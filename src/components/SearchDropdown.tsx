@@ -4,6 +4,19 @@ import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { createPortal } from 'react-dom';
 
+const DROPDOWN_GAP = 4;
+const VIEWPORT_GUTTER = 8;
+const MAX_DROPDOWN_HEIGHT = 320;
+
+interface DropdownPosition {
+  left: number;
+  top?: number;
+  bottom?: number;
+  width: number;
+  maxHeight: number;
+  placement: 'top' | 'bottom';
+}
+
 function getDropdownPortalTarget() {
   if (typeof document === 'undefined') return null;
   return (
@@ -36,11 +49,8 @@ export default function SearchDropdown({
   renderItemLabel?: (item: any) => any;
   renderItemUrl?: (item: any) => string;
 }) {
-  const [anchorRect, setAnchorRect] = useState<{
-    left: number;
-    top: number;
-    width: number;
-  } | null>(null);
+  const [dropdownPosition, setDropdownPosition] =
+    useState<DropdownPosition | null>(null);
   const [anchorTypography, setAnchorTypography] = useState<{
     fontSize: string;
     fontFamily: string;
@@ -62,10 +72,44 @@ export default function SearchDropdown({
     function updatePosition() {
       const rect = anchorElement.getBoundingClientRect();
       const anchorStyle = window.getComputedStyle(anchorElement);
-      setAnchorRect({
-        left: rect.left,
-        top: rect.bottom + 4,
-        width: rect.width
+      const viewportHeight =
+        window.visualViewport?.height ||
+        window.innerHeight ||
+        document.documentElement.clientHeight;
+      const viewportWidth =
+        window.visualViewport?.width ||
+        window.innerWidth ||
+        document.documentElement.clientWidth;
+      const availableBelow = Math.max(
+        0,
+        viewportHeight - rect.bottom - VIEWPORT_GUTTER - DROPDOWN_GAP
+      );
+      const availableAbove = Math.max(
+        0,
+        rect.top - VIEWPORT_GUTTER - DROPDOWN_GAP
+      );
+      const shouldOpenUp =
+        availableBelow < MAX_DROPDOWN_HEIGHT &&
+        availableAbove > availableBelow;
+      const availableHeight = shouldOpenUp ? availableAbove : availableBelow;
+      const width = Math.min(rect.width, viewportWidth - VIEWPORT_GUTTER * 2);
+      const left = Math.min(
+        Math.max(VIEWPORT_GUTTER, rect.left),
+        Math.max(VIEWPORT_GUTTER, viewportWidth - width - VIEWPORT_GUTTER)
+      );
+
+      setDropdownPosition({
+        left,
+        width,
+        maxHeight: Math.min(MAX_DROPDOWN_HEIGHT, availableHeight),
+        placement: shouldOpenUp ? 'top' : 'bottom',
+        ...(shouldOpenUp
+          ? {
+              bottom: viewportHeight - rect.top + DROPDOWN_GAP
+            }
+          : {
+              top: rect.bottom + DROPDOWN_GAP
+            })
       });
       setAnchorTypography((prev) => {
         const next = {
@@ -110,7 +154,7 @@ export default function SearchDropdown({
   }, [anchorRef, searchResults.length]);
 
   const portalTarget = anchorRef ? getDropdownPortalTarget() : null;
-  const shouldUsePortal = !!portalTarget && !!anchorRef && !!anchorRect;
+  const shouldUsePortal = !!portalTarget && !!anchorRef && !!dropdownPosition;
 
   const dropdown = (
     <ErrorBoundary
@@ -134,9 +178,12 @@ export default function SearchDropdown({
         shouldUsePortal
           ? {
               position: 'fixed',
-              left: `${anchorRect.left}px`,
-              top: `${anchorRect.top}px`,
-              width: `${anchorRect.width}px`,
+              left: `${dropdownPosition.left}px`,
+              ...(dropdownPosition.placement === 'top'
+                ? { bottom: `${dropdownPosition.bottom}px` }
+                : { top: `${dropdownPosition.top}px` }),
+              width: `${dropdownPosition.width}px`,
+              maxHeight: `${dropdownPosition.maxHeight}px`,
               zIndex: 100_000_000,
               fontSize: anchorTypography?.fontSize,
               fontFamily: anchorTypography?.fontFamily,
@@ -152,6 +199,9 @@ export default function SearchDropdown({
         className={css`
           width: 100%;
           display: block;
+          max-height: inherit;
+          overflow-y: auto;
+          overscroll-behavior: contain;
           nav {
             padding: 1rem 1.2rem;
             color: ${Color.darkerGray()};

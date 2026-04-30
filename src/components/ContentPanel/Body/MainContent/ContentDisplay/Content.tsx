@@ -60,7 +60,7 @@ export default function Content({
   imageStyle?: string;
   isListening?: boolean;
   isNotification: boolean;
-  navigate: (url: string) => void;
+  navigate: (url: string, options?: Record<string, any>) => void;
   onClickSecretAnswer?: () => void;
   rootId: number;
   secretAnswer: string;
@@ -274,8 +274,11 @@ export default function Content({
           <BuildContent
             build={{
               id: contentObj.id || contentId,
+              userId: contentObj.userId,
               title,
               description,
+              collaborationMode: contentObj.collaborationMode,
+              contributionAccess: contentObj.contributionAccess,
               thumbnailUrl: contentObj.thumbnailUrl,
               updatedAt: contentObj.updatedAt
             }}

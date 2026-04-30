@@ -46,7 +46,7 @@ export default function ContentDisplay({
   displayedContent: string;
   description: string;
   filePath: string;
-  navigate: (url: string) => void;
+  navigate: (url: string, options?: Record<string, any>) => void;
   secretAnswer: string;
   secretAttachment: any;
   title: string;

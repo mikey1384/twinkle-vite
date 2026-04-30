@@ -1,21 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { borderRadius } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 const buildForkUiEnabled = false;
 
 const buildCardClass = css`
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 34%);
+  gap: 1.2rem;
+  align-items: stretch;
   cursor: pointer;
-  padding: 1.4rem;
+  padding: 1.1rem;
   background: #fff;
   border: 1px solid var(--ui-border);
-  border-left: 4px solid #418CEB;
+  border-left: 4px solid #418ceb;
   border-radius: ${borderRadius};
   text-decoration: none;
   color: inherit;
@@ -34,6 +38,16 @@ const buildCardClass = css`
   &:active {
     text-decoration: none;
   }
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const buildCardMainClass = css`
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0.25rem 0.1rem 0.15rem 0.15rem;
 `;
 
 const buildCardHeaderClass = css`
@@ -57,6 +71,8 @@ const buildTitleClass = css`
   font-size: 1.7rem;
   font-weight: 900;
   font-family: ${displayFontFamily};
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 `;
 
 const buildDescriptionClass = css`
@@ -134,7 +150,8 @@ const buildTagClass = css`
 `;
 
 const buildMetaRowClass = css`
-  margin-top: 0.85rem;
+  margin-top: auto;
+  padding-top: 0.85rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
@@ -147,6 +164,93 @@ const buildMetaItemClass = css`
   font-size: 1.1rem;
   color: var(--chat-text);
   opacity: 0.72;
+`;
+
+const buildPreviewClass = css`
+  position: relative;
+  align-self: stretch;
+  min-height: 12rem;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid rgba(20, 35, 60, 0.14);
+  border-radius: calc(${borderRadius} - 2px);
+  background:
+    linear-gradient(135deg, rgba(65, 140, 235, 0.12), rgba(41, 171, 135, 0.14)),
+    #111827;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 700px) {
+    order: -1;
+    min-height: 13rem;
+  }
+`;
+
+const buildPreviewToolbarClass = css`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  height: 1.9rem;
+  padding: 0 0.75rem;
+  background: rgba(255, 255, 255, 0.88);
+
+  span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: rgba(50, 65, 90, 0.42);
+  }
+`;
+
+const buildPreviewFallbackClass = css`
+  height: 100%;
+  min-height: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 2.4rem 1rem 1rem;
+  color: rgba(255, 255, 255, 0.88);
+  text-align: center;
+
+  svg {
+    font-size: 2.4rem;
+  }
+
+  span {
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+`;
+
+const buildPreviewLabelClass = css`
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.76);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
 `;
 
 interface BuildTone {
@@ -166,6 +270,7 @@ export interface BuildProjectListItemData {
   viewCount?: number;
   publishedAt?: number | null;
   sourceBuildId?: number | null;
+  thumbnailUrl?: string | null;
 }
 
 export default function BuildProjectListItem({
@@ -173,6 +278,7 @@ export default function BuildProjectListItem({
   to,
   navigationState,
   isOwner = false,
+  themeName,
   onAddDescription,
   onDelete
 }: {
@@ -180,110 +286,150 @@ export default function BuildProjectListItem({
   to?: string;
   navigationState?: Record<string, any>;
   isOwner?: boolean;
+  themeName?: string;
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
 }) {
   const navigate = useNavigate();
+  const { accentColor: buildAccentColor } = useThemedCardVars({
+    role: 'sectionPanel',
+    themeName
+  });
   const visibilityTone = getVisibilityTone(build.isPublic);
   const description = build.description?.trim() || '';
   const detailsActionLabel = isOwner ? 'Edit Details' : '';
   const targetPath = to || `/build/${build.id}`;
+  const thumbnailUrl = String(build.thumbnailUrl || '').trim();
+  const [thumbnailFailed, setThumbnailFailed] = useState(false);
+  const thumbnailShown = Boolean(thumbnailUrl) && !thumbnailFailed;
+
+  useEffect(() => {
+    setThumbnailFailed(false);
+  }, [thumbnailUrl]);
 
   return (
     <div
       role="link"
       tabIndex={0}
       className={buildCardClass}
-      style={{ borderLeftColor: visibilityTone.border }}
+      style={{ borderLeftColor: buildAccentColor }}
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
     >
-      <div className={buildCardHeaderClass}>
-        <div>
-          <h3 className={buildTitleClass}>{build.title}</h3>
-          {(description || detailsActionLabel) &&
-            (description ? (
-              <>
-                <p className={buildDescriptionClass}>{description}</p>
-                {isOwner && onAddDescription && (
-                  <button
-                    type="button"
-                    className={detailsButtonClass}
-                    onClick={handleAddDescriptionClick}
-                  >
-                    {detailsActionLabel}
-                  </button>
-                )}
-              </>
-            ) : (
+      <div className={buildCardMainClass}>
+        <div className={buildCardHeaderClass}>
+          <div>
+            <h3 className={buildTitleClass}>{build.title}</h3>
+            {(description || detailsActionLabel) &&
+              (description ? (
+                <>
+                  <p className={buildDescriptionClass}>{description}</p>
+                  {isOwner && onAddDescription && (
+                    <button
+                      type="button"
+                      className={detailsButtonClass}
+                      onClick={handleAddDescriptionClick}
+                    >
+                      {detailsActionLabel}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className={detailsButtonClass}
+                  onClick={handleAddDescriptionClick}
+                >
+                  {detailsActionLabel}
+                </button>
+              ))}
+          </div>
+          <div className={buildHeaderAsideClass}>
+            <span className={buildUpdatedClass}>
+              <Icon icon="clock" />
+              Updated {formatRelativeTime(build.updatedAt)}
+            </span>
+            {isOwner && onDelete && (
               <button
                 type="button"
-                className={detailsButtonClass}
-                onClick={handleAddDescriptionClick}
+                className={buildDeleteButtonClass}
+                onClick={handleDeleteClick}
               >
-                {detailsActionLabel}
+                Delete
               </button>
-            ))}
+            )}
+          </div>
         </div>
-        <div className={buildHeaderAsideClass}>
-          <span className={buildUpdatedClass}>
-            <Icon icon="clock" />
-            Updated {formatRelativeTime(build.updatedAt)}
+        <div className={buildTagRowClass}>
+          <span className={buildTagClass} style={toTagStyle(visibilityTone)}>
+            {build.isPublic ? 'Public' : 'Private'}
           </span>
-          {isOwner && onDelete && (
-            <button
-              type="button"
-              className={buildDeleteButtonClass}
-              onClick={handleDeleteClick}
+          {buildForkUiEnabled && !!build.sourceBuildId && (
+            <span
+              className={buildTagClass}
+              style={toTagStyle({
+                background: 'rgba(147, 51, 234, 0.14)',
+                border: 'rgba(147, 51, 234, 0.36)',
+                color: '#6b21a8'
+              })}
             >
-              Delete
-            </button>
+              Forked
+            </span>
+          )}
+        </div>
+        <div className={buildMetaRowClass}>
+          <span className={buildMetaItemClass}>
+            <Icon icon="clock-rotate-left" />
+            Created {formatRelativeTime(build.createdAt)}
+          </span>
+          <span className={buildMetaItemClass}>
+            <Icon icon="eye" />
+            {formatViewLabel(build.viewCount)}
+          </span>
+          {build.isPublic && build.publishedAt ? (
+            <span className={buildMetaItemClass}>
+              <Icon icon="globe" />
+              Published {formatRelativeTime(build.publishedAt)}
+            </span>
+          ) : (
+            <span className={buildMetaItemClass}>
+              <Icon icon="lock" />
+              Not published yet
+            </span>
           )}
         </div>
       </div>
-      <div className={buildTagRowClass}>
-        <span className={buildTagClass} style={toTagStyle(visibilityTone)}>
-          {build.isPublic ? 'Public' : 'Private'}
-        </span>
-        {buildForkUiEnabled && !!build.sourceBuildId && (
-          <span
-            className={buildTagClass}
-            style={toTagStyle({
-              background: 'rgba(147, 51, 234, 0.14)',
-              border: 'rgba(147, 51, 234, 0.36)',
-              color: '#6b21a8'
-            })}
-          >
-            Forked
-          </span>
-        )}
-      </div>
-      <div className={buildMetaRowClass}>
-        <span className={buildMetaItemClass}>
-          <Icon icon="clock-rotate-left" />
-          Created {formatRelativeTime(build.createdAt)}
-        </span>
-        <span className={buildMetaItemClass}>
-          <Icon icon="eye" />
-          {formatViewLabel(build.viewCount)}
-        </span>
-        {build.isPublic && build.publishedAt ? (
-          <span className={buildMetaItemClass}>
-            <Icon icon="globe" />
-            Published {formatRelativeTime(build.publishedAt)}
-          </span>
+      <div className={buildPreviewClass} aria-label={`${build.title} preview`}>
+        <div className={buildPreviewToolbarClass} aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        {thumbnailShown ? (
+          <img
+            src={thumbnailUrl}
+            alt={`${build.title} screenshot`}
+            onError={() => setThumbnailFailed(true)}
+          />
         ) : (
-          <span className={buildMetaItemClass}>
-            <Icon icon="lock" />
-            Not published yet
-          </span>
+          <div className={buildPreviewFallbackClass}>
+            <Icon icon="laptop-code" />
+            <span>Preview not captured</span>
+          </div>
         )}
+        <div className={buildPreviewLabelClass}>
+          <Icon icon="external-link-alt" />
+          <span>Open app</span>
+        </div>
       </div>
     </div>
   );
 
   function handleNavigate() {
-    navigate(targetPath, navigationState ? { state: navigationState } : undefined);
+    navigate(
+      targetPath,
+      navigationState ? { state: navigationState } : undefined
+    );
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -293,14 +439,19 @@ export default function BuildProjectListItem({
     }
   }
 
-  function handleAddDescriptionClick(event: React.MouseEvent<HTMLButtonElement>) {
+  function handleAddDescriptionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
     event.preventDefault();
     event.stopPropagation();
     if (onAddDescription) {
       onAddDescription(build);
       return;
     }
-    navigate(targetPath, navigationState ? { state: navigationState } : undefined);
+    navigate(
+      targetPath,
+      navigationState ? { state: navigationState } : undefined
+    );
   }
 
   function handleDeleteClick(event: React.MouseEvent<HTMLButtonElement>) {

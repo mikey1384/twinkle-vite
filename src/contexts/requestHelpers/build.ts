@@ -1128,6 +1128,416 @@ export default function buildRequestHelpers({
       }
     },
 
+    async updateBuildCollaboration({
+      buildId,
+      collaborationMode,
+      contributionAccess
+    }: {
+      buildId: number;
+      collaborationMode: 'private' | 'contribution' | 'open_source';
+      contributionAccess: 'anyone' | 'invite_only';
+    }) {
+      try {
+        const { data } = await request.patch(
+          `${URL}/build/${buildId}/collaboration`,
+          { collaborationMode, contributionAccess },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildLumineChatVisibility({
+      buildId,
+      visibility
+    }: {
+      buildId: number;
+      visibility: 'private' | 'collaborators' | 'public';
+    }) {
+      try {
+        const { data } = await request.patch(
+          `${URL}/build/${buildId}/lumine-chat-visibility`,
+          { visibility },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildLumineChatHistory(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/lumine-chat-history`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildContributors(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contributors`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async inviteBuildContributor({
+      buildId,
+      userId
+    }: {
+      buildId: number;
+      userId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributors`,
+          { userId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async revokeBuildContributor({
+      buildId,
+      userId
+    }: {
+      buildId: number;
+      userId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/${buildId}/contributors/${userId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadMyBuildCollaborationRequest(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/collaboration-requests/mine`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildCollaborationRequest({
+      buildId,
+      message
+    }: {
+      buildId: number;
+      message?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/collaboration-requests`,
+          { message },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildCollaborationRequests({
+      buildId,
+      hidden = false
+    }: {
+      buildId: number;
+      hidden?: boolean;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/collaboration-requests`,
+          {
+            ...auth(),
+            params: hidden ? { hidden: 1 } : undefined
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async acceptBuildCollaborationRequest({
+      buildId,
+      requestId
+    }: {
+      buildId: number;
+      requestId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/collaboration-requests/${requestId}/accept`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async rejectBuildCollaborationRequest({
+      buildId,
+      requestId
+    }: {
+      buildId: number;
+      requestId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/collaboration-requests/${requestId}/reject`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async hideBuildCollaborationRequest({
+      buildId,
+      requestId
+    }: {
+      buildId: number;
+      requestId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/collaboration-requests/${requestId}/hide`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async cancelBuildCollaborationRequest({
+      buildId,
+      requestId
+    }: {
+      buildId: number;
+      requestId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/collaboration-requests/${requestId}/cancel`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildContributionFork(buildId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/fork`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildContributions(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contributions`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildContribution({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async submitBuildContribution({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/submit`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async reopenBuildContribution({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/reopen`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async rejectBuildContribution({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/reject`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async mergeBuildContribution({
+      buildId,
+      contributionBuildId,
+      filePaths
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      filePaths?: string[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge`,
+          { filePaths },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildContributionComments({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId?: number | null;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contribution-comments`,
+          {
+            ...auth(),
+            params: contributionBuildId ? { contributionBuildId } : undefined
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildContributionComment({
+      buildId,
+      contributionBuildId,
+      body
+    }: {
+      buildId: number;
+      contributionBuildId?: number | null;
+      body: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contribution-comments`,
+          { contributionBuildId, body },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildContributionComment({
+      buildId,
+      commentId
+    }: {
+      buildId: number;
+      commentId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/${buildId}/contribution-comments/${commentId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async queryViewerDb({
       buildId,
       sql,

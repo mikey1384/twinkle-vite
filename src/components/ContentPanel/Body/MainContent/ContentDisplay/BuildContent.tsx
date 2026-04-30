@@ -1,12 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import Modal from '~/components/Modal';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
-import { useContentContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 import { BUILD_APP_IFRAME_ALLOW } from '~/containers/Build/iframePermissions';
+
+type BuildCollaborationMode = 'private' | 'contribution' | 'open_source';
+type BuildContributionAccess = 'anyone' | 'invite_only';
+
+interface BuildCollaborationRequest {
+  id: number;
+  status: 'pending' | 'accepted' | 'rejected' | 'canceled';
+  message?: string;
+  ownerHidden?: number;
+}
 
 export default function BuildContent({
   build,
@@ -16,15 +27,32 @@ export default function BuildContent({
 }: {
   build: {
     id?: number;
+    userId?: number;
     title?: string;
     description?: string;
+    collaborationMode?: BuildCollaborationMode;
+    contributionAccess?: BuildContributionAccess;
     thumbnailUrl?: string | null;
     updatedAt?: number | null;
   };
   contentId: number;
-  navigate: (url: string) => void;
+  navigate: (url: string, options?: Record<string, any>) => void;
   theme?: string;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
+  const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
+  const createBuildContributionFork = useAppContext(
+    (v) => v.requestHelpers.createBuildContributionFork
+  );
+  const loadMyBuildCollaborationRequest = useAppContext(
+    (v) => v.requestHelpers.loadMyBuildCollaborationRequest
+  );
+  const createBuildCollaborationRequest = useAppContext(
+    (v) => v.requestHelpers.createBuildCollaborationRequest
+  );
+  const cancelBuildCollaborationRequest = useAppContext(
+    (v) => v.requestHelpers.cancelBuildCollaborationRequest
+  );
   const onSetMediaStarted = useContentContext(
     (v) => v.actions.onSetMediaStarted
   );
@@ -35,7 +63,53 @@ export default function BuildContent({
   });
   const [iframeActivated, setIframeActivated] = useState(false);
   const [iframeReady, setIframeReady] = useState(false);
+  const [actionLoading, setActionLoading] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [
+    collaborationRequestModalShown,
+    setCollaborationRequestModalShown
+  ] = useState(false);
+  const [collaborationRequestMessage, setCollaborationRequestMessage] =
+    useState('');
+  const [collaborationRequest, setCollaborationRequest] =
+    useState<BuildCollaborationRequest | null>(null);
+  const [collaborationRequestLoading, setCollaborationRequestLoading] =
+    useState(false);
+  const [collaborationRequestError, setCollaborationRequestError] =
+    useState('');
   const buildId = Number(build?.id || 0);
+  const ownerId = Number(build?.userId || 0);
+  const isOwner = Boolean(userId && ownerId && Number(userId) === ownerId);
+  const collaborationMode = normalizeCollaborationMode(
+    build?.collaborationMode
+  );
+  const contributionAccess = normalizeContributionAccess(
+    build?.contributionAccess
+  );
+  const showContributeAction =
+    !isOwner &&
+    Boolean(userId) &&
+    (collaborationMode === 'contribution' ||
+      collaborationMode === 'open_source') &&
+    contributionAccess === 'anyone';
+  const showForkAction =
+    !isOwner && Boolean(userId) && collaborationMode === 'open_source';
+  const showCollaborationRequestAction =
+    !isOwner &&
+    Boolean(userId) &&
+    (collaborationMode === 'private' ||
+      (collaborationMode === 'contribution' &&
+        contributionAccess === 'invite_only') ||
+      (collaborationMode === 'open_source' &&
+        contributionAccess === 'invite_only'));
+  const collaborationRequestActionLabel =
+    collaborationMode === 'private' ? 'Offer Collaboration' : 'Request Access';
+  const showDiscussAction = isOwner;
+  const showCollaborationSettingsAction = isOwner;
+  const collaborationSettingsLabel =
+    collaborationMode === 'private'
+      ? 'Set Up Collaboration'
+      : 'Manage Collaboration';
   const thumbnailUrl = String(build?.thumbnailUrl || '').trim();
   const hasThumbnail = Boolean(thumbnailUrl);
   const { colorKey: playButtonColorKey } = useRoleColor('button', {
@@ -100,6 +174,7 @@ export default function BuildContent({
         gap: 1rem;
       `}
     >
+      {collaborationRequestModalShown ? renderCollaborationRequestModal() : null}
       <div
         className={css`
           display: flex;
@@ -149,15 +224,120 @@ export default function BuildContent({
             </div>
           ) : null}
         </div>
-        <Button
-          variant="ghost"
-          onClick={() => navigate(appPath)}
-          style={{ whiteSpace: 'nowrap' }}
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.55rem;
+            flex-wrap: wrap;
+          `}
         >
-          <Icon icon="external-link-alt" />
-          <span style={{ marginLeft: '0.7rem' }}>Open app</span>
-        </Button>
+          {showContributeAction ? (
+            <Button
+              color="logoBlue"
+              variant="soft"
+              shape="pill"
+              size="sm"
+              uppercase={false}
+              loading={actionLoading === 'contribute'}
+              disabled={Boolean(actionLoading)}
+              onClick={handleContribute}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <Icon icon="code-branch" />
+              <span>Contribute</span>
+            </Button>
+          ) : null}
+          {showForkAction ? (
+            <Button
+              color="purple"
+              variant="soft"
+              shape="pill"
+              size="sm"
+              uppercase={false}
+              loading={actionLoading === 'fork'}
+              disabled={Boolean(actionLoading)}
+              onClick={handleFork}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <Icon icon="code-branch" />
+              <span>Fork</span>
+            </Button>
+          ) : null}
+          {showCollaborationRequestAction ? (
+            <Button
+              color="pink"
+              variant="soft"
+              shape="pill"
+              size="sm"
+              uppercase={false}
+              loading={actionLoading === 'collaborationRequest'}
+              disabled={Boolean(actionLoading)}
+              onClick={handleOpenCollaborationRequestModal}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <Icon icon="user-plus" />
+              <span>{collaborationRequestActionLabel}</span>
+            </Button>
+          ) : null}
+          {showDiscussAction ? (
+            <Button
+              color="darkerGray"
+              variant="outline"
+              shape="pill"
+              size="sm"
+              uppercase={false}
+              disabled={Boolean(actionLoading)}
+              onClick={handleDiscuss}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <Icon icon="comments" />
+              <span>Discuss</span>
+            </Button>
+          ) : null}
+          {showCollaborationSettingsAction ? (
+            <Button
+              color="pink"
+              variant="soft"
+              shape="pill"
+              size="sm"
+              uppercase={false}
+              disabled={Boolean(actionLoading)}
+              onClick={handleOpenCollaborationSettings}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <Icon icon="users" />
+              <span>{collaborationSettingsLabel}</span>
+            </Button>
+          ) : null}
+          <Button
+            color="logoBlue"
+            variant="solid"
+            tone="raised"
+            shape="pill"
+            size="sm"
+            uppercase={false}
+            disabled={Boolean(actionLoading)}
+            onClick={handleOpenApp}
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            <Icon icon="external-link-alt" />
+            <span>Open App</span>
+          </Button>
+        </div>
       </div>
+      {actionError ? (
+        <div
+          className={css`
+            color: #be123c;
+            font-size: 1.05rem;
+            font-weight: 700;
+          `}
+        >
+          {actionError}
+        </div>
+      ) : null}
       <div
         ref={VisibilityRef}
         className={css`
@@ -334,6 +514,144 @@ export default function BuildContent({
     setIframeReady(false);
   }
 
+  function handleOpenApp() {
+    if (!appPath) return;
+    navigate(appPath);
+  }
+
+  function handleDiscuss() {
+    if (!buildId) return;
+    navigate(`/build/${buildId}`, {
+      state: {
+        openPeoplePanel: true
+      }
+    });
+  }
+
+  function handleOpenCollaborationSettings() {
+    if (!buildId) return;
+    navigate(`/build/${buildId}`, {
+      state: {
+        openCollaborationSettings: true,
+        openPeoplePanel: true
+      }
+    });
+  }
+
+  async function handleOpenCollaborationRequestModal() {
+    if (!buildId || actionLoading) return;
+    setActionLoading('collaborationRequest');
+    setActionError('');
+    setCollaborationRequestError('');
+    setCollaborationRequestModalShown(true);
+    try {
+      const result = await loadMyBuildCollaborationRequest(buildId);
+      const nextRequest = result?.request || null;
+      setCollaborationRequest(nextRequest);
+      setCollaborationRequestMessage(String(nextRequest?.message || ''));
+    } catch (error: any) {
+      setCollaborationRequestError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to load collaboration request'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleSubmitCollaborationRequest() {
+    if (!buildId || collaborationRequestLoading) return;
+    setCollaborationRequestLoading(true);
+    setCollaborationRequestError('');
+    try {
+      const result = await createBuildCollaborationRequest({
+        buildId,
+        message: collaborationRequestMessage
+      });
+      if (result?.request) {
+        setCollaborationRequest(result.request);
+        setCollaborationRequestMessage(String(result.request.message || ''));
+      }
+    } catch (error: any) {
+      setCollaborationRequestError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to send collaboration request'
+      );
+    } finally {
+      setCollaborationRequestLoading(false);
+    }
+  }
+
+  async function handleCancelCollaborationRequest() {
+    if (!buildId || !collaborationRequest?.id || collaborationRequestLoading) {
+      return;
+    }
+    setCollaborationRequestLoading(true);
+    setCollaborationRequestError('');
+    try {
+      const result = await cancelBuildCollaborationRequest({
+        buildId,
+        requestId: collaborationRequest.id
+      });
+      if (result?.success) {
+        setCollaborationRequest(null);
+        setCollaborationRequestMessage('');
+      }
+    } catch (error: any) {
+      setCollaborationRequestError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to cancel collaboration request'
+      );
+    } finally {
+      setCollaborationRequestLoading(false);
+    }
+  }
+
+  async function handleContribute() {
+    if (!buildId || actionLoading) return;
+    setActionLoading('contribute');
+    setActionError('');
+    try {
+      const result = await createBuildContributionFork(buildId);
+      if (result?.success && result?.build?.id) {
+        navigate(`/build/${result.build.id}`, {
+          state: {
+            openPeoplePanel: true
+          }
+        });
+      }
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to start contribution'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleFork() {
+    if (!buildId || actionLoading) return;
+    setActionLoading('fork');
+    setActionError('');
+    try {
+      const result = await forkBuild(buildId);
+      if (result?.success && result?.build?.id) {
+        navigate(`/build/${result.build.id}`);
+      }
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error || error?.message || 'Failed to fork app'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
   function postRuntimeVisibility(visible: boolean) {
     const runtimeWindow = iframeRef.current?.contentWindow;
     if (!runtimeWindow) return;
@@ -348,4 +666,169 @@ export default function BuildContent({
       '*'
     );
   }
+
+  function renderCollaborationRequestModal() {
+    const pending = collaborationRequest?.status === 'pending';
+    const accepted = collaborationRequest?.status === 'accepted';
+    return (
+      <Modal
+        modalKey="BuildCollaborationRequestModal"
+        isOpen
+        onClose={
+          collaborationRequestLoading
+            ? () => {}
+            : () => setCollaborationRequestModalShown(false)
+        }
+        closeOnBackdropClick={!collaborationRequestLoading}
+        title={
+          collaborationMode === 'contribution'
+            ? 'Request Contributor Access'
+            : 'Offer Collaboration'
+        }
+        size="sm"
+        footer={
+          <div
+            className={css`
+              display: flex;
+              justify-content: flex-end;
+              gap: 0.65rem;
+              flex-wrap: wrap;
+            `}
+          >
+            <Button
+              variant="ghost"
+              disabled={collaborationRequestLoading}
+              onClick={() => setCollaborationRequestModalShown(false)}
+            >
+              Close
+            </Button>
+            {pending ? (
+              <Button
+                color="darkerGray"
+                variant="outline"
+                loading={collaborationRequestLoading}
+                disabled={collaborationRequestLoading}
+                onClick={handleCancelCollaborationRequest}
+              >
+                Cancel Request
+              </Button>
+            ) : accepted ? (
+              <Button
+                color="logoBlue"
+                loading={collaborationRequestLoading}
+                disabled={collaborationRequestLoading}
+                onClick={handleContribute}
+              >
+                Start Contributing
+              </Button>
+            ) : (
+              <Button
+                color="pink"
+                loading={collaborationRequestLoading}
+                disabled={collaborationRequestLoading}
+                onClick={handleSubmitCollaborationRequest}
+              >
+                Send Request
+              </Button>
+            )}
+          </div>
+        }
+      >
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+          `}
+        >
+          {pending ? (
+            <div
+              className={css`
+                color: ${Color.darkGray()};
+                font-weight: 800;
+                line-height: 1.4;
+              `}
+            >
+              Your request is pending.
+            </div>
+          ) : accepted ? (
+            <div
+              className={css`
+                color: ${Color.logoBlue()};
+                font-weight: 800;
+                line-height: 1.4;
+              `}
+            >
+              Your request was accepted. You can start a project-scoped
+              contribution fork.
+            </div>
+          ) : (
+            <div
+              className={css`
+                color: ${Color.darkGray()};
+                font-weight: 700;
+                line-height: 1.45;
+              `}
+            >
+              Ask the owner to invite you as a contributor.
+            </div>
+          )}
+          {!accepted ? (
+            <textarea
+              value={collaborationRequestMessage}
+              onChange={(event) =>
+                setCollaborationRequestMessage(event.target.value)
+              }
+              disabled={pending || collaborationRequestLoading}
+              maxLength={1000}
+              placeholder="Optional message"
+              className={css`
+                min-height: 7rem;
+                resize: vertical;
+                border: 1px solid var(--ui-border);
+                border-radius: ${borderRadius};
+                padding: 0.75rem;
+                font: inherit;
+                &:focus {
+                  outline: 2px solid ${Color.pink(0.22)};
+                  border-color: ${Color.pink(0.65)};
+                }
+              `}
+            />
+          ) : null}
+          {collaborationRequest?.ownerHidden ? (
+            <div
+              className={css`
+                color: ${Color.darkGray(0.7)};
+                font-size: 0.9rem;
+                font-weight: 700;
+              `}
+            >
+              This request is saved in the owner&apos;s hidden request list.
+            </div>
+          ) : null}
+          {collaborationRequestError ? (
+            <div
+              className={css`
+                color: #be123c;
+                font-weight: 800;
+              `}
+            >
+              {collaborationRequestError}
+            </div>
+          ) : null}
+        </div>
+      </Modal>
+    );
+  }
+}
+
+function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
+  return value === 'contribution' || value === 'open_source'
+    ? value
+    : 'private';
+}
+
+function normalizeContributionAccess(value: unknown): BuildContributionAccess {
+  return value === 'invite_only' ? 'invite_only' : 'anyone';
 }

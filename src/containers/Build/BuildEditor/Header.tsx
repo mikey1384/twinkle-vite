@@ -113,15 +113,19 @@ const headerActionsClass = css`
 `;
 
 const badgePillClass = css`
-  font-size: 0.76rem;
-  padding: 0.38rem 0.74rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  padding: 0.58rem 0.9rem;
   border-radius: 999px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 900;
   font-family: ${displayFontFamily};
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   line-height: 1;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.12);
 `;
 
 interface HeaderProps {
@@ -131,14 +135,21 @@ interface HeaderProps {
     username: string;
     isPublic: boolean;
     code: string | null;
+    collaborationMode?: 'private' | 'contribution' | 'open_source';
+    contributionAccess?: 'anyone' | 'invite_only';
+    contributionStatus?: string | null;
   };
   forking: boolean;
+  canEditMetadata: boolean;
   isOwner: boolean;
   profileTheme?: string | null;
   publishing: boolean;
   savingThumbnail: boolean;
+  showContributionButton: boolean;
   showForkButton: boolean;
+  onContribute: () => void;
   onFork: () => void;
+  onOpenCollaborationSettings: () => void;
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
   onTogglePublish: () => void;
@@ -147,16 +158,23 @@ interface HeaderProps {
 export default function Header({
   build,
   forking,
+  canEditMetadata,
   isOwner,
   profileTheme,
   publishing,
   savingThumbnail,
+  showContributionButton,
   showForkButton,
+  onContribute,
   onFork,
+  onOpenCollaborationSettings,
   onOpenDescriptionModal,
   onOpenThumbnailModal,
   onTogglePublish
 }: HeaderProps) {
+  const isContributionFork =
+    build.contributionStatus && build.contributionStatus !== 'none';
+  const collaborationMode = normalizeCollaborationMode(build.collaborationMode);
   return (
     <header className={headerClass}>
       <div
@@ -177,7 +195,7 @@ export default function Header({
         </ScopedTheme>
         <div className={headerTitleRowClass}>
           <h2 className={headerTitleClass}>{build.title}</h2>
-          {isOwner ? (
+          {canEditMetadata ? (
             <button
               type="button"
               className={headerTitleEditButtonClass}
@@ -197,10 +215,26 @@ export default function Header({
         <span
           className={badgePillClass}
           style={getVisibilityBadgeStyle(build.isPublic)}
+          title={
+            build.isPublic
+              ? 'Published publicly'
+              : 'Only you can access this build'
+          }
         >
-          {build.isPublic ? 'public' : 'private'}
+          <Icon icon={build.isPublic ? 'globe' : 'lock'} />
+          {build.isPublic ? 'Public' : 'Private'}
         </span>
-        {isOwner ? (
+        {isOwner && !isContributionFork ? (
+          <GameCTAButton
+            onClick={onOpenCollaborationSettings}
+            variant={collaborationMode === 'private' ? 'pink' : 'logoBlue'}
+            size="md"
+            icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
+          >
+            {getCollaborationButtonLabel(collaborationMode)}
+          </GameCTAButton>
+        ) : null}
+        {canEditMetadata ? (
           <GameCTAButton
             onClick={onOpenDescriptionModal}
             variant="neutral"
@@ -210,7 +244,7 @@ export default function Header({
             {build.description?.trim() ? 'Edit Details' : 'Add Details'}
           </GameCTAButton>
         ) : null}
-        {isOwner ? (
+        {isOwner && !isContributionFork ? (
           <GameCTAButton
             onClick={onOpenThumbnailModal}
             disabled={savingThumbnail || publishing}
@@ -222,7 +256,7 @@ export default function Header({
             Thumbnail
           </GameCTAButton>
         ) : null}
-        {isOwner ? (
+        {isOwner && !isContributionFork ? (
           <GameCTAButton
             onClick={onTogglePublish}
             disabled={publishing || (!build.isPublic && !build.code)}
@@ -238,21 +272,49 @@ export default function Header({
                 : 'Publish'}
           </GameCTAButton>
         ) : null}
+        {showContributionButton ? (
+          <GameCTAButton
+            onClick={onContribute}
+            disabled={forking}
+            loading={forking}
+            variant="primary"
+            size="md"
+            icon="users"
+          >
+            {forking ? 'Working...' : 'Contribute'}
+          </GameCTAButton>
+        ) : null}
         {showForkButton ? (
           <GameCTAButton
             onClick={onFork}
             disabled={forking}
             loading={forking}
-            variant="primary"
+            variant={showContributionButton ? 'neutral' : 'primary'}
             size="md"
             icon="code-branch"
           >
-            {forking ? 'Forking...' : 'Fork'}
+            {forking ? 'Working...' : 'Fork'}
           </GameCTAButton>
         ) : null}
       </div>
     </header>
   );
+}
+
+function normalizeCollaborationMode(
+  value: unknown
+): 'private' | 'contribution' | 'open_source' {
+  return value === 'contribution' || value === 'open_source'
+    ? value
+    : 'private';
+}
+
+function getCollaborationButtonLabel(
+  mode: 'private' | 'contribution' | 'open_source'
+) {
+  if (mode === 'open_source') return 'Open Source Settings';
+  if (mode === 'contribution') return 'Manage Contributions';
+  return 'Work with People';
 }
 
 function getVisibilityBadgeStyle(isPublic: boolean): React.CSSProperties {

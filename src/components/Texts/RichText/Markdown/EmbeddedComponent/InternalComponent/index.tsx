@@ -35,6 +35,9 @@ export default function InternalComponent({
     if (isProfileComponent) {
       return <DefaultComponent linkType={linkType} src={src} />;
     }
+    if (['app', 'apps', 'build', 'builds'].includes(linkType) && contentId) {
+      return <MainContentComponent contentType="build" contentId={contentId} />;
+    }
     if (mainContentTypes.includes(linkType) && contentId) {
       const contentType = linkType.slice(0, -1);
       return (

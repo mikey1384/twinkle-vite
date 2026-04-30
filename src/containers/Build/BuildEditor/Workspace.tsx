@@ -119,8 +119,8 @@ interface WorkspaceProps {
   buildChatPanelWidth: number;
   buildWorkshopScale: number;
   chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'>;
+  communicationPanelShown: boolean;
   isDesktopWorkspaceLayout: boolean;
-  isOwner: boolean;
   mobilePanelTabIntent: MobilePanelTabIntent;
   onMobilePanelTabChange: (tab: MobilePanelTab) => void;
   onWorkspaceResizeKeyDown: (
@@ -139,8 +139,8 @@ export default function Workspace({
   buildChatPanelWidth,
   buildWorkshopScale,
   chatPanelProps,
+  communicationPanelShown,
   isDesktopWorkspaceLayout,
-  isOwner,
   mobilePanelTabIntent,
   onMobilePanelTabChange,
   onWorkspaceResizeKeyDown,
@@ -154,9 +154,12 @@ export default function Workspace({
     mobilePanelTabIntent.tab
   );
   const showChatPanel =
-    isOwner && (isDesktopWorkspaceLayout || mobilePanelTab === 'chat');
+    communicationPanelShown &&
+    (isDesktopWorkspaceLayout || mobilePanelTab === 'chat');
   const showPreviewPanel =
-    !isOwner || isDesktopWorkspaceLayout || mobilePanelTab === 'preview';
+    !communicationPanelShown ||
+    isDesktopWorkspaceLayout ||
+    mobilePanelTab === 'preview';
 
   useEffect(() => {
     setMobilePanelTab(mobilePanelTabIntent.tab);
@@ -169,7 +172,7 @@ export default function Workspace({
 
   return (
     <div className={panelShellClass}>
-      {isOwner ? (
+      {communicationPanelShown ? (
         <div className={mobileTabBarClass}>
           <SegmentedToggle
             value={mobilePanelTab}
@@ -185,7 +188,9 @@ export default function Workspace({
       ) : null}
       <div
         ref={workspaceShellRef}
-        className={isOwner ? workspaceWithChatClass : workspaceNoChatClass}
+        className={
+          communicationPanelShown ? workspaceWithChatClass : workspaceNoChatClass
+        }
         style={workspaceShellStyle}
       >
         {showChatPanel ? (
@@ -194,7 +199,7 @@ export default function Workspace({
             workshopScale={buildWorkshopScale}
           />
         ) : null}
-        {isOwner && isDesktopWorkspaceLayout ? (
+        {communicationPanelShown && isDesktopWorkspaceLayout ? (
           <button
             type="button"
             className={workspaceResizeHandleClass}

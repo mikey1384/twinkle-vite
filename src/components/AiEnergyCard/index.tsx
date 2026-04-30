@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useRoleColor } from '~/theme/useRoleColor';
 import AiEnergyDashboardModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal';
 
@@ -86,6 +87,8 @@ export default function AiEnergyCard({
 }) {
   const [aiEnergyDashboardModalShown, setAiEnergyDashboardModalShown] =
     useState(false);
+  const [paidRechargeConfirmShown, setPaidRechargeConfirmShown] =
+    useState(false);
   const [acknowledgedChargeKey, setAcknowledgedChargeKey] = useState<
     string | null
   >(null);
@@ -107,6 +110,7 @@ export default function AiEnergyCard({
     : '';
   const statusLabel = modeLabel;
   const hasEnoughCoins = twinkleCoins >= resetCost;
+  const formattedResetCost = resetCost.toLocaleString();
   const showRequirements = !!(
     communityFundsRequirements && communityFundsRequirements.length > 0
   );
@@ -170,6 +174,21 @@ export default function AiEnergyCard({
       setAcknowledgedChargeKey(effectiveChargeAttentionKey);
     }
     setAiEnergyDashboardModalShown(true);
+  }
+
+  function handlePaidRechargeClick() {
+    if (!onRecharge || rechargeLoading || !hasEnoughCoins) return;
+    if (resetCost > 0) {
+      setPaidRechargeConfirmShown(true);
+      return;
+    }
+    onRecharge();
+  }
+
+  async function handleConfirmPaidRecharge() {
+    if (!onRecharge) return;
+    await onRecharge();
+    setPaidRechargeConfirmShown(false);
   }
 
   const energyCells = Array.from({ length: segments }).map((_, index) => {
@@ -318,11 +337,11 @@ export default function AiEnergyCard({
                 shiny
                 loading={rechargeLoading}
                 disabled={rechargeLoading || !hasEnoughCoins}
-                onClick={onRecharge}
+                onClick={handlePaidRechargeClick}
               >
                 {hasEnoughCoins
-                  ? `Recharge (${resetCost.toLocaleString()} coins)`
-                  : `Need ${resetCost.toLocaleString()} coins (you have ${twinkleCoins.toLocaleString()})`}
+                  ? `Recharge (${formattedResetCost} coins)`
+                  : `Need ${formattedResetCost} coins (you have ${twinkleCoins.toLocaleString()})`}
               </GameCTAButton>
             )}
             {showRequirements && (
@@ -365,6 +384,24 @@ export default function AiEnergyCard({
         <AiEnergyDashboardModal
           modalLevel={3}
           onHide={() => setAiEnergyDashboardModalShown(false)}
+        />
+      )}
+      {paidRechargeConfirmShown && (
+        <ConfirmModal
+          modalOverModal
+          title="Recharge AI Energy"
+          description={
+            <div style={{ textAlign: 'center', lineHeight: 1.45 }}>
+              Spend <b>{formattedResetCost} Twinkle Coins</b> to recharge one
+              full AI Energy battery?
+            </div>
+          }
+          descriptionFontSize="1.35rem"
+          confirmButtonColor="orange"
+          confirmButtonLabel="Recharge"
+          disabled={rechargeLoading}
+          onHide={() => setPaidRechargeConfirmShown(false)}
+          onConfirm={handleConfirmPaidRecharge}
         />
       )}
     </>

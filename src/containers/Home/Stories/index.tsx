@@ -305,6 +305,9 @@ export default function Stories() {
                       >
                         <ContentPanel
                           feedId={feed.feedId}
+                          feedActivityType={feed.feedActivityType}
+                          feedTimeStamp={feed.timeStamp}
+                          feedUploader={feed.feedUploader}
                           zIndex={feeds?.length - index}
                           contentId={feed.contentId}
                           contentType={feed.contentType}

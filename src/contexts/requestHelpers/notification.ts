@@ -244,8 +244,12 @@ export default function notificationRequestHelpers({
     },
     async updateDailyRewardViewStatus() {
       try {
-        await request.put(`${URL}/notification/today/dailyReward`, {}, auth());
-        return { success: true };
+        const { data } = await request.put(
+          `${URL}/notification/today/dailyReward`,
+          {},
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }

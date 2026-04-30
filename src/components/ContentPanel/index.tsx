@@ -63,6 +63,9 @@ export default function ContentPanel({
   className,
   commentsLoadLimit,
   feedId,
+  feedActivityType,
+  feedTimeStamp,
+  feedUploader,
   contentId,
   contentType,
   rootType,
@@ -78,6 +81,9 @@ export default function ContentPanel({
   className?: string;
   commentsLoadLimit?: number;
   feedId?: number;
+  feedActivityType?: string | null;
+  feedTimeStamp?: number | string | null;
+  feedUploader?: any;
   contentId: number;
   contentType: string;
   rootType?: string;
@@ -385,6 +391,9 @@ export default function ContentPanel({
                   {loaded && (
                     <>
                       <Heading
+                        feedActivityType={feedActivityType}
+                        feedTimeStamp={feedTimeStamp}
+                        feedUploader={feedUploader}
                         showActualDate={showActualDate}
                         theme={theme || profileTheme}
                         contentObj={contentState}
@@ -398,10 +407,10 @@ export default function ContentPanel({
                                 }`
                               : 'replied to'
                             : appliedRootType === 'subject'
-                            ? 'responded to'
-                            : appliedRootType === 'user'
-                            ? 'posted a profile message'
-                            : 'commented on'
+                              ? 'responded to'
+                              : appliedRootType === 'user'
+                                ? 'posted a profile message'
+                                : 'commented on'
                         }
                       />
                       <div className="body">

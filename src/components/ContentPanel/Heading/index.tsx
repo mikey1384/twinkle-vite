@@ -10,6 +10,9 @@ import { Content } from '~/types';
 
 function Heading({
   action,
+  feedActivityType,
+  feedTimeStamp,
+  feedUploader,
   theme,
   contentObj,
   showActualDate,
@@ -23,6 +26,9 @@ function Heading({
   }
 }: {
   action: string;
+  feedActivityType?: string | null;
+  feedTimeStamp?: number | string | null;
+  feedUploader?: any;
   showActualDate?: boolean;
   theme: string;
   contentObj: Content;
@@ -39,6 +45,10 @@ function Heading({
   const navigate = useNavigate();
   // For pass content, contentObj.rootType tells us if it's mission or achievement
   const passRootType = contentObj?.rootType;
+  const displayedTimeStamp =
+    feedActivityType && feedTimeStamp ? feedTimeStamp : timeStamp;
+  const headingUser =
+    feedActivityType && feedUploader ? feedUploader : uploader;
   const timeStampLink = useMemo(() => {
     if (contentType === 'pass') {
       const isAchievement = passRootType === 'achievement';
@@ -63,23 +73,25 @@ function Heading({
       contentType === 'url'
         ? 'link'
         : contentType === 'aiStory'
-        ? 'ai-storie'
-        : contentType
+          ? 'ai-storie'
+          : contentType
     }s${subPath}`;
   }, [contentType, id, passRootType]);
 
   const formattedTime = useMemo(() => {
-    if (!timeStamp) return '';
-    return showActualDate ? formatDate(timeStamp) : timeSince(timeStamp);
-  }, [timeStamp, showActualDate]);
+    if (!displayedTimeStamp) return '';
+    return showActualDate
+      ? formatDate(displayedTimeStamp)
+      : timeSince(displayedTimeStamp);
+  }, [displayedTimeStamp, showActualDate]);
 
   return (
     <ErrorBoundary componentPath="ContentPanel/Heading">
       <header className="heading">
         <ProfilePic
           style={{ width: '3.8rem', flexShrink: 0 }}
-          userId={uploader.id}
-          profilePicUrl={uploader.profilePicUrl || ''}
+          userId={headingUser.id}
+          profilePicUrl={headingUser.profilePicUrl || ''}
         />
         <div
           className={css`
@@ -93,6 +105,8 @@ function Heading({
             <HeadingText
               action={action}
               contentObj={contentObj}
+              feedActivityType={feedActivityType}
+              feedUploader={feedUploader}
               rootObj={rootObj}
               theme={theme}
             />

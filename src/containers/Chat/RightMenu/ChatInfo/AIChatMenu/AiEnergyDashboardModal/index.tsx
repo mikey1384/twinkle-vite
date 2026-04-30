@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Modal from '~/components/Modal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { Color } from '~/constants/css';
 import {
   useAppContext,
@@ -103,6 +104,7 @@ export default function AiEnergyDashboardModal({
   );
   const [chargeLoading, setChargeLoading] = useState(false);
   const [chargeError, setChargeError] = useState('');
+  const [paidChargeConfirmShown, setPaidChargeConfirmShown] = useState(false);
 
   const energyAccentColor = energyAccentRole.getColor();
   const energyAccentSoft = energyAccentRole.getColor(0.1);
@@ -152,14 +154,16 @@ export default function AiEnergyDashboardModal({
     communityRechargeCoinsRemaining >= rechargeCost;
   const communityFundHasEnoughCoins =
     !communityFundBalanceKnown || totalCommunityFunds >= rechargeCost;
-  const communityRechargeReady =
+  const shouldUseCommunityFundsForCharge =
     communitySponsoredChargeUnlocked &&
     communityDailyCapAvailable &&
     communityFundHasEnoughCoins;
+  const communityRechargeReady = shouldUseCommunityFundsForCharge;
   const energyDepleted =
     typeof aiUsagePolicy?.energyRemaining === 'number' &&
     aiUsagePolicy.energyRemaining <= 0;
-  const freeChargeAvailable = energyDepleted && communityRechargeReady;
+  const freeChargeAvailable =
+    energyDepleted && shouldUseCommunityFundsForCharge;
   const chargeButtonVariant = freeChargeAvailable ? 'gold' : 'orange';
   let chargeButtonMeta = `${formattedRechargeCost} coins`;
   if (freeChargeAvailable) {
@@ -335,112 +339,149 @@ export default function AiEnergyDashboardModal({
   }, [liveAiUsagePolicy]);
 
   return (
-    <Modal
-      modalKey="AiEnergyDashboardModal"
-      isOpen
-      onClose={onHide}
-      closeOnBackdropClick={!userMenuShown}
-      modalLevel={modalLevel}
-      size="lg"
-      bodyPadding={0}
-      header={
-        <div className={headerWrapCls}>
-          <div
-            className={headerIconCls}
-            style={{
-              color:
-                activeSection === 'community'
-                  ? communityAccentColor
-                  : activeSection === 'leaderboard'
-                    ? leaderboardAccentColor
-                    : energyAccentColor,
-              background:
-                activeSection === 'community'
-                  ? communityAccentSoft
-                  : activeSection === 'leaderboard'
-                    ? leaderboardAccentSoft
-                    : energyAccentSoft
-            }}
-          >
-            <Icon icon={sectionMeta.icon} />
-          </div>
-          <div className={headerTextWrapCls}>
-            <div className={headerTitleCls}>{sectionMeta.title}</div>
-            <div className={headerSubtitleCls}>{sectionMeta.subtitle}</div>
-          </div>
-        </div>
-      }
-      footer={<Button variant="ghost" onClick={onHide}>Close</Button>}
-    >
-      {loading ? (
-        <Loading className={loadingCls} />
-      ) : (
-        <div className={bodyCls}>
-          <div className={sectionNavCls}>
-            <Button
-              color="logoBlue"
-              variant={activeSection === 'overview' ? 'solid' : 'soft'}
-              tone="flat"
-              size="sm"
-              shape="pill"
-              uppercase={false}
-              onClick={() => setActiveSection('overview')}
+    <>
+      <Modal
+        modalKey="AiEnergyDashboardModal"
+        isOpen
+        onClose={onHide}
+        closeOnBackdropClick={!userMenuShown}
+        modalLevel={modalLevel}
+        size="lg"
+        bodyPadding={0}
+        header={
+          <div className={headerWrapCls}>
+            <div
+              className={headerIconCls}
+              style={{
+                color:
+                  activeSection === 'community'
+                    ? communityAccentColor
+                    : activeSection === 'leaderboard'
+                      ? leaderboardAccentColor
+                      : energyAccentColor,
+                background:
+                  activeSection === 'community'
+                    ? communityAccentSoft
+                    : activeSection === 'leaderboard'
+                      ? leaderboardAccentSoft
+                      : energyAccentSoft
+              }}
             >
-              Overview
-            </Button>
-            <Button
-              color="rose"
-              variant={activeSection === 'community' ? 'solid' : 'soft'}
-              tone="flat"
-              size="sm"
-              shape="pill"
-              uppercase={false}
-              onClick={() => setActiveSection('community')}
-            >
-              Community
-            </Button>
-            <Button
-              color="orange"
-              variant={activeSection === 'leaderboard' ? 'solid' : 'soft'}
-              tone="flat"
-              size="sm"
-              shape="pill"
-              uppercase={false}
-              onClick={() => setActiveSection('leaderboard')}
-            >
-              Leaderboard
-            </Button>
+              <Icon icon={sectionMeta.icon} />
+            </div>
+            <div className={headerTextWrapCls}>
+              <div className={headerTitleCls}>{sectionMeta.title}</div>
+              <div className={headerSubtitleCls}>{sectionMeta.subtitle}</div>
+            </div>
           </div>
+        }
+        footer={
+          <Button variant="ghost" onClick={onHide}>
+            Close
+          </Button>
+        }
+      >
+        {loading ? (
+          <Loading className={loadingCls} />
+        ) : (
+          <div className={bodyCls}>
+            <div className={sectionNavCls}>
+              <Button
+                color="logoBlue"
+                variant={activeSection === 'overview' ? 'solid' : 'soft'}
+                tone="flat"
+                size="sm"
+                shape="pill"
+                uppercase={false}
+                onClick={() => setActiveSection('overview')}
+              >
+                Overview
+              </Button>
+              <Button
+                color="rose"
+                variant={activeSection === 'community' ? 'solid' : 'soft'}
+                tone="flat"
+                size="sm"
+                shape="pill"
+                uppercase={false}
+                onClick={() => setActiveSection('community')}
+              >
+                Community
+              </Button>
+              <Button
+                color="orange"
+                variant={activeSection === 'leaderboard' ? 'solid' : 'soft'}
+                tone="flat"
+                size="sm"
+                shape="pill"
+                uppercase={false}
+                onClick={() => setActiveSection('leaderboard')}
+              >
+                Leaderboard
+              </Button>
+            </div>
 
-          {activeSection === 'overview' && (
-            <div className={overviewPageCls}>
-              <Overview
-                chargeButtonDisabled={
-                  chargeLoading ||
-                  (!freeChargeAvailable && availableCoins < rechargeCost)
-                }
-                chargeButtonLoading={chargeLoading}
-                chargeButtonMeta={chargeButtonMeta}
-                chargeButtonShiny={freeChargeAvailable}
-                chargeButtonVariant={chargeButtonVariant}
-                onCharge={handleCharge}
-                showChargeButton={energyDepleted}
-                chargeError={chargeError}
-                currentModeLabel={currentModeLabel}
-                energyAccentColor={energyAccentColor}
-                energyAccentSoft={energyAccentSoft}
-                energyBorderColor={energyAccentBorder}
-                energyPercentValue={energyPercentValue || 0}
-                energySegments={energySegments}
-                heroDescription={overviewDescription}
-              />
+            {activeSection === 'overview' && (
+              <div className={overviewPageCls}>
+                <Overview
+                  chargeButtonDisabled={
+                    chargeLoading ||
+                    (!freeChargeAvailable && availableCoins < rechargeCost)
+                  }
+                  chargeButtonLoading={chargeLoading}
+                  chargeButtonMeta={chargeButtonMeta}
+                  chargeButtonShiny={freeChargeAvailable}
+                  chargeButtonVariant={chargeButtonVariant}
+                  onCharge={handleChargeClick}
+                  showChargeButton={energyDepleted}
+                  chargeError={chargeError}
+                  currentModeLabel={currentModeLabel}
+                  energyAccentColor={energyAccentColor}
+                  energyAccentSoft={energyAccentSoft}
+                  energyBorderColor={energyAccentBorder}
+                  energyPercentValue={energyPercentValue || 0}
+                  energySegments={energySegments}
+                  heroDescription={overviewDescription}
+                />
+                <Community
+                  communityAccentColor={communityAccentColor}
+                  communityAccentSoft={communityAccentSoft}
+                  communityRechargeDailyCap={communityRechargeDailyCap}
+                  communityRechargeCoinsRemaining={
+                    communityRechargeCoinsRemaining
+                  }
+                  communityDailyCapAvailable={communityDailyCapAvailable}
+                  communityFundHasEnoughCoins={communityFundHasEnoughCoins}
+                  communityRequirementsComplete={communityRequirementsComplete}
+                  communityRechargeReady={communityRechargeReady}
+                  communityStatusLabel={communityStatusLabel}
+                  communitySponsoredChargeUnlocked={
+                    communitySponsoredChargeUnlocked
+                  }
+                  energyAccentColor={energyAccentColor}
+                  fundStats={fundStats}
+                  onOpenChessPuzzle={handleOpenChessPuzzle}
+                  onOpenLumineBuild={handleOpenLumineBuild}
+                  rechargeCost={rechargeCost}
+                  requirements={requirements}
+                  totalFunds={totalCommunityFunds}
+                />
+                <Leaderboard
+                  communityAccentColor={communityAccentColor}
+                  donorData={donorData}
+                  fundStats={fundStats}
+                  myId={myId}
+                  setUserMenuShown={setUserMenuShown}
+                />
+              </div>
+            )}
+
+            {activeSection === 'community' && (
               <Community
                 communityAccentColor={communityAccentColor}
                 communityAccentSoft={communityAccentSoft}
                 communityRechargeDailyCap={communityRechargeDailyCap}
-                communityRechargeCoinsRemaining={
-                  communityRechargeCoinsRemaining
-                }
+                communityRechargeCoinsRemaining={communityRechargeCoinsRemaining}
                 communityDailyCapAvailable={communityDailyCapAvailable}
                 communityFundHasEnoughCoins={communityFundHasEnoughCoins}
                 communityRequirementsComplete={communityRequirementsComplete}
@@ -457,6 +498,9 @@ export default function AiEnergyDashboardModal({
                 requirements={requirements}
                 totalFunds={totalCommunityFunds}
               />
+            )}
+
+            {activeSection === 'leaderboard' && (
               <Leaderboard
                 communityAccentColor={communityAccentColor}
                 donorData={donorData}
@@ -464,45 +508,30 @@ export default function AiEnergyDashboardModal({
                 myId={myId}
                 setUserMenuShown={setUserMenuShown}
               />
+            )}
+          </div>
+        )}
+      </Modal>
+      {paidChargeConfirmShown && (
+        <ConfirmModal
+          modalOverModal
+          modalLevel={(modalLevel ?? 1) + 1}
+          title="Recharge AI Energy"
+          description={
+            <div style={{ textAlign: 'center', lineHeight: 1.45 }}>
+              Spend <b>{formattedRechargeCost} Twinkle Coins</b> to recharge
+              one full AI Energy battery?
             </div>
-          )}
-
-          {activeSection === 'community' && (
-            <Community
-              communityAccentColor={communityAccentColor}
-              communityAccentSoft={communityAccentSoft}
-              communityRechargeDailyCap={communityRechargeDailyCap}
-              communityRechargeCoinsRemaining={communityRechargeCoinsRemaining}
-              communityDailyCapAvailable={communityDailyCapAvailable}
-              communityFundHasEnoughCoins={communityFundHasEnoughCoins}
-              communityRequirementsComplete={communityRequirementsComplete}
-              communityRechargeReady={communityRechargeReady}
-              communityStatusLabel={communityStatusLabel}
-              communitySponsoredChargeUnlocked={
-                communitySponsoredChargeUnlocked
-              }
-              energyAccentColor={energyAccentColor}
-              fundStats={fundStats}
-              onOpenChessPuzzle={handleOpenChessPuzzle}
-              onOpenLumineBuild={handleOpenLumineBuild}
-              rechargeCost={rechargeCost}
-              requirements={requirements}
-              totalFunds={totalCommunityFunds}
-            />
-          )}
-
-          {activeSection === 'leaderboard' && (
-            <Leaderboard
-              communityAccentColor={communityAccentColor}
-              donorData={donorData}
-              fundStats={fundStats}
-              myId={myId}
-              setUserMenuShown={setUserMenuShown}
-            />
-          )}
-        </div>
+          }
+          descriptionFontSize="1.35rem"
+          confirmButtonColor="orange"
+          confirmButtonLabel="Recharge"
+          disabled={chargeLoading}
+          onHide={() => setPaidChargeConfirmShown(false)}
+          onConfirm={handleConfirmPaidCharge}
+        />
       )}
-    </Modal>
+    </>
   );
 
   function handleOpenChessPuzzle() {
@@ -516,17 +545,28 @@ export default function AiEnergyDashboardModal({
     navigate('/build');
   }
 
+  function handleChargeClick() {
+    if (!energyDepleted || chargeLoading) return;
+    setChargeError('');
+    if (shouldUseCommunityFundsForCharge || rechargeCost <= 0) {
+      void handleCharge();
+      return;
+    }
+    setPaidChargeConfirmShown(true);
+  }
+
+  async function handleConfirmPaidCharge() {
+    await handleCharge();
+    setPaidChargeConfirmShown(false);
+  }
+
   async function handleCharge() {
     if (!energyDepleted || chargeLoading) return;
     setChargeError('');
     setChargeLoading(true);
-    const shouldTryCommunityFunds =
-      communitySponsoredChargeUnlocked &&
-      communityDailyCapAvailable &&
-      (!communityFundBalanceKnown || totalCommunityFunds >= rechargeCost);
     try {
       const result = await purchaseAiEnergyRecharge({
-        useCommunityFunds: shouldTryCommunityFunds
+        useCommunityFunds: shouldUseCommunityFundsForCharge
       });
       const nextPolicy = result?.aiUsagePolicy || null;
       if (nextPolicy) {

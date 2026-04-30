@@ -538,13 +538,27 @@ export default function DailyRewardModal({
   async function handleReveal() {
     setIsRevealPressed(true);
     isRevealPressedRef.current = true;
-    newCoinsRef.current = twinkleCoins + coinEarned;
+    let finalizedCoinEarned = coinEarned;
+    let finalizedCoinBalance = twinkleCoins + finalizedCoinEarned;
+    newCoinsRef.current = finalizedCoinBalance;
     let currentIndex = 0;
     let interval = 1500;
     let isFirstIteration = true;
     let fastIterations = 0;
 
-    await updateDailyRewardViewStatus();
+    const finalizedReward = await updateDailyRewardViewStatus();
+    if (typeof finalizedReward?.coinEarned === 'number') {
+      finalizedCoinEarned = finalizedReward.coinEarned;
+      setCoinEarned(finalizedCoinEarned);
+    }
+    if (finalizedReward?.dailyTaskReward) {
+      setDailyTaskReward(finalizedReward.dailyTaskReward);
+    }
+    finalizedCoinBalance =
+      typeof finalizedReward?.twinkleCoins === 'number'
+        ? finalizedReward.twinkleCoins
+        : twinkleCoins + finalizedCoinEarned;
+    newCoinsRef.current = finalizedCoinBalance;
 
     setCurrentCardId(cardIds[currentIndex]);
 
@@ -558,7 +572,7 @@ export default function DailyRewardModal({
         onSetIsDailyRewardChecked(true);
         onSetUserState({
           userId,
-          newState: { twinkleCoins: twinkleCoins + coinEarned }
+          newState: { twinkleCoins: finalizedCoinBalance }
         });
         isCoinReceivedRef.current = true;
         setTimeout(() => setShowFirstSentence(true), 1500);

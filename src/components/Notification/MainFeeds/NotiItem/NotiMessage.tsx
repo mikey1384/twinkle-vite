@@ -606,6 +606,41 @@ function NotiMessage({
           />
         </>
       );
+    case 'buildCollaborationRequest':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            wants to collaborate
+          </span>{' '}
+          on your{' '}
+          <Link
+            to={`/build/${targetObj.id}`}
+            state={{ openPeoplePanel: true }}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Build
+            {targetObj.content ? ` (${truncatedTargetObjectText})` : ''}
+          </Link>
+          {!contentIsEmpty ? <>: "{truncatedActionText}"</> : null}
+        </>
+      );
+    case 'buildCollaborationRequestAccepted':
+      return (
+        <>
+          <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
+            accepted your collaboration request
+          </span>{' '}
+          for{' '}
+          <Link
+            to={`/build/${targetObj.id}`}
+            state={{ openPeoplePanel: true }}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Build
+            {targetObj.content ? ` (${truncatedTargetObjectText})` : ''}
+          </Link>
+        </>
+      );
     case 'pass': {
       const message =
         targetObj.contentType === 'mission'

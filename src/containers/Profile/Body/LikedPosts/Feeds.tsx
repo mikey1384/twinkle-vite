@@ -177,6 +177,9 @@ export default function Feeds({
                           zIndex: feeds.length - index
                         }}
                         feedId={feed.feedId}
+                        feedActivityType={feed.feedActivityType}
+                        feedTimeStamp={feed.timeStamp}
+                        feedUploader={feed.feedUploader}
                         zIndex={feeds.length - index}
                         contentId={contentId}
                         contentType={contentType}
@@ -240,10 +243,10 @@ export default function Feeds({
         item === 'url'
           ? 'link'
           : item === 'aiStory'
-          ? 'ai-storie'
-          : item === 'dailyReflection'
-          ? 'reflection'
-          : item
+            ? 'ai-storie'
+            : item === 'dailyReflection'
+              ? 'reflection'
+              : item
       }${item === 'all' ? '' : 's'}`
     );
   }

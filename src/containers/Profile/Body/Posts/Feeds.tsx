@@ -163,24 +163,22 @@ export default function Feeds({
   }, [filter, noFeedByUserLabel, noFeedLabel]);
 
   const feedListClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        /* Match Likes tab spacing: no dividers, 1rem vertical gap */
-        > .feed-item {
-          margin: 0 0 1rem 0;
-        }
-      `,
+    () => css`
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      /* Match Likes tab spacing: no dividers, 1rem vertical gap */
+      > .feed-item {
+        margin: 0 0 1rem 0;
+      }
+    `,
     []
   );
   const feedItemCustomClass = useMemo(
-    () =>
-      css`
-        /* Remove inner padding so posts can be full-bleed on mobile */
-        padding: 0;
-      `,
+    () => css`
+      /* Remove inner padding so posts can be full-bleed on mobile */
+      padding: 0;
+    `,
     []
   );
 
@@ -299,6 +297,9 @@ export default function Feeds({
                             style={{ margin: 0, zIndex: feeds.length - index }}
                             zIndex={feeds.length - index}
                             feedId={feed.feedId}
+                            feedActivityType={feed.feedActivityType}
+                            feedTimeStamp={feed.timeStamp}
+                            feedUploader={feed.feedUploader}
                             contentId={contentId}
                             contentType={contentType}
                             rootType={rootType}
@@ -366,10 +367,10 @@ export default function Feeds({
       item === 'url'
         ? 'link'
         : item === 'aiStory'
-        ? 'ai-storie'
-        : item === 'dailyReflection'
-        ? 'reflection'
-        : item
+          ? 'ai-storie'
+          : item === 'dailyReflection'
+            ? 'reflection'
+            : item
     }${item === 'all' ? '' : 's'}`;
     navigate(`/users/${username}/${appliedNav}`);
     if (section === appliedNav) {

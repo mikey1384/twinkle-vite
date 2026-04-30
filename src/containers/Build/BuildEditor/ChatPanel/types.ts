@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 
@@ -144,6 +144,8 @@ export interface LimitProgressItem {
 export interface ChatPanelProps {
   className?: string;
   workshopScale?: number;
+  preferredCommunicationMode?: 'lumine' | 'people';
+  peoplePanel?: ReactNode;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;

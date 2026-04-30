@@ -21,6 +21,8 @@ interface RuntimeBuild {
   code: string | null;
   primaryArtifactId?: number | null;
   isPublic: boolean;
+  collaborationMode?: 'private' | 'contribution' | 'open_source';
+  contributionAccess?: 'anyone' | 'invite_only';
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   projectFiles?: Array<{
     id?: number;
@@ -192,6 +194,47 @@ const backButtonClass = css`
   }
 `;
 
+const contributionCtaRowClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+`;
+
+const contributionButtonClass = css`
+  border: 1px solid rgba(34, 197, 94, 0.36);
+  background: rgba(34, 197, 94, 0.12);
+  color: #166534;
+  border-radius: 8px;
+  padding: 0.58rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+  &:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.18);
+    border-color: rgba(34, 197, 94, 0.5);
+    transform: translateY(-1px);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+`;
+
+const contributionErrorClass = css`
+  color: #be123c;
+  font-weight: 800;
+  font-size: 0.86rem;
+`;
+
 const panelWrapClass = css`
   min-height: 0;
   overflow: hidden;
@@ -213,6 +256,10 @@ export default function BuildRuntime() {
   const loadRuntimeBuild = useAppContext(
     (v) => v.requestHelpers.loadRuntimeBuild
   );
+  const createBuildContributionFork = useAppContext(
+    (v) => v.requestHelpers.createBuildContributionFork
+  );
+  const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -228,6 +275,10 @@ export default function BuildRuntime() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
+  const [creatingContributionFork, setCreatingContributionFork] =
+    useState(false);
+  const [forkingBuild, setForkingBuild] = useState(false);
+  const [contributionForkError, setContributionForkError] = useState('');
   const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
   const [aiUsagePolicyLoadAttempted, setAiUsagePolicyLoadAttempted] =
     useState(false);
@@ -283,6 +334,21 @@ export default function BuildRuntime() {
         aiUsagePolicy.resetCost || 0
       ].join(':')
     : '';
+  const buildAcceptsContributions =
+    (build?.collaborationMode === 'contribution' ||
+      build?.collaborationMode === 'open_source') &&
+    build?.contributionAccess === 'anyone';
+  const buildAcceptsStandaloneForks = build?.collaborationMode === 'open_source';
+  const showContributeButton =
+    !!build &&
+    !!userId &&
+    Number(build.userId) !== Number(userId) &&
+    buildAcceptsContributions;
+  const showStandaloneForkButton =
+    !!build &&
+    !!userId &&
+    Number(build.userId) !== Number(userId) &&
+    buildAcceptsStandaloneForks;
 
   function handleBack() {
     if (canUseHistoryBack) {
@@ -294,6 +360,46 @@ export default function BuildRuntime() {
 
   function handleGoToBuildMenu() {
     navigate('/build');
+  }
+
+  async function handleCreateContributionFork() {
+    if (!build || !userId || creatingContributionFork) return;
+    setCreatingContributionFork(true);
+    setContributionForkError('');
+    try {
+      const result = await createBuildContributionFork(build.id);
+      if (result?.build?.id) {
+        navigate(`/build/${result.build.id}`);
+      }
+    } catch (error: any) {
+      console.error('Failed to create build contribution fork:', error);
+      setContributionForkError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Unable to start contribution'
+      );
+    } finally {
+      setCreatingContributionFork(false);
+    }
+  }
+
+  async function handleCreateStandaloneFork() {
+    if (!build || !userId || forkingBuild) return;
+    setForkingBuild(true);
+    setContributionForkError('');
+    try {
+      const result = await forkBuild(build.id);
+      if (result?.build?.id) {
+        navigate(`/build/${result.build.id}`);
+      }
+    } catch (error: any) {
+      console.error('Failed to fork open source build:', error);
+      setContributionForkError(
+        error?.response?.data?.error || error?.message || 'Unable to fork Build'
+      );
+    } finally {
+      setForkingBuild(false);
+    }
   }
 
   function applyRuntimeAiUsagePolicyUpdate(
@@ -523,6 +629,51 @@ export default function BuildRuntime() {
                 </span>
               ) : null}
             </div>
+            {showContributeButton || showStandaloneForkButton ? (
+              <div className={contributionCtaRowClass}>
+                {showContributeButton ? (
+                  <button
+                    type="button"
+                    className={contributionButtonClass}
+                    onClick={handleCreateContributionFork}
+                    disabled={creatingContributionFork || forkingBuild}
+                  >
+                    <Icon
+                      icon={
+                        creatingContributionFork ? 'spinner' : 'code-branch'
+                      }
+                      pulse={creatingContributionFork}
+                    />
+                    <span>
+                      {creatingContributionFork
+                        ? 'Starting contribution...'
+                        : 'Contribute to this Build'}
+                    </span>
+                  </button>
+                ) : null}
+                {showStandaloneForkButton ? (
+                  <button
+                    type="button"
+                    className={contributionButtonClass}
+                    onClick={handleCreateStandaloneFork}
+                    disabled={creatingContributionFork || forkingBuild}
+                  >
+                    <Icon
+                      icon={forkingBuild ? 'spinner' : 'code-branch'}
+                      pulse={forkingBuild}
+                    />
+                    <span>
+                      {forkingBuild ? 'Forking...' : 'Fork this Build'}
+                    </span>
+                  </button>
+                ) : null}
+                {contributionForkError ? (
+                  <span className={contributionErrorClass}>
+                    {contributionForkError}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         )}
         <div className={panelWrapClass}>

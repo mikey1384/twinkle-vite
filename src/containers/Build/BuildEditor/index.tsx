@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { ChatPanelProps } from './ChatPanel/types';
+import CollaborationPanel from './CollaborationPanel';
 import Header from './Header';
 import Modals from './Modals';
 import Workspace from './Workspace';
@@ -50,7 +51,6 @@ import {
   MIN_BUILD_CHAT_PANEL_WIDTH,
   MIN_BUILD_PREVIEW_PANEL_WIDTH
 } from './constants';
-const buildForkUiEnabled = false;
 const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
 const BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY =
@@ -174,6 +174,24 @@ interface Build {
   publishedAt?: number | null;
   thumbnailUrl?: string | null;
   sourceBuildId?: number | null;
+  collaborationMode?: 'private' | 'contribution' | 'open_source';
+  contributionAccess?: 'anyone' | 'invite_only';
+  lumineChatVisibility?: 'private' | 'collaborators' | 'public';
+  contributionParentBuildId?: number | null;
+  contributionRootBuildId?: number | null;
+  contributionContributorId?: number | null;
+  contributionStatus?:
+    | 'none'
+    | 'draft'
+    | 'submitted'
+    | 'merged'
+    | 'rejected'
+    | 'withdrawn';
+  contributionBaseBuildUpdatedAt?: number | null;
+  contributionSubmittedAt?: number | null;
+  contributionMergedAt?: number | null;
+  contributionClosedAt?: number | null;
+  contributionMergedByUserId?: number | null;
   projectManifest?: {
     entryPath: string;
     storageMode: string;
@@ -194,6 +212,26 @@ interface Build {
   runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
   createdAt: number;
   updatedAt: number;
+}
+
+function canStartProjectScopedContribution(build: Build) {
+  if (build.collaborationMode === 'contribution') return true;
+  if (build.collaborationMode !== 'open_source') return false;
+  if ((build.contributionAccess || 'anyone') === 'anyone') return true;
+  const isPublished = Number(build.isPublic || 0) === 1;
+  return build.contributionAccess === 'invite_only' || !isPublished;
+}
+
+function canStartStandaloneFork(build: Build) {
+  return (
+    build.collaborationMode === 'open_source' &&
+    Number(build.isPublic || 0) === 1
+  );
+}
+
+function canEditBuildProject(build: Build) {
+  const status = build.contributionStatus || 'none';
+  return status === 'none' || status === 'draft';
 }
 
 interface BuildExecutionPlanChunk {
@@ -1288,6 +1326,8 @@ export default function BuildEditor({
   onUpdateChatMessages,
   onUpdateCopilotPolicy
 }: BuildEditorProps) {
+  const canEditCurrentBuildProject = isOwner && canEditBuildProject(build);
+  const location = useLocation();
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
@@ -1326,6 +1366,14 @@ export default function BuildEditor({
     (v) => v.actions.onClearBuildRuntimeVerifyResult
   );
   const navigate = useNavigate();
+  const routeState = (location.state || {}) as {
+    openCollaborationSettings?: boolean;
+    openPeoplePanel?: boolean;
+  };
+  const routeOpenCollaborationSettings = Boolean(
+    routeState.openCollaborationSettings
+  );
+  const routeOpenPeoplePanel = Boolean(routeState.openPeoplePanel);
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
@@ -1375,6 +1423,9 @@ export default function BuildEditor({
   const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
+  const createBuildContributionFork = useAppContext(
+    (v) => v.requestHelpers.createBuildContributionFork
+  );
   const purchaseBuildGenerationReset = useAppContext(
     (v) => v.requestHelpers.purchaseBuildGenerationReset
   );
@@ -1389,6 +1440,10 @@ export default function BuildEditor({
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [descriptionModalShown, setDescriptionModalShown] = useState(false);
+  const [
+    collaborationSettingsModalShown,
+    setCollaborationSettingsModalShown
+  ] = useState(false);
   const [savingDescription, setSavingDescription] = useState(false);
   const [thumbnailModalShown, setThumbnailModalShown] = useState(false);
   const [savingThumbnail, setSavingThumbnail] = useState(false);
@@ -1455,7 +1510,7 @@ export default function BuildEditor({
   >();
   const runIdentity = useBuildRunIdentity();
   const projectFileDrafts = useBuildProjectFileDrafts({
-    isOwner,
+    isOwner: canEditCurrentBuildProject,
     normalizeProjectFilePath,
     persistProjectFilesDraft,
     onAppendFeedbackEvent: appendLocalRunEvent
@@ -1482,6 +1537,21 @@ export default function BuildEditor({
     onStartRuntimeAutoFix: startRuntimeAutoFix,
     isRunActivityInFlight
   });
+
+  useEffect(() => {
+    if (!isOwner || !routeOpenCollaborationSettings) return;
+    setCollaborationSettingsModalShown(true);
+    navigate(location.pathname, {
+      replace: true,
+      state: routeOpenPeoplePanel ? { openPeoplePanel: true } : null
+    });
+  }, [
+    isOwner,
+    location.pathname,
+    navigate,
+    routeOpenCollaborationSettings,
+    routeOpenPeoplePanel
+  ]);
   const mergedPersistedAndLiveChatMessages = mergeChatMessagesWithBuildRun({
     persistedMessages: chatMessages,
     buildRun: sharedBuildRun
@@ -5202,18 +5272,36 @@ export default function BuildEditor({
     setPublishing(false);
   }
 
+  async function handleCreateContribution() {
+    if (!userId || forking || isOwner) return;
+    setForking(true);
+    try {
+      const latestBuild = getLatestBuild();
+      const result = await createBuildContributionFork(latestBuild.id);
+      if (result?.success && result?.build) {
+        navigate(`/build/${result.build.id}`);
+      }
+    } catch (error) {
+      console.error('Failed to create contribution fork:', error);
+    } finally {
+      setForking(false);
+    }
+  }
+
   async function handleFork() {
     if (!userId || forking || isOwner) return;
     setForking(true);
     try {
-      const result = await forkBuild(build.id);
+      const latestBuild = getLatestBuild();
+      const result = await forkBuild(latestBuild.id);
       if (result?.success && result?.build) {
         navigate(`/build/${result.build.id}`);
       }
     } catch (error) {
       console.error('Failed to fork build:', error);
+    } finally {
+      setForking(false);
     }
-    setForking(false);
   }
 
   async function handlePurchaseGenerationReset() {
@@ -5260,14 +5348,36 @@ export default function BuildEditor({
   const buildWorkshopScale = isDesktopWorkspaceLayout
     ? getBuildWorkshopScale(buildChatPanelWidth)
     : 1;
-  const workspaceShellStyle = isOwner
+  const communicationPanelShown =
+    isOwner ||
+    (!isOwner &&
+      Boolean(userId) &&
+      (build.collaborationMode === 'contribution' ||
+        build.collaborationMode === 'open_source'));
+  const workspaceShellStyle = communicationPanelShown
     ? ({
         '--build-chat-panel-width': `${buildChatPanelWidth}px`
       } as React.CSSProperties)
     : undefined;
+  const showContributionButton =
+    !isOwner &&
+    Boolean(userId) &&
+    canStartProjectScopedContribution(build);
   const showForkButton =
-    buildForkUiEnabled && !isOwner && Boolean(userId) && build.isPublic;
+    !isOwner && Boolean(userId) && canStartStandaloneFork(build);
   const chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'> = {
+    preferredCommunicationMode: routeOpenPeoplePanel ? 'people' : 'lumine',
+    peoplePanel: (
+      <CollaborationPanel
+        build={build}
+        embedded
+        isOwner={isOwner}
+        onBuildPatch={handleBuildCollaborationPatch}
+        onCanonicalMerge={handleBuildContributionMerge}
+        onBeforeContributionAction={handleBeforeContributionAction}
+        onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
+      />
+    ),
     messages: mergedChatMessages,
     executionPlan: currentBuildRunView.executionPlan,
     scopedPlanQuestion: resolveScopedPlanQuestion(
@@ -5284,7 +5394,7 @@ export default function BuildEditor({
     runEvents: currentBuildRunView.runEvents,
     runError: currentBuildRunView.error,
     activeStreamMessageIds: currentBuildRunView.activeStreamMessageIds,
-    isOwner,
+    isOwner: canEditCurrentBuildProject,
     chatScrollRef,
     chatEndRef,
     onChatScroll: handleChatScroll,
@@ -5322,7 +5432,7 @@ export default function BuildEditor({
     projectFiles: previewProjectFiles,
     streamingProjectFiles: currentBuildRunView.streamingProjectFiles,
     streamingFocusFilePath: currentBuildRunView.streamingFocusFilePath,
-    isOwner,
+    isOwner: canEditCurrentBuildProject,
     capabilitySnapshot: build.capabilitySnapshot || null,
     runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,
     onReplaceCode: handleReplaceCode,
@@ -5346,12 +5456,16 @@ export default function BuildEditor({
       <Header
         build={build}
         forking={forking}
+        canEditMetadata={canEditCurrentBuildProject}
         isOwner={isOwner}
         profileTheme={profileTheme}
         publishing={publishing}
         savingThumbnail={savingThumbnail}
+        showContributionButton={showContributionButton}
         showForkButton={showForkButton}
+        onContribute={handleCreateContribution}
         onFork={handleFork}
+        onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}
         onTogglePublish={build.isPublic ? handleUnpublish : handlePublish}
@@ -5360,8 +5474,8 @@ export default function BuildEditor({
         buildChatPanelWidth={buildChatPanelWidth}
         buildWorkshopScale={buildWorkshopScale}
         chatPanelProps={chatPanelProps}
+        communicationPanelShown={communicationPanelShown}
         isDesktopWorkspaceLayout={isDesktopWorkspaceLayout}
-        isOwner={isOwner}
         mobilePanelTabIntent={mobilePanelTabIntent}
         onMobilePanelTabChange={setMobilePanelTab}
         onWorkspaceResizeKeyDown={handleWorkspaceResizeKeyDown}
@@ -5372,11 +5486,13 @@ export default function BuildEditor({
         workspaceShellStyle={workspaceShellStyle}
       />
       <Modals
+        build={build}
         buildChatDraftMessage={buildChatDraftMessage}
         buildChatUploadFileObj={buildChatUploadFileObj}
         buildChatUploadModalShown={buildChatUploadModalShown}
         buildDescription={build.description}
         buildTitle={build.title}
+        collaborationSettingsModalShown={collaborationSettingsModalShown}
         descriptionModalShown={descriptionModalShown}
         isOwner={isOwner}
         savingDescription={savingDescription}
@@ -5399,8 +5515,12 @@ export default function BuildEditor({
         }
         onHideBuildChatUploadFileModal={() => setBuildChatUploadFileObj(null)}
         onHideBuildChatUploadModal={() => setBuildChatUploadModalShown(false)}
+        onHideCollaborationSettingsModal={
+          handleCloseCollaborationSettingsModal
+        }
         onHideDescriptionModal={handleCloseDescriptionModal}
         onHideThumbnailModal={handleCloseThumbnailModal}
+        onBuildCollaborationPatch={handleBuildCollaborationPatch}
         onSaveThumbnail={handleSaveThumbnail}
         onSelectBuildChatUploadFile={(file) => {
           setBuildChatUploadModalShown(false);
@@ -5414,6 +5534,48 @@ export default function BuildEditor({
       />
     </div>
   );
+
+  function handleBuildCollaborationPatch(patch: Record<string, any>) {
+    const latestBuild = getLatestBuild();
+    applyBuildUpdate({
+      ...latestBuild,
+      ...patch
+    });
+  }
+
+  function handleBuildContributionMerge({
+    build: mergedBuild,
+    projectFiles
+  }: {
+    build?: Record<string, any> | null;
+    projectFiles?: Array<{ path: string; content?: string }> | null;
+  }) {
+    const latestBuild = getLatestBuild();
+    const nextProjectFiles = Array.isArray(projectFiles)
+      ? projectFiles
+      : latestBuild.projectFiles || [];
+    applyBuildUpdate({
+      ...latestBuild,
+      ...(mergedBuild || {}),
+      projectFiles: nextProjectFiles,
+      projectManifest: Array.isArray(projectFiles)
+        ? {
+            entryPath: resolveIndexEntryPathFromProjectFiles(
+              nextProjectFiles,
+              latestBuild.projectManifest?.entryPath || '/index.html'
+            ),
+            storageMode: 'project-files',
+            fileCount: nextProjectFiles.length
+          }
+        : latestBuild.projectManifest || null
+    });
+  }
+
+  async function handleBeforeContributionAction(action: 'submit' | 'merge') {
+    return projectFileDrafts.ensureProjectFilesPersistedBeforeContributionAction(
+      { action }
+    );
+  }
 
   function setMobilePanelTab(tab: MobilePanelTab) {
     setMobilePanelTabIntent((currentIntent) => ({
@@ -5515,6 +5677,14 @@ export default function BuildEditor({
 
   function handleOpenDescriptionModal() {
     setDescriptionModalShown(true);
+  }
+
+  function handleOpenCollaborationSettingsModal() {
+    setCollaborationSettingsModalShown(true);
+  }
+
+  function handleCloseCollaborationSettingsModal() {
+    setCollaborationSettingsModalShown(false);
   }
 
   function handleCloseDescriptionModal() {

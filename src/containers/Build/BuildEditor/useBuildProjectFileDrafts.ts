@@ -34,6 +34,9 @@ interface BuildProjectFileDraftsApi {
   handleProjectFilesDraftStateChange(
     state: BuildProjectFilesDraftState
   ): void;
+  ensureProjectFilesPersistedBeforeContributionAction(options: {
+    action: 'submit' | 'merge';
+  }): Promise<boolean>;
   ensureProjectFilesPersistedBeforeRun(options: {
     runType: 'copilot' | 'greeting';
   }): Promise<boolean>;
@@ -238,6 +241,31 @@ export default function useBuildProjectFileDrafts({
         projectFilesDraftRef.current = normalizeDraftFiles(state.files);
         hasUnsavedProjectFilesRef.current = Boolean(state.hasUnsavedChanges);
         savingProjectFilesRef.current = Boolean(state.saving);
+      },
+
+      ensureProjectFilesPersistedBeforeContributionAction({ action }) {
+        const isMerge = action === 'merge';
+        return ensureProjectFilesPersisted({
+          settleErrorMessage: `Please wait for file save to finish before ${
+            isMerge ? 'merging' : 'submitting'
+          } this contribution.`,
+          draftChangedMessage: `Unable to ${
+            isMerge ? 'merge' : 'submit'
+          } contribution: file drafts kept changing during auto-save. Please stop editing and try again.`,
+          initialSaveMessage: `Saving unsaved files before ${
+            isMerge ? 'merge' : 'submit'
+          }...`,
+          retrySaveMessage: `Draft changed during save. Saving latest edits before ${
+            isMerge ? 'merge' : 'submit'
+          }...`,
+          savedMessage: `Saved pending file edits before ${
+            isMerge ? 'merge' : 'submit'
+          }.`,
+          saveFailurePrefix: `Unable to ${
+            isMerge ? 'merge' : 'submit'
+          } contribution: `,
+          returnTrueOnEmptyDraft: true
+        });
       },
 
       ensureProjectFilesPersistedBeforeRun({ runType }) {

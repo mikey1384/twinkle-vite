@@ -9,11 +9,15 @@ import { returnTheme } from '~/helpers';
 export default function HeadingText({
   action,
   contentObj,
+  feedActivityType,
+  feedUploader,
   rootObj,
   theme
 }: {
   action: string;
   contentObj: any;
+  feedActivityType?: string | null;
+  feedUploader?: any;
   rootObj: any;
   theme?: string;
 }) {
@@ -43,22 +47,22 @@ export default function HeadingText({
     rootType === 'aiStory'
       ? 'AI Story'
       : rootType === 'url'
-      ? 'link'
-      : rootType === 'subject'
-      ? 'subject'
-      : rootType === 'build'
-      ? 'app'
-      : isPassType
-      ? isAchievementPass
-        ? 'achievement unlock'
-        : 'mission accomplishment'
-      : rootType === 'xpChange'
-      ? 'daily goals completion'
-      : rootType === 'sharedTopic'
-      ? 'shared prompt'
-      : rootType === 'dailyReflection'
-      ? 'daily reflection'
-      : rootType;
+        ? 'link'
+        : rootType === 'subject'
+          ? 'subject'
+          : rootType === 'build'
+            ? 'app'
+            : isPassType
+              ? isAchievementPass
+                ? 'achievement unlock'
+                : 'mission accomplishment'
+              : rootType === 'xpChange'
+                ? 'daily goals completion'
+                : rootType === 'sharedTopic'
+                  ? 'shared prompt'
+                  : rootType === 'dailyReflection'
+                    ? 'daily reflection'
+                    : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
     targetObj?.subject &&
@@ -226,6 +230,28 @@ export default function HeadingText({
         </>
       );
     case 'build':
+      if (
+        feedActivityType === 'buildFork' ||
+        feedActivityType === 'buildContributor'
+      ) {
+        const buildActor = feedUploader || uploader;
+        const buildAction =
+          feedActivityType === 'buildFork'
+            ? 'forked an app'
+            : 'started contributing to an app';
+        return (
+          <>
+            <UsernameText user={buildActor} color={Color[linkColor]()} />{' '}
+            {buildAction}:{' '}
+            <ContentLink
+              content={contentObj}
+              contentType={contentType}
+              theme={theme}
+              label=""
+            />{' '}
+          </>
+        );
+      }
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> published
@@ -304,8 +330,8 @@ export default function HeadingText({
               replyId
                 ? 'reply '
                 : rootType === 'user'
-                ? 'profile message '
-                : 'comment '
+                  ? 'profile message '
+                  : 'comment '
             }
           />
           {rootType === 'user' ? '' : 'on'}

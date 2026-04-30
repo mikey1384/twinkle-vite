@@ -2,14 +2,22 @@ import React from 'react';
 import UploadModal from '~/components/Modals/UploadModal';
 import UploadFileModal from '~/containers/Chat/Modals/UploadFileModal';
 import BuildDescriptionModal from '../BuildDescriptionModal';
+import BuildCollaborationSettingsModal from './BuildCollaborationSettingsModal';
 import BuildThumbnailModal from './BuildThumbnailModal';
 
 interface ModalsProps {
+  build: {
+    id: number;
+    isPublic?: boolean;
+    collaborationMode?: 'private' | 'contribution' | 'open_source';
+    contributionAccess?: 'anyone' | 'invite_only';
+  };
   buildChatDraftMessage: string;
   buildChatUploadFileObj: File | File[] | null;
   buildChatUploadModalShown: boolean;
   buildDescription: string | null;
   buildTitle: string;
+  collaborationSettingsModalShown: boolean;
   descriptionModalShown: boolean;
   isOwner: boolean;
   savingDescription: boolean;
@@ -25,8 +33,10 @@ interface ModalsProps {
   }) => Promise<boolean | void> | boolean | void;
   onHideBuildChatUploadFileModal: () => void;
   onHideBuildChatUploadModal: () => void;
+  onHideCollaborationSettingsModal: () => void;
   onHideDescriptionModal: () => void;
   onHideThumbnailModal: () => void;
+  onBuildCollaborationPatch: (patch: Record<string, any>) => void;
   onSaveThumbnail: (croppedImageUrl: string | null) => Promise<void> | void;
   onSelectBuildChatUploadFile: (file: File) => void;
   onSelectBuildChatUploadFiles: (files: File[]) => void;
@@ -37,11 +47,13 @@ interface ModalsProps {
 }
 
 export default function Modals({
+  build,
   buildChatDraftMessage,
   buildChatUploadFileObj,
   buildChatUploadModalShown,
   buildDescription,
   buildTitle,
+  collaborationSettingsModalShown,
   descriptionModalShown,
   isOwner,
   savingDescription,
@@ -54,8 +66,10 @@ export default function Modals({
   onCustomUploadSubmit,
   onHideBuildChatUploadFileModal,
   onHideBuildChatUploadModal,
+  onHideCollaborationSettingsModal,
   onHideDescriptionModal,
   onHideThumbnailModal,
+  onBuildCollaborationPatch,
   onSaveThumbnail,
   onSelectBuildChatUploadFile,
   onSelectBuildChatUploadFiles,
@@ -91,6 +105,13 @@ export default function Modals({
           loading={savingDescription}
           onHide={onHideDescriptionModal}
           onSubmit={onSubmitBuildMetadata}
+        />
+      ) : null}
+      {collaborationSettingsModalShown && isOwner ? (
+        <BuildCollaborationSettingsModal
+          build={build}
+          onBuildPatch={onBuildCollaborationPatch}
+          onHide={onHideCollaborationSettingsModal}
         />
       ) : null}
       {thumbnailModalShown && isOwner ? (

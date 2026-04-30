@@ -33,7 +33,9 @@ export default function Builds({
   const isOwnProfile =
     (myUsername && myUsername === profile.username) ||
     (Number(myId) > 0 && Number(myId) === Number(profile.id));
-  const { pinnedBuilds: cachedPinnedBuilds } = useProfileState(profile.username);
+  const { pinnedBuilds: cachedPinnedBuilds } = useProfileState(
+    profile.username
+  );
   const loadPinnedBuildsOnProfile = useAppContext(
     (v) => v.requestHelpers.loadPinnedBuildsOnProfile
   );
@@ -54,9 +56,8 @@ export default function Builds({
   const [displayedBuilds, setDisplayedBuilds] = useState<
     BuildProjectListItemData[]
   >([]);
-  const [editingBuild, setEditingBuild] = useState<BuildProjectListItemData | null>(
-    null
-  );
+  const [editingBuild, setEditingBuild] =
+    useState<BuildProjectListItemData | null>(null);
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [selectModalShown, setSelectModalShown] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -172,12 +173,7 @@ export default function Builds({
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    hasCachedPinnedBuilds,
-    pinnedBuildIdsKey,
-    profile.id,
-    profile.username
-  ]);
+  }, [hasCachedPinnedBuilds, pinnedBuildIdsKey, profile.id, profile.username]);
 
   if (!loading && !isOwnProfile && displayedBuilds.length === 0) {
     return null;
@@ -224,6 +220,7 @@ export default function Builds({
               to={`/app/${build.id}`}
               navigationState={buildRuntimeNavigationState}
               isOwner={isOwnProfile}
+              themeName={selectedTheme}
               onAddDescription={isOwnProfile ? setEditingBuild : undefined}
             />
           ))}
@@ -251,7 +248,9 @@ export default function Builds({
   async function handlePinBuilds(buildIds: number[]) {
     try {
       const data = await pinBuildsOnProfile({ buildIds });
-      const nextBuildIds = Array.isArray(data?.buildIds) ? data.buildIds : buildIds;
+      const nextBuildIds = Array.isArray(data?.buildIds)
+        ? data.buildIds
+        : buildIds;
       const nextBuilds = Array.isArray(data?.builds) ? data.builds : [];
       const nextState = {
         ...(profile.state || {}),

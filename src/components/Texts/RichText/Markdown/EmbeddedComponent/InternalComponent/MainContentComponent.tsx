@@ -92,6 +92,7 @@ export default function MainContentComponent({
     case 'comment':
     case 'aiStory':
     case 'dailyReflection':
+    case 'build':
       return (
         <ContentListItem
           style={{ minWidth: displayIsMobile ? '100%' : '80%' }}

@@ -1,5 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { useViewContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import Composer from './Composer';
@@ -10,8 +11,8 @@ import { ChatPanelProps } from './types';
 import { formatScaledRem } from './utils';
 
 const panelClass = css`
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   overflow: hidden;
   border-right: 1px solid var(--ui-border);
@@ -28,11 +29,18 @@ const panelClass = css`
   --build-workshop-prompt-font-size: 1.08rem;
   --build-workshop-choice-font-size: 1rem;
   font-size: var(--build-workshop-body-font-size);
-  gap: 0.6rem;
   @media (max-width: ${mobileMaxWidth}) {
     border-right: none;
     border-bottom: 1px solid var(--ui-border);
   }
+`;
+
+const communicationTabsClass = css`
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--ui-border);
+  background: #fff;
 `;
 
 const scrollAreaClass = css`
@@ -44,9 +52,21 @@ const scrollAreaClass = css`
   min-height: 0;
 `;
 
+const peoplePaneClass = css`
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+`;
+
+type CommunicationMode = 'lumine' | 'people';
+const LUMINE_BOTTOM_SCROLL_THRESHOLD = 120;
+
 export default function ChatPanel({
   className,
   workshopScale = 1,
+  preferredCommunicationMode,
+  peoplePanel,
   messages,
   executionPlan,
   scopedPlanQuestion,
@@ -101,7 +121,18 @@ export default function ChatPanel({
   );
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
   const [limitsExpanded, setLimitsExpanded] = useState(false);
+  const [communicationMode, setCommunicationMode] = useState<CommunicationMode>(
+    () => (preferredCommunicationMode === 'people' ? 'people' : 'lumine')
+  );
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const lumineScrollSnapshotRef = useRef<{
+    scrollTop: number;
+    stickToBottom: boolean;
+  } | null>(null);
+  const hasPeoplePanel = Boolean(peoplePanel);
+  const activeCommunicationMode = hasPeoplePanel
+    ? communicationMode
+    : 'lumine';
   const energyPolicy = aiUsagePolicy;
   const energyUnavailable =
     !!energyPolicy &&
@@ -227,8 +258,52 @@ export default function ChatPanel({
     Boolean(normalizedFollowUpQuestion) &&
     Boolean(normalizedFollowUpSuggestedMessage);
 
+  useEffect(() => {
+    if (activeCommunicationMode !== 'lumine') return;
+    const snapshot = lumineScrollSnapshotRef.current;
+    const frame = window.requestAnimationFrame(() => {
+      const container = chatScrollRef.current;
+      if (container) {
+        container.scrollTo({
+          top:
+            snapshot && !snapshot.stickToBottom
+              ? snapshot.scrollTop
+              : container.scrollHeight,
+          behavior: 'auto'
+        });
+        return;
+      }
+      chatEndRef.current?.scrollIntoView({
+        behavior: 'auto',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeCommunicationMode, chatEndRef, chatScrollRef]);
+
+  useEffect(() => {
+    if (!hasPeoplePanel || !preferredCommunicationMode) return;
+    setCommunicationMode(preferredCommunicationMode);
+  }, [hasPeoplePanel, preferredCommunicationMode]);
+
   function handleToggleLimitsExpanded() {
     setLimitsExpanded((prev) => !prev);
+  }
+
+  function handleCommunicationModeChange(nextMode: CommunicationMode) {
+    if (activeCommunicationMode === 'lumine' && nextMode !== 'lumine') {
+      const container = chatScrollRef.current;
+      if (container) {
+        const distanceFromBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight;
+        lumineScrollSnapshotRef.current = {
+          scrollTop: container.scrollTop,
+          stickToBottom: distanceFromBottom <= LUMINE_BOTTOM_SCROLL_THRESHOLD
+        };
+      }
+    }
+    setCommunicationMode(nextMode);
   }
 
   function handlePrefillRedirect() {
@@ -307,60 +382,84 @@ export default function ChatPanel({
         } as React.CSSProperties
       }
     >
-      <Header
-        copilotPolicy={copilotPolicy}
-        aiUsagePolicy={aiUsagePolicy}
-        pageFeedbackEvents={pageFeedbackEvents}
-        twinkleCoins={twinkleCoins}
-        purchasingGenerationReset={purchasingGenerationReset}
-        generationResetError={generationResetError}
-        generationResetUi={generationResetUi}
-        limitsExpanded={limitsExpanded}
-        onPurchaseGenerationReset={onPurchaseGenerationReset}
-        onOpenRuntimeUploadsManager={onOpenRuntimeUploadsManager}
-        onToggleLimitsExpanded={handleToggleLimitsExpanded}
-      />
-      <div ref={chatScrollRef} onScroll={onChatScroll} className={scrollAreaClass}>
-        <Transcript
-          messages={messages}
-          runMode={runMode}
-          generating={generating}
-          generatingStatus={generatingStatus}
-          assistantStatusSteps={assistantStatusSteps}
-          currentActivity={currentActivity}
-          statusStepEntries={statusStepEntries}
-          runError={runError}
-          activeStreamMessageIds={activeStreamMessageIds}
-          isOwner={isOwner}
-          chatEndRef={chatEndRef}
-          onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
-          onDeleteMessage={onDeleteMessage}
-        />
-      </div>
-      <Composer
-        AI_FEATURES_DISABLED={AI_FEATURES_DISABLED}
-        aiInputDisabled={aiInputDisabled}
-        aiInputDisabledNotice={aiInputDisabledNotice}
-        draftMessage={draftMessage}
-        generating={generating}
-        inputRef={inputRef}
-        isOwner={isOwner}
-        limitsExpanded={limitsExpanded}
-        normalizedFollowUpQuestion={normalizedFollowUpQuestion}
-        normalizedScopedPlanQuestion={normalizedScopedPlanQuestion}
-        onAcceptFollowUpPrompt={onAcceptFollowUpPrompt}
-        onCancelScopedPlan={onCancelScopedPlan}
-        onContinueScopedPlan={onContinueScopedPlan}
-        onDismissFollowUpPrompt={onDismissFollowUpPrompt}
-        onDraftMessageChange={onDraftMessageChange}
-        onOpenBuildChatUpload={onOpenBuildChatUpload}
-        onPrefillRedirect={handlePrefillRedirect}
-        onStopGeneration={onStopGeneration}
-        onSubmitMessage={handleSubmitMessage}
-        showGenericFollowUpQuickReplies={showGenericFollowUpQuickReplies}
-        showScopedPlanQuickReplies={showScopedPlanQuickReplies}
-        uploadInFlight={uploadInFlight}
-      />
+      {hasPeoplePanel ? (
+        <div className={communicationTabsClass}>
+          <SegmentedToggle
+            value={activeCommunicationMode}
+            options={[
+              { value: 'lumine' as const, label: 'Lumine', icon: 'sparkles' },
+              { value: 'people' as const, label: 'People', icon: 'comments' }
+            ]}
+            onChange={handleCommunicationModeChange}
+            ariaLabel="Switch communication mode"
+            size="sm"
+          />
+        </div>
+      ) : null}
+      {activeCommunicationMode === 'people' ? (
+        <div className={peoplePaneClass}>{peoplePanel}</div>
+      ) : (
+        <>
+          <Header
+            copilotPolicy={copilotPolicy}
+            aiUsagePolicy={aiUsagePolicy}
+            pageFeedbackEvents={pageFeedbackEvents}
+            twinkleCoins={twinkleCoins}
+            purchasingGenerationReset={purchasingGenerationReset}
+            generationResetError={generationResetError}
+            generationResetUi={generationResetUi}
+            limitsExpanded={limitsExpanded}
+            onPurchaseGenerationReset={onPurchaseGenerationReset}
+            onOpenRuntimeUploadsManager={onOpenRuntimeUploadsManager}
+            onToggleLimitsExpanded={handleToggleLimitsExpanded}
+          />
+          <div
+            ref={chatScrollRef}
+            onScroll={onChatScroll}
+            className={scrollAreaClass}
+          >
+            <Transcript
+              messages={messages}
+              runMode={runMode}
+              generating={generating}
+              generatingStatus={generatingStatus}
+              assistantStatusSteps={assistantStatusSteps}
+              currentActivity={currentActivity}
+              statusStepEntries={statusStepEntries}
+              runError={runError}
+              activeStreamMessageIds={activeStreamMessageIds}
+              isOwner={isOwner}
+              chatEndRef={chatEndRef}
+              onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
+              onDeleteMessage={onDeleteMessage}
+            />
+          </div>
+          <Composer
+            AI_FEATURES_DISABLED={AI_FEATURES_DISABLED}
+            aiInputDisabled={aiInputDisabled}
+            aiInputDisabledNotice={aiInputDisabledNotice}
+            draftMessage={draftMessage}
+            generating={generating}
+            inputRef={inputRef}
+            isOwner={isOwner}
+            limitsExpanded={limitsExpanded}
+            normalizedFollowUpQuestion={normalizedFollowUpQuestion}
+            normalizedScopedPlanQuestion={normalizedScopedPlanQuestion}
+            onAcceptFollowUpPrompt={onAcceptFollowUpPrompt}
+            onCancelScopedPlan={onCancelScopedPlan}
+            onContinueScopedPlan={onContinueScopedPlan}
+            onDismissFollowUpPrompt={onDismissFollowUpPrompt}
+            onDraftMessageChange={onDraftMessageChange}
+            onOpenBuildChatUpload={onOpenBuildChatUpload}
+            onPrefillRedirect={handlePrefillRedirect}
+            onStopGeneration={onStopGeneration}
+            onSubmitMessage={handleSubmitMessage}
+            showGenericFollowUpQuickReplies={showGenericFollowUpQuickReplies}
+            showScopedPlanQuickReplies={showScopedPlanQuickReplies}
+            uploadInFlight={uploadInFlight}
+          />
+        </>
+      )}
       <RuntimeUploadsModal
         copilotPolicy={copilotPolicy}
         runtimeUploadsModalShown={runtimeUploadsModalShown}
