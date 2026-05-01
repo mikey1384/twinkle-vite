@@ -132,6 +132,18 @@ export interface BuildFollowUpPrompt {
   sourceMessageId?: number | null;
 }
 
+export type BuildLumineChatVisibility = 'private' | 'collaborators';
+
+export interface LumineChatVisibilityControl {
+  value: BuildLumineChatVisibility;
+  savedValue: BuildLumineChatVisibility;
+  loading: boolean;
+  error: string;
+  onSave: (
+    value: BuildLumineChatVisibility
+  ) => Promise<boolean | void> | boolean | void;
+}
+
 export interface LimitProgressItem {
   id: string;
   label: string;
@@ -146,6 +158,7 @@ export interface ChatPanelProps {
   workshopScale?: number;
   preferredCommunicationMode?: 'lumine' | 'people';
   peoplePanel?: ReactNode;
+  lumineChatVisibilityControl?: LumineChatVisibilityControl | null;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;

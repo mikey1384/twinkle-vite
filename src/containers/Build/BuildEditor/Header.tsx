@@ -5,6 +5,10 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
+import {
+  getBuildDisplayTitle,
+  getBuildRelationshipLabels
+} from './buildRelationshipLabels';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -128,6 +132,21 @@ const badgePillClass = css`
   box-shadow: 0 2px 0 rgba(15, 23, 42, 0.12);
 `;
 
+const titleRelationshipBadgeClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.32rem 0.66rem;
+  font-size: 0.82rem;
+  font-weight: 900;
+  font-family: ${displayFontFamily};
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  border: 2px solid transparent;
+`;
+
 interface HeaderProps {
   build: {
     title: string;
@@ -135,9 +154,12 @@ interface HeaderProps {
     username: string;
     isPublic: boolean;
     code: string | null;
+    sourceBuildId?: number | null;
     collaborationMode?: 'private' | 'contribution' | 'open_source';
     contributionAccess?: 'anyone' | 'invite_only';
     contributionStatus?: string | null;
+    rootBuildUsername?: string | null;
+    rootBuildSourceBuildId?: number | null;
   };
   forking: boolean;
   canEditMetadata: boolean;
@@ -146,12 +168,16 @@ interface HeaderProps {
   publishing: boolean;
   savingThumbnail: boolean;
   showContributionButton: boolean;
+  contributionActionError?: string;
+  contributionActionLoading?: 'submit' | 'reopen' | '';
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
   onOpenCollaborationSettings: () => void;
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
+  onReopenContribution?: () => void;
+  onSubmitContribution?: () => void;
   onTogglePublish: () => void;
 }
 
@@ -164,17 +190,31 @@ export default function Header({
   publishing,
   savingThumbnail,
   showContributionButton,
+  contributionActionError = '',
+  contributionActionLoading = '',
   showForkButton,
   onContribute,
   onFork,
   onOpenCollaborationSettings,
   onOpenDescriptionModal,
   onOpenThumbnailModal,
+  onReopenContribution,
+  onSubmitContribution,
   onTogglePublish
 }: HeaderProps) {
   const isContributionFork =
     build.contributionStatus && build.contributionStatus !== 'none';
+  const contributionStatus = normalizeContributionStatus(
+    build.contributionStatus
+  );
   const collaborationMode = normalizeCollaborationMode(build.collaborationMode);
+  const displayTitle = getBuildDisplayTitle(build);
+  const relationshipLabels = getBuildRelationshipLabels(build);
+  const description = build.description?.trim();
+  const sourceOwnerUsername =
+    isContributionFork && build.rootBuildUsername
+      ? build.rootBuildUsername
+      : build.username;
   return (
     <header className={headerClass}>
       <div
@@ -194,7 +234,17 @@ export default function Header({
           </Link>
         </ScopedTheme>
         <div className={headerTitleRowClass}>
-          <h2 className={headerTitleClass}>{build.title}</h2>
+          <h2 className={headerTitleClass}>{displayTitle}</h2>
+          {relationshipLabels.map((label) => (
+            <span
+              key={label}
+              className={titleRelationshipBadgeClass}
+              style={getRelationshipBadgeStyle(label)}
+            >
+              <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
+              {label === 'fork' ? 'Fork' : 'Contribution'}
+            </span>
+          ))}
           {canEditMetadata ? (
             <button
               type="button"
@@ -208,7 +258,8 @@ export default function Header({
           ) : null}
         </div>
         <span className={headerSubtitleClass}>
-          {build.description?.trim() || `by ${build.username}`}
+          {description ? `${description} · ` : ''}
+          by {sourceOwnerUsername}
         </span>
       </div>
       <div className={headerActionsClass}>
@@ -255,6 +306,58 @@ export default function Header({
           >
             Thumbnail
           </GameCTAButton>
+        ) : null}
+        {isOwner && isContributionFork ? (
+          <>
+            <span
+              className={badgePillClass}
+              style={getContributionBadgeStyle(contributionStatus)}
+              title={
+                contributionStatus === 'submitted'
+                  ? 'Submitted forks are locked until reopened'
+                  : contributionStatus === 'merging'
+                    ? 'This contribution is being merged into the original Build'
+                    : 'Contribution fork status'
+              }
+            >
+              <Icon icon="code-branch" />
+              {formatContributionStatusLabel(contributionStatus)}
+            </span>
+            {contributionStatus === 'draft' ? (
+              <GameCTAButton
+                onClick={onSubmitContribution || (() => {})}
+                disabled={Boolean(contributionActionLoading)}
+                loading={contributionActionLoading === 'submit'}
+                variant="success"
+                size="md"
+                icon="paper-plane"
+              >
+                Submit
+              </GameCTAButton>
+            ) : null}
+            {contributionStatus === 'submitted' ? (
+              <GameCTAButton
+                onClick={onReopenContribution || (() => {})}
+                disabled={Boolean(contributionActionLoading)}
+                loading={contributionActionLoading === 'reopen'}
+                variant="neutral"
+                size="md"
+                icon="undo"
+              >
+                Reopen Draft
+              </GameCTAButton>
+            ) : null}
+            {contributionActionError ? (
+              <span
+                className={css`
+                  color: #be123c;
+                  font-weight: 900;
+                `}
+              >
+                {contributionActionError}
+              </span>
+            ) : null}
+          </>
         ) : null}
         {isOwner && !isContributionFork ? (
           <GameCTAButton
@@ -303,17 +406,37 @@ export default function Header({
 
 function normalizeCollaborationMode(
   value: unknown
-): 'private' | 'contribution' | 'open_source' {
-  return value === 'contribution' || value === 'open_source'
-    ? value
-    : 'private';
+): 'private' | 'open_source' {
+  return value === 'open_source' ? value : 'private';
+}
+
+function normalizeContributionStatus(
+  value: unknown
+):
+  | 'none'
+  | 'draft'
+  | 'submitted'
+  | 'merging'
+  | 'merged'
+  | 'rejected'
+  | 'withdrawn' {
+  if (
+    value === 'draft' ||
+    value === 'submitted' ||
+    value === 'merging' ||
+    value === 'merged' ||
+    value === 'rejected' ||
+    value === 'withdrawn'
+  ) {
+    return value;
+  }
+  return 'none';
 }
 
 function getCollaborationButtonLabel(
-  mode: 'private' | 'contribution' | 'open_source'
+  mode: 'private' | 'open_source'
 ) {
   if (mode === 'open_source') return 'Open Source Settings';
-  if (mode === 'contribution') return 'Manage Contributions';
   return 'Work with People';
 }
 
@@ -331,4 +454,74 @@ function getVisibilityBadgeStyle(isPublic: boolean): React.CSSProperties {
     borderColor: 'rgba(100, 116, 139, 0.3)',
     color: '#334155'
   };
+}
+
+function getRelationshipBadgeStyle(
+  label: 'fork' | 'contribution'
+): React.CSSProperties {
+  if (label === 'fork') {
+    return {
+      background: 'rgba(139, 92, 246, 0.14)',
+      borderColor: 'rgba(139, 92, 246, 0.34)',
+      color: '#6d28d9'
+    };
+  }
+  return {
+    background: 'rgba(236, 72, 153, 0.13)',
+    borderColor: 'rgba(236, 72, 153, 0.32)',
+    color: '#be185d'
+  };
+}
+
+function getContributionBadgeStyle(
+  status:
+    | 'none'
+    | 'draft'
+    | 'submitted'
+    | 'merging'
+    | 'merged'
+    | 'rejected'
+    | 'withdrawn'
+): React.CSSProperties {
+  if (status === 'draft') {
+    return {
+      background: 'rgba(65, 140, 235, 0.14)',
+      borderColor: 'rgba(65, 140, 235, 0.34)',
+      color: '#1d4ed8'
+    };
+  }
+  if (status === 'submitted') {
+    return {
+      background: 'rgba(34, 197, 94, 0.14)',
+      borderColor: 'rgba(34, 197, 94, 0.34)',
+      color: '#15803d'
+    };
+  }
+  if (status === 'merging') {
+    return {
+      background: 'rgba(236, 72, 153, 0.13)',
+      borderColor: 'rgba(236, 72, 153, 0.32)',
+      color: '#be185d'
+    };
+  }
+  return {
+    background: 'rgba(100, 116, 139, 0.14)',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    color: '#334155'
+  };
+}
+
+function formatContributionStatusLabel(
+  status:
+    | 'none'
+    | 'draft'
+    | 'submitted'
+    | 'merging'
+    | 'merged'
+    | 'rejected'
+    | 'withdrawn'
+) {
+  if (status === 'none') return 'Contribution';
+  if (status === 'merging') return 'Merging';
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }

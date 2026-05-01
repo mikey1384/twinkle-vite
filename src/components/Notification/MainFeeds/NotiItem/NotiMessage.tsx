@@ -1,9 +1,11 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useState } from 'react';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User } from '~/types';
+import Button from '~/components/Button';
 import ContentLink from '~/components/ContentLink';
+import { useAppContext } from '~/contexts';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 function NotiMessage({
@@ -32,7 +34,11 @@ function NotiMessage({
     amount: number;
     content: string;
     contentType: string;
+    acceptedAt?: number;
+    buildId?: number;
+    declinedAt?: number;
     id: number;
+    revokedAt?: number;
     userId: number;
   };
   actionColor: string;
@@ -74,10 +80,25 @@ function NotiMessage({
     userId: number;
   };
 }) {
+  const navigate = useNavigate();
   const isReply = useMemo(
     () => targetComment?.userId === myId,
     [myId, targetComment?.userId]
   );
+  const acceptBuildContributorInvite = useAppContext(
+    (v) => v.requestHelpers.acceptBuildContributorInvite
+  );
+  const declineBuildContributorInvite = useAppContext(
+    (v) => v.requestHelpers.declineBuildContributorInvite
+  );
+  const createBuildContributionFork = useAppContext(
+    (v) => v.requestHelpers.createBuildContributionFork
+  );
+  const [buildInviteStatusOverride, setBuildInviteStatusOverride] =
+    useState('');
+  const [buildInviteActionLoading, setBuildInviteActionLoading] =
+    useState('');
+  const [buildInviteActionError, setBuildInviteActionError] = useState('');
   const isSubjectResponse = useMemo(
     () => targetSubject?.userId === myId,
     [myId, targetSubject?.userId]
@@ -641,6 +662,82 @@ function NotiMessage({
           </Link>
         </>
       );
+    case 'buildContributionInvite': {
+      const inviteId = Number(actionObj.id || 0);
+      const inviteBuildId = Number(actionObj.buildId || targetObj.id || 0);
+      const inviteStatus =
+        buildInviteStatusOverride ||
+        (Number(actionObj.revokedAt || 0) > 0
+          ? 'revoked'
+          : Number(actionObj.declinedAt || 0) > 0
+            ? 'declined'
+            : Number(actionObj.acceptedAt || 0) > 0
+              ? 'accepted'
+              : 'pending');
+      return (
+        <>
+          <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
+            invited you to collaborate
+          </span>{' '}
+          on{' '}
+          <Link
+            to={`/build/${targetObj.id}`}
+            state={{ openPeoplePanel: true }}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Build
+            {targetObj.content ? ` (${truncatedTargetObjectText})` : ''}
+          </Link>
+          {inviteStatus === 'pending' && inviteId && inviteBuildId ? (
+            <span
+              style={{
+                display: 'inline-flex',
+                gap: '0.35rem',
+                marginLeft: '0.45rem',
+                verticalAlign: 'middle'
+              }}
+            >
+              <Button
+                color="logoBlue"
+                variant="soft"
+                size="sm"
+                loading={buildInviteActionLoading === 'accept'}
+                disabled={Boolean(buildInviteActionLoading)}
+                onClick={handleAcceptBuildContributionInvite}
+              >
+                Accept
+              </Button>
+              <Button
+                color="darkerGray"
+                variant="outline"
+                size="sm"
+                loading={buildInviteActionLoading === 'decline'}
+                disabled={Boolean(buildInviteActionLoading)}
+                onClick={handleDeclineBuildContributionInvite}
+              >
+                Decline
+              </Button>
+            </span>
+          ) : inviteStatus === 'accepted' ? (
+            <span style={{ color: recommendationColorValue, fontWeight: 800 }}>
+              {' '}
+              accepted
+            </span>
+          ) : inviteStatus === 'declined' ? (
+            <span style={{ color: infoColor, fontWeight: 800 }}>
+              {' '}
+              declined
+            </span>
+          ) : null}
+          {buildInviteActionError ? (
+            <span style={{ color: Color.red(), fontWeight: 800 }}>
+              {' '}
+              {buildInviteActionError}
+            </span>
+          ) : null}
+        </>
+      );
+    }
     case 'pass': {
       const message =
         targetObj.contentType === 'mission'
@@ -680,6 +777,78 @@ function NotiMessage({
       );
     default:
       return <span>There was an error - report to Mikey!</span>;
+  }
+
+  async function handleAcceptBuildContributionInvite() {
+    const inviteId = Number(actionObj.id || 0);
+    const buildId = Number(actionObj.buildId || targetObj.id || 0);
+    if (!inviteId || !buildId || buildInviteActionLoading) return;
+    setBuildInviteActionLoading('accept');
+    setBuildInviteActionError('');
+    try {
+      const result = await acceptBuildContributorInvite({
+        buildId,
+        inviteId
+      });
+      if (result?.success) {
+        await startBuildContributionFromAcceptedInvite(buildId);
+      }
+    } catch (error: any) {
+      setBuildInviteActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to accept invite'
+      );
+    } finally {
+      setBuildInviteActionLoading('');
+    }
+  }
+
+  async function handleDeclineBuildContributionInvite() {
+    const inviteId = Number(actionObj.id || 0);
+    const buildId = Number(actionObj.buildId || targetObj.id || 0);
+    if (!inviteId || !buildId || buildInviteActionLoading) return;
+    setBuildInviteActionLoading('decline');
+    setBuildInviteActionError('');
+    try {
+      const result = await declineBuildContributorInvite({
+        buildId,
+        inviteId
+      });
+      if (result?.success) {
+        setBuildInviteStatusOverride('declined');
+      }
+    } catch (error: any) {
+      setBuildInviteActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to decline invite'
+      );
+    } finally {
+      setBuildInviteActionLoading('');
+    }
+  }
+
+  async function startBuildContributionFromAcceptedInvite(buildId: number) {
+    try {
+      const result = await createBuildContributionFork(buildId);
+      if (result?.success && result?.build?.id) {
+        navigate(`/build/${result.build.id}`, {
+          state: {
+            openPeoplePanel: true
+          }
+        });
+        return;
+      }
+      setBuildInviteStatusOverride('accepted');
+    } catch (error: any) {
+      setBuildInviteStatusOverride('accepted');
+      setBuildInviteActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Invite accepted, but failed to start contribution'
+      );
+    }
   }
 }
 

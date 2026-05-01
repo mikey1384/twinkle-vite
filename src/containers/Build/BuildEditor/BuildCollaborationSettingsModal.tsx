@@ -8,26 +8,28 @@ import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 import BuildContributorInvitePicker from './BuildContributorInvitePicker';
 
-type BuildCollaborationMode = 'private' | 'contribution' | 'open_source';
+type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
-type BuildLumineChatVisibility = 'private' | 'collaborators' | 'public';
+type BuildLumineChatVisibility = 'private' | 'collaborators';
 
 interface BuildLike {
   id: number;
   isPublic?: boolean;
-  collaborationMode?: BuildCollaborationMode;
+  collaborationMode?: BuildCollaborationMode | 'contribution';
   contributionAccess?: BuildContributionAccess;
-  lumineChatVisibility?: BuildLumineChatVisibility;
+  lumineChatVisibility?: BuildLumineChatVisibility | 'public';
 }
 
 interface BuildContributorInvite {
   userId: number;
   username?: string | null;
   profilePicUrl?: string | null;
+  acceptedAt?: number | null;
 }
 
 interface BuildCollaborationSettingsModalProps {
   build: BuildLike;
+  canShowLumineChatVisibilitySetting: boolean;
   onBuildPatch: (patch: Record<string, any>) => void;
   onHide: () => void;
 }
@@ -62,15 +64,6 @@ const optionGridClass = css`
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.7rem;
-`;
-
-const accessGridClass = css`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
-  @media (max-width: 520px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const optionButtonClass = css`
@@ -152,25 +145,6 @@ const rowClass = css`
   flex-wrap: wrap;
 `;
 
-const invitePillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  border: 1px solid rgba(65, 140, 235, 0.28);
-  border-radius: 999px;
-  background: rgba(65, 140, 235, 0.08);
-  padding: 0.35rem 0.45rem 0.35rem 0.7rem;
-  font-weight: 900;
-  button {
-    border: 0;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.08);
-    color: inherit;
-    font-weight: 900;
-    cursor: pointer;
-  }
-`;
-
 const mutedTextClass = css`
   color: var(--chat-text);
   opacity: 0.68;
@@ -193,14 +167,9 @@ const modeOptions: Array<{
   {
     value: 'private',
     icon: 'lock',
-    title: 'Solo project',
-    description: 'Only you can make changes. People can still discuss here.'
-  },
-  {
-    value: 'contribution',
-    icon: 'code-branch',
-    title: 'Open for contribution',
-    description: 'People can create project-scoped forks for you to review.'
+    title: 'Private Project',
+    description:
+      'Only you and invited collaborators can access the team workspace.'
   },
   {
     value: 'open_source',
@@ -208,26 +177,6 @@ const modeOptions: Array<{
     title: 'Open source',
     description:
       'People can fork a published copy, while collaborators can still contribute here.'
-  }
-];
-
-const accessOptions: Array<{
-  value: BuildContributionAccess;
-  icon: string;
-  title: string;
-  description: string;
-}> = [
-  {
-    value: 'anyone',
-    icon: 'users',
-    title: 'Anyone',
-    description: 'Any signed-in user can start a contribution fork.'
-  },
-  {
-    value: 'invite_only',
-    icon: 'user-plus',
-    title: 'Invite-only',
-    description: 'Only invited users can start contribution forks.'
   }
 ];
 
@@ -240,7 +189,7 @@ const lumineChatVisibilityOptions: Array<{
   {
     value: 'private',
     icon: 'lock',
-    title: 'Private',
+    title: 'Nobody',
     description: 'Only you can see your Lumine chat history.'
   },
   {
@@ -248,17 +197,12 @@ const lumineChatVisibilityOptions: Array<{
     icon: 'users',
     title: 'Collaborators',
     description: 'Project collaborators can review the transcript.'
-  },
-  {
-    value: 'public',
-    icon: 'eye',
-    title: 'Public',
-    description: 'Signed-in users can read the transcript when the build is public.'
   }
 ];
 
 export default function BuildCollaborationSettingsModal({
   build,
+  canShowLumineChatVisibilitySetting,
   onBuildPatch,
   onHide
 }: BuildCollaborationSettingsModalProps) {
@@ -282,10 +226,6 @@ export default function BuildCollaborationSettingsModal({
     useState<BuildCollaborationMode>(
       normalizeCollaborationMode(build.collaborationMode)
     );
-  const [contributionAccess, setContributionAccess] =
-    useState<BuildContributionAccess>(
-      normalizeContributionAccess(build.contributionAccess)
-    );
   const [lumineChatVisibility, setLumineChatVisibility] =
     useState<BuildLumineChatVisibility>(
       normalizeLumineChatVisibility(build.lumineChatVisibility)
@@ -299,25 +239,19 @@ export default function BuildCollaborationSettingsModal({
   const persistedCollaborationMode = normalizeCollaborationMode(
     build.collaborationMode
   );
-  const canInviteContributors = persistedCollaborationMode !== 'private';
-  const contributorsCardShown =
-    canInviteContributors || contributors.length > 0;
-  const contributionAccessShown = collaborationMode !== 'private';
+  const canInviteContributors = true;
+  const contributorsCardShown = true;
   const openSourceNotPublished =
     collaborationMode === 'open_source' && !build.isPublic;
-  const persistedContributionAccess =
-    persistedCollaborationMode !== 'private'
-      ? normalizeContributionAccess(build.contributionAccess)
-      : 'anyone';
-  const effectiveContributionAccess =
-    collaborationMode !== 'private' ? contributionAccess : 'anyone';
   const persistedLumineChatVisibility = normalizeLumineChatVisibility(
     build.lumineChatVisibility
   );
+  const lumineChatVisibilityChanged =
+    canShowLumineChatVisibilitySetting &&
+    lumineChatVisibility !== persistedLumineChatVisibility;
   const settingsChanged =
     collaborationMode !== persistedCollaborationMode ||
-    effectiveContributionAccess !== persistedContributionAccess ||
-    lumineChatVisibility !== persistedLumineChatVisibility;
+    lumineChatVisibilityChanged;
   const collaborationThemeStyle = {
     '--collaboration-accent': accentRole.getColor(1),
     '--collaboration-accent-border': accentRole.getColor(0.5),
@@ -327,17 +261,10 @@ export default function BuildCollaborationSettingsModal({
 
   useEffect(() => {
     setCollaborationMode(normalizeCollaborationMode(build.collaborationMode));
-    setContributionAccess(
-      normalizeContributionAccess(build.contributionAccess)
-    );
     setLumineChatVisibility(
       normalizeLumineChatVisibility(build.lumineChatVisibility)
     );
-  }, [
-    build.collaborationMode,
-    build.contributionAccess,
-    build.lumineChatVisibility
-  ]);
+  }, [build.collaborationMode, build.lumineChatVisibility]);
 
   useEffect(() => {
     void reloadContributors();
@@ -376,8 +303,8 @@ export default function BuildCollaborationSettingsModal({
     >
       <div className={bodyClass} style={collaborationThemeStyle}>
         <div className={introClass}>
-          Choose whether people can send project-scoped contributions or fork a
-          published copy into their own projects.
+          Choose whether people can fork a published copy. Project
+          collaborators are managed by invite or accepted requests.
         </div>
         <div className={sectionClass}>
           <div className={sectionTitleClass}>Project mode</div>
@@ -409,20 +336,18 @@ export default function BuildCollaborationSettingsModal({
             Publish this build when you are ready for people to see and fork it.
           </div>
         ) : null}
-        {contributionAccessShown ? (
+        {canShowLumineChatVisibilitySetting ? (
           <div className={sectionClass}>
-            <div className={sectionTitleClass}>
-              Who can contribute to the original project
-            </div>
-            <div className={accessGridClass}>
-              {accessOptions.map((option) => (
+            <div className={sectionTitleClass}>Share Lumine chat with</div>
+            <div className={optionGridClass}>
+              {lumineChatVisibilityOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   className={`${optionButtonClass}${
-                    contributionAccess === option.value ? ' selected' : ''
+                    lumineChatVisibility === option.value ? ' selected' : ''
                   }`}
-                  onClick={() => setContributionAccess(option.value)}
+                  onClick={() => setLumineChatVisibility(option.value)}
                 >
                   <span className={optionIconClass}>
                     <Icon icon={option.icon} />
@@ -438,67 +363,22 @@ export default function BuildCollaborationSettingsModal({
             </div>
           </div>
         ) : null}
-        <div className={sectionClass}>
-          <div className={sectionTitleClass}>Lumine chat history</div>
-          <div className={optionGridClass}>
-            {lumineChatVisibilityOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`${optionButtonClass}${
-                  lumineChatVisibility === option.value ? ' selected' : ''
-                }`}
-                onClick={() => setLumineChatVisibility(option.value)}
-              >
-                <span className={optionIconClass}>
-                  <Icon icon={option.icon} />
-                </span>
-                <span className={optionContentClass}>
-                  <span className={optionTitleClass}>{option.title}</span>
-                  <span className={optionDescriptionClass}>
-                    {option.description}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
         {contributorsCardShown ? (
           <div className={inviteCardClass}>
             <div className={rowClass}>
-              <strong>Designated collaborators</strong>
+              <strong>Collaborators</strong>
               {loadingContributors ? (
                 <span className={mutedTextClass}>Loading...</span>
               ) : null}
             </div>
-            {canInviteContributors ? (
-              <BuildContributorInvitePicker
-                buildId={build.id}
-                contributors={contributors}
-                onInvited={reloadContributors}
-              />
-            ) : null}
-            <div className={rowClass}>
-              {contributors.length === 0 ? (
-                <span className={mutedTextClass}>
-                  No designated collaborators yet.
-                </span>
-              ) : (
-                contributors.map((contributor) => (
-                  <span key={contributor.userId} className={invitePillClass}>
-                    {contributor.username || `User ${contributor.userId}`}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleRevokeContributor(Number(contributor.userId))
-                      }
-                    >
-                      Remove
-                    </button>
-                  </span>
-                ))
-              )}
-            </div>
+            <BuildContributorInvitePicker
+              buildId={build.id}
+              canInvite={canInviteContributors}
+              confirmModalOverModal
+              contributors={contributors}
+              onInvited={reloadContributors}
+              onRemoveContributor={handleRevokeContributor}
+            />
           </div>
         ) : null}
         {settingsError ? (
@@ -518,13 +398,14 @@ export default function BuildCollaborationSettingsModal({
       const result = await updateBuildCollaboration({
         buildId: build.id,
         collaborationMode,
-        contributionAccess:
-          collaborationMode !== 'private' ? contributionAccess : 'anyone'
+        contributionAccess: getContributionAccessForCollaborationMode(
+          collaborationMode
+        )
       });
       if (result?.build) {
         onBuildPatch(result.build);
       }
-      if (lumineChatVisibility !== persistedLumineChatVisibility) {
+      if (lumineChatVisibilityChanged) {
         const visibilityResult = await updateBuildLumineChatVisibility({
           buildId: build.id,
           visibility: lumineChatVisibility
@@ -550,9 +431,6 @@ export default function BuildCollaborationSettingsModal({
 
   function handleModeChange(nextMode: BuildCollaborationMode) {
     setCollaborationMode(nextMode);
-    if (nextMode === 'private') {
-      setContributionAccess('anyone');
-    }
   }
 
   async function reloadContributors() {
@@ -592,19 +470,17 @@ export default function BuildCollaborationSettingsModal({
 }
 
 function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
-  return value === 'contribution' || value === 'open_source'
-    ? value
-    : 'private';
-}
-
-function normalizeContributionAccess(value: unknown): BuildContributionAccess {
-  return value === 'invite_only' ? 'invite_only' : 'anyone';
+  return value === 'open_source' ? value : 'private';
 }
 
 function normalizeLumineChatVisibility(
   value: unknown
 ): BuildLumineChatVisibility {
-  return value === 'collaborators' || value === 'public'
-    ? value
-    : 'private';
+  return value === 'collaborators' ? value : 'private';
+}
+
+function getContributionAccessForCollaborationMode(
+  _mode: BuildCollaborationMode
+): BuildContributionAccess {
+  return 'invite_only';
 }

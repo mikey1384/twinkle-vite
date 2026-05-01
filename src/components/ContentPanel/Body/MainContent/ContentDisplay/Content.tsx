@@ -279,6 +279,7 @@ export default function Content({
               description,
               collaborationMode: contentObj.collaborationMode,
               contributionAccess: contentObj.contributionAccess,
+              collaboratorCount: contentObj.collaboratorCount,
               thumbnailUrl: contentObj.thumbnailUrl,
               updatedAt: contentObj.updatedAt
             }}

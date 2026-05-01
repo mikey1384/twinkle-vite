@@ -7,6 +7,7 @@ import Chess from '../../Chess';
 import Omok from '../../Omok';
 import { MessageStyle } from '../../Styles';
 import ApprovalRequest from './ApprovalRequest';
+import BuildContributionInvite from './BuildContributionInvite';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
 import Invitation from './Invitation';
@@ -70,6 +71,22 @@ interface Props {
   uploadStatus: any;
   userCanEditThis: boolean;
   userId: number;
+}
+
+function parseMessageSettings(settings: unknown): Record<string, any> {
+  if (typeof settings === 'string') {
+    try {
+      const parsed = JSON.parse(settings);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed
+        : {};
+    } catch {
+      return {};
+    }
+  }
+  return settings && typeof settings === 'object' && !Array.isArray(settings)
+    ? (settings as Record<string, any>)
+    : {};
 }
 
 export default function Content({
@@ -147,12 +164,15 @@ export default function Content({
     numMsgs,
     rewardAmount,
     rewardReason,
+    rootType,
     rootId,
+    settings,
     subjectId,
     thumbUrl,
     targetMessage,
     targetSubject
   } = message;
+  const parsedSettings = parseMessageSettings(settings);
 
   return (
     <div>
@@ -168,6 +188,13 @@ export default function Content({
         <ModificationNotice
           modificationId={rootId}
           username={appliedUsername}
+        />
+      ) : rootType === 'buildContributionInvite' && rootId ? (
+        <BuildContributionInvite
+          content={content}
+          invite={parsedSettings?.buildContributionInvite}
+          myId={myId}
+          sender={{ id: userId, username: appliedUsername }}
         />
       ) : invitePath ? (
         <Invitation
@@ -336,7 +363,7 @@ export default function Content({
               userCanEditThis={userCanEditThis}
             />
           )}
-          {message.settings?.saveFailed && (
+          {parsedSettings?.saveFailed && (
             <div
               className={css`
                 margin-top: 0.75rem;

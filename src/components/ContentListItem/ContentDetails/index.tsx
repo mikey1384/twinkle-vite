@@ -8,6 +8,7 @@ import BuildDetails from './BuildDetails';
 import { User } from '~/types';
 
 export default function ContentDetails({
+  collaboratorCount,
   contentType,
   description = '',
   isListening,
@@ -20,9 +21,13 @@ export default function ContentDetails({
   thumbUrl,
   actualTitle,
   actualDescription,
+  sourceBuildId,
+  contributionStatus,
+  rootBuildSourceBuildId,
   siteUrl
 }: {
   audioPath?: string;
+  collaboratorCount?: number;
   contentType: string;
   description?: string;
   isListening?: boolean;
@@ -35,6 +40,9 @@ export default function ContentDetails({
   thumbUrl?: string;
   actualTitle?: string;
   actualDescription?: string;
+  sourceBuildId?: number | null;
+  contributionStatus?: string | null;
+  rootBuildSourceBuildId?: number | null;
   siteUrl?: string;
 }) {
   return (
@@ -75,9 +83,13 @@ export default function ContentDetails({
       )}
       {contentType === 'build' && (
         <BuildDetails
+          collaboratorCount={collaboratorCount}
           description={description}
           title={title}
           uploader={uploader}
+          sourceBuildId={sourceBuildId}
+          contributionStatus={contributionStatus}
+          rootBuildSourceBuildId={rootBuildSourceBuildId}
         />
       )}
     </>

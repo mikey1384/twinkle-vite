@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useRef
 } from 'react';
-import { createContext, useContext } from 'use-context-selector';
+import { createContext, useContext } from '../selectableContext';
 import ViewActions from './actions';
 import ViewReducer, {
   AI_DISABLED_NOTICE,

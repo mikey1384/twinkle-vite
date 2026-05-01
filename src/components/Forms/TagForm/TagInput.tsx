@@ -10,6 +10,7 @@ export default function TagInput({
   className,
   dropdownFooter,
   inputRef,
+  inputHeight,
   onClickOutSide,
   loading,
   onAddItem,
@@ -19,6 +20,7 @@ export default function TagInput({
   renderDropdownLabel,
   searchResults = [],
   selectedItems,
+  searchInputFontSize,
   style,
   value
 }: {
@@ -26,6 +28,7 @@ export default function TagInput({
   className?: string;
   dropdownFooter?: any;
   inputRef?: any;
+  inputHeight?: string;
   onClickOutSide: () => any;
   loading?: boolean;
   onAddItem: (item: object) => void;
@@ -35,6 +38,7 @@ export default function TagInput({
   renderDropdownLabel: (item: any) => string;
   searchResults?: { id: number; title: string }[];
   selectedItems: Record<string, { id: number }>;
+  searchInputFontSize?: string;
   style?: React.CSSProperties;
   value: string;
 }) {
@@ -75,6 +79,8 @@ export default function TagInput({
           onClickOutSide={onClickOutSide}
           onSelect={onAddItem}
           placeholder={placeholder}
+          inputFontSize={searchInputFontSize}
+          inputHeight={inputHeight}
           renderItemLabel={renderDropdownLabel}
           searchResults={results}
           value={value}

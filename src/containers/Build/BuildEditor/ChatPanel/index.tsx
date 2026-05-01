@@ -67,6 +67,7 @@ export default function ChatPanel({
   workshopScale = 1,
   preferredCommunicationMode,
   peoplePanel,
+  lumineChatVisibilityControl,
   messages,
   executionPlan,
   scopedPlanQuestion,
@@ -388,7 +389,7 @@ export default function ChatPanel({
             value={activeCommunicationMode}
             options={[
               { value: 'lumine' as const, label: 'Lumine', icon: 'sparkles' },
-              { value: 'people' as const, label: 'People', icon: 'comments' }
+              { value: 'people' as const, label: 'Team', icon: 'comments' }
             ]}
             onChange={handleCommunicationModeChange}
             ariaLabel="Switch communication mode"
@@ -403,6 +404,7 @@ export default function ChatPanel({
           <Header
             copilotPolicy={copilotPolicy}
             aiUsagePolicy={aiUsagePolicy}
+            lumineChatVisibilityControl={lumineChatVisibilityControl}
             pageFeedbackEvents={pageFeedbackEvents}
             twinkleCoins={twinkleCoins}
             purchasingGenerationReset={purchasingGenerationReset}

@@ -631,6 +631,28 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadCollaboratingBuilds({
+      limit = 20,
+      cursor
+    }: {
+      limit?: number;
+      cursor?: string;
+    } = {}) {
+      try {
+        const params: Record<string, any> = { limit };
+        if (cursor) {
+          params.cursor = cursor;
+        }
+        const { data } = await request.get(`${URL}/build/list/collaborating`, {
+          ...auth(),
+          params
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadMyPublicBuildsForPinning() {
       try {
         const { data } = await request.get(
@@ -1088,25 +1110,33 @@ export default function buildRequestHelpers({
 
     async loadPublicBuilds({
       sort = 'recent',
+      scope = 'all',
+      excludeMine = false,
       limit = 20,
       lastId,
       cursor
     }: {
       sort?: 'recent' | 'popular';
+      scope?: 'all' | 'open_source';
+      excludeMine?: boolean;
       limit?: number;
       lastId?: number;
       cursor?: string;
     } = {}) {
       try {
-        const params: Record<string, any> = { sort, limit };
+        const params: Record<string, any> = { sort, scope, limit };
+        if (excludeMine) {
+          params.excludeMine = 1;
+        }
         if (cursor) {
           params.cursor = cursor;
         } else if (lastId) {
           params.lastId = lastId;
         }
         const { data } = cursor
-          ? await request.post(`${URL}/build/public/list`, params)
+          ? await request.post(`${URL}/build/public/list`, params, auth())
           : await request.get(`${URL}/build/public/list`, {
+              ...auth(),
               params
             });
         return data;
@@ -1154,7 +1184,7 @@ export default function buildRequestHelpers({
       visibility
     }: {
       buildId: number;
-      visibility: 'private' | 'collaborators' | 'public';
+      visibility: 'private' | 'collaborators';
     }) {
       try {
         const { data } = await request.patch(
@@ -1221,6 +1251,44 @@ export default function buildRequestHelpers({
       try {
         const { data } = await request.delete(
           `${URL}/build/${buildId}/contributors/${userId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async acceptBuildContributorInvite({
+      buildId,
+      inviteId
+    }: {
+      buildId: number;
+      inviteId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributor-invites/${inviteId}/accept`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async declineBuildContributorInvite({
+      buildId,
+      inviteId
+    }: {
+      buildId: number;
+      inviteId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributor-invites/${inviteId}/decline`,
+          {},
           auth()
         );
         return data;
@@ -1474,6 +1542,31 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async completeBuildContributionMerge({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/complete-merge`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        if (
+          error?.response?.data?.code ===
+          'build_contribution_conflict_markers_remaining'
+        ) {
+          return error.response.data;
+        }
         return handleError(error);
       }
     },

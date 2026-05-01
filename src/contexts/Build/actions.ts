@@ -2,7 +2,9 @@ import React from 'react';
 import {
   BuildAction,
   BuildLiveRunActionPayload,
-  BuildRuntimeVerifyResultPayload
+  BuildRuntimeVerifyResultPayload,
+  BuildStudioActionPayload,
+  BuildStudioTab
 } from './reducer';
 
 export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
@@ -65,6 +67,66 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'SET_BUILD_WORKSPACE',
         buildRun
+      });
+    },
+    onSetBuildStudioActiveTab(activeTab: BuildStudioTab) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_ACTIVE_TAB',
+        buildStudio: { activeTab }
+      });
+    },
+    onSetBuildStudioMyBuilds({
+      builds,
+      userId
+    }: {
+      builds: any[];
+      userId?: number | null;
+    }) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_MY_BUILDS',
+        buildStudio: { builds, userId }
+      });
+    },
+    onPatchBuildStudioMyBuild({
+      build,
+      userId
+    }: {
+      build: any;
+      userId?: number | null;
+    }) {
+      return dispatch({
+        type: 'PATCH_BUILD_STUDIO_MY_BUILD',
+        buildStudio: { build, userId }
+      });
+    },
+    onRemoveBuildStudioMyBuild({
+      buildId,
+      userId
+    }: {
+      buildId: number;
+      userId?: number | null;
+    }) {
+      return dispatch({
+        type: 'REMOVE_BUILD_STUDIO_MY_BUILD',
+        buildStudio: { buildId, userId }
+      });
+    },
+    onSetBuildStudioBrowseBuilds(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_BROWSE_BUILDS',
+        buildStudio
+      });
+    },
+    onAppendBuildStudioBrowseBuilds(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'APPEND_BUILD_STUDIO_BROWSE_BUILDS',
+        buildStudio
+      });
+    },
+    onSetBuildStudioScroll(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_SCROLL',
+        buildStudio
       });
     },
     onPublishBuildRuntimeVerifyResult(

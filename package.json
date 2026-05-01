@@ -73,7 +73,6 @@
     "stockfish.js": "^10.0.2",
     "stream": "^0.0.3",
     "style-to-object": "^1.0.8",
-    "use-context-selector": "^2.0.0",
     "util": "^0.12.5",
     "uuid": "^11.1.0",
     "video.js": "^8.22.0"

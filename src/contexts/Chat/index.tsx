@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useReducer, useMemo } from 'react';
-import { createContext } from 'use-context-selector';
+import { createContext } from '../selectableContext';
 import ChatActions from './actions';
 import ChatReducer from './reducer';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';

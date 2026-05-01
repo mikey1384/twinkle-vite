@@ -16,6 +16,7 @@ export default function SearchInput({
   autoFocus,
   className,
   innerRef,
+  inputFontSize,
   inputHeight,
   onChange,
   placeholder,
@@ -35,6 +36,7 @@ export default function SearchInput({
   autoFocus?: boolean;
   className?: string;
   innerRef?: RefObject<any>;
+  inputFontSize?: string;
   inputHeight?: string;
   onChange: (text: string) => void;
   placeholder?: string;
@@ -82,7 +84,7 @@ export default function SearchInput({
         width: 100%;
         svg,
         input {
-          font-size: 2.3rem;
+          font-size: ${inputFontSize || '2.3rem'};
         }
       `} ${className || ''}`}
       ref={SearchInputRef}

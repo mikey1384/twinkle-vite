@@ -252,6 +252,20 @@ const rootContentCSS = css`
       text-transform: uppercase;
       letter-spacing: 0;
     }
+    .build-collaborator-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.7rem;
+      border: 1px solid rgba(34, 197, 94, 0.28);
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #15803d;
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
     .description {
       position: relative;
       z-index: 1;
@@ -388,6 +402,11 @@ const rootContentCSS = css`
         padding: 0.32rem 0.55rem;
         font-size: 0.82rem;
       }
+      .build-collaborator-badge {
+        gap: 0.3rem;
+        padding: 0.3rem 0.5rem;
+        font-size: 0.82rem;
+      }
       .description {
         font-size: 0.9rem;
         line-height: 1.35;
@@ -439,6 +458,7 @@ export default function RootContent({
   actualTitle,
   actualDescription,
   content,
+  collaboratorCount,
   contentType,
   contentId,
   description,
@@ -464,12 +484,16 @@ export default function RootContent({
   title,
   topic,
   uploader,
+  sourceBuildId,
+  contributionStatus,
+  rootBuildSourceBuildId,
   userId,
   itemSelectedColor,
   itemSelectedOpacity
 }: {
   actualTitle?: string;
   actualDescription?: string;
+  collaboratorCount?: number;
   content: string;
   contentType: string;
   contentId: number;
@@ -498,6 +522,9 @@ export default function RootContent({
   title: string;
   topic?: string;
   uploader: { id: number; username: string; profileTheme?: string | null };
+  sourceBuildId?: number | null;
+  contributionStatus?: string | null;
+  rootBuildSourceBuildId?: number | null;
   userId?: number;
   itemSelectedColor?: string;
   itemSelectedOpacity?: number;
@@ -606,6 +633,7 @@ export default function RootContent({
       }}
     >
       <ContentDetails
+        collaboratorCount={collaboratorCount}
         isListening={isListening}
         contentType={contentType}
         description={description}
@@ -614,6 +642,9 @@ export default function RootContent({
         topic={topic}
         title={title}
         uploader={uploader}
+        sourceBuildId={sourceBuildId}
+        contributionStatus={contributionStatus}
+        rootBuildSourceBuildId={rootBuildSourceBuildId}
         contentId={contentId}
         thumbUrl={thumbUrl}
         actualTitle={actualTitle}

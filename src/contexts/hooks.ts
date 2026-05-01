@@ -1,4 +1,4 @@
-import { useContextSelector } from 'use-context-selector';
+import { useContextSelector } from './selectableContext';
 import { AppContext } from './AppContext';
 import { BuildContext } from './Build';
 import { ChatContext } from './Chat';

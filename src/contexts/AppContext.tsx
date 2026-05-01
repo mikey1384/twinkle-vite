@@ -1,5 +1,5 @@
 import React, { useReducer, ReactNode, useCallback, useMemo } from 'react';
-import { createContext } from 'use-context-selector';
+import { createContext } from './selectableContext';
 import UserActions from './User/actions';
 import UserReducer from './User/reducer';
 import requestHelpers from './requestHelpers';

@@ -3,20 +3,11 @@ import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { removeLineBreaks, truncateTopic } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { getBuildDisplayTitle } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
 
 export default function ContentLink({
   style,
-  content: {
-    byUser,
-    id,
-    content,
-    missionType,
-    rootMissionType,
-    title,
-    topic,
-    username,
-    word
-  },
+  content: contentObj,
   contentType,
   label,
   rootType: _rootType = 'mission',
@@ -29,6 +20,17 @@ export default function ContentLink({
   rootType?: string;
   theme?: string;
 }) {
+  const {
+    byUser,
+    id,
+    content,
+    missionType,
+    rootMissionType,
+    title,
+    topic,
+    username,
+    word
+  } = contentObj || {};
   const truncatedTopic = useMemo(() => {
     return topic ? truncateTopic(topic) : '';
   }, [topic]);
@@ -84,10 +86,22 @@ export default function ContentLink({
   }, [contentType, id, isPassType, missionType, rootMissionType, username]);
 
   const appliedLabel = useMemo(() => {
+    if (contentType === 'build') {
+      return label || getBuildDisplayTitle(contentObj || {});
+    }
     return !label && contentType === 'user'
       ? username
       : label || title || word || content || truncatedTopic;
-  }, [content, contentType, label, title, truncatedTopic, username, word]);
+  }, [
+    content,
+    contentObj,
+    contentType,
+    label,
+    title,
+    truncatedTopic,
+    username,
+    word
+  ]);
 
   return appliedLabel ? (
     <Link

@@ -82,6 +82,7 @@ function ContentListItem({
     actualTitle,
     actualDescription,
     content,
+    collaboratorCount,
     description,
     fileName,
     filePath,
@@ -94,6 +95,9 @@ function ContentListItem({
     title,
     thumbUrl,
     thumbnailUrl,
+    sourceBuildId,
+    contributionStatus,
+    rootBuildSourceBuildId,
     uploader = {}
   } = currentContent;
   const displayThumbUrl = thumbUrl || thumbnailUrl;
@@ -143,6 +147,7 @@ function ContentListItem({
               content={content}
               contentId={contentId}
               contentType={contentType}
+              collaboratorCount={collaboratorCount}
               description={description}
               fileName={fileName}
               filePath={filePath}
@@ -170,6 +175,9 @@ function ContentListItem({
               title={title}
               topic={topic}
               uploader={uploader}
+              sourceBuildId={sourceBuildId}
+              contributionStatus={contributionStatus}
+              rootBuildSourceBuildId={rootBuildSourceBuildId}
               userId={userId}
             />
           )}

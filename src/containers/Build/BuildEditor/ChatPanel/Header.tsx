@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import AiEnergyCard from '~/components/AiEnergyCard';
+import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import Modal from '~/components/Modal';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   BuildAiUsagePolicy,
   BuildCopilotPolicy,
+  BuildLumineChatVisibility,
   BuildRunEvent,
   LimitProgressItem
 } from './types';
@@ -30,6 +33,14 @@ const headerClass = css`
   }
 `;
 
+const headerTopRowClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+`;
+
 const headerTitleClass = css`
   display: inline-flex;
   align-items: center;
@@ -42,6 +53,15 @@ const headerTitleClass = css`
 interface HeaderProps {
   copilotPolicy: BuildCopilotPolicy | null;
   aiUsagePolicy: BuildAiUsagePolicy | null;
+  lumineChatVisibilityControl?: {
+    value: BuildLumineChatVisibility;
+    savedValue: BuildLumineChatVisibility;
+    loading: boolean;
+    error: string;
+    onSave: (
+      value: BuildLumineChatVisibility
+    ) => Promise<boolean | void> | boolean | void;
+  } | null;
   pageFeedbackEvents: BuildRunEvent[];
   twinkleCoins: number;
   purchasingGenerationReset: boolean;
@@ -59,6 +79,7 @@ interface HeaderProps {
 export default function Header({
   copilotPolicy,
   aiUsagePolicy,
+  lumineChatVisibilityControl,
   pageFeedbackEvents,
   twinkleCoins,
   purchasingGenerationReset,
@@ -130,9 +151,16 @@ export default function Header({
 
   return (
     <div className={headerClass}>
-      <div className={headerTitleClass}>
-        <Icon icon="sparkles" />
-        Lumine
+      <div className={headerTopRowClass}>
+        <div className={headerTitleClass}>
+          <Icon icon="sparkles" />
+          Lumine
+        </div>
+        {lumineChatVisibilityControl ? (
+          <LumineChatVisibilitySettings
+            control={lumineChatVisibilityControl}
+          />
+        ) : null}
       </div>
       {copilotPolicy ? (
         <div
@@ -382,6 +410,274 @@ export default function Header({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function LumineChatVisibilitySettings({
+  control
+}: {
+  control: {
+    value: BuildLumineChatVisibility;
+    savedValue: BuildLumineChatVisibility;
+    loading: boolean;
+    error: string;
+    onSave: (
+      value: BuildLumineChatVisibility
+    ) => Promise<boolean | void> | boolean | void;
+  };
+}) {
+  const [modalShown, setModalShown] = useState(false);
+  const [draftValue, setDraftValue] = useState<BuildLumineChatVisibility>(
+    control.value
+  );
+  const selectedOption = getLumineChatVisibilityOption(control.value);
+  const changed = draftValue !== control.savedValue;
+
+  useEffect(() => {
+    if (!modalShown) {
+      setDraftValue(control.value);
+    }
+  }, [control.value, modalShown]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={handleOpenModal}
+        className={css`
+          margin-left: auto;
+          border: 1px solid rgba(36, 99, 235, 0.22);
+          background: #fff;
+          color: var(--chat-text);
+          border-radius: 999px;
+          min-height: 2.45rem;
+          padding: 0.35rem 0.85rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.45rem;
+          font-family: inherit;
+          font-size: var(--build-workshop-small-font-size);
+          font-weight: 900;
+          cursor: pointer;
+          transition:
+            border-color 0.15s ease,
+            background-color 0.15s ease,
+            transform 0.15s ease;
+          &:hover,
+          &:focus-visible {
+            border-color: var(--theme-border);
+            background: rgba(65, 140, 235, 0.08);
+            transform: translateY(-1px);
+            outline: none;
+          }
+        `}
+        aria-label="Change Lumine chat sharing"
+      >
+        <span
+          className={css`
+            opacity: 0.72;
+          `}
+        >
+          Share Lumine chat with
+        </span>
+        <span
+          className={css`
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: #1d4ed8;
+          `}
+        >
+          <Icon icon={selectedOption.icon} />
+          {selectedOption.title}
+        </span>
+      </button>
+
+      {modalShown ? (
+        <Modal
+          modalKey="LumineChatVisibilitySettingsModal"
+          isOpen
+          onClose={control.loading ? () => {} : handleCloseModal}
+          closeOnBackdropClick={!control.loading}
+          title="Lumine Chat Sharing"
+          size="sm"
+          footer={
+            <div>
+              <Button
+                variant="ghost"
+                disabled={control.loading}
+                onClick={handleCloseModal}
+                style={{ marginRight: '0.7rem' }}
+              >
+                Cancel
+              </Button>
+              <Button
+                color="logoBlue"
+                loading={control.loading}
+                disabled={control.loading || !changed}
+                onClick={handleSave}
+              >
+                Save
+              </Button>
+            </div>
+          }
+        >
+          <div
+            className={css`
+              display: grid;
+              gap: 0.7rem;
+            `}
+          >
+            {lumineChatVisibilityOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                disabled={control.loading}
+                onClick={() => setDraftValue(option.value)}
+                className={css`
+                  width: 100%;
+                  border: 1px solid
+                    ${draftValue === option.value
+                      ? '#1d4ed8'
+                      : 'var(--ui-border)'};
+                  border-radius: 8px;
+                  background: ${draftValue === option.value
+                    ? 'rgba(65, 140, 235, 0.12)'
+                    : '#fff'};
+                  color: var(--chat-text);
+                  padding: 0.85rem 0.9rem;
+                  display: flex;
+                  align-items: flex-start;
+                  gap: 0.7rem;
+                  text-align: left;
+                  font-family: inherit;
+                  cursor: ${control.loading ? 'not-allowed' : 'pointer'};
+                  transition:
+                    border-color 0.15s ease,
+                    background-color 0.15s ease;
+                  &:hover:not(:disabled),
+                  &:focus-visible:not(:disabled) {
+                    border-color: #1d4ed8;
+                    background: rgba(65, 140, 235, 0.08);
+                    outline: none;
+                  }
+                `}
+              >
+                <span
+                  className={css`
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 999px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(65, 140, 235, 0.12);
+                    color: #1d4ed8;
+                    flex: 0 0 auto;
+                  `}
+                >
+                  <Icon icon={option.icon} />
+                </span>
+                <span
+                  className={css`
+                    display: grid;
+                    gap: 0.2rem;
+                    min-width: 0;
+                  `}
+                >
+                  <span
+                    className={css`
+                      font-size: 1rem;
+                      font-weight: 900;
+                    `}
+                  >
+                    {option.title}
+                  </span>
+                  <span
+                    className={css`
+                      color: ${Color.darkGray()};
+                      font-size: 0.92rem;
+                      line-height: 1.35;
+                    `}
+                  >
+                    {option.description}
+                  </span>
+                </span>
+              </button>
+            ))}
+            {control.error ? (
+              <span
+                className={css`
+                  color: #be123c;
+                  font-size: var(--build-workshop-small-font-size);
+                  font-weight: 800;
+                `}
+              >
+                {control.error}
+              </span>
+            ) : null}
+          </div>
+        </Modal>
+      ) : null}
+      {!modalShown && control.error ? (
+        <div
+          className={css`
+            text-align: right;
+            color: #be123c;
+            font-size: var(--build-workshop-small-font-size);
+            font-weight: 800;
+          `}
+        >
+          {control.error}
+        </div>
+      ) : null}
+    </>
+  );
+
+  function handleOpenModal() {
+    setDraftValue(control.value);
+    setModalShown(true);
+  }
+
+  function handleCloseModal() {
+    if (control.loading) return;
+    setDraftValue(control.value);
+    setModalShown(false);
+  }
+
+  async function handleSave() {
+    if (control.loading || !changed) return;
+    const result = await control.onSave(draftValue);
+    if (result === false) return;
+    setModalShown(false);
+  }
+}
+
+const lumineChatVisibilityOptions: Array<{
+  value: BuildLumineChatVisibility;
+  title: string;
+  description: string;
+  icon: string;
+}> = [
+  {
+    value: 'private',
+    title: 'Nobody',
+    description: 'Only you can see your Lumine chat history.',
+    icon: 'lock'
+  },
+  {
+    value: 'collaborators',
+    title: 'Team',
+    description: 'Project collaborators can review the transcript.',
+    icon: 'users'
+  }
+];
+
+function getLumineChatVisibilityOption(value: BuildLumineChatVisibility) {
+  return (
+    lumineChatVisibilityOptions.find((option) => option.value === value) ||
+    lumineChatVisibilityOptions[0]
   );
 }
 

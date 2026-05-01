@@ -24,6 +24,9 @@ function TagForm({
   onSubmit,
   renderDropdownLabel,
   renderTagLabel,
+  searchInputFontSize,
+  searchInputHeight,
+  searchInputTopMargin,
   searchPlaceholder,
   subTitle,
   style,
@@ -47,6 +50,9 @@ function TagForm({
   onSubmit?: () => void;
   renderDropdownLabel: (item: any) => any;
   renderTagLabel?: (label: string) => string;
+  searchInputFontSize?: string;
+  searchInputHeight?: string;
+  searchInputTopMargin?: string;
   searchPlaceholder?: string;
   subTitle?: string;
   style?: CSSProperties;
@@ -101,7 +107,12 @@ function TagForm({
           {(!maxItems || selectedItems.length < maxItems) && (
             <TagInput
               dropdownFooter={dropdownFooter}
-              style={{ marginTop: selectedItems.length === 0 ? '1rem' : 0 }}
+              style={{
+                marginTop:
+                  selectedItems.length === 0
+                    ? searchInputTopMargin ?? '1rem'
+                    : 0
+              }}
               autoFocus={autoFocus}
               inputRef={inputRef}
               loading={searching}
@@ -113,10 +124,12 @@ function TagForm({
               }}
               onNotFound={onNotFound}
               placeholder={searchPlaceholder}
+              searchInputFontSize={searchInputFontSize}
               renderDropdownLabel={renderDropdownLabel}
               searchResults={filteredResults}
               selectedItems={objectify(selectedItems)}
               onAddItem={handleAddItem}
+              inputHeight={searchInputHeight}
             />
           )}
         </div>

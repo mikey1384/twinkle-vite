@@ -15,6 +15,8 @@ interface ModalsProps {
   buildChatDraftMessage: string;
   buildChatUploadFileObj: File | File[] | null;
   buildChatUploadModalShown: boolean;
+  canEditMetadata: boolean;
+  canShowLumineChatVisibilitySetting: boolean;
   buildDescription: string | null;
   buildTitle: string;
   collaborationSettingsModalShown: boolean;
@@ -51,6 +53,8 @@ export default function Modals({
   buildChatDraftMessage,
   buildChatUploadFileObj,
   buildChatUploadModalShown,
+  canEditMetadata,
+  canShowLumineChatVisibilitySetting,
   buildDescription,
   buildTitle,
   collaborationSettingsModalShown,
@@ -98,7 +102,7 @@ export default function Modals({
           onHide={onHideBuildChatUploadFileModal}
         />
       ) : null}
-      {descriptionModalShown && isOwner ? (
+      {descriptionModalShown && canEditMetadata ? (
         <BuildDescriptionModal
           initialTitle={buildTitle}
           initialDescription={buildDescription}
@@ -110,6 +114,9 @@ export default function Modals({
       {collaborationSettingsModalShown && isOwner ? (
         <BuildCollaborationSettingsModal
           build={build}
+          canShowLumineChatVisibilitySetting={
+            canShowLumineChatVisibilitySetting
+          }
           onBuildPatch={onBuildCollaborationPatch}
           onHide={onHideCollaborationSettingsModal}
         />

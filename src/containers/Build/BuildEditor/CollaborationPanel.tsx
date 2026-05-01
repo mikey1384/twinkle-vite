@@ -1,18 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
+import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import BuildContributorInvitePicker from './BuildContributorInvitePicker';
 
-type BuildCollaborationMode = 'private' | 'contribution' | 'open_source';
+type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
-type BuildLumineChatVisibility = 'private' | 'collaborators' | 'public';
+type BuildLumineChatVisibility = 'private' | 'collaborators';
 type BuildContributionStatus =
   | 'none'
   | 'draft'
   | 'submitted'
+  | 'merging'
   | 'merged'
   | 'rejected'
   | 'withdrawn';
@@ -20,15 +22,19 @@ type BuildContributionStatus =
 interface BuildContributionFileDiff {
   path: string;
   status: 'added' | 'updated' | 'deleted';
+  baseContent?: string;
   currentContent?: string;
   contributionContent?: string;
+  mergeStatus?: 'clean' | 'conflict' | 'unchanged';
+  conflictType?: string;
+  autoMergedContent?: string;
 }
 
 interface BuildLike {
   id: number;
   userId: number;
   title: string;
-  collaborationMode?: BuildCollaborationMode;
+  collaborationMode?: BuildCollaborationMode | 'contribution';
   contributionAccess?: BuildContributionAccess;
   contributionRootBuildId?: number | null;
   contributionStatus?: BuildContributionStatus;
@@ -37,7 +43,7 @@ interface BuildLike {
   username?: string;
   profilePicUrl?: string | null;
   code?: string | null;
-  lumineChatVisibility?: BuildLumineChatVisibility;
+  lumineChatVisibility?: BuildLumineChatVisibility | 'public';
 }
 
 interface ContributionComment {
@@ -53,15 +59,18 @@ interface BuildContributorInvite {
   userId: number;
   username?: string | null;
   profilePicUrl?: string | null;
+  acceptedAt?: number | null;
+  declinedAt?: number | null;
 }
 
 interface BuildCollaborationRequest {
   id: number;
+  inviteId?: number;
   buildId: number;
   requesterUserId: number;
   ownerUserId: number;
   message: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'canceled';
+  status: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
   ownerHidden?: number;
   username?: string | null;
   profilePicUrl?: string | null;
@@ -85,6 +94,7 @@ interface CollaborationPanelProps {
     build?: Record<string, any> | null;
     projectFiles?: Array<{ path: string; content?: string }> | null;
   }) => void;
+  onAcceptedContributorCountChange?: (count: number) => void;
   onBeforeContributionAction?: (action: 'submit' | 'merge') => Promise<boolean>;
   onOpenCollaborationSettings?: () => void;
 }
@@ -262,7 +272,7 @@ const detailClass = css`
 const collaborationPromptClass = css`
   border: 1px solid rgba(65, 140, 235, 0.3);
   border-radius: 8px;
-  background: linear-gradient(180deg, #ffffff 0%, rgba(65, 140, 235, 0.06) 100%);
+  background: #fff;
   padding: 0.9rem;
   display: flex;
   flex-direction: column;
@@ -339,6 +349,17 @@ const codePreviewClass = css`
   word-break: break-word;
 `;
 
+const conflictBadgeClass = css`
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.18rem 0.48rem;
+  background: rgba(244, 63, 94, 0.12);
+  color: #be123c;
+  font-size: 0.72rem;
+  font-weight: 900;
+`;
+
 const commentListClass = css`
   display: flex;
   flex-direction: column;
@@ -356,16 +377,27 @@ const commentActionsClass = css`
 const commentClass = css`
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
-  padding: 0.6rem;
+  padding: 0.65rem 0.75rem;
   background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 `;
 
 const commentHeaderClass = css`
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 0.7rem;
   font-weight: 900;
   font-size: 0.82rem;
+`;
+
+const commentBodyClass = css`
+  color: #111827;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
 `;
 
 const textareaClass = css`
@@ -388,25 +420,6 @@ const errorClass = css`
   font-size: 0.86rem;
 `;
 
-const invitePillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  border: 1px solid rgba(65, 140, 235, 0.28);
-  border-radius: 999px;
-  background: rgba(65, 140, 235, 0.08);
-  padding: 0.35rem 0.45rem 0.35rem 0.7rem;
-  font-weight: 900;
-  button {
-    border: 0;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.08);
-    color: inherit;
-    font-weight: 900;
-    cursor: pointer;
-  }
-`;
-
 const requestCardClass = css`
   border: 1px solid rgba(236, 72, 153, 0.28);
   border-radius: 8px;
@@ -423,34 +436,6 @@ const requestMessageClass = css`
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
-`;
-
-const visibilityGridClass = css`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.45rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const visibilityButtonClass = css`
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--chat-text);
-  padding: 0.65rem;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-weight: 900;
-  cursor: pointer;
-  text-align: left;
-  &:hover,
-  &.selected {
-    border-color: rgba(65, 140, 235, 0.42);
-    background: rgba(65, 140, 235, 0.08);
-  }
 `;
 
 const lumineHistoryListClass = css`
@@ -495,15 +480,14 @@ export default function CollaborationPanel({
   isOwner,
   onBuildPatch,
   onCanonicalMerge,
+  onAcceptedContributorCountChange,
   onBeforeContributionAction,
   onOpenCollaborationSettings
 }: CollaborationPanelProps) {
+  const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const updateBuildCollaboration = useAppContext(
     (v) => v.requestHelpers.updateBuildCollaboration
-  );
-  const updateBuildLumineChatVisibility = useAppContext(
-    (v) => v.requestHelpers.updateBuildLumineChatVisibility
   );
   const loadBuildLumineChatHistory = useAppContext(
     (v) => v.requestHelpers.loadBuildLumineChatHistory
@@ -529,20 +513,29 @@ export default function CollaborationPanel({
   const revokeBuildContributor = useAppContext(
     (v) => v.requestHelpers.revokeBuildContributor
   );
+  const loadMyBuildCollaborationRequest = useAppContext(
+    (v) => v.requestHelpers.loadMyBuildCollaborationRequest
+  );
+  const acceptBuildContributorInvite = useAppContext(
+    (v) => v.requestHelpers.acceptBuildContributorInvite
+  );
+  const declineBuildContributorInvite = useAppContext(
+    (v) => v.requestHelpers.declineBuildContributorInvite
+  );
+  const createBuildContributionFork = useAppContext(
+    (v) => v.requestHelpers.createBuildContributionFork
+  );
   const loadBuildContribution = useAppContext(
     (v) => v.requestHelpers.loadBuildContribution
-  );
-  const submitBuildContribution = useAppContext(
-    (v) => v.requestHelpers.submitBuildContribution
-  );
-  const reopenBuildContribution = useAppContext(
-    (v) => v.requestHelpers.reopenBuildContribution
   );
   const rejectBuildContribution = useAppContext(
     (v) => v.requestHelpers.rejectBuildContribution
   );
   const mergeBuildContribution = useAppContext(
     (v) => v.requestHelpers.mergeBuildContribution
+  );
+  const completeBuildContributionMerge = useAppContext(
+    (v) => v.requestHelpers.completeBuildContributionMerge
   );
   const loadBuildContributionComments = useAppContext(
     (v) => v.requestHelpers.loadBuildContributionComments
@@ -566,18 +559,6 @@ export default function CollaborationPanel({
     useState<BuildCollaborationMode>(
       normalizeCollaborationMode(build.collaborationMode)
     );
-  const [contributionAccess, setContributionAccess] =
-    useState<BuildContributionAccess>(
-      normalizeContributionAccess(build.contributionAccess)
-    );
-  const [lumineChatVisibility, setLumineChatVisibility] =
-    useState<BuildLumineChatVisibility>(
-      normalizeLumineChatVisibility(build.lumineChatVisibility)
-    );
-  const [savingLumineChatVisibility, setSavingLumineChatVisibility] =
-    useState(false);
-  const [lumineChatVisibilityError, setLumineChatVisibilityError] =
-    useState('');
   const [sharedLumineChatMessages, setSharedLumineChatMessages] = useState<
     SharedLumineChatMessage[]
   >([]);
@@ -592,6 +573,10 @@ export default function CollaborationPanel({
   const [collaborationRequests, setCollaborationRequests] = useState<
     BuildCollaborationRequest[]
   >([]);
+  const [myCollaborationRequest, setMyCollaborationRequest] =
+    useState<BuildCollaborationRequest | null>(null);
+  const [myCollaborationRequestLoading, setMyCollaborationRequestLoading] =
+    useState(false);
   const [showHiddenCollaborationRequests, setShowHiddenCollaborationRequests] =
     useState(false);
   const [loadingCollaborationRequests, setLoadingCollaborationRequests] =
@@ -619,6 +604,16 @@ export default function CollaborationPanel({
     () => changedFiles.find((file) => file.path === previewPath) || null,
     [changedFiles, previewPath]
   );
+  const reviewContributions = useMemo(
+    () =>
+      contributions.filter((contribution) => {
+        const status = normalizeContributionStatus(
+          contribution.contributionStatus
+        );
+        return status !== 'none' && status !== 'draft';
+      }),
+    [contributions]
+  );
   const sharedLumineChatTarget = useMemo(() => {
     if (isOwner && !isContributionFork && selectedContribution) {
       return selectedContribution;
@@ -631,26 +626,19 @@ export default function CollaborationPanel({
   const sharedLumineChatTargetVisibility = normalizeLumineChatVisibility(
     sharedLumineChatTarget?.lumineChatVisibility
   );
-  const lumineChatVisibilityChanged =
-    lumineChatVisibility !==
-    normalizeLumineChatVisibility(build.lumineChatVisibility);
-  const canInviteContributors = collaborationMode !== 'private';
-  const contributorsCardShown =
-    canInviteContributors || contributors.length > 0;
+  const acceptedContributorCount = useMemo(
+    () =>
+      contributors.filter(
+        (contributor) => Number(contributor.acceptedAt || 0) > 0
+      ).length,
+    [contributors]
+  );
+  const canInviteContributors = true;
+  const contributorsCardShown = true;
 
   useEffect(() => {
     setCollaborationMode(normalizeCollaborationMode(build.collaborationMode));
-    setContributionAccess(
-      normalizeContributionAccess(build.contributionAccess)
-    );
-    setLumineChatVisibility(
-      normalizeLumineChatVisibility(build.lumineChatVisibility)
-    );
-  }, [
-    build.collaborationMode,
-    build.contributionAccess,
-    build.lumineChatVisibility
-  ]);
+  }, [build.collaborationMode]);
 
   useEffect(() => {
     if (
@@ -673,6 +661,9 @@ export default function CollaborationPanel({
       void reloadCollaborationRequests(showHiddenCollaborationRequests);
       void reloadContributors();
     }
+    if (!isOwner && !isContributionFork) {
+      void reloadMyCollaborationRequest();
+    }
     if (isContributionFork && rootBuildId && contributionBuildId) {
       setSelectedContributionId(contributionBuildId);
       void reloadContributionDetail(contributionBuildId);
@@ -690,7 +681,8 @@ export default function CollaborationPanel({
     isContributionFork,
     isOwner,
     rootBuildId,
-    showHiddenCollaborationRequests
+    showHiddenCollaborationRequests,
+    userId
   ]);
 
   if (!canShowPanel) return null;
@@ -707,7 +699,7 @@ export default function CollaborationPanel({
             <>
               <span className={statusPillClass}>
                 <Icon icon="comments" />
-                People
+                Team
               </span>
             </>
           ) : isOwner && !isContributionFork ? (
@@ -727,25 +719,8 @@ export default function CollaborationPanel({
                     )
                   }
                 >
-                  <option value="private">Private</option>
-                  <option value="contribution">Open for contribution</option>
+                  <option value="private">Private Project</option>
                   <option value="open_source">Open source</option>
-                </select>
-              </label>
-              <label className={labelClass}>
-                Contributors
-                <select
-                  className={selectClass}
-                  value={contributionAccess}
-                  onChange={(event) =>
-                    setContributionAccess(
-                      normalizeContributionAccess(event.target.value)
-                    )
-                  }
-                  disabled={collaborationMode === 'private'}
-                >
-                  <option value="anyone">Anyone</option>
-                  <option value="invite_only">Invite-only</option>
                 </select>
               </label>
               <GameCTAButton
@@ -775,51 +750,18 @@ export default function CollaborationPanel({
                   Submitted forks are locked.
                 </span>
               ) : null}
-              {isOwner ? (
-                <>
-                  {normalizeContributionStatus(build.contributionStatus) ===
-                  'draft' ? (
-                    <GameCTAButton
-                      variant="success"
-                      size="sm"
-                      icon="paper-plane"
-                      loading={actionLoading === 'submit'}
-                      disabled={Boolean(actionLoading)}
-                      onClick={handleSubmitContribution}
-                    >
-                      Submit
-                    </GameCTAButton>
-                  ) : null}
-                  {normalizeContributionStatus(build.contributionStatus) ===
-                  'submitted' ? (
-                    <GameCTAButton
-                      variant="neutral"
-                      size="sm"
-                      icon="undo"
-                      loading={actionLoading === 'reopen'}
-                      disabled={Boolean(actionLoading)}
-                      onClick={handleReopenContribution}
-                    >
-                      Reopen Draft
-                    </GameCTAButton>
-                  ) : null}
-                </>
-              ) : null}
-              {actionError ? (
-                <span className={errorClass}>{actionError}</span>
-              ) : null}
             </>
           )}
           <span className={summaryPillClass}>
             <Icon icon="comment" />
             {comments.length}
           </span>
-          <span className={summaryPillClass}>
-            <Icon icon="code-branch" />
-            {isOwner && !isContributionFork
-              ? contributions.length
-              : changedFiles.length}
-          </span>
+          {isOwner && !isContributionFork ? (
+            <span className={summaryPillClass}>
+              <Icon icon="code-branch" />
+              {reviewContributions.length}
+            </span>
+          ) : null}
         </div>
         {!embedded ? (
           <div className={toolbarActionsClass}>
@@ -843,15 +785,12 @@ export default function CollaborationPanel({
             <>
               {isOwner && !isContributionFork ? (
                 <>
-                  {renderLumineChatVisibilityCard()}
                   {renderCollaborationRequests()}
                   {contributorsCardShown ? renderInviteCard() : null}
                   {renderOwnerContributions(true)}
                 </>
               ) : (
                 <div className={splitClass}>
-                  {renderLumineChatVisibilityCard()}
-                  {renderContributionDetail(false)}
                   {renderSharedLumineChatHistoryCard()}
                   {renderComments()}
                 </div>
@@ -865,15 +804,12 @@ export default function CollaborationPanel({
 
   function renderEmbeddedBody() {
     if (isOwner && !isContributionFork) {
-      const mode = normalizeCollaborationMode(build.collaborationMode);
       const ownerContributionsShown =
-        mode !== 'private' ||
         loadingContributions ||
-        contributions.length > 0 ||
+        reviewContributions.length > 0 ||
         Boolean(selectedContribution);
       return (
         <div className={embeddedBodyStackClass}>
-          {renderLumineChatVisibilityCard()}
           {renderComments()}
           {renderCollaborationRequests()}
           {renderCollaborationPromptCard()}
@@ -885,6 +821,7 @@ export default function CollaborationPanel({
     if (!isContributionFork) {
       return (
         <div className={embeddedBodyStackClass}>
+          {renderViewerInviteCard()}
           {renderSharedLumineChatHistoryCard()}
           {renderComments()}
         </div>
@@ -892,79 +829,8 @@ export default function CollaborationPanel({
     }
     return (
       <div className={embeddedBodyStackClass}>
-        {renderLumineChatVisibilityCard()}
-        {renderContributionActionsCard()}
         {renderSharedLumineChatHistoryCard()}
         {renderComments()}
-        {renderContributionDetail(false)}
-      </div>
-    );
-  }
-
-  function renderLumineChatVisibilityCard() {
-    if (!isOwner) return null;
-    return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>Lumine chat history</strong>
-          <span className={mutedTextClass}>
-            Choose who can review your transcript.
-          </span>
-        </div>
-        <div className={visibilityGridClass}>
-          {(
-            [
-              {
-                value: 'private',
-                icon: 'lock',
-                label: 'Private'
-              },
-              {
-                value: 'collaborators',
-                icon: 'users',
-                label: 'Collaborators'
-              },
-              {
-                value: 'public',
-                icon: 'eye',
-                label: 'Public'
-              }
-            ] as Array<{
-              value: BuildLumineChatVisibility;
-              icon: string;
-              label: string;
-            }>
-          ).map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`${visibilityButtonClass}${
-                lumineChatVisibility === option.value ? ' selected' : ''
-              }`}
-              onClick={() => setLumineChatVisibility(option.value)}
-            >
-              <Icon icon={option.icon} />
-              <span>{option.label}</span>
-            </button>
-          ))}
-        </div>
-        <div className={rowClass}>
-          <GameCTAButton
-            variant="logoBlue"
-            size="sm"
-            icon="save"
-            loading={savingLumineChatVisibility}
-            disabled={
-              savingLumineChatVisibility || !lumineChatVisibilityChanged
-            }
-            onClick={handleSaveLumineChatVisibility}
-          >
-            Save History Setting
-          </GameCTAButton>
-          {lumineChatVisibilityError ? (
-            <span className={errorClass}>{lumineChatVisibilityError}</span>
-          ) : null}
-        </div>
       </div>
     );
   }
@@ -1022,19 +888,22 @@ export default function CollaborationPanel({
   }
 
   function renderCollaborationPromptCard() {
+    if (acceptedContributorCount > 0) {
+      return null;
+    }
     const mode = normalizeCollaborationMode(build.collaborationMode);
     const isPrivate = mode === 'private';
     const isOpenSource = mode === 'open_source';
     const title = isPrivate
-      ? 'Want to work on this project with other people?'
+      ? 'This project is private.'
       : isOpenSource
         ? 'This project is open source.'
-        : 'This project accepts contribution forks.';
+        : 'This project uses invite-only collaboration.';
     const description = isPrivate
-      ? ''
+      ? 'Invite collaborators to discuss and contribute in the team workspace.'
       : isOpenSource
         ? 'People can fork published copies, and invited collaborators can still contribute to this original project.'
-        : 'People can create project-scoped forks, discuss changes, and send them back for review.';
+        : 'Invited collaborators can create project-scoped forks, discuss changes, and send them back for review.';
     return (
       <div className={collaborationPromptClass}>
         <div className={collaborationPromptTitleClass}>
@@ -1065,36 +934,87 @@ export default function CollaborationPanel({
     return (
       <div className={detailClass}>
         <div className={rowClass}>
-          <strong>Invited contributors</strong>
+          <strong>Collaborators</strong>
         </div>
-        {canInviteContributors ? (
-          <BuildContributorInvitePicker
-            buildId={rootBuildId}
-            contributors={contributors}
-            onInvited={reloadContributors}
-          />
-        ) : null}
+        <BuildContributorInvitePicker
+          buildId={rootBuildId}
+          canInvite={canInviteContributors}
+          contributors={contributors}
+          onInvited={reloadContributors}
+          onRemoveContributor={handleRevokeContributor}
+        />
+      </div>
+    );
+  }
+
+  function renderViewerInviteCard() {
+    if (!myCollaborationRequest && !myCollaborationRequestLoading) {
+      return null;
+    }
+    const inviteId = Number(myCollaborationRequest?.inviteId || 0);
+    const status = myCollaborationRequest?.status || '';
+    const isInvited = status === 'invited';
+    const isAccepted = status === 'accepted';
+    return (
+      <div className={detailClass}>
         <div className={rowClass}>
-          {contributors.length === 0 ? (
-            <span className={mutedTextClass}>
-              No designated collaborators yet.
-            </span>
+          <strong>Contributor invite</strong>
+          {myCollaborationRequestLoading ? (
+            <span className={mutedTextClass}>Loading...</span>
           ) : (
-            contributors.map((contributor) => (
-              <span key={contributor.userId} className={invitePillClass}>
-                {contributor.username || `User ${contributor.userId}`}
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleRevokeContributor(Number(contributor.userId))
-                  }
-                >
-                  Remove
-                </button>
-              </span>
-            ))
+            <span className={statusPillClass}>{status}</span>
           )}
         </div>
+        {isInvited ? (
+          <>
+            <span className={mutedTextClass}>
+              The owner invited you to collaborate on this Build.
+            </span>
+            <div className={rowClass}>
+              <GameCTAButton
+                variant="logoBlue"
+                size="sm"
+                icon="check"
+                loading={actionLoading === 'accept-invite'}
+                disabled={Boolean(actionLoading) || !inviteId}
+                onClick={handleAcceptContributorInvite}
+              >
+                Accept Invite
+              </GameCTAButton>
+              <GameCTAButton
+                variant="neutral"
+                size="sm"
+                icon="ban"
+                loading={actionLoading === 'decline-invite'}
+                disabled={Boolean(actionLoading) || !inviteId}
+                onClick={handleDeclineContributorInvite}
+              >
+                Decline
+              </GameCTAButton>
+            </div>
+          </>
+        ) : isAccepted ? (
+          <>
+            <span className={mutedTextClass}>
+              You can start a project-scoped contribution fork.
+            </span>
+            <div className={rowClass}>
+              <GameCTAButton
+                variant="success"
+                size="sm"
+                icon="code-branch"
+                loading={actionLoading === 'start-contribution'}
+                disabled={Boolean(actionLoading)}
+                onClick={handleStartContribution}
+              >
+                Start Contributing
+              </GameCTAButton>
+            </div>
+          </>
+        ) : null}
+        {requestActionError ? (
+          <span className={errorClass}>{requestActionError}</span>
+        ) : null}
       </div>
     );
   }
@@ -1195,6 +1115,13 @@ export default function CollaborationPanel({
   }
 
   function renderOwnerContributions(showCommentsFallback = false) {
+    if (
+      !loadingContributions &&
+      reviewContributions.length === 0 &&
+      !selectedContribution
+    ) {
+      return showCommentsFallback ? renderComments() : null;
+    }
     return (
       <div className={splitClass}>
         <div className={listClass}>
@@ -1204,10 +1131,10 @@ export default function CollaborationPanel({
               <span className={mutedTextClass}>Loading...</span>
             ) : null}
           </div>
-          {contributions.length === 0 ? (
+          {reviewContributions.length === 0 ? (
             <span className={mutedTextClass}>No contributions yet.</span>
           ) : (
-            contributions.map((contribution) => (
+            reviewContributions.map((contribution) => (
               <button
                 key={contribution.id}
                 type="button"
@@ -1240,50 +1167,6 @@ export default function CollaborationPanel({
     );
   }
 
-  function renderContributionActionsCard() {
-    const contributionStatus = normalizeContributionStatus(
-      build.contributionStatus
-    );
-    return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <span className={statusPillClass}>
-            <Icon icon="code-branch" />
-            Contribution {contributionStatus}
-          </span>
-          {contributionStatus === 'submitted' ? (
-            <span className={mutedTextClass}>Submitted forks are locked.</span>
-          ) : null}
-          {isOwner && contributionStatus === 'draft' ? (
-            <GameCTAButton
-              variant="success"
-              size="sm"
-              icon="paper-plane"
-              loading={actionLoading === 'submit'}
-              disabled={Boolean(actionLoading)}
-              onClick={handleSubmitContribution}
-            >
-              Submit
-            </GameCTAButton>
-          ) : null}
-          {isOwner && contributionStatus === 'submitted' ? (
-            <GameCTAButton
-              variant="neutral"
-              size="sm"
-              icon="undo"
-              loading={actionLoading === 'reopen'}
-              disabled={Boolean(actionLoading)}
-              onClick={handleReopenContribution}
-            >
-              Reopen Draft
-            </GameCTAButton>
-          ) : null}
-        </div>
-        {actionError ? <span className={errorClass}>{actionError}</span> : null}
-      </div>
-    );
-  }
-
   async function handleSaveSettings() {
     if (savingSettings) return;
     setSavingSettings(true);
@@ -1292,8 +1175,9 @@ export default function CollaborationPanel({
       const result = await updateBuildCollaboration({
         buildId: build.id,
         collaborationMode,
-        contributionAccess:
-          collaborationMode === 'private' ? 'anyone' : contributionAccess
+        contributionAccess: getContributionAccessForCollaborationMode(
+          collaborationMode
+        )
       });
       if (result?.build) {
         onBuildPatch(result.build);
@@ -1306,29 +1190,6 @@ export default function CollaborationPanel({
       );
     } finally {
       setSavingSettings(false);
-    }
-  }
-
-  async function handleSaveLumineChatVisibility() {
-    if (savingLumineChatVisibility || !lumineChatVisibilityChanged) return;
-    setSavingLumineChatVisibility(true);
-    setLumineChatVisibilityError('');
-    try {
-      const result = await updateBuildLumineChatVisibility({
-        buildId: build.id,
-        visibility: lumineChatVisibility
-      });
-      if (result?.build) {
-        onBuildPatch(result.build);
-      }
-    } catch (error: any) {
-      setLumineChatVisibilityError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to save Lumine history setting'
-      );
-    } finally {
-      setSavingLumineChatVisibility(false);
     }
   }
 
@@ -1372,11 +1233,32 @@ export default function CollaborationPanel({
     if (!rootBuildId) return;
     try {
       const result = await loadBuildContributors(rootBuildId);
-      setContributors(
-        Array.isArray(result?.contributors) ? result.contributors : []
+      const nextContributors = Array.isArray(result?.contributors)
+        ? result.contributors
+        : [];
+      setContributors(nextContributors);
+      onAcceptedContributorCountChange?.(
+        nextContributors.filter(
+          (contributor: BuildContributorInvite) =>
+            Number(contributor.acceptedAt || 0) > 0
+        ).length
       );
     } catch (error) {
       console.error('Failed to load build contributors:', error);
+    }
+  }
+
+  async function reloadMyCollaborationRequest() {
+    if (!rootBuildId || !userId) return;
+    setMyCollaborationRequestLoading(true);
+    try {
+      const result = await loadMyBuildCollaborationRequest(rootBuildId);
+      setMyCollaborationRequest(result?.request || null);
+    } catch (error) {
+      console.error('Failed to load my build collaboration request:', error);
+      setMyCollaborationRequest(null);
+    } finally {
+      setMyCollaborationRequestLoading(false);
     }
   }
 
@@ -1503,6 +1385,89 @@ export default function CollaborationPanel({
     }
   }
 
+  async function handleAcceptContributorInvite() {
+    const inviteId = Number(myCollaborationRequest?.inviteId || 0);
+    if (!rootBuildId || !inviteId || actionLoading) return;
+    setActionLoading('accept-invite');
+    setRequestActionError('');
+    try {
+      const result = await acceptBuildContributorInvite({
+        buildId: rootBuildId,
+        inviteId
+      });
+      if (result?.build) {
+        onBuildPatch(result.build);
+      }
+      await startContributionFromAcceptedInvite();
+    } catch (error: any) {
+      setRequestActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to accept contributor invite'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleDeclineContributorInvite() {
+    const inviteId = Number(myCollaborationRequest?.inviteId || 0);
+    if (!rootBuildId || !inviteId || actionLoading) return;
+    setActionLoading('decline-invite');
+    setRequestActionError('');
+    try {
+      const result = await declineBuildContributorInvite({
+        buildId: rootBuildId,
+        inviteId
+      });
+      if (result?.success) {
+        setMyCollaborationRequest(null);
+      }
+    } catch (error: any) {
+      setRequestActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to decline contributor invite'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleStartContribution() {
+    if (!rootBuildId || actionLoading) return;
+    setActionLoading('start-contribution');
+    setRequestActionError('');
+    await startContributionFromAcceptedInvite();
+    setActionLoading('');
+  }
+
+  async function startContributionFromAcceptedInvite() {
+    try {
+      const result = await createBuildContributionFork(rootBuildId);
+      if (result?.success && result?.build?.id) {
+        navigate(`/build/${result.build.id}`, {
+          state: {
+            openPeoplePanel: true
+          }
+        });
+        return;
+      }
+      setMyCollaborationRequest((current) =>
+        current ? { ...current, status: 'accepted' } : current
+      );
+    } catch (error: any) {
+      setMyCollaborationRequest((current) =>
+        current ? { ...current, status: 'accepted' } : current
+      );
+      setRequestActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Invite accepted, but failed to start contribution'
+      );
+    }
+  }
+
   async function handleSelectContribution(nextContributionBuildId: number) {
     setSelectedContributionId(nextContributionBuildId);
     await reloadContributionDetail(nextContributionBuildId);
@@ -1532,58 +1497,6 @@ export default function CollaborationPanel({
           error?.message ||
           'Failed to load contribution'
       );
-    }
-  }
-
-  async function handleSubmitContribution() {
-    if (!rootBuildId || !contributionBuildId || actionLoading) return;
-    setActionLoading('submit');
-    setActionError('');
-    try {
-      const filesReady = onBeforeContributionAction
-        ? await onBeforeContributionAction('submit')
-        : true;
-      if (!filesReady) return;
-      const result = await submitBuildContribution({
-        buildId: rootBuildId,
-        contributionBuildId
-      });
-      if (result?.contribution) {
-        onBuildPatch(result.contribution);
-        setSelectedContribution(result.contribution);
-      }
-    } catch (error: any) {
-      setActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to submit contribution'
-      );
-    } finally {
-      setActionLoading('');
-    }
-  }
-
-  async function handleReopenContribution() {
-    if (!rootBuildId || !contributionBuildId || actionLoading) return;
-    setActionLoading('reopen');
-    setActionError('');
-    try {
-      const result = await reopenBuildContribution({
-        buildId: rootBuildId,
-        contributionBuildId
-      });
-      if (result?.contribution) {
-        onBuildPatch(result.contribution);
-        setSelectedContribution(result.contribution);
-      }
-    } catch (error: any) {
-      setActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to reopen contribution'
-      );
-    } finally {
-      setActionLoading('');
     }
   }
 
@@ -1648,12 +1561,73 @@ export default function CollaborationPanel({
             )
           );
         }
+        if (result.mergeInProgress) {
+          setActionError(
+            'Conflict markers were written into the project files. Resolve them with Lumine or edit the files, then complete the merge.'
+          );
+        }
       }
     } catch (error: any) {
       setActionError(
         error?.response?.data?.error ||
           error?.message ||
           'Failed to merge contribution'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleCompleteContributionMerge() {
+    if (!rootBuildId || !selectedContributionId || actionLoading) return;
+    setActionLoading('complete-merge');
+    setActionError('');
+    try {
+      const filesReady = onBeforeContributionAction
+        ? await onBeforeContributionAction('merge')
+        : true;
+      if (!filesReady) return;
+      const result = await completeBuildContributionMerge({
+        buildId: rootBuildId,
+        contributionBuildId: selectedContributionId
+      });
+      if (result?.code === 'build_contribution_conflict_markers_remaining') {
+        const markerPaths = Array.isArray(result.conflictMarkerPaths)
+          ? result.conflictMarkerPaths
+          : [];
+        setActionError(
+          markerPaths.length > 0
+            ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
+            : 'Resolve all conflict markers before completing this merge.'
+        );
+        return;
+      }
+      if (result?.success) {
+        onCanonicalMerge({
+          build: result.build || null,
+          projectFiles: Array.isArray(result.projectFiles)
+            ? result.projectFiles
+            : null
+        });
+        if (result.contribution) {
+          setSelectedContribution(result.contribution);
+          setContributions((current) =>
+            current.map((entry) =>
+              entry.id === selectedContributionId
+                ? { ...entry, ...result.contribution }
+                : entry
+            )
+          );
+        }
+      }
+    } catch (error: any) {
+      const markerPaths = error?.response?.data?.conflictMarkerPaths;
+      setActionError(
+        Array.isArray(markerPaths) && markerPaths.length > 0
+          ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
+          : error?.response?.data?.error ||
+              error?.message ||
+              'Failed to complete contribution merge'
       );
     } finally {
       setActionLoading('');
@@ -1769,6 +1743,9 @@ export default function CollaborationPanel({
                   >
                     <span className={filePathClass}>{file.path}</span>
                   </button>
+                  {file.mergeStatus === 'conflict' ? (
+                    <span className={conflictBadgeClass}>conflict</span>
+                  ) : null}
                 </label>
               ))}
             </div>
@@ -1808,6 +1785,24 @@ export default function CollaborationPanel({
             </GameCTAButton>
           </div>
         ) : null}
+        {ownerReview && contributionStatus === 'merging' ? (
+          <div className={rowClass}>
+            <span className={mutedTextClass}>
+              Conflict markers are in the project files. Resolve them with
+              Lumine or edit the files, then complete the merge.
+            </span>
+            <GameCTAButton
+              variant="success"
+              size="sm"
+              icon="check"
+              loading={actionLoading === 'complete-merge'}
+              disabled={Boolean(actionLoading)}
+              onClick={handleCompleteContributionMerge}
+            >
+              Complete Merge
+            </GameCTAButton>
+          </div>
+        ) : null}
         {actionError ? <span className={errorClass}>{actionError}</span> : null}
       </div>
     );
@@ -1830,15 +1825,17 @@ export default function CollaborationPanel({
                   <span>{comment.username || 'User'}</span>
                   {Number(comment.userId) === Number(userId) ||
                   canModerateContributionComments ? (
-                    <button
-                      type="button"
+                    <GameCTAButton
+                      variant="neutral"
+                      size="sm"
+                      icon="trash-alt"
                       onClick={() => handleDeleteComment(comment.id)}
                     >
                       Delete
-                    </button>
+                    </GameCTAButton>
                   ) : null}
                 </div>
-                <div>{comment.body}</div>
+                <div className={commentBodyClass}>{comment.body}</div>
               </div>
             ))
           )}
@@ -1870,21 +1867,19 @@ export default function CollaborationPanel({
 }
 
 function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
-  return value === 'contribution' || value === 'open_source'
-    ? value
-    : 'private';
-}
-
-function normalizeContributionAccess(value: unknown): BuildContributionAccess {
-  return value === 'invite_only' ? 'invite_only' : 'anyone';
+  return value === 'open_source' ? value : 'private';
 }
 
 function normalizeLumineChatVisibility(
   value: unknown
 ): BuildLumineChatVisibility {
-  return value === 'collaborators' || value === 'public'
-    ? value
-    : 'private';
+  return value === 'collaborators' ? value : 'private';
+}
+
+function getContributionAccessForCollaborationMode(
+  _mode: BuildCollaborationMode
+): BuildContributionAccess {
+  return 'invite_only';
 }
 
 function normalizeContributionStatus(value: unknown): BuildContributionStatus {
@@ -1892,6 +1887,7 @@ function normalizeContributionStatus(value: unknown): BuildContributionStatus {
   if (
     normalized === 'draft' ||
     normalized === 'submitted' ||
+    normalized === 'merging' ||
     normalized === 'merged' ||
     normalized === 'rejected' ||
     normalized === 'withdrawn'

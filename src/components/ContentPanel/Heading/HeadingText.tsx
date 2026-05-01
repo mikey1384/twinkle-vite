@@ -1,10 +1,16 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
+import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { returnTheme } from '~/helpers';
+import {
+  type BuildRelationshipLabel,
+  getBuildDisplayTitle,
+  getBuildRelationshipLabels
+} from '~/containers/Build/BuildEditor/buildRelationshipLabels';
 
 export default function HeadingText({
   action,
@@ -232,36 +238,23 @@ export default function HeadingText({
     case 'build':
       if (
         feedActivityType === 'buildFork' ||
-        feedActivityType === 'buildContributor'
+        feedActivityType === 'buildContributor' ||
+        feedActivityType === 'buildCollaborator'
       ) {
         const buildActor = feedUploader || uploader;
-        const buildAction =
-          feedActivityType === 'buildFork'
-            ? 'forked an app'
-            : 'started contributing to an app';
+        const buildAction = getBuildActivityText(feedActivityType);
         return (
           <>
             <UsernameText user={buildActor} color={Color[linkColor]()} />{' '}
             {buildAction}:{' '}
-            <ContentLink
-              content={contentObj}
-              contentType={contentType}
-              theme={theme}
-              label=""
-            />{' '}
+            {renderBuildContentLink()}{' '}
           </>
         );
       }
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> published
-          an app:{' '}
-          <ContentLink
-            content={contentObj}
-            contentType={contentType}
-            theme={theme}
-            label=""
-          />{' '}
+          an app: {renderBuildContentLink()}{' '}
         </>
       );
     case 'xpChange': {
@@ -340,4 +333,87 @@ export default function HeadingText({
     }
     return null;
   }
+
+  function renderBuildContentLink() {
+    const displayTitle = getBuildDisplayTitle(contentObj);
+    return (
+      <>
+        <ContentLink
+          content={contentObj}
+          contentType={contentType}
+          theme={theme}
+          label={displayTitle}
+        />{' '}
+        {renderBuildRelationshipBadges()}
+      </>
+    );
+  }
+
+  function renderBuildRelationshipBadges() {
+    const labels = getHeadingBuildRelationshipLabels({
+      build: contentObj,
+      feedActivityType
+    });
+    if (labels.length === 0) return null;
+    return (
+      <>
+        {labels.map((label) => (
+          <span key={label} style={buildRelationshipBadgeStyle(label)}>
+            <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
+            {label === 'fork' ? 'Fork' : 'Contribution'}
+          </span>
+        ))}
+      </>
+    );
+  }
+}
+
+function getBuildActivityText(feedActivityType?: string | null) {
+  if (feedActivityType === 'buildFork') return 'forked an app';
+  if (feedActivityType === 'buildCollaborator') {
+    return 'joined an app as a collaborator';
+  }
+  return 'started contributing to an app';
+}
+
+function getHeadingBuildRelationshipLabels({
+  build,
+  feedActivityType
+}: {
+  build: any;
+  feedActivityType?: string | null;
+}) {
+  const labelSet = new Set<BuildRelationshipLabel>(
+    getBuildRelationshipLabels(build)
+  );
+  if (feedActivityType === 'buildFork') {
+    labelSet.add('fork');
+  }
+  return Array.from(labelSet);
+}
+
+function buildRelationshipBadgeStyle(
+  label: BuildRelationshipLabel
+): React.CSSProperties {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.28rem',
+    padding: '0.14rem 0.44rem',
+    borderRadius: 999,
+    border:
+      label === 'fork'
+        ? '1px solid rgba(147, 51, 234, 0.3)'
+        : '1px solid rgba(59, 130, 246, 0.3)',
+    background:
+      label === 'fork'
+        ? 'rgba(147, 51, 234, 0.12)'
+        : 'rgba(59, 130, 246, 0.12)',
+    color: label === 'fork' ? '#6b21a8' : '#1d4ed8',
+    fontSize: '0.72em',
+    fontWeight: 800,
+    lineHeight: 1.1,
+    verticalAlign: '0.08em',
+    whiteSpace: 'nowrap'
+  };
 }

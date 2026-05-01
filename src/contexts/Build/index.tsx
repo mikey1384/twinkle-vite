@@ -1,10 +1,11 @@
 import React, { ReactNode, useMemo, useReducer, useRef } from 'react';
-import { createContext, useContext } from 'use-context-selector';
+import { createContext, useContext } from '../selectableContext';
 import BuildActions from './actions';
 import BuildReducer, {
   BuildAction,
   BuildLiveRunState,
-  BuildState
+  BuildState,
+  createInitialBuildStudioState
 } from './reducer';
 
 interface BuildRunIdentityState {
@@ -29,7 +30,8 @@ const initialBuildState: BuildState = {
   buildRuns: {},
   buildRunRequestMap: {},
   buildWorkspaces: {},
-  runtimeVerifyResults: {}
+  runtimeVerifyResults: {},
+  buildStudio: createInitialBuildStudioState()
 };
 
 function readBuildRunIdentity(

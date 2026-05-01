@@ -95,6 +95,30 @@ export interface BuildWorkspaceSnapshot {
   updatedAt: number;
 }
 
+export type BuildStudioTab =
+  | 'mine'
+  | 'collaborating'
+  | 'community'
+  | 'open_source';
+type BuildStudioBrowseTab = Exclude<BuildStudioTab, 'mine'>;
+
+export interface BuildStudioBrowseTabState {
+  builds: any[];
+  loadMoreToken: string | null;
+  loaded: boolean;
+  userId: number | null;
+  scrollY: number;
+}
+
+export interface BuildStudioState {
+  activeTab: BuildStudioTab;
+  myBuilds: any[];
+  myBuildsLoaded: boolean;
+  myBuildsUserId: number | null;
+  myBuildsScrollY: number;
+  browse: Record<BuildStudioBrowseTab, BuildStudioBrowseTabState>;
+}
+
 export interface BuildLiveRunStreamUpdatePayload {
   userMessageContent?: string | null;
   userClientMessageId?: string | null;
@@ -185,11 +209,23 @@ export interface BuildRuntimeVerifyResult {
   error: string | null;
 }
 
+export interface BuildStudioActionPayload {
+  activeTab?: BuildStudioTab;
+  tab?: BuildStudioTab;
+  builds?: any[];
+  build?: any;
+  buildId?: number;
+  userId?: number | null;
+  loadMoreToken?: string | null;
+  scrollY?: number;
+}
+
 export interface BuildState {
   buildRuns: Record<string, BuildLiveRunState>;
   buildRunRequestMap: Record<string, number>;
   buildWorkspaces: Record<string, BuildWorkspaceSnapshot>;
   runtimeVerifyResults: Record<string, BuildRuntimeVerifyResult>;
+  buildStudio: BuildStudioState;
 }
 
 export interface BuildAction {
@@ -204,12 +240,45 @@ export interface BuildAction {
     | 'STOP_BUILD_RUN'
     | 'REMOVE_BUILD_RUN_MESSAGE'
     | 'SET_BUILD_WORKSPACE'
+    | 'SET_BUILD_STUDIO_ACTIVE_TAB'
+    | 'SET_BUILD_STUDIO_MY_BUILDS'
+    | 'PATCH_BUILD_STUDIO_MY_BUILD'
+    | 'REMOVE_BUILD_STUDIO_MY_BUILD'
+    | 'SET_BUILD_STUDIO_BROWSE_BUILDS'
+    | 'APPEND_BUILD_STUDIO_BROWSE_BUILDS'
+    | 'SET_BUILD_STUDIO_SCROLL'
     | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUN'
     | 'RESET_BUILD_RUNS';
   buildRun?: BuildLiveRunActionPayload;
   runtimeVerifyResult?: BuildRuntimeVerifyResultPayload;
+  buildStudio?: BuildStudioActionPayload;
+}
+
+export function createInitialBuildStudioState(): BuildStudioState {
+  return {
+    activeTab: 'mine',
+    myBuilds: [],
+    myBuildsLoaded: false,
+    myBuildsUserId: null,
+    myBuildsScrollY: 0,
+    browse: {
+      community: createInitialBuildStudioBrowseState(),
+      collaborating: createInitialBuildStudioBrowseState(),
+      open_source: createInitialBuildStudioBrowseState()
+    }
+  };
+}
+
+function createInitialBuildStudioBrowseState(): BuildStudioBrowseTabState {
+  return {
+    builds: [],
+    loadMoreToken: null,
+    loaded: false,
+    userId: null,
+    scrollY: 0
+  };
 }
 
 function getBuildRunLookupBuildId(
@@ -234,6 +303,47 @@ function getBuildRuntimeVerifyResultKey(
   if (!requestId) return '';
   const buildId = Number(runtimeVerifyResult?.buildId || 0);
   return `${buildId > 0 ? buildId : 0}:${requestId}`;
+}
+
+function getBuildStudioState(state: BuildState) {
+  return state.buildStudio || createInitialBuildStudioState();
+}
+
+function normalizeBuildStudioTab(value?: string | null): BuildStudioTab {
+  return value === 'collaborating' ||
+    value === 'community' ||
+    value === 'open_source'
+    ? value
+    : 'mine';
+}
+
+function normalizeBuildStudioBrowseTab(
+  value?: string | null
+): BuildStudioBrowseTab {
+  if (value === 'collaborating') return 'collaborating';
+  return value === 'open_source' ? 'open_source' : 'community';
+}
+
+function normalizeBuildStudioUserId(value: unknown) {
+  const userId = Math.floor(Number(value) || 0);
+  return userId > 0 ? userId : null;
+}
+
+function normalizeBuildStudioScrollY(value: unknown) {
+  const normalized = Number(value || 0);
+  if (!Number.isFinite(normalized)) return 0;
+  return Math.max(0, Math.floor(normalized));
+}
+
+function patchBuildStudioMyBuild(
+  builds: any[],
+  nextBuild?: any | null
+) {
+  const buildId = Number(nextBuild?.id || 0);
+  if (!buildId) return builds;
+  return builds.map((build) =>
+    Number(build?.id || 0) === buildId ? { ...build, ...nextBuild } : build
+  );
 }
 
 function normalizeBuildRunProjectFilePath(rawPath: string) {
@@ -1271,6 +1381,152 @@ export default function BuildReducer(
                 ? action.buildRun.copilotPolicy
                 : null,
             updatedAt: Date.now()
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_ACTIVE_TAB': {
+      const buildStudio = getBuildStudioState(state);
+      const activeTab = normalizeBuildStudioTab(action.buildStudio?.activeTab);
+      if (buildStudio.activeTab === activeTab) return state;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          activeTab
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_MY_BUILDS': {
+      const buildStudio = getBuildStudioState(state);
+      const userId = Number(action.buildStudio?.userId || 0) || null;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          myBuilds: Array.isArray(action.buildStudio?.builds)
+            ? action.buildStudio.builds
+            : [],
+          myBuildsLoaded: true,
+          myBuildsUserId: userId
+        }
+      };
+    }
+    case 'PATCH_BUILD_STUDIO_MY_BUILD': {
+      const buildStudio = getBuildStudioState(state);
+      const userId = Number(action.buildStudio?.userId || 0) || null;
+      if (userId && buildStudio.myBuildsUserId !== userId) return state;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          myBuilds: patchBuildStudioMyBuild(
+            buildStudio.myBuilds,
+            action.buildStudio?.build
+          )
+        }
+      };
+    }
+    case 'REMOVE_BUILD_STUDIO_MY_BUILD': {
+      const buildStudio = getBuildStudioState(state);
+      const buildId = Number(action.buildStudio?.buildId || 0);
+      const userId = Number(action.buildStudio?.userId || 0) || null;
+      if (!buildId) return state;
+      if (userId && buildStudio.myBuildsUserId !== userId) return state;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          myBuilds: buildStudio.myBuilds.filter(
+            (build) => Number(build?.id || 0) !== buildId
+          )
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_BROWSE_BUILDS': {
+      const buildStudio = getBuildStudioState(state);
+      const tab = normalizeBuildStudioBrowseTab(action.buildStudio?.tab);
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          browse: {
+            ...buildStudio.browse,
+            [tab]: {
+              ...buildStudio.browse[tab],
+              builds: Array.isArray(action.buildStudio?.builds)
+                ? action.buildStudio.builds
+                : [],
+              loadMoreToken:
+                typeof action.buildStudio?.loadMoreToken === 'string'
+                  ? action.buildStudio.loadMoreToken
+                  : null,
+              loaded: true,
+              userId: normalizeBuildStudioUserId(action.buildStudio?.userId)
+            }
+          }
+        }
+      };
+    }
+    case 'APPEND_BUILD_STUDIO_BROWSE_BUILDS': {
+      const buildStudio = getBuildStudioState(state);
+      const tab = normalizeBuildStudioBrowseTab(action.buildStudio?.tab);
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const currentTabState = buildStudio.browse[tab];
+      const canAppend = currentTabState.userId === userId;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          browse: {
+            ...buildStudio.browse,
+            [tab]: {
+              ...currentTabState,
+              builds: canAppend
+                ? [
+                    ...currentTabState.builds,
+                    ...(Array.isArray(action.buildStudio?.builds)
+                      ? action.buildStudio.builds
+                      : [])
+                  ]
+                : Array.isArray(action.buildStudio?.builds)
+                  ? action.buildStudio.builds
+                  : [],
+              loadMoreToken:
+                typeof action.buildStudio?.loadMoreToken === 'string'
+                  ? action.buildStudio.loadMoreToken
+                  : null,
+              loaded: true,
+              userId
+            }
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_SCROLL': {
+      const buildStudio = getBuildStudioState(state);
+      const tab = normalizeBuildStudioTab(action.buildStudio?.tab);
+      const scrollY = normalizeBuildStudioScrollY(action.buildStudio?.scrollY);
+      if (tab === 'mine') {
+        if (buildStudio.myBuildsScrollY === scrollY) return state;
+        return {
+          ...state,
+          buildStudio: {
+            ...buildStudio,
+            myBuildsScrollY: scrollY
+          }
+        };
+      }
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          browse: {
+            ...buildStudio.browse,
+            [tab]: {
+              ...buildStudio.browse[tab],
+              scrollY
+            }
           }
         }
       };

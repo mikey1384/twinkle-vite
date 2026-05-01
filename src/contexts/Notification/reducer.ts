@@ -35,18 +35,34 @@ function mergeTodayStats(
     'aiUsagePolicy' in newStats
       ? mergeAiUsagePolicy(state.todayStats.aiUsagePolicy, newStats.aiUsagePolicy)
       : state.todayStats.aiUsagePolicy;
+  const nextTodayStats = {
+    ...state.todayStats,
+    ...newStats,
+    ...('aiUsagePolicy' in newStats
+      ? { aiUsagePolicy: nextAiUsagePolicy }
+      : {}),
+    ...(typeof loaded === 'boolean' ? { loaded } : {}),
+    ...(typeof loading === 'boolean' ? { loading } : {})
+  };
+  if (shallowEqualObject(state.todayStats, nextTodayStats)) {
+    return state;
+  }
   return {
     ...state,
-    todayStats: {
-      ...state.todayStats,
-      ...newStats,
-      ...('aiUsagePolicy' in newStats
-        ? { aiUsagePolicy: nextAiUsagePolicy }
-        : {}),
-      ...(typeof loaded === 'boolean' ? { loaded } : {}),
-      ...(typeof loading === 'boolean' ? { loading } : {})
-    }
+    todayStats: nextTodayStats
   };
+}
+
+function shallowEqualObject(
+  prev: Record<string, any> | null | undefined,
+  next: Record<string, any> | null | undefined
+) {
+  if (Object.is(prev, next)) return true;
+  if (!prev || !next) return false;
+  const prevKeys = Object.keys(prev);
+  const nextKeys = Object.keys(next);
+  if (prevKeys.length !== nextKeys.length) return false;
+  return prevKeys.every((key) => Object.is(prev[key], next[key]));
 }
 
 export default function NotiReducer(

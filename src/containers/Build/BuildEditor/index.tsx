@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { ChatPanelProps } from './ChatPanel/types';
+import type {
+  BuildLumineChatVisibility,
+  ChatPanelProps
+} from './ChatPanel/types';
 import CollaborationPanel from './CollaborationPanel';
 import Header from './Header';
 import Modals from './Modals';
@@ -51,6 +54,10 @@ import {
   MIN_BUILD_CHAT_PANEL_WIDTH,
   MIN_BUILD_PREVIEW_PANEL_WIDTH
 } from './constants';
+import {
+  getBuildDisplayTitle,
+  isBuildContributionFork
+} from './buildRelationshipLabels';
 const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
 const BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY =
@@ -176,7 +183,14 @@ interface Build {
   sourceBuildId?: number | null;
   collaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionAccess?: 'anyone' | 'invite_only';
-  lumineChatVisibility?: 'private' | 'collaborators' | 'public';
+  canOpenContributionWorkspace?: boolean;
+  hasActiveContributionInvite?: boolean;
+  lumineChatVisibility?: BuildLumineChatVisibility | 'public';
+  rootBuildUserId?: number | null;
+  rootBuildUsername?: string | null;
+  rootBuildProfilePicUrl?: string | null;
+  rootBuildSourceBuildId?: number | null;
+  rootBuildTitle?: string | null;
   contributionParentBuildId?: number | null;
   contributionRootBuildId?: number | null;
   contributionContributorId?: number | null;
@@ -184,6 +198,7 @@ interface Build {
     | 'none'
     | 'draft'
     | 'submitted'
+    | 'merging'
     | 'merged'
     | 'rejected'
     | 'withdrawn';
@@ -215,11 +230,7 @@ interface Build {
 }
 
 function canStartProjectScopedContribution(build: Build) {
-  if (build.collaborationMode === 'contribution') return true;
-  if (build.collaborationMode !== 'open_source') return false;
-  if ((build.contributionAccess || 'anyone') === 'anyone') return true;
-  const isPublished = Number(build.isPublic || 0) === 1;
-  return build.contributionAccess === 'invite_only' || !isPublished;
+  return Boolean(build.hasActiveContributionInvite);
 }
 
 function canStartStandaloneFork(build: Build) {
@@ -232,6 +243,12 @@ function canStartStandaloneFork(build: Build) {
 function canEditBuildProject(build: Build) {
   const status = build.contributionStatus || 'none';
   return status === 'none' || status === 'draft';
+}
+
+function normalizeLumineChatVisibility(
+  value: unknown
+): BuildLumineChatVisibility {
+  return value === 'collaborators' ? value : 'private';
 }
 
 interface BuildExecutionPlanChunk {
@@ -1327,6 +1344,9 @@ export default function BuildEditor({
   onUpdateCopilotPolicy
 }: BuildEditorProps) {
   const canEditCurrentBuildProject = isOwner && canEditBuildProject(build);
+  const currentBuildIsContributionFork = isBuildContributionFork(build);
+  const canEditCurrentBuildMetadata =
+    isOwner && !currentBuildIsContributionFork && canEditBuildProject(build);
   const location = useLocation();
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -1426,6 +1446,18 @@ export default function BuildEditor({
   const createBuildContributionFork = useAppContext(
     (v) => v.requestHelpers.createBuildContributionFork
   );
+  const submitBuildContribution = useAppContext(
+    (v) => v.requestHelpers.submitBuildContribution
+  );
+  const reopenBuildContribution = useAppContext(
+    (v) => v.requestHelpers.reopenBuildContribution
+  );
+  const updateBuildLumineChatVisibility = useAppContext(
+    (v) => v.requestHelpers.updateBuildLumineChatVisibility
+  );
+  const loadBuildContributors = useAppContext(
+    (v) => v.requestHelpers.loadBuildContributors
+  );
   const purchaseBuildGenerationReset = useAppContext(
     (v) => v.requestHelpers.purchaseBuildGenerationReset
   );
@@ -1439,6 +1471,19 @@ export default function BuildEditor({
     }));
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
+  const [contributionActionLoading, setContributionActionLoading] = useState<
+    'submit' | 'reopen' | ''
+  >('');
+  const [contributionActionError, setContributionActionError] = useState('');
+  const [lumineChatVisibility, setLumineChatVisibility] =
+    useState<BuildLumineChatVisibility>(() =>
+      normalizeLumineChatVisibility(build.lumineChatVisibility)
+    );
+  const [savingLumineChatVisibility, setSavingLumineChatVisibility] =
+    useState(false);
+  const [lumineChatVisibilityError, setLumineChatVisibilityError] =
+    useState('');
+  const [acceptedContributorCount, setAcceptedContributorCount] = useState(0);
   const [descriptionModalShown, setDescriptionModalShown] = useState(false);
   const [
     collaborationSettingsModalShown,
@@ -1593,6 +1638,50 @@ export default function BuildEditor({
       }
     });
   }
+
+  useEffect(() => {
+    setLumineChatVisibility(
+      normalizeLumineChatVisibility(build.lumineChatVisibility)
+    );
+    setLumineChatVisibilityError('');
+  }, [build.id, build.lumineChatVisibility]);
+
+  useEffect(() => {
+    let canceled = false;
+
+    async function reloadAcceptedContributorCount() {
+      if (!isOwner || currentBuildIsContributionFork) {
+        setAcceptedContributorCount(0);
+        return;
+      }
+      try {
+        const result = await loadBuildContributors(Number(build.id));
+        if (canceled) return;
+        const contributors = Array.isArray(result?.contributors)
+          ? result.contributors
+          : [];
+        setAcceptedContributorCount(
+          contributors.filter(
+            (contributor: { acceptedAt?: number | null }) =>
+              Number(contributor?.acceptedAt || 0) > 0
+          ).length
+        );
+      } catch (error) {
+        if (!canceled) {
+          setAcceptedContributorCount(0);
+        }
+        console.error('Failed to load accepted build contributors:', error);
+      }
+    }
+
+    void reloadAcceptedContributorCount();
+
+    return () => {
+      canceled = true;
+    };
+    // request helpers are stable context helpers; do not include them in deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id, currentBuildIsContributionFork, isOwner]);
 
   useEffect(() => {
     function handleWindowResize() {
@@ -5161,7 +5250,7 @@ export default function BuildEditor({
   }
 
   async function handlePublish() {
-    if (!isOwner || publishing) return;
+    if (!canEditCurrentBuildMetadata || publishing) return;
 
     setPublishing(true);
     try {
@@ -5246,7 +5335,7 @@ export default function BuildEditor({
   }
 
   async function handleUnpublish() {
-    if (!isOwner || publishing) return;
+    if (!canEditCurrentBuildMetadata || publishing) return;
     setPublishing(true);
     try {
       const latestBuild = getLatestBuild();
@@ -5304,6 +5393,107 @@ export default function BuildEditor({
     }
   }
 
+  async function handleSubmitContribution() {
+    const latestBuild = getLatestBuild();
+    const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
+    const contributionBuildId = Number(latestBuild.id || 0);
+    if (!rootBuildId || !contributionBuildId || contributionActionLoading) {
+      return;
+    }
+    setContributionActionLoading('submit');
+    setContributionActionError('');
+    try {
+      const filesReady = await handleBeforeContributionAction('submit');
+      if (!filesReady) return;
+      const result = await submitBuildContribution({
+        buildId: rootBuildId,
+        contributionBuildId
+      });
+      if (result?.contribution) {
+        handleBuildCollaborationPatch(result.contribution);
+      }
+    } catch (error: any) {
+      setContributionActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to submit contribution'
+      );
+    } finally {
+      setContributionActionLoading('');
+    }
+  }
+
+  async function handleReopenContribution() {
+    const latestBuild = getLatestBuild();
+    const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
+    const contributionBuildId = Number(latestBuild.id || 0);
+    if (!rootBuildId || !contributionBuildId || contributionActionLoading) {
+      return;
+    }
+    setContributionActionLoading('reopen');
+    setContributionActionError('');
+    try {
+      const result = await reopenBuildContribution({
+        buildId: rootBuildId,
+        contributionBuildId
+      });
+      if (result?.contribution) {
+        handleBuildCollaborationPatch(result.contribution);
+      }
+    } catch (error: any) {
+      setContributionActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to reopen contribution'
+      );
+    } finally {
+      setContributionActionLoading('');
+    }
+  }
+
+  async function handleSaveLumineChatVisibility(
+    nextVisibility: BuildLumineChatVisibility
+  ) {
+    const latestBuild = getLatestBuild();
+    const normalizedNextVisibility =
+      normalizeLumineChatVisibility(nextVisibility);
+    const savedVisibility = normalizeLumineChatVisibility(
+      latestBuild.lumineChatVisibility
+    );
+    if (
+      !canEditCurrentBuildProject ||
+      savingLumineChatVisibility ||
+      normalizedNextVisibility === savedVisibility
+    ) {
+      return true;
+    }
+    setSavingLumineChatVisibility(true);
+    setLumineChatVisibilityError('');
+    try {
+      const result = await updateBuildLumineChatVisibility({
+        buildId: latestBuild.id,
+        visibility: normalizedNextVisibility
+      });
+      if (result?.build) {
+        applyBuildUpdate({
+          ...latestBuild,
+          ...result.build
+        });
+      }
+      setLumineChatVisibility(normalizedNextVisibility);
+      return true;
+    } catch (error: any) {
+      setLumineChatVisibilityError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to save Lumine history setting'
+      );
+      return false;
+    } finally {
+      setSavingLumineChatVisibility(false);
+    }
+  }
+
   async function handlePurchaseGenerationReset() {
     if (!isOwner || !userId || purchasingGenerationReset) return;
     setPurchasingGenerationReset(true);
@@ -5352,8 +5542,7 @@ export default function BuildEditor({
     isOwner ||
     (!isOwner &&
       Boolean(userId) &&
-      (build.collaborationMode === 'contribution' ||
-        build.collaborationMode === 'open_source'));
+      Boolean(build.canOpenContributionWorkspace));
   const workspaceShellStyle = communicationPanelShown
     ? ({
         '--build-chat-panel-width': `${buildChatPanelWidth}px`
@@ -5365,8 +5554,26 @@ export default function BuildEditor({
     canStartProjectScopedContribution(build);
   const showForkButton =
     !isOwner && Boolean(userId) && canStartStandaloneFork(build);
+  const savedLumineChatVisibility = normalizeLumineChatVisibility(
+    build.lumineChatVisibility
+  );
+  const lumineChatVisibilitySettingsShown =
+    currentBuildIsContributionFork ||
+    acceptedContributorCount > 0 ||
+    savedLumineChatVisibility === 'collaborators' ||
+    lumineChatVisibility === 'collaborators';
   const chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'> = {
     preferredCommunicationMode: routeOpenPeoplePanel ? 'people' : 'lumine',
+    lumineChatVisibilityControl:
+      canEditCurrentBuildProject && lumineChatVisibilitySettingsShown
+        ? {
+            value: lumineChatVisibility,
+            savedValue: savedLumineChatVisibility,
+            loading: savingLumineChatVisibility,
+            error: lumineChatVisibilityError,
+            onSave: handleSaveLumineChatVisibility
+          }
+        : null,
     peoplePanel: (
       <CollaborationPanel
         build={build}
@@ -5375,6 +5582,7 @@ export default function BuildEditor({
         onBuildPatch={handleBuildCollaborationPatch}
         onCanonicalMerge={handleBuildContributionMerge}
         onBeforeContributionAction={handleBeforeContributionAction}
+        onAcceptedContributorCountChange={setAcceptedContributorCount}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
       />
     ),
@@ -5456,18 +5664,22 @@ export default function BuildEditor({
       <Header
         build={build}
         forking={forking}
-        canEditMetadata={canEditCurrentBuildProject}
+        canEditMetadata={canEditCurrentBuildMetadata}
         isOwner={isOwner}
         profileTheme={profileTheme}
         publishing={publishing}
         savingThumbnail={savingThumbnail}
         showContributionButton={showContributionButton}
+        contributionActionError={contributionActionError}
+        contributionActionLoading={contributionActionLoading}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}
+        onReopenContribution={handleReopenContribution}
+        onSubmitContribution={handleSubmitContribution}
         onTogglePublish={build.isPublic ? handleUnpublish : handlePublish}
       />
       <Workspace
@@ -5487,11 +5699,13 @@ export default function BuildEditor({
       />
       <Modals
         build={build}
+        canEditMetadata={canEditCurrentBuildMetadata}
         buildChatDraftMessage={buildChatDraftMessage}
         buildChatUploadFileObj={buildChatUploadFileObj}
         buildChatUploadModalShown={buildChatUploadModalShown}
         buildDescription={build.description}
-        buildTitle={build.title}
+        buildTitle={getBuildDisplayTitle(build)}
+        canShowLumineChatVisibilitySetting={lumineChatVisibilitySettingsShown}
         collaborationSettingsModalShown={collaborationSettingsModalShown}
         descriptionModalShown={descriptionModalShown}
         isOwner={isOwner}
@@ -5676,10 +5890,12 @@ export default function BuildEditor({
   }
 
   function handleOpenDescriptionModal() {
+    if (!canEditCurrentBuildMetadata) return;
     setDescriptionModalShown(true);
   }
 
   function handleOpenCollaborationSettingsModal() {
+    if (!canEditCurrentBuildMetadata) return;
     setCollaborationSettingsModalShown(true);
   }
 
@@ -5693,6 +5909,7 @@ export default function BuildEditor({
   }
 
   function handleOpenThumbnailModal() {
+    if (!canEditCurrentBuildMetadata) return;
     setThumbnailSaveError('');
     setThumbnailModalShown(true);
   }
@@ -5710,7 +5927,7 @@ export default function BuildEditor({
     title: string;
     description: string;
   }) {
-    if (!isOwner || savingDescription) return;
+    if (!canEditCurrentBuildMetadata || savingDescription) return;
     const latestBuild = getLatestBuild();
     const nextTitle = title.trim();
     const nextDescription = description.trim();
@@ -5744,7 +5961,7 @@ export default function BuildEditor({
   }
 
   async function handleSaveThumbnail(croppedImageUrl: string | null) {
-    if (!isOwner || savingThumbnail) return;
+    if (!canEditCurrentBuildMetadata || savingThumbnail) return;
     const latestBuild = getLatestBuild();
     const currentThumbnailUrl = String(latestBuild.thumbnailUrl || '').trim();
     if (!croppedImageUrl && !currentThumbnailUrl) {
