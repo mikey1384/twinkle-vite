@@ -266,6 +266,26 @@ const rootContentCSS = css`
       line-height: 1;
       white-space: nowrap;
     }
+    .build-status-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      min-width: 0;
+    }
+    .build-open-source-badge {
+      border-color: rgba(59, 130, 246, 0.32);
+      background: rgba(59, 130, 246, 0.12);
+      color: #1d4ed8;
+    }
+    .build-fork-count-badge,
+    .build-fork-badge {
+      border-color: rgba(147, 51, 234, 0.36);
+      background: rgba(147, 51, 234, 0.14);
+      color: #6b21a8;
+    }
     .description {
       position: relative;
       z-index: 1;
@@ -277,9 +297,28 @@ const rootContentCSS = css`
       -moz-line-clamp: 3;
       line-clamp: 3;
     }
+    .build-action-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      min-width: 0;
+    }
+    .build-action-error {
+      position: relative;
+      z-index: 1;
+      color: #be123c;
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
     .build-card-action {
       position: relative;
       z-index: 1;
+      appearance: none;
+      border: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -293,6 +332,30 @@ const rootContentCSS = css`
       color: #fff;
       font-size: 1.25rem;
       font-weight: 800;
+      font-family: inherit;
+      line-height: 1;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .build-card-action:disabled {
+      opacity: 0.68;
+      cursor: default;
+    }
+    .build-card-action.fork {
+      border: 1px solid rgba(147, 51, 234, 0.32);
+      background: rgba(147, 51, 234, 0.14);
+      color: #6b21a8;
+    }
+    .build-card-action.collaboration {
+      border: 1px solid rgba(236, 72, 153, 0.34);
+      background: rgba(236, 72, 153, 0.14);
+      color: #be185d;
+    }
+    .build-card-action.workspace {
+      border: 1px solid ${Color.logoBlue(0.3)};
+      background: ${Color.logoBlue(0.12)};
+      color: ${Color.logoBlue()};
     }
     .thumb.build-thumb {
       justify-content: stretch;
@@ -407,12 +470,21 @@ const rootContentCSS = css`
         padding: 0.3rem 0.5rem;
         font-size: 0.82rem;
       }
+      .build-status-row {
+        gap: 0.35rem;
+      }
       .description {
         font-size: 0.9rem;
         line-height: 1.35;
         -webkit-line-clamp: 2;
         -moz-line-clamp: 2;
         line-clamp: 2;
+      }
+      .build-action-row {
+        gap: 0.4rem;
+      }
+      .build-action-error {
+        font-size: 0.85rem;
       }
       .build-card-action {
         min-height: 2.35rem;
@@ -459,15 +531,18 @@ export default function RootContent({
   actualDescription,
   content,
   collaboratorCount,
+  collaborationMode,
   contentType,
   contentId,
   description,
   fileName,
   filePath,
   fileSize,
+  forkCount,
   hideSideBordersOnMobile,
   noTopBorderRadius,
   isListening,
+  isPublic,
   navigate,
   onClick,
   question,
@@ -487,6 +562,7 @@ export default function RootContent({
   sourceBuildId,
   contributionStatus,
   rootBuildSourceBuildId,
+  buildUserId,
   userId,
   itemSelectedColor,
   itemSelectedOpacity
@@ -494,6 +570,7 @@ export default function RootContent({
   actualTitle?: string;
   actualDescription?: string;
   collaboratorCount?: number;
+  collaborationMode?: 'private' | 'contribution' | 'open_source' | null;
   content: string;
   contentType: string;
   contentId: number;
@@ -502,9 +579,11 @@ export default function RootContent({
   fileName?: string;
   filePath?: string;
   fileSize?: number;
+  forkCount?: number;
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
   isListening?: boolean;
+  isPublic?: number | boolean | null;
   modalOverModal?: boolean;
   navigate: (path: string) => void;
   onClick?: () => void;
@@ -525,6 +604,7 @@ export default function RootContent({
   sourceBuildId?: number | null;
   contributionStatus?: string | null;
   rootBuildSourceBuildId?: number | null;
+  buildUserId?: number | null;
   userId?: number;
   itemSelectedColor?: string;
   itemSelectedOpacity?: number;
@@ -634,9 +714,12 @@ export default function RootContent({
     >
       <ContentDetails
         collaboratorCount={collaboratorCount}
+        collaborationMode={collaborationMode}
         isListening={isListening}
         contentType={contentType}
         description={description}
+        forkCount={forkCount}
+        isPublic={isPublic}
         question={question}
         story={story}
         topic={topic}
@@ -645,6 +728,7 @@ export default function RootContent({
         sourceBuildId={sourceBuildId}
         contributionStatus={contributionStatus}
         rootBuildSourceBuildId={rootBuildSourceBuildId}
+        buildUserId={buildUserId}
         contentId={contentId}
         thumbUrl={thumbUrl}
         actualTitle={actualTitle}

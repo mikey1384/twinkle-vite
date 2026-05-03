@@ -39,6 +39,7 @@ import { faBadgeDollar as farBadgeDollar } from '@fortawesome/pro-regular-svg-ic
 import { faBadgeDollar as falBadgeDollar } from '@fortawesome/pro-light-svg-icons/faBadgeDollar';
 import { faBan } from '@fortawesome/pro-solid-svg-icons/faBan';
 import { faBars } from '@fortawesome/pro-solid-svg-icons/faBars';
+import { faBell } from '@fortawesome/pro-solid-svg-icons/faBell';
 import { faBatteryFull } from '@fortawesome/pro-solid-svg-icons/faBatteryFull';
 import { faBatteryEmpty } from '@fortawesome/pro-solid-svg-icons/faBatteryEmpty';
 import { faBolt } from '@fortawesome/pro-solid-svg-icons/faBolt';
@@ -180,6 +181,7 @@ import { faStar as farStar } from '@fortawesome/pro-regular-svg-icons/faStar';
 import { faStarHalfAlt as farStarHalfAlt } from '@fortawesome/pro-regular-svg-icons/faStarHalfAlt';
 import { faStop } from '@fortawesome/pro-solid-svg-icons/faStop';
 import { faSurprise } from '@fortawesome/pro-solid-svg-icons/faSurprise';
+import { faSync } from '@fortawesome/pro-solid-svg-icons/faSync';
 import { faTasks } from '@fortawesome/pro-solid-svg-icons/faTasks';
 import { faThumbtack } from '@fortawesome/pro-solid-svg-icons/faThumbtack';
 import { faThumbsDown } from '@fortawesome/pro-solid-svg-icons/faThumbsDown';
@@ -257,6 +259,7 @@ library.add(
   falBadgeDollar,
   faBan,
   faBars,
+  faBell,
   faBatteryFull,
   faBatteryEmpty,
   faBolt,
@@ -399,6 +402,7 @@ library.add(
   farStar,
   farStarHalfAlt,
   faSurprise,
+  faSync,
   faTasks,
   faThumbsDown,
   faThumbsUp,

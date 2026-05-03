@@ -761,6 +761,7 @@ export default function CollaborationPanel({
   const [changedFiles, setChangedFiles] = useState<BuildContributionFileDiff[]>(
     []
   );
+  const [branchRootDrifted, setBranchRootDrifted] = useState(false);
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [previewPath, setPreviewPath] = useState('');
   const [actionLoading, setActionLoading] = useState('');
@@ -1592,6 +1593,7 @@ export default function CollaborationPanel({
         : [];
       setSelectedContribution(result?.contribution || null);
       setChangedFiles(nextFiles);
+      setBranchRootDrifted(Boolean(result?.rootDrifted));
       setConflictMarkerPaths(
         nextFiles
           .filter(
@@ -1693,6 +1695,7 @@ export default function CollaborationPanel({
         return;
       }
       if (result?.success) {
+        setBranchRootDrifted(false);
         if (result.contribution) {
           onBuildPatch(result.contribution);
           setSelectedContribution(result.contribution);
@@ -2078,16 +2081,30 @@ export default function CollaborationPanel({
     );
     const contributionCanMerge = contributionStatus === 'draft';
     const canUpdateFromMain =
+      !ownerReview &&
+      branchRootDrifted &&
       (contributionStatus === 'draft' || contributionStatus === 'merged') &&
       Number(activeContribution.contributionContributorId || 0) ===
         Number(userId || 0);
+    const branchOwnerNeedsAttention =
+      !ownerReview &&
+      (canUpdateFromMain || activeConflictMarkerPaths.length > 0 || actionError);
+    if (!ownerReview && !branchOwnerNeedsAttention) {
+      return null;
+    }
     return (
       <div className={detailClass}>
         <div className={rowClass}>
-          <strong>
-            {ownerReview ? 'Review branch' : 'Changed files'}
-          </strong>
-          <span className={mutedTextClass}>{changedFiles.length} changed</span>
+          <strong>{ownerReview ? 'Review branch' : 'Branch needs attention'}</strong>
+          {ownerReview ? (
+            <span className={mutedTextClass}>
+              {changedFiles.length} changed
+            </span>
+          ) : canUpdateFromMain ? (
+            <span className={mutedTextClass}>
+              Main has new changes for this branch.
+            </span>
+          ) : null}
           {contributionStatus !== 'draft' ? (
             <span className={statusPillClass}>{contributionStatus}</span>
           ) : null}
@@ -2102,53 +2119,7 @@ export default function CollaborationPanel({
             </GameCTAButton>
           ) : null}
         </div>
-        {changedFiles.length === 0 ? (
-          <span className={mutedTextClass}>No file changes loaded.</span>
-        ) : (
-          <>
-            <div className={fileListClass}>
-              {changedFiles.map((file) => (
-                <label key={file.path} className={fileRowClass}>
-                  <input
-                    type="checkbox"
-                    checked={selectedPaths.includes(file.path)}
-                    disabled={!ownerReview || !contributionCanMerge}
-                    onChange={() => toggleSelectedPath(file.path)}
-                  />
-                  <strong>{file.status}</strong>
-                  <button
-                    type="button"
-                    className={css`
-                      border: 0;
-                      background: transparent;
-                      color: inherit;
-                      padding: 0;
-                      text-align: left;
-                      min-width: 0;
-                      cursor: pointer;
-                    `}
-                    onClick={() => setPreviewPath(file.path)}
-                  >
-                    <span className={filePathClass}>{file.path}</span>
-                  </button>
-                  {file.mergeStatus === 'conflict' ? (
-                    <span className={conflictBadgeClass}>conflict</span>
-                  ) : null}
-                </label>
-              ))}
-            </div>
-            {selectedPreviewFile ? (
-              <div className={diffPreviewClass}>
-                <pre className={codePreviewClass}>
-                  {selectedPreviewFile.currentContent ?? ''}
-                </pre>
-                <pre className={codePreviewClass}>
-                  {selectedPreviewFile.contributionContent ?? ''}
-                </pre>
-              </div>
-            ) : null}
-          </>
-        )}
+        {ownerReview ? renderChangedFiles() : null}
         {canUpdateFromMain ? (
           <div className={rowClass}>
             <GameCTAButton
@@ -2227,6 +2198,56 @@ export default function CollaborationPanel({
         {actionError ? <span className={errorClass}>{actionError}</span> : null}
       </div>
     );
+
+    function renderChangedFiles() {
+      return changedFiles.length === 0 ? (
+        <span className={mutedTextClass}>No file changes loaded.</span>
+      ) : (
+        <>
+          <div className={fileListClass}>
+            {changedFiles.map((file) => (
+              <label key={file.path} className={fileRowClass}>
+                <input
+                  type="checkbox"
+                  checked={selectedPaths.includes(file.path)}
+                  disabled={!contributionCanMerge}
+                  onChange={() => toggleSelectedPath(file.path)}
+                />
+                <strong>{file.status}</strong>
+                <button
+                  type="button"
+                  className={css`
+                    border: 0;
+                    background: transparent;
+                    color: inherit;
+                    padding: 0;
+                    text-align: left;
+                    min-width: 0;
+                    cursor: pointer;
+                  `}
+                  onClick={() => setPreviewPath(file.path)}
+                >
+                  <span className={filePathClass}>{file.path}</span>
+                </button>
+                {file.mergeStatus === 'conflict' ? (
+                  <span className={conflictBadgeClass}>conflict</span>
+                ) : null}
+              </label>
+            ))}
+          </div>
+          {selectedPreviewFile ? (
+            <div className={diffPreviewClass}>
+              <pre className={codePreviewClass}>
+                {selectedPreviewFile.currentContent ?? ''}
+              </pre>
+              <pre className={codePreviewClass}>
+                {selectedPreviewFile.contributionContent ?? ''}
+              </pre>
+            </div>
+          ) : null}
+        </>
+      );
+    }
   }
 
   function renderForum() {

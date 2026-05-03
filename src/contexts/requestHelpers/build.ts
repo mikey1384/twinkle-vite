@@ -690,6 +690,32 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildActivity({
+      cursor,
+      kind = 'notifications',
+      limit = 12,
+      scope = 'mine'
+    }: {
+      cursor?: string;
+      kind?: 'notifications' | 'branch_updates';
+      limit?: number;
+      scope?: 'mine' | 'collaborating';
+    } = {}) {
+      try {
+        const params: Record<string, any> = { kind, limit, scope };
+        if (cursor) {
+          params.cursor = cursor;
+        }
+        const { data } = await request.get(`${URL}/build/activity`, {
+          ...auth(),
+          params
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadMyPublicBuildsForPinning() {
       try {
         const { data } = await request.get(

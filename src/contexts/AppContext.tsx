@@ -22,6 +22,10 @@ import {
   localStorageKeys
 } from '~/constants/defaultValues';
 import { removeStoredItem } from '~/helpers/userDataHelpers';
+import {
+  getErrorMessage,
+  getErrorMessageFromResponseData
+} from '~/helpers/errorMessageHelpers';
 
 export const AppContext = createContext({});
 export const initialMyState = {
@@ -70,47 +74,6 @@ function shouldReloadForRedirect() {
     // fall back to the old behavior and reload immediately.
     return true;
   }
-}
-
-function decodeBinaryErrorText(data: ArrayBuffer | ArrayBufferView) {
-  try {
-    const view =
-      data instanceof ArrayBuffer
-        ? new Uint8Array(data)
-        : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-    return new TextDecoder().decode(view);
-  } catch {
-    return '';
-  }
-}
-
-function getErrorMessageFromResponseData(data: unknown): string | null {
-  if (!data) {
-    return null;
-  }
-
-  if (typeof data === 'string') {
-    const trimmed = data.trim();
-    if (!trimmed) {
-      return null;
-    }
-    try {
-      return getErrorMessageFromResponseData(JSON.parse(trimmed)) || trimmed;
-    } catch {
-      return trimmed;
-    }
-  }
-
-  if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
-    return getErrorMessageFromResponseData(decodeBinaryErrorText(data));
-  }
-
-  if (typeof data === 'object') {
-    const errorData = data as { error?: string; message?: string };
-    return errorData.error || errorData.message || null;
-  }
-
-  return null;
 }
 
 export function AppContextProvider({ children }: { children: ReactNode }) {
@@ -165,7 +128,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
       return Promise.reject({
         status: 500,
-        message: error?.message || 'An unexpected error occurred'
+        message: getErrorMessage(error)
       });
     },
     [userDispatch]

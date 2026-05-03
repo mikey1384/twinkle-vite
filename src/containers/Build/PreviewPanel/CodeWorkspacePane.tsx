@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import CodeDiff from '~/components/CodeDiff';
@@ -27,6 +27,8 @@ interface CodeWorkspacePaneProps {
   downloadingProjectArchive: boolean;
   projectFilesLocked: boolean;
   projectFileError: string;
+  projectFileSaveError: string;
+  maxProjectFileLines: number;
   currentBuildRuntimeAssets: PreviewRuntimeUploadAsset[];
   streamingAutoFollowEnabled: boolean;
   persistedFileContentByPath: Map<string, string>;
@@ -50,6 +52,129 @@ interface CodeWorkspacePaneProps {
   onActiveFileContentChange: (value: string) => void;
 }
 
+const DEFAULT_PROJECT_FILE_LINE_LIMIT = 500;
+const PROJECT_FILE_LINE_WARNING_RATIO = 0.96;
+const MAX_PROJECT_FILE_SEARCH_RESULTS = 40;
+
+type ProjectFileLineDiagnosticSeverity = 'warning' | 'error';
+
+interface ProjectFileLineDiagnostic {
+  path: string;
+  lineCount: number;
+  maxLines: number;
+  severity: ProjectFileLineDiagnosticSeverity;
+}
+
+interface ProjectFileSearchResult {
+  path: string;
+  lineNumber: number;
+  lineText: string;
+  beforeText: string;
+  afterText: string;
+}
+
+function resolveProjectFileLineLimit(maxProjectFileLines: number) {
+  if (!Number.isFinite(maxProjectFileLines) || maxProjectFileLines <= 0) {
+    return DEFAULT_PROJECT_FILE_LINE_LIMIT;
+  }
+  return Math.floor(maxProjectFileLines);
+}
+
+function normalizeProjectFileContent(content: string) {
+  return String(content || '').replace(/\r\n?/g, '\n');
+}
+
+function getProjectFileLines(content: string) {
+  const normalizedContent = normalizeProjectFileContent(content);
+  if (!normalizedContent) return [];
+  return normalizedContent.split('\n');
+}
+
+function countProjectFileLines(content: string) {
+  return getProjectFileLines(content).length;
+}
+
+function buildProjectFileLineDiagnostics(
+  files: EditableProjectFile[],
+  maxLines: number
+): ProjectFileLineDiagnostic[] {
+  const warningThreshold = Math.max(
+    1,
+    Math.floor(maxLines * PROJECT_FILE_LINE_WARNING_RATIO)
+  );
+
+  return files
+    .map((file) => {
+      const lineCount = countProjectFileLines(file.content);
+      if (lineCount > maxLines) {
+        return {
+          path: file.path,
+          lineCount,
+          maxLines,
+          severity: 'error' as const
+        };
+      }
+      if (lineCount >= warningThreshold) {
+        return {
+          path: file.path,
+          lineCount,
+          maxLines,
+          severity: 'warning' as const
+        };
+      }
+      return null;
+    })
+    .filter(
+      (diagnostic): diagnostic is ProjectFileLineDiagnostic =>
+        diagnostic !== null
+    )
+    .sort((a, b) => {
+      if (a.severity !== b.severity) {
+        return a.severity === 'error' ? -1 : 1;
+      }
+      return b.lineCount - a.lineCount;
+    });
+}
+
+function searchProjectFileLines(
+  files: EditableProjectFile[],
+  rawQuery: string
+): ProjectFileSearchResult[] {
+  const query = rawQuery.trim().toLowerCase();
+  if (!query) return [];
+
+  const results: ProjectFileSearchResult[] = [];
+  for (const file of files) {
+    const lines = getProjectFileLines(file.content);
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!lines[index].toLowerCase().includes(query)) {
+        continue;
+      }
+      results.push({
+        path: file.path,
+        lineNumber: index + 1,
+        lineText: lines[index],
+        beforeText: lines[index - 1] || '',
+        afterText: lines[index + 1] || ''
+      });
+      if (results.length >= MAX_PROJECT_FILE_SEARCH_RESULTS) {
+        return results;
+      }
+    }
+  }
+  return results;
+}
+
+function formatLineCount(lineCount: number, maxLines: number) {
+  return `${lineCount}/${maxLines}`;
+}
+
+function truncateSearchLine(line: string) {
+  const trimmedLine = line.trim();
+  if (trimmedLine.length <= 160) return trimmedLine;
+  return `${trimmedLine.slice(0, 157)}...`;
+}
+
 export default function CodeWorkspacePane({
   displayedProjectFiles,
   projectExplorerEntries,
@@ -66,6 +191,8 @@ export default function CodeWorkspacePane({
   downloadingProjectArchive,
   projectFilesLocked,
   projectFileError,
+  projectFileSaveError,
+  maxProjectFileLines,
   currentBuildRuntimeAssets,
   streamingAutoFollowEnabled,
   persistedFileContentByPath,
@@ -88,6 +215,9 @@ export default function CodeWorkspacePane({
   onDismissProjectFileError,
   onActiveFileContentChange
 }: CodeWorkspacePaneProps) {
+  const [projectFileSearchQuery, setProjectFileSearchQuery] = useState('');
+  const resolvedMaxProjectFileLines =
+    resolveProjectFileLineLimit(maxProjectFileLines);
   const persistedActiveFileContent = activeFile
     ? persistedFileContentByPath.get(activeFile.path) || ''
     : '';
@@ -98,6 +228,46 @@ export default function CodeWorkspacePane({
     ? persistedActiveFileContent !== activeFile.content
     : false;
   const displayedAssetEntries = currentBuildRuntimeAssets.slice(0, 8);
+  const projectFileLineDiagnostics = useMemo(
+    () =>
+      buildProjectFileLineDiagnostics(
+        displayedProjectFiles,
+        resolvedMaxProjectFileLines
+      ),
+    [displayedProjectFiles, resolvedMaxProjectFileLines]
+  );
+  const projectFileLineDiagnosticByPath = useMemo(() => {
+    const diagnosticByPath = new Map<string, ProjectFileLineDiagnostic>();
+    for (const diagnostic of projectFileLineDiagnostics) {
+      diagnosticByPath.set(diagnostic.path, diagnostic);
+    }
+    return diagnosticByPath;
+  }, [projectFileLineDiagnostics]);
+  const blockingLineDiagnostics = projectFileLineDiagnostics.filter(
+    (diagnostic) => diagnostic.severity === 'error'
+  );
+  const activeFileLineCount = activeFile
+    ? countProjectFileLines(activeFile.content)
+    : 0;
+  const activeFileLineDiagnostic = activeFile
+    ? projectFileLineDiagnosticByPath.get(activeFile.path) || null
+    : null;
+  const projectFileSearchResults = useMemo(
+    () => searchProjectFileLines(displayedProjectFiles, projectFileSearchQuery),
+    [displayedProjectFiles, projectFileSearchQuery]
+  );
+  const trimmedProjectFileSearchQuery = projectFileSearchQuery.trim();
+  const firstBlockingLineDiagnostic = blockingLineDiagnostics[0] || null;
+  const saveBlockedByLineLimit = Boolean(
+    firstBlockingLineDiagnostic && !isShowingStreamingCode
+  );
+  const saveStatus = projectFileSaveError
+    ? 'save-failed'
+    : saveBlockedByLineLimit
+      ? 'save-blocked'
+      : hasUnsavedProjectFileChanges
+        ? 'unsaved'
+        : 'saved';
 
   return (
     <div
@@ -340,6 +510,214 @@ export default function CodeWorkspacePane({
           </div>
         )}
         <div
+          role="search"
+          className={css`
+            padding: 0.6rem 0.65rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            background: rgba(15, 23, 42, 0.58);
+          `}
+        >
+          <label
+            htmlFor="build-project-file-search"
+            className={css`
+              color: #cbd5e1;
+              font-size: 0.69rem;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.03em;
+            `}
+          >
+            Workspace search
+          </label>
+          <div
+            className={css`
+              position: relative;
+            `}
+          >
+            <Icon
+              icon="search"
+              className={css`
+                position: absolute;
+                left: 0.55rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #94a3b8;
+                font-size: 0.72rem;
+                pointer-events: none;
+              `}
+            />
+            <input
+              id="build-project-file-search"
+              value={projectFileSearchQuery}
+              onChange={(e) => setProjectFileSearchQuery(e.target.value)}
+              placeholder="Find text in all files"
+              aria-label="Search project files"
+              data-testid="build-project-file-search-input"
+              className={css`
+                width: 100%;
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 8px;
+                background: rgba(17, 24, 39, 0.86);
+                color: #e5e7eb;
+                padding: 0.43rem 0.55rem 0.43rem 1.75rem;
+                font-size: 0.74rem;
+                &:focus {
+                  outline: none;
+                  border-color: rgba(65, 140, 235, 0.8);
+                }
+              `}
+            />
+          </div>
+          {trimmedProjectFileSearchQuery && (
+            <div
+              data-testid="build-project-file-search-results"
+              className={css`
+                max-height: 13rem;
+                overflow: auto;
+                border: 1px solid rgba(148, 163, 184, 0.18);
+                border-radius: 10px;
+                background: rgba(2, 6, 23, 0.8);
+              `}
+            >
+              {projectFileSearchResults.length > 0 ? (
+                projectFileSearchResults.map((result) => (
+                  <button
+                    key={`${result.path}:${result.lineNumber}:${result.lineText}`}
+                    type="button"
+                    onClick={() => onSelectFile(result.path)}
+                    className={css`
+                      width: 100%;
+                      border: none;
+                      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+                      background: transparent;
+                      color: #dbeafe;
+                      padding: 0.5rem 0.55rem;
+                      text-align: left;
+                      cursor: pointer;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 0.25rem;
+                      &:hover {
+                        background: rgba(65, 140, 235, 0.14);
+                      }
+                      &:last-child {
+                        border-bottom: none;
+                      }
+                    `}
+                    title={`${result.path}:${result.lineNumber}`}
+                  >
+                    <span
+                      className={css`
+                        max-width: 100%;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        color: #93c5fd;
+                        font-size: 0.7rem;
+                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                        font-weight: 800;
+                      `}
+                    >
+                      {result.path}:{result.lineNumber}
+                    </span>
+                    {result.beforeText && (
+                      <span
+                        className={css`
+                          color: #64748b;
+                          font-size: 0.66rem;
+                          font-family: 'SF Mono', 'Menlo', 'Consolas',
+                            monospace;
+                        `}
+                      >
+                        {truncateSearchLine(result.beforeText)}
+                      </span>
+                    )}
+                    <span
+                      className={css`
+                        color: #e5e7eb;
+                        font-size: 0.69rem;
+                        line-height: 1.35;
+                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                      `}
+                    >
+                      {truncateSearchLine(result.lineText)}
+                    </span>
+                    {result.afterText && (
+                      <span
+                        className={css`
+                          color: #64748b;
+                          font-size: 0.66rem;
+                          font-family: 'SF Mono', 'Menlo', 'Consolas',
+                            monospace;
+                        `}
+                      >
+                        {truncateSearchLine(result.afterText)}
+                      </span>
+                    )}
+                  </button>
+                ))
+              ) : (
+                <div
+                  className={css`
+                    padding: 0.6rem;
+                    color: #94a3b8;
+                    font-size: 0.72rem;
+                  `}
+                >
+                  No matches
+                </div>
+              )}
+            </div>
+          )}
+          {projectFileLineDiagnostics.length > 0 && (
+            <div
+              role={blockingLineDiagnostics.length > 0 ? 'alert' : 'status'}
+              data-testid="build-project-file-line-diagnostics"
+              className={css`
+                border: 1px solid
+                  ${blockingLineDiagnostics.length > 0
+                    ? 'rgba(248, 113, 113, 0.45)'
+                    : 'rgba(251, 191, 36, 0.36)'};
+                border-radius: 10px;
+                background: ${blockingLineDiagnostics.length > 0
+                  ? 'rgba(127, 29, 29, 0.24)'
+                  : 'rgba(120, 53, 15, 0.22)'};
+                color: ${blockingLineDiagnostics.length > 0
+                  ? '#fecaca'
+                  : '#fde68a'};
+                padding: 0.52rem 0.58rem;
+                font-size: 0.69rem;
+                line-height: 1.4;
+              `}
+            >
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 0.35rem;
+                  font-weight: 900;
+                  margin-bottom: 0.25rem;
+                `}
+              >
+                <Icon icon="exclamation-triangle" />
+                <span>
+                  {blockingLineDiagnostics.length > 0
+                    ? 'Save blocked by line limit'
+                    : 'Near line limit'}
+                </span>
+              </div>
+              {projectFileLineDiagnostics.slice(0, 3).map((diagnostic) => (
+                <div key={diagnostic.path}>
+                  {diagnostic.path} {formatLineCount(diagnostic.lineCount, diagnostic.maxLines)} lines
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div
           className={css`
             flex: 1;
             min-height: 0;
@@ -429,6 +807,9 @@ export default function CodeWorkspacePane({
               !isShowingStreamingCode &&
               persistedFileContentByPath.get(file.path) !== file.content;
             const displayName = getFileNameFromPath(file.path);
+            const fileLineCount = countProjectFileLines(file.content);
+            const fileLineDiagnostic =
+              projectFileLineDiagnosticByPath.get(file.path) || null;
 
             return (
               <div
@@ -449,10 +830,18 @@ export default function CodeWorkspacePane({
                     min-width: 0;
                     text-align: left;
                     border: 1px solid
-                      ${isActive
+                      ${fileLineDiagnostic?.severity === 'error'
+                        ? 'rgba(248, 113, 113, 0.62)'
+                        : fileLineDiagnostic?.severity === 'warning'
+                          ? 'rgba(251, 191, 36, 0.5)'
+                          : isActive
                         ? 'rgba(65, 140, 235, 0.65)'
                         : 'rgba(255, 255, 255, 0.08)'};
-                    background: ${isActive
+                    background: ${fileLineDiagnostic?.severity === 'error'
+                      ? 'rgba(127, 29, 29, 0.18)'
+                      : fileLineDiagnostic?.severity === 'warning'
+                        ? 'rgba(120, 53, 15, 0.18)'
+                        : isActive
                       ? 'rgba(65, 140, 235, 0.2)'
                       : 'rgba(17, 24, 39, 0.6)'};
                     color: ${isActive ? '#dbeafe' : '#e5e7eb'};
@@ -475,6 +864,32 @@ export default function CodeWorkspacePane({
                     `}
                   >
                     {displayName}
+                  </span>
+                  <span
+                    data-testid="build-project-file-line-count"
+                    className={css`
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 0.25rem;
+                      flex-shrink: 0;
+                      color: ${fileLineDiagnostic?.severity === 'error'
+                        ? '#fecaca'
+                        : fileLineDiagnostic?.severity === 'warning'
+                          ? '#fde68a'
+                          : '#94a3b8'};
+                      font-size: 0.66rem;
+                      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                      font-weight: 800;
+                    `}
+                    title={`${file.path} has ${formatLineCount(
+                      fileLineCount,
+                      resolvedMaxProjectFileLines
+                    )} lines`}
+                  >
+                    {fileLineDiagnostic && (
+                      <Icon icon="exclamation-triangle" />
+                    )}
+                    {formatLineCount(fileLineCount, resolvedMaxProjectFileLines)}
                   </span>
                   {isDirty && (
                     <span
@@ -716,6 +1131,31 @@ export default function CodeWorkspacePane({
             >
               {activeFile?.path || '/index.html'}
             </div>
+            {activeFile && !isShowingStreamingCode && (
+              <div
+                data-testid="build-active-file-line-count"
+                className={css`
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.35rem;
+                  color: ${activeFileLineDiagnostic?.severity === 'error'
+                    ? '#fecaca'
+                    : activeFileLineDiagnostic?.severity === 'warning'
+                      ? '#fde68a'
+                      : '#94a3b8'};
+                  font-size: 0.7rem;
+                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                  font-weight: 800;
+                `}
+              >
+                {activeFileLineDiagnostic && (
+                  <Icon icon="exclamation-triangle" />
+                )}
+                <span>
+                  Lines {formatLineCount(activeFileLineCount, resolvedMaxProjectFileLines)}
+                </span>
+              </div>
+            )}
             {isOwner && activeFile && !isShowingStreamingCode && (
               <div
                 className={css`
@@ -774,8 +1214,9 @@ export default function CodeWorkspacePane({
           <div
             className={css`
               display: flex;
-              align-items: center;
-              gap: 0.5rem;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 0.35rem;
               color: #e5e7eb;
               font-size: 0.72rem;
             `}
@@ -816,35 +1257,101 @@ export default function CodeWorkspacePane({
             ) : null}
             {isOwner && !isShowingStreamingCode && (
               <>
-                <GameCTAButton
-                  variant="neutral"
-                  size="sm"
-                  icon="download"
-                  disabled={savingProjectFiles || downloadingProjectArchive}
-                  loading={downloadingProjectArchive}
-                  onClick={onDownloadProjectArchive}
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    flex-wrap: wrap;
+                    justify-content: flex-end;
+                  `}
                 >
-                  {hasUnsavedProjectFileChanges
-                    ? 'Save & download'
-                    : 'Download zip'}
-                </GameCTAButton>
-                <GameCTAButton
-                  variant="primary"
-                  size="sm"
-                  disabled={
-                    savingProjectFiles ||
-                    downloadingProjectArchive ||
-                    !hasUnsavedProjectFileChanges
+                  <GameCTAButton
+                    variant="neutral"
+                    size="sm"
+                    icon="download"
+                    disabled={
+                      savingProjectFiles ||
+                      downloadingProjectArchive ||
+                      (hasUnsavedProjectFileChanges && saveBlockedByLineLimit)
+                    }
+                    loading={downloadingProjectArchive}
+                    onClick={onDownloadProjectArchive}
+                  >
+                    {hasUnsavedProjectFileChanges
+                      ? 'Save & download'
+                      : 'Download zip'}
+                  </GameCTAButton>
+                  <GameCTAButton
+                    variant="primary"
+                    size="sm"
+                    disabled={
+                      savingProjectFiles ||
+                      downloadingProjectArchive ||
+                      !hasUnsavedProjectFileChanges ||
+                      saveBlockedByLineLimit
+                    }
+                    loading={savingProjectFiles}
+                    onClick={onSaveEditableProjectFiles}
+                  >
+                    {savingProjectFiles
+                      ? 'Saving...'
+                      : saveBlockedByLineLimit
+                        ? 'Fix line limit'
+                        : hasUnsavedProjectFileChanges
+                          ? 'Save files'
+                          : 'Saved'}
+                  </GameCTAButton>
+                </div>
+                <div
+                  role={
+                    projectFileSaveError || saveBlockedByLineLimit
+                      ? 'alert'
+                      : 'status'
                   }
-                  loading={savingProjectFiles}
-                  onClick={onSaveEditableProjectFiles}
+                  aria-live={
+                    projectFileSaveError || saveBlockedByLineLimit
+                      ? 'assertive'
+                      : 'polite'
+                  }
+                  data-testid="build-project-file-save-status"
+                  data-agent-status={saveStatus}
+                  className={css`
+                    max-width: 34rem;
+                    border: 1px solid
+                      ${projectFileSaveError || saveBlockedByLineLimit
+                        ? 'rgba(248, 113, 113, 0.45)'
+                        : hasUnsavedProjectFileChanges
+                          ? 'rgba(251, 191, 36, 0.34)'
+                          : 'rgba(34, 197, 94, 0.28)'};
+                    border-radius: 8px;
+                    background: ${projectFileSaveError || saveBlockedByLineLimit
+                      ? 'rgba(127, 29, 29, 0.2)'
+                      : hasUnsavedProjectFileChanges
+                        ? 'rgba(120, 53, 15, 0.16)'
+                        : 'rgba(22, 101, 52, 0.14)'};
+                    color: ${projectFileSaveError || saveBlockedByLineLimit
+                      ? '#fecaca'
+                      : hasUnsavedProjectFileChanges
+                        ? '#fde68a'
+                        : '#bbf7d0'};
+                    padding: 0.35rem 0.5rem;
+                    font-size: 0.69rem;
+                    line-height: 1.35;
+                    text-align: right;
+                  `}
                 >
-                  {savingProjectFiles
-                    ? 'Saving...'
-                    : hasUnsavedProjectFileChanges
-                      ? 'Save files'
-                      : 'Saved'}
-                </GameCTAButton>
+                  {projectFileSaveError
+                    ? `Save failed: ${projectFileSaveError}`
+                    : firstBlockingLineDiagnostic
+                      ? `Save blocked: ${firstBlockingLineDiagnostic.path} has ${formatLineCount(
+                          firstBlockingLineDiagnostic.lineCount,
+                          firstBlockingLineDiagnostic.maxLines
+                        )} lines. Split it before saving.`
+                      : hasUnsavedProjectFileChanges
+                        ? 'Unsaved changes'
+                        : 'Saved'}
+                </div>
               </>
             )}
           </div>
@@ -924,31 +1431,83 @@ export default function CodeWorkspacePane({
               )}
             </div>
           ) : (
-            <textarea
-              value={activeFile.content}
-              onChange={(e) => onActiveFileContentChange(e.target.value)}
-              readOnly={
-                !isOwner || isShowingStreamingCode || projectFilesLocked
-              }
-              aria-label={`Code editor for ${activeFile.path}`}
-              data-testid="build-code-editor"
-              spellCheck={false}
+            <div
               className={css`
                 width: 100%;
                 height: 100%;
-                padding: 1rem;
-                border: none;
-                resize: none;
-                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-                font-size: 0.85rem;
-                line-height: 1.5;
-                background: #111827;
-                color: #d4d4d4;
-                &:focus {
-                  outline: none;
-                }
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
               `}
-            />
+            >
+              {activeFileLineDiagnostic && (
+                <div
+                  role={
+                    activeFileLineDiagnostic.severity === 'error'
+                      ? 'alert'
+                      : 'status'
+                  }
+                  data-testid="build-active-file-line-diagnostic"
+                  className={css`
+                    border-bottom: 1px solid
+                      ${activeFileLineDiagnostic.severity === 'error'
+                        ? 'rgba(248, 113, 113, 0.35)'
+                        : 'rgba(251, 191, 36, 0.3)'};
+                    background: ${activeFileLineDiagnostic.severity === 'error'
+                      ? 'rgba(127, 29, 29, 0.18)'
+                      : 'rgba(120, 53, 15, 0.18)'};
+                    color: ${activeFileLineDiagnostic.severity === 'error'
+                      ? '#fecaca'
+                      : '#fde68a'};
+                    padding: 0.55rem 0.75rem;
+                    font-size: 0.74rem;
+                    line-height: 1.45;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.45rem;
+                  `}
+                >
+                  <Icon icon="exclamation-triangle" />
+                  <span>
+                    {activeFileLineDiagnostic.severity === 'error'
+                      ? `This file is too long to save: ${formatLineCount(
+                          activeFileLineDiagnostic.lineCount,
+                          activeFileLineDiagnostic.maxLines
+                        )} lines. Split it before saving.`
+                      : `This file is near the save limit: ${formatLineCount(
+                          activeFileLineDiagnostic.lineCount,
+                          activeFileLineDiagnostic.maxLines
+                        )} lines.`}
+                  </span>
+                </div>
+              )}
+              <textarea
+                value={activeFile.content}
+                onChange={(e) => onActiveFileContentChange(e.target.value)}
+                readOnly={
+                  !isOwner || isShowingStreamingCode || projectFilesLocked
+                }
+                aria-label={`Code editor for ${activeFile.path}`}
+                data-testid="build-code-editor"
+                spellCheck={false}
+                className={css`
+                  width: 100%;
+                  flex: 1;
+                  min-height: 0;
+                  padding: 1rem;
+                  border: none;
+                  resize: none;
+                  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                  font-size: 0.85rem;
+                  line-height: 1.5;
+                  background: #111827;
+                  color: #d4d4d4;
+                  &:focus {
+                    outline: none;
+                  }
+                `}
+              />
+            </div>
           )
         ) : (
           <div
@@ -966,6 +1525,8 @@ export default function CodeWorkspacePane({
         )}
         {projectFileError && (
           <div
+            role="alert"
+            data-testid="build-project-file-save-error-toast"
             className={css`
               position: absolute;
               right: 0.8rem;

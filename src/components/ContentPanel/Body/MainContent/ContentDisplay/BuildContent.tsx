@@ -15,6 +15,7 @@ import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
 } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
+import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
@@ -36,8 +37,8 @@ export default function BuildContent({
   build: {
     id?: number;
     userId?: number;
-    title?: string;
-    description?: string;
+    title?: unknown;
+    description?: unknown;
     isPublic?: number | boolean | null;
     sourceBuildId?: number | null;
     contributionStatus?: string | null;
@@ -45,7 +46,7 @@ export default function BuildContent({
     collaborationMode?: BuildCollaborationMode | 'contribution';
     contributionAccess?: BuildContributionAccess;
     collaboratorCount?: number;
-    thumbnailUrl?: string | null;
+    thumbnailUrl?: unknown;
     updatedAt?: number | null;
   };
   contentId: number;
@@ -114,8 +115,15 @@ export default function BuildContent({
         ? 'users'
         : 'user-plus';
   const buildId = Number(build?.id || 0);
-  const displayTitle = getBuildDisplayTitle(build);
-  const relationshipLabels = getBuildRelationshipLabels(build);
+  const normalizedBuild = {
+    ...build,
+    title: getBuildText(build?.title),
+    description: getBuildText(build?.description),
+    thumbnailUrl: getBuildText(build?.thumbnailUrl)
+  };
+  const displayTitle = getBuildDisplayTitle(normalizedBuild);
+  const relationshipLabels = getBuildRelationshipLabels(normalizedBuild);
+  const buildDescription = normalizedBuild.description.trim();
   const ownerId = Number(build?.userId || 0);
   const isOwner = Boolean(userId && ownerId && Number(userId) === ownerId);
   const collaborationMode = normalizeCollaborationMode(
@@ -130,7 +138,7 @@ export default function BuildContent({
     0,
     Math.floor(Number(build?.collaboratorCount) || 0)
   );
-  const thumbnailUrl = String(build?.thumbnailUrl || '').trim();
+  const thumbnailUrl = normalizedBuild.thumbnailUrl.trim();
   const hasThumbnail = Boolean(thumbnailUrl);
   const { colorKey: playButtonColorKey } = useRoleColor('button', {
     themeName: theme,
@@ -464,7 +472,7 @@ export default function BuildContent({
             >
               {displayTitle || 'Lumine App'}
             </div>
-            {build.description?.trim() ? (
+            {buildDescription ? (
               <div
                 className={css`
                   max-width: 32rem;
@@ -482,7 +490,7 @@ export default function BuildContent({
                     : 'none'};
                 `}
               >
-                {build.description.trim()}
+                {buildDescription}
               </div>
             ) : null}
             <Button
@@ -624,9 +632,7 @@ export default function BuildContent({
       setCollaborationRequestMessage(String(nextRequest?.message || ''));
     } catch (error: any) {
       setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to load collaboration request'
+        getErrorMessage(error, 'Failed to load collaboration request')
       );
     } finally {
       setActionLoading('');
@@ -648,9 +654,7 @@ export default function BuildContent({
       }
     } catch (error: any) {
       setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to send collaboration request'
+        getErrorMessage(error, 'Failed to send collaboration request')
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -674,9 +678,7 @@ export default function BuildContent({
       }
     } catch (error: any) {
       setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to cancel collaboration request'
+        getErrorMessage(error, 'Failed to cancel collaboration request')
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -701,9 +703,7 @@ export default function BuildContent({
       }
     } catch (error: any) {
       setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to accept contributor invite'
+        getErrorMessage(error, 'Failed to accept contributor invite')
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -726,9 +726,7 @@ export default function BuildContent({
       }
     } catch (error: any) {
       setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to decline contributor invite'
+        getErrorMessage(error, 'Failed to decline contributor invite')
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -749,9 +747,7 @@ export default function BuildContent({
         navigate(`/build/${result.build.id}`);
       }
     } catch (error: any) {
-      setActionError(
-        error?.response?.data?.error || error?.message || 'Failed to fork app'
-      );
+      setActionError(getErrorMessage(error, 'Failed to fork app'));
     } finally {
       setActionLoading('');
     }
@@ -955,6 +951,14 @@ function formatCollaboratorCount(count: number) {
   return count === 1
     ? '1 collaborator'
     : `${count.toLocaleString()} collaborators`;
+}
+
+function getBuildText(value: unknown) {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return '';
 }
 
 function buildRelationshipBadgeClass(label: BuildRelationshipLabel) {

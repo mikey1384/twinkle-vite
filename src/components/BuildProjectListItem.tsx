@@ -327,6 +327,22 @@ const buildPreviewAppButtonClass = css`
   }
 `;
 
+const buildPreviewForkButtonClass = css`
+  ${buildPreviewActionButtonClass};
+  background: rgba(37, 99, 235, 0.88);
+
+  &:hover {
+    background: rgba(37, 99, 235, 0.98);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.65;
+    transform: none;
+  }
+`;
+
 const buildPreviewCollabButtonClass = css`
   ${buildPreviewActionButtonClass};
   background: rgba(190, 24, 93, 0.88);
@@ -391,6 +407,7 @@ export interface BuildProjectListItemData {
   rootBuildSourceBuildId?: number | null;
   rootBuildTitle?: string | null;
   collaboratorCount?: number;
+  forkCount?: number;
   thumbnailUrl?: string | null;
   pendingCollaborationRequestCount?: number;
   latestPendingCollaborationRequestAt?: number | null;
@@ -438,6 +455,7 @@ export default function BuildProjectListItem({
   const cancelBuildCollaborationRequest = useAppContext(
     (v) => v.requestHelpers.cancelBuildCollaborationRequest
   );
+  const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
   const acceptBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.acceptBuildContributorInvite
   );
@@ -469,11 +487,23 @@ export default function BuildProjectListItem({
     0,
     Math.floor(Number(build.collaboratorCount) || 0)
   );
+  const forkCount = Math.max(0, Math.floor(Number(build.forkCount) || 0));
   const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
   const showUnpublishedChangesBadge =
     isOwner &&
     build.isPublic &&
     Boolean(releaseStatus?.hasUnpublishedChanges);
+  const showForkCountBadge =
+    showForkBadge &&
+    buildForkUiEnabled &&
+    collaborationMode === 'open_source';
+  const showStandaloneForkAction =
+    buildForkUiEnabled &&
+    collaborationMode === 'open_source' &&
+    Boolean(build.isPublic) &&
+    !isOwner &&
+    !isCurrentUserOwner &&
+    Boolean(build.id);
   const previewLabel = primaryActionLabel || (isOwner ? 'Build' : 'Open app');
   const previewIcon =
     primaryActionIcon || (isOwner ? 'wrench' : 'external-link-alt');
@@ -623,6 +653,7 @@ export default function BuildProjectListItem({
                 <Icon icon="code-branch" /> Open Source
               </span>
             ) : null}
+            {showForkCountBadge ? renderForkCountBadge() : null}
             {collaboratorCount > 0 ? (
               <span
                 className={buildTagClass}
@@ -684,6 +715,20 @@ export default function BuildProjectListItem({
           ariaLabel={`${displayTitle} preview`}
         >
           <div className={buildPreviewActionsClass}>
+            {showStandaloneForkAction ? (
+              <button
+                type="button"
+                className={buildPreviewForkButtonClass}
+                disabled={Boolean(actionLoading)}
+                onClick={handleForkActionClick}
+              >
+                <Icon
+                  icon={actionLoading === 'fork' ? 'spinner' : 'code-branch'}
+                  {...(actionLoading === 'fork' ? { pulse: true } : {})}
+                />
+                <span>{actionLoading === 'fork' ? 'Forking...' : 'Fork'}</span>
+              </button>
+            ) : null}
             {showListCollaborationAction ? (
               <button
                 type="button"
@@ -694,8 +739,14 @@ export default function BuildProjectListItem({
                 onClick={handleListCollaborationActionClick}
               >
                 <Icon
-                  icon={actionLoading ? 'spinner' : listCollaborationActionIcon}
-                  {...(actionLoading ? { pulse: true } : {})}
+                  icon={
+                    actionLoading && actionLoading !== 'fork'
+                      ? 'spinner'
+                      : listCollaborationActionIcon
+                  }
+                  {...(actionLoading && actionLoading !== 'fork'
+                    ? { pulse: true }
+                    : {})}
                 />
                 <span>{listCollaborationActionLabel}</span>
               </button>
@@ -766,6 +817,36 @@ export default function BuildProjectListItem({
     handleNavigate();
   }
 
+  async function handleForkActionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (actionLoading) return;
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    setActionLoading('fork');
+    setActionError('');
+    try {
+      const result = await forkBuild(Number(build.id));
+      const forkedBuildId = Number(result?.build?.id || 0);
+      if (!forkedBuildId) {
+        throw new Error('Unable to fork Build');
+      }
+      navigate(`/build/${forkedBuildId}`);
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Unable to fork Build'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
   function handleListCollaborationActionClick(
     event?: React.MouseEvent<HTMLButtonElement>
   ) {
@@ -816,6 +897,23 @@ export default function BuildProjectListItem({
       >
         {badgeContent}
       </button>
+    );
+  }
+
+  function renderForkCountBadge() {
+    const forkBadgeStyle = toTagStyle({
+      background: 'rgba(147, 51, 234, 0.14)',
+      border: 'rgba(147, 51, 234, 0.36)',
+      color: '#6b21a8'
+    });
+    return (
+      <span
+        className={buildTagClass}
+        style={forkBadgeStyle}
+        title={formatForkCount(forkCount)}
+      >
+        <Icon icon="code-branch" /> {formatForkCount(forkCount)}
+      </span>
     );
   }
 
@@ -1139,6 +1237,10 @@ function formatViewLabel(viewCount?: number | null) {
   if (views <= 0) return 'No views yet';
   if (views === 1) return '1 view';
   return `${views} views`;
+}
+
+function formatForkCount(count: number) {
+  return count === 1 ? '1 fork' : `${count.toLocaleString()} forks`;
 }
 
 function formatCollaboratorCount(count: number) {

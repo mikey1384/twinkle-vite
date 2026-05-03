@@ -16,6 +16,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import type { BuildCapabilitySnapshot } from '../capabilityTypes';
 import type {
   BuildRuntimeExplorationPlan,
+  BuildRuntimeObservationIssue,
   BuildRuntimeObservationState
 } from '../runtimeObservationTypes';
 import GuestRestrictionBanner from './GuestRestrictionBanner';
@@ -182,6 +183,71 @@ const previewLoadingOverlayClass = css`
   backdrop-filter: blur(1px);
 `;
 
+const previewRuntimeIssuePanelClass = css`
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  max-width: 44rem;
+  max-height: min(48%, 22rem);
+  overflow: auto;
+  border: 1px solid rgba(248, 113, 113, 0.42);
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.92);
+  color: #fee2e2;
+  z-index: 5;
+  padding: 0.7rem 0.78rem;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.28);
+  font-size: 0.78rem;
+  line-height: 1.42;
+  backdrop-filter: blur(2px);
+`;
+
+const previewRuntimeIssueHeaderClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 900;
+  margin-bottom: 0.35rem;
+`;
+
+const previewRuntimeIssueMetaClass = css`
+  margin-top: 0.42rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  color: #fecaca;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 0.72rem;
+`;
+
+const previewRuntimeIssueOpenButtonClass = css`
+  border: 1px solid rgba(254, 226, 226, 0.42);
+  border-radius: 999px;
+  background: rgba(254, 226, 226, 0.14);
+  color: #fff7ed;
+  padding: 0.24rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  &:hover {
+    background: rgba(254, 226, 226, 0.22);
+  }
+`;
+
+const previewRuntimeIssueStackClass = css`
+  margin: 0.5rem 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #fecaca;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 0.68rem;
+`;
+
 const previewSpinnerClass = css`
   animation: previewSpin 0.9s linear infinite;
   @keyframes previewSpin {
@@ -290,6 +356,77 @@ function getRuntimePreviewIframeSandbox(frameSrc: string | null | undefined) {
   return canUseSameOriginBuildPreviewSandbox(frameSrc)
     ? RUNTIME_CAPABILITY_IFRAME_SANDBOX
     : PREVIEW_IFRAME_SANDBOX;
+}
+
+function getRuntimeIssueLookupTexts(
+  issue: BuildRuntimeObservationIssue | null
+) {
+  if (!issue) return [];
+  return [issue.filename || '', issue.stack || '']
+    .map((value) => {
+      const trimmedValue = String(value || '').trim();
+      if (!trimmedValue) return '';
+      try {
+        return decodeURIComponent(trimmedValue);
+      } catch {
+        return trimmedValue;
+      }
+    })
+    .filter(Boolean);
+}
+
+function resolveRuntimeIssueProjectFilePath({
+  issue,
+  files
+}: {
+  issue: BuildRuntimeObservationIssue | null;
+  files: EditableProjectFile[];
+}) {
+  const lookupTexts = getRuntimeIssueLookupTexts(issue);
+  if (lookupTexts.length === 0) return null;
+
+  const sortedFilePaths = files
+    .map((file) => normalizeProjectFilePath(file.path))
+    .sort((a, b) => b.length - a.length);
+
+  for (const filePath of sortedFilePaths) {
+    const filePathWithoutSlash = filePath.replace(/^\//, '');
+    for (const lookupText of lookupTexts) {
+      if (
+        lookupText === filePath ||
+        lookupText.includes(`twinkle-local${filePath}`) ||
+        lookupText.includes(filePath) ||
+        lookupText.includes(`/${filePathWithoutSlash}`)
+      ) {
+        return filePath;
+      }
+    }
+  }
+  return null;
+}
+
+function getRuntimeIssueLocationText({
+  issue,
+  projectFilePath
+}: {
+  issue: BuildRuntimeObservationIssue;
+  projectFilePath: string | null;
+}) {
+  const fileLabel = projectFilePath || issue.filename || 'Unknown file';
+  const lineLabel =
+    issue.lineNumber != null
+      ? `:${issue.lineNumber}${issue.columnNumber != null ? `:${issue.columnNumber}` : ''}`
+      : '';
+  return `${fileLabel}${lineLabel}`;
+}
+
+function getRuntimeIssueStackPreview(issue: BuildRuntimeObservationIssue) {
+  return String(issue.stack || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 4)
+    .join('\n');
 }
 
 function triggerBrowserDownload({
@@ -1081,6 +1218,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       runtimeOnly = false,
       runtimeHostVisible = true,
       capabilitySnapshot = null,
+      maxProjectFileLines = null,
       onEditableProjectFilesStateChange,
       runtimeExplorationPlan = null,
       onRuntimeObservationChange,
@@ -1140,6 +1278,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const [downloadingProjectArchive, setDownloadingProjectArchive] =
       useState(false);
     const [projectFileError, setProjectFileError] = useState('');
+    const [projectFileSaveError, setProjectFileSaveError] = useState('');
     const [workspaceRuntimeAssets, setWorkspaceRuntimeAssets] = useState<
       PreviewRuntimeUploadAsset[]
     >(currentBuildRuntimeAssets);
@@ -1246,6 +1385,38 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         null,
       [displayedProjectFiles, activeFilePath]
     );
+    const latestRuntimeObservationIssue = useMemo(
+      () =>
+        runtimeObservationState.issues[
+          runtimeObservationState.issues.length - 1
+        ] || null,
+      [runtimeObservationState.issues]
+    );
+    const latestRuntimeObservationProjectFilePath = useMemo(
+      () =>
+        resolveRuntimeIssueProjectFilePath({
+          issue: latestRuntimeObservationIssue,
+          files: displayedProjectFiles
+        }),
+      [displayedProjectFiles, latestRuntimeObservationIssue]
+    );
+    const latestRuntimeObservationStackPreview = useMemo(
+      () =>
+        latestRuntimeObservationIssue
+          ? getRuntimeIssueStackPreview(latestRuntimeObservationIssue)
+          : '',
+      [latestRuntimeObservationIssue]
+    );
+
+    function openRuntimeIssueProjectFile(path: string) {
+      if (!codeWorkspaceAvailable) return;
+      setViewMode('code');
+      setActiveFilePath(path);
+      setSelectedFolderPath(null);
+      setRenamePathInput(path);
+      setProjectFileError('');
+      setProjectFileSaveError('');
+    }
 
     function openProjectFileUploadPicker() {
       if (
@@ -2012,6 +2183,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       setSelectedFolderPath(null);
       setFolderMoveTargetPath('');
       setCollapsedFolders({});
+      setProjectFileSaveError('');
       wasShowingStreamingCodeRef.current = false;
       streamingAutoFollowEnabledRef.current = false;
       autoReturnToPreviewPendingRef.current = false;
@@ -2128,6 +2300,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       editableProjectFilesRef.current = sorted;
       setEditableProjectFiles(sorted);
       setHasLocalEditableProjectFileChanges(Boolean(options?.markDirty));
+      if (options?.markDirty) {
+        setProjectFileSaveError('');
+      }
       setActiveFilePath((prev) => {
         if (sorted.some((file) => file.path === prev)) return prev;
         return (
@@ -3242,6 +3417,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       const collisionError = getProjectFileCaseCollisionError(files);
       if (collisionError) {
         setProjectFileError(collisionError);
+        setProjectFileSaveError(collisionError);
         return {
           success: false,
           error: collisionError
@@ -3251,6 +3427,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       const savedSignature = serializeEditableProjectFiles(files);
       setSavingProjectFilesState(true);
       setProjectFileError('');
+      setProjectFileSaveError('');
       try {
         const result = await onSaveProjectFiles(files, {
           targetBuildId,
@@ -3259,12 +3436,14 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         if (!result?.success) {
           const message = result?.error || fallbackError;
           setProjectFileError(message);
+          setProjectFileSaveError(message);
           return {
             success: false,
             error: message
           };
         }
         setProjectFileError('');
+        setProjectFileSaveError('');
         return {
           success: true,
           savedSignature
@@ -3298,6 +3477,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       const message =
         'Project files changed while export was preparing. Please stop editing for a moment and try again.';
       setProjectFileError(message);
+      setProjectFileSaveError(message);
       return {
         success: false,
         error: message
@@ -3316,6 +3496,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       }
 
       setProjectFileError('');
+      setProjectFileSaveError('');
       setDownloadingProjectArchiveState(true);
       try {
         if (hasUnsavedProjectFileChanges) {
@@ -3671,6 +3852,50 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     }}
                   />
                 )}
+                {isOwner && !runtimeOnly && latestRuntimeObservationIssue && (
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    data-testid="build-preview-runtime-error"
+                    data-agent-status="preview-error"
+                    className={previewRuntimeIssuePanelClass}
+                  >
+                    <div className={previewRuntimeIssueHeaderClass}>
+                      <Icon icon="exclamation-triangle" />
+                      <span>Preview error</span>
+                    </div>
+                    <div>{latestRuntimeObservationIssue.message}</div>
+                    <div className={previewRuntimeIssueMetaClass}>
+                      <span>
+                        {getRuntimeIssueLocationText({
+                          issue: latestRuntimeObservationIssue,
+                          projectFilePath:
+                            latestRuntimeObservationProjectFilePath
+                        })}
+                      </span>
+                      {latestRuntimeObservationProjectFilePath &&
+                        codeWorkspaceAvailable && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openRuntimeIssueProjectFile(
+                                latestRuntimeObservationProjectFilePath
+                              )
+                            }
+                            className={previewRuntimeIssueOpenButtonClass}
+                          >
+                            <Icon icon="code" />
+                            <span>Open source</span>
+                          </button>
+                        )}
+                    </div>
+                    {latestRuntimeObservationStackPreview && (
+                      <pre className={previewRuntimeIssueStackClass}>
+                        {latestRuntimeObservationStackPreview}
+                      </pre>
+                    )}
+                  </div>
+                )}
                 {previewTransitioning && (
                   <div className={previewLoadingOverlayClass}>
                     <Icon icon="spinner" className={previewSpinnerClass} />
@@ -3735,6 +3960,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               downloadingProjectArchive={downloadingProjectArchive}
               projectFilesLocked={projectFilesLocked}
               projectFileError={projectFileError}
+              projectFileSaveError={projectFileSaveError}
+              maxProjectFileLines={maxProjectFileLines ?? 500}
               currentBuildRuntimeAssets={workspaceRuntimeAssets}
               streamingAutoFollowEnabled={streamingAutoFollowEnabledRef.current}
               persistedFileContentByPath={persistedFileContentByPath}
@@ -3757,6 +3984,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 setActiveFilePath(path);
                 setSelectedFolderPath(null);
                 setProjectFileError('');
+                setProjectFileSaveError('');
               }}
               onDeleteProjectFile={handleDeleteProjectFile}
               onRenamePathInputChange={setRenamePathInput}
@@ -3765,6 +3993,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               onDownloadProjectArchive={handleDownloadProjectArchive}
               onDismissProjectFileError={() => {
                 setProjectFileError('');
+                setProjectFileSaveError('');
               }}
               onActiveFileContentChange={handleEditableFileContentChange}
             />

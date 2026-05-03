@@ -9,8 +9,11 @@ import { User } from '~/types';
 
 export default function ContentDetails({
   collaboratorCount,
+  collaborationMode,
   contentType,
   description = '',
+  forkCount,
+  isPublic,
   isListening,
   question,
   story,
@@ -24,12 +27,16 @@ export default function ContentDetails({
   sourceBuildId,
   contributionStatus,
   rootBuildSourceBuildId,
+  buildUserId,
   siteUrl
 }: {
   audioPath?: string;
   collaboratorCount?: number;
+  collaborationMode?: 'private' | 'contribution' | 'open_source' | null;
   contentType: string;
   description?: string;
+  forkCount?: number;
+  isPublic?: number | boolean | null;
   isListening?: boolean;
   question?: string;
   story?: string;
@@ -43,6 +50,7 @@ export default function ContentDetails({
   sourceBuildId?: number | null;
   contributionStatus?: string | null;
   rootBuildSourceBuildId?: number | null;
+  buildUserId?: number | null;
   siteUrl?: string;
 }) {
   return (
@@ -84,8 +92,12 @@ export default function ContentDetails({
       {contentType === 'build' && (
         <BuildDetails
           buildId={contentId}
+          buildUserId={buildUserId}
           collaboratorCount={collaboratorCount}
+          collaborationMode={collaborationMode}
           description={description}
+          forkCount={forkCount}
+          isPublic={isPublic}
           title={title}
           uploader={uploader}
           sourceBuildId={sourceBuildId}

@@ -4,7 +4,6 @@ import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import FilterBar from '~/components/FilterBar';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import BuildProjectListItem, {
   BuildProjectListItemData
@@ -12,6 +11,12 @@ import BuildProjectListItem, {
 import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
 import BuildDescriptionModal from './BuildDescriptionModal';
 import BuildDeleteModal from './BuildDeleteModal';
+import BuildTabFilter from './BuildTabFilter';
+import BuildActivityPanel, {
+  type BuildActivitySubtab,
+  type BuildActivityTab,
+  type BuildActivityItem
+} from './BuildActivityPanel';
 import {
   useAppContext,
   useBuildContext,
@@ -27,6 +32,11 @@ const displayFontFamily =
 
 type BuildListTab = BuildStudioTab;
 type PublicBuildScope = 'all' | 'open_source';
+const buildActivityRailBreakpoint = '1620px';
+const buildPageTopGap = '2rem';
+const desktopHeaderHeight = '4.5rem';
+const mobileBottomNavClearance =
+  'calc(var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px) + 2rem)';
 
 const buildListTabs: Array<{
   value: BuildListTab;
@@ -42,10 +52,36 @@ const buildListTabs: Array<{
 const pageClass = css`
   width: 100%;
   max-width: 980px;
-  margin: 2rem auto 0;
+  margin: ${buildPageTopGap} auto 0;
   padding: 0 2rem 3rem;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 0 1rem 3rem;
+    padding: 0 1rem ${mobileBottomNavClearance};
+  }
+`;
+
+const buildStudioLayoutClass = css`
+  position: relative;
+  width: 100%;
+`;
+
+const buildStudioMainClass = css`
+  min-width: 0;
+`;
+
+const buildActivityRailClass = css`
+  --build-activity-rail-top: calc(
+    ${desktopHeaderHeight} + ${buildPageTopGap}
+  );
+  --build-activity-rail-bottom-gap: ${buildPageTopGap};
+  position: fixed;
+  top: var(--build-activity-rail-top);
+  right: max(1rem, calc((100vw - 980px) / 2 - 23rem));
+  width: min(22rem, calc((100vw - 980px) / 2 - 2rem));
+  min-width: 18rem;
+  z-index: 12;
+
+  @media (max-width: ${buildActivityRailBreakpoint}) {
+    display: none;
   }
 `;
 
@@ -116,39 +152,6 @@ const buildGridClass = css`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-`;
-
-const tabBarClass = css`
-  margin: -0.7rem 0 1.4rem;
-  border: 1px solid rgba(65, 140, 235, 0.24);
-  border-radius: ${borderRadius};
-  padding: 0.35rem;
-  background: #fff;
-
-  > .nav-section > nav {
-    border-bottom: none !important;
-    border-radius: 10px;
-    transition:
-      background-color 0.15s ease,
-      color 0.15s ease,
-      transform 0.15s ease;
-  }
-
-  > .nav-section > nav > a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-  }
-
-  > .nav-section > nav.active {
-    background: rgba(65, 140, 235, 0.14);
-    color: #1d4ed8 !important;
-  }
-
-  > .nav-section > nav:not(.active):hover {
-    background: rgba(65, 140, 235, 0.08);
-    transform: translateY(-1px);
-  }
 `;
 
 const requestQueueClass = css`
@@ -298,6 +301,9 @@ export default function BuildList() {
   const loadPublicBuilds = useAppContext(
     (v) => v.requestHelpers.loadPublicBuilds
   );
+  const loadBuildActivity = useAppContext(
+    (v) => v.requestHelpers.loadBuildActivity
+  );
   const createBuild = useAppContext((v) => v.requestHelpers.createBuild);
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
@@ -381,6 +387,21 @@ export default function BuildList() {
   const [deleting, setDeleting] = useState(false);
   const [promptInput, setPromptInput] = useState('');
   const [creatingFromPrompt, setCreatingFromPrompt] = useState(false);
+  const [buildActivityActiveTab, setBuildActivityActiveTab] =
+    useState<BuildActivityTab>('mine');
+  const [buildActivityActiveSubtab, setBuildActivityActiveSubtab] =
+    useState<BuildActivitySubtab>('notifications');
+  const [buildActivityItems, setBuildActivityItems] = useState<
+    BuildActivityItem[]
+  >([]);
+  const [buildActivityCursor, setBuildActivityCursor] = useState<string | null>(
+    null
+  );
+  const [buildActivityLoading, setBuildActivityLoading] = useState(false);
+  const [buildActivityLoadingMore, setBuildActivityLoadingMore] =
+    useState(false);
+  const [buildActivityError, setBuildActivityError] = useState('');
+  const buildActivityLoadRef = useRef(0);
   const buildsWithPendingRequests = builds
     .filter((build) => Number(build.pendingCollaborationRequestCount || 0) > 0)
     .sort(
@@ -485,6 +506,35 @@ export default function BuildList() {
   }, [activeTab, collaboratingLoadedForCurrentUser, collaboratingBuildCount]);
 
   useEffect(() => {
+    if (!normalizedUserId) {
+      setBuildActivityItems([]);
+      setBuildActivityCursor(null);
+      setBuildActivityLoading(false);
+      setBuildActivityLoadingMore(false);
+      setBuildActivityError('');
+      setBuildActivityActiveTab('mine');
+      setBuildActivityActiveSubtab('notifications');
+      return;
+    }
+    void loadBuildActivityItems({
+      subtab: buildActivityActiveSubtab,
+      resetItems: true,
+      tab: buildActivityActiveTab
+    });
+
+    return () => {
+      buildActivityLoadRef.current += 1;
+    };
+    // loadBuildActivity is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    normalizedUserId,
+    numNewNotis,
+    buildActivityActiveTab,
+    buildActivityActiveSubtab
+  ]);
+
+  useEffect(() => {
     if (!userId || activeTab === 'mine') {
       setBrowseLoading(false);
       return;
@@ -560,206 +610,235 @@ export default function BuildList() {
 
   return (
     <div className={pageClass}>
-      <section className={heroClass}>
-        <div className={heroContentClass}>
-          <div className={heroBadgeClass}>
-            <Icon icon="rocket-launch" />
-            Build Studio
-          </div>
-          <h1 className={heroTitleClass}>Build Studio</h1>
-          <p className={heroBodyClass}>
-            Create apps, review requests, and find projects to join or fork.
-          </p>
-          <div>
-            <GameCTAButton
-              variant="gold"
-              size="lg"
-              shiny
-              onClick={() => navigate('/build/new')}
-            >
-              New Build
-            </GameCTAButton>
-          </div>
-        </div>
-      </section>
-
-      <FilterBar
-        className={tabBarClass}
-        color={profileTheme}
-        style={{ margin: 0, minHeight: '3.4rem', fontSize: '1rem' }}
-      >
-        {visibleBuildListTabs.map((tab) => (
-          <nav
-            key={tab.value}
-            className={activeTab === tab.value ? 'active' : ''}
-            onClick={() => handleTabChange(tab.value)}
-          >
-            <a>
-              <Icon icon={tab.icon} />
-              {tab.label}
-            </a>
-          </nav>
-        ))}
-      </FilterBar>
-
-      {isMyBuildsTab && totalPendingCollaborationRequests > 0 ? (
-        <section className={requestQueueClass}>
-          <div className={requestQueueHeaderClass}>
-            <div className={requestQueueTitleClass}>
-              <Icon icon="comments" />
-              Collaboration requests
+      <div className={buildStudioLayoutClass}>
+        <main className={buildStudioMainClass}>
+          <section className={heroClass}>
+            <div className={heroContentClass}>
+              <div className={heroBadgeClass}>
+                <Icon icon="rocket-launch" />
+                Build Studio
+              </div>
+              <h1 className={heroTitleClass}>Build Studio</h1>
+              <p className={heroBodyClass}>
+                Create apps, review requests, and find projects to join or fork.
+              </p>
+              <div>
+                <GameCTAButton
+                  variant="gold"
+                  size="lg"
+                  shiny
+                  onClick={() => navigate('/build/new')}
+                >
+                  New Build
+                </GameCTAButton>
+              </div>
             </div>
-            <div className={requestQueueCountClass}>
-              <Icon icon="exclamation-circle" />
-              {totalPendingCollaborationRequests === 1
-                ? '1 pending'
-                : `${totalPendingCollaborationRequests} pending`}
-            </div>
-          </div>
-          <div className={requestQueueRowsClass}>
-            {buildsWithPendingRequests.map((build) => {
-              const requestCount = Number(
-                build.pendingCollaborationRequestCount || 0
-              );
-              return (
-                <div key={build.id} className={requestQueueRowClass}>
-                  <div className={requestQueueBuildClass}>
-                    <div className={requestQueueBuildTitleClass}>
-                      {build.title || 'Untitled Build'}
+          </section>
+
+          <BuildTabFilter
+            activeTab={activeTab}
+            color={profileTheme}
+            onChange={handleTabChange}
+            tabs={visibleBuildListTabs}
+          />
+
+          <BuildActivityPanel
+            activeSubtab={buildActivityActiveSubtab}
+            activeTab={buildActivityActiveTab}
+            activities={buildActivityItems}
+            color={profileTheme}
+            currentUserId={normalizedUserId || 0}
+            error={buildActivityError}
+            hasMore={Boolean(buildActivityCursor)}
+            loading={buildActivityLoading}
+            loadingMore={buildActivityLoadingMore}
+            onLoadMore={handleLoadMoreBuildActivity}
+            onRefresh={handleRefreshBuildActivity}
+            onSubtabChange={handleBuildActivitySubtabChange}
+            onTabChange={handleBuildActivityTabChange}
+            variant="mobile"
+          />
+
+          {isMyBuildsTab && totalPendingCollaborationRequests > 0 ? (
+            <section className={requestQueueClass}>
+              <div className={requestQueueHeaderClass}>
+                <div className={requestQueueTitleClass}>
+                  <Icon icon="comments" />
+                  Collaboration requests
+                </div>
+                <div className={requestQueueCountClass}>
+                  <Icon icon="exclamation-circle" />
+                  {totalPendingCollaborationRequests === 1
+                    ? '1 pending'
+                    : `${totalPendingCollaborationRequests} pending`}
+                </div>
+              </div>
+              <div className={requestQueueRowsClass}>
+                {buildsWithPendingRequests.map((build) => {
+                  const requestCount = Number(
+                    build.pendingCollaborationRequestCount || 0
+                  );
+                  return (
+                    <div key={build.id} className={requestQueueRowClass}>
+                      <div className={requestQueueBuildClass}>
+                        <div className={requestQueueBuildTitleClass}>
+                          {build.title || 'Untitled Build'}
+                        </div>
+                        <div className={requestQueueMetaClass}>
+                          {requestCount === 1
+                            ? '1 person asked to collaborate'
+                            : `${requestCount} people asked to collaborate`}
+                        </div>
+                      </div>
+                      <GameCTAButton
+                        variant="pink"
+                        size="sm"
+                        icon="comments"
+                        onClick={() => handleOpenBuildRequests(build)}
+                      >
+                        Review
+                      </GameCTAButton>
                     </div>
-                    <div className={requestQueueMetaClass}>
-                      {requestCount === 1
-                        ? '1 person asked to collaborate'
-                        : `${requestCount} people asked to collaborate`}
-                    </div>
-                  </div>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {isMyBuildsTab ? (
+            builds.length === 0 ? (
+              <div className={emptyStateClass}>
+                <h2 className={emptyTitleClass}>Make Your First App</h2>
+                <p className={emptyBodyClass}>
+                  Tell AI what you want to make, like a game, quiz, or helper
+                  app. It will start building right away.
+                </p>
+                <div className={emptyInputWrapClass}>
+                  <input
+                    value={promptInput}
+                    onChange={(e) => setPromptInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleStartFromPrompt();
+                      }
+                    }}
+                    placeholder='Try: "Build a daily reflection app with streaks and friend feed"'
+                    className={css`
+                      flex: 1;
+                      min-width: 0;
+                      height: 48px;
+                      border: 1px solid rgba(65, 140, 235, 0.3);
+                      border-radius: 12px;
+                      padding: 0 0.95rem;
+                      font-size: 1rem;
+                      background: #fff;
+                      &:focus {
+                        outline: none;
+                        border-color: #418CEB;
+                        box-shadow: 0 0 0 2px rgba(65, 140, 235, 0.12);
+                      }
+                    `}
+                  />
                   <GameCTAButton
-                    variant="pink"
-                    size="sm"
-                    icon="comments"
-                    onClick={() => handleOpenBuildRequests(build)}
+                    variant="success"
+                    size="lg"
+                    shiny
+                    loading={creatingFromPrompt}
+                    disabled={!promptInput.trim() || creatingFromPrompt}
+                    onClick={handleStartFromPrompt}
                   >
-                    Review
+                    {creatingFromPrompt ? 'Starting...' : 'Start Building'}
                   </GameCTAButton>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {isMyBuildsTab ? (
-        builds.length === 0 ? (
-          <div className={emptyStateClass}>
-            <h2 className={emptyTitleClass}>Make Your First App</h2>
-            <p className={emptyBodyClass}>
-              Tell AI what you want to make, like a game, quiz, or helper app.
-              It will start building right away.
-            </p>
-            <div className={emptyInputWrapClass}>
-              <input
-                value={promptInput}
-                onChange={(e) => setPromptInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleStartFromPrompt();
-                  }
-                }}
-                placeholder='Try: "Build a daily reflection app with streaks and friend feed"'
-                className={css`
-                  flex: 1;
-                  min-width: 0;
-                  height: 48px;
-                  border: 1px solid rgba(65, 140, 235, 0.3);
-                  border-radius: 12px;
-                  padding: 0 0.95rem;
-                  font-size: 1rem;
-                  background: #fff;
-                  &:focus {
-                    outline: none;
-                    border-color: #418CEB;
-                    box-shadow: 0 0 0 2px rgba(65, 140, 235, 0.12);
-                  }
-                `}
-              />
-              <GameCTAButton
-                variant="success"
-                size="lg"
-                shiny
-                loading={creatingFromPrompt}
-                disabled={!promptInput.trim() || creatingFromPrompt}
-                onClick={handleStartFromPrompt}
-              >
-                {creatingFromPrompt ? 'Starting...' : 'Start Building'}
-              </GameCTAButton>
+              </div>
+            ) : (
+              <div className={buildGridClass}>
+                {builds.map((build) => (
+                  <BuildProjectListItem
+                    key={build.id}
+                    build={build}
+                    isOwner
+                    onAddDescription={setEditingBuild}
+                    onDelete={setDeletingBuild}
+                    onOpenForkHistory={setForkHistoryBuildId}
+                  />
+                ))}
+              </div>
+            )
+          ) : browseLoading ? (
+            <Loading />
+          ) : browseBuilds.length === 0 ? (
+            <div className={emptyStateClass}>
+              <h2 className={emptyTitleClass}>
+                No {activeTabConfig.label} Builds Yet
+              </h2>
+              <p className={emptyBodyClass}>{getBrowseEmptyCopy(activeTab)}</p>
             </div>
-          </div>
-        ) : (
-          <div className={buildGridClass}>
-            {builds.map((build) => (
-              <BuildProjectListItem
-                key={build.id}
-                build={build}
-                isOwner
-                onAddDescription={setEditingBuild}
-                onDelete={setDeletingBuild}
-                onOpenForkHistory={setForkHistoryBuildId}
-              />
-            ))}
-          </div>
-        )
-      ) : browseLoading ? (
-        <Loading />
-      ) : browseBuilds.length === 0 ? (
-        <div className={emptyStateClass}>
-          <h2 className={emptyTitleClass}>
-            No {activeTabConfig.label} Builds Yet
-          </h2>
-          <p className={emptyBodyClass}>{getBrowseEmptyCopy(activeTab)}</p>
-        </div>
-      ) : (
-        <>
-          <div className={buildGridClass}>
-            {browseBuilds.map((build) => (
-              <BuildProjectListItem
-                key={build.id}
-                build={build}
-                to={
-                  activeTab === 'collaborating'
-                    ? `/build/${build.id}`
-                    : `/app/${build.id}`
-                }
-                navigationState={{
-                  ...(activeTab === 'collaborating'
-                    ? { openPeoplePanel: true }
-                    : {
-                        runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
-                        runtimeBackLabel: 'Back to Build Studio'
-                      })
-                }}
-                primaryActionLabel={
-                  activeTab === 'collaborating' ? 'Collaborate' : undefined
-                }
-                primaryActionIcon={
-                  activeTab === 'collaborating' ? 'users' : undefined
-                }
-                showCollaborationRequestAction={activeTab !== 'collaborating'}
-                onOpenForkHistory={setForkHistoryBuildId}
-              />
-            ))}
-          </div>
-          {browseLoadMoreButton ? (
-            <div className={loadMoreWrapClass}>
-              <LoadMoreButton
-                loading={browseLoadingMore}
-                onClick={handleLoadMoreBrowseBuilds}
-                color={profileTheme}
-              />
-            </div>
-          ) : null}
-        </>
-      )}
+          ) : (
+            <>
+              <div className={buildGridClass}>
+                {browseBuilds.map((build) => (
+                  <BuildProjectListItem
+                    key={build.id}
+                    build={build}
+                    to={
+                      activeTab === 'collaborating'
+                        ? `/build/${build.id}`
+                        : `/app/${build.id}`
+                    }
+                    navigationState={{
+                      ...(activeTab === 'collaborating'
+                        ? { openPeoplePanel: true }
+                        : {
+                            runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
+                            runtimeBackLabel: 'Back to Build Studio'
+                          })
+                    }}
+                    primaryActionLabel={
+                      activeTab === 'collaborating' ? 'Collaborate' : undefined
+                    }
+                    primaryActionIcon={
+                      activeTab === 'collaborating' ? 'users' : undefined
+                    }
+                    showCollaborationRequestAction={
+                      activeTab !== 'collaborating'
+                    }
+                    onOpenForkHistory={setForkHistoryBuildId}
+                  />
+                ))}
+              </div>
+              {browseLoadMoreButton ? (
+                <div className={loadMoreWrapClass}>
+                  <LoadMoreButton
+                    loading={browseLoadingMore}
+                    onClick={handleLoadMoreBrowseBuilds}
+                    color={profileTheme}
+                  />
+                </div>
+              ) : null}
+            </>
+          )}
+        </main>
+        <aside className={buildActivityRailClass}>
+          <BuildActivityPanel
+            activeSubtab={buildActivityActiveSubtab}
+            activeTab={buildActivityActiveTab}
+            activities={buildActivityItems}
+            color={profileTheme}
+            currentUserId={normalizedUserId || 0}
+            error={buildActivityError}
+            hasMore={Boolean(buildActivityCursor)}
+            loading={buildActivityLoading}
+            loadingMore={buildActivityLoadingMore}
+            onLoadMore={handleLoadMoreBuildActivity}
+            onRefresh={handleRefreshBuildActivity}
+            onSubtabChange={handleBuildActivitySubtabChange}
+            onTabChange={handleBuildActivityTabChange}
+            variant="rail"
+          />
+        </aside>
+      </div>
       {editingBuild && (
         <BuildDescriptionModal
           initialTitle={editingBuild.title}
@@ -786,6 +865,103 @@ export default function BuildList() {
       ) : null}
     </div>
   );
+
+  async function loadBuildActivityItems({
+    resetItems = false,
+    subtab = buildActivityActiveSubtab,
+    tab = buildActivityActiveTab
+  }: {
+    resetItems?: boolean;
+    subtab?: BuildActivitySubtab;
+    tab?: BuildActivityTab;
+  } = {}) {
+    if (!normalizedUserId) return;
+    const loadId = buildActivityLoadRef.current + 1;
+    buildActivityLoadRef.current = loadId;
+    setBuildActivityLoading(true);
+    setBuildActivityLoadingMore(false);
+    setBuildActivityError('');
+    if (resetItems) {
+      setBuildActivityItems([]);
+      setBuildActivityCursor(null);
+    }
+    try {
+      const data = await loadBuildActivity({
+        kind: subtab,
+        limit: 12,
+        scope: tab
+      });
+      if (buildActivityLoadRef.current === loadId) {
+        setBuildActivityItems(data?.activities || []);
+        setBuildActivityCursor(getLoadMoreToken(data));
+      }
+    } catch (error: any) {
+      console.error('Failed to load build activity:', error);
+      if (buildActivityLoadRef.current === loadId) {
+        setBuildActivityCursor(null);
+        setBuildActivityError(
+          error?.response?.data?.error ||
+            error?.message ||
+            'Build activity could not load.'
+        );
+      }
+    } finally {
+      if (buildActivityLoadRef.current === loadId) {
+        setBuildActivityLoading(false);
+      }
+    }
+  }
+
+  function handleRefreshBuildActivity() {
+    void loadBuildActivityItems();
+  }
+
+  function handleBuildActivityTabChange(tab: BuildActivityTab) {
+    if (tab !== buildActivityActiveTab) {
+      setBuildActivityActiveTab(tab);
+    }
+  }
+
+  function handleBuildActivitySubtabChange(subtab: BuildActivitySubtab) {
+    if (subtab !== buildActivityActiveSubtab) {
+      setBuildActivityActiveSubtab(subtab);
+    }
+  }
+
+  async function handleLoadMoreBuildActivity() {
+    if (
+      !normalizedUserId ||
+      !buildActivityCursor ||
+      buildActivityLoading ||
+      buildActivityLoadingMore
+    ) {
+      return;
+    }
+    const loadId = buildActivityLoadRef.current + 1;
+    buildActivityLoadRef.current = loadId;
+    setBuildActivityLoadingMore(true);
+    setBuildActivityError('');
+    try {
+      const data = await loadBuildActivity({
+        cursor: buildActivityCursor,
+        kind: buildActivityActiveSubtab,
+        limit: 12,
+        scope: buildActivityActiveTab
+      });
+      if (buildActivityLoadRef.current === loadId) {
+        setBuildActivityItems((prevItems) =>
+          mergeBuildActivityItems(prevItems, data?.activities || [])
+        );
+        setBuildActivityCursor(getLoadMoreToken(data));
+      }
+    } catch (error: any) {
+      console.error('Failed to load more build activity:', error);
+    } finally {
+      if (buildActivityLoadRef.current === loadId) {
+        setBuildActivityLoadingMore(false);
+      }
+    }
+  }
 
   async function handleStartFromPrompt() {
     if (!promptInput.trim() || creatingFromPrompt) return;
@@ -966,6 +1142,21 @@ function getLoadMoreToken(data: any) {
   if (data?.cursor != null) return String(data.cursor);
   if (data?.loadMoreButton != null) return String(data.loadMoreButton);
   return null;
+}
+
+function mergeBuildActivityItems(
+  currentItems: BuildActivityItem[],
+  nextItems: BuildActivityItem[]
+) {
+  const seenIds = new Set(currentItems.map((item) => String(item.id)));
+  const mergedItems = [...currentItems];
+  for (const item of nextItems || []) {
+    const id = String(item?.id || '');
+    if (!id || seenIds.has(id)) continue;
+    seenIds.add(id);
+    mergedItems.push(item);
+  }
+  return mergedItems;
 }
 
 function getBrowseEmptyCopy(tab: BuildListTab) {

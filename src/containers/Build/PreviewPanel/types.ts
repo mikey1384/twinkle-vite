@@ -49,6 +49,7 @@ export interface PreviewPanelProps {
   runtimeOnly?: boolean;
   runtimeHostVisible?: boolean;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
+  maxProjectFileLines?: number | null;
   onEditableProjectFilesStateChange?: (state: {
     files: Array<{ path: string; content?: string }>;
     hasUnsavedChanges: boolean;

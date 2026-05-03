@@ -7,6 +7,7 @@ import Chess from '../../Chess';
 import Omok from '../../Omok';
 import { MessageStyle } from '../../Styles';
 import ApprovalRequest from './ApprovalRequest';
+import BuildCollaborationRequest from './BuildCollaborationRequest';
 import BuildContributionInvite from './BuildContributionInvite';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
@@ -193,6 +194,13 @@ export default function Content({
         <BuildContributionInvite
           content={content}
           invite={parsedSettings?.buildContributionInvite}
+          myId={myId}
+          sender={{ id: userId, username: appliedUsername }}
+        />
+      ) : rootType === 'buildCollaborationRequest' && rootId ? (
+        <BuildCollaborationRequest
+          content={content}
+          request={parsedSettings?.buildCollaborationRequest}
           myId={myId}
           sender={{ id: userId, username: appliedUsername }}
         />

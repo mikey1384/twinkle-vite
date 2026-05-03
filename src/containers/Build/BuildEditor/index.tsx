@@ -8,6 +8,7 @@ import type {
 import CollaborationPanel from './CollaborationPanel';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Header from './Header';
+import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
 import BuildPreviewFrame from '~/components/BuildPreviewFrame';
 import Icon from '~/components/Icon';
 import Modals from './Modals';
@@ -2633,15 +2634,25 @@ export default function BuildEditor({
   );
   const navigate = useNavigate();
   const routeState = (location.state || {}) as {
+    forumThreadId?: number;
+    openForkHistory?: boolean;
     openCollaborationSettings?: boolean;
     openPeoplePanel?: boolean;
     openVersionsPanel?: boolean;
   };
+  const routeForumThreadId = Math.max(
+    0,
+    Math.floor(Number(routeState.forumThreadId || 0))
+  );
   const routeOpenCollaborationSettings = Boolean(
     routeState.openCollaborationSettings
   );
+  const routeOpenForkHistory = Boolean(routeState.openForkHistory);
   const routeOpenPeoplePanel = Boolean(routeState.openPeoplePanel);
   const routeOpenVersionsPanel = Boolean(routeState.openVersionsPanel);
+  const [forkHistoryBuildId, setForkHistoryBuildId] = useState(
+    routeOpenForkHistory ? Number(build.id || 0) : 0
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
@@ -2876,6 +2887,11 @@ export default function BuildEditor({
     routeOpenPeoplePanel,
     routeOpenVersionsPanel
   ]);
+
+  useEffect(() => {
+    if (!routeOpenForkHistory) return;
+    setForkHistoryBuildId(Number(build.id || 0));
+  }, [build.id, routeOpenForkHistory]);
 
   useEffect(() => {
     const branchListBuildId = currentBuildIsContributionFork
@@ -7187,7 +7203,7 @@ export default function BuildEditor({
           handleBuildWorkspaceCommunicationScrollChange('people', scrollTop)
         }
         initialSelectedForumThreadId={
-          buildWorkspaceUi?.selectedForumThreadId || 0
+          routeForumThreadId || buildWorkspaceUi?.selectedForumThreadId || 0
         }
         onSelectedForumThreadChange={handleBuildWorkspaceForumThreadChange}
       />
@@ -7249,6 +7265,7 @@ export default function BuildEditor({
     isOwner: canEditCurrentBuildProject,
     codeWorkspaceAvailable: canEditCurrentBuildProject,
     capabilitySnapshot: build.capabilitySnapshot || null,
+    maxProjectFileLines: copilotPolicy?.limits?.maxFileLines ?? null,
     runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,
     onReplaceCode: handleReplaceCode,
     onApplyRestoredProjectFiles: handleApplyRestoredProjectFiles,
@@ -7291,6 +7308,13 @@ export default function BuildEditor({
         onTogglePublish={handlePublish}
         onUnpublish={handleUnpublish}
       />
+      {forkHistoryBuildId ? (
+        <BuildForkHistoryModal
+          buildId={forkHistoryBuildId}
+          isOpen
+          onClose={() => setForkHistoryBuildId(0)}
+        />
+      ) : null}
       <Workspace
         buildChatPanelWidth={buildChatPanelWidth}
         buildWorkshopScale={buildWorkshopScale}

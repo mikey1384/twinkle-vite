@@ -83,10 +83,13 @@ function ContentListItem({
     actualDescription,
     content,
     collaboratorCount,
+    collaborationMode,
     description,
     fileName,
     filePath,
     fileSize,
+    forkCount,
+    isPublic,
     question,
     rewardLevel,
     siteUrl,
@@ -98,6 +101,7 @@ function ContentListItem({
     sourceBuildId,
     contributionStatus,
     rootBuildSourceBuildId,
+    userId: buildUserId,
     uploader = {}
   } = currentContent;
   const displayThumbUrl = thumbUrl || thumbnailUrl;
@@ -148,10 +152,13 @@ function ContentListItem({
               contentId={contentId}
               contentType={contentType}
               collaboratorCount={collaboratorCount}
+              collaborationMode={collaborationMode}
               description={description}
               fileName={fileName}
               filePath={filePath}
               fileSize={fileSize}
+              forkCount={forkCount}
+              isPublic={isPublic}
               onClick={onClick}
               question={question}
               rootType={rootContent.contentType}
@@ -178,6 +185,7 @@ function ContentListItem({
               sourceBuildId={sourceBuildId}
               contributionStatus={contributionStatus}
               rootBuildSourceBuildId={rootBuildSourceBuildId}
+              buildUserId={buildUserId}
               userId={userId}
             />
           )}

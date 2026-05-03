@@ -50,7 +50,7 @@ export default class ErrorBoundary extends Component<
 
     reportError({
       componentPath: this.props.componentPath,
-      message: error.stack || error.message || String(error),
+      message: buildErrorMessage(error),
       info: buildErrorInfo(errorInfo)
     });
 
@@ -168,6 +168,14 @@ export default class ErrorBoundary extends Component<
       <React.Fragment key={recoveryKey}>{children}</React.Fragment>
     );
   }
+}
+
+function buildErrorMessage(error: Error) {
+  const message = error.message || String(error);
+  if (!error.stack) {
+    return message;
+  }
+  return `Message: ${message}\n\nStack: ${error.stack}`;
 }
 
 function isRecoverableDomMutationError(error: Error) {
