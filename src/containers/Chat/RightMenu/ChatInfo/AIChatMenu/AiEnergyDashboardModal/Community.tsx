@@ -77,14 +77,16 @@ export default function Community({
     Number(fundStats.totalDonationsAllTime || 0) - Number(totalFunds || 0)
   );
   const formattedRechargeCost = `${addCommasToNumber(rechargeCost)} coins`;
+  const fundShortfall = Math.max(0, rechargeCost - totalFunds);
+  const formattedFundShortfall = `${addCommasToNumber(fundShortfall)} coins`;
   const communityNotice = communityRechargeReady
-    ? 'Sponsored recharge ready. When your battery hits 0%, the next full charge is free.'
+    ? 'Sponsored recharge ready for when your AI Energy runs out.'
     : communityRequirementsComplete && !communitySponsoredChargeUnlocked
       ? "Tasks are done, but today's sponsored recharges are already used."
       : communitySponsoredChargeUnlocked && !communityDailyCapAvailable
         ? "Tasks are done, but today's sponsored limit is already used up."
-        : communitySponsoredChargeUnlocked && !communityFundHasEnoughCoins
-        ? `Tasks are done, but the community fund is below ${formattedRechargeCost} right now.`
+        : !communityFundHasEnoughCoins
+        ? `The community fund needs ${formattedFundShortfall} more before another sponsored recharge can be used.`
         : requirements.length > 0
           ? 'Complete the tasks below to unlock the next sponsored recharge.'
           : 'Tasks unavailable right now.';
@@ -95,8 +97,8 @@ export default function Community({
         background: Color.green(0.08)
       }
     : (communityRequirementsComplete && !communitySponsoredChargeUnlocked) ||
-        (communitySponsoredChargeUnlocked &&
-          (!communityDailyCapAvailable || !communityFundHasEnoughCoins))
+        (communitySponsoredChargeUnlocked && !communityDailyCapAvailable) ||
+        !communityFundHasEnoughCoins
       ? {
           color: Color.orange(),
           borderColor: Color.orange(0.22),
@@ -172,8 +174,8 @@ export default function Community({
                 : (communityRequirementsComplete &&
                     !communitySponsoredChargeUnlocked) ||
                     (communitySponsoredChargeUnlocked &&
-                      (!communityDailyCapAvailable ||
-                        !communityFundHasEnoughCoins))
+                      !communityDailyCapAvailable) ||
+                    !communityFundHasEnoughCoins
                   ? Color.orange()
                   : communityAccentColor,
               background: communityRechargeReady
@@ -181,8 +183,8 @@ export default function Community({
                 : (communityRequirementsComplete &&
                     !communitySponsoredChargeUnlocked) ||
                     (communitySponsoredChargeUnlocked &&
-                      (!communityDailyCapAvailable ||
-                        !communityFundHasEnoughCoins))
+                      !communityDailyCapAvailable) ||
+                    !communityFundHasEnoughCoins
                   ? Color.orange(0.1)
                   : communityAccentSoft
             }}
@@ -191,9 +193,11 @@ export default function Community({
           </div>
         </div>
         <p className={surfaceDescriptionCls}>
-          1 sponsored recharge = {formattedRechargeCost}. Daily sponsored
-          limit: {addCommasToNumber(communityRechargeDailyCap)} coins. Left
-          today: {addCommasToNumber(communityRechargeCoinsRemaining)} coins.
+          1 sponsored recharge = {formattedRechargeCost}. Daily cap remaining:
+          {' '}
+          {addCommasToNumber(communityRechargeCoinsRemaining)} of{' '}
+          {addCommasToNumber(communityRechargeDailyCap)} coins. Fund balance
+          must also cover the recharge.
         </p>
         <div className={emptyInlineStateCls} style={communityNoticeStyle}>
           {communityNotice}

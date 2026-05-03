@@ -356,6 +356,7 @@ export default function Header({
   const publicAppIsUpToDate = Boolean(
     build.isPublic && releaseStatus && !releaseStatus.hasUnpublishedChanges
   );
+  const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
@@ -590,6 +591,7 @@ export default function Header({
                 variant="magenta"
                 size="md"
                 icon="globe"
+                shiny={publicAppNeedsUpdate}
               >
                 {publishing
                   ? 'Processing...'
@@ -724,6 +726,7 @@ export default function Header({
               variant="magenta"
               size="md"
               icon="globe"
+              shiny={publicAppNeedsUpdate}
             >
               {publishing
                 ? 'Processing...'

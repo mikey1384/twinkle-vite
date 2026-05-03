@@ -24,6 +24,7 @@ interface RuntimeBuild {
   code: string | null;
   primaryArtifactId?: number | null;
   isPublic: boolean;
+  releaseStatus?: RuntimeBuildReleaseStatus | null;
   collaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionAccess?: 'anyone' | 'invite_only';
   hasActiveContributionInvite?: boolean;
@@ -37,6 +38,17 @@ interface RuntimeBuild {
     createdAt?: number;
     updatedAt?: number;
   }>;
+}
+
+interface RuntimeBuildReleaseStatus {
+  state?: string;
+  hasUnpublishedChanges?: boolean;
+  diff?: {
+    total?: number;
+    added?: number;
+    updated?: number;
+    deleted?: number;
+  };
 }
 
 interface BuildCollaborationRequest {
@@ -325,6 +337,7 @@ export default function BuildRuntime() {
   const loadRuntimeBuild = useAppContext(
     (v) => v.requestHelpers.loadRuntimeBuild
   );
+  const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
@@ -359,6 +372,9 @@ export default function BuildRuntime() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
+  const [publishingRuntimeUpdate, setPublishingRuntimeUpdate] = useState(false);
+  const [publishRuntimeUpdateError, setPublishRuntimeUpdateError] =
+    useState('');
   const [forkingBuild, setForkingBuild] = useState(false);
   const [openingCollaborationRequest, setOpeningCollaborationRequest] =
     useState(false);
@@ -453,14 +469,30 @@ export default function BuildRuntime() {
     !isBuildOwner &&
     buildAcceptsStandaloneForks;
   const showWorkspaceButton = !!build && isBuildOwner;
+  const showRuntimePublishUpdateButton = Boolean(
+    build?.isPublic &&
+      isBuildOwner &&
+      build.releaseStatus?.hasUnpublishedChanges
+  );
   const showRuntimeActions =
     showWorkspaceButton ||
+    showRuntimePublishUpdateButton ||
     showCollaborationButton ||
     showStandaloneForkButton;
   const runtimeActionBusy =
     forkingBuild ||
     openingCollaborationRequest ||
     collaborationRequestLoading;
+
+  function applyRuntimeBuildPayload(data: any) {
+    if (!data?.build) return false;
+    setBuild({
+      ...data.build,
+      capabilitySnapshot: data.capabilitySnapshot || null,
+      projectFiles: Array.isArray(data.projectFiles) ? data.projectFiles : []
+    });
+    return true;
+  }
 
   function handleBack() {
     if (canUseHistoryBack) {
@@ -477,6 +509,75 @@ export default function BuildRuntime() {
   function handleGoToWorkspace() {
     if (!build?.id) return;
     navigate(`/build/${build.id}`);
+  }
+
+  async function handleUpdatePublishedApp() {
+    if (
+      !build?.id ||
+      publishingRuntimeUpdate ||
+      !build.releaseStatus?.hasUnpublishedChanges
+    ) {
+      return;
+    }
+    const requestedBuildId = build.id;
+    setPublishingRuntimeUpdate(true);
+    setPublishRuntimeUpdateError('');
+    try {
+      const result = await publishBuild({ buildId: requestedBuildId });
+      if (result?.success) {
+        try {
+          const runtimePayload = await loadRuntimeBuild(requestedBuildId, {
+            fromWriter: true
+          });
+          if (applyRuntimeBuildPayload(runtimePayload)) return;
+        } catch (reloadError) {
+          console.error(
+            'Published app updated but runtime refresh failed:',
+            reloadError
+          );
+        }
+        if (result?.build) {
+          setBuild((current) =>
+            current
+              ? {
+                  ...current,
+                  ...result.build,
+                  releaseStatus: result.build.releaseStatus || null
+                }
+              : current
+          );
+        }
+        setPublishRuntimeUpdateError(
+          'App updated, but this page could not refresh the preview.'
+        );
+        return;
+      }
+      setPublishRuntimeUpdateError('Unable to update app right now.');
+    } catch (error: any) {
+      console.error('Failed to update published app:', error);
+      const releaseStatus = error?.response?.data?.releaseStatus;
+      if (releaseStatus) {
+        setBuild((current) =>
+          current
+            ? {
+                ...current,
+                releaseStatus
+              }
+            : current
+        );
+      }
+      if (error?.response?.data?.code === 'build_release_up_to_date') {
+        setPublishRuntimeUpdateError('');
+        return;
+      }
+      setPublishRuntimeUpdateError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Unable to update app right now.'
+      );
+    } finally {
+      setPublishingRuntimeUpdate(false);
+    }
   }
 
   function handleOpenCollaborationWorkspace() {
@@ -791,15 +892,7 @@ export default function BuildRuntime() {
       setError('');
       try {
         const data = await loadRuntimeBuild(numericBuildId);
-        if (data?.build) {
-          setBuild({
-            ...data.build,
-            capabilitySnapshot: data.capabilitySnapshot || null,
-            projectFiles: Array.isArray(data.projectFiles)
-              ? data.projectFiles
-              : []
-          });
-        } else {
+        if (!applyRuntimeBuildPayload(data)) {
           setError('Build not found');
         }
       } catch (error: any) {
@@ -888,6 +981,25 @@ export default function BuildRuntime() {
                     <span>Build</span>
                   </button>
                 ) : null}
+                {showRuntimePublishUpdateButton ? (
+                  <button
+                    type="button"
+                    className={runtimeActionButtonClass}
+                    onClick={handleUpdatePublishedApp}
+                    disabled={publishingRuntimeUpdate}
+                    title="Update published app"
+                  >
+                    <Icon
+                      icon={
+                        publishingRuntimeUpdate ? 'spinner' : 'cloud-upload-alt'
+                      }
+                      pulse={publishingRuntimeUpdate}
+                    />
+                    <span>
+                      {publishingRuntimeUpdate ? 'Updating...' : 'Update App'}
+                    </span>
+                  </button>
+                ) : null}
                 {showCollaborationButton ? (
                   <button
                     type="button"
@@ -940,6 +1052,11 @@ export default function BuildRuntime() {
                 {contributionForkError ? (
                   <span className={contributionErrorClass}>
                     {contributionForkError}
+                  </span>
+                ) : null}
+                {publishRuntimeUpdateError ? (
+                  <span className={contributionErrorClass}>
+                    {publishRuntimeUpdateError}
                   </span>
                 ) : null}
               </div>

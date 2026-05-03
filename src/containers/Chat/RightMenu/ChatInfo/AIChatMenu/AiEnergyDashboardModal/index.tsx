@@ -190,7 +190,6 @@ export default function AiEnergyDashboardModal({
         : `Sponsored limit used up today. You have ${addCommasToNumber(availableCoins)} coins.`;
   } else if (
     energyDepleted &&
-    communitySponsoredChargeUnlocked &&
     !communityFundHasEnoughCoins
   ) {
     chargeButtonMeta =
@@ -240,9 +239,12 @@ export default function AiEnergyDashboardModal({
   ) {
     overviewDescription =
       'Battery empty. Community tasks are done, but the shared fund is too low right now.';
+  } else if (!communityFundHasEnoughCoins) {
+    overviewDescription =
+      'Community fund needs more coins before another sponsored recharge is available.';
   } else if (communityRechargeReady) {
     overviewDescription =
-      'Battery is healthy. Your next empty battery can be recharged free.';
+      'You still have AI Energy. A sponsored recharge is ready when it runs out.';
   }
   const communityStatusLabel =
     requirementCount > 0
@@ -252,7 +254,7 @@ export default function AiEnergyDashboardModal({
           ? 'Used today'
           : communitySponsoredChargeUnlocked && !communityDailyCapAvailable
             ? 'Daily cap used'
-            : communitySponsoredChargeUnlocked && !communityFundHasEnoughCoins
+            : !communityFundHasEnoughCoins
             ? 'Fund too low'
             : `${completedRequirementCount}/${requirementCount} complete`
       : 'Tasks unavailable';

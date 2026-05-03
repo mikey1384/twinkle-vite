@@ -1088,7 +1088,36 @@ export default function buildRequestHelpers({
           auth()
         );
         return data;
-      } catch (error) {
+      } catch (error: any) {
+        if (
+          error?.response &&
+          error.response.status !== 401 &&
+          error.response.status !== 301
+        ) {
+          const responseData = error.response.data || {};
+          const nextError: any = new Error(
+            responseData.error ||
+              responseData.message ||
+              error.message ||
+              'Unable to publish Build'
+          );
+          nextError.status = error.response.status;
+          nextError.response = error.response;
+          if (responseData.code) {
+            nextError.code = responseData.code;
+          }
+          if (responseData.releaseStatus) {
+            nextError.releaseStatus = responseData.releaseStatus;
+          }
+          if (Array.isArray(responseData.conflictMarkerPaths)) {
+            nextError.conflictMarkerPaths = responseData.conflictMarkerPaths;
+          }
+          if (responseData.mergingContributionBuildId) {
+            nextError.mergingContributionBuildId =
+              responseData.mergingContributionBuildId;
+          }
+          return Promise.reject(nextError);
+        }
         return handleError(error);
       }
     },

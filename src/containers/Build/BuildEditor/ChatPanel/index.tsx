@@ -52,6 +52,7 @@ const communicationHeaderClass = css`
   padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
+  container-type: inline-size;
   @media (max-width: 44rem) {
     grid-template-columns: 1fr;
     justify-items: start;
@@ -72,6 +73,9 @@ const communicationHeaderSpacerClass = css`
 `;
 
 const mainProjectButtonClass = css`
+  justify-self: start;
+  width: max-content;
+  max-width: 100%;
   border: 1px solid var(--ui-border);
   border-radius: 999px;
   background: #fff;
@@ -88,6 +92,18 @@ const mainProjectButtonClass = css`
   &:hover {
     border-color: var(--ui-border-strong);
     background: #f8fbff;
+  }
+  @container (max-width: 42rem) {
+    width: 2.75rem;
+    height: 2.75rem;
+    justify-content: center;
+    padding: 0;
+  }
+`;
+
+const mainProjectButtonLabelClass = css`
+  @container (max-width: 42rem) {
+    display: none;
   }
 `;
 
@@ -546,7 +562,7 @@ export default function ChatPanel({
             onClick={onOpenMainProject}
           >
             <Icon icon="arrow-left" />
-            Main Project
+            <span className={mainProjectButtonLabelClass}>Main Project</span>
           </button>
           {communicationOptions.length > 1 ? (
             <div className={communicationHeaderTabsSlotClass}>
