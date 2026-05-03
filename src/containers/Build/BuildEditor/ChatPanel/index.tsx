@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
+import Icon from '~/components/Icon';
 import { useViewContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import Composer from './Composer';
@@ -43,6 +44,53 @@ const communicationTabsClass = css`
   background: #fff;
 `;
 
+const communicationHeaderClass = css`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--ui-border);
+  background: #fff;
+  @media (max-width: 44rem) {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+`;
+
+const communicationHeaderTabsSlotClass = css`
+  justify-self: center;
+  max-width: 100%;
+  @media (max-width: 44rem) {
+    justify-self: start;
+    overflow-x: auto;
+  }
+`;
+
+const communicationHeaderSpacerClass = css`
+  min-width: 0;
+`;
+
+const mainProjectButtonClass = css`
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chat-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.56rem 0.85rem;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.1);
+  white-space: nowrap;
+  &:hover {
+    border-color: var(--ui-border-strong);
+    background: #f8fbff;
+  }
+`;
+
 const scrollAreaClass = css`
   flex: 1;
   overflow-y: auto;
@@ -69,6 +117,8 @@ export default function ChatPanel({
   onCommunicationModeChange,
   communicationScrollTops,
   onCommunicationScrollChange,
+  showMainProjectNavigation,
+  onOpenMainProject,
   peoplePanel,
   versionsPanel,
   luminePanelOverride,
@@ -145,6 +195,8 @@ export default function ChatPanel({
   communicationScrollTopsRef.current = communicationScrollTops;
   onCommunicationScrollChangeRef.current = onCommunicationScrollChange;
   const hasPeoplePanel = Boolean(peoplePanel);
+  const mainProjectNavigationShown =
+    Boolean(showMainProjectNavigation) && Boolean(onOpenMainProject);
   const communicationOptions = useMemo(() => {
     const options: Array<{
       value: CommunicationMode;
@@ -486,7 +538,30 @@ export default function ChatPanel({
         } as React.CSSProperties
       }
     >
-      {communicationOptions.length > 1 ? (
+      {mainProjectNavigationShown ? (
+        <div className={communicationHeaderClass}>
+          <button
+            type="button"
+            className={mainProjectButtonClass}
+            onClick={onOpenMainProject}
+          >
+            <Icon icon="arrow-left" />
+            Main Project
+          </button>
+          {communicationOptions.length > 1 ? (
+            <div className={communicationHeaderTabsSlotClass}>
+              <SegmentedToggle
+                value={activeCommunicationMode}
+                options={communicationOptions}
+                onChange={handleCommunicationModeChange}
+                ariaLabel="Switch communication mode"
+                size="sm"
+              />
+            </div>
+          ) : null}
+          <span className={communicationHeaderSpacerClass} aria-hidden="true" />
+        </div>
+      ) : communicationOptions.length > 1 ? (
         <div className={communicationTabsClass}>
           <SegmentedToggle
             value={activeCommunicationMode}

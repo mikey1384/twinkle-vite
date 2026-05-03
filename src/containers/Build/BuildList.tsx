@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
@@ -322,9 +322,6 @@ export default function BuildList() {
   const onAppendBuildStudioBrowseBuilds = useBuildContext(
     (v) => v.actions.onAppendBuildStudioBrowseBuilds
   );
-  const onSetBuildStudioScroll = useBuildContext(
-    (v) => v.actions.onSetBuildStudioScroll
-  );
 
   const normalizedUserId = Number(userId || 0) || null;
   const activeTab = normalizeBuildListTab(buildStudio?.activeTab);
@@ -369,7 +366,6 @@ export default function BuildList() {
   const activeBrowseLoaded =
     activeTab === 'mine' ? true : activeBrowseLoadedForCurrentUser;
   const activeTabRef = useRef<BuildListTab>(activeTab);
-  const restoreScrollKeyRef = useRef('');
   const [loading, setLoading] = useState(true);
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseLoadingMore, setBrowseLoadingMore] = useState(false);
@@ -510,7 +506,7 @@ export default function BuildList() {
             : await loadPublicBuilds({
                 sort: 'recent',
                 scope: getPublicBuildScope(activeTab),
-                excludeMine: true
+                excludeMine: shouldExcludeMineFromPublicBrowse(activeTab)
               });
         if (!canceled) {
           onSetBuildStudioBrowseBuilds({
@@ -541,43 +537,6 @@ export default function BuildList() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, activeTab, activeBrowseLoaded]);
-
-  useLayoutEffect(() => {
-    if (
-      (activeTab === 'mine' && loading) ||
-      (activeTab !== 'mine' && browseLoading)
-    ) {
-      return;
-    }
-    const scrollY = getBuildStudioScrollY(buildStudio, activeTab);
-    const itemCount = activeTab === 'mine' ? builds.length : browseBuilds.length;
-    const restoreKey = `${activeTab}:${scrollY}:${itemCount}`;
-    if (restoreScrollKeyRef.current === restoreKey) return;
-    restoreScrollKeyRef.current = restoreKey;
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
-    });
-  }, [
-    activeTab,
-    browseBuilds.length,
-    browseLoading,
-    buildStudio,
-    builds.length,
-    loading
-  ]);
-
-  useEffect(() => {
-    function handlePageHide() {
-      saveBuildStudioScroll(activeTabRef.current);
-    }
-
-    window.addEventListener('pagehide', handlePageHide);
-    return () => {
-      handlePageHide();
-      window.removeEventListener('pagehide', handlePageHide);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (!userId) {
     return (
@@ -899,8 +858,6 @@ export default function BuildList() {
 
   function handleTabChange(tab: BuildListTab) {
     if (tab !== activeTab) {
-      saveBuildStudioScroll(activeTab);
-      restoreScrollKeyRef.current = '';
       onSetBuildStudioActiveTab(tab);
     }
   }
@@ -938,20 +895,20 @@ export default function BuildList() {
   ): {
     sort: 'recent';
     scope: PublicBuildScope;
-    excludeMine: true;
+    excludeMine: boolean;
     cursor?: string;
     lastId?: number;
   } {
     const loadMoreParams: {
       sort: 'recent';
       scope: PublicBuildScope;
-      excludeMine: true;
+      excludeMine: boolean;
       cursor?: string;
       lastId?: number;
     } = {
       sort: 'recent',
       scope: getPublicBuildScope(tab),
-      excludeMine: true
+      excludeMine: shouldExcludeMineFromPublicBrowse(tab)
     };
     if (/^\d+$/.test(loadMoreToken)) {
       loadMoreParams.lastId = Number(loadMoreToken);
@@ -968,18 +925,15 @@ export default function BuildList() {
       }
     });
   }
-
-  function saveBuildStudioScroll(tab: BuildListTab) {
-    onSetBuildStudioScroll({
-      tab,
-      scrollY: window.scrollY || window.pageYOffset || 0
-    });
-  }
 }
 
 function getPublicBuildScope(tab: BuildListTab): PublicBuildScope {
   if (tab === 'open_source') return 'open_source';
   return 'all';
+}
+
+function shouldExcludeMineFromPublicBrowse(tab: BuildListTab) {
+  return tab === 'community';
 }
 
 function getBuildListBrowseTab(tab: BuildListTab) {
@@ -1004,22 +958,8 @@ function createEmptyBrowseState() {
     builds: [],
     loadMoreToken: null,
     loaded: false,
-    userId: null,
-    scrollY: 0
+    userId: null
   };
-}
-
-function getBuildStudioScrollY(buildStudio: any, tab: BuildListTab) {
-  if (tab === 'mine') {
-    return normalizeScrollY(buildStudio?.myBuildsScrollY);
-  }
-  return normalizeScrollY(buildStudio?.browse?.[tab]?.scrollY);
-}
-
-function normalizeScrollY(value: unknown) {
-  const scrollY = Number(value || 0);
-  if (!Number.isFinite(scrollY)) return 0;
-  return Math.max(0, Math.floor(scrollY));
 }
 
 function getLoadMoreToken(data: any) {

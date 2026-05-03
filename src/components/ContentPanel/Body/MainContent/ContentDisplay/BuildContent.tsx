@@ -38,6 +38,7 @@ export default function BuildContent({
     userId?: number;
     title?: string;
     description?: string;
+    isPublic?: number | boolean | null;
     sourceBuildId?: number | null;
     contributionStatus?: string | null;
     rootBuildSourceBuildId?: number | null;
@@ -120,7 +121,9 @@ export default function BuildContent({
   const collaborationMode = normalizeCollaborationMode(
     build?.collaborationMode
   );
-  const showForkAction = !isOwner && collaborationMode === 'open_source';
+  const buildIsPublic = Number(build?.isPublic || 0) === 1;
+  const showForkAction =
+    !isOwner && buildIsPublic && collaborationMode === 'open_source';
   const showCollaborationRequestAction = !isOwner;
   const showBuildWorkspaceAction = isOwner;
   const collaboratorCount = Math.max(
@@ -871,7 +874,7 @@ export default function BuildContent({
                 line-height: 1.4;
               `}
             >
-              Your request is pending.
+              Your request has been sent. The owner can accept or decline it.
             </div>
           ) : invited ? (
             <div

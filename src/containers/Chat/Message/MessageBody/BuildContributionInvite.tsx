@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
@@ -11,7 +11,17 @@ interface BuildContributionInvitePayload {
   buildId?: number;
   inviteId?: number;
   title?: string;
+  status?: BuildContributionInviteStatus;
+  acceptedAt?: number;
+  declinedAt?: number;
+  revokedAt?: number;
 }
+
+type BuildContributionInviteStatus =
+  | 'pending'
+  | 'accepted'
+  | 'declined'
+  | 'revoked';
 
 export default function BuildContributionInvite({
   content,
@@ -34,11 +44,6 @@ export default function BuildContributionInvite({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
-  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>(
-    'pending'
-  );
-  const [loading, setLoading] = useState('');
-  const [error, setError] = useState('');
   const payload = useMemo(
     () => invite || parseBuildInvitePayload(content),
     [content, invite]
@@ -46,7 +51,16 @@ export default function BuildContributionInvite({
   const buildId = Number(payload?.buildId || 0);
   const inviteId = Number(payload?.inviteId || 0);
   const title = String(payload?.title || 'Build');
+  const payloadStatus = getBuildInviteStatus(payload);
+  const [status, setStatus] =
+    useState<BuildContributionInviteStatus>(payloadStatus);
+  const [loading, setLoading] = useState('');
+  const [error, setError] = useState('');
   const sentByMe = Number(sender.id) === Number(myId);
+
+  useEffect(() => {
+    setStatus(payloadStatus);
+  }, [inviteId, payloadStatus]);
 
   if (!buildId || !inviteId) {
     return <span>{content}</span>;
@@ -61,7 +75,14 @@ export default function BuildContributionInvite({
       <div className={inviteBodyClass}>
         {sentByMe ? (
           <span>
-            You invited this user to collaborate on <strong>{title}</strong>.
+            {status === 'accepted'
+              ? 'This invite was accepted for '
+              : status === 'declined'
+                ? 'This invite was declined for '
+                : status === 'revoked'
+                  ? 'This invite was revoked for '
+                  : 'You invited this user to collaborate on '}
+            <strong>{title}</strong>.
           </span>
         ) : status === 'accepted' ? (
           <span>
@@ -72,6 +93,11 @@ export default function BuildContributionInvite({
           <span>
             You declined {sender.username}&apos;s invite for{' '}
             <strong>{title}</strong>.
+          </span>
+        ) : status === 'revoked' ? (
+          <span>
+            {sender.username}&apos;s invite for <strong>{title}</strong> was
+            revoked.
           </span>
         ) : (
           <span>
@@ -145,7 +171,9 @@ export default function BuildContributionInvite({
         inviteId
       });
       if (result?.success) {
-        setStatus('accepted');
+        setStatus(
+          result?.invite ? getBuildInviteStatus(result.invite) : 'accepted'
+        );
         handleOpenWorkspace();
       }
     } catch (error: any) {
@@ -169,7 +197,9 @@ export default function BuildContributionInvite({
         inviteId
       });
       if (result?.success) {
-        setStatus('declined');
+        setStatus(
+          result?.invite ? getBuildInviteStatus(result.invite) : 'declined'
+        );
       }
     } catch (error: any) {
       setError(
@@ -200,6 +230,29 @@ function parseBuildInvitePayload(
   } catch {
     return null;
   }
+}
+
+function getBuildInviteStatus(
+  invite?: BuildContributionInvitePayload | null
+): BuildContributionInviteStatus {
+  const status = invite?.status;
+  if (
+    status === 'accepted' ||
+    status === 'declined' ||
+    status === 'revoked'
+  ) {
+    return status;
+  }
+  if (Number(invite?.revokedAt || 0) > 0) {
+    return 'revoked';
+  }
+  if (Number(invite?.declinedAt || 0) > 0) {
+    return 'declined';
+  }
+  if (Number(invite?.acceptedAt || 0) > 0) {
+    return 'accepted';
+  }
+  return 'pending';
 }
 
 const inviteCardClass = css`

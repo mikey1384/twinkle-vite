@@ -1056,7 +1056,7 @@ export default function BuildProjectListItem({
                 line-height: 1.4;
               `}
             >
-              Your request is pending.
+              Your request has been sent. The owner can accept or decline it.
             </div>
           ) : invited ? (
             <div

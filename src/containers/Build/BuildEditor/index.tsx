@@ -190,31 +190,12 @@ const versionStartPanelClass = css`
   background: #fff;
 `;
 
-const branchTopNavClass = css`
+const branchPanelActionsClass = css`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.65rem;
   min-height: 2.8rem;
-`;
-
-const branchBackButtonClass = css`
-  border: 1px solid var(--ui-border);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--chat-text);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.56rem 0.85rem;
-  font: inherit;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.1);
-  &:hover {
-    border-color: var(--ui-border-strong);
-    background: #f8fbff;
-  }
 `;
 
 const versionStartCardClass = css`
@@ -805,7 +786,21 @@ function canStartStandaloneFork(build: Build) {
 
 function canEditBuildProject(build: Build) {
   const status = build.contributionStatus || 'none';
-  return status === 'none' || status === 'draft';
+  return (
+    status === 'none' ||
+    status === 'draft' ||
+    status === 'merging' ||
+    status === 'merged'
+  );
+}
+
+function markBuildContributionWorkspaceEdited(build: Build): Build {
+  if (build.contributionStatus !== 'merged') return build;
+  return {
+    ...build,
+    contributionStatus: 'draft',
+    contributionClosedAt: 0
+  };
 }
 
 function canMergeBuildBranch(build: Build, userId?: number | null) {
@@ -906,7 +901,6 @@ function VersionStartPanel({
   onStartVersion,
   onLoadVersion,
   onDeleteBranch,
-  onOpenMainProject,
   onFork,
   onOpenTeamPanel,
   onOpenBranchesPanel,
@@ -937,7 +931,6 @@ function VersionStartPanel({
   onStartVersion: () => void;
   onLoadVersion: (version: BuildVersionSummary) => void;
   onDeleteBranch: (target: BuildBranchDeleteTarget) => void;
-  onOpenMainProject: () => void;
   onFork: () => void;
   onOpenTeamPanel: () => void;
   onOpenBranchesPanel: () => void;
@@ -1398,42 +1391,32 @@ function VersionStartPanel({
       className={versionStartPanelClass}
       onScroll={handlePanelScroll}
     >
-      {rootBuildId > 0 ? (
-        <div className={branchTopNavClass}>
+      {canDeleteActiveBranch ? (
+        <div className={branchPanelActionsClass}>
           <button
             type="button"
-            className={branchBackButtonClass}
-            onClick={onOpenMainProject}
+            className={branchTopDeleteButtonClass}
+            disabled={deletingBranchId === activeBuildId}
+            title="Delete branch"
+            aria-label={`Delete ${activeBranchLabel}`}
+            onClick={() =>
+              onDeleteBranch({
+                id: activeBuildId,
+                title: activeBranchLabel,
+                confirmTitle: String(
+                  activeBuildTitle || activeBranchLabel
+                ).trim()
+              })
+            }
           >
-            <Icon icon="arrow-left" />
-            Main Project
-          </button>
-          {canDeleteActiveBranch ? (
-            <button
-              type="button"
-              className={branchTopDeleteButtonClass}
-              disabled={deletingBranchId === activeBuildId}
-              title="Delete branch"
-              aria-label={`Delete ${activeBranchLabel}`}
-              onClick={() =>
-                onDeleteBranch({
-                  id: activeBuildId,
-                  title: activeBranchLabel,
-                  confirmTitle: String(
-                    activeBuildTitle || activeBranchLabel
-                  ).trim()
-                })
+            <Icon
+              icon={
+                deletingBranchId === activeBuildId ? 'spinner' : 'trash-alt'
               }
-            >
-              <Icon
-                icon={
-                  deletingBranchId === activeBuildId ? 'spinner' : 'trash-alt'
-                }
-                pulse={deletingBranchId === activeBuildId}
-              />
-              Delete Branch
-            </button>
-          ) : null}
+              pulse={deletingBranchId === activeBuildId}
+            />
+            Delete Branch
+          </button>
         </div>
       ) : null}
       {renderOwnerAttentionPanel()}
@@ -3405,10 +3388,14 @@ export default function BuildEditor({
         ? nextProjectFiles
         : currentBuild.projectFiles
     };
-    const appliedBuild = hasSharedTerminalWorkspaceSnapshot
-      ? markBuildReleaseStatusUnpublished(nextBuild)
+    const workspaceUpdatedBuild = hasSharedTerminalWorkspaceSnapshot
+      ? markBuildContributionWorkspaceEdited(nextBuild)
       : nextBuild;
+    const appliedBuild = hasSharedTerminalWorkspaceSnapshot
+      ? markBuildReleaseStatusUnpublished(workspaceUpdatedBuild)
+      : workspaceUpdatedBuild;
     applyBuildUpdate(appliedBuild);
+    syncAvailableBranchSummary(appliedBuild);
     if (hasSharedTerminalWorkspaceSnapshot) {
       maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
     }
@@ -3989,8 +3976,11 @@ export default function BuildEditor({
           },
           projectFiles: nextProjectFiles
         };
-        const appliedBuild = markBuildReleaseStatusUnpublished(nextBuild);
+        const appliedBuild = markBuildReleaseStatusUnpublished(
+          markBuildContributionWorkspaceEdited(nextBuild)
+        );
         applyBuildUpdate(appliedBuild);
+        syncAvailableBranchSummary(appliedBuild);
         maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
         if (payloadProjectFiles) {
           runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
@@ -6246,6 +6236,7 @@ export default function BuildEditor({
     options?: {
       artifactVersionId?: number | null;
       primaryArtifactId?: number | null;
+      contributionStatus?: Build['contributionStatus'];
     }
   ) {
     const activeBuild = getLatestBuild();
@@ -6275,6 +6266,12 @@ export default function BuildEditor({
         options?.artifactVersionId ??
         activeBuild.currentArtifactVersionId ??
         null,
+      contributionStatus:
+        options?.contributionStatus ?? activeBuild.contributionStatus,
+      contributionClosedAt:
+        options?.contributionStatus === 'draft'
+          ? 0
+          : activeBuild.contributionClosedAt ?? null,
       projectManifest: {
         entryPath: resolveIndexEntryPathFromProjectFiles(
           normalizedFiles,
@@ -6285,7 +6282,11 @@ export default function BuildEditor({
       },
       projectFiles: normalizedFiles
     };
-    applyBuildUpdate(markBuildReleaseStatusUnpublished(nextBuild));
+    const appliedBuild = markBuildReleaseStatusUnpublished(
+      markBuildContributionWorkspaceEdited(nextBuild)
+    );
+    applyBuildUpdate(appliedBuild);
+    syncAvailableBranchSummary(appliedBuild);
   }
 
   function handleProjectFilesChange(
@@ -6315,7 +6316,10 @@ export default function BuildEditor({
       projectFiles: normalizedFiles
     };
     applyBuildUpdate(
-      markBuildReleaseStatusUnpublished(nextBuild, { force: true })
+      markBuildReleaseStatusUnpublished(
+        markBuildContributionWorkspaceEdited(nextBuild),
+        { force: true }
+      )
     );
   }
 
@@ -6404,6 +6408,12 @@ export default function BuildEditor({
           result?.artifactVersion?.versionId ??
           latestBuild.currentArtifactVersionId ??
           null,
+        contributionStatus:
+          result?.contributionStatus ?? latestBuild.contributionStatus,
+        contributionClosedAt:
+          result?.contributionStatus === 'draft'
+            ? 0
+            : latestBuild.contributionClosedAt ?? null,
         releaseStatus: result?.releaseStatus ?? latestBuild.releaseStatus ?? null,
         projectManifest: result?.projectManifest || {
           entryPath: resolveIndexEntryPathFromProjectFiles(
@@ -6415,8 +6425,10 @@ export default function BuildEditor({
         },
         projectFiles: savedFiles
       };
-      applyBuildUpdate(nextBuild);
-      maybeAutoCaptureBranchThumbnailAfterProgressSave(nextBuild);
+      const appliedBuild = markBuildContributionWorkspaceEdited(nextBuild);
+      applyBuildUpdate(appliedBuild);
+      syncAvailableBranchSummary(appliedBuild);
+      maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
       if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
         replaceCopilotPolicy(result?.copilotPolicy || null);
       }
@@ -7094,7 +7106,6 @@ export default function BuildEditor({
       onStartVersion={handleCreateContribution}
       onLoadVersion={handleLoadVersion}
       onDeleteBranch={handleRequestDeleteBranch}
-      onOpenMainProject={handleOpenMainProject}
       onFork={handleFork}
       onOpenTeamPanel={() =>
         handleBuildWorkspaceCommunicationModeChange('people')
@@ -7141,6 +7152,8 @@ export default function BuildEditor({
     onCommunicationModeChange: handleBuildWorkspaceCommunicationModeChange,
     communicationScrollTops: buildWorkspaceScrollTops,
     onCommunicationScrollChange: handleBuildWorkspaceCommunicationScrollChange,
+    showMainProjectNavigation: currentBuildIsContributionFork,
+    onOpenMainProject: handleOpenMainProject,
     luminePanelOverride,
     versionsPanel,
     lumineTabLabel: luminePanelOverride ? 'Branches' : 'Lumine',

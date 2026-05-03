@@ -527,26 +527,30 @@ export function useScrollPosition({
   pathname: string;
   isMobile: boolean;
 }) {
-  const pathnameRef = useRef('');
+  const pathnameRef = useRef(pathname);
+  const restoredPathnameRef = useRef('');
+  pathnameRef.current = pathname;
 
-  useEffect(() => {
-    if (pathname !== pathnameRef.current) {
-      pathnameRef.current = pathname;
-      const appElement = document.getElementById('App');
-      if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
-      (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
-      setTimeout(() => {
-        if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
-        (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
+  useLayoutEffect(() => {
+    if (pathname !== restoredPathnameRef.current) {
+      restoredPathnameRef.current = pathname;
+      restoreScrollPosition(pathname);
+      const restoreTimer = window.setTimeout(() => {
+        restoreScrollPosition(pathname);
       }, 0);
+      let mobileRestoreTimer: number | null = null;
       // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
       if (isMobile) {
-        setTimeout(() => {
-          if (appElement)
-            appElement.scrollTop = scrollPositions[pathnameRef.current] || 0;
-          (BodyRef || {}).scrollTop = scrollPositions[pathnameRef.current] || 0;
+        mobileRestoreTimer = window.setTimeout(() => {
+          restoreScrollPosition(pathnameRef.current);
         }, 500);
       }
+      return () => {
+        window.clearTimeout(restoreTimer);
+        if (mobileRestoreTimer !== null) {
+          window.clearTimeout(mobileRestoreTimer);
+        }
+      };
     }
   }, [pathname, isMobile]);
 
@@ -560,15 +564,23 @@ export function useScrollPosition({
     };
 
     function handleScroll() {
-      const appElement = document.getElementById('App');
-      const appElementScrollTopPosition = appElement?.scrollTop || 0;
-      const position = Math.max(
-        appElementScrollTopPosition,
-        (BodyRef || {}).scrollTop
-      );
-      scrollPositions[pathnameRef.current] = position;
+      const currentPathname = pathnameRef.current;
+      if (!currentPathname) return;
+      scrollPositions[currentPathname] = getCurrentScrollPosition();
     }
   }, []);
+}
+
+function getCurrentScrollPosition() {
+  const appElement = document.getElementById('App');
+  return Math.max(appElement?.scrollTop || 0, (BodyRef || {}).scrollTop || 0);
+}
+
+function restoreScrollPosition(pathname: string) {
+  const appElement = document.getElementById('App');
+  const scrollTop = scrollPositions[pathname] || 0;
+  if (appElement) appElement.scrollTop = scrollTop;
+  (BodyRef || {}).scrollTop = scrollTop;
 }
 
 export function useMyLevel() {

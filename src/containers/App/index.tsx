@@ -68,6 +68,7 @@ import {
   useChatContext,
   useChessContext,
   useMissionContext,
+  useBuildContext,
   KeyContext
 } from '~/contexts';
 import AICallWindow from './AICallWindow';
@@ -130,6 +131,28 @@ function BuildPreviewPassthrough() {
       text="This preview URL should be served by the backend. If it does not redirect, production routing still needs to be fixed."
     />
   );
+}
+
+function getScrollPositionPathname({
+  pathname,
+  buildStudioActiveTab
+}: {
+  pathname: string;
+  buildStudioActiveTab?: string | null;
+}) {
+  if (pathname !== '/build') return pathname;
+  return `/build:${normalizeBuildStudioTab(buildStudioActiveTab)}`;
+}
+
+function normalizeBuildStudioTab(value?: string | null) {
+  if (
+    value === 'collaborating' ||
+    value === 'community' ||
+    value === 'open_source'
+  ) {
+    return value;
+  }
+  return 'mine';
 }
 
 export default function App() {
@@ -349,9 +372,20 @@ export default function App() {
     () => /^\/(app|app-capture)\/[^/]+/.test(location.pathname),
     [location.pathname]
   );
+  const buildStudioActiveTab = useBuildContext(
+    (v) => v.state.buildStudio.activeTab
+  );
+  const scrollPositionPathname = useMemo(
+    () =>
+      getScrollPositionPathname({
+        pathname: location.pathname,
+        buildStudioActiveTab
+      }),
+    [buildStudioActiveTab, location.pathname]
+  );
 
   useScrollPosition({
-    pathname: location.pathname,
+    pathname: scrollPositionPathname,
     isMobile: deviceIsMobile
   });
 

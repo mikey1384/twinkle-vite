@@ -155,12 +155,6 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildStudio
       });
     },
-    onSetBuildStudioScroll(buildStudio: BuildStudioActionPayload) {
-      return dispatch({
-        type: 'SET_BUILD_STUDIO_SCROLL',
-        buildStudio
-      });
-    },
     onPublishBuildRuntimeVerifyResult(
       runtimeVerifyResult: BuildRuntimeVerifyResultPayload
     ) {

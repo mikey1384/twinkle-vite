@@ -126,6 +126,7 @@ export default function Puzzle({
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
   const timeIsAlreadyUpRef = useRef(false);
   const timeAttackDeadlineRef = useRef<number | null>(null);
+  const startingPromotionRef = useRef(false);
   const [promoSolved, setPromoSolved] = useState(0);
   const [dailyStats, setDailyStats] = useState<{
     puzzlesSolved: number;
@@ -695,7 +696,8 @@ export default function Puzzle({
   async function handlePromotionClick() {
     let promotionStarted = false;
     try {
-      if (startingPromotion) return;
+      if (startingPromotionRef.current || startingPromotion) return;
+      startingPromotionRef.current = true;
       setStartingPromotion(true);
       const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
       if (!promoPuzzle) {
@@ -738,6 +740,7 @@ export default function Puzzle({
         await onRefreshStats();
       }
     } finally {
+      startingPromotionRef.current = false;
       setStartingPromotion(false);
     }
   }

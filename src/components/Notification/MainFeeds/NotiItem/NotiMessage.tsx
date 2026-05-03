@@ -718,12 +718,12 @@ function NotiMessage({
           ) : inviteStatus === 'accepted' ? (
             <span style={{ color: recommendationColorValue, fontWeight: 800 }}>
               {' '}
-              accepted
+              (accepted)
             </span>
           ) : inviteStatus === 'declined' ? (
             <span style={{ color: infoColor, fontWeight: 800 }}>
               {' '}
-              declined
+              (declined)
             </span>
           ) : null}
           {buildInviteActionError ? (

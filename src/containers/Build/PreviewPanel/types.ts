@@ -36,6 +36,7 @@ export interface PreviewPanelProps {
     options?: {
       artifactVersionId?: number | null;
       primaryArtifactId?: number | null;
+      contributionStatus?: 'none' | 'draft' | 'merging' | 'merged';
     }
   ) => void;
   onSaveProjectFiles: (

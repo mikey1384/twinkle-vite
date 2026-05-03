@@ -277,6 +277,7 @@ export default function Content({
               userId: contentObj.userId,
               title,
               description,
+              isPublic: contentObj.isPublic,
               collaborationMode: contentObj.collaborationMode,
               contributionAccess: contentObj.contributionAccess,
               collaboratorCount: contentObj.collaboratorCount,

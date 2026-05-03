@@ -3412,7 +3412,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             typeof result?.code === 'string' ? result.code : null;
           onApplyRestoredProjectFiles(restoredProjectFiles, restoredCode, {
             artifactVersionId: result?.versionId ?? versionId,
-            primaryArtifactId: artifactId
+            primaryArtifactId: artifactId,
+            contributionStatus: result?.contributionStatus
           });
           const restoredEditableFiles = buildEditableProjectFiles({
             code: restoredCode,

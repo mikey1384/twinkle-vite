@@ -164,6 +164,8 @@ export interface ChatPanelProps {
     mode: ChatPanelCommunicationMode,
     scrollTop: number
   ) => void;
+  showMainProjectNavigation?: boolean;
+  onOpenMainProject?: () => void;
   peoplePanel?: ReactNode;
   versionsPanel?: ReactNode;
   luminePanelOverride?: ReactNode;

@@ -186,11 +186,18 @@ export default function ContentPanel({
     }
   });
   const loading = useRef(false);
+  const buildForkabilityHydrationKeyRef = useRef('');
   const inputAtBottom = contentType === 'comment';
   const { started: rootStarted } = useContentState({
     contentType: normalizedRootType,
     contentId: rootId
   });
+  const buildNeedsForkabilityHydration =
+    contentType === 'build' &&
+    loaded &&
+    !contentState.notFound &&
+    (typeof contentState.collaborationMode !== 'string' ||
+      typeof contentState.isPublic === 'undefined');
 
   useEffect(() => {
     return function cleanUp() {
@@ -200,7 +207,18 @@ export default function ContentPanel({
   }, [contentId, contentType]);
 
   useEffect(() => {
-    if (!loaded && !loading.current && contentId) {
+    const hydrationKey = `${contentType}-${contentId}`;
+    const shouldHydrateBuildForkability =
+      buildNeedsForkabilityHydration &&
+      buildForkabilityHydrationKeyRef.current !== hydrationKey;
+    if (
+      (!loaded || shouldHydrateBuildForkability) &&
+      !loading.current &&
+      contentId
+    ) {
+      if (shouldHydrateBuildForkability) {
+        buildForkabilityHydrationKeyRef.current = hydrationKey;
+      }
       onMount();
     }
     async function onMount() {
@@ -223,7 +241,7 @@ export default function ContentPanel({
       loading.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [buildNeedsForkabilityHydration, loaded]);
 
   const contentShown = useMemo(
     () => alwaysShow || inView || isVisible || started || rootStarted,

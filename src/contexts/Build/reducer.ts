@@ -114,7 +114,6 @@ export interface BuildStudioBrowseTabState {
   loadMoreToken: string | null;
   loaded: boolean;
   userId: number | null;
-  scrollY: number;
 }
 
 export interface BuildStudioState {
@@ -122,7 +121,6 @@ export interface BuildStudioState {
   myBuilds: any[];
   myBuildsLoaded: boolean;
   myBuildsUserId: number | null;
-  myBuildsScrollY: number;
   browse: Record<BuildStudioBrowseTab, BuildStudioBrowseTabState>;
 }
 
@@ -224,7 +222,6 @@ export interface BuildStudioActionPayload {
   buildId?: number;
   userId?: number | null;
   loadMoreToken?: string | null;
-  scrollY?: number;
 }
 
 export interface BuildWorkspaceUiActionPayload {
@@ -265,7 +262,6 @@ export interface BuildAction {
     | 'REMOVE_BUILD_STUDIO_MY_BUILD'
     | 'SET_BUILD_STUDIO_BROWSE_BUILDS'
     | 'APPEND_BUILD_STUDIO_BROWSE_BUILDS'
-    | 'SET_BUILD_STUDIO_SCROLL'
     | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUN'
@@ -282,7 +278,6 @@ export function createInitialBuildStudioState(): BuildStudioState {
     myBuilds: [],
     myBuildsLoaded: false,
     myBuildsUserId: null,
-    myBuildsScrollY: 0,
     browse: {
       community: createInitialBuildStudioBrowseState(),
       collaborating: createInitialBuildStudioBrowseState(),
@@ -296,8 +291,7 @@ function createInitialBuildStudioBrowseState(): BuildStudioBrowseTabState {
     builds: [],
     loadMoreToken: null,
     loaded: false,
-    userId: null,
-    scrollY: 0
+    userId: null
   };
 }
 
@@ -375,12 +369,6 @@ function normalizeBuildStudioBrowseTab(
 function normalizeBuildStudioUserId(value: unknown) {
   const userId = Math.floor(Number(value) || 0);
   return userId > 0 ? userId : null;
-}
-
-function normalizeBuildStudioScrollY(value: unknown) {
-  const normalized = Number(value || 0);
-  if (!Number.isFinite(normalized)) return 0;
-  return Math.max(0, Math.floor(normalized));
 }
 
 function normalizeBuildWorkspaceScrollTop(value: unknown) {
@@ -1626,34 +1614,6 @@ export default function BuildReducer(
                   : null,
               loaded: true,
               userId
-            }
-          }
-        }
-      };
-    }
-    case 'SET_BUILD_STUDIO_SCROLL': {
-      const buildStudio = getBuildStudioState(state);
-      const tab = normalizeBuildStudioTab(action.buildStudio?.tab);
-      const scrollY = normalizeBuildStudioScrollY(action.buildStudio?.scrollY);
-      if (tab === 'mine') {
-        if (buildStudio.myBuildsScrollY === scrollY) return state;
-        return {
-          ...state,
-          buildStudio: {
-            ...buildStudio,
-            myBuildsScrollY: scrollY
-          }
-        };
-      }
-      return {
-        ...state,
-        buildStudio: {
-          ...buildStudio,
-          browse: {
-            ...buildStudio.browse,
-            [tab]: {
-              ...buildStudio.browse[tab],
-              scrollY
             }
           }
         }

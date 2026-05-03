@@ -514,6 +514,11 @@ const forumThreadButtonClass = css`
     border-color: rgba(65, 140, 235, 0.42);
     background: rgba(65, 140, 235, 0.06);
   }
+  &.recent {
+    border-color: rgba(34, 197, 94, 0.48);
+    background: rgba(34, 197, 94, 0.07);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
+  }
 `;
 
 const forumThreadMainClass = css`
@@ -559,6 +564,18 @@ const forumThreadCountClass = css`
   border-radius: 999px;
   background: rgba(248, 250, 252, 0.9);
   color: var(--chat-text);
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+`;
+
+const forumThreadPostedClass = css`
+  align-self: start;
+  border: 1px solid rgba(34, 197, 94, 0.38);
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
   padding: 0.3rem 0.55rem;
   font-size: 0.78rem;
   font-weight: 900;
@@ -757,6 +774,8 @@ export default function CollaborationPanel({
   const [threadTitleInput, setThreadTitleInput] = useState('');
   const [threadBodyInput, setThreadBodyInput] = useState('');
   const [replyInput, setReplyInput] = useState('');
+  const [recentlyCreatedForumThreadId, setRecentlyCreatedForumThreadId] =
+    useState(0);
   const embeddedScrollRef = useRef<HTMLDivElement | null>(null);
   const restoreScrollKeyRef = useRef('');
   const initialScrollTopRef = useRef(initialScrollTop);
@@ -766,6 +785,7 @@ export default function CollaborationPanel({
   );
   const onSelectedForumThreadChangeRef = useRef(onSelectedForumThreadChange);
   const scrollSaveTimeoutRef = useRef<number | null>(null);
+  const recentlyCreatedForumThreadTimeoutRef = useRef<number | null>(null);
   const pendingScrollTopRef = useRef<number | null>(null);
   const lastSavedScrollTopRef = useRef(
     normalizePanelScrollTop(initialScrollTop)
@@ -884,6 +904,10 @@ export default function CollaborationPanel({
       if (scrollSaveTimeoutRef.current !== null) {
         window.clearTimeout(scrollSaveTimeoutRef.current);
         scrollSaveTimeoutRef.current = null;
+      }
+      if (recentlyCreatedForumThreadTimeoutRef.current !== null) {
+        window.clearTimeout(recentlyCreatedForumThreadTimeoutRef.current);
+        recentlyCreatedForumThreadTimeoutRef.current = null;
       }
       const pendingScrollTop = pendingScrollTopRef.current;
       pendingScrollTopRef.current = null;
@@ -1849,7 +1873,6 @@ export default function CollaborationPanel({
     if (
       !rootBuildId ||
       !threadTitleInput.trim() ||
-      !threadBodyInput.trim() ||
       forumActionLoading
     ) {
       return;
@@ -1865,10 +1888,15 @@ export default function CollaborationPanel({
         body: threadBodyInput.trim()
       });
       if (result?.thread) {
-        setForumThreads((current) => [result.thread, ...current]);
-        setSelectedThread(result.thread);
+        setForumThreads((current) => [
+          result.thread,
+          ...current.filter(
+            (thread) => Number(thread.id) !== Number(result.thread.id)
+          )
+        ]);
         setThreadReplies([]);
-        commitSelectedForumThreadId(result.thread.id);
+        commitSelectedForumThreadId(0);
+        markForumThreadPosted(result.thread.id);
         setThreadTitleInput('');
         setThreadBodyInput('');
       }
@@ -1881,6 +1909,19 @@ export default function CollaborationPanel({
     } finally {
       setForumActionLoading('');
     }
+  }
+
+  function markForumThreadPosted(threadId: number) {
+    setRecentlyCreatedForumThreadId(threadId);
+    if (recentlyCreatedForumThreadTimeoutRef.current !== null) {
+      window.clearTimeout(recentlyCreatedForumThreadTimeoutRef.current);
+    }
+    recentlyCreatedForumThreadTimeoutRef.current = window.setTimeout(() => {
+      recentlyCreatedForumThreadTimeoutRef.current = null;
+      setRecentlyCreatedForumThreadId((currentThreadId) =>
+        Number(currentThreadId) === Number(threadId) ? 0 : currentThreadId
+      );
+    }, 3200);
   }
 
   async function handleOpenForumThread(
@@ -2037,7 +2078,7 @@ export default function CollaborationPanel({
     );
     const contributionCanMerge = contributionStatus === 'draft';
     const canUpdateFromMain =
-      contributionStatus === 'draft' &&
+      (contributionStatus === 'draft' || contributionStatus === 'merged') &&
       Number(activeContribution.contributionContributorId || 0) ===
         Number(userId || 0);
     return (
@@ -2255,7 +2296,9 @@ export default function CollaborationPanel({
                     </div>
                   ) : null}
                 </div>
-                <div className={forumPostBodyClass}>{selectedThread.body}</div>
+                {selectedThread.body ? (
+                  <div className={forumPostBodyClass}>{selectedThread.body}</div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -2333,7 +2376,7 @@ export default function CollaborationPanel({
             className={textareaClass}
             value={threadBodyInput}
             onChange={(event) => setThreadBodyInput(event.target.value)}
-            placeholder="Share an update or ask the team..."
+            placeholder="Optional details..."
             minRows={3}
             maxRows={10}
           />
@@ -2347,9 +2390,7 @@ export default function CollaborationPanel({
               icon="comment"
               loading={forumActionLoading === 'create-thread'}
               disabled={
-                !threadTitleInput.trim() ||
-                !threadBodyInput.trim() ||
-                Boolean(forumActionLoading)
+                !threadTitleInput.trim() || Boolean(forumActionLoading)
               }
               onClick={handleCreateForumThread}
             >
@@ -2371,10 +2412,14 @@ export default function CollaborationPanel({
   function renderForumThread(thread: BuildForumThread) {
     const threadUser = getForumUser(thread);
     const canDeleteThread = userCanDeleteForumItem(thread);
+    const recentlyCreated =
+      Number(thread.id) === Number(recentlyCreatedForumThreadId);
     return (
       <div
         key={thread.id}
-        className={forumThreadButtonClass}
+        className={`${forumThreadButtonClass}${
+          recentlyCreated ? ' recent' : ''
+        }`}
         role="button"
         tabIndex={0}
         onClick={() => handleOpenForumThread(thread.id)}
@@ -2387,7 +2432,9 @@ export default function CollaborationPanel({
       >
         <div className={forumThreadMainClass}>
           <span className={forumThreadTitleClass}>{thread.title}</span>
-          <span className={forumThreadPreviewClass}>{thread.body}</span>
+          {thread.body ? (
+            <span className={forumThreadPreviewClass}>{thread.body}</span>
+          ) : null}
           <div className={forumThreadMetaClass}>
             <span
               onClick={(event) => event.stopPropagation()}
@@ -2414,6 +2461,9 @@ export default function CollaborationPanel({
           </div>
         </div>
         <div className={rowClass}>
+          {recentlyCreated ? (
+            <span className={forumThreadPostedClass}>Posted</span>
+          ) : null}
           <span className={forumThreadCountClass}>
             {Number(thread.replyCount || 0)}{' '}
             {Number(thread.replyCount || 0) === 1 ? 'reply' : 'replies'}
