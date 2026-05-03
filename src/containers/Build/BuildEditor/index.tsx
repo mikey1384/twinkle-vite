@@ -648,6 +648,51 @@ interface BuildVersionSummary {
   thumbnailUrl?: string | null;
 }
 
+function getBuildVersionSortRank(version: BuildVersionSummary) {
+  switch (String(version.contributionStatus || '').trim()) {
+    case 'merging':
+      return 1;
+    case 'draft':
+      return 2;
+    case 'merged':
+      return 3;
+    default:
+      return 4;
+  }
+}
+
+function sortBuildVersionSummaries(versions: BuildVersionSummary[]) {
+  return [...versions].sort(
+    (a, b) =>
+      getBuildVersionSortRank(a) - getBuildVersionSortRank(b) ||
+      Number(b.updatedAt || 0) - Number(a.updatedAt || 0) ||
+      Number(b.id || 0) - Number(a.id || 0)
+  );
+}
+
+function normalizeBuildVersionSummary(
+  value: Record<string, any> | null | undefined
+): BuildVersionSummary | null {
+  const id = Number(value?.id || 0);
+  if (!id) return null;
+  return {
+    ...value,
+    id,
+    userId: Number(value?.userId || 0) || null,
+    username: value?.username || null,
+    profilePicUrl: value?.profilePicUrl || null,
+    title: value?.title || '',
+    contributionRootBuildId: Number(value?.contributionRootBuildId || 0) || null,
+    contributionContributorId:
+      Number(value?.contributionContributorId || 0) || null,
+    contributionBranchNumber:
+      Number(value?.contributionBranchNumber || 0) || null,
+    contributionStatus: value?.contributionStatus || null,
+    updatedAt: Number(value?.updatedAt || 0) || null,
+    thumbnailUrl: value?.thumbnailUrl || null
+  };
+}
+
 interface BuildBranchDeleteTarget {
   id: number;
   title: string;
@@ -1279,7 +1324,7 @@ function VersionStartPanel({
         icon: 'comments',
         label: `${formatOwnerAttentionCount(
           pendingRequestCount,
-          'collaboration request'
+          'join request'
         )}`,
         detail: 'People are asking to join this project.',
         actionLabel: 'Review',
@@ -2639,6 +2684,7 @@ export default function BuildEditor({
     openCollaborationSettings?: boolean;
     openPeoplePanel?: boolean;
     openVersionsPanel?: boolean;
+    skipDefaultContributionBranchRedirect?: boolean;
   };
   const routeForumThreadId = Math.max(
     0,
@@ -6902,7 +6948,8 @@ export default function BuildEditor({
           if (rootBuildId > 0) {
             navigate(`/build/${rootBuildId}`, {
               state: {
-                openVersionsPanel: true
+                openVersionsPanel: true,
+                skipDefaultContributionBranchRedirect: true
               }
             });
           }
@@ -6920,7 +6967,8 @@ export default function BuildEditor({
     if (!rootBuildId) return;
     navigate(`/build/${rootBuildId}`, {
       state: {
-        openVersionsPanel: true
+        openVersionsPanel: true,
+        skipDefaultContributionBranchRedirect: true
       }
     });
   }
@@ -7190,6 +7238,7 @@ export default function BuildEditor({
         embedded
         isOwner={isOwner}
         onBuildPatch={handleBuildCollaborationPatch}
+        onContributionBranchCreated={handleContributionBranchCreated}
         onCanonicalMerge={handleBuildContributionMerge}
         onVersionProjectFilesUpdate={handleBuildContributionMerge}
         onBeforeContributionAction={handleBeforeContributionAction}
@@ -7439,6 +7488,23 @@ export default function BuildEditor({
     applyBuildUpdate({
       ...latestBuild,
       ...patch
+    });
+  }
+
+  function handleContributionBranchCreated(branch: Record<string, any>) {
+    const nextVersion = normalizeBuildVersionSummary(branch);
+    if (!nextVersion) return;
+    setAvailableVersions((versions) => {
+      const nextVersions = versions.some(
+        (version) => Number(version.id || 0) === Number(nextVersion.id || 0)
+      )
+        ? versions.map((version) =>
+            Number(version.id || 0) === Number(nextVersion.id || 0)
+              ? { ...version, ...nextVersion }
+              : version
+          )
+        : [...versions, nextVersion];
+      return sortBuildVersionSummaries(nextVersions);
     });
   }
 

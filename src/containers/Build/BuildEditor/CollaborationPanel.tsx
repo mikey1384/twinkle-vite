@@ -107,6 +107,7 @@ interface CollaborationPanelProps {
   embedded?: boolean;
   isOwner: boolean;
   onBuildPatch: (patch: Record<string, any>) => void;
+  onContributionBranchCreated?: (branch: BuildLike) => void;
   onCanonicalMerge: (payload: {
     build?: Record<string, any> | null;
     projectFiles?: Array<{ path: string; content?: string }> | null;
@@ -661,6 +662,7 @@ export default function CollaborationPanel({
   embedded = false,
   isOwner,
   onBuildPatch,
+  onContributionBranchCreated,
   onCanonicalMerge,
   onVersionProjectFilesUpdate,
   onAcceptedContributorCountChange,
@@ -971,7 +973,7 @@ export default function CollaborationPanel({
             <>
               <span className={statusPillClass}>
                 <Icon icon="code-branch" />
-                Collaboration
+                Team
               </span>
               <label className={labelClass}>
                 Mode
@@ -1108,12 +1110,12 @@ export default function CollaborationPanel({
       ? 'This project is private.'
       : isOpenSource
         ? 'This project is open source.'
-        : 'This project uses invite-only collaboration.';
+        : 'This project uses invite-only teams.';
     const description = isPrivate
-      ? 'Invite collaborators to discuss and contribute in the team workspace.'
+      ? 'Invite team members to discuss and help in the team workspace.'
       : isOpenSource
-        ? 'People can fork published copies, and invited collaborators can still contribute to this original project.'
-        : 'Invited collaborators can create project-scoped forks, discuss changes, and send them back for review.';
+        ? 'People can fork published copies, and invited team members can still help with this original project.'
+        : 'Invited team members can create project branches, discuss changes, and send them back for review.';
     return (
       <div className={collaborationPromptClass}>
         <div className={collaborationPromptTitleClass}>
@@ -1132,7 +1134,7 @@ export default function CollaborationPanel({
               shiny={isPrivate}
               onClick={onOpenCollaborationSettings}
             >
-              {isPrivate ? 'Set Up Collaboration' : 'Manage Settings'}
+              {isPrivate ? 'Set Up Team' : 'Manage Settings'}
             </GameCTAButton>
           </div>
         ) : null}
@@ -1144,7 +1146,7 @@ export default function CollaborationPanel({
     return (
       <div className={detailClass}>
         <div className={rowClass}>
-          <strong>Collaborators</strong>
+          <strong>Team members</strong>
         </div>
         <BuildContributorInvitePicker
           buildId={rootBuildId}
@@ -1164,8 +1166,8 @@ export default function CollaborationPanel({
         <div className={rowClass}>
           <strong>
             {showHiddenCollaborationRequests
-              ? 'Hidden collaboration requests'
-              : 'Collaboration requests'}
+              ? 'Hidden join requests'
+              : 'Join requests'}
           </strong>
           <span className={mutedTextClass}>{collaborationRequests.length}</span>
           {loadingCollaborationRequests ? (
@@ -1450,12 +1452,16 @@ export default function CollaborationPanel({
       setCollaborationRequests((current) =>
         current.filter((request) => Number(request.id) !== Number(requestId))
       );
+      if (result?.defaultBranch) {
+        onContributionBranchCreated?.(result.defaultBranch);
+        void reloadContributions();
+      }
       void reloadContributors();
     } catch (error: any) {
       setRequestActionError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to accept collaboration request'
+          'Failed to accept join request'
       );
     } finally {
       setActionLoading('');
@@ -1495,7 +1501,7 @@ export default function CollaborationPanel({
       setRequestActionError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to reject collaboration request'
+          'Failed to reject join request'
       );
     } finally {
       setActionLoading('');
@@ -1527,7 +1533,7 @@ export default function CollaborationPanel({
       setRequestActionError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to hide collaboration request'
+          'Failed to hide join request'
       );
     } finally {
       setActionLoading('');

@@ -170,6 +170,28 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildStudio: { activityTab, activitySubtab }
       });
     },
+    onInvalidateBuildStudioActivityFeeds({
+      userId
+    }: {
+      userId?: number | null;
+    } = {}) {
+      return dispatch({
+        type: 'INVALIDATE_BUILD_STUDIO_ACTIVITY_FEEDS',
+        buildStudio: { userId }
+      });
+    },
+    onSetBuildStudioActivityItems(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_ACTIVITY_ITEMS',
+        buildStudio
+      });
+    },
+    onAppendBuildStudioActivityItems(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'APPEND_BUILD_STUDIO_ACTIVITY_ITEMS',
+        buildStudio
+      });
+    },
     onSetBuildStudioBrowseBuilds(buildStudio: BuildStudioActionPayload) {
       return dispatch({
         type: 'SET_BUILD_STUDIO_BROWSE_BUILDS',

@@ -1839,6 +1839,11 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       getBuildApiTokenRef,
       setGuestRestrictionBannerVisible
     }).current;
+    buildRef.current = build;
+    isOwnerRef.current = isOwner;
+    userIdRef.current = resolvedUserId || null;
+    usernameRef.current = resolvedUsername || null;
+    profilePicUrlRef.current = resolvedProfilePicUrl || null;
     const previewRequestRefs = useRef({
       loadBuildAiPromptsRef,
       callBuildAiChatRef,

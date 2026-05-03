@@ -169,14 +169,14 @@ const modeOptions: Array<{
     icon: 'lock',
     title: 'Private Project',
     description:
-      'Only you and invited collaborators can access the team workspace.'
+      'Only you and invited team members can access the team workspace.'
   },
   {
     value: 'open_source',
     icon: 'globe',
     title: 'Open source',
     description:
-      'People can fork a published copy, while collaborators can still contribute here.'
+      'People can fork a published copy, while team members can still help here.'
   }
 ];
 
@@ -195,8 +195,8 @@ const lumineChatVisibilityOptions: Array<{
   {
     value: 'collaborators',
     icon: 'users',
-    title: 'Collaborators',
-    description: 'Project collaborators can review the transcript.'
+    title: 'Team',
+    description: 'Team members can see the chat history.'
   }
 ];
 
@@ -278,7 +278,7 @@ export default function BuildCollaborationSettingsModal({
       isOpen
       onClose={savingSettings ? () => {} : onHide}
       closeOnBackdropClick={!savingSettings}
-      title="Collaboration Settings"
+      title="Team Settings"
       size="md"
       footer={
         <div>
@@ -303,8 +303,8 @@ export default function BuildCollaborationSettingsModal({
     >
       <div className={bodyClass} style={collaborationThemeStyle}>
         <div className={introClass}>
-          Choose whether people can fork a published copy. Project
-          collaborators are managed by invite or accepted requests.
+          Choose whether people can fork a published copy. Team members are
+          added by invite or accepted join requests.
         </div>
         <div className={sectionClass}>
           <div className={sectionTitleClass}>Project mode</div>
@@ -366,7 +366,7 @@ export default function BuildCollaborationSettingsModal({
         {contributorsCardShown ? (
           <div className={inviteCardClass}>
             <div className={rowClass}>
-              <strong>Collaborators</strong>
+              <strong>Team members</strong>
               {loadingContributors ? (
                 <span className={mutedTextClass}>Loading...</span>
               ) : null}

@@ -29,7 +29,7 @@ const buildActivityTabs: Array<{
   icon: string;
 }> = [
   { value: 'mine', label: 'My Projects', icon: 'rocket-launch' },
-  { value: 'collaborating', label: 'Collaborating', icon: 'users' }
+  { value: 'collaborating', label: 'Team Builds', icon: 'users' }
 ];
 
 const buildActivitySubtabs: Array<{
@@ -60,18 +60,6 @@ export interface BuildActivityItem {
     username: string;
     profilePicUrl?: string | null;
   };
-  request?: {
-    id: number;
-    message?: string;
-    status?: string;
-  } | null;
-  invite?: {
-    id: number;
-    status: string;
-    acceptedAt?: number;
-    declinedAt?: number;
-    revokedAt?: number;
-  } | null;
   branch?: {
     id: number;
     title: string;
@@ -168,18 +156,21 @@ const mobilePanelClass = css`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: min(86dvh, 58rem);
-  max-height: calc(100dvh - 7rem);
+  max-height: calc(100dvh - 5.75rem);
+  min-height: 0;
 
-  @media (max-width: ${mobileMaxWidth}) {
-    height: calc(100dvh - 6rem);
-    max-height: calc(100dvh - 6rem);
+  > *:not(:last-child) {
+    flex-shrink: 0;
   }
 `;
 
+const mobileModalStyle: React.CSSProperties = {
+  maxHeight: 'calc(100dvh - 1rem)'
+};
+
 const mobileListClass = css`
   width: 100%;
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
 `;
@@ -259,19 +250,7 @@ const rowMetaClass = css`
   opacity: 0.64;
 `;
 
-const statusPillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.22rem 0.48rem;
-  border-radius: 999px;
-  background: rgba(34, 197, 94, 0.12);
-  color: #166534;
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  opacity: 1;
-`;
-
-const requestMessageClass = css`
+const activityDetailClass = css`
   color: var(--chat-text);
   font-size: 1rem;
   line-height: 1.35;
@@ -354,6 +333,7 @@ export default function BuildActivityPanel({
             title="Build Activity"
             size="md"
             bodyPadding={0}
+            style={mobileModalStyle}
           >
             <div className={mobilePanelClass}>
               {renderTabs()}
@@ -468,18 +448,13 @@ export default function BuildActivityPanel({
               </span>
               <span className={buildTitleClass}>{getSubjectLabel(activity)}</span>
               {getActivityDetailText(activity) ? (
-                <span className={requestMessageClass}>
+                <span className={activityDetailClass}>
                   &quot;{truncateActivityText(getActivityDetailText(activity))}&quot;
                 </span>
               ) : null}
               <span className={rowMetaClass}>
                 <Icon icon={getActivityIcon(activity)} />
                 <span>{timeSinceShort(activity.timeStamp)}</span>
-                {getActivityStatus(activity, currentUserId) ? (
-                  <span className={statusPillClass}>
-                    {getActivityStatus(activity, currentUserId)}
-                  </span>
-                ) : null}
               </span>
             </span>
           </button>
@@ -522,11 +497,11 @@ function getEmptyMessage(
 ) {
   if (activeSubtab === 'branch_updates') {
     return activeTab === 'collaborating'
-      ? 'No branch updates from collaborators yet.'
+      ? 'No branch updates from team members yet.'
       : 'No branch updates from other people yet.';
   }
   if (activeTab === 'collaborating') {
-    return 'No activity for collaborating projects yet.';
+    return 'No activity for team builds yet.';
   }
   return 'No activity for your projects yet.';
 }
@@ -576,20 +551,6 @@ function getActivityMessage(activity: BuildActivityItem, currentUserId: number) 
     Number(activity.targetId || 0) === Number(currentUserId || 0);
 
   switch (activity.activityType) {
-    case 'buildCollaborationRequest':
-      return actorIsCurrentUser
-        ? 'asked to collaborate on'
-        : 'wants to collaborate on';
-    case 'buildCollaborationRequestAccepted':
-      if (actorIsCurrentUser) return 'accepted a collaboration request for';
-      return targetIsCurrentUser
-        ? 'accepted your collaboration request for'
-        : 'accepted a collaboration request for';
-    case 'buildContributionInvite':
-      if (actorIsCurrentUser) return 'invited someone to collaborate on';
-      return targetIsCurrentUser
-        ? 'invited you to collaborate on'
-        : 'sent a collaboration invite for';
     case 'buildFork':
       return 'forked';
     case 'buildContributor':
@@ -609,10 +570,6 @@ function getActivityMessage(activity: BuildActivityItem, currentUserId: number) 
       return 'updated branch';
     case 'buildPublished':
       return 'published';
-    case 'like':
-      return 'liked';
-    case 'comment':
-      return 'commented on';
     default:
       return 'updated';
   }
@@ -630,12 +587,6 @@ function isActivityActorCurrentUser(
 
 function getActivityIcon(activity: BuildActivityItem) {
   switch (activity.activityType) {
-    case 'buildCollaborationRequest':
-      return 'user-plus';
-    case 'buildCollaborationRequestAccepted':
-      return 'check-circle';
-    case 'buildContributionInvite':
-      return 'users';
     case 'buildFork':
     case 'buildContributor':
       return 'code-branch';
@@ -647,42 +598,13 @@ function getActivityIcon(activity: BuildActivityItem) {
     case 'buildUpdate':
     case 'buildBranchUpdate':
       return 'cloud-upload-alt';
-    case 'like':
-      return 'heart';
-    case 'comment':
-      return 'comments';
     default:
       return 'rocket-launch';
   }
 }
 
-function getActivityStatus(activity: BuildActivityItem, currentUserId: number) {
-  const targetIsCurrentUser =
-    Number(activity.targetId || 0) > 0 &&
-    Number(activity.targetId || 0) === Number(currentUserId || 0);
-  if (activity.invite?.status && activity.invite.status !== 'pending') {
-    return activity.invite.status;
-  }
-  if (
-    activity.activityType === 'buildCollaborationRequest' &&
-    activity.request?.status === 'pending' &&
-    targetIsCurrentUser
-  ) {
-    return 'Review';
-  }
-  if (activity.invite?.status === 'pending' && targetIsCurrentUser) {
-    return 'Respond';
-  }
-  return '';
-}
-
 function getActivityNavigationState(activity: BuildActivityItem) {
-  if (
-    activity.activityType === 'buildCollaborationRequest' ||
-    activity.activityType === 'buildCollaborationRequestAccepted' ||
-    activity.activityType === 'buildContributionInvite' ||
-    activity.activityType === 'buildCollaborator'
-  ) {
+  if (activity.activityType === 'buildCollaborator') {
     return { openPeoplePanel: true };
   }
   if (
@@ -705,7 +627,6 @@ function getActivityNavigationState(activity: BuildActivityItem) {
 
 function getActivityDetailText(activity: BuildActivityItem) {
   if (activity.forum?.body) return activity.forum.body;
-  if (activity.request?.message) return activity.request.message;
   return '';
 }
 

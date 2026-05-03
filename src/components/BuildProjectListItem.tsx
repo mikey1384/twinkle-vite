@@ -534,14 +534,14 @@ export default function BuildProjectListItem({
   const collaborationStatus = collaborationRequest?.status || '';
   const listCollaborationActionLabel =
     !userId
-      ? 'Collaborate'
+      ? 'Ask to join'
       : collaborationStatus === 'pending'
-        ? 'Pending Approval'
+        ? 'Request sent'
         : collaborationStatus === 'invited'
-          ? 'Accept Invitation'
+          ? 'Join team'
           : collaborationStatus === 'accepted'
-            ? 'Collaborate'
-            : 'Offer Collaboration';
+            ? 'Work together'
+            : 'Ask to join';
   const listCollaborationActionIcon =
     collaborationStatus === 'pending'
       ? 'clock'
@@ -967,7 +967,7 @@ export default function BuildProjectListItem({
       setCollaborationRequestError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to load collaboration request'
+          'Failed to load join request'
       );
     } finally {
       setActionLoading('');
@@ -991,7 +991,7 @@ export default function BuildProjectListItem({
       setCollaborationRequestError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to send collaboration request'
+          'Failed to send join request'
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -1017,7 +1017,7 @@ export default function BuildProjectListItem({
       setCollaborationRequestError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to cancel collaboration request'
+          'Failed to cancel join request'
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -1100,7 +1100,7 @@ export default function BuildProjectListItem({
             : () => setCollaborationRequestModalShown(false)
         }
         closeOnBackdropClick={!collaborationRequestLoading}
-        title="Offer Collaboration"
+        title="Ask to join"
         size="sm"
         footer={
           <div
@@ -1126,7 +1126,7 @@ export default function BuildProjectListItem({
                 disabled={collaborationRequestLoading}
                 onClick={handleCancelCollaborationRequest}
               >
-                Cancel Request
+                Cancel request
               </Button>
             ) : invited ? (
               <>
@@ -1145,7 +1145,7 @@ export default function BuildProjectListItem({
                   disabled={collaborationRequestLoading}
                   onClick={handleAcceptContributorInvite}
                 >
-                  Accept Invite
+                  Join team
                 </Button>
               </>
             ) : accepted ? (
@@ -1155,7 +1155,7 @@ export default function BuildProjectListItem({
                 disabled={collaborationRequestLoading}
                 onClick={handleOpenCollaborationWorkspace}
               >
-                Open Workspace
+                Open workspace
               </Button>
             ) : (
               <Button
@@ -1164,7 +1164,7 @@ export default function BuildProjectListItem({
                 disabled={collaborationRequestLoading}
                 onClick={handleSubmitCollaborationRequest}
               >
-                Send Request
+                Send join request
               </Button>
             )}
           </div>
@@ -1196,7 +1196,7 @@ export default function BuildProjectListItem({
                 line-height: 1.4;
               `}
             >
-              The owner invited you to collaborate on this Build.
+              The owner invited you to join the team for this Build.
             </div>
           ) : accepted ? (
             <div
@@ -1216,7 +1216,7 @@ export default function BuildProjectListItem({
                 line-height: 1.45;
               `}
             >
-              Ask the owner to invite you as a contributor.
+              Ask the owner if you can join the team.
             </div>
           )}
           {!accepted && !invited ? (
@@ -1287,8 +1287,8 @@ function formatForkCount(count: number) {
 
 function formatCollaboratorCount(count: number) {
   return count === 1
-    ? '1 collaborator'
-    : `${count.toLocaleString()} collaborators`;
+    ? '1 team member'
+    : `${count.toLocaleString()} team members`;
 }
 
 function normalizeReleaseStatus(

@@ -136,15 +136,18 @@ export default function MessageRow({
               padding: 0.85rem 1.05rem;
               border-radius: 12px;
               background: ${message.role === 'user'
-                ? 'var(--theme-bg)'
+                ? 'var(--build-chat-user-bg)'
                 : 'var(--chat-bg)'};
               color: ${message.role === 'user'
-                ? 'var(--theme-text)'
+                ? 'var(--build-chat-user-text)'
                 : 'var(--chat-text)'};
               word-break: break-word;
               font-size: var(--build-workshop-message-font-size);
               line-height: 1.48;
-              border: 1px solid var(--ui-border);
+              border: 1px solid
+                ${message.role === 'user'
+                  ? 'var(--build-chat-user-border)'
+                  : 'var(--ui-border)'};
             `}
           >
             {message.role === 'assistant' ? (

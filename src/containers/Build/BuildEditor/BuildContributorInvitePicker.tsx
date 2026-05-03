@@ -237,13 +237,13 @@ export default function BuildContributorInvitePicker({
         ) : null}
         {inviteError ? <span className={errorClass}>{inviteError}</span> : null}
         {contributors.length === 0 ? (
-          <span className={emptyClass}>No collaborators yet.</span>
+          <span className={emptyClass}>No team members yet.</span>
         ) : (
           <>
             {acceptedContributors.length > 0 ? (
               <div className={collaboratorListClass}>
                 <div className={collaboratorSectionTitleClass}>
-                  Collaborators
+                  Team members
                 </div>
                 {acceptedContributors.map((contributor) =>
                   renderContributorRow(contributor)
@@ -269,7 +269,7 @@ export default function BuildContributorInvitePicker({
           modalLevel={confirmModalLevel}
           title={
             contributorToRemoveAccepted
-              ? 'Remove Collaborator'
+              ? 'Remove from Team'
               : 'Cancel Invitation'
           }
           description={
@@ -277,7 +277,7 @@ export default function BuildContributorInvitePicker({
               {contributorToRemoveAccepted ? (
                 <>
                   Remove <b>{contributorToRemoveName}</b> from this Build's
-                  collaborators?
+                  team?
                 </>
               ) : (
                 <>

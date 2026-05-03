@@ -103,14 +103,14 @@ export default function BuildContent({
   const collaborationStatus = collaborationRequest?.status || '';
   const collaborationRequestActionLabel =
     !userId
-      ? 'Collaborate'
+      ? 'Ask to join'
       : collaborationStatus === 'pending'
-        ? 'Pending Approval'
+        ? 'Request sent'
         : collaborationStatus === 'invited'
-          ? 'Accept Invitation'
+          ? 'Join team'
           : collaborationStatus === 'accepted'
-            ? 'Collaborate'
-            : 'Offer Collaboration';
+            ? 'Work together'
+            : 'Ask to join';
   const collaborationRequestActionIcon =
     collaborationStatus === 'pending'
       ? 'clock'
@@ -635,7 +635,7 @@ export default function BuildContent({
       setCollaborationRequestMessage(String(nextRequest?.message || ''));
     } catch (error: any) {
       setCollaborationRequestError(
-        getErrorMessage(error, 'Failed to load collaboration request')
+        getErrorMessage(error, 'Failed to load join request')
       );
     } finally {
       setActionLoading('');
@@ -657,7 +657,7 @@ export default function BuildContent({
       }
     } catch (error: any) {
       setCollaborationRequestError(
-        getErrorMessage(error, 'Failed to send collaboration request')
+        getErrorMessage(error, 'Failed to send join request')
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -681,7 +681,7 @@ export default function BuildContent({
       }
     } catch (error: any) {
       setCollaborationRequestError(
-        getErrorMessage(error, 'Failed to cancel collaboration request')
+        getErrorMessage(error, 'Failed to cancel join request')
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -796,7 +796,7 @@ export default function BuildContent({
         }
         closeOnBackdropClick={!collaborationRequestLoading}
         title={
-          'Offer Collaboration'
+          'Ask to join'
         }
         size="sm"
         footer={
@@ -823,7 +823,7 @@ export default function BuildContent({
                 disabled={collaborationRequestLoading}
                 onClick={handleCancelCollaborationRequest}
               >
-                Cancel Request
+                Cancel request
               </Button>
             ) : invited ? (
               <>
@@ -842,7 +842,7 @@ export default function BuildContent({
                   disabled={collaborationRequestLoading}
                   onClick={handleAcceptContributorInvite}
                 >
-                  Accept Invite
+                  Join team
                 </Button>
               </>
             ) : accepted ? (
@@ -852,7 +852,7 @@ export default function BuildContent({
                 disabled={collaborationRequestLoading}
                 onClick={handleOpenCollaborationWorkspace}
               >
-                Open Workspace
+                Open workspace
               </Button>
             ) : (
               <Button
@@ -861,7 +861,7 @@ export default function BuildContent({
                 disabled={collaborationRequestLoading}
                 onClick={handleSubmitCollaborationRequest}
               >
-                Send Request
+                Send join request
               </Button>
             )}
           </div>
@@ -893,7 +893,7 @@ export default function BuildContent({
                 line-height: 1.4;
               `}
             >
-              The owner invited you to collaborate on this Build.
+              The owner invited you to join the team for this Build.
             </div>
           ) : accepted ? (
             <div
@@ -913,7 +913,7 @@ export default function BuildContent({
                 line-height: 1.45;
               `}
             >
-              Ask the owner to invite you as a collaborator.
+              Ask the owner if you can join the team.
             </div>
           )}
           {!accepted && !invited ? (
@@ -962,8 +962,8 @@ function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
 
 function formatCollaboratorCount(count: number) {
   return count === 1
-    ? '1 collaborator'
-    : `${count.toLocaleString()} collaborators`;
+    ? '1 team member'
+    : `${count.toLocaleString()} team members`;
 }
 
 function getBuildText(value: unknown) {

@@ -1238,6 +1238,9 @@ function BuildEditorWrapper() {
   const loadBuildBranch = useAppContext(
     (v) => v.requestHelpers.loadBuildBranch
   );
+  const ensureDefaultBuildContributionBranch = useAppContext(
+    (v) => v.requestHelpers.ensureDefaultBuildContributionBranch
+  );
   const numericBuildId = useMemo(() => {
     const id = parseInt(buildId || '', 10);
     return isNaN(id) ? null : id;
@@ -1301,6 +1304,9 @@ function BuildEditorWrapper() {
 
   const locationState = (location.state as any) || null;
   const seedGreeting = Boolean(locationState?.seedGreeting);
+  const skipDefaultContributionBranchRedirect = Boolean(
+    locationState?.skipDefaultContributionBranchRedirect
+  );
   const initialPrompt =
     typeof locationState?.initialPrompt === 'string'
       ? locationState.initialPrompt
@@ -1385,6 +1391,30 @@ function BuildEditorWrapper() {
               state: location.state
             });
             return;
+          }
+          const currentUserId = Number(userId) || 0;
+          const shouldOpenDefaultContributionBranch =
+            !numericBranchNumber &&
+            !skipDefaultContributionBranchRedirect &&
+            currentUserId > 0 &&
+            Number(data.build.userId || 0) !== currentUserId &&
+            Number(data.build.contributionRootBuildId || 0) === 0 &&
+            Number(data.build.contributionBranchNumber || 0) === 0 &&
+            Boolean(data.build.canOpenContributionWorkspace) &&
+            Boolean(data.build.hasActiveContributionInvite);
+          if (shouldOpenDefaultContributionBranch) {
+            const defaultBranchResult =
+              await ensureDefaultBuildContributionBranch(
+                Number(data.build.id || numericBuildId)
+              );
+            if (cancelled) return;
+            if (defaultBranchResult?.build) {
+              navigate(getBuildWorkspacePath(defaultBranchResult.build), {
+                replace: true,
+                state: location.state
+              });
+              return;
+            }
           }
           const nextProjectFiles = Array.isArray(data.projectFiles)
             ? data.projectFiles
@@ -1481,6 +1511,7 @@ function BuildEditorWrapper() {
     numericBranchNumber,
     numericBuildId,
     seedGreeting,
+    skipDefaultContributionBranchRedirect,
     userId
   ]);
 

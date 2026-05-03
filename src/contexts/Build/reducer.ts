@@ -129,6 +129,14 @@ export interface BuildStudioActivityPanelState {
   activeSubtab: BuildActivitySubtab;
 }
 
+export interface BuildStudioActivityFeedState {
+  activities: any[];
+  loadMoreToken: string | null;
+  loaded: boolean;
+  userId: number | null;
+  loadedAt: number;
+}
+
 export interface BuildStudioState {
   activeTab: BuildStudioTab;
   myBuilds: any[];
@@ -137,6 +145,10 @@ export interface BuildStudioState {
   browse: Record<BuildStudioBrowseTab, BuildStudioBrowseTabState>;
   browseModes: Record<BuildStudioPublicBrowseTab, BuildStudioBrowseMode>;
   activityPanel: BuildStudioActivityPanelState;
+  activityFeeds: Record<
+    BuildActivityTab,
+    Record<BuildActivitySubtab, BuildStudioActivityFeedState>
+  >;
 }
 
 export interface BuildLiveRunStreamUpdatePayload {
@@ -240,6 +252,8 @@ export interface BuildStudioActionPayload {
   browseMode?: BuildStudioBrowseMode | string | null;
   activityTab?: BuildActivityTab | string | null;
   activitySubtab?: BuildActivitySubtab | string | null;
+  activities?: any[];
+  activityLoadedAt?: number | null;
 }
 
 export interface BuildWorkspaceUiActionPayload {
@@ -280,6 +294,9 @@ export interface BuildAction {
     | 'REMOVE_BUILD_STUDIO_MY_BUILD'
     | 'SET_BUILD_STUDIO_BROWSE_MODE'
     | 'SET_BUILD_STUDIO_ACTIVITY_FILTER'
+    | 'INVALIDATE_BUILD_STUDIO_ACTIVITY_FEEDS'
+    | 'SET_BUILD_STUDIO_ACTIVITY_ITEMS'
+    | 'APPEND_BUILD_STUDIO_ACTIVITY_ITEMS'
     | 'SET_BUILD_STUDIO_BROWSE_BUILDS'
     | 'APPEND_BUILD_STUDIO_BROWSE_BUILDS'
     | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
@@ -304,7 +321,8 @@ export function createInitialBuildStudioState(): BuildStudioState {
       open_source: createInitialBuildStudioBrowseState()
     },
     browseModes: createInitialBuildStudioBrowseModes(),
-    activityPanel: createInitialBuildStudioActivityPanelState()
+    activityPanel: createInitialBuildStudioActivityPanelState(),
+    activityFeeds: createInitialBuildStudioActivityFeeds()
   };
 }
 
@@ -322,6 +340,32 @@ function createInitialBuildStudioActivityPanelState(): BuildStudioActivityPanelS
   return {
     activeTab: 'mine',
     activeSubtab: 'notifications'
+  };
+}
+
+function createInitialBuildStudioActivityFeeds(): Record<
+  BuildActivityTab,
+  Record<BuildActivitySubtab, BuildStudioActivityFeedState>
+> {
+  return {
+    mine: {
+      notifications: createInitialBuildStudioActivityFeedState(),
+      branch_updates: createInitialBuildStudioActivityFeedState()
+    },
+    collaborating: {
+      notifications: createInitialBuildStudioActivityFeedState(),
+      branch_updates: createInitialBuildStudioActivityFeedState()
+    }
+  };
+}
+
+function createInitialBuildStudioActivityFeedState(): BuildStudioActivityFeedState {
+  return {
+    activities: [],
+    loadMoreToken: null,
+    loaded: false,
+    userId: null,
+    loadedAt: 0
   };
 }
 
@@ -431,6 +475,30 @@ function normalizeBuildActivitySubtab(
 function normalizeBuildStudioUserId(value: unknown) {
   const userId = Math.floor(Number(value) || 0);
   return userId > 0 ? userId : null;
+}
+
+function normalizeBuildStudioActivityLoadedAt(value: unknown) {
+  const loadedAt = Math.floor(Number(value) || 0);
+  return loadedAt > 0 ? loadedAt : Date.now();
+}
+
+function getBuildStudioActivityFeeds(buildStudio: BuildStudioState) {
+  return {
+    ...createInitialBuildStudioActivityFeeds(),
+    ...(buildStudio.activityFeeds || {})
+  };
+}
+
+function mergeBuildStudioActivityItems(currentItems: any[], nextItems: any[]) {
+  const seenIds = new Set(currentItems.map((item) => String(item?.id || '')));
+  const mergedItems = [...currentItems];
+  for (const item of nextItems || []) {
+    const id = String(item?.id || '');
+    if (id && seenIds.has(id)) continue;
+    if (id) seenIds.add(id);
+    mergedItems.push(item);
+  }
+  return mergedItems;
 }
 
 function normalizeBuildWorkspaceScrollTop(value: unknown) {
@@ -1664,6 +1732,131 @@ export default function BuildReducer(
           activityPanel: {
             activeTab,
             activeSubtab
+          }
+        }
+      };
+    }
+    case 'INVALIDATE_BUILD_STUDIO_ACTIVITY_FEEDS': {
+      const buildStudio = getBuildStudioState(state);
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const activityFeeds = getBuildStudioActivityFeeds(buildStudio);
+      const nextActivityFeeds = Object.entries(activityFeeds).reduce(
+        (result, [tab, subtabFeeds]) => {
+          result[tab as BuildActivityTab] = Object.entries(subtabFeeds).reduce(
+            (nextSubtabFeeds, [subtab, feed]) => {
+              nextSubtabFeeds[subtab as BuildActivitySubtab] =
+                !userId || feed.userId === userId
+                  ? {
+                      ...feed,
+                      loadedAt: 0
+                    }
+                  : feed;
+              return nextSubtabFeeds;
+            },
+            {} as Record<BuildActivitySubtab, BuildStudioActivityFeedState>
+          );
+          return result;
+        },
+        {} as Record<
+          BuildActivityTab,
+          Record<BuildActivitySubtab, BuildStudioActivityFeedState>
+        >
+      );
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          activityFeeds: nextActivityFeeds
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_ACTIVITY_ITEMS': {
+      const buildStudio = getBuildStudioState(state);
+      const activityTab = normalizeBuildActivityTab(
+        action.buildStudio?.activityTab
+      );
+      const activitySubtab = normalizeBuildActivitySubtab(
+        action.buildStudio?.activitySubtab
+      );
+      const activityFeeds = getBuildStudioActivityFeeds(buildStudio);
+      const currentTabFeeds = {
+        ...createInitialBuildStudioActivityFeeds()[activityTab],
+        ...(activityFeeds[activityTab] || {})
+      };
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          activityFeeds: {
+            ...activityFeeds,
+            [activityTab]: {
+              ...currentTabFeeds,
+              [activitySubtab]: {
+                activities: Array.isArray(action.buildStudio?.activities)
+                  ? action.buildStudio.activities
+                  : [],
+                loadMoreToken:
+                  typeof action.buildStudio?.loadMoreToken === 'string'
+                    ? action.buildStudio.loadMoreToken
+                    : null,
+                loaded: true,
+                userId: normalizeBuildStudioUserId(action.buildStudio?.userId),
+                loadedAt: normalizeBuildStudioActivityLoadedAt(
+                  action.buildStudio?.activityLoadedAt
+                )
+              }
+            }
+          }
+        }
+      };
+    }
+    case 'APPEND_BUILD_STUDIO_ACTIVITY_ITEMS': {
+      const buildStudio = getBuildStudioState(state);
+      const activityTab = normalizeBuildActivityTab(
+        action.buildStudio?.activityTab
+      );
+      const activitySubtab = normalizeBuildActivitySubtab(
+        action.buildStudio?.activitySubtab
+      );
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const activityFeeds = getBuildStudioActivityFeeds(buildStudio);
+      const currentTabFeeds = {
+        ...createInitialBuildStudioActivityFeeds()[activityTab],
+        ...(activityFeeds[activityTab] || {})
+      };
+      const currentFeed =
+        currentTabFeeds[activitySubtab] ||
+        createInitialBuildStudioActivityFeedState();
+      if (currentFeed.userId !== userId) {
+        return state;
+      }
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          activityFeeds: {
+            ...activityFeeds,
+            [activityTab]: {
+              ...currentTabFeeds,
+              [activitySubtab]: {
+                ...currentFeed,
+                activities: mergeBuildStudioActivityItems(
+                  currentFeed.activities,
+                  Array.isArray(action.buildStudio?.activities)
+                    ? action.buildStudio.activities
+                    : []
+                ),
+                loadMoreToken:
+                  typeof action.buildStudio?.loadMoreToken === 'string'
+                    ? action.buildStudio.loadMoreToken
+                    : null,
+                loaded: true,
+                userId,
+                loadedAt: normalizeBuildStudioActivityLoadedAt(
+                  action.buildStudio?.activityLoadedAt
+                )
+              }
+            }
           }
         }
       };

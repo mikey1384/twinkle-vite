@@ -1547,6 +1547,19 @@ export default function buildRequestHelpers({
       }
     },
 
+    async ensureDefaultBuildContributionBranch(buildId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/default-branch`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildContributions(buildId: number) {
       try {
         const { data } = await request.get(

@@ -73,7 +73,7 @@ export default function BuildContributionInvite({
     <div className={inviteCardClass}>
       <div className={inviteHeaderClass}>
         <Icon icon="code-branch" />
-        <strong>Build collaboration invite</strong>
+        <strong>Build team invite</strong>
       </div>
       <div className={inviteBodyClass}>
         {sentByMe ? (
@@ -84,7 +84,7 @@ export default function BuildContributionInvite({
                 ? 'This invite was declined for '
                 : status === 'revoked'
                   ? 'This invite was revoked for '
-                  : 'You invited this user to collaborate on '}
+                  : 'You invited this user to join the team for '}
             <strong>{title}</strong>.
           </span>
         ) : status === 'accepted' ? (
@@ -104,7 +104,7 @@ export default function BuildContributionInvite({
           </span>
         ) : (
           <span>
-            {sender.username} invited you to collaborate on{' '}
+            {sender.username} invited you to join the team for{' '}
             <strong>{title}</strong>.
           </span>
         )}

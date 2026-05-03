@@ -452,20 +452,20 @@ export default function BuildRuntime() {
   const buildAcceptsStandaloneForks = build?.collaborationMode === 'open_source';
   const isBuildOwner =
     !!build && !!userId && Number(build.userId) === Number(userId);
-  const collaborationRequestActionLabel = 'Offer Collaboration';
+  const collaborationRequestActionLabel = 'Ask to join';
   const collaborationStatus =
     collaborationRequest?.status ||
     (build?.hasActiveContributionInvite ? 'accepted' : '');
   const showCollaborationButton = !!build && !isBuildOwner;
   const collaborationButtonLabel =
     !userId
-      ? 'Collaborate'
+      ? 'Ask to join'
       : collaborationStatus === 'pending'
-        ? 'Pending Approval'
+        ? 'Request sent'
         : collaborationStatus === 'invited'
-          ? 'Accept Invitation'
+          ? 'Join team'
           : collaborationStatus === 'accepted'
-            ? 'Collaborate'
+            ? 'Work together'
             : collaborationRequestActionLabel;
   const showStandaloneForkButton =
     !!build &&
@@ -673,7 +673,7 @@ export default function BuildRuntime() {
       setCollaborationRequestError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to load collaboration request'
+          'Failed to load join request'
       );
     } finally {
       setOpeningCollaborationRequest(false);
@@ -697,7 +697,7 @@ export default function BuildRuntime() {
       setCollaborationRequestError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to send collaboration request'
+          'Failed to send join request'
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -723,7 +723,7 @@ export default function BuildRuntime() {
       setCollaborationRequestError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to cancel collaboration request'
+          'Failed to cancel join request'
       );
     } finally {
       setCollaborationRequestLoading(false);
@@ -1148,7 +1148,7 @@ export default function BuildRuntime() {
             : () => setCollaborationRequestModalShown(false)
         }
         closeOnBackdropClick={!collaborationRequestLoading}
-        title="Offer Collaboration"
+        title="Ask to join"
         size="sm"
         footer={
           <div
@@ -1174,7 +1174,7 @@ export default function BuildRuntime() {
                 disabled={collaborationRequestLoading}
                 onClick={handleCancelCollaborationRequest}
               >
-                Cancel Request
+                Cancel request
               </Button>
             ) : invited ? (
               <>
@@ -1193,7 +1193,7 @@ export default function BuildRuntime() {
                   disabled={collaborationRequestLoading}
                   onClick={handleAcceptContributorInvite}
                 >
-                  Accept Invite
+                  Join team
                 </Button>
               </>
             ) : accepted ? (
@@ -1203,7 +1203,7 @@ export default function BuildRuntime() {
                 disabled={collaborationRequestLoading}
                 onClick={handleOpenCollaborationWorkspace}
               >
-                Open Workspace
+                Open workspace
               </Button>
             ) : (
               <Button
@@ -1212,7 +1212,7 @@ export default function BuildRuntime() {
                 disabled={collaborationRequestLoading}
                 onClick={handleSubmitCollaborationRequest}
               >
-                Send Request
+                Send join request
               </Button>
             )}
           </div>
@@ -1244,7 +1244,7 @@ export default function BuildRuntime() {
                 line-height: 1.4;
               `}
             >
-              The owner invited you to collaborate on this Build.
+              The owner invited you to join the team for this Build.
             </div>
           ) : accepted ? (
             <div
@@ -1264,7 +1264,7 @@ export default function BuildRuntime() {
                 line-height: 1.45;
               `}
             >
-              Ask the owner to invite you as a collaborator.
+              Ask the owner if you can join the team.
             </div>
           )}
           {!accepted && !invited ? (

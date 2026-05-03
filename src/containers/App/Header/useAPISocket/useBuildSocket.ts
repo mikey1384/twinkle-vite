@@ -55,6 +55,9 @@ export default function useBuildSocket() {
   const onFailBuildRun = useBuildContext((v) => v.actions.onFailBuildRun);
   const onStopBuildRun = useBuildContext((v) => v.actions.onStopBuildRun);
   const onResetBuildRuns = useBuildContext((v) => v.actions.onResetBuildRuns);
+  const onInvalidateBuildStudioActivityFeeds = useBuildContext(
+    (v) => v.actions.onInvalidateBuildStudioActivityFeeds
+  );
   const onPublishBuildRuntimeVerifyResult = useBuildContext(
     (v) => v.actions.onPublishBuildRuntimeVerifyResult
   );
@@ -65,6 +68,7 @@ export default function useBuildSocket() {
   const buildWorkspacesRef = useRef<Record<string, BuildWorkspaceSnapshot>>(
     buildWorkspaces
   );
+  const userIdRef = useRef(userId);
   const replayedResumeRunStateKeysRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
@@ -72,6 +76,10 @@ export default function useBuildSocket() {
     buildRunRequestMapRef.current = buildRunRequestMap;
     buildWorkspacesRef.current = buildWorkspaces;
   }, [buildRunRequestMap, buildRuns, buildWorkspaces]);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   useEffect(() => {
     onResetBuildRuns();
@@ -912,6 +920,10 @@ export default function useBuildSocket() {
       resumeTrackedBuildRuns();
     }
 
+    function handleBuildActivityUpdated() {
+      onInvalidateBuildStudioActivityFeeds({ userId: userIdRef.current });
+    }
+
     socket.on('build_generate_update', handleGenerateUpdate);
     socket.on('build_generate_complete', handleGenerateComplete);
     socket.on('build_generate_error', handleGenerateError);
@@ -920,6 +932,7 @@ export default function useBuildSocket() {
     socket.on('build_resume_run_state', replayResumeRunState);
     socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
     socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
+    socket.on('build_activity_updated', handleBuildActivityUpdated);
     socket.on('connect', resumeTrackedBuildRuns);
     window.addEventListener('pageshow', resumeTrackedBuildRuns);
     window.addEventListener('online', resumeTrackedBuildRuns);
@@ -934,6 +947,7 @@ export default function useBuildSocket() {
       socket.off('build_resume_run_state', replayResumeRunState);
       socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
       socket.off('build_runtime_verify_error', handleRuntimeVerifyError);
+      socket.off('build_activity_updated', handleBuildActivityUpdated);
       socket.off('connect', resumeTrackedBuildRuns);
       window.removeEventListener('pageshow', resumeTrackedBuildRuns);
       window.removeEventListener('online', resumeTrackedBuildRuns);

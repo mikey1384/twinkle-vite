@@ -28,6 +28,7 @@ import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import {
   type BuildActivitySubtab,
   type BuildActivityTab,
+  type BuildStudioActivityFeedState,
   type BuildStudioBrowseMode,
   type BuildStudioTab
 } from '~/contexts/Build/reducer';
@@ -49,6 +50,7 @@ type TodayTopViewedBuild = BuildProjectListItemData & {
 };
 const buildActivityRailBreakpoint = '1180px';
 const buildActivityRailWidth = '30rem';
+const buildActivityCacheFreshMs = 60 * 1000;
 const buildPageTopGap = '2rem';
 const desktopHeaderHeight = '4.5rem';
 const buildActivityPanelInitialViewportTop = `calc(
@@ -63,7 +65,7 @@ const buildListTabs: Array<{
   icon: string;
 }> = [
   { value: 'mine', label: 'My Builds', icon: 'rocket-launch' },
-  { value: 'collaborating', label: 'Collaborating', icon: 'users' },
+  { value: 'collaborating', label: 'Team Builds', icon: 'users' },
   { value: 'community', label: 'Community', icon: 'users' },
   { value: 'open_source', label: 'Open Source', icon: 'code-branch' }
 ];
@@ -463,6 +465,12 @@ export default function BuildList() {
   const onSetBuildStudioActivityFilter = useBuildContext(
     (v) => v.actions.onSetBuildStudioActivityFilter
   );
+  const onSetBuildStudioActivityItems = useBuildContext(
+    (v) => v.actions.onSetBuildStudioActivityItems
+  );
+  const onAppendBuildStudioActivityItems = useBuildContext(
+    (v) => v.actions.onAppendBuildStudioActivityItems
+  );
   const onSetBuildStudioBrowseBuilds = useBuildContext(
     (v) => v.actions.onSetBuildStudioBrowseBuilds
   );
@@ -485,6 +493,27 @@ export default function BuildList() {
   const buildActivityActiveSubtab = normalizeBuildActivitySubtab(
     buildStudio?.activityPanel?.activeSubtab
   );
+  const activeBuildActivityFeedState = getBuildActivityFeedState({
+    buildStudio,
+    activeTab: buildActivityActiveTab,
+    activeSubtab: buildActivityActiveSubtab
+  });
+  const buildActivityLoadedForCurrentUser = Boolean(
+    normalizedUserId &&
+      activeBuildActivityFeedState.userId === normalizedUserId &&
+      activeBuildActivityFeedState.loaded
+  );
+  const buildActivityCacheFreshForCurrentUser = Boolean(
+    buildActivityLoadedForCurrentUser &&
+      Date.now() - Number(activeBuildActivityFeedState.loadedAt || 0) <
+        buildActivityCacheFreshMs
+  );
+  const buildActivityItems = buildActivityLoadedForCurrentUser
+    ? ((activeBuildActivityFeedState.activities || []) as BuildActivityItem[])
+    : [];
+  const buildActivityCursor = buildActivityLoadedForCurrentUser
+    ? activeBuildActivityFeedState.loadMoreToken
+    : null;
   const collaboratingBrowseState =
     buildStudio?.browse?.collaborating || createEmptyBrowseState();
   const activeBrowseLoadedForCurrentUser = Boolean(
@@ -541,14 +570,10 @@ export default function BuildList() {
   const [deleting, setDeleting] = useState(false);
   const [promptInput, setPromptInput] = useState('');
   const [creatingFromPrompt, setCreatingFromPrompt] = useState(false);
-  const [buildActivityItems, setBuildActivityItems] = useState<
-    BuildActivityItem[]
-  >([]);
-  const [buildActivityCursor, setBuildActivityCursor] = useState<string | null>(
-    null
-  );
   const [buildActivityLoading, setBuildActivityLoading] = useState(false);
   const [buildActivityLoadingMore, setBuildActivityLoadingMore] =
+    useState(false);
+  const [buildActivitySilentRefreshing, setBuildActivitySilentRefreshing] =
     useState(false);
   const [buildActivityError, setBuildActivityError] = useState('');
   const [todayTopViewedBuild, setTodayTopViewedBuild] =
@@ -689,10 +714,9 @@ export default function BuildList() {
 
   useEffect(() => {
     if (!normalizedUserId) {
-      setBuildActivityItems([]);
-      setBuildActivityCursor(null);
       setBuildActivityLoading(false);
       setBuildActivityLoadingMore(false);
+      setBuildActivitySilentRefreshing(false);
       setBuildActivityError('');
       onSetBuildStudioActivityFilter({
         activityTab: 'mine',
@@ -700,9 +724,17 @@ export default function BuildList() {
       });
       return;
     }
+    if (buildActivityCacheFreshForCurrentUser) {
+      setBuildActivityLoading(false);
+      setBuildActivityLoadingMore(false);
+      setBuildActivitySilentRefreshing(false);
+      setBuildActivityError('');
+      return;
+    }
     void loadBuildActivityItems({
+      showError: !buildActivityLoadedForCurrentUser,
+      showLoading: !buildActivityLoadedForCurrentUser,
       subtab: buildActivityActiveSubtab,
-      resetItems: true,
       tab: buildActivityActiveTab
     });
 
@@ -713,9 +745,10 @@ export default function BuildList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     normalizedUserId,
-    numNewNotis,
     buildActivityActiveTab,
-    buildActivityActiveSubtab
+    buildActivityActiveSubtab,
+    buildActivityLoadedForCurrentUser,
+    buildActivityCacheFreshForCurrentUser
   ]);
 
   useEffect(() => {
@@ -874,7 +907,7 @@ export default function BuildList() {
               <div className={requestQueueHeaderClass}>
                 <div className={requestQueueTitleClass}>
                   <Icon icon="comments" />
-                  Collaboration requests
+                  Join requests
                 </div>
                 <div className={requestQueueCountClass}>
                   <Icon icon="exclamation-circle" />
@@ -896,8 +929,8 @@ export default function BuildList() {
                         </div>
                         <div className={requestQueueMetaClass}>
                           {requestCount === 1
-                            ? '1 person asked to collaborate'
-                            : `${requestCount} people asked to collaborate`}
+                            ? '1 person asked to join'
+                            : `${requestCount} people asked to join`}
                         </div>
                       </div>
                       <GameCTAButton
@@ -1006,7 +1039,9 @@ export default function BuildList() {
                           })
                     }}
                     primaryActionLabel={
-                      activeTab === 'collaborating' ? 'Collaborate' : undefined
+                      activeTab === 'collaborating'
+                        ? 'Work together'
+                        : undefined
                     }
                     primaryActionIcon={
                       activeTab === 'collaborating' ? 'users' : undefined
@@ -1077,24 +1112,23 @@ export default function BuildList() {
   );
 
   async function loadBuildActivityItems({
-    resetItems = false,
+    showError = true,
+    showLoading = true,
     subtab = buildActivityActiveSubtab,
     tab = buildActivityActiveTab
   }: {
-    resetItems?: boolean;
+    showError?: boolean;
+    showLoading?: boolean;
     subtab?: BuildActivitySubtab;
     tab?: BuildActivityTab;
   } = {}) {
     if (!normalizedUserId) return;
     const loadId = buildActivityLoadRef.current + 1;
     buildActivityLoadRef.current = loadId;
-    setBuildActivityLoading(true);
+    setBuildActivityLoading(showLoading);
     setBuildActivityLoadingMore(false);
-    setBuildActivityError('');
-    if (resetItems) {
-      setBuildActivityItems([]);
-      setBuildActivityCursor(null);
-    }
+    setBuildActivitySilentRefreshing(!showLoading);
+    if (showError) setBuildActivityError('');
     try {
       const data = await loadBuildActivity({
         kind: subtab,
@@ -1102,13 +1136,19 @@ export default function BuildList() {
         scope: tab
       });
       if (buildActivityLoadRef.current === loadId) {
-        setBuildActivityItems(data?.activities || []);
-        setBuildActivityCursor(getLoadMoreToken(data));
+        onSetBuildStudioActivityItems({
+          activities: data?.activities || [],
+          activityLoadedAt: Date.now(),
+          activitySubtab: subtab,
+          activityTab: tab,
+          loadMoreToken: getLoadMoreToken(data),
+          userId: normalizedUserId
+        });
+        setBuildActivityError('');
       }
     } catch (error: any) {
       console.error('Failed to load build activity:', error);
-      if (buildActivityLoadRef.current === loadId) {
-        setBuildActivityCursor(null);
+      if (buildActivityLoadRef.current === loadId && showError) {
         setBuildActivityError(
           error?.response?.data?.error ||
             error?.message ||
@@ -1118,12 +1158,16 @@ export default function BuildList() {
     } finally {
       if (buildActivityLoadRef.current === loadId) {
         setBuildActivityLoading(false);
+        setBuildActivitySilentRefreshing(false);
       }
     }
   }
 
   function handleRefreshBuildActivity() {
-    void loadBuildActivityItems();
+    void loadBuildActivityItems({
+      showError: true,
+      showLoading: true
+    });
   }
 
   function handleOpenTodayTopViewedBuild(build: TodayTopViewedBuild) {
@@ -1152,7 +1196,8 @@ export default function BuildList() {
       !normalizedUserId ||
       !buildActivityCursor ||
       buildActivityLoading ||
-      buildActivityLoadingMore
+      buildActivityLoadingMore ||
+      buildActivitySilentRefreshing
     ) {
       return;
     }
@@ -1168,10 +1213,14 @@ export default function BuildList() {
         scope: buildActivityActiveTab
       });
       if (buildActivityLoadRef.current === loadId) {
-        setBuildActivityItems((prevItems) =>
-          mergeBuildActivityItems(prevItems, data?.activities || [])
-        );
-        setBuildActivityCursor(getLoadMoreToken(data));
+        onAppendBuildStudioActivityItems({
+          activities: data?.activities || [],
+          activityLoadedAt: Date.now(),
+          activitySubtab: buildActivityActiveSubtab,
+          activityTab: buildActivityActiveTab,
+          loadMoreToken: getLoadMoreToken(data),
+          userId: normalizedUserId
+        });
       }
     } catch (error: any) {
       console.error('Failed to load more build activity:', error);
@@ -1477,6 +1526,43 @@ function createEmptyBrowseState() {
   };
 }
 
+function createEmptyBuildActivityFeedState(): BuildStudioActivityFeedState {
+  return {
+    activities: [],
+    loadMoreToken: null,
+    loaded: false,
+    userId: null,
+    loadedAt: 0
+  };
+}
+
+function getBuildActivityFeedState({
+  buildStudio,
+  activeTab,
+  activeSubtab
+}: {
+  buildStudio?: {
+    activityFeeds?: Partial<
+      Record<
+        BuildActivityTab,
+        Partial<
+          Record<
+            BuildActivitySubtab,
+            BuildStudioActivityFeedState
+          >
+        >
+      >
+    >;
+  } | null;
+  activeTab: BuildActivityTab;
+  activeSubtab: BuildActivitySubtab;
+}) {
+  return (
+    buildStudio?.activityFeeds?.[activeTab]?.[activeSubtab] ||
+    createEmptyBuildActivityFeedState()
+  );
+}
+
 function getLoadMoreToken(data: any) {
   if (data?.cursor != null) return String(data.cursor);
   if (data?.loadMoreButton != null) return String(data.loadMoreButton);
@@ -1515,24 +1601,9 @@ function getBuildUsernameUser(
   };
 }
 
-function mergeBuildActivityItems(
-  currentItems: BuildActivityItem[],
-  nextItems: BuildActivityItem[]
-) {
-  const seenIds = new Set(currentItems.map((item) => String(item.id)));
-  const mergedItems = [...currentItems];
-  for (const item of nextItems || []) {
-    const id = String(item?.id || '');
-    if (!id || seenIds.has(id)) continue;
-    seenIds.add(id);
-    mergedItems.push(item);
-  }
-  return mergedItems;
-}
-
 function getBrowseEmptyCopy(tab: BuildListTab) {
   if (tab === 'collaborating') {
-    return 'Builds you collaborate on will show up here after an invitation or collaboration request is accepted.';
+    return 'Builds where you are on the team will show up here after an invitation or join request is accepted.';
   }
   if (tab === 'open_source') {
     return 'No public open-source builds have been published yet.';

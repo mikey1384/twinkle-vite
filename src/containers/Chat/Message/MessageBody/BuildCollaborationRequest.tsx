@@ -72,7 +72,7 @@ export default function BuildCollaborationRequest({
     <div className={requestCardClass}>
       <div className={requestHeaderClass}>
         <Icon icon="users" />
-        <strong>Build collaboration request</strong>
+        <strong>Build join request</strong>
       </div>
       <div className={requestBodyClass}>
         {sentByMe ? (
@@ -83,7 +83,7 @@ export default function BuildCollaborationRequest({
                 ? 'Your request was declined for '
                 : status === 'canceled'
                   ? 'You canceled your request for '
-                  : 'You asked to collaborate on '}
+                  : 'You asked to join '}
             <strong>{title}</strong>.
           </span>
         ) : status === 'accepted' ? (
@@ -102,7 +102,7 @@ export default function BuildCollaborationRequest({
           </span>
         ) : (
           <span>
-            {sender.username} wants to collaborate on{' '}
+            {sender.username} asked to join{' '}
             <strong>{title}</strong>.
           </span>
         )}

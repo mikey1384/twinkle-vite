@@ -631,9 +631,9 @@ function NotiMessage({
       return (
         <>
           <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
-            wants to collaborate
+            asked to join
           </span>{' '}
-          on your{' '}
+          your{' '}
           <Link
             to={`/build/${targetObj.id}`}
             state={{ openPeoplePanel: true }}
@@ -649,7 +649,7 @@ function NotiMessage({
       return (
         <>
           <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
-            accepted your collaboration request
+            said yes to your join request
           </span>{' '}
           for{' '}
           <Link
@@ -677,9 +677,9 @@ function NotiMessage({
       return (
         <>
           <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
-            invited you to collaborate
+            invited you to join the team
           </span>{' '}
-          on{' '}
+          for{' '}
           <Link
             to={`/build/${targetObj.id}`}
             state={{ openVersionsPanel: true }}

@@ -669,7 +669,7 @@ const lumineChatVisibilityOptions: Array<{
   {
     value: 'collaborators',
     title: 'Team',
-    description: 'Project collaborators can review the transcript.',
+    description: 'Team members can see the chat history.',
     icon: 'users'
   }
 ];
