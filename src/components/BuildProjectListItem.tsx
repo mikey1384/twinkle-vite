@@ -11,6 +11,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { getBuildDisplayTitle } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -462,6 +463,8 @@ export default function BuildProjectListItem({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
+  const updateBuildContributionInviteStatus =
+    useBuildContributionInviteStatusUpdater();
   const { accentColor: buildAccentColor } = useThemedCardVars({
     role: 'sectionPanel',
     themeName
@@ -1013,6 +1016,11 @@ export default function BuildProjectListItem({
         inviteId
       });
       if (result?.success) {
+        updateBuildContributionInviteStatus({
+          invite: result.invite,
+          inviteId,
+          status: 'accepted'
+        });
         setCollaborationRequest((current) =>
           current ? { ...current, status: 'accepted' } : current
         );
@@ -1040,6 +1048,11 @@ export default function BuildProjectListItem({
         inviteId
       });
       if (result?.success) {
+        updateBuildContributionInviteStatus({
+          invite: result.invite,
+          inviteId,
+          status: 'declined'
+        });
         setCollaborationRequest(null);
         setCollaborationRequestMessage('');
       }

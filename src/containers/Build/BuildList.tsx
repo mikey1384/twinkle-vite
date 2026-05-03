@@ -32,7 +32,7 @@ const displayFontFamily =
 
 type BuildListTab = BuildStudioTab;
 type PublicBuildScope = 'all' | 'open_source';
-const buildActivityRailBreakpoint = '1620px';
+const buildActivityRailBreakpoint = '1180px';
 const buildPageTopGap = '2rem';
 const desktopHeaderHeight = '4.5rem';
 const mobileBottomNavClearance =
@@ -51,9 +51,13 @@ const buildListTabs: Array<{
 
 const pageClass = css`
   width: 100%;
-  max-width: 980px;
+  max-width: calc(980px + 1.5rem + 18rem + 4rem);
+  box-sizing: border-box;
   margin: ${buildPageTopGap} auto 0;
   padding: 0 2rem 3rem;
+  @media (max-width: ${buildActivityRailBreakpoint}) {
+    max-width: 980px;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0 1rem ${mobileBottomNavClearance};
   }
@@ -62,6 +66,15 @@ const pageClass = css`
 const buildStudioLayoutClass = css`
   position: relative;
   width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 980px) 18rem;
+  justify-content: center;
+  align-items: start;
+  gap: 1.5rem;
+
+  @media (max-width: ${buildActivityRailBreakpoint}) {
+    display: block;
+  }
 `;
 
 const buildStudioMainClass = css`
@@ -73,11 +86,9 @@ const buildActivityRailClass = css`
     ${desktopHeaderHeight} + ${buildPageTopGap}
   );
   --build-activity-rail-bottom-gap: ${buildPageTopGap};
-  position: fixed;
+  position: sticky;
   top: var(--build-activity-rail-top);
-  right: max(1rem, calc((100vw - 980px) / 2 - 23rem));
-  width: min(22rem, calc((100vw - 980px) / 2 - 2rem));
-  min-width: 18rem;
+  width: 100%;
   z-index: 12;
 
   @media (max-width: ${buildActivityRailBreakpoint}) {

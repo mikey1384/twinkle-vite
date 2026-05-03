@@ -100,6 +100,22 @@ export default function ChatActions(dispatch: Dispatch) {
         fileSize
       });
     },
+    onUpdateBuildContributionInviteMessages({
+      invite,
+      inviteId,
+      status
+    }: {
+      invite?: Record<string, any> | null;
+      inviteId: number;
+      status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+    }) {
+      return dispatch({
+        type: 'UPDATE_BUILD_CONTRIBUTION_INVITE_MESSAGES',
+        invite,
+        inviteId,
+        status
+      });
+    },
     onDeleteAIChatFile({
       channelId,
       topicId,

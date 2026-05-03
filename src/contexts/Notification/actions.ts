@@ -124,6 +124,22 @@ export default function NotiActions(dispatch: Dispatch) {
         userId
       });
     },
+    onUpdateBuildContributionInviteNotification({
+      invite,
+      inviteId,
+      status
+    }: {
+      invite?: Record<string, any> | null;
+      inviteId: number;
+      status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+    }) {
+      return dispatch({
+        type: 'UPDATE_BUILD_CONTRIBUTION_INVITE_NOTIFICATION',
+        invite,
+        inviteId,
+        status
+      });
+    },
     onLoadMoreRewards({ userId, data }: { userId: number; data: object }) {
       return dispatch({
         type: 'LOAD_MORE_REWARDS',

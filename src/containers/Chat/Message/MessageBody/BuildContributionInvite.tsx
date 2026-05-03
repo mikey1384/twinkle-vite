@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
 import { useAppContext } from '~/contexts';
+import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 
 interface BuildContributionInvitePayload {
   type?: string;
@@ -44,6 +45,8 @@ export default function BuildContributionInvite({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
+  const updateBuildContributionInviteStatus =
+    useBuildContributionInviteStatusUpdater();
   const payload = useMemo(
     () => invite || parseBuildInvitePayload(content),
     [content, invite]
@@ -171,9 +174,14 @@ export default function BuildContributionInvite({
         inviteId
       });
       if (result?.success) {
-        setStatus(
-          result?.invite ? getBuildInviteStatus(result.invite) : 'accepted'
-        );
+        const nextStatus = result?.invite
+          ? getBuildInviteStatus(result.invite)
+          : 'accepted';
+        setStatus(nextStatus);
+        updateInviteCaches({
+          invite: result.invite,
+          status: nextStatus
+        });
         handleOpenWorkspace();
       }
     } catch (error: any) {
@@ -197,9 +205,14 @@ export default function BuildContributionInvite({
         inviteId
       });
       if (result?.success) {
-        setStatus(
-          result?.invite ? getBuildInviteStatus(result.invite) : 'declined'
-        );
+        const nextStatus = result?.invite
+          ? getBuildInviteStatus(result.invite)
+          : 'declined';
+        setStatus(nextStatus);
+        updateInviteCaches({
+          invite: result.invite,
+          status: nextStatus
+        });
       }
     } catch (error: any) {
       setError(
@@ -217,6 +230,20 @@ export default function BuildContributionInvite({
       state: {
         openVersionsPanel: true
       }
+    });
+  }
+
+  function updateInviteCaches({
+    invite,
+    status
+  }: {
+    invite?: Record<string, any> | null;
+    status: BuildContributionInviteStatus;
+  }) {
+    updateBuildContributionInviteStatus({
+      invite,
+      inviteId,
+      status
     });
   }
 }

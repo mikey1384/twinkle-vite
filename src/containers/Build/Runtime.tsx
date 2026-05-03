@@ -12,6 +12,7 @@ import Textarea from '~/components/Texts/Textarea';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
+import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 import PreviewPanel from './PreviewPanel';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
 
@@ -357,6 +358,8 @@ export default function BuildRuntime() {
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
+  const updateBuildContributionInviteStatus =
+    useBuildContributionInviteStatusUpdater();
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -738,6 +741,11 @@ export default function BuildRuntime() {
         inviteId
       });
       if (result?.success) {
+        updateBuildContributionInviteStatus({
+          invite: result.invite,
+          inviteId,
+          status: 'accepted'
+        });
         setCollaborationRequest((current) =>
           current ? { ...current, status: 'accepted' } : current
         );
@@ -768,6 +776,11 @@ export default function BuildRuntime() {
         inviteId
       });
       if (result?.success) {
+        updateBuildContributionInviteStatus({
+          invite: result.invite,
+          inviteId,
+          status: 'declined'
+        });
         setCollaborationRequest(null);
         setCollaborationRequestMessage('');
       }

@@ -65,6 +65,101 @@ function shallowEqualObject(
   return prevKeys.every((key) => Object.is(prev[key], next[key]));
 }
 
+function updateBuildContributionInviteNotification(
+  state: any,
+  {
+    invite,
+    inviteId,
+    status
+  }: {
+    invite?: Record<string, any> | null;
+    inviteId: number;
+    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+  }
+) {
+  const resolvedInviteId = Number(invite?.id || inviteId || 0);
+  if (!resolvedInviteId || !state?.notiObj) return state;
+
+  const hasAcceptedAt = Object.prototype.hasOwnProperty.call(
+    invite || {},
+    'acceptedAt'
+  );
+  const hasDeclinedAt = Object.prototype.hasOwnProperty.call(
+    invite || {},
+    'declinedAt'
+  );
+  const hasRevokedAt = Object.prototype.hasOwnProperty.call(
+    invite || {},
+    'revokedAt'
+  );
+  const invitePatch = {
+    ...(invite?.buildId ? { buildId: Number(invite.buildId) } : {}),
+    ...(invite?.userId ? { userId: Number(invite.userId) } : {}),
+    acceptedAt: hasAcceptedAt
+      ? Number(invite?.acceptedAt || 0)
+      : status === 'accepted'
+        ? 1
+        : 0,
+    declinedAt: hasDeclinedAt
+      ? Number(invite?.declinedAt || 0)
+      : status === 'declined'
+        ? 1
+        : 0,
+    revokedAt: hasRevokedAt
+      ? Number(invite?.revokedAt || 0)
+      : status === 'revoked'
+        ? 1
+        : 0
+  };
+  let changed = false;
+  const nextNotiObj: Record<string, any> = { ...state.notiObj };
+
+  for (const [userId, notiState] of Object.entries<any>(state.notiObj)) {
+    const notifications = Array.isArray(notiState?.notifications)
+      ? notiState.notifications
+      : null;
+    if (!notifications) continue;
+
+    let notificationsChanged = false;
+    const nextNotifications = notifications.map((notification: any) => {
+      const actionObj = notification?.actionObj || {};
+      if (
+        actionObj.contentType !== 'buildContributionInvite' ||
+        Number(actionObj.id || 0) !== resolvedInviteId
+      ) {
+        return notification;
+      }
+      const nextActionObj = {
+        ...actionObj,
+        ...invitePatch,
+        id: resolvedInviteId
+      };
+      if (shallowEqualObject(actionObj, nextActionObj)) {
+        return notification;
+      }
+      notificationsChanged = true;
+      return {
+        ...notification,
+        actionObj: nextActionObj
+      };
+    });
+
+    if (notificationsChanged) {
+      changed = true;
+      nextNotiObj[userId] = {
+        ...notiState,
+        notifications: nextNotifications
+      };
+    }
+  }
+
+  if (!changed) return state;
+  return {
+    ...state,
+    notiObj: nextNotiObj
+  };
+}
+
 export default function NotiReducer(
   state: any,
   action: {
@@ -148,6 +243,12 @@ export default function NotiReducer(
         numNewNotis: 0,
         notificationsLoaded: true
       };
+    case 'UPDATE_BUILD_CONTRIBUTION_INVITE_NOTIFICATION':
+      return updateBuildContributionInviteNotification(state, {
+        invite: action.invite,
+        inviteId: action.inviteId,
+        status: action.status
+      });
     case 'LOAD_REWARDS':
       return {
         ...state,

@@ -10,7 +10,7 @@ import { timeSinceShort } from '~/helpers/timeStampHelpers';
 import { useNavigate } from 'react-router-dom';
 import BuildTabFilter from './BuildTabFilter';
 
-const buildActivityRailBreakpoint = '1620px';
+const buildActivityRailBreakpoint = '1180px';
 export type BuildActivityTab = 'mine' | 'collaborating';
 export type BuildActivitySubtab = 'notifications' | 'branch_updates';
 
@@ -154,7 +154,14 @@ const listClass = css`
 const mobilePanelClass = css`
   display: flex;
   flex-direction: column;
-  max-height: min(70dvh, 42rem);
+  width: 100%;
+  height: min(86dvh, 58rem);
+  max-height: calc(100dvh - 7rem);
+
+  @media (max-width: ${mobileMaxWidth}) {
+    height: calc(100dvh - 6rem);
+    max-height: calc(100dvh - 6rem);
+  }
 `;
 
 const mobileListClass = css`

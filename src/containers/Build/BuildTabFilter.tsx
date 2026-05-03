@@ -118,9 +118,11 @@ const miniTabFilterClass = css`
   }
 
   > .nav-section > nav.active {
-    background: #fff;
+    background: rgba(65, 140, 235, 0.14);
     color: #1d4ed8 !important;
-    box-shadow: 0 1px 5px rgba(15, 23, 42, 0.08);
+    box-shadow:
+      inset 0 0 0 1px rgba(65, 140, 235, 0.24),
+      0 1px 5px rgba(15, 23, 42, 0.08);
   }
 
   > .nav-section > nav:not(.active):hover {

@@ -63,6 +63,192 @@ function mergeChannelSettings({
   return merged;
 }
 
+function getBuildContributionInvitePatch({
+  invite,
+  status
+}: {
+  invite?: Record<string, any> | null;
+  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+}) {
+  const hasAcceptedAt = Object.prototype.hasOwnProperty.call(
+    invite || {},
+    'acceptedAt'
+  );
+  const hasDeclinedAt = Object.prototype.hasOwnProperty.call(
+    invite || {},
+    'declinedAt'
+  );
+  const hasRevokedAt = Object.prototype.hasOwnProperty.call(
+    invite || {},
+    'revokedAt'
+  );
+  const acceptedAt = hasAcceptedAt
+    ? Number(invite?.acceptedAt || 0)
+    : status === 'accepted'
+      ? 1
+      : 0;
+  const declinedAt = hasDeclinedAt
+    ? Number(invite?.declinedAt || 0)
+    : status === 'declined'
+      ? 1
+      : 0;
+  const revokedAt = hasRevokedAt
+    ? Number(invite?.revokedAt || 0)
+    : status === 'revoked'
+      ? 1
+      : 0;
+  const resolvedStatus =
+    revokedAt > 0
+      ? 'revoked'
+      : declinedAt > 0
+        ? 'declined'
+        : acceptedAt > 0
+          ? 'accepted'
+          : status || 'pending';
+
+  return {
+    ...(invite?.buildId ? { buildId: Number(invite.buildId) } : {}),
+    ...(invite?.userId ? { userId: Number(invite.userId) } : {}),
+    acceptedAt,
+    declinedAt,
+    revokedAt,
+    status: resolvedStatus
+  };
+}
+
+function updateBuildContributionInviteMessage(
+  message: any,
+  {
+    invite,
+    inviteId,
+    status
+  }: {
+    invite?: Record<string, any> | null;
+    inviteId: number;
+    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+  }
+) {
+  if (message?.rootType !== 'buildContributionInvite') return message;
+  const settings = loadChannelSettings(message.settings);
+  const currentInvite = settings?.buildContributionInvite || {};
+  const messageInviteId = Number(currentInvite.inviteId || message.rootId || 0);
+  if (messageInviteId !== inviteId) return message;
+
+  return {
+    ...message,
+    settings: {
+      ...settings,
+      buildContributionInvite: {
+        ...currentInvite,
+        ...getBuildContributionInvitePatch({ invite, status }),
+        inviteId
+      }
+    }
+  };
+}
+
+function updateBuildContributionInviteMessagesObj(
+  messagesObj: Record<string, any> | null | undefined,
+  {
+    invite,
+    inviteId,
+    status
+  }: {
+    invite?: Record<string, any> | null;
+    inviteId: number;
+    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+  }
+) {
+  if (!messagesObj) return { changed: false, messagesObj };
+  let changed = false;
+  const nextMessagesObj: Record<string, any> = {};
+
+  for (const [messageId, message] of Object.entries<any>(messagesObj)) {
+    const nextMessage = updateBuildContributionInviteMessage(message, {
+      invite,
+      inviteId,
+      status
+    });
+    if (nextMessage !== message) changed = true;
+    nextMessagesObj[messageId] = nextMessage;
+  }
+
+  return {
+    changed,
+    messagesObj: changed ? nextMessagesObj : messagesObj
+  };
+}
+
+function updateBuildContributionInviteMessages(
+  state: any,
+  {
+    invite,
+    inviteId,
+    status
+  }: {
+    invite?: Record<string, any> | null;
+    inviteId: number;
+    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+  }
+) {
+  const resolvedInviteId = Number(invite?.id || inviteId || 0);
+  if (!resolvedInviteId || !state?.channelsObj) return state;
+
+  let changed = false;
+  const nextChannelsObj: Record<string, any> = {};
+  for (const [channelId, channel] of Object.entries<any>(state.channelsObj)) {
+    let channelChanged = false;
+    const messagesResult = updateBuildContributionInviteMessagesObj(
+      channel?.messagesObj,
+      {
+        invite,
+        inviteId: resolvedInviteId,
+        status
+      }
+    );
+    if (messagesResult.changed) channelChanged = true;
+
+    let nextSubchannelObj = channel?.subchannelObj;
+    if (channel?.subchannelObj) {
+      nextSubchannelObj = {};
+      for (const [subchannelId, subchannel] of Object.entries<any>(
+        channel.subchannelObj
+      )) {
+        const subchannelMessagesResult =
+          updateBuildContributionInviteMessagesObj(subchannel?.messagesObj, {
+            invite,
+            inviteId: resolvedInviteId,
+            status
+          });
+        if (subchannelMessagesResult.changed) channelChanged = true;
+        nextSubchannelObj[subchannelId] = subchannelMessagesResult.changed
+          ? {
+              ...subchannel,
+              messagesObj: subchannelMessagesResult.messagesObj
+            }
+          : subchannel;
+      }
+    }
+
+    if (channelChanged) {
+      changed = true;
+      nextChannelsObj[channelId] = {
+        ...channel,
+        messagesObj: messagesResult.messagesObj,
+        ...(channel?.subchannelObj ? { subchannelObj: nextSubchannelObj } : {})
+      };
+    } else {
+      nextChannelsObj[channelId] = channel;
+    }
+  }
+
+  if (!changed) return state;
+  return {
+    ...state,
+    channelsObj: nextChannelsObj
+  };
+}
+
 export default function ChatReducer(
   state: any,
   action: {
@@ -77,6 +263,12 @@ export default function ChatReducer(
         chessThemeVersion: (state.chessThemeVersion || 0) + 1
       };
     }
+    case 'UPDATE_BUILD_CONTRIBUTION_INVITE_MESSAGES':
+      return updateBuildContributionInviteMessages(state, {
+        invite: action.invite,
+        inviteId: action.inviteId,
+        status: action.status
+      });
     case 'AI_CARD_OFFER_WITHDRAWAL': {
       return {
         ...state,

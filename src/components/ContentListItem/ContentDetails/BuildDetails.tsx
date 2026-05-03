@@ -13,6 +13,7 @@ import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
 } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
+import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 
@@ -72,6 +73,8 @@ export default function BuildDetails({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
+  const updateBuildContributionInviteStatus =
+    useBuildContributionInviteStatusUpdater();
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
   const [
@@ -408,6 +411,11 @@ export default function BuildDetails({
         inviteId
       });
       if (result?.success) {
+        updateBuildContributionInviteStatus({
+          invite: result.invite,
+          inviteId,
+          status: 'accepted'
+        });
         setCollaborationRequest((current) =>
           current ? { ...current, status: 'accepted' } : current
         );
@@ -435,6 +443,11 @@ export default function BuildDetails({
         inviteId
       });
       if (result?.success) {
+        updateBuildContributionInviteStatus({
+          invite: result.invite,
+          inviteId,
+          status: 'declined'
+        });
         setCollaborationRequest(null);
         setCollaborationRequestMessage('');
       }
