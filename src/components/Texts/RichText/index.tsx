@@ -377,6 +377,7 @@ function RichText({
     <ErrorBoundary
       style={{ width: '100%', position: 'relative' }}
       componentPath="components/Texts/RichText"
+      autoRecoverDomMutationError
     >
       <div
         ref={TextRef}
@@ -428,7 +429,10 @@ function RichText({
             />
           </ErrorBoundary>
         )}
-        <ErrorBoundary componentPath="components/Texts/RichText/Markdown">
+        <ErrorBoundary
+          componentPath="components/Texts/RichText/Markdown"
+          autoRecoverDomMutationError
+        >
           {markdownContent}
         </ErrorBoundary>
       </div>

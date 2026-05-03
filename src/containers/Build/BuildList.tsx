@@ -773,7 +773,10 @@ export default function BuildList() {
             : await loadPublicBuilds({
                 sort: getPublicBuildSort(activeTab, activeBrowseMode),
                 scope: getPublicBuildScope(activeTab),
-                excludeMine: shouldExcludeMineFromPublicBrowse(activeTab)
+                excludeMine: shouldExcludeMineFromPublicBrowse(
+                  activeTab,
+                  activeBrowseMode
+                )
               });
         if (!canceled) {
           onSetBuildStudioBrowseBuilds({
@@ -1365,7 +1368,7 @@ export default function BuildList() {
     } = {
       sort: getPublicBuildSort(tab, browseMode),
       scope: getPublicBuildScope(tab),
-      excludeMine: shouldExcludeMineFromPublicBrowse(tab)
+      excludeMine: shouldExcludeMineFromPublicBrowse(tab, browseMode)
     };
     if (/^\d+$/.test(loadMoreToken)) {
       loadMoreParams.lastId = Number(loadMoreToken);
@@ -1495,8 +1498,11 @@ function isPublicBrowseTab(tab: BuildListTab) {
   return tab === 'community' || tab === 'open_source';
 }
 
-function shouldExcludeMineFromPublicBrowse(tab: BuildListTab) {
-  return tab === 'community';
+function shouldExcludeMineFromPublicBrowse(
+  tab: BuildListTab,
+  browseMode: BuildStudioBrowseMode
+) {
+  return tab === 'community' && browseMode !== 'leaderboard';
 }
 
 function getBuildListBrowseTab(tab: BuildListTab) {

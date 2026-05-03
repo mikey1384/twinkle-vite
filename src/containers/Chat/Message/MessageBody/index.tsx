@@ -708,7 +708,10 @@ function MessageBody({
   }
 
   return (
-    <ErrorBoundary componentPath="Chat/Message/MessageBody">
+    <ErrorBoundary
+      componentPath="Chat/Message/MessageBody"
+      autoRecoverDomMutationError
+    >
       <div
         className={css`
           width: 100%;
