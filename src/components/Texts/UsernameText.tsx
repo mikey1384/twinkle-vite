@@ -12,6 +12,7 @@ export default function UsernameText({
   color,
   onMenuShownChange,
   style = {},
+  textStyle = {},
   user = {
     id: 0,
     username: '',
@@ -34,6 +35,7 @@ export default function UsernameText({
   color?: string;
   onMenuShownChange?: (v: boolean) => void;
   style?: object;
+  textStyle?: React.CSSProperties;
   user?: User;
   wordBreakEnabled?: boolean;
   displayedName?: string;
@@ -113,7 +115,8 @@ export default function UsernameText({
               : {}),
             color: user.username
               ? color || Color.darkerGray()
-              : Color.lighterGray()
+              : Color.lighterGray(),
+            ...textStyle
           }}
           onClick={onUsernameClick}
           onMouseEnter={onMouseEnter}

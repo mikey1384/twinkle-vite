@@ -70,13 +70,15 @@ export default function Tooltip({
       style={{
         zIndex: 100_000_000,
         top: 0,
-        position: 'fixed'
+        position: 'fixed',
+        pointerEvents: 'none'
       }}
     >
       <div
         translate="no"
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
+        style={{ pointerEvents: 'auto' }}
         className={`${css`
           padding: 0.5rem;
           font-size: 1.2rem;

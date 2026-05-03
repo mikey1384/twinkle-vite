@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
+import UsernameText from '~/components/Texts/UsernameText';
 import BuildProjectListItem, {
   BuildProjectListItemData
 } from '~/components/BuildProjectListItem';
@@ -14,8 +15,6 @@ import BuildDescriptionModal from './BuildDescriptionModal';
 import BuildDeleteModal from './BuildDeleteModal';
 import BuildTabFilter from './BuildTabFilter';
 import BuildActivityPanel, {
-  type BuildActivitySubtab,
-  type BuildActivityTab,
   type BuildActivityItem
 } from './BuildActivityPanel';
 import {
@@ -27,12 +26,20 @@ import {
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import {
+  type BuildActivitySubtab,
+  type BuildActivityTab,
   type BuildStudioBrowseMode,
   type BuildStudioTab
 } from '~/contexts/Build/reducer';
+import type { User } from '~/types';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+const inheritedUsernameTextStyle: React.CSSProperties = {
+  color: 'inherit',
+  fontSize: 'inherit',
+  fontWeight: 'inherit'
+};
 
 type BuildListTab = BuildStudioTab;
 type PublicBuildScope = 'all' | 'open_source';
@@ -43,6 +50,10 @@ type TodayTopViewedBuild = BuildProjectListItemData & {
 const buildActivityRailBreakpoint = '1180px';
 const buildActivityRailWidth = '30rem';
 const buildPageTopGap = '2rem';
+const desktopHeaderHeight = '4.5rem';
+const buildActivityPanelInitialViewportTop = `calc(
+  ${desktopHeaderHeight} + ${buildPageTopGap}
+)`;
 const mobileBottomNavClearance =
   'calc(var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px) + 2rem)';
 
@@ -100,7 +111,8 @@ const buildStudioMainClass = css`
 
 const buildActivityRailClass = css`
   --build-activity-rail-top: ${buildPageTopGap};
-  --build-activity-rail-bottom-gap: 0px;
+  --build-activity-panel-top-offset: ${buildActivityPanelInitialViewportTop};
+  --build-activity-rail-bottom-gap: ${buildPageTopGap};
   position: sticky;
   top: var(--build-activity-rail-top);
   width: 100%;
@@ -268,6 +280,10 @@ const buildGridClass = css`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+`;
+
+const browseModeFilterWrapClass = css`
+  margin-bottom: 1rem;
 `;
 
 const requestQueueClass = css`
@@ -441,6 +457,12 @@ export default function BuildList() {
   const onRemoveBuildStudioMyBuild = useBuildContext(
     (v) => v.actions.onRemoveBuildStudioMyBuild
   );
+  const onSetBuildStudioBrowseMode = useBuildContext(
+    (v) => v.actions.onSetBuildStudioBrowseMode
+  );
+  const onSetBuildStudioActivityFilter = useBuildContext(
+    (v) => v.actions.onSetBuildStudioActivityFilter
+  );
   const onSetBuildStudioBrowseBuilds = useBuildContext(
     (v) => v.actions.onSetBuildStudioBrowseBuilds
   );
@@ -451,17 +473,18 @@ export default function BuildList() {
   const normalizedUserId = Number(userId || 0) || null;
   const activeTab = normalizeBuildListTab(buildStudio?.activeTab);
   const activeBrowseTab = getBuildListBrowseTab(activeTab);
-  const [communityBrowseMode, setCommunityBrowseMode] =
-    useState<BuildStudioBrowseMode>('recent');
-  const [openSourceBrowseMode, setOpenSourceBrowseMode] =
-    useState<BuildStudioBrowseMode>('recent');
-  const activeBrowseMode = getBuildListBrowseMode({
-    activeTab,
-    communityBrowseMode,
-    openSourceBrowseMode
-  });
   const activeBrowseState =
     buildStudio?.browse?.[activeBrowseTab] || createEmptyBrowseState();
+  const activeBrowseMode = getBuildListBrowseMode({
+    activeTab,
+    buildStudio
+  });
+  const buildActivityActiveTab = normalizeBuildActivityTab(
+    buildStudio?.activityPanel?.activeTab
+  );
+  const buildActivityActiveSubtab = normalizeBuildActivitySubtab(
+    buildStudio?.activityPanel?.activeSubtab
+  );
   const collaboratingBrowseState =
     buildStudio?.browse?.collaborating || createEmptyBrowseState();
   const activeBrowseLoadedForCurrentUser = Boolean(
@@ -518,10 +541,6 @@ export default function BuildList() {
   const [deleting, setDeleting] = useState(false);
   const [promptInput, setPromptInput] = useState('');
   const [creatingFromPrompt, setCreatingFromPrompt] = useState(false);
-  const [buildActivityActiveTab, setBuildActivityActiveTab] =
-    useState<BuildActivityTab>('mine');
-  const [buildActivityActiveSubtab, setBuildActivityActiveSubtab] =
-    useState<BuildActivitySubtab>('notifications');
   const [buildActivityItems, setBuildActivityItems] = useState<
     BuildActivityItem[]
   >([]);
@@ -675,8 +694,10 @@ export default function BuildList() {
       setBuildActivityLoading(false);
       setBuildActivityLoadingMore(false);
       setBuildActivityError('');
-      setBuildActivityActiveTab('mine');
-      setBuildActivityActiveSubtab('notifications');
+      onSetBuildStudioActivityFilter({
+        activityTab: 'mine',
+        activitySubtab: 'notifications'
+      });
       return;
     }
     void loadBuildActivityItems({
@@ -820,13 +841,15 @@ export default function BuildList() {
           />
 
           {isPublicBrowseTab(activeTab) ? (
-            <BuildTabFilter
-              activeTab={activeBrowseMode}
-              color={profileTheme}
-              density="compact"
-              onChange={handleBrowseModeChange}
-              tabs={buildBrowseModeTabs}
-            />
+            <div className={browseModeFilterWrapClass}>
+              <BuildTabFilter
+                activeTab={activeBrowseMode}
+                color={profileTheme}
+                density="compact"
+                onChange={handleBrowseModeChange}
+                tabs={buildBrowseModeTabs}
+              />
+            </div>
           ) : null}
 
           <BuildActivityPanel
@@ -1114,13 +1137,13 @@ export default function BuildList() {
 
   function handleBuildActivityTabChange(tab: BuildActivityTab) {
     if (tab !== buildActivityActiveTab) {
-      setBuildActivityActiveTab(tab);
+      onSetBuildStudioActivityFilter({ activityTab: tab });
     }
   }
 
   function handleBuildActivitySubtabChange(subtab: BuildActivitySubtab) {
     if (subtab !== buildActivityActiveSubtab) {
-      setBuildActivityActiveSubtab(subtab);
+      onSetBuildStudioActivityFilter({ activitySubtab: subtab });
     }
   }
 
@@ -1235,13 +1258,10 @@ export default function BuildList() {
   }
 
   function handleBrowseModeChange(browseMode: BuildStudioBrowseMode) {
-    if (activeTab === 'community') {
-      setCommunityBrowseMode(browseMode);
+    if (!isPublicBrowseTab(activeTab) || browseMode === activeBrowseMode) {
       return;
     }
-    if (activeTab === 'open_source') {
-      setOpenSourceBrowseMode(browseMode);
-    }
+    onSetBuildStudioBrowseMode({ tab: activeTab, browseMode });
   }
 
   async function handleLoadMoreBrowseBuilds() {
@@ -1329,23 +1349,31 @@ function TodayTopViewedShowcase({
 }) {
   const displayTitle = build.title || 'Untitled Build';
   return (
-    <aside className={topViewedShowcaseClass} aria-label="Most viewed app today">
+    <aside
+      className={topViewedShowcaseClass}
+      aria-label="Most visited app today"
+    >
       <div className={topViewedCopyClass}>
         <div className={topViewedKickerClass}>
           <Icon icon="eye" />
-          Most viewed today
+          Most visited today
         </div>
         <h2 className={topViewedTitleClass}>{displayTitle}</h2>
         <div className={topViewedMetaClass}>
           {build.username ? (
             <span>
               <Icon icon="user" />
-              by {build.username}
+              by{' '}
+              <UsernameText
+                color="inherit"
+                textStyle={inheritedUsernameTextStyle}
+                user={getBuildUsernameUser(build)}
+              />
             </span>
           ) : null}
           <span>
             <Icon icon="eye" />
-            {formatTodayViewLabel(build.todayViewCount)}
+            {formatTodayVisitLabel(build.todayViewCount)}
           </span>
         </div>
         <div>
@@ -1380,16 +1408,38 @@ function getPublicBuildSort(
 
 function getBuildListBrowseMode({
   activeTab,
-  communityBrowseMode,
-  openSourceBrowseMode
+  buildStudio
 }: {
   activeTab: BuildListTab;
-  communityBrowseMode: BuildStudioBrowseMode;
-  openSourceBrowseMode: BuildStudioBrowseMode;
+  buildStudio?: {
+    browseModes?: Partial<
+      Record<'community' | 'open_source', BuildStudioBrowseMode | string | null>
+    >;
+  } | null;
 }): BuildStudioBrowseMode {
-  if (activeTab === 'open_source') return openSourceBrowseMode;
-  if (activeTab === 'community') return communityBrowseMode;
+  if (activeTab === 'open_source') {
+    return normalizeBuildListBrowseMode(buildStudio?.browseModes?.open_source);
+  }
+  if (activeTab === 'community') {
+    return normalizeBuildListBrowseMode(buildStudio?.browseModes?.community);
+  }
   return 'recent';
+}
+
+function normalizeBuildListBrowseMode(
+  value?: string | null
+): BuildStudioBrowseMode {
+  return value === 'leaderboard' ? 'leaderboard' : 'recent';
+}
+
+function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
+  return value === 'collaborating' ? 'collaborating' : 'mine';
+}
+
+function normalizeBuildActivitySubtab(
+  value?: string | null
+): BuildActivitySubtab {
+  return value === 'branch_updates' ? 'branch_updates' : 'notifications';
 }
 
 function isPublicBrowseTab(tab: BuildListTab) {
@@ -1449,10 +1499,20 @@ function normalizeTodayTopViewedBuild(
   };
 }
 
-function formatTodayViewLabel(viewCount?: number | null) {
-  const views = Math.max(0, Math.floor(Number(viewCount) || 0));
-  if (views === 1) return '1 view today';
-  return `${views.toLocaleString()} views today`;
+function formatTodayVisitLabel(viewCount?: number | null) {
+  const visits = Math.max(0, Math.floor(Number(viewCount) || 0));
+  if (visits === 1) return '1 visit today';
+  return `${visits.toLocaleString()} visits today`;
+}
+
+function getBuildUsernameUser(
+  build: Pick<BuildProjectListItemData, 'profilePicUrl' | 'userId' | 'username'>
+): User {
+  return {
+    id: Number(build.userId || 0),
+    profilePicUrl: build.profilePicUrl || '',
+    username: build.username || ''
+  };
 }
 
 function mergeBuildActivityItems(

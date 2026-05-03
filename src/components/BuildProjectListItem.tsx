@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import BuildPreviewFrame from '~/components/BuildPreviewFrame';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
+import UsernameText from '~/components/Texts/UsernameText';
 import { css, cx } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -12,10 +13,16 @@ import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { getBuildDisplayTitle } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
+import type { User } from '~/types';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 const buildForkUiEnabled = true;
+const inheritedUsernameTextStyle: React.CSSProperties = {
+  color: 'inherit',
+  fontSize: 'inherit',
+  fontWeight: 'inherit'
+};
 
 const buildCardClass = css`
   display: grid;
@@ -582,7 +589,19 @@ export default function BuildProjectListItem({
             <div>
               <h3 className={buildTitleClass}>{displayTitle}</h3>
               {!isOwner && build.username ? (
-                <div className={buildBylineClass}>by {build.username}</div>
+                <div className={buildBylineClass}>
+                  by{' '}
+                  <span
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
+                    <UsernameText
+                      color="inherit"
+                      textStyle={inheritedUsernameTextStyle}
+                      user={getBuildUsernameUser(build)}
+                    />
+                  </span>
+                </div>
               ) : null}
               {(description || detailsActionLabel) &&
                 (description ? (
@@ -696,7 +715,7 @@ export default function BuildProjectListItem({
             </span>
             <span className={buildMetaItemClass}>
               <Icon icon="eye" />
-              {formatViewLabel(build.viewCount)}
+              {formatVisitLabel(build.viewCount)}
             </span>
             {build.isPublic && build.publishedAt ? (
               <span className={buildMetaItemClass}>
@@ -1245,11 +1264,21 @@ function formatRelativeTime(timestamp?: number | null) {
   return timeSince(Number(timestamp));
 }
 
-function formatViewLabel(viewCount?: number | null) {
-  const views = Number.isFinite(Number(viewCount)) ? Number(viewCount) : 0;
-  if (views <= 0) return 'No views yet';
-  if (views === 1) return '1 view';
-  return `${views} views`;
+function formatVisitLabel(viewCount?: number | null) {
+  const visits = Number.isFinite(Number(viewCount)) ? Number(viewCount) : 0;
+  if (visits <= 0) return 'No visits yet';
+  if (visits === 1) return '1 visit';
+  return `${visits} visits`;
+}
+
+function getBuildUsernameUser(
+  build: Pick<BuildProjectListItemData, 'profilePicUrl' | 'userId' | 'username'>
+): User {
+  return {
+    id: Number(build.userId || 0),
+    profilePicUrl: build.profilePicUrl || '',
+    username: build.username || ''
+  };
 }
 
 function formatForkCount(count: number) {

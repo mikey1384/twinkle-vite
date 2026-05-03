@@ -101,7 +101,13 @@ export type BuildStudioTab =
   | 'community'
   | 'open_source';
 type BuildStudioBrowseTab = Exclude<BuildStudioTab, 'mine'>;
+type BuildStudioPublicBrowseTab = Exclude<
+  BuildStudioBrowseTab,
+  'collaborating'
+>;
 export type BuildStudioBrowseMode = 'recent' | 'leaderboard';
+export type BuildActivityTab = 'mine' | 'collaborating';
+export type BuildActivitySubtab = 'notifications' | 'branch_updates';
 export type BuildWorkspaceCommunicationMode = 'lumine' | 'versions' | 'people';
 
 export interface BuildWorkspaceUiState {
@@ -118,12 +124,19 @@ export interface BuildStudioBrowseTabState {
   userId: number | null;
 }
 
+export interface BuildStudioActivityPanelState {
+  activeTab: BuildActivityTab;
+  activeSubtab: BuildActivitySubtab;
+}
+
 export interface BuildStudioState {
   activeTab: BuildStudioTab;
   myBuilds: any[];
   myBuildsLoaded: boolean;
   myBuildsUserId: number | null;
   browse: Record<BuildStudioBrowseTab, BuildStudioBrowseTabState>;
+  browseModes: Record<BuildStudioPublicBrowseTab, BuildStudioBrowseMode>;
+  activityPanel: BuildStudioActivityPanelState;
 }
 
 export interface BuildLiveRunStreamUpdatePayload {
@@ -225,6 +238,8 @@ export interface BuildStudioActionPayload {
   userId?: number | null;
   loadMoreToken?: string | null;
   browseMode?: BuildStudioBrowseMode | string | null;
+  activityTab?: BuildActivityTab | string | null;
+  activitySubtab?: BuildActivitySubtab | string | null;
 }
 
 export interface BuildWorkspaceUiActionPayload {
@@ -263,6 +278,8 @@ export interface BuildAction {
     | 'SET_BUILD_STUDIO_MY_BUILDS'
     | 'PATCH_BUILD_STUDIO_MY_BUILD'
     | 'REMOVE_BUILD_STUDIO_MY_BUILD'
+    | 'SET_BUILD_STUDIO_BROWSE_MODE'
+    | 'SET_BUILD_STUDIO_ACTIVITY_FILTER'
     | 'SET_BUILD_STUDIO_BROWSE_BUILDS'
     | 'APPEND_BUILD_STUDIO_BROWSE_BUILDS'
     | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
@@ -285,7 +302,26 @@ export function createInitialBuildStudioState(): BuildStudioState {
       community: createInitialBuildStudioBrowseState(),
       collaborating: createInitialBuildStudioBrowseState(),
       open_source: createInitialBuildStudioBrowseState()
-    }
+    },
+    browseModes: createInitialBuildStudioBrowseModes(),
+    activityPanel: createInitialBuildStudioActivityPanelState()
+  };
+}
+
+function createInitialBuildStudioBrowseModes(): Record<
+  BuildStudioPublicBrowseTab,
+  BuildStudioBrowseMode
+> {
+  return {
+    community: 'recent',
+    open_source: 'recent'
+  };
+}
+
+function createInitialBuildStudioActivityPanelState(): BuildStudioActivityPanelState {
+  return {
+    activeTab: 'mine',
+    activeSubtab: 'notifications'
   };
 }
 
@@ -370,10 +406,26 @@ function normalizeBuildStudioBrowseTab(
   return value === 'open_source' ? 'open_source' : 'community';
 }
 
+function normalizeBuildStudioPublicBrowseTab(
+  value?: string | null
+): BuildStudioPublicBrowseTab {
+  return value === 'open_source' ? 'open_source' : 'community';
+}
+
 function normalizeBuildStudioBrowseMode(
   value?: string | null
 ): BuildStudioBrowseMode {
   return value === 'leaderboard' ? 'leaderboard' : 'recent';
+}
+
+function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
+  return value === 'collaborating' ? 'collaborating' : 'mine';
+}
+
+function normalizeBuildActivitySubtab(
+  value?: string | null
+): BuildActivitySubtab {
+  return value === 'branch_updates' ? 'branch_updates' : 'notifications';
 }
 
 function normalizeBuildStudioUserId(value: unknown) {
@@ -1566,6 +1618,53 @@ export default function BuildReducer(
           myBuilds: buildStudio.myBuilds.filter(
             (build) => Number(build?.id || 0) !== buildId
           )
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_BROWSE_MODE': {
+      const buildStudio = getBuildStudioState(state);
+      const tab = normalizeBuildStudioPublicBrowseTab(action.buildStudio?.tab);
+      const browseMode = normalizeBuildStudioBrowseMode(
+        action.buildStudio?.browseMode
+      );
+      const browseModes =
+        buildStudio.browseModes || createInitialBuildStudioBrowseModes();
+      if (browseModes[tab] === browseMode) return state;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          browseModes: {
+            ...browseModes,
+            [tab]: browseMode
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_ACTIVITY_FILTER': {
+      const buildStudio = getBuildStudioState(state);
+      const currentActivityPanel =
+        buildStudio.activityPanel || createInitialBuildStudioActivityPanelState();
+      const activeTab = action.buildStudio?.activityTab
+        ? normalizeBuildActivityTab(action.buildStudio.activityTab)
+        : currentActivityPanel.activeTab;
+      const activeSubtab = action.buildStudio?.activitySubtab
+        ? normalizeBuildActivitySubtab(action.buildStudio.activitySubtab)
+        : currentActivityPanel.activeSubtab;
+      if (
+        currentActivityPanel.activeTab === activeTab &&
+        currentActivityPanel.activeSubtab === activeSubtab
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          activityPanel: {
+            activeTab,
+            activeSubtab
+          }
         }
       };
     }

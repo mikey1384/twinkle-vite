@@ -122,10 +122,16 @@ export default function DropdownList({
       style={{
         zIndex,
         top: 0,
-        position: 'fixed'
+        position: 'fixed',
+        pointerEvents: 'none'
       }}
     >
-      <div ref={MenuRef} className="notranslate" translate="no">
+      <div
+        ref={MenuRef}
+        className="notranslate"
+        translate="no"
+        style={{ pointerEvents: 'auto' }}
+      >
         <ul
           ref={innerRef}
           translate="no"

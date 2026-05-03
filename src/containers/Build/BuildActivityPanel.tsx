@@ -5,14 +5,23 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import ProfilePic from '~/components/ProfilePic';
+import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
 import { timeSinceShort } from '~/helpers/timeStampHelpers';
 import { useNavigate } from 'react-router-dom';
 import BuildTabFilter from './BuildTabFilter';
+import type {
+  BuildActivitySubtab,
+  BuildActivityTab
+} from '~/contexts/Build/reducer';
+import type { User } from '~/types';
 
 const buildActivityRailBreakpoint = '1180px';
-export type BuildActivityTab = 'mine' | 'collaborating';
-export type BuildActivitySubtab = 'notifications' | 'branch_updates';
+const inheritedUsernameTextStyle: React.CSSProperties = {
+  color: 'inherit',
+  fontSize: 'inherit',
+  fontWeight: 'inherit'
+};
 
 const buildActivityTabs: Array<{
   value: BuildActivityTab;
@@ -98,7 +107,11 @@ const panelClass = css`
   display: flex;
   flex-direction: column;
   max-height: calc(
-    100dvh - var(--build-activity-rail-top, 6.5rem) -
+    100dvh -
+      var(
+        --build-activity-panel-top-offset,
+        var(--build-activity-rail-top, 6.5rem)
+      ) -
       var(--build-activity-rail-bottom-gap, 2rem)
   );
   border: 1px solid var(--ui-border);
@@ -436,8 +449,20 @@ export default function BuildActivityPanel({
             )}
             <span className={rowBodyClass}>
               <span className={rowMessageClass}>
-                <span className={actorNameClass}>
-                  {getActivityActorLabel(activity, currentUserId)}
+                <span
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  <UsernameText
+                    className={actorNameClass}
+                    color="inherit"
+                    displayedName={getActivityActorLabel(
+                      activity,
+                      currentUserId
+                    )}
+                    textStyle={inheritedUsernameTextStyle}
+                    user={getActivityActorUser(activity)}
+                  />
                 </span>{' '}
                 {getActivityMessage(activity, currentUserId)}
               </span>
@@ -531,6 +556,14 @@ function getActivityActorLabel(
 ) {
   if (isActivityActorCurrentUser(activity, currentUserId)) return 'You';
   return activity.actor.username || 'Someone';
+}
+
+function getActivityActorUser(activity: BuildActivityItem): User {
+  return {
+    id: Number(activity.actor.id || 0),
+    profilePicUrl: activity.actor.profilePicUrl || '',
+    username: activity.actor.username || ''
+  };
 }
 
 function getActivityMessage(activity: BuildActivityItem, currentUserId: number) {

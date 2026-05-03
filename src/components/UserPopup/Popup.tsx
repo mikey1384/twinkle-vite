@@ -65,10 +65,11 @@ export default function Popup({
       style={{
         zIndex: 100_000_000,
         top: 0,
-        position: 'fixed'
+        position: 'fixed',
+        pointerEvents: 'none'
       }}
     >
-      <div ref={MenuRef}>
+      <div ref={MenuRef} style={{ pointerEvents: 'auto' }}>
         <div
           style={style}
           onMouseEnter={onMouseEnter}

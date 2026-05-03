@@ -72,7 +72,8 @@ export default function FullTextRevealFromOuterLayer({
       style={{
         zIndex: 100_000_000,
         top: 0,
-        position: 'fixed'
+        position: 'fixed',
+        pointerEvents: 'none'
       }}
     >
       <div

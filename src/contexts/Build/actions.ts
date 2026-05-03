@@ -1,11 +1,14 @@
 import React from 'react';
 import {
+  BuildActivitySubtab,
+  BuildActivityTab,
   BuildAction,
   BuildLiveRunActionPayload,
   BuildRuntimeVerifyResultPayload,
   BuildWorkspaceCommunicationMode,
   BuildWorkspaceUiActionPayload,
   BuildStudioActionPayload,
+  BuildStudioBrowseMode,
   BuildStudioTab
 } from './reducer';
 
@@ -141,6 +144,30 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'REMOVE_BUILD_STUDIO_MY_BUILD',
         buildStudio: { buildId, userId }
+      });
+    },
+    onSetBuildStudioBrowseMode({
+      tab,
+      browseMode
+    }: {
+      tab: BuildStudioTab;
+      browseMode: BuildStudioBrowseMode;
+    }) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_BROWSE_MODE',
+        buildStudio: { tab, browseMode }
+      });
+    },
+    onSetBuildStudioActivityFilter({
+      activityTab,
+      activitySubtab
+    }: {
+      activityTab?: BuildActivityTab;
+      activitySubtab?: BuildActivitySubtab;
+    }) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_ACTIVITY_FILTER',
+        buildStudio: { activityTab, activitySubtab }
       });
     },
     onSetBuildStudioBrowseBuilds(buildStudio: BuildStudioActionPayload) {
