@@ -75,7 +75,7 @@ export default function GuestRestrictionBanner({
         <span>{message}</span>
       </div>
       <div className={guestRestrictionBannerActionsClass}>
-        <GameCTAButton variant="gold" size="sm" onClick={onOpenSigninModal}>
+        <GameCTAButton variant="success" size="sm" onClick={onOpenSigninModal}>
           Log In
         </GameCTAButton>
         <button

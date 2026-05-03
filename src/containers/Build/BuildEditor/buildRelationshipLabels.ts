@@ -2,17 +2,55 @@ export type BuildRelationshipLabel = 'fork' | 'contribution';
 
 export interface BuildRelationshipLike {
   title?: string | null;
+  username?: string | null;
   sourceBuildId?: number | null;
+  contributionBranchNumber?: number | null;
+  contributionContributorId?: number | null;
   contributionStatus?: string | null;
   rootBuildSourceBuildId?: number | null;
+  rootBuildTitle?: string | null;
 }
 
 export function getBuildDisplayTitle(build: BuildRelationshipLike) {
   const rawTitle = String(build.title || '').trim();
+  if (isBuildContributionFork(build)) {
+    const projectTitle = stripBuildRelationshipTitleSuffixes(
+      String(build.rootBuildTitle || '').trim()
+    );
+    const branchTitle = getBuildBranchDisplayTitle(build);
+    if (
+      projectTitle &&
+      branchTitle &&
+      projectTitle.toLowerCase() !== branchTitle.toLowerCase()
+    ) {
+      return `${projectTitle} / ${branchTitle}`;
+    }
+    return branchTitle || projectTitle || 'Untitled Build';
+  }
   if (!hasBuildRelationshipLabel(build)) {
     return rawTitle || 'Untitled Build';
   }
   return stripBuildRelationshipTitleSuffixes(rawTitle) || 'Untitled Build';
+}
+
+export function getBuildBranchDisplayTitle(build: BuildRelationshipLike) {
+  const rawTitle = stripBuildRelationshipTitleSuffixes(
+    String(build.title || '').trim()
+  );
+  const rootTitle = stripBuildRelationshipTitleSuffixes(
+    String(build.rootBuildTitle || '').trim()
+  );
+  if (
+    rawTitle &&
+    (!rootTitle || rawTitle.toLowerCase() !== rootTitle.toLowerCase())
+  ) {
+    return rawTitle;
+  }
+  const contributorName = String(build.username || '').trim() || 'Contributor';
+  const branchNumber = Number(build.contributionBranchNumber || 0);
+  return branchNumber > 0
+    ? `${contributorName}'s branch ${branchNumber}`
+    : `${contributorName}'s branch`;
 }
 
 export function getBuildRelationshipLabels(
@@ -66,11 +104,8 @@ function stripBuildRelationshipTitleSuffixes(value: string) {
 
 function normalizeContributionStatus(value: unknown) {
   return value === 'draft' ||
-    value === 'submitted' ||
     value === 'merging' ||
-    value === 'merged' ||
-    value === 'rejected' ||
-    value === 'withdrawn'
+    value === 'merged'
     ? value
     : 'none';
 }

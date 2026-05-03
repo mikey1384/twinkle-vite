@@ -1,6 +1,7 @@
 import type { ReactNode, RefObject } from 'react';
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
+export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 
 export interface ChatMessage {
   id: number;
@@ -156,8 +157,18 @@ export interface LimitProgressItem {
 export interface ChatPanelProps {
   className?: string;
   workshopScale?: number;
-  preferredCommunicationMode?: 'lumine' | 'people';
+  preferredCommunicationMode?: ChatPanelCommunicationMode;
+  onCommunicationModeChange?: (mode: ChatPanelCommunicationMode) => void;
+  communicationScrollTops?: Partial<Record<ChatPanelCommunicationMode, number>>;
+  onCommunicationScrollChange?: (
+    mode: ChatPanelCommunicationMode,
+    scrollTop: number
+  ) => void;
   peoplePanel?: ReactNode;
+  versionsPanel?: ReactNode;
+  luminePanelOverride?: ReactNode;
+  lumineTabLabel?: string;
+  lumineTabIcon?: string;
   lumineChatVisibilityControl?: LumineChatVisibilityControl | null;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;

@@ -28,6 +28,7 @@ export interface PreviewPanelProps {
   }> | null;
   streamingFocusFilePath?: string | null;
   isOwner: boolean;
+  codeWorkspaceAvailable?: boolean;
   onReplaceCode: (code: string) => void;
   onApplyRestoredProjectFiles: (
     files: Array<{ path: string; content?: string }>,

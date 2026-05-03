@@ -83,6 +83,7 @@ export default function ContentDetails({
       )}
       {contentType === 'build' && (
         <BuildDetails
+          buildId={contentId}
           collaboratorCount={collaboratorCount}
           description={description}
           title={title}

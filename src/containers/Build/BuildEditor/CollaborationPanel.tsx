@@ -1,23 +1,25 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
+import ProfilePic from '~/components/ProfilePic';
+import Textarea from '~/components/Texts/Textarea';
+import UsernameText from '~/components/Texts/UsernameText';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
+import { timeSince } from '~/helpers/timeStampHelpers';
+import type { User } from '~/types';
 import BuildContributorInvitePicker from './BuildContributorInvitePicker';
+import { getBuildWorkspacePath } from '../buildNavigation';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
-type BuildLumineChatVisibility = 'private' | 'collaborators';
 type BuildContributionStatus =
   | 'none'
   | 'draft'
-  | 'submitted'
   | 'merging'
-  | 'merged'
-  | 'rejected'
-  | 'withdrawn';
+  | 'merged';
 
 interface BuildContributionFileDiff {
   path: string;
@@ -37,17 +39,39 @@ interface BuildLike {
   collaborationMode?: BuildCollaborationMode | 'contribution';
   contributionAccess?: BuildContributionAccess;
   contributionRootBuildId?: number | null;
+  contributionBranchNumber?: number | null;
   contributionStatus?: BuildContributionStatus;
-  contributionSubmittedAt?: number | null;
   contributionContributorId?: number | null;
   username?: string;
   profilePicUrl?: string | null;
+  rootBuildUserId?: number | null;
   code?: string | null;
-  lumineChatVisibility?: BuildLumineChatVisibility | 'public';
+  pendingCollaborationRequestCount?: number | null;
 }
 
-interface ContributionComment {
+interface BuildForumThread {
   id: number;
+  buildId: number;
+  contributionBuildId?: number | null;
+  userId: number;
+  title: string;
+  body: string;
+  replyCount?: number | null;
+  lastReplyAt?: number | null;
+  lastReplyUserId?: number | null;
+  username?: string | null;
+  profilePicUrl?: string | null;
+  lastReplyUsername?: string | null;
+  lastReplyProfilePicUrl?: string | null;
+  createdAt?: number | null;
+  updatedAt?: number | null;
+}
+
+interface BuildForumReply {
+  id: number;
+  threadId: number;
+  buildId: number;
+  contributionBuildId?: number | null;
   userId: number;
   body: string;
   username?: string | null;
@@ -78,13 +102,6 @@ interface BuildCollaborationRequest {
   updatedAt?: number | null;
 }
 
-interface SharedLumineChatMessage {
-  id: number;
-  role: 'user' | 'assistant';
-  content: string;
-  createdAt?: number | null;
-}
-
 interface CollaborationPanelProps {
   build: BuildLike;
   embedded?: boolean;
@@ -94,9 +111,22 @@ interface CollaborationPanelProps {
     build?: Record<string, any> | null;
     projectFiles?: Array<{ path: string; content?: string }> | null;
   }) => void;
+  onVersionProjectFilesUpdate?: (payload: {
+    build?: Record<string, any> | null;
+    projectFiles?: Array<{ path: string; content?: string }> | null;
+  }) => void;
   onAcceptedContributorCountChange?: (count: number) => void;
-  onBeforeContributionAction?: (action: 'submit' | 'merge') => Promise<boolean>;
+  onBeforeContributionAction?: (
+    action: 'merge' | 'update-from-main'
+  ) => Promise<boolean>;
+  onAskLumineToResolveConflicts?: (
+    paths: string[]
+  ) => Promise<boolean> | boolean;
   onOpenCollaborationSettings?: () => void;
+  initialScrollTop?: number;
+  onScrollTopChange?: (scrollTop: number) => void;
+  initialSelectedForumThreadId?: number;
+  onSelectedForumThreadChange?: (threadId: number) => void;
 }
 
 const panelClass = css`
@@ -360,13 +390,25 @@ const conflictBadgeClass = css`
   font-weight: 900;
 `;
 
-const commentListClass = css`
+const forumComposerClass = css`
+  border: 1px solid rgba(65, 140, 235, 0.24);
+  border-radius: 8px;
+  background: rgba(65, 140, 235, 0.04);
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.65rem;
 `;
 
-const commentActionsClass = css`
+const forumComposerTitleClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--chat-text);
+  font-weight: 900;
+`;
+
+const forumActionsClass = css`
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -374,30 +416,177 @@ const commentActionsClass = css`
   flex-wrap: wrap;
 `;
 
-const commentClass = css`
+const forumPostListClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+`;
+
+const forumPostClass = css`
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
-  padding: 0.65rem 0.75rem;
+  padding: 0.75rem;
   background: #fff;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: flex-start;
+`;
+
+const forumAvatarClass = css`
+  width: 2.65rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 2.35rem;
+  }
+`;
+
+const forumPostMainClass = css`
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
 `;
 
-const commentHeaderClass = css`
+const forumPostHeaderClass = css`
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.7rem;
-  font-weight: 900;
-  font-size: 0.82rem;
 `;
 
-const commentBodyClass = css`
+const forumAuthorMetaClass = css`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+`;
+
+const forumUsernameClass = css`
+  font-weight: 900;
+  font-size: 0.95rem;
+  max-width: 100%;
+`;
+
+const forumTimestampClass = css`
+  color: var(--chat-text);
+  opacity: 0.58;
+  font-size: 0.78rem;
+  font-weight: 800;
+`;
+
+const forumPostActionsClass = css`
+  flex: 0 0 auto;
+`;
+
+const forumPostBodyClass = css`
   color: #111827;
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+`;
+
+const forumTitleInputClass = css`
+  width: 100%;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  padding: 0.65rem;
+  font: inherit;
+  font-weight: 900;
+  &:focus {
+    outline: 2px solid rgba(65, 140, 235, 0.24);
+    border-color: rgba(65, 140, 235, 0.55);
+  }
+`;
+
+const forumThreadButtonClass = css`
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  text-align: left;
+  color: var(--chat-text);
+  cursor: pointer;
+  &:hover {
+    border-color: rgba(65, 140, 235, 0.42);
+    background: rgba(65, 140, 235, 0.06);
+  }
+`;
+
+const forumThreadMainClass = css`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+`;
+
+const forumThreadTitleClass = css`
+  font-size: 1rem;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const forumThreadPreviewClass = css`
+  color: var(--chat-text);
+  opacity: 0.72;
+  font-weight: 700;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const forumThreadMetaClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  color: var(--chat-text);
+  opacity: 0.62;
+  font-size: 0.8rem;
+  font-weight: 800;
+`;
+
+const forumThreadCountClass = css`
+  align-self: start;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  color: var(--chat-text);
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+`;
+
+const forumDetailHeaderClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+`;
+
+const forumBackButtonClass = css`
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chat-text);
+  padding: 0.4rem 0.7rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  align-self: flex-start;
+  &:hover {
+    border-color: rgba(65, 140, 235, 0.42);
+    background: rgba(65, 140, 235, 0.08);
+  }
 `;
 
 const textareaClass = css`
@@ -438,41 +627,17 @@ const requestMessageClass = css`
   word-break: break-word;
 `;
 
-const lumineHistoryListClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  max-height: 20rem;
-  overflow: auto;
-`;
+function normalizePanelScrollTop(value: unknown) {
+  const scrollTop = Number(value || 0);
+  if (!Number.isFinite(scrollTop)) return 0;
+  return Math.max(0, Math.floor(scrollTop));
+}
 
-const lumineHistoryMessageClass = css`
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  padding: 0.65rem;
-  background: #fff;
-  display: grid;
-  gap: 0.35rem;
-`;
-
-const lumineHistoryMessageHeaderClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.82rem;
-  font-weight: 900;
-  color: var(--chat-text);
-  opacity: 0.72;
-`;
-
-const lumineHistoryMessageBodyClass = css`
-  color: var(--chat-text);
-  font-size: 0.92rem;
-  line-height: 1.42;
-  white-space: pre-wrap;
-  word-break: break-word;
-`;
+function normalizePanelForumThreadId(value: unknown) {
+  const threadId = Number(value || 0);
+  if (!Number.isFinite(threadId)) return 0;
+  return Math.max(0, Math.floor(threadId));
+}
 
 export default function CollaborationPanel({
   build,
@@ -480,17 +645,20 @@ export default function CollaborationPanel({
   isOwner,
   onBuildPatch,
   onCanonicalMerge,
+  onVersionProjectFilesUpdate,
   onAcceptedContributorCountChange,
   onBeforeContributionAction,
-  onOpenCollaborationSettings
+  onAskLumineToResolveConflicts,
+  onOpenCollaborationSettings,
+  initialScrollTop = 0,
+  onScrollTopChange,
+  initialSelectedForumThreadId = 0,
+  onSelectedForumThreadChange
 }: CollaborationPanelProps) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const updateBuildCollaboration = useAppContext(
     (v) => v.requestHelpers.updateBuildCollaboration
-  );
-  const loadBuildLumineChatHistory = useAppContext(
-    (v) => v.requestHelpers.loadBuildLumineChatHistory
   );
   const loadBuildContributions = useAppContext(
     (v) => v.requestHelpers.loadBuildContributions
@@ -513,43 +681,40 @@ export default function CollaborationPanel({
   const revokeBuildContributor = useAppContext(
     (v) => v.requestHelpers.revokeBuildContributor
   );
-  const loadMyBuildCollaborationRequest = useAppContext(
-    (v) => v.requestHelpers.loadMyBuildCollaborationRequest
-  );
-  const acceptBuildContributorInvite = useAppContext(
-    (v) => v.requestHelpers.acceptBuildContributorInvite
-  );
-  const declineBuildContributorInvite = useAppContext(
-    (v) => v.requestHelpers.declineBuildContributorInvite
-  );
-  const createBuildContributionFork = useAppContext(
-    (v) => v.requestHelpers.createBuildContributionFork
-  );
   const loadBuildContribution = useAppContext(
     (v) => v.requestHelpers.loadBuildContribution
-  );
-  const rejectBuildContribution = useAppContext(
-    (v) => v.requestHelpers.rejectBuildContribution
   );
   const mergeBuildContribution = useAppContext(
     (v) => v.requestHelpers.mergeBuildContribution
   );
+  const updateBuildContributionFromMain = useAppContext(
+    (v) => v.requestHelpers.updateBuildContributionFromMain
+  );
   const completeBuildContributionMerge = useAppContext(
     (v) => v.requestHelpers.completeBuildContributionMerge
   );
-  const loadBuildContributionComments = useAppContext(
-    (v) => v.requestHelpers.loadBuildContributionComments
+  const loadBuildContributionForumThreads = useAppContext(
+    (v) => v.requestHelpers.loadBuildContributionForumThreads
   );
-  const createBuildContributionComment = useAppContext(
-    (v) => v.requestHelpers.createBuildContributionComment
+  const createBuildContributionForumThread = useAppContext(
+    (v) => v.requestHelpers.createBuildContributionForumThread
   );
-  const deleteBuildContributionComment = useAppContext(
-    (v) => v.requestHelpers.deleteBuildContributionComment
+  const loadBuildContributionForumThread = useAppContext(
+    (v) => v.requestHelpers.loadBuildContributionForumThread
+  );
+  const createBuildContributionForumReply = useAppContext(
+    (v) => v.requestHelpers.createBuildContributionForumReply
+  );
+  const deleteBuildContributionForumThread = useAppContext(
+    (v) => v.requestHelpers.deleteBuildContributionForumThread
+  );
+  const deleteBuildContributionForumReply = useAppContext(
+    (v) => v.requestHelpers.deleteBuildContributionForumReply
   );
 
   const isContributionFork =
     normalizeContributionStatus(build.contributionStatus) !== 'none';
-  const canModerateContributionComments = isOwner && !isContributionFork;
+  const canModerateForum = isOwner && !isContributionFork;
   const rootBuildId = isContributionFork
     ? Number(build.contributionRootBuildId || 0)
     : Number(build.id || 0);
@@ -559,12 +724,6 @@ export default function CollaborationPanel({
     useState<BuildCollaborationMode>(
       normalizeCollaborationMode(build.collaborationMode)
     );
-  const [sharedLumineChatMessages, setSharedLumineChatMessages] = useState<
-    SharedLumineChatMessage[]
-  >([]);
-  const [sharedLumineChatLoading, setSharedLumineChatLoading] =
-    useState(false);
-  const [sharedLumineChatError, setSharedLumineChatError] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsError, setSettingsError] = useState('');
   const [contributors, setContributors] = useState<BuildContributorInvite[]>(
@@ -573,10 +732,6 @@ export default function CollaborationPanel({
   const [collaborationRequests, setCollaborationRequests] = useState<
     BuildCollaborationRequest[]
   >([]);
-  const [myCollaborationRequest, setMyCollaborationRequest] =
-    useState<BuildCollaborationRequest | null>(null);
-  const [myCollaborationRequestLoading, setMyCollaborationRequestLoading] =
-    useState(false);
   const [showHiddenCollaborationRequests, setShowHiddenCollaborationRequests] =
     useState(false);
   const [loadingCollaborationRequests, setLoadingCollaborationRequests] =
@@ -593,38 +748,63 @@ export default function CollaborationPanel({
   const [previewPath, setPreviewPath] = useState('');
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
+  const [conflictMarkerPaths, setConflictMarkerPaths] = useState<string[]>([]);
   const [requestActionError, setRequestActionError] = useState('');
-  const [comments, setComments] = useState<ContributionComment[]>([]);
-  const [commentInput, setCommentInput] = useState('');
-  const [commentLoading, setCommentLoading] = useState(false);
-  const [commentError, setCommentError] = useState('');
+  const [forumThreads, setForumThreads] = useState<BuildForumThread[]>([]);
+  const [selectedThread, setSelectedThread] =
+    useState<BuildForumThread | null>(null);
+  const [threadReplies, setThreadReplies] = useState<BuildForumReply[]>([]);
+  const [threadTitleInput, setThreadTitleInput] = useState('');
+  const [threadBodyInput, setThreadBodyInput] = useState('');
+  const [replyInput, setReplyInput] = useState('');
+  const embeddedScrollRef = useRef<HTMLDivElement | null>(null);
+  const restoreScrollKeyRef = useRef('');
+  const initialScrollTopRef = useRef(initialScrollTop);
+  const onScrollTopChangeRef = useRef(onScrollTopChange);
+  const initialSelectedForumThreadIdRef = useRef(
+    normalizePanelForumThreadId(initialSelectedForumThreadId)
+  );
+  const onSelectedForumThreadChangeRef = useRef(onSelectedForumThreadChange);
+  const scrollSaveTimeoutRef = useRef<number | null>(null);
+  const pendingScrollTopRef = useRef<number | null>(null);
+  const lastSavedScrollTopRef = useRef(
+    normalizePanelScrollTop(initialScrollTop)
+  );
+  initialScrollTopRef.current = initialScrollTop;
+  onScrollTopChangeRef.current = onScrollTopChange;
+  initialSelectedForumThreadIdRef.current = normalizePanelForumThreadId(
+    initialSelectedForumThreadId
+  );
+  onSelectedForumThreadChangeRef.current = onSelectedForumThreadChange;
+  const [forumLoading, setForumLoading] = useState(false);
+  const [forumActionLoading, setForumActionLoading] = useState('');
+  const [forumError, setForumError] = useState('');
   const [panelExpanded, setPanelExpanded] = useState(false);
   const contentExpanded = embedded || panelExpanded;
   const selectedPreviewFile = useMemo(
     () => changedFiles.find((file) => file.path === previewPath) || null,
     [changedFiles, previewPath]
   );
+  const changedFileConflictPaths = useMemo(
+    () =>
+      changedFiles
+        .filter((file) => file.mergeStatus === 'conflict')
+        .map((file) => file.path),
+    [changedFiles]
+  );
+  const activeConflictMarkerPaths =
+    conflictMarkerPaths.length > 0
+      ? conflictMarkerPaths
+      : changedFileConflictPaths;
   const reviewContributions = useMemo(
     () =>
       contributions.filter((contribution) => {
         const status = normalizeContributionStatus(
           contribution.contributionStatus
         );
-        return status !== 'none' && status !== 'draft';
+        return status !== 'none';
       }),
     [contributions]
-  );
-  const sharedLumineChatTarget = useMemo(() => {
-    if (isOwner && !isContributionFork && selectedContribution) {
-      return selectedContribution;
-    }
-    if (!isOwner) {
-      return build;
-    }
-    return null;
-  }, [build, isContributionFork, isOwner, selectedContribution]);
-  const sharedLumineChatTargetVisibility = normalizeLumineChatVisibility(
-    sharedLumineChatTarget?.lumineChatVisibility
   );
   const acceptedContributorCount = useMemo(
     () =>
@@ -641,35 +821,20 @@ export default function CollaborationPanel({
   }, [build.collaborationMode]);
 
   useEffect(() => {
-    if (
-      !sharedLumineChatTarget?.id ||
-      sharedLumineChatTargetVisibility === 'private'
-    ) {
-      setSharedLumineChatMessages([]);
-      setSharedLumineChatError('');
-      return;
-    }
-    void reloadSharedLumineChatHistory(Number(sharedLumineChatTarget.id));
-    // request helpers are stable context helpers; do not include them in deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sharedLumineChatTarget?.id, sharedLumineChatTargetVisibility]);
-
-  useEffect(() => {
     if (!canShowPanel) return;
     if (isOwner && !isContributionFork) {
-      void reloadContributions();
+      if (!embedded) {
+        void reloadContributions();
+      }
       void reloadCollaborationRequests(showHiddenCollaborationRequests);
       void reloadContributors();
-    }
-    if (!isOwner && !isContributionFork) {
-      void reloadMyCollaborationRequest();
     }
     if (isContributionFork && rootBuildId && contributionBuildId) {
       setSelectedContributionId(contributionBuildId);
       void reloadContributionDetail(contributionBuildId);
-      void reloadComments(contributionBuildId);
+      void reloadForumThreads(contributionBuildId);
     } else if (!isContributionFork) {
-      void reloadComments(0);
+      void reloadForumThreads(0);
     }
     // request helpers are stable context helpers; do not include them in deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -684,6 +849,81 @@ export default function CollaborationPanel({
     showHiddenCollaborationRequests,
     userId
   ]);
+
+  useEffect(() => {
+    if (!embedded) return;
+    const scrollTop = normalizePanelScrollTop(initialScrollTopRef.current);
+    const restoreKey = [
+      build.id,
+      forumThreads.length,
+      selectedThread?.id || 0,
+      threadReplies.length,
+      collaborationRequests.length,
+      contributors.length
+    ].join(':');
+    if (restoreScrollKeyRef.current === restoreKey) return;
+    restoreScrollKeyRef.current = restoreKey;
+    const frame = window.requestAnimationFrame(() => {
+      const container = embeddedScrollRef.current;
+      if (!container) return;
+      container.scrollTo({ top: scrollTop, left: 0, behavior: 'auto' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    build.id,
+    collaborationRequests.length,
+    contributors.length,
+    embedded,
+    forumThreads.length,
+    selectedThread?.id,
+    threadReplies.length
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollSaveTimeoutRef.current !== null) {
+        window.clearTimeout(scrollSaveTimeoutRef.current);
+        scrollSaveTimeoutRef.current = null;
+      }
+      const pendingScrollTop = pendingScrollTopRef.current;
+      pendingScrollTopRef.current = null;
+      if (pendingScrollTop !== null) {
+        commitScrollTop(pendingScrollTop);
+      }
+    };
+  }, []);
+
+  function handleEmbeddedScroll(event: React.UIEvent<HTMLDivElement>) {
+    scheduleScrollTopSave(event.currentTarget.scrollTop || 0);
+  }
+
+  function scheduleScrollTopSave(scrollTop: number) {
+    pendingScrollTopRef.current = scrollTop;
+    if (scrollSaveTimeoutRef.current !== null) {
+      window.clearTimeout(scrollSaveTimeoutRef.current);
+    }
+    scrollSaveTimeoutRef.current = window.setTimeout(() => {
+      scrollSaveTimeoutRef.current = null;
+      const pendingScrollTop = pendingScrollTopRef.current;
+      pendingScrollTopRef.current = null;
+      if (pendingScrollTop !== null) {
+        commitScrollTop(pendingScrollTop);
+      }
+    }, 160);
+  }
+
+  function commitScrollTop(scrollTop: number) {
+    const normalizedScrollTop = normalizePanelScrollTop(scrollTop);
+    if (lastSavedScrollTopRef.current === normalizedScrollTop) return;
+    lastSavedScrollTopRef.current = normalizedScrollTop;
+    onScrollTopChangeRef.current?.(normalizedScrollTop);
+  }
+
+  function commitSelectedForumThreadId(threadId: number) {
+    onSelectedForumThreadChangeRef.current?.(
+      normalizePanelForumThreadId(threadId)
+    );
+  }
 
   if (!canShowPanel) return null;
 
@@ -741,22 +981,20 @@ export default function CollaborationPanel({
             <>
               <span className={statusPillClass}>
                 <Icon icon="code-branch" />
-                Contribution{' '}
-                {normalizeContributionStatus(build.contributionStatus)}
+                {normalizeContributionStatus(build.contributionStatus) ===
+                'draft'
+                  ? 'Branch'
+                  : `Branch ${normalizeContributionStatus(
+                      build.contributionStatus
+                    )}`}
               </span>
-              {normalizeContributionStatus(build.contributionStatus) ===
-              'submitted' ? (
-                <span className={mutedTextClass}>
-                  Submitted forks are locked.
-                </span>
-              ) : null}
             </>
           )}
           <span className={summaryPillClass}>
             <Icon icon="comment" />
-            {comments.length}
+            {forumThreads.length}
           </span>
-          {isOwner && !isContributionFork ? (
+          {!embedded && isOwner && !isContributionFork ? (
             <span className={summaryPillClass}>
               <Icon icon="code-branch" />
               {reviewContributions.length}
@@ -778,7 +1016,11 @@ export default function CollaborationPanel({
       </div>
 
       {contentExpanded ? (
-        <div className={expandedBodyClass}>
+        <div
+          ref={embedded ? embeddedScrollRef : undefined}
+          className={expandedBodyClass}
+          onScroll={embedded ? handleEmbeddedScroll : undefined}
+        >
           {embedded ? (
             renderEmbeddedBody()
           ) : (
@@ -791,8 +1033,7 @@ export default function CollaborationPanel({
                 </>
               ) : (
                 <div className={splitClass}>
-                  {renderSharedLumineChatHistoryCard()}
-                  {renderComments()}
+                  {renderForum()}
                 </div>
               )}
             </>
@@ -804,85 +1045,29 @@ export default function CollaborationPanel({
 
   function renderEmbeddedBody() {
     if (isOwner && !isContributionFork) {
-      const ownerContributionsShown =
-        loadingContributions ||
-        reviewContributions.length > 0 ||
-        Boolean(selectedContribution);
       return (
         <div className={embeddedBodyStackClass}>
-          {renderComments()}
+          {renderForum()}
           {renderCollaborationRequests()}
           {renderCollaborationPromptCard()}
           {contributorsCardShown ? renderInviteCard() : null}
-          {ownerContributionsShown ? renderOwnerContributions() : null}
         </div>
       );
     }
     if (!isContributionFork) {
       return (
         <div className={embeddedBodyStackClass}>
-          {renderViewerInviteCard()}
-          {renderSharedLumineChatHistoryCard()}
-          {renderComments()}
+          {renderForum()}
         </div>
       );
     }
+    const canCompleteConflictMerge =
+      Number(build.rootBuildUserId || 0) === Number(userId || 0) &&
+      normalizeContributionStatus(build.contributionStatus) === 'merging';
     return (
       <div className={embeddedBodyStackClass}>
-        {renderSharedLumineChatHistoryCard()}
-        {renderComments()}
-      </div>
-    );
-  }
-
-  function renderSharedLumineChatHistoryCard() {
-    if (!sharedLumineChatTarget) return null;
-    const targetTitle =
-      isOwner && !isContributionFork
-        ? `${sharedLumineChatTarget.username || 'Contributor'}'s Lumine history`
-        : 'Shared Lumine history';
-    if (sharedLumineChatTargetVisibility === 'private') {
-      return (
-        <div className={detailClass}>
-          <div className={rowClass}>
-            <strong>{targetTitle}</strong>
-          </div>
-          <span className={mutedTextClass}>No shared transcript.</span>
-        </div>
-      );
-    }
-    return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>{targetTitle}</strong>
-          <span className={statusPillClass}>
-            {sharedLumineChatTargetVisibility}
-          </span>
-          {sharedLumineChatLoading ? (
-            <span className={mutedTextClass}>Loading...</span>
-          ) : null}
-        </div>
-        {sharedLumineChatError ? (
-          <span className={errorClass}>{sharedLumineChatError}</span>
-        ) : sharedLumineChatMessages.length === 0 ? (
-          <span className={mutedTextClass}>No visible messages yet.</span>
-        ) : (
-          <div className={lumineHistoryListClass}>
-            {sharedLumineChatMessages.map((message) => (
-              <div key={message.id} className={lumineHistoryMessageClass}>
-                <div className={lumineHistoryMessageHeaderClass}>
-                  <span>{message.role === 'user' ? 'Builder' : 'Lumine'}</span>
-                  {message.createdAt ? (
-                    <span>{formatShortTimestamp(message.createdAt)}</span>
-                  ) : null}
-                </div>
-                <div className={lumineHistoryMessageBodyClass}>
-                  {message.content}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {renderContributionDetail(canCompleteConflictMerge)}
+        {renderForum()}
       </div>
     );
   }
@@ -947,78 +1132,6 @@ export default function CollaborationPanel({
     );
   }
 
-  function renderViewerInviteCard() {
-    if (!myCollaborationRequest && !myCollaborationRequestLoading) {
-      return null;
-    }
-    const inviteId = Number(myCollaborationRequest?.inviteId || 0);
-    const status = myCollaborationRequest?.status || '';
-    const isInvited = status === 'invited';
-    const isAccepted = status === 'accepted';
-    return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>Contributor invite</strong>
-          {myCollaborationRequestLoading ? (
-            <span className={mutedTextClass}>Loading...</span>
-          ) : (
-            <span className={statusPillClass}>{status}</span>
-          )}
-        </div>
-        {isInvited ? (
-          <>
-            <span className={mutedTextClass}>
-              The owner invited you to collaborate on this Build.
-            </span>
-            <div className={rowClass}>
-              <GameCTAButton
-                variant="logoBlue"
-                size="sm"
-                icon="check"
-                loading={actionLoading === 'accept-invite'}
-                disabled={Boolean(actionLoading) || !inviteId}
-                onClick={handleAcceptContributorInvite}
-              >
-                Accept Invite
-              </GameCTAButton>
-              <GameCTAButton
-                variant="neutral"
-                size="sm"
-                icon="ban"
-                loading={actionLoading === 'decline-invite'}
-                disabled={Boolean(actionLoading) || !inviteId}
-                onClick={handleDeclineContributorInvite}
-              >
-                Decline
-              </GameCTAButton>
-            </div>
-          </>
-        ) : isAccepted ? (
-          <>
-            <span className={mutedTextClass}>
-              You can start a project-scoped contribution fork.
-            </span>
-            <div className={rowClass}>
-              <GameCTAButton
-                variant="success"
-                size="sm"
-                icon="code-branch"
-                loading={actionLoading === 'start-contribution'}
-                disabled={Boolean(actionLoading)}
-                onClick={handleStartContribution}
-              >
-                Start Contributing
-              </GameCTAButton>
-            </div>
-          </>
-        ) : null}
-        {requestActionError ? (
-          <span className={errorClass}>{requestActionError}</span>
-        ) : null}
-      </div>
-    );
-  }
-
   function renderCollaborationRequests() {
     if (!isOwner || isContributionFork) return null;
     return (
@@ -1052,7 +1165,7 @@ export default function CollaborationPanel({
               : 'No pending requests.'}
           </span>
         ) : (
-          <div className={commentListClass}>
+          <div className={listClass}>
             {collaborationRequests.map((request) => (
               <div key={request.id} className={requestCardClass}>
                 <div className={rowClass}>
@@ -1120,19 +1233,19 @@ export default function CollaborationPanel({
       reviewContributions.length === 0 &&
       !selectedContribution
     ) {
-      return showCommentsFallback ? renderComments() : null;
+      return showCommentsFallback ? renderForum() : null;
     }
     return (
       <div className={splitClass}>
         <div className={listClass}>
           <div className={rowClass}>
-            <strong>Contributions</strong>
+            <strong>Branches</strong>
             {loadingContributions ? (
               <span className={mutedTextClass}>Loading...</span>
             ) : null}
           </div>
           {reviewContributions.length === 0 ? (
-            <span className={mutedTextClass}>No contributions yet.</span>
+            <span className={mutedTextClass}>No branches yet.</span>
           ) : (
             reviewContributions.map((contribution) => (
               <button
@@ -1146,22 +1259,22 @@ export default function CollaborationPanel({
                 <span className={contributionTitleClass}>
                   {contribution.username || 'Contributor'}
                 </span>
-                <span className={mutedTextClass}>
-                  {normalizeContributionStatus(
-                    contribution.contributionStatus
-                  )}
-                </span>
+                {normalizeContributionStatus(contribution.contributionStatus) !==
+                'draft' ? (
+                  <span className={mutedTextClass}>
+                    {normalizeContributionStatus(
+                      contribution.contributionStatus
+                    )}
+                  </span>
+                ) : null}
               </button>
             ))
           )}
         </div>
         {selectedContribution ? (
-          <>
-            {renderContributionDetail(true)}
-            {renderSharedLumineChatHistoryCard()}
-          </>
+          renderContributionDetail(true)
         ) : showCommentsFallback ? (
-          renderComments()
+          renderForum()
         ) : null}
       </div>
     );
@@ -1190,27 +1303,6 @@ export default function CollaborationPanel({
       );
     } finally {
       setSavingSettings(false);
-    }
-  }
-
-  async function reloadSharedLumineChatHistory(targetBuildId: number) {
-    if (!targetBuildId) return;
-    setSharedLumineChatLoading(true);
-    setSharedLumineChatError('');
-    try {
-      const result = await loadBuildLumineChatHistory(targetBuildId);
-      setSharedLumineChatMessages(
-        Array.isArray(result?.messages) ? result.messages : []
-      );
-    } catch (error: any) {
-      setSharedLumineChatMessages([]);
-      setSharedLumineChatError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Lumine chat history is not shared'
-      );
-    } finally {
-      setSharedLumineChatLoading(false);
     }
   }
 
@@ -1248,20 +1340,6 @@ export default function CollaborationPanel({
     }
   }
 
-  async function reloadMyCollaborationRequest() {
-    if (!rootBuildId || !userId) return;
-    setMyCollaborationRequestLoading(true);
-    try {
-      const result = await loadMyBuildCollaborationRequest(rootBuildId);
-      setMyCollaborationRequest(result?.request || null);
-    } catch (error) {
-      console.error('Failed to load my build collaboration request:', error);
-      setMyCollaborationRequest(null);
-    } finally {
-      setMyCollaborationRequestLoading(false);
-    }
-  }
-
   async function reloadCollaborationRequests(hidden: boolean) {
     if (!rootBuildId || !isOwner || isContributionFork) return;
     setLoadingCollaborationRequests(true);
@@ -1270,9 +1348,15 @@ export default function CollaborationPanel({
         buildId: rootBuildId,
         hidden
       });
-      setCollaborationRequests(
-        Array.isArray(result?.requests) ? result.requests : []
-      );
+      const nextRequests = Array.isArray(result?.requests)
+        ? result.requests
+        : [];
+      setCollaborationRequests(nextRequests);
+      if (!hidden) {
+        patchPendingCollaborationRequestCount(
+          getVisiblePendingCollaborationRequestCount(nextRequests)
+        );
+      }
     } catch (error) {
       console.error('Failed to load build collaboration requests:', error);
     } finally {
@@ -1280,17 +1364,63 @@ export default function CollaborationPanel({
     }
   }
 
+  function getVisiblePendingCollaborationRequestCount(
+    requests = collaborationRequests
+  ) {
+    return requests.filter(
+      (request) =>
+        request.status === 'pending' && Number(request.ownerHidden || 0) === 0
+    ).length;
+  }
+
+  function patchPendingCollaborationRequestCount(count: number) {
+    onBuildPatch({
+      pendingCollaborationRequestCount: Math.max(
+        0,
+        Math.floor(Number(count) || 0)
+      )
+    });
+  }
+
+  function getPendingRequestCountAfterResolving(
+    request?: BuildCollaborationRequest | null
+  ) {
+    if (
+      !request ||
+      request.status !== 'pending' ||
+      Number(request.ownerHidden || 0) !== 0
+    ) {
+      return null;
+    }
+    const currentCount = Math.max(
+      Math.floor(Number(build.pendingCollaborationRequestCount) || 0),
+      getVisiblePendingCollaborationRequestCount()
+    );
+    return Math.max(0, currentCount - 1);
+  }
+
   async function handleAcceptCollaborationRequest(requestId: number) {
     if (!rootBuildId || !requestId || actionLoading) return;
     setActionLoading(`accept-request-${requestId}`);
     setRequestActionError('');
     try {
+      const request = collaborationRequests.find(
+        (entry) => Number(entry.id) === Number(requestId)
+      );
+      const nextPendingCount = getPendingRequestCountAfterResolving(request);
       const result = await acceptBuildCollaborationRequest({
         buildId: rootBuildId,
         requestId
       });
       if (result?.build) {
-        onBuildPatch(result.build);
+        onBuildPatch({
+          ...result.build,
+          ...(nextPendingCount !== null
+            ? { pendingCollaborationRequestCount: nextPendingCount }
+            : {})
+        });
+      } else if (nextPendingCount !== null) {
+        patchPendingCollaborationRequestCount(nextPendingCount);
       }
       setCollaborationRequests((current) =>
         current.filter((request) => Number(request.id) !== Number(requestId))
@@ -1312,6 +1442,10 @@ export default function CollaborationPanel({
     setActionLoading(`reject-request-${requestId}`);
     setRequestActionError('');
     try {
+      const request = collaborationRequests.find(
+        (entry) => Number(entry.id) === Number(requestId)
+      );
+      const nextPendingCount = getPendingRequestCountAfterResolving(request);
       const result = await rejectBuildCollaborationRequest({
         buildId: rootBuildId,
         requestId
@@ -1329,6 +1463,9 @@ export default function CollaborationPanel({
           current.filter((request) => Number(request.id) !== Number(requestId))
         );
       }
+      if (nextPendingCount !== null) {
+        patchPendingCollaborationRequestCount(nextPendingCount);
+      }
     } catch (error: any) {
       setRequestActionError(
         error?.response?.data?.error ||
@@ -1345,6 +1482,10 @@ export default function CollaborationPanel({
     setActionLoading(`hide-request-${requestId}`);
     setRequestActionError('');
     try {
+      const request = collaborationRequests.find(
+        (entry) => Number(entry.id) === Number(requestId)
+      );
+      const nextPendingCount = getPendingRequestCountAfterResolving(request);
       const result = await hideBuildCollaborationRequest({
         buildId: rootBuildId,
         requestId
@@ -1353,6 +1494,9 @@ export default function CollaborationPanel({
         setCollaborationRequests((current) =>
           current.filter((request) => Number(request.id) !== Number(requestId))
         );
+        if (nextPendingCount !== null) {
+          patchPendingCollaborationRequestCount(nextPendingCount);
+        }
       }
     } catch (error: any) {
       setRequestActionError(
@@ -1385,93 +1529,30 @@ export default function CollaborationPanel({
     }
   }
 
-  async function handleAcceptContributorInvite() {
-    const inviteId = Number(myCollaborationRequest?.inviteId || 0);
-    if (!rootBuildId || !inviteId || actionLoading) return;
-    setActionLoading('accept-invite');
-    setRequestActionError('');
-    try {
-      const result = await acceptBuildContributorInvite({
-        buildId: rootBuildId,
-        inviteId
-      });
-      if (result?.build) {
-        onBuildPatch(result.build);
-      }
-      await startContributionFromAcceptedInvite();
-    } catch (error: any) {
-      setRequestActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to accept contributor invite'
-      );
-    } finally {
-      setActionLoading('');
-    }
-  }
-
-  async function handleDeclineContributorInvite() {
-    const inviteId = Number(myCollaborationRequest?.inviteId || 0);
-    if (!rootBuildId || !inviteId || actionLoading) return;
-    setActionLoading('decline-invite');
-    setRequestActionError('');
-    try {
-      const result = await declineBuildContributorInvite({
-        buildId: rootBuildId,
-        inviteId
-      });
-      if (result?.success) {
-        setMyCollaborationRequest(null);
-      }
-    } catch (error: any) {
-      setRequestActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to decline contributor invite'
-      );
-    } finally {
-      setActionLoading('');
-    }
-  }
-
-  async function handleStartContribution() {
-    if (!rootBuildId || actionLoading) return;
-    setActionLoading('start-contribution');
-    setRequestActionError('');
-    await startContributionFromAcceptedInvite();
-    setActionLoading('');
-  }
-
-  async function startContributionFromAcceptedInvite() {
-    try {
-      const result = await createBuildContributionFork(rootBuildId);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-        return;
-      }
-      setMyCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-    } catch (error: any) {
-      setMyCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-      setRequestActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Invite accepted, but failed to start contribution'
-      );
-    }
-  }
-
   async function handleSelectContribution(nextContributionBuildId: number) {
     setSelectedContributionId(nextContributionBuildId);
     await reloadContributionDetail(nextContributionBuildId);
-    await reloadComments(nextContributionBuildId);
+    await reloadForumThreads(nextContributionBuildId);
+  }
+
+  function handlePreviewContribution(nextContributionBuildId: number) {
+    if (!nextContributionBuildId) return;
+    const contribution = contributions.find(
+      (entry) => Number(entry.id) === Number(nextContributionBuildId)
+    );
+    navigate(
+      getBuildWorkspacePath(
+        contribution || {
+          id: nextContributionBuildId,
+          contributionRootBuildId: rootBuildId
+        }
+      ),
+      {
+        state: {
+          openVersionsPanel: true
+        }
+      }
+    );
   }
 
   async function reloadContributionDetail(nextContributionBuildId: number) {
@@ -1487,6 +1568,14 @@ export default function CollaborationPanel({
         : [];
       setSelectedContribution(result?.contribution || null);
       setChangedFiles(nextFiles);
+      setConflictMarkerPaths(
+        nextFiles
+          .filter(
+            (file: BuildContributionFileDiff) =>
+              file.mergeStatus === 'conflict'
+          )
+          .map((file: BuildContributionFileDiff) => file.path)
+      );
       setSelectedPaths(
         nextFiles.map((file: BuildContributionFileDiff) => file.path)
       );
@@ -1495,38 +1584,8 @@ export default function CollaborationPanel({
       setActionError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to load contribution'
+          'Failed to load branch'
       );
-    }
-  }
-
-  async function handleRejectContribution() {
-    if (!rootBuildId || !selectedContributionId || actionLoading) return;
-    setActionLoading('reject');
-    setActionError('');
-    try {
-      const result = await rejectBuildContribution({
-        buildId: rootBuildId,
-        contributionBuildId: selectedContributionId
-      });
-      if (result?.contribution) {
-        setSelectedContribution(result.contribution);
-        setContributions((current) =>
-          current.map((entry) =>
-            entry.id === selectedContributionId
-              ? { ...entry, ...result.contribution }
-              : entry
-          )
-        );
-      }
-    } catch (error: any) {
-      setActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to reject contribution'
-      );
-    } finally {
-      setActionLoading('');
     }
   }
 
@@ -1545,6 +1604,12 @@ export default function CollaborationPanel({
         filePaths: selectedPaths
       });
       if (result?.success) {
+        const conflictPaths = Array.isArray(result.conflicts)
+          ? result.conflicts
+              .map((conflict: any) => String(conflict?.path || '').trim())
+              .filter(Boolean)
+          : [];
+        setConflictMarkerPaths(conflictPaths);
         onCanonicalMerge({
           build: result.build || null,
           projectFiles: Array.isArray(result.projectFiles)
@@ -1571,7 +1636,70 @@ export default function CollaborationPanel({
       setActionError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to merge contribution'
+          'Failed to merge branch'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleUpdateVersionFromMain() {
+    if (!rootBuildId || !contributionBuildId || actionLoading) return;
+    setActionLoading('update-from-main');
+    setActionError('');
+    try {
+      const filesReady = onBeforeContributionAction
+        ? await onBeforeContributionAction('update-from-main')
+        : true;
+      if (!filesReady) return;
+      const result = await updateBuildContributionFromMain({
+        buildId: rootBuildId,
+        contributionBuildId
+      });
+      if (result?.code === 'build_contribution_conflict_markers_remaining') {
+        const markerPaths = Array.isArray(result.conflictMarkerPaths)
+          ? result.conflictMarkerPaths
+          : [];
+        setConflictMarkerPaths(markerPaths);
+        setActionError(
+          markerPaths.length > 0
+            ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
+            : 'Resolve all conflict markers before updating from main.'
+        );
+        return;
+      }
+      if (result?.success) {
+        if (result.contribution) {
+          onBuildPatch(result.contribution);
+          setSelectedContribution(result.contribution);
+        }
+        onVersionProjectFilesUpdate?.({
+          build: result.contribution || null,
+          projectFiles: Array.isArray(result.projectFiles)
+            ? result.projectFiles
+            : null
+        });
+        setChangedFiles([]);
+        setSelectedPaths([]);
+        setPreviewPath('');
+        if (Array.isArray(result.conflicts) && result.conflicts.length > 0) {
+          setConflictMarkerPaths(
+            result.conflicts
+              .map((conflict: any) => String(conflict?.path || '').trim())
+              .filter(Boolean)
+          );
+          setActionError(
+            'Main was merged into this branch with conflict markers. Ask Lumine to resolve them before merging.'
+          );
+        } else {
+          setConflictMarkerPaths([]);
+        }
+      }
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to update from main'
       );
     } finally {
       setActionLoading('');
@@ -1595,6 +1723,7 @@ export default function CollaborationPanel({
         const markerPaths = Array.isArray(result.conflictMarkerPaths)
           ? result.conflictMarkerPaths
           : [];
+        setConflictMarkerPaths(markerPaths);
         setActionError(
           markerPaths.length > 0
             ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
@@ -1603,6 +1732,7 @@ export default function CollaborationPanel({
         return;
       }
       if (result?.success) {
+        setConflictMarkerPaths([]);
         onCanonicalMerge({
           build: result.build || null,
           projectFiles: Array.isArray(result.projectFiles)
@@ -1622,71 +1752,273 @@ export default function CollaborationPanel({
       }
     } catch (error: any) {
       const markerPaths = error?.response?.data?.conflictMarkerPaths;
+      if (Array.isArray(markerPaths)) {
+        setConflictMarkerPaths(markerPaths);
+      }
       setActionError(
         Array.isArray(markerPaths) && markerPaths.length > 0
           ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
           : error?.response?.data?.error ||
               error?.message ||
-              'Failed to complete contribution merge'
+              'Failed to complete branch merge'
       );
     } finally {
       setActionLoading('');
     }
   }
 
-  async function reloadComments(nextContributionBuildId: number) {
-    if (!rootBuildId) return;
+  async function handleAskLumineToResolveConflicts() {
+    if (!onAskLumineToResolveConflicts || actionLoading) return;
+    setActionLoading('ask-lumine-conflicts');
+    setActionError('');
     try {
-      const result = await loadBuildContributionComments({
+      const started = await onAskLumineToResolveConflicts(
+        activeConflictMarkerPaths
+      );
+      if (!started) {
+        setActionError('Lumine could not start right now. Try again soon.');
+      }
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to ask Lumine for help'
+      );
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function reloadForumThreads(nextContributionBuildId: number) {
+    if (!rootBuildId) return;
+    setForumLoading(true);
+    setForumError('');
+    try {
+      const result = await loadBuildContributionForumThreads({
         buildId: rootBuildId,
         contributionBuildId: nextContributionBuildId || null
       });
-      setComments(Array.isArray(result?.comments) ? result.comments : []);
-    } catch (error) {
-      console.error('Failed to load build contribution comments:', error);
+      const nextThreads = Array.isArray(result?.threads)
+        ? result.threads
+        : [];
+      const selectedThreadId = Number(selectedThread?.id || 0);
+      const persistedThreadId = selectedThreadId
+        ? 0
+        : initialSelectedForumThreadIdRef.current;
+      const selectedThreadStillExists =
+        selectedThreadId > 0 &&
+        nextThreads.some(
+          (thread: BuildForumThread) => Number(thread.id) === selectedThreadId
+        );
+      const persistedThreadStillExists =
+        persistedThreadId > 0 &&
+        nextThreads.some(
+          (thread: BuildForumThread) => Number(thread.id) === persistedThreadId
+        );
+      setForumThreads(nextThreads);
+      setSelectedThread((current) => {
+        if (!current) return current;
+        return selectedThreadStillExists ? current : null;
+      });
+      if (!selectedThreadStillExists) {
+        setThreadReplies([]);
+      }
+      if (selectedThreadId > 0 && !selectedThreadStillExists) {
+        commitSelectedForumThreadId(0);
+      }
+      if (persistedThreadStillExists) {
+        await handleOpenForumThread(persistedThreadId, {
+          persistSelection: false,
+          showLoading: false
+        });
+      } else if (persistedThreadId > 0) {
+        commitSelectedForumThreadId(0);
+      }
+    } catch (error: any) {
+      setForumError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to load team forum'
+      );
+    } finally {
+      setForumLoading(false);
     }
   }
 
-  async function handlePostComment() {
-    if (!rootBuildId || !commentInput.trim() || commentLoading) return;
-    setCommentLoading(true);
-    setCommentError('');
+  async function handleCreateForumThread() {
+    if (
+      !rootBuildId ||
+      !threadTitleInput.trim() ||
+      !threadBodyInput.trim() ||
+      forumActionLoading
+    ) {
+      return;
+    }
+    setForumActionLoading('create-thread');
+    setForumError('');
     try {
-      const result = await createBuildContributionComment({
+      const result = await createBuildContributionForumThread({
         buildId: rootBuildId,
         contributionBuildId:
           selectedContributionId || contributionBuildId || null,
-        body: commentInput.trim()
+        title: threadTitleInput.trim(),
+        body: threadBodyInput.trim()
       });
-      if (result?.comment) {
-        setComments((current) => [...current, result.comment]);
-        setCommentInput('');
+      if (result?.thread) {
+        setForumThreads((current) => [result.thread, ...current]);
+        setSelectedThread(result.thread);
+        setThreadReplies([]);
+        commitSelectedForumThreadId(result.thread.id);
+        setThreadTitleInput('');
+        setThreadBodyInput('');
       }
     } catch (error: any) {
-      setCommentError(
+      setForumError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to post comment'
+          'Failed to create topic'
       );
     } finally {
-      setCommentLoading(false);
+      setForumActionLoading('');
     }
   }
 
-  async function handleDeleteComment(commentId: number) {
-    if (!rootBuildId) return;
+  async function handleOpenForumThread(
+    threadId: number,
+    options?: {
+      persistSelection?: boolean;
+      showLoading?: boolean;
+    }
+  ) {
+    if (!rootBuildId || !threadId) return;
+    const showLoading = options?.showLoading !== false;
+    if (showLoading) {
+      setForumActionLoading(`load-thread-${threadId}`);
+    }
+    setForumError('');
     try {
-      const result = await deleteBuildContributionComment({
+      const result = await loadBuildContributionForumThread({
         buildId: rootBuildId,
-        commentId
+        threadId
       });
-      if (result?.success) {
-        setComments((current) =>
-          current.filter((comment) => comment.id !== commentId)
+      setSelectedThread(result?.thread || null);
+      setThreadReplies(Array.isArray(result?.replies) ? result.replies : []);
+      if (options?.persistSelection !== false) {
+        commitSelectedForumThreadId(result?.thread?.id || threadId);
+      }
+    } catch (error: any) {
+      setForumError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to open topic'
+      );
+    } finally {
+      if (showLoading) {
+        setForumActionLoading('');
+      }
+    }
+  }
+
+  async function handleCreateForumReply() {
+    if (
+      !rootBuildId ||
+      !selectedThread?.id ||
+      !replyInput.trim() ||
+      forumActionLoading
+    ) {
+      return;
+    }
+    setForumActionLoading('create-reply');
+    setForumError('');
+    try {
+      const result = await createBuildContributionForumReply({
+        buildId: rootBuildId,
+        threadId: selectedThread.id,
+        body: replyInput.trim()
+      });
+      if (result?.reply) {
+        setThreadReplies((current) => [...current, result.reply]);
+        setReplyInput('');
+      }
+      if (result?.thread) {
+        setSelectedThread(result.thread);
+        setForumThreads((current) =>
+          current.map((thread) =>
+            Number(thread.id) === Number(result.thread.id)
+              ? result.thread
+              : thread
+          )
         );
       }
-    } catch (error) {
-      console.error('Failed to delete contribution comment:', error);
+    } catch (error: any) {
+      setForumError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to reply'
+      );
+    } finally {
+      setForumActionLoading('');
+    }
+  }
+
+  async function handleDeleteForumThread(threadId: number) {
+    if (!rootBuildId || !threadId || forumActionLoading) return;
+    setForumActionLoading(`delete-thread-${threadId}`);
+    setForumError('');
+    try {
+      const result = await deleteBuildContributionForumThread({
+        buildId: rootBuildId,
+        threadId
+      });
+      if (result?.success) {
+        setForumThreads((current) =>
+          current.filter((thread) => Number(thread.id) !== Number(threadId))
+        );
+        if (Number(selectedThread?.id || 0) === Number(threadId)) {
+          setSelectedThread(null);
+          setThreadReplies([]);
+          commitSelectedForumThreadId(0);
+        } else if (
+          Number(initialSelectedForumThreadIdRef.current || 0) ===
+          Number(threadId)
+        ) {
+          commitSelectedForumThreadId(0);
+        }
+      }
+    } catch (error: any) {
+      setForumError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to delete topic'
+      );
+    } finally {
+      setForumActionLoading('');
+    }
+  }
+
+  async function handleDeleteForumReply(replyId: number) {
+    if (!rootBuildId || !selectedThread?.id || !replyId || forumActionLoading) {
+      return;
+    }
+    setForumActionLoading(`delete-reply-${replyId}`);
+    setForumError('');
+    try {
+      const result = await deleteBuildContributionForumReply({
+        buildId: rootBuildId,
+        threadId: selectedThread.id,
+        replyId
+      });
+      if (result?.success) {
+        await handleOpenForumThread(selectedThread.id);
+      }
+    } catch (error: any) {
+      setForumError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to delete reply'
+      );
+    } finally {
+      setForumActionLoading('');
     }
   }
 
@@ -1703,14 +2035,31 @@ export default function CollaborationPanel({
     const contributionStatus = normalizeContributionStatus(
       activeContribution.contributionStatus
     );
+    const contributionCanMerge = contributionStatus === 'draft';
+    const canUpdateFromMain =
+      contributionStatus === 'draft' &&
+      Number(activeContribution.contributionContributorId || 0) ===
+        Number(userId || 0);
     return (
       <div className={detailClass}>
         <div className={rowClass}>
           <strong>
-            {ownerReview ? 'Review contribution' : 'Changed files'}
+            {ownerReview ? 'Review branch' : 'Changed files'}
           </strong>
           <span className={mutedTextClass}>{changedFiles.length} changed</span>
-          <span className={statusPillClass}>{contributionStatus}</span>
+          {contributionStatus !== 'draft' ? (
+            <span className={statusPillClass}>{contributionStatus}</span>
+          ) : null}
+          {ownerReview ? (
+            <GameCTAButton
+              variant="neutral"
+              size="sm"
+              icon="eye"
+              onClick={() => handlePreviewContribution(activeContribution.id)}
+            >
+              Preview
+            </GameCTAButton>
+          ) : null}
         </div>
         {changedFiles.length === 0 ? (
           <span className={mutedTextClass}>No file changes loaded.</span>
@@ -1722,9 +2071,7 @@ export default function CollaborationPanel({
                   <input
                     type="checkbox"
                     checked={selectedPaths.includes(file.path)}
-                    disabled={
-                      !ownerReview || contributionStatus !== 'submitted'
-                    }
+                    disabled={!ownerReview || !contributionCanMerge}
                     onChange={() => toggleSelectedPath(file.path)}
                   />
                   <strong>{file.status}</strong>
@@ -1761,7 +2108,38 @@ export default function CollaborationPanel({
             ) : null}
           </>
         )}
-        {ownerReview && contributionStatus === 'submitted' ? (
+        {canUpdateFromMain ? (
+          <div className={rowClass}>
+            <GameCTAButton
+              variant="neutral"
+              size="sm"
+              icon="redo"
+              loading={actionLoading === 'update-from-main'}
+              disabled={Boolean(actionLoading)}
+              onClick={handleUpdateVersionFromMain}
+            >
+              Update from Main
+            </GameCTAButton>
+          </div>
+        ) : null}
+        {!ownerReview &&
+        contributionStatus === 'draft' &&
+        onAskLumineToResolveConflicts &&
+        activeConflictMarkerPaths.length > 0 ? (
+          <div className={rowClass}>
+            <GameCTAButton
+              variant="purple"
+              size="sm"
+              icon="wand-magic-sparkles"
+              loading={actionLoading === 'ask-lumine-conflicts'}
+              disabled={Boolean(actionLoading)}
+              onClick={handleAskLumineToResolveConflicts}
+            >
+              Ask Lumine to Fix
+            </GameCTAButton>
+          </div>
+        ) : null}
+        {ownerReview && contributionCanMerge ? (
           <div className={rowClass}>
             <GameCTAButton
               variant="success"
@@ -1771,17 +2149,7 @@ export default function CollaborationPanel({
               disabled={Boolean(actionLoading) || selectedPaths.length === 0}
               onClick={handleMergeContribution}
             >
-              Merge Selected
-            </GameCTAButton>
-            <GameCTAButton
-              variant="neutral"
-              size="sm"
-              icon="ban"
-              loading={actionLoading === 'reject'}
-              disabled={Boolean(actionLoading)}
-              onClick={handleRejectContribution}
-            >
-              Reject
+              Merge Branch
             </GameCTAButton>
           </div>
         ) : null}
@@ -1791,6 +2159,18 @@ export default function CollaborationPanel({
               Conflict markers are in the project files. Resolve them with
               Lumine or edit the files, then complete the merge.
             </span>
+            {onAskLumineToResolveConflicts ? (
+              <GameCTAButton
+                variant="purple"
+                size="sm"
+                icon="wand-magic-sparkles"
+                loading={actionLoading === 'ask-lumine-conflicts'}
+                disabled={Boolean(actionLoading)}
+                onClick={handleAskLumineToResolveConflicts}
+              >
+                Ask Lumine to Fix
+              </GameCTAButton>
+            ) : null}
             <GameCTAButton
               variant="success"
               size="sm"
@@ -1808,72 +2188,311 @@ export default function CollaborationPanel({
     );
   }
 
-  function renderComments() {
+  function renderForum() {
+    if (selectedThread) {
+      const threadUser = getForumUser(selectedThread);
+      return (
+        <div className={detailClass}>
+          <div className={forumDetailHeaderClass}>
+            <button
+              type="button"
+              className={forumBackButtonClass}
+              onClick={() => {
+                setSelectedThread(null);
+                setThreadReplies([]);
+                setReplyInput('');
+                commitSelectedForumThreadId(0);
+              }}
+            >
+              <Icon icon="arrow-left" />
+              Topics
+            </button>
+            <div className={forumPostClass}>
+              <ProfilePic
+                className={forumAvatarClass}
+                userId={threadUser.id}
+                profilePicUrl={threadUser.profilePicUrl}
+              />
+              <div className={forumPostMainClass}>
+                <div className={forumPostHeaderClass}>
+                  <div className={forumAuthorMetaClass}>
+                    <strong className={forumThreadTitleClass}>
+                      {selectedThread.title}
+                    </strong>
+                    <div className={forumThreadMetaClass}>
+                      <span
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
+                      >
+                        <UsernameText
+                          className={forumUsernameClass}
+                          user={threadUser}
+                        />
+                      </span>
+                      {selectedThread.createdAt ? (
+                        <>
+                          <span>·</span>
+                          <span>{timeSince(selectedThread.createdAt)}</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                  {userCanDeleteForumItem(selectedThread) ? (
+                    <div className={forumPostActionsClass}>
+                      <GameCTAButton
+                        variant="neutral"
+                        size="sm"
+                        icon="trash-alt"
+                        loading={
+                          forumActionLoading ===
+                          `delete-thread-${selectedThread.id}`
+                        }
+                        disabled={Boolean(forumActionLoading)}
+                        onClick={() =>
+                          handleDeleteForumThread(selectedThread.id)
+                        }
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                <div className={forumPostBodyClass}>{selectedThread.body}</div>
+              </div>
+            </div>
+          </div>
+          <div className={rowClass}>
+            <strong>Replies</strong>
+            <span className={mutedTextClass}>
+              {threadReplies.length}{' '}
+              {threadReplies.length === 1 ? 'reply' : 'replies'}
+            </span>
+          </div>
+          <div className={forumPostListClass}>
+            {threadReplies.length === 0 ? (
+              <span className={mutedTextClass}>No replies yet.</span>
+            ) : (
+              threadReplies.map((reply) => renderForumReply(reply))
+            )}
+          </div>
+          <div className={forumComposerClass}>
+            <div className={forumComposerTitleClass}>
+              <Icon icon="reply" />
+              Reply
+            </div>
+            <Textarea
+              className={textareaClass}
+              value={replyInput}
+              onChange={(event) => setReplyInput(event.target.value)}
+              placeholder="Add a reply..."
+              minRows={2}
+              maxRows={8}
+            />
+            <div className={forumActionsClass}>
+              {forumError ? (
+                <span className={errorClass}>{forumError}</span>
+              ) : null}
+              <GameCTAButton
+                variant="logoBlue"
+                size="sm"
+                icon="reply"
+                loading={forumActionLoading === 'create-reply'}
+                disabled={!replyInput.trim() || Boolean(forumActionLoading)}
+                onClick={handleCreateForumReply}
+              >
+                Reply
+              </GameCTAButton>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={detailClass}>
         <div className={rowClass}>
-          <strong>Comments</strong>
-          <span className={mutedTextClass}>{comments.length}</span>
-        </div>
-        <div className={commentListClass}>
-          {comments.length === 0 ? (
-            <span className={mutedTextClass}>No comments yet.</span>
-          ) : (
-            comments.map((comment) => (
-              <div key={comment.id} className={commentClass}>
-                <div className={commentHeaderClass}>
-                  <span>{comment.username || 'User'}</span>
-                  {Number(comment.userId) === Number(userId) ||
-                  canModerateContributionComments ? (
-                    <GameCTAButton
-                      variant="neutral"
-                      size="sm"
-                      icon="trash-alt"
-                      onClick={() => handleDeleteComment(comment.id)}
-                    >
-                      Delete
-                    </GameCTAButton>
-                  ) : null}
-                </div>
-                <div className={commentBodyClass}>{comment.body}</div>
-              </div>
-            ))
-          )}
-        </div>
-        <textarea
-          className={textareaClass}
-          value={commentInput}
-          onChange={(event) => setCommentInput(event.target.value)}
-          placeholder="Add a comment"
-        />
-        <div className={commentActionsClass}>
-          {commentError ? (
-            <span className={errorClass}>{commentError}</span>
+          <strong>Team Forum</strong>
+          <span className={mutedTextClass}>
+            {forumThreads.length}{' '}
+            {forumThreads.length === 1 ? 'topic' : 'topics'}
+          </span>
+          {forumLoading ? (
+            <span className={mutedTextClass}>Loading...</span>
           ) : null}
-          <GameCTAButton
-            variant="logoBlue"
-            size="sm"
-            icon="comment"
-            loading={commentLoading}
-            disabled={!commentInput.trim() || commentLoading}
-            onClick={handlePostComment}
-          >
-            Post
-          </GameCTAButton>
+        </div>
+        <div className={forumComposerClass}>
+          <div className={forumComposerTitleClass}>
+            <Icon icon="comments" />
+            New topic
+          </div>
+          <input
+            className={forumTitleInputClass}
+            value={threadTitleInput}
+            onChange={(event) => setThreadTitleInput(event.target.value)}
+            placeholder="Topic title"
+          />
+          <Textarea
+            className={textareaClass}
+            value={threadBodyInput}
+            onChange={(event) => setThreadBodyInput(event.target.value)}
+            placeholder="Share an update or ask the team..."
+            minRows={3}
+            maxRows={10}
+          />
+          <div className={forumActionsClass}>
+            {forumError ? (
+              <span className={errorClass}>{forumError}</span>
+            ) : null}
+            <GameCTAButton
+              variant="logoBlue"
+              size="sm"
+              icon="comment"
+              loading={forumActionLoading === 'create-thread'}
+              disabled={
+                !threadTitleInput.trim() ||
+                !threadBodyInput.trim() ||
+                Boolean(forumActionLoading)
+              }
+              onClick={handleCreateForumThread}
+            >
+              Post Topic
+            </GameCTAButton>
+          </div>
+        </div>
+        <div className={listClass}>
+          {forumThreads.length === 0 ? (
+            <span className={mutedTextClass}>No topics yet.</span>
+          ) : (
+            forumThreads.map((thread) => renderForumThread(thread))
+          )}
         </div>
       </div>
     );
+  }
+
+  function renderForumThread(thread: BuildForumThread) {
+    const threadUser = getForumUser(thread);
+    const canDeleteThread = userCanDeleteForumItem(thread);
+    return (
+      <div
+        key={thread.id}
+        className={forumThreadButtonClass}
+        role="button"
+        tabIndex={0}
+        onClick={() => handleOpenForumThread(thread.id)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            void handleOpenForumThread(thread.id);
+          }
+        }}
+      >
+        <div className={forumThreadMainClass}>
+          <span className={forumThreadTitleClass}>{thread.title}</span>
+          <span className={forumThreadPreviewClass}>{thread.body}</span>
+          <div className={forumThreadMetaClass}>
+            <span
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <UsernameText
+                className={forumUsernameClass}
+                user={threadUser}
+              />
+            </span>
+            {thread.createdAt ? (
+              <>
+                <span>·</span>
+                <span>{timeSince(thread.createdAt)}</span>
+              </>
+            ) : null}
+            {thread.lastReplyAt &&
+            Number(thread.lastReplyAt) !== Number(thread.createdAt || 0) ? (
+              <>
+                <span>·</span>
+                <span>active {timeSince(thread.lastReplyAt)}</span>
+              </>
+            ) : null}
+          </div>
+        </div>
+        <div className={rowClass}>
+          <span className={forumThreadCountClass}>
+            {Number(thread.replyCount || 0)}{' '}
+            {Number(thread.replyCount || 0) === 1 ? 'reply' : 'replies'}
+          </span>
+          {canDeleteThread ? (
+            <span
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <GameCTAButton
+                variant="neutral"
+                size="sm"
+                icon="trash-alt"
+                loading={forumActionLoading === `delete-thread-${thread.id}`}
+                disabled={Boolean(forumActionLoading)}
+                onClick={() => handleDeleteForumThread(thread.id)}
+              />
+            </span>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  function renderForumReply(reply: BuildForumReply) {
+    const replyUser = getForumUser(reply);
+    return (
+      <article key={reply.id} className={forumPostClass}>
+        <ProfilePic
+          className={forumAvatarClass}
+          userId={replyUser.id}
+          profilePicUrl={replyUser.profilePicUrl}
+        />
+        <div className={forumPostMainClass}>
+          <div className={forumPostHeaderClass}>
+            <div className={forumAuthorMetaClass}>
+              <UsernameText className={forumUsernameClass} user={replyUser} />
+              {reply.createdAt ? (
+                <span className={forumTimestampClass}>
+                  {timeSince(reply.createdAt)}
+                </span>
+              ) : null}
+            </div>
+            {userCanDeleteForumItem(reply) ? (
+              <div className={forumPostActionsClass}>
+                <GameCTAButton
+                  variant="neutral"
+                  size="sm"
+                  icon="trash-alt"
+                  loading={forumActionLoading === `delete-reply-${reply.id}`}
+                  disabled={Boolean(forumActionLoading)}
+                  onClick={() => handleDeleteForumReply(reply.id)}
+                />
+              </div>
+            ) : null}
+          </div>
+          <div className={forumPostBodyClass}>{reply.body}</div>
+        </div>
+      </article>
+    );
+  }
+
+  function userCanDeleteForumItem(item: { userId: number }) {
+    return Number(item.userId) === Number(userId) || canModerateForum;
+  }
+
+  function getForumUser(
+    item: Pick<BuildForumThread | BuildForumReply, 'userId' | 'username' | 'profilePicUrl'>
+  ): User {
+    return {
+      id: Number(item.userId || 0),
+      username: item.username || 'User',
+      profilePicUrl: item.profilePicUrl || ''
+    };
   }
 }
 
 function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
   return value === 'open_source' ? value : 'private';
-}
-
-function normalizeLumineChatVisibility(
-  value: unknown
-): BuildLumineChatVisibility {
-  return value === 'collaborators' ? value : 'private';
 }
 
 function getContributionAccessForCollaborationMode(
@@ -1886,24 +2505,10 @@ function normalizeContributionStatus(value: unknown): BuildContributionStatus {
   const normalized = String(value || '').trim();
   if (
     normalized === 'draft' ||
-    normalized === 'submitted' ||
     normalized === 'merging' ||
-    normalized === 'merged' ||
-    normalized === 'rejected' ||
-    normalized === 'withdrawn'
+    normalized === 'merged'
   ) {
     return normalized;
   }
   return 'none';
-}
-
-function formatShortTimestamp(value: unknown) {
-  const timestamp = Number(value || 0);
-  if (!Number.isFinite(timestamp) || timestamp <= 0) return '';
-  return new Date(timestamp * 1000).toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  });
 }

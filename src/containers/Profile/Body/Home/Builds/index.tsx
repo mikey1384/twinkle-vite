@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import BuildProjectListItem, {
   BuildProjectListItemData
 } from '~/components/BuildProjectListItem';
+import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
 import BuildDescriptionModal from '~/containers/Build/BuildDescriptionModal';
@@ -61,6 +62,9 @@ export default function Builds({
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [selectModalShown, setSelectModalShown] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [forkHistoryBuildId, setForkHistoryBuildId] = useState<number | null>(
+    null
+  );
 
   const buildRuntimeNavigationState = {
     runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
@@ -109,6 +113,7 @@ export default function Builds({
 
   useEffect(() => {
     setIsExpanded(false);
+    setForkHistoryBuildId(null);
   }, [profile.id]);
 
   useEffect(() => {
@@ -222,6 +227,7 @@ export default function Builds({
               isOwner={isOwnProfile}
               themeName={selectedTheme}
               onAddDescription={isOwnProfile ? setEditingBuild : undefined}
+              onOpenForkHistory={setForkHistoryBuildId}
             />
           ))}
         </div>
@@ -242,6 +248,13 @@ export default function Builds({
           onSubmit={handleSubmitMetadata}
         />
       )}
+      {forkHistoryBuildId ? (
+        <BuildForkHistoryModal
+          buildId={forkHistoryBuildId}
+          isOpen
+          onClose={() => setForkHistoryBuildId(null)}
+        />
+      ) : null}
     </ErrorBoundary>
   );
 

@@ -47,7 +47,7 @@ export function useWorkspacePreviewSrc({
 
       const basePreviewSrc = buildPreviewBaseSrc(build);
 
-      if (Boolean(build.isPublic) || !previewAuth.isOwnerRef.current) {
+      if (!userId) {
         setWorkspacePreviewSrc(basePreviewSrc);
         return;
       }

@@ -325,10 +325,10 @@ export default function BuildRuntime() {
   const loadRuntimeBuild = useAppContext(
     (v) => v.requestHelpers.loadRuntimeBuild
   );
-  const createBuildContributionFork = useAppContext(
-    (v) => v.requestHelpers.createBuildContributionFork
-  );
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const loadMyBuildCollaborationRequest = useAppContext(
     (v) => v.requestHelpers.loadMyBuildCollaborationRequest
   );
@@ -359,8 +359,6 @@ export default function BuildRuntime() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
-  const [creatingContributionFork, setCreatingContributionFork] =
-    useState(false);
   const [forkingBuild, setForkingBuild] = useState(false);
   const [openingCollaborationRequest, setOpeningCollaborationRequest] =
     useState(false);
@@ -435,30 +433,31 @@ export default function BuildRuntime() {
   const buildAcceptsStandaloneForks = build?.collaborationMode === 'open_source';
   const isBuildOwner =
     !!build && !!userId && Number(build.userId) === Number(userId);
-  const showContributeButton =
-    !!build &&
-    !!userId &&
-    !isBuildOwner &&
-    Boolean(build.hasActiveContributionInvite);
+  const collaborationRequestActionLabel = 'Offer Collaboration';
+  const collaborationStatus =
+    collaborationRequest?.status ||
+    (build?.hasActiveContributionInvite ? 'accepted' : '');
+  const showCollaborationButton = !!build && !isBuildOwner;
+  const collaborationButtonLabel =
+    !userId
+      ? 'Collaborate'
+      : collaborationStatus === 'pending'
+        ? 'Pending Approval'
+        : collaborationStatus === 'invited'
+          ? 'Accept Invitation'
+          : collaborationStatus === 'accepted'
+            ? 'Collaborate'
+            : collaborationRequestActionLabel;
   const showStandaloneForkButton =
     !!build &&
-    !!userId &&
     !isBuildOwner &&
     buildAcceptsStandaloneForks;
-  const showCollaborationRequestButton =
-    !!build &&
-    !!userId &&
-    !isBuildOwner &&
-    !build.hasActiveContributionInvite;
   const showWorkspaceButton = !!build && isBuildOwner;
   const showRuntimeActions =
     showWorkspaceButton ||
-    showContributeButton ||
-    showStandaloneForkButton ||
-    showCollaborationRequestButton;
-  const collaborationRequestActionLabel = 'Offer Collaboration';
+    showCollaborationButton ||
+    showStandaloneForkButton;
   const runtimeActionBusy =
-    creatingContributionFork ||
     forkingBuild ||
     openingCollaborationRequest ||
     collaborationRequestLoading;
@@ -480,33 +479,64 @@ export default function BuildRuntime() {
     navigate(`/build/${build.id}`);
   }
 
-  async function handleCreateContributionFork() {
-    if (!build || !userId || creatingContributionFork) return;
-    setCreatingContributionFork(true);
-    setContributionForkError('');
-    try {
-      const result = await createBuildContributionFork(build.id);
-      if (result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
+  function handleOpenCollaborationWorkspace() {
+    if (!build?.id) return;
+    navigate(`/build/${build.id}`, {
+      state: {
+        openVersionsPanel: true
       }
-    } catch (error: any) {
-      console.error('Failed to create build contribution fork:', error);
-      setContributionForkError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Unable to start contribution'
-      );
-    } finally {
-      setCreatingContributionFork(false);
-    }
+    });
   }
 
+  async function handleCollaborateClick() {
+    if (!build?.id || runtimeActionBusy) return;
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    if (collaborationStatus === 'pending') return;
+    if (collaborationStatus === 'accepted') {
+      handleOpenCollaborationWorkspace();
+      return;
+    }
+    if (collaborationStatus === 'invited') {
+      await handleAcceptContributorInvite();
+      return;
+    }
+    await handleOpenCollaborationRequestModal();
+  }
+
+  useEffect(() => {
+    if (!build?.id || !userId || isBuildOwner) {
+      setCollaborationRequest(null);
+      return;
+    }
+    let canceled = false;
+    loadMyBuildCollaborationRequest(build.id)
+      .then((result: any) => {
+        if (canceled) return;
+        const nextRequest = result?.request || null;
+        setCollaborationRequest(nextRequest);
+        setCollaborationRequestMessage(String(nextRequest?.message || ''));
+      })
+      .catch(() => {
+        if (!canceled) {
+          setCollaborationRequest(null);
+        }
+      });
+    return () => {
+      canceled = true;
+    };
+    // loadMyBuildCollaborationRequest is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build?.id, isBuildOwner, userId]);
+
   async function handleCreateStandaloneFork() {
-    if (!build || !userId || forkingBuild) return;
+    if (!build || forkingBuild) return;
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     setForkingBuild(true);
     setContributionForkError('');
     try {
@@ -607,7 +637,13 @@ export default function BuildRuntime() {
         inviteId
       });
       if (result?.success) {
-        await startContributionFromAcceptedInvite();
+        setCollaborationRequest((current) =>
+          current ? { ...current, status: 'accepted' } : current
+        );
+        setBuild((current) =>
+          current ? { ...current, hasActiveContributionInvite: true } : current
+        );
+        handleOpenCollaborationWorkspace();
       }
     } catch (error: any) {
       setCollaborationRequestError(
@@ -642,33 +678,6 @@ export default function BuildRuntime() {
       );
     } finally {
       setCollaborationRequestLoading(false);
-    }
-  }
-
-  async function startContributionFromAcceptedInvite() {
-    if (!build?.id) return;
-    try {
-      const result = await createBuildContributionFork(build.id);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-        return;
-      }
-      setCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-    } catch (error: any) {
-      setCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-      setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Invite accepted, but failed to start contribution'
-      );
     }
   }
 
@@ -879,36 +888,33 @@ export default function BuildRuntime() {
                     <span>Build</span>
                   </button>
                 ) : null}
-                {showCollaborationRequestButton ? (
+                {showCollaborationButton ? (
                   <button
                     type="button"
-                    className={runtimeActionPinkClass}
-                    onClick={handleOpenCollaborationRequestModal}
-                    disabled={runtimeActionBusy}
+                    className={
+                      collaborationStatus === 'accepted' ||
+                      collaborationStatus === 'invited'
+                        ? runtimeActionButtonClass
+                        : runtimeActionPinkClass
+                    }
+                    onClick={handleCollaborateClick}
+                    disabled={
+                      runtimeActionBusy || collaborationStatus === 'pending'
+                    }
                   >
                     <Icon
                       icon={
-                        openingCollaborationRequest ? 'spinner' : 'user-plus'
+                        runtimeActionBusy
+                          ? 'spinner'
+                          : collaborationStatus === 'pending'
+                            ? 'clock'
+                            : collaborationStatus === 'accepted'
+                              ? 'users'
+                              : 'user-plus'
                       }
-                      pulse={openingCollaborationRequest}
+                      pulse={runtimeActionBusy}
                     />
-                    <span>{collaborationRequestActionLabel}</span>
-                  </button>
-                ) : null}
-                {showContributeButton ? (
-                  <button
-                    type="button"
-                    className={runtimeActionButtonClass}
-                    onClick={handleCreateContributionFork}
-                    disabled={runtimeActionBusy}
-                  >
-                    <Icon
-                      icon={creatingContributionFork ? 'spinner' : 'users'}
-                      pulse={creatingContributionFork}
-                    />
-                    <span>
-                      {creatingContributionFork ? 'Starting...' : 'Collaborate'}
-                    </span>
+                    <span>{collaborationButtonLabel}</span>
                   </button>
                 ) : null}
                 {showStandaloneForkButton ? (
@@ -922,7 +928,13 @@ export default function BuildRuntime() {
                       icon={forkingBuild ? 'spinner' : 'code-branch'}
                       pulse={forkingBuild}
                     />
-                    <span>{forkingBuild ? 'Forking...' : 'Fork'}</span>
+                    <span>
+                      {forkingBuild
+                        ? 'Forking...'
+                        : userId
+                          ? 'Fork'
+                          : 'Fork'}
+                    </span>
                   </button>
                 ) : null}
                 {contributionForkError ? (
@@ -1059,9 +1071,9 @@ export default function BuildRuntime() {
                 color="logoBlue"
                 loading={collaborationRequestLoading}
                 disabled={collaborationRequestLoading}
-                onClick={handleCreateContributionFork}
+                onClick={handleOpenCollaborationWorkspace}
               >
-                Start Contributing
+                Open Workspace
               </Button>
             ) : (
               <Button
@@ -1112,8 +1124,7 @@ export default function BuildRuntime() {
                 line-height: 1.4;
               `}
             >
-              Your request was accepted. You can start a project-scoped
-              contribution fork.
+              You&apos;re on the team. Open the workspace to start a branch.
             </div>
           ) : (
             <div
@@ -1123,7 +1134,7 @@ export default function BuildRuntime() {
                 line-height: 1.45;
               `}
             >
-              Ask the owner to invite you as a contributor.
+              Ask the owner to invite you as a collaborator.
             </div>
           )}
           {!accepted && !invited ? (

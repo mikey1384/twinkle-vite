@@ -2,7 +2,9 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
+import { mobileMaxWidth } from '~/constants/css';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
 import {
@@ -22,6 +24,13 @@ const headerClass = css`
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 1rem;
+  }
 `;
 
 const badgeClass = css`
@@ -72,6 +81,21 @@ const headerTitleRowClass = css`
   align-items: center;
   gap: 0.55rem;
   flex-wrap: wrap;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+  }
+`;
+
+const headerTitleMainClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  min-width: 0;
 `;
 
 const headerTitleEditButtonClass = css`
@@ -109,11 +133,32 @@ const headerSubtitleClass = css`
   opacity: 0.75;
 `;
 
+const headerInfoClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 100%;
+  }
+`;
+
 const headerActionsClass = css`
   display: flex;
   gap: 0.55rem;
   align-items: center;
   flex-wrap: wrap;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
+  }
+`;
+
+const headerActionItemClass = css`
+  display: contents;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: inline-flex;
+    order: var(--mobile-action-order, 10);
+  }
 `;
 
 const badgePillClass = css`
@@ -130,6 +175,44 @@ const badgePillClass = css`
   border: 2px solid transparent;
   line-height: 1;
   box-shadow: 0 2px 0 rgba(15, 23, 42, 0.12);
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.35rem;
+    padding: 0.48rem 0.72rem;
+    font-size: 0.78rem;
+  }
+`;
+
+const mobileTitleBadgeGroupClass = css`
+  display: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    min-width: max-content;
+  }
+`;
+
+const mobileButtonRowsClass = css`
+  display: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    width: 100%;
+  }
+`;
+
+const mobileButtonRowClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  width: 100%;
 `;
 
 const titleRelationshipBadgeClass = css`
@@ -149,42 +232,80 @@ const titleRelationshipBadgeClass = css`
 
 interface HeaderProps {
   build: {
+    id: number;
     title: string;
     description: string | null;
     username: string;
     isPublic: boolean;
     code: string | null;
+    releaseStatus?: {
+      state?: string;
+      hasUnpublishedChanges?: boolean;
+      diff?: {
+        total?: number;
+        added?: number;
+        updated?: number;
+        deleted?: number;
+      };
+    } | null;
     sourceBuildId?: number | null;
     collaborationMode?: 'private' | 'contribution' | 'open_source';
     contributionAccess?: 'anyone' | 'invite_only';
+    contributionBranchNumber?: number | null;
+    contributionContributorId?: number | null;
     contributionStatus?: string | null;
     rootBuildUsername?: string | null;
     rootBuildSourceBuildId?: number | null;
+    rootBuildTitle?: string | null;
   };
   forking: boolean;
   canEditMetadata: boolean;
+  canEditThumbnail: boolean;
   isOwner: boolean;
   profileTheme?: string | null;
   publishing: boolean;
   savingThumbnail: boolean;
   showContributionButton: boolean;
   contributionActionError?: string;
-  contributionActionLoading?: 'submit' | 'reopen' | '';
+  contributionActionLoading?: 'merge' | '';
+  canMergeBranch?: boolean;
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
+  onMergeBranch?: () => void;
   onOpenCollaborationSettings: () => void;
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
-  onReopenContribution?: () => void;
-  onSubmitContribution?: () => void;
   onTogglePublish: () => void;
+  onUnpublish?: () => void;
+}
+
+function HeaderActionItem({
+  mobileOrder,
+  children
+}: {
+  mobileOrder: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={headerActionItemClass}
+      style={
+        {
+          '--mobile-action-order': mobileOrder
+        } as React.CSSProperties
+      }
+    >
+      {children}
+    </span>
+  );
 }
 
 export default function Header({
   build,
   forking,
   canEditMetadata,
+  canEditThumbnail,
   isOwner,
   profileTheme,
   publishing,
@@ -192,15 +313,16 @@ export default function Header({
   showContributionButton,
   contributionActionError = '',
   contributionActionLoading = '',
+  canMergeBranch = false,
   showForkButton,
   onContribute,
   onFork,
+  onMergeBranch,
   onOpenCollaborationSettings,
   onOpenDescriptionModal,
   onOpenThumbnailModal,
-  onReopenContribution,
-  onSubmitContribution,
-  onTogglePublish
+  onTogglePublish,
+  onUnpublish
 }: HeaderProps) {
   const isContributionFork =
     build.contributionStatus && build.contributionStatus !== 'none';
@@ -211,19 +333,36 @@ export default function Header({
   const displayTitle = getBuildDisplayTitle(build);
   const relationshipLabels = getBuildRelationshipLabels(build);
   const description = build.description?.trim();
-  const sourceOwnerUsername =
+  const projectOwnerUsername = String(
     isContributionFork && build.rootBuildUsername
       ? build.rootBuildUsername
-      : build.username;
+      : build.username
+  ).trim();
+  const branchOwnerUsername = String(build.username || '').trim();
+  const ownerLine = isContributionFork
+    ? projectOwnerUsername &&
+      branchOwnerUsername &&
+      projectOwnerUsername !== branchOwnerUsername
+      ? `Project by ${projectOwnerUsername} · Branch by ${branchOwnerUsername}`
+      : `Project and branch by ${
+          branchOwnerUsername || projectOwnerUsername || 'unknown'
+        }`
+    : `by ${projectOwnerUsername || 'unknown'}`;
+  const showContributionStatusBadge =
+    isContributionFork &&
+    contributionStatus !== 'none' &&
+    contributionStatus !== 'draft';
+  const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
+  const publicAppIsUpToDate = Boolean(
+    build.isPublic && releaseStatus && !releaseStatus.hasUnpublishedChanges
+  );
+  const publishButtonDisabled =
+    publishing ||
+    (!build.isPublic && !build.code) ||
+    Boolean(build.isPublic && publicAppIsUpToDate);
   return (
     <header className={headerClass}>
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
-        `}
-      >
+      <div className={headerInfoClass}>
         <ScopedTheme
           as="span"
           theme={(profileTheme || DEFAULT_PROFILE_THEME) as any}
@@ -234,170 +373,388 @@ export default function Header({
           </Link>
         </ScopedTheme>
         <div className={headerTitleRowClass}>
-          <h2 className={headerTitleClass}>{displayTitle}</h2>
-          {relationshipLabels.map((label) => (
+          <div className={headerTitleMainClass}>
+            <h2 className={headerTitleClass}>{displayTitle}</h2>
+            {relationshipLabels.map((label) =>
+              label === 'fork' ? (
+                <BuildForkHistoryTrigger
+                  key={label}
+                  buildId={Number(build.id)}
+                  className={titleRelationshipBadgeClass}
+                  style={getRelationshipBadgeStyle(label)}
+                >
+                  <Icon icon="code-branch" />
+                  Fork
+                </BuildForkHistoryTrigger>
+              ) : (
+                <span
+                  key={label}
+                  className={titleRelationshipBadgeClass}
+                  style={getRelationshipBadgeStyle(label)}
+                >
+                  <Icon icon="users" />
+                  Branch
+                </span>
+              )
+            )}
+            {canEditMetadata ? (
+              <button
+                type="button"
+                className={headerTitleEditButtonClass}
+                onClick={onOpenDescriptionModal}
+                aria-label="Edit build details"
+                title="Edit build details"
+              >
+                <Icon icon="pencil-alt" />
+              </button>
+            ) : null}
+          </div>
+          <div className={mobileTitleBadgeGroupClass}>
             <span
-              key={label}
-              className={titleRelationshipBadgeClass}
-              style={getRelationshipBadgeStyle(label)}
+              className={badgePillClass}
+              style={getVisibilityBadgeStyle(build.isPublic)}
+              title={
+                build.isPublic
+                  ? 'Published publicly'
+                  : 'Only you can access this build'
+              }
             >
-              <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
-              {label === 'fork' ? 'Fork' : 'Contribution'}
+              <Icon icon={build.isPublic ? 'globe' : 'lock'} />
+              {build.isPublic ? 'Public' : 'Private'}
             </span>
-          ))}
-          {canEditMetadata ? (
-            <button
-              type="button"
-              className={headerTitleEditButtonClass}
-              onClick={onOpenDescriptionModal}
-              aria-label="Edit build details"
-              title="Edit build details"
-            >
-              <Icon icon="pencil-alt" />
-            </button>
-          ) : null}
+            {build.isPublic && releaseStatus ? (
+              <span
+                className={badgePillClass}
+                style={getReleaseStatusBadgeStyle(releaseStatus.state)}
+                title={getReleaseStatusTitle(releaseStatus)}
+              >
+                <Icon
+                  icon={
+                    releaseStatus.hasUnpublishedChanges
+                      ? 'cloud-upload-alt'
+                      : 'check-circle'
+                  }
+                />
+                {releaseStatus.hasUnpublishedChanges
+                  ? 'Unpublished Changes'
+                  : 'Live'}
+              </span>
+            ) : null}
+            {showContributionStatusBadge ? (
+              <span
+                className={badgePillClass}
+                style={getContributionBadgeStyle(contributionStatus)}
+                title={
+                  contributionStatus === 'merging'
+                      ? 'This branch is being merged into the original Build'
+                      : 'Branch status'
+                }
+              >
+                <Icon icon="code-branch" />
+                {formatContributionStatusLabel(contributionStatus)}
+              </span>
+            ) : null}
+          </div>
         </div>
         <span className={headerSubtitleClass}>
           {description ? `${description} · ` : ''}
-          by {sourceOwnerUsername}
+          {ownerLine}
         </span>
       </div>
       <div className={headerActionsClass}>
-        <span
-          className={badgePillClass}
-          style={getVisibilityBadgeStyle(build.isPublic)}
-          title={
-            build.isPublic
-              ? 'Published publicly'
-              : 'Only you can access this build'
-          }
-        >
-          <Icon icon={build.isPublic ? 'globe' : 'lock'} />
-          {build.isPublic ? 'Public' : 'Private'}
-        </span>
-        {isOwner && !isContributionFork ? (
-          <GameCTAButton
-            onClick={onOpenCollaborationSettings}
-            variant={collaborationMode === 'private' ? 'pink' : 'logoBlue'}
-            size="md"
-            icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
+        <HeaderActionItem mobileOrder={1}>
+          <span
+            className={badgePillClass}
+            style={getVisibilityBadgeStyle(build.isPublic)}
+            title={
+              build.isPublic
+                ? 'Published publicly'
+                : 'Only you can access this build'
+            }
           >
-            {getCollaborationButtonLabel(collaborationMode)}
-          </GameCTAButton>
-        ) : null}
-        {canEditMetadata ? (
-          <GameCTAButton
-            onClick={onOpenDescriptionModal}
-            variant="neutral"
-            size="md"
-            icon="pencil-alt"
-          >
-            {build.description?.trim() ? 'Edit Details' : 'Add Details'}
-          </GameCTAButton>
-        ) : null}
-        {isOwner && !isContributionFork ? (
-          <GameCTAButton
-            onClick={onOpenThumbnailModal}
-            disabled={savingThumbnail || publishing}
-            loading={savingThumbnail}
-            variant="neutral"
-            size="md"
-            icon="image"
-          >
-            Thumbnail
-          </GameCTAButton>
-        ) : null}
-        {isOwner && isContributionFork ? (
-          <>
+            <Icon icon={build.isPublic ? 'globe' : 'lock'} />
+            {build.isPublic ? 'Public' : 'Private'}
+          </span>
+        </HeaderActionItem>
+        {build.isPublic && releaseStatus ? (
+          <HeaderActionItem mobileOrder={2}>
             <span
               className={badgePillClass}
-              style={getContributionBadgeStyle(contributionStatus)}
-              title={
-                contributionStatus === 'submitted'
-                  ? 'Submitted forks are locked until reopened'
-                  : contributionStatus === 'merging'
-                    ? 'This contribution is being merged into the original Build'
-                    : 'Contribution fork status'
-              }
+              style={getReleaseStatusBadgeStyle(releaseStatus.state)}
+              title={getReleaseStatusTitle(releaseStatus)}
             >
-              <Icon icon="code-branch" />
-              {formatContributionStatusLabel(contributionStatus)}
+              <Icon
+                icon={
+                  releaseStatus.hasUnpublishedChanges
+                    ? 'cloud-upload-alt'
+                    : 'check-circle'
+                }
+              />
+              {releaseStatus.hasUnpublishedChanges
+                ? 'Unpublished Changes'
+                : 'Live'}
             </span>
-            {contributionStatus === 'draft' ? (
-              <GameCTAButton
-                onClick={onSubmitContribution || (() => {})}
-                disabled={Boolean(contributionActionLoading)}
-                loading={contributionActionLoading === 'submit'}
-                variant="success"
-                size="md"
-                icon="paper-plane"
-              >
-                Submit
-              </GameCTAButton>
+          </HeaderActionItem>
+        ) : null}
+        {isOwner && !isContributionFork ? (
+          <HeaderActionItem mobileOrder={3}>
+            <GameCTAButton
+              onClick={onOpenCollaborationSettings}
+              variant={collaborationMode === 'private' ? 'pink' : 'logoBlue'}
+              size="md"
+              icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
+            >
+              {getCollaborationButtonLabel(collaborationMode)}
+            </GameCTAButton>
+          </HeaderActionItem>
+        ) : null}
+        {canEditMetadata ? (
+          <HeaderActionItem mobileOrder={5}>
+            <GameCTAButton
+              onClick={onOpenDescriptionModal}
+              variant="neutral"
+              size="md"
+              icon="pencil-alt"
+            >
+              {build.description?.trim() ? 'Edit Details' : 'Add Details'}
+            </GameCTAButton>
+          </HeaderActionItem>
+        ) : null}
+        {canEditThumbnail ? (
+          <HeaderActionItem mobileOrder={6}>
+            <GameCTAButton
+              onClick={onOpenThumbnailModal}
+              disabled={savingThumbnail || publishing}
+              loading={savingThumbnail}
+              variant="neutral"
+              size="md"
+              icon="image"
+            >
+              Thumbnail
+            </GameCTAButton>
+          </HeaderActionItem>
+        ) : null}
+        {showContributionStatusBadge || canMergeBranch ? (
+          <>
+            {showContributionStatusBadge ? (
+              <HeaderActionItem mobileOrder={2}>
+                <span
+                  className={badgePillClass}
+                  style={getContributionBadgeStyle(contributionStatus)}
+                  title={
+                    contributionStatus === 'merging'
+                        ? 'This branch is being merged into the original Build'
+                        : 'Branch status'
+                  }
+                >
+                  <Icon icon="code-branch" />
+                  {formatContributionStatusLabel(contributionStatus)}
+                </span>
+              </HeaderActionItem>
             ) : null}
-            {contributionStatus === 'submitted' ? (
-              <GameCTAButton
-                onClick={onReopenContribution || (() => {})}
-                disabled={Boolean(contributionActionLoading)}
-                loading={contributionActionLoading === 'reopen'}
-                variant="neutral"
-                size="md"
-                icon="undo"
-              >
-                Reopen Draft
-              </GameCTAButton>
+            {canMergeBranch ? (
+              <HeaderActionItem mobileOrder={4}>
+                <GameCTAButton
+                  onClick={onMergeBranch || (() => {})}
+                  disabled={Boolean(contributionActionLoading)}
+                  loading={contributionActionLoading === 'merge'}
+                  variant="success"
+                  size="md"
+                  icon="check"
+                >
+                  Merge Branch
+                </GameCTAButton>
+              </HeaderActionItem>
             ) : null}
             {contributionActionError ? (
-              <span
-                className={css`
-                  color: #be123c;
-                  font-weight: 900;
-                `}
-              >
-                {contributionActionError}
-              </span>
+              <HeaderActionItem mobileOrder={9}>
+                <span
+                  className={css`
+                    color: #be123c;
+                    font-weight: 900;
+                  `}
+                >
+                  {contributionActionError}
+                </span>
+              </HeaderActionItem>
             ) : null}
           </>
         ) : null}
         {isOwner && !isContributionFork ? (
-          <GameCTAButton
-            onClick={onTogglePublish}
-            disabled={publishing || (!build.isPublic && !build.code)}
-            loading={publishing}
-            variant={build.isPublic ? 'neutral' : 'magenta'}
-            size="md"
-            icon={build.isPublic ? 'eye-slash' : 'globe'}
-          >
-            {publishing
-              ? 'Processing...'
-              : build.isPublic
-                ? 'Unpublish'
-                : 'Publish'}
-          </GameCTAButton>
+          <>
+            <HeaderActionItem mobileOrder={4}>
+              <GameCTAButton
+                onClick={onTogglePublish}
+                disabled={publishButtonDisabled}
+                loading={publishing}
+                variant="magenta"
+                size="md"
+                icon="globe"
+              >
+                {publishing
+                  ? 'Processing...'
+                  : build.isPublic
+                    ? publicAppIsUpToDate
+                      ? 'Up to Date'
+                      : 'Update App'
+                    : 'Publish'}
+              </GameCTAButton>
+            </HeaderActionItem>
+            {build.isPublic ? (
+              <HeaderActionItem mobileOrder={7}>
+                <GameCTAButton
+                  onClick={onUnpublish || (() => {})}
+                  disabled={publishing}
+                  variant="neutral"
+                  size="md"
+                  icon="eye-slash"
+                >
+                  Unpublish
+                </GameCTAButton>
+              </HeaderActionItem>
+            ) : null}
+          </>
         ) : null}
         {showContributionButton ? (
-          <GameCTAButton
-            onClick={onContribute}
-            disabled={forking}
-            loading={forking}
-            variant="primary"
-            size="md"
-            icon="users"
-          >
-            {forking ? 'Working...' : 'Contribute'}
-          </GameCTAButton>
+          <HeaderActionItem mobileOrder={3}>
+            <GameCTAButton
+              onClick={onContribute}
+              disabled={forking}
+              loading={forking}
+              variant="primary"
+              size="md"
+              icon="users"
+            >
+              {forking ? 'Working...' : 'Start Branch'}
+            </GameCTAButton>
+          </HeaderActionItem>
         ) : null}
         {showForkButton ? (
-          <GameCTAButton
-            onClick={onFork}
-            disabled={forking}
-            loading={forking}
-            variant={showContributionButton ? 'neutral' : 'primary'}
-            size="md"
-            icon="code-branch"
+          <HeaderActionItem mobileOrder={4}>
+            <GameCTAButton
+              onClick={onFork}
+              disabled={forking}
+              loading={forking}
+              variant={showContributionButton ? 'neutral' : 'primary'}
+              size="md"
+              icon="code-branch"
+            >
+              {forking ? 'Working...' : 'Fork'}
+            </GameCTAButton>
+          </HeaderActionItem>
+        ) : null}
+      </div>
+      <div className={mobileButtonRowsClass}>
+        <div className={mobileButtonRowClass}>
+          {isOwner && !isContributionFork ? (
+            <GameCTAButton
+              onClick={onOpenCollaborationSettings}
+              variant={collaborationMode === 'private' ? 'pink' : 'logoBlue'}
+              size="md"
+              icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
+            >
+              {getCollaborationButtonLabel(collaborationMode)}
+            </GameCTAButton>
+          ) : null}
+          {canEditMetadata ? (
+            <GameCTAButton
+              onClick={onOpenDescriptionModal}
+              variant="neutral"
+              size="md"
+              icon="pencil-alt"
+            >
+              {build.description?.trim() ? 'Edit Details' : 'Add Details'}
+            </GameCTAButton>
+          ) : null}
+          {canEditThumbnail ? (
+            <GameCTAButton
+              onClick={onOpenThumbnailModal}
+              disabled={savingThumbnail || publishing}
+              loading={savingThumbnail}
+              variant="neutral"
+              size="md"
+              icon="image"
+            >
+              Thumbnail
+            </GameCTAButton>
+          ) : null}
+          {canMergeBranch ? (
+            <GameCTAButton
+              onClick={onMergeBranch || (() => {})}
+              disabled={Boolean(contributionActionLoading)}
+              loading={contributionActionLoading === 'merge'}
+              variant="success"
+              size="md"
+              icon="check"
+            >
+              Merge Branch
+            </GameCTAButton>
+          ) : null}
+          {showContributionButton ? (
+            <GameCTAButton
+              onClick={onContribute}
+              disabled={forking}
+              loading={forking}
+              variant="primary"
+              size="md"
+              icon="users"
+            >
+              {forking ? 'Working...' : 'Start Branch'}
+            </GameCTAButton>
+          ) : null}
+          {showForkButton ? (
+            <GameCTAButton
+              onClick={onFork}
+              disabled={forking}
+              loading={forking}
+              variant={showContributionButton ? 'neutral' : 'primary'}
+              size="md"
+              icon="code-branch"
+            >
+              {forking ? 'Working...' : 'Fork'}
+            </GameCTAButton>
+          ) : null}
+        </div>
+        {isOwner && !isContributionFork ? (
+          <div className={mobileButtonRowClass}>
+            <GameCTAButton
+              onClick={onTogglePublish}
+              disabled={publishButtonDisabled}
+              loading={publishing}
+              variant="magenta"
+              size="md"
+              icon="globe"
+            >
+              {publishing
+                ? 'Processing...'
+                : build.isPublic
+                  ? publicAppIsUpToDate
+                    ? 'Up to Date'
+                    : 'Update App'
+                  : 'Publish'}
+            </GameCTAButton>
+            {build.isPublic ? (
+              <GameCTAButton
+                onClick={onUnpublish || (() => {})}
+                disabled={publishing}
+                variant="neutral"
+                size="md"
+                icon="eye-slash"
+              >
+                Unpublish
+              </GameCTAButton>
+            ) : null}
+          </div>
+        ) : null}
+        {contributionActionError ? (
+          <span
+            className={css`
+              color: #be123c;
+              font-weight: 900;
+            `}
           >
-            {forking ? 'Working...' : 'Fork'}
-          </GameCTAButton>
+            {contributionActionError}
+          </span>
         ) : null}
       </div>
     </header>
@@ -415,22 +772,55 @@ function normalizeContributionStatus(
 ):
   | 'none'
   | 'draft'
-  | 'submitted'
   | 'merging'
-  | 'merged'
-  | 'rejected'
-  | 'withdrawn' {
+  | 'merged' {
   if (
     value === 'draft' ||
-    value === 'submitted' ||
     value === 'merging' ||
-    value === 'merged' ||
-    value === 'rejected' ||
-    value === 'withdrawn'
+    value === 'merged'
   ) {
     return value;
   }
   return 'none';
+}
+
+function normalizeReleaseStatus(value: unknown): {
+  state: 'up_to_date' | 'unpublished_changes' | 'missing_snapshot';
+  hasUnpublishedChanges: boolean;
+  diff: {
+    total: number;
+    added: number;
+    updated: number;
+    deleted: number;
+  };
+} | null {
+  if (!value || typeof value !== 'object') return null;
+  const status = value as {
+    state?: string;
+    hasUnpublishedChanges?: boolean;
+    diff?: {
+      total?: number;
+      added?: number;
+      updated?: number;
+      deleted?: number;
+    };
+  };
+  const state =
+    status.state === 'missing_snapshot'
+      ? 'missing_snapshot'
+      : status.state === 'unpublished_changes'
+        ? 'unpublished_changes'
+        : 'up_to_date';
+  return {
+    state,
+    hasUnpublishedChanges: Boolean(status.hasUnpublishedChanges),
+    diff: {
+      total: Number(status.diff?.total || 0),
+      added: Number(status.diff?.added || 0),
+      updated: Number(status.diff?.updated || 0),
+      deleted: Number(status.diff?.deleted || 0)
+    }
+  };
 }
 
 function getCollaborationButtonLabel(
@@ -456,6 +846,45 @@ function getVisibilityBadgeStyle(isPublic: boolean): React.CSSProperties {
   };
 }
 
+function getReleaseStatusBadgeStyle(
+  state: 'up_to_date' | 'unpublished_changes' | 'missing_snapshot'
+): React.CSSProperties {
+  if (state === 'up_to_date') {
+    return {
+      background: 'rgba(34, 197, 94, 0.14)',
+      borderColor: 'rgba(34, 197, 94, 0.34)',
+      color: '#15803d'
+    };
+  }
+  if (state === 'missing_snapshot') {
+    return {
+      background: 'rgba(236, 72, 153, 0.13)',
+      borderColor: 'rgba(236, 72, 153, 0.32)',
+      color: '#be185d'
+    };
+  }
+  return {
+    background: 'rgba(245, 158, 11, 0.16)',
+    borderColor: 'rgba(245, 158, 11, 0.38)',
+    color: '#b45309'
+  };
+}
+
+function getReleaseStatusTitle(
+  status: NonNullable<ReturnType<typeof normalizeReleaseStatus>>
+) {
+  if (status.state === 'up_to_date') {
+    return 'The live app matches this workspace.';
+  }
+  if (status.state === 'missing_snapshot') {
+    return 'This public app needs a published snapshot.';
+  }
+  const total = status.diff.total;
+  return total > 0
+    ? `${total} file${total === 1 ? '' : 's'} waiting to be released.`
+    : 'Workspace changes are waiting to be released.';
+}
+
 function getRelationshipBadgeStyle(
   label: 'fork' | 'contribution'
 ): React.CSSProperties {
@@ -477,24 +906,14 @@ function getContributionBadgeStyle(
   status:
     | 'none'
     | 'draft'
-    | 'submitted'
     | 'merging'
     | 'merged'
-    | 'rejected'
-    | 'withdrawn'
 ): React.CSSProperties {
   if (status === 'draft') {
     return {
       background: 'rgba(65, 140, 235, 0.14)',
       borderColor: 'rgba(65, 140, 235, 0.34)',
       color: '#1d4ed8'
-    };
-  }
-  if (status === 'submitted') {
-    return {
-      background: 'rgba(34, 197, 94, 0.14)',
-      borderColor: 'rgba(34, 197, 94, 0.34)',
-      color: '#15803d'
     };
   }
   if (status === 'merging') {
@@ -515,13 +934,10 @@ function formatContributionStatusLabel(
   status:
     | 'none'
     | 'draft'
-    | 'submitted'
     | 'merging'
     | 'merged'
-    | 'rejected'
-    | 'withdrawn'
 ) {
-  if (status === 'none') return 'Contribution';
+  if (status === 'none') return 'Branch';
   if (status === 'merging') return 'Merging';
   return status.charAt(0).toUpperCase() + status.slice(1);
 }

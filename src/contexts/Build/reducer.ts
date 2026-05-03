@@ -101,6 +101,13 @@ export type BuildStudioTab =
   | 'community'
   | 'open_source';
 type BuildStudioBrowseTab = Exclude<BuildStudioTab, 'mine'>;
+export type BuildWorkspaceCommunicationMode = 'lumine' | 'versions' | 'people';
+
+export interface BuildWorkspaceUiState {
+  communicationMode: BuildWorkspaceCommunicationMode;
+  scrollTops: Partial<Record<BuildWorkspaceCommunicationMode, number>>;
+  selectedForumThreadId: number;
+}
 
 export interface BuildStudioBrowseTabState {
   builds: any[];
@@ -220,10 +227,19 @@ export interface BuildStudioActionPayload {
   scrollY?: number;
 }
 
+export interface BuildWorkspaceUiActionPayload {
+  buildId?: number | null;
+  communicationMode?: BuildWorkspaceCommunicationMode | string | null;
+  scrollMode?: BuildWorkspaceCommunicationMode | string | null;
+  scrollTop?: number | null;
+  forumThreadId?: number | null;
+}
+
 export interface BuildState {
   buildRuns: Record<string, BuildLiveRunState>;
   buildRunRequestMap: Record<string, number>;
   buildWorkspaces: Record<string, BuildWorkspaceSnapshot>;
+  buildWorkspaceUi: Record<string, BuildWorkspaceUiState>;
   runtimeVerifyResults: Record<string, BuildRuntimeVerifyResult>;
   buildStudio: BuildStudioState;
 }
@@ -240,6 +256,9 @@ export interface BuildAction {
     | 'STOP_BUILD_RUN'
     | 'REMOVE_BUILD_RUN_MESSAGE'
     | 'SET_BUILD_WORKSPACE'
+    | 'SET_BUILD_WORKSPACE_COMMUNICATION_MODE'
+    | 'SET_BUILD_WORKSPACE_SCROLL'
+    | 'SET_BUILD_WORKSPACE_FORUM_THREAD'
     | 'SET_BUILD_STUDIO_ACTIVE_TAB'
     | 'SET_BUILD_STUDIO_MY_BUILDS'
     | 'PATCH_BUILD_STUDIO_MY_BUILD'
@@ -254,6 +273,7 @@ export interface BuildAction {
   buildRun?: BuildLiveRunActionPayload;
   runtimeVerifyResult?: BuildRuntimeVerifyResultPayload;
   buildStudio?: BuildStudioActionPayload;
+  buildWorkspaceUi?: BuildWorkspaceUiActionPayload;
 }
 
 export function createInitialBuildStudioState(): BuildStudioState {
@@ -296,6 +316,34 @@ function getBuildRunKey(buildId: number) {
   return String(Number(buildId) || 0);
 }
 
+function getBuildWorkspaceUiKey(buildId: number) {
+  return String(Number(buildId) || 0);
+}
+
+function createInitialBuildWorkspaceUiState(): BuildWorkspaceUiState {
+  return {
+    communicationMode: 'lumine',
+    scrollTops: {},
+    selectedForumThreadId: 0
+  };
+}
+
+function getBuildWorkspaceUiState(
+  state: BuildState,
+  buildId: number
+): BuildWorkspaceUiState {
+  const key = getBuildWorkspaceUiKey(buildId);
+  return (
+    state.buildWorkspaceUi?.[key] || createInitialBuildWorkspaceUiState()
+  );
+}
+
+function normalizeBuildWorkspaceCommunicationMode(
+  value?: string | null
+): BuildWorkspaceCommunicationMode {
+  return value === 'people' || value === 'versions' ? value : 'lumine';
+}
+
 function getBuildRuntimeVerifyResultKey(
   runtimeVerifyResult?: BuildRuntimeVerifyResultPayload
 ) {
@@ -330,6 +378,18 @@ function normalizeBuildStudioUserId(value: unknown) {
 }
 
 function normalizeBuildStudioScrollY(value: unknown) {
+  const normalized = Number(value || 0);
+  if (!Number.isFinite(normalized)) return 0;
+  return Math.max(0, Math.floor(normalized));
+}
+
+function normalizeBuildWorkspaceScrollTop(value: unknown) {
+  const normalized = Number(value || 0);
+  if (!Number.isFinite(normalized)) return 0;
+  return Math.max(0, Math.floor(normalized));
+}
+
+function normalizeBuildWorkspaceForumThreadId(value: unknown) {
   const normalized = Number(value || 0);
   if (!Number.isFinite(normalized)) return 0;
   return Math.max(0, Math.floor(normalized));
@@ -1381,6 +1441,74 @@ export default function BuildReducer(
                 ? action.buildRun.copilotPolicy
                 : null,
             updatedAt: Date.now()
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_WORKSPACE_COMMUNICATION_MODE': {
+      const buildId = Number(action.buildWorkspaceUi?.buildId || 0);
+      if (!buildId) return state;
+      const key = getBuildWorkspaceUiKey(buildId);
+      const currentUi = getBuildWorkspaceUiState(state, buildId);
+      const communicationMode = normalizeBuildWorkspaceCommunicationMode(
+        action.buildWorkspaceUi?.communicationMode
+      );
+      if (currentUi.communicationMode === communicationMode) return state;
+      return {
+        ...state,
+        buildWorkspaceUi: {
+          ...(state.buildWorkspaceUi || {}),
+          [key]: {
+            ...currentUi,
+            communicationMode
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_WORKSPACE_SCROLL': {
+      const buildId = Number(action.buildWorkspaceUi?.buildId || 0);
+      if (!buildId) return state;
+      const key = getBuildWorkspaceUiKey(buildId);
+      const currentUi = getBuildWorkspaceUiState(state, buildId);
+      const scrollMode = normalizeBuildWorkspaceCommunicationMode(
+        action.buildWorkspaceUi?.scrollMode
+      );
+      const scrollTop = normalizeBuildWorkspaceScrollTop(
+        action.buildWorkspaceUi?.scrollTop
+      );
+      if (currentUi.scrollTops[scrollMode] === scrollTop) return state;
+      return {
+        ...state,
+        buildWorkspaceUi: {
+          ...(state.buildWorkspaceUi || {}),
+          [key]: {
+            ...currentUi,
+            scrollTops: {
+              ...currentUi.scrollTops,
+              [scrollMode]: scrollTop
+            }
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_WORKSPACE_FORUM_THREAD': {
+      const buildId = Number(action.buildWorkspaceUi?.buildId || 0);
+      if (!buildId) return state;
+      const key = getBuildWorkspaceUiKey(buildId);
+      const currentUi = getBuildWorkspaceUiState(state, buildId);
+      const selectedForumThreadId = normalizeBuildWorkspaceForumThreadId(
+        action.buildWorkspaceUi?.forumThreadId
+      );
+      if (currentUi.selectedForumThreadId === selectedForumThreadId) {
+        return state;
+      }
+      return {
+        ...state,
+        buildWorkspaceUi: {
+          ...(state.buildWorkspaceUi || {}),
+          [key]: {
+            ...currentUi,
+            selectedForumThreadId
           }
         }
       };

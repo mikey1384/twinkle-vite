@@ -7,11 +7,19 @@ import { css } from '@emotion/css';
 
 export default function BuildDeleteModal({
   buildTitle,
+  title = 'Delete Build',
+  actionLabel = 'Delete Build',
+  body,
+  confirmLabel,
   loading = false,
   onHide,
   onSubmit
 }: {
   buildTitle: string;
+  title?: string;
+  actionLabel?: string;
+  body?: React.ReactNode;
+  confirmLabel?: React.ReactNode;
   loading?: boolean;
   onHide: () => void;
   onSubmit: (confirmTitle: string) => void | Promise<void>;
@@ -30,7 +38,7 @@ export default function BuildDeleteModal({
       modalKey="BuildDeleteModal"
       isOpen
       onClose={onHide}
-      title="Delete Build"
+      title={title}
       size="md"
       footer={
         <div>
@@ -51,7 +59,7 @@ export default function BuildDeleteModal({
             onClick={handleSubmit}
             uppercase={false}
           >
-            Delete Build
+            {actionLabel}
           </Button>
         </div>
       }
@@ -70,8 +78,12 @@ export default function BuildDeleteModal({
             line-height: 1.65;
           `}
         >
-          This permanently deletes <b>{buildTitle}</b>, including its files,
-          versions, chat history, and runtime data.
+          {body || (
+            <>
+              This permanently deletes <b>{buildTitle}</b>, including its files,
+              versions, chat history, and runtime data.
+            </>
+          )}
         </div>
         <div
           className={css`
@@ -80,7 +92,11 @@ export default function BuildDeleteModal({
             line-height: 1.6;
           `}
         >
-          Type <b>{buildTitle}</b> to confirm.
+          {confirmLabel || (
+            <>
+              Type <b>{buildTitle}</b> to confirm.
+            </>
+          )}
         </div>
         <Input
           value={confirmTitle}

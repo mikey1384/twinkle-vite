@@ -7,7 +7,7 @@ import Composer from './Composer';
 import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
-import { ChatPanelProps } from './types';
+import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
 import { formatScaledRem } from './utils';
 
 const panelClass = css`
@@ -59,14 +59,21 @@ const peoplePaneClass = css`
   background: #fff;
 `;
 
-type CommunicationMode = 'lumine' | 'people';
+type CommunicationMode = ChatPanelCommunicationMode;
 const LUMINE_BOTTOM_SCROLL_THRESHOLD = 120;
 
 export default function ChatPanel({
   className,
   workshopScale = 1,
   preferredCommunicationMode,
+  onCommunicationModeChange,
+  communicationScrollTops,
+  onCommunicationScrollChange,
   peoplePanel,
+  versionsPanel,
+  luminePanelOverride,
+  lumineTabLabel = 'Lumine',
+  lumineTabIcon = 'sparkles',
   lumineChatVisibilityControl,
   messages,
   executionPlan,
@@ -123,17 +130,63 @@ export default function ChatPanel({
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const [communicationMode, setCommunicationMode] = useState<CommunicationMode>(
-    () => (preferredCommunicationMode === 'people' ? 'people' : 'lumine')
+    () => normalizeCommunicationMode(preferredCommunicationMode)
   );
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const communicationScrollTopsRef = useRef(communicationScrollTops);
+  const onCommunicationScrollChangeRef = useRef(onCommunicationScrollChange);
+  const lumineScrollSaveTimeoutRef = useRef<number | null>(null);
+  const pendingLumineScrollTopRef = useRef<number | null>(null);
+  const lastSavedLumineScrollTopRef = useRef<number | null>(null);
   const lumineScrollSnapshotRef = useRef<{
     scrollTop: number;
     stickToBottom: boolean;
   } | null>(null);
+  communicationScrollTopsRef.current = communicationScrollTops;
+  onCommunicationScrollChangeRef.current = onCommunicationScrollChange;
   const hasPeoplePanel = Boolean(peoplePanel);
-  const activeCommunicationMode = hasPeoplePanel
+  const communicationOptions = useMemo(() => {
+    const options: Array<{
+      value: CommunicationMode;
+      label: string;
+      icon: string;
+    }> = [];
+    if (luminePanelOverride) {
+      options.push({
+        value: 'versions',
+        label: lumineTabLabel,
+        icon: lumineTabIcon
+      });
+    } else {
+      options.push({
+        value: 'lumine',
+        label: lumineTabLabel,
+        icon: lumineTabIcon
+      });
+      if (versionsPanel) {
+        options.push({
+          value: 'versions',
+          label: 'Branches',
+          icon: 'code-branch'
+        });
+      }
+    }
+    if (hasPeoplePanel) {
+      options.push({ value: 'people', label: 'Team', icon: 'comments' });
+    }
+    return options;
+  }, [
+    hasPeoplePanel,
+    luminePanelOverride,
+    lumineTabIcon,
+    lumineTabLabel,
+    versionsPanel
+  ]);
+  const activeCommunicationMode = communicationOptions.some(
+    (option) => option.value === communicationMode
+  )
     ? communicationMode
-    : 'lumine';
+    : communicationOptions[0]?.value || 'lumine';
   const energyPolicy = aiUsagePolicy;
   const energyUnavailable =
     !!energyPolicy &&
@@ -262,6 +315,10 @@ export default function ChatPanel({
   useEffect(() => {
     if (activeCommunicationMode !== 'lumine') return;
     const snapshot = lumineScrollSnapshotRef.current;
+    lumineScrollSnapshotRef.current = null;
+    const savedScrollTop = Number(
+      communicationScrollTopsRef.current?.lumine || 0
+    );
     const frame = window.requestAnimationFrame(() => {
       const container = chatScrollRef.current;
       if (container) {
@@ -269,6 +326,8 @@ export default function ChatPanel({
           top:
             snapshot && !snapshot.stickToBottom
               ? snapshot.scrollTop
+              : savedScrollTop > 0
+                ? savedScrollTop
               : container.scrollHeight,
           behavior: 'auto'
         });
@@ -281,12 +340,26 @@ export default function ChatPanel({
       });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeCommunicationMode, chatEndRef, chatScrollRef]);
+  }, [
+    activeCommunicationMode,
+    chatEndRef,
+    chatScrollRef
+  ]);
 
   useEffect(() => {
-    if (!hasPeoplePanel || !preferredCommunicationMode) return;
+    return () => {
+      if (lumineScrollSaveTimeoutRef.current !== null) {
+        window.clearTimeout(lumineScrollSaveTimeoutRef.current);
+        lumineScrollSaveTimeoutRef.current = null;
+      }
+      pendingLumineScrollTopRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!preferredCommunicationMode) return;
     setCommunicationMode(preferredCommunicationMode);
-  }, [hasPeoplePanel, preferredCommunicationMode]);
+  }, [preferredCommunicationMode]);
 
   function handleToggleLimitsExpanded() {
     setLimitsExpanded((prev) => !prev);
@@ -298,6 +371,7 @@ export default function ChatPanel({
       if (container) {
         const distanceFromBottom =
           container.scrollHeight - container.scrollTop - container.clientHeight;
+        commitLumineScrollTop(container.scrollTop);
         lumineScrollSnapshotRef.current = {
           scrollTop: container.scrollTop,
           stickToBottom: distanceFromBottom <= LUMINE_BOTTOM_SCROLL_THRESHOLD
@@ -305,6 +379,35 @@ export default function ChatPanel({
       }
     }
     setCommunicationMode(nextMode);
+    onCommunicationModeChange?.(nextMode);
+  }
+
+  function handleLumineScroll() {
+    onChatScroll();
+    const scrollTop = chatScrollRef.current?.scrollTop || 0;
+    scheduleLumineScrollTopSave(scrollTop);
+  }
+
+  function scheduleLumineScrollTopSave(scrollTop: number) {
+    pendingLumineScrollTopRef.current = scrollTop;
+    if (lumineScrollSaveTimeoutRef.current !== null) {
+      window.clearTimeout(lumineScrollSaveTimeoutRef.current);
+    }
+    lumineScrollSaveTimeoutRef.current = window.setTimeout(() => {
+      lumineScrollSaveTimeoutRef.current = null;
+      const pendingScrollTop = pendingLumineScrollTopRef.current;
+      pendingLumineScrollTopRef.current = null;
+      if (pendingScrollTop !== null) {
+        commitLumineScrollTop(pendingScrollTop);
+      }
+    }, 160);
+  }
+
+  function commitLumineScrollTop(scrollTop: number) {
+    const normalizedScrollTop = Math.max(0, Math.floor(Number(scrollTop) || 0));
+    if (lastSavedLumineScrollTopRef.current === normalizedScrollTop) return;
+    lastSavedLumineScrollTopRef.current = normalizedScrollTop;
+    onCommunicationScrollChangeRef.current?.('lumine', normalizedScrollTop);
   }
 
   function handlePrefillRedirect() {
@@ -383,14 +486,11 @@ export default function ChatPanel({
         } as React.CSSProperties
       }
     >
-      {hasPeoplePanel ? (
+      {communicationOptions.length > 1 ? (
         <div className={communicationTabsClass}>
           <SegmentedToggle
             value={activeCommunicationMode}
-            options={[
-              { value: 'lumine' as const, label: 'Lumine', icon: 'sparkles' },
-              { value: 'people' as const, label: 'Team', icon: 'comments' }
-            ]}
+            options={communicationOptions}
             onChange={handleCommunicationModeChange}
             ariaLabel="Switch communication mode"
             size="sm"
@@ -399,6 +499,12 @@ export default function ChatPanel({
       ) : null}
       {activeCommunicationMode === 'people' ? (
         <div className={peoplePaneClass}>{peoplePanel}</div>
+      ) : activeCommunicationMode === 'versions' ? (
+        <div className={peoplePaneClass}>
+          {versionsPanel || luminePanelOverride}
+        </div>
+      ) : luminePanelOverride ? (
+        <div className={peoplePaneClass}>{luminePanelOverride}</div>
       ) : (
         <>
           <Header
@@ -417,7 +523,7 @@ export default function ChatPanel({
           />
           <div
             ref={chatScrollRef}
-            onScroll={onChatScroll}
+            onScroll={handleLumineScroll}
             className={scrollAreaClass}
           >
             <Transcript
@@ -477,4 +583,10 @@ export default function ChatPanel({
       />
     </div>
   );
+}
+
+function normalizeCommunicationMode(
+  value?: ChatPanelCommunicationMode | null
+): CommunicationMode {
+  return value === 'people' || value === 'versions' ? value : 'lumine';
 }

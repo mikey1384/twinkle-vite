@@ -16,6 +16,7 @@ interface ModalsProps {
   buildChatUploadFileObj: File | File[] | null;
   buildChatUploadModalShown: boolean;
   canEditMetadata: boolean;
+  canEditThumbnail: boolean;
   canShowLumineChatVisibilitySetting: boolean;
   buildDescription: string | null;
   buildTitle: string;
@@ -54,6 +55,7 @@ export default function Modals({
   buildChatUploadFileObj,
   buildChatUploadModalShown,
   canEditMetadata,
+  canEditThumbnail,
   canShowLumineChatVisibilitySetting,
   buildDescription,
   buildTitle,
@@ -121,7 +123,7 @@ export default function Modals({
           onHide={onHideCollaborationSettingsModal}
         />
       ) : null}
-      {thumbnailModalShown && isOwner ? (
+      {thumbnailModalShown && canEditThumbnail ? (
         <BuildThumbnailModal
           initialImageUrl={thumbnailInitialImageUrl}
           loading={savingThumbnail}

@@ -3,6 +3,8 @@ import {
   BuildAction,
   BuildLiveRunActionPayload,
   BuildRuntimeVerifyResultPayload,
+  BuildWorkspaceCommunicationMode,
+  BuildWorkspaceUiActionPayload,
   BuildStudioActionPayload,
   BuildStudioTab
 } from './reducer';
@@ -67,6 +69,36 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'SET_BUILD_WORKSPACE',
         buildRun
+      });
+    },
+    onSetBuildWorkspaceCommunicationMode({
+      buildId,
+      communicationMode
+    }: {
+      buildId: number;
+      communicationMode: BuildWorkspaceCommunicationMode;
+    }) {
+      return dispatch({
+        type: 'SET_BUILD_WORKSPACE_COMMUNICATION_MODE',
+        buildWorkspaceUi: { buildId, communicationMode }
+      });
+    },
+    onSetBuildWorkspaceScroll(buildWorkspaceUi: BuildWorkspaceUiActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_WORKSPACE_SCROLL',
+        buildWorkspaceUi
+      });
+    },
+    onSetBuildWorkspaceForumThread({
+      buildId,
+      forumThreadId
+    }: {
+      buildId: number;
+      forumThreadId: number;
+    }) {
+      return dispatch({
+        type: 'SET_BUILD_WORKSPACE_FORUM_THREAD',
+        buildWorkspaceUi: { buildId, forumThreadId }
       });
     },
     onSetBuildStudioActiveTab(activeTab: BuildStudioTab) {

@@ -9,6 +9,7 @@ import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import BuildProjectListItem, {
   BuildProjectListItemData
 } from '~/components/BuildProjectListItem';
+import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
 import BuildDescriptionModal from './BuildDescriptionModal';
 import BuildDeleteModal from './BuildDeleteModal';
 import {
@@ -377,6 +378,9 @@ export default function BuildList() {
   );
   const [deletingBuild, setDeletingBuild] =
     useState<BuildProjectListItemData | null>(null);
+  const [forkHistoryBuildId, setForkHistoryBuildId] = useState<number | null>(
+    null
+  );
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [promptInput, setPromptInput] = useState('');
@@ -404,6 +408,7 @@ export default function BuildList() {
   useEffect(() => {
     setEditingBuild(null);
     setDeletingBuild(null);
+    setForkHistoryBuildId(null);
   }, [normalizedUserId]);
 
   useEffect(() => {
@@ -740,6 +745,7 @@ export default function BuildList() {
                 isOwner
                 onAddDescription={setEditingBuild}
                 onDelete={setDeletingBuild}
+                onOpenForkHistory={setForkHistoryBuildId}
               />
             ))}
           </div>
@@ -780,6 +786,7 @@ export default function BuildList() {
                   activeTab === 'collaborating' ? 'users' : undefined
                 }
                 showCollaborationRequestAction={activeTab !== 'collaborating'}
+                onOpenForkHistory={setForkHistoryBuildId}
               />
             ))}
           </div>
@@ -811,6 +818,13 @@ export default function BuildList() {
           onSubmit={handleDeleteBuild}
         />
       )}
+      {forkHistoryBuildId ? (
+        <BuildForkHistoryModal
+          buildId={forkHistoryBuildId}
+          isOpen
+          onClose={() => setForkHistoryBuildId(null)}
+        />
+      ) : null}
     </div>
   );
 

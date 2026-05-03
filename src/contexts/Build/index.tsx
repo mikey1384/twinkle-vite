@@ -30,6 +30,7 @@ const initialBuildState: BuildState = {
   buildRuns: {},
   buildRunRequestMap: {},
   buildWorkspaces: {},
+  buildWorkspaceUi: {},
   runtimeVerifyResults: {},
   buildStudio: createInitialBuildStudioState()
 };

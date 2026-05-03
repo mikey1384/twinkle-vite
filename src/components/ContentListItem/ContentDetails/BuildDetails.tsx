@@ -1,4 +1,5 @@
 import React from 'react';
+import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
 import { User } from '~/types';
 import {
@@ -8,6 +9,7 @@ import {
 } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
 
 export default function BuildDetails({
+  buildId,
   collaboratorCount,
   description,
   sourceBuildId,
@@ -16,6 +18,7 @@ export default function BuildDetails({
   title,
   uploader
 }: {
+  buildId: number;
   collaboratorCount?: number;
   description: string;
   sourceBuildId?: number | null;
@@ -49,20 +52,36 @@ export default function BuildDetails({
           <small>Published by {uploader.username}</small>
         )}
       </div>
-      {relationshipLabels.map((label) => (
-        <div
-          key={label}
-          className="build-collaborator-badge"
-          style={{
-            borderColor: getRelationshipBadgeBorder(label),
-            background: getRelationshipBadgeBackground(label),
-            color: getRelationshipBadgeColor(label)
-          }}
-        >
-          <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
-          <span>{label === 'fork' ? 'Fork' : 'Contribution'}</span>
-        </div>
-      ))}
+      {relationshipLabels.map((label) =>
+        label === 'fork' ? (
+          <BuildForkHistoryTrigger
+            key={label}
+            buildId={buildId}
+            className="build-collaborator-badge"
+            style={{
+              borderColor: getRelationshipBadgeBorder(label),
+              background: getRelationshipBadgeBackground(label),
+              color: getRelationshipBadgeColor(label)
+            }}
+          >
+            <Icon icon="code-branch" />
+            <span>Fork</span>
+          </BuildForkHistoryTrigger>
+        ) : (
+          <div
+            key={label}
+            className="build-collaborator-badge"
+            style={{
+              borderColor: getRelationshipBadgeBorder(label),
+              background: getRelationshipBadgeBackground(label),
+              color: getRelationshipBadgeColor(label)
+            }}
+          >
+            <Icon icon="users" />
+            <span>Branch</span>
+          </div>
+        )
+      )}
       {normalizedCollaboratorCount > 0 ? (
         <div className="build-collaborator-badge">
           <Icon icon="users" />

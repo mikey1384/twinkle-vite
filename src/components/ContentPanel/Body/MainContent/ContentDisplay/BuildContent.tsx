@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
+import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
@@ -51,10 +52,10 @@ export default function BuildContent({
   theme?: string;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
-  const createBuildContributionFork = useAppContext(
-    (v) => v.requestHelpers.createBuildContributionFork
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
   );
+  const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
   const loadMyBuildCollaborationRequest = useAppContext(
     (v) => v.requestHelpers.loadMyBuildCollaborationRequest
   );
@@ -94,6 +95,23 @@ export default function BuildContent({
     useState(false);
   const [collaborationRequestError, setCollaborationRequestError] =
     useState('');
+  const collaborationStatus = collaborationRequest?.status || '';
+  const collaborationRequestActionLabel =
+    !userId
+      ? 'Collaborate'
+      : collaborationStatus === 'pending'
+        ? 'Pending Approval'
+        : collaborationStatus === 'invited'
+          ? 'Accept Invitation'
+          : collaborationStatus === 'accepted'
+            ? 'Collaborate'
+            : 'Offer Collaboration';
+  const collaborationRequestActionIcon =
+    collaborationStatus === 'pending'
+      ? 'clock'
+      : collaborationStatus === 'accepted'
+        ? 'users'
+        : 'user-plus';
   const buildId = Number(build?.id || 0);
   const displayTitle = getBuildDisplayTitle(build);
   const relationshipLabels = getBuildRelationshipLabels(build);
@@ -102,11 +120,8 @@ export default function BuildContent({
   const collaborationMode = normalizeCollaborationMode(
     build?.collaborationMode
   );
-  const showForkAction =
-    !isOwner && Boolean(userId) && collaborationMode === 'open_source';
-  const showCollaborationRequestAction =
-    !isOwner && Boolean(userId);
-  const collaborationRequestActionLabel = 'Offer Collaboration';
+  const showForkAction = !isOwner && collaborationMode === 'open_source';
+  const showCollaborationRequestAction = !isOwner;
   const showBuildWorkspaceAction = isOwner;
   const collaboratorCount = Math.max(
     0,
@@ -147,6 +162,31 @@ export default function BuildContent({
     if (!iframeActivated || !iframeReady) return;
     postRuntimeVisibility(previewInView);
   }, [iframeActivated, iframeReady, previewInView]);
+
+  useEffect(() => {
+    if (!showCollaborationRequestAction || !buildId || !userId) {
+      setCollaborationRequest(null);
+      return;
+    }
+    let canceled = false;
+    loadMyBuildCollaborationRequest(buildId)
+      .then((result: any) => {
+        if (canceled) return;
+        const nextRequest = result?.request || null;
+        setCollaborationRequest(nextRequest);
+        setCollaborationRequestMessage(String(nextRequest?.message || ''));
+      })
+      .catch(() => {
+        if (!canceled) {
+          setCollaborationRequest(null);
+        }
+      });
+    return () => {
+      canceled = true;
+    };
+    // loadMyBuildCollaborationRequest is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildId, showCollaborationRequestAction, userId]);
 
   if (!buildId || !embeddedAppPath) {
     return (
@@ -225,28 +265,26 @@ export default function BuildContent({
               {displayTitle}
             </div>
           ) : null}
-          {relationshipLabels.map((label) => (
-            <div
-              key={label}
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                flex-shrink: 0;
-                padding: 0.4rem 0.7rem;
-                border-radius: 999px;
-                border: 1px solid ${getRelationshipBadgeBorder(label)};
-                background: ${getRelationshipBadgeBackground(label)};
-                color: ${getRelationshipBadgeColor(label)};
-                font-size: 1rem;
-                font-weight: 800;
-                white-space: nowrap;
-              `}
-            >
-              <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
-              <span>{label === 'fork' ? 'Fork' : 'Contribution'}</span>
-            </div>
-          ))}
+          {relationshipLabels.map((label) =>
+            label === 'fork' ? (
+              <BuildForkHistoryTrigger
+                key={label}
+                buildId={buildId || contentId}
+                className={buildRelationshipBadgeClass(label)}
+              >
+                <Icon icon="code-branch" />
+                <span>Fork</span>
+              </BuildForkHistoryTrigger>
+            ) : (
+              <div
+                key={label}
+                className={buildRelationshipBadgeClass(label)}
+              >
+                <Icon icon="users" />
+                <span>Branch</span>
+              </div>
+            )
+          )}
           {collaboratorCount > 0 ? (
             <div
               className={css`
@@ -302,11 +340,13 @@ export default function BuildContent({
               size="sm"
               uppercase={false}
               loading={actionLoading === 'collaborationRequest'}
-              disabled={Boolean(actionLoading)}
-              onClick={handleOpenCollaborationRequestModal}
+              disabled={
+                Boolean(actionLoading) || collaborationStatus === 'pending'
+              }
+              onClick={handleCollaborationActionClick}
               style={{ whiteSpace: 'nowrap' }}
             >
-              <Icon icon="user-plus" />
+              <Icon icon={collaborationRequestActionIcon} />
               <span>{collaborationRequestActionLabel}</span>
             </Button>
           ) : null}
@@ -538,8 +578,38 @@ export default function BuildContent({
     navigate(`/build/${buildId}`);
   }
 
+  function handleOpenCollaborationWorkspace() {
+    if (!buildId) return;
+    navigate(`/build/${buildId}`, {
+      state: {
+        openVersionsPanel: true
+      }
+    });
+  }
+
+  function handleCollaborationActionClick() {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    if (collaborationStatus === 'pending') return;
+    if (collaborationStatus === 'accepted') {
+      handleOpenCollaborationWorkspace();
+      return;
+    }
+    if (collaborationStatus === 'invited') {
+      void handleAcceptContributorInvite();
+      return;
+    }
+    void handleOpenCollaborationRequestModal();
+  }
+
   async function handleOpenCollaborationRequestModal() {
     if (!buildId || actionLoading) return;
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     setActionLoading('collaborationRequest');
     setActionError('');
     setCollaborationRequestError('');
@@ -621,7 +691,10 @@ export default function BuildContent({
         inviteId
       });
       if (result?.success) {
-        await startContributionFromAcceptedInvite();
+        setCollaborationRequest((current) =>
+          current ? { ...current, status: 'accepted' } : current
+        );
+        handleOpenCollaborationWorkspace();
       }
     } catch (error: any) {
       setCollaborationRequestError(
@@ -659,58 +732,12 @@ export default function BuildContent({
     }
   }
 
-  async function handleContribute() {
-    if (!buildId || actionLoading) return;
-    setActionLoading('contribute');
-    setActionError('');
-    try {
-      const result = await createBuildContributionFork(buildId);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-      }
-    } catch (error: any) {
-      setActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to start contribution'
-      );
-    } finally {
-      setActionLoading('');
-    }
-  }
-
-  async function startContributionFromAcceptedInvite() {
-    try {
-      const result = await createBuildContributionFork(buildId);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-        return;
-      }
-      setCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-    } catch (error: any) {
-      setCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-      setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Invite accepted, but failed to start contribution'
-      );
-    }
-  }
-
   async function handleFork() {
     if (!buildId || actionLoading) return;
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     setActionLoading('fork');
     setActionError('');
     try {
@@ -811,9 +838,9 @@ export default function BuildContent({
                 color="logoBlue"
                 loading={collaborationRequestLoading}
                 disabled={collaborationRequestLoading}
-                onClick={handleContribute}
+                onClick={handleOpenCollaborationWorkspace}
               >
-                Start Contributing
+                Open Workspace
               </Button>
             ) : (
               <Button
@@ -864,8 +891,7 @@ export default function BuildContent({
                 line-height: 1.4;
               `}
             >
-              Your request was accepted. You can start a project-scoped
-              contribution fork.
+              You&apos;re on the team. Open the workspace to start a branch.
             </div>
           ) : (
             <div
@@ -875,7 +901,7 @@ export default function BuildContent({
                 line-height: 1.45;
               `}
             >
-              Ask the owner to invite you as a contributor.
+              Ask the owner to invite you as a collaborator.
             </div>
           )}
           {!accepted && !invited ? (
@@ -926,6 +952,25 @@ function formatCollaboratorCount(count: number) {
   return count === 1
     ? '1 collaborator'
     : `${count.toLocaleString()} collaborators`;
+}
+
+function buildRelationshipBadgeClass(label: BuildRelationshipLabel) {
+  return css`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid ${getRelationshipBadgeBorder(label)};
+    background: ${getRelationshipBadgeBackground(label)};
+    color: ${getRelationshipBadgeColor(label)};
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+  `;
 }
 
 function getRelationshipBadgeBorder(label: BuildRelationshipLabel) {

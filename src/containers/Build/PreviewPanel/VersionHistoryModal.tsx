@@ -144,8 +144,8 @@ export default function VersionHistoryModal({
             <div className={centeredStateClass}>Loading versions...</div>
           ) : versions.length === 0 ? (
             <div className={centeredStateClass}>
-              No versions yet. Lumine runs and saved file changes will create
-              version history.
+              No versions yet. Lumine runs, saved file changes, and branch
+              merges will create version history.
             </div>
           ) : (
             versions.map((version) => (

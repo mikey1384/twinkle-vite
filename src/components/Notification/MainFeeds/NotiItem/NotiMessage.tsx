@@ -91,9 +91,6 @@ function NotiMessage({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
-  const createBuildContributionFork = useAppContext(
-    (v) => v.requestHelpers.createBuildContributionFork
-  );
   const [buildInviteStatusOverride, setBuildInviteStatusOverride] =
     useState('');
   const [buildInviteActionLoading, setBuildInviteActionLoading] =
@@ -654,7 +651,7 @@ function NotiMessage({
           for{' '}
           <Link
             to={`/build/${targetObj.id}`}
-            state={{ openPeoplePanel: true }}
+            state={{ openVersionsPanel: true }}
             style={{ color: targetLinkColor, fontWeight: 'bold' }}
           >
             Build
@@ -682,7 +679,7 @@ function NotiMessage({
           on{' '}
           <Link
             to={`/build/${targetObj.id}`}
-            state={{ openPeoplePanel: true }}
+            state={{ openVersionsPanel: true }}
             style={{ color: targetLinkColor, fontWeight: 'bold' }}
           >
             Build
@@ -791,7 +788,12 @@ function NotiMessage({
         inviteId
       });
       if (result?.success) {
-        await startBuildContributionFromAcceptedInvite(buildId);
+        setBuildInviteStatusOverride('accepted');
+        navigate(`/build/${buildId}`, {
+          state: {
+            openVersionsPanel: true
+          }
+        });
       }
     } catch (error: any) {
       setBuildInviteActionError(
@@ -829,27 +831,6 @@ function NotiMessage({
     }
   }
 
-  async function startBuildContributionFromAcceptedInvite(buildId: number) {
-    try {
-      const result = await createBuildContributionFork(buildId);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-        return;
-      }
-      setBuildInviteStatusOverride('accepted');
-    } catch (error: any) {
-      setBuildInviteStatusOverride('accepted');
-      setBuildInviteActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Invite accepted, but failed to start contribution'
-      );
-    }
-  }
 }
 
 export default memo(NotiMessage);

@@ -34,9 +34,6 @@ export default function BuildContributionInvite({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
-  const createBuildContributionFork = useAppContext(
-    (v) => v.requestHelpers.createBuildContributionFork
-  );
   const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>(
     'pending'
   );
@@ -92,7 +89,7 @@ export default function BuildContributionInvite({
           onClick={() =>
             navigate(`/build/${buildId}`, {
               state: {
-                openPeoplePanel: true
+                openVersionsPanel: true
               }
             })
           }
@@ -128,11 +125,10 @@ export default function BuildContributionInvite({
             color="green"
             variant="soft"
             size="sm"
-            loading={loading === 'start'}
             disabled={Boolean(loading)}
-            onClick={handleStartContribution}
+            onClick={handleOpenWorkspace}
           >
-            Start Contributing
+            Open Workspace
           </Button>
         ) : null}
       </div>
@@ -149,7 +145,8 @@ export default function BuildContributionInvite({
         inviteId
       });
       if (result?.success) {
-        await startContribution();
+        setStatus('accepted');
+        handleOpenWorkspace();
       }
     } catch (error: any) {
       setError(
@@ -185,34 +182,12 @@ export default function BuildContributionInvite({
     }
   }
 
-  async function handleStartContribution() {
-    if (loading) return;
-    setLoading('start');
-    setError('');
-    await startContribution();
-    setLoading('');
-  }
-
-  async function startContribution() {
-    try {
-      const result = await createBuildContributionFork(buildId);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-        return;
+  function handleOpenWorkspace() {
+    navigate(`/build/${buildId}`, {
+      state: {
+        openVersionsPanel: true
       }
-      setStatus('accepted');
-    } catch (error: any) {
-      setStatus('accepted');
-      setError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to start contribution'
-      );
-    }
+    });
   }
 }
 

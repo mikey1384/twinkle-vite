@@ -2,12 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type {
   BuildLumineChatVisibility,
+  ChatPanelCommunicationMode,
   ChatPanelProps
 } from './ChatPanel/types';
 import CollaborationPanel from './CollaborationPanel';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Header from './Header';
+import BuildPreviewFrame from '~/components/BuildPreviewFrame';
+import Icon from '~/components/Icon';
 import Modals from './Modals';
+import ProfilePic from '~/components/ProfilePic';
+import UsernameText from '~/components/Texts/UsernameText';
 import Workspace from './Workspace';
+import BuildDeleteModal from '../BuildDeleteModal';
 import useBuildRunIdentity, {
   getSharedBuildRunIdentityState,
   type BuildRunMode,
@@ -26,6 +33,7 @@ import type {
 } from '../PreviewPanel/types';
 import type { BuildCapabilitySnapshot } from '../capabilityTypes';
 import type {
+  BuildWorkspaceCommunicationMode,
   BuildLiveRunMessage,
   BuildLiveRunState
 } from '~/contexts/Build/reducer';
@@ -46,6 +54,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { generateFileName } from '~/helpers/stringHelpers';
 import { returnImageFileFromUrl } from '~/helpers';
+import { timeSince } from '~/helpers/timeStampHelpers';
 import { v1 as uuidv1 } from 'uuid';
 import {
   BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH,
@@ -55,9 +64,11 @@ import {
   MIN_BUILD_PREVIEW_PANEL_WIDTH
 } from './constants';
 import {
+  getBuildBranchDisplayTitle,
   getBuildDisplayTitle,
   isBuildContributionFork
 } from './buildRelationshipLabels';
+import { getBuildWorkspacePath } from '../buildNavigation';
 const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
 const BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY =
@@ -167,6 +178,519 @@ const pageClass = css`
   }
 `;
 
+const versionStartPanelClass = css`
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.85rem;
+  padding: 1.4rem;
+  background: #fff;
+`;
+
+const branchTopNavClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-height: 2.8rem;
+`;
+
+const branchBackButtonClass = css`
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chat-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.56rem 0.85rem;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.1);
+  &:hover {
+    border-color: var(--ui-border-strong);
+    background: #f8fbff;
+  }
+`;
+
+const versionStartCardClass = css`
+  border: 1px solid var(--ui-border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  align-items: flex-start;
+  background: #fff;
+`;
+
+const branchStartRowClass = css`
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const versionStartTitleClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 900;
+  font-size: 1.25rem;
+  color: var(--chat-text);
+`;
+
+const versionStartTextClass = css`
+  margin: 0;
+  color: var(--chat-text);
+  opacity: 0.76;
+  font-weight: 700;
+  line-height: 1.4;
+`;
+
+const branchListHelpClass = css`
+  width: 100%;
+  margin: 0.1rem 0 -0.25rem;
+  color: var(--chat-text);
+  opacity: 0.68;
+  font-weight: 800;
+  line-height: 1.35;
+`;
+
+const branchNameInputClass = css`
+  width: 100%;
+  border: 1px solid var(--ui-border);
+  border-radius: 0.7rem;
+  padding: 0.78rem 0.9rem;
+  font: inherit;
+  color: var(--chat-text);
+  background: #fff;
+  &:focus {
+    outline: 2px solid var(--ui-border-strong);
+    outline-offset: 2px;
+  }
+`;
+
+const versionStartActionsClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+`;
+
+const branchListsClass = css`
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const branchSectionClass = css`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+`;
+
+const versionLoadTitleClass = css`
+  font-size: 0.92rem;
+  font-weight: 900;
+  color: var(--chat-text);
+  opacity: 0.7;
+  text-transform: uppercase;
+`;
+
+const branchCardClass = css`
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--ui-border);
+  border-radius: 0.85rem;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  &:hover {
+    border-color: var(--ui-border-strong);
+    background: #f8fbff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--ui-border-strong);
+    outline-offset: 3px;
+  }
+`;
+
+const branchPreviewClass = css`
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  border: 0;
+  border-bottom: 1px solid var(--ui-border);
+  border-radius: 0;
+  box-shadow: none;
+`;
+
+const branchPreviewCurrentBadgeClass = css`
+  position: absolute;
+  z-index: 3;
+  top: 0.55rem;
+  right: 0.55rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+`;
+
+const branchCardBodyClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+`;
+
+const branchCardHeaderClass = css`
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  min-width: 0;
+`;
+
+const branchAvatarClass = css`
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+`;
+
+const versionLoadButtonClass = css`
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chat-text);
+  padding: 0.44rem 0.7rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.1);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  &:hover:not(:disabled) {
+    border-color: var(--ui-border-strong);
+    background: #f8fbff;
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+`;
+
+const branchDeleteButtonClass = css`
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  width: 2.15rem;
+  height: 2.15rem;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(220, 38, 38, 0.12);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  &:hover:not(:disabled) {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: #fff1f2;
+    color: #dc2626;
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+`;
+
+const branchTopDeleteButtonClass = css`
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 999px;
+  background: #fff;
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+  padding: 0.56rem 0.85rem;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(220, 38, 38, 0.12);
+  &:hover:not(:disabled) {
+    background: #fff1f2;
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+`;
+
+const branchLoadTextClass = css`
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+`;
+
+const branchLoadTitleTextClass = css`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 900;
+`;
+
+const branchLoadMetaClass = css`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  color: var(--chat-text);
+  opacity: 0.62;
+  font-size: 0.9rem;
+  font-weight: 800;
+`;
+
+const branchLoadBadgeRowClass = css`
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+`;
+
+const versionLoadStatusClass = css`
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #edf4ff;
+  color: #2563eb;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+`;
+
+const branchEmptyTextClass = css`
+  border: 1px dashed var(--ui-border);
+  border-radius: 0.7rem;
+  padding: 0.75rem 0.9rem;
+  color: var(--chat-text);
+  opacity: 0.66;
+  font-weight: 800;
+`;
+
+const ownerAttentionCardClass = css`
+  border: 1px solid var(--ui-border);
+  border-radius: 0.95rem;
+  background: #fff;
+  padding: 0.85rem;
+  margin-bottom: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+`;
+
+const ownerAttentionHeaderClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+`;
+
+const ownerAttentionTitleClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--chat-text);
+`;
+
+const ownerAttentionCountClass = css`
+  border-radius: 999px;
+  border: 1px solid rgba(236, 72, 153, 0.24);
+  background: #fdf2f8;
+  color: #db2777;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 900;
+`;
+
+const ownerAttentionListClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const ownerAttentionItemClass = css`
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 0.8rem;
+  background: #f8fbff;
+  padding: 0.7rem;
+  &[data-tone='request'] {
+    background: #fff7fb;
+    border-color: rgba(236, 72, 153, 0.22);
+  }
+  &[data-tone='release'] {
+    background: #eff6ff;
+    border-color: rgba(59, 130, 246, 0.22);
+  }
+  &[data-tone='merge'] {
+    background: #fff7ed;
+    border-color: rgba(249, 115, 22, 0.24);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: auto 1fr;
+  }
+`;
+
+const ownerAttentionIconClass = css`
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--chat-text);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+`;
+
+const ownerAttentionTextClass = css`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+`;
+
+const ownerAttentionLabelClass = css`
+  font-weight: 900;
+  color: var(--chat-text);
+`;
+
+const ownerAttentionDetailClass = css`
+  color: var(--chat-text);
+  opacity: 0.66;
+  font-size: 0.88rem;
+  font-weight: 800;
+`;
+
+const ownerAttentionActionClass = css`
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chat-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.48rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.08);
+  white-space: nowrap;
+  &:hover:not(:disabled) {
+    background: #f8fbff;
+    border-color: var(--ui-border-strong);
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-column: 2;
+    justify-self: start;
+  }
+`;
+
+interface BuildVersionSummary {
+  id: number;
+  userId?: number | null;
+  username?: string | null;
+  profilePicUrl?: string | null;
+  title?: string;
+  contributionRootBuildId?: number | null;
+  contributionContributorId?: number | null;
+  contributionBranchNumber?: number | null;
+  contributionStatus?: string | null;
+  updatedAt?: number | null;
+  thumbnailUrl?: string | null;
+}
+
+interface BuildBranchDeleteTarget {
+  id: number;
+  title: string;
+  confirmTitle: string;
+}
+
+interface BuildReleaseStatus {
+  state:
+    | 'private'
+    | 'up_to_date'
+    | 'unpublished_changes'
+    | 'missing_snapshot';
+  isPublic: boolean;
+  hasPublishedVersion: boolean;
+  hasUnpublishedChanges: boolean;
+  diff?: {
+    total: number;
+    added: number;
+    updated: number;
+    deleted: number;
+  };
+  publishedArtifactVersionId?: number | null;
+  currentArtifactVersionId?: number | null;
+}
+
 interface Build {
   id: number;
   userId: number;
@@ -179,7 +703,11 @@ interface Build {
   currentArtifactVersionId?: number | null;
   isPublic: boolean;
   publishedAt?: number | null;
+  publishedArtifactVersionId?: number | null;
+  releaseStatus?: BuildReleaseStatus | null;
   thumbnailUrl?: string | null;
+  collaboratorCount?: number;
+  pendingCollaborationRequestCount?: number;
   sourceBuildId?: number | null;
   collaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionAccess?: 'anyone' | 'invite_only';
@@ -191,19 +719,18 @@ interface Build {
   rootBuildProfilePicUrl?: string | null;
   rootBuildSourceBuildId?: number | null;
   rootBuildTitle?: string | null;
+  rootBuildIsPublic?: boolean | number | null;
+  rootBuildCollaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionParentBuildId?: number | null;
   contributionRootBuildId?: number | null;
   contributionContributorId?: number | null;
+  contributionBranchNumber?: number | null;
   contributionStatus?:
     | 'none'
     | 'draft'
-    | 'submitted'
     | 'merging'
-    | 'merged'
-    | 'rejected'
-    | 'withdrawn';
+    | 'merged';
   contributionBaseBuildUpdatedAt?: number | null;
-  contributionSubmittedAt?: number | null;
   contributionMergedAt?: number | null;
   contributionClosedAt?: number | null;
   contributionMergedByUserId?: number | null;
@@ -229,11 +756,47 @@ interface Build {
   updatedAt: number;
 }
 
+function markBuildReleaseStatusUnpublished(
+  build: Build,
+  options: { force?: boolean } = {}
+): Build {
+  if (!build.isPublic || !build.releaseStatus) return build;
+  if (build.releaseStatus.hasUnpublishedChanges) return build;
+  if (
+    !options.force &&
+    Number(build.currentArtifactVersionId || 0) > 0 &&
+    Number(build.currentArtifactVersionId || 0) ===
+      Number(build.publishedArtifactVersionId || 0)
+  ) {
+    return build;
+  }
+  return {
+    ...build,
+    releaseStatus: {
+      ...build.releaseStatus,
+      state: 'unpublished_changes',
+      hasUnpublishedChanges: true,
+      diff: {
+        total: Math.max(Number(build.releaseStatus.diff?.total || 0), 1),
+        added: Number(build.releaseStatus.diff?.added || 0),
+        updated: Math.max(Number(build.releaseStatus.diff?.updated || 0), 1),
+        deleted: Number(build.releaseStatus.diff?.deleted || 0)
+      }
+    }
+  };
+}
+
 function canStartProjectScopedContribution(build: Build) {
   return Boolean(build.hasActiveContributionInvite);
 }
 
 function canStartStandaloneFork(build: Build) {
+  if (isBuildContributionFork(build)) {
+    return (
+      build.rootBuildCollaborationMode === 'open_source' &&
+      Number(build.rootBuildIsPublic || 0) === 1
+    );
+  }
   return (
     build.collaborationMode === 'open_source' &&
     Number(build.isPublic || 0) === 1
@@ -243,6 +806,691 @@ function canStartStandaloneFork(build: Build) {
 function canEditBuildProject(build: Build) {
   const status = build.contributionStatus || 'none';
   return status === 'none' || status === 'draft';
+}
+
+function canMergeBuildBranch(build: Build, userId?: number | null) {
+  const status = build.contributionStatus || 'none';
+  return (
+    isBuildContributionFork(build) &&
+    Number(build.rootBuildUserId || 0) === Number(userId || 0) &&
+    status === 'draft'
+  );
+}
+
+function canDeleteBuildBranchStatus(status?: string | null) {
+  const normalizedStatus = String(status || 'draft').trim() || 'draft';
+  return normalizedStatus === 'draft' || normalizedStatus === 'none';
+}
+
+function canReviewBuildBranchStatus(status?: string | null) {
+  const normalizedStatus = String(status || 'draft').trim() || 'draft';
+  return normalizedStatus !== 'merged';
+}
+
+function formatOwnerAttentionCount(count: number, singular: string) {
+  const normalizedCount = Math.max(0, Math.floor(Number(count) || 0));
+  return `${normalizedCount} ${singular}${normalizedCount === 1 ? '' : 's'}`;
+}
+
+function getReleaseDiffTotal(releaseStatus?: BuildReleaseStatus | null) {
+  return Math.max(0, Math.floor(Number(releaseStatus?.diff?.total) || 0));
+}
+
+function stripBranchTitleSuffixes(value: string) {
+  let nextTitle = value.trim();
+  let previousTitle = '';
+  while (nextTitle && nextTitle !== previousTitle) {
+    previousTitle = nextTitle;
+    nextTitle = nextTitle
+      .replace(/\s+\((Fork|Contribution)\)\s*$/i, '')
+      .trim();
+  }
+  return nextTitle || value;
+}
+
+function normalizeWorkspacePanelScrollTop(value: unknown) {
+  const scrollTop = Number(value || 0);
+  if (!Number.isFinite(scrollTop)) return 0;
+  return Math.max(0, Math.floor(scrollTop));
+}
+
+function normalizeBuildWorkspaceCommunicationMode(
+  value: unknown
+): BuildWorkspaceCommunicationMode {
+  return value === 'people' || value === 'versions' ? value : 'lumine';
+}
+
+function formatBranchFullDisplayTitle({
+  projectTitle,
+  branchTitle
+}: {
+  projectTitle?: string | null;
+  branchTitle: string;
+}) {
+  const normalizedProjectTitle = stripBranchTitleSuffixes(
+    String(projectTitle || '').trim()
+  );
+  const normalizedBranchTitle = String(branchTitle || '').trim();
+  if (
+    normalizedProjectTitle &&
+    normalizedBranchTitle &&
+    normalizedProjectTitle.toLowerCase() !==
+      normalizedBranchTitle.toLowerCase()
+  ) {
+    return `${normalizedProjectTitle} / ${normalizedBranchTitle}`;
+  }
+  return normalizedBranchTitle || normalizedProjectTitle || 'Untitled Build';
+}
+
+function VersionStartPanel({
+  rootBuildId,
+  activeBuildId,
+  activeBuildTitle,
+  currentUserId,
+  rootProjectTitle,
+  versionOwnerUsername,
+  isOwnBranch,
+  isProjectOwner,
+  branchName,
+  forking,
+  canStartVersion,
+  canFork,
+  versions,
+  versionsLoading,
+  deletingBranchId,
+  pendingCollaborationRequestCount = 0,
+  releaseStatus = null,
+  publishing = false,
+  status,
+  onBranchNameChange,
+  onStartVersion,
+  onLoadVersion,
+  onDeleteBranch,
+  onOpenMainProject,
+  onFork,
+  onOpenTeamPanel,
+  onOpenBranchesPanel,
+  onUpdatePublishedApp,
+  initialScrollTop = 0,
+  onScrollTopChange
+}: {
+  rootBuildId: number;
+  activeBuildId: number;
+  activeBuildTitle?: string | null;
+  currentUserId?: number | null;
+  rootProjectTitle?: string | null;
+  versionOwnerUsername?: string | null;
+  isOwnBranch: boolean;
+  isProjectOwner: boolean;
+  branchName: string;
+  forking: boolean;
+  canStartVersion: boolean;
+  canFork: boolean;
+  versions: BuildVersionSummary[];
+  versionsLoading: boolean;
+  deletingBranchId?: number | null;
+  pendingCollaborationRequestCount?: number;
+  releaseStatus?: BuildReleaseStatus | null;
+  publishing?: boolean;
+  status?: string | null;
+  onBranchNameChange: (value: string) => void;
+  onStartVersion: () => void;
+  onLoadVersion: (version: BuildVersionSummary) => void;
+  onDeleteBranch: (target: BuildBranchDeleteTarget) => void;
+  onOpenMainProject: () => void;
+  onFork: () => void;
+  onOpenTeamPanel: () => void;
+  onOpenBranchesPanel: () => void;
+  onUpdatePublishedApp: () => void;
+  initialScrollTop?: number;
+  onScrollTopChange?: (scrollTop: number) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const restoreScrollKeyRef = useRef('');
+  const initialScrollTopRef = useRef(initialScrollTop);
+  const onScrollTopChangeRef = useRef(onScrollTopChange);
+  const scrollSaveTimeoutRef = useRef<number | null>(null);
+  const pendingScrollTopRef = useRef<number | null>(null);
+  const lastSavedScrollTopRef = useRef(
+    normalizeWorkspacePanelScrollTop(initialScrollTop)
+  );
+  initialScrollTopRef.current = initialScrollTop;
+  onScrollTopChangeRef.current = onScrollTopChange;
+  const normalizedStatus = String(status || '').trim();
+  const ownerLabel = String(versionOwnerUsername || '').trim() || 'Someone';
+  const rootProjectTitleText = stripBranchTitleSuffixes(
+    String(rootProjectTitle || '')
+  );
+  const branchNumberById = new Map<number, number>();
+  const branchCountByContributor = new Map<string, number>();
+  [...versions]
+    .sort((a, b) => Number(a.id || 0) - Number(b.id || 0))
+    .forEach((version) => {
+      const contributorKey = getBranchContributorKey(version);
+      const nextCount = (branchCountByContributor.get(contributorKey) || 0) + 1;
+      branchCountByContributor.set(contributorKey, nextCount);
+      branchNumberById.set(Number(version.id || 0), nextCount);
+    });
+  const meaningfulStatus =
+    normalizedStatus && normalizedStatus !== 'draft' ? normalizedStatus : '';
+  const ownBranches = versions.filter(
+    (version) =>
+      Number(version.contributionContributorId || version.userId || 0) ===
+      Number(currentUserId || 0)
+  );
+  const teamBranches = versions.filter(
+    (version) =>
+      Number(version.contributionContributorId || version.userId || 0) !==
+      Number(currentUserId || 0)
+  );
+  const activeBranch = versions.find(
+    (version) => Number(version.id || 0) === Number(activeBuildId || 0)
+  );
+  const activeBranchLabel = activeBranch
+    ? getBranchFullDisplayTitle(activeBranch)
+    : isOwnBranch
+      ? 'your branch'
+      : `${ownerLabel}'s branch`;
+  const versionDescription = canStartVersion
+    ? isProjectOwner
+      ? 'Try changes in a separate branch, then merge them into main when ready.'
+      : 'Name a new branch and build your idea with Lumine. If the owner likes it, they can merge it into the main project.'
+    : meaningfulStatus
+      ? `${activeBranchLabel} (${meaningfulStatus})`
+      : activeBranchLabel;
+  const canDeleteActiveBranch =
+    rootBuildId > 0 &&
+    isOwnBranch &&
+    activeBuildId > 0 &&
+    canDeleteBuildBranchStatus(status);
+  const reviewableTeamBranches = teamBranches.filter((version) =>
+    canReviewBuildBranchStatus(version.contributionStatus)
+  );
+  const mergingBranches = versions.filter(
+    (version) => String(version.contributionStatus || '').trim() === 'merging'
+  );
+  const releaseDiffTotal = getReleaseDiffTotal(releaseStatus);
+  const hasUnpublishedChanges = Boolean(
+    releaseStatus?.hasUnpublishedChanges
+  );
+
+  useEffect(() => {
+    const scrollTop = normalizeWorkspacePanelScrollTop(
+      initialScrollTopRef.current
+    );
+    const restoreKey = [
+      activeBuildId,
+      versions.length,
+      canStartVersion ? 1 : 0
+    ].join(':');
+    if (restoreScrollKeyRef.current === restoreKey) return;
+    restoreScrollKeyRef.current = restoreKey;
+    const frame = window.requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      if (!container) return;
+      container.scrollTo({ top: scrollTop, left: 0, behavior: 'auto' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeBuildId, canStartVersion, versions.length]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollSaveTimeoutRef.current !== null) {
+        window.clearTimeout(scrollSaveTimeoutRef.current);
+        scrollSaveTimeoutRef.current = null;
+      }
+      const pendingScrollTop = pendingScrollTopRef.current;
+      pendingScrollTopRef.current = null;
+      if (pendingScrollTop !== null) {
+        commitScrollTop(pendingScrollTop);
+      }
+    };
+  }, []);
+
+  function handlePanelScroll(event: React.UIEvent<HTMLDivElement>) {
+    scheduleScrollTopSave(event.currentTarget.scrollTop || 0);
+  }
+
+  function scheduleScrollTopSave(scrollTop: number) {
+    pendingScrollTopRef.current = scrollTop;
+    if (scrollSaveTimeoutRef.current !== null) {
+      window.clearTimeout(scrollSaveTimeoutRef.current);
+    }
+    scrollSaveTimeoutRef.current = window.setTimeout(() => {
+      scrollSaveTimeoutRef.current = null;
+      const pendingScrollTop = pendingScrollTopRef.current;
+      pendingScrollTopRef.current = null;
+      if (pendingScrollTop !== null) {
+        commitScrollTop(pendingScrollTop);
+      }
+    }, 160);
+  }
+
+  function commitScrollTop(scrollTop: number) {
+    const normalizedScrollTop =
+      normalizeWorkspacePanelScrollTop(scrollTop);
+    if (lastSavedScrollTopRef.current === normalizedScrollTop) return;
+    lastSavedScrollTopRef.current = normalizedScrollTop;
+    onScrollTopChangeRef.current?.(normalizedScrollTop);
+  }
+
+  function getBranchContributorKey(version: BuildVersionSummary) {
+    const contributorId = Number(
+      version.contributionContributorId || version.userId || 0
+    );
+    if (contributorId > 0) return `user:${contributorId}`;
+    const contributorName = String(version.username || '').trim();
+    return contributorName ? `name:${contributorName}` : `branch:${version.id}`;
+  }
+
+  function getBranchDisplayTitle(version: BuildVersionSummary) {
+    return getBuildBranchDisplayTitle({
+      ...version,
+      contributionBranchNumber:
+        Number(version.contributionBranchNumber || 0) ||
+        branchNumberById.get(Number(version.id || 0)) ||
+        null,
+      rootBuildTitle: rootProjectTitleText
+    });
+  }
+
+  function getBranchFullDisplayTitle(version: BuildVersionSummary) {
+    return formatBranchFullDisplayTitle({
+      projectTitle: rootProjectTitleText,
+      branchTitle: getBranchDisplayTitle(version)
+    });
+  }
+
+  function getBranchUser(version: BuildVersionSummary) {
+    const userId = Number(
+      version.contributionContributorId || version.userId || 0
+    );
+    return {
+      id: userId,
+      username: String(version.username || '').trim() || 'Contributor',
+      profilePicUrl: String(version.profilePicUrl || '').trim()
+    };
+  }
+
+  function getBranchUpdatedLabel(version: BuildVersionSummary) {
+    const updatedAt = Number(version.updatedAt || 0);
+    if (!updatedAt) return '';
+    return `Updated ${timeSince(updatedAt)}`;
+  }
+
+  function handleBranchCardKeyDown(
+    event: React.KeyboardEvent<HTMLDivElement>,
+    version: BuildVersionSummary
+  ) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onLoadVersion(version);
+  }
+
+  function renderBranchSection(title: string, branchList: BuildVersionSummary[]) {
+    return (
+      <div className={branchSectionClass}>
+        <span className={versionLoadTitleClass}>{title}</span>
+        {versionsLoading ? (
+          <span className={branchEmptyTextClass}>Loading branches...</span>
+        ) : branchList.length > 0 ? (
+          branchList.map((version) => {
+            const branchUser = getBranchUser(version);
+            const branchStatus = String(
+              version.contributionStatus || ''
+            ).trim();
+            const branchName = getBranchDisplayTitle(version);
+            const updatedLabel = getBranchUpdatedLabel(version);
+            const thumbnailUrl = String(version.thumbnailUrl || '').trim();
+            const isCurrentBranch =
+              Number(version.id || 0) === Number(activeBuildId || 0);
+            const canDeleteBranch =
+              !isCurrentBranch &&
+              Number(version.contributionContributorId || version.userId || 0) ===
+                Number(currentUserId || 0) &&
+              canDeleteBuildBranchStatus(branchStatus);
+            const deleteTarget = {
+              id: version.id,
+              title: branchName,
+              confirmTitle: String(version.title || branchName).trim()
+            };
+            return (
+              <div
+                key={version.id}
+                className={branchCardClass}
+                role="button"
+                tabIndex={0}
+                onClick={() => onLoadVersion(version)}
+                onKeyDown={(event) => handleBranchCardKeyDown(event, version)}
+              >
+                <BuildPreviewFrame
+                  className={branchPreviewClass}
+                  thumbnailUrl={thumbnailUrl}
+                  alt={`${branchName} preview`}
+                  ariaLabel={`${branchName} preview`}
+                >
+                  {isCurrentBranch ? (
+                    <span className={branchPreviewCurrentBadgeClass}>
+                      Current
+                    </span>
+                  ) : null}
+                </BuildPreviewFrame>
+                <div className={branchCardBodyClass}>
+                  <div className={branchCardHeaderClass}>
+                    <ProfilePic
+                      className={branchAvatarClass}
+                      userId={branchUser.id}
+                      profilePicUrl={branchUser.profilePicUrl}
+                    />
+                    <span className={branchLoadTextClass}>
+                      <span className={branchLoadTitleTextClass}>
+                        {branchName}
+                      </span>
+                      <span className={branchLoadMetaClass}>
+                        <span
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                        >
+                          <UsernameText user={branchUser as any} />
+                        </span>
+                        {updatedLabel ? (
+                          <>
+                            <span>·</span>
+                            <span>{updatedLabel}</span>
+                          </>
+                        ) : null}
+                      </span>
+                    </span>
+                  </div>
+                  <span className={branchLoadBadgeRowClass}>
+                    <button
+                      type="button"
+                      className={versionLoadButtonClass}
+                      disabled={isCurrentBranch}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onLoadVersion(version);
+                      }}
+                    >
+                      <Icon icon="eye" />
+                      {isCurrentBranch
+                        ? 'Viewing'
+                        : isProjectOwner
+                          ? 'Review'
+                          : 'Open'}
+                    </button>
+                    {branchStatus && branchStatus !== 'draft' ? (
+                      <span className={versionLoadStatusClass}>
+                        {branchStatus}
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
+                {canDeleteBranch ? (
+                  <button
+                    type="button"
+                    className={branchDeleteButtonClass}
+                    disabled={deletingBranchId === version.id}
+                    title="Delete branch"
+                    aria-label={`Delete ${branchName}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onDeleteBranch(deleteTarget);
+                    }}
+                  >
+                    <Icon
+                      icon={
+                        deletingBranchId === version.id
+                          ? 'spinner'
+                          : 'trash-alt'
+                      }
+                      pulse={deletingBranchId === version.id}
+                    />
+                  </button>
+                ) : null}
+              </div>
+            );
+          })
+        ) : (
+          <span className={branchEmptyTextClass}>No branches yet.</span>
+        )}
+      </div>
+    );
+  }
+
+  function renderOwnerAttentionPanel() {
+    if (!isProjectOwner) return null;
+    const pendingRequestCount = Math.max(
+      0,
+      Math.floor(Number(pendingCollaborationRequestCount) || 0)
+    );
+    const items: Array<{
+      key: string;
+      tone: 'request' | 'branch' | 'merge' | 'release';
+      icon: string;
+      label: string;
+      detail: string;
+      actionLabel: string;
+      actionIcon: string;
+      disabled?: boolean;
+      onClick: () => void;
+    }> = [];
+
+    if (pendingRequestCount > 0) {
+      items.push({
+        key: 'requests',
+        tone: 'request',
+        icon: 'comments',
+        label: `${formatOwnerAttentionCount(
+          pendingRequestCount,
+          'collaboration request'
+        )}`,
+        detail: 'People are asking to join this project.',
+        actionLabel: 'Review',
+        actionIcon: 'comments',
+        onClick: onOpenTeamPanel
+      });
+    }
+
+    if (reviewableTeamBranches.length > 0) {
+      items.push({
+        key: 'branches',
+        tone: 'branch',
+        icon: 'code-branch',
+        label: `${formatOwnerAttentionCount(
+          reviewableTeamBranches.length,
+          'team branch'
+        )}`,
+        detail: 'Preview teammate ideas and merge the ones you want.',
+        actionLabel: 'Branches',
+        actionIcon: 'code-branch',
+        onClick: onOpenBranchesPanel
+      });
+    }
+
+    if (mergingBranches.length > 0) {
+      items.push({
+        key: 'merging',
+        tone: 'merge',
+        icon: 'exclamation-triangle',
+        label: `${formatOwnerAttentionCount(
+          mergingBranches.length,
+          'merge'
+        )} needs help`,
+        detail: 'Ask Lumine to finish the merge conflict cleanup.',
+        actionLabel: 'Fix',
+        actionIcon: 'sparkles',
+        onClick: onOpenBranchesPanel
+      });
+    }
+
+    if (hasUnpublishedChanges) {
+      items.push({
+        key: 'release',
+        tone: 'release',
+        icon: 'cloud-upload-alt',
+        label: 'Unpublished changes',
+        detail:
+          releaseDiffTotal > 0
+            ? `${formatOwnerAttentionCount(
+                releaseDiffTotal,
+                'file change'
+              )} waiting for release.`
+            : 'Workspace changes are waiting for release.',
+        actionLabel: 'Update App',
+        actionIcon: 'cloud-upload-alt',
+        disabled: publishing,
+        onClick: onUpdatePublishedApp
+      });
+    }
+
+    if (items.length === 0) return null;
+
+    return (
+      <div className={ownerAttentionCardClass}>
+        <div className={ownerAttentionHeaderClass}>
+          <span className={ownerAttentionTitleClass}>
+            <Icon icon="exclamation-circle" />
+            Needs Attention
+          </span>
+          <span className={ownerAttentionCountClass}>
+            {formatOwnerAttentionCount(items.length, 'item')}
+          </span>
+        </div>
+        <div className={ownerAttentionListClass}>
+          {items.map((item) => (
+            <div
+              key={item.key}
+              className={ownerAttentionItemClass}
+              data-tone={item.tone}
+            >
+              <span className={ownerAttentionIconClass}>
+                <Icon icon={item.icon as any} />
+              </span>
+              <span className={ownerAttentionTextClass}>
+                <span className={ownerAttentionLabelClass}>
+                  {item.label}
+                </span>
+                <span className={ownerAttentionDetailClass}>
+                  {item.detail}
+                </span>
+              </span>
+              <button
+                type="button"
+                className={ownerAttentionActionClass}
+                disabled={item.disabled}
+                onClick={item.onClick}
+              >
+                <Icon icon={item.actionIcon as any} />
+                {item.actionLabel}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div
+      ref={scrollRef}
+      className={versionStartPanelClass}
+      onScroll={handlePanelScroll}
+    >
+      {rootBuildId > 0 ? (
+        <div className={branchTopNavClass}>
+          <button
+            type="button"
+            className={branchBackButtonClass}
+            onClick={onOpenMainProject}
+          >
+            <Icon icon="arrow-left" />
+            Main Project
+          </button>
+          {canDeleteActiveBranch ? (
+            <button
+              type="button"
+              className={branchTopDeleteButtonClass}
+              disabled={deletingBranchId === activeBuildId}
+              title="Delete branch"
+              aria-label={`Delete ${activeBranchLabel}`}
+              onClick={() =>
+                onDeleteBranch({
+                  id: activeBuildId,
+                  title: activeBranchLabel,
+                  confirmTitle: String(
+                    activeBuildTitle || activeBranchLabel
+                  ).trim()
+                })
+              }
+            >
+              <Icon
+                icon={
+                  deletingBranchId === activeBuildId ? 'spinner' : 'trash-alt'
+                }
+                pulse={deletingBranchId === activeBuildId}
+              />
+              Delete Branch
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {renderOwnerAttentionPanel()}
+      <div className={versionStartCardClass}>
+        <div className={versionStartTitleClass}>
+          <Icon icon="code-branch" />
+          Branches
+        </div>
+        <p className={versionStartTextClass}>{versionDescription}</p>
+        {canStartVersion ? (
+          <div className={branchStartRowClass}>
+            <input
+              className={branchNameInputClass}
+              value={branchName}
+              onChange={(event) => onBranchNameChange(event.target.value)}
+              placeholder="What are you making? Pink theme, harder level, new character..."
+              maxLength={80}
+              aria-label="Branch name"
+            />
+            <div className={versionStartActionsClass}>
+              <GameCTAButton
+                variant="success"
+                size="md"
+                icon="play"
+                loading={forking}
+                disabled={forking || branchName.trim().length === 0}
+                onClick={onStartVersion}
+              >
+                Start Branch
+              </GameCTAButton>
+            </div>
+          </div>
+        ) : null}
+        {canFork ? (
+          <div className={versionStartActionsClass}>
+            <GameCTAButton
+              variant="primary"
+              size="md"
+              icon="code-branch"
+              loading={forking}
+              disabled={forking}
+              onClick={onFork}
+            >
+              Fork
+            </GameCTAButton>
+          </div>
+        ) : null}
+        <p className={branchListHelpClass}>
+          Switch between your branches or check out your teammates' branches.
+        </p>
+        <div className={branchListsClass}>
+          {renderBranchSection('Your Branches', ownBranches)}
+          {renderBranchSection('Team Branches', teamBranches)}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function normalizeLumineChatVisibility(
@@ -455,6 +1703,7 @@ interface BuildEditorProps {
   copilotPolicy: BuildCopilotPolicy | null;
   isOwner: boolean;
   initialPrompt?: string;
+  forceInitialPrompt?: boolean;
   seedGreeting?: boolean;
   onUpdateBuild: (build: Build) => void;
   onUpdateChatMessages: (messages: ChatMessage[]) => void;
@@ -1338,6 +2587,7 @@ export default function BuildEditor({
   copilotPolicy,
   isOwner,
   initialPrompt = '',
+  forceInitialPrompt = false,
   seedGreeting = false,
   onUpdateBuild,
   onUpdateChatMessages,
@@ -1347,12 +2597,16 @@ export default function BuildEditor({
   const currentBuildIsContributionFork = isBuildContributionFork(build);
   const canEditCurrentBuildMetadata =
     isOwner && !currentBuildIsContributionFork && canEditBuildProject(build);
+  const canEditCurrentBuildThumbnail = isOwner && canEditBuildProject(build);
   const location = useLocation();
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
   const sharedBuildRun = useBuildContext(
     (v) => v.state.buildRuns[String(build.id)] || null
+  );
+  const buildWorkspaceUi = useBuildContext(
+    (v) => v.state.buildWorkspaceUi[String(build.id)] || null
   );
   const getBuildRunIdentity: (
     buildId: number
@@ -1382,6 +2636,15 @@ export default function BuildEditor({
     (v) => v.actions.onRemoveBuildRunMessage
   );
   const onClearBuildRun = useBuildContext((v) => v.actions.onClearBuildRun);
+  const onSetBuildWorkspaceCommunicationMode = useBuildContext(
+    (v) => v.actions.onSetBuildWorkspaceCommunicationMode
+  );
+  const onSetBuildWorkspaceScroll = useBuildContext(
+    (v) => v.actions.onSetBuildWorkspaceScroll
+  );
+  const onSetBuildWorkspaceForumThread = useBuildContext(
+    (v) => v.actions.onSetBuildWorkspaceForumThread
+  );
   const onClearBuildRuntimeVerifyResult = useBuildContext(
     (v) => v.actions.onClearBuildRuntimeVerifyResult
   );
@@ -1389,11 +2652,13 @@ export default function BuildEditor({
   const routeState = (location.state || {}) as {
     openCollaborationSettings?: boolean;
     openPeoplePanel?: boolean;
+    openVersionsPanel?: boolean;
   };
   const routeOpenCollaborationSettings = Boolean(
     routeState.openCollaborationSettings
   );
   const routeOpenPeoplePanel = Boolean(routeState.openPeoplePanel);
+  const routeOpenVersionsPanel = Boolean(routeState.openVersionsPanel);
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
@@ -1443,14 +2708,15 @@ export default function BuildEditor({
   const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
+  const deleteBuild = useAppContext((v) => v.requestHelpers.deleteBuild);
   const createBuildContributionFork = useAppContext(
     (v) => v.requestHelpers.createBuildContributionFork
   );
-  const submitBuildContribution = useAppContext(
-    (v) => v.requestHelpers.submitBuildContribution
+  const loadBuildContributions = useAppContext(
+    (v) => v.requestHelpers.loadBuildContributions
   );
-  const reopenBuildContribution = useAppContext(
-    (v) => v.requestHelpers.reopenBuildContribution
+  const mergeBuildContribution = useAppContext(
+    (v) => v.requestHelpers.mergeBuildContribution
   );
   const updateBuildLumineChatVisibility = useAppContext(
     (v) => v.requestHelpers.updateBuildLumineChatVisibility
@@ -1472,9 +2738,18 @@ export default function BuildEditor({
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [contributionActionLoading, setContributionActionLoading] = useState<
-    'submit' | 'reopen' | ''
+    'merge' | ''
   >('');
   const [contributionActionError, setContributionActionError] = useState('');
+  const [availableVersions, setAvailableVersions] = useState<
+    BuildVersionSummary[]
+  >([]);
+  const [availableVersionsLoading, setAvailableVersionsLoading] =
+    useState(false);
+  const [deletingBranch, setDeletingBranch] =
+    useState<BuildBranchDeleteTarget | null>(null);
+  const [deletingBranchLoading, setDeletingBranchLoading] = useState(false);
+  const [branchNameDraft, setBranchNameDraft] = useState('');
   const [lumineChatVisibility, setLumineChatVisibility] =
     useState<BuildLumineChatVisibility>(() =>
       normalizeLumineChatVisibility(build.lumineChatVisibility)
@@ -1492,6 +2767,7 @@ export default function BuildEditor({
   const [savingDescription, setSavingDescription] = useState(false);
   const [thumbnailModalShown, setThumbnailModalShown] = useState(false);
   const [savingThumbnail, setSavingThumbnail] = useState(false);
+  const savingThumbnailRef = useRef(false);
   const [thumbnailSaveError, setThumbnailSaveError] = useState('');
   const [runtimeUploadsModalShown, setRuntimeUploadsModalShown] =
     useState(false);
@@ -1546,6 +2822,8 @@ export default function BuildEditor({
   const pendingBuildChatUploadClarificationRef = useRef<
     PendingBuildChatUploadClarification[]
   >([]);
+  const autoBranchThumbnailTimeoutRef = useRef<number | null>(null);
+  const autoBranchThumbnailInFlightRef = useRef(false);
   const buildChatUploadProgressMessageIdRef = useRef<number | null>(null);
   const handledSharedTerminalStateKeyRef = useRef('');
   const DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS = 8000;
@@ -1584,18 +2862,84 @@ export default function BuildEditor({
   });
 
   useEffect(() => {
+    savingThumbnailRef.current = savingThumbnail;
+  }, [savingThumbnail]);
+
+  useEffect(() => {
+    return () => {
+      if (autoBranchThumbnailTimeoutRef.current !== null) {
+        window.clearTimeout(autoBranchThumbnailTimeoutRef.current);
+        autoBranchThumbnailTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isOwner || !routeOpenCollaborationSettings) return;
     setCollaborationSettingsModalShown(true);
     navigate(location.pathname, {
       replace: true,
-      state: routeOpenPeoplePanel ? { openPeoplePanel: true } : null
+      state: routeOpenPeoplePanel
+        ? { openPeoplePanel: true }
+        : routeOpenVersionsPanel
+          ? { openVersionsPanel: true }
+          : null
     });
   }, [
     isOwner,
     location.pathname,
     navigate,
     routeOpenCollaborationSettings,
-    routeOpenPeoplePanel
+    routeOpenPeoplePanel,
+    routeOpenVersionsPanel
+  ]);
+
+  useEffect(() => {
+    const branchListBuildId = currentBuildIsContributionFork
+      ? Number(build.contributionRootBuildId || 0)
+      : Number(build.id || 0);
+    if (
+      !userId ||
+      !branchListBuildId ||
+      (!isOwner &&
+        !currentBuildIsContributionFork &&
+        !build.canOpenContributionWorkspace)
+    ) {
+      setAvailableVersions([]);
+      setAvailableVersionsLoading(false);
+      return;
+    }
+    let canceled = false;
+    setAvailableVersionsLoading(true);
+    loadBuildContributions(branchListBuildId)
+      .then((result: any) => {
+        if (canceled) return;
+        setAvailableVersions(
+          Array.isArray(result?.contributions) ? result.contributions : []
+        );
+      })
+      .catch((error: any) => {
+        if (canceled) return;
+        console.error('Failed to load build branches:', error);
+        setAvailableVersions([]);
+      })
+      .finally(() => {
+        if (!canceled) {
+          setAvailableVersionsLoading(false);
+        }
+      });
+    return () => {
+      canceled = true;
+    };
+    // loadBuildContributions is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    build.canOpenContributionWorkspace,
+    build.contributionRootBuildId,
+    build.id,
+    currentBuildIsContributionFork,
+    isOwner,
+    userId
   ]);
   const mergedPersistedAndLiveChatMessages = mergeChatMessagesWithBuildRun({
     persistedMessages: chatMessages,
@@ -2061,7 +3405,13 @@ export default function BuildEditor({
         ? nextProjectFiles
         : currentBuild.projectFiles
     };
-    applyBuildUpdate(nextBuild);
+    const appliedBuild = hasSharedTerminalWorkspaceSnapshot
+      ? markBuildReleaseStatusUnpublished(nextBuild)
+      : nextBuild;
+    applyBuildUpdate(appliedBuild);
+    if (hasSharedTerminalWorkspaceSnapshot) {
+      maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharedBuildRun]);
 
@@ -2370,11 +3720,11 @@ export default function BuildEditor({
     if (!isOwner) return;
     const prompt = initialPrompt.trim();
     if (!prompt) return;
-    if (getLatestChatMessages().length > 0) return;
+    if (!forceInitialPrompt && getLatestChatMessages().length > 0) return;
     didAutoPromptRef.current = true;
     void startGeneration(prompt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, isOwner, initialPrompt]);
+  }, [build.id, isOwner, initialPrompt, forceInitialPrompt]);
 
   useEffect(() => {
     if (didAutoGreetingRef.current) return;
@@ -2639,7 +3989,9 @@ export default function BuildEditor({
           },
           projectFiles: nextProjectFiles
         };
-        applyBuildUpdate(nextBuild);
+        const appliedBuild = markBuildReleaseStatusUnpublished(nextBuild);
+        applyBuildUpdate(appliedBuild);
+        maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
         if (payloadProjectFiles) {
           runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
         } else if (completionUsedFallbackProjectFiles) {
@@ -3492,6 +4844,41 @@ export default function BuildEditor({
 
   async function handleSendMessage(messageText: string) {
     return await sendBuildMessageText(messageText);
+  }
+
+  async function handleAskLumineToResolveMergeConflicts(paths: string[] = []) {
+    const rootBuildId = Number(build.contributionRootBuildId || 0);
+    const requesterOwnsRootBuild =
+      currentBuildIsContributionFork &&
+      rootBuildId > 0 &&
+      Number(build.rootBuildUserId || 0) === Number(userId || 0);
+    const canResolveFromMainProject =
+      requesterOwnsRootBuild &&
+      String(build.contributionStatus || '').trim() === 'merging';
+    if (!isOwner && !canResolveFromMainProject) return false;
+    const normalizedPaths = Array.from(
+      new Set(
+        (Array.isArray(paths) ? paths : [])
+          .map((path) => String(path || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const pathsText =
+      normalizedPaths.length > 0
+        ? ` in ${normalizedPaths.join(', ')}`
+        : '';
+    const prompt = `Please resolve the merge conflict markers${pathsText}. Keep the intended changes from both Current Build and Contribution, remove every <<<<<<< Current Build / ======= / >>>>>>> Contribution marker, and make sure the app still runs.`;
+    if (!isOwner) {
+      navigate(`/build/${rootBuildId}`, {
+        state: {
+          initialPrompt: prompt,
+          forceInitialPrompt: true
+        }
+      });
+      return true;
+    }
+    handleBuildWorkspaceCommunicationModeChange('lumine');
+    return await sendBuildMessageText(prompt);
   }
 
   async function handleContinueScopedPlan() {
@@ -4898,7 +6285,7 @@ export default function BuildEditor({
       },
       projectFiles: normalizedFiles
     };
-    applyBuildUpdate(nextBuild);
+    applyBuildUpdate(markBuildReleaseStatusUnpublished(nextBuild));
   }
 
   function handleProjectFilesChange(
@@ -4927,7 +6314,9 @@ export default function BuildEditor({
       },
       projectFiles: normalizedFiles
     };
-    applyBuildUpdate(nextBuild);
+    applyBuildUpdate(
+      markBuildReleaseStatusUnpublished(nextBuild, { force: true })
+    );
   }
 
   async function handleSaveProjectFiles(
@@ -5015,6 +6404,7 @@ export default function BuildEditor({
           result?.artifactVersion?.versionId ??
           latestBuild.currentArtifactVersionId ??
           null,
+        releaseStatus: result?.releaseStatus ?? latestBuild.releaseStatus ?? null,
         projectManifest: result?.projectManifest || {
           entryPath: resolveIndexEntryPathFromProjectFiles(
             savedFiles,
@@ -5026,6 +6416,7 @@ export default function BuildEditor({
         projectFiles: savedFiles
       };
       applyBuildUpdate(nextBuild);
+      maybeAutoCaptureBranchThumbnailAfterProgressSave(nextBuild);
       if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
         replaceCopilotPolicy(result?.copilotPolicy || null);
       }
@@ -5237,6 +6628,7 @@ export default function BuildEditor({
       ...result.build
     };
     applyBuildUpdate(nextBuild);
+    syncAvailableBranchSummary(nextBuild);
     return nextBuild;
   }
 
@@ -5247,6 +6639,47 @@ export default function BuildEditor({
     }
     const capturedImageUrl = await captureThumbnailFromPreview();
     return await persistBuildThumbnailFromDataUrl(capturedImageUrl);
+  }
+
+  function maybeAutoCaptureBranchThumbnailAfterProgressSave(
+    savedBuild: Build | null | undefined
+  ) {
+    if (!savedBuild || !isBuildContributionFork(savedBuild)) return;
+    if (!isOwner || !canEditBuildProject(savedBuild)) return;
+    if (String(savedBuild.thumbnailUrl || '').trim()) return;
+    const savedBuildId = Number(savedBuild.id || 0);
+    const savedArtifactVersionId = Number(
+      savedBuild.currentArtifactVersionId || 0
+    );
+    if (!savedBuildId || !savedArtifactVersionId) return;
+    if (autoBranchThumbnailInFlightRef.current) return;
+    if (autoBranchThumbnailTimeoutRef.current !== null) {
+      window.clearTimeout(autoBranchThumbnailTimeoutRef.current);
+    }
+    autoBranchThumbnailTimeoutRef.current = window.setTimeout(async () => {
+      autoBranchThumbnailTimeoutRef.current = null;
+      if (
+        autoBranchThumbnailInFlightRef.current ||
+        savingThumbnailRef.current
+      ) {
+        return;
+      }
+      const latestBuild = getLatestBuild();
+      if (Number(latestBuild?.id || 0) !== savedBuildId) return;
+      if (!isBuildContributionFork(latestBuild)) return;
+      if (!canEditBuildProject(latestBuild)) return;
+      if (String(latestBuild.thumbnailUrl || '').trim()) return;
+      if (Number(latestBuild.currentArtifactVersionId || 0) <= 0) return;
+      autoBranchThumbnailInFlightRef.current = true;
+      try {
+        const capturedImageUrl = await captureThumbnailFromPreview();
+        await persistBuildThumbnailFromDataUrl(capturedImageUrl);
+      } catch (error) {
+        console.warn('Failed to auto-save branch thumbnail:', error);
+      } finally {
+        autoBranchThumbnailInFlightRef.current = false;
+      }
+    }, 900);
   }
 
   async function handlePublish() {
@@ -5289,6 +6722,19 @@ export default function BuildEditor({
         });
         return;
       }
+      if (
+        latestBuild.isPublic &&
+        latestBuild.releaseStatus &&
+        !latestBuild.releaseStatus.hasUnpublishedChanges
+      ) {
+        appendLocalRunEvent({
+          kind: 'lifecycle',
+          phase: 'publish',
+          message: 'This app is already up to date.',
+          pageFeedbackOnMissingRequestId: true
+        });
+        return;
+      }
       let publishTargetBuild = latestBuild;
       if (!String(latestBuild.thumbnailUrl || '').trim()) {
         try {
@@ -5313,9 +6759,7 @@ export default function BuildEditor({
       if (result?.success && result?.build) {
         applyBuildUpdate({
           ...publishTargetBuild,
-          isPublic: result.build.isPublic,
-          publishedAt: result.build.publishedAt,
-          thumbnailUrl: result.build.thumbnailUrl
+          ...result.build
         });
         if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
           replaceCopilotPolicy(result.copilotPolicy || null);
@@ -5323,6 +6767,15 @@ export default function BuildEditor({
       }
     } catch (error: any) {
       console.error('Failed to publish build:', error);
+      if (error?.response?.data?.releaseStatus) {
+        const latestBuild = getLatestBuild();
+        if (latestBuild) {
+          applyBuildUpdate({
+            ...latestBuild,
+            releaseStatus: error.response.data.releaseStatus
+          });
+        }
+      }
       appendLocalRunEvent({
         kind: 'lifecycle',
         phase: 'publish',
@@ -5343,7 +6796,10 @@ export default function BuildEditor({
       if (result?.success && result?.build) {
         applyBuildUpdate({
           ...latestBuild,
-          isPublic: result.build.isPublic
+          ...result.build,
+          releaseStatus: result.build.isPublic
+            ? result.build.releaseStatus ?? latestBuild.releaseStatus ?? null
+            : null
         });
         if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
           replaceCopilotPolicy(result.copilotPolicy || null);
@@ -5362,23 +6818,89 @@ export default function BuildEditor({
   }
 
   async function handleCreateContribution() {
-    if (!userId || forking || isOwner) return;
+    if (!userId || forking || currentBuildIsContributionFork) return;
+    const branchName = branchNameDraft.trim();
+    if (!branchName) return;
     setForking(true);
     try {
       const latestBuild = getLatestBuild();
-      const result = await createBuildContributionFork(latestBuild.id);
+      const result = await createBuildContributionFork({
+        buildId: latestBuild.id,
+        name: branchName
+      });
       if (result?.success && result?.build) {
-        navigate(`/build/${result.build.id}`);
+        setBranchNameDraft('');
+        navigate(getBuildWorkspacePath(result.build));
       }
     } catch (error) {
-      console.error('Failed to create contribution fork:', error);
+      console.error('Failed to create branch:', error);
     } finally {
       setForking(false);
     }
   }
 
+  function handleLoadVersion(version: BuildVersionSummary) {
+    if (!version?.id) return;
+    navigate(getBuildWorkspacePath(version), {
+      state: {
+        openVersionsPanel: true
+      }
+    });
+  }
+
+  function handleRequestDeleteBranch(target: BuildBranchDeleteTarget) {
+    if (!target?.id || deletingBranchLoading) return;
+    setDeletingBranch(target);
+  }
+
+  async function handleDeleteBranch(confirmTitle: string) {
+    const target = deletingBranch;
+    if (!target || deletingBranchLoading) return;
+    setDeletingBranchLoading(true);
+    try {
+      const result = await deleteBuild({
+        buildId: target.id,
+        confirmTitle
+      });
+      if (result?.success) {
+        setAvailableVersions((versions) =>
+          versions.filter((version) => Number(version.id) !== Number(target.id))
+        );
+        setDeletingBranch(null);
+        if (Number(target.id) === Number(getLatestBuild().id || 0)) {
+          const rootBuildId = Number(
+            getLatestBuild().contributionRootBuildId || 0
+          );
+          if (rootBuildId > 0) {
+            navigate(`/build/${rootBuildId}`, {
+              state: {
+                openVersionsPanel: true
+              }
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete branch:', error);
+    } finally {
+      setDeletingBranchLoading(false);
+    }
+  }
+
+  function handleOpenMainProject() {
+    const rootBuildId = Number(getLatestBuild().contributionRootBuildId || 0);
+    if (!rootBuildId) return;
+    navigate(`/build/${rootBuildId}`, {
+      state: {
+        openVersionsPanel: true
+      }
+    });
+  }
+
   async function handleFork() {
-    if (!userId || forking || isOwner) return;
+    if (!userId || forking || (isOwner && !currentBuildIsContributionFork)) {
+      return;
+    }
     setForking(true);
     try {
       const latestBuild = getLatestBuild();
@@ -5393,58 +6915,39 @@ export default function BuildEditor({
     }
   }
 
-  async function handleSubmitContribution() {
+  async function handleMergeCurrentBranch() {
     const latestBuild = getLatestBuild();
     const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
     const contributionBuildId = Number(latestBuild.id || 0);
-    if (!rootBuildId || !contributionBuildId || contributionActionLoading) {
+    if (
+      !rootBuildId ||
+      !contributionBuildId ||
+      !canMergeBuildBranch(latestBuild, userId) ||
+      contributionActionLoading
+    ) {
       return;
     }
-    setContributionActionLoading('submit');
+    setContributionActionLoading('merge');
     setContributionActionError('');
     try {
-      const filesReady = await handleBeforeContributionAction('submit');
+      const filesReady = await handleBeforeContributionAction('merge');
       if (!filesReady) return;
-      const result = await submitBuildContribution({
+      const result = await mergeBuildContribution({
         buildId: rootBuildId,
         contributionBuildId
       });
-      if (result?.contribution) {
-        handleBuildCollaborationPatch(result.contribution);
+      if (result?.success) {
+        navigate(`/build/${rootBuildId}`, {
+          state: {
+            openVersionsPanel: true
+          }
+        });
       }
     } catch (error: any) {
       setContributionActionError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to submit contribution'
-      );
-    } finally {
-      setContributionActionLoading('');
-    }
-  }
-
-  async function handleReopenContribution() {
-    const latestBuild = getLatestBuild();
-    const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
-    const contributionBuildId = Number(latestBuild.id || 0);
-    if (!rootBuildId || !contributionBuildId || contributionActionLoading) {
-      return;
-    }
-    setContributionActionLoading('reopen');
-    setContributionActionError('');
-    try {
-      const result = await reopenBuildContribution({
-        buildId: rootBuildId,
-        contributionBuildId
-      });
-      if (result?.contribution) {
-        handleBuildCollaborationPatch(result.contribution);
-      }
-    } catch (error: any) {
-      setContributionActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to reopen contribution'
+          'Failed to merge branch'
       );
     } finally {
       setContributionActionLoading('');
@@ -5461,7 +6964,7 @@ export default function BuildEditor({
       latestBuild.lumineChatVisibility
     );
     if (
-      !canEditCurrentBuildProject ||
+      !isOwner ||
       savingLumineChatVisibility ||
       normalizedNextVisibility === savedVisibility
     ) {
@@ -5548,12 +7051,75 @@ export default function BuildEditor({
         '--build-chat-panel-width': `${buildChatPanelWidth}px`
       } as React.CSSProperties)
     : undefined;
-  const showContributionButton =
-    !isOwner &&
+  const canShowVersionStartActions =
+    !currentBuildIsContributionFork &&
     Boolean(userId) &&
-    canStartProjectScopedContribution(build);
+    (isOwner ||
+      (Boolean(build.canOpenContributionWorkspace) &&
+        canStartProjectScopedContribution(build)));
+  const shouldShowVersionStartPanel =
+    !canEditCurrentBuildProject && mergedChatMessages.length === 0;
+  const showContributionButton = false;
   const showForkButton =
-    !isOwner && Boolean(userId) && canStartStandaloneFork(build);
+    Boolean(userId) &&
+    canStartStandaloneFork(build) &&
+    (!isOwner || currentBuildIsContributionFork);
+  const canMergeCurrentBranch = canMergeBuildBranch(build, userId);
+  const buildWorkspaceCommunicationMode = normalizeBuildWorkspaceCommunicationMode(
+    buildWorkspaceUi?.communicationMode
+  );
+  const buildWorkspaceScrollTops = buildWorkspaceUi?.scrollTops || {};
+  const versionNavigationPanel = (
+    <VersionStartPanel
+      rootBuildId={Number(build.contributionRootBuildId || 0)}
+      activeBuildId={Number(build.id || 0)}
+      activeBuildTitle={build.title}
+      currentUserId={userId}
+      rootProjectTitle={build.rootBuildTitle || getBuildDisplayTitle(build)}
+      versionOwnerUsername={build.username}
+      isOwnBranch={Number(build.userId || 0) === Number(userId || 0)}
+      isProjectOwner={isOwner && !currentBuildIsContributionFork}
+      branchName={branchNameDraft}
+      forking={forking}
+      canStartVersion={canShowVersionStartActions}
+      canFork={showForkButton}
+      versions={availableVersions}
+      versionsLoading={availableVersionsLoading}
+      deletingBranchId={deletingBranch?.id || null}
+      pendingCollaborationRequestCount={build.pendingCollaborationRequestCount}
+      releaseStatus={build.releaseStatus || null}
+      publishing={publishing}
+      status={build.contributionStatus || null}
+      onBranchNameChange={setBranchNameDraft}
+      onStartVersion={handleCreateContribution}
+      onLoadVersion={handleLoadVersion}
+      onDeleteBranch={handleRequestDeleteBranch}
+      onOpenMainProject={handleOpenMainProject}
+      onFork={handleFork}
+      onOpenTeamPanel={() =>
+        handleBuildWorkspaceCommunicationModeChange('people')
+      }
+      onOpenBranchesPanel={() =>
+        handleBuildWorkspaceCommunicationModeChange('versions')
+      }
+      onUpdatePublishedApp={handlePublish}
+      initialScrollTop={buildWorkspaceScrollTops.versions || 0}
+      onScrollTopChange={(scrollTop) =>
+        handleBuildWorkspaceCommunicationScrollChange('versions', scrollTop)
+      }
+    />
+  );
+  const versionsPanelShown =
+    currentBuildIsContributionFork ||
+    canShowVersionStartActions ||
+    showForkButton ||
+    availableVersionsLoading ||
+    availableVersions.length > 0;
+  const luminePanelOverride = shouldShowVersionStartPanel
+    ? versionNavigationPanel
+    : null;
+  const versionsPanel =
+    versionsPanelShown && !luminePanelOverride ? versionNavigationPanel : null;
   const savedLumineChatVisibility = normalizeLumineChatVisibility(
     build.lumineChatVisibility
   );
@@ -5562,10 +7128,25 @@ export default function BuildEditor({
     acceptedContributorCount > 0 ||
     savedLumineChatVisibility === 'collaborators' ||
     lumineChatVisibility === 'collaborators';
+  const canManageLumineChatVisibility =
+    isOwner && lumineChatVisibilitySettingsShown;
+  const preferredCommunicationMode: ChatPanelCommunicationMode =
+    routeOpenPeoplePanel
+      ? 'people'
+      : routeOpenVersionsPanel
+        ? 'versions'
+        : buildWorkspaceCommunicationMode;
   const chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'> = {
-    preferredCommunicationMode: routeOpenPeoplePanel ? 'people' : 'lumine',
+    preferredCommunicationMode,
+    onCommunicationModeChange: handleBuildWorkspaceCommunicationModeChange,
+    communicationScrollTops: buildWorkspaceScrollTops,
+    onCommunicationScrollChange: handleBuildWorkspaceCommunicationScrollChange,
+    luminePanelOverride,
+    versionsPanel,
+    lumineTabLabel: luminePanelOverride ? 'Branches' : 'Lumine',
+    lumineTabIcon: luminePanelOverride ? 'code-branch' : 'sparkles',
     lumineChatVisibilityControl:
-      canEditCurrentBuildProject && lumineChatVisibilitySettingsShown
+      canManageLumineChatVisibility
         ? {
             value: lumineChatVisibility,
             savedValue: savedLumineChatVisibility,
@@ -5581,9 +7162,21 @@ export default function BuildEditor({
         isOwner={isOwner}
         onBuildPatch={handleBuildCollaborationPatch}
         onCanonicalMerge={handleBuildContributionMerge}
+        onVersionProjectFilesUpdate={handleBuildContributionMerge}
         onBeforeContributionAction={handleBeforeContributionAction}
+        onAskLumineToResolveConflicts={
+          handleAskLumineToResolveMergeConflicts
+        }
         onAcceptedContributorCountChange={setAcceptedContributorCount}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
+        initialScrollTop={buildWorkspaceScrollTops.people || 0}
+        onScrollTopChange={(scrollTop) =>
+          handleBuildWorkspaceCommunicationScrollChange('people', scrollTop)
+        }
+        initialSelectedForumThreadId={
+          buildWorkspaceUi?.selectedForumThreadId || 0
+        }
+        onSelectedForumThreadChange={handleBuildWorkspaceForumThreadChange}
       />
     ),
     messages: mergedChatMessages,
@@ -5641,6 +7234,7 @@ export default function BuildEditor({
     streamingProjectFiles: currentBuildRunView.streamingProjectFiles,
     streamingFocusFilePath: currentBuildRunView.streamingFocusFilePath,
     isOwner: canEditCurrentBuildProject,
+    codeWorkspaceAvailable: canEditCurrentBuildProject,
     capabilitySnapshot: build.capabilitySnapshot || null,
     runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,
     onReplaceCode: handleReplaceCode,
@@ -5665,6 +7259,7 @@ export default function BuildEditor({
         build={build}
         forking={forking}
         canEditMetadata={canEditCurrentBuildMetadata}
+        canEditThumbnail={canEditCurrentBuildThumbnail}
         isOwner={isOwner}
         profileTheme={profileTheme}
         publishing={publishing}
@@ -5672,15 +7267,16 @@ export default function BuildEditor({
         showContributionButton={showContributionButton}
         contributionActionError={contributionActionError}
         contributionActionLoading={contributionActionLoading}
+        canMergeBranch={canMergeCurrentBranch}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
+        onMergeBranch={handleMergeCurrentBranch}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}
-        onReopenContribution={handleReopenContribution}
-        onSubmitContribution={handleSubmitContribution}
-        onTogglePublish={build.isPublic ? handleUnpublish : handlePublish}
+        onTogglePublish={handlePublish}
+        onUnpublish={handleUnpublish}
       />
       <Workspace
         buildChatPanelWidth={buildChatPanelWidth}
@@ -5700,6 +7296,7 @@ export default function BuildEditor({
       <Modals
         build={build}
         canEditMetadata={canEditCurrentBuildMetadata}
+        canEditThumbnail={canEditCurrentBuildThumbnail}
         buildChatDraftMessage={buildChatDraftMessage}
         buildChatUploadFileObj={buildChatUploadFileObj}
         buildChatUploadModalShown={buildChatUploadModalShown}
@@ -5746,8 +7343,59 @@ export default function BuildEditor({
         }}
         onSubmitBuildMetadata={handleSaveMetadata}
       />
+      {deletingBranch ? (
+        <BuildDeleteModal
+          title="Delete Branch"
+          actionLabel="Delete Branch"
+          buildTitle={deletingBranch.confirmTitle}
+          loading={deletingBranchLoading}
+          body={
+            <>
+              This permanently deletes the branch{' '}
+              <b>{deletingBranch.title}</b>, including its files, Team
+              comments, and Lumine chat history.
+            </>
+          }
+          confirmLabel={
+            <>
+              Type <b>{deletingBranch.confirmTitle}</b> to confirm.
+            </>
+          }
+          onHide={() =>
+            deletingBranchLoading ? null : setDeletingBranch(null)
+          }
+          onSubmit={handleDeleteBranch}
+        />
+      ) : null}
     </div>
   );
+
+  function handleBuildWorkspaceCommunicationModeChange(
+    communicationMode: ChatPanelCommunicationMode
+  ) {
+    onSetBuildWorkspaceCommunicationMode({
+      buildId: build.id,
+      communicationMode
+    });
+  }
+
+  function handleBuildWorkspaceCommunicationScrollChange(
+    scrollMode: ChatPanelCommunicationMode,
+    scrollTop: number
+  ) {
+    onSetBuildWorkspaceScroll({
+      buildId: build.id,
+      scrollMode,
+      scrollTop
+    });
+  }
+
+  function handleBuildWorkspaceForumThreadChange(threadId: number) {
+    onSetBuildWorkspaceForumThread({
+      buildId: build.id,
+      forumThreadId: threadId
+    });
+  }
 
   function handleBuildCollaborationPatch(patch: Record<string, any>) {
     const latestBuild = getLatestBuild();
@@ -5755,6 +7403,24 @@ export default function BuildEditor({
       ...latestBuild,
       ...patch
     });
+  }
+
+  function syncAvailableBranchSummary(nextBuild: Build) {
+    if (!isBuildContributionFork(nextBuild)) return;
+    setAvailableVersions((versions) =>
+      versions.map((version) =>
+        Number(version.id || 0) === Number(nextBuild.id || 0)
+          ? {
+              ...version,
+              title: nextBuild.title || version.title,
+              thumbnailUrl: nextBuild.thumbnailUrl || null,
+              updatedAt: nextBuild.updatedAt || version.updatedAt,
+              contributionStatus:
+                nextBuild.contributionStatus || version.contributionStatus
+            }
+          : version
+      )
+    );
   }
 
   function handleBuildContributionMerge({
@@ -5785,7 +7451,9 @@ export default function BuildEditor({
     });
   }
 
-  async function handleBeforeContributionAction(action: 'submit' | 'merge') {
+  async function handleBeforeContributionAction(
+    action: 'merge' | 'update-from-main'
+  ) {
     return projectFileDrafts.ensureProjectFilesPersistedBeforeContributionAction(
       { action }
     );
@@ -5909,7 +7577,7 @@ export default function BuildEditor({
   }
 
   function handleOpenThumbnailModal() {
-    if (!canEditCurrentBuildMetadata) return;
+    if (!canEditCurrentBuildThumbnail) return;
     setThumbnailSaveError('');
     setThumbnailModalShown(true);
   }
@@ -5961,7 +7629,7 @@ export default function BuildEditor({
   }
 
   async function handleSaveThumbnail(croppedImageUrl: string | null) {
-    if (!canEditCurrentBuildMetadata || savingThumbnail) return;
+    if (!canEditCurrentBuildThumbnail || savingThumbnail) return;
     const latestBuild = getLatestBuild();
     const currentThumbnailUrl = String(latestBuild.thumbnailUrl || '').trim();
     if (!croppedImageUrl && !currentThumbnailUrl) {
@@ -5980,10 +7648,12 @@ export default function BuildEditor({
         if (!result?.success || !result?.build) {
           throw new Error('Failed to remove build thumbnail');
         }
-        applyBuildUpdate({
+        const nextBuild = {
           ...latestBuild,
           ...result.build
-        });
+        };
+        applyBuildUpdate(nextBuild);
+        syncAvailableBranchSummary(nextBuild);
       } else {
         await persistBuildThumbnailFromDataUrl(croppedImageUrl);
       }

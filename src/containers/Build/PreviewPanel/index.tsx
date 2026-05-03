@@ -1074,6 +1074,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       streamingProjectFiles = null,
       streamingFocusFilePath = null,
       isOwner,
+      codeWorkspaceAvailable = isOwner,
       onReplaceCode,
       onApplyRestoredProjectFiles,
       onSaveProjectFiles,
@@ -1111,6 +1112,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const onEditableProjectFilesStateChangeRef = useRef(
       onEditableProjectFilesStateChange || null
     );
+    const availableWorkspaceViewOptions = useMemo(
+      () =>
+        codeWorkspaceAvailable
+          ? workspaceViewOptions
+          : workspaceViewOptions.filter((option) => option.value !== 'code'),
+      [codeWorkspaceAvailable]
+    );
     const [editableProjectFiles, setEditableProjectFiles] = useState<
       EditableProjectFile[]
     >(() => buildEditableProjectFiles({ code, projectFiles }));
@@ -1137,6 +1145,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     >(currentBuildRuntimeAssets);
     const [guestRestrictionBannerVisible, setGuestRestrictionBannerVisible] =
       useState(false);
+
+    useEffect(() => {
+      if (!codeWorkspaceAvailable && viewMode === 'code') {
+        setViewMode('preview');
+      }
+    }, [codeWorkspaceAvailable, viewMode]);
     const [runtimeObservationState, setRuntimeObservationState] =
       useState<BuildRuntimeObservationState>(() =>
         buildEmptyRuntimeObservationState({
@@ -1234,7 +1248,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
 
     function openProjectFileUploadPicker() {
-      if (!isOwner || areProjectFileMutationsLocked()) return;
+      if (
+        !isOwner ||
+        !codeWorkspaceAvailable ||
+        areProjectFileMutationsLocked()
+      ) {
+        return;
+      }
       if (viewMode !== 'code') {
         setViewMode('code');
       }
@@ -1242,7 +1262,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     function openProjectFolderImportPicker() {
-      if (!isOwner || areProjectFileMutationsLocked()) return;
+      if (
+        !isOwner ||
+        !codeWorkspaceAvailable ||
+        areProjectFileMutationsLocked()
+      ) {
+        return;
+      }
       if (viewMode !== 'code') {
         setViewMode('code');
       }
@@ -1250,7 +1276,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     function openProjectAssetUploadPicker() {
-      if (!isOwner || areProjectFileMutationsLocked()) return;
+      if (
+        !isOwner ||
+        !codeWorkspaceAvailable ||
+        areProjectFileMutationsLocked()
+      ) {
+        return;
+      }
       if (viewMode !== 'code') {
         setViewMode('code');
       }
@@ -1282,7 +1314,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       }
 
       const basePreviewSrc = buildPreviewBaseSrc(build);
-      if (Boolean(build.isPublic) || !previewAuth.isOwnerRef.current) {
+      if (!previewAuth.userIdRef.current) {
         return basePreviewSrc;
       }
 
@@ -1296,8 +1328,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         const parsedUrl = new URL(rawPreviewPath, window.location.href);
         if (
           !parsedUrl.pathname.startsWith('/build/preview/') ||
-          Boolean(build.isPublic) ||
-          !previewAuth.isOwnerRef.current
+          !previewAuth.userIdRef.current
         ) {
           return parsedUrl.toString();
         }
@@ -2190,6 +2221,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
 
     function handleViewModeChange(nextMode: WorkspaceViewMode) {
       if (nextMode === viewMode) return;
+      if (nextMode === 'code' && !codeWorkspaceAvailable) return;
       if (isShowingStreamingCode) {
         streamingAutoFollowEnabledRef.current = nextMode === 'code';
       }
@@ -3319,7 +3351,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         void loadVersions();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [historyOpen, artifactId]);
+    }, [historyOpen, artifactId, build.currentArtifactVersionId]);
 
     async function loadVersions() {
       if (!isOwnerRef.current) {
@@ -3468,7 +3500,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               <SegmentedToggle<WorkspaceViewMode>
                 value={viewMode}
                 onChange={handleViewModeChange}
-                options={workspaceViewOptions}
+                options={availableWorkspaceViewOptions}
                 size="md"
                 ariaLabel="Workspace mode"
               />

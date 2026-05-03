@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import BuildPreviewFrame from '~/components/BuildPreviewFrame';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
@@ -233,6 +234,25 @@ const buildTagClass = css`
   }
 `;
 
+const clickableBuildTagClass = css`
+  appearance: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(147, 51, 234, 0.45);
+    outline-offset: 2px;
+  }
+`;
+
 const buildMetaRowClass = css`
   margin-top: auto;
   padding-top: 0.85rem;
@@ -255,72 +275,14 @@ const buildMetaItemClass = css`
 `;
 
 const buildPreviewClass = css`
-  position: relative;
   align-self: stretch;
-  min-width: 0;
   min-height: 12rem;
   aspect-ratio: 16 / 10;
-  overflow: hidden;
-  border: 1px solid rgba(20, 35, 60, 0.14);
   border-radius: calc(${borderRadius} - 2px);
-  background:
-    linear-gradient(135deg, rgba(65, 140, 235, 0.12), rgba(41, 171, 135, 0.14)),
-    #111827;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-
-  img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
 
   @media (max-width: 700px) {
     align-self: start;
     min-height: 0;
-  }
-`;
-
-const buildPreviewToolbarClass = css`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.38rem;
-  height: 1.9rem;
-  padding: 0 0.75rem;
-  background: rgba(255, 255, 255, 0.88);
-
-  span {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: rgba(50, 65, 90, 0.42);
-  }
-`;
-
-const buildPreviewFallbackClass = css`
-  height: 100%;
-  min-height: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  padding: 2.4rem 1rem 1rem;
-  color: rgba(255, 255, 255, 0.88);
-  text-align: center;
-
-  svg {
-    font-size: 2.4rem;
-  }
-
-  span {
-    font-size: 1.05rem;
-    font-weight: 800;
   }
 `;
 
@@ -387,6 +349,17 @@ interface BuildTone {
   color: string;
 }
 
+interface BuildProjectListItemReleaseStatus {
+  state?: string;
+  hasUnpublishedChanges?: boolean;
+  diff?: {
+    total?: number;
+    added?: number;
+    updated?: number;
+    deleted?: number;
+  } | null;
+}
+
 interface BuildCollaborationRequest {
   id: number;
   inviteId?: number;
@@ -411,10 +384,17 @@ export interface BuildProjectListItemData {
   sourceBuildId?: number | null;
   collaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionAccess?: 'anyone' | 'invite_only';
+  contributionRootBuildId?: number | null;
+  contributionBranchNumber?: number | null;
+  contributionStatus?: string | null;
+  rootBuildUsername?: string | null;
+  rootBuildSourceBuildId?: number | null;
+  rootBuildTitle?: string | null;
   collaboratorCount?: number;
   thumbnailUrl?: string | null;
   pendingCollaborationRequestCount?: number;
   latestPendingCollaborationRequestAt?: number | null;
+  releaseStatus?: BuildProjectListItemReleaseStatus | null;
 }
 
 export default function BuildProjectListItem({
@@ -426,8 +406,10 @@ export default function BuildProjectListItem({
   primaryActionLabel,
   primaryActionIcon,
   showCollaborationRequestAction = true,
+  showForkBadge = true,
   onAddDescription,
-  onDelete
+  onDelete,
+  onOpenForkHistory
 }: {
   build: BuildProjectListItemData;
   to?: string;
@@ -437,11 +419,16 @@ export default function BuildProjectListItem({
   primaryActionLabel?: string;
   primaryActionIcon?: string;
   showCollaborationRequestAction?: boolean;
+  showForkBadge?: boolean;
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
+  onOpenForkHistory?: (buildId: number) => void;
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const loadMyBuildCollaborationRequest = useAppContext(
     (v) => v.requestHelpers.loadMyBuildCollaborationRequest
   );
@@ -456,9 +443,6 @@ export default function BuildProjectListItem({
   );
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
-  );
-  const createBuildContributionFork = useAppContext(
-    (v) => v.requestHelpers.createBuildContributionFork
   );
   const { accentColor: buildAccentColor } = useThemedCardVars({
     role: 'sectionPanel',
@@ -475,12 +459,9 @@ export default function BuildProjectListItem({
     Boolean(userId) && Number(userId) === Number(build.userId || 0);
   const showListCollaborationAction =
     showCollaborationRequestAction &&
-    Boolean(userId) &&
     !isOwner &&
     !isCurrentUserOwner &&
     Boolean(build.id);
-  const listCollaborationActionLabel = 'Offer Collaboration';
-  const listCollaborationActionIcon = 'user-plus';
   const pendingRequestCount = Number(
     build.pendingCollaborationRequestCount || 0
   );
@@ -488,10 +469,14 @@ export default function BuildProjectListItem({
     0,
     Math.floor(Number(build.collaboratorCount) || 0)
   );
+  const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
+  const showUnpublishedChangesBadge =
+    isOwner &&
+    build.isPublic &&
+    Boolean(releaseStatus?.hasUnpublishedChanges);
   const previewLabel = primaryActionLabel || (isOwner ? 'Build' : 'Open app');
   const previewIcon =
     primaryActionIcon || (isOwner ? 'wrench' : 'external-link-alt');
-  const [thumbnailFailed, setThumbnailFailed] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
   const [
@@ -506,11 +491,48 @@ export default function BuildProjectListItem({
     useState(false);
   const [collaborationRequestError, setCollaborationRequestError] =
     useState('');
-  const thumbnailShown = Boolean(thumbnailUrl) && !thumbnailFailed;
+  const collaborationStatus = collaborationRequest?.status || '';
+  const listCollaborationActionLabel =
+    !userId
+      ? 'Collaborate'
+      : collaborationStatus === 'pending'
+        ? 'Pending Approval'
+        : collaborationStatus === 'invited'
+          ? 'Accept Invitation'
+          : collaborationStatus === 'accepted'
+            ? 'Collaborate'
+            : 'Offer Collaboration';
+  const listCollaborationActionIcon =
+    collaborationStatus === 'pending'
+      ? 'clock'
+      : collaborationStatus === 'accepted'
+        ? 'users'
+        : 'user-plus';
 
   useEffect(() => {
-    setThumbnailFailed(false);
-  }, [thumbnailUrl]);
+    if (!showListCollaborationAction || !build.id || !userId) {
+      setCollaborationRequest(null);
+      return;
+    }
+    let canceled = false;
+    loadMyBuildCollaborationRequest(build.id)
+      .then((result: any) => {
+        if (canceled) return;
+        const nextRequest = result?.request || null;
+        setCollaborationRequest(nextRequest);
+        setCollaborationRequestMessage(String(nextRequest?.message || ''));
+      })
+      .catch(() => {
+        if (!canceled) {
+          setCollaborationRequest(null);
+        }
+      });
+    return () => {
+      canceled = true;
+    };
+    // loadMyBuildCollaborationRequest is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id, showListCollaborationAction, userId]);
 
   return (
     <>
@@ -573,18 +595,22 @@ export default function BuildProjectListItem({
             <span className={buildTagClass} style={toTagStyle(visibilityTone)}>
               {build.isPublic ? 'Public' : 'Private'}
             </span>
-            {buildForkUiEnabled && !!build.sourceBuildId && (
+            {showUnpublishedChangesBadge ? (
               <span
                 className={buildTagClass}
                 style={toTagStyle({
-                  background: 'rgba(147, 51, 234, 0.14)',
-                  border: 'rgba(147, 51, 234, 0.36)',
-                  color: '#6b21a8'
+                  background: 'rgba(245, 158, 11, 0.16)',
+                  border: 'rgba(245, 158, 11, 0.38)',
+                  color: '#b45309'
                 })}
+                title={formatReleaseStatusTitle(releaseStatus)}
               >
-                <Icon icon="code-branch" /> Fork
+                <Icon icon="cloud-upload-alt" /> Unpublished changes
               </span>
-            )}
+            ) : null}
+            {showForkBadge && buildForkUiEnabled && !!build.sourceBuildId
+              ? renderForkBadge()
+              : null}
             {collaborationMode === 'open_source' ? (
               <span
                 className={buildTagClass}
@@ -651,33 +677,20 @@ export default function BuildProjectListItem({
             )}
           </div>
         </div>
-        <div
+        <BuildPreviewFrame
           className={buildPreviewClass}
-          aria-label={`${displayTitle} preview`}
+          thumbnailUrl={thumbnailUrl}
+          alt={`${displayTitle} screenshot`}
+          ariaLabel={`${displayTitle} preview`}
         >
-          <div className={buildPreviewToolbarClass} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          {thumbnailShown ? (
-            <img
-              src={thumbnailUrl}
-              alt={`${displayTitle} screenshot`}
-              onError={() => setThumbnailFailed(true)}
-            />
-          ) : (
-            <div className={buildPreviewFallbackClass}>
-              <Icon icon="laptop-code" />
-              <span>Preview not captured</span>
-            </div>
-          )}
           <div className={buildPreviewActionsClass}>
             {showListCollaborationAction ? (
               <button
                 type="button"
                 className={buildPreviewCollabButtonClass}
-                disabled={Boolean(actionLoading)}
+                disabled={
+                  Boolean(actionLoading) || collaborationStatus === 'pending'
+                }
                 onClick={handleListCollaborationActionClick}
               >
                 <Icon
@@ -696,7 +709,7 @@ export default function BuildProjectListItem({
               <span>{previewLabel}</span>
             </button>
           </div>
-        </div>
+        </BuildPreviewFrame>
       </div>
       {collaborationRequestModalShown
         ? renderCollaborationRequestModal()
@@ -739,6 +752,14 @@ export default function BuildProjectListItem({
     onDelete?.(build);
   }
 
+  function handleForkHistoryClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    onOpenForkHistory?.(Number(build.id));
+  }
+
   function handlePreviewActionClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
@@ -750,11 +771,69 @@ export default function BuildProjectListItem({
   ) {
     event?.preventDefault();
     event?.stopPropagation();
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    if (collaborationStatus === 'pending') return;
+    if (collaborationStatus === 'accepted') {
+      handleOpenCollaborationWorkspace();
+      return;
+    }
+    if (collaborationStatus === 'invited') {
+      void handleAcceptContributorInvite();
+      return;
+    }
     void handleOpenCollaborationRequestModal();
+  }
+
+  function renderForkBadge() {
+    const forkBadgeStyle = toTagStyle({
+      background: 'rgba(147, 51, 234, 0.14)',
+      border: 'rgba(147, 51, 234, 0.36)',
+      color: '#6b21a8'
+    });
+    const badgeContent = (
+      <>
+        <Icon icon="code-branch" /> Fork
+      </>
+    );
+    if (!onOpenForkHistory) {
+      return (
+        <span className={buildTagClass} style={forkBadgeStyle}>
+          {badgeContent}
+        </span>
+      );
+    }
+    return (
+      <button
+        type="button"
+        className={cx(buildTagClass, clickableBuildTagClass)}
+        style={forkBadgeStyle}
+        title="View fork history"
+        aria-label="View fork history"
+        onClick={handleForkHistoryClick}
+      >
+        {badgeContent}
+      </button>
+    );
+  }
+
+  function handleOpenCollaborationWorkspace() {
+    if (!build.id) return;
+    navigate(`/build/${build.id}`, {
+      state: {
+        openVersionsPanel: true
+      }
+    });
   }
 
   async function handleOpenCollaborationRequestModal() {
     if (!build.id || actionLoading) return;
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     setActionLoading('collaborationRequest');
     setActionError('');
     setCollaborationRequestError('');
@@ -836,7 +915,10 @@ export default function BuildProjectListItem({
         inviteId
       });
       if (result?.success) {
-        await startContributionFromAcceptedInvite();
+        setCollaborationRequest((current) =>
+          current ? { ...current, status: 'accepted' } : current
+        );
+        handleOpenCollaborationWorkspace();
       }
     } catch (error: any) {
       setCollaborationRequestError(
@@ -871,56 +953,6 @@ export default function BuildProjectListItem({
       );
     } finally {
       setCollaborationRequestLoading(false);
-    }
-  }
-
-  async function handleContribute() {
-    if (!build.id || actionLoading) return;
-    setActionLoading('contribute');
-    setActionError('');
-    try {
-      const result = await createBuildContributionFork(build.id);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-      }
-    } catch (error: any) {
-      setActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to start contribution'
-      );
-    } finally {
-      setActionLoading('');
-    }
-  }
-
-  async function startContributionFromAcceptedInvite() {
-    try {
-      const result = await createBuildContributionFork(build.id);
-      if (result?.success && result?.build?.id) {
-        navigate(`/build/${result.build.id}`, {
-          state: {
-            openPeoplePanel: true
-          }
-        });
-        return;
-      }
-      setCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-    } catch (error: any) {
-      setCollaborationRequest((current) =>
-        current ? { ...current, status: 'accepted' } : current
-      );
-      setCollaborationRequestError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Invite accepted, but failed to start contribution'
-      );
     }
   }
 
@@ -991,9 +1023,9 @@ export default function BuildProjectListItem({
                 color="logoBlue"
                 loading={collaborationRequestLoading}
                 disabled={collaborationRequestLoading}
-                onClick={handleContribute}
+                onClick={handleOpenCollaborationWorkspace}
               >
-                Start Contributing
+                Open Workspace
               </Button>
             ) : (
               <Button
@@ -1044,8 +1076,7 @@ export default function BuildProjectListItem({
                 line-height: 1.4;
               `}
             >
-              Your request was accepted. You can start a project-scoped
-              contribution fork.
+              You&apos;re on the team. Open the workspace to start a branch.
             </div>
           ) : (
             <div
@@ -1114,6 +1145,32 @@ function formatCollaboratorCount(count: number) {
   return count === 1
     ? '1 collaborator'
     : `${count.toLocaleString()} collaborators`;
+}
+
+function normalizeReleaseStatus(
+  value?: BuildProjectListItemReleaseStatus | null
+): BuildProjectListItemReleaseStatus | null {
+  if (!value || typeof value !== 'object') return null;
+  return {
+    state: typeof value.state === 'string' ? value.state : '',
+    hasUnpublishedChanges: Boolean(value.hasUnpublishedChanges),
+    diff: value.diff || null
+  };
+}
+
+function formatReleaseStatusTitle(
+  releaseStatus: BuildProjectListItemReleaseStatus | null
+) {
+  const changedFiles = Math.max(
+    0,
+    Math.floor(Number(releaseStatus?.diff?.total) || 0)
+  );
+  if (changedFiles <= 0) {
+    return 'This public app has unpublished workspace changes.';
+  }
+  return changedFiles === 1
+    ? '1 file has not been released yet.'
+    : `${changedFiles.toLocaleString()} files have not been released yet.`;
 }
 
 function getVisibilityTone(isPublic: boolean): BuildTone {

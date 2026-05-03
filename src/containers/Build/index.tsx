@@ -12,6 +12,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import BuildEditor from './BuildEditor';
 import BuildList from './BuildList';
+import { getBuildWorkspacePath } from './buildNavigation';
 import Icon from '~/components/Icon';
 import { useAppContext, useBuildContext, useKeyContext } from '~/contexts';
 import type {
@@ -96,7 +97,7 @@ interface BuildCopilotPolicy {
 }
 
 interface BuildWorkspaceAccessResult {
-  kind: 'redirect-runtime' | 'unpublished';
+  kind: 'redirect-runtime' | 'unpublished' | 'branch-private';
   runtimePath?: string;
 }
 
@@ -114,6 +115,8 @@ interface PersistedBuildRunHydrationActions {
 
 const BUILD_UNPUBLISHED_PUBLIC_TEXT =
   "This project hasn't been published yet, so it can't be opened publicly.";
+const BUILD_PRIVATE_BRANCH_TEXT =
+  'Branches are only available to project team members. Log in with a team account or ask the project owner for access.';
 
 function normalizeBuildRunProjectFilePathForComparison(rawPath: string) {
   const trimmedPath = String(rawPath || '').trim().replace(/\\/g, '/');
@@ -1019,6 +1022,7 @@ export default function Build() {
         <Routes>
           <Route path="/" element={<BuildList />} />
           <Route path="/new" element={<NewBuild />} />
+          <Route path="/:buildId/:branchNumber" element={<BuildEditorWrapper />} />
           <Route path="/:buildId" element={<BuildEditorWrapper />} />
         </Routes>
       </div>
@@ -1223,20 +1227,34 @@ function NewBuild() {
 }
 
 function BuildEditorWrapper() {
-  const { buildId } = useParams();
+  const { buildId, branchNumber } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
+  const loadBuildBranch = useAppContext(
+    (v) => v.requestHelpers.loadBuildBranch
+  );
   const numericBuildId = useMemo(() => {
     const id = parseInt(buildId || '', 10);
     return isNaN(id) ? null : id;
   }, [buildId]);
+  const numericBranchNumber = useMemo(() => {
+    const id = parseInt(branchNumber || '', 10);
+    return isNaN(id) ? null : id;
+  }, [branchNumber]);
   const cachedWorkspace = useBuildContext((v) =>
-    numericBuildId ? v.state.buildWorkspaces[String(numericBuildId)] || null : null
+    numericBuildId && !numericBranchNumber
+      ? v.state.buildWorkspaces[String(numericBuildId)] || null
+      : null
   );
   const activeBuildRun = useBuildContext((v) =>
-    numericBuildId ? v.state.buildRuns[String(numericBuildId)] || null : null
+    numericBuildId && !numericBranchNumber
+      ? v.state.buildRuns[String(numericBuildId)] || null
+      : null
   );
   const onSetBuildWorkspace = useBuildContext(
     (v) => v.actions.onSetBuildWorkspace
@@ -1287,6 +1305,7 @@ function BuildEditorWrapper() {
     typeof locationState?.initialPrompt === 'string'
       ? locationState.initialPrompt
       : '';
+  const forceInitialPrompt = Boolean(locationState?.forceInitialPrompt);
 
   useEffect(() => {
     setError('');
@@ -1305,7 +1324,7 @@ function BuildEditorWrapper() {
     setChatMessages([]);
     setCopilotPolicy(null);
     setLoading(true);
-  }, [numericBuildId, usableCachedWorkspace]);
+  }, [numericBuildId, numericBranchNumber, usableCachedWorkspace]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1319,14 +1338,22 @@ function BuildEditorWrapper() {
         setLoading(true);
       }
       try {
-        const data = await loadBuild(numericBuildId, {
-          fromWriter: Boolean(
+        const shouldReadFromWriter = Boolean(
+          numericBranchNumber ||
             initialPrompt ||
-              seedGreeting ||
-              activeBuildRun?.generating ||
-              activeBuildRun?.terminalState
-          )
-        });
+            seedGreeting ||
+            activeBuildRun?.generating ||
+            activeBuildRun?.terminalState
+        );
+        const data = numericBranchNumber
+          ? await loadBuildBranch({
+              buildId: numericBuildId,
+              branchNumber: numericBranchNumber,
+              options: { fromWriter: shouldReadFromWriter }
+            })
+          : await loadBuild(numericBuildId, {
+              fromWriter: shouldReadFromWriter
+            });
         if (cancelled) return;
         const access = data?.access as BuildWorkspaceAccessResult | undefined;
         if (access?.kind === 'redirect-runtime' && access.runtimePath) {
@@ -1340,7 +1367,25 @@ function BuildEditorWrapper() {
           setError(BUILD_UNPUBLISHED_PUBLIC_TEXT);
           return;
         }
+        if (access?.kind === 'branch-private') {
+          setBuild(null);
+          setChatMessages([]);
+          setCopilotPolicy(null);
+          setError(BUILD_PRIVATE_BRANCH_TEXT);
+          return;
+        }
         if (data?.build) {
+          if (
+            !numericBranchNumber &&
+            Number(data.build.contributionRootBuildId || 0) > 0 &&
+            Number(data.build.contributionBranchNumber || 0) > 0
+          ) {
+            navigate(getBuildWorkspacePath(data.build), {
+              replace: true,
+              state: location.state
+            });
+            return;
+          }
           const nextProjectFiles = Array.isArray(data.projectFiles)
             ? data.projectFiles
             : [];
@@ -1356,7 +1401,9 @@ function BuildEditorWrapper() {
           const nextChatMessages = data.chatMessages || [];
           const nextCopilotPolicy = data.copilotPolicy || null;
           const nextActiveRun = data.activeRun || null;
-          const latestActiveBuildRun = getLatestBuildRun(numericBuildId);
+          const latestActiveBuildRun = getLatestBuildRun(
+            Number(nextBuild.id || numericBuildId)
+          );
           setBuild(nextBuild);
           setChatMessages(nextChatMessages);
           setCopilotPolicy(nextCopilotPolicy);
@@ -1431,6 +1478,7 @@ function BuildEditorWrapper() {
     initialPrompt,
     location.pathname,
     navigate,
+    numericBranchNumber,
     numericBuildId,
     seedGreeting,
     userId
@@ -1472,24 +1520,30 @@ function BuildEditorWrapper() {
   }
 
   if (!build) {
+    const showLoginForPrivateBranch =
+      error === BUILD_PRIVATE_BRANCH_TEXT && !userId;
     return (
       <BuildWorkspaceUnavailable
         title={
           error === BUILD_UNPUBLISHED_PUBLIC_TEXT
             ? 'Project Not Published Yet'
+            : error === BUILD_PRIVATE_BRANCH_TEXT
+              ? 'For Team Members Only'
             : 'Workspace Unavailable'
         }
         text={error || 'Build not found'}
         onBack={() =>
-          navigate(
-            '/build'
-          )
+          showLoginForPrivateBranch ? onOpenSigninModal() : navigate('/build')
         }
         buttonLabel={
-          error === BUILD_UNPUBLISHED_PUBLIC_TEXT
+          showLoginForPrivateBranch
+            ? 'Log In'
+            : error === BUILD_UNPUBLISHED_PUBLIC_TEXT ||
+                error === BUILD_PRIVATE_BRANCH_TEXT
             ? 'Build Menu'
             : undefined
         }
+        buttonIcon={showLoginForPrivateBranch ? 'sign-in-alt' : undefined}
       />
     );
   }
@@ -1503,6 +1557,7 @@ function BuildEditorWrapper() {
       copilotPolicy={copilotPolicy}
       isOwner={isOwner}
       initialPrompt={initialPrompt}
+      forceInitialPrompt={forceInitialPrompt}
       seedGreeting={seedGreeting}
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}
@@ -1515,12 +1570,14 @@ function BuildWorkspaceUnavailable({
   title,
   text,
   onBack,
-  buttonLabel
+  buttonLabel,
+  buttonIcon
 }: {
   title: string;
   text: string;
   onBack: () => void;
   buttonLabel?: string;
+  buttonIcon?: string;
 }) {
   return (
     <div
@@ -1597,7 +1654,7 @@ function BuildWorkspaceUnavailable({
         <GameCTAButton
           variant="primary"
           size="lg"
-          icon="arrow-left"
+          icon={buttonIcon || 'arrow-left'}
           onClick={onBack}
         >
           {buttonLabel || 'Back to Build Studio'}

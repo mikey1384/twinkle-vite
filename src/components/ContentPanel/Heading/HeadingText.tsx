@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
+import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
@@ -239,7 +240,8 @@ export default function HeadingText({
       if (
         feedActivityType === 'buildFork' ||
         feedActivityType === 'buildContributor' ||
-        feedActivityType === 'buildCollaborator'
+        feedActivityType === 'buildCollaborator' ||
+        feedActivityType === 'buildUpdate'
       ) {
         const buildActor = feedUploader || uploader;
         const buildAction = getBuildActivityText(feedActivityType);
@@ -357,12 +359,23 @@ export default function HeadingText({
     if (labels.length === 0) return null;
     return (
       <>
-        {labels.map((label) => (
-          <span key={label} style={buildRelationshipBadgeStyle(label)}>
-            <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
-            {label === 'fork' ? 'Fork' : 'Contribution'}
-          </span>
-        ))}
+        {labels.map((label) =>
+          label === 'fork' ? (
+            <BuildForkHistoryTrigger
+              key={label}
+              buildId={Number(contentObj?.id || 0)}
+              style={buildRelationshipBadgeStyle(label)}
+            >
+              <Icon icon="code-branch" />
+              Fork
+            </BuildForkHistoryTrigger>
+          ) : (
+            <span key={label} style={buildRelationshipBadgeStyle(label)}>
+              <Icon icon="users" />
+              Version
+            </span>
+          )
+        )}
       </>
     );
   }
@@ -370,10 +383,11 @@ export default function HeadingText({
 
 function getBuildActivityText(feedActivityType?: string | null) {
   if (feedActivityType === 'buildFork') return 'forked an app';
+  if (feedActivityType === 'buildUpdate') return 'released an app update';
   if (feedActivityType === 'buildCollaborator') {
     return 'joined an app as a collaborator';
   }
-  return 'started contributing to an app';
+  return 'started a version of an app';
 }
 
 function getHeadingBuildRelationshipLabels({

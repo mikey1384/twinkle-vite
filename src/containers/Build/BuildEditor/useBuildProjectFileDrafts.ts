@@ -35,7 +35,7 @@ interface BuildProjectFileDraftsApi {
     state: BuildProjectFilesDraftState
   ): void;
   ensureProjectFilesPersistedBeforeContributionAction(options: {
-    action: 'submit' | 'merge';
+    action: 'merge' | 'update-from-main';
   }): Promise<boolean>;
   ensureProjectFilesPersistedBeforeRun(options: {
     runType: 'copilot' | 'greeting';
@@ -244,26 +244,17 @@ export default function useBuildProjectFileDrafts({
       },
 
       ensureProjectFilesPersistedBeforeContributionAction({ action }) {
-        const isMerge = action === 'merge';
+        const isUpdateFromMain = action === 'update-from-main';
+        const actionText = isUpdateFromMain ? 'updating from main' : 'merging';
+        const actionVerb = isUpdateFromMain ? 'update from main' : 'merge';
         return ensureProjectFilesPersisted({
-          settleErrorMessage: `Please wait for file save to finish before ${
-            isMerge ? 'merging' : 'submitting'
-          } this contribution.`,
-          draftChangedMessage: `Unable to ${
-            isMerge ? 'merge' : 'submit'
-          } contribution: file drafts kept changing during auto-save. Please stop editing and try again.`,
-          initialSaveMessage: `Saving unsaved files before ${
-            isMerge ? 'merge' : 'submit'
-          }...`,
-          retrySaveMessage: `Draft changed during save. Saving latest edits before ${
-            isMerge ? 'merge' : 'submit'
-          }...`,
-          savedMessage: `Saved pending file edits before ${
-            isMerge ? 'merge' : 'submit'
-          }.`,
-          saveFailurePrefix: `Unable to ${
-            isMerge ? 'merge' : 'submit'
-          } contribution: `,
+          settleErrorMessage: `Please wait for file save to finish before ${actionText} this branch.`,
+          draftChangedMessage: `Unable to ${actionVerb}: file drafts kept changing during auto-save. Please stop editing and try again.`,
+          initialSaveMessage: `Saving unsaved files before ${actionVerb}...`,
+          retrySaveMessage:
+            `Draft changed during save. Saving latest edits before ${actionVerb}...`,
+          savedMessage: `Saved pending file edits before ${actionVerb}.`,
+          saveFailurePrefix: `Unable to ${actionVerb}: `,
           returnTrueOnEmptyDraft: true
         });
       },

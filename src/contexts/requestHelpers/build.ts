@@ -362,6 +362,43 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildForkHistory(
+      buildId: number,
+      options?: { fromWriter?: boolean }
+    ) {
+      try {
+        const qs = options?.fromWriter ? '?fromWriter=1' : '';
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/fork-history${qs}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildBranch({
+      buildId,
+      branchNumber,
+      options
+    }: {
+      buildId: number;
+      branchNumber: number;
+      options?: { fromWriter?: boolean };
+    }) {
+      try {
+        const qs = options?.fromWriter ? '?fromWriter=1' : '';
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/branches/${branchNumber}${qs}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildRuntimeUploads(options?: {
       cursor?: number | null;
       limit?: number;
@@ -1425,11 +1462,16 @@ export default function buildRequestHelpers({
       }
     },
 
-    async createBuildContributionFork(buildId: number) {
+    async createBuildContributionFork(input: {
+      buildId: number;
+      name: string;
+    }) {
+      const buildId = input.buildId;
+      const name = input.name;
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/fork`,
-          {},
+          { name },
           auth()
         );
         return data;
@@ -1468,7 +1510,7 @@ export default function buildRequestHelpers({
       }
     },
 
-    async submitBuildContribution({
+    async updateBuildContributionFromMain({
       buildId,
       contributionBuildId
     }: {
@@ -1477,50 +1519,18 @@ export default function buildRequestHelpers({
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/build/${buildId}/contributions/${contributionBuildId}/submit`,
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/update-from-main`,
           {},
           auth()
         );
         return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async reopenBuildContribution({
-      buildId,
-      contributionBuildId
-    }: {
-      buildId: number;
-      contributionBuildId: number;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/contributions/${contributionBuildId}/reopen`,
-          {},
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async rejectBuildContribution({
-      buildId,
-      contributionBuildId
-    }: {
-      buildId: number;
-      contributionBuildId: number;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/contributions/${contributionBuildId}/reject`,
-          {},
-          auth()
-        );
-        return data;
-      } catch (error) {
+      } catch (error: any) {
+        if (
+          error?.response?.data?.code ===
+          'build_contribution_conflict_markers_remaining'
+        ) {
+          return error.response.data;
+        }
         return handleError(error);
       }
     },
@@ -1571,7 +1581,7 @@ export default function buildRequestHelpers({
       }
     },
 
-    async loadBuildContributionComments({
+    async loadBuildContributionForumThreads({
       buildId,
       contributionBuildId
     }: {
@@ -1580,7 +1590,7 @@ export default function buildRequestHelpers({
     }) {
       try {
         const { data } = await request.get(
-          `${URL}/build/${buildId}/contribution-comments`,
+          `${URL}/build/${buildId}/contribution-forum-threads`,
           {
             ...auth(),
             params: contributionBuildId ? { contributionBuildId } : undefined
@@ -1592,19 +1602,21 @@ export default function buildRequestHelpers({
       }
     },
 
-    async createBuildContributionComment({
+    async createBuildContributionForumThread({
       buildId,
       contributionBuildId,
+      title,
       body
     }: {
       buildId: number;
       contributionBuildId?: number | null;
+      title: string;
       body: string;
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/build/${buildId}/contribution-comments`,
-          { contributionBuildId, body },
+          `${URL}/build/${buildId}/contribution-forum-threads`,
+          { contributionBuildId, title, body },
           auth()
         );
         return data;
@@ -1613,16 +1625,75 @@ export default function buildRequestHelpers({
       }
     },
 
-    async deleteBuildContributionComment({
+    async loadBuildContributionForumThread({
       buildId,
-      commentId
+      threadId
     }: {
       buildId: number;
-      commentId: number;
+      threadId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contribution-forum-threads/${threadId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildContributionForumReply({
+      buildId,
+      threadId,
+      body
+    }: {
+      buildId: number;
+      threadId: number;
+      body: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contribution-forum-threads/${threadId}/replies`,
+          { body },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildContributionForumThread({
+      buildId,
+      threadId
+    }: {
+      buildId: number;
+      threadId: number;
     }) {
       try {
         const { data } = await request.delete(
-          `${URL}/build/${buildId}/contribution-comments/${commentId}`,
+          `${URL}/build/${buildId}/contribution-forum-threads/${threadId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildContributionForumReply({
+      buildId,
+      threadId,
+      replyId
+    }: {
+      buildId: number;
+      threadId: number;
+      replyId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/${buildId}/contribution-forum-threads/${threadId}/replies/${replyId}`,
           auth()
         );
         return data;
