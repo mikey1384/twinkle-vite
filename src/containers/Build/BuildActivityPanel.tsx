@@ -123,7 +123,7 @@ const titleClass = css`
   gap: 0.5rem;
   min-width: 0;
   color: var(--chat-text);
-  font-size: 1.15rem;
+  font-size: 1.22rem;
   font-weight: 900;
 `;
 
@@ -214,7 +214,7 @@ const rowBodyClass = css`
 
 const rowMessageClass = css`
   color: var(--chat-text);
-  font-size: 0.96rem;
+  font-size: 1.04rem;
   font-weight: 800;
   line-height: 1.32;
   overflow-wrap: anywhere;
@@ -227,7 +227,7 @@ const actorNameClass = css`
 
 const buildTitleClass = css`
   color: var(--chat-text);
-  font-size: 0.86rem;
+  font-size: 1rem;
   font-weight: 800;
   opacity: 0.68;
   overflow: hidden;
@@ -241,7 +241,7 @@ const rowMetaClass = css`
   gap: 0.45rem;
   flex-wrap: wrap;
   color: var(--chat-text);
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-weight: 800;
   opacity: 0.64;
 `;
@@ -260,7 +260,7 @@ const statusPillClass = css`
 
 const requestMessageClass = css`
   color: var(--chat-text);
-  font-size: 0.82rem;
+  font-size: 1rem;
   line-height: 1.35;
   opacity: 0.74;
   overflow-wrap: anywhere;

@@ -8,6 +8,7 @@ import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import BuildProjectListItem, {
   BuildProjectListItemData
 } from '~/components/BuildProjectListItem';
+import BuildPreviewFrame from '~/components/BuildPreviewFrame';
 import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
 import BuildDescriptionModal from './BuildDescriptionModal';
 import BuildDeleteModal from './BuildDeleteModal';
@@ -25,16 +26,23 @@ import {
 } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
-import { type BuildStudioTab } from '~/contexts/Build/reducer';
+import {
+  type BuildStudioBrowseMode,
+  type BuildStudioTab
+} from '~/contexts/Build/reducer';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 type BuildListTab = BuildStudioTab;
 type PublicBuildScope = 'all' | 'open_source';
+type PublicBuildSort = 'recent' | 'popular' | 'forks';
+type TodayTopViewedBuild = BuildProjectListItemData & {
+  todayViewCount?: number;
+};
 const buildActivityRailBreakpoint = '1180px';
+const buildActivityRailWidth = '30rem';
 const buildPageTopGap = '2rem';
-const desktopHeaderHeight = '4.5rem';
 const mobileBottomNavClearance =
   'calc(var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px) + 2rem)';
 
@@ -49,9 +57,18 @@ const buildListTabs: Array<{
   { value: 'open_source', label: 'Open Source', icon: 'code-branch' }
 ];
 
+const buildBrowseModeTabs: Array<{
+  value: BuildStudioBrowseMode;
+  label: string;
+  icon: string;
+}> = [
+  { value: 'recent', label: 'Recent', icon: 'clock' },
+  { value: 'leaderboard', label: 'Leaderboard', icon: 'trophy' }
+];
+
 const pageClass = css`
   width: 100%;
-  max-width: calc(980px + 1.5rem + 18rem + 4rem);
+  max-width: calc(980px + 1.5rem + ${buildActivityRailWidth} + 4rem);
   box-sizing: border-box;
   margin: ${buildPageTopGap} auto 0;
   padding: 0 2rem 3rem;
@@ -67,7 +84,7 @@ const buildStudioLayoutClass = css`
   position: relative;
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 980px) 18rem;
+  grid-template-columns: minmax(0, 980px) ${buildActivityRailWidth};
   justify-content: center;
   align-items: start;
   gap: 1.5rem;
@@ -82,10 +99,8 @@ const buildStudioMainClass = css`
 `;
 
 const buildActivityRailClass = css`
-  --build-activity-rail-top: calc(
-    ${desktopHeaderHeight} + ${buildPageTopGap}
-  );
-  --build-activity-rail-bottom-gap: ${buildPageTopGap};
+  --build-activity-rail-top: ${buildPageTopGap};
+  --build-activity-rail-bottom-gap: 0px;
   position: sticky;
   top: var(--build-activity-rail-top);
   width: 100%;
@@ -110,9 +125,27 @@ const heroClass = css`
   }
 `;
 
-const heroContentClass = css`
+const heroShellClass = css`
   position: relative;
   z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+
+  &.has-top-app {
+    grid-template-columns: minmax(0, 0.85fr) minmax(20rem, 1.15fr);
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    &.has-top-app {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+`;
+
+const heroContentClass = css`
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -128,7 +161,7 @@ const heroBadgeClass = css`
   color: #1d4ed8;
   border: 1px solid rgba(65, 140, 235, 0.28);
   font-weight: 900;
-  font-size: 0.95rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-family: ${displayFontFamily};
@@ -157,6 +190,78 @@ const heroBodyClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.2rem;
   }
+`;
+
+const topViewedShowcaseClass = css`
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+  gap: 1.2rem;
+  align-items: center;
+  padding-left: 1.6rem;
+  border-left: 1px solid rgba(65, 140, 235, 0.18);
+
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 0;
+    padding-top: 1.4rem;
+    border-left: 0;
+    border-top: 1px solid rgba(65, 140, 235, 0.18);
+  }
+`;
+
+const topViewedCopyClass = css`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const topViewedKickerClass = css`
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.36rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 213, 100, 0.22);
+  border: 1px solid rgba(245, 190, 70, 0.55);
+  color: #9a5c00;
+  font-size: 1rem;
+  font-weight: 900;
+  font-family: ${displayFontFamily};
+`;
+
+const topViewedTitleClass = css`
+  margin: 0;
+  color: var(--chat-text);
+  font-size: 1.65rem;
+  font-weight: 900;
+  line-height: 1.1;
+  font-family: ${displayFontFamily};
+  overflow-wrap: anywhere;
+`;
+
+const topViewedMetaClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.9rem;
+  color: var(--chat-text);
+  font-size: 1rem;
+  font-weight: 800;
+  opacity: 0.76;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+  }
+`;
+
+const topViewedPreviewClass = css`
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 11rem;
 `;
 
 const buildGridClass = css`
@@ -204,7 +309,7 @@ const requestQueueCountClass = css`
   background: rgba(236, 72, 153, 0.12);
   border: 1px solid rgba(236, 72, 153, 0.28);
   color: #be185d;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 900;
 `;
 
@@ -247,7 +352,7 @@ const requestQueueBuildTitleClass = css`
 const requestQueueMetaClass = css`
   color: var(--chat-text);
   opacity: 0.68;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
 `;
 
@@ -315,6 +420,9 @@ export default function BuildList() {
   const loadBuildActivity = useAppContext(
     (v) => v.requestHelpers.loadBuildActivity
   );
+  const loadTodayTopViewedBuild = useAppContext(
+    (v) => v.requestHelpers.loadTodayTopViewedBuild
+  );
   const createBuild = useAppContext((v) => v.requestHelpers.createBuild);
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
@@ -343,6 +451,15 @@ export default function BuildList() {
   const normalizedUserId = Number(userId || 0) || null;
   const activeTab = normalizeBuildListTab(buildStudio?.activeTab);
   const activeBrowseTab = getBuildListBrowseTab(activeTab);
+  const [communityBrowseMode, setCommunityBrowseMode] =
+    useState<BuildStudioBrowseMode>('recent');
+  const [openSourceBrowseMode, setOpenSourceBrowseMode] =
+    useState<BuildStudioBrowseMode>('recent');
+  const activeBrowseMode = getBuildListBrowseMode({
+    activeTab,
+    communityBrowseMode,
+    openSourceBrowseMode
+  });
   const activeBrowseState =
     buildStudio?.browse?.[activeBrowseTab] || createEmptyBrowseState();
   const collaboratingBrowseState =
@@ -350,6 +467,7 @@ export default function BuildList() {
   const activeBrowseLoadedForCurrentUser = Boolean(
     normalizedUserId &&
       activeBrowseState.userId === normalizedUserId &&
+      activeBrowseState.browseMode === activeBrowseMode &&
       activeBrowseState.loaded
   );
   const collaboratingLoadedForCurrentUser = Boolean(
@@ -379,7 +497,9 @@ export default function BuildList() {
       ? []
       : ((activeBrowseState.builds || []) as BuildProjectListItemData[]);
   const browseLoadMoreButton =
-    activeTab === 'mine' ? null : activeBrowseState.loadMoreToken;
+    activeTab === 'mine' || !activeBrowseLoadedForCurrentUser
+      ? null
+      : activeBrowseState.loadMoreToken;
   const activeBrowseLoaded =
     activeTab === 'mine' ? true : activeBrowseLoadedForCurrentUser;
   const activeTabRef = useRef<BuildListTab>(activeTab);
@@ -412,6 +532,8 @@ export default function BuildList() {
   const [buildActivityLoadingMore, setBuildActivityLoadingMore] =
     useState(false);
   const [buildActivityError, setBuildActivityError] = useState('');
+  const [todayTopViewedBuild, setTodayTopViewedBuild] =
+    useState<TodayTopViewedBuild | null>(null);
   const buildActivityLoadRef = useRef(0);
   const buildsWithPendingRequests = builds
     .filter((build) => Number(build.pendingCollaborationRequestCount || 0) > 0)
@@ -437,6 +559,34 @@ export default function BuildList() {
     setEditingBuild(null);
     setDeletingBuild(null);
     setForkHistoryBuildId(null);
+  }, [normalizedUserId]);
+
+  useEffect(() => {
+    if (!normalizedUserId) {
+      setTodayTopViewedBuild(null);
+      return;
+    }
+    let canceled = false;
+    handleLoadTodayTopViewedBuild();
+
+    async function handleLoadTodayTopViewedBuild() {
+      try {
+        const data = await loadTodayTopViewedBuild();
+        if (canceled) return;
+        setTodayTopViewedBuild(normalizeTodayTopViewedBuild(data?.build));
+      } catch (error) {
+        console.error('Failed to load today top viewed build:', error);
+        if (!canceled) {
+          setTodayTopViewedBuild(null);
+        }
+      }
+    }
+
+    return () => {
+      canceled = true;
+    };
+    // loadTodayTopViewedBuild is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId]);
 
   useEffect(() => {
@@ -486,6 +636,7 @@ export default function BuildList() {
             tab: 'collaborating',
             builds: data?.builds || [],
             loadMoreToken: getLoadMoreToken(data),
+            browseMode: 'recent',
             userId: normalizedUserId
           });
         }
@@ -496,6 +647,7 @@ export default function BuildList() {
             tab: 'collaborating',
             builds: [],
             loadMoreToken: null,
+            browseMode: 'recent',
             userId: normalizedUserId
           });
         }
@@ -565,7 +717,7 @@ export default function BuildList() {
           activeTab === 'collaborating'
             ? await loadCollaboratingBuilds()
             : await loadPublicBuilds({
-                sort: 'recent',
+                sort: getPublicBuildSort(activeTab, activeBrowseMode),
                 scope: getPublicBuildScope(activeTab),
                 excludeMine: shouldExcludeMineFromPublicBrowse(activeTab)
               });
@@ -574,6 +726,7 @@ export default function BuildList() {
             tab: activeTab,
             builds: data?.builds || [],
             loadMoreToken: getLoadMoreToken(data),
+            browseMode: activeBrowseMode,
             userId: normalizedUserId
           });
         }
@@ -584,6 +737,7 @@ export default function BuildList() {
             tab: activeTab,
             builds: [],
             loadMoreToken: null,
+            browseMode: activeBrowseMode,
             userId: normalizedUserId
           });
         }
@@ -597,7 +751,7 @@ export default function BuildList() {
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, activeTab, activeBrowseLoaded]);
+  }, [userId, activeTab, activeBrowseMode, activeBrowseLoaded]);
 
   if (!userId) {
     return (
@@ -624,25 +778,37 @@ export default function BuildList() {
       <div className={buildStudioLayoutClass}>
         <main className={buildStudioMainClass}>
           <section className={heroClass}>
-            <div className={heroContentClass}>
-              <div className={heroBadgeClass}>
-                <Icon icon="rocket-launch" />
-                Build Studio
+            <div
+              className={`${heroShellClass}${
+                todayTopViewedBuild ? ' has-top-app' : ''
+              }`}
+            >
+              <div className={heroContentClass}>
+                <div className={heroBadgeClass}>
+                  <Icon icon="rocket-launch" />
+                  Build Studio
+                </div>
+                <h1 className={heroTitleClass}>Build Studio</h1>
+                <p className={heroBodyClass}>
+                  Create apps, review requests, and find projects to join or fork.
+                </p>
+                <div>
+                  <GameCTAButton
+                    variant="gold"
+                    size="lg"
+                    shiny
+                    onClick={() => navigate('/build/new')}
+                  >
+                    New Build
+                  </GameCTAButton>
+                </div>
               </div>
-              <h1 className={heroTitleClass}>Build Studio</h1>
-              <p className={heroBodyClass}>
-                Create apps, review requests, and find projects to join or fork.
-              </p>
-              <div>
-                <GameCTAButton
-                  variant="gold"
-                  size="lg"
-                  shiny
-                  onClick={() => navigate('/build/new')}
-                >
-                  New Build
-                </GameCTAButton>
-              </div>
+              {todayTopViewedBuild ? (
+                <TodayTopViewedShowcase
+                  build={todayTopViewedBuild}
+                  onOpen={handleOpenTodayTopViewedBuild}
+                />
+              ) : null}
             </div>
           </section>
 
@@ -652,6 +818,16 @@ export default function BuildList() {
             onChange={handleTabChange}
             tabs={visibleBuildListTabs}
           />
+
+          {isPublicBrowseTab(activeTab) ? (
+            <BuildTabFilter
+              activeTab={activeBrowseMode}
+              color={profileTheme}
+              density="compact"
+              onChange={handleBrowseModeChange}
+              tabs={buildBrowseModeTabs}
+            />
+          ) : null}
 
           <BuildActivityPanel
             activeSubtab={buildActivityActiveSubtab}
@@ -927,6 +1103,15 @@ export default function BuildList() {
     void loadBuildActivityItems();
   }
 
+  function handleOpenTodayTopViewedBuild(build: TodayTopViewedBuild) {
+    navigate(`/app/${build.id}`, {
+      state: {
+        runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
+        runtimeBackLabel: 'Back to Build Studio'
+      }
+    });
+  }
+
   function handleBuildActivityTabChange(tab: BuildActivityTab) {
     if (tab !== buildActivityActiveTab) {
       setBuildActivityActiveTab(tab);
@@ -1049,6 +1234,16 @@ export default function BuildList() {
     }
   }
 
+  function handleBrowseModeChange(browseMode: BuildStudioBrowseMode) {
+    if (activeTab === 'community') {
+      setCommunityBrowseMode(browseMode);
+      return;
+    }
+    if (activeTab === 'open_source') {
+      setOpenSourceBrowseMode(browseMode);
+    }
+  }
+
   async function handleLoadMoreBrowseBuilds() {
     if (browseLoadingMore || !browseLoadMoreButton || activeTab === 'mine') {
       return;
@@ -1061,12 +1256,17 @@ export default function BuildList() {
               cursor: browseLoadMoreButton
             })
           : await loadPublicBuilds(
-              buildPublicLoadMoreParams(activeTab, browseLoadMoreButton)
+              buildPublicLoadMoreParams(
+                activeTab,
+                activeBrowseMode,
+                browseLoadMoreButton
+              )
             );
       onAppendBuildStudioBrowseBuilds({
         tab: activeTab,
         builds: data?.builds || [],
         loadMoreToken: getLoadMoreToken(data),
+        browseMode: activeBrowseMode,
         userId: normalizedUserId
       });
     } catch (error) {
@@ -1078,22 +1278,23 @@ export default function BuildList() {
 
   function buildPublicLoadMoreParams(
     tab: BuildListTab,
+    browseMode: BuildStudioBrowseMode,
     loadMoreToken: string
   ): {
-    sort: 'recent';
+    sort: PublicBuildSort;
     scope: PublicBuildScope;
     excludeMine: boolean;
     cursor?: string;
     lastId?: number;
   } {
     const loadMoreParams: {
-      sort: 'recent';
+      sort: PublicBuildSort;
       scope: PublicBuildScope;
       excludeMine: boolean;
       cursor?: string;
       lastId?: number;
     } = {
-      sort: 'recent',
+      sort: getPublicBuildSort(tab, browseMode),
       scope: getPublicBuildScope(tab),
       excludeMine: shouldExcludeMineFromPublicBrowse(tab)
     };
@@ -1117,6 +1318,82 @@ export default function BuildList() {
 function getPublicBuildScope(tab: BuildListTab): PublicBuildScope {
   if (tab === 'open_source') return 'open_source';
   return 'all';
+}
+
+function TodayTopViewedShowcase({
+  build,
+  onOpen
+}: {
+  build: TodayTopViewedBuild;
+  onOpen: (build: TodayTopViewedBuild) => void;
+}) {
+  const displayTitle = build.title || 'Untitled Build';
+  return (
+    <aside className={topViewedShowcaseClass} aria-label="Most viewed app today">
+      <div className={topViewedCopyClass}>
+        <div className={topViewedKickerClass}>
+          <Icon icon="eye" />
+          Most viewed today
+        </div>
+        <h2 className={topViewedTitleClass}>{displayTitle}</h2>
+        <div className={topViewedMetaClass}>
+          {build.username ? (
+            <span>
+              <Icon icon="user" />
+              by {build.username}
+            </span>
+          ) : null}
+          <span>
+            <Icon icon="eye" />
+            {formatTodayViewLabel(build.todayViewCount)}
+          </span>
+        </div>
+        <div>
+          <GameCTAButton
+            variant="logoBlue"
+            size="md"
+            icon="external-link-alt"
+            onClick={() => onOpen(build)}
+          >
+            Open app
+          </GameCTAButton>
+        </div>
+      </div>
+      <BuildPreviewFrame
+        className={topViewedPreviewClass}
+        thumbnailUrl={build.thumbnailUrl}
+        alt={`${displayTitle} screenshot`}
+        ariaLabel={`${displayTitle} preview`}
+      />
+    </aside>
+  );
+}
+
+function getPublicBuildSort(
+  tab: BuildListTab,
+  browseMode: BuildStudioBrowseMode
+): PublicBuildSort {
+  if (browseMode !== 'leaderboard') return 'recent';
+  if (tab === 'open_source') return 'forks';
+  return 'popular';
+}
+
+function getBuildListBrowseMode({
+  activeTab,
+  communityBrowseMode,
+  openSourceBrowseMode
+}: {
+  activeTab: BuildListTab;
+  communityBrowseMode: BuildStudioBrowseMode;
+  openSourceBrowseMode: BuildStudioBrowseMode;
+}): BuildStudioBrowseMode {
+  if (activeTab === 'open_source') return openSourceBrowseMode;
+  if (activeTab === 'community') return communityBrowseMode;
+  return 'recent';
+}
+
+function isPublicBrowseTab(tab: BuildListTab) {
+  return tab === 'community' || tab === 'open_source';
 }
 
 function shouldExcludeMineFromPublicBrowse(tab: BuildListTab) {
@@ -1145,6 +1422,7 @@ function createEmptyBrowseState() {
     builds: [],
     loadMoreToken: null,
     loaded: false,
+    browseMode: 'recent' as BuildStudioBrowseMode,
     userId: null
   };
 }
@@ -1153,6 +1431,28 @@ function getLoadMoreToken(data: any) {
   if (data?.cursor != null) return String(data.cursor);
   if (data?.loadMoreButton != null) return String(data.loadMoreButton);
   return null;
+}
+
+function normalizeTodayTopViewedBuild(
+  build: any
+): TodayTopViewedBuild | null {
+  const buildId = Number(build?.id || 0);
+  const todayViewCount = Math.max(
+    0,
+    Math.floor(Number(build?.todayViewCount) || 0)
+  );
+  if (!buildId || todayViewCount <= 0) return null;
+  return {
+    ...build,
+    id: buildId,
+    todayViewCount
+  };
+}
+
+function formatTodayViewLabel(viewCount?: number | null) {
+  const views = Math.max(0, Math.floor(Number(viewCount) || 0));
+  if (views === 1) return '1 view today';
+  return `${views.toLocaleString()} views today`;
 }
 
 function mergeBuildActivityItems(

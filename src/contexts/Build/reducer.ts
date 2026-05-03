@@ -101,6 +101,7 @@ export type BuildStudioTab =
   | 'community'
   | 'open_source';
 type BuildStudioBrowseTab = Exclude<BuildStudioTab, 'mine'>;
+export type BuildStudioBrowseMode = 'recent' | 'leaderboard';
 export type BuildWorkspaceCommunicationMode = 'lumine' | 'versions' | 'people';
 
 export interface BuildWorkspaceUiState {
@@ -113,6 +114,7 @@ export interface BuildStudioBrowseTabState {
   builds: any[];
   loadMoreToken: string | null;
   loaded: boolean;
+  browseMode: BuildStudioBrowseMode;
   userId: number | null;
 }
 
@@ -222,6 +224,7 @@ export interface BuildStudioActionPayload {
   buildId?: number;
   userId?: number | null;
   loadMoreToken?: string | null;
+  browseMode?: BuildStudioBrowseMode | string | null;
 }
 
 export interface BuildWorkspaceUiActionPayload {
@@ -291,6 +294,7 @@ function createInitialBuildStudioBrowseState(): BuildStudioBrowseTabState {
     builds: [],
     loadMoreToken: null,
     loaded: false,
+    browseMode: 'recent',
     userId: null
   };
 }
@@ -364,6 +368,12 @@ function normalizeBuildStudioBrowseTab(
 ): BuildStudioBrowseTab {
   if (value === 'collaborating') return 'collaborating';
   return value === 'open_source' ? 'open_source' : 'community';
+}
+
+function normalizeBuildStudioBrowseMode(
+  value?: string | null
+): BuildStudioBrowseMode {
+  return value === 'leaderboard' ? 'leaderboard' : 'recent';
 }
 
 function normalizeBuildStudioUserId(value: unknown) {
@@ -1562,6 +1572,9 @@ export default function BuildReducer(
     case 'SET_BUILD_STUDIO_BROWSE_BUILDS': {
       const buildStudio = getBuildStudioState(state);
       const tab = normalizeBuildStudioBrowseTab(action.buildStudio?.tab);
+      const browseMode = normalizeBuildStudioBrowseMode(
+        action.buildStudio?.browseMode
+      );
       return {
         ...state,
         buildStudio: {
@@ -1578,6 +1591,7 @@ export default function BuildReducer(
                   ? action.buildStudio.loadMoreToken
                   : null,
               loaded: true,
+              browseMode,
               userId: normalizeBuildStudioUserId(action.buildStudio?.userId)
             }
           }
@@ -1588,8 +1602,14 @@ export default function BuildReducer(
       const buildStudio = getBuildStudioState(state);
       const tab = normalizeBuildStudioBrowseTab(action.buildStudio?.tab);
       const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const browseMode = normalizeBuildStudioBrowseMode(
+        action.buildStudio?.browseMode
+      );
       const currentTabState = buildStudio.browse[tab];
-      const canAppend = currentTabState.userId === userId;
+      const canAppend =
+        currentTabState.userId === userId &&
+        currentTabState.browseMode === browseMode;
+      if (!canAppend) return state;
       return {
         ...state,
         buildStudio: {
@@ -1598,21 +1618,18 @@ export default function BuildReducer(
             ...buildStudio.browse,
             [tab]: {
               ...currentTabState,
-              builds: canAppend
-                ? [
-                    ...currentTabState.builds,
-                    ...(Array.isArray(action.buildStudio?.builds)
-                      ? action.buildStudio.builds
-                      : [])
-                  ]
-                : Array.isArray(action.buildStudio?.builds)
+              builds: [
+                ...currentTabState.builds,
+                ...(Array.isArray(action.buildStudio?.builds)
                   ? action.buildStudio.builds
-                  : [],
+                  : [])
+              ],
               loadMoreToken:
                 typeof action.buildStudio?.loadMoreToken === 'string'
                   ? action.buildStudio.loadMoreToken
                   : null,
               loaded: true,
+              browseMode,
               userId
             }
           }

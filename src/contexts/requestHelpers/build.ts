@@ -716,6 +716,18 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadTodayTopViewedBuild() {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/today-top-viewed`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadMyPublicBuildsForPinning() {
       try {
         const { data } = await request.get(
@@ -1208,7 +1220,7 @@ export default function buildRequestHelpers({
       lastId,
       cursor
     }: {
-      sort?: 'recent' | 'popular';
+      sort?: 'recent' | 'popular' | 'forks';
       scope?: 'all' | 'open_source';
       excludeMine?: boolean;
       limit?: number;
