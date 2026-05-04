@@ -22,8 +22,17 @@ const guideSections: GuideSection[] = [
       'Use the Code tab to edit project files directly. The app preview runs from the saved project files.',
       'Keep /index.html or /index.htm as the entry file. Split CSS and JavaScript into supporting files before a file approaches the server line limit.',
       `The current project-file limit is ${PROJECT_FILE_LINE_LIMIT} lines per file. If save fails for size, split the file and save again.`,
-      'Use project assets for bundled images/audio. Use Twinkle.files for user-selected runtime uploads that need Twinkle-hosted storage.',
+      'Use workspace project assets for bundled images/audio. Use Twinkle.files only for viewer-created runtime uploads after the app is running.',
       'Save files before relying on Preview, Publish, or Download zip.'
+    ]
+  },
+  {
+    title: 'Workspace project assets',
+    items: [
+      'From the parent workspace page, await window.TwinkleBuildAgent.assets.create({ fileName: "jump.wav", mimeType: "audio/wav", base64 }) to upload a generated audio or image asset.',
+      'The create result returns asset.url, stableUrl, and reference. Use that returned URL in project files, such as new Audio(asset.url) or an <img> src value.',
+      'Use await window.TwinkleBuildAgent.assets.createMany([...]) for batches, list({ limit, cursor }) to inspect existing assets, delete(assetId) to remove one, and openManager() to open the asset manager.',
+      'Project assets support image and audio files for bundled app media. Video is not supported.'
     ]
   },
   {
@@ -82,7 +91,7 @@ const sdkSections: GuideSection[] = [
     items: [
       'For simple same-origin downloads, a normal <a href={imageUrl} download="file.png"> is fine.',
       'await Twinkle.files.saveAs({ fileName, url, dataUrl, blob, bytes, text, json, mimeType }) downloads generated or remote files through the parent frame without opening a popup.',
-      'await Twinkle.files.uploadGenerated({ fileName, dataUrl, mimeType }) uploads an app-generated image/file to Twinkle storage without opening a picker.',
+      'await Twinkle.files.uploadGenerated({ fileName, dataUrl, mimeType }) uploads a viewer/runtime-generated image or file after the app is running. Use window.TwinkleBuildAgent.assets from the workspace for bundled project media.',
       'await Twinkle.files.pickAndUpload({ accept: "image/*", multiple: true }) opens a viewer file picker and uploads to Twinkle storage.',
       'Store returned asset references in Twinkle.privateDb for private refs, Twinkle.sharedDb for shared refs, or Twinkle.userDb only when the app already needs advanced private SQLite.',
       "await Twinkle.files.list({ limit: 20 }) lists this viewer's runtime uploads for the build.",

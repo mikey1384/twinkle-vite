@@ -91,6 +91,7 @@ export interface PreviewPanelHandle {
   uploadProjectAssetsFromChatUpload: (files: File[]) => Promise<{
     success: boolean;
     uploadedCount: number;
+    assets?: PreviewRuntimeUploadAsset[];
     warningText?: string;
     error?: string;
   }>;

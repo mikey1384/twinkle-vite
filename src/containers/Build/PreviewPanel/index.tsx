@@ -50,6 +50,17 @@ import {
 } from '../previewOrigin';
 import { BUILD_APP_IFRAME_ALLOW } from '../iframePermissions';
 import { resolveLocalProjectPathFromBase } from './moduleRewrite';
+import {
+  BUILD_PROJECT_ASSET_UPLOAD_ACCEPT,
+  createAgentAssetFile,
+  isSupportedBuildAssetUploadFile,
+  normalizeBuildAgentAssetLimit,
+  type BuildAgentAssetCreateManyResult,
+  type BuildAgentAssetCreateOptions,
+  type BuildAgentAssetCreateResult,
+  type BuildAgentAssetListOptions,
+  type BuildAgentWorkspaceAssetsApi
+} from './agentWorkspaceAssets';
 import type {
   ArtifactVersion,
   EditableProjectFile,
@@ -262,6 +273,14 @@ const previewSpinnerClass = css`
 
 type WorkspaceViewMode = 'preview' | 'code' | 'manual';
 
+declare global {
+  interface Window {
+    TwinkleBuildAgent?: {
+      assets?: BuildAgentWorkspaceAssetsApi;
+    };
+  }
+}
+
 const workspaceViewOptions = [
   { value: 'preview', label: 'Preview', icon: 'eye' },
   { value: 'code', label: 'Code', icon: 'code' },
@@ -269,8 +288,6 @@ const workspaceViewOptions = [
 ] as const;
 const BUILD_PROJECT_UPLOAD_ACCEPT =
   '.html,.htm,.css,.js,.mjs,.cjs,.json,.txt,.md,.svg,.xml,.csv,.yml,.yaml';
-const BUILD_PROJECT_ASSET_UPLOAD_ACCEPT =
-  'image/*,audio/*,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff,.tif,.heic,.heif,.avif,.mp3,.wav,.ogg,.m4a,.aac,.flac,.aif,.aiff';
 
 function normalizeUploadInputFiles(uploadInput: FileList | File[] | null) {
   if (!uploadInput) {
@@ -293,28 +310,6 @@ const BUILD_PROJECT_TEXT_UPLOAD_EXTENSIONS = [
   '.csv',
   '.yml',
   '.yaml'
-] as const;
-const BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS = [
-  '.png',
-  '.jpg',
-  '.jpeg',
-  '.gif',
-  '.webp',
-  '.svg',
-  '.bmp',
-  '.tiff',
-  '.tif',
-  '.heic',
-  '.heif',
-  '.avif',
-  '.mp3',
-  '.wav',
-  '.ogg',
-  '.m4a',
-  '.aac',
-  '.flac',
-  '.aif',
-  '.aiff'
 ] as const;
 const BUILD_PROJECT_UNSUPPORTED_UPLOAD_EXTENSIONS = [
   '.jsx',
@@ -484,21 +479,6 @@ function isSupportedBuildProjectUploadFile(file: File) {
   return (
     normalizedType.startsWith('text/') ||
     BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES.has(normalizedType)
-  );
-}
-
-function isSupportedBuildAssetUploadFile(file: File) {
-  const lowerName = String(file?.name || '').toLowerCase();
-  if (
-    BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS.some((extension) =>
-      lowerName.endsWith(extension)
-    )
-  ) {
-    return true;
-  }
-  const normalizedType = String(file?.type || '').toLowerCase();
-  return (
-    normalizedType.startsWith('image/') || normalizedType.startsWith('audio/')
   );
 }
 
@@ -1320,6 +1300,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const projectAssetInputRef = useRef<HTMLInputElement | null>(null);
     const editableProjectFilesRef = useRef<EditableProjectFile[]>(
       buildEditableProjectFiles({ code, projectFiles })
+    );
+    const agentAssetApiRef = useRef<BuildAgentWorkspaceAssetsApi | null>(
+      null
     );
     const savingProjectFilesRef = useRef(false);
     const downloadingProjectArchiveRef = useRef(false);
@@ -3077,12 +3060,14 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               : null,
           usage: payload?.usage || null
         });
+        return payload;
       } catch (error) {
         console.error(
           'Failed to sync current build assets after upload',
           error
         );
       }
+      return null;
     }
 
     async function cleanupRestoredRuntimeAssets(
@@ -3147,6 +3132,197 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [build.id, isOwner, runtimeOnly]);
 
+    function ensureAgentAssetAccess(options?: { requireWritable?: boolean }) {
+      if (!isOwner || runtimeOnly || !codeWorkspaceAvailable) {
+        throw new Error(
+          'Project asset authoring is available only in an editable build workspace.'
+        );
+      }
+      if (options?.requireWritable && areProjectFileMutationsLocked()) {
+        throw new Error('Project files are temporarily locked.');
+      }
+    }
+
+    async function createManyAgentProjectAssets(
+      items: BuildAgentAssetCreateOptions[]
+    ): Promise<BuildAgentAssetCreateManyResult> {
+      ensureAgentAssetAccess({ requireWritable: true });
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new Error('Provide at least one asset to upload.');
+      }
+
+      const files = await Promise.all(
+        items.map((item) => createAgentAssetFile(item))
+      );
+      const unsupportedFileNames = files
+        .filter((file) => !isSupportedBuildAssetUploadFile(file))
+        .map((file) => file.name);
+      if (unsupportedFileNames.length > 0) {
+        throw new Error(
+          `Project assets support image and audio files. Unsupported: ${summarizeUploadedFileNames(
+            unsupportedFileNames
+          )}`
+        );
+      }
+
+      const uploadTargetBuildId = Number(buildRef.current?.id || build.id || 0);
+      const token = await ensureBuildApiTokenForBuild(
+        ['files:read', 'files:write'],
+        uploadTargetBuildId
+      );
+      const payload = await uploadBuildRuntimeFilesRef.current({
+        buildId: uploadTargetBuildId,
+        files,
+        token
+      });
+      const assets = Array.isArray(payload?.assets) ? payload.assets : [];
+      await syncCurrentBuildRuntimeUploads(token, uploadTargetBuildId);
+      const failed = Array.isArray(payload?.failed) ? payload.failed : [];
+      if (assets.length === 0 && failed.length > 0) {
+        const firstMessage =
+          failed
+            .map((entry: any) => String(entry?.message || '').trim())
+            .find(Boolean) || 'Asset upload failed.';
+        throw new Error(firstMessage);
+      }
+      return {
+        success: failed.length === 0,
+        assets,
+        failed: failed.map((entry: any) => ({
+          fileName: String(entry?.fileName || ''),
+          message: entry?.message ? String(entry.message) : undefined
+        }))
+      };
+    }
+
+    async function createAgentProjectAsset(
+      options: BuildAgentAssetCreateOptions
+    ): Promise<BuildAgentAssetCreateResult> {
+      const result = await createManyAgentProjectAssets([options]);
+      const asset = result.assets[0] || null;
+      if (!asset) {
+        throw new Error('Asset upload did not return an uploaded asset.');
+      }
+      return {
+        success: true,
+        asset,
+        url: asset.url,
+        stableUrl: asset.url,
+        reference: asset.url
+      };
+    }
+
+    async function listAgentProjectAssets(
+      options: BuildAgentAssetListOptions = {}
+    ) {
+      ensureAgentAssetAccess();
+      const targetBuildId = Number(buildRef.current?.id || build.id || 0);
+      const token = await ensureBuildApiTokenForBuild(
+        ['files:read'],
+        targetBuildId
+      );
+      const payload = await listBuildRuntimeFilesRef.current({
+        buildId: targetBuildId,
+        cursor:
+          Number.isFinite(Number(options.cursor)) && Number(options.cursor) > 0
+            ? Math.floor(Number(options.cursor))
+            : undefined,
+        limit: normalizeBuildAgentAssetLimit(options.limit),
+        token
+      });
+      return {
+        assets: Array.isArray(payload?.assets) ? payload.assets : [],
+        nextCursor:
+          Number.isFinite(Number(payload?.nextCursor)) &&
+          Number(payload?.nextCursor) > 0
+            ? Math.floor(Number(payload.nextCursor))
+            : null,
+        usage: payload?.usage || null
+      };
+    }
+
+    async function deleteAgentProjectAsset(assetId: number) {
+      ensureAgentAssetAccess({ requireWritable: true });
+      const normalizedAssetId = Math.floor(Number(assetId));
+      if (!Number.isFinite(normalizedAssetId) || normalizedAssetId <= 0) {
+        throw new Error('assetId is required.');
+      }
+      const targetBuildId = Number(buildRef.current?.id || build.id || 0);
+      const token = await ensureBuildApiTokenForBuild(
+        ['files:read', 'files:write'],
+        targetBuildId
+      );
+      const payload = await deleteBuildRuntimeFileRef.current({
+        buildId: targetBuildId,
+        assetId: normalizedAssetId,
+        token
+      });
+      await syncCurrentBuildRuntimeUploads(token, targetBuildId);
+      return {
+        success: Boolean(payload?.success)
+      };
+    }
+
+    agentAssetApiRef.current = {
+      create: createAgentProjectAsset,
+      createMany: createManyAgentProjectAssets,
+      list: listAgentProjectAssets,
+      delete: deleteAgentProjectAsset,
+      openManager: () => {
+        onOpenRuntimeUploadsManager?.();
+      }
+    };
+
+    useEffect(() => {
+      if (!isOwner || runtimeOnly || !codeWorkspaceAvailable) return;
+      const previousAssetsApi = window.TwinkleBuildAgent?.assets;
+      const assetsApi: BuildAgentWorkspaceAssetsApi = {
+        create: (options) => {
+          if (!agentAssetApiRef.current) {
+            return Promise.reject(new Error('Asset API is not ready.'));
+          }
+          return agentAssetApiRef.current.create(options);
+        },
+        createMany: (items) => {
+          if (!agentAssetApiRef.current) {
+            return Promise.reject(new Error('Asset API is not ready.'));
+          }
+          return agentAssetApiRef.current.createMany(items);
+        },
+        list: (options) => {
+          if (!agentAssetApiRef.current) {
+            return Promise.reject(new Error('Asset API is not ready.'));
+          }
+          return agentAssetApiRef.current.list(options);
+        },
+        delete: (assetId) => {
+          if (!agentAssetApiRef.current) {
+            return Promise.reject(new Error('Asset API is not ready.'));
+          }
+          return agentAssetApiRef.current.delete(assetId);
+        },
+        openManager: () => {
+          agentAssetApiRef.current?.openManager();
+        }
+      };
+      window.TwinkleBuildAgent = {
+        ...(window.TwinkleBuildAgent || {}),
+        assets: assetsApi
+      };
+      return () => {
+        const currentAgentApi = window.TwinkleBuildAgent;
+        if (currentAgentApi?.assets !== assetsApi) return;
+        if (previousAssetsApi) {
+          currentAgentApi.assets = previousAssetsApi;
+          return;
+        }
+        delete currentAgentApi.assets;
+        if (Object.keys(currentAgentApi).length === 0) {
+          delete window.TwinkleBuildAgent;
+        }
+      };
+    }, [build.id, codeWorkspaceAvailable, isOwner, runtimeOnly]);
+
     async function handleUploadProjectAssets(
       uploadInput: FileList | File[] | null
     ) {
@@ -3199,6 +3375,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           token
         });
         await syncCurrentBuildRuntimeUploads(token, uploadTargetBuildId);
+        const uploadedAssets = Array.isArray(payload?.assets)
+          ? payload.assets
+          : [];
         const failedUploads = Array.isArray(payload?.failed)
           ? payload.failed
           : [];
@@ -3225,18 +3404,20 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           setProjectFileError(warningText);
           return {
             success: true,
-            uploadedCount: Array.isArray(payload?.assets) ? payload.assets.length : 0,
+            uploadedCount: uploadedAssets.length,
+            assets: uploadedAssets,
             warningText
           };
         }
-        if (Array.isArray(payload?.assets) && payload.assets.length > 0) {
+        if (uploadedAssets.length > 0) {
           onOpenRuntimeUploadsManager?.();
         }
         const warningText = warnings.join(' ');
         setProjectFileError(warningText);
         return {
           success: true,
-          uploadedCount: Array.isArray(payload?.assets) ? payload.assets.length : 0,
+          uploadedCount: uploadedAssets.length,
+          assets: uploadedAssets,
           warningText
         };
       } catch (error: any) {
