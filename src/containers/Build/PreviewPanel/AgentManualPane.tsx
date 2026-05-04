@@ -54,12 +54,15 @@ const sdkSections: GuideSection[] = [
     title: 'Twinkle.capabilities',
     items: [
       'await Twinkle.capabilities.get() returns the live capability snapshot.',
-      'await Twinkle.capabilities.can("Twinkle.ai.generateImage") checks a specific action.'
+      'await Twinkle.capabilities.can("Twinkle.ai.generateImage") checks a specific SDK action or Lumine action.',
+      'await Twinkle.capabilities.listActions() returns Lumine action permissions: available, blocked, and details.',
+      'await Twinkle.capabilities.refresh() clears the cache and fetches a fresh snapshot.'
     ]
   },
   {
     title: 'Twinkle.ai',
     items: [
+      'Do not build prompt-preset selection UIs from Twinkle.ai.listPrompts(); runtime chat uses message, history, and systemPrompt.',
       'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", quality: "high", requestId, onStatus }) generates or edits an image.',
       'await Twinkle.ai.chat({ message, history, systemPrompt, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided.',
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
@@ -67,6 +70,7 @@ const sdkSections: GuideSection[] = [
       'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
       'For text chat UIs, use onText to render the assistant response as it arrives, then use the resolved result for the final text and aiUsagePolicy.',
+      'Twinkle.ai.onChatStatus(listener) returns an unsubscribe function for shared text-generation status UI.',
       'Twinkle.ai.onImageGenerationStatus(listener) returns an unsubscribe function for shared streaming UI.',
       'Pass a unique requestId to correlate iframe logs, parent bridge logs, and backend stream logs for one generation.',
       'Signed-in viewers only. Each successful image or text generation consumes AI Energy from the signed-in viewer.',
@@ -89,28 +93,60 @@ const sdkSections: GuideSection[] = [
     title: 'Databases',
     items: [
       'Twinkle.privateDb is the default private per-user store for preferences, drafts, settings, and small JSON state.',
+      'Twinkle.privateDb.get(key) returns { item: { id, key, value, updatedAt } | null }.',
+      'Twinkle.privateDb.list({ prefix, limit, cursor }) returns { items: [{ id, key, value, updatedAt }], cursor? }.',
+      'Twinkle.privateDb.set(key, value) returns { item: { id, key, value, updatedAt } }.',
+      'Twinkle.privateDb.remove(key) returns { success: true, deleted: boolean }.',
       'Twinkle.userDb is advanced private per-user SQLite for tables, indexes, many rows, filtered queries, or aggregates.',
+      'Twinkle.userDb.query(sql, params) returns { rows, rowCount, truncated }; Twinkle.userDb.exec(sql, params) returns { changes, lastInsertRowid }.',
       'Twinkle.sharedDb stores shared build data when the capability allows it.',
+      'Twinkle.sharedDb.getTopics() returns { topics: [{ id, name, createdBy, createdAt }] }.',
+      'Twinkle.sharedDb.createTopic(name) creates or returns a topic; topic names max at 100 characters.',
       'Twinkle.sharedDb.getEntries(topic, { limit }) returns newest entries first by default and includes cursor and hasMore for pagination.',
+      'Twinkle.sharedDb.getEntries(topic, { limit, pageSize, cursor, order, sort, direction }) and loadMoreEntries(...) return { entries, cursor, hasMore }.',
+      'Shared entries are shaped like { id, topicId, userId, username, profilePicUrl, data, createdAt, updatedAt }. data is the JSON object you stored.',
+      'Twinkle.sharedDb.addEntry(topic, data) writes a JSON object and returns { entry }. It auto-creates the topic if needed. data max is 10 KB.',
+      'Twinkle.sharedDb.updateEntry(entryId, data) returns { entry }. Only the entry creator or build owner can update.',
+      'Twinkle.sharedDb.deleteEntry(entryId) returns { success: true }. Only the entry creator or build owner can delete.',
       'Use limit or pageSize to choose how many entries appear per page. Default is 20, max is 100.',
       'Use Twinkle.sharedDb.loadMoreEntries(topic, { limit, cursor }) for Load more buttons.',
       "Pass order: 'asc' or order: 'oldest' for oldest-first chronological reads. sort and direction are accepted aliases.",
+      'There is no sharedDb setEntry/saveEntry/upsertEntry method. For leaderboards, either append every run with addEntry or keep one personal-best row by storing the returned entry.id in Twinkle.privateDb and updating it later.',
       'Do not use sessionStorage for runtime state or persistence.'
+    ]
+  },
+  {
+    title: 'SharedDb leaderboards',
+    items: [
+      'Use Twinkle.viewer.get() for the signed-in viewer id and username; guests need a sign-in prompt or local-only score.',
+      'For per-viewer best scores, store the returned sharedDb entry.id in privateDb, skip writes unless the score improves, and recreate with addEntry if updateEntry finds the saved row missing.',
+      'For all-time rankings, sharedDb pages are newest-first, not score-sorted. Page with loadMoreEntries until hasMore is false, then sort by score in app code.',
+      'Use plain addEntry instead when the design wants append-only run history.'
     ]
   },
   {
     title: 'Preview and viewer',
     items: [
-      'Twinkle.viewer.get() returns the current viewer identity and guest/signed-in state.',
+      'Twinkle.viewer.get() returns { id, username, profilePicUrl, isLoggedIn, isOwner, isGuest } for the current viewer.',
+      'Twinkle.viewer.refresh() clears the cache and re-fetches viewer identity.',
+      'Twinkle.preview.getLayout() returns { mode, viewport, stage, safeInsets, playfield }.',
       'Twinkle.preview.reserveInsets(...) reserves host UI space for games and fixed controls.',
       'Twinkle.preview.setPlayfield(...) and reportGameplayState(...) expose game bounds for preview diagnostics.',
+      'Twinkle.preview.getGameplayTelemetry(), clearGameplayState(), and clearReservedInsets() manage preview diagnostics and reserved host space.',
+      'Twinkle.preview.wrapResult(result) is an internal compatibility helper used by preview methods; app code should not call it directly.',
       'Twinkle.preview.subscribe(listener, { immediate: true }) reacts to host layout changes.'
     ]
   },
   {
-    title: 'Other namespaces',
+    title: 'Content and social reads',
     items: [
-      'Twinkle.chat, Twinkle.reminders, Twinkle.reflections, Twinkle.subjects, Twinkle.users, and Twinkle.profileComments are available only when capabilities permit them.',
+      'Twinkle.subjects.getMySubjects({ limit, cursor }), getSubject(subjectId), and getSubjectComments(subjectId, { limit, cursor }) are read-only subject APIs.',
+      'Twinkle.profileComments.getProfileComments(...), getProfileCommentIds(...), getCommentsByIds(idsOrOpts), and getProfileCommentCounts(idsOrOpts) are focused profile-comment reads.',
+      'Twinkle.users.getUser(userId) returns { id, username, profilePicUrl } or null; getUsers({ search, userIds, cursor, limit }) returns a paged user list.',
+      'Twinkle.reflections.getDailyReflections(...) and getDailyReflectionsByUser(userId, ...) return daily reflection feed rows.',
+      'Twinkle.chat.listRooms(), createRoom({ roomKey, name }), listMessages(roomKey, ...), sendMessage(roomKey, textOrOptions, options), deleteMessage(messageId), and subscribe(roomKey, listener) support app-scoped chat.',
+      'Twinkle.reminders.list(...), create(...), update(reminderId, patch), remove(reminderId), and getDue(...) support per-viewer reminder rules.',
+      'These namespaces are available only when capabilities permit them.',
       'Prefer capability checks and small, explicit SDK calls over guessing method names.'
     ]
   }

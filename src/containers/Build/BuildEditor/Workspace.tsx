@@ -178,10 +178,10 @@ export default function Workspace({
             value={mobilePanelTab}
             options={[
               { value: 'chat' as const, label: 'Chat', icon: 'comments' },
-              { value: 'preview' as const, label: 'Preview', icon: 'eye' }
+              { value: 'preview' as const, label: 'Workspace', icon: 'eye' }
             ]}
             onChange={handleMobilePanelTabChange}
-            ariaLabel="Switch between chat and preview"
+            ariaLabel="Switch between chat and workspace"
             size="sm"
           />
         </div>
