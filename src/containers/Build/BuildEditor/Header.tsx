@@ -233,6 +233,7 @@ const titleRelationshipBadgeClass = css`
 interface HeaderProps {
   build: {
     id: number;
+    userId?: number | null;
     title: string;
     description: string | null;
     username: string;
@@ -254,6 +255,7 @@ interface HeaderProps {
     contributionBranchNumber?: number | null;
     contributionContributorId?: number | null;
     contributionStatus?: string | null;
+    rootBuildUserId?: number | null;
     rootBuildUsername?: string | null;
     rootBuildSourceBuildId?: number | null;
     rootBuildTitle?: string | null;
@@ -352,6 +354,15 @@ export default function Header({
     isContributionFork &&
     contributionStatus !== 'none' &&
     contributionStatus !== 'draft';
+  const rootBuildUserId = Number(build.rootBuildUserId || 0);
+  const branchOwnerUserId = Number(
+    build.contributionContributorId || build.userId || 0
+  );
+  const shouldHighlightMergeBranch =
+    canMergeBranch &&
+    rootBuildUserId > 0 &&
+    branchOwnerUserId > 0 &&
+    branchOwnerUserId !== rootBuildUserId;
   const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
   const publicAppIsUpToDate = Boolean(
     build.isPublic && releaseStatus && !releaseStatus.hasUnpublishedChanges
@@ -562,6 +573,7 @@ export default function Header({
                   variant="success"
                   size="md"
                   icon="check"
+                  shiny={shouldHighlightMergeBranch}
                 >
                   Merge Branch
                 </GameCTAButton>
@@ -688,6 +700,7 @@ export default function Header({
               variant="success"
               size="md"
               icon="check"
+              shiny={shouldHighlightMergeBranch}
             >
               Merge Branch
             </GameCTAButton>

@@ -327,6 +327,11 @@ const branchCardClass = css`
     outline: 2px solid var(--ui-border-strong);
     outline-offset: 3px;
   }
+  @media (max-width: ${mobileMaxWidth}) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(7.25rem, 34vw, 10rem);
+    min-height: 7.4rem;
+  }
 `;
 
 const branchPreviewClass = css`
@@ -337,6 +342,14 @@ const branchPreviewClass = css`
   border-bottom: 1px solid var(--ui-border);
   border-radius: 0;
   box-shadow: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    order: 2;
+    height: 100%;
+    min-height: 7.4rem;
+    aspect-ratio: auto;
+    border-bottom: 0;
+    border-left: 1px solid var(--ui-border);
+  }
 `;
 
 const branchPreviewCurrentBadgeClass = css`
@@ -359,6 +372,12 @@ const branchCardBodyClass = css`
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.85rem;
+  min-width: 0;
+  @media (max-width: ${mobileMaxWidth}) {
+    order: 1;
+    justify-content: space-between;
+    padding: 0.72rem;
+  }
 `;
 
 const branchCardHeaderClass = css`
@@ -372,6 +391,10 @@ const branchAvatarClass = css`
   width: 2.35rem;
   height: 2.35rem;
   flex: 0 0 auto;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 2rem;
+    height: 2rem;
+  }
 `;
 
 const versionLoadButtonClass = css`
@@ -432,6 +455,13 @@ const branchDeleteButtonClass = css`
   &:disabled {
     cursor: default;
     opacity: 0.55;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    top: 0.4rem;
+    right: 0.4rem;
+    width: 1.85rem;
+    height: 1.85rem;
+    font-size: 0.92rem;
   }
 `;
 
@@ -497,6 +527,9 @@ const branchLoadBadgeRowClass = css`
   gap: 0.35rem;
   flex-wrap: wrap;
   justify-content: space-between;
+  @media (max-width: ${mobileMaxWidth}) {
+    justify-content: flex-start;
+  }
 `;
 
 const versionLoadStatusClass = css`
