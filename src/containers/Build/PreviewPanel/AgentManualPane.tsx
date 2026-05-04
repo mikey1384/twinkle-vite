@@ -37,6 +37,14 @@ const guideSections: GuideSection[] = [
     ]
   },
   {
+    title: 'Vendor libraries',
+    items: [
+      'Do not use CDN imports, package imports, or pasted library bundles for project code.',
+      'For Three.js, use import * as THREE from "/build/vendor/three/0.160.0/three.module.min.js"; inside a type="module" project file.',
+      'The Three.js vendor path is served by Twinkle and is stable for preview and published builds.'
+    ]
+  },
+  {
     title: 'Agent rules',
     items: [
       'Do not use Lumine when the user asked for manual/external-agent work.',
