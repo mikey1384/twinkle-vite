@@ -483,6 +483,7 @@ function getActivityNavigationBuildId(activity: BuildActivityItem) {
     (activity.activityType === 'buildTeamForumThread' ||
       activity.activityType === 'buildTeamForumReply' ||
       activity.activityType === 'buildBranchUpdate' ||
+      activity.activityType === 'buildBranchMerged' ||
       activity.activityType === 'buildContributor') &&
     Number(activity.branch?.id || 0) > 0
   ) {
@@ -568,6 +569,13 @@ function getActivityMessage(activity: BuildActivityItem, currentUserId: number) 
       return 'updated';
     case 'buildBranchUpdate':
       return 'updated branch';
+    case 'buildBranchMerged': {
+      const branchTitle = String(activity.branch?.title || 'branch').trim();
+      if (!actorIsCurrentUser && targetIsCurrentUser) {
+        return `merged your branch ${branchTitle} into`;
+      }
+      return `merged branch ${branchTitle} into`;
+    }
     case 'buildPublished':
       return 'published';
     default:
@@ -589,6 +597,7 @@ function getActivityIcon(activity: BuildActivityItem) {
   switch (activity.activityType) {
     case 'buildFork':
     case 'buildContributor':
+    case 'buildBranchMerged':
       return 'code-branch';
     case 'buildCollaborator':
       return 'users';
@@ -609,6 +618,7 @@ function getActivityNavigationState(activity: BuildActivityItem) {
   }
   if (
     activity.activityType === 'buildBranchUpdate' ||
+    activity.activityType === 'buildBranchMerged' ||
     activity.activityType === 'buildContributor'
   ) {
     return { openVersionsPanel: true };

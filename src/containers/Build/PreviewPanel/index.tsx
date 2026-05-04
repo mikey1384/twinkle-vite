@@ -2002,13 +2002,17 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         Boolean(previewSrc) &&
         previewFrameReady[activePreviewFrame] &&
         !previewTransitioning;
-      onCaptureReadyChange(ready);
+      onCaptureReadyChange(ready, {
+        codeSignature: previewCodeSignature || null,
+        previewSrc: previewSrc || null
+      });
     }, [
       activePreviewFrame,
       onCaptureReadyChange,
       previewFrameSuspended,
       previewFrameReady,
       previewHostVisible,
+      previewCodeSignature,
       previewSrc,
       previewTransitioning
     ]);

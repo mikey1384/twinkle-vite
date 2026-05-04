@@ -15,6 +15,7 @@ import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 import PreviewPanel from './PreviewPanel';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
+import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from './runtimeViewSources';
 
 interface RuntimeBuild {
   id: number;
@@ -411,6 +412,10 @@ export default function BuildRuntime() {
     Number(window.history.state?.idx) > 0;
   const isEmbedded = useMemo(() => {
     return new URLSearchParams(location.search).get('embedded') === '1';
+  }, [location.search]);
+  const runtimeViewSource = useMemo(() => {
+    const source = new URLSearchParams(location.search).get('viewSource');
+    return source === BUILD_TRENDING_SHOWCASE_VIEW_SOURCE ? source : '';
   }, [location.search]);
   const backTo = useMemo(() => {
     return typeof location.state?.runtimeBackTo === 'string'
@@ -904,7 +909,9 @@ export default function BuildRuntime() {
       setLoading(true);
       setError('');
       try {
-        const data = await loadRuntimeBuild(numericBuildId);
+        const data = await loadRuntimeBuild(numericBuildId, {
+          viewSource: runtimeViewSource
+        });
         if (!applyRuntimeBuildPayload(data)) {
           setError('Build not found');
         }
@@ -915,7 +922,7 @@ export default function BuildRuntime() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numericBuildId, userId]);
+  }, [numericBuildId, runtimeViewSource, userId]);
 
   useEffect(() => {
     if (!isEmbedded) return;

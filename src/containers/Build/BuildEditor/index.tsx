@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type {
   BuildLumineChatVisibility,
@@ -13,6 +13,7 @@ import BuildPreviewFrame from '~/components/BuildPreviewFrame';
 import Icon from '~/components/Icon';
 import Modals from './Modals';
 import ProfilePic from '~/components/ProfilePic';
+import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import UsernameText from '~/components/Texts/UsernameText';
 import Workspace from './Workspace';
 import BuildDeleteModal from '../BuildDeleteModal';
@@ -54,7 +55,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { generateFileName } from '~/helpers/stringHelpers';
-import { returnImageFileFromUrl } from '~/helpers';
+import { returnImageFileFromUrl, textIsOverflown } from '~/helpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { v1 as uuidv1 } from 'uuid';
 import {
@@ -74,12 +75,19 @@ const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
 const BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY =
   'twinkle:build-workshop-chat-panel-width';
+const BRANCH_THUMBNAIL_CAPTURE_SETTLE_MS = 1600;
 
 type MobilePanelTab = 'chat' | 'preview';
 
 interface MobilePanelTabIntent {
   tab: MobilePanelTab;
   version: number;
+}
+
+interface PendingBranchThumbnailCapture {
+  buildId: number;
+  artifactVersionId: number;
+  codeSignature: string;
 }
 
 function clampBuildChatPanelWidth(width: number, workspaceWidth = 0) {
@@ -457,7 +465,14 @@ const branchLoadTextClass = css`
   gap: 0.18rem;
 `;
 
+const branchLoadTitleRevealWrapClass = css`
+  display: block;
+  width: 100%;
+  min-width: 0;
+`;
+
 const branchLoadTitleTextClass = css`
+  display: block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -1222,9 +1237,7 @@ function VersionStartPanel({
                       profilePicUrl={branchUser.profilePicUrl}
                     />
                     <span className={branchLoadTextClass}>
-                      <span className={branchLoadTitleTextClass}>
-                        {branchName}
-                      </span>
+                      <BranchTitleReveal title={branchName} />
                       <span className={branchLoadMetaClass}>
                         <span
                           onClick={(event) => event.stopPropagation()}
@@ -1519,6 +1532,43 @@ function VersionStartPanel({
         </div>
       </div>
     </div>
+  );
+}
+
+function BranchTitleReveal({ title }: { title: string }) {
+  const [titleContext, setTitleContext] = useState<DOMRect | null>(null);
+  const titleRef = useRef<HTMLSpanElement | null>(null);
+  const containerRef = useRef<HTMLSpanElement | null>(null);
+
+  const showFullTitle = useCallback(() => {
+    const titleElement = titleRef.current;
+    const containerElement = containerRef.current;
+    if (!titleElement || !containerElement) return;
+    if (!textIsOverflown(titleElement)) {
+      setTitleContext(null);
+      return;
+    }
+    setTitleContext(containerElement.getBoundingClientRect());
+  }, []);
+
+  return (
+    <span
+      ref={containerRef}
+      className={branchLoadTitleRevealWrapClass}
+      onMouseEnter={showFullTitle}
+      onMouseLeave={() => setTitleContext(null)}
+    >
+      <span ref={titleRef} className={branchLoadTitleTextClass}>
+        {title}
+      </span>
+      {titleContext ? (
+        <FullTextReveal
+          textContext={titleContext}
+          text={title}
+          style={{ fontSize: '0.95rem', fontWeight: 800 }}
+        />
+      ) : null}
+    </span>
   );
 }
 
@@ -2864,6 +2914,12 @@ export default function BuildEditor({
   >([]);
   const autoBranchThumbnailTimeoutRef = useRef<number | null>(null);
   const autoBranchThumbnailInFlightRef = useRef(false);
+  const pendingBranchThumbnailCaptureRef =
+    useRef<PendingBranchThumbnailCapture | null>(null);
+  const previewCaptureReadyRef = useRef<{
+    ready: boolean;
+    codeSignature: string | null;
+  }>({ ready: false, codeSignature: null });
   const buildChatUploadProgressMessageIdRef = useRef<number | null>(null);
   const handledSharedTerminalStateKeyRef = useRef('');
   const DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS = 8000;
@@ -2911,6 +2967,7 @@ export default function BuildEditor({
         window.clearTimeout(autoBranchThumbnailTimeoutRef.current);
         autoBranchThumbnailTimeoutRef.current = null;
       }
+      pendingBranchThumbnailCaptureRef.current = null;
     };
   }, []);
 
@@ -4919,7 +4976,12 @@ export default function BuildEditor({
       normalizedPaths.length > 0
         ? ` in ${normalizedPaths.join(', ')}`
         : '';
-    const prompt = `Please resolve the merge conflict markers${pathsText}. Keep the intended changes from both Current Build and Contribution, remove every <<<<<<< Current Build / ======= / >>>>>>> Contribution marker, and make sure the app still runs.`;
+    const prompt = [
+      `Please resolve the merge conflict markers${pathsText}.`,
+      'First inspect the conflict and decide whether it is a mechanical code merge or a product decision.',
+      'For mechanical conflicts, keep the intended changes from both Current Build and Contribution, remove every <<<<<<< Current Build / ======= / >>>>>>> Contribution marker, and make sure the app still runs.',
+      'If the conflict changes product identity, core gameplay, main workflow, data model, or requires choosing between mutually exclusive features, do not guess or edit yet. Ask the owner clear questions until the intended direction is unambiguous, then resolve the markers.'
+    ].join(' ');
     if (!isOwner) {
       navigate(`/build/${rootBuildId}`, {
         state: {
@@ -6720,40 +6782,127 @@ export default function BuildEditor({
   ) {
     if (!savedBuild || !isBuildContributionFork(savedBuild)) return;
     if (!isOwner || !canEditBuildProject(savedBuild)) return;
-    if (String(savedBuild.thumbnailUrl || '').trim()) return;
     const savedBuildId = Number(savedBuild.id || 0);
+    if (!savedBuildId) return;
+    if (buildHasOwnedThumbnail(savedBuild)) {
+      if (
+        Number(pendingBranchThumbnailCaptureRef.current?.buildId || 0) ===
+        savedBuildId
+      ) {
+        pendingBranchThumbnailCaptureRef.current = null;
+        if (autoBranchThumbnailTimeoutRef.current !== null) {
+          window.clearTimeout(autoBranchThumbnailTimeoutRef.current);
+          autoBranchThumbnailTimeoutRef.current = null;
+        }
+      }
+      return;
+    }
     const savedArtifactVersionId = Number(
       savedBuild.currentArtifactVersionId || 0
     );
-    if (!savedBuildId || !savedArtifactVersionId) return;
-    if (autoBranchThumbnailInFlightRef.current) return;
+    if (!savedArtifactVersionId) return;
+    pendingBranchThumbnailCaptureRef.current = {
+      buildId: savedBuildId,
+      artifactVersionId: savedArtifactVersionId,
+      codeSignature: `artifact:${savedArtifactVersionId}`
+    };
     if (autoBranchThumbnailTimeoutRef.current !== null) {
       window.clearTimeout(autoBranchThumbnailTimeoutRef.current);
+      autoBranchThumbnailTimeoutRef.current = null;
     }
+    schedulePendingBranchThumbnailCaptureIfReady();
+  }
+
+  function handlePreviewCaptureReadyChange(
+    ready: boolean,
+    payload: { codeSignature: string | null; previewSrc: string | null }
+  ) {
+    previewCaptureReadyRef.current = {
+      ready,
+      codeSignature: payload?.codeSignature || null
+    };
+    if (!ready && autoBranchThumbnailTimeoutRef.current !== null) {
+      window.clearTimeout(autoBranchThumbnailTimeoutRef.current);
+      autoBranchThumbnailTimeoutRef.current = null;
+      return;
+    }
+    schedulePendingBranchThumbnailCaptureIfReady();
+  }
+
+  function schedulePendingBranchThumbnailCaptureIfReady() {
+    const pendingCapture = pendingBranchThumbnailCaptureRef.current;
+    if (!pendingCapture) return;
+    const previewReady = previewCaptureReadyRef.current;
+    if (
+      !previewReady.ready ||
+      previewReady.codeSignature !== pendingCapture.codeSignature
+    ) {
+      return;
+    }
+    if (autoBranchThumbnailTimeoutRef.current !== null) return;
     autoBranchThumbnailTimeoutRef.current = window.setTimeout(async () => {
       autoBranchThumbnailTimeoutRef.current = null;
+      const pendingCapture = pendingBranchThumbnailCaptureRef.current;
+      if (!pendingCapture) return;
+      const previewReady = previewCaptureReadyRef.current;
+      if (
+        !previewReady.ready ||
+        previewReady.codeSignature !== pendingCapture.codeSignature
+      ) {
+        return;
+      }
       if (
         autoBranchThumbnailInFlightRef.current ||
         savingThumbnailRef.current
       ) {
+        schedulePendingBranchThumbnailCaptureIfReady();
         return;
       }
       const latestBuild = getLatestBuild();
-      if (Number(latestBuild?.id || 0) !== savedBuildId) return;
-      if (!isBuildContributionFork(latestBuild)) return;
-      if (!canEditBuildProject(latestBuild)) return;
-      if (String(latestBuild.thumbnailUrl || '').trim()) return;
-      if (Number(latestBuild.currentArtifactVersionId || 0) <= 0) return;
+      if (Number(latestBuild?.id || 0) !== pendingCapture.buildId) {
+        pendingBranchThumbnailCaptureRef.current = null;
+        return;
+      }
+      if (!isBuildContributionFork(latestBuild)) {
+        pendingBranchThumbnailCaptureRef.current = null;
+        return;
+      }
+      if (!canEditBuildProject(latestBuild)) {
+        pendingBranchThumbnailCaptureRef.current = null;
+        return;
+      }
+      if (buildHasOwnedThumbnail(latestBuild)) {
+        pendingBranchThumbnailCaptureRef.current = null;
+        return;
+      }
+      if (
+        Number(latestBuild.currentArtifactVersionId || 0) !==
+        pendingCapture.artifactVersionId
+      ) {
+        pendingBranchThumbnailCaptureRef.current = null;
+        return;
+      }
       autoBranchThumbnailInFlightRef.current = true;
       try {
         const capturedImageUrl = await captureThumbnailFromPreview();
         await persistBuildThumbnailFromDataUrl(capturedImageUrl);
+        if (pendingBranchThumbnailCaptureRef.current === pendingCapture) {
+          pendingBranchThumbnailCaptureRef.current = null;
+        }
       } catch (error) {
         console.warn('Failed to auto-save branch thumbnail:', error);
       } finally {
         autoBranchThumbnailInFlightRef.current = false;
       }
-    }, 900);
+    }, BRANCH_THUMBNAIL_CAPTURE_SETTLE_MS);
+  }
+
+  function buildHasOwnedThumbnail(candidate: Build | null | undefined) {
+    const thumbnailUrl = String(candidate?.thumbnailUrl || '').trim();
+    const buildId = Number(candidate?.id || 0);
+    const userId = Number(candidate?.userId || 0);
+    if (!thumbnailUrl || !buildId || !userId) return false;
+    return thumbnailUrl.includes(`/thumbs/builds/${userId}/${buildId}/`);
   }
 
   async function handlePublish() {
@@ -7329,7 +7478,8 @@ export default function BuildEditor({
     onRuntimeUploadsSync: handleRuntimeUploadsSyncFromPreview,
     onAiUsagePolicyUpdate: handlePreviewAiUsagePolicyUpdate,
     onOpenRuntimeUploadsManager: handleOpenRuntimeUploadsManager,
-    currentBuildRuntimeAssets
+    currentBuildRuntimeAssets,
+    onCaptureReadyChange: handlePreviewCaptureReadyChange
   };
 
   return (

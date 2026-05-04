@@ -578,7 +578,7 @@ export default function ChatPanel({
             className={mainProjectButtonClass}
             onClick={onOpenMainProject}
           >
-            <Icon icon="arrow-left" />
+            <Icon icon="home" />
             <span className={mainProjectButtonLabelClass}>Main Project</span>
           </button>
           {communicationOptions.length > 1 ? (

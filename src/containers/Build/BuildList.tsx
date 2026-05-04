@@ -17,6 +17,7 @@ import BuildTabFilter from './BuildTabFilter';
 import BuildActivityPanel, {
   type BuildActivityItem
 } from './BuildActivityPanel';
+import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from './runtimeViewSources';
 import {
   useAppContext,
   useBuildContext,
@@ -1174,12 +1175,15 @@ export default function BuildList() {
   }
 
   function handleOpenTodayTopViewedBuild(build: TodayTopViewedBuild) {
-    navigate(`/app/${build.id}`, {
-      state: {
-        runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
-        runtimeBackLabel: 'Back to Build Studio'
+    navigate(
+      `/app/${build.id}?viewSource=${BUILD_TRENDING_SHOWCASE_VIEW_SOURCE}`,
+      {
+        state: {
+          runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
+          runtimeBackLabel: 'Back to Build Studio'
+        }
       }
-    });
+    );
   }
 
   function handleBuildActivityTabChange(tab: BuildActivityTab) {
@@ -1403,12 +1407,12 @@ function TodayTopViewedShowcase({
   return (
     <aside
       className={topViewedShowcaseClass}
-      aria-label="Most visited app today"
+      aria-label="Trending app today"
     >
       <div className={topViewedCopyClass}>
         <div className={topViewedKickerClass}>
           <Icon icon="eye" />
-          Most visited today
+          Trending today
         </div>
         <h2 className={topViewedTitleClass}>{displayTitle}</h2>
         <div className={topViewedMetaClass}>

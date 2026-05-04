@@ -433,9 +433,20 @@ export default function buildRequestHelpers({
       }
     },
 
-    async loadRuntimeBuild(buildId: number, options?: { fromWriter?: boolean }) {
+    async loadRuntimeBuild(
+      buildId: number,
+      options?: { fromWriter?: boolean; viewSource?: string }
+    ) {
       try {
-        const qs = options?.fromWriter ? '?fromWriter=1' : '';
+        const params = new URLSearchParams();
+        if (options?.fromWriter) {
+          params.set('fromWriter', '1');
+        }
+        if (options?.viewSource) {
+          params.set('viewSource', options.viewSource);
+        }
+        const queryString = params.toString();
+        const qs = queryString ? `?${queryString}` : '';
         const { data } = await request.get(
           `${URL}/build/${buildId}/runtime${qs}`,
           auth()

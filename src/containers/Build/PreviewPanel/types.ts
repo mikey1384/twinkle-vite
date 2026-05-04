@@ -71,7 +71,10 @@ export interface PreviewPanelProps {
     username: string | null;
     profilePicUrl: string | null;
   } | null;
-  onCaptureReadyChange?: (ready: boolean) => void;
+  onCaptureReadyChange?: (
+    ready: boolean,
+    payload: { codeSignature: string | null; previewSrc: string | null }
+  ) => void;
 }
 
 export interface PreviewPanelHandle {
