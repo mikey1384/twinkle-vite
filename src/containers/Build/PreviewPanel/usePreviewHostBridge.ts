@@ -180,6 +180,38 @@ export function buildEmptyRuntimeObservationState({
   };
 }
 
+function filterResolvedRuntimeObservationIssues({
+  issues,
+  health
+}: {
+  issues: BuildRuntimeObservationIssue[];
+  health: BuildRuntimeHealthSnapshot | null;
+}) {
+  if (!health?.meaningfulRender) {
+    return issues;
+  }
+  const unresolvedIssues = issues.filter(
+    (issue) => issue.kind !== 'blankrender'
+  );
+  return unresolvedIssues.length === issues.length ? issues : unresolvedIssues;
+}
+
+function isStaleRuntimePreviewSignature({
+  messageCodeSignature,
+  currentCodeSignature
+}: {
+  messageCodeSignature: string | null;
+  currentCodeSignature: string | null;
+}) {
+  const normalizedMessageSignature = String(messageCodeSignature || '').trim();
+  const normalizedCurrentSignature = String(currentCodeSignature || '').trim();
+  return Boolean(
+    normalizedMessageSignature &&
+      normalizedCurrentSignature &&
+      normalizedMessageSignature !== normalizedCurrentSignature
+  );
+}
+
 function normalizeRuntimeObservationIssue(
   payload: any
 ): BuildRuntimeObservationIssue | null {
@@ -1397,6 +1429,14 @@ export function usePreviewHostBridge({
           ? previewCodeSignatureRef.current
           : frameMeta[sourceFrame]?.codeSignature ||
             previewCodeSignatureRef.current;
+        if (
+          isStaleRuntimePreviewSignature({
+            messageCodeSignature: observationCodeSignature,
+            currentCodeSignature: previewCodeSignatureRef.current
+          })
+        ) {
+          return;
+        }
 
         setRuntimeObservationState((prev) => {
           const baseState =
@@ -1444,6 +1484,14 @@ export function usePreviewHostBridge({
           ? previewCodeSignatureRef.current
           : frameMeta[sourceFrame]?.codeSignature ||
             previewCodeSignatureRef.current;
+        if (
+          isStaleRuntimePreviewSignature({
+            messageCodeSignature: healthCodeSignature,
+            currentCodeSignature: previewCodeSignatureRef.current
+          })
+        ) {
+          return;
+        }
 
         setRuntimeObservationState((prev) => {
           const baseState =
@@ -1455,6 +1503,11 @@ export function usePreviewHostBridge({
                   codeSignature: healthCodeSignature
                 });
           const previousHealth = baseState.health;
+          const nextIssues = filterResolvedRuntimeObservationIssues({
+            issues: baseState.issues,
+            health: normalizedHealth
+          });
+          const didResolveIssues = nextIssues !== baseState.issues;
           const isUnchanged =
             previousHealth &&
             previousHealth.booted === normalizedHealth.booted &&
@@ -1476,16 +1529,18 @@ export function usePreviewHostBridge({
             normalizedHealth.observedAt
           );
           if (isUnchanged) {
-            if (nextUpdatedAt === baseState.updatedAt) {
+            if (!didResolveIssues && nextUpdatedAt === baseState.updatedAt) {
               return prev;
             }
             return {
               ...baseState,
+              issues: nextIssues,
               updatedAt: nextUpdatedAt
             };
           }
           return {
             ...baseState,
+            issues: nextIssues,
             health: normalizedHealth,
             updatedAt: nextUpdatedAt
           };

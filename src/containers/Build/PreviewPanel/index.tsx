@@ -412,7 +412,12 @@ function getRuntimeIssueLocationText({
   issue: BuildRuntimeObservationIssue;
   projectFilePath: string | null;
 }) {
-  const fileLabel = projectFilePath || issue.filename || 'Unknown file';
+  const fileLabel =
+    projectFilePath ||
+    issue.filename ||
+    (isPreviewValidatorRuntimeIssue(issue)
+      ? 'Preview validator'
+      : 'Unknown file');
   const lineLabel =
     issue.lineNumber != null
       ? `:${issue.lineNumber}${issue.columnNumber != null ? `:${issue.columnNumber}` : ''}`
@@ -427,6 +432,14 @@ function getRuntimeIssueStackPreview(issue: BuildRuntimeObservationIssue) {
     .filter(Boolean)
     .slice(0, 4)
     .join('\n');
+}
+
+function isPreviewValidatorRuntimeIssue(issue: BuildRuntimeObservationIssue) {
+  return (
+    issue.kind === 'blankrender' ||
+    issue.kind === 'keyboardscroll' ||
+    issue.kind === 'playfieldmismatch'
+  );
 }
 
 function triggerBrowserDownload({
