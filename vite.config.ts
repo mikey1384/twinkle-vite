@@ -34,6 +34,10 @@ export default defineConfig(({ mode }) => {
         '/build/preview': {
           target: previewProxyTarget,
           changeOrigin: true
+        },
+        '/build/vendor': {
+          target: previewProxyTarget,
+          changeOrigin: true
         }
       }
     },

@@ -15,6 +15,10 @@
       ],
       "destination": "https://api.twinkle.network/build/preview/$1"
     },
+    {
+      "source": "/build/vendor/(.*)",
+      "destination": "https://api.twinkle.network/build/vendor/$1"
+    },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
