@@ -1,5 +1,9 @@
 import type { BuildCapabilitySnapshot } from '../capabilityTypes';
 import type {
+  BuildAgentAssetCreateOptions,
+  BuildAgentAssetCreateResult
+} from './agentWorkspaceAssets';
+import type {
   BuildRuntimeExplorationPlan,
   BuildRuntimeObservationState
 } from '../runtimeObservationTypes';
@@ -95,6 +99,9 @@ export interface PreviewPanelHandle {
     warningText?: string;
     error?: string;
   }>;
+  uploadGeneratedProjectAsset: (
+    options: BuildAgentAssetCreateOptions
+  ) => Promise<BuildAgentAssetCreateResult>;
 }
 
 export interface ArtifactVersion {

@@ -29,7 +29,8 @@ const guideSections: GuideSection[] = [
   {
     title: 'Workspace project assets',
     items: [
-      'From the parent workspace page, await window.TwinkleBuildAgent.assets.create({ fileName: "jump.wav", mimeType: "audio/wav", base64 }) to upload a generated audio or image asset.',
+      'Open Manage uploads, use Add generated asset, paste a file name, MIME type when needed, and base64/data URL, then copy the returned asset URL into project code.',
+      'Agents that can run parent-page JavaScript may await window.TwinkleBuildAgent.assets.create({ fileName: "jump.wav", mimeType: "audio/wav", base64 }) to upload a generated audio or image asset.',
       'The create result returns asset.url, stableUrl, and reference. Use that returned URL in project files, such as new Audio(asset.url) or an <img> src value.',
       'Use await window.TwinkleBuildAgent.assets.createMany([...]) for batches, list({ limit, cursor }) to inspect existing assets, delete(assetId) to remove one, and openManager() to open the asset manager.',
       'Project assets support image and audio files for bundled app media. Video is not supported.'

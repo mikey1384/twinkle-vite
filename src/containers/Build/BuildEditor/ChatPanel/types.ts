@@ -1,4 +1,8 @@
 import type { ReactNode, RefObject } from 'react';
+import type {
+  BuildAgentAssetCreateOptions,
+  BuildAgentAssetCreateResult
+} from '../../PreviewPanel/agentWorkspaceAssets';
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
@@ -210,6 +214,9 @@ export interface ChatPanelProps {
   onCloseRuntimeUploadsManager: () => void;
   onLoadMoreRuntimeUploads: () => void;
   onDeleteRuntimeUpload: (asset: BuildRuntimeUploadAsset) => Promise<void> | void;
+  onCreateGeneratedRuntimeAsset: (
+    options: BuildAgentAssetCreateOptions
+  ) => Promise<BuildAgentAssetCreateResult>;
   twinkleCoins: number;
   purchasingGenerationReset: boolean;
   generationResetError: string;

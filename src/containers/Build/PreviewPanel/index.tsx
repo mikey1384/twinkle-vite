@@ -1573,6 +1573,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         },
         async uploadProjectAssetsFromChatUpload(files: File[]) {
           return await handleUploadProjectAssets(files);
+        },
+        async uploadGeneratedProjectAsset(options: BuildAgentAssetCreateOptions) {
+          return await createAgentProjectAsset(options);
         }
       })
     );

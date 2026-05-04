@@ -196,6 +196,7 @@ export default function ChatPanel({
   onCloseRuntimeUploadsManager,
   onLoadMoreRuntimeUploads,
   onDeleteRuntimeUpload,
+  onCreateGeneratedRuntimeAsset,
   twinkleCoins,
   purchasingGenerationReset,
   generationResetError,
@@ -687,6 +688,7 @@ export default function ChatPanel({
         runtimeUploadDeletingId={runtimeUploadDeletingId}
         onCloseRuntimeUploadsManager={onCloseRuntimeUploadsManager}
         onDeleteRuntimeUpload={onDeleteRuntimeUpload}
+        onCreateGeneratedRuntimeAsset={onCreateGeneratedRuntimeAsset}
         onLoadMoreRuntimeUploads={onLoadMoreRuntimeUploads}
       />
     </div>

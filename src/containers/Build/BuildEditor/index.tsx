@@ -31,8 +31,15 @@ import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import type {
   PreviewPanelHandle,
   PreviewPanelProps,
+  PreviewRuntimeUploadAsset,
   PreviewRuntimeUploadsSyncPayload
 } from '../PreviewPanel/types';
+import {
+  createAgentAssetFile,
+  isSupportedBuildAssetUploadFile,
+  type BuildAgentAssetCreateOptions,
+  type BuildAgentAssetCreateResult
+} from '../PreviewPanel/agentWorkspaceAssets';
 import type { BuildCapabilitySnapshot } from '../capabilityTypes';
 import type {
   BuildWorkspaceCommunicationMode,
@@ -2807,6 +2814,15 @@ export default function BuildEditor({
   );
   const deleteBuildRuntimeUpload = useAppContext(
     (v) => v.requestHelpers.deleteBuildRuntimeUpload
+  );
+  const getBuildApiToken = useAppContext(
+    (v) => v.requestHelpers.getBuildApiToken
+  );
+  const listBuildRuntimeFiles = useAppContext(
+    (v) => v.requestHelpers.listBuildRuntimeFiles
+  );
+  const uploadBuildRuntimeFiles = useAppContext(
+    (v) => v.requestHelpers.uploadBuildRuntimeFiles
   );
   const deleteBuildChatMessage = useAppContext(
     (v) => v.requestHelpers.deleteBuildChatMessage
@@ -6624,6 +6640,18 @@ export default function BuildEditor({
     replaceCopilotPolicy(nextPolicy);
   }
 
+  function formatBuildRuntimeUploadAssetForBuild(
+    asset: PreviewRuntimeUploadAsset,
+    targetBuild: Build
+  ): BuildRuntimeUploadAsset {
+    return {
+      ...asset,
+      buildTitle: String(targetBuild.title || '').trim() || null,
+      buildSlug: null,
+      buildIsPublic: Boolean(targetBuild.isPublic)
+    };
+  }
+
   function handleRuntimeUploadsSyncFromPreview(
     payload: PreviewRuntimeUploadsSyncPayload | null
   ) {
@@ -6632,17 +6660,11 @@ export default function BuildEditor({
     }
     setRuntimeUploadsError('');
     updateRuntimeUploadQuotaUsage(payload.usage || null);
-    const currentBuildTitle = String(
-      getLatestBuild()?.title || build.title || ''
-    );
-    const currentBuildIsPublic = Boolean(getLatestBuild()?.isPublic);
+    const activeBuild = getLatestBuild() || build;
     const currentBuildAssets = Array.isArray(payload.assets)
-      ? payload.assets.map((asset) => ({
-          ...asset,
-          buildTitle: currentBuildTitle || null,
-          buildSlug: null,
-          buildIsPublic: currentBuildIsPublic
-        }))
+      ? payload.assets.map((asset) =>
+          formatBuildRuntimeUploadAssetForBuild(asset, activeBuild)
+        )
       : [];
     setCurrentBuildRuntimeAssets(currentBuildAssets);
     if (runtimeUploadsModalShown) {
@@ -6711,6 +6733,106 @@ export default function BuildEditor({
 
   function handleLoadMoreRuntimeUploads() {
     void loadRuntimeUploadsPage({ append: true });
+  }
+
+  async function handleCreateGeneratedRuntimeAsset(
+    options: BuildAgentAssetCreateOptions
+  ): Promise<BuildAgentAssetCreateResult> {
+    if (!canEditCurrentBuildProject) {
+      throw new Error(
+        'Project asset upload is available only in an editable build workspace.'
+      );
+    }
+    setRuntimeUploadsError('');
+    const targetBuild = getLatestBuild() || build;
+    const targetBuildId = Number(targetBuild?.id || 0);
+    if (!targetBuildId) {
+      throw new Error('Build not found.');
+    }
+    function assertUploadTargetStillActive() {
+      if (Number(getLatestBuild()?.id || 0) === targetBuildId) {
+        return;
+      }
+      throw new Error(
+        'Asset upload target changed because you switched builds before it completed.'
+      );
+    }
+
+    const file = await createAgentAssetFile(options);
+    assertUploadTargetStillActive();
+    if (!isSupportedBuildAssetUploadFile(file)) {
+      throw new Error('Project assets support image and audio files.');
+    }
+
+    const tokenPayload = await getBuildApiToken({
+      buildId: targetBuildId,
+      scopes: ['files:read', 'files:write']
+    });
+    const token = tokenPayload?.token;
+    if (!token) {
+      throw new Error('Failed to obtain API token.');
+    }
+    assertUploadTargetStillActive();
+
+    const uploadPayload = await uploadBuildRuntimeFiles({
+      buildId: targetBuildId,
+      files: [file],
+      token
+    });
+    const asset = Array.isArray(uploadPayload?.assets)
+      ? uploadPayload.assets[0]
+      : null;
+    if (!asset) {
+      const failedUpload = Array.isArray(uploadPayload?.failed)
+        ? uploadPayload.failed[0]
+        : null;
+      throw new Error(
+        failedUpload?.message || 'Asset upload did not return an uploaded asset.'
+      );
+    }
+    assertUploadTargetStillActive();
+
+    const activeBuild = getLatestBuild() || targetBuild;
+    const uploadedAsset = formatBuildRuntimeUploadAssetForBuild(
+      asset,
+      activeBuild
+    );
+    let listPayload: any = null;
+    try {
+      listPayload = await listBuildRuntimeFiles({
+        buildId: targetBuildId,
+        limit: 30,
+        token
+      });
+      assertUploadTargetStillActive();
+    } catch (refreshError) {
+      console.error(
+        'Failed to refresh build assets after generated asset upload:',
+        refreshError
+      );
+      assertUploadTargetStillActive();
+      setRuntimeUploadsError(
+        'Asset uploaded, but the asset list could not refresh. Reopen uploads to refresh the list.'
+      );
+    }
+    const currentBuildAssets = Array.isArray(listPayload?.assets)
+      ? listPayload.assets.map((nextAsset: PreviewRuntimeUploadAsset) =>
+          formatBuildRuntimeUploadAssetForBuild(nextAsset, activeBuild)
+        )
+      : [uploadedAsset];
+    updateRuntimeUploadQuotaUsage(listPayload?.usage || null);
+    setCurrentBuildRuntimeAssets(currentBuildAssets);
+    setRuntimeUploadAssets((prev) => [
+      uploadedAsset,
+      ...prev.filter((asset) => asset.id !== uploadedAsset.id)
+    ]);
+    return {
+      success: true,
+      asset,
+      url: asset.url,
+      stableUrl: asset.url,
+      reference: asset.url
+    };
   }
 
   async function handleDeleteRuntimeUploadManagerAsset(
@@ -7479,6 +7601,7 @@ export default function BuildEditor({
     onCloseRuntimeUploadsManager: handleCloseRuntimeUploadsManager,
     onLoadMoreRuntimeUploads: handleLoadMoreRuntimeUploads,
     onDeleteRuntimeUpload: handleDeleteRuntimeUploadManagerAsset,
+    onCreateGeneratedRuntimeAsset: handleCreateGeneratedRuntimeAsset,
     twinkleCoins: Number(twinkleCoins) || 0,
     purchasingGenerationReset,
     generationResetError,
