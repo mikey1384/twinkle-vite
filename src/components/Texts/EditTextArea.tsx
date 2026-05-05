@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import { useKeyContext } from '~/contexts';
 import { editFormTextStates } from '~/constants/state';
+import { css } from '@emotion/css';
 import {
   exceedsCharLimit,
   stringIsEmpty,
@@ -14,6 +15,7 @@ import {
 export default function EditTextArea({
   allowEmptyText,
   autoFocus = false,
+  compactMode = false,
   contentId,
   contentType,
   disabled,
@@ -30,6 +32,7 @@ export default function EditTextArea({
 }: {
   allowEmptyText?: boolean;
   autoFocus?: boolean;
+  compactMode?: boolean;
   contentId: number;
   contentType: string;
   disabled?: boolean;
@@ -54,6 +57,14 @@ export default function EditTextArea({
 
   const editTextRef = useRef(prevEditState || '');
   const [editText, setEditText] = useState(prevEditState || '');
+  const resolvedRows = compactMode && rows === 4 ? 2 : rows;
+  const textAreaClassName = compactMode
+    ? css`
+        font-size: 0.95rem !important;
+        line-height: 1.35 !important;
+        padding: 0.58rem 0.7rem !important;
+      `
+    : '';
 
   useEffect(() => {
     handleSetEditText(prevEditState || editTextRef.current || '');
@@ -89,15 +100,17 @@ export default function EditTextArea({
   return (
     <div style={{ lineHeight: 1, ...style }}>
       <Textarea
+        className={textAreaClassName}
         placeholder={placeholder}
         autoFocus={autoFocus}
         style={{
-          marginTop,
+          marginTop: compactMode ? '0.35rem' : marginTop,
+          minHeight: compactMode ? '3.1rem' : undefined,
           position: 'relative'
         }}
         hasError={!!commentExceedsCharLimit}
         maxRows={maxRows}
-        minRows={rows}
+        minRows={resolvedRows}
         value={editText}
         onChange={handleChange}
         onKeyUp={handleKeyUp}
@@ -111,13 +124,26 @@ export default function EditTextArea({
         style={{
           display: 'flex',
           flexDirection: 'row-reverse',
-          marginTop: '1rem'
+          gap: compactMode ? '0.45rem' : undefined,
+          marginTop: compactMode ? '0.45rem' : '1rem'
         }}
       >
         <Button
           color={doneColor}
           onClick={onSubmit}
           loading={isEditing}
+          size={compactMode ? 'sm' : 'md'}
+          uppercase={!compactMode}
+          style={
+            compactMode
+              ? {
+                  borderRadius: 8,
+                  fontSize: '0.78rem',
+                  minHeight: '2.1rem',
+                  padding: '0.42rem 0.7rem'
+                }
+              : undefined
+          }
           disabled={
             (!allowEmptyText && stringIsEmpty(editText)) ||
             !!commentExceedsCharLimit ||
@@ -129,8 +155,17 @@ export default function EditTextArea({
         </Button>
         <Button
           variant="ghost"
+          size={compactMode ? 'sm' : 'md'}
+          uppercase={!compactMode}
           style={{
-            marginRight: '1rem'
+            ...(compactMode
+              ? {
+                  borderRadius: 8,
+                  fontSize: '0.78rem',
+                  minHeight: '2.1rem',
+                  padding: '0.42rem 0.55rem'
+                }
+              : { marginRight: '1rem' })
           }}
           onClick={handleCancel}
         >

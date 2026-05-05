@@ -6677,6 +6677,7 @@ export default function BuildEditor({
           result?.artifactVersion?.versionId ??
           latestBuild.currentArtifactVersionId ??
           null,
+        updatedAt: Number(result?.updatedAt || 0) || latestBuild.updatedAt,
         contributionStatus:
           result?.contributionStatus ?? latestBuild.contributionStatus,
         contributionClosedAt:

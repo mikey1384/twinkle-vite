@@ -50,6 +50,7 @@ import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Comment({
   comment,
+  compactMode,
   innerRef,
   isPreview,
   parent,
@@ -71,6 +72,7 @@ function Comment({
   }
 }: {
   comment: CommentType;
+  compactMode?: boolean;
   innerRef?: React.RefObject<any>;
   isPreview?: boolean;
   parent: Content;
@@ -242,6 +244,26 @@ function Comment({
     userIsParentUploader,
     userIsUploader
   ]);
+  const dropdownLabelMarginLeft = compactMode ? 0 : '1rem';
+  const compactDropdownMenuItemStyle: React.CSSProperties | undefined =
+    compactMode
+      ? {
+          borderRadius: 7,
+          fontSize: '0.92rem',
+          gap: '0.4rem',
+          justifyContent: 'flex-start',
+          padding: '0.48rem 0.6rem',
+          textAlign: 'left'
+        }
+      : undefined;
+  const compactDropdownListStyle: React.CSSProperties | undefined = compactMode
+    ? {
+        borderRadius: 10,
+        gap: '0.2rem',
+        minWidth: '8.5rem',
+        padding: '0.35rem'
+      }
+    : undefined;
 
   const dropdownMenuItems = useMemo(() => {
     const items = [];
@@ -255,7 +277,7 @@ function Comment({
         label: (
           <>
             <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '1rem' }}>Edit</span>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>Edit</span>
           </>
         ),
         onClick: () =>
@@ -263,7 +285,8 @@ function Comment({
             contentId: comment.id,
             contentType: 'comment',
             isEditing: true
-          })
+          }),
+        style: compactDropdownMenuItemStyle
       });
     }
     if (
@@ -275,10 +298,11 @@ function Comment({
         label: (
           <>
             <Icon icon={['fas', 'thumbtack']} />
-            <span style={{ marginLeft: '1rem' }}>Unpin</span>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>Unpin</span>
           </>
         ),
-        onClick: () => handleUnPinComment()
+        onClick: () => handleUnPinComment(),
+        style: compactDropdownMenuItemStyle
       });
     }
     if (userIsUploader || canDelete) {
@@ -286,10 +310,11 @@ function Comment({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span style={{ marginLeft: '1rem' }}>Remove</span>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>Remove</span>
           </>
         ),
-        onClick: () => setConfirmModalShown(true)
+        onClick: () => setConfirmModalShown(true),
+        style: compactDropdownMenuItemStyle
       });
     }
     return items;
@@ -298,7 +323,9 @@ function Comment({
     banned?.posting,
     canDelete,
     canEdit,
+    compactDropdownMenuItemStyle,
     comment.id,
+    dropdownLabelMarginLeft,
     isCommentForASubjectWithSecretMessage,
     isAdmin,
     isNotification,
@@ -375,7 +402,7 @@ function Comment({
     <ScopedTheme theme={themeName} roles={['link', 'reward']}>
       <div
         style={isPreview ? { cursor: 'pointer' } : {}}
-        className={commentContainer}
+        className={`${commentContainer} comment__container`}
         ref={innerRef}
       >
         <div className="content-wrapper">
@@ -461,6 +488,7 @@ function Comment({
                 <EditTextArea
                   isPinned
                   allowEmptyText={!!filePath}
+                  compactMode={compactMode}
                   style={{ marginBottom: '1rem' }}
                   contentType="comment"
                   contentId={comment.id}
@@ -557,7 +585,7 @@ function Comment({
                               </span>
                             ) : null}
                           </Button>
-                          {userCanRewardThis && (
+                          {userCanRewardThis && !compactMode && (
                             <Button
                               color={rewardColor}
                               style={{ marginLeft: '0.7rem' }}
@@ -589,23 +617,25 @@ function Comment({
                           onLinkClick={() => setUserListModalShown(true)}
                         />
                       </div>
-                      <div>
-                        <Button
-                          color={rewardColor}
-                          variant={isRecommendedByUser ? 'solid' : 'soft'}
-                          tone="raised"
-                          disabled={recommendationInterfaceShown}
-                          onClick={() => setRecommendationInterfaceShown(true)}
-                        >
-                          <Icon icon="heart" />
-                        </Button>
-                      </div>
+                      {!compactMode && (
+                        <div>
+                          <Button
+                            color={rewardColor}
+                            variant={isRecommendedByUser ? 'solid' : 'soft'}
+                            tone="raised"
+                            disabled={recommendationInterfaceShown}
+                            onClick={() => setRecommendationInterfaceShown(true)}
+                          >
+                            <Icon icon="heart" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
             </div>
-            {!isPreview && (
+            {!isPreview && !compactMode && (
               <RecommendationStatus
                 style={{ marginTop: likes.length > 0 ? '0.5rem' : '1rem' }}
                 contentType="comment"
@@ -613,7 +643,7 @@ function Comment({
                 theme={theme}
               />
             )}
-            {!isPreview && recommendationInterfaceShown && (
+            {!isPreview && !compactMode && recommendationInterfaceShown && (
               <RecommendationInterface
                 style={{ marginTop: likes.length > 0 ? '0.5rem' : '1rem' }}
                 contentId={commentId}
@@ -626,7 +656,7 @@ function Comment({
                 uploaderId={uploader.id}
               />
             )}
-            {!isPreview && xpRewardInterfaceShown && (
+            {!isPreview && !compactMode && xpRewardInterfaceShown && (
               <XPRewardInterface
                 innerRef={RewardInterfaceRef}
                 rewardLevel={rewardLevel}
@@ -668,13 +698,15 @@ function Comment({
         )}
         {dropdownButtonShown && !isEditing && (
           <div className="dropdown-wrapper">
-            <DropdownButton
-              variant="solid"
-              tone="raised"
-              icon="chevron-down"
-              color="darkerGray"
-              menuProps={dropdownMenuItems}
-            />
+              <DropdownButton
+                variant="solid"
+                tone="raised"
+                icon="chevron-down"
+                color="darkerGray"
+                listStyle={compactDropdownListStyle}
+                menuProps={dropdownMenuItems}
+                xAdjustment={compactMode ? -6 : undefined}
+              />
           </div>
         )}
       </div>
@@ -714,6 +746,10 @@ function Comment({
     likes: any[];
     isUnlike: boolean;
   }) {
+    if (compactMode) {
+      onLikeClick({ commentId: comment.id, likes });
+      return;
+    }
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: comment.id,

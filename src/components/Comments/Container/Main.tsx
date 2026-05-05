@@ -18,7 +18,9 @@ export default function Main({
   commentsHidden,
   commentsShown,
   commentsLoadLimit,
+  compactMode,
   disableReason,
+  inputFormClassName,
   inputAtBottom,
   inputAreaInnerRef,
   inputTypeLabel,
@@ -36,6 +38,7 @@ export default function Main({
   pinnedCommentId,
   previewComments,
   showSecretButtonAvailable,
+  submitButtonLabel,
   subject,
   subjectId,
   theme,
@@ -54,7 +57,9 @@ export default function Main({
   commentsHidden?: boolean;
   commentsShown?: boolean;
   commentsLoadLimit?: number;
+  compactMode?: boolean;
   disableReason?: string;
+  inputFormClassName?: string;
   inputAtBottom?: boolean;
   inputAreaInnerRef?: React.RefObject<any>;
   inputTypeLabel: string;
@@ -72,6 +77,7 @@ export default function Main({
   pinnedCommentId?: number;
   previewComments?: any[];
   showSecretButtonAvailable?: boolean;
+  submitButtonLabel?: string;
   subject?: any;
   subjectId?: number;
   theme?: string;
@@ -88,6 +94,7 @@ export default function Main({
           autoFocus={autoFocus}
           disableReason={disableReason}
           InputFormRef={CommentInputAreaRef}
+          inputFormClassName={inputFormClassName}
           innerRef={inputAreaInnerRef}
           inputTypeLabel={inputTypeLabel}
           numInputRows={numInputRows}
@@ -108,6 +115,7 @@ export default function Main({
               : 0
           }
           style={style}
+          submitButtonLabel={submitButtonLabel}
           theme={theme}
           targetCommentId={
             parent.contentType === 'comment' ? parent.contentId : null
@@ -120,12 +128,14 @@ export default function Main({
       autoFocus,
       banned?.posting,
       disableReason,
+      inputFormClassName,
       inputAreaInnerRef,
       inputTypeLabel,
       numInputRows,
       onCommentSubmit,
       parent,
       showSecretButtonAvailable,
+      submitButtonLabel,
       subjectId,
       subject?.rewardLevel,
       theme
@@ -211,6 +221,7 @@ export default function Main({
             pinnedCommentId &&
             !isPreview && (
               <PinnedComment
+                compactMode={compactMode}
                 parent={parent}
                 rootContent={rootContent}
                 subject={subject}
@@ -222,7 +233,9 @@ export default function Main({
           {!isLoading &&
             (isPreview ? previewComments : comments)?.map((comment) => (
               <Comment
+                compactMode={compactMode}
                 disableReason={disableReason}
+                inputFormClassName={inputFormClassName}
                 isSubjectPannelComment={isSubjectPannelComments}
                 isPreview={isPreview}
                 innerRef={(ref) => (CommentRefs[comment.id] = ref)}
@@ -233,6 +246,7 @@ export default function Main({
                 comment={comment}
                 pinnedCommentId={pinnedCommentId}
                 key={comment.id}
+                submitButtonLabel={submitButtonLabel}
               />
             ))}
           {!inputAtBottom && loadMoreShown && renderLoadMoreButton()}

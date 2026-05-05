@@ -67,6 +67,7 @@ function InputForm({
   rows,
   onViewSecretAnswer,
   style = {},
+  submitButtonLabel,
   theme,
   targetCommentId
 }: {
@@ -84,6 +85,7 @@ function InputForm({
   rows?: number;
   onViewSecretAnswer?: () => void;
   style?: React.CSSProperties;
+  submitButtonLabel?: string;
   theme?: string;
   targetCommentId?: number | null;
 }) {
@@ -514,7 +516,7 @@ function InputForm({
               disabled={submitDisabled}
               onClick={handleSubmit}
             >
-              {tapThisButtonToSubmitLabel}!
+              {submitButtonLabel || `${tapThisButtonToSubmitLabel}!`}
             </Button>
           </div>
         )}

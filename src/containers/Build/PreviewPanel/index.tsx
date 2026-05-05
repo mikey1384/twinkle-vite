@@ -347,6 +347,15 @@ function buildProjectExportBaseName(title: string, buildId: number) {
   return normalized || `lumine-project-${buildId}`;
 }
 
+function createPreviewRevision(value: string) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${value.length.toString(36)}-${(hash >>> 0).toString(36)}`;
+}
+
 function getRuntimePreviewIframeSandbox(frameSrc: string | null | undefined) {
   return canUseSameOriginBuildPreviewSandbox(frameSrc)
     ? RUNTIME_CAPABILITY_IFRAME_SANDBOX
@@ -1340,6 +1349,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       () => serializeEditableProjectFiles(persistedProjectFiles),
       [persistedProjectFiles]
     );
+    const previewProjectFilesRevision = useMemo(
+      () => createPreviewRevision(persistedProjectFilesSignature),
+      [persistedProjectFilesSignature]
+    );
     const editableProjectFilesSignature = useMemo(
       () => serializeEditableProjectFiles(editableProjectFiles),
       [editableProjectFiles]
@@ -1918,14 +1931,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const workspacePreviewSrc = useWorkspacePreviewSrc({
       build,
       runtimeOnly,
+      previewRevision: previewProjectFilesRevision,
       viewMode,
       userId: resolvedUserId || null,
       previewAuth
     });
     const previewCodeSignature =
       Number(build.currentArtifactVersionId) > 0
-        ? `artifact:${build.currentArtifactVersionId}`
-        : `current:${build.id}:${Number(build.updatedAt) || 0}`;
+        ? `artifact:${build.currentArtifactVersionId}:${previewProjectFilesRevision}`
+        : `current:${build.id}:${Number(build.updatedAt) || 0}:${previewProjectFilesRevision}`;
     const previewHostVisible = runtimeHostVisible !== false;
     const previewFrameSuspended =
       !previewHostVisible && previewLifecycleState === 'suspended';

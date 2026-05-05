@@ -32,8 +32,10 @@ function Comments({
   commentsHidden,
   commentsLoadLimit,
   commentsShown,
+  compactMode,
   className,
   disableReason,
+  inputFormClassName,
   inputAreaInnerRef,
   inputAtBottom,
   inputTypeLabel,
@@ -56,6 +58,7 @@ function Comments({
   parent,
   rootContent,
   showSecretButtonAvailable,
+  submitButtonLabel,
   subject,
   style,
   theme,
@@ -68,8 +71,10 @@ function Comments({
   commentsHidden?: boolean;
   commentsLoadLimit?: number;
   commentsShown?: boolean;
+  compactMode?: boolean;
   className?: string;
   disableReason?: string;
+  inputFormClassName?: string;
   inputAreaInnerRef?: any;
   inputAtBottom?: boolean;
   inputTypeLabel: string;
@@ -92,6 +97,7 @@ function Comments({
   parent: Content;
   rootContent?: Content;
   showSecretButtonAvailable?: boolean;
+  submitButtonLabel?: string;
   subject?: Subject;
   style?: React.CSSProperties;
   theme?: string;
@@ -418,9 +424,11 @@ function Comments({
               commentsShown={commentsShown}
               commentsHidden={commentsHidden}
               commentsLoadLimit={commentsLoadLimit}
+              compactMode={compactMode}
               CommentRefs={CommentRefs}
               CommentInputAreaRef={CommentInputAreaRef}
               disableReason={disableReason}
+              inputFormClassName={inputFormClassName}
               inputAreaInnerRef={inputAreaInnerRef}
               inputAtBottom={inputAtBottom}
               inputTypeLabel={inputTypeLabel}
@@ -437,6 +445,7 @@ function Comments({
               parent={parent}
               previewComments={previewComments}
               showSecretButtonAvailable={showSecretButtonAvailable}
+              submitButtonLabel={submitButtonLabel}
               subject={subject}
               subjectId={subjectId}
               theme={theme}

@@ -7,9 +7,11 @@ import { useAppContext } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 
 function Replies({
+  compactMode,
   replies,
   comment,
   disableReason,
+  inputFormClassName,
   isSubjectPannelComment,
   subject,
   onPinReply,
@@ -17,10 +19,13 @@ function Replies({
   pinnedCommentId,
   rootContent,
   ReplyRefs = {},
+  submitButtonLabel,
   theme
 }: {
   comment: Comment;
+  compactMode?: boolean;
   disableReason?: string;
+  inputFormClassName?: string;
   isSubjectPannelComment?: boolean;
   subject?: Subject;
   onPinReply: (commentId: number | null) => Promise<any>;
@@ -29,6 +34,7 @@ function Replies({
   pinnedCommentId?: number;
   ReplyRefs?: Record<string, HTMLDivElement | null>;
   rootContent?: Content;
+  submitButtonLabel?: string;
   theme?: string;
 }) {
   const {
@@ -107,10 +113,12 @@ function Replies({
           />
         ) : (
           <Reply
+            compactMode={compactMode}
             innerRef={(ref) => {
               ReplyRefs[reply.id] = ref;
             }}
             disableReason={disableReason}
+            inputFormClassName={inputFormClassName}
             isSubjectPannelComment={isSubjectPannelComment}
             key={reply.id}
             comment={comment}
@@ -122,6 +130,7 @@ function Replies({
             parent={parent}
             pinnedCommentId={pinnedCommentId}
             rootContent={rootContent}
+            submitButtonLabel={submitButtonLabel}
             subject={subject}
             theme={theme}
             onSubmitReply={handleSubmitReply}

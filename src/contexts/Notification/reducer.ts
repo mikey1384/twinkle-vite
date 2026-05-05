@@ -65,6 +65,35 @@ function shallowEqualObject(
   return prevKeys.every((key) => Object.is(prev[key], next[key]));
 }
 
+function getBuildContributionInviteMembershipKey(invite: any) {
+  const buildId = Number(invite?.buildId || 0);
+  const userId = Number(invite?.userId || 0);
+  return buildId > 0 && userId > 0 ? `${buildId}:${userId}` : '';
+}
+
+function buildContributionInviteMatches({
+  actionObj,
+  invite,
+  inviteId,
+  status
+}: {
+  actionObj: Record<string, any>;
+  invite?: Record<string, any> | null;
+  inviteId: number;
+  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+}) {
+  if (Number(actionObj.id || 0) === inviteId) return true;
+  const acceptedMembership =
+    status === 'accepted' || Number(invite?.acceptedAt || 0) > 0;
+  if (!acceptedMembership) return false;
+  const currentMembershipKey =
+    getBuildContributionInviteMembershipKey(actionObj);
+  const updatedMembershipKey = getBuildContributionInviteMembershipKey(invite);
+  return Boolean(
+    currentMembershipKey && currentMembershipKey === updatedMembershipKey
+  );
+}
+
 function updateBuildContributionInviteNotification(
   state: any,
   {
@@ -125,14 +154,20 @@ function updateBuildContributionInviteNotification(
       const actionObj = notification?.actionObj || {};
       if (
         actionObj.contentType !== 'buildContributionInvite' ||
-        Number(actionObj.id || 0) !== resolvedInviteId
+        !buildContributionInviteMatches({
+          actionObj,
+          invite,
+          inviteId: resolvedInviteId,
+          status
+        })
       ) {
         return notification;
       }
+      const actionInviteId = Number(actionObj.id || 0);
       const nextActionObj = {
         ...actionObj,
         ...invitePatch,
-        id: resolvedInviteId
+        id: actionInviteId || resolvedInviteId
       };
       if (shallowEqualObject(actionObj, nextActionObj)) {
         return notification;

@@ -72,13 +72,16 @@ const replyLabel = 'Reply';
 
 function Comment({
   comment,
+  compactMode,
   disableReason,
   innerRef,
+  inputFormClassName,
   isSubjectPannelComment,
   isPreview,
   parent,
   pinnedCommentId,
   rootContent = { contentType: '', contentId: 0 },
+  submitButtonLabel,
   subject,
   theme,
   comment: {
@@ -98,13 +101,16 @@ function Comment({
   }
 }: {
   comment: any;
+  compactMode?: boolean;
   disableReason?: string;
   innerRef?: (ref: any) => void;
+  inputFormClassName?: string;
   isSubjectPannelComment?: boolean;
   isPreview?: boolean;
   parent?: any;
   pinnedCommentId?: number;
   rootContent?: Content;
+  submitButtonLabel?: string;
   subject?: any;
   theme?: string;
 }) {
@@ -327,6 +333,26 @@ function Comment({
   const userHasHigherLevel = useMemo(() => {
     return level > uploader?.level;
   }, [level, uploader?.level]);
+  const dropdownLabelMarginLeft = compactMode ? 0 : '1rem';
+  const compactDropdownMenuItemStyle: React.CSSProperties | undefined =
+    compactMode
+      ? {
+          borderRadius: 7,
+          fontSize: '0.92rem',
+          gap: '0.4rem',
+          justifyContent: 'flex-start',
+          padding: '0.48rem 0.6rem',
+          textAlign: 'left'
+        }
+      : undefined;
+  const compactDropdownListStyle: React.CSSProperties | undefined = compactMode
+    ? {
+        borderRadius: 10,
+        gap: '0.2rem',
+        minWidth: '8.5rem',
+        padding: '0.35rem'
+      }
+    : undefined;
 
   const dropdownMenuItems = useMemo(() => {
     const userCanEditThis = canEdit && userHasHigherLevel;
@@ -341,7 +367,9 @@ function Comment({
         label: (
           <>
             <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '1rem' }}>{editLabel}</span>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>
+              {editLabel}
+            </span>
           </>
         ),
         onClick: () =>
@@ -349,7 +377,8 @@ function Comment({
             contentId: comment.id,
             contentType: 'comment',
             isEditing: true
-          })
+          }),
+        style: compactDropdownMenuItemStyle
       });
     }
     if (
@@ -360,13 +389,14 @@ function Comment({
         label: (
           <>
             <Icon icon={['fas', 'thumbtack']} />
-            <span style={{ marginLeft: '1rem' }}>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>
               {pinnedCommentId === comment.id ? unpinLabel : pinLabel}
             </span>
           </>
         ),
         onClick: () =>
-          handlePinComment(pinnedCommentId === comment.id ? null : comment.id)
+          handlePinComment(pinnedCommentId === comment.id ? null : comment.id),
+        style: compactDropdownMenuItemStyle
       });
     }
     if (userIsUploader || userCanDeleteThis) {
@@ -374,10 +404,13 @@ function Comment({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span style={{ marginLeft: '1rem' }}>{removeCommentLabel}</span>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>
+              {removeCommentLabel}
+            </span>
           </>
         ),
-        onClick: () => setConfirmModalShown(true)
+        onClick: () => setConfirmModalShown(true),
+        style: compactDropdownMenuItemStyle
       });
     }
     return items;
@@ -387,6 +420,8 @@ function Comment({
     canDelete,
     canEdit,
     comment.id,
+    compactDropdownMenuItemStyle,
+    dropdownLabelMarginLeft,
     isCommentForASubjectWithSecretMessage,
     isAdmin,
     pinnedCommentId,
@@ -548,7 +583,7 @@ function Comment({
             marginBottom: 0,
             ...(isPreview ? { cursor: 'pointer' } : {})
           }}
-          className={commentContainer}
+          className={`${commentContainer} comment__container`}
           ref={innerRef}
         >
           {contentShown ? (
@@ -686,6 +721,7 @@ function Comment({
                     {isEditing ? (
                       <EditTextArea
                         allowEmptyText={!!filePath}
+                        compactMode={compactMode}
                         style={{ marginBottom: '1rem' }}
                         contentType="comment"
                         contentId={comment.id}
@@ -747,13 +783,16 @@ function Comment({
                             {(comment.content || '').trimEnd()}
                           </RichText>
                         ) : null}
-                        <div style={{ height: '1em' }} />
+                        <div
+                          className="comment__content-spacer"
+                          style={{ height: '1em' }}
+                        />
                         {!isPreview && !isHidden && !isNotification && (
                           <div
-                            className={css`
+                            className={`comment__actions ${css`
                               display: flex;
                               justify-content: space-between;
-                            `}
+                            `}`}
                           >
                             <div>
                               <div className="comment__buttons">
@@ -817,7 +856,9 @@ function Comment({
                                     ) : null}
                                   </Button>
                                 )}
-                                {userCanRewardThis && !isDeleteNotification && (
+                                {userCanRewardThis &&
+                                !compactMode &&
+                                !isDeleteNotification && (
                                   <RewardButton
                                     contentId={commentId}
                                     contentType="comment"
@@ -840,13 +881,13 @@ function Comment({
                                 />
                               )}
                             </div>
-                            {isDeleteNotification ? null : (
+                            {!compactMode && !isDeleteNotification ? (
                               <div
-                                className={css`
+                                className={`comment__secondary-actions ${css`
                                   display: flex;
                                   justify-content: center;
                                   align-items: center;
-                                `}
+                                `}`}
                               >
                                 <Button
                                   color={rewardColor}
@@ -871,13 +912,13 @@ function Comment({
                                   />
                                 )}
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                  {!isPreview && !isDeleteNotification && (
+                  {!isPreview && !compactMode && !isDeleteNotification && (
                     <RecommendationStatus
                       style={{
                         marginTop: likes.length > 0 ? '0.5rem' : '1rem'
@@ -887,7 +928,9 @@ function Comment({
                       theme={theme}
                     />
                   )}
-                  {!isPreview && recommendationInterfaceShown && (
+                  {!isPreview &&
+                    !compactMode &&
+                    recommendationInterfaceShown && (
                     <RecommendationInterface
                       style={{
                         marginTop: likes.length > 0 ? '0.5rem' : '1rem'
@@ -902,7 +945,7 @@ function Comment({
                       uploaderId={uploader?.id}
                     />
                   )}
-                  {!isPreview && xpRewardInterfaceShown && (
+                  {!isPreview && !compactMode && xpRewardInterfaceShown && (
                     <XPRewardInterface
                       innerRef={RewardInterfaceRef}
                       rewardLevel={rewardLevel}
@@ -938,6 +981,7 @@ function Comment({
                       {isDeleteNotification ? null : (
                         <ReplyInputArea
                           disableReason={disableReason}
+                          inputFormClassName={inputFormClassName}
                           innerRef={ReplyInputAreaRef}
                           onSubmit={handleSubmitReply}
                           onSubmitWithAttachment={handleSubmitWithAttachment}
@@ -946,6 +990,7 @@ function Comment({
                           style={{
                             marginTop: '0.5rem'
                           }}
+                          submitButtonLabel={submitButtonLabel}
                           theme={theme}
                           targetCommentPoster={uploader}
                           targetCommentId={comment.id}
@@ -961,7 +1006,9 @@ function Comment({
                         />
                       )}
                       <Replies
+                        compactMode={compactMode}
                         disableReason={disableReason}
+                        inputFormClassName={inputFormClassName}
                         isSubjectPannelComment={isSubjectPannelComment}
                         pinnedCommentId={pinnedCommentId}
                         subject={subject || {}}
@@ -971,6 +1018,7 @@ function Comment({
                         rootContent={rootContent}
                         onPinReply={handlePinComment}
                         ReplyRefs={ReplyRefs}
+                        submitButtonLabel={submitButtonLabel}
                         theme={theme}
                       />
                     </div>
@@ -995,7 +1043,9 @@ function Comment({
                 tone="raised"
                 icon="chevron-down"
                 color="darkerGray"
+                listStyle={compactDropdownListStyle}
                 menuProps={dropdownMenuItems}
+                xAdjustment={compactMode ? -6 : undefined}
               />
             </div>
           )}
@@ -1040,6 +1090,10 @@ function Comment({
     likes: any[];
     isUnlike: boolean;
   }) {
+    if (compactMode) {
+      onLikeClick({ commentId: comment.id, likes });
+      return;
+    }
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: comment.id,

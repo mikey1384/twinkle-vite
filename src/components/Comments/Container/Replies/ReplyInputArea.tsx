@@ -8,18 +8,21 @@ import { v1 as uuidv1 } from 'uuid';
 
 export default function ReplyInputArea({
   disableReason,
+  inputFormClassName,
   innerRef,
   onSubmit,
   onSubmitWithAttachment,
   parent,
   rootCommentId,
   style,
+  submitButtonLabel,
   targetCommentId,
   targetCommentPoster,
   theme,
   rows = 1
 }: {
   disableReason?: string;
+  inputFormClassName?: string;
   innerRef?: React.RefObject<any>;
   onSubmit: (v: object) => void;
   onSubmitWithAttachment: (args: any) => void;
@@ -30,6 +33,7 @@ export default function ReplyInputArea({
   };
   rootCommentId?: number | null;
   style?: React.CSSProperties;
+  submitButtonLabel?: string;
   targetCommentId: number | null;
   targetCommentPoster?: {
     id: number;
@@ -83,12 +87,14 @@ export default function ReplyInputArea({
         ) : (
           <InputForm
             isComment
+            className={inputFormClassName}
             innerRef={innerRef}
             disableReason={disableReason}
             onSubmit={handleSubmit}
             parent={parent}
             placeholder={replyPlaceholder}
             rows={rows}
+            submitButtonLabel={submitButtonLabel}
             theme={theme}
             targetCommentId={targetCommentId}
           />

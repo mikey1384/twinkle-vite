@@ -10,12 +10,14 @@ const pinnedLabel = 'Pinned';
 
 export default function PinnedComment({
   commentId,
+  compactMode,
   parent,
   rootContent,
   subject,
   theme
 }: {
   commentId: number;
+  compactMode?: boolean;
   parent: Content;
   rootContent?: Content;
   subject?: Subject;
@@ -52,24 +54,26 @@ export default function PinnedComment({
       !comment.isDeleteNotification ? (
         <div
           style={{
-            marginTop: '0.5rem',
             borderBottom: '1px solid var(--ui-border)',
-            paddingBottom: '0.5rem',
-            marginBottom: '1rem'
+            marginBottom: compactMode ? '0.65rem' : '1rem',
+            marginTop: compactMode ? '0.35rem' : '0.5rem',
+            paddingBottom: compactMode ? '0.4rem' : '0.5rem'
           }}
         >
           <div
             style={{
-              lineHeight: 1,
-              fontSize: '1.3rem',
+              color: Color.darkerGray(),
+              fontSize: compactMode ? '0.86rem' : '1.3rem',
               fontWeight: 'bold',
-              color: Color.darkerGray()
+              lineHeight: 1,
+              marginBottom: compactMode ? '0.1rem' : undefined
             }}
           >
             <Icon icon={['fas', 'thumbtack']} />
             <span style={{ marginLeft: '0.7rem' }}>{pinnedLabel}</span>
           </div>
           <Comment
+            compactMode={compactMode}
             parent={parent}
             rootContent={rootContent}
             subject={subject}

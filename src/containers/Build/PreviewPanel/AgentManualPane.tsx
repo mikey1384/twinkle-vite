@@ -139,7 +139,7 @@ const sdkSections: GuideSection[] = [
       'For simple same-origin downloads, a normal <a href={imageUrl} download="file.png"> is fine.',
       'await Twinkle.files.saveAs({ fileName, url, dataUrl, blob, bytes, text, json, mimeType }) downloads generated or remote files through the parent frame without opening a popup.',
       'await Twinkle.files.uploadGenerated({ fileName, dataUrl, mimeType }) uploads a viewer/runtime-generated image or file after the app is running. Use window.TwinkleBuildAgent.assets from the workspace for bundled project media.',
-      'await Twinkle.files.pickAndUpload({ accept: "image/*", multiple: true }) opens a viewer file picker and uploads to Twinkle storage.',
+      'await Twinkle.files.pickAndUpload({ accept: "image/*", multiple: true }) opens a viewer file picker and uploads to Twinkle-hosted file storage through Twinkle.files.',
       'Store returned asset references in Twinkle.privateDb for private refs, Twinkle.sharedDb for shared refs, or Twinkle.userDb only when the app already needs advanced private SQLite.',
       "await Twinkle.files.list({ limit: 20 }) lists this viewer's runtime uploads for the build.",
       "await Twinkle.files.delete(assetId) deletes one of the viewer's uploaded runtime files."

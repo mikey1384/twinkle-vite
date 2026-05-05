@@ -6,14 +6,23 @@ import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import AiEnergyCard from '~/components/AiEnergyCard';
+import Comments from '~/components/Comments';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
-import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
+import {
+  useAppContext,
+  useContentContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
+import { useContentState } from '~/helpers/hooks';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
+import type { Content } from '~/types';
 import PreviewPanel from './PreviewPanel';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from './runtimeViewSources';
@@ -26,6 +35,8 @@ interface RuntimeBuild {
   title: string;
   description: string | null;
   code: string | null;
+  numComments?: number;
+  pinnedCommentId?: number | null;
   primaryArtifactId?: number | null;
   isPublic: boolean;
   releaseStatus?: RuntimeBuildReleaseStatus | null;
@@ -77,6 +88,8 @@ interface AiUsagePolicy {
     eligible?: boolean | null;
   } | null;
 }
+
+const RUNTIME_COMMENTS_LOAD_LIMIT = 20;
 
 const shellClass = css`
   width: 100%;
@@ -237,29 +250,52 @@ const backButtonClass = css`
 `;
 
 const contributionCtaRowClass = css`
-  position: absolute;
-  top: 50%;
-  right: 1.3rem;
   z-index: 3;
-  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 0.7rem;
   flex-wrap: wrap;
   justify-content: flex-end;
   max-width: min(42rem, 42vw);
+  margin-left: auto;
 
   @media (max-width: 1100px) {
-    position: static;
     max-width: 100%;
     margin-left: auto;
-    transform: none;
   }
 
   @media (max-width: ${mobileMaxWidth}) {
     width: 100%;
     justify-content: flex-start;
     margin-left: 0;
+  }
+`;
+
+const titleSectionClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  flex-wrap: wrap;
+`;
+
+const titleTextStackClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1 1 18rem;
+`;
+
+const commentsCtaSlotClass = css`
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-self: center;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    align-self: flex-start;
   }
 `;
 
@@ -339,12 +375,382 @@ const panelWrapClass = css`
   padding: 0;
 `;
 
+const runtimeBodyClass = css`
+  --runtime-comments-drawer-width: clamp(24rem, 31vw, 31rem);
+  --runtime-comments-drawer-height: 42vh;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0rem;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+  transition: grid-template-columns 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &[data-comments-open='true'] {
+    grid-template-columns: minmax(0, 1fr) var(--runtime-comments-drawer-width);
+  }
+
+  @media (max-width: 760px) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 0rem;
+    transition: grid-template-rows 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &[data-comments-open='true'] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) var(--runtime-comments-drawer-height);
+    }
+  }
+`;
+
 const previewShellClass = css`
   height: 100%;
   min-height: 0;
   display: grid;
   overflow: hidden;
   background: #fff;
+`;
+
+const commentsDrawerClass = css`
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: #fff;
+  border-left: 1px solid transparent;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(0.8rem);
+  visibility: hidden;
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.18s ease-out,
+    box-shadow 0.18s ease-out,
+    visibility 0s linear 0.24s;
+
+  &[data-visible='true'] {
+    border-left-color: rgba(148, 163, 184, 0.35);
+    box-shadow: -0.8rem 0 2rem rgba(15, 23, 42, 0.08);
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+    visibility: visible;
+    transition:
+      opacity 0.18s ease-out,
+      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.18s ease-out,
+      box-shadow 0.18s ease-out,
+      visibility 0s;
+  }
+
+  @media (max-width: 760px) {
+    border-left: 0;
+    border-top: 1px solid transparent;
+    transform: translateY(0.65rem);
+
+    &[data-visible='true'] {
+      border-top-color: rgba(148, 163, 184, 0.35);
+      box-shadow: 0 -0.8rem 2rem rgba(15, 23, 42, 0.08);
+      transform: translateY(0);
+    }
+  }
+`;
+
+const commentsDrawerHeaderClass = css`
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.05rem 0.85rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+`;
+
+const commentsDrawerTitleWrapClass = css`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+`;
+
+const commentsDrawerTitleClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+  color: #172033;
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1.15;
+`;
+
+const commentsDrawerSubtitleClass = css`
+  max-width: 100%;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const commentsDrawerBodyClass = css`
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.9rem 1.05rem 1.2rem;
+`;
+
+const commentsDrawerErrorClass = css`
+  margin-bottom: 0.85rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(244, 63, 94, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 241, 242, 0.88);
+  color: #be123c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+`;
+
+const runtimeCommentsClass = css`
+  padding: 0;
+  color: #1f2937;
+  font-size: 0.95rem;
+
+  .comment__container {
+    padding-top: 0.55rem;
+    margin-bottom: 0.65rem;
+    font-size: 0.95rem;
+  }
+
+  .content-wrapper {
+    align-items: flex-start;
+  }
+
+  .content-wrapper > div:first-of-type {
+    flex: 0 0 3rem;
+    width: 3rem;
+    margin-top: 0.45rem;
+  }
+
+  .content-wrapper > div:first-of-type > div {
+    width: 2.35rem;
+  }
+
+  .content-wrapper > section {
+    min-width: 0;
+    margin-left: 0.65rem;
+  }
+
+  .username {
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+
+  .timestamp,
+  .timestamp > a {
+    font-size: 0.75rem;
+  }
+
+  .to {
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .comment__content {
+    padding-top: 0.45rem;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .comment__content-spacer {
+    height: 0.35rem !important;
+  }
+
+  .comment__likes {
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .comment__actions {
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.1rem;
+  }
+
+  .comment__actions > div:first-of-type {
+    min-width: 0;
+  }
+
+  .comment__buttons {
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+
+  .comment__buttons button {
+    min-height: 0;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.78rem;
+    margin-left: 0 !important;
+    border-radius: 8px;
+  }
+
+  .comment__buttons button span {
+    margin-left: 0.35rem !important;
+  }
+
+  .comment__secondary-actions {
+    flex: 0 0 auto;
+    gap: 0.35rem;
+  }
+
+  .comment__secondary-actions > button {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    border-radius: 9px !important;
+    font-size: 0.84rem !important;
+  }
+
+  .comment__secondary-actions > button > span {
+    gap: 0 !important;
+  }
+
+  .comment__secondary-actions > button > span > span {
+    display: none;
+  }
+
+  .comment__secondary-actions img {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .dropdown-wrapper {
+    top: 0.1rem;
+    right: 0;
+  }
+
+  .dropdown-wrapper button {
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    font-size: 0.72rem !important;
+  }
+
+  textarea {
+    padding: 0.75rem;
+    font-size: 0.95rem !important;
+    line-height: 1.38;
+  }
+
+  button {
+    max-width: 100%;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    .content-wrapper > div:first-of-type {
+      flex-basis: 2.75rem;
+      width: 2.75rem;
+    }
+
+    .content-wrapper > div:first-of-type > div {
+      width: 2.15rem;
+    }
+  }
+`;
+
+const runtimeCommentsInputFormClass = css`
+  gap: 0.55rem;
+  align-items: flex-start !important;
+
+  > div:first-of-type {
+    min-width: 0;
+  }
+
+  textarea {
+    min-height: 3.1rem !important;
+    padding: 0.58rem 0.7rem !important;
+    border-radius: 10px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.35 !important;
+  }
+
+  > div:first-of-type > div:nth-of-type(2) {
+    gap: 0.55rem !important;
+    margin-top: 0.35rem !important;
+    margin-bottom: 0.15rem !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  > div:first-of-type > div:nth-of-type(2) > div {
+    color: #94a3b8 !important;
+    font-size: 0.78rem !important;
+    line-height: 1.15 !important;
+    white-space: nowrap;
+  }
+
+  > div:first-of-type > div:nth-of-type(2) > button {
+    min-height: 2.15rem !important;
+    padding: 0.48rem 0.72rem !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem !important;
+    line-height: 1.1 !important;
+    box-shadow: 0 1px 0 rgba(22, 163, 74, 0.24) !important;
+  }
+
+  > div:last-child:not(:first-child) {
+    flex: 0 0 auto;
+    max-width: 5.7rem;
+    margin-left: 0.55rem !important;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+  }
+
+  > div:last-child:not(:first-child) > svg:first-child {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    top: -0.45rem !important;
+    right: -0.35rem !important;
+    padding: 0.12rem !important;
+  }
+
+  > div:last-child:not(:first-child) > div {
+    width: 5.4rem !important;
+    height: 3rem !important;
+  }
+
+  > div:last-child:not(:first-child) > div > div {
+    margin-top: 0.15rem;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+  }
+
+  > div:last-child > button {
+    width: 2.65rem !important;
+    height: 2.65rem !important;
+    margin-left: 0.55rem !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+  }
+
+  > div:last-child > button svg {
+    width: 1rem;
+    height: 1rem;
+  }
 `;
 
 export default function BuildRuntime() {
@@ -379,6 +785,25 @@ export default function BuildRuntime() {
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
+  const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
+  const onDeleteComment = useContentContext((v) => v.actions.onDeleteComment);
+  const onEditComment = useContentContext((v) => v.actions.onEditComment);
+  const onEditRewardComment = useContentContext(
+    (v) => v.actions.onEditRewardComment
+  );
+  const onLikeComment = useContentContext((v) => v.actions.onLikeComment);
+  const onLoadComments = useContentContext((v) => v.actions.onLoadComments);
+  const onLoadMoreComments = useContentContext(
+    (v) => v.actions.onLoadMoreComments
+  );
+  const onLoadMoreReplies = useContentContext(
+    (v) => v.actions.onLoadMoreReplies
+  );
+  const onLoadRepliesOfReply = useContentContext(
+    (v) => v.actions.onLoadRepliesOfReply
+  );
+  const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
+  const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -411,11 +836,49 @@ export default function BuildRuntime() {
     useState('');
   const [contributionForkError, setContributionForkError] = useState('');
   const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
+  const [commentsDrawerShown, setCommentsDrawerShown] = useState(false);
+  const [runtimeCommentsLoading, setRuntimeCommentsLoading] = useState(false);
+  const [runtimeCommentsError, setRuntimeCommentsError] = useState('');
   const [aiUsagePolicyLoadAttempted, setAiUsagePolicyLoadAttempted] =
     useState(false);
   const getAiEnergyPolicyRef = useRef(getAiEnergyPolicy);
   const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
+  const runtimeCommentsLoadTokenRef = useRef(0);
   const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
+  const {
+    comments: runtimeComments,
+    commentsLoaded: runtimeCommentsLoaded,
+    commentsLoadMoreButton: runtimeCommentsLoadMoreButton
+  } = useContentState({
+    contentType: 'build',
+    contentId: build?.id || 0
+  });
+  const runtimeCommentsParent = useMemo<Content | null>(() => {
+    if (!build?.id) return null;
+    return {
+      id: build.id,
+      contentId: build.id,
+      contentType: 'build',
+      rootId: build.id,
+      rootType: 'build',
+      pinnedCommentId: Number(build.pinnedCommentId || 0) || undefined,
+      title: build.title,
+      description: build.description || '',
+      uploader: {
+        id: build.userId,
+        username: build.username || '',
+        profilePicUrl: build.profilePicUrl || ''
+      }
+    };
+  }, [
+    build?.description,
+    build?.id,
+    build?.pinnedCommentId,
+    build?.profilePicUrl,
+    build?.title,
+    build?.userId,
+    build?.username
+  ]);
 
   const numericBuildId = useMemo(() => {
     const id = parseInt(buildId || '', 10);
@@ -506,6 +969,15 @@ export default function BuildRuntime() {
     forkingBuild ||
     openingCollaborationRequest ||
     collaborationRequestLoading;
+  const runtimeCommentsCount = Math.max(
+    0,
+    Number(build?.numComments ?? runtimeComments.length ?? 0)
+  );
+  const runtimeCommentsCountLabel =
+    runtimeCommentsCount > 99 ? '99+' : String(runtimeCommentsCount);
+  const runtimeCommentsButtonLabel = `${
+    runtimeCommentsCount === 1 ? 'Comment' : 'Comments'
+  } (${runtimeCommentsCountLabel})`;
 
   function applyRuntimeBuildPayload(data: any) {
     if (!data?.build) return false;
@@ -532,6 +1004,91 @@ export default function BuildRuntime() {
   function handleGoToWorkspace() {
     if (!build?.id) return;
     navigate(`/build/${build.id}`);
+  }
+
+  function handleToggleCommentsDrawer() {
+    const shouldOpen = !commentsDrawerShown;
+    setCommentsDrawerShown(shouldOpen);
+    if (shouldOpen && !runtimeCommentsLoaded) {
+      void loadRuntimeComments();
+    }
+  }
+
+  function handleRetryLoadComments() {
+    void loadRuntimeComments(true);
+  }
+
+  function handleRuntimeCommentSubmit(data: any) {
+    onUploadComment(data);
+    adjustRuntimeCommentCount(getSubmittedCommentCountDelta(data));
+  }
+
+  function handleRuntimeReplySubmit(data: any) {
+    onUploadReply(data);
+    adjustRuntimeCommentCount(getSubmittedCommentCountDelta(data));
+  }
+
+  function handleRuntimeCommentDelete(commentId: number) {
+    onDeleteComment(commentId);
+    adjustRuntimeCommentCount(-1);
+  }
+
+  function adjustRuntimeCommentCount(delta: number) {
+    if (!delta) return;
+    setBuild((current) =>
+      current
+        ? {
+            ...current,
+            numComments: Math.max(0, Number(current.numComments || 0) + delta)
+          }
+        : current
+      );
+  }
+
+  function getSubmittedCommentCountDelta(data: any) {
+    return 1 + (Array.isArray(data?.replies) ? data.replies.length : 0);
+  }
+
+  async function loadRuntimeComments(force = false) {
+    if (
+      !build?.id ||
+      runtimeCommentsLoading ||
+      (!force && runtimeCommentsLoaded)
+    ) {
+      return;
+    }
+    const requestedBuildId = build.id;
+    const requestToken = runtimeCommentsLoadTokenRef.current + 1;
+    runtimeCommentsLoadTokenRef.current = requestToken;
+    setRuntimeCommentsLoading(true);
+    setRuntimeCommentsError('');
+    try {
+      const { comments, loadMoreButton } = await loadComments({
+        contentType: 'build',
+        contentId: requestedBuildId,
+        limit: RUNTIME_COMMENTS_LOAD_LIMIT
+      });
+      if (runtimeCommentsLoadTokenRef.current !== requestToken) return;
+      onLoadComments({
+        comments,
+        contentId: requestedBuildId,
+        contentType: 'build',
+        isPreview: false,
+        loadMoreButton
+      });
+    } catch (error: any) {
+      if (runtimeCommentsLoadTokenRef.current !== requestToken) return;
+      console.error('Failed to load runtime comments:', error);
+      setRuntimeCommentsError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Unable to load comments.'
+      );
+    } finally {
+      if (runtimeCommentsLoadTokenRef.current === requestToken) {
+        setRuntimeCommentsLoading(false);
+      }
+    }
   }
 
   async function handleUpdatePublishedApp() {
@@ -959,6 +1516,26 @@ export default function BuildRuntime() {
     return () => window.removeEventListener('message', handleMessage);
   }, [isEmbedded]);
 
+  useEffect(() => {
+    runtimeCommentsLoadTokenRef.current += 1;
+    setCommentsDrawerShown(false);
+    setRuntimeCommentsLoading(false);
+    setRuntimeCommentsError('');
+  }, [build?.id]);
+
+  useEffect(() => {
+    if (!commentsDrawerShown) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setCommentsDrawerShown(false);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [commentsDrawerShown]);
+
   if (!numericBuildId) {
     return renderRuntimeUnavailable({
       text: 'Invalid build ID'
@@ -1003,99 +1580,101 @@ export default function BuildRuntime() {
                   <span>Build Menu</span>
                 </button>
               </div>
+              {showRuntimeActions ? (
+                <div className={contributionCtaRowClass}>
+                  {showWorkspaceButton ? (
+                    <button
+                      type="button"
+                      className={runtimeActionBlueClass}
+                      onClick={handleGoToWorkspace}
+                    >
+                      <Icon icon="wrench" />
+                      <span>Build</span>
+                    </button>
+                  ) : null}
+                  {showRuntimePublishUpdateButton ? (
+                    <button
+                      type="button"
+                      className={runtimeActionButtonClass}
+                      onClick={handleUpdatePublishedApp}
+                      disabled={publishingRuntimeUpdate}
+                      title="Update published app"
+                    >
+                      <Icon
+                        icon={
+                          publishingRuntimeUpdate
+                            ? 'spinner'
+                            : 'cloud-upload-alt'
+                        }
+                        pulse={publishingRuntimeUpdate}
+                      />
+                      <span>
+                        {publishingRuntimeUpdate ? 'Updating...' : 'Update App'}
+                      </span>
+                    </button>
+                  ) : null}
+                  {showCollaborationButton ? (
+                    <button
+                      type="button"
+                      className={
+                        collaborationStatus === 'accepted' ||
+                        collaborationStatus === 'invited'
+                          ? runtimeActionButtonClass
+                          : runtimeActionPinkClass
+                      }
+                      onClick={handleCollaborateClick}
+                      disabled={
+                        runtimeActionBusy || collaborationStatus === 'pending'
+                      }
+                    >
+                      <Icon
+                        icon={
+                          runtimeActionBusy
+                            ? 'spinner'
+                            : collaborationStatus === 'pending'
+                              ? 'clock'
+                              : collaborationStatus === 'accepted'
+                                ? 'users'
+                                : 'user-plus'
+                        }
+                        pulse={runtimeActionBusy}
+                      />
+                      <span>{collaborationButtonLabel}</span>
+                    </button>
+                  ) : null}
+                  {showStandaloneForkButton ? (
+                    <button
+                      type="button"
+                      className={runtimeActionPurpleClass}
+                      onClick={handleCreateStandaloneFork}
+                      disabled={runtimeActionBusy}
+                    >
+                      <Icon
+                        icon={forkingBuild ? 'spinner' : 'code-branch'}
+                        pulse={forkingBuild}
+                      />
+                      <span>
+                        {forkingBuild
+                          ? 'Forking...'
+                          : userId
+                            ? 'Fork'
+                            : 'Fork'}
+                      </span>
+                    </button>
+                  ) : null}
+                  {contributionForkError ? (
+                    <span className={contributionErrorClass}>
+                      {contributionForkError}
+                    </span>
+                  ) : null}
+                  {publishRuntimeUpdateError ? (
+                    <span className={contributionErrorClass}>
+                      {publishRuntimeUpdateError}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
-            {showRuntimeActions ? (
-              <div className={contributionCtaRowClass}>
-                {showWorkspaceButton ? (
-                  <button
-                    type="button"
-                    className={runtimeActionBlueClass}
-                    onClick={handleGoToWorkspace}
-                  >
-                    <Icon icon="wrench" />
-                    <span>Build</span>
-                  </button>
-                ) : null}
-                {showRuntimePublishUpdateButton ? (
-                  <button
-                    type="button"
-                    className={runtimeActionButtonClass}
-                    onClick={handleUpdatePublishedApp}
-                    disabled={publishingRuntimeUpdate}
-                    title="Update published app"
-                  >
-                    <Icon
-                      icon={
-                        publishingRuntimeUpdate ? 'spinner' : 'cloud-upload-alt'
-                      }
-                      pulse={publishingRuntimeUpdate}
-                    />
-                    <span>
-                      {publishingRuntimeUpdate ? 'Updating...' : 'Update App'}
-                    </span>
-                  </button>
-                ) : null}
-                {showCollaborationButton ? (
-                  <button
-                    type="button"
-                    className={
-                      collaborationStatus === 'accepted' ||
-                      collaborationStatus === 'invited'
-                        ? runtimeActionButtonClass
-                        : runtimeActionPinkClass
-                    }
-                    onClick={handleCollaborateClick}
-                    disabled={
-                      runtimeActionBusy || collaborationStatus === 'pending'
-                    }
-                  >
-                    <Icon
-                      icon={
-                        runtimeActionBusy
-                          ? 'spinner'
-                          : collaborationStatus === 'pending'
-                            ? 'clock'
-                            : collaborationStatus === 'accepted'
-                              ? 'users'
-                              : 'user-plus'
-                      }
-                      pulse={runtimeActionBusy}
-                    />
-                    <span>{collaborationButtonLabel}</span>
-                  </button>
-                ) : null}
-                {showStandaloneForkButton ? (
-                  <button
-                    type="button"
-                    className={runtimeActionPurpleClass}
-                    onClick={handleCreateStandaloneFork}
-                    disabled={runtimeActionBusy}
-                  >
-                    <Icon
-                      icon={forkingBuild ? 'spinner' : 'code-branch'}
-                      pulse={forkingBuild}
-                    />
-                    <span>
-                      {forkingBuild
-                        ? 'Forking...'
-                        : userId
-                          ? 'Fork'
-                          : 'Fork'}
-                    </span>
-                  </button>
-                ) : null}
-                {contributionForkError ? (
-                  <span className={contributionErrorClass}>
-                    {contributionForkError}
-                  </span>
-                ) : null}
-                {publishRuntimeUpdateError ? (
-                  <span className={contributionErrorClass}>
-                    {publishRuntimeUpdateError}
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
             {showAiEnergy && (
               <div className={headerEnergySlotClass}>
                 <AiEnergyCard
@@ -1116,54 +1695,150 @@ export default function BuildRuntime() {
                 />
               </div>
             )}
-            <div className={titleRowClass}>
-              <Icon icon="laptop-code" />
-              <h1 className={titleClass}>{build.title}</h1>
-            </div>
-            <div className={metaClass}>
-              <div className={metaCreatorClass}>
-                <span>by</span>
-                <UsernameText
-                  color="inherit"
-                  textStyle={runtimeCreatorUsernameTextStyle}
-                  user={{
-                    id: build.userId,
-                    username: build.username || '',
-                    profilePicUrl: build.profilePicUrl || ''
-                  }}
-                />
+            <div className={titleSectionClass}>
+              <div className={titleTextStackClass}>
+                <div className={titleRowClass}>
+                  <Icon icon="laptop-code" />
+                  <h1 className={titleClass}>{build.title}</h1>
+                </div>
+                <div className={metaClass}>
+                  <div className={metaCreatorClass}>
+                    <span>by</span>
+                    <UsernameText
+                      color="inherit"
+                      textStyle={runtimeCreatorUsernameTextStyle}
+                      user={{
+                        id: build.userId,
+                        username: build.username || '',
+                        profilePicUrl: build.profilePicUrl || ''
+                      }}
+                    />
+                  </div>
+                  {build.description?.trim() ? (
+                    <span className={metaDescriptionClass}>
+                      {build.description.trim()}
+                    </span>
+                  ) : null}
+                </div>
               </div>
-              {build.description?.trim() ? (
-                <span className={metaDescriptionClass}>
-                  {build.description.trim()}
-                </span>
-              ) : null}
+              <div className={commentsCtaSlotClass}>
+                <GameCTAButton
+                  onClick={handleToggleCommentsDrawer}
+                  variant="neutral"
+                  size="sm"
+                  icon="comments"
+                  toggled={commentsDrawerShown}
+                >
+                  {runtimeCommentsButtonLabel}
+                </GameCTAButton>
+              </div>
             </div>
             {collaborationRequestModalShown
               ? renderCollaborationRequestModal()
               : null}
           </div>
         )}
-        <div className={panelWrapClass}>
-          <div className={previewShellClass}>
-            <PreviewPanel
-              build={build}
-              code={build.code}
-              projectFiles={build.projectFiles || []}
-              isOwner={false}
-              runtimeOnly
-              runtimeHostVisible={runtimeHostVisible}
-              capabilitySnapshot={build.capabilitySnapshot || null}
-              onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
-              onReplaceCode={() => {}}
-              onApplyRestoredProjectFiles={() => {}}
-              onSaveProjectFiles={async () => ({ success: false })}
-            />
+        <div
+          className={runtimeBodyClass}
+          data-comments-open={commentsDrawerShown ? 'true' : 'false'}
+        >
+          <div className={panelWrapClass}>
+            <div className={previewShellClass}>
+              <PreviewPanel
+                build={build}
+                code={build.code}
+                projectFiles={build.projectFiles || []}
+                isOwner={false}
+                runtimeOnly
+                runtimeHostVisible={runtimeHostVisible}
+                capabilitySnapshot={build.capabilitySnapshot || null}
+                onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
+                onReplaceCode={() => {}}
+                onApplyRestoredProjectFiles={() => {}}
+                onSaveProjectFiles={async () => ({ success: false })}
+              />
+            </div>
           </div>
+          {renderCommentsDrawer()}
         </div>
       </div>
     </ErrorBoundary>
   );
+
+  function renderCommentsDrawer() {
+    if (!runtimeCommentsParent) return null;
+    return (
+      <aside
+        aria-hidden={!commentsDrawerShown}
+        aria-labelledby="runtime-comments-title"
+        className={commentsDrawerClass}
+        data-visible={commentsDrawerShown ? 'true' : 'false'}
+        role="complementary"
+      >
+        <div className={commentsDrawerHeaderClass}>
+          <div className={commentsDrawerTitleWrapClass}>
+            <h2
+              className={commentsDrawerTitleClass}
+              id="runtime-comments-title"
+            >
+              <Icon icon="comments" />
+              <span>Comments</span>
+            </h2>
+            <div className={commentsDrawerSubtitleClass}>
+              {runtimeCommentsParent.title}
+            </div>
+          </div>
+        </div>
+        <div className={commentsDrawerBodyClass}>
+          {runtimeCommentsError ? (
+            <div className={commentsDrawerErrorClass} role="alert">
+              <span>{runtimeCommentsError}</span>
+              <GameCTAButton
+                onClick={handleRetryLoadComments}
+                variant="pink"
+                size="sm"
+                icon="redo"
+                loading={runtimeCommentsLoading}
+              >
+                Retry
+              </GameCTAButton>
+            </div>
+          ) : null}
+          {commentsDrawerShown || runtimeCommentsLoaded ? (
+            <Comments
+              alwaysShowInput
+              autoExpand
+              autoFocus={commentsDrawerShown}
+              comments={runtimeComments}
+              commentsLoadLimit={RUNTIME_COMMENTS_LOAD_LIMIT}
+              commentsShown
+              compactMode
+              className={runtimeCommentsClass}
+              inputFormClassName={runtimeCommentsInputFormClass}
+              inputTypeLabel="comment"
+              isLoading={runtimeCommentsLoading}
+              loadMoreButton={runtimeCommentsLoadMoreButton}
+              numInputRows={2}
+              onCommentSubmit={handleRuntimeCommentSubmit}
+              onDelete={handleRuntimeCommentDelete}
+              onEditDone={onEditComment}
+              onLikeClick={onLikeComment}
+              onLoadMoreComments={onLoadMoreComments}
+              onLoadMoreReplies={onLoadMoreReplies}
+              onLoadRepliesOfReply={onLoadRepliesOfReply}
+              onReplySubmit={handleRuntimeReplySubmit}
+              onRewardCommentEdit={onEditRewardComment}
+              parent={runtimeCommentsParent}
+              rootContent={runtimeCommentsParent}
+              submitButtonLabel="Post"
+              theme="logoBlue"
+              userId={userId}
+            />
+          ) : null}
+        </div>
+      </aside>
+    );
+  }
 
   function renderCollaborationRequestModal() {
     const currentBuild = build;

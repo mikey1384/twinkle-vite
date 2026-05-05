@@ -58,10 +58,12 @@ const repliesLabel = 'Replies';
 const replyLabel = 'Reply';
 
 function Reply({
+  compactMode,
   comment,
   innerRef,
   deleteReply,
   disableReason,
+  inputFormClassName,
   isSubjectPannelComment,
   onLoadRepliesOfReply,
   onPinReply,
@@ -83,11 +85,14 @@ function Reply({
   },
   rootContent,
   onSubmitReply,
+  submitButtonLabel,
   subject,
   theme
 }: {
   comment: Comment;
+  compactMode?: boolean;
   disableReason?: string;
+  inputFormClassName?: string;
   innerRef?: React.Ref<HTMLDivElement>;
   deleteReply: (v: any) => void;
   isSubjectPannelComment?: boolean;
@@ -100,6 +105,7 @@ function Reply({
   rootContent?: any;
   subject: any;
   onSubmitReply: (v: any) => void;
+  submitButtonLabel?: string;
   theme?: string;
 }) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
@@ -269,6 +275,26 @@ function Reply({
     () => timeSince(reply.timeStamp),
     [reply.timeStamp]
   );
+  const dropdownLabelMarginLeft = compactMode ? 0 : '1rem';
+  const compactDropdownMenuItemStyle: React.CSSProperties | undefined =
+    compactMode
+      ? {
+          borderRadius: 7,
+          fontSize: '0.92rem',
+          gap: '0.4rem',
+          justifyContent: 'flex-start',
+          padding: '0.48rem 0.6rem',
+          textAlign: 'left'
+        }
+      : undefined;
+  const compactDropdownListStyle: React.CSSProperties | undefined = compactMode
+    ? {
+        borderRadius: 10,
+        gap: '0.2rem',
+        minWidth: '8.5rem',
+        padding: '0.35rem'
+      }
+    : undefined;
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (userIsUploader || canEdit) {
@@ -276,7 +302,9 @@ function Reply({
         label: (
           <>
             <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '1rem' }}>{editLabel}</span>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>
+              {editLabel}
+            </span>
           </>
         ),
         onClick: () =>
@@ -284,7 +312,8 @@ function Reply({
             contentId: reply.id,
             contentType: 'comment',
             isEditing: true
-          })
+          }),
+        style: compactDropdownMenuItemStyle
       });
     }
     if (
@@ -295,13 +324,14 @@ function Reply({
         label: (
           <>
             <Icon icon={['fas', 'thumbtack']} />
-            <span style={{ marginLeft: '1rem' }}>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>
               {pinnedCommentId === reply.id ? unpinLabel : pinLabel}
             </span>
           </>
         ),
         onClick: () =>
-          onPinReply(pinnedCommentId === reply.id ? null : reply.id)
+          onPinReply(pinnedCommentId === reply.id ? null : reply.id),
+        style: compactDropdownMenuItemStyle
       });
     }
     if (userIsUploader || canDelete) {
@@ -309,10 +339,13 @@ function Reply({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span style={{ marginLeft: '1rem' }}>{removeReplyLabel}</span>
+            <span style={{ marginLeft: dropdownLabelMarginLeft }}>
+              {removeReplyLabel}
+            </span>
           </>
         ),
-        onClick: () => setConfirmModalShown(true)
+        onClick: () => setConfirmModalShown(true),
+        style: compactDropdownMenuItemStyle
       });
     }
     return items;
@@ -320,6 +353,8 @@ function Reply({
   }, [
     canDelete,
     canEdit,
+    compactDropdownMenuItemStyle,
+    dropdownLabelMarginLeft,
     pinnedCommentId,
     reply.id,
     userIsParentUploader,
@@ -329,7 +364,7 @@ function Reply({
   return !(isDeleteNotification && !reply.numReplies) && !reply.isDeleted ? (
     <ErrorBoundary componentPath="Comments/Replies/Reply">
       <ScopedTheme theme={themeName} roles={['link', 'reward']}>
-        <div className={commentContainer} ref={innerRef}>
+        <div className={`${commentContainer} comment__container`} ref={innerRef}>
           {pinnedCommentId === reply.id && (
             <div
               className={css`
@@ -435,6 +470,7 @@ function Reply({
                 {isEditing ? (
                   <EditTextArea
                     allowEmptyText={!!filePath}
+                    compactMode={compactMode}
                     style={{ marginBottom: '1rem' }}
                     contentId={reply.id}
                     contentType="comment"
@@ -559,16 +595,18 @@ function Reply({
                               ) : null}
                             </Button>
                           )}
-                          {userCanRewardThis && !isDeleteNotification && (
-                            <RewardButton
-                              style={{ marginLeft: '1rem' }}
-                              contentId={reply.id}
-                              contentType="comment"
-                              disableReason={xpButtonDisabled}
-                              theme={theme}
-                              hideLabel={isTablet(navigator)}
-                            />
-                          )}
+                          {userCanRewardThis &&
+                            !compactMode &&
+                            !isDeleteNotification && (
+                              <RewardButton
+                                style={{ marginLeft: '1rem' }}
+                                contentId={reply.id}
+                                contentType="comment"
+                                disableReason={xpButtonDisabled}
+                                theme={theme}
+                                hideLabel={isTablet(navigator)}
+                              />
+                            )}
                         </div>
                         {isDeleteNotification ? null : (
                           <small>
@@ -582,7 +620,7 @@ function Reply({
                           </small>
                         )}
                       </div>
-                      {isDeleteNotification ? null : (
+                      {!compactMode && !isDeleteNotification ? (
                         <div
                           className={css`
                             display: flex;
@@ -613,20 +651,20 @@ function Reply({
                             />
                           )}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 )}
               </div>
-              {isDeleteNotification ? null : (
+              {!compactMode && !isDeleteNotification ? (
                 <RecommendationStatus
                   style={{ marginTop: '0.5rem' }}
                   contentType="comment"
                   recommendations={recommendations}
                   theme={theme}
                 />
-              )}
-              {recommendationInterfaceShown && (
+              ) : null}
+              {!compactMode && recommendationInterfaceShown && (
                 <RecommendationInterface
                   style={{ marginTop: '0.5rem' }}
                   contentId={reply.id}
@@ -639,7 +677,7 @@ function Reply({
                   uploaderId={uploader.id}
                 />
               )}
-              {xpRewardInterfaceShown && (
+              {!compactMode && xpRewardInterfaceShown && (
                 <XPRewardInterface
                   innerRef={RewardInterfaceRef}
                   rewardLevel={rewardLevel}
@@ -678,6 +716,7 @@ function Reply({
                 {isDeleteNotification ? null : (
                   <ReplyInputArea
                     disableReason={disableReason}
+                    inputFormClassName={inputFormClassName}
                     innerRef={ReplyInputAreaRef}
                     onSubmit={handleSubmitReply}
                     onSubmitWithAttachment={onSubmitWithAttachment}
@@ -687,6 +726,7 @@ function Reply({
                       marginTop: '0.5rem'
                     }}
                     targetCommentPoster={reply.uploader}
+                    submitButtonLabel={submitButtonLabel}
                     theme={theme}
                     targetCommentId={reply.id}
                   />
@@ -727,7 +767,9 @@ function Reply({
                 tone="raised"
                 icon="chevron-down"
                 color="darkerGray"
+                listStyle={compactDropdownListStyle}
                 menuProps={dropdownMenuItems}
+                xAdjustment={compactMode ? -6 : undefined}
               />
             </div>
           )}
@@ -762,6 +804,10 @@ function Reply({
     likes: object[];
     isUnlike: boolean;
   }) {
+    if (compactMode) {
+      onLikeClick({ commentId: reply.id, likes });
+      return;
+    }
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: reply.id,

@@ -7,6 +7,10 @@ import { useContentState } from '~/helpers/hooks';
 import { useContentContext } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 
+function normalizePinnedCommentId(value: unknown) {
+  return Number(value || 0) || undefined;
+}
+
 export default function Container({
   alwaysShowInput,
   autoExpand,
@@ -18,7 +22,9 @@ export default function Container({
   commentsHidden,
   commentsShown,
   commentsLoadLimit,
+  compactMode,
   disableReason,
+  inputFormClassName,
   inputAtBottom,
   inputAreaInnerRef,
   inputTypeLabel,
@@ -35,6 +41,7 @@ export default function Container({
   parent,
   previewComments,
   showSecretButtonAvailable,
+  submitButtonLabel,
   subject,
   subjectId,
   theme,
@@ -51,7 +58,9 @@ export default function Container({
   commentsHidden?: boolean;
   commentsShown?: boolean;
   commentsLoadLimit?: number;
+  compactMode?: boolean;
   disableReason?: string;
+  inputFormClassName?: string;
   inputAtBottom?: boolean;
   inputAreaInnerRef?: React.RefObject<any>;
   inputTypeLabel: string;
@@ -68,6 +77,7 @@ export default function Container({
   parent: Content;
   previewComments?: Comment[];
   showSecretButtonAvailable?: boolean;
+  submitButtonLabel?: string;
   subject?: Subject;
   subjectId?: number;
   theme?: any;
@@ -85,18 +95,32 @@ export default function Container({
     contentType: rootContent?.contentType || '',
     contentId: rootContent?.id || 0
   });
+  const parentContentState = useContentState({
+    contentType: parent.contentType,
+    contentId: parent.contentId
+  });
+  const parentStateHasPinnedCommentId = Object.prototype.hasOwnProperty.call(
+    parentContentState || {},
+    'pinnedCommentId'
+  );
+  const parentStatePinnedCommentId = parentContentState?.pinnedCommentId;
   const pinnedCommentId = useMemo(() => {
     if (isSubjectPannelComments) {
-      return subject?.pinnedCommentId;
+      return normalizePinnedCommentId(subject?.pinnedCommentId);
     }
     if (parent.contentType === 'comment') {
-      return rootContentState?.pinnedCommentId;
+      return normalizePinnedCommentId(rootContentState?.pinnedCommentId);
     }
-    return parent.pinnedCommentId;
+    const resolvedPinnedCommentId = parentStateHasPinnedCommentId
+      ? parentStatePinnedCommentId
+      : parent.pinnedCommentId;
+    return normalizePinnedCommentId(resolvedPinnedCommentId);
   }, [
     isSubjectPannelComments,
     parent.contentType,
     parent.pinnedCommentId,
+    parentStateHasPinnedCommentId,
+    parentStatePinnedCommentId,
     rootContentState?.pinnedCommentId,
     subject?.pinnedCommentId
   ]);
@@ -135,9 +159,11 @@ export default function Container({
           commentsShown={commentsShown}
           commentsHidden={commentsHidden}
           commentsLoadLimit={commentsLoadLimit}
+          compactMode={compactMode}
           CommentRefs={CommentRefs}
           CommentInputAreaRef={CommentInputAreaRef}
           disableReason={disableReason}
+          inputFormClassName={inputFormClassName}
           inputAreaInnerRef={inputAreaInnerRef}
           inputAtBottom={inputAtBottom}
           inputTypeLabel={inputTypeLabel}
@@ -155,6 +181,7 @@ export default function Container({
           pinnedCommentId={pinnedCommentId}
           previewComments={previewComments}
           showSecretButtonAvailable={showSecretButtonAvailable}
+          submitButtonLabel={submitButtonLabel}
           subject={subject}
           subjectId={subjectId}
           theme={theme}

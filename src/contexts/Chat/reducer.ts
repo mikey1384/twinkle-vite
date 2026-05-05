@@ -116,6 +116,37 @@ function getBuildContributionInvitePatch({
   };
 }
 
+function getBuildContributionInviteMembershipKey(invite: any) {
+  const buildId = Number(invite?.buildId || 0);
+  const userId = Number(invite?.userId || 0);
+  return buildId > 0 && userId > 0 ? `${buildId}:${userId}` : '';
+}
+
+function buildContributionInviteMatches({
+  currentInvite,
+  invite,
+  inviteId,
+  messageInviteId,
+  status
+}: {
+  currentInvite: Record<string, any>;
+  invite?: Record<string, any> | null;
+  inviteId: number;
+  messageInviteId: number;
+  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+}) {
+  if (messageInviteId === inviteId) return true;
+  const acceptedMembership =
+    status === 'accepted' || Number(invite?.acceptedAt || 0) > 0;
+  if (!acceptedMembership) return false;
+  const currentMembershipKey =
+    getBuildContributionInviteMembershipKey(currentInvite);
+  const updatedMembershipKey = getBuildContributionInviteMembershipKey(invite);
+  return Boolean(
+    currentMembershipKey && currentMembershipKey === updatedMembershipKey
+  );
+}
+
 function updateBuildContributionInviteMessage(
   message: any,
   {
@@ -132,7 +163,17 @@ function updateBuildContributionInviteMessage(
   const settings = loadChannelSettings(message.settings);
   const currentInvite = settings?.buildContributionInvite || {};
   const messageInviteId = Number(currentInvite.inviteId || message.rootId || 0);
-  if (messageInviteId !== inviteId) return message;
+  if (
+    !buildContributionInviteMatches({
+      currentInvite,
+      invite,
+      inviteId,
+      messageInviteId,
+      status
+    })
+  ) {
+    return message;
+  }
 
   return {
     ...message,
@@ -141,7 +182,7 @@ function updateBuildContributionInviteMessage(
       buildContributionInvite: {
         ...currentInvite,
         ...getBuildContributionInvitePatch({ invite, status }),
-        inviteId
+        inviteId: messageInviteId || inviteId
       }
     }
   };

@@ -175,6 +175,23 @@ const badgePillClass = css`
   border: 2px solid transparent;
   line-height: 1;
   box-shadow: 0 2px 0 rgba(15, 23, 42, 0.12);
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+  &[href] {
+    cursor: pointer;
+  }
+  &[href]:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+    box-shadow: 0 3px 0 rgba(15, 23, 42, 0.14);
+  }
+  &[href]:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    text-decoration: none;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.35rem;
     padding: 0.48rem 0.72rem;
@@ -241,6 +258,7 @@ interface HeaderProps {
     code: string | null;
     releaseStatus?: {
       state?: string;
+      hasPublishedVersion?: boolean;
       hasUnpublishedChanges?: boolean;
       diff?: {
         total?: number;
@@ -301,6 +319,94 @@ function HeaderActionItem({
       }
     >
       {children}
+    </span>
+  );
+}
+
+function BuildVisibilityBadge({
+  buildId,
+  canOpenRuntime,
+  isPublic
+}: {
+  buildId: number;
+  canOpenRuntime: boolean;
+  isPublic: boolean;
+}) {
+  const badgeContent = (
+    <>
+      <Icon icon={isPublic ? 'globe' : 'lock'} />
+      {isPublic ? 'Public' : 'Private'}
+    </>
+  );
+
+  if (isPublic && canOpenRuntime) {
+    return (
+      <Link
+        to={getBuildRuntimePath(buildId)}
+        className={badgePillClass}
+        style={getVisibilityBadgeStyle(true)}
+        title="Open public app"
+      >
+        {badgeContent}
+      </Link>
+    );
+  }
+
+  return (
+    <span
+      className={badgePillClass}
+      style={getVisibilityBadgeStyle(isPublic)}
+      title={
+        isPublic
+          ? 'This public app needs a published snapshot.'
+          : 'Only you can access this build'
+      }
+    >
+      {badgeContent}
+    </span>
+  );
+}
+
+function BuildReleaseStatusBadge({
+  buildId,
+  releaseStatus
+}: {
+  buildId: number;
+  releaseStatus: NonNullable<ReturnType<typeof normalizeReleaseStatus>>;
+}) {
+  const hasUnpublishedChanges =
+    releaseStatus.hasUnpublishedChanges ||
+    releaseStatus.state === 'missing_snapshot';
+  const canOpenRuntime = buildCanOpenRuntime(releaseStatus);
+  const badgeContent = (
+    <>
+      <Icon
+        icon={hasUnpublishedChanges ? 'cloud-upload-alt' : 'check-circle'}
+      />
+      {hasUnpublishedChanges ? 'Unpublished Changes' : 'Live'}
+    </>
+  );
+
+  if (!hasUnpublishedChanges && canOpenRuntime) {
+    return (
+      <Link
+        to={getBuildRuntimePath(buildId)}
+        className={badgePillClass}
+        style={getReleaseStatusBadgeStyle(releaseStatus.state)}
+        title="Open live app"
+      >
+        {badgeContent}
+      </Link>
+    );
+  }
+
+  return (
+    <span
+      className={badgePillClass}
+      style={getReleaseStatusBadgeStyle(releaseStatus.state)}
+      title={getReleaseStatusTitle(releaseStatus)}
+    >
+      {badgeContent}
     </span>
   );
 }
@@ -373,10 +479,17 @@ export default function Header({
     branchOwnerUserId > 0 &&
     branchOwnerUserId !== rootBuildUserId;
   const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
+  const canOpenRuntime = Boolean(
+    build.isPublic && releaseStatus && buildCanOpenRuntime(releaseStatus)
+  );
   const publicAppIsUpToDate = Boolean(
-    build.isPublic && releaseStatus && !releaseStatus.hasUnpublishedChanges
+    build.isPublic &&
+      releaseStatus?.state === 'up_to_date' &&
+      canOpenRuntime &&
+      !releaseStatus.hasUnpublishedChanges
   );
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
+  const showVisibilityBadge = !isContributionFork;
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
@@ -431,35 +544,18 @@ export default function Header({
             ) : null}
           </div>
           <div className={mobileTitleBadgeGroupClass}>
-            <span
-              className={badgePillClass}
-              style={getVisibilityBadgeStyle(build.isPublic)}
-              title={
-                build.isPublic
-                  ? 'Published publicly'
-                  : 'Only you can access this build'
-              }
-            >
-              <Icon icon={build.isPublic ? 'globe' : 'lock'} />
-              {build.isPublic ? 'Public' : 'Private'}
-            </span>
+            {showVisibilityBadge ? (
+              <BuildVisibilityBadge
+                canOpenRuntime={canOpenRuntime}
+                buildId={Number(build.id)}
+                isPublic={Boolean(build.isPublic)}
+              />
+            ) : null}
             {build.isPublic && releaseStatus ? (
-              <span
-                className={badgePillClass}
-                style={getReleaseStatusBadgeStyle(releaseStatus.state)}
-                title={getReleaseStatusTitle(releaseStatus)}
-              >
-                <Icon
-                  icon={
-                    releaseStatus.hasUnpublishedChanges
-                      ? 'cloud-upload-alt'
-                      : 'check-circle'
-                  }
-                />
-                {releaseStatus.hasUnpublishedChanges
-                  ? 'Unpublished Changes'
-                  : 'Live'}
-              </span>
+              <BuildReleaseStatusBadge
+                buildId={Number(build.id)}
+                releaseStatus={releaseStatus}
+              />
             ) : null}
             {showContributionStatusBadge ? (
               <span
@@ -483,38 +579,21 @@ export default function Header({
         </span>
       </div>
       <div className={headerActionsClass}>
-        <HeaderActionItem mobileOrder={1}>
-          <span
-            className={badgePillClass}
-            style={getVisibilityBadgeStyle(build.isPublic)}
-            title={
-              build.isPublic
-                ? 'Published publicly'
-                : 'Only you can access this build'
-            }
-          >
-            <Icon icon={build.isPublic ? 'globe' : 'lock'} />
-            {build.isPublic ? 'Public' : 'Private'}
-          </span>
-        </HeaderActionItem>
+        {showVisibilityBadge ? (
+          <HeaderActionItem mobileOrder={1}>
+            <BuildVisibilityBadge
+              canOpenRuntime={canOpenRuntime}
+              buildId={Number(build.id)}
+              isPublic={Boolean(build.isPublic)}
+            />
+          </HeaderActionItem>
+        ) : null}
         {build.isPublic && releaseStatus ? (
           <HeaderActionItem mobileOrder={2}>
-            <span
-              className={badgePillClass}
-              style={getReleaseStatusBadgeStyle(releaseStatus.state)}
-              title={getReleaseStatusTitle(releaseStatus)}
-            >
-              <Icon
-                icon={
-                  releaseStatus.hasUnpublishedChanges
-                    ? 'cloud-upload-alt'
-                    : 'check-circle'
-                }
-              />
-              {releaseStatus.hasUnpublishedChanges
-                ? 'Unpublished Changes'
-                : 'Live'}
-            </span>
+            <BuildReleaseStatusBadge
+              buildId={Number(build.id)}
+              releaseStatus={releaseStatus}
+            />
           </HeaderActionItem>
         ) : null}
         {isOwner && !isContributionFork ? (
@@ -792,6 +871,10 @@ function normalizeCollaborationMode(
   return value === 'open_source' ? value : 'private';
 }
 
+function getBuildRuntimePath(buildId: number) {
+  return `/app/${buildId}`;
+}
+
 function normalizeContributionStatus(
   value: unknown
 ):
@@ -811,6 +894,7 @@ function normalizeContributionStatus(
 
 function normalizeReleaseStatus(value: unknown): {
   state: 'up_to_date' | 'unpublished_changes' | 'missing_snapshot';
+  hasPublishedVersion: boolean;
   hasUnpublishedChanges: boolean;
   diff: {
     total: number;
@@ -822,6 +906,7 @@ function normalizeReleaseStatus(value: unknown): {
   if (!value || typeof value !== 'object') return null;
   const status = value as {
     state?: string;
+    hasPublishedVersion?: boolean;
     hasUnpublishedChanges?: boolean;
     diff?: {
       total?: number;
@@ -838,6 +923,7 @@ function normalizeReleaseStatus(value: unknown): {
         : 'up_to_date';
   return {
     state,
+    hasPublishedVersion: Boolean(status.hasPublishedVersion),
     hasUnpublishedChanges: Boolean(status.hasUnpublishedChanges),
     diff: {
       total: Number(status.diff?.total || 0),
@@ -846,6 +932,12 @@ function normalizeReleaseStatus(value: unknown): {
       deleted: Number(status.diff?.deleted || 0)
     }
   };
+}
+
+function buildCanOpenRuntime(
+  status: NonNullable<ReturnType<typeof normalizeReleaseStatus>>
+) {
+  return status.state !== 'missing_snapshot' && status.hasPublishedVersion;
 }
 
 function getCollaborationButtonLabel(

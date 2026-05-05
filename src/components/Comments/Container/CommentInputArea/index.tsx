@@ -14,6 +14,7 @@ export default function CommentInputArea({
   autoFocus,
   disableReason,
   innerRef,
+  inputFormClassName,
   inputTypeLabel,
   InputFormRef,
   numInputRows = 4,
@@ -23,6 +24,7 @@ export default function CommentInputArea({
   rootCommentId,
   subjectId,
   style,
+  submitButtonLabel,
   subjectRewardLevel,
   targetCommentId,
   theme
@@ -30,6 +32,7 @@ export default function CommentInputArea({
   autoFocus?: boolean;
   disableReason?: string;
   innerRef?: React.RefObject<any>;
+  inputFormClassName?: string;
   inputTypeLabel: string;
   InputFormRef?: React.RefObject<any>;
   numInputRows?: number;
@@ -39,6 +42,7 @@ export default function CommentInputArea({
   rootCommentId?: number | null;
   subjectId?: number;
   style?: React.CSSProperties;
+  submitButtonLabel?: string;
   subjectRewardLevel?: number;
   targetCommentId?: number | null;
   theme?: string;
@@ -121,6 +125,7 @@ export default function CommentInputArea({
         <div style={{ position: 'relative', width: '100%' }}>
           <InputForm
             isComment
+            className={inputFormClassName}
             disableReason={disableReason}
             expectedContentLength={expectedContentLength}
             effortBarColor={effortBarColor}
@@ -131,6 +136,7 @@ export default function CommentInputArea({
             parent={{ contentId, contentType }}
             rows={numInputRows}
             placeholder={placeholderLabel}
+            submitButtonLabel={submitButtonLabel}
             targetCommentId={targetCommentId}
             theme={theme}
           />
