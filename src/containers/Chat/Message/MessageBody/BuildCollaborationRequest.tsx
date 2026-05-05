@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
@@ -48,8 +48,14 @@ export default function BuildCollaborationRequest({
   const rejectBuildCollaborationRequest = useAppContext(
     (v) => v.requestHelpers.rejectBuildCollaborationRequest
   );
+  const loadBuildContributionMembership = useAppContext(
+    (v) => v.requestHelpers.loadBuildContributionMembership
+  );
   const onUpdateBuildCollaborationState = useChatContext(
     (v) => v.actions.onUpdateBuildCollaborationState
+  );
+  const onUpdateBuildContributionMembership = useChatContext(
+    (v) => v.actions.onUpdateBuildContributionMembership
   );
   const payload = useMemo(
     () => request || parseBuildCollaborationRequestPayload(content),
@@ -60,10 +66,12 @@ export default function BuildCollaborationRequest({
   const title = String(payload?.title || 'Build');
   const requestMessage = String(payload?.message || '').trim();
   const sentByMe = Number(sender.id) === Number(myId);
+  const membershipUserId = Number(payload?.requesterUserId || sender.id || 0);
   const membershipKey =
-    buildId > 0 && Number(payload?.requesterUserId || 0) > 0
-      ? `${buildId}:${Number(payload?.requesterUserId || 0)}`
-      : '';
+    buildId > 0 && membershipUserId > 0 ? `${buildId}:${membershipUserId}` : '';
+  const membershipState = useChatContext((v) =>
+    membershipKey ? v.state.buildContributionMembershipByKey?.[membershipKey] : null
+  );
   const cachedRequestById = useChatContext((v) =>
     requestId > 0 ? v.state.buildCollaborationRequestsById?.[requestId] : null
   );
@@ -72,9 +80,48 @@ export default function BuildCollaborationRequest({
       ? v.state.buildCollaborationRequestMembershipByKey?.[membershipKey]
       : null
   );
-  const canonicalRequest = cachedRequestById || cachedRequestByMembership || null;
-  const status = getBuildCollaborationRequestStatus(canonicalRequest || payload);
-  const hasCanonicalRequestState = Boolean(canonicalRequest || request);
+  const canonicalRequest = getNewestBuildRequestState(
+    cachedRequestById,
+    cachedRequestByMembership,
+    request
+  );
+  const isActiveMember = Boolean(membershipState?.active);
+  const membershipLoaded = !membershipKey || Boolean(membershipState);
+  const rowStatus = getBuildCollaborationRequestRowStatus(
+    canonicalRequest || payload
+  );
+  const status = isActiveMember ? 'accepted' : rowStatus;
+
+  useEffect(() => {
+    if (!buildId || !membershipUserId || membershipState) return;
+    let isMounted = true;
+    loadMembership();
+
+    async function loadMembership() {
+      try {
+        const result = await loadBuildContributionMembership({
+          buildId,
+          userId: membershipUserId
+        });
+        if (!isMounted) return;
+        onUpdateBuildContributionMembership({
+          active: Boolean(result?.active),
+          buildId,
+          eventTimeMs: result?.eventTimeMs,
+          membership: result?.membership,
+          userId: membershipUserId
+        });
+      } catch (error) {
+        console.error('Failed to load build contribution membership:', error);
+      }
+    }
+
+    return () => {
+      isMounted = false;
+    };
+    // Context request/action helpers are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildId, membershipUserId, Boolean(membershipState)]);
 
   if (!buildId || !requestId) {
     return <span>{content}</span>;
@@ -131,7 +178,7 @@ export default function BuildCollaborationRequest({
         >
           Open Build
         </Button>
-        {!sentByMe && hasCanonicalRequestState && status === 'pending' ? (
+        {!sentByMe && membershipLoaded && status === 'pending' ? (
           <>
             <Button
               color="logoBlue"
@@ -276,6 +323,64 @@ function getBuildCollaborationRequestStatus(
     return 'canceled';
   }
   return 'pending';
+}
+
+function getBuildCollaborationRequestRowStatus(
+  request?: BuildCollaborationRequestPayload | null
+): BuildCollaborationRequestStatus {
+  const status = String(request?.status || '').trim();
+  if (status === 'rejected' || status === 'canceled' || status === 'invited') {
+    return status;
+  }
+  if (Number(request?.canceledAt || 0) > 0) {
+    return 'canceled';
+  }
+  return 'pending';
+}
+
+function normalizeEventTimeMs(value?: number) {
+  const normalizedValue = Number(value || 0);
+  if (!normalizedValue) return 0;
+  return normalizedValue > 1000000000000
+    ? normalizedValue
+    : normalizedValue * 1000;
+}
+
+function getBuildRequestEventTime(request?: Record<string, any> | null) {
+  if (!request) return 0;
+  return Math.max(
+    normalizeEventTimeMs(Number(request.__eventTime || 0)),
+    normalizeEventTimeMs(Number(request.respondedAt || 0)),
+    normalizeEventTimeMs(Number(request.canceledAt || 0)),
+    normalizeEventTimeMs(Number(request.hiddenAt || 0)),
+    normalizeEventTimeMs(Number(request.updatedAt || 0)),
+    normalizeEventTimeMs(Number(request.createdAt || 0))
+  );
+}
+
+function getBuildRequestStatusRank(status: BuildCollaborationRequestStatus) {
+  if (status === 'accepted') return 3;
+  if (status === 'rejected' || status === 'canceled') return 2;
+  if (status === 'invited') return 1;
+  return 0;
+}
+
+function getNewestBuildRequestState(
+  ...states: Array<Record<string, any> | null | undefined>
+) {
+  return states.reduce<Record<string, any> | null>((current, next) => {
+    if (!next) return current;
+    if (!current) return next;
+    const nextTime = getBuildRequestEventTime(next);
+    const currentTime = getBuildRequestEventTime(current);
+    if (nextTime !== currentTime) {
+      return nextTime > currentTime ? next : current;
+    }
+    return getBuildRequestStatusRank(getBuildCollaborationRequestStatus(next)) >=
+      getBuildRequestStatusRank(getBuildCollaborationRequestStatus(current))
+      ? next
+      : current;
+  }, null);
 }
 
 function getBuildInviteStatusFromActionState(

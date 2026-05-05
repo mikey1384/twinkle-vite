@@ -136,6 +136,31 @@ export default function ChatActions(dispatch: Dispatch) {
         timeStamp
       });
     },
+    onUpdateBuildContributionMembership({
+      active,
+      buildId,
+      eventTimeMs,
+      membership,
+      timeStamp,
+      userId
+    }: {
+      active?: boolean;
+      buildId: number;
+      eventTimeMs?: number;
+      membership?: Record<string, any> | null;
+      timeStamp?: number;
+      userId: number;
+    }) {
+      return dispatch({
+        type: 'UPDATE_BUILD_CONTRIBUTION_MEMBERSHIP',
+        active,
+        buildId,
+        eventTimeMs,
+        membership,
+        timeStamp,
+        userId
+      });
+    },
     onDeleteAIChatFile({
       channelId,
       topicId,

@@ -69,6 +69,20 @@ function getBuildContributionInviteMembershipKey(invite: any) {
   return buildId > 0 && userId > 0 ? `${buildId}:${userId}` : '';
 }
 
+function getBuildContributionMembershipKey({
+  buildId,
+  userId
+}: {
+  buildId?: number;
+  userId?: number;
+}) {
+  const normalizedBuildId = Number(buildId || 0);
+  const normalizedUserId = Number(userId || 0);
+  return normalizedBuildId > 0 && normalizedUserId > 0
+    ? `${normalizedBuildId}:${normalizedUserId}`
+    : '';
+}
+
 function getBuildContributionInviteStatus(invite: any, fallbackStatus?: string) {
   const status = String(invite?.status || fallbackStatus || '').trim();
   if (
@@ -159,10 +173,84 @@ function shouldReplaceBuildCollaborationEntry({
   status: string;
 }) {
   if (!current) return true;
+  if (current.active && !next.active) return false;
   const currentTime = Number(current.__eventTime || 0);
   const nextTime = Number(next.__eventTime || 0);
   if (nextTime !== currentTime) return nextTime > currentTime;
   return getStatusRank(status) >= getStatusRank(current.status);
+}
+
+function shouldReplaceBuildContributionMembership({
+  current,
+  next
+}: {
+  current: any;
+  next: any;
+}) {
+  if (!current) return true;
+  const currentTime = Number(current.__eventTime || 0);
+  const nextTime = Number(next.__eventTime || 0);
+  if (nextTime !== currentTime) return nextTime > currentTime;
+  return Number(next.active ? 1 : 0) >= Number(current.active ? 1 : 0);
+}
+
+function upsertBuildContributionMembershipState({
+  state,
+  active,
+  buildId,
+  eventTimeMs,
+  membership,
+  timeStamp,
+  userId
+}: {
+  state: any;
+  active?: boolean;
+  buildId?: number;
+  eventTimeMs?: number;
+  membership?: Record<string, any> | null;
+  timeStamp?: number;
+  userId?: number;
+}) {
+  const resolvedBuildId = Number(membership?.buildId || buildId || 0);
+  const resolvedUserId = Number(membership?.userId || userId || 0);
+  const membershipKey = getBuildContributionMembershipKey({
+    buildId: resolvedBuildId,
+    userId: resolvedUserId
+  });
+  if (!membershipKey) return state;
+  const isActive =
+    typeof active === 'boolean'
+      ? active
+      : Number(membership?.acceptedAt || 0) > 0;
+  const nextMembership = {
+    ...(membership || {}),
+    active: isActive,
+    buildId: resolvedBuildId,
+    userId: resolvedUserId,
+    __eventTime: Math.max(
+      normalizeEventTimeMs(Number(membership?.acceptedAt || 0)),
+      normalizeEventTimeMs(Number(membership?.createdAt || 0)),
+      normalizeEventTimeMs(timeStamp),
+      normalizeEventTimeMs(eventTimeMs)
+    )
+  };
+  const currentMembership =
+    state.buildContributionMembershipByKey?.[membershipKey] || null;
+  if (
+    !shouldReplaceBuildContributionMembership({
+      current: currentMembership,
+      next: nextMembership
+    })
+  ) {
+    return state;
+  }
+  return {
+    ...state,
+    buildContributionMembershipByKey: {
+      ...(state.buildContributionMembershipByKey || {}),
+      [membershipKey]: nextMembership
+    }
+  };
 }
 
 function upsertBuildContributionInviteState({
@@ -307,6 +395,40 @@ function updateBuildCollaborationState(
   }
 ) {
   let nextState = state;
+  if (
+    getBuildContributionInviteStatus(invite, inviteStatus) === 'accepted' &&
+    Number(invite?.buildId || 0) > 0 &&
+    Number(invite?.userId || 0) > 0
+  ) {
+    nextState = upsertBuildContributionMembershipState({
+      state: nextState,
+      active: true,
+      buildId: Number(invite?.buildId || 0),
+      eventTimeMs,
+      membership: invite,
+      timeStamp,
+      userId: Number(invite?.userId || 0)
+    });
+  }
+  if (
+    getBuildCollaborationRequestStatus(request, requestStatus) === 'accepted' &&
+    Number(request?.buildId || 0) > 0 &&
+    Number(request?.requesterUserId || 0) > 0
+  ) {
+    nextState = upsertBuildContributionMembershipState({
+      state: nextState,
+      active: true,
+      buildId: Number(request?.buildId || 0),
+      eventTimeMs,
+      membership: {
+        buildId: Number(request?.buildId || 0),
+        userId: Number(request?.requesterUserId || 0),
+        acceptedAt: Number(request?.respondedAt || request?.updatedAt || 0)
+      },
+      timeStamp,
+      userId: Number(request?.requesterUserId || 0)
+    });
+  }
   nextState = upsertBuildContributionInviteState({
     state: nextState,
     invite,
@@ -350,6 +472,16 @@ export default function ChatReducer(
         requestStatus: action.requestStatus,
         eventTimeMs: action.eventTimeMs,
         timeStamp: action.timeStamp
+      });
+    case 'UPDATE_BUILD_CONTRIBUTION_MEMBERSHIP':
+      return upsertBuildContributionMembershipState({
+        state,
+        active: action.active,
+        buildId: action.buildId,
+        eventTimeMs: action.eventTimeMs,
+        membership: action.membership,
+        timeStamp: action.timeStamp,
+        userId: action.userId
       });
     case 'AI_CARD_OFFER_WITHDRAWAL': {
       return {

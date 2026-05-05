@@ -1350,6 +1350,24 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildContributionMembership({
+      buildId,
+      userId
+    }: {
+      buildId: number;
+      userId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contributors/${userId}/membership`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async inviteBuildContributor({
       buildId,
       userId
