@@ -48,7 +48,11 @@ import {
   canUseSameOriginBuildPreviewSandbox,
   getBuildPreviewMessageTargetOrigin
 } from '../previewOrigin';
-import { BUILD_APP_IFRAME_ALLOW } from '../iframePermissions';
+import {
+  BUILD_APP_IFRAME_ALLOW,
+  BUILD_APP_PREVIEW_IFRAME_SANDBOX,
+  BUILD_APP_RUNTIME_IFRAME_SANDBOX
+} from '../iframePermissions';
 import { resolveLocalProjectPathFromBase } from './moduleRewrite';
 import {
   BUILD_PROJECT_ASSET_UPLOAD_ACCEPT,
@@ -318,11 +322,6 @@ const BUILD_PROJECT_UNSUPPORTED_UPLOAD_EXTENSIONS = [
 ] as const;
 const EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS: PreviewRuntimeUploadAsset[] = [];
 const PREVIEW_HIDDEN_SUSPEND_DELAY_MS = 1200;
-const PREVIEW_IFRAME_SANDBOX =
-  'allow-scripts allow-downloads allow-pointer-lock';
-const RUNTIME_CAPABILITY_IFRAME_SANDBOX =
-  `${PREVIEW_IFRAME_SANDBOX} allow-same-origin`;
-
 type PreviewLifecycleState = 'active' | 'background' | 'suspended';
 const BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES = new Set([
   'application/json',
@@ -358,8 +357,8 @@ function createPreviewRevision(value: string) {
 
 function getRuntimePreviewIframeSandbox(frameSrc: string | null | undefined) {
   return canUseSameOriginBuildPreviewSandbox(frameSrc)
-    ? RUNTIME_CAPABILITY_IFRAME_SANDBOX
-    : PREVIEW_IFRAME_SANDBOX;
+    ? BUILD_APP_RUNTIME_IFRAME_SANDBOX
+    : BUILD_APP_PREVIEW_IFRAME_SANDBOX;
 }
 
 function getRuntimeIssueLookupTexts(
@@ -4013,7 +4012,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     )}
                     allow={BUILD_APP_IFRAME_ALLOW}
                     allowFullScreen
-                    sandbox={PREVIEW_IFRAME_SANDBOX}
+                    sandbox={BUILD_APP_PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(
                         'primary',
@@ -4050,7 +4049,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     )}
                     allow={BUILD_APP_IFRAME_ALLOW}
                     allowFullScreen
-                    sandbox={PREVIEW_IFRAME_SANDBOX}
+                    sandbox={BUILD_APP_PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(
                         'secondary',
