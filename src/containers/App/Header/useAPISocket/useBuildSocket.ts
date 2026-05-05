@@ -1,6 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
-import { useBuildContext, useKeyContext } from '~/contexts';
+import {
+  useBuildContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import type {
   BuildLiveRunUsageMetric,
   BuildLiveRunState,
@@ -57,6 +62,12 @@ export default function useBuildSocket() {
   const onResetBuildRuns = useBuildContext((v) => v.actions.onResetBuildRuns);
   const onInvalidateBuildStudioActivityFeeds = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioActivityFeeds
+  );
+  const onUpdateBuildCollaborationState = useChatContext(
+    (v) => v.actions.onUpdateBuildCollaborationState
+  );
+  const onUpdateBuildContributionInviteNotification = useNotiContext(
+    (v) => v.actions.onUpdateBuildContributionInviteNotification
   );
   const onPublishBuildRuntimeVerifyResult = useBuildContext(
     (v) => v.actions.onPublishBuildRuntimeVerifyResult
@@ -924,6 +935,49 @@ export default function useBuildSocket() {
       onInvalidateBuildStudioActivityFeeds({ userId: userIdRef.current });
     }
 
+    function handleBuildCollaborationUpdated({
+      invite,
+      inviteId,
+      inviteStatus,
+      request,
+      requestId,
+      requestStatus,
+      eventTimeMs,
+      timeStamp
+    }: {
+      invite?: Record<string, any> | null;
+      inviteId?: number;
+      inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked';
+      request?: Record<string, any> | null;
+      requestId?: number;
+      requestStatus?:
+        | 'pending'
+        | 'invited'
+        | 'accepted'
+        | 'rejected'
+        | 'canceled';
+      eventTimeMs?: number;
+      timeStamp?: number;
+    }) {
+      onUpdateBuildCollaborationState({
+        invite,
+        inviteId,
+        inviteStatus,
+        request,
+        requestId,
+        requestStatus,
+        eventTimeMs,
+        timeStamp
+      });
+      if (invite || inviteId) {
+        onUpdateBuildContributionInviteNotification({
+          invite,
+          inviteId: Number(invite?.id || inviteId || 0),
+          status: inviteStatus
+        });
+      }
+    }
+
     socket.on('build_generate_update', handleGenerateUpdate);
     socket.on('build_generate_complete', handleGenerateComplete);
     socket.on('build_generate_error', handleGenerateError);
@@ -933,6 +987,7 @@ export default function useBuildSocket() {
     socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
     socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
     socket.on('build_activity_updated', handleBuildActivityUpdated);
+    socket.on('build_collaboration_updated', handleBuildCollaborationUpdated);
     socket.on('connect', resumeTrackedBuildRuns);
     window.addEventListener('pageshow', resumeTrackedBuildRuns);
     window.addEventListener('online', resumeTrackedBuildRuns);
@@ -948,6 +1003,7 @@ export default function useBuildSocket() {
       socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
       socket.off('build_runtime_verify_error', handleRuntimeVerifyError);
       socket.off('build_activity_updated', handleBuildActivityUpdated);
+      socket.off('build_collaboration_updated', handleBuildCollaborationUpdated);
       socket.off('connect', resumeTrackedBuildRuns);
       window.removeEventListener('pageshow', resumeTrackedBuildRuns);
       window.removeEventListener('online', resumeTrackedBuildRuns);

@@ -100,20 +100,40 @@ export default function ChatActions(dispatch: Dispatch) {
         fileSize
       });
     },
-    onUpdateBuildContributionInviteMessages({
+    onUpdateBuildCollaborationState({
       invite,
       inviteId,
-      status
+      inviteStatus,
+      request,
+      requestId,
+      requestStatus,
+      eventTimeMs,
+      timeStamp
     }: {
       invite?: Record<string, any> | null;
-      inviteId: number;
-      status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+      inviteId?: number;
+      inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked';
+      request?: Record<string, any> | null;
+      requestId?: number;
+      requestStatus?:
+        | 'pending'
+        | 'invited'
+        | 'accepted'
+        | 'rejected'
+        | 'canceled';
+      eventTimeMs?: number;
+      timeStamp?: number;
     }) {
       return dispatch({
-        type: 'UPDATE_BUILD_CONTRIBUTION_INVITE_MESSAGES',
+        type: 'UPDATE_BUILD_COLLABORATION_STATE',
         invite,
         inviteId,
-        status
+        inviteStatus,
+        request,
+        requestId,
+        requestStatus,
+        eventTimeMs,
+        timeStamp
       });
     },
     onDeleteAIChatFile({

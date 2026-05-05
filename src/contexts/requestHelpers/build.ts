@@ -46,6 +46,19 @@ export default function buildRequestHelpers({
     return headers;
   }
 
+  function handleBuildCollaborationActionError(error: any) {
+    const responseData = error?.response?.data || {};
+    return Promise.resolve((handleError as any)(error)).catch((handledError) =>
+      Promise.reject({
+        ...handledError,
+        responseData,
+        eventTimeMs: responseData.eventTimeMs,
+        invite: responseData.invite,
+        request: responseData.request
+      })
+    );
+  }
+
   async function readBuildRuntimeAiChatStream({
     response,
     onEvent
@@ -1389,7 +1402,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleError(error);
+        return handleBuildCollaborationActionError(error);
       }
     },
 
@@ -1408,7 +1421,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleError(error);
+        return handleBuildCollaborationActionError(error);
       }
     },
 
@@ -1479,7 +1492,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleError(error);
+        return handleBuildCollaborationActionError(error);
       }
     },
 
@@ -1498,7 +1511,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleError(error);
+        return handleBuildCollaborationActionError(error);
       }
     },
 

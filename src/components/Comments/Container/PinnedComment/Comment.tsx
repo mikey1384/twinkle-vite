@@ -684,7 +684,7 @@ function Comment({
                 uploaderId={uploader.id}
               />
             )}
-            {!isPreview && (
+            {!isPreview && !compactMode && (
               <RewardStatus
                 contentType="comment"
                 contentId={comment.id}

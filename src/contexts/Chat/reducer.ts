@@ -63,231 +63,267 @@ function mergeChannelSettings({
   return merged;
 }
 
-function getBuildContributionInvitePatch({
-  invite,
-  status
-}: {
-  invite?: Record<string, any> | null;
-  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
-}) {
-  const hasAcceptedAt = Object.prototype.hasOwnProperty.call(
-    invite || {},
-    'acceptedAt'
-  );
-  const hasDeclinedAt = Object.prototype.hasOwnProperty.call(
-    invite || {},
-    'declinedAt'
-  );
-  const hasRevokedAt = Object.prototype.hasOwnProperty.call(
-    invite || {},
-    'revokedAt'
-  );
-  const acceptedAt = hasAcceptedAt
-    ? Number(invite?.acceptedAt || 0)
-    : status === 'accepted'
-      ? 1
-      : 0;
-  const declinedAt = hasDeclinedAt
-    ? Number(invite?.declinedAt || 0)
-    : status === 'declined'
-      ? 1
-      : 0;
-  const revokedAt = hasRevokedAt
-    ? Number(invite?.revokedAt || 0)
-    : status === 'revoked'
-      ? 1
-      : 0;
-  const resolvedStatus =
-    revokedAt > 0
-      ? 'revoked'
-      : declinedAt > 0
-        ? 'declined'
-        : acceptedAt > 0
-          ? 'accepted'
-          : status || 'pending';
-
-  return {
-    ...(invite?.buildId ? { buildId: Number(invite.buildId) } : {}),
-    ...(invite?.userId ? { userId: Number(invite.userId) } : {}),
-    acceptedAt,
-    declinedAt,
-    revokedAt,
-    status: resolvedStatus
-  };
-}
-
 function getBuildContributionInviteMembershipKey(invite: any) {
   const buildId = Number(invite?.buildId || 0);
   const userId = Number(invite?.userId || 0);
   return buildId > 0 && userId > 0 ? `${buildId}:${userId}` : '';
 }
 
-function buildContributionInviteMatches({
-  currentInvite,
-  invite,
-  inviteId,
-  messageInviteId,
-  status
-}: {
-  currentInvite: Record<string, any>;
-  invite?: Record<string, any> | null;
-  inviteId: number;
-  messageInviteId: number;
-  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
-}) {
-  if (messageInviteId === inviteId) return true;
-  const acceptedMembership =
-    status === 'accepted' || Number(invite?.acceptedAt || 0) > 0;
-  if (!acceptedMembership) return false;
-  const currentMembershipKey =
-    getBuildContributionInviteMembershipKey(currentInvite);
-  const updatedMembershipKey = getBuildContributionInviteMembershipKey(invite);
-  return Boolean(
-    currentMembershipKey && currentMembershipKey === updatedMembershipKey
+function getBuildContributionInviteStatus(invite: any, fallbackStatus?: string) {
+  const status = String(invite?.status || fallbackStatus || '').trim();
+  if (
+    status === 'accepted' ||
+    status === 'declined' ||
+    status === 'revoked'
+  ) {
+    return status;
+  }
+  if (Number(invite?.revokedAt || 0) > 0) return 'revoked';
+  if (Number(invite?.declinedAt || 0) > 0) return 'declined';
+  if (Number(invite?.acceptedAt || 0) > 0) return 'accepted';
+  return 'pending';
+}
+
+function getBuildCollaborationRequestStatus(
+  request: any,
+  fallbackStatus?: string
+) {
+  const status = String(request?.status || fallbackStatus || '').trim();
+  if (
+    status === 'accepted' ||
+    status === 'invited' ||
+    status === 'rejected' ||
+    status === 'canceled'
+  ) {
+    return status;
+  }
+  if (Number(request?.canceledAt || 0) > 0) return 'canceled';
+  return 'pending';
+}
+
+function getStatusRank(status: string) {
+  if (status === 'accepted') return 3;
+  if (status === 'declined' || status === 'rejected' || status === 'canceled') {
+    return 2;
+  }
+  if (status === 'revoked') return 1;
+  return 0;
+}
+
+function normalizeEventTimeMs(value?: number) {
+  const normalizedValue = Number(value || 0);
+  if (!normalizedValue) return 0;
+  return normalizedValue > 1000000000000
+    ? normalizedValue
+    : normalizedValue * 1000;
+}
+
+function getInviteEventTime(
+  invite: any,
+  fallbackTimeStamp?: number,
+  eventTimeMs?: number
+) {
+  return Math.max(
+    normalizeEventTimeMs(Number(invite?.acceptedAt || 0)),
+    normalizeEventTimeMs(Number(invite?.declinedAt || 0)),
+    normalizeEventTimeMs(Number(invite?.revokedAt || 0)),
+    normalizeEventTimeMs(Number(invite?.createdAt || 0)),
+    normalizeEventTimeMs(fallbackTimeStamp),
+    normalizeEventTimeMs(eventTimeMs)
   );
 }
 
-function updateBuildContributionInviteMessage(
-  message: any,
-  {
-    invite,
-    inviteId,
-    status
-  }: {
-    invite?: Record<string, any> | null;
-    inviteId: number;
-    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
-  }
+function getRequestEventTime(
+  request: any,
+  fallbackTimeStamp?: number,
+  eventTimeMs?: number
 ) {
-  if (message?.rootType !== 'buildContributionInvite') return message;
-  const settings = loadChannelSettings(message.settings);
-  const currentInvite = settings?.buildContributionInvite || {};
-  const messageInviteId = Number(currentInvite.inviteId || message.rootId || 0);
+  return Math.max(
+    normalizeEventTimeMs(Number(request?.respondedAt || 0)),
+    normalizeEventTimeMs(Number(request?.canceledAt || 0)),
+    normalizeEventTimeMs(Number(request?.hiddenAt || 0)),
+    normalizeEventTimeMs(Number(request?.updatedAt || 0)),
+    normalizeEventTimeMs(Number(request?.createdAt || 0)),
+    normalizeEventTimeMs(fallbackTimeStamp),
+    normalizeEventTimeMs(eventTimeMs)
+  );
+}
+
+function shouldReplaceBuildCollaborationEntry({
+  current,
+  next,
+  status
+}: {
+  current: any;
+  next: any;
+  status: string;
+}) {
+  if (!current) return true;
+  const currentTime = Number(current.__eventTime || 0);
+  const nextTime = Number(next.__eventTime || 0);
+  if (nextTime !== currentTime) return nextTime > currentTime;
+  return getStatusRank(status) >= getStatusRank(current.status);
+}
+
+function upsertBuildContributionInviteState({
+  state,
+  invite,
+  inviteId,
+  status,
+  eventTimeMs,
+  timeStamp
+}: {
+  state: any;
+  invite?: Record<string, any> | null;
+  inviteId?: number;
+  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+  eventTimeMs?: number;
+  timeStamp?: number;
+}) {
+  const resolvedInviteId = Number(invite?.id || inviteId || 0);
+  if (!resolvedInviteId) return state;
+  const resolvedStatus = getBuildContributionInviteStatus(invite, status);
+  const nextInvite = {
+    ...(invite || {}),
+    id: resolvedInviteId,
+    status: resolvedStatus,
+    __eventTime: getInviteEventTime(invite, timeStamp, eventTimeMs)
+  };
+  const currentInvite =
+    state.buildContributionInvitesById?.[resolvedInviteId] || null;
   if (
-    !buildContributionInviteMatches({
-      currentInvite,
-      invite,
-      inviteId,
-      messageInviteId,
-      status
+    !shouldReplaceBuildCollaborationEntry({
+      current: currentInvite,
+      next: nextInvite,
+      status: resolvedStatus
     })
   ) {
-    return message;
+    return state;
   }
-
+  const membershipKey = getBuildContributionInviteMembershipKey(nextInvite);
   return {
-    ...message,
-    settings: {
-      ...settings,
-      buildContributionInvite: {
-        ...currentInvite,
-        ...getBuildContributionInvitePatch({ invite, status }),
-        inviteId: messageInviteId || inviteId
-      }
-    }
+    ...state,
+    buildContributionInvitesById: {
+      ...(state.buildContributionInvitesById || {}),
+      [resolvedInviteId]: nextInvite
+    },
+    ...(membershipKey
+      ? {
+          buildContributionInviteMembershipByKey: {
+            ...(state.buildContributionInviteMembershipByKey || {}),
+            [membershipKey]: nextInvite
+          }
+        }
+      : {})
   };
 }
 
-function updateBuildContributionInviteMessagesObj(
-  messagesObj: Record<string, any> | null | undefined,
-  {
-    invite,
-    inviteId,
-    status
-  }: {
-    invite?: Record<string, any> | null;
-    inviteId: number;
-    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
-  }
-) {
-  if (!messagesObj) return { changed: false, messagesObj };
-  let changed = false;
-  const nextMessagesObj: Record<string, any> = {};
+function getBuildCollaborationRequestMembershipKey(request: any) {
+  const buildId = Number(request?.buildId || 0);
+  const requesterUserId = Number(request?.requesterUserId || 0);
+  return buildId > 0 && requesterUserId > 0
+    ? `${buildId}:${requesterUserId}`
+    : '';
+}
 
-  for (const [messageId, message] of Object.entries<any>(messagesObj)) {
-    const nextMessage = updateBuildContributionInviteMessage(message, {
-      invite,
-      inviteId,
-      status
-    });
-    if (nextMessage !== message) changed = true;
-    nextMessagesObj[messageId] = nextMessage;
+function upsertBuildCollaborationRequestState({
+  state,
+  request,
+  requestId,
+  status,
+  eventTimeMs,
+  timeStamp
+}: {
+  state: any;
+  request?: Record<string, any> | null;
+  requestId?: number;
+  status?: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
+  eventTimeMs?: number;
+  timeStamp?: number;
+}) {
+  const resolvedRequestId = Number(request?.id || requestId || 0);
+  if (!resolvedRequestId) return state;
+  const resolvedStatus = getBuildCollaborationRequestStatus(request, status);
+  const nextRequest = {
+    ...(request || {}),
+    id: resolvedRequestId,
+    status: resolvedStatus,
+    __eventTime: getRequestEventTime(request, timeStamp, eventTimeMs)
+  };
+  const currentRequest =
+    state.buildCollaborationRequestsById?.[resolvedRequestId] || null;
+  if (
+    !shouldReplaceBuildCollaborationEntry({
+      current: currentRequest,
+      next: nextRequest,
+      status: resolvedStatus
+    })
+  ) {
+    return state;
   }
-
+  const membershipKey = getBuildCollaborationRequestMembershipKey(nextRequest);
   return {
-    changed,
-    messagesObj: changed ? nextMessagesObj : messagesObj
+    ...state,
+    buildCollaborationRequestsById: {
+      ...(state.buildCollaborationRequestsById || {}),
+      [resolvedRequestId]: nextRequest
+    },
+    ...(membershipKey
+      ? {
+          buildCollaborationRequestMembershipByKey: {
+            ...(state.buildCollaborationRequestMembershipByKey || {}),
+            [membershipKey]: nextRequest
+          }
+        }
+      : {})
   };
 }
 
-function updateBuildContributionInviteMessages(
+function updateBuildCollaborationState(
   state: any,
   {
     invite,
     inviteId,
-    status
+    inviteStatus,
+    request,
+    requestId,
+    requestStatus,
+    eventTimeMs,
+    timeStamp
   }: {
     invite?: Record<string, any> | null;
-    inviteId: number;
-    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+    inviteId?: number;
+    inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked';
+    request?: Record<string, any> | null;
+    requestId?: number;
+    requestStatus?:
+      | 'pending'
+      | 'invited'
+      | 'accepted'
+      | 'rejected'
+      | 'canceled';
+    eventTimeMs?: number;
+    timeStamp?: number;
   }
 ) {
-  const resolvedInviteId = Number(invite?.id || inviteId || 0);
-  if (!resolvedInviteId || !state?.channelsObj) return state;
-
-  let changed = false;
-  const nextChannelsObj: Record<string, any> = {};
-  for (const [channelId, channel] of Object.entries<any>(state.channelsObj)) {
-    let channelChanged = false;
-    const messagesResult = updateBuildContributionInviteMessagesObj(
-      channel?.messagesObj,
-      {
-        invite,
-        inviteId: resolvedInviteId,
-        status
-      }
-    );
-    if (messagesResult.changed) channelChanged = true;
-
-    let nextSubchannelObj = channel?.subchannelObj;
-    if (channel?.subchannelObj) {
-      nextSubchannelObj = {};
-      for (const [subchannelId, subchannel] of Object.entries<any>(
-        channel.subchannelObj
-      )) {
-        const subchannelMessagesResult =
-          updateBuildContributionInviteMessagesObj(subchannel?.messagesObj, {
-            invite,
-            inviteId: resolvedInviteId,
-            status
-          });
-        if (subchannelMessagesResult.changed) channelChanged = true;
-        nextSubchannelObj[subchannelId] = subchannelMessagesResult.changed
-          ? {
-              ...subchannel,
-              messagesObj: subchannelMessagesResult.messagesObj
-            }
-          : subchannel;
-      }
-    }
-
-    if (channelChanged) {
-      changed = true;
-      nextChannelsObj[channelId] = {
-        ...channel,
-        messagesObj: messagesResult.messagesObj,
-        ...(channel?.subchannelObj ? { subchannelObj: nextSubchannelObj } : {})
-      };
-    } else {
-      nextChannelsObj[channelId] = channel;
-    }
-  }
-
-  if (!changed) return state;
-  return {
-    ...state,
-    channelsObj: nextChannelsObj
-  };
+  let nextState = state;
+  nextState = upsertBuildContributionInviteState({
+    state: nextState,
+    invite,
+    inviteId,
+    status: inviteStatus,
+    eventTimeMs,
+    timeStamp
+  });
+  nextState = upsertBuildCollaborationRequestState({
+    state: nextState,
+    request,
+    requestId,
+    status: requestStatus,
+    eventTimeMs,
+    timeStamp
+  });
+  return nextState;
 }
 
 export default function ChatReducer(
@@ -304,11 +340,16 @@ export default function ChatReducer(
         chessThemeVersion: (state.chessThemeVersion || 0) + 1
       };
     }
-    case 'UPDATE_BUILD_CONTRIBUTION_INVITE_MESSAGES':
-      return updateBuildContributionInviteMessages(state, {
+    case 'UPDATE_BUILD_COLLABORATION_STATE':
+      return updateBuildCollaborationState(state, {
         invite: action.invite,
         inviteId: action.inviteId,
-        status: action.status
+        inviteStatus: action.inviteStatus,
+        request: action.request,
+        requestId: action.requestId,
+        requestStatus: action.requestStatus,
+        eventTimeMs: action.eventTimeMs,
+        timeStamp: action.timeStamp
       });
     case 'AI_CARD_OFFER_WITHDRAWAL': {
       return {

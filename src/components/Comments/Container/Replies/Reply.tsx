@@ -700,7 +700,7 @@ function Reply({
                   uploaderId={uploader.id}
                 />
               )}
-              {isDeleteNotification ? null : (
+              {!compactMode && !isDeleteNotification ? (
                 <RewardStatus
                   noMarginForEditButton
                   contentType="comment"
@@ -714,7 +714,7 @@ function Reply({
                   theme={theme}
                   rewards={rewards}
                 />
-              )}
+              ) : null}
               <div
                 className={css`
                   position: relative;

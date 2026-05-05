@@ -181,8 +181,6 @@ export default function BuildContributorInvitePicker({
   const contributorToRemoveName = contributorToRemove
     ? contributorToRemove.username || `User ${contributorToRemove.userId}`
     : '';
-  const contributorToRemoveAccepted =
-    Number(contributorToRemove?.acceptedAt || 0) > 0;
 
   return (
     <>
@@ -267,30 +265,15 @@ export default function BuildContributorInvitePicker({
         <ConfirmModal
           modalOverModal={confirmModalOverModal}
           modalLevel={confirmModalLevel}
-          title={
-            contributorToRemoveAccepted
-              ? 'Remove from Team'
-              : 'Cancel Invitation'
-          }
+          title="Cancel Invitation"
           description={
             <div style={{ textAlign: 'center', lineHeight: 1.45 }}>
-              {contributorToRemoveAccepted ? (
-                <>
-                  Remove <b>{contributorToRemoveName}</b> from this Build's
-                  team?
-                </>
-              ) : (
-                <>
-                  Cancel the invitation for <b>{contributorToRemoveName}</b>?
-                </>
-              )}
+              Cancel the invitation for <b>{contributorToRemoveName}</b>?
             </div>
           }
           descriptionFontSize="1.65rem"
           confirmButtonColor="red"
-          confirmButtonLabel={
-            contributorToRemoveAccepted ? 'Remove' : 'Cancel Invite'
-          }
+          confirmButtonLabel="Cancel Invite"
           onHide={() => setContributorToRemove(null)}
           onConfirm={() =>
             handleRemoveContributor(Number(contributorToRemove.userId))
@@ -363,6 +346,13 @@ export default function BuildContributorInvitePicker({
 
   async function handleRemoveContributor(userId: number) {
     if (!onRemoveContributor || removingContributorUserId) return;
+    const contributor = contributors.find(
+      (candidate) => Number(candidate.userId) === Number(userId)
+    );
+    if (Number(contributor?.acceptedAt || 0) > 0) {
+      setContributorToRemove(null);
+      return;
+    }
     setRemovingContributorUserId(userId);
     try {
       await onRemoveContributor(userId);
@@ -377,6 +367,7 @@ export default function BuildContributorInvitePicker({
     status?: string
   ) {
     const userId = Number(contributor.userId);
+    const accepted = Number(contributor.acceptedAt || 0) > 0;
     return (
       <div key={userId} className={collaboratorRowClass}>
         <div className={collaboratorIdentityClass}>
@@ -390,11 +381,13 @@ export default function BuildContributorInvitePicker({
           </span>
           {status ? <span className={pendingLabelClass}>{status}</span> : null}
         </div>
-        {onRemoveContributor ? (
+        {onRemoveContributor && !accepted ? (
           <button
             type="button"
             className={removeButtonClass}
-            aria-label={`Remove ${contributor.username || `User ${userId}`}`}
+            aria-label={`Cancel invitation for ${
+              contributor.username || `User ${userId}`
+            }`}
             disabled={Boolean(removingContributorUserId)}
             onClick={() => setContributorToRemove(contributor)}
           >

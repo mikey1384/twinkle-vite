@@ -794,6 +794,7 @@ function NotiMessage({
         updateBuildContributionInviteStatus({
           invite: result.invite,
           inviteId,
+          eventTimeMs: result.eventTimeMs,
           status: 'accepted'
         });
         setBuildInviteStatusOverride('accepted');
@@ -829,6 +830,7 @@ function NotiMessage({
         updateBuildContributionInviteStatus({
           invite: result.invite,
           inviteId,
+          eventTimeMs: result.eventTimeMs,
           status: 'declined'
         });
         setBuildInviteStatusOverride('declined');

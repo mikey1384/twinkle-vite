@@ -7,8 +7,8 @@ type BuildContributionInviteStatus =
   | 'revoked';
 
 export function useBuildContributionInviteStatusUpdater() {
-  const onUpdateBuildContributionInviteMessages = useChatContext(
-    (v) => v.actions.onUpdateBuildContributionInviteMessages
+  const onUpdateBuildCollaborationState = useChatContext(
+    (v) => v.actions.onUpdateBuildCollaborationState
   );
   const onUpdateBuildContributionInviteNotification = useNotiContext(
     (v) => v.actions.onUpdateBuildContributionInviteNotification
@@ -17,10 +17,12 @@ export function useBuildContributionInviteStatusUpdater() {
   function updateBuildContributionInviteStatus({
     invite,
     inviteId,
+    eventTimeMs,
     status
   }: {
     invite?: Record<string, any> | null;
     inviteId: number;
+    eventTimeMs?: number;
     status?: BuildContributionInviteStatus;
   }) {
     onUpdateBuildContributionInviteNotification({
@@ -28,10 +30,11 @@ export function useBuildContributionInviteStatusUpdater() {
       inviteId,
       status
     });
-    onUpdateBuildContributionInviteMessages({
+    onUpdateBuildCollaborationState({
       invite,
       inviteId,
-      status
+      inviteStatus: status,
+      eventTimeMs: Number(eventTimeMs || Date.now())
     });
   }
 

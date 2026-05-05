@@ -1,16 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
-import { useAppContext } from '~/contexts';
-import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
+import { useAppContext, useChatContext } from '~/contexts';
 
 interface BuildContributionInvitePayload {
   type?: string;
   buildId?: number;
   inviteId?: number;
+  userId?: number;
+  invitedByUserId?: number;
   title?: string;
   status?: BuildContributionInviteStatus;
   acceptedAt?: number;
@@ -45,11 +46,9 @@ export default function BuildContributionInvite({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
-  const loadMyBuildCollaborationRequest = useAppContext(
-    (v) => v.requestHelpers.loadMyBuildCollaborationRequest
+  const onUpdateBuildCollaborationState = useChatContext(
+    (v) => v.actions.onUpdateBuildCollaborationState
   );
-  const updateBuildContributionInviteStatus =
-    useBuildContributionInviteStatusUpdater();
   const payload = useMemo(
     () => invite || parseBuildInvitePayload(content),
     [content, invite]
@@ -57,41 +56,22 @@ export default function BuildContributionInvite({
   const buildId = Number(payload?.buildId || 0);
   const inviteId = Number(payload?.inviteId || 0);
   const title = String(payload?.title || 'Build');
-  const payloadStatus = getBuildInviteStatus(payload);
-  const [status, setStatus] =
-    useState<BuildContributionInviteStatus>(payloadStatus);
-  const [alreadyOnTeam, setAlreadyOnTeam] = useState(false);
-  const [loading, setLoading] = useState('');
-  const [error, setError] = useState('');
   const sentByMe = Number(sender.id) === Number(myId);
-  const displayStatus = alreadyOnTeam ? 'accepted' : status;
-
-  useEffect(() => {
-    setStatus(payloadStatus);
-  }, [inviteId, payloadStatus]);
-
-  useEffect(() => {
-    setAlreadyOnTeam(false);
-    if (!buildId || sentByMe) return;
-    let isMounted = true;
-    loadMembershipState();
-
-    async function loadMembershipState() {
-      try {
-        const result = await loadMyBuildCollaborationRequest(buildId);
-        if (!isMounted) return;
-        setAlreadyOnTeam(result?.request?.status === 'accepted');
-      } catch (error) {
-        console.error('Failed to load build team membership:', error);
-      }
-    }
-
-    return () => {
-      isMounted = false;
-    };
-    // loadMyBuildCollaborationRequest is a stable context request helper.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, sentByMe]);
+  const membershipKey =
+    buildId > 0 && Number(payload?.userId || 0) > 0
+      ? `${buildId}:${Number(payload?.userId || 0)}`
+      : '';
+  const cachedInviteById = useChatContext((v) =>
+    inviteId > 0 ? v.state.buildContributionInvitesById?.[inviteId] : null
+  );
+  const cachedInviteByMembership = useChatContext((v) =>
+    membershipKey
+      ? v.state.buildContributionInviteMembershipByKey?.[membershipKey]
+      : null
+  );
+  const canonicalInvite = cachedInviteById || cachedInviteByMembership || null;
+  const status = getBuildInviteStatus(canonicalInvite || payload);
+  const hasCanonicalInviteState = Boolean(canonicalInvite || invite);
 
   if (!buildId || !inviteId) {
     return <span>{content}</span>;
@@ -106,26 +86,26 @@ export default function BuildContributionInvite({
       <div className={inviteBodyClass}>
         {sentByMe ? (
           <span>
-            {displayStatus === 'accepted'
+            {status === 'accepted'
               ? 'This invite was accepted for '
-              : displayStatus === 'declined'
+              : status === 'declined'
                 ? 'This invite was declined for '
-                : displayStatus === 'revoked'
+                : status === 'revoked'
                   ? 'This invite was revoked for '
                   : 'You invited this user to join the team for '}
             <strong>{title}</strong>.
           </span>
-        ) : displayStatus === 'accepted' ? (
+        ) : status === 'accepted' ? (
           <span>
             You are on the team for{' '}
             <strong>{title}</strong>.
           </span>
-        ) : displayStatus === 'declined' ? (
+        ) : status === 'declined' ? (
           <span>
             You declined {sender.username}&apos;s invite for{' '}
             <strong>{title}</strong>.
           </span>
-        ) : displayStatus === 'revoked' ? (
+        ) : status === 'revoked' ? (
           <span>
             {sender.username}&apos;s invite for <strong>{title}</strong> was
             revoked.
@@ -137,7 +117,6 @@ export default function BuildContributionInvite({
           </span>
         )}
       </div>
-      {error ? <div className={errorClass}>{error}</div> : null}
       <div className={actionsClass}>
         <Button
           color="darkerGray"
@@ -153,36 +132,31 @@ export default function BuildContributionInvite({
         >
           Open Build
         </Button>
-        {!sentByMe && displayStatus === 'pending' ? (
+        {!sentByMe && hasCanonicalInviteState && status === 'pending' ? (
           <>
-            <Button
-              color="darkerGray"
-              variant="outline"
-              size="sm"
-              loading={loading === 'decline'}
-              disabled={Boolean(loading)}
-              onClick={handleDecline}
-            >
-              Decline
-            </Button>
             <Button
               color="logoBlue"
               variant="soft"
               size="sm"
-              loading={loading === 'accept'}
-              disabled={Boolean(loading)}
               onClick={handleAccept}
             >
               Accept
             </Button>
+            <Button
+              color="darkerGray"
+              variant="outline"
+              size="sm"
+              onClick={handleDecline}
+            >
+              Decline
+            </Button>
           </>
         ) : null}
-        {!sentByMe && displayStatus === 'accepted' ? (
+        {!sentByMe && status === 'accepted' ? (
           <Button
             color="green"
             variant="soft"
             size="sm"
-            disabled={Boolean(loading)}
             onClick={handleOpenWorkspace}
           >
             Open Workspace
@@ -193,65 +167,73 @@ export default function BuildContributionInvite({
   );
 
   async function handleAccept() {
-    if (loading) return;
-    setLoading('accept');
-    setError('');
     try {
       const result = await acceptBuildContributorInvite({
         buildId,
         inviteId
       });
       if (result?.success) {
-        const nextStatus = result?.invite
-          ? getBuildInviteStatus(result.invite)
-          : 'accepted';
-        setStatus(nextStatus);
-        setAlreadyOnTeam(nextStatus === 'accepted');
-        updateInviteCaches({
+        onUpdateBuildCollaborationState({
           invite: result.invite,
-          status: nextStatus
+          inviteId,
+          inviteStatus: 'accepted',
+          request: result.request,
+          requestId: Number(result.request?.id || 0),
+          requestStatus: 'accepted',
+          eventTimeMs: Number(result.eventTimeMs || Date.now()),
+          timeStamp: Math.floor(Date.now() / 1000)
         });
         handleOpenWorkspace();
       }
     } catch (error: any) {
-      setError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to accept invite'
-      );
-    } finally {
-      setLoading('');
+      if (applyBuildInviteActionState(error)) return;
+      console.error('Failed to accept build invite:', error);
     }
   }
 
   async function handleDecline() {
-    if (loading) return;
-    setLoading('decline');
-    setError('');
     try {
       const result = await declineBuildContributorInvite({
         buildId,
         inviteId
       });
       if (result?.success) {
-        const nextStatus = result?.invite
-          ? getBuildInviteStatus(result.invite)
-          : 'declined';
-        setStatus(nextStatus);
-        updateInviteCaches({
+        onUpdateBuildCollaborationState({
           invite: result.invite,
-          status: nextStatus
+          inviteId,
+          inviteStatus: 'declined',
+          eventTimeMs: Number(result.eventTimeMs || Date.now()),
+          timeStamp: Math.floor(Date.now() / 1000)
         });
       }
     } catch (error: any) {
-      setError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to decline invite'
-      );
-    } finally {
-      setLoading('');
+      if (applyBuildInviteActionState(error)) return;
+      console.error('Failed to decline build invite:', error);
     }
+  }
+
+  function applyBuildInviteActionState(error: any) {
+    const nextInvite = error?.invite || error?.responseData?.invite || null;
+    const nextRequest = error?.request || error?.responseData?.request || null;
+    const eventTimeMs = Number(
+      error?.eventTimeMs || error?.responseData?.eventTimeMs || Date.now()
+    );
+    if (!nextInvite && !nextRequest) return false;
+    onUpdateBuildCollaborationState({
+      invite: nextInvite,
+      inviteId: Number(nextInvite?.id || inviteId || 0),
+      inviteStatus: nextInvite
+        ? getBuildInviteStatus(nextInvite as BuildContributionInvitePayload)
+        : undefined,
+      request: nextRequest,
+      requestId: Number(nextRequest?.id || 0),
+      requestStatus: nextRequest
+        ? getBuildRequestStatusFromActionState(nextRequest)
+        : undefined,
+      eventTimeMs,
+      timeStamp: Math.floor(Date.now() / 1000)
+    });
+    return true;
   }
 
   function handleOpenWorkspace() {
@@ -259,20 +241,6 @@ export default function BuildContributionInvite({
       state: {
         openVersionsPanel: true
       }
-    });
-  }
-
-  function updateInviteCaches({
-    invite,
-    status
-  }: {
-    invite?: Record<string, any> | null;
-    status: BuildContributionInviteStatus;
-  }) {
-    updateBuildContributionInviteStatus({
-      invite,
-      inviteId,
-      status
     });
   }
 }
@@ -311,6 +279,22 @@ function getBuildInviteStatus(
   return 'pending';
 }
 
+function getBuildRequestStatusFromActionState(
+  request: Record<string, any>
+): 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled' {
+  const status = String(request?.status || '').trim();
+  if (
+    status === 'invited' ||
+    status === 'accepted' ||
+    status === 'rejected' ||
+    status === 'canceled'
+  ) {
+    return status;
+  }
+  if (Number(request?.canceledAt || 0) > 0) return 'canceled';
+  return 'pending';
+}
+
 const inviteCardClass = css`
   border: 1px solid ${Color.pink(0.55)};
   border-radius: ${borderRadius};
@@ -339,10 +323,4 @@ const actionsClass = css`
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
-`;
-
-const errorClass = css`
-  color: #be123c;
-  font-weight: 800;
-  font-size: 0.9rem;
 `;

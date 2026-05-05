@@ -414,6 +414,7 @@ export default function BuildDetails({
         updateBuildContributionInviteStatus({
           invite: result.invite,
           inviteId,
+          eventTimeMs: result.eventTimeMs,
           status: 'accepted'
         });
         setCollaborationRequest((current) =>
@@ -446,6 +447,7 @@ export default function BuildDetails({
         updateBuildContributionInviteStatus({
           invite: result.invite,
           inviteId,
+          eventTimeMs: result.eventTimeMs,
           status: 'declined'
         });
         setCollaborationRequest(null);

@@ -978,7 +978,7 @@ function Comment({
                       uploaderId={uploader?.id}
                     />
                   )}
-                  {!isPreview && !isDeleteNotification && (
+                  {!isPreview && !compactMode && !isDeleteNotification && (
                     <RewardStatus
                       contentType="comment"
                       contentId={comment.id}
