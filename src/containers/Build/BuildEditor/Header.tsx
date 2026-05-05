@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
@@ -326,11 +326,13 @@ function HeaderActionItem({
 function BuildVisibilityBadge({
   buildId,
   canOpenRuntime,
-  isPublic
+  isPublic,
+  runtimeBackState
 }: {
   buildId: number;
   canOpenRuntime: boolean;
   isPublic: boolean;
+  runtimeBackState: RuntimeBackState;
 }) {
   const badgeContent = (
     <>
@@ -343,6 +345,7 @@ function BuildVisibilityBadge({
     return (
       <Link
         to={getBuildRuntimePath(buildId)}
+        state={runtimeBackState}
         className={badgePillClass}
         style={getVisibilityBadgeStyle(true)}
         title="Open public app"
@@ -369,10 +372,12 @@ function BuildVisibilityBadge({
 
 function BuildReleaseStatusBadge({
   buildId,
-  releaseStatus
+  releaseStatus,
+  runtimeBackState
 }: {
   buildId: number;
   releaseStatus: NonNullable<ReturnType<typeof normalizeReleaseStatus>>;
+  runtimeBackState: RuntimeBackState;
 }) {
   const hasUnpublishedChanges =
     releaseStatus.hasUnpublishedChanges ||
@@ -391,6 +396,7 @@ function BuildReleaseStatusBadge({
     return (
       <Link
         to={getBuildRuntimePath(buildId)}
+        state={runtimeBackState}
         className={badgePillClass}
         style={getReleaseStatusBadgeStyle(releaseStatus.state)}
         title="Open live app"
@@ -436,6 +442,14 @@ export default function Header({
   onTogglePublish,
   onUnpublish
 }: HeaderProps) {
+  const location = useLocation();
+  const runtimeBackState = React.useMemo(
+    () => ({
+      runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
+      runtimeBackLabel: 'Back to Workspace'
+    }),
+    [location.hash, location.pathname, location.search]
+  );
   const isContributionFork =
     build.contributionStatus && build.contributionStatus !== 'none';
   const contributionStatus = normalizeContributionStatus(
@@ -549,12 +563,14 @@ export default function Header({
                 canOpenRuntime={canOpenRuntime}
                 buildId={Number(build.id)}
                 isPublic={Boolean(build.isPublic)}
+                runtimeBackState={runtimeBackState}
               />
             ) : null}
             {build.isPublic && releaseStatus ? (
               <BuildReleaseStatusBadge
                 buildId={Number(build.id)}
                 releaseStatus={releaseStatus}
+                runtimeBackState={runtimeBackState}
               />
             ) : null}
             {showContributionStatusBadge ? (
@@ -585,6 +601,7 @@ export default function Header({
               canOpenRuntime={canOpenRuntime}
               buildId={Number(build.id)}
               isPublic={Boolean(build.isPublic)}
+              runtimeBackState={runtimeBackState}
             />
           </HeaderActionItem>
         ) : null}
@@ -593,6 +610,7 @@ export default function Header({
             <BuildReleaseStatusBadge
               buildId={Number(build.id)}
               releaseStatus={releaseStatus}
+              runtimeBackState={runtimeBackState}
             />
           </HeaderActionItem>
         ) : null}
@@ -869,6 +887,11 @@ function normalizeCollaborationMode(
   value: unknown
 ): 'private' | 'open_source' {
   return value === 'open_source' ? value : 'private';
+}
+
+interface RuntimeBackState {
+  runtimeBackTo: string;
+  runtimeBackLabel: string;
 }
 
 function getBuildRuntimePath(buildId: number) {

@@ -895,11 +895,10 @@ export default function BuildRuntime() {
     const source = new URLSearchParams(location.search).get('viewSource');
     return source === BUILD_TRENDING_SHOWCASE_VIEW_SOURCE ? source : '';
   }, [location.search]);
+  const hasExplicitBackTarget = typeof location.state?.runtimeBackTo === 'string';
   const backTo = useMemo(() => {
-    return typeof location.state?.runtimeBackTo === 'string'
-      ? location.state.runtimeBackTo
-      : '/';
-  }, [location.state]);
+    return hasExplicitBackTarget ? location.state.runtimeBackTo : '/';
+  }, [hasExplicitBackTarget, location.state]);
   const backLabel = useMemo(() => {
     return typeof location.state?.runtimeBackLabel === 'string'
       ? location.state.runtimeBackLabel
