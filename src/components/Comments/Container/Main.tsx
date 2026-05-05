@@ -92,6 +92,7 @@ export default function Main({
       return (
         <CommentInputArea
           autoFocus={autoFocus}
+          compactMode={compactMode}
           disableReason={disableReason}
           InputFormRef={CommentInputAreaRef}
           inputFormClassName={inputFormClassName}
@@ -129,6 +130,7 @@ export default function Main({
       banned?.posting,
       disableReason,
       inputFormClassName,
+      compactMode,
       inputAreaInnerRef,
       inputTypeLabel,
       numInputRows,

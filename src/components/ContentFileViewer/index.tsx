@@ -10,6 +10,7 @@ import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ContentFileViewer({
   className,
+  compactMode = false,
   contentId,
   contentType,
   isSecretAttachment,
@@ -28,6 +29,7 @@ export default function ContentFileViewer({
   modalOverModal
 }: {
   className?: string;
+  compactMode?: boolean;
   contentId?: number;
   contentType: string;
   isSecretAttachment?: boolean;
@@ -84,6 +86,7 @@ export default function ContentFileViewer({
         {fileType === 'image' ? (
           <ErrorBoundary componentPath="ContentFileViewer/ImagePreview">
             <ImagePreview
+              compactMode={compactMode}
               isThumb={isThumb}
               userIsUploader={userIsUploader}
               src={thumbUrl || src}

@@ -440,10 +440,11 @@ function Reply({
                     <div
                       className={css`
                         width: 100%;
-                        padding-top: 2rem;
+                        padding-top: ${compactMode ? '0.75rem' : '2rem'};
                       `}
                     >
                       <ContentFileViewer
+                        compactMode={compactMode}
                         theme={theme}
                         contentId={reply.id}
                         contentType="comment"
@@ -455,11 +456,17 @@ function Reply({
                         userIsUploader={userId === uploader?.id}
                         style={{
                           display: 'flex',
-                          justifyContent: 'center',
+                          justifyContent: compactMode ? 'flex-start' : 'center',
                           marginBottom: replyIsEmpty
                             ? fileType === 'audio'
-                              ? '2rem'
+                              ? compactMode
+                                ? '0.75rem'
+                                : '2rem'
+                              : compactMode
+                              ? '0.45rem'
                               : '1rem'
+                            : compactMode
+                            ? '0.35rem'
                             : 0
                         }}
                       />
@@ -715,6 +722,7 @@ function Reply({
               >
                 {isDeleteNotification ? null : (
                   <ReplyInputArea
+                    compactMode={compactMode}
                     disableReason={disableReason}
                     inputFormClassName={inputFormClassName}
                     innerRef={ReplyInputAreaRef}

@@ -7,6 +7,7 @@ import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
 
 export default function ReplyInputArea({
+  compactMode,
   disableReason,
   inputFormClassName,
   innerRef,
@@ -21,6 +22,7 @@ export default function ReplyInputArea({
   theme,
   rows = 1
 }: {
+  compactMode?: boolean;
   disableReason?: string;
   inputFormClassName?: string;
   innerRef?: React.RefObject<any>;
@@ -74,9 +76,10 @@ export default function ReplyInputArea({
       <div style={style}>
         {uploadingFile ? (
           <FileUploadStatusIndicator
+            compactMode={compactMode}
             theme={theme}
             style={{
-              fontSize: '1.7rem',
+              fontSize: compactMode ? '0.88rem' : '1.7rem',
               fontWeight: 'bold',
               marginTop: 0,
               width: '100%'

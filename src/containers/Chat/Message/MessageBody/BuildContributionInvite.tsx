@@ -45,6 +45,9 @@ export default function BuildContributionInvite({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
+  const loadMyBuildCollaborationRequest = useAppContext(
+    (v) => v.requestHelpers.loadMyBuildCollaborationRequest
+  );
   const updateBuildContributionInviteStatus =
     useBuildContributionInviteStatusUpdater();
   const payload = useMemo(
@@ -57,13 +60,38 @@ export default function BuildContributionInvite({
   const payloadStatus = getBuildInviteStatus(payload);
   const [status, setStatus] =
     useState<BuildContributionInviteStatus>(payloadStatus);
+  const [alreadyOnTeam, setAlreadyOnTeam] = useState(false);
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
   const sentByMe = Number(sender.id) === Number(myId);
+  const displayStatus = alreadyOnTeam ? 'accepted' : status;
 
   useEffect(() => {
     setStatus(payloadStatus);
   }, [inviteId, payloadStatus]);
+
+  useEffect(() => {
+    setAlreadyOnTeam(false);
+    if (!buildId || sentByMe) return;
+    let isMounted = true;
+    loadMembershipState();
+
+    async function loadMembershipState() {
+      try {
+        const result = await loadMyBuildCollaborationRequest(buildId);
+        if (!isMounted) return;
+        setAlreadyOnTeam(result?.request?.status === 'accepted');
+      } catch (error) {
+        console.error('Failed to load build team membership:', error);
+      }
+    }
+
+    return () => {
+      isMounted = false;
+    };
+    // loadMyBuildCollaborationRequest is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildId, sentByMe]);
 
   if (!buildId || !inviteId) {
     return <span>{content}</span>;
@@ -78,26 +106,26 @@ export default function BuildContributionInvite({
       <div className={inviteBodyClass}>
         {sentByMe ? (
           <span>
-            {status === 'accepted'
+            {displayStatus === 'accepted'
               ? 'This invite was accepted for '
-              : status === 'declined'
+              : displayStatus === 'declined'
                 ? 'This invite was declined for '
-                : status === 'revoked'
+                : displayStatus === 'revoked'
                   ? 'This invite was revoked for '
                   : 'You invited this user to join the team for '}
             <strong>{title}</strong>.
           </span>
-        ) : status === 'accepted' ? (
+        ) : displayStatus === 'accepted' ? (
           <span>
-            You accepted {sender.username}&apos;s invite for{' '}
+            You are on the team for{' '}
             <strong>{title}</strong>.
           </span>
-        ) : status === 'declined' ? (
+        ) : displayStatus === 'declined' ? (
           <span>
             You declined {sender.username}&apos;s invite for{' '}
             <strong>{title}</strong>.
           </span>
-        ) : status === 'revoked' ? (
+        ) : displayStatus === 'revoked' ? (
           <span>
             {sender.username}&apos;s invite for <strong>{title}</strong> was
             revoked.
@@ -125,7 +153,7 @@ export default function BuildContributionInvite({
         >
           Open Build
         </Button>
-        {!sentByMe && status === 'pending' ? (
+        {!sentByMe && displayStatus === 'pending' ? (
           <>
             <Button
               color="darkerGray"
@@ -149,7 +177,7 @@ export default function BuildContributionInvite({
             </Button>
           </>
         ) : null}
-        {!sentByMe && status === 'accepted' ? (
+        {!sentByMe && displayStatus === 'accepted' ? (
           <Button
             color="green"
             variant="soft"
@@ -178,6 +206,7 @@ export default function BuildContributionInvite({
           ? getBuildInviteStatus(result.invite)
           : 'accepted';
         setStatus(nextStatus);
+        setAlreadyOnTeam(nextStatus === 'accepted');
         updateInviteCaches({
           invite: result.invite,
           status: nextStatus

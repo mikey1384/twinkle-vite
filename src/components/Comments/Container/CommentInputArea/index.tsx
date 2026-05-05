@@ -12,6 +12,7 @@ import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function CommentInputArea({
   autoFocus,
+  compactMode,
   disableReason,
   innerRef,
   inputFormClassName,
@@ -30,6 +31,7 @@ export default function CommentInputArea({
   theme
 }: {
   autoFocus?: boolean;
+  compactMode?: boolean;
   disableReason?: string;
   innerRef?: React.RefObject<any>;
   inputFormClassName?: string;
@@ -111,12 +113,14 @@ export default function CommentInputArea({
       )}
       {uploadingFile ? (
         <FileUploadStatusIndicator
+          compactMode={compactMode}
           theme={theme}
           style={{
-            fontSize: '1.7rem',
+            fontSize: compactMode ? '0.88rem' : '1.7rem',
             fontWeight: 'bold',
             marginTop: 0,
-            paddingBottom: '1rem'
+            paddingBottom: compactMode ? '0.55rem' : '1rem',
+            width: '100%'
           }}
           fileName={attachment?.file?.name}
           uploadProgress={fileUploadProgress}

@@ -691,8 +691,15 @@ function Comment({
                     {filePath &&
                       !isDeleteNotification &&
                       (userId ? (
-                        <div style={{ width: '100%', paddingTop: '2rem' }}>
+                        <div
+                          className="comment__file"
+                          style={{
+                            width: '100%',
+                            paddingTop: compactMode ? '0.75rem' : '2rem'
+                          }}
+                        >
                           <ContentFileViewer
+                            compactMode={compactMode}
                             theme={theme}
                             contentId={comment.id}
                             contentType="comment"
@@ -704,13 +711,23 @@ function Comment({
                             userIsUploader={userId === uploader?.id}
                             style={{
                               display: 'flex',
-                              justifyContent: 'center',
+                              justifyContent: compactMode
+                                ? 'flex-start'
+                                : 'center',
                               marginBottom: commentIsEmpty
                                 ? fileType === 'audio'
-                                  ? '2rem'
+                                  ? compactMode
+                                    ? '0.75rem'
+                                    : '2rem'
+                                  : compactMode
+                                  ? '0.45rem'
                                   : '1rem'
                                 : fileType === 'audio'
-                                ? '1rem'
+                                ? compactMode
+                                  ? '0.5rem'
+                                  : '1rem'
+                                : compactMode
+                                ? '0.35rem'
                                 : 0
                             }}
                           />
@@ -980,6 +997,7 @@ function Comment({
                     <div style={{ position: 'relative' }}>
                       {isDeleteNotification ? null : (
                         <ReplyInputArea
+                          compactMode={compactMode}
                           disableReason={disableReason}
                           inputFormClassName={inputFormClassName}
                           innerRef={ReplyInputAreaRef}

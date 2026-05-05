@@ -4,6 +4,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 function ImagePreview({
+  compactMode = false,
   isThumb,
   userIsUploader,
   src,
@@ -13,6 +14,7 @@ function ImagePreview({
   contentId,
   isReplaceable
 }: {
+  compactMode?: boolean;
   isThumb?: boolean;
   userIsUploader?: boolean;
   src: string;
@@ -38,14 +40,16 @@ function ImagePreview({
         loading="lazy"
         style={{
           maxWidth: '100%',
-          maxHeight: '100%',
+          maxHeight: compactMode ? undefined : '100%',
           objectFit: isThumb ? 'cover' : 'contain',
           cursor: 'pointer'
         }}
         className={css`
-          height: 25vw;
+          height: ${compactMode ? 'auto' : '25vw'};
+          max-height: ${compactMode ? '13rem' : '100%'};
           @media (max-width: ${mobileMaxWidth}) {
-            height: 50vw;
+            height: ${compactMode ? 'auto' : '50vw'};
+            max-height: ${compactMode ? '11rem' : '100%'};
           }
         `}
         src={src}

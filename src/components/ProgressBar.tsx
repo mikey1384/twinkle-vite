@@ -6,6 +6,7 @@ import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ProgressBar({
   className,
+  compactMode = false,
   color,
   noBorderRadius,
   progress,
@@ -16,6 +17,7 @@ export default function ProgressBar({
   endLabel
 }: {
   className?: string;
+  compactMode?: boolean;
   color?: string;
   noBorderRadius?: boolean;
   progress: number;
@@ -56,8 +58,8 @@ export default function ProgressBar({
         <div
           className={`${css`
             border-radius: ${borderRadius};
-            height: 1.8rem;
-            margin-top: 0.6rem;
+            height: ${compactMode ? '1rem' : '1.8rem'};
+            margin-top: ${compactMode ? '0.35rem' : '0.6rem'};
             position: relative;
             overflow: hidden;
             background: rgba(148, 163, 184, 0.18);
@@ -101,13 +103,13 @@ export default function ProgressBar({
               justify-content: center;
               font-weight: 700;
               pointer-events: none;
-              font-size: 1.2rem;
+              font-size: ${compactMode ? '0.76rem' : '1.2rem'};
             `}
             style={{
               color: textColor,
               textShadow:
                 showDarkBg ? '0 0 6px rgba(0,0,0,0.35)' : 'none',
-              padding: '0 0.6rem',
+              padding: compactMode ? '0 0.42rem' : '0 0.6rem',
               whiteSpace: 'nowrap',
               zIndex: 2,
               background: textBackground,

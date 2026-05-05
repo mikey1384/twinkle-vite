@@ -3,12 +3,14 @@ import ProgressBar from '~/components/ProgressBar';
 import { Color } from '~/constants/css';
 
 export default function FileUploadStatusIndicator({
+  compactMode = false,
   fileName,
   style,
   theme,
   uploadProgress,
   hideUploading
 }: {
+  compactMode?: boolean;
   fileName?: string;
   style?: React.CSSProperties;
   theme?: string;
@@ -38,18 +40,22 @@ export default function FileUploadStatusIndicator({
   );
 
   return (
-    <div style={{ marginTop: '1rem', ...style }}>
+    <div style={{ marginTop: compactMode ? 0 : '1rem', ...style }}>
       {!hideUploading && (
         <div
           style={{
-            textAlign: 'center',
+            textAlign: compactMode ? 'left' : 'center',
             maxWidth: '100%',
             textOverflow: 'ellipsis',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            whiteSpace: compactMode ? 'nowrap' : undefined,
+            fontSize: compactMode ? '0.82rem' : undefined,
+            lineHeight: compactMode ? 1.25 : undefined
           }}
         >{`Uploading${fileName ? ` ${fileName}` : ''}...`}</div>
       )}
       <ProgressBar
+        compactMode={compactMode}
         text={text}
         theme={theme}
         color={color}

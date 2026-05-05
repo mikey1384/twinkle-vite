@@ -460,8 +460,14 @@ function Comment({
               )}
               {filePath &&
                 (userId ? (
-                  <div style={{ width: '100%', paddingTop: '3rem' }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      paddingTop: compactMode ? '0.75rem' : '3rem'
+                    }}
+                  >
                     <ContentFileViewer
+                      compactMode={compactMode}
                       theme={theme}
                       contentId={comment.id}
                       contentType="comment"
@@ -472,11 +478,17 @@ function Comment({
                       videoHeight="100%"
                       style={{
                         display: 'flex',
-                        justifyContent: 'center',
+                        justifyContent: compactMode ? 'flex-start' : 'center',
                         marginBottom: stringIsEmpty(comment.content)
                           ? fileType === 'audio'
-                            ? '2rem'
+                            ? compactMode
+                              ? '0.75rem'
+                              : '2rem'
+                            : compactMode
+                            ? '0.45rem'
                             : '1rem'
+                          : compactMode
+                          ? '0.35rem'
                           : 0
                       }}
                     />
