@@ -39,6 +39,7 @@ export interface BuildRuntimeObservationIssue {
   lineNumber: number | null;
   columnNumber: number | null;
   createdAt: number;
+  previewNonce: string | null;
 }
 
 export interface BuildRuntimeInteractionStep {

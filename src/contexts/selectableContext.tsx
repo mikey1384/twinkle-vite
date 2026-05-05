@@ -2,8 +2,8 @@ import React, {
   useCallback,
   useContext as useReactContext,
   useLayoutEffect,
+  useReducer,
   useRef,
-  useSyncExternalStore,
   type ReactNode
 } from 'react';
 
@@ -116,51 +116,34 @@ export function useContextSelector<T, S>(
   const store =
     useReactContext(context._storeContext) || context._defaultStore;
   const selectorRef = useRef(selector);
-  const selectionRef = useRef<{
-    selected: S;
-    selector: (value: T) => S;
-    snapshot: SelectableSnapshot<T>;
-  } | null>(null);
+  const selectedRef = useRef<S | null>(null);
+  const hasSelectedRef = useRef(false);
+  const [, forceUpdate] = useReducer((version) => version + 1, 0);
   selectorRef.current = selector;
 
-  const subscribe = useCallback(
-    (listener: () => void) => store.subscribe(listener),
-    [store]
-  );
-  const getSelectionSnapshot = useCallback(() => {
-    const snapshot = store.snapshot;
-    const currentSelector = selectorRef.current;
-    const previous = selectionRef.current;
-    if (
-      previous?.snapshot === snapshot &&
-      previous.selector === currentSelector
-    ) {
-      return previous.selected;
-    }
+  const selected = selector(store.snapshot.value);
 
-    const selected = currentSelector(snapshot.value);
-    if (previous && Object.is(previous.selected, selected)) {
-      selectionRef.current = {
-        selected: previous.selected,
-        selector: currentSelector,
-        snapshot
-      };
-      return previous.selected;
-    }
+  useLayoutEffect(() => {
+    selectedRef.current = selected;
+    hasSelectedRef.current = true;
+  });
 
-    selectionRef.current = {
-      selected,
-      selector: currentSelector,
-      snapshot
-    };
-    return selected;
+  const checkForUpdates = useCallback(() => {
+    const nextSelected = selectorRef.current(store.snapshot.value);
+    if (hasSelectedRef.current && Object.is(selectedRef.current, nextSelected)) {
+      return;
+    }
+    selectedRef.current = nextSelected;
+    hasSelectedRef.current = true;
+    forceUpdate();
   }, [store]);
 
-  return useSyncExternalStore(
-    subscribe,
-    getSelectionSnapshot,
-    getSelectionSnapshot
-  );
+  useLayoutEffect(() => {
+    checkForUpdates();
+    return store.subscribe(checkForUpdates);
+  }, [checkForUpdates, store]);
+
+  return selected;
 }
 
 export function useContext<T>(context: SelectableContext<T>): T {

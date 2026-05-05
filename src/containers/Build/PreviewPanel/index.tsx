@@ -2007,6 +2007,31 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
 
     useEffect(() => {
+      const activePreviewNonce =
+        previewFrameMetaRef.current[activePreviewFrame]?.messageNonce || null;
+      setRuntimeObservationState((prev) => {
+        const nextIssues = activePreviewNonce
+          ? prev.issues.filter(
+              (issue) => issue.previewNonce === activePreviewNonce
+            )
+          : [];
+        if (nextIssues.length === prev.issues.length) {
+          return prev;
+        }
+        return {
+          ...prev,
+          issues: nextIssues,
+          updatedAt: Date.now()
+        };
+      });
+    }, [
+      activePreviewFrame,
+      previewFrameReady.primary,
+      previewFrameReady.secondary,
+      previewFrameMetaRef
+    ]);
+
+    useEffect(() => {
       if (!onCaptureReadyChange) return;
       const ready =
         previewHostVisible &&

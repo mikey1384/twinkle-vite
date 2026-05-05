@@ -182,18 +182,35 @@ export function buildEmptyRuntimeObservationState({
 
 function filterResolvedRuntimeObservationIssues({
   issues,
-  health
+  health,
+  sourcePreviewNonce,
+  retainedPreviewNonces
 }: {
   issues: BuildRuntimeObservationIssue[];
   health: BuildRuntimeHealthSnapshot | null;
+  sourcePreviewNonce: string | null;
+  retainedPreviewNonces: string[];
 }) {
+  const retainedPreviewNonceSet = new Set(retainedPreviewNonces);
+  const currentFrameIssues = retainedPreviewNonceSet.size > 0
+    ? issues.filter(
+        (issue) =>
+          issue.previewNonce && retainedPreviewNonceSet.has(issue.previewNonce)
+      )
+    : issues;
+  const removedStaleFrameIssues = currentFrameIssues.length !== issues.length;
   if (!health?.meaningfulRender) {
-    return issues;
+    return removedStaleFrameIssues ? currentFrameIssues : issues;
   }
-  const unresolvedIssues = issues.filter(
-    (issue) => issue.kind !== 'blankrender'
-  );
-  return unresolvedIssues.length === issues.length ? issues : unresolvedIssues;
+  const unresolvedIssues = currentFrameIssues.filter((issue) => {
+    if (issue.kind !== 'blankrender') return true;
+    return sourcePreviewNonce && issue.previewNonce !== sourcePreviewNonce;
+  });
+  const removedResolvedIssues =
+    unresolvedIssues.length !== currentFrameIssues.length;
+  return removedStaleFrameIssues || removedResolvedIssues
+    ? unresolvedIssues
+    : issues;
 }
 
 function isStaleRuntimePreviewSignature({
@@ -212,9 +229,13 @@ function isStaleRuntimePreviewSignature({
   );
 }
 
-function normalizeRuntimeObservationIssue(
-  payload: any
-): BuildRuntimeObservationIssue | null {
+function normalizeRuntimeObservationIssue({
+  payload,
+  previewNonce
+}: {
+  payload: any;
+  previewNonce: string | null;
+}): BuildRuntimeObservationIssue | null {
   const kind =
     payload?.kind === 'unhandledrejection'
       ? 'unhandledrejection'
@@ -251,7 +272,8 @@ function normalizeRuntimeObservationIssue(
     columnNumber:
       Number.isFinite(columnNumber) && columnNumber > 0 ? columnNumber : null,
     createdAt:
-      Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now()
+      Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now(),
+    previewNonce
   };
 }
 
@@ -1423,7 +1445,10 @@ export function usePreviewHostBridge({
       }
 
       if (type === 'runtime-observation') {
-        const normalizedIssue = normalizeRuntimeObservationIssue(payload);
+        const normalizedIssue = normalizeRuntimeObservationIssue({
+          payload,
+          previewNonce: sourceFrameMeta.messageNonce || null
+        });
         if (!normalizedIssue) return;
         const observationCodeSignature = runtimeOnly
           ? previewCodeSignatureRef.current
@@ -1453,7 +1478,8 @@ export function usePreviewHostBridge({
               issue.message === normalizedIssue.message &&
               issue.filename === normalizedIssue.filename &&
               issue.lineNumber === normalizedIssue.lineNumber &&
-              issue.columnNumber === normalizedIssue.columnNumber
+              issue.columnNumber === normalizedIssue.columnNumber &&
+              issue.previewNonce === normalizedIssue.previewNonce
           );
           const nextUpdatedAt = Math.max(
             baseState.updatedAt,
@@ -1503,9 +1529,15 @@ export function usePreviewHostBridge({
                   codeSignature: healthCodeSignature
                 });
           const previousHealth = baseState.health;
+          const retainedPreviewNonces = [
+            frameMeta.primary.messageNonce || '',
+            frameMeta.secondary.messageNonce || ''
+          ].filter(Boolean);
           const nextIssues = filterResolvedRuntimeObservationIssues({
             issues: baseState.issues,
-            health: normalizedHealth
+            health: normalizedHealth,
+            sourcePreviewNonce: sourceFrameMeta.messageNonce || null,
+            retainedPreviewNonces
           });
           const didResolveIssues = nextIssues !== baseState.issues;
           const isUnchanged =
