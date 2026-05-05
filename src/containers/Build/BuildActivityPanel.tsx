@@ -28,12 +28,13 @@ const buildActivityTabs: Array<{
   label: string;
   icon: string;
 }> = [
+  { value: 'all', label: 'All', icon: 'bell' },
   { value: 'mine', label: 'My Projects', icon: 'rocket-launch' },
   { value: 'collaborating', label: 'Team Builds', icon: 'users' }
 ];
 
 const buildActivitySubtabs: Array<{
-  value: BuildActivitySubtab;
+  value: Exclude<BuildActivitySubtab, 'all'>;
   label: string;
   icon: string;
 }> = [
@@ -86,7 +87,7 @@ interface BuildActivityPanelProps {
   loadingMore: boolean;
   onLoadMore: () => void;
   onRefresh: () => void;
-  onSubtabChange: (subtab: BuildActivitySubtab) => void;
+  onSubtabChange: (subtab: Exclude<BuildActivitySubtab, 'all'>) => void;
   onTabChange: (tab: BuildActivityTab) => void;
   variant: 'rail' | 'mobile';
 }
@@ -378,13 +379,17 @@ export default function BuildActivityPanel({
           onChange={onTabChange}
           tabs={buildActivityTabs}
         />
-        <BuildTabFilter
-          activeTab={activeSubtab}
-          color={color}
-          density="mini"
-          onChange={onSubtabChange}
-          tabs={buildActivitySubtabs}
-        />
+        {activeTab !== 'all' ? (
+          <BuildTabFilter
+            activeTab={
+              activeSubtab === 'branch_updates' ? activeSubtab : 'notifications'
+            }
+            color={color}
+            density="mini"
+            onChange={onSubtabChange}
+            tabs={buildActivitySubtabs}
+          />
+        ) : null}
       </>
     );
   }
@@ -496,6 +501,9 @@ function getEmptyMessage(
   activeTab: BuildActivityTab,
   activeSubtab: BuildActivitySubtab
 ) {
+  if (activeTab === 'all') {
+    return 'No build activity yet.';
+  }
   if (activeSubtab === 'branch_updates') {
     return activeTab === 'collaborating'
       ? 'No branch updates from team members yet.'

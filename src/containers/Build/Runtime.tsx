@@ -9,6 +9,7 @@ import AiEnergyCard from '~/components/AiEnergyCard';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
+import UsernameText from '~/components/Texts/UsernameText';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
@@ -21,6 +22,7 @@ interface RuntimeBuild {
   id: number;
   userId: number;
   username: string;
+  profilePicUrl?: string | null;
   title: string;
   description: string | null;
   code: string | null;
@@ -147,6 +149,12 @@ const runtimeEnergyCardClass = css`
   width: 100%;
 `;
 
+const runtimeCreatorUsernameTextStyle: React.CSSProperties = {
+  color: 'inherit',
+  fontSize: 'inherit',
+  fontWeight: 800
+};
+
 const titleRowClass = css`
   display: flex;
   align-items: center;
@@ -181,6 +189,13 @@ const metaClass = css`
     font-size: 0.82rem;
     gap: 0.35rem;
   }
+`;
+
+const metaCreatorClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
 `;
 
 const metaDescriptionClass = css`
@@ -1106,7 +1121,18 @@ export default function BuildRuntime() {
               <h1 className={titleClass}>{build.title}</h1>
             </div>
             <div className={metaClass}>
-              <span>by {build.username}</span>
+              <div className={metaCreatorClass}>
+                <span>by</span>
+                <UsernameText
+                  color="inherit"
+                  textStyle={runtimeCreatorUsernameTextStyle}
+                  user={{
+                    id: build.userId,
+                    username: build.username || '',
+                    profilePicUrl: build.profilePicUrl || ''
+                  }}
+                />
+              </div>
               {build.description?.trim() ? (
                 <span className={metaDescriptionClass}>
                   {build.description.trim()}

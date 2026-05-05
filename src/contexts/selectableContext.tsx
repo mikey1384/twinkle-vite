@@ -14,9 +14,28 @@ interface SelectableSnapshot<T> {
 
 interface SelectableStore<T> {
   listeners: Set<() => void>;
+  notifyQueued: boolean;
   notifiedVersion: number;
   snapshot: SelectableSnapshot<T>;
   subscribe: (listener: () => void) => () => void;
+}
+
+function queueSelectableStoreNotification<T>(store: SelectableStore<T>) {
+  if (store.notifyQueued) {
+    return;
+  }
+  store.notifyQueued = true;
+  const notify = () => {
+    store.notifyQueued = false;
+    for (const listener of Array.from(store.listeners)) {
+      listener();
+    }
+  };
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(notify);
+    return;
+  }
+  void Promise.resolve().then(notify);
 }
 
 export interface SelectableContext<T> {
@@ -28,6 +47,7 @@ export interface SelectableContext<T> {
 function createSelectableStore<T>(value: T): SelectableStore<T> {
   const store: SelectableStore<T> = {
     listeners: new Set(),
+    notifyQueued: false,
     notifiedVersion: 0,
     snapshot: {
       value,
@@ -74,9 +94,7 @@ export function createContext<T>(defaultValue: T): SelectableContext<T> {
         return;
       }
       store.notifiedVersion = nextVersion;
-      for (const listener of Array.from(store.listeners)) {
-        listener();
-      }
+      queueSelectableStoreNotification(store);
     }, [store, value]);
 
     return (

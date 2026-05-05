@@ -271,6 +271,8 @@ interface HeaderProps {
   contributionActionError?: string;
   contributionActionLoading?: 'merge' | '';
   canMergeBranch?: boolean;
+  showMergeBranch?: boolean;
+  mergeBranchDisabled?: boolean;
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
@@ -316,6 +318,8 @@ export default function Header({
   contributionActionError = '',
   contributionActionLoading = '',
   canMergeBranch = false,
+  showMergeBranch = false,
+  mergeBranchDisabled = false,
   showForkButton,
   onContribute,
   onFork,
@@ -358,8 +362,13 @@ export default function Header({
   const branchOwnerUserId = Number(
     build.contributionContributorId || build.userId || 0
   );
+  const shouldShowMergeBranch = Boolean(showMergeBranch || canMergeBranch);
+  const mergeBranchButtonDisabled = Boolean(
+    mergeBranchDisabled || !canMergeBranch || contributionActionLoading
+  );
   const shouldHighlightMergeBranch =
     canMergeBranch &&
+    !mergeBranchButtonDisabled &&
     rootBuildUserId > 0 &&
     branchOwnerUserId > 0 &&
     branchOwnerUserId !== rootBuildUserId;
@@ -458,8 +467,8 @@ export default function Header({
                 style={getContributionBadgeStyle(contributionStatus)}
                 title={
                   contributionStatus === 'merging'
-                      ? 'This branch is being merged into the original Build'
-                      : 'Branch status'
+                    ? 'This branch is being merged into the original Build'
+                    : 'Branch status'
                 }
               >
                 <Icon icon="code-branch" />
@@ -546,7 +555,7 @@ export default function Header({
             </GameCTAButton>
           </HeaderActionItem>
         ) : null}
-        {showContributionStatusBadge || canMergeBranch ? (
+        {showContributionStatusBadge || shouldShowMergeBranch ? (
           <>
             {showContributionStatusBadge ? (
               <HeaderActionItem mobileOrder={2}>
@@ -564,11 +573,11 @@ export default function Header({
                 </span>
               </HeaderActionItem>
             ) : null}
-            {canMergeBranch ? (
+            {shouldShowMergeBranch ? (
               <HeaderActionItem mobileOrder={4}>
                 <GameCTAButton
                   onClick={onMergeBranch || (() => {})}
-                  disabled={Boolean(contributionActionLoading)}
+                  disabled={mergeBranchButtonDisabled}
                   loading={contributionActionLoading === 'merge'}
                   variant="success"
                   size="md"
@@ -692,10 +701,10 @@ export default function Header({
               Thumbnail
             </GameCTAButton>
           ) : null}
-          {canMergeBranch ? (
+          {shouldShowMergeBranch ? (
             <GameCTAButton
               onClick={onMergeBranch || (() => {})}
-              disabled={Boolean(contributionActionLoading)}
+              disabled={mergeBranchButtonDisabled}
               loading={contributionActionLoading === 'merge'}
               variant="success"
               size="md"

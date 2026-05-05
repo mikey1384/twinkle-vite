@@ -708,9 +708,9 @@ export default function buildRequestHelpers({
       scope = 'mine'
     }: {
       cursor?: string;
-      kind?: 'notifications' | 'branch_updates';
+      kind?: 'all' | 'notifications' | 'branch_updates';
       limit?: number;
-      scope?: 'mine' | 'collaborating';
+      scope?: 'all' | 'mine' | 'collaborating';
     } = {}) {
       try {
         const params: Record<string, any> = { kind, limit, scope };

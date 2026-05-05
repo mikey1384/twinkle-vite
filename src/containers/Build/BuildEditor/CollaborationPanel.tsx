@@ -32,6 +32,11 @@ interface BuildContributionFileDiff {
   autoMergedContent?: string;
 }
 
+interface BuildProjectFile {
+  path: string;
+  content?: string;
+}
+
 interface BuildLike {
   id: number;
   userId: number;
@@ -46,6 +51,7 @@ interface BuildLike {
   profilePicUrl?: string | null;
   rootBuildUserId?: number | null;
   code?: string | null;
+  projectFiles?: BuildProjectFile[] | null;
   pendingCollaborationRequestCount?: number | null;
 }
 
@@ -110,11 +116,11 @@ interface CollaborationPanelProps {
   onContributionBranchCreated?: (branch: BuildLike) => void;
   onCanonicalMerge: (payload: {
     build?: Record<string, any> | null;
-    projectFiles?: Array<{ path: string; content?: string }> | null;
+    projectFiles?: BuildProjectFile[] | null;
   }) => void;
   onVersionProjectFilesUpdate?: (payload: {
     build?: Record<string, any> | null;
-    projectFiles?: Array<{ path: string; content?: string }> | null;
+    projectFiles?: BuildProjectFile[] | null;
   }) => void;
   onAcceptedContributorCountChange?: (count: number) => void;
   onBeforeContributionAction?: (
@@ -128,6 +134,48 @@ interface CollaborationPanelProps {
   onScrollTopChange?: (scrollTop: number) => void;
   initialSelectedForumThreadId?: number;
   onSelectedForumThreadChange?: (threadId: number) => void;
+}
+
+const CONTRIBUTION_CONFLICT_MARKER_START = '<<<<<<< Current Build';
+const CONTRIBUTION_CONFLICT_MARKER_SEPARATOR = '=======';
+const CONTRIBUTION_CONFLICT_MARKER_END = '>>>>>>> Contribution';
+const UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE =
+  'Main was merged into this branch with conflict markers. Ask Lumine to resolve them before merging.';
+const MERGE_CONFLICT_MARKERS_MESSAGE =
+  'Conflict markers were written into the project files. Resolve them with Lumine or edit the files, then complete the merge.';
+
+function hasContributionConflictMarkers(content: string) {
+  const text = String(content || '');
+  return (
+    text.includes(CONTRIBUTION_CONFLICT_MARKER_START) &&
+    text.includes(CONTRIBUTION_CONFLICT_MARKER_SEPARATOR) &&
+    text.includes(CONTRIBUTION_CONFLICT_MARKER_END)
+  );
+}
+
+function getContributionConflictMarkerPaths(files?: BuildProjectFile[] | null) {
+  return (Array.isArray(files) ? files : [])
+    .filter((file) => hasContributionConflictMarkers(file.content || ''))
+    .map((file) => String(file.path || '').trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function stringArraysEqual(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+}
+
+function canClearConflictMarkerActionError(message: string) {
+  const normalized = String(message || '').trim();
+  return (
+    normalized === UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE ||
+    normalized === MERGE_CONFLICT_MARKERS_MESSAGE ||
+    /^Resolve conflict markers in .+ first\.$/.test(normalized) ||
+    /^Resolve all conflict markers before (?:updating from main|completing this merge)\.$/.test(
+      normalized
+    )
+  );
 }
 
 const panelClass = css`
@@ -808,6 +856,10 @@ export default function CollaborationPanel({
     () => changedFiles.find((file) => file.path === previewPath) || null,
     [changedFiles, previewPath]
   );
+  const projectFileConflictMarkerPaths = useMemo(
+    () => getContributionConflictMarkerPaths(build.projectFiles),
+    [build.projectFiles]
+  );
   const changedFileConflictPaths = useMemo(
     () =>
       changedFiles
@@ -842,6 +894,19 @@ export default function CollaborationPanel({
   useEffect(() => {
     setCollaborationMode(normalizeCollaborationMode(build.collaborationMode));
   }, [build.collaborationMode]);
+
+  useEffect(() => {
+    if (!Array.isArray(build.projectFiles)) return;
+    setConflictMarkerPaths((currentPaths) =>
+      stringArraysEqual(currentPaths, projectFileConflictMarkerPaths)
+        ? currentPaths
+        : projectFileConflictMarkerPaths
+    );
+    if (projectFileConflictMarkerPaths.length > 0) return;
+    setActionError((currentError) =>
+      canClearConflictMarkerActionError(currentError) ? '' : currentError
+    );
+  }, [build.projectFiles, projectFileConflictMarkerPaths]);
 
   useEffect(() => {
     if (!canShowPanel) return;
@@ -1326,7 +1391,7 @@ export default function CollaborationPanel({
       setSettingsError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to save collaboration settings'
+          'Failed to save team settings'
       );
     } finally {
       setSavingSettings(false);
@@ -1659,9 +1724,7 @@ export default function CollaborationPanel({
           );
         }
         if (result.mergeInProgress) {
-          setActionError(
-            'Conflict markers were written into the project files. Resolve them with Lumine or edit the files, then complete the merge.'
-          );
+          setActionError(MERGE_CONFLICT_MARKERS_MESSAGE);
         }
       }
     } catch (error: any) {
@@ -1721,9 +1784,7 @@ export default function CollaborationPanel({
               .map((conflict: any) => String(conflict?.path || '').trim())
               .filter(Boolean)
           );
-          setActionError(
-            'Main was merged into this branch with conflict markers. Ask Lumine to resolve them before merging.'
-          );
+          setActionError(UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE);
         } else {
           setConflictMarkerPaths([]);
         }

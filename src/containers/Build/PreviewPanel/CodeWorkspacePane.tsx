@@ -268,6 +268,10 @@ export default function CodeWorkspacePane({
       : hasUnsavedProjectFileChanges
         ? 'unsaved'
         : 'saved';
+  const showProjectFileSaveStatus =
+    Boolean(projectFileSaveError) ||
+    saveBlockedByLineLimit ||
+    hasUnsavedProjectFileChanges;
 
   return (
     <div
@@ -1303,55 +1307,49 @@ export default function CodeWorkspacePane({
                           : 'Saved'}
                   </GameCTAButton>
                 </div>
-                <div
-                  role={
-                    projectFileSaveError || saveBlockedByLineLimit
-                      ? 'alert'
-                      : 'status'
-                  }
-                  aria-live={
-                    projectFileSaveError || saveBlockedByLineLimit
-                      ? 'assertive'
-                      : 'polite'
-                  }
-                  data-testid="build-project-file-save-status"
-                  data-agent-status={saveStatus}
-                  className={css`
-                    max-width: 34rem;
-                    border: 1px solid
-                      ${projectFileSaveError || saveBlockedByLineLimit
-                        ? 'rgba(248, 113, 113, 0.45)'
-                        : hasUnsavedProjectFileChanges
-                          ? 'rgba(251, 191, 36, 0.34)'
-                          : 'rgba(34, 197, 94, 0.28)'};
-                    border-radius: 8px;
-                    background: ${projectFileSaveError || saveBlockedByLineLimit
-                      ? 'rgba(127, 29, 29, 0.2)'
-                      : hasUnsavedProjectFileChanges
-                        ? 'rgba(120, 53, 15, 0.16)'
-                        : 'rgba(22, 101, 52, 0.14)'};
-                    color: ${projectFileSaveError || saveBlockedByLineLimit
-                      ? '#fecaca'
-                      : hasUnsavedProjectFileChanges
-                        ? '#fde68a'
-                        : '#bbf7d0'};
-                    padding: 0.35rem 0.5rem;
-                    font-size: 0.69rem;
-                    line-height: 1.35;
-                    text-align: right;
-                  `}
-                >
-                  {projectFileSaveError
-                    ? `Save failed: ${projectFileSaveError}`
-                    : firstBlockingLineDiagnostic
-                      ? `Save blocked: ${firstBlockingLineDiagnostic.path} has ${formatLineCount(
-                          firstBlockingLineDiagnostic.lineCount,
-                          firstBlockingLineDiagnostic.maxLines
-                        )} lines. Split it before saving.`
-                      : hasUnsavedProjectFileChanges
-                        ? 'Unsaved changes'
-                        : 'Saved'}
-                </div>
+                {showProjectFileSaveStatus ? (
+                  <div
+                    role={
+                      projectFileSaveError || saveBlockedByLineLimit
+                        ? 'alert'
+                        : 'status'
+                    }
+                    aria-live={
+                      projectFileSaveError || saveBlockedByLineLimit
+                        ? 'assertive'
+                        : 'polite'
+                    }
+                    data-testid="build-project-file-save-status"
+                    data-agent-status={saveStatus}
+                    className={css`
+                      max-width: 34rem;
+                      border: 1px solid
+                        ${projectFileSaveError || saveBlockedByLineLimit
+                          ? 'rgba(248, 113, 113, 0.45)'
+                          : 'rgba(251, 191, 36, 0.34)'};
+                      border-radius: 8px;
+                      background: ${projectFileSaveError || saveBlockedByLineLimit
+                        ? 'rgba(127, 29, 29, 0.2)'
+                        : 'rgba(120, 53, 15, 0.16)'};
+                      color: ${projectFileSaveError || saveBlockedByLineLimit
+                        ? '#fecaca'
+                        : '#fde68a'};
+                      padding: 0.35rem 0.5rem;
+                      font-size: 0.69rem;
+                      line-height: 1.35;
+                      text-align: right;
+                    `}
+                  >
+                    {projectFileSaveError
+                      ? `Save failed: ${projectFileSaveError}`
+                      : firstBlockingLineDiagnostic
+                        ? `Save blocked: ${firstBlockingLineDiagnostic.path} has ${formatLineCount(
+                            firstBlockingLineDiagnostic.lineCount,
+                            firstBlockingLineDiagnostic.maxLines
+                          )} lines. Split it before saving.`
+                        : 'Unsaved changes'}
+                  </div>
+                ) : null}
               </>
             )}
           </div>

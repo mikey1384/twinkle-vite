@@ -5,6 +5,33 @@ import { mobileMaxWidth } from '~/constants/css';
 import type { BuildCapabilitySnapshot } from '../capabilityTypes';
 
 const PROJECT_FILE_LINE_LIMIT = 500;
+const previewLayoutBoilerplate = [
+  'function subscribePreviewStage(onSize) {',
+  '  let frame = 0;',
+  '  let lastKey = "";',
+  '  function applyLayout(layout) {',
+  '    window.cancelAnimationFrame(frame);',
+  '    frame = window.requestAnimationFrame(() => {',
+  '      const stage = layout.stage || layout.viewport;',
+  '      const width = Math.max(1, Math.floor(stage.width));',
+  '      const height = Math.max(1, Math.floor(stage.height));',
+  '      const key = width + "x" + height;',
+  '      if (key === lastKey) return;',
+  '      lastKey = key;',
+  '      onSize(width, height, layout);',
+  '      Twinkle.preview.setPlayfield({ x: 0, y: 0, width, height });',
+  '    });',
+  '  }',
+  '  return Twinkle.preview.subscribe(applyLayout, { immediate: true });',
+  '}',
+  '',
+  '// Three.js example:',
+  '// subscribePreviewStage((width, height) => {',
+  '//   camera.aspect = width / height;',
+  '//   camera.updateProjectionMatrix();',
+  '//   renderer.setSize(width, height, false);',
+  '// });'
+].join('\n');
 
 interface AgentManualPaneProps {
   capabilitySnapshot: BuildCapabilitySnapshot | null;
@@ -42,6 +69,17 @@ const guideSections: GuideSection[] = [
       'Do not use CDN imports, package imports, or pasted library bundles for project code.',
       'For Three.js, use import * as THREE from "/build/vendor/three/0.160.0/three.module.min.js"; inside a type="module" project file.',
       'The Three.js vendor path is served by Twinkle and is stable for preview and published builds.'
+    ]
+  },
+  {
+    title: 'Viewport and game layout',
+    items: [
+      'Canvas, WebGL, Three.js, and fullscreen game apps must use Twinkle.preview as the layout source of truth.',
+      'Do not size game roots from 100vh, 100vw, window.innerWidth, or window.innerHeight. These can fight the host preview and cause blank, cropped, or scrolled previews.',
+      'Use Twinkle.preview.getLayout() or Twinkle.preview.subscribe(listener, { immediate: true }), then size the canvas or renderer from layout.stage or layout.viewport.',
+      'Only call renderer.setSize() or canvas width/height assignment when the width or height actually changed. Use requestAnimationFrame to coalesce resize work.',
+      'Call Twinkle.preview.setPlayfield(...) after measuring the intended game area. Use reportGameplayState(...) for important gameplay bounds and state.',
+      'The plain text manual includes a copyable subscribePreviewStage helper for canvas and Three.js apps.'
     ]
   },
   {
@@ -148,6 +186,9 @@ const sdkSections: GuideSection[] = [
       'Twinkle.viewer.get() returns { id, username, profilePicUrl, isLoggedIn, isOwner, isGuest } for the current viewer.',
       'Twinkle.viewer.refresh() clears the cache and re-fetches viewer identity.',
       'Twinkle.preview.getLayout() returns { mode, viewport, stage, safeInsets, playfield }.',
+      'Canvas, WebGL, Three.js, and fullscreen game apps must use Twinkle.preview as their layout source of truth.',
+      'Do not use 100vh, 100vw, window.innerWidth, or window.innerHeight as the source of truth for game/canvas sizing.',
+      'Subscribe with Twinkle.preview.subscribe(listener, { immediate: true }) and resize only when stage or viewport dimensions actually changed.',
       'Twinkle.preview.reserveInsets(...) reserves host UI space for games and fixed controls.',
       'Twinkle.preview.setPlayfield(...) and reportGameplayState(...) expose game bounds for preview diagnostics.',
       'Twinkle.preview.getGameplayTelemetry(), clearGameplayState(), and clearReservedInsets() manage preview diagnostics and reserved host space.',
@@ -343,6 +384,14 @@ function buildManualText(capabilitySnapshot: BuildCapabilitySnapshot | null) {
     '',
     '## SDK Quick Reference',
     ...formatSections(sdkSections),
+    '',
+    '## Preview Layout Boilerplate',
+    '',
+    'Use this helper for canvas/WebGL/Three.js/fullscreen apps instead of 100vh/100vw or raw window resize sizing:',
+    '',
+    '```js',
+    previewLayoutBoilerplate,
+    '```',
     '',
     '## Current Capability Snapshot',
     ...formatCapabilitySnapshot(capabilitySnapshot),

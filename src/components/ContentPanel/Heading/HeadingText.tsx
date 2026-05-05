@@ -385,7 +385,7 @@ function getBuildActivityText(feedActivityType?: string | null) {
   if (feedActivityType === 'buildFork') return 'forked an app';
   if (feedActivityType === 'buildUpdate') return 'released an app update';
   if (feedActivityType === 'buildCollaborator') {
-    return 'joined an app as a collaborator';
+    return 'joined the team for an app';
   }
   return 'started a version of an app';
 }

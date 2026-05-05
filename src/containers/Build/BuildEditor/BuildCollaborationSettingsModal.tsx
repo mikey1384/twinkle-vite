@@ -419,7 +419,7 @@ export default function BuildCollaborationSettingsModal({
       setSettingsError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to save collaboration settings'
+          'Failed to save team settings'
       );
     } finally {
       setSavingSettings(false);

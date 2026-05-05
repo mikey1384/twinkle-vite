@@ -491,8 +491,12 @@ export default function BuildList() {
   const buildActivityActiveTab = normalizeBuildActivityTab(
     buildStudio?.activityPanel?.activeTab
   );
-  const buildActivityActiveSubtab = normalizeBuildActivitySubtab(
+  const rawBuildActivityActiveSubtab = normalizeBuildActivitySubtab(
     buildStudio?.activityPanel?.activeSubtab
+  );
+  const buildActivityActiveSubtab = getBuildActivityFeedSubtab(
+    buildActivityActiveTab,
+    rawBuildActivityActiveSubtab
   );
   const activeBuildActivityFeedState = getBuildActivityFeedState({
     buildStudio,
@@ -720,8 +724,8 @@ export default function BuildList() {
       setBuildActivitySilentRefreshing(false);
       setBuildActivityError('');
       onSetBuildStudioActivityFilter({
-        activityTab: 'mine',
-        activitySubtab: 'notifications'
+        activityTab: 'all',
+        activitySubtab: 'all'
       });
       return;
     }
@@ -1135,7 +1139,7 @@ export default function BuildList() {
     if (showError) setBuildActivityError('');
     try {
       const data = await loadBuildActivity({
-        kind: subtab,
+        kind: getBuildActivityRequestKind(tab, subtab),
         limit: 12,
         scope: tab
       });
@@ -1143,7 +1147,7 @@ export default function BuildList() {
         onSetBuildStudioActivityItems({
           activities: data?.activities || [],
           activityLoadedAt: Date.now(),
-          activitySubtab: subtab,
+          activitySubtab: getBuildActivityFeedSubtab(tab, subtab),
           activityTab: tab,
           loadMoreToken: getLoadMoreToken(data),
           userId: normalizedUserId
@@ -1188,11 +1192,19 @@ export default function BuildList() {
 
   function handleBuildActivityTabChange(tab: BuildActivityTab) {
     if (tab !== buildActivityActiveTab) {
-      onSetBuildStudioActivityFilter({ activityTab: tab });
+      onSetBuildStudioActivityFilter({
+        activityTab: tab,
+        activitySubtab: getBuildActivityFeedSubtab(
+          tab,
+          buildActivityActiveSubtab
+        )
+      });
     }
   }
 
-  function handleBuildActivitySubtabChange(subtab: BuildActivitySubtab) {
+  function handleBuildActivitySubtabChange(
+    subtab: Exclude<BuildActivitySubtab, 'all'>
+  ) {
     if (subtab !== buildActivityActiveSubtab) {
       onSetBuildStudioActivityFilter({ activitySubtab: subtab });
     }
@@ -1215,7 +1227,10 @@ export default function BuildList() {
     try {
       const data = await loadBuildActivity({
         cursor: buildActivityCursor,
-        kind: buildActivityActiveSubtab,
+        kind: getBuildActivityRequestKind(
+          buildActivityActiveTab,
+          buildActivityActiveSubtab
+        ),
         limit: 12,
         scope: buildActivityActiveTab
       });
@@ -1223,7 +1238,10 @@ export default function BuildList() {
         onAppendBuildStudioActivityItems({
           activities: data?.activities || [],
           activityLoadedAt: Date.now(),
-          activitySubtab: buildActivityActiveSubtab,
+          activitySubtab: getBuildActivityFeedSubtab(
+            buildActivityActiveTab,
+            buildActivityActiveSubtab
+          ),
           activityTab: buildActivityActiveTab,
           loadMoreToken: getLoadMoreToken(data),
           userId: normalizedUserId
@@ -1489,13 +1507,32 @@ function normalizeBuildListBrowseMode(
 }
 
 function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
-  return value === 'collaborating' ? 'collaborating' : 'mine';
+  if (value === 'all') return 'all';
+  if (value === 'mine' || value === 'collaborating') return value;
+  return 'all';
 }
 
 function normalizeBuildActivitySubtab(
   value?: string | null
 ): BuildActivitySubtab {
+  if (value === 'all') return 'all';
   return value === 'branch_updates' ? 'branch_updates' : 'notifications';
+}
+
+function getBuildActivityFeedSubtab(
+  tab: BuildActivityTab,
+  subtab: BuildActivitySubtab
+): BuildActivitySubtab {
+  if (tab === 'all') return 'all';
+  return subtab === 'branch_updates' ? 'branch_updates' : 'notifications';
+}
+
+function getBuildActivityRequestKind(
+  tab: BuildActivityTab,
+  subtab: BuildActivitySubtab
+): 'all' | 'notifications' | 'branch_updates' {
+  if (tab === 'all') return 'all';
+  return subtab === 'branch_updates' ? 'branch_updates' : 'notifications';
 }
 
 function isPublicBrowseTab(tab: BuildListTab) {

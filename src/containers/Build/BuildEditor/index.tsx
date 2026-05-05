@@ -22,7 +22,9 @@ import useBuildRunIdentity, {
   type BuildRunMode,
   type SharedBuildRunIdentityState
 } from './useBuildRunIdentity';
-import useBuildProjectFileDrafts from './useBuildProjectFileDrafts';
+import useBuildProjectFileDrafts, {
+  type BuildProjectFilesDraftState
+} from './useBuildProjectFileDrafts';
 import useBuildEditorMutableState from './useBuildEditorMutableState';
 import useBuildRunOrchestration from './useBuildRunOrchestration';
 import useRuntimeBuildFollowUp from './useRuntimeBuildFollowUp';
@@ -2854,6 +2856,9 @@ export default function BuildEditor({
   const loadBuildContributions = useAppContext(
     (v) => v.requestHelpers.loadBuildContributions
   );
+  const loadBuildContribution = useAppContext(
+    (v) => v.requestHelpers.loadBuildContribution
+  );
   const mergeBuildContribution = useAppContext(
     (v) => v.requestHelpers.mergeBuildContribution
   );
@@ -2880,6 +2885,25 @@ export default function BuildEditor({
     'merge' | ''
   >('');
   const [contributionActionError, setContributionActionError] = useState('');
+  const [
+    currentBranchMergeableFileCount,
+    setCurrentBranchMergeableFileCount
+  ] = useState<number | null>(null);
+  const [
+    currentBranchMergeabilityLoadFailed,
+    setCurrentBranchMergeabilityLoadFailed
+  ] = useState(false);
+  const [
+    currentBranchProjectFileDraftState,
+    setCurrentBranchProjectFileDraftState
+  ] = useState({
+    hasUnsavedChanges: false,
+    saving: false
+  });
+  const [
+    currentBranchMergeabilityRefreshKey,
+    setCurrentBranchMergeabilityRefreshKey
+  ] = useState(0);
   const [availableVersions, setAvailableVersions] = useState<
     BuildVersionSummary[]
   >([]);
@@ -2984,6 +3008,25 @@ export default function BuildEditor({
     onAppendFeedbackEvent: appendLocalRunEvent
   });
   const sharedRunReconciliation = useSharedBuildRunReconciliation();
+  const currentBranchRootBuildId = currentBuildIsContributionFork
+    ? Number(build.contributionRootBuildId || 0)
+    : 0;
+  const currentBranchContributionBuildId = currentBuildIsContributionFork
+    ? Number(build.id || 0)
+    : 0;
+  const canShowMergeCurrentBranch = canMergeBuildBranch(build, userId);
+  const currentBranchHasMergeableFileChanges =
+    currentBranchMergeableFileCount !== null &&
+    currentBranchMergeableFileCount > 0;
+  const currentBranchHasPendingProjectFileDrafts =
+    canEditCurrentBuildProject &&
+    (currentBranchProjectFileDraftState.hasUnsavedChanges ||
+      currentBranchProjectFileDraftState.saving);
+  const canMergeCurrentBranch =
+    canShowMergeCurrentBranch &&
+    (currentBranchHasMergeableFileChanges ||
+      currentBranchMergeabilityLoadFailed ||
+      currentBranchHasPendingProjectFileDrafts);
   const RUNTIME_AUTOFIX_ENABLED = false;
   const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
   const RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS = 18000;
@@ -3009,6 +3052,13 @@ export default function BuildEditor({
   useEffect(() => {
     savingThumbnailRef.current = savingThumbnail;
   }, [savingThumbnail]);
+
+  useEffect(() => {
+    setCurrentBranchProjectFileDraftState({
+      hasUnsavedChanges: false,
+      saving: false
+    });
+  }, [build.id]);
 
   useEffect(() => {
     return () => {
@@ -3091,6 +3141,52 @@ export default function BuildEditor({
     currentBuildIsContributionFork,
     isOwner,
     userId
+  ]);
+
+  useEffect(() => {
+    if (
+      !canShowMergeCurrentBranch ||
+      !currentBranchRootBuildId ||
+      !currentBranchContributionBuildId
+    ) {
+      setCurrentBranchMergeableFileCount(null);
+      setCurrentBranchMergeabilityLoadFailed(false);
+      return;
+    }
+    let canceled = false;
+    setCurrentBranchMergeableFileCount(null);
+    setCurrentBranchMergeabilityLoadFailed(false);
+    loadBuildContribution({
+      buildId: currentBranchRootBuildId,
+      contributionBuildId: currentBranchContributionBuildId
+    })
+      .then((result: any) => {
+        if (canceled) return;
+        const changedFiles = Array.isArray(result?.diff?.changedFiles)
+          ? result.diff.changedFiles
+          : [];
+        setCurrentBranchMergeableFileCount(changedFiles.length);
+        setCurrentBranchMergeabilityLoadFailed(false);
+      })
+      .catch((error: any) => {
+        if (canceled) return;
+        console.error('Failed to load current branch merge diff:', error);
+        setCurrentBranchMergeableFileCount(null);
+        setCurrentBranchMergeabilityLoadFailed(true);
+      });
+    return () => {
+      canceled = true;
+    };
+    // loadBuildContribution is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    build.contributionBaseBuildUpdatedAt,
+    build.contributionStatus,
+    build.updatedAt,
+    canShowMergeCurrentBranch,
+    currentBranchContributionBuildId,
+    currentBranchMergeabilityRefreshKey,
+    currentBranchRootBuildId
   ]);
   const mergedPersistedAndLiveChatMessages = mergeChatMessagesWithBuildRun({
     persistedMessages: chatMessages,
@@ -6601,6 +6697,9 @@ export default function BuildEditor({
       const appliedBuild = markBuildContributionWorkspaceEdited(nextBuild);
       applyBuildUpdate(appliedBuild);
       syncAvailableBranchSummary(appliedBuild);
+      if (canMergeBuildBranch(appliedBuild, userId)) {
+        setCurrentBranchMergeabilityRefreshKey((key) => key + 1);
+      }
       maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
       if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
         replaceCopilotPolicy(result?.copilotPolicy || null);
@@ -7302,7 +7401,7 @@ export default function BuildEditor({
     if (
       !rootBuildId ||
       !contributionBuildId ||
-      !canMergeBuildBranch(latestBuild, userId) ||
+      !canMergeCurrentBranch ||
       contributionActionLoading
     ) {
       return;
@@ -7444,7 +7543,6 @@ export default function BuildEditor({
     Boolean(userId) &&
     canStartStandaloneFork(build) &&
     (!isOwner || currentBuildIsContributionFork);
-  const canMergeCurrentBranch = canMergeBuildBranch(build, userId);
   const buildWorkspaceCommunicationMode = normalizeBuildWorkspaceCommunicationMode(
     buildWorkspaceUi?.communicationMode
   );
@@ -7628,8 +7726,7 @@ export default function BuildEditor({
         resumePausedQueue: true,
         ...options
       }),
-    onEditableProjectFilesStateChange:
-      projectFileDrafts.handleProjectFilesDraftStateChange,
+    onEditableProjectFilesStateChange: handleEditableProjectFilesStateChange,
     onRuntimeObservationChange: runtimeFollowUp.handleRuntimeObservationChange,
     onRuntimeUploadsSync: handleRuntimeUploadsSyncFromPreview,
     onAiUsagePolicyUpdate: handlePreviewAiUsagePolicyUpdate,
@@ -7653,6 +7750,8 @@ export default function BuildEditor({
         contributionActionError={contributionActionError}
         contributionActionLoading={contributionActionLoading}
         canMergeBranch={canMergeCurrentBranch}
+        showMergeBranch={canShowMergeCurrentBranch}
+        mergeBranchDisabled={!canMergeCurrentBranch}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
@@ -7866,6 +7965,22 @@ export default function BuildEditor({
     return projectFileDrafts.ensureProjectFilesPersistedBeforeContributionAction(
       { action }
     );
+  }
+
+  function handleEditableProjectFilesStateChange(
+    state: BuildProjectFilesDraftState
+  ) {
+    projectFileDrafts.handleProjectFilesDraftStateChange(state);
+    setCurrentBranchProjectFileDraftState((current) => {
+      const next = {
+        hasUnsavedChanges: Boolean(state.hasUnsavedChanges),
+        saving: Boolean(state.saving)
+      };
+      return current.hasUnsavedChanges === next.hasUnsavedChanges &&
+        current.saving === next.saving
+        ? current
+        : next;
+    });
   }
 
   function setMobilePanelTab(tab: MobilePanelTab) {

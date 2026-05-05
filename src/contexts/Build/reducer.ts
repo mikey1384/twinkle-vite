@@ -106,8 +106,8 @@ type BuildStudioPublicBrowseTab = Exclude<
   'collaborating'
 >;
 export type BuildStudioBrowseMode = 'recent' | 'leaderboard';
-export type BuildActivityTab = 'mine' | 'collaborating';
-export type BuildActivitySubtab = 'notifications' | 'branch_updates';
+export type BuildActivityTab = 'all' | 'mine' | 'collaborating';
+export type BuildActivitySubtab = 'all' | 'notifications' | 'branch_updates';
 export type BuildWorkspaceCommunicationMode = 'lumine' | 'versions' | 'people';
 
 export interface BuildWorkspaceUiState {
@@ -338,8 +338,8 @@ function createInitialBuildStudioBrowseModes(): Record<
 
 function createInitialBuildStudioActivityPanelState(): BuildStudioActivityPanelState {
   return {
-    activeTab: 'mine',
-    activeSubtab: 'notifications'
+    activeTab: 'all',
+    activeSubtab: 'all'
   };
 }
 
@@ -348,11 +348,18 @@ function createInitialBuildStudioActivityFeeds(): Record<
   Record<BuildActivitySubtab, BuildStudioActivityFeedState>
 > {
   return {
+    all: {
+      all: createInitialBuildStudioActivityFeedState(),
+      notifications: createInitialBuildStudioActivityFeedState(),
+      branch_updates: createInitialBuildStudioActivityFeedState()
+    },
     mine: {
+      all: createInitialBuildStudioActivityFeedState(),
       notifications: createInitialBuildStudioActivityFeedState(),
       branch_updates: createInitialBuildStudioActivityFeedState()
     },
     collaborating: {
+      all: createInitialBuildStudioActivityFeedState(),
       notifications: createInitialBuildStudioActivityFeedState(),
       branch_updates: createInitialBuildStudioActivityFeedState()
     }
@@ -463,12 +470,15 @@ function normalizeBuildStudioBrowseMode(
 }
 
 function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
-  return value === 'collaborating' ? 'collaborating' : 'mine';
+  if (value === 'all') return 'all';
+  if (value === 'mine' || value === 'collaborating') return value;
+  return 'all';
 }
 
 function normalizeBuildActivitySubtab(
   value?: string | null
 ): BuildActivitySubtab {
+  if (value === 'all') return 'all';
   return value === 'branch_updates' ? 'branch_updates' : 'notifications';
 }
 
@@ -1719,9 +1729,15 @@ export default function BuildReducer(
       const activeSubtab = action.buildStudio?.activitySubtab
         ? normalizeBuildActivitySubtab(action.buildStudio.activitySubtab)
         : currentActivityPanel.activeSubtab;
+      const resolvedActiveSubtab =
+        activeTab === 'all'
+          ? 'all'
+          : activeSubtab === 'all'
+            ? 'notifications'
+            : activeSubtab;
       if (
         currentActivityPanel.activeTab === activeTab &&
-        currentActivityPanel.activeSubtab === activeSubtab
+        currentActivityPanel.activeSubtab === resolvedActiveSubtab
       ) {
         return state;
       }
@@ -1731,7 +1747,7 @@ export default function BuildReducer(
           ...buildStudio,
           activityPanel: {
             activeTab,
-            activeSubtab
+            activeSubtab: resolvedActiveSubtab
           }
         }
       };
