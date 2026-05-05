@@ -13,10 +13,18 @@ interface BuildContributionInvitePayload {
   userId?: number;
   invitedByUserId?: number;
   title?: string;
+  isPublic?: boolean | number;
+  publishedArtifactVersionId?: number | null;
+  releaseStatus?: BuildPublishedAppReleaseStatus | null;
   status?: BuildContributionInviteStatus;
   acceptedAt?: number;
   declinedAt?: number;
   revokedAt?: number;
+}
+
+interface BuildPublishedAppReleaseStatus {
+  state?: string;
+  hasPublishedVersion?: boolean;
 }
 
 type BuildContributionInviteStatus =
@@ -90,6 +98,19 @@ export default function BuildContributionInvite({
   const membershipLoaded = !membershipKey || Boolean(membershipState);
   const rowStatus = getBuildInviteRowStatus(canonicalInvite || payload);
   const status = isActiveMember ? 'accepted' : rowStatus;
+  const canOpenApp = canOpenPublishedBuildApp(payload);
+  const canOpenWorkspaceFromTitle = sentByMe || status === 'accepted';
+  const titleNode = canOpenWorkspaceFromTitle ? (
+    <button
+      type="button"
+      className={workspaceTitleButtonClass}
+      onClick={handleOpenWorkspace}
+    >
+      {title}
+    </button>
+  ) : (
+    <strong>{title}</strong>
+  );
 
   useEffect(() => {
     if (!buildId || !membershipUserId || membershipState) return;
@@ -142,45 +163,40 @@ export default function BuildContributionInvite({
                 : status === 'revoked'
                   ? 'This invite was revoked for '
                   : 'You invited this user to join the team for '}
-            <strong>{title}</strong>.
+            {titleNode}.
           </span>
         ) : status === 'accepted' ? (
           <span>
             You are on the team for{' '}
-            <strong>{title}</strong>.
+            {titleNode}.
           </span>
         ) : status === 'declined' ? (
           <span>
             You declined {sender.username}&apos;s invite for{' '}
-            <strong>{title}</strong>.
+            {titleNode}.
           </span>
         ) : status === 'revoked' ? (
           <span>
-            {sender.username}&apos;s invite for <strong>{title}</strong> was
-            revoked.
+            {sender.username}&apos;s invite for {titleNode} was revoked.
           </span>
         ) : (
           <span>
             {sender.username} invited you to join the team for{' '}
-            <strong>{title}</strong>.
+            {titleNode}.
           </span>
         )}
       </div>
       <div className={actionsClass}>
-        <Button
-          color="darkerGray"
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            navigate(`/build/${buildId}`, {
-              state: {
-                openVersionsPanel: true
-              }
-            })
-          }
-        >
-          Open Build
-        </Button>
+        {canOpenApp ? (
+          <Button
+            color="darkerGray"
+            variant="outline"
+            size="sm"
+            onClick={handleOpenApp}
+          >
+            Open App
+          </Button>
+        ) : null}
         {!sentByMe && membershipLoaded && status === 'pending' ? (
           <>
             <Button
@@ -292,6 +308,10 @@ export default function BuildContributionInvite({
       }
     });
   }
+
+  function handleOpenApp() {
+    navigate(`/app/${buildId}`);
+  }
 }
 
 function parseBuildInvitePayload(
@@ -303,6 +323,18 @@ function parseBuildInvitePayload(
   } catch {
     return null;
   }
+}
+
+function canOpenPublishedBuildApp(
+  build?: BuildContributionInvitePayload | null
+) {
+  if (!build || Number(build.isPublic || 0) !== 1) return false;
+  if (Number(build.publishedArtifactVersionId || 0) <= 0) return false;
+  if (!build.releaseStatus) return true;
+  return (
+    build.releaseStatus.state !== 'missing_snapshot' &&
+    Boolean(build.releaseStatus.hasPublishedVersion)
+  );
 }
 
 function getBuildInviteStatus(
@@ -421,6 +453,28 @@ const inviteHeaderClass = css`
 const inviteBodyClass = css`
   color: ${Color.darkGray()};
   line-height: 1.4;
+`;
+
+const workspaceTitleButtonClass = css`
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline;
+  font: inherit;
+  font-weight: 700;
+  text-align: inherit;
+  vertical-align: baseline;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+  }
 `;
 
 const actionsClass = css`

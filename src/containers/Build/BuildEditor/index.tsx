@@ -99,6 +99,16 @@ interface PendingBranchThumbnailCapture {
   codeSignature: string;
 }
 
+interface BuildEditorRouteState {
+  forumThreadId?: number;
+  openForkHistory?: boolean;
+  openCollaborationSettings?: boolean;
+  openPeoplePanel?: boolean;
+  openVersionsPanel?: boolean;
+  skipDefaultContributionBranchRedirect?: boolean;
+  [key: string]: unknown;
+}
+
 function clampBuildChatPanelWidth(width: number, workspaceWidth = 0) {
   const safeWidth = Number.isFinite(width)
     ? width
@@ -2770,14 +2780,7 @@ export default function BuildEditor({
     (v) => v.actions.onClearBuildRuntimeVerifyResult
   );
   const navigate = useNavigate();
-  const routeState = (location.state || {}) as {
-    forumThreadId?: number;
-    openForkHistory?: boolean;
-    openCollaborationSettings?: boolean;
-    openPeoplePanel?: boolean;
-    openVersionsPanel?: boolean;
-    skipDefaultContributionBranchRedirect?: boolean;
-  };
+  const routeState = (location.state || {}) as BuildEditorRouteState;
   const routeForumThreadId = Math.max(
     0,
     Math.floor(Number(routeState.forumThreadId || 0))
@@ -7883,10 +7886,19 @@ export default function BuildEditor({
   }
 
   function handleBuildWorkspaceForumThreadChange(threadId: number) {
+    const normalizedThreadId = Math.max(0, Math.floor(Number(threadId || 0)));
     onSetBuildWorkspaceForumThread({
       buildId: build.id,
-      forumThreadId: threadId
+      forumThreadId: normalizedThreadId
     });
+    if (routeForumThreadId > 0) {
+      const nextRouteState = { ...routeState };
+      delete nextRouteState.forumThreadId;
+      navigate(location.pathname, {
+        replace: true,
+        state: Object.keys(nextRouteState).length > 0 ? nextRouteState : null
+      });
+    }
   }
 
   function handleBuildCollaborationPatch(patch: Record<string, any>) {

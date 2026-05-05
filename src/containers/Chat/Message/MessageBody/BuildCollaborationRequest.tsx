@@ -13,11 +13,19 @@ interface BuildCollaborationRequestPayload {
   requesterUserId?: number;
   ownerUserId?: number;
   title?: string;
+  isPublic?: boolean | number;
+  publishedArtifactVersionId?: number | null;
+  releaseStatus?: BuildPublishedAppReleaseStatus | null;
   message?: string;
   status?: BuildCollaborationRequestStatus;
   respondedAt?: number;
   canceledAt?: number;
   ownerHidden?: number;
+}
+
+interface BuildPublishedAppReleaseStatus {
+  state?: string;
+  hasPublishedVersion?: boolean;
 }
 
 type BuildCollaborationRequestStatus =
@@ -91,6 +99,7 @@ export default function BuildCollaborationRequest({
     canonicalRequest || payload
   );
   const status = isActiveMember ? 'accepted' : rowStatus;
+  const canOpenApp = canOpenPublishedBuildApp(payload);
 
   useEffect(() => {
     if (!buildId || !membershipUserId || membershipState) return;
@@ -170,14 +179,16 @@ export default function BuildCollaborationRequest({
         <div className={requestMessageClass}>{requestMessage}</div>
       ) : null}
       <div className={actionsClass}>
-        <Button
-          color="darkerGray"
-          variant="outline"
-          size="sm"
-          onClick={handleOpenBuild}
-        >
-          Open Build
-        </Button>
+        {canOpenApp ? (
+          <Button
+            color="darkerGray"
+            variant="outline"
+            size="sm"
+            onClick={handleOpenApp}
+          >
+            Open App
+          </Button>
+        ) : null}
         {!sentByMe && membershipLoaded && status === 'pending' ? (
           <>
             <Button
@@ -283,8 +294,8 @@ export default function BuildCollaborationRequest({
     return true;
   }
 
-  function handleOpenBuild() {
-    navigate(`/build/${buildId}`);
+  function handleOpenApp() {
+    navigate(`/app/${buildId}`);
   }
 
   function handleOpenWorkspace() {
@@ -305,6 +316,18 @@ function parseBuildCollaborationRequestPayload(
   } catch {
     return null;
   }
+}
+
+function canOpenPublishedBuildApp(
+  build?: BuildCollaborationRequestPayload | null
+) {
+  if (!build || Number(build.isPublic || 0) !== 1) return false;
+  if (Number(build.publishedArtifactVersionId || 0) <= 0) return false;
+  if (!build.releaseStatus) return true;
+  return (
+    build.releaseStatus.state !== 'missing_snapshot' &&
+    Boolean(build.releaseStatus.hasPublishedVersion)
+  );
 }
 
 function getBuildCollaborationRequestStatus(
