@@ -1657,6 +1657,43 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildContributionMergeIntoMyBranch({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge-into-my-branch`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async mergeBuildContributionIntoMyBranch({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge-into-my-branch`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async mergeBuildContribution({
       buildId,
       contributionBuildId,

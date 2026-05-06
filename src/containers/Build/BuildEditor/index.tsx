@@ -925,6 +925,46 @@ function canMergeBuildBranch(build: Build, userId?: number | null) {
   );
 }
 
+function getBuildContributionContributorUserId(build?: {
+  contributionContributorId?: number | null;
+  userId?: number | null;
+}) {
+  return Number(build?.contributionContributorId || build?.userId || 0) || 0;
+}
+
+function canReceiveBranchMergeStatus(status?: string | null) {
+  const normalizedStatus = String(status || '').trim();
+  return normalizedStatus === 'draft' || normalizedStatus === 'merged';
+}
+
+function canUseBranchAsMergeSourceStatus(status?: string | null) {
+  const normalizedStatus = String(status || '').trim();
+  return normalizedStatus === 'draft' || normalizedStatus === 'merged';
+}
+
+function canMergeBuildBranchIntoOwnBranch({
+  build,
+  userId,
+  ownBranch
+}: {
+  build: Build;
+  userId?: number | null;
+  ownBranch?: BuildVersionSummary | null;
+}) {
+  const normalizedUserId = Number(userId || 0);
+  const ownBranchId = Number(ownBranch?.id || 0);
+  return (
+    normalizedUserId > 0 &&
+    isBuildContributionFork(build) &&
+    Number(build.contributionRootBuildId || 0) > 0 &&
+    ownBranchId > 0 &&
+    ownBranchId !== Number(build.id || 0) &&
+    getBuildContributionContributorUserId(build) !== normalizedUserId &&
+    canUseBranchAsMergeSourceStatus(build.contributionStatus) &&
+    canReceiveBranchMergeStatus(ownBranch?.contributionStatus)
+  );
+}
+
 function canDeleteBuildBranchStatus(status?: string | null) {
   const normalizedStatus = String(status || 'draft').trim() || 'draft';
   return normalizedStatus === 'draft' || normalizedStatus === 'none';
@@ -2862,8 +2902,14 @@ export default function BuildEditor({
   const loadBuildContribution = useAppContext(
     (v) => v.requestHelpers.loadBuildContribution
   );
+  const loadBuildContributionMergeIntoMyBranch = useAppContext(
+    (v) => v.requestHelpers.loadBuildContributionMergeIntoMyBranch
+  );
   const mergeBuildContribution = useAppContext(
     (v) => v.requestHelpers.mergeBuildContribution
+  );
+  const mergeBuildContributionIntoMyBranch = useAppContext(
+    (v) => v.requestHelpers.mergeBuildContributionIntoMyBranch
   );
   const updateBuildLumineChatVisibility = useAppContext(
     (v) => v.requestHelpers.updateBuildLumineChatVisibility
@@ -2910,6 +2956,8 @@ export default function BuildEditor({
   const [availableVersions, setAvailableVersions] = useState<
     BuildVersionSummary[]
   >([]);
+  const [currentUserContributionBranch, setCurrentUserContributionBranch] =
+    useState<BuildVersionSummary | null>(null);
   const [availableVersionsLoading, setAvailableVersionsLoading] =
     useState(false);
   const [deletingBranch, setDeletingBranch] =
@@ -3017,7 +3065,19 @@ export default function BuildEditor({
   const currentBranchContributionBuildId = currentBuildIsContributionFork
     ? Number(build.id || 0)
     : 0;
-  const canShowMergeCurrentBranch = canMergeBuildBranch(build, userId);
+  const canMergeCurrentBranchToMain = canMergeBuildBranch(build, userId);
+  const canMergeCurrentBranchIntoOwnBranch = canMergeBuildBranchIntoOwnBranch({
+    build,
+    userId,
+    ownBranch: currentUserContributionBranch
+  });
+  const currentBranchMergeTarget: 'main' | 'own-branch' | null =
+    canMergeCurrentBranchToMain
+      ? 'main'
+      : canMergeCurrentBranchIntoOwnBranch
+        ? 'own-branch'
+        : null;
+  const canShowMergeCurrentBranch = Boolean(currentBranchMergeTarget);
   const currentBranchHasMergeableFileChanges =
     currentBranchMergeableFileCount !== null &&
     currentBranchMergeableFileCount > 0;
@@ -3029,6 +3089,10 @@ export default function BuildEditor({
     canShowMergeCurrentBranch &&
     (currentBranchHasMergeableFileChanges ||
       currentBranchMergeabilityLoadFailed ||
+      currentBranchHasPendingProjectFileDrafts);
+  const mergeCurrentBranchShiny =
+    canShowMergeCurrentBranch &&
+    (currentBranchHasMergeableFileChanges ||
       currentBranchHasPendingProjectFileDrafts);
   const RUNTIME_AUTOFIX_ENABLED = false;
   const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
@@ -3110,6 +3174,7 @@ export default function BuildEditor({
         !build.canOpenContributionWorkspace)
     ) {
       setAvailableVersions([]);
+      setCurrentUserContributionBranch(null);
       setAvailableVersionsLoading(false);
       return;
     }
@@ -3118,14 +3183,26 @@ export default function BuildEditor({
     loadBuildContributions(branchListBuildId)
       .then((result: any) => {
         if (canceled) return;
-        setAvailableVersions(
-          Array.isArray(result?.contributions) ? result.contributions : []
-        );
+        const nextVersions = Array.isArray(result?.contributions)
+          ? result.contributions
+          : [];
+        const currentUserBranch =
+          normalizeBuildVersionSummary(result?.currentUserContribution) ||
+          nextVersions.find(
+            (version: BuildVersionSummary) =>
+              getBuildContributionContributorUserId(version) ===
+                Number(userId || 0) &&
+              canReceiveBranchMergeStatus(version.contributionStatus)
+          ) ||
+          null;
+        setAvailableVersions(nextVersions);
+        setCurrentUserContributionBranch(currentUserBranch);
       })
       .catch((error: any) => {
         if (canceled) return;
         console.error('Failed to load build branches:', error);
         setAvailableVersions([]);
+        setCurrentUserContributionBranch(null);
       })
       .finally(() => {
         if (!canceled) {
@@ -3159,7 +3236,11 @@ export default function BuildEditor({
     let canceled = false;
     setCurrentBranchMergeableFileCount(null);
     setCurrentBranchMergeabilityLoadFailed(false);
-    loadBuildContribution({
+    const loadMergeability =
+      currentBranchMergeTarget === 'own-branch'
+        ? loadBuildContributionMergeIntoMyBranch
+        : loadBuildContribution;
+    loadMergeability({
       buildId: currentBranchRootBuildId,
       contributionBuildId: currentBranchContributionBuildId
     })
@@ -3168,7 +3249,10 @@ export default function BuildEditor({
         const changedFiles = Array.isArray(result?.diff?.changedFiles)
           ? result.diff.changedFiles
           : [];
-        setCurrentBranchMergeableFileCount(changedFiles.length);
+        const mergeableChangedFiles = changedFiles.filter(
+          (file: any) => file?.mergeStatus !== 'unchanged'
+        );
+        setCurrentBranchMergeableFileCount(mergeableChangedFiles.length);
         setCurrentBranchMergeabilityLoadFailed(false);
       })
       .catch((error: any) => {
@@ -3180,7 +3264,7 @@ export default function BuildEditor({
     return () => {
       canceled = true;
     };
-    // loadBuildContribution is a stable context request helper.
+    // loadBuildContribution and loadBuildContributionMergeIntoMyBranch are stable context request helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     build.contributionBaseBuildUpdatedAt,
@@ -3188,8 +3272,11 @@ export default function BuildEditor({
     build.updatedAt,
     canShowMergeCurrentBranch,
     currentBranchContributionBuildId,
+    currentBranchMergeTarget,
     currentBranchMergeabilityRefreshKey,
-    currentBranchRootBuildId
+    currentBranchRootBuildId,
+    currentUserContributionBranch?.id,
+    currentUserContributionBranch?.updatedAt
   ]);
   const mergedPersistedAndLiveChatMessages = mergeChatMessagesWithBuildRun({
     persistedMessages: chatMessages,
@@ -7347,6 +7434,11 @@ export default function BuildEditor({
         setAvailableVersions((versions) =>
           versions.filter((version) => Number(version.id) !== Number(target.id))
         );
+        if (
+          Number(currentUserContributionBranch?.id || 0) === Number(target.id)
+        ) {
+          setCurrentUserContributionBranch(null);
+        }
         setDeletingBranch(null);
         if (Number(target.id) === Number(getLatestBuild().id || 0)) {
           const rootBuildId = Number(
@@ -7405,6 +7497,7 @@ export default function BuildEditor({
     if (
       !rootBuildId ||
       !contributionBuildId ||
+      !currentBranchMergeTarget ||
       !canMergeCurrentBranch ||
       contributionActionLoading
     ) {
@@ -7415,16 +7508,32 @@ export default function BuildEditor({
     try {
       const filesReady = await handleBeforeContributionAction('merge');
       if (!filesReady) return;
-      const result = await mergeBuildContribution({
-        buildId: rootBuildId,
-        contributionBuildId
-      });
+      const result =
+        currentBranchMergeTarget === 'own-branch'
+          ? await mergeBuildContributionIntoMyBranch({
+              buildId: rootBuildId,
+              contributionBuildId
+            })
+          : await mergeBuildContribution({
+              buildId: rootBuildId,
+              contributionBuildId
+            });
       if (result?.success) {
-        navigate(`/build/${rootBuildId}`, {
-          state: {
-            openVersionsPanel: true
-          }
-        });
+        const mergedBranch = result.contribution || null;
+        if (currentBranchMergeTarget === 'own-branch' && mergedBranch) {
+          handleContributionBranchCreated(mergedBranch);
+          navigate(getBuildWorkspacePath(mergedBranch), {
+            state: {
+              openVersionsPanel: true
+            }
+          });
+        } else {
+          navigate(`/build/${rootBuildId}`, {
+            state: {
+              openVersionsPanel: true
+            }
+          });
+        }
       }
     } catch (error: any) {
       setContributionActionError(
@@ -7756,6 +7865,7 @@ export default function BuildEditor({
         canMergeBranch={canMergeCurrentBranch}
         showMergeBranch={canShowMergeCurrentBranch}
         mergeBranchDisabled={!canMergeCurrentBranch}
+        mergeBranchShiny={mergeCurrentBranchShiny}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
@@ -7912,6 +8022,11 @@ export default function BuildEditor({
   function handleContributionBranchCreated(branch: Record<string, any>) {
     const nextVersion = normalizeBuildVersionSummary(branch);
     if (!nextVersion) return;
+    if (
+      getBuildContributionContributorUserId(nextVersion) === Number(userId || 0)
+    ) {
+      setCurrentUserContributionBranch(nextVersion);
+    }
     setAvailableVersions((versions) => {
       const nextVersions = versions.some(
         (version) => Number(version.id || 0) === Number(nextVersion.id || 0)
@@ -7928,6 +8043,22 @@ export default function BuildEditor({
 
   function syncAvailableBranchSummary(nextBuild: Build) {
     if (!isBuildContributionFork(nextBuild)) return;
+    setCurrentUserContributionBranch((currentBranch) => {
+      if (
+        !currentBranch ||
+        Number(currentBranch.id || 0) !== Number(nextBuild.id || 0)
+      ) {
+        return currentBranch;
+      }
+      return {
+        ...currentBranch,
+        title: nextBuild.title || currentBranch.title,
+        thumbnailUrl: nextBuild.thumbnailUrl || null,
+        updatedAt: nextBuild.updatedAt || currentBranch.updatedAt,
+        contributionStatus:
+          nextBuild.contributionStatus || currentBranch.contributionStatus
+      };
+    });
     setAvailableVersions((versions) =>
       versions.map((version) =>
         Number(version.id || 0) === Number(nextBuild.id || 0)

@@ -291,6 +291,7 @@ interface HeaderProps {
   canMergeBranch?: boolean;
   showMergeBranch?: boolean;
   mergeBranchDisabled?: boolean;
+  mergeBranchShiny?: boolean;
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
@@ -432,6 +433,7 @@ export default function Header({
   canMergeBranch = false,
   showMergeBranch = false,
   mergeBranchDisabled = false,
+  mergeBranchShiny = false,
   showForkButton,
   onContribute,
   onFork,
@@ -478,20 +480,12 @@ export default function Header({
     isContributionFork &&
     contributionStatus !== 'none' &&
     contributionStatus !== 'draft';
-  const rootBuildUserId = Number(build.rootBuildUserId || 0);
-  const branchOwnerUserId = Number(
-    build.contributionContributorId || build.userId || 0
-  );
   const shouldShowMergeBranch = Boolean(showMergeBranch || canMergeBranch);
   const mergeBranchButtonDisabled = Boolean(
     mergeBranchDisabled || !canMergeBranch || contributionActionLoading
   );
   const shouldHighlightMergeBranch =
-    canMergeBranch &&
-    !mergeBranchButtonDisabled &&
-    rootBuildUserId > 0 &&
-    branchOwnerUserId > 0 &&
-    branchOwnerUserId !== rootBuildUserId;
+    mergeBranchShiny && !mergeBranchButtonDisabled;
   const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
   const canOpenRuntime = Boolean(
     build.isPublic && releaseStatus && buildCanOpenRuntime(releaseStatus)
