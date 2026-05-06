@@ -161,7 +161,7 @@ export default function RewardLayout({
       <div
         className={css`
           margin-bottom: 1rem;
-          font-size: 0.9rem;
+          font-size: 1.1rem;
           color: #666;
         `}
       >

@@ -165,7 +165,7 @@ export default function RuntimeUploadsModal({
               </span>
               <span
                 className={css`
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                   color: var(--chat-text);
                   opacity: 0.72;
                 `}
@@ -189,7 +189,7 @@ export default function RuntimeUploadsModal({
             <div
               className={css`
                 margin-top: 0.45rem;
-                font-size: 1rem;
+                font-size: 1.1rem;
                 color: var(--chat-text);
                 opacity: 0.72;
               `}
@@ -275,7 +275,7 @@ export default function RuntimeUploadsModal({
                     </span>
                     <span
                       className={css`
-                        font-size: 1rem;
+                        font-size: 1.1rem;
                         color: var(--chat-text);
                         opacity: 0.68;
                       `}
@@ -287,7 +287,7 @@ export default function RuntimeUploadsModal({
                     <a
                       href={`/build/${group.buildId}`}
                       className={css`
-                        font-size: 1rem;
+                        font-size: 1.1rem;
                         font-weight: 800;
                         color: #1d4ed8;
                         text-decoration: none;
@@ -298,7 +298,7 @@ export default function RuntimeUploadsModal({
                   ) : (
                     <span
                       className={css`
-                        font-size: 1rem;
+                        font-size: 1.1rem;
                         color: var(--chat-text);
                         opacity: 0.6;
                       `}
@@ -355,7 +355,7 @@ export default function RuntimeUploadsModal({
                             color: #1d4ed8;
                             display: grid;
                             place-items: center;
-                            font-size: 0.9rem;
+                            font-size: 1.1rem;
                             font-weight: 800;
                             text-transform: uppercase;
                           `}
@@ -389,7 +389,7 @@ export default function RuntimeUploadsModal({
                         </a>
                         <div
                           className={css`
-                            font-size: 1rem;
+                            font-size: 1.1rem;
                             color: var(--chat-text);
                             opacity: 0.72;
                             display: flex;
@@ -413,7 +413,7 @@ export default function RuntimeUploadsModal({
                           color: #b91c1c;
                           border-radius: 999px;
                           padding: 0.48rem 0.95rem;
-                          font-size: 1rem;
+                          font-size: 1.1rem;
                           font-weight: 800;
                           cursor: pointer;
                           white-space: nowrap;
@@ -545,7 +545,7 @@ function GeneratedAssetUploadPanel({
             background: #2563eb;
             color: #fff;
             padding: 0.55rem 0.95rem;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             font-weight: 900;
             cursor: pointer;
             &:disabled {
@@ -573,7 +573,7 @@ function GeneratedAssetUploadPanel({
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
-            font-size: 0.92rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--chat-text);
           `}
@@ -593,7 +593,7 @@ function GeneratedAssetUploadPanel({
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
-            font-size: 0.92rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--chat-text);
           `}
@@ -614,7 +614,7 @@ function GeneratedAssetUploadPanel({
           display: flex;
           flex-direction: column;
           gap: 0.35rem;
-          font-size: 0.92rem;
+          font-size: 1.1rem;
           font-weight: 800;
           color: var(--chat-text);
         `}
@@ -644,7 +644,7 @@ function GeneratedAssetUploadPanel({
             background: rgba(254, 242, 242, 0.96);
             color: #b91c1c;
             padding: 0.65rem 0.75rem;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             font-weight: 800;
           `}
           data-testid="generated-build-asset-upload-error"
@@ -686,7 +686,7 @@ function GeneratedAssetUploadPanel({
               background: #fff;
               color: #15803d;
               padding: 0.46rem 0.8rem;
-              font-size: 0.9rem;
+              font-size: 1.1rem;
               font-weight: 900;
               cursor: pointer;
             `}
@@ -708,7 +708,7 @@ const generatedAssetInputClass = css`
   background: #fff;
   color: var(--chat-text);
   padding: 0.55rem 0.65rem;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 650;
   &:focus {
     outline: none;

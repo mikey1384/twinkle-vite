@@ -115,7 +115,7 @@ export default function ThinkHardToggle({
         </label>
         <p
           className={css`
-            font-size: 0.8rem;
+            font-size: 1.1rem;
             color: #666;
             margin: 0;
             text-align: center;

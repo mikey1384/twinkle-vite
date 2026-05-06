@@ -326,7 +326,7 @@ export default function AIChatTopicMenu({
               tone="raised"
               disabled={generating || improving}
               style={{
-                fontSize: '1rem',
+                fontSize: '1.1rem',
                 padding: '1rem',
                 marginRight: '1rem'
               }}
@@ -355,7 +355,7 @@ export default function AIChatTopicMenu({
                 tone="raised"
                 disabled={generating || improving}
                 style={{
-                  fontSize: '1rem',
+                  fontSize: '1.1rem',
                   padding: '1rem'
                 }}
               >

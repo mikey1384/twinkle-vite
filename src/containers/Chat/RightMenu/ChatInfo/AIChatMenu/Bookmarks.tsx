@@ -109,7 +109,7 @@ function Bookmarks({
             <li
               key={message.bookmarkId || message.id || index}
               className={css`
-                font-size: 1rem;
+                font-size: 1.1rem;
                 color: #666;
                 margin-bottom: 0.5rem;
                 cursor: pointer;

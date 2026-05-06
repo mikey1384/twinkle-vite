@@ -95,7 +95,7 @@ export default function AnalysisModal({
                   {canExplore && (
                     <button
                       className={css`
-                        font-size: 0.85rem;
+                        font-size: 1.1rem;
                         font-weight: 700;
                         color: #111827;
                         background: #e5e7eb;
@@ -189,7 +189,7 @@ export default function AnalysisModal({
                       <div style={{ marginTop: '0.25rem' }}>
                         <button
                           className={css`
-                            font-size: 0.8rem;
+                            font-size: 1.1rem;
                             font-weight: 700;
                             color: #0f172a;
                             background: #e2e8f0;
@@ -334,7 +334,7 @@ const moveHeaderCSS = css`
 `;
 
 const moveCountCSS = css`
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: #6b7280;
   background: #f3f4f6;
   padding: 0.25rem 0.75rem;
@@ -369,7 +369,7 @@ const moveNumberCSS = css`
   color: white;
   border-radius: 50%;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
 `;
 
@@ -390,21 +390,21 @@ const expectedMoveCSS = css`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 `;
 
 const engineMoveCSS = css`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 `;
 
 const evaluationCSS = css`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 `;
 
 const moveLabelCSS = css`
@@ -456,7 +456,7 @@ const closeFooterButtonCSS = css`
   border: 2px solid #1f2937;
   color: white;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 6px;
   padding: 0.75rem 2rem;
   transition: all 0.15s ease;

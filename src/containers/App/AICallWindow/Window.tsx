@@ -152,7 +152,7 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
               white-space: nowrap;
               color: ${batteryLevel < 30 ? '#333' : '#fff'};
               font-weight: 600;
-              font-size: 0.7rem;
+              font-size: 1.1rem;
               width: 80px;
               text-align: center;
             `}

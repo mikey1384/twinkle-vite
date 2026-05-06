@@ -59,7 +59,7 @@ const fallbackClass = css`
   }
 
   span {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 800;
   }
 `;

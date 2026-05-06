@@ -92,7 +92,7 @@ export function badgeStyle(colorName: string, bgOpacity = 0.85) {
   return css`
     display: inline-flex;
     font-family: 'Press Start 2P', cursive;
-    font-size: 0.8rem;
+    font-size: 1.1rem;
     padding: 0.5rem 0.8rem;
     align-items: center;
     justify-content: center;
@@ -145,7 +145,7 @@ const statusBadgeStyle = css`
   width: fit-content;
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     padding: 0.3rem 0.6rem;
   }
 `;
@@ -175,14 +175,14 @@ function levelBadgeStyle(backgroundColor: string) {
     justify-content: center;
     padding: 0.3rem 0.7rem;
     border-radius: 1rem;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: #fff;
     background: ${backgroundColor};
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 
     @media (max-width: ${mobileMaxWidth}) {
-      font-size: 0.8rem;
+      font-size: 1.1rem;
     }
   `;
 }

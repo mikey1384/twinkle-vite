@@ -165,7 +165,7 @@ const previewPreloadIconWrapClass = css`
 `;
 
 const previewPreloadLabelClass = css`
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 700;
   opacity: 0.82;
 `;
@@ -192,7 +192,7 @@ const previewLoadingOverlayClass = css`
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
   color: var(--chat-text);
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   font-weight: 700;
   z-index: 4;
   backdrop-filter: blur(1px);
@@ -213,7 +213,7 @@ const previewRuntimeIssuePanelClass = css`
   z-index: 5;
   padding: 0.7rem 0.78rem;
   box-shadow: 0 16px 38px rgba(15, 23, 42, 0.28);
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   line-height: 1.42;
   backdrop-filter: blur(2px);
 `;
@@ -234,7 +234,7 @@ const previewRuntimeIssueMetaClass = css`
   flex-wrap: wrap;
   color: #fecaca;
   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-  font-size: 0.72rem;
+  font-size: 1.1rem;
 `;
 
 const previewRuntimeIssueOpenButtonClass = css`
@@ -243,7 +243,7 @@ const previewRuntimeIssueOpenButtonClass = css`
   background: rgba(254, 226, 226, 0.14);
   color: #fff7ed;
   padding: 0.24rem 0.55rem;
-  font-size: 0.7rem;
+  font-size: 1.1rem;
   font-weight: 800;
   cursor: pointer;
   display: inline-flex;
@@ -260,7 +260,7 @@ const previewRuntimeIssueStackClass = css`
   word-break: break-word;
   color: #fecaca;
   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-  font-size: 0.68rem;
+  font-size: 1.1rem;
 `;
 
 const previewSpinnerClass = css`
@@ -4029,7 +4029,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 <p
                   style={{
                     margin: '0.5rem 0 0 0',
-                    fontSize: '0.9rem',
+                    fontSize: '1.1rem',
                     color: 'var(--chat-text)',
                     opacity: 0.6
                   }}
@@ -4199,7 +4199,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 <p
                   style={{
                     margin: '0.5rem 0 0 0',
-                    fontSize: '0.9rem',
+                    fontSize: '1.1rem',
                     color: 'var(--chat-text)',
                     opacity: 0.6
                   }}

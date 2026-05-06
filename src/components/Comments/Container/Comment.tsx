@@ -338,7 +338,7 @@ function Comment({
     compactMode
       ? {
           borderRadius: 7,
-          fontSize: '0.92rem',
+          fontSize: '1.1rem',
           gap: '0.4rem',
           justifyContent: 'flex-start',
           padding: '0.48rem 0.6rem',

@@ -648,7 +648,7 @@ export default function BuildDetails({
             <div
               style={{
                 color: Color.darkGray(0.7),
-                fontSize: '0.9rem',
+                fontSize: '1.1rem',
                 fontWeight: 700
               }}
             >

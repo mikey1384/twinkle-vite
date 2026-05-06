@@ -86,7 +86,7 @@ const item = {
                       color: #fff;
                     `}
                   >
-                    <div style={{ fontSize: '1rem', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: '1.1rem', lineHeight: 1, whiteSpace: 'nowrap' }}>
                       {[...Array(rewardLevel)].map((_, i) => (
                         <Icon key={i} style={{ verticalAlign: 0 }} icon="star" />
                       ))}

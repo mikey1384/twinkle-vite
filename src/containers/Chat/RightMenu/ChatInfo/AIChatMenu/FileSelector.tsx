@@ -128,7 +128,7 @@ export default function FileSelector({
           {files.length > 0 && (
             <span
               className={css`
-                font-size: 0.9rem;
+                font-size: 1.1rem;
                 color: #666;
                 font-weight: normal;
                 margin-left: 0.5rem;
@@ -248,7 +248,7 @@ export default function FileSelector({
                         className={css`
                           color: #00aa00;
                           margin-left: 0.5rem;
-                          font-size: 0.9rem;
+                          font-size: 1.1rem;
                           flex-shrink: 0;
                         `}
                       >

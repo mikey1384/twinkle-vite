@@ -45,7 +45,7 @@ export default function Board({
     size !== 'regular'
       ? css`
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 0.8rem;
+            font-size: 1.1rem;
           }
         `
       : '';

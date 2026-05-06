@@ -89,7 +89,7 @@ export default function RightPanel({
     border: 2px solid #2563eb;
     color: #ffffff;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 1.1rem;
     border-radius: 9999px;
     padding: 0.5rem 0.9rem;
     transition: all 0.15s ease;
@@ -142,7 +142,7 @@ export default function RightPanel({
                 color: #9a3412;
                 border-radius: 8px;
                 padding: 0.625rem 0.75rem;
-                font-size: 0.95rem;
+                font-size: 1.1rem;
                 font-weight: 600;
                 display: flex;
                 align-items: center;
@@ -169,7 +169,7 @@ export default function RightPanel({
                 color: #065f46;
                 border-radius: 8px;
                 padding: 0.625rem 0.75rem;
-                font-size: 0.95rem;
+                font-size: 1.1rem;
                 font-weight: 700;
                 display: flex;
                 align-items: center;

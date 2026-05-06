@@ -108,7 +108,7 @@ export default function MessageRow({
                 border: none;
                 background: transparent;
                 color: var(--chat-text);
-                font-size: 1.05rem;
+                font-size: 1.1rem;
                 line-height: 1;
                 opacity: 0.55;
                 pointer-events: auto;

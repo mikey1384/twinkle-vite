@@ -1109,7 +1109,7 @@ function NewBuild() {
               color: #1d4ed8;
               border: 1px solid rgba(65, 140, 235, 0.28);
               font-weight: 900;
-              font-size: 0.95rem;
+              font-size: 1.1rem;
               letter-spacing: 0.05em;
               text-transform: uppercase;
               font-family: ${displayFontFamily};
@@ -1181,7 +1181,7 @@ function NewBuild() {
           className={css`
             width: 100%;
             padding: 0.9rem 1rem;
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             border: 1px solid rgba(65, 140, 235, 0.26);
             border-radius: ${borderRadius};
             background: #fff;
@@ -1647,7 +1647,7 @@ function BuildWorkspaceUnavailable({
             color: #b45309;
             border: 1px solid rgba(245, 158, 11, 0.25);
             font-weight: 900;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             font-family: ${displayFontFamily};
@@ -1674,7 +1674,7 @@ function BuildWorkspaceUnavailable({
           <p
             className={css`
               margin: 0.85rem 0 0;
-              font-size: 1.05rem;
+              font-size: 1.1rem;
               line-height: 1.6;
               color: var(--chat-text);
               opacity: 0.8;

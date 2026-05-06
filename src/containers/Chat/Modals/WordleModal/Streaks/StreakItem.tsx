@@ -52,7 +52,7 @@ export default function StreakItem({
     return rank < 100 ? '1.6rem' : '1.3rem';
   }, [rank]);
   const mobileRankFontSize = useMemo(() => {
-    return rank <= 5 ? '1.2rem' : '1rem';
+    return rank <= 5 ? '1.2rem' : '1.1rem';
   }, [rank]);
   const rankBadgeClass = useMemo(
     () =>

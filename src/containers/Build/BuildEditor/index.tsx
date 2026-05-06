@@ -314,7 +314,7 @@ const branchSectionClass = css`
 `;
 
 const versionLoadTitleClass = css`
-  font-size: 0.92rem;
+  font-size: 1.1rem;
   font-weight: 900;
   color: var(--chat-text);
   opacity: 0.7;
@@ -381,7 +381,7 @@ const branchPreviewCurrentBadgeClass = css`
   color: #15803d;
   border: 1px solid rgba(34, 197, 94, 0.24);
   padding: 0.25rem 0.55rem;
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   font-weight: 900;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
 `;
@@ -427,7 +427,7 @@ const versionLoadButtonClass = css`
   color: var(--chat-text);
   padding: 0.44rem 0.7rem;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 2px 0 rgba(15, 23, 42, 0.1);
@@ -459,7 +459,7 @@ const branchDeleteButtonClass = css`
   align-items: center;
   justify-content: center;
   font: inherit;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   cursor: pointer;
   box-shadow: 0 2px 0 rgba(220, 38, 38, 0.12);
   transition:
@@ -480,7 +480,7 @@ const branchDeleteButtonClass = css`
     right: 0.4rem;
     width: 1.85rem;
     height: 1.85rem;
-    font-size: 0.92rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -535,7 +535,7 @@ const branchLoadMetaClass = css`
   gap: 0.35rem;
   color: var(--chat-text);
   opacity: 0.62;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 800;
 `;
 
@@ -557,7 +557,7 @@ const versionLoadStatusClass = css`
   background: #edf4ff;
   color: #2563eb;
   padding: 0.25rem 0.55rem;
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   font-weight: 900;
 `;
 
@@ -593,7 +593,7 @@ const ownerAttentionTitleClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 900;
   color: var(--chat-text);
 `;
@@ -604,7 +604,7 @@ const ownerAttentionCountClass = css`
   background: #fdf2f8;
   color: #db2777;
   padding: 0.22rem 0.55rem;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 900;
 `;
 
@@ -667,7 +667,7 @@ const ownerAttentionLabelClass = css`
 const ownerAttentionDetailClass = css`
   color: var(--chat-text);
   opacity: 0.66;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   font-weight: 800;
 `;
 
@@ -682,7 +682,7 @@ const ownerAttentionActionClass = css`
   gap: 0.4rem;
   padding: 0.48rem 0.75rem;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 2px 0 rgba(15, 23, 42, 0.08);
@@ -1657,7 +1657,7 @@ function BranchTitleReveal({ title }: { title: string }) {
         <FullTextReveal
           textContext={titleContext}
           text={title}
-          style={{ fontSize: '0.95rem', fontWeight: 800 }}
+          style={{ fontSize: '1.1rem', fontWeight: 800 }}
         />
       ) : null}
     </span>

@@ -73,7 +73,7 @@ const progressLabelStyles = css`
   align-items: center;
   margin-bottom: 8px;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 `;
 
 export default function MergingProgressArea({

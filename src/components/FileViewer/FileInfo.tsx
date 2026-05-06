@@ -82,7 +82,7 @@ export default function FileInfo({
                 width: 100%;
                 font-size: 1.2rem;
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                 }
               `}
             >

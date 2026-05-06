@@ -69,7 +69,7 @@ const inviteButtonWrapClass = css`
 const errorClass = css`
   color: #be123c;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 `;
 
 const collaboratorListClass = css`
@@ -80,7 +80,7 @@ const collaboratorListClass = css`
 
 const collaboratorSectionTitleClass = css`
   color: ${Color.darkGray()};
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 900;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -111,19 +111,19 @@ const collaboratorNameClass = css`
   text-overflow: ellipsis;
   white-space: nowrap;
   color: ${Color.darkerGray()};
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 900;
 `;
 
 const pendingLabelClass = css`
   color: ${Color.gray()};
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 800;
 `;
 
 const emptyClass = css`
   color: ${Color.darkGray()};
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 700;
 `;
 

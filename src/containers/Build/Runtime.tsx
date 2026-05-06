@@ -210,7 +210,7 @@ const titleClass = css`
   text-overflow: ellipsis;
   white-space: nowrap;
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -218,12 +218,12 @@ const metaClass = css`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   color: var(--chat-text);
   opacity: 0.72;
   flex-wrap: wrap;
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.82rem;
+    font-size: 1.1rem;
     gap: 0.35rem;
   }
 `;
@@ -250,7 +250,7 @@ const backButtonClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.92rem;
+  font-size: 1.1rem;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -266,7 +266,7 @@ const backButtonClass = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0.48rem 0.72rem;
-    font-size: 0.8rem;
+    font-size: 1.1rem;
     max-width: 46vw;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -332,7 +332,7 @@ const runtimeActionButtonClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.92rem;
+  font-size: 1.1rem;
   font-weight: 900;
   line-height: 1;
   cursor: pointer;
@@ -390,7 +390,7 @@ const runtimeActionPurpleClass = css`
 const contributionErrorClass = css`
   color: #be123c;
   font-weight: 800;
-  font-size: 0.86rem;
+  font-size: 1.1rem;
 `;
 
 const panelWrapClass = css`
@@ -515,7 +515,7 @@ const commentsDrawerTitleClass = css`
 const commentsDrawerSubtitleClass = css`
   max-width: 100%;
   color: #64748b;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -540,19 +540,19 @@ const commentsDrawerErrorClass = css`
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  font-size: 0.86rem;
+  font-size: 1.1rem;
   font-weight: 800;
 `;
 
 const runtimeCommentsClass = css`
   padding: 0;
   color: #1f2937;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 
   .comment__container {
     padding-top: 0.55rem;
     margin-bottom: 0.65rem;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
   }
 
   .content-wrapper {
@@ -575,24 +575,24 @@ const runtimeCommentsClass = css`
   }
 
   .username {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 800;
   }
 
   .timestamp,
   .timestamp > a {
-    font-size: 0.75rem;
+    font-size: 1.1rem;
   }
 
   .to {
-    font-size: 0.82rem;
+    font-size: 1.1rem;
     line-height: 1.35;
   }
 
   .comment__content {
     padding-top: 0.45rem;
-    font-size: 0.95rem;
-    line-height: 1.45;
+    font-size: 1.1rem;
+    line-height: 1.5;
   }
 
   .comment__content-spacer {
@@ -601,7 +601,7 @@ const runtimeCommentsClass = css`
 
   .comment__likes {
     margin-top: 0.15rem;
-    font-size: 0.78rem;
+    font-size: 1.1rem;
     line-height: 1.25;
   }
 
@@ -622,8 +622,8 @@ const runtimeCommentsClass = css`
 
   .comment__buttons button {
     min-height: 0;
-    padding: 0.35rem 0.55rem;
-    font-size: 0.78rem;
+    padding: 0.42rem 0.68rem;
+    font-size: 1.1rem;
     margin-left: 0 !important;
     border-radius: 8px;
   }
@@ -638,13 +638,13 @@ const runtimeCommentsClass = css`
   }
 
   .comment__secondary-actions > button {
-    width: 2.25rem !important;
-    height: 2.25rem !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
     min-height: 0 !important;
     padding: 0 !important;
     margin-left: 0 !important;
     border-radius: 9px !important;
-    font-size: 0.84rem !important;
+    font-size: 1.1rem !important;
   }
 
   .comment__secondary-actions > button > span {
@@ -666,17 +666,17 @@ const runtimeCommentsClass = css`
   }
 
   .dropdown-wrapper button {
-    width: 1.9rem !important;
-    height: 1.9rem !important;
+    width: 2.2rem !important;
+    height: 2.2rem !important;
     min-height: 0 !important;
     padding: 0 !important;
     border-radius: 8px !important;
-    font-size: 0.72rem !important;
+    font-size: 1.1rem !important;
   }
 
   textarea {
     padding: 0.75rem;
-    font-size: 0.95rem !important;
+    font-size: 1.1rem !important;
     line-height: 1.38;
   }
 
@@ -705,10 +705,10 @@ const runtimeCommentsInputFormClass = css`
   }
 
   textarea {
-    min-height: 3.1rem !important;
-    padding: 0.58rem 0.7rem !important;
+    min-height: 3.4rem !important;
+    padding: 0.65rem 0.78rem !important;
     border-radius: 10px !important;
-    font-size: 0.9rem !important;
+    font-size: 1.1rem !important;
     line-height: 1.35 !important;
   }
 
@@ -722,25 +722,25 @@ const runtimeCommentsInputFormClass = css`
 
   > div:first-of-type > div:nth-of-type(2) > div {
     color: #94a3b8 !important;
-    font-size: 0.78rem !important;
+    font-size: 1.1rem !important;
     line-height: 1.15 !important;
     white-space: nowrap;
   }
 
   > div:first-of-type > div:nth-of-type(2) > button {
-    min-height: 2.15rem !important;
-    padding: 0.48rem 0.72rem !important;
+    min-height: 2.4rem !important;
+    padding: 0.55rem 0.8rem !important;
     border-radius: 8px !important;
-    font-size: 0.78rem !important;
+    font-size: 1.1rem !important;
     line-height: 1.1 !important;
     box-shadow: 0 1px 0 rgba(22, 163, 74, 0.24) !important;
   }
 
   > div:last-child:not(:first-child) {
     flex: 0 0 auto;
-    max-width: 5.7rem;
+    max-width: 6.6rem;
     margin-left: 0.55rem !important;
-    font-size: 0.72rem !important;
+    font-size: 1.1rem !important;
     line-height: 1.15 !important;
   }
 
@@ -753,13 +753,13 @@ const runtimeCommentsInputFormClass = css`
   }
 
   > div:last-child:not(:first-child) > div {
-    width: 5.4rem !important;
-    height: 3rem !important;
+    width: 6.2rem !important;
+    height: 3.45rem !important;
   }
 
   > div:last-child:not(:first-child) > div > div {
     margin-top: 0.15rem;
-    font-size: 0.72rem !important;
+    font-size: 1.1rem !important;
     line-height: 1.15 !important;
   }
 
@@ -2027,7 +2027,7 @@ export default function BuildRuntime() {
             <div
               className={css`
                 color: ${Color.darkGray(0.7)};
-                font-size: 0.9rem;
+                font-size: 1.1rem;
                 font-weight: 700;
               `}
             >

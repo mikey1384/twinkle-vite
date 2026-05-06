@@ -87,7 +87,7 @@ const Explanation = ({ level }: { level: number }) => {
       <div
         style={{
           marginTop: '1rem',
-          fontSize: '1rem',
+          fontSize: '1.1rem',
           textAlign: 'center',
           width: '80%'
         }}
@@ -286,7 +286,7 @@ export default function MainMenu({
       <div
         style={{
           marginTop: '1rem',
-          fontSize: '0.875rem',
+          fontSize: '1.1rem',
           textAlign: 'center',
           width: '80%'
         }}

@@ -63,7 +63,7 @@ export default function PinnedComment({
           <div
             style={{
               color: Color.darkerGray(),
-              fontSize: compactMode ? '0.86rem' : '1.3rem',
+              fontSize: compactMode ? '1.1rem' : '1.3rem',
               fontWeight: 'bold',
               lineHeight: 1,
               marginBottom: compactMode ? '0.1rem' : undefined

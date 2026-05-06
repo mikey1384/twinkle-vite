@@ -96,7 +96,7 @@ export default function FileThumb({
             className={css`
               font-size: 1.3rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
               }
             `}
             onClick={() => window.open(src)}

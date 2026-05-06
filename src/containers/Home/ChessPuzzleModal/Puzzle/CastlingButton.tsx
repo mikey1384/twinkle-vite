@@ -48,7 +48,7 @@ export default function CastlingButton({
             align-items: center;
             padding: 0 0.5rem 0 0.5rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
               left: 0;
               bottom: ${bottomOffset};
             }
@@ -105,7 +105,7 @@ export default function CastlingButton({
             align-items: center;
             padding: 0 0.5rem 0 0.5rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
               right: 0;
               bottom: ${bottomOffset};
             }

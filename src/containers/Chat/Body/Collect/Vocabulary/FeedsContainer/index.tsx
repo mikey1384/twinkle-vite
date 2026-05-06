@@ -196,11 +196,11 @@ function FeedsContainer({
               <div
                 className={css`
                   margin-top: 0.5rem;
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                   font-weight: 500;
                   color: #666;
                   @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 0.9rem;
+                    font-size: 1.1rem;
                   }
                 `}
               >

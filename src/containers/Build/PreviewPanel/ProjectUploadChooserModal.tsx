@@ -14,7 +14,7 @@ const chooserGridClass = css`
 
 const chooserHintClass = css`
   margin: 0 0 1.1rem;
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   line-height: 1.5;
   color: var(--chat-text);
   opacity: 0.8;
@@ -47,7 +47,7 @@ const optionTitleStyle: React.CSSProperties = {
 };
 
 const optionDescriptionStyle: React.CSSProperties = {
-  fontSize: '0.9rem',
+  fontSize: '1.1rem',
   opacity: 0.92,
   textAlign: 'center',
   lineHeight: 1.45

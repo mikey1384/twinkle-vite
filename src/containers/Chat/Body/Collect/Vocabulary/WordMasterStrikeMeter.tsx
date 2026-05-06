@@ -292,11 +292,11 @@ const titleCls = css`
 `;
 
 const panelTitleCls = css`
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   color: ${Color.white(0.72)};
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.8rem;
+    font-size: 1.1rem;
     letter-spacing: 0.08em;
   }
 `;
@@ -321,11 +321,11 @@ const pillBaseCls = css`
 `;
 
 const panelPillBaseCls = css`
-  font-size: 1rem;
+  font-size: 1.1rem;
   padding: 0.25rem 0.7rem;
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.8rem;
+    font-size: 1.1rem;
     padding: 0.2rem 0.55rem;
   }
 `;
@@ -386,11 +386,11 @@ const countLabelCls = css`
 `;
 
 const panelCountLabelCls = css`
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: ${Color.white(0.6)};
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -411,11 +411,11 @@ const progressMetaCls = css`
 `;
 
 const panelMetaCls = css`
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: ${Color.white(0.65)};
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -470,7 +470,7 @@ const panelBarTicksCls = css`
 `;
 
 const actionHintCls = css`
-  font-size: 1rem;
+  font-size: 1.1rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: ${Color.logoBlue()};
@@ -500,7 +500,7 @@ const panelActionHintCls = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.75rem;
+    font-size: 1.1rem;
   }
 `;
 

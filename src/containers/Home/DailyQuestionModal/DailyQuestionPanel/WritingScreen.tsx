@@ -115,7 +115,7 @@ export default function WritingScreen({
               background: ${Color.yellow(0.14)};
               border: 1px solid ${Color.yellow(0.35)};
               color: ${Color.darkerGray()};
-              font-size: 1.05rem;
+              font-size: 1.1rem;
               line-height: 1.4;
             `}
           >

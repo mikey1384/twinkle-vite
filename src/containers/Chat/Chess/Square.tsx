@@ -38,7 +38,7 @@ function Square({
           outline: none;
         }
         @media (max-width: ${mobileMaxWidth}) {
-          font-size: 1rem;
+          font-size: 1.1rem;
         }
       `} ${shade} ${className}`}
       style={{ position: 'relative', ...(style || {}) }}

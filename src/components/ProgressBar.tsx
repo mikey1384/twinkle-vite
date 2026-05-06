@@ -103,7 +103,7 @@ export default function ProgressBar({
               justify-content: center;
               font-weight: 700;
               pointer-events: none;
-              font-size: ${compactMode ? '0.76rem' : '1.2rem'};
+              font-size: ${compactMode ? '1.1rem' : '1.2rem'};
             `}
             style={{
               color: textColor,

@@ -50,7 +50,7 @@ export default function CastlingButton({
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 left: 0;
                 top: ${mobileTop};
               }
@@ -107,7 +107,7 @@ export default function CastlingButton({
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 left: CALC(100% - 7rem);
                 top: ${mobileTop};
               }
@@ -167,7 +167,7 @@ export default function CastlingButton({
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 left: 0;
                 top: ${mobileTop};
               }
@@ -225,7 +225,7 @@ export default function CastlingButton({
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 left: CALC(100% - 7rem);
                 top: ${mobileTop};
               }

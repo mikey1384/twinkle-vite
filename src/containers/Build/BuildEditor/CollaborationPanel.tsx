@@ -238,7 +238,7 @@ const labelClass = css`
   flex-wrap: wrap;
   font-weight: 900;
   color: var(--chat-text);
-  font-size: 0.88rem;
+  font-size: 1.1rem;
 `;
 
 const selectClass = css`
@@ -262,7 +262,7 @@ const statusPillClass = css`
   color: #1d4ed8;
   padding: 0.35rem 0.7rem;
   font-weight: 900;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
 `;
 
 const summaryPillClass = css`
@@ -275,14 +275,14 @@ const summaryPillClass = css`
   color: var(--chat-text);
   padding: 0.35rem 0.7rem;
   font-weight: 900;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   white-space: nowrap;
 `;
 
 const mutedTextClass = css`
   color: var(--chat-text);
   opacity: 0.68;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   font-weight: 700;
 `;
 
@@ -335,7 +335,7 @@ const contributionButtonClass = css`
 
 const contributionTitleClass = css`
   font-weight: 900;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 `;
 
 const detailClass = css`
@@ -363,7 +363,7 @@ const collaborationPromptTitleClass = css`
   align-items: center;
   gap: 0.55rem;
   color: var(--chat-text);
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 900;
   line-height: 1.25;
 `;
@@ -371,7 +371,7 @@ const collaborationPromptTitleClass = css`
 const collaborationPromptTextClass = css`
   color: var(--chat-text);
   opacity: 0.72;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.35;
 `;
@@ -397,7 +397,7 @@ const fileRowClass = css`
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
   padding: 0.45rem 0.55rem;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
 `;
 
 const filePathClass = css`
@@ -423,7 +423,7 @@ const codePreviewClass = css`
   background: #0f172a;
   color: #e2e8f0;
   padding: 0.7rem;
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   white-space: pre-wrap;
   word-break: break-word;
 `;
@@ -435,7 +435,7 @@ const conflictBadgeClass = css`
   padding: 0.18rem 0.48rem;
   background: rgba(244, 63, 94, 0.12);
   color: #be123c;
-  font-size: 0.72rem;
+  font-size: 1.1rem;
   font-weight: 900;
 `;
 
@@ -512,14 +512,14 @@ const forumAuthorMetaClass = css`
 
 const forumUsernameClass = css`
   font-weight: 900;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   max-width: 100%;
 `;
 
 const forumTimestampClass = css`
   color: var(--chat-text);
   opacity: 0.58;
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   font-weight: 800;
 `;
 
@@ -578,7 +578,7 @@ const forumThreadMainClass = css`
 `;
 
 const forumThreadTitleClass = css`
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 900;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -603,7 +603,7 @@ const forumThreadMetaClass = css`
   flex-wrap: wrap;
   color: var(--chat-text);
   opacity: 0.62;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   font-weight: 800;
 `;
 
@@ -614,7 +614,7 @@ const forumThreadCountClass = css`
   background: rgba(248, 250, 252, 0.9);
   color: var(--chat-text);
   padding: 0.3rem 0.55rem;
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   font-weight: 900;
   white-space: nowrap;
 `;
@@ -626,7 +626,7 @@ const forumThreadPostedClass = css`
   background: rgba(34, 197, 94, 0.1);
   color: #15803d;
   padding: 0.3rem 0.55rem;
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   font-weight: 900;
   white-space: nowrap;
 `;
@@ -672,7 +672,7 @@ const textareaClass = css`
 const errorClass = css`
   color: #be123c;
   font-weight: 800;
-  font-size: 0.86rem;
+  font-size: 1.1rem;
 `;
 
 const requestCardClass = css`
@@ -687,7 +687,7 @@ const requestCardClass = css`
 
 const requestMessageClass = css`
   color: var(--chat-text);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;

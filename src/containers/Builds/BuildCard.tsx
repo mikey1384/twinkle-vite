@@ -87,7 +87,7 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
               border-radius: 999px;
               background: rgba(107, 33, 168, 0.8);
               color: #fff;
-              font-size: 0.75rem;
+              font-size: 1.1rem;
               font-weight: 700;
               display: flex;
               align-items: center;
@@ -121,7 +121,7 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
           <p
             className={css`
               margin: 0 0 1rem 0;
-              font-size: 0.9rem;
+              font-size: 1.1rem;
               color: var(--chat-text);
               opacity: 0.75;
               overflow: hidden;
@@ -157,7 +157,7 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
             />
             <span
               className={css`
-                font-size: 0.9rem;
+                font-size: 1.1rem;
                 font-weight: 600;
                 color: var(--chat-text);
               `}
@@ -170,7 +170,7 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
               display: flex;
               align-items: center;
               gap: 0.75rem;
-              font-size: 0.85rem;
+              font-size: 1.1rem;
               color: var(--chat-text);
               opacity: 0.65;
             `}
@@ -190,7 +190,7 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
         <div
           className={css`
             margin-top: 0.75rem;
-            font-size: 0.8rem;
+            font-size: 1.1rem;
             color: var(--chat-text);
             opacity: 0.55;
           `}

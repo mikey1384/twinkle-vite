@@ -117,7 +117,7 @@ export default function TopicItem({
         text={children}
         direction="left"
         style={{
-          fontSize: '1rem',
+          fontSize: '1.1rem',
           width: '70%'
         }}
       />

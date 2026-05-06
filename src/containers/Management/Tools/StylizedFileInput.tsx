@@ -24,7 +24,7 @@ const fileInputButtonStyles = css`
   border: 1px dashed var(--ui-border);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   transition: all 0.2s ease;
   color: #212529;
   min-width: 140px;
@@ -53,7 +53,7 @@ const fileInputContainerStyles = css`
 
 const fileInfoStyles = css`
   margin-left: 10px;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: #6c757d;
   display: flex;
   align-items: center;
@@ -63,7 +63,7 @@ const fileSizeStyles = css`
   background-color: #e9ecef;
   border-radius: 4px;
   padding: 2px 8px;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   margin-left: 8px;
   font-weight: 500;
   color: #495057;

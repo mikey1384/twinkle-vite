@@ -57,7 +57,7 @@ function LazyCodeBlockWrapper({
             font-size: 1.4rem;
             line-height: 1.5;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
             }
           `}
         >

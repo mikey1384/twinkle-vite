@@ -152,7 +152,7 @@ export default function BuildTabFilter<T extends string = string>({
       style={{
         margin: 0,
         height: isMini ? '2.75rem' : isCompact ? '3.15rem' : '3.4rem',
-        fontSize: '1rem'
+        fontSize: '1.1rem'
       }}
     >
       {tabs.map((tab) => (

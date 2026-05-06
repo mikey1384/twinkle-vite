@@ -49,7 +49,7 @@ export default function FileUploadStatusIndicator({
             textOverflow: 'ellipsis',
             overflow: 'hidden',
             whiteSpace: compactMode ? 'nowrap' : undefined,
-            fontSize: compactMode ? '0.82rem' : undefined,
+            fontSize: compactMode ? '1.1rem' : undefined,
             lineHeight: compactMode ? 1.25 : undefined
           }}
         >{`Uploading${fileName ? ` ${fileName}` : ''}...`}</div>

@@ -97,7 +97,7 @@ export default function Collector({
     font-weight: 600;
     @media (max-width: ${mobileMaxWidth}) {
       max-width: 9rem;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
     }
   `;
   const infoGroupClass = css`

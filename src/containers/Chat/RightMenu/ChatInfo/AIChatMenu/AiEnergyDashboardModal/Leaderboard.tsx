@@ -134,7 +134,7 @@ const donorCountValueCls = css`
 
 const donorCountLabelCls = css`
   margin-top: 0.35rem;
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   line-height: 1.45;
   color: ${Color.darkGray()};
 `;

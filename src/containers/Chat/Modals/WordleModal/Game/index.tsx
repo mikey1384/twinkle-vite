@@ -168,8 +168,8 @@ export default function Game({
           labelStyle={{
             display: 'inline',
             fontSize: deviceIsMobile
-              ? `${1.2 * uiScale}rem`
-              : `${1.3 * uiScale}rem`,
+              ? `${Math.max(1.1, 1.2 * uiScale)}rem`
+              : `${Math.max(1.1, 1.3 * uiScale)}rem`,
             fontWeight: deviceIsMobile ? 'normal' : 'bold',
             marginRight: deviceIsMobile ? '0.5rem' : '1rem'
           }}

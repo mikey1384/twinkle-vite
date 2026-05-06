@@ -119,7 +119,7 @@ const buildDescriptionClass = css`
   line-height: 1.45;
 
   @media (max-width: 700px) {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -127,11 +127,11 @@ const buildBylineClass = css`
   margin: -0.15rem 0 0.45rem;
   color: var(--chat-text);
   opacity: 0.68;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
 
   @media (max-width: 700px) {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -153,7 +153,7 @@ const detailsButtonClass = css`
   }
 
   @media (max-width: 700px) {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -167,7 +167,7 @@ const buildUpdatedClass = css`
   white-space: nowrap;
 
   @media (max-width: 700px) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -177,7 +177,7 @@ const buildDeleteButtonClass = css`
   color: #b91c1c;
   border-radius: 999px;
   padding: 0.52rem 0.9rem;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -221,7 +221,7 @@ const buildPreviewActionsClass = css`
 const buildActionErrorClass = css`
   margin-top: 0.7rem;
   color: #be123c;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 800;
 `;
 
@@ -229,7 +229,7 @@ const buildTagClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 1rem;
+  font-size: 1.1rem;
   padding: 0.42rem 0.78rem;
   border-radius: 999px;
   border: 1px solid var(--ui-border);
@@ -239,7 +239,7 @@ const buildTagClass = css`
 
   @media (max-width: 700px) {
     padding: 0.34rem 0.56rem;
-    font-size: 0.86rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -279,7 +279,7 @@ const buildMetaItemClass = css`
   opacity: 0.72;
 
   @media (max-width: 700px) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -303,7 +303,7 @@ const buildPreviewActionButtonClass = css`
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
@@ -319,11 +319,11 @@ const buildPreviewActionButtonClass = css`
 
   @media (max-width: 700px) {
     padding: 0.55rem 0.78rem;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
   }
   @media (max-width: 430px) {
     padding: 0.48rem 0.65rem;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -1244,7 +1244,7 @@ export default function BuildProjectListItem({
             <div
               className={css`
                 color: ${Color.darkGray(0.7)};
-                font-size: 0.9rem;
+                font-size: 1.1rem;
                 font-weight: 700;
               `}
             >

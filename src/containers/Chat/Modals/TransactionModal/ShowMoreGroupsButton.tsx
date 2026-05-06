@@ -37,7 +37,7 @@ export default function ShowMoreGroupsButton({
         `}
 
         @media (max-width: ${mobileMaxWidth}) {
-          font-size: 1rem;
+          font-size: 1.1rem;
           ${onClick &&
           `
             &:hover {

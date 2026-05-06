@@ -144,10 +144,10 @@ export default function Input({
             icon="search"
             className={css`
               color: ${Color.white()};
-              font-size: 1rem;
+              font-size: 1.1rem;
 
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.9rem;
+                font-size: 1.1rem;
               }
             `}
           />

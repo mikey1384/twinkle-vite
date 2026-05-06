@@ -228,7 +228,7 @@ export default function TargetSelector({
             >
               <span
                 style={{
-                  fontSize: '0.9rem',
+                  fontSize: '1.1rem',
                   opacity: 0.9,
                   fontWeight: 'normal'
                 }}
@@ -439,7 +439,7 @@ export default function TargetSelector({
           >
             <span
               style={{
-                fontSize: '0.9rem',
+                fontSize: '1.1rem',
                 opacity: 0.9,
                 fontWeight: 'normal'
               }}

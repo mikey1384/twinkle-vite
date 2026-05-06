@@ -104,7 +104,7 @@ export default function ActionButtons({
       <div className={bottomBarCss}>
         <div
           className={css`
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #dc2626;
             margin-right: 0.75rem;
@@ -147,7 +147,7 @@ const successBtnCss = css`
   align-items: center;
   text-align: center;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 6px;
   padding: 0.75rem 1.25rem;
   gap: 0.5rem;
@@ -177,7 +177,7 @@ const successBtnCss = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     padding: 0.625rem 1rem;
   }
 `;
@@ -192,7 +192,7 @@ const neutralBtnCss = css`
   align-items: center;
   text-align: center;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 6px;
   padding: 0.75rem 1.25rem;
   gap: 0.5rem;
@@ -220,7 +220,7 @@ const neutralBtnCss = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     padding: 0.625rem 1rem;
   }
 `;
@@ -235,7 +235,7 @@ const giveUpBtnCss = css`
   align-items: center;
   text-align: center;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 6px;
   padding: 0.75rem 1.25rem;
   gap: 0.5rem;
@@ -263,7 +263,7 @@ const giveUpBtnCss = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     padding: 0.625rem 1rem;
   }
 `;
@@ -278,7 +278,7 @@ const analysisBtnCss = css`
   align-items: center;
   text-align: center;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 6px;
   padding: 0.75rem 1.25rem;
   gap: 0.5rem;
@@ -306,7 +306,7 @@ const analysisBtnCss = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     padding: 0.625rem 1rem;
   }
 `;
@@ -321,7 +321,7 @@ const solutionBtnCss = css`
   align-items: center;
   text-align: center;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 6px;
   padding: 0.75rem 1.25rem;
   gap: 0.5rem;
@@ -349,7 +349,7 @@ const solutionBtnCss = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     padding: 0.625rem 1rem;
   }
 `;

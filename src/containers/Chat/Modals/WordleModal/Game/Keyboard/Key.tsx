@@ -58,7 +58,7 @@ export default function Key({
         transitionDelay: isRevealing ? `${keyDelayMs}ms` : 'unset',
         width: `${width * uiScale}px`,
         height: `${5.5 * uiScale}rem`,
-        fontSize: `${1.2 * uiScale}rem`,
+        fontSize: `${Math.max(1.1, 1.2 * uiScale)}rem`,
         backgroundColor
       }}
       onClick={handleClick}

@@ -32,7 +32,7 @@ const fileInputContainerStyles = css`
 
 const fileInfoStyles = css`
   margin-left: 10px;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: #6c757d;
   display: flex;
   align-items: center;
@@ -44,7 +44,7 @@ const fileNameStyles = css`
 `;
 
 const fileSizeStyles = css`
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   color: #6c757d;
   background-color: #e9ecef;
   padding: 2px 6px;

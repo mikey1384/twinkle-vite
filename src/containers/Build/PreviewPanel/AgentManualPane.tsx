@@ -498,7 +498,7 @@ const manualIconClass = css`
 
 const manualTitleClass = css`
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   line-height: 1.2;
   font-weight: 900;
   color: #111827;
@@ -507,7 +507,7 @@ const manualTitleClass = css`
 const manualSubtitleClass = css`
   margin-top: 0.18rem;
   color: #64748b;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   line-height: 1.35;
 `;
 
@@ -517,7 +517,7 @@ const copyButtonClass = css`
   background: #64748b;
   color: #ffffff;
   padding: 0.58rem 0.78rem;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
@@ -578,7 +578,7 @@ const manualSectionClass = css`
 const manualSectionTitleClass = css`
   margin: 0;
   color: #0f172a;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -597,7 +597,7 @@ const guideBlockClass = css`
   padding: 0.85rem;
   h4 {
     margin: 0 0 0.55rem;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     line-height: 1.25;
     color: #111827;
   }
@@ -605,7 +605,7 @@ const guideBlockClass = css`
     margin: 0;
     padding-left: 1rem;
     color: #334155;
-    font-size: 0.8rem;
+    font-size: 1.1rem;
     line-height: 1.48;
   }
   li + li {
@@ -628,7 +628,7 @@ const statusGridClass = css`
   grid-template-columns: minmax(6rem, auto) 1fr;
   gap: 0.42rem 0.7rem;
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 1.1rem;
   dt {
     color: #64748b;
     font-weight: 800;
@@ -654,7 +654,7 @@ const namespaceRowClass = css`
   gap: 0.55rem;
   border-bottom: 1px solid #e6ebf2;
   padding-bottom: 0.32rem;
-  font-size: 0.75rem;
+  font-size: 1.1rem;
   color: #334155;
   span {
     min-width: 0;
@@ -664,7 +664,7 @@ const namespaceRowClass = css`
   }
   strong {
     color: #0f766e;
-    font-size: 0.68rem;
+    font-size: 1.1rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     white-space: nowrap;
@@ -688,7 +688,7 @@ const manualPreClass = css`
   color: #dbeafe;
   padding: 0.85rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.72rem;
+  font-size: 1.1rem;
   line-height: 1.5;
   white-space: pre-wrap;
 `;

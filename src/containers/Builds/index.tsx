@@ -187,7 +187,7 @@ export default function Builds() {
                 <p
                   className={css`
                     margin: 0.5rem 0 0 0;
-                    font-size: 1rem;
+                    font-size: 1.1rem;
                     color: var(--chat-text);
                     opacity: 0.7;
                   `}
@@ -225,7 +225,7 @@ export default function Builds() {
             `}
           >
             <FilterBar
-              style={{ margin: 0, minHeight: '3.6rem', fontSize: '1rem' }}
+              style={{ margin: 0, minHeight: '3.6rem', fontSize: '1.1rem' }}
               className={galleryFilterClass}
               color={profileTheme}
             >

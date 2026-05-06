@@ -201,7 +201,7 @@ export default function DailyGoals({
                   align-items: center;
                   justify-content: center;
                   gap: 0.55rem;
-                  font-size: 1.05rem;
+                  font-size: 1.1rem;
                   font-weight: 800;
                   color: ${collapsedRepairNoticeAccent};
                   font-family: ${funFont};
@@ -215,7 +215,7 @@ export default function DailyGoals({
               </div>
               <p
                 className={css`
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                   color: ${repairNoticeBodyColor};
                   line-height: 1.35;
                   margin: 0;
@@ -233,7 +233,7 @@ export default function DailyGoals({
                 border: 0;
                 background: transparent;
                 color: ${Color.darkBlueGray()};
-                font-size: 1.05rem;
+                font-size: 1.1rem;
                 font-weight: 700;
                 padding: 0.2rem 0;
                 cursor: pointer;
@@ -275,7 +275,7 @@ export default function DailyGoals({
                   border-radius: 999px;
                   background: ${repairNoticeBadgeBackground};
                   color: ${Color.white()};
-                  font-size: 0.95rem;
+                  font-size: 1.1rem;
                   font-weight: 800;
                   letter-spacing: 0.01em;
                   font-family: ${funFont};
@@ -299,7 +299,7 @@ export default function DailyGoals({
                   display: inline-flex;
                   align-items: center;
                   gap: 0.45rem;
-                  font-size: 0.95rem;
+                  font-size: 1.1rem;
                   font-weight: 700;
                   cursor: pointer;
                   padding: 0.2rem 0;
@@ -326,7 +326,7 @@ export default function DailyGoals({
             </p>
             <p
               className={css`
-                font-size: 1.08rem;
+                font-size: 1.1rem;
                 line-height: 1.5;
                 color: ${repairNoticeBodyColor};
                 margin-bottom: 0.9rem;
@@ -354,7 +354,7 @@ export default function DailyGoals({
                   border-radius: 999px;
                   background: ${Color.gold(0.16)};
                   color: ${Color.darkGold()};
-                  font-size: 0.98rem;
+                  font-size: 1.1rem;
                   font-weight: 700;
                   box-shadow: inset 0 0 0 1px ${Color.gold(0.45)};
                 `}
@@ -371,7 +371,7 @@ export default function DailyGoals({
                   border-radius: 999px;
                   background: ${Color.logoBlue(0.15)};
                   color: ${Color.darkBlue()};
-                  font-size: 0.98rem;
+                  font-size: 1.1rem;
                   font-weight: 700;
                   box-shadow: inset 0 0 0 1px ${Color.logoBlue(0.4)};
                 `}
@@ -399,7 +399,7 @@ export default function DailyGoals({
               <p
                 className={css`
                   margin-top: 0.75rem;
-                  font-size: 1.05rem;
+                  font-size: 1.1rem;
                   color: ${Color.rose()};
                   font-weight: 700;
                   margin-bottom: 0;

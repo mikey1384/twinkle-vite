@@ -52,7 +52,7 @@ export default function CodeDiff({
         display: flex;
         flex-direction: column;
         font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
-        font-size: 0.8rem;
+        font-size: 1.1rem;
         border-radius: 8px;
         overflow: hidden;
         border: 1px solid ${Color.borderGray()};
@@ -75,7 +75,7 @@ export default function CodeDiff({
             align-items: center;
             gap: 0.75rem;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 1.1rem;
           `}
         >
           <span
@@ -109,7 +109,7 @@ export default function CodeDiff({
               border: none;
               color: ${Color.logoBlue()};
               cursor: pointer;
-              font-size: 0.8rem;
+              font-size: 1.1rem;
               display: flex;
               align-items: center;
               gap: 0.3rem;

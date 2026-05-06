@@ -71,12 +71,12 @@ export default function InputSection({
               className={css`
                 display: flex;
                 align-items: center;
-                font-size: 1rem;
+                font-size: 1.1rem;
                 font-weight: 800;
                 color: #333333;
 
                 @media (min-width: 768px) {
-                  font-size: 1.05rem;
+                  font-size: 1.1rem;
                 }
               `}
             >
@@ -212,7 +212,7 @@ const selectClassName = css`
   padding: 0.48rem 0.7rem;
   border: 1px solid;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   background: #fff;
   outline: none;

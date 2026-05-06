@@ -59,9 +59,9 @@ export default function SummonActivity({ card }: { card: any }) {
           className={css`
             margin-top: 0.5rem;
             color: ${Color.gray()};
-            font-size: 1rem;
+            font-size: 1.1rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 0.9rem;
+              font-size: 1.1rem;
             }
           `}
         >
@@ -97,7 +97,7 @@ export default function SummonActivity({ card }: { card: any }) {
             font-family: 'Montserrat', sans-serif;
             margin-bottom: 2rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
             }
           `}
         >
@@ -133,7 +133,7 @@ export default function SummonActivity({ card }: { card: any }) {
             color: ${Color.darkerGray()};
             margin-bottom: 0.5rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
             }
           `}
         >
@@ -169,7 +169,7 @@ export default function SummonActivity({ card }: { card: any }) {
               line-height: 1;
               text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: ${isNanoBananaEngine ? '1.12rem' : '1rem'};
+                font-size: ${isNanoBananaEngine ? '1.12rem' : '1.1rem'};
               }
             `}
           >

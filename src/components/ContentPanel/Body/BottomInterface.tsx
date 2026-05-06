@@ -50,7 +50,7 @@ const bottomInterfaceCSS = css`
       gap: 0.5rem;
       button,
       span {
-        font-size: 1rem;
+        font-size: 1.1rem;
       }
     }
   }
@@ -63,7 +63,7 @@ const bottomInterfaceCSS = css`
     @media (max-width: ${mobileMaxWidth}) {
       gap: 0.4rem;
       button {
-        font-size: 1rem;
+        font-size: 1.1rem;
       }
     }
   }

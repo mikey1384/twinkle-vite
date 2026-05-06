@@ -24,9 +24,9 @@ export default function Preview({
         ...style
       }}
       className={css`
-        font-size: 1rem;
+        font-size: 1.1rem;
         p {
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-family: none;
           font-weight: normal;
           display: block;

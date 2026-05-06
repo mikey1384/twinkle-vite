@@ -751,7 +751,7 @@ export default function ImageEditModal({
                   display: flex;
                   flex-direction: column;
                   align-items: center;
-                  font-size: 0.85rem;
+                  font-size: 1.1rem;
                   color: ${canAffordGeneration
                     ? Color.darkGray()
                     : Color.rose()};

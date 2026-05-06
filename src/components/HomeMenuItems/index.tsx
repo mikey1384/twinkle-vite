@@ -387,7 +387,7 @@ export default function HomeMenuItems({
         )}
         <div
           style={{
-            fontSize: '1rem',
+            fontSize: '1.1rem',
             display: 'flex',
             justifyContent: 'flex-start',
             marginTop: '1.5rem',

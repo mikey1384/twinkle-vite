@@ -70,7 +70,7 @@ export const commentContainer = css`
       color: ${Color.darkerGray()};
     }
     button {
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
   }
 `;

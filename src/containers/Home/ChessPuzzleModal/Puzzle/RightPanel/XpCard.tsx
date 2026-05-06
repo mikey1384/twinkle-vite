@@ -21,13 +21,13 @@ function XpCard({
     >
       <div
         className={css`
-          font-size: 0.9rem;
+          font-size: 1.1rem;
           color: #64748b;
           font-weight: 600;
           margin-bottom: 0.5rem;
 
           @media (max-width: ${tabletMaxWidth}) {
-            font-size: 0.8rem;
+            font-size: 1.1rem;
           }
         `}
       >

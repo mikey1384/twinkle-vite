@@ -50,7 +50,7 @@ const badgeClass = css`
   color: color-mix(in srgb, var(--theme-border) 82%, #24324a);
   border: 1px solid color-mix(in srgb, var(--theme-bg) 22%, white);
   font-weight: 900;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   text-transform: none;
   letter-spacing: normal;
   font-family: ${displayFontFamily};
@@ -135,7 +135,7 @@ const headerTitleEditButtonClass = css`
 `;
 
 const headerSubtitleClass = css`
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   color: var(--chat-text);
   opacity: 0.75;
 `;
@@ -172,7 +172,7 @@ const badgePillClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   padding: 0.58rem 0.9rem;
   border-radius: 999px;
   text-transform: uppercase;
@@ -202,7 +202,7 @@ const badgePillClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.35rem;
     padding: 0.48rem 0.72rem;
-    font-size: 0.78rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -245,7 +245,7 @@ const titleRelationshipBadgeClass = css`
   gap: 0.35rem;
   border-radius: 999px;
   padding: 0.32rem 0.66rem;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 900;
   font-family: ${displayFontFamily};
   text-transform: uppercase;

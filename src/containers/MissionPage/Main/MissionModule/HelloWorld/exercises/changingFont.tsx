@@ -35,7 +35,7 @@ export const initialCode = `function HomePage() {
           color: 'black',
           fontFamily: 'sans-serif',
           fontWeight: 'normal',
-          fontSize: '1rem'
+          fontSize: '1.1rem'
         }}
       >
         Welcome to My Website!

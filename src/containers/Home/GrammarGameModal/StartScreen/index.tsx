@@ -645,7 +645,7 @@ function XPValue({
         style={{
           color: xpLabelColor,
           fontWeight: 700,
-          fontSize: '0.9em',
+          fontSize: '1.1rem',
           letterSpacing: '0.04em'
         }}
       >

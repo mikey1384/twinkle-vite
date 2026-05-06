@@ -588,7 +588,7 @@ export default function CallZero({
             </h2>
             <p
               className={css`
-                font-size: 1rem;
+                font-size: 1.1rem;
                 line-height: 1.6;
                 margin-bottom: 1rem;
               `}
@@ -597,7 +597,7 @@ export default function CallZero({
             </p>
             <p
               className={css`
-                font-size: 1rem;
+                font-size: 1.1rem;
                 line-height: 1.6;
               `}
             >
@@ -695,7 +695,7 @@ export default function CallZero({
                 justify-content: center;
                 color: ${batteryLevel < 30 ? '#333' : '#fff'};
                 font-weight: 600;
-                font-size: 1rem;
+                font-size: 1.1rem;
               `}
             >
               AI Energy: {batteryLevel}%

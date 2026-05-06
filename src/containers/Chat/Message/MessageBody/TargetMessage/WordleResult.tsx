@@ -74,7 +74,7 @@ export default function WordleResult({
               padding: 2rem 1rem;
               font-size: 1.5rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
               }
             `}
           >
@@ -128,9 +128,9 @@ export default function WordleResult({
               right: '8px'
             }}
             className={css`
-              font-size: 0.8rem;
+              font-size: 1.1rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.6rem;
+                font-size: 1.1rem;
               }
             `}
           >

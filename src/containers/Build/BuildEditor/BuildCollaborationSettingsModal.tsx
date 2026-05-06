@@ -53,7 +53,7 @@ const sectionClass = css`
 `;
 
 const sectionTitleClass = css`
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -118,13 +118,13 @@ const optionContentClass = css`
 
 const optionTitleClass = css`
   font-weight: 900;
-  font-size: 1rem;
+  font-size: 1.1rem;
 `;
 
 const optionDescriptionClass = css`
   color: var(--chat-text);
   opacity: 0.68;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   line-height: 1.35;
 `;
 
@@ -148,14 +148,14 @@ const rowClass = css`
 const mutedTextClass = css`
   color: var(--chat-text);
   opacity: 0.68;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 700;
 `;
 
 const errorClass = css`
   color: #be123c;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 `;
 
 const modeOptions: Array<{

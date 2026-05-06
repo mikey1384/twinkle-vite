@@ -86,7 +86,7 @@ export default function AddModeratorModal({
                 style={{
                   color: Color.lightGray(),
                   marginLeft: '0.7rem',
-                  fontSize: '1rem'
+                  fontSize: '1.1rem'
                 }}
               >
                 ({user.realName})

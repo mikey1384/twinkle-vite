@@ -97,7 +97,7 @@ function getOptionClass({
   selected: boolean;
   size: 'sm' | 'md';
 }) {
-  const fontSize = size === 'sm' ? '0.86rem' : '0.92rem';
+  const fontSize = '1.1rem';
   const padding = size === 'sm' ? '0.4rem 0.68rem' : '0.45rem 0.75rem';
   const activeBackground = 'linear-gradient(180deg, #5aa3fb 0%, #418CEB 100%)';
   const inactiveBackground = '#ffffff';

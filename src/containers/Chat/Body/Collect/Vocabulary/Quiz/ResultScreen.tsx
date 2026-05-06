@@ -240,7 +240,7 @@ const cardCls = (funFont: string) => css`
 
     .points-stats {
       margin-top: 0.8rem;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       line-height: 1.6;
     }
 
@@ -302,7 +302,7 @@ const gradeBadgeCls = (colorKey: string) => css`
   border: 2px solid ${getThemeColor(colorKey, 0.95)};
 
   small {
-    font-size: 0.7rem;
+    font-size: 1.1rem;
     letter-spacing: 0.4px;
   }
 `;

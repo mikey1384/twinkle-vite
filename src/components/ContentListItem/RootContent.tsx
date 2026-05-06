@@ -117,7 +117,7 @@ const rootContentCSS = css`
     word-wrap: break-word;
     text-overflow: ellipsis;
     @media (max-width: ${mobileMaxWidth}) {
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
   }
 
@@ -131,7 +131,7 @@ const rootContentCSS = css`
       font-size: 1.1rem;
     }
     @media (max-width: ${mobileMaxWidth}) {
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
   }
 
@@ -261,7 +261,7 @@ const rootContentCSS = css`
       border-radius: 999px;
       background: rgba(34, 197, 94, 0.12);
       color: #15803d;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 800;
       line-height: 1;
       white-space: nowrap;
@@ -310,7 +310,7 @@ const rootContentCSS = css`
       position: relative;
       z-index: 1;
       color: #be123c;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 800;
       line-height: 1.3;
     }
@@ -403,7 +403,7 @@ const rootContentCSS = css`
       border-radius: 999px;
       background: rgba(15, 23, 42, 0.72);
       color: #fff;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 800;
     }
     &.no-thumb {
@@ -458,23 +458,23 @@ const rootContentCSS = css`
         max-height: 3.6rem;
       }
       .title > small {
-        font-size: 0.95rem;
+        font-size: 1.1rem;
       }
       .build-badge {
         gap: 0.35rem;
         padding: 0.32rem 0.55rem;
-        font-size: 0.82rem;
+        font-size: 1.1rem;
       }
       .build-collaborator-badge {
         gap: 0.3rem;
         padding: 0.3rem 0.5rem;
-        font-size: 0.82rem;
+        font-size: 1.1rem;
       }
       .build-status-row {
         gap: 0.35rem;
       }
       .description {
-        font-size: 0.9rem;
+        font-size: 1.1rem;
         line-height: 1.35;
         -webkit-line-clamp: 2;
         -moz-line-clamp: 2;
@@ -484,13 +484,13 @@ const rootContentCSS = css`
         gap: 0.4rem;
       }
       .build-action-error {
-        font-size: 0.85rem;
+        font-size: 1.1rem;
       }
       .build-card-action {
         min-height: 2.35rem;
         padding: 0.45rem 0.7rem;
         border-radius: 0.65rem;
-        font-size: 0.95rem;
+        font-size: 1.1rem;
       }
       .thumb.build-thumb {
         min-height: 8.5rem;
@@ -510,7 +510,7 @@ const rootContentCSS = css`
         bottom: 0.5rem;
         gap: 0.3rem;
         padding: 0.34rem 0.5rem;
-        font-size: 0.82rem;
+        font-size: 1.1rem;
       }
       &.no-thumb {
         grid-template-areas: 'buildDetails';

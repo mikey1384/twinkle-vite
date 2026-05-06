@@ -128,7 +128,7 @@ export default function SecretMessageInput({
         <div style={{ marginLeft: '1rem' }}>
           {secretAttachment ? (
             <Attachment
-              style={{ marginLeft: '1rem', fontSize: '1rem' }}
+              style={{ marginLeft: '1rem', fontSize: '1.1rem' }}
               attachment={secretAttachment}
               onDragStart={() => {
                 const file = secretAttachment?.file;

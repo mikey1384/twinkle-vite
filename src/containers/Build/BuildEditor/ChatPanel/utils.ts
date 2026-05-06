@@ -27,7 +27,7 @@ export function isBuildAssistantPlaceholderContent(
 }
 
 export function formatScaledRem(baseRem: number, scale: number) {
-  return `${(baseRem * scale).toFixed(3)}rem`;
+  return `${Math.max(1.1, baseRem * scale).toFixed(3)}rem`;
 }
 
 export function formatStepLabel(status: string): string {

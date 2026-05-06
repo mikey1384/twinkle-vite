@@ -34,7 +34,7 @@ export default function SharedPromptRow({
           </h4>
           {topic.sharedAt && (
             <div className={sharedAtClass}>
-              <Icon icon="users" style={{ fontSize: '1rem' }} />
+              <Icon icon="users" style={{ fontSize: '1.1rem' }} />
               <span>Shared {moment.unix(topic.sharedAt).fromNow()}</span>
             </div>
           )}

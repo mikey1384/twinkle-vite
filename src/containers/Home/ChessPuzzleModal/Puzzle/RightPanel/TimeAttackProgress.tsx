@@ -15,13 +15,13 @@ export default function TimeAttackProgress({ solved }: { solved: number }) {
         border: 2px solid #fecaca;
         color: #be123c;
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: 1.1rem;
         border-radius: 9999px;
         padding: 0.25rem 0.75rem;
         margin-bottom: 0.5rem;
 
         @media (max-width: ${tabletMaxWidth}) {
-          font-size: 0.8rem;
+          font-size: 1.1rem;
           padding: 0.2rem 0.6rem;
         }
       `}

@@ -92,7 +92,7 @@ const checkboxClass = css`
     letter-spacing: 0.04em;
     color: var(--role-search-color, ${Color.darkerGray()});
     @media (max-width: ${mobileMaxWidth}) {
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
   }
   @media (min-width: 821px) {
@@ -199,9 +199,9 @@ const wordInputClass = css`
   width: 9rem;
   @media (max-width: ${mobileMaxWidth}) {
     width: 5.4rem;
-    font-size: 1rem;
+    font-size: 1.1rem;
     &::placeholder {
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
   }
 `;
@@ -211,9 +211,9 @@ const cardInputClass = css`
   letter-spacing: 0.04em;
   @media (max-width: ${mobileMaxWidth}) {
     width: 5.8rem;
-    font-size: 1rem;
+    font-size: 1.1rem;
     &::placeholder {
-      font-size: 1rem;
+      font-size: 1.1rem;
       letter-spacing: 0.02em;
     }
   }

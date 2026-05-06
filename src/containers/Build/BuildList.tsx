@@ -176,7 +176,7 @@ const heroBadgeClass = css`
   color: #1d4ed8;
   border: 1px solid rgba(65, 140, 235, 0.28);
   font-weight: 900;
-  font-size: 1rem;
+  font-size: 1.1rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-family: ${displayFontFamily};
@@ -242,7 +242,7 @@ const topViewedKickerClass = css`
   background: rgba(255, 213, 100, 0.22);
   border: 1px solid rgba(245, 190, 70, 0.55);
   color: #9a5c00;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 900;
   font-family: ${displayFontFamily};
 `;
@@ -262,7 +262,7 @@ const topViewedMetaClass = css`
   flex-wrap: wrap;
   gap: 0.55rem 0.9rem;
   color: var(--chat-text);
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
   opacity: 0.76;
 
@@ -328,7 +328,7 @@ const requestQueueCountClass = css`
   background: rgba(236, 72, 153, 0.12);
   border: 1px solid rgba(236, 72, 153, 0.28);
   color: #be185d;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 900;
 `;
 
@@ -371,7 +371,7 @@ const requestQueueBuildTitleClass = css`
 const requestQueueMetaClass = css`
   color: var(--chat-text);
   opacity: 0.68;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
 `;
 
@@ -982,7 +982,7 @@ export default function BuildList() {
                       border: 1px solid rgba(65, 140, 235, 0.3);
                       border-radius: 12px;
                       padding: 0 0.95rem;
-                      font-size: 1rem;
+                      font-size: 1.1rem;
                       background: #fff;
                       &:focus {
                         outline: none;

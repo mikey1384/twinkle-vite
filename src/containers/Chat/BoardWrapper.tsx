@@ -135,7 +135,7 @@ export default function BoardWrapper({
 }) {
   const isCompact = size === 'compact';
   const headerFontSize = isCompact ? '1.1rem' : '1.5rem';
-  const mobileHeaderFontSize = isCompact ? '0.9rem' : '1.2rem';
+  const mobileHeaderFontSize = isCompact ? '1.1rem' : '1.2rem';
   const headerPadding = isCompact ? '0.4rem 0.75rem' : '0.5rem 1rem';
   const headerGap = isCompact ? '0.5rem' : '0.75rem';
   const boardStatusMarginTop = isCompact ? '0.35rem' : '0.5rem';

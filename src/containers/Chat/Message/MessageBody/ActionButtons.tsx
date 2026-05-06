@@ -269,7 +269,7 @@ export default function ActionButtons({
           variant="solid"
           tone="raised"
           buttonStyle={{
-            fontSize: '1rem',
+            fontSize: '1.1rem',
             lineHeight: 1
           }}
           className="menu-button"

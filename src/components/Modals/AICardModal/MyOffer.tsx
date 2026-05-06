@@ -32,7 +32,7 @@ export default function MyOffer({
         className={css`
           font-size: 1.6rem;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1rem;
+            font-size: 1.1rem;
           }
         `}
         style={{ textAlign: 'center' }}
@@ -76,7 +76,7 @@ export default function MyOffer({
             className={css`
               font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.8rem !important;
+                font-size: 1.1rem !important;
               }
             `}
             icon="redo"
@@ -86,7 +86,7 @@ export default function MyOffer({
             className={css`
               font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.8rem !important;
+                font-size: 1.1rem !important;
               }
             `}
           >

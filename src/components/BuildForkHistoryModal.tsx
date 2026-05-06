@@ -45,7 +45,7 @@ const historyStepClass = css`
   background: rgba(147, 51, 234, 0.1);
   color: #6b21a8;
   border: 1px solid rgba(147, 51, 234, 0.24);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 900;
 `;
 

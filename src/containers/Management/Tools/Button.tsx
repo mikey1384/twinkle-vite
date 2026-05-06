@@ -41,17 +41,17 @@ const baseButtonStyles = css`
 // Size variants
 const buttonSizes = {
   sm: css`
-    font-size: 0.875rem;
+    font-size: 1.1rem;
     padding: 6px 12px;
     border-radius: 4px;
   `,
   md: css`
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     padding: 10px 18px;
     border-radius: 6px;
   `,
   lg: css`
-    font-size: 1rem;
+    font-size: 1.1rem;
     padding: 12px 24px;
     border-radius: 8px;
   `

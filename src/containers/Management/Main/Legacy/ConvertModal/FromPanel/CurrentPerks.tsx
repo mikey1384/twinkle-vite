@@ -30,7 +30,7 @@ export default function CurrentPerks({ target }: { target: User }) {
               style={{
                 color: Color.lightGray(),
                 marginLeft: '0.7rem',
-                fontSize: '1rem'
+                fontSize: '1.1rem'
               }}
             >
               ({target.realName})

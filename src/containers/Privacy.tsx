@@ -41,7 +41,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-weight: 600;
         `}
       >
@@ -50,7 +50,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-weight: 600;
         `}
       >
@@ -60,7 +60,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         {`Twinkle Network ("we," "us," or "our") is a personal project created and
@@ -75,7 +75,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         The Service is exclusively accessible to Twinkle English Academy
@@ -99,7 +99,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We collect and use the following types of data to operate and improve
@@ -120,7 +120,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We may collect personally identifiable information, such as email
@@ -143,7 +143,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We collect data on how the Service is accessed and used, including IP
@@ -165,7 +165,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We use cookies and similar technologies to track activity on the
@@ -187,7 +187,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         {`Given that the Service is designed for students, we take special
@@ -213,7 +213,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         The Service includes a chat feature for students and teachers. We
@@ -237,7 +237,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         Parents are encouraged to oversee their children’s use of the chat
@@ -259,7 +259,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We may use automated tools to monitor chats for inappropriate content.
@@ -280,7 +280,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         Your data is used to operate and improve the Service, communicate
@@ -304,7 +304,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         As a user (or parent of a user), you have rights regarding your data:
@@ -327,7 +327,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We may use third-party providers to process your data, such as for
@@ -350,7 +350,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We use Google Analytics to understand how the Service is used. You can
@@ -371,7 +371,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         We may update this Privacy Policy periodically. Significant changes will
@@ -392,7 +392,7 @@ export default function Privacy() {
       <p
         className={css`
           margin-bottom: 1.25rem;
-          font-size: 1rem;
+          font-size: 1.1rem;
         `}
       >
         If you have any questions about this Privacy Policy, please contact us:

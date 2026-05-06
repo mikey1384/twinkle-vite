@@ -37,7 +37,7 @@ export default function NewStats({
               style={{
                 color: Color.lightGray(),
                 marginLeft: '0.7rem',
-                fontSize: '1rem'
+                fontSize: '1.1rem'
               }}
             >
               ({newStats.realName})

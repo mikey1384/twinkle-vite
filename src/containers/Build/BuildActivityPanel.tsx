@@ -66,12 +66,18 @@ export interface BuildActivityItem {
     title: string;
     status: string;
   } | null;
+  targetBranch?: {
+    id: number;
+    title: string;
+    status: string;
+  } | null;
   forum?: {
     threadId: number;
     replyId?: number | null;
     title: string;
     body: string;
     threadUserId: number;
+    viewerHasReplied?: boolean;
   } | null;
 }
 
@@ -107,6 +113,7 @@ const panelClass = css`
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  font-size: 1.1rem;
   overflow: hidden;
 `;
 
@@ -159,6 +166,7 @@ const mobilePanelClass = css`
   width: 100%;
   max-height: calc(100dvh - 5.75rem);
   min-height: 0;
+  font-size: 1.1rem;
 
   > *:not(:last-child) {
     flex-shrink: 0;
@@ -219,7 +227,7 @@ const rowBodyClass = css`
 
 const rowMessageClass = css`
   color: var(--chat-text);
-  font-size: 1.04rem;
+  font-size: 1.1rem;
   font-weight: 800;
   line-height: 1.32;
   overflow-wrap: anywhere;
@@ -232,7 +240,7 @@ const actorNameClass = css`
 
 const buildTitleClass = css`
   color: var(--chat-text);
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
   opacity: 0.68;
   overflow: hidden;
@@ -246,14 +254,14 @@ const rowMetaClass = css`
   gap: 0.45rem;
   flex-wrap: wrap;
   color: var(--chat-text);
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
   opacity: 0.64;
 `;
 
 const activityDetailClass = css`
   color: var(--chat-text);
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1.35;
   opacity: 0.74;
   overflow-wrap: anywhere;
@@ -266,6 +274,7 @@ const stateClass = css`
   justify-content: center;
   padding: 1.4rem;
   color: var(--chat-text);
+  font-size: 1.1rem;
   font-weight: 800;
   opacity: 0.72;
   text-align: center;
@@ -485,6 +494,12 @@ export default function BuildActivityPanel({
 
 function getActivityNavigationBuildId(activity: BuildActivityItem) {
   if (
+    activity.activityType === 'buildBranchMerged' &&
+    Number(activity.targetBranch?.id || 0) > 0
+  ) {
+    return Number(activity.targetBranch?.id || 0);
+  }
+  if (
     (activity.activityType === 'buildTeamForumThread' ||
       activity.activityType === 'buildTeamForumReply' ||
       activity.activityType === 'buildBranchUpdate' ||
@@ -572,6 +587,9 @@ function getActivityMessage(activity: BuildActivityItem, currentUserId: number) 
       if (!actorIsCurrentUser && targetIsCurrentUser) {
         return 'replied to your team topic in';
       }
+      if (!actorIsCurrentUser && activity.forum?.viewerHasReplied) {
+        return 'replied to a team topic you joined';
+      }
       return 'replied in team forum for';
     case 'buildUpdate':
       return 'updated';
@@ -579,8 +597,17 @@ function getActivityMessage(activity: BuildActivityItem, currentUserId: number) 
       return 'updated branch';
     case 'buildBranchMerged': {
       const branchTitle = String(activity.branch?.title || 'branch').trim();
+      const targetBranchTitle = String(
+        activity.targetBranch?.title || ''
+      ).trim();
       if (!actorIsCurrentUser && targetIsCurrentUser) {
+        if (targetBranchTitle) {
+          return `merged your branch ${branchTitle} into branch ${targetBranchTitle}`;
+        }
         return `merged your branch ${branchTitle} into`;
+      }
+      if (targetBranchTitle) {
+        return `merged branch ${branchTitle} into branch ${targetBranchTitle}`;
       }
       return `merged branch ${branchTitle} into`;
     }

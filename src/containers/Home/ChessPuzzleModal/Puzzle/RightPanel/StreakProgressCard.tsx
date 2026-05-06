@@ -41,7 +41,7 @@ function StreakProgressCard({
           <span
             style={{
               fontWeight: '600',
-              fontSize: '0.9rem',
+              fontSize: '1.1rem',
               color: '#374151'
             }}
           >
@@ -60,7 +60,7 @@ function StreakProgressCard({
           </span>
           <span
             style={{
-              fontSize: '0.85rem',
+              fontSize: '1.1rem',
               color: '#6b7280'
             }}
           >
@@ -99,7 +99,7 @@ function StreakProgressCard({
       {/* Status text */}
       <div
         style={{
-          fontSize: '0.8rem',
+          fontSize: '1.1rem',
           color: '#374151',
           textAlign: 'center',
           fontWeight: '600'

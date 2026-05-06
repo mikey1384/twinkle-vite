@@ -588,7 +588,7 @@ function LumineChatVisibilitySettings({
                 >
                   <span
                     className={css`
-                      font-size: 1rem;
+                      font-size: 1.1rem;
                       font-weight: 900;
                     `}
                   >
@@ -597,7 +597,7 @@ function LumineChatVisibilitySettings({
                   <span
                     className={css`
                       color: ${Color.darkGray()};
-                      font-size: 0.92rem;
+                      font-size: 1.1rem;
                       line-height: 1.35;
                     `}
                   >

@@ -16,7 +16,7 @@ export default React.forwardRef<
     border: 2px solid var(--ui-border);
     color: #374151;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     border-radius: 8px;
     padding: 0.75rem 1rem;
     text-align: center;

@@ -233,7 +233,7 @@ export default function BuildThumbnailModal({
               <StatusDots color={Color.darkGray()} />
               <div
                 className={css`
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                   font-weight: 700;
                   letter-spacing: 0.01em;
                 `}
@@ -329,7 +329,7 @@ export default function BuildThumbnailModal({
           <div
             className={css`
               color: ${Color.red()};
-              font-size: 1rem;
+              font-size: 1.1rem;
               line-height: 1.5;
             `}
           >

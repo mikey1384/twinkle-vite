@@ -336,7 +336,7 @@ function XPVideoPlayer({
 
             @media (max-width: ${mobileMaxWidth}) {
               padding: 0.3rem 0.5rem;
-              font-size: ${isChat ? '1rem' : '1.5rem'};
+              font-size: ${isChat ? '1.1rem' : '1.5rem'};
             }
           `}
         >

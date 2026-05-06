@@ -82,7 +82,7 @@ const progressLabelStyles = css`
   align-items: center;
   margin-bottom: 8px;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 `;
 
 const warningStyles = css`
@@ -91,7 +91,7 @@ const warningStyles = css`
   padding: 10px;
   margin-top: 8px;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   border-left: 3px solid #ffc107;
 `;
 

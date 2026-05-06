@@ -43,15 +43,15 @@ export default function DonorListItem({
   }, [userRank]);
 
   const rankFontSize = useMemo(() => {
-    return userRank < 100 ? '1.5rem' : '1rem';
+    return userRank < 100 ? '1.5rem' : '1.1rem';
   }, [userRank]);
 
   const mobileRankFontSize = useMemo(() => {
-    return userRank < 100 ? '1.2rem' : '1rem';
+    return userRank < 100 ? '1.2rem' : '1.1rem';
   }, [userRank]);
 
   const usernameFontSize = '1.2rem';
-  const mobileUsernameFontSize = '1rem';
+  const mobileUsernameFontSize = '1.1rem';
   const donationFontSize = '1.3rem';
   const mobileDonationFontSize = '1.1rem';
   const profileSize = '3rem';

@@ -96,7 +96,7 @@ export default function WordleResult({
           variant="solid"
           tone="raised"
           buttonStyle={{
-            fontSize: '1rem',
+            fontSize: '1.1rem',
             lineHeight: 1
           }}
           className="menu-button"
@@ -199,9 +199,9 @@ export default function WordleResult({
           right: '8px'
         }}
         className={css`
-          font-size: 1rem;
+          font-size: 1.1rem;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 0.8rem;
+            font-size: 1.1rem;
           }
         `}
       >

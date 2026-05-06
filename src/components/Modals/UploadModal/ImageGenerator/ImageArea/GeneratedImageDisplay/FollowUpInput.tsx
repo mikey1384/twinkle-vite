@@ -115,7 +115,7 @@ export default function FollowUpInput({
         <label
           className={css`
             display: block;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: ${Color.black()};
             margin-bottom: 0;
@@ -199,7 +199,7 @@ export default function FollowUpInput({
             padding: 0.875rem 1rem;
             border: 2px solid var(--ui-border);
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 1.1rem;
             outline: none;
             transition: all 0.2s ease;
             width: 100%;
@@ -254,7 +254,7 @@ const selectClassName = css`
   padding: 0.48rem 0.7rem;
   border: 1px solid;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   background: #fff;
   outline: none;

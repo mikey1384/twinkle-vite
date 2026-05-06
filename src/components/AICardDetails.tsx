@@ -61,7 +61,7 @@ export default function AICardDetails({
             padding: 0 5rem;
 
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
               padding: 0 2rem;
             }
           `}
@@ -109,7 +109,7 @@ export default function AICardDetails({
               margin-bottom: 0.5rem;
 
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
               }
             `}
           >
@@ -141,7 +141,7 @@ export default function AICardDetails({
                 text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: ${isNanoBananaEngine ? '1.12rem' : '1rem'};
+                  font-size: ${isNanoBananaEngine ? '1.12rem' : '1.1rem'};
                 }
               `}
             >
@@ -152,7 +152,7 @@ export default function AICardDetails({
       </div>
       <div
         className={css`
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-family: 'Lato', sans-serif;
           font-weight: 400;
           color: ${Color.gray()};
@@ -160,9 +160,9 @@ export default function AICardDetails({
           text-align: center;
 
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 0.5rem;
+            font-size: 1.1rem;
             margin-top: 1rem;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             padding: 0 2rem 1rem;
           }
         `}

@@ -546,7 +546,7 @@ function InputForm({
       </div>
       {attachment ? (
         <Attachment
-          style={{ marginLeft: '1rem', fontSize: '1rem' }}
+          style={{ marginLeft: '1rem', fontSize: '1.1rem' }}
           attachment={attachment}
           onDragStart={() => {
             const file = attachment?.file;

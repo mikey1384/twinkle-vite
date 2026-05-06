@@ -167,7 +167,7 @@ function XPBar({
                       padding: 0;
                       flex: 0 0 auto;
                       width: 5rem;
-                      font-size: ${numXpEarned > 0 ? '0.7rem' : '1rem'};
+                      font-size: 1.1rem;
                     }
                   `}
                 >

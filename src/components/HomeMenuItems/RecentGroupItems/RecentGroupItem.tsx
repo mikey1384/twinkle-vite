@@ -109,7 +109,7 @@ export default function RecentGroupItem({
         ) : (
           <div
             className={css`
-              font-size: 1rem;
+              font-size: 1.1rem;
               font-weight: bold;
               color: white;
               font-family: 'Roboto', sans-serif;

@@ -86,7 +86,7 @@ export default function TodayResult({ results }: { results: any[] }) {
     .xp-label {
       color: ${xpLabelColor};
       font-weight: 700;
-      font-size: 0.8em;
+      font-size: 1.1rem;
       letter-spacing: 0.05em;
     }
   `;

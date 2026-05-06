@@ -254,7 +254,7 @@ export default function Preferences({
                 <p
                   className={css`
                     margin: 0 0 0.7rem;
-                    font-size: 1.05rem;
+                    font-size: 1.1rem;
                     color: ${Color.orange()};
                     font-weight: 700;
                   `}
@@ -429,7 +429,7 @@ export default function Preferences({
                             display: inline-flex;
                             align-items: center;
                             gap: 0.3rem;
-                            font-size: 1.05rem;
+                            font-size: 1.1rem;
                             color: ${Color.orange()};
                             font-weight: 700;
                           `}
@@ -559,7 +559,7 @@ export default function Preferences({
                               display: inline-flex;
                               align-items: center;
                               gap: 0.3rem;
-                              font-size: 1.05rem;
+                              font-size: 1.1rem;
                               color: ${Color.orange()};
                               font-weight: 700;
                             `}

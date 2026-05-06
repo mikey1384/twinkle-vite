@@ -51,7 +51,7 @@ export default function Heading({
           font-size: 1.2rem;
           font-weight: normal;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 0.8rem;
+            font-size: 1.1rem;
           }
         `}
       >

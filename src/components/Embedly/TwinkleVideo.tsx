@@ -84,7 +84,7 @@ export default function TwinkleVideo({
                 font-weight: bold;
                 font-size: 1.7rem;
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                 }
               `}
               to={`/videos/${videoId}`}

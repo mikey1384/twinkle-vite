@@ -84,7 +84,7 @@ export default function PromotionCTA({
           align-items: center;
           text-align: center;
           font-weight: bold;
-          font-size: 1rem;
+          font-size: 1.1rem;
           border-radius: 8px;
           padding: 0.75rem 1.25rem;
           margin-bottom: 0.75rem;
@@ -173,7 +173,7 @@ export default function PromotionCTA({
           }
 
           @media (max-width: ${tabletMaxWidth}) {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
           }
         `}
       >
@@ -197,7 +197,7 @@ export default function PromotionCTA({
             align-items: center;
             text-align: center;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 1.1rem;
             opacity: 0.7;
             width: 100%;
             flex-direction: column;
@@ -206,12 +206,12 @@ export default function PromotionCTA({
             margin-bottom: 0.5rem;
 
             @media (max-width: ${tabletMaxWidth}) {
-              font-size: 0.9rem;
+              font-size: 1.1rem;
             }
           `}
         >
           <div>🔒 Promotion failed</div>
-          <div style={{ fontSize: '0.85rem' }}>
+          <div style={{ fontSize: '1.1rem' }}>
             {timeLeft ? `Try again in ${timeLeft}` : 'Available tomorrow'}
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function PromotionCTA({
             align-items: center;
             text-align: center;
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             border-radius: 8px;
             padding: 0.6rem 1rem;
             width: 100%;
@@ -281,7 +281,7 @@ export default function PromotionCTA({
             }
 
             @media (max-width: ${tabletMaxWidth}) {
-              font-size: 0.85rem;
+              font-size: 1.1rem;
               padding: 0.5rem 0.8rem;
             }
           `}
@@ -289,10 +289,10 @@ export default function PromotionCTA({
           <div style={{ fontSize: '1.1em' }}>
             {unlocking ? '⏳ Unlocking...' : '💰 Unlock with Coins'}
           </div>
-          <div style={{ fontSize: '0.8em', opacity: 0.9 }}>
+          <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>
             Cost: 100,000 coins
           </div>
-          <div style={{ fontSize: '0.75em', opacity: 0.7 }}>
+          <div style={{ fontSize: '1.1rem', opacity: 0.7 }}>
             You have: {twinkleCoins?.toLocaleString() || '0'}
           </div>
         </button>

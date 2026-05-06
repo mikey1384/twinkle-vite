@@ -121,11 +121,11 @@ function VideoThumbImage({
               color: #fff;
               z-index: 2;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
               }
             `}
           >
-            <div style={{ fontSize: '1rem', lineHeight: 1 }}>{Stars}</div>
+            <div style={{ fontSize: '1.1rem', lineHeight: 1 }}>{Stars}</div>
           </div>
         )}
       </div>

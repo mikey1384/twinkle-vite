@@ -42,7 +42,7 @@ export default function LoadingState({
           align-items: center;
           justify-content: center;
           color: ${Color.gray()};
-          font-size: 1rem;
+          font-size: 1.1rem;
           text-align: center;
           position: relative;
         `}

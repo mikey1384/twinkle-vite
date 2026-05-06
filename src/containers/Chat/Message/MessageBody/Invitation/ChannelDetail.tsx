@@ -120,7 +120,7 @@ export default function ChannelDetail({
         className={css`
           font-size: 1.5rem;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1rem;
+            font-size: 1.1rem;
           }
         `}
       >

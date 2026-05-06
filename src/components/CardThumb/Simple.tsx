@@ -87,7 +87,7 @@ export default function Simple({
             justify-content: center;
             align-items: center;
             padding: 0.5rem 0;
-            font-size: 0.7rem;
+            font-size: 1.1rem;
           `}
         >
           <b style={{ color: xpNumberColor }}>{displayedBurnXP}</b>

@@ -60,7 +60,7 @@ export default function EditTextArea({
   const resolvedRows = compactMode && rows === 4 ? 2 : rows;
   const textAreaClassName = compactMode
     ? css`
-        font-size: 0.95rem !important;
+        font-size: 1.1rem !important;
         line-height: 1.35 !important;
         padding: 0.58rem 0.7rem !important;
       `
@@ -138,9 +138,9 @@ export default function EditTextArea({
             compactMode
               ? {
                   borderRadius: 8,
-                  fontSize: '0.78rem',
-                  minHeight: '2.1rem',
-                  padding: '0.42rem 0.7rem'
+                  fontSize: '1.1rem',
+                  minHeight: '2.4rem',
+                  padding: '0.5rem 0.8rem'
                 }
               : undefined
           }
@@ -161,9 +161,9 @@ export default function EditTextArea({
             ...(compactMode
               ? {
                   borderRadius: 8,
-                  fontSize: '0.78rem',
-                  minHeight: '2.1rem',
-                  padding: '0.42rem 0.55rem'
+                  fontSize: '1.1rem',
+                  minHeight: '2.4rem',
+                  padding: '0.5rem 0.7rem'
                 }
               : { marginRight: '1rem' })
           }}

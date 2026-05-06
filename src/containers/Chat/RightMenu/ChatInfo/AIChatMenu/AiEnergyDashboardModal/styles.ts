@@ -73,7 +73,7 @@ export const heroCardCls = css`
 `;
 
 export const heroEyebrowCls = css`
-  font-size: 0.92rem;
+  font-size: 1.1rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -111,7 +111,7 @@ export const batteryMeterTopRowCls = css`
 `;
 
 export const batteryMeterTitleCls = css`
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: ${Color.black()};
   line-height: 1.3;
@@ -120,7 +120,7 @@ export const batteryMeterTitleCls = css`
 export const batteryMeterModeCls = css`
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -159,7 +159,7 @@ export const batteryMeterMetaCls = css`
 `;
 
 export const batteryMeterMetaItemCls = css`
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   line-height: 1.45;
   color: ${Color.darkGray()};
 `;
@@ -173,14 +173,14 @@ export const batteryChargeActionCls = css`
 `;
 
 export const batteryChargeMetaCls = css`
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   line-height: 1.45;
   color: ${Color.darkGray()};
   text-align: center;
 `;
 
 export const batteryChargeErrorCls = css`
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   line-height: 1.45;
   color: ${Color.rose()};
   text-align: center;
@@ -220,7 +220,7 @@ export const metricTileLabelRowCls = css`
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   color: ${Color.darkGray()};
   line-height: 1.35;
 `;
@@ -288,7 +288,7 @@ export const entryCardIconCls = css`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.1rem;
 `;
 
 export const entryCardStatusCls = css`
@@ -297,7 +297,7 @@ export const entryCardStatusCls = css`
   right: 1.15rem;
   padding: 0.3rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -319,7 +319,7 @@ export const entryCardValueCls = css`
 
 export const entryCardDetailCls = css`
   margin-top: 0.85rem;
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   line-height: 1.55;
   color: ${Color.darkGray()};
 `;
@@ -348,7 +348,7 @@ export const surfaceTitleCls = css`
 
 export const surfaceDescriptionCls = css`
   margin: 0.65rem 0 0;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   line-height: 1.65;
   color: ${Color.darkerGray()};
 `;
@@ -359,7 +359,7 @@ export const featureListCls = css`
   color: ${Color.darkerGray()};
 
   li {
-    font-size: 1rem;
+    font-size: 1.1rem;
     line-height: 1.55;
   }
 
@@ -397,7 +397,7 @@ export const emptyStateTitleCls = css`
 export const emptyStateTextCls = css`
   max-width: 36rem;
   margin: 0.6rem auto 0;
-  font-size: 1.02rem;
+  font-size: 1.1rem;
   line-height: 1.65;
   color: ${Color.darkGray()};
 `;
@@ -415,7 +415,7 @@ export const secondaryGridCls = css`
 export const statusPillCls = css`
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -435,7 +435,7 @@ export const requirementRowCls = css`
   border: 1px solid var(--ui-border);
   border-radius: 14px;
   padding: 0.8rem 0.9rem;
-  font-size: 1.02rem;
+  font-size: 1.1rem;
   line-height: 1.45;
   color: ${Color.darkerGray()};
 `;
@@ -450,7 +450,7 @@ export const requirementIconCls = css`
 
 export const finePrintCls = css`
   margin-top: 0.85rem;
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   line-height: 1.55;
   color: ${Color.darkGray()};
 `;
@@ -461,7 +461,7 @@ export const emptyInlineStateCls = css`
   border-radius: 14px;
   border: 1px dashed var(--ui-border);
   background: rgba(255, 255, 255, 0.85);
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: ${Color.darkGray()};
 `;
 
@@ -492,7 +492,7 @@ export const myContributionValueCls = css`
 `;
 
 export const subtleLabelCls = css`
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   line-height: 1.45;
   color: ${Color.darkGray()};
 `;

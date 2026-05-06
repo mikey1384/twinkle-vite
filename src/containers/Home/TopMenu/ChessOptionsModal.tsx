@@ -74,7 +74,7 @@ export default function ChessOptionsModal({
             }
 
             @media (max-width: ${tabletMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
               padding: 1.25rem;
             }
           `}
@@ -120,7 +120,7 @@ export default function ChessOptionsModal({
               }
 
               @media (max-width: ${tabletMaxWidth}) {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 padding: 1.25rem;
               }
             `}

@@ -138,7 +138,7 @@ export default function GroupItem({
                 background-color: ${Color.green()};
                 color: white;
                 border-radius: 0.3rem;
-                font-size: 0.8rem;
+                font-size: 1.1rem;
                 font-weight: bold;
               `}
             >

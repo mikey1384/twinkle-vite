@@ -62,7 +62,7 @@ const commentContentCSS = css`
     word-wrap: break-word;
     text-overflow: ellipsis;
     @media (max-width: ${mobileMaxWidth}) {
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
   }
   .fileViewer {

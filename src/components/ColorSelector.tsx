@@ -78,9 +78,9 @@ export default function ColorSelector({
             {twinkleXP < (requirement[color] || -1) && (
               <Icon
                 className={css`
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                   @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 0.6rem;
+                    font-size: 1.1rem;
                   }
                 `}
                 style={{ color: '#fff' }}

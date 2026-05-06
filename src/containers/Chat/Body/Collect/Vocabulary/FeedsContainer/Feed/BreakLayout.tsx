@@ -154,7 +154,7 @@ export default function BreakLayout({
       <div
         className={css`
           margin-bottom: 0.5rem;
-          font-size: 0.9rem;
+          font-size: 1.1rem;
           color: #666;
         `}
       >

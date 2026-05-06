@@ -423,7 +423,7 @@ function SubjectInput({
                   style={titleExceedsCharLimit?.style}
                 />
               </div>
-              <div style={{ marginLeft: '1rem', fontSize: '1rem' }}>
+              <div style={{ marginLeft: '1rem', fontSize: '1.1rem' }}>
                 {attachment ? (
                   <Attachment
                     attachment={attachment}

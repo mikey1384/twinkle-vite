@@ -93,7 +93,7 @@ const targetContentCSS = css`
       gap: 0.6rem;
     }
     .timestamp {
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
     .left {
       margin-top: 1.2rem;
@@ -522,7 +522,7 @@ export default function TargetContent({
                             font-size: 1.2rem;
                             line-height: 2;
                             @media (max-width: ${mobileMaxWidth}) {
-                              font-size: 1.05rem;
+                              font-size: 1.1rem;
                               line-height: 1.6;
                             }
                           `}

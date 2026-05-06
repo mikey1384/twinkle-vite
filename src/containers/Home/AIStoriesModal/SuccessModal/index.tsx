@@ -551,7 +551,7 @@ export default function SuccessModal({
                   <div
                     style={{
                       color: Color.darkGray(),
-                      fontSize: '1rem',
+                      fontSize: '1.1rem',
                       marginTop: '0.5rem'
                     }}
                   >
@@ -583,7 +583,7 @@ export default function SuccessModal({
                       style={{
                         fontWeight: 600,
                         color: Color.darkerGray(),
-                        fontSize: '1rem'
+                        fontSize: '1.1rem'
                       }}
                     >
                       Image Model
@@ -600,7 +600,7 @@ export default function SuccessModal({
                         padding: '0.35rem 0.5rem',
                         borderRadius: '8px',
                         border: `1px solid ${Color.borderGray()}`,
-                        fontSize: '0.95rem'
+                        fontSize: '1.1rem'
                       }}
                     >
                       <option value="gemini">Nano Banana Pro</option>
@@ -663,7 +663,7 @@ export default function SuccessModal({
                         font-size: 1.1rem;
                         margin-top: 0.5rem;
                         @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1rem;
+                          font-size: 1.1rem;
                         }
                       `}
                     >
@@ -675,7 +675,7 @@ export default function SuccessModal({
                 <div
                   style={{
                     color: Color.darkGray(),
-                    fontSize: '1rem',
+                    fontSize: '1.1rem',
                     marginTop: '0.5rem',
                     textAlign: 'center'
                   }}

@@ -437,7 +437,7 @@ const inlineCls = css`
   color: ${Color.darkerGray()};
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -512,7 +512,7 @@ const inlinePercentCls = css`
   border-radius: 6px;
   background: rgba(17, 24, 39, 0.35);
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 800;
   line-height: 1;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);

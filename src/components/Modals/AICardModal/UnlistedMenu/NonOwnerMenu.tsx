@@ -58,7 +58,7 @@ export default function NonOwnerMenu({
             font-size: 1.1rem;
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 0.3rem;
-              font-size: 0.8rem;
+              font-size: 1.1rem;
             }
           `}
         >

@@ -40,12 +40,12 @@ const iconButtonSizes = {
   sm: css`
     width: 36px;
     height: 36px;
-    font-size: 0.875rem;
+    font-size: 1.1rem;
   `,
   md: css`
     width: 48px;
     height: 48px;
-    font-size: 1rem;
+    font-size: 1.1rem;
   `,
   lg: css`
     width: 56px;

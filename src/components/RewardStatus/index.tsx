@@ -93,15 +93,15 @@ function RewardStatus({
   const basePadding = compact ? '0.55rem 0.85rem' : '0.6rem 1rem';
   const baseGap = compact ? '0.8rem' : '1rem';
   const baseJustify = compact ? 'flex-start' : 'space-between';
-  const mobileFontSize = compact ? '0.95rem' : '1.05rem';
+  const mobileFontSize = '1.1rem';
   const mobilePadding = compact ? '0.65rem 0.75rem' : '0.8rem 0.9rem';
   const mobileGap = compact ? '0.55rem' : '0.6rem';
   const mobileJustify = compact ? 'flex-start' : 'center';
   const loadMoreFontSize = compact ? '1.15rem' : '1.3rem';
   const badgePadding = compact ? '0.3rem 0.75rem' : '0.35rem 0.85rem';
-  const badgeFontSize = compact ? '0.9em' : '0.95em';
+  const badgeFontSize = '1em';
   const badgeMobilePadding = compact ? '0.27rem 0.68rem' : '0.3rem 0.75rem';
-  const badgeMobileFontSize = compact ? '0.86em' : '0.92em';
+  const badgeMobileFontSize = '1em';
 
   const handleLoadMore = useCallback(() => {
     setNumLoaded((prev) => prev + LOAD_MORE_COUNT);

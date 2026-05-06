@@ -199,7 +199,7 @@ export default function ResultLevelRow({
     padding: 0.25rem 0.6rem;
     border-radius: 9999px;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 1.1rem;
     color: #fff;
     @media (max-width: ${mobileMaxWidth}) {
       grid-column: 1;

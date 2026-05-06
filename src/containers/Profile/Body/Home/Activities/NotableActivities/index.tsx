@@ -262,10 +262,10 @@ function NotablePreview({
           </p>
           <span
             className={css`
-              font-size: 1rem;
+              font-size: 1.1rem;
               color: ${Color.gray()};
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.8rem;
+                font-size: 1.1rem;
               }
             `}
           >

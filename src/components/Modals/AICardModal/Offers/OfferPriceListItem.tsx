@@ -56,7 +56,7 @@ export default function OfferPriceListItem({
           }
           @media (max-width: ${mobileMaxWidth}) {
             height: 3rem;
-            font-size: 0.8rem;
+            font-size: 1.1rem;
           }
         `}
         key={offer.price}

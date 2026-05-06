@@ -32,7 +32,7 @@ export default function SearchInput({
           box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
           font-size: 1.2rem;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1rem;
+            font-size: 1.1rem;
           }
         `}
       />

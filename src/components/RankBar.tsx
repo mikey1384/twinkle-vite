@@ -165,7 +165,7 @@ export default function RankBar({
         @media (max-width: ${mobileMaxWidth}) {
           min-width: 2.9rem;
           height: 2.2rem;
-          font-size: 1.05rem;
+          font-size: 1.1rem;
         }
       `,
     []

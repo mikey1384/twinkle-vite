@@ -5,7 +5,7 @@ export const inputStyles = css`
   padding: 10px 14px;
   border-radius: 6px;
   border: 1px solid var(--ui-border);
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   transition: all 0.2s ease;
   width: 100%;
   max-width: 320px;

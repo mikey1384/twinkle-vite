@@ -42,7 +42,7 @@ export default function RankingsListItem({
   }, [userRank]);
 
   const rankFontSize = useMemo(() => {
-    if (small) return userRank < 100 ? '1.2rem' : '1rem';
+    if (small) return userRank < 100 ? '1.2rem' : '1.1rem';
     return userRank < 100 ? '1.5rem' : '1.2rem';
   }, [small, userRank]);
 
@@ -51,7 +51,7 @@ export default function RankingsListItem({
   }, [small]);
 
   const mobileUsernameFontSize = useMemo(() => {
-    return small ? '1rem' : '1.2rem';
+    return small ? '1.1rem' : '1.2rem';
   }, [small]);
 
   const xpFontSize = useMemo(() => {

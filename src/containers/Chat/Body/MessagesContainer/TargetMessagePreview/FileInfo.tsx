@@ -71,7 +71,7 @@ export default function FileInfo({
           <span
             className={css`
               position: absolute;
-              font-size: 0.8rem;
+              font-size: 1.1rem;
               font-weight: bold;
               color: #fff;
               text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);

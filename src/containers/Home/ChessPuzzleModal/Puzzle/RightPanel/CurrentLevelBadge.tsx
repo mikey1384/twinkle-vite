@@ -170,7 +170,7 @@ export default function CurrentLevelBadge({
         }
 
         @media (max-width: ${tabletMaxWidth}) {
-          font-size: ${parseFloat(style.fontSize) * 0.9}rem;
+          font-size: ${Math.max(1.1, parseFloat(style.fontSize) * 0.9)}rem;
           padding: 0.625rem 1.25rem;
         }
       `}
@@ -180,7 +180,7 @@ export default function CurrentLevelBadge({
       </span>
       {levelText}
       {currentLevel === 42 && (
-        <span style={{ marginLeft: '0.5rem', fontSize: '0.8em', opacity: 0.9 }}>
+        <span style={{ marginLeft: '0.5rem', fontSize: '1.1rem', opacity: 0.9 }}>
           42
         </span>
       )}

@@ -82,9 +82,9 @@ export default function WordleResult({
             right: '8px'
           }}
           className={css`
-            font-size: 0.8rem;
+            font-size: 1.1rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 0.6rem;
+              font-size: 1.1rem;
             }
           `}
         >

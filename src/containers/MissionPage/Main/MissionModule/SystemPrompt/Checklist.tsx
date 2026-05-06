@@ -201,7 +201,7 @@ export default function Checklist({
                   />
                   <span
                     className={css`
-                      font-size: 0.95rem;
+                      font-size: 1.1rem;
                       font-weight: 700;
                       color: ${item.complete
                         ? Color[themeColor]()
@@ -244,7 +244,7 @@ export default function Checklist({
                           border-radius: 999px;
                           background: ${Color[themeColor]()};
                           color: ${Color.white()};
-                          font-size: 0.95rem;
+                          font-size: 1.1rem;
                           font-weight: 700;
                         `}
                       >

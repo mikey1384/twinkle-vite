@@ -79,7 +79,7 @@ export default function ReplyInputArea({
             compactMode={compactMode}
             theme={theme}
             style={{
-              fontSize: compactMode ? '0.88rem' : '1.7rem',
+              fontSize: compactMode ? '1.1rem' : '1.7rem',
               fontWeight: 'bold',
               marginTop: 0,
               width: '100%'

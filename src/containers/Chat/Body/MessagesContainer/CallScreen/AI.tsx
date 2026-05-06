@@ -129,7 +129,7 @@ export default function CallScreen({
         <div
           className={css`
             margin-top: 0.5rem;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             color: #555;
           `}
         >

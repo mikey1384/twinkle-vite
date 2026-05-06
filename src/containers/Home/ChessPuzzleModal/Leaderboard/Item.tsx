@@ -83,7 +83,7 @@ const levelPillCss = css`
   justify-content: center;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #1d4ed8;
   background: #dbeafe;
@@ -96,7 +96,7 @@ const clearsPillCss = css`
   justify-content: center;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #15803d;
   background: #dcfce7;

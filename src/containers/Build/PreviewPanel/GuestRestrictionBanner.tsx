@@ -32,7 +32,7 @@ const guestRestrictionBannerTextClass = css`
   align-items: center;
   gap: 0.65rem;
   min-width: 0;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.5;
 `;
@@ -48,7 +48,7 @@ const guestRestrictionBannerDismissClass = css`
   border: none;
   background: transparent;
   color: inherit;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
   padding: 0;

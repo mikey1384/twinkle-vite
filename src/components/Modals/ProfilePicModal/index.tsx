@@ -204,7 +204,7 @@ function SelectionScreen({
           </div>
           <div
             style={{
-              fontSize: '0.9rem',
+              fontSize: '1.1rem',
               opacity: 0.9,
               textAlign: 'center',
               lineHeight: '1.4'
@@ -252,7 +252,7 @@ function SelectionScreen({
             </div>
             <div
               style={{
-                fontSize: '0.9rem',
+                fontSize: '1.1rem',
                 opacity: 0.9,
                 textAlign: 'center',
                 lineHeight: '1.4'

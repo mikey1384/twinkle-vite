@@ -432,7 +432,7 @@ function ChessBoard({
             }
 
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 0.9rem;
+              font-size: 1.1rem;
               padding: 1rem 1.5rem;
               max-width: 240px;
             }
@@ -465,7 +465,7 @@ function ChessBoard({
             </div>
             <div
               className={css`
-                font-size: 1rem;
+                font-size: 1.1rem;
                 opacity: 0.9;
               `}
             >

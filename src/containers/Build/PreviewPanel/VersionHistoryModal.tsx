@@ -27,7 +27,7 @@ const versionRowClass = css`
 `;
 
 const versionMetaClass = css`
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   color: var(--chat-text);
   opacity: 0.6;
   margin-top: 0.2rem;
@@ -93,7 +93,7 @@ const centeredStateClass = css`
 `;
 
 const versionSummaryClass = css`
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: var(--chat-text);
   opacity: 0.75;
 `;

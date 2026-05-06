@@ -40,7 +40,7 @@ export default function RewardAmountInfo({
         font-size: 1.3rem;
         height: 2.7rem;
         @media (max-width: ${mobileMaxWidth}) {
-          font-size: 1rem;
+          font-size: 1.1rem;
           height: 2rem;
         }
       `}

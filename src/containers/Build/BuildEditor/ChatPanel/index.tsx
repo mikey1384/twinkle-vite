@@ -36,16 +36,16 @@ const panelClass = css`
   --chat-text: #2f3747;
   --chat-border: rgba(148, 163, 184, 0.34);
   --build-workshop-title-font-size: 1.2rem;
-  --build-workshop-body-font-size: 1rem;
-  --build-workshop-label-font-size: 0.96rem;
-  --build-workshop-meta-font-size: 0.88rem;
-  --build-workshop-small-font-size: 0.84rem;
-  --build-workshop-tiny-font-size: 0.78rem;
+  --build-workshop-body-font-size: 1.1rem;
+  --build-workshop-label-font-size: 1.1rem;
+  --build-workshop-meta-font-size: 1.1rem;
+  --build-workshop-small-font-size: 1.1rem;
+  --build-workshop-tiny-font-size: 1.1rem;
   --build-workshop-message-font-size: 1.1rem;
-  --build-workshop-message-meta-font-size: 0.82rem;
-  --build-workshop-input-font-size: 1.06rem;
-  --build-workshop-prompt-font-size: 1.08rem;
-  --build-workshop-choice-font-size: 1rem;
+  --build-workshop-message-meta-font-size: 1.1rem;
+  --build-workshop-input-font-size: 1.1rem;
+  --build-workshop-prompt-font-size: 1.1rem;
+  --build-workshop-choice-font-size: 1.1rem;
   font-size: var(--build-workshop-body-font-size);
   @media (max-width: ${mobileMaxWidth}) {
     border-right: none;

@@ -224,7 +224,7 @@ export default function DefaultLayout({
                 display: block;
 
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 0.95rem;
+                  font-size: 1.1rem;
                   line-height: 1.2;
                 }
               `}
@@ -303,7 +303,7 @@ export default function DefaultLayout({
         <div
           className={css`
             margin-top: 0.4rem;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             color: #666;
           `}
         >

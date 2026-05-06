@@ -153,8 +153,8 @@ function getButtonCls({
     }
   } as const;
   const sz = {
-    sm: { fs: '0.9rem', pad: '0.625rem 1rem' },
-    md: { fs: '1rem', pad: '0.75rem 1.25rem' },
+    sm: { fs: '1.1rem', pad: '0.625rem 1rem' },
+    md: { fs: '1.1rem', pad: '0.75rem 1.25rem' },
     lg: { fs: '1.25rem', pad: '1rem 1.5rem' },
     xl: { fs: '1.6rem', pad: '1.3rem 2rem' }
   } as const;
@@ -226,7 +226,7 @@ function getButtonCls({
     }
 
     @media (max-width: ${tabletMaxWidth}) {
-      font-size: calc(${s.fs} - 0.1rem);
+      font-size: ${s.fs};
       padding: 0.625rem 1rem;
     }
   `;

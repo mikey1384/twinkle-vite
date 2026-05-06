@@ -45,7 +45,7 @@ export default function OfferListItem({
           font-size: 1.6rem;
           @media (max-width: ${mobileMaxWidth}) {
             height: 3rem;
-            font-size: 1rem;
+            font-size: 1.1rem;
           }
         `}
       >
@@ -90,7 +90,7 @@ export default function OfferListItem({
                   font-size: 1.2rem;
                   color: ${Color.darkGray()};
                   @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 0.7rem;
+                    font-size: 1.1rem;
                   }
                 `}
               >
@@ -112,7 +112,7 @@ export default function OfferListItem({
                   className={css`
                     font-size: 1.5rem;
                     @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 0.8rem;
+                      font-size: 1.1rem;
                     }
                   `}
                 >

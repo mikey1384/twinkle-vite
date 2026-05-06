@@ -57,7 +57,7 @@ export default function Bar({
       justify-content: center;
       @media (max-width: ${mobileMaxWidth}) {
         height: ${isChat ? '2rem' : '2.7rem'};
-        font-size: ${isChat ? '0.9rem' : '1.1rem'};
+        font-size: 1.1rem;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         border-left: 0;
@@ -87,7 +87,7 @@ export default function Bar({
       font-weight: 700;
       white-space: nowrap;
       padding: 0 0.75rem;
-      font-size: ${isChat ? '1rem' : '1.2rem'};
+      font-size: ${isChat ? '1.1rem' : '1.2rem'};
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;

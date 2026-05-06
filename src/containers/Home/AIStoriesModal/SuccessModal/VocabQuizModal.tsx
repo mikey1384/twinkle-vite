@@ -360,7 +360,7 @@ export default function VocabQuizModal({
                   </div>
                   <div
                     className={css`
-                      font-size: 1.05rem;
+                      font-size: 1.1rem;
                       font-weight: 600;
                       color: ${Color.darkGray()};
                     `}
@@ -393,7 +393,7 @@ export default function VocabQuizModal({
                   </div>
                   <div
                     className={css`
-                      font-size: 0.9rem;
+                      font-size: 1.1rem;
                       font-weight: 700;
                       color: ${Color.darkGray()};
                     `}
@@ -414,7 +414,7 @@ export default function VocabQuizModal({
                     background: transparent;
                     border: 1px solid ${Color.rose(0.3)};
                     color: ${Color.rose()};
-                    font-size: 0.95rem;
+                    font-size: 1.1rem;
                     font-weight: 700;
                   `}
                 >
@@ -475,7 +475,7 @@ export default function VocabQuizModal({
                     </div>
                     <div
                       className={css`
-                        font-size: 0.9rem;
+                        font-size: 1.1rem;
                         font-weight: 700;
                         color: ${Color.darkerGray()};
                         text-transform: uppercase;
@@ -538,7 +538,7 @@ export default function VocabQuizModal({
                           ? Color.logoBlue()
                           : Color.darkGray()};
                         font-weight: 700;
-                        font-size: 0.95rem;
+                        font-size: 1.1rem;
                         cursor: pointer;
                       `}
                     >
@@ -549,7 +549,7 @@ export default function VocabQuizModal({
                           border-radius: 999px;
                           background: ${Color.white()};
                           border: 1px solid ${Color.borderGray()};
-                          font-size: 0.85rem;
+                          font-size: 1.1rem;
                           color: ${Color.darkGray()};
                         `}
                       >
@@ -579,7 +579,7 @@ export default function VocabQuizModal({
               >
                 <div
                   className={css`
-                    font-size: 1.05rem;
+                    font-size: 1.1rem;
                     font-weight: 700;
                     color: ${Color.darkerGray()};
                   `}
@@ -588,7 +588,7 @@ export default function VocabQuizModal({
                 </div>
                 <div
                   className={css`
-                    font-size: 0.9rem;
+                    font-size: 1.1rem;
                     color: ${Color.gray()};
                     font-weight: 600;
                   `}
@@ -676,7 +676,7 @@ export default function VocabQuizModal({
                           {meta.note && (
                             <span
                               className={css`
-                                font-size: 0.85rem;
+                                font-size: 1.1rem;
                                 color: ${Color.darkGray()};
                                 line-height: 1.3;
                                 display: -webkit-box;

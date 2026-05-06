@@ -289,7 +289,7 @@ export default function CodeWorkspacePane({
             justify-content: space-between;
             gap: 0.5rem;
             color: #e5e7eb;
-            font-size: 0.75rem;
+            font-size: 1.1rem;
             letter-spacing: 0.02em;
             text-transform: uppercase;
             font-weight: 800;
@@ -323,7 +323,7 @@ export default function CodeWorkspacePane({
                 background: rgba(17, 24, 39, 0.8);
                 color: #e5e7eb;
                 padding: 0.45rem 0.5rem;
-                font-size: 0.75rem;
+                font-size: 1.1rem;
                 &:focus {
                   outline: none;
                   border-color: rgba(65, 140, 235, 0.8);
@@ -341,7 +341,7 @@ export default function CodeWorkspacePane({
                 color: #dbeafe;
                 padding: 0.4rem 0.55rem;
                 cursor: pointer;
-                font-size: 0.75rem;
+                font-size: 1.1rem;
                 font-weight: 700;
                 &:hover {
                   background: rgba(65, 140, 235, 0.3);
@@ -363,7 +363,7 @@ export default function CodeWorkspacePane({
                 color: #e5e7eb;
                 padding: 0.4rem 0.6rem;
                 cursor: pointer;
-                font-size: 0.75rem;
+                font-size: 1.1rem;
                 font-weight: 700;
                 display: inline-flex;
                 align-items: center;
@@ -390,7 +390,7 @@ export default function CodeWorkspacePane({
                 color: #e5e7eb;
                 padding: 0.4rem 0.6rem;
                 cursor: pointer;
-                font-size: 0.75rem;
+                font-size: 1.1rem;
                 font-weight: 700;
                 display: inline-flex;
                 align-items: center;
@@ -417,7 +417,7 @@ export default function CodeWorkspacePane({
                 color: #e5e7eb;
                 padding: 0.4rem 0.6rem;
                 cursor: pointer;
-                font-size: 0.75rem;
+                font-size: 1.1rem;
                 font-weight: 700;
                 display: inline-flex;
                 align-items: center;
@@ -467,7 +467,7 @@ export default function CodeWorkspacePane({
                     background: rgba(17, 24, 39, 0.82);
                     color: #e5e7eb;
                     padding: 0.42rem 0.5rem;
-                    font-size: 0.72rem;
+                    font-size: 1.1rem;
                   `}
                 />
                 <button
@@ -481,7 +481,7 @@ export default function CodeWorkspacePane({
                     background: rgba(34, 197, 94, 0.2);
                     color: #bbf7d0;
                     padding: 0.36rem 0.52rem;
-                    font-size: 0.72rem;
+                    font-size: 1.1rem;
                     font-weight: 700;
                     cursor: pointer;
                   `}
@@ -508,7 +508,7 @@ export default function CodeWorkspacePane({
             htmlFor="build-project-file-search"
             className={css`
               color: #cbd5e1;
-              font-size: 0.69rem;
+              font-size: 1.1rem;
               font-weight: 800;
               text-transform: uppercase;
               letter-spacing: 0.03em;
@@ -529,7 +529,7 @@ export default function CodeWorkspacePane({
                 top: 50%;
                 transform: translateY(-50%);
                 color: #94a3b8;
-                font-size: 0.72rem;
+                font-size: 1.1rem;
                 pointer-events: none;
               `}
             />
@@ -547,7 +547,7 @@ export default function CodeWorkspacePane({
                 background: rgba(17, 24, 39, 0.86);
                 color: #e5e7eb;
                 padding: 0.43rem 0.55rem 0.43rem 1.75rem;
-                font-size: 0.74rem;
+                font-size: 1.1rem;
                 &:focus {
                   outline: none;
                   border-color: rgba(65, 140, 235, 0.8);
@@ -600,7 +600,7 @@ export default function CodeWorkspacePane({
                         text-overflow: ellipsis;
                         white-space: nowrap;
                         color: #93c5fd;
-                        font-size: 0.7rem;
+                        font-size: 1.1rem;
                         font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                         font-weight: 800;
                       `}
@@ -611,7 +611,7 @@ export default function CodeWorkspacePane({
                       <span
                         className={css`
                           color: #64748b;
-                          font-size: 0.66rem;
+                          font-size: 1.1rem;
                           font-family: 'SF Mono', 'Menlo', 'Consolas',
                             monospace;
                         `}
@@ -622,7 +622,7 @@ export default function CodeWorkspacePane({
                     <span
                       className={css`
                         color: #e5e7eb;
-                        font-size: 0.69rem;
+                        font-size: 1.1rem;
                         line-height: 1.35;
                         font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                       `}
@@ -633,7 +633,7 @@ export default function CodeWorkspacePane({
                       <span
                         className={css`
                           color: #64748b;
-                          font-size: 0.66rem;
+                          font-size: 1.1rem;
                           font-family: 'SF Mono', 'Menlo', 'Consolas',
                             monospace;
                         `}
@@ -648,7 +648,7 @@ export default function CodeWorkspacePane({
                   className={css`
                     padding: 0.6rem;
                     color: #94a3b8;
-                    font-size: 0.72rem;
+                    font-size: 1.1rem;
                   `}
                 >
                   No matches
@@ -673,7 +673,7 @@ export default function CodeWorkspacePane({
                   ? '#fecaca'
                   : '#fde68a'};
                 padding: 0.52rem 0.58rem;
-                font-size: 0.69rem;
+                font-size: 1.1rem;
                 line-height: 1.4;
               `}
             >
@@ -742,7 +742,7 @@ export default function CodeWorkspacePane({
                       background: rgba(148, 163, 184, 0.16);
                       color: #cbd5e1;
                       padding: 0.3rem 0.45rem;
-                      font-size: 0.68rem;
+                      font-size: 1.1rem;
                       cursor: pointer;
                     `}
                   >
@@ -767,7 +767,7 @@ export default function CodeWorkspacePane({
                       border-radius: 8px;
                       padding: 0.34rem 0.48rem;
                       cursor: pointer;
-                      font-size: 0.74rem;
+                      font-size: 1.1rem;
                       display: flex;
                       align-items: center;
                       justify-content: space-between;
@@ -839,7 +839,7 @@ export default function CodeWorkspacePane({
                     border-radius: 8px;
                     padding: 0.42rem 0.5rem;
                     cursor: pointer;
-                    font-size: 0.76rem;
+                    font-size: 1.1rem;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
@@ -868,7 +868,7 @@ export default function CodeWorkspacePane({
                         : fileLineDiagnostic?.severity === 'warning'
                           ? '#fde68a'
                           : '#94a3b8'};
-                      font-size: 0.66rem;
+                      font-size: 1.1rem;
                       font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                       font-weight: 800;
                     `}
@@ -943,7 +943,7 @@ export default function CodeWorkspacePane({
                 justify-content: space-between;
                 gap: 0.5rem;
                 color: #cbd5e1;
-                font-size: 0.72rem;
+                font-size: 1.1rem;
                 font-weight: 800;
                 text-transform: uppercase;
                 letter-spacing: 0.03em;
@@ -959,7 +959,7 @@ export default function CodeWorkspacePane({
                   background: rgba(148, 163, 184, 0.14);
                   color: #e2e8f0;
                   padding: 0.2rem 0.5rem;
-                  font-size: 0.67rem;
+                  font-size: 1.1rem;
                   font-weight: 700;
                   cursor: pointer;
                 `}
@@ -974,7 +974,7 @@ export default function CodeWorkspacePane({
                   border-radius: 10px;
                   padding: 0.75rem 0.7rem;
                   color: #94a3b8;
-                  font-size: 0.74rem;
+                  font-size: 1.1rem;
                   line-height: 1.45;
                 `}
               >
@@ -1059,7 +1059,7 @@ export default function CodeWorkspacePane({
                             overflow: hidden;
                             text-overflow: ellipsis;
                             white-space: nowrap;
-                            font-size: 0.74rem;
+                            font-size: 1.1rem;
                             font-weight: 700;
                           `}
                         >
@@ -1067,7 +1067,7 @@ export default function CodeWorkspacePane({
                         </span>
                         <span
                           className={css`
-                            font-size: 0.68rem;
+                            font-size: 1.1rem;
                             color: #94a3b8;
                             text-transform: uppercase;
                             letter-spacing: 0.03em;
@@ -1118,7 +1118,7 @@ export default function CodeWorkspacePane({
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 color: #e5e7eb;
-                font-size: 0.8rem;
+                font-size: 1.1rem;
                 font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
               `}
               title={activeFile?.path || '/index.html'}
@@ -1137,7 +1137,7 @@ export default function CodeWorkspacePane({
                     : activeFileLineDiagnostic?.severity === 'warning'
                       ? '#fde68a'
                       : '#94a3b8'};
-                  font-size: 0.7rem;
+                  font-size: 1.1rem;
                   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                   font-weight: 800;
                 `}
@@ -1177,7 +1177,7 @@ export default function CodeWorkspacePane({
                     background: rgba(17, 24, 39, 0.85);
                     color: #e5e7eb;
                     padding: 0.3rem 0.45rem;
-                    font-size: 0.72rem;
+                    font-size: 1.1rem;
                     font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                     &:focus {
                       outline: none;
@@ -1196,7 +1196,7 @@ export default function CodeWorkspacePane({
                     background: rgba(65, 140, 235, 0.18);
                     color: #dbeafe;
                     padding: 0.3rem 0.55rem;
-                    font-size: 0.72rem;
+                    font-size: 1.1rem;
                     font-weight: 700;
                     cursor: pointer;
                     &:hover {
@@ -1216,7 +1216,7 @@ export default function CodeWorkspacePane({
               align-items: flex-end;
               gap: 0.35rem;
               color: #e5e7eb;
-              font-size: 0.72rem;
+              font-size: 1.1rem;
             `}
           >
             {isShowingStreamingCode ? (
@@ -1242,7 +1242,7 @@ export default function CodeWorkspacePane({
                     className={css`
                       color: #cbd5e1;
                       opacity: 0.85;
-                      font-size: 0.69rem;
+                      font-size: 1.1rem;
                       font-weight: 700;
                       text-transform: uppercase;
                       letter-spacing: 0.03em;
@@ -1329,7 +1329,7 @@ export default function CodeWorkspacePane({
                         ? '#fecaca'
                         : '#fde68a'};
                       padding: 0.35rem 0.5rem;
-                      font-size: 0.69rem;
+                      font-size: 1.1rem;
                       line-height: 1.35;
                       text-align: right;
                     `}
@@ -1371,7 +1371,7 @@ export default function CodeWorkspacePane({
                   flex-wrap: wrap;
                   background: rgba(15, 23, 42, 0.82);
                   color: #cbd5e1;
-                  font-size: 0.74rem;
+                  font-size: 1.1rem;
                 `}
               >
                 <span>
@@ -1413,7 +1413,7 @@ export default function CodeWorkspacePane({
                     padding: 1.5rem;
                     text-align: center;
                     color: #94a3b8;
-                    font-size: 0.82rem;
+                    font-size: 1.1rem;
                     line-height: 1.5;
                   `}
                 >
@@ -1452,7 +1452,7 @@ export default function CodeWorkspacePane({
                       ? '#fecaca'
                       : '#fde68a'};
                     padding: 0.55rem 0.75rem;
-                    font-size: 0.74rem;
+                    font-size: 1.1rem;
                     line-height: 1.45;
                     display: flex;
                     align-items: center;
@@ -1490,7 +1490,7 @@ export default function CodeWorkspacePane({
                   border: none;
                   resize: none;
                   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-                  font-size: 0.85rem;
+                  font-size: 1.1rem;
                   line-height: 1.5;
                   background: #111827;
                   color: #d4d4d4;
@@ -1528,7 +1528,7 @@ export default function CodeWorkspacePane({
               color: #fecaca;
               border-radius: 8px;
               padding: 0.45rem 0.5rem 0.45rem 0.6rem;
-              font-size: 0.75rem;
+              font-size: 1.1rem;
               max-width: 28rem;
               display: flex;
               align-items: flex-start;

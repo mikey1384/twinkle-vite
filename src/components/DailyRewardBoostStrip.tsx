@@ -212,7 +212,7 @@ export default function DailyRewardBoostStrip({
                     background: var(--boost-strip-accent-soft);
                     color: var(--boost-strip-heading-color);
                     text-shadow: var(--boost-strip-heading-shadow);
-                    font-size: 1.02rem;
+                    font-size: 1.1rem;
                     font-weight: 800;
                     letter-spacing: 0.02em;
                     border: 1px solid var(--boost-strip-accent-strong);
@@ -231,7 +231,7 @@ export default function DailyRewardBoostStrip({
                       background: ${withAlpha(streakColor, 0.1)};
                       border: 1px solid ${withAlpha(streakColor, 0.22)};
                       color: ${streakColor};
-                      font-size: 0.98rem;
+                      font-size: 1.1rem;
                       font-weight: 800;
                       white-space: nowrap;
                     `}
@@ -258,7 +258,7 @@ export default function DailyRewardBoostStrip({
                     {showSparkles && (
                       <Icon
                         icon="sparkles"
-                        style={{ fontSize: '0.75rem', color: streakColor }}
+                        style={{ fontSize: '1.1rem', color: streakColor }}
                       />
                     )}
                   </div>
@@ -266,7 +266,7 @@ export default function DailyRewardBoostStrip({
               </div>
               <div
                 className={css`
-                  font-size: 1.08rem;
+                  font-size: 1.1rem;
                   font-weight: 700;
                   color: ${Color.darkerGray()};
                   line-height: 1.4;
@@ -390,7 +390,7 @@ export default function DailyRewardBoostStrip({
                 background: ${withAlpha(streakColor, 0.1)};
                 border: 1px solid ${withAlpha(streakColor, 0.22)};
                 color: ${streakColor};
-                font-size: 1.05rem;
+                font-size: 1.1rem;
                 font-weight: 800;
                 white-space: nowrap;
               `}
@@ -417,7 +417,7 @@ export default function DailyRewardBoostStrip({
               {showSparkles && (
                 <Icon
                   icon="sparkles"
-                  style={{ fontSize: '0.85rem', color: streakColor }}
+                  style={{ fontSize: '1.1rem', color: streakColor }}
                 />
               )}
             </div>
@@ -471,7 +471,7 @@ export default function DailyRewardBoostStrip({
                   border: 1px solid var(--boost-strip-accent-strong);
                   background: rgba(255, 255, 255, 0.96);
                   color: var(--boost-strip-accent);
-                  font-size: 1.05rem;
+                  font-size: 1.1rem;
                   font-weight: 800;
                   cursor: pointer;
                   display: flex;
@@ -498,7 +498,7 @@ export default function DailyRewardBoostStrip({
                 border-radius: 0.9rem;
                 background: rgba(255, 255, 255, 0.96);
                 border: 1px solid var(--section-panel-border-color);
-                font-size: 1.08rem;
+                font-size: 1.1rem;
                 line-height: 1.5;
                 color: ${Color.darkGray()};
               `}
@@ -660,7 +660,7 @@ function CompactStatusChip({ row }: { row: BoostRow }) {
         <span
           className={css`
             color: ${toneColor};
-            font-size: 0.94rem;
+            font-size: 1.1rem;
             font-weight: 800;
             line-height: 1.15;
             text-wrap: balance;
@@ -749,7 +749,7 @@ function CompactStatusDot({
         <Icon
           icon={icon}
           style={{
-            fontSize: '0.72rem',
+            fontSize: '1.1rem',
             width: '0.72rem',
             height: '0.72rem',
             display: 'block',
@@ -924,7 +924,7 @@ function ProgressPill({
           ${achieved ? withAlpha(color, 0.48) : withAlpha(color, 0.32)};
         background: ${achieved ? withAlpha(color, 0.1) : Color.white()};
         color: ${achieved ? color : Color.darkGray()};
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         font-weight: 700;
         white-space: nowrap;
         box-shadow: inset 0 0 0 1px

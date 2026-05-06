@@ -69,7 +69,7 @@ const badgeClass = css`
   background: ${Color.logoBlue(0.18)};
   color: ${Color.darkOceanBlue()};
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 1.1rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 `;

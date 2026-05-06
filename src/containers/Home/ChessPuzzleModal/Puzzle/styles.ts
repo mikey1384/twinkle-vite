@@ -39,7 +39,7 @@ export const analysisBadgeCls = css`
   color: #0f172a;
   border-radius: 9999px;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   animation: fadeIn 200ms ease;
 
   @keyframes fadeIn {
@@ -78,7 +78,7 @@ export const headerNavCls = css`
 
 export const returnToStartBtnCls = css`
   margin-left: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #0f172a;
   background: #e2e8f0;

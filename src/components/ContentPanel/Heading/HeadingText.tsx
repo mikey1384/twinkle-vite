@@ -424,7 +424,7 @@ function buildRelationshipBadgeStyle(
         ? 'rgba(147, 51, 234, 0.12)'
         : 'rgba(59, 130, 246, 0.12)',
     color: label === 'fork' ? '#6b21a8' : '#1d4ed8',
-    fontSize: '0.72em',
+    fontSize: '1.1rem',
     fontWeight: 800,
     lineHeight: 1.1,
     verticalAlign: '0.08em',

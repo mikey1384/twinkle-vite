@@ -551,7 +551,7 @@ export default function PromptWorkshop({
                 disabled={improving || generating}
                 color="magenta"
                 variant="ghost"
-                style={{ padding: '0.4rem 0.8rem', fontSize: '1rem' }}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '1.1rem' }}
               >
                 <Icon
                   icon="wand-magic-sparkles"
@@ -565,7 +565,7 @@ export default function PromptWorkshop({
                 disabled={!canGenerate}
                 color="darkBlue"
                 variant="ghost"
-                style={{ padding: '0.4rem 0.8rem', fontSize: '1rem' }}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '1.1rem' }}
               >
                 {generating ? (
                   <>
@@ -618,7 +618,7 @@ export default function PromptWorkshop({
                 color="rose"
                 variant="ghost"
                 onClick={() => setChatMessages([])}
-                style={{ padding: '0.3rem 0.6rem', fontSize: '0.9rem' }}
+                style={{ padding: '0.3rem 0.6rem', fontSize: '1.1rem' }}
               >
                 <Icon icon="broom" style={{ marginRight: '0.3rem' }} />
                 Clear
@@ -671,7 +671,7 @@ export default function PromptWorkshop({
                 >
                   <div
                     className={css`
-                      font-size: 1rem;
+                      font-size: 1.1rem;
                       font-weight: 700;
                       color: ${Color.gray()};
                       margin-bottom: 0.2rem;
@@ -737,7 +737,7 @@ export default function PromptWorkshop({
           >
             <span
               className={css`
-                font-size: 1.05rem;
+                font-size: 1.1rem;
                 color: ${Color.gray()};
                 font-weight: 700;
               `}

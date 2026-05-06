@@ -80,9 +80,9 @@ export default function StatusTag({
   }, [status]);
 
   const pillFontSize = useMemo(() => {
-    if (size === 'medium') return isCompact ? '1rem' : '1.15rem';
+    if (size === 'medium') return isCompact ? '1.1rem' : '1.15rem';
     if (size === 'large') return isCompact ? '1.15rem' : '1.3rem';
-    return isCompact ? '1.05rem' : '1.25rem';
+    return isCompact ? '1.1rem' : '1.25rem';
   }, [isCompact, size]);
 
   const pillPadding = useMemo(() => {

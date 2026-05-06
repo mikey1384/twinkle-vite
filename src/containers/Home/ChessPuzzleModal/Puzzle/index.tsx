@@ -906,7 +906,7 @@ function FenBar({ fen }: { fen: string }) {
     flex: 1;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
       'Liberation Mono', 'Courier New', monospace;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     border: none;
     outline: none;
     background: transparent;
@@ -965,7 +965,7 @@ function FenBar({ fen }: { fen: string }) {
         <span
           className={css`
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             color: #111827;
           `}
         >

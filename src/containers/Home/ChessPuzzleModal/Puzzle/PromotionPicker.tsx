@@ -160,7 +160,7 @@ export default function PromotionPicker({
               />
               <span
                 className={css`
-                  font-size: 1rem;
+                  font-size: 1.1rem;
                   font-weight: 600;
                   color: #222222;
                   letter-spacing: -0.01em;
@@ -180,7 +180,7 @@ export default function PromotionPicker({
             border: 1px solid ${borderSubtle};
             border-radius: ${radiusButton};
             padding: 0.875rem 1.25rem;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #222222;
             cursor: pointer;

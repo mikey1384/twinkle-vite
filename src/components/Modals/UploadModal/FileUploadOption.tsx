@@ -146,7 +146,7 @@ export default function FileUploadOption({
           <div
             style={{
               marginTop: '0.5rem',
-              fontSize: '1rem',
+              fontSize: '1.1rem',
               color: Color.gray()
             }}
           >

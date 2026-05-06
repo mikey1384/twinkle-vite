@@ -313,7 +313,7 @@ export default function TopicSettingsModal({
               tone="raised"
               style={{
                 padding: '0.7rem',
-                fontSize: '1rem',
+                fontSize: '1.1rem',
                 marginTop: '2rem'
               }}
             >

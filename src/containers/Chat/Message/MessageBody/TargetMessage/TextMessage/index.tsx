@@ -80,7 +80,7 @@ export default function TextMessage({
           <small
             style={{
               fontWeight: 'normal',
-              fontSize: '1rem',
+              fontSize: '1.1rem',
               color: Color.darkGray()
             }}
           >

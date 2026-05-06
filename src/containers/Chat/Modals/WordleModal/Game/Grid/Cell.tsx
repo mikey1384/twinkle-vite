@@ -53,7 +53,7 @@ export default function Cell({
         className="letter-container"
         style={{
           animationDelay,
-          fontSize: `${1.5 * uiScale}rem`
+          fontSize: `${Math.max(1.1, 1.5 * uiScale)}rem`
         }}
       >
         {value}

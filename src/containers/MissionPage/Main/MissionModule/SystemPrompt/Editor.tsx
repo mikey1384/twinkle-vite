@@ -153,7 +153,7 @@ export default function Editor({
                 color="magenta"
                 variant="soft"
                 tone="raised"
-                style={{ padding: '0.7rem 1.3rem', fontSize: '1rem' }}
+                style={{ padding: '0.7rem 1.3rem', fontSize: '1.1rem' }}
               >
                 {improving ? (
                   <>
@@ -181,7 +181,7 @@ export default function Editor({
                 color="darkBlue"
                 variant="soft"
                 tone="raised"
-                style={{ padding: '0.7rem 1.3rem', fontSize: '1rem' }}
+                style={{ padding: '0.7rem 1.3rem', fontSize: '1.1rem' }}
               >
                 {generating ? (
                   <>

@@ -104,7 +104,7 @@ export default function RewardLevelInfo({
             @media (max-width: ${mobileMaxWidth}) {
               flex-grow: 0;
               width: 5rem;
-              font-size: ${numXpEarned > 0 ? '0.7rem' : '1rem'};
+              font-size: 1.1rem;
             }
           `}
         >

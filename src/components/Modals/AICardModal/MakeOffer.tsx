@@ -38,7 +38,7 @@ export default function MakeOffer({
           className={css`
             font-size: 1.6rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              font-size: 1.1rem;
             }
           `}
         >

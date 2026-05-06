@@ -36,14 +36,14 @@ export default function DailyStatsCard({
     >
       <div
         className={css`
-          font-size: 0.9rem;
+          font-size: 1.1rem;
           color: #15803d;
           font-weight: bold;
           margin-bottom: 0.5rem;
           text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 
           @media (max-width: ${tabletMaxWidth}) {
-            font-size: 0.8rem;
+            font-size: 1.1rem;
           }
         `}
       >
@@ -69,12 +69,12 @@ export default function DailyStatsCard({
 
       <div
         className={css`
-          font-size: 0.85rem;
+          font-size: 1.1rem;
           color: #15803d;
           text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 
           @media (max-width: ${tabletMaxWidth}) {
-            font-size: 0.75rem;
+            font-size: 1.1rem;
           }
         `}
       >

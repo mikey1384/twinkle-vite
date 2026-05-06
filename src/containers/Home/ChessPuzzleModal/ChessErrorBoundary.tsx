@@ -67,7 +67,7 @@ export default class ChessErrorBoundary extends Component<Props, State> {
           </div>
           <div
             className={css`
-              font-size: 1rem;
+              font-size: 1.1rem;
               color: ${Color.darkGray()};
               margin-bottom: 1.5rem;
               max-width: 400px;

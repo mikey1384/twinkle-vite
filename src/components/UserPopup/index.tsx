@@ -25,7 +25,7 @@ const xpRankBadgeWrapperClass = css`
   font-weight: 600;
 `;
 const xpRankBadgeClass = css`
-  font-size: 0.75rem;
+  font-size: 1.1rem;
   min-width: 2.1rem;
   height: 1.6rem;
 `;
@@ -341,7 +341,7 @@ export default function UserPopup({
                     {user.username}
                   </span>
                 </div>
-                <div style={{ fontSize: '0.8rem' }}>
+                <div style={{ fontSize: '1.1rem' }}>
                   <UserTitle
                     user={{
                       ...user,
@@ -350,7 +350,7 @@ export default function UserPopup({
                       userType: user.userType || userType,
                       authLevel: user.authLevel || authLevel
                     }}
-                    style={{ fontSize: '1rem' }}
+                    style={{ fontSize: '1.1rem' }}
                     className={`unselectable ${css`
                       font-weight: bold;
                       display: inline;
@@ -509,7 +509,7 @@ export default function UserPopup({
                 {shouldShowMonthlyXP && (
                   <div
                     style={{
-                      fontSize: '1rem',
+                      fontSize: '1.1rem',
                       fontWeight: 'normal'
                     }}
                   >

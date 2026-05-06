@@ -105,7 +105,7 @@ export default function RecommendationStatus({
   const baseFontSize = compact ? '1.2rem' : '1.4rem';
   const basePadding = compact ? '0.5rem 0.9rem' : '0.6rem 1rem';
   const baseGap = compact ? '0.35rem' : '0.4rem';
-  const mobileFontSize = compact ? '1.05rem' : '1.2rem';
+  const mobileFontSize = compact ? '1.1rem' : '1.2rem';
   const mobilePadding = compact ? '0.45rem 0.8rem' : '0.55rem 0.9rem';
   const mobileGap = compact ? '0.3rem' : '0.35rem';
 

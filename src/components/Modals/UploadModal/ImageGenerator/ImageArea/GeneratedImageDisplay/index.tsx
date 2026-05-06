@@ -171,7 +171,7 @@ export default function GeneratedImageDisplay({
               color: white;
               padding: 0.5rem 1rem;
               border-radius: 12px;
-              font-size: 1rem;
+              font-size: 1.1rem;
               font-weight: 500;
               backdrop-filter: blur(8px);
             `}
@@ -221,7 +221,7 @@ export default function GeneratedImageDisplay({
                 color: white;
                 padding: 0.75rem 1.25rem;
                 border-radius: 12px;
-                font-size: 1rem;
+                font-size: 1.1rem;
                 font-weight: 500;
                 backdrop-filter: blur(8px);
                 text-align: center;
@@ -314,7 +314,7 @@ export default function GeneratedImageDisplay({
                 border: none;
                 border-radius: 12px;
                 padding: 1rem 1.5rem;
-                font-size: 1rem;
+                font-size: 1.1rem;
                 font-weight: 600;
                 cursor: pointer;
                 display: flex;
@@ -346,7 +346,7 @@ export default function GeneratedImageDisplay({
                 border: none;
                 border-radius: 12px;
                 padding: 1rem 1.5rem;
-                font-size: 1rem;
+                font-size: 1.1rem;
                 font-weight: 600;
                 cursor: pointer;
                 display: flex;

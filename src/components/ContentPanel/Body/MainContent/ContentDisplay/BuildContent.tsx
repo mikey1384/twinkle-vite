@@ -314,7 +314,7 @@ export default function BuildContent({
                 border: 1px solid rgba(34, 197, 94, 0.28);
                 background: rgba(34, 197, 94, 0.12);
                 color: #15803d;
-                font-size: 1rem;
+                font-size: 1.1rem;
                 font-weight: 800;
                 white-space: nowrap;
               `}
@@ -402,7 +402,7 @@ export default function BuildContent({
         <div
           className={css`
             color: #be123c;
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 700;
           `}
         >
@@ -482,7 +482,7 @@ export default function BuildContent({
               <div
                 className={css`
                   max-width: 32rem;
-                  font-size: 1.05rem;
+                  font-size: 1.1rem;
                   line-height: 1.55;
                   color: ${hasThumbnail
                     ? 'rgba(255, 255, 255, 0.94)'
@@ -941,7 +941,7 @@ export default function BuildContent({
             <div
               className={css`
                 color: ${Color.darkGray(0.7)};
-                font-size: 0.9rem;
+                font-size: 1.1rem;
                 font-weight: 700;
               `}
             >
@@ -994,7 +994,7 @@ function buildRelationshipBadgeClass(label: BuildRelationshipLabel) {
     background: ${getRelationshipBadgeBackground(label)};
     color: ${getRelationshipBadgeColor(label)};
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 800;
     line-height: 1;
     white-space: nowrap;

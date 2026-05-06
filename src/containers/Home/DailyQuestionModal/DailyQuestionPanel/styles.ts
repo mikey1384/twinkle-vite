@@ -92,7 +92,7 @@ export const todayPreferenceCardCls = css`
 `;
 
 export const todayPreferenceLabelCls = css`
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;

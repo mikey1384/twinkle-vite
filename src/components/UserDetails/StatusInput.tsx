@@ -138,7 +138,7 @@ export default function StatusInput({
               tone="raised"
               color="darkerGray"
               onClick={onCancel}
-              style={{ fontSize: '1rem' }}
+              style={{ fontSize: '1.1rem' }}
             >
               Cancel
             </Button>
@@ -152,7 +152,7 @@ export default function StatusInput({
                   text: editedStatusMsg
                 })
               }
-              style={{ marginLeft: '1rem', fontSize: '1rem' }}
+              style={{ marginLeft: '1rem', fontSize: '1.1rem' }}
               onClick={onStatusSubmit}
             >
               Enter

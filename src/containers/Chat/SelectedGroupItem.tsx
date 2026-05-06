@@ -155,7 +155,7 @@ export default function SelectedGroupItem({
                 background-color: ${Color.green()};
                 color: white;
                 border-radius: 0.3rem;
-                font-size: 0.7rem;
+                font-size: 1.1rem;
                 font-weight: bold;
               `}
             >
@@ -165,7 +165,7 @@ export default function SelectedGroupItem({
         </div>
         <div
           className={css`
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             color: ${Color.gray()};
           `}
         >
@@ -205,7 +205,7 @@ export default function SelectedGroupItem({
             right: 0;
             text-align: center;
             color: ${Color.red()};
-            font-size: 0.8rem;
+            font-size: 1.1rem;
             animation: ${fadeAnimation} 2s forwards;
           `}
         >

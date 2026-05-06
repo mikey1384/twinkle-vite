@@ -579,7 +579,7 @@ export default function ImageGenerator({
               border-radius: 8px;
               cursor: ${isShowingLoadingState ? 'not-allowed' : 'pointer'};
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-              font-size: 1rem;
+              font-size: 1.1rem;
               font-weight: 800;
               color: ${isShowingLoadingState ? '#ccc' : uploadThemeRole.getColor()};
               position: relative;
