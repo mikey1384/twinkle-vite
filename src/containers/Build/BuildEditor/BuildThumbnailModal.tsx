@@ -327,6 +327,7 @@ export default function BuildThumbnailModal({
         <UploadModal
           isOpen
           accept="image/*"
+          imageGenerationPurpose="buildThumbnail"
           onHide={() => setUploadModalShown(false)}
           onFileSelect={handleSelectImageFile}
         />

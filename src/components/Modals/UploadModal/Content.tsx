@@ -17,6 +17,7 @@ export default function UploadModalContent({
   accept,
   multiple,
   allowMultipleGenericFileSelection,
+  imageGenerationPurpose,
   onError
 }: {
   selectedOption: 'select' | 'upload' | 'generate';
@@ -33,6 +34,7 @@ export default function UploadModalContent({
   accept: string;
   multiple?: boolean;
   allowMultipleGenericFileSelection?: boolean;
+  imageGenerationPurpose?: 'buildThumbnail';
   onError?: (error: string) => void;
 }) {
   switch (selectedOption) {
@@ -54,6 +56,7 @@ export default function UploadModalContent({
           onError={onError}
           onUseImageAvailabilityChange={onUseImageAvailabilityChange}
           onRegisterUseImageHandler={onRegisterUseImageHandler}
+          purpose={imageGenerationPurpose}
         />
       );
     default:

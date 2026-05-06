@@ -36,6 +36,7 @@ interface ImageGeneratorProps {
   onRegisterUseImageHandler?: (
     handler: (() => void | Promise<void>) | null
   ) => void;
+  purpose?: 'buildThumbnail';
 }
 
 type AiImageEngine = 'gemini' | 'openai';
@@ -62,7 +63,8 @@ export default function ImageGenerator({
   onImageGenerated,
   onError,
   onUseImageAvailabilityChange,
-  onRegisterUseImageHandler
+  onRegisterUseImageHandler,
+  purpose
 }: ImageGeneratorProps) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -113,6 +115,7 @@ export default function ImageGenerator({
   const [isFollowUpGenerating, setIsFollowUpGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const useImageHandlerRef = useRef<(() => void | Promise<void>) | null>(null);
+  const thumbnailMode = purpose === 'buildThumbnail';
 
   const isShowingLoadingState = useMemo(() => {
     return (
@@ -805,7 +808,7 @@ export default function ImageGenerator({
       }
 
       const result = await generateAIImage({
-        prompt: prompt.trim(),
+        prompt: buildGenerationPrompt(prompt.trim()),
         referenceImageB64: referenceB64,
         engine,
         quality: engine === 'openai' ? quality : undefined,
@@ -902,7 +905,7 @@ export default function ImageGenerator({
       }
 
       const result = await generateAIImage({
-        prompt: followUpPrompt.trim(),
+        prompt: buildGenerationPrompt(followUpPrompt.trim()),
         previousResponseId: generatedResponseId, // Keep for backend pricing logic
         previousImageId: generatedImageId, // Keep for backend pricing logic
         referenceImageB64: referenceB64, // Send previous image as reference for Gemini
@@ -1135,6 +1138,18 @@ export default function ImageGenerator({
     } catch (err) {
       console.error('Failed to convert partial image to reference:', err);
     }
+  }
+
+  function buildGenerationPrompt(rawPrompt: string) {
+    const normalizedPrompt = rawPrompt.trim();
+    if (!thumbnailMode) return normalizedPrompt;
+    return [
+      'Create a wide build thumbnail image for a 16:9 frame.',
+      'Keep the complete main subject fully inside the image with generous safe margins.',
+      'Avoid important details near the top, bottom, left, and right edges.',
+      'Use a landscape composition that still reads clearly when cropped as a game/app thumbnail.',
+      normalizedPrompt
+    ].join(' ');
   }
 }
 

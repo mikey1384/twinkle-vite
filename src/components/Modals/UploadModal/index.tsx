@@ -22,6 +22,7 @@ interface UploadModalProps {
   accept?: string;
   multiple?: boolean;
   allowMultipleGenericFileSelection?: boolean;
+  imageGenerationPurpose?: 'buildThumbnail';
 }
 
 export default function UploadModal({
@@ -31,7 +32,8 @@ export default function UploadModal({
   onFilesSelect,
   accept,
   multiple = false,
-  allowMultipleGenericFileSelection = false
+  allowMultipleGenericFileSelection = false,
+  imageGenerationPurpose
 }: UploadModalProps) {
   const [selectedOption, setSelectedOption] = useState<
     'select' | 'upload' | 'generate'
@@ -105,6 +107,7 @@ export default function UploadModal({
           accept={accept || '*/*'}
           multiple={multiple}
           allowMultipleGenericFileSelection={allowMultipleGenericFileSelection}
+          imageGenerationPurpose={imageGenerationPurpose}
         />
       </Modal>
       {confirmModalShown && (
