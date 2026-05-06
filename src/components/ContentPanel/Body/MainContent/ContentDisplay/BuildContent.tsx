@@ -16,6 +16,7 @@ import {
   getBuildRelationshipLabels
 } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
+import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 
 type BuildCollaborationMode = 'private' | 'open_source';
@@ -76,6 +77,8 @@ export default function BuildContent({
   );
   const updateBuildContributionInviteStatus =
     useBuildContributionInviteStatusUpdater();
+  const updateBuildCollaborationDirectMessage =
+    useBuildCollaborationDirectMessageUpdater();
   const onSetMediaStarted = useContentContext(
     (v) => v.actions.onSetMediaStarted
   );
@@ -650,6 +653,9 @@ export default function BuildContent({
       const result = await createBuildCollaborationRequest({
         buildId,
         message: collaborationRequestMessage
+      });
+      updateBuildCollaborationDirectMessage({
+        directMessage: result?.directMessage
       });
       if (result?.request) {
         setCollaborationRequest(result.request);

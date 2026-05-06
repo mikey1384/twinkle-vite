@@ -7,6 +7,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import ProfilePic from '~/components/ProfilePic';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
 
 interface BuildContributorInvite {
   userId: number;
@@ -164,6 +165,8 @@ export default function BuildContributorInvitePicker({
   const inviteBuildContributor = useAppContext(
     (v) => v.requestHelpers.inviteBuildContributor
   );
+  const updateBuildCollaborationDirectMessage =
+    useBuildCollaborationDirectMessageUpdater();
   const myId = useKeyContext((v) => v.myState.userId);
   const [searchedUsers, setSearchedUsers] = useState<UserSearchResult[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserSearchResult[]>([]);
@@ -325,9 +328,12 @@ export default function BuildContributorInvitePicker({
     setInviteError('');
     try {
       for (const user of usersToInvite) {
-        await inviteBuildContributor({
+        const result = await inviteBuildContributor({
           buildId,
           userId: Number(user.id)
+        });
+        updateBuildCollaborationDirectMessage({
+          directMessage: result?.directMessage
         });
       }
       setSelectedUsers([]);

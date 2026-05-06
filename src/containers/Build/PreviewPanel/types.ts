@@ -18,6 +18,11 @@ export interface Build {
   updatedAt?: number | null;
 }
 
+export interface PreviewMountContext {
+  type: 'subject';
+  id: number;
+}
+
 export interface PreviewPanelProps {
   className?: string;
   build: Build;
@@ -70,6 +75,7 @@ export interface PreviewPanelProps {
   onOpenRuntimeUploadsManager?: () => void;
   currentBuildRuntimeAssets?: PreviewRuntimeUploadAsset[];
   previewSrcOverride?: string | null;
+  mountContext?: PreviewMountContext | null;
   viewerOverride?: {
     id: number | null;
     username: string | null;

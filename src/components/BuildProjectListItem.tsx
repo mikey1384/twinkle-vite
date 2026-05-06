@@ -12,6 +12,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { getBuildDisplayTitle } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 import type { User } from '~/types';
 
@@ -472,6 +473,8 @@ export default function BuildProjectListItem({
   );
   const updateBuildContributionInviteStatus =
     useBuildContributionInviteStatusUpdater();
+  const updateBuildCollaborationDirectMessage =
+    useBuildCollaborationDirectMessageUpdater();
   const { accentColor: buildAccentColor } = useThemedCardVars({
     role: 'sectionPanel',
     themeName
@@ -982,6 +985,9 @@ export default function BuildProjectListItem({
       const result = await createBuildCollaborationRequest({
         buildId: build.id,
         message: collaborationRequestMessage
+      });
+      updateBuildCollaborationDirectMessage({
+        directMessage: result?.directMessage
       });
       if (result?.request) {
         setCollaborationRequest(result.request);

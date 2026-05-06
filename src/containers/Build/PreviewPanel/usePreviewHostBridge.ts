@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   type Dispatch,
   type RefObject,
   type SetStateAction
@@ -24,6 +25,7 @@ import API_URL from '~/constants/URL';
 import type {
   Build,
   PreviewFrameMeta,
+  PreviewMountContext,
   PreviewRuntimeUploadsSyncPayload
 } from './types';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
@@ -98,8 +100,10 @@ interface PreviewHostBridgeRequestRefs {
   deleteBuildRuntimeFileRef: AsyncRequestRef;
   uploadBuildRuntimeFilesRef: AsyncRequestRef;
   getBuildMySubjectsRef: AsyncRequestRef;
+  searchBuildSubjectsRef: AsyncRequestRef;
   getBuildSubjectRef: AsyncRequestRef;
   getBuildSubjectCommentsRef: AsyncRequestRef;
+  listBuildSubjectCommentsRef: AsyncRequestRef;
   getBuildProfileCommentsRef: AsyncRequestRef;
   getBuildProfileCommentIdsRef: AsyncRequestRef;
   getBuildProfileCommentsByIdsRef: AsyncRequestRef;
@@ -136,6 +140,7 @@ interface UsePreviewHostBridgeArgs {
   profilePicUrl: string | null;
   resolvedCapabilitySnapshot: BuildCapabilitySnapshot | null;
   resolvedRuntimeExplorationPlan: BuildRuntimeExplorationPlan | null;
+  mountContext: PreviewMountContext | null;
   capabilitySnapshotRef: RefObject<BuildCapabilitySnapshot | null>;
   runtimeExplorationPlanRef: RefObject<BuildRuntimeExplorationPlan | null>;
   messageTargetFrameRef: RefObject<'primary' | 'secondary'>;
@@ -1028,6 +1033,7 @@ export function usePreviewHostBridge({
   profilePicUrl,
   resolvedCapabilitySnapshot,
   resolvedRuntimeExplorationPlan,
+  mountContext,
   capabilitySnapshotRef,
   runtimeExplorationPlanRef,
   messageTargetFrameRef,
@@ -1043,6 +1049,9 @@ export function usePreviewHostBridge({
   runtimeUploadsSyncRef,
   onAiUsagePolicyUpdateRef
 }: UsePreviewHostBridgeArgs) {
+  const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
+  mountContextRef.current = mountContext;
+
   useEffect(() => {
     const viewer = getViewerInfo(previewAuth);
     postToPreviewFrames(
@@ -1085,6 +1094,19 @@ export function usePreviewHostBridge({
     resolvedCapabilitySnapshot,
     secondaryIframeRef
   ]);
+
+  useEffect(() => {
+    postToPreviewFrames(
+      primaryIframeRef,
+      secondaryIframeRef,
+      previewFrameMetaRef,
+      {
+        source: 'twinkle-parent',
+        type: 'mount:update',
+        mount: mountContext
+      }
+    );
+  }, [mountContext, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
 
   useEffect(() => {
     postToPreviewFrames(
@@ -1612,9 +1634,14 @@ export function usePreviewHostBridge({
               title: activeBuild.title,
               username: activeBuild.username,
               viewer: getViewerInfo(previewAuth),
+              mount: mountContextRef.current,
               capabilities: capabilitySnapshotRef.current,
               explorationPlan: runtimeExplorationPlanRef.current
             };
+            break;
+
+          case 'mount:get':
+            response = { mount: mountContextRef.current };
             break;
 
           case 'capabilities:get':
@@ -1881,6 +1908,21 @@ export function usePreviewHostBridge({
             break;
           }
 
+          case 'content:subjects:search': {
+            const contentSubjectsToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.searchBuildSubjectsRef.current({
+              buildId: activeBuild.id,
+              query: payload?.query,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: contentSubjectsToken
+            });
+            break;
+          }
+
           case 'content:subject': {
             const contentSubjectToken = await ensureBuildApiToken(
               ['content:read'],
@@ -1904,6 +1946,25 @@ export function usePreviewHostBridge({
               subjectId: payload?.subjectId,
               limit: payload?.limit,
               cursor: payload?.cursor,
+              token: contentCommentsToken
+            });
+            break;
+          }
+
+          case 'content:subject-comments:list': {
+            const contentCommentsToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.listBuildSubjectCommentsRef.current({
+              buildId: activeBuild.id,
+              subjectId: payload?.subjectId,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              sortBy: payload?.sortBy,
+              includeReplies: payload?.includeReplies,
+              author: payload?.author,
+              authorUserId: payload?.authorUserId,
               token: contentCommentsToken
             });
             break;

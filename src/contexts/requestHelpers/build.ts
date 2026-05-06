@@ -2149,6 +2149,37 @@ export default function buildRequestHelpers({
       }
     },
 
+    async searchBuildSubjects({
+      buildId,
+      query,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      query: string;
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/subjects/search`,
+          { query, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getBuildSubject({
       buildId,
       subjectId,
@@ -2193,6 +2224,53 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/content/subject-comments`,
           { subjectId, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildSubjectComments({
+      buildId,
+      subjectId,
+      limit,
+      cursor,
+      sortBy,
+      includeReplies,
+      author,
+      authorUserId,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      limit?: number;
+      cursor?: { id?: number };
+      sortBy?: 'newest' | 'oldest';
+      includeReplies?: boolean;
+      author?: 'all' | 'viewer' | 'subjectPoster';
+      authorUserId?: number | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/subject-comment-list`,
+          {
+            subjectId,
+            limit,
+            cursor,
+            sortBy,
+            includeReplies,
+            author,
+            authorUserId
+          },
           {
             ...auth(),
             headers: {

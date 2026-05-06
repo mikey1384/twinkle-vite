@@ -1228,6 +1228,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onOpenRuntimeUploadsManager,
       currentBuildRuntimeAssets = EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
       previewSrcOverride = null,
+      mountContext = null,
       viewerOverride = null,
       onCaptureReadyChange
     }: PreviewPanelProps,
@@ -1690,11 +1691,17 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const getBuildMySubjects = useAppContext(
       (v) => v.requestHelpers.getBuildMySubjects
     );
+    const searchBuildSubjects = useAppContext(
+      (v) => v.requestHelpers.searchBuildSubjects
+    );
     const getBuildSubject = useAppContext(
       (v) => v.requestHelpers.getBuildSubject
     );
     const getBuildSubjectComments = useAppContext(
       (v) => v.requestHelpers.getBuildSubjectComments
+    );
+    const listBuildSubjectComments = useAppContext(
+      (v) => v.requestHelpers.listBuildSubjectComments
     );
     const getBuildProfileComments = useAppContext(
       (v) => v.requestHelpers.getBuildProfileComments
@@ -1792,8 +1799,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const deleteBuildRuntimeFileRef = useRef(deleteBuildRuntimeFile);
     const uploadBuildRuntimeFilesRef = useRef(uploadBuildRuntimeFiles);
     const getBuildMySubjectsRef = useRef(getBuildMySubjects);
+    const searchBuildSubjectsRef = useRef(searchBuildSubjects);
     const getBuildSubjectRef = useRef(getBuildSubject);
     const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
+    const listBuildSubjectCommentsRef = useRef(listBuildSubjectComments);
     const getBuildProfileCommentsRef = useRef(getBuildProfileComments);
     const getBuildProfileCommentIdsRef = useRef(getBuildProfileCommentIds);
     const getBuildProfileCommentsByIdsRef = useRef(
@@ -1870,8 +1879,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       deleteBuildRuntimeFileRef,
       uploadBuildRuntimeFilesRef,
       getBuildMySubjectsRef,
+      searchBuildSubjectsRef,
       getBuildSubjectRef,
       getBuildSubjectCommentsRef,
+      listBuildSubjectCommentsRef,
       getBuildProfileCommentsRef,
       getBuildProfileCommentIdsRef,
       getBuildProfileCommentsByIdsRef,
@@ -2116,6 +2127,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       profilePicUrl: resolvedProfilePicUrl || null,
       resolvedCapabilitySnapshot,
       resolvedRuntimeExplorationPlan,
+      mountContext,
       capabilitySnapshotRef,
       runtimeExplorationPlanRef,
       messageTargetFrameRef,

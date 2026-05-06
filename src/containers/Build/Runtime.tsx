@@ -21,10 +21,12 @@ import {
   useNotiContext
 } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 import type { Content } from '~/types';
 import PreviewPanel from './PreviewPanel';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
+import type { PreviewMountContext } from './PreviewPanel/types';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from './runtimeViewSources';
 
 interface RuntimeBuild {
@@ -64,6 +66,28 @@ interface RuntimeBuildReleaseStatus {
     updated?: number;
     deleted?: number;
   };
+}
+
+function parseRuntimeMountContext(search: string): PreviewMountContext | null {
+  const params = new URLSearchParams(search);
+  const mountType = String(params.get('mountType') || '').trim();
+  const mountId = Number(params.get('mountId') || 0);
+  if (mountType === 'subject' && Number.isFinite(mountId) && mountId > 0) {
+    return { type: 'subject', id: Math.floor(mountId) };
+  }
+
+  const subjectId = Number(params.get('subjectId') || 0);
+  if (Number.isFinite(subjectId) && subjectId > 0) {
+    return { type: 'subject', id: Math.floor(subjectId) };
+  }
+
+  const mount = String(params.get('mount') || '').trim();
+  const match = mount.match(/^subject:(\d+)$/i);
+  if (match) {
+    return { type: 'subject', id: Number(match[1]) };
+  }
+
+  return null;
 }
 
 interface BuildCollaborationRequest {
@@ -782,6 +806,8 @@ export default function BuildRuntime() {
   );
   const updateBuildContributionInviteStatus =
     useBuildContributionInviteStatusUpdater();
+  const updateBuildCollaborationDirectMessage =
+    useBuildCollaborationDirectMessageUpdater();
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -895,6 +921,10 @@ export default function BuildRuntime() {
     const source = new URLSearchParams(location.search).get('viewSource');
     return source === BUILD_TRENDING_SHOWCASE_VIEW_SOURCE ? source : '';
   }, [location.search]);
+  const runtimeMountContext = useMemo(
+    () => parseRuntimeMountContext(location.search),
+    [location.search]
+  );
   const hasExplicitBackTarget = typeof location.state?.runtimeBackTo === 'string';
   const backTo = useMemo(() => {
     return hasExplicitBackTarget ? location.state.runtimeBackTo : '/';
@@ -1264,6 +1294,9 @@ export default function BuildRuntime() {
       const result = await createBuildCollaborationRequest({
         buildId: build.id,
         message: collaborationRequestMessage
+      });
+      updateBuildCollaborationDirectMessage({
+        directMessage: result?.directMessage
       });
       if (result?.request) {
         setCollaborationRequest(result.request);
@@ -1752,6 +1785,7 @@ export default function BuildRuntime() {
                 isOwner={false}
                 runtimeOnly
                 runtimeHostVisible={runtimeHostVisible}
+                mountContext={runtimeMountContext}
                 capabilitySnapshot={build.capabilitySnapshot || null}
                 onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
                 onReplaceCode={() => {}}
