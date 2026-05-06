@@ -297,7 +297,7 @@ export default function Header({
               >
                 <LimitStat
                   label="Single file max"
-                  value={`${formatTokenCount(copilotPolicy.limits.maxFileLines)} lines`}
+                  value={`${formatTokenCount(copilotPolicy.limits.maxFileLines)} effective lines`}
                 />
                 <LimitStat
                   label="Uploaded file max"

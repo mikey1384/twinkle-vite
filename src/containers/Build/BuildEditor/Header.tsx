@@ -4,9 +4,11 @@ import { Link, useLocation } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
+import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
+import type { User } from '~/types';
 import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
@@ -14,6 +16,11 @@ import {
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+const subtitleUsernameTextStyle: React.CSSProperties = {
+  color: 'inherit',
+  fontSize: 'inherit',
+  fontWeight: 900
+};
 
 const headerClass = css`
   padding: 1.2rem 1.8rem;
@@ -251,6 +258,7 @@ interface HeaderProps {
   build: {
     id: number;
     userId?: number | null;
+    profilePicUrl?: string | null;
     title: string;
     description: string | null;
     username: string;
@@ -275,6 +283,7 @@ interface HeaderProps {
     contributionStatus?: string | null;
     rootBuildUserId?: number | null;
     rootBuildUsername?: string | null;
+    rootBuildProfilePicUrl?: string | null;
     rootBuildSourceBuildId?: number | null;
     rootBuildTitle?: string | null;
   };
@@ -467,15 +476,39 @@ export default function Header({
       : build.username
   ).trim();
   const branchOwnerUsername = String(build.username || '').trim();
-  const ownerLine = isContributionFork
-    ? projectOwnerUsername &&
-      branchOwnerUsername &&
-      projectOwnerUsername !== branchOwnerUsername
-      ? `Project by ${projectOwnerUsername} · Branch by ${branchOwnerUsername}`
-      : `Project and branch by ${
-          branchOwnerUsername || projectOwnerUsername || 'unknown'
-        }`
-    : `by ${projectOwnerUsername || 'unknown'}`;
+  const projectOwnerUser = getHeaderUsernameUser({
+    id:
+      isContributionFork && build.rootBuildUserId
+        ? build.rootBuildUserId
+        : build.userId,
+    profilePicUrl: isContributionFork
+      ? build.rootBuildProfilePicUrl
+      : build.profilePicUrl,
+    username: projectOwnerUsername
+  });
+  const branchOwnerUser = getHeaderUsernameUser({
+    id: build.userId,
+    profilePicUrl: build.profilePicUrl,
+    username: branchOwnerUsername
+  });
+  const sharedOwnerUser = branchOwnerUsername ? branchOwnerUser : projectOwnerUser;
+  const ownerLine =
+    isContributionFork &&
+    projectOwnerUsername &&
+    branchOwnerUsername &&
+    projectOwnerUsername !== branchOwnerUsername ? (
+      <>
+        Project by {renderHeaderUsername(projectOwnerUser)} · Branch by{' '}
+        {renderHeaderUsername(branchOwnerUser)}
+      </>
+    ) : isContributionFork ? (
+      <>
+        Project and branch by{' '}
+        {renderHeaderUsername(sharedOwnerUser)}
+      </>
+    ) : (
+      <>by {renderHeaderUsername(projectOwnerUser)}</>
+    );
   const showContributionStatusBadge =
     isContributionFork &&
     contributionStatus !== 'none' &&
@@ -583,10 +616,10 @@ export default function Header({
             ) : null}
           </div>
         </div>
-        <span className={headerSubtitleClass}>
-          {description ? `${description} · ` : ''}
+        <div className={headerSubtitleClass}>
+          {description ? <>{description} · </> : null}
           {ownerLine}
-        </span>
+        </div>
       </div>
       <div className={headerActionsClass}>
         {showVisibilityBadge ? (
@@ -874,6 +907,33 @@ export default function Header({
         ) : null}
       </div>
     </header>
+  );
+}
+
+function getHeaderUsernameUser({
+  id,
+  profilePicUrl,
+  username
+}: {
+  id?: number | null;
+  profilePicUrl?: string | null;
+  username?: string | null;
+}): User {
+  return {
+    id: Number(id || 0),
+    profilePicUrl: profilePicUrl || '',
+    username: username || ''
+  };
+}
+
+function renderHeaderUsername(user: User) {
+  if (!user.username) return 'unknown';
+  return (
+    <UsernameText
+      color="inherit"
+      textStyle={subtitleUsernameTextStyle}
+      user={user}
+    />
   );
 }
 

@@ -26,6 +26,7 @@ export interface BuildCopilotPolicy {
     maxProjectBytes: number;
     maxFilesPerProject: number;
     maxFileLines: number;
+    maxEffectiveLineColumns?: number;
     maxPublishedBuildStorageBytes: number;
     maxRuntimeFileStorageBytes: number;
     maxRuntimeFileBytes: number;

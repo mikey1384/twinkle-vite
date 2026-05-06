@@ -5,6 +5,12 @@ import CodeDiff from '~/components/CodeDiff';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
 import { getFileNameFromPath, isIndexHtmlPath } from './projectFiles';
+import {
+  countProjectFileEffectiveLines,
+  formatProjectFileEffectiveLineCount,
+  getProjectFilePhysicalLines,
+  resolveProjectFileEffectiveLineLimit
+} from './projectFileEffectiveLines';
 import type {
   EditableProjectFile,
   PreviewRuntimeUploadAsset,
@@ -52,7 +58,6 @@ interface CodeWorkspacePaneProps {
   onActiveFileContentChange: (value: string) => void;
 }
 
-const DEFAULT_PROJECT_FILE_LINE_LIMIT = 500;
 const PROJECT_FILE_LINE_WARNING_RATIO = 0.96;
 const MAX_PROJECT_FILE_SEARCH_RESULTS = 40;
 
@@ -60,7 +65,7 @@ type ProjectFileLineDiagnosticSeverity = 'warning' | 'error';
 
 interface ProjectFileLineDiagnostic {
   path: string;
-  lineCount: number;
+  effectiveLineCount: number;
   maxLines: number;
   severity: ProjectFileLineDiagnosticSeverity;
 }
@@ -71,27 +76,6 @@ interface ProjectFileSearchResult {
   lineText: string;
   beforeText: string;
   afterText: string;
-}
-
-function resolveProjectFileLineLimit(maxProjectFileLines: number) {
-  if (!Number.isFinite(maxProjectFileLines) || maxProjectFileLines <= 0) {
-    return DEFAULT_PROJECT_FILE_LINE_LIMIT;
-  }
-  return Math.floor(maxProjectFileLines);
-}
-
-function normalizeProjectFileContent(content: string) {
-  return String(content || '').replace(/\r\n?/g, '\n');
-}
-
-function getProjectFileLines(content: string) {
-  const normalizedContent = normalizeProjectFileContent(content);
-  if (!normalizedContent) return [];
-  return normalizedContent.split('\n');
-}
-
-function countProjectFileLines(content: string) {
-  return getProjectFileLines(content).length;
 }
 
 function buildProjectFileLineDiagnostics(
@@ -105,19 +89,19 @@ function buildProjectFileLineDiagnostics(
 
   return files
     .map((file) => {
-      const lineCount = countProjectFileLines(file.content);
-      if (lineCount > maxLines) {
+      const effectiveLineCount = countProjectFileEffectiveLines(file.content);
+      if (effectiveLineCount > maxLines) {
         return {
           path: file.path,
-          lineCount,
+          effectiveLineCount,
           maxLines,
           severity: 'error' as const
         };
       }
-      if (lineCount >= warningThreshold) {
+      if (effectiveLineCount >= warningThreshold) {
         return {
           path: file.path,
-          lineCount,
+          effectiveLineCount,
           maxLines,
           severity: 'warning' as const
         };
@@ -132,7 +116,7 @@ function buildProjectFileLineDiagnostics(
       if (a.severity !== b.severity) {
         return a.severity === 'error' ? -1 : 1;
       }
-      return b.lineCount - a.lineCount;
+      return b.effectiveLineCount - a.effectiveLineCount;
     });
 }
 
@@ -145,7 +129,7 @@ function searchProjectFileLines(
 
   const results: ProjectFileSearchResult[] = [];
   for (const file of files) {
-    const lines = getProjectFileLines(file.content);
+    const lines = getProjectFilePhysicalLines(file.content);
     for (let index = 0; index < lines.length; index += 1) {
       if (!lines[index].toLowerCase().includes(query)) {
         continue;
@@ -163,10 +147,6 @@ function searchProjectFileLines(
     }
   }
   return results;
-}
-
-function formatLineCount(lineCount: number, maxLines: number) {
-  return `${lineCount}/${maxLines}`;
 }
 
 function truncateSearchLine(line: string) {
@@ -217,7 +197,7 @@ export default function CodeWorkspacePane({
 }: CodeWorkspacePaneProps) {
   const [projectFileSearchQuery, setProjectFileSearchQuery] = useState('');
   const resolvedMaxProjectFileLines =
-    resolveProjectFileLineLimit(maxProjectFileLines);
+    resolveProjectFileEffectiveLineLimit(maxProjectFileLines);
   const persistedActiveFileContent = activeFile
     ? persistedFileContentByPath.get(activeFile.path) || ''
     : '';
@@ -246,8 +226,8 @@ export default function CodeWorkspacePane({
   const blockingLineDiagnostics = projectFileLineDiagnostics.filter(
     (diagnostic) => diagnostic.severity === 'error'
   );
-  const activeFileLineCount = activeFile
-    ? countProjectFileLines(activeFile.content)
+  const activeFileEffectiveLineCount = activeFile
+    ? countProjectFileEffectiveLines(activeFile.content)
     : 0;
   const activeFileLineDiagnostic = activeFile
     ? projectFileLineDiagnosticByPath.get(activeFile.path) || null
@@ -709,13 +689,18 @@ export default function CodeWorkspacePane({
                 <Icon icon="exclamation-triangle" />
                 <span>
                   {blockingLineDiagnostics.length > 0
-                    ? 'Save blocked by line limit'
-                    : 'Near line limit'}
+                    ? 'Save blocked by effective-line limit'
+                    : 'Near effective-line limit'}
                 </span>
               </div>
               {projectFileLineDiagnostics.slice(0, 3).map((diagnostic) => (
                 <div key={diagnostic.path}>
-                  {diagnostic.path} {formatLineCount(diagnostic.lineCount, diagnostic.maxLines)} lines
+                  {diagnostic.path}{' '}
+                  {formatProjectFileEffectiveLineCount(
+                    diagnostic.effectiveLineCount,
+                    diagnostic.maxLines
+                  )}{' '}
+                  effective lines
                 </div>
               ))}
             </div>
@@ -811,7 +796,9 @@ export default function CodeWorkspacePane({
               !isShowingStreamingCode &&
               persistedFileContentByPath.get(file.path) !== file.content;
             const displayName = getFileNameFromPath(file.path);
-            const fileLineCount = countProjectFileLines(file.content);
+            const fileEffectiveLineCount = countProjectFileEffectiveLines(
+              file.content
+            );
             const fileLineDiagnostic =
               projectFileLineDiagnosticByPath.get(file.path) || null;
 
@@ -885,15 +872,18 @@ export default function CodeWorkspacePane({
                       font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                       font-weight: 800;
                     `}
-                    title={`${file.path} has ${formatLineCount(
-                      fileLineCount,
+                    title={`${file.path} has ${formatProjectFileEffectiveLineCount(
+                      fileEffectiveLineCount,
                       resolvedMaxProjectFileLines
-                    )} lines`}
+                    )} effective lines`}
                   >
                     {fileLineDiagnostic && (
                       <Icon icon="exclamation-triangle" />
                     )}
-                    {formatLineCount(fileLineCount, resolvedMaxProjectFileLines)}
+                    {formatProjectFileEffectiveLineCount(
+                      fileEffectiveLineCount,
+                      resolvedMaxProjectFileLines
+                    )}
                   </span>
                   {isDirty && (
                     <span
@@ -1156,7 +1146,11 @@ export default function CodeWorkspacePane({
                   <Icon icon="exclamation-triangle" />
                 )}
                 <span>
-                  Lines {formatLineCount(activeFileLineCount, resolvedMaxProjectFileLines)}
+                  Effective lines{' '}
+                  {formatProjectFileEffectiveLineCount(
+                    activeFileEffectiveLineCount,
+                    resolvedMaxProjectFileLines
+                  )}
                 </span>
               </div>
             )}
@@ -1301,7 +1295,7 @@ export default function CodeWorkspacePane({
                     {savingProjectFiles
                       ? 'Saving...'
                       : saveBlockedByLineLimit
-                        ? 'Fix line limit'
+                        ? 'Fix effective-line limit'
                         : hasUnsavedProjectFileChanges
                           ? 'Save files'
                           : 'Saved'}
@@ -1343,10 +1337,10 @@ export default function CodeWorkspacePane({
                     {projectFileSaveError
                       ? `Save failed: ${projectFileSaveError}`
                       : firstBlockingLineDiagnostic
-                        ? `Save blocked: ${firstBlockingLineDiagnostic.path} has ${formatLineCount(
-                            firstBlockingLineDiagnostic.lineCount,
+                        ? `Save blocked: ${firstBlockingLineDiagnostic.path} has ${formatProjectFileEffectiveLineCount(
+                            firstBlockingLineDiagnostic.effectiveLineCount,
                             firstBlockingLineDiagnostic.maxLines
-                          )} lines. Split it before saving.`
+                          )} effective lines. Split it before saving.`
                         : 'Unsaved changes'}
                   </div>
                 ) : null}
@@ -1468,14 +1462,14 @@ export default function CodeWorkspacePane({
                   <Icon icon="exclamation-triangle" />
                   <span>
                     {activeFileLineDiagnostic.severity === 'error'
-                      ? `This file is too long to save: ${formatLineCount(
-                          activeFileLineDiagnostic.lineCount,
+                      ? `This file is too long to save: ${formatProjectFileEffectiveLineCount(
+                          activeFileLineDiagnostic.effectiveLineCount,
                           activeFileLineDiagnostic.maxLines
-                        )} lines. Split it before saving.`
-                      : `This file is near the save limit: ${formatLineCount(
-                          activeFileLineDiagnostic.lineCount,
+                        )} effective lines. Split it before saving.`
+                      : `This file is near the save limit: ${formatProjectFileEffectiveLineCount(
+                          activeFileLineDiagnostic.effectiveLineCount,
                           activeFileLineDiagnostic.maxLines
-                        )} lines.`}
+                        )} effective lines.`}
                   </span>
                 </div>
               )}

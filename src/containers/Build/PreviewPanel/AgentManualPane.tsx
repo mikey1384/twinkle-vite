@@ -3,8 +3,11 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
 import type { BuildCapabilitySnapshot } from '../capabilityTypes';
+import {
+  DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT,
+  PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS
+} from './projectFileEffectiveLines';
 
-const PROJECT_FILE_LINE_LIMIT = 500;
 const previewLayoutBoilerplate = [
   'function subscribePreviewStage(onSize) {',
   '  let frame = 0;',
@@ -47,8 +50,8 @@ const guideSections: GuideSection[] = [
     title: 'Workspace workflow',
     items: [
       'Use the Code tab to edit project files directly. The app preview runs from the saved project files.',
-      'Keep /index.html or /index.htm as the entry file. Split CSS and JavaScript into supporting files before a file approaches the server line limit.',
-      `The current project-file limit is ${PROJECT_FILE_LINE_LIMIT} lines per file. If save fails for size, split the file and save again.`,
+      'Keep /index.html or /index.htm as the entry file. Split CSS and JavaScript into supporting files before a file approaches the server effective-line limit.',
+      `The current project-file limit is ${DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT} effective lines per file. Long physical lines count as additional effective lines every ${PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS} characters. If save fails for size, split the file and save again.`,
       'Use workspace project assets for bundled images/audio. Use Twinkle.files only for viewer-created runtime uploads after the app is running.',
       'Save files before relying on Preview, Publish, or Download zip.'
     ]
