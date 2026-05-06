@@ -203,6 +203,7 @@ const sdkSections: GuideSection[] = [
       'Twinkle.mount.get() returns optional host-provided content context such as { type: "subject", id }; use it as a preselection when present, not as the only way to choose a subject.',
       'Twinkle.subjects.getMySubjects({ limit, cursor }), search({ query, limit, cursor }), and getSubject(subjectId) are read-only subject metadata APIs. getSubjectComments(subjectId, { limit, cursor }) is the legacy viewer-own-comments helper.',
       'Twinkle.subjectComments.list(subjectId, { sortBy, author, authorUserId, includeReplies, limit, cursor }) reads subject-wide comment streams. Use sortBy: "oldest" for book pages and author: "subjectPoster" when only the subject poster should become pages.',
+      'Twinkle.aiStories.search/list/get reads existing user-generated AI Stories, including story text, explanations, imageUrl, audioUrl, and normalized questions. It is read-only and does not generate new AI Stories.',
       'Twinkle.profileComments.getProfileComments(...), getProfileCommentIds(...), getCommentsByIds(idsOrOpts), and getProfileCommentCounts(idsOrOpts) are focused profile-comment reads.',
       'Twinkle.users.getUser(userId) returns { id, username, profilePicUrl } or null; getUsers({ search, userIds, cursor, limit }) returns a paged user list.',
       'Twinkle.reflections.getDailyReflections(...) and getDailyReflectionsByUser(userId, ...) return daily reflection feed rows.',

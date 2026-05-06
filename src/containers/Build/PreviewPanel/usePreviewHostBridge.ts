@@ -101,6 +101,9 @@ interface PreviewHostBridgeRequestRefs {
   uploadBuildRuntimeFilesRef: AsyncRequestRef;
   getBuildMySubjectsRef: AsyncRequestRef;
   searchBuildSubjectsRef: AsyncRequestRef;
+  listBuildAiStoriesRef: AsyncRequestRef;
+  searchBuildAiStoriesRef: AsyncRequestRef;
+  getBuildAiStoryRef: AsyncRequestRef;
   getBuildSubjectRef: AsyncRequestRef;
   getBuildSubjectCommentsRef: AsyncRequestRef;
   listBuildSubjectCommentsRef: AsyncRequestRef;
@@ -1919,6 +1922,60 @@ export function usePreviewHostBridge({
               limit: payload?.limit,
               cursor: payload?.cursor,
               token: contentSubjectsToken
+            });
+            break;
+          }
+
+          case 'content:ai-stories:list': {
+            const contentAiStoriesToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.listBuildAiStoriesRef.current({
+              buildId: activeBuild.id,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              difficulty: payload?.difficulty,
+              type: payload?.type,
+              isListening: payload?.isListening,
+              userId: payload?.userId,
+              hasImage: payload?.hasImage,
+              hasQuestions: payload?.hasQuestions,
+              token: contentAiStoriesToken
+            });
+            break;
+          }
+
+          case 'content:ai-stories:search': {
+            const contentAiStoriesToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.searchBuildAiStoriesRef.current({
+              buildId: activeBuild.id,
+              query: payload?.query,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              difficulty: payload?.difficulty,
+              type: payload?.type,
+              isListening: payload?.isListening,
+              userId: payload?.userId,
+              hasImage: payload?.hasImage,
+              hasQuestions: payload?.hasQuestions,
+              token: contentAiStoriesToken
+            });
+            break;
+          }
+
+          case 'content:ai-story': {
+            const contentAiStoryToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildAiStoryRef.current({
+              buildId: activeBuild.id,
+              storyId: payload?.storyId,
+              token: contentAiStoryToken
             });
             break;
           }

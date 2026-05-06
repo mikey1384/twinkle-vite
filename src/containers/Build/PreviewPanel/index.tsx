@@ -1694,6 +1694,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const searchBuildSubjects = useAppContext(
       (v) => v.requestHelpers.searchBuildSubjects
     );
+    const listBuildAiStories = useAppContext(
+      (v) => v.requestHelpers.listBuildAiStories
+    );
+    const searchBuildAiStories = useAppContext(
+      (v) => v.requestHelpers.searchBuildAiStories
+    );
+    const getBuildAiStory = useAppContext(
+      (v) => v.requestHelpers.getBuildAiStory
+    );
     const getBuildSubject = useAppContext(
       (v) => v.requestHelpers.getBuildSubject
     );
@@ -1800,6 +1809,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const uploadBuildRuntimeFilesRef = useRef(uploadBuildRuntimeFiles);
     const getBuildMySubjectsRef = useRef(getBuildMySubjects);
     const searchBuildSubjectsRef = useRef(searchBuildSubjects);
+    const listBuildAiStoriesRef = useRef(listBuildAiStories);
+    const searchBuildAiStoriesRef = useRef(searchBuildAiStories);
+    const getBuildAiStoryRef = useRef(getBuildAiStory);
     const getBuildSubjectRef = useRef(getBuildSubject);
     const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
     const listBuildSubjectCommentsRef = useRef(listBuildSubjectComments);
@@ -1880,6 +1892,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       uploadBuildRuntimeFilesRef,
       getBuildMySubjectsRef,
       searchBuildSubjectsRef,
+      listBuildAiStoriesRef,
+      searchBuildAiStoriesRef,
+      getBuildAiStoryRef,
       getBuildSubjectRef,
       getBuildSubjectCommentsRef,
       listBuildSubjectCommentsRef,

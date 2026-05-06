@@ -2180,6 +2180,136 @@ export default function buildRequestHelpers({
       }
     },
 
+    async listBuildAiStories({
+      buildId,
+      limit,
+      cursor,
+      difficulty,
+      type,
+      isListening,
+      userId,
+      hasImage,
+      hasQuestions,
+      token
+    }: {
+      buildId: number;
+      limit?: number;
+      cursor?: { id?: number };
+      difficulty?: number | null;
+      type?: string | null;
+      isListening?: boolean | null;
+      userId?: number | null;
+      hasImage?: boolean | null;
+      hasQuestions?: boolean | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/ai-stories/list`,
+          {
+            limit,
+            cursor,
+            difficulty,
+            type,
+            isListening,
+            userId,
+            hasImage,
+            hasQuestions
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async searchBuildAiStories({
+      buildId,
+      query,
+      limit,
+      cursor,
+      difficulty,
+      type,
+      isListening,
+      userId,
+      hasImage,
+      hasQuestions,
+      token
+    }: {
+      buildId: number;
+      query: string;
+      limit?: number;
+      cursor?: { id?: number };
+      difficulty?: number | null;
+      type?: string | null;
+      isListening?: boolean | null;
+      userId?: number | null;
+      hasImage?: boolean | null;
+      hasQuestions?: boolean | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/ai-stories/search`,
+          {
+            query,
+            limit,
+            cursor,
+            difficulty,
+            type,
+            isListening,
+            userId,
+            hasImage,
+            hasQuestions
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildAiStory({
+      buildId,
+      storyId,
+      token
+    }: {
+      buildId: number;
+      storyId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/ai-story`,
+          { storyId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getBuildSubject({
       buildId,
       subjectId,
