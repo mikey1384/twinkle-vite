@@ -239,6 +239,77 @@ const mobileButtonRowClass = css`
   width: 100%;
 `;
 
+const mergeBranchActionClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  max-width: 100%;
+  @media (max-width: ${mobileMaxWidth}) {
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+`;
+
+const mergeBranchTargetControlClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  max-width: min(22rem, 44vw);
+  height: 2.6rem;
+  padding: 0.28rem 0.45rem 0.28rem 0.65rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  background: #f0fdf4;
+  color: #166534;
+  box-shadow: 0 2px 0 rgba(21, 128, 61, 0.12);
+  @media (max-width: ${mobileMaxWidth}) {
+    max-width: 100%;
+  }
+`;
+
+const mergeBranchTargetPrefixClass = css`
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #15803d;
+`;
+
+const mergeBranchTargetTextClass = css`
+  min-width: 0;
+  max-width: 15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 900;
+  @media (max-width: ${mobileMaxWidth}) {
+    max-width: min(15rem, calc(100vw - 9rem));
+  }
+`;
+
+const mergeBranchTargetSelectClass = css`
+  min-width: 8rem;
+  max-width: 15rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #14532d;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 900;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @media (max-width: ${mobileMaxWidth}) {
+    max-width: min(15rem, calc(100vw - 9rem));
+  }
+`;
+
 const titleRelationshipBadgeClass = css`
   display: inline-flex;
   align-items: center;
@@ -253,6 +324,12 @@ const titleRelationshipBadgeClass = css`
   line-height: 1;
   border: 2px solid transparent;
 `;
+
+interface MergeBranchTargetOption {
+  id: number;
+  label: string;
+  title?: string;
+}
 
 interface HeaderProps {
   build: {
@@ -301,10 +378,16 @@ interface HeaderProps {
   showMergeBranch?: boolean;
   mergeBranchDisabled?: boolean;
   mergeBranchShiny?: boolean;
+  mergeBranchButtonLabel?: string;
+  mergeBranchTargetId?: number;
+  mergeBranchTargetLabel?: string;
+  mergeBranchTargetOptions?: MergeBranchTargetOption[];
+  mergeBranchTargetTitle?: string;
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
   onMergeBranch?: () => void;
+  onMergeBranchTargetChange?: (targetBranchId: number) => void;
   onOpenCollaborationSettings: () => void;
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
@@ -443,10 +526,16 @@ export default function Header({
   showMergeBranch = false,
   mergeBranchDisabled = false,
   mergeBranchShiny = false,
+  mergeBranchButtonLabel = 'Merge Branch',
+  mergeBranchTargetId = 0,
+  mergeBranchTargetLabel = '',
+  mergeBranchTargetOptions = [],
+  mergeBranchTargetTitle = '',
   showForkButton,
   onContribute,
   onFork,
   onMergeBranch,
+  onMergeBranchTargetChange,
   onOpenCollaborationSettings,
   onOpenDescriptionModal,
   onOpenThumbnailModal,
@@ -519,6 +608,9 @@ export default function Header({
   );
   const shouldHighlightMergeBranch =
     mergeBranchShiny && !mergeBranchButtonDisabled;
+  const normalizedMergeBranchTargetOptions = mergeBranchTargetOptions.filter(
+    (option) => Number(option.id || 0) > 0 && String(option.label || '').trim()
+  );
   const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
   const canOpenRuntime = Boolean(
     build.isPublic && releaseStatus && buildCanOpenRuntime(releaseStatus)
@@ -535,6 +627,61 @@ export default function Header({
     publishing ||
     (!build.isPublic && !build.code) ||
     Boolean(build.isPublic && publicAppIsUpToDate);
+
+  function renderMergeTargetControl() {
+    const targetLabel = String(mergeBranchTargetLabel || '').trim();
+    if (!targetLabel) return null;
+    const targetTitle = String(mergeBranchTargetTitle || targetLabel).trim();
+    if (normalizedMergeBranchTargetOptions.length > 1) {
+      return (
+        <span className={mergeBranchTargetControlClass} title={targetTitle}>
+          <span className={mergeBranchTargetPrefixClass}>Into</span>
+          <select
+            className={mergeBranchTargetSelectClass}
+            aria-label="Merge target branch"
+            value={Number(mergeBranchTargetId || 0)}
+            disabled={Boolean(contributionActionLoading)}
+            onChange={(event) =>
+              onMergeBranchTargetChange?.(Number(event.target.value || 0))
+            }
+          >
+            {normalizedMergeBranchTargetOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </span>
+      );
+    }
+    return (
+      <span className={mergeBranchTargetControlClass} title={targetTitle}>
+        <span className={mergeBranchTargetPrefixClass}>Into</span>
+        <span className={mergeBranchTargetTextClass}>{targetLabel}</span>
+      </span>
+    );
+  }
+
+  function renderMergeBranchAction() {
+    if (!shouldShowMergeBranch) return null;
+    return (
+      <span className={mergeBranchActionClass}>
+        {renderMergeTargetControl()}
+        <GameCTAButton
+          onClick={onMergeBranch || (() => {})}
+          disabled={mergeBranchButtonDisabled}
+          loading={contributionActionLoading === 'merge'}
+          variant="success"
+          size="md"
+          icon="check"
+          shiny={shouldHighlightMergeBranch}
+        >
+          {mergeBranchButtonLabel}
+        </GameCTAButton>
+      </span>
+    );
+  }
+
   return (
     <header className={headerClass}>
       <div className={headerInfoClass}>
@@ -699,17 +846,7 @@ export default function Header({
             ) : null}
             {shouldShowMergeBranch ? (
               <HeaderActionItem mobileOrder={4}>
-                <GameCTAButton
-                  onClick={onMergeBranch || (() => {})}
-                  disabled={mergeBranchButtonDisabled}
-                  loading={contributionActionLoading === 'merge'}
-                  variant="success"
-                  size="md"
-                  icon="check"
-                  shiny={shouldHighlightMergeBranch}
-                >
-                  Merge Branch
-                </GameCTAButton>
+                {renderMergeBranchAction()}
               </HeaderActionItem>
             ) : null}
             {contributionActionError ? (
@@ -825,19 +962,7 @@ export default function Header({
               Thumbnail
             </GameCTAButton>
           ) : null}
-          {shouldShowMergeBranch ? (
-            <GameCTAButton
-              onClick={onMergeBranch || (() => {})}
-              disabled={mergeBranchButtonDisabled}
-              loading={contributionActionLoading === 'merge'}
-              variant="success"
-              size="md"
-              icon="check"
-              shiny={shouldHighlightMergeBranch}
-            >
-              Merge Branch
-            </GameCTAButton>
-          ) : null}
+          {shouldShowMergeBranch ? renderMergeBranchAction() : null}
           {showContributionButton ? (
             <GameCTAButton
               onClick={onContribute}

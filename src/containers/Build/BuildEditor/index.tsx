@@ -965,6 +965,36 @@ function canMergeBuildBranchIntoOwnBranch({
   );
 }
 
+function canUseBuildBranchAsMergeTarget({
+  version,
+  activeBuildId,
+  userId
+}: {
+  version: BuildVersionSummary;
+  activeBuildId?: number | null;
+  userId?: number | null;
+}) {
+  return (
+    Number(version.id || 0) > 0 &&
+    Number(version.id || 0) !== Number(activeBuildId || 0) &&
+    getBuildContributionContributorUserId(version) === Number(userId || 0) &&
+    canReceiveBranchMergeStatus(version.contributionStatus)
+  );
+}
+
+function getBuildBranchMergeTargetLabel({
+  version,
+  rootProjectTitle
+}: {
+  version: BuildVersionSummary;
+  rootProjectTitle?: string | null;
+}) {
+  return getBuildBranchDisplayTitle({
+    ...version,
+    rootBuildTitle: rootProjectTitle
+  });
+}
+
 function canDeleteBuildBranchStatus(status?: string | null) {
   const normalizedStatus = String(status || 'draft').trim() || 'draft';
   return normalizedStatus === 'draft' || normalizedStatus === 'none';
@@ -2957,6 +2987,10 @@ export default function BuildEditor({
   const [availableVersions, setAvailableVersions] = useState<
     BuildVersionSummary[]
   >([]);
+  const [
+    currentUserContributionBranches,
+    setCurrentUserContributionBranches
+  ] = useState<BuildVersionSummary[]>([]);
   const [currentUserContributionBranch, setCurrentUserContributionBranch] =
     useState<BuildVersionSummary | null>(null);
   const [availableVersionsLoading, setAvailableVersionsLoading] =
@@ -3066,6 +3100,9 @@ export default function BuildEditor({
   const currentBranchContributionBuildId = currentBuildIsContributionFork
     ? Number(build.id || 0)
     : 0;
+  const currentBranchRootProjectTitle = currentBuildIsContributionFork
+    ? build.rootBuildTitle || ''
+    : build.title || '';
   const canMergeCurrentBranchToMain = canMergeBuildBranch(build, userId);
   const canMergeCurrentBranchIntoOwnBranch = canMergeBuildBranchIntoOwnBranch({
     build,
@@ -3078,6 +3115,60 @@ export default function BuildEditor({
       : canMergeCurrentBranchIntoOwnBranch
         ? 'own-branch'
         : null;
+  const branchMergeTargetBranches = currentUserContributionBranches.filter(
+    (version) =>
+      canUseBuildBranchAsMergeTarget({
+        version,
+        activeBuildId: currentBranchContributionBuildId,
+        userId
+      })
+  );
+  const selectedBranchMergeTarget =
+    currentBranchMergeTarget === 'own-branch'
+      ? branchMergeTargetBranches.find(
+          (version) =>
+            Number(version.id || 0) ===
+            Number(currentUserContributionBranch?.id || 0)
+        ) ||
+        currentUserContributionBranch ||
+        null
+      : null;
+  const branchMergeTargetOptions =
+    currentBranchMergeTarget === 'own-branch'
+      ? branchMergeTargetBranches.map((version) => {
+          const branchTitle = getBuildBranchMergeTargetLabel({
+            version,
+            rootProjectTitle: currentBranchRootProjectTitle
+          });
+          return {
+            id: Number(version.id || 0),
+            label: branchTitle,
+            title: formatBranchFullDisplayTitle({
+              projectTitle: currentBranchRootProjectTitle,
+              branchTitle
+            })
+          };
+        })
+      : [];
+  const selectedBranchMergeTargetLabel = selectedBranchMergeTarget
+    ? getBuildBranchMergeTargetLabel({
+        version: selectedBranchMergeTarget,
+        rootProjectTitle: currentBranchRootProjectTitle
+      })
+    : '';
+  const mergeBranchTargetLabel =
+    currentBranchMergeTarget === 'own-branch'
+      ? selectedBranchMergeTargetLabel
+      : '';
+  const mergeBranchTargetTitle =
+    currentBranchMergeTarget === 'own-branch' && selectedBranchMergeTargetLabel
+      ? formatBranchFullDisplayTitle({
+          projectTitle: currentBranchRootProjectTitle,
+          branchTitle: selectedBranchMergeTargetLabel
+        })
+      : '';
+  const mergeBranchButtonLabel =
+    currentBranchMergeTarget === 'main' ? 'Merge into Main' : 'Merge';
   const canShowMergeCurrentBranch = Boolean(currentBranchMergeTarget);
   const currentBranchHasMergeableFileChanges =
     currentBranchMergeableFileCount !== null &&
@@ -3175,6 +3266,7 @@ export default function BuildEditor({
         !build.canOpenContributionWorkspace)
     ) {
       setAvailableVersions([]);
+      setCurrentUserContributionBranches([]);
       setCurrentUserContributionBranch(null);
       setAvailableVersionsLoading(false);
       return;
@@ -3187,22 +3279,62 @@ export default function BuildEditor({
         const nextVersions = Array.isArray(result?.contributions)
           ? result.contributions
           : [];
-        const currentUserBranch =
-          normalizeBuildVersionSummary(result?.currentUserContribution) ||
-          nextVersions.find(
-            (version: BuildVersionSummary) =>
-              getBuildContributionContributorUserId(version) ===
-                Number(userId || 0) &&
-              canReceiveBranchMergeStatus(version.contributionStatus)
-          ) ||
+        const explicitCurrentUserBranches = Array.isArray(
+          result?.currentUserContributions
+        )
+          ? result.currentUserContributions
+              .map((version: any) => normalizeBuildVersionSummary(version))
+              .filter(Boolean)
+          : [];
+        const currentUserBranchFromResponse = normalizeBuildVersionSummary(
+          result?.currentUserContribution
+        );
+        const currentUserBranchesById = new Map<number, BuildVersionSummary>();
+        [
+          ...explicitCurrentUserBranches,
+          currentUserBranchFromResponse,
+          ...nextVersions
+            .filter(
+              (version: BuildVersionSummary) =>
+                getBuildContributionContributorUserId(version) ===
+                Number(userId || 0)
+            )
+            .map((version: BuildVersionSummary) =>
+              normalizeBuildVersionSummary(version)
+            )
+        ].forEach((version) => {
+          if (version?.id) currentUserBranchesById.set(version.id, version);
+        });
+        const nextCurrentUserBranches = sortBuildVersionSummaries(
+          Array.from(currentUserBranchesById.values())
+        );
+        const mergeTargetBranches = nextCurrentUserBranches.filter(
+          (version) =>
+            canUseBuildBranchAsMergeTarget({
+              version,
+              activeBuildId: build.id,
+              userId
+            })
+        );
+        const fallbackCurrentUserBranch =
+          currentUserBranchFromResponse ||
+          mergeTargetBranches[0] ||
           null;
         setAvailableVersions(nextVersions);
-        setCurrentUserContributionBranch(currentUserBranch);
+        setCurrentUserContributionBranches(nextCurrentUserBranches);
+        setCurrentUserContributionBranch((previousBranch) => {
+          const previousBranchId = Number(previousBranch?.id || 0);
+          const preservedBranch = mergeTargetBranches.find(
+            (version) => Number(version.id || 0) === previousBranchId
+          );
+          return preservedBranch || fallbackCurrentUserBranch;
+        });
       })
       .catch((error: any) => {
         if (canceled) return;
         console.error('Failed to load build branches:', error);
         setAvailableVersions([]);
+        setCurrentUserContributionBranches([]);
         setCurrentUserContributionBranch(null);
       })
       .finally(() => {
@@ -3243,7 +3375,14 @@ export default function BuildEditor({
         : loadBuildContribution;
     loadMergeability({
       buildId: currentBranchRootBuildId,
-      contributionBuildId: currentBranchContributionBuildId
+      contributionBuildId: currentBranchContributionBuildId,
+      ...(currentBranchMergeTarget === 'own-branch'
+        ? {
+            targetContributionBuildId: Number(
+              currentUserContributionBranch?.id || 0
+            )
+          }
+        : {})
     })
       .then((result: any) => {
         if (canceled) return;
@@ -7417,6 +7556,14 @@ export default function BuildEditor({
     });
   }
 
+  function handleMergeBranchTargetChange(targetBranchId: number) {
+    const targetBranch = branchMergeTargetBranches.find(
+      (version) => Number(version.id || 0) === Number(targetBranchId || 0)
+    );
+    if (!targetBranch) return;
+    setCurrentUserContributionBranch(targetBranch);
+  }
+
   function handleRequestDeleteBranch(target: BuildBranchDeleteTarget) {
     if (!target?.id || deletingBranchLoading) return;
     setDeletingBranch(target);
@@ -7513,7 +7660,10 @@ export default function BuildEditor({
         currentBranchMergeTarget === 'own-branch'
           ? await mergeBuildContributionIntoMyBranch({
               buildId: rootBuildId,
-              contributionBuildId
+              contributionBuildId,
+              targetContributionBuildId: Number(
+                currentUserContributionBranch?.id || 0
+              )
             })
           : await mergeBuildContribution({
               buildId: rootBuildId,
@@ -7867,10 +8017,16 @@ export default function BuildEditor({
         showMergeBranch={canShowMergeCurrentBranch}
         mergeBranchDisabled={!canMergeCurrentBranch}
         mergeBranchShiny={mergeCurrentBranchShiny}
+        mergeBranchButtonLabel={mergeBranchButtonLabel}
+        mergeBranchTargetId={Number(currentUserContributionBranch?.id || 0)}
+        mergeBranchTargetLabel={mergeBranchTargetLabel}
+        mergeBranchTargetOptions={branchMergeTargetOptions}
+        mergeBranchTargetTitle={mergeBranchTargetTitle}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
         onMergeBranch={handleMergeCurrentBranch}
+        onMergeBranchTargetChange={handleMergeBranchTargetChange}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}

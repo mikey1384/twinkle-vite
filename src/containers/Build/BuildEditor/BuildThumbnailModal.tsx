@@ -12,6 +12,7 @@ import { Color } from '~/constants/css';
 import API_URL from '~/constants/URL';
 import { convertToWebFriendlyFormat } from '~/helpers/imageHelpers';
 import StatusDots from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator/StatusDots';
+import UploadModal from '~/components/Modals/UploadModal';
 
 const THUMBNAIL_ASPECT_RATIO = 16 / 9;
 
@@ -98,13 +99,13 @@ export default function BuildThumbnailModal({
   onSave: (croppedImageUrl: string | null) => void | Promise<void>;
   onCaptureFromPreview?: () => Promise<string>;
 }) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [sourceImageUrl, setSourceImageUrl] = useState('');
   const [croppedImageUrl, setCroppedImageUrl] = useState('');
   const [processingImage, setProcessingImage] = useState(false);
   const [capturingPreview, setCapturingPreview] = useState(false);
+  const [uploadModalShown, setUploadModalShown] = useState(false);
   const [error, setError] = useState('');
   const canEditSourceImage = canEditImageUrlInCanvas(sourceImageUrl);
 
@@ -176,7 +177,7 @@ export default function BuildThumbnailModal({
           <Button
             variant="ghost"
             disabled={processingImage || loading}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => setUploadModalShown(true)}
           >
             <Icon icon="image" />
             <span style={{ marginLeft: '0.7rem' }}>Upload image</span>
@@ -192,21 +193,6 @@ export default function BuildThumbnailModal({
             </Button>
           )}
         </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className={css`
-            display: none;
-          `}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) {
-              void handleSelectImageFile(file);
-            }
-            event.target.value = '';
-          }}
-        />
         <div
           className={css`
             width: 100%;
@@ -337,6 +323,14 @@ export default function BuildThumbnailModal({
           </div>
         ) : null}
       </div>
+      {uploadModalShown && (
+        <UploadModal
+          isOpen
+          accept="image/*"
+          onHide={() => setUploadModalShown(false)}
+          onFileSelect={handleSelectImageFile}
+        />
+      )}
     </Modal>
   );
 

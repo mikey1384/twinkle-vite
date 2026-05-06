@@ -1659,15 +1659,22 @@ export default function buildRequestHelpers({
 
     async loadBuildContributionMergeIntoMyBranch({
       buildId,
-      contributionBuildId
+      contributionBuildId,
+      targetContributionBuildId
     }: {
       buildId: number;
       contributionBuildId: number;
+      targetContributionBuildId?: number | null;
     }) {
       try {
         const { data } = await request.get(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge-into-my-branch`,
-          auth()
+          {
+            ...auth(),
+            params: targetContributionBuildId
+              ? { targetContributionBuildId }
+              : undefined
+          }
         );
         return data;
       } catch (error) {
@@ -1677,15 +1684,17 @@ export default function buildRequestHelpers({
 
     async mergeBuildContributionIntoMyBranch({
       buildId,
-      contributionBuildId
+      contributionBuildId,
+      targetContributionBuildId
     }: {
       buildId: number;
       contributionBuildId: number;
+      targetContributionBuildId?: number | null;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge-into-my-branch`,
-          {},
+          targetContributionBuildId ? { targetContributionBuildId } : {},
           auth()
         );
         return data;
