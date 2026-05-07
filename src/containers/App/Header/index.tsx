@@ -1,9 +1,10 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { capitalize } from '~/helpers/stringHelpers';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { getSectionFromPathname } from '~/helpers';
 import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
@@ -31,7 +32,7 @@ import {
 } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const BalanceModal = lazy(() => import('./BalanceModal'));
+const BalanceModal = lazyWithRetry(() => import('./BalanceModal'));
 
 interface HeaderProps {
   onInit: () => void;

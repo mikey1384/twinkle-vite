@@ -683,9 +683,16 @@ export default function buildRequestHelpers({
       }
     },
 
-    async loadMyBuilds() {
+    async loadMyBuilds({ search }: { search?: string } = {}) {
       try {
-        const { data } = await request.get(`${URL}/build/list/mine`, auth());
+        const params: Record<string, any> = {};
+        if (search) {
+          params.search = search;
+        }
+        const { data } = await request.get(`${URL}/build/list/mine`, {
+          ...auth(),
+          params
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -694,15 +701,20 @@ export default function buildRequestHelpers({
 
     async loadCollaboratingBuilds({
       limit = 20,
-      cursor
+      cursor,
+      search
     }: {
       limit?: number;
       cursor?: string;
+      search?: string;
     } = {}) {
       try {
         const params: Record<string, any> = { limit };
         if (cursor) {
           params.cursor = cursor;
+        }
+        if (search) {
+          params.search = search;
         }
         const { data } = await request.get(`${URL}/build/list/collaborating`, {
           ...auth(),
@@ -1267,7 +1279,8 @@ export default function buildRequestHelpers({
       excludeMine = false,
       limit = 20,
       lastId,
-      cursor
+      cursor,
+      search
     }: {
       sort?: 'recent' | 'popular' | 'forks';
       scope?: 'all' | 'open_source';
@@ -1275,11 +1288,15 @@ export default function buildRequestHelpers({
       limit?: number;
       lastId?: number;
       cursor?: string;
+      search?: string;
     } = {}) {
       try {
         const params: Record<string, any> = { sort, scope, limit };
         if (excludeMine) {
           params.excludeMine = 1;
+        }
+        if (search) {
+          params.search = search;
         }
         if (cursor) {
           params.cursor = cursor;

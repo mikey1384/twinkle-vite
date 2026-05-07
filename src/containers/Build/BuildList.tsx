@@ -294,6 +294,84 @@ const browseModeFilterWrapClass = css`
   margin-bottom: 1rem;
 `;
 
+const buildSearchWrapClass = css`
+  margin: 0 0 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const buildSearchFieldClass = css`
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  color: var(--chat-text);
+
+  > svg {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #418ceb;
+    font-size: 1.2rem;
+    pointer-events: none;
+  }
+`;
+
+const buildSearchInputClass = css`
+  width: 100%;
+  height: 3.45rem;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: var(--chat-text);
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 0 3rem 0 3rem;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &::placeholder {
+    color: rgba(55, 65, 81, 0.55);
+    font-weight: 700;
+  }
+
+  &:focus {
+    border-color: #418ceb;
+    box-shadow: 0 0 0 3px rgba(65, 140, 235, 0.14);
+  }
+`;
+
+const buildSearchClearButtonClass = css`
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(55, 65, 81, 0.08);
+  color: rgba(31, 41, 55, 0.76);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(65, 140, 235, 0.16);
+    color: #1d4ed8;
+    outline: none;
+  }
+`;
+
 const requestQueueClass = css`
   margin: -0.8rem 0 1.4rem;
   padding: 1rem;
@@ -499,6 +577,8 @@ export default function BuildList() {
     activeTab,
     buildStudio
   });
+  const [buildSearchInput, setBuildSearchInput] = useState('');
+  const [buildSearchQuery, setBuildSearchQuery] = useState('');
   const buildActivityActiveTab = normalizeBuildActivityTab(
     buildStudio?.activityPanel?.activeTab
   );
@@ -565,18 +645,23 @@ export default function BuildList() {
     normalizedUserId &&
       activeBrowseState.userId === normalizedUserId &&
       activeBrowseState.browseMode === activeBrowseMode &&
+      activeBrowseState.searchQuery === buildSearchQuery &&
       activeBrowseState.loaded
   );
   const collaboratingLoadedForCurrentUser = Boolean(
     normalizedUserId &&
       collaboratingBrowseState.userId === normalizedUserId &&
+      collaboratingBrowseState.searchQuery === '' &&
       collaboratingBrowseState.loaded
   );
   const collaboratingBuildCount = collaboratingLoadedForCurrentUser
     ? collaboratingBrowseState.builds.length
     : 0;
   const visibleBuildListTabs = buildListTabs.filter(
-    (tab) => tab.value !== 'collaborating' || collaboratingBuildCount > 0
+    (tab) =>
+      tab.value !== 'collaborating' ||
+      activeTab === 'collaborating' ||
+      collaboratingBuildCount > 0
   );
   const buildStudioMyBuildsUserId =
     Number(buildStudio?.myBuildsUserId || 0) || null;
@@ -589,6 +674,10 @@ export default function BuildList() {
     myBuildsLoadedForCurrentUser && Array.isArray(buildStudio?.myBuilds)
       ? (buildStudio.myBuilds as BuildProjectListItemData[])
       : [];
+  const isBuildSearchActive = buildSearchQuery.length > 0;
+  const displayedMyBuilds = isBuildSearchActive
+    ? builds.filter((build) => buildMatchesSearchQuery(build, buildSearchQuery))
+    : builds;
   const browseBuilds =
     activeTab === 'mine' || !activeBrowseLoadedForCurrentUser
       ? []
@@ -650,6 +739,18 @@ export default function BuildList() {
     setDeletingBuild(null);
     setForkHistoryBuildId(null);
   }, [normalizedUserId]);
+
+  useEffect(() => {
+    const nextSearchQuery = normalizeBuildListSearchQuery(buildSearchInput);
+    const timeoutId = window.setTimeout(() => {
+      setBuildSearchQuery((currentSearchQuery) =>
+        currentSearchQuery === nextSearchQuery
+          ? currentSearchQuery
+          : nextSearchQuery
+      );
+    }, 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [buildSearchInput]);
 
   useEffect(() => {
     if (!normalizedUserId) {
@@ -727,6 +828,7 @@ export default function BuildList() {
             builds: data?.builds || [],
             loadMoreToken: getLoadMoreToken(data),
             browseMode: 'recent',
+            searchQuery: '',
             userId: normalizedUserId
           });
         }
@@ -738,6 +840,7 @@ export default function BuildList() {
             builds: [],
             loadMoreToken: null,
             browseMode: 'recent',
+            searchQuery: '',
             userId: normalizedUserId
           });
         }
@@ -752,11 +855,17 @@ export default function BuildList() {
 
   useEffect(() => {
     if (activeTab !== 'collaborating') return;
+    if (buildSearchQuery) return;
     if (!collaboratingLoadedForCurrentUser) return;
     if (collaboratingBuildCount > 0) return;
     onSetBuildStudioActiveTab('mine');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, collaboratingLoadedForCurrentUser, collaboratingBuildCount]);
+  }, [
+    activeTab,
+    buildSearchQuery,
+    collaboratingLoadedForCurrentUser,
+    collaboratingBuildCount
+  ]);
 
   useEffect(() => {
     if (!normalizedUserId) {
@@ -831,14 +940,17 @@ export default function BuildList() {
       try {
         const data =
           activeTab === 'collaborating'
-            ? await loadCollaboratingBuilds()
+            ? await loadCollaboratingBuilds({
+                search: buildSearchQuery || undefined
+              })
             : await loadPublicBuilds({
                 sort: getPublicBuildSort(activeTab, activeBrowseMode),
                 scope: getPublicBuildScope(activeTab),
                 excludeMine: shouldExcludeMineFromPublicBrowse(
                   activeTab,
                   activeBrowseMode
-                )
+                ),
+                search: buildSearchQuery || undefined
               });
         if (!canceled) {
           onSetBuildStudioBrowseBuilds({
@@ -846,6 +958,7 @@ export default function BuildList() {
             builds: data?.builds || [],
             loadMoreToken: getLoadMoreToken(data),
             browseMode: activeBrowseMode,
+            searchQuery: buildSearchQuery,
             userId: normalizedUserId
           });
         }
@@ -857,6 +970,7 @@ export default function BuildList() {
             builds: [],
             loadMoreToken: null,
             browseMode: activeBrowseMode,
+            searchQuery: buildSearchQuery,
             userId: normalizedUserId
           });
         }
@@ -870,7 +984,13 @@ export default function BuildList() {
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, activeTab, activeBrowseMode, activeBrowseLoaded]);
+  }, [
+    userId,
+    activeTab,
+    activeBrowseMode,
+    activeBrowseLoaded,
+    buildSearchQuery
+  ]);
 
   if (!userId) {
     return (
@@ -950,6 +1070,32 @@ export default function BuildList() {
             </div>
           ) : null}
 
+          <div className={buildSearchWrapClass}>
+            <label className={buildSearchFieldClass}>
+              <Icon icon="search" />
+              <input
+                aria-label="Search builds"
+                className={buildSearchInputClass}
+                value={buildSearchInput}
+                onChange={(event) => setBuildSearchInput(event.target.value)}
+                placeholder="Search builds"
+              />
+              {buildSearchInput ? (
+                <button
+                  type="button"
+                  className={buildSearchClearButtonClass}
+                  aria-label="Clear build search"
+                  onClick={() => {
+                    setBuildSearchInput('');
+                    setBuildSearchQuery('');
+                  }}
+                >
+                  <Icon icon="times" />
+                </button>
+              ) : null}
+            </label>
+          </div>
+
           <BuildActivityPanel
             activeSubtab={buildActivityActiveSubtab}
             activeTab={buildActivityActiveTab}
@@ -1016,7 +1162,7 @@ export default function BuildList() {
           ) : null}
 
           {isMyBuildsTab ? (
-            builds.length === 0 ? (
+            builds.length === 0 && !isBuildSearchActive ? (
               <div className={emptyStateClass}>
                 <h2 className={emptyTitleClass}>Make Your First App</h2>
                 <p className={emptyBodyClass}>
@@ -1062,9 +1208,11 @@ export default function BuildList() {
                   </GameCTAButton>
                 </div>
               </div>
+            ) : displayedMyBuilds.length === 0 ? (
+              <BuildSearchEmptyState query={buildSearchQuery} />
             ) : (
               <div className={buildGridClass}>
-                {builds.map((build) => (
+                {displayedMyBuilds.map((build) => (
                   <BuildProjectListItem
                     key={build.id}
                     build={build}
@@ -1079,12 +1227,18 @@ export default function BuildList() {
           ) : browseLoading ? (
             <Loading />
           ) : browseBuilds.length === 0 ? (
-            <div className={emptyStateClass}>
-              <h2 className={emptyTitleClass}>
-                No {activeTabConfig.label} Builds Yet
-              </h2>
-              <p className={emptyBodyClass}>{getBrowseEmptyCopy(activeTab)}</p>
-            </div>
+            isBuildSearchActive ? (
+              <BuildSearchEmptyState query={buildSearchQuery} />
+            ) : (
+              <div className={emptyStateClass}>
+                <h2 className={emptyTitleClass}>
+                  No {activeTabConfig.label} Builds Yet
+                </h2>
+                <p className={emptyBodyClass}>
+                  {getBrowseEmptyCopy(activeTab)}
+                </p>
+              </div>
+            )
           ) : (
             <>
               <div className={buildGridClass}>
@@ -1494,13 +1648,15 @@ export default function BuildList() {
       const data =
         activeTab === 'collaborating'
           ? await loadCollaboratingBuilds({
-              cursor: browseLoadMoreButton
+              cursor: browseLoadMoreButton,
+              search: buildSearchQuery || undefined
             })
           : await loadPublicBuilds(
               buildPublicLoadMoreParams(
                 activeTab,
                 activeBrowseMode,
-                browseLoadMoreButton
+                browseLoadMoreButton,
+                buildSearchQuery
               )
             );
       onAppendBuildStudioBrowseBuilds({
@@ -1508,6 +1664,7 @@ export default function BuildList() {
         builds: data?.builds || [],
         loadMoreToken: getLoadMoreToken(data),
         browseMode: activeBrowseMode,
+        searchQuery: buildSearchQuery,
         userId: normalizedUserId
       });
     } catch (error) {
@@ -1520,13 +1677,15 @@ export default function BuildList() {
   function buildPublicLoadMoreParams(
     tab: BuildListTab,
     browseMode: BuildStudioBrowseMode,
-    loadMoreToken: string
+    loadMoreToken: string,
+    searchQuery: string
   ): {
     sort: PublicBuildSort;
     scope: PublicBuildScope;
     excludeMine: boolean;
     cursor?: string;
     lastId?: number;
+    search?: string;
   } {
     const loadMoreParams: {
       sort: PublicBuildSort;
@@ -1534,11 +1693,15 @@ export default function BuildList() {
       excludeMine: boolean;
       cursor?: string;
       lastId?: number;
+      search?: string;
     } = {
       sort: getPublicBuildSort(tab, browseMode),
       scope: getPublicBuildScope(tab),
       excludeMine: shouldExcludeMineFromPublicBrowse(tab, browseMode)
     };
+    if (searchQuery) {
+      loadMoreParams.search = searchQuery;
+    }
     if (/^\d+$/.test(loadMoreToken)) {
       loadMoreParams.lastId = Number(loadMoreToken);
     } else {
@@ -1554,6 +1717,18 @@ export default function BuildList() {
       }
     });
   }
+}
+
+function BuildSearchEmptyState({ query }: { query: string }) {
+  return (
+    <div className={emptyStateClass}>
+      <h2 className={emptyTitleClass}>No Matching Builds</h2>
+      <p className={emptyBodyClass}>
+        No builds here match <strong>{query}</strong>. Try another title or
+        description.
+      </p>
+    </div>
+  );
 }
 
 function getPublicBuildScope(tab: BuildListTab): PublicBuildScope {
@@ -1791,12 +1966,42 @@ function normalizeBuildListTab(value?: string | null): BuildListTab {
   return 'mine';
 }
 
+function normalizeBuildListSearchQuery(value: string) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160);
+}
+
+function buildMatchesSearchQuery(
+  build: BuildProjectListItemData,
+  searchQuery: string
+) {
+  const normalizedSearchQuery = normalizeBuildListSearchQuery(
+    searchQuery
+  ).toLowerCase();
+  if (!normalizedSearchQuery) return true;
+  const searchTokens = normalizedSearchQuery.split(' ').filter(Boolean);
+  const searchableText = [
+    build.title,
+    build.description,
+    build.username,
+    build.rootBuildTitle,
+    build.rootBuildUsername
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return searchTokens.every((token) => searchableText.includes(token));
+}
+
 function createEmptyBrowseState() {
   return {
     builds: [],
     loadMoreToken: null,
     loaded: false,
     browseMode: 'recent' as BuildStudioBrowseMode,
+    searchQuery: '',
     userId: null
   };
 }

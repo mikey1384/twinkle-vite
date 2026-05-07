@@ -1,5 +1,4 @@
 import React, {
-  lazy,
   memo,
   useEffect,
   useMemo,
@@ -16,8 +15,9 @@ import { css } from '@emotion/css';
 import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 
-const Markdown = lazy(() => import('./Markdown'));
+const Markdown = lazyWithRetry(() => import('./Markdown'));
 
 const RichTextCss = css`
   width: 100%;

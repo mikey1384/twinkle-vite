@@ -1005,9 +1005,13 @@ function canReviewBuildBranchStatus(status?: string | null) {
   return normalizedStatus !== 'merged';
 }
 
-function formatOwnerAttentionCount(count: number, singular: string) {
+function formatOwnerAttentionCount(
+  count: number,
+  singular: string,
+  plural = `${singular}s`
+) {
   const normalizedCount = Math.max(0, Math.floor(Number(count) || 0));
-  return `${normalizedCount} ${singular}${normalizedCount === 1 ? '' : 's'}`;
+  return `${normalizedCount} ${normalizedCount === 1 ? singular : plural}`;
 }
 
 function getReleaseDiffTotal(releaseStatus?: BuildReleaseStatus | null) {
@@ -1475,7 +1479,8 @@ function VersionStartPanel({
         icon: 'code-branch',
         label: `${formatOwnerAttentionCount(
           reviewableTeamBranches.length,
-          'team branch'
+          'team branch',
+          'team branches'
         )}`,
         detail: 'Preview teammate ideas and merge the ones you want.',
         actionLabel: 'Branches',

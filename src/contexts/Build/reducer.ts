@@ -121,6 +121,7 @@ export interface BuildStudioBrowseTabState {
   loadMoreToken: string | null;
   loaded: boolean;
   browseMode: BuildStudioBrowseMode;
+  searchQuery: string;
   userId: number | null;
 }
 
@@ -253,6 +254,7 @@ export interface BuildStudioActionPayload {
   userId?: number | null;
   loadMoreToken?: string | null;
   browseMode?: BuildStudioBrowseMode | string | null;
+  searchQuery?: string | null;
   activityTab?: BuildActivityTab | string | null;
   activitySubtab?: BuildActivitySubtab | string | null;
   activities?: any[];
@@ -392,6 +394,7 @@ function createInitialBuildStudioBrowseState(): BuildStudioBrowseTabState {
     loadMoreToken: null,
     loaded: false,
     browseMode: 'recent',
+    searchQuery: '',
     userId: null
   };
 }
@@ -477,6 +480,13 @@ function normalizeBuildStudioBrowseMode(
   value?: string | null
 ): BuildStudioBrowseMode {
   return value === 'leaderboard' ? 'leaderboard' : 'recent';
+}
+
+function normalizeBuildStudioSearchQuery(value?: string | null) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160);
 }
 
 function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
@@ -2062,6 +2072,9 @@ export default function BuildReducer(
       const browseMode = normalizeBuildStudioBrowseMode(
         action.buildStudio?.browseMode
       );
+      const searchQuery = normalizeBuildStudioSearchQuery(
+        action.buildStudio?.searchQuery
+      );
       return {
         ...state,
         buildStudio: {
@@ -2079,6 +2092,7 @@ export default function BuildReducer(
                   : null,
               loaded: true,
               browseMode,
+              searchQuery,
               userId: normalizeBuildStudioUserId(action.buildStudio?.userId)
             }
           }
@@ -2092,10 +2106,14 @@ export default function BuildReducer(
       const browseMode = normalizeBuildStudioBrowseMode(
         action.buildStudio?.browseMode
       );
+      const searchQuery = normalizeBuildStudioSearchQuery(
+        action.buildStudio?.searchQuery
+      );
       const currentTabState = buildStudio.browse[tab];
       const canAppend =
         currentTabState.userId === userId &&
-        currentTabState.browseMode === browseMode;
+        currentTabState.browseMode === browseMode &&
+        currentTabState.searchQuery === searchQuery;
       if (!canAppend) return state;
       return {
         ...state,
@@ -2117,6 +2135,7 @@ export default function BuildReducer(
                   : null,
               loaded: true,
               browseMode,
+              searchQuery,
               userId
             }
           }

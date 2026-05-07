@@ -1,5 +1,4 @@
 import React, {
-  lazy,
   Suspense,
   useMemo,
   useCallback,
@@ -7,8 +6,9 @@ import React, {
   useEffect
 } from 'react';
 import { css } from '@emotion/css';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 
-const Markdown = lazy(() => import('./Markdown'));
+const Markdown = lazyWithRetry(() => import('./Markdown'));
 
 export default function InvisibleTextContainer({
   contentId,
