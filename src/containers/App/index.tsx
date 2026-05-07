@@ -55,6 +55,8 @@ import { useRootTheme } from '~/theme/RootThemeProvider';
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 const lazyImportRetryDelays = [400, 1200, 2500];
+const LAZY_IMPORT_RELOAD_STORAGE_KEY = 'twinkleLazyImportReloadAt';
+const LAZY_IMPORT_RELOAD_COOLDOWN_MS = 60 * 1000;
 
 const Build = lazyWithRetry(() => import('~/containers/Build'));
 const BuildRuntime = lazyWithRetry(() => import('~/containers/Build/Runtime'));
@@ -106,10 +108,14 @@ async function retryLazyImport<T extends React.ComponentType<any>>(
       return await importer();
     } catch (error) {
       lastError = error;
-      if (
-        attempt >= lazyImportRetryDelays.length ||
-        !isLazyImportLoadError(error)
-      ) {
+      if (!isLazyImportLoadError(error)) {
+        throw error;
+      }
+      if (attempt >= lazyImportRetryDelays.length) {
+        if (await shouldReloadForLazyImportFailure(error)) {
+          window.location.reload();
+          return await new Promise<{ default: T }>(() => {});
+        }
         throw error;
       }
       await wait(lazyImportRetryDelays[attempt]);
@@ -127,6 +133,69 @@ function isLazyImportLoadError(error: unknown) {
     message.includes('ChunkLoadError') ||
     message.includes('Loading chunk')
   );
+}
+
+async function shouldReloadForLazyImportFailure(error: unknown) {
+  if (typeof window === 'undefined') return false;
+  const failedUrl = getLazyImportFailureUrl(error);
+  if (!failedUrl) return false;
+  const staleAsset = await isLikelyStaleLazyImportAsset(failedUrl);
+  if (!staleAsset) return false;
+  try {
+    if (typeof window.sessionStorage === 'undefined') return false;
+    const lastReload =
+      Number(
+        window.sessionStorage.getItem(LAZY_IMPORT_RELOAD_STORAGE_KEY)
+      ) || 0;
+    const now = Date.now();
+    if (lastReload && now - lastReload <= LAZY_IMPORT_RELOAD_COOLDOWN_MS) {
+      return false;
+    }
+    window.sessionStorage.setItem(
+      LAZY_IMPORT_RELOAD_STORAGE_KEY,
+      String(now)
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getLazyImportFailureUrl(error: unknown) {
+  const request = (error as { request?: unknown })?.request;
+  if (typeof request === 'string' && request.trim()) {
+    return request.trim();
+  }
+  const targetSrc = (error as { target?: { src?: unknown } })?.target?.src;
+  if (typeof targetSrc === 'string' && targetSrc.trim()) {
+    return targetSrc.trim();
+  }
+  const message = String((error as Error)?.message || error || '');
+  return (
+    message.match(/https?:\/\/[^\s"'`<>)]*?\.js\b[^\s"'`<>)]*/i)?.[0] ||
+    null
+  );
+}
+
+async function isLikelyStaleLazyImportAsset(rawUrl: string) {
+  try {
+    const url = new URL(rawUrl, window.location.href);
+    if (url.origin !== window.location.origin) return false;
+    if (!url.pathname.startsWith('/assets/') || !url.pathname.endsWith('.js')) {
+      return false;
+    }
+    const response = await fetch(url.toString(), {
+      cache: 'no-store',
+      method: 'HEAD'
+    });
+    if (response.status === 404 || response.status === 410) return true;
+    if (!response.ok) return false;
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType) return false;
+    return !/javascript|ecmascript/i.test(contentType);
+  } catch {
+    return false;
+  }
 }
 
 function wait(ms: number) {
