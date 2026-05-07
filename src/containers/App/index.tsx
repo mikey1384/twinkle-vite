@@ -200,7 +200,6 @@ export default function App() {
   const fetchTodayStats = useAppContext(
     (v) => v.requestHelpers.fetchTodayStats
   );
-  const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
   const loadCommunityFunds = useAppContext(
     (v) => v.requestHelpers.loadCommunityFunds
   );
@@ -323,7 +322,6 @@ export default function App() {
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const updateNoticeShown = useNotiContext((v) => v.state.updateNoticeShown);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
-  const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -338,7 +336,6 @@ export default function App() {
   const onResetContentInput = useInputContext(
     (v) => v.actions.onResetContentInput
   );
-  const [loadingRankings, setLoadingRankings] = useState(false);
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
   const visibilityChangeRef: React.RefObject<any> = useRef(null);
   const hiddenRef: React.RefObject<any> = useRef(null);
@@ -351,10 +348,10 @@ export default function App() {
   const keyContextMyState = useMemo(
     () => ({
       ...myState,
-      loadingRankings,
+      loadingRankings: false,
       profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
     }),
-    [loadingRankings, myState]
+    [myState]
   );
   const keyContextHelpers = useMemo(
     () => ({ checkUserChange, setMobileMenuShown }),
@@ -424,42 +421,6 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  useEffect(() => {
-    handleLoadRankings();
-    async function handleLoadRankings() {
-      setLoadingRankings(true);
-      try {
-        const {
-          all,
-          top30s,
-          allMonthly,
-          top30sMonthly,
-          myMonthlyRank,
-          myAllTimeRank,
-          myAllTimeXP,
-          myMonthlyXP
-        } = await loadRankings();
-        if (checkUserChange(userId)) return;
-        onGetRanks({
-          all,
-          top30s,
-          allMonthly,
-          top30sMonthly,
-          myMonthlyRank,
-          myAllTimeRank,
-          myAllTimeXP,
-          myMonthlyXP
-        });
-      } catch (error) {
-        console.error(error);
-      } finally {
-        if (checkUserChange(userId)) return;
-        setLoadingRankings(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [twinkleXP]);
 
   useEffect(() => {
     if (userId) {

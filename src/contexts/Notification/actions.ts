@@ -69,7 +69,9 @@ export default function NotiActions(dispatch: Dispatch) {
       myMonthlyRank,
       myAllTimeRank,
       myAllTimeXP,
-      myMonthlyXP
+      myMonthlyXP,
+      rankingsTwinkleXP,
+      userId
     }: {
       all: object[];
       top30s: object[];
@@ -79,6 +81,8 @@ export default function NotiActions(dispatch: Dispatch) {
       myAllTimeRank: number;
       myAllTimeXP: number;
       myMonthlyXP: number;
+      rankingsTwinkleXP?: number | null;
+      userId?: number | null;
     }) {
       return dispatch({
         type: 'LOAD_RANKS',
@@ -89,7 +93,9 @@ export default function NotiActions(dispatch: Dispatch) {
         myMonthlyRank,
         myAllTimeRank,
         myAllTimeXP,
-        myMonthlyXP
+        myMonthlyXP,
+        rankingsTwinkleXP,
+        userId
       });
     },
     onIncreaseNumNewNotis() {

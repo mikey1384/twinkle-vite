@@ -1743,15 +1743,17 @@ export default function buildRequestHelpers({
 
     async updateBuildContributionFromMain({
       buildId,
-      contributionBuildId
+      contributionBuildId,
+      projectFiles
     }: {
       buildId: number;
       contributionBuildId: number;
+      projectFiles?: Array<{ path: string; content?: string }>;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/update-from-main`,
-          {},
+          projectFiles ? { projectFiles } : {},
           auth()
         );
         return data;
@@ -1815,16 +1817,50 @@ export default function buildRequestHelpers({
     async mergeBuildContribution({
       buildId,
       contributionBuildId,
-      filePaths
+      filePaths,
+      projectFiles,
+      rootProjectFiles
     }: {
       buildId: number;
       contributionBuildId: number;
       filePaths?: string[];
+      projectFiles?: Array<{ path: string; content?: string }>;
+      rootProjectFiles?: Array<{ path: string; content?: string }>;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge`,
-          { filePaths },
+          {
+            filePaths,
+            ...(projectFiles ? { projectFiles } : {}),
+            ...(rootProjectFiles ? { rootProjectFiles } : {})
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async replaceMainWithBuildContribution({
+      buildId,
+      contributionBuildId,
+      projectFiles,
+      rootProjectFiles
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      projectFiles?: Array<{ path: string; content?: string }>;
+      rootProjectFiles?: Array<{ path: string; content?: string }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/replace-main`,
+          {
+            ...(projectFiles ? { projectFiles } : {}),
+            ...(rootProjectFiles ? { rootProjectFiles } : {})
+          },
           auth()
         );
         return data;

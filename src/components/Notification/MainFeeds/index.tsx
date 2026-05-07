@@ -17,6 +17,7 @@ import { REWARD_VALUE } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
+import useEnsureRankingsLoaded from '~/helpers/hooks/useEnsureRankingsLoaded';
 
 const tapToCollectRewardsLabel = 'Tap to collect all your rewards';
 const yourXPLabel = 'Your XP';
@@ -105,6 +106,9 @@ export default function MainFeeds({
   const [originalTwinkleCoins, setOriginalTwinkleCoins] = useState(0);
   const [totalTwinkles, setTotalTwinkles] = useState(0);
   const [totalCoins, setTotalCoins] = useState(0);
+  const { loading: rankingsLoading } = useEnsureRankingsLoaded({
+    enabled: activeTab === 'rankings' || activeTab === 'reward'
+  });
 
   const { accentColor, cardVars, themeName } = useThemedCardVars({
     role: 'sectionPanel'
@@ -369,7 +373,7 @@ export default function MainFeeds({
             </div>
           </ScopedTheme>
         )}
-      {activeTab === 'rankings' && <Rankings loadingFeeds={loadingNewFeeds} />}
+      {activeTab === 'rankings' && <Rankings loadingFeeds={rankingsLoading} />}
       {activeTab === 'reward' && rewards.length > 0 && (
         <div style={{ marginTop: 0 }}>{RewardSections}</div>
       )}

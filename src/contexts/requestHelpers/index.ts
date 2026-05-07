@@ -139,6 +139,7 @@ registerMethods('build', [
   'loadBuildContributionMergeIntoMyBranch',
   'mergeBuildContributionIntoMyBranch',
   'mergeBuildContribution',
+  'replaceMainWithBuildContribution',
   'completeBuildContributionMerge',
   'loadBuildContributionForumThreads',
   'createBuildContributionForumThread',

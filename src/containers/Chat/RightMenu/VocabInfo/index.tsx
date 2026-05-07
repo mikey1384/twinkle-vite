@@ -3,8 +3,10 @@ import BottomMenu from './BottomMenu';
 import TopMenu from './TopMenu';
 import LocalContext from '../../Context';
 import { useKeyContext, useNotiContext } from '~/contexts';
+import useEnsureRankingsLoaded from '~/helpers/hooks/useEnsureRankingsLoaded';
 
 export default function VocabInfo() {
+  useEnsureRankingsLoaded();
   const {
     state: { allRanks }
   } = useContext(LocalContext);

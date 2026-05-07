@@ -10,6 +10,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Header from './Header';
 import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
 import BuildPreviewFrame from '~/components/BuildPreviewFrame';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
 import Modals from './Modals';
 import ProfilePic from '~/components/ProfilePic';
@@ -2947,6 +2948,9 @@ export default function BuildEditor({
   const mergeBuildContributionIntoMyBranch = useAppContext(
     (v) => v.requestHelpers.mergeBuildContributionIntoMyBranch
   );
+  const replaceMainWithBuildContribution = useAppContext(
+    (v) => v.requestHelpers.replaceMainWithBuildContribution
+  );
   const updateBuildLumineChatVisibility = useAppContext(
     (v) => v.requestHelpers.updateBuildLumineChatVisibility
   );
@@ -2967,9 +2971,10 @@ export default function BuildEditor({
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [contributionActionLoading, setContributionActionLoading] = useState<
-    'merge' | ''
+    'merge' | 'replace-main' | ''
   >('');
   const [contributionActionError, setContributionActionError] = useState('');
+  const [replaceMainConfirmShown, setReplaceMainConfirmShown] = useState(false);
   const [
     currentBranchMergeableFileCount,
     setCurrentBranchMergeableFileCount
@@ -3187,6 +3192,8 @@ export default function BuildEditor({
     (currentBranchHasMergeableFileChanges ||
       currentBranchMergeabilityLoadFailed ||
       currentBranchHasPendingProjectFileDrafts);
+  const canReplaceMainWithCurrentBranch =
+    currentBranchMergeTarget === 'main' && canMergeCurrentBranch;
   const mergeCurrentBranchShiny =
     canShowMergeCurrentBranch &&
     (currentBranchHasMergeableFileChanges ||
@@ -7659,20 +7666,21 @@ export default function BuildEditor({
     setContributionActionLoading('merge');
     setContributionActionError('');
     try {
-      const filesReady = await handleBeforeContributionAction('merge');
-      if (!filesReady) return;
+      const preparedFiles = await handleBeforeContributionAction('merge');
+      if (!preparedFiles.ready) return;
       const result =
-        currentBranchMergeTarget === 'own-branch'
-          ? await mergeBuildContributionIntoMyBranch({
-              buildId: rootBuildId,
-              contributionBuildId,
-              targetContributionBuildId: Number(
-                currentUserContributionBranch?.id || 0
-              )
-            })
+            currentBranchMergeTarget === 'own-branch'
+              ? await mergeBuildContributionIntoMyBranch({
+                  buildId: rootBuildId,
+                  contributionBuildId,
+                  targetContributionBuildId: Number(
+                    currentUserContributionBranch?.id || 0
+                  )
+                })
           : await mergeBuildContribution({
               buildId: rootBuildId,
-              contributionBuildId
+              contributionBuildId,
+              projectFiles: preparedFiles.files
             });
       if (result?.success) {
         const mergedBranch = result.contribution || null;
@@ -7699,6 +7707,58 @@ export default function BuildEditor({
       );
     } finally {
       setContributionActionLoading('');
+    }
+  }
+
+  function handleOpenReplaceMainConfirm() {
+    if (!canReplaceMainWithCurrentBranch || contributionActionLoading) return;
+    setContributionActionError('');
+    setReplaceMainConfirmShown(true);
+  }
+
+  async function handleReplaceMainWithCurrentBranch() {
+    const latestBuild = getLatestBuild();
+    const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
+    const contributionBuildId = Number(latestBuild.id || 0);
+    if (
+      !rootBuildId ||
+      !contributionBuildId ||
+      !canReplaceMainWithCurrentBranch ||
+      contributionActionLoading
+    ) {
+      return;
+    }
+    setContributionActionLoading('replace-main');
+    setContributionActionError('');
+    try {
+      const preparedFiles = await handleBeforeContributionAction('merge');
+      if (!preparedFiles.ready) return;
+      const result = await replaceMainWithBuildContribution({
+        buildId: rootBuildId,
+        contributionBuildId,
+        projectFiles: preparedFiles.files
+      });
+      if (result?.success) {
+        setReplaceMainConfirmShown(false);
+        navigate(`/build/${rootBuildId}`, {
+          state: {
+            openVersionsPanel: true
+          }
+        });
+      } else {
+        setContributionActionError(
+          result?.error || 'Failed to replace main'
+        );
+      }
+    } catch (error: any) {
+      setContributionActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to replace main'
+      );
+    } finally {
+      setContributionActionLoading('');
+      setReplaceMainConfirmShown(false);
     }
   }
 
@@ -8027,10 +8087,13 @@ export default function BuildEditor({
         mergeBranchTargetLabel={mergeBranchTargetLabel}
         mergeBranchTargetOptions={branchMergeTargetOptions}
         mergeBranchTargetTitle={mergeBranchTargetTitle}
+        showReplaceMainBranch={currentBranchMergeTarget === 'main'}
+        replaceMainBranchDisabled={!canReplaceMainWithCurrentBranch}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
         onMergeBranch={handleMergeCurrentBranch}
+        onReplaceMainBranch={handleOpenReplaceMainConfirm}
         onMergeBranchTargetChange={handleMergeBranchTargetChange}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         onOpenDescriptionModal={handleOpenDescriptionModal}
@@ -8132,6 +8195,37 @@ export default function BuildEditor({
             deletingBranchLoading ? null : setDeletingBranch(null)
           }
           onSubmit={handleDeleteBranch}
+        />
+      ) : null}
+      {replaceMainConfirmShown ? (
+        <ConfirmModal
+          title="Replace Main?"
+          descriptionFontSize="1.1rem"
+          confirmButtonColor="orange"
+          confirmButtonLabel="Replace Main"
+          onHide={() =>
+            contributionActionLoading ? null : setReplaceMainConfirmShown(false)
+          }
+          onConfirm={handleReplaceMainWithCurrentBranch}
+          description={
+            <div
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                lineHeight: 1.5
+              }}
+            >
+              <p>
+                This will make Main identical to{' '}
+                <b>{build.title || 'this branch'}</b>.
+              </p>
+              <p>
+                Any Main changes that are not in this branch will be overwritten.
+                No merge conflict resolution will run.
+              </p>
+              <p>The branch will be marked as merged after Main is replaced.</p>
+            </div>
+          }
         />
       ) : null}
     </div>
@@ -8268,9 +8362,9 @@ export default function BuildEditor({
   async function handleBeforeContributionAction(
     action: 'merge' | 'update-from-main'
   ) {
-    return projectFileDrafts.ensureProjectFilesPersistedBeforeContributionAction(
-      { action }
-    );
+    return projectFileDrafts.prepareProjectFilesForContributionAction({
+      action
+    });
   }
 
   function handleEditableProjectFilesStateChange(

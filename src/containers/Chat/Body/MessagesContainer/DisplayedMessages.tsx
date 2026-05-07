@@ -477,7 +477,8 @@ export default function DisplayedMessages({
       myMonthlyRank,
       myAllTimeRank,
       myAllTimeXP,
-      myMonthlyXP
+      myMonthlyXP,
+      userId
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

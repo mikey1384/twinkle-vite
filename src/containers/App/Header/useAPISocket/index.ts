@@ -151,7 +151,8 @@ export default function useAPISocket({
       myMonthlyRank,
       myAllTimeRank,
       myAllTimeXP,
-      myMonthlyXP
+      myMonthlyXP,
+      userId
     });
     const { xp, rank } = await loadXP();
     onSetUserState({ userId, newState: { twinkleXP: xp, rank } });

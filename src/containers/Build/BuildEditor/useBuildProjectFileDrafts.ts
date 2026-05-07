@@ -11,6 +11,11 @@ interface BuildProjectFileSaveResult {
   error?: string;
 }
 
+interface BuildProjectFileContributionActionResult {
+  ready: boolean;
+  files?: Array<{ path: string; content?: string }>;
+}
+
 interface BuildProjectFileDraftFeedbackEvent {
   kind: 'lifecycle' | 'status';
   phase: string | null;
@@ -34,9 +39,9 @@ interface BuildProjectFileDraftsApi {
   handleProjectFilesDraftStateChange(
     state: BuildProjectFilesDraftState
   ): void;
-  ensureProjectFilesPersistedBeforeContributionAction(options: {
+  prepareProjectFilesForContributionAction(options: {
     action: 'merge' | 'update-from-main';
-  }): Promise<boolean>;
+  }): Promise<BuildProjectFileContributionActionResult>;
   ensureProjectFilesPersistedBeforeRun(options: {
     runType: 'copilot' | 'greeting';
   }): Promise<boolean>;
@@ -230,6 +235,47 @@ export default function useBuildProjectFileDrafts({
       return true;
     }
 
+    async function prepareProjectFilesForContributionAction({
+      action
+    }: {
+      action: 'merge' | 'update-from-main';
+    }): Promise<BuildProjectFileContributionActionResult> {
+      if (!isOwnerRef.current) {
+        return { ready: true };
+      }
+
+      const isUpdateFromMain = action === 'update-from-main';
+      const actionText = isUpdateFromMain ? 'updating from main' : 'merging';
+      const settled = await waitForProjectFileSaveToSettle();
+      if (!settled) {
+        appendFeedbackEvent({
+          kind: 'lifecycle',
+          phase: 'error',
+          message: `Please wait for file save to finish before ${actionText} this branch.`
+        });
+        return { ready: false };
+      }
+
+      if (!hasUnsavedProjectFilesRef.current) {
+        return { ready: true };
+      }
+
+      const pendingFiles = normalizeDraftFiles(projectFilesDraftRef.current);
+      if (!pendingFiles.length) {
+        return { ready: true };
+      }
+
+      appendFeedbackEvent({
+        kind: 'status',
+        phase: 'planning',
+        message: `Using pending file edits for ${isUpdateFromMain ? 'update from main' : 'merge'}...`
+      });
+      return {
+        ready: true,
+        files: pendingFiles
+      };
+    }
+
     apiRef.current = {
       resetDraftState(files) {
         projectFilesDraftRef.current = normalizeDraftFiles(files);
@@ -243,20 +289,8 @@ export default function useBuildProjectFileDrafts({
         savingProjectFilesRef.current = Boolean(state.saving);
       },
 
-      ensureProjectFilesPersistedBeforeContributionAction({ action }) {
-        const isUpdateFromMain = action === 'update-from-main';
-        const actionText = isUpdateFromMain ? 'updating from main' : 'merging';
-        const actionVerb = isUpdateFromMain ? 'update from main' : 'merge';
-        return ensureProjectFilesPersisted({
-          settleErrorMessage: `Please wait for file save to finish before ${actionText} this branch.`,
-          draftChangedMessage: `Unable to ${actionVerb}: file drafts kept changing during auto-save. Please stop editing and try again.`,
-          initialSaveMessage: `Saving unsaved files before ${actionVerb}...`,
-          retrySaveMessage:
-            `Draft changed during save. Saving latest edits before ${actionVerb}...`,
-          savedMessage: `Saved pending file edits before ${actionVerb}.`,
-          saveFailurePrefix: `Unable to ${actionVerb}: `,
-          returnTrueOnEmptyDraft: true
-        });
+      prepareProjectFilesForContributionAction({ action }) {
+        return prepareProjectFilesForContributionAction({ action });
       },
 
       ensureProjectFilesPersistedBeforeRun({ runType }) {

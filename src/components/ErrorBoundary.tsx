@@ -212,15 +212,7 @@ function isRecoverableDomMutationError(error: Error) {
 }
 
 function shouldSuppressErrorReport(error: Error) {
-  return isKnownCrawlerUserAgent() && isLazyImportLoadError(error);
-}
-
-function isKnownCrawlerUserAgent() {
-  if (typeof navigator === 'undefined') return false;
-  const userAgent = navigator.userAgent || '';
-  return /Applebot|Googlebot|bingbot|DuckDuckBot|YandexBot|Baiduspider|facebookexternalhit|Twitterbot|Slackbot|Discordbot|LinkedInBot|crawler|spider/i.test(
-    userAgent
-  );
+  return isLazyImportLoadError(error);
 }
 
 function handleLazyImportRecoveryReload() {

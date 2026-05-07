@@ -14,6 +14,8 @@ export const initialNotiState = {
   numNewNotis: 0,
   numNewPosts: 0,
   rankingsLoaded: false,
+  rankingsTwinkleXP: null,
+  rankingsUserId: null,
   notificationsLoaded: false,
   allRanks: [],
   allMonthly: [],

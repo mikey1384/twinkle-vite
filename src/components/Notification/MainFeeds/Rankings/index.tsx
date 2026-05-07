@@ -3,8 +3,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import { notiFilterBar } from '../../Styles';
 import ThisMonth from './ThisMonth';
-import AllTime from './AllTime';import moment from 'moment';
+import AllTime from './AllTime';
+import moment from 'moment';
 import { useKeyContext, useNotiContext } from '~/contexts';
+import Loading from '~/components/Loading';
 
 const allTimeLabel = 'All Time';
 
@@ -24,6 +26,12 @@ export default function Rankings({ loadingFeeds }: { loadingFeeds: boolean }) {
   const currentMonth = useMemo(
     () => moment.utc(standardTimeStamp || Date.now()).format('MMMM'),
     [standardTimeStamp]
+  );
+  const rankingsEmpty = Boolean(
+    allRanks.length === 0 &&
+      top30s.length === 0 &&
+      allMonthly.length === 0 &&
+      top30sMonthly.length === 0
   );
 
   useEffect(() => {
@@ -61,7 +69,9 @@ export default function Rankings({ loadingFeeds }: { loadingFeeds: boolean }) {
         </FilterBar>
       )}
       <div style={{ width: '100%' }}>
-        {thisMonthSelected ? (
+        {loadingFeeds && rankingsEmpty ? (
+          <Loading />
+        ) : thisMonthSelected ? (
           <ThisMonth
             allMonthly={allMonthly}
             loading={loadingFeeds}

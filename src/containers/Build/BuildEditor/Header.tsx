@@ -373,7 +373,7 @@ interface HeaderProps {
   savingThumbnail: boolean;
   showContributionButton: boolean;
   contributionActionError?: string;
-  contributionActionLoading?: 'merge' | '';
+  contributionActionLoading?: 'merge' | 'replace-main' | '';
   canMergeBranch?: boolean;
   showMergeBranch?: boolean;
   mergeBranchDisabled?: boolean;
@@ -383,10 +383,13 @@ interface HeaderProps {
   mergeBranchTargetLabel?: string;
   mergeBranchTargetOptions?: MergeBranchTargetOption[];
   mergeBranchTargetTitle?: string;
+  showReplaceMainBranch?: boolean;
+  replaceMainBranchDisabled?: boolean;
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
   onMergeBranch?: () => void;
+  onReplaceMainBranch?: () => void;
   onMergeBranchTargetChange?: (targetBranchId: number) => void;
   onOpenCollaborationSettings: () => void;
   onOpenDescriptionModal: () => void;
@@ -531,10 +534,13 @@ export default function Header({
   mergeBranchTargetLabel = '',
   mergeBranchTargetOptions = [],
   mergeBranchTargetTitle = '',
+  showReplaceMainBranch = false,
+  replaceMainBranchDisabled = false,
   showForkButton,
   onContribute,
   onFork,
   onMergeBranch,
+  onReplaceMainBranch,
   onMergeBranchTargetChange,
   onOpenCollaborationSettings,
   onOpenDescriptionModal,
@@ -605,6 +611,9 @@ export default function Header({
   const shouldShowMergeBranch = Boolean(showMergeBranch || canMergeBranch);
   const mergeBranchButtonDisabled = Boolean(
     mergeBranchDisabled || !canMergeBranch || contributionActionLoading
+  );
+  const replaceMainBranchButtonDisabled = Boolean(
+    replaceMainBranchDisabled || contributionActionLoading
   );
   const shouldHighlightMergeBranch =
     mergeBranchShiny && !mergeBranchButtonDisabled;
@@ -678,6 +687,18 @@ export default function Header({
         >
           {mergeBranchButtonLabel}
         </GameCTAButton>
+        {showReplaceMainBranch ? (
+          <GameCTAButton
+            onClick={onReplaceMainBranch || (() => {})}
+            disabled={replaceMainBranchButtonDisabled}
+            loading={contributionActionLoading === 'replace-main'}
+            variant="orange"
+            size="md"
+            icon="copy"
+          >
+            Replace Main
+          </GameCTAButton>
+        ) : null}
       </span>
     );
   }

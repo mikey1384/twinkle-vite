@@ -71,6 +71,14 @@ function getBuildContributionInviteMembershipKey(invite: any) {
   return buildId > 0 && userId > 0 ? `${buildId}:${userId}` : '';
 }
 
+function nullableNumber(value: any) {
+  if (value === null || typeof value === 'undefined' || value === '') {
+    return null;
+  }
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
 function buildContributionInviteMatches({
   actionObj,
   invite,
@@ -323,7 +331,11 @@ export default function NotiReducer(
         myAllTimeRank: action.myAllTimeRank,
         myAllTimeXP: action.myAllTimeXP,
         myMonthlyXP: action.myMonthlyXP,
-        rankingsLoaded: true
+        rankingsLoaded: true,
+        rankingsTwinkleXP:
+          nullableNumber(action.rankingsTwinkleXP) ??
+          nullableNumber(action.myAllTimeXP),
+        rankingsUserId: Number(action.userId || 0) || null
       };
     case 'RESET_NUM_NEW_POSTS':
       return {

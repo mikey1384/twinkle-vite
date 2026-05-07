@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import ProfilePic from '~/components/ProfilePic';
 import Textarea from '~/components/Texts/Textarea';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -125,7 +126,10 @@ interface CollaborationPanelProps {
   onAcceptedContributorCountChange?: (count: number) => void;
   onBeforeContributionAction?: (
     action: 'merge' | 'update-from-main'
-  ) => Promise<boolean>;
+  ) => Promise<{
+    ready: boolean;
+    files?: Array<{ path: string; content?: string }>;
+  }>;
   onAskLumineToResolveConflicts?: (
     paths: string[]
   ) => Promise<boolean> | boolean;
@@ -754,6 +758,9 @@ export default function CollaborationPanel({
   const mergeBuildContribution = useAppContext(
     (v) => v.requestHelpers.mergeBuildContribution
   );
+  const replaceMainWithBuildContribution = useAppContext(
+    (v) => v.requestHelpers.replaceMainWithBuildContribution
+  );
   const updateBuildContributionFromMain = useAppContext(
     (v) => v.requestHelpers.updateBuildContributionFromMain
   );
@@ -816,6 +823,7 @@ export default function CollaborationPanel({
   const [previewPath, setPreviewPath] = useState('');
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
+  const [replaceMainConfirmShown, setReplaceMainConfirmShown] = useState(false);
   const [conflictMarkerPaths, setConflictMarkerPaths] = useState<string[]>([]);
   const [requestActionError, setRequestActionError] = useState('');
   const [forumThreads, setForumThreads] = useState<BuildForumThread[]>([]);
@@ -1020,12 +1028,13 @@ export default function CollaborationPanel({
   if (!canShowPanel) return null;
 
   return (
-    <section
-      className={
-        embedded ? `${panelClass} ${embeddedPanelClass}` : panelClass
-      }
-    >
-      <div className={toolbarClass}>
+    <>
+      <section
+        className={
+          embedded ? `${panelClass} ${embeddedPanelClass}` : panelClass
+        }
+      >
+        <div className={toolbarClass}>
         <div className={toolbarPrimaryClass}>
           {embedded ? (
             <>
@@ -1107,12 +1116,12 @@ export default function CollaborationPanel({
         ) : null}
       </div>
 
-      {contentExpanded ? (
-        <div
-          ref={embedded ? embeddedScrollRef : undefined}
-          className={expandedBodyClass}
-          onScroll={embedded ? handleEmbeddedScroll : undefined}
-        >
+        {contentExpanded ? (
+          <div
+            ref={embedded ? embeddedScrollRef : undefined}
+            className={expandedBodyClass}
+            onScroll={embedded ? handleEmbeddedScroll : undefined}
+          >
           {embedded ? (
             renderEmbeddedBody()
           ) : (
@@ -1130,9 +1139,41 @@ export default function CollaborationPanel({
               )}
             </>
           )}
-        </div>
+          </div>
+        ) : null}
+      </section>
+      {replaceMainConfirmShown ? (
+        <ConfirmModal
+          title="Replace Main?"
+          descriptionFontSize="1.1rem"
+          confirmButtonColor="orange"
+          confirmButtonLabel="Replace Main"
+          onHide={() =>
+            actionLoading ? null : setReplaceMainConfirmShown(false)
+          }
+          onConfirm={handleReplaceMainWithContribution}
+          description={
+            <div
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                lineHeight: 1.5
+              }}
+            >
+              <p>
+                This will make Main identical to{' '}
+                <b>{selectedContribution?.title || 'this branch'}</b>.
+              </p>
+              <p>
+                Any Main changes that are not in this branch will be overwritten.
+                No merge conflict resolution will run.
+              </p>
+              <p>The branch will be marked as merged after Main is replaced.</p>
+            </div>
+          }
+        />
       ) : null}
-    </section>
+    </>
   );
 
   function renderEmbeddedBody() {
@@ -1691,14 +1732,15 @@ export default function CollaborationPanel({
     setActionLoading('merge');
     setActionError('');
     try {
-      const filesReady = onBeforeContributionAction
+      const preparedFiles = onBeforeContributionAction
         ? await onBeforeContributionAction('merge')
-        : true;
-      if (!filesReady) return;
+        : { ready: true };
+      if (!preparedFiles.ready) return;
       const result = await mergeBuildContribution({
         buildId: rootBuildId,
         contributionBuildId: selectedContributionId,
-        filePaths: selectedPaths
+        filePaths: selectedPaths,
+        rootProjectFiles: preparedFiles.files
       });
       if (result?.success) {
         const conflictPaths = Array.isArray(result.conflicts)
@@ -1738,18 +1780,68 @@ export default function CollaborationPanel({
     }
   }
 
+  async function handleReplaceMainWithContribution() {
+    if (!rootBuildId || !selectedContributionId || actionLoading) return;
+    setActionLoading('replace-main');
+    setActionError('');
+    try {
+      const preparedFiles = onBeforeContributionAction
+        ? await onBeforeContributionAction('merge')
+        : { ready: true };
+      if (!preparedFiles.ready) return;
+      const result = await replaceMainWithBuildContribution({
+        buildId: rootBuildId,
+        contributionBuildId: selectedContributionId,
+        rootProjectFiles: preparedFiles.files
+      });
+      if (result?.success) {
+        onCanonicalMerge({
+          build: result.build || null,
+          projectFiles: Array.isArray(result.projectFiles)
+            ? result.projectFiles
+            : null
+        });
+        if (result.contribution) {
+          setSelectedContribution(result.contribution);
+          setContributions((current) =>
+            current.map((entry) =>
+              entry.id === selectedContributionId
+                ? { ...entry, ...result.contribution }
+                : entry
+            )
+          );
+        }
+        setChangedFiles([]);
+        setSelectedPaths([]);
+        setConflictMarkerPaths([]);
+      } else {
+        setActionError(result?.error || 'Failed to replace main');
+      }
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to replace main'
+      );
+    } finally {
+      setActionLoading('');
+      setReplaceMainConfirmShown(false);
+    }
+  }
+
   async function handleUpdateVersionFromMain() {
     if (!rootBuildId || !contributionBuildId || actionLoading) return;
     setActionLoading('update-from-main');
     setActionError('');
     try {
-      const filesReady = onBeforeContributionAction
+      const preparedFiles = onBeforeContributionAction
         ? await onBeforeContributionAction('update-from-main')
-        : true;
-      if (!filesReady) return;
+        : { ready: true };
+      if (!preparedFiles.ready) return;
       const result = await updateBuildContributionFromMain({
         buildId: rootBuildId,
-        contributionBuildId
+        contributionBuildId,
+        projectFiles: preparedFiles.files
       });
       if (result?.code === 'build_contribution_conflict_markers_remaining') {
         const markerPaths = Array.isArray(result.conflictMarkerPaths)
@@ -1805,10 +1897,10 @@ export default function CollaborationPanel({
     setActionLoading('complete-merge');
     setActionError('');
     try {
-      const filesReady = onBeforeContributionAction
+      const preparedFiles = onBeforeContributionAction
         ? await onBeforeContributionAction('merge')
-        : true;
-      if (!filesReady) return;
+        : { ready: true };
+      if (!preparedFiles.ready) return;
       const result = await completeBuildContributionMerge({
         buildId: rootBuildId,
         contributionBuildId: selectedContributionId
@@ -2229,6 +2321,16 @@ export default function CollaborationPanel({
               onClick={handleMergeContribution}
             >
               Merge Branch
+            </GameCTAButton>
+            <GameCTAButton
+              variant="orange"
+              size="sm"
+              icon="copy"
+              loading={actionLoading === 'replace-main'}
+              disabled={Boolean(actionLoading)}
+              onClick={() => setReplaceMainConfirmShown(true)}
+            >
+              Replace Main
             </GameCTAButton>
           </div>
         ) : null}
