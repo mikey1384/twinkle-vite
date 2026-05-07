@@ -49,6 +49,11 @@ type PublicBuildSort = 'recent' | 'popular' | 'forks';
 type TodayTopViewedBuild = BuildProjectListItemData & {
   todayViewCount?: number;
 };
+interface BuildActivityPosition {
+  timeStamp: number;
+  sourceRank: number;
+  sortId: number;
+}
 const buildActivityRailBreakpoint = '1180px';
 const buildActivityRailWidth = '30rem';
 const buildActivityCacheFreshMs = 60 * 1000;
@@ -439,6 +444,9 @@ export default function BuildList() {
   const loadBuildActivity = useAppContext(
     (v) => v.requestHelpers.loadBuildActivity
   );
+  const updateBuildActivityViewed = useAppContext(
+    (v) => v.requestHelpers.updateBuildActivityViewed
+  );
   const loadTodayTopViewedBuild = useAppContext(
     (v) => v.requestHelpers.loadTodayTopViewedBuild
   );
@@ -471,6 +479,9 @@ export default function BuildList() {
   );
   const onAppendBuildStudioActivityItems = useBuildContext(
     (v) => v.actions.onAppendBuildStudioActivityItems
+  );
+  const onSetBuildStudioActivityViewed = useBuildContext(
+    (v) => v.actions.onSetBuildStudioActivityViewed
   );
   const onSetBuildStudioBrowseBuilds = useBuildContext(
     (v) => v.actions.onSetBuildStudioBrowseBuilds
@@ -519,6 +530,35 @@ export default function BuildList() {
   const buildActivityCursor = buildActivityLoadedForCurrentUser
     ? activeBuildActivityFeedState.loadMoreToken
     : null;
+  const allBuildActivityFeedState = getBuildActivityFeedState({
+    buildStudio,
+    activeTab: 'all',
+    activeSubtab: 'all'
+  });
+  const allBuildActivityLoadedForCurrentUser = Boolean(
+    normalizedUserId &&
+      allBuildActivityFeedState.userId === normalizedUserId &&
+      allBuildActivityFeedState.loaded
+  );
+  const allBuildActivityItems = allBuildActivityLoadedForCurrentUser
+    ? ((allBuildActivityFeedState.activities || []) as BuildActivityItem[])
+    : [];
+  const allBuildActivityLatestPosition =
+    getBuildActivityLatestPosition(allBuildActivityItems);
+  const allBuildActivityLastViewedPosition =
+    allBuildActivityLoadedForCurrentUser
+      ? getBuildActivityViewedPosition(allBuildActivityFeedState)
+      : getEmptyBuildActivityPosition();
+  const allBuildActivityCacheFreshForCurrentUser = Boolean(
+    allBuildActivityLoadedForCurrentUser &&
+      Date.now() - Number(allBuildActivityFeedState.loadedAt || 0) <
+        buildActivityCacheFreshMs
+  );
+  const hasNewBuildActivity =
+    compareBuildActivityPositions(
+      allBuildActivityLatestPosition,
+      allBuildActivityLastViewedPosition
+    ) > 0;
   const collaboratingBrowseState =
     buildStudio?.browse?.collaborating || createEmptyBrowseState();
   const activeBrowseLoadedForCurrentUser = Boolean(
@@ -584,6 +624,7 @@ export default function BuildList() {
   const [todayTopViewedBuild, setTodayTopViewedBuild] =
     useState<TodayTopViewedBuild | null>(null);
   const buildActivityLoadRef = useRef(0);
+  const allBuildActivityLoadRef = useRef(0);
   const buildsWithPendingRequests = builds
     .filter((build) => Number(build.pendingCollaborationRequestCount || 0) > 0)
     .sort(
@@ -757,6 +798,22 @@ export default function BuildList() {
   ]);
 
   useEffect(() => {
+    if (!normalizedUserId || buildActivityActiveTab === 'all') return;
+    if (allBuildActivityCacheFreshForCurrentUser) return;
+    void loadAllBuildActivityItems();
+
+    return () => {
+      allBuildActivityLoadRef.current += 1;
+    };
+    // loadBuildActivity is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    normalizedUserId,
+    buildActivityActiveTab,
+    allBuildActivityCacheFreshForCurrentUser
+  ]);
+
+  useEffect(() => {
     if (!userId || activeTab === 'mine') {
       setBrowseLoading(false);
       return;
@@ -900,10 +957,12 @@ export default function BuildList() {
             color={profileTheme}
             currentUserId={normalizedUserId || 0}
             error={buildActivityError}
+            hasNewActivity={hasNewBuildActivity}
             hasMore={Boolean(buildActivityCursor)}
             loading={buildActivityLoading}
             loadingMore={buildActivityLoadingMore}
             onLoadMore={handleLoadMoreBuildActivity}
+            onMobileOpen={handleBuildActivityMobileOpen}
             onRefresh={handleRefreshBuildActivity}
             onSubtabChange={handleBuildActivitySubtabChange}
             onTabChange={handleBuildActivityTabChange}
@@ -1144,14 +1203,26 @@ export default function BuildList() {
         scope: tab
       });
       if (buildActivityLoadRef.current === loadId) {
+        const activities = Array.isArray(data?.activities)
+          ? data.activities
+          : [];
         onSetBuildStudioActivityItems({
-          activities: data?.activities || [],
+          activities,
           activityLoadedAt: Date.now(),
           activitySubtab: getBuildActivityFeedSubtab(tab, subtab),
           activityTab: tab,
+          lastViewedAllActivityAt: data?.lastViewedAllActivityAt,
+          lastViewedAllActivitySourceRank:
+            data?.lastViewedAllActivitySourceRank,
+          lastViewedAllActivitySortId: data?.lastViewedAllActivitySortId,
           loadMoreToken: getLoadMoreToken(data),
           userId: normalizedUserId
         });
+        if (tab === 'all') {
+          void markBuildActivityPositionViewed(
+            getBuildActivityLatestPosition(activities as BuildActivityItem[])
+          );
+        }
         setBuildActivityError('');
       }
     } catch (error: any) {
@@ -1171,11 +1242,80 @@ export default function BuildList() {
     }
   }
 
+  async function loadAllBuildActivityItems() {
+    if (!normalizedUserId) return;
+    const loadId = allBuildActivityLoadRef.current + 1;
+    allBuildActivityLoadRef.current = loadId;
+    try {
+      const data = await loadBuildActivity({
+        kind: 'all',
+        limit: 12,
+        scope: 'all'
+      });
+      if (allBuildActivityLoadRef.current === loadId) {
+        onSetBuildStudioActivityItems({
+          activities: data?.activities || [],
+          activityLoadedAt: Date.now(),
+          activitySubtab: 'all',
+          activityTab: 'all',
+          lastViewedAllActivityAt: data?.lastViewedAllActivityAt,
+          lastViewedAllActivitySourceRank:
+            data?.lastViewedAllActivitySourceRank,
+          lastViewedAllActivitySortId: data?.lastViewedAllActivitySortId,
+          loadMoreToken: getLoadMoreToken(data),
+          userId: normalizedUserId
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load all build activity:', error);
+    }
+  }
+
   function handleRefreshBuildActivity() {
     void loadBuildActivityItems({
       showError: true,
       showLoading: true
     });
+  }
+
+  async function markBuildActivityPositionViewed(
+    position: BuildActivityPosition
+  ) {
+    if (!normalizedUserId || !isValidBuildActivityPosition(position)) {
+      return;
+    }
+    try {
+      const data = await updateBuildActivityViewed({
+        lastViewedAllActivityAt: position.timeStamp,
+        lastViewedAllActivitySourceRank: position.sourceRank,
+        lastViewedAllActivitySortId: position.sortId
+      });
+      onSetBuildStudioActivityViewed({
+        lastViewedAllActivityAt:
+          data?.lastViewedAllActivityAt || position.timeStamp,
+        lastViewedAllActivitySourceRank:
+          data?.lastViewedAllActivitySourceRank || position.sourceRank,
+        lastViewedAllActivitySortId:
+          data?.lastViewedAllActivitySortId || position.sortId,
+        userId: normalizedUserId
+      });
+    } catch (error) {
+      console.error('Failed to mark build activity viewed:', error);
+    }
+  }
+
+  async function markBuildActivityViewed() {
+    return markBuildActivityPositionViewed(allBuildActivityLatestPosition);
+  }
+
+  function handleBuildActivityMobileOpen() {
+    if (hasNewBuildActivity && buildActivityActiveTab !== 'all') {
+      onSetBuildStudioActivityFilter({
+        activityTab: 'all',
+        activitySubtab: 'all'
+      });
+    }
+    void markBuildActivityViewed();
   }
 
   function handleOpenTodayTopViewedBuild(build: TodayTopViewedBuild) {
@@ -1191,6 +1331,9 @@ export default function BuildList() {
   }
 
   function handleBuildActivityTabChange(tab: BuildActivityTab) {
+    if (tab === 'all') {
+      void markBuildActivityViewed();
+    }
     if (tab !== buildActivityActiveTab) {
       onSetBuildStudioActivityFilter({
         activityTab: tab,
@@ -1243,6 +1386,10 @@ export default function BuildList() {
             buildActivityActiveSubtab
           ),
           activityTab: buildActivityActiveTab,
+          lastViewedAllActivityAt: data?.lastViewedAllActivityAt,
+          lastViewedAllActivitySourceRank:
+            data?.lastViewedAllActivitySourceRank,
+          lastViewedAllActivitySortId: data?.lastViewedAllActivitySortId,
           loadMoreToken: getLoadMoreToken(data),
           userId: normalizedUserId
         });
@@ -1535,6 +1682,87 @@ function getBuildActivityRequestKind(
   return subtab === 'branch_updates' ? 'branch_updates' : 'notifications';
 }
 
+function normalizeBuildActivityTimeStamp(value: unknown) {
+  const timeStamp = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(timeStamp)) return 0;
+  return Math.max(0, timeStamp);
+}
+
+function normalizeBuildActivityPositiveInteger(value: unknown) {
+  const normalized = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(normalized)) return 0;
+  return Math.max(0, normalized);
+}
+
+function getEmptyBuildActivityPosition(): BuildActivityPosition {
+  return {
+    timeStamp: 0,
+    sourceRank: 0,
+    sortId: 0
+  };
+}
+
+function getBuildActivityPosition({
+  sourceRank,
+  sortId,
+  timeStamp
+}: {
+  sourceRank?: unknown;
+  sortId?: unknown;
+  timeStamp?: unknown;
+}): BuildActivityPosition {
+  return {
+    timeStamp: normalizeBuildActivityTimeStamp(timeStamp),
+    sourceRank: normalizeBuildActivityPositiveInteger(sourceRank),
+    sortId: normalizeBuildActivityPositiveInteger(sortId)
+  };
+}
+
+function compareBuildActivityPositions(
+  a: BuildActivityPosition,
+  b: BuildActivityPosition
+) {
+  return (
+    a.timeStamp - b.timeStamp ||
+    a.sourceRank - b.sourceRank ||
+    a.sortId - b.sortId
+  );
+}
+
+function isValidBuildActivityPosition(position: BuildActivityPosition) {
+  return (
+    position.timeStamp > 0 &&
+    position.sourceRank > 0 &&
+    position.sortId > 0
+  );
+}
+
+function getBuildActivityViewedPosition(
+  feed: BuildStudioActivityFeedState
+) {
+  return getBuildActivityPosition({
+    timeStamp: feed.lastViewedAllActivityAt,
+    sourceRank: feed.lastViewedAllActivitySourceRank,
+    sortId: feed.lastViewedAllActivitySortId
+  });
+}
+
+function getBuildActivityLatestPosition(activities: BuildActivityItem[]) {
+  return activities.reduce(
+    (latestPosition, activity) => {
+      const activityPosition = getBuildActivityPosition({
+        timeStamp: activity.timeStamp,
+        sourceRank: activity.activitySourceRank,
+        sortId: activity.activitySortId
+      });
+      return compareBuildActivityPositions(activityPosition, latestPosition) > 0
+        ? activityPosition
+        : latestPosition;
+    },
+    getEmptyBuildActivityPosition()
+  );
+}
+
 function isPublicBrowseTab(tab: BuildListTab) {
   return tab === 'community' || tab === 'open_source';
 }
@@ -1579,7 +1807,10 @@ function createEmptyBuildActivityFeedState(): BuildStudioActivityFeedState {
     loadMoreToken: null,
     loaded: false,
     userId: null,
-    loadedAt: 0
+    loadedAt: 0,
+    lastViewedAllActivityAt: 0,
+    lastViewedAllActivitySourceRank: 0,
+    lastViewedAllActivitySortId: 0
   };
 }
 

@@ -1,6 +1,14 @@
-import React, { useMemo, useCallback, useRef, useEffect } from 'react';
-import Markdown from './Markdown';
+import React, {
+  lazy,
+  Suspense,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect
+} from 'react';
 import { css } from '@emotion/css';
+
+const Markdown = lazy(() => import('./Markdown'));
 
 export default function InvisibleTextContainer({
   contentId,
@@ -27,6 +35,17 @@ export default function InvisibleTextContainer({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const parsedRef = useRef(false);
+
+  const scheduleContainerNodeUpdate = useCallback(
+    (node: HTMLDivElement) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = window.setTimeout(() => {
+        onSetContainerNode(node);
+      }, 100);
+    },
+    [onSetContainerNode]
+  );
 
   const renderedText = useMemo(() => {
     const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
@@ -34,16 +53,26 @@ export default function InvisibleTextContainer({
   }, [text]);
 
   const handleSetContainerRef = useCallback(
-    (node: HTMLDivElement) => {
-      if (node !== null) {
-        containerRef.current = node;
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = window.setTimeout(() => {
-          onSetContainerNode(node);
-        }, 100);
+    (node: HTMLDivElement | null) => {
+      if (node === null) return;
+
+      containerRef.current = node;
+      if (parsedRef.current) {
+        scheduleContainerNodeUpdate(node);
       }
     },
-    [onSetContainerNode]
+    [scheduleContainerNodeUpdate]
+  );
+
+  const handleSetIsParsed = useCallback(
+    (isParsed: boolean) => {
+      parsedRef.current = isParsed;
+      onSetIsParsed(isParsed);
+      if (isParsed && containerRef.current) {
+        scheduleContainerNodeUpdate(containerRef.current);
+      }
+    },
+    [onSetIsParsed, scheduleContainerNodeUpdate]
   );
 
   useEffect(() => {
@@ -70,18 +99,20 @@ export default function InvisibleTextContainer({
 
   return (
     <div ref={handleSetContainerRef} className={containerStyle}>
-      <Markdown
-        isInvisible
-        contentId={contentId}
-        contentType={contentType}
-        isProfileComponent={isProfileComponent}
-        isAIMessage={isAIMessage}
-        linkColor={linkColor}
-        markerColor={markerColor}
-        onSetIsParsed={onSetIsParsed}
-      >
-        {renderedText}
-      </Markdown>
+      <Suspense fallback={null}>
+        <Markdown
+          isInvisible
+          contentId={contentId}
+          contentType={contentType}
+          isProfileComponent={isProfileComponent}
+          isAIMessage={isAIMessage}
+          linkColor={linkColor}
+          markerColor={markerColor}
+          onSetIsParsed={handleSetIsParsed}
+        >
+          {renderedText}
+        </Markdown>
+      </Suspense>
     </div>
   );
 }

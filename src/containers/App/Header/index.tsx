@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 
@@ -8,8 +8,6 @@ import { getSectionFromPathname } from '~/helpers';
 import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';
-import BalanceModal from './BalanceModal';
-import loadAiFeatureFlags from './requestHelpers/loadAiFeatureFlags';
 import useAPISocket from './useAPISocket';
 
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
@@ -32,6 +30,8 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
+
+const BalanceModal = lazy(() => import('./BalanceModal'));
 
 interface HeaderProps {
   onInit: () => void;
@@ -161,11 +161,14 @@ export default function Header({
   useEffect(() => {
     initAiFeatureFlags();
 
-    async function initAiFeatureFlags() {
-      try {
-        const { aiFeaturesDisabled } = await loadAiFeatureFlags();
-        onSetAiFeaturesDisabled(aiFeaturesDisabled);
-      } catch (error) {
+	async function initAiFeatureFlags() {
+	  try {
+	    const { default: loadAiFeatureFlags } = await import(
+	      './requestHelpers/loadAiFeatureFlags'
+	    );
+	    const { aiFeaturesDisabled } = await loadAiFeatureFlags();
+	    onSetAiFeaturesDisabled(aiFeaturesDisabled);
+	  } catch (error) {
         console.error('Failed to load AI feature flags:', error);
         onSetAiFeaturesDisabled(true);
       }
@@ -305,7 +308,9 @@ export default function Header({
         </div>
       </nav>
       {balanceModalShown && (
-        <BalanceModal onHide={() => setBalanceModalShown(false)} />
+        <Suspense fallback={null}>
+          <BalanceModal onHide={() => setBalanceModalShown(false)} />
+        </Suspense>
       )}
     </ErrorBoundary>
   );

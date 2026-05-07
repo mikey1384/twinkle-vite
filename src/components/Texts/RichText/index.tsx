@@ -1,4 +1,5 @@
 import React, {
+  lazy,
   memo,
   useEffect,
   useMemo,
@@ -6,7 +7,6 @@ import React, {
   useState,
   Suspense
 } from 'react';
-import Markdown from './Markdown';
 import AIAudioButton from './AIAudioButton';
 import InvisibleTextContainer from './InvisibleTextContainer';
 import Loading from '~/components/Loading';
@@ -16,6 +16,8 @@ import { css } from '@emotion/css';
 import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/useRoleColor';
+
+const Markdown = lazy(() => import('./Markdown'));
 
 const RichTextCss = css`
   width: 100%;

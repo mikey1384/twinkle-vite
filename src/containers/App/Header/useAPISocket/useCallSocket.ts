@@ -1,8 +1,34 @@
 import React, { useEffect, useRef } from 'react';
-import Peer from 'simple-peer';
 import { TURN_USERNAME, TURN_PASSWORD } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext, useKeyContext } from '~/contexts';
+
+let peerConstructorPromise: Promise<any> | null = null;
+
+function loadPeerConstructor() {
+  if (!peerConstructorPromise) {
+    peerConstructorPromise = import('simple-peer').then(
+      (module) => module.default
+    );
+  }
+  return peerConstructorPromise;
+}
+
+function signalPeer(peer: any, signal: any) {
+  if (!peer?.signal) return;
+  try {
+    peer.signal(signal);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function getCallId(channelId: unknown) {
+  const parsedChannelId = Number(channelId);
+  return Number.isInteger(parsedChannelId) && parsedChannelId > 0
+    ? parsedChannelId
+    : null;
+}
 
 export default function useCallSocket({
   selectedChannelId,
@@ -44,7 +70,20 @@ export default function useCallSocket({
   const peersRef: React.RefObject<any> = useRef({});
   const prevIncomingShown = useRef(false);
   const prevMyStreamRef = useRef(null);
-  const receivedCallSignals = useRef([]);
+  const pendingCallSignals = useRef<Record<string, any[]>>({});
+  const callGenerationRef = useRef(0);
+  const peerGenerationRef = useRef<Record<string, number>>({});
+  const currentCallIdRef = useRef(getCallId(channelOnCall.id));
+
+  const currentCallId = getCallId(channelOnCall.id);
+  if (currentCallIdRef.current !== currentCallId) {
+    callGenerationRef.current += 1;
+    currentCallIdRef.current = currentCallId;
+    if (!currentCallId) {
+      pendingCallSignals.current = {};
+      peerGenerationRef.current = {};
+    }
+  }
 
   useEffect(() => {
     if (
@@ -146,37 +185,50 @@ export default function useCallSocket({
       peerId,
       signal,
       to,
-      toSocketId
+      toSocketId,
+      channelId
     }: {
+      channelId?: number;
       peerId: string;
       signal: any;
       to: number | null;
       toSocketId?: string;
     }) {
-      if (
-        (to === userIdRef.current || toSocketId === socket.id) &&
-        peersRef.current[peerId]
-      ) {
-        if (peersRef.current[peerId].signal) {
-          try {
-            peersRef.current[peerId].signal(signal);
-          } catch (error) {
-            console.error(error);
-          }
-        }
+      if (to !== userIdRef.current && toSocketId !== socket.id) {
+        return;
       }
+      if (
+        typeof channelId === 'number' &&
+        getCallId(channelId) !== getCallId(channelOnCallRef.current.id)
+      ) {
+        return;
+      }
+
+      const peer = peersRef.current[peerId];
+      if (peer) {
+        signalPeer(peer, signal);
+        return;
+      }
+
+      if (!pendingCallSignals.current[peerId]) {
+        pendingCallSignals.current[peerId] = [];
+      }
+      pendingCallSignals.current[peerId].push(signal);
     }
 
     function handleCallTerminated() {
+      callGenerationRef.current += 1;
       onSetCall({});
       onSetMyStream(null);
       onSetPeerStreams({});
       onSetMembersOnCall({});
+      channelOnCallRef.current = {};
+      destroyPeers();
       membersOnCall.current = {};
-      peersRef.current = {};
       prevMyStreamRef.current = null;
       prevIncomingShown.current = false;
-      receivedCallSignals.current = [];
+      pendingCallSignals.current = {};
+      peerGenerationRef.current = {};
     }
 
     function handleNewCall({
@@ -238,50 +290,150 @@ export default function useCallSocket({
     initiator?: boolean;
     stream?: MediaStream;
   }) {
-    const currentChannelOnCall = channelOnCallRef.current;
-    const currentUserId = userIdRef.current;
-    if (initiator || currentChannelOnCall.members[currentUserId]) {
-      peersRef.current[peerId] = new Peer({
-        config: {
-          iceServers: [
-            {
-              urls: 'turn:13.230.133.153:3478',
-              username: TURN_USERNAME as string,
-              credential: TURN_PASSWORD as string
+    const requestCallGeneration = callGenerationRef.current;
+    const requestPeerGeneration = peerGenerationRef.current[peerId] || 0;
+
+    if (canCreatePeerForCurrentCall({ channelId, initiator })) {
+      void loadPeerConstructor()
+        .then((Peer) => {
+          if (
+            !isPeerCreationCurrent({
+              callGeneration: requestCallGeneration,
+              peerGeneration: requestPeerGeneration,
+              channelId,
+              peerId,
+              initiator
+            })
+          ) {
+            delete pendingCallSignals.current[peerId];
+            return;
+          }
+
+          const existingPeer = peersRef.current[peerId];
+          if (existingPeer) {
+            replayPendingCallSignals(peerId, existingPeer);
+            return;
+          }
+
+          const peer = new Peer({
+            config: {
+              iceServers: [
+                {
+                  urls: 'turn:13.230.133.153:3478',
+                  username: TURN_USERNAME as string,
+                  credential: TURN_PASSWORD as string
+                },
+                {
+                  urls: 'stun:stun.l.google.com:19302'
+                }
+              ]
             },
-            {
-              urls: 'stun:stun.l.google.com:19302'
-            }
-          ]
-        },
-        initiator,
-        stream
-      });
+            initiator,
+            stream
+          });
 
-      peersRef.current[peerId].on('signal', (signal: any) => {
-        socket.emit('send_signal', {
-          socketId: peerId,
-          signal,
-          channelId
+          peer.on('signal', (signal: any) => {
+            socket.emit('send_signal', {
+              socketId: peerId,
+              signal,
+              channelId
+            });
+          });
+
+          peer.on('stream', (stream: any) => {
+            onShowIncoming();
+            onSetPeerStreams({ peerId, stream });
+          });
+
+          peer.on('connect', () => {
+            onShowOutgoing();
+          });
+
+          peer.on('close', () => {
+            delete peersRef.current[peerId];
+            delete pendingCallSignals.current[peerId];
+            bumpPeerGeneration(peerId);
+          });
+
+          peer.on('error', (e: any) => {
+            console.error('Peer error %s:', peerId, e);
+          });
+
+          peersRef.current[peerId] = peer;
+          replayPendingCallSignals(peerId, peer);
+        })
+        .catch((error) => {
+          console.error(error);
         });
-      });
+    }
+  }
 
-      peersRef.current[peerId].on('stream', (stream: any) => {
-        onShowIncoming();
-        onSetPeerStreams({ peerId, stream });
-      });
+  function canCreatePeerForCurrentCall({
+    channelId,
+    initiator
+  }: {
+    channelId: number;
+    initiator?: boolean;
+  }) {
+    const currentChannelOnCall = channelOnCallRef.current;
+    if (getCallId(currentChannelOnCall.id) !== getCallId(channelId)) {
+      return false;
+    }
+    if (initiator) return true;
+    return !!currentChannelOnCall.members?.[userIdRef.current];
+  }
 
-      peersRef.current[peerId].on('connect', () => {
-        onShowOutgoing();
-      });
+  function isPeerCreationCurrent({
+    callGeneration,
+    peerGeneration,
+    channelId,
+    peerId,
+    initiator
+  }: {
+    callGeneration: number;
+    peerGeneration: number;
+    channelId: number;
+    peerId: string;
+    initiator?: boolean;
+  }) {
+    return (
+      callGeneration === callGenerationRef.current &&
+      peerGeneration === (peerGenerationRef.current[peerId] || 0) &&
+      canCreatePeerForCurrentCall({ channelId, initiator })
+    );
+  }
 
-      peersRef.current[peerId].on('close', () => {
-        delete peersRef.current[peerId];
-      });
+  function replayPendingCallSignals(peerId: string, peer: any) {
+    const signals = pendingCallSignals.current[peerId];
+    if (!signals?.length) return;
 
-      peersRef.current[peerId].on('error', (e: any) => {
-        console.error('Peer error %s:', peerId, e);
-      });
+    delete pendingCallSignals.current[peerId];
+    for (const signal of signals) {
+      signalPeer(peer, signal);
+    }
+  }
+
+  function bumpPeerGeneration(peerId: string) {
+    peerGenerationRef.current[peerId] =
+      (peerGenerationRef.current[peerId] || 0) + 1;
+  }
+
+  function destroyPeer(peerId: string) {
+    const peer = peersRef.current[peerId];
+    if (peer?.destroy) {
+      try {
+        peer.destroy();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    delete peersRef.current[peerId];
+    delete pendingCallSignals.current[peerId];
+  }
+
+  function destroyPeers() {
+    for (const peerId of Object.keys(peersRef.current)) {
+      destroyPeer(peerId);
     }
   }
 
@@ -318,10 +470,11 @@ export default function useCallSocket({
     memberId: number;
     peerId: string;
   }) {
-    if (
-      Number(channelId) === Number(channelOnCallRef.current.id) &&
-      membersOnCall.current[peerId]
-    ) {
+    if (Number(channelId) !== Number(channelOnCallRef.current.id)) return;
+
+    bumpPeerGeneration(peerId);
+    destroyPeer(peerId);
+    if (membersOnCall.current[peerId]) {
       delete membersOnCall.current[peerId];
       onHangUp({ peerId, memberId, iHungUp: memberId === userIdRef.current });
     }

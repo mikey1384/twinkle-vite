@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer';
 import { Card } from '~/types';
 import { userIdRef } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
@@ -13,7 +12,6 @@ import {
   ADMIN_USER_ID
 } from '~/constants/defaultValues';
 
-import axios from 'axios';
 import URL from '~/constants/URL';
 
 const twinkleDayIndexEpochMs = Date.UTC(2022, 0, 1, 0, 0, 0);
@@ -430,10 +428,14 @@ export function returnImageFileFromUrl({
   imageUrl: string;
   fileName?: string;
 }) {
-  const dataUri = imageUrl.replace(/^data:image\/\w+;base64,/, '');
-  const buffer = Buffer.from(dataUri, 'base64');
-  const file = new File([buffer], fileName);
-  return file;
+  const mediaType = imageUrl.match(/^data:([^;]+);base64,/)?.[1];
+  const dataUri = imageUrl.replace(/^data:[^;]+;base64,/, '');
+  const binary = window.atob(dataUri);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new File([bytes], fileName, mediaType ? { type: mediaType } : {});
 }
 
 export function getAge(dateString: string) {
@@ -687,6 +689,7 @@ export async function attemptUpload({
 
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
+  const { default: axios } = await import('axios');
 
   logForAdmin({
     message: `Attempting to upload file ${fileName}`

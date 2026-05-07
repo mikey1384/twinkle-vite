@@ -1,38 +1,16 @@
 import React, {
+  lazy,
   useEffect,
   useMemo,
   useRef,
   useState,
+  Suspense,
   useCallback
 } from 'react';
-import Build from '~/containers/Build';
-import BuildRuntime from '~/containers/Build/Runtime';
-import BuildThumbnailCaptureHost from '~/containers/Build/ThumbnailCaptureHost';
 import { buildPreviewFrameSrc } from '~/containers/Build/previewOrigin';
-import Builds from '~/containers/Builds';
-import Chat from '~/containers/Chat';
-import ContentPage from '~/containers/ContentPage';
-import Explore from '~/containers/Explore';
-import ExploreRedirect from '~/containers/Explore/ExploreRedirect';
 import Header from './Header';
-import Home from '~/containers/Home';
-import LinkPage from '~/containers/LinkPage';
-import PlaylistPage from '~/containers/PlaylistPage';
-import Privacy from '~/containers/Privacy';
-import Redirect from '~/containers/Redirect';
-import MissionPage from '~/containers/MissionPage';
-import Mission from '~/containers/Mission';
-import SigninModal from '~/containers/Signin';
-import Management from '~/containers/Management';
-import MobileMenu from './MobileMenu';
-import Profile from '~/containers/Profile';
-import ResetPassword from '~/containers/ResetPassword';
-import Verify from '~/containers/Verify';
-import VideoPage from '~/containers/VideoPage';
-import Incoming from './Stream/Incoming';
-import Outgoing from './Stream/Outgoing';
 import InvalidPage from '~/components/InvalidPage';
-import DailyRewardModal from '~/components/Modals/DailyRewardModal';
+import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import API_URL from '~/constants/URL';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
@@ -71,14 +49,44 @@ import {
   useBuildContext,
   KeyContext
 } from '~/contexts';
-import AICallWindow from './AICallWindow';
-import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
-import UpdateNotice from './UpdateNotice';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+const Build = lazy(() => import('~/containers/Build'));
+const BuildRuntime = lazy(() => import('~/containers/Build/Runtime'));
+const BuildThumbnailCaptureHost = lazy(
+  () => import('~/containers/Build/ThumbnailCaptureHost')
+);
+const Builds = lazy(() => import('~/containers/Builds'));
+const Chat = lazy(() => import('~/containers/Chat'));
+const ContentPage = lazy(() => import('~/containers/ContentPage'));
+const Explore = lazy(() => import('~/containers/Explore'));
+const ExploreRedirect = lazy(() => import('~/containers/Explore/ExploreRedirect'));
+const Home = lazy(() => import('~/containers/Home'));
+const LinkPage = lazy(() => import('~/containers/LinkPage'));
+const PlaylistPage = lazy(() => import('~/containers/PlaylistPage'));
+const Privacy = lazy(() => import('~/containers/Privacy'));
+const Redirect = lazy(() => import('~/containers/Redirect'));
+const MissionPage = lazy(() => import('~/containers/MissionPage'));
+const Mission = lazy(() => import('~/containers/Mission'));
+const Management = lazy(() => import('~/containers/Management'));
+const Profile = lazy(() => import('~/containers/Profile'));
+const ResetPassword = lazy(() => import('~/containers/ResetPassword'));
+const Verify = lazy(() => import('~/containers/Verify'));
+const VideoPage = lazy(() => import('~/containers/VideoPage'));
+const SigninModal = lazy(() => import('~/containers/Signin'));
+const MobileMenu = lazy(() => import('./MobileMenu'));
+const Incoming = lazy(() => import('./Stream/Incoming'));
+const Outgoing = lazy(() => import('./Stream/Outgoing'));
+const DailyRewardModal = lazy(
+  () => import('~/components/Modals/DailyRewardModal')
+);
+const AICallWindow = lazy(() => import('./AICallWindow'));
+const AdminLogWindow = lazy(() => import('./AdminLogWindow'));
+const UpdateNotice = lazy(() => import('./UpdateNotice'));
 
 // Workaround for browsers (like Naver Whale) that don't recalculate vw units on orientation change
 function useOrientationReflow() {
@@ -564,9 +572,15 @@ export default function App() {
     >
       <KeyContext.Provider value={keyContextValue}>
         {mobileMenuShown && (
-          <MobileMenu onClose={() => setMobileMenuShown(false)} />
+          <Suspense fallback={null}>
+            <MobileMenu onClose={() => setMobileMenuShown(false)} />
+          </Suspense>
         )}
-        {updateNoticeShown && <UpdateNotice updateDetail={updateDetail} />}
+        {updateNoticeShown && (
+          <Suspense fallback={null}>
+            <UpdateNotice updateDetail={updateDetail} />
+          </Suspense>
+        )}
         {!usingBuildRuntime && (
           <Header
             onInit={handleInit}
@@ -585,111 +599,132 @@ export default function App() {
             }
           `}`}
         >
-          <Routes>
-            <Route path="/users/:username/*" element={<Profile />} />
-            <Route path="/ai-stories/:contentId" element={<ContentPage />} />
-            <Route path="/comments/:contentId" element={<ContentPage />} />
-            <Route
-              path="/mission-passes/:contentId"
-              element={<ContentPage />}
-            />
-            <Route
-              path="/achievement-unlocks/:contentId"
-              element={<ContentPage />}
-            />
-            <Route path="/daily-rewards/:contentId" element={<ContentPage />} />
-            <Route
-              path="/shared-prompts/:contentId"
-              element={<ContentPage />}
-            />
-            <Route
-              path="/daily-reflections/:contentId"
-              element={<ContentPage />}
-            />
-            <Route path="/videos/:videoId" element={<VideoPage />} />
-            <Route path="/videos/:videoId/*" element={<VideoPage />} />
-            <Route path="/links/:linkId" element={<LinkPage />} />
-            <Route path="/subjects/:contentId" element={<ContentPage />} />
-            <Route path="/explore" element={<ExploreRedirect />} />
-            <Route path="/ai-cards" element={<Explore category="ai-cards" />} />
-            <Route path="/videos" element={<Explore category="videos" />} />
-            <Route path="/links" element={<Explore category="links" />} />
-            <Route path="/subjects" element={<Explore category="subjects" />} />
-            <Route path="/playlists/*" element={<PlaylistPage />} />
-            <Route path="/missions/:missionType/*" element={<MissionPage />} />
-            <Route path="/missions" element={<Mission />} />
-            <Route
-              path="/build/preview/*"
-              element={<BuildPreviewPassthrough />}
-            />
-            <Route path="/build/*" element={<Build />} />
-            <Route
-              path="/app-capture/:buildId"
-              element={<BuildThumbnailCaptureHost />}
-            />
-            <Route path="/app/:buildId" element={<BuildRuntime />} />
-            <Route path="/builds" element={<Builds />} />
-            <Route
-              path="/chat/*"
-              element={<Chat onFileUpload={handleFileUploadOnChat} />}
-            />
-            <Route path="/management/*" element={<Management />} />
-            <Route path="/reset/*" element={<ResetPassword />} />
-            <Route path="/verify/*" element={<Verify />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/users" element={<Home section="people" />} />
-            <Route path="/groups" element={<Home section="group" />} />
-            <Route
-              path="/achievements"
-              element={<Home section="achievement" />}
-            />
-            <Route path="/settings" element={<Home section="store" />} />
-            <Route path="/earn" element={<Home section="earn" />} />
-            <Route
-              path="/"
-              element={
-                <Home section="story" onFileUpload={handleFileUploadOnHome} />
-              }
-            />
-            <Route path="/:username/*" element={<Redirect />} />
-            <Route path="*" element={<InvalidPage />} />
-          </Routes>
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              <Route path="/users/:username/*" element={<Profile />} />
+              <Route path="/ai-stories/:contentId" element={<ContentPage />} />
+              <Route path="/comments/:contentId" element={<ContentPage />} />
+              <Route
+                path="/mission-passes/:contentId"
+                element={<ContentPage />}
+              />
+              <Route
+                path="/achievement-unlocks/:contentId"
+                element={<ContentPage />}
+              />
+              <Route
+                path="/daily-rewards/:contentId"
+                element={<ContentPage />}
+              />
+              <Route
+                path="/shared-prompts/:contentId"
+                element={<ContentPage />}
+              />
+              <Route
+                path="/daily-reflections/:contentId"
+                element={<ContentPage />}
+              />
+              <Route path="/videos/:videoId" element={<VideoPage />} />
+              <Route path="/videos/:videoId/*" element={<VideoPage />} />
+              <Route path="/links/:linkId" element={<LinkPage />} />
+              <Route path="/subjects/:contentId" element={<ContentPage />} />
+              <Route path="/explore" element={<ExploreRedirect />} />
+              <Route path="/ai-cards" element={<Explore category="ai-cards" />} />
+              <Route path="/videos" element={<Explore category="videos" />} />
+              <Route path="/links" element={<Explore category="links" />} />
+              <Route path="/subjects" element={<Explore category="subjects" />} />
+              <Route path="/playlists/*" element={<PlaylistPage />} />
+              <Route path="/missions/:missionType/*" element={<MissionPage />} />
+              <Route path="/missions" element={<Mission />} />
+              <Route
+                path="/build/preview/*"
+                element={<BuildPreviewPassthrough />}
+              />
+              <Route path="/build/*" element={<Build />} />
+              <Route
+                path="/app-capture/:buildId"
+                element={<BuildThumbnailCaptureHost />}
+              />
+              <Route path="/app/:buildId" element={<BuildRuntime />} />
+              <Route path="/builds" element={<Builds />} />
+              <Route
+                path="/chat/*"
+                element={<Chat onFileUpload={handleFileUploadOnChat} />}
+              />
+              <Route path="/management/*" element={<Management />} />
+              <Route path="/reset/*" element={<ResetPassword />} />
+              <Route path="/verify/*" element={<Verify />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/users" element={<Home section="people" />} />
+              <Route path="/groups" element={<Home section="group" />} />
+              <Route
+                path="/achievements"
+                element={<Home section="achievement" />}
+              />
+              <Route path="/settings" element={<Home section="store" />} />
+              <Route path="/earn" element={<Home section="earn" />} />
+              <Route
+                path="/"
+                element={
+                  <Home section="story" onFileUpload={handleFileUploadOnHome} />
+                }
+              />
+              <Route path="/:username/*" element={<Redirect />} />
+              <Route path="*" element={<InvalidPage />} />
+            </Routes>
+          </Suspense>
         </div>
         {dailyRewardModalShown && (
-          <DailyRewardModal
-            onSetHasBonus={(hasBonus: boolean) => {
-              onUpdateTodayStats({
-                newStats: {
-                  dailyHasBonus: hasBonus,
-                  dailyRewardResultViewed: true
-                }
-              });
-            }}
-            onSetIsDailyRewardChecked={() => {
-              onUpdateTodayStats({
-                newStats: {
-                  dailyRewardResultViewed: true
-                }
-              });
-            }}
-            onCountdownComplete={handleCountdownComplete}
-            onHide={() => onSetDailyRewardModalShown(false)}
-          />
+          <Suspense fallback={null}>
+            <DailyRewardModal
+              onSetHasBonus={(hasBonus: boolean) => {
+                onUpdateTodayStats({
+                  newStats: {
+                    dailyHasBonus: hasBonus,
+                    dailyRewardResultViewed: true
+                  }
+                });
+              }}
+              onSetIsDailyRewardChecked={() => {
+                onUpdateTodayStats({
+                  newStats: {
+                    dailyRewardResultViewed: true
+                  }
+                });
+              }}
+              onCountdownComplete={handleCountdownComplete}
+              onHide={() => onSetDailyRewardModalShown(false)}
+            />
+          </Suspense>
         )}
         {dailyBonusModalShown && (
-          <DailyRewardModal
-            openBonus
-            onHide={() => onSetDailyBonusModalShown(false)}
-            onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
-            // No-ops for unrelated callbacks when in bonus-only mode
-            onSetHasBonus={() => {}}
-            onSetIsDailyRewardChecked={() => {}}
-            onCountdownComplete={() => {}}
-          />
+          <Suspense fallback={null}>
+            <DailyRewardModal
+              openBonus
+              onHide={() => onSetDailyBonusModalShown(false)}
+              onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
+              // No-ops for unrelated callbacks when in bonus-only mode
+              onSetHasBonus={() => {}}
+              onSetIsDailyRewardChecked={() => {}}
+              onCountdownComplete={() => {}}
+            />
+          </Suspense>
         )}
-        {signinModalShown && <SigninModal onHide={onCloseSigninModal} />}
-        {channelOnCall.incomingShown && <Incoming />}
-        {outgoingShown && <Outgoing />}
+        {signinModalShown && (
+          <Suspense fallback={null}>
+            <SigninModal onHide={onCloseSigninModal} />
+          </Suspense>
+        )}
+        {channelOnCall.incomingShown && (
+          <Suspense fallback={null}>
+            <Incoming />
+          </Suspense>
+        )}
+        {outgoingShown && (
+          <Suspense fallback={null}>
+            <Outgoing />
+          </Suspense>
+        )}
         <div
           className={css`
             opacity: 0;
@@ -698,20 +733,24 @@ export default function App() {
           `}
         />
         {aiCallOngoing && (
-          <AICallWindow
-            initialPosition={{
-              x: Math.max(0, window.innerWidth - 520),
-              y: 70
-            }}
-          />
+          <Suspense fallback={null}>
+            <AICallWindow
+              initialPosition={{
+                x: Math.max(0, window.innerWidth - 520),
+                y: 70
+              }}
+            />
+          </Suspense>
         )}
         {isAdmin && !!adminLogs?.length && (
-          <AdminLogWindow
-            initialPosition={{
-              x: Math.max(0, window.innerWidth - 520),
-              y: 100
-            }}
-          />
+          <Suspense fallback={null}>
+            <AdminLogWindow
+              initialPosition={{
+                x: Math.max(0, window.innerWidth - 520),
+                y: 100
+              }}
+            />
+          </Suspense>
         )}
       </KeyContext.Provider>
       <Global

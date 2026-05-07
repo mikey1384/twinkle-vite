@@ -740,6 +740,31 @@ export default function buildRequestHelpers({
       }
     },
 
+    async updateBuildActivityViewed({
+      lastViewedAllActivityAt,
+      lastViewedAllActivitySourceRank,
+      lastViewedAllActivitySortId
+    }: {
+      lastViewedAllActivityAt: number;
+      lastViewedAllActivitySourceRank: number;
+      lastViewedAllActivitySortId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/activity/viewed`,
+          {
+            lastViewedAllActivityAt,
+            lastViewedAllActivitySourceRank,
+            lastViewedAllActivitySortId
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadTodayTopViewedBuild() {
       try {
         const { data } = await request.get(

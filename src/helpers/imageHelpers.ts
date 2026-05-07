@@ -1,5 +1,3 @@
-import heic2any from 'heic2any';
-
 const WEB_FRIENDLY_FORMATS = new Set([
   'jpg',
   'jpeg',
@@ -47,6 +45,7 @@ export async function convertToWebFriendlyFormat(
   try {
     // Handle HEIC/HEIF with heic2any
     if (ext === 'heic' || ext === 'heif') {
+      const { default: heic2any } = await import('heic2any');
       const convertedBlob = await heic2any({
         blob: file,
         toType: 'image/jpeg',

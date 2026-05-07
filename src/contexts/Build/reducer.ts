@@ -135,6 +135,9 @@ export interface BuildStudioActivityFeedState {
   loaded: boolean;
   userId: number | null;
   loadedAt: number;
+  lastViewedAllActivityAt: number;
+  lastViewedAllActivitySourceRank: number;
+  lastViewedAllActivitySortId: number;
 }
 
 export interface BuildStudioState {
@@ -254,6 +257,9 @@ export interface BuildStudioActionPayload {
   activitySubtab?: BuildActivitySubtab | string | null;
   activities?: any[];
   activityLoadedAt?: number | null;
+  lastViewedAllActivityAt?: number | null;
+  lastViewedAllActivitySourceRank?: number | null;
+  lastViewedAllActivitySortId?: number | null;
 }
 
 export interface BuildWorkspaceUiActionPayload {
@@ -297,6 +303,7 @@ export interface BuildAction {
     | 'INVALIDATE_BUILD_STUDIO_ACTIVITY_FEEDS'
     | 'SET_BUILD_STUDIO_ACTIVITY_ITEMS'
     | 'APPEND_BUILD_STUDIO_ACTIVITY_ITEMS'
+    | 'SET_BUILD_STUDIO_ACTIVITY_VIEWED'
     | 'SET_BUILD_STUDIO_BROWSE_BUILDS'
     | 'APPEND_BUILD_STUDIO_BROWSE_BUILDS'
     | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
@@ -372,7 +379,10 @@ function createInitialBuildStudioActivityFeedState(): BuildStudioActivityFeedSta
     loadMoreToken: null,
     loaded: false,
     userId: null,
-    loadedAt: 0
+    loadedAt: 0,
+    lastViewedAllActivityAt: 0,
+    lastViewedAllActivitySourceRank: 0,
+    lastViewedAllActivitySortId: 0
   };
 }
 
@@ -490,6 +500,91 @@ function normalizeBuildStudioUserId(value: unknown) {
 function normalizeBuildStudioActivityLoadedAt(value: unknown) {
   const loadedAt = Math.floor(Number(value) || 0);
   return loadedAt > 0 ? loadedAt : Date.now();
+}
+
+function normalizeBuildStudioActivityViewedAt(value: unknown) {
+  const viewedAt = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(viewedAt)) return 0;
+  return Math.max(0, viewedAt);
+}
+
+interface BuildStudioActivityViewedPosition {
+  timeStamp: number;
+  sourceRank: number;
+  sortId: number;
+}
+
+function normalizeBuildStudioActivityPositiveInteger(value: unknown) {
+  const normalized = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(normalized)) return 0;
+  return Math.max(0, normalized);
+}
+
+function normalizeBuildStudioActivityViewedPosition({
+  sourceRank,
+  sortId,
+  timeStamp
+}: {
+  sourceRank?: unknown;
+  sortId?: unknown;
+  timeStamp?: unknown;
+}): BuildStudioActivityViewedPosition {
+  return {
+    timeStamp: normalizeBuildStudioActivityViewedAt(timeStamp),
+    sourceRank: normalizeBuildStudioActivityPositiveInteger(sourceRank),
+    sortId: normalizeBuildStudioActivityPositiveInteger(sortId)
+  };
+}
+
+function getBuildStudioActivityViewedPositionFromPayload(
+  payload?: BuildStudioActionPayload | null
+) {
+  return normalizeBuildStudioActivityViewedPosition({
+    timeStamp: payload?.lastViewedAllActivityAt,
+    sourceRank: payload?.lastViewedAllActivitySourceRank,
+    sortId: payload?.lastViewedAllActivitySortId
+  });
+}
+
+function getBuildStudioActivityViewedPositionFromFeed(
+  feed?: BuildStudioActivityFeedState | null
+) {
+  return normalizeBuildStudioActivityViewedPosition({
+    timeStamp: feed?.lastViewedAllActivityAt,
+    sourceRank: feed?.lastViewedAllActivitySourceRank,
+    sortId: feed?.lastViewedAllActivitySortId
+  });
+}
+
+function serializeBuildStudioActivityViewedPosition(
+  position: BuildStudioActivityViewedPosition
+) {
+  return {
+    lastViewedAllActivityAt: position.timeStamp,
+    lastViewedAllActivitySourceRank: position.sourceRank,
+    lastViewedAllActivitySortId: position.sortId
+  };
+}
+
+function compareBuildStudioActivityViewedPositions(
+  a: BuildStudioActivityViewedPosition,
+  b: BuildStudioActivityViewedPosition
+) {
+  return (
+    a.timeStamp - b.timeStamp ||
+    a.sourceRank - b.sourceRank ||
+    a.sortId - b.sortId
+  );
+}
+
+function isValidBuildStudioActivityViewedPosition(
+  position: BuildStudioActivityViewedPosition
+) {
+  return (
+    position.timeStamp > 0 &&
+    position.sourceRank > 0 &&
+    position.sortId > 0
+  );
 }
 
 function getBuildStudioActivityFeeds(buildStudio: BuildStudioState) {
@@ -1799,6 +1894,23 @@ export default function BuildReducer(
         ...createInitialBuildStudioActivityFeeds()[activityTab],
         ...(activityFeeds[activityTab] || {})
       };
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const currentFeed =
+        currentTabFeeds[activitySubtab] ||
+        createInitialBuildStudioActivityFeedState();
+      const actionViewedPosition =
+        getBuildStudioActivityViewedPositionFromPayload(action.buildStudio);
+      const currentViewedPosition =
+        currentFeed.userId === userId
+          ? getBuildStudioActivityViewedPositionFromFeed(currentFeed)
+          : actionViewedPosition;
+      const nextViewedPosition =
+        compareBuildStudioActivityViewedPositions(
+          actionViewedPosition,
+          currentViewedPosition
+        ) > 0
+          ? actionViewedPosition
+          : currentViewedPosition;
       return {
         ...state,
         buildStudio: {
@@ -1816,9 +1928,12 @@ export default function BuildReducer(
                     ? action.buildStudio.loadMoreToken
                     : null,
                 loaded: true,
-                userId: normalizeBuildStudioUserId(action.buildStudio?.userId),
+                userId,
                 loadedAt: normalizeBuildStudioActivityLoadedAt(
                   action.buildStudio?.activityLoadedAt
+                ),
+                ...serializeBuildStudioActivityViewedPosition(
+                  nextViewedPosition
                 )
               }
             }
@@ -1846,6 +1961,17 @@ export default function BuildReducer(
       if (currentFeed.userId !== userId) {
         return state;
       }
+      const currentViewedPosition =
+        getBuildStudioActivityViewedPositionFromFeed(currentFeed);
+      const actionViewedPosition =
+        getBuildStudioActivityViewedPositionFromPayload(action.buildStudio);
+      const nextViewedPosition =
+        compareBuildStudioActivityViewedPositions(
+          actionViewedPosition,
+          currentViewedPosition
+        ) > 0
+          ? actionViewedPosition
+          : currentViewedPosition;
       return {
         ...state,
         buildStudio: {
@@ -1870,6 +1996,59 @@ export default function BuildReducer(
                 userId,
                 loadedAt: normalizeBuildStudioActivityLoadedAt(
                   action.buildStudio?.activityLoadedAt
+                ),
+                ...serializeBuildStudioActivityViewedPosition(
+                  nextViewedPosition
+                )
+              }
+            }
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_ACTIVITY_VIEWED': {
+      const buildStudio = getBuildStudioState(state);
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const actionViewedPosition =
+        getBuildStudioActivityViewedPositionFromPayload(action.buildStudio);
+      if (
+        !userId ||
+        !isValidBuildStudioActivityViewedPosition(actionViewedPosition)
+      ) {
+        return state;
+      }
+      const activityFeeds = getBuildStudioActivityFeeds(buildStudio);
+      const currentAllFeeds = {
+        ...createInitialBuildStudioActivityFeeds().all,
+        ...(activityFeeds.all || {})
+      };
+      const currentAllFeed =
+        currentAllFeeds.all || createInitialBuildStudioActivityFeedState();
+      if (currentAllFeed.userId && currentAllFeed.userId !== userId) {
+        return state;
+      }
+      const currentViewedPosition =
+        getBuildStudioActivityViewedPositionFromFeed(currentAllFeed);
+      const nextViewedPosition =
+        compareBuildStudioActivityViewedPositions(
+          actionViewedPosition,
+          currentViewedPosition
+        ) > 0
+          ? actionViewedPosition
+          : currentViewedPosition;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          activityFeeds: {
+            ...activityFeeds,
+            all: {
+              ...currentAllFeeds,
+              all: {
+                ...currentAllFeed,
+                userId,
+                ...serializeBuildStudioActivityViewedPosition(
+                  nextViewedPosition
                 )
               }
             }

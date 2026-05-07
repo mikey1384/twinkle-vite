@@ -7,6 +7,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const previewProxyTarget = env.VITE_URL || 'http://localhost:3500';
+  const nodeEnv = mode === 'production' ? 'production' : 'development';
 
   return {
     plugins: [
@@ -50,7 +51,10 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       global: 'window',
-      'process.env': {}
+      'process.env.NODE_ENV': JSON.stringify(nodeEnv),
+      'process.env': {
+        NODE_ENV: nodeEnv
+      }
     },
     resolve: {
       alias: {

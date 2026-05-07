@@ -3,7 +3,6 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import URL from '~/constants/URL';
-import request from 'axios';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
 
@@ -226,6 +225,7 @@ async function reportError({
   message: string;
 }) {
   try {
+    const { default: request } = await import('axios');
     const {
       data: { success }
     } = await request.post(

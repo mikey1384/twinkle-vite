@@ -192,6 +192,12 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildStudio
       });
     },
+    onSetBuildStudioActivityViewed(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_ACTIVITY_VIEWED',
+        buildStudio
+      });
+    },
     onSetBuildStudioBrowseBuilds(buildStudio: BuildStudioActionPayload) {
       return dispatch({
         type: 'SET_BUILD_STUDIO_BROWSE_BUILDS',

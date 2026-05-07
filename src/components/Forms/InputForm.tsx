@@ -15,7 +15,6 @@ import FullTextReveal from '~/components/Texts/FullTextReveal';
 import ProgressBar from '~/components/ProgressBar';
 import AlertModal from '~/components/Modals/AlertModal';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
-import { Buffer } from 'buffer';
 import { Color } from '~/constants/css';
 import {
   FILE_UPLOAD_XP_REQUIREMENT,
@@ -336,17 +335,23 @@ function InputForm({
                 if (img && typeof img.toDataURL === 'function') {
                   const outputFormat = extension === 'png' ? 'png' : 'jpeg';
                   const imageUrl = img.toDataURL(`image/${outputFormat}`);
-                  const dataUri = imageUrl.replace(
-                    /^data:image\/\w+;base64,/,
-                    ''
-                  );
-                  const buffer = Buffer.from(dataUri, 'base64');
-                  // Use correct extension to match actual content type
-                  const outputFileName =
-                    outputFormat === 'png'
-                      ? fileObj.name
-                      : fileObj.name.replace(/\.[^.]+$/, '.jpg');
-                  const file = new File([buffer], outputFileName);
+	                  const dataUri = imageUrl.replace(
+	                    /^data:image\/\w+;base64,/,
+	                    ''
+	                  );
+	                  const binary = window.atob(dataUri);
+	                  const bytes = new Uint8Array(binary.length);
+	                  for (let i = 0; i < binary.length; i += 1) {
+	                    bytes[i] = binary.charCodeAt(i);
+	                  }
+	                  // Use correct extension to match actual content type
+	                  const outputFileName =
+	                    outputFormat === 'png'
+	                      ? fileObj.name
+	                      : fileObj.name.replace(/\.[^.]+$/, '.jpg');
+	                  const file = new File([bytes], outputFileName, {
+	                    type: `image/${outputFormat}`
+	                  });
                   onSetCommentAttachment({
                     attachment: {
                       file,

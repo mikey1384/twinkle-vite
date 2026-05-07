@@ -47,6 +47,8 @@ export interface BuildActivityItem {
   type: string;
   activityType: string;
   timeStamp: number;
+  activitySourceRank: number;
+  activitySortId: number;
   isNotification: boolean;
   targetId: number;
   build: {
@@ -91,7 +93,9 @@ interface BuildActivityPanelProps {
   hasMore: boolean;
   loading: boolean;
   loadingMore: boolean;
+  hasNewActivity?: boolean;
   onLoadMore: () => void;
+  onMobileOpen?: () => void;
   onRefresh: () => void;
   onSubtabChange: (subtab: Exclude<BuildActivitySubtab, 'all'>) => void;
   onTabChange: (tab: BuildActivityTab) => void;
@@ -311,9 +315,11 @@ export default function BuildActivityPanel({
   currentUserId,
   error = '',
   hasMore,
+  hasNewActivity = false,
   loading,
   loadingMore,
   onLoadMore,
+  onMobileOpen,
   onRefresh,
   onSubtabChange,
   onTabChange,
@@ -327,10 +333,11 @@ export default function BuildActivityPanel({
       <>
         <div className={mobileTriggerClass}>
           <GameCTAButton
-            variant="neutral"
+            variant={hasNewActivity ? 'logoBlue' : 'neutral'}
             size="md"
             icon="bell"
-            onClick={() => setMobileOpen(true)}
+            shiny={hasNewActivity}
+            onClick={handleMobileOpen}
           >
             Build Activity{activities.length ? ` · ${activities.length}` : ''}
           </GameCTAButton>
@@ -377,6 +384,11 @@ export default function BuildActivityPanel({
       <div className={listClass}>{renderActivityContent()}</div>
     </section>
   );
+
+  function handleMobileOpen() {
+    onMobileOpen?.();
+    setMobileOpen(true);
+  }
 
   function renderTabs() {
     return (
