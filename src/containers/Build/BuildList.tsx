@@ -76,7 +76,9 @@ interface BuildActivityPosition {
 const buildActivityRailBreakpoint = '1180px';
 const buildActivityRailWidth = '30rem';
 const buildActivityCacheFreshMs = 60 * 1000;
-const quickAccessStripLimit = 5;
+const quickAccessDesktopStripLimit = 5;
+const quickAccessCompactStripLimit = 3;
+const quickAccessCompactMaxWidth = '980px';
 const quickAccessModalPageSize = 12;
 const buildPageTopGap = '2rem';
 const desktopHeaderHeight = '4.5rem';
@@ -438,7 +440,7 @@ const quickAccessCardGridClass = css`
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.85rem;
 
-  @media (max-width: 980px) {
+  @media (max-width: ${quickAccessCompactMaxWidth}) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -2503,6 +2505,15 @@ function BuildSearchEmptyState({ query }: { query: string }) {
   );
 }
 
+function getQuickAccessStripLimit() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return quickAccessDesktopStripLimit;
+  }
+  return window.matchMedia(`(max-width: ${quickAccessCompactMaxWidth})`).matches
+    ? quickAccessCompactStripLimit
+    : quickAccessDesktopStripLimit;
+}
+
 function BuildQuickAccessStrip({
   activeMode,
   builds,
@@ -2546,7 +2557,40 @@ function BuildQuickAccessStrip({
     activeMode === 'favorites'
       ? 'No favorite builds yet.'
       : 'No recently used builds yet.';
-  const visibleBuilds = builds.slice(0, quickAccessStripLimit);
+  const [stripLimit, setStripLimit] = useState(getQuickAccessStripLimit);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+    const mediaQueryList = window.matchMedia(
+      `(max-width: ${quickAccessCompactMaxWidth})`
+    );
+    function handleMediaQueryChange() {
+      setStripLimit(
+        mediaQueryList.matches
+          ? quickAccessCompactStripLimit
+          : quickAccessDesktopStripLimit
+      );
+    }
+    handleMediaQueryChange();
+    if (typeof mediaQueryList.addEventListener === 'function') {
+      mediaQueryList.addEventListener('change', handleMediaQueryChange);
+      return () => {
+        mediaQueryList.removeEventListener('change', handleMediaQueryChange);
+      };
+    }
+    if (typeof mediaQueryList.addListener === 'function') {
+      mediaQueryList.addListener(handleMediaQueryChange);
+      return () => {
+        mediaQueryList.removeListener(handleMediaQueryChange);
+      };
+    }
+    mediaQueryList.onchange = handleMediaQueryChange;
+    return () => {
+      mediaQueryList.onchange = null;
+    };
+  }, []);
+  const visibleBuilds = builds.slice(0, stripLimit);
   const moreButtonShown = builds.length > visibleBuilds.length || hasMore;
   return (
     <section className={quickAccessSectionClass}>
