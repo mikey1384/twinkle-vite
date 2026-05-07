@@ -3,6 +3,8 @@ import { Color } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
 import Icon from '~/components/Icon';
 
+const UPDATE_RELOAD_PARAM = '_twinkleUpdate';
+
 const shimmer = keyframes`
   0% {
     background-position: -1000px 0;
@@ -199,7 +201,7 @@ export default function UpdateNotice({
                 }
                 transition: all 0.3s ease;
               `}
-              onClick={() => window.location.reload()}
+              onClick={handleUpdateNow}
             >
               <Icon icon="sparkles" style={{ marginRight: '0.5rem' }} />
               Update Now
@@ -209,4 +211,14 @@ export default function UpdateNotice({
       </div>
     </div>
   );
+}
+
+function handleUpdateNow() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set(UPDATE_RELOAD_PARAM, String(Date.now()));
+    window.location.replace(url.toString());
+  } catch {
+    window.location.reload();
+  }
 }
