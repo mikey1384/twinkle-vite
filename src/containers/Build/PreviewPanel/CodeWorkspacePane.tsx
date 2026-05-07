@@ -58,7 +58,7 @@ interface CodeWorkspacePaneProps {
   onActiveFileContentChange: (value: string) => void;
 }
 
-const PROJECT_FILE_LINE_WARNING_RATIO = 0.96;
+const PROJECT_FILE_LINE_WARNING_RATIO = 0.9;
 const MAX_PROJECT_FILE_SEARCH_RESULTS = 40;
 
 type ProjectFileLineDiagnosticSeverity = 'warning' | 'error';
