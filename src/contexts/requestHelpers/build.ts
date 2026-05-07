@@ -889,29 +889,6 @@ export default function buildRequestHelpers({
       }
     },
 
-    async updateBuildCode({
-      buildId,
-      code,
-      createVersion,
-      summary
-    }: {
-      buildId: number;
-      code: string;
-      createVersion?: boolean;
-      summary?: string;
-    }) {
-      try {
-        const { data } = await request.put(
-          `${URL}/build/${buildId}/code`,
-          { code, createVersion, summary },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
     async loadBuildProjectFiles(
       buildId: number,
       options?: { fromWriter?: boolean }
@@ -1167,6 +1144,186 @@ export default function buildRequestHelpers({
           const errorPayload = await response.json().catch(() => null);
           const error: any = new Error(
             errorPayload?.error || 'AI chat stream failed'
+          );
+          if (errorPayload?.code) error.code = errorPayload.code;
+          if (errorPayload?.aiUsagePolicy) {
+            error.aiUsagePolicy = errorPayload.aiUsagePolicy;
+          }
+          throw error;
+        }
+        return await readBuildRuntimeAiChatStream({ response, onEvent });
+      } catch (error: any) {
+        if (error?.aiUsagePolicy || error?.code) {
+          return Promise.reject(error);
+        }
+        return handleError(error);
+      }
+    },
+
+    async callBuildRuntimeAiObject({
+      buildId,
+      prompt,
+      expectedStructure,
+      thinkingMode,
+      mode,
+      instructions,
+      systemPrompt
+    }: {
+      buildId: number;
+      prompt: string;
+      expectedStructure: Record<string, unknown>;
+      thinkingMode?: 'low' | 'medium' | 'mid' | 'high';
+      mode?: 'low' | 'medium' | 'mid' | 'high';
+      instructions?: string;
+      systemPrompt?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/runtime-ai-object`,
+          {
+            prompt,
+            expectedStructure,
+            thinkingMode,
+            mode,
+            instructions,
+            systemPrompt
+          },
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        const response = error?.response;
+        if (response?.data?.code || response?.data?.aiUsagePolicy) {
+          return Promise.reject({
+            status: response.status,
+            message:
+              response.data.error ||
+              response.data.message ||
+              'Object generation failed',
+            code: response.data.code,
+            aiUsagePolicy: response.data.aiUsagePolicy
+          });
+        }
+        return handleError(error);
+      }
+    },
+
+    async callBuildRuntimeCharacterChat({
+      buildId,
+      character,
+      thinkingMode,
+      message,
+      history,
+      roomContext,
+      scene,
+      systemPrompt,
+      instructions,
+      includeWebsiteContext
+    }: {
+      buildId: number;
+      character: 'zero' | 'ciel';
+      thinkingMode?: 'low' | 'medium' | 'high';
+      message: string;
+      history?: Array<{
+        role: 'user' | 'assistant';
+        content: string;
+        speaker?: string;
+      }>;
+      roomContext?: unknown;
+      scene?: unknown;
+      systemPrompt?: string;
+      instructions?: string;
+      includeWebsiteContext?: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/runtime-character-chat`,
+          {
+            character,
+            thinkingMode,
+            message,
+            history,
+            roomContext,
+            scene,
+            systemPrompt,
+            instructions,
+            includeWebsiteContext
+          },
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        const response = error?.response;
+        if (response?.data?.code || response?.data?.aiUsagePolicy) {
+          return Promise.reject({
+            status: response.status,
+            message:
+              response.data.error ||
+              response.data.message ||
+              'Character chat failed',
+            code: response.data.code,
+            aiUsagePolicy: response.data.aiUsagePolicy
+          });
+        }
+        return handleError(error);
+      }
+    },
+
+    async callBuildRuntimeCharacterChatStream({
+      buildId,
+      character,
+      thinkingMode,
+      message,
+      history,
+      roomContext,
+      scene,
+      systemPrompt,
+      instructions,
+      includeWebsiteContext,
+      onEvent
+    }: {
+      buildId: number;
+      character: 'zero' | 'ciel';
+      thinkingMode?: 'low' | 'medium' | 'high';
+      message: string;
+      history?: Array<{
+        role: 'user' | 'assistant';
+        content: string;
+        speaker?: string;
+      }>;
+      roomContext?: unknown;
+      scene?: unknown;
+      systemPrompt?: string;
+      instructions?: string;
+      includeWebsiteContext?: boolean;
+      onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
+    }) {
+      try {
+        const response = await fetch(
+          `${URL}/build/${buildId}/runtime-character-chat/stream`,
+          {
+            method: 'POST',
+            headers: getFetchAuthHeaders({
+              Accept: 'application/x-ndjson',
+              'Content-Type': 'application/json'
+            }),
+            body: JSON.stringify({
+              character,
+              thinkingMode,
+              message,
+              history,
+              roomContext,
+              scene,
+              systemPrompt,
+              instructions,
+              includeWebsiteContext
+            })
+          }
+        );
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          const error: any = new Error(
+            errorPayload?.error || 'Character chat stream failed'
           );
           if (errorPayload?.code) error.code = errorPayload.code;
           if (errorPayload?.aiUsagePolicy) {

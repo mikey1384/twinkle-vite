@@ -124,7 +124,10 @@ const sdkSections: GuideSection[] = [
       'Do not build prompt-preset selection UIs from Twinkle.ai.listPrompts(); runtime chat uses message, history, and systemPrompt.',
       'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", quality: "high", requestId, onStatus }) generates or edits an image.',
       'await Twinkle.ai.chat({ message, history, systemPrompt, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided.',
+      'await Twinkle.ai.generateObject({ prompt, expectedStructure, thinkingMode: "low" | "medium" | "high" }) returns a validated structured JSON object for app decisions.',
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
+      'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
+      'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
       'Use systemPrompt to define the app AI personality, tone, role, or response rules.',
       'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
@@ -132,8 +135,21 @@ const sdkSections: GuideSection[] = [
       'Twinkle.ai.onChatStatus(listener) returns an unsubscribe function for shared text-generation status UI.',
       'Twinkle.ai.onImageGenerationStatus(listener) returns an unsubscribe function for shared streaming UI.',
       'Pass a unique requestId to correlate iframe logs, parent bridge logs, and backend stream logs for one generation.',
-      'Signed-in viewers only. Each successful image or text generation consumes AI Energy from the signed-in viewer.',
+      'Signed-in viewers only. Each successful image, text, or object generation consumes AI Energy from the signed-in viewer; generateObject low uses free Lite Mode.',
       'The prompt, message, optional history, and optional reference image are sent to the configured AI provider.'
+    ]
+  },
+  {
+    title: 'Twinkle.characters',
+    items: [
+      'await Twinkle.characters.chat({ character: "zero" | "ciel", thinkingMode: "low" | "medium" | "high", message, history, roomContext, scene, instructions, includeWebsiteContext, onText, onStatus }) talks to the real Zero or Ciel runtime bridge.',
+      'Pass onText/onStatus for streaming dialogue; omit callbacks when the app only needs the final response.',
+      'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
+      'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
+      'thinkingMode low is Lite Mode and free AI Energy; medium is normal battery use; high is high battery use.',
+      'Zero uses GPT nano/mini/full for low/medium/high. Ciel uses Claude Haiku/Sonnet/Opus 4.7 for low/medium/high.',
+      'If medium or high is requested after AI Energy is empty, the server falls back to low and returns thinkingMode: "low".',
+      'Use Twinkle.characters.chat for Zero/Ciel NPCs instead of pretending with Twinkle.ai.chat systemPrompt.'
     ]
   },
   {

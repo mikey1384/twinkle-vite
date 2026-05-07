@@ -44,7 +44,9 @@ const PREVIEW_DOWNLOAD_PROXY_HOSTS = new Set([
 ]);
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
+  'ai:generate-object',
   'ai:generate-image',
+  'characters:chat',
   'chat:create-room',
   'chat:delete-message',
   'chat:send-message',
@@ -90,6 +92,9 @@ interface PreviewHostBridgeRequestRefs {
   callBuildAiChatRef: AsyncRequestRef;
   callBuildRuntimeAiChatRef: AsyncRequestRef;
   callBuildRuntimeAiChatStreamRef: AsyncRequestRef;
+  callBuildRuntimeAiObjectRef: AsyncRequestRef;
+  callBuildRuntimeCharacterChatRef: AsyncRequestRef;
+  callBuildRuntimeCharacterChatStreamRef: AsyncRequestRef;
   generateAiImageRef: AsyncRequestRef;
   queryViewerDbRef: AsyncRequestRef;
   execViewerDbRef: AsyncRequestRef;
@@ -1688,6 +1693,79 @@ export function usePreviewHostBridge({
                 history: payload.history,
                 systemPrompt: payload.systemPrompt
               });
+            }
+            if (
+              response?.aiUsagePolicy &&
+              typeof response.aiUsagePolicy === 'object'
+            ) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
+            break;
+
+          case 'ai:generate-object':
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+            }
+            response =
+              await requestRefs.callBuildRuntimeAiObjectRef.current({
+                buildId: activeBuild.id,
+                prompt: payload.prompt,
+                expectedStructure: payload.expectedStructure,
+                thinkingMode: payload.thinkingMode,
+                mode: payload.mode,
+                instructions: payload.instructions,
+                systemPrompt: payload.systemPrompt
+              });
+            if (
+              response?.aiUsagePolicy &&
+              typeof response.aiUsagePolicy === 'object'
+            ) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
+            break;
+
+          case 'characters:chat':
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+            }
+            if (payload?.stream) {
+              const requestId = String(payload?.requestId || id);
+              response =
+                await requestRefs.callBuildRuntimeCharacterChatStreamRef.current(
+                  {
+                    buildId: activeBuild.id,
+                    character: payload.character,
+                    thinkingMode: payload.thinkingMode,
+                    message: payload.message,
+                    history: payload.history,
+                    roomContext: payload.roomContext,
+                    scene: payload.scene,
+                    systemPrompt: payload.systemPrompt,
+                    instructions: payload.instructions,
+                    includeWebsiteContext: payload.includeWebsiteContext,
+                    onEvent: (streamEvent: any) => {
+                      forwardAiChatStreamEventToFrame({
+                        sourceWindow,
+                        requestId,
+                        event: streamEvent
+                      });
+                    }
+                  }
+                );
+            } else {
+              response =
+                await requestRefs.callBuildRuntimeCharacterChatRef.current({
+                  buildId: activeBuild.id,
+                  character: payload.character,
+                  thinkingMode: payload.thinkingMode,
+                  message: payload.message,
+                  history: payload.history,
+                  roomContext: payload.roomContext,
+                  scene: payload.scene,
+                  systemPrompt: payload.systemPrompt,
+                  instructions: payload.instructions,
+                  includeWebsiteContext: payload.includeWebsiteContext
+                });
             }
             if (
               response?.aiUsagePolicy &&

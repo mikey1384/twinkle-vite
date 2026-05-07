@@ -1653,6 +1653,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const callBuildRuntimeAiChatStream = useAppContext(
       (v) => v.requestHelpers.callBuildRuntimeAiChatStream
     );
+    const callBuildRuntimeAiObject = useAppContext(
+      (v) => v.requestHelpers.callBuildRuntimeAiObject
+    );
+    const callBuildRuntimeCharacterChat = useAppContext(
+      (v) => v.requestHelpers.callBuildRuntimeCharacterChat
+    );
+    const callBuildRuntimeCharacterChatStream = useAppContext(
+      (v) => v.requestHelpers.callBuildRuntimeCharacterChatStream
+    );
     const generateAIImage = useAppContext(
       (v) => v.requestHelpers.generateAIImage
     );
@@ -1794,6 +1803,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const callBuildRuntimeAiChatStreamRef = useRef(
       callBuildRuntimeAiChatStream
     );
+    const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
+    const callBuildRuntimeCharacterChatRef = useRef(
+      callBuildRuntimeCharacterChat
+    );
+    const callBuildRuntimeCharacterChatStreamRef = useRef(
+      callBuildRuntimeCharacterChatStream
+    );
     const generateAiImageRef = useRef(generateAIImage);
     const listBuildArtifactsRef = useRef(listBuildArtifacts);
     const listBuildArtifactVersionsRef = useRef(listBuildArtifactVersions);
@@ -1881,6 +1897,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       callBuildAiChatRef,
       callBuildRuntimeAiChatRef,
       callBuildRuntimeAiChatStreamRef,
+      callBuildRuntimeAiObjectRef,
+      callBuildRuntimeCharacterChatRef,
+      callBuildRuntimeCharacterChatStreamRef,
       generateAiImageRef,
       queryViewerDbRef,
       execViewerDbRef,
