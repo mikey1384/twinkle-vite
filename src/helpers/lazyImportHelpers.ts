@@ -42,6 +42,7 @@ export function isLazyImportLoadError(error: unknown) {
     message.includes('Failed to fetch dynamically imported module') ||
     message.includes('error loading dynamically imported module') ||
     message.includes('Importing a module script failed') ||
+    message.includes('not a valid JavaScript MIME type') ||
     message.includes('ChunkLoadError') ||
     message.includes('Loading chunk')
   );
