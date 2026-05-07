@@ -789,6 +789,72 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadRecentlyUsedBuilds({
+      cursor,
+      limit = 8
+    }: {
+      cursor?: string;
+      limit?: number;
+    } = {}) {
+      try {
+        const params: Record<string, any> = { limit };
+        if (cursor) {
+          params.cursor = cursor;
+        }
+        const { data } = await request.get(
+          `${URL}/build/list/recently-used`,
+          {
+            ...auth(),
+            params
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadFavoriteBuilds({
+      cursor,
+      limit = 8
+    }: {
+      cursor?: string;
+      limit?: number;
+    } = {}) {
+      try {
+        const params: Record<string, any> = { limit };
+        if (cursor) {
+          params.cursor = cursor;
+        }
+        const { data } = await request.get(`${URL}/build/list/favorites`, {
+          ...auth(),
+          params
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildFavorite({
+      buildId,
+      favorited
+    }: {
+      buildId: number;
+      favorited: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/favorite`,
+          { favorited },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadMyPublicBuildsForPinning() {
       try {
         const { data } = await request.get(
@@ -814,6 +880,7 @@ export default function buildRequestHelpers({
         const params: Record<string, any> = { limit };
         if (lastId) params.lastId = lastId;
         const { data } = await request.get(`${URL}/build/user/${userId}`, {
+          ...auth(),
           params
         });
         return data;

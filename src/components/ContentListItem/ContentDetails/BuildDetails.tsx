@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
+import BuildFavoriteButton from '~/components/Buttons/BuildFavoriteButton';
 import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
@@ -33,6 +34,7 @@ export default function BuildDetails({
   collaborationMode,
   description,
   forkCount,
+  isFavorited,
   isPublic,
   sourceBuildId,
   contributionStatus,
@@ -45,7 +47,9 @@ export default function BuildDetails({
   collaboratorCount?: number;
   collaborationMode?: BuildCollaborationMode | 'contribution' | null;
   description: string;
+  favoritedAt?: number | null;
   forkCount?: number;
+  isFavorited?: boolean;
   isPublic?: number | boolean | null;
   sourceBuildId?: number | null;
   contributionStatus?: string | null;
@@ -80,10 +84,8 @@ export default function BuildDetails({
     useBuildCollaborationDirectMessageUpdater();
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
-  const [
-    collaborationRequestModalShown,
-    setCollaborationRequestModalShown
-  ] = useState(false);
+  const [collaborationRequestModalShown, setCollaborationRequestModalShown] =
+    useState(false);
   const [collaborationRequestMessage, setCollaborationRequestMessage] =
     useState('');
   const [collaborationRequest, setCollaborationRequest] =
@@ -96,10 +98,7 @@ export default function BuildDetails({
     0,
     Math.floor(Number(collaboratorCount) || 0)
   );
-  const normalizedForkCount = Math.max(
-    0,
-    Math.floor(Number(forkCount) || 0)
-  );
+  const normalizedForkCount = Math.max(0, Math.floor(Number(forkCount) || 0));
   const buildRelationship = {
     title,
     sourceBuildId,
@@ -113,23 +112,24 @@ export default function BuildDetails({
   const normalizedCollaborationMode =
     normalizeCollaborationMode(collaborationMode);
   const buildIsPublic = isPublic === true || Number(isPublic || 0) === 1;
+  const favorited = Boolean(isFavorited);
   const showOpenSourceBadge = normalizedCollaborationMode === 'open_source';
   const showForkCountBadge = showOpenSourceBadge;
   const showForkAction =
     !isOwner && buildIsPublic && normalizedCollaborationMode === 'open_source';
   const showCollaborationRequestAction = !isOwner && Boolean(buildId);
   const showBuildWorkspaceAction = isOwner && Boolean(buildId);
+  const showFavoriteAction = buildIsPublic && Boolean(buildId);
   const collaborationStatus = collaborationRequest?.status || '';
-  const collaborationRequestActionLabel =
-    !userId
-      ? 'Ask to join'
-      : collaborationStatus === 'pending'
-        ? 'Request sent'
-        : collaborationStatus === 'invited'
-          ? 'Join team'
-          : collaborationStatus === 'accepted'
-            ? 'Work together'
-            : 'Ask to join';
+  const collaborationRequestActionLabel = !userId
+    ? 'Ask to join'
+    : collaborationStatus === 'pending'
+      ? 'Request sent'
+      : collaborationStatus === 'invited'
+        ? 'Join team'
+        : collaborationStatus === 'accepted'
+          ? 'Work together'
+          : 'Ask to join';
   const collaborationRequestActionIcon =
     collaborationStatus === 'pending'
       ? 'clock'
@@ -164,16 +164,16 @@ export default function BuildDetails({
 
   return (
     <div className="build-details">
-      {collaborationRequestModalShown ? renderCollaborationRequestModal() : null}
+      {collaborationRequestModalShown
+        ? renderCollaborationRequestModal()
+        : null}
       <div className="title">
         <div className="build-badge">
           <Icon icon="rocket" />
           <span>Lumine App</span>
         </div>
         <p>{displayTitle || 'Lumine App'}</p>
-        {uploader.username && (
-          <small>Published by {uploader.username}</small>
-        )}
+        {uploader.username && <small>Published by {uploader.username}</small>}
       </div>
       <div className="build-status-row">
         {relationshipLabels.map((label) =>
@@ -243,7 +243,9 @@ export default function BuildDetails({
           <button
             type="button"
             className="build-card-action collaboration"
-            disabled={Boolean(actionLoading) || collaborationStatus === 'pending'}
+            disabled={
+              Boolean(actionLoading) || collaborationStatus === 'pending'
+            }
             onClick={handleCollaborationActionClick}
           >
             <Icon
@@ -272,13 +274,31 @@ export default function BuildDetails({
         ) : null}
         <button
           type="button"
-          className="build-card-action"
+          className="build-card-action open-app"
           disabled={Boolean(actionLoading)}
           onClick={handleOpenApp}
         >
           <span>Open app</span>
           <Icon icon="external-link-alt" />
         </button>
+        {showFavoriteAction ? (
+          <BuildFavoriteButton
+            buildId={buildId}
+            favorited={favorited}
+            label={favorited ? 'Favorited' : 'Favorite'}
+            size="pill"
+            preventDefault
+            stopPropagation
+            onError={(error: any) =>
+              setActionError(
+                error?.response?.data?.error ||
+                  error?.message ||
+                  'Favorite could not be updated.'
+              )
+            }
+            onStart={() => setActionError('')}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -489,9 +509,7 @@ export default function BuildDetails({
       navigate(`/build/${forkedBuildId}`);
     } catch (error: any) {
       setActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Unable to fork Build'
+        error?.response?.data?.error || error?.message || 'Unable to fork Build'
       );
     } finally {
       setActionLoading('');
@@ -671,9 +689,7 @@ export default function BuildDetails({
   }
 }
 
-function normalizeCollaborationMode(
-  value: unknown
-): BuildCollaborationMode {
+function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
   return value === 'open_source' ? value : 'private';
 }
 

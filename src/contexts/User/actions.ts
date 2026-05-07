@@ -13,6 +13,12 @@ export default function UserActions(dispatch: Dispatch) {
         filter
       });
     },
+    onChangeBuildQuickAccessMode(mode: 'recent' | 'favorites') {
+      return dispatch({
+        type: 'CHANGE_BUILD_QUICK_ACCESS_MODE',
+        mode
+      });
+    },
     onClearUserSearch() {
       return dispatch({
         type: 'CLEAR_USER_SEARCH'

@@ -3,7 +3,7 @@ import CommentContent from './CommentContent';
 import RootContent from './RootContent';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
-import { useKeyContext } from '~/contexts';
+import { useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 
@@ -35,6 +35,10 @@ function ContentListItem({
   const navigate = useNavigate();
   const PanelRef = useRef(null);
   const userId = useKeyContext((v) => v.myState.userId);
+  const getContentStateSnapshot = useContentContext(
+    (v) => v.getContentStateSnapshot
+  );
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const itemSelectedRole = useRoleColor('itemSelected', {
     fallback: 'logoBlue'
   });
@@ -65,10 +69,31 @@ function ContentListItem({
 
   useEffect(() => {
     if (contentState.loaded) {
-      setCurrentContent(contentState);
+      setCurrentContent((current: any) => ({
+        ...current,
+        ...contentState
+      }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentState?.loaded]);
+  }, [
+    contentState?.favoritedAt,
+    contentState?.isFavorited,
+    contentState?.loaded
+  ]);
+
+  useEffect(() => {
+    if (contentType !== 'build' || !contentId) return;
+    const contentKey = `${contentType}${contentId}`;
+    const currentState = getContentStateSnapshot?.()?.[contentKey];
+    if (currentState?.loaded) return;
+    onInitContent({
+      ...contentObj,
+      contentId,
+      contentType
+    });
+    // onInitContent/getContentStateSnapshot are stable context helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, contentType]);
 
   useEffect(() => {
     if (currentContent?.rootObj?.id && rootState.loaded) {
@@ -89,6 +114,8 @@ function ContentListItem({
     filePath,
     fileSize,
     forkCount,
+    favoritedAt,
+    isFavorited,
     isPublic,
     question,
     rewardLevel,
@@ -158,6 +185,8 @@ function ContentListItem({
               filePath={filePath}
               fileSize={fileSize}
               forkCount={forkCount}
+              favoritedAt={favoritedAt}
+              isFavorited={isFavorited}
               isPublic={isPublic}
               onClick={onClick}
               question={question}

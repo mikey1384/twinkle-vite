@@ -265,6 +265,22 @@ function NotiMessage({
           />
         </>
       );
+    case 'buildFavorite':
+      return (
+        <>
+          <span style={{ color: infoColorValue, fontWeight: 'bold' }}>
+            favorited
+          </span>{' '}
+          your{' '}
+          <Link
+            to={`/build/${targetObj.id}`}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Build
+            {targetObj.content ? ` (${truncatedTargetObjectText})` : ''}
+          </Link>
+        </>
+      );
     case 'mention':
       return (
         <>

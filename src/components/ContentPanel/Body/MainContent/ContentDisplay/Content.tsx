@@ -37,6 +37,7 @@ export default function Content({
   imageStyle,
   isNotification,
   isListening,
+  isFavorited,
   navigate,
   onClickSecretAnswer,
   rootId,
@@ -60,6 +61,7 @@ export default function Content({
   imageStyle?: string;
   isListening?: boolean;
   isNotification: boolean;
+  isFavorited?: boolean;
   navigate: (url: string, options?: Record<string, any>) => void;
   onClickSecretAnswer?: () => void;
   rootId: number;
@@ -152,7 +154,9 @@ export default function Content({
       };
     }
 
-    const appliedBasicMultiplier = Number(dailyTaskReward?.basicMultiplier || 1);
+    const appliedBasicMultiplier = Number(
+      dailyTaskReward?.basicMultiplier || 1
+    );
     const appliedExcellenceMultiplier = Number(
       dailyTaskReward?.excellenceMultiplier || 1
     );
@@ -281,6 +285,8 @@ export default function Content({
               collaborationMode: contentObj.collaborationMode,
               contributionAccess: contentObj.contributionAccess,
               collaboratorCount: contentObj.collaboratorCount,
+              favoritedAt: contentObj.favoritedAt,
+              isFavorited: contentObj.isFavorited,
               thumbnailUrl: contentObj.thumbnailUrl,
               updatedAt: contentObj.updatedAt
             }}
@@ -614,6 +620,7 @@ export default function Content({
     difficulty,
     imagePath,
     imageStyle,
+    isFavorited,
     story,
     Description,
     rootId,

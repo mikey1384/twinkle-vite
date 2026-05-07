@@ -240,8 +240,10 @@ export default function userRequestHelpers({
     },
     async loadPinnedBuildsOnProfile(userId: number) {
       try {
+        const config = token?.() ? auth() : undefined;
         const { data } = await request.get(
-          `${URL}/user/profile/pinnedBuilds?userId=${userId}`
+          `${URL}/user/profile/pinnedBuilds?userId=${userId}`,
+          config
         );
         return data;
       } catch (error) {
@@ -826,6 +828,18 @@ export default function userRequestHelpers({
         const { data } = await request.post(
           `${URL}/user/searchFilter`,
           { filter },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setBuildQuickAccessMode(mode: 'recent' | 'favorites') {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/buildQuickAccessMode`,
+          { mode },
           auth()
         );
         return data;

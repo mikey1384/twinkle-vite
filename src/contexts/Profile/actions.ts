@@ -46,16 +46,19 @@ export default function ProfileActions(dispatch: Dispatch) {
     },
     onLoadPinnedBuilds({
       builds,
+      favoriteViewerId,
       isTopBuilds,
       username
     }: {
       builds: object[];
+      favoriteViewerId?: number;
       isTopBuilds?: boolean;
       username: string;
     }) {
       return dispatch({
         type: 'LOAD_PINNED_BUILDS',
         builds,
+        favoriteViewerId,
         isTopBuilds,
         username
       });
@@ -224,16 +227,19 @@ export default function ProfileActions(dispatch: Dispatch) {
     },
     onSetPinnedBuilds({
       builds,
+      favoriteViewerId,
       isTopBuilds,
       username
     }: {
       builds: object[];
+      favoriteViewerId?: number;
       isTopBuilds?: boolean;
       username: string;
     }) {
       return dispatch({
         type: 'SET_PINNED_BUILDS',
         builds,
+        favoriteViewerId,
         isTopBuilds,
         username
       });

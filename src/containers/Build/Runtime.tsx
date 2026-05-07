@@ -5,6 +5,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
+import BuildFavoriteButton from '~/components/Buttons/BuildFavoriteButton';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import Comments from '~/components/Comments';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -45,6 +46,8 @@ interface RuntimeBuild {
   collaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionAccess?: 'anyone' | 'invite_only';
   hasActiveContributionInvite?: boolean;
+  isFavorited?: boolean;
+  favoritedAt?: number | null;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   projectFiles?: Array<{
     id?: number;
@@ -848,10 +851,8 @@ export default function BuildRuntime() {
   const [forkingBuild, setForkingBuild] = useState(false);
   const [openingCollaborationRequest, setOpeningCollaborationRequest] =
     useState(false);
-  const [
-    collaborationRequestModalShown,
-    setCollaborationRequestModalShown
-  ] = useState(false);
+  const [collaborationRequestModalShown, setCollaborationRequestModalShown] =
+    useState(false);
   const [collaborationRequestMessage, setCollaborationRequestMessage] =
     useState('');
   const [collaborationRequest, setCollaborationRequest] =
@@ -861,6 +862,7 @@ export default function BuildRuntime() {
   const [collaborationRequestError, setCollaborationRequestError] =
     useState('');
   const [contributionForkError, setContributionForkError] = useState('');
+  const [runtimeFavoriteError, setRuntimeFavoriteError] = useState('');
   const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
   const [commentsDrawerShown, setCommentsDrawerShown] = useState(false);
   const [runtimeCommentsLoading, setRuntimeCommentsLoading] = useState(false);
@@ -925,7 +927,8 @@ export default function BuildRuntime() {
     () => parseRuntimeMountContext(location.search),
     [location.search]
   );
-  const hasExplicitBackTarget = typeof location.state?.runtimeBackTo === 'string';
+  const hasExplicitBackTarget =
+    typeof location.state?.runtimeBackTo === 'string';
   const backTo = useMemo(() => {
     return hasExplicitBackTarget ? location.state.runtimeBackTo : '/';
   }, [hasExplicitBackTarget, location.state]);
@@ -961,7 +964,8 @@ export default function BuildRuntime() {
         aiUsagePolicy.resetCost || 0
       ].join(':')
     : '';
-  const buildAcceptsStandaloneForks = build?.collaborationMode === 'open_source';
+  const buildAcceptsStandaloneForks =
+    build?.collaborationMode === 'open_source';
   const isBuildOwner =
     !!build && !!userId && Number(build.userId) === Number(userId);
   const collaborationRequestActionLabel = 'Ask to join';
@@ -969,35 +973,32 @@ export default function BuildRuntime() {
     collaborationRequest?.status ||
     (build?.hasActiveContributionInvite ? 'accepted' : '');
   const showCollaborationButton = !!build && !isBuildOwner;
-  const collaborationButtonLabel =
-    !userId
-      ? 'Ask to join'
-      : collaborationStatus === 'pending'
-        ? 'Request sent'
-        : collaborationStatus === 'invited'
-          ? 'Join team'
-          : collaborationStatus === 'accepted'
-            ? 'Work together'
-            : collaborationRequestActionLabel;
+  const collaborationButtonLabel = !userId
+    ? 'Ask to join'
+    : collaborationStatus === 'pending'
+      ? 'Request sent'
+      : collaborationStatus === 'invited'
+        ? 'Join team'
+        : collaborationStatus === 'accepted'
+          ? 'Work together'
+          : collaborationRequestActionLabel;
   const showStandaloneForkButton =
-    !!build &&
-    !isBuildOwner &&
-    buildAcceptsStandaloneForks;
+    !!build && !isBuildOwner && buildAcceptsStandaloneForks;
   const showWorkspaceButton = !!build && isBuildOwner;
   const showRuntimePublishUpdateButton = Boolean(
     build?.isPublic &&
-      isBuildOwner &&
-      build.releaseStatus?.hasUnpublishedChanges
+    isBuildOwner &&
+    build.releaseStatus?.hasUnpublishedChanges
   );
+  const showRuntimeFavoriteButton = Boolean(build?.id && build.isPublic);
   const showRuntimeActions =
     showWorkspaceButton ||
     showRuntimePublishUpdateButton ||
     showCollaborationButton ||
-    showStandaloneForkButton;
+    showStandaloneForkButton ||
+    showRuntimeFavoriteButton;
   const runtimeActionBusy =
-    forkingBuild ||
-    openingCollaborationRequest ||
-    collaborationRequestLoading;
+    forkingBuild || openingCollaborationRequest || collaborationRequestLoading;
   const runtimeCommentsCount = Math.max(
     0,
     Number(build?.numComments ?? runtimeComments.length ?? 0)
@@ -1071,7 +1072,7 @@ export default function BuildRuntime() {
             numComments: Math.max(0, Number(current.numComments || 0) + delta)
           }
         : current
-      );
+    );
   }
 
   function getSubmittedCommentCountDelta(data: any) {
@@ -1314,7 +1315,11 @@ export default function BuildRuntime() {
   }
 
   async function handleCancelCollaborationRequest() {
-    if (!build?.id || !collaborationRequest?.id || collaborationRequestLoading) {
+    if (
+      !build?.id ||
+      !collaborationRequest?.id ||
+      collaborationRequestLoading
+    ) {
       return;
     }
     setCollaborationRequestLoading(true);
@@ -1626,6 +1631,33 @@ export default function BuildRuntime() {
                       <span>Build</span>
                     </button>
                   ) : null}
+                  {showRuntimeFavoriteButton ? (
+                    <BuildFavoriteButton
+                      buildId={Number(build.id)}
+                      favorited={Boolean(build.isFavorited)}
+                      label={build.isFavorited ? 'Favorited' : 'Favorite'}
+                      size="pill"
+                      onChange={({ buildId, favoritedAt, isFavorited }) => {
+                        setBuild((current) =>
+                          current && Number(current.id) === buildId
+                            ? {
+                                ...current,
+                                favoritedAt,
+                                isFavorited
+                              }
+                            : current
+                        );
+                      }}
+                      onError={(error: any) =>
+                        setRuntimeFavoriteError(
+                          error?.response?.data?.error ||
+                            error?.message ||
+                            'Favorite could not be updated.'
+                        )
+                      }
+                      onStart={() => setRuntimeFavoriteError('')}
+                    />
+                  ) : null}
                   {showRuntimePublishUpdateButton ? (
                     <button
                       type="button"
@@ -1688,11 +1720,7 @@ export default function BuildRuntime() {
                         pulse={forkingBuild}
                       />
                       <span>
-                        {forkingBuild
-                          ? 'Forking...'
-                          : userId
-                            ? 'Fork'
-                            : 'Fork'}
+                        {forkingBuild ? 'Forking...' : userId ? 'Fork' : 'Fork'}
                       </span>
                     </button>
                   ) : null}
@@ -1704,6 +1732,11 @@ export default function BuildRuntime() {
                   {publishRuntimeUpdateError ? (
                     <span className={contributionErrorClass}>
                       {publishRuntimeUpdateError}
+                    </span>
+                  ) : null}
+                  {runtimeFavoriteError ? (
+                    <span className={contributionErrorClass}>
+                      {runtimeFavoriteError}
                     </span>
                   ) : null}
                 </div>

@@ -22,6 +22,7 @@ export default function ProfileReducer(
     },
     pinnedBuilds: {
       builds: [],
+      favoriteViewerId: 0,
       loaded: false,
       isTopBuilds: false
     },
@@ -143,6 +144,10 @@ export default function ProfileReducer(
           pinnedBuilds: {
             ...prevContentState.pinnedBuilds,
             builds: action.builds,
+            favoriteViewerId:
+              Number(action.favoriteViewerId) > 0
+                ? Number(action.favoriteViewerId)
+                : 0,
             loaded: true,
             isTopBuilds: Boolean(action.isTopBuilds)
           }
@@ -310,6 +315,10 @@ export default function ProfileReducer(
           pinnedBuilds: {
             ...prevContentState.pinnedBuilds,
             builds: action.builds,
+            favoriteViewerId:
+              Number(action.favoriteViewerId) > 0
+                ? Number(action.favoriteViewerId)
+                : 0,
             loaded: true,
             isTopBuilds: Boolean(action.isTopBuilds)
           }

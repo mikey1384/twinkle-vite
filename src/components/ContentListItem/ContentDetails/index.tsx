@@ -12,7 +12,9 @@ export default function ContentDetails({
   collaborationMode,
   contentType,
   description = '',
+  favoritedAt,
   forkCount,
+  isFavorited,
   isPublic,
   isListening,
   question,
@@ -35,7 +37,9 @@ export default function ContentDetails({
   collaborationMode?: 'private' | 'contribution' | 'open_source' | null;
   contentType: string;
   description?: string;
+  favoritedAt?: number | null;
   forkCount?: number;
+  isFavorited?: boolean;
   isPublic?: number | boolean | null;
   isListening?: boolean;
   question?: string;
@@ -96,7 +100,9 @@ export default function ContentDetails({
           collaboratorCount={collaboratorCount}
           collaborationMode={collaborationMode}
           description={description}
+          favoritedAt={favoritedAt}
           forkCount={forkCount}
+          isFavorited={isFavorited}
           isPublic={isPublic}
           title={title}
           uploader={uploader}

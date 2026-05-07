@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Loading from '~/components/Loading';
+import Modal from '~/components/Modal';
 import Icon from '~/components/Icon';
+import BuildFavoriteButton, {
+  type BuildFavoriteChange
+} from '~/components/Buttons/BuildFavoriteButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
@@ -25,7 +29,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import {
   type BuildActivitySubtab,
   type BuildActivityTab,
@@ -42,12 +46,25 @@ const inheritedUsernameTextStyle: React.CSSProperties = {
   fontSize: 'inherit',
   fontWeight: 'inherit'
 };
+const logoBlueOpenAppButtonStyle = {
+  ['--build-open-app-bg' as const]: Color.logoBlue(),
+  ['--build-open-app-hover-bg' as const]: Color.darkBlue(),
+  ['--build-open-app-border' as const]: Color.darkBlue(0.82),
+  ['--build-open-app-focus' as const]: Color.logoBlue(0.9)
+} as React.CSSProperties;
 
 type BuildListTab = BuildStudioTab;
+type BuildBrowseTab = Exclude<BuildListTab, 'mine'>;
 type PublicBuildScope = 'all' | 'open_source';
 type PublicBuildSort = 'recent' | 'popular' | 'forks';
 type TodayTopViewedBuild = BuildProjectListItemData & {
   todayViewCount?: number;
+};
+type BuildQuickAccessMode = 'recent' | 'favorites';
+type QuickAccessBuild = BuildProjectListItemData & {
+  favoritedAt?: number | null;
+  isFavorited?: boolean;
+  lastUsedAt?: number | null;
 };
 interface BuildActivityPosition {
   timeStamp: number;
@@ -57,6 +74,8 @@ interface BuildActivityPosition {
 const buildActivityRailBreakpoint = '1180px';
 const buildActivityRailWidth = '30rem';
 const buildActivityCacheFreshMs = 60 * 1000;
+const quickAccessStripLimit = 5;
+const quickAccessModalPageSize = 12;
 const buildPageTopGap = '2rem';
 const desktopHeaderHeight = '4.5rem';
 const buildActivityPanelInitialViewportTop = `calc(
@@ -76,6 +95,12 @@ const buildListTabs: Array<{
   { value: 'open_source', label: 'Open Source', icon: 'code-branch' }
 ];
 
+const buildBrowseTabs: BuildBrowseTab[] = [
+  'collaborating',
+  'community',
+  'open_source'
+];
+
 const buildBrowseModeTabs: Array<{
   value: BuildStudioBrowseMode;
   label: string;
@@ -83,6 +108,15 @@ const buildBrowseModeTabs: Array<{
 }> = [
   { value: 'recent', label: 'Recent', icon: 'clock' },
   { value: 'leaderboard', label: 'Leaderboard', icon: 'trophy' }
+];
+
+const buildQuickAccessTabs: Array<{
+  value: BuildQuickAccessMode;
+  label: string;
+  icon: string;
+}> = [
+  { value: 'recent', label: 'Recent', icon: 'clock-rotate-left' },
+  { value: 'favorites', label: 'Favorites', icon: 'star' }
 ];
 
 const pageClass = css`
@@ -222,9 +256,10 @@ const topViewedShowcaseClass = css`
   border-left: 1px solid rgba(65, 140, 235, 0.18);
 
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.82fr) minmax(8.5rem, 1.18fr);
+    gap: 0.85rem;
     padding-left: 0;
-    padding-top: 1.4rem;
+    padding-top: 1rem;
     border-left: 0;
     border-top: 1px solid rgba(65, 140, 235, 0.18);
   }
@@ -235,6 +270,10 @@ const topViewedCopyClass = css`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.5rem;
+  }
 `;
 
 const topViewedKickerClass = css`
@@ -250,6 +289,11 @@ const topViewedKickerClass = css`
   font-size: 1.1rem;
   font-weight: 900;
   font-family: ${displayFontFamily};
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.32rem 0.58rem;
+    font-size: 1rem;
+  }
 `;
 
 const topViewedTitleClass = css`
@@ -260,6 +304,10 @@ const topViewedTitleClass = css`
   line-height: 1.1;
   font-family: ${displayFontFamily};
   overflow-wrap: anywhere;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.3rem;
+  }
 `;
 
 const topViewedMetaClass = css`
@@ -278,10 +326,345 @@ const topViewedMetaClass = css`
   }
 `;
 
+const topViewedActionRowClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+`;
+
 const topViewedPreviewClass = css`
   width: 100%;
   aspect-ratio: 16 / 10;
   min-height: 11rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+  }
+`;
+
+const quickAccessSectionClass = css`
+  margin: 0 0 1.6rem;
+`;
+
+const quickAccessHeaderClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+`;
+
+const quickAccessTitleClass = css`
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--chat-text);
+  font-size: 1.3rem;
+  font-weight: 900;
+  font-family: ${displayFontFamily};
+`;
+
+const quickAccessFilterWrapClass = css`
+  min-width: 16rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 100%;
+  }
+`;
+
+const quickAccessHeaderActionsClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-left: auto;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 100%;
+    justify-content: space-between;
+  }
+`;
+
+const quickAccessMoreButtonClass = css`
+  height: 2.75rem;
+  padding: 0 1rem;
+  border: 1px solid var(--ui-border, rgba(65, 140, 235, 0.24));
+  border-radius: 999px;
+  background: #fff;
+  color: var(--theme-bg, #1d4ed8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.08);
+
+  &:hover {
+    background: var(--theme-hover-bg, rgba(65, 140, 235, 0.08));
+    color: var(--theme-text, #fff);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-bg, #418ceb);
+    outline-offset: 2px;
+  }
+`;
+
+const quickAccessEmptyClass = css`
+  padding: 1rem;
+  border: 1px dashed var(--ui-border, rgba(65, 140, 235, 0.28));
+  border-radius: 8px;
+  background: rgba(248, 251, 255, 0.72);
+  color: var(--chat-text);
+  font-size: 1.1rem;
+  font-weight: 800;
+  opacity: 0.72;
+`;
+
+const quickAccessCardGridClass = css`
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+
+  @media (max-width: 980px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 620px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+`;
+
+const quickAccessCardClass = css`
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ui-border, rgba(65, 140, 235, 0.24));
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 620px) {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
+  }
+`;
+
+const quickAccessCardPreviewButtonClass = css`
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-bg, #418ceb);
+    outline-offset: -2px;
+  }
+`;
+
+const quickAccessCardPreviewClass = css`
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+
+  @media (max-width: 620px) {
+    aspect-ratio: 16 / 8;
+  }
+`;
+
+const quickAccessCardBodyClass = css`
+  min-width: 0;
+  padding: 0.7rem 0.75rem 0.78rem;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  @media (max-width: 620px) {
+    padding: 0.45rem 0.5rem 0.5rem;
+    gap: 0.25rem;
+  }
+`;
+
+const quickAccessCardTitleButtonClass = css`
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--chat-text);
+  cursor: pointer;
+  display: -webkit-box;
+  width: 100%;
+  overflow: hidden;
+  text-align: left;
+  font-size: 1.3rem;
+  font-weight: 900;
+  line-height: 1.15;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  @media (max-width: 620px) {
+    font-size: 1.2rem;
+    -webkit-line-clamp: 1;
+  }
+
+  &:hover {
+    color: var(--theme-bg, #1d4ed8);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-bg, #418ceb);
+    outline-offset: 2px;
+  }
+`;
+
+const quickAccessCardMetaClass = css`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  color: var(--chat-text);
+  font-size: 1.1rem;
+  font-weight: 800;
+  opacity: 0.74;
+
+  @media (max-width: 620px) {
+    gap: 0.15rem;
+  }
+
+  span {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+const quickAccessCardFooterClass = css`
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  @media (max-width: 620px) {
+    gap: 0.25rem;
+  }
+`;
+
+const quickAccessCardOpenButtonClass = css`
+  height: 2.1rem;
+  min-width: 0;
+  padding: 0 0.62rem;
+  border: 1px solid
+    var(--build-open-app-border, var(--ui-border, rgba(65, 140, 235, 0.32)));
+  border-radius: 7px;
+  background: var(--build-open-app-bg, var(--theme-bg, #418ceb));
+  color: var(--theme-text, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+
+  @media (max-width: 620px) {
+    width: 2.1rem;
+    padding: 0;
+  }
+
+  &:hover {
+    background: var(--build-open-app-hover-bg, var(--theme-hover-bg, #1d4ed8));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--build-open-app-focus, var(--theme-bg, #93c5fd));
+    outline-offset: 2px;
+  }
+`;
+
+const quickAccessCardOpenTextClass = css`
+  @media (max-width: 620px) {
+    display: none;
+  }
+`;
+
+const quickAccessModalContentClass = css`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const quickAccessModalGridClass = css`
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+
+  @media (max-width: 980px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 620px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+`;
+
+const quickAccessModalPagerClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.2rem;
+`;
+
+const quickAccessPagerButtonClass = css`
+  height: 2.45rem;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(65, 140, 235, 0.24);
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    color: #94a3b8;
+    background: #f8fafc;
+  }
+`;
+
+const quickAccessPagerStatusClass = css`
+  color: var(--chat-text);
+  font-size: 1rem;
+  font-weight: 900;
+  opacity: 0.72;
 `;
 
 const buildGridClass = css`
@@ -510,6 +893,9 @@ export default function BuildList() {
   const navigate = useNavigate();
   const location = useLocation();
   const userId = useKeyContext((v) => v.myState.userId);
+  const buildQuickAccessMode = useKeyContext(
+    (v) => v.myState.buildQuickAccessMode
+  );
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const loadMyBuilds = useAppContext((v) => v.requestHelpers.loadMyBuilds);
@@ -528,7 +914,19 @@ export default function BuildList() {
   const loadTodayTopViewedBuild = useAppContext(
     (v) => v.requestHelpers.loadTodayTopViewedBuild
   );
+  const loadRecentlyUsedBuilds = useAppContext(
+    (v) => v.requestHelpers.loadRecentlyUsedBuilds
+  );
+  const loadFavoriteBuilds = useAppContext(
+    (v) => v.requestHelpers.loadFavoriteBuilds
+  );
+  const setBuildQuickAccessMode = useAppContext(
+    (v) => v.requestHelpers.setBuildQuickAccessMode
+  );
   const createBuild = useAppContext((v) => v.requestHelpers.createBuild);
+  const onChangeBuildQuickAccessMode = useAppContext(
+    (v) => v.user.actions.onChangeBuildQuickAccessMode
+  );
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
   );
@@ -577,6 +975,7 @@ export default function BuildList() {
     activeTab,
     buildStudio
   });
+  const quickAccessMode = normalizeBuildQuickAccessMode(buildQuickAccessMode);
   const [buildSearchInput, setBuildSearchInput] = useState('');
   const [buildSearchQuery, setBuildSearchQuery] = useState('');
   const buildActivityActiveTab = normalizeBuildActivityTab(
@@ -596,13 +995,13 @@ export default function BuildList() {
   });
   const buildActivityLoadedForCurrentUser = Boolean(
     normalizedUserId &&
-      activeBuildActivityFeedState.userId === normalizedUserId &&
-      activeBuildActivityFeedState.loaded
+    activeBuildActivityFeedState.userId === normalizedUserId &&
+    activeBuildActivityFeedState.loaded
   );
   const buildActivityCacheFreshForCurrentUser = Boolean(
     buildActivityLoadedForCurrentUser &&
-      Date.now() - Number(activeBuildActivityFeedState.loadedAt || 0) <
-        buildActivityCacheFreshMs
+    Date.now() - Number(activeBuildActivityFeedState.loadedAt || 0) <
+      buildActivityCacheFreshMs
   );
   const buildActivityItems = buildActivityLoadedForCurrentUser
     ? ((activeBuildActivityFeedState.activities || []) as BuildActivityItem[])
@@ -617,22 +1016,23 @@ export default function BuildList() {
   });
   const allBuildActivityLoadedForCurrentUser = Boolean(
     normalizedUserId &&
-      allBuildActivityFeedState.userId === normalizedUserId &&
-      allBuildActivityFeedState.loaded
+    allBuildActivityFeedState.userId === normalizedUserId &&
+    allBuildActivityFeedState.loaded
   );
   const allBuildActivityItems = allBuildActivityLoadedForCurrentUser
     ? ((allBuildActivityFeedState.activities || []) as BuildActivityItem[])
     : [];
-  const allBuildActivityLatestPosition =
-    getBuildActivityLatestPosition(allBuildActivityItems);
+  const allBuildActivityLatestPosition = getBuildActivityLatestPosition(
+    allBuildActivityItems
+  );
   const allBuildActivityLastViewedPosition =
     allBuildActivityLoadedForCurrentUser
       ? getBuildActivityViewedPosition(allBuildActivityFeedState)
       : getEmptyBuildActivityPosition();
   const allBuildActivityCacheFreshForCurrentUser = Boolean(
     allBuildActivityLoadedForCurrentUser &&
-      Date.now() - Number(allBuildActivityFeedState.loadedAt || 0) <
-        buildActivityCacheFreshMs
+    Date.now() - Number(allBuildActivityFeedState.loadedAt || 0) <
+      buildActivityCacheFreshMs
   );
   const hasNewBuildActivity =
     compareBuildActivityPositions(
@@ -643,16 +1043,16 @@ export default function BuildList() {
     buildStudio?.browse?.collaborating || createEmptyBrowseState();
   const activeBrowseLoadedForCurrentUser = Boolean(
     normalizedUserId &&
-      activeBrowseState.userId === normalizedUserId &&
-      activeBrowseState.browseMode === activeBrowseMode &&
-      activeBrowseState.searchQuery === buildSearchQuery &&
-      activeBrowseState.loaded
+    activeBrowseState.userId === normalizedUserId &&
+    activeBrowseState.browseMode === activeBrowseMode &&
+    activeBrowseState.searchQuery === buildSearchQuery &&
+    activeBrowseState.loaded
   );
   const collaboratingLoadedForCurrentUser = Boolean(
     normalizedUserId &&
-      collaboratingBrowseState.userId === normalizedUserId &&
-      collaboratingBrowseState.searchQuery === '' &&
-      collaboratingBrowseState.loaded
+    collaboratingBrowseState.userId === normalizedUserId &&
+    collaboratingBrowseState.searchQuery === '' &&
+    collaboratingBrowseState.loaded
   );
   const collaboratingBuildCount = collaboratingLoadedForCurrentUser
     ? collaboratingBrowseState.builds.length
@@ -667,8 +1067,8 @@ export default function BuildList() {
     Number(buildStudio?.myBuildsUserId || 0) || null;
   const myBuildsLoadedForCurrentUser = Boolean(
     normalizedUserId &&
-      buildStudioMyBuildsUserId === normalizedUserId &&
-      buildStudio?.myBuildsLoaded
+    buildStudioMyBuildsUserId === normalizedUserId &&
+    buildStudio?.myBuildsLoaded
   );
   const builds =
     myBuildsLoadedForCurrentUser && Array.isArray(buildStudio?.myBuilds)
@@ -692,9 +1092,8 @@ export default function BuildList() {
   const [loading, setLoading] = useState(true);
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseLoadingMore, setBrowseLoadingMore] = useState(false);
-  const [editingBuild, setEditingBuild] = useState<BuildProjectListItemData | null>(
-    null
-  );
+  const [editingBuild, setEditingBuild] =
+    useState<BuildProjectListItemData | null>(null);
   const [deletingBuild, setDeletingBuild] =
     useState<BuildProjectListItemData | null>(null);
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState<number | null>(
@@ -712,8 +1111,25 @@ export default function BuildList() {
   const [buildActivityError, setBuildActivityError] = useState('');
   const [todayTopViewedBuild, setTodayTopViewedBuild] =
     useState<TodayTopViewedBuild | null>(null);
+  const [recentlyUsedBuilds, setRecentlyUsedBuilds] = useState<
+    QuickAccessBuild[]
+  >([]);
+  const [favoriteBuilds, setFavoriteBuilds] = useState<QuickAccessBuild[]>([]);
+  const [recentlyUsedCursor, setRecentlyUsedCursor] = useState<string | null>(
+    null
+  );
+  const [favoriteBuildsCursor, setFavoriteBuildsCursor] = useState<
+    string | null
+  >(null);
+  const [quickAccessLoading, setQuickAccessLoading] = useState(false);
+  const [quickAccessLoadingMore, setQuickAccessLoadingMore] = useState(false);
+  const [quickAccessError, setQuickAccessError] = useState('');
+  const [quickAccessModalMode, setQuickAccessModalMode] =
+    useState<BuildQuickAccessMode | null>(null);
+  const [quickAccessModalPage, setQuickAccessModalPage] = useState(0);
   const buildActivityLoadRef = useRef(0);
   const allBuildActivityLoadRef = useRef(0);
+  const quickAccessLoadRef = useRef(0);
   const buildsWithPendingRequests = builds
     .filter((build) => Number(build.pendingCollaborationRequestCount || 0) > 0)
     .sort(
@@ -722,13 +1138,26 @@ export default function BuildList() {
         Number(a.latestPendingCollaborationRequestAt || 0)
     );
   const totalPendingCollaborationRequests = buildsWithPendingRequests.reduce(
-    (total, build) => total + Number(build.pendingCollaborationRequestCount || 0),
+    (total, build) =>
+      total + Number(build.pendingCollaborationRequestCount || 0),
     0
   );
   const activeTabConfig =
     visibleBuildListTabs.find((tab) => tab.value === activeTab) ||
     visibleBuildListTabs[0];
   const isMyBuildsTab = activeTab === 'mine';
+  const activeQuickAccessBuilds =
+    quickAccessMode === 'favorites' ? favoriteBuilds : recentlyUsedBuilds;
+  const activeQuickAccessCursor =
+    quickAccessMode === 'favorites' ? favoriteBuildsCursor : recentlyUsedCursor;
+  const quickAccessModalBuilds =
+    quickAccessModalMode === 'favorites' ? favoriteBuilds : recentlyUsedBuilds;
+  const quickAccessModalCursor =
+    quickAccessModalMode === 'favorites'
+      ? favoriteBuildsCursor
+      : recentlyUsedCursor;
+  const quickAccessOpenButtonStyle =
+    profileTheme === 'gold' ? logoBlueOpenAppButtonStyle : undefined;
 
   useEffect(() => {
     activeTabRef.current = activeTab;
@@ -779,6 +1208,37 @@ export default function BuildList() {
     // loadTodayTopViewedBuild is a stable context request helper.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId]);
+
+  useEffect(() => {
+    setRecentlyUsedBuilds([]);
+    setFavoriteBuilds([]);
+    setRecentlyUsedCursor(null);
+    setFavoriteBuildsCursor(null);
+    setQuickAccessModalMode(null);
+    setQuickAccessModalPage(0);
+    setQuickAccessLoading(false);
+    setQuickAccessLoadingMore(false);
+    setQuickAccessError('');
+    if (!normalizedUserId) {
+      return;
+    }
+    void loadBuildQuickAccess();
+
+    return () => {
+      quickAccessLoadRef.current += 1;
+    };
+    // loadRecentlyUsedBuilds and loadFavoriteBuilds are stable request helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedUserId]);
+
+  useEffect(() => {
+    if (!quickAccessModalMode) return;
+    const pageCount = Math.max(
+      1,
+      Math.ceil(quickAccessModalBuilds.length / quickAccessModalPageSize)
+    );
+    setQuickAccessModalPage((page) => Math.min(page, pageCount - 1));
+  }, [quickAccessModalBuilds.length, quickAccessModalMode]);
 
   useEffect(() => {
     if (!normalizedUserId) {
@@ -1016,6 +1476,22 @@ export default function BuildList() {
     <div className={pageClass}>
       <div className={buildStudioLayoutClass}>
         <main className={buildStudioMainClass}>
+          <BuildQuickAccessStrip
+            activeMode={quickAccessMode}
+            builds={activeQuickAccessBuilds}
+            color={profileTheme}
+            error={quickAccessError}
+            hasMore={Boolean(activeQuickAccessCursor)}
+            loading={quickAccessLoading}
+            openButtonStyle={quickAccessOpenButtonStyle}
+            onModeChange={handleQuickAccessModeChange}
+            onOpenBuild={handleOpenQuickAccessBuild}
+            onShowMore={handleShowMoreQuickAccess}
+            onFavoriteChange={handleBuildFavoriteChange}
+            onFavoriteError={handleBuildFavoriteError}
+            onFavoriteStart={handleBuildFavoriteStart}
+          />
+
           <section className={heroClass}>
             <div
               className={`${heroShellClass}${
@@ -1029,7 +1505,8 @@ export default function BuildList() {
                 </div>
                 <h1 className={heroTitleClass}>Build Studio</h1>
                 <p className={heroBodyClass}>
-                  Create apps, review requests, and find projects to join or fork.
+                  Create apps, review requests, and find projects to join or
+                  fork.
                 </p>
                 <div>
                   <GameCTAButton
@@ -1045,6 +1522,9 @@ export default function BuildList() {
               {todayTopViewedBuild ? (
                 <TodayTopViewedShowcase
                   build={todayTopViewedBuild}
+                  onFavoriteChange={handleBuildFavoriteChange}
+                  onFavoriteError={handleBuildFavoriteError}
+                  onFavoriteStart={handleBuildFavoriteStart}
                   onOpen={handleOpenTodayTopViewedBuild}
                 />
               ) : null}
@@ -1191,7 +1671,7 @@ export default function BuildList() {
                       background: #fff;
                       &:focus {
                         outline: none;
-                        border-color: #418CEB;
+                        border-color: #418ceb;
                         box-shadow: 0 0 0 2px rgba(65, 140, 235, 0.12);
                       }
                     `}
@@ -1219,6 +1699,10 @@ export default function BuildList() {
                     isOwner
                     onAddDescription={setEditingBuild}
                     onDelete={setDeletingBuild}
+                    showFavoriteAction
+                    onFavoriteChange={handleBuildFavoriteChange}
+                    onFavoriteError={handleBuildFavoriteError}
+                    onFavoriteStart={handleBuildFavoriteStart}
                     onOpenForkHistory={setForkHistoryBuildId}
                   />
                 ))}
@@ -1270,6 +1754,10 @@ export default function BuildList() {
                     showCollaborationRequestAction={
                       activeTab !== 'collaborating'
                     }
+                    showFavoriteAction
+                    onFavoriteChange={handleBuildFavoriteChange}
+                    onFavoriteError={handleBuildFavoriteError}
+                    onFavoriteStart={handleBuildFavoriteStart}
                     onOpenForkHistory={setForkHistoryBuildId}
                   />
                 ))}
@@ -1329,8 +1817,268 @@ export default function BuildList() {
           onClose={() => setForkHistoryBuildId(null)}
         />
       ) : null}
+      {quickAccessModalMode ? (
+        <BuildQuickAccessModal
+          builds={quickAccessModalBuilds}
+          cursor={quickAccessModalCursor}
+          loadingMore={quickAccessLoadingMore}
+          mode={quickAccessModalMode}
+          openButtonStyle={quickAccessOpenButtonStyle}
+          page={quickAccessModalPage}
+          onClose={handleCloseQuickAccessModal}
+          onNextPage={handleNextQuickAccessModalPage}
+          onOpenBuild={handleOpenQuickAccessBuild}
+          onPreviousPage={handlePreviousQuickAccessModalPage}
+          onFavoriteChange={handleBuildFavoriteChange}
+          onFavoriteError={handleBuildFavoriteError}
+          onFavoriteStart={handleBuildFavoriteStart}
+        />
+      ) : null}
     </div>
   );
+
+  async function loadBuildQuickAccess({ showLoading = true } = {}) {
+    if (!normalizedUserId) return;
+    const loadId = quickAccessLoadRef.current + 1;
+    quickAccessLoadRef.current = loadId;
+    if (showLoading) {
+      setQuickAccessLoading(true);
+    }
+    setQuickAccessError('');
+    try {
+      const [recentResult, favoriteResult] = await Promise.all([
+        loadRecentlyUsedBuilds({ limit: quickAccessModalPageSize }),
+        loadFavoriteBuilds({ limit: quickAccessModalPageSize })
+      ]);
+      if (quickAccessLoadRef.current !== loadId) return;
+      setRecentlyUsedBuilds(normalizeQuickAccessBuilds(recentResult?.builds));
+      setFavoriteBuilds(normalizeQuickAccessBuilds(favoriteResult?.builds));
+      setRecentlyUsedCursor(normalizeQuickAccessCursor(recentResult?.cursor));
+      setFavoriteBuildsCursor(
+        normalizeQuickAccessCursor(favoriteResult?.cursor)
+      );
+    } catch (error: any) {
+      console.error('Failed to load build quick access:', error);
+      if (quickAccessLoadRef.current === loadId) {
+        setQuickAccessError(
+          error?.response?.data?.error ||
+            error?.message ||
+            'Quick access could not load.'
+        );
+      }
+    } finally {
+      if (quickAccessLoadRef.current === loadId) {
+        setQuickAccessLoading(false);
+      }
+    }
+  }
+
+  function handleOpenQuickAccessBuild(build: QuickAccessBuild) {
+    const buildId = Number(build.id || 0);
+    if (!buildId) return;
+    navigate(`/app/${buildId}`, {
+      state: {
+        runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
+        runtimeBackLabel: 'Back to Build Studio'
+      }
+    });
+  }
+
+  function handleShowMoreQuickAccess() {
+    setQuickAccessModalMode(quickAccessMode);
+    setQuickAccessModalPage(0);
+  }
+
+  function handleCloseQuickAccessModal() {
+    setQuickAccessModalMode(null);
+    setQuickAccessModalPage(0);
+  }
+
+  function handlePreviousQuickAccessModalPage() {
+    setQuickAccessModalPage((page) => Math.max(0, page - 1));
+  }
+
+  function handleNextQuickAccessModalPage() {
+    if (!quickAccessModalMode) return;
+    const nextPageStart = (quickAccessModalPage + 1) * quickAccessModalPageSize;
+    if (nextPageStart < quickAccessModalBuilds.length) {
+      setQuickAccessModalPage((page) => page + 1);
+      return;
+    }
+    if (!quickAccessModalCursor || quickAccessLoadingMore) return;
+    void loadMoreQuickAccessBuilds(quickAccessModalMode);
+  }
+
+  async function loadMoreQuickAccessBuilds(mode: BuildQuickAccessMode) {
+    const cursor =
+      mode === 'favorites' ? favoriteBuildsCursor : recentlyUsedCursor;
+    if (!cursor) return;
+    setQuickAccessLoadingMore(true);
+    setQuickAccessError('');
+    try {
+      const result =
+        mode === 'favorites'
+          ? await loadFavoriteBuilds({
+              cursor,
+              limit: quickAccessModalPageSize
+            })
+          : await loadRecentlyUsedBuilds({
+              cursor,
+              limit: quickAccessModalPageSize
+            });
+      const nextBuilds = normalizeQuickAccessBuilds(result?.builds);
+      appendQuickAccessBuilds(mode, nextBuilds);
+      setQuickAccessCursor(mode, normalizeQuickAccessCursor(result?.cursor));
+      if (nextBuilds.length > 0) {
+        setQuickAccessModalPage((page) => page + 1);
+      }
+    } catch (error: any) {
+      console.error('Failed to load more quick access builds:', error);
+      setQuickAccessError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'More quick access builds could not load.'
+      );
+    } finally {
+      setQuickAccessLoadingMore(false);
+    }
+  }
+
+  function appendQuickAccessBuilds(
+    mode: BuildQuickAccessMode,
+    nextBuilds: QuickAccessBuild[]
+  ) {
+    if (nextBuilds.length === 0) return;
+    const appendUnique = (items: QuickAccessBuild[]) => {
+      const seenIds = new Set(items.map((item) => Number(item.id)));
+      return items.concat(
+        nextBuilds.filter((build) => {
+          const buildId = Number(build.id);
+          if (!buildId || seenIds.has(buildId)) return false;
+          seenIds.add(buildId);
+          return true;
+        })
+      );
+    };
+    if (mode === 'favorites') {
+      setFavoriteBuilds(appendUnique);
+      return;
+    }
+    setRecentlyUsedBuilds(appendUnique);
+  }
+
+  function setQuickAccessCursor(
+    mode: BuildQuickAccessMode,
+    cursor: string | null
+  ) {
+    if (mode === 'favorites') {
+      setFavoriteBuildsCursor(cursor);
+      return;
+    }
+    setRecentlyUsedCursor(cursor);
+  }
+
+  function handleBuildFavoriteStart() {
+    setQuickAccessError('');
+  }
+
+  function handleBuildFavoriteChange(
+    build: BuildProjectListItemData,
+    change: BuildFavoriteChange
+  ) {
+    patchBuildFavoriteState({
+      build,
+      buildId: change.buildId,
+      favoritedAt: change.favoritedAt,
+      isFavorited: change.isFavorited
+    });
+  }
+
+  function handleBuildFavoriteError(
+    _build: BuildProjectListItemData,
+    error: any
+  ) {
+    console.error('Failed to update build favorite:', error);
+    setQuickAccessError(
+      error?.response?.data?.error ||
+        error?.message ||
+        'Favorite could not be updated.'
+    );
+    void loadBuildQuickAccess({ showLoading: false });
+  }
+
+  function patchBuildFavoriteState({
+    build,
+    buildId,
+    favoritedAt,
+    isFavorited
+  }: {
+    build: BuildProjectListItemData;
+    buildId: number;
+    favoritedAt: number | null;
+    isFavorited: boolean;
+  }) {
+    const patchProjectBuild = (
+      item: BuildProjectListItemData
+    ): BuildProjectListItemData =>
+      Number(item.id) === buildId
+        ? { ...item, favoritedAt, isFavorited }
+        : item;
+    const patchBuild = (item: QuickAccessBuild): QuickAccessBuild =>
+      Number(item.id) === buildId
+        ? { ...item, favoritedAt, isFavorited }
+        : item;
+    setRecentlyUsedBuilds((items) => items.map(patchBuild));
+    setFavoriteBuilds((items) => {
+      if (!isFavorited) {
+        return items.filter((item) => Number(item.id) !== buildId);
+      }
+      const nextBuild: QuickAccessBuild = {
+        ...build,
+        favoritedAt,
+        isFavorited: true
+      };
+      return [
+        nextBuild,
+        ...items.filter((item) => Number(item.id) !== buildId).map(patchBuild)
+      ];
+    });
+    setTodayTopViewedBuild((currentBuild) =>
+      currentBuild && Number(currentBuild.id) === buildId
+        ? { ...currentBuild, favoritedAt, isFavorited }
+        : currentBuild
+    );
+    onPatchBuildStudioMyBuild({
+      build: {
+        ...build,
+        favoritedAt,
+        isFavorited
+      },
+      userId: normalizedUserId
+    });
+    buildBrowseTabs.forEach((tab) => {
+      const browseState = buildStudio?.browse?.[tab];
+      if (
+        !browseState?.loaded ||
+        browseState.userId !== normalizedUserId ||
+        !Array.isArray(browseState.builds)
+      ) {
+        return;
+      }
+      const cachedBuilds = browseState.builds as BuildProjectListItemData[];
+      if (!cachedBuilds.some((item) => Number(item.id) === buildId)) {
+        return;
+      }
+      onSetBuildStudioBrowseBuilds({
+        tab,
+        builds: cachedBuilds.map(patchProjectBuild),
+        loadMoreToken: browseState.loadMoreToken,
+        browseMode: browseState.browseMode,
+        searchQuery: browseState.searchQuery,
+        userId: normalizedUserId
+      });
+    });
+  }
 
   async function loadBuildActivityItems({
     showError = true,
@@ -1613,10 +2361,20 @@ export default function BuildList() {
         confirmTitle
       });
       if (result?.success) {
+        const deletedBuildId = Number(deletingBuild.id);
         onRemoveBuildStudioMyBuild({
           buildId: deletingBuild.id,
           userId: normalizedUserId
         });
+        setRecentlyUsedBuilds((builds) =>
+          builds.filter((build) => Number(build.id) !== deletedBuildId)
+        );
+        setFavoriteBuilds((builds) =>
+          builds.filter((build) => Number(build.id) !== deletedBuildId)
+        );
+        setTodayTopViewedBuild((build) =>
+          build && Number(build.id) === deletedBuildId ? null : build
+        );
         setDeletingBuild(null);
       }
     } catch (error) {
@@ -1637,6 +2395,18 @@ export default function BuildList() {
       return;
     }
     onSetBuildStudioBrowseMode({ tab: activeTab, browseMode });
+  }
+
+  async function handleQuickAccessModeChange(mode: BuildQuickAccessMode) {
+    if (mode === quickAccessMode) {
+      return;
+    }
+    onChangeBuildQuickAccessMode(mode);
+    try {
+      await setBuildQuickAccessMode(mode);
+    } catch (error) {
+      console.error('Failed to save build quick access preference:', error);
+    }
   }
 
   async function handleLoadMoreBrowseBuilds() {
@@ -1731,6 +2501,332 @@ function BuildSearchEmptyState({ query }: { query: string }) {
   );
 }
 
+function BuildQuickAccessStrip({
+  activeMode,
+  builds,
+  color,
+  error,
+  hasMore,
+  loading,
+  openButtonStyle,
+  onModeChange,
+  onFavoriteChange,
+  onFavoriteError,
+  onFavoriteStart,
+  onOpenBuild,
+  onShowMore
+}: {
+  activeMode: BuildQuickAccessMode;
+  builds: QuickAccessBuild[];
+  color?: string;
+  error: string;
+  hasMore: boolean;
+  loading: boolean;
+  openButtonStyle?: React.CSSProperties;
+  onModeChange: (mode: BuildQuickAccessMode) => void;
+  onFavoriteChange: (
+    build: BuildProjectListItemData,
+    change: BuildFavoriteChange
+  ) => void;
+  onFavoriteError: (
+    build: BuildProjectListItemData,
+    error: unknown,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onFavoriteStart: (
+    build: BuildProjectListItemData,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onOpenBuild: (build: QuickAccessBuild) => void;
+  onShowMore: () => void;
+}) {
+  const emptyText =
+    activeMode === 'favorites'
+      ? 'No favorite builds yet.'
+      : 'No recently used builds yet.';
+  const visibleBuilds = builds.slice(0, quickAccessStripLimit);
+  const moreButtonShown = builds.length > visibleBuilds.length || hasMore;
+  return (
+    <section className={quickAccessSectionClass}>
+      <div className={quickAccessHeaderClass}>
+        <h2 className={quickAccessTitleClass}>
+          <Icon icon="bolt" />
+          Quick Access
+        </h2>
+        <div className={quickAccessHeaderActionsClass}>
+          <div className={quickAccessFilterWrapClass}>
+            <BuildTabFilter
+              activeTab={activeMode}
+              color={color}
+              density="mini"
+              onChange={onModeChange}
+              tabs={buildQuickAccessTabs}
+            />
+          </div>
+          {moreButtonShown ? (
+            <button
+              type="button"
+              className={quickAccessMoreButtonClass}
+              onClick={onShowMore}
+            >
+              More
+              <Icon icon="chevron-right" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {loading && builds.length === 0 ? (
+        <div className={quickAccessEmptyClass}>
+          <Icon icon="spinner" pulse /> Loading
+        </div>
+      ) : builds.length === 0 ? (
+        <div className={quickAccessEmptyClass}>{error || emptyText}</div>
+      ) : (
+        <div className={quickAccessCardGridClass}>
+          {visibleBuilds.map((build) => (
+            <BuildQuickAccessCard
+              key={build.id}
+              build={build}
+              mode={activeMode}
+              onFavoriteChange={onFavoriteChange}
+              onFavoriteError={onFavoriteError}
+              onFavoriteStart={onFavoriteStart}
+              onOpen={onOpenBuild}
+              openButtonStyle={openButtonStyle}
+            />
+          ))}
+        </div>
+      )}
+      {error && builds.length > 0 ? (
+        <div
+          className={css`
+            margin-top: 0.65rem;
+            color: #be123c;
+            font-size: 1rem;
+            font-weight: 800;
+          `}
+        >
+          {error}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function BuildQuickAccessCard({
+  build,
+  mode,
+  onFavoriteChange,
+  onFavoriteError,
+  onFavoriteStart,
+  onOpen,
+  openButtonStyle
+}: {
+  build: QuickAccessBuild;
+  mode: BuildQuickAccessMode;
+  onFavoriteChange: (
+    build: BuildProjectListItemData,
+    change: BuildFavoriteChange
+  ) => void;
+  onFavoriteError: (
+    build: BuildProjectListItemData,
+    error: unknown,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onFavoriteStart: (
+    build: BuildProjectListItemData,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onOpen: (build: QuickAccessBuild) => void;
+  openButtonStyle?: React.CSSProperties;
+}) {
+  const title = build.title || 'Untitled Build';
+  const isFavorited = Boolean(build.isFavorited);
+  const timestamp = mode === 'favorites' ? build.favoritedAt : build.lastUsedAt;
+  const timestampLabel =
+    mode === 'favorites'
+      ? `Favorited ${formatQuickAccessRelativeTime(timestamp)}`
+      : `Used ${formatQuickAccessRelativeTime(timestamp)}`;
+  return (
+    <article className={quickAccessCardClass}>
+      <button
+        type="button"
+        className={quickAccessCardPreviewButtonClass}
+        onClick={() => onOpen(build)}
+        aria-label={`Open ${title}`}
+      >
+        <BuildPreviewFrame
+          className={quickAccessCardPreviewClass}
+          thumbnailUrl={build.thumbnailUrl}
+          alt={`${title} screenshot`}
+          ariaLabel={`${title} preview`}
+        />
+      </button>
+      <div className={quickAccessCardBodyClass}>
+        <button
+          type="button"
+          className={quickAccessCardTitleButtonClass}
+          onClick={() => onOpen(build)}
+        >
+          {title}
+        </button>
+        <div className={quickAccessCardMetaClass}>
+          {build.username ? (
+            <span>
+              <Icon icon="user" />
+              by{' '}
+              <UsernameText
+                color="inherit"
+                textStyle={inheritedUsernameTextStyle}
+                user={getBuildUsernameUser(build)}
+              />
+            </span>
+          ) : null}
+          <span>
+            <Icon icon={mode === 'favorites' ? 'star' : 'clock'} />
+            {timestampLabel}
+          </span>
+        </div>
+        <div className={quickAccessCardFooterClass}>
+          <button
+            type="button"
+            className={quickAccessCardOpenButtonClass}
+            style={openButtonStyle}
+            onClick={() => onOpen(build)}
+          >
+            <Icon icon="external-link-alt" />
+            <span className={quickAccessCardOpenTextClass}>Open</span>
+          </button>
+          <BuildFavoriteButton
+            buildId={Number(build.id)}
+            favorited={isFavorited}
+            size="sm"
+            onChange={(change) => onFavoriteChange(build, change)}
+            onError={(error, params) => onFavoriteError(build, error, params)}
+            onStart={(params) => onFavoriteStart(build, params)}
+          />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function BuildQuickAccessModal({
+  builds,
+  cursor,
+  loadingMore,
+  mode,
+  openButtonStyle,
+  page,
+  onClose,
+  onFavoriteChange,
+  onFavoriteError,
+  onFavoriteStart,
+  onNextPage,
+  onOpenBuild,
+  onPreviousPage
+}: {
+  builds: QuickAccessBuild[];
+  cursor: string | null;
+  loadingMore: boolean;
+  mode: BuildQuickAccessMode;
+  openButtonStyle?: React.CSSProperties;
+  page: number;
+  onClose: () => void;
+  onFavoriteChange: (
+    build: BuildProjectListItemData,
+    change: BuildFavoriteChange
+  ) => void;
+  onFavoriteError: (
+    build: BuildProjectListItemData,
+    error: unknown,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onFavoriteStart: (
+    build: BuildProjectListItemData,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onNextPage: () => void;
+  onOpenBuild: (build: QuickAccessBuild) => void;
+  onPreviousPage: () => void;
+}) {
+  const title = mode === 'favorites' ? 'Favorite Builds' : 'Recently Used';
+  const pageCount = Math.max(
+    1,
+    Math.ceil(builds.length / quickAccessModalPageSize)
+  );
+  const pageStart = page * quickAccessModalPageSize;
+  const visibleBuilds = builds.slice(
+    pageStart,
+    pageStart + quickAccessModalPageSize
+  );
+  const canGoNext = page < pageCount - 1 || Boolean(cursor);
+  return (
+    <Modal
+      isOpen
+      modalKey="BuildQuickAccessModal"
+      size="xl"
+      title={title}
+      onClose={onClose}
+    >
+      <div className={quickAccessModalContentClass}>
+        {visibleBuilds.length > 0 ? (
+          <div className={quickAccessModalGridClass}>
+            {visibleBuilds.map((build) => (
+              <BuildQuickAccessCard
+                key={build.id}
+                build={build}
+                mode={mode}
+                onFavoriteChange={onFavoriteChange}
+                onFavoriteError={onFavoriteError}
+                onFavoriteStart={onFavoriteStart}
+                onOpen={onOpenBuild}
+                openButtonStyle={openButtonStyle}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className={quickAccessEmptyClass}>
+            {mode === 'favorites'
+              ? 'No favorite builds yet.'
+              : 'No recently used builds yet.'}
+          </div>
+        )}
+        <div className={quickAccessModalPagerClass}>
+          <button
+            type="button"
+            className={quickAccessPagerButtonClass}
+            disabled={page <= 0 || loadingMore}
+            onClick={onPreviousPage}
+          >
+            <Icon icon="chevron-left" />
+            Previous
+          </button>
+          <span className={quickAccessPagerStatusClass}>Page {page + 1}</span>
+          <button
+            type="button"
+            className={quickAccessPagerButtonClass}
+            disabled={!canGoNext || loadingMore}
+            onClick={onNextPage}
+          >
+            {loadingMore ? (
+              <>
+                <Icon icon="spinner" pulse />
+                Loading
+              </>
+            ) : (
+              <>
+                Next
+                <Icon icon="chevron-right" />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 function getPublicBuildScope(tab: BuildListTab): PublicBuildScope {
   if (tab === 'open_source') return 'open_source';
   return 'all';
@@ -1738,17 +2834,31 @@ function getPublicBuildScope(tab: BuildListTab): PublicBuildScope {
 
 function TodayTopViewedShowcase({
   build,
+  onFavoriteChange,
+  onFavoriteError,
+  onFavoriteStart,
   onOpen
 }: {
   build: TodayTopViewedBuild;
+  onFavoriteChange: (
+    build: BuildProjectListItemData,
+    change: BuildFavoriteChange
+  ) => void;
+  onFavoriteError: (
+    build: BuildProjectListItemData,
+    error: unknown,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onFavoriteStart: (
+    build: BuildProjectListItemData,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
   onOpen: (build: TodayTopViewedBuild) => void;
 }) {
   const displayTitle = build.title || 'Untitled Build';
+  const isFavorited = Boolean(build.isFavorited);
   return (
-    <aside
-      className={topViewedShowcaseClass}
-      aria-label="Trending app today"
-    >
+    <aside className={topViewedShowcaseClass} aria-label="Trending app today">
       <div className={topViewedCopyClass}>
         <div className={topViewedKickerClass}>
           <Icon icon="eye" />
@@ -1768,7 +2878,7 @@ function TodayTopViewedShowcase({
             </span>
           ) : null}
         </div>
-        <div>
+        <div className={topViewedActionRowClass}>
           <GameCTAButton
             variant="logoBlue"
             size="md"
@@ -1777,6 +2887,14 @@ function TodayTopViewedShowcase({
           >
             Open app
           </GameCTAButton>
+          <BuildFavoriteButton
+            buildId={Number(build.id)}
+            favorited={isFavorited}
+            size="pill"
+            onChange={(change) => onFavoriteChange(build, change)}
+            onError={(error, params) => onFavoriteError(build, error, params)}
+            onStart={(params) => onFavoriteStart(build, params)}
+          />
         </div>
       </div>
       <BuildPreviewFrame
@@ -1822,6 +2940,12 @@ function normalizeBuildListBrowseMode(
   value?: string | null
 ): BuildStudioBrowseMode {
   return value === 'leaderboard' ? 'leaderboard' : 'recent';
+}
+
+function normalizeBuildQuickAccessMode(
+  value?: string | null
+): BuildQuickAccessMode {
+  return value === 'favorites' ? 'favorites' : 'recent';
 }
 
 function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
@@ -1902,15 +3026,11 @@ function compareBuildActivityPositions(
 
 function isValidBuildActivityPosition(position: BuildActivityPosition) {
   return (
-    position.timeStamp > 0 &&
-    position.sourceRank > 0 &&
-    position.sortId > 0
+    position.timeStamp > 0 && position.sourceRank > 0 && position.sortId > 0
   );
 }
 
-function getBuildActivityViewedPosition(
-  feed: BuildStudioActivityFeedState
-) {
+function getBuildActivityViewedPosition(feed: BuildStudioActivityFeedState) {
   return getBuildActivityPosition({
     timeStamp: feed.lastViewedAllActivityAt,
     sourceRank: feed.lastViewedAllActivitySourceRank,
@@ -1919,19 +3039,16 @@ function getBuildActivityViewedPosition(
 }
 
 function getBuildActivityLatestPosition(activities: BuildActivityItem[]) {
-  return activities.reduce(
-    (latestPosition, activity) => {
-      const activityPosition = getBuildActivityPosition({
-        timeStamp: activity.timeStamp,
-        sourceRank: activity.activitySourceRank,
-        sortId: activity.activitySortId
-      });
-      return compareBuildActivityPositions(activityPosition, latestPosition) > 0
-        ? activityPosition
-        : latestPosition;
-    },
-    getEmptyBuildActivityPosition()
-  );
+  return activities.reduce((latestPosition, activity) => {
+    const activityPosition = getBuildActivityPosition({
+      timeStamp: activity.timeStamp,
+      sourceRank: activity.activitySourceRank,
+      sortId: activity.activitySortId
+    });
+    return compareBuildActivityPositions(activityPosition, latestPosition) > 0
+      ? activityPosition
+      : latestPosition;
+  }, getEmptyBuildActivityPosition());
 }
 
 function isPublicBrowseTab(tab: BuildListTab) {
@@ -1973,9 +3090,8 @@ function buildMatchesSearchQuery(
   build: BuildProjectListItemData,
   searchQuery: string
 ) {
-  const normalizedSearchQuery = normalizeBuildListSearchQuery(
-    searchQuery
-  ).toLowerCase();
+  const normalizedSearchQuery =
+    normalizeBuildListSearchQuery(searchQuery).toLowerCase();
   if (!normalizedSearchQuery) return true;
   const searchTokens = normalizedSearchQuery.split(' ').filter(Boolean);
   const searchableText = [
@@ -2024,12 +3140,7 @@ function getBuildActivityFeedState({
     activityFeeds?: Partial<
       Record<
         BuildActivityTab,
-        Partial<
-          Record<
-            BuildActivitySubtab,
-            BuildStudioActivityFeedState
-          >
-        >
+        Partial<Record<BuildActivitySubtab, BuildStudioActivityFeedState>>
       >
     >;
   } | null;
@@ -2048,9 +3159,7 @@ function getLoadMoreToken(data: any) {
   return null;
 }
 
-function normalizeTodayTopViewedBuild(
-  build: any
-): TodayTopViewedBuild | null {
+function normalizeTodayTopViewedBuild(build: any): TodayTopViewedBuild | null {
   const buildId = Number(build?.id || 0);
   const todayViewCount = Math.max(
     0,
@@ -2062,6 +3171,49 @@ function normalizeTodayTopViewedBuild(
     id: buildId,
     todayViewCount
   };
+}
+
+function normalizeQuickAccessBuilds(builds: any): QuickAccessBuild[] {
+  if (!Array.isArray(builds)) return [];
+  return builds
+    .map((build): QuickAccessBuild | null => {
+      const buildId = Number(build?.id || 0);
+      if (!buildId) return null;
+      return {
+        ...build,
+        id: buildId,
+        favoritedAt: normalizeOptionalTimestamp(build?.favoritedAt),
+        isFavorited: Boolean(build?.isFavorited),
+        lastUsedAt: normalizeOptionalTimestamp(build?.lastUsedAt)
+      };
+    })
+    .filter((build): build is QuickAccessBuild => Boolean(build));
+}
+
+function normalizeQuickAccessCursor(cursor: unknown) {
+  const normalizedCursor = String(cursor || '').trim();
+  return normalizedCursor || null;
+}
+
+function normalizeOptionalTimestamp(value: unknown) {
+  const timestamp = Math.floor(Number(value) || 0);
+  return timestamp > 0 ? timestamp : null;
+}
+
+function formatQuickAccessRelativeTime(timestamp?: number | null) {
+  if (!timestamp) return 'recently';
+  const seconds = Math.max(0, Math.floor(Date.now() / 1000) - timestamp);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  const years = Math.floor(months / 12);
+  return `${years}y ago`;
 }
 
 function getBuildUsernameUser(

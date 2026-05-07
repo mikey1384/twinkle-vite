@@ -297,6 +297,9 @@ export function useMyState() {
   const lastChatPath = useAppContext((v) => v.user.state.myState.lastChatPath);
   const hideWatched = useAppContext((v) => v.user.state.myState.hideWatched);
   const searchFilter = useAppContext((v) => v.user.state.myState.searchFilter);
+  const buildQuickAccessMode = useAppContext(
+    (v) => v.user.state.myState.buildQuickAccessMode
+  );
   const wordleStrictMode = useAppContext(
     (v) => v.user.state.myState.wordleStrictMode
   );
@@ -338,6 +341,7 @@ export function useMyState() {
           ...myStateFromUserObj,
           notifications,
           collectType,
+          buildQuickAccessMode,
           hideWatched,
           lastChatPath,
           searchFilter,
@@ -360,6 +364,7 @@ export function useMyState() {
           profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME
         };
   }, [
+    buildQuickAccessMode,
     collectType,
     contextValues,
     hideWatched,

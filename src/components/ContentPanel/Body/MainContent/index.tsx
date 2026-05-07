@@ -50,6 +50,7 @@ export default function MainContent({
     imagePath,
     imageStyle,
     isEditing,
+    isFavorited,
     isNotification,
     rootContent,
     rootObj,
@@ -187,6 +188,7 @@ export default function MainContent({
           contentObj={contentObj}
           difficulty={difficulty}
           isEditing={isEditing}
+          isFavorited={isFavorited}
           isListening={isListening}
           content={content}
           displayedContent={displayedContent}

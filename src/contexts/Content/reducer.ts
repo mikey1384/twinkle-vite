@@ -2,6 +2,57 @@ import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 import { Comment, Reward, Subject } from '~/types';
 
+function buildObjectMatches(build: any, buildId: number) {
+  if (!build || (build.contentType && build.contentType !== 'build')) {
+    return false;
+  }
+  return (
+    Number(build.contentId || 0) === buildId ||
+    Number(build.id || 0) === buildId
+  );
+}
+
+function patchBuildFavoriteObject(
+  build: any,
+  buildId: number,
+  favoriteState: any
+) {
+  return buildObjectMatches(build, buildId)
+    ? { ...build, ...favoriteState }
+    : build;
+}
+
+function patchBuildFavoriteTargetObj(
+  targetObj: any,
+  buildId: number,
+  favoriteState: any
+) {
+  if (!targetObj) return undefined;
+  const nextTargetObj = patchBuildFavoriteObject(
+    targetObj,
+    buildId,
+    favoriteState
+  );
+  const patchedTargetObj =
+    nextTargetObj === targetObj ? { ...targetObj } : nextTargetObj;
+  Object.keys(targetObj).forEach((key) => {
+    const value = targetObj[key];
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      (key === 'build' || value.contentType === 'build')
+    ) {
+      patchedTargetObj[key] = patchBuildFavoriteObject(
+        value,
+        buildId,
+        favoriteState
+      );
+    }
+  });
+  return patchedTargetObj;
+}
+
 export default function ContentReducer(
   state: any,
   action: {
@@ -682,6 +733,52 @@ export default function ContentReducer(
                 })
               };
             }
+          )
+        };
+      }
+      return newState;
+    }
+    case 'UPDATE_BUILD_FAVORITE': {
+      const newState = { ...state };
+      const contentKeys = Object.keys(newState);
+      const favoriteState = {
+        isFavorited: action.isFavorited,
+        favoritedAt: action.isFavorited ? action.favoritedAt : null
+      };
+      for (const contentKey of contentKeys) {
+        const prevContentState = newState[contentKey];
+        const contentMatches = buildObjectMatches(
+          prevContentState,
+          action.buildId
+        );
+        const rootBuildMatches =
+          (prevContentState.rootType === 'build' &&
+            Number(prevContentState.rootId || 0) === action.buildId) ||
+          buildObjectMatches(prevContentState.rootObj, action.buildId);
+        newState[contentKey] = {
+          ...prevContentState,
+          ...(contentMatches ? favoriteState : {}),
+          build: prevContentState.build
+            ? patchBuildFavoriteObject(
+                prevContentState.build,
+                action.buildId,
+                favoriteState
+              )
+            : prevContentState.build,
+          rootObj: prevContentState.rootObj
+            ? patchBuildFavoriteObject(
+                {
+                  ...prevContentState.rootObj,
+                  ...(rootBuildMatches ? favoriteState : {})
+                },
+                action.buildId,
+                favoriteState
+              )
+            : undefined,
+          targetObj: patchBuildFavoriteTargetObj(
+            prevContentState.targetObj,
+            action.buildId,
+            favoriteState
           )
         };
       }

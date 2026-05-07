@@ -17,6 +17,7 @@ export default function ContentDisplay({
   imagePath,
   imageStyle,
   isEditing,
+  isFavorited,
   isListening,
   filePath,
   navigate,
@@ -41,6 +42,7 @@ export default function ContentDisplay({
   imagePath?: string;
   imageStyle?: string;
   isEditing: boolean;
+  isFavorited?: boolean;
   isListening?: boolean;
   content: string;
   displayedContent: string;
@@ -78,8 +80,8 @@ export default function ContentDisplay({
           marginBottom: isEditing
             ? 0
             : contentType !== 'video' && !secretHidden
-            ? '1rem'
-            : 0
+              ? '1rem'
+              : 0
         }}
       >
         {isEditing ? (
@@ -115,6 +117,7 @@ export default function ContentDisplay({
             imagePath={imagePath}
             imageStyle={imageStyle}
             isListening={isListening}
+            isFavorited={isFavorited}
             isNotification={isNotification}
             navigate={navigate}
             onClickSecretAnswer={onClickSecretAnswer}

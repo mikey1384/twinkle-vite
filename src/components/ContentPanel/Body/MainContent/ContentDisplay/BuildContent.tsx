@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import BuildFavoriteButton from '~/components/Buttons/BuildFavoriteButton';
 import Button from '~/components/Button';
 import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
@@ -48,6 +49,8 @@ export default function BuildContent({
     collaborationMode?: BuildCollaborationMode | 'contribution';
     contributionAccess?: BuildContributionAccess;
     collaboratorCount?: number;
+    favoritedAt?: number | null;
+    isFavorited?: boolean;
     thumbnailUrl?: unknown;
     updatedAt?: number | null;
   };
@@ -91,10 +94,8 @@ export default function BuildContent({
   const [iframeReady, setIframeReady] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
-  const [
-    collaborationRequestModalShown,
-    setCollaborationRequestModalShown
-  ] = useState(false);
+  const [collaborationRequestModalShown, setCollaborationRequestModalShown] =
+    useState(false);
   const [collaborationRequestMessage, setCollaborationRequestMessage] =
     useState('');
   const [collaborationRequest, setCollaborationRequest] =
@@ -104,16 +105,15 @@ export default function BuildContent({
   const [collaborationRequestError, setCollaborationRequestError] =
     useState('');
   const collaborationStatus = collaborationRequest?.status || '';
-  const collaborationRequestActionLabel =
-    !userId
-      ? 'Ask to join'
-      : collaborationStatus === 'pending'
-        ? 'Request sent'
-        : collaborationStatus === 'invited'
-          ? 'Join team'
-          : collaborationStatus === 'accepted'
-            ? 'Work together'
-            : 'Ask to join';
+  const collaborationRequestActionLabel = !userId
+    ? 'Ask to join'
+    : collaborationStatus === 'pending'
+      ? 'Request sent'
+      : collaborationStatus === 'invited'
+        ? 'Join team'
+        : collaborationStatus === 'accepted'
+          ? 'Work together'
+          : 'Ask to join';
   const collaborationRequestActionIcon =
     collaborationStatus === 'pending'
       ? 'clock'
@@ -140,6 +140,8 @@ export default function BuildContent({
     !isOwner && buildIsPublic && collaborationMode === 'open_source';
   const showCollaborationRequestAction = !isOwner;
   const showBuildWorkspaceAction = isOwner;
+  const showFavoriteAction = buildIsPublic && Boolean(buildId);
+  const favorited = Boolean(build?.isFavorited);
   const collaboratorCount = Math.max(
     0,
     Math.floor(Number(build?.collaboratorCount) || 0)
@@ -150,13 +152,14 @@ export default function BuildContent({
     themeName: theme,
     fallback: 'logoBlue'
   });
-  const { colorKey: playButtonHoverColorKey } = useRoleColor(
-    'buttonHovered',
-    {
-      themeName: theme,
-      fallback: playButtonColorKey || 'logoBlue'
-    }
-  );
+  const { colorKey: playButtonHoverColorKey } = useRoleColor('buttonHovered', {
+    themeName: theme,
+    fallback: playButtonColorKey || 'logoBlue'
+  });
+  const openAppButtonColorKey =
+    theme === 'gold' ? 'logoBlue' : playButtonColorKey;
+  const openAppButtonHoverColorKey =
+    theme === 'gold' ? 'darkBlue' : playButtonHoverColorKey;
   const appPath = useMemo(() => {
     return buildId ? `/app/${buildId}` : '';
   }, [buildId]);
@@ -233,7 +236,9 @@ export default function BuildContent({
         gap: 1rem;
       `}
     >
-      {collaborationRequestModalShown ? renderCollaborationRequestModal() : null}
+      {collaborationRequestModalShown
+        ? renderCollaborationRequestModal()
+        : null}
       <div
         className={css`
           display: flex;
@@ -293,10 +298,7 @@ export default function BuildContent({
                 <span>Fork</span>
               </BuildForkHistoryTrigger>
             ) : (
-              <div
-                key={label}
-                className={buildRelationshipBadgeClass(label)}
-              >
+              <div key={label} className={buildRelationshipBadgeClass(label)}>
                 <Icon icon="users" />
                 <span>Branch</span>
               </div>
@@ -383,7 +385,8 @@ export default function BuildContent({
             </Button>
           ) : null}
           <Button
-            color="logoBlue"
+            color={openAppButtonColorKey}
+            hoverColor={openAppButtonHoverColorKey}
             variant="solid"
             tone="raised"
             shape="pill"
@@ -396,6 +399,20 @@ export default function BuildContent({
             <Icon icon="external-link-alt" />
             <span>Open App</span>
           </Button>
+          {showFavoriteAction ? (
+            <BuildFavoriteButton
+              buildId={buildId}
+              favorited={favorited}
+              label={favorited ? 'Favorited' : 'Favorite'}
+              size="pill"
+              onError={(error: any) =>
+                setActionError(
+                  getErrorMessage(error, 'Favorite could not be updated.')
+                )
+              }
+              onStart={() => setActionError('')}
+            />
+          ) : null}
         </div>
       </div>
       {actionError ? (
@@ -803,9 +820,7 @@ export default function BuildContent({
             : () => setCollaborationRequestModalShown(false)
         }
         closeOnBackdropClick={!collaborationRequestLoading}
-        title={
-          'Ask to join'
-        }
+        title={'Ask to join'}
         size="sm"
         footer={
           <div

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import BuildProjectListItem, {
   BuildProjectListItemData
 } from '~/components/BuildProjectListItem';
+import type { BuildFavoriteChange } from '~/components/Buttons/BuildFavoriteButton';
 import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
@@ -31,9 +32,10 @@ export default function Builds({
   const location = useLocation();
   const myId = useKeyContext((v) => v.myState.userId);
   const myUsername = useKeyContext((v) => v.myState.username);
+  const viewerId = Number(myId) > 0 ? Number(myId) : 0;
   const isOwnProfile =
     (myUsername && myUsername === profile.username) ||
-    (Number(myId) > 0 && Number(myId) === Number(profile.id));
+    (viewerId > 0 && viewerId === Number(profile.id));
   const { pinnedBuilds: cachedPinnedBuilds } = useProfileState(
     profile.username
   );
@@ -57,6 +59,7 @@ export default function Builds({
   const [displayedBuilds, setDisplayedBuilds] = useState<
     BuildProjectListItemData[]
   >([]);
+  const displayedBuildsRef = useRef<BuildProjectListItemData[]>([]);
   const [editingBuild, setEditingBuild] =
     useState<BuildProjectListItemData | null>(null);
   const [savingMetadata, setSavingMetadata] = useState(false);
@@ -89,6 +92,10 @@ export default function Builds({
     return Array.isArray(builds) ? builds : [];
   }, [cachedPinnedBuilds?.builds]);
   const cachedIsTopBuilds = Boolean(cachedPinnedBuilds?.isTopBuilds);
+  const cachedFavoriteViewerId =
+    Number(cachedPinnedBuilds?.favoriteViewerId) > 0
+      ? Number(cachedPinnedBuilds?.favoriteViewerId)
+      : 0;
   const cachedPinnedBuildIdsKey = useMemo(
     () =>
       cachedBuilds
@@ -99,6 +106,7 @@ export default function Builds({
   );
   const hasCachedPinnedBuilds =
     Boolean(cachedPinnedBuilds?.loaded) &&
+    cachedFavoriteViewerId === viewerId &&
     ((cachedIsTopBuilds && pinnedBuildIds.length === 0) ||
       (!cachedIsTopBuilds && cachedPinnedBuildIdsKey === pinnedBuildIdsKey));
   const shownBuilds = useMemo(() => {
@@ -115,6 +123,10 @@ export default function Builds({
     setIsExpanded(false);
     setForkHistoryBuildId(null);
   }, [profile.id]);
+
+  useEffect(() => {
+    displayedBuildsRef.current = displayedBuilds;
+  }, [displayedBuilds]);
 
   useEffect(() => {
     if (hasCachedPinnedBuilds) {
@@ -149,7 +161,8 @@ export default function Builds({
         onLoadPinnedBuilds({
           username: profile.username,
           builds: nextBuilds,
-          isTopBuilds
+          isTopBuilds,
+          favoriteViewerId: viewerId
         });
         const nextPinnedBuildIds = isTopBuilds ? [] : nextBuildIds;
         if (nextPinnedBuildIds.join(',') !== pinnedBuildIdsKey) {
@@ -178,7 +191,13 @@ export default function Builds({
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasCachedPinnedBuilds, pinnedBuildIdsKey, profile.id, profile.username]);
+  }, [
+    hasCachedPinnedBuilds,
+    pinnedBuildIdsKey,
+    profile.id,
+    profile.username,
+    viewerId
+  ]);
 
   if (!loading && !isOwnProfile && displayedBuilds.length === 0) {
     return null;
@@ -226,6 +245,9 @@ export default function Builds({
               navigationState={buildRuntimeNavigationState}
               isOwner={isOwnProfile}
               themeName={selectedTheme}
+              showFavoriteAction
+              onFavoriteChange={handleBuildFavoriteChange}
+              onFavoriteError={handleBuildFavoriteError}
               onAddDescription={isOwnProfile ? setEditingBuild : undefined}
               onOpenForkHistory={setForkHistoryBuildId}
             />
@@ -279,7 +301,8 @@ export default function Builds({
       onSetPinnedBuilds({
         username: profile.username,
         builds: nextBuilds,
-        isTopBuilds: false
+        isTopBuilds: false,
+        favoriteViewerId: viewerId
       });
       setDisplayedBuilds(nextBuilds);
       setIsExpanded(false);
@@ -312,7 +335,8 @@ export default function Builds({
         onSetPinnedBuilds({
           username: profile.username,
           builds: nextBuilds,
-          isTopBuilds: cachedIsTopBuilds
+          isTopBuilds: cachedIsTopBuilds,
+          favoriteViewerId: viewerId
         });
         setEditingBuild(null);
       }
@@ -321,5 +345,42 @@ export default function Builds({
     } finally {
       setSavingMetadata(false);
     }
+  }
+
+  function handleBuildFavoriteChange(
+    build: BuildProjectListItemData,
+    change: BuildFavoriteChange
+  ) {
+    const buildId = Number(build.id) || change.buildId;
+    const nextBuilds = displayedBuildsRef.current.map((displayedBuild) =>
+      Number(displayedBuild.id) === buildId
+        ? {
+            ...displayedBuild,
+            isFavorited: change.isFavorited,
+            favoritedAt: change.favoritedAt
+        }
+        : displayedBuild
+    );
+    displayedBuildsRef.current = nextBuilds;
+    setDisplayedBuilds(nextBuilds);
+    onSetPinnedBuilds({
+      username: profile.username,
+      builds: nextBuilds,
+      isTopBuilds: cachedIsTopBuilds,
+      favoriteViewerId: viewerId
+    });
+  }
+
+  function handleBuildFavoriteError(
+    build: BuildProjectListItemData,
+    error: unknown,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) {
+    console.error(
+      `Failed to update favorite for profile build ${
+        Number(build.id) || params.buildId
+      }:`,
+      error
+    );
   }
 }

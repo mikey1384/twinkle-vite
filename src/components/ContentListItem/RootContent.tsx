@@ -338,6 +338,15 @@ const rootContentCSS = css`
       cursor: pointer;
       white-space: nowrap;
     }
+    .build-card-action.open-app {
+      background: var(--build-open-app-accent, var(--build-card-accent, ${Color.logoBlue()}));
+    }
+    .build-card-action.open-app:hover:not(:disabled) {
+      background: var(
+        --build-open-app-hover-accent,
+        var(--build-open-app-accent, var(--build-card-accent, ${Color.logoBlue()}))
+      );
+    }
     .build-card-action:disabled {
       opacity: 0.68;
       cursor: default;
@@ -539,9 +548,11 @@ export default function RootContent({
   filePath,
   fileSize,
   forkCount,
+  favoritedAt,
   hideSideBordersOnMobile,
   noTopBorderRadius,
   isListening,
+  isFavorited,
   isPublic,
   navigate,
   onClick,
@@ -580,9 +591,11 @@ export default function RootContent({
   filePath?: string;
   fileSize?: number;
   forkCount?: number;
+  favoritedAt?: number | null;
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
   isListening?: boolean;
+  isFavorited?: boolean;
   isPublic?: number | boolean | null;
   modalOverModal?: boolean;
   navigate: (path: string) => void;
@@ -618,6 +631,10 @@ export default function RootContent({
     role: 'sectionPanel',
     themeName: uploader?.profileTheme || undefined
   });
+  const buildOpenAppAccentColor =
+    uploader?.profileTheme === 'gold' ? Color.logoBlue() : buildAccentColor;
+  const buildOpenAppHoverAccentColor =
+    uploader?.profileTheme === 'gold' ? Color.darkBlue() : buildAccentColor;
   // Use global UI border vars for consistency with ContentPanel
 
   const buildCardVars = useMemo(
@@ -626,9 +643,17 @@ export default function RootContent({
         ['--build-card-accent' as const]: buildAccentColor,
         ['--build-card-border' as const]: buildBorderColor,
         ['--build-card-tint' as const]: setAlphaExact(buildAccentColor, 0.1),
+        ['--build-open-app-accent' as const]: buildOpenAppAccentColor,
+        ['--build-open-app-hover-accent' as const]:
+          buildOpenAppHoverAccentColor,
         ['--build-card-bg' as const]: '#fff'
       } as React.CSSProperties),
-    [buildAccentColor, buildBorderColor]
+    [
+      buildAccentColor,
+      buildBorderColor,
+      buildOpenAppAccentColor,
+      buildOpenAppHoverAccentColor
+    ]
   );
 
   const selectedBorder = useMemo(() => {
@@ -712,14 +737,16 @@ export default function RootContent({
           : null)
       }}
     >
-      <ContentDetails
-        collaboratorCount={collaboratorCount}
-        collaborationMode={collaborationMode}
+        <ContentDetails
+          collaboratorCount={collaboratorCount}
+          collaborationMode={collaborationMode}
         isListening={isListening}
         contentType={contentType}
         description={description}
-        forkCount={forkCount}
-        isPublic={isPublic}
+          forkCount={forkCount}
+          favoritedAt={favoritedAt}
+          isFavorited={isFavorited}
+          isPublic={isPublic}
         question={question}
         story={story}
         topic={topic}

@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import BuildPreviewFrame from '~/components/BuildPreviewFrame';
+import BuildFavoriteButton, {
+  type BuildFavoriteChange
+} from '~/components/Buttons/BuildFavoriteButton';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -421,6 +424,8 @@ export interface BuildProjectListItemData {
   pendingCollaborationRequestCount?: number;
   latestPendingCollaborationRequestAt?: number | null;
   releaseStatus?: BuildProjectListItemReleaseStatus | null;
+  isFavorited?: boolean;
+  favoritedAt?: number | null;
 }
 
 export default function BuildProjectListItem({
@@ -432,9 +437,13 @@ export default function BuildProjectListItem({
   primaryActionLabel,
   primaryActionIcon,
   showCollaborationRequestAction = true,
+  showFavoriteAction = false,
   showForkBadge = true,
   onAddDescription,
   onDelete,
+  onFavoriteChange,
+  onFavoriteError,
+  onFavoriteStart,
   onOpenForkHistory
 }: {
   build: BuildProjectListItemData;
@@ -445,9 +454,23 @@ export default function BuildProjectListItem({
   primaryActionLabel?: string;
   primaryActionIcon?: string;
   showCollaborationRequestAction?: boolean;
+  showFavoriteAction?: boolean;
   showForkBadge?: boolean;
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
+  onFavoriteChange?: (
+    build: BuildProjectListItemData,
+    change: BuildFavoriteChange
+  ) => void;
+  onFavoriteError?: (
+    build: BuildProjectListItemData,
+    error: unknown,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
+  onFavoriteStart?: (
+    build: BuildProjectListItemData,
+    params: { buildId: number; requestedFavorited: boolean }
+  ) => void;
   onOpenForkHistory?: (buildId: number) => void;
 }) {
   const navigate = useNavigate();
@@ -503,13 +526,9 @@ export default function BuildProjectListItem({
   const forkCount = Math.max(0, Math.floor(Number(build.forkCount) || 0));
   const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
   const showUnpublishedChangesBadge =
-    isOwner &&
-    build.isPublic &&
-    Boolean(releaseStatus?.hasUnpublishedChanges);
+    isOwner && build.isPublic && Boolean(releaseStatus?.hasUnpublishedChanges);
   const showForkCountBadge =
-    showForkBadge &&
-    buildForkUiEnabled &&
-    collaborationMode === 'open_source';
+    showForkBadge && buildForkUiEnabled && collaborationMode === 'open_source';
   const showStandaloneForkAction =
     buildForkUiEnabled &&
     collaborationMode === 'open_source' &&
@@ -520,12 +539,12 @@ export default function BuildProjectListItem({
   const previewLabel = primaryActionLabel || (isOwner ? 'Build' : 'Open app');
   const previewIcon =
     primaryActionIcon || (isOwner ? 'wrench' : 'external-link-alt');
+  const favoriteActionShown =
+    showFavoriteAction && Boolean(build.isPublic) && Boolean(build.id);
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
-  const [
-    collaborationRequestModalShown,
-    setCollaborationRequestModalShown
-  ] = useState(false);
+  const [collaborationRequestModalShown, setCollaborationRequestModalShown] =
+    useState(false);
   const [collaborationRequestMessage, setCollaborationRequestMessage] =
     useState('');
   const [collaborationRequest, setCollaborationRequest] =
@@ -535,16 +554,15 @@ export default function BuildProjectListItem({
   const [collaborationRequestError, setCollaborationRequestError] =
     useState('');
   const collaborationStatus = collaborationRequest?.status || '';
-  const listCollaborationActionLabel =
-    !userId
-      ? 'Ask to join'
-      : collaborationStatus === 'pending'
-        ? 'Request sent'
-        : collaborationStatus === 'invited'
-          ? 'Join team'
-          : collaborationStatus === 'accepted'
-            ? 'Work together'
-            : 'Ask to join';
+  const listCollaborationActionLabel = !userId
+    ? 'Ask to join'
+    : collaborationStatus === 'pending'
+      ? 'Request sent'
+      : collaborationStatus === 'invited'
+        ? 'Join team'
+        : collaborationStatus === 'accepted'
+          ? 'Work together'
+          : 'Ask to join';
   const listCollaborationActionIcon =
     collaborationStatus === 'pending'
       ? 'clock'
@@ -624,7 +642,7 @@ export default function BuildProjectListItem({
                   <button
                     type="button"
                     className={detailsButtonClass}
-                      onClick={handleAddDescriptionClick}
+                    onClick={handleAddDescriptionClick}
                   >
                     {detailsActionLabel}
                   </button>
@@ -776,6 +794,20 @@ export default function BuildProjectListItem({
                 <span>{listCollaborationActionLabel}</span>
               </button>
             ) : null}
+            {favoriteActionShown ? (
+              <BuildFavoriteButton
+                buildId={Number(build.id)}
+                favorited={Boolean(build.isFavorited)}
+                size="sm"
+                preventDefault
+                stopPropagation
+                onChange={(change) => onFavoriteChange?.(build, change)}
+                onError={(error, params) =>
+                  onFavoriteError?.(build, error, params)
+                }
+                onStart={(params) => onFavoriteStart?.(build, params)}
+              />
+            ) : null}
             <button
               type="button"
               className={buildPreviewAppButtonClass}
@@ -828,15 +860,15 @@ export default function BuildProjectListItem({
     onDelete?.(build);
   }
 
-  function handleForkHistoryClick(
-    event: React.MouseEvent<HTMLButtonElement>
-  ) {
+  function handleForkHistoryClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
     onOpenForkHistory?.(Number(build.id));
   }
 
-  function handlePreviewActionClick(event: React.MouseEvent<HTMLButtonElement>) {
+  function handlePreviewActionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
     event.preventDefault();
     event.stopPropagation();
     handleNavigate();
@@ -863,9 +895,7 @@ export default function BuildProjectListItem({
       navigate(`/build/${forkedBuildId}`);
     } catch (error: any) {
       setActionError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Unable to fork Build'
+        error?.response?.data?.error || error?.message || 'Unable to fork Build'
       );
     } finally {
       setActionLoading('');

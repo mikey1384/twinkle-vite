@@ -19,8 +19,22 @@ interface BuildTabFilterProps<T extends string = string> {
 }
 
 const defaultTabFilterClass = css`
+  --build-tab-accent: var(
+    --role-filterActive-color,
+    var(--role-filter-color, #1d4ed8)
+  );
+  --build-tab-accent-soft: color-mix(
+    in srgb,
+    var(--build-tab-accent) 14%,
+    transparent
+  );
+  --build-tab-accent-hover: color-mix(
+    in srgb,
+    var(--build-tab-accent) 8%,
+    transparent
+  );
   margin: -0.7rem 0 1.4rem;
-  border: 1px solid rgba(65, 140, 235, 0.24);
+  border: 1px solid var(--ui-border, rgba(65, 140, 235, 0.24));
   border-radius: ${borderRadius};
   padding: 0.35rem;
   background: #fff;
@@ -41,20 +55,34 @@ const defaultTabFilterClass = css`
   }
 
   > .nav-section > nav.active {
-    background: rgba(65, 140, 235, 0.14);
-    color: #1d4ed8 !important;
+    background: var(--build-tab-accent-soft);
+    color: var(--build-tab-accent) !important;
   }
 
   > .nav-section > nav:not(.active):hover {
-    background: rgba(65, 140, 235, 0.08);
+    background: var(--build-tab-accent-hover);
     transform: translateY(-1px);
   }
 `;
 
 const compactTabFilterClass = css`
+  --build-tab-accent: var(
+    --role-filterActive-color,
+    var(--role-filter-color, #1d4ed8)
+  );
+  --build-tab-accent-soft: color-mix(
+    in srgb,
+    var(--build-tab-accent) 14%,
+    transparent
+  );
+  --build-tab-accent-hover: color-mix(
+    in srgb,
+    var(--build-tab-accent) 8%,
+    transparent
+  );
   margin: 0;
   border: 0;
-  border-bottom: 1px solid rgba(65, 140, 235, 0.16);
+  border-bottom: 1px solid var(--ui-border, rgba(65, 140, 235, 0.16));
   border-radius: 0;
   padding: 0.35rem;
   background: #fff;
@@ -80,16 +108,30 @@ const compactTabFilterClass = css`
   }
 
   > .nav-section > nav.active {
-    background: rgba(65, 140, 235, 0.14);
-    color: #1d4ed8 !important;
+    background: var(--build-tab-accent-soft);
+    color: var(--build-tab-accent) !important;
   }
 
   > .nav-section > nav:not(.active):hover {
-    background: rgba(65, 140, 235, 0.08);
+    background: var(--build-tab-accent-hover);
   }
 `;
 
 const miniTabFilterClass = css`
+  --build-tab-accent: var(
+    --role-filterActive-color,
+    var(--role-filter-color, #1d4ed8)
+  );
+  --build-tab-accent-soft: color-mix(
+    in srgb,
+    var(--build-tab-accent) 14%,
+    transparent
+  );
+  --build-tab-accent-hover: color-mix(
+    in srgb,
+    var(--build-tab-accent) 8%,
+    transparent
+  );
   margin: 0;
   border: 0;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
@@ -118,15 +160,16 @@ const miniTabFilterClass = css`
   }
 
   > .nav-section > nav.active {
-    background: rgba(65, 140, 235, 0.14);
-    color: #1d4ed8 !important;
+    background: var(--build-tab-accent-soft);
+    color: var(--build-tab-accent) !important;
     box-shadow:
-      inset 0 0 0 1px rgba(65, 140, 235, 0.24),
+      inset 0 0 0 1px
+        color-mix(in srgb, var(--build-tab-accent) 24%, transparent),
       0 1px 5px rgba(15, 23, 42, 0.08);
   }
 
   > .nav-section > nav:not(.active):hover {
-    background: rgba(65, 140, 235, 0.08);
+    background: var(--build-tab-accent-hover);
   }
 `;
 

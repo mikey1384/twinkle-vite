@@ -214,15 +214,18 @@ export default function ContentActions(dispatch: Dispatch) {
     onInitContent({
       contentId,
       contentType,
+      requestStartedAt,
       ...data
     }: {
       contentId: number;
       contentType: string;
+      requestStartedAt?: number;
     }) {
       return dispatch({
         type: 'INIT_CONTENT',
         contentId: Number(contentId),
         contentType,
+        requestStartedAt,
         data
       });
     },
@@ -269,6 +272,23 @@ export default function ContentActions(dispatch: Dispatch) {
         likes,
         contentType,
         contentId: Number(contentId)
+      });
+    },
+    onUpdateBuildFavorite({
+      buildId,
+      isFavorited,
+      favoritedAt
+    }: {
+      buildId: number;
+      isFavorited: boolean;
+      favoritedAt?: number | null;
+    }) {
+      return dispatch({
+        type: 'UPDATE_BUILD_FAVORITE',
+        buildId: Number(buildId),
+        isFavorited,
+        favoritedAt: Number(favoritedAt || 0) || null,
+        updatedAt: Date.now()
       });
     },
     onLoadComments({

@@ -31,6 +31,15 @@ export default function UserReducer(
           searchFilter: action.filter
         }
       };
+    case 'CHANGE_BUILD_QUICK_ACCESS_MODE':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          buildQuickAccessMode:
+            action.mode === 'favorites' ? 'favorites' : 'recent'
+        }
+      };
     case 'CLEAR_USER_SEARCH':
       return {
         ...state,
