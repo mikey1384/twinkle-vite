@@ -54,39 +54,84 @@ import { useRootTheme } from '~/theme/RootThemeProvider';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const lazyImportRetryDelays = [400, 1200, 2500];
 
-const Build = lazy(() => import('~/containers/Build'));
-const BuildRuntime = lazy(() => import('~/containers/Build/Runtime'));
-const BuildThumbnailCaptureHost = lazy(
+const Build = lazyWithRetry(() => import('~/containers/Build'));
+const BuildRuntime = lazyWithRetry(() => import('~/containers/Build/Runtime'));
+const BuildThumbnailCaptureHost = lazyWithRetry(
   () => import('~/containers/Build/ThumbnailCaptureHost')
 );
-const Builds = lazy(() => import('~/containers/Builds'));
-const Chat = lazy(() => import('~/containers/Chat'));
-const ContentPage = lazy(() => import('~/containers/ContentPage'));
-const Explore = lazy(() => import('~/containers/Explore'));
-const ExploreRedirect = lazy(() => import('~/containers/Explore/ExploreRedirect'));
-const Home = lazy(() => import('~/containers/Home'));
-const LinkPage = lazy(() => import('~/containers/LinkPage'));
-const PlaylistPage = lazy(() => import('~/containers/PlaylistPage'));
-const Privacy = lazy(() => import('~/containers/Privacy'));
-const Redirect = lazy(() => import('~/containers/Redirect'));
-const MissionPage = lazy(() => import('~/containers/MissionPage'));
-const Mission = lazy(() => import('~/containers/Mission'));
-const Management = lazy(() => import('~/containers/Management'));
-const Profile = lazy(() => import('~/containers/Profile'));
-const ResetPassword = lazy(() => import('~/containers/ResetPassword'));
-const Verify = lazy(() => import('~/containers/Verify'));
-const VideoPage = lazy(() => import('~/containers/VideoPage'));
-const SigninModal = lazy(() => import('~/containers/Signin'));
-const MobileMenu = lazy(() => import('./MobileMenu'));
-const Incoming = lazy(() => import('./Stream/Incoming'));
-const Outgoing = lazy(() => import('./Stream/Outgoing'));
-const DailyRewardModal = lazy(
+const Builds = lazyWithRetry(() => import('~/containers/Builds'));
+const Chat = lazyWithRetry(() => import('~/containers/Chat'));
+const ContentPage = lazyWithRetry(() => import('~/containers/ContentPage'));
+const Explore = lazyWithRetry(() => import('~/containers/Explore'));
+const ExploreRedirect = lazyWithRetry(
+  () => import('~/containers/Explore/ExploreRedirect')
+);
+const Home = lazyWithRetry(() => import('~/containers/Home'));
+const LinkPage = lazyWithRetry(() => import('~/containers/LinkPage'));
+const PlaylistPage = lazyWithRetry(() => import('~/containers/PlaylistPage'));
+const Privacy = lazyWithRetry(() => import('~/containers/Privacy'));
+const Redirect = lazyWithRetry(() => import('~/containers/Redirect'));
+const MissionPage = lazyWithRetry(() => import('~/containers/MissionPage'));
+const Mission = lazyWithRetry(() => import('~/containers/Mission'));
+const Management = lazyWithRetry(() => import('~/containers/Management'));
+const Profile = lazyWithRetry(() => import('~/containers/Profile'));
+const ResetPassword = lazyWithRetry(() => import('~/containers/ResetPassword'));
+const Verify = lazyWithRetry(() => import('~/containers/Verify'));
+const VideoPage = lazyWithRetry(() => import('~/containers/VideoPage'));
+const SigninModal = lazyWithRetry(() => import('~/containers/Signin'));
+const MobileMenu = lazyWithRetry(() => import('./MobileMenu'));
+const Incoming = lazyWithRetry(() => import('./Stream/Incoming'));
+const Outgoing = lazyWithRetry(() => import('./Stream/Outgoing'));
+const DailyRewardModal = lazyWithRetry(
   () => import('~/components/Modals/DailyRewardModal')
 );
-const AICallWindow = lazy(() => import('./AICallWindow'));
-const AdminLogWindow = lazy(() => import('./AdminLogWindow'));
-const UpdateNotice = lazy(() => import('./UpdateNotice'));
+const AICallWindow = lazyWithRetry(() => import('./AICallWindow'));
+const AdminLogWindow = lazyWithRetry(() => import('./AdminLogWindow'));
+const UpdateNotice = lazyWithRetry(() => import('./UpdateNotice'));
+
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  importer: () => Promise<{ default: T }>
+) {
+  return lazy(() => retryLazyImport(importer));
+}
+
+async function retryLazyImport<T extends React.ComponentType<any>>(
+  importer: () => Promise<{ default: T }>
+) {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= lazyImportRetryDelays.length; attempt += 1) {
+    try {
+      return await importer();
+    } catch (error) {
+      lastError = error;
+      if (
+        attempt >= lazyImportRetryDelays.length ||
+        !isLazyImportLoadError(error)
+      ) {
+        throw error;
+      }
+      await wait(lazyImportRetryDelays[attempt]);
+    }
+  }
+  throw lastError;
+}
+
+function isLazyImportLoadError(error: unknown) {
+  const message = String((error as Error)?.message || error || '');
+  return (
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('error loading dynamically imported module') ||
+    message.includes('Importing a module script failed') ||
+    message.includes('ChunkLoadError') ||
+    message.includes('Loading chunk')
+  );
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // Workaround for browsers (like Naver Whale) that don't recalculate vw units on orientation change
 function useOrientationReflow() {
