@@ -59,6 +59,8 @@ type PublicBuildScope = 'all' | 'open_source';
 type PublicBuildSort = 'recent' | 'popular' | 'forks';
 type TodayTopViewedBuild = BuildProjectListItemData & {
   todayViewCount?: number;
+  todayFavoriteCount?: number;
+  todayTrendingWeight?: number;
 };
 type BuildQuickAccessMode = 'recent' | 'favorites';
 type QuickAccessBuild = BuildProjectListItemData & {
@@ -3161,15 +3163,27 @@ function getLoadMoreToken(data: any) {
 
 function normalizeTodayTopViewedBuild(build: any): TodayTopViewedBuild | null {
   const buildId = Number(build?.id || 0);
-  const todayViewCount = Math.max(
-    0,
-    Math.floor(Number(build?.todayViewCount) || 0)
+  const todayViewCount = normalizeNonNegativeInteger(build?.todayViewCount);
+  const todayFavoriteCount = normalizeNonNegativeInteger(
+    build?.todayFavoriteCount
   );
-  if (!buildId || todayViewCount <= 0) return null;
+  const todayTrendingWeight = normalizeNonNegativeInteger(
+    build?.todayTrendingWeight
+  );
+  if (
+    !buildId ||
+    (todayViewCount <= 0 &&
+      todayFavoriteCount <= 0 &&
+      todayTrendingWeight <= 0)
+  ) {
+    return null;
+  }
   return {
     ...build,
     id: buildId,
-    todayViewCount
+    todayViewCount,
+    todayFavoriteCount,
+    todayTrendingWeight
   };
 }
 
@@ -3198,6 +3212,10 @@ function normalizeQuickAccessCursor(cursor: unknown) {
 function normalizeOptionalTimestamp(value: unknown) {
   const timestamp = Math.floor(Number(value) || 0);
   return timestamp > 0 ? timestamp : null;
+}
+
+function normalizeNonNegativeInteger(value: unknown) {
+  return Math.max(0, Math.floor(Number(value) || 0));
 }
 
 function formatQuickAccessRelativeTime(timestamp?: number | null) {
