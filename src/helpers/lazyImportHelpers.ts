@@ -36,7 +36,7 @@ async function retryLazyImport<T extends ComponentType<any>>(
   throw lastError;
 }
 
-function isLazyImportLoadError(error: unknown) {
+export function isLazyImportLoadError(error: unknown) {
   const message = String((error as Error)?.message || error || '');
   return (
     message.includes('Failed to fetch dynamically imported module') ||

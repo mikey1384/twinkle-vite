@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
+import UpdateRecoveryNotice from '~/components/UpdateRecoveryNotice';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import URL from '~/constants/URL';
+import API_URL from '~/constants/URL';
+import { isLazyImportLoadError } from '~/helpers/lazyImportHelpers';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
 
@@ -14,6 +16,7 @@ const token = () => getStoredItem('token');
 
 interface State {
   hasError: boolean;
+  lastErrorIsLazyImportLoadError: boolean;
   recoveryKey: number;
   recoverableErrorCount: number;
 }
@@ -36,22 +39,26 @@ export default class ErrorBoundary extends Component<
     super(props);
     this.state = {
       hasError: false,
+      lastErrorIsLazyImportLoadError: false,
       recoveryKey: 0,
       recoverableErrorCount: 0
     };
   }
 
   async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    const lazyImportLoadError = isLazyImportLoadError(error);
     const shouldAutoRecover =
       this.props.autoRecoverDomMutationError &&
       isRecoverableDomMutationError(error) &&
       this.state.recoverableErrorCount < 1;
 
-    reportError({
-      componentPath: this.props.componentPath,
-      message: buildErrorMessage(error),
-      info: buildErrorInfo(errorInfo)
-    });
+    if (!shouldSuppressErrorReport(error)) {
+      reportError({
+        componentPath: this.props.componentPath,
+        message: buildErrorMessage(error),
+        info: buildErrorInfo(errorInfo)
+      });
+    }
 
     if (shouldAutoRecover) {
       this.setState((state) => ({
@@ -62,14 +69,29 @@ export default class ErrorBoundary extends Component<
       return;
     }
 
-    this.setState({ hasError: true });
+    this.setState({
+      hasError: true,
+      lastErrorIsLazyImportLoadError: lazyImportLoadError
+    });
   }
 
   render() {
     const { children, innerRef, componentPath, ...props } = this.props;
     delete (props as any).autoRecoverDomMutationError;
-    const { hasError, recoveryKey } = this.state;
+    const { hasError, lastErrorIsLazyImportLoadError, recoveryKey } =
+      this.state;
     if (hasError) {
+      if (lastErrorIsLazyImportLoadError) {
+        return (
+          <UpdateRecoveryNotice
+            buttonLabel="Reload Now"
+            detail="Press the button below to reload the app with the newest files."
+            message="The app could not finish loading one of its files. Reloading usually fixes this after an update or temporary network issue."
+            onAction={handleLazyImportRecoveryReload}
+            title="Reload Required"
+          />
+        );
+      }
       return (
         <div
           style={{
@@ -189,6 +211,28 @@ function isRecoverableDomMutationError(error: Error) {
   );
 }
 
+function shouldSuppressErrorReport(error: Error) {
+  return isKnownCrawlerUserAgent() && isLazyImportLoadError(error);
+}
+
+function isKnownCrawlerUserAgent() {
+  if (typeof navigator === 'undefined') return false;
+  const userAgent = navigator.userAgent || '';
+  return /Applebot|Googlebot|bingbot|DuckDuckBot|YandexBot|Baiduspider|facebookexternalhit|Twitterbot|Slackbot|Discordbot|LinkedInBot|crawler|spider/i.test(
+    userAgent
+  );
+}
+
+function handleLazyImportRecoveryReload() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('_twinkleLazyImportRecovery', String(Date.now()));
+    window.location.replace(url.toString());
+  } catch {
+    window.location.reload();
+  }
+}
+
 function buildErrorInfo(errorInfo: React.ErrorInfo) {
   const info = [
     getCurrentLocation(),
@@ -229,7 +273,7 @@ async function reportError({
     const {
       data: { success }
     } = await request.post(
-      `${URL}/user/error`,
+      `${API_URL}/user/error`,
       { componentPath, info, message, clientVersion },
       {
         headers: {

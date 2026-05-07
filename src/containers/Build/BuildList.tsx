@@ -1767,10 +1767,6 @@ function TodayTopViewedShowcase({
               />
             </span>
           ) : null}
-          <span>
-            <Icon icon="eye" />
-            {formatTodayVisitLabel(build.todayViewCount)}
-          </span>
         </div>
         <div>
           <GameCTAButton
@@ -2066,12 +2062,6 @@ function normalizeTodayTopViewedBuild(
     id: buildId,
     todayViewCount
   };
-}
-
-function formatTodayVisitLabel(viewCount?: number | null) {
-  const visits = Math.max(0, Math.floor(Number(viewCount) || 0));
-  if (visits === 1) return '1 visit today';
-  return `${visits.toLocaleString()} visits today`;
 }
 
 function getBuildUsernameUser(
