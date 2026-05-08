@@ -124,6 +124,7 @@ const sdkSections: GuideSection[] = [
       'Do not build prompt-preset selection UIs from Twinkle.ai.listPrompts(); runtime chat uses message, history, and systemPrompt.',
       'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", quality: "high", requestId, onStatus }) generates or edits an image.',
       'await Twinkle.ai.chat({ message, history, systemPrompt, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided.',
+      'Twinkle.ai.chat history entries must be shaped as { role: "user" | "assistant", content: string }. Do not pass saved message objects shaped as { text } unless you map text to content first.',
       'await Twinkle.ai.generateObject({ prompt, expectedStructure, thinkingMode: "low" | "medium" | "high" }) returns a validated structured JSON object for app decisions.',
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
       'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
@@ -143,6 +144,7 @@ const sdkSections: GuideSection[] = [
     title: 'Twinkle.characters',
     items: [
       'await Twinkle.characters.chat({ character: "zero" | "ciel", thinkingMode: "low" | "medium" | "high", message, history, roomContext, scene, instructions, includeWebsiteContext, onText, onStatus }) talks to the real Zero or Ciel runtime bridge.',
+      'Use character history entries shaped as { role: "user" | "assistant", content: string, speaker?: string }. content is the canonical text field; roomContext is for the shared scene transcript both characters should know.',
       'Pass onText/onStatus for streaming dialogue; omit callbacks when the app only needs the final response.',
       'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
       'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
@@ -226,7 +228,9 @@ const sdkSections: GuideSection[] = [
       'Twinkle.profileComments.getProfileComments(...), getProfileCommentIds(...), getCommentsByIds(idsOrOpts), and getProfileCommentCounts(idsOrOpts) are focused profile-comment reads.',
       'Twinkle.users.getUser(userId) returns { id, username, profilePicUrl } or null; getUsers({ search, userIds, cursor, limit }) returns a paged user list.',
       'Twinkle.reflections.getDailyReflections(...) and getDailyReflectionsByUser(userId, ...) return daily reflection feed rows.',
-      'Twinkle.chat.listRooms(), createRoom({ roomKey, name }), listMessages(roomKey, ...), sendMessage(roomKey, textOrOptions, options), deleteMessage(messageId), and subscribe(roomKey, listener) support app-scoped chat.',
+      'Twinkle.chat.listRooms(), createRoom({ roomKey, name }), listMessages(roomKey, ...), deleteMessage(messageId), and subscribe(roomKey, listener) support app-scoped chat.',
+      'Twinkle.chat.sendMessage(roomKey, "hi") or Twinkle.chat.sendMessage(roomKey, { text, metadata, clientMessageId }) posts app-scoped chat messages.',
+      'Twinkle.chat.subscribe(roomKey, listener) receives realtime events like { type: "message.created", roomKey, message } and returns unsubscribe.',
       'Twinkle.reminders.list(...), create(...), update(reminderId, patch), remove(reminderId), and getDue(...) support per-viewer reminder rules.',
       'These namespaces are available only when capabilities permit them.',
       'Prefer capability checks and small, explicit SDK calls over guessing method names.'
