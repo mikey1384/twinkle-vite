@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import BuildFavoriteButton, {
+import FavoriteButton, {
   type BuildFavoriteChange
-} from '~/components/Buttons/BuildFavoriteButton';
+} from '~/containers/Build/shared/components/FavoriteButton';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import UsernameText from '~/components/Texts/UsernameText';
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/BuildProjectListItem';
-import BuildPreviewFrame from '~/containers/Build/shared/components/BuildPreviewFrame';
+import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
+import PreviewFrame from '~/containers/Build/shared/components/PreviewFrame';
 import { mobileMaxWidth } from '~/constants/css';
-import BuildTabFilter from '../BuildTabFilter';
+import TabFilter from '../TabFilter';
 import {
   formatQuickAccessRelativeTime,
   getBuildUsernameUser
@@ -465,7 +465,7 @@ export function BuildQuickAccessStrip({
         </h2>
         <div className={quickAccessHeaderActionsClass}>
           <div className={quickAccessFilterWrapClass}>
-            <BuildTabFilter
+            <TabFilter
               activeTab={activeMode}
               color={color}
               density="mini"
@@ -556,7 +556,7 @@ function BuildQuickAccessCard({
         onClick={() => onOpen(build)}
         aria-label={`Open ${title}`}
       >
-        <BuildPreviewFrame
+        <PreviewFrame
           className={quickAccessCardPreviewClass}
           thumbnailUrl={build.thumbnailUrl}
           alt={`${title} screenshot`}
@@ -598,7 +598,7 @@ function BuildQuickAccessCard({
             <Icon icon="external-link-alt" />
             <span className={quickAccessCardOpenTextClass}>Open</span>
           </button>
-          <BuildFavoriteButton
+          <FavoriteButton
             buildId={Number(build.id)}
             favorited={isFavorited}
             size="sm"

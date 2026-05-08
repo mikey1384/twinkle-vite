@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { CIEL_PFP_URL, CIEL_TWINKLE_ID } from '~/constants/defaultValues';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function InfoModal({ onHide }: { onHide: () => void }) {
   const [usermenuShown, setUsermenuShown] = useState(false);

@@ -5,7 +5,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import CategoryInput from './CategoryInput';
 import CategoryModal from './CategoryModal';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function GrammarCategories({
   style

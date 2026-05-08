@@ -3,7 +3,7 @@ import Button from '~/components/Button';
 import StartScreen from './StartScreen';
 import SelectFromArchive from './SelectFromArchive';
 import Modal from '~/components/Modal';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function AddPictureModal({

@@ -7,7 +7,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 

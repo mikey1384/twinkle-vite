@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { isEqual } from 'lodash';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const youLabel = 'You';

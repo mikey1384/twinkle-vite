@@ -2,7 +2,7 @@ import React from 'react';
 import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 export default function HomeSectionHeader({
   title,

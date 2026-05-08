@@ -20,7 +20,7 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const clearLabel = 'Clear';
 const rewardLabel = 'Reward';

@@ -12,7 +12,7 @@ import {
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
-import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useNavigate, useParams } from 'react-router-dom';
 

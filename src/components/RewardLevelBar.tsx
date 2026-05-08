@@ -3,7 +3,7 @@ import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { isMobile, isTablet } from '~/helpers';
 
 const rewardLevelLabel = 'Effort Level';

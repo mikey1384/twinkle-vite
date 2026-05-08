@@ -3,7 +3,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import Icon from '~/components/Icon';
 import RankBadge from '~/components/RankBadge';
 import { getRankDigitCount, getRankFontScale } from '~/helpers/rankHelpers';

@@ -4,14 +4,14 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import BuildProjectListItem, {
+import ProjectListItem, {
   BuildProjectListItemData
-} from '~/containers/Build/shared/components/BuildProjectListItem';
-import type { BuildFavoriteChange } from '~/components/Buttons/BuildFavoriteButton';
-import BuildForkHistoryModal from '~/containers/Build/shared/components/BuildForkHistoryModal';
+} from '~/containers/Build/shared/components/ProjectListItem';
+import type { BuildFavoriteChange } from '~/containers/Build/shared/components/FavoriteButton';
+import ForkHistoryModal from '~/containers/Build/shared/components/ForkHistoryModal';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
-import BuildDescriptionModal from '~/containers/Build/BuildDescriptionModal';
+import DescriptionModal from '~/containers/Build/DescriptionModal';
 import SelectPinnedBuildsModal from './SelectPinnedBuildsModal';
 import { useLocation } from 'react-router-dom';
 
@@ -238,7 +238,7 @@ export default function Builds({
           `}
         >
           {shownBuilds.map((build) => (
-            <BuildProjectListItem
+            <ProjectListItem
               key={build.id}
               build={build}
               to={`/app/${build.id}`}
@@ -262,7 +262,7 @@ export default function Builds({
         />
       )}
       {editingBuild && (
-        <BuildDescriptionModal
+        <DescriptionModal
           initialTitle={editingBuild.title}
           initialDescription={editingBuild.description}
           loading={savingMetadata}
@@ -271,7 +271,7 @@ export default function Builds({
         />
       )}
       {forkHistoryBuildId ? (
-        <BuildForkHistoryModal
+        <ForkHistoryModal
           buildId={forkHistoryBuildId}
           isOpen
           onClose={() => setForkHistoryBuildId(null)}

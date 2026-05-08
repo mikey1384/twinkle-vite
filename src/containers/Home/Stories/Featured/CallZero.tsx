@@ -19,7 +19,7 @@ import {
 } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import NextDayCountdown from '~/components/NextDayCountdown';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 interface AiUsagePolicy {
   hasVerifiedEmail?: boolean;

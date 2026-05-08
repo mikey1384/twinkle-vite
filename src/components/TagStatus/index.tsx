@@ -5,7 +5,7 @@ import { hashify } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import Icon from '~/components/Icon';
 
 const addVideoToPlaylistsLabel = 'Add Video to Playlists';

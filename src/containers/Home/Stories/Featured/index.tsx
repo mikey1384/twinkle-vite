@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import FeaturedSubjects from './FeaturedSubjects';
+import FeaturedSubjects from './Subjects';
 import CallZero from './CallZero';
 import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';

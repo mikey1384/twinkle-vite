@@ -16,7 +16,7 @@ import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 
 const deviceIsMobile = isMobile(navigator);
 const changeThemeMobileLabel = 'Theme';

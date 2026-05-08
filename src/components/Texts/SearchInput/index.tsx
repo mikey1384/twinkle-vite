@@ -4,7 +4,7 @@ import { Color, borderRadius } from '~/constants/css';
 import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useOutsideClick } from '~/helpers/hooks';
 
 export default function SearchInput({

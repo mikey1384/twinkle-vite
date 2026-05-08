@@ -1,8 +1,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import BuildActivityPanel, {
-  type BuildActivityItem
-} from '../BuildActivityPanel';
+import ActivityPanel, {
+  type ActivityItem
+} from '../ActivityPanel';
 import type {
   BuildActivitySubtab,
   BuildActivityTab
@@ -51,7 +51,7 @@ export default function ActivityPanels({
 }: {
   activeSubtab: BuildActivitySubtab;
   activeTab: BuildActivityTab;
-  activities: BuildActivityItem[];
+  activities: ActivityItem[];
   color?: string;
   currentUserId: number;
   error: string;
@@ -67,7 +67,7 @@ export default function ActivityPanels({
   variant: 'mobile' | 'rail';
 }) {
   const panel = (
-    <BuildActivityPanel
+    <ActivityPanel
       activeSubtab={activeSubtab}
       activeTab={activeTab}
       activities={activities}

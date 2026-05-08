@@ -10,7 +10,7 @@ import ContentLink from '~/components/ContentLink';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Content, User } from '~/types';
 
 export default function TargetPassContent({

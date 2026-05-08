@@ -5,7 +5,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import ProfilePic from '~/components/ProfilePic';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 const completedLabel = 'Completed';

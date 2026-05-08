@@ -16,7 +16,7 @@ import {
   useChatContext,
   useNotiContext
 } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import Content from './Content';
 import { DailyRewardModalProps } from './types';
 import {

@@ -6,7 +6,7 @@ import {
   borderRadius
 } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 
 export default function SideMenu({

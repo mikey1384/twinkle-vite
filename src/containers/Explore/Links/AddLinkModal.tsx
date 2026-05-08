@@ -13,7 +13,7 @@ import {
   finalizeEmoji
 } from '~/helpers/stringHelpers';
 import { useAppContext, useExploreContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function AddLinkModal({ onHide }: { onHide: () => void }) {
   const { color: doneColor } = useRoleColor('done', {

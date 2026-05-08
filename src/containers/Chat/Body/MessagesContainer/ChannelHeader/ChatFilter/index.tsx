@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import ChatFilterBar from './ChatFilterBar';
+import ChatFilterBar from './Bar';
 import TopicSelectorModal from '../../../../Modals/TopicSelectorModal';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';

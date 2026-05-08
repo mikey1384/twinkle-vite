@@ -17,7 +17,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
-import { useContentContext, useInputContext, useKeyContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
+import { useContentContext, useInputContext, useKeyContext } from '~/contexts';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const addedByLabel = 'Added by';
 const editLabel = 'Edit';

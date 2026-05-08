@@ -5,7 +5,7 @@ import Button from '~/components/Button';
 import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 

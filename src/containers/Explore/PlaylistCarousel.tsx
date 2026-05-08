@@ -12,7 +12,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { charLimit } from '~/constants/defaultValues';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 const byLabel = 'By';
 const changeVideosLabel = 'Change Videos';
 const editTitleLabel = 'Edit Title';

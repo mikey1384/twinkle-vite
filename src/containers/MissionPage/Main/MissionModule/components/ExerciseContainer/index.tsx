@@ -4,7 +4,7 @@ import SuccessMessage from './SuccessMessage';
 import FailMessage from './FailMessage';
 import Icon from '~/components/Icon';
 import CodeSandbox from '~/components/Forms/CodeSandbox';
-import useExercises from './useExercises';
+import useExercises from './hooks/useExercises';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';

@@ -7,7 +7,7 @@ import ToPanel from './ToPanel';
 import { css } from '@emotion/css';
 import { User } from '~/types';
 import { useAppContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function ConvertModal({

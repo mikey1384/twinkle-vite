@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function MadeByBar({
   username,

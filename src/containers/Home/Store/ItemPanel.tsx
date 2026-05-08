@@ -8,7 +8,7 @@ import { karmaPointTable } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 const freeLabel = 'Free';
 

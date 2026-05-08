@@ -44,7 +44,7 @@ import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 import { Comment as CommentType, Subject } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const commentRemovedLabel = 'Comment removed / no longer available';
 const replyLabel = 'Reply';

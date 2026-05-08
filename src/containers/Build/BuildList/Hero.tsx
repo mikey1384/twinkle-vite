@@ -1,13 +1,13 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import BuildFavoriteButton, {
+import FavoriteButton, {
   type BuildFavoriteChange
-} from '~/components/Buttons/BuildFavoriteButton';
+} from '~/containers/Build/shared/components/FavoriteButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
-import BuildPreviewFrame from '~/containers/Build/shared/components/BuildPreviewFrame';
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/BuildProjectListItem';
+import PreviewFrame from '~/containers/Build/shared/components/PreviewFrame';
+import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
 import { mobileMaxWidth } from '~/constants/css';
 import { getBuildUsernameUser } from './domain';
 import type { TodayTopViewedBuild } from './types';
@@ -318,7 +318,7 @@ function TodayTopViewedShowcase({
           >
             Open app
           </GameCTAButton>
-          <BuildFavoriteButton
+          <FavoriteButton
             buildId={Number(build.id)}
             favorited={isFavorited}
             size="pill"
@@ -328,7 +328,7 @@ function TodayTopViewedShowcase({
           />
         </div>
       </div>
-      <BuildPreviewFrame
+      <PreviewFrame
         className={topViewedPreviewClass}
         thumbnailUrl={build.thumbnailUrl}
         alt={`${displayTitle} screenshot`}

@@ -17,7 +17,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';

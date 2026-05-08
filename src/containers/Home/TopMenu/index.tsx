@@ -30,7 +30,7 @@ import ChessOptionsModal from './ChessOptionsModal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { getDailyRewardPreviewStreak } from '~/helpers';
-import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function TopMenu({

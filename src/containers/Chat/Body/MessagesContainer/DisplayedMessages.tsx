@@ -21,7 +21,7 @@ import { isMobile, parseChannelPath } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);

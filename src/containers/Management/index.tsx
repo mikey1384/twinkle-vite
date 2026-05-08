@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import InvalidPage from '~/components/InvalidPage';
 import FilterBar from '~/components/FilterBar';
-import ManagementRoutes from './ManagementRoutes';
+import ManagementRoutes from './Routes';
 import Loading from '~/components/Loading';
 import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';

@@ -11,7 +11,7 @@ import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import AchievementBadges from '~/components/AchievementBadges';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const searchUsersLabel = 'Search Users';
 

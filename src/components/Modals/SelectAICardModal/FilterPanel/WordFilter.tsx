@@ -9,10 +9,14 @@ import { mobileMaxWidth } from '~/constants/css';
 
 export default function WordFilter({
   selectedWord = '',
-  onSelectWord
+  onSelectWord,
+  fullWidthSearchInput = false,
+  hasStackingContext = true
 }: {
   selectedWord?: string;
   onSelectWord: (v: string) => void;
+  fullWidthSearchInput?: boolean;
+  hasStackingContext?: boolean;
 }) {
   const [searchedWords, setSearchedWords] = useState([]);
   const [searchText, setSearchText] = useState('');
@@ -26,7 +30,7 @@ export default function WordFilter({
   });
 
   return (
-    <div className={containerClass}>
+    <div className={hasStackingContext ? containerClass : flatContainerClass}>
       <div className={headerRowClass}>
         <div className="label">Word:</div>
         <SelectedWord
@@ -38,6 +42,7 @@ export default function WordFilter({
       <div className={inputWrapperClass}>
         <SearchInput
           placeholder="Search word..."
+          style={fullWidthSearchInput ? { width: '100%' } : undefined}
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedWords}
@@ -74,6 +79,18 @@ const containerClass = css`
   text-align: left;
   position: relative;
   z-index: 800;
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.5rem;
+  }
+`;
+
+const flatContainerClass = css`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.5rem;
   }

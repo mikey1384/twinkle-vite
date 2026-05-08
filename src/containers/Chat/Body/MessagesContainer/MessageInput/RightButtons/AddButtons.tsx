@@ -3,7 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import UploadButton from '~/components/Buttons/UploadButton';
 import { useAppContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function AddButtons({

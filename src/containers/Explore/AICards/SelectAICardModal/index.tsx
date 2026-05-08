@@ -11,7 +11,7 @@ import ConfirmSelectionModal from './ConfirmSelectionModal';
 import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const MAX_SELECTED_CARDS = 30;
 

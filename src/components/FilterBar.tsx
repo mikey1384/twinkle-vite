@@ -2,7 +2,7 @@ import React from 'react';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 interface FilterBarProps {
   color?: string;

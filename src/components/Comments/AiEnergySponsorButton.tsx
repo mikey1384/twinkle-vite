@@ -6,7 +6,7 @@ import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { Comment } from '~/types';
-import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 
 const PLACEHOLDER_SUFFIX =
   'needs AI Energy to reply. Someone can sponsor this reply.';

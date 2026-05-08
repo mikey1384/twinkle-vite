@@ -9,7 +9,7 @@ import { useAppContext, useChatContext } from '~/contexts';
 import Simple from './Simple';
 import Detailed from './Detailed';
 import { Card } from '~/types';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function CardThumb({
   card,

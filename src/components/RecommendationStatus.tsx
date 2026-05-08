@@ -4,7 +4,7 @@ import UserListModal from '~/components/Modals/UserListModal';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
 
 const recommendedByLabel = 'Recommended by';

@@ -6,7 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { isMobile, textIsOverflown } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 

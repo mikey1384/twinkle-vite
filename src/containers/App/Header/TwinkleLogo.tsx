@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function TwinkleLogo({
   style

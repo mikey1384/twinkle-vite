@@ -19,7 +19,7 @@ import {
   isValidYoutubeUrl,
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 const cancelLabel = 'Cancel';

@@ -10,7 +10,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { useChatContext, useInputContext } from '~/contexts';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 const deviceIsMobile = isMobile(navigator);

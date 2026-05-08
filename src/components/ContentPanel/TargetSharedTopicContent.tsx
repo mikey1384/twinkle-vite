@@ -6,7 +6,7 @@ import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Content, User } from '~/types';
 
 export default function TargetSharedTopicContent({

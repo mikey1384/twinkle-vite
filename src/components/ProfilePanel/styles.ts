@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
-import { themedCardBase } from '~/theme/themedCard';
+import { themedCardBase } from '~/theme/card';
 
 export const chatLabel = 'Chat';
 export const changePicLabel = 'Change Pic';

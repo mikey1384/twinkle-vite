@@ -11,7 +11,7 @@ import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useOutsideClick } from '~/helpers/hooks';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
+import { useSectionPanelVars } from '~/theme/hooks/useSectionPanelVars';
 
 const editLabel = 'Edit';
 

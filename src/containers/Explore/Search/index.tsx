@@ -3,7 +3,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import TopFilter from './TopFilter';
 import Results from './Results';
-import SearchBox from './SearchBox';
+import SearchBox from './Box';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation } from 'react-router-dom';
 import { getSectionFromPathname } from '~/helpers';

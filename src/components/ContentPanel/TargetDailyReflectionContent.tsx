@@ -8,7 +8,7 @@ import RichText from '~/components/Texts/RichText';
 import AnswerDailyQuestionButton from '~/components/Buttons/AnswerDailyQuestionButton';
 import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Content, User } from '~/types';
 
 export default function TargetDailyReflectionContent({

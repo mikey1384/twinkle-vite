@@ -11,7 +11,7 @@ import Loading from '~/components/Loading';
 import InvalidContent from '../InvalidContent';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { isMobile } from '~/helpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const displayIsMobile = isMobile(navigator);
 

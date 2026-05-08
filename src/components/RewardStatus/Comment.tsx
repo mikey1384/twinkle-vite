@@ -13,7 +13,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isSupermod } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';import RewardStatusLabel from './RewardStatusLabel';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';import RewardStatusLabel from './Label';
 
 const editLabel = 'Edit';
 const revokeLabel = 'Revoke';

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '~/contexts';
-import DeletedPost from '~/components/Deleted/DeletedPost';
-import DeletedMessage from '~/components/Deleted/DeletedMessage';
+import DeletedPost from '~/components/Deleted/Post';
+import DeletedMessage from '~/components/Deleted/Message';
 import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import Button from '~/components/Button';

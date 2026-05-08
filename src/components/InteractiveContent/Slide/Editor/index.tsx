@@ -28,7 +28,7 @@ import { edit } from '~/constants/placeholders';
 import { isEqual } from 'lodash';
 import { v1 as uuidv1 } from 'uuid';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function Editor({

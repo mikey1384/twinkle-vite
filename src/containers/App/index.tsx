@@ -65,7 +65,7 @@ const Chat = lazyWithRetry(() => import('~/containers/Chat'));
 const ContentPage = lazyWithRetry(() => import('~/containers/ContentPage'));
 const Explore = lazyWithRetry(() => import('~/containers/Explore'));
 const ExploreRedirect = lazyWithRetry(
-  () => import('~/containers/Explore/ExploreRedirect')
+  () => import('~/containers/Explore/Redirect')
 );
 const Home = lazyWithRetry(() => import('~/containers/Home'));
 const LinkPage = lazyWithRetry(() => import('~/containers/LinkPage'));

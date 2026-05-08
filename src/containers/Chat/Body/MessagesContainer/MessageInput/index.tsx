@@ -42,7 +42,7 @@ import {
 import LocalContext from '../../../Context';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 

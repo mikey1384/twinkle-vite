@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
-import SearchedComment from './SearchedComment';
+import SearchedComment from './Comment';
 import { useAppContext } from '~/contexts';
 import { Content, Subject, User } from '~/types';
 import ErrorBoundary from '~/components/ErrorBoundary';

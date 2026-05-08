@@ -1,7 +1,7 @@
 import React from 'react';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function PleaseLogIn() {
   const twinRole = useRoleColor('logoTwin', {

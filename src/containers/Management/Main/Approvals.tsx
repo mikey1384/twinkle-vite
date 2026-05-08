@@ -8,7 +8,7 @@ import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ApproveModal from '../Modals/ApproveModal';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function Approvals({ canManage }: { canManage: boolean }) {
   const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });

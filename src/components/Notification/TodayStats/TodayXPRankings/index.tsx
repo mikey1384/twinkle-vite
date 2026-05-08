@@ -4,7 +4,7 @@ import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import TodayXPModal from './TodayXPModal';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import LeaderboardList from '~/components/LeaderboardList';
 
 export default function TodayXPRankings() {

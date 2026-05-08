@@ -2,7 +2,7 @@ import React, { useId, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const hiddenFileInputStyle: React.CSSProperties = {
   position: 'fixed',

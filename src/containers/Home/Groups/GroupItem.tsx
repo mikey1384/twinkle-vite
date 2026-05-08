@@ -15,7 +15,7 @@ import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { getColorFromName } from '~/helpers/stringHelpers';
 import Button from '~/components/Button';
-import { themedCardBase } from '~/theme/themedCard';
+import { themedCardBase } from '~/theme/card';
 
 export default function GroupItem({
   groupId,

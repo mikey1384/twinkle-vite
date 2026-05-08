@@ -11,9 +11,9 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import AiEnergyCard from '~/components/AiEnergyCard';
-import { themedCardBase } from '~/theme/themedCard';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { themedCardBase } from '~/theme/card';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import AiEnergyDashboardModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal';
 import { FULL_RECHARGE_COST } from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal/helpers';
 

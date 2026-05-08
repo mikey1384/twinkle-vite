@@ -5,7 +5,7 @@ import RecommendPosts from './RecommendPosts';
 import RewardPosts from './RewardPosts';
 import StartMenu from './StartMenu';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { homePanelClass } from '~/theme/homePanels';
 
 export default function ActivitySuggester({

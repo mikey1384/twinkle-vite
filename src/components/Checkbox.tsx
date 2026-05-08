@@ -1,7 +1,7 @@
 import React from 'react';
 import { innerBorderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function Checkbox({
   backgroundColor = Color.inputGray(),

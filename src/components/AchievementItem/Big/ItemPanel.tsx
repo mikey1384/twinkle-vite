@@ -16,7 +16,7 @@ import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 const deviceIsMobile = isMobile(navigator);
 

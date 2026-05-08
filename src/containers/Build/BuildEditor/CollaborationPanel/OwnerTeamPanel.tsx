@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
-import BuildContributorInvitePicker from '../BuildContributorInvitePicker';
+import ContributorInvitePicker from '../ContributorInvitePicker';
 import type {
   BuildCollaborationMode,
   BuildCollaborationRequest,
@@ -301,7 +301,7 @@ export default function OwnerTeamPanel({
           <div className={rowClass}>
             <strong>Team members</strong>
           </div>
-          <BuildContributorInvitePicker
+          <ContributorInvitePicker
             buildId={rootBuildId}
             canInvite={canInviteContributors}
             contributors={contributors}

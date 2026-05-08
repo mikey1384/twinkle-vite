@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import Loading from '~/components/Loading';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
-import TwinkleVideoLink from './TwinkleVideoLink';
+import TwinkleVideoLink from './Link';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';

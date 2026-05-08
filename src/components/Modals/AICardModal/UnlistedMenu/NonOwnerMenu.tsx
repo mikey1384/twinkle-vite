@@ -5,7 +5,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import UsernameText from '~/components/Texts/UsernameText';
 import MakeOffer from '../MakeOffer';
 import MyOffer from '../MyOffer';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function NonOwnerMenu({
   burnXP,

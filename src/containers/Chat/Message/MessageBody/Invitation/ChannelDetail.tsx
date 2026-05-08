@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { useChatContext, useAppContext } from '~/contexts';
 import UserListModal from '~/components/Modals/UserListModal';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const membersLabel = 'Members';
 

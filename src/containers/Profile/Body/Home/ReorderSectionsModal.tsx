@@ -4,7 +4,7 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
 import { isEqual } from 'lodash';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 const titleLabel = 'Reorder Profile Sections';

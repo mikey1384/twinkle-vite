@@ -23,17 +23,17 @@ import {
   serializeEditableProjectFiles
 } from './projectFiles';
 import CodeWorkspacePane from './CodeWorkspacePane';
-import { usePreviewFrameManager } from './usePreviewFrameManager';
+import { useFrameManager } from './hooks/useFrameManager';
 import {
   buildEmptyRuntimeObservationState,
   ensureBuildApiToken,
   normalizeRuntimeExplorationPlan,
-  usePreviewHostBridge
-} from './usePreviewHostBridge';
+  useHostBridge
+} from './hooks/useHostBridge';
 import {
   buildPreviewBaseSrc,
   useWorkspacePreviewSrc
-} from './usePreviewSource';
+} from './hooks/useSource';
 import {
   getBuildPreviewMessageTargetOrigin
 } from '../previewOrigin';
@@ -66,11 +66,11 @@ import {
   workspaceViewOptions,
   type WorkspaceViewMode
 } from './workspaceView';
-import usePreviewAppRequests from './usePreviewAppRequests';
-import usePreviewProjectFileActions from './usePreviewProjectFileActions';
-import usePreviewProjectFileUploads from './usePreviewProjectFileUploads';
-import usePreviewProjectAssets from './usePreviewProjectAssets';
-import usePreviewVersionHistory from './usePreviewVersionHistory';
+import useAppRequests from './hooks/useAppRequests';
+import useProjectFileActions from './hooks/useProjectFileActions';
+import useProjectFileUploads from './hooks/useProjectFileUploads';
+import useProjectAssets from './hooks/useProjectAssets';
+import useVersionHistory from './hooks/useVersionHistory';
 const GUEST_RESTRICTION_BANNER_TEXT =
   'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
 
@@ -520,7 +520,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewRequestRefs,
       restoreBuildArtifactVersionRef,
       uploadBuildRuntimeFilesRef
-    } = usePreviewAppRequests();
+    } = useAppRequests();
 
     const buildApiTokenRef = useRef<{
       buildId?: number;
@@ -569,7 +569,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       saveEditableProjectFilesWithTracking,
       setEditableFiles,
       toggleFolderCollapsed
-    } = usePreviewProjectFileActions({
+    } = useProjectFileActions({
       activeFile,
       build,
       buildApiTokenRef,
@@ -609,7 +609,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       handleUploadProjectAssets,
       syncCurrentBuildRuntimeUploads,
       workspaceRuntimeAssets
-    } = usePreviewProjectAssets({
+    } = useProjectAssets({
       areProjectFileMutationsLocked,
       buildId: build.id,
       codeWorkspaceAvailable,
@@ -628,7 +628,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const {
       handleImportProjectFolder,
       handleUploadProjectFiles
-    } = usePreviewProjectFileUploads({
+    } = useProjectFileUploads({
       areProjectFileMutationsLocked,
       buildId: build.id,
       buildRef,
@@ -657,7 +657,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       setHistoryOpen,
       versions,
       handleRestoreVersion
-    } = usePreviewVersionHistory({
+    } = useVersionHistory({
       build,
       buildRef,
       isOwnerRef,
@@ -751,7 +751,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewTransitioningRef,
       primaryIframeRef,
       secondaryIframeRef
-    } = usePreviewFrameManager({
+    } = useFrameManager({
       buildId: build.id,
       runtimeOnly,
       previewCodeSignature,
@@ -880,7 +880,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       secondaryIframeRef
     ]);
 
-    usePreviewHostBridge({
+    useHostBridge({
       runtimeOnly,
       buildId: build.id,
       buildIsPublic: build.isPublic,

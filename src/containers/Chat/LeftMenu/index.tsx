@@ -6,7 +6,7 @@ import Tabs from './Tabs';
 import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
 import AIButton from './AIButton';
-import ChatFlatButton from '../ChatFlatButton';
+import ChatFlatButton from '../FlatButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';

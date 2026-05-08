@@ -11,12 +11,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { themedCardBase } from '~/theme/themedCard';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { themedCardBase } from '~/theme/card';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { REWARD_VALUE } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import useEnsureRankingsLoaded from '~/helpers/hooks/useEnsureRankingsLoaded';
 
 const tapToCollectRewardsLabel = 'Tap to collect all your rewards';

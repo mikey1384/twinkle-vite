@@ -7,7 +7,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function FileAttachment({
   messageId,

@@ -16,7 +16,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { edit } from '~/constants/placeholders';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function EditSubjectForm({

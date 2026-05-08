@@ -25,7 +25,7 @@ import {
 } from '../constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 // removed pre-play of correct sound to avoid iOS beeps on start screen
 
 const grammarGameLabel = 'Grammarbles';

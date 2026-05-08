@@ -10,7 +10,7 @@ import {
 } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';import ErrorBoundary from '~/components/ErrorBoundary';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deletedLabel = 'Deleted';
 

@@ -4,7 +4,7 @@ import RichText from '~/components/Texts/RichText';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { edit } from '~/constants/placeholders';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 const cancelLabel = 'Cancel';
 const doneLabel = 'Done';
 const noDescriptionLabel = 'No description';

@@ -1,9 +1,9 @@
 import React from 'react';
-import type { BuildFavoriteChange } from '~/components/Buttons/BuildFavoriteButton';
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/BuildProjectListItem';
-import BuildForkHistoryModal from '~/containers/Build/shared/components/BuildForkHistoryModal';
-import BuildDescriptionModal from '../BuildDescriptionModal';
-import BuildDeleteModal from '../BuildDeleteModal';
+import type { BuildFavoriteChange } from '~/containers/Build/shared/components/FavoriteButton';
+import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
+import ForkHistoryModal from '~/containers/Build/shared/components/ForkHistoryModal';
+import DescriptionModal from '../DescriptionModal';
+import DeleteModal from '../DeleteModal';
 import { BuildQuickAccessModal } from './QuickAccess';
 import type { BuildQuickAccessMode, QuickAccessBuild } from './types';
 
@@ -72,7 +72,7 @@ export default function Overlays({
   return (
     <>
       {editingBuild ? (
-        <BuildDescriptionModal
+        <DescriptionModal
           initialTitle={editingBuild.title}
           initialDescription={editingBuild.description}
           loading={savingMetadata}
@@ -81,7 +81,7 @@ export default function Overlays({
         />
       ) : null}
       {deletingBuild ? (
-        <BuildDeleteModal
+        <DeleteModal
           buildTitle={deletingBuild.title}
           loading={deleting}
           onHide={onCloseDelete}
@@ -89,7 +89,7 @@ export default function Overlays({
         />
       ) : null}
       {forkHistoryBuildId ? (
-        <BuildForkHistoryModal
+        <ForkHistoryModal
           buildId={forkHistoryBuildId}
           isOpen
           onClose={onCloseForkHistory}

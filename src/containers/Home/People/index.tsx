@@ -3,7 +3,7 @@ import SearchInput from '~/components/Texts/SearchInput';
 import ProfilePanel from '~/components/ProfilePanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
-import PeopleFilterBar from './PeopleFilterBar';
+import PeopleFilterBar from './FilterBar';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -13,7 +13,7 @@ import {
   LAST_ONLINE_FILTER_LABEL,
   RANKING_FILTER_LABEL
 } from '~/constants/defaultValues';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const searchUsersLabel = 'Search Users';
 

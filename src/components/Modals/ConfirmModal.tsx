@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const areYouSureLabel = 'Are you sure?';
 const cancelLabel = 'Cancel';

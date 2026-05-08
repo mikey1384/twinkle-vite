@@ -14,7 +14,7 @@ import { useKeyContext } from '~/contexts';
 import { useInterval } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const maxTextLength = 65;

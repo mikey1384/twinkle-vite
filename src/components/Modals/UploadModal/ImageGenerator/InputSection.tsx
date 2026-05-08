@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import ActionButton from './ActionButton';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 interface InputSectionProps {
   prompt: string;

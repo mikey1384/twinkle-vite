@@ -9,7 +9,7 @@ import Comment from './Comment';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import RewardProgressBar from './RewardProgressBar';
 
 const INITIAL_LOAD_COUNT = 1;

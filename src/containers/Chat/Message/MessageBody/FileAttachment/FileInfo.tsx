@@ -9,7 +9,7 @@ import {
   mobileMaxWidth
 } from '~/constants/css';
 import { renderFileSize } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function FileInfo({
   fileName,

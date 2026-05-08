@@ -15,7 +15,7 @@ import {
   type FocusOptionId,
   type VibeOptionId
 } from '../questionPreferences';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import {
   DEFAULT_REWARD_COLOR,
   DEFAULT_XP_NUMBER_COLOR

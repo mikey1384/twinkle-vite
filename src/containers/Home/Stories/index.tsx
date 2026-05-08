@@ -17,8 +17,8 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 const hiThereLabel = 'Hi there!';
 

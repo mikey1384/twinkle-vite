@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
-import ChangePasswordModal from './ChangePasswordModal';
+import ChangePasswordModal from './Modal';
 
 const changeMyPasswordLabel = 'Change My Password';
 

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useKeyContext } from '~/contexts';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 

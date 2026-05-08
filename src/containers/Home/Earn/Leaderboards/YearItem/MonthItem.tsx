@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import TopRanker from './TopRanker';
 import Top30Modal from './Top30Modal';
-import { themedCardBase } from '~/theme/themedCard';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { themedCardBase } from '~/theme/card';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 
 const container = css`
   ${themedCardBase};

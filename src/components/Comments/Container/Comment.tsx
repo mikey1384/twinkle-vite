@@ -56,8 +56,8 @@ import { useInView } from 'react-intersection-observer';
 import LocalContext from '../Context';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { Content } from '~/types';
-import { useThemeTokens } from '~/theme/useThemeTokens';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import ScopedTheme from '~/theme/ScopedTheme';
 
 const commentWasDeletedLabel = 'this comment was deleted';

@@ -13,7 +13,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import Community from './Community';
 import {
   defaultDonorData,

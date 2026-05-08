@@ -43,8 +43,8 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import { Content, Comment as CommentType } from '~/types';
-import { useThemeTokens } from '~/theme/useThemeTokens';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 

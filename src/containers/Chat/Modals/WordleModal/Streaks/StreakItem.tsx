@@ -5,7 +5,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { User } from '~/types';import { useRoleColor } from '~/theme/useRoleColor';
+import { User } from '~/types';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import RankBadge from '~/components/RankBadge';
 
 const youLabel = 'You';

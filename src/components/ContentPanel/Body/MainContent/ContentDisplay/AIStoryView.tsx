@@ -8,7 +8,7 @@ import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { audioRef } from '~/constants/state';
 import { useViewContext } from '~/contexts';
 import Icon from '~/components/Icon';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 function adjustColor(color: string, amount: number) {
   const match = color.match(

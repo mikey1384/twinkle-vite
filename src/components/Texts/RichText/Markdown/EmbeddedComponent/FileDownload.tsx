@@ -3,7 +3,7 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { borderRadius, Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function FileDownload({
   src,

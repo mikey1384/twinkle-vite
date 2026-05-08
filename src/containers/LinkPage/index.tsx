@@ -35,7 +35,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useLocation, useParams } from 'react-router-dom';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function LinkPage() {
   const location = useLocation();

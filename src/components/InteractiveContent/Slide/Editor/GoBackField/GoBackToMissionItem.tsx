@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function GoBackToMissionItem({
   style,

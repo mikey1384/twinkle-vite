@@ -6,7 +6,7 @@ import SortableListGroup from '~/components/SortableListGroup';
 import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
 import { useAppContext, useProfileContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function ReorderFeaturedSubjects({

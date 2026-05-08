@@ -5,8 +5,8 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
 import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function KarmaStatus({
   karmaPoints,

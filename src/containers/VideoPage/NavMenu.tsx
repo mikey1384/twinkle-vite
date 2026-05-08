@@ -19,7 +19,7 @@ import {
   useExploreContext,
   useNotiContext,
   useKeyContext
-} from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/contexts';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const hideWatchedLabel = 'Hide Watched';
 const videosLabel = 'Videos';

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Loading from '~/components/Loading';
-import type { BuildFavoriteChange } from '~/components/Buttons/BuildFavoriteButton';
+import type { BuildFavoriteChange } from '~/containers/Build/shared/components/FavoriteButton';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/BuildProjectListItem';
-import BuildTabFilter from '../BuildTabFilter';
-import type { BuildActivityItem } from '../BuildActivityPanel';
+import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
+import TabFilter from '../TabFilter';
+import type { ActivityItem } from '../ActivityPanel';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../runtimeViewSources';
 import {
   useAppContext,
@@ -233,7 +233,7 @@ export default function BuildList() {
       buildActivityCacheFreshMs
   );
   const buildActivityItems = buildActivityLoadedForCurrentUser
-    ? ((activeBuildActivityFeedState.activities || []) as BuildActivityItem[])
+    ? ((activeBuildActivityFeedState.activities || []) as ActivityItem[])
     : [];
   const buildActivityCursor = buildActivityLoadedForCurrentUser
     ? activeBuildActivityFeedState.loadMoreToken
@@ -249,7 +249,7 @@ export default function BuildList() {
     allBuildActivityFeedState.loaded
   );
   const allBuildActivityItems = allBuildActivityLoadedForCurrentUser
-    ? ((allBuildActivityFeedState.activities || []) as BuildActivityItem[])
+    ? ((allBuildActivityFeedState.activities || []) as ActivityItem[])
     : [];
   const allBuildActivityLatestPosition = getBuildActivityLatestPosition(
     allBuildActivityItems
@@ -746,7 +746,7 @@ export default function BuildList() {
             onOpenTopViewedBuild={handleOpenTodayTopViewedBuild}
           />
 
-          <BuildTabFilter
+          <TabFilter
             activeTab={activeTab}
             color={profileTheme}
             onChange={handleTabChange}
@@ -755,7 +755,7 @@ export default function BuildList() {
 
           {isPublicBrowseTab(activeTab) ? (
             <div className={browseModeFilterWrapClass}>
-              <BuildTabFilter
+              <TabFilter
                 activeTab={activeBrowseMode}
                 color={profileTheme}
                 density="compact"
@@ -1132,7 +1132,7 @@ export default function BuildList() {
         });
         if (tab === 'all') {
           void markBuildActivityPositionViewed(
-            getBuildActivityLatestPosition(activities as BuildActivityItem[])
+            getBuildActivityLatestPosition(activities as ActivityItem[])
           );
         }
         setBuildActivityError('');

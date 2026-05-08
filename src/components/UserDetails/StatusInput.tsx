@@ -5,7 +5,7 @@ import ColorSelector from '~/components/ColorSelector';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 

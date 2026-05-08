@@ -9,7 +9,7 @@ import { getSectionFromPathname } from '~/helpers';
 import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';
-import useAPISocket from './useAPISocket';
+import useAPISocket from './hooks/useAPISocket';
 
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
 import { userIdRef } from '~/constants/state';
@@ -30,7 +30,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const BalanceModal = lazyWithRetry(() => import('./BalanceModal'));
 

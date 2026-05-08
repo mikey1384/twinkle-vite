@@ -13,8 +13,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const container = css`
   width: 100%;

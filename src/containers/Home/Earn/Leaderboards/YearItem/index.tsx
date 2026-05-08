@@ -8,7 +8,7 @@ import { homePanelClass } from '~/theme/homePanels';
 import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
 import { months } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 const leaderboardLabel = 'Leaderboard';
 

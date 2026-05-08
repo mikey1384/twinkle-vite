@@ -43,7 +43,7 @@ import {
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = `Enter Description (Optional, you don't need to write this)`;

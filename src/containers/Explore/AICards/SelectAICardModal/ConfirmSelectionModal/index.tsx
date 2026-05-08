@@ -5,7 +5,7 @@ import Button from '~/components/Button';
 import Details from './Details';
 import FinalConfirm from './FinalConfirm';
 import { useAppContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const cancelLabel = 'Cancel';
 

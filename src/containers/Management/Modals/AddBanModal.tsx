@@ -11,7 +11,7 @@ import { useSearch } from '~/helpers/hooks';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { isEqual } from 'lodash';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 const searchUsersLabel = 'Search Users';

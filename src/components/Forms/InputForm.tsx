@@ -35,7 +35,7 @@ import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
 import { useDraft } from '~/helpers/hooks';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import {
   needsImageConversion,
   convertToWebFriendlyFormat

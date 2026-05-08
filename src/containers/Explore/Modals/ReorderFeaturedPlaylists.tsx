@@ -6,7 +6,7 @@ import SortableListGroup from '~/components/SortableListGroup';
 import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
 import { useAppContext, useExploreContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function ReorderFeaturedPlaylists({
   onHide,

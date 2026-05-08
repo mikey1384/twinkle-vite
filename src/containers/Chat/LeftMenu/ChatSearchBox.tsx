@@ -12,7 +12,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);

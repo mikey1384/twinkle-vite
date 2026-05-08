@@ -12,7 +12,7 @@ import { returnImageFileFromUrl } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { exceedsCharLimit, finalizeEmoji } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { convertToWebFriendlyFormat } from '~/helpers/imageHelpers';
 
 export default function ImageEditModal({

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function ReactionText({ difficulty }: { difficulty: number }) {

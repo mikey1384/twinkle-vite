@@ -4,7 +4,7 @@ import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
 import correct from './correct_sound.wav';
-import useLiveGrade from './useLiveGrade';
+import useLiveGrade from './hooks/useLiveGrade';
 
 const delay = 1000;
 

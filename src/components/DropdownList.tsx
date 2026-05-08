@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { createPortal } from 'react-dom';
 import { useOutsideClick } from '~/helpers/hooks';
 import { isMobile } from '~/helpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 

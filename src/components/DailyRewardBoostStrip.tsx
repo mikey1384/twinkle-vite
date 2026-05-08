@@ -6,7 +6,7 @@ import { useAppContext, useNotiContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
+import { useSectionPanelVars } from '~/theme/hooks/useSectionPanelVars';
 
 type Focus = 'all' | 'wordle' | 'grammarbles' | 'aiStory';
 type TaskKey = Exclude<Focus, 'all'>;

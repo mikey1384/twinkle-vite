@@ -6,7 +6,7 @@ import RichText from '~/components/Texts/RichText';
 import { Color, borderRadius } from '~/constants/css';
 import { panel } from '../../../../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 
 export default function Attempt({

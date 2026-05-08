@@ -6,7 +6,7 @@ import CheckYourEmail from '~/components/CheckYourEmail';
 import SelectEmail from '~/components/SelectEmail';
 import AskForHelp from '~/components/AskForHelp';
 import { useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function VerificationEmailSendModal({
   onHide

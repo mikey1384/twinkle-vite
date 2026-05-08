@@ -11,7 +11,7 @@ import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ItemPanel from './ItemPanel';
 import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 export default function DonorLicenseItem({
   karmaPoints,

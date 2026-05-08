@@ -9,10 +9,12 @@ import { mobileMaxWidth } from '~/constants/css';
 
 export default function CardIdFilter({
   selectedNumber = 0,
-  onSelectNumber
+  onSelectNumber,
+  fullWidthSearchInput = false
 }: {
   selectedNumber?: number;
   onSelectNumber: (v: number) => void;
+  fullWidthSearchInput?: boolean;
 }) {
   const [searchedIds, setSearchedIds] = useState([]);
   const [searchText, setSearchText] = useState('');
@@ -40,6 +42,7 @@ export default function CardIdFilter({
       <div className={inputWrapperClass}>
         <SearchInput
           placeholder="Card No."
+          style={fullWidthSearchInput ? { width: '100%' } : undefined}
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedIds}

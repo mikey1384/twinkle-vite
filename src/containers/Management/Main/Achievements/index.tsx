@@ -5,7 +5,7 @@ import Table from '../../Table';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AchievementListItem from './AchievementListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const achievementsLabel = 'Achievements';
 

@@ -39,7 +39,7 @@ import TopicMessagePreview from './TopicMessagePreview';
 import TopicStartNotification from './TopicStartNotification';
 import TransferMessage from './TransferMessage';
 import type { MessageBodyProps } from './types';
-import useOptimisticSave from './useOptimisticSave';
+import useOptimisticSave from './hooks/useOptimisticSave';
 import WordleResult from './WordleResult';
 
 function MessageBody({

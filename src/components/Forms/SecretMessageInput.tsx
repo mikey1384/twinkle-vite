@@ -23,7 +23,7 @@ import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import AlertModal from '~/components/Modals/AlertModal';
 import Attachment from '~/components/Attachment';
-import FullTextReveal from '~/components/Texts/FullTextReveal';import { useRoleColor } from '~/theme/useRoleColor';
+import FullTextReveal from '~/components/Texts/FullTextReveal';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const secretMessageLabel = 'Secret Message';
 const enterSecretMessageLabel = 'Enter Secret Message';

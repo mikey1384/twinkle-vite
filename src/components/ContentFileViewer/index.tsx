@@ -6,7 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function ContentFileViewer({
   className,

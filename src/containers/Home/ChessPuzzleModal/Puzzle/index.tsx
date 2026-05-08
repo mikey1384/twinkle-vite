@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Chess, type Square } from 'chess.js';
-import PuzzleBoard from './PuzzleBoard';
+import PuzzleBoard from './Board';
 import {
   indexToAlgebraic,
   fenToBoardState,

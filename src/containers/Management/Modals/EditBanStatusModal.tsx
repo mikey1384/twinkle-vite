@@ -9,7 +9,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { isEqual } from 'lodash';
 import { useAppContext, useManagementContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function EditBanStatusModal({
   onHide,

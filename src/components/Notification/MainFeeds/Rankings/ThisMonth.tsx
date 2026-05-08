@@ -7,8 +7,8 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { notiFilterBar } from '../../Styles';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { themedCardBase } from '~/theme/themedCard';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { themedCardBase } from '~/theme/card';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import LeaderboardList from '~/components/LeaderboardList';
 
 const myRankingLabel = 'My Ranking';

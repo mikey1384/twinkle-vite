@@ -3,7 +3,7 @@ import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';import ScopedTheme from '~/theme/ScopedTheme';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 const loadMoreLabel = 'Load More';

@@ -8,7 +8,7 @@ import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useAppContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useSearch } from '~/helpers/hooks';
 import { objectify } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';

@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useInteractiveContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function SlideListItem({
   interactiveId,

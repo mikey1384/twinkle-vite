@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
 import SelectAttachmentScreen from './SelectAttachmentScreen';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const attachContentToSubjectLabel = 'Attach a content to your subject';
 const backLabel = 'Back';

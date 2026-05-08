@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useAutoFollow } from '../useAutoFollow';
+import { useAutoFollow } from '../hooks/useAutoFollow';
 import { metaFor } from './statusMeta';
 import { shimmerAnimation } from '~/components/StreamingThoughtContent/animations';
 import StatusIcon from './StatusIcon';

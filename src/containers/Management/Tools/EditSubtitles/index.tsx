@@ -14,7 +14,7 @@ import type {
   SubtitleField,
   TimeField
 } from './types';
-import useMerge from './useMerge';
+import useMerge from './hooks/useMerge';
 
 export default function EditSubtitles({
   videoFile,

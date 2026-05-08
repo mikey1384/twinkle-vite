@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
 import { addEmoji, finalizeEmoji } from '~/helpers/stringHelpers';
 

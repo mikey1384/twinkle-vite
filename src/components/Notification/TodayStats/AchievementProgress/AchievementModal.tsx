@@ -4,7 +4,7 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import AchievementItem from '~/components/AchievementItem';
 import NextMission from './NextMission';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function AchievementModal({

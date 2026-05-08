@@ -1,9 +1,6 @@
-import React, { useState } from 'react';
-import TeenagerBadge from '~/assets/teenager.png';
-import ItemPanel from './ItemPanel';
-import ErrorBoundary from '~/components/ErrorBoundary';
-import FormModal from '../FormModal';
-import { useKeyContext } from '~/contexts';
+import React from 'react';
+import teenagerBadge from '~/assets/teenager.png';
+import AgeMilestoneItem from './AgeMilestoneItem';
 
 export default function Teenager({
   isThumb,
@@ -23,46 +20,15 @@ export default function Teenager({
   };
   style?: React.CSSProperties;
 }) {
-  const userId = useKeyContext((v) => v.myState.userId);
-  const unlockedAchievementIds = useKeyContext(
-    (v) => v.myState.unlockedAchievementIds
-  );
-  const [formModalShown, setFormModalShown] = useState(false);
   return (
-    <ErrorBoundary componentPath="AchievementItems/Teenager">
-      <ItemPanel
-        isThumb={isThumb}
-        isNotification={isNotification}
-        itemId={id}
-        style={style}
-        ap={ap}
-        isUnlocked={unlockedAchievementIds.includes(id)}
-        itemName={title}
-        milestones={milestones}
-        description={description}
-        unlockMessage={unlockMessage}
-        requirements={[
-          <>
-            Submit{' '}
-            {userId ? (
-              <a
-                style={{ fontWeight: 'bold', cursor: 'pointer' }}
-                onClick={() => setFormModalShown(true)}
-              >
-                additional profile details
-              </a>
-            ) : (
-              <span>additional profile details</span>
-            )}{' '}
-            and get your birthdate verified
-          </>,
-          'Survive childhood and enter teenage years and beyond'
-        ]}
-        badgeSrc={TeenagerBadge}
-      />
-      {formModalShown && (
-        <FormModal type="dob" onHide={() => setFormModalShown(false)} />
-      )}
-    </ErrorBoundary>
+    <AgeMilestoneItem
+      badgeSrc={teenagerBadge}
+      componentPath="AchievementItems/Teenager"
+      isThumb={isThumb}
+      isNotification={isNotification}
+      data={{ id, ap, title, description, milestones, unlockMessage }}
+      secondaryRequirement="Survive childhood and enter teenage years and beyond"
+      style={style}
+    />
   );
 }

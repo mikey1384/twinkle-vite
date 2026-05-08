@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import zero from '~/assets/zero.png';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import ZeroModal from './ZeroModal';
 
 export default function ZeroButton({

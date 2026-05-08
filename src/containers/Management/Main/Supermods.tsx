@@ -16,7 +16,7 @@ import {
   FOUNDER_LABEL
 } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/useRoleColor';
+import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const nowLabel = 'now';
 const onlineLabel = 'Online';

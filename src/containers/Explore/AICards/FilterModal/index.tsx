@@ -8,7 +8,7 @@ import QualityFilter from './QualityFilter';
 import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
 import EngineFilter from './EngineFilter';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function FilterModal({
   filters,

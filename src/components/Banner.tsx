@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function Banner({
   children,

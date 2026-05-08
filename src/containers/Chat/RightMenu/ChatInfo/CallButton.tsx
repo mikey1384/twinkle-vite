@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import ChatFlatButton from '../../ChatFlatButton';
+import ChatFlatButton from '../../FlatButton';
 
 const callLabel = 'Call';
 const hangUpLabel = 'Hang Up';

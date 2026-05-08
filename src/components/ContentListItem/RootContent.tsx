@@ -15,7 +15,7 @@ import {
   desktopMinWidth,
   borderRadius
 } from '~/constants/css';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { css } from '@emotion/css';
 
 function setAlphaExact(rgba: string, a: number) {

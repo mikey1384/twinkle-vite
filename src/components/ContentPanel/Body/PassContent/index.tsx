@@ -2,7 +2,7 @@ import React from 'react';
 import MissionPass from './MissionPass';
 import AchievementItem from '~/components/AchievementItem';
 import { Content, User } from '~/types';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function PassContent({
   uploader,

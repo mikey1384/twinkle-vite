@@ -10,7 +10,7 @@ import { Color } from '~/constants/css';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import URL from '~/constants/URL';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const API_URL = `${URL}/chat`;
 

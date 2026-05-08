@@ -11,7 +11,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import VocabQuizModal from './VocabQuizModal';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import AiEnergyCard from '~/components/AiEnergyCard';

@@ -39,7 +39,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deleteLabel = 'Delete';
 const editLabel = 'Edit';

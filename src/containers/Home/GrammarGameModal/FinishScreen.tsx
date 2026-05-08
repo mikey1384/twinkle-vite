@@ -5,7 +5,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScoreBonus } from './constants';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 

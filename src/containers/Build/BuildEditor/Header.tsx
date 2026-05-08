@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import { BuildForkHistoryTrigger } from '~/containers/Build/shared/components/BuildForkHistoryModal';
+import { ForkHistoryTrigger } from '~/containers/Build/shared/components/ForkHistoryModal';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
@@ -720,7 +720,7 @@ export default function Header({
             <h2 className={headerTitleClass}>{displayTitle}</h2>
             {relationshipLabels.map((label) =>
               label === 'fork' ? (
-                <BuildForkHistoryTrigger
+                <ForkHistoryTrigger
                   key={label}
                   buildId={Number(build.id)}
                   className={titleRelationshipBadgeClass}
@@ -728,7 +728,7 @@ export default function Header({
                 >
                   <Icon icon="code-branch" />
                   Fork
-                </BuildForkHistoryTrigger>
+                </ForkHistoryTrigger>
               ) : (
                 <span
                   key={label}

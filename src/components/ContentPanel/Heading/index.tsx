@@ -1,6 +1,6 @@
 import React, { useMemo, memo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
-import HeadingText from './HeadingText';
+import HeadingText from './Text';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useNavigate } from 'react-router-dom';
 import { timeSince, formatDate } from '~/helpers/timeStampHelpers';

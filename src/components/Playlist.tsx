@@ -8,7 +8,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const eitherRemovedOrNeverExistedLabel =
   'It is either removed or never existed in the first place';

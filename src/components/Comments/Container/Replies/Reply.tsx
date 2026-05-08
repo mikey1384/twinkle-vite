@@ -44,8 +44,8 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';import { Comment } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useThemeTokens } from '~/theme/useThemeTokens';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';

@@ -1,4 +1,4 @@
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/BuildProjectListItem';
+import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
 import type { BuildStudioTab } from '~/contexts/Build/reducer';
 
 export type BuildListTab = BuildStudioTab;

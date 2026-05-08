@@ -16,7 +16,7 @@ import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile, objectify } from '~/helpers';
 import { useAppContext, useExploreContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 

@@ -11,7 +11,7 @@ import {
   useProfileContext
 } from '~/contexts';
 import { ThemeName } from '~/theme';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import Content from './Content';
 
 function ProfilePanel({

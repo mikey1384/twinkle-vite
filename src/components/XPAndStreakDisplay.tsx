@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color, getStreakColor } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
 

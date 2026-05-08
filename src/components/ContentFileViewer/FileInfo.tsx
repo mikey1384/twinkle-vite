@@ -7,7 +7,7 @@ import {
   desktopMinWidth,
   mobileMaxWidth
 } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
 export default function FileInfo({

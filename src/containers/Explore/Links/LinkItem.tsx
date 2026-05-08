@@ -17,7 +17,7 @@ import {
   useExploreContext,
   useKeyContext
 } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 

@@ -26,7 +26,7 @@ import {
   errorHasActualCommunityFundsBalance,
   isCommunityFundRechargeAvailable
 } from '~/helpers/aiEnergy';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 interface ImageGeneratorProps {
   onImageGenerated: (file: File) => void;

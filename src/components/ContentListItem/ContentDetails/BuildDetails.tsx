@@ -1,22 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '~/components/Button';
-import BuildFavoriteButton from '~/components/Buttons/BuildFavoriteButton';
-import { BuildForkHistoryTrigger } from '~/containers/Build/shared/components/BuildForkHistoryModal';
+import FavoriteButton from '~/containers/Build/shared/components/FavoriteButton';
+import { ForkHistoryTrigger } from '~/containers/Build/shared/components/ForkHistoryModal';
+import CollaborationRequestModal from '~/containers/Build/shared/components/CollaborationRequestModal';
 import Icon from '~/components/Icon';
-import Modal from '~/components/Modal';
-import Textarea from '~/components/Texts/Textarea';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { Color } from '~/constants/css';
 import { User } from '~/types';
 import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
 } from '~/containers/Build/shared/domain/buildRelationshipLabels';
-import { formatVisitLabel } from '~/containers/Build/shared/components/BuildProjectListItem/domain';
-import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
-import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
+import { formatVisitLabel } from '~/containers/Build/shared/components/ProjectListItem/domain';
+import { useCollaborationDirectMessageUpdater } from '~/containers/Build/shared/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/containers/Build/shared/hooks/useContributionInviteStatusUpdater';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 
@@ -82,9 +79,9 @@ export default function BuildDetails({
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
   const updateBuildContributionInviteStatus =
-    useBuildContributionInviteStatusUpdater();
+    useContributionInviteStatusUpdater();
   const updateBuildCollaborationDirectMessage =
-    useBuildCollaborationDirectMessageUpdater();
+    useCollaborationDirectMessageUpdater();
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
   const [collaborationRequestModalShown, setCollaborationRequestModalShown] =
@@ -181,14 +178,14 @@ export default function BuildDetails({
       <div className="build-status-row">
         {relationshipLabels.map((label) =>
           label === 'fork' ? (
-            <BuildForkHistoryTrigger
+            <ForkHistoryTrigger
               key={label}
               buildId={buildId}
               className="build-collaborator-badge build-fork-badge"
             >
               <Icon icon="code-branch" />
               <span>Fork</span>
-            </BuildForkHistoryTrigger>
+            </ForkHistoryTrigger>
           ) : (
             <div
               key={label}
@@ -289,7 +286,7 @@ export default function BuildDetails({
           <Icon icon="external-link-alt" />
         </button>
         {showFavoriteAction ? (
-          <BuildFavoriteButton
+          <FavoriteButton
             buildId={buildId}
             favorited={favorited}
             label={favorited ? 'Favorited' : 'Favorite'}
@@ -524,174 +521,22 @@ export default function BuildDetails({
   }
 
   function renderCollaborationRequestModal() {
-    const pending = collaborationRequest?.status === 'pending';
-    const accepted = collaborationRequest?.status === 'accepted';
-    const invited = collaborationRequest?.status === 'invited';
     return (
-      <Modal
+      <CollaborationRequestModal
+        buildId={buildId}
+        error={collaborationRequestError}
+        loading={collaborationRequestLoading}
+        message={collaborationRequestMessage}
         modalKey={`BuildDetailsCollaborationRequestModal-${buildId}`}
-        isOpen
-        onClose={
-          collaborationRequestLoading
-            ? () => {}
-            : () => setCollaborationRequestModalShown(false)
-        }
-        closeOnBackdropClick={!collaborationRequestLoading}
-        title="Ask to join"
-        size="sm"
-        footer={
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '0.65rem',
-              flexWrap: 'wrap'
-            }}
-          >
-            <Button
-              variant="ghost"
-              disabled={collaborationRequestLoading}
-              onClick={() => setCollaborationRequestModalShown(false)}
-            >
-              Close
-            </Button>
-            {pending ? (
-              <Button
-                color="darkerGray"
-                variant="outline"
-                loading={collaborationRequestLoading}
-                disabled={collaborationRequestLoading}
-                onClick={handleCancelCollaborationRequest}
-              >
-                Cancel request
-              </Button>
-            ) : invited ? (
-              <>
-                <Button
-                  color="darkerGray"
-                  variant="outline"
-                  loading={collaborationRequestLoading}
-                  disabled={collaborationRequestLoading}
-                  onClick={handleDeclineContributorInvite}
-                >
-                  Decline
-                </Button>
-                <Button
-                  color="logoBlue"
-                  loading={collaborationRequestLoading}
-                  disabled={collaborationRequestLoading}
-                  onClick={handleAcceptContributorInvite}
-                >
-                  Join team
-                </Button>
-              </>
-            ) : accepted ? (
-              <Button
-                color="logoBlue"
-                loading={collaborationRequestLoading}
-                disabled={collaborationRequestLoading}
-                onClick={handleOpenCollaborationWorkspace}
-              >
-                Open workspace
-              </Button>
-            ) : (
-              <Button
-                color="pink"
-                loading={collaborationRequestLoading}
-                disabled={collaborationRequestLoading}
-                onClick={handleSubmitCollaborationRequest}
-              >
-                Send join request
-              </Button>
-            )}
-          </div>
-        }
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.9rem',
-            width: '100%'
-          }}
-        >
-          {pending ? (
-            <div
-              style={{
-                color: Color.darkGray(),
-                fontWeight: 800,
-                lineHeight: 1.4
-              }}
-            >
-              Your request has been sent. The owner can accept or decline it.
-            </div>
-          ) : invited ? (
-            <div
-              style={{
-                color: Color.logoBlue(),
-                fontWeight: 800,
-                lineHeight: 1.4
-              }}
-            >
-              The owner invited you to join the team for this Build.
-            </div>
-          ) : accepted ? (
-            <div
-              style={{
-                color: Color.logoBlue(),
-                fontWeight: 800,
-                lineHeight: 1.4
-              }}
-            >
-              You&apos;re on the team. Open the workspace to start a branch.
-            </div>
-          ) : (
-            <div
-              style={{
-                color: Color.darkGray(),
-                fontWeight: 700,
-                lineHeight: 1.45
-              }}
-            >
-              Ask the owner if you can join the team.
-            </div>
-          )}
-          {!accepted && !invited ? (
-            <Textarea
-              value={collaborationRequestMessage}
-              onChange={(event) =>
-                setCollaborationRequestMessage(event.target.value)
-              }
-              disabled={pending || collaborationRequestLoading}
-              maxLength={1000}
-              minRows={4}
-              maxRows={8}
-              placeholder="Optional message"
-            />
-          ) : null}
-          {collaborationRequest?.ownerHidden ? (
-            <div
-              style={{
-                color: Color.darkGray(0.7),
-                fontSize: '1.1rem',
-                fontWeight: 700
-              }}
-            >
-              This request is saved in the owner&apos;s hidden request list.
-            </div>
-          ) : null}
-          {collaborationRequestError ? (
-            <div
-              style={{
-                color: '#be123c',
-                fontWeight: 800
-              }}
-            >
-              {collaborationRequestError}
-            </div>
-          ) : null}
-        </div>
-      </Modal>
+        request={collaborationRequest}
+        onAcceptInvite={handleAcceptContributorInvite}
+        onCancelRequest={handleCancelCollaborationRequest}
+        onClose={() => setCollaborationRequestModalShown(false)}
+        onDeclineInvite={handleDeclineContributorInvite}
+        onMessageChange={setCollaborationRequestMessage}
+        onOpenWorkspace={handleOpenCollaborationWorkspace}
+        onSubmitRequest={handleSubmitCollaborationRequest}
+      />
     );
   }
 }

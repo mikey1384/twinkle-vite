@@ -12,7 +12,7 @@ import {
 import { socket } from '~/constants/sockets/api';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const logInLabel = 'Log In';
 const profileLabel = 'Profile';

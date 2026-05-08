@@ -7,7 +7,7 @@ import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import { useAppContext, useContentContext, useHomeContext } from '~/contexts';
 import { Color, borderRadius } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 

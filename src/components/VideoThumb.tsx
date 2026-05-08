@@ -10,7 +10,7 @@ import { css } from '@emotion/css';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 import { textIsOverflown, isMobile } from '~/helpers';
 import { useContentState } from '~/helpers/hooks';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 const deviceIsMobile = isMobile(navigator);
 const addedByLabel = 'Added by';
 

@@ -4,7 +4,7 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SlideListItem from '../../../SlideListItem';
 import GoBackToMissionItem from './GoBackToMissionItem';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function SelectDestinationModal({

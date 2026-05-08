@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function ListedMenu({
   burnXP,

@@ -12,22 +12,29 @@ import {
   borderRadius,
   desktopMinWidth
 } from '~/constants/css';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 
 export default function FilterPanel({
   filters,
   onDropdownShown,
-  onSetFilters
+  onSetFilters,
+  variant = 'default'
 }: {
   filters: any;
-  onDropdownShown: () => void;
+  onDropdownShown: (isShown?: boolean) => void;
   onSetFilters: (filters: any) => void;
+  variant?: 'default' | 'explore';
 }) {
   const { cardVars } = useThemedCardVars({ role: 'filter' });
+  const isExploreVariant = variant === 'explore';
 
   return (
     <div style={cardVars} className={panelClass}>
-      <div className={filtersGridClass}>
+      <div
+        className={
+          isExploreVariant ? exploreFiltersGridClass : filtersGridClass
+        }
+      >
         <ColorFilter
           selectedColor={filters.color}
           onSelectColor={handleSelectColor}
@@ -36,14 +43,19 @@ export default function FilterPanel({
         <StyleFilter
           selectedStyle={filters.style}
           onSelectStyle={handleSelectStyle}
+          fullWidthSearchInput={isExploreVariant}
+          hasStackingContext={!isExploreVariant}
         />
         <WordFilter
           selectedWord={filters.word}
           onSelectWord={handleSelectWord}
+          fullWidthSearchInput={isExploreVariant}
+          hasStackingContext={!isExploreVariant}
         />
         <CardIdFilter
           selectedNumber={filters.cardId}
           onSelectNumber={handleSelectNumber}
+          fullWidthSearchInput={isExploreVariant}
         />
         <QualityFilter
           selectedQuality={filters.quality}
@@ -140,8 +152,7 @@ export default function FilterPanel({
 
   function handleClearEngine() {
     onSetFilters((prevFilters: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { engine, ...rest } = prevFilters;
+      const { engine: _unusedEngine, ...rest } = prevFilters;
       return rest;
     });
   }
@@ -186,6 +197,18 @@ const filtersGridClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+`;
+
+const exploreFiltersGridClass = css`
+  width: 100%;
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: end;
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 `;
 

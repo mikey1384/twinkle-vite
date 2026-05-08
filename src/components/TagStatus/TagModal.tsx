@@ -6,7 +6,7 @@ import TagForm from '~/components/Forms/TagForm';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import { capitalize, hashify } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 function TagModal({

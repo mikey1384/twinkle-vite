@@ -12,7 +12,7 @@ import { isMobile } from '~/helpers';
 import { User } from '~/types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Icon from '~/components/Icon';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const accountTypeLabel = 'Account Type';
 const changeAccountTypeLabel = 'Change Account Type';

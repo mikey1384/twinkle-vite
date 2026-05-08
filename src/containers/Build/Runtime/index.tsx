@@ -5,7 +5,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import BuildFavoriteButton from '~/components/Buttons/BuildFavoriteButton';
+import FavoriteButton from '~/containers/Build/shared/components/FavoriteButton';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -18,15 +18,15 @@ import {
   useNotiContext
 } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
-import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
+import { useCollaborationDirectMessageUpdater } from '~/containers/Build/shared/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/containers/Build/shared/hooks/useContributionInviteStatusUpdater';
 import type { Content } from '~/types';
 import PreviewPanel from '../PreviewPanel';
 import type { PreviewMountContext } from '../PreviewPanel/types';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../runtimeViewSources';
-import { formatVisitLabel } from '../shared/components/BuildProjectListItem/domain';
+import { formatVisitLabel } from '../shared/components/ProjectListItem/domain';
 import CommentsDrawer from './CommentsDrawer';
-import CollaborationRequestModal from './CollaborationRequestModal';
+import CollaborationRequestModal from '~/containers/Build/shared/components/CollaborationRequestModal';
 import type {
   AiUsagePolicy,
   BuildCollaborationRequest,
@@ -403,9 +403,9 @@ export default function BuildRuntime() {
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
   const updateBuildContributionInviteStatus =
-    useBuildContributionInviteStatusUpdater();
+    useContributionInviteStatusUpdater();
   const updateBuildCollaborationDirectMessage =
-    useBuildCollaborationDirectMessageUpdater();
+    useCollaborationDirectMessageUpdater();
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -1227,7 +1227,7 @@ export default function BuildRuntime() {
                     </button>
                   ) : null}
                   {showRuntimeFavoriteButton ? (
-                    <BuildFavoriteButton
+                    <FavoriteButton
                       buildId={Number(build.id)}
                       favorited={Boolean(build.isFavorited)}
                       label={build.isFavorited ? 'Favorited' : 'Favorite'}

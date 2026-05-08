@@ -1,6 +1,6 @@
 import React, { JSX } from 'react';
 import { ThemeName } from '~/theme';
-import { useScopedThemeVars } from '~/theme/useScopedThemeVars';
+import { useScopedThemeVars } from '~/theme/hooks/useScopedThemeVars';
 
 interface Props {
   theme: ThemeName | string;

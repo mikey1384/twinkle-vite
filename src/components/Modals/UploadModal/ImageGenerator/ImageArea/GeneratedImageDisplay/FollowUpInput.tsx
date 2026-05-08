@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import ActionButton from '../../ActionButton';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import AiEnergyCard from '~/components/AiEnergyCard';
 
 interface CommunityFundRequirement {

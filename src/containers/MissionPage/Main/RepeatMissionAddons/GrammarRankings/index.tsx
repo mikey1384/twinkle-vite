@@ -4,7 +4,7 @@ import Ranker from './Ranker';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';import { User } from '~/types';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const myRankingLabel = 'My Ranking';
 const top30Label = 'Top 30';

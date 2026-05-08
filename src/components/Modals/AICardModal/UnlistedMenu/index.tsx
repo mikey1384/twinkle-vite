@@ -4,7 +4,7 @@ import NonOwnerMenu from './NonOwnerMenu';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function UnlistedMenu({
   burnXP,

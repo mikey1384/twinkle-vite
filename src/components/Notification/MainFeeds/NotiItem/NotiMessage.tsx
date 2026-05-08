@@ -6,7 +6,7 @@ import { User } from '~/types';
 import Button from '~/components/Button';
 import ContentLink from '~/components/ContentLink';
 import { useAppContext } from '~/contexts';
-import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
+import { useContributionInviteStatusUpdater } from '~/containers/Build/shared/hooks/useContributionInviteStatusUpdater';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 function NotiMessage({
@@ -93,7 +93,7 @@ function NotiMessage({
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
   const updateBuildContributionInviteStatus =
-    useBuildContributionInviteStatusUpdater();
+    useContributionInviteStatusUpdater();
   const [buildInviteStatusOverride, setBuildInviteStatusOverride] =
     useState('');
   const [buildInviteActionLoading, setBuildInviteActionLoading] =

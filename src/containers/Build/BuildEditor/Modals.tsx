@@ -1,11 +1,11 @@
 import React from 'react';
 import UploadModal from '~/components/Modals/UploadModal';
 import UploadFileModal from '~/containers/Chat/Modals/UploadFileModal';
-import BuildDescriptionModal from '../BuildDescriptionModal';
-import BuildCollaborationSettingsModal from './BuildCollaborationSettingsModal';
-import BuildThumbnailModal, {
-  type BuildThumbnailOption
-} from './BuildThumbnailModal';
+import DescriptionModal from '../DescriptionModal';
+import CollaborationSettingsModal from './CollaborationSettingsModal';
+import ThumbnailModal, {
+  type ThumbnailOption
+} from './ThumbnailModal';
 
 interface ModalsProps {
   build: {
@@ -29,7 +29,7 @@ interface ModalsProps {
   savingThumbnail: boolean;
   thumbnailInitialImageUrl: string | null;
   thumbnailModalShown: boolean;
-  thumbnailOptions: BuildThumbnailOption[];
+  thumbnailOptions: ThumbnailOption[];
   thumbnailOptionsLoading: boolean;
   thumbnailSaveError: string;
   onCaptureThumbnailFromPreview?: () => Promise<string>;
@@ -111,7 +111,7 @@ export default function Modals({
         />
       ) : null}
       {descriptionModalShown && canEditMetadata ? (
-        <BuildDescriptionModal
+        <DescriptionModal
           initialTitle={buildTitle}
           initialDescription={buildDescription}
           loading={savingDescription}
@@ -120,7 +120,7 @@ export default function Modals({
         />
       ) : null}
       {collaborationSettingsModalShown && isOwner ? (
-        <BuildCollaborationSettingsModal
+        <CollaborationSettingsModal
           build={build}
           canShowLumineChatVisibilitySetting={
             canShowLumineChatVisibilitySetting
@@ -130,7 +130,7 @@ export default function Modals({
         />
       ) : null}
       {thumbnailModalShown && canEditThumbnail ? (
-        <BuildThumbnailModal
+        <ThumbnailModal
           initialImageUrl={thumbnailInitialImageUrl}
           thumbnailOptions={thumbnailOptions}
           thumbnailOptionsLoading={thumbnailOptionsLoading}

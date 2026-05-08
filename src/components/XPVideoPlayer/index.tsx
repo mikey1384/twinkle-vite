@@ -19,7 +19,7 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const intervalLength = 2000;
 const deviceIsMobile = isMobile(navigator);

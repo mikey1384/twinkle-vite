@@ -2,7 +2,7 @@ import type { BuildLiveRunState } from '~/contexts/Build/reducer';
 import type {
   BuildRunMode,
   SharedBuildRunIdentityState
-} from './useBuildRunIdentity';
+} from './hooks/useRunIdentity';
 import { resolveBuildFollowUpPromptKey } from './domain/promptBindings';
 import type {
   Build,

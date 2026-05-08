@@ -7,7 +7,7 @@ import EditBanStatusModal from '../Modals/EditBanStatusModal';
 import AddBanModal from '../Modals/AddBanModal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useManagementContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
+import { useManagementContext } from '~/contexts';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const chatLabel = 'Chat';
 const chessLabel = 'Chess';

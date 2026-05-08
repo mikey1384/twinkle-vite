@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useChatContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
 import {

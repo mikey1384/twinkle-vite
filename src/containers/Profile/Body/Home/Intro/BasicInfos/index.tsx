@@ -16,7 +16,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 const editLabel = 'Edit';

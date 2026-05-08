@@ -1,12 +1,12 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import type { BuildFavoriteChange } from '~/components/Buttons/BuildFavoriteButton';
+import type { BuildFavoriteChange } from '~/containers/Build/shared/components/FavoriteButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
-import BuildProjectListItem, {
+import ProjectListItem, {
   type BuildProjectListItemData
-} from '~/containers/Build/shared/components/BuildProjectListItem';
+} from '~/containers/Build/shared/components/ProjectListItem';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { getBrowseEmptyCopy } from './domain';
 import type { BuildListTab } from './types';
@@ -187,7 +187,7 @@ export default function Results({
     return (
       <div className={buildGridClass}>
         {displayedMyBuilds.map((build) => (
-          <BuildProjectListItem
+          <ProjectListItem
             key={build.id}
             build={build}
             isOwner
@@ -222,7 +222,7 @@ export default function Results({
     <>
       <div className={buildGridClass}>
         {browseBuilds.map((build) => (
-          <BuildProjectListItem
+          <ProjectListItem
             key={build.id}
             build={build}
             to={activeTab === 'collaborating' ? `/build/${build.id}` : `/app/${build.id}`}

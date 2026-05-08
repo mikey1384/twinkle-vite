@@ -1,7 +1,7 @@
 import React, { useMemo, memo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 function InnerContent({
   likes = [],

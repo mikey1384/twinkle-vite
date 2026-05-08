@@ -9,7 +9,7 @@ import { css } from '@emotion/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts/';
 import SearchInput from '~/components/Texts/SearchInput';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 interface GroupsProps {
   id: number;

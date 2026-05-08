@@ -41,8 +41,8 @@ import type {
   MessagesContainerProps,
   SubjectMsgsModalState
 } from './types';
-import useMessageInputBridge from './useMessageInputBridge';
-import useMessageSearch from './useMessageSearch';
+import useMessageInputBridge from './hooks/useMessageInputBridge';
+import useMessageSearch from './hooks/useMessageSearch';
 import LocalContext from '../../Context';
 const deviceIsMobile = isMobile(navigator);
 

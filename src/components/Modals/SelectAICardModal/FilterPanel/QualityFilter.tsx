@@ -11,7 +11,7 @@ export default function QualityFilter({
 }: {
   selectedQuality?: string;
   onSelectQuality: (v: string) => void;
-  onDropdownShown: () => void;
+  onDropdownShown: (isShown?: boolean) => void;
 }) {
   const menuProps = useMemo(() => {
     const qualities = [

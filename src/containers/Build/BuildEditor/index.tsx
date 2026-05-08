@@ -7,43 +7,43 @@ import type {
 import CollaborationPanel from './CollaborationPanel';
 import Header from './Header';
 import VersionStartPanel from './VersionStartPanel';
-import BuildForkHistoryModal from '~/containers/Build/shared/components/BuildForkHistoryModal';
+import ForkHistoryModal from '~/containers/Build/shared/components/ForkHistoryModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Modals from './Modals';
 import Workspace from './Workspace';
-import BuildDeleteModal from '../BuildDeleteModal';
-import useBuildRunIdentity, {
+import DeleteModal from '../DeleteModal';
+import useRunIdentity, {
   getSharedBuildRunIdentityState,
   type SharedBuildRunIdentityState
-} from './useBuildRunIdentity';
-import useBuildEditorBranches from './useBuildEditorBranches';
-import useBuildEditorChatSync from './useBuildEditorChatSync';
-import useBuildEditorChatUploads from './useBuildEditorChatUploads';
-import useBuildEditorGenerationReset from './useBuildEditorGenerationReset';
-import useBuildEditorLumineSettings from './useBuildEditorLumineSettings';
-import useBuildEditorMutableState from './useBuildEditorMutableState';
-import useBuildEditorMetadata from './useBuildEditorMetadata';
-import useBuildEditorPublishing from './useBuildEditorPublishing';
-import useBuildEditorProjectFiles from './useBuildEditorProjectFiles';
-import useBuildEditorRequests from './useBuildEditorRequests';
-import useBuildEditorWorkspaceLayout from './useBuildEditorWorkspaceLayout';
-import useBuildEditorRuntimeUploads from './useBuildEditorRuntimeUploads';
-import useBuildRunOrchestration from './useBuildRunOrchestration';
-import useBuildRunRecovery from './useBuildRunRecovery';
-import useChatCommandActions from './useChatCommandActions';
-import useChatScrollControls from './useChatScrollControls';
-import useCurrentRunIdentity from './useCurrentRunIdentity';
-import useLocalChatMessages from './useLocalChatMessages';
-import useQueuedBuildRequests from './useQueuedBuildRequests';
-import useRunFeedbackEvents from './useRunFeedbackEvents';
-import useRuntimeBuildFollowUp from './useRuntimeBuildFollowUp';
-import useRunStartActions from './useRunStartActions';
-import useRunTerminalActions from './useRunTerminalActions';
-import useSharedActiveRunReconciliation from './useSharedActiveRunReconciliation';
-import useSharedBuildRunReconciliation from './useSharedBuildRunReconciliation';
-import useSharedRunCleanup from './useSharedRunCleanup';
-import useSharedTerminalRunReconciliation from './useSharedTerminalRunReconciliation';
-import useWorkspaceCommunicationActions from './useWorkspaceCommunicationActions';
+} from './hooks/useRunIdentity';
+import useBranches from './hooks/useBranches';
+import useChatSync from './hooks/useChatSync';
+import useChatUploads from './hooks/useChatUploads';
+import useGenerationReset from './hooks/useGenerationReset';
+import useLumineSettings from './hooks/useLumineSettings';
+import useMutableState from './hooks/useMutableState';
+import useMetadata from './hooks/useMetadata';
+import usePublishing from './hooks/usePublishing';
+import useProjectFiles from './hooks/useProjectFiles';
+import useRequests from './hooks/useRequests';
+import useWorkspaceLayout from './hooks/useWorkspaceLayout';
+import useRuntimeUploads from './hooks/useRuntimeUploads';
+import useRunOrchestration from './hooks/useRunOrchestration';
+import useRunRecovery from './hooks/useRunRecovery';
+import useChatCommandActions from './hooks/useChatCommandActions';
+import useChatScrollControls from './hooks/useChatScrollControls';
+import useCurrentRunIdentity from './hooks/useCurrentRunIdentity';
+import useLocalChatMessages from './hooks/useLocalChatMessages';
+import useQueuedRequests from './hooks/useQueuedRequests';
+import useRunFeedbackEvents from './hooks/useRunFeedbackEvents';
+import useRuntimeFollowUp from './hooks/useRuntimeFollowUp';
+import useRunStartActions from './hooks/useRunStartActions';
+import useRunTerminalActions from './hooks/useRunTerminalActions';
+import useSharedActiveRunReconciliation from './hooks/useSharedActiveRunReconciliation';
+import useSharedRunReconciliation from './hooks/useSharedRunReconciliation';
+import useSharedRunCleanup from './hooks/useSharedRunCleanup';
+import useSharedTerminalRunReconciliation from './hooks/useSharedTerminalRunReconciliation';
+import useWorkspaceCommunicationActions from './hooks/useWorkspaceCommunicationActions';
 import resolveCurrentBuildRunView from './resolveCurrentBuildRunView';
 import type {
   PreviewPanelHandle,
@@ -233,7 +233,7 @@ export default function BuildEditor({
     uploadBuildRuntimeFiles,
     uploadBuildThumbnail,
     uploadFile
-  } = useBuildEditorRequests();
+  } = useRequests();
   const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
   onUpdateTodayStatsRef.current = onUpdateTodayStats;
 
@@ -261,7 +261,7 @@ export default function BuildEditor({
     isDesktopWorkspaceLayout,
     workspaceShellRef,
     workspaceShellStyle
-  } = useBuildEditorWorkspaceLayout({ communicationPanelShown });
+  } = useWorkspaceLayout({ communicationPanelShown });
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const previewPanelRef = useRef<PreviewPanelHandle | null>(null);
@@ -284,12 +284,12 @@ export default function BuildEditor({
     shouldAutoScrollRef
   });
   const DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS = 8000;
-  const runOrchestration = useBuildRunOrchestration<
+  const runOrchestration = useRunOrchestration<
     QueuedBuildRequest,
     BuildRunEvent
   >();
-  const runIdentity = useBuildRunIdentity();
-  const sharedRunReconciliation = useSharedBuildRunReconciliation();
+  const runIdentity = useRunIdentity();
+  const sharedRunReconciliation = useSharedRunReconciliation();
   const currentSharedRunIdentityState =
     getSharedBuildRunIdentityState(sharedBuildRun);
   const {
@@ -336,7 +336,7 @@ export default function BuildEditor({
     requestStopForRecoveredBuildRun,
     resetDedupedProcessingReconcileState,
     scheduleDedupedProcessingReconcile
-  } = useBuildRunRecovery({
+  } = useRunRecovery({
     buildId: build.id,
     currentSharedRunIdentityState,
     dedupedProcessingRecoveryStatus: DEDUPED_PROCESSING_RECOVERY_STATUS,
@@ -361,7 +361,7 @@ export default function BuildEditor({
     maybeStartNextQueuedRequest,
     releaseQueuedRequestsIfStopTargetAlreadySettled,
     releaseQueuedRequestsWaitingForStop
-  } = useQueuedBuildRequests({
+  } = useQueuedRequests({
     appendLocalRunEvent,
     currentSharedRunIdentityState,
     getActiveBuildId: getActiveBuildRunFeedbackBuildId,
@@ -378,7 +378,7 @@ export default function BuildEditor({
     runOrchestration,
     startGeneration: startGenerationForQueue
   });
-  const runtimeFollowUp = useRuntimeBuildFollowUp({
+  const runtimeFollowUp = useRuntimeFollowUp({
     buildId: build.id,
     isOwner,
     runtimeAutoFixEnabled: RUNTIME_AUTOFIX_ENABLED,
@@ -431,7 +431,7 @@ export default function BuildEditor({
     replaceChatMessages,
     getLatestCopilotPolicy,
     replaceCopilotPolicy
-  } = useBuildEditorMutableState<Build, ChatMessage, BuildCopilotPolicy | null>(
+  } = useMutableState<Build, ChatMessage, BuildCopilotPolicy | null>(
     {
       build,
       chatMessages: mergedPersistedAndLiveChatMessages,
@@ -442,7 +442,7 @@ export default function BuildEditor({
       areChatMessagesEqual: chatMessagesEqual
     }
   );
-  const { syncChatMessagesFromServer } = useBuildEditorChatSync({
+  const { syncChatMessagesFromServer } = useChatSync({
     applyBuildUpdate,
     buildId: build.id,
     getBuildRunIdentity,
@@ -543,7 +543,7 @@ export default function BuildEditor({
     showContributionButton,
     showForkButton,
     syncAvailableBranchSummary
-  } = useBuildEditorBranches({
+  } = useBranches({
     applyBuildUpdate,
     build,
     canEditCurrentBuildProject,
@@ -583,7 +583,7 @@ export default function BuildEditor({
     thumbnailOptions,
     thumbnailOptionsLoading,
     thumbnailSaveError
-  } = useBuildEditorMetadata({
+  } = useMetadata({
     applyBuildUpdate,
     build,
     canEditCurrentBuildMetadata,
@@ -648,7 +648,7 @@ export default function BuildEditor({
     handleSaveProjectFiles,
     prepareProjectFilesForContributionAction,
     resetProjectFilesDraftState
-  } = useBuildEditorProjectFiles({
+  } = useProjectFiles({
     applyBuildUpdate,
     build,
     getLatestBuild,
@@ -671,7 +671,7 @@ export default function BuildEditor({
     handlePublish,
     handleUnpublish,
     publishing
-  } = useBuildEditorPublishing({
+  } = usePublishing({
     appendLocalRunEvent,
     applyBuildUpdate,
     build,
@@ -692,7 +692,7 @@ export default function BuildEditor({
     savedLumineChatVisibility,
     savingLumineChatVisibility,
     setAcceptedContributorCount
-  } = useBuildEditorLumineSettings({
+  } = useLumineSettings({
     applyBuildUpdate,
     build,
     currentBuildIsContributionFork,
@@ -705,7 +705,7 @@ export default function BuildEditor({
     generationResetError,
     handlePurchaseGenerationReset,
     purchasingGenerationReset
-  } = useBuildEditorGenerationReset({
+  } = useGenerationReset({
     buildId: build.id,
     isOwner,
     onApplyCopilotRequestLimitsSnapshot: applyCopilotRequestLimitsSnapshot,
@@ -729,7 +729,7 @@ export default function BuildEditor({
     runtimeUploadsLoadingMore,
     runtimeUploadsModalShown,
     runtimeUploadsNextCursor
-  } = useBuildEditorRuntimeUploads({
+  } = useRuntimeUploads({
     build,
     canEditCurrentBuildProject,
     deleteBuildRuntimeUpload,
@@ -753,7 +753,7 @@ export default function BuildEditor({
     setBuildChatUploadFileObj,
     setBuildChatUploadModalShown,
     startBuildChatUploadProcessing
-  } = useBuildEditorChatUploads({
+  } = useChatUploads({
     appendLocalBuildChatAssistantMessage,
     build,
     cleanupBuildChatReferenceUploads,
@@ -1352,7 +1352,7 @@ export default function BuildEditor({
         onUnpublish={handleUnpublish}
       />
       {forkHistoryBuildId ? (
-        <BuildForkHistoryModal
+        <ForkHistoryModal
           buildId={forkHistoryBuildId}
           isOpen
           onClose={() => setForkHistoryBuildId(0)}
@@ -1426,7 +1426,7 @@ export default function BuildEditor({
         onSubmitBuildMetadata={handleSaveMetadata}
       />
       {deletingBranch ? (
-        <BuildDeleteModal
+        <DeleteModal
           title="Delete Branch"
           actionLabel="Delete Branch"
           buildTitle={deletingBranch.confirmTitle}

@@ -8,7 +8,7 @@ import CardThumb from '~/components/CardThumb';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { Content, User } from '~/types';
 

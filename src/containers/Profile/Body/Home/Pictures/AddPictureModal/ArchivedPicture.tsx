@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { useAppContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const width = 25;
 

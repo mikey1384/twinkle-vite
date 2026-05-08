@@ -4,7 +4,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import EmailSubmitForm from './EmailSubmitForm';
 import VerificationCodeInput from './VerificationCodeInput';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function EmailVerifier() {
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });

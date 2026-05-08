@@ -6,7 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { isTablet } from '~/helpers';
 
 const deviceIsTablet = isTablet(navigator);

@@ -32,7 +32,7 @@ import {
   errorHasActualCommunityFundsBalance,
   isCommunityFundRechargeAvailable
 } from '~/helpers/aiEnergy';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 // Helper to get proxied URL for CloudFront images
 function getProxiedUrl(imageUrl: string): string {

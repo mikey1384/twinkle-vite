@@ -3,7 +3,7 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { useOutsideClick } from '~/helpers/hooks';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import {
   addEmoji,
   finalizeEmoji,

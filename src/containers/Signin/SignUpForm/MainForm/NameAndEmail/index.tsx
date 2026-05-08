@@ -4,7 +4,7 @@ import EmailSection from './EmailSection';
 import Verifier from './Verifier';import { stringIsEmpty, isValidEmailAddress } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const firstNameLabel = 'First Name';
 const lastNameLabel = 'Last Name';

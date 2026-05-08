@@ -5,7 +5,7 @@ import Link from '~/components/Link';
 import { css } from '@emotion/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function AlreadyPosted({
   contentId,

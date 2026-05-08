@@ -1,6 +1,6 @@
 import React from 'react';
-import DeletedMessage from '~/components/Deleted/DeletedMessage';
-import DeletedPost from '~/components/Deleted/DeletedPost';
+import DeletedMessage from '~/components/Deleted/Message';
+import DeletedPost from '~/components/Deleted/Post';
 import { Color } from '~/constants/css';
 
 export default function Details({

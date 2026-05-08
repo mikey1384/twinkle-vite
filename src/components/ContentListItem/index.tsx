@@ -4,7 +4,7 @@ import RootContent from './RootContent';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useContentContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 
 function ContentListItem({

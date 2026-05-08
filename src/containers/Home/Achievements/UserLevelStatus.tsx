@@ -6,7 +6,7 @@ import { Color } from '~/constants/css';
 import { useMyLevel } from '~/helpers/hooks';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 export default function UserLevelStatus({
   style

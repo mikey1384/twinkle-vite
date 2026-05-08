@@ -7,7 +7,7 @@ import Check from '../../Check';
 import AddAccountTypeModal from '../../Modals/AddAccountTypeModal';
 import EditAccountTypeModal from '../../Modals/EditAccountTypeModal';
 import Icon from '~/components/Icon';
-import { useManagementContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
+import { useManagementContext } from '~/contexts';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const addAccountTypeLabel = 'Add Account Type';
 const authLevelLabel = 'Auth Level';

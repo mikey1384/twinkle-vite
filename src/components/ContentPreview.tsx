@@ -13,8 +13,8 @@ import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
-import { useRoleColor } from '~/theme/useRoleColor';
-import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { css } from '@emotion/css';
 
 export default function ContentPreview({

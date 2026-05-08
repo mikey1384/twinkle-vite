@@ -15,7 +15,7 @@ import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 const deviceIsMobile = isMobile(navigator);
 

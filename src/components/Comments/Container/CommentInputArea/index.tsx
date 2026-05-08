@@ -8,7 +8,7 @@ import { v1 as uuidv1 } from 'uuid';
 import { expectedResponseLength } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function CommentInputArea({
   autoFocus,

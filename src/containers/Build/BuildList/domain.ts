@@ -1,4 +1,4 @@
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/BuildProjectListItem';
+import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
 import type {
   BuildActivitySubtab,
   BuildActivityTab,
@@ -6,7 +6,7 @@ import type {
   BuildStudioBrowseMode
 } from '~/contexts/Build/reducer';
 import type { User } from '~/types';
-import type { BuildActivityItem } from '../BuildActivityPanel';
+import type { ActivityItem } from '../ActivityPanel';
 import type {
   BuildActivityPosition,
   BuildListTab,
@@ -153,7 +153,7 @@ export function getBuildActivityViewedPosition(feed: BuildStudioActivityFeedStat
   });
 }
 
-export function getBuildActivityLatestPosition(activities: BuildActivityItem[]) {
+export function getBuildActivityLatestPosition(activities: ActivityItem[]) {
   return activities.reduce((latestPosition, activity) => {
     const activityPosition = getBuildActivityPosition({
       timeStamp: activity.timeStamp,

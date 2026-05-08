@@ -8,7 +8,7 @@ import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import AlertModal from '~/components/Modals/AlertModal';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const cancelLabel = 'Cancel';
 const setLabel = 'Set';

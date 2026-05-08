@@ -4,7 +4,7 @@ import ProfilePic from '~/components/ProfilePic';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import RankBadge from '~/components/RankBadge';
 
 export default function RankingsListItem({

@@ -3,7 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Link } from 'react-router-dom';
 import { Subject } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function SubjectLink({
   subject,

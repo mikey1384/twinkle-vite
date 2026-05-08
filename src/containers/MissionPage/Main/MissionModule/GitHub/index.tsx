@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import GitHubVerifier from './GitHubVerifier';
+import GitHubVerifier from './Verifier';
 import TaskComplete from '../components/TaskComplete';
 import { useKeyContext } from '~/contexts';
 

@@ -11,7 +11,7 @@ import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const searchUsersLabel = 'Search Users';
 

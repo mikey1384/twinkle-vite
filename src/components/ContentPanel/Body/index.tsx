@@ -15,7 +15,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { determineUserCanRewardThis } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import BottomInterface from './BottomInterface';
 
 const settingCannotBeChangedLabel = 'This setting cannot be changed';

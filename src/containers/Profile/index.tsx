@@ -15,7 +15,7 @@ import { useProfileState } from '~/helpers/hooks';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
-import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import { setStoredItem } from '~/helpers/userDataHelpers';

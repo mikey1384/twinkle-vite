@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import BuildPreviewFrame from '~/containers/Build/shared/components/BuildPreviewFrame';
+import PreviewFrame from '~/containers/Build/shared/components/PreviewFrame';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
@@ -799,7 +799,7 @@ export default function VersionStartPanel({
                 onClick={() => onLoadVersion(version)}
                 onKeyDown={(event) => handleBranchCardKeyDown(event, version)}
               >
-                <BuildPreviewFrame
+                <PreviewFrame
                   className={branchPreviewClass}
                   thumbnailUrl={thumbnailUrl}
                   alt={`${branchName} preview`}
@@ -810,7 +810,7 @@ export default function VersionStartPanel({
                       Current
                     </span>
                   ) : null}
-                </BuildPreviewFrame>
+                </PreviewFrame>
                 <div className={branchCardBodyClass}>
                   <div className={branchCardHeaderClass}>
                     <ProfilePic

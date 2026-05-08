@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import CurrentMission from './CurrentMission';
-import MissionList from './MissionList';
+import MissionList from './List';
 import Loading from '~/components/Loading';
 import RepeatableMissions from './RepeatableMissions';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';

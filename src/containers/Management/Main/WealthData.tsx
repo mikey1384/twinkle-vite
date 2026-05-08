@@ -4,7 +4,7 @@ import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
 import Table from '../Table';
 import { useAppContext, useManagementContext } from '~/contexts';
-import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/useRoleColor';
+import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const userLabel = 'User';
 

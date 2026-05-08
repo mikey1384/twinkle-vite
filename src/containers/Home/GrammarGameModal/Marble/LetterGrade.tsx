@@ -1,7 +1,7 @@
 import React from 'react';
 import { Color } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const shimmerAnimation = keyframes`
   0% { background-position: -200% 0; }

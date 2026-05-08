@@ -11,7 +11,7 @@ import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { objectify } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 export default function SelectFeaturedSubjectsModal({

@@ -22,7 +22,7 @@ import BuildContent from './BuildContent';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
 
 export default function Content({

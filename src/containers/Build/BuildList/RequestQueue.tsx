@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/BuildProjectListItem';
+import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
 const displayFontFamily =

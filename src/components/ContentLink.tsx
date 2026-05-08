@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { removeLineBreaks, truncateTopic } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { getBuildDisplayTitle } from '~/containers/Build/shared/domain/buildRelationshipLabels';
 
 export default function ContentLink({

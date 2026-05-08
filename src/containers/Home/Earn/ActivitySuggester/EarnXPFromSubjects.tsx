@@ -6,7 +6,7 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';import { useAppContext, useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = 'Show me another subject';

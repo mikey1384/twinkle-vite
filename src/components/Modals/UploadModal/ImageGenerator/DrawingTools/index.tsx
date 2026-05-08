@@ -1,6 +1,6 @@
 import React from 'react';
-import useDrawingTools from './useDrawingTools';
-import DrawingToolsUI from './DrawingToolsUI';
+import useDrawingTools from './hooks/useDrawingTools';
+import DrawingToolsUI from './UI';
 
 interface DrawingToolsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;

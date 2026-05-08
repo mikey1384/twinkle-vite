@@ -14,7 +14,7 @@ import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));

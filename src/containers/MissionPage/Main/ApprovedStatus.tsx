@@ -7,7 +7,7 @@ import RichText from '~/components/Texts/RichText';
 import { useMissionContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function ApprovedStatus({
   isTask,

@@ -16,7 +16,7 @@ import { useAppContext, useContentContext, useInputContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';import ThumbnailPicker from '~/components/ThumbnailPicker';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 const cancelLabel = 'Cancel';

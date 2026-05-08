@@ -13,7 +13,7 @@ import {
   useKeyContext,
   useViewContext
 } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 const BodyRef = document.scrollingElement || document.documentElement;

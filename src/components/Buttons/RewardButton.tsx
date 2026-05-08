@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import Button from '~/components/Button';import Icon from '~/components/Icon';
 import { useContentContext, useKeyContext } from '~/contexts';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';

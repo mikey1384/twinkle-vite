@@ -5,7 +5,7 @@ import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { addEmoji } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function Editor({
   missionId,

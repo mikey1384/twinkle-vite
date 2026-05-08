@@ -20,7 +20,7 @@ import { useSearch } from '~/helpers/hooks';
 import { useAppContext } from '~/contexts';
 import { isMobile, objectify } from '~/helpers';
 import { css } from '@emotion/css';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;

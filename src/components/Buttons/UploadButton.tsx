@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import UploadModal from '../Modals/UploadModal';
 

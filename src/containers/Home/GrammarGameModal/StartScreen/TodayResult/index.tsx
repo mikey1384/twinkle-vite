@@ -13,7 +13,7 @@ import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import ResultLevelRow from './ResultLevelRow';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const xpFontSize = '1.7rem';
 const mobileXpFontSize = '1.5rem';
