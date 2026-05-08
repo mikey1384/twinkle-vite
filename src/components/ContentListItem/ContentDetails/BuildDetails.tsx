@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FavoriteButton from '~/containers/Build/shared/components/FavoriteButton';
-import { ForkHistoryTrigger } from '~/containers/Build/shared/components/ForkHistoryModal';
-import CollaborationRequestModal from '~/containers/Build/shared/components/CollaborationRequestModal';
+import FavoriteButton from '~/domains/Build/shared/components/FavoriteButton';
+import { ForkHistoryTrigger } from '~/domains/Build/shared/components/ForkHistoryModal';
+import CollaborationRequestModal from '~/domains/Build/shared/components/CollaborationRequestModal';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
@@ -10,10 +10,10 @@ import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/containers/Build/shared/domain/buildRelationshipLabels';
-import { formatVisitLabel } from '~/containers/Build/shared/components/ProjectListItem/domain';
-import { useCollaborationDirectMessageUpdater } from '~/containers/Build/shared/hooks/useCollaborationDirectMessageUpdater';
-import { useContributionInviteStatusUpdater } from '~/containers/Build/shared/hooks/useContributionInviteStatusUpdater';
+} from '~/domains/Build/shared/domain/relationshipLabels';
+import { formatVisitLabel } from '~/domains/Build/shared/components/ProjectListItem/domain';
+import { useCollaborationDirectMessageUpdater } from '~/domains/Build/shared/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 

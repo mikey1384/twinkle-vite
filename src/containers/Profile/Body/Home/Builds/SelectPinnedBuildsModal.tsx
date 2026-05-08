@@ -5,7 +5,7 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import type { BuildProjectListItemData } from '~/containers/Build/shared/components/ProjectListItem';
+import type { BuildProjectListItemData } from '~/domains/Build/shared/components/ProjectListItem';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';

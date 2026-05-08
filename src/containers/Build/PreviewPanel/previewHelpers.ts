@@ -4,7 +4,7 @@ import type { BuildRuntimeObservationIssue } from '../runtimeObservationTypes';
 import {
   BUILD_APP_PREVIEW_IFRAME_SANDBOX,
   BUILD_APP_RUNTIME_IFRAME_SANDBOX
-} from '../iframePermissions';
+} from '~/domains/Build/iframePermissions';
 import { canUseSameOriginBuildPreviewSandbox } from '../previewOrigin';
 import { resolveLocalProjectPathFromBase } from './moduleRewrite';
 import { normalizeProjectFilePath } from './projectFiles';

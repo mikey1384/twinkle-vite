@@ -4,7 +4,7 @@ import Icon from '~/components/Icon';
 import {
   BUILD_APP_IFRAME_ALLOW,
   BUILD_APP_PREVIEW_IFRAME_SANDBOX
-} from '../iframePermissions';
+} from '~/domains/Build/iframePermissions';
 import { buildPreviewFrameWindowName } from '../previewOrigin';
 import type { BuildRuntimeObservationIssue } from '../runtimeObservationTypes';
 import type { PreviewFrameMeta } from './types';

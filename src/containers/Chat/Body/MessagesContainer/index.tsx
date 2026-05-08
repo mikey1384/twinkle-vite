@@ -7,7 +7,6 @@ import React, {
   useState
 } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { countdownStore } from '~/contexts/GameCountdown';
 import { v1 as uuidv1 } from 'uuid';
 import {
   GENERAL_CHAT_PATH_ID,
@@ -28,10 +27,6 @@ import {
   useKeyContext
 } from '~/contexts';
 import { User } from '~/types';
-import {
-  getLatestGameBoundaryMessageId,
-  getPendingTerminalToken
-} from '~/containers/Chat/helpers/gameMessageIds';
 import CallScreens from './CallScreens';
 import { CALL_SCREEN_HEIGHT } from './constants';
 import Content from './Content';
@@ -43,6 +38,8 @@ import type {
 } from './types';
 import useMessageInputBridge from './hooks/useMessageInputBridge';
 import useMessageSearch from './hooks/useMessageSearch';
+import useBoardTimers from './hooks/useBoardTimers';
+import useGameMoveHandlers from './hooks/useGameMoveHandlers';
 import LocalContext from '../../Context';
 const deviceIsMobile = isMobile(navigator);
 
@@ -162,9 +159,6 @@ export default function MessagesContainer({
   const textForThisChannel = useInputContext(
     (v) => v.state['chat' + selectedChannelId]?.text || ''
   );
-  const [boardCountdownObj, setBoardCountdownObj] = useState<
-    Record<number, Partial<Record<'chess' | 'omok', number | null>>>
-  >({});
   const [textAreaHeight, setTextAreaHeight] = useState(0);
   const [aiUsagePolicyHeight, setAiUsagePolicyHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
@@ -204,14 +198,16 @@ export default function MessagesContainer({
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
-  // Used only to ignore stale countdown ticks after a newer game event (move or
-  // terminal result) has already arrived for the same channel/game type.
-  const latestBoardMessageIdRef = useRef<
-    Record<number, Partial<Record<'chess' | 'omok', number>>>
-  >({});
-  const pendingTerminalTokenRef = useRef<
-    Record<number, Partial<Record<'chess' | 'omok', string>>>
-  >({});
+  const {
+    boardCountdownObj,
+    clearBoardCountdown,
+    setLatestBoardMessageId
+  } = useBoardTimers({
+    currentChannel,
+    onSetChessModalShown,
+    onSetOmokModalShown,
+    selectedChannelId
+  });
 
   const subchannel = useMemo(() => {
     if (!subchannelPath) {
@@ -486,53 +482,6 @@ export default function MessagesContainer({
   }, [wordleModalShown]);
 
   useEffect(() => {
-    const channelId = Number(currentChannel?.id || selectedChannelId || 0);
-    if (!channelId) return;
-    const latestChessMessageId = Number(
-      getLatestGameBoundaryMessageId(currentChannel, 'chess') || 0
-    );
-    const latestOmokMessageId = Number(
-      getLatestGameBoundaryMessageId(currentChannel, 'omok') || 0
-    );
-    setPendingTerminalToken({
-      channelId,
-      gameType: 'chess',
-      token: getPendingTerminalToken(currentChannel, 'chess')
-    });
-    setPendingTerminalToken({
-      channelId,
-      gameType: 'omok',
-      token: getPendingTerminalToken(currentChannel, 'omok')
-    });
-    if (latestChessMessageId > 0) {
-      setLatestBoardMessageId({
-        channelId,
-        gameType: 'chess',
-        messageId: latestChessMessageId
-      });
-    }
-    if (latestOmokMessageId > 0) {
-      setLatestBoardMessageId({
-        channelId,
-        gameType: 'omok',
-        messageId: latestOmokMessageId
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentChannel?.id,
-    currentChannel?.lastChessMessageId,
-    currentChannel?.lastChessTerminalMessageId,
-    currentChannel?.lastChessPendingTerminalToken,
-    currentChannel?.lastOmokMessageId,
-    currentChannel?.lastOmokTerminalMessageId,
-    currentChannel?.lastOmokPendingTerminalToken,
-    currentChannel?.latestChessBoardMessageId,
-    currentChannel?.latestOmokBoardMessageId,
-    selectedChannelId
-  ]);
-
-  useEffect(() => {
     if (isReloadRequired) {
       reload();
     }
@@ -550,154 +499,6 @@ export default function MessagesContainer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReloadRequired, selectedChannelId]);
-
-  useEffect(() => {
-    socket.on('chess_timer_cleared', handleBoardTimerCleared);
-    socket.on('chess_countdown_number_received', handleCountdownUpdate);
-    socket.on('new_message_received', handleReceiveMessage);
-
-    function handleBoardTimerCleared({
-      channelId,
-      gameType = 'chess'
-    }: {
-      channelId: number;
-      gameType?: 'chess' | 'omok';
-    }) {
-      // Clear the countdown store so CountdownDisplay stops showing the value
-      countdownStore.set(channelId, gameType, null);
-      setBoardCountdownObj((prev) => ({
-        ...prev,
-        [channelId]: {
-          ...(prev[channelId] || {}),
-          [gameType]: null
-        }
-      }));
-    }
-
-    function handleCountdownUpdate({
-      channelId,
-      number,
-      gameType = 'chess',
-      startMessageId
-    }: {
-      channelId: number;
-      number: number;
-      gameType?: 'chess' | 'omok';
-      startMessageId?: number;
-    }) {
-      if (hasPendingTerminalBoundary(channelId, gameType)) {
-        // A live terminal row arrived before MySQL assigned a numeric id. Any
-        // later countdown packet belongs to the finished game and must be ignored.
-        clearBoardCountdown(channelId, gameType);
-        return;
-      }
-      const normalizedStartMessageId = Number(startMessageId || 0);
-      const latestKnownMessageId = getLatestBoardMessageId(channelId, gameType);
-      if (
-        normalizedStartMessageId > 0 &&
-        latestKnownMessageId > normalizedStartMessageId
-      ) {
-        // Ignore delayed stale timer ticks after a newer move has already been saved.
-        clearBoardCountdown(channelId, gameType);
-        return;
-      }
-      if (channelId === selectedChannelId) {
-        if (gameType === 'chess' && number === 0) {
-          onSetChessModalShown(false);
-        }
-        if (gameType === 'omok' && number === 0) {
-          onSetOmokModalShown(false);
-        }
-      }
-      // Update store for countdown display (triggers only display re-render)
-      countdownStore.set(channelId, gameType, number);
-      // Only update React state when countdown activity changes (starts/ends)
-      // This prevents game board re-renders on every tick
-      setBoardCountdownObj((prev) => {
-        const wasActive =
-          typeof prev[channelId]?.[gameType] === 'number' &&
-          (prev[channelId]?.[gameType] ?? 0) > 0;
-        const isActive = typeof number === 'number' && number > 0;
-        if (wasActive !== isActive) {
-          return {
-            ...prev,
-            [channelId]: {
-              ...(prev[channelId] || {}),
-              // When countdown expires (0), keep it as 0 to block modal reopening
-              // Only timer-cleared events set this to null
-              [gameType]: isActive ? number : 0
-            }
-          };
-        }
-        return prev;
-      });
-    }
-
-    function handleReceiveMessage({ message }: { message: any }) {
-      if (message.isChessMsg) {
-        // Determine game type, respecting explicit server tag first
-        const content: string = message?.content || '';
-        const normalizedChannelId = Number(message?.channelId || 0);
-        const normalizedMessageId = Number(message?.id || 0);
-        let gameType: 'chess' | 'omok';
-        if (message.gameType === 'omok') {
-          gameType = 'omok';
-        } else if (message.gameType === 'chess') {
-          gameType = 'chess';
-        } else if (message.omokState) {
-          gameType = 'omok';
-        } else if (/omok/i.test(content)) {
-          gameType = 'omok';
-        } else {
-          gameType = 'chess';
-        }
-        const isTerminalMessage =
-          typeof message?.gameWinnerId === 'number' ||
-          !!message?.isDraw ||
-          !!message?.isAbort ||
-          !!message?.isResign;
-        if (normalizedChannelId > 0 && normalizedMessageId > 0) {
-          setLatestBoardMessageId({
-            channelId: normalizedChannelId,
-            gameType,
-            messageId: normalizedMessageId
-          });
-          if (isTerminalMessage) {
-            setPendingTerminalToken({
-              channelId: normalizedChannelId,
-              gameType,
-              token: null
-            });
-          }
-        } else if (normalizedChannelId > 0 && isTerminalMessage) {
-          setPendingTerminalToken({
-            channelId: normalizedChannelId,
-            gameType,
-            token: getPendingTerminalBoundaryToken({
-              channelId: normalizedChannelId,
-              gameType,
-              message
-            })
-          });
-        }
-        // Clear the countdown store so CountdownDisplay stops showing the value
-        countdownStore.set(message.channelId, gameType, null);
-        setBoardCountdownObj((prev) => ({
-          ...prev,
-          [message.channelId]: {
-            ...(prev[message.channelId] || {}),
-            [gameType]: null
-          }
-        }));
-      }
-    }
-
-    return function cleanUp() {
-      socket.off('chess_timer_cleared', handleBoardTimerCleared);
-      socket.off('chess_countdown_number_received', handleCountdownUpdate);
-      socket.off('new_message_received', handleReceiveMessage);
-    };
-  });
 
   useEffect(() => {
     onSetReplyTarget({ channelId: selectedChannelId, target: null });
@@ -796,266 +597,37 @@ export default function MessagesContainer({
     [chessTarget, selectedChannelId]
   );
 
-  const handleConfirmChessMove = useCallback(
-    async ({
-      state,
-      isCheckmate,
-      isStalemate,
-      previousState
-    }: {
-      state: any;
-      isCheckmate: boolean;
-      isStalemate: boolean;
-      previousState: any;
-    }) => {
-      const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : null;
-      const chessState = {
-        ...state,
-        previousState: previousState
-          ? {
-              ...previousState,
-              previousState: null
-            }
-          : null
-      };
-      const content = 'Made a chess move';
-      try {
-        if (selectedChannelId) {
-          onSetReplyTarget({ channelId: selectedChannelId, target: null });
-          // Save via HTTP API - this also triggers socket broadcast on the server
-          const { messageId, timeStamp } = await saveChatMessage({
-            message: {
-              userId,
-              content,
-              channelId: selectedChannelId,
-              chessState,
-              isChessMsg: true,
-              gameWinnerId
-            }
-          });
-          setLatestBoardMessageId({
-            channelId: selectedChannelId,
-            gameType: 'chess',
-            messageId: Number(messageId)
-          });
-          clearBoardCountdown(selectedChannelId, 'chess');
-          const messagePayload = {
-            id: messageId,
-            userId,
-            chessState,
-            isChessMsg: 1,
-            gameWinnerId,
-            profilePicUrl,
-            username,
-            content,
-            channelId: selectedChannelId,
-            timeStamp
-          };
-          onSubmitMessage({
-            messageId,
-            message: messagePayload
-          });
-          onUpdateLastChessMessageId({
-            channelId: selectedChannelId,
-            messageId: Number(messageId),
-            ...(typeof gameWinnerId === 'number'
-              ? { terminalMessageId: Number(messageId) }
-              : {})
-          });
-          onUpdateLastChessMoveViewerId({
-            channelId: selectedChannelId,
-            viewerId: userId
-          });
-          onUpdateRecentChessMessage({
-            channelId: selectedChannelId,
-            message: messagePayload
-          });
-          onScrollToBottom();
-          onSetChessModalShown(false);
-        } else {
-          if (selectedChannelId === 0 && !partner?.id) {
-            reportError({
-              componentPath: 'MessagesContainer/index',
-              message: `handleConfirmChessMove: User is trying to send the first chess message to someone but recipient ID is missing`
-            });
-            return window.location.reload();
-          }
-          const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
-            await startNewDMChannel({
-              userId,
-              chessState,
-              isChessMsg: 1,
-              gameWinnerId,
-              content,
-              recipientId: partner?.id
-            });
-          if (alreadyExists) {
-            return window.location.reload();
-          }
-          if (aiUsagePolicy) {
-            handleAiUsagePolicyUpdate(aiUsagePolicy);
-          }
-          socket.emit('join_chat_group', message.channelId);
-          socket.emit('send_bi_chat_invitation', {
-            userId: partner?.id,
-            members: currentChannel.members,
-            pathId,
-            message
-          });
-          onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
-          onCreateNewDMChannel({ channel, withoutMessage: true });
-          navigate(`/chat/${pathId}`, { replace: true });
-          onSetChessModalShown(false);
-        }
-      } catch (error) {
-        console.error(error);
-        throw error;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      currentChannel?.members,
-      currentChannel?.pathId,
-      currentChannel?.twoPeople,
-      channelName,
-      partner?.id,
-      profilePicUrl,
-      selectedChannelId,
-      userId,
-      username
-    ]
-  );
-
-  const handleConfirmOmokMove = useCallback(
-    async ({
-      state,
-      isWinning,
-      moveNumber: _moveNumber,
-      previousState
-    }: {
-      state: any;
-      isWinning: boolean;
-      moveNumber?: number;
-      previousState?: any;
-    }) => {
-      const omokState = {
-        ...state,
-        previousState: previousState
-          ? {
-              ...previousState,
-              previousState: null
-            }
-          : null
-      };
-      const gameWinnerId = isWinning ? userId : null;
-      const content = 'Made an omok move';
-      try {
-        if (selectedChannelId) {
-          onSetReplyTarget({ channelId: selectedChannelId, target: null });
-          // Save via HTTP API - this also triggers socket broadcast on the server
-          const { messageId, timeStamp } = await saveChatMessage({
-            message: {
-              userId,
-              content,
-              channelId: selectedChannelId,
-              omokState,
-              isChessMsg: true,
-              gameWinnerId
-            }
-          });
-          setLatestBoardMessageId({
-            channelId: selectedChannelId,
-            gameType: 'omok',
-            messageId: Number(messageId)
-          });
-          clearBoardCountdown(selectedChannelId, 'omok');
-          const messagePayload = {
-            id: messageId,
-            userId,
-            omokState,
-            isChessMsg: 1,
-            gameWinnerId,
-            profilePicUrl,
-            username,
-            content,
-            channelId: selectedChannelId,
-            timeStamp
-          };
-          onSubmitMessage({
-            messageId,
-            message: messagePayload
-          });
-          onUpdateLastOmokMessageId({
-            channelId: selectedChannelId,
-            messageId: Number(messageId),
-            ...(typeof gameWinnerId === 'number'
-              ? { terminalMessageId: Number(messageId) }
-              : {})
-          });
-          onUpdateLastOmokMoveViewerId({
-            channelId: selectedChannelId,
-            viewerId: userId
-          });
-          onUpdateRecentOmokMessage({
-            channelId: selectedChannelId,
-            message: messagePayload
-          });
-          onSetOmokModalShown(false);
-          onScrollToBottom();
-        } else {
-          if (selectedChannelId === 0 && !partner?.id) {
-            reportError({
-              componentPath: 'MessagesContainer/index',
-              message:
-                'handleConfirmOmokMove: User is trying to send the first omok message but recipient ID is missing'
-            });
-            return window.location.reload();
-          }
-          const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
-            await startNewDMChannel({
-              userId,
-              omokState,
-              isChessMsg: 1,
-              gameWinnerId,
-              content,
-              recipientId: partner?.id
-            });
-          if (alreadyExists) {
-            return window.location.reload();
-          }
-          if (aiUsagePolicy) {
-            handleAiUsagePolicyUpdate(aiUsagePolicy);
-          }
-          socket.emit('join_chat_group', message.channelId);
-          socket.emit('send_bi_chat_invitation', {
-            userId: partner?.id,
-            members: currentChannel.members,
-            pathId,
-            message
-          });
-          onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
-          onCreateNewDMChannel({ channel, withoutMessage: true });
-          navigate(`/chat/${pathId}`, { replace: true });
-          onSetOmokModalShown(false);
-        }
-      } catch (error) {
-        console.error(error);
-        throw error;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      currentChannel?.members,
-      currentChannel?.pathId,
-      currentChannel?.twoPeople,
-      channelName,
-      partner?.id,
-      profilePicUrl,
-      selectedChannelId,
-      userId,
-      username
-    ]
-  );
+  const {
+    handleConfirmChessMove,
+    handleConfirmOmokMove
+  } = useGameMoveHandlers({
+    clearBoardCountdown,
+    currentChannel,
+    handleAiUsagePolicyUpdate,
+    navigate,
+    onCreateNewDMChannel,
+    onScrollToBottom,
+    onSetChessModalShown,
+    onSetOmokModalShown,
+    onSetReplyTarget,
+    onSubmitMessage,
+    onUpdateChannelPathIdHash,
+    onUpdateLastChessMessageId,
+    onUpdateLastChessMoveViewerId,
+    onUpdateLastOmokMessageId,
+    onUpdateLastOmokMoveViewerId,
+    onUpdateRecentChessMessage,
+    onUpdateRecentOmokMessage,
+    partner,
+    profilePicUrl,
+    reportError,
+    saveChatMessage,
+    selectedChannelId,
+    setLatestBoardMessageId,
+    startNewDMChannel,
+    userId,
+    username
+  });
 
   const handleDelete = useCallback(async () => {
     const { messageId } = deleteModal;
@@ -1881,125 +1453,5 @@ export default function MessagesContainer({
     onSetOmokModalShown(true);
   }
 
-  function setLatestBoardMessageId({
-    channelId,
-    gameType,
-    messageId
-  }: {
-    channelId: number;
-    gameType: 'chess' | 'omok';
-    messageId: number;
-  }) {
-    const normalizedChannelId = Number(channelId || 0);
-    const normalizedMessageId = Number(messageId || 0);
-    if (!normalizedChannelId || normalizedMessageId <= 0) return;
-    const latestForType = getLatestBoardMessageId(
-      normalizedChannelId,
-      gameType
-    );
-    if (normalizedMessageId <= latestForType) return;
-    latestBoardMessageIdRef.current[normalizedChannelId] = {
-      ...(latestBoardMessageIdRef.current[normalizedChannelId] || {}),
-      [gameType]: normalizedMessageId
-    };
-    setPendingTerminalToken({
-      channelId: normalizedChannelId,
-      gameType,
-      token: null
-    });
-  }
 
-  function getLatestBoardMessageId(
-    channelId: number,
-    gameType: 'chess' | 'omok'
-  ) {
-    return Number(
-      latestBoardMessageIdRef.current[Number(channelId || 0)]?.[gameType] || 0
-    );
-  }
-
-  function setPendingTerminalToken({
-    channelId,
-    gameType,
-    token
-  }: {
-    channelId: number;
-    gameType: 'chess' | 'omok';
-    token: string | null;
-  }) {
-    const normalizedChannelId = Number(channelId || 0);
-    if (!normalizedChannelId) return;
-    const currentEntry = pendingTerminalTokenRef.current[normalizedChannelId] || {};
-    if (!token) {
-      if (!currentEntry[gameType]) return;
-      const nextEntry = { ...currentEntry };
-      delete nextEntry[gameType];
-      if (Object.keys(nextEntry).length === 0) {
-        delete pendingTerminalTokenRef.current[normalizedChannelId];
-      } else {
-        pendingTerminalTokenRef.current[normalizedChannelId] = nextEntry;
-      }
-      return;
-    }
-    pendingTerminalTokenRef.current[normalizedChannelId] = {
-      ...currentEntry,
-      [gameType]: token
-    };
-  }
-
-  function hasPendingTerminalBoundary(
-    channelId: number,
-    gameType: 'chess' | 'omok'
-  ) {
-    return Boolean(
-      pendingTerminalTokenRef.current[Number(channelId || 0)]?.[gameType]
-    );
-  }
-
-  function getPendingTerminalBoundaryToken({
-    channelId,
-    gameType,
-    message
-  }: {
-    channelId: number;
-    gameType: 'chess' | 'omok';
-    message: any;
-  }) {
-    const explicitId =
-      typeof message?.id === 'string' && message.id
-        ? message.id
-        : typeof message?.id === 'number' && message.id > 0
-        ? String(message.id)
-        : null;
-    if (explicitId) return explicitId;
-    const content =
-      typeof message?.content === 'string' ? message.content : 'terminal';
-    const timeStamp = Number(message?.timeStamp || 0);
-    const winnerId =
-      typeof message?.gameWinnerId === 'number' ? message.gameWinnerId : 0;
-    return [
-      'pending-terminal',
-      channelId,
-      gameType,
-      timeStamp,
-      winnerId,
-      Number(Boolean(message?.isDraw)),
-      Number(Boolean(message?.isAbort)),
-      Number(Boolean(message?.isResign)),
-      content
-    ].join(':');
-  }
-
-  function clearBoardCountdown(channelId: number, gameType: 'chess' | 'omok') {
-    const normalizedChannelId = Number(channelId || 0);
-    if (!normalizedChannelId) return;
-    countdownStore.set(normalizedChannelId, gameType, null);
-    setBoardCountdownObj((prev) => ({
-      ...prev,
-      [normalizedChannelId]: {
-        ...(prev[normalizedChannelId] || {}),
-        [gameType]: null
-      }
-    }));
-  }
 }

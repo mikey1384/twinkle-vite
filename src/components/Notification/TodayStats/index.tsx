@@ -14,8 +14,8 @@ import AiEnergyCard from '~/components/AiEnergyCard';
 import { themedCardBase } from '~/theme/card';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import AiEnergyDashboardModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal';
-import { FULL_RECHARGE_COST } from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal/helpers';
+import AiEnergyDashboardModal from '~/domains/AiEnergy/DashboardModal';
+import { FULL_RECHARGE_COST } from '~/domains/AiEnergy/DashboardModal/helpers';
 
 const DEFAULT_PROGRESS_COLOR = 'rgba(65, 140, 235, 1)';
 const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';

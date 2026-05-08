@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import DailyQuestionModal from '~/containers/Home/DailyQuestionModal';
+import DailyQuestionModal from '~/domains/DailyQuestion/Modal';
 import { useKeyContext, useNotiContext } from '~/contexts';
 
 export default function AnswerDailyQuestionButton({

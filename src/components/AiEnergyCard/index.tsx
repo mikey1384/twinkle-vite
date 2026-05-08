@@ -5,7 +5,7 @@ import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import AiEnergyDashboardModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal';
+import AiEnergyDashboardModal from '~/domains/AiEnergy/DashboardModal';
 
 interface CommunityFundRequirement {
   key: string;

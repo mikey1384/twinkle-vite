@@ -1,23 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import FavoriteButton from '~/containers/Build/shared/components/FavoriteButton';
+import FavoriteButton from '~/domains/Build/shared/components/FavoriteButton';
 import Button from '~/components/Button';
-import { ForkHistoryTrigger } from '~/containers/Build/shared/components/ForkHistoryModal';
-import CollaborationRequestModal from '~/containers/Build/shared/components/CollaborationRequestModal';
+import { ForkHistoryTrigger } from '~/domains/Build/shared/components/ForkHistoryModal';
+import CollaborationRequestModal from '~/domains/Build/shared/components/CollaborationRequestModal';
 import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
-import { BUILD_APP_IFRAME_ALLOW } from '~/containers/Build/iframePermissions';
+import { BUILD_APP_IFRAME_ALLOW } from '~/domains/Build/iframePermissions';
 import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/containers/Build/shared/domain/buildRelationshipLabels';
+} from '~/domains/Build/shared/domain/relationshipLabels';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
-import { useCollaborationDirectMessageUpdater } from '~/containers/Build/shared/hooks/useCollaborationDirectMessageUpdater';
-import { useContributionInviteStatusUpdater } from '~/containers/Build/shared/hooks/useContributionInviteStatusUpdater';
+import { useCollaborationDirectMessageUpdater } from '~/domains/Build/shared/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';

@@ -5,7 +5,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import FavoriteButton from '~/containers/Build/shared/components/FavoriteButton';
+import FavoriteButton from '~/domains/Build/shared/components/FavoriteButton';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -18,15 +18,15 @@ import {
   useNotiContext
 } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { useCollaborationDirectMessageUpdater } from '~/containers/Build/shared/hooks/useCollaborationDirectMessageUpdater';
-import { useContributionInviteStatusUpdater } from '~/containers/Build/shared/hooks/useContributionInviteStatusUpdater';
+import { useCollaborationDirectMessageUpdater } from '~/domains/Build/shared/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
 import type { Content } from '~/types';
 import PreviewPanel from '../PreviewPanel';
 import type { PreviewMountContext } from '../PreviewPanel/types';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../runtimeViewSources';
-import { formatVisitLabel } from '../shared/components/ProjectListItem/domain';
+import { formatVisitLabel } from '~/domains/Build/shared/components/ProjectListItem/domain';
 import CommentsDrawer from './CommentsDrawer';
-import CollaborationRequestModal from '~/containers/Build/shared/components/CollaborationRequestModal';
+import CollaborationRequestModal from '~/domains/Build/shared/components/CollaborationRequestModal';
 import type {
   AiUsagePolicy,
   BuildCollaborationRequest,

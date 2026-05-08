@@ -6,7 +6,7 @@ import { User } from '~/types';
 import Button from '~/components/Button';
 import ContentLink from '~/components/ContentLink';
 import { useAppContext } from '~/contexts';
-import { useContributionInviteStatusUpdater } from '~/containers/Build/shared/hooks/useContributionInviteStatusUpdater';
+import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 function NotiMessage({

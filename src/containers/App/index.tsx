@@ -51,6 +51,7 @@ import {
 } from '~/contexts';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import { useRootTheme } from '~/theme/RootThemeProvider';
+import useOrientationReflow from './hooks/useOrientationReflow';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -89,25 +90,6 @@ const DailyRewardModal = lazyWithRetry(
 const AICallWindow = lazyWithRetry(() => import('./AICallWindow'));
 const AdminLogWindow = lazyWithRetry(() => import('./AdminLogWindow'));
 const UpdateNotice = lazyWithRetry(() => import('./UpdateNotice'));
-
-// Workaround for browsers (like Naver Whale) that don't recalculate vw units on orientation change
-function useOrientationReflow() {
-  useEffect(() => {
-    function handleOrientationChange() {
-      // Force layout recalculation by briefly modifying zoom
-      requestAnimationFrame(() => {
-        document.body.style.zoom = '99.99%';
-        requestAnimationFrame(() => {
-          document.body.style.zoom = '';
-        });
-      });
-    }
-    window.addEventListener('orientationchange', handleOrientationChange);
-    return () => {
-      window.removeEventListener('orientationchange', handleOrientationChange);
-    };
-  }, []);
-}
 
 function BuildPreviewPassthrough() {
   const location = useLocation();

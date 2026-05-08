@@ -33,7 +33,7 @@ function parseOptionalViewerId(value: string | null) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-export default function BuildThumbnailCaptureHost() {
+export default function ThumbnailCaptureHost() {
   const { buildId } = useParams();
   const location = useLocation();
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
