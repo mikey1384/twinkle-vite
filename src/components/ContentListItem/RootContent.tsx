@@ -286,6 +286,11 @@ const rootContentCSS = css`
       background: rgba(147, 51, 234, 0.14);
       color: #6b21a8;
     }
+    .build-visit-count-badge {
+      border-color: rgba(100, 116, 139, 0.28);
+      background: rgba(100, 116, 139, 0.12);
+      color: #334155;
+    }
     .description {
       position: relative;
       z-index: 1;
@@ -570,6 +575,7 @@ export default function RootContent({
   title,
   topic,
   uploader,
+  viewCount,
   sourceBuildId,
   contributionStatus,
   rootBuildSourceBuildId,
@@ -614,6 +620,7 @@ export default function RootContent({
   title: string;
   topic?: string;
   uploader: { id: number; username: string; profileTheme?: string | null };
+  viewCount?: number;
   sourceBuildId?: number | null;
   contributionStatus?: string | null;
   rootBuildSourceBuildId?: number | null;
@@ -752,6 +759,7 @@ export default function RootContent({
         topic={topic}
         title={title}
         uploader={uploader}
+        viewCount={viewCount}
         sourceBuildId={sourceBuildId}
         contributionStatus={contributionStatus}
         rootBuildSourceBuildId={rootBuildSourceBuildId}

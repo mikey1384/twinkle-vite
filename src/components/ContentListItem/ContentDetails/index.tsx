@@ -21,6 +21,7 @@ export default function ContentDetails({
   story,
   title = '',
   uploader,
+  viewCount,
   contentId,
   topic,
   thumbUrl,
@@ -46,6 +47,7 @@ export default function ContentDetails({
   story?: string;
   title?: string;
   uploader: User;
+  viewCount?: number;
   contentId: number;
   topic?: string;
   thumbUrl?: string;
@@ -106,6 +108,7 @@ export default function ContentDetails({
           isPublic={isPublic}
           title={title}
           uploader={uploader}
+          viewCount={viewCount}
           sourceBuildId={sourceBuildId}
           contributionStatus={contributionStatus}
           rootBuildSourceBuildId={rootBuildSourceBuildId}

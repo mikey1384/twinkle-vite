@@ -125,6 +125,7 @@ function ContentListItem({
     title,
     thumbUrl,
     thumbnailUrl,
+    viewCount,
     sourceBuildId,
     contributionStatus,
     rootBuildSourceBuildId,
@@ -211,6 +212,7 @@ function ContentListItem({
               title={title}
               topic={topic}
               uploader={uploader}
+              viewCount={viewCount}
               sourceBuildId={sourceBuildId}
               contributionStatus={contributionStatus}
               rootBuildSourceBuildId={rootBuildSourceBuildId}

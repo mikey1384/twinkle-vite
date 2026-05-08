@@ -5,7 +5,7 @@ import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import BuildProjectListItem, {
   type BuildProjectListItemData
-} from '~/components/BuildProjectListItem';
+} from '~/containers/Build/shared/components/BuildProjectListItem';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { getBuildWorkspacePath } from '~/containers/Build/buildNavigation';
 

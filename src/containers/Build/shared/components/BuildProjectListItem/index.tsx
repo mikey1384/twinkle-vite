@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
-import BuildPreviewFrame from '~/components/BuildPreviewFrame';
+import BuildPreviewFrame from '~/containers/Build/shared/components/BuildPreviewFrame';
 import BuildFavoriteButton, {
   type BuildFavoriteChange
 } from '~/components/Buttons/BuildFavoriteButton';
@@ -11,13 +11,28 @@ import Textarea from '~/components/Texts/Textarea';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css, cx } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
-import { timeSince } from '~/helpers/timeStampHelpers';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
-import { getBuildDisplayTitle } from '~/containers/Build/BuildEditor/buildRelationshipLabels';
+import { getBuildDisplayTitle } from '~/containers/Build/shared/domain/buildRelationshipLabels';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
-import type { User } from '~/types';
+import {
+  formatCollaboratorCount,
+  formatForkCount,
+  formatRelativeTime,
+  formatReleaseStatusTitle,
+  formatVisitLabel,
+  getBuildUsernameUser,
+  getVisibilityTone,
+  normalizeCollaborationMode,
+  normalizeReleaseStatus,
+  toTagStyle
+} from './domain';
+import type {
+  BuildCollaborationRequest,
+  BuildProjectListItemData
+} from './types';
+export type { BuildProjectListItemData } from './types';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -370,63 +385,6 @@ const buildPreviewCollabButtonClass = css`
     transform: none;
   }
 `;
-
-interface BuildTone {
-  background: string;
-  border: string;
-  color: string;
-}
-
-interface BuildProjectListItemReleaseStatus {
-  state?: string;
-  hasUnpublishedChanges?: boolean;
-  diff?: {
-    total?: number;
-    added?: number;
-    updated?: number;
-    deleted?: number;
-  } | null;
-}
-
-interface BuildCollaborationRequest {
-  id: number;
-  inviteId?: number;
-  status: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
-  message?: string;
-  ownerHidden?: number;
-}
-
-export interface BuildProjectListItemData {
-  id: number;
-  userId?: number;
-  username?: string;
-  profilePicUrl?: string | null;
-  title: string;
-  description: string | null;
-  isPublic: boolean;
-  updatedAt: number;
-  createdAt: number;
-  hasCode?: boolean;
-  viewCount?: number;
-  publishedAt?: number | null;
-  sourceBuildId?: number | null;
-  collaborationMode?: 'private' | 'contribution' | 'open_source';
-  contributionAccess?: 'anyone' | 'invite_only';
-  contributionRootBuildId?: number | null;
-  contributionBranchNumber?: number | null;
-  contributionStatus?: string | null;
-  rootBuildUsername?: string | null;
-  rootBuildSourceBuildId?: number | null;
-  rootBuildTitle?: string | null;
-  collaboratorCount?: number;
-  forkCount?: number;
-  thumbnailUrl?: string | null;
-  pendingCollaborationRequestCount?: number;
-  latestPendingCollaborationRequestAt?: number | null;
-  releaseStatus?: BuildProjectListItemReleaseStatus | null;
-  isFavorited?: boolean;
-  favoritedAt?: number | null;
-}
 
 export default function BuildProjectListItem({
   build,
@@ -1295,91 +1253,4 @@ export default function BuildProjectListItem({
       </Modal>
     );
   }
-}
-
-function formatRelativeTime(timestamp?: number | null) {
-  if (!timestamp || Number.isNaN(Number(timestamp))) return 'just now';
-  return timeSince(Number(timestamp));
-}
-
-function formatVisitLabel(viewCount?: number | null) {
-  const visits = Number.isFinite(Number(viewCount)) ? Number(viewCount) : 0;
-  if (visits <= 0) return 'No visits yet';
-  if (visits === 1) return '1 visit';
-  return `${visits} visits`;
-}
-
-function getBuildUsernameUser(
-  build: Pick<BuildProjectListItemData, 'profilePicUrl' | 'userId' | 'username'>
-): User {
-  return {
-    id: Number(build.userId || 0),
-    profilePicUrl: build.profilePicUrl || '',
-    username: build.username || ''
-  };
-}
-
-function formatForkCount(count: number) {
-  return count === 1 ? '1 fork' : `${count.toLocaleString()} forks`;
-}
-
-function formatCollaboratorCount(count: number) {
-  return count === 1
-    ? '1 team member'
-    : `${count.toLocaleString()} team members`;
-}
-
-function normalizeReleaseStatus(
-  value?: BuildProjectListItemReleaseStatus | null
-): BuildProjectListItemReleaseStatus | null {
-  if (!value || typeof value !== 'object') return null;
-  return {
-    state: typeof value.state === 'string' ? value.state : '',
-    hasUnpublishedChanges: Boolean(value.hasUnpublishedChanges),
-    diff: value.diff || null
-  };
-}
-
-function formatReleaseStatusTitle(
-  releaseStatus: BuildProjectListItemReleaseStatus | null
-) {
-  const changedFiles = Math.max(
-    0,
-    Math.floor(Number(releaseStatus?.diff?.total) || 0)
-  );
-  if (changedFiles <= 0) {
-    return 'This public app has unpublished workspace changes.';
-  }
-  return changedFiles === 1
-    ? '1 file has not been released yet.'
-    : `${changedFiles.toLocaleString()} files have not been released yet.`;
-}
-
-function getVisibilityTone(isPublic: boolean): BuildTone {
-  if (isPublic) {
-    return {
-      background: 'rgba(65, 140, 235, 0.14)',
-      border: 'rgba(65, 140, 235, 0.34)',
-      color: '#1d4ed8'
-    };
-  }
-  return {
-    background: 'rgba(100, 116, 139, 0.14)',
-    border: 'rgba(100, 116, 139, 0.3)',
-    color: '#334155'
-  };
-}
-
-function normalizeCollaborationMode(
-  value?: string | null
-): 'private' | 'open_source' {
-  return value === 'open_source' ? value : 'private';
-}
-
-function toTagStyle(tone: BuildTone): React.CSSProperties {
-  return {
-    background: tone.background,
-    borderColor: tone.border,
-    color: tone.color
-  };
 }

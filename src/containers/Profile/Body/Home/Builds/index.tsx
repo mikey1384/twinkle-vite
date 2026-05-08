@@ -6,9 +6,9 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import BuildProjectListItem, {
   BuildProjectListItemData
-} from '~/components/BuildProjectListItem';
+} from '~/containers/Build/shared/components/BuildProjectListItem';
 import type { BuildFavoriteChange } from '~/components/Buttons/BuildFavoriteButton';
-import BuildForkHistoryModal from '~/components/BuildForkHistoryModal';
+import BuildForkHistoryModal from '~/containers/Build/shared/components/BuildForkHistoryModal';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
 import BuildDescriptionModal from '~/containers/Build/BuildDescriptionModal';

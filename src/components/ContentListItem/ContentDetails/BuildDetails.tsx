@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import BuildFavoriteButton from '~/components/Buttons/BuildFavoriteButton';
-import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
+import { BuildForkHistoryTrigger } from '~/containers/Build/shared/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
@@ -13,7 +13,8 @@ import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/containers/Build/BuildEditor/buildRelationshipLabels';
+} from '~/containers/Build/shared/domain/buildRelationshipLabels';
+import { formatVisitLabel } from '~/containers/Build/shared/components/BuildProjectListItem/domain';
 import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
 
@@ -40,7 +41,8 @@ export default function BuildDetails({
   contributionStatus,
   rootBuildSourceBuildId,
   title,
-  uploader
+  uploader,
+  viewCount
 }: {
   buildId: number;
   buildUserId?: number | null;
@@ -56,6 +58,7 @@ export default function BuildDetails({
   rootBuildSourceBuildId?: number | null;
   title: string;
   uploader: User;
+  viewCount?: number;
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
@@ -213,6 +216,10 @@ export default function BuildDetails({
             <span>{formatForkCount(normalizedForkCount)}</span>
           </div>
         ) : null}
+        <div className="build-collaborator-badge build-visit-count-badge">
+          <Icon icon="eye" />
+          <span>{formatVisitLabel(viewCount)}</span>
+        </div>
         {normalizedCollaboratorCount > 0 ? (
           <div className="build-collaborator-badge">
             <Icon icon="users" />

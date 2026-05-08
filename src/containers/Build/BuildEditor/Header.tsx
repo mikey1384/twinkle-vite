@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
+import { BuildForkHistoryTrigger } from '~/containers/Build/shared/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
@@ -12,7 +12,7 @@ import type { User } from '~/types';
 import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from './buildRelationshipLabels';
+} from '../shared/domain/buildRelationshipLabels';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";

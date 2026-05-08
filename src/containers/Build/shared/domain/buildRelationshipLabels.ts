@@ -103,9 +103,7 @@ function stripBuildRelationshipTitleSuffixes(value: string) {
 }
 
 function normalizeContributionStatus(value: unknown) {
-  return value === 'draft' ||
-    value === 'merging' ||
-    value === 'merged'
+  return value === 'draft' || value === 'merging' || value === 'merged'
     ? value
     : 'none';
 }

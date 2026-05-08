@@ -1,186 +1,38 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
-import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import ProfilePic from '~/components/ProfilePic';
-import Textarea from '~/components/Texts/Textarea';
-import UsernameText from '~/components/Texts/UsernameText';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
-import { timeSince } from '~/helpers/timeStampHelpers';
-import type { User } from '~/types';
-import BuildContributorInvitePicker from './BuildContributorInvitePicker';
-import { getBuildWorkspacePath } from '../buildNavigation';
-
-type BuildCollaborationMode = 'private' | 'open_source';
-type BuildContributionAccess = 'anyone' | 'invite_only';
-type BuildContributionStatus =
-  | 'none'
-  | 'draft'
-  | 'merging'
-  | 'merged';
-
-interface BuildContributionFileDiff {
-  path: string;
-  status: 'added' | 'updated' | 'deleted';
-  baseContent?: string;
-  currentContent?: string;
-  contributionContent?: string;
-  mergeStatus?: 'clean' | 'conflict' | 'unchanged';
-  conflictType?: string;
-  autoMergedContent?: string;
-}
-
-interface BuildProjectFile {
-  path: string;
-  content?: string;
-}
-
-interface BuildLike {
-  id: number;
-  userId: number;
-  title: string;
-  collaborationMode?: BuildCollaborationMode | 'contribution';
-  contributionAccess?: BuildContributionAccess;
-  contributionRootBuildId?: number | null;
-  contributionBranchNumber?: number | null;
-  contributionStatus?: BuildContributionStatus;
-  contributionContributorId?: number | null;
-  username?: string;
-  profilePicUrl?: string | null;
-  rootBuildUserId?: number | null;
-  code?: string | null;
-  projectFiles?: BuildProjectFile[] | null;
-  pendingCollaborationRequestCount?: number | null;
-}
-
-interface BuildForumThread {
-  id: number;
-  buildId: number;
-  contributionBuildId?: number | null;
-  userId: number;
-  title: string;
-  body: string;
-  replyCount?: number | null;
-  lastReplyAt?: number | null;
-  lastReplyUserId?: number | null;
-  username?: string | null;
-  profilePicUrl?: string | null;
-  lastReplyUsername?: string | null;
-  lastReplyProfilePicUrl?: string | null;
-  createdAt?: number | null;
-  updatedAt?: number | null;
-}
-
-interface BuildForumReply {
-  id: number;
-  threadId: number;
-  buildId: number;
-  contributionBuildId?: number | null;
-  userId: number;
-  body: string;
-  username?: string | null;
-  profilePicUrl?: string | null;
-  createdAt?: number | null;
-}
-
-interface BuildContributorInvite {
-  userId: number;
-  username?: string | null;
-  profilePicUrl?: string | null;
-  acceptedAt?: number | null;
-  declinedAt?: number | null;
-}
-
-interface BuildCollaborationRequest {
-  id: number;
-  inviteId?: number;
-  buildId: number;
-  requesterUserId: number;
-  ownerUserId: number;
-  message: string;
-  status: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
-  ownerHidden?: number;
-  username?: string | null;
-  profilePicUrl?: string | null;
-  createdAt?: number | null;
-  updatedAt?: number | null;
-}
-
-interface CollaborationPanelProps {
-  build: BuildLike;
-  embedded?: boolean;
-  isOwner: boolean;
-  onBuildPatch: (patch: Record<string, any>) => void;
-  onContributionBranchCreated?: (branch: BuildLike) => void;
-  onCanonicalMerge: (payload: {
-    build?: Record<string, any> | null;
-    projectFiles?: BuildProjectFile[] | null;
-  }) => void;
-  onVersionProjectFilesUpdate?: (payload: {
-    build?: Record<string, any> | null;
-    projectFiles?: BuildProjectFile[] | null;
-  }) => void;
-  onAcceptedContributorCountChange?: (count: number) => void;
-  onBeforeContributionAction?: (
-    action: 'merge' | 'update-from-main'
-  ) => Promise<{
-    ready: boolean;
-    files?: Array<{ path: string; content?: string }>;
-  }>;
-  onAskLumineToResolveConflicts?: (
-    paths: string[]
-  ) => Promise<boolean> | boolean;
-  onOpenCollaborationSettings?: () => void;
-  initialScrollTop?: number;
-  onScrollTopChange?: (scrollTop: number) => void;
-  initialSelectedForumThreadId?: number;
-  onSelectedForumThreadChange?: (threadId: number) => void;
-}
-
-const CONTRIBUTION_CONFLICT_MARKER_START = '<<<<<<< Current Build';
-const CONTRIBUTION_CONFLICT_MARKER_SEPARATOR = '=======';
-const CONTRIBUTION_CONFLICT_MARKER_END = '>>>>>>> Contribution';
-const UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE =
-  'Main was merged into this branch with conflict markers. Ask Lumine to resolve them before merging.';
-const MERGE_CONFLICT_MARKERS_MESSAGE =
-  'Conflict markers were written into the project files. Resolve them with Lumine or edit the files, then complete the merge.';
-
-function hasContributionConflictMarkers(content: string) {
-  const text = String(content || '');
-  return (
-    text.includes(CONTRIBUTION_CONFLICT_MARKER_START) &&
-    text.includes(CONTRIBUTION_CONFLICT_MARKER_SEPARATOR) &&
-    text.includes(CONTRIBUTION_CONFLICT_MARKER_END)
-  );
-}
-
-function getContributionConflictMarkerPaths(files?: BuildProjectFile[] | null) {
-  return (Array.isArray(files) ? files : [])
-    .filter((file) => hasContributionConflictMarkers(file.content || ''))
-    .map((file) => String(file.path || '').trim())
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b));
-}
-
-function stringArraysEqual(a: string[], b: string[]) {
-  if (a.length !== b.length) return false;
-  return a.every((value, index) => value === b[index]);
-}
-
-function canClearConflictMarkerActionError(message: string) {
-  const normalized = String(message || '').trim();
-  return (
-    normalized === UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE ||
-    normalized === MERGE_CONFLICT_MARKERS_MESSAGE ||
-    /^Resolve conflict markers in .+ first\.$/.test(normalized) ||
-    /^Resolve all conflict markers before (?:updating from main|completing this merge)\.$/.test(
-      normalized
-    )
-  );
-}
+import { getBuildWorkspacePath } from '../../buildNavigation';
+import ContributionDetail from './ContributionDetail';
+import Forum from './Forum';
+import OwnerContributionsPanel from './OwnerContributionsPanel';
+import OwnerTeamPanel from './OwnerTeamPanel';
+import Toolbar from './Toolbar';
+import {
+  MERGE_CONFLICT_MARKERS_MESSAGE,
+  UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE,
+  canClearConflictMarkerActionError,
+  getContributionConflictMarkerPaths,
+  stringArraysEqual
+} from './collaborationConflicts';
+import {
+  normalizePanelForumThreadId,
+  normalizePanelScrollTop
+} from './panelState';
+import type {
+  BuildCollaborationMode,
+  BuildCollaborationRequest,
+  BuildContributionAccess,
+  BuildContributionFileDiff,
+  BuildContributionStatus,
+  BuildContributorInvite,
+  BuildForumReply,
+  BuildForumThread,
+  BuildLike,
+  CollaborationPanelProps
+} from './types';
 
 const panelClass = css`
   border-bottom: 1px solid var(--ui-border);
@@ -204,92 +56,6 @@ const embeddedPanelClass = css`
   grid-template-rows: auto minmax(0, 1fr);
 `;
 
-const toolbarClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-`;
-
-const toolbarPrimaryClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  flex-wrap: wrap;
-  min-width: 0;
-`;
-
-const toolbarActionsClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-  margin-left: auto;
-`;
-
-const rowClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-`;
-
-const labelClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  font-weight: 900;
-  color: var(--chat-text);
-  font-size: 1.1rem;
-`;
-
-const selectClass = css`
-  height: 2.25rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--chat-text);
-  padding: 0 0.65rem;
-  font-weight: 800;
-  max-width: 100%;
-`;
-
-const statusPillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 1px solid rgba(65, 140, 235, 0.28);
-  border-radius: 999px;
-  background: rgba(65, 140, 235, 0.1);
-  color: #1d4ed8;
-  padding: 0.35rem 0.7rem;
-  font-weight: 900;
-  font-size: 1.1rem;
-`;
-
-const summaryPillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 999px;
-  background: rgba(248, 250, 252, 0.9);
-  color: var(--chat-text);
-  padding: 0.35rem 0.7rem;
-  font-weight: 900;
-  font-size: 1.1rem;
-  white-space: nowrap;
-`;
-
-const mutedTextClass = css`
-  color: var(--chat-text);
-  opacity: 0.68;
-  font-size: 1.1rem;
-  font-weight: 700;
-`;
-
 const expandedBodyClass = css`
   border-top: 1px solid rgba(148, 163, 184, 0.28);
   padding-top: 0.75rem;
@@ -311,403 +77,6 @@ const splitClass = css`
   grid-template-columns: 1fr;
   gap: 1rem;
 `;
-
-const listClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-`;
-
-const contributionButtonClass = css`
-  border: 1px solid var(--ui-border);
-  background: #fff;
-  color: var(--chat-text);
-  border-radius: 8px;
-  padding: 0.7rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-  cursor: pointer;
-  text-align: left;
-  &:hover,
-  &.selected {
-    border-color: rgba(65, 140, 235, 0.42);
-    background: rgba(65, 140, 235, 0.08);
-  }
-`;
-
-const contributionTitleClass = css`
-  font-weight: 900;
-  font-size: 1.1rem;
-`;
-
-const detailClass = css`
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: #fff;
-  padding: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-`;
-
-const collaborationPromptClass = css`
-  border: 1px solid rgba(65, 140, 235, 0.3);
-  border-radius: 8px;
-  background: #fff;
-  padding: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
-
-const collaborationPromptTitleClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--chat-text);
-  font-size: 1.1rem;
-  font-weight: 900;
-  line-height: 1.25;
-`;
-
-const collaborationPromptTextClass = css`
-  color: var(--chat-text);
-  opacity: 0.72;
-  font-size: 1.1rem;
-  font-weight: 700;
-  line-height: 1.35;
-`;
-
-const collaborationPromptActionClass = css`
-  display: flex;
-  justify-content: center;
-`;
-
-const fileListClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  max-height: 16rem;
-  overflow: auto;
-`;
-
-const fileRowClass = css`
-  display: grid;
-  grid-template-columns: auto 5rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.55rem;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
-  padding: 0.45rem 0.55rem;
-  font-size: 1.1rem;
-`;
-
-const filePathClass = css`
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-`;
-
-const diffPreviewClass = css`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.6rem;
-`;
-
-const codePreviewClass = css`
-  min-height: 6rem;
-  max-height: 14rem;
-  overflow: auto;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
-  background: #0f172a;
-  color: #e2e8f0;
-  padding: 0.7rem;
-  font-size: 1.1rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-`;
-
-const conflictBadgeClass = css`
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0.18rem 0.48rem;
-  background: rgba(244, 63, 94, 0.12);
-  color: #be123c;
-  font-size: 1.1rem;
-  font-weight: 900;
-`;
-
-const forumComposerClass = css`
-  border: 1px solid rgba(65, 140, 235, 0.24);
-  border-radius: 8px;
-  background: rgba(65, 140, 235, 0.04);
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-`;
-
-const forumComposerTitleClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--chat-text);
-  font-weight: 900;
-`;
-
-const forumActionsClass = css`
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-`;
-
-const forumPostListClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-`;
-
-const forumPostClass = css`
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
-  padding: 0.75rem;
-  background: #fff;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.75rem;
-  align-items: flex-start;
-`;
-
-const forumAvatarClass = css`
-  width: 2.65rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    width: 2.35rem;
-  }
-`;
-
-const forumPostMainClass = css`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-`;
-
-const forumPostHeaderClass = css`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.7rem;
-`;
-
-const forumAuthorMetaClass = css`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-`;
-
-const forumUsernameClass = css`
-  font-weight: 900;
-  font-size: 1.1rem;
-  max-width: 100%;
-`;
-
-const forumTimestampClass = css`
-  color: var(--chat-text);
-  opacity: 0.58;
-  font-size: 1.1rem;
-  font-weight: 800;
-`;
-
-const forumPostActionsClass = css`
-  flex: 0 0 auto;
-`;
-
-const forumPostBodyClass = css`
-  color: #111827;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  word-break: break-word;
-`;
-
-const forumTitleInputClass = css`
-  width: 100%;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  padding: 0.65rem;
-  font: inherit;
-  font-weight: 900;
-  &:focus {
-    outline: 2px solid rgba(65, 140, 235, 0.24);
-    border-color: rgba(65, 140, 235, 0.55);
-  }
-`;
-
-const forumThreadButtonClass = css`
-  width: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
-  background: #fff;
-  padding: 0.75rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.75rem;
-  text-align: left;
-  color: var(--chat-text);
-  cursor: pointer;
-  &:hover {
-    border-color: rgba(65, 140, 235, 0.42);
-    background: rgba(65, 140, 235, 0.06);
-  }
-  &.recent {
-    border-color: rgba(34, 197, 94, 0.48);
-    background: rgba(34, 197, 94, 0.07);
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
-  }
-`;
-
-const forumThreadMainClass = css`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-`;
-
-const forumThreadTitleClass = css`
-  font-size: 1.1rem;
-  font-weight: 900;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const forumThreadPreviewClass = css`
-  color: var(--chat-text);
-  opacity: 0.72;
-  font-weight: 700;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
-const forumThreadMetaClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-  color: var(--chat-text);
-  opacity: 0.62;
-  font-size: 1.1rem;
-  font-weight: 800;
-`;
-
-const forumThreadCountClass = css`
-  align-self: start;
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 999px;
-  background: rgba(248, 250, 252, 0.9);
-  color: var(--chat-text);
-  padding: 0.3rem 0.55rem;
-  font-size: 1.1rem;
-  font-weight: 900;
-  white-space: nowrap;
-`;
-
-const forumThreadPostedClass = css`
-  align-self: start;
-  border: 1px solid rgba(34, 197, 94, 0.38);
-  border-radius: 999px;
-  background: rgba(34, 197, 94, 0.1);
-  color: #15803d;
-  padding: 0.3rem 0.55rem;
-  font-size: 1.1rem;
-  font-weight: 900;
-  white-space: nowrap;
-`;
-
-const forumDetailHeaderClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-`;
-
-const forumBackButtonClass = css`
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--chat-text);
-  padding: 0.4rem 0.7rem;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  cursor: pointer;
-  align-self: flex-start;
-  &:hover {
-    border-color: rgba(65, 140, 235, 0.42);
-    background: rgba(65, 140, 235, 0.08);
-  }
-`;
-
-const textareaClass = css`
-  width: 100%;
-  min-height: 3.8rem;
-  resize: vertical;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  padding: 0.65rem;
-  font: inherit;
-  &:focus {
-    outline: 2px solid rgba(65, 140, 235, 0.24);
-    border-color: rgba(65, 140, 235, 0.55);
-  }
-`;
-
-const errorClass = css`
-  color: #be123c;
-  font-weight: 800;
-  font-size: 1.1rem;
-`;
-
-const requestCardClass = css`
-  border: 1px solid rgba(236, 72, 153, 0.28);
-  border-radius: 8px;
-  background: rgba(253, 242, 248, 0.52);
-  padding: 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-`;
-
-const requestMessageClass = css`
-  color: var(--chat-text);
-  font-size: 1.1rem;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  word-break: break-word;
-`;
-
-function normalizePanelScrollTop(value: unknown) {
-  const scrollTop = Number(value || 0);
-  if (!Number.isFinite(scrollTop)) return 0;
-  return Math.max(0, Math.floor(scrollTop));
-}
-
-function normalizePanelForumThreadId(value: unknown) {
-  const threadId = Number(value || 0);
-  if (!Number.isFinite(threadId)) return 0;
-  return Math.max(0, Math.floor(threadId));
-}
 
 export default function CollaborationPanel({
   build,
@@ -1034,87 +403,21 @@ export default function CollaborationPanel({
           embedded ? `${panelClass} ${embeddedPanelClass}` : panelClass
         }
       >
-        <div className={toolbarClass}>
-        <div className={toolbarPrimaryClass}>
-          {embedded ? (
-            <>
-              <span className={statusPillClass}>
-                <Icon icon="comments" />
-                Team
-              </span>
-            </>
-          ) : isOwner && !isContributionFork ? (
-            <>
-              <span className={statusPillClass}>
-                <Icon icon="code-branch" />
-                Team
-              </span>
-              <label className={labelClass}>
-                Mode
-                <select
-                  className={selectClass}
-                  value={collaborationMode}
-                  onChange={(event) =>
-                    setCollaborationMode(
-                      normalizeCollaborationMode(event.target.value)
-                    )
-                  }
-                >
-                  <option value="private">Private Project</option>
-                  <option value="open_source">Open source</option>
-                </select>
-              </label>
-              <GameCTAButton
-                variant="logoBlue"
-                size="sm"
-                icon="save"
-                loading={savingSettings}
-                disabled={savingSettings}
-                onClick={handleSaveSettings}
-              >
-                Save
-              </GameCTAButton>
-              {settingsError ? (
-                <span className={errorClass}>{settingsError}</span>
-              ) : null}
-            </>
-          ) : (
-            <>
-              <span className={statusPillClass}>
-                <Icon icon="code-branch" />
-                {normalizeContributionStatus(build.contributionStatus) ===
-                'draft'
-                  ? 'Branch'
-                  : `Branch ${normalizeContributionStatus(
-                      build.contributionStatus
-                    )}`}
-              </span>
-            </>
-          )}
-          <span className={summaryPillClass}>
-            <Icon icon="comment" />
-            {forumThreads.length}
-          </span>
-          {!embedded && isOwner && !isContributionFork ? (
-            <span className={summaryPillClass}>
-              <Icon icon="code-branch" />
-              {reviewContributions.length}
-            </span>
-          ) : null}
-        </div>
-        {!embedded ? (
-          <div className={toolbarActionsClass}>
-            <GameCTAButton
-              variant="neutral"
-              size="sm"
-              icon={panelExpanded ? 'chevron-up' : 'comment'}
-              onClick={() => setPanelExpanded((current) => !current)}
-            >
-              {panelExpanded ? 'Hide' : 'Discuss'}
-            </GameCTAButton>
-          </div>
-        ) : null}
-      </div>
+        <Toolbar
+          collaborationMode={collaborationMode}
+          contributionStatus={build.contributionStatus}
+          embedded={embedded}
+          forumThreadCount={forumThreads.length}
+          isContributionFork={isContributionFork}
+          isOwner={isOwner}
+          panelExpanded={panelExpanded}
+          reviewContributionCount={reviewContributions.length}
+          savingSettings={savingSettings}
+          settingsError={settingsError}
+          onCollaborationModeChange={setCollaborationMode}
+          onSaveSettings={handleSaveSettings}
+          onToggleExpanded={() => setPanelExpanded((current) => !current)}
+        />
 
         {contentExpanded ? (
           <div
@@ -1128,8 +431,7 @@ export default function CollaborationPanel({
             <>
               {isOwner && !isContributionFork ? (
                 <>
-                  {renderCollaborationRequests()}
-                  {contributorsCardShown ? renderInviteCard() : null}
+                  {renderOwnerTeamPanel({ showPrompt: false })}
                   {renderOwnerContributions(true)}
                 </>
               ) : (
@@ -1181,9 +483,7 @@ export default function CollaborationPanel({
       return (
         <div className={embeddedBodyStackClass}>
           {renderForum()}
-          {renderCollaborationRequests()}
-          {renderCollaborationPromptCard()}
-          {contributorsCardShown ? renderInviteCard() : null}
+          {renderOwnerTeamPanel()}
         </div>
       );
     }
@@ -1205,211 +505,46 @@ export default function CollaborationPanel({
     );
   }
 
-  function renderCollaborationPromptCard() {
-    if (acceptedContributorCount > 0) {
-      return null;
-    }
-    const mode = normalizeCollaborationMode(build.collaborationMode);
-    const isPrivate = mode === 'private';
-    const isOpenSource = mode === 'open_source';
-    const title = isPrivate
-      ? 'This project is private.'
-      : isOpenSource
-        ? 'This project is open source.'
-        : 'This project uses invite-only teams.';
-    const description = isPrivate
-      ? 'Invite team members to discuss and help in the team workspace.'
-      : isOpenSource
-        ? 'People can fork published copies, and invited team members can still help with this original project.'
-        : 'Invited team members can create project branches, discuss changes, and send them back for review.';
+  function renderOwnerTeamPanel({ showPrompt = true } = {}) {
     return (
-      <div className={collaborationPromptClass}>
-        <div className={collaborationPromptTitleClass}>
-          <Icon icon={isPrivate ? 'users' : 'code-branch'} />
-          <span>{title}</span>
-        </div>
-        {description ? (
-          <div className={collaborationPromptTextClass}>{description}</div>
-        ) : null}
-        {onOpenCollaborationSettings ? (
-          <div className={collaborationPromptActionClass}>
-            <GameCTAButton
-              variant={isPrivate ? 'pink' : 'logoBlue'}
-              size="sm"
-              icon={isPrivate ? 'users' : 'gear'}
-              shiny={isPrivate}
-              onClick={onOpenCollaborationSettings}
-            >
-              {isPrivate ? 'Set Up Team' : 'Manage Settings'}
-            </GameCTAButton>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
-  function renderInviteCard() {
-    return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>Team members</strong>
-        </div>
-        <BuildContributorInvitePicker
-          buildId={rootBuildId}
-          canInvite={canInviteContributors}
-          contributors={contributors}
-          onInvited={reloadContributors}
-          onRemoveContributor={handleRevokeContributor}
-        />
-      </div>
-    );
-  }
-
-  function renderCollaborationRequests() {
-    if (!isOwner || isContributionFork) return null;
-    return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>
-            {showHiddenCollaborationRequests
-              ? 'Hidden join requests'
-              : 'Join requests'}
-          </strong>
-          <span className={mutedTextClass}>{collaborationRequests.length}</span>
-          {loadingCollaborationRequests ? (
-            <span className={mutedTextClass}>Loading...</span>
-          ) : null}
-          <GameCTAButton
-            variant="neutral"
-            size="sm"
-            icon={showHiddenCollaborationRequests ? 'inbox' : 'eye-slash'}
-            disabled={loadingCollaborationRequests}
-            onClick={() =>
-              setShowHiddenCollaborationRequests((current) => !current)
-            }
-          >
-            {showHiddenCollaborationRequests ? 'Visible' : 'Hidden'}
-          </GameCTAButton>
-        </div>
-        {collaborationRequests.length === 0 ? (
-          <span className={mutedTextClass}>
-            {showHiddenCollaborationRequests
-              ? 'No hidden requests.'
-              : 'No pending requests.'}
-          </span>
-        ) : (
-          <div className={listClass}>
-            {collaborationRequests.map((request) => (
-              <div key={request.id} className={requestCardClass}>
-                <div className={rowClass}>
-                  <strong>{request.username || 'User'}</strong>
-                  <span className={statusPillClass}>{request.status}</span>
-                  {request.ownerHidden ? (
-                    <span className={mutedTextClass}>Hidden</span>
-                  ) : null}
-                </div>
-                {request.message ? (
-                  <div className={requestMessageClass}>{request.message}</div>
-                ) : (
-                  <span className={mutedTextClass}>No message.</span>
-                )}
-                {request.status === 'pending' ? (
-                  <div className={rowClass}>
-                    <GameCTAButton
-                      variant="success"
-                      size="sm"
-                      icon="check"
-                      loading={actionLoading === `accept-request-${request.id}`}
-                      disabled={Boolean(actionLoading)}
-                      onClick={() => handleAcceptCollaborationRequest(request.id)}
-                    >
-                      Accept
-                    </GameCTAButton>
-                    <GameCTAButton
-                      variant="neutral"
-                      size="sm"
-                      icon="ban"
-                      loading={actionLoading === `reject-request-${request.id}`}
-                      disabled={Boolean(actionLoading)}
-                      onClick={() => handleRejectCollaborationRequest(request.id)}
-                    >
-                      Reject
-                    </GameCTAButton>
-                    {!request.ownerHidden ? (
-                      <GameCTAButton
-                        variant="neutral"
-                        size="sm"
-                        icon="eye-slash"
-                        loading={actionLoading === `hide-request-${request.id}`}
-                        disabled={Boolean(actionLoading)}
-                        onClick={() => handleHideCollaborationRequest(request.id)}
-                      >
-                        Hide
-                      </GameCTAButton>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        )}
-        {requestActionError ? (
-          <span className={errorClass}>{requestActionError}</span>
-        ) : null}
-      </div>
+      <OwnerTeamPanel
+        acceptedContributorCount={acceptedContributorCount}
+        actionLoading={actionLoading}
+        build={build}
+        canInviteContributors={canInviteContributors}
+        collaborationRequests={collaborationRequests}
+        contributors={contributors}
+        contributorsCardShown={contributorsCardShown}
+        loadingCollaborationRequests={loadingCollaborationRequests}
+        requestActionError={requestActionError}
+        rootBuildId={rootBuildId}
+        showHiddenCollaborationRequests={showHiddenCollaborationRequests}
+        showPrompt={showPrompt}
+        onAcceptRequest={handleAcceptCollaborationRequest}
+        onHideRequest={handleHideCollaborationRequest}
+        onInvited={reloadContributors}
+        onOpenCollaborationSettings={onOpenCollaborationSettings}
+        onRejectRequest={handleRejectCollaborationRequest}
+        onRemoveContributor={handleRevokeContributor}
+        onToggleHiddenRequests={() =>
+          setShowHiddenCollaborationRequests((current) => !current)
+        }
+      />
     );
   }
 
   function renderOwnerContributions(showCommentsFallback = false) {
-    if (
-      !loadingContributions &&
-      reviewContributions.length === 0 &&
-      !selectedContribution
-    ) {
-      return showCommentsFallback ? renderForum() : null;
-    }
+    const emptyFallback = showCommentsFallback ? renderForum() : null;
     return (
-      <div className={splitClass}>
-        <div className={listClass}>
-          <div className={rowClass}>
-            <strong>Branches</strong>
-            {loadingContributions ? (
-              <span className={mutedTextClass}>Loading...</span>
-            ) : null}
-          </div>
-          {reviewContributions.length === 0 ? (
-            <span className={mutedTextClass}>No branches yet.</span>
-          ) : (
-            reviewContributions.map((contribution) => (
-              <button
-                key={contribution.id}
-                type="button"
-                className={`${contributionButtonClass}${
-                  selectedContributionId === contribution.id ? ' selected' : ''
-                }`}
-                onClick={() => handleSelectContribution(contribution.id)}
-              >
-                <span className={contributionTitleClass}>
-                  {contribution.username || 'Contributor'}
-                </span>
-                {normalizeContributionStatus(contribution.contributionStatus) !==
-                'draft' ? (
-                  <span className={mutedTextClass}>
-                    {normalizeContributionStatus(
-                      contribution.contributionStatus
-                    )}
-                  </span>
-                ) : null}
-              </button>
-            ))
-          )}
-        </div>
-        {selectedContribution ? (
-          renderContributionDetail(true)
-        ) : showCommentsFallback ? (
-          renderForum()
-        ) : null}
-      </div>
+      <OwnerContributionsPanel
+        emptyFallback={emptyFallback}
+        loading={loadingContributions}
+        reviewContributions={reviewContributions}
+        selectedContribution={selectedContribution}
+        selectedContributionId={selectedContributionId}
+        selectedContributionDetail={renderContributionDetail(true)}
+        onSelectContribution={handleSelectContribution}
+      />
     );
   }
 
@@ -2252,482 +1387,66 @@ export default function CollaborationPanel({
       return null;
     }
     return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>{ownerReview ? 'Review branch' : 'Branch needs attention'}</strong>
-          {ownerReview ? (
-            <span className={mutedTextClass}>
-              {changedFiles.length} changed
-            </span>
-          ) : canUpdateFromMain ? (
-            <span className={mutedTextClass}>
-              Main has new changes for this branch.
-            </span>
-          ) : null}
-          {contributionStatus !== 'draft' ? (
-            <span className={statusPillClass}>{contributionStatus}</span>
-          ) : null}
-          {ownerReview ? (
-            <GameCTAButton
-              variant="neutral"
-              size="sm"
-              icon="eye"
-              onClick={() => handlePreviewContribution(activeContribution.id)}
-            >
-              Preview
-            </GameCTAButton>
-          ) : null}
-        </div>
-        {ownerReview ? renderChangedFiles() : null}
-        {canUpdateFromMain ? (
-          <div className={rowClass}>
-            <GameCTAButton
-              variant="neutral"
-              size="sm"
-              icon="redo"
-              loading={actionLoading === 'update-from-main'}
-              disabled={Boolean(actionLoading)}
-              onClick={handleUpdateVersionFromMain}
-            >
-              Update from Main
-            </GameCTAButton>
-          </div>
-        ) : null}
-        {!ownerReview &&
-        contributionStatus === 'draft' &&
-        onAskLumineToResolveConflicts &&
-        activeConflictMarkerPaths.length > 0 ? (
-          <div className={rowClass}>
-            <GameCTAButton
-              variant="purple"
-              size="sm"
-              icon="wand-magic-sparkles"
-              loading={actionLoading === 'ask-lumine-conflicts'}
-              disabled={Boolean(actionLoading)}
-              onClick={handleAskLumineToResolveConflicts}
-            >
-              Ask Lumine to Fix
-            </GameCTAButton>
-          </div>
-        ) : null}
-        {ownerReview && contributionCanMerge ? (
-          <div className={rowClass}>
-            <GameCTAButton
-              variant="success"
-              size="sm"
-              icon="check"
-              loading={actionLoading === 'merge'}
-              disabled={Boolean(actionLoading) || selectedPaths.length === 0}
-              onClick={handleMergeContribution}
-            >
-              Merge Branch
-            </GameCTAButton>
-            <GameCTAButton
-              variant="orange"
-              size="sm"
-              icon="copy"
-              loading={actionLoading === 'replace-main'}
-              disabled={Boolean(actionLoading)}
-              onClick={() => setReplaceMainConfirmShown(true)}
-            >
-              Replace Main
-            </GameCTAButton>
-          </div>
-        ) : null}
-        {ownerReview && contributionStatus === 'merging' ? (
-          <div className={rowClass}>
-            <span className={mutedTextClass}>
-              Conflict markers are in the project files. Resolve them with
-              Lumine or edit the files, then complete the merge.
-            </span>
-            {onAskLumineToResolveConflicts ? (
-              <GameCTAButton
-                variant="purple"
-                size="sm"
-                icon="wand-magic-sparkles"
-                loading={actionLoading === 'ask-lumine-conflicts'}
-                disabled={Boolean(actionLoading)}
-                onClick={handleAskLumineToResolveConflicts}
-              >
-                Ask Lumine to Fix
-              </GameCTAButton>
-            ) : null}
-            <GameCTAButton
-              variant="success"
-              size="sm"
-              icon="check"
-              loading={actionLoading === 'complete-merge'}
-              disabled={Boolean(actionLoading)}
-              onClick={handleCompleteContributionMerge}
-            >
-              Complete Merge
-            </GameCTAButton>
-          </div>
-        ) : null}
-        {actionError ? <span className={errorClass}>{actionError}</span> : null}
-      </div>
+      <ContributionDetail
+        activeConflictMarkerPaths={activeConflictMarkerPaths}
+        activeContributionId={activeContribution.id}
+        actionError={actionError}
+        actionLoading={actionLoading}
+        canAskLumineToResolveConflicts={Boolean(
+          onAskLumineToResolveConflicts
+        )}
+        canUpdateFromMain={canUpdateFromMain}
+        changedFiles={changedFiles}
+        contributionCanMerge={contributionCanMerge}
+        contributionStatus={contributionStatus}
+        ownerReview={ownerReview}
+        selectedPaths={selectedPaths}
+        selectedPreviewFile={selectedPreviewFile}
+        onAskLumineToResolveConflicts={handleAskLumineToResolveConflicts}
+        onCompleteContributionMerge={handleCompleteContributionMerge}
+        onMergeContribution={handleMergeContribution}
+        onPreviewContribution={handlePreviewContribution}
+        onPreviewPathChange={setPreviewPath}
+        onReplaceMain={() => setReplaceMainConfirmShown(true)}
+        onToggleSelectedPath={toggleSelectedPath}
+        onUpdateVersionFromMain={handleUpdateVersionFromMain}
+      />
     );
-
-    function renderChangedFiles() {
-      return changedFiles.length === 0 ? (
-        <span className={mutedTextClass}>No file changes loaded.</span>
-      ) : (
-        <>
-          <div className={fileListClass}>
-            {changedFiles.map((file) => (
-              <label key={file.path} className={fileRowClass}>
-                <input
-                  type="checkbox"
-                  checked={selectedPaths.includes(file.path)}
-                  disabled={!contributionCanMerge}
-                  onChange={() => toggleSelectedPath(file.path)}
-                />
-                <strong>{file.status}</strong>
-                <button
-                  type="button"
-                  className={css`
-                    border: 0;
-                    background: transparent;
-                    color: inherit;
-                    padding: 0;
-                    text-align: left;
-                    min-width: 0;
-                    cursor: pointer;
-                  `}
-                  onClick={() => setPreviewPath(file.path)}
-                >
-                  <span className={filePathClass}>{file.path}</span>
-                </button>
-                {file.mergeStatus === 'conflict' ? (
-                  <span className={conflictBadgeClass}>conflict</span>
-                ) : null}
-              </label>
-            ))}
-          </div>
-          {selectedPreviewFile ? (
-            <div className={diffPreviewClass}>
-              <pre className={codePreviewClass}>
-                {selectedPreviewFile.currentContent ?? ''}
-              </pre>
-              <pre className={codePreviewClass}>
-                {selectedPreviewFile.contributionContent ?? ''}
-              </pre>
-            </div>
-          ) : null}
-        </>
-      );
-    }
   }
 
   function renderForum() {
-    if (selectedThread) {
-      const threadUser = getForumUser(selectedThread);
-      return (
-        <div className={detailClass}>
-          <div className={forumDetailHeaderClass}>
-            <button
-              type="button"
-              className={forumBackButtonClass}
-              onClick={() => {
-                setSelectedThread(null);
-                setThreadReplies([]);
-                setReplyInput('');
-                commitSelectedForumThreadId(0);
-              }}
-            >
-              <Icon icon="arrow-left" />
-              Topics
-            </button>
-            <div className={forumPostClass}>
-              <ProfilePic
-                className={forumAvatarClass}
-                userId={threadUser.id}
-                profilePicUrl={threadUser.profilePicUrl}
-              />
-              <div className={forumPostMainClass}>
-                <div className={forumPostHeaderClass}>
-                  <div className={forumAuthorMetaClass}>
-                    <strong className={forumThreadTitleClass}>
-                      {selectedThread.title}
-                    </strong>
-                    <div className={forumThreadMetaClass}>
-                      <span
-                        onClick={(event) => event.stopPropagation()}
-                        onKeyDown={(event) => event.stopPropagation()}
-                      >
-                        <UsernameText
-                          className={forumUsernameClass}
-                          user={threadUser}
-                        />
-                      </span>
-                      {selectedThread.createdAt ? (
-                        <>
-                          <span>·</span>
-                          <span>{timeSince(selectedThread.createdAt)}</span>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                  {userCanDeleteForumItem(selectedThread) ? (
-                    <div className={forumPostActionsClass}>
-                      <GameCTAButton
-                        variant="neutral"
-                        size="sm"
-                        icon="trash-alt"
-                        loading={
-                          forumActionLoading ===
-                          `delete-thread-${selectedThread.id}`
-                        }
-                        disabled={Boolean(forumActionLoading)}
-                        onClick={() =>
-                          handleDeleteForumThread(selectedThread.id)
-                        }
-                      />
-                    </div>
-                  ) : null}
-                </div>
-                {selectedThread.body ? (
-                  <div className={forumPostBodyClass}>{selectedThread.body}</div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-          <div className={rowClass}>
-            <strong>Replies</strong>
-            <span className={mutedTextClass}>
-              {threadReplies.length}{' '}
-              {threadReplies.length === 1 ? 'reply' : 'replies'}
-            </span>
-          </div>
-          <div className={forumPostListClass}>
-            {threadReplies.length === 0 ? (
-              <span className={mutedTextClass}>No replies yet.</span>
-            ) : (
-              threadReplies.map((reply) => renderForumReply(reply))
-            )}
-          </div>
-          <div className={forumComposerClass}>
-            <div className={forumComposerTitleClass}>
-              <Icon icon="reply" />
-              Reply
-            </div>
-            <Textarea
-              className={textareaClass}
-              value={replyInput}
-              onChange={(event) => setReplyInput(event.target.value)}
-              placeholder="Add a reply..."
-              minRows={2}
-              maxRows={8}
-            />
-            <div className={forumActionsClass}>
-              {forumError ? (
-                <span className={errorClass}>{forumError}</span>
-              ) : null}
-              <GameCTAButton
-                variant="logoBlue"
-                size="sm"
-                icon="reply"
-                loading={forumActionLoading === 'create-reply'}
-                disabled={!replyInput.trim() || Boolean(forumActionLoading)}
-                onClick={handleCreateForumReply}
-              >
-                Reply
-              </GameCTAButton>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>Team Forum</strong>
-          <span className={mutedTextClass}>
-            {forumThreads.length}{' '}
-            {forumThreads.length === 1 ? 'topic' : 'topics'}
-          </span>
-          {forumLoading ? (
-            <span className={mutedTextClass}>Loading...</span>
-          ) : null}
-        </div>
-        <div className={forumComposerClass}>
-          <div className={forumComposerTitleClass}>
-            <Icon icon="comments" />
-            New topic
-          </div>
-          <input
-            className={forumTitleInputClass}
-            value={threadTitleInput}
-            onChange={(event) => setThreadTitleInput(event.target.value)}
-            placeholder="Topic title"
-          />
-          <Textarea
-            className={textareaClass}
-            value={threadBodyInput}
-            onChange={(event) => setThreadBodyInput(event.target.value)}
-            placeholder="Optional details..."
-            minRows={3}
-            maxRows={10}
-          />
-          <div className={forumActionsClass}>
-            {forumError ? (
-              <span className={errorClass}>{forumError}</span>
-            ) : null}
-            <GameCTAButton
-              variant="logoBlue"
-              size="sm"
-              icon="comment"
-              loading={forumActionLoading === 'create-thread'}
-              disabled={
-                !threadTitleInput.trim() || Boolean(forumActionLoading)
-              }
-              onClick={handleCreateForumThread}
-            >
-              Post Topic
-            </GameCTAButton>
-          </div>
-        </div>
-        <div className={listClass}>
-          {forumThreads.length === 0 ? (
-            <span className={mutedTextClass}>No topics yet.</span>
-          ) : (
-            forumThreads.map((thread) => renderForumThread(thread))
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function renderForumThread(thread: BuildForumThread) {
-    const threadUser = getForumUser(thread);
-    const canDeleteThread = userCanDeleteForumItem(thread);
-    const recentlyCreated =
-      Number(thread.id) === Number(recentlyCreatedForumThreadId);
-    return (
-      <div
-        key={thread.id}
-        className={`${forumThreadButtonClass}${
-          recentlyCreated ? ' recent' : ''
-        }`}
-        role="button"
-        tabIndex={0}
-        onClick={() => handleOpenForumThread(thread.id)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            void handleOpenForumThread(thread.id);
-          }
+      <Forum
+        actionLoading={forumActionLoading}
+        bodyInput={threadBodyInput}
+        canModerate={canModerateForum}
+        error={forumError}
+        loading={forumLoading}
+        recentlyCreatedThreadId={recentlyCreatedForumThreadId}
+        replyInput={replyInput}
+        replies={threadReplies}
+        selectedThread={selectedThread}
+        threads={forumThreads}
+        titleInput={threadTitleInput}
+        userId={userId}
+        onBackToThreads={() => {
+          setSelectedThread(null);
+          setThreadReplies([]);
+          setReplyInput('');
+          commitSelectedForumThreadId(0);
         }}
-      >
-        <div className={forumThreadMainClass}>
-          <span className={forumThreadTitleClass}>{thread.title}</span>
-          {thread.body ? (
-            <span className={forumThreadPreviewClass}>{thread.body}</span>
-          ) : null}
-          <div className={forumThreadMetaClass}>
-            <span
-              onClick={(event) => event.stopPropagation()}
-              onKeyDown={(event) => event.stopPropagation()}
-            >
-              <UsernameText
-                className={forumUsernameClass}
-                user={threadUser}
-              />
-            </span>
-            {thread.createdAt ? (
-              <>
-                <span>·</span>
-                <span>{timeSince(thread.createdAt)}</span>
-              </>
-            ) : null}
-            {thread.lastReplyAt &&
-            Number(thread.lastReplyAt) !== Number(thread.createdAt || 0) ? (
-              <>
-                <span>·</span>
-                <span>active {timeSince(thread.lastReplyAt)}</span>
-              </>
-            ) : null}
-          </div>
-        </div>
-        <div className={rowClass}>
-          {recentlyCreated ? (
-            <span className={forumThreadPostedClass}>Posted</span>
-          ) : null}
-          <span className={forumThreadCountClass}>
-            {Number(thread.replyCount || 0)}{' '}
-            {Number(thread.replyCount || 0) === 1 ? 'reply' : 'replies'}
-          </span>
-          {canDeleteThread ? (
-            <span
-              onClick={(event) => event.stopPropagation()}
-              onKeyDown={(event) => event.stopPropagation()}
-            >
-              <GameCTAButton
-                variant="neutral"
-                size="sm"
-                icon="trash-alt"
-                loading={forumActionLoading === `delete-thread-${thread.id}`}
-                disabled={Boolean(forumActionLoading)}
-                onClick={() => handleDeleteForumThread(thread.id)}
-              />
-            </span>
-          ) : null}
-        </div>
-      </div>
+        onBodyInputChange={setThreadBodyInput}
+        onCreateReply={handleCreateForumReply}
+        onCreateThread={handleCreateForumThread}
+        onDeleteReply={handleDeleteForumReply}
+        onDeleteThread={handleDeleteForumThread}
+        onOpenThread={(threadId) => {
+          void handleOpenForumThread(threadId);
+        }}
+        onReplyInputChange={setReplyInput}
+        onTitleInputChange={setThreadTitleInput}
+      />
     );
-  }
-
-  function renderForumReply(reply: BuildForumReply) {
-    const replyUser = getForumUser(reply);
-    return (
-      <article key={reply.id} className={forumPostClass}>
-        <ProfilePic
-          className={forumAvatarClass}
-          userId={replyUser.id}
-          profilePicUrl={replyUser.profilePicUrl}
-        />
-        <div className={forumPostMainClass}>
-          <div className={forumPostHeaderClass}>
-            <div className={forumAuthorMetaClass}>
-              <UsernameText className={forumUsernameClass} user={replyUser} />
-              {reply.createdAt ? (
-                <span className={forumTimestampClass}>
-                  {timeSince(reply.createdAt)}
-                </span>
-              ) : null}
-            </div>
-            {userCanDeleteForumItem(reply) ? (
-              <div className={forumPostActionsClass}>
-                <GameCTAButton
-                  variant="neutral"
-                  size="sm"
-                  icon="trash-alt"
-                  loading={forumActionLoading === `delete-reply-${reply.id}`}
-                  disabled={Boolean(forumActionLoading)}
-                  onClick={() => handleDeleteForumReply(reply.id)}
-                />
-              </div>
-            ) : null}
-          </div>
-          <div className={forumPostBodyClass}>{reply.body}</div>
-        </div>
-      </article>
-    );
-  }
-
-  function userCanDeleteForumItem(item: { userId: number }) {
-    return Number(item.userId) === Number(userId) || canModerateForum;
-  }
-
-  function getForumUser(
-    item: Pick<BuildForumThread | BuildForumReply, 'userId' | 'username' | 'profilePicUrl'>
-  ): User {
-    return {
-      id: Number(item.userId || 0),
-      username: item.username || 'User',
-      profilePicUrl: item.profilePicUrl || ''
-    };
   }
 }
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import BuildFavoriteButton from '~/components/Buttons/BuildFavoriteButton';
 import Button from '~/components/Button';
-import { BuildForkHistoryTrigger } from '~/components/BuildForkHistoryModal';
+import { BuildForkHistoryTrigger } from '~/containers/Build/shared/components/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import Textarea from '~/components/Texts/Textarea';
@@ -15,7 +15,7 @@ import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/containers/Build/BuildEditor/buildRelationshipLabels';
+} from '~/containers/Build/shared/domain/buildRelationshipLabels';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { useBuildCollaborationDirectMessageUpdater } from '~/helpers/hooks/useBuildCollaborationDirectMessageUpdater';
 import { useBuildContributionInviteStatusUpdater } from '~/helpers/hooks/useBuildContributionInviteStatusUpdater';
