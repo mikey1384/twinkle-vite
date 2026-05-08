@@ -222,6 +222,7 @@ export default function BuildEditor({
     onSetUserState,
     publishBuild,
     purchaseBuildGenerationReset,
+    replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
     routeBuildChatUpload,
     saveFileData,
@@ -506,7 +507,7 @@ export default function BuildEditor({
     branchMergeTargetOptions,
     branchNameDraft,
     canMergeCurrentBranch,
-    canReplaceMainWithCurrentBranch,
+    canReplaceCurrentBranchTarget,
     canShowMergeCurrentBranch,
     canShowVersionStartActions,
     contributionActionError,
@@ -536,6 +537,8 @@ export default function BuildEditor({
     mergeBranchTargetLabel,
     mergeBranchTargetTitle,
     mergeCurrentBranchShiny,
+    replaceBranchButtonLabel,
+    replaceBranchTargetLabel,
     refreshCurrentBranchMergeabilityForBuild,
     replaceMainConfirmShown,
     setBranchNameDraft,
@@ -561,6 +564,7 @@ export default function BuildEditor({
       handleProjectFilesDraftStateChange(state),
     prepareProjectFilesForContributionAction: (options) =>
       prepareProjectFilesForContributionAction(options),
+    replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
     userId
   });
@@ -1336,8 +1340,9 @@ export default function BuildEditor({
         mergeBranchTargetLabel={mergeBranchTargetLabel}
         mergeBranchTargetOptions={branchMergeTargetOptions}
         mergeBranchTargetTitle={mergeBranchTargetTitle}
-        showReplaceMainBranch={currentBranchMergeTarget === 'main'}
-        replaceMainBranchDisabled={!canReplaceMainWithCurrentBranch}
+        showReplaceBranch={Boolean(currentBranchMergeTarget)}
+        replaceBranchDisabled={!canReplaceCurrentBranchTarget}
+        replaceBranchButtonLabel={replaceBranchButtonLabel}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
@@ -1429,6 +1434,8 @@ export default function BuildEditor({
         deletingBranch={deletingBranch}
         deletingBranchLoading={deletingBranchLoading}
         replaceMainConfirmShown={replaceMainConfirmShown}
+        replaceBranchButtonLabel={replaceBranchButtonLabel}
+        replaceBranchTargetLabel={replaceBranchTargetLabel}
         onCloseDeleteBranch={handleCloseDeleteBranch}
         onCloseReplaceMainConfirm={handleCloseReplaceMainConfirm}
         onDeleteBranch={handleDeleteBranch}

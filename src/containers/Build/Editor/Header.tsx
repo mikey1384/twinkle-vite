@@ -352,6 +352,7 @@ interface HeaderProps {
         deleted?: number;
       };
     } | null;
+    thumbnailUrl?: string | null;
     sourceBuildId?: number | null;
     collaborationMode?: 'private' | 'contribution' | 'open_source';
     contributionAccess?: 'anyone' | 'invite_only';
@@ -383,8 +384,9 @@ interface HeaderProps {
   mergeBranchTargetLabel?: string;
   mergeBranchTargetOptions?: MergeBranchTargetOption[];
   mergeBranchTargetTitle?: string;
-  showReplaceMainBranch?: boolean;
-  replaceMainBranchDisabled?: boolean;
+  showReplaceBranch?: boolean;
+  replaceBranchDisabled?: boolean;
+  replaceBranchButtonLabel?: string;
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
@@ -534,8 +536,9 @@ export default function Header({
   mergeBranchTargetLabel = '',
   mergeBranchTargetOptions = [],
   mergeBranchTargetTitle = '',
-  showReplaceMainBranch = false,
-  replaceMainBranchDisabled = false,
+  showReplaceBranch = false,
+  replaceBranchDisabled = false,
+  replaceBranchButtonLabel = 'Replace Branch',
   showForkButton,
   onContribute,
   onFork,
@@ -613,7 +616,7 @@ export default function Header({
     mergeBranchDisabled || !canMergeBranch || contributionActionLoading
   );
   const replaceMainBranchButtonDisabled = Boolean(
-    replaceMainBranchDisabled || contributionActionLoading
+    replaceBranchDisabled || contributionActionLoading
   );
   const shouldHighlightMergeBranch =
     mergeBranchShiny && !mergeBranchButtonDisabled;
@@ -631,6 +634,7 @@ export default function Header({
       !releaseStatus.hasUnpublishedChanges
   );
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
+  const thumbnailButtonShiny = !String(build.thumbnailUrl || '').trim();
   const showVisibilityBadge = !isContributionFork;
   const publishButtonDisabled =
     publishing ||
@@ -687,7 +691,7 @@ export default function Header({
         >
           {mergeBranchButtonLabel}
         </GameCTAButton>
-        {showReplaceMainBranch ? (
+        {showReplaceBranch ? (
           <GameCTAButton
             onClick={onReplaceMainBranch || (() => {})}
             disabled={replaceMainBranchButtonDisabled}
@@ -696,7 +700,7 @@ export default function Header({
             size="md"
             icon="copy"
           >
-            Replace Main
+            {replaceBranchButtonLabel}
           </GameCTAButton>
         ) : null}
       </span>
@@ -842,6 +846,7 @@ export default function Header({
               variant="neutral"
               size="md"
               icon="image"
+              shiny={thumbnailButtonShiny}
             >
               Thumbnail
             </GameCTAButton>
@@ -979,6 +984,7 @@ export default function Header({
               variant="neutral"
               size="md"
               icon="image"
+              shiny={thumbnailButtonShiny}
             >
               Thumbnail
             </GameCTAButton>

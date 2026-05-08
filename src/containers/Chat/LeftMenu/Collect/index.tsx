@@ -2,7 +2,7 @@ import React from 'react';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
+import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AICards from './AICards';
 import Vocabulary from './Vocabulary';
@@ -17,6 +17,11 @@ export default function Collect({
   onClick: () => void;
 }) {
   const collectType = useKeyContext((v) => v.myState.collectType);
+  const displayedCollectType = vocabSelected
+    ? VOCAB_CHAT_TYPE
+    : aiCardSelected
+      ? AI_CARD_CHAT_TYPE
+      : collectType;
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Collect">
@@ -35,7 +40,11 @@ export default function Collect({
         `}`}
         onClick={onClick}
       >
-        {collectType === AI_CARD_CHAT_TYPE ? <AICards /> : <Vocabulary />}
+        {displayedCollectType === AI_CARD_CHAT_TYPE ? (
+          <AICards />
+        ) : (
+          <Vocabulary />
+        )}
       </div>
     </ErrorBoundary>
   );

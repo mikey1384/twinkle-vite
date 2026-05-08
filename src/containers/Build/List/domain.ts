@@ -310,6 +310,9 @@ export function normalizeQuickAccessBuilds(builds: any): QuickAccessBuild[] {
         ...build,
         id: buildId,
         favoritedAt: normalizeOptionalTimestamp(build?.favoritedAt),
+        favoriteActivityAt: normalizeOptionalTimestamp(
+          build?.favoriteActivityAt
+        ),
         isFavorited: Boolean(build?.isFavorited),
         lastUsedAt: normalizeOptionalTimestamp(build?.lastUsedAt)
       };

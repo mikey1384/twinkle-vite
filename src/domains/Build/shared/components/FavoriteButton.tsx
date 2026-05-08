@@ -78,6 +78,7 @@ const labelClass = css`
 export interface BuildFavoriteChange {
   buildId: number;
   favoritedAt: number | null;
+  favoriteActivityAt: number | null;
   isFavorited: boolean;
   requestedFavorited: boolean;
   result: any;
@@ -177,6 +178,10 @@ export default function FavoriteButton({
         buildId,
         favoritedAt: result.isFavorited
           ? Number(result?.favoritedAt || 0) || null
+          : null,
+        favoriteActivityAt: result.isFavorited
+          ? Number(result?.favoriteActivityAt || result?.favoritedAt || 0) ||
+            null
           : null,
         isFavorited: result.isFavorited,
         requestedFavorited,

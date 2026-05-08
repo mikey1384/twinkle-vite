@@ -170,8 +170,7 @@ export default function LeftMenu({
           aiCardSelected={chatType === AI_CARD_CHAT_TYPE || loadingAICardChat}
           vocabSelected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
           onClick={() => {
-            if (vocabMatch && collectType === VOCAB_CHAT_TYPE) return null;
-            if (aiCardMatch && collectType === AI_CARD_CHAT_TYPE) return null;
+            if (vocabMatch || aiCardMatch) return null;
             navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
           }}
         />

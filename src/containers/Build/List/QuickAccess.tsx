@@ -543,10 +543,17 @@ function BuildQuickAccessCard({
 }) {
   const title = build.title || 'Untitled Build';
   const isFavorited = Boolean(build.isFavorited);
-  const timestamp = mode === 'favorites' ? build.favoritedAt : build.lastUsedAt;
+  const favoriteActivityAt = build.favoriteActivityAt || build.favoritedAt;
+  const favoriteActivityIsUse =
+    Boolean(build.favoriteActivityAt) &&
+    Number(build.favoriteActivityAt || 0) > Number(build.favoritedAt || 0);
+  const timestamp =
+    mode === 'favorites' ? favoriteActivityAt : build.lastUsedAt;
   const timestampLabel =
     mode === 'favorites'
-      ? `Favorited ${formatQuickAccessRelativeTime(timestamp)}`
+      ? `${favoriteActivityIsUse ? 'Used' : 'Favorited'} ${formatQuickAccessRelativeTime(
+          timestamp
+        )}`
       : `Used ${formatQuickAccessRelativeTime(timestamp)}`;
   return (
     <article className={quickAccessCardClass}>
@@ -584,7 +591,13 @@ function BuildQuickAccessCard({
             </span>
           ) : null}
           <span>
-            <Icon icon={mode === 'favorites' ? 'star' : 'clock'} />
+            <Icon
+              icon={
+                mode === 'favorites' && !favoriteActivityIsUse
+                  ? 'star'
+                  : 'clock'
+              }
+            />
             {timestampLabel}
           </span>
         </div>

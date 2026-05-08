@@ -60,6 +60,9 @@ interface UseBuildEditorBranchesOptions {
   prepareProjectFilesForContributionAction: (options: {
     action: ContributionAction;
   }) => Promise<ContributionActionPreparationResult>;
+  replaceBuildContributionIntoMyBranch: (
+    options: Record<string, any>
+  ) => Promise<any>;
   replaceMainWithBuildContribution: (
     options: Record<string, any>
   ) => Promise<any>;
@@ -83,6 +86,7 @@ export default function useBranches({
   mergeBuildContributionIntoMyBranch,
   onProjectFilesDraftStateChange,
   prepareProjectFilesForContributionAction,
+  replaceBuildContributionIntoMyBranch,
   replaceMainWithBuildContribution,
   userId
 }: UseBuildEditorBranchesOptions) {
@@ -216,8 +220,13 @@ export default function useBranches({
     (currentBranchHasMergeableFileChanges ||
       currentBranchMergeabilityLoadFailed ||
       currentBranchHasPendingProjectFileDrafts);
-  const canReplaceMainWithCurrentBranch =
-    currentBranchMergeTarget === 'main' && canMergeCurrentBranch;
+  const canReplaceCurrentBranchTarget = canMergeCurrentBranch;
+  const replaceBranchTargetLabel =
+    currentBranchMergeTarget === 'main'
+      ? 'Main'
+      : selectedBranchMergeTargetLabel || 'your branch';
+  const replaceBranchButtonLabel =
+    currentBranchMergeTarget === 'main' ? 'Replace Main' : 'Replace Branch';
   const mergeCurrentBranchShiny =
     canShowMergeCurrentBranch &&
     (currentBranchHasMergeableFileChanges ||
@@ -597,7 +606,7 @@ export default function useBranches({
   }
 
   function handleOpenReplaceMainConfirm() {
-    if (!canReplaceMainWithCurrentBranch || contributionActionLoading) return;
+    if (!canReplaceCurrentBranchTarget || contributionActionLoading) return;
     setContributionActionError('');
     setReplaceMainConfirmShown(true);
   }
@@ -614,7 +623,7 @@ export default function useBranches({
     if (
       !rootBuildId ||
       !contributionBuildId ||
-      !canReplaceMainWithCurrentBranch ||
+      !canReplaceCurrentBranchTarget ||
       contributionActionLoading
     ) {
       return;
@@ -624,26 +633,46 @@ export default function useBranches({
     try {
       const preparedFiles = await handleBeforeContributionAction('merge');
       if (!preparedFiles.ready) return;
-      const result = await replaceMainWithBuildContribution({
-        buildId: rootBuildId,
-        contributionBuildId,
-        projectFiles: preparedFiles.files
-      });
+      const result =
+        currentBranchMergeTarget === 'own-branch'
+          ? await replaceBuildContributionIntoMyBranch({
+              buildId: rootBuildId,
+              contributionBuildId,
+              targetContributionBuildId: Number(
+                currentUserContributionBranch?.id || 0
+              )
+            })
+          : await replaceMainWithBuildContribution({
+              buildId: rootBuildId,
+              contributionBuildId,
+              projectFiles: preparedFiles.files
+            });
       if (result?.success) {
         setReplaceMainConfirmShown(false);
-        navigate(`/build/${rootBuildId}`, {
-          state: {
-            openVersionsPanel: true
-          }
-        });
+        if (currentBranchMergeTarget === 'own-branch' && result.contribution) {
+          handleContributionBranchCreated(result.contribution);
+          navigate(getBuildWorkspacePath(result.contribution), {
+            state: {
+              openVersionsPanel: true
+            }
+          });
+        } else {
+          navigate(`/build/${rootBuildId}`, {
+            state: {
+              openVersionsPanel: true
+            }
+          });
+        }
       } else {
-        setContributionActionError(result?.error || 'Failed to replace main');
+        setContributionActionError(
+          result?.error || `Failed to replace ${replaceBranchTargetLabel}`
+        );
       }
     } catch (error: any) {
       setContributionActionError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to replace main'
+          `Failed to replace ${replaceBranchTargetLabel}`
       );
     } finally {
       setContributionActionLoading('');
@@ -761,7 +790,7 @@ export default function useBranches({
     branchMergeTargetOptions,
     branchNameDraft,
     canMergeCurrentBranch,
-    canReplaceMainWithCurrentBranch,
+    canReplaceCurrentBranchTarget,
     canShowMergeCurrentBranch,
     canShowVersionStartActions,
     contributionActionError,
@@ -791,6 +820,8 @@ export default function useBranches({
     mergeBranchTargetLabel,
     mergeBranchTargetTitle,
     mergeCurrentBranchShiny,
+    replaceBranchButtonLabel,
+    replaceBranchTargetLabel,
     refreshCurrentBranchMergeability,
     refreshCurrentBranchMergeabilityForBuild,
     replaceMainConfirmShown,

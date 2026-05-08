@@ -352,6 +352,7 @@ export default function useQuickAccess({
     patchFavoriteState({
       build,
       buildId: change.buildId,
+      favoriteActivityAt: change.favoriteActivityAt,
       favoritedAt: change.favoritedAt,
       isFavorited: change.isFavorited
     });
@@ -373,14 +374,19 @@ export default function useQuickAccess({
   function patchFavoriteState({
     build,
     buildId,
+    favoriteActivityAt,
     favoritedAt,
     isFavorited
   }: {
     build: BuildProjectListItemData;
     buildId: number;
+    favoriteActivityAt: number | null;
     favoritedAt: number | null;
     isFavorited: boolean;
   }) {
+    const nextFavoriteActivityAt = isFavorited
+      ? favoriteActivityAt || favoritedAt
+      : null;
     const patchProjectBuild = (
       item: BuildProjectListItemData
     ): BuildProjectListItemData =>
@@ -389,7 +395,12 @@ export default function useQuickAccess({
         : item;
     const patchBuild = (item: QuickAccessBuild): QuickAccessBuild =>
       Number(item.id) === buildId
-        ? { ...item, favoritedAt, isFavorited }
+        ? {
+            ...item,
+            favoriteActivityAt: nextFavoriteActivityAt,
+            favoritedAt,
+            isFavorited
+          }
         : item;
     setRecentlyUsedBuilds((items) => items.map(patchBuild));
     setFavoriteBuilds((items) => {
@@ -398,6 +409,7 @@ export default function useQuickAccess({
       }
       const nextBuild: QuickAccessBuild = {
         ...build,
+        favoriteActivityAt: nextFavoriteActivityAt,
         favoritedAt,
         isFavorited: true
       };

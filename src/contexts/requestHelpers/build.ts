@@ -2038,6 +2038,27 @@ export default function buildRequestHelpers({
       }
     },
 
+    async replaceBuildContributionIntoMyBranch({
+      buildId,
+      contributionBuildId,
+      targetContributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      targetContributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/replace-my-branch`,
+          { targetContributionBuildId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async completeBuildContributionMerge({
       buildId,
       contributionBuildId

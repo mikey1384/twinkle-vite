@@ -13,6 +13,7 @@ export type TodayTopViewedBuild = BuildProjectListItemData & {
 export type BuildQuickAccessMode = 'recent' | 'favorites';
 export type QuickAccessBuild = BuildProjectListItemData & {
   favoritedAt?: number | null;
+  favoriteActivityAt?: number | null;
   isFavorited?: boolean;
   lastUsedAt?: number | null;
 };

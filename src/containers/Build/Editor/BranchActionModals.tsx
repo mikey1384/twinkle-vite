@@ -7,6 +7,8 @@ export default function BranchActionModals({
   activeBuildTitle,
   deletingBranch,
   deletingBranchLoading,
+  replaceBranchButtonLabel,
+  replaceBranchTargetLabel,
   replaceMainConfirmShown,
   onCloseDeleteBranch,
   onCloseReplaceMainConfirm,
@@ -16,6 +18,8 @@ export default function BranchActionModals({
   activeBuildTitle?: string | null;
   deletingBranch: BuildBranchDeleteTarget | null;
   deletingBranchLoading: boolean;
+  replaceBranchButtonLabel: string;
+  replaceBranchTargetLabel: string;
   replaceMainConfirmShown: boolean;
   onCloseDeleteBranch: () => void;
   onCloseReplaceMainConfirm: () => void;
@@ -48,10 +52,10 @@ export default function BranchActionModals({
       ) : null}
       {replaceMainConfirmShown ? (
         <ConfirmModal
-          title="Replace Main?"
+          title={`${replaceBranchButtonLabel}?`}
           descriptionFontSize="1.1rem"
           confirmButtonColor="orange"
-          confirmButtonLabel="Replace Main"
+          confirmButtonLabel={replaceBranchButtonLabel}
           onHide={onCloseReplaceMainConfirm}
           onConfirm={onReplaceMainWithCurrentBranch}
           description={
@@ -63,14 +67,21 @@ export default function BranchActionModals({
               }}
             >
               <p>
-                This will make Main identical to{' '}
+                This will make {replaceBranchTargetLabel} identical to{' '}
                 <b>{activeBuildTitle || 'this branch'}</b>.
               </p>
               <p>
-                Any Main changes that are not in this branch will be
-                overwritten. No merge conflict resolution will run.
+                Any {replaceBranchTargetLabel} changes that are not in this
+                branch will be overwritten. No merge conflict resolution will
+                run.
               </p>
-              <p>The branch will be marked as merged after Main is replaced.</p>
+              {replaceBranchTargetLabel === 'Main' ? (
+                <p>
+                  The branch will be marked as merged after Main is replaced.
+                </p>
+              ) : (
+                <p>Your branch will stay editable after it is replaced.</p>
+              )}
             </div>
           }
         />

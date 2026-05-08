@@ -160,7 +160,7 @@ export default function ThumbnailModal({
       onClose={loading ? () => {} : onHide}
       closeOnBackdropClick={false}
       title="Thumbnail"
-      size="xl"
+      size="lg"
       footer={
         <div>
           <Button
@@ -181,6 +181,7 @@ export default function ThumbnailModal({
         className={css`
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
+          align-items: start;
           gap: 1rem;
           width: 100%;
 
@@ -235,7 +236,8 @@ export default function ThumbnailModal({
         <div
           className={css`
             width: 100%;
-            min-height: 24rem;
+            aspect-ratio: 16 / 9;
+            min-height: 20rem;
             border: 1px solid var(--ui-border);
             border-radius: 16px;
             background: #fff;
@@ -246,7 +248,8 @@ export default function ThumbnailModal({
             <div
               className={css`
                 width: 100%;
-                min-height: 24rem;
+                height: 100%;
+                min-height: 20rem;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -270,7 +273,8 @@ export default function ThumbnailModal({
             <div
               className={css`
                 width: 100%;
-                min-height: 24rem;
+                height: 100%;
+                min-height: 20rem;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -327,7 +331,8 @@ export default function ThumbnailModal({
             <div
               className={css`
                 width: 100%;
-                min-height: 24rem;
+                height: 100%;
+                min-height: 20rem;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
