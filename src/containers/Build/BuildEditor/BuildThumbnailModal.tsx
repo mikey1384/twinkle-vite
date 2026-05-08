@@ -16,6 +16,18 @@ import UploadModal from '~/components/Modals/UploadModal';
 
 const THUMBNAIL_ASPECT_RATIO = 16 / 9;
 
+export interface BuildThumbnailOption {
+  id: string;
+  thumbnailUrl: string;
+  sourceBuildId: number;
+  sourceType: 'main' | 'branch';
+  sourceLabel: string;
+  sourceTitle?: string | null;
+  username?: string | null;
+  usedAt?: number | null;
+  isCurrent?: boolean;
+}
+
 function buildInitialThumbnailCrop(image: HTMLImageElement): Crop {
   const imageWidth = Math.max(1, image.width);
   const imageHeight = Math.max(1, image.height);
@@ -84,8 +96,19 @@ function canEditImageUrlInCanvas(imageUrl: string) {
   }
 }
 
+function formatThumbnailUsedAt(usedAt?: number | null) {
+  const timestamp = Math.floor(Number(usedAt || 0));
+  if (!timestamp) return 'Saved thumbnail';
+  return new Date(timestamp * 1000).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
 export default function BuildThumbnailModal({
   initialImageUrl,
+  thumbnailOptions = [],
+  thumbnailOptionsLoading = false,
   loading = false,
   saveError = '',
   onHide,
@@ -93,6 +116,8 @@ export default function BuildThumbnailModal({
   onCaptureFromPreview
 }: {
   initialImageUrl?: string | null;
+  thumbnailOptions?: BuildThumbnailOption[];
+  thumbnailOptionsLoading?: boolean;
   loading?: boolean;
   saveError?: string;
   onHide: () => void;
@@ -107,6 +132,7 @@ export default function BuildThumbnailModal({
   const [capturingPreview, setCapturingPreview] = useState(false);
   const [uploadModalShown, setUploadModalShown] = useState(false);
   const [error, setError] = useState('');
+  const [selectedThumbnailUrl, setSelectedThumbnailUrl] = useState('');
   const canEditSourceImage = canEditImageUrlInCanvas(sourceImageUrl);
 
   useEffect(() => {
@@ -114,6 +140,7 @@ export default function BuildThumbnailModal({
     setCrop(undefined);
     setCroppedImageUrl('');
     setError('');
+    setSelectedThumbnailUrl(nextInitialImageUrl);
     setSourceImageUrl(getEditableCanvasImageUrl(nextInitialImageUrl));
   }, [initialImageUrl]);
 
@@ -133,7 +160,7 @@ export default function BuildThumbnailModal({
       onClose={loading ? () => {} : onHide}
       closeOnBackdropClick={false}
       title="Thumbnail"
-      size="md"
+      size="xl"
       footer={
         <div>
           <Button
@@ -152,12 +179,24 @@ export default function BuildThumbnailModal({
     >
       <div
         className={css`
-          display: flex;
-          flex-direction: column;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
           gap: 1rem;
           width: 100%;
+
+          @media (max-width: 760px) {
+            grid-template-columns: 1fr;
+          }
         `}
       >
+        <div
+          className={css`
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            gap: 1rem;
+          `}
+        >
         <div
           className={css`
             display: flex;
@@ -322,6 +361,143 @@ export default function BuildThumbnailModal({
             {error || saveError}
           </div>
         ) : null}
+        </div>
+        <aside
+          className={css`
+            min-width: 0;
+            max-height: 33rem;
+            overflow: hidden;
+            border: 1px solid var(--ui-border);
+            border-radius: 12px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+          `}
+        >
+          <div
+            className={css`
+              padding: 0.85rem 0.9rem;
+              border-bottom: 1px solid var(--ui-border);
+              font-size: 1.05rem;
+              font-weight: 800;
+              color: ${Color.black()};
+            `}
+          >
+            Saved thumbnails
+          </div>
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 0.65rem;
+              padding: 0.75rem;
+              overflow-y: auto;
+            `}
+          >
+            {thumbnailOptionsLoading ? (
+              <div
+                className={css`
+                  min-height: 8rem;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: ${Color.darkGray()};
+                `}
+              >
+                <StatusDots color={Color.darkGray()} />
+              </div>
+            ) : thumbnailOptions.length > 0 ? (
+              thumbnailOptions.map((option) => {
+                const isSelected =
+                  String(option.thumbnailUrl || '').trim() ===
+                  selectedThumbnailUrl;
+                return (
+                  <button
+                    key={option.id || option.thumbnailUrl}
+                    type="button"
+                    onClick={() => handleSelectExistingThumbnail(option)}
+                    className={css`
+                      width: 100%;
+                      border: 2px solid
+                        ${isSelected ? Color.logoBlue() : 'var(--ui-border)'};
+                      border-radius: 8px;
+                      background: ${isSelected ? '#edf4ff' : '#fff'};
+                      padding: 0.45rem;
+                      text-align: left;
+                      cursor: pointer;
+                      transition:
+                        border-color 120ms ease,
+                        background 120ms ease;
+
+                      &:hover {
+                        border-color: ${Color.logoBlue()};
+                        background: #f5f9ff;
+                      }
+                    `}
+                  >
+                    <div
+                      className={css`
+                        width: 100%;
+                        aspect-ratio: 16 / 9;
+                        overflow: hidden;
+                        border-radius: 6px;
+                        background: #eef1f5;
+                      `}
+                    >
+                      <img
+                        src={option.thumbnailUrl}
+                        alt={`${option.sourceLabel || 'Build'} thumbnail`}
+                        className={css`
+                          width: 100%;
+                          height: 100%;
+                          display: block;
+                          object-fit: cover;
+                        `}
+                      />
+                    </div>
+                    <div
+                      className={css`
+                        margin-top: 0.45rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 0.5rem;
+                        color: ${Color.black()};
+                        font-size: 1.1rem;
+                        font-weight: 800;
+                      `}
+                    >
+                      <span>{option.sourceLabel || 'Thumbnail'}</span>
+                      {option.isCurrent ? <span>Current</span> : null}
+                    </div>
+                    <div
+                      className={css`
+                        margin-top: 0.2rem;
+                        color: ${Color.darkGray()};
+                        font-size: 1.1rem;
+                        line-height: 1.3;
+                      `}
+                    >
+                      {formatThumbnailUsedAt(option.usedAt)}
+                      {option.sourceTitle ? ` · ${option.sourceTitle}` : ''}
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
+              <div
+                className={css`
+                  padding: 1rem 0.4rem;
+                  color: ${Color.darkGray()};
+                  font-size: 1.1rem;
+                  line-height: 1.4;
+                `}
+              >
+                No saved thumbnails yet.
+              </div>
+            )}
+          </div>
+        </aside>
       </div>
       {uploadModalShown && (
         <UploadModal
@@ -404,6 +580,7 @@ export default function BuildThumbnailModal({
       const { dataUrl } = await convertToWebFriendlyFormat(file);
       setCrop(undefined);
       setCroppedImageUrl('');
+      setSelectedThumbnailUrl('');
       setSourceImageUrl(dataUrl);
     } catch (error: any) {
       setError(error?.message || 'Unable to load that image');
@@ -420,6 +597,7 @@ export default function BuildThumbnailModal({
       const capturedImageUrl = await onCaptureFromPreview();
       setCrop(undefined);
       setCroppedImageUrl('');
+      setSelectedThumbnailUrl('');
       setSourceImageUrl(String(capturedImageUrl || '').trim());
     } catch (error: any) {
       setError(String(error?.message || 'Preview capture failed').trim());
@@ -432,7 +610,18 @@ export default function BuildThumbnailModal({
     setCrop(undefined);
     setCroppedImageUrl('');
     setSourceImageUrl('');
+    setSelectedThumbnailUrl('');
     setError('');
+  }
+
+  function handleSelectExistingThumbnail(option: BuildThumbnailOption) {
+    const thumbnailUrl = String(option.thumbnailUrl || '').trim();
+    if (!thumbnailUrl || loading || processingImage || capturingPreview) return;
+    setCrop(undefined);
+    setCroppedImageUrl('');
+    setError('');
+    setSelectedThumbnailUrl(thumbnailUrl);
+    setSourceImageUrl(getEditableCanvasImageUrl(thumbnailUrl));
   }
 
   function handleSave() {

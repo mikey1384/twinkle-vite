@@ -77,6 +77,7 @@ registerMethods('build', [
   'deleteBuildRuntimeUpload',
   'loadRuntimeBuild',
   'updateBuildMetadata',
+  'loadBuildThumbnailOptions',
   'uploadBuildThumbnail',
   'captureBuildThumbnailPreview',
   'deleteBuildChatMessage',

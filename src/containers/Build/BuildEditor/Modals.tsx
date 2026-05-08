@@ -3,7 +3,9 @@ import UploadModal from '~/components/Modals/UploadModal';
 import UploadFileModal from '~/containers/Chat/Modals/UploadFileModal';
 import BuildDescriptionModal from '../BuildDescriptionModal';
 import BuildCollaborationSettingsModal from './BuildCollaborationSettingsModal';
-import BuildThumbnailModal from './BuildThumbnailModal';
+import BuildThumbnailModal, {
+  type BuildThumbnailOption
+} from './BuildThumbnailModal';
 
 interface ModalsProps {
   build: {
@@ -27,6 +29,8 @@ interface ModalsProps {
   savingThumbnail: boolean;
   thumbnailInitialImageUrl: string | null;
   thumbnailModalShown: boolean;
+  thumbnailOptions: BuildThumbnailOption[];
+  thumbnailOptionsLoading: boolean;
   thumbnailSaveError: string;
   onCaptureThumbnailFromPreview?: () => Promise<string>;
   onCompleteBuildChatUpload: () => void;
@@ -66,6 +70,8 @@ export default function Modals({
   savingThumbnail,
   thumbnailInitialImageUrl,
   thumbnailModalShown,
+  thumbnailOptions,
+  thumbnailOptionsLoading,
   thumbnailSaveError,
   onCaptureThumbnailFromPreview,
   onCompleteBuildChatUpload,
@@ -126,6 +132,8 @@ export default function Modals({
       {thumbnailModalShown && canEditThumbnail ? (
         <BuildThumbnailModal
           initialImageUrl={thumbnailInitialImageUrl}
+          thumbnailOptions={thumbnailOptions}
+          thumbnailOptionsLoading={thumbnailOptionsLoading}
           loading={savingThumbnail}
           saveError={thumbnailSaveError}
           onHide={onHideThumbnailModal}

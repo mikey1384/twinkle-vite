@@ -18,6 +18,7 @@ import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import UsernameText from '~/components/Texts/UsernameText';
 import Workspace from './Workspace';
 import BuildDeleteModal from '../BuildDeleteModal';
+import type { BuildThumbnailOption } from './BuildThumbnailModal';
 import useBuildRunIdentity, {
   getSharedBuildRunIdentityState,
   type BuildRunMode,
@@ -2887,6 +2888,9 @@ export default function BuildEditor({
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
   );
+  const loadBuildThumbnailOptions = useAppContext(
+    (v) => v.requestHelpers.loadBuildThumbnailOptions
+  );
   const uploadBuildThumbnail = useAppContext(
     (v) => v.requestHelpers.uploadBuildThumbnail
   );
@@ -3027,6 +3031,10 @@ export default function BuildEditor({
   const [thumbnailModalShown, setThumbnailModalShown] = useState(false);
   const [savingThumbnail, setSavingThumbnail] = useState(false);
   const savingThumbnailRef = useRef(false);
+  const [thumbnailOptions, setThumbnailOptions] = useState<
+    BuildThumbnailOption[]
+  >([]);
+  const [thumbnailOptionsLoading, setThumbnailOptionsLoading] = useState(false);
   const [thumbnailSaveError, setThumbnailSaveError] = useState('');
   const [runtimeUploadsModalShown, setRuntimeUploadsModalShown] =
     useState(false);
@@ -3265,6 +3273,40 @@ export default function BuildEditor({
     if (!routeOpenForkHistory) return;
     setForkHistoryBuildId(Number(build.id || 0));
   }, [build.id, routeOpenForkHistory]);
+
+  useEffect(() => {
+    if (!thumbnailModalShown || !canEditCurrentBuildThumbnail || !build.id) {
+      setThumbnailOptions([]);
+      setThumbnailOptionsLoading(false);
+      return;
+    }
+    let canceled = false;
+    setThumbnailOptionsLoading(true);
+    loadBuildThumbnailOptions(build.id)
+      .then((result: any) => {
+        if (canceled) return;
+        setThumbnailOptions(
+          Array.isArray(result?.thumbnailOptions)
+            ? result.thumbnailOptions
+            : []
+        );
+      })
+      .catch((error: any) => {
+        if (canceled) return;
+        console.error('Failed to load build thumbnail options:', error);
+        setThumbnailOptions([]);
+      })
+      .finally(() => {
+        if (!canceled) {
+          setThumbnailOptionsLoading(false);
+        }
+      });
+    return () => {
+      canceled = true;
+    };
+    // loadBuildThumbnailOptions is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id, canEditCurrentBuildThumbnail, thumbnailModalShown]);
 
   useEffect(() => {
     const branchListBuildId = currentBuildIsContributionFork
@@ -8142,6 +8184,8 @@ export default function BuildEditor({
           build.thumbnailUrl || getLatestBuild()?.thumbnailUrl || null
         }
         thumbnailModalShown={thumbnailModalShown}
+        thumbnailOptions={thumbnailOptions}
+        thumbnailOptionsLoading={thumbnailOptionsLoading}
         thumbnailSaveError={thumbnailSaveError}
         onCaptureThumbnailFromPreview={captureThumbnailFromPreview}
         onCompleteBuildChatUpload={() => {

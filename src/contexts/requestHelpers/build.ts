@@ -493,6 +493,18 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildThumbnailOptions(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/thumbnail-options`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async uploadBuildThumbnail({
       buildId,
       file
