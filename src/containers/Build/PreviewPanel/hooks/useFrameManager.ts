@@ -1,5 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { PreviewFrameMeta, PreviewSeedCacheEntry } from '../types';
+import {
+  type RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
+import type {
+  PreviewFrameKey,
+  PreviewFrameMeta,
+  PreviewFrameRetiredHandler,
+  PreviewSeedCacheEntry
+} from '../types';
 
 const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
@@ -85,6 +96,31 @@ interface UsePreviewFrameManagerArgs {
   previewCodeSignature: string | null;
   runtimePreviewSrc: string | null;
   workspacePreviewSrc: string | null;
+  onPreviewFrameRetiredRef?: RefObject<PreviewFrameRetiredHandler | null>;
+}
+
+function notifyPreviewFrameRetired({
+  frame,
+  onPreviewFrameRetiredRef,
+  primaryIframeRef,
+  reason,
+  secondaryIframeRef
+}: {
+  frame: PreviewFrameKey;
+  onPreviewFrameRetiredRef?: RefObject<PreviewFrameRetiredHandler | null>;
+  primaryIframeRef: RefObject<HTMLIFrameElement | null>;
+  reason: 'cleared' | 'replaced' | 'runtime-reset';
+  secondaryIframeRef: RefObject<HTMLIFrameElement | null>;
+}) {
+  const sourceWindow =
+    frame === 'primary'
+      ? primaryIframeRef.current?.contentWindow || null
+      : secondaryIframeRef.current?.contentWindow || null;
+  onPreviewFrameRetiredRef?.current?.({
+    frame,
+    sourceWindow,
+    reason
+  });
 }
 
 export function useFrameManager({
@@ -92,11 +128,11 @@ export function useFrameManager({
   runtimeOnly,
   previewCodeSignature,
   runtimePreviewSrc,
-  workspacePreviewSrc
+  workspacePreviewSrc,
+  onPreviewFrameRetiredRef
 }: UsePreviewFrameManagerArgs) {
-  const [activePreviewFrame, setActivePreviewFrame] = useState<
-    'primary' | 'secondary'
-  >('primary');
+  const [activePreviewFrame, setActivePreviewFrame] =
+    useState<PreviewFrameKey>('primary');
   const [previewFrameSources, setPreviewFrameSources] = useState<{
     primary: string | null;
     secondary: string | null;
@@ -114,8 +150,8 @@ export function useFrameManager({
   const [previewTransitioning, setPreviewTransitioning] = useState(false);
   const primaryIframeRef = useRef<HTMLIFrameElement>(null);
   const secondaryIframeRef = useRef<HTMLIFrameElement>(null);
-  const activePreviewFrameRef = useRef<'primary' | 'secondary'>('primary');
-  const messageTargetFrameRef = useRef<'primary' | 'secondary'>('primary');
+  const activePreviewFrameRef = useRef<PreviewFrameKey>('primary');
+  const messageTargetFrameRef = useRef<PreviewFrameKey>('primary');
   const previewTransitioningRef = useRef(false);
   const previewFrameMetaRef = useRef<{
     primary: PreviewFrameMeta;
@@ -198,6 +234,24 @@ export function useFrameManager({
     if (!previewSrc) {
       clearCachedPreviewSeed(buildId);
       if (currentSources.primary) {
+        notifyPreviewFrameRetired({
+          frame: 'primary',
+          onPreviewFrameRetiredRef,
+          primaryIframeRef,
+          reason: 'cleared',
+          secondaryIframeRef
+        });
+      }
+      if (currentSources.secondary) {
+        notifyPreviewFrameRetired({
+          frame: 'secondary',
+          onPreviewFrameRetiredRef,
+          primaryIframeRef,
+          reason: 'cleared',
+          secondaryIframeRef
+        });
+      }
+      if (currentSources.primary) {
         revokePreviewUrl(currentSources.primary);
       }
       if (
@@ -278,6 +332,13 @@ export function useFrameManager({
     }
 
     if (inactiveSrc && inactiveSrc !== previewSrc) {
+      notifyPreviewFrameRetired({
+        frame: inactiveFrame,
+        onPreviewFrameRetiredRef,
+        primaryIframeRef,
+        reason: 'replaced',
+        secondaryIframeRef
+      });
       revokePreviewUrl(inactiveSrc);
     }
 
@@ -304,7 +365,14 @@ export function useFrameManager({
     messageTargetFrameRef.current = activeFrame;
     previewTransitioningRef.current = true;
     setPreviewTransitioning(true);
-  }, [buildId, previewCodeSignature, previewSrc]);
+  }, [
+    buildId,
+    onPreviewFrameRetiredRef,
+    previewCodeSignature,
+    previewSrc,
+    primaryIframeRef,
+    secondaryIframeRef
+  ]);
 
   useEffect(() => {
     activePreviewFrameRef.current = activePreviewFrame;
@@ -324,6 +392,15 @@ export function useFrameManager({
 
   useEffect(() => {
     if (!runtimeOnly) return;
+    if (previewFrameSourcesRef.current.secondary) {
+      notifyPreviewFrameRetired({
+        frame: 'secondary',
+        onPreviewFrameRetiredRef,
+        primaryIframeRef,
+        reason: 'runtime-reset',
+        secondaryIframeRef
+      });
+    }
 
     previewFrameMetaRef.current = {
       primary: {
@@ -348,7 +425,14 @@ export function useFrameManager({
     };
     previewFrameReadyRef.current = nextReadyState;
     setPreviewFrameReady(nextReadyState);
-  }, [buildId, previewCodeSignature, runtimeOnly]);
+  }, [
+    buildId,
+    onPreviewFrameRetiredRef,
+    previewCodeSignature,
+    primaryIframeRef,
+    runtimeOnly,
+    secondaryIframeRef
+  ]);
 
   useEffect(() => {
     return () => {
@@ -418,6 +502,15 @@ export function useFrameManager({
     }
 
     const outgoingSrc = sources[activeFrame];
+    if (outgoingSrc && outgoingSrc !== expectedSrc) {
+      notifyPreviewFrameRetired({
+        frame: activeFrame,
+        onPreviewFrameRetiredRef,
+        primaryIframeRef,
+        reason: 'replaced',
+        secondaryIframeRef
+      });
+    }
     setActivePreviewFrame(frame);
     activePreviewFrameRef.current = frame;
     messageTargetFrameRef.current = frame;

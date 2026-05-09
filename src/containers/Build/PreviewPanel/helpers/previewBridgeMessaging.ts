@@ -84,6 +84,36 @@ export function getBuildRuntimeChatSubscriptionKey(
   return `${Number(buildId)}:${roomKey}`;
 }
 
+export function normalizeBuildRuntimeWorldKey(
+  value: unknown,
+  fallback: string
+) {
+  const key = String(value == null ? fallback : value).trim() || fallback;
+  if (!key) {
+    throw new Error('world key is required');
+  }
+  return key;
+}
+
+export function getBuildRuntimeWorldSubscriptionKey({
+  buildId,
+  worldKey,
+  roomKey,
+  instanceId
+}: {
+  buildId: number;
+  worldKey: string;
+  roomKey: string;
+  instanceId: string;
+}) {
+  return [
+    Number(buildId),
+    worldKey,
+    roomKey,
+    instanceId
+  ].join(':');
+}
+
 export function postBuildRuntimeChatEventToFrames({
   subscriptions,
   payload,
@@ -111,6 +141,64 @@ export function postBuildRuntimeChatEventToFrames({
       {
         source: 'twinkle-parent',
         type: 'chat:event',
+        payload,
+        previewNonce: targetBridge.previewNonce
+      },
+      targetBridge.targetOrigin
+    );
+  }
+}
+
+export function postBuildRuntimeWorldEventToFrames({
+  sessions,
+  payload,
+  getTargetBridge
+}: {
+  sessions: Map<
+    string,
+    {
+      sourceWindow: Window;
+      buildId: number;
+      worldKey: string;
+      roomKey: string;
+      instanceId: string;
+    }
+  >;
+  payload: any;
+  getTargetBridge: (targetWindow: Window) => {
+    targetOrigin: string;
+    previewNonce: string | null;
+  };
+}) {
+  const buildId = Number(payload?.buildId || payload?.room?.buildId || 0);
+  const worldKey = String(
+    payload?.worldKey || payload?.room?.worldKey || ''
+  ).trim();
+  const roomKey = String(payload?.roomKey || payload?.room?.roomKey || '').trim();
+  const instanceId = String(
+    payload?.instanceId || payload?.room?.instanceId || ''
+  ).trim();
+  if (!buildId || !worldKey || !roomKey || !instanceId) return;
+
+  const postedWindows = new Set<Window>();
+  for (const session of sessions.values()) {
+    if (
+      session.buildId !== buildId ||
+      session.worldKey !== worldKey ||
+      session.roomKey !== roomKey ||
+      session.instanceId !== instanceId
+    ) {
+      continue;
+    }
+    if (postedWindows.has(session.sourceWindow)) {
+      continue;
+    }
+    postedWindows.add(session.sourceWindow);
+    const targetBridge = getTargetBridge(session.sourceWindow);
+    session.sourceWindow.postMessage(
+      {
+        source: 'twinkle-parent',
+        type: 'world:event',
         payload,
         previewNonce: targetBridge.previewNonce
       },

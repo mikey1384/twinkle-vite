@@ -19,7 +19,12 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'shared-db:create-topic',
   'shared-db:delete-entry',
   'shared-db:update-entry',
-  'user-db:exec'
+  'user-db:exec',
+  'world:heartbeat',
+  'world:join',
+  'world:leave',
+  'world:send',
+  'world:update-presence'
 ]);
 
 export function isMutatingPreviewRequestType(type: string) {

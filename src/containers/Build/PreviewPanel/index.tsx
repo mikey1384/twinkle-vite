@@ -43,6 +43,7 @@ import {
 import type {
   EditableProjectFile,
   PreviewPanelHandle,
+  PreviewFrameRetiredHandler,
   PreviewPanelProps
 } from './types';
 import VersionHistoryModal from './VersionHistoryModal';
@@ -528,6 +529,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       scopes: string[];
       expiresAt: number;
     } | null>(null);
+    const onPreviewFrameRetiredRef =
+      useRef<PreviewFrameRetiredHandler | null>(null);
     const hydratedBuildIdRef = useRef<number | null>(null);
     const capabilitySnapshotRef = useRef<BuildCapabilitySnapshot | null>(
       capabilitySnapshot
@@ -759,7 +762,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       workspacePreviewSrc:
         previewFrameSuspended
           ? null
-          : normalizedPreviewSrcOverride || workspacePreviewSrc
+          : normalizedPreviewSrcOverride || workspacePreviewSrc,
+      onPreviewFrameRetiredRef
     });
     const runtimePreviewFrameSrc = runtimeOnly
       ? previewFrameSources.primary
@@ -898,6 +902,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewFrameMetaRef,
       previewFrameSourcesRef,
       previewTransitioningRef,
+      onPreviewFrameRetiredRef,
       primaryIframeRef,
       secondaryIframeRef,
       setRuntimeObservationState,

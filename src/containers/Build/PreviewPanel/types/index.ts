@@ -141,6 +141,18 @@ export interface PreviewFrameMeta {
   messageNonce: string | null;
 }
 
+export type PreviewFrameKey = 'primary' | 'secondary';
+
+export interface PreviewFrameRetiredPayload {
+  frame: PreviewFrameKey;
+  sourceWindow: Window | null;
+  reason: 'cleared' | 'replaced' | 'runtime-reset';
+}
+
+export type PreviewFrameRetiredHandler = (
+  payload: PreviewFrameRetiredPayload
+) => void;
+
 export interface EditableProjectFile {
   path: string;
   content: string;

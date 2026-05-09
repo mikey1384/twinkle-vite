@@ -178,6 +178,17 @@ const sdkSections: GuideSection[] = [
     ]
   },
   {
+    title: 'Twinkle.world',
+    items: [
+      'await Twinkle.world.join({ worldKey: "town", roomKey: "square", presence: { x, y, z, facing }, player: { name } }) joins a realtime multiplayer room and returns a session handle.',
+      'world.subscribe(listener) receives snapshot, player.joined, player.left, presence.updated, and action.received events with serverTime, seq, eventId, room, player, and players.',
+      'world.updatePresence({ x, y, z, facing, animation }) updates the current avatar snapshot. Throttle movement updates to about 5-15 times per second; do not call it every animation frame.',
+      'world.send("emote", { emote: "wave" }) sends lightweight in-room actions for emotes, interactions, and chat bubbles.',
+      'world.leave() leaves the room; Twinkle.world.leaveAll() leaves all active sessions in the iframe.',
+      'Twinkle.world is ephemeral heartbeat/TTL state. Use Twinkle.sharedDb/privateDb for durable inventory, XP, quests, ownership, and saved progress.'
+    ]
+  },
+  {
     title: 'Databases',
     items: [
       'Twinkle.privateDb is the default private per-user store for preferences, drafts, settings, and small JSON state.',

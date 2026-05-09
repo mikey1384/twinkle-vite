@@ -160,20 +160,30 @@ export default function Header({
   }, [userId]);
 
   useEffect(() => {
+    let cancelled = false;
+
     initAiFeatureFlags();
 
-	async function initAiFeatureFlags() {
-	  try {
-	    const { default: loadAiFeatureFlags } = await import(
-	      './requestHelpers/loadAiFeatureFlags'
-	    );
-	    const { aiFeaturesDisabled } = await loadAiFeatureFlags();
-	    onSetAiFeaturesDisabled(aiFeaturesDisabled);
-	  } catch (error) {
+    async function initAiFeatureFlags() {
+      try {
+        const { default: loadAiFeatureFlags } = await import(
+          './requestHelpers/loadAiFeatureFlags'
+        );
+        const { aiFeaturesDisabled } = await loadAiFeatureFlags();
+        if (!cancelled) {
+          onSetAiFeaturesDisabled(aiFeaturesDisabled);
+        }
+      } catch (error) {
         console.error('Failed to load AI feature flags:', error);
-        onSetAiFeaturesDisabled(true);
+        if (!cancelled) {
+          onSetAiFeaturesDisabled(true);
+        }
       }
     }
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

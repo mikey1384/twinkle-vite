@@ -11,8 +11,10 @@ import {
 } from '../helpers/previewBridgeAuth';
 import {
   getBuildRuntimeChatSubscriptionKey,
+  normalizeBuildRuntimeWorldKey,
   normalizeBuildRuntimeChatRoomKey,
   postBuildRuntimeChatEventToFrames,
+  postBuildRuntimeWorldEventToFrames,
   postToPreviewFrames,
   syncPreviewRuntimeUploadsState
 } from '../helpers/previewBridgeMessaging';
@@ -50,6 +52,31 @@ import {
   disposeBuildChessEngine,
   evaluateBuildChessPosition
 } from '../helpers/chessEngine';
+import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
+
+function getBuildRuntimeWorldViewerIdentityKey(
+  viewer: ReturnType<typeof getViewerInfo>
+) {
+  if (viewer.isLoggedIn) {
+    return `user:${viewer.id || ''}`;
+  }
+  if (viewer.isGuest) {
+    return `guest:${viewer.id || ''}`;
+  }
+  return `anonymous:${viewer.isOwner ? 'owner' : 'viewer'}`;
+}
+
+function shouldUseReliableBuildRuntimeWorldEmit(eventName: string) {
+  return (
+    eventName === 'build_app_world_join' ||
+    eventName === 'build_app_world_leave'
+  );
+}
+
+function isBuildRuntimeWorldSocketWritable() {
+  const transport = (socket as any).io?.engine?.transport;
+  return socket.connected && (!transport || transport.writable !== false);
+}
 
 export function useHostBridge({
   runtimeOnly,
@@ -69,6 +96,7 @@ export function useHostBridge({
   previewFrameMetaRef,
   previewFrameSourcesRef,
   previewTransitioningRef,
+  onPreviewFrameRetiredRef,
   primaryIframeRef,
   secondaryIframeRef,
   setRuntimeObservationState,
@@ -78,10 +106,23 @@ export function useHostBridge({
   onAiUsagePolicyUpdateRef
 }: UsePreviewHostBridgeArgs) {
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
+  const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(
+    null
+  );
+  const worldViewerIdentityKeyRef = useRef<string | null>(null);
   mountContextRef.current = mountContext;
 
   useEffect(() => {
     const viewer = getViewerInfo(previewAuth);
+    const viewerIdentityKey = getBuildRuntimeWorldViewerIdentityKey(viewer);
+    const previousViewerIdentityKey = worldViewerIdentityKeyRef.current;
+    worldViewerIdentityKeyRef.current = viewerIdentityKey;
+    if (
+      previousViewerIdentityKey &&
+      previousViewerIdentityKey !== viewerIdentityKey
+    ) {
+      resetWorldSessionsRef.current?.('viewer-changed');
+    }
     postToPreviewFrames(
       primaryIframeRef,
       secondaryIframeRef,
@@ -165,6 +206,16 @@ export function useHostBridge({
         terminalStatusForwarded: boolean;
       }
     >();
+    const activeWorldSessions = new Map<
+      string,
+      {
+        sourceWindow: Window;
+        buildId: number;
+        worldKey: string;
+        roomKey: string;
+        instanceId: string;
+      }
+    >();
 
     function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
       socket.emit('build_app_chat_subscribe', {
@@ -186,6 +237,168 @@ export function useHostBridge({
         payload,
         getTargetBridge: getMessageTargetBridgeForWindow
       });
+    }
+
+    function handleBuildRuntimeWorldEvent(payload: any) {
+      postBuildRuntimeWorldEventToFrames({
+        sessions: activeWorldSessions,
+        payload,
+        getTargetBridge: getMessageTargetBridgeForWindow
+      });
+    }
+
+    function postBuildRuntimeWorldResetToFrame({
+      reason,
+      sessionIds,
+      sourceWindow
+    }: {
+      reason: string;
+      sessionIds: string[];
+      sourceWindow: Window;
+    }) {
+      const targetBridge = getMessageTargetBridgeForWindow(sourceWindow);
+      sourceWindow.postMessage(
+        {
+          source: 'twinkle-parent',
+          type: 'world:reset',
+          payload: {
+            reason,
+            sessionIds,
+            serverTime: Date.now()
+          },
+          previewNonce: targetBridge.previewNonce
+        },
+        targetBridge.targetOrigin
+      );
+    }
+
+    function resetActiveWorldSessions({
+      leaveServer,
+      reason
+    }: {
+      leaveServer?: boolean;
+      reason: string;
+    }) {
+      if (activeWorldSessions.size === 0) return;
+      const sessionIdsByWindow = new Map<Window, string[]>();
+      for (const [sessionId, session] of activeWorldSessions) {
+        if (leaveServer && socket.connected) {
+          socket.emit('build_app_world_leave', { sessionId });
+        }
+        const sessionIds = sessionIdsByWindow.get(session.sourceWindow) || [];
+        sessionIds.push(sessionId);
+        sessionIdsByWindow.set(session.sourceWindow, sessionIds);
+      }
+      activeWorldSessions.clear();
+      for (const [sourceWindow, sessionIds] of sessionIdsByWindow) {
+        postBuildRuntimeWorldResetToFrame({
+          reason,
+          sessionIds,
+          sourceWindow
+        });
+      }
+    }
+
+    function handleBuildRuntimeWorldSocketDisconnect() {
+      resetActiveWorldSessions({
+        reason: 'socket-disconnected'
+      });
+    }
+
+    resetWorldSessionsRef.current = (reason: string) => {
+      resetActiveWorldSessions({
+        leaveServer: true,
+        reason
+      });
+    };
+
+    function emitBuildRuntimeWorldRequest(
+      eventName: string,
+      payload: Record<string, any>,
+      timeoutMs = 8000
+    ) {
+      return new Promise<Record<string, any>>((resolve, reject) => {
+        const useReliableEmit = shouldUseReliableBuildRuntimeWorldEmit(
+          eventName
+        );
+        if (!socket.connected) {
+          reject(new Error('Socket is not connected'));
+          return;
+        }
+        if (useReliableEmit && !isBuildRuntimeWorldSocketWritable()) {
+          reject(new Error('Socket transport is not ready'));
+          return;
+        }
+        let settled = false;
+        const timeout = window.setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          reject(new Error('World request timed out'));
+        }, timeoutMs);
+        const emitter = useReliableEmit ? socket : socket.volatile;
+        emitter.emit(eventName, payload, (response: any) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          if (!response?.ok) {
+            reject(new Error(response?.error || 'World request failed'));
+            return;
+          }
+          resolve(response);
+        });
+      });
+    }
+
+    function trackWorldSession({
+      response,
+      sourceWindow,
+      buildId
+    }: {
+      response: any;
+      sourceWindow: Window;
+      buildId: number;
+    }) {
+      const sessionId = String(response?.session?.sessionId || '').trim();
+      if (!sessionId) return;
+      const worldKey = normalizeBuildRuntimeWorldKey(
+        response?.room?.worldKey || response?.session?.worldKey,
+        'default'
+      );
+      const roomKey = normalizeBuildRuntimeWorldKey(
+        response?.room?.roomKey || response?.session?.roomKey,
+        'main'
+      );
+      const instanceId = normalizeBuildRuntimeWorldKey(
+        response?.room?.instanceId || response?.session?.instanceId,
+        'main'
+      );
+      activeWorldSessions.set(sessionId, {
+        sourceWindow,
+        buildId,
+        worldKey,
+        roomKey,
+        instanceId
+      });
+    }
+
+    function forgetWorldSession(sessionId: unknown) {
+      activeWorldSessions.delete(String(sessionId || '').trim());
+    }
+
+    function leaveWorldSessionsForWindow(sourceWindow: Window | null) {
+      if (!sourceWindow) return;
+      for (const [sessionId, session] of Array.from(activeWorldSessions)) {
+        if (session.sourceWindow !== sourceWindow) continue;
+        socket.emit('build_app_world_leave', { sessionId });
+        activeWorldSessions.delete(sessionId);
+      }
+    }
+
+    function leaveAllWorldSessions() {
+      for (const sessionId of activeWorldSessions.keys()) {
+        socket.emit('build_app_world_leave', { sessionId });
+      }
+      activeWorldSessions.clear();
     }
 
     async function ensureAiImageNotificationChannel() {
@@ -355,6 +568,15 @@ export function useHostBridge({
         void ensureAiImageNotificationChannel();
       }
     }
+
+    const handlePreviewFrameRetired = ({
+      sourceWindow
+    }: {
+      sourceWindow: Window | null;
+    }) => {
+      leaveWorldSessionsForWindow(sourceWindow);
+    };
+    onPreviewFrameRetiredRef.current = handlePreviewFrameRetired;
 
     function getMessageTargetBridgeForWindow(targetWindow: Window) {
       const primaryWindow = primaryIframeRef.current?.contentWindow || null;
@@ -1282,6 +1504,79 @@ export function useHostBridge({
             break;
           }
 
+          case 'world:join': {
+            const viewer = getViewerInfo(previewAuth);
+            if (viewer.isLoggedIn) {
+              await waitForSocketAuthReady(Number(viewer.id || 0));
+            }
+            response = await emitBuildRuntimeWorldRequest(
+              'build_app_world_join',
+              {
+                buildId: activeBuild.id,
+                worldKey: payload?.worldKey,
+                roomKey: payload?.roomKey,
+                instanceId: payload?.instanceId,
+                presence: payload?.presence,
+                player: {
+                  ...(payload?.player || {}),
+                  name: payload?.player?.name || viewer.username,
+                  profilePicUrl:
+                    payload?.player?.profilePicUrl || viewer.profilePicUrl
+                },
+                guestSessionId: viewer.isGuest ? viewer.id : null
+              }
+            );
+            trackWorldSession({
+              response,
+              sourceWindow,
+              buildId: activeBuild.id
+            });
+            break;
+          }
+
+          case 'world:update-presence': {
+            response = await emitBuildRuntimeWorldRequest(
+              'build_app_world_update_presence',
+              {
+                sessionId: payload?.sessionId,
+                presence: payload?.presence
+              }
+            );
+            break;
+          }
+
+          case 'world:send': {
+            response = await emitBuildRuntimeWorldRequest(
+              'build_app_world_send',
+              {
+                sessionId: payload?.sessionId,
+                action: payload?.action
+              }
+            );
+            break;
+          }
+
+          case 'world:heartbeat': {
+            response = await emitBuildRuntimeWorldRequest(
+              'build_app_world_heartbeat',
+              {
+                sessionId: payload?.sessionId
+              }
+            );
+            break;
+          }
+
+          case 'world:leave': {
+            response = await emitBuildRuntimeWorldRequest(
+              'build_app_world_leave',
+              {
+                sessionId: payload?.sessionId
+              }
+            );
+            forgetWorldSession(payload?.sessionId);
+            break;
+          }
+
           case 'private-db:get': {
             const privateDbReadToken = await ensureBuildApiToken(
               ['privateDb:read'],
@@ -1454,6 +1749,8 @@ export function useHostBridge({
       handleSocketAuthReady
     );
     socket.on('build_app_chat_event', handleBuildRuntimeChatEvent);
+    socket.on('build_app_world_event', handleBuildRuntimeWorldEvent);
+    socket.on('disconnect', handleBuildRuntimeWorldSocketDisconnect);
     socket.on(
       'image_generation_status_received',
       handleAiImageGenerationStatus
@@ -1465,6 +1762,8 @@ export function useHostBridge({
         handleSocketAuthReady
       );
       socket.off('build_app_chat_event', handleBuildRuntimeChatEvent);
+      socket.off('build_app_world_event', handleBuildRuntimeWorldEvent);
+      socket.off('disconnect', handleBuildRuntimeWorldSocketDisconnect);
       socket.off(
         'image_generation_status_received',
         handleAiImageGenerationStatus
@@ -1478,6 +1777,13 @@ export function useHostBridge({
       }
       chatSubscriptions.clear();
       activeAiImageStatusTargets.clear();
+      leaveAllWorldSessions();
+      if (resetWorldSessionsRef.current) {
+        resetWorldSessionsRef.current = null;
+      }
+      if (onPreviewFrameRetiredRef.current === handlePreviewFrameRetired) {
+        onPreviewFrameRetiredRef.current = null;
+      }
       disposeBuildChessEngine();
     };
   }, [
@@ -1489,6 +1795,7 @@ export function useHostBridge({
     previewFrameMetaRef,
     previewFrameSourcesRef,
     previewTransitioningRef,
+    onPreviewFrameRetiredRef,
     primaryIframeRef,
     requestRefs,
     runtimeUploadsSyncRef,

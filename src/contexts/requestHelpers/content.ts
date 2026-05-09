@@ -1489,13 +1489,15 @@ export default function contentRequestHelpers({
       rootType,
       currentRecommendations,
       rewardDisabled,
+      shouldRecommend,
       uploaderId
     }: {
       contentId: number;
       contentType: string;
       rootType?: string;
-      currentRecommendations: number[];
+      currentRecommendations: any[];
       rewardDisabled: boolean;
+      shouldRecommend: boolean;
       uploaderId: number;
     }) {
       try {
@@ -1509,7 +1511,8 @@ export default function contentRequestHelpers({
             rootType,
             currentRecommendations,
             uploaderId,
-            rewardDisabled
+            rewardDisabled,
+            shouldRecommend
           },
           auth()
         );

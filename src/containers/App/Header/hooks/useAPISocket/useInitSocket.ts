@@ -7,8 +7,11 @@ import {
   ZERO_TWINKLE_ID,
   CIEL_TWINKLE_ID
 } from '~/constants/defaultValues';
-import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { logForAdmin, parseChannelPath } from '~/helpers';
+import {
+  clearSocketAuthReady,
+  markSocketAuthReady
+} from '~/helpers/socketAuthReady';
 import {
   nextChatBootstrapId,
   recordChatBootstrapEvent
@@ -26,16 +29,7 @@ import {
 } from '~/contexts';
 
 function dispatchSocketAuthReady(userId?: number | null) {
-  const normalizedUserId = Number(userId || 0);
-  if (!normalizedUserId) return;
-  window.dispatchEvent(
-    new CustomEvent(TWINKLE_SOCKET_AUTH_READY_EVENT, {
-      detail: {
-        socketId: socket.id,
-        userId: normalizedUserId
-      }
-    })
-  );
+  markSocketAuthReady(userId);
 }
 
 export default function useInitSocket({
@@ -333,6 +327,7 @@ export default function useInitSocket({
 
   useEffect(() => {
     if (userId) return;
+    clearSocketAuthReady();
     if (loadChatRetryTimerRef.current) {
       clearTimeout(loadChatRetryTimerRef.current);
       loadChatRetryTimerRef.current = null;
@@ -881,6 +876,7 @@ export default function useInitSocket({
       logForAdmin({
         message: `disconnected from socket. reason: ${reason}`
       });
+      clearSocketAuthReady();
       didSocketDisconnectRef.current = true;
       onSetAICallEnding(false);
       onChangeSocketStatus(false);

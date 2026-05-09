@@ -255,7 +255,8 @@ export default function RecommendationInterface({
           rootType,
           uploaderId,
           currentRecommendations,
-          rewardDisabled: state.rewardDisabled
+          rewardDisabled: state.rewardDisabled,
+          shouldRecommend: !isRecommendedByUser
         }),
         timeout(10000)
       ]);

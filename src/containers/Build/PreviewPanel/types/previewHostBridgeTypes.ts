@@ -10,6 +10,7 @@ import type {
 } from '../../types/runtimeObservationTypes';
 import type {
   PreviewFrameMeta,
+  PreviewFrameRetiredHandler,
   PreviewMountContext,
   PreviewRuntimeUploadsSyncPayload
 } from './index';
@@ -42,6 +43,7 @@ export interface UsePreviewHostBridgeArgs {
     secondary: string | null;
   }>;
   previewTransitioningRef: RefObject<boolean>;
+  onPreviewFrameRetiredRef: RefObject<PreviewFrameRetiredHandler | null>;
   primaryIframeRef: RefObject<HTMLIFrameElement | null>;
   secondaryIframeRef: RefObject<HTMLIFrameElement | null>;
   setRuntimeObservationState: Dispatch<
