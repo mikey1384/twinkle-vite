@@ -1,13 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
-import Main from './Main';
-import RightMenu from './RightMenu';
-import SystemPromptMenu from './SystemPromptMenu';
-import SystemPromptShared from './SystemPromptShared';
-import WorkshopPage from './WorkshopPage';
 import InvalidPage from '~/components/InvalidPage';
 import GoBack from '~/components/GoBack';
-import Management from './Management';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -20,6 +14,14 @@ import {
   useParams
 } from 'react-router-dom';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+
+const Main = lazyWithRetry(() => import('./Main'));
+const RightMenu = lazyWithRetry(() => import('./RightMenu'));
+const SystemPromptMenu = lazyWithRetry(() => import('./SystemPromptMenu'));
+const SystemPromptShared = lazyWithRetry(() => import('./SystemPromptShared'));
+const WorkshopPage = lazyWithRetry(() => import('./WorkshopPage'));
+const Management = lazyWithRetry(() => import('./Management'));
 
 export default function MissionPage() {
   const [loading, setLoading] = useState(false);
@@ -288,56 +290,59 @@ export default function MissionPage() {
               }
             `}
           >
-            <Routes>
-              {allowManage && (
-                <Route
-                  path={`/manage`}
-                  element={
-                    <Management
-                      missionId={missionId}
-                      mission={mission}
-                      onSetMissionState={onSetMissionState}
-                    />
-                  }
-                />
-              )}
-              {isSystemPromptMission && missionCleared && (
-                <Route
-                  path="/workshop"
-                  element={
-                    <WorkshopPage
-                      mission={mission}
-                      onSetMissionState={onSetMissionState}
-                    />
-                  }
-                />
-              )}
-              {isSystemPromptMission && (
-                <Route
-                  path="/shared"
-                  element={<SystemPromptShared />}
-                />
-              )}
-              <Route
-                path="*"
-                element={
-                  <Main
-                    onSetMissionState={onSetMissionState}
-                    mission={mission}
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                {allowManage && (
+                  <Route
+                    path={`/manage`}
+                    element={
+                      <Management
+                        missionId={missionId}
+                        mission={mission}
+                        onSetMissionState={onSetMissionState}
+                      />
+                    }
                   />
-                }
-              />
-            </Routes>
+                )}
+                {isSystemPromptMission && missionCleared && (
+                  <Route
+                    path="/workshop"
+                    element={
+                      <WorkshopPage
+                        mission={mission}
+                        onSetMissionState={onSetMissionState}
+                      />
+                    }
+                  />
+                )}
+                {isSystemPromptMission && (
+                  <Route path="/shared" element={<SystemPromptShared />} />
+                )}
+                <Route
+                  path="*"
+                  element={
+                    <Main
+                      onSetMissionState={onSetMissionState}
+                      mission={mission}
+                    />
+                  }
+                />
+              </Routes>
+            </Suspense>
           </div>
           {isSystemPromptMission ? (
-            <SystemPromptMenu
-              className="desktop"
-              missionType={missionType}
-              missionCleared={missionCleared}
-            />
+            <Suspense fallback={null}>
+              <SystemPromptMenu
+                className="desktop"
+                missionType={missionType}
+                missionCleared={missionCleared}
+              />
+            </Suspense>
           ) : (
             isAdmin && (
-              <RightMenu className="desktop" missionType={missionType} />
+              <Suspense fallback={null}>
+                <RightMenu className="desktop" missionType={missionType} />
+              </Suspense>
             )
           )}
         </div>

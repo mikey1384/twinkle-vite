@@ -1,12 +1,15 @@
-import React from 'react';
-import Main from './Main';
+import React, { Suspense } from 'react';
 import Notification from '~/components/Notification';
-import ModActivities from './ModActivities';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import Tools from './Tools';
-import AiCosts from './AiCosts';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+
+const Main = lazyWithRetry(() => import('./Main'));
+const Tools = lazyWithRetry(() => import('./Tools'));
+const ModActivities = lazyWithRetry(() => import('./ModActivities'));
+const AiCosts = lazyWithRetry(() => import('./AiCosts'));
 
 export default function ManagementRoutes({ className }: { className: string }) {
   const location = useLocation();
@@ -23,12 +26,14 @@ export default function ManagementRoutes({ className }: { className: string }) {
           }
         `}
       >
-        <Routes>
-          <Route path="*" element={<Main />} />
-          <Route path="tools" element={<Tools />} />
-          <Route path="mod-activities" element={<ModActivities />} />
-          <Route path="ai-costs" element={<AiCosts />} />
-        </Routes>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="*" element={<Main />} />
+            <Route path="tools" element={<Tools />} />
+            <Route path="mod-activities" element={<ModActivities />} />
+            <Route path="ai-costs" element={<AiCosts />} />
+          </Routes>
+        </Suspense>
       </div>
       <Notification
         className={css`

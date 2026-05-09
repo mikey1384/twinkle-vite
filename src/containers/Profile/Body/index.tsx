@@ -1,10 +1,8 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import { mobileMaxWidth } from '~/constants/css';
 import { useViewContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
-import Home from './Home';
-import LikedPosts from './LikedPosts';
-import Posts from './Posts';
+import Loading from '~/components/Loading';
 import {
   matchPath,
   Navigate,
@@ -15,6 +13,11 @@ import {
   useNavigate
 } from 'react-router-dom';
 import { css } from '@emotion/css';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+
+const Home = lazyWithRetry(() => import('./Home'));
+const LikedPosts = lazyWithRetry(() => import('./LikedPosts'));
+const Posts = lazyWithRetry(() => import('./Posts'));
 const profileLabel = 'Profile';
 const watchedLabel = 'Watched';
 const likesLabel = 'Likes';
@@ -175,21 +178,23 @@ export default function Body({
             }
           `}
         >
-          <Routes>
-            <Route path="/likes" element={<Navigate replace to={`./all`} />} />
-            <Route
-              path="/likes/:section"
-              element={<LikedPosts selectedTheme={selectedTheme} />}
-            />
-            <Route
-              path="/:section/*"
-              element={<Posts selectedTheme={selectedTheme} />}
-            />
-            <Route
-              path="*"
-              element={<Home profile={profile} selectedTheme={selectedTheme} />}
-            />
-          </Routes>
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              <Route path="/likes" element={<Navigate replace to={`./all`} />} />
+              <Route
+                path="/likes/:section"
+                element={<LikedPosts selectedTheme={selectedTheme} />}
+              />
+              <Route
+                path="/:section/*"
+                element={<Posts selectedTheme={selectedTheme} />}
+              />
+              <Route
+                path="*"
+                element={<Home profile={profile} selectedTheme={selectedTheme} />}
+              />
+            </Routes>
+          </Suspense>
         </div>
       </div>
     </div>

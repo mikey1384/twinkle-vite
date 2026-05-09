@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Route, Routes, useParams } from 'react-router-dom';
-import Main from './Main';
+import Loading from '~/components/Loading';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+
+const Main = lazyWithRetry(() => import('./Main'));
 
 export default function Router({
   onFileUpload
@@ -13,31 +16,33 @@ export default function Router({
     currentPathId?: string;
   } = useParams();
   return (
-    <Routes>
-      <Route
-        path="/:subchannelPath/topic/:topicId"
-        element={
-          <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
-        }
-      />
-      <Route
-        path="/topic/:topicId"
-        element={
-          <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
-        }
-      />
-      <Route
-        path="/:subchannelPath"
-        element={
-          <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
-        }
-      />
-      <Route
-        path="/*"
-        element={
-          <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
-        }
-      />
-    </Routes>
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route
+          path="/:subchannelPath/topic/:topicId"
+          element={
+            <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
+          }
+        />
+        <Route
+          path="/topic/:topicId"
+          element={
+            <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
+          }
+        />
+        <Route
+          path="/:subchannelPath"
+          element={
+            <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
+          }
+        />
+      </Routes>
+    </Suspense>
   );
 }

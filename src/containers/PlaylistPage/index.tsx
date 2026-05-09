@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import Content from './Content';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+
+const Content = lazyWithRetry(() => import('./Content'));
 
 export default function PlaylistPage() {
   return (
@@ -29,10 +32,12 @@ export default function PlaylistPage() {
           }
         `}
       >
-        <Routes>
-          <Route path={'/:contentId'} element={<Content />} />
-          <Route path="*" element={<InvalidPage />} />
-        </Routes>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path={'/:contentId'} element={<Content />} />
+            <Route path="*" element={<InvalidPage />} />
+          </Routes>
+        </Suspense>
       </section>
     </div>
   );
