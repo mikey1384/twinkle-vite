@@ -9,7 +9,7 @@ import {
   ChatMessage,
   ChatPanelRunMode
 } from './types';
-import { findLastIndex } from './utils';
+import { findLastIndex } from './helpers/utils';
 
 interface TranscriptProps {
   messages: ChatMessage[];

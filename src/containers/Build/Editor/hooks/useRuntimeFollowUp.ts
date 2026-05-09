@@ -4,7 +4,7 @@ import type { BuildRuntimeVerifyResult } from '~/contexts/Build/reducer';
 import type {
   BuildRuntimeObservationIssue,
   BuildRuntimeObservationState
-} from '../../runtimeObservationTypes';
+} from '../../types/runtimeObservationTypes';
 
 type BuildRunMode = 'user' | 'greeting' | 'runtime-autofix';
 

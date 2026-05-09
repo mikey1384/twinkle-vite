@@ -1,23 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import FavoriteButton from '~/domains/Build/shared/components/FavoriteButton';
+import FavoriteButton from '~/components/Build/FavoriteButton';
 import Button from '~/components/Button';
-import { ForkHistoryTrigger } from '~/domains/Build/shared/components/ForkHistoryModal';
-import CollaborationRequestModal from '~/domains/Build/shared/components/CollaborationRequestModal';
+import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
+import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
-import { BUILD_APP_IFRAME_ALLOW } from '~/domains/Build/iframePermissions';
+import { BUILD_APP_IFRAME_ALLOW } from '~/helpers/buildIframePermissions';
 import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/domains/Build/shared/domain/relationshipLabels';
+} from '~/helpers/buildRelationshipHelpers';
+import {
+  formatBuildCollaboratorCount,
+  normalizeBuildCollaborationMode
+} from '~/helpers/buildProjectHelpers';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
-import { useCollaborationDirectMessageUpdater } from '~/domains/Build/shared/hooks/useCollaborationDirectMessageUpdater';
-import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
+import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
@@ -131,7 +135,7 @@ export default function BuildContent({
   const buildDescription = normalizedBuild.description.trim();
   const ownerId = Number(build?.userId || 0);
   const isOwner = Boolean(userId && ownerId && Number(userId) === ownerId);
-  const collaborationMode = normalizeCollaborationMode(
+  const collaborationMode = normalizeBuildCollaborationMode(
     build?.collaborationMode
   );
   const buildIsPublic = Number(build?.isPublic || 0) === 1;
@@ -321,7 +325,7 @@ export default function BuildContent({
               `}
             >
               <Icon icon="users" />
-              <span>{formatCollaboratorCount(collaboratorCount)}</span>
+              <span>{formatBuildCollaboratorCount(collaboratorCount)}</span>
             </div>
           ) : null}
         </div>
@@ -824,16 +828,6 @@ export default function BuildContent({
       />
     );
   }
-}
-
-function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
-  return value === 'open_source' ? value : 'private';
-}
-
-function formatCollaboratorCount(count: number) {
-  return count === 1
-    ? '1 team member'
-    : `${count.toLocaleString()} team members`;
 }
 
 function getBuildText(value: unknown) {

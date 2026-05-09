@@ -11,7 +11,7 @@ import {
   formatStepLabel,
   isBuildAssistantPlaceholderContent,
   looksLikeCompletedCodeChangeClaim
-} from './utils';
+} from './helpers/utils';
 
 interface AssistantMessageProps {
   message: ChatMessage;

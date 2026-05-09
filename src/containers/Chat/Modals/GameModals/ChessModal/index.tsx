@@ -15,8 +15,11 @@ import {
   useChessContext
 } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
-import { getLevelCategory } from '../../../../Home/ChessPuzzleModal/helpers';
 import { getStoredItem } from '~/helpers/userDataHelpers';
+import {
+  getAllowedChatChessThemes,
+  mapThemeToColors
+} from '~/containers/Chat/Chess/helpers/theme';
 
 const acceptDrawLabel = 'Accept Draw';
 const chessLabel = 'Chess';
@@ -89,29 +92,7 @@ export default function ChessModal({
     useChessContext((v) => v.state.stats?.maxLevelUnlocked) ?? 1;
 
   const allowedThemeValues = useMemo(() => {
-    const category = getLevelCategory(maxLevelUnlocked);
-    const order = [
-      'DEFAULT',
-      'INTERMEDIATE',
-      'ADVANCED',
-      'EXPERT',
-      'LEGENDARY',
-      'GENIUS'
-    ] as const;
-    const maxIndex =
-      category === 'GENIUS'
-        ? order.indexOf('GENIUS')
-        : category === 'LEGENDARY'
-        ? order.indexOf('LEGENDARY')
-        : category === 'EXPERT'
-        ? order.indexOf('EXPERT')
-        : category === 'ADVANCED'
-        ? order.indexOf('ADVANCED')
-        : category === 'INTERMEDIATE'
-        ? order.indexOf('INTERMEDIATE')
-        : order.indexOf('DEFAULT');
-    const base = order.slice(0, maxIndex + 1);
-    return maxLevelUnlocked >= 42 ? ([...base, 'LEVEL_42'] as const) : base;
+    return getAllowedChatChessThemes(maxLevelUnlocked);
   }, [maxLevelUnlocked]);
 
   const boardState: any = useMemo(
@@ -293,25 +274,7 @@ export default function ChessModal({
     }
   }, [allowedThemeValues, theme]);
 
-  const squareColors = useMemo(() => {
-    switch (theme) {
-      case 'INTERMEDIATE':
-        return { light: '#dbeafe', dark: '#93c5fd' };
-      case 'ADVANCED':
-        return { light: '#e2e8f0', dark: '#94a3b8' };
-      case 'EXPERT':
-        return { light: '#ede9fe', dark: '#c4b5fd' };
-      case 'LEGENDARY':
-        return { light: '#fee2e2', dark: '#fca5a5' };
-      case 'GENIUS':
-        return { light: '#fef3c7', dark: '#fbbf24' };
-      case 'LEVEL_42':
-        return { light: '#e0e7ff', dark: '#556377' };
-      case 'DEFAULT':
-      default:
-        return undefined;
-    }
-  }, [theme]);
+  const squareColors = useMemo(() => mapThemeToColors(theme), [theme]);
 
   return (
     <ErrorBoundary componentPath="ChessModal">

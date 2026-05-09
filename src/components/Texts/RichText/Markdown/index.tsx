@@ -21,7 +21,7 @@ import LazyCodeBlockWrapper from './LazyCodeBlockWrapper';
 import {
   protectCurrencyLiteralsOutsideMath,
   restoreCurrencyPlaceholders
-} from './currencyPlaceholders';
+} from './helpers/currencyPlaceholders';
 import {
   containsDescendantTagNames,
   getParentTagName,

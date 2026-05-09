@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import { ForkHistoryTrigger } from '~/domains/Build/shared/components/ForkHistoryModal';
+import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
@@ -12,7 +12,11 @@ import type { User } from '~/types';
 import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/domains/Build/shared/domain/relationshipLabels';
+} from '~/helpers/buildRelationshipHelpers';
+import {
+  normalizeBuildCollaborationMode,
+  normalizeBuildReleaseStatus
+} from '~/helpers/buildProjectHelpers';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -423,48 +427,28 @@ function HeaderActionItem({
 
 function BuildVisibilityBadge({
   buildId,
-  canOpenRuntime,
-  isPublic,
   runtimeBackState
 }: {
   buildId: number;
-  canOpenRuntime: boolean;
-  isPublic: boolean;
   runtimeBackState: RuntimeBackState;
 }) {
   const badgeContent = (
     <>
-      <Icon icon={isPublic ? 'globe' : 'lock'} />
-      {isPublic ? 'Public' : 'Private'}
+      <Icon icon="globe" />
+      Public
     </>
   );
 
-  if (isPublic && canOpenRuntime) {
-    return (
-      <Link
-        to={getBuildRuntimePath(buildId)}
-        state={runtimeBackState}
-        className={badgePillClass}
-        style={getVisibilityBadgeStyle(true)}
-        title="Open public app"
-      >
-        {badgeContent}
-      </Link>
-    );
-  }
-
   return (
-    <span
+    <Link
+      to={getBuildRuntimePath(buildId)}
+      state={runtimeBackState}
       className={badgePillClass}
-      style={getVisibilityBadgeStyle(isPublic)}
-      title={
-        isPublic
-          ? 'This public app needs a published snapshot.'
-          : 'Only you can access this build'
-      }
+      style={getVisibilityBadgeStyle(true)}
+      title="Open App"
     >
       {badgeContent}
-    </span>
+    </Link>
   );
 }
 
@@ -474,13 +458,12 @@ function BuildReleaseStatusBadge({
   runtimeBackState
 }: {
   buildId: number;
-  releaseStatus: NonNullable<ReturnType<typeof normalizeReleaseStatus>>;
+  releaseStatus: NonNullable<ReturnType<typeof normalizeBuildReleaseStatus>>;
   runtimeBackState: RuntimeBackState;
 }) {
   const hasUnpublishedChanges =
     releaseStatus.hasUnpublishedChanges ||
     releaseStatus.state === 'missing_snapshot';
-  const canOpenRuntime = buildCanOpenRuntime(releaseStatus);
   const badgeContent = (
     <>
       <Icon
@@ -490,28 +473,16 @@ function BuildReleaseStatusBadge({
     </>
   );
 
-  if (!hasUnpublishedChanges && canOpenRuntime) {
-    return (
-      <Link
-        to={getBuildRuntimePath(buildId)}
-        state={runtimeBackState}
-        className={badgePillClass}
-        style={getReleaseStatusBadgeStyle(releaseStatus.state)}
-        title="Open live app"
-      >
-        {badgeContent}
-      </Link>
-    );
-  }
-
   return (
-    <span
+    <Link
+      to={getBuildRuntimePath(buildId)}
+      state={runtimeBackState}
       className={badgePillClass}
       style={getReleaseStatusBadgeStyle(releaseStatus.state)}
-      title={getReleaseStatusTitle(releaseStatus)}
+      title="Open App"
     >
       {badgeContent}
-    </span>
+    </Link>
   );
 }
 
@@ -564,7 +535,9 @@ export default function Header({
   const contributionStatus = normalizeContributionStatus(
     build.contributionStatus
   );
-  const collaborationMode = normalizeCollaborationMode(build.collaborationMode);
+  const collaborationMode = normalizeBuildCollaborationMode(
+    build.collaborationMode
+  );
   const displayTitle = getBuildDisplayTitle(build);
   const relationshipLabels = getBuildRelationshipLabels(build);
   const description = build.description?.trim();
@@ -623,19 +596,15 @@ export default function Header({
   const normalizedMergeBranchTargetOptions = mergeBranchTargetOptions.filter(
     (option) => Number(option.id || 0) > 0 && String(option.label || '').trim()
   );
-  const releaseStatus = normalizeReleaseStatus(build.releaseStatus);
-  const canOpenRuntime = Boolean(
-    build.isPublic && releaseStatus && buildCanOpenRuntime(releaseStatus)
-  );
+  const releaseStatus = normalizeBuildReleaseStatus(build.releaseStatus);
   const publicAppIsUpToDate = Boolean(
     build.isPublic &&
       releaseStatus?.state === 'up_to_date' &&
-      canOpenRuntime &&
       !releaseStatus.hasUnpublishedChanges
   );
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
   const thumbnailButtonShiny = !String(build.thumbnailUrl || '').trim();
-  const showVisibilityBadge = !isContributionFork;
+  const showPublicBadge = !isContributionFork && Boolean(build.isPublic);
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
@@ -757,11 +726,9 @@ export default function Header({
             ) : null}
           </div>
           <div className={mobileTitleBadgeGroupClass}>
-            {showVisibilityBadge ? (
+            {showPublicBadge ? (
               <BuildVisibilityBadge
-                canOpenRuntime={canOpenRuntime}
                 buildId={Number(build.id)}
-                isPublic={Boolean(build.isPublic)}
                 runtimeBackState={runtimeBackState}
               />
             ) : null}
@@ -794,12 +761,10 @@ export default function Header({
         </div>
       </div>
       <div className={headerActionsClass}>
-        {showVisibilityBadge ? (
+        {showPublicBadge ? (
           <HeaderActionItem mobileOrder={1}>
             <BuildVisibilityBadge
-              canOpenRuntime={canOpenRuntime}
               buildId={Number(build.id)}
-              isPublic={Boolean(build.isPublic)}
               runtimeBackState={runtimeBackState}
             />
           </HeaderActionItem>
@@ -1089,12 +1054,6 @@ function renderHeaderUsername(user: User) {
   );
 }
 
-function normalizeCollaborationMode(
-  value: unknown
-): 'private' | 'open_source' {
-  return value === 'open_source' ? value : 'private';
-}
-
 interface RuntimeBackState {
   runtimeBackTo: string;
   runtimeBackLabel: string;
@@ -1119,54 +1078,6 @@ function normalizeContributionStatus(
     return value;
   }
   return 'none';
-}
-
-function normalizeReleaseStatus(value: unknown): {
-  state: 'up_to_date' | 'unpublished_changes' | 'missing_snapshot';
-  hasPublishedVersion: boolean;
-  hasUnpublishedChanges: boolean;
-  diff: {
-    total: number;
-    added: number;
-    updated: number;
-    deleted: number;
-  };
-} | null {
-  if (!value || typeof value !== 'object') return null;
-  const status = value as {
-    state?: string;
-    hasPublishedVersion?: boolean;
-    hasUnpublishedChanges?: boolean;
-    diff?: {
-      total?: number;
-      added?: number;
-      updated?: number;
-      deleted?: number;
-    };
-  };
-  const state =
-    status.state === 'missing_snapshot'
-      ? 'missing_snapshot'
-      : status.state === 'unpublished_changes'
-        ? 'unpublished_changes'
-        : 'up_to_date';
-  return {
-    state,
-    hasPublishedVersion: Boolean(status.hasPublishedVersion),
-    hasUnpublishedChanges: Boolean(status.hasUnpublishedChanges),
-    diff: {
-      total: Number(status.diff?.total || 0),
-      added: Number(status.diff?.added || 0),
-      updated: Number(status.diff?.updated || 0),
-      deleted: Number(status.diff?.deleted || 0)
-    }
-  };
-}
-
-function buildCanOpenRuntime(
-  status: NonNullable<ReturnType<typeof normalizeReleaseStatus>>
-) {
-  return status.state !== 'missing_snapshot' && status.hasPublishedVersion;
 }
 
 function getCollaborationButtonLabel(
@@ -1214,21 +1125,6 @@ function getReleaseStatusBadgeStyle(
     borderColor: 'rgba(245, 158, 11, 0.38)',
     color: '#b45309'
   };
-}
-
-function getReleaseStatusTitle(
-  status: NonNullable<ReturnType<typeof normalizeReleaseStatus>>
-) {
-  if (status.state === 'up_to_date') {
-    return 'The live app matches this workspace.';
-  }
-  if (status.state === 'missing_snapshot') {
-    return 'This public app needs a published snapshot.';
-  }
-  const total = status.diff.total;
-  return total > 0
-    ? `${total} file${total === 1 ? '' : 's'} waiting to be released.`
-    : 'Workspace changes are waiting to be released.';
 }
 
 function getRelationshipBadgeStyle(

@@ -20,8 +20,8 @@ import {
   isValidBuildActivityPosition,
   normalizeBuildActivitySubtab,
   normalizeBuildActivityTab
-} from '../domain';
-import { buildActivityCacheFreshMs } from '../layout';
+} from '../helpers';
+import { buildActivityCacheFreshMs } from '../constants/layout';
 import type { BuildActivityPosition } from '../types';
 
 export default function useActivityPanel({

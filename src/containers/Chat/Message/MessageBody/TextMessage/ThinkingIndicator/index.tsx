@@ -2,10 +2,10 @@ import React, { useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAutoFollow } from '../hooks/useAutoFollow';
-import { metaFor } from './statusMeta';
+import { metaFor } from './constants/statusMeta';
 import { shimmerAnimation } from '~/components/StreamingThoughtContent/animations';
 import StatusIcon from './StatusIcon';
-import StatusDots from './StatusDots';
+import StatusDots from '~/components/StatusDots';
 import StreamingThoughtContent from '~/components/StreamingThoughtContent';
 
 export interface ThinkingIndicatorProps {

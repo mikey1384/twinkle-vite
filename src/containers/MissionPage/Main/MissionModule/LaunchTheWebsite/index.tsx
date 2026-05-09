@@ -7,7 +7,7 @@ import MakeAccount from './MakeAccount';
 import FinalizeYourCode from './FinalizeYourCode';
 import ConnectReplToGitHub from './ConnectReplToGitHub';
 import UpdateYourRepl from './UpdateYourRepl';
-import defaultCode from './defaultCode';
+import defaultCode from './constants/defaultCode';
 import RequiresComputer from '../components/RequiresComputer';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';

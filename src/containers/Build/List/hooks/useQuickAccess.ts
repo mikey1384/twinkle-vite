@@ -1,25 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { BuildFavoriteChange } from '~/domains/Build/shared/components/FavoriteButton';
-import type { BuildProjectListItemData } from '~/domains/Build/shared/components/ProjectListItem';
+import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import {
   useAppContext
 } from '~/contexts';
-import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../../runtimeViewSources';
+import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../../constants/runtimeViewSources';
 import {
   normalizeBuildQuickAccessMode,
   normalizeQuickAccessBuilds,
   normalizeQuickAccessCursor,
   normalizeTodayTopViewedBuild
-} from '../domain';
+} from '../helpers';
 import {
   BuildQuickAccessMode,
   QuickAccessBuild,
   TodayTopViewedBuild
 } from '../types';
-import { buildBrowseTabs } from '../tabs';
+import { buildBrowseTabs } from '../constants/tabs';
 import { QUICK_ACCESS_MODAL_PAGE_SIZE } from '../QuickAccess';
-import { logoBlueOpenAppButtonStyle } from '../layout';
+import { logoBlueOpenAppButtonStyle } from '../constants/layout';
 
 export default function useQuickAccess({
   buildQuickAccessMode,

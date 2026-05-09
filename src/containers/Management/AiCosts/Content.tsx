@@ -20,7 +20,7 @@ import {
   getWidthPercent,
   numberValue,
   shortenHash
-} from './formatters';
+} from './helpers/formatters';
 import {
   actionsClass,
   barRowClass,

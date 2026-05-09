@@ -7,6 +7,7 @@ import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import ContributorInvitePicker from './ContributorInvitePicker';
+import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
@@ -224,7 +225,7 @@ export default function CollaborationSettingsModal({
 
   const [collaborationMode, setCollaborationMode] =
     useState<BuildCollaborationMode>(
-      normalizeCollaborationMode(build.collaborationMode)
+      normalizeBuildCollaborationMode(build.collaborationMode)
     );
   const [lumineChatVisibility, setLumineChatVisibility] =
     useState<BuildLumineChatVisibility>(
@@ -236,7 +237,7 @@ export default function CollaborationSettingsModal({
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsError, setSettingsError] = useState('');
   const [loadingContributors, setLoadingContributors] = useState(false);
-  const persistedCollaborationMode = normalizeCollaborationMode(
+  const persistedCollaborationMode = normalizeBuildCollaborationMode(
     build.collaborationMode
   );
   const canInviteContributors = true;
@@ -260,7 +261,9 @@ export default function CollaborationSettingsModal({
   } as React.CSSProperties;
 
   useEffect(() => {
-    setCollaborationMode(normalizeCollaborationMode(build.collaborationMode));
+    setCollaborationMode(
+      normalizeBuildCollaborationMode(build.collaborationMode)
+    );
     setLumineChatVisibility(
       normalizeLumineChatVisibility(build.lumineChatVisibility)
     );
@@ -467,10 +470,6 @@ export default function CollaborationSettingsModal({
       console.error('Failed to revoke build contributor:', error);
     }
   }
-}
-
-function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
-  return value === 'open_source' ? value : 'private';
 }
 
 function normalizeLumineChatVisibility(

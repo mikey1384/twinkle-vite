@@ -6,7 +6,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { extractDrawingColorSettings } from './DrawingTools/colorSettings';
+import { extractDrawingColorSettings } from './DrawingTools/helpers/colorSettings';
 
 const MIN_DRAW_CANVAS_WIDTH = 320;
 const MAX_DRAW_CANVAS_WIDTH = 1000;

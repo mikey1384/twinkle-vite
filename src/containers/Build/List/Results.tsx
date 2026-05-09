@@ -1,14 +1,14 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import type { BuildFavoriteChange } from '~/domains/Build/shared/components/FavoriteButton';
+import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import ProjectListItem, {
   type BuildProjectListItemData
-} from '~/domains/Build/shared/components/ProjectListItem';
+} from '~/components/Build/ProjectListItem';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
-import { getBrowseEmptyCopy } from './domain';
+import { getBrowseEmptyCopy } from './helpers';
 import type { BuildListTab } from './types';
 
 const displayFontFamily =

@@ -5,7 +5,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import FavoriteButton from '~/domains/Build/shared/components/FavoriteButton';
+import FavoriteButton from '~/components/Build/FavoriteButton';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -18,15 +18,15 @@ import {
   useNotiContext
 } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { useCollaborationDirectMessageUpdater } from '~/domains/Build/shared/hooks/useCollaborationDirectMessageUpdater';
-import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
+import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import type { Content } from '~/types';
 import PreviewPanel from '../PreviewPanel';
 import type { PreviewMountContext } from '../PreviewPanel/types';
-import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../runtimeViewSources';
-import { formatVisitLabel } from '~/domains/Build/shared/components/ProjectListItem/domain';
+import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
+import { formatVisitLabel } from '~/helpers/stringHelpers';
 import CommentsDrawer from './CommentsDrawer';
-import CollaborationRequestModal from '~/domains/Build/shared/components/CollaborationRequestModal';
+import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import type {
   AiUsagePolicy,
   BuildCollaborationRequest,
@@ -53,6 +53,12 @@ function parseRuntimeMountContext(search: string): PreviewMountContext | null {
   }
 
   return null;
+}
+
+function normalizeRuntimeBackTo(value: string) {
+  const normalized = value.trim();
+  if (!normalized.startsWith('/') || normalized.startsWith('//')) return '';
+  return normalized;
 }
 
 const RUNTIME_COMMENTS_LOAD_LIMIT = 20;
@@ -522,18 +528,24 @@ export default function BuildRuntime() {
     () => parseRuntimeMountContext(location.search),
     [location.search]
   );
-  const hasExplicitBackTarget =
-    typeof location.state?.runtimeBackTo === 'string';
-  const backTo = useMemo(() => {
-    return hasExplicitBackTarget ? location.state.runtimeBackTo : '/';
-  }, [hasExplicitBackTarget, location.state]);
-  const backLabel = useMemo(() => {
-    return typeof location.state?.runtimeBackLabel === 'string'
+  const explicitBackTo =
+    typeof location.state?.runtimeBackTo === 'string'
+      ? normalizeRuntimeBackTo(location.state.runtimeBackTo)
+      : '';
+  const explicitBackLabel =
+    typeof location.state?.runtimeBackLabel === 'string'
       ? location.state.runtimeBackLabel
+      : '';
+  const backTo = useMemo(() => {
+    return explicitBackTo || '/';
+  }, [explicitBackTo]);
+  const backLabel = useMemo(() => {
+    return explicitBackLabel
+      ? explicitBackLabel
       : canUseHistoryBack
         ? 'Go back'
         : 'Back to Twinkle';
-  }, [canUseHistoryBack, location.state]);
+  }, [canUseHistoryBack, explicitBackLabel]);
   const showAiEnergy = !!userId && !!aiUsagePolicy;
   const energyPercent = Math.max(
     0,
@@ -615,6 +627,10 @@ export default function BuildRuntime() {
   }
 
   function handleBack() {
+    if (explicitBackTo) {
+      navigate(explicitBackTo, { replace: true });
+      return;
+    }
     if (canUseHistoryBack) {
       navigate(-1);
       return;
@@ -1398,24 +1414,22 @@ export default function BuildRuntime() {
                 </GameCTAButton>
               </div>
             </div>
-            {collaborationRequestModalShown
-              ? (
-                  <CollaborationRequestModal
-                    buildId={build.id}
-                    error={collaborationRequestError}
-                    loading={collaborationRequestLoading}
-                    message={collaborationRequestMessage}
-                    request={collaborationRequest}
-                    onAcceptInvite={handleAcceptContributorInvite}
-                    onCancelRequest={handleCancelCollaborationRequest}
-                    onClose={() => setCollaborationRequestModalShown(false)}
-                    onDeclineInvite={handleDeclineContributorInvite}
-                    onMessageChange={setCollaborationRequestMessage}
-                    onOpenWorkspace={handleOpenCollaborationWorkspace}
-                    onSubmitRequest={handleSubmitCollaborationRequest}
-                  />
-                )
-              : null}
+            {collaborationRequestModalShown ? (
+              <CollaborationRequestModal
+                buildId={build.id}
+                error={collaborationRequestError}
+                loading={collaborationRequestLoading}
+                message={collaborationRequestMessage}
+                request={collaborationRequest}
+                onAcceptInvite={handleAcceptContributorInvite}
+                onCancelRequest={handleCancelCollaborationRequest}
+                onClose={() => setCollaborationRequestModalShown(false)}
+                onDeclineInvite={handleDeclineContributorInvite}
+                onMessageChange={setCollaborationRequestMessage}
+                onOpenWorkspace={handleOpenCollaborationWorkspace}
+                onSubmitRequest={handleSubmitCollaborationRequest}
+              />
+            ) : null}
           </div>
         )}
         <div
@@ -1464,5 +1478,4 @@ export default function BuildRuntime() {
       </div>
     </ErrorBoundary>
   );
-
 }

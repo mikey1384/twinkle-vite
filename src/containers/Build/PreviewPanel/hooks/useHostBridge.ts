@@ -8,44 +8,44 @@ import {
   getViewerInfo,
   isGuestViewerActive,
   triggerGuestRestriction
-} from '../previewBridgeAuth';
+} from '../helpers/previewBridgeAuth';
 import {
   getBuildRuntimeChatSubscriptionKey,
   normalizeBuildRuntimeChatRoomKey,
   postBuildRuntimeChatEventToFrames,
   postToPreviewFrames,
   syncPreviewRuntimeUploadsState
-} from '../previewBridgeMessaging';
+} from '../helpers/previewBridgeMessaging';
 import {
   handlePreviewHealthMessage,
   handleRuntimeObservationPreviewMessage
-} from '../runtimeObservationMessages';
-import type { UsePreviewHostBridgeArgs } from '../previewHostBridgeTypes';
-import { isMutatingPreviewRequestType } from '../previewRequestPolicy';
+} from '../helpers/runtimeObservationMessages';
+import type { UsePreviewHostBridgeArgs } from '../types/previewHostBridgeTypes';
+import { isMutatingPreviewRequestType } from '../helpers/previewRequestPolicy';
 
 export {
   buildEmptyRuntimeObservationState,
   normalizeRuntimeExplorationPlan
-} from '../runtimeObservationBridge';
+} from '../helpers/runtimeObservationBridge';
 export {
   ensureBuildApiToken,
   type PreviewHostBridgeAuth
-} from '../previewBridgeAuth';
+} from '../helpers/previewBridgeAuth';
 export type {
   PreviewHostBridgeRequestRefs
-} from '../previewBridgeRequestRefs';
+} from '../helpers/previewBridgeRequestRefs';
 import {
   executeGuestViewerDbExec,
   executeGuestViewerDbQuery
-} from '../guestViewerDb';
+} from '../helpers/guestViewerDb';
 import { socket } from '~/constants/sockets/api';
 import type { PreviewMountContext } from '../types';
-import { triggerPreviewLocalDownload } from '../previewDownloads';
+import { triggerPreviewLocalDownload } from '../helpers/previewDownloads';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import {
   getBuildPreviewMessageTargetOrigin,
   isAllowedBuildPreviewMessageOrigin
-} from '../../previewOrigin';
+} from '~/helpers/buildPreviewOriginHelpers';
 
 export function useHostBridge({
   runtimeOnly,

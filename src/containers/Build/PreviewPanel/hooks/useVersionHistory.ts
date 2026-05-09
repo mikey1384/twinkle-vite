@@ -6,7 +6,7 @@ import {
 import {
   buildEditableProjectFiles,
   getPreferredIndexPath
-} from '../projectFiles';
+} from '../helpers/projectFiles';
 import type {
   ArtifactVersion,
   Build,

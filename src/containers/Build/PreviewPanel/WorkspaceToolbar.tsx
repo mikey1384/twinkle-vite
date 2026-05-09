@@ -4,7 +4,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
-import type { WorkspaceViewMode } from './workspaceView';
+import type { WorkspaceViewMode } from './constants/workspaceView';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import PreviewFrame from '~/domains/Build/shared/components/PreviewFrame';
+import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
@@ -9,7 +9,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
 import { textIsOverflown } from '~/helpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { getBuildBranchDisplayTitle } from '~/domains/Build/shared/domain/relationshipLabels';
+import { getBuildBranchDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import {
   canDeleteBuildBranchStatus,
   canReviewBuildBranchStatus,
@@ -18,7 +18,7 @@ import {
   getReleaseDiffTotal,
   normalizeWorkspacePanelScrollTop,
   stripBranchTitleSuffixes
-} from './domain/branches';
+} from './helpers/branches';
 import type {
   BuildBranchDeleteTarget,
   BuildReleaseStatus,

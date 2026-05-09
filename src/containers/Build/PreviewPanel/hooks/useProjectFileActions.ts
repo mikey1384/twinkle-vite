@@ -11,7 +11,7 @@ import {
   normalizeProjectFilePath,
   remapPathPrefix,
   serializeEditableProjectFiles
-} from '../projectFiles';
+} from '../helpers/projectFiles';
 import type {
   Build,
   EditableProjectFile
@@ -21,7 +21,7 @@ import {
   readLatestEditableProjectFiles,
   summarizeUploadedFileNames,
   triggerBrowserDownload
-} from '../previewHelpers';
+} from '../helpers/previewHelpers';
 
 export default function useProjectFileActions({
   activeFile,

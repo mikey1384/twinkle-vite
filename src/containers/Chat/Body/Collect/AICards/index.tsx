@@ -354,9 +354,7 @@ export default function AICards({
         typeof policy.energyRemaining === 'number' &&
         policy.energyRemaining <= 0
       ) {
-        return onSetAICardStatusMessage(
-          'Recharge Energy to summon a card.'
-        );
+        return onSetAICardStatusMessage('Recharge Energy to summon a card.');
       }
       onSetIsGeneratingAICard(true);
       onSetAICardStatusMessage('Checking Energy...');

@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState } from 'react';
 import CodeSandbox from '~/components/Forms/CodeSandbox';
-import defaultCode from './defaultCode';
+import defaultCode from './constants/defaultCode';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StepSlide from '../components/StepSlide';
 import Button from '~/components/Button';

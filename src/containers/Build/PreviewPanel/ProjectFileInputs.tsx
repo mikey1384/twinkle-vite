@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { BUILD_PROJECT_ASSET_UPLOAD_ACCEPT } from './agentWorkspaceAssets';
-import { BUILD_PROJECT_UPLOAD_ACCEPT } from './previewHelpers';
+import { BUILD_PROJECT_ASSET_UPLOAD_ACCEPT } from '~/containers/Build/helpers/agentWorkspaceAssets';
+import { BUILD_PROJECT_UPLOAD_ACCEPT } from './helpers/previewHelpers';
 
 export default function ProjectFileInputs({
   projectAssetInputRef,

@@ -4,8 +4,8 @@ import {
   chatMessagesEqual,
   mergeChatMessagesWithBuildRun,
   normalizeSharedBuildRunBaseProjectFiles
-} from '../domain/chatMessages';
-import { serializedComparableValue } from '../domain/projectFiles';
+} from '../helpers/chatMessages';
+import { serializedComparableValue } from '../helpers/projectFiles';
 import type { ChatMessage } from '../types';
 import type {
   BuildRunMode,

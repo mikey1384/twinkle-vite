@@ -351,8 +351,7 @@ export default function SuccessModal({
       setProgressStage('not_started');
       return;
     }
-    const isGenerating =
-      isAIStoryImageGenerationInProgress(normalizedStoryId);
+    const isGenerating = isAIStoryImageGenerationInProgress(normalizedStoryId);
     setGeneratingImage(isGenerating);
     if (isGenerating) {
       setProgressStage((stage) =>
@@ -473,259 +472,260 @@ export default function SuccessModal({
         bodyPadding={0}
         allowOverflow
       >
-      <LegacyModalLayout wrapped>
-        <header>
-          {isListening ? 'AI Story Listening' : 'AI Story Reading'} Cleared
-        </header>
-        <main>
-          <SuccessText difficulty={difficulty} />
-          <div style={{ marginTop: '3.5rem' }}>
-            You answered {numQuestions} out of {numQuestions} question
-            {numQuestions === 1 ? '' : 's'} correctly!
-          </div>
-          <div
-            style={{
-              marginTop: '1rem',
-              marginBottom: '2rem',
-              fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
-            }}
-          >
-            You earned{' '}
-            <b style={{ color: Color[xpNumberColorKey]() }}>
-              {addCommasToNumber(
-                rewardTable[difficulty].xp * (isListening ? 2 : 1)
+        <LegacyModalLayout wrapped>
+          <header>
+            {isListening ? 'AI Story Listening' : 'AI Story Reading'} Cleared
+          </header>
+          <main>
+            <SuccessText difficulty={difficulty} />
+            <div style={{ marginTop: '3.5rem' }}>
+              You answered {numQuestions} out of {numQuestions} question
+              {numQuestions === 1 ? '' : 's'} correctly!
+            </div>
+            <div
+              style={{
+                marginTop: '1rem',
+                marginBottom: '2rem',
+                fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
+              }}
+            >
+              You earned{' '}
+              <b style={{ color: Color[xpNumberColorKey]() }}>
+                {addCommasToNumber(
+                  rewardTable[difficulty].xp * (isListening ? 2 : 1)
+                )}
+              </b>{' '}
+              <b style={{ color: Color.gold() }}>XP</b> and{' '}
+              <b style={{ color: Color.brownOrange() }}>
+                {addCommasToNumber(
+                  rewardTable[difficulty].coins * (isListening ? 2 : 1)
+                )}{' '}
+                coins
+              </b>
+            </div>
+            <div
+              style={{
+                marginTop: '2rem',
+                marginBottom: imageUrl ? '1rem' : 0,
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1.5rem'
+              }}
+            >
+              {(imageUrl || previewImageUrl) && (
+                <img
+                  loading="lazy"
+                  style={{
+                    width: '100%',
+                    maxHeight: '50vh',
+                    objectFit: 'contain',
+                    borderRadius: '12px'
+                  }}
+                  src={imageUrl || previewImageUrl}
+                  alt="Generated Story Image"
+                />
               )}
-            </b>{' '}
-            <b style={{ color: Color.gold() }}>XP</b> and{' '}
-            <b style={{ color: Color.brownOrange() }}>
-              {addCommasToNumber(
-                rewardTable[difficulty].coins * (isListening ? 2 : 1)
-              )}{' '}
-              coins
-            </b>
-          </div>
-          <div
-            style={{
-              marginTop: '2rem',
-              marginBottom: imageUrl ? '1rem' : 0,
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '1.5rem'
-            }}
-          >
-            {(imageUrl || previewImageUrl) && (
-              <img
-                loading="lazy"
-                style={{
-                  width: '100%',
-                  maxHeight: '50vh',
-                  objectFit: 'contain',
-                  borderRadius: '12px'
-                }}
-                src={imageUrl || previewImageUrl}
-                alt="Generated Story Image"
-              />
-            )}
 
-            {!imageUrl && (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}
-              >
-                <div>
-                  <Input
-                    hasError={!!inputError}
-                    placeholder="Enter Art Style..."
-                    onChange={handleChange}
-                    value={styleText}
-                  />
-                </div>
-                {!inputError && (
+              {!imageUrl && (
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div>
+                    <Input
+                      hasError={!!inputError}
+                      placeholder="Enter Art Style..."
+                      onChange={handleChange}
+                      value={styleText}
+                    />
+                  </div>
+                  {!inputError && (
+                    <div
+                      style={{
+                        color: Color.darkGray(),
+                        fontSize: '1.1rem',
+                        marginTop: '0.5rem'
+                      }}
+                    >
+                      Examples: Cartoon, Realistic, Watercolor, Sketch, etc.
+                    </div>
+                  )}
+                  {inputError && (
+                    <div
+                      style={{
+                        color: 'red',
+                        marginTop: '0.5rem'
+                      }}
+                    >
+                      {inputError}
+                    </div>
+                  )}
+
+                  {/* Engine selector hidden - hardcoded to OpenAI image generation */}
+                  {false && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginTop: '1rem'
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontWeight: 600,
+                          color: Color.darkerGray(),
+                          fontSize: '1.1rem'
+                        }}
+                      >
+                        Image Model
+                      </label>
+                      <select
+                        value={imageEngine}
+                        onChange={(e) =>
+                          handleEngineChange(
+                            e.target.value as 'gemini' | 'openai'
+                          )
+                        }
+                        disabled={generatingImage}
+                        style={{
+                          padding: '0.35rem 0.5rem',
+                          borderRadius: '8px',
+                          border: `1px solid ${Color.borderGray()}`,
+                          fontSize: '1.1rem'
+                        }}
+                      >
+                        <option value="gemini">Nano Banana Pro</option>
+                        <option value="openai">GPT Image-1</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {aiUsagePolicy && (
+                    <AiEnergyCard
+                      variant="inline"
+                      className={css`
+                        width: min(100%, 34rem);
+                        margin-top: 1.2rem;
+                      `}
+                      energyPercent={aiUsagePolicy.energyPercent ?? 0}
+                      energySegments={aiUsagePolicy.energySegments}
+                      energySegmentsRemaining={
+                        aiUsagePolicy.energySegmentsRemaining
+                      }
+                      overflowed={aiUsagePolicy.lastUsageOverflowed}
+                      resetNeeded={energyDepleted}
+                      resetCost={aiUsagePolicy.resetCost || 0}
+                      resetPurchaseNumber={
+                        (aiUsagePolicy.resetPurchasesToday || 0) + 1
+                      }
+                      twinkleCoins={twinkleCoins}
+                      rechargeLoading={aiUsageResetLoading}
+                      rechargeError={aiUsageResetError}
+                      onRecharge={() => handlePurchaseAiUsageReset(false)}
+                      communityFundsEligible={isCommunityFundRechargeAvailable({
+                        aiUsagePolicy,
+                        communityFunds,
+                        communityFundsKnown: communityFundsLoaded
+                      })}
+                      communityFundsRequirements={
+                        aiUsagePolicy.communityFundResetEligibility
+                          ?.requirements
+                      }
+                      onRechargeWithCommunityFunds={
+                        aiUsagePolicy.communityFundResetEligibility
+                          ? () => handlePurchaseAiUsageReset(true)
+                          : undefined
+                      }
+                    />
+                  )}
+
+                  <GradientButton
+                    theme={colorHash[difficulty] || 'default'}
+                    loading={generatingImage}
+                    onClick={handleGenerateImage}
+                    fontSize="1.5rem"
+                    mobileFontSize="1.1rem"
+                    style={{ marginTop: '1.5rem' }}
+                    disabled={!canGenerateImage}
+                  >
+                    <div>
+                      <div>{buttonLabel}</div>
+                      <div
+                        className={css`
+                          font-size: 1.1rem;
+                          margin-top: 0.5rem;
+                          @media (max-width: ${mobileMaxWidth}) {
+                            font-size: 1.1rem;
+                          }
+                        `}
+                      >
+                        ({imageGenerationCostText})
+                      </div>
+                    </div>
+                  </GradientButton>
+
                   <div
                     style={{
                       color: Color.darkGray(),
                       fontSize: '1.1rem',
-                      marginTop: '0.5rem'
+                      marginTop: '0.5rem',
+                      textAlign: 'center'
                     }}
                   >
-                    Examples: Cartoon, Realistic, Watercolor, Sketch, etc.
+                    <div>Image generation uses Energy.</div>
+                    <div>Recharge when the battery is empty.</div>
                   </div>
-                )}
-                {inputError && (
-                  <div
-                    style={{
-                      color: 'red',
-                      marginTop: '0.5rem'
-                    }}
-                  >
-                    {inputError}
-                  </div>
-                )}
-
-                {/* Engine selector hidden - hardcoded to OpenAI image generation */}
-                {false && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginTop: '1rem'
-                    }}
-                  >
-                    <label
-                      style={{
-                        fontWeight: 600,
-                        color: Color.darkerGray(),
-                        fontSize: '1.1rem'
-                      }}
-                    >
-                      Image Model
-                    </label>
-                    <select
-                      value={imageEngine}
-                      onChange={(e) =>
-                        handleEngineChange(
-                          e.target.value as 'gemini' | 'openai'
-                        )
-                      }
-                      disabled={generatingImage}
-                      style={{
-                        padding: '0.35rem 0.5rem',
-                        borderRadius: '8px',
-                        border: `1px solid ${Color.borderGray()}`,
-                        fontSize: '1.1rem'
-                      }}
-                    >
-                      <option value="gemini">Nano Banana Pro</option>
-                      <option value="openai">GPT Image-1</option>
-                    </select>
-                  </div>
-                )}
-
-                {aiUsagePolicy && (
-                  <AiEnergyCard
-                    variant="inline"
-                    className={css`
-                      width: min(100%, 34rem);
-                      margin-top: 1.2rem;
-                    `}
-                    energyPercent={aiUsagePolicy.energyPercent ?? 0}
-                    energySegments={aiUsagePolicy.energySegments}
-                    energySegmentsRemaining={
-                      aiUsagePolicy.energySegmentsRemaining
-                    }
-                    overflowed={aiUsagePolicy.lastUsageOverflowed}
-                    resetNeeded={energyDepleted}
-                    resetCost={aiUsagePolicy.resetCost || 0}
-                    resetPurchaseNumber={
-                      (aiUsagePolicy.resetPurchasesToday || 0) + 1
-                    }
-                    twinkleCoins={twinkleCoins}
-                    rechargeLoading={aiUsageResetLoading}
-                    rechargeError={aiUsageResetError}
-                    onRecharge={() => handlePurchaseAiUsageReset(false)}
-                    communityFundsEligible={isCommunityFundRechargeAvailable({
-                      aiUsagePolicy,
-                      communityFunds,
-                      communityFundsKnown: communityFundsLoaded
-                    })}
-                    communityFundsRequirements={
-                      aiUsagePolicy.communityFundResetEligibility?.requirements
-                    }
-                    onRechargeWithCommunityFunds={
-                      aiUsagePolicy.communityFundResetEligibility
-                        ? () => handlePurchaseAiUsageReset(true)
-                        : undefined
-                    }
-                  />
-                )}
-
-                <GradientButton
-                  theme={colorHash[difficulty] || 'default'}
-                  loading={generatingImage}
-                  onClick={handleGenerateImage}
-                  fontSize="1.5rem"
-                  mobileFontSize="1.1rem"
-                  style={{ marginTop: '1.5rem' }}
-                  disabled={!canGenerateImage}
-                >
-                  <div>
-                    <div>{buttonLabel}</div>
-                    <div
-                      className={css`
-                        font-size: 1.1rem;
-                        margin-top: 0.5rem;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1.1rem;
-                        }
-                      `}
-                    >
-                      ({imageGenerationCostText})
-                    </div>
-                  </div>
-                </GradientButton>
-
-                <div
-                  style={{
-                    color: Color.darkGray(),
-                    fontSize: '1.1rem',
-                    marginTop: '0.5rem',
-                    textAlign: 'center'
-                  }}
-                >
-                  <div>Image generation uses Energy.</div>
-                  <div>Recharge when the battery is empty.</div>
                 </div>
-              </div>
-            )}
-            {!isListening && (
-              <div
-                className={css`
-                  width: 100%;
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  margin-top: ${imageUrl ? '1.5rem' : '2rem'};
-                  gap: 0.6rem;
-                `}
-              >
-                <GameCTAButton
-                  variant={
-                    loadingVocabSummary || eligibleVocabCount === 0
-                      ? 'logoBlue'
-                      : vocabButtonVariantHash[difficulty] || 'logoBlue'
-                  }
-                  size="lg"
-                  shiny={!loadingVocabSummary && eligibleVocabCount > 0}
-                  loading={loadingVocabSummary}
-                  disabled={!loadingVocabSummary && eligibleVocabCount === 0}
-                  onClick={() => setVocabQuizShown(true)}
+              )}
+              {!isListening && (
+                <div
+                  className={css`
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    margin-top: ${imageUrl ? '1.5rem' : '2rem'};
+                    gap: 0.6rem;
+                  `}
                 >
-                  {!loadingVocabSummary && eligibleVocabCount === 0
-                    ? 'No Words to Collect'
-                    : 'Collect Words'}
-                </GameCTAButton>
-              </div>
-            )}
-          </div>
-        </main>
-        <footer>
-          <Button
-            variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
-            Close
-          </Button>
-        </footer>
-      </LegacyModalLayout>
+                  <GameCTAButton
+                    variant={
+                      loadingVocabSummary || eligibleVocabCount === 0
+                        ? 'logoBlue'
+                        : vocabButtonVariantHash[difficulty] || 'logoBlue'
+                    }
+                    size="lg"
+                    shiny={!loadingVocabSummary && eligibleVocabCount > 0}
+                    loading={loadingVocabSummary}
+                    disabled={!loadingVocabSummary && eligibleVocabCount === 0}
+                    onClick={() => setVocabQuizShown(true)}
+                  >
+                    {!loadingVocabSummary && eligibleVocabCount === 0
+                      ? 'No Words to Collect'
+                      : 'Collect Words'}
+                  </GameCTAButton>
+                </div>
+              )}
+            </div>
+          </main>
+          <footer>
+            <Button
+              variant="ghost"
+              style={{ marginRight: '0.7rem' }}
+              onClick={onHide}
+            >
+              Close
+            </Button>
+          </footer>
+        </LegacyModalLayout>
       </Modal>
       {vocabQuizShown && (
         <VocabQuizModal

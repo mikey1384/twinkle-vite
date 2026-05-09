@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { debounce } from 'lodash';
 import { mergeStates, subtitleVideoPlayer, subtitlesState } from '~/constants/state';
-import { srtTimeToSeconds } from '../utils';
+import { srtTimeToSeconds } from '../helpers/utils';
 import ActionBar from './ActionBar';
 import FileInputs from './FileInputs';
 import PlayerPanel from './PlayerPanel';
-import { generateSrtContent } from './srt';
+import { generateSrtContent } from './helpers/srt';
 import { containerStyles } from './styles';
 import SubtitleList from './SubtitleList';
 import type {

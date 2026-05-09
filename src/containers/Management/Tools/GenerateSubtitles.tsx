@@ -5,7 +5,7 @@ import Button from './Button';
 import StylizedFileInput from './StylizedFileInput';
 import { selectStyles, fileInputWrapperStyles } from './styles';
 import { translationStates } from '~/constants/state';
-import { parseSrt } from './utils';
+import { parseSrt } from './helpers/utils';
 
 interface GenerateSubtitlesProps {
   MAX_MB: number;

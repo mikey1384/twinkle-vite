@@ -1,7 +1,7 @@
 import {
   findMatchingBuildChatMessageId,
   mergePersistedChatMessagesIntoLocalMessages
-} from '../domain/chatMessages';
+} from '../helpers/chatMessages';
 import type {
   Build,
   BuildCopilotPolicy,

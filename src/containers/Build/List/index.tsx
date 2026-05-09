@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Loading from '~/components/Loading';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
-import type { BuildProjectListItemData } from '~/domains/Build/shared/components/ProjectListItem';
+import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import TabFilter from '../TabFilter';
 import {
   useAppContext,
@@ -29,7 +29,7 @@ import {
   normalizeBuildListSearchQuery,
   normalizeBuildListTab,
   shouldExcludeMineFromPublicBrowse
-} from './domain';
+} from './helpers';
 import { BuildQuickAccessStrip } from './QuickAccess';
 import ActivityPanels from './ActivityPanels';
 import Hero from './Hero';
@@ -47,13 +47,13 @@ import type {
 import {
   buildBrowseModeTabs,
   buildListTabs
-} from './tabs';
+} from './constants/tabs';
 import {
   buildActivityRailBreakpoint,
   buildActivityRailWidth,
   buildPageTopGap,
   mobileBottomNavClearance
-} from './layout';
+} from './constants/layout';
 
 const pageClass = css`
   width: 100%;

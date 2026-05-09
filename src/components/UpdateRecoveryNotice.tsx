@@ -26,7 +26,7 @@ export default function UpdateRecoveryNotice({
   title
 }: {
   buttonLabel: string;
-  detail: string;
+  detail?: string;
   message: string;
   onAction: () => void;
   title: string;
@@ -122,25 +122,27 @@ export default function UpdateRecoveryNotice({
           >
             {message}
           </p>
-          <div
-            className={css`
-              background: ${Color.highlightGray()};
-              border-left: 4px solid ${Color.gold()};
-              padding: 1.5rem;
-              border-radius: 0.5rem;
-            `}
-          >
-            <p
+          {detail ? (
+            <div
               className={css`
-                margin: 0;
-                color: ${Color.darkerGray()};
-                font-size: 1.25rem;
-                line-height: 1.6;
+                background: ${Color.highlightGray()};
+                border-left: 4px solid ${Color.gold()};
+                padding: 1.5rem;
+                border-radius: 0.5rem;
               `}
             >
-              {detail}
-            </p>
-          </div>
+              <p
+                className={css`
+                  margin: 0;
+                  color: ${Color.darkerGray()};
+                  font-size: 1.25rem;
+                  line-height: 1.6;
+                `}
+              >
+                {detail}
+              </p>
+            </div>
+          ) : null}
           <div
             className={css`
               display: flex;

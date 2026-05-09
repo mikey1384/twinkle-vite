@@ -6,7 +6,7 @@ import { User } from '~/types';
 import Button from '~/components/Button';
 import ContentLink from '~/components/ContentLink';
 import { useAppContext } from '~/contexts';
-import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
+import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 function NotiMessage({
@@ -96,8 +96,7 @@ function NotiMessage({
     useContributionInviteStatusUpdater();
   const [buildInviteStatusOverride, setBuildInviteStatusOverride] =
     useState('');
-  const [buildInviteActionLoading, setBuildInviteActionLoading] =
-    useState('');
+  const [buildInviteActionLoading, setBuildInviteActionLoading] = useState('');
   const [buildInviteActionError, setBuildInviteActionError] = useState('');
   const isSubjectResponse = useMemo(
     () => targetSubject?.userId === myId,
@@ -138,17 +137,17 @@ function NotiMessage({
       targetObj.contentType === 'aiStory'
         ? 'AI Story'
         : targetObj.contentType === 'url'
-        ? 'link'
-        : targetObj.contentType === 'pass' ||
-          targetObj.contentType === 'achievementPass'
-        ? 'achievement'
-        : targetObj.contentType === 'missionPass'
-        ? 'mission'
-        : targetObj.contentType === 'dailyReflection'
-        ? 'reflection'
-        : targetObj.contentType === 'sharedTopic'
-        ? 'shared prompt'
-        : targetObj.contentType
+          ? 'link'
+          : targetObj.contentType === 'pass' ||
+              targetObj.contentType === 'achievementPass'
+            ? 'achievement'
+            : targetObj.contentType === 'missionPass'
+              ? 'mission'
+              : targetObj.contentType === 'dailyReflection'
+                ? 'reflection'
+                : targetObj.contentType === 'sharedTopic'
+                  ? 'shared prompt'
+                  : targetObj.contentType
     } ${
       !stringIsEmpty(displayedContent)
         ? `(${truncateText({
@@ -162,8 +161,8 @@ function NotiMessage({
     return isReply
       ? targetComment.content
       : isSubjectResponse
-      ? targetSubject.content
-      : targetObj.content;
+        ? targetSubject.content
+        : targetObj.content;
   }, [
     isReply,
     isSubjectResponse,
@@ -205,10 +204,10 @@ function NotiMessage({
       actionObj.amount >= 10
         ? Color.rose()
         : actionObj.amount >= 5
-        ? Color.orange()
-        : actionObj.amount >= 3
-        ? Color.pink()
-        : infoColorValue,
+          ? Color.orange()
+          : actionObj.amount >= 3
+            ? Color.pink()
+            : infoColorValue,
     [actionObj.amount, infoColorValue]
   );
   const contentIsEmpty = useMemo(
@@ -450,26 +449,26 @@ function NotiMessage({
           threadContentType === 'aiStory'
             ? 'AI Story'
             : threadContentType === 'user'
-            ? 'profile'
-            : threadContentType === 'url'
-            ? 'link'
-            : threadContentType === 'pass'
-            ? 'mission completion'
-            : threadContentType === 'xpChange'
-            ? 'daily goals completion'
-            : threadContentType === 'sharedTopic'
-            ? 'shared prompt'
-            : threadContentType === 'dailyReflection'
-            ? 'reflection'
-            : threadContentType;
+              ? 'profile'
+              : threadContentType === 'url'
+                ? 'link'
+                : threadContentType === 'pass'
+                  ? 'mission completion'
+                  : threadContentType === 'xpChange'
+                    ? 'daily goals completion'
+                    : threadContentType === 'sharedTopic'
+                      ? 'shared prompt'
+                      : threadContentType === 'dailyReflection'
+                        ? 'reflection'
+                        : threadContentType;
         const threadLabelSuffix =
           threadContentType === 'subject'
             ? stringIsEmpty(targetSubject?.content)
               ? ''
               : ` (${truncatedTargetSubjectText})`
             : stringIsEmpty(targetObj.content)
-            ? ''
-            : ` (${truncatedTargetObjectText})`;
+              ? ''
+              : ` (${truncatedTargetObjectText})`;
         const threadLabel = `${threadLabelBase}${threadLabelSuffix}`;
         const threadContent =
           threadContentType === 'subject'
@@ -478,16 +477,16 @@ function NotiMessage({
                 title: targetSubject?.content
               }
             : threadContentType === 'user'
-            ? {
-                id: targetObj.id,
-                username: targetObj.content
-              }
-            : {
-                id: targetObj.id,
-                title: targetObj.content,
-                missionType: targetObj.missionType,
-                rootMissionType: targetObj.rootMissionType
-              };
+              ? {
+                  id: targetObj.id,
+                  username: targetObj.content
+                }
+              : {
+                  id: targetObj.id,
+                  title: targetObj.content,
+                  missionType: targetObj.missionType,
+                  rootMissionType: targetObj.rootMissionType
+                };
         return (
           <>
             replied to a comment in your thread on{' '}
@@ -542,8 +541,8 @@ function NotiMessage({
               title: isReply
                 ? 'replied to'
                 : targetObj.contentType === 'user'
-                ? 'left a message on'
-                : 'commented on'
+                  ? 'left a message on'
+                  : 'commented on'
             }}
             style={{ color: contentLinkColor }}
             label=""
@@ -554,40 +553,40 @@ function NotiMessage({
               isReply
                 ? 'comment'
                 : isSubjectResponse
-                ? 'subject'
-                : targetObj.contentType
+                  ? 'subject'
+                  : targetObj.contentType
             }
             content={{
               id: isReply
                 ? targetComment.id
                 : isSubjectResponse
-                ? targetSubject.id
-                : targetObj.id,
+                  ? targetSubject.id
+                  : targetObj.id,
               username: targetObj.content
             }}
             label={`${
               isReply
                 ? 'comment'
                 : isSubjectResponse
-                ? 'subject'
-                : targetObj.contentType === 'aiStory'
-                ? 'AI Story'
-                : targetObj.contentType === 'user'
-                ? 'profile'
-                : targetObj.contentType === 'url'
-                ? 'link'
-                : targetObj.contentType === 'pass' ||
-                  targetObj.contentType === 'missionPass'
-                ? 'mission completion'
-                : targetObj.contentType === 'achievementPass'
-                ? 'achievement'
-                : targetObj.contentType === 'xpChange'
-                ? 'daily goals completion'
-                : targetObj.contentType === 'sharedTopic'
-                ? 'shared prompt'
-                : targetObj.contentType === 'dailyReflection'
-                ? 'reflection'
-                : targetObj.contentType
+                  ? 'subject'
+                  : targetObj.contentType === 'aiStory'
+                    ? 'AI Story'
+                    : targetObj.contentType === 'user'
+                      ? 'profile'
+                      : targetObj.contentType === 'url'
+                        ? 'link'
+                        : targetObj.contentType === 'pass' ||
+                            targetObj.contentType === 'missionPass'
+                          ? 'mission completion'
+                          : targetObj.contentType === 'achievementPass'
+                            ? 'achievement'
+                            : targetObj.contentType === 'xpChange'
+                              ? 'daily goals completion'
+                              : targetObj.contentType === 'sharedTopic'
+                                ? 'shared prompt'
+                                : targetObj.contentType === 'dailyReflection'
+                                  ? 'reflection'
+                                  : targetObj.contentType
             }${
               (!isReply && targetObj.contentType === 'user') ||
               stringIsEmpty(contentString)
@@ -633,10 +632,10 @@ function NotiMessage({
                 targetObj.contentType === 'url'
                   ? 'link'
                   : targetObj.contentType === 'missionPass'
-                  ? 'mission completion'
-                  : targetObj.contentType === 'achievementPass'
-                  ? 'achievement'
-                  : targetObj.contentType
+                    ? 'mission completion'
+                    : targetObj.contentType === 'achievementPass'
+                      ? 'achievement'
+                      : targetObj.contentType
               } (${truncatedTargetObjectText})`
             }}
             label=""
@@ -861,7 +860,6 @@ function NotiMessage({
       setBuildInviteActionLoading('');
     }
   }
-
 }
 
 export default memo(NotiMessage);

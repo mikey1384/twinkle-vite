@@ -18,7 +18,7 @@ import {
   buildImportedProjectFilesNote,
   buildUploadedRuntimeAssetsNote,
   isImageChatReferenceFile
-} from '../domain/chatUploads';
+} from '../helpers/chatUploads';
 import type {
   Build,
   BuildChatFileSelectionResult,

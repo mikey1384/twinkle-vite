@@ -10,7 +10,7 @@ import {
   RequirementSectionProps,
   SuggestedOmokUser
 } from './types';
-import { getToneColor } from './utils';
+import { getToneColor } from './helpers/utils';
 
 export default function RequirementSection({
   title,

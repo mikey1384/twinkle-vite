@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
-import { ForkHistoryTrigger } from '~/domains/Build/shared/components/ForkHistoryModal';
+import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
@@ -11,7 +11,7 @@ import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/domains/Build/shared/domain/relationshipLabels';
+} from '~/helpers/buildRelationshipHelpers';
 
 export default function HeadingText({
   action,

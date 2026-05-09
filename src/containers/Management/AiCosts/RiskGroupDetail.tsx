@@ -16,7 +16,7 @@ import {
   formatTime,
   formatUsd,
   numberValue
-} from './formatters';
+} from './helpers/formatters';
 
 export default function RiskGroupDetail({
   detail,

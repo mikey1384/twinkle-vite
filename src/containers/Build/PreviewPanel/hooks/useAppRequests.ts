@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useAppContext } from '~/contexts';
 import type {
   PreviewHostBridgeRequestRefs
-} from '../previewBridgeRequestRefs';
+} from '../helpers/previewBridgeRequestRefs';
 
 export default function useAppRequests() {
   const captureBuildThumbnailPreview = useAppContext(

@@ -9,6 +9,33 @@ export type ChatChessTheme =
   | 'GENIUS'
   | 'LEVEL_42';
 
+const chatChessThemeUnlockOrder: ChatChessTheme[] = [
+  'DEFAULT',
+  'INTERMEDIATE',
+  'ADVANCED',
+  'EXPERT',
+  'LEGENDARY',
+  'GENIUS'
+];
+
+export function getAllowedChatChessThemes(
+  maxLevelUnlocked: number
+): ChatChessTheme[] {
+  const maxTheme = getMaxUnlockedChatChessTheme(maxLevelUnlocked);
+  const maxIndex = chatChessThemeUnlockOrder.indexOf(maxTheme);
+  const base = chatChessThemeUnlockOrder.slice(0, maxIndex + 1);
+  return maxLevelUnlocked >= 42 ? [...base, 'LEVEL_42'] : base;
+}
+
+function getMaxUnlockedChatChessTheme(level: number): ChatChessTheme {
+  if (level >= 37) return 'GENIUS';
+  if (level >= 31) return 'LEGENDARY';
+  if (level >= 25) return 'EXPERT';
+  if (level >= 20) return 'ADVANCED';
+  if (level >= 15) return 'INTERMEDIATE';
+  return 'DEFAULT';
+}
+
 export function mapThemeToColors(
   theme?: string | null
 ): { light?: string; dark?: string } | undefined {

@@ -4,7 +4,7 @@ import {
   type PreviewHostBridgeAuth
 } from './useHostBridge';
 import type { Build } from '../types';
-import { buildPreviewFrameSrc } from '../../previewOrigin';
+import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 
 function toPreviewBaseSrc(build: Build) {
   return Number(build.currentArtifactVersionId) > 0

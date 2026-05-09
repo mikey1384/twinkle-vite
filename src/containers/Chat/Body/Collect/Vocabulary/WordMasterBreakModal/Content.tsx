@@ -9,7 +9,7 @@ import NextDayCountdown from '~/components/NextDayCountdown';
 import { Color } from '~/constants/css';
 import RoulettePass from './RoulettePass';
 import { BreakAccent } from './types';
-import { formatCoins } from './utils';
+import { formatCoins } from './helpers/utils';
 
 export default function Content({
   actionLoading,

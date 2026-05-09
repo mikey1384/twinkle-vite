@@ -2,12 +2,12 @@ import { socket } from '~/constants/sockets/api';
 import type {
   BuildRuntimeExplorationPlan,
   BuildRuntimeObservationState
-} from '../../runtimeObservationTypes';
+} from '../../types/runtimeObservationTypes';
 import {
   createBuildChatClientMessageId,
   normalizeBuildChatClientMessageId
-} from '../domain/chatMessages';
-import { normalizeProjectFilesForBuild } from '../domain/projectFiles';
+} from '../helpers/chatMessages';
+import { normalizeProjectFilesForBuild } from '../helpers/projectFiles';
 import type {
   Build,
   BuildPlanAction,

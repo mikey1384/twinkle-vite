@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import ChessBoard from '../ChessBoard';
 import {
-  getLevelCategory,
   canCastle as canCastleHelper,
-  applyFenToBoard
+  applyFenToBoard,
+  getLevelCategory
 } from '../helpers';
 import CastlingOverlay from './CastlingOverlay';
 import { Chess } from 'chess.js';

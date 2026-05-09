@@ -5,7 +5,7 @@ import {
   DEFAULT_DRAWING_COLOR,
   normalizeDrawingColor,
   normalizeRecentDrawingColors
-} from '../colorSettings';
+} from '../helpers/colorSettings';
 
 interface DrawingToolsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;

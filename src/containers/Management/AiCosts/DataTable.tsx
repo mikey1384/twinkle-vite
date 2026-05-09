@@ -1,6 +1,6 @@
 import React from 'react';
 import Button from '~/components/Button';
-import { formatCell, getRowKey } from './formatters';
+import { formatCell, getRowKey } from './helpers/formatters';
 import {
   emptyInlineClass,
   paginationFooterClass,

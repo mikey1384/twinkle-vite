@@ -7,7 +7,7 @@ import type {
 import CollaborationPanel from './CollaborationPanel';
 import Header from './Header';
 import VersionStartPanel from './VersionStartPanel';
-import ForkHistoryModal from '~/domains/Build/shared/components/ForkHistoryModal';
+import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
 import Modals from './Modals';
 import Workspace from './Workspace';
 import BranchActionModals from './BranchActionModals';
@@ -43,7 +43,7 @@ import useSharedRunReconciliation from './hooks/useSharedRunReconciliation';
 import useSharedRunCleanup from './hooks/useSharedRunCleanup';
 import useSharedTerminalRunReconciliation from './hooks/useSharedTerminalRunReconciliation';
 import useWorkspaceCommunicationActions from './hooks/useWorkspaceCommunicationActions';
-import resolveCurrentBuildRunView from './resolveCurrentBuildRunView';
+import resolveCurrentBuildRunView from './helpers/resolveCurrentBuildRunView';
 import type {
   PreviewPanelHandle,
   PreviewPanelProps
@@ -52,7 +52,7 @@ import type { BuildLiveRunState } from '~/contexts/Build/reducer';
 import type {
   BuildRuntimeExplorationPlan,
   BuildRuntimeObservationState
-} from '../runtimeObservationTypes';
+} from '../types/runtimeObservationTypes';
 import {
   useBuildContext,
   useKeyContext,
@@ -64,22 +64,22 @@ import { mobileMaxWidth } from '~/constants/css';
 import {
   getBuildDisplayTitle,
   isBuildContributionFork
-} from '~/domains/Build/shared/domain/relationshipLabels';
+} from '~/helpers/buildRelationshipHelpers';
 import {
   canEditBuildProject,
   normalizeBuildWorkspaceCommunicationMode
-} from './domain/branches';
+} from './helpers/branches';
 import {
   EMPTY_BUILD_PROJECT_FILES,
   normalizeProjectFilesForBuild,
   serializedComparableValue
-} from './domain/projectFiles';
-import { resolveScopedPlanQuestion } from './domain/promptBindings';
+} from './helpers/projectFiles';
+import { resolveScopedPlanQuestion } from './helpers/promptBindings';
 import {
   chatMessagesEqual,
   mergeChatMessagesWithBuildRun,
   mergeDisplayedChatMessages
-} from './domain/chatMessages';
+} from './helpers/chatMessages';
 import type {
   Build,
   BuildCopilotPolicy,

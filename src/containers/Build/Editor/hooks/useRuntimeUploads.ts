@@ -7,14 +7,14 @@ import {
   isSupportedBuildAssetUploadFile,
   type BuildAgentAssetCreateOptions,
   type BuildAgentAssetCreateResult
-} from '../../PreviewPanel/agentWorkspaceAssets';
+} from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type {
   PreviewRuntimeUploadAsset,
   PreviewRuntimeUploadsSyncPayload
 } from '../../PreviewPanel/types';
 import {
   applyRuntimeUploadUsageToCopilotPolicy
-} from '../domain/branches';
+} from '../helpers/branches';
 import type {
   Build,
   BuildCopilotPolicy,

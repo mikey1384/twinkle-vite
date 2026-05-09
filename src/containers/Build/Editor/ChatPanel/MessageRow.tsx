@@ -12,7 +12,7 @@ import {
   ChatMessage,
   ChatPanelRunMode
 } from './types';
-import { isBuildAssistantPlaceholderContent } from './utils';
+import { isBuildAssistantPlaceholderContent } from './helpers/utils';
 
 interface MessageRowProps {
   message: ChatMessage;

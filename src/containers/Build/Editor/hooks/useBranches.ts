@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getBuildWorkspacePath } from '~/domains/Build/navigation';
+import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import {
   canMergeBuildBranch,
   canMergeBuildBranchIntoOwnBranch,
@@ -12,9 +12,9 @@ import {
   getBuildContributionContributorUserId,
   normalizeBuildVersionSummary,
   sortBuildVersionSummaries
-} from '../domain/branches';
-import { resolveIndexEntryPathFromProjectFiles } from '../domain/projectFiles';
-import { isBuildContributionFork } from '~/domains/Build/shared/domain/relationshipLabels';
+} from '../helpers/branches';
+import { resolveIndexEntryPathFromProjectFiles } from '../helpers/projectFiles';
+import { isBuildContributionFork } from '~/helpers/buildRelationshipHelpers';
 import type {
   Build,
   BuildBranchDeleteTarget,

@@ -84,11 +84,10 @@ export default class ErrorBoundary extends Component<
       if (lastErrorIsLazyImportLoadError) {
         return (
           <UpdateRecoveryNotice
-            buttonLabel="Reload Now"
-            detail="Press the button below to reload the app with the newest files."
-            message="The app could not finish loading one of its files. Reloading usually fixes this after an update or temporary network issue."
+            buttonLabel="Reload to Update"
+            message="The app has been updated. Reload to get the newest version."
             onAction={handleLazyImportRecoveryReload}
-            title="Reload Required"
+            title="Update Available"
           />
         );
       }

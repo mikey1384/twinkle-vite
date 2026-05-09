@@ -6,7 +6,7 @@ import React, {
   Suspense,
   useCallback
 } from 'react';
-import { buildPreviewFrameSrc } from '~/containers/Build/previewOrigin';
+import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 import Header from './Header';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
-import type { BuildRuntimeExplorationPlan } from '../../runtimeObservationTypes';
+import type { BuildRuntimeExplorationPlan } from '../../types/runtimeObservationTypes';
 import {
   markBuildContributionWorkspaceEdited,
   markBuildReleaseStatusUnpublished
-} from '../domain/branches';
+} from '../helpers/branches';
 import {
   applyArtifactCodeToProjectFiles,
   normalizeProjectFilesForBuild,
@@ -12,11 +12,11 @@ import {
   resolveIndexEntryPathFromProjectFiles,
   resolveIndexHtmlFromProjectFiles,
   serializedComparableValue
-} from '../domain/projectFiles';
+} from '../helpers/projectFiles';
 import {
   isBuildAssistantPlaceholderContent,
   normalizeSharedBuildRunBaseProjectFiles
-} from '../domain/chatMessages';
+} from '../helpers/chatMessages';
 import type {
   Build,
   BuildCopilotPolicy,

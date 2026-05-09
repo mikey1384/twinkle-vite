@@ -362,11 +362,14 @@ const emoticons: { [key: string]: string } = {
 
 // Split emoji keys into buckets to avoid iOS Safari 32KB regex limit
 const emoticonBuckets = (() => {
-  const buckets = Object.keys(emoticons).reduce((bucketMap, key) => {
-    const bucketIndex = key.charCodeAt(1) % 3; // Split into 3 buckets
-    (bucketMap[bucketIndex] ??= []).push(key);
-    return bucketMap;
-  }, {} as Record<number, string[]>);
+  const buckets = Object.keys(emoticons).reduce(
+    (bucketMap, key) => {
+      const bucketIndex = key.charCodeAt(1) % 3; // Split into 3 buckets
+      (bucketMap[bucketIndex] ??= []).push(key);
+      return bucketMap;
+    },
+    {} as Record<number, string[]>
+  );
 
   return Object.values(buckets)
     .map((keyArray) => {
@@ -540,6 +543,13 @@ export function finalizeEmoji(string: string): string {
     finalizedString = finalizedString.slice(0, -1);
   }
   return finalizedString || '';
+}
+
+export function formatVisitLabel(viewCount?: number | null) {
+  const visits = Number.isFinite(Number(viewCount)) ? Number(viewCount) : 0;
+  if (visits <= 0) return 'No visits yet';
+  if (visits === 1) return '1 visit';
+  return `${visits} visits`;
 }
 
 export function getFileInfoFromFileName(fileName: string): {

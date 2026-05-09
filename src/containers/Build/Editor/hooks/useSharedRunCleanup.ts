@@ -3,12 +3,12 @@ import type {
   BuildLiveRunMessage,
   BuildLiveRunState
 } from '~/contexts/Build/reducer';
-import { doChatMessagesRepresentSameBuildMessage } from '../domain/chatMessages';
+import { doChatMessagesRepresentSameBuildMessage } from '../helpers/chatMessages';
 import {
   normalizeProjectFilesForBuild,
   projectFilesEqual,
   serializedComparableValue
-} from '../domain/projectFiles';
+} from '../helpers/projectFiles';
 import type { ChatMessage } from '../types';
 
 interface SharedRunCleanupReconciliation {

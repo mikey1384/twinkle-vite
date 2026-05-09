@@ -43,6 +43,7 @@ export function isLazyImportLoadError(error: unknown) {
     message.includes('error loading dynamically imported module') ||
     message.includes('Importing a module script failed') ||
     message.includes('not a valid JavaScript MIME type') ||
+    message.includes('Unable to preload CSS for') ||
     message.includes('ChunkLoadError') ||
     message.includes('Loading chunk')
   );
@@ -97,9 +98,15 @@ function getLazyImportFailureUrl(error: unknown) {
   if (typeof targetSrc === 'string' && targetSrc.trim()) {
     return targetSrc.trim();
   }
+  const targetHref = (error as { target?: { href?: unknown } })?.target?.href;
+  if (typeof targetHref === 'string' && targetHref.trim()) {
+    return targetHref.trim();
+  }
   const message = String((error as Error)?.message || error || '');
   return (
-    message.match(/https?:\/\/[^\s"'`<>)]*?\.js\b[^\s"'`<>)]*/i)?.[0] ||
+    message.match(
+      /(?:https?:\/\/[^\s"'`<>)]*|\/[^\s"'`<>)]*|(?:\.{1,2}\/)?assets\/[^\s"'`<>)]*)\.(?:js|css)\b[^\s"'`<>)]*/i
+    )?.[0] ||
     null
   );
 }
@@ -108,7 +115,8 @@ async function isLikelyStaleLazyImportAsset(rawUrl: string) {
   try {
     const url = new URL(rawUrl, window.location.href);
     if (url.origin !== window.location.origin) return false;
-    if (!url.pathname.startsWith('/assets/') || !url.pathname.endsWith('.js')) {
+    const assetExtension = getLazyImportAssetExtension(url.pathname);
+    if (!url.pathname.startsWith('/assets/') || !assetExtension) {
       return false;
     }
     const response = await fetch(url.toString(), {
@@ -119,10 +127,17 @@ async function isLikelyStaleLazyImportAsset(rawUrl: string) {
     if (!response.ok) return false;
     const contentType = response.headers.get('content-type') || '';
     if (!contentType) return false;
+    if (assetExtension === 'css') return !/text\/css/i.test(contentType);
     return !/javascript|ecmascript/i.test(contentType);
   } catch {
     return false;
   }
+}
+
+function getLazyImportAssetExtension(pathname: string) {
+  if (pathname.endsWith('.js')) return 'js';
+  if (pathname.endsWith('.css')) return 'css';
+  return '';
 }
 
 async function isFreshDocumentReachable() {

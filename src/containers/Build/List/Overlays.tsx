@@ -1,8 +1,8 @@
 import React from 'react';
-import type { BuildFavoriteChange } from '~/domains/Build/shared/components/FavoriteButton';
-import type { BuildProjectListItemData } from '~/domains/Build/shared/components/ProjectListItem';
-import ForkHistoryModal from '~/domains/Build/shared/components/ForkHistoryModal';
-import DescriptionModal from '../DescriptionModal';
+import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
+import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
+import DescriptionModal from '~/components/Modals/BuildDescriptionModal';
 import DeleteModal from '../DeleteModal';
 import { BuildQuickAccessModal } from './QuickAccess';
 import type { BuildQuickAccessMode, QuickAccessBuild } from './types';

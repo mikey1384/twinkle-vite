@@ -9,11 +9,11 @@ import React, {
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import type { BuildCapabilitySnapshot } from '../capabilityTypes';
+import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type {
   BuildRuntimeExplorationPlan,
   BuildRuntimeObservationState
-} from '../runtimeObservationTypes';
+} from '../types/runtimeObservationTypes';
 import GuestRestrictionBanner from './GuestRestrictionBanner';
 import {
   buildEditableProjectFiles,
@@ -21,7 +21,7 @@ import {
   getPreferredIndexPath,
   normalizeProjectFilePath,
   serializeEditableProjectFiles
-} from './projectFiles';
+} from './helpers/projectFiles';
 import CodeWorkspacePane from './CodeWorkspacePane';
 import { useFrameManager } from './hooks/useFrameManager';
 import {
@@ -36,10 +36,10 @@ import {
 } from './hooks/useSource';
 import {
   getBuildPreviewMessageTargetOrigin
-} from '../previewOrigin';
+} from '~/helpers/buildPreviewOriginHelpers';
 import {
   type BuildAgentAssetCreateOptions
-} from './agentWorkspaceAssets';
+} from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type {
   EditableProjectFile,
   PreviewPanelHandle,
@@ -57,7 +57,7 @@ import {
   resolveRuntimeIssueProjectFilePath,
   summarizeUploadedFileNames,
   type PreviewLifecycleState
-} from './previewHelpers';
+} from './helpers/previewHelpers';
 import AgentManualPane from './AgentManualPane';
 import PreviewStage from './PreviewStage';
 import ProjectFileInputs from './ProjectFileInputs';
@@ -65,7 +65,7 @@ import WorkspaceToolbar from './WorkspaceToolbar';
 import {
   workspaceViewOptions,
   type WorkspaceViewMode
-} from './workspaceView';
+} from './constants/workspaceView';
 import useAppRequests from './hooks/useAppRequests';
 import useProjectFileActions from './hooks/useProjectFileActions';
 import useProjectFileUploads from './hooks/useProjectFileUploads';

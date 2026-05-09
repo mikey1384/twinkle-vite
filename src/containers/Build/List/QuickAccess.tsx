@@ -2,18 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import FavoriteButton, {
   type BuildFavoriteChange
-} from '~/domains/Build/shared/components/FavoriteButton';
+} from '~/components/Build/FavoriteButton';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import UsernameText from '~/components/Texts/UsernameText';
-import type { BuildProjectListItemData } from '~/domains/Build/shared/components/ProjectListItem';
-import PreviewFrame from '~/domains/Build/shared/components/PreviewFrame';
+import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
+import PreviewFrame from '~/components/Build/PreviewFrame';
 import { mobileMaxWidth } from '~/constants/css';
+import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
 import TabFilter from '../TabFilter';
-import {
-  formatQuickAccessRelativeTime,
-  getBuildUsernameUser
-} from './domain';
+import { formatQuickAccessRelativeTime } from './helpers';
 import type { BuildQuickAccessMode, QuickAccessBuild } from './types';
 
 export const QUICK_ACCESS_MODAL_PAGE_SIZE = 12;

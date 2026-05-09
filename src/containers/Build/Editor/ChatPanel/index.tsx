@@ -9,7 +9,7 @@ import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
 import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
-import { formatScaledRem } from './utils';
+import { formatScaledRem } from './helpers/utils';
 
 const panelClass = css`
   display: flex;

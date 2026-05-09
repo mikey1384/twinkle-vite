@@ -1,7 +1,7 @@
 import type { BuildLumineChatVisibility } from './ChatPanel/types';
-import type { BuildCapabilitySnapshot } from '../capabilityTypes';
+import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
-import type { BuildRuntimeExplorationPlan } from '../runtimeObservationTypes';
+import type { BuildRuntimeExplorationPlan } from '../types/runtimeObservationTypes';
 
 export type MobilePanelTab = 'chat' | 'preview';
 

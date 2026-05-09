@@ -3,11 +3,11 @@ import {
   buildFollowUpAcceptPromptBinding,
   buildScopedPlanContinuePromptBinding,
   resolveBuildFollowUpPromptKey
-} from '../domain/promptBindings';
+} from '../helpers/promptBindings';
 import {
   formatTrailingRuntimeObservationMessageContext,
   mergeHiddenBuildMessageContext
-} from '../domain/chatMessages';
+} from '../helpers/chatMessages';
 import type {
   Build,
   BuildPlanAction,

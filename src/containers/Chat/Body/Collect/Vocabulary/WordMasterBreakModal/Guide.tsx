@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { BREAK_GUIDE_ROWS, getToneColor } from './utils';
+import { BREAK_GUIDE_ROWS, getToneColor } from './helpers/utils';
 
 export default function Guide({
   isCompact,

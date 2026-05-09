@@ -8,10 +8,10 @@ import { returnImageFileFromUrl } from '~/helpers';
 import type { PreviewPanelHandle } from '../../PreviewPanel/types';
 import {
   canEditBuildProject
-} from '../domain/branches';
+} from '../helpers/branches';
 import {
   isBuildContributionFork
-} from '~/domains/Build/shared/domain/relationshipLabels';
+} from '~/helpers/buildRelationshipHelpers';
 import type { ThumbnailOption } from '../ThumbnailModal';
 import type {
   Build,

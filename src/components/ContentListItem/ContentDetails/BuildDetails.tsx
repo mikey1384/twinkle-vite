@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FavoriteButton from '~/domains/Build/shared/components/FavoriteButton';
-import { ForkHistoryTrigger } from '~/domains/Build/shared/components/ForkHistoryModal';
-import CollaborationRequestModal from '~/domains/Build/shared/components/CollaborationRequestModal';
+import FavoriteButton from '~/components/Build/FavoriteButton';
+import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
+import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
@@ -10,10 +10,15 @@ import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
   getBuildRelationshipLabels
-} from '~/domains/Build/shared/domain/relationshipLabels';
-import { formatVisitLabel } from '~/domains/Build/shared/components/ProjectListItem/domain';
-import { useCollaborationDirectMessageUpdater } from '~/domains/Build/shared/hooks/useCollaborationDirectMessageUpdater';
-import { useContributionInviteStatusUpdater } from '~/domains/Build/shared/hooks/useContributionInviteStatusUpdater';
+} from '~/helpers/buildRelationshipHelpers';
+import {
+  formatBuildCollaboratorCount,
+  formatBuildForkCount,
+  normalizeBuildCollaborationMode
+} from '~/helpers/buildProjectHelpers';
+import { formatVisitLabel } from '~/helpers/stringHelpers';
+import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
+import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 
@@ -110,7 +115,7 @@ export default function BuildDetails({
   const ownerId = Number(buildUserId || uploader?.id || 0);
   const isOwner = Boolean(userId && ownerId && Number(userId) === ownerId);
   const normalizedCollaborationMode =
-    normalizeCollaborationMode(collaborationMode);
+    normalizeBuildCollaborationMode(collaborationMode);
   const buildIsPublic = isPublic === true || Number(isPublic || 0) === 1;
   const favorited = Boolean(isFavorited);
   const showOpenSourceBadge = normalizedCollaborationMode === 'open_source';
@@ -210,7 +215,7 @@ export default function BuildDetails({
         {showForkCountBadge ? (
           <div className="build-collaborator-badge build-fork-count-badge">
             <Icon icon="code-branch" />
-            <span>{formatForkCount(normalizedForkCount)}</span>
+            <span>{formatBuildForkCount(normalizedForkCount)}</span>
           </div>
         ) : null}
         <div className="build-collaborator-badge build-visit-count-badge">
@@ -220,7 +225,9 @@ export default function BuildDetails({
         {normalizedCollaboratorCount > 0 ? (
           <div className="build-collaborator-badge">
             <Icon icon="users" />
-            <span>{formatCollaboratorCount(normalizedCollaboratorCount)}</span>
+            <span>
+              {formatBuildCollaboratorCount(normalizedCollaboratorCount)}
+            </span>
           </div>
         ) : null}
       </div>
@@ -539,20 +546,6 @@ export default function BuildDetails({
       />
     );
   }
-}
-
-function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
-  return value === 'open_source' ? value : 'private';
-}
-
-function formatCollaboratorCount(count: number) {
-  return count === 1
-    ? '1 team member'
-    : `${count.toLocaleString()} team members`;
-}
-
-function formatForkCount(count: number) {
-  return count === 1 ? '1 fork' : `${count.toLocaleString()} forks`;
 }
 
 function getRelationshipBadgeBorder(label: BuildRelationshipLabel) {

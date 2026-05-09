@@ -1,7 +1,7 @@
 import {
   mergeDuplicateAssistantMessages,
   normalizeBuildChatClientMessageId
-} from '../domain/chatMessages';
+} from '../helpers/chatMessages';
 import type { ChatMessage } from '../types';
 import type { SharedBuildRunIdentityState } from './useRunIdentity';
 

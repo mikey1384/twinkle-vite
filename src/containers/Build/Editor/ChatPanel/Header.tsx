@@ -18,7 +18,7 @@ import {
   formatBytes,
   formatStepLabel,
   formatTokenCount
-} from './utils';
+} from './helpers/utils';
 
 const headerClass = css`
   min-height: var(--build-workspace-header-height);
@@ -157,9 +157,7 @@ export default function Header({
           Lumine
         </div>
         {lumineChatVisibilityControl ? (
-          <LumineChatVisibilitySettings
-            control={lumineChatVisibilityControl}
-          />
+          <LumineChatVisibilitySettings control={lumineChatVisibilityControl} />
         ) : null}
       </div>
       {copilotPolicy ? (
@@ -248,10 +246,7 @@ export default function Header({
                         className={css`
                           font-size: var(--build-workshop-small-font-size);
                           font-family:
-                            'SF Mono',
-                            'Menlo',
-                            'Consolas',
-                            monospace;
+                            'SF Mono', 'Menlo', 'Consolas', monospace;
                           color: var(--chat-text);
                           opacity: 0.7;
                         `}
@@ -384,7 +379,9 @@ export default function Header({
                 font-size: var(--build-workshop-small-font-size);
                 font-weight: 800;
                 cursor: pointer;
-                transition: border-color 0.15s ease, transform 0.15s ease;
+                transition:
+                  border-color 0.15s ease,
+                  transform 0.15s ease;
                 &:hover,
                 &:focus-visible {
                   border-color: var(--theme-border);
@@ -685,7 +682,9 @@ function FeedbackNotice({ event }: { event: BuildRunEvent }) {
   const normalizedMessage = String(event.message || '').trim();
   if (!normalizedMessage) return null;
 
-  const label = formatStepLabel(String(event.phase || 'build').trim() || 'build');
+  const label = formatStepLabel(
+    String(event.phase || 'build').trim() || 'build'
+  );
   const normalizedMessageKey = normalizedMessage.toLowerCase();
   const isErrorLike =
     label === 'Error' ||

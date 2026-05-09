@@ -2,7 +2,7 @@ import type { ReactNode, RefObject } from 'react';
 import type {
   BuildAgentAssetCreateOptions,
   BuildAgentAssetCreateResult
-} from '../../PreviewPanel/agentWorkspaceAssets';
+} from '~/containers/Build/helpers/agentWorkspaceAssets';
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';

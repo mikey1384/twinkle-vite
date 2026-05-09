@@ -11,7 +11,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import API_URL from '~/constants/URL';
 import { convertToWebFriendlyFormat } from '~/helpers/imageHelpers';
-import StatusDots from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator/StatusDots';
+import StatusDots from '~/components/StatusDots';
 import UploadModal from '~/components/Modals/UploadModal';
 
 const THUMBNAIL_ASPECT_RATIO = 16 / 9;

@@ -1,4 +1,4 @@
-import type { BuildCapabilitySnapshot } from '../capabilityTypes';
+import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 
 export interface RuntimeBuild {
   id: number;

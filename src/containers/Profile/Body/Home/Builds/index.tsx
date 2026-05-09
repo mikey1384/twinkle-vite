@@ -6,12 +6,12 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ProjectListItem, {
   BuildProjectListItemData
-} from '~/domains/Build/shared/components/ProjectListItem';
-import type { BuildFavoriteChange } from '~/domains/Build/shared/components/FavoriteButton';
-import ForkHistoryModal from '~/domains/Build/shared/components/ForkHistoryModal';
+} from '~/components/Build/ProjectListItem';
+import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
-import DescriptionModal from '~/containers/Build/DescriptionModal';
+import DescriptionModal from '~/components/Modals/BuildDescriptionModal';
 import SelectPinnedBuildsModal from './SelectPinnedBuildsModal';
 import { useLocation } from 'react-router-dom';
 

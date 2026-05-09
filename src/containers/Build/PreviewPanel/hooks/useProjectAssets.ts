@@ -13,7 +13,7 @@ import {
   type BuildAgentAssetCreateResult,
   type BuildAgentAssetListOptions,
   type BuildAgentWorkspaceAssetsApi
-} from '../agentWorkspaceAssets';
+} from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type {
   PreviewRuntimeUploadAsset,
   PreviewRuntimeUploadsSyncPayload
@@ -21,7 +21,7 @@ import type {
 import {
   normalizeUploadInputFiles,
   summarizeUploadedFileNames
-} from '../previewHelpers';
+} from '../helpers/previewHelpers';
 
 declare global {
   interface Window {

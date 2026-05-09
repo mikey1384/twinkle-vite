@@ -4,18 +4,18 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import CodeDiff from '~/components/CodeDiff';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
-import { getFileNameFromPath, isIndexHtmlPath } from './projectFiles';
+import { getFileNameFromPath, isIndexHtmlPath } from './helpers/projectFiles';
 import {
   countProjectFileEffectiveLines,
   formatProjectFileEffectiveLineCount,
   resolveProjectFileEffectiveLineLimit
-} from './projectFileEffectiveLines';
+} from './helpers/projectFileEffectiveLines';
 import {
   buildProjectFileLineDiagnostics,
   searchProjectFileLines,
   truncateSearchLine,
   type ProjectFileLineDiagnostic
-} from './codeWorkspaceSearch';
+} from './helpers/codeWorkspaceSearch';
 import type {
   EditableProjectFile,
   PreviewRuntimeUploadAsset,

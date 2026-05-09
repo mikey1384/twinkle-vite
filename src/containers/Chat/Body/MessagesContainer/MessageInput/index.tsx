@@ -13,7 +13,7 @@ import Icon from '~/components/Icon';
 import InputArea from './InputArea';
 import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
-import UploadFileModal from '../../../Modals/UploadFileModal';
+import UploadFileModal from '~/components/Modals/UploadFileModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
@@ -259,11 +259,13 @@ export default function MessageInput({
     (v) => v.actions.onUpdateTodayStats
   );
   const {
+    onFileUpload,
     actions: {
       onEnterComment,
       onSetIsRespondingToSubject,
       onSetChessTarget,
-      onSetReplyTarget
+      onSetReplyTarget,
+      onSubmitMessage
     }
   } = useContext(LocalContext);
   const prevChannelId = useRef(selectedChannelId);
@@ -811,7 +813,9 @@ export default function MessageInput({
           }}
           onScrollToBottom={onScrollToBottom}
           onAiUsagePolicyUpdate={applyConfirmedAiUsagePolicy}
+          onFileUpload={onFileUpload}
           onTextMessageSubmit={handleUploadModalTextMessageSubmit}
+          onSubmitMessage={onSubmitMessage}
           onUpload={() => {
             handleSetText('');
             onSetTextAreaHeight(0);

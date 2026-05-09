@@ -1,13 +1,13 @@
 import {
   markBuildContributionWorkspaceEdited,
   markBuildReleaseStatusUnpublished
-} from '../domain/branches';
+} from '../helpers/branches';
 import {
   normalizeProjectFilePath,
   normalizeProjectFilesForBuild,
   resolveIndexEntryPathFromProjectFiles,
   resolveIndexHtmlFromProjectFiles
-} from '../domain/projectFiles';
+} from '../helpers/projectFiles';
 import useProjectFileDrafts, {
   type BuildProjectFilesDraftState
 } from './useProjectFileDrafts';

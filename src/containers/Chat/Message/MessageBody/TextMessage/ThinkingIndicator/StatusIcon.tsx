@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
-import { metaFor } from './statusMeta';
+import { metaFor } from './constants/statusMeta';
 import { pulseAnimation } from '~/components/StreamingThoughtContent/animations';
 
 interface StatusIconProps {

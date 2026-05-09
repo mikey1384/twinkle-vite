@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { removeLineBreaks, truncateTopic } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import { getBuildDisplayTitle } from '~/domains/Build/shared/domain/relationshipLabels';
+import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 
 export default function ContentLink({
   style,

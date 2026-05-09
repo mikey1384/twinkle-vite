@@ -7,7 +7,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import ProfilePic from '~/components/ProfilePic';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { useCollaborationDirectMessageUpdater } from '~/domains/Build/shared/hooks/useCollaborationDirectMessageUpdater';
+import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 
 interface BuildContributorInvite {
   userId: number;
@@ -211,9 +211,7 @@ export default function ContributorInvitePicker({
               renderDropdownLabel={(item) => (
                 <span>
                   {item.username}{' '}
-                  {item.realName ? (
-                    <small>{`(${item.realName})`}</small>
-                  ) : null}
+                  {item.realName ? <small>{`(${item.realName})`}</small> : null}
                 </span>
               )}
               searchInputFontSize="1.35rem"

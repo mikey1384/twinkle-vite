@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Roulette, { RouletteResolveResult } from '~/components/Roulette';
 import { Color } from '~/constants/css';
-import { BREAK_PASS_ROULETTE_SEGMENTS } from './utils';
+import { BREAK_PASS_ROULETTE_SEGMENTS } from './helpers/utils';
 
 export default function RoulettePass({
   onSpinRoulette,

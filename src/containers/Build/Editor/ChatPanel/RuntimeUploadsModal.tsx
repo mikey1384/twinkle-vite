@@ -6,11 +6,11 @@ import ProgressBar from '~/components/ProgressBar';
 import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { BuildCopilotPolicy, BuildRuntimeUploadAsset } from './types';
-import { formatBytes, formatTokenCount } from './utils';
+import { formatBytes, formatTokenCount } from './helpers/utils';
 import type {
   BuildAgentAssetCreateOptions,
   BuildAgentAssetCreateResult
-} from '../../PreviewPanel/agentWorkspaceAssets';
+} from '~/containers/Build/helpers/agentWorkspaceAssets';
 
 interface RuntimeUploadsModalProps {
   copilotPolicy: BuildCopilotPolicy | null;

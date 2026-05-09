@@ -10,7 +10,7 @@ import type {
 import {
   buildActivityRailBreakpoint,
   buildPageTopGap
-} from './layout';
+} from './constants/layout';
 
 const desktopHeaderHeight = '4.5rem';
 const buildActivityPanelInitialViewportTop = `calc(

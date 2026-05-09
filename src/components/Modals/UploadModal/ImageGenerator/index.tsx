@@ -87,8 +87,7 @@ export default function ImageGenerator({
   );
   const [mode, setMode] = useState<'text' | 'draw'>('text');
   const [engine, setEngine] = useState<AiImageEngine>('openai');
-  const [followUpEngine, setFollowUpEngine] =
-    useState<AiImageEngine>('openai');
+  const [followUpEngine, setFollowUpEngine] = useState<AiImageEngine>('openai');
   const [quality, setQuality] = useState<AiImageQuality>('high');
   const [followUpQuality, setFollowUpQuality] =
     useState<AiImageQuality>('high');
@@ -439,10 +438,10 @@ export default function ImageGenerator({
     Boolean(referenceImageUrl || drawingCanvasUrl);
   const hasImageAreaContent = Boolean(
     partialImageData ||
-      generatedImageUrl ||
-      referenceImageUrl ||
-      drawingCanvasUrl ||
-      isGenerating
+    generatedImageUrl ||
+    referenceImageUrl ||
+    drawingCanvasUrl ||
+    isGenerating
   );
 
   const imageArea = (
@@ -578,13 +577,17 @@ export default function ImageGenerator({
               padding: 0.8rem 1.4rem;
               background: transparent;
               border: 2px dashed
-                ${isShowingLoadingState ? '#ccc' : uploadThemeRole.getColor(0.58)};
+                ${isShowingLoadingState
+                  ? '#ccc'
+                  : uploadThemeRole.getColor(0.58)};
               border-radius: 8px;
               cursor: ${isShowingLoadingState ? 'not-allowed' : 'pointer'};
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               font-size: 1.1rem;
               font-weight: 800;
-              color: ${isShowingLoadingState ? '#ccc' : uploadThemeRole.getColor()};
+              color: ${isShowingLoadingState
+                ? '#ccc'
+                : uploadThemeRole.getColor()};
               position: relative;
               overflow: hidden;
               min-width: 200px;
@@ -720,7 +723,9 @@ export default function ImageGenerator({
   }
 
   function shouldIgnoreImageGenerationStatus(requestId?: string) {
-    const activeRequestId = String(activeImageRequestIdRef.current || '').trim();
+    const activeRequestId = String(
+      activeImageRequestIdRef.current || ''
+    ).trim();
     const statusRequestId = String(requestId || '').trim();
     return !activeRequestId || statusRequestId !== activeRequestId;
   }

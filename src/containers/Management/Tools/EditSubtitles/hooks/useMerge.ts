@@ -1,7 +1,7 @@
 import { useCallback, useRef, type MutableRefObject } from 'react';
 import { mergeStates } from '~/constants/state';
 import { useAppContext } from '~/contexts/hooks';
-import { generateSrtContent } from '../srt';
+import { generateSrtContent } from '../helpers/srt';
 import type { SrtSegment } from '../types';
 
 interface UseMergeArgs {

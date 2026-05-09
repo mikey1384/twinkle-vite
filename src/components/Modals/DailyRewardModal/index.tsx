@@ -23,7 +23,7 @@ import {
   formatRewardMultiplier,
   getRewardFontSize,
   roundRewardAmount
-} from './utils';
+} from './helpers/utils';
 
 export default function DailyRewardModal({
   onHide,

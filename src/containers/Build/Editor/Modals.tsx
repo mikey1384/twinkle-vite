@@ -1,7 +1,7 @@
 import React from 'react';
 import UploadModal from '~/components/Modals/UploadModal';
-import UploadFileModal from '~/containers/Chat/Modals/UploadFileModal';
-import DescriptionModal from '../DescriptionModal';
+import UploadFileModal from '~/components/Modals/UploadFileModal';
+import DescriptionModal from '~/components/Modals/BuildDescriptionModal';
 import CollaborationSettingsModal from './CollaborationSettingsModal';
 import ThumbnailModal, {
   type ThumbnailOption

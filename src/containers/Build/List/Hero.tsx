@@ -2,14 +2,14 @@ import React from 'react';
 import { css } from '@emotion/css';
 import FavoriteButton, {
   type BuildFavoriteChange
-} from '~/domains/Build/shared/components/FavoriteButton';
+} from '~/components/Build/FavoriteButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
-import PreviewFrame from '~/domains/Build/shared/components/PreviewFrame';
-import type { BuildProjectListItemData } from '~/domains/Build/shared/components/ProjectListItem';
+import PreviewFrame from '~/components/Build/PreviewFrame';
+import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import { mobileMaxWidth } from '~/constants/css';
-import { getBuildUsernameUser } from './domain';
+import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
 import type { TodayTopViewedBuild } from './types';
 
 const displayFontFamily =

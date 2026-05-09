@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { BuildLumineChatVisibility } from '../ChatPanel/types';
-import { normalizeLumineChatVisibility } from '../domain/branches';
+import { normalizeLumineChatVisibility } from '../helpers/branches';
 import type { Build } from '../types';
 
 interface UseBuildEditorLumineSettingsOptions {

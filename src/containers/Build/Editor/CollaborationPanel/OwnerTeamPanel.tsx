@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import ContributorInvitePicker from '../ContributorInvitePicker';
+import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
 import type {
-  BuildCollaborationMode,
   BuildCollaborationRequest,
   BuildContributorInvite,
   BuildLike
@@ -110,10 +110,6 @@ const errorClass = css`
   font-size: 1.1rem;
 `;
 
-function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
-  return value === 'open_source' ? value : 'private';
-}
-
 function CollaborationPromptCard({
   build,
   onOpenCollaborationSettings
@@ -121,7 +117,7 @@ function CollaborationPromptCard({
   build: BuildLike;
   onOpenCollaborationSettings?: () => void;
 }) {
-  const mode = normalizeCollaborationMode(build.collaborationMode);
+  const mode = normalizeBuildCollaborationMode(build.collaborationMode);
   const isPrivate = mode === 'private';
   const isOpenSource = mode === 'open_source';
   const title = isPrivate

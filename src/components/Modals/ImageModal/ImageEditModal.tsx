@@ -26,7 +26,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Textarea from '~/components/Texts/Textarea';
 import DrawingTools from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools';
-import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/colorSettings';
+import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/helpers/colorSettings';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import {
   errorHasActualCommunityFundsBalance,
@@ -160,10 +160,7 @@ export default function ImageEditModal({
     aiUsagePolicy.energyRemaining <= 0;
 
   const canAffordGeneration = useMemo(() => {
-    return (
-      !(aiUsagePolicyLoading && !aiUsagePolicy) &&
-      !energyDepleted
-    );
+    return !(aiUsagePolicyLoading && !aiUsagePolicy) && !energyDepleted;
   }, [aiUsagePolicy, aiUsagePolicyLoading, energyDepleted]);
   const aiModificationDisabled = AI_FEATURES_DISABLED;
 
@@ -677,9 +674,7 @@ export default function ImageEditModal({
               overflowed={aiUsagePolicy.lastUsageOverflowed}
               resetNeeded={energyDepleted}
               resetCost={aiUsagePolicy.resetCost || 0}
-              resetPurchaseNumber={
-                (aiUsagePolicy.resetPurchasesToday || 0) + 1
-              }
+              resetPurchaseNumber={(aiUsagePolicy.resetPurchasesToday || 0) + 1}
               twinkleCoins={twinkleCoins}
               rechargeLoading={aiUsageResetLoading}
               rechargeError={aiUsageResetError}
@@ -741,10 +736,10 @@ export default function ImageEditModal({
                 {isGenerating
                   ? getProgressLabel()
                   : aiUsagePolicyLoading && !aiUsagePolicy
-                  ? 'Checking Energy...'
-                  : !canAffordGeneration
-                  ? 'Recharge Energy'
-                  : 'Generate'}
+                    ? 'Checking Energy...'
+                    : !canAffordGeneration
+                      ? 'Recharge Energy'
+                      : 'Generate'}
               </Button>
               <div
                 className={css`
@@ -859,9 +854,7 @@ export default function ImageEditModal({
   }
 
   function createImageRequestId() {
-    return `image-editor-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2)}`;
+    return `image-editor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
   function startImageRequest() {
@@ -881,7 +874,9 @@ export default function ImageEditModal({
   }
 
   function shouldIgnoreImageGenerationStatus(requestId?: string) {
-    const activeRequestId = String(activeImageRequestIdRef.current || '').trim();
+    const activeRequestId = String(
+      activeImageRequestIdRef.current || ''
+    ).trim();
     const statusRequestId = String(requestId || '').trim();
     return !activeRequestId || statusRequestId !== activeRequestId;
   }

@@ -240,10 +240,10 @@ export default function FollowUpInput({
           {isGenerating || isFollowUpGenerating
             ? 'Modifying...'
             : energyLoading
-            ? 'Checking Energy...'
-            : !canAffordFollowUp
-            ? 'Recharge Energy'
-            : 'Modify'}
+              ? 'Checking Energy...'
+              : !canAffordFollowUp
+                ? 'Recharge Energy'
+                : 'Modify'}
         </ActionButton>
       </div>
     </div>

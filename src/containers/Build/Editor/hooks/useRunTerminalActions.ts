@@ -1,20 +1,20 @@
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
-import type { BuildRuntimeExplorationPlan } from '../../runtimeObservationTypes';
+import type { BuildRuntimeExplorationPlan } from '../../types/runtimeObservationTypes';
 import {
   markBuildContributionWorkspaceEdited,
   markBuildReleaseStatusUnpublished
-} from '../domain/branches';
+} from '../helpers/branches';
 import {
   normalizeProjectFilePath,
   normalizeProjectFilesForBuild,
   resolveIndexEntryPathFromProjectFiles,
   resolveIndexHtmlFromProjectFiles,
   serializedComparableValue
-} from '../domain/projectFiles';
+} from '../helpers/projectFiles';
 import {
   normalizeBuildChatClientMessageId,
   resolveStoppedRunAssistantMessage
-} from '../domain/chatMessages';
+} from '../helpers/chatMessages';
 import type {
   Build,
   BuildCopilotPolicy,

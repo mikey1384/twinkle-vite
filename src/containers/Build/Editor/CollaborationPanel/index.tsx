@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
-import { getBuildWorkspacePath } from '~/domains/Build/navigation';
+import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
+import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
 import ContributionDetail from './ContributionDetail';
 import Forum from './Forum';
 import OwnerContributionsPanel from './OwnerContributionsPanel';
@@ -16,11 +17,11 @@ import {
   canClearConflictMarkerActionError,
   getContributionConflictMarkerPaths,
   stringArraysEqual
-} from './collaborationConflicts';
+} from './helpers/collaborationConflicts';
 import {
   normalizePanelForumThreadId,
   normalizePanelScrollTop
-} from './panelState';
+} from './helpers/panelState';
 import type {
   BuildCollaborationMode,
   BuildCollaborationRequest,
@@ -165,7 +166,7 @@ export default function CollaborationPanel({
   const canShowPanel = isOwner || isContributionFork || embedded;
   const [collaborationMode, setCollaborationMode] =
     useState<BuildCollaborationMode>(
-      normalizeCollaborationMode(build.collaborationMode)
+      normalizeBuildCollaborationMode(build.collaborationMode)
     );
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsError, setSettingsError] = useState('');
@@ -269,7 +270,9 @@ export default function CollaborationPanel({
   const contributorsCardShown = true;
 
   useEffect(() => {
-    setCollaborationMode(normalizeCollaborationMode(build.collaborationMode));
+    setCollaborationMode(
+      normalizeBuildCollaborationMode(build.collaborationMode)
+    );
   }, [build.collaborationMode]);
 
   useEffect(() => {
@@ -1448,10 +1451,6 @@ export default function CollaborationPanel({
       />
     );
   }
-}
-
-function normalizeCollaborationMode(value: unknown): BuildCollaborationMode {
-  return value === 'open_source' ? value : 'private';
 }
 
 function getContributionAccessForCollaborationMode(

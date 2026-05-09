@@ -5,7 +5,7 @@ import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
-import { normalizeAllowedBuildPreviewFrameSrc } from './previewOrigin';
+import { normalizeAllowedBuildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 import { setStoredItem } from '~/helpers/userDataHelpers';
 
 const shellClass = css`

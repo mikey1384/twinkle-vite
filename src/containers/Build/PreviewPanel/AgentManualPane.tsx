@@ -2,11 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
-import type { BuildCapabilitySnapshot } from '../capabilityTypes';
+import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import {
   DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT,
   PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS
-} from './projectFileEffectiveLines';
+} from './helpers/projectFileEffectiveLines';
 
 const previewLayoutBoilerplate = [
   'function subscribePreviewStage(onSize) {',

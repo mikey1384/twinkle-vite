@@ -4,7 +4,7 @@ import { WORD_MASTER_BREAK_INTERVAL } from '~/constants/defaultValues';
 import BreakSection from './BreakSection';
 import Content from './Content';
 import { WordMasterBreakModalProps } from './types';
-import { getBreakAccent } from './utils';
+import { getBreakAccent } from './helpers/utils';
 
 export default function WordMasterBreakModal({
   breakStatus,

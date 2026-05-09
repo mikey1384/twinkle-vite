@@ -30,8 +30,11 @@ import {
 } from './helpers/model';
 import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext, useChessContext } from '~/contexts';
-import { getLevelCategory } from '../../Home/ChessPuzzleModal/helpers';
-import { mapThemeToColors } from './helpers/theme';
+import {
+  ChatChessTheme,
+  getAllowedChatChessThemes,
+  mapThemeToColors
+} from './helpers/theme';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -140,7 +143,9 @@ export default function Chess({
   const maxLevelUnlocked: number =
     useChessContext((v) => v.state.stats?.maxLevelUnlocked) ?? 1;
 
-  const themeOptions = useMemo(
+  const themeOptions = useMemo<
+    Array<{ label: string; value: ChatChessTheme }>
+  >(
     () => [
       { label: 'Default', value: 'DEFAULT' },
       { label: 'Intermediate', value: 'INTERMEDIATE' },
@@ -154,29 +159,7 @@ export default function Chess({
   );
 
   const allowedThemeValues = useMemo(() => {
-    const category = getLevelCategory(maxLevelUnlocked);
-    const order = [
-      'DEFAULT',
-      'INTERMEDIATE',
-      'ADVANCED',
-      'EXPERT',
-      'LEGENDARY',
-      'GENIUS'
-    ];
-    const maxIndex =
-      category === 'GENIUS'
-        ? order.indexOf('GENIUS')
-        : category === 'LEGENDARY'
-        ? order.indexOf('LEGENDARY')
-        : category === 'EXPERT'
-        ? order.indexOf('EXPERT')
-        : category === 'ADVANCED'
-        ? order.indexOf('ADVANCED')
-        : category === 'INTERMEDIATE'
-        ? order.indexOf('INTERMEDIATE')
-        : order.indexOf('DEFAULT');
-    const base = order.slice(0, maxIndex + 1);
-    return maxLevelUnlocked >= 42 ? [...base, 'LEVEL_42'] : base;
+    return getAllowedChatChessThemes(maxLevelUnlocked);
   }, [maxLevelUnlocked]);
 
   const handleApplyTheme = useCallback(

@@ -13,7 +13,7 @@ import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
 import GrammarGameModal from './GrammarGameModal';
 import ChessPuzzleModal from './ChessPuzzleModal';
-import DailyQuestionModal from '~/domains/DailyQuestion/Modal';
+import DailyQuestionModal from '~/components/Modals/DailyQuestionModal';
 import Achievements from './Achievements';
 import { useHomeContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';

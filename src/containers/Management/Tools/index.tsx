@@ -5,7 +5,7 @@ import GenerateSubtitles from './GenerateSubtitles';
 import TranslationProgressArea from './TranslationProgressArea';
 import MergingProgressArea from './MergingProgressArea';
 import BackToTopButton from './BackToTopButton';
-import { parseSrt, secondsToSrtTime } from './utils';
+import { parseSrt, secondsToSrtTime } from './helpers/utils';
 import { css } from '@emotion/css';
 import Section from './Section';
 import { subtitlesState, subtitleVideoPlayer } from '~/constants/state';

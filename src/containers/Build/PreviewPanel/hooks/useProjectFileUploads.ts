@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 import {
   isSupportedBuildAssetUploadFile
-} from '../agentWorkspaceAssets';
+} from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type {
   EditableProjectFile,
   PreviewRuntimeUploadAsset
@@ -10,7 +10,7 @@ import {
   getPreferredIndexPath,
   isIndexHtmlPath,
   normalizeProjectFilePath
-} from '../projectFiles';
+} from '../helpers/projectFiles';
 import {
   IMPORTED_RUNTIME_THUMB_ATTACHMENT_PATH_PREFIX,
   buildImportedRuntimeAttachmentDocumentBasePathsByScript,
@@ -26,7 +26,7 @@ import {
   resolveUploadedProjectFilePath,
   rewriteImportedProjectFilesWithRuntimeAssetUrls,
   summarizeUploadedFileNames
-} from '../previewHelpers';
+} from '../helpers/previewHelpers';
 
 export default function useProjectFileUploads({
   areProjectFileMutationsLocked,
