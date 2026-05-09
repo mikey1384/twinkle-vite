@@ -46,6 +46,10 @@ import {
   getBuildPreviewMessageTargetOrigin,
   isAllowedBuildPreviewMessageOrigin
 } from '~/helpers/buildPreviewOriginHelpers';
+import {
+  disposeBuildChessEngine,
+  evaluateBuildChessPosition
+} from '../helpers/chessEngine';
 
 export function useHostBridge({
   runtimeOnly,
@@ -732,6 +736,11 @@ export function useHostBridge({
 
           case 'viewer:get':
             response = { viewer: getViewerInfo(previewAuth) };
+            break;
+
+          case 'chess:best-move':
+          case 'chess:evaluate':
+            response = await evaluateBuildChessPosition(payload);
             break;
 
           case 'user-db:query':
@@ -1469,6 +1478,7 @@ export function useHostBridge({
       }
       chatSubscriptions.clear();
       activeAiImageStatusTargets.clear();
+      disposeBuildChessEngine();
     };
   }, [
     buildId,

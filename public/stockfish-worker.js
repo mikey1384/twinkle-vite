@@ -113,7 +113,12 @@ self.onmessage = function (e) {
 
     if (type === 'evaluate' || command === 'evaluate') {
       const evalData = data || payload;
-      evaluatePosition(evalData.fen, evalData.depth || 15, requestId);
+      evaluatePosition(
+        evalData.fen,
+        evalData.depth || 15,
+        requestId,
+        normalizeMoveTimeMs(evalData.moveTimeMs)
+      );
       return;
     }
 
@@ -140,7 +145,7 @@ self.onmessage = function (e) {
   }
 };
 
-function evaluatePosition(fen, depth, requestId) {
+function evaluatePosition(fen, depth, requestId, moveTimeMs) {
   if (!engine) {
     self.postMessage({
       type: 'result',
@@ -157,8 +162,17 @@ function evaluatePosition(fen, depth, requestId) {
 
   // Keep transposition table between calls for stronger play
   engine.postMessage(`position fen ${fen}` + NL);
-  // Prefer fixed depth; caller can pass a higher number for stronger search
+  if (moveTimeMs) {
+    engine.postMessage(`go depth ${depth} movetime ${moveTimeMs}` + NL);
+    return;
+  }
   engine.postMessage(`go depth ${depth}` + NL);
+}
+
+function normalizeMoveTimeMs(value) {
+  const normalized = Number(value);
+  if (!Number.isFinite(normalized) || normalized <= 0) return null;
+  return Math.max(1, Math.floor(normalized));
 }
 
 function handleBestMove(message) {

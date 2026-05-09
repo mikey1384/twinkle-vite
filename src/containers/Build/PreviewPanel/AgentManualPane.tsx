@@ -155,6 +155,17 @@ const sdkSections: GuideSection[] = [
     ]
   },
   {
+    title: 'Twinkle.chess',
+    items: [
+      'await Twinkle.chess.bestMove({ fen, skillLevel: 0-20, maxTimeMs: 500-60000 }) returns a Stockfish move for computer-opponent chess apps.',
+      'await Twinkle.chess.evaluate({ fen, depth: 12 }) returns the bestMove plus evaluation, depth, and mate when available.',
+      'Use skillLevel: 20 with maxTimeMs: 60000 for the strongest bounded computer opponent; lower skill levels default to shorter searches.',
+      'Returned moves include move/bestMove in UCI form plus from, to, and promotion fields for applying to app board state.',
+      'Twinkle.chess runs a bounded parent-managed Stockfish worker. Do not call it from render loops, animation loops, or high-frequency polling.',
+      'Twinkle.chess does not manage chess rules, legal moves, game-over state, or board UI. App code still owns those pieces.'
+    ]
+  },
+  {
     title: 'Twinkle.files',
     items: [
       'For simple same-origin downloads, a normal <a href={imageUrl} download="file.png"> is fine.',

@@ -61,7 +61,6 @@ const BuildRuntime = lazyWithRetry(() => import('~/containers/Build/Runtime'));
 const BuildThumbnailCaptureHost = lazyWithRetry(
   () => import('~/containers/Build/ThumbnailCaptureHost')
 );
-const Builds = lazyWithRetry(() => import('~/containers/Builds'));
 const Chat = lazyWithRetry(() => import('~/containers/Chat'));
 const ContentPage = lazyWithRetry(() => import('~/containers/ContentPage'));
 const Explore = lazyWithRetry(() => import('~/containers/Explore'));
@@ -574,12 +573,21 @@ export default function App() {
               <Route path="/links/:linkId" element={<LinkPage />} />
               <Route path="/subjects/:contentId" element={<ContentPage />} />
               <Route path="/explore" element={<ExploreRedirect />} />
-              <Route path="/ai-cards" element={<Explore category="ai-cards" />} />
+              <Route
+                path="/ai-cards"
+                element={<Explore category="ai-cards" />}
+              />
               <Route path="/videos" element={<Explore category="videos" />} />
               <Route path="/links" element={<Explore category="links" />} />
-              <Route path="/subjects" element={<Explore category="subjects" />} />
+              <Route
+                path="/subjects"
+                element={<Explore category="subjects" />}
+              />
               <Route path="/playlists/*" element={<PlaylistPage />} />
-              <Route path="/missions/:missionType/*" element={<MissionPage />} />
+              <Route
+                path="/missions/:missionType/*"
+                element={<MissionPage />}
+              />
               <Route path="/missions" element={<Mission />} />
               <Route
                 path="/build/preview/*"
@@ -591,7 +599,6 @@ export default function App() {
                 element={<BuildThumbnailCaptureHost />}
               />
               <Route path="/app/:buildId" element={<BuildRuntime />} />
-              <Route path="/builds" element={<Builds />} />
               <Route
                 path="/chat/*"
                 element={<Chat onFileUpload={handleFileUploadOnChat} />}
