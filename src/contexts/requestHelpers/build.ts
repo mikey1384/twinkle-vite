@@ -2721,6 +2721,7 @@ export default function buildRequestHelpers({
       includeReplies,
       author,
       authorUserId,
+      replyScope,
       token
     }: {
       buildId: number;
@@ -2731,6 +2732,7 @@ export default function buildRequestHelpers({
       includeReplies?: boolean;
       author?: 'all' | 'viewer' | 'subjectPoster';
       authorUserId?: number | null;
+      replyScope?: 'all' | 'ownThread';
       token?: string;
     }) {
       try {
@@ -2743,7 +2745,8 @@ export default function buildRequestHelpers({
             sortBy,
             includeReplies,
             author,
-            authorUserId
+            authorUserId,
+            replyScope
           },
           {
             ...auth(),

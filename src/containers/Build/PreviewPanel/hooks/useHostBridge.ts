@@ -1239,6 +1239,7 @@ export function useHostBridge({
               includeReplies: payload?.includeReplies,
               author: payload?.author,
               authorUserId: payload?.authorUserId,
+              replyScope: payload?.replyScope,
               token: contentCommentsToken
             });
             break;
