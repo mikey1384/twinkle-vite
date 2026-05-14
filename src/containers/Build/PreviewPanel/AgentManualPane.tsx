@@ -210,17 +210,20 @@ const sdkSections: GuideSection[] = [
       'Use limit or pageSize to choose how many entries appear per page. Default is 20, max is 100.',
       'Use Twinkle.sharedDb.loadMoreEntries(topic, { limit, cursor }) for Load more buttons.',
       "Pass order: 'asc' or order: 'oldest' for oldest-first chronological reads. sort and direction are accepted aliases.",
-      'There is no sharedDb setEntry/saveEntry/upsertEntry method. For leaderboards, either append every run with addEntry or keep one personal-best row by storing the returned entry.id in Twinkle.privateDb and updating it later.',
+      'There is no sharedDb setEntry/saveEntry/upsertEntry method. Use Twinkle.leaderboards for standard top-score rankings; use sharedDb only for custom shared JSON or append-only run history.',
       'Do not use sessionStorage for runtime state or persistence.'
     ]
   },
   {
-    title: 'SharedDb leaderboards',
+    title: 'Build leaderboards',
     items: [
-      'Use Twinkle.viewer.get() for the signed-in viewer id and username; guests need a sign-in prompt or local-only score.',
-      'For per-viewer best scores, store the returned sharedDb entry.id in privateDb, skip writes unless the score improves, and recreate with addEntry if updateEntry finds the saved row missing.',
-      'For all-time rankings, sharedDb pages are newest-first, not score-sorted. Page with loadMoreEntries until hasMore is false, then sort by score in app code.',
-      'Use plain addEntry instead when the design wants append-only run history.'
+      'Use Twinkle.leaderboards for game scoreboards and top-score rankings.',
+      'Twinkle.leaderboards.submit({ boardKey, score, displayName, meta }) records one personal-best row per viewer. Signed-in viewers use their Twinkle username automatically.',
+      'Submit only after computing the final score when a run, shift, match, or level attempt ends; do not submit every frame or every tick.',
+      'Guests can submit to the same public leaderboard by entering displayName once; keep that name in app state for later submits.',
+      'Sign-in can be shown as optional, but public Build leaderboards must not require sign-in before a guest can submit.',
+      'Twinkle.leaderboards.get({ boardKey, limit, cursor }) returns score-sorted entries with cursor pagination, hasMore, and the current viewer personalBest when available.',
+      'Leaderboard entries are sorted by score descending, then earliest achieved time. Use sharedDb only for custom shared JSON or append-only run history.'
     ]
   },
   {

@@ -174,6 +174,8 @@ registerMethods('build', [
   'addSharedDbEntry',
   'updateSharedDbEntry',
   'deleteSharedDbEntry',
+  'getBuildLeaderboard',
+  'submitBuildLeaderboardScore',
   'listBuildChatRooms',
   'createBuildChatRoom',
   'listBuildChatMessages',

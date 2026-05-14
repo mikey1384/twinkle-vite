@@ -3072,6 +3072,71 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getBuildLeaderboard({
+      buildId,
+      boardKey,
+      limit,
+      cursor,
+      guestSessionId
+    }: {
+      buildId: number;
+      boardKey?: string;
+      limit?: number;
+      cursor?: string | null;
+      guestSessionId?: string | null;
+    }) {
+      try {
+        const normalizedBoardKey = encodeURIComponent(boardKey || 'default');
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/leaderboards/${normalizedBoardKey}`,
+          {
+            ...auth(),
+            params: {
+              ...(limit != null ? { limit } : {}),
+              ...(cursor ? { cursor } : {}),
+              ...(guestSessionId ? { guestSessionId } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async submitBuildLeaderboardScore({
+      buildId,
+      boardKey,
+      score,
+      displayName,
+      meta,
+      guestSessionId
+    }: {
+      buildId: number;
+      boardKey?: string;
+      score: number;
+      displayName?: string;
+      meta?: Record<string, any> | null;
+      guestSessionId?: string | null;
+    }) {
+      try {
+        const normalizedBoardKey = encodeURIComponent(boardKey || 'default');
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/leaderboards/${normalizedBoardKey}/submit`,
+          {
+            score,
+            displayName,
+            meta,
+            guestSessionId
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async listBuildChatRooms({
       buildId,
       token

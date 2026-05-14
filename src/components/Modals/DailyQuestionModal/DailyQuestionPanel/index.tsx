@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -126,6 +127,7 @@ export default function DailyQuestionPanel({
   const isSubmittingRef = useRef(false);
   const isComposingRef = useRef(false);
   const committedResponseRef = useRef('');
+  const responseRef = useRef('');
   const lastActivityRef = useRef<number>(Date.now());
   const restoredDraftNeedsFreshTypingRef = useRef(
     restoredDraftNeedsFreshTyping
@@ -162,6 +164,7 @@ export default function DailyQuestionPanel({
   const onSetUserStateRef = useRef(onSetUserState);
   const onApplyTodayStatsProgressRef = useRef(onApplyTodayStatsProgress);
 
+  responseRef.current = response;
   getDailyQuestionRef.current = getDailyQuestion;
   submitDailyQuestionResponseRef.current = submitDailyQuestionResponse;
   recoverDailyQuestionSubmissionRef.current = recoverDailyQuestionSubmission;
@@ -874,7 +877,10 @@ export default function DailyQuestionPanel({
         isDeletionOnlyChange(committedResponse, finalValue);
       if (looksLikeDeletionOnly) {
         e.currentTarget.value = committedResponse;
-        setResponse(committedResponse);
+        if (responseRef.current !== committedResponse) {
+          responseRef.current = committedResponse;
+          setResponse(committedResponse);
+        }
         return;
       }
 
@@ -886,7 +892,10 @@ export default function DailyQuestionPanel({
       }
 
       committedResponseRef.current = finalValue;
-      setResponse(finalValue);
+      if (responseRef.current !== finalValue) {
+        responseRef.current = finalValue;
+        setResponse(finalValue);
+      }
       lastActivityRef.current = now;
     },
     []
@@ -900,7 +909,10 @@ export default function DailyQuestionPanel({
       const nativeEvent = e.nativeEvent as InputEvent;
 
       if (isComposingRef.current || nativeEvent.isComposing) {
-        setResponse(newValue);
+        if (responseRef.current !== newValue) {
+          responseRef.current = newValue;
+          setResponse(newValue);
+        }
         lastActivityRef.current = now;
         return;
       }
@@ -911,7 +923,10 @@ export default function DailyQuestionPanel({
       const isUndo = nativeEvent.inputType === 'historyUndo';
       if (looksLikeDeletionOnly || isUndo) {
         e.target.value = committedResponse;
-        setResponse(committedResponse);
+        if (responseRef.current !== committedResponse) {
+          responseRef.current = committedResponse;
+          setResponse(committedResponse);
+        }
         return;
       }
 
@@ -923,7 +938,10 @@ export default function DailyQuestionPanel({
       }
 
       committedResponseRef.current = newValue;
-      setResponse(newValue);
+      if (responseRef.current !== newValue) {
+        responseRef.current = newValue;
+        setResponse(newValue);
+      }
       lastActivityRef.current = now;
     },
     []
@@ -1073,16 +1091,18 @@ export default function DailyQuestionPanel({
     handleSubmitRef.current = handleSubmit;
   }, [handleSubmit]);
 
+  const deferredResponse = useDeferredValue(response);
+
   const wordCount = useMemo(() => {
-    return response
+    return deferredResponse
       .trim()
       .split(/\s+/)
       .filter((w) => w.length > 0).length;
-  }, [response]);
+  }, [deferredResponse]);
 
   const trimmedResponseLength = useMemo(
-    () => response.trim().length,
-    [response]
+    () => deferredResponse.trim().length,
+    [deferredResponse]
   );
   const minEffortBarShown = trimmedResponseLength > 0;
   const minLengthMet = trimmedResponseLength >= MIN_RESPONSE_LENGTH;

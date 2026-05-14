@@ -9,6 +9,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'files:delete',
   'files:save-as',
   'files:upload-selected',
+  'leaderboards:submit',
   'private-db:remove',
   'private-db:set',
   'reminders:create',

@@ -102,7 +102,14 @@ export default function WritingScreen({
           onDrop={onDrop}
           placeholder="Just start typing... don't stop to think, just write..."
           className={textareaCls}
+          autoCapitalize="off"
+          autoComplete="off"
+          autoCorrect="off"
           autoFocus
+          data-enable-grammarly="false"
+          data-gramm="false"
+          data-gramm_editor="false"
+          spellCheck={false}
         />
 
         {restoredDraftNeedsFreshTyping && (

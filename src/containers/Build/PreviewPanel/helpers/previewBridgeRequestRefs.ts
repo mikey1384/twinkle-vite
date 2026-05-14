@@ -34,6 +34,8 @@ export interface PreviewHostBridgeRequestRefs {
   addSharedDbEntryRef: AsyncRequestRef;
   updateSharedDbEntryRef: AsyncRequestRef;
   deleteSharedDbEntryRef: AsyncRequestRef;
+  getBuildLeaderboardRef: AsyncRequestRef;
+  submitBuildLeaderboardScoreRef: AsyncRequestRef;
   listBuildChatRoomsRef: AsyncRequestRef;
   createBuildChatRoomRef: AsyncRequestRef;
   listBuildChatMessagesRef: AsyncRequestRef;

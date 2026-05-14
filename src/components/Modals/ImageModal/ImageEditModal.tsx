@@ -32,6 +32,7 @@ import {
   errorHasActualCommunityFundsBalance,
   isCommunityFundRechargeAvailable
 } from '~/helpers/aiEnergy';
+import { mergeAiUsagePolicyWithCurrent } from '~/helpers/aiUsagePolicy';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 // Helper to get proxied URL for CloudFront images
@@ -143,6 +144,10 @@ export default function ImageEditModal({
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
+  const globalAiUsagePolicyRef = useRef<AiUsagePolicy | null>(
+    globalAiUsagePolicy || null
+  );
+  globalAiUsagePolicyRef.current = globalAiUsagePolicy || null;
   const { color: initialDrawingColor, recentColors: initialRecentColors } =
     extractDrawingColorSettings(userSettings);
   const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
@@ -210,9 +215,8 @@ export default function ImageEditModal({
 
   useEffect(() => {
     if (globalAiUsagePolicy) {
-      applyAiUsagePolicy(globalAiUsagePolicy);
+      syncAiUsagePolicyFromGlobal(globalAiUsagePolicy);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalAiUsagePolicy]);
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
@@ -420,7 +424,7 @@ export default function ImageEditModal({
           loadImageOntoCanvas(status.imageUrl);
 
           if (status.aiUsagePolicy) {
-            applyAiUsagePolicy(status.aiUsagePolicy);
+            applyConfirmedAiUsagePolicy(status.aiUsagePolicy);
           }
 
           isGeneratingRef.current = false;
@@ -436,7 +440,7 @@ export default function ImageEditModal({
           setError(errorMessage);
 
           if (status.aiUsagePolicy) {
-            applyAiUsagePolicy(status.aiUsagePolicy);
+            applyConfirmedAiUsagePolicy(status.aiUsagePolicy);
           }
 
           isGeneratingRef.current = false;
@@ -814,7 +818,7 @@ export default function ImageEditModal({
       const result = await getAiEnergyPolicy();
       const nextPolicy = result?.aiUsagePolicy || null;
       if (!isCancelled()) {
-        applyAiUsagePolicy(nextPolicy);
+        return applyConfirmedAiUsagePolicy(nextPolicy);
       }
       return nextPolicy;
     } catch (error) {
@@ -827,30 +831,38 @@ export default function ImageEditModal({
     }
   }
 
-  function applyAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+  function syncAiUsagePolicyFromGlobal(nextPolicy?: AiUsagePolicy | null) {
     if (!nextPolicy) return;
-    const currentPolicy = aiUsagePolicyRef.current;
-    const sameDay =
-      currentPolicy?.dayIndex == null ||
-      nextPolicy.dayIndex == null ||
-      currentPolicy.dayIndex === nextPolicy.dayIndex;
-    const mergedPolicy =
-      sameDay &&
-      currentPolicy?.communityFundResetEligibility &&
-      !nextPolicy.communityFundResetEligibility
-        ? {
-            ...nextPolicy,
-            communityFundResetEligibility:
-              currentPolicy.communityFundResetEligibility
-          }
-        : nextPolicy;
+    const mergedPolicy = mergeAiUsagePolicyWithCurrent(
+      aiUsagePolicyRef.current,
+      nextPolicy
+    );
+    if (mergedPolicy === aiUsagePolicyRef.current) {
+      return mergedPolicy;
+    }
     aiUsagePolicyRef.current = mergedPolicy;
     setAiUsagePolicy(mergedPolicy);
-    onUpdateTodayStats({
-      newStats: {
-        aiUsagePolicy: mergedPolicy
-      }
-    });
+    return mergedPolicy;
+  }
+
+  function applyConfirmedAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+    const mergedPolicy = syncAiUsagePolicyFromGlobal(nextPolicy);
+    if (!mergedPolicy) return null;
+
+    const currentGlobalPolicy = globalAiUsagePolicyRef.current;
+    const nextGlobalPolicy = mergeAiUsagePolicyWithCurrent(
+      currentGlobalPolicy,
+      mergedPolicy
+    );
+    if (nextGlobalPolicy !== currentGlobalPolicy) {
+      globalAiUsagePolicyRef.current = nextGlobalPolicy;
+      onUpdateTodayStats({
+        newStats: {
+          aiUsagePolicy: nextGlobalPolicy
+        }
+      });
+    }
+    return mergedPolicy;
   }
 
   function createImageRequestId() {
@@ -890,7 +902,7 @@ export default function ImageEditModal({
         useCommunityFunds
       });
       if (result?.aiUsagePolicy) {
-        applyAiUsagePolicy(result.aiUsagePolicy);
+        applyConfirmedAiUsagePolicy(result.aiUsagePolicy);
       }
       if (typeof result?.newBalance === 'number') {
         onSetUserState({
@@ -907,7 +919,7 @@ export default function ImageEditModal({
     } catch (error: any) {
       console.error(error);
       if (error?.aiUsagePolicy) {
-        applyAiUsagePolicy(error.aiUsagePolicy);
+        applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
       }
       if (
         typeof error?.currentCommunityFunds === 'number' &&
@@ -977,7 +989,7 @@ export default function ImageEditModal({
       });
 
       if (result.aiUsagePolicy) {
-        applyAiUsagePolicy(result.aiUsagePolicy);
+        applyConfirmedAiUsagePolicy(result.aiUsagePolicy);
       }
 
       if (result.success && result.imageUrl) {

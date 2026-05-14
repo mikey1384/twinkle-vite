@@ -1398,6 +1398,32 @@ export function useHostBridge({
             break;
           }
 
+          case 'leaderboards:get': {
+            const viewer = getViewerInfo(previewAuth);
+            response = await requestRefs.getBuildLeaderboardRef.current({
+              buildId: activeBuild.id,
+              boardKey: payload?.boardKey,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              guestSessionId: viewer.isGuest ? viewer.id : null
+            });
+            break;
+          }
+
+          case 'leaderboards:submit': {
+            const viewer = getViewerInfo(previewAuth);
+            response =
+              await requestRefs.submitBuildLeaderboardScoreRef.current({
+                buildId: activeBuild.id,
+                boardKey: payload?.boardKey,
+                score: payload?.score,
+                displayName: payload?.displayName,
+                meta: payload?.meta,
+                guestSessionId: viewer.isGuest ? viewer.id : null
+              });
+            break;
+          }
+
           case 'chat:list-rooms': {
             const chatReadToken = await ensureBuildApiToken(
               ['chat:read'],

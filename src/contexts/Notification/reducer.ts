@@ -1,24 +1,4 @@
-function mergeAiUsagePolicy(
-  prevPolicy: Record<string, any> | null | undefined,
-  nextPolicy: Record<string, any> | null | undefined
-) {
-  if (!nextPolicy) return nextPolicy;
-  const hasCommunityEligibility = Object.prototype.hasOwnProperty.call(
-    nextPolicy,
-    'communityFundResetEligibility'
-  );
-  if (
-    prevPolicy?.communityFundResetEligibility &&
-    !hasCommunityEligibility &&
-    (!nextPolicy.dayIndex || nextPolicy.dayIndex === prevPolicy.dayIndex)
-  ) {
-    return {
-      ...nextPolicy,
-      communityFundResetEligibility: prevPolicy.communityFundResetEligibility
-    };
-  }
-  return nextPolicy;
-}
+import { mergeAiUsagePolicyWithCurrent } from '~/helpers/aiUsagePolicy';
 
 function mergeTodayStats(
   state: any,
@@ -33,7 +13,10 @@ function mergeTodayStats(
 ) {
   const nextAiUsagePolicy =
     'aiUsagePolicy' in newStats
-      ? mergeAiUsagePolicy(state.todayStats.aiUsagePolicy, newStats.aiUsagePolicy)
+      ? mergeAiUsagePolicyWithCurrent(
+          state.todayStats.aiUsagePolicy,
+          newStats.aiUsagePolicy
+        )
       : state.todayStats.aiUsagePolicy;
   const nextTodayStats = {
     ...state.todayStats,
