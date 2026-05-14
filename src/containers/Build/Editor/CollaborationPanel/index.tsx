@@ -197,8 +197,9 @@ export default function CollaborationPanel({
   const [conflictMarkerPaths, setConflictMarkerPaths] = useState<string[]>([]);
   const [requestActionError, setRequestActionError] = useState('');
   const [forumThreads, setForumThreads] = useState<BuildForumThread[]>([]);
-  const [selectedThread, setSelectedThread] =
-    useState<BuildForumThread | null>(null);
+  const [selectedThread, setSelectedThread] = useState<BuildForumThread | null>(
+    null
+  );
   const [threadReplies, setThreadReplies] = useState<BuildForumReply[]>([]);
   const [threadTitleInput, setThreadTitleInput] = useState('');
   const [threadBodyInput, setThreadBodyInput] = useState('');
@@ -249,6 +250,16 @@ export default function CollaborationPanel({
     conflictMarkerPaths.length > 0
       ? conflictMarkerPaths
       : changedFileConflictPaths;
+  const rootConflictMarkerPaths =
+    projectFileConflictMarkerPaths.length > 0
+      ? projectFileConflictMarkerPaths
+      : isOwner && !isContributionFork
+        ? conflictMarkerPaths
+        : [];
+  const conflictMarkerPathsForLumine =
+    isOwner && !isContributionFork
+      ? rootConflictMarkerPaths
+      : activeConflictMarkerPaths;
   const reviewContributions = useMemo(
     () =>
       contributions.filter((contribution) => {
@@ -428,22 +439,20 @@ export default function CollaborationPanel({
             className={expandedBodyClass}
             onScroll={embedded ? handleEmbeddedScroll : undefined}
           >
-          {embedded ? (
-            renderEmbeddedBody()
-          ) : (
-            <>
-              {isOwner && !isContributionFork ? (
-                <>
-                  {renderOwnerTeamPanel({ showPrompt: false })}
-                  {renderOwnerContributions(true)}
-                </>
-              ) : (
-                <div className={splitClass}>
-                  {renderForum()}
-                </div>
-              )}
-            </>
-          )}
+            {embedded ? (
+              renderEmbeddedBody()
+            ) : (
+              <>
+                {isOwner && !isContributionFork ? (
+                  <>
+                    {renderOwnerTeamPanel({ showPrompt: false })}
+                    {renderOwnerContributions(true)}
+                  </>
+                ) : (
+                  <div className={splitClass}>{renderForum()}</div>
+                )}
+              </>
+            )}
           </div>
         ) : null}
       </section>
@@ -470,8 +479,8 @@ export default function CollaborationPanel({
                 <b>{selectedContribution?.title || 'this branch'}</b>.
               </p>
               <p>
-                Any Main changes that are not in this branch will be overwritten.
-                No merge conflict resolution will run.
+                Any Main changes that are not in this branch will be
+                overwritten. No merge conflict resolution will run.
               </p>
               <p>The branch will be marked as merged after Main is replaced.</p>
             </div>
@@ -491,11 +500,7 @@ export default function CollaborationPanel({
       );
     }
     if (!isContributionFork) {
-      return (
-        <div className={embeddedBodyStackClass}>
-          {renderForum()}
-        </div>
-      );
+      return <div className={embeddedBodyStackClass}>{renderForum()}</div>;
     }
     const canCompleteConflictMerge =
       Number(build.rootBuildUserId || 0) === Number(userId || 0) &&
@@ -559,9 +564,8 @@ export default function CollaborationPanel({
       const result = await updateBuildCollaboration({
         buildId: build.id,
         collaborationMode,
-        contributionAccess: getContributionAccessForCollaborationMode(
-          collaborationMode
-        )
+        contributionAccess:
+          getContributionAccessForCollaborationMode(collaborationMode)
       });
       if (result?.build) {
         onBuildPatch(result.build);
@@ -728,9 +732,7 @@ export default function CollaborationPanel({
       if (result?.request && showHiddenCollaborationRequests) {
         setCollaborationRequests((current) =>
           current.map((request) =>
-            Number(request.id) === Number(requestId)
-              ? result.request
-              : request
+            Number(request.id) === Number(requestId) ? result.request : request
           )
         );
       } else if (result?.success) {
@@ -844,14 +846,9 @@ export default function CollaborationPanel({
       setSelectedContribution(result?.contribution || null);
       setChangedFiles(nextFiles);
       setBranchRootDrifted(Boolean(result?.rootDrifted));
-      setConflictMarkerPaths(
-        nextFiles
-          .filter(
-            (file: BuildContributionFileDiff) =>
-              file.mergeStatus === 'conflict'
-          )
-          .map((file: BuildContributionFileDiff) => file.path)
-      );
+      if (projectFileConflictMarkerPaths.length === 0) {
+        setConflictMarkerPaths([]);
+      }
       setSelectedPaths(
         nextFiles.map((file: BuildContributionFileDiff) => file.path)
       );
@@ -877,8 +874,7 @@ export default function CollaborationPanel({
       const result = await mergeBuildContribution({
         buildId: rootBuildId,
         contributionBuildId: selectedContributionId,
-        filePaths: selectedPaths,
-        rootProjectFiles: preparedFiles.files
+        filePaths: selectedPaths
       });
       if (result?.success) {
         const conflictPaths = Array.isArray(result.conflicts)
@@ -903,7 +899,7 @@ export default function CollaborationPanel({
             )
           );
         }
-        if (result.mergeInProgress) {
+        if (result.mergeConflictsWritten || conflictPaths.length > 0) {
           setActionError(MERGE_CONFLICT_MARKERS_MESSAGE);
         }
       }
@@ -924,13 +920,12 @@ export default function CollaborationPanel({
     setActionError('');
     try {
       const preparedFiles = onBeforeContributionAction
-        ? await onBeforeContributionAction('merge')
+        ? await onBeforeContributionAction('replace')
         : { ready: true };
       if (!preparedFiles.ready) return;
       const result = await replaceMainWithBuildContribution({
         buildId: rootBuildId,
-        contributionBuildId: selectedContributionId,
-        rootProjectFiles: preparedFiles.files
+        contributionBuildId: selectedContributionId
       });
       if (result?.success) {
         onCanonicalMerge({
@@ -978,8 +973,7 @@ export default function CollaborationPanel({
       if (!preparedFiles.ready) return;
       const result = await updateBuildContributionFromMain({
         buildId: rootBuildId,
-        contributionBuildId,
-        projectFiles: preparedFiles.files
+        contributionBuildId
       });
       if (result?.code === 'build_contribution_conflict_markers_remaining') {
         const markerPaths = Array.isArray(result.conflictMarkerPaths)
@@ -988,8 +982,8 @@ export default function CollaborationPanel({
         setConflictMarkerPaths(markerPaths);
         setActionError(
           markerPaths.length > 0
-            ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
-            : 'Resolve all conflict markers before updating from main.'
+            ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
+            : 'Fix overlapping branch changes before updating from main.'
         );
         return;
       }
@@ -1036,7 +1030,7 @@ export default function CollaborationPanel({
     setActionError('');
     try {
       const preparedFiles = onBeforeContributionAction
-        ? await onBeforeContributionAction('merge')
+        ? await onBeforeContributionAction('complete-merge')
         : { ready: true };
       if (!preparedFiles.ready) return;
       const result = await completeBuildContributionMerge({
@@ -1050,8 +1044,8 @@ export default function CollaborationPanel({
         setConflictMarkerPaths(markerPaths);
         setActionError(
           markerPaths.length > 0
-            ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
-            : 'Resolve all conflict markers before completing this merge.'
+            ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
+            : 'Fix overlapping branch changes before completing this merge.'
         );
         return;
       }
@@ -1081,7 +1075,7 @@ export default function CollaborationPanel({
       }
       setActionError(
         Array.isArray(markerPaths) && markerPaths.length > 0
-          ? `Resolve conflict markers in ${markerPaths.join(', ')} first.`
+          ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
           : error?.response?.data?.error ||
               error?.message ||
               'Failed to complete branch merge'
@@ -1097,7 +1091,7 @@ export default function CollaborationPanel({
     setActionError('');
     try {
       const started = await onAskLumineToResolveConflicts(
-        activeConflictMarkerPaths
+        conflictMarkerPathsForLumine
       );
       if (!started) {
         setActionError('Lumine could not start right now. Try again soon.');
@@ -1122,9 +1116,7 @@ export default function CollaborationPanel({
         buildId: rootBuildId,
         contributionBuildId: nextContributionBuildId || null
       });
-      const nextThreads = Array.isArray(result?.threads)
-        ? result.threads
-        : [];
+      const nextThreads = Array.isArray(result?.threads) ? result.threads : [];
       const selectedThreadId = Number(selectedThread?.id || 0);
       const persistedThreadId = selectedThreadId
         ? 0
@@ -1170,11 +1162,7 @@ export default function CollaborationPanel({
   }
 
   async function handleCreateForumThread() {
-    if (
-      !rootBuildId ||
-      !threadTitleInput.trim() ||
-      forumActionLoading
-    ) {
+    if (!rootBuildId || !threadTitleInput.trim() || forumActionLoading) {
       return;
     }
     setForumActionLoading('create-thread');
@@ -1249,9 +1237,7 @@ export default function CollaborationPanel({
       }
     } catch (error: any) {
       setForumError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to open topic'
+        error?.response?.data?.error || error?.message || 'Failed to open topic'
       );
     } finally {
       if (showLoading) {
@@ -1293,9 +1279,7 @@ export default function CollaborationPanel({
       }
     } catch (error: any) {
       setForumError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Failed to reply'
+        error?.response?.data?.error || error?.message || 'Failed to reply'
       );
     } finally {
       setForumActionLoading('');
@@ -1377,6 +1361,8 @@ export default function CollaborationPanel({
       activeContribution.contributionStatus
     );
     const contributionCanMerge = contributionStatus === 'draft';
+    const contributionCanReplaceMain =
+      contributionStatus === 'draft' || contributionStatus === 'merged';
     const canUpdateFromMain =
       !ownerReview &&
       branchRootDrifted &&
@@ -1385,22 +1371,29 @@ export default function CollaborationPanel({
         Number(userId || 0);
     const branchOwnerNeedsAttention =
       !ownerReview &&
-      (canUpdateFromMain || activeConflictMarkerPaths.length > 0 || actionError);
+      (canUpdateFromMain ||
+        activeConflictMarkerPaths.length > 0 ||
+        actionError);
+    const detailConflictMarkerPaths = ownerReview
+      ? rootConflictMarkerPaths
+      : activeConflictMarkerPaths;
     if (!ownerReview && !branchOwnerNeedsAttention) {
       return null;
     }
     return (
       <ContributionDetail
-        activeConflictMarkerPaths={activeConflictMarkerPaths}
+        activeConflictMarkerPaths={detailConflictMarkerPaths}
         activeContributionId={activeContribution.id}
         actionError={actionError}
         actionLoading={actionLoading}
-        canAskLumineToResolveConflicts={Boolean(
-          onAskLumineToResolveConflicts
-        )}
+        canAskLumineToResolveConflicts={Boolean(onAskLumineToResolveConflicts)}
+        canCompleteConflictMerge={
+          ownerReview && contributionStatus === 'merging'
+        }
         canUpdateFromMain={canUpdateFromMain}
         changedFiles={changedFiles}
         contributionCanMerge={contributionCanMerge}
+        contributionCanReplaceMain={contributionCanReplaceMain}
         contributionStatus={contributionStatus}
         ownerReview={ownerReview}
         selectedPaths={selectedPaths}

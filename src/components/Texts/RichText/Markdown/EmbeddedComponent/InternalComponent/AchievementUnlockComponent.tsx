@@ -15,7 +15,13 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const displayIsMobile = isMobile(navigator);
 
-export default function AchievementUnlockComponent({ src }: { src: string }) {
+export default function AchievementUnlockComponent({
+  src,
+  isPreview
+}: {
+  src: string;
+  isPreview?: boolean;
+}) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const [hasError, setHasError] = useState(false);
@@ -77,6 +83,28 @@ export default function AchievementUnlockComponent({ src }: { src: string }) {
 
   if (rootType !== 'achievement' || !rootObj) {
     return <InvalidContent />;
+  }
+
+  if (isPreview) {
+    return (
+      <button
+        type="button"
+        className={compactAchievementUnlockClass}
+        onClick={handlePreviewClick}
+      >
+        <AchievementItem
+          isSmall
+          isThumb
+          achievement={rootObj}
+          thumbSize="5.4rem"
+        />
+        <div className="compact-achievement-unlock__copy">
+          <span>Achievement Unlocked</span>
+          <strong>{rootObj.title || 'Achievement'}</strong>
+          {rootObj.description ? <p>{rootObj.description}</p> : null}
+        </div>
+      </button>
+    );
   }
 
   return (
@@ -144,4 +172,60 @@ export default function AchievementUnlockComponent({ src }: { src: string }) {
       </div>
     </div>
   );
+
+  function handlePreviewClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    navigate(`/achievement-unlocks/${passId}`);
+  }
 }
+
+const compactAchievementUnlockClass = css`
+  appearance: none;
+  display: grid;
+  grid-template-columns: 5.6rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 8.2rem;
+  padding: 0.8rem 0.9rem;
+  overflow: hidden;
+  border: 1px solid ${Color.gold(0.66)};
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: ${Color.darkerGray()};
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  .compact-achievement-unlock__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+  span {
+    color: ${Color.gold()};
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+  strong {
+    overflow: hidden;
+    color: ${Color.black()};
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  p {
+    margin: 0;
+    overflow: hidden;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+`;

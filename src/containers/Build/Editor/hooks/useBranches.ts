@@ -4,6 +4,7 @@ import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import {
   canMergeBuildBranch,
   canMergeBuildBranchIntoOwnBranch,
+  canReplaceBuildBranchMain,
   canStartProjectScopedContribution,
   canStartStandaloneFork,
   canUseBuildBranchAsMergeTarget,
@@ -20,13 +21,13 @@ import type {
   BuildBranchDeleteTarget,
   BuildVersionSummary
 } from '../types';
-import type { BuildProjectFilesDraftState } from './useProjectFileDrafts';
-
-type ContributionAction = 'merge' | 'update-from-main';
+import type {
+  BuildProjectFileContributionAction,
+  BuildProjectFilesDraftState
+} from './useProjectFileDrafts';
 
 interface ContributionActionPreparationResult {
   ready: boolean;
-  files?: Array<{ path: string; content?: string }>;
 }
 
 interface UseBuildEditorBranchesOptions {
@@ -58,7 +59,7 @@ interface UseBuildEditorBranchesOptions {
     state: BuildProjectFilesDraftState
   ) => void;
   prepareProjectFilesForContributionAction: (options: {
-    action: ContributionAction;
+    action: BuildProjectFileContributionAction;
   }) => Promise<ContributionActionPreparationResult>;
   replaceBuildContributionIntoMyBranch: (
     options: Record<string, any>
@@ -142,6 +143,10 @@ export default function useBranches({
     ? build.rootBuildTitle || ''
     : build.title || '';
   const canMergeCurrentBranchToMain = canMergeBuildBranch(build, userId);
+  const canReplaceCurrentBranchToMain = canReplaceBuildBranchMain(
+    build,
+    userId
+  );
   const canMergeCurrentBranchIntoOwnBranch = canMergeBuildBranchIntoOwnBranch({
     build,
     userId,
@@ -152,7 +157,9 @@ export default function useBranches({
       ? 'main'
       : canMergeCurrentBranchIntoOwnBranch
         ? 'own-branch'
-        : null;
+        : canReplaceCurrentBranchToMain
+          ? 'main'
+          : null;
   const branchMergeTargetBranches = currentUserContributionBranches.filter(
     (version) =>
       canUseBuildBranchAsMergeTarget({
@@ -207,7 +214,8 @@ export default function useBranches({
       : '';
   const mergeBranchButtonLabel =
     currentBranchMergeTarget === 'main' ? 'Merge into Main' : 'Merge';
-  const canShowMergeCurrentBranch = Boolean(currentBranchMergeTarget);
+  const canShowMergeCurrentBranch =
+    canMergeCurrentBranchToMain || canMergeCurrentBranchIntoOwnBranch;
   const currentBranchHasMergeableFileChanges =
     currentBranchMergeableFileCount !== null &&
     currentBranchMergeableFileCount > 0;
@@ -220,7 +228,10 @@ export default function useBranches({
     (currentBranchHasMergeableFileChanges ||
       currentBranchMergeabilityLoadFailed ||
       currentBranchHasPendingProjectFileDrafts);
-  const canReplaceCurrentBranchTarget = canMergeCurrentBranch;
+  const canReplaceCurrentBranchTarget =
+    currentBranchMergeTarget === 'own-branch'
+      ? canMergeCurrentBranchIntoOwnBranch
+      : canReplaceCurrentBranchToMain;
   const replaceBranchTargetLabel =
     currentBranchMergeTarget === 'main'
       ? 'Main'
@@ -574,8 +585,7 @@ export default function useBranches({
             })
           : await mergeBuildContribution({
               buildId: rootBuildId,
-              contributionBuildId,
-              projectFiles: preparedFiles.files
+              contributionBuildId
             });
       if (result?.success) {
         const mergedBranch = result.contribution || null;
@@ -631,7 +641,7 @@ export default function useBranches({
     setContributionActionLoading('replace-main');
     setContributionActionError('');
     try {
-      const preparedFiles = await handleBeforeContributionAction('merge');
+      const preparedFiles = await handleBeforeContributionAction('replace');
       if (!preparedFiles.ready) return;
       const result =
         currentBranchMergeTarget === 'own-branch'
@@ -644,8 +654,7 @@ export default function useBranches({
             })
           : await replaceMainWithBuildContribution({
               buildId: rootBuildId,
-              contributionBuildId,
-              projectFiles: preparedFiles.files
+              contributionBuildId
             });
       if (result?.success) {
         setReplaceMainConfirmShown(false);
@@ -764,7 +773,9 @@ export default function useBranches({
     });
   }
 
-  async function handleBeforeContributionAction(action: ContributionAction) {
+  async function handleBeforeContributionAction(
+    action: BuildProjectFileContributionAction
+  ) {
     return prepareProjectFilesForContributionAction({ action });
   }
 

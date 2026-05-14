@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import KarmaStatus from './KarmaStatus';
 import ItemPanel from './ItemPanel';
 import ChangePassword from './ChangePassword';
@@ -15,6 +15,7 @@ import { priceTable } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
 import { css } from '@emotion/css';
 import HomeSectionHeader from '~/components/HomeSectionHeader';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 const changePasswordLabel = 'Change your password';
 const changePasswordDescriptionLabel = 'Change your password anytime you want. This item is free';
@@ -60,6 +61,14 @@ export default function Store() {
   const [numApprovedRecommendations, setNumApprovedRecommendations] =
     useState(0);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
+  const settingsListRef = useRef<HTMLDivElement | null>(null);
+
+  useScrollAnchorRestoration({
+    anchorKey: 'home:settings',
+    containerRef: settingsListRef,
+    initialScroll: { type: 'top' },
+    itemsReady: !!userId
+  });
 
   useEffect(() => {
     if (userId) {
@@ -103,65 +112,83 @@ export default function Store() {
       {!userId ? (
         <HomeLoginPrompt />
       ) : (
-        <div className={contentWrapperClass}>
-          <KarmaStatus
-            karmaPoints={karmaPoints}
-            level={level}
-            loading={loading}
-            numApprovedRecommendations={numApprovedRecommendations}
-            numPostsRewarded={numPostsRewarded}
-            numRecommended={numRecommended}
-            numTwinklesRewarded={numTwinklesRewarded}
-            title={title}
-            userId={userId}
-            userType={userType}
-          />
-          <ItemPanel
-            itemKey="changePassword"
-            itemName={changePasswordLabel}
-            itemDescription={changePasswordDescriptionLabel}
-            loading={loading}
-          >
-            <ChangePassword style={{ marginTop: '1rem' }} />
-          </ItemPanel>
+        <div ref={settingsListRef} className={contentWrapperClass}>
+          <div data-scroll-anchor-id="home-settings:karma">
+            <KarmaStatus
+              karmaPoints={karmaPoints}
+              level={level}
+              loading={loading}
+              numApprovedRecommendations={numApprovedRecommendations}
+              numPostsRewarded={numPostsRewarded}
+              numRecommended={numRecommended}
+              numTwinklesRewarded={numTwinklesRewarded}
+              title={title}
+              userId={userId}
+              userType={userType}
+            />
+          </div>
+          <div data-scroll-anchor-id="home-settings:change-password">
+            <ItemPanel
+              itemKey="changePassword"
+              itemName={changePasswordLabel}
+              itemDescription={changePasswordDescriptionLabel}
+              loading={loading}
+            >
+              <ChangePassword style={{ marginTop: '1rem' }} />
+            </ItemPanel>
+          </div>
           {loading ? (
             <Loading />
           ) : (
             <>
-              <ItemPanel
-                karmaPoints={karmaPoints}
-                locked={!canChangeUsername}
-                itemKey="username"
-                itemName={changeUsernameLabel}
-                itemDescription={changeUsernameDescriptionLabel}
-                onUnlock={handleUnlockUsernameChange}
-                unlocking={unlockingUsernameChange}
-                loading={loading}
-              >
-                <ChangeUsername style={{ marginTop: '1rem' }} />
-              </ItemPanel>
-              <RewardBoostItem loading={loading} />
-              <FileSizeItem loading={loading} />
-              <ProfilePictureItem loading={loading} />
-              <AICardItem
-                userId={userId}
-                canGenerateAICard={!!canGenerateAICard}
-                karmaPoints={karmaPoints}
-                loading={loading}
-              />
-              <DonorLicenseItem
-                karmaPoints={karmaPoints}
-                loading={loading}
-                canDonate={canDonate}
-                donatedCoins={donatedCoins || 0}
-              />
-              <ItemPanel
-                karmaPoints={karmaPoints}
-                locked
-                itemKey="moreToCome"
-                itemName={`${moreToComeLabel}...`}
-                loading={loading}
-              />
+              <div data-scroll-anchor-id="home-settings:username">
+                <ItemPanel
+                  karmaPoints={karmaPoints}
+                  locked={!canChangeUsername}
+                  itemKey="username"
+                  itemName={changeUsernameLabel}
+                  itemDescription={changeUsernameDescriptionLabel}
+                  onUnlock={handleUnlockUsernameChange}
+                  unlocking={unlockingUsernameChange}
+                  loading={loading}
+                >
+                  <ChangeUsername style={{ marginTop: '1rem' }} />
+                </ItemPanel>
+              </div>
+              <div data-scroll-anchor-id="home-settings:reward-boost">
+                <RewardBoostItem loading={loading} />
+              </div>
+              <div data-scroll-anchor-id="home-settings:file-size">
+                <FileSizeItem loading={loading} />
+              </div>
+              <div data-scroll-anchor-id="home-settings:profile-picture">
+                <ProfilePictureItem loading={loading} />
+              </div>
+              <div data-scroll-anchor-id="home-settings:ai-card">
+                <AICardItem
+                  userId={userId}
+                  canGenerateAICard={!!canGenerateAICard}
+                  karmaPoints={karmaPoints}
+                  loading={loading}
+                />
+              </div>
+              <div data-scroll-anchor-id="home-settings:donor-license">
+                <DonorLicenseItem
+                  karmaPoints={karmaPoints}
+                  loading={loading}
+                  canDonate={canDonate}
+                  donatedCoins={donatedCoins || 0}
+                />
+              </div>
+              <div data-scroll-anchor-id="home-settings:more">
+                <ItemPanel
+                  karmaPoints={karmaPoints}
+                  locked
+                  itemKey="moreToCome"
+                  itemName={`${moreToComeLabel}...`}
+                  loading={loading}
+                />
+              </div>
             </>
           )}
         </div>

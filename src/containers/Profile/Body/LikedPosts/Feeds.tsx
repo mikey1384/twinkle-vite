@@ -8,6 +8,7 @@ import EmptyStateMessage from '~/components/EmptyStateMessage';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -35,6 +36,7 @@ export default function Feeds({
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(loadingMore);
+  const feedListRef = useRef<HTMLDivElement | null>(null);
   const selectedSection = useRef('all');
   const myUsername = useKeyContext((v) => v.myState.username);
   const loadLikedFeeds = useAppContext((v) => v.requestHelpers.loadLikedFeeds);
@@ -73,6 +75,13 @@ export default function Feeds({
     () => !loaded || loadingFeeds,
     [loaded, loadingFeeds]
   );
+
+  useScrollAnchorRestoration({
+    anchorKey: `profile:${username}:likes:${section}:${filter || 'all'}`,
+    containerRef: feedListRef,
+    initialScroll: { type: 'top' },
+    itemsReady: !loadingShown && feeds.length > 0
+  });
 
   const isOwnProfile = myUsername === username;
   const displayName = isOwnProfile ? 'You' : username;
@@ -165,30 +174,39 @@ export default function Feeds({
               />
             ) : (
               <>
-                {feeds.length > 0 &&
-                  feeds.map((feed, index) => {
-                    const { contentId, contentType } = feed;
-                    return (
-                      <ContentPanel
-                        key={filterTable[section] + feed.feedId}
-                        style={{
-                          marginTop: '0',
-                          marginBottom: '1rem',
-                          zIndex: feeds.length - index
-                        }}
-                        feedId={feed.feedId}
-                        feedActivityType={feed.feedActivityType}
-                        feedTimeStamp={feed.timeStamp}
-                        feedUploader={feed.feedUploader}
-                        zIndex={feeds.length - index}
-                        contentId={contentId}
-                        contentType={contentType}
-                        theme={selectedTheme}
-                        commentsLoadLimit={5}
-                        numPreviewComments={1}
-                      />
-                    );
-                  })}
+                {feeds.length > 0 && (
+                  <div ref={feedListRef}>
+                    {feeds.map((feed, index) => {
+                      const { contentId, contentType } = feed;
+                      return (
+                        <div
+                          key={filterTable[section] + feed.feedId}
+                          data-scroll-anchor-id={`profile-like:${feed.feedId}`}
+                          data-scroll-anchor-secondary-id={String(feed.feedId)}
+                          data-scroll-anchor-content-key={`${contentType}:${contentId}`}
+                        >
+                          <ContentPanel
+                            style={{
+                              marginTop: '0',
+                              marginBottom: '1rem',
+                              zIndex: feeds.length - index
+                            }}
+                            feedId={feed.feedId}
+                            feedActivityType={feed.feedActivityType}
+                            feedTimeStamp={feed.timeStamp}
+                            feedUploader={feed.feedUploader}
+                            zIndex={feeds.length - index}
+                            contentId={contentId}
+                            contentType={contentType}
+                            theme={selectedTheme}
+                            commentsLoadLimit={5}
+                            numPreviewComments={1}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 {feeds.length === 0 && (
                   <div style={{ marginTop: '8rem', padding: '0 1rem' }}>
                     <EmptyStateMessage theme={selectedTheme}>

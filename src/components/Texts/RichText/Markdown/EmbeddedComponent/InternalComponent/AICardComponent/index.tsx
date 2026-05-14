@@ -4,10 +4,12 @@ import MultiCardComponent from './MultiCardComponent';
 import DefaultComponent from '../DefaultComponent';
 
 export default function AICardComponent({
+  isPreview,
   rootId,
   rootType,
   src
 }: {
+  isPreview?: boolean;
   src: string;
   rootId?: number | string;
   rootType?: string;
@@ -36,7 +38,12 @@ export default function AICardComponent({
   }, [src]);
 
   if (queryParams.cardId) {
-    return <SingleCardComponent cardId={Number(queryParams.cardId)} />;
+    return (
+      <SingleCardComponent
+        cardId={Number(queryParams.cardId)}
+        isPreview={isPreview}
+      />
+    );
   }
   if (
     Object.keys(queryParams).filter((key: string) => queryParams[key]).length
@@ -44,11 +51,14 @@ export default function AICardComponent({
     return (
       <MultiCardComponent
         {...queryParams}
+        isPreview={isPreview}
         rootId={rootId}
         rootType={rootType}
         src={src}
       />
     );
   }
-  return <DefaultComponent linkType="ai-cards" src={src} />;
+  return (
+    <DefaultComponent linkType="ai-cards" src={src} isPreview={isPreview} />
+  );
 }

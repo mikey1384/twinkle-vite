@@ -132,6 +132,15 @@ export function canMergeBuildBranch(build: Build, userId?: number | null) {
   );
 }
 
+export function canReplaceBuildBranchMain(build: Build, userId?: number | null) {
+  const status = build.contributionStatus || 'none';
+  return (
+    isBuildContributionFork(build) &&
+    Number(build.rootBuildUserId || 0) === Number(userId || 0) &&
+    (status === 'draft' || status === 'merged')
+  );
+}
+
 export function getBuildContributionContributorUserId(build?: {
   contributionContributorId?: number | null;
   userId?: number | null;

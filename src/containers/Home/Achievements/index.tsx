@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Color } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
@@ -6,6 +6,7 @@ import Loading from '~/components/Loading';
 import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import HomeSectionHeader from '~/components/HomeSectionHeader';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 export default function Achievements() {
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
@@ -38,6 +39,14 @@ export default function Achievements() {
     }
     return result;
   }, [achievementsObj]);
+  const achievementsListRef = useRef<HTMLDivElement | null>(null);
+
+  useScrollAnchorRestoration({
+    anchorKey: 'home:achievements',
+    containerRef: achievementsListRef,
+    initialScroll: { type: 'top' },
+    itemsReady: isAchievementsLoaded && achievementKeys.length > 0
+  });
   
 
   useEffect(() => {
@@ -86,28 +95,36 @@ export default function Achievements() {
       ) : !isAchievementsLoaded ? (
         <Loading />
       ) : (
-        <>
+        <div ref={achievementsListRef}>
           {userId && (
-            <UserLevelStatus
-              style={{
-                marginBottom: '4rem',
-                // Force neutral text colors (theme-independent)
-                ['--home-panel-color' as any]: Color.darkerGray(),
-                ['--home-panel-heading' as any]: Color.black(),
-              }}
-            />
+            <div data-scroll-anchor-id="home-achievements:level-status">
+              <UserLevelStatus
+                style={{
+                  marginBottom: '4rem',
+                  // Force neutral text colors (theme-independent)
+                  ['--home-panel-color' as any]: Color.darkerGray(),
+                  ['--home-panel-heading' as any]: Color.black(),
+                }}
+              />
+            </div>
           )}
           {achievementKeys.map((key) => (
-            <AchievementItem
+            <div
               key={key}
-              achievement={{
-                ...achievementsObj[key],
-                milestones: myAchievementsObj[key]?.milestones,
-                progressObj: myAchievementsObj[key]?.progressObj
-              }}
-            />
+              data-scroll-anchor-id={`home-achievement:${key}`}
+              data-scroll-anchor-secondary-id={String(achievementsObj[key]?.id || key)}
+              data-scroll-anchor-content-key={`achievement:${achievementsObj[key]?.id || key}`}
+            >
+              <AchievementItem
+                achievement={{
+                  ...achievementsObj[key],
+                  milestones: myAchievementsObj[key]?.milestones,
+                  progressObj: myAchievementsObj[key]?.progressObj
+                }}
+              />
+            </div>
           ))}
-        </>
+        </div>
       )}
     </div>
   );

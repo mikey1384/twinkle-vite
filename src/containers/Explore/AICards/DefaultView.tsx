@@ -39,7 +39,13 @@ export default function DefaultView({
         <Loading />
       ) : (
         cards.map((card) => (
-          <div key={card.id} style={{ margin: '1rem' }}>
+          <div
+            key={card.id}
+            data-scroll-anchor-id={`explore-ai-cards:default:${card.id}`}
+            data-scroll-anchor-secondary-id={String(card.id)}
+            data-scroll-anchor-content-key={`ai-card:${card.id}`}
+            style={{ margin: '1rem' }}
+          >
             <AICard
               card={cardObj[card.id] ? cardObj[card.id] : card}
               onClick={() => {

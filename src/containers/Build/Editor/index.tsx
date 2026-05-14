@@ -8,9 +8,11 @@ import CollaborationPanel from './CollaborationPanel';
 import Header from './Header';
 import VersionStartPanel from './VersionStartPanel';
 import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
+import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
 import Modals from './Modals';
 import Workspace from './Workspace';
 import BranchActionModals from './BranchActionModals';
+import ProjectFileDraftActionModal from './ProjectFileDraftActionModal';
 import useRunIdentity, {
   getSharedBuildRunIdentityState,
   type SharedBuildRunIdentityState
@@ -19,6 +21,7 @@ import useBranches from './hooks/useBranches';
 import useChatSync from './hooks/useChatSync';
 import useChatUploads from './hooks/useChatUploads';
 import useGenerationReset from './hooks/useGenerationReset';
+import useLumineModelSelection from './hooks/useLumineModelSelection';
 import useLumineSettings from './hooks/useLumineSettings';
 import useMutableState from './hooks/useMutableState';
 import useMetadata from './hooks/useMetadata';
@@ -43,6 +46,7 @@ import useSharedRunReconciliation from './hooks/useSharedRunReconciliation';
 import useSharedRunCleanup from './hooks/useSharedRunCleanup';
 import useSharedTerminalRunReconciliation from './hooks/useSharedTerminalRunReconciliation';
 import useWorkspaceCommunicationActions from './hooks/useWorkspaceCommunicationActions';
+import { getContributionConflictMarkerPaths } from './CollaborationPanel/helpers/collaborationConflicts';
 import resolveCurrentBuildRunView from './helpers/resolveCurrentBuildRunView';
 import type {
   PreviewPanelHandle,
@@ -113,6 +117,7 @@ export default function BuildEditor({
   copilotPolicy,
   isOwner,
   initialPrompt = '',
+  initialPromptContext = '',
   forceInitialPrompt = false,
   seedGreeting = false,
   onUpdateBuild,
@@ -232,7 +237,8 @@ export default function BuildEditor({
     updateBuildProjectFiles,
     uploadBuildRuntimeFiles,
     uploadBuildThumbnail,
-    uploadFile
+    uploadFile,
+    updateBuildLumineModelPreference
   } = useRequests();
   const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
   onUpdateTodayStatsRef.current = onUpdateTodayStats;
@@ -242,10 +248,8 @@ export default function BuildEditor({
       tab: 'chat',
       version: 0
     }));
-  const [
-    collaborationSettingsModalShown,
-    setCollaborationSettingsModalShown
-  ] = useState(false);
+  const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
+    useState(false);
   const [dismissedFollowUpPromptKey, setDismissedFollowUpPromptKey] =
     useState('');
   const communicationPanelShown =
@@ -272,17 +276,14 @@ export default function BuildEditor({
   const pendingScrollBehaviorRef = useRef<ScrollBehavior>('auto');
   const scrollRafRef = useRef<number | null>(null);
   const handledSharedTerminalStateKeyRef = useRef('');
-  const {
-    handleChatScroll,
-    maybeAutoScrollDuringStream,
-    scrollChatToBottom
-  } = useChatScrollControls({
-    chatEndRef,
-    chatScrollRef,
-    pendingScrollBehaviorRef,
-    scrollRafRef,
-    shouldAutoScrollRef
-  });
+  const { handleChatScroll, maybeAutoScrollDuringStream, scrollChatToBottom } =
+    useChatScrollControls({
+      chatEndRef,
+      chatScrollRef,
+      pendingScrollBehaviorRef,
+      scrollRafRef,
+      shouldAutoScrollRef
+    });
   const DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS = 8000;
   const runOrchestration = useRunOrchestration<
     QueuedBuildRequest,
@@ -371,7 +372,8 @@ export default function BuildEditor({
     getLatestChatMessages: getLatestChatMessagesForQueue,
     handleStopGeneration: handleStopGenerationForQueue,
     hasCurrentPageRunActivity,
-    hasPendingRuntimeFollowUp: () => runtimeFollowUp.hasPendingRuntimeFollowUp(),
+    hasPendingRuntimeFollowUp: () =>
+      runtimeFollowUp.hasPendingRuntimeFollowUp(),
     isRunActivityInFlight,
     requestStopForRecoveredBuildRun,
     runIdentity,
@@ -383,8 +385,7 @@ export default function BuildEditor({
     isOwner,
     runtimeAutoFixEnabled: RUNTIME_AUTOFIX_ENABLED,
     runtimeAutoFixWindowMs: RUNTIME_AUTO_FIX_WINDOW_MS,
-    runtimePostFixVerificationWindowMs:
-      RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS,
+    runtimePostFixVerificationWindowMs: RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS,
     sharedRuntimeVerifyResults,
     claimRuntimeVerifyResult: sharedRunReconciliation.claimRuntimeVerifyResult,
     onClearBuildRuntimeVerifyResult,
@@ -431,17 +432,15 @@ export default function BuildEditor({
     replaceChatMessages,
     getLatestCopilotPolicy,
     replaceCopilotPolicy
-  } = useMutableState<Build, ChatMessage, BuildCopilotPolicy | null>(
-    {
-      build,
-      chatMessages: mergedPersistedAndLiveChatMessages,
-      copilotPolicy,
-      onUpdateBuild,
-      onUpdateChatMessages,
-      onUpdateCopilotPolicy,
-      areChatMessagesEqual: chatMessagesEqual
-    }
-  );
+  } = useMutableState<Build, ChatMessage, BuildCopilotPolicy | null>({
+    build,
+    chatMessages: mergedPersistedAndLiveChatMessages,
+    copilotPolicy,
+    onUpdateBuild,
+    onUpdateChatMessages,
+    onUpdateCopilotPolicy,
+    areChatMessagesEqual: chatMessagesEqual
+  });
   const { syncChatMessagesFromServer } = useChatSync({
     applyBuildUpdate,
     buildId: build.id,
@@ -512,7 +511,6 @@ export default function BuildEditor({
     canShowVersionStartActions,
     contributionActionError,
     contributionActionLoading,
-    currentBranchMergeTarget,
     currentUserContributionBranch,
     deletingBranch,
     deletingBranchLoading,
@@ -599,61 +597,61 @@ export default function BuildEditor({
     updateBuildMetadata,
     uploadBuildThumbnail
   });
-  const {
-    applyGenerateComplete,
-    applyGenerateError,
-    applyGenerateStopped
-  } = useRunTerminalActions({
-    appendLocalRunEvent,
-    applyBuildUpdate,
-    applyCopilotRequestLimitsSnapshot,
-    beginDedupedProcessingRecovery,
-    clearCurrentPageRunActivity,
-    dedupedProcessingRecoveryStatus: DEDUPED_PROCESSING_RECOVERY_STATUS,
-    enqueueLatestBuildRequest,
-    getActiveBuildId: getActiveBuildRunFeedbackBuildId,
-    getBuildRunIdentity,
-    getCurrentActiveAssistantMessageId,
-    getCurrentActiveUserMessageId,
-    getCurrentRunMode,
-    getCurrentRunRequestId,
-    getLatestBuild,
-    getLatestBuildRun,
-    getLatestChatMessages,
-    markActiveBuildRunActivity,
-    markCurrentPageRunActivityActive,
-    maybeAutoCaptureBranchThumbnailAfterProgressSave,
-    maybeStartNextQueuedRequest,
-    onCompleteBuildRun,
-    onFailBuildRun,
-    onStopBuildRun,
-    onUpdateBuildRunStatus,
-    releaseQueuedRequestsIfStopTargetAlreadySettled,
-    releaseQueuedRequestsWaitingForStop,
-    removeLocalMessagesByIdentity,
-    replaceChatMessages,
-    resetDedupedProcessingReconcileState,
-    runIdentity,
-    runOrchestration,
-    runtimeFollowUp,
-    scrollChatToBottom,
-    setMobilePanelTab,
-    syncAvailableBranchSummary,
-    syncChatMessagesFromServer,
-    upsertLocalBuildChatAssistantMessage
-  });
+  const { applyGenerateComplete, applyGenerateError, applyGenerateStopped } =
+    useRunTerminalActions({
+      appendLocalRunEvent,
+      applyBuildUpdate,
+      applyCopilotRequestLimitsSnapshot,
+      beginDedupedProcessingRecovery,
+      clearCurrentPageRunActivity,
+      dedupedProcessingRecoveryStatus: DEDUPED_PROCESSING_RECOVERY_STATUS,
+      enqueueLatestBuildRequest,
+      getActiveBuildId: getActiveBuildRunFeedbackBuildId,
+      getBuildRunIdentity,
+      getCurrentActiveAssistantMessageId,
+      getCurrentActiveUserMessageId,
+      getCurrentRunMode,
+      getCurrentRunRequestId,
+      getLatestBuild,
+      getLatestBuildRun,
+      getLatestChatMessages,
+      markActiveBuildRunActivity,
+      markCurrentPageRunActivityActive,
+      maybeAutoCaptureBranchThumbnailAfterProgressSave,
+      maybeStartNextQueuedRequest,
+      onCompleteBuildRun,
+      onFailBuildRun,
+      onStopBuildRun,
+      onUpdateBuildRunStatus,
+      releaseQueuedRequestsIfStopTargetAlreadySettled,
+      releaseQueuedRequestsWaitingForStop,
+      removeLocalMessagesByIdentity,
+      replaceChatMessages,
+      resetDedupedProcessingReconcileState,
+      runIdentity,
+      runOrchestration,
+      runtimeFollowUp,
+      scrollChatToBottom,
+      setMobilePanelTab,
+      syncAvailableBranchSummary,
+      syncChatMessagesFromServer,
+      upsertLocalBuildChatAssistantMessage
+    });
   const {
     ensureProjectFilesPersistedBeforePublish,
     ensureProjectFilesPersistedBeforeRun,
+    draftActionPrompt,
     handleApplyRestoredProjectFiles,
     handleProjectFilesDraftStateChange,
     handleReplaceCode,
     handleSaveProjectFiles,
     prepareProjectFilesForContributionAction,
+    resolveProjectFilesDraftActionPrompt,
     resetProjectFilesDraftState
   } = useProjectFiles({
     applyBuildUpdate,
     build,
+    discardProjectFilesDraft: discardCurrentProjectFileDraft,
     getLatestBuild,
     isOwner,
     maybeAutoCaptureBranchThumbnailAfterProgressSave,
@@ -670,11 +668,7 @@ export default function BuildEditor({
     syncChatMessagesFromServer,
     updateBuildProjectFiles
   });
-  const {
-    handlePublish,
-    handleUnpublish,
-    publishing
-  } = usePublishing({
+  const { handlePublish, handleUnpublish, publishing } = usePublishing({
     appendLocalRunEvent,
     applyBuildUpdate,
     build,
@@ -704,6 +698,15 @@ export default function BuildEditor({
     loadBuildContributors,
     updateBuildLumineChatVisibility
   });
+  const { getCurrentLumineModelSelection, lumineModelSelectionControl } =
+    useLumineModelSelection({
+      buildId: build.id,
+      copilotPolicy,
+      getLatestCopilotPolicy,
+      isOwner: canEditCurrentBuildProject,
+      replaceCopilotPolicy,
+      updateBuildLumineModelPreference
+    });
   const {
     generationResetError,
     handlePurchaseGenerationReset,
@@ -717,6 +720,10 @@ export default function BuildEditor({
     replaceCopilotPolicy,
     userId
   });
+  const {
+    confirmModal: runtimeUploadConfirmModal,
+    requestConfirm: requestRuntimeUploadConfirm
+  } = useConfirmModal();
   const {
     currentBuildRuntimeAssets,
     handleCloseRuntimeUploadsManager,
@@ -742,6 +749,7 @@ export default function BuildEditor({
     isOwner,
     listBuildRuntimeFiles,
     loadBuildRuntimeUploads,
+    requestConfirm: requestRuntimeUploadConfirm,
     replaceCopilotPolicy,
     uploadBuildRuntimeFiles
   });
@@ -814,40 +822,38 @@ export default function BuildEditor({
     hasCurrentPageRunActivity: runOrchestration.hasCurrentPageRunActivity(),
     sharedBuildRun
   });
-  const {
-    startGeneration,
-    startGreetingGeneration,
-    startRuntimeAutoFix
-  } = useRunStartActions({
-    aiFeaturesDisabled: AI_FEATURES_DISABLED,
-    appendLocalRunEvent,
-    clearBufferedRunStartEvents,
-    clearLocalFollowUpPrompt,
-    ensureProjectFilesPersistedBeforeRun,
-    flushBufferedRunStartEvents,
-    flushBufferedRunStartEventsToPageFeedback,
-    forceChatAutoScroll: () => {
-      shouldAutoScrollRef.current = true;
-      scrollChatToBottom('smooth', { force: true });
-    },
-    getLatestBuild,
-    getLatestChatMessages,
-    getRuntimeExplorationPlan: () =>
-      currentBuildRunView.runtimeExplorationPlan,
-    isOwner,
-    isRunActivityInFlight,
-    markActiveBuildRunActivity,
-    markCurrentPageRunActivityActive,
-    onRegisterBuildRun,
-    replaceChatMessages,
-    resetDedupedProcessingReconcileState,
-    runIdentity,
-    runOrchestration,
-    runtimeAutoFixEnabled: RUNTIME_AUTOFIX_ENABLED,
-    runtimeFollowUp,
-    setBuildRuntimeExplorationPlanValue,
-    setDismissedFollowUpPromptKey
-  });
+  const { startGeneration, startGreetingGeneration, startRuntimeAutoFix } =
+    useRunStartActions({
+      aiFeaturesDisabled: AI_FEATURES_DISABLED,
+      appendLocalRunEvent,
+      clearBufferedRunStartEvents,
+      clearLocalFollowUpPrompt,
+      ensureProjectFilesPersistedBeforeRun,
+      flushBufferedRunStartEvents,
+      flushBufferedRunStartEventsToPageFeedback,
+      forceChatAutoScroll: () => {
+        shouldAutoScrollRef.current = true;
+        scrollChatToBottom('smooth', { force: true });
+      },
+      getLatestBuild,
+      getLatestChatMessages,
+      getLumineModelSelection: getCurrentLumineModelSelection,
+      getRuntimeExplorationPlan: () =>
+        currentBuildRunView.runtimeExplorationPlan,
+      isOwner,
+      isRunActivityInFlight,
+      markActiveBuildRunActivity,
+      markCurrentPageRunActivityActive,
+      onRegisterBuildRun,
+      replaceChatMessages,
+      resetDedupedProcessingReconcileState,
+      runIdentity,
+      runOrchestration,
+      runtimeAutoFixEnabled: RUNTIME_AUTOFIX_ENABLED,
+      runtimeFollowUp,
+      setBuildRuntimeExplorationPlanValue,
+      setDismissedFollowUpPromptKey
+    });
   const {
     handleAcceptFollowUpPrompt,
     handleAskLumineToResolveMergeConflicts,
@@ -982,6 +988,21 @@ export default function BuildEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
 
+  function discardCurrentProjectFileDraft() {
+    const discardedFiles = previewPanelRef.current?.discardProjectFileDraft();
+    if (Array.isArray(discardedFiles)) {
+      return discardedFiles;
+    }
+    const activeBuild = getLatestBuild();
+    return normalizeProjectFilesForBuild(
+      activeBuild?.projectFiles || [],
+      activeBuild?.code || ''
+    ).map((file) => ({
+      path: file.path,
+      content: file.content
+    }));
+  }
+
   useEffect(() => {
     return () => {
       if (scrollRafRef.current !== null) {
@@ -1001,9 +1022,19 @@ export default function BuildEditor({
     if (!prompt) return;
     if (!forceInitialPrompt && getLatestChatMessages().length > 0) return;
     didAutoPromptRef.current = true;
-    void startGeneration(prompt);
+    handleBuildWorkspaceCommunicationModeChange('lumine');
+    setMobilePanelTab('chat');
+    void startGeneration(prompt, {
+      messageContext: initialPromptContext.trim() || null
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, isOwner, initialPrompt, forceInitialPrompt]);
+  }, [
+    build.id,
+    isOwner,
+    initialPrompt,
+    initialPromptContext,
+    forceInitialPrompt
+  ]);
 
   useEffect(() => {
     if (didAutoGreetingRef.current) return;
@@ -1015,12 +1046,7 @@ export default function BuildEditor({
     didAutoGreetingRef.current = true;
     void startGreetingGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    build.id,
-    initialPrompt,
-    isOwner,
-    seedGreeting
-  ]);
+  }, [build.id, initialPrompt, isOwner, seedGreeting]);
 
   useEffect(() => {
     if (didInitialChatScrollRef.current) return;
@@ -1135,10 +1161,14 @@ export default function BuildEditor({
     : EMPTY_BUILD_PROJECT_FILES;
   const shouldShowVersionStartPanel =
     !canEditCurrentBuildProject && mergedChatMessages.length === 0;
-  const buildWorkspaceCommunicationMode = normalizeBuildWorkspaceCommunicationMode(
-    buildWorkspaceUi?.communicationMode
-  );
+  const buildWorkspaceCommunicationMode =
+    normalizeBuildWorkspaceCommunicationMode(
+      buildWorkspaceUi?.communicationMode
+    );
   const buildWorkspaceScrollTops = buildWorkspaceUi?.scrollTops || {};
+  const mainProjectConflictMarkerPaths = getContributionConflictMarkerPaths(
+    build.projectFiles
+  );
   const versionNavigationPanel = (
     <VersionStartPanel
       rootBuildId={Number(build.contributionRootBuildId || 0)}
@@ -1159,12 +1189,18 @@ export default function BuildEditor({
       pendingCollaborationRequestCount={build.pendingCollaborationRequestCount}
       releaseStatus={build.releaseStatus || null}
       publishing={publishing}
+      mainProjectConflictMarkerPaths={mainProjectConflictMarkerPaths}
       status={build.contributionStatus || null}
       onBranchNameChange={setBranchNameDraft}
       onStartVersion={handleCreateContribution}
       onLoadVersion={handleLoadVersion}
       onDeleteBranch={handleRequestDeleteBranch}
       onFork={handleFork}
+      onFixMergeConflicts={() => {
+        void handleAskLumineToResolveMergeConflicts(
+          mainProjectConflictMarkerPaths
+        );
+      }}
       onOpenTeamPanel={() =>
         handleBuildWorkspaceCommunicationModeChange('people')
       }
@@ -1206,16 +1242,16 @@ export default function BuildEditor({
     versionsPanel,
     lumineTabLabel: luminePanelOverride ? 'Branches' : 'Lumine',
     lumineTabIcon: luminePanelOverride ? 'code-branch' : 'sparkles',
-    lumineChatVisibilityControl:
-      canManageLumineChatVisibility
-        ? {
-            value: lumineChatVisibility,
-            savedValue: savedLumineChatVisibility,
-            loading: savingLumineChatVisibility,
-            error: lumineChatVisibilityError,
-            onSave: handleSaveLumineChatVisibility
-          }
-        : null,
+    lumineChatVisibilityControl: canManageLumineChatVisibility
+      ? {
+          value: lumineChatVisibility,
+          savedValue: savedLumineChatVisibility,
+          loading: savingLumineChatVisibility,
+          error: lumineChatVisibilityError,
+          onSave: handleSaveLumineChatVisibility
+        }
+      : null,
+    lumineModelSelectionControl,
     peoplePanel: (
       <CollaborationPanel
         build={build}
@@ -1226,9 +1262,7 @@ export default function BuildEditor({
         onCanonicalMerge={handleBuildContributionMerge}
         onVersionProjectFilesUpdate={handleBuildContributionMerge}
         onBeforeContributionAction={handleBeforeContributionAction}
-        onAskLumineToResolveConflicts={
-          handleAskLumineToResolveMergeConflicts
-        }
+        onAskLumineToResolveConflicts={handleAskLumineToResolveMergeConflicts}
         onAcceptedContributorCountChange={setAcceptedContributorCount}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         initialScrollTop={buildWorkspaceScrollTops.people || 0}
@@ -1251,6 +1285,9 @@ export default function BuildEditor({
     generating: currentBuildRunView.generating,
     generatingStatus: currentBuildRunView.status,
     assistantStatusSteps: currentBuildRunView.assistantStatusSteps,
+    requestId: currentBuildRunView.requestId,
+    agentContext: currentBuildRunView.agentContext,
+    lifecycle: currentBuildRunView.lifecycle,
     copilotPolicy,
     aiUsagePolicy: todayAiUsagePolicy,
     pageFeedbackEvents,
@@ -1340,7 +1377,7 @@ export default function BuildEditor({
         mergeBranchTargetLabel={mergeBranchTargetLabel}
         mergeBranchTargetOptions={branchMergeTargetOptions}
         mergeBranchTargetTitle={mergeBranchTargetTitle}
-        showReplaceBranch={Boolean(currentBranchMergeTarget)}
+        showReplaceBranch={canReplaceCurrentBranchTarget}
         replaceBranchDisabled={!canReplaceCurrentBranchTarget}
         replaceBranchButtonLabel={replaceBranchButtonLabel}
         showForkButton={showForkButton}
@@ -1412,9 +1449,7 @@ export default function BuildEditor({
         }
         onHideBuildChatUploadFileModal={() => setBuildChatUploadFileObj(null)}
         onHideBuildChatUploadModal={() => setBuildChatUploadModalShown(false)}
-        onHideCollaborationSettingsModal={
-          handleCloseCollaborationSettingsModal
-        }
+        onHideCollaborationSettingsModal={handleCloseCollaborationSettingsModal}
         onHideDescriptionModal={handleCloseDescriptionModal}
         onHideThumbnailModal={handleCloseThumbnailModal}
         onBuildCollaborationPatch={handleBuildCollaborationPatch}
@@ -1441,6 +1476,11 @@ export default function BuildEditor({
         onDeleteBranch={handleDeleteBranch}
         onReplaceMainWithCurrentBranch={handleReplaceMainWithCurrentBranch}
       />
+      <ProjectFileDraftActionModal
+        prompt={draftActionPrompt}
+        onChoose={resolveProjectFilesDraftActionPrompt}
+      />
+      {runtimeUploadConfirmModal}
     </div>
   );
 
@@ -1458,5 +1498,4 @@ export default function BuildEditor({
       });
     }
   }
-
 }

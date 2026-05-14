@@ -170,6 +170,8 @@ export default function SystemPromptShared() {
   return (
     <ErrorBoundary componentPath="MissionPage/SystemPromptShared">
       <div
+        data-scroll-anchor-id={`mission-shared:${sortBy}:page`}
+        data-scroll-anchor-content-key={`mission-shared:${sortBy}:page`}
         className={css`
           display: flex;
           flex-direction: column;
@@ -178,6 +180,8 @@ export default function SystemPromptShared() {
         `}
       >
         <header
+          data-scroll-anchor-id={`mission-shared:${sortBy}:header`}
+          data-scroll-anchor-content-key={`mission-shared:${sortBy}:header`}
           className={css`
             display: flex;
             flex-direction: column;
@@ -311,26 +315,36 @@ export default function SystemPromptShared() {
             </p>
           </div>
         ) : (
-          <section className={gridClass}>
+          <section
+            className={gridClass}
+            data-scroll-anchor-id={`mission-shared:${sortBy}:list`}
+            data-scroll-anchor-content-key={`mission-shared:${sortBy}:list`}
+          >
             {topics.map((topic) => (
-              <SharedPromptCard
+              <div
                 key={topic.id}
-                topic={topic}
-                isOwnTopic={topic.userId === userId}
-                userId={userId}
-                copiedId={copiedId}
-                commentText={commentTexts[topic.id] || ''}
-                commentSubmitting={commentSubmitting[topic.id] || false}
-                onCommentTextChange={(text: string) =>
-                  setCommentTexts((prev) => ({
-                    ...prev,
-                    [topic.id]: text
-                  }))
-                }
-                onCommentSubmit={() => handleCommentSubmit(topic.id)}
-                onCopyEmbed={() => handleCopyEmbed(topic.id)}
-                onCloneSuccess={handleCloneSuccess}
-              />
+                data-scroll-anchor-id={`mission-shared:${sortBy}:${topic.id}`}
+                data-scroll-anchor-secondary-id={String(topic.id)}
+                data-scroll-anchor-content-key={`sharedTopic:${topic.id}`}
+              >
+                <SharedPromptCard
+                  topic={topic}
+                  isOwnTopic={topic.userId === userId}
+                  userId={userId}
+                  copiedId={copiedId}
+                  commentText={commentTexts[topic.id] || ''}
+                  commentSubmitting={commentSubmitting[topic.id] || false}
+                  onCommentTextChange={(text: string) =>
+                    setCommentTexts((prev) => ({
+                      ...prev,
+                      [topic.id]: text
+                    }))
+                  }
+                  onCommentSubmit={() => handleCommentSubmit(topic.id)}
+                  onCopyEmbed={() => handleCopyEmbed(topic.id)}
+                  onCloneSuccess={handleCloneSuccess}
+                />
+              </div>
             ))}
           </section>
         )}

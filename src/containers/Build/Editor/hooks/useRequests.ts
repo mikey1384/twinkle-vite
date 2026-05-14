@@ -81,6 +81,9 @@ export default function useRequests() {
   const updateBuildLumineChatVisibility = useAppContext(
     (v) => v.requestHelpers.updateBuildLumineChatVisibility
   );
+  const updateBuildLumineModelPreference = useAppContext(
+    (v) => v.requestHelpers.updateBuildLumineModelPreference
+  );
   const loadBuildContributors = useAppContext(
     (v) => v.requestHelpers.loadBuildContributors
   );
@@ -118,6 +121,7 @@ export default function useRequests() {
     saveFileData,
     unpublishBuild,
     updateBuildLumineChatVisibility,
+    updateBuildLumineModelPreference,
     updateBuildMetadata,
     updateBuildProjectFiles,
     uploadBuildRuntimeFiles,

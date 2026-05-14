@@ -19,9 +19,13 @@ import {
 import { createFallbackBuildRunMessageId } from '~/contexts/Build/messageIdentity';
 
 function normalizeBuildRunProjectFilePathForComparison(rawPath: string) {
-  const trimmedPath = String(rawPath || '').trim().replace(/\\/g, '/');
+  const trimmedPath = String(rawPath || '')
+    .trim()
+    .replace(/\\/g, '/');
   if (!trimmedPath) return null;
-  const normalized = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
+  const normalized = trimmedPath.startsWith('/')
+    ? trimmedPath
+    : `/${trimmedPath}`;
   return normalized.replace(/\/{2,}/g, '/');
 }
 
@@ -53,10 +57,9 @@ function projectFilesContainSnapshot(
   snapshotProjectFiles?: Array<{ path: string; content?: string }> | null
 ) {
   const currentProjectFileMap = new Map(
-    normalizeBuildRunProjectFilesForComparison(currentProjectFiles).map((file) => [
-      file.path,
-      file.content
-    ])
+    normalizeBuildRunProjectFilesForComparison(currentProjectFiles).map(
+      (file) => [file.path, file.content]
+    )
   );
 
   for (const file of normalizeBuildRunProjectFilesForComparison(
@@ -186,11 +189,35 @@ function arraysEqual<T>(
   });
 }
 
+function getBuildRunEventEnvelopeMetadata(event: BuildLiveRunEvent) {
+  return {
+    schemaVersion: event.schemaVersion ?? null,
+    eventType: event.eventType ?? null,
+    source: event.source ?? null,
+    threadId: event.threadId ?? null,
+    requestId: event.requestId ?? null,
+    sequence: event.sequence ?? null,
+    buildId: event.buildId ?? null,
+    userId: event.userId ?? null
+  };
+}
+
+function buildRunEventEnvelopeMetadataEqual(
+  currentEvent: BuildLiveRunEvent,
+  snapshotEvent: BuildLiveRunEvent
+) {
+  return (
+    JSON.stringify(getBuildRunEventEnvelopeMetadata(currentEvent)) ===
+    JSON.stringify(getBuildRunEventEnvelopeMetadata(snapshotEvent))
+  );
+}
+
 function buildRunEventsPayloadEqual(
   currentEvent: BuildLiveRunEvent,
   snapshotEvent: BuildLiveRunEvent
 ) {
   return (
+    buildRunEventEnvelopeMetadataEqual(currentEvent, snapshotEvent) &&
     currentEvent.kind === snapshotEvent.kind &&
     currentEvent.phase === snapshotEvent.phase &&
     currentEvent.message === snapshotEvent.message &&
@@ -198,12 +225,14 @@ function buildRunEventsPayloadEqual(
     Boolean(currentEvent.deduped) === Boolean(snapshotEvent.deduped) &&
     JSON.stringify(currentEvent.details || null) ===
       JSON.stringify(snapshotEvent.details || null) &&
-      JSON.stringify(currentEvent.usage || null) ===
+    JSON.stringify(currentEvent.usage || null) ===
       JSON.stringify(snapshotEvent.usage || null)
   );
 }
 
-function isBuildRunEventComparableObject(value: unknown): value is Record<string, any> {
+function isBuildRunEventComparableObject(
+  value: unknown
+): value is Record<string, any> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
@@ -337,6 +366,10 @@ function isBuildRunEventCoveredByCurrentEvent(
       return false;
     }
 
+    if (!buildRunEventEnvelopeMetadataEqual(currentEvent, snapshotEvent)) {
+      return false;
+    }
+
     if (Boolean(currentEvent.deduped) !== Boolean(snapshotEvent.deduped)) {
       return false;
     }
@@ -432,7 +465,10 @@ function streamUpdateCoveredByCurrentRun(
   if (
     Object.prototype.hasOwnProperty.call(streamUpdate, 'reply') &&
     typeof streamUpdate.reply === 'string' &&
-    !textCoversSnapshot(currentRun.assistantMessage?.content, streamUpdate.reply)
+    !textCoversSnapshot(
+      currentRun.assistantMessage?.content,
+      streamUpdate.reply
+    )
   ) {
     return false;
   }
@@ -452,7 +488,8 @@ function streamUpdateCoveredByCurrentRun(
   if (
     Object.prototype.hasOwnProperty.call(streamUpdate, 'userMessageId') &&
     Number(streamUpdate.userMessageId || 0) > 0 &&
-    Number(currentRun.userMessage?.id || 0) !== Number(streamUpdate.userMessageId)
+    Number(currentRun.userMessage?.id || 0) !==
+      Number(streamUpdate.userMessageId)
   ) {
     return false;
   }
@@ -469,7 +506,10 @@ function streamUpdateCoveredByCurrentRun(
   if (
     Object.prototype.hasOwnProperty.call(streamUpdate, 'userMessageContent') &&
     typeof streamUpdate.userMessageContent === 'string' &&
-    !textCoversSnapshot(currentRun.userMessage?.content, streamUpdate.userMessageContent)
+    !textCoversSnapshot(
+      currentRun.userMessage?.content,
+      streamUpdate.userMessageContent
+    )
   ) {
     return false;
   }
@@ -527,7 +567,10 @@ function streamUpdateCoveredByCurrentRun(
     }
     if (
       streamUpdate.projectFilesPersisted !== true &&
-      Object.prototype.hasOwnProperty.call(streamUpdate, 'projectFilesFocusPath') &&
+      Object.prototype.hasOwnProperty.call(
+        streamUpdate,
+        'projectFilesFocusPath'
+      ) &&
       (currentRun.streamingFocusFilePath || null) !==
         (streamUpdate.projectFilesFocusPath || null)
     ) {
@@ -556,10 +599,13 @@ function terminalSnapshotCoveredByCurrentRun(
       return false;
     }
 
-    const expectedAssistantMessageId = Number(terminalPayload?.message?.id || 0);
+    const expectedAssistantMessageId = Number(
+      terminalPayload?.message?.id || 0
+    );
     if (
       expectedAssistantMessageId > 0 &&
-      Number(currentRun.assistantMessage?.id || 0) !== expectedAssistantMessageId
+      Number(currentRun.assistantMessage?.id || 0) !==
+        expectedAssistantMessageId
     ) {
       return false;
     }
@@ -649,7 +695,9 @@ export function isPersistedSnapshotEquivalentOrNewer({
     if (!terminalSnapshotCoveredByCurrentRun(currentRun, normalized)) {
       return false;
     }
-    return !snapshotLastActivityAt || currentUpdatedAt >= snapshotLastActivityAt;
+    return (
+      !snapshotLastActivityAt || currentUpdatedAt >= snapshotLastActivityAt
+    );
   }
 
   if (!currentRun.generating) return false;
@@ -660,7 +708,8 @@ export function isPersistedSnapshotEquivalentOrNewer({
       normalized.assistantStatusSteps,
       (currentStep, snapshotStep) => currentStep === snapshotStep
     ) ||
-    (currentRun.assistantStatusSteps.length >= normalized.assistantStatusSteps.length &&
+    (currentRun.assistantStatusSteps.length >=
+      normalized.assistantStatusSteps.length &&
       normalized.assistantStatusSteps.every(
         (snapshotStep, index) =>
           currentRun.assistantStatusSteps[index] === snapshotStep
@@ -670,7 +719,9 @@ export function isPersistedSnapshotEquivalentOrNewer({
     return false;
   }
 
-  if (!hasUsageMetricsCoverage(currentRun.usageMetrics, normalized.usageMetrics)) {
+  if (
+    !hasUsageMetricsCoverage(currentRun.usageMetrics, normalized.usageMetrics)
+  ) {
     return false;
   }
 
@@ -702,9 +753,7 @@ function getBuildRequestLimitsFromPayload(payload: any) {
 
 interface PersistedBuildRunHydrationActions {
   onRegisterBuildRun: (buildRun: BuildLiveRunActionPayload) => void;
-  onApplyBuildRunRunningSnapshot: (
-    buildRun: BuildLiveRunActionPayload
-  ) => void;
+  onApplyBuildRunRunningSnapshot: (buildRun: BuildLiveRunActionPayload) => void;
   onUpdateBuildRunStream: (buildRun: BuildLiveRunActionPayload) => void;
   onAppendBuildRunEvent: (buildRun: BuildLiveRunActionPayload) => void;
   onCompleteBuildRun: (buildRun: BuildLiveRunActionPayload) => void;
@@ -753,12 +802,13 @@ export function hydrateBuildRunFromPersistedSnapshot({
 
   replayedPersistedRunStateKeys[replayLookupKey] = replayKey;
 
-  const persistedUserMessage = normalizeBuildRunMessageForSharedState(
-    findPersistedBuildRunMessage(
-      chatMessages,
-      normalized.streamUpdate?.userMessageId
-    )
-  ) ||
+  const persistedUserMessage =
+    normalizeBuildRunMessageForSharedState(
+      findPersistedBuildRunMessage(
+        chatMessages,
+        normalized.streamUpdate?.userMessageId
+      )
+    ) ||
     createFallbackPersistedUserMessage({
       userMessageId: normalized.streamUpdate?.userMessageId,
       userMessageContent: normalized.streamUpdate?.userMessageContent,
@@ -783,7 +833,8 @@ export function hydrateBuildRunFromPersistedSnapshot({
     buildId,
     requestId,
     runMode:
-      normalized.runMode === 'greeting' || normalized.runMode === 'runtime-autofix'
+      normalized.runMode === 'greeting' ||
+      normalized.runMode === 'runtime-autofix'
         ? normalized.runMode
         : 'user',
     generating: normalized.terminal ? false : true,
@@ -819,22 +870,25 @@ export function hydrateBuildRunFromPersistedSnapshot({
             }
           : {}),
         executionPlan: terminalPayload.executionPlan,
-        followUpPrompt:
-          Object.prototype.hasOwnProperty.call(terminalPayload || {}, 'followUpPrompt')
-            ? terminalPayload.followUpPrompt ?? null
-            : undefined,
+        followUpPrompt: Object.prototype.hasOwnProperty.call(
+          terminalPayload || {},
+          'followUpPrompt'
+        )
+          ? (terminalPayload.followUpPrompt ?? null)
+          : undefined,
         deferredBuildRequest: Object.prototype.hasOwnProperty.call(
           terminalPayload || {},
           'deferredBuildRequest'
         )
-          ? terminalPayload.deferredBuildRequest ?? null
+          ? (terminalPayload.deferredBuildRequest ?? null)
           : undefined,
         ...(Object.prototype.hasOwnProperty.call(
           terminalPayload || {},
           'runtimeExplorationPlan'
         )
           ? {
-              runtimeExplorationPlan: terminalPayload.runtimeExplorationPlan ?? null
+              runtimeExplorationPlan:
+                terminalPayload.runtimeExplorationPlan ?? null
             }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(
@@ -847,6 +901,7 @@ export function hydrateBuildRunFromPersistedSnapshot({
           : {}),
         billingState: terminalPayload.billingState ?? null,
         requestLimits: getBuildRequestLimitsFromPayload(terminalPayload),
+        lifecycle: terminalPayload.lifecycle ?? null,
         artifactVersionId:
           Number(terminalPayload?.message?.artifactVersionId || 0) > 0
             ? Number(terminalPayload.message.artifactVersionId)
@@ -879,8 +934,11 @@ export function hydrateBuildRunFromPersistedSnapshot({
       actions.onFailBuildRun({
         buildId,
         requestId,
-        error: terminalPayload.error || 'Failed to generate code.',
-        requestLimits: getBuildRequestLimitsFromPayload(terminalPayload)
+        error:
+          terminalPayload.error ||
+          'Lumine had trouble with that request. Please try again.',
+        requestLimits: getBuildRequestLimitsFromPayload(terminalPayload),
+        lifecycle: terminalPayload.lifecycle ?? null
       });
     },
     onTerminalStopped: (terminalPayload) => {
@@ -888,6 +946,7 @@ export function hydrateBuildRunFromPersistedSnapshot({
         buildId,
         requestId,
         stopReason: terminalPayload.stopReason || null,
+        lifecycle: terminalPayload.lifecycle ?? null,
         ...(typeof terminalPayload.assistantText === 'string'
           ? { assistantText: terminalPayload.assistantText }
           : {})
@@ -900,6 +959,8 @@ export function hydrateBuildRunFromPersistedSnapshot({
         runningSnapshot: {
           status: runningSnapshot.status,
           assistantStatusSteps: runningSnapshot.assistantStatusSteps,
+          agentContext: runningSnapshot.agentContext,
+          lifecycle: runningSnapshot.lifecycle,
           usageMetrics: runningSnapshot.usageMetrics,
           updatedAt: runningSnapshot.lastActivityAt
         }

@@ -6,11 +6,13 @@ import { borderRadius, Color, desktopMinWidth, mobileMaxWidth } from '~/constant
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function FileDownload({
+  isPreview,
   src,
   fileName,
   fileType,
   theme
 }: {
+  isPreview?: boolean;
   src: string;
   fileName: string;
   fileType?: 'image' | 'audio' | 'video' | 'pdf' | 'text' | 'other' | string;
@@ -45,7 +47,7 @@ export default function FileDownload({
           width: '100%',
           height: '100%',
           background: Color.wellGray(),
-          padding: '1rem',
+          padding: isPreview ? '0.75rem 0.9rem' : '1rem',
           borderRadius
         }}
       >
@@ -66,13 +68,17 @@ export default function FileDownload({
                 color: #000;
               }
             `}
-            onClick={() => window.open(src, '_blank')}
+            onClick={(event) => {
+              event.stopPropagation();
+              window.open(src, '_blank');
+            }}
           >
             <Icon
               className={css`
                 font-size: 6rem;
+                ${isPreview ? 'font-size: 3.2rem;' : ''}
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 5rem;
+                  font-size: ${isPreview ? '3rem' : '5rem'};
                 }
               `}
               icon={typeKey as any}
@@ -105,13 +111,15 @@ export default function FileDownload({
               >
                 <a
                   className={css`
+                    font-size: ${isPreview ? '1.1rem' : 'inherit'};
                     @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.5rem;
+                      font-size: ${isPreview ? '1.1rem' : '1.5rem'};
                     }
                   `}
                   href={src}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
                 >
                   {fileName}
                 </a>
@@ -124,7 +132,10 @@ export default function FileDownload({
                 display: 'flex',
                 justifyContent: 'flex-end'
               }}
-              onClick={() => window.open(src, '_blank')}
+              onClick={(event) => {
+                event.stopPropagation();
+                window.open(src, '_blank');
+              }}
             >
               <span
                 className={css`
@@ -137,8 +148,9 @@ export default function FileDownload({
                     }
                   }
                   line-height: 1;
+                  font-size: ${isPreview ? '1rem' : 'inherit'};
                   @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.3rem;
+                    font-size: ${isPreview ? '1rem' : '1.3rem'};
                   }
                 `}
               >
@@ -151,4 +163,3 @@ export default function FileDownload({
     </ErrorBoundary>
   );
 }
-

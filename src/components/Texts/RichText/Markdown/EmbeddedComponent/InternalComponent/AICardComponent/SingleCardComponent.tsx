@@ -5,11 +5,18 @@ import InvalidContent from '../../InvalidContent';
 import AICardDetails from '~/components/AICardDetails';
 import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import CompactPreview from './CompactPreview';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Card as CardType } from '~/types';
 import { css } from '@emotion/css';
 
-export default function SingleCardComponent({ cardId }: { cardId: number }) {
+export default function SingleCardComponent({
+  cardId,
+  isPreview
+}: {
+  cardId: number;
+  isPreview?: boolean;
+}) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -44,6 +51,11 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
         <Loading />
       ) : cardNotFound ? (
         <InvalidContent style={{ marginTop: '2rem' }} />
+      ) : isPreview ? (
+        <CompactPreview
+          card={card}
+          onClick={() => setCardModalShown(true)}
+        />
       ) : (
         <div
           style={{

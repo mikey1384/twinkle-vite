@@ -48,6 +48,15 @@ export default function useWorkspaceCommunicationActions({
       buildId: build.id,
       communicationMode
     });
+    if (routeState.openPeoplePanel || routeState.openVersionsPanel) {
+      const nextRouteState = { ...routeState };
+      delete nextRouteState.openPeoplePanel;
+      delete nextRouteState.openVersionsPanel;
+      navigate(locationPathname, {
+        replace: true,
+        state: Object.keys(nextRouteState).length > 0 ? nextRouteState : null
+      });
+    }
   }
 
   function handleBuildWorkspaceCommunicationScrollChange(

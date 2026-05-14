@@ -7,6 +7,7 @@ import Loading from '~/components/Loading';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -38,6 +39,7 @@ export default function Feeds({
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
+  const feedListRef = useRef<HTMLDivElement | null>(null);
   const selectedSection = useRef('all');
   const byUserSelected = useRef(false);
   const myUsername = useKeyContext((v) => v.myState.username);
@@ -112,6 +114,13 @@ export default function Feeds({
     () => !loaded || loadingFeeds,
     [loaded, loadingFeeds]
   );
+
+  useScrollAnchorRestoration({
+    anchorKey: `profile:${username}:posts:${section}:${filter || 'all'}`,
+    containerRef: feedListRef,
+    initialScroll: { type: 'top' },
+    itemsReady: !loadingShown && feeds.length > 0
+  });
 
   useEffect(() => {
     if (filter && filter !== 'byuser') {
@@ -285,13 +294,16 @@ export default function Feeds({
             ) : (
               <>
                 {feeds.length > 0 && (
-                  <div className={feedListClass}>
+                  <div ref={feedListRef} className={feedListClass}>
                     {feeds.map((feed, index) => {
                       const { contentId, contentType, rootType } = feed;
                       return (
                         <div
                           key={filterTable[section] + feed.feedId}
                           className={`feed-item ${feedItemCustomClass}`}
+                          data-scroll-anchor-id={`profile-post:${feed.feedId}`}
+                          data-scroll-anchor-secondary-id={String(feed.feedId)}
+                          data-scroll-anchor-content-key={`${contentType}:${contentId}`}
                         >
                           <ContentPanel
                             style={{ margin: 0, zIndex: feeds.length - index }}

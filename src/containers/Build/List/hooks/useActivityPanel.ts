@@ -25,10 +25,12 @@ import { buildActivityCacheFreshMs } from '../constants/layout';
 import type { BuildActivityPosition } from '../types';
 
 export default function useActivityPanel({
+  autoMarkActivityViewed = false,
   buildStudio,
   color,
   normalizedUserId
 }: {
+  autoMarkActivityViewed?: boolean;
   buildStudio: any;
   color?: string;
   normalizedUserId: number | null;
@@ -112,6 +114,7 @@ export default function useActivityPanel({
   const [error, setError] = useState('');
   const loadRef = useRef(0);
   const allLoadRef = useRef(0);
+  const activityPanelOpenRef = useRef(false);
 
   useEffect(() => {
     if (!normalizedUserId) {
@@ -164,6 +167,29 @@ export default function useActivityPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId, activeTab, allCacheFreshForCurrentUser]);
 
+  useEffect(() => {
+    if (
+      !autoMarkActivityViewed ||
+      activeTab !== 'all' ||
+      !hasNewActivity ||
+      !normalizedUserId
+    ) {
+      return;
+    }
+    void markViewed();
+
+    // updateBuildActivityViewed and context actions are stable request/action helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    autoMarkActivityViewed,
+    activeTab,
+    hasNewActivity,
+    normalizedUserId,
+    allLatestPosition.timeStamp,
+    allLatestPosition.sourceRank,
+    allLatestPosition.sortId
+  ]);
+
   const panelProps = {
     activeSubtab,
     activeTab,
@@ -182,6 +208,7 @@ export default function useActivityPanel({
 
   return {
     hasNewActivity,
+    onMobileClose: handleMobileClose,
     onMobileOpen: handleMobileOpen,
     panelProps
   };
@@ -226,7 +253,7 @@ export default function useActivityPanel({
           loadMoreToken: getLoadMoreToken(data),
           userId: normalizedUserId
         });
-        if (tab === 'all') {
+        if (tab === 'all' && shouldMarkLoadedAllActivityViewed()) {
           void markPositionViewed(
             getBuildActivityLatestPosition(nextActivities as ActivityItem[])
           );
@@ -315,6 +342,7 @@ export default function useActivityPanel({
   }
 
   function handleMobileOpen() {
+    activityPanelOpenRef.current = true;
     if (hasNewActivity && activeTab !== 'all') {
       onSetBuildStudioActivityFilter({
         activityTab: 'all',
@@ -322,6 +350,14 @@ export default function useActivityPanel({
       });
     }
     void markViewed();
+  }
+
+  function handleMobileClose() {
+    activityPanelOpenRef.current = false;
+  }
+
+  function shouldMarkLoadedAllActivityViewed() {
+    return activityPanelOpenRef.current;
   }
 
   function handleTabChange(tab: BuildActivityTab) {

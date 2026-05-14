@@ -1,8 +1,6 @@
 import { useRef } from 'react';
 import { useAppContext } from '~/contexts';
-import type {
-  PreviewHostBridgeRequestRefs
-} from '../helpers/previewBridgeRequestRefs';
+import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
 
 export default function useAppRequests() {
   const captureBuildThumbnailPreview = useAppContext(
@@ -13,9 +11,6 @@ export default function useAppRequests() {
   );
   const loadBuildAiPrompts = useAppContext(
     (v) => v.requestHelpers.loadBuildAiPrompts
-  );
-  const callBuildAiChat = useAppContext(
-    (v) => v.requestHelpers.callBuildAiChat
   );
   const callBuildRuntimeAiChat = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiChat
@@ -168,11 +163,8 @@ export default function useAppRequests() {
   );
 
   const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
-  const callBuildAiChatRef = useRef(callBuildAiChat);
   const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
-  const callBuildRuntimeAiChatStreamRef = useRef(
-    callBuildRuntimeAiChatStream
-  );
+  const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
   const callBuildRuntimeCharacterChatRef = useRef(
     callBuildRuntimeCharacterChat
@@ -203,12 +195,8 @@ export default function useAppRequests() {
   const listBuildSubjectCommentsRef = useRef(listBuildSubjectComments);
   const getBuildProfileCommentsRef = useRef(getBuildProfileComments);
   const getBuildProfileCommentIdsRef = useRef(getBuildProfileCommentIds);
-  const getBuildProfileCommentsByIdsRef = useRef(
-    getBuildProfileCommentsByIds
-  );
-  const getBuildProfileCommentCountsRef = useRef(
-    getBuildProfileCommentCounts
-  );
+  const getBuildProfileCommentsByIdsRef = useRef(getBuildProfileCommentsByIds);
+  const getBuildProfileCommentCountsRef = useRef(getBuildProfileCommentCounts);
   const getSharedDbTopicsRef = useRef(getSharedDbTopics);
   const createSharedDbTopicRef = useRef(createSharedDbTopic);
   const getSharedDbEntriesRef = useRef(getSharedDbEntries);
@@ -234,7 +222,6 @@ export default function useAppRequests() {
 
   const previewRequestRefs = useRef<PreviewHostBridgeRequestRefs>({
     loadBuildAiPromptsRef,
-    callBuildAiChatRef,
     callBuildRuntimeAiChatRef,
     callBuildRuntimeAiChatStreamRef,
     callBuildRuntimeAiObjectRef,

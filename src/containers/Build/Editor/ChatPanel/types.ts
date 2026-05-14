@@ -6,6 +6,33 @@ import type {
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
+export type BuildLumineModel = 'gpt-5.5' | 'gpt-5.4';
+export type BuildLumineThinkLevel =
+  | 'none'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'xhigh';
+
+export interface BuildLumineModelOption {
+  model: BuildLumineModel;
+  label: string;
+  description: string;
+  apiContextWindowTokens?: number;
+  apiMaxOutputTokens?: number;
+  operatingContextWindowTokens?: number;
+  operatingMaxOutputTokens?: number;
+  maxOutputTokens?: number;
+  apiDefaultReasoningEffort?: BuildLumineThinkLevel;
+  defaultReasoningEffort: BuildLumineThinkLevel;
+  supportedReasoningEfforts: BuildLumineThinkLevel[];
+}
+
+export interface BuildLumineModelPreference {
+  model: BuildLumineModel;
+  reasoningEffort: BuildLumineThinkLevel;
+  source?: 'default' | 'stored' | 'explicit' | string;
+}
 
 export interface ChatMessage {
   id: number;
@@ -71,32 +98,44 @@ export interface BuildCopilotPolicy {
     generationRequestsToday: number;
     generationRequestsRemaining: number;
   };
+  lumineModelPreference?: BuildLumineModelPreference | null;
+  lumineModelOptions?: BuildLumineModelOption[];
 }
 
-export type BuildAiUsagePolicy = Partial<
-  BuildCopilotPolicy['requestLimits']
-> &
+export type BuildAiUsagePolicy = Partial<BuildCopilotPolicy['requestLimits']> &
   Record<string, any>;
 
 export interface BuildRunEvent {
   id: string;
+  schemaVersion?: number | null;
+  eventType?: string | null;
+  source?: string | null;
+  threadId?: string | null;
+  requestId?: string | null;
+  sequence?: number | null;
+  buildId?: number | null;
+  userId?: number | null;
   kind: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
   phase: string | null;
   message: string;
   createdAt: number;
   deduped?: boolean;
-  details?: {
-    thoughtContent?: string | null;
-    isComplete?: boolean;
-    isThinkingHard?: boolean;
-  } | null;
-  usage?: {
-    stage?: string | null;
-    model?: string | null;
-    inputTokens?: number;
-    outputTokens?: number;
-    totalTokens?: number;
-  } | null;
+  details?:
+    | ({
+        thoughtContent?: string | null;
+        isComplete?: boolean;
+        isThinkingHard?: boolean;
+      } & Record<string, any>)
+    | null;
+  usage?:
+    | ({
+        stage?: string | null;
+        model?: string | null;
+        inputTokens?: number;
+        outputTokens?: number;
+        totalTokens?: number;
+      } & Record<string, any>)
+    | null;
 }
 
 export interface BuildCurrentActivity {
@@ -108,6 +147,17 @@ export interface BuildStatusStepEntry {
   thoughtContent: string;
   thoughtIsComplete: boolean;
   thoughtIsThinkingHard: boolean;
+}
+
+export interface BuildRuntimeDebugSnapshot {
+  requestId: string | null;
+  threadId: string | null;
+  lifecycle: Record<string, any> | null;
+  providerChainControl: Record<string, any> | null;
+  conflictState: Record<string, any> | null;
+  responsesCompaction: Record<string, any> | null;
+  eventEnvelope: Record<string, any> | null;
+  compactJson: string;
 }
 
 export interface BuildRuntimeUploadAsset {
@@ -150,6 +200,17 @@ export interface LumineChatVisibilityControl {
   ) => Promise<boolean | void> | boolean | void;
 }
 
+export interface LumineModelSelectionControl {
+  value: BuildLumineModelPreference;
+  savedValue: BuildLumineModelPreference;
+  modelOptions: BuildLumineModelOption[];
+  loading: boolean;
+  error: string;
+  onSave: (
+    value: BuildLumineModelPreference
+  ) => Promise<boolean | void> | boolean | void;
+}
+
 export interface LimitProgressItem {
   id: string;
   label: string;
@@ -177,6 +238,7 @@ export interface ChatPanelProps {
   lumineTabLabel?: string;
   lumineTabIcon?: string;
   lumineChatVisibilityControl?: LumineChatVisibilityControl | null;
+  lumineModelSelectionControl?: LumineModelSelectionControl | null;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;
@@ -185,6 +247,9 @@ export interface ChatPanelProps {
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
+  requestId?: string | null;
+  agentContext?: Record<string, any> | null;
+  lifecycle?: Record<string, any> | null;
   copilotPolicy: BuildCopilotPolicy | null;
   aiUsagePolicy: BuildAiUsagePolicy | null;
   pageFeedbackEvents: BuildRunEvent[];
@@ -214,7 +279,9 @@ export interface ChatPanelProps {
   onOpenRuntimeUploadsManager: () => void;
   onCloseRuntimeUploadsManager: () => void;
   onLoadMoreRuntimeUploads: () => void;
-  onDeleteRuntimeUpload: (asset: BuildRuntimeUploadAsset) => Promise<void> | void;
+  onDeleteRuntimeUpload: (
+    asset: BuildRuntimeUploadAsset
+  ) => Promise<void> | void;
   onCreateGeneratedRuntimeAsset: (
     options: BuildAgentAssetCreateOptions
   ) => Promise<BuildAgentAssetCreateResult>;
@@ -223,6 +290,8 @@ export interface ChatPanelProps {
   generationResetError: string;
   onPurchaseGenerationReset: () => Promise<void> | void;
   onStopGeneration: () => void;
-  onFixRuntimeObservationMessage: (message: ChatMessage) => Promise<boolean> | boolean;
+  onFixRuntimeObservationMessage: (
+    message: ChatMessage
+  ) => Promise<boolean> | boolean;
   onDeleteMessage: (message: ChatMessage) => void;
 }

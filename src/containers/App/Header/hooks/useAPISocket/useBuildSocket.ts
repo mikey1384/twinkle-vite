@@ -13,15 +13,12 @@ import type {
 } from '~/contexts/Build/reducer';
 import {
   getBuildResumeRunStateReplayKey,
+  type BuildRunEventEnvelopePayload,
   type BuildResumeRunStatePayload,
+  normalizeBuildRunEventEnvelope,
   normalizeBuildResumeRunState,
   replayBuildResumeRunState
 } from '~/contexts/Build/resumeRunState';
-import {
-  buildFallbackBuildRunEventId,
-  normalizeBuildRunEventCreatedAt,
-  normalizeBuildRunEventId
-} from '~/contexts/Build/runEventIdentity';
 import { createFallbackBuildRunMessageId } from '~/contexts/Build/messageIdentity';
 
 function getBuildRequestLimitsFromPayload(payload: any) {
@@ -30,9 +27,10 @@ function getBuildRequestLimitsFromPayload(payload: any) {
 
 export default function useBuildSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
-  const buildRuns = useBuildContext(
-    (v) => v.state.buildRuns
-  ) as Record<string, BuildLiveRunState>;
+  const buildRuns = useBuildContext((v) => v.state.buildRuns) as Record<
+    string,
+    BuildLiveRunState
+  >;
   const buildRunRequestMap = useBuildContext(
     (v) => v.state.buildRunRequestMap
   ) as Record<string, number>;
@@ -73,12 +71,10 @@ export default function useBuildSocket() {
     (v) => v.actions.onPublishBuildRuntimeVerifyResult
   );
   const buildRunsRef = useRef<Record<string, BuildLiveRunState>>(buildRuns);
-  const buildRunRequestMapRef = useRef<Record<string, number>>(
-    buildRunRequestMap
-  );
-  const buildWorkspacesRef = useRef<Record<string, BuildWorkspaceSnapshot>>(
-    buildWorkspaces
-  );
+  const buildRunRequestMapRef =
+    useRef<Record<string, number>>(buildRunRequestMap);
+  const buildWorkspacesRef =
+    useRef<Record<string, BuildWorkspaceSnapshot>>(buildWorkspaces);
   const userIdRef = useRef(userId);
   const replayedResumeRunStateKeysRef = useRef<Record<string, string>>({});
 
@@ -99,15 +95,23 @@ export default function useBuildSocket() {
   }, [userId]);
 
   useEffect(() => {
-    function resolveBuildId(requestId?: string, explicitBuildId?: number | null) {
+    function resolveBuildId(
+      requestId?: string,
+      explicitBuildId?: number | null
+    ) {
       const normalizedBuildId = Number(explicitBuildId || 0);
       if (normalizedBuildId > 0) return normalizedBuildId;
       const normalizedRequestId = String(requestId || '').trim();
       if (!normalizedRequestId) return 0;
-      return Number(buildRunRequestMapRef.current[normalizedRequestId] || 0) || 0;
+      return (
+        Number(buildRunRequestMapRef.current[normalizedRequestId] || 0) || 0
+      );
     }
 
-    function shouldHandleRun(requestId?: string, explicitBuildId?: number | null) {
+    function shouldHandleRun(
+      requestId?: string,
+      explicitBuildId?: number | null
+    ) {
       const resolvedBuildId = resolveBuildId(requestId, explicitBuildId);
       if (!resolvedBuildId) {
         return {
@@ -183,7 +187,7 @@ export default function useBuildSocket() {
       const assistantMessage =
         findWorkspaceMessage(buildId, assistantMessageId) ||
         (Number(assistantMessageId || 0) > 0 ||
-          String(assistantClientMessageId || '').trim()
+        String(assistantClientMessageId || '').trim()
           ? {
               id:
                 Number(assistantMessageId || 0) > 0
@@ -218,7 +222,9 @@ export default function useBuildSocket() {
           userClientMessageId:
             String(userClientMessageId || '').trim() || undefined,
           updatedAt:
-            Number(lastActivityAt || 0) > 0 ? Number(lastActivityAt) : Date.now()
+            Number(lastActivityAt || 0) > 0
+              ? Number(lastActivityAt)
+              : Date.now()
         });
         return;
       }
@@ -259,7 +265,9 @@ export default function useBuildSocket() {
         resolvedRun.buildId,
         String(normalizedResumeRunState.requestId || '').trim()
       ].join(':');
-      if (replayedResumeRunStateKeysRef.current[replayLookupKey] === replayKey) {
+      if (
+        replayedResumeRunStateKeysRef.current[replayLookupKey] === replayKey
+      ) {
         return;
       }
       replayedResumeRunStateKeysRef.current[replayLookupKey] = replayKey;
@@ -312,18 +320,17 @@ export default function useBuildSocket() {
                 }
               : {}),
             executionPlan: terminalPayload.executionPlan,
-            followUpPrompt:
-              Object.prototype.hasOwnProperty.call(
-                terminalPayload || {},
-                'followUpPrompt'
-              )
-                ? terminalPayload.followUpPrompt ?? null
-                : undefined,
+            followUpPrompt: Object.prototype.hasOwnProperty.call(
+              terminalPayload || {},
+              'followUpPrompt'
+            )
+              ? (terminalPayload.followUpPrompt ?? null)
+              : undefined,
             deferredBuildRequest: Object.prototype.hasOwnProperty.call(
               terminalPayload || {},
               'deferredBuildRequest'
             )
-              ? terminalPayload.deferredBuildRequest ?? null
+              ? (terminalPayload.deferredBuildRequest ?? null)
               : undefined,
             ...(Object.prototype.hasOwnProperty.call(
               terminalPayload || {},
@@ -339,11 +346,14 @@ export default function useBuildSocket() {
               'runtimePlanRefined'
             )
               ? {
-                  runtimePlanRefined: Boolean(terminalPayload.runtimePlanRefined)
+                  runtimePlanRefined: Boolean(
+                    terminalPayload.runtimePlanRefined
+                  )
                 }
               : {}),
             billingState: terminalPayload.billingState ?? null,
             requestLimits: getBuildRequestLimitsFromPayload(terminalPayload),
+            lifecycle: terminalPayload.lifecycle ?? null,
             artifactVersionId:
               Number(terminalPayload?.message?.artifactVersionId || 0) > 0
                 ? Number(terminalPayload.message.artifactVersionId)
@@ -377,8 +387,11 @@ export default function useBuildSocket() {
           onFailBuildRun({
             buildId: resolvedRun.buildId,
             requestId: normalizedResumeRunState.requestId,
-            error: terminalPayload.error || 'Failed to generate code.',
-            requestLimits: getBuildRequestLimitsFromPayload(terminalPayload)
+            error:
+              terminalPayload.error ||
+              'Lumine had trouble with that request. Please try again.',
+            requestLimits: getBuildRequestLimitsFromPayload(terminalPayload),
+            lifecycle: terminalPayload.lifecycle ?? null
           });
         },
         onTerminalStopped: (terminalPayload) => {
@@ -386,6 +399,7 @@ export default function useBuildSocket() {
             buildId: resolvedRun.buildId,
             requestId: normalizedResumeRunState.requestId,
             stopReason: terminalPayload.stopReason || null,
+            lifecycle: terminalPayload.lifecycle ?? null,
             ...(typeof terminalPayload.assistantText === 'string'
               ? { assistantText: terminalPayload.assistantText }
               : {})
@@ -398,6 +412,8 @@ export default function useBuildSocket() {
             runningSnapshot: {
               status: runningSnapshot.status,
               assistantStatusSteps: runningSnapshot.assistantStatusSteps,
+              agentContext: runningSnapshot.agentContext,
+              lifecycle: runningSnapshot.lifecycle,
               usageMetrics: runningSnapshot.usageMetrics,
               updatedAt: runningSnapshot.lastActivityAt
             }
@@ -493,7 +509,9 @@ export default function useBuildSocket() {
       if (Object.prototype.hasOwnProperty.call(payload, 'status')) {
         buildRun.status = typeof status === 'string' ? status : null;
       }
-      if (Object.prototype.hasOwnProperty.call(payload, 'assistantStatusSteps')) {
+      if (
+        Object.prototype.hasOwnProperty.call(payload, 'assistantStatusSteps')
+      ) {
         buildRun.assistantStatusSteps = Array.isArray(assistantStatusSteps)
           ? assistantStatusSteps.filter(
               (step): step is string =>
@@ -515,7 +533,9 @@ export default function useBuildSocket() {
         buildRun.userMessageContent =
           typeof userMessageContent === 'string' ? userMessageContent : null;
       }
-      if (Object.prototype.hasOwnProperty.call(payload, 'userClientMessageId')) {
+      if (
+        Object.prototype.hasOwnProperty.call(payload, 'userClientMessageId')
+      ) {
         buildRun.userClientMessageId =
           typeof userClientMessageId === 'string'
             ? userClientMessageId.trim() || null
@@ -587,6 +607,7 @@ export default function useBuildSocket() {
       requestLimits,
       billing,
       deferredBuildRequest,
+      lifecycle,
       message
     }: {
       requestId?: string;
@@ -601,13 +622,11 @@ export default function useBuildSocket() {
       projectFiles?: Array<{ path: string; content?: string }> | null;
       interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
       executionPlan?: any | null;
-      followUpPrompt?:
-        | {
-            question?: string | null;
-            suggestedMessage?: string | null;
-            sourceMessageId?: number | null;
-          }
-        | null;
+      followUpPrompt?: {
+        question?: string | null;
+        suggestedMessage?: string | null;
+        sourceMessageId?: number | null;
+      } | null;
       runtimeExplorationPlan?: any | null;
       runtimePlanRefined?: boolean;
       workspaceChanged?: boolean;
@@ -621,6 +640,7 @@ export default function useBuildSocket() {
         stopActiveRun?: boolean | null;
         stopRequestId?: string | null;
       } | null;
+      lifecycle?: Record<string, any> | null;
       message?: {
         id?: number | null;
         userMessageId?: number | null;
@@ -658,18 +678,17 @@ export default function useBuildSocket() {
             : null,
         interruptionReason,
         executionPlan,
-        followUpPrompt:
-          Object.prototype.hasOwnProperty.call(
-            arguments[0] || {},
-            'followUpPrompt'
-          )
-            ? followUpPrompt ?? null
-            : undefined,
+        followUpPrompt: Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'followUpPrompt'
+        )
+          ? (followUpPrompt ?? null)
+          : undefined,
         deferredBuildRequest: Object.prototype.hasOwnProperty.call(
           arguments[0] || {},
           'deferredBuildRequest'
         )
-          ? deferredBuildRequest ?? null
+          ? (deferredBuildRequest ?? null)
           : undefined,
         ...(Object.prototype.hasOwnProperty.call(
           arguments[0] || {},
@@ -692,6 +711,12 @@ export default function useBuildSocket() {
           'workspaceChanged'
         )
           ? { workspaceChanged: workspaceChanged === true }
+          : {}),
+        ...(Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'lifecycle'
+        )
+          ? { lifecycle: lifecycle ?? null }
           : {}),
         billingState: billingState ?? null,
         requestLimits: requestLimits || billing?.snapshot || null,
@@ -725,13 +750,15 @@ export default function useBuildSocket() {
       buildId,
       runMode,
       error,
-      requestLimits
+      requestLimits,
+      lifecycle
     }: {
       requestId?: string;
       buildId?: number | null;
       runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
       error?: string;
       requestLimits?: any | null;
+      lifecycle?: Record<string, any> | null;
     }) {
       const resolvedRun = shouldHandleRun(requestId, buildId);
       if (!resolvedRun.shouldHandle || !requestId) return;
@@ -743,8 +770,15 @@ export default function useBuildSocket() {
       onFailBuildRun({
         buildId: resolvedRun.buildId,
         requestId,
-        error: error || 'Failed to generate code.',
-        requestLimits: requestLimits || null
+        error:
+          error || 'Lumine had trouble with that request. Please try again.',
+        requestLimits: requestLimits || null,
+        ...(Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'lifecycle'
+        )
+          ? { lifecycle: lifecycle ?? null }
+          : {})
       });
     }
 
@@ -755,7 +789,8 @@ export default function useBuildSocket() {
       deduped,
       guardStatus,
       assistantText,
-      stopReason
+      stopReason,
+      lifecycle
     }: {
       requestId?: string;
       buildId?: number | null;
@@ -764,6 +799,7 @@ export default function useBuildSocket() {
       guardStatus?: 'processing' | 'completed' | 'conflict';
       assistantText?: string;
       stopReason?: 'user' | 'replacement' | null;
+      lifecycle?: Record<string, any> | null;
     }) {
       const resolvedRun = shouldHandleRun(requestId, buildId);
       if (!resolvedRun.shouldHandle || !requestId) return;
@@ -789,6 +825,12 @@ export default function useBuildSocket() {
         buildId: resolvedRun.buildId,
         requestId,
         stopReason: stopReason || null,
+        ...(Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'lifecycle'
+        )
+          ? { lifecycle: lifecycle ?? null }
+          : {}),
         ...(typeof assistantText === 'string' ? { assistantText } : {})
       });
     }
@@ -803,66 +845,37 @@ export default function useBuildSocket() {
       buildId?: number | null;
       runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
       event?: {
-        id?: string;
         buildId?: number | null;
-        kind?: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
-        phase?: string | null;
-        message?: string;
-        createdAt?: number;
-        deduped?: boolean;
-        details?: {
-          thoughtContent?: string | null;
-          isComplete?: boolean;
-          isThinkingHard?: boolean;
-        } | null;
-        usage?: {
-          stage?: string | null;
-          model?: string | null;
-          inputTokens?: number;
-          outputTokens?: number;
-          totalTokens?: number;
-        } | null;
-      };
+      } & BuildRunEventEnvelopePayload;
     }) {
+      const normalizedRequestId =
+        String(requestId || event?.requestId || '').trim() || undefined;
       const resolvedRun = shouldHandleRun(
-        requestId,
+        normalizedRequestId,
         Number(event?.buildId || 0) > 0 ? Number(event?.buildId) : buildId
       );
-      if (!resolvedRun.shouldHandle || !requestId || !event?.kind || !event?.message) {
+      const normalizedEvent = normalizeBuildRunEventEnvelope({
+        event,
+        requestId: normalizedRequestId,
+        buildId: resolvedRun.buildId,
+        userId
+      });
+      if (
+        !resolvedRun.shouldHandle ||
+        !normalizedRequestId ||
+        !normalizedEvent
+      ) {
         return;
       }
       ensureBuildRunRegistered({
-        requestId,
+        requestId: normalizedRequestId,
         buildId: resolvedRun.buildId,
         runMode
       });
-      const normalizedCreatedAt = normalizeBuildRunEventCreatedAt(
-        event.createdAt
-      );
-      const normalizedId = normalizeBuildRunEventId(event.id);
       onAppendBuildRunEvent({
         buildId: resolvedRun.buildId,
-        requestId,
-        event: {
-          id:
-            normalizedId ||
-            buildFallbackBuildRunEventId({
-              requestId,
-              event: {
-                kind: event.kind,
-                phase: event.phase || null,
-                message: event.message,
-                createdAt: normalizedCreatedAt
-              }
-            }),
-          kind: event.kind,
-          phase: event.phase || null,
-          message: event.message,
-          createdAt: normalizedCreatedAt,
-          deduped: Boolean(event.deduped),
-          details: event.details || null,
-          usage: event.usage || null
-        }
+        requestId: normalizedRequestId,
+        event: normalizedEvent
       });
     }
 
@@ -1003,7 +1016,10 @@ export default function useBuildSocket() {
       socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
       socket.off('build_runtime_verify_error', handleRuntimeVerifyError);
       socket.off('build_activity_updated', handleBuildActivityUpdated);
-      socket.off('build_collaboration_updated', handleBuildCollaborationUpdated);
+      socket.off(
+        'build_collaboration_updated',
+        handleBuildCollaborationUpdated
+      );
       socket.off('connect', resumeTrackedBuildRuns);
       window.removeEventListener('pageshow', resumeTrackedBuildRuns);
       window.removeEventListener('online', resumeTrackedBuildRuns);

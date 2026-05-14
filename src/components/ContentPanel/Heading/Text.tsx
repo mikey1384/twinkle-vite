@@ -15,6 +15,7 @@ import {
 
 export default function HeadingText({
   action,
+  compactFeed,
   contentObj,
   feedActivityType,
   feedUploader,
@@ -22,6 +23,7 @@ export default function HeadingText({
   theme
 }: {
   action: string;
+  compactFeed?: boolean;
   contentObj: any;
   feedActivityType?: string | null;
   feedUploader?: any;
@@ -78,6 +80,9 @@ export default function HeadingText({
     contentLabel = 'subject';
   }
   const contentLinkColor = Color[contentColor]();
+  if (compactFeed) {
+    return renderCompactFeedHeading();
+  }
   switch (contentType) {
     case 'video':
       return (
@@ -304,6 +309,208 @@ export default function HeadingText({
       return <span>Error</span>;
   }
 
+  function renderCompactFeedHeading() {
+    switch (contentType) {
+      case 'comment':
+        return renderCompactCommentHeading();
+      case 'url':
+        return (
+          <>
+            {renderCompactUser()} {renderCompactAction('shared link')}:{' '}
+            {renderCompactContentLink(contentObj, contentType)}
+          </>
+        );
+      case 'subject':
+        return (
+          <>
+            {renderCompactUser()} started a{' '}
+            <ContentLink
+              content={{ id, title: 'subject' }}
+              contentType={contentType}
+              style={{
+                color: byUser ? Color[userLinkColor]() : contentLinkColor
+              }}
+              theme={theme}
+              label="subject"
+            />
+            {rootObj.id ? (
+              <>
+                {' '}
+                on {contentLabel}:{' '}
+                {renderCompactContentLink(rootObj, rootType, contentLabel)}
+              </>
+            ) : null}
+          </>
+        );
+      case 'pass':
+        return contentObj.rootType === 'mission' ? (
+          <>
+            {renderCompactUser()} {renderCompactAction('completed')}:{' '}
+            <ContentLink
+              content={{
+                id: rootObj.id,
+                missionType: rootObj.missionType,
+                rootMissionType: rootObj.rootMission?.missionType
+              }}
+              contentType="mission"
+              style={{ color: Color.orange() }}
+              theme={theme}
+              label={rootObj.title || 'mission'}
+            />
+          </>
+        ) : (
+          <>
+            {renderCompactUser()} {renderCompactAction('unlocked')}:{' '}
+            <ContentLink
+              content={{ id }}
+              contentType="pass"
+              rootType="achievement"
+              style={{ color: Color.orange() }}
+              theme={theme}
+              label="achievement"
+            />
+          </>
+        );
+      case 'aiStory':
+        return (
+          <>
+            {renderCompactUser()} {renderCompactAction('cleared')}{' '}
+            <b
+              style={{
+                color:
+                  Color?.[cardLevelHash?.[contentObj?.difficulty]?.color]?.()
+              }}
+            >
+              Level {contentObj.difficulty} Story
+            </b>
+            : {renderCompactContentLink(contentObj, contentType, 'AI Story')}
+          </>
+        );
+      case 'build':
+        return (
+          <>
+            {renderCompactUser()}{' '}
+            {renderCompactAction(
+              feedActivityType
+                ? getBuildActivityText(feedActivityType)
+                : 'published app'
+            )}
+            :{' '}
+            {renderBuildContentLink()}
+          </>
+        );
+      case 'video':
+        return (
+          <>
+            {renderCompactUser()} {renderCompactAction('uploaded video')}:{' '}
+            {renderCompactContentLink(contentObj, contentType, 'video')}
+          </>
+        );
+      case 'xpChange':
+        return (
+          <>
+            {renderCompactUser()} {renderCompactAction('completed daily goals')}
+          </>
+        );
+      case 'sharedTopic':
+        return (
+          <>
+            {renderCompactUser()} {renderCompactAction('created prompt')}:{' '}
+            {renderCompactContentLink(contentObj, contentType, 'prompt')}
+          </>
+        );
+      case 'dailyReflection':
+        return (
+          <>
+            {renderCompactUser()} {renderCompactAction('shared a reflection')}
+          </>
+        );
+      default:
+        return <span>Error</span>;
+    }
+  }
+
+  function renderCompactCommentHeading() {
+    if (rootType === 'user') {
+      return (
+        <>
+          {renderCompactUser()} {renderCompactAction('posted a profile message')}
+        </>
+      );
+    }
+
+    if (targetObj?.comment && !targetObj.comment.notFound) {
+      return (
+        <>
+          {renderCompactUser()} {renderCompactAction('replied to')}{' '}
+          {renderCompactUser(targetObj.comment.uploader)}
+          {"'s "}
+          {targetObj.comment.replyId
+            ? 'reply'
+            : rootType === 'user'
+              ? 'profile message'
+              : 'comment'}
+          {isSubjectComment ? (
+            <>
+              {' '}
+              on subject:{' '}
+              {renderCompactContentLink(targetObj.subject, 'subject', 'subject')}
+            </>
+          ) : (
+            renderCompactRootContext()
+          )}
+        </>
+      );
+    }
+
+    if (isSubjectComment) {
+      return (
+        <>
+          {renderCompactUser()} {renderCompactAction('answered')}:{' '}
+          {renderCompactContentLink(targetObj.subject, 'subject', 'subject')}
+        </>
+      );
+    }
+
+    return (
+      <>
+        {renderCompactUser()} {renderCompactAction('commented')}
+        {renderCompactRootContext()}
+      </>
+    );
+  }
+
+  function renderCompactRootContext() {
+    if (!rootType || rootType === 'user') return null;
+    const link = renderCompactContentLink(rootObj, rootType, contentLabel);
+    return <>: {link}</>;
+  }
+
+  function renderCompactContentLink(
+    content: any,
+    type: string,
+    fallbackLabel?: string
+  ) {
+    return (
+      <ContentLink
+        content={content}
+        contentType={type}
+        rootType={isPassType ? rootObj?.rootType : undefined}
+        style={{ color: contentLinkColor }}
+        theme={theme}
+        label={getCompactContentLabel(content, fallbackLabel)}
+      />
+    );
+  }
+
+  function renderCompactUser(user = uploader) {
+    return <UsernameText user={user} color={Color[linkColor]()} />;
+  }
+
+  function renderCompactAction(label: string) {
+    return <span className="home-feed-heading-action">{label}</span>;
+  }
+
   function renderTargetAction() {
     if (targetObj?.comment && !targetObj?.comment.notFound) {
       return (
@@ -430,4 +637,14 @@ function buildRelationshipBadgeStyle(
     verticalAlign: '0.08em',
     whiteSpace: 'nowrap'
   };
+}
+
+function getCompactContentLabel(content: any, fallbackLabel = '') {
+  return String(
+    content?.title ||
+      content?.word ||
+      content?.content ||
+      content?.topic ||
+      fallbackLabel
+  ).trim();
 }

@@ -100,6 +100,10 @@ export interface PreviewPanelHandle {
   openProjectFileUploadPicker: () => void;
   openProjectFolderImportPicker: () => void;
   openProjectAssetUploadPicker: () => void;
+  discardProjectFileDraft: () => Array<{
+    path: string;
+    content?: string;
+  }>;
   captureThumbnail: () => Promise<string>;
   importProjectFilesFromChatUpload: (files: File[]) => Promise<{
     success: boolean;

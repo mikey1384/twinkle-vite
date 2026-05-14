@@ -8,6 +8,7 @@ const searchPlaylistsLabel = 'Search Playlists';
 const allPlaylistsLabel = 'All Playlists';
 
 export default function PlaylistsPanel({
+  anchorPrefix = 'explore-playlists',
   buttonGroupShown = true,
   buttonGroup,
   isSearching,
@@ -21,6 +22,7 @@ export default function PlaylistsPanel({
   title = allPlaylistsLabel,
   userId
 }: {
+  anchorPrefix?: string;
   buttonGroupShown?: boolean;
   buttonGroup: () => React.ReactNode;
   innerRef?: React.RefObject<any>;
@@ -58,13 +60,19 @@ export default function PlaylistsPanel({
     >
       {(playlists || []).map((playlist, index) => {
         return (
-          <PlaylistCarousel
-            {...playlist}
+          <div
             key={playlist.id}
-            arrayIndex={index}
-            userIsUploader={userId === playlist.uploaderId}
-            showAllButton={playlist.showAllButton}
-          />
+            data-scroll-anchor-id={`${anchorPrefix}:${playlist.id}`}
+            data-scroll-anchor-secondary-id={String(playlist.id)}
+            data-scroll-anchor-content-key={`playlist:${playlist.id}`}
+          >
+            <PlaylistCarousel
+              {...playlist}
+              arrayIndex={index}
+              userIsUploader={userId === playlist.uploaderId}
+              showAllButton={playlist.showAllButton}
+            />
+          </div>
         );
       })}
     </SectionPanel>

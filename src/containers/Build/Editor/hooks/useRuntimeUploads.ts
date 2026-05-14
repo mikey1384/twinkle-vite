@@ -8,6 +8,7 @@ import {
   type BuildAgentAssetCreateOptions,
   type BuildAgentAssetCreateResult
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
+import type { ConfirmModalOptions } from '~/components/Modals/hooks/useConfirmModal';
 import type {
   PreviewRuntimeUploadAsset,
   PreviewRuntimeUploadsSyncPayload
@@ -32,6 +33,7 @@ export default function useRuntimeUploads({
   isOwner,
   listBuildRuntimeFiles,
   loadBuildRuntimeUploads,
+  requestConfirm,
   replaceCopilotPolicy,
   uploadBuildRuntimeFiles
 }: {
@@ -54,6 +56,7 @@ export default function useRuntimeUploads({
     cursor?: number | null;
     limit: number;
   }) => Promise<any>;
+  requestConfirm: (options: ConfirmModalOptions) => Promise<boolean>;
   replaceCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
   uploadBuildRuntimeFiles: (options: {
     buildId: number;
@@ -303,20 +306,26 @@ export default function useRuntimeUploads({
     asset: BuildRuntimeUploadAsset
   ) {
     if (!asset?.id || runtimeUploadDeletingId) return;
+    const assetId = asset.id;
     const fileLabel = asset.originalFileName || asset.fileName || 'this file';
-    const confirmed = window.confirm(
-      `Delete "${fileLabel}" from your Twinkle uploads?`
-    );
+    const confirmed = await requestConfirm({
+      title: 'Delete uploaded file',
+      description: `Delete "${fileLabel}" from your Twinkle uploads?`,
+      descriptionFontSize: '1.35rem',
+      confirmButtonColor: 'red',
+      confirmButtonLabel: 'Delete',
+      modalOverModal: true
+    });
     if (!confirmed) return;
-    setRuntimeUploadDeletingId(asset.id);
+    setRuntimeUploadDeletingId(assetId);
     setRuntimeUploadsError('');
     try {
-      const payload = await deleteBuildRuntimeUpload(asset.id);
+      const payload = await deleteBuildRuntimeUpload(assetId);
       setRuntimeUploadAssets((prev) =>
-        prev.filter((item) => item.id !== asset.id)
+        prev.filter((item) => item.id !== assetId)
       );
       setCurrentBuildRuntimeAssets((prev) =>
-        prev.filter((item) => item.id !== asset.id)
+        prev.filter((item) => item.id !== assetId)
       );
       updateRuntimeUploadQuotaUsage(payload?.usage || null);
     } catch (error: any) {

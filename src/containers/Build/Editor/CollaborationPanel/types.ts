@@ -109,10 +109,9 @@ export interface CollaborationPanelProps {
   }) => void;
   onAcceptedContributorCountChange?: (count: number) => void;
   onBeforeContributionAction?: (
-    action: 'merge' | 'update-from-main'
+    action: 'merge' | 'replace' | 'update-from-main' | 'complete-merge'
   ) => Promise<{
     ready: boolean;
-    files?: Array<{ path: string; content?: string }>;
   }>;
   onAskLumineToResolveConflicts?: (
     paths: string[]

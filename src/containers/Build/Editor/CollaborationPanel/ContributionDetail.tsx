@@ -117,15 +117,22 @@ const errorClass = css`
   font-size: 1.1rem;
 `;
 
+function formatContributionStatusLabel(status: BuildContributionStatus) {
+  if (status === 'merging') return 'conflicts';
+  return status;
+}
+
 export default function ContributionDetail({
   activeConflictMarkerPaths,
   activeContributionId,
   actionError,
   actionLoading,
   canAskLumineToResolveConflicts,
+  canCompleteConflictMerge,
   canUpdateFromMain,
   changedFiles,
   contributionCanMerge,
+  contributionCanReplaceMain,
   contributionStatus,
   ownerReview,
   selectedPaths,
@@ -144,9 +151,11 @@ export default function ContributionDetail({
   actionError: string;
   actionLoading: string;
   canAskLumineToResolveConflicts: boolean;
+  canCompleteConflictMerge: boolean;
   canUpdateFromMain: boolean;
   changedFiles: BuildContributionFileDiff[];
   contributionCanMerge: boolean;
+  contributionCanReplaceMain: boolean;
   contributionStatus: BuildContributionStatus;
   ownerReview: boolean;
   selectedPaths: string[];
@@ -160,10 +169,16 @@ export default function ContributionDetail({
   onToggleSelectedPath: (path: string) => void;
   onUpdateVersionFromMain: () => void;
 }) {
+  const hasActiveConflictMarkers = activeConflictMarkerPaths.length > 0;
+  const ownerConflictRepairShown =
+    ownerReview && (hasActiveConflictMarkers || canCompleteConflictMerge);
+
   return (
     <div className={detailClass}>
       <div className={rowClass}>
-        <strong>{ownerReview ? 'Review branch' : 'Branch needs attention'}</strong>
+        <strong>
+          {ownerReview ? 'Review branch' : 'Branch needs attention'}
+        </strong>
         {ownerReview ? (
           <span className={mutedTextClass}>{changedFiles.length} changed</span>
         ) : canUpdateFromMain ? (
@@ -172,7 +187,9 @@ export default function ContributionDetail({
           </span>
         ) : null}
         {contributionStatus !== 'draft' ? (
-          <span className={statusPillClass}>{contributionStatus}</span>
+          <span className={statusPillClass}>
+            {formatContributionStatusLabel(contributionStatus)}
+          </span>
         ) : null}
         {ownerReview ? (
           <GameCTAButton
@@ -222,41 +239,46 @@ export default function ContributionDetail({
             disabled={Boolean(actionLoading)}
             onClick={onAskLumineToResolveConflicts}
           >
-            Ask Lumine to Fix
+            Fix with Lumine
           </GameCTAButton>
         </div>
       ) : null}
-      {ownerReview && contributionCanMerge ? (
+      {ownerReview && (contributionCanMerge || contributionCanReplaceMain) ? (
         <div className={rowClass}>
-          <GameCTAButton
-            variant="success"
-            size="sm"
-            icon="check"
-            loading={actionLoading === 'merge'}
-            disabled={Boolean(actionLoading) || selectedPaths.length === 0}
-            onClick={onMergeContribution}
-          >
-            Merge Branch
-          </GameCTAButton>
-          <GameCTAButton
-            variant="orange"
-            size="sm"
-            icon="copy"
-            loading={actionLoading === 'replace-main'}
-            disabled={Boolean(actionLoading)}
-            onClick={onReplaceMain}
-          >
-            Replace Main
-          </GameCTAButton>
+          {contributionCanMerge ? (
+            <GameCTAButton
+              variant="success"
+              size="sm"
+              icon="check"
+              loading={actionLoading === 'merge'}
+              disabled={Boolean(actionLoading) || selectedPaths.length === 0}
+              onClick={onMergeContribution}
+            >
+              Merge Branch
+            </GameCTAButton>
+          ) : null}
+          {contributionCanReplaceMain ? (
+            <GameCTAButton
+              variant="orange"
+              size="sm"
+              icon="copy"
+              loading={actionLoading === 'replace-main'}
+              disabled={Boolean(actionLoading)}
+              onClick={onReplaceMain}
+            >
+              Replace Main
+            </GameCTAButton>
+          ) : null}
         </div>
       ) : null}
-      {ownerReview && contributionStatus === 'merging' ? (
+      {ownerConflictRepairShown ? (
         <div className={rowClass}>
           <span className={mutedTextClass}>
-            Conflict markers are in the project files. Resolve them with Lumine
-            or edit the files, then complete the merge.
+            {hasActiveConflictMarkers
+              ? 'Main project files have conflict markers. Let Lumine fix them or edit the files.'
+              : 'Conflict markers are resolved. Complete the legacy merge record.'}
           </span>
-          {canAskLumineToResolveConflicts ? (
+          {canAskLumineToResolveConflicts && hasActiveConflictMarkers ? (
             <GameCTAButton
               variant="purple"
               size="sm"
@@ -265,19 +287,21 @@ export default function ContributionDetail({
               disabled={Boolean(actionLoading)}
               onClick={onAskLumineToResolveConflicts}
             >
-              Ask Lumine to Fix
+              Fix with Lumine
             </GameCTAButton>
           ) : null}
-          <GameCTAButton
-            variant="success"
-            size="sm"
-            icon="check"
-            loading={actionLoading === 'complete-merge'}
-            disabled={Boolean(actionLoading)}
-            onClick={onCompleteContributionMerge}
-          >
-            Complete Merge
-          </GameCTAButton>
+          {canCompleteConflictMerge ? (
+            <GameCTAButton
+              variant="success"
+              size="sm"
+              icon="check"
+              loading={actionLoading === 'complete-merge'}
+              disabled={Boolean(actionLoading)}
+              onClick={onCompleteContributionMerge}
+            >
+              Complete Merge
+            </GameCTAButton>
+          ) : null}
         </div>
       ) : null}
       {actionError ? <span className={errorClass}>{actionError}</span> : null}

@@ -165,6 +165,9 @@ function PlaylistVideoItem({
 
   return (
     <div
+      data-scroll-anchor-id={`playlist:${playlistId}:video:${videoId}`}
+      data-scroll-anchor-secondary-id={String(videoId)}
+      data-scroll-anchor-content-key={`video:${videoId}`}
       style={{
         display: 'flex',
         justifyContent: 'space-between',

@@ -79,7 +79,7 @@ export default function ProfilePic({
   }, [profilePicUrl, userProfile?.profilePicUrl]);
 
   const statusTagShown = useMemo(
-    () => statusShown && (myId === userId || online),
+    () => Boolean(statusShown && (myId === userId || online)),
     [myId, online, statusShown, userId]
   );
 
@@ -127,7 +127,7 @@ export default function ProfilePic({
         ...containerStyle,
         ...restStyle
       }}
-      onClick={onClick || (() => null)}
+      onClick={handleClick}
       onMouseEnter={() => setChangePictureShown(true)}
       onMouseLeave={() => setChangePictureShown(false)}
     >
@@ -180,4 +180,10 @@ export default function ProfilePic({
       )}
     </div>
   );
+
+  function handleClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (!onClick) return;
+    event.stopPropagation();
+    onClick();
+  }
 }

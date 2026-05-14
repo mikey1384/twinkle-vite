@@ -5,6 +5,7 @@ import { Color } from '~/constants/css';
 import MessageRow from './MessageRow';
 import {
   BuildCurrentActivity,
+  BuildRuntimeDebugSnapshot,
   BuildStatusStepEntry,
   ChatMessage,
   ChatPanelRunMode
@@ -19,11 +20,14 @@ interface TranscriptProps {
   assistantStatusSteps: string[];
   currentActivity: BuildCurrentActivity | null;
   statusStepEntries: BuildStatusStepEntry[];
+  runtimeDebugSnapshot: BuildRuntimeDebugSnapshot | null;
   runError: string | null;
   activeStreamMessageIds: number[];
   isOwner: boolean;
   chatEndRef: RefObject<HTMLDivElement | null>;
-  onFixRuntimeObservationMessage: (message: ChatMessage) => Promise<boolean> | boolean;
+  onFixRuntimeObservationMessage: (
+    message: ChatMessage
+  ) => Promise<boolean> | boolean;
   onDeleteMessage: (message: ChatMessage) => void;
 }
 
@@ -35,6 +39,7 @@ const Transcript = React.memo(function Transcript({
   assistantStatusSteps,
   currentActivity,
   statusStepEntries,
+  runtimeDebugSnapshot,
   runError,
   activeStreamMessageIds,
   isOwner,
@@ -65,11 +70,7 @@ const Transcript = React.memo(function Transcript({
         opacity: 0.7;
       `}
     >
-      <Icon
-        icon="comments"
-        size="2x"
-        style={{ marginBottom: '0.8rem' }}
-      />
+      <Icon icon="comments" size="2x" style={{ marginBottom: '0.8rem' }} />
       <p
         style={{
           margin: 0,
@@ -137,12 +138,60 @@ const Transcript = React.memo(function Transcript({
           onDeleteMessage={onDeleteMessage}
         />
       ))}
+      {runtimeDebugSnapshot ? (
+        <RuntimeDebugProjection snapshot={runtimeDebugSnapshot} />
+      ) : null}
       <div ref={chatEndRef} />
     </div>
   );
 });
 
 export default Transcript;
+
+function RuntimeDebugProjection({
+  snapshot
+}: {
+  snapshot: BuildRuntimeDebugSnapshot;
+}) {
+  return (
+    <details
+      className={css`
+        align-self: stretch;
+        border: 1px dashed rgba(52, 109, 255, 0.26);
+        border-radius: 8px;
+        background: rgba(52, 109, 255, 0.04);
+        color: var(--chat-text);
+        padding: 0.65rem 0.75rem;
+      `}
+    >
+      <summary
+        className={css`
+          cursor: pointer;
+          color: ${Color.logoBlue()};
+          font-size: 1.1rem;
+          font-weight: 800;
+          letter-spacing: 0;
+        `}
+      >
+        Runtime metadata
+      </summary>
+      <pre
+        className={css`
+          margin: 0.7rem 0 0;
+          max-height: 20rem;
+          overflow: auto;
+          white-space: pre-wrap;
+          word-break: break-word;
+          font-size: 1.1rem;
+          line-height: 1.45;
+          font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+        `}
+      >
+        {snapshot.compactJson}
+      </pre>
+    </details>
+  );
+}
 
 function FailureNotice({ runError }: { runError: string }) {
   const normalizedRunError = String(runError || '').trim();

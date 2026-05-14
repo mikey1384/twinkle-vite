@@ -4,9 +4,9 @@ import Loading from '~/components/Loading';
 import Banner from '~/components/Banner';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeFilter from './HomeFilter';
-import ContentPanel from '~/components/ContentPanel';
 import TopMenu from '../TopMenu';
 import Featured from './Featured';
+import HomeFeedCard from './FeedCard';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -19,6 +19,7 @@ import {
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
+import { useScrollAnchor } from './hooks/useScrollAnchor';
 
 const hiThereLabel = 'Hi there!';
 
@@ -41,6 +42,35 @@ const categoryObj: Record<string, any> = {
     orderBy: 'lastInteraction'
   }
 };
+
+function getHomeFeedAnchorId(
+  feed: { [key: string]: any } = {},
+  index: number
+) {
+  const parts = [
+    getHomeFeedAnchorPart('feed', feed.feedId),
+    getHomeFeedAnchorPart('type', feed.contentType),
+    getHomeFeedAnchorPart('content', feed.contentId),
+    getHomeFeedAnchorPart('activity', feed.feedActivityType),
+    getHomeFeedAnchorPart('rootType', feed.rootType),
+    getHomeFeedAnchorPart('root', feed.rootId),
+    getHomeFeedAnchorPart('rootComment', feed.rootCommentId),
+    getHomeFeedAnchorPart('subject', feed.subjectId),
+    getHomeFeedAnchorPart('uploader', feed.uploaderId),
+    getHomeFeedAnchorPart('time', feed.timeStamp),
+    getHomeFeedAnchorPart('last', feed.lastInteraction),
+    getHomeFeedAnchorPart('view', feed.viewTimeStamp),
+    getHomeFeedAnchorPart('position', index)
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join('|') : `position:${index}`;
+}
+
+function getHomeFeedAnchorPart(label: string, value: unknown) {
+  const normalizedValue =
+    value === null || typeof value === 'undefined' ? '' : String(value).trim();
+  return normalizedValue ? `${label}:${normalizedValue}` : '';
+}
 
 export default function Stories() {
   const loadingMoreRef = useRef(false);
@@ -90,6 +120,7 @@ export default function Stories() {
   const [loadingNewFeeds, setLoadingNewFeeds] = useState(false);
   const categoryRef: React.RefObject<any> = useRef(null);
   const ContainerRef = useRef(null);
+  const FeedListRef = useRef<HTMLDivElement | null>(null);
   const subFilterRef = useRef<string | null>(null);
   const displayOrderRef = useRef(displayOrder);
   const numNewPostsRef = useRef(numNewPosts);
@@ -123,19 +154,6 @@ export default function Stories() {
     `,
     []
   );
-  const contentPanelClass = useMemo(
-    () => css`
-      > div {
-        padding: 1rem 0 1rem 0;
-        border-top: none;
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 0.5rem 0 0.5rem 0;
-        }
-      }
-    `,
-    []
-  );
-
   useEffect(() => {
     subFilterRef.current = subFilter;
   }, [subFilter]);
@@ -156,6 +174,17 @@ export default function Stories() {
     scrollable: feeds?.length > 0 && !loadingMoreRef.current,
     feedsLength: feeds?.length,
     onScrollToBottom: handleLoadMoreFeeds
+  });
+
+  const homeFeedAnchorKey = useMemo(
+    () => `${category}:${subFilter}:${displayOrder}`,
+    [category, displayOrder, subFilter]
+  );
+
+  useScrollAnchor({
+    anchorKey: homeFeedAnchorKey,
+    containerRef: FeedListRef,
+    feedsReady: loaded && !loadingPosts && feeds?.length > 0
   });
 
   useEffect(() => {
@@ -294,28 +323,31 @@ export default function Stories() {
                   </Banner>
                 )
               )}
-              <div className={feedListClass}>
+              <div ref={FeedListRef} className={feedListClass}>
                 {(feeds || []).map(
                   (feed: { [key: string]: any } = {}, index: number) => {
                     const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
+                    const contentKey = `${feed.contentType}-${feed.contentId}`;
+                    const feedAnchorId = getHomeFeedAnchorId(feed, index);
                     return feed.contentId ? (
                       <div
                         key={panelKey}
                         className={`feed-item ${feedItemCustomClass}`}
+                        data-feed-anchor-id={feedAnchorId}
+                        data-feed-id={feed.feedId || undefined}
+                        data-content-key={contentKey}
+                        data-feed-index={index}
+                        data-scroll-anchor-id={feedAnchorId}
+                        data-scroll-anchor-secondary-id={
+                          feed.feedId || undefined
+                        }
+                        data-scroll-anchor-content-key={contentKey}
                       >
-                        <ContentPanel
-                          feedId={feed.feedId}
-                          feedActivityType={feed.feedActivityType}
-                          feedTimeStamp={feed.timeStamp}
-                          feedUploader={feed.feedUploader}
-                          zIndex={feeds?.length - index}
-                          contentId={feed.contentId}
-                          contentType={feed.contentType}
-                          rootType={feed.rootType}
-                          commentsLoadLimit={5}
-                          numPreviewComments={1}
-                          className={contentPanelClass}
-                          style={{ margin: 0 }}
+                        <HomeFeedCard
+                          feedAnchorId={feedAnchorId}
+                          feed={feed}
+                          index={index}
+                          totalCount={feeds?.length || 0}
                         />
                       </div>
                     ) : null;

@@ -54,7 +54,7 @@ interface CodeWorkspacePaneProps {
   onSelectFolder: (path: string) => void;
   onToggleFolderCollapsed: (path: string) => void;
   onSelectFile: (path: string) => void;
-  onDeleteProjectFile: (path: string) => void;
+  onDeleteProjectFile: (path: string) => void | Promise<void>;
   onRenamePathInputChange: (value: string) => void;
   onRenameOrMoveActiveFile: () => void;
   onSaveEditableProjectFiles: () => void;
@@ -811,7 +811,7 @@ export default function CodeWorkspacePane({
                   !isIndexHtmlPath(file.path) && (
                     <button
                       type="button"
-                      onClick={() => onDeleteProjectFile(file.path)}
+                      onClick={() => void onDeleteProjectFile(file.path)}
                       disabled={projectFilesLocked}
                       className={css`
                         border: 1px solid rgba(255, 255, 255, 0.12);

@@ -1,7 +1,4 @@
-import {
-  getStoredItem,
-  getTwinkleDeviceId
-} from '~/helpers/userDataHelpers';
+import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 
 type RequestHelperModuleName =
   | 'build'
@@ -100,11 +97,9 @@ registerMethods('build', [
   'updateBuildProjectFiles',
   'createBuildPreviewSession',
   'loadBuildProjectFileChangeLogs',
-  'generateBuildCode',
   'deleteBuild',
   'downloadBuildProjectArchive',
   'loadBuildAiPrompts',
-  'callBuildAiChat',
   'callBuildRuntimeAiChat',
   'callBuildRuntimeAiChatStream',
   'callBuildRuntimeAiObject',
@@ -120,6 +115,7 @@ registerMethods('build', [
   'forkBuild',
   'updateBuildCollaboration',
   'updateBuildLumineChatVisibility',
+  'updateBuildLumineModelPreference',
   'loadBuildLumineChatHistory',
   'loadBuildContributors',
   'loadBuildContributionMembership',
@@ -713,11 +709,11 @@ export default function requestHelpers(handleError: (error: unknown) => void) {
     return helper;
   }
 
-	return new Proxy(baseHelpers, {
-	  get(target, prop) {
-	    if (typeof prop !== 'string') {
-	      return Reflect.get(target, prop);
-	    }
+  return new Proxy(baseHelpers, {
+    get(target, prop) {
+      if (typeof prop !== 'string') {
+        return Reflect.get(target, prop);
+      }
       if (prop === 'then') return undefined;
       if (Object.prototype.hasOwnProperty.call(target, prop)) {
         return target[prop as keyof typeof target];

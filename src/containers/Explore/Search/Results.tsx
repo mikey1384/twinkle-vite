@@ -138,11 +138,17 @@ export default function Results({
       {resultsShown &&
         (resultObj[filter] || []).map(
           (result: { id: number; contentType: string; uploader: User }) => (
-            <ContentListItem
+            <div
               key={result.id}
-              style={{ marginBottom: '1rem' }}
-              contentObj={result}
-            />
+              data-scroll-anchor-id={`explore-search:${filter}:${result.contentType}:${result.id}`}
+              data-scroll-anchor-secondary-id={String(result.id)}
+              data-scroll-anchor-content-key={`${result.contentType}:${result.id}`}
+            >
+              <ContentListItem
+                style={{ marginBottom: '1rem' }}
+                contentObj={result}
+              />
+            </div>
           )
         )}
       {!searching &&

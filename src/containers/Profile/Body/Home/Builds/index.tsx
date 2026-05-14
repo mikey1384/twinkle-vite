@@ -238,19 +238,25 @@ export default function Builds({
           `}
         >
           {shownBuilds.map((build) => (
-            <ProjectListItem
+            <div
               key={build.id}
-              build={build}
-              to={`/app/${build.id}`}
-              navigationState={buildRuntimeNavigationState}
-              isOwner={isOwnProfile}
-              themeName={selectedTheme}
-              showFavoriteAction
-              onFavoriteChange={handleBuildFavoriteChange}
-              onFavoriteError={handleBuildFavoriteError}
-              onAddDescription={isOwnProfile ? setEditingBuild : undefined}
-              onOpenForkHistory={setForkHistoryBuildId}
-            />
+              data-scroll-anchor-id={`profile-build:${build.id}`}
+              data-scroll-anchor-secondary-id={String(build.id)}
+              data-scroll-anchor-content-key={`build:${build.id}`}
+            >
+              <ProjectListItem
+                build={build}
+                to={`/app/${build.id}`}
+                navigationState={buildRuntimeNavigationState}
+                isOwner={isOwnProfile}
+                themeName={selectedTheme}
+                showFavoriteAction
+                onFavoriteChange={handleBuildFavoriteChange}
+                onFavoriteError={handleBuildFavoriteError}
+                onAddDescription={isOwnProfile ? setEditingBuild : undefined}
+                onOpenForkHistory={setForkHistoryBuildId}
+              />
+            </div>
           ))}
         </div>
       </SectionPanel>

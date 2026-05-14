@@ -103,19 +103,28 @@ export default function ContinueWatchingPanel() {
           }}
         >
           {(continueWatchingVideos || []).map((video: any, index: number) => (
-            <VideoThumb
-              to={`videos/${video.id}${
-                showingRecommendedVideos ? '' : '?continue=true'
-              }`}
+            <div
+              key={video.id || index}
+              data-scroll-anchor-id={`explore-videos:continue:${video.id || index}`}
+              data-scroll-anchor-secondary-id={String(video.id || index)}
+              data-scroll-anchor-content-key={
+                video.id ? `video:${video.id}` : undefined
+              }
               style={{
                 width: `CALC(25% - 0.75rem)`,
                 marginLeft: index % 4 > 0 ? '1rem' : 0,
                 marginTop: index > 3 ? '1.5rem' : 0
               }}
-              key={index}
-              video={video}
-              user={video.uploader}
-            />
+            >
+              <VideoThumb
+                to={`videos/${video.id}${
+                  showingRecommendedVideos ? '' : '?continue=true'
+                }`}
+                style={{ width: '100%' }}
+                video={video}
+                user={video.uploader}
+              />
+            </div>
           ))}
         </div>
       </SectionPanel>

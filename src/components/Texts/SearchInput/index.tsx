@@ -1,4 +1,4 @@
-import React, { RefObject, useMemo, useRef, useState } from 'react';
+import React, { RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import Input from '../Input';
@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useOutsideClick } from '~/helpers/hooks';
+import { renderText } from '~/helpers/stringHelpers';
 
 export default function SearchInput({
   addonColor,
@@ -48,13 +49,25 @@ export default function SearchInput({
   style?: any;
   value?: string;
 }) {
+  const [draftValue, setDraftValue] = useState(value);
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
   const DropdownRef = useRef(null);
+  const isComposingRef = useRef(false);
+  const previousValueRef = useRef(value);
 
   useOutsideClick([SearchInputRef, DropdownRef], onClickOutSide, {
     enabled: !!onClickOutSide && searchResults.length > 0
   });
+
+  useEffect(() => {
+    if (value === previousValueRef.current) return;
+    previousValueRef.current = value;
+    if (!isComposingRef.current) {
+      setDraftValue(value);
+    }
+  }, [value]);
+
   const { colorKey: searchColor } = useRoleColor('search', {
     fallback: 'logoBlue'
   });
@@ -128,8 +141,10 @@ export default function SearchInput({
           inputRef={innerRef}
           onFocus={onFocus && onFocus}
           placeholder={placeholder}
-          value={value}
-          onChange={onChange}
+          value={draftValue}
+          onChange={handleInputChange}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
           onKeyDown={onKeyDown}
         />
       </div>
@@ -146,6 +161,24 @@ export default function SearchInput({
       />
     </div>
   );
+
+  function handleInputChange(text: string) {
+    setDraftValue(text);
+    if (!isComposingRef.current) {
+      onChange(text);
+    }
+  }
+
+  function handleCompositionStart() {
+    isComposingRef.current = true;
+  }
+
+  function handleCompositionEnd(event: React.CompositionEvent<HTMLInputElement>) {
+    isComposingRef.current = false;
+    const text = renderText(event.currentTarget.value);
+    setDraftValue(text);
+    onChange(text);
+  }
 
   function onKeyDown(event: any) {
     let index = indexToHighlight;

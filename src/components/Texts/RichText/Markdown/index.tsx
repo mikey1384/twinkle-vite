@@ -45,6 +45,7 @@ function Markdown({
   contentType,
   children,
   isInvisible,
+  isPreview,
   isProfileComponent,
   isAIMessage,
   linkColor,
@@ -56,6 +57,7 @@ function Markdown({
   contentId?: number | string;
   contentType?: string;
   isInvisible?: boolean;
+  isPreview?: boolean;
   isProfileComponent?: boolean;
   isAIMessage?: boolean;
   children: string;
@@ -291,6 +293,7 @@ function Markdown({
                     <EmbeddedComponent
                       contentId={contentId}
                       contentType={contentType}
+                      isPreview={isPreview}
                       isProfileComponent={isProfileComponent}
                       src={unescapeEqualSignAndDash(domNode.attribs?.src || '')}
                       alt={unescapeEqualSignAndDash(domNode.attribs?.alt || '')}
@@ -744,6 +747,7 @@ function Markdown({
                 <EmbeddedComponent
                   {...commonProps}
                   isProfileComponent={isProfileComponent}
+                  isPreview={isPreview}
                   contentId={contentId}
                   contentType={contentType}
                   embeddedContentRef={embeddedContentRef}

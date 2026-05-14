@@ -1,4 +1,8 @@
-import type { BuildLumineChatVisibility } from './ChatPanel/types';
+import type {
+  BuildLumineChatVisibility,
+  BuildLumineModelOption,
+  BuildLumineModelPreference
+} from './ChatPanel/types';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
 import type { BuildRuntimeExplorationPlan } from '../types/runtimeObservationTypes';
@@ -70,11 +74,7 @@ export interface BuildBranchDeleteTarget {
 }
 
 export interface BuildReleaseStatus {
-  state:
-    | 'private'
-    | 'up_to_date'
-    | 'unpublished_changes'
-    | 'missing_snapshot';
+  state: 'private' | 'up_to_date' | 'unpublished_changes' | 'missing_snapshot';
   isPublic: boolean;
   hasPublishedVersion: boolean;
   hasUnpublishedChanges: boolean;
@@ -122,11 +122,7 @@ export interface Build {
   contributionRootBuildId?: number | null;
   contributionContributorId?: number | null;
   contributionBranchNumber?: number | null;
-  contributionStatus?:
-    | 'none'
-    | 'draft'
-    | 'merging'
-    | 'merged';
+  contributionStatus?: 'none' | 'draft' | 'merging' | 'merged';
   contributionBaseBuildUpdatedAt?: number | null;
   contributionMergedAt?: number | null;
   contributionClosedAt?: number | null;
@@ -253,6 +249,8 @@ export interface BuildCopilotPolicy {
     generationRequestsToday: number;
     generationRequestsRemaining: number;
   };
+  lumineModelPreference?: BuildLumineModelPreference | null;
+  lumineModelOptions?: BuildLumineModelOption[];
 }
 
 export type BuildRequestLimitsSnapshot = Partial<
@@ -262,23 +260,35 @@ export type BuildRequestLimitsSnapshot = Partial<
 
 export interface BuildRunEvent {
   id: string;
+  schemaVersion?: number | null;
+  eventType?: string | null;
+  source?: string | null;
+  threadId?: string | null;
+  requestId?: string | null;
+  sequence?: number | null;
+  buildId?: number | null;
+  userId?: number | null;
   kind: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
   phase: string | null;
   message: string;
   createdAt: number;
   deduped?: boolean;
-  details?: {
-    thoughtContent?: string | null;
-    isComplete?: boolean;
-    isThinkingHard?: boolean;
-  } | null;
-  usage?: {
-    stage?: string | null;
-    model?: string | null;
-    inputTokens?: number;
-    outputTokens?: number;
-    totalTokens?: number;
-  } | null;
+  details?:
+    | ({
+        thoughtContent?: string | null;
+        isComplete?: boolean;
+        isThinkingHard?: boolean;
+      } & Record<string, any>)
+    | null;
+  usage?:
+    | ({
+        stage?: string | null;
+        model?: string | null;
+        inputTokens?: number;
+        outputTokens?: number;
+        totalTokens?: number;
+      } & Record<string, any>)
+    | null;
 }
 
 export type BuildPlanAction = 'continue' | 'cancel' | 'pivot';
@@ -358,6 +368,7 @@ export interface BuildEditorProps {
   copilotPolicy: BuildCopilotPolicy | null;
   isOwner: boolean;
   initialPrompt?: string;
+  initialPromptContext?: string;
   forceInitialPrompt?: boolean;
   seedGreeting?: boolean;
   onUpdateBuild: (build: Build) => void;
@@ -382,6 +393,8 @@ export interface CurrentBuildRunView {
   generating: boolean;
   status: string | null;
   assistantStatusSteps: string[];
+  agentContext: BuildLiveRunState['agentContext'] | null;
+  lifecycle: BuildLiveRunState['lifecycle'] | null;
   usageMetrics: BuildLiveRunState['usageMetrics'];
   runEvents: BuildRunEvent[];
   streamingProjectFiles: Array<{ path: string; content?: string }> | null;

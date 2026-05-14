@@ -10,10 +10,12 @@ import VideoPlayer from '~/components/VideoPlayer';
 export default function YouTubeVideo({
   contentType,
   contentId,
+  isPreview,
   src
 }: {
   contentType?: string;
   contentId?: number | string;
+  isPreview?: boolean;
   src: string;
 }) {
   const timeAtRef = useRef(0);
@@ -53,8 +55,15 @@ export default function YouTubeVideo({
   return (
     <div
       className={css`
-        min-width: 80%;
+        min-width: ${isPreview ? '100%' : '80%'};
         position: relative;
+        ${isPreview
+          ? `
+            max-height: 18rem;
+            overflow: hidden;
+            border-radius: 0.8rem;
+          `
+          : ''}
         @media (max-width: ${mobileMaxWidth}) {
           min-width: 100%;
         }
@@ -94,6 +103,9 @@ export default function YouTubeVideo({
       ) : (
         <div
           onClick={handlePlay}
+          onKeyDown={handlePreviewKeyDown}
+          role="button"
+          tabIndex={0}
           className={css`
             position: relative;
             width: 100%;
@@ -118,7 +130,10 @@ export default function YouTubeVideo({
           >
             <img
               loading="lazy"
-              style={{ height: '8rem', width: '12rem' }}
+              style={{
+                height: isPreview ? '4.6rem' : '8rem',
+                width: isPreview ? '6.9rem' : '12rem'
+              }}
               src={YoutubeIcon}
               alt="Play YouTube video"
             />
@@ -128,7 +143,24 @@ export default function YouTubeVideo({
     </div>
   );
 
-  function handlePlay() {
+  function handlePlay(event: React.MouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    setIsStarted(true);
+    setPlaying(true);
+    if (contentType && contentId) {
+      onSetMediaStarted({
+        contentId,
+        contentType,
+        targetKey,
+        started: true
+      });
+    }
+  }
+
+  function handlePreviewKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    event.stopPropagation();
     setIsStarted(true);
     setPlaying(true);
     if (contentType && contentId) {

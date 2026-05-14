@@ -28,7 +28,13 @@ interface SharedPrompt {
   }>;
 }
 
-export default function SharedPromptComponent({ src }: { src: string }) {
+export default function SharedPromptComponent({
+  src,
+  isPreview
+}: {
+  src: string;
+  isPreview?: boolean;
+}) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadSharedPrompt = useAppContext(
@@ -86,7 +92,13 @@ export default function SharedPromptComponent({ src }: { src: string }) {
   }, [promptId]);
 
   if (!promptId) {
-    return <DefaultComponent linkType="shared-prompts" src={src} />;
+    return (
+      <DefaultComponent
+        linkType="shared-prompts"
+        src={src}
+        isPreview={isPreview}
+      />
+    );
   }
 
   return (
@@ -95,6 +107,22 @@ export default function SharedPromptComponent({ src }: { src: string }) {
         <Loading />
       ) : notFound ? (
         <InvalidContent style={{ marginTop: '2rem' }} />
+      ) : prompt && isPreview ? (
+        <button
+          type="button"
+          className={compactSharedPromptClass}
+          onClick={handlePreviewClick}
+        >
+          <span>Shared Prompt</span>
+          <strong>{prompt.content}</strong>
+          {prompt.customInstructions ? (
+            <p>{getPlainPreviewText(prompt.customInstructions)}</p>
+          ) : null}
+          <div className="compact-shared-prompt__stats">
+            <span>{prompt.cloneCount || 0} clones</span>
+            <span>{prompt.messageCount || 0} messages</span>
+          </div>
+        </button>
       ) : prompt ? (
         <article className={cardClass}>
           <header className={headerClass}>
@@ -149,7 +177,84 @@ export default function SharedPromptComponent({ src }: { src: string }) {
       ) : null}
     </ErrorBoundary>
   );
+
+  function handlePreviewClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    if (prompt) {
+      navigate(`/shared-prompts/${prompt.id}`);
+    }
+  }
 }
+
+function getPlainPreviewText(value: string) {
+  return value
+    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const compactSharedPromptClass = css`
+  appearance: none;
+  display: flex;
+  width: 100%;
+  min-height: 8.2rem;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow: hidden;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid ${Color.logoBlue(0.5)};
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: ${Color.darkerGray()};
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  > span {
+    color: ${Color.logoBlue()};
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+  strong {
+    overflow: hidden;
+    color: ${Color.black()};
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  p {
+    margin: 0;
+    overflow: hidden;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .compact-shared-prompt__stats {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.1rem;
+  }
+  .compact-shared-prompt__stats span {
+    padding: 0.22rem 0.5rem;
+    border-radius: 999px;
+    background: ${Color.logoBlue(0.1)};
+    color: ${Color.logoBlue()};
+    font-size: 1rem;
+    font-weight: 850;
+    line-height: 1.1;
+  }
+`;
 
 const cardClass = css`
   width: 100%;

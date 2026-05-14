@@ -5,6 +5,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { mobileMaxWidth } from '~/constants/css';
 import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { css } from '@emotion/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts/';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -47,6 +48,7 @@ export default function Groups() {
     (v) => v.actions.onClearSearchedGroups
   );
   const loadingMoreRef = useRef(false);
+  const groupsListRef = useRef<HTMLDivElement | null>(null);
   const groups = useMemo(() => {
     return groupIds.map((id: number) => groupsObj[id]);
   }, [groupIds, groupsObj]);
@@ -101,6 +103,15 @@ export default function Groups() {
     [loading, searching, searchText]
   );
 
+  useScrollAnchorRestoration({
+    anchorKey: `home:groups:${stringIsEmpty(searchText) ? 'browse' : `search:${searchText}`}`,
+    containerRef: groupsListRef,
+    initialScroll: { type: 'top' },
+    itemsReady:
+      !isLoading &&
+      (stringIsEmpty(searchText) ? groups.length > 0 : searchedGroups.length > 0)
+  });
+
   const filteredGroups = useMemo(
     () =>
       groups
@@ -108,19 +119,25 @@ export default function Groups() {
           Boolean(group)
         )
         .map((group: GroupsProps) => (
-          <GroupItem
+          <div
             key={group.id}
-            groupId={group.id}
-            allMemberIds={group.allMemberIds}
-            groupName={group.channelName}
-            description={group.description || 'No description'}
-            thumbPath={group.thumbPath}
-            isOwner={group.creatorId === userId}
-            isMember={group.allMemberIds.includes(userId)}
-            members={group.members}
-            pathId={group.pathId}
-            ownerId={group.creatorId}
-          />
+            data-scroll-anchor-id={`home-group:${group.id}`}
+            data-scroll-anchor-secondary-id={String(group.id)}
+            data-scroll-anchor-content-key={`group:${group.id}`}
+          >
+            <GroupItem
+              groupId={group.id}
+              allMemberIds={group.allMemberIds}
+              groupName={group.channelName}
+              description={group.description || 'No description'}
+              thumbPath={group.thumbPath}
+              isOwner={group.creatorId === userId}
+              isMember={group.allMemberIds.includes(userId)}
+              members={group.members}
+              pathId={group.pathId}
+              ownerId={group.creatorId}
+            />
+          </div>
         )),
     [groups, userId]
   );
@@ -132,19 +149,25 @@ export default function Groups() {
           Boolean(group)
         )
         .map((group: GroupsProps) => (
-          <GroupItem
+          <div
             key={group.id}
-            groupId={group.id}
-            allMemberIds={group.allMemberIds}
-            groupName={group.channelName}
-            description={group.description || 'No description'}
-            thumbPath={group.thumbPath}
-            isOwner={group.creatorId === userId}
-            isMember={group.allMemberIds.includes(userId)}
-            members={group.members}
-            pathId={group.pathId}
-            ownerId={group.creatorId}
-          />
+            data-scroll-anchor-id={`home-group:${group.id}`}
+            data-scroll-anchor-secondary-id={String(group.id)}
+            data-scroll-anchor-content-key={`group:${group.id}`}
+          >
+            <GroupItem
+              groupId={group.id}
+              allMemberIds={group.allMemberIds}
+              groupName={group.channelName}
+              description={group.description || 'No description'}
+              thumbPath={group.thumbPath}
+              isOwner={group.creatorId === userId}
+              isMember={group.allMemberIds.includes(userId)}
+              members={group.members}
+              pathId={group.pathId}
+              ownerId={group.creatorId}
+            />
+          </div>
         )),
     [searchedGroups, userId]
   );
@@ -158,6 +181,7 @@ export default function Groups() {
   return (
     <ErrorBoundary componentPath="Home/Groups">
       <div
+        ref={groupsListRef}
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1rem 1.2rem 0;

@@ -86,6 +86,7 @@ export default function Videos() {
         <ContinueWatchingPanel />
         <FeaturedPlaylistsPanel />
         <PlaylistsPanel
+          anchorPrefix="explore-playlists:all"
           key="allplaylists"
           innerRef={AllPlaylistsPanelRef}
           buttonGroup={() => (

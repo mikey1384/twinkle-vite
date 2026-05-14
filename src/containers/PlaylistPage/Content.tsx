@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Playlist from '~/components/Playlist';
 import { useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 export default function Content() {
   const { contentId = 0 } = useParams();
@@ -12,6 +13,7 @@ export default function Content() {
     contentId: Number(contentId)
   });
   const [title, setTitle] = useState('');
+  const playlistRef = useRef<HTMLDivElement | null>(null);
   const border = useMemo(
     () => (videos?.length && loaded ? '1px solid var(--ui-border)' : ''),
     [videos, loaded]
@@ -20,8 +22,15 @@ export default function Content() {
     () => (videos?.length && loaded ? '#fff' : 'none'),
     [videos, loaded]
   );
+  useScrollAnchorRestoration({
+    anchorKey: `playlist:${contentId}`,
+    containerRef: playlistRef,
+    initialScroll: { type: 'top' },
+    itemsReady: loaded && videos?.length > 0
+  });
   return (
     <div
+      ref={playlistRef}
       style={{
         border,
         background,

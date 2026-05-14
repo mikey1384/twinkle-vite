@@ -95,6 +95,7 @@ interface ActivityPanelProps {
   loadingMore: boolean;
   hasNewActivity?: boolean;
   onLoadMore: () => void;
+  onMobileClose?: () => void;
   onMobileOpen?: () => void;
   onRefresh: () => void;
   onSubtabChange: (subtab: Exclude<BuildActivitySubtab, 'all'>) => void;
@@ -319,6 +320,7 @@ export default function ActivityPanel({
   loading,
   loadingMore,
   onLoadMore,
+  onMobileClose,
   onMobileOpen,
   onRefresh,
   onSubtabChange,
@@ -339,14 +341,14 @@ export default function ActivityPanel({
             shiny={hasNewActivity}
             onClick={handleMobileOpen}
           >
-            Build Activity{activities.length ? ` · ${activities.length}` : ''}
+            Build Activity
           </GameCTAButton>
         </div>
         {mobileOpen ? (
           <Modal
             modalKey="BuildActivityMobileModal"
             isOpen
-            onClose={() => setMobileOpen(false)}
+            onClose={handleMobileClose}
             title="Build Activity"
             size="md"
             bodyPadding={0}
@@ -388,6 +390,11 @@ export default function ActivityPanel({
   function handleMobileOpen() {
     onMobileOpen?.();
     setMobileOpen(true);
+  }
+
+  function handleMobileClose() {
+    onMobileClose?.();
+    setMobileOpen(false);
   }
 
   function renderTabs() {

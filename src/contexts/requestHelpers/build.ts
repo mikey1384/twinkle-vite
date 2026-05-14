@@ -368,7 +368,10 @@ export default function buildRequestHelpers({
     async loadBuild(buildId: number, options?: { fromWriter?: boolean }) {
       try {
         const qs = options?.fromWriter ? '?fromWriter=1' : '';
-        const { data } = await request.get(`${URL}/build/${buildId}${qs}`, auth());
+        const { data } = await request.get(
+          `${URL}/build/${buildId}${qs}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -418,10 +421,16 @@ export default function buildRequestHelpers({
     }) {
       try {
         const params: Record<string, any> = {};
-        if (Number.isFinite(Number(options?.cursor)) && Number(options?.cursor) > 0) {
+        if (
+          Number.isFinite(Number(options?.cursor)) &&
+          Number(options?.cursor) > 0
+        ) {
           params.cursor = Math.floor(Number(options?.cursor));
         }
-        if (Number.isFinite(Number(options?.limit)) && Number(options?.limit) > 0) {
+        if (
+          Number.isFinite(Number(options?.limit)) &&
+          Number(options?.limit) > 0
+        ) {
           params.limit = Math.floor(Number(options?.limit));
         }
         const { data } = await request.get(`${URL}/build/runtime-files`, {
@@ -813,13 +822,10 @@ export default function buildRequestHelpers({
         if (cursor) {
           params.cursor = cursor;
         }
-        const { data } = await request.get(
-          `${URL}/build/list/recently-used`,
-          {
-            ...auth(),
-            params
-          }
-        );
+        const { data } = await request.get(`${URL}/build/list/recently-used`, {
+          ...auth(),
+          params
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -996,25 +1002,6 @@ export default function buildRequestHelpers({
       }
     },
 
-    async generateBuildCode({
-      buildId,
-      message
-    }: {
-      buildId: number;
-      message: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/generate`,
-          { message },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
     async deleteBuild({
       buildId,
       confirmTitle
@@ -1023,13 +1010,10 @@ export default function buildRequestHelpers({
       confirmTitle: string;
     }) {
       try {
-        const { data } = await request.delete(
-          `${URL}/build/${buildId}`,
-          {
-            ...auth(),
-            data: { confirmTitle }
-          }
-        );
+        const { data } = await request.delete(`${URL}/build/${buildId}`, {
+          ...auth(),
+          data: { confirmTitle }
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1065,29 +1049,6 @@ export default function buildRequestHelpers({
       }
     },
 
-    async callBuildAiChat({
-      buildId,
-      promptId,
-      message,
-      history
-    }: {
-      buildId: number;
-      promptId: number;
-      message: string;
-      history?: Array<{ role: 'user' | 'assistant'; content: string }>;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/ai-chat`,
-          { promptId, message, history },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
     async callBuildRuntimeAiChat({
       buildId,
       promptId,
@@ -1114,9 +1075,7 @@ export default function buildRequestHelpers({
           return Promise.reject({
             status: response.status,
             message:
-              response.data.error ||
-              response.data.message ||
-              'AI chat failed',
+              response.data.error || response.data.message || 'AI chat failed',
             code: response.data.code,
             aiUsagePolicy: response.data.aiUsagePolicy
           });
@@ -1596,6 +1555,27 @@ export default function buildRequestHelpers({
         const { data } = await request.patch(
           `${URL}/build/${buildId}/lumine-chat-visibility`,
           { visibility },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildLumineModelPreference({
+      buildId,
+      model,
+      reasoningEffort
+    }: {
+      buildId: number;
+      model: string;
+      reasoningEffort: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/${buildId}/lumine-model-preference`,
+          { model, reasoningEffort },
           auth()
         );
         return data;
@@ -3484,7 +3464,6 @@ export default function buildRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
-    },
-
+    }
   };
 }

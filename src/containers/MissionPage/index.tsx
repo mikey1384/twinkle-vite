@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import GoBack from '~/components/GoBack';
@@ -15,6 +15,7 @@ import {
 } from 'react-router-dom';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 const Main = lazyWithRetry(() => import('./Main'));
 const RightMenu = lazyWithRetry(() => import('./RightMenu'));
@@ -28,6 +29,7 @@ export default function MissionPage() {
   const { missionType = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const missionPageRef = useRef<HTMLDivElement | null>(null);
   const userId = useKeyContext((v) => v.myState.userId);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const loadMission = useAppContext((v) => v.requestHelpers.loadMission);
@@ -114,6 +116,29 @@ export default function MissionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, prevUserId, missionId, mission.loaded]);
 
+  const isManagementPage =
+    location.pathname === `/missions/${missionType}/manage`;
+  const isWorkshopPage =
+    location.pathname === `/missions/${missionType}/workshop`;
+  const isSharedPage = location.pathname === `/missions/${missionType}/shared`;
+  const isSystemPromptMission = missionType === 'system-prompt';
+  const allowManage = isAdmin && !isSystemPromptMission;
+  const hasSideMenu = isAdmin || isSystemPromptMission;
+  const missionRouteSection = isManagementPage
+    ? 'manage'
+    : isWorkshopPage
+    ? 'workshop'
+    : isSharedPage
+    ? 'shared'
+    : 'mission';
+
+  useScrollAnchorRestoration({
+    anchorKey: `mission-page:${location.pathname}`,
+    containerRef: missionPageRef,
+    initialScroll: { type: 'top' },
+    itemsReady: Boolean(userId && mission.loaded && !loading)
+  });
+
   if (loading) {
     return <Loading />;
   }
@@ -127,15 +152,6 @@ export default function MissionPage() {
   ) {
     return <InvalidPage />;
   }
-
-  const isManagementPage =
-    location.pathname === `/missions/${missionType}/manage`;
-  const isWorkshopPage =
-    location.pathname === `/missions/${missionType}/workshop`;
-  const isSharedPage = location.pathname === `/missions/${missionType}/shared`;
-  const isSystemPromptMission = missionType === 'system-prompt';
-  const allowManage = isAdmin && !isSystemPromptMission;
-  const hasSideMenu = isAdmin || isSystemPromptMission;
 
   return userId ? (
     mission.loaded ? (
@@ -192,6 +208,9 @@ export default function MissionPage() {
           `}
         >
           <div
+            ref={missionPageRef}
+            data-scroll-anchor-id={`mission-page:${missionType}:${missionRouteSection}`}
+            data-scroll-anchor-content-key={`mission:${missionType}:${missionRouteSection}`}
             className={css`
               display: flex;
               flex-direction: column;

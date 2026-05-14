@@ -58,13 +58,19 @@ export default function NotableActivities({
         </div>
       )}
       {posts.map((post: any, index: number) => (
-        <NotablePreview
+        <div
           key={post.feedId}
-          post={post}
-          profile={profile}
-          username={username}
-          style={{ marginBottom: index !== posts.length - 1 ? '1rem' : 0 }}
-        />
+          data-scroll-anchor-id={`profile-notable:${post.feedId}`}
+          data-scroll-anchor-secondary-id={String(post.feedId)}
+          data-scroll-anchor-content-key={`${post.contentType}:${post.contentId}`}
+        >
+          <NotablePreview
+            post={post}
+            profile={profile}
+            username={username}
+            style={{ marginBottom: index !== posts.length - 1 ? '1rem' : 0 }}
+          />
+        </div>
       ))}
       {loadMoreButtonShown && (
         <LoadMoreButton
@@ -118,12 +124,18 @@ function NotablePreview({
   const navigate = useNavigate();
 
   const {
+    hasSecretAnswer,
+    hasSecretAttachment,
+    secretShown: postSecretShown,
     timeStamp,
     secretAnswer,
     secretAttachment,
     subjectId,
     subjectUploaderId
   } = post;
+  const hasSecret = Boolean(
+    hasSecretAnswer || hasSecretAttachment || secretAnswer || secretAttachment
+  );
 
   const subjectState = useContentState({
     contentType: 'subject',
@@ -133,8 +145,9 @@ function NotablePreview({
   useEffect(() => {
     if (
       userId &&
-      (secretAnswer || secretAttachment) &&
+      hasSecret &&
       subjectId &&
+      !postSecretShown &&
       subjectState.prevSecretViewerId !== userId
     ) {
       handleCheckSecretShown();
@@ -155,15 +168,23 @@ function NotablePreview({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subjectId, subjectState?.prevSecretViewerId, userId]);
+  }, [
+    hasSecret,
+    postSecretShown,
+    subjectId,
+    subjectState?.prevSecretViewerId,
+    userId
+  ]);
 
   const isHidden = useMemo(() => {
     const secretShown =
-      subjectState.secretShown || subjectUploaderId === userId;
-    return (secretAnswer || secretAttachment) && !secretShown;
+      postSecretShown ||
+      subjectState.secretShown ||
+      subjectUploaderId === userId;
+    return hasSecret && !secretShown;
   }, [
-    secretAnswer,
-    secretAttachment,
+    hasSecret,
+    postSecretShown,
     subjectState.secretShown,
     subjectUploaderId,
     userId
@@ -230,7 +251,9 @@ function NotablePreview({
     border: 1px solid var(--ui-border);
     border-radius: ${borderRadius};
     background: #fff;
-    transition: background 0.5s, border 0.5s;
+    transition:
+      background 0.5s,
+      border 0.5s;
     &:hover {
       border-color: var(--ui-border-strong);
       background: ${Color.highlightGray()};

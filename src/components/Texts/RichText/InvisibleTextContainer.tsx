@@ -9,6 +9,7 @@ import { css } from '@emotion/css';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
+const collapsedLineHeight = 1.7;
 
 export default function InvisibleTextContainer({
   contentId,
@@ -92,7 +93,7 @@ export default function InvisibleTextContainer({
       word-break: break-word;
       line-height: 1.7;
       overflow: hidden;
-      max-height: calc(1.5em * ${maxLines});
+      max-height: calc(${collapsedLineHeight}em * ${maxLines});
     `,
     [maxLines]
   );

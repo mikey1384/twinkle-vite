@@ -15,6 +15,8 @@ export default function WorkshopPage({
 }) {
   return (
     <div
+      data-scroll-anchor-id={`mission-workshop:${mission?.id || mission?.missionType || 'system-prompt'}:page`}
+      data-scroll-anchor-content-key={`mission-workshop:${mission?.missionType || mission?.id || 'system-prompt'}:page`}
       className={css`
         display: flex;
         flex-direction: column;
@@ -23,6 +25,8 @@ export default function WorkshopPage({
       `}
     >
       <header
+        data-scroll-anchor-id={`mission-workshop:${mission?.id || mission?.missionType || 'system-prompt'}:header`}
+        data-scroll-anchor-content-key={`mission-workshop:${mission?.missionType || mission?.id || 'system-prompt'}:header`}
         className={css`
           display: flex;
           flex-direction: column;
@@ -64,6 +68,8 @@ export default function WorkshopPage({
         </p>
       </header>
       <div
+        data-scroll-anchor-id={`mission-workshop:${mission?.id || mission?.missionType || 'system-prompt'}:factory`}
+        data-scroll-anchor-content-key={`mission-workshop:${mission?.missionType || mission?.id || 'system-prompt'}:factory`}
         className={css`
           background: #fff;
           border: 1px solid var(--ui-border);

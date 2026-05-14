@@ -5,9 +5,9 @@ const CONTRIBUTION_CONFLICT_MARKER_SEPARATOR = '=======';
 const CONTRIBUTION_CONFLICT_MARKER_END = '>>>>>>> Contribution';
 
 export const UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE =
-  'Main was merged into this branch with conflict markers. Ask Lumine to resolve them before merging.';
+  'Main changes overlap with this branch. Let Lumine fix them before merging.';
 export const MERGE_CONFLICT_MARKERS_MESSAGE =
-  'Conflict markers were written into the project files. Resolve them with Lumine or edit the files, then complete the merge.';
+  'Branch changes overlap in the main project files. Let Lumine fix them or edit the files.';
 
 function hasContributionConflictMarkers(content: string) {
   const text = String(content || '');
@@ -39,7 +39,11 @@ export function canClearConflictMarkerActionError(message: string) {
     normalized === UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE ||
     normalized === MERGE_CONFLICT_MARKERS_MESSAGE ||
     /^Resolve conflict markers in .+ first\.$/.test(normalized) ||
+    /^Fix overlapping branch changes in .+ first\.$/.test(normalized) ||
     /^Resolve all conflict markers before (?:updating from main|completing this merge)\.$/.test(
+      normalized
+    ) ||
+    /^Fix overlapping branch changes before (?:updating from main|completing this merge)\.$/.test(
       normalized
     )
   );

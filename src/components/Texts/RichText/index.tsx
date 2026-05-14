@@ -121,6 +121,7 @@ const RichTextCss = css`
     margin-top: 1em;
   }
 `;
+const collapsedLineHeight = 1.7;
 
 function RichText({
   style,
@@ -266,7 +267,8 @@ function RichText({
         'img, iframe, video, audio'
       );
       if (!hasEmbeddedContent) {
-        const heightToApply = isOverflown ? visibleHeight - 20 : visibleHeight;
+        const heightToApply =
+          isOverflown && !isPreview ? visibleHeight - 20 : visibleHeight;
         TextRef.current.style.height = fullTextShown
           ? 'auto'
           : `${heightToApply}px`;
@@ -280,7 +282,7 @@ function RichText({
     } else {
       TextRef.current.style.height = 'auto';
     }
-  }, [containerNode, fullTextShown, isOverflown, isParsed]);
+  }, [containerNode, fullTextShown, isOverflown, isParsed, isPreview]);
 
   const appliedLinkColor = useMemo(
     () => (isStatusMsg ? statusMsgLinkColor : linkColor),
@@ -351,6 +353,7 @@ function RichText({
         <Markdown
           contentId={contentId}
           contentType={contentType}
+          isPreview={isPreview}
           isProfileComponent={isProfileComponent}
           isAIMessage={isAIMessage}
           linkColor={appliedLinkColor}
@@ -369,6 +372,7 @@ function RichText({
     contentId,
     contentType,
     isAIMessage,
+    isPreview,
     isProfileComponent,
     markerColor,
     text,
@@ -386,7 +390,9 @@ function RichText({
         style={{
           opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
           minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
-          maxHeight: fullTextShown ? undefined : `calc(1.5em * ${maxLines})`,
+          maxHeight: fullTextShown
+            ? undefined
+            : `calc(${collapsedLineHeight}em * ${maxLines})`,
           overflow: fullTextShown ? undefined : 'hidden',
           ...style
         }}

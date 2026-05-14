@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { debounce } from 'lodash';
+import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
 import { mergeStates, subtitleVideoPlayer, subtitlesState } from '~/constants/state';
 import { srtTimeToSeconds } from '../helpers/utils';
 import ActionBar from './ActionBar';
@@ -60,6 +61,10 @@ export default function EditSubtitles({
     onSetMergeProgress,
     onSetMergeStage
   });
+  const {
+    confirmModal: removeSubtitleConfirmModal,
+    requestConfirm: requestRemoveSubtitleConfirm
+  } = useConfirmModal();
 
   useEffect(() => {
     if (isMergingInProgress) {
@@ -203,25 +208,27 @@ export default function EditSubtitles({
     [onSetEditingTimes, onSetSubtitles, subtitles]
   );
 
-  const handleRemoveSubtitle = useCallback(
-    (index: number) => {
-      if (
-        !window.confirm('Are you sure you want to remove this subtitle block?')
-      ) {
-        return;
-      }
+  async function handleRemoveSubtitle(index: number) {
+    const confirmed = await requestRemoveSubtitleConfirm({
+      title: 'Remove subtitle block',
+      description: 'Are you sure you want to remove this subtitle block?',
+      descriptionFontSize: '1.35rem',
+      confirmButtonColor: 'red',
+      confirmButtonLabel: 'Remove'
+    });
+    if (!confirmed) {
+      return;
+    }
 
-      const updatedSubtitles = subtitles.filter((_, i) => i !== index);
-      onSetSubtitles(
-        updatedSubtitles.map((sub, i) => ({
-          ...sub,
-          index: i + 1
-        }))
-      );
-      subtitlesState.lastEdited = Date.now();
-    },
-    [onSetSubtitles, subtitles]
-  );
+    const updatedSubtitles = subtitles.filter((_, i) => i !== index);
+    onSetSubtitles(
+      updatedSubtitles.map((sub, i) => ({
+        ...sub,
+        index: i + 1
+      }))
+    );
+    subtitlesState.lastEdited = Date.now();
+  }
 
   const handleInsertSubtitle = useCallback(
     (index: number) => {
@@ -461,6 +468,7 @@ export default function EditSubtitles({
         onMerge={handleMerge}
         onSave={handleSaveEditedSrt}
       />
+      {removeSubtitleConfirmModal}
     </div>
   );
 

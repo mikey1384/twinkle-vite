@@ -171,17 +171,22 @@ export default function MissionProgress({
             {filteredMissions.length > 0 ? (
               <>
                 {filteredMissions.map((mission) => (
-                  <MissionItem
+                  <div
                     key={mission.key}
-                    style={{ marginRight: '1rem', marginBottom: '1rem' }}
-                    completed={
-                      selectedMissionListTab === 'complete' ||
-                      selectedMissionListTab === 'legacy'
-                    }
-                    taskProgress={mission.taskProgress}
-                    missionName={mission.name}
-                    missionType={mission.key}
-                  />
+                    data-scroll-anchor-id={`profile-mission:${mission.key}`}
+                    data-scroll-anchor-content-key={`mission:${mission.key}`}
+                  >
+                    <MissionItem
+                      style={{ marginRight: '1rem', marginBottom: '1rem' }}
+                      completed={
+                        selectedMissionListTab === 'complete' ||
+                        selectedMissionListTab === 'legacy'
+                      }
+                      taskProgress={mission.taskProgress}
+                      missionName={mission.name}
+                      missionType={mission.key}
+                    />
+                  </div>
                 ))}
               </>
             ) : (

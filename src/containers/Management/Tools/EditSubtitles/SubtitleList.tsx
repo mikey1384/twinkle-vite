@@ -21,7 +21,7 @@ interface Props {
   ) => void;
   onInsertSubtitle: (index: number) => void;
   onPlaySubtitle: (startTime: number, endTime: number) => void;
-  onRemoveSubtitle: (index: number) => void;
+  onRemoveSubtitle: (index: number) => void | Promise<void>;
   onSeekToSubtitle: (startTime: number) => void;
   onShiftSubtitle: (index: number, shiftSeconds: number) => void;
   onTimeInputBlur: (index: number, field: TimeField) => void;

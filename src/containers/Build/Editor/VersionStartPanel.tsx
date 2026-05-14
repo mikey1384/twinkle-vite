@@ -539,12 +539,14 @@ export default function VersionStartPanel({
   pendingCollaborationRequestCount = 0,
   releaseStatus = null,
   publishing = false,
+  mainProjectConflictMarkerPaths = [],
   status,
   onBranchNameChange,
   onStartVersion,
   onLoadVersion,
   onDeleteBranch,
   onFork,
+  onFixMergeConflicts,
   onOpenTeamPanel,
   onOpenBranchesPanel,
   onUpdatePublishedApp,
@@ -569,12 +571,14 @@ export default function VersionStartPanel({
   pendingCollaborationRequestCount?: number;
   releaseStatus?: BuildReleaseStatus | null;
   publishing?: boolean;
+  mainProjectConflictMarkerPaths?: string[];
   status?: string | null;
   onBranchNameChange: (value: string) => void;
   onStartVersion: () => void;
   onLoadVersion: (version: BuildVersionSummary) => void;
   onDeleteBranch: (target: BuildBranchDeleteTarget) => void;
   onFork: () => void;
+  onFixMergeConflicts?: () => void | Promise<void>;
   onOpenTeamPanel: () => void;
   onOpenBranchesPanel: () => void;
   onUpdatePublishedApp: () => void;
@@ -645,10 +649,9 @@ export default function VersionStartPanel({
   const mergingBranches = versions.filter(
     (version) => String(version.contributionStatus || '').trim() === 'merging'
   );
+  const mainProjectConflictMarkerCount = mainProjectConflictMarkerPaths.length;
   const releaseDiffTotal = getReleaseDiffTotal(releaseStatus);
-  const hasUnpublishedChanges = Boolean(
-    releaseStatus?.hasUnpublishedChanges
-  );
+  const hasUnpublishedChanges = Boolean(releaseStatus?.hasUnpublishedChanges);
 
   useEffect(() => {
     const scrollTop = normalizeWorkspacePanelScrollTop(
@@ -703,8 +706,7 @@ export default function VersionStartPanel({
   }
 
   function commitScrollTop(scrollTop: number) {
-    const normalizedScrollTop =
-      normalizeWorkspacePanelScrollTop(scrollTop);
+    const normalizedScrollTop = normalizeWorkspacePanelScrollTop(scrollTop);
     if (lastSavedScrollTopRef.current === normalizedScrollTop) return;
     lastSavedScrollTopRef.current = normalizedScrollTop;
     onScrollTopChangeRef.current?.(normalizedScrollTop);
@@ -763,7 +765,10 @@ export default function VersionStartPanel({
     onLoadVersion(version);
   }
 
-  function renderBranchSection(title: string, branchList: BuildVersionSummary[]) {
+  function renderBranchSection(
+    title: string,
+    branchList: BuildVersionSummary[]
+  ) {
     return (
       <div className={branchSectionClass}>
         <span className={versionLoadTitleClass}>{title}</span>
@@ -782,8 +787,9 @@ export default function VersionStartPanel({
               Number(version.id || 0) === Number(activeBuildId || 0);
             const canDeleteBranch =
               !isCurrentBranch &&
-              Number(version.contributionContributorId || version.userId || 0) ===
-                Number(currentUserId || 0) &&
+              Number(
+                version.contributionContributorId || version.userId || 0
+              ) === Number(currentUserId || 0) &&
               canDeleteBuildBranchStatus(branchStatus);
             const deleteTarget = {
               id: version.id,
@@ -945,19 +951,35 @@ export default function VersionStartPanel({
       });
     }
 
-    if (mergingBranches.length > 0) {
+    if (mainProjectConflictMarkerCount > 0 || mergingBranches.length > 0) {
+      const canFixWithLumine =
+        mainProjectConflictMarkerCount > 0 &&
+        typeof onFixMergeConflicts === 'function';
       items.push({
-        key: 'merging',
+        key: 'main-conflicts',
         tone: 'merge',
         icon: 'exclamation-triangle',
-        label: `${formatOwnerAttentionCount(
-          mergingBranches.length,
-          'merge'
-        )} needs help`,
-        detail: 'Ask Lumine to finish the merge conflict cleanup.',
-        actionLabel: 'Fix',
-        actionIcon: 'sparkles',
-        onClick: onOpenBranchesPanel
+        label:
+          mainProjectConflictMarkerCount > 0
+            ? `${formatOwnerAttentionCount(
+                mainProjectConflictMarkerCount,
+                'conflict file'
+              )} needs help`
+            : `${formatOwnerAttentionCount(
+                mergingBranches.length,
+                'legacy merge'
+              )} needs help`,
+        detail:
+          mainProjectConflictMarkerCount > 0
+            ? 'Send the main project conflict cleanup to Lumine.'
+            : 'Open branches to finish the legacy merge record.',
+        actionLabel: canFixWithLumine ? 'Fix' : 'Open Branches',
+        actionIcon: canFixWithLumine ? 'wand-magic-sparkles' : 'code-branch',
+        onClick: canFixWithLumine
+          ? () => {
+              void onFixMergeConflicts?.();
+            }
+          : onOpenBranchesPanel
       });
     }
 
@@ -1005,12 +1027,8 @@ export default function VersionStartPanel({
                 <Icon icon={item.icon as any} />
               </span>
               <span className={ownerAttentionTextClass}>
-                <span className={ownerAttentionLabelClass}>
-                  {item.label}
-                </span>
-                <span className={ownerAttentionDetailClass}>
-                  {item.detail}
-                </span>
+                <span className={ownerAttentionLabelClass}>{item.label}</span>
+                <span className={ownerAttentionDetailClass}>{item.detail}</span>
               </span>
               <button
                 type="button"

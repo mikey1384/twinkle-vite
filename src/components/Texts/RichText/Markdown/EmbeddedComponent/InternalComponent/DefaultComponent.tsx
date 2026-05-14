@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { css } from '@emotion/css';
+import { Color, borderRadius } from '~/constants/css';
 
 const getDescriptionForLinkType: { [key: string]: (src: string) => string } = {
   users: (src) => {
@@ -72,9 +74,11 @@ const getDescriptionForLinkType: { [key: string]: (src: string) => string } = {
 };
 
 export default function DefaultComponent({
+  isPreview,
   linkType,
   src
 }: {
+  isPreview?: boolean;
   linkType: string;
   src: string;
 }) {
@@ -90,6 +94,19 @@ export default function DefaultComponent({
     [appliedLinkType, src]
   );
 
+  if (isPreview) {
+    return (
+      <Link
+        className={compactDefaultEmbedClass}
+        to={src}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <span>Link</span>
+        <strong>{linkLabel}</strong>
+      </Link>
+    );
+  }
+
   return (
     <div>
       <Link to={src} style={{ fontWeight: 'bold' }}>
@@ -98,6 +115,37 @@ export default function DefaultComponent({
     </div>
   );
 }
+
+const compactDefaultEmbedClass = css`
+  display: flex;
+  width: 100%;
+  min-height: 6.4rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.9rem;
+  overflow: hidden;
+  border: 1px solid ${Color.logoBlue(0.42)};
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: ${Color.darkerGray()};
+  text-decoration: none;
+  span {
+    color: ${Color.logoBlue()};
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+  strong {
+    overflow: hidden;
+    color: ${Color.black()};
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
 
 function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);

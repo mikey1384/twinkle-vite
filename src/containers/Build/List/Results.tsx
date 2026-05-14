@@ -8,6 +8,7 @@ import ProjectListItem, {
   type BuildProjectListItemData
 } from '~/components/Build/ProjectListItem';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { getBrowseEmptyCopy } from './helpers';
 import type { BuildListTab } from './types';
 
@@ -84,9 +85,21 @@ const loadMoreWrapClass = css`
   justify-content: center;
 `;
 
+const browseLoadingClass = css`
+  height: 60rem;
+  width: 100%;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    height: 36rem;
+  }
+`;
+
 export default function Results({
   activeTab,
   activeTabLabel,
+  anchorKey,
+  initialScrollToList,
+  initialScrollTargetRef,
   browseBuilds,
   browseHasMore,
   browseLoading,
@@ -112,6 +125,9 @@ export default function Results({
 }: {
   activeTab: BuildListTab;
   activeTabLabel: string;
+  anchorKey: string;
+  initialScrollToList: boolean;
+  initialScrollTargetRef: React.RefObject<HTMLElement | null>;
   browseBuilds: BuildProjectListItemData[];
   browseHasMore: boolean;
   browseLoading: boolean;
@@ -145,6 +161,22 @@ export default function Results({
   onPromptInputChange: (value: string) => void;
   onStartFromPrompt: () => void;
 }) {
+  const buildGridRef = React.useRef<HTMLDivElement | null>(null);
+  const visibleBuilds = isMyBuildsTab ? displayedMyBuilds : browseBuilds;
+  useScrollAnchorRestoration({
+    anchorKey,
+    containerRef: buildGridRef,
+    initialScroll: initialScrollToList
+      ? {
+          type: 'element',
+          targetRef: initialScrollTargetRef
+        }
+      : { type: 'top' },
+    itemsReady:
+      visibleBuilds.length > 0 &&
+      (isMyBuildsTab || (!browseLoading && browseBuilds.length > 0))
+  });
+
   if (isMyBuildsTab) {
     if (builds.length === 0 && !isBuildSearchActive) {
       return (
@@ -185,27 +217,33 @@ export default function Results({
       return <SearchEmptyState query={searchQuery} />;
     }
     return (
-      <div className={buildGridClass}>
+      <div ref={buildGridRef} className={buildGridClass}>
         {displayedMyBuilds.map((build) => (
-          <ProjectListItem
+          <div
             key={build.id}
-            build={build}
-            isOwner
-            onAddDescription={onAddDescription}
-            onDelete={onDelete}
-            showFavoriteAction
-            onFavoriteChange={onFavoriteChange}
-            onFavoriteError={onFavoriteError}
-            onFavoriteStart={onFavoriteStart}
-            onOpenForkHistory={onOpenForkHistory}
-          />
+            data-scroll-anchor-id={getBuildScrollAnchorId(build)}
+            data-scroll-anchor-secondary-id={String(build.id)}
+            data-scroll-anchor-content-key={`build:${build.id}`}
+          >
+            <ProjectListItem
+              build={build}
+              isOwner
+              onAddDescription={onAddDescription}
+              onDelete={onDelete}
+              showFavoriteAction
+              onFavoriteChange={onFavoriteChange}
+              onFavoriteError={onFavoriteError}
+              onFavoriteStart={onFavoriteStart}
+              onOpenForkHistory={onOpenForkHistory}
+            />
+          </div>
         ))}
       </div>
     );
   }
 
   if (browseLoading) {
-    return <Loading />;
+    return <Loading className={browseLoadingClass} />;
   }
   if (browseBuilds.length === 0) {
     if (isBuildSearchActive) {
@@ -220,31 +258,43 @@ export default function Results({
   }
   return (
     <>
-      <div className={buildGridClass}>
+      <div ref={buildGridRef} className={buildGridClass}>
         {browseBuilds.map((build) => (
-          <ProjectListItem
+          <div
             key={build.id}
-            build={build}
-            to={activeTab === 'collaborating' ? `/build/${build.id}` : `/app/${build.id}`}
-            navigationState={{
-              ...(activeTab === 'collaborating'
-                ? { openPeoplePanel: true }
-                : {
-                    runtimeBackTo,
-                    runtimeBackLabel: 'Back to Build Studio'
-                  })
-            }}
-            primaryActionLabel={
-              activeTab === 'collaborating' ? 'Work together' : undefined
-            }
-            primaryActionIcon={activeTab === 'collaborating' ? 'users' : undefined}
-            showCollaborationRequestAction={activeTab !== 'collaborating'}
-            showFavoriteAction
-            onFavoriteChange={onFavoriteChange}
-            onFavoriteError={onFavoriteError}
-            onFavoriteStart={onFavoriteStart}
-            onOpenForkHistory={onOpenForkHistory}
-          />
+            data-scroll-anchor-id={getBuildScrollAnchorId(build)}
+            data-scroll-anchor-secondary-id={String(build.id)}
+            data-scroll-anchor-content-key={`build:${build.id}`}
+          >
+            <ProjectListItem
+              build={build}
+              to={
+                activeTab === 'collaborating'
+                  ? `/build/${build.id}`
+                  : `/app/${build.id}`
+              }
+              navigationState={{
+                ...(activeTab === 'collaborating'
+                  ? { openPeoplePanel: true }
+                  : {
+                      runtimeBackTo,
+                      runtimeBackLabel: 'Back to Build Studio'
+                    })
+              }}
+              primaryActionLabel={
+                activeTab === 'collaborating' ? 'Work together' : undefined
+              }
+              primaryActionIcon={
+                activeTab === 'collaborating' ? 'users' : undefined
+              }
+              showCollaborationRequestAction={activeTab !== 'collaborating'}
+              showFavoriteAction
+              onFavoriteChange={onFavoriteChange}
+              onFavoriteError={onFavoriteError}
+              onFavoriteStart={onFavoriteStart}
+              onOpenForkHistory={onOpenForkHistory}
+            />
+          </div>
         ))}
       </div>
       {browseHasMore ? (
@@ -258,6 +308,10 @@ export default function Results({
       ) : null}
     </>
   );
+}
+
+function getBuildScrollAnchorId(build: BuildProjectListItemData) {
+  return `build:${build.id}`;
 }
 
 function SearchEmptyState({ query }: { query: string }) {

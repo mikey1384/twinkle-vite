@@ -24,7 +24,7 @@ interface SubtitleEditorProps {
     value: number | string
   ) => void;
   onTimeInputBlur: (index: number, field: TimeField) => void;
-  onRemoveSubtitle: (index: number) => void;
+  onRemoveSubtitle: (index: number) => void | Promise<void>;
   onInsertSubtitle: (index: number) => void;
   onSeekToSubtitle: (startTime: number) => void;
   onPlaySubtitle: (startTime: number, endTime: number) => void;
@@ -117,7 +117,7 @@ function SubtitleEditor({
         <div style={{ fontWeight: 'bold' }}>#{sub.index}</div>
         <ButtonGroup spacing="sm">
           <Button
-            onClick={() => onRemoveSubtitle(index)}
+            onClick={() => void onRemoveSubtitle(index)}
             size="sm"
             variant="danger"
             title="Remove this subtitle"

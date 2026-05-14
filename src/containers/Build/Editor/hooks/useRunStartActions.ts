@@ -15,6 +15,7 @@ import type {
   BuildRunEvent,
   ChatMessage
 } from '../types';
+import type { BuildLumineModelPreference } from '../ChatPanel/types';
 
 interface RunStartIdentity {
   beginRun(options: {
@@ -64,6 +65,7 @@ interface UseRunStartActionsOptions {
   forceChatAutoScroll: () => void;
   getLatestBuild: () => Build;
   getLatestChatMessages: () => ChatMessage[];
+  getLumineModelSelection: () => BuildLumineModelPreference | null;
   getRuntimeExplorationPlan: () => BuildRuntimeExplorationPlan | null;
   isOwner: boolean;
   isRunActivityInFlight: () => boolean;
@@ -93,6 +95,7 @@ export default function useRunStartActions({
   forceChatAutoScroll,
   getLatestBuild,
   getLatestChatMessages,
+  getLumineModelSelection,
   getRuntimeExplorationPlan,
   isOwner,
   isRunActivityInFlight,
@@ -152,6 +155,7 @@ export default function useRunStartActions({
       activeBuild?.projectFiles || [],
       activeBuild?.code || ''
     );
+    const lumineModelSelection = getLumineModelSelection();
     setDismissedFollowUpPromptKey('');
     clearLocalFollowUpPrompt();
 
@@ -209,6 +213,9 @@ export default function useRunStartActions({
       runtimeAutoFixSourceRequestId: options?.sourceRequestId || null,
       runtimeAutoFixSourceArtifactVersionId:
         options?.sourceArtifactVersionId || null,
+      lumineModel: lumineModelSelection?.model || undefined,
+      lumineReasoningEffort:
+        lumineModelSelection?.reasoningEffort || undefined,
       assistantClientMessageId,
       expectedCurrentArtifactVersionId:
         Number(getLatestBuild()?.currentArtifactVersionId || 0) > 0
@@ -274,6 +281,7 @@ export default function useRunStartActions({
         activeBuild.projectFiles || [],
         activeBuild.code || ''
       );
+      const lumineModelSelection = getLumineModelSelection();
       setDismissedFollowUpPromptKey('');
       clearLocalFollowUpPrompt();
       runtimeFollowUp.resetRuntimeHealthFollowUpState();
@@ -357,6 +365,9 @@ export default function useRunStartActions({
         existingUserMessageId: existingUserMessageId || undefined,
         clientMessageId: userClientMessageId || undefined,
         assistantClientMessageId,
+        lumineModel: lumineModelSelection?.model || undefined,
+        lumineReasoningEffort:
+          lumineModelSelection?.reasoningEffort || undefined,
         planAction: options?.planAction || undefined,
         promptBinding: options?.promptBinding || undefined,
         expectedCurrentArtifactVersionId:

@@ -146,18 +146,27 @@ export default function TaskContainer({ mission }: { mission: any }) {
   }
 
   return (
-    <div style={{ width: '100%' }}>
+    <div
+      data-scroll-anchor-id={`mission-task:${task.id || taskType}:page`}
+      data-scroll-anchor-content-key={`mission-task:${task.missionType || taskType}:page`}
+      style={{ width: '100%' }}
+    >
       {loading ? (
         <Loading />
       ) : (
         <>
           <GoBack isAtTop={!isManager} bordered to=".." text={mission.title} />
-          <Task
-            style={{ width: '100%', marginTop: '2rem' }}
-            task={task}
-            onSetMissionState={onSetMissionState}
-            nextTaskType={nextTask}
-          />
+          <div
+            data-scroll-anchor-id={`mission-task:${task.id || taskType}:task`}
+            data-scroll-anchor-content-key={`mission-task:${task.missionType || taskType}:task`}
+          >
+            <Task
+              style={{ width: '100%', marginTop: '2rem' }}
+              task={task}
+              onSetMissionState={onSetMissionState}
+              nextTaskType={nextTask}
+            />
+          </div>
           <GoBack
             isAtTop={false}
             style={{ marginTop: '2rem' }}
@@ -165,19 +174,24 @@ export default function TaskContainer({ mission }: { mission: any }) {
             to=".."
             text={mission.title}
           />
-          <Tutorial
-            mission={task}
-            innerRef={TutorialRef}
-            className={css`
-              margin-top: 5rem;
-              margin-bottom: 1rem;
-              width: 100%;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-top: 2rem;
-              }
-            `}
-            onSetMissionState={onSetMissionState}
-          />
+          <div
+            data-scroll-anchor-id={`mission-task:${task.id || taskType}:tutorial`}
+            data-scroll-anchor-content-key={`mission-task:${task.missionType || taskType}:tutorial`}
+          >
+            <Tutorial
+              mission={task}
+              innerRef={TutorialRef}
+              className={css`
+                margin-top: 5rem;
+                margin-bottom: 1rem;
+                width: 100%;
+                @media (max-width: ${mobileMaxWidth}) {
+                  margin-top: 2rem;
+                }
+              `}
+              onSetMissionState={onSetMissionState}
+            />
+          </div>
           {task.tutorialStarted && (
             <TutorialModal
               missionTitle={task.title}

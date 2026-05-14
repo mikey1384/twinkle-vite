@@ -48,11 +48,17 @@ export default function MadeByUsers({
         loaded={loaded}
       >
         {shownSubjects.map((subject) => (
-          <ContentListItem
+          <div
             key={subject.id}
-            style={{ marginBottom: '1rem' }}
-            contentObj={subject}
-          />
+            data-scroll-anchor-id={`explore-subjects:by-user:${subject.id}`}
+            data-scroll-anchor-secondary-id={String(subject.id)}
+            data-scroll-anchor-content-key={`subject:${subject.id}`}
+          >
+            <ContentListItem
+              style={{ marginBottom: '1rem' }}
+              contentObj={subject}
+            />
+          </div>
         ))}
       </SectionPanel>
     </ErrorBoundary>

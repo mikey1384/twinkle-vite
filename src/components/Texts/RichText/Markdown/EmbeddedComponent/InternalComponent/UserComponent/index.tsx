@@ -8,7 +8,13 @@ import {
 import Loading from '~/components/Loading';
 import DefaultComponent from './DefaultComponent';
 
-export default function UserComponent({ src }: { src: string }) {
+export default function UserComponent({
+  src,
+  isPreview
+}: {
+  src: string;
+  isPreview?: boolean;
+}) {
   const parts = src.split('/');
   const username = parts[2];
   const pageType = parts[3];
@@ -78,6 +84,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'watched') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         profile={profile}
@@ -88,6 +95,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'likes') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         profile={profile}
@@ -98,6 +106,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'all' && subPageType === 'byuser') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         subPageType={subPageType}
@@ -109,6 +118,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'all') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         profile={profile}
@@ -119,6 +129,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'comments') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         profile={profile}
@@ -129,6 +140,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'subjects' && subPageType === 'byuser') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         subPageType={subPageType}
@@ -140,6 +152,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'subjects') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         profile={profile}
@@ -150,6 +163,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'ai-stories') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         profile={profile}
@@ -160,6 +174,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'videos' && subPageType === 'byuser') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         subPageType={subPageType}
@@ -171,6 +186,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'videos') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         profile={profile}
@@ -181,6 +197,7 @@ export default function UserComponent({ src }: { src: string }) {
   if (pageType === 'links' && subPageType === 'byuser') {
     return (
       <DefaultComponent
+        isPreview={isPreview}
         src={src}
         pageType={pageType}
         subPageType={subPageType}
@@ -189,5 +206,12 @@ export default function UserComponent({ src }: { src: string }) {
       />
     );
   }
-  return <DefaultComponent src={src} profile={profile} profileId={profileId} />;
+  return (
+    <DefaultComponent
+      isPreview={isPreview}
+      src={src}
+      profile={profile}
+      profileId={profileId}
+    />
+  );
 }

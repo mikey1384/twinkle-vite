@@ -9,6 +9,7 @@ import {
   resolveIndexHtmlFromProjectFiles
 } from '../helpers/projectFiles';
 import useProjectFileDrafts, {
+  type BuildProjectFileContributionAction,
   type BuildProjectFilesDraftState
 } from './useProjectFileDrafts';
 import type {
@@ -18,8 +19,6 @@ import type {
   ProjectFileSaveOptions,
   ProjectFileSaveResult
 } from '../types';
-
-type ContributionAction = 'merge' | 'update-from-main';
 
 interface BuildEditorProjectFilesFeedbackEvent {
   kind: BuildRunEvent['kind'];
@@ -43,6 +42,7 @@ interface UseBuildEditorProjectFilesOptions {
     nextBuild: Build | null | undefined
   ) => void;
   onSyncAvailableBranchSummary: (nextBuild: Build) => void;
+  discardProjectFilesDraft: () => Array<{ path: string; content?: string }>;
   replaceCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
   requiresProjectFilesResyncBeforeSave: () => boolean;
   setRequiresProjectFilesResyncBeforeSave: (nextValue: boolean) => void;
@@ -64,6 +64,7 @@ export default function useProjectFiles({
   onAppendLocalRunEvent,
   onRefreshCurrentBranchMergeabilityForBuild,
   onSyncAvailableBranchSummary,
+  discardProjectFilesDraft,
   replaceCopilotPolicy,
   requiresProjectFilesResyncBeforeSave,
   setRequiresProjectFilesResyncBeforeSave,
@@ -74,6 +75,7 @@ export default function useProjectFiles({
     isOwner,
     normalizeProjectFilePath,
     persistProjectFilesDraft,
+    discardProjectFilesDraft,
     onAppendFeedbackEvent: onAppendLocalRunEvent
   });
 
@@ -325,12 +327,13 @@ export default function useProjectFiles({
   }
 
   function prepareProjectFilesForContributionAction(options: {
-    action: ContributionAction;
+    action: BuildProjectFileContributionAction;
   }) {
     return projectFileDrafts.prepareProjectFilesForContributionAction(options);
   }
 
   return {
+    draftActionPrompt: projectFileDrafts.draftActionPrompt,
     ensureProjectFilesPersistedBeforePublish:
       projectFileDrafts.ensureProjectFilesPersistedBeforePublish,
     ensureProjectFilesPersistedBeforeRun:
@@ -341,6 +344,8 @@ export default function useProjectFiles({
     handleReplaceCode,
     handleSaveProjectFiles,
     prepareProjectFilesForContributionAction,
+    resolveProjectFilesDraftActionPrompt:
+      projectFileDrafts.resolveProjectFilesDraftActionPrompt,
     resetProjectFilesDraftState: projectFileDrafts.resetDraftState
   };
 }

@@ -209,7 +209,8 @@ function MediaPlayer({
     onPause();
   }
 
-  function handlePlay() {
+  function handlePlay(event?: React.SyntheticEvent) {
+    event?.stopPropagation();
     setPlaying(true);
     setHasStartedPlaying(true);
     onPlay();

@@ -3,6 +3,7 @@ import type {
   RefObject,
   SetStateAction
 } from 'react';
+import type { ConfirmModalOptions } from '~/components/Modals/hooks/useConfirmModal';
 import {
   getPreferredIndexPath,
   isIndexHtmlPath,
@@ -41,6 +42,7 @@ export default function useProjectFileActions({
   newFilePath,
   onSaveProjectFiles,
   renamePathInput,
+  requestConfirm,
   savingProjectFiles,
   savingProjectFilesRef,
   selectedFolderPath,
@@ -88,6 +90,7 @@ export default function useProjectFileActions({
     error?: string;
   }>;
   renamePathInput: string;
+  requestConfirm: (options: ConfirmModalOptions) => Promise<boolean>;
   savingProjectFiles: boolean;
   savingProjectFilesRef: RefObject<boolean>;
   selectedFolderPath: string | null;
@@ -259,18 +262,32 @@ export default function useProjectFileActions({
     setProjectFileError('');
   }
 
-  function handleDeleteProjectFile(filePath: string) {
+  async function handleDeleteProjectFile(filePath: string) {
     if (!isOwner || areProjectFileMutationsLocked()) return;
     if (isIndexHtmlPath(filePath)) {
       setProjectFileError('Cannot delete /index.html');
       return;
     }
-    const nextFiles = editableProjectFiles.filter(
+    const currentFiles = readLatestEditableProjectFiles(editableProjectFilesRef);
+    const nextFiles = currentFiles.filter(
       (file) => file.path !== filePath
     );
-    if (nextFiles.length === editableProjectFiles.length) return;
-    if (!window.confirm(`Delete ${filePath}?`)) return;
-    setEditableFiles(nextFiles, { markDirty: true });
+    if (nextFiles.length === currentFiles.length) return;
+    const confirmed = await requestConfirm({
+      title: 'Delete project file',
+      description: `Delete ${filePath}?`,
+      descriptionFontSize: '1.4rem',
+      confirmButtonColor: 'red',
+      confirmButtonLabel: 'Delete'
+    });
+    if (!confirmed) return;
+    if (!isOwner || areProjectFileMutationsLocked() || isIndexHtmlPath(filePath)) {
+      return;
+    }
+    const latestFiles = readLatestEditableProjectFiles(editableProjectFilesRef);
+    const latestNextFiles = latestFiles.filter((file) => file.path !== filePath);
+    if (latestNextFiles.length === latestFiles.length) return;
+    setEditableFiles(latestNextFiles, { markDirty: true });
     setProjectFileError('');
   }
 

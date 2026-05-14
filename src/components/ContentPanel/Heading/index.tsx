@@ -2,7 +2,7 @@ import React, { useMemo, memo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import HeadingText from './Text';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { timeSince, formatDate } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
@@ -10,6 +10,7 @@ import { Content } from '~/types';
 
 function Heading({
   action,
+  compactFeed,
   feedActivityType,
   feedTimeStamp,
   feedUploader,
@@ -26,6 +27,7 @@ function Heading({
   }
 }: {
   action: string;
+  compactFeed?: boolean;
   feedActivityType?: string | null;
   feedTimeStamp?: number | string | null;
   feedUploader?: any;
@@ -42,7 +44,6 @@ function Heading({
     contentType: normalizedRootType,
     contentId: rootId
   });
-  const navigate = useNavigate();
   // For pass content, contentObj.rootType tells us if it's mission or achievement
   const passRootType = contentObj?.rootType;
   const displayedTimeStamp =
@@ -87,7 +88,7 @@ function Heading({
 
   return (
     <ErrorBoundary componentPath="ContentPanel/Heading">
-      <header className="heading">
+      <header className={`heading${compactFeed ? ' compact-feed' : ''}`}>
         <ProfilePic
           style={{ width: '3.8rem', flexShrink: 0 }}
           userId={headingUser.id}
@@ -104,6 +105,7 @@ function Heading({
           <span className="title">
             <HeadingText
               action={action}
+              compactFeed={compactFeed}
               contentObj={contentObj}
               feedActivityType={feedActivityType}
               feedUploader={feedUploader}
@@ -115,13 +117,21 @@ function Heading({
             <small
               className={`timestamp ${css`
                 cursor: pointer;
-                &:hover {
+                a {
+                  color: inherit;
+                  text-decoration: none;
+                }
+                a:hover {
                   text-decoration: underline;
                 }
               `}`}
-              onClick={() => navigate(timeStampLink)}
             >
-              {formattedTime}
+              <Link
+                to={timeStampLink}
+                onClick={(event) => event.stopPropagation()}
+              >
+                {formattedTime}
+              </Link>
             </small>
           ) : null}
         </div>

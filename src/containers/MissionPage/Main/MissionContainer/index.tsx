@@ -19,30 +19,49 @@ export default function MissionContainer({
   }, [mission.missionType]);
 
   return (
-    <div style={{ width: '100%' }}>
-      <Mission
-        style={{ width: '100%' }}
-        mission={mission}
-        onSetMissionState={onSetMissionState}
-      />
+    <div
+      data-scroll-anchor-id={`mission-detail:${mission.id || mission.missionType}:page`}
+      data-scroll-anchor-content-key={`mission:${mission.missionType || mission.id}:page`}
+      style={{ width: '100%' }}
+    >
+      <div
+        data-scroll-anchor-id={`mission-detail:${mission.id || mission.missionType}:mission`}
+        data-scroll-anchor-content-key={`mission:${mission.missionType || mission.id}:mission`}
+      >
+        <Mission
+          style={{ width: '100%' }}
+          mission={mission}
+          onSetMissionState={onSetMissionState}
+        />
+      </div>
       {isRepeatMission ? (
-        <RepeatMissionAddons
-          mission={mission}
-          onSetMissionState={onSetMissionState}
-        />
+        <div
+          data-scroll-anchor-id={`mission-detail:${mission.id || mission.missionType}:repeat-addons`}
+          data-scroll-anchor-content-key={`mission:${mission.missionType || mission.id}:repeat-addons`}
+        >
+          <RepeatMissionAddons
+            mission={mission}
+            onSetMissionState={onSetMissionState}
+          />
+        </div>
       ) : (
-        <Tutorial
-          mission={mission}
-          className={css`
-            margin-top: 5rem;
-            margin-bottom: 1rem;
-            width: 100%;
-            @media (max-width: ${mobileMaxWidth}) {
-              margin-top: 2rem;
-            }
-          `}
-          onSetMissionState={onSetMissionState}
-        />
+        <div
+          data-scroll-anchor-id={`mission-detail:${mission.id || mission.missionType}:tutorial`}
+          data-scroll-anchor-content-key={`mission:${mission.missionType || mission.id}:tutorial`}
+        >
+          <Tutorial
+            mission={mission}
+            className={css`
+              margin-top: 5rem;
+              margin-bottom: 1rem;
+              width: 100%;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 2rem;
+              }
+            `}
+            onSetMissionState={onSetMissionState}
+          />
+        </div>
       )}
       {mission.tutorialStarted && (
         <TutorialModal

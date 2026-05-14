@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import MissionItem from '~/components/MissionItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
@@ -9,6 +9,7 @@ import { useMissionContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import { css } from '@emotion/css';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 const allMissionsLabel = 'All Missions';
 const completeLabel = 'Complete';
 const inProgressLabel = 'In Progress';
@@ -31,6 +32,7 @@ export default function MissionList({
   const onSetSelectedMissionListTab = useMissionContext(
     (v) => v.actions.onSetSelectedMissionListTab
   );
+  const missionListRef = useRef<HTMLDivElement | null>(null);
 
   const userId = useKeyContext((v) => v.myState.userId);
   const ongoingMissions = useMemo(() => {
@@ -70,6 +72,13 @@ export default function MissionList({
     userId
   ]);
 
+  useScrollAnchorRestoration({
+    anchorKey: `missions:${selectedMissionListTab || 'all'}`,
+    containerRef: missionListRef,
+    initialScroll: { type: 'top' },
+    itemsReady: displayedMissions.length > 0
+  });
+
   return (
     <ErrorBoundary componentPath="Mission/MissionList">
       <div style={style} className={className}>
@@ -101,7 +110,7 @@ export default function MissionList({
           </FilterBar>
         )}
         <div>
-          <div style={{ marginTop: '1rem' }}>
+          <div ref={missionListRef} style={{ marginTop: '1rem' }}>
             {displayedMissions.length === 0 ? (
               selectedMissionListTab === 'ongoing' ||
               selectedMissionListTab === 'complete' ? (
@@ -126,12 +135,18 @@ export default function MissionList({
               displayedMissions.map((missionId, index) => {
                 const mission = missionObj[missionId];
                 return (
-                  <MissionItem
-                    style={{ marginTop: index > 0 ? '1rem' : 0 }}
+                  <div
                     key={missionId}
-                    mission={mission}
-                    missionLink={`/missions/${mission.missionType}`}
-                  />
+                    data-scroll-anchor-id={`mission:${missionId}`}
+                    data-scroll-anchor-secondary-id={String(missionId)}
+                    data-scroll-anchor-content-key={`mission:${mission?.missionType || missionId}`}
+                    style={{ marginTop: index > 0 ? '1rem' : 0 }}
+                  >
+                    <MissionItem
+                      mission={mission}
+                      missionLink={`/missions/${mission.missionType}`}
+                    />
+                  </div>
                 );
               })
             )}

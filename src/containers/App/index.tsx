@@ -26,12 +26,11 @@ import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { setStoredItem } from '~/helpers/userDataHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
-import { useMyState, useScrollPosition } from '~/helpers/hooks';
+import { useMyState } from '~/helpers/hooks';
 import {
   buildTodayStatsFromResponse,
   buildTodayStatsForNextDay,
   getSectionFromPathname,
-  isMobile,
   toValidNextDayTimeStamp,
   returnImageFileFromUrl
 } from '~/helpers';
@@ -46,14 +45,12 @@ import {
   useChatContext,
   useChessContext,
   useMissionContext,
-  useBuildContext,
   KeyContext
 } from '~/contexts';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import useOrientationReflow from './hooks/useOrientationReflow';
 
-const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const Build = lazyWithRetry(() => import('~/containers/Build'));
@@ -122,28 +119,6 @@ function BuildPreviewPassthrough() {
       text="This preview URL should be served by the backend. If it does not redirect, production routing still needs to be fixed."
     />
   );
-}
-
-function getScrollPositionPathname({
-  pathname,
-  buildStudioActiveTab
-}: {
-  pathname: string;
-  buildStudioActiveTab?: string | null;
-}) {
-  if (pathname !== '/build') return pathname;
-  return `/build:${normalizeBuildStudioTab(buildStudioActiveTab)}`;
-}
-
-function normalizeBuildStudioTab(value?: string | null) {
-  if (
-    value === 'collaborating' ||
-    value === 'community' ||
-    value === 'open_source'
-  ) {
-    return value;
-  }
-  return 'mine';
 }
 
 export default function App() {
@@ -360,22 +335,6 @@ export default function App() {
     () => /^\/(app|app-capture)\/[^/]+/.test(location.pathname),
     [location.pathname]
   );
-  const buildStudioActiveTab = useBuildContext(
-    (v) => v.state.buildStudio.activeTab
-  );
-  const scrollPositionPathname = useMemo(
-    () =>
-      getScrollPositionPathname({
-        pathname: location.pathname,
-        buildStudioActiveTab
-      }),
-    [buildStudioActiveTab, location.pathname]
-  );
-
-  useScrollPosition({
-    pathname: scrollPositionPathname,
-    isMobile: deviceIsMobile
-  });
 
   useEffect(() => {
     window.gtag('event', 'page_view', {

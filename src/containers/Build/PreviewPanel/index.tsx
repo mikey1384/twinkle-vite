@@ -9,6 +9,7 @@ import React, {
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type {
   BuildRuntimeExplorationPlan,
@@ -397,12 +398,35 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       }
     }
 
+    function discardProjectFileDraft() {
+      const nextFiles = persistedProjectFiles.map((file) => ({
+        path: file.path,
+        content: file.content
+      }));
+      editableProjectFilesRef.current = nextFiles;
+      setEditableProjectFiles(nextFiles);
+      setHasLocalEditableProjectFileChanges(false);
+      setProjectFileError('');
+      setProjectFileSaveError('');
+      setActiveFilePath((prev) => {
+        const hasPrev = nextFiles.some((file) => file.path === prev);
+        if (hasPrev) return prev;
+        return (
+          getPreferredIndexPath(nextFiles) ||
+          nextFiles[0]?.path ||
+          '/index.html'
+        );
+      });
+      return nextFiles;
+    }
+
     useImperativeHandle(
       ref,
       () => ({
         openProjectFileUploadPicker,
         openProjectFolderImportPicker,
         openProjectAssetUploadPicker,
+        discardProjectFileDraft,
         captureThumbnail,
         async importProjectFilesFromChatUpload(files: File[]) {
           const normalizedFiles = normalizeUploadInputFiles(files);
@@ -556,6 +580,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     usernameRef.current = resolvedUsername || null;
     profilePicUrlRef.current = resolvedProfilePicUrl || null;
     const {
+      confirmModal: projectFileConfirmModal,
+      requestConfirm: requestProjectFileConfirm
+    } = useConfirmModal();
+    const {
       areProjectFileMutationsLocked,
       ensureBuildApiTokenForBuild,
       getProjectFileCaseCollisionError,
@@ -590,6 +618,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       newFilePath,
       onSaveProjectFiles,
       renamePathInput,
+      requestConfirm: requestProjectFileConfirm,
       savingProjectFiles,
       savingProjectFilesRef,
       selectedFolderPath,
@@ -643,6 +672,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       isActiveBuildId,
       isOwner,
       persistedProjectFiles,
+      requestConfirm: requestProjectFileConfirm,
       saveEditableProjectFilesWithTracking,
       selectedFolderPath,
       setActiveFilePath,
@@ -1289,6 +1319,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             onRestoreVersion={handleRestoreVersion}
           />
         )}
+        {projectFileConfirmModal}
       </div>
     );
   }

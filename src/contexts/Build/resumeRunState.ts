@@ -17,8 +17,16 @@ export interface BuildResumeRunStateUsageMetricPayload {
   totalTokens?: number;
 }
 
-export interface BuildResumeRunStateRunEventPayload {
+export interface BuildRunEventEnvelopePayload {
   id?: string;
+  schemaVersion?: number | null;
+  eventType?: string | null;
+  source?: string | null;
+  threadId?: string | null;
+  requestId?: string | null;
+  sequence?: number | null;
+  buildId?: number | null;
+  userId?: number | null;
   kind?: BuildLiveRunEvent['kind'];
   phase?: string | null;
   message?: string;
@@ -27,6 +35,8 @@ export interface BuildResumeRunStateRunEventPayload {
   details?: BuildLiveRunEvent['details'];
   usage?: BuildLiveRunEvent['usage'];
 }
+
+export type BuildResumeRunStateRunEventPayload = BuildRunEventEnvelopePayload;
 
 export interface BuildResumeRunStateStreamUpdatePayload {
   userMessageContent?: string | null;
@@ -56,6 +66,8 @@ export interface BuildResumeRunStatePayload {
   runMode?: BuildLiveRunState['runMode'] | null;
   status?: string | null;
   assistantStatusSteps?: string[];
+  agentContext?: Record<string, any> | null;
+  lifecycle?: Record<string, any> | null;
   usageMetrics?: Record<string, BuildResumeRunStateUsageMetricPayload>;
   runEvents?: BuildResumeRunStateRunEventPayload[];
   streamUpdate?: BuildResumeRunStateStreamUpdatePayload | null;
@@ -82,6 +94,8 @@ export interface BuildResumeRunStateNormalizedStreamUpdate {
 export interface BuildResumeRunStateNormalizedRunningSnapshot {
   status: string | null;
   assistantStatusSteps: string[];
+  agentContext: Record<string, any> | null;
+  lifecycle: Record<string, any> | null;
   usageMetrics: Record<string, BuildLiveRunUsageMetric>;
   lastActivityAt: number | null;
 }
@@ -92,6 +106,8 @@ export interface NormalizedBuildResumeRunState {
   runMode?: BuildLiveRunState['runMode'] | null;
   status: string | null;
   assistantStatusSteps: string[];
+  agentContext: Record<string, any> | null;
+  lifecycle: Record<string, any> | null;
   usageMetrics: Record<string, BuildLiveRunUsageMetric>;
   runEvents: BuildLiveRunEvent[];
   streamUpdate: BuildResumeRunStateNormalizedStreamUpdate | null;
@@ -155,44 +171,154 @@ function normalizeBuildResumeRunUsageMetrics(
   }, {});
 }
 
+function normalizeBuildResumeRunRecord(value?: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  try {
+    const clonedValue = JSON.parse(JSON.stringify(value));
+    return clonedValue &&
+      typeof clonedValue === 'object' &&
+      !Array.isArray(clonedValue)
+      ? (clonedValue as Record<string, any>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeNullableEnvelopeString(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function normalizePositiveEnvelopeNumber(value: unknown) {
+  const normalized = Number(value || 0);
+  return Number.isFinite(normalized) && normalized > 0
+    ? Math.floor(normalized)
+    : null;
+}
+
+function normalizeBuildRunEventKind(
+  kind?: BuildRunEventEnvelopePayload['kind']
+) {
+  return kind === 'lifecycle' ||
+    kind === 'phase' ||
+    kind === 'action' ||
+    kind === 'status' ||
+    kind === 'usage'
+    ? kind
+    : null;
+}
+
+function normalizeBuildRunEventDetails(
+  details?: BuildRunEventEnvelopePayload['details']
+) {
+  return details && typeof details === 'object' && !Array.isArray(details)
+    ? { ...details }
+    : null;
+}
+
+function normalizeBuildRunEventUsage(
+  usage?: BuildRunEventEnvelopePayload['usage']
+) {
+  if (!usage || typeof usage !== 'object' || Array.isArray(usage)) {
+    return null;
+  }
+  return {
+    ...usage,
+    stage:
+      typeof usage.stage === 'string' && usage.stage.trim().length > 0
+        ? usage.stage.trim()
+        : null,
+    model:
+      typeof usage.model === 'string' && usage.model.trim().length > 0
+        ? usage.model.trim()
+        : null,
+    inputTokens: Number(usage.inputTokens || 0),
+    outputTokens: Number(usage.outputTokens || 0),
+    totalTokens: Number(usage.totalTokens || 0)
+  };
+}
+
+export function normalizeBuildRunEventEnvelope({
+  event,
+  requestId,
+  buildId,
+  userId,
+  index
+}: {
+  event?: BuildRunEventEnvelopePayload | null;
+  requestId?: string | null;
+  buildId?: number | null;
+  userId?: number | null;
+  index?: number | null;
+}): BuildLiveRunEvent | null {
+  const kind = normalizeBuildRunEventKind(event?.kind);
+  const message = String(event?.message || '').trim();
+  if (!event || !kind || !message) {
+    return null;
+  }
+  const normalizedCreatedAt = normalizeBuildRunEventCreatedAt(event.createdAt);
+  const normalizedId = normalizeBuildRunEventId(event.id);
+  const normalizedRequestId =
+    normalizeNullableEnvelopeString(event.requestId) ||
+    normalizeNullableEnvelopeString(requestId);
+  const normalizedBuildId =
+    normalizePositiveEnvelopeNumber(event.buildId) ||
+    normalizePositiveEnvelopeNumber(buildId);
+  const normalizedUserId =
+    normalizePositiveEnvelopeNumber(event.userId) ||
+    normalizePositiveEnvelopeNumber(userId);
+
+  return {
+    id:
+      normalizedId ||
+      buildFallbackBuildRunEventId({
+        requestId: normalizedRequestId,
+        event: {
+          kind,
+          phase: event.phase || null,
+          message,
+          createdAt: normalizedCreatedAt
+        },
+        index
+      }),
+    schemaVersion: normalizePositiveEnvelopeNumber(event.schemaVersion),
+    eventType: normalizeNullableEnvelopeString(event.eventType),
+    source: normalizeNullableEnvelopeString(event.source),
+    threadId: normalizeNullableEnvelopeString(event.threadId),
+    requestId: normalizedRequestId,
+    sequence: normalizePositiveEnvelopeNumber(event.sequence),
+    buildId: normalizedBuildId,
+    userId: normalizedUserId,
+    kind,
+    phase: event.phase || null,
+    message,
+    createdAt: normalizedCreatedAt,
+    deduped: Boolean(event.deduped),
+    details: normalizeBuildRunEventDetails(event.details),
+    usage: normalizeBuildRunEventUsage(event.usage)
+  };
+}
+
 function normalizeBuildResumeRunEvents({
   requestId,
+  buildId,
   runEvents
-}: Pick<BuildResumeRunStatePayload, 'requestId' | 'runEvents'>) {
+}: Pick<BuildResumeRunStatePayload, 'requestId' | 'buildId' | 'runEvents'>) {
   return Array.isArray(runEvents)
     ? runEvents
-        .filter(
-          (event): event is NonNullable<typeof runEvents>[number] =>
-            Boolean(event?.kind && event?.message)
+        .map((event, index) =>
+          normalizeBuildRunEventEnvelope({
+            event,
+            requestId,
+            buildId,
+            index
+          })
         )
-        .map((event, index) => {
-          const normalizedCreatedAt = normalizeBuildRunEventCreatedAt(
-            event.createdAt
-          );
-          const normalizedId = normalizeBuildRunEventId(event.id);
-
-          return {
-            id:
-              normalizedId ||
-              buildFallbackBuildRunEventId({
-                requestId,
-                event: {
-                  kind: event.kind,
-                  phase: event.phase || null,
-                  message: String(event.message || ''),
-                  createdAt: normalizedCreatedAt
-                },
-                index
-              }),
-            kind: event.kind as BuildLiveRunEvent['kind'],
-            phase: event.phase || null,
-            message: String(event.message || ''),
-            createdAt: normalizedCreatedAt,
-            deduped: Boolean(event.deduped),
-            details: event.details || null,
-            usage: event.usage || null
-          };
-        })
+        .filter((event): event is BuildLiveRunEvent => Boolean(event))
         .slice(-40)
     : [];
 }
@@ -204,13 +330,17 @@ function normalizeBuildResumeRunStreamUpdate(
 
   const normalizedStreamUpdate: BuildResumeRunStateNormalizedStreamUpdate = {};
 
-  if (Object.prototype.hasOwnProperty.call(streamUpdate, 'userMessageContent')) {
+  if (
+    Object.prototype.hasOwnProperty.call(streamUpdate, 'userMessageContent')
+  ) {
     normalizedStreamUpdate.userMessageContent =
       typeof streamUpdate.userMessageContent === 'string'
         ? streamUpdate.userMessageContent
         : null;
   }
-  if (Object.prototype.hasOwnProperty.call(streamUpdate, 'userClientMessageId')) {
+  if (
+    Object.prototype.hasOwnProperty.call(streamUpdate, 'userClientMessageId')
+  ) {
     normalizedStreamUpdate.userClientMessageId =
       typeof streamUpdate.userClientMessageId === 'string'
         ? streamUpdate.userClientMessageId.trim() || null
@@ -228,7 +358,9 @@ function normalizeBuildResumeRunStreamUpdate(
         ? Number(streamUpdate.userMessageId)
         : null;
   }
-  if (Object.prototype.hasOwnProperty.call(streamUpdate, 'assistantMessageId')) {
+  if (
+    Object.prototype.hasOwnProperty.call(streamUpdate, 'assistantMessageId')
+  ) {
     normalizedStreamUpdate.assistantMessageId =
       Number(streamUpdate.assistantMessageId || 0) > 0
         ? Number(streamUpdate.assistantMessageId)
@@ -301,11 +433,15 @@ export function normalizeBuildResumeRunState(
     runMode: payload.runMode,
     status: normalizedAssistantStatusSteps.status,
     assistantStatusSteps: normalizedAssistantStatusSteps.assistantStatusSteps,
+    agentContext: normalizeBuildResumeRunRecord(payload.agentContext),
+    lifecycle: normalizeBuildResumeRunRecord(payload.lifecycle),
     usageMetrics: normalizeBuildResumeRunUsageMetrics(payload.usageMetrics),
     runEvents: normalizeBuildResumeRunEvents(payload),
     streamUpdate: normalizeBuildResumeRunStreamUpdate(payload.streamUpdate),
     terminal: normalizeBuildResumeRunTerminal(payload.terminal),
-    lastActivityAt: normalizeBuildResumeRunLastActivityAt(payload.lastActivityAt)
+    lastActivityAt: normalizeBuildResumeRunLastActivityAt(
+      payload.lastActivityAt
+    )
   };
 }
 
@@ -321,6 +457,8 @@ export function getBuildResumeRunStateReplayKey(
     runMode: normalizedResumeRunState.runMode || null,
     status: normalizedResumeRunState.status,
     assistantStatusSteps: normalizedResumeRunState.assistantStatusSteps,
+    agentContext: normalizedResumeRunState.agentContext,
+    lifecycle: normalizedResumeRunState.lifecycle,
     usageMetrics: Object.values(normalizedResumeRunState.usageMetrics)
       .sort((a, b) => {
         if (a.stage !== b.stage) {
@@ -337,6 +475,14 @@ export function getBuildResumeRunStateReplayKey(
       })),
     runEvents: normalizedResumeRunState.runEvents.map((event) => ({
       id: event.id,
+      schemaVersion: event.schemaVersion ?? null,
+      eventType: event.eventType ?? null,
+      source: event.source ?? null,
+      threadId: event.threadId ?? null,
+      requestId: event.requestId ?? null,
+      sequence: event.sequence ?? null,
+      buildId: event.buildId ?? null,
+      userId: event.userId ?? null,
       kind: event.kind,
       phase: event.phase,
       message: event.message,
@@ -366,23 +512,28 @@ export function getBuildResumeRunStateReplayKey(
           projectFiles: Array.isArray(
             normalizedResumeRunState.streamUpdate.projectFiles
           )
-            ? normalizedResumeRunState.streamUpdate.projectFiles.map((file) => ({
-                path: String(file.path || ''),
-                content: typeof file.content === 'string' ? file.content : ''
-              }))
+            ? normalizedResumeRunState.streamUpdate.projectFiles.map(
+                (file) => ({
+                  path: String(file.path || ''),
+                  content: typeof file.content === 'string' ? file.content : ''
+                })
+              )
             : null,
           baseProjectFiles: Array.isArray(
             normalizedResumeRunState.streamUpdate.baseProjectFiles
           )
-            ? normalizedResumeRunState.streamUpdate.baseProjectFiles.map((file) => ({
-                path: String(file.path || ''),
-                content: typeof file.content === 'string' ? file.content : ''
-              }))
+            ? normalizedResumeRunState.streamUpdate.baseProjectFiles.map(
+                (file) => ({
+                  path: String(file.path || ''),
+                  content: typeof file.content === 'string' ? file.content : ''
+                })
+              )
             : null,
           projectFilesMode:
             normalizedResumeRunState.streamUpdate.projectFilesMode ?? null,
           projectFilesPersisted:
-            normalizedResumeRunState.streamUpdate.projectFilesPersisted === true,
+            normalizedResumeRunState.streamUpdate.projectFilesPersisted ===
+            true,
           projectFilesFocusPath:
             normalizedResumeRunState.streamUpdate.projectFilesFocusPath ?? null
         }
@@ -405,6 +556,8 @@ export function replayBuildResumeRunState({
     onRunningSnapshot?.({
       status: normalized.status,
       assistantStatusSteps: normalized.assistantStatusSteps,
+      agentContext: normalized.agentContext,
+      lifecycle: normalized.lifecycle,
       usageMetrics: normalized.usageMetrics,
       lastActivityAt: normalized.lastActivityAt
     });
@@ -417,21 +570,32 @@ export function replayBuildResumeRunState({
   }
 
   if (normalized.terminal?.type === 'complete' && normalized.terminal.payload) {
-    onTerminalComplete?.(normalized.terminal.payload);
+    onTerminalComplete?.({
+      ...normalized.terminal.payload,
+      lifecycle: normalized.terminal.payload.lifecycle ?? normalized.lifecycle
+    });
     return true;
   }
   if (normalized.terminal?.type === 'error' && normalized.terminal.payload) {
-    onTerminalError?.(normalized.terminal.payload);
+    onTerminalError?.({
+      ...normalized.terminal.payload,
+      lifecycle: normalized.terminal.payload.lifecycle ?? normalized.lifecycle
+    });
     return true;
   }
   if (normalized.terminal?.type === 'stopped' && normalized.terminal.payload) {
-    onTerminalStopped?.(normalized.terminal.payload);
+    onTerminalStopped?.({
+      ...normalized.terminal.payload,
+      lifecycle: normalized.terminal.payload.lifecycle ?? normalized.lifecycle
+    });
     return true;
   }
 
   onRunningSnapshot?.({
     status: normalized.status,
     assistantStatusSteps: normalized.assistantStatusSteps,
+    agentContext: normalized.agentContext,
+    lifecycle: normalized.lifecycle,
     usageMetrics: normalized.usageMetrics,
     lastActivityAt: normalized.lastActivityAt
   });

@@ -1,0 +1,1068 @@
+import React from 'react';
+import AchievementItem from '~/components/AchievementItem';
+import CardThumb from '~/components/CardThumb';
+import Embedly from '~/components/Embedly';
+import Icon from '~/components/Icon';
+import ProfilePic from '~/components/ProfilePic';
+import SecretComment from '~/components/SecretComment';
+import RichText from '~/components/Texts/RichText';
+import VideoThumbImage from '~/components/VideoThumbImage';
+import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
+import { Color } from '~/constants/css';
+import { cardLevelHash } from '~/constants/defaultValues';
+import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
+import {
+  addCommasToNumber,
+  getFileInfoFromFileName,
+  getRenderedTextForVocabQuestions
+} from '~/helpers/stringHelpers';
+import {
+  getBuildDisplayTitle,
+  getBuildRelationshipLabels
+} from '~/helpers/buildRelationshipHelpers';
+import {
+  formatBuildCollaboratorCount,
+  formatBuildForkCount,
+  normalizeBuildCollaborationMode
+} from '~/helpers/buildProjectHelpers';
+import { bodyClass, compactSecretCommentStyle } from './styles';
+import {
+  AttachmentSurface,
+  AudioWavePreview,
+  CompactEffortStrip,
+  MarkdownEmbedPreview,
+  formatRewardMultiplier,
+  getAIStoryDifficultyStyle,
+  getReadableAIStoryPreview
+} from './PreviewPrimitives';
+import ProfilePanelPreview from './ProfilePanelPreview';
+import TargetPreview from './TargetPreview';
+import SanitizedHTML from 'react-sanitized-html';
+import { useNavigate } from 'react-router-dom';
+import { normalizeRootType } from '../helpers/navigation';
+import type { Comment } from '~/types';
+import {
+  type FeedCardSizing,
+  getFeedCardSizing,
+  getMarkdownImageEmbedPreview,
+  removeMarkdownImageEmbeds,
+  type MarkdownImageEmbed
+} from '../helpers/sizing';
+
+type PreviewCommentMedia =
+  | {
+      extension: string;
+      icon: string;
+      kind: 'file';
+      label: string;
+    }
+  | {
+      isVideo: boolean;
+      kind: 'image';
+      label: string;
+      src: string;
+    };
+
+export default function Body({
+  content,
+  loading,
+  rootObj,
+  sizing,
+  theme,
+  userId
+}: {
+  content: any;
+  loading: boolean;
+  rootObj: any;
+  sizing?: FeedCardSizing;
+  theme?: string;
+  userId: number;
+}) {
+  const navigate = useNavigate();
+  const contentId = Number(content?.contentId || content?.id || 0);
+  const contentType = String(content?.contentType || '');
+  const normalizedRootType = normalizeRootType(content?.rootType);
+  const resolvedRootObj =
+    rootObj?.id || rootObj?.notFound ? rootObj : content?.rootObj || {};
+  const targetSubject = content?.targetObj?.subject;
+  const targetComment = content?.targetObj?.comment;
+  const previewComment = getRenderablePreviewComment(content?.comments);
+  const resolvedSizing =
+    sizing || getFeedCardSizing({ content, rootObj: resolvedRootObj, userId });
+  const secretHidden = resolvedSizing.flags.secretHidden;
+  const panelClassName = resolvedSizing.main.className;
+  const targetPanelClassName =
+    resolvedSizing.target?.className ||
+    'home-feed-card__target-preview home-feed-card__target-preview--size-standard';
+  const previewCommentShown = Boolean(
+    previewComment && resolvedSizing.card.hasCommentPreview
+  );
+  if (loading || !contentId || !contentType) {
+    return (
+      <div className={`${bodyClass} home-feed-card__body`}>
+        <div className="home-feed-card__skeleton title" />
+        <div className="home-feed-card__skeleton panel" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${bodyClass} home-feed-card__body`}>
+      <section className={panelClassName}>{renderContentPreview()}</section>
+      <TargetPreview
+        contentType={contentType}
+        normalizedRootType={normalizedRootType}
+        resolvedRootObj={resolvedRootObj}
+        targetComment={targetComment}
+        targetPanelClassName={targetPanelClassName}
+        targetSubject={targetSubject}
+        theme={theme}
+        userId={userId}
+      />
+      {previewCommentShown && previewComment
+        ? renderPreviewComment(previewComment)
+        : null}
+    </div>
+  );
+
+  function renderPreviewComment(comment: Comment) {
+    const uploader = getPreviewCommentUploader(comment);
+    const commentText = getPreviewCommentText(comment);
+    const previewLabel = getPreviewCommentLabel(comment, contentType);
+    const previewMedia = getPreviewCommentMedia(comment);
+    const accentColor =
+      Color[uploader.profileTheme || theme || 'logoBlue']?.() ||
+      Color.logoBlue();
+
+    return (
+      <button
+        className={`home-feed-card__comment-preview${
+          previewMedia ? ' home-feed-card__comment-preview--has-media' : ''
+        }`}
+        data-comment-id={comment.id}
+        data-feed-card-interactive="true"
+        style={
+          {
+            '--home-feed-comment-accent': accentColor
+          } as React.CSSProperties
+        }
+        type="button"
+        onClick={handlePreviewCommentClick}
+      >
+        <span className="home-feed-card__comment-preview-avatar">
+          <ProfilePic
+            profilePicUrl={uploader.profilePicUrl}
+            size="100%"
+            userId={Number(uploader.id || 0)}
+          />
+        </span>
+        <span className="home-feed-card__comment-preview-body">
+          <span className="home-feed-card__comment-preview-meta">
+            <b>{uploader.username || 'Someone'}</b>
+            {previewLabel ? <span>{previewLabel}</span> : null}
+          </span>
+          <span className="home-feed-card__comment-preview-text">
+            {commentText}
+          </span>
+        </span>
+        {previewMedia ? renderPreviewCommentMedia(previewMedia) : null}
+        <Icon className="home-feed-card__comment-preview-icon" icon="comment" />
+      </button>
+    );
+  }
+
+  function renderPreviewCommentMedia(media: PreviewCommentMedia) {
+    if (media.kind === 'image') {
+      return (
+        <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--image">
+          <img src={media.src} alt={media.label} loading="lazy" />
+          {media.isVideo ? (
+            <span className="home-feed-card__comment-preview-media-play">
+              <Icon icon="play" />
+            </span>
+          ) : null}
+        </span>
+      );
+    }
+
+    return (
+      <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--file">
+        <Icon
+          className="home-feed-card__comment-preview-media-icon"
+          icon={media.icon}
+        />
+        {media.extension ? (
+          <small>{media.extension.toUpperCase()}</small>
+        ) : null}
+      </span>
+    );
+  }
+
+  function handlePreviewCommentClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    const commentId = Number(event.currentTarget.dataset.commentId || 0);
+    if (commentId > 0) navigate(`/comments/${commentId}`);
+  }
+
+  function renderContentPreview() {
+    if (secretHidden) {
+      const secretCommentStyle = {
+        ...compactSecretCommentStyle,
+        background: Color.whiteGray(0.72),
+        border: `1px solid ${Color.borderGray()}`,
+        boxShadow: `0 0.16rem 0 ${Color.black(0.05)}`,
+        color: Color.darkerGray()
+      };
+      return (
+        <div className="home-feed-card__secret-preview">
+          <SecretComment
+            label="Respond to unlock this comment"
+            style={secretCommentStyle}
+          />
+        </div>
+      );
+    }
+
+    if (contentType === 'dailyReflection') {
+      return renderDailyReflectionPreview();
+    }
+    if (contentType === 'xpChange') {
+      return renderDailyGoalsPreview();
+    }
+    if (contentType === 'sharedTopic') {
+      return renderSharedTopicPreview();
+    }
+    if (contentType === 'build') {
+      return renderBuildPreview();
+    }
+    if (contentType === 'pass') {
+      return renderPassPreview();
+    }
+    if (contentType === 'aiStory') {
+      return renderAIStoryPreview();
+    }
+    if (contentType === 'url') {
+      return renderUrlPreview();
+    }
+    if (contentType === 'video') {
+      return renderVideoPreview();
+    }
+    if (contentType === 'subject') {
+      return renderSubjectPreview();
+    }
+    if (contentType === 'comment') {
+      if (normalizedRootType === 'user') {
+        return <ProfilePanelPreview profile={resolvedRootObj} theme={theme} />;
+      }
+      return renderCommentPreview();
+    }
+
+    return renderTextPreview({
+      text: content?.description || content?.content || '',
+      title: content?.title || ''
+    });
+  }
+
+  function renderCommentPreview() {
+    return renderTextPreview({
+      text: content?.content || '',
+      section: 'content',
+      showAttachment: true
+    });
+  }
+
+  function renderSubjectPreview() {
+    const attachmentPreview = renderAttachmentPreview('subject');
+    const description = String(content?.description || content?.content || '');
+    const descriptionEmbed = getMarkdownImageEmbedPreview(description);
+    const descriptionText = descriptionEmbed
+      ? removeMarkdownImageEmbeds(description)
+      : description;
+    const hasDescriptionText = Boolean(descriptionText.trim());
+    const hasDescriptionEmbed = Boolean(descriptionEmbed);
+    const secretAnswer = String(content?.secretAnswer || '');
+    const secretAttachment = content?.secretAttachment;
+    const hasSecretAnswerText = Boolean(secretAnswer.trim());
+    const hasSecretAttachment = Boolean(secretAttachment?.filePath);
+    const secretAnswerDuplicatesDescription =
+      hasSecretAnswerText && secretAnswer.trim() === descriptionText.trim();
+    const showSecretAnswer =
+      !secretHidden &&
+      !secretAnswerDuplicatesDescription &&
+      (hasSecretAnswerText || hasSecretAttachment);
+    const hasAttachedRootContent = Boolean(
+      contentType === 'subject' &&
+      normalizedRootType &&
+      Number(content?.rootId || 0) > 0
+    );
+    const isMinimalSubject =
+      !attachmentPreview &&
+      !hasDescriptionText &&
+      !hasDescriptionEmbed &&
+      !showSecretAnswer &&
+      !hasAttachedRootContent;
+    const isRootCompactSubject =
+      hasAttachedRootContent && !attachmentPreview && !hasDescriptionEmbed;
+    return (
+      <div
+        className={`home-feed-card__subject-preview${
+          isMinimalSubject ? ' home-feed-card__subject-preview--minimal' : ''
+        }${
+          hasDescriptionEmbed
+            ? ' home-feed-card__subject-preview--with-embed'
+            : ''
+        }${
+          hasAttachedRootContent
+            ? ' home-feed-card__subject-preview--with-root'
+            : ''
+        }${
+          isRootCompactSubject
+            ? ' home-feed-card__subject-preview--root-compact'
+            : ''
+        }`}
+      >
+        <div
+          className={`home-feed-card__subject-main${
+            attachmentPreview
+              ? ' home-feed-card__subject-main--with-attachment'
+              : ''
+          }${
+            hasDescriptionEmbed
+              ? ' home-feed-card__subject-main--with-embed'
+              : ''
+          }`}
+        >
+          <div className="home-feed-card__subject-copy">
+            {Number(content?.rewardLevel || 0) > 0 ? (
+              <CompactEffortStrip rewardLevel={Number(content.rewardLevel)} />
+            ) : null}
+            {content?.title ? <h3>{content.title}</h3> : null}
+            {hasDescriptionText ? (
+              <RichText
+                className="home-feed-card__subject-description"
+                contentId={contentId}
+                contentType={contentType}
+                isPreview
+                maxLines={resolvedSizing.main.subjectDescriptionMaxLines}
+                section="description"
+                theme={theme}
+              >
+                {descriptionText}
+              </RichText>
+            ) : null}
+            {showSecretAnswer ? (
+              <div
+                className={`home-feed-card__subject-secret-answer${
+                  hasSecretAttachment
+                    ? ' home-feed-card__subject-secret-answer--has-attachment'
+                    : ''
+                }`}
+              >
+                {hasSecretAttachment ? (
+                  <AttachmentSurface
+                    className="home-feed-card__subject-secret-attachment"
+                    source={secretAttachment}
+                    sourceContentId={contentId}
+                    sourceContentType={contentType}
+                    userId={userId}
+                  />
+                ) : null}
+                {hasSecretAnswerText ? (
+                  <RichText
+                    className="home-feed-card__subject-secret-text"
+                    contentId={contentId}
+                    contentType={contentType}
+                    isPreview
+                    maxLines={3}
+                    section="secret"
+                    theme={theme}
+                  >
+                    {secretAnswer}
+                  </RichText>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          {descriptionEmbed ? (
+            <MarkdownEmbedPreview
+              className="home-feed-card__subject-embed-preview"
+              contentId={contentId}
+              contentType={contentType}
+              embed={descriptionEmbed}
+            />
+          ) : null}
+          {attachmentPreview}
+        </div>
+      </div>
+    );
+  }
+
+  function renderTextPreview({
+    section = 'description',
+    showAttachment = false,
+    text,
+    title
+  }: {
+    section?: string;
+    showAttachment?: boolean;
+    text: string;
+    title?: string;
+  }) {
+    const attachment = showAttachment
+      ? renderAttachmentPreview('comment')
+      : null;
+    const embedPreview = getMarkdownImageEmbedPreview(text);
+    const textWithoutEmbeds = embedPreview
+      ? removeMarkdownImageEmbeds(text)
+      : text;
+    const hasText = Boolean(title || textWithoutEmbeds.trim());
+
+    if (embedPreview && !attachment) {
+      return renderRichTextEmbedPreview({
+        contentId,
+        contentType,
+        imageEmbed: embedPreview,
+        section,
+        text: textWithoutEmbeds,
+        title
+      });
+    }
+
+    if (attachment && !hasText) {
+      return (
+        <div className="home-feed-card__attachment-only-preview">
+          {attachment}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={`home-feed-card__text-preview${
+          attachment ? ' home-feed-card__text-preview--with-attachment' : ''
+        }`}
+      >
+        <div className="home-feed-card__text-copy">
+          {title ? <h3>{title}</h3> : null}
+          {textWithoutEmbeds ? (
+            <RichText
+              contentId={contentId}
+              contentType={contentType}
+              isPreview
+              maxLines={resolvedSizing.main.textMaxLines}
+              section={section}
+              theme={theme}
+            >
+              {textWithoutEmbeds}
+            </RichText>
+          ) : null}
+        </div>
+        {attachment}
+      </div>
+    );
+  }
+
+  function renderAttachmentPreview(classNameSuffix: string) {
+    if (!content?.filePath) return null;
+    return (
+      <AttachmentSurface
+        className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}`}
+        source={content}
+        sourceContentId={contentId}
+        sourceContentType={contentType}
+        userId={userId}
+      />
+    );
+  }
+
+  function renderDailyReflectionPreview() {
+    return (
+      <div className="home-feed-card__reflection-preview">
+        {content?.question ? (
+          <div className="home-feed-card__question-box">
+            <b>Question:</b>
+            <span>{content.question}</span>
+          </div>
+        ) : null}
+        {content?.description ? (
+          <RichText
+            className="home-feed-card__reflection-answer"
+            contentId={contentId}
+            contentType={contentType}
+            isPreview
+            maxLines={resolvedSizing.main.reflectionAnswerMaxLines}
+            section="description"
+            theme={theme}
+          >
+            {content.description}
+          </RichText>
+        ) : null}
+        <div className="home-feed-card__reflection-footer">
+          {content?.grade === 'Masterpiece' ? (
+            <span className="home-feed-card__masterpiece-chip">
+              <Icon icon="certificate" />
+              Masterpiece
+            </span>
+          ) : null}
+          {content?.isRefined ? (
+            <span className="home-feed-card__refined-chip">
+              <span className="home-feed-card__refined-sparkle">✨</span>
+              <span>AI-polished</span>
+            </span>
+          ) : null}
+          <XPAndStreakDisplay
+            xpAwarded={content?.xpAwarded}
+            streak={content?.streakAtTime}
+            style={{ marginTop: 0 }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  function renderDailyGoalsPreview() {
+    const bonusQuestion = content?.bonusQuestion || {};
+    const word = content?.word || content?.card?.word || '';
+    const level = Number(content?.level || content?.card?.level || 0);
+    const levelColor = cardLevelHash[level]?.color || 'logoGreen';
+    const renderedQuestion = bonusQuestion?.question
+      ? getRenderedTextForVocabQuestions(
+          bonusQuestion.question,
+          word,
+          levelColor
+        )
+      : '';
+    const choices = Array.isArray(bonusQuestion?.choices)
+      ? bonusQuestion.choices.slice(0, 4)
+      : [];
+
+    return (
+      <div className="home-feed-card__daily-goals-preview">
+        {content?.card ? (
+          <div className="home-feed-card__daily-goals-card">
+            <CardThumb card={content.card} />
+          </div>
+        ) : null}
+        <div className="home-feed-card__daily-goals-copy">
+          <div className="home-feed-card__reward-chips">
+            {content?.dailyTaskReward ? (
+              <span className="home-feed-card__reward-chip">
+                <Icon icon="bolt" />
+                {`x${formatRewardMultiplier(
+                  Number(content.dailyTaskReward.finalMultiplier || 1)
+                )}`}
+              </span>
+            ) : null}
+            {Number(content?.xpEarned || 0) > 0 ? (
+              <span className="home-feed-card__reward-chip xp">
+                {addCommasToNumber(Number(content.xpEarned))} XP
+              </span>
+            ) : null}
+            {Number(content?.coinEarned || 0) > 0 ? (
+              <span className="home-feed-card__reward-chip coins">
+                <Icon icon="coins" />
+                {addCommasToNumber(Number(content.coinEarned))}
+              </span>
+            ) : null}
+          </div>
+          {word ? (
+            <h3 style={{ color: Color[levelColor]?.() || Color.logoGreen() }}>
+              {word}
+            </h3>
+          ) : null}
+          {renderedQuestion ? (
+            <div className="home-feed-card__bonus-question">
+              <SanitizedHTML
+                allowedAttributes={{ b: ['style'] }}
+                html={renderedQuestion}
+              />
+            </div>
+          ) : null}
+          {choices.length > 0 ? (
+            <div className="home-feed-card__choice-list">
+              {choices.map((choice: string, index: number) => (
+                <span key={`${choice}-${index}`}>{choice}</span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  function renderSharedTopicPreview() {
+    return (
+      <div className="home-feed-card__shared-topic-preview">
+        <h3>{content?.title || content?.content || content?.topic}</h3>
+        {content?.customInstructions ? (
+          <div className="home-feed-card__system-prompt-box">
+            <b>System Prompt:</b>
+            <RichText
+              contentId={contentId}
+              contentType={contentType}
+              isPreview
+              maxLines={7}
+              section="content"
+              theme={theme}
+            >
+              {content.customInstructions}
+            </RichText>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderBuildPreview() {
+    const displayTitle = getBuildDisplayTitle(content);
+    const relationshipLabels = getBuildRelationshipLabels(content);
+    const collaboratorCount = Math.max(
+      0,
+      Math.floor(Number(content?.collaboratorCount) || 0)
+    );
+    const forkCount = Math.max(0, Math.floor(Number(content?.forkCount) || 0));
+    const collaborationMode = normalizeBuildCollaborationMode(
+      content?.collaborationMode
+    );
+    const showOpenSource = collaborationMode === 'open_source';
+    const thumbnailUrl = String(
+      content?.thumbnailUrl || content?.thumbUrl || ''
+    );
+    const ownerId = Number(content?.userId || content?.uploader?.id || 0);
+    const isOwner = Boolean(userId && ownerId && ownerId === userId);
+
+    return (
+      <div
+        className={`home-feed-card__build-preview${
+          thumbnailUrl ? '' : ' home-feed-card__build-preview--no-thumb'
+        }`}
+      >
+        <div className="home-feed-card__build-copy">
+          <div className="home-feed-card__build-badge">
+            <Icon icon="rocket" />
+            <span>Lumine App</span>
+          </div>
+          <h3>{displayTitle || 'Lumine App'}</h3>
+          {content?.description ? <p>{content.description}</p> : null}
+          <div className="home-feed-card__build-status-row">
+            {relationshipLabels.map((label) => (
+              <span
+                key={label}
+                className={`home-feed-card__build-status ${label}`}
+              >
+                <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
+                {label === 'fork' ? 'Fork' : 'Branch'}
+              </span>
+            ))}
+            {showOpenSource ? (
+              <span className="home-feed-card__build-status open-source">
+                <Icon icon="code-branch" />
+                Open Source
+              </span>
+            ) : null}
+            {collaboratorCount > 0 ? (
+              <span className="home-feed-card__build-status team">
+                <Icon icon="users" />
+                {formatBuildCollaboratorCount(collaboratorCount)}
+              </span>
+            ) : null}
+            {showOpenSource ? (
+              <span className="home-feed-card__build-status fork-count">
+                <Icon icon="code-branch" />
+                {formatBuildForkCount(forkCount)}
+              </span>
+            ) : null}
+          </div>
+          <div className="home-feed-card__build-actions">
+            {isOwner ? (
+              <button
+                type="button"
+                onClick={() => navigate(`/build/${contentId}`)}
+              >
+                <Icon icon="wrench" />
+                Build
+              </button>
+            ) : null}
+            <button
+              className="primary"
+              type="button"
+              onClick={() => navigate(`/app/${contentId}`)}
+            >
+              <Icon icon="external-link-alt" />
+              Open App
+            </button>
+          </div>
+        </div>
+        {thumbnailUrl ? (
+          <div className="home-feed-card__build-thumb">
+            <div className="home-feed-card__build-thumb-toolbar">
+              <span />
+              <span />
+              <span />
+            </div>
+            <img src={thumbnailUrl} alt={displayTitle || 'Lumine App'} />
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderPassPreview() {
+    const passRootObj = content?.rootObj || resolvedRootObj;
+    const isMission = content?.rootType === 'mission';
+    if (!passRootObj?.id) return null;
+
+    if (!isMission) {
+      return (
+        <div className="home-feed-card__pass-preview home-feed-card__achievement-preview">
+          <div className="home-feed-card__achievement-badge">
+            <AchievementItem
+              isSmall
+              isThumb
+              thumbSize="7.8rem"
+              achievement={passRootObj}
+            />
+          </div>
+          <div className="home-feed-card__achievement-copy">
+            <h3>
+              {passRootObj.title}
+              {passRootObj.ap ? (
+                <span>({addCommasToNumber(Number(passRootObj.ap))} AP)</span>
+              ) : null}
+            </h3>
+            {passRootObj.description ? <p>{passRootObj.description}</p> : null}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="home-feed-card__pass-preview home-feed-card__mission-preview">
+        <div className="home-feed-card__mission-icon">
+          <Icon icon="check" />
+        </div>
+        <div className="home-feed-card__mission-copy">
+          <span className="home-feed-card__mission-status">
+            {passRootObj.isTask ? 'Task Complete' : 'Mission Accomplished'}
+          </span>
+          <h3>{passRootObj.title}</h3>
+          {passRootObj.rootMission?.title ? (
+            <p>{passRootObj.rootMission.title}</p>
+          ) : null}
+          <div className="home-feed-card__mission-reward-row">
+            {passRootObj.xpReward ? (
+              <span className="home-feed-card__mission-reward xp">
+                {addCommasToNumber(Number(passRootObj.xpReward))} XP
+              </span>
+            ) : null}
+            {passRootObj.coinReward ? (
+              <span className="home-feed-card__mission-reward coins">
+                <Icon icon="coins" />
+                {addCommasToNumber(Number(passRootObj.coinReward))}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderAIStoryPreview() {
+    const difficulty = content?.difficulty || content?.level;
+    const difficultyStyle = getAIStoryDifficultyStyle(difficulty);
+    const storyPreview = getReadableAIStoryPreview(content?.story);
+    const isListening = Boolean(content?.isListening);
+
+    return (
+      <div
+        className={`home-feed-card__ai-story-preview${
+          isListening
+            ? ' home-feed-card__ai-story-preview--listening'
+            : ' home-feed-card__ai-story-preview--reading'
+        }`}
+        style={difficultyStyle}
+      >
+        <div className="home-feed-card__ai-story-topline">
+          <span>
+            <Icon icon={isListening ? 'volume-up' : 'book-open'} />
+            {isListening ? 'Listening' : 'Reading'}
+          </span>
+          {difficulty ? (
+            <span className="level">Level {difficulty}</span>
+          ) : null}
+        </div>
+        <div className="home-feed-card__ai-story-main">
+          <h3>{content?.title || content?.topic || 'AI Story'}</h3>
+          {isListening ? (
+            <div className="home-feed-card__ai-story-listening-body">
+              <AudioWavePreview />
+            </div>
+          ) : storyPreview ? (
+            <p className="home-feed-card__ai-story-story">{storyPreview}</p>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  function renderUrlPreview() {
+    return (
+      <div className="home-feed-card__url-preview">
+        <div className="home-feed-card__url-copy">
+          <h3>
+            {content?.actualTitle ||
+              content?.linkTitle ||
+              content?.title ||
+              content?.content}
+          </h3>
+          {content?.siteUrl ? <span>{content.siteUrl}</span> : null}
+          {content?.actualDescription ||
+          content?.linkDescription ||
+          content?.description ? (
+            <p>
+              {content.actualDescription ||
+                content.linkDescription ||
+                content.description}
+            </p>
+          ) : null}
+        </div>
+        <div className="home-feed-card__url-thumb">
+          <Embedly
+            imageOnly
+            noLink
+            contentId={contentId}
+            defaultThumbUrl={content?.thumbUrl || '/img/link.png'}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  function renderVideoPreview() {
+    return (
+      <div className="home-feed-card__video-preview">
+        <VideoThumbImage
+          className="home-feed-card__video-thumb"
+          rewardLevel={content?.rewardLevel}
+          videoId={contentId}
+          noPaddingBottom
+          src={`https://img.youtube.com/vi/${content?.content}/mqdefault.jpg`}
+        />
+        <div className="home-feed-card__video-copy">
+          <h3>{content?.title}</h3>
+          {content?.description ? <p>{content.description}</p> : null}
+        </div>
+      </div>
+    );
+  }
+
+  function renderRichTextEmbedPreview({
+    contentId,
+    contentType,
+    imageEmbed,
+    section,
+    text,
+    title
+  }: {
+    contentId: number;
+    contentType: string;
+    imageEmbed: MarkdownImageEmbed;
+    section: string;
+    text: string;
+    title?: string;
+  }) {
+    const hasText = Boolean(title || text.trim());
+    const textMaxLines =
+      resolvedSizing.main.size === 'rich-embed-compact'
+        ? 3
+        : Math.min(resolvedSizing.main.textMaxLines, 6);
+    return (
+      <div
+        className={`home-feed-card__rich-embed-preview${
+          hasText ? ' home-feed-card__rich-embed-preview--with-text' : ''
+        }${!hasText ? ' home-feed-card__rich-embed-preview--image-only' : ''}`}
+      >
+        {hasText ? (
+          <div className="home-feed-card__rich-embed-copy">
+            {title ? <h3>{title}</h3> : null}
+            {text ? (
+              <RichText
+                contentId={contentId}
+                contentType={contentType}
+                isPreview
+                maxLines={textMaxLines}
+                section={section}
+                theme={theme}
+              >
+                {text}
+              </RichText>
+            ) : null}
+          </div>
+        ) : null}
+        <MarkdownEmbedPreview
+          className="home-feed-card__rich-embed-image"
+          contentId={contentId}
+          contentType={contentType}
+          embed={imageEmbed}
+        />
+      </div>
+    );
+  }
+}
+
+function getRenderablePreviewComment(comments: Comment[] | undefined) {
+  if (!Array.isArray(comments)) return null;
+  return (
+    comments.find(
+      (comment) =>
+        comment &&
+        !comment.isDeleted &&
+        !comment.isLoadMoreButton &&
+        !comment.notFound
+    ) || null
+  );
+}
+
+function getPreviewCommentUploader(comment: Comment) {
+  const uploader = comment.uploader || {};
+  return {
+    id: Number(uploader.id || (comment as any).userId || 0),
+    profilePicUrl: uploader.profilePicUrl || (comment as any).profilePicUrl,
+    profileTheme: uploader.profileTheme || (comment as any).profileTheme,
+    username: uploader.username || (comment as any).username || ''
+  };
+}
+
+function getPreviewCommentText(comment: Comment) {
+  if (comment.isNotification) return 'viewed the secret message';
+  if (comment.isDeleteNotification) return 'this comment was deleted';
+
+  const rawContent = String(comment.content || '');
+  const markdownEmbed = getMarkdownImageEmbedPreview(rawContent);
+  const content = stripMarkdownForCommentPreview(
+    removeMarkdownImageEmbeds(rawContent)
+  );
+  if (content) return content;
+  if (markdownEmbed) return getPreviewCommentEmbedText(markdownEmbed);
+  if (comment.filePath || comment.thumbUrl || (comment as any).actualFilePath) {
+    return getPreviewCommentAttachmentText(comment);
+  }
+  return 'View latest comment';
+}
+
+function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
+  const filePath = String(
+    (comment as any).actualFilePath || comment.filePath || ''
+  );
+  const fileName = getPreviewCommentFileName(comment, filePath);
+  const thumbUrl = String(comment.thumbUrl || '');
+  if (filePath || thumbUrl) {
+    const { extension, fileType } = getFileInfoFromFileName(fileName);
+    const src =
+      thumbUrl ||
+      buildAttachmentUrl({
+        fileName,
+        filePath,
+        contentType: 'comment'
+      });
+
+    if ((fileType === 'image' || thumbUrl) && src) {
+      return {
+        isVideo: fileType === 'video',
+        kind: 'image',
+        label: fileName || getPreviewCommentAttachmentText(comment),
+        src
+      };
+    }
+
+    return {
+      extension,
+      icon: getPreviewCommentFileIcon(fileType),
+      kind: 'file',
+      label: fileName || getPreviewCommentAttachmentText(comment)
+    };
+  }
+
+  const markdownEmbed = getMarkdownImageEmbedPreview(
+    String(comment.content || '')
+  );
+  if (!markdownEmbed) return null;
+
+  if (markdownEmbed.type === 'image') {
+    return {
+      isVideo: false,
+      kind: 'image',
+      label: markdownEmbed.alt || 'Image',
+      src: markdownEmbed.src
+    };
+  }
+
+  return {
+    extension: '',
+    icon: markdownEmbed.type === 'youtube' ? 'play' : 'link',
+    kind: 'file',
+    label: getPreviewCommentEmbedText(markdownEmbed)
+  };
+}
+
+function getPreviewCommentAttachmentText(comment: Comment) {
+  const fileName = getPreviewCommentFileName(
+    comment,
+    String((comment as any).actualFilePath || comment.filePath || '')
+  );
+  const { fileType } = getFileInfoFromFileName(fileName);
+  if (fileType === 'image' || comment.thumbUrl) return 'shared an image';
+  if (fileType === 'video') return 'shared a video';
+  if (fileType === 'audio') return 'shared audio';
+  if (fileType === 'pdf') return 'shared a PDF';
+  if (fileType === 'archive') return 'shared a file';
+  if (fileType === 'word') return 'shared a document';
+  return 'shared a file';
+}
+
+function getPreviewCommentEmbedText(embed: MarkdownImageEmbed) {
+  if (embed.type === 'youtube') return 'shared a video';
+  if (embed.type === 'internal') return 'shared a link';
+  return 'shared an image';
+}
+
+function getPreviewCommentFileName(comment: Comment, filePath: string) {
+  if (comment.fileName) return comment.fileName;
+  const pathName = String(filePath || '')
+    .split('?')[0]
+    .split('#')[0];
+  const fileName = pathName.split('/').filter(Boolean).pop() || '';
+  try {
+    return decodeURIComponent(fileName);
+  } catch {
+    return fileName;
+  }
+}
+
+function getPreviewCommentFileIcon(fileType: string) {
+  if (fileType === 'image') return 'file-image';
+  if (fileType === 'video') return 'file-video';
+  if (fileType === 'audio') return 'file-audio';
+  if (fileType === 'pdf') return 'file-pdf';
+  if (fileType === 'archive') return 'file-archive';
+  if (fileType === 'word') return 'file-word';
+  return 'file';
+}
+
+function getPreviewCommentLabel(comment: Comment, contentType: string) {
+  if (comment.isNotification || comment.isDeleteNotification) return '';
+  return contentType === 'comment' || Number(comment.replyId || 0)
+    ? 'replied'
+    : 'commented';
+}
+
+function stripMarkdownForCommentPreview(text: string) {
+  return text
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+    .replace(/[`*_>#~-]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}

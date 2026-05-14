@@ -14,6 +14,7 @@ import PinnedAICards from './PinnedAICards';
 import ReorderSectionsModal from './ReorderSectionsModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useContentState, useProfileState } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   useAppContext,
   useContentContext,
@@ -151,6 +152,7 @@ export default function Home({
   const [isSubjectsLoading, setIsSubjectsLoading] = useState(false);
   const [reorderModalShown, setReorderModalShown] = useState(false);
   const CommentInputAreaRef = useRef(null);
+  const profileHomeRef = useRef<HTMLDivElement | null>(null);
   const sectionOrder = useMemo(
     () => normalizeSectionOrder(profile?.state?.profile?.sectionOrder),
     [profile?.state?.profile?.sectionOrder]
@@ -206,6 +208,13 @@ export default function Home({
       />
     )
   };
+
+  useScrollAnchorRestoration({
+    anchorKey: `profile:${username}:home`,
+    containerRef: profileHomeRef,
+    initialScroll: { type: 'top' },
+    itemsReady: sectionOrder.length > 0
+  });
 
   useEffect(() => {
     if (!commentsLoaded) {
@@ -277,78 +286,93 @@ export default function Home({
         }
       `}
     >
-      {isOwnProfile && (
+      <div ref={profileHomeRef}>
+        {isOwnProfile && (
+          <div
+            className={css`
+              display: flex;
+              justify-content: flex-end;
+              width: 100%;
+              margin-bottom: 1rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                padding: 0 1.4rem;
+              }
+            `}
+          >
+            <Button
+              color="darkerGray"
+              variant="solid"
+              tone="raised"
+              onClick={() => setReorderModalShown(true)}
+            >
+              <Icon icon="sort" />
+              <span style={{ marginLeft: '0.7rem' }}>
+                {reorderSectionsLabel}
+              </span>
+            </Button>
+          </div>
+        )}
+        {sectionOrder.map((sectionKey) => {
+          const sectionContent = sectionContentByKey[sectionKey];
+          if (!sectionContent) return null;
+          return (
+            <div
+              key={sectionKey}
+              data-scroll-anchor-id={`profile-home:${sectionKey}`}
+              data-scroll-anchor-content-key={`profile-section:${sectionKey}`}
+            >
+              {sectionContent}
+            </div>
+          );
+        })}
+        <div
+          data-scroll-anchor-id="profile-home:message-board"
+          data-scroll-anchor-content-key="profile-section:message-board"
+        >
+          <SectionPanel
+            elevated
+            customColorTheme={selectedTheme}
+            loaded
+            title={messageBoardLabel}
+          >
+            <Comments
+              theme={selectedTheme}
+              comments={comments}
+              commentsLoadLimit={5}
+              commentsShown={true}
+              inputAreaInnerRef={CommentInputAreaRef}
+              inputTypeLabel={`message${
+                profile.id === userId ? '' : ` to ${username}`
+              }`}
+              isLoading={loadingComments}
+              loadMoreButton={commentsLoadMoreButton}
+              numPreviews={1}
+              onCommentSubmit={onUploadComment}
+              onDelete={onDeleteComment}
+              onEditDone={onEditComment}
+              onLikeClick={onLikeComment}
+              onLoadMoreComments={onLoadMoreComments}
+              onLoadMoreReplies={onLoadMoreReplies}
+              onLoadRepliesOfReply={onLoadRepliesOfReply}
+              onPreviewClick={onLoadComments}
+              onReplySubmit={onUploadReply}
+              onRewardCommentEdit={onEditRewardComment}
+              parent={{
+                ...profile,
+                pinnedCommentId,
+                contentType: 'user'
+              }}
+              userId={userId}
+            />
+          </SectionPanel>
+        </div>
         <div
           className={css`
-            display: flex;
-            justify-content: flex-end;
-            width: 100%;
-            margin-bottom: 1rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 0 1.4rem;
-            }
+            display: block;
+            height: 7rem;
           `}
-        >
-          <Button
-            color="darkerGray"
-            variant="solid"
-            tone="raised"
-            onClick={() => setReorderModalShown(true)}
-          >
-            <Icon icon="sort" />
-            <span style={{ marginLeft: '0.7rem' }}>{reorderSectionsLabel}</span>
-          </Button>
-        </div>
-      )}
-      {sectionOrder.map((sectionKey) => {
-        const sectionContent = sectionContentByKey[sectionKey];
-        if (!sectionContent) return null;
-        return (
-          <React.Fragment key={sectionKey}>{sectionContent}</React.Fragment>
-        );
-      })}
-      <SectionPanel
-        elevated
-        customColorTheme={selectedTheme}
-        loaded
-        title={messageBoardLabel}
-      >
-        <Comments
-          theme={selectedTheme}
-          comments={comments}
-          commentsLoadLimit={5}
-          commentsShown={true}
-          inputAreaInnerRef={CommentInputAreaRef}
-          inputTypeLabel={`message${
-            profile.id === userId ? '' : ` to ${username}`
-          }`}
-          isLoading={loadingComments}
-          loadMoreButton={commentsLoadMoreButton}
-          numPreviews={1}
-          onCommentSubmit={onUploadComment}
-          onDelete={onDeleteComment}
-          onEditDone={onEditComment}
-          onLikeClick={onLikeComment}
-          onLoadMoreComments={onLoadMoreComments}
-          onLoadMoreReplies={onLoadMoreReplies}
-          onLoadRepliesOfReply={onLoadRepliesOfReply}
-          onPreviewClick={onLoadComments}
-          onReplySubmit={onUploadReply}
-          onRewardCommentEdit={onEditRewardComment}
-          parent={{
-            ...profile,
-            pinnedCommentId,
-            contentType: 'user'
-          }}
-          userId={userId}
         />
-      </SectionPanel>
-      <div
-        className={css`
-          display: block;
-          height: 7rem;
-        `}
-      />
+      </div>
       {reorderModalShown && (
         <ReorderSectionsModal
           initialSectionOrder={sectionOrder}

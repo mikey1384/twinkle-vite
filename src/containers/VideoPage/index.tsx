@@ -23,6 +23,7 @@ import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   useAppContext,
   useContentContext,
@@ -33,7 +34,8 @@ import {
 const commentOnThisVideoLabel = 'Comment on this video';
 
 export default function VideoPage() {
-  const { search } = useLocation();
+  const location = useLocation();
+  const { pathname, search } = location;
   const { videoId: initialVideoId } = useParams();
   const videoId = Number(initialVideoId);
   const [changingPage, setChangingPage] = useState(false);
@@ -140,6 +142,18 @@ export default function VideoPage() {
     () => !!notFound || !!isNotFound || !!isDeleted,
     [isDeleted, isNotFound, notFound]
   );
+  const videoPageRef = useRef<HTMLDivElement | null>(null);
+  const videoAnchorKey = useMemo(
+    () => `video:${videoId}:${pathname.endsWith('/questions') ? 'questions' : 'watch'}`,
+    [pathname, videoId]
+  );
+
+  useScrollAnchorRestoration({
+    anchorKey: videoAnchorKey,
+    containerRef: videoPageRef,
+    initialScroll: { type: 'top' },
+    itemsReady: loaded && !isVideoUnavailable
+  });
 
   useEffect(() => {
     isMounted.current = true;
@@ -258,6 +272,7 @@ export default function VideoPage() {
         </div>
       )}
       <div
+        ref={videoPageRef}
         className={css`
           width: 100%;
           height: 100%;
@@ -277,6 +292,9 @@ export default function VideoPage() {
       >
         {loaded && !isVideoUnavailable && (
           <div
+            data-scroll-anchor-id={`video:${videoId}:main`}
+            data-scroll-anchor-secondary-id={String(videoId)}
+            data-scroll-anchor-content-key={`video:${videoId}`}
             className={css`
               grid-column: 1;
               min-width: 0;
@@ -319,6 +337,8 @@ export default function VideoPage() {
               />
             </Routes>
             <div
+              data-scroll-anchor-id={`video:${videoId}:details`}
+              data-scroll-anchor-content-key={`video:${videoId}:details`}
               className={css`
                 display: flex;
                 flex-direction: column;
@@ -350,6 +370,8 @@ export default function VideoPage() {
               />
               {rewards?.length > 0 && (
                 <div
+                  data-scroll-anchor-id={`video:${videoId}:rewards`}
+                  data-scroll-anchor-content-key={`video:${videoId}:rewards`}
                   className={css`
                     background: #fff;
                     border-radius: ${borderRadius};
@@ -373,6 +395,8 @@ export default function VideoPage() {
               )}
             </div>
             <div
+              data-scroll-anchor-id={`video:${videoId}:subjects`}
+              data-scroll-anchor-content-key={`video:${videoId}:subjects`}
               className={css`
                 background: #fff;
                 border-radius: ${borderRadius};
@@ -415,6 +439,8 @@ export default function VideoPage() {
               />
             </div>
             <div
+              data-scroll-anchor-id={`video:${videoId}:comments`}
+              data-scroll-anchor-content-key={`video:${videoId}:comments`}
               className={css`
                 background: #fff;
                 border-radius: ${borderRadius};
@@ -482,6 +508,8 @@ export default function VideoPage() {
         )}
         {loaded && !isVideoUnavailable && (
           <div
+            data-scroll-anchor-id={`video:${videoId}:nav`}
+            data-scroll-anchor-content-key={`video:${videoId}:nav`}
             className={css`
               grid-column: 2;
               @media (max-width: ${tabletMaxWidth}) {

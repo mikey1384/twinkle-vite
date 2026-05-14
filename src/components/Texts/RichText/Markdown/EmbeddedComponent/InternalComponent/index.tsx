@@ -12,11 +12,13 @@ export default function InternalComponent({
   rootId,
   rootType,
   src,
+  isPreview,
   isProfileComponent
 }: {
   rootId?: number | string;
   rootType?: string;
   src: string;
+  isPreview?: boolean;
   isProfileComponent?: boolean;
 }) {
   const InnerComponent = useMemo(() => {
@@ -33,38 +35,59 @@ export default function InternalComponent({
       'daily-reflections'
     ];
     if (isProfileComponent) {
-      return <DefaultComponent linkType={linkType} src={src} />;
+      return (
+        <DefaultComponent linkType={linkType} src={src} isPreview={isPreview} />
+      );
     }
     if (['app', 'apps', 'build', 'builds'].includes(linkType) && contentId) {
-      return <MainContentComponent contentType="build" contentId={contentId} />;
+      return (
+        <MainContentComponent
+          contentType="build"
+          contentId={contentId}
+          isPreview={isPreview}
+        />
+      );
     }
     if (mainContentTypes.includes(linkType) && contentId) {
       const contentType = linkType.slice(0, -1);
       return (
-        <MainContentComponent contentType={contentType} contentId={contentId} />
+        <MainContentComponent
+          contentType={contentType}
+          contentId={contentId}
+          isPreview={isPreview}
+        />
       );
     }
     if (linkType === 'missions' && contentId) {
-      return <MissionComponent src={src} />;
+      return <MissionComponent src={src} isPreview={isPreview} />;
     }
     if (linkType === 'users') {
-      return <UserComponent src={src} />;
+      return <UserComponent src={src} isPreview={isPreview} />;
     }
     if (
       (linkType === 'ai-cards' ||
         (linkType === 'chat' && linkSubType === 'ai-cards')) &&
       rootType !== 'user'
     ) {
-      return <AICardComponent rootId={rootId} rootType={rootType} src={src} />;
+      return (
+        <AICardComponent
+          rootId={rootId}
+          rootType={rootType}
+          isPreview={isPreview}
+          src={src}
+        />
+      );
     }
     if (linkType === 'shared-prompts') {
-      return <SharedPromptComponent src={src} />;
+      return <SharedPromptComponent src={src} isPreview={isPreview} />;
     }
     if (linkType === 'achievement-unlocks' && contentId) {
-      return <AchievementUnlockComponent src={src} />;
+      return <AchievementUnlockComponent src={src} isPreview={isPreview} />;
     }
-    return <DefaultComponent linkType={linkType} src={src} />;
-  }, [src, isProfileComponent, rootId, rootType]);
+    return (
+      <DefaultComponent linkType={linkType} src={src} isPreview={isPreview} />
+    );
+  }, [src, isProfileComponent, isPreview, rootId, rootType]);
 
   return (
     <ErrorBoundary componentPath="Texts/EmbeddedComponent/InternalComponent">

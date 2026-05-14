@@ -4,10 +4,7 @@ import type {
   SharedBuildRunIdentityState
 } from '../hooks/useRunIdentity';
 import { resolveBuildFollowUpPromptKey } from './promptBindings';
-import type {
-  Build,
-  CurrentBuildRunView
-} from '../types';
+import type { Build, CurrentBuildRunView } from '../types';
 
 function getActiveStreamMessageIds({
   getCurrentActiveAssistantMessageId,
@@ -70,17 +67,19 @@ export default function resolveCurrentBuildRunView({
     Object.prototype.hasOwnProperty.call(sharedBuildRun, 'followUpPrompt');
   const sharedRunHasRuntimeExplorationPlan =
     Boolean(sharedBuildRun) &&
-    Object.prototype.hasOwnProperty.call(sharedBuildRun, 'runtimeExplorationPlan');
+    Object.prototype.hasOwnProperty.call(
+      sharedBuildRun,
+      'runtimeExplorationPlan'
+    );
   const sharedFirstExecutionPlan = sharedRunHasExecutionPlan
     ? (sharedBuildRun?.executionPlan ?? null)
     : (build.executionPlan ?? null);
   const sharedFirstFollowUpPrompt = sharedRunHasFollowUpPrompt
     ? (sharedBuildRun?.followUpPrompt ?? null)
     : (build.followUpPrompt ?? null);
-  const sharedFirstRuntimeExplorationPlan =
-    sharedRunHasRuntimeExplorationPlan
-      ? (sharedBuildRun?.runtimeExplorationPlan ?? null)
-      : (build.runtimeExplorationPlan ?? null);
+  const sharedFirstRuntimeExplorationPlan = sharedRunHasRuntimeExplorationPlan
+    ? (sharedBuildRun?.runtimeExplorationPlan ?? null)
+    : (build.runtimeExplorationPlan ?? null);
   const sharedGeneratingRun = sharedBuildRun?.generating
     ? sharedBuildRun
     : null;
@@ -96,7 +95,8 @@ export default function resolveCurrentBuildRunView({
   );
 
   return {
-    requestId: activeRequestId || String(sharedBuildRun?.requestId || '').trim() || null,
+    requestId:
+      activeRequestId || String(sharedBuildRun?.requestId || '').trim() || null,
     runMode:
       sharedBuildRun?.runMode ||
       (activeRequestId
@@ -105,13 +105,14 @@ export default function resolveCurrentBuildRunView({
     generating: Boolean(sharedGeneratingRun) || hasLocalGeneratingRun,
     status: sharedBuildRun?.status ?? null,
     assistantStatusSteps: sharedBuildRun?.assistantStatusSteps || [],
+    agentContext: sharedBuildRun?.agentContext ?? null,
+    lifecycle: sharedBuildRun?.lifecycle ?? null,
     usageMetrics: sharedBuildRun?.usageMetrics || {},
     runEvents: Array.isArray(sharedBuildRun?.runEvents)
       ? sharedBuildRun.runEvents
       : [],
     streamingProjectFiles: sharedGeneratingRun?.streamingProjectFiles ?? null,
-    streamingFocusFilePath:
-      sharedGeneratingRun?.streamingFocusFilePath ?? null,
+    streamingFocusFilePath: sharedGeneratingRun?.streamingFocusFilePath ?? null,
     error:
       typeof sharedBuildRun?.error === 'string' && sharedBuildRun.error.trim()
         ? sharedBuildRun.error

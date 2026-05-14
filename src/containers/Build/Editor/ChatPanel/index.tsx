@@ -9,6 +9,7 @@ import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
 import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
+import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
 import { formatScaledRem } from './helpers/utils';
 
 const panelClass = css`
@@ -158,6 +159,7 @@ export default function ChatPanel({
   lumineTabLabel = 'Lumine',
   lumineTabIcon = 'sparkles',
   lumineChatVisibilityControl,
+  lumineModelSelectionControl,
   messages,
   executionPlan,
   scopedPlanQuestion,
@@ -166,6 +168,9 @@ export default function ChatPanel({
   generating,
   generatingStatus,
   assistantStatusSteps,
+  requestId,
+  agentContext,
+  lifecycle,
   copilotPolicy,
   aiUsagePolicy,
   pageFeedbackEvents,
@@ -334,7 +339,9 @@ export default function ChatPanel({
         currentStepIndex = nextStepIndex;
         nextStepIndex += 1;
       }
-      const thoughtContent = String(event?.details?.thoughtContent || '').trim();
+      const thoughtContent = String(
+        event?.details?.thoughtContent || ''
+      ).trim();
       if (!thoughtContent) continue;
       const targetIndex =
         currentStepIndex >= 0 ? currentStepIndex : entries.length - 1;
@@ -348,6 +355,15 @@ export default function ChatPanel({
     }
     return entries;
   }, [assistantStatusSteps, runEvents]);
+  const runtimeDebugSnapshot = useMemo(() => {
+    if (!import.meta.env.DEV) return null;
+    return buildLumineRuntimeDebugSnapshot({
+      requestId,
+      agentContext,
+      lifecycle,
+      runEvents
+    });
+  }, [agentContext, lifecycle, requestId, runEvents]);
   const generationResetUi = useMemo(() => {
     if (!aiUsagePolicy) return null;
     const resetCost = Math.max(
@@ -385,7 +401,9 @@ export default function ChatPanel({
     !generating &&
     !draftMessage.trim();
   const normalizedScopedPlanQuestion = String(scopedPlanQuestion || '').trim();
-  const normalizedFollowUpQuestion = String(followUpPrompt?.question || '').trim();
+  const normalizedFollowUpQuestion = String(
+    followUpPrompt?.question || ''
+  ).trim();
   const normalizedFollowUpSuggestedMessage = String(
     followUpPrompt?.suggestedMessage || ''
   ).trim();
@@ -414,7 +432,7 @@ export default function ChatPanel({
               ? snapshot.scrollTop
               : savedScrollTop > 0
                 ? savedScrollTop
-              : container.scrollHeight,
+                : container.scrollHeight,
           behavior: 'auto'
         });
         return;
@@ -426,11 +444,7 @@ export default function ChatPanel({
       });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [
-    activeCommunicationMode,
-    chatEndRef,
-    chatScrollRef
-  ]);
+  }, [activeCommunicationMode, chatEndRef, chatScrollRef]);
 
   useEffect(() => {
     return () => {
@@ -620,6 +634,7 @@ export default function ChatPanel({
             copilotPolicy={copilotPolicy}
             aiUsagePolicy={aiUsagePolicy}
             lumineChatVisibilityControl={lumineChatVisibilityControl}
+            lumineModelSelectionControl={lumineModelSelectionControl}
             pageFeedbackEvents={pageFeedbackEvents}
             twinkleCoins={twinkleCoins}
             purchasingGenerationReset={purchasingGenerationReset}
@@ -643,6 +658,7 @@ export default function ChatPanel({
               assistantStatusSteps={assistantStatusSteps}
               currentActivity={currentActivity}
               statusStepEntries={statusStepEntries}
+              runtimeDebugSnapshot={runtimeDebugSnapshot}
               runError={runError}
               activeStreamMessageIds={activeStreamMessageIds}
               isOwner={isOwner}

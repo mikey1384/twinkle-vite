@@ -64,7 +64,11 @@ export default function FileInfo({
                   }
                 `
           }
-          onClick={() => (isThumb ? {} : window.open(src))}
+          onClick={(event) => {
+            if (isThumb) return;
+            event.stopPropagation();
+            window.open(src);
+          }}
         >
           <Icon
             className={css`
@@ -118,6 +122,7 @@ export default function FileInfo({
                   href={src}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
                 >
                   {fileName}
                 </a>
@@ -140,7 +145,10 @@ export default function FileInfo({
                 display: 'flex',
                 justifyContent: 'flex-end'
               }}
-              onClick={() => window.open(src)}
+              onClick={(event) => {
+                event.stopPropagation();
+                window.open(src);
+              }}
             >
               <span
                 className={css`

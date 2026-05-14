@@ -194,7 +194,8 @@ export default function UsernameText({
     }
   }
 
-  async function onUsernameClick() {
+  async function onUsernameClick(event: React.MouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
     const elementContext = {
       x: UsernameTextRef.current?.getBoundingClientRect?.()?.left || 0,
       y: UsernameTextRef.current?.getBoundingClientRect?.()?.top || 0,

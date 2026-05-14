@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ImageModal from '~/components/Modals/ImageModal';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
 
 const STATIC_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'bmp'];
 const TRUSTED_DOMAINS = ['cloudfront.net', 's3.amazonaws.com'];
@@ -9,37 +10,46 @@ const TRUSTED_DOMAINS = ['cloudfront.net', 's3.amazonaws.com'];
 export default function ImageComponent({
   src,
   alt,
+  isPreview,
   onSetErrorLoadingImage,
   ...commonProps
 }: {
   src: string;
   alt?: string;
+  isPreview?: boolean;
   onSetErrorLoadingImage: (v: boolean) => void;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
+  const [repairImageSrc, setRepairImageSrc] = useState('');
 
   const isSecret = alt === 'secret';
+  const appliedSrc = repairImageSrc || src;
+
+  useEffect(() => {
+    setLoaded(false);
+    setRepairImageSrc('');
+  }, [src]);
 
   const isInternalImage = useMemo(() => {
     try {
-      const hostname = new URL(src).hostname.toLowerCase();
+      const hostname = new URL(appliedSrc).hostname.toLowerCase();
       return TRUSTED_DOMAINS.some(
         (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
       );
     } catch {
       return false;
     }
-  }, [src]);
+  }, [appliedSrc]);
 
   const isStaticImage = useMemo(() => {
-    const url = (src || '').split('?')[0].split('#')[0];
+    const url = (appliedSrc || '').split('?')[0].split('#')[0];
     const fileName = url.split('/').pop() || '';
     const dotIdx = fileName.lastIndexOf('.');
     const ext = dotIdx > -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
     return STATIC_IMAGE_EXTS.includes(ext);
-  }, [src]);
+  }, [appliedSrc]);
 
   const isClickable =
     isInternalImage && isStaticImage && (!isSecret || isRevealed);
@@ -49,20 +59,37 @@ export default function ImageComponent({
       className={css`
         position: relative;
         display: inline-block;
+        ${isPreview
+          ? `
+            width: 100%;
+            max-height: 18rem;
+            overflow: hidden;
+            border-radius: 0.8rem;
+          `
+          : ''}
       `}
     >
       <img
         {...commonProps}
         className={css`
           cursor: ${isClickable ? 'pointer' : 'default'};
+          ${isPreview
+            ? `
+              display: block;
+              width: 100%;
+              max-height: 18rem;
+              object-fit: contain;
+            `
+            : ''}
         `}
-        src={src}
+        src={appliedSrc}
         alt={alt}
         loading="lazy"
         onLoad={() => setLoaded(true)}
-        onError={() => onSetErrorLoadingImage(true)}
-        onClick={() => {
+        onError={handleImageError}
+        onClick={(event) => {
           if (isClickable) {
+            event.stopPropagation();
             setImageModalShown(true);
           }
         }}
@@ -94,7 +121,10 @@ export default function ImageComponent({
               background: ${Color.darkerGray()};
             }
           `}`}
-          onClick={() => setIsRevealed(true)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsRevealed(true);
+          }}
         >
           {loaded ? 'Tap to reveal image' : ''}
         </div>
@@ -102,10 +132,21 @@ export default function ImageComponent({
       {imageModalShown && (
         <ImageModal
           onHide={() => setImageModalShown(false)}
-          src={src}
+          src={appliedSrc}
           downloadable
         />
       )}
     </div>
   );
+
+  function handleImageError() {
+    if (!repairImageSrc) {
+      const nextRepairImageSrc = getEmbedSvgRepairImageUrl(appliedSrc);
+      if (nextRepairImageSrc) {
+        setRepairImageSrc(nextRepairImageSrc);
+        return;
+      }
+    }
+    onSetErrorLoadingImage(true);
+  }
 }

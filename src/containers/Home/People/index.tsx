@@ -9,6 +9,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useInputContext } from '~/contexts';
 import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   LAST_ONLINE_FILTER_LABEL,
   RANKING_FILTER_LABEL
@@ -43,6 +44,7 @@ function People() {
   const searchRole = useRoleColor('search', { fallback: 'logoBlue' });
   const searchColor = searchRole.color;
   const [loading, setLoading] = useState(false);
+  const peopleListRef = useRef<HTMLDivElement | null>(null);
   const searchTextRef = useRef(userSearchText);
   const [searchText, setSearchText] = useState(userSearchText);
   const { handleSearch, searching } = useSearch({
@@ -90,6 +92,19 @@ function People() {
     () => stringIsEmpty(searchText) && profilesLoaded && loadMoreButton,
     [loadMoreButton, profilesLoaded, searchText]
   );
+  const displayedProfiles = stringIsEmpty(searchText)
+    ? profiles
+    : searchedProfiles;
+
+  useScrollAnchorRestoration({
+    anchorKey: `home:people:${stringIsEmpty(searchText) ? orderUsersBy : `search:${searchText}`}`,
+    containerRef: peopleListRef,
+    initialScroll: { type: 'top' },
+    itemsReady:
+      profilesLoaded &&
+      !searching &&
+      displayedProfiles.length > 0
+  });
 
   return (
     <div style={{ height: '100%' }}>
@@ -110,6 +125,7 @@ function People() {
         />
       </div>
       <div
+        ref={peopleListRef}
         style={{
           marginTop: '1rem',
           position: 'relative',
@@ -132,25 +148,37 @@ function People() {
         {profilesLoaded &&
           stringIsEmpty(searchText) &&
           profiles.map((profile: { id: number }, index: number) => (
-            <ProfilePanel
-              style={{ marginTop: index === 0 ? 0 : '1rem' }}
-              expandable
+            <div
               key={profile.id}
-              profileId={profile.id}
-            />
+              data-scroll-anchor-id={`home-user:${profile.id}`}
+              data-scroll-anchor-secondary-id={String(profile.id)}
+              data-scroll-anchor-content-key={`user:${profile.id}`}
+            >
+              <ProfilePanel
+                style={{ marginTop: index === 0 ? 0 : '1rem' }}
+                expandable
+                profileId={profile.id}
+              />
+            </div>
           ))}
         {profilesLoaded &&
           !stringIsEmpty(searchText) &&
           !searching &&
           searchedProfiles.map((profile: { id: number }, index: number) => (
-            <ProfilePanel
-              style={{
-                marginTop: index === 0 ? 0 : '1rem'
-              }}
-              expandable
+            <div
               key={profile.id}
-              profileId={profile.id}
-            />
+              data-scroll-anchor-id={`home-user:${profile.id}`}
+              data-scroll-anchor-secondary-id={String(profile.id)}
+              data-scroll-anchor-content-key={`user:${profile.id}`}
+            >
+              <ProfilePanel
+                style={{
+                  marginTop: index === 0 ? 0 : '1rem'
+                }}
+                expandable
+                profileId={profile.id}
+              />
+            </div>
           ))}
         {!stringIsEmpty(searchText) &&
           !searching &&

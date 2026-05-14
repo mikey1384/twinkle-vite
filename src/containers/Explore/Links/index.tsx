@@ -139,7 +139,7 @@ export default function Links() {
           onLoadMore={handleLoadMoreByUserLinks}
           loadMoreButtonShown={loadMoreByUserLinksButtonShown}
         >
-          <LinkGroup links={byUserLinks} />
+          <LinkGroup anchorPrefix="explore-links:by-user" links={byUserLinks} />
         </SectionPanel>
         <SectionPanel
           title={recommendedLabel}
@@ -150,7 +150,10 @@ export default function Links() {
           onLoadMore={handleLoadMoreRecommendeds}
           loadMoreButtonShown={loadMoreRecommendedsButtonShown}
         >
-          <LinkGroup links={recommendeds} />
+          <LinkGroup
+            anchorPrefix="explore-links:recommended"
+            links={recommendeds}
+          />
         </SectionPanel>
         <SectionPanel
           title={allLinksLabel}
@@ -171,7 +174,7 @@ export default function Links() {
           onLoadMore={handleLoadMoreLinks}
           loadMoreButtonShown={loadMoreLinksButtonShown}
         >
-          <LinkGroup links={links} />
+          <LinkGroup anchorPrefix="explore-links:all" links={links} />
         </SectionPanel>
         {addLinkModalShown && (
           <AddLinkModal onHide={() => setAddLinkModalShown(false)} />

@@ -122,9 +122,7 @@ interface UseRunTerminalActionsOptions {
     }
   ) => void;
   getActiveBuildId: () => number;
-  getBuildRunIdentity: (
-    buildId: number
-  ) => SharedBuildRunIdentityState | null;
+  getBuildRunIdentity: (buildId: number) => SharedBuildRunIdentityState | null;
   getCurrentActiveAssistantMessageId: (
     requestId?: string | null,
     sharedRunState?: SharedBuildRunIdentityState | null
@@ -244,7 +242,8 @@ export default function useRunTerminalActions({
       requestLimits,
       message
     } = options;
-    const latestSharedRunIdentityState = getBuildRunIdentity(getActiveBuildId());
+    const latestSharedRunIdentityState =
+      getBuildRunIdentity(getActiveBuildId());
     const currentRequestId = getCurrentRunRequestId(
       requestId,
       latestSharedRunIdentityState
@@ -468,7 +467,9 @@ export default function useRunTerminalActions({
       artifactCode !== null ||
       (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0);
     const pausedForToolLimit = interruptionReason === 'tool_limit';
-    const planWasRefined = Boolean(runtimePlanRefined && runtimeExplorationPlan);
+    const planWasRefined = Boolean(
+      runtimePlanRefined && runtimeExplorationPlan
+    );
     if (generatedCodeSuccessfully || planWasRefined) {
       setMobilePanelTab('preview');
     } else {
@@ -550,7 +551,8 @@ export default function useRunTerminalActions({
     error?: string;
     requestLimits?: BuildCopilotPolicy['requestLimits'] | null;
   }) {
-    const latestSharedRunIdentityState = getBuildRunIdentity(getActiveBuildId());
+    const latestSharedRunIdentityState =
+      getBuildRunIdentity(getActiveBuildId());
     const currentRequestId = getCurrentRunRequestId(
       requestId,
       latestSharedRunIdentityState
@@ -563,17 +565,18 @@ export default function useRunTerminalActions({
       requestId,
       latestSharedRunIdentityState
     );
-    const errorMessage = error || 'Failed to generate code.';
+    const errorMessage =
+      error || 'Lumine had trouble with that request. Please try again.';
     const shouldPreserveAssistantArtifacts = Boolean(
       assistantId &&
-        getLatestChatMessages().some(
-          (entry) =>
-            entry.id === assistantId &&
-            entry.role === 'assistant' &&
-            (Number(entry.artifactVersionId || 0) > 0 ||
-              (typeof entry.codeGenerated === 'string' &&
-                entry.codeGenerated.trim().length > 0))
-        )
+      getLatestChatMessages().some(
+        (entry) =>
+          entry.id === assistantId &&
+          entry.role === 'assistant' &&
+          (Number(entry.artifactVersionId || 0) > 0 ||
+            (typeof entry.codeGenerated === 'string' &&
+              entry.codeGenerated.trim().length > 0))
+      )
     );
     applyCopilotRequestLimitsSnapshot(requestLimits);
     if (!shouldPreserveAssistantArtifacts) {
@@ -634,7 +637,8 @@ export default function useRunTerminalActions({
       guardStatus !== 'processing'
         ? releaseQueuedRequestsWaitingForStop(normalizedRequestId)
         : false;
-    const latestSharedRunIdentityState = getBuildRunIdentity(getActiveBuildId());
+    const latestSharedRunIdentityState =
+      getBuildRunIdentity(getActiveBuildId());
     const currentRequestId = getCurrentRunRequestId(
       normalizedRequestId,
       latestSharedRunIdentityState
@@ -653,8 +657,11 @@ export default function useRunTerminalActions({
       runOrchestration.consumeReplacementStop(normalizedRequestId);
     const isReplacementStop =
       stopReason === 'replacement' || queuedReplacementStop;
-    const normalizedStopReason =
-      isReplacementStop ? 'replacement' : stopReason === 'user' ? 'user' : null;
+    const normalizedStopReason = isReplacementStop
+      ? 'replacement'
+      : stopReason === 'user'
+        ? 'user'
+        : null;
     const userRequestedStop = runOrchestration.didUserRequestStop();
     if (deduped) {
       resetDedupedProcessingReconcileState();

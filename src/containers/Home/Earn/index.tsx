@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
@@ -6,11 +6,13 @@ import ActivitySuggester from './ActivitySuggester';
 import TopMenu from '../TopMenu';
 import { useHomeContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 const leaderboardsLabel = 'Leaderboards';
 
 export default function Earn() {
   const navigate = useNavigate();
+  const earnListRef = useRef<HTMLDivElement | null>(null);
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
@@ -24,6 +26,13 @@ export default function Earn() {
     (v) => v.actions.onSetInputModalShown
   );
 
+  useScrollAnchorRestoration({
+    anchorKey: 'home:earn',
+    containerRef: earnListRef,
+    initialScroll: { type: 'top' },
+    itemsReady: true
+  });
+
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
       <TopMenu
@@ -35,6 +44,7 @@ export default function Earn() {
         onInputModalButtonClick={handleInputModalButtonClick}
       />
       <div
+        ref={earnListRef}
         className={css`
           > section {
             margin-bottom: 3rem;
@@ -53,10 +63,10 @@ export default function Earn() {
           }
         `}
       >
-        <section>
+        <section data-scroll-anchor-id="home-earn:activity-suggester">
           <ActivitySuggester />
         </section>
-        <section>
+        <section data-scroll-anchor-id="home-earn:leaderboards">
           <h2 style={{ fontSize: '2rem' }}>{leaderboardsLabel}</h2>
           <Leaderboards />
         </section>

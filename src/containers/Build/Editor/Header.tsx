@@ -584,7 +584,10 @@ export default function Header({
     isContributionFork &&
     contributionStatus !== 'none' &&
     contributionStatus !== 'draft';
-  const shouldShowMergeBranch = Boolean(showMergeBranch || canMergeBranch);
+  const shouldShowMergeButton = Boolean(showMergeBranch || canMergeBranch);
+  const shouldShowMergeBranch = Boolean(
+    shouldShowMergeButton || showReplaceBranch
+  );
   const mergeBranchButtonDisabled = Boolean(
     mergeBranchDisabled || !canMergeBranch || contributionActionLoading
   );
@@ -649,17 +652,19 @@ export default function Header({
     return (
       <span className={mergeBranchActionClass}>
         {renderMergeTargetControl()}
-        <GameCTAButton
-          onClick={onMergeBranch || (() => {})}
-          disabled={mergeBranchButtonDisabled}
-          loading={contributionActionLoading === 'merge'}
-          variant="success"
-          size="md"
-          icon="check"
-          shiny={shouldHighlightMergeBranch}
-        >
-          {mergeBranchButtonLabel}
-        </GameCTAButton>
+        {shouldShowMergeButton ? (
+          <GameCTAButton
+            onClick={onMergeBranch || (() => {})}
+            disabled={mergeBranchButtonDisabled}
+            loading={contributionActionLoading === 'merge'}
+            variant="success"
+            size="md"
+            icon="check"
+            shiny={shouldHighlightMergeBranch}
+          >
+            {mergeBranchButtonLabel}
+          </GameCTAButton>
+        ) : null}
         {showReplaceBranch ? (
           <GameCTAButton
             onClick={onReplaceMainBranch || (() => {})}
@@ -745,7 +750,7 @@ export default function Header({
                 style={getContributionBadgeStyle(contributionStatus)}
                 title={
                   contributionStatus === 'merging'
-                    ? 'This branch is being merged into the original Build'
+                    ? 'This branch has conflict markers to resolve'
                     : 'Branch status'
                 }
               >
@@ -826,8 +831,8 @@ export default function Header({
                   style={getContributionBadgeStyle(contributionStatus)}
                   title={
                     contributionStatus === 'merging'
-                        ? 'This branch is being merged into the original Build'
-                        : 'Branch status'
+                      ? 'This branch has conflict markers to resolve'
+                      : 'Branch status'
                   }
                 >
                   <Icon icon="code-branch" />
@@ -1180,6 +1185,6 @@ function formatContributionStatusLabel(
     | 'merged'
 ) {
   if (status === 'none') return 'Branch';
-  if (status === 'merging') return 'Merging';
+  if (status === 'merging') return 'Conflicts';
   return status.charAt(0).toUpperCase() + status.slice(1);
 }

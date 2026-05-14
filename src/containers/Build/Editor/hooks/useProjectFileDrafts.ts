@@ -1,4 +1,19 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+export type BuildProjectFileContributionAction =
+  | 'merge'
+  | 'replace'
+  | 'update-from-main'
+  | 'complete-merge';
+
+export type BuildProjectFileDraftActionChoice =
+  | 'save'
+  | 'discard'
+  | 'cancel';
+
+export interface BuildProjectFileDraftActionPrompt {
+  action: BuildProjectFileContributionAction;
+}
 
 export interface BuildProjectFilesDraftState {
   files: Array<{ path: string; content?: string }>;
@@ -13,7 +28,6 @@ interface BuildProjectFileSaveResult {
 
 interface BuildProjectFileContributionActionResult {
   ready: boolean;
-  files?: Array<{ path: string; content?: string }>;
 }
 
 interface BuildProjectFileDraftFeedbackEvent {
@@ -35,13 +49,17 @@ interface BuildProjectFilePersistenceOptions {
 }
 
 interface BuildProjectFileDraftsApi {
+  draftActionPrompt: BuildProjectFileDraftActionPrompt | null;
   resetDraftState(files: Array<{ path: string; content?: string }>): void;
   handleProjectFilesDraftStateChange(
     state: BuildProjectFilesDraftState
   ): void;
   prepareProjectFilesForContributionAction(options: {
-    action: 'merge' | 'update-from-main';
+    action: BuildProjectFileContributionAction;
   }): Promise<BuildProjectFileContributionActionResult>;
+  resolveProjectFilesDraftActionPrompt(
+    choice: BuildProjectFileDraftActionChoice
+  ): void;
   ensureProjectFilesPersistedBeforeRun(options: {
     runType: 'copilot' | 'greeting';
   }): Promise<boolean>;
@@ -54,6 +72,7 @@ interface UseBuildProjectFileDraftsOptions {
   persistProjectFilesDraft: (
     files: Array<{ path: string; content?: string }>
   ) => Promise<BuildProjectFileSaveResult>;
+  discardProjectFilesDraft: () => Array<{ path: string; content?: string }>;
   onAppendFeedbackEvent: (event: BuildProjectFileDraftFeedbackEvent) => void;
 }
 
@@ -61,8 +80,11 @@ export default function useProjectFileDrafts({
   isOwner,
   normalizeProjectFilePath,
   persistProjectFilesDraft,
+  discardProjectFilesDraft,
   onAppendFeedbackEvent
 }: UseBuildProjectFileDraftsOptions): BuildProjectFileDraftsApi {
+  const [draftActionPrompt, setDraftActionPrompt] =
+    useState<BuildProjectFileDraftActionPrompt | null>(null);
   const projectFilesDraftRef = useRef<Array<{ path: string; content?: string }>>(
     []
   );
@@ -71,13 +93,27 @@ export default function useProjectFileDrafts({
   const isOwnerRef = useRef(isOwner);
   const normalizeProjectFilePathRef = useRef(normalizeProjectFilePath);
   const persistProjectFilesDraftRef = useRef(persistProjectFilesDraft);
+  const discardProjectFilesDraftRef = useRef(discardProjectFilesDraft);
   const onAppendFeedbackEventRef = useRef(onAppendFeedbackEvent);
+  const pendingPromptResolveRef =
+    useRef<((choice: BuildProjectFileDraftActionChoice) => void) | null>(null);
   const apiRef = useRef<BuildProjectFileDraftsApi | null>(null);
 
   isOwnerRef.current = isOwner;
   normalizeProjectFilePathRef.current = normalizeProjectFilePath;
   persistProjectFilesDraftRef.current = persistProjectFilesDraft;
+  discardProjectFilesDraftRef.current = discardProjectFilesDraft;
   onAppendFeedbackEventRef.current = onAppendFeedbackEvent;
+
+  useEffect(() => {
+    return () => {
+      const resolve = pendingPromptResolveRef.current;
+      pendingPromptResolveRef.current = null;
+      if (resolve) {
+        resolve('cancel');
+      }
+    };
+  }, []);
 
   if (!apiRef.current) {
     function wait(ms: number) {
@@ -106,6 +142,32 @@ export default function useProjectFileDrafts({
 
     function appendFeedbackEvent(event: BuildProjectFileDraftFeedbackEvent) {
       onAppendFeedbackEventRef.current(event);
+    }
+
+    function actionNeedsMergeLabel(
+      action: BuildProjectFileContributionAction
+    ) {
+      return action === 'merge';
+    }
+
+    function actionText(action: BuildProjectFileContributionAction) {
+      if (action === 'update-from-main') return 'updating from main';
+      if (action === 'replace') return 'replacing';
+      if (action === 'complete-merge') return 'completing this merge';
+      return 'merging';
+    }
+
+    function waitForDraftActionChoice(
+      action: BuildProjectFileContributionAction
+    ) {
+      if (pendingPromptResolveRef.current) {
+        pendingPromptResolveRef.current('cancel');
+        pendingPromptResolveRef.current = null;
+      }
+      setDraftActionPrompt({ action });
+      return new Promise<BuildProjectFileDraftActionChoice>((resolve) => {
+        pendingPromptResolveRef.current = resolve;
+      });
     }
 
     async function waitForProjectFileSaveToSettle(timeoutMs = 12000) {
@@ -238,20 +300,20 @@ export default function useProjectFileDrafts({
     async function prepareProjectFilesForContributionAction({
       action
     }: {
-      action: 'merge' | 'update-from-main';
+      action: BuildProjectFileContributionAction;
     }): Promise<BuildProjectFileContributionActionResult> {
       if (!isOwnerRef.current) {
         return { ready: true };
       }
 
-      const isUpdateFromMain = action === 'update-from-main';
-      const actionText = isUpdateFromMain ? 'updating from main' : 'merging';
       const settled = await waitForProjectFileSaveToSettle();
       if (!settled) {
         appendFeedbackEvent({
           kind: 'lifecycle',
           phase: 'error',
-          message: `Please wait for file save to finish before ${actionText} this branch.`
+          message: `Please wait for file save to finish before ${actionText(
+            action
+          )}.`
         });
         return { ready: false };
       }
@@ -265,18 +327,53 @@ export default function useProjectFileDrafts({
         return { ready: true };
       }
 
-      appendFeedbackEvent({
-        kind: 'status',
-        phase: 'planning',
-        message: `Using pending file edits for ${isUpdateFromMain ? 'update from main' : 'merge'}...`
+      const choice = await waitForDraftActionChoice(action);
+      setDraftActionPrompt(null);
+      pendingPromptResolveRef.current = null;
+      if (choice === 'cancel') {
+        return { ready: false };
+      }
+
+      if (choice === 'discard') {
+        const discardedFiles = normalizeDraftFiles(
+          discardProjectFilesDraftRef.current()
+        );
+        projectFilesDraftRef.current = discardedFiles;
+        hasUnsavedProjectFilesRef.current = false;
+        savingProjectFilesRef.current = false;
+        appendFeedbackEvent({
+          kind: 'status',
+          phase: 'planning',
+          message: actionNeedsMergeLabel(action)
+            ? 'Discarded pending file edits before merge.'
+            : 'Discarded pending file edits before continuing.'
+        });
+        return { ready: true };
+      }
+
+      const saved = await ensureProjectFilesPersisted({
+        settleErrorMessage: `Please wait for file save to finish before ${actionText(
+          action
+        )}.`,
+        draftChangedMessage:
+          'Unable to continue: file drafts kept changing during save. Please stop editing and try again.',
+        initialSaveMessage: actionNeedsMergeLabel(action)
+          ? 'Saving unsaved files before merge...'
+          : 'Saving unsaved files before continuing...',
+        retrySaveMessage:
+          'Draft changed during save. Saving latest edits again...',
+        savedMessage: actionNeedsMergeLabel(action)
+          ? 'Saved pending file edits before merge.'
+          : 'Saved pending file edits before continuing.',
+        saveFailurePrefix: 'Unable to continue: ',
+        returnTrueOnEmptyDraft: true
       });
-      return {
-        ready: true,
-        files: pendingFiles
-      };
+      return { ready: saved };
     }
 
     apiRef.current = {
+      draftActionPrompt: null,
+
       resetDraftState(files) {
         projectFilesDraftRef.current = normalizeDraftFiles(files);
         hasUnsavedProjectFilesRef.current = false;
@@ -291,6 +388,15 @@ export default function useProjectFileDrafts({
 
       prepareProjectFilesForContributionAction({ action }) {
         return prepareProjectFilesForContributionAction({ action });
+      },
+
+      resolveProjectFilesDraftActionPrompt(choice) {
+        const resolve = pendingPromptResolveRef.current;
+        pendingPromptResolveRef.current = null;
+        setDraftActionPrompt(null);
+        if (resolve) {
+          resolve(choice);
+        }
       },
 
       ensureProjectFilesPersistedBeforeRun({ runType }) {
@@ -324,5 +430,8 @@ export default function useProjectFileDrafts({
     };
   }
 
-  return apiRef.current;
+  return {
+    ...(apiRef.current as BuildProjectFileDraftsApi),
+    draftActionPrompt
+  };
 }

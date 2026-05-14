@@ -94,6 +94,9 @@ const browseModeFilterWrapClass = css`
 export default function BuildList() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [activityRailVisible, setActivityRailVisible] = useState(
+    getIsActivityRailVisible
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const buildQuickAccessMode = useKeyContext(
     (v) => v.myState.buildQuickAccessMode
@@ -196,6 +199,8 @@ export default function BuildList() {
   const activeBrowseLoaded =
     activeTab === 'mine' ? true : activeBrowseLoadedForCurrentUser;
   const activeTabRef = useRef<BuildListTab>(activeTab);
+  const tabChangeInitialScrollRef = useRef(false);
+  const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseLoadingMore, setBrowseLoadingMore] = useState(false);
@@ -226,6 +231,7 @@ export default function BuildList() {
     visibleBuildListTabs.find((tab) => tab.value === activeTab) ||
     visibleBuildListTabs[0];
   const isMyBuildsTab = activeTab === 'mine';
+  const browsePending = !isMyBuildsTab && !activeBrowseLoaded;
   const {
     activeBuilds: activeQuickAccessBuilds,
     activeCursor: activeQuickAccessCursor,
@@ -261,13 +267,25 @@ export default function BuildList() {
 
   const {
     hasNewActivity: hasNewBuildActivity,
+    onMobileClose: handleBuildActivityMobileClose,
     onMobileOpen: handleBuildActivityMobileOpen,
     panelProps: buildActivityPanelProps
   } = useActivityPanel({
+    autoMarkActivityViewed: activityRailVisible,
     buildStudio,
     color: profileTheme,
     normalizedUserId
   });
+
+  useEffect(() => {
+    function handleResize() {
+      setActivityRailVisible(getIsActivityRailVisible());
+    }
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     activeTabRef.current = activeTab;
@@ -497,75 +515,84 @@ export default function BuildList() {
             onOpenTopViewedBuild={handleOpenTodayTopViewedBuild}
           />
 
-          <TabFilter
-            activeTab={activeTab}
-            color={profileTheme}
-            onChange={handleTabChange}
-            tabs={visibleBuildListTabs}
-          />
-
-          {isPublicBrowseTab(activeTab) ? (
-            <div className={browseModeFilterWrapClass}>
-              <TabFilter
-                activeTab={activeBrowseMode}
-                color={profileTheme}
-                density="compact"
-                onChange={handleBrowseModeChange}
-                tabs={buildBrowseModeTabs}
-              />
-            </div>
-          ) : null}
-
-          <Search
-            value={buildSearchInput}
-            onChange={setBuildSearchInput}
-            onClear={() => {
-              setBuildSearchInput('');
-              setBuildSearchQuery('');
-            }}
-          />
-
-          <ActivityPanels
-            {...buildActivityPanelProps}
-            hasNewActivity={hasNewBuildActivity}
-            onMobileOpen={handleBuildActivityMobileOpen}
-            variant="mobile"
-          />
-
-          {isMyBuildsTab ? (
-            <RequestQueue
-              builds={buildsWithPendingRequests}
-              totalCount={totalPendingCollaborationRequests}
-              onOpenBuildRequests={handleOpenBuildRequests}
+          <div
+            ref={listInitialScrollRef}
+            data-scroll-initial-target="build-list"
+          >
+            <TabFilter
+              activeTab={activeTab}
+              color={profileTheme}
+              onChange={handleTabChange}
+              tabs={visibleBuildListTabs}
             />
-          ) : null}
 
-          <Results
-            activeTab={activeTab}
-            activeTabLabel={activeTabConfig.label}
-            browseBuilds={browseBuilds}
-            browseHasMore={Boolean(browseLoadMoreButton)}
-            browseLoading={browseLoading}
-            browseLoadingMore={browseLoadingMore}
-            builds={builds}
-            color={profileTheme}
-            displayedMyBuilds={displayedMyBuilds}
-            isBuildSearchActive={isBuildSearchActive}
-            isMyBuildsTab={isMyBuildsTab}
-            promptInput={promptInput}
-            searchQuery={buildSearchQuery}
-            creatingFromPrompt={creatingFromPrompt}
-            runtimeBackTo={`${location.pathname}${location.search}${location.hash}`}
-            onAddDescription={setEditingBuild}
-            onDelete={setDeletingBuild}
-            onFavoriteChange={handleBuildFavoriteChange}
-            onFavoriteError={handleBuildFavoriteError}
-            onFavoriteStart={handleBuildFavoriteStart}
-            onLoadMoreBrowseBuilds={handleLoadMoreBrowseBuilds}
-            onOpenForkHistory={setForkHistoryBuildId}
-            onPromptInputChange={setPromptInput}
-            onStartFromPrompt={handleStartFromPrompt}
-          />
+            {isPublicBrowseTab(activeTab) ? (
+              <div className={browseModeFilterWrapClass}>
+                <TabFilter
+                  activeTab={activeBrowseMode}
+                  color={profileTheme}
+                  density="compact"
+                  onChange={handleBrowseModeChange}
+                  tabs={buildBrowseModeTabs}
+                />
+              </div>
+            ) : null}
+
+            <Search
+              value={buildSearchInput}
+              onChange={setBuildSearchInput}
+              onClear={() => {
+                setBuildSearchInput('');
+                setBuildSearchQuery('');
+              }}
+            />
+
+            <ActivityPanels
+              {...buildActivityPanelProps}
+              hasNewActivity={hasNewBuildActivity}
+              onMobileClose={handleBuildActivityMobileClose}
+              onMobileOpen={handleBuildActivityMobileOpen}
+              variant="mobile"
+            />
+
+            {isMyBuildsTab ? (
+              <RequestQueue
+                builds={buildsWithPendingRequests}
+                totalCount={totalPendingCollaborationRequests}
+                onOpenBuildRequests={handleOpenBuildRequests}
+              />
+            ) : null}
+
+            <Results
+              activeTab={activeTab}
+              activeTabLabel={activeTabConfig.label}
+              anchorKey={getBuildListScrollPositionPathname(activeTab)}
+              initialScrollToList={tabChangeInitialScrollRef.current}
+              initialScrollTargetRef={listInitialScrollRef}
+              browseBuilds={browseBuilds}
+              browseHasMore={Boolean(browseLoadMoreButton)}
+              browseLoading={browseLoading || browsePending}
+              browseLoadingMore={browseLoadingMore}
+              builds={builds}
+              color={profileTheme}
+              displayedMyBuilds={displayedMyBuilds}
+              isBuildSearchActive={isBuildSearchActive}
+              isMyBuildsTab={isMyBuildsTab}
+              promptInput={promptInput}
+              searchQuery={buildSearchQuery}
+              creatingFromPrompt={creatingFromPrompt}
+              runtimeBackTo={`${location.pathname}${location.search}${location.hash}`}
+              onAddDescription={setEditingBuild}
+              onDelete={setDeletingBuild}
+              onFavoriteChange={handleBuildFavoriteChange}
+              onFavoriteError={handleBuildFavoriteError}
+              onFavoriteStart={handleBuildFavoriteStart}
+              onLoadMoreBrowseBuilds={handleLoadMoreBrowseBuilds}
+              onOpenForkHistory={setForkHistoryBuildId}
+              onPromptInputChange={setPromptInput}
+              onStartFromPrompt={handleStartFromPrompt}
+            />
+          </div>
         </main>
         <ActivityPanels {...buildActivityPanelProps} variant="rail" />
       </div>
@@ -670,6 +697,7 @@ export default function BuildList() {
 
   function handleTabChange(tab: BuildListTab) {
     if (tab !== activeTab) {
+      tabChangeInitialScrollRef.current = true;
       onSetBuildStudioActiveTab(tab);
     }
   }
@@ -759,4 +787,16 @@ export default function BuildList() {
       }
     });
   }
+
+}
+
+function getIsActivityRailVisible() {
+  if (typeof window === 'undefined') return false;
+  const breakpoint = Number.parseInt(buildActivityRailBreakpoint, 10);
+  if (!Number.isFinite(breakpoint)) return true;
+  return window.innerWidth > breakpoint;
+}
+
+function getBuildListScrollPositionPathname(tab: BuildListTab) {
+  return `/build:${tab}`;
 }

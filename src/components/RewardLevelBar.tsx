@@ -67,14 +67,20 @@ export default function RewardLevelBar({
         font-weight: 600;
         width: auto;
         max-width: 100%;
-        .left {
+        .reward-level-bar__left {
           margin: 0;
           display: flex;
           align-items: center;
           justify-content: flex-start;
+          gap: 0.35rem;
           max-width: 50%;
         }
-        .right {
+        .reward-level-bar__stars {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        .reward-level-bar__right {
           display: flex;
           align-items: center;
           justify-content: flex-end;
@@ -85,10 +91,11 @@ export default function RewardLevelBar({
       `}`}
       style={style}
     >
-      <div className="left">
-        {rewardLevelLabel}: {leftStars}
+      <div className="reward-level-bar__left">
+        <span>{rewardLevelLabel}:</span>
+        <span className="reward-level-bar__stars">{leftStars}</span>
       </div>
-      <div className="right">{earnUpToLabel}</div>
+      <div className="reward-level-bar__right">{earnUpToLabel}</div>
     </div>
   );
 }

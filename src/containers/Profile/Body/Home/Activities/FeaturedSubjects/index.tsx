@@ -79,11 +79,17 @@ export default function FeaturedSubjects({
       >
         {shownSubjects.map(
           (subject: { id: number; contentType: string; uploader: User }) => (
-            <ContentListItem
+            <div
               key={subject.id}
-              style={{ marginBottom: '1rem' }}
-              contentObj={subject}
-            />
+              data-scroll-anchor-id={`profile-featured-subject:${subject.id}`}
+              data-scroll-anchor-secondary-id={String(subject.id)}
+              data-scroll-anchor-content-key={`subject:${subject.id}`}
+            >
+              <ContentListItem
+                style={{ marginBottom: '1rem' }}
+                contentObj={subject}
+              />
+            </div>
           )
         )}
       </SectionPanel>

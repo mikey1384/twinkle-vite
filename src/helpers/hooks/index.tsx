@@ -2,7 +2,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore
@@ -32,11 +31,9 @@ import { Color } from '~/constants/css';
 import { levels } from '~/constants/userLevels';
 import { User, UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
-import { scrollPositions } from '~/constants/state';
 import { throttle } from '~/helpers';
 
 const allContentState: Record<string, any> = {};
-const BodyRef = document.scrollingElement || document.documentElement;
 const EMPTY_PROFILE_FEEDS: any[] = [];
 const EMPTY_USER_STATE = {};
 const DEFAULT_PROFILE_NOTABLES = {
@@ -244,6 +241,12 @@ export function useLazyLoad({
   const getSnapshot = useCallback(() => lazyLoadStore.getVisibility(id), [id]);
 
   const isVisible = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const onSetPlaceholderHeightRef = useRef(onSetPlaceholderHeight);
+  const hasPlaceholderHeightCallback = Boolean(onSetPlaceholderHeight);
+
+  useEffect(() => {
+    onSetPlaceholderHeightRef.current = onSetPlaceholderHeight;
+  }, [onSetPlaceholderHeight]);
 
   // Update store when inView changes
   useEffect(() => {
@@ -252,27 +255,45 @@ export function useLazyLoad({
 
   // Handle placeholder height measurement (unchanged - doesn't cause parent re-renders)
   useEffect(() => {
-    if (!PanelRef || !onSetPlaceholderHeight) return;
+    if (!PanelRef || !hasPlaceholderHeightCallback) return;
 
+    const panelRef = PanelRef;
+    let frame = 0;
+    let observedElement: Element | null = null;
     const handleResize = throttle((entries: ResizeObserverEntry[]) => {
       if (entries.length > 0) {
         const clientHeight = entries[0].target.clientHeight;
-        onSetPlaceholderHeight(clientHeight);
+        onSetPlaceholderHeightRef.current?.(clientHeight);
       }
     }, 100);
 
     const resizeObserver = new ResizeObserver(handleResize);
 
-    if (PanelRef.current) {
-      resizeObserver.observe(PanelRef.current);
-    }
+    observePanelWhenReady();
 
     return () => {
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      if (frame) window.cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
     };
-  }, [onSetPlaceholderHeight, PanelRef]);
+
+    function observePanelWhenReady() {
+      const panelElement = panelRef.current;
+      if (panelElement && panelElement !== observedElement) {
+        if (observedElement) {
+          resizeObserver.unobserve(observedElement);
+        }
+        observedElement = panelElement;
+        resizeObserver.observe(panelElement);
+        onSetPlaceholderHeightRef.current?.(panelElement.clientHeight);
+        return;
+      }
+      if (!panelElement) {
+        if (inView || isVisible) {
+          frame = window.requestAnimationFrame(observePanelWhenReady);
+        }
+      }
+    }
+  }, [PanelRef, hasPlaceholderHeightCallback, id, inView, isVisible]);
 
   return isVisible;
 }
@@ -523,69 +544,6 @@ export function useSearch({
   }
 
   return { handleSearch, searching };
-}
-
-export function useScrollPosition({
-  pathname,
-  isMobile
-}: {
-  pathname: string;
-  isMobile: boolean;
-}) {
-  const pathnameRef = useRef(pathname);
-  const restoredPathnameRef = useRef('');
-  pathnameRef.current = pathname;
-
-  useLayoutEffect(() => {
-    if (pathname !== restoredPathnameRef.current) {
-      restoredPathnameRef.current = pathname;
-      restoreScrollPosition(pathname);
-      const restoreTimer = window.setTimeout(() => {
-        restoreScrollPosition(pathname);
-      }, 0);
-      let mobileRestoreTimer: number | null = null;
-      // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
-      if (isMobile) {
-        mobileRestoreTimer = window.setTimeout(() => {
-          restoreScrollPosition(pathnameRef.current);
-        }, 500);
-      }
-      return () => {
-        window.clearTimeout(restoreTimer);
-        if (mobileRestoreTimer !== null) {
-          window.clearTimeout(mobileRestoreTimer);
-        }
-      };
-    }
-  }, [pathname, isMobile]);
-
-  useLayoutEffect(() => {
-    addEvent(window, 'scroll', handleScroll);
-    addEvent(document.getElementById('App'), 'scroll', handleScroll);
-
-    return function cleanUp() {
-      removeEvent(window, 'scroll', handleScroll);
-      removeEvent(document.getElementById('App'), 'scroll', handleScroll);
-    };
-
-    function handleScroll() {
-      const currentPathname = pathnameRef.current;
-      if (!currentPathname) return;
-      scrollPositions[currentPathname] = getCurrentScrollPosition();
-    }
-  }, []);
-}
-
-function getCurrentScrollPosition() {
-  const appElement = document.getElementById('App');
-  return Math.max(appElement?.scrollTop || 0, (BodyRef || {}).scrollTop || 0);
-}
-
-function restoreScrollPosition(pathname: string) {
-  const appElement = document.getElementById('App');
-  const scrollTop = scrollPositions[pathname] || 0;
-  if (appElement) appElement.scrollTop = scrollTop;
-  (BodyRef || {}).scrollTop = scrollTop;
 }
 
 export function useMyLevel() {

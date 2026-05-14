@@ -44,9 +44,7 @@ interface UseChatCommandActionsOptions {
       existingUserMessageId?: number | null;
     }
   ) => void;
-  getBuildRunIdentity: (
-    buildId: number
-  ) => SharedBuildRunIdentityState | null;
+  getBuildRunIdentity: (buildId: number) => SharedBuildRunIdentityState | null;
   getCurrentPageRunActivityRequestId: (
     sharedRunState?: SharedBuildRunIdentityState | null
   ) => string;
@@ -128,6 +126,14 @@ export default function useChatCommandActions({
   syncChatMessagesFromServer,
   userId
 }: UseChatCommandActionsOptions) {
+  function openLumineChatShortcutTarget() {
+    handleBuildWorkspaceCommunicationModeChange('lumine');
+    setMobilePanelTab('chat');
+    window.requestAnimationFrame(() => {
+      scrollChatToBottom('smooth');
+    });
+  }
+
   async function handleSendMessage(messageText: string) {
     return await sendBuildMessageText(messageText);
   }
@@ -138,10 +144,6 @@ export default function useChatCommandActions({
       currentBuildIsContributionFork &&
       rootBuildId > 0 &&
       Number(build.rootBuildUserId || 0) === Number(userId || 0);
-    const canResolveFromMainProject =
-      requesterOwnsRootBuild &&
-      String(build.contributionStatus || '').trim() === 'merging';
-    if (!isOwner && !canResolveFromMainProject) return false;
     const normalizedPaths = Array.from(
       new Set(
         (Array.isArray(paths) ? paths : [])
@@ -149,27 +151,42 @@ export default function useChatCommandActions({
           .filter(Boolean)
       )
     );
-    const pathsText =
+    const canResolveFromMainProject =
+      requesterOwnsRootBuild &&
+      (normalizedPaths.length > 0 ||
+        String(build.contributionStatus || '').trim() === 'merging');
+    if (!isOwner && !canResolveFromMainProject) return false;
+    const prompt =
+      'Resolve the conflict markers in the main project files and save the project.';
+    const knownPathsContext =
       normalizedPaths.length > 0
-        ? ` in ${normalizedPaths.join(', ')}`
-        : '';
-    const prompt = [
-      `Please resolve the merge conflict markers${pathsText}.`,
-      'First inspect the conflict and decide whether it is a mechanical code merge or a product decision.',
-      'For mechanical conflicts, keep the intended changes from both Current Build and Contribution, remove every <<<<<<< Current Build / ======= / >>>>>>> Contribution marker, and make sure the app still runs.',
-      'If the conflict changes product identity, core gameplay, main workflow, data model, or requires choosing between mutually exclusive features, do not guess or edit yet. Ask the owner clear questions until the intended direction is unambiguous, then resolve the markers.'
-    ].join(' ');
+        ? `Known marker paths: ${normalizedPaths.join(', ')}.`
+        : 'Known marker paths were not provided.';
+    const mergeConflictContext = [
+      'MERGE_CONFLICT_CONTEXT:',
+      knownPathsContext,
+      'Marker labels: <<<<<<< Current Build / ======= / >>>>>>> Contribution.',
+      'These markers are in main project files after a branch merge.',
+      'This is a normal workspace repair request. Use workspace tools as needed; there may be additional marker paths beyond the known list.',
+      'Do not rely on chat excerpts.',
+      'Resolve all markers that have a coherent safe resolution, preserve intended behavior from both sides where the code context supports it, and keep the app runnable.',
+      'Before saving, make sure every project file that contains markers has been considered and all markers are removed.',
+      'Ask only if the actual marked files and nearby code still leave no coherent safe resolution.'
+    ].join('\n');
     if (!isOwner) {
       navigate(`/build/${rootBuildId}`, {
         state: {
           initialPrompt: prompt,
+          initialPromptContext: mergeConflictContext,
           forceInitialPrompt: true
         }
       });
       return true;
     }
-    handleBuildWorkspaceCommunicationModeChange('lumine');
-    return await sendBuildMessageText(prompt);
+    openLumineChatShortcutTarget();
+    return await sendBuildMessageText(prompt, {
+      messageContext: mergeConflictContext
+    });
   }
 
   async function handleContinueScopedPlan() {

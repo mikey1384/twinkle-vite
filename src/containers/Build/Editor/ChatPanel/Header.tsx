@@ -10,8 +10,12 @@ import {
   BuildAiUsagePolicy,
   BuildCopilotPolicy,
   BuildLumineChatVisibility,
+  BuildLumineModel,
+  BuildLumineModelPreference,
+  BuildLumineThinkLevel,
   BuildRunEvent,
-  LimitProgressItem
+  LimitProgressItem,
+  LumineModelSelectionControl
 } from './types';
 import {
   buildLimitProgressItem,
@@ -19,6 +23,11 @@ import {
   formatStepLabel,
   formatTokenCount
 } from './helpers/utils';
+import {
+  getLumineModelOption,
+  LUMINE_THINK_LEVEL_LABELS,
+  normalizeLumineModelSelection
+} from '../helpers/lumineModelSelection';
 
 const headerClass = css`
   min-height: var(--build-workspace-header-height);
@@ -50,6 +59,15 @@ const headerTitleClass = css`
   font-size: var(--build-workshop-title-font-size);
 `;
 
+const headerActionsClass = css`
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+`;
+
 interface HeaderProps {
   copilotPolicy: BuildCopilotPolicy | null;
   aiUsagePolicy: BuildAiUsagePolicy | null;
@@ -62,6 +80,7 @@ interface HeaderProps {
       value: BuildLumineChatVisibility
     ) => Promise<boolean | void> | boolean | void;
   } | null;
+  lumineModelSelectionControl?: LumineModelSelectionControl | null;
   pageFeedbackEvents: BuildRunEvent[];
   twinkleCoins: number;
   purchasingGenerationReset: boolean;
@@ -80,6 +99,7 @@ export default function Header({
   copilotPolicy,
   aiUsagePolicy,
   lumineChatVisibilityControl,
+  lumineModelSelectionControl,
   pageFeedbackEvents,
   twinkleCoins,
   purchasingGenerationReset,
@@ -156,8 +176,19 @@ export default function Header({
           <Icon icon="sparkles" />
           Lumine
         </div>
-        {lumineChatVisibilityControl ? (
-          <LumineChatVisibilitySettings control={lumineChatVisibilityControl} />
+        {lumineModelSelectionControl || lumineChatVisibilityControl ? (
+          <div className={headerActionsClass}>
+            {lumineModelSelectionControl ? (
+              <LumineModelSelectionSettings
+                control={lumineModelSelectionControl}
+              />
+            ) : null}
+            {lumineChatVisibilityControl ? (
+              <LumineChatVisibilitySettings
+                control={lumineChatVisibilityControl}
+              />
+            ) : null}
+          </div>
         ) : null}
       </div>
       {copilotPolicy ? (
@@ -410,6 +441,160 @@ export default function Header({
   );
 }
 
+function LumineModelSelectionSettings({
+  control
+}: {
+  control: LumineModelSelectionControl;
+}) {
+  const selectedOption = getLumineModelOption(
+    control.modelOptions,
+    control.value.model
+  );
+  const allowedThinkLevels = selectedOption.supportedReasoningEfforts;
+
+  return (
+    <div
+      className={css`
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      `}
+    >
+      <LumineSelect
+        label="Model"
+        value={control.value.model}
+        disabled={control.loading}
+        onChange={handleModelChange}
+      >
+        {control.modelOptions.map((option) => (
+          <option key={option.model} value={option.model}>
+            {option.label}
+          </option>
+        ))}
+      </LumineSelect>
+      <LumineSelect
+        label="Think level"
+        value={control.value.reasoningEffort}
+        disabled={control.loading}
+        onChange={handleThinkLevelChange}
+      >
+        {allowedThinkLevels.map((effort) => (
+          <option key={effort} value={effort}>
+            {LUMINE_THINK_LEVEL_LABELS[effort]}
+          </option>
+        ))}
+      </LumineSelect>
+      {control.error ? (
+        <span
+          className={css`
+            flex-basis: 100%;
+            text-align: right;
+            color: #be123c;
+            font-size: 1rem;
+            font-weight: 800;
+          `}
+        >
+          {control.error}
+        </span>
+      ) : null}
+    </div>
+  );
+
+  function saveSelection(nextSelection: BuildLumineModelPreference) {
+    void Promise.resolve(control.onSave(nextSelection));
+  }
+
+  function handleModelChange(value: string) {
+    const nextModel = value as BuildLumineModel;
+    saveSelection(
+      normalizeLumineModelSelection({
+        selection: {
+          model: nextModel,
+          reasoningEffort: control.value.reasoningEffort
+        },
+        modelOptions: control.modelOptions
+      })
+    );
+  }
+
+  function handleThinkLevelChange(value: string) {
+    saveSelection(
+      normalizeLumineModelSelection({
+        selection: {
+          model: control.value.model,
+          reasoningEffort: value as BuildLumineThinkLevel
+        },
+        modelOptions: control.modelOptions
+      })
+    );
+  }
+}
+
+function LumineSelect({
+  label,
+  value,
+  disabled,
+  children,
+  onChange
+}: {
+  label: string;
+  value: string;
+  disabled?: boolean;
+  children: React.ReactNode;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label
+      className={css`
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid var(--ui-border);
+        border-radius: 8px;
+        background: #fff;
+        padding: 0.34rem 0.45rem 0.34rem 0.62rem;
+        color: var(--chat-text);
+        font-size: 1rem;
+        font-weight: 900;
+      `}
+    >
+      <span
+        className={css`
+          opacity: 0.72;
+          white-space: nowrap;
+        `}
+      >
+        {label}
+      </span>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        className={css`
+          min-width: 6rem;
+          max-width: 10.5rem;
+          border: none;
+          background: transparent;
+          color: #1d4ed8;
+          font: inherit;
+          font-size: 1rem;
+          font-weight: 900;
+          cursor: ${disabled ? 'not-allowed' : 'pointer'};
+          &:focus,
+          &:focus-visible {
+            outline: none;
+            box-shadow: none;
+          }
+        `}
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
 function LumineChatVisibilitySettings({
   control
 }: {
@@ -442,7 +627,6 @@ function LumineChatVisibilitySettings({
         type="button"
         onClick={handleOpenModal}
         className={css`
-          margin-left: auto;
           border: 1px solid rgba(36, 99, 235, 0.22);
           background: #fff;
           color: var(--chat-text);

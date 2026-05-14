@@ -14,6 +14,7 @@ function EmbeddedComponent({
   contentId,
   src,
   alt,
+  isPreview,
   isProfileComponent,
   embeddedContentRef,
   ...commonProps
@@ -22,6 +23,7 @@ function EmbeddedComponent({
   contentId?: number | string;
   src?: string;
   alt?: string;
+  isPreview?: boolean;
   isProfileComponent?: boolean;
   embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
 }) {
@@ -119,12 +121,14 @@ function EmbeddedComponent({
           rootType={contentType}
           isProfileComponent={isProfileComponent}
           src={cleanReplacedLink}
+          isPreview={isPreview}
         />
       ) : isYouTube && src ? (
         <YouTubeVideo
           {...commonProps}
           contentType={contentType}
           contentId={contentId}
+          isPreview={isPreview}
           src={src}
         />
       ) : src && !errorLoadingImage ? (
@@ -132,6 +136,7 @@ function EmbeddedComponent({
           {...commonProps}
           src={src}
           alt={alt}
+          isPreview={isPreview}
           onSetErrorLoadingImage={setErrorLoadingImage}
         />
       ) : src ? (
@@ -139,12 +144,14 @@ function EmbeddedComponent({
           src={href || src}
           fileName={fileNameFromSrc || alt || 'file'}
           fileType={fileType}
+          isPreview={isPreview}
         />
       ) : href ? (
         <FileDownload
           src={href}
           fileName={fileNameFromSrc || alt || 'file'}
           fileType={fileType}
+          isPreview={isPreview}
         />
       ) : (
         '![]()'

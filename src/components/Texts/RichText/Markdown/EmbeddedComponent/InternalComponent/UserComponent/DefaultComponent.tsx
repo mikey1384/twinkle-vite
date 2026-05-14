@@ -7,11 +7,13 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function DefaultComponent({
+  isPreview,
   src,
   pageType,
   subPageType,
   profile
 }: {
+  isPreview?: boolean;
   src: string;
   pageType?: string;
   subPageType?: string;
@@ -58,6 +60,36 @@ export default function DefaultComponent({
         return '';
     }
   }, [pageType, profile?.username, subPageType]);
+
+  if (isPreview) {
+    return (
+      <button
+        type="button"
+        className={compactUserPreviewClass}
+        onClick={handlePreviewClick}
+      >
+        {heading ? (
+          <div className="compact-user-embed__heading">{heading}</div>
+        ) : null}
+        <div className="compact-user-embed__body">
+          <ProfilePic
+            style={{ width: '5.7rem', flexShrink: 0 }}
+            userId={profile.id}
+            profilePicUrl={profile.profilePicUrl || ''}
+            online={chatStatus[profile.id]?.isOnline}
+            statusShown
+          />
+          <div className="compact-user-embed__copy">
+            <span>Profile</span>
+            <strong>{profile.username || 'User'}</strong>
+            {getProfilePreviewText(profile) ? (
+              <p>{getProfilePreviewText(profile)}</p>
+            ) : null}
+          </div>
+        </div>
+      </button>
+    );
+  }
 
   return (
     <div
@@ -135,4 +167,91 @@ export default function DefaultComponent({
       </div>
     </div>
   );
+
+  function handlePreviewClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    navigate(src);
+  }
 }
+
+function getProfilePreviewText(profile: any) {
+  return (
+    profile.statusMsg ||
+    profile.profileFirstRow ||
+    profile.profileSecondRow ||
+    profile.profileThirdRow ||
+    profile.realName ||
+    ''
+  );
+}
+
+const compactUserPreviewClass = css`
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 8.6rem;
+  padding: 0.78rem 0.9rem;
+  overflow: hidden;
+  border: 1px solid ${Color.borderGray()};
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: ${Color.darkerGray()};
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  .compact-user-embed__heading {
+    max-width: 100%;
+    overflow: hidden;
+    color: ${Color.logoBlue()};
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.12;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .compact-user-embed__body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+  }
+  .compact-user-embed__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+  span {
+    overflow: hidden;
+    color: ${Color.darkGray()};
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  strong {
+    overflow: hidden;
+    color: ${Color.black()};
+    font-size: 1.45rem;
+    font-weight: 900;
+    line-height: 1.12;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  p {
+    margin: 0;
+    overflow: hidden;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+`;

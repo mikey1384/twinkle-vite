@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useInView } from 'react-intersection-observer';
+import { placeholderHeights } from '~/constants/state';
 
 function ContentListItem({
   onClick,
@@ -134,16 +135,56 @@ function ContentListItem({
   } = currentContent;
   const displayThumbUrl = thumbUrl || thumbnailUrl;
   const isBuildItem = contentType === 'build';
+  const placeholderHeightKey = `list-item-${contentType}-${contentId}`;
+  const previousPlaceholderHeight = useMemo(
+    () => placeholderHeights[placeholderHeightKey] || 0,
+    [placeholderHeightKey]
+  );
+  const placeholderHeightRef = useRef(previousPlaceholderHeight);
+  const [placeholderHeightState, setPlaceholderHeightState] = useState(() => ({
+    height: previousPlaceholderHeight,
+    key: placeholderHeightKey
+  }));
+  const placeholderHeight =
+    placeholderHeightState.key === placeholderHeightKey
+      ? placeholderHeightState.height
+      : previousPlaceholderHeight;
 
   const isVisible = useLazyLoad({
-    id: `list-item-${contentType}-${contentId}`,
+    id: placeholderHeightKey,
     inView,
-    PanelRef
+    PanelRef,
+    onSetPlaceholderHeight: (height: number) => {
+      if (!isBuildItem) return;
+      const nextHeight = Math.ceil(Number(height) || 0);
+      if (nextHeight <= 0) return;
+      setPlaceholderHeightState({
+        height: nextHeight,
+        key: placeholderHeightKey
+      });
+      placeholderHeightRef.current = nextHeight;
+    }
   });
 
   const contentShown = useMemo(() => {
     return isVisible || inView;
   }, [inView, isVisible]);
+
+  useEffect(() => {
+    placeholderHeightRef.current = previousPlaceholderHeight;
+    setPlaceholderHeightState({
+      height: previousPlaceholderHeight,
+      key: placeholderHeightKey
+    });
+  }, [placeholderHeightKey, previousPlaceholderHeight]);
+
+  useEffect(() => {
+    return function cleanUp() {
+      if (isBuildItem && placeholderHeightRef.current > 0) {
+        placeholderHeights[placeholderHeightKey] = placeholderHeightRef.current;
+      }
+    };
+  }, [isBuildItem, placeholderHeightKey]);
 
   return (
     <div
@@ -222,7 +263,17 @@ function ContentListItem({
           )}
         </div>
       ) : (
-        <div style={{ width: '100%' }} />
+        <div
+          style={{
+            width: '100%',
+            height:
+              isBuildItem && placeholderHeight
+                ? placeholderHeight
+                : isBuildItem
+                  ? '17rem'
+                  : undefined
+          }}
+        />
       )}
     </div>
   );

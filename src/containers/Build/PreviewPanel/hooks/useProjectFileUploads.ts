@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import {
   isSupportedBuildAssetUploadFile
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
+import type { ConfirmModalOptions } from '~/components/Modals/hooks/useConfirmModal';
 import type {
   EditableProjectFile,
   PreviewRuntimeUploadAsset
@@ -40,6 +41,7 @@ export default function useProjectFileUploads({
   isActiveBuildId,
   isOwner,
   persistedProjectFiles,
+  requestConfirm,
   saveEditableProjectFilesWithTracking,
   selectedFolderPath,
   setActiveFilePath,
@@ -70,6 +72,7 @@ export default function useProjectFileUploads({
   isActiveBuildId: (targetBuildId: number) => boolean;
   isOwner: boolean;
   persistedProjectFiles: EditableProjectFile[];
+  requestConfirm: (options: ConfirmModalOptions) => Promise<boolean>;
   saveEditableProjectFilesWithTracking: (options: {
     files: EditableProjectFile[];
     fallbackError: string;
@@ -267,7 +270,7 @@ export default function useProjectFileUploads({
         error: message
       };
     }
-    const latestEditableProjectFiles = readLatestEditableProjectFiles(
+    let latestEditableProjectFiles = readLatestEditableProjectFiles(
       editableProjectFilesRef
     );
     const collisionPaths = dedupedUploads
@@ -280,11 +283,15 @@ export default function useProjectFileUploads({
       .sort((a, b) => a.localeCompare(b));
 
     if (collisionPaths.length > 0) {
-      const shouldReplace = window.confirm(
-        `Replace existing files?\n\n${summarizeUploadedFileNames(
+      const shouldReplace = await requestConfirm({
+        title: 'Replace existing files',
+        description: `Replace existing files? ${summarizeUploadedFileNames(
           collisionPaths
-        )}`
-      );
+        )}`,
+        descriptionFontSize: '1.3rem',
+        confirmButtonColor: 'orange',
+        confirmButtonLabel: 'Replace'
+      });
       if (!shouldReplace) {
         const message = 'Upload cancelled. Existing files were not replaced.';
         setProjectFileError(message);
@@ -294,6 +301,9 @@ export default function useProjectFileUploads({
           error: message
         };
       }
+      latestEditableProjectFiles = readLatestEditableProjectFiles(
+        editableProjectFilesRef
+      );
     }
     const mergedProjectFilesForReferenceDetection = mergeEditableProjectFiles(
       latestEditableProjectFiles,

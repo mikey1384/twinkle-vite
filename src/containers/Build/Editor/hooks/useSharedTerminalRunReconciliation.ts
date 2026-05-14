@@ -186,7 +186,7 @@ export default function useSharedTerminalRunReconciliation({
         error:
           sharedBuildRun.error ||
           sharedAssistantText ||
-          'Failed to generate code.',
+          'Lumine had trouble with that request. Please try again.',
         requestLimits: sharedBuildRun.requestLimits ?? null
       });
       return;
@@ -243,18 +243,19 @@ export default function useSharedTerminalRunReconciliation({
     );
     const nextFollowUpPrompt = sharedHasFollowUpPrompt
       ? (sharedBuildRun.followUpPrompt ?? null)
-      : currentBuild.followUpPrompt ?? null;
+      : (currentBuild.followUpPrompt ?? null);
     const shouldUpdateFollowUpPrompt =
       sharedHasFollowUpPrompt &&
       serializedComparableValue(currentBuild.followUpPrompt ?? null) !==
         serializedComparableValue(nextFollowUpPrompt);
-    const sharedHasRuntimeExplorationPlan = Object.prototype.hasOwnProperty.call(
-      sharedBuildRun,
-      'runtimeExplorationPlan'
-    );
+    const sharedHasRuntimeExplorationPlan =
+      Object.prototype.hasOwnProperty.call(
+        sharedBuildRun,
+        'runtimeExplorationPlan'
+      );
     const nextRuntimeExplorationPlan = sharedHasRuntimeExplorationPlan
       ? (sharedBuildRun.runtimeExplorationPlan ?? null)
-      : currentBuild.runtimeExplorationPlan ?? null;
+      : (currentBuild.runtimeExplorationPlan ?? null);
     const shouldUpdateRuntimeExplorationPlan =
       sharedHasRuntimeExplorationPlan &&
       serializedComparableValue(currentBuild.runtimeExplorationPlan ?? null) !==
@@ -301,10 +302,11 @@ export default function useSharedTerminalRunReconciliation({
               currentBuild.code || ''
             )
           : currentBuild.code || null;
-    const nextArtifactVersionId =
-      hasSharedTerminalWorkspaceSnapshot
-        ? sharedArtifactVersionId ?? currentBuild.currentArtifactVersionId ?? null
-        : currentBuild.currentArtifactVersionId ?? null;
+    const nextArtifactVersionId = hasSharedTerminalWorkspaceSnapshot
+      ? (sharedArtifactVersionId ??
+        currentBuild.currentArtifactVersionId ??
+        null)
+      : (currentBuild.currentArtifactVersionId ?? null);
 
     if (
       !shouldUpdateProjectFiles &&

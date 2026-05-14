@@ -2,7 +2,13 @@ import React from 'react';
 import LinkItem from './LinkItem';
 import { css } from '@emotion/css';
 
-export default function LinkGroup({ links }: { links: any[] }) {
+export default function LinkGroup({
+  anchorPrefix = 'explore-links',
+  links
+}: {
+  anchorPrefix?: string;
+  links: any[];
+}) {
   return (
     <div
       className={css`
@@ -12,7 +18,14 @@ export default function LinkGroup({ links }: { links: any[] }) {
       `}
     >
       {links.map((link) => (
-        <LinkItem key={link.id} link={link} />
+        <div
+          key={link.id}
+          data-scroll-anchor-id={`${anchorPrefix}:${link.id}`}
+          data-scroll-anchor-secondary-id={String(link.id)}
+          data-scroll-anchor-content-key={`url:${link.id}`}
+        >
+          <LinkItem link={link} />
+        </div>
       ))}
     </div>
   );

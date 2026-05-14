@@ -4,10 +4,12 @@ import { css } from '@emotion/css';
 const submitYourResponseLabel = 'Submit your response to view this comment';
 
 export default function SecretComment({
+  label = submitYourResponseLabel,
   onClick,
   onMount,
   style
 }: {
+  label?: string;
   onClick?: () => void;
   onMount?: () => void;
   style?: React.CSSProperties;
@@ -37,7 +39,7 @@ export default function SecretComment({
       `}
       onClick={onClick}
     >
-      {submitYourResponseLabel}
+      {label}
     </div>
   );
 }

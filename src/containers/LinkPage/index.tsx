@@ -26,6 +26,7 @@ import {
   determineXpButtonDisabled
 } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { processedURL } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -41,6 +42,7 @@ export default function LinkPage() {
   const location = useLocation();
   const { linkId: initialLinkId } = useParams();
   const linkId = Number(initialLinkId);
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -132,6 +134,14 @@ export default function LinkPage() {
     uploader,
     xpRewardInterfaceShown
   } = useContentState({ contentType: 'url', contentId: linkId });
+  const linkAnchorKey = `url:${linkId}`;
+
+  useScrollAnchorRestoration({
+    anchorKey: linkAnchorKey,
+    containerRef: pageRef,
+    initialScroll: { type: 'top' },
+    itemsReady: loaded && !isDeleted
+  });
 
   useEffect(() => {
     if (title) {
@@ -258,6 +268,7 @@ export default function LinkPage() {
 
   return loaded && !isDeleted ? (
     <div
+      ref={pageRef}
       className={css`
         width: CALC(100% - 2rem);
         min-height: 100%;
@@ -297,6 +308,9 @@ export default function LinkPage() {
         `}
       >
         <div
+          data-scroll-anchor-id={`url:${linkId}:main`}
+          data-scroll-anchor-secondary-id={String(linkId)}
+          data-scroll-anchor-content-key={`url:${linkId}`}
           className={css`
             grid-column: 1;
           `}
@@ -452,6 +466,8 @@ export default function LinkPage() {
             </div>
             {Array.isArray(rewards) && rewards.length > 0 && (
               <div
+                data-scroll-anchor-id={`url:${linkId}:rewards`}
+                data-scroll-anchor-content-key={`url:${linkId}:rewards`}
                 className={css`
                   background: #fff;
                   border-radius: ${borderRadius};
@@ -484,68 +500,78 @@ export default function LinkPage() {
             }
           `}
         >
-          <Card
-            edgeToEdgeOnMobile
-            style={{ padding: '1rem', marginBottom: '1rem' }}
+          <div
+            data-scroll-anchor-id={`url:${linkId}:subjects`}
+            data-scroll-anchor-content-key={`url:${linkId}:subjects`}
           >
-            <Subjects
-              contentId={linkId}
-              contentType="url"
-              loadMoreButton={subjectsLoadMoreButton}
-              subjects={subjects}
-              onLoadMoreSubjects={onLoadMoreSubjects}
-              onLoadSubjectComments={onLoadSubjectComments}
-              onSubjectEditDone={onEditSubject}
-              onSubjectDelete={(subjectId: number) =>
-                onDeleteContent({
-                  contentType: 'subject',
-                  contentId: subjectId
-                })
-              }
-              onSetRewardLevel={onSetRewardLevel}
-              uploadSubject={onUploadSubject}
-              commentActions={{
-                editRewardComment: onEditRewardComment,
-                onDelete: handleDeleteComment,
-                onEditDone: onEditComment,
-                onLikeClick: onLikeComment,
-                onLoadMoreComments: onLoadMoreSubjectComments,
-                onLoadMoreReplies: onLoadMoreSubjectReplies,
-                onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
-                onUploadComment: handleUploadComment,
-                onUploadReply: handleUploadReply
-              }}
-            />
-          </Card>
-          <Card
-            edgeToEdgeOnMobile
-            style={{ padding: '1rem', marginBottom: '2rem' }}
+            <Card
+              edgeToEdgeOnMobile
+              style={{ padding: '1rem', marginBottom: '1rem' }}
+            >
+              <Subjects
+                contentId={linkId}
+                contentType="url"
+                loadMoreButton={subjectsLoadMoreButton}
+                subjects={subjects}
+                onLoadMoreSubjects={onLoadMoreSubjects}
+                onLoadSubjectComments={onLoadSubjectComments}
+                onSubjectEditDone={onEditSubject}
+                onSubjectDelete={(subjectId: number) =>
+                  onDeleteContent({
+                    contentType: 'subject',
+                    contentId: subjectId
+                  })
+                }
+                onSetRewardLevel={onSetRewardLevel}
+                uploadSubject={onUploadSubject}
+                commentActions={{
+                  editRewardComment: onEditRewardComment,
+                  onDelete: handleDeleteComment,
+                  onEditDone: onEditComment,
+                  onLikeClick: onLikeComment,
+                  onLoadMoreComments: onLoadMoreSubjectComments,
+                  onLoadMoreReplies: onLoadMoreSubjectReplies,
+                  onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
+                  onUploadComment: handleUploadComment,
+                  onUploadReply: handleUploadReply
+                }}
+              />
+            </Card>
+          </div>
+          <div
+            data-scroll-anchor-id={`url:${linkId}:comments`}
+            data-scroll-anchor-content-key={`url:${linkId}:comments`}
           >
-            <Comments
-              autoExpand
-              comments={comments}
-              isLoading={loadingComments}
-              inputTypeLabel="comment"
-              key={'comments' + linkId}
-              loadMoreButton={commentsLoadMoreButton}
-              onCommentSubmit={handleUploadComment}
-              onDelete={handleDeleteComment}
-              onEditDone={onEditComment}
-              onLikeClick={onLikeComment}
-              onLoadMoreComments={onLoadMoreComments}
-              onLoadMoreReplies={onLoadMoreReplies}
-              onLoadRepliesOfReply={onLoadRepliesOfReply}
-              onReplySubmit={handleUploadReply}
-              onRewardCommentEdit={onEditRewardComment}
-              parent={{
-                contentType: 'url',
-                contentId: linkId,
-                uploader,
-                pinnedCommentId
-              }}
-              userId={userId}
-            />
-          </Card>
+            <Card
+              edgeToEdgeOnMobile
+              style={{ padding: '1rem', marginBottom: '2rem' }}
+            >
+              <Comments
+                autoExpand
+                comments={comments}
+                isLoading={loadingComments}
+                inputTypeLabel="comment"
+                key={'comments' + linkId}
+                loadMoreButton={commentsLoadMoreButton}
+                onCommentSubmit={handleUploadComment}
+                onDelete={handleDeleteComment}
+                onEditDone={onEditComment}
+                onLikeClick={onLikeComment}
+                onLoadMoreComments={onLoadMoreComments}
+                onLoadMoreReplies={onLoadMoreReplies}
+                onLoadRepliesOfReply={onLoadRepliesOfReply}
+                onReplySubmit={handleUploadReply}
+                onRewardCommentEdit={onEditRewardComment}
+                parent={{
+                  contentType: 'url',
+                  contentId: linkId,
+                  uploader,
+                  pinnedCommentId
+                }}
+                userId={userId}
+              />
+            </Card>
+          </div>
         </div>
       </div>
       <div

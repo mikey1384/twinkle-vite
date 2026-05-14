@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
@@ -10,7 +10,9 @@ import Notification from '~/components/Notification';
 import SideMenu from '~/components/SideMenu';
 import Search from './Search';
 import Categories from './Categories';
-import Icon from '~/components/Icon';import { debounce, isTablet } from '~/helpers';
+import Icon from '~/components/Icon';
+import { debounce, isTablet } from '~/helpers';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 const deviceIsTablet = isTablet(navigator);
 const aiCardsLabel = 'AI Cards';
@@ -29,6 +31,7 @@ export default function Explore({ category }: { category: string }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const ContainerRef: React.RefObject<any> = useRef({});
   const SearchBoxRef: React.RefObject<any> = useRef(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     onSetPrevUserId(userId);
@@ -46,6 +49,21 @@ export default function Explore({ category }: { category: string }) {
       window.removeEventListener('orientationchange', updateOrientation);
     };
   }, []);
+
+  const exploreAnchorKey = useMemo(
+    () =>
+      `explore:${category}:${
+        stringIsEmpty(searchText) ? 'browse' : `search:${searchText}`
+      }`,
+    [category, searchText]
+  );
+
+  useScrollAnchorRestoration({
+    anchorKey: exploreAnchorKey,
+    containerRef: contentRef,
+    initialScroll: { type: 'top' },
+    itemsReady: true
+  });
 
   return (
     <ErrorBoundary componentPath="Explore/index">
@@ -90,6 +108,7 @@ export default function Explore({ category }: { category: string }) {
           </NavLink>
         </SideMenu>
         <div
+          ref={contentRef}
           className={css`
             width: CALC(100% - 51rem - 2rem);
             margin-left: 20rem;

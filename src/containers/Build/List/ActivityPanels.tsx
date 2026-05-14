@@ -43,6 +43,7 @@ export default function ActivityPanels({
   loading,
   loadingMore,
   onLoadMore,
+  onMobileClose,
   onMobileOpen,
   onRefresh,
   onSubtabChange,
@@ -60,6 +61,7 @@ export default function ActivityPanels({
   loading: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
+  onMobileClose?: () => void;
   onMobileOpen?: () => void;
   onRefresh: () => void;
   onSubtabChange: (subtab: Exclude<BuildActivitySubtab, 'all'>) => void;
@@ -79,6 +81,7 @@ export default function ActivityPanels({
       loading={loading}
       loadingMore={loadingMore}
       onLoadMore={onLoadMore}
+      onMobileClose={onMobileClose}
       onMobileOpen={onMobileOpen}
       onRefresh={onRefresh}
       onSubtabChange={onSubtabChange}

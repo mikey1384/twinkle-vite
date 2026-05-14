@@ -105,6 +105,10 @@ export default function BuildEditorRoute() {
     typeof locationState?.initialPrompt === 'string'
       ? locationState.initialPrompt
       : '';
+  const initialPromptContext =
+    typeof locationState?.initialPromptContext === 'string'
+      ? locationState.initialPromptContext
+      : '';
   const forceInitialPrompt = Boolean(locationState?.forceInitialPrompt);
 
   useEffect(() => {
@@ -382,6 +386,7 @@ export default function BuildEditorRoute() {
       copilotPolicy={copilotPolicy}
       isOwner={isOwner}
       initialPrompt={initialPrompt}
+      initialPromptContext={initialPromptContext}
       forceInitialPrompt={forceInitialPrompt}
       seedGreeting={seedGreeting}
       onUpdateBuild={setBuild}
