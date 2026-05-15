@@ -564,7 +564,17 @@ export function getFileInfoFromFileName(fileName: string): {
 
   function getFileType(extension: string): string {
     const audioExt = ['wav', 'aif', 'mp3', 'mid', 'm4a'];
-    const imageExt = ['jpg', 'png', 'jpeg', 'bmp', 'gif', 'webp', 'svg'];
+    const imageExt = [
+      'jpg',
+      'png',
+      'jpeg',
+      'bmp',
+      'gif',
+      'webp',
+      'svg',
+      'heic',
+      'heif'
+    ];
     const movieExt = ['wmv', 'mov', 'mp4', '3gp', 'ogg', 'm4v'];
     const compressedExt = ['zip', 'rar', 'arj', 'tar', 'gz', 'tgz'];
     const wordExt = ['docx', 'docm', 'dotx', 'dotm', 'docb'];
@@ -775,6 +785,19 @@ export function applyTextSize(string: string): string {
         };">${string.substring(2, string.length - 2)}</span>`
     );
   });
+
+  return outputString;
+}
+
+export function stripTextSizeMarkers(string: string): string {
+  const textSizeMarkerRegex = /([hbst])\[([^\n]*?)\]\1/gi;
+  let outputString = String(string || '');
+  let previousString = '';
+
+  while (outputString !== previousString) {
+    previousString = outputString;
+    outputString = outputString.replace(textSizeMarkerRegex, '$2');
+  }
 
   return outputString;
 }

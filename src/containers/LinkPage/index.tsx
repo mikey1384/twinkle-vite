@@ -27,6 +27,16 @@ import {
 } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
+import {
+  centerHomeFeedActionIntentTarget,
+  clearHomeFeedActionIntentState,
+  clearHomeFeedNavigationState,
+  focusHomeFeedCommentIntentTarget,
+  getMatchingHomeFeedActionIntent,
+  getMatchingHomeFeedNavigationState,
+  homeFeedNavigationKeyShouldClear
+} from '~/helpers/homeFeedActionIntent';
+import { scrollAnchorSavesAreSuppressed } from '~/helpers/scrollAnchorRestorationCoordinator';
 import { processedURL } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -35,14 +45,17 @@ import {
   useExploreContext,
   useKeyContext
 } from '~/contexts';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function LinkPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { linkId: initialLinkId } = useParams();
   const linkId = Number(initialLinkId);
   const pageRef = useRef<HTMLDivElement | null>(null);
+  const CommentInputAreaRef = useRef<any>(null);
+  const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -135,13 +148,65 @@ export default function LinkPage() {
     xpRewardInterfaceShown
   } = useContentState({ contentType: 'url', contentId: linkId });
   const linkAnchorKey = `url:${linkId}`;
+  const homeFeedActionIntent = useMemo(
+    () =>
+      getMatchingHomeFeedActionIntent({
+        contentId: linkId,
+        contentType: 'url',
+        state: location.state
+      }),
+    [linkId, location.state]
+  );
+  const homeFeedNavigationState = useMemo(
+    () =>
+      getMatchingHomeFeedNavigationState({
+        contentId: linkId,
+        contentType: 'url',
+        state: location.state
+      }),
+    [linkId, location.state]
+  );
+  const pageReady = loaded && !isDeleted;
 
   useScrollAnchorRestoration({
     anchorKey: linkAnchorKey,
     containerRef: pageRef,
+    ignoreSavedAnchor: Boolean(homeFeedNavigationState),
     initialScroll: { type: 'top' },
-    itemsReady: loaded && !isDeleted
+    itemsReady: pageReady
   });
+
+  useEffect(() => {
+    if (
+      !pageReady ||
+      !homeFeedNavigationState ||
+      homeFeedNavigationState.action ||
+      homeFeedActionIntent
+    ) {
+      return;
+    }
+    handleConsumeHomeFeedNavigationState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [homeFeedActionIntent?.nonce, homeFeedNavigationState?.nonce, pageReady]);
+
+  useEffect(() => {
+    if (
+      !pageReady ||
+      !homeFeedNavigationState?.action ||
+      homeFeedActionIntent
+    ) {
+      return;
+    }
+
+    addHomeFeedNavigationClearListeners();
+    return removeHomeFeedNavigationClearListeners;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    homeFeedActionIntent?.nonce,
+    homeFeedNavigationState?.action,
+    homeFeedNavigationState?.nonce,
+    pageReady
+  ]);
 
   useEffect(() => {
     if (title) {
@@ -158,6 +223,7 @@ export default function LinkPage() {
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
   const RewardInterfaceRef = useRef(null);
+  const RecommendationInterfaceRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!loaded) {
@@ -265,6 +331,47 @@ export default function LinkPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  useEffect(() => {
+    const intent = homeFeedActionIntent;
+    if (!intent) return;
+    if (consumedHomeFeedActionIntentRef.current === intent.nonce) return;
+    if (!loaded || isDeleted) return;
+
+    consumedHomeFeedActionIntentRef.current = intent.nonce;
+
+    if (intent.action === 'comment') {
+      focusCommentInputFromHomeFeedIntent();
+    }
+
+    if (intent.action === 'reward') {
+      if (userCanRewardThis && !xpButtonDisabled) {
+        onSetXpRewardInterfaceShown({
+          contentId: linkId,
+          contentType: 'url',
+          shown: true
+        });
+        centerHomeFeedActionIntentTarget(RewardInterfaceRef);
+      }
+    }
+
+    if (intent.action === 'recommend') {
+      setRecommendationInterfaceShown(true);
+      centerHomeFeedActionIntentTarget(RecommendationInterfaceRef);
+    }
+
+    handleConsumeHomeFeedActionIntent();
+    // onSetXpRewardInterfaceShown is a stable context helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    homeFeedActionIntent?.action,
+    homeFeedActionIntent?.nonce,
+    isDeleted,
+    linkId,
+    loaded,
+    userCanRewardThis,
+    xpButtonDisabled
+  ]);
 
   return loaded && !isDeleted ? (
     <div
@@ -415,19 +522,21 @@ export default function LinkPage() {
               </Button>
             </div>
             {recommendationInterfaceShown && (
-              <RecommendationInterface
-                style={{
-                  marginTop: likes.length > 0 ? '0.5rem' : '1rem',
-                  marginBottom: 0
-                }}
-                contentId={linkId}
-                contentType="url"
-                onHide={() => setRecommendationInterfaceShown(false)}
-                recommendations={recommendations}
-                rewardLevel={byUser ? 5 : 0}
-                content={description}
-                uploaderId={uploader?.id}
-              />
+              <div ref={RecommendationInterfaceRef}>
+                <RecommendationInterface
+                  style={{
+                    marginTop: likes.length > 0 ? '0.5rem' : '1rem',
+                    marginBottom: 0
+                  }}
+                  contentId={linkId}
+                  contentType="url"
+                  onHide={() => setRecommendationInterfaceShown(false)}
+                  recommendations={recommendations}
+                  rewardLevel={byUser ? 5 : 0}
+                  content={description}
+                  uploaderId={uploader?.id}
+                />
+              </div>
             )}
             {xpRewardInterfaceShown && (
               <div style={{ padding: '0 1rem' }}>
@@ -549,6 +658,7 @@ export default function LinkPage() {
               <Comments
                 autoExpand
                 comments={comments}
+                inputAreaInnerRef={CommentInputAreaRef}
                 isLoading={loadingComments}
                 inputTypeLabel="comment"
                 key={'comments' + linkId}
@@ -681,5 +791,83 @@ export default function LinkPage() {
       id: linkId,
       updateType: 'increase'
     });
+  }
+
+  function handleConsumeHomeFeedActionIntent() {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: clearHomeFeedActionIntentState(location.state)
+      }
+    );
+  }
+
+  function handleConsumeHomeFeedNavigationState() {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: clearHomeFeedNavigationState(location.state)
+      }
+    );
+  }
+
+  function focusCommentInputFromHomeFeedIntent() {
+    focusHomeFeedCommentIntentTarget(CommentInputAreaRef);
+  }
+
+  function addHomeFeedNavigationClearListeners() {
+    const appScroller = document.getElementById('App');
+    appScroller?.addEventListener('scroll', handleHomeFeedNavigationScroll, {
+      passive: true
+    });
+    window.addEventListener('wheel', handleHomeFeedNavigationUserScroll, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('keydown', handleHomeFeedNavigationKeyDown, {
+      capture: true
+    });
+  }
+
+  function removeHomeFeedNavigationClearListeners() {
+    const appScroller = document.getElementById('App');
+    appScroller?.removeEventListener('scroll', handleHomeFeedNavigationScroll);
+    window.removeEventListener('wheel', handleHomeFeedNavigationUserScroll, {
+      capture: true
+    });
+    window.removeEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
+      capture: true
+    });
+    window.removeEventListener('keydown', handleHomeFeedNavigationKeyDown, {
+      capture: true
+    });
+  }
+
+  function handleHomeFeedNavigationUserScroll() {
+    handleConsumeHomeFeedNavigationState();
+  }
+
+  function handleHomeFeedNavigationScroll() {
+    if (scrollAnchorSavesAreSuppressed()) return;
+    handleConsumeHomeFeedNavigationState();
+  }
+
+  function handleHomeFeedNavigationKeyDown(event: KeyboardEvent) {
+    if (!homeFeedNavigationKeyShouldClear(event)) return;
+    handleConsumeHomeFeedNavigationState();
   }
 }

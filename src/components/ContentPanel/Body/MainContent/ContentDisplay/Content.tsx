@@ -23,7 +23,7 @@ import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
+import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 
 export default function Content({
   audioPath,
@@ -509,40 +509,10 @@ export default function Content({
             >
               {description || ''}
             </RichText>
-            {contentObj?.grade === 'Masterpiece' && (
-              <div
-                style={{
-                  marginTop: '1rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.4rem 0.8rem',
-                  background: `linear-gradient(135deg, ${Color.gold()}20, ${Color.orange()}20)`,
-                  border: `1px solid ${Color.gold()}`,
-                  borderRadius: '1rem',
-                  fontSize: '1.2rem',
-                  fontWeight: 600,
-                  color: Color.gold()
-                }}
-              >
-                <span>★</span>
-                <span>
-                  {contentObj?.masterpieceType
-                    ? `Masterpiece (${contentObj.masterpieceType
-                        .replace(/_/g, ' ')
-                        .split(' ')
-                        .map((word: string, i: number) =>
-                          ['and', 'or', 'the', 'a', 'an'].includes(word) &&
-                          i > 0
-                            ? word
-                            : word.charAt(0).toUpperCase() + word.slice(1)
-                        )
-                        .join(' ')})`
-                    : 'Masterpiece'}
-                </span>
-              </div>
-            )}
-            <XPAndStreakDisplay
+            <DailyReflectionMetaBadges
+              grade={contentObj?.grade}
+              isRefined={contentObj?.isRefined}
+              masterpieceType={contentObj?.masterpieceType}
               xpAwarded={contentObj?.xpAwarded}
               streak={contentObj?.streakAtTime}
               style={{ marginTop: '1rem' }}
@@ -566,21 +536,6 @@ export default function Content({
                   </b>{' '}
                   for sharing this
                 </span>
-              </div>
-            )}
-            {contentObj?.isRefined && (
-              <div
-                style={{
-                  marginTop: '0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  fontSize: '1.2rem',
-                  color: Color.darkerGray()
-                }}
-              >
-                <span style={{ color: Color.logoBlue() }}>✨</span>
-                <span style={{ fontStyle: 'italic' }}>AI-polished</span>
               </div>
             )}
           </div>

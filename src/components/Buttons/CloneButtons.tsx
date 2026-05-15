@@ -21,6 +21,7 @@ interface CloneEntry {
 }
 
 export default function CloneButtons({
+  layout = 'default',
   sharedTopicId,
   sharedTopicTitle,
   uploaderId,
@@ -28,6 +29,7 @@ export default function CloneButtons({
   onCloneSuccess,
   style
 }: {
+  layout?: 'default' | 'paired';
   sharedTopicId: number;
   sharedTopicTitle?: string;
   uploaderId: number;
@@ -97,12 +99,20 @@ export default function CloneButtons({
 
   // Combine API clones with newly created clones from this session
   const existingClones = useMemo(() => {
-    const cloneMap: Partial<Record<CloneTarget, { channelId: number; topicId: number }>> = {};
+    const cloneMap: Partial<
+      Record<CloneTarget, { channelId: number; topicId: number }>
+    > = {};
     for (const clone of myClones) {
-      cloneMap[clone.target] = { channelId: clone.channelId, topicId: clone.topicId };
+      cloneMap[clone.target] = {
+        channelId: clone.channelId,
+        topicId: clone.topicId
+      };
     }
     for (const clone of newClones) {
-      cloneMap[clone.target] = { channelId: clone.channelId, topicId: clone.topicId };
+      cloneMap[clone.target] = {
+        channelId: clone.channelId,
+        topicId: clone.topicId
+      };
     }
     return cloneMap;
   }, [myClones, newClones]);
@@ -122,35 +132,62 @@ export default function CloneButtons({
     hasCloneForTarget(existingClones[target])
   );
   const hasAnyClone = existingCloneTargets.length > 0;
+  const defaultClass = css`
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  `;
   const compactRowClass = css`
     width: 100%;
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
   `;
+  const pairedClass = css`
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+
+    .clone-buttons__error {
+      width: 100%;
+    }
+
+    .clone-buttons__target-action {
+      display: flex;
+      flex: 0 0 auto;
+      min-width: 14.5rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.35rem;
+    }
+
+    .clone-buttons__target-action > button {
+      width: 100%;
+      justify-content: center;
+    }
+  `;
 
   return (
     <div
-      className={css`
-        display: flex;
-        gap: 0.6rem;
-        flex-wrap: wrap;
-      `}
+      className={`${layout === 'paired' ? pairedClass : defaultClass} clone-buttons clone-buttons--${layout}`}
       style={style}
     >
       {error && (
         <div
-          className={css`
+          className={`clone-buttons__error ${css`
             width: 100%;
             color: red;
             font-size: 1.2rem;
             margin-bottom: 0.5rem;
-          `}
+          `}`}
         >
           {error}
         </div>
       )}
-      {hasAnyClone ? (
+      {layout === 'paired' ? (
+        <>{cloneTargets.map((target) => renderPairedTarget(target))}</>
+      ) : hasAnyClone ? (
         <>
           {existingCloneTargets.map((target) => renderChatButton(target))}
           <div className={compactRowClass}>
@@ -158,12 +195,20 @@ export default function CloneButtons({
           </div>
         </>
       ) : (
-        <>
-          {cloneTargets.map((target) => renderCloneButton(target, false))}
-        </>
+        <>{cloneTargets.map((target) => renderCloneButton(target, false))}</>
       )}
     </div>
   );
+
+  function renderPairedTarget(target: CloneTarget) {
+    const hasClone = hasCloneForTarget(existingClones[target]);
+    return (
+      <div className="clone-buttons__target-action" key={`paired-${target}`}>
+        {hasClone ? renderChatButton(target) : null}
+        {renderCloneButton(target, hasClone)}
+      </div>
+    );
+  }
 
   function renderChatButton(target: CloneTarget) {
     const clone = existingClones[target];
@@ -268,7 +313,10 @@ export default function CloneButtons({
               <div
                 className={css`
                   height: 100%;
-                  background: var(--role-cloneProgress-color, ${Color.logoBlue()});
+                  background: var(
+                    --role-cloneProgress-color,
+                    ${Color.logoBlue()}
+                  );
                   border-radius: 2px;
                   transition: width 0.3s ease-out;
                 `}

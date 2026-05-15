@@ -539,6 +539,7 @@ export default function BuildEditor({
     replaceBranchTargetLabel,
     refreshCurrentBranchMergeabilityForBuild,
     replaceMainConfirmShown,
+    runtimeAssetTransferProgress,
     setBranchNameDraft,
     showContributionButton,
     showForkButton,
@@ -1368,6 +1369,7 @@ export default function BuildEditor({
         showContributionButton={showContributionButton}
         contributionActionError={contributionActionError}
         contributionActionLoading={contributionActionLoading}
+        runtimeAssetTransferProgress={runtimeAssetTransferProgress}
         canMergeBranch={canMergeCurrentBranch}
         showMergeBranch={canShowMergeCurrentBranch}
         mergeBranchDisabled={!canMergeCurrentBranch}

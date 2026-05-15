@@ -113,13 +113,14 @@ export const targetPreviewStyles = `
       overflow: hidden;
       color: ${Color.black()};
       font-size: var(--home-feed-secondary-content-font-size);
-      font-weight: 700;
-      line-height: 1.22;
+      font-weight: 400;
+      line-height: 1.34;
     }
     .home-feed-card__target-daily-reflection-answer p {
       color: ${Color.black()};
-      font-size: max(1.48rem, 14.8px);
-      line-height: 1.22;
+      font-size: var(--home-feed-secondary-content-font-size);
+      font-weight: 400;
+      line-height: 1.34;
     }
     .home-feed-card__target-shared-topic {
       border-left: 0.35rem solid var(--home-feed-target-accent, ${Color.logoBlue()});

@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
@@ -22,6 +23,11 @@ import {
   normalizePanelForumThreadId,
   normalizePanelScrollTop
 } from './helpers/panelState';
+import {
+  createRuntimeAssetTransferOperationId,
+  normalizeRuntimeAssetTransferProgressPayload,
+  type RuntimeAssetTransferProgressPayload
+} from '../helpers/runtimeAssetTransferProgress';
 import type {
   BuildCollaborationMode,
   BuildCollaborationRequest,
@@ -193,6 +199,9 @@ export default function CollaborationPanel({
   const [previewPath, setPreviewPath] = useState('');
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
+  const [runtimeAssetTransferProgress, setRuntimeAssetTransferProgress] =
+    useState<RuntimeAssetTransferProgressPayload | null>(null);
+  const runtimeAssetTransferOperationIdRef = useRef('');
   const [replaceMainConfirmShown, setReplaceMainConfirmShown] = useState(false);
   const [conflictMarkerPaths, setConflictMarkerPaths] = useState<string[]>([]);
   const [requestActionError, setRequestActionError] = useState('');
@@ -285,6 +294,30 @@ export default function CollaborationPanel({
       normalizeBuildCollaborationMode(build.collaborationMode)
     );
   }, [build.collaborationMode]);
+
+  useEffect(() => {
+    function handleRuntimeAssetTransferProgress(payload: any) {
+      const progress = normalizeRuntimeAssetTransferProgressPayload(payload);
+      if (
+        !progress ||
+        progress.operationId !== runtimeAssetTransferOperationIdRef.current
+      ) {
+        return;
+      }
+      setRuntimeAssetTransferProgress(progress);
+    }
+
+    socket.on(
+      'build_runtime_asset_transfer_progress',
+      handleRuntimeAssetTransferProgress
+    );
+    return () => {
+      socket.off(
+        'build_runtime_asset_transfer_progress',
+        handleRuntimeAssetTransferProgress
+      );
+    };
+  }, []);
 
   useEffect(() => {
     if (!Array.isArray(build.projectFiles)) return;
@@ -862,10 +895,37 @@ export default function CollaborationPanel({
     }
   }
 
+  function beginRuntimeAssetTransferProgress() {
+    const operationId = createRuntimeAssetTransferOperationId();
+    runtimeAssetTransferOperationIdRef.current = operationId;
+    setRuntimeAssetTransferProgress({
+      operationId,
+      sourceBuildId: 0,
+      sourceUserId: 0,
+      targetBuildId: 0,
+      targetUserId: 0,
+      status: 'running',
+      phase: 'preparing',
+      copiedAssets: 0,
+      totalAssets: 0,
+      copiedBytes: 0,
+      totalBytes: 0,
+      progressPercent: 2,
+      message: 'Preparing runtime assets'
+    });
+    return operationId;
+  }
+
+  function clearRuntimeAssetTransferProgress() {
+    runtimeAssetTransferOperationIdRef.current = '';
+    setRuntimeAssetTransferProgress(null);
+  }
+
   async function handleMergeContribution() {
     if (!rootBuildId || !selectedContributionId || actionLoading) return;
     setActionLoading('merge');
     setActionError('');
+    const assetTransferOperationId = beginRuntimeAssetTransferProgress();
     try {
       const preparedFiles = onBeforeContributionAction
         ? await onBeforeContributionAction('merge')
@@ -874,6 +934,7 @@ export default function CollaborationPanel({
       const result = await mergeBuildContribution({
         buildId: rootBuildId,
         contributionBuildId: selectedContributionId,
+        assetTransferOperationId,
         filePaths: selectedPaths
       });
       if (result?.success) {
@@ -911,6 +972,7 @@ export default function CollaborationPanel({
       );
     } finally {
       setActionLoading('');
+      clearRuntimeAssetTransferProgress();
     }
   }
 
@@ -918,6 +980,7 @@ export default function CollaborationPanel({
     if (!rootBuildId || !selectedContributionId || actionLoading) return;
     setActionLoading('replace-main');
     setActionError('');
+    const assetTransferOperationId = beginRuntimeAssetTransferProgress();
     try {
       const preparedFiles = onBeforeContributionAction
         ? await onBeforeContributionAction('replace')
@@ -925,7 +988,8 @@ export default function CollaborationPanel({
       if (!preparedFiles.ready) return;
       const result = await replaceMainWithBuildContribution({
         buildId: rootBuildId,
-        contributionBuildId: selectedContributionId
+        contributionBuildId: selectedContributionId,
+        assetTransferOperationId
       });
       if (result?.success) {
         onCanonicalMerge({
@@ -958,6 +1022,7 @@ export default function CollaborationPanel({
       );
     } finally {
       setActionLoading('');
+      clearRuntimeAssetTransferProgress();
       setReplaceMainConfirmShown(false);
     }
   }
@@ -966,6 +1031,7 @@ export default function CollaborationPanel({
     if (!rootBuildId || !contributionBuildId || actionLoading) return;
     setActionLoading('update-from-main');
     setActionError('');
+    const assetTransferOperationId = beginRuntimeAssetTransferProgress();
     try {
       const preparedFiles = onBeforeContributionAction
         ? await onBeforeContributionAction('update-from-main')
@@ -973,7 +1039,8 @@ export default function CollaborationPanel({
       if (!preparedFiles.ready) return;
       const result = await updateBuildContributionFromMain({
         buildId: rootBuildId,
-        contributionBuildId
+        contributionBuildId,
+        assetTransferOperationId
       });
       if (result?.code === 'build_contribution_conflict_markers_remaining') {
         const markerPaths = Array.isArray(result.conflictMarkerPaths)
@@ -1021,6 +1088,7 @@ export default function CollaborationPanel({
       );
     } finally {
       setActionLoading('');
+      clearRuntimeAssetTransferProgress();
     }
   }
 
@@ -1396,6 +1464,7 @@ export default function CollaborationPanel({
         contributionCanReplaceMain={contributionCanReplaceMain}
         contributionStatus={contributionStatus}
         ownerReview={ownerReview}
+        runtimeAssetTransferProgress={runtimeAssetTransferProgress}
         selectedPaths={selectedPaths}
         selectedPreviewFile={selectedPreviewFile}
         onAskLumineToResolveConflicts={handleAskLumineToResolveConflicts}

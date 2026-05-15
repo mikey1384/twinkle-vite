@@ -437,6 +437,10 @@ export default function Textarea({
               color: ${Color.lighterGray()};
             }
           }
+          &.home-feed-comment-intent-target:not(:focus) {
+            border-color: var(--ui-border-strong);
+            box-shadow: 0 0 0 3px ${Color.logoBlue(0.16)};
+          }
           ::placeholder {
             color: ${Color.gray()};
           }

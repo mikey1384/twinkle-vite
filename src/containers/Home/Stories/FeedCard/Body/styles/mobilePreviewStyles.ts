@@ -57,6 +57,10 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-ai-story-reading {
       height: max(19rem, 190px);
     }
+    .home-feed-card__ai-story-story {
+      max-height: max(7.17rem, 71.7px);
+      -webkit-line-clamp: 3;
+    }
     .home-feed-card__panel-preview--size-build {
       height: max(17rem, 170px);
     }

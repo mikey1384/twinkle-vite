@@ -2,13 +2,14 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AchievementItem from '~/components/AchievementItem';
 import CardThumb from '~/components/CardThumb';
+import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
 import Embedly from '~/components/Embedly';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
-import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
-import { Color, getStreakColor } from '~/constants/css';
+import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
+import { Color } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -17,14 +18,9 @@ import {
   AttachmentSurface,
   AudioWavePreview,
   CompactEffortStrip,
-  MarkdownEmbedPreview,
   getAIStoryDifficultyStyle,
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
-import {
-  getMarkdownImageEmbedPreview,
-  removeMarkdownImageEmbeds
-} from '../helpers/sizing';
 import { getHomeFeedContentPath } from '../helpers/navigation';
 
 function resolveTargetPreviewTheme({
@@ -252,75 +248,19 @@ export default function TargetPreview({
 
   function renderTargetCommentPreview(comment: any) {
     const commentId = Number(comment.id || comment.commentId || 0);
-    const embedPreview = getMarkdownImageEmbedPreview(comment.content || '');
-    const textWithoutEmbeds = embedPreview
-      ? removeMarkdownImageEmbeds(comment.content || '')
-      : comment.content || '';
-    const attachmentPreview = comment.filePath ? (
-      <AttachmentSurface
-        className="home-feed-card__target-comment-attachment"
-        source={comment}
-        sourceContentId={commentId}
-        sourceContentType="comment"
-        userId={userId}
-      />
-    ) : null;
-    const hasText = Boolean(textWithoutEmbeds.trim());
-    const hasMedia = Boolean(embedPreview || attachmentPreview);
-    const mediaOnly = hasMedia && !hasText;
-    const attachmentOnly = Boolean(
-      attachmentPreview && !hasText && !embedPreview
-    );
 
     return (
-      <div
-        className={`home-feed-card__target-comment${
-          mediaOnly ? ' home-feed-card__target-comment--media-only' : ''
-        }${
-          attachmentOnly
-            ? ' home-feed-card__target-comment--attachment-only'
-            : ''
-        }`}
-      >
-        <div className="home-feed-card__target-comment-profile">
-          <ProfilePic
-            style={{ width: mediaOnly ? '3rem' : '4.3rem' }}
-            userId={comment.uploader?.id}
-            profilePicUrl={comment.uploader?.profilePicUrl || ''}
-          />
-          {comment.uploader?.username ? (
-            <span>by {comment.uploader.username}</span>
-          ) : null}
-        </div>
-        <div
-          className={`home-feed-card__target-comment-content${
-            hasMedia ? ' has-embed' : ''
-          }`}
-        >
-          {hasText ? (
-            <RichText
-              contentId={commentId}
-              contentType="comment"
-              isPreview
-              maxLines={hasMedia ? 2 : 4}
-              section="content"
-              theme={theme}
-            >
-              {textWithoutEmbeds}
-            </RichText>
-          ) : null}
-          {embedPreview ? (
-            <MarkdownEmbedPreview
-              className="home-feed-card__target-comment-embed"
-              contentId={commentId}
-              contentType="comment"
-              embed={embedPreview}
-            />
-          ) : (
-            attachmentPreview
-          )}
-        </div>
-      </div>
+      <CompactCommentEmbedPreview
+        className="home-feed-card__target-comment-preview"
+        comment={comment}
+        contentId={commentId}
+        isNested
+        maxTextLines={3}
+        showTypeLabel={false}
+        theme={theme}
+        userId={userId}
+        variant="targetRoot"
+      />
     );
   }
 
@@ -496,45 +436,15 @@ export default function TargetPreview({
             </RichText>
           </div>
         ) : null}
-        <div className="home-feed-card__target-reflection-footer">
-          {reflection?.isRefined ? (
-            <span className="home-feed-card__target-reflection-badge home-feed-card__target-reflection-badge--refined">
-              <span className="home-feed-card__target-reflection-refined-icon">
-                ✨
-              </span>
-              <span>AI-polished</span>
-            </span>
-          ) : null}
-          {reflection?.grade === 'Masterpiece' ? (
-            <span className="home-feed-card__target-reflection-badge home-feed-card__target-reflection-badge--masterpiece">
-              <Icon icon="certificate" />
-              Masterpiece
-            </span>
-          ) : null}
-          {Number(reflection?.xpAwarded || 0) > 0 ? (
-            <span className="home-feed-card__target-reflection-badge home-feed-card__target-reflection-badge--xp">
-              <span className="home-feed-card__target-reflection-xp-number">
-                {addCommasToNumber(Number(reflection.xpAwarded))}
-              </span>
-              <span className="home-feed-card__target-reflection-xp-label">
-                XP
-              </span>
-            </span>
-          ) : null}
-          {streak > 0 ? (
-            <span
-              className="home-feed-card__target-reflection-badge home-feed-card__target-reflection-badge--streak"
-              style={
-                {
-                  '--home-feed-target-streak-color': getStreakColor(streak)
-                } as React.CSSProperties
-              }
-            >
-              <span className="home-feed-card__target-reflection-fire">🔥</span>
-              {addCommasToNumber(streak)}-day streak
-            </span>
-          ) : null}
-        </div>
+        <DailyReflectionMetaBadges
+          className="home-feed-card__target-reflection-footer"
+          density="compact"
+          grade={reflection?.grade}
+          isRefined={reflection?.isRefined}
+          masterpieceType={reflection?.masterpieceType}
+          streak={streak}
+          xpAwarded={Number(reflection?.xpAwarded || 0)}
+        />
       </div>
     );
   }

@@ -81,6 +81,9 @@ export const commentPreviewStyles = `
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
+  .home-feed-card__comment-preview-text--message {
+    font-weight: 500;
+  }
   .home-feed-card__comment-preview-media {
     position: relative;
     display: flex;
@@ -96,10 +99,25 @@ export const commentPreviewStyles = `
     background: #fff;
     pointer-events: none;
   }
-  .home-feed-card__comment-preview-media--image img {
+  .home-feed-card__comment-preview-media--image img,
+  .home-feed-card__comment-preview-media--build img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  .home-feed-card__comment-preview-media--ai-card {
+    align-items: center;
+    background: color-mix(in srgb, var(--home-feed-comment-accent, ${Color.logoBlue()}) 7%, #ffffff);
+  }
+  .home-feed-card__comment-preview-media--ai-card > div {
+    width: 4.1rem;
+    height: 5.15rem;
+    transform: scale(0.84);
+    transform-origin: center;
+  }
+  .home-feed-card__comment-preview-media--build {
+    background: color-mix(in srgb, ${Color.logoBlue()} 7%, #ffffff);
+    color: ${Color.logoBlue()};
   }
   .home-feed-card__comment-preview-media--file {
     gap: 0.35rem;
@@ -140,9 +158,9 @@ export const commentPreviewStyles = `
   }
   @media (max-width: ${mobileMaxWidth}) {
     .home-feed-card__comment-preview {
-      flex-basis: 7.05rem;
-      height: 7.05rem;
-      min-height: 7.05rem;
+      flex-basis: var(--home-feed-card-mobile-comment-preview-height);
+      height: var(--home-feed-card-mobile-comment-preview-height);
+      min-height: var(--home-feed-card-mobile-comment-preview-height);
       gap: 0.8rem;
       padding: 0.8rem 0.9rem;
     }
@@ -155,14 +173,19 @@ export const commentPreviewStyles = `
       height: 3.85rem;
     }
     .home-feed-card__comment-preview-meta {
-      font-size: 1.15rem;
+      font-size: 1.5rem;
     }
     .home-feed-card__comment-preview-text {
-      font-size: 1.45rem;
+      font-size: 1.9rem;
     }
     .home-feed-card__comment-preview-media {
       width: 5.35rem;
       height: 4.75rem;
+    }
+    .home-feed-card__comment-preview-media--ai-card > div {
+      width: 3.75rem;
+      height: 4.75rem;
+      transform: scale(0.78);
     }
     .home-feed-card__comment-preview-media-icon {
       font-size: 1.7rem;

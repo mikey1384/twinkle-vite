@@ -12,11 +12,25 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import AlertModal from '~/components/Modals/AlertModal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { determineUserCanRewardThis } from '~/helpers';
+import {
+  determineUserCanRewardThis,
+  determineXpButtonDisabled
+} from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import BottomInterface from './BottomInterface';
+import {
+  centerHomeFeedActionIntentTarget,
+  focusHomeFeedCommentIntentTarget,
+  type HomeFeedActionIntent
+} from '~/helpers/homeFeedActionIntent';
+import {
+  contentPanelNoRewardContentTypes,
+  isContentPanelCommentActionEnabled,
+  isContentPanelRecommendActionEnabled,
+  isContentPanelRewardActionEnabled
+} from '~/helpers/contentActionAvailability';
 
 const settingCannotBeChangedLabel = 'This setting cannot be changed';
 
@@ -42,16 +56,20 @@ export default function Body({
     contentType,
     uploader = {}
   },
+  homeFeedActionIntent,
   inputAtBottom,
   numPreviewComments = 0,
+  onConsumeHomeFeedActionIntent,
   onChangeSpoilerStatus,
   theme
 }: {
   autoExpand?: boolean;
   commentsShown?: boolean;
   contentObj: any;
+  homeFeedActionIntent?: HomeFeedActionIntent | null;
   inputAtBottom?: boolean;
   numPreviewComments?: number;
+  onConsumeHomeFeedActionIntent?: () => void;
   onChangeSpoilerStatus: (params: object) => void;
   theme: string;
 }) {
@@ -177,6 +195,8 @@ export default function Body({
 
   const CommentInputAreaRef = useRef<any>(null);
   const RewardInterfaceRef = useRef(null);
+  const RecommendationInterfaceRef = useRef<HTMLDivElement | null>(null);
+  const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -271,8 +291,8 @@ export default function Body({
     return contentType === 'subject' && (secretAnswer || secretAttachment)
       ? contentSecretHidden
       : targetObj.subject?.secretAnswer || targetObj.subject?.secretAttachment
-      ? targetSubjectSecretHidden
-      : !!rootObj?.secretAnswer && rootObjSecretHidden;
+        ? targetSubjectSecretHidden
+        : !!rootObj?.secretAnswer && rootObjSecretHidden;
   }, [
     contentType,
     rootObj?.secretAnswer,
@@ -308,10 +328,7 @@ export default function Body({
     ) {
       return {};
     }
-    if (
-      targetObj.subject?.id &&
-      Number(targetObj.subject?.rewardLevel) > 0
-    ) {
+    if (targetObj.subject?.id && Number(targetObj.subject?.rewardLevel) > 0) {
       return {
         rewardContextType: 'subject',
         rewardContextId: targetObj.subject.id
@@ -368,6 +385,17 @@ export default function Body({
     [level, canReward, recommendations, uploader, userId]
   );
 
+  const xpButtonDisabled = useMemo(
+    () =>
+      determineXpButtonDisabled({
+        rewardLevel: finalRewardLevel,
+        rewards,
+        myId: userId,
+        xpRewardInterfaceShown
+      }),
+    [finalRewardLevel, rewards, userId, xpRewardInterfaceShown]
+  );
+
   useEffect(() => {
     onSetXpRewardInterfaceShown({
       contentType,
@@ -384,6 +412,88 @@ export default function Body({
       ).length > 0
     );
   }, [recommendations, userId]);
+
+  useEffect(() => {
+    const intent = homeFeedActionIntent;
+    if (!intent) return;
+    if (consumedHomeFeedActionIntentRef.current === intent.nonce) return;
+
+    const rootStatePending = Boolean(
+      rootId && normalizedRootType && !rootObj?.loaded && !rootObj?.notFound
+    );
+    const secretStatePending = Boolean(
+      userId &&
+      subjectHasSecretMessage &&
+      subjectId &&
+      subjectState?.prevSecretViewerId !== userId
+    );
+    if (rootStatePending || secretStatePending) return;
+
+    consumedHomeFeedActionIntentRef.current = intent.nonce;
+
+    if (intent.action === 'comment') {
+      if (
+        isContentPanelCommentActionEnabled({
+          contentType,
+          secretHidden
+        })
+      ) {
+        void openCommentsFromHomeFeedIntent();
+      }
+    }
+
+    if (intent.action === 'reward') {
+      if (
+        isContentPanelRewardActionEnabled({
+          contentType,
+          secretHidden,
+          userCanRewardThis,
+          xpButtonDisabled
+        })
+      ) {
+        onSetXpRewardInterfaceShown({
+          contentId,
+          contentType,
+          shown: true
+        });
+        centerHomeFeedActionIntentTarget(RewardInterfaceRef);
+      }
+    }
+
+    if (intent.action === 'recommend') {
+      if (
+        isContentPanelRecommendActionEnabled({
+          contentType,
+          secretHidden
+        })
+      ) {
+        setRecommendationInterfaceShown(true);
+        centerHomeFeedActionIntentTarget(RecommendationInterfaceRef);
+      }
+    }
+
+    onConsumeHomeFeedActionIntent?.();
+    // onSetXpRewardInterfaceShown/onConsumeHomeFeedActionIntent are stable helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    autoExpand,
+    commentsShown,
+    contentId,
+    contentType,
+    homeFeedActionIntent?.action,
+    homeFeedActionIntent?.nonce,
+    normalizedRootType,
+    rootId,
+    rootObj?.loaded,
+    rootObj?.notFound,
+    secretHidden,
+    subjectHasSecretMessage,
+    subjectId,
+    subjectState?.prevSecretViewerId,
+    userCanRewardThis,
+    userId,
+    xpButtonDisabled
+  ]);
 
   const moderatorHasDisabledChangeLabel = useMemo(() => {
     return (
@@ -450,26 +560,23 @@ export default function Body({
             theme={theme}
           />
           {recommendationInterfaceShown && (
-            <RecommendationInterface
-              contentId={contentId}
-              contentType={contentType}
-              rootType={rootType}
-              onHide={() => setRecommendationInterfaceShown(false)}
-              recommendations={recommendations}
-              rewardLevel={finalRewardLevel}
-              content={contentObj?.content}
-              theme={theme}
-              uploaderId={uploader.id}
-            />
+            <div ref={RecommendationInterfaceRef}>
+              <RecommendationInterface
+                contentId={contentId}
+                contentType={contentType}
+                rootType={rootType}
+                onHide={() => setRecommendationInterfaceShown(false)}
+                recommendations={recommendations}
+                rewardLevel={finalRewardLevel}
+                content={contentObj?.content}
+                theme={theme}
+                uploaderId={uploader.id}
+              />
+            </div>
           )}
 
           {xpRewardInterfaceShown &&
-            contentType !== 'aiStory' &&
-            contentType !== 'build' &&
-            contentType !== 'pass' &&
-            contentType !== 'xpChange' &&
-            contentType !== 'sharedTopic' &&
-            contentType !== 'dailyReflection' && (
+            !contentPanelNoRewardContentTypes.has(contentType) && (
               <XPRewardInterface
                 innerRef={RewardInterfaceRef}
                 contentType={contentType}
@@ -669,5 +776,14 @@ export default function Body({
     onLoadComments({ ...data, contentId, contentType });
     onSetCommentsShown({ contentId, contentType });
     setLoadingComments(false);
+  }
+
+  async function openCommentsFromHomeFeedIntent() {
+    if (!commentsShown && !(autoExpand && !secretHidden)) {
+      await handleExpandComments();
+    }
+    if (!mountedRef.current) return;
+
+    focusHomeFeedCommentIntentTarget(CommentInputAreaRef);
   }
 }

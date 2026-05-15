@@ -16,6 +16,146 @@ const noLabel = 'No';
 const rewardableLabel = 'anyone can reward';
 const deviceIsMobile = isMobile(navigator);
 
+const recommendationSurfaceClass = css`
+  position: relative;
+  display: flex;
+  min-height: 6rem;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 0.8rem;
+  background-color: transparent;
+  box-shadow: 0 0.28rem 0.9rem rgba(15, 23, 42, 0.08);
+  animation: recommendationBorderGlow 1.6s ease-out 1;
+
+  @keyframes recommendationBorderGlow {
+    0% {
+      border-color: ${Color.darkGold(0.72)};
+      background-color: ${Color.logoBlue(0.08)};
+      box-shadow:
+        0 0 0 0.22rem ${Color.darkGold(0.2)},
+        0 0.28rem 0.9rem rgba(15, 23, 42, 0.08);
+    }
+
+    45% {
+      border-color: ${Color.logoBlue(0.58)};
+      background-color: ${Color.darkGold(0.11)};
+      box-shadow:
+        0 0 0 0.18rem ${Color.logoBlue(0.16)},
+        0 0.28rem 0.9rem rgba(15, 23, 42, 0.08);
+    }
+
+    100% {
+      border-color: var(--ui-border-strong);
+      background-color: transparent;
+      box-shadow: 0 0.28rem 0.9rem rgba(15, 23, 42, 0.08);
+    }
+  }
+`;
+
+const recommendationRowClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 1.4rem;
+  row-gap: 0.8rem;
+`;
+
+const recommendationPromptClass = css`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  font-weight: bold;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.3rem;
+  }
+`;
+
+const recommendationTextGlowClass = css`
+  &,
+  & * {
+    animation: recommendationTextGlow 1.6s ease-out 1;
+  }
+
+  @keyframes recommendationTextGlow {
+    0% {
+      color: ${Color.darkGold()};
+    }
+
+    45% {
+      color: ${Color.logoBlue()};
+    }
+  }
+`;
+
+const recommendationPromptLineClass = css`
+  display: flex;
+  align-items: center;
+  line-height: 1.3;
+`;
+
+const recommendationRewardSwitchClass = css`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  align-self: flex-start;
+  margin-top: 0.7rem;
+`;
+
+const recommendationRewardLabelClass = css`
+  color: ${Color.darkerGray()};
+  font-size: 1.3rem;
+  font-weight: 600;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.1rem;
+  }
+`;
+
+const recommendationActionsClass = css`
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+`;
+
+const recommendationActionGlowClass = css`
+  animation: recommendationActionGlow 1.6s ease-out 1;
+
+  @keyframes recommendationActionGlow {
+    0% {
+      color: #fff;
+      background-color: var(--recommendation-action-start-bg);
+      border-color: var(--recommendation-action-start-bg);
+    }
+
+    45% {
+      background-color: var(--recommendation-action-soft-bg);
+    }
+  }
+`;
+
+function getRecommendationActionGlowStyle({
+  color,
+  softColor,
+  style = {}
+}: {
+  color: string;
+  softColor: string;
+  style?: React.CSSProperties;
+}) {
+  return {
+    ...style,
+    '--recommendation-action-start-bg': color,
+    '--recommendation-action-soft-bg': softColor
+  } as React.CSSProperties;
+}
+
 export default function RecommendationInterface({
   contentId,
   contentType,
@@ -113,20 +253,9 @@ export default function RecommendationInterface({
 
   return (
     <ErrorBoundary
+      className={recommendationSurfaceClass}
       componentPath="RecommendationInterface"
-      style={{
-        position: 'relative',
-        border: '1px solid var(--ui-border)',
-        borderLeft: 'none',
-        borderRight: 'none',
-        marginBottom: '1rem',
-        padding: '1rem',
-        display: 'flex',
-        minHeight: '6rem',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        ...style
-      }}
+      style={style}
     >
       {state.recommending && (
         <Loading
@@ -134,36 +263,16 @@ export default function RecommendationInterface({
           style={{ position: 'absolute', width: '100%', left: 0 }}
         />
       )}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
+      <div className={recommendationRowClass}>
         <div
-          className={css`
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.3rem;
-            }
-          `}
+          className={recommendationPromptClass}
           style={{
-            fontWeight: 'bold',
-            opacity: state.recommending ? 0 : 1,
-            display: 'flex',
-            alignItems: 'center'
+            opacity: state.recommending ? 0 : 1
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: switchButtonShown ? 'column' : 'row',
-              alignItems: 'center',
-              lineHeight: 1.3
-            }}
-          >
+          <div className={recommendationPromptLineClass}>
             <div>
-              <span>
+              <span className={recommendationTextGlowClass}>
                 {isRecommendedByUser ? (
                   <>
                     <span style={{ color: Color.rose(), fontWeight: 'bold' }}>
@@ -176,25 +285,17 @@ export default function RecommendationInterface({
                 )}
               </span>
             </div>
-            <PriceText
-              isRecommendedByUser={isRecommendedByUser}
-              switchButtonShown={switchButtonShown}
-            />
+            <PriceText isRecommendedByUser={isRecommendedByUser} />
           </div>
-          <div
-            className={css`
-              margin-left: 3rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: 2rem;
-                margin-right: 1rem;
-              }
-            `}
-          >
-            {switchButtonShown && (
+          {switchButtonShown && (
+            <div className={recommendationRewardSwitchClass}>
+              <span className={recommendationRewardLabelClass}>
+                {rewardableLabel}
+              </span>
               <SwitchButton
+                ariaLabel={rewardableLabel}
                 small={deviceIsMobile}
                 checked={!state.rewardDisabled}
-                label={rewardableLabel}
                 theme={theme}
                 onChange={() =>
                   setState((prevState) => ({
@@ -203,26 +304,34 @@ export default function RecommendationInterface({
                   }))
                 }
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
         {!state.recommending && (
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className={recommendationActionsClass}>
             <Button
+              className={recommendationActionGlowClass}
               disabled={disabled}
               onClick={handleRecommend}
               color="darkBlue"
-              variant="soft"
-              tone="raised"
+              variant="outline"
+              style={getRecommendationActionGlowStyle({
+                color: Color.darkBlue(),
+                softColor: Color.darkBlue(0.08)
+              })}
             >
               {yesLabel}
             </Button>
             <Button
+              className={recommendationActionGlowClass}
               onClick={onHide}
-              style={{ marginLeft: '0.7rem' }}
+              style={getRecommendationActionGlowStyle({
+                color: Color.rose(),
+                softColor: Color.rose(0.08),
+                style: { marginLeft: '0.7rem' }
+              })}
               color="rose"
-              variant="soft"
-              tone="raised"
+              variant="outline"
             >
               {noLabel}
             </Button>

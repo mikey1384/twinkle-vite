@@ -40,6 +40,10 @@ import {
 } from '~/contexts';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import {
+  centerHomeFeedActionIntentTarget,
+  type HomeFeedActionIntent
+} from '~/helpers/homeFeedActionIntent';
 
 const deleteLabel = 'Delete';
 const editLabel = 'Edit';
@@ -59,9 +63,11 @@ export default function Details({
   title,
   description,
   likes,
+  homeFeedActionIntent,
   recommendations,
   onDelete,
   onEditFinish,
+  onConsumeHomeFeedActionIntent,
   tags = [],
   onSetRewardLevel,
   rewards,
@@ -77,8 +83,10 @@ export default function Details({
   description: string;
   rewardLevel: number;
   likes: any[];
+  homeFeedActionIntent?: HomeFeedActionIntent | null;
   onDelete: () => void;
   onEditFinish: (v: any) => void;
+  onConsumeHomeFeedActionIntent?: () => void;
   onSetRewardLevel: (v: any) => void;
   recommendations: any[];
   tags: string[];
@@ -132,6 +140,8 @@ export default function Details({
 
   const TitleRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
+  const RecommendationInterfaceRef = useRef<HTMLDivElement | null>(null);
+  const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!editState) {
@@ -227,6 +237,42 @@ export default function Details({
       }),
     [byUser, rewards, userId, xpRewardInterfaceShown]
   );
+
+  useEffect(() => {
+    const intent = homeFeedActionIntent;
+    if (!intent || intent.action === 'comment') return;
+    if (consumedHomeFeedActionIntentRef.current === intent.nonce) return;
+    if (changingPage) return;
+
+    consumedHomeFeedActionIntentRef.current = intent.nonce;
+
+    if (intent.action === 'reward') {
+      if (userCanRewardThis && !xpButtonDisabled) {
+        onSetXpRewardInterfaceShown({
+          contentId: videoId,
+          contentType: 'video',
+          shown: true
+        });
+        centerHomeFeedActionIntentTarget(RewardInterfaceRef);
+      }
+    }
+
+    if (intent.action === 'recommend') {
+      setRecommendationInterfaceShown(true);
+      centerHomeFeedActionIntentTarget(RecommendationInterfaceRef);
+    }
+
+    onConsumeHomeFeedActionIntent?.();
+    // onSetXpRewardInterfaceShown/onConsumeHomeFeedActionIntent are stable helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    changingPage,
+    homeFeedActionIntent?.action,
+    homeFeedActionIntent?.nonce,
+    userCanRewardThis,
+    videoId,
+    xpButtonDisabled
+  ]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
@@ -547,6 +593,7 @@ export default function Details({
               recommendations={recommendations}
             />
             <div
+              ref={RecommendationInterfaceRef}
               style={{
                 marginTop: '1rem',
                 fontSize: '1.7rem',

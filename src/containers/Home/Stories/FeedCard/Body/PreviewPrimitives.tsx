@@ -109,6 +109,7 @@ export function MarkdownEmbedPreview({
           rootId={contentId}
           rootType={contentType}
           isPreview
+          showCompactCommentTypeLabel={false}
           src={internalSrc}
         />
       </div>

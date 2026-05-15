@@ -19,6 +19,7 @@ import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
+import type { HomeFeedActionIntent } from '~/helpers/homeFeedActionIntent';
 const urlCss = css`
   padding: 1rem;
   background: #fff;
@@ -66,6 +67,7 @@ export default function ContentPanel({
   feedActivityType,
   feedTimeStamp,
   feedUploader,
+  homeFeedActionIntent,
   contentId,
   contentType,
   rootType,
@@ -74,7 +76,8 @@ export default function ContentPanel({
   showActualDate,
   theme,
   zIndex = 1,
-  isContentPage
+  isContentPage,
+  onConsumeHomeFeedActionIntent
 }: {
   alwaysShow?: boolean;
   autoExpand?: boolean;
@@ -84,6 +87,7 @@ export default function ContentPanel({
   feedActivityType?: string | null;
   feedTimeStamp?: number | string | null;
   feedUploader?: any;
+  homeFeedActionIntent?: HomeFeedActionIntent | null;
   contentId: number;
   contentType: string;
   rootType?: string;
@@ -93,6 +97,7 @@ export default function ContentPanel({
   theme?: string;
   zIndex?: number;
   isContentPage?: boolean;
+  onConsumeHomeFeedActionIntent?: () => void;
 }) {
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`${contentType}-${contentId}`],
@@ -436,8 +441,12 @@ export default function ContentPanel({
                           autoExpand={autoExpand}
                           commentsShown={commentsShown}
                           contentObj={contentState}
+                          homeFeedActionIntent={homeFeedActionIntent}
                           inputAtBottom={inputAtBottom}
                           numPreviewComments={numPreviewComments}
+                          onConsumeHomeFeedActionIntent={
+                            onConsumeHomeFeedActionIntent
+                          }
                           onChangeSpoilerStatus={onChangeSpoilerStatus}
                           theme={theme || profileTheme}
                         />

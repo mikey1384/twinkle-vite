@@ -163,14 +163,16 @@ export const panelPreviewStyles = `
   }
   h3 {
     margin: 0;
+    padding-bottom: 0.08em;
     color: ${Color.black()};
     font-size: max(2rem, 20px);
     font-weight: 800;
-    line-height: 1.18;
+    line-height: 1.28;
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    text-overflow: ellipsis;
   }
   p {
     margin: 0;

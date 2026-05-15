@@ -15,6 +15,7 @@ function LikeButton({
   likes,
   labelClassName,
   hideLabel,
+  rootType,
   style,
   theme,
   onClick = () => null
@@ -26,6 +27,7 @@ function LikeButton({
   likes: Array<{ id: number }>;
   labelClassName?: string;
   hideLabel?: boolean;
+  rootType?: string;
   style?: React.CSSProperties;
   theme?: string;
   onClick: (v?: any) => void;
@@ -61,7 +63,8 @@ function LikeButton({
             setLoading(true);
             const newLikes = await likeContent({
               id: contentId,
-              contentType
+              contentType,
+              rootType
             });
             if (userId) {
               onLikeContent({ likes: newLikes, contentType, contentId });

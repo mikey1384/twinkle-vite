@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { socket } from '~/constants/sockets/api';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import {
   canMergeBuildBranch,
@@ -25,6 +26,11 @@ import type {
   BuildProjectFileContributionAction,
   BuildProjectFilesDraftState
 } from './useProjectFileDrafts';
+import {
+  createRuntimeAssetTransferOperationId,
+  normalizeRuntimeAssetTransferProgressPayload,
+  type RuntimeAssetTransferProgressPayload
+} from '../helpers/runtimeAssetTransferProgress';
 
 interface ContributionActionPreparationResult {
   ready: boolean;
@@ -55,9 +61,7 @@ interface UseBuildEditorBranchesOptions {
   mergeBuildContributionIntoMyBranch: (
     options: Record<string, any>
   ) => Promise<any>;
-  onProjectFilesDraftStateChange: (
-    state: BuildProjectFilesDraftState
-  ) => void;
+  onProjectFilesDraftStateChange: (state: BuildProjectFilesDraftState) => void;
   prepareProjectFilesForContributionAction: (options: {
     action: BuildProjectFileContributionAction;
   }) => Promise<ContributionActionPreparationResult>;
@@ -97,11 +101,12 @@ export default function useBranches({
     'merge' | 'replace-main' | ''
   >('');
   const [contributionActionError, setContributionActionError] = useState('');
+  const [runtimeAssetTransferProgress, setRuntimeAssetTransferProgress] =
+    useState<RuntimeAssetTransferProgressPayload | null>(null);
+  const runtimeAssetTransferOperationIdRef = useRef('');
   const [replaceMainConfirmShown, setReplaceMainConfirmShown] = useState(false);
-  const [
-    currentBranchMergeableFileCount,
-    setCurrentBranchMergeableFileCount
-  ] = useState<number | null>(null);
+  const [currentBranchMergeableFileCount, setCurrentBranchMergeableFileCount] =
+    useState<number | null>(null);
   const [
     currentBranchMergeabilityLoadFailed,
     setCurrentBranchMergeabilityLoadFailed
@@ -120,10 +125,8 @@ export default function useBranches({
   const [availableVersions, setAvailableVersions] = useState<
     BuildVersionSummary[]
   >([]);
-  const [
-    currentUserContributionBranches,
-    setCurrentUserContributionBranches
-  ] = useState<BuildVersionSummary[]>([]);
+  const [currentUserContributionBranches, setCurrentUserContributionBranches] =
+    useState<BuildVersionSummary[]>([]);
   const [currentUserContributionBranch, setCurrentUserContributionBranch] =
     useState<BuildVersionSummary | null>(null);
   const [availableVersionsLoading, setAvailableVersionsLoading] =
@@ -262,6 +265,30 @@ export default function useBranches({
   }, [build.id]);
 
   useEffect(() => {
+    function handleRuntimeAssetTransferProgress(payload: any) {
+      const progress = normalizeRuntimeAssetTransferProgressPayload(payload);
+      if (
+        !progress ||
+        progress.operationId !== runtimeAssetTransferOperationIdRef.current
+      ) {
+        return;
+      }
+      setRuntimeAssetTransferProgress(progress);
+    }
+
+    socket.on(
+      'build_runtime_asset_transfer_progress',
+      handleRuntimeAssetTransferProgress
+    );
+    return () => {
+      socket.off(
+        'build_runtime_asset_transfer_progress',
+        handleRuntimeAssetTransferProgress
+      );
+    };
+  }, []);
+
+  useEffect(() => {
     const branchListBuildId = currentBuildIsContributionFork
       ? Number(build.contributionRootBuildId || 0)
       : Number(build.id || 0);
@@ -315,18 +342,15 @@ export default function useBranches({
         const nextCurrentUserBranches = sortBuildVersionSummaries(
           Array.from(currentUserBranchesById.values())
         );
-        const mergeTargetBranches = nextCurrentUserBranches.filter(
-          (version) =>
-            canUseBuildBranchAsMergeTarget({
-              version,
-              activeBuildId: build.id,
-              userId
-            })
+        const mergeTargetBranches = nextCurrentUserBranches.filter((version) =>
+          canUseBuildBranchAsMergeTarget({
+            version,
+            activeBuildId: build.id,
+            userId
+          })
         );
         const fallbackCurrentUserBranch =
-          currentUserBranchFromResponse ||
-          mergeTargetBranches[0] ||
-          null;
+          currentUserBranchFromResponse || mergeTargetBranches[0] || null;
         setAvailableVersions(nextVersions);
         setCurrentUserContributionBranches(nextCurrentUserBranches);
         setCurrentUserContributionBranch((previousBranch) => {
@@ -556,6 +580,32 @@ export default function useBranches({
     }
   }
 
+  function beginRuntimeAssetTransferProgress() {
+    const operationId = createRuntimeAssetTransferOperationId();
+    runtimeAssetTransferOperationIdRef.current = operationId;
+    setRuntimeAssetTransferProgress({
+      operationId,
+      sourceBuildId: 0,
+      sourceUserId: 0,
+      targetBuildId: 0,
+      targetUserId: 0,
+      status: 'running',
+      phase: 'preparing',
+      copiedAssets: 0,
+      totalAssets: 0,
+      copiedBytes: 0,
+      totalBytes: 0,
+      progressPercent: 2,
+      message: 'Preparing runtime assets'
+    });
+    return operationId;
+  }
+
+  function clearRuntimeAssetTransferProgress() {
+    runtimeAssetTransferOperationIdRef.current = '';
+    setRuntimeAssetTransferProgress(null);
+  }
+
   async function handleMergeCurrentBranch() {
     const latestBuild = getLatestBuild();
     const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
@@ -571,6 +621,7 @@ export default function useBranches({
     }
     setContributionActionLoading('merge');
     setContributionActionError('');
+    const assetTransferOperationId = beginRuntimeAssetTransferProgress();
     try {
       const preparedFiles = await handleBeforeContributionAction('merge');
       if (!preparedFiles.ready) return;
@@ -579,13 +630,15 @@ export default function useBranches({
           ? await mergeBuildContributionIntoMyBranch({
               buildId: rootBuildId,
               contributionBuildId,
+              assetTransferOperationId,
               targetContributionBuildId: Number(
                 currentUserContributionBranch?.id || 0
               )
             })
           : await mergeBuildContribution({
               buildId: rootBuildId,
-              contributionBuildId
+              contributionBuildId,
+              assetTransferOperationId
             });
       if (result?.success) {
         const mergedBranch = result.contribution || null;
@@ -612,6 +665,7 @@ export default function useBranches({
       );
     } finally {
       setContributionActionLoading('');
+      clearRuntimeAssetTransferProgress();
     }
   }
 
@@ -640,6 +694,7 @@ export default function useBranches({
     }
     setContributionActionLoading('replace-main');
     setContributionActionError('');
+    const assetTransferOperationId = beginRuntimeAssetTransferProgress();
     try {
       const preparedFiles = await handleBeforeContributionAction('replace');
       if (!preparedFiles.ready) return;
@@ -648,13 +703,15 @@ export default function useBranches({
           ? await replaceBuildContributionIntoMyBranch({
               buildId: rootBuildId,
               contributionBuildId,
+              assetTransferOperationId,
               targetContributionBuildId: Number(
                 currentUserContributionBranch?.id || 0
               )
             })
           : await replaceMainWithBuildContribution({
               buildId: rootBuildId,
-              contributionBuildId
+              contributionBuildId,
+              assetTransferOperationId
             });
       if (result?.success) {
         setReplaceMainConfirmShown(false);
@@ -685,6 +742,7 @@ export default function useBranches({
       );
     } finally {
       setContributionActionLoading('');
+      clearRuntimeAssetTransferProgress();
       setReplaceMainConfirmShown(false);
     }
   }
@@ -836,6 +894,7 @@ export default function useBranches({
     refreshCurrentBranchMergeability,
     refreshCurrentBranchMergeabilityForBuild,
     replaceMainConfirmShown,
+    runtimeAssetTransferProgress,
     setBranchNameDraft,
     showContributionButton,
     showForkButton,

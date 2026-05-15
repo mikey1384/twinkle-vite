@@ -1,10 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import SideMenu from '../SideMenu';
+import HomeFeedCard from '~/containers/Home/Stories/FeedCard';
+import {
+  getProfileFeedCardAnchorId,
+  getProfileFeedContentKey
+} from '../feedCardAnchors';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
@@ -296,28 +300,32 @@ export default function Feeds({
                 {feeds.length > 0 && (
                   <div ref={feedListRef} className={feedListClass}>
                     {feeds.map((feed, index) => {
-                      const { contentId, contentType, rootType } = feed;
+                      const contentKey = getProfileFeedContentKey(feed);
+                      const feedAnchorId = getProfileFeedCardAnchorId({
+                        feed,
+                        index,
+                        prefix: 'profile-post'
+                      });
                       return (
                         <div
-                          key={filterTable[section] + feed.feedId}
+                          key={`${filterTable[section]}:${feedAnchorId}`}
                           className={`feed-item ${feedItemCustomClass}`}
-                          data-scroll-anchor-id={`profile-post:${feed.feedId}`}
-                          data-scroll-anchor-secondary-id={String(feed.feedId)}
-                          data-scroll-anchor-content-key={`${contentType}:${contentId}`}
+                          data-feed-anchor-id={feedAnchorId}
+                          data-feed-id={feed.feedId || undefined}
+                          data-content-key={contentKey}
+                          data-feed-index={index}
+                          data-scroll-anchor-id={feedAnchorId}
+                          data-scroll-anchor-secondary-id={
+                            feed.feedId ? String(feed.feedId) : undefined
+                          }
+                          data-scroll-anchor-content-key={contentKey}
                         >
-                          <ContentPanel
-                            style={{ margin: 0, zIndex: feeds.length - index }}
-                            zIndex={feeds.length - index}
-                            feedId={feed.feedId}
-                            feedActivityType={feed.feedActivityType}
-                            feedTimeStamp={feed.timeStamp}
-                            feedUploader={feed.feedUploader}
-                            contentId={contentId}
-                            contentType={contentType}
-                            rootType={rootType}
+                          <HomeFeedCard
+                            feed={feed}
+                            feedAnchorId={feedAnchorId}
+                            index={index}
+                            totalCount={feeds.length}
                             theme={selectedTheme}
-                            commentsLoadLimit={5}
-                            numPreviewComments={1}
                           />
                         </div>
                       );

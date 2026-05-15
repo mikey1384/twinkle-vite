@@ -171,7 +171,16 @@ function Markdown({
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, linkColor, markerColor, isAIMessage, key]);
+  }, [
+    children,
+    componentPath,
+    isAIMessage,
+    isPreview,
+    isProfileComponent,
+    key,
+    linkColor,
+    markerColor
+  ]);
 
   useEffect(() => {
     if ((processedContent.processed && !isProcessed) || hasLongWord) {

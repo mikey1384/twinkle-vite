@@ -38,6 +38,7 @@ export type FeedCardSize =
   | 'tall';
 
 export type FeedCardTargetSize = 'compact' | 'fallback' | 'standard';
+export type FeedCardLayoutAxis = 'desktop' | 'mobile';
 
 export type FeedCardFrameSize =
   | 'comment-with-target-card'
@@ -65,6 +66,11 @@ export interface FeedCardPanelSizing {
   textMaxLines: number;
 }
 
+export interface FeedCardSubjectPreviewLineLimits {
+  descriptionMaxLines: number;
+  secretMaxLines: number;
+}
+
 export interface FeedCardTargetSizing {
   className: string;
   size: FeedCardTargetSize;
@@ -73,11 +79,13 @@ export interface FeedCardTargetSizing {
 export interface FeedCardFrameSizing {
   bodyHeight: string;
   className: string;
+  commentPreviewHeight: string;
   desktopHeight: string;
   hasCommentPreview: boolean;
   hasTarget: boolean;
   headingHeight: string;
   mobileBodyHeight: string;
+  mobileCommentPreviewHeight: string;
   mobileHeight: string;
   mobileHeadingHeight: string;
   placeholderHeight: string;
@@ -160,7 +168,7 @@ const COMMENT_PREVIEW_HEIGHT_REM = {
 
 const CARD_FRAME_REM = {
   desktop: {
-    actions: 1.6,
+    actions: 2.95,
     commentPreviewGap: 0.85,
     gapAfterBody: 0.75,
     gapAfterHeading: 0.75,
@@ -169,16 +177,52 @@ const CARD_FRAME_REM = {
     targetGap: 0.85
   },
   mobile: {
-    actions: 1.6,
-    commentPreviewGap: 0.85,
+    actions: 3.1,
+    commentPreviewGap: 0.75,
     gapAfterBody: 0.75,
     gapAfterHeading: 0.75,
-    heading: 5.4,
-    padding: 1.65,
+    heading: 6.2,
+    padding: 0.95,
     targetGap: 0.85
   }
 };
 const CARD_BORDER_PX = 2;
+const REFLECTION_PREVIEW_LAYOUT_REM = {
+  answerLineHeight: 1.9 * 1.36,
+  footerMinHeight: 2.35,
+  minAnswerLines: 2,
+  paddingY: 2,
+  questionBorderY: 0.13,
+  questionCharsPerLine: {
+    desktop: 64,
+    mobile: 34
+  },
+  questionContentGap: 0.35,
+  questionLabelLines: 1,
+  questionLineHeight: 1.85 * 1.32,
+  questionMaxLines: 2,
+  questionPaddingY: 1.7,
+  rowGap: 0.75
+};
+const SUBJECT_PREVIEW_LAYOUT_REM = {
+  attachmentSecretMinHeight: 5.9,
+  descriptionLineHeight: 1.9 * 1.36,
+  effortHeight: 2.9,
+  gap: 0.85,
+  minDescriptionLines: 2,
+  previewPaddingY: 1.6,
+  secretLineHeight: 1.42 * 1.3,
+  secretMaxLines: 3,
+  secretMinHeight: 5.4,
+  secretPaddingY: 1.7,
+  titleCharsPerLine: {
+    desktop: 44,
+    mobile: 30
+  },
+  titleLineHeight: 2 * 1.28,
+  titleMaxLines: 2,
+  titlePaddingBottom: 0.16
+};
 
 export function getFeedCardSizing({
   content,
@@ -226,7 +270,6 @@ export function getFeedCardSizing({
     subjectDescriptionMaxLines: getSubjectDescriptionMaxLines(size),
     textMaxLines: getTextMaxLines(size)
   };
-
   return {
     card: getFeedCardFrameSizing({
       hasCommentPreview: flags.hasCommentPreview,
@@ -237,6 +280,95 @@ export function getFeedCardSizing({
     main,
     target
   };
+}
+
+export function getDailyReflectionAnswerPreviewMaxLines({
+  axis = 'desktop',
+  content,
+  maxLines,
+  size
+}: {
+  axis?: FeedCardLayoutAxis;
+  content: any;
+  maxLines: number;
+  size: FeedCardSize;
+}) {
+  const maxLineCount = Math.max(1, Math.floor(Number(maxLines) || 0));
+  const hasQuestion = Boolean(String(content?.question || '').trim());
+  const hasFooter = hasDailyReflectionMetaBadges(content);
+
+  if (!hasQuestion && !hasFooter) {
+    return maxLineCount;
+  }
+
+  return Math.min(
+    maxLineCount,
+    getDailyReflectionAnswerLineBudget({ axis, content, size })
+  );
+}
+
+export function getSharedTopicPreviewMaxLines(main: FeedCardPanelSizing) {
+  return Math.min(main.textMaxLines, 4);
+}
+
+export function getSubjectPreviewLineLimits({
+  axis = 'desktop',
+  content,
+  hasDescriptionText,
+  hasEffort,
+  hasSecretAnswer,
+  hasSecretAnswerText,
+  hasSecretAttachment,
+  hasTitle,
+  size
+}: {
+  axis?: FeedCardLayoutAxis;
+  content: any;
+  hasDescriptionText: boolean;
+  hasEffort: boolean;
+  hasSecretAnswer: boolean;
+  hasSecretAnswerText: boolean;
+  hasSecretAttachment: boolean;
+  hasTitle: boolean;
+  size: FeedCardSize;
+}): FeedCardSubjectPreviewLineLimits {
+  const secretMaxLines = getSubjectSecretAnswerMaxLines({
+    axis,
+    content,
+    hasSecretAnswerText
+  });
+
+  if (!hasDescriptionText) {
+    return {
+      descriptionMaxLines: 0,
+      secretMaxLines
+    };
+  }
+
+  return {
+    descriptionMaxLines: getSubjectDescriptionLineBudget({
+      axis,
+      content,
+      hasDescriptionText,
+      hasEffort,
+      hasSecretAnswer,
+      hasSecretAnswerText,
+      hasSecretAttachment,
+      hasTitle,
+      secretMaxLines,
+      size
+    }),
+    secretMaxLines
+  };
+}
+
+export function hasDailyReflectionMetaBadges(content: any) {
+  return Boolean(
+    content?.grade === 'Masterpiece' ||
+    content?.isRefined ||
+    Number(content?.xpAwarded || 0) > 0 ||
+    Number(content?.streakAtTime || 0) > 0
+  );
 }
 
 export function removeMarkdownImageEmbeds(text: string) {
@@ -520,16 +652,22 @@ function getFeedCardFrameSizing({
 }): FeedCardFrameSizing {
   const desktopBodyHeight = getBodyHeight({
     axis: 'desktop',
-    hasCommentPreview,
     mainSize,
     target
   });
   const mobileBodyHeight = getBodyHeight({
     axis: 'mobile',
-    hasCommentPreview,
     mainSize,
     target
   });
+  const desktopCommentPreviewFrameHeight = hasCommentPreview
+    ? CARD_FRAME_REM.desktop.commentPreviewGap +
+      COMMENT_PREVIEW_HEIGHT_REM.desktop
+    : 0;
+  const mobileCommentPreviewFrameHeight = hasCommentPreview
+    ? CARD_FRAME_REM.mobile.commentPreviewGap +
+      COMMENT_PREVIEW_HEIGHT_REM.mobile
+    : 0;
   const desktopFrame = CARD_FRAME_REM.desktop;
   const mobileFrame = CARD_FRAME_REM.mobile;
   const desktopHeight =
@@ -538,25 +676,31 @@ function getFeedCardFrameSizing({
     desktopFrame.gapAfterHeading +
     desktopBodyHeight +
     desktopFrame.gapAfterBody +
-    desktopFrame.actions;
+    desktopFrame.actions +
+    desktopCommentPreviewFrameHeight;
   const mobileHeight =
     mobileFrame.padding +
     mobileFrame.heading +
     mobileFrame.gapAfterHeading +
     mobileBodyHeight +
     mobileFrame.gapAfterBody +
-    mobileFrame.actions;
+    mobileFrame.actions +
+    mobileCommentPreviewFrameHeight;
 
   const size = getFeedCardFrameSize({ mainSize, target });
 
   return {
     bodyHeight: toCssFixedHeight(desktopBodyHeight),
     className: `home-feed-card--size-${size}`,
+    commentPreviewHeight: toCssFixedHeight(COMMENT_PREVIEW_HEIGHT_REM.desktop),
     desktopHeight: toCssFixedHeight(desktopHeight, CARD_BORDER_PX),
     hasCommentPreview,
     hasTarget: Boolean(target),
     headingHeight: toCssFixedHeight(desktopFrame.heading),
     mobileBodyHeight: toCssFixedHeight(mobileBodyHeight),
+    mobileCommentPreviewHeight: toCssFixedHeight(
+      COMMENT_PREVIEW_HEIGHT_REM.mobile
+    ),
     mobileHeight: toCssFixedHeight(mobileHeight, CARD_BORDER_PX),
     mobileHeadingHeight: toCssFixedHeight(mobileFrame.heading),
     placeholderHeight: toCssFixedHeight(desktopHeight, CARD_BORDER_PX),
@@ -566,12 +710,10 @@ function getFeedCardFrameSizing({
 
 function getBodyHeight({
   axis,
-  hasCommentPreview,
   mainSize,
   target
 }: {
   axis: 'desktop' | 'mobile';
-  hasCommentPreview: boolean;
   mainSize: FeedCardSize;
   target: FeedCardTargetSizing | null;
 }) {
@@ -579,11 +721,8 @@ function getBodyHeight({
   const targetHeight = target
     ? CARD_FRAME_REM[axis].targetGap + TARGET_HEIGHT_REM[target.size][axis]
     : 0;
-  const commentPreviewHeight = hasCommentPreview
-    ? CARD_FRAME_REM[axis].commentPreviewGap + COMMENT_PREVIEW_HEIGHT_REM[axis]
-    : 0;
 
-  return panelHeight + targetHeight + commentPreviewHeight;
+  return panelHeight + targetHeight;
 }
 
 function getFeedCardFrameSize({
@@ -808,7 +947,7 @@ function isCompactRichTextEmbedContent(content: any) {
 function getPlainTextPanelSize(content: any): FeedCardSize {
   const plainTextLength = getPlainTextLength(content);
 
-  if (plainTextLength <= 140 && !content?.title && !content?.filePath) {
+  if (plainTextLength <= 84 && !content?.title && !content?.filePath) {
     return 'compact';
   }
 
@@ -841,62 +980,319 @@ function getReflectionPanelSize(content: any): FeedCardSize {
 
 function getTextMaxLines(size: FeedCardSize) {
   if (size === 'compact' || size === 'attachment-only') {
-    return 5;
+    return 2;
   }
 
   if (size === 'media') {
-    return 6;
+    return 4;
   }
 
   if (size === 'tall') {
-    return 13;
-  }
-
-  if (size === 'rich-embed' || size === 'rich-embed-compact') {
-    return 10;
-  }
-
-  if (size === 'fallback') {
     return 8;
   }
 
-  return 9;
-}
-
-function getReflectionAnswerMaxLines(size: FeedCardSize) {
-  if (size === 'reflection-tight') {
+  if (size === 'rich-embed') {
     return 6;
   }
 
-  if (size === 'reflection-tall') {
-    return 13;
+  if (size === 'rich-embed-compact') {
+    return 4;
   }
 
-  return 9;
+  if (size === 'fallback') {
+    return 5;
+  }
+
+  return 5;
+}
+
+function getReflectionAnswerMaxLines(size: FeedCardSize) {
+  return getDailyReflectionAnswerLineBudget({
+    axis: 'desktop',
+    content: {},
+    size
+  });
+}
+
+function getDailyReflectionAnswerLineBudget({
+  axis,
+  content,
+  size
+}: {
+  axis: FeedCardLayoutAxis;
+  content: any;
+  size: FeedCardSize;
+}) {
+  const layout = REFLECTION_PREVIEW_LAYOUT_REM;
+  const questionLines = estimatePreviewLineCount({
+    charsPerLine: layout.questionCharsPerLine[axis],
+    maxLines: layout.questionMaxLines,
+    value: content?.question
+  });
+  const hasQuestion = questionLines > 0;
+  const hasFooter = hasDailyReflectionMetaBadges(content);
+  const gapCount = Number(hasQuestion) + Number(hasFooter);
+  const occupiedHeight =
+    layout.paddingY +
+    gapCount * layout.rowGap +
+    (hasQuestion ? getDailyReflectionQuestionBoxHeight(questionLines) : 0) +
+    (hasFooter ? layout.footerMinHeight : 0);
+  const panelHeight =
+    PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM.reflection[axis];
+  const availableAnswerHeight = panelHeight - occupiedHeight;
+  const answerLines = Math.floor(
+    availableAnswerHeight / layout.answerLineHeight
+  );
+
+  return Math.max(layout.minAnswerLines, answerLines);
+}
+
+function getDailyReflectionQuestionBoxHeight(questionLines: number) {
+  const layout = REFLECTION_PREVIEW_LAYOUT_REM;
+  return (
+    layout.questionPaddingY +
+    layout.questionContentGap +
+    layout.questionBorderY +
+    (layout.questionLabelLines + questionLines) * layout.questionLineHeight
+  );
+}
+
+function estimatePreviewLineCount({
+  charsPerLine,
+  maxLines,
+  value
+}: {
+  charsPerLine: number;
+  maxLines: number;
+  value: any;
+}) {
+  const text = removeMarkdownImageEmbeds(String(value || '')).trim();
+
+  if (!text || maxLines <= 0) {
+    return 0;
+  }
+
+  const lineCount = text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .reduce((count, line) => {
+      return count + Math.max(1, Math.ceil(line.length / charsPerLine));
+    }, 0);
+
+  return Math.min(maxLines, lineCount);
 }
 
 function getSubjectDescriptionMaxLines(size: FeedCardSize) {
+  if (size === 'subject-tall') {
+    return getSubjectDescriptionLineBudget({
+      axis: 'desktop',
+      content: {},
+      hasDescriptionText: true,
+      hasEffort: false,
+      hasSecretAnswer: false,
+      hasSecretAnswerText: false,
+      hasSecretAttachment: false,
+      hasTitle: false,
+      secretMaxLines: 0,
+      size
+    });
+  }
+
   if (size === 'subject-rich-embed') {
     return 3;
   }
 
   if (size === 'rich-embed') {
-    return 7;
-  }
-
-  if (size === 'rich-embed-compact') {
     return 5;
   }
 
+  if (size === 'rich-embed-compact') {
+    return 3;
+  }
+
   if (size === 'subject-media') {
-    return 7;
+    return 5;
   }
 
   if (size === 'subject-minimal' || size === 'subject-root') {
     return 3;
   }
 
-  return 10;
+  return 5;
+}
+
+function getSubjectDescriptionLineBudget({
+  axis,
+  content,
+  hasDescriptionText,
+  hasEffort,
+  hasSecretAnswer,
+  hasSecretAnswerText,
+  hasSecretAttachment,
+  hasTitle,
+  secretMaxLines,
+  size
+}: {
+  axis: FeedCardLayoutAxis;
+  content: any;
+  hasDescriptionText: boolean;
+  hasEffort: boolean;
+  hasSecretAnswer: boolean;
+  hasSecretAnswerText: boolean;
+  hasSecretAttachment: boolean;
+  hasTitle: boolean;
+  secretMaxLines: number;
+  size: FeedCardSize;
+}) {
+  const maxLines = getSubjectDescriptionMaxLineCap({
+    axis,
+    size
+  });
+
+  if (!hasDescriptionText || size !== 'subject-tall') {
+    return maxLines;
+  }
+
+  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const renderedChildrenCount = [
+    hasEffort,
+    hasTitle,
+    hasDescriptionText,
+    hasSecretAnswer
+  ].filter(Boolean).length;
+  const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
+  const occupiedHeight =
+    layout.previewPaddingY +
+    gapHeight +
+    (hasEffort ? layout.effortHeight : 0) +
+    (hasTitle
+      ? getSubjectTitleHeight({
+          axis,
+          title: content?.title
+        })
+      : 0) +
+    (hasSecretAnswer
+      ? getSubjectSecretAnswerHeight({
+          hasSecretAnswerText,
+          hasSecretAttachment,
+          secretMaxLines
+        })
+      : 0);
+  const panelHeight =
+    PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM['subject-tall'][axis];
+  const availableDescriptionHeight = panelHeight - occupiedHeight;
+  const descriptionLines = Math.floor(
+    availableDescriptionHeight / layout.descriptionLineHeight
+  );
+
+  return Math.min(
+    maxLines,
+    Math.max(layout.minDescriptionLines, descriptionLines)
+  );
+}
+
+function getSubjectDescriptionMaxLineCap({
+  axis,
+  size
+}: {
+  axis: FeedCardLayoutAxis;
+  size: FeedCardSize;
+}) {
+  if (size !== 'subject-tall') {
+    return getSubjectNonTallDescriptionMaxLines(size);
+  }
+
+  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const panelHeight =
+    PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM['subject-tall'][axis];
+  return Math.max(
+    layout.minDescriptionLines,
+    Math.floor(
+      (panelHeight - layout.previewPaddingY) / layout.descriptionLineHeight
+    )
+  );
+}
+
+function getSubjectNonTallDescriptionMaxLines(size: FeedCardSize) {
+  if (size === 'subject-rich-embed') {
+    return 3;
+  }
+
+  if (size === 'rich-embed') {
+    return 5;
+  }
+
+  if (size === 'rich-embed-compact') {
+    return 3;
+  }
+
+  if (size === 'subject-media') {
+    return 5;
+  }
+
+  if (size === 'subject-minimal' || size === 'subject-root') {
+    return 3;
+  }
+
+  return 5;
+}
+
+function getSubjectTitleHeight({
+  axis,
+  title
+}: {
+  axis: FeedCardLayoutAxis;
+  title: any;
+}) {
+  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const titleLines = estimatePreviewLineCount({
+    charsPerLine: layout.titleCharsPerLine[axis],
+    maxLines: layout.titleMaxLines,
+    value: title
+  });
+
+  return titleLines * layout.titleLineHeight + layout.titlePaddingBottom;
+}
+
+function getSubjectSecretAnswerHeight({
+  hasSecretAnswerText,
+  hasSecretAttachment,
+  secretMaxLines
+}: {
+  hasSecretAnswerText: boolean;
+  hasSecretAttachment: boolean;
+  secretMaxLines: number;
+}) {
+  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const textHeight = hasSecretAnswerText
+    ? layout.secretPaddingY + secretMaxLines * layout.secretLineHeight
+    : 0;
+  const minHeight = hasSecretAttachment
+    ? layout.attachmentSecretMinHeight
+    : layout.secretMinHeight;
+
+  return Math.max(minHeight, textHeight);
+}
+
+function getSubjectSecretAnswerMaxLines({
+  axis,
+  content,
+  hasSecretAnswerText
+}: {
+  axis: FeedCardLayoutAxis;
+  content: any;
+  hasSecretAnswerText: boolean;
+}) {
+  if (!hasSecretAnswerText) {
+    return 0;
+  }
+
+  return estimatePreviewLineCount({
+    charsPerLine: axis === 'desktop' ? 54 : 30,
+    maxLines: SUBJECT_PREVIEW_LAYOUT_REM.secretMaxLines,
+    value: content?.secretAnswer
+  });
 }
 
 function getPlainTextLength(content: any) {

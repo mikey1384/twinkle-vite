@@ -1893,16 +1893,21 @@ export default function buildRequestHelpers({
     async updateBuildContributionFromMain({
       buildId,
       contributionBuildId,
+      assetTransferOperationId,
       projectFiles
     }: {
       buildId: number;
       contributionBuildId: number;
+      assetTransferOperationId?: string;
       projectFiles?: Array<{ path: string; content?: string }>;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/update-from-main`,
-          projectFiles ? { projectFiles } : {},
+          {
+            ...(projectFiles ? { projectFiles } : {}),
+            ...(assetTransferOperationId ? { assetTransferOperationId } : {})
+          },
           auth()
         );
         return data;
@@ -1945,16 +1950,21 @@ export default function buildRequestHelpers({
     async mergeBuildContributionIntoMyBranch({
       buildId,
       contributionBuildId,
+      assetTransferOperationId,
       targetContributionBuildId
     }: {
       buildId: number;
       contributionBuildId: number;
+      assetTransferOperationId?: string;
       targetContributionBuildId?: number | null;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge-into-my-branch`,
-          targetContributionBuildId ? { targetContributionBuildId } : {},
+          {
+            ...(targetContributionBuildId ? { targetContributionBuildId } : {}),
+            ...(assetTransferOperationId ? { assetTransferOperationId } : {})
+          },
           auth()
         );
         return data;
@@ -1966,12 +1976,14 @@ export default function buildRequestHelpers({
     async mergeBuildContribution({
       buildId,
       contributionBuildId,
+      assetTransferOperationId,
       filePaths,
       projectFiles,
       rootProjectFiles
     }: {
       buildId: number;
       contributionBuildId: number;
+      assetTransferOperationId?: string;
       filePaths?: string[];
       projectFiles?: Array<{ path: string; content?: string }>;
       rootProjectFiles?: Array<{ path: string; content?: string }>;
@@ -1981,6 +1993,7 @@ export default function buildRequestHelpers({
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/merge`,
           {
             filePaths,
+            ...(assetTransferOperationId ? { assetTransferOperationId } : {}),
             ...(projectFiles ? { projectFiles } : {}),
             ...(rootProjectFiles ? { rootProjectFiles } : {})
           },
@@ -1995,11 +2008,13 @@ export default function buildRequestHelpers({
     async replaceMainWithBuildContribution({
       buildId,
       contributionBuildId,
+      assetTransferOperationId,
       projectFiles,
       rootProjectFiles
     }: {
       buildId: number;
       contributionBuildId: number;
+      assetTransferOperationId?: string;
       projectFiles?: Array<{ path: string; content?: string }>;
       rootProjectFiles?: Array<{ path: string; content?: string }>;
     }) {
@@ -2007,6 +2022,7 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/replace-main`,
           {
+            ...(assetTransferOperationId ? { assetTransferOperationId } : {}),
             ...(projectFiles ? { projectFiles } : {}),
             ...(rootProjectFiles ? { rootProjectFiles } : {})
           },
@@ -2021,16 +2037,21 @@ export default function buildRequestHelpers({
     async replaceBuildContributionIntoMyBranch({
       buildId,
       contributionBuildId,
+      assetTransferOperationId,
       targetContributionBuildId
     }: {
       buildId: number;
       contributionBuildId: number;
+      assetTransferOperationId?: string;
       targetContributionBuildId: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/replace-my-branch`,
-          { targetContributionBuildId },
+          {
+            targetContributionBuildId,
+            ...(assetTransferOperationId ? { assetTransferOperationId } : {})
+          },
           auth()
         );
         return data;

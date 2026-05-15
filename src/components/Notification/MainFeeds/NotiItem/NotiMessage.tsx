@@ -9,6 +9,9 @@ import { useAppContext } from '~/contexts';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { resolveColorValue } from '~/theme/resolveColor';
 
+const DAILY_GOAL_COMPLETION_LABEL = 'daily goal completion';
+const SHARED_SYSTEM_PROMPT_LABEL = 'shared system prompt';
+
 function NotiMessage({
   actionObj,
   actionColor,
@@ -133,20 +136,32 @@ function NotiMessage({
     targetObj.passType
   ]);
   const contentPreview = useMemo(() => {
+    const missionPassPreview = isTask
+      ? 'task accomplishment'
+      : 'mission completion';
+    const passPreview =
+      targetObj.contentType === 'pass'
+        ? targetObj.passType === 'achievement'
+          ? 'achievement'
+          : missionPassPreview
+        : targetObj.contentType === 'achievementPass'
+          ? 'achievement'
+          : targetObj.contentType === 'missionPass'
+            ? missionPassPreview
+            : '';
     return `${
       targetObj.contentType === 'aiStory'
         ? 'AI Story'
         : targetObj.contentType === 'url'
           ? 'link'
-          : targetObj.contentType === 'pass' ||
-              targetObj.contentType === 'achievementPass'
-            ? 'achievement'
-            : targetObj.contentType === 'missionPass'
-              ? 'mission'
+          : passPreview
+            ? passPreview
+            : targetObj.contentType === 'xpChange'
+              ? DAILY_GOAL_COMPLETION_LABEL
               : targetObj.contentType === 'dailyReflection'
                 ? 'reflection'
                 : targetObj.contentType === 'sharedTopic'
-                  ? 'shared prompt'
+                  ? SHARED_SYSTEM_PROMPT_LABEL
                   : targetObj.contentType
     } ${
       !stringIsEmpty(displayedContent)
@@ -156,7 +171,7 @@ function NotiMessage({
           })})`
         : ''
     }`;
-  }, [displayedContent, targetObj.contentType]);
+  }, [displayedContent, isTask, targetObj.contentType, targetObj.passType]);
   const contentString = useMemo(() => {
     return isReply
       ? targetComment.content
@@ -251,11 +266,12 @@ function NotiMessage({
       return (
         <>
           <span style={{ color: infoColorValue, fontWeight: 'bold' }}>
-            likes
+            liked
           </span>{' '}
           <span>your</span>{' '}
           <ContentLink
             contentType={targetObj.contentType}
+            rootType={targetObj.passType}
             content={{
               id: targetObj.id,
               title: contentPreview
@@ -455,9 +471,9 @@ function NotiMessage({
                 : threadContentType === 'pass'
                   ? 'mission completion'
                   : threadContentType === 'xpChange'
-                    ? 'daily goals completion'
+                    ? DAILY_GOAL_COMPLETION_LABEL
                     : threadContentType === 'sharedTopic'
-                      ? 'shared prompt'
+                      ? SHARED_SYSTEM_PROMPT_LABEL
                       : threadContentType === 'dailyReflection'
                         ? 'reflection'
                         : threadContentType;
@@ -581,9 +597,9 @@ function NotiMessage({
                           : targetObj.contentType === 'achievementPass'
                             ? 'achievement'
                             : targetObj.contentType === 'xpChange'
-                              ? 'daily goals completion'
+                              ? DAILY_GOAL_COMPLETION_LABEL
                               : targetObj.contentType === 'sharedTopic'
-                                ? 'shared prompt'
+                                ? SHARED_SYSTEM_PROMPT_LABEL
                                 : targetObj.contentType === 'dailyReflection'
                                   ? 'reflection'
                                   : targetObj.contentType

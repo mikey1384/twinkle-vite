@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Heading from '~/components/ContentPanel/Heading';
-import Body from './Body';
+import Body, { HomeFeedCommentPreview } from './Body';
 import Actions from './Actions';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -9,7 +9,21 @@ import { placeholderHeights } from '~/constants/state';
 import { useInView } from 'react-intersection-observer';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
+import {
+  determineUserCanRewardThis,
+  determineXpButtonDisabled
+} from '~/helpers';
+import {
+  getContentPanelCommentActionLabel,
+  getContentPanelRewardActionBlockedReason,
+  isContentPanelCommentActionEnabled,
+  isContentPanelLikeActionEnabled,
+  isContentPanelRecommendActionEnabled,
+  isContentPanelRewardActionEnabled,
+  isContentPanelRewardActionSupported,
+  isHomeFeedRecommendActionSupported
+} from '~/helpers/contentActionAvailability';
 import {
   getHomeFeedContentPath,
   normalizeRootType,
@@ -17,8 +31,18 @@ import {
   shouldSkipFeedCardNavigation
 } from './helpers/navigation';
 import { getFeedCardSizing, type FeedCardSizing } from './helpers/sizing';
+import {
+  getHomeFeedFinalRewardLevel,
+  type HomeFeedActionType
+} from './helpers/actionState';
+import {
+  createHomeFeedActionIntent,
+  createHomeFeedNavigationState
+} from '~/helpers/homeFeedActionIntent';
 
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
+const HOME_FEED_CARD_LAYOUT_VERSION = 'mobile-tight-preview-v2';
+const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
 const homeFeedCardSizingCache = new Map<string, FeedCardSizing>();
 
 export default function HomeFeedCard({
@@ -39,12 +63,21 @@ export default function HomeFeedCard({
   const [VisibilityRef, inView] = useInView();
   const navigate = useNavigate();
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const level = useKeyContext((v) => v.myState.level);
   const userId = useKeyContext((v) => v.myState.userId);
+  const { canReward } = useMyLevel();
+  const likeContent = useAppContext((v) => v.requestHelpers.likeContent);
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
   const onLoadComments = useContentContext((v) => v.actions.onLoadComments);
   const contentState = useContentState({ contentId, contentType });
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [primaryTextTruncated, setPrimaryTextTruncated] = useState(false);
   const loadingRef = useRef(false);
   const previewCommentLoadingRef = useRef(false);
   const PanelRef = useRef<HTMLDivElement | null>(null);
@@ -138,7 +171,7 @@ export default function HomeFeedCard({
     rootObj,
     userId
   });
-  const sizingKey = `${contentType}:${contentId}:${feedIdentity}:${
+  const sizingKey = `${HOME_FEED_CARD_LAYOUT_VERSION}:${contentType}:${contentId}:${feedIdentity}:${
     userId || 0
   }:${hasPreviewCommentSlot ? 'comment-preview' : 'no-comment-preview'}:${
     calculatedSizing.flags.secretHidden ? 'secret-hidden' : 'secret-open'
@@ -160,9 +193,12 @@ export default function HomeFeedCard({
       : previousPlaceholderHeight;
   const sizingStyle = {
     '--home-feed-card-body-height': sizing.card.bodyHeight,
+    '--home-feed-card-comment-preview-height': sizing.card.commentPreviewHeight,
     '--home-feed-card-heading-height': sizing.card.headingHeight,
     '--home-feed-card-height': sizing.card.desktopHeight,
     '--home-feed-card-mobile-body-height': sizing.card.mobileBodyHeight,
+    '--home-feed-card-mobile-comment-preview-height':
+      sizing.card.mobileCommentPreviewHeight,
     '--home-feed-card-mobile-heading-height': sizing.card.mobileHeadingHeight,
     '--home-feed-card-mobile-height': sizing.card.mobileHeight
   } as React.CSSProperties & Record<string, string>;
@@ -279,6 +315,66 @@ export default function HomeFeedCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldLoadPreviewComment, contentId, contentType]);
 
+  useEffect(() => {
+    if (!contentShown) {
+      setPrimaryTextTruncated(false);
+      return;
+    }
+
+    const panel = PanelRef.current;
+    if (!panel) return;
+    const measuredPanel = panel;
+
+    let animationFrame = 0;
+    let destroyed = false;
+    const resizeObserver =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(schedulePrimaryTextTruncationMeasure)
+        : null;
+    const mutationObserver =
+      typeof MutationObserver === 'function'
+        ? new MutationObserver(schedulePrimaryTextTruncationMeasure)
+        : null;
+
+    resizeObserver?.observe(measuredPanel);
+    mutationObserver?.observe(measuredPanel, {
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
+    window.addEventListener('resize', schedulePrimaryTextTruncationMeasure);
+    document.fonts?.ready
+      .then(() => {
+        if (!destroyed) schedulePrimaryTextTruncationMeasure();
+      })
+      .catch(() => undefined);
+    schedulePrimaryTextTruncationMeasure();
+
+    return function cleanUpPrimaryTextTruncationMeasure() {
+      destroyed = true;
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      window.removeEventListener(
+        'resize',
+        schedulePrimaryTextTruncationMeasure
+      );
+    };
+
+    function schedulePrimaryTextTruncationMeasure() {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(() => {
+        if (destroyed) return;
+        const nextTruncated = hasHomeFeedPrimaryTextTruncation(measuredPanel);
+        setPrimaryTextTruncated((current) =>
+          current === nextTruncated ? current : nextTruncated
+        );
+      });
+    }
+  }, [contentShown, sizingKey]);
+
   const headingAction = useMemo(() => {
     if (appliedContent.commentId) {
       if (appliedContent.targetObj?.comment?.notFound) {
@@ -314,6 +410,85 @@ export default function HomeFeedCard({
   const rewardsCount = Number(
     appliedContent.rewards?.length || appliedContent.numRewards || 0
   );
+  const likes = Array.isArray(appliedContent.likes) ? appliedContent.likes : [];
+  const rewards = Array.isArray(appliedContent.rewards)
+    ? appliedContent.rewards
+    : [];
+  const recommendations = Array.isArray(appliedContent.recommendations)
+    ? appliedContent.recommendations
+    : [];
+  const recommendationsCount = Number(
+    recommendations.length || appliedContent.numRecommendations || 0
+  );
+  const likedByUser = likes.some(
+    (like: any) => Number(like.id) === Number(userId)
+  );
+  const rewardedByUser = rewards.some(
+    (reward: any) => Number(reward.rewarderId) === Number(userId)
+  );
+  const recommendedByUser = recommendations.some(
+    (recommendation: any) => Number(recommendation.userId) === Number(userId)
+  );
+  const finalRewardLevel = getHomeFeedFinalRewardLevel({
+    content: appliedContent,
+    rootObj
+  });
+  const userCanRewardThis = determineUserCanRewardThis({
+    userLevel: level,
+    canReward,
+    recommendations,
+    uploader: appliedContent.uploader,
+    userId
+  });
+  const xpButtonDisabled = determineXpButtonDisabled({
+    rewardLevel: finalRewardLevel,
+    rewards,
+    myId: userId,
+    xpRewardInterfaceShown: false
+  });
+  const signInRequired = !userId;
+  const actionsReady = Boolean(appliedContent.loaded);
+  const secretHidden = sizing.flags.secretHidden;
+  const likeDisabled =
+    likeLoading ||
+    !isContentPanelLikeActionEnabled({
+      actionsReady,
+      contentType,
+      secretHidden
+    });
+  const commentDisabled = !isContentPanelCommentActionEnabled({
+    actionsReady,
+    contentType,
+    secretHidden
+  });
+  const rewardShown = isContentPanelRewardActionSupported(contentType);
+  const recommendShown = isHomeFeedRecommendActionSupported(contentType);
+  const rewardDisableReason = getContentPanelRewardActionBlockedReason({
+    actionsReady,
+    contentType,
+    secretHidden,
+    userCanRewardThis,
+    userId,
+    uploaderId: appliedContent.uploader?.id,
+    xpButtonDisabled
+  });
+  const rewardDisabled =
+    rewardShown &&
+    !isContentPanelRewardActionEnabled({
+      actionsReady,
+      contentType,
+      secretHidden,
+      userCanRewardThis,
+      xpButtonDisabled
+    });
+  const recommendDisabled =
+    recommendShown &&
+    !isContentPanelRecommendActionEnabled({
+      actionsReady,
+      contentType,
+      secretHidden
+    });
+  const commentLabel = getContentPanelCommentActionLabel(contentType);
   const appliedTheme = theme || profileTheme;
 
   if (
@@ -370,12 +545,37 @@ export default function HomeFeedCard({
                 userId={userId}
               />
               <Actions
-                commentLabel={contentType === 'subject' ? 'Respond' : 'Comment'}
+                commentDisabled={commentDisabled}
+                commentLabel={commentLabel}
                 commentsCount={commentsCount}
+                likedByUser={likedByUser}
+                likeDisabled={likeDisabled}
+                likeLoading={likeLoading}
                 likesCount={likesCount}
+                onComment={handleCommentActionClick}
+                onLike={handleLikeActionClick}
                 onOpen={handleOpenButtonClick}
+                openProminent={primaryTextTruncated}
+                onRecommend={handleRecommendActionClick}
+                onReward={handleRewardActionClick}
+                recommendedByUser={recommendedByUser}
+                recommendDisabled={recommendDisabled}
+                recommendShown={recommendShown}
+                recommendationsCount={recommendationsCount}
+                rewardedByUser={rewardedByUser}
+                rewardDisableReason={rewardDisableReason}
+                rewardDisabled={rewardDisabled}
+                rewardShown={rewardShown}
                 rewardsCount={rewardsCount}
+                signInRequired={signInRequired}
               />
+              {appliedContent.loaded && sizing.card.hasCommentPreview ? (
+                <HomeFeedCommentPreview
+                  comments={appliedContent.comments}
+                  contentType={contentType}
+                  theme={appliedTheme}
+                />
+              ) : null}
             </article>
           </div>
         ) : (
@@ -396,13 +596,73 @@ export default function HomeFeedCard({
       return;
     }
     if (shouldUseExplicitFeedCardNavigation()) return;
-    navigate(contentPath);
+    navigateToContentPageFromHomeFeed();
   }
 
   function handleOpenButtonClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
-    navigate(contentPath);
+    navigateToContentPageFromHomeFeed();
+  }
+
+  async function handleLikeActionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (signInRequired) {
+      onOpenSigninModal();
+      return;
+    }
+    if (likeDisabled) return;
+
+    try {
+      setLikeLoading(true);
+      const newLikes = await likeContent({
+        id: contentId,
+        contentType,
+        rootType: appliedContent.rootType || feed?.rootType
+      });
+      onLikeContent({ likes: newLikes, contentId, contentType });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLikeLoading(false);
+    }
+  }
+
+  function handleCommentActionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    handleNavigationActionClick(event, 'comment');
+  }
+
+  function handleRewardActionClick(event: React.MouseEvent<HTMLButtonElement>) {
+    handleNavigationActionClick(event, 'reward');
+  }
+
+  function handleRecommendActionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    handleNavigationActionClick(event, 'recommend');
+  }
+
+  function handleNavigationActionClick(
+    event: React.MouseEvent<HTMLButtonElement>,
+    action: HomeFeedActionType
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (signInRequired) {
+      onOpenSigninModal();
+      return;
+    }
+    if (action === 'comment' && commentDisabled) return;
+    if (action === 'reward' && (!rewardShown || rewardDisabled)) return;
+    if (action === 'recommend' && (!recommendShown || recommendDisabled)) {
+      return;
+    }
+    navigateToContentPageFromHomeFeed(action);
   }
 
   function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -416,7 +676,29 @@ export default function HomeFeedCard({
     ) {
       return;
     }
-    navigate(contentPath);
+    if (shouldUseExplicitFeedCardNavigation()) return;
+    navigateToContentPageFromHomeFeed();
+  }
+
+  function navigateToContentPageFromHomeFeed(action?: HomeFeedActionType) {
+    navigate(contentPath, {
+      state: {
+        homeFeedNavigation: createHomeFeedNavigationState({
+          action,
+          contentId,
+          contentType
+        }),
+        ...(action
+          ? {
+              homeFeedActionIntent: createHomeFeedActionIntent({
+                action,
+                contentId,
+                contentType
+              })
+            }
+          : {})
+      }
+    });
   }
 }
 
@@ -566,6 +848,75 @@ function getHomeFeedPreviewCommentCount(content: any) {
   return Array.isArray(content?.comments) ? content.comments.length : 0;
 }
 
+function hasHomeFeedPrimaryTextTruncation(panel: HTMLElement) {
+  const mainPreview = panel.querySelector<HTMLElement>(
+    '.home-feed-card__panel-preview'
+  );
+  if (!mainPreview) return false;
+
+  const primaryTextElements = Array.from(
+    mainPreview.querySelectorAll<HTMLElement>(HOME_FEED_PRIMARY_TEXT_SELECTOR)
+  );
+
+  return primaryTextElements.some((element) =>
+    isHomeFeedPrimaryTextElementTruncated(element, mainPreview)
+  );
+}
+
+function isHomeFeedPrimaryTextElementTruncated(
+  element: HTMLElement,
+  mainPreview: HTMLElement
+) {
+  if (!element.textContent?.trim()) return false;
+
+  const rect = element.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return false;
+
+  if (element.scrollHeight > element.clientHeight + 1) {
+    return true;
+  }
+
+  const clipRect = getHomeFeedPrimaryTextClipRect(element, mainPreview);
+  return rect.bottom > clipRect.bottom + 1 || rect.top < clipRect.top - 1;
+}
+
+function getHomeFeedPrimaryTextClipRect(
+  element: HTMLElement,
+  mainPreview: HTMLElement
+) {
+  const rootRect = mainPreview.getBoundingClientRect();
+  const clipRect = {
+    bottom: rootRect.bottom,
+    left: rootRect.left,
+    right: rootRect.right,
+    top: rootRect.top
+  };
+  let current: HTMLElement | null = element.parentElement;
+
+  while (current) {
+    if (doesElementClipContent(current)) {
+      const currentRect = current.getBoundingClientRect();
+      clipRect.bottom = Math.min(clipRect.bottom, currentRect.bottom);
+      clipRect.left = Math.max(clipRect.left, currentRect.left);
+      clipRect.right = Math.min(clipRect.right, currentRect.right);
+      clipRect.top = Math.max(clipRect.top, currentRect.top);
+    }
+
+    if (current === mainPreview) break;
+    current = current.parentElement;
+  }
+
+  return clipRect;
+}
+
+function doesElementClipContent(element: HTMLElement) {
+  const style = window.getComputedStyle(element);
+  return [style.overflow, style.overflowX, style.overflowY].some(
+    (overflow) =>
+      overflow === 'hidden' || overflow === 'clip' || overflow === 'auto'
+  );
+}
+
 const placeholderClass = css`
   box-sizing: border-box;
   width: 100%;
@@ -667,9 +1018,17 @@ const cardClass = css`
   }
   .home-feed-card__actions {
     box-sizing: border-box;
-    flex: 0 0 1.6rem;
-    height: 1.6rem;
+    flex: 0 0 2.95rem;
+    height: 2.95rem;
     min-height: 0;
+    overflow: hidden;
+  }
+  .home-feed-card__comment-preview-slot {
+    box-sizing: border-box;
+    flex: 0 0 var(--home-feed-card-comment-preview-height);
+    height: var(--home-feed-card-comment-preview-height);
+    min-height: 0;
+    margin-top: 0.1rem;
     overflow: hidden;
   }
   .home-feed-card__avatar-skeleton,
@@ -713,7 +1072,8 @@ const cardClass = css`
     height: var(--home-feed-card-mobile-height);
     min-height: var(--home-feed-card-mobile-height);
     max-height: var(--home-feed-card-mobile-height);
-    padding: 0.9rem 0 0.75rem 0;
+    gap: max(0.75rem, 7.5px);
+    padding: max(0.75rem, 7.5px) 0 max(0.2rem, 2px) 0;
     border-left: 0;
     border-right: 0;
     border-radius: 0;
@@ -724,7 +1084,7 @@ const cardClass = css`
       padding-right: 1rem;
     }
     .title {
-      font-size: 1.45rem;
+      font-size: 1.94rem;
     }
     .heading {
       flex-basis: var(--home-feed-card-mobile-heading-height);
@@ -736,6 +1096,15 @@ const cardClass = css`
     .home-feed-card__body {
       flex-basis: var(--home-feed-card-mobile-body-height);
       height: var(--home-feed-card-mobile-body-height);
+    }
+    .home-feed-card__actions {
+      flex-basis: max(3.1rem, 31px);
+      height: max(3.1rem, 31px);
+    }
+    .home-feed-card__comment-preview-slot {
+      flex-basis: var(--home-feed-card-mobile-comment-preview-height);
+      height: var(--home-feed-card-mobile-comment-preview-height);
+      margin-top: 0;
     }
   }
 `;

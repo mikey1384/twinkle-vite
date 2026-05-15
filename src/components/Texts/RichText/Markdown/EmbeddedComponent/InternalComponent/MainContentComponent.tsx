@@ -4,6 +4,7 @@ import { useAppContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ContentListItem from '~/components/ContentListItem';
+import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import VideoThumbnail from '~/components/ContentListItem/VideoThumbnail';
@@ -19,11 +20,13 @@ const displayIsMobile = isMobile(navigator);
 export default function MainContentComponent({
   contentId,
   contentType,
-  isPreview
+  isPreview,
+  showCompactCommentTypeLabel = true
 }: {
   contentId: string;
   contentType: string;
   isPreview?: boolean;
+  showCompactCommentTypeLabel?: boolean;
 }) {
   const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
@@ -93,6 +96,7 @@ export default function MainContentComponent({
         contentType={appliedContentType}
         content={contentState}
         navigate={navigate}
+        showCompactCommentTypeLabel={showCompactCommentTypeLabel}
       />
     );
   }
@@ -129,12 +133,14 @@ function CompactMainContentEmbedPreview({
   content,
   contentId,
   contentType,
-  navigate
+  navigate,
+  showCompactCommentTypeLabel
 }: {
   content: any;
   contentId: number;
   contentType: string;
   navigate: (path: string) => void;
+  showCompactCommentTypeLabel: boolean;
 }) {
   const label = getContentLabel(contentType, content);
   const title = getContentTitle(contentType, content);
@@ -155,6 +161,18 @@ function CompactMainContentEmbedPreview({
         content={content}
         onClick={handleClick}
         title={title}
+      />
+    );
+  }
+
+  if (contentType === 'comment') {
+    return (
+      <CompactCommentEmbedPreview
+        comment={content}
+        contentId={contentId}
+        maxTextLines={2}
+        onOpen={() => navigate(path)}
+        showTypeLabel={showCompactCommentTypeLabel}
       />
     );
   }

@@ -6,7 +6,7 @@ import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
 import AnswerDailyQuestionButton from '~/components/Buttons/AnswerDailyQuestionButton';
-import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
+import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Content, User } from '~/types';
@@ -25,10 +25,6 @@ export default function TargetDailyReflectionContent({
 
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
   const linkColor = linkRole.getColor();
-
-  // Get XP and streak from the content
-  const xpAwarded = dailyReflectionContent.xpAwarded || 0;
-  const streak = dailyReflectionContent.streakAtTime || 0;
 
   if (!dailyReflectionContent) {
     return null;
@@ -143,25 +139,12 @@ export default function TargetDailyReflectionContent({
         >
           {dailyReflectionContent.description || ''}
         </RichText>
-        {dailyReflectionContent.isRefined && (
-          <div
-            className={css`
-              margin-top: 1rem;
-              display: flex;
-              align-items: center;
-              gap: 0.3rem;
-              font-size: 1.2rem;
-              color: ${Color.darkerGray()};
-            `}
-          >
-            <span style={{ color: Color.logoBlue() }}>✨</span>
-            <span style={{ fontStyle: 'italic' }}>AI-polished</span>
-          </div>
-        )}
-
-        <XPAndStreakDisplay
-          xpAwarded={xpAwarded}
-          streak={streak}
+        <DailyReflectionMetaBadges
+          grade={dailyReflectionContent.grade}
+          isRefined={dailyReflectionContent.isRefined}
+          masterpieceType={dailyReflectionContent.masterpieceType}
+          xpAwarded={dailyReflectionContent.xpAwarded}
+          streak={dailyReflectionContent.streakAtTime}
           style={{ marginTop: '1rem' }}
         />
 

@@ -4,14 +4,23 @@ import InvalidPage from '~/components/InvalidPage';
 import request from 'axios';
 import URL from '~/constants/URL';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
+import {
+  clearHomeFeedActionIntentState,
+  clearHomeFeedNavigationState,
+  getMatchingHomeFeedActionIntent,
+  getMatchingHomeFeedNavigationState,
+  homeFeedNavigationKeyShouldClear
+} from '~/helpers/homeFeedActionIntent';
+import { scrollAnchorSavesAreSuppressed } from '~/helpers/scrollAnchorRestorationCoordinator';
 
 export default function ContentPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { contentId: initialContentId } = useParams();
   const contentId = Number(initialContentId);
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -43,13 +52,69 @@ export default function ContentPage() {
   });
   const [exists, setExists] = useState(true);
   const contentAnchorKey = `content:${rootType || 'root'}:${contentType}:${contentId}`;
+  const homeFeedActionIntent = useMemo(
+    () =>
+      getMatchingHomeFeedActionIntent({
+        contentId,
+        contentType,
+        state: location.state
+      }),
+    [contentId, contentType, location.state]
+  );
+  const homeFeedNavigationState = useMemo(
+    () =>
+      getMatchingHomeFeedNavigationState({
+        contentId,
+        contentType,
+        state: location.state
+      }),
+    [contentId, contentType, location.state]
+  );
+  const contentReady = exists && !isDeleted && !isDeleteNotification;
 
   useScrollAnchorRestoration({
     anchorKey: contentAnchorKey,
     containerRef: pageRef,
+    ignoreSavedAnchor: Boolean(homeFeedNavigationState),
     initialScroll: { type: 'top' },
-    itemsReady: exists && !isDeleted && !isDeleteNotification
+    itemsReady: contentReady
   });
+
+  useEffect(() => {
+    if (
+      !contentReady ||
+      !homeFeedNavigationState ||
+      homeFeedNavigationState.action ||
+      homeFeedActionIntent
+    ) {
+      return;
+    }
+    handleConsumeHomeFeedNavigationState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    contentReady,
+    homeFeedActionIntent?.nonce,
+    homeFeedNavigationState?.nonce
+  ]);
+
+  useEffect(() => {
+    if (
+      !contentReady ||
+      !homeFeedNavigationState?.action ||
+      homeFeedActionIntent
+    ) {
+      return;
+    }
+
+    addHomeFeedNavigationClearListeners();
+    return removeHomeFeedNavigationClearListeners;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    contentReady,
+    homeFeedActionIntent?.nonce,
+    homeFeedNavigationState?.action,
+    homeFeedNavigationState?.nonce
+  ]);
 
   useEffect(() => {
     checkExists();
@@ -119,6 +184,10 @@ export default function ContentPage() {
                 commentsLoadLimit={5}
                 contentId={Number(contentId)}
                 contentType={contentType}
+                homeFeedActionIntent={homeFeedActionIntent}
+                onConsumeHomeFeedActionIntent={
+                  handleConsumeHomeFeedActionIntent
+                }
                 rootType={rootType}
               />
             </div>
@@ -129,4 +198,78 @@ export default function ContentPage() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleConsumeHomeFeedActionIntent() {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: clearHomeFeedActionIntentState(location.state)
+      }
+    );
+  }
+
+  function handleConsumeHomeFeedNavigationState() {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: clearHomeFeedNavigationState(location.state)
+      }
+    );
+  }
+
+  function addHomeFeedNavigationClearListeners() {
+    const appScroller = document.getElementById('App');
+    appScroller?.addEventListener('scroll', handleHomeFeedNavigationScroll, {
+      passive: true
+    });
+    window.addEventListener('wheel', handleHomeFeedNavigationUserScroll, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('keydown', handleHomeFeedNavigationKeyDown, {
+      capture: true
+    });
+  }
+
+  function removeHomeFeedNavigationClearListeners() {
+    const appScroller = document.getElementById('App');
+    appScroller?.removeEventListener('scroll', handleHomeFeedNavigationScroll);
+    window.removeEventListener('wheel', handleHomeFeedNavigationUserScroll, {
+      capture: true
+    });
+    window.removeEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
+      capture: true
+    });
+    window.removeEventListener('keydown', handleHomeFeedNavigationKeyDown, {
+      capture: true
+    });
+  }
+
+  function handleHomeFeedNavigationUserScroll() {
+    handleConsumeHomeFeedNavigationState();
+  }
+
+  function handleHomeFeedNavigationScroll() {
+    if (scrollAnchorSavesAreSuppressed()) return;
+    handleConsumeHomeFeedNavigationState();
+  }
+
+  function handleHomeFeedNavigationKeyDown(event: KeyboardEvent) {
+    if (!homeFeedNavigationKeyShouldClear(event)) return;
+    handleConsumeHomeFeedNavigationState();
+  }
 }

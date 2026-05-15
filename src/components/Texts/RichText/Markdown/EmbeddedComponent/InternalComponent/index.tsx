@@ -13,13 +13,15 @@ export default function InternalComponent({
   rootType,
   src,
   isPreview,
-  isProfileComponent
+  isProfileComponent,
+  showCompactCommentTypeLabel = true
 }: {
   rootId?: number | string;
   rootType?: string;
   src: string;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  showCompactCommentTypeLabel?: boolean;
 }) {
   const InnerComponent = useMemo(() => {
     const urlParts = src.split('/');
@@ -45,6 +47,7 @@ export default function InternalComponent({
           contentType="build"
           contentId={contentId}
           isPreview={isPreview}
+          showCompactCommentTypeLabel={showCompactCommentTypeLabel}
         />
       );
     }
@@ -55,6 +58,7 @@ export default function InternalComponent({
           contentType={contentType}
           contentId={contentId}
           isPreview={isPreview}
+          showCompactCommentTypeLabel={showCompactCommentTypeLabel}
         />
       );
     }
@@ -87,7 +91,14 @@ export default function InternalComponent({
     return (
       <DefaultComponent linkType={linkType} src={src} isPreview={isPreview} />
     );
-  }, [src, isProfileComponent, isPreview, rootId, rootType]);
+  }, [
+    src,
+    isProfileComponent,
+    isPreview,
+    rootId,
+    rootType,
+    showCompactCommentTypeLabel
+  ]);
 
   return (
     <ErrorBoundary componentPath="Texts/EmbeddedComponent/InternalComponent">

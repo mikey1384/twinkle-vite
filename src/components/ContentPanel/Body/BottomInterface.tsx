@@ -9,7 +9,11 @@ import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { mobileMaxWidth, tabletMaxWidth, desktopMinWidth } from '~/constants/css';
+import {
+  mobileMaxWidth,
+  tabletMaxWidth,
+  desktopMinWidth
+} from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
@@ -17,22 +21,17 @@ import {
   scrollElementToCenter,
   isTablet
 } from '~/helpers';
+import {
+  getContentPanelCommentActionLabel,
+  getContentPanelRewardActionBlockedReason,
+  isContentPanelRewardActionEnabled,
+  isContentPanelRewardActionSupported
+} from '~/helpers/contentActionAvailability';
 import { useContentContext, useMissionContext } from '~/contexts';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
-const commentLabel = 'Comment';
 const copiedLabel = 'Copied!';
-const replyLabel = 'Reply';
-const respondLabel = 'Respond';
 const nonEditableContentTypes = ['build', 'pass', 'xpChange', 'sharedTopic'];
-const noRewardContentTypes = [
-  'aiStory',
-  'build',
-  'dailyReflection',
-  'pass',
-  'sharedTopic',
-  'xpChange'
-];
 
 const bottomInterfaceCSS = css`
   display: flex;
@@ -65,6 +64,32 @@ const bottomInterfaceCSS = css`
       button {
         font-size: 1.1rem;
       }
+    }
+  }
+  &.bottom-interface--shared-topic {
+    align-items: flex-start;
+
+    .left {
+      align-items: flex-start;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .content-panel__shared-topic-like-action {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.45rem;
+    }
+
+    .content-panel__shared-topic-like-action .content-panel__likes {
+      margin-left: 0.1rem;
+      line-height: 1.2;
+    }
+
+    .content-panel__shared-topic-clone-actions {
+      display: flex;
+      align-items: flex-start;
     }
   }
   /* Hide Like/Comment labels on tablet and smaller */
@@ -344,6 +369,27 @@ export default function BottomInterface({
   }
 
   const deviceIsTablet = isTablet(navigator);
+  const isSharedTopic = contentType === 'sharedTopic';
+  const sharedTopicLikeStatusShown = isSharedTopic && likes.length > 0;
+  const bottomStatsRowShown =
+    !isSharedTopic || (views > 10 && contentType === 'video');
+  const commentActionLabel = getContentPanelCommentActionLabel(contentType);
+  const rewardActionSupported =
+    isContentPanelRewardActionSupported(contentType);
+  const rewardActionBlockedReason = getContentPanelRewardActionBlockedReason({
+    contentType,
+    secretHidden,
+    userCanRewardThis,
+    userId,
+    uploaderId: uploader.id,
+    xpButtonDisabled
+  });
+  const rewardActionEnabled = isContentPanelRewardActionEnabled({
+    contentType,
+    secretHidden,
+    userCanRewardThis,
+    xpButtonDisabled
+  });
 
   return (
     <div
@@ -354,75 +400,94 @@ export default function BottomInterface({
     >
       <div
         style={{ marginTop: secretHidden ? '0.5rem' : '1.5rem' }}
-        className={bottomInterfaceCSS}
+        className={`${bottomInterfaceCSS}${isSharedTopic ? ' bottom-interface--shared-topic content-panel__shared-topic-actions' : ''}`}
       >
         <div className="left">
-            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && contentType !== 'sharedTopic' && (
+          {!secretHidden && isSharedTopic ? (
+            <div className="content-panel__shared-topic-like-action">
               <LikeButton
                 contentType={contentType}
                 contentId={contentId}
                 likes={likes}
+                rootType={contentObj.rootType}
                 key="likeButton"
                 onClick={handleLikeClick}
                 theme={theme}
                 labelClassName="button-label"
                 hideLabel={deviceIsTablet}
               />
-            )}
-            {!secretHidden && (
-              <Button
-                key="commentButton"
-                variant="ghost"
-                onClick={handleCommentButtonClick}
-              >
-                <Icon icon="comment-alt" />
-                {!deviceIsTablet && (
-                  <span className="button-label" style={{ marginLeft: '0.7rem' }}>
-                    {contentType === 'video' ||
-                    contentType === 'url' ||
-                    contentType === 'build' ||
-                    contentType === 'pass' ||
-                    contentType === 'xpChange' ||
-                    contentType === 'sharedTopic'
-                      ? commentLabel
-                      : contentType === 'subject'
-                      ? respondLabel
-                      : replyLabel}
-                  </span>
-                )}
-                {numCommentsShown ? (
-                  <span
-                    className={css`
-                      margin-left: 0.5rem;
-                    `}
-                  >
-                    ({numComments || numReplies})
-                  </span>
-                ) : null}
-              </Button>
-            )}
-            {contentType === 'sharedTopic' && (
+              {sharedTopicLikeStatusShown && (
+                <Likers
+                  className="content-panel__likes"
+                  userId={userId}
+                  likes={likes}
+                  onLinkClick={() => onSetUserListModalShown(true)}
+                  theme={theme}
+                />
+              )}
+            </div>
+          ) : !secretHidden ? (
+            <LikeButton
+              contentType={contentType}
+              contentId={contentId}
+              likes={likes}
+              rootType={contentObj.rootType}
+              key="likeButton"
+              onClick={handleLikeClick}
+              theme={theme}
+              labelClassName="button-label"
+              hideLabel={deviceIsTablet}
+            />
+          ) : null}
+          {!secretHidden && (
+            <Button
+              key="commentButton"
+              variant="ghost"
+              onClick={handleCommentButtonClick}
+            >
+              <Icon icon="comment-alt" />
+              {!deviceIsTablet && (
+                <span className="button-label" style={{ marginLeft: '0.7rem' }}>
+                  {commentActionLabel}
+                </span>
+              )}
+              {numCommentsShown ? (
+                <span
+                  className={css`
+                    margin-left: 0.5rem;
+                  `}
+                >
+                  ({numComments || numReplies})
+                </span>
+              ) : null}
+            </Button>
+          )}
+          {isSharedTopic && (
+            <div className="content-panel__shared-topic-clone-actions">
               <CloneButtons
+                layout="paired"
                 sharedTopicId={contentId}
                 sharedTopicTitle={contentObj.content}
                 uploaderId={uploader.id}
                 myClones={myClones}
                 onCloneSuccess={handleCloneSuccess}
               />
-            )}
-            {userCanRewardThis &&
-              !secretHidden &&
-              !noRewardContentTypes.includes(contentType) && (
-                <RewardButton
-                  labelClassName="reward-button-label"
-                  hideLabel={deviceIsTablet}
-                  contentId={contentId}
-                  contentType={contentType}
-                  disableReason={xpButtonDisabled}
-                  theme={theme}
-                />
-              )}
-            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && contentType !== 'sharedTopic' && (
+            </div>
+          )}
+          {rewardActionSupported && !secretHidden && (
+            <RewardButton
+              labelClassName="reward-button-label"
+              hideLabel={deviceIsTablet}
+              contentId={contentId}
+              contentType={contentType}
+              disableReason={rewardActionBlockedReason}
+              theme={theme}
+            />
+          )}
+          {!secretHidden &&
+            contentType !== 'pass' &&
+            contentType !== 'xpChange' &&
+            contentType !== 'sharedTopic' && (
               <div style={{ position: 'relative' }}>
                 <Button
                   onClick={() => {
@@ -451,15 +516,17 @@ export default function BottomInterface({
                 </div>
               </div>
             )}
-            {editButtonShown && !isNotification && !nonEditableContentTypes.includes(contentType) ? (
-              <DropdownButton
-                variant="solid"
-                tone="raised"
-                color="darkerGray"
-                style={{ display: 'inline-block' }}
-                menuProps={editMenuItems}
-              />
-            ) : null}
+          {editButtonShown &&
+          !isNotification &&
+          !nonEditableContentTypes.includes(contentType) ? (
+            <DropdownButton
+              variant="solid"
+              tone="raised"
+              color="darkerGray"
+              style={{ display: 'inline-block' }}
+              menuProps={editMenuItems}
+            />
+          ) : null}
         </div>
         {!secretHidden && (
           <div
@@ -499,33 +566,37 @@ export default function BottomInterface({
           </div>
         )}
       </div>
-      <div
-        className={css`
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 0.5rem;
-          margin-bottom: 0.5rem;
-        `}
-      >
-        <Likers
-          className="content-panel__likes"
-          userId={userId}
-          likes={likes}
-          onLinkClick={() => onSetUserListModalShown(true)}
-          theme={theme}
-        />
-        {views > 10 && contentType === 'video' && (
-          <div
-            className={css`
-              font-weight: bold;
-              font-size: 1.7rem;
-            `}
-          >
-            {viewsLabel}
-          </div>
-        )}
-      </div>
+      {bottomStatsRowShown && (
+        <div
+          className={css`
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+          `}
+        >
+          {!isSharedTopic && (
+            <Likers
+              className="content-panel__likes"
+              userId={userId}
+              likes={likes}
+              onLinkClick={() => onSetUserListModalShown(true)}
+              theme={theme}
+            />
+          )}
+          {views > 10 && contentType === 'video' && (
+            <div
+              className={css`
+                font-weight: bold;
+                font-size: 1.7rem;
+              `}
+            >
+              {viewsLabel}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -569,12 +640,7 @@ export default function BottomInterface({
   }
 
   async function handleLikeClick({ isUnlike }: { isUnlike: boolean }) {
-    if (
-      !noRewardContentTypes.includes(contentType) &&
-      !xpButtonDisabled &&
-      userCanRewardThis &&
-      !isRewardedByUser
-    ) {
+    if (rewardActionEnabled && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentType,
         contentId,
@@ -598,12 +664,12 @@ export default function BottomInterface({
             contentType === 'aiStory'
               ? 'ai-storie'
               : contentType === 'url'
-              ? 'link'
-              : contentType === 'sharedTopic'
-              ? 'shared-prompt'
-              : contentType === 'dailyReflection'
-              ? 'daily-reflection'
-              : contentType
+                ? 'link'
+                : contentType === 'sharedTopic'
+                  ? 'shared-prompt'
+                  : contentType === 'dailyReflection'
+                    ? 'daily-reflection'
+                    : contentType
           }s/${contentId}`;
     const contentUrl = `https://www.twin-kle.com/${contentPath}`;
     try {

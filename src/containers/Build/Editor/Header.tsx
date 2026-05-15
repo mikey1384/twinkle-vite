@@ -17,6 +17,8 @@ import {
   normalizeBuildCollaborationMode,
   normalizeBuildReleaseStatus
 } from '~/helpers/buildProjectHelpers';
+import RuntimeAssetTransferProgressBar from './RuntimeAssetTransferProgressBar';
+import type { RuntimeAssetTransferProgressPayload } from './helpers/runtimeAssetTransferProgress';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -379,6 +381,7 @@ interface HeaderProps {
   showContributionButton: boolean;
   contributionActionError?: string;
   contributionActionLoading?: 'merge' | 'replace-main' | '';
+  runtimeAssetTransferProgress?: RuntimeAssetTransferProgressPayload | null;
   canMergeBranch?: boolean;
   showMergeBranch?: boolean;
   mergeBranchDisabled?: boolean;
@@ -498,6 +501,7 @@ export default function Header({
   showContributionButton,
   contributionActionError = '',
   contributionActionLoading = '',
+  runtimeAssetTransferProgress = null,
   canMergeBranch = false,
   showMergeBranch = false,
   mergeBranchDisabled = false,
@@ -562,7 +566,9 @@ export default function Header({
     profilePicUrl: build.profilePicUrl,
     username: branchOwnerUsername
   });
-  const sharedOwnerUser = branchOwnerUsername ? branchOwnerUser : projectOwnerUser;
+  const sharedOwnerUser = branchOwnerUsername
+    ? branchOwnerUser
+    : projectOwnerUser;
   const ownerLine =
     isContributionFork &&
     projectOwnerUsername &&
@@ -573,10 +579,7 @@ export default function Header({
         {renderHeaderUsername(branchOwnerUser)}
       </>
     ) : isContributionFork ? (
-      <>
-        Project and branch by{' '}
-        {renderHeaderUsername(sharedOwnerUser)}
-      </>
+      <>Project and branch by {renderHeaderUsername(sharedOwnerUser)}</>
     ) : (
       <>by {renderHeaderUsername(projectOwnerUser)}</>
     );
@@ -602,8 +605,8 @@ export default function Header({
   const releaseStatus = normalizeBuildReleaseStatus(build.releaseStatus);
   const publicAppIsUpToDate = Boolean(
     build.isPublic &&
-      releaseStatus?.state === 'up_to_date' &&
-      !releaseStatus.hasUnpublishedChanges
+    releaseStatus?.state === 'up_to_date' &&
+    !releaseStatus.hasUnpublishedChanges
   );
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
   const thumbnailButtonShiny = !String(build.thumbnailUrl || '').trim();
@@ -845,6 +848,13 @@ export default function Header({
                 {renderMergeBranchAction()}
               </HeaderActionItem>
             ) : null}
+            {runtimeAssetTransferProgress ? (
+              <HeaderActionItem mobileOrder={8}>
+                <RuntimeAssetTransferProgressBar
+                  progress={runtimeAssetTransferProgress}
+                />
+              </HeaderActionItem>
+            ) : null}
             {contributionActionError ? (
               <HeaderActionItem mobileOrder={9}>
                 <span
@@ -985,6 +995,11 @@ export default function Header({
             </GameCTAButton>
           ) : null}
         </div>
+        {runtimeAssetTransferProgress ? (
+          <RuntimeAssetTransferProgressBar
+            progress={runtimeAssetTransferProgress}
+          />
+        ) : null}
         {isOwner && !isContributionFork ? (
           <div className={mobileButtonRowClass}>
             <GameCTAButton
@@ -1070,24 +1085,14 @@ function getBuildRuntimePath(buildId: number) {
 
 function normalizeContributionStatus(
   value: unknown
-):
-  | 'none'
-  | 'draft'
-  | 'merging'
-  | 'merged' {
-  if (
-    value === 'draft' ||
-    value === 'merging' ||
-    value === 'merged'
-  ) {
+): 'none' | 'draft' | 'merging' | 'merged' {
+  if (value === 'draft' || value === 'merging' || value === 'merged') {
     return value;
   }
   return 'none';
 }
 
-function getCollaborationButtonLabel(
-  mode: 'private' | 'open_source'
-) {
+function getCollaborationButtonLabel(mode: 'private' | 'open_source') {
   if (mode === 'open_source') return 'Open Source Settings';
   return 'Work with People';
 }
@@ -1150,11 +1155,7 @@ function getRelationshipBadgeStyle(
 }
 
 function getContributionBadgeStyle(
-  status:
-    | 'none'
-    | 'draft'
-    | 'merging'
-    | 'merged'
+  status: 'none' | 'draft' | 'merging' | 'merged'
 ): React.CSSProperties {
   if (status === 'draft') {
     return {
@@ -1178,11 +1179,7 @@ function getContributionBadgeStyle(
 }
 
 function formatContributionStatusLabel(
-  status:
-    | 'none'
-    | 'draft'
-    | 'merging'
-    | 'merged'
+  status: 'none' | 'draft' | 'merging' | 'merged'
 ) {
   if (status === 'none') return 'Branch';
   if (status === 'merging') return 'Conflicts';

@@ -51,6 +51,13 @@ const commentsDrawerClass = css`
     transform: translateY(0.65rem);
 
     &[data-visible='true'] {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      height: min(48vh, 34rem);
+      max-height: calc(100vh - 5rem);
       border-top-color: rgba(148, 163, 184, 0.35);
       box-shadow: 0 -0.8rem 2rem rgba(15, 23, 42, 0.08);
       transform: translateY(0);
@@ -359,6 +366,7 @@ export default function CommentsDrawer({
   loading,
   loadMoreButton,
   parent,
+  inputAreaInnerRef,
   userId,
   visible,
   onCommentSubmit,
@@ -378,6 +386,7 @@ export default function CommentsDrawer({
   loading: boolean;
   loadMoreButton: any;
   parent: Content | null;
+  inputAreaInnerRef?: React.RefObject<any>;
   userId: number;
   visible: boolean;
   onCommentSubmit: (data: any) => void;
@@ -435,6 +444,7 @@ export default function CommentsDrawer({
             compactMode
             className={runtimeCommentsClass}
             inputFormClassName={runtimeCommentsInputFormClass}
+            inputAreaInnerRef={inputAreaInnerRef}
             inputTypeLabel="comment"
             isLoading={loading}
             loadMoreButton={loadMoreButton}

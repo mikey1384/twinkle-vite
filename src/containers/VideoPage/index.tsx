@@ -25,6 +25,15 @@ import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
+  clearHomeFeedActionIntentState,
+  clearHomeFeedNavigationState,
+  focusHomeFeedCommentIntentTarget,
+  getMatchingHomeFeedActionIntent,
+  getMatchingHomeFeedNavigationState,
+  homeFeedNavigationKeyShouldClear
+} from '~/helpers/homeFeedActionIntent';
+import { scrollAnchorSavesAreSuppressed } from '~/helpers/scrollAnchorRestorationCoordinator';
+import {
   useAppContext,
   useContentContext,
   useViewContext,
@@ -42,7 +51,8 @@ export default function VideoPage() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isNotFound, setIsNotFound] = useState(false);
-  const CommentInputAreaRef = useRef(null);
+  const CommentInputAreaRef = useRef<any>(null);
+  const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
   const isMounted = useRef(true);
   const navigate = useNavigate();
 
@@ -147,13 +157,65 @@ export default function VideoPage() {
     () => `video:${videoId}:${pathname.endsWith('/questions') ? 'questions' : 'watch'}`,
     [pathname, videoId]
   );
+  const homeFeedActionIntent = useMemo(
+    () =>
+      getMatchingHomeFeedActionIntent({
+        contentId: videoId,
+        contentType: 'video',
+        state: location.state
+      }),
+    [location.state, videoId]
+  );
+  const homeFeedNavigationState = useMemo(
+    () =>
+      getMatchingHomeFeedNavigationState({
+        contentId: videoId,
+        contentType: 'video',
+        state: location.state
+      }),
+    [location.state, videoId]
+  );
+  const pageReady = loaded && !isVideoUnavailable;
 
   useScrollAnchorRestoration({
     anchorKey: videoAnchorKey,
     containerRef: videoPageRef,
+    ignoreSavedAnchor: Boolean(homeFeedNavigationState),
     initialScroll: { type: 'top' },
-    itemsReady: loaded && !isVideoUnavailable
+    itemsReady: pageReady
   });
+
+  useEffect(() => {
+    if (
+      !pageReady ||
+      !homeFeedNavigationState ||
+      homeFeedNavigationState.action ||
+      homeFeedActionIntent
+    ) {
+      return;
+    }
+    handleConsumeHomeFeedNavigationState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [homeFeedActionIntent?.nonce, homeFeedNavigationState?.nonce, pageReady]);
+
+  useEffect(() => {
+    if (
+      !pageReady ||
+      !homeFeedNavigationState?.action ||
+      homeFeedActionIntent
+    ) {
+      return;
+    }
+
+    addHomeFeedNavigationClearListeners();
+    return removeHomeFeedNavigationClearListeners;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    homeFeedActionIntent?.nonce,
+    homeFeedNavigationState?.action,
+    homeFeedNavigationState?.nonce,
+    pageReady
+  ]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -239,6 +301,23 @@ export default function VideoPage() {
   useEffect(() => {
     nextVideosRef.current = nextVideos;
   }, [nextVideos]);
+
+  useEffect(() => {
+    const intent = homeFeedActionIntent;
+    if (!intent || intent.action !== 'comment') return;
+    if (consumedHomeFeedActionIntentRef.current === intent.nonce) return;
+    if (!loaded || isVideoUnavailable) return;
+
+    consumedHomeFeedActionIntentRef.current = intent.nonce;
+    focusCommentInputFromHomeFeedIntent();
+    handleConsumeHomeFeedActionIntent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    homeFeedActionIntent?.action,
+    homeFeedActionIntent?.nonce,
+    isVideoUnavailable,
+    loaded
+  ]);
 
   const { playlist: playlistId, continue: isContinuing } =
     queryString.parse(search);
@@ -358,6 +437,10 @@ export default function VideoPage() {
                 onEditFinish={handleEditVideoPage}
                 onDelete={() => setConfirmModalShown(true)}
                 onSetRewardLevel={handleSetRewardLevel}
+                homeFeedActionIntent={homeFeedActionIntent}
+                onConsumeHomeFeedActionIntent={
+                  handleConsumeHomeFeedActionIntent
+                }
                 recommendations={recommendations}
                 rewards={rewards}
                 tags={tags}
@@ -596,5 +679,83 @@ export default function VideoPage() {
   }) {
     onSetRewardLevel({ contentType, contentId, rewardLevel });
     onSetThumbRewardLevel({ videoId, rewardLevel });
+  }
+
+  function handleConsumeHomeFeedActionIntent() {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: clearHomeFeedActionIntentState(location.state)
+      }
+    );
+  }
+
+  function handleConsumeHomeFeedNavigationState() {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: clearHomeFeedNavigationState(location.state)
+      }
+    );
+  }
+
+  function focusCommentInputFromHomeFeedIntent() {
+    focusHomeFeedCommentIntentTarget(CommentInputAreaRef);
+  }
+
+  function addHomeFeedNavigationClearListeners() {
+    const appScroller = document.getElementById('App');
+    appScroller?.addEventListener('scroll', handleHomeFeedNavigationScroll, {
+      passive: true
+    });
+    window.addEventListener('wheel', handleHomeFeedNavigationUserScroll, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('keydown', handleHomeFeedNavigationKeyDown, {
+      capture: true
+    });
+  }
+
+  function removeHomeFeedNavigationClearListeners() {
+    const appScroller = document.getElementById('App');
+    appScroller?.removeEventListener('scroll', handleHomeFeedNavigationScroll);
+    window.removeEventListener('wheel', handleHomeFeedNavigationUserScroll, {
+      capture: true
+    });
+    window.removeEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
+      capture: true
+    });
+    window.removeEventListener('keydown', handleHomeFeedNavigationKeyDown, {
+      capture: true
+    });
+  }
+
+  function handleHomeFeedNavigationUserScroll() {
+    handleConsumeHomeFeedNavigationState();
+  }
+
+  function handleHomeFeedNavigationScroll() {
+    if (scrollAnchorSavesAreSuppressed()) return;
+    handleConsumeHomeFeedNavigationState();
+  }
+
+  function handleHomeFeedNavigationKeyDown(event: KeyboardEvent) {
+    if (!homeFeedNavigationKeyShouldClear(event)) return;
+    handleConsumeHomeFeedNavigationState();
   }
 }

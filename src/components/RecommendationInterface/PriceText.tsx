@@ -5,16 +5,16 @@ import { priceTable } from '~/constants/defaultValues';
 
 interface PriceTextProps {
   isRecommendedByUser: boolean;
-  switchButtonShown: boolean;
 }
 
-function PriceText({ isRecommendedByUser, switchButtonShown }: PriceTextProps) {
+function PriceText({ isRecommendedByUser }: PriceTextProps) {
   if (isRecommendedByUser) return null;
   return (
     <span
       style={{
-        marginLeft: switchButtonShown ? 0 : '0.7rem',
-        color: Color.darkBlue(),
+        marginLeft: '0.7rem',
+        color: Color.darkGold(),
+        fontWeight: 700,
         fontSize: '1.3rem'
       }}
     >

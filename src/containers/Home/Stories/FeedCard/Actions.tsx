@@ -1,50 +1,174 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import FullTextReveal from '~/components/Texts/FullTextReveal';
 
 export default function Actions({
   commentsCount,
+  commentDisabled,
   commentLabel = 'Comment',
+  likedByUser,
+  likeDisabled,
+  likeLoading,
   likesCount,
+  onComment,
+  onLike,
   onOpen,
-  rewardsCount
+  openProminent,
+  onRecommend,
+  onReward,
+  recommendedByUser,
+  recommendDisabled,
+  recommendShown = true,
+  recommendationsCount,
+  rewardedByUser,
+  rewardDisableReason,
+  rewardDisabled,
+  rewardShown = true,
+  rewardsCount,
+  signInRequired
 }: {
   commentsCount: number;
+  commentDisabled?: boolean;
   commentLabel?: string;
+  likedByUser: boolean;
+  likeDisabled?: boolean;
+  likeLoading?: boolean;
   likesCount: number;
+  onComment: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onLike: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onOpen: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  openProminent?: boolean;
+  onRecommend: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onReward: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  recommendedByUser: boolean;
+  recommendDisabled?: boolean;
+  recommendShown?: boolean;
+  recommendationsCount: number;
+  rewardedByUser: boolean;
+  rewardDisableReason?: string;
+  rewardDisabled?: boolean;
+  rewardShown?: boolean;
   rewardsCount: number;
+  signInRequired?: boolean;
 }) {
+  const [rewardReasonShown, setRewardReasonShown] = useState(false);
+  const rewardBlockedReason =
+    rewardDisableReason ||
+    (rewardDisabled ? 'You cannot reward this right now.' : '');
+  const rewardIsBlocked = Boolean(
+    !signInRequired && rewardDisabled && rewardBlockedReason
+  );
+
   return (
     <div className={`${actionsClass} home-feed-card__actions`}>
       <div className="home-feed-card__counts">
-        <span className="home-feed-card__count-pill like">
-          <Icon icon="thumbs-up" />
+        <button
+          aria-pressed={likedByUser}
+          className={`home-feed-card__action-button like ${
+            likedByUser ? 'selected' : ''
+          }`}
+          data-feed-card-interactive="true"
+          disabled={likeLoading || (!signInRequired && likeDisabled)}
+          type="button"
+          onClick={onLike}
+        >
+          <span className="home-feed-card__action-icon">
+            <Icon icon="thumbs-up" />
+          </span>
           <strong>Like</strong>
           <em>{likesCount}</em>
-        </span>
-        <span className="home-feed-card__count-pill comment">
-          <Icon icon="comment-alt" />
+        </button>
+        <button
+          className="home-feed-card__action-button comment"
+          data-feed-card-interactive="true"
+          disabled={!signInRequired && commentDisabled}
+          type="button"
+          onClick={onComment}
+        >
+          <span className="home-feed-card__action-icon">
+            <Icon icon="comment-alt" />
+          </span>
           <strong>{commentLabel}</strong>
           <em>{commentsCount}</em>
-        </span>
-        <span className="home-feed-card__count-pill reward">
-          <Icon icon="certificate" />
-          <strong>Reward</strong>
-          <em>{rewardsCount}</em>
-        </span>
+        </button>
+        {rewardShown && (
+          <div
+            className="home-feed-card__action-wrapper"
+            onMouseEnter={handleRewardMouseEnter}
+            onMouseLeave={handleRewardMouseLeave}
+          >
+            <button
+              aria-disabled={rewardIsBlocked || undefined}
+              aria-pressed={rewardedByUser}
+              className={`home-feed-card__action-button reward ${
+                rewardedByUser ? 'selected' : ''
+              } ${rewardIsBlocked ? 'blocked' : ''}`}
+              data-feed-card-interactive="true"
+              type="button"
+              onClick={onReward}
+            >
+              <span className="home-feed-card__action-icon">
+                <Icon icon="certificate" />
+              </span>
+              <strong>Reward</strong>
+              <em>{rewardsCount}</em>
+            </button>
+            <FullTextReveal
+              show={rewardReasonShown && rewardIsBlocked}
+              text={rewardBlockedReason}
+              style={{
+                minWidth: '14rem',
+                width: 'max-content',
+                maxWidth: '32rem',
+                fontSize: '1.2rem'
+              }}
+            />
+          </div>
+        )}
+        {recommendShown && (
+          <button
+            aria-pressed={recommendedByUser}
+            className={`home-feed-card__action-button recommend ${
+              recommendedByUser ? 'selected' : ''
+            }`}
+            data-feed-card-interactive="true"
+            disabled={!signInRequired && recommendDisabled}
+            type="button"
+            onClick={onRecommend}
+          >
+            <span className="home-feed-card__action-icon">
+              <Icon icon="heart" />
+            </span>
+            <strong>Recommend</strong>
+            <em>{recommendationsCount}</em>
+          </button>
+        )}
       </div>
       <button
-        className="home-feed-card__open"
+        className={`home-feed-card__open${
+          openProminent ? ' home-feed-card__open--show-more' : ''
+        }`}
         data-feed-card-interactive="true"
         type="button"
         onClick={onOpen}
       >
-        Open <Icon icon="arrow-right" />
+        <span>{openProminent ? 'Show More' : 'Open'}</span>
+        <Icon icon="arrow-right" />
       </button>
     </div>
   );
+
+  function handleRewardMouseEnter() {
+    if (rewardIsBlocked) {
+      setRewardReasonShown(true);
+    }
+  }
+
+  function handleRewardMouseLeave() {
+    setRewardReasonShown(false);
+  }
 }
 
 const actionsClass = css`
@@ -53,37 +177,72 @@ const actionsClass = css`
   justify-content: space-between;
   gap: 1rem;
   width: 100%;
-  padding: 0 0.2rem;
+  padding: 0.05rem 0.2rem 0;
   .home-feed-card__counts {
     display: flex;
     align-items: center;
-    gap: 0.42rem;
+    gap: 0.62rem;
     min-width: 0;
     color: ${Color.darkGray()};
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     line-height: 1;
-    .home-feed-card__count-pill {
+    .home-feed-card__action-wrapper {
       display: inline-flex;
       align-items: center;
-      gap: 0.28rem;
+    }
+    .home-feed-card__action-button {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.46rem;
       min-width: 0;
-      height: 1.5rem;
-      padding: 0.12rem 0.4rem;
-      border: 1px solid ${Color.borderGray()};
-      border-radius: 0.65rem;
-      background: #fff;
-      box-shadow: 0 0.05rem 0 rgba(17, 24, 39, 0.08);
+      height: 2.6rem;
+      padding: 0.32rem 0.72rem 0.32rem 0.52rem;
+      border: 1px solid rgba(148, 163, 184, 0.34);
+      border-radius: 0.95rem;
+      background: linear-gradient(180deg, #fff, #f8fafc);
+      box-shadow:
+        0 0.08rem 0 rgba(17, 24, 39, 0.06),
+        0 0.28rem 0.9rem rgba(17, 24, 39, 0.05);
+      cursor: pointer;
+      color: inherit;
+      font-family: inherit;
+      transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        transform 0.16s ease,
+        background 0.16s ease;
+      --home-feed-action-color: ${Color.darkGray()};
+      .home-feed-card__action-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.58rem;
+        height: 1.58rem;
+        flex: 0 0 1.58rem;
+        border-radius: 0.55rem;
+        background: var(--home-feed-action-color);
+        color: #fff;
+      }
       strong {
         overflow: hidden;
-        font-size: 1rem;
-        font-weight: 850;
+        font-size: 1.1rem;
+        font-weight: 800;
         line-height: 1;
         text-overflow: ellipsis;
-        text-transform: uppercase;
         white-space: nowrap;
       }
       em {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.45rem;
+        height: 1.45rem;
+        padding: 0 0.36rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.74);
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
         font-size: 1rem;
         font-style: normal;
         font-weight: 850;
@@ -91,53 +250,160 @@ const actionsClass = css`
       }
       svg {
         flex-shrink: 0;
-        font-size: 1rem;
+        font-size: 0.9rem;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        &:not(:disabled):not(.blocked):hover {
+          box-shadow:
+            0 0.08rem 0 rgba(17, 24, 39, 0.08),
+            0 0.38rem 1rem rgba(17, 24, 39, 0.08);
+          transform: translateY(-1px);
+        }
+      }
+      &.blocked {
+        cursor: default;
+      }
+      &:disabled {
+        cursor: default;
+        opacity: 0.56;
       }
     }
-    .home-feed-card__count-pill.like {
-      border-color: ${Color.logoBlue(0.24)};
-      background: ${Color.logoBlue(0.08)};
+    .home-feed-card__action-button.like {
+      --home-feed-action-color: ${Color.logoBlue()};
+      border-color: ${Color.logoBlue(0.28)};
+      background: linear-gradient(
+        180deg,
+        ${Color.logoBlue(0.1)},
+        ${Color.logoBlue(0.04)}
+      );
       color: ${Color.logoBlue()};
     }
-    .home-feed-card__count-pill.comment {
-      border-color: rgba(92, 92, 92, 0.2);
+    .home-feed-card__action-button.like.selected {
+      background: ${Color.logoBlue()};
+      color: #fff;
+    }
+    .home-feed-card__action-button.selected .home-feed-card__action-icon {
+      background: #fff;
+      color: var(--home-feed-action-color);
+    }
+    .home-feed-card__action-button.selected em {
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+      color: #fff;
+    }
+    .home-feed-card__action-button.comment {
+      --home-feed-action-color: ${Color.darkGray()};
+      border-color: rgba(71, 85, 105, 0.22);
       color: ${Color.darkGray()};
     }
-    .home-feed-card__count-pill.reward {
-      border-color: ${Color.pink(0.28)};
-      background: ${Color.pink(0.08)};
+    .home-feed-card__action-button.reward {
+      --home-feed-action-color: ${Color.pink()};
+      border-color: ${Color.pink(0.3)};
+      background: linear-gradient(
+        180deg,
+        ${Color.pink(0.1)},
+        ${Color.pink(0.04)}
+      );
       color: ${Color.pink()};
+    }
+    .home-feed-card__action-button.reward.selected {
+      background: ${Color.pink()};
+      color: #fff;
+    }
+    .home-feed-card__action-button.recommend {
+      --home-feed-action-color: ${Color.rose()};
+      border-color: ${Color.rose(0.32)};
+      background: linear-gradient(
+        180deg,
+        ${Color.rose(0.11)},
+        ${Color.rose(0.04)}
+      );
+      color: ${Color.rose()};
+    }
+    .home-feed-card__action-button.recommend.selected {
+      background: ${Color.rose()};
+      color: #fff;
     }
   }
   .home-feed-card__open {
     appearance: none;
-    border: 0;
-    background: transparent;
+    border: 1px solid ${Color.logoBlue(0.22)};
+    border-radius: 0.95rem;
+    background: ${Color.logoBlue(0.06)};
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.6rem;
+    padding: 0.42rem 0.82rem;
     color: ${Color.logoBlue()};
-    font-size: 1.3rem;
+    font-size: 1.15rem;
     font-weight: 800;
     line-height: 1;
     font-family: inherit;
     white-space: nowrap;
+    box-shadow: 0 0.24rem 0.8rem ${Color.logoBlue(0.08)};
+    transition:
+      background 0.16s ease,
+      border-color 0.16s ease,
+      transform 0.16s ease;
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: ${Color.logoBlue(0.1)};
+        border-color: ${Color.logoBlue(0.34)};
+        transform: translateY(-1px);
+      }
+    }
+    &.home-feed-card__open--show-more {
+      min-height: 2.8rem;
+      padding: 0.46rem 1rem;
+      border-color: ${Color.logoBlue(0.5)};
+      background: ${Color.logoBlue()};
+      color: #fff;
+      font-size: 1.2rem;
+      box-shadow: 0 0.32rem 1rem ${Color.logoBlue(0.18)};
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: ${Color.logoBlue(0.9)};
+          border-color: ${Color.logoBlue(0.62)};
+        }
+      }
+    }
   }
   @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.5rem;
+    align-items: flex-start;
+    gap: 0.55rem;
     .home-feed-card__counts {
-      gap: 0.32rem;
+      flex-wrap: wrap;
+      gap: 0.48rem;
     }
-    .home-feed-card__counts .home-feed-card__count-pill {
-      padding: 0.12rem 0.36rem;
+    .home-feed-card__counts .home-feed-card__action-button {
+      height: 2.75rem;
+      padding: 0.32rem 0.58rem;
+      .home-feed-card__action-icon {
+        width: 1.75rem;
+        height: 1.75rem;
+        flex-basis: 1.75rem;
+      }
+      em {
+        min-width: 1.55rem;
+        height: 1.55rem;
+        font-size: 1.05rem;
+      }
       strong {
         display: none;
       }
     }
     .home-feed-card__open {
-      font-size: 1.1rem;
+      min-height: 2.75rem;
+      padding: 0.42rem 0.74rem;
+      font-size: 1.12rem;
+    }
+    .home-feed-card__open.home-feed-card__open--show-more {
+      min-height: 2.85rem;
+      padding: 0.44rem 0.86rem;
+      font-size: 1.12rem;
     }
   }
 `;

@@ -1,6 +1,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import RuntimeAssetTransferProgressBar from '../RuntimeAssetTransferProgressBar';
+import type { RuntimeAssetTransferProgressPayload } from '../helpers/runtimeAssetTransferProgress';
 import type {
   BuildContributionFileDiff,
   BuildContributionStatus
@@ -135,6 +137,7 @@ export default function ContributionDetail({
   contributionCanReplaceMain,
   contributionStatus,
   ownerReview,
+  runtimeAssetTransferProgress,
   selectedPaths,
   selectedPreviewFile,
   onAskLumineToResolveConflicts,
@@ -158,6 +161,7 @@ export default function ContributionDetail({
   contributionCanReplaceMain: boolean;
   contributionStatus: BuildContributionStatus;
   ownerReview: boolean;
+  runtimeAssetTransferProgress?: RuntimeAssetTransferProgressPayload | null;
   selectedPaths: string[];
   selectedPreviewFile: BuildContributionFileDiff | null;
   onAskLumineToResolveConflicts: () => void;
@@ -303,6 +307,11 @@ export default function ContributionDetail({
             </GameCTAButton>
           ) : null}
         </div>
+      ) : null}
+      {runtimeAssetTransferProgress ? (
+        <RuntimeAssetTransferProgressBar
+          progress={runtimeAssetTransferProgress}
+        />
       ) : null}
       {actionError ? <span className={errorClass}>{actionError}</span> : null}
     </div>

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
+import { scrollAnchorSavesAreSuppressed } from '~/helpers/scrollAnchorRestorationCoordinator';
 
 interface SavedScrollAnchor {
   anchorKey: string;
@@ -33,11 +34,13 @@ const restoreCancelKeys = new Set([
 export function useScrollAnchorRestoration({
   anchorKey,
   containerRef,
+  ignoreSavedAnchor = false,
   initialScroll,
   itemsReady
 }: {
   anchorKey: string;
   containerRef: RefObject<HTMLElement | null>;
+  ignoreSavedAnchor?: boolean;
   initialScroll: InitialScrollPolicy;
   itemsReady: boolean;
 }) {
@@ -47,8 +50,13 @@ export function useScrollAnchorRestoration({
   const initialScrollTopOffset =
     initialScroll.type === 'element' ? initialScroll.topOffset : undefined;
   const initialScrollAttemptedRef = useRef('');
+  const ignoredSavedAnchorKeyRef = useRef('');
   const restoreAttemptedRef = useRef('');
   const userCancelledRestoreRef = useRef('');
+
+  if (ignoreSavedAnchor && ignoredSavedAnchorKeyRef.current !== anchorKey) {
+    ignoredSavedAnchorKeyRef.current = anchorKey;
+  }
 
   useLayoutEffect(() => {
     function markUserScrollInput() {
@@ -93,10 +101,12 @@ export function useScrollAnchorRestoration({
     let frame = 0;
 
     function handleScroll() {
+      if (scrollAnchorSavesAreSuppressed()) return;
       saveCurrentAnchor(anchorKey, container, scroller);
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         frame = 0;
+        if (scrollAnchorSavesAreSuppressed()) return;
         saveCurrentAnchor(anchorKey, container, scroller);
       });
     }
@@ -114,7 +124,10 @@ export function useScrollAnchorRestoration({
   useLayoutEffect(() => {
     if (!itemsReady || !containerRef.current) return;
     if (userCancelledRestoreRef.current === anchorKey) return;
-    const savedAnchor = savedScrollAnchors[anchorKey];
+    const savedAnchor =
+      ignoredSavedAnchorKeyRef.current === anchorKey
+        ? undefined
+        : savedScrollAnchors[anchorKey];
     if (!savedAnchor) {
       const initialScrollKey = `${anchorKey}:initial`;
       if (initialScrollAttemptedRef.current === initialScrollKey) return;
@@ -128,9 +141,10 @@ export function useScrollAnchorRestoration({
       return;
     }
 
-    const restoreKey = `${anchorKey}:${savedAnchor.primaryId || ''}:${
-      savedAnchor.secondaryId || ''
-    }:${savedAnchor.contentKey || ''}`;
+    const anchorToRestore = savedAnchor;
+    const restoreKey = `${anchorKey}:${anchorToRestore.primaryId || ''}:${
+      anchorToRestore.secondaryId || ''
+    }:${anchorToRestore.contentKey || ''}`;
     if (restoreAttemptedRef.current === restoreKey) return;
     restoreAttemptedRef.current = restoreKey;
 
@@ -149,7 +163,7 @@ export function useScrollAnchorRestoration({
       if (restoreCancelled) return;
       const container = containerRef.current;
       if (!container) return;
-      const anchorElement = findAnchorElement(container, savedAnchor);
+      const anchorElement = findAnchorElement(container, anchorToRestore);
       if (!anchorElement) {
         attempts += 1;
         if (attempts < 12) {
@@ -157,7 +171,7 @@ export function useScrollAnchorRestoration({
         }
         return;
       }
-      restoreToAnchor(anchorElement, savedAnchor.offset, scroller);
+      restoreToAnchor(anchorElement, anchorToRestore.offset, scroller);
       settleAnchor();
     }
 
@@ -250,10 +264,10 @@ export function useScrollAnchorRestoration({
         settleFrame = 0;
         const container = containerRef.current;
         if (!container) return;
-        const anchorElement = findAnchorElement(container, savedAnchor);
+        const anchorElement = findAnchorElement(container, anchorToRestore);
         if (!anchorElement) return;
 
-        restoreToAnchor(anchorElement, savedAnchor.offset, scroller);
+        restoreToAnchor(anchorElement, anchorToRestore.offset, scroller);
         settleAttempts += 1;
         if (settleAttempts < 12 && !restoreCancelled) {
           settleFrame = window.requestAnimationFrame(settle);
@@ -266,7 +280,8 @@ export function useScrollAnchorRestoration({
     initialScrollTargetRef,
     initialScrollTopOffset,
     initialScrollType,
-    itemsReady
+    itemsReady,
+    ignoreSavedAnchor
   ]);
 }
 

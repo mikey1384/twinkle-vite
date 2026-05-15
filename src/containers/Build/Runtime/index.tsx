@@ -20,6 +20,11 @@ import {
 import { useContentState } from '~/helpers/hooks';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
+import {
+  clearHomeFeedActionIntentState,
+  focusHomeFeedCommentIntentTarget,
+  getMatchingHomeFeedActionIntent
+} from '~/helpers/homeFeedActionIntent';
 import type { Content } from '~/types';
 import PreviewPanel from '../PreviewPanel';
 import type { PreviewMountContext } from '../PreviewPanel/types';
@@ -473,6 +478,8 @@ export default function BuildRuntime() {
   const getAiEnergyPolicyRef = useRef(getAiEnergyPolicy);
   const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
   const runtimeCommentsLoadTokenRef = useRef(0);
+  const RuntimeCommentInputAreaRef = useRef<any>(null);
+  const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
   const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
   const {
     comments: runtimeComments,
@@ -513,6 +520,17 @@ export default function BuildRuntime() {
     const id = parseInt(buildId || '', 10);
     return Number.isNaN(id) ? null : id;
   }, [buildId]);
+  const homeFeedActionIntent = useMemo(
+    () =>
+      numericBuildId
+        ? getMatchingHomeFeedActionIntent({
+            contentId: numericBuildId,
+            contentType: 'build',
+            state: location.state
+          })
+        : null,
+    [location.state, numericBuildId]
+  );
   const canUseHistoryBack =
     typeof window !== 'undefined' &&
     Number.isFinite(Number(window.history.state?.idx)) &&
@@ -652,6 +670,32 @@ export default function BuildRuntime() {
     setCommentsDrawerShown(shouldOpen);
     if (shouldOpen && !runtimeCommentsLoaded) {
       void loadRuntimeComments();
+    }
+  }
+
+  function handleConsumeHomeFeedActionIntent() {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: clearHomeFeedActionIntentState(location.state)
+      }
+    );
+  }
+
+  function scrollRuntimePageToTop() {
+    const scrollingElement =
+      document.scrollingElement || document.documentElement;
+    if (scrollingElement) {
+      scrollingElement.scrollTop = 0;
+    }
+    const appElement = document.getElementById('App');
+    if (appElement) {
+      appElement.scrollTop = 0;
     }
   }
 
@@ -1174,6 +1218,35 @@ export default function BuildRuntime() {
   }, [build?.id]);
 
   useEffect(() => {
+    const intent = homeFeedActionIntent;
+    if (!intent || intent.action !== 'comment') return;
+    if (consumedHomeFeedActionIntentRef.current === intent.nonce) return;
+    if (loading || error || !build?.id) return;
+    if (Number(build.id) !== Number(numericBuildId)) return;
+
+    consumedHomeFeedActionIntentRef.current = intent.nonce;
+    setCommentsDrawerShown(true);
+    scrollRuntimePageToTop();
+    focusHomeFeedCommentIntentTarget(RuntimeCommentInputAreaRef, {
+      documentScroll: false
+    });
+    if (!runtimeCommentsLoaded) {
+      void loadRuntimeComments();
+    }
+    handleConsumeHomeFeedActionIntent();
+    // loadRuntimeComments/handleConsumeHomeFeedActionIntent use stable route/context state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    build?.id,
+    error,
+    homeFeedActionIntent?.action,
+    homeFeedActionIntent?.nonce,
+    loading,
+    numericBuildId,
+    runtimeCommentsLoaded
+  ]);
+
+  useEffect(() => {
     if (!commentsDrawerShown) return;
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -1461,6 +1534,7 @@ export default function BuildRuntime() {
             loading={runtimeCommentsLoading}
             loadMoreButton={runtimeCommentsLoadMoreButton}
             parent={runtimeCommentsParent}
+            inputAreaInnerRef={RuntimeCommentInputAreaRef}
             userId={userId}
             visible={commentsDrawerShown}
             onCommentSubmit={handleRuntimeCommentSubmit}

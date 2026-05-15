@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import AchievementItem from '~/components/AchievementItem';
 import CardThumb from '~/components/CardThumb';
 import Embedly from '~/components/Embedly';
@@ -7,14 +7,21 @@ import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
 import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
-import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
+import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
+import {
+  getInternalEmbedCommentLabel,
+  getInternalEmbedPreviewInfo
+} from '~/helpers/aiCardEmbedHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
+import { useAppContext, useContentContext } from '~/contexts';
+import { useContentState } from '~/helpers/hooks';
 import {
   addCommasToNumber,
   getFileInfoFromFileName,
-  getRenderedTextForVocabQuestions
+  getRenderedTextForVocabQuestions,
+  stripTextSizeMarkers
 } from '~/helpers/stringHelpers';
 import {
   getBuildDisplayTitle,
@@ -43,13 +50,27 @@ import { normalizeRootType } from '../helpers/navigation';
 import type { Comment } from '~/types';
 import {
   type FeedCardSizing,
+  getDailyReflectionAnswerPreviewMaxLines,
   getFeedCardSizing,
+  getSharedTopicPreviewMaxLines,
+  getSubjectPreviewLineLimits,
+  hasDailyReflectionMetaBadges,
   getMarkdownImageEmbedPreview,
   removeMarkdownImageEmbeds,
   type MarkdownImageEmbed
 } from '../helpers/sizing';
 
 type PreviewCommentMedia =
+  | {
+      cardId: number;
+      kind: 'aiCard';
+      label: string;
+    }
+  | {
+      contentId: number;
+      kind: 'build';
+      label: string;
+    }
   | {
       extension: string;
       icon: string;
@@ -62,6 +83,8 @@ type PreviewCommentMedia =
       label: string;
       src: string;
     };
+
+const primaryPreviewTextClass = 'home-feed-card__primary-preview-text';
 
 export default function Body({
   content,
@@ -86,7 +109,6 @@ export default function Body({
     rootObj?.id || rootObj?.notFound ? rootObj : content?.rootObj || {};
   const targetSubject = content?.targetObj?.subject;
   const targetComment = content?.targetObj?.comment;
-  const previewComment = getRenderablePreviewComment(content?.comments);
   const resolvedSizing =
     sizing || getFeedCardSizing({ content, rootObj: resolvedRootObj, userId });
   const secretHidden = resolvedSizing.flags.secretHidden;
@@ -94,9 +116,6 @@ export default function Body({
   const targetPanelClassName =
     resolvedSizing.target?.className ||
     'home-feed-card__target-preview home-feed-card__target-preview--size-standard';
-  const previewCommentShown = Boolean(
-    previewComment && resolvedSizing.card.hasCommentPreview
-  );
   if (loading || !contentId || !contentType) {
     return (
       <div className={`${bodyClass} home-feed-card__body`}>
@@ -119,93 +138,8 @@ export default function Body({
         theme={theme}
         userId={userId}
       />
-      {previewCommentShown && previewComment
-        ? renderPreviewComment(previewComment)
-        : null}
     </div>
   );
-
-  function renderPreviewComment(comment: Comment) {
-    const uploader = getPreviewCommentUploader(comment);
-    const commentText = getPreviewCommentText(comment);
-    const previewLabel = getPreviewCommentLabel(comment, contentType);
-    const previewMedia = getPreviewCommentMedia(comment);
-    const accentColor =
-      Color[uploader.profileTheme || theme || 'logoBlue']?.() ||
-      Color.logoBlue();
-
-    return (
-      <button
-        className={`home-feed-card__comment-preview${
-          previewMedia ? ' home-feed-card__comment-preview--has-media' : ''
-        }`}
-        data-comment-id={comment.id}
-        data-feed-card-interactive="true"
-        style={
-          {
-            '--home-feed-comment-accent': accentColor
-          } as React.CSSProperties
-        }
-        type="button"
-        onClick={handlePreviewCommentClick}
-      >
-        <span className="home-feed-card__comment-preview-avatar">
-          <ProfilePic
-            profilePicUrl={uploader.profilePicUrl}
-            size="100%"
-            userId={Number(uploader.id || 0)}
-          />
-        </span>
-        <span className="home-feed-card__comment-preview-body">
-          <span className="home-feed-card__comment-preview-meta">
-            <b>{uploader.username || 'Someone'}</b>
-            {previewLabel ? <span>{previewLabel}</span> : null}
-          </span>
-          <span className="home-feed-card__comment-preview-text">
-            {commentText}
-          </span>
-        </span>
-        {previewMedia ? renderPreviewCommentMedia(previewMedia) : null}
-        <Icon className="home-feed-card__comment-preview-icon" icon="comment" />
-      </button>
-    );
-  }
-
-  function renderPreviewCommentMedia(media: PreviewCommentMedia) {
-    if (media.kind === 'image') {
-      return (
-        <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--image">
-          <img src={media.src} alt={media.label} loading="lazy" />
-          {media.isVideo ? (
-            <span className="home-feed-card__comment-preview-media-play">
-              <Icon icon="play" />
-            </span>
-          ) : null}
-        </span>
-      );
-    }
-
-    return (
-      <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--file">
-        <Icon
-          className="home-feed-card__comment-preview-media-icon"
-          icon={media.icon}
-        />
-        {media.extension ? (
-          <small>{media.extension.toUpperCase()}</small>
-        ) : null}
-      </span>
-    );
-  }
-
-  function handlePreviewCommentClick(
-    event: React.MouseEvent<HTMLButtonElement>
-  ) {
-    event.preventDefault();
-    event.stopPropagation();
-    const commentId = Number(event.currentTarget.dataset.commentId || 0);
-    if (commentId > 0) navigate(`/comments/${commentId}`);
-  }
 
   function renderContentPreview() {
     if (secretHidden) {
@@ -293,6 +227,14 @@ export default function Body({
       !secretHidden &&
       !secretAnswerDuplicatesDescription &&
       (hasSecretAnswerText || hasSecretAttachment);
+    const subjectLineLimits = getSubjectPreviewLineLimitsForLayout({
+      hasDescriptionText,
+      hasEffort: Number(content?.rewardLevel || 0) > 0,
+      hasSecretAnswer: showSecretAnswer,
+      hasSecretAnswerText,
+      hasSecretAttachment,
+      hasTitle: Boolean(content?.title)
+    });
     const hasAttachedRootContent = Boolean(
       contentType === 'subject' &&
       normalizedRootType &&
@@ -339,14 +281,17 @@ export default function Body({
             {Number(content?.rewardLevel || 0) > 0 ? (
               <CompactEffortStrip rewardLevel={Number(content.rewardLevel)} />
             ) : null}
-            {content?.title ? <h3>{content.title}</h3> : null}
+            {content?.title ? (
+              <h3 className={primaryPreviewTextClass}>{content.title}</h3>
+            ) : null}
             {hasDescriptionText ? (
               <RichText
-                className="home-feed-card__subject-description"
+                className={`home-feed-card__subject-description ${primaryPreviewTextClass}`}
                 contentId={contentId}
                 contentType={contentType}
                 isPreview
-                maxLines={resolvedSizing.main.subjectDescriptionMaxLines}
+                maxLines={subjectLineLimits.desktop.descriptionMaxLines}
+                mobileMaxLines={subjectLineLimits.mobile.descriptionMaxLines}
                 section="description"
                 theme={theme}
               >
@@ -372,11 +317,12 @@ export default function Body({
                 ) : null}
                 {hasSecretAnswerText ? (
                   <RichText
-                    className="home-feed-card__subject-secret-text"
+                    className={`home-feed-card__subject-secret-text ${primaryPreviewTextClass}`}
                     contentId={contentId}
                     contentType={contentType}
                     isPreview
-                    maxLines={3}
+                    maxLines={subjectLineLimits.desktop.secretMaxLines}
+                    mobileMaxLines={subjectLineLimits.mobile.secretMaxLines}
                     section="secret"
                     theme={theme}
                   >
@@ -439,6 +385,11 @@ export default function Body({
       );
     }
 
+    const textMaxLines = getTextMaxLinesForLayout({
+      hasTitle: Boolean(title),
+      maxLines: resolvedSizing.main.textMaxLines
+    });
+
     return (
       <div
         className={`home-feed-card__text-preview${
@@ -446,13 +397,14 @@ export default function Body({
         }`}
       >
         <div className="home-feed-card__text-copy">
-          {title ? <h3>{title}</h3> : null}
+          {title ? <h3 className={primaryPreviewTextClass}>{title}</h3> : null}
           {textWithoutEmbeds ? (
             <RichText
+              className={primaryPreviewTextClass}
               contentId={contentId}
               contentType={contentType}
               isPreview
-              maxLines={resolvedSizing.main.textMaxLines}
+              maxLines={textMaxLines}
               section={section}
               theme={theme}
             >
@@ -479,48 +431,117 @@ export default function Body({
   }
 
   function renderDailyReflectionPreview() {
+    const answerLineLimits = getReflectionAnswerLineLimitsForLayout();
+    const hasMetaBadges = hasDailyReflectionMetaBadges(content);
+
     return (
-      <div className="home-feed-card__reflection-preview">
+      <div
+        className={`home-feed-card__reflection-preview${
+          hasMetaBadges
+            ? ' home-feed-card__reflection-preview--with-footer'
+            : ''
+        }`}
+      >
         {content?.question ? (
           <div className="home-feed-card__question-box">
             <b>Question:</b>
-            <span>{content.question}</span>
+            <span className={primaryPreviewTextClass}>{content.question}</span>
           </div>
         ) : null}
         {content?.description ? (
           <RichText
-            className="home-feed-card__reflection-answer"
+            className={`home-feed-card__reflection-answer ${primaryPreviewTextClass}`}
             contentId={contentId}
             contentType={contentType}
             isPreview
-            maxLines={resolvedSizing.main.reflectionAnswerMaxLines}
+            maxLines={answerLineLimits.desktop}
+            mobileMaxLines={answerLineLimits.mobile}
             section="description"
             theme={theme}
           >
             {content.description}
           </RichText>
         ) : null}
-        <div className="home-feed-card__reflection-footer">
-          {content?.grade === 'Masterpiece' ? (
-            <span className="home-feed-card__masterpiece-chip">
-              <Icon icon="certificate" />
-              Masterpiece
-            </span>
-          ) : null}
-          {content?.isRefined ? (
-            <span className="home-feed-card__refined-chip">
-              <span className="home-feed-card__refined-sparkle">✨</span>
-              <span>AI-polished</span>
-            </span>
-          ) : null}
-          <XPAndStreakDisplay
-            xpAwarded={content?.xpAwarded}
+        {hasMetaBadges ? (
+          <DailyReflectionMetaBadges
+            className="home-feed-card__reflection-footer"
+            density="compact"
+            grade={content?.grade}
+            isRefined={content?.isRefined}
+            masterpieceType={content?.masterpieceType}
             streak={content?.streakAtTime}
-            style={{ marginTop: 0 }}
+            xpAwarded={content?.xpAwarded}
           />
-        </div>
+        ) : null}
       </div>
     );
+  }
+
+  function getReflectionAnswerLineLimitsForLayout() {
+    const params = {
+      content,
+      maxLines: resolvedSizing.main.reflectionAnswerMaxLines,
+      size: resolvedSizing.main.size
+    };
+
+    return {
+      desktop: getDailyReflectionAnswerPreviewMaxLines({
+        ...params,
+        axis: 'desktop'
+      }),
+      mobile: getDailyReflectionAnswerPreviewMaxLines({
+        ...params,
+        axis: 'mobile'
+      })
+    };
+  }
+
+  function getSubjectPreviewLineLimitsForLayout({
+    hasDescriptionText,
+    hasEffort,
+    hasSecretAnswer,
+    hasSecretAnswerText,
+    hasSecretAttachment,
+    hasTitle
+  }: {
+    hasDescriptionText: boolean;
+    hasEffort: boolean;
+    hasSecretAnswer: boolean;
+    hasSecretAnswerText: boolean;
+    hasSecretAttachment: boolean;
+    hasTitle: boolean;
+  }) {
+    const params = {
+      content,
+      hasDescriptionText,
+      hasEffort,
+      hasSecretAnswer,
+      hasSecretAnswerText,
+      hasSecretAttachment,
+      hasTitle,
+      size: resolvedSizing.main.size
+    };
+
+    return {
+      desktop: getSubjectPreviewLineLimits({
+        ...params,
+        axis: 'desktop'
+      }),
+      mobile: getSubjectPreviewLineLimits({
+        ...params,
+        axis: 'mobile'
+      })
+    };
+  }
+
+  function getTextMaxLinesForLayout({
+    hasTitle,
+    maxLines
+  }: {
+    hasTitle: boolean;
+    maxLines: number;
+  }) {
+    return hasTitle ? Math.max(2, maxLines - 2) : maxLines;
   }
 
   function renderDailyGoalsPreview() {
@@ -596,15 +617,18 @@ export default function Body({
   function renderSharedTopicPreview() {
     return (
       <div className="home-feed-card__shared-topic-preview">
-        <h3>{content?.title || content?.content || content?.topic}</h3>
+        <h3 className={primaryPreviewTextClass}>
+          {content?.title || content?.content || content?.topic}
+        </h3>
         {content?.customInstructions ? (
           <div className="home-feed-card__system-prompt-box">
             <b>System Prompt:</b>
             <RichText
+              className={primaryPreviewTextClass}
               contentId={contentId}
               contentType={contentType}
               isPreview
-              maxLines={7}
+              maxLines={getSharedTopicPreviewMaxLines(resolvedSizing.main)}
               section="content"
               theme={theme}
             >
@@ -645,8 +669,12 @@ export default function Body({
             <Icon icon="rocket" />
             <span>Lumine App</span>
           </div>
-          <h3>{displayTitle || 'Lumine App'}</h3>
-          {content?.description ? <p>{content.description}</p> : null}
+          <h3 className={primaryPreviewTextClass}>
+            {displayTitle || 'Lumine App'}
+          </h3>
+          {content?.description ? (
+            <p className={primaryPreviewTextClass}>{content.description}</p>
+          ) : null}
           <div className="home-feed-card__build-status-row">
             {relationshipLabels.map((label) => (
               <span
@@ -727,13 +755,17 @@ export default function Body({
             />
           </div>
           <div className="home-feed-card__achievement-copy">
-            <h3>
+            <h3 className={primaryPreviewTextClass}>
               {passRootObj.title}
               {passRootObj.ap ? (
                 <span>({addCommasToNumber(Number(passRootObj.ap))} AP)</span>
               ) : null}
             </h3>
-            {passRootObj.description ? <p>{passRootObj.description}</p> : null}
+            {passRootObj.description ? (
+              <p className={primaryPreviewTextClass}>
+                {passRootObj.description}
+              </p>
+            ) : null}
           </div>
         </div>
       );
@@ -748,9 +780,11 @@ export default function Body({
           <span className="home-feed-card__mission-status">
             {passRootObj.isTask ? 'Task Complete' : 'Mission Accomplished'}
           </span>
-          <h3>{passRootObj.title}</h3>
+          <h3 className={primaryPreviewTextClass}>{passRootObj.title}</h3>
           {passRootObj.rootMission?.title ? (
-            <p>{passRootObj.rootMission.title}</p>
+            <p className={primaryPreviewTextClass}>
+              {passRootObj.rootMission.title}
+            </p>
           ) : null}
           <div className="home-feed-card__mission-reward-row">
             {passRootObj.xpReward ? (
@@ -775,6 +809,11 @@ export default function Body({
     const difficultyStyle = getAIStoryDifficultyStyle(difficulty);
     const storyPreview = getReadableAIStoryPreview(content?.story);
     const isListening = Boolean(content?.isListening);
+    const title = String(content?.title || content?.topic || 'AI Story');
+    const longTitleClass =
+      !isListening && title.length > 56
+        ? ' home-feed-card__ai-story-preview--long-title'
+        : '';
 
     return (
       <div
@@ -782,7 +821,7 @@ export default function Body({
           isListening
             ? ' home-feed-card__ai-story-preview--listening'
             : ' home-feed-card__ai-story-preview--reading'
-        }`}
+        }${longTitleClass}`}
         style={difficultyStyle}
       >
         <div className="home-feed-card__ai-story-topline">
@@ -795,13 +834,17 @@ export default function Body({
           ) : null}
         </div>
         <div className="home-feed-card__ai-story-main">
-          <h3>{content?.title || content?.topic || 'AI Story'}</h3>
+          <h3 className={primaryPreviewTextClass}>{title}</h3>
           {isListening ? (
             <div className="home-feed-card__ai-story-listening-body">
               <AudioWavePreview />
             </div>
           ) : storyPreview ? (
-            <p className="home-feed-card__ai-story-story">{storyPreview}</p>
+            <p
+              className={`home-feed-card__ai-story-story ${primaryPreviewTextClass}`}
+            >
+              {storyPreview}
+            </p>
           ) : null}
         </div>
       </div>
@@ -812,7 +855,7 @@ export default function Body({
     return (
       <div className="home-feed-card__url-preview">
         <div className="home-feed-card__url-copy">
-          <h3>
+          <h3 className={primaryPreviewTextClass}>
             {content?.actualTitle ||
               content?.linkTitle ||
               content?.title ||
@@ -822,7 +865,7 @@ export default function Body({
           {content?.actualDescription ||
           content?.linkDescription ||
           content?.description ? (
-            <p>
+            <p className={primaryPreviewTextClass}>
               {content.actualDescription ||
                 content.linkDescription ||
                 content.description}
@@ -852,8 +895,10 @@ export default function Body({
           src={`https://img.youtube.com/vi/${content?.content}/mqdefault.jpg`}
         />
         <div className="home-feed-card__video-copy">
-          <h3>{content?.title}</h3>
-          {content?.description ? <p>{content.description}</p> : null}
+          <h3 className={primaryPreviewTextClass}>{content?.title}</h3>
+          {content?.description ? (
+            <p className={primaryPreviewTextClass}>{content.description}</p>
+          ) : null}
         </div>
       </div>
     );
@@ -879,6 +924,10 @@ export default function Body({
       resolvedSizing.main.size === 'rich-embed-compact'
         ? 3
         : Math.min(resolvedSizing.main.textMaxLines, 6);
+    const previewTextMaxLines = getTextMaxLinesForLayout({
+      hasTitle: Boolean(title),
+      maxLines: textMaxLines
+    });
     return (
       <div
         className={`home-feed-card__rich-embed-preview${
@@ -887,13 +936,16 @@ export default function Body({
       >
         {hasText ? (
           <div className="home-feed-card__rich-embed-copy">
-            {title ? <h3>{title}</h3> : null}
+            {title ? (
+              <h3 className={primaryPreviewTextClass}>{title}</h3>
+            ) : null}
             {text ? (
               <RichText
+                className={primaryPreviewTextClass}
                 contentId={contentId}
                 contentType={contentType}
                 isPreview
-                maxLines={textMaxLines}
+                maxLines={previewTextMaxLines}
                 section={section}
                 theme={theme}
               >
@@ -911,6 +963,184 @@ export default function Body({
       </div>
     );
   }
+}
+
+export function HomeFeedCommentPreview({
+  comments,
+  contentType,
+  theme
+}: {
+  comments?: Comment[];
+  contentType: string;
+  theme?: string;
+}) {
+  const navigate = useNavigate();
+  const comment = getRenderablePreviewComment(comments);
+  if (!comment) return null;
+
+  const uploader = getPreviewCommentUploader(comment);
+  const commentText = getPreviewCommentText(comment);
+  const commentTextIsMessage = hasPreviewCommentMessageText(comment);
+  const previewLabel = getPreviewCommentLabel(comment, contentType);
+  const previewMedia = getPreviewCommentMedia(comment);
+  const accentColor =
+    Color[uploader.profileTheme || theme || 'logoBlue']?.() || Color.logoBlue();
+
+  return (
+    <div className={`${bodyClass} home-feed-card__comment-preview-slot`}>
+      <button
+        className={`home-feed-card__comment-preview${
+          previewMedia ? ' home-feed-card__comment-preview--has-media' : ''
+        }`}
+        data-comment-id={comment.id}
+        data-feed-card-interactive="true"
+        style={
+          {
+            '--home-feed-comment-accent': accentColor
+          } as React.CSSProperties
+        }
+        type="button"
+        onClick={handlePreviewCommentClick}
+      >
+        <span className="home-feed-card__comment-preview-avatar">
+          <ProfilePic
+            profilePicUrl={uploader.profilePicUrl}
+            size="100%"
+            userId={Number(uploader.id || 0)}
+          />
+        </span>
+        <span className="home-feed-card__comment-preview-body">
+          <span className="home-feed-card__comment-preview-meta">
+            <b>{uploader.username || 'Someone'}</b>
+            {previewLabel ? <span>{previewLabel}</span> : null}
+          </span>
+          <span
+            className={`home-feed-card__comment-preview-text${
+              commentTextIsMessage
+                ? ' home-feed-card__comment-preview-text--message'
+                : ''
+            }`}
+          >
+            {commentText}
+          </span>
+        </span>
+        {previewMedia ? renderPreviewCommentMedia(previewMedia) : null}
+        <Icon className="home-feed-card__comment-preview-icon" icon="comment" />
+      </button>
+    </div>
+  );
+
+  function renderPreviewCommentMedia(media: PreviewCommentMedia) {
+    if (media.kind === 'aiCard') {
+      return <PreviewCommentAICardMedia cardId={media.cardId} />;
+    }
+
+    if (media.kind === 'build') {
+      return (
+        <PreviewCommentBuildMedia
+          contentId={media.contentId}
+          label={media.label}
+        />
+      );
+    }
+
+    if (media.kind === 'image') {
+      return (
+        <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--image">
+          <img src={media.src} alt={media.label} loading="lazy" />
+          {media.isVideo ? (
+            <span className="home-feed-card__comment-preview-media-play">
+              <Icon icon="play" />
+            </span>
+          ) : null}
+        </span>
+      );
+    }
+
+    return (
+      <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--file">
+        <Icon
+          className="home-feed-card__comment-preview-media-icon"
+          icon={media.icon}
+        />
+        {media.extension ? (
+          <small>{media.extension.toUpperCase()}</small>
+        ) : null}
+      </span>
+    );
+  }
+
+  function handlePreviewCommentClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    const commentId = Number(event.currentTarget.dataset.commentId || 0);
+    if (commentId > 0) navigate(`/comments/${commentId}`);
+  }
+}
+
+function PreviewCommentAICardMedia({ cardId }: { cardId: number }) {
+  const card = useMemo(() => ({ id: cardId }), [cardId]);
+
+  return (
+    <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--ai-card">
+      <CardThumb card={card as any} />
+    </span>
+  );
+}
+
+function PreviewCommentBuildMedia({
+  contentId,
+  label
+}: {
+  contentId: number;
+  label: string;
+}) {
+  const loadingRef = useRef(false);
+  const contentState = useContentState({ contentId, contentType: 'build' });
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const thumbnailUrl = String(
+    contentState?.thumbnailUrl || contentState?.thumbUrl || ''
+  );
+  const title = getBuildDisplayTitle(contentState) || label;
+
+  useEffect(() => {
+    if (!contentId || contentState.loaded || loadingRef.current) return;
+    loadingRef.current = true;
+    loadContent({ contentId, contentType: 'build' })
+      .then((data: any) => {
+        if (!data?.notFound) {
+          onInitContent({
+            ...data,
+            contentId,
+            contentType: 'build'
+          });
+        }
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+      })
+      .finally(() => {
+        loadingRef.current = false;
+      });
+    // loadContent/onInitContent are stable context helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, contentState.loaded]);
+
+  return (
+    <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--build">
+      {thumbnailUrl ? (
+        <img src={thumbnailUrl} alt={title} loading="lazy" />
+      ) : (
+        <Icon
+          className="home-feed-card__comment-preview-media-icon"
+          icon="rocket"
+        />
+      )}
+    </span>
+  );
 }
 
 function getRenderablePreviewComment(comments: Comment[] | undefined) {
@@ -951,6 +1181,15 @@ function getPreviewCommentText(comment: Comment) {
     return getPreviewCommentAttachmentText(comment);
   }
   return 'View latest comment';
+}
+
+function hasPreviewCommentMessageText(comment: Comment) {
+  if (comment.isNotification || comment.isDeleteNotification) return false;
+  const rawContent = String(comment.content || '');
+  const content = stripMarkdownForCommentPreview(
+    removeMarkdownImageEmbeds(rawContent)
+  );
+  return Boolean(content);
 }
 
 function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
@@ -1000,6 +1239,30 @@ function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
     };
   }
 
+  if (markdownEmbed.type === 'internal') {
+    const internalInfo = getInternalEmbedPreviewInfo(markdownEmbed.src);
+    if (internalInfo?.kind === 'aiCard' && internalInfo.cardId) {
+      return {
+        cardId: internalInfo.cardId,
+        kind: 'aiCard',
+        label: getInternalEmbedCommentLabel(internalInfo)
+      };
+    }
+    if (internalInfo?.kind === 'build' && internalInfo.contentId) {
+      return {
+        contentId: internalInfo.contentId,
+        kind: 'build',
+        label: getInternalEmbedCommentLabel(internalInfo)
+      };
+    }
+    return {
+      extension: '',
+      icon: internalInfo?.icon || 'globe',
+      kind: 'file',
+      label: getInternalEmbedCommentLabel(internalInfo)
+    };
+  }
+
   return {
     extension: '',
     icon: markdownEmbed.type === 'youtube' ? 'play' : 'link',
@@ -1025,7 +1288,9 @@ function getPreviewCommentAttachmentText(comment: Comment) {
 
 function getPreviewCommentEmbedText(embed: MarkdownImageEmbed) {
   if (embed.type === 'youtube') return 'shared a video';
-  if (embed.type === 'internal') return 'shared a link';
+  if (embed.type === 'internal') {
+    return getInternalEmbedCommentLabel(getInternalEmbedPreviewInfo(embed.src));
+  }
   return 'shared an image';
 }
 
@@ -1060,7 +1325,7 @@ function getPreviewCommentLabel(comment: Comment, contentType: string) {
 }
 
 function stripMarkdownForCommentPreview(text: string) {
-  return text
+  return stripTextSizeMarkers(text)
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
     .replace(/[`*_>#~-]+/g, '')
     .replace(/\s+/g, ' ')

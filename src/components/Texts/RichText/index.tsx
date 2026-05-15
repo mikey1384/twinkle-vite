@@ -16,6 +16,7 @@ import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import { mobileMaxWidth } from '~/constants/css';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
@@ -140,6 +141,7 @@ function RichText({
   isShowMoreButtonCentered,
   voice,
   maxLines = 10,
+  mobileMaxLines,
   section = '',
   showMoreButtonStyle,
   readMoreColor,
@@ -162,6 +164,7 @@ function RichText({
   isAIMessage?: boolean;
   section?: string;
   maxLines?: number;
+  mobileMaxLines?: number;
   readMoreHeightFixed?: boolean;
   readMoreColor?: string;
   showMoreButtonStyle?: React.CSSProperties;
@@ -196,13 +199,19 @@ function RichText({
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
+  const isPreviewRef = useRef(isPreview);
+  // Preview RichText is deterministic: no expansion state or shared height cache.
   const fullTextState = useMemo(
-    () => fullTextStates[`${contentType}-${contentId}`] || {},
-    [contentId, contentType]
+    () =>
+      isPreview ? {} : fullTextStates[`${contentType}-${contentId}`] || {},
+    [contentId, contentType, isPreview]
   );
   const defaultMinHeight = useMemo(
-    () => richTextHeights[`${contentType}-${contentId}`]?.[section],
-    [contentType, contentId, section]
+    () =>
+      isPreview
+        ? undefined
+        : richTextHeights[`${contentType}-${contentId}`]?.[section],
+    [contentType, contentId, isPreview, section]
   );
   const defaultMinHeightRef = useRef(defaultMinHeight);
   const [isParsed, setIsParsed] = useState(false);
@@ -226,21 +235,42 @@ function RichText({
   const [hasTopEmbeddedContent, setHasTopEmbeddedContent] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
+  useEffect(() => {
+    isPreviewRef.current = isPreview;
+  }, [isPreview]);
+
   const tooLongNonUrlToken = useMemo(() => {
     const tooLongNonUrlToken =
       /(^|\s)(?!https?:\/\/)(?!www\.)\S{400,}(?=\s|$)/i.test(text);
     return tooLongNonUrlToken;
   }, [text]);
 
+  const hasMarkdownEmbed = useMemo(
+    () =>
+      /!\[[^\]]*\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/.test(String(text)),
+    [text]
+  );
+  const isLineClampedPreview = Boolean(isPreview && !hasMarkdownEmbed);
+  const previewMobileMaxLines = mobileMaxLines || maxLines;
+
   useEffect(() => {
+    if (isPreview) {
+      return;
+    }
     if (text.length < prevFullTextLength) {
       setFullTextShown(false);
       fullTextShownRef.current = false;
       setIsOverflown(false);
     }
-  }, [text, prevFullTextLength]);
+  }, [isPreview, text, prevFullTextLength]);
 
   useEffect(() => {
+    if (isPreview) {
+      setFullTextShown(false);
+      fullTextShownRef.current = false;
+      setIsOverflown(false);
+      return;
+    }
     if (containerNode && !fullTextShown) {
       if (!thresholdRef.current) {
         thresholdRef.current = containerNode.clientHeight;
@@ -261,6 +291,13 @@ function RichText({
   }, [isPreview, fullTextShown, containerNode, hasTopEmbeddedContent]);
 
   useEffect(() => {
+    if (!TextRef.current) {
+      return;
+    }
+    if (isPreview) {
+      TextRef.current.style.height = '';
+      return;
+    }
     const visibleHeight = TextRef.current.clientHeight;
     if (containerNode && isParsed) {
       const hasEmbeddedContent = containerNode.querySelector(
@@ -303,6 +340,7 @@ function RichText({
   useEffect(() => {
     let resizeObserver: any;
     if (
+      !isPreview &&
       typeof ResizeObserver === 'function' &&
       TextRef.current &&
       !defaultMinHeightRef.current
@@ -317,7 +355,7 @@ function RichText({
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, []);
+  }, [isPreview]);
 
   useEffect(() => {
     minHeightRef.current = minHeight;
@@ -325,8 +363,13 @@ function RichText({
 
   useEffect(() => {
     const key = `${contentType}-${contentId}`;
+    const defaultHeight = defaultMinHeightRef.current;
     return () => {
+      if (isPreviewRef.current) {
+        return;
+      }
       if (contentType && section) {
+        const heightToPersist = defaultHeight ?? minHeightRef.current;
         fullTextStates[key] = {
           ...fullTextStates[key],
           [section]: {
@@ -334,11 +377,12 @@ function RichText({
             textLength: text.length
           }
         };
-        richTextHeights[key] = {
-          ...richTextHeights[key],
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-          [section]: defaultMinHeightRef.current || minHeightRef.current
-        };
+        if (typeof heightToPersist === 'number') {
+          richTextHeights[key] = {
+            ...richTextHeights[key],
+            [section]: heightToPersist
+          };
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -390,13 +434,65 @@ function RichText({
         style={{
           opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
           minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
-          maxHeight: fullTextShown
+          maxHeight: fullTextShown || isLineClampedPreview
             ? undefined
             : `calc(${collapsedLineHeight}em * ${maxLines})`,
           overflow: fullTextShown ? undefined : 'hidden',
           ...style
         }}
         className={`${className} ${RichTextCss} ${css`
+          ${isLineClampedPreview
+            ? `
+              display: -webkit-box;
+              -webkit-box-orient: vertical;
+              -webkit-line-clamp: ${maxLines};
+              position: relative;
+              text-overflow: ellipsis;
+
+              ${
+                previewMobileMaxLines !== maxLines
+                  ? `
+                    @media (max-width: ${mobileMaxWidth}) {
+                      -webkit-line-clamp: ${previewMobileMaxLines};
+                    }
+                  `
+                  : ''
+              }
+
+              > p,
+              > h1,
+              > h2,
+              > h3,
+              > h4,
+              > h5,
+              > h6,
+              > ol,
+              > ul {
+                display: inline;
+              }
+
+              > p + p::before {
+                content: '\\A\\A';
+                white-space: pre;
+              }
+
+              > ol,
+              > ul {
+                padding: 0;
+              }
+
+              > ol > li,
+              > ul > li {
+                display: inline;
+                margin-left: 0;
+              }
+
+              > ol > li + li::before,
+              > ul > li + li::before {
+                content: ' ';
+              }
+            `
+            : ''}
           a {
             color: ${appliedLinkColor};
           }
@@ -421,7 +517,7 @@ function RichText({
           }
         `}`}
       >
-        {!cleanString && !tooLongNonUrlToken && (
+        {!isPreview && !cleanString && !tooLongNonUrlToken && (
           <ErrorBoundary componentPath="components/Texts/RichText/InvisibleTextContainer">
             <InvisibleTextContainer
               contentId={contentId}

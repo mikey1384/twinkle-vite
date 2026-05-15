@@ -13,6 +13,9 @@ import {
   getBuildRelationshipLabels
 } from '~/helpers/buildRelationshipHelpers';
 
+const DAILY_GOAL_COMPLETION_LABEL = 'daily goal completion';
+const SHARED_SYSTEM_PROMPT_LABEL = 'shared system prompt';
+
 export default function HeadingText({
   action,
   compactFeed,
@@ -66,9 +69,9 @@ export default function HeadingText({
                 ? 'achievement unlock'
                 : 'mission accomplishment'
               : rootType === 'xpChange'
-                ? 'daily goals completion'
+                ? DAILY_GOAL_COMPLETION_LABEL
                 : rootType === 'sharedTopic'
-                  ? 'shared prompt'
+                  ? SHARED_SYSTEM_PROMPT_LABEL
                   : rootType === 'dailyReflection'
                     ? 'daily reflection'
                     : rootType;
@@ -415,8 +418,9 @@ export default function HeadingText({
       case 'sharedTopic':
         return (
           <>
-            {renderCompactUser()} {renderCompactAction('created prompt')}:{' '}
-            {renderCompactContentLink(contentObj, contentType, 'prompt')}
+            {renderCompactUser()} {renderCompactAction('created a system prompt')}
+            :{' '}
+            {renderCompactContentLink(contentObj, contentType, 'system prompt')}
           </>
         );
       case 'dailyReflection':

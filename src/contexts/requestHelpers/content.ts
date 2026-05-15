@@ -437,17 +437,19 @@ export default function contentRequestHelpers({
     },
     async likeContent({
       id,
-      contentType
+      contentType,
+      rootType
     }: {
       id: number;
       contentType: string;
+      rootType?: string;
     }) {
       try {
         const {
           data: { likes }
         } = await request.post(
           `${URL}/content/like`,
-          { id, contentType },
+          { id, contentType, rootType },
           auth()
         );
         return likes;
