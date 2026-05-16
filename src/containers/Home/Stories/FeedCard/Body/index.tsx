@@ -44,7 +44,6 @@ import {
   getAIStoryImageUrl,
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
-import ProfilePanelPreview from './ProfilePanelPreview';
 import TargetPreview from './TargetPreview';
 import SanitizedHTML from 'react-sanitized-html';
 import { useNavigate } from 'react-router-dom';
@@ -185,9 +184,6 @@ export default function Body({
       return renderSubjectPreview();
     }
     if (contentType === 'comment') {
-      if (normalizedRootType === 'user') {
-        return <ProfilePanelPreview profile={resolvedRootObj} theme={theme} />;
-      }
       return renderCommentPreview();
     }
 

@@ -781,7 +781,7 @@ test('keeps non-previewable attachment-only files compact', () => {
   assert.equal(sizing.card.mobileBodyHeight, 'max(11rem, 110px)');
 });
 
-test('uses profile bucket for comments rooted on profile messages', () => {
+test('uses comment text bucket for comments rooted on profile messages', () => {
   const sizing = getFeedCardSizing({
     content: {
       contentType: 'comment',
@@ -792,7 +792,9 @@ test('uses profile bucket for comments rooted on profile messages', () => {
     userId: 1
   });
 
-  assert.equal(sizing.main.size, 'profile');
+  assert.equal(sizing.main.size, 'compact');
+  assert.equal(sizing.card.size, 'compact-card');
+  assert.equal(sizing.target, null);
 });
 
 test('uses preview root object when hook state is still empty', () => {

@@ -44,8 +44,9 @@ import {
 } from '~/helpers/homeFeedActionIntent';
 
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
-const HOME_FEED_CARD_LAYOUT_VERSION = 'root-subject-preview-v5';
+const HOME_FEED_CARD_LAYOUT_VERSION = 'root-subject-preview-v6';
 const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
+const HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX = 10;
 const homeFeedCardSizingCache = new Map<string, FeedCardSizing>();
 
 export default function HomeFeedCard({
@@ -84,6 +85,12 @@ export default function HomeFeedCard({
   const loadingRef = useRef(false);
   const previewCommentLoadingRef = useRef(false);
   const PanelRef = useRef<HTMLDivElement | null>(null);
+  const tapNavigationRef = useRef<{
+    moved: boolean;
+    pointerId: number;
+    startX: number;
+    startY: number;
+  } | null>(null);
   const feedPreviewContent = feed?.previewContent || {};
   const feedPreviewComments = Array.isArray(feed?.comments)
     ? feed.comments
@@ -530,6 +537,10 @@ export default function HomeFeedCard({
               tabIndex={0}
               onClick={handleCardClick}
               onKeyDown={handleCardKeyDown}
+              onPointerCancel={handleCardPointerCancel}
+              onPointerDown={handleCardPointerDown}
+              onPointerMove={handleCardPointerMove}
+              onPointerUp={handleCardPointerUp}
             >
               {appliedContent.loaded ? (
                 <Heading
@@ -617,6 +628,66 @@ export default function HomeFeedCard({
   function handleOpenButtonClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
+    navigateToContentPageFromHomeFeed();
+  }
+
+  function handleCardPointerDown(event: React.PointerEvent<HTMLElement>) {
+    tapNavigationRef.current = null;
+    if (!shouldUseExplicitFeedCardNavigation()) return;
+    if (event.pointerType === 'mouse' || event.button !== 0) return;
+    if (
+      shouldSkipFeedCardNavigation({
+        currentTarget: event.currentTarget,
+        defaultPrevented: event.defaultPrevented,
+        target: event.target
+      })
+    ) {
+      return;
+    }
+
+    tapNavigationRef.current = {
+      moved: false,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY
+    };
+  }
+
+  function handleCardPointerMove(event: React.PointerEvent<HTMLElement>) {
+    const tapNavigation = tapNavigationRef.current;
+    if (!tapNavigation || tapNavigation.pointerId !== event.pointerId) return;
+
+    const xDelta = event.clientX - tapNavigation.startX;
+    const yDelta = event.clientY - tapNavigation.startY;
+    if (
+      xDelta * xDelta + yDelta * yDelta >
+      HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX *
+        HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX
+    ) {
+      tapNavigation.moved = true;
+    }
+  }
+
+  function handleCardPointerCancel(event: React.PointerEvent<HTMLElement>) {
+    if (tapNavigationRef.current?.pointerId !== event.pointerId) return;
+    tapNavigationRef.current = null;
+  }
+
+  function handleCardPointerUp(event: React.PointerEvent<HTMLElement>) {
+    const tapNavigation = tapNavigationRef.current;
+    tapNavigationRef.current = null;
+    if (!tapNavigation || tapNavigation.pointerId !== event.pointerId) return;
+    if (tapNavigation.moved) return;
+    if (
+      shouldSkipFeedCardNavigation({
+        currentTarget: event.currentTarget,
+        defaultPrevented: event.defaultPrevented,
+        target: event.target
+      })
+    ) {
+      return;
+    }
+
     navigateToContentPageFromHomeFeed();
   }
 

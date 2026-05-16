@@ -274,8 +274,7 @@ export function getFeedCardSizing({
   const size = getMainPanelSize({
     content,
     flags,
-    kind,
-    normalizedRootType
+    kind
   });
   const target = getTargetPanelSizing({
     content,
@@ -474,13 +473,11 @@ function hasResolvedTargetObj(targetObj: any) {
 function getMainPanelSize({
   content,
   flags,
-  kind,
-  normalizedRootType
+  kind
 }: {
   content: any;
   flags: FeedCardSizing['flags'];
   kind: FeedCardPreviewKind;
-  normalizedRootType: string;
 }): FeedCardSize {
   if (flags.secretHidden && !shouldShowPublicSubjectPreview(content)) {
     return 'secret';
@@ -488,10 +485,6 @@ function getMainPanelSize({
 
   if (!KNOWN_CONTENT_TYPES.has(String(content?.contentType || ''))) {
     return 'fallback';
-  }
-
-  if (content?.contentType === 'comment' && normalizedRootType === 'user') {
-    return 'profile';
   }
 
   if (
