@@ -16,6 +16,21 @@ import {
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
+function scrollCurrentPageToTop() {
+  const appElement = document.getElementById('App');
+  const bodyRef = document.scrollingElement || document.documentElement;
+
+  setScrollSurfaceTop(appElement);
+  setScrollSurfaceTop(bodyRef);
+  window.dispatchEvent(new Event('scroll'));
+}
+
+function setScrollSurfaceTop(element: Element | null) {
+  if (!element) return;
+  element.scrollTop = 0;
+  element.dispatchEvent(new Event('scroll'));
+}
+
 function Nav({
   alert,
   className,
@@ -276,6 +291,13 @@ function Nav({
       onSetSubjectsLoaded(false);
       onClearVideosLoaded();
     }
+    if (navTargetIsCurrentLocation()) {
+      scrollCurrentPageToTop();
+    }
+  }
+
+  function navTargetIsCurrentLocation() {
+    return to === pathname || to === `${pathname}${search || ''}`;
   }
 }
 

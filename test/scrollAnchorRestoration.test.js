@@ -75,9 +75,24 @@ assert.match(
   source,
   /return \(\) => \{[\s\S]*saveCurrentAnchor\(anchorKey, container, getActiveScroller\(\)\);[\s\S]*removeEventListener\('scroll', handleScroll\);/
 );
+assert.match(
+  mainNavSource,
+  /function scrollCurrentPageToTop\(\) \{[\s\S]*document\.getElementById\('App'\)[\s\S]*document\.scrollingElement \|\| document\.documentElement[\s\S]*setScrollSurfaceTop\(appElement\);[\s\S]*setScrollSurfaceTop\(bodyRef\);[\s\S]*window\.dispatchEvent\(new Event\('scroll'\)\);[\s\S]*\}/
+);
+assert.match(
+  mainNavSource,
+  /function setScrollSurfaceTop\(element: Element \| null\) \{[\s\S]*if \(!element\) return;[\s\S]*element\.scrollTop = 0;[\s\S]*element\.dispatchEvent\(new Event\('scroll'\)\);[\s\S]*\}/
+);
 assert.match(handleNavClickSource, /function handleNavClick\(\)/);
 assert.doesNotMatch(handleNavClickSource, /suppressScrollAnchorRestores/);
-assert.doesNotMatch(handleNavClickSource, /scrollTop = 0/);
+assert.match(
+  handleNavClickSource,
+  /if \(navTargetIsCurrentLocation\(\)\) \{[\s\S]*scrollCurrentPageToTop\(\);[\s\S]*\}/
+);
+assert.match(
+  handleNavClickSource,
+  /function navTargetIsCurrentLocation\(\) \{[\s\S]*return to === pathname \|\| to === `\$\{pathname\}\$\{search \|\| ''\}`;[\s\S]*\}/
+);
 assert.match(handleStoryClickSource, /function handleStoryClick\(\)/);
 assert.doesNotMatch(handleStoryClickSource, /scrollTop = 0/);
 
