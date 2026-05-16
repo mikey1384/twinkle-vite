@@ -430,24 +430,38 @@ function HeaderActionItem({
 
 function BuildVisibilityBadge({
   buildId,
+  isPublic,
   runtimeBackState
 }: {
   buildId: number;
+  isPublic: boolean;
   runtimeBackState: RuntimeBackState;
 }) {
   const badgeContent = (
     <>
-      <Icon icon="globe" />
-      Public
+      <Icon icon={isPublic ? 'globe' : 'lock'} />
+      {isPublic ? 'Public' : 'Private'}
     </>
   );
+
+  if (!isPublic) {
+    return (
+      <span
+        className={badgePillClass}
+        style={getVisibilityBadgeStyle(isPublic)}
+        title="Private build"
+      >
+        {badgeContent}
+      </span>
+    );
+  }
 
   return (
     <Link
       to={getBuildRuntimePath(buildId)}
       state={runtimeBackState}
       className={badgePillClass}
-      style={getVisibilityBadgeStyle(true)}
+      style={getVisibilityBadgeStyle(isPublic)}
       title="Open App"
     >
       {badgeContent}
@@ -610,7 +624,7 @@ export default function Header({
   );
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
   const thumbnailButtonShiny = !String(build.thumbnailUrl || '').trim();
-  const showPublicBadge = !isContributionFork && Boolean(build.isPublic);
+  const showVisibilityBadge = !isContributionFork;
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
@@ -734,9 +748,10 @@ export default function Header({
             ) : null}
           </div>
           <div className={mobileTitleBadgeGroupClass}>
-            {showPublicBadge ? (
+            {showVisibilityBadge ? (
               <BuildVisibilityBadge
                 buildId={Number(build.id)}
+                isPublic={Boolean(build.isPublic)}
                 runtimeBackState={runtimeBackState}
               />
             ) : null}
@@ -769,10 +784,11 @@ export default function Header({
         </div>
       </div>
       <div className={headerActionsClass}>
-        {showPublicBadge ? (
+        {showVisibilityBadge ? (
           <HeaderActionItem mobileOrder={1}>
             <BuildVisibilityBadge
               buildId={Number(build.id)}
+              isPublic={Boolean(build.isPublic)}
               runtimeBackState={runtimeBackState}
             />
           </HeaderActionItem>

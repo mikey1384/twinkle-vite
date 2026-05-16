@@ -42,6 +42,7 @@ export default function ActivityPanels({
   hasNewActivity,
   loading,
   loadingMore,
+  mobileTriggerLabel,
   onLoadMore,
   onMobileClose,
   onMobileOpen,
@@ -60,6 +61,7 @@ export default function ActivityPanels({
   hasNewActivity?: boolean;
   loading: boolean;
   loadingMore: boolean;
+  mobileTriggerLabel?: string;
   onLoadMore: () => void;
   onMobileClose?: () => void;
   onMobileOpen?: () => void;
@@ -80,6 +82,7 @@ export default function ActivityPanels({
       hasMore={hasMore}
       loading={loading}
       loadingMore={loadingMore}
+      mobileTriggerLabel={mobileTriggerLabel}
       onLoadMore={onLoadMore}
       onMobileClose={onMobileClose}
       onMobileOpen={onMobileOpen}

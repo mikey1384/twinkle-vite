@@ -61,6 +61,7 @@ export default function TargetPreview({
   contentType,
   normalizedRootType,
   resolvedRootObj,
+  secretHidden,
   targetComment,
   targetPanelClassName,
   targetSubject,
@@ -71,6 +72,7 @@ export default function TargetPreview({
   contentType: string;
   normalizedRootType: string;
   resolvedRootObj: any;
+  secretHidden: boolean;
   targetComment: any;
   targetPanelClassName: string;
   targetSubject: any;
@@ -122,6 +124,8 @@ export default function TargetPreview({
   }
 
   if (targetComment && !targetComment.notFound) {
+    if (secretHidden) return null;
+
     return renderTargetPanel({
       children: renderTargetCommentPreview(targetComment),
       target: {

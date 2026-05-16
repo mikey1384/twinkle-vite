@@ -278,6 +278,7 @@ export function getFeedCardSizing({
   });
   const target = getTargetPanelSizing({
     content,
+    flags,
     normalizedRootType,
     rootObj: resolvedRootObj,
     targetObj: resolvedTargetObj
@@ -584,11 +585,13 @@ function getMainPanelSize({
 
 function getTargetPanelSizing({
   content,
+  flags,
   normalizedRootType,
   rootObj,
   targetObj
 }: {
   content: any;
+  flags: FeedCardSizing['flags'];
   normalizedRootType: string;
   rootObj: any;
   targetObj: any;
@@ -605,6 +608,8 @@ function getTargetPanelSizing({
   }
 
   if (targetComment && !targetComment.notFound) {
+    if (flags.secretHidden) return null;
+
     return buildTargetSizing(
       isTargetCommentCompact(targetComment) ? 'compact' : 'standard',
       targetComment.filePath ? ['attachment'] : []
@@ -1053,7 +1058,6 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
   const descriptionLength = getSubjectDescriptionTextLength(content);
   const secretLength = getPlainTextValueLength(content?.secretAnswer);
   const hasEffort = Number(content?.rewardLevel || 0) > 0;
-  const hasSecret = secretLength > 0 || Boolean(content?.secretAttachment);
 
   if (content?.secretAttachment || content?.filePath) {
     if (
@@ -1068,10 +1072,6 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
   }
 
   if (secretLength > 160 || descriptionLength > 750) {
-    return 'subject-tall';
-  }
-
-  if (hasEffort && hasSecret) {
     return 'subject-tall';
   }
 

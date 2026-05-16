@@ -215,8 +215,9 @@ test('keeps secret-answer subjects above the action floor', () => {
     userId: 1
   });
 
-  assert.equal(sizing.main.size, 'subject-tall');
-  assert.equal(sizing.card.bodyHeight, 'max(32rem, 320px)');
+  assert.equal(sizing.main.size, 'standard');
+  assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(19rem, 190px)');
   assert.deepEqual(
     getSubjectPreviewLineLimits({
       axis: 'desktop',
@@ -230,8 +231,62 @@ test('keeps secret-answer subjects above the action floor', () => {
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 3,
+      descriptionMaxLines: 2,
       secretMaxLines: 1
+    }
+  );
+});
+
+test('uses standard height for short effort subjects with short secret messages', () => {
+  const content = {
+    contentType: 'subject',
+    description: 'Session 2 Week 5 2024',
+    rewardLevel: 5,
+    secretAnswer: 'https://www.twin-kle.com/videos/25166',
+    secretShown: true,
+    title:
+      'Week 5: Should police be replaced by robots? Should teachers be replaced by robots? Which jobs should not be replaced by robots?'
+  };
+  const sizing = getFeedCardSizing({
+    content,
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'standard');
+  assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(19rem, 190px)');
+  assert.deepEqual(
+    getSubjectPreviewLineLimits({
+      axis: 'desktop',
+      content,
+      hasDescriptionText: true,
+      hasEffort: true,
+      hasSecretAnswer: true,
+      hasSecretAnswerText: true,
+      hasSecretAttachment: false,
+      hasTitle: true,
+      size: sizing.main.size
+    }),
+    {
+      descriptionMaxLines: 2,
+      secretMaxLines: 1
+    }
+  );
+  assert.deepEqual(
+    getSubjectPreviewLineLimits({
+      axis: 'mobile',
+      content,
+      hasDescriptionText: true,
+      hasEffort: true,
+      hasSecretAnswer: true,
+      hasSecretAnswerText: true,
+      hasSecretAttachment: false,
+      hasTitle: true,
+      size: sizing.main.size
+    }),
+    {
+      descriptionMaxLines: 2,
+      secretMaxLines: 2
     }
   );
 });
@@ -310,6 +365,41 @@ test('uses root-aware subject sizing for standard subject root types', () => {
   }
 });
 
+test('keeps target and comment preview space deterministic for short effort secret subjects', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      __homeFeedHasCommentPreview: true,
+      comments: [{ id: 1, content: 'comment' }],
+      contentType: 'subject',
+      description: 'Session 2 Week 5 2024',
+      rewardLevel: 5,
+      rootId: 200,
+      rootType: 'video',
+      secretAnswer: 'https://www.twin-kle.com/videos/25166',
+      secretShown: true,
+      title:
+        'Week 5: Should police be replaced by robots? Should teachers be replaced by robots? Which jobs should not be replaced by robots?'
+    },
+    rootObj: {
+      id: 200,
+      contentType: 'video',
+      title: 'Video'
+    },
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'subject-root');
+  assert.equal(sizing.target?.size, 'standard');
+  assert.equal(sizing.card.hasTarget, true);
+  assert.equal(sizing.card.hasCommentPreview, true);
+  assert.equal(sizing.card.bodyHeight, 'max(29.35rem, 293.5px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(28.35rem, 283.5px)');
+  assert.equal(sizing.card.commentPreviewHeight, 'max(7.4rem, 74px)');
+  assert.equal(sizing.card.mobileCommentPreviewHeight, 'max(7.05rem, 70.5px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(49.5rem, 495px) + 2px)');
+  assert.equal(sizing.card.mobileHeight, 'calc(max(48.15rem, 481.5px) + 2px)');
+});
+
 test('keeps image-only secret attachments centered without tall root spacing', () => {
   const sizing = getFeedCardSizing({
     content: {
@@ -373,6 +463,45 @@ test('keeps image-only secret attachments centered without tall root spacing', (
     /home-feed-card__subject-secret-answer--attachment-only[\s\S]*height: 14rem/
   );
   assert.match(panelStylesSource, /size-subject-secret-media/);
+});
+
+test('keeps secret attachments and public media in media-sized subject buckets', () => {
+  const secretAttachmentSizing = getFeedCardSizing({
+    content: {
+      contentType: 'subject',
+      description: 'Short description',
+      rewardLevel: 5,
+      secretAttachment: {
+        fileName: 'board.png',
+        filePath: '/attachments/board.png'
+      },
+      secretShown: true,
+      title: 'Prompt'
+    },
+    userId: 1
+  });
+  const publicMediaSizing = getFeedCardSizing({
+    content: {
+      contentType: 'subject',
+      description: 'Short description',
+      filePath: '/attachments/public.png',
+      rewardLevel: 5,
+      secretAnswer: 'short',
+      secretShown: true,
+      title: 'Prompt'
+    },
+    userId: 1
+  });
+
+  assert.equal(secretAttachmentSizing.main.size, 'subject-secret-media');
+  assert.equal(secretAttachmentSizing.card.bodyHeight, 'max(25rem, 250px)');
+  assert.equal(
+    secretAttachmentSizing.card.mobileBodyHeight,
+    'max(24rem, 240px)'
+  );
+  assert.equal(publicMediaSizing.main.size, 'subject-media');
+  assert.equal(publicMediaSizing.card.bodyHeight, 'max(21rem, 210px)');
+  assert.equal(publicMediaSizing.card.mobileBodyHeight, 'max(20rem, 200px)');
 });
 
 test('gives real secret-answer text enough root-subject panel space', () => {
@@ -992,6 +1121,38 @@ test('reserves space for long secret answers in subject previews', () => {
   );
 });
 
+test('keeps long effort subjects with secret messages in tall space', () => {
+  assert.equal(
+    getFeedCardSizing({
+      content: {
+        contentType: 'subject',
+        description: 'Long description. '.repeat(60),
+        rewardLevel: 5,
+        secretAnswer: 'short',
+        secretShown: true,
+        title: 'Long prompt'
+      },
+      userId: 1
+    }).main.size,
+    'subject-tall'
+  );
+
+  assert.equal(
+    getFeedCardSizing({
+      content: {
+        contentType: 'subject',
+        description: 'Short description',
+        rewardLevel: 5,
+        secretAnswer: 'Long secret answer. '.repeat(25),
+        secretShown: true,
+        title: 'Prompt'
+      },
+      userId: 1
+    }).main.size,
+    'subject-tall'
+  );
+});
+
 test('keeps long-question reflection previews inside the fixed panel', () => {
   const content = {
     contentType: 'dailyReflection',
@@ -1062,6 +1223,139 @@ test('uses explicit AI Story buckets instead of plain text sizing', () => {
     listeningSizing.main.className,
     /home-feed-card__panel-preview--size-ai-story-listening/
   );
+});
+
+test('clamps AI Story home preview text deterministically on mobile and desktop', () => {
+  const imageBackedLongTitleSizing = getFeedCardSizing({
+    content: {
+      contentType: 'aiStory',
+      imagePath: '/ai-story/baby-thalattosauria.png',
+      story: 'The baby thalattosauria wakes up in the warm, blue sea.\nIt is small, with a long tail and shiny, wet skin. '.repeat(
+        4
+      ),
+      title:
+        'baby thalattosauria adventure: a little sea reptile learns to survive in the warm blue sea'
+    },
+    userId: 1
+  });
+  const bodySource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/index.tsx'
+    ),
+    'utf8'
+  );
+  const primitivesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/PreviewPrimitives.tsx'
+    ),
+    'utf8'
+  );
+  const mainStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const titleBlock = getCssBlock(
+    mainStylesSource,
+    '.home-feed-card__ai-story-preview h3'
+  );
+  const storyBlock = getCssBlock(
+    mainStylesSource,
+    '.home-feed-card__ai-story-story'
+  );
+  const longTitleStoryBlock = getCssBlock(
+    mainStylesSource,
+    '.home-feed-card__ai-story-preview--long-title .home-feed-card__ai-story-story'
+  );
+  const imageStoryBlock = getCssBlock(
+    mainStylesSource,
+    '.home-feed-card__ai-story-preview--has-image .home-feed-card__ai-story-story'
+  );
+  const mobileStoryBlock = getCssBlock(
+    mobileStylesSource,
+    '.home-feed-card__ai-story-story'
+  );
+  const mobileImageStoryBlock = getCssBlock(
+    mobileStylesSource,
+    '.home-feed-card__ai-story-preview--has-image .home-feed-card__ai-story-story'
+  );
+
+  assert.equal(imageBackedLongTitleSizing.main.kind, 'ai-story');
+  assert.equal(imageBackedLongTitleSizing.main.size, 'ai-story-reading');
+  assert.equal(imageBackedLongTitleSizing.card.bodyHeight, 'max(20rem, 200px)');
+  assert.equal(
+    imageBackedLongTitleSizing.card.mobileBodyHeight,
+    'max(19rem, 190px)'
+  );
+  assert.match(bodySource, /title\.length > 56/);
+  assert.match(bodySource, /home-feed-card__ai-story-preview--has-image/);
+  assert.match(
+    primitivesSource,
+    /story\.trim\(\)\.replace\(\/\\s\+\/g, ' '\)/
+  );
+  assert.match(titleBlock, /display: -webkit-box;/);
+  assert.match(titleBlock, /max-height: max\(5\.06rem, 50\.6px\);/);
+  assert.match(titleBlock, /-webkit-line-clamp: 2;/);
+  assert.match(storyBlock, /max-height: max\(9\.56rem, 95\.6px\);/);
+  assert.match(storyBlock, /white-space: normal;/);
+  assert.match(storyBlock, /-webkit-line-clamp: 4;/);
+  assert.doesNotMatch(storyBlock, /white-space: pre-line;/);
+  assert.match(longTitleStoryBlock, /max-height: max\(7\.17rem, 71\.7px\);/);
+  assert.match(longTitleStoryBlock, /-webkit-line-clamp: 3;/);
+  assert.match(imageStoryBlock, /max-height: max\(7\.17rem, 71\.7px\);/);
+  assert.match(imageStoryBlock, /-webkit-line-clamp: 3;/);
+  assert.match(mobileStoryBlock, /max-height: max\(7\.17rem, 71\.7px\);/);
+  assert.match(mobileStoryBlock, /-webkit-line-clamp: 3;/);
+  assert.match(mobileImageStoryBlock, /font-size: max\(1\.22rem, 12\.2px\);/);
+  assert.match(mobileImageStoryBlock, /line-height: 1\.35;/);
+});
+
+test('keeps AI Story listening cards out of story text clamps', () => {
+  const listeningSizing = getFeedCardSizing({
+    content: {
+      contentType: 'aiStory',
+      difficulty: 1,
+      imagePath: '/ai-story/listening.png',
+      isListening: true,
+      story: 'This should not render as the visible preview body.',
+      title:
+        'listening practice: a longer title still uses the audio preview body'
+    },
+    userId: 1
+  });
+  const bodySource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/index.tsx'
+    ),
+    'utf8'
+  );
+  const mainStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+
+  assert.equal(listeningSizing.main.kind, 'ai-story');
+  assert.equal(listeningSizing.main.size, 'ai-story-listening');
+  assert.equal(listeningSizing.card.bodyHeight, 'max(18rem, 180px)');
+  assert.equal(listeningSizing.card.mobileBodyHeight, 'max(17rem, 170px)');
+  assert.match(bodySource, /isListening \? \(/);
+  assert.match(bodySource, /home-feed-card__ai-story-listening-body/);
+  assert.match(mainStylesSource, /home-feed-card__audio-wave/);
 });
 
 test('keeps sibling media-like content in bounded feed buckets', () => {
@@ -1214,6 +1508,67 @@ test('uses subject secret-message wording for locked subject previews', () => {
   assert.match(bodyStylesSource, /\.\.\.compactSecretCommentStyle/);
 });
 
+test('hides target comments when a secret subject locks the feed card', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: 'hidden reply',
+      rootType: 'subject',
+      targetObj: {
+        comment: {
+          id: 7,
+          content: 'parent comment should not leak'
+        },
+        subject: {
+          id: 3,
+          hasSecretAnswer: true,
+          secretShown: false,
+          uploader: { id: 2 }
+        }
+      }
+    },
+    userId: 1
+  });
+  const bodySource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/index.tsx'
+    ),
+    'utf8'
+  );
+  const targetPreviewSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/TargetPreview.tsx'
+    ),
+    'utf8'
+  );
+
+  assert.equal(sizing.flags.secretHidden, true);
+  assert.equal(sizing.main.size, 'secret');
+  assert.equal(sizing.target, null);
+  assert.equal(sizing.card.hasTarget, false);
+  assert.match(bodySource, /secretHidden=\{secretHidden\}/);
+  assert.match(targetPreviewSource, /secretHidden: boolean;/);
+  assert.match(targetPreviewSource, /if \(secretHidden\) return null;/);
+});
+
+test('hides reward and recommend actions when a secret subject locks the feed card', () => {
+  const feedCardSource = readFileSync(
+    path.resolve(__dirname, '../src/containers/Home/Stories/FeedCard/index.tsx'),
+    'utf8'
+  );
+
+  assert.match(
+    feedCardSource,
+    /const rewardShown =\s+isContentPanelRewardActionSupported\(contentType\) && !secretHidden;/
+  );
+  assert.match(
+    feedCardSource,
+    /const recommendShown =\s+isHomeFeedRecommendActionSupported\(contentType\) && !secretHidden;/
+  );
+});
+
 test('uses standard video-scale target previews for link roots', () => {
   const sizing = getFeedCardSizing({
     content: {
@@ -1342,4 +1697,14 @@ function loadTypeScriptModule(entryPoint) {
   compiled(localRequire, mod, mod.exports);
 
   return mod;
+}
+
+function getCssBlock(source, selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = source.match(
+    new RegExp(`${escapedSelector} \\{([\\s\\S]*?)\\n\\s+\\}`)
+  );
+
+  assert.ok(match, `Missing CSS block for ${selector}`);
+  return match[1];
 }

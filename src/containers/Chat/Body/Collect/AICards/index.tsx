@@ -4,7 +4,7 @@ import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
 import Loading from '~/components/Loading';
 import { Link, useNavigate } from 'react-router-dom';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -44,6 +44,26 @@ interface AiUsagePolicy {
     requirements: AiUsageRequirement[];
   };
 }
+
+const aiCardControlTrayMobileBottomClearance =
+  'calc(2rem + env(safe-area-inset-bottom, 0px))';
+
+const aiCardControlTrayCls = css`
+  min-height: 9.5rem;
+  max-height: 45%;
+  background: ${Color.inputGray()};
+  padding: 1rem;
+  border-top: 1px solid var(--ui-border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding-bottom: ${aiCardControlTrayMobileBottomClearance};
+    scroll-padding-bottom: ${aiCardControlTrayMobileBottomClearance};
+  }
+`;
 
 export default function AICards({
   displayedThemeColor,
@@ -189,19 +209,7 @@ export default function AICards({
           page
         </div>
       )}
-      <div
-        className={css`
-          min-height: 9.5rem;
-          max-height: 45%;
-          background: ${Color.inputGray()};
-          padding: 1rem;
-          border-top: 1px solid var(--ui-border);
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        `}
-      >
+      <div className={aiCardControlTrayCls}>
         {aiUsagePolicy && (
           <AiEnergyCard
             variant="inline"

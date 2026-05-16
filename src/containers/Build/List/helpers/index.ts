@@ -165,6 +165,41 @@ export function getBuildActivityLatestPosition(activities: ActivityItem[]) {
   }, getEmptyBuildActivityPosition());
 }
 
+export function getCappedNewBuildActivityCount({
+  activities,
+  cap = 10,
+  lastViewedPosition
+}: {
+  activities: ActivityItem[];
+  cap?: number;
+  lastViewedPosition: BuildActivityPosition;
+}) {
+  const cappedLimit = Math.max(0, Math.floor(Number(cap) || 0));
+  if (!cappedLimit) return 0;
+
+  let count = 0;
+  for (const activity of activities) {
+    const activityPosition = getBuildActivityPosition({
+      timeStamp: activity.timeStamp,
+      sourceRank: activity.activitySourceRank,
+      sortId: activity.activitySortId
+    });
+    if (compareBuildActivityPositions(activityPosition, lastViewedPosition) <= 0) {
+      continue;
+    }
+    count += 1;
+    if (count >= cappedLimit) return cappedLimit;
+  }
+  return count;
+}
+
+export function getBuildActivityMobileTriggerLabel(newActivityCount: number) {
+  const count = Math.max(0, Math.floor(Number(newActivityCount) || 0));
+  if (!count) return 'Build Activity';
+  if (count >= 10) return '10+ new notifications';
+  return `${count} new notification${count === 1 ? '' : 's'}`;
+}
+
 export function isPublicBrowseTab(tab: BuildListTab) {
   return tab === 'community' || tab === 'open_source';
 }

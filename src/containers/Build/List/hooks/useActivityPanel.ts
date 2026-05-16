@@ -10,11 +10,13 @@ import type {
 } from '~/contexts/Build/reducer';
 import {
   compareBuildActivityPositions,
+  getBuildActivityMobileTriggerLabel,
   getBuildActivityFeedState,
   getBuildActivityFeedSubtab,
   getBuildActivityLatestPosition,
   getBuildActivityRequestKind,
   getBuildActivityViewedPosition,
+  getCappedNewBuildActivityCount,
   getEmptyBuildActivityPosition,
   getLoadMoreToken,
   isValidBuildActivityPosition,
@@ -107,6 +109,12 @@ export default function useActivityPanel({
       allLatestPosition,
       allLastViewedPosition
     ) > 0;
+  const newActivityCount = getCappedNewBuildActivityCount({
+    activities: allActivities,
+    lastViewedPosition: allLastViewedPosition
+  });
+  const mobileTriggerLabel =
+    getBuildActivityMobileTriggerLabel(newActivityCount);
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -200,6 +208,7 @@ export default function useActivityPanel({
     hasMore: Boolean(cursor),
     loading,
     loadingMore,
+    mobileTriggerLabel,
     onLoadMore: handleLoadMore,
     onRefresh: handleRefresh,
     onSubtabChange: handleSubtabChange,

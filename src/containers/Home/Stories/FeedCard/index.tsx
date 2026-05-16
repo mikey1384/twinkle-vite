@@ -502,8 +502,10 @@ export default function HomeFeedCard({
     contentType,
     secretHidden
   });
-  const rewardShown = isContentPanelRewardActionSupported(contentType);
-  const recommendShown = isHomeFeedRecommendActionSupported(contentType);
+  const rewardShown =
+    isContentPanelRewardActionSupported(contentType) && !secretHidden;
+  const recommendShown =
+    isHomeFeedRecommendActionSupported(contentType) && !secretHidden;
   const rewardDisableReason = getContentPanelRewardActionBlockedReason({
     actionsReady,
     contentType,

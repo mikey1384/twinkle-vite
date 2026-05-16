@@ -199,22 +199,40 @@ export const mobilePreviewStyles = `
         grid-template-columns: minmax(0, 1fr) minmax(7.2rem, 34%);
       }
       .home-feed-card__mini-profile-header {
-        grid-template-columns: 8.4rem minmax(0, 1fr);
-        gap: 0.75rem;
+        grid-template-columns: 6.9rem minmax(0, 1fr) minmax(9.4rem, 34%);
+        align-items: center;
+        gap: 0.65rem;
       }
       .home-feed-card__mini-profile-bio-panel {
-        grid-column: 1 / -1;
-        min-height: 3.2rem;
-        padding-left: 0;
-        padding-top: 0.5rem;
-        border-left: 0;
-        border-top: 1px solid ${Color.borderGray()};
+        grid-column: auto;
+        height: 100%;
+        min-height: 0;
+        padding-left: 0.65rem;
+        padding-top: 0;
+        border-left: 1px solid ${Color.borderGray()};
+        border-top: 0;
       }
       .home-feed-card__mini-profile-avatar {
-        width: 7.8rem;
+        width: 6.5rem;
       }
       .home-feed-card__mini-profile-details h4 {
-        font-size: 1.8rem;
+        font-size: 1.65rem;
+      }
+      .home-feed-card__mini-profile-title-row {
+        gap: 0.35rem;
+      }
+      .home-feed-card__mini-profile-bio {
+        gap: 0.32rem;
+        font-size: max(1.18rem, 11.8px);
+        line-height: 1.24;
+      }
+      .home-feed-card__mini-profile-bio > div {
+        grid-template-columns: 0.55rem minmax(0, 1fr);
+        gap: 0.32rem;
+      }
+      .home-feed-card__mini-profile-empty-bio {
+        font-size: max(1.18rem, 11.8px);
+        line-height: 1.24;
       }
       .home-feed-card__daily-goals-preview {
         grid-template-columns: 6.8rem minmax(0, 1fr);

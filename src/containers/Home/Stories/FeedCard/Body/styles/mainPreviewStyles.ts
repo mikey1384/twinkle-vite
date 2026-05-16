@@ -1040,6 +1040,7 @@ export const mainPreviewStyles = `
   .home-feed-card__ai-story-preview h3 {
     display: -webkit-box;
     margin: 0;
+    max-height: max(5.06rem, 50.6px);
     overflow: hidden;
     color: ${Color.black()};
     font-size: max(1.78rem, 17.8px);
@@ -1060,7 +1061,7 @@ export const mainPreviewStyles = `
     font-weight: 500;
     line-height: 1.44;
     text-overflow: ellipsis;
-    white-space: pre-line;
+    white-space: normal;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 4;
   }

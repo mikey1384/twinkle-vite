@@ -94,6 +94,7 @@ interface ActivityPanelProps {
   loading: boolean;
   loadingMore: boolean;
   hasNewActivity?: boolean;
+  mobileTriggerLabel?: string;
   onLoadMore: () => void;
   onMobileClose?: () => void;
   onMobileOpen?: () => void;
@@ -319,6 +320,7 @@ export default function ActivityPanel({
   hasNewActivity = false,
   loading,
   loadingMore,
+  mobileTriggerLabel = 'Build Activity',
   onLoadMore,
   onMobileClose,
   onMobileOpen,
@@ -341,7 +343,7 @@ export default function ActivityPanel({
             shiny={hasNewActivity}
             onClick={handleMobileOpen}
           >
-            Build Activity
+            {mobileTriggerLabel}
           </GameCTAButton>
         </div>
         {mobileOpen ? (

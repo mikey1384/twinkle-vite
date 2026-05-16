@@ -275,7 +275,7 @@ export function AudioWavePreview({ small = false }: { small?: boolean }) {
 
 export function getReadableAIStoryPreview(story: unknown) {
   if (typeof story !== 'string') return '';
-  const text = story.trim();
+  const text = story.trim().replace(/\s+/g, ' ');
   if (!text) return '';
 
   if (text.startsWith('[') || text.startsWith('{')) {

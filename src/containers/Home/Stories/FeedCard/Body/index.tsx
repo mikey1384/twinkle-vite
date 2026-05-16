@@ -136,6 +136,7 @@ export default function Body({
         contentType={contentType}
         normalizedRootType={normalizedRootType}
         resolvedRootObj={resolvedRootObj}
+        secretHidden={secretHidden}
         targetComment={targetComment}
         targetPanelClassName={targetPanelClassName}
         targetSubject={targetSubject}
