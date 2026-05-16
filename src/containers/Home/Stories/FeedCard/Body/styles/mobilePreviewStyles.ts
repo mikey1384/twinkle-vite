@@ -267,5 +267,8 @@ export const mobilePreviewStyles = `
       font-size: 1.9rem;
       line-height: 1.24;
     }
+    .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
+      min-height: max(2.36rem, 23.6px);
+    }
   }
 `;

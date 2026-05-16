@@ -492,15 +492,16 @@ export default function TargetPreview({
 
   function renderTargetSubjectPreview(target: any) {
     const attachmentPreview = renderTargetAttachmentPreview(target);
+    const hasReward = Number(target?.rewardLevel || 0) > 0;
     const uploaderName = getTargetUploaderName(target);
     return (
       <div
         className={`home-feed-card__target-content home-feed-card__target-subject${
           attachmentPreview ? ' has-media' : ''
-        }`}
+        }${hasReward ? ' has-reward' : ''}`}
       >
         <div className="home-feed-card__target-copy">
-          {Number(target?.rewardLevel || 0) > 0 ? (
+          {hasReward ? (
             <CompactEffortStrip
               rewardLevel={Number(target.rewardLevel)}
               className="home-feed-card__target-reward-bar"
@@ -513,16 +514,19 @@ export default function TargetPreview({
             </span>
           ) : null}
           {target?.description ? (
-            <RichText
-              contentId={Number(target.id || 0)}
-              contentType="subject"
-              isPreview
-              maxLines={2}
-              section="description"
-              theme={theme}
-            >
-              {target.description}
-            </RichText>
+            <div className="home-feed-card__target-subject-description-slot">
+              <RichText
+                className="home-feed-card__target-subject-description"
+                contentId={Number(target.id || 0)}
+                contentType="subject"
+                isPreview
+                maxLines={2}
+                section="description"
+                theme={theme}
+              >
+                {target.description}
+              </RichText>
+            </div>
           ) : null}
         </div>
         {attachmentPreview}

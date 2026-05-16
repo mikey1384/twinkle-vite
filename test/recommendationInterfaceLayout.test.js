@@ -33,27 +33,32 @@ assert.match(source, /row-gap: 0\.8rem;/);
 assert.doesNotMatch(source, /justify-content: space-between;/);
 assert.match(source, /animation: recommendationBorderGlow 1\.6s ease-out 1;/);
 assert.match(source, /@keyframes recommendationBorderGlow/);
-assert.match(source, /const recommendationTextGlowClass = css`/);
-assert.match(source, /animation: recommendationTextGlow 1\.6s ease-out 1;/);
-assert.match(source, /@keyframes recommendationTextGlow/);
+assert.doesNotMatch(source, /recommendationTextGlow/);
 assert.match(source, /const recommendationActionGlowClass = css`/);
 assert.match(source, /animation: recommendationActionGlow 1\.6s ease-out 1;/);
 assert.match(source, /@keyframes recommendationActionGlow/);
 assert.match(source, /className={recommendationPromptClass}/);
-assert.match(source, /<span className={recommendationTextGlowClass}>/);
+assert.doesNotMatch(source, /<span className={recommendationTextGlowClass}>/);
 assert.equal(
   source.match(/className={recommendationActionGlowClass}/g)?.length,
   2
 );
-assert.match(source, /color: #fff;/);
-assert.match(source, /color: var\(--recommendation-action-start-color\);/);
+assert.doesNotMatch(source, /color: #fff;/);
+assert.doesNotMatch(
+  source,
+  /^\s*color: var\(--recommendation-action-start-color\);/m
+);
+assert.match(source, /background-color: var\(--recommendation-action-start-bg\);/);
 assert.match(source, /border-color: var\(--recommendation-action-start-color\);/);
-assert.doesNotMatch(source, /background-color: var\(--recommendation-action/);
+assert.match(source, /box-shadow: 0 0 0 0\.18rem var\(--recommendation-action-start-bg\);/);
+assert.match(source, /'--recommendation-action-start-bg': glowColor/);
 assert.match(source, /color: Color\.darkBlue\(\)/);
 assert.match(source, /color: Color\.rose\(\)/);
+assert.match(source, /glowColor: Color\.darkBlue\(0\.1\)/);
+assert.match(source, /glowColor: Color\.rose\(0\.1\)/);
 assert.doesNotMatch(source, /softColor:/);
 assert.doesNotMatch(source, /color: \$\{Color\.darkGold\(\)\};/);
-assert.match(source, /color: \$\{Color\.logoBlue\(\)\};/);
+assert.doesNotMatch(source, /color: \$\{Color\.logoBlue\(\)\};/);
 assert.match(source, /border-color: \$\{Color\.darkGold\(0\.72\)\};/);
 assert.match(source, /border-color: \$\{Color\.logoBlue\(0\.58\)\};/);
 assert.match(source, /background-color: transparent;/);

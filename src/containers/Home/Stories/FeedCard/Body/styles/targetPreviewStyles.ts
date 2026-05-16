@@ -47,8 +47,11 @@ export const targetPreviewStyles = `
       padding: 0.65rem;
     }
     .home-feed-card__target-subject .home-feed-card__target-copy {
+      height: 100%;
+      min-height: 0;
       justify-content: flex-start;
       gap: 0.24rem;
+      overflow: hidden;
     }
     .home-feed-card__target-mission,
     .home-feed-card__target-achievement {
@@ -327,6 +330,13 @@ export const targetPreviewStyles = `
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
     }
+    .home-feed-card__target-subject .home-feed-card__target-reward-bar,
+    .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
+      flex: 0 0 auto;
+    }
+    .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
+      min-height: max(2.25rem, 22.5px);
+    }
     .home-feed-card__target-copy h4 span {
       margin-left: 0.38rem;
       color: ${Color.darkGray()};
@@ -344,6 +354,10 @@ export const targetPreviewStyles = `
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .home-feed-card__target-subject .home-feed-card__target-subject-meta {
+      flex: 0 1 auto;
+      min-height: 0;
+    }
     .home-feed-card__target-copy p {
       margin: 0;
       color: ${Color.darkGray()};
@@ -353,6 +367,18 @@ export const targetPreviewStyles = `
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
+    }
+    .home-feed-card__target-subject-description-slot {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .home-feed-card__target-subject-description-slot > * {
+      max-height: 100%;
+    }
+    .home-feed-card__target-subject.has-media.has-reward
+      .home-feed-card__target-subject-description {
+      -webkit-line-clamp: 1;
     }
     .home-feed-card__target-chip {
       display: inline-flex;

@@ -83,23 +83,6 @@ const recommendationPromptClass = css`
   }
 `;
 
-const recommendationTextGlowClass = css`
-  &,
-  & * {
-    animation: recommendationTextGlow 1.6s ease-out 1;
-  }
-
-  @keyframes recommendationTextGlow {
-    0% {
-      color: #fff;
-    }
-
-    45% {
-      color: ${Color.logoBlue()};
-    }
-  }
-`;
-
 const recommendationPromptLineClass = css`
   display: flex;
   align-items: center;
@@ -136,27 +119,37 @@ const recommendationActionGlowClass = css`
 
   @keyframes recommendationActionGlow {
     0% {
-      color: var(--recommendation-action-start-color);
-      background-color: transparent;
+      background-color: var(--recommendation-action-start-bg);
       border-color: var(--recommendation-action-start-color);
+      box-shadow: 0 0 0 0.18rem var(--recommendation-action-start-bg);
     }
 
     45% {
       background-color: transparent;
+      border-color: var(--recommendation-action-start-color);
+      box-shadow: 0 0 0 0.12rem transparent;
+    }
+
+    100% {
+      background-color: transparent;
+      box-shadow: none;
     }
   }
 `;
 
 function getRecommendationActionGlowStyle({
   color,
+  glowColor,
   style = {}
 }: {
   color: string;
+  glowColor: string;
   style?: React.CSSProperties;
 }) {
   return {
     ...style,
-    '--recommendation-action-start-color': color
+    '--recommendation-action-start-color': color,
+    '--recommendation-action-start-bg': glowColor
   } as React.CSSProperties;
 }
 
@@ -290,7 +283,7 @@ export default function RecommendationInterface({
         >
           <div className={recommendationPromptLineClass}>
             <div>
-              <span className={recommendationTextGlowClass}>
+              <span>
                 {isRecommendedByUser ? (
                   <>
                     <span style={{ color: Color.rose(), fontWeight: 'bold' }}>
@@ -334,7 +327,8 @@ export default function RecommendationInterface({
               color="darkBlue"
               variant="outline"
               style={getRecommendationActionGlowStyle({
-                color: Color.darkBlue()
+                color: Color.darkBlue(),
+                glowColor: Color.darkBlue(0.1)
               })}
             >
               {yesLabel}
@@ -344,6 +338,7 @@ export default function RecommendationInterface({
               onClick={onHide}
               style={getRecommendationActionGlowStyle({
                 color: Color.rose(),
+                glowColor: Color.rose(0.1),
                 style: { marginLeft: '0.7rem' }
               })}
               color="rose"

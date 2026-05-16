@@ -270,7 +270,6 @@ const PLAIN_TEXT_PREVIEW_LAYOUT = {
     desktop: 2,
     mobile: 3
   },
-  compactRawLengthFallback: 84,
   desktopLineHeightBonus: 2,
   mobileLineHeightBonus: 3,
   tallRawLength: 520
@@ -1092,6 +1091,15 @@ function getSubjectWithRootPanelSize(content: any): FeedCardSize {
 
 function getPlainSubjectPanelSize(content: any): FeedCardSize {
   const descriptionLength = getSubjectDescriptionTextLength(content);
+  const fitsCompactDescription =
+    getSubjectDescriptionPreviewLineCount({
+      axis: 'desktop',
+      content
+    }) <= getSubjectNonTallDescriptionMaxLines('compact') &&
+    getSubjectDescriptionPreviewLineCount({
+      axis: 'mobile',
+      content
+    }) <= getSubjectNonTallDescriptionMaxLines('compact');
   const secretLength = getPlainTextValueLength(content?.secretAnswer);
   const hasEffort = Number(content?.rewardLevel || 0) > 0;
 
@@ -1107,7 +1115,7 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
     return 'subject-tall';
   }
 
-  if (descriptionLength <= 180 && secretLength > 0) {
+  if (descriptionLength <= 180 && secretLength > 0 && fitsCompactDescription) {
     return getShortPublicSubjectSecretPanelSize(content);
   }
 
@@ -1115,7 +1123,12 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
     return 'subject-tall';
   }
 
-  if (!hasEffort && secretLength === 0 && descriptionLength <= 120) {
+  if (
+    !hasEffort &&
+    secretLength === 0 &&
+    descriptionLength <= 120 &&
+    fitsCompactDescription
+  ) {
     return 'compact';
   }
 
@@ -1331,7 +1344,6 @@ function estimatePreviewLineCount({
   const lineCount = text
     .split(/\r?\n/)
     .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
     .reduce((count, line) => {
       return count + Math.max(1, Math.ceil(line.length / charsPerLine));
     }, 0);
@@ -1608,6 +1620,20 @@ function getSubjectSecretAnswerMaxLines({
   });
 }
 
+function getSubjectDescriptionPreviewLineCount({
+  axis,
+  content
+}: {
+  axis: FeedCardLayoutAxis;
+  content: any;
+}) {
+  return estimatePreviewLineCount({
+    charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine[axis],
+    maxLines: Number.MAX_SAFE_INTEGER,
+    value: content?.description || content?.content || ''
+  });
+}
+
 function getPlainTextLength(content: any) {
   return getPlainTextValue(content).length;
 }
@@ -1641,10 +1667,6 @@ function isCompactPlainTextPreview(content: any) {
   if (content?.title || content?.filePath) return false;
 
   const text = getPlainTextValue(content);
-  if (text.length <= PLAIN_TEXT_PREVIEW_LAYOUT.compactRawLengthFallback) {
-    return true;
-  }
-
   return (
     estimatePreviewLineCount({
       charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine.desktop,

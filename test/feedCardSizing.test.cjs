@@ -43,6 +43,20 @@ test('uses compact bucket for short plain comments', () => {
   );
 });
 
+test('counts blank line breaks before compacting plain comments', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: 'first line\n\n\nsecond line'
+    },
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'standard');
+  assert.equal(sizing.main.textMaxLines, 7);
+  assert.equal(sizing.main.mobileTextMaxLines, 8);
+});
+
 test('uses compact body space for visually short comments with target previews', () => {
   const sizing = getFeedCardSizing({
     content: {
@@ -310,6 +324,38 @@ test('uses compact space for short plain subject descriptions', () => {
     }),
     {
       descriptionMaxLines: 2,
+      secretMaxLines: 0
+    }
+  );
+});
+
+test('counts blank line breaks before compacting subject descriptions', () => {
+  const content = {
+    contentType: 'subject',
+    description: 'first line\n\n\nsecond line',
+    title: 'Short prompt'
+  };
+  const sizing = getFeedCardSizing({
+    content,
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'standard');
+  assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
+  assert.deepEqual(
+    getSubjectPreviewLineLimits({
+      axis: 'mobile',
+      content,
+      hasDescriptionText: true,
+      hasEffort: false,
+      hasSecretAnswer: false,
+      hasSecretAnswerText: false,
+      hasSecretAttachment: false,
+      hasTitle: true,
+      size: sizing.main.size
+    }),
+    {
+      descriptionMaxLines: 5,
       secretMaxLines: 0
     }
   );
@@ -922,6 +968,104 @@ test('standardizes mobile subject title typography across feed card subject vari
   assert.ok(
     getCssBlock(targetPreviewStylesSource, '.home-feed-card__target-copy h4')
   );
+});
+
+test('protects crowded target-subject titles before lower-priority preview rows', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: 'it had no four and had two 9, so I fixed it ^^'
+    },
+    targetObj: {
+      subject: {
+        description: "Skystar's Anime Picture Shop\n\nJoin my group plz!",
+        filePath: '/attachments/shop.png',
+        id: 44,
+        rewardLevel: 2,
+        title: "Skystar's Anime Picture Shop",
+        uploader: { username: 'Skystar' }
+      }
+    },
+    userId: 1
+  });
+  const targetPreviewSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/TargetPreview.tsx'
+    ),
+    'utf8'
+  );
+  const targetStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/targetPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const targetSubjectCopyBlock = getCssBlock(
+    targetStylesSource,
+    '.home-feed-card__target-subject .home-feed-card__target-copy'
+  );
+  const protectedTitleRule = targetStylesSource.match(
+    /\.home-feed-card__target-subject \.home-feed-card__target-reward-bar,\s+\.home-feed-card__target-subject \.home-feed-card__target-copy > h4 \{([\s\S]*?)\n\s+\}/
+  );
+  const targetTitleMinHeightRule = targetStylesSource.match(
+    /\.home-feed-card__target-subject \.home-feed-card__target-copy > h4 \{[\s\S]*?min-height: max\(2\.25rem, 22\.5px\);[\s\S]*?\n\s+\}/
+  );
+  const metadataBlock = getCssBlock(
+    targetStylesSource,
+    '.home-feed-card__target-subject .home-feed-card__target-subject-meta'
+  );
+  const descriptionSlotBlock = getCssBlock(
+    targetStylesSource,
+    '.home-feed-card__target-subject-description-slot'
+  );
+  const crowdedDescriptionRule = targetStylesSource.match(
+    /\.home-feed-card__target-subject\.has-media\.has-reward\s+\.home-feed-card__target-subject-description \{([\s\S]*?)\n\s+\}/
+  );
+  const mobileTitleMinHeightRule = mobileStylesSource.match(
+    /\.home-feed-card__target-subject \.home-feed-card__target-copy > h4 \{[\s\S]*?min-height: max\(2\.36rem, 23\.6px\);[\s\S]*?\n\s+\}/
+  );
+
+  assert.equal(sizing.target?.size, 'standard');
+  assert.match(
+    sizing.target?.className || '',
+    /home-feed-card__target-preview--size-standard/
+  );
+  assert.match(
+    targetPreviewSource,
+    /const hasReward = Number\(target\?\.rewardLevel \|\| 0\) > 0;/
+  );
+  assert.match(targetPreviewSource, /\$\{hasReward \? ' has-reward' : ''\}/);
+  assert.match(
+    targetPreviewSource,
+    /className="home-feed-card__target-subject-description-slot"/
+  );
+  assert.match(
+    targetPreviewSource,
+    /className="home-feed-card__target-subject-description"/
+  );
+  assert.match(targetSubjectCopyBlock, /height: 100%;/);
+  assert.match(targetSubjectCopyBlock, /min-height: 0;/);
+  assert.match(targetSubjectCopyBlock, /overflow: hidden;/);
+  assert.ok(protectedTitleRule);
+  assert.match(protectedTitleRule[1], /flex: 0 0 auto;/);
+  assert.ok(targetTitleMinHeightRule);
+  assert.match(metadataBlock, /flex: 0 1 auto;/);
+  assert.match(metadataBlock, /min-height: 0;/);
+  assert.match(descriptionSlotBlock, /flex: 1 1 auto;/);
+  assert.match(descriptionSlotBlock, /min-height: 0;/);
+  assert.match(descriptionSlotBlock, /overflow: hidden;/);
+  assert.ok(crowdedDescriptionRule);
+  assert.match(crowdedDescriptionRule[1], /-webkit-line-clamp: 1;/);
+  assert.ok(mobileTitleMinHeightRule);
 });
 
 test('uses compact rich embed bucket for sparse internal RichText embeds', () => {

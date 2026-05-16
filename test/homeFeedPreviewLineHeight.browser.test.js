@@ -57,6 +57,18 @@ test('Home feed preview RichText computes the standard card line-height in a bro
       .rich-text-root {
         line-height: 1.7;
       }
+      .line-clamp-richtext {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        font-size: 20px;
+        line-height: 1.36;
+        overflow: hidden;
+        width: 420px;
+      }
+      .line-clamp-richtext > p {
+        display: inline;
+        margin: 0;
+      }
     </style>
   </head>
   <body>
@@ -108,6 +120,11 @@ test('Home feed preview RichText computes the standard card line-height in a bro
         width: 240px;
       "
     >one<br>two<br>three<br>four<br>five<br>six<br>seven<br>eight<br>nine<br>ten<br>eleven<br>twelve</div>
+    <div
+      id="blank-break-clamp"
+      class="line-clamp-richtext"
+      style="-webkit-line-clamp: 3;"
+    ><p>one<br><br>two<br>three</p></div>
   </body>
 </html>
 `,
@@ -156,6 +173,7 @@ test('Home feed preview RichText computes the standard card line-height in a bro
       };
     }
     return {
+      blankBreakClamp: inspect('blank-break-clamp'),
       clamp: inspect('mobile-clamp'),
       control: inspect('control'),
       desktopClamp: inspect('desktop-clamp'),
@@ -178,6 +196,13 @@ test('Home feed preview RichText computes the standard card line-height in a bro
   assert.ok(
     Math.abs(computed.clamp.height - 11 * computed.clamp.lineHeight) < 1,
     `Expected 11 clamped mobile lines, received ${computed.clamp.height}`
+  );
+  assert.equal(computed.blankBreakClamp.lineHeight, 27.2);
+  assert.ok(
+    Math.abs(
+      computed.blankBreakClamp.height - 3 * computed.blankBreakClamp.lineHeight
+    ) < 1,
+    `Expected blank line breaks to count as 3 clamped lines, received ${computed.blankBreakClamp.height}`
   );
 });
 
