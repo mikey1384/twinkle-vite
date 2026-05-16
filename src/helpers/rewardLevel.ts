@@ -62,6 +62,19 @@ export function resolveSubjectRewardLevel({
   });
 }
 
+export function resolveDirectSubjectRewardLevel({
+  rootRewardLevel,
+  subject
+}: {
+  rootRewardLevel?: number | string | null;
+  subject?: RewardLevelContent | null;
+}) {
+  if (Number(subject?.byUser || 0) > 0) {
+    return 5;
+  }
+  return normalizeRewardLevel(rootRewardLevel) > 0 ? 1 : 0;
+}
+
 export function resolveContentRewardLevel({
   content,
   rootObj,
@@ -83,10 +96,8 @@ export function resolveContentRewardLevel({
   const targetSubject = subject || content?.targetObj?.subject || null;
 
   if (content?.contentType === 'subject') {
-    return resolveSubjectRewardLevel({
-      rootId,
+    return resolveDirectSubjectRewardLevel({
       rootRewardLevel,
-      rootType,
       subject: content
     });
   }

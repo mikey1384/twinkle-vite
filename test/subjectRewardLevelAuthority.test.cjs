@@ -11,84 +11,79 @@ const rewardLevelModule = loadTypeScriptModule(
 const {
   resolveCommentRewardLevel,
   resolveContentRewardLevel,
+  resolveDirectSubjectRewardLevel,
   resolveSubjectRewardLevel
 } = rewardLevelModule.exports;
 
 const twinkleXpValue = 200;
 
-test('direct level-5 subject resolves to the 50 Twinkle / 10,000 XP cap', () => {
-  const rewardLevel = resolveSubjectRewardLevel({
-    rootId: 10,
-    rootRewardLevel: 1,
-    rootType: 'video',
-    subject: { id: 7, rewardLevel: 5 }
+test('direct level-2 subject keeps the old standalone subject cap', () => {
+  const rewardLevel = resolveDirectSubjectRewardLevel({
+    rootRewardLevel: 0,
+    subject: { byUser: false, id: 7, rewardLevel: 2 }
   });
   const cap = rewardLevelToTwinkleCap(rewardLevel);
 
-  assert.equal(rewardLevel, 5);
-  assert.equal(cap, 50);
-  assert.equal(cap * twinkleXpValue, 10_000);
+  assert.equal(rewardLevel, 0);
+  assert.equal(cap, 5);
+  assert.equal(cap * twinkleXpValue, 1_000);
 });
 
-test('stored subject reward level wins over by-user and root fallbacks', () => {
+test('direct level-2 subject under a rewarded root keeps the old root fallback cap', () => {
   assert.equal(
-    resolveSubjectRewardLevel({
-      rootId: 10,
+    resolveDirectSubjectRewardLevel({
       rootRewardLevel: 5,
-      rootType: 'video',
-      subject: { byUser: true, id: 7, rewardLevel: 4 }
+      subject: { byUser: false, id: 7, rewardLevel: 2 }
     }),
-    4
+    1
   );
 });
 
-test('feed and embedded subject surfaces use the subject level before the root', () => {
+test('subject response reward level still uses the stored subject level', () => {
+  assert.equal(
+    resolveSubjectRewardLevel({
+      rootId: 10,
+      rootRewardLevel: 1,
+      rootType: 'video',
+      subject: { byUser: false, id: 7, rewardLevel: 2 }
+    }),
+    2
+  );
+});
+
+test('direct subject content surfaces ignore stored subject level for caps', () => {
   assert.equal(
     resolveContentRewardLevel({
       content: {
         contentType: 'subject',
         id: 7,
-        rewardLevel: 5,
+        rewardLevel: 2,
         rootId: 10,
         rootType: 'video'
       },
-      rootObj: { contentType: 'video', id: 10, rewardLevel: 1 }
+      rootObj: { contentType: 'video', id: 10, rewardLevel: 0 }
     }),
-    5
-  );
-  assert.equal(
-    resolveContentRewardLevel({
-      content: {
-        contentType: 'comment',
-        rootId: 10,
-        rootType: 'video',
-        targetObj: {
-          subject: { id: 7, rewardLevel: 5 }
-        }
-      },
-      rootObj: { contentType: 'video', id: 10, rewardLevel: 1 }
-    }),
-    5
+    0
   );
 });
 
-test('comments and replies attached to subjects use the subject level', () => {
+test('comments and replies attached to a level-2 subject use level 2', () => {
   const rewardLevel = resolveCommentRewardLevel({
     parent: { contentId: 10, contentType: 'url', rewardLevel: 0 },
     rootContent: { contentType: 'url', id: 10 },
-    subject: { id: 7, rewardLevel: 5 }
+    subject: { id: 7, rewardLevel: 2 }
   });
   const cap = rewardLevelToTwinkleCap(rewardLevel);
 
-  assert.equal(rewardLevel, 5);
-  assert.equal(cap, 50);
-  assert.equal(cap * twinkleXpValue, 10_000);
+  assert.equal(rewardLevel, 2);
+  assert.equal(cap, 20);
+  assert.equal(cap * twinkleXpValue, 4_000);
 });
 
 test('subject reward surfaces are wired to the shared resolver', () => {
   assertSourceIncludes(
     '../src/components/Subjects/SubjectPanel.tsx',
-    /resolveSubjectRewardLevel/
+    /resolveDirectSubjectRewardLevel/
   );
   assertSourceIncludes(
     '../src/components/ContentPanel/Body/index.tsx',
@@ -107,6 +102,13 @@ test('subject reward surfaces are wired to the shared resolver', () => {
   ]) {
     assertSourceIncludes(sourcePath, /resolveCommentRewardLevel/);
   }
+});
+
+test('home feed subject effort display still uses stored subject reward level', () => {
+  assertSourceIncludes(
+    '../src/containers/Home/Stories/FeedCard/Body/index.tsx',
+    /<CompactEffortStrip rewardLevel=\{Number\(content\.rewardLevel\)\} \/>/
+  );
 });
 
 function rewardLevelToTwinkleCap(rewardLevel) {
