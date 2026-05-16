@@ -37,7 +37,7 @@ export const mobilePreviewStyles = `
       height: max(11rem, 110px);
     }
     .home-feed-card__panel-preview--build {
-      height: max(17rem, 170px);
+      height: max(14rem, 140px);
     }
     .home-feed-card__panel-preview--text-compact {
       height: max(10rem, 100px);
@@ -67,13 +67,15 @@ export const mobilePreviewStyles = `
     }
     .home-feed-card__ai-story-preview--has-image h3 {
       font-size: max(1.5rem, 15px);
+      max-height: 2.84em;
     }
     .home-feed-card__ai-story-preview--has-image .home-feed-card__ai-story-story {
       font-size: max(1.22rem, 12.2px);
       line-height: 1.35;
+      max-height: 4.05em;
     }
     .home-feed-card__panel-preview--size-build {
-      height: max(17rem, 170px);
+      height: max(14rem, 140px);
     }
     .home-feed-card__panel-preview--size-compact {
       height: max(10rem, 100px);
@@ -156,6 +158,15 @@ export const mobilePreviewStyles = `
       border-right: 0;
       border-radius: 0;
     }
+      .home-feed-card__text-copy
+        > div.home-feed-card__primary-preview-text,
+      .home-feed-card__subject-description,
+      .home-feed-card__rich-embed-copy
+        > div.home-feed-card__primary-preview-text,
+      .home-feed-card__system-prompt-box
+        > div.home-feed-card__primary-preview-text {
+        line-height: 1.36;
+      }
       .home-feed-card__panel-preview--profile-panel {
         height: max(23rem, 230px);
       }

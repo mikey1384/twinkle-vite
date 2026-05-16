@@ -128,10 +128,61 @@ test('reserves reply preview height outside build app body slots', () => {
   assert.equal(sizing.main.size, 'build');
   assert.equal(sizing.card.hasCommentPreview, true);
   assert.equal(sizing.card.bodyHeight, 'max(18rem, 180px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(17rem, 170px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(14rem, 140px)');
   assert.equal(sizing.card.mobileCommentPreviewHeight, 'max(7.05rem, 70.5px)');
   assert.equal(sizing.card.desktopHeight, 'calc(max(38.15rem, 381.5px) + 2px)');
-  assert.equal(sizing.card.mobileHeight, 'calc(max(36.8rem, 368px) + 2px)');
+  assert.equal(sizing.card.mobileHeight, 'calc(max(33.8rem, 338px) + 2px)');
+});
+
+test('keeps mobile build app thumbnails close to square without changing desktop', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'build',
+      thumbnailUrl: '/builds/draw.png',
+      title: 'draw'
+    },
+    userId: 1
+  });
+  const noThumbnailSizing = getFeedCardSizing({
+    content: {
+      contentType: 'build',
+      title: 'draw'
+    },
+    userId: 1
+  });
+  const mainStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const mobileBuildSizeBlock = getCssBlock(
+    mobileStylesSource,
+    '.home-feed-card__panel-preview--size-build'
+  );
+
+  assert.equal(sizing.main.size, 'build');
+  assert.equal(sizing.card.bodyHeight, 'max(18rem, 180px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(14rem, 140px)');
+  assert.equal(noThumbnailSizing.main.size, 'build');
+  assert.equal(noThumbnailSizing.card.mobileBodyHeight, 'max(14rem, 140px)');
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__build-preview--no-thumb \{\n\s+grid-template-columns: 1fr;/
+  );
+  assert.match(
+    mobileStylesSource,
+    /\.home-feed-card__build-preview,\n\s+\.home-feed-card__url-preview \{\n\s+grid-template-columns: minmax\(0, 1fr\) minmax\(8\.5rem, 34%\);/
+  );
+  assert.match(mobileBuildSizeBlock, /height: max\(14rem, 140px\);/);
 });
 
 test('separates subject buckets by available content', () => {
@@ -599,6 +650,13 @@ test('keeps subject description styling separate from secret styling', () => {
     ),
     'utf8'
   );
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
   const rootDescriptionBlock = stylesSource.match(
     /\.home-feed-card__subject-preview--with-root \.home-feed-card__subject-description \{([\s\S]*?)\n  \}/
   )?.[1];
@@ -611,6 +669,14 @@ test('keeps subject description styling separate from secret styling', () => {
   assert.match(
     stylesSource,
     /\.home-feed-card__subject-description \{[\s\S]*font-family: inherit;[\s\S]*font-size: inherit;/
+  );
+  assert.match(
+    stylesSource,
+    /\.home-feed-card__reflection-answer \{[\s\S]*line-height: 1\.36;/
+  );
+  assert.match(
+    mobileStylesSource,
+    /\.home-feed-card__subject-description,[\s\S]*line-height: 1\.36;/
   );
   assert.doesNotMatch(stylesSource, /font-size: max\(1\.28rem, 12\.8px\)/);
   assert.match(stylesSource, /\.home-feed-card__subject-secret-answer \{/);
@@ -1286,6 +1352,10 @@ test('clamps AI Story home preview text deterministically on mobile and desktop'
     mobileStylesSource,
     '.home-feed-card__ai-story-story'
   );
+  const mobileImageTitleBlock = getCssBlock(
+    mobileStylesSource,
+    '.home-feed-card__ai-story-preview--has-image h3'
+  );
   const mobileImageStoryBlock = getCssBlock(
     mobileStylesSource,
     '.home-feed-card__ai-story-preview--has-image .home-feed-card__ai-story-story'
@@ -1317,8 +1387,10 @@ test('clamps AI Story home preview text deterministically on mobile and desktop'
   assert.match(imageStoryBlock, /-webkit-line-clamp: 3;/);
   assert.match(mobileStoryBlock, /max-height: max\(7\.17rem, 71\.7px\);/);
   assert.match(mobileStoryBlock, /-webkit-line-clamp: 3;/);
+  assert.match(mobileImageTitleBlock, /max-height: 2\.84em;/);
   assert.match(mobileImageStoryBlock, /font-size: max\(1\.22rem, 12\.2px\);/);
   assert.match(mobileImageStoryBlock, /line-height: 1\.35;/);
+  assert.match(mobileImageStoryBlock, /max-height: 4\.05em;/);
 });
 
 test('keeps AI Story listening cards out of story text clamps', () => {
@@ -1359,6 +1431,20 @@ test('keeps AI Story listening cards out of story text clamps', () => {
 });
 
 test('keeps sibling media-like content in bounded feed buckets', () => {
+  const aiStorySizing = getFeedCardSizing({
+    content: {
+      contentType: 'aiStory',
+      imagePath: '/ai-story/preview.png',
+      story: 'A short generated story preview.',
+      title: 'Generated story'
+    },
+    userId: 1
+  });
+
+  assert.equal(aiStorySizing.main.size, 'ai-story-reading');
+  assert.equal(aiStorySizing.card.bodyHeight, 'max(20rem, 200px)');
+  assert.equal(aiStorySizing.card.mobileBodyHeight, 'max(19rem, 190px)');
+
   for (const contentType of ['sharedTopic', 'url', 'video']) {
     const sizing = getFeedCardSizing({
       content: {

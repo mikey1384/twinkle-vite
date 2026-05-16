@@ -8,6 +8,7 @@ function readSource(path) {
 const aiCardsSource = readSource(
   'src/containers/Chat/Body/Collect/AICards/index.tsx'
 );
+const aiEnergyCardSource = readSource('src/components/AiEnergyCard.tsx');
 const chatMainSource = readSource('src/containers/Chat/Main.tsx');
 const globalStylesSource = readSource('src/styles.css');
 
@@ -47,6 +48,45 @@ assert.match(aiCardsSource, /energyDepleted=\{energyDepleted\}/);
 assert.match(
   aiCardsSource,
   /energyLoading=\{aiUsagePolicyLoading && !aiUsagePolicy\}/
+);
+
+const inlineRowClassMatch = aiEnergyCardSource.match(
+  /const inlineRowCls = css`([\s\S]*?)`;/
+);
+assert.ok(
+  inlineRowClassMatch,
+  'Expected a named inline AI energy row style.'
+);
+assert.match(inlineRowClassMatch[1], /position: relative;/);
+assert.match(inlineRowClassMatch[1], /min-height: 2rem;/);
+
+const inlineChargeSlotClassMatch = aiEnergyCardSource.match(
+  /const inlineChargeSlotCls = css`([\s\S]*?)`;/
+);
+assert.ok(
+  inlineChargeSlotClassMatch,
+  'Expected an absolute inline charge slot style.'
+);
+assert.match(inlineChargeSlotClassMatch[1], /position: absolute;/);
+assert.match(inlineChargeSlotClassMatch[1], /top: 50%;/);
+assert.match(inlineChargeSlotClassMatch[1], /transform: translateY\(-50%\);/);
+
+const inlineMeterWrapWithChargeClassMatch = aiEnergyCardSource.match(
+  /const inlineMeterWrapWithChargeCls = css`([\s\S]*?)`;/
+);
+assert.ok(
+  inlineMeterWrapWithChargeClassMatch,
+  'Expected a reserved meter offset when inline charge is visible.'
+);
+assert.match(inlineMeterWrapWithChargeClassMatch[1], /margin-left: 8\.9rem;/);
+assert.match(inlineMeterWrapWithChargeClassMatch[1], /min-width: 0;/);
+assert.match(
+  aiEnergyCardSource,
+  /<div className=\{inlineChargeSlotCls\}>\s*<GameCTAButton/
+);
+assert.match(
+  aiEnergyCardSource,
+  /chargeCtaType \? inlineMeterWrapWithChargeCls : ''/
 );
 
 assert.match(

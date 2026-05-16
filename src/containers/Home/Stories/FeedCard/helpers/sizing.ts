@@ -135,7 +135,7 @@ const PANEL_HEIGHT_REM: Record<
   'attachment-only': { desktop: 12, mobile: 11 },
   'ai-story-listening': { desktop: 18, mobile: 17 },
   'ai-story-reading': { desktop: 20, mobile: 19 },
-  build: { desktop: 18, mobile: 17 },
+  build: { desktop: 18, mobile: 14 },
   compact: { desktop: 11, mobile: 10 },
   fallback: { desktop: 20, mobile: 19 },
   media: { desktop: 22, mobile: 20 },

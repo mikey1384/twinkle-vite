@@ -263,16 +263,17 @@ export default function AiEnergyCard({
         {isInline ? (
           <div className={inlineRowCls}>
             {chargeCtaType ? (
-              <GameCTAButton
-                icon="bolt"
-                variant={chargeCtaType === 'free' ? 'gold' : 'orange'}
-                size="sm"
-                shiny={chargeButtonShiny}
-                onClick={handleOpenDashboard}
-                style={{ flexShrink: 0 }}
-              >
-                Charge
-              </GameCTAButton>
+              <div className={inlineChargeSlotCls}>
+                <GameCTAButton
+                  icon="bolt"
+                  variant={chargeCtaType === 'free' ? 'gold' : 'orange'}
+                  size="sm"
+                  shiny={chargeButtonShiny}
+                  onClick={handleOpenDashboard}
+                >
+                  Charge
+                </GameCTAButton>
+              </div>
             ) : (
               <button
                 type="button"
@@ -286,7 +287,11 @@ export default function AiEnergyCard({
                 )}
               </button>
             )}
-            <div className={inlineMeterWrapCls}>
+            <div
+              className={`${inlineMeterWrapCls} ${
+                chargeCtaType ? inlineMeterWrapWithChargeCls : ''
+              }`}
+            >
               {meter}
               <span className={inlinePercentCls}>{percent}%</span>
             </div>
@@ -445,8 +450,19 @@ const inlineRowCls = css`
   display: flex;
   align-items: center;
   gap: 0.65rem;
+  position: relative;
   width: 100%;
   min-height: 2rem;
+`;
+
+const inlineChargeSlotCls = css`
+  position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  transform: translateY(-50%);
 `;
 
 const inlineTitleCls = css`
@@ -497,6 +513,11 @@ const inlineMeterWrapCls = css`
   align-items: center;
   flex: 1 1 auto;
   min-width: 8rem;
+`;
+
+const inlineMeterWrapWithChargeCls = css`
+  margin-left: 8.9rem;
+  min-width: 0;
 `;
 
 const inlinePercentCls = css`
