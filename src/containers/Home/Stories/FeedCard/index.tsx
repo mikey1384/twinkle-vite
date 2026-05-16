@@ -446,12 +446,6 @@ export default function HomeFeedCard({
       }),
     [appliedContent.rootType, contentId, contentType]
   );
-  const likesCount = Number(
-    appliedContent.likes?.length || appliedContent.numLikes || 0
-  );
-  const rewardsCount = Number(
-    appliedContent.rewards?.length || appliedContent.numRewards || 0
-  );
   const likes = Array.isArray(appliedContent.likes) ? appliedContent.likes : [];
   const rewards = Array.isArray(appliedContent.rewards)
     ? appliedContent.rewards
@@ -459,6 +453,13 @@ export default function HomeFeedCard({
   const recommendations = Array.isArray(appliedContent.recommendations)
     ? appliedContent.recommendations
     : [];
+  const likesCount = Number(
+    appliedContent.likes?.length || appliedContent.numLikes || 0
+  );
+  const rewardsCount = getHomeFeedRewardsCount({
+    fallbackCount: appliedContent.numRewards,
+    rewards
+  });
   const recommendationsCount = Number(
     recommendations.length || appliedContent.numRecommendations || 0
   );
@@ -1073,6 +1074,25 @@ function getHomeFeedPreviewCommentCount(content: any) {
   if (count > 0) return count;
 
   return Array.isArray(content?.comments) ? content.comments.length : 0;
+}
+
+function getHomeFeedRewardsCount({
+  fallbackCount,
+  rewards
+}: {
+  fallbackCount?: number | string | null;
+  rewards: any[];
+}) {
+  if (!Array.isArray(rewards) || rewards.length === 0) {
+    return Number(fallbackCount || 0);
+  }
+
+  const totalRewardAmount = rewards.reduce((total, reward) => {
+    const rewardAmount = Number(reward?.rewardAmount);
+    return total + (Number.isFinite(rewardAmount) ? rewardAmount : 0);
+  }, 0);
+
+  return Number(totalRewardAmount || fallbackCount || rewards.length || 0);
 }
 
 function getHomeFeedSecretHidden({
