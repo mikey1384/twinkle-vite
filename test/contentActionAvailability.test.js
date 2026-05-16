@@ -28,6 +28,7 @@ const feedActionStateSource = readSource(
 const contentPanelBodySource = readSource(
   'src/components/ContentPanel/Body/index.tsx'
 );
+const contentPanelSource = readSource('src/components/ContentPanel/index.tsx');
 const bottomInterfaceSource = readSource(
   'src/components/ContentPanel/Body/BottomInterface.tsx'
 );
@@ -201,6 +202,8 @@ assert.doesNotMatch(
   contentPanelBodySource,
   /intent\.action === 'comment'[\s\S]{0,220}!disableReason/
 );
+assert.match(contentPanelSource, /targetObj\?\.comment\?\.notFound/);
+assert.doesNotMatch(contentPanelSource, /targetObj\?\.comment\.notFound/);
 
 assert.match(bottomInterfaceSource, /getContentPanelCommentActionLabel/);
 assert.match(bottomInterfaceSource, /getContentPanelRewardActionBlockedReason/);
@@ -271,6 +274,19 @@ assert.match(
 assert.match(
   scrollAnchorCoordinatorSource,
   /export function suppressScrollAnchorRestores/
+);
+assert.match(
+  scrollAnchorCoordinatorSource,
+  /export function cancelScrollAnchorRestores/
+);
+assert.match(
+  scrollAnchorRestorationSource,
+  /addScrollAnchorRestoreCancelListener/
+);
+assert.match(mainNavSource, /cancelScrollAnchorRestores\(\)/);
+assert.match(
+  mainNavSource,
+  /suppressScrollAnchorSaves\(sameRouteNavScrollSaveSuppressionMs\)/
 );
 assert.doesNotMatch(mainNavSource, /suppressScrollAnchorRestores\(\)/);
 assert.match(contentPageSource, /getMatchingHomeFeedNavigationState/);

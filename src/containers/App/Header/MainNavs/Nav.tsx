@@ -15,11 +15,19 @@ import {
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
+import {
+  cancelScrollAnchorRestores,
+  suppressScrollAnchorSaves
+} from '~/helpers/scrollAnchorRestorationCoordinator';
+
+const sameRouteNavScrollSaveSuppressionMs = 250;
 
 function scrollCurrentPageToTop() {
   const appElement = document.getElementById('App');
   const bodyRef = document.scrollingElement || document.documentElement;
 
+  cancelScrollAnchorRestores();
+  suppressScrollAnchorSaves(sameRouteNavScrollSaveSuppressionMs);
   setScrollSurfaceTop(appElement);
   setScrollSurfaceTop(bodyRef);
   window.dispatchEvent(new Event('scroll'));

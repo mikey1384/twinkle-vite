@@ -1,7 +1,22 @@
 const defaultSuppressionDurationMs = 1200;
+const scrollAnchorRestoreCancelEventName =
+  'twinkle-scroll-anchor-restore-cancel';
 
 let scrollAnchorSaveSuppressedUntil = 0;
 let scrollAnchorRestoreSuppressedUntil = 0;
+
+export function cancelScrollAnchorRestores() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(scrollAnchorRestoreCancelEventName));
+}
+
+export function addScrollAnchorRestoreCancelListener(listener: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  const eventListener = () => listener();
+  window.addEventListener(scrollAnchorRestoreCancelEventName, eventListener);
+  return () =>
+    window.removeEventListener(scrollAnchorRestoreCancelEventName, eventListener);
+}
 
 export function suppressScrollAnchorSaves(
   durationMs = defaultSuppressionDurationMs

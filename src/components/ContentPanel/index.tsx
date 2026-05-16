@@ -422,7 +422,7 @@ export default function ContentPanel({
                         contentObj={contentState}
                         action={
                           commentId
-                            ? targetObj?.comment.notFound
+                            ? targetObj?.comment?.notFound
                               ? `replied${
                                   appliedRootType && appliedRootType !== 'user'
                                     ? ' on'

@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import {
+  addScrollAnchorRestoreCancelListener,
   suppressScrollAnchorSaves,
   scrollAnchorRestoresAreSuppressed,
   scrollAnchorSavesAreSuppressed
@@ -87,6 +88,8 @@ export function useScrollAnchorRestoration({
     window.addEventListener('keydown', handleKeyDown, {
       capture: true
     });
+    const removeRestoreCancelListener =
+      addScrollAnchorRestoreCancelListener(markUserScrollInput);
 
     return () => {
       window.removeEventListener('wheel', markUserScrollInput, {
@@ -98,6 +101,7 @@ export function useScrollAnchorRestoration({
       window.removeEventListener('keydown', handleKeyDown, {
         capture: true
       });
+      removeRestoreCancelListener();
     };
   }, [anchorKey]);
 
@@ -168,6 +172,7 @@ export function useScrollAnchorRestoration({
     let mutationObserver: MutationObserver | null = null;
     let restoreCancelled = false;
     let cancelListenersAttached = false;
+    let removeRestoreCancelSignalListener: (() => void) | null = null;
 
     function restore() {
       if (restoreCancelled) return;
@@ -235,6 +240,8 @@ export function useScrollAnchorRestoration({
       window.addEventListener('keydown', handleRestoreKeyDown, {
         capture: true
       });
+      removeRestoreCancelSignalListener =
+        addScrollAnchorRestoreCancelListener(cancelPendingRestore);
     }
 
     function removeRestoreCancelListeners() {
@@ -249,6 +256,8 @@ export function useScrollAnchorRestoration({
       window.removeEventListener('keydown', handleRestoreKeyDown, {
         capture: true
       });
+      removeRestoreCancelSignalListener?.();
+      removeRestoreCancelSignalListener = null;
     }
 
     function handleUserScrollInput() {

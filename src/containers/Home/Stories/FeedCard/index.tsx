@@ -49,6 +49,7 @@ const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
 const HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX = 10;
 const HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX = 2;
 const homeFeedCardSizingCache = new Map<string, FeedCardSizing>();
+const homeFeedContentHydrationRequests = new Set<string>();
 
 export default function HomeFeedCard({
   feed,
@@ -249,7 +250,11 @@ export default function HomeFeedCard({
   });
   const contentShown = useMemo(() => inView || isVisible, [inView, isVisible]);
   const shouldHydrate =
-    contentShown && contentId > 0 && contentType && !contentState.loaded;
+    contentId > 0 && Boolean(contentType) && !contentState.loaded;
+  const hydrationRequestKey = getHomeFeedContentHydrationKey(
+    contentType,
+    contentId
+  );
   const commentsCount = getHomeFeedPreviewCommentCount(appliedContent);
   const shouldLoadPreviewComment =
     contentShown &&
@@ -279,7 +284,9 @@ export default function HomeFeedCard({
 
   useEffect(() => {
     if (!shouldHydrate || loadingRef.current) return;
+    if (homeFeedContentHydrationRequests.has(hydrationRequestKey)) return;
     loadingRef.current = true;
+    homeFeedContentHydrationRequests.add(hydrationRequestKey);
     hydrateContent();
 
     async function hydrateContent() {
@@ -304,11 +311,19 @@ export default function HomeFeedCard({
         console.error(error);
       } finally {
         loadingRef.current = false;
+        homeFeedContentHydrationRequests.delete(hydrationRequestKey);
       }
     }
     // loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldHydrate, contentId, contentType, feed?.rootType, feed?.feedId]);
+  }, [
+    shouldHydrate,
+    hydrationRequestKey,
+    contentId,
+    contentType,
+    feed?.rootType,
+    feed?.feedId
+  ]);
 
   useEffect(() => {
     if (!shouldLoadPreviewComment || previewCommentLoadingRef.current) return;
@@ -833,6 +848,10 @@ function mergeLoadedFeedContentWithPreviewState({
       contentState?.rootType || previewContent?.rootType
     )
   };
+}
+
+function getHomeFeedContentHydrationKey(contentType: string, contentId: number) {
+  return `${contentType}:${contentId}`;
 }
 
 function mergePreviewTargetSecretState(

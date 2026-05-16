@@ -77,7 +77,15 @@ assert.match(
 );
 assert.match(
   mainNavSource,
-  /function scrollCurrentPageToTop\(\) \{[\s\S]*document\.getElementById\('App'\)[\s\S]*document\.scrollingElement \|\| document\.documentElement[\s\S]*setScrollSurfaceTop\(appElement\);[\s\S]*setScrollSurfaceTop\(bodyRef\);[\s\S]*window\.dispatchEvent\(new Event\('scroll'\)\);[\s\S]*\}/
+  /import \{[\s\S]*cancelScrollAnchorRestores,[\s\S]*suppressScrollAnchorSaves[\s\S]*\} from '~\/helpers\/scrollAnchorRestorationCoordinator';/
+);
+assert.match(
+  mainNavSource,
+  /const sameRouteNavScrollSaveSuppressionMs = 250;/
+);
+assert.match(
+  mainNavSource,
+  /function scrollCurrentPageToTop\(\) \{[\s\S]*document\.getElementById\('App'\)[\s\S]*document\.scrollingElement \|\| document\.documentElement[\s\S]*cancelScrollAnchorRestores\(\);[\s\S]*suppressScrollAnchorSaves\(sameRouteNavScrollSaveSuppressionMs\);[\s\S]*setScrollSurfaceTop\(appElement\);[\s\S]*setScrollSurfaceTop\(bodyRef\);[\s\S]*window\.dispatchEvent\(new Event\('scroll'\)\);[\s\S]*\}/
 );
 assert.match(
   mainNavSource,
@@ -85,6 +93,7 @@ assert.match(
 );
 assert.match(handleNavClickSource, /function handleNavClick\(\)/);
 assert.doesNotMatch(handleNavClickSource, /suppressScrollAnchorRestores/);
+assert.match(handleNavClickSource, /scrollCurrentPageToTop\(\);/);
 assert.match(
   handleNavClickSource,
   /if \(navTargetIsCurrentLocation\(\)\) \{[\s\S]*scrollCurrentPageToTop\(\);[\s\S]*\}/
