@@ -262,8 +262,10 @@ export const mobilePreviewStyles = `
     }
     .home-feed-card__subject-preview
       .home-feed-card__subject-copy
-      > h3.home-feed-card__primary-preview-text {
-      font-size: 1.75rem;
+      > h3.home-feed-card__primary-preview-text,
+    .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
+      font-size: 1.9rem;
+      line-height: 1.16;
     }
   }
 `;

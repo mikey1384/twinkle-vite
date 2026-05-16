@@ -800,7 +800,7 @@ test('keeps subject description styling separate from secret styling', () => {
   );
 });
 
-test('standardizes mobile subject title size across feed card subject variants', () => {
+test('standardizes mobile subject title typography across feed card subject variants', () => {
   const mobileStylesSource = readFileSync(
     path.resolve(
       __dirname,
@@ -816,7 +816,7 @@ test('standardizes mobile subject title size across feed card subject variants',
     'utf8'
   );
   const subjectTitleRule = mobileStylesSource.match(
-    /\.home-feed-card__subject-preview\s+\.home-feed-card__subject-copy\s+>\s+h3\.home-feed-card__primary-preview-text \{([\s\S]*?)\n\s+\}/
+    /\.home-feed-card__subject-preview\s+\.home-feed-card__subject-copy\s+>\s+h3\.home-feed-card__primary-preview-text,\s+\.home-feed-card__target-subject \.home-feed-card__target-copy > h4 \{([\s\S]*?)\n\s+\}/
   );
   const genericHeadingRule = mobileStylesSource.match(
     /\n\s+h3 \{([\s\S]*?)\n\s+\}/
@@ -824,16 +824,22 @@ test('standardizes mobile subject title size across feed card subject variants',
 
   assert.ok(subjectTitleRule);
   assert.ok(genericHeadingRule);
-  assert.match(subjectTitleRule[1], /font-size: 1\.75rem;/);
+  assert.match(subjectTitleRule[0], /\.home-feed-card__target-subject/);
+  assert.match(subjectTitleRule[1], /font-size: 1\.9rem;/);
+  assert.match(subjectTitleRule[1], /line-height: 1\.16;/);
   assert.doesNotMatch(subjectTitleRule[1], /max\(/);
   assert.ok(
     mobileStylesSource.indexOf(subjectTitleRule[0]) >
       mobileStylesSource.indexOf(genericHeadingRule[0])
   );
-  assert.doesNotMatch(genericHeadingRule[1], /font-size: 1\.75rem;/);
+  assert.doesNotMatch(genericHeadingRule[1], /font-size: 1\.9rem;/);
   assert.match(
     stylesSource,
     /mainPreviewStyles[\s\S]*mobilePreviewStyles/
+  );
+  assert.match(
+    stylesSource,
+    /targetPreviewStyles[\s\S]*mobilePreviewStyles/
   );
 });
 
