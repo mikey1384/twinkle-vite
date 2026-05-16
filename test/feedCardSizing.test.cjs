@@ -757,6 +757,13 @@ test('lets long root-subject descriptions use dedicated text-heavy root space', 
 });
 
 test('keeps subject description styling separate from secret styling', () => {
+  const bodySource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/index.tsx'
+    ),
+    'utf8'
+  );
   const stylesSource = readFileSync(
     path.resolve(
       __dirname,
@@ -792,6 +799,14 @@ test('keeps subject description styling separate from secret styling', () => {
     mobileStylesSource,
     /\.home-feed-card__subject-copy[\s\S]*>\s+\.home-feed-card__subject-description,[\s\S]*line-height: 1\.36;/
   );
+  assert.match(
+    bodySource,
+    /const homeFeedPreviewRichTextStyle: React\.CSSProperties = \{\s+lineHeight: 1\.36\s+\};/
+  );
+  assert.equal(
+    (bodySource.match(/style=\{homeFeedPreviewRichTextStyle\}/g) || []).length,
+    5
+  );
   assert.doesNotMatch(stylesSource, /font-size: max\(1\.28rem, 12\.8px\)/);
   assert.match(stylesSource, /\.home-feed-card__subject-secret-answer \{/);
   assert.match(
@@ -808,10 +823,24 @@ test('standardizes mobile subject title typography across feed card subject vari
     ),
     'utf8'
   );
-  const stylesSource = readFileSync(
+  const composedStylesSource = readFileSync(
     path.resolve(
       __dirname,
       '../src/containers/Home/Stories/FeedCard/Body/styles.ts'
+    ),
+    'utf8'
+  );
+  const mainPreviewStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const targetPreviewStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/targetPreviewStyles.ts'
     ),
     'utf8'
   );
@@ -826,7 +855,7 @@ test('standardizes mobile subject title typography across feed card subject vari
   assert.ok(genericHeadingRule);
   assert.match(subjectTitleRule[0], /\.home-feed-card__target-subject/);
   assert.match(subjectTitleRule[1], /font-size: 1\.9rem;/);
-  assert.match(subjectTitleRule[1], /line-height: 1\.16;/);
+  assert.match(subjectTitleRule[1], /line-height: 1\.24;/);
   assert.doesNotMatch(subjectTitleRule[1], /max\(/);
   assert.ok(
     mobileStylesSource.indexOf(subjectTitleRule[0]) >
@@ -834,12 +863,33 @@ test('standardizes mobile subject title typography across feed card subject vari
   );
   assert.doesNotMatch(genericHeadingRule[1], /font-size: 1\.9rem;/);
   assert.match(
-    stylesSource,
+    composedStylesSource,
     /mainPreviewStyles[\s\S]*mobilePreviewStyles/
   );
   assert.match(
-    stylesSource,
+    composedStylesSource,
     /targetPreviewStyles[\s\S]*mobilePreviewStyles/
+  );
+
+  for (const variantSelector of [
+    '.home-feed-card__subject-preview--root-compact h3',
+    '.home-feed-card__subject-preview--with-embed h3',
+    '.home-feed-card__subject-preview--minimal h3'
+  ]) {
+    assert.ok(getCssBlock(mainPreviewStylesSource, variantSelector));
+    assert.ok(
+      getCssSelectorClassCount(
+        '.home-feed-card__subject-preview .home-feed-card__subject-copy > h3.home-feed-card__primary-preview-text'
+      ) > getCssSelectorClassCount(variantSelector)
+    );
+  }
+  assert.ok(
+    getCssSelectorClassCount(
+      '.home-feed-card__target-subject .home-feed-card__target-copy > h4'
+    ) > getCssSelectorClassCount('.home-feed-card__target-copy h4')
+  );
+  assert.ok(
+    getCssBlock(targetPreviewStylesSource, '.home-feed-card__target-copy h4')
   );
 });
 
@@ -2018,4 +2068,8 @@ function getCssBlock(source, selector) {
 
   assert.ok(match, `Missing CSS block for ${selector}`);
   return match[1];
+}
+
+function getCssSelectorClassCount(selector) {
+  return (selector.match(/\.[_a-zA-Z0-9-]+/g) || []).length;
 }

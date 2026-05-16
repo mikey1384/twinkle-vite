@@ -86,6 +86,9 @@ type PreviewCommentMedia =
     };
 
 const primaryPreviewTextClass = 'home-feed-card__primary-preview-text';
+const homeFeedPreviewRichTextStyle: React.CSSProperties = {
+  lineHeight: 1.36
+};
 const lockedSubjectSecretPreviewLabel =
   'Submit your response to view the secret message';
 
@@ -219,9 +222,9 @@ export default function Body({
     const hasSecretAttachment = Boolean(secretAttachment?.filePath);
     const hasAnySecret = Boolean(
       hasSecretAnswerText ||
-        hasSecretAttachment ||
-        content?.hasSecretAnswer ||
-        content?.hasSecretAttachment
+      hasSecretAttachment ||
+      content?.hasSecretAnswer ||
+      content?.hasSecretAttachment
     );
     const secretAnswerDuplicatesDescription =
       hasSecretAnswerText && secretAnswer.trim() === descriptionText.trim();
@@ -308,6 +311,7 @@ export default function Body({
                 maxLines={subjectLineLimits.desktop.descriptionMaxLines}
                 mobileMaxLines={subjectLineLimits.mobile.descriptionMaxLines}
                 section="description"
+                style={homeFeedPreviewRichTextStyle}
                 theme={theme}
               >
                 {descriptionText}
@@ -459,6 +463,7 @@ export default function Body({
               maxLines={textMaxLines}
               mobileMaxLines={mobileTextMaxLines}
               section={section}
+              style={homeFeedPreviewRichTextStyle}
               theme={theme}
             >
               {textWithoutEmbeds}
@@ -527,6 +532,7 @@ export default function Body({
             maxLines={answerLineLimits.desktop}
             mobileMaxLines={answerLineLimits.mobile}
             section="description"
+            style={homeFeedPreviewRichTextStyle}
             theme={theme}
           >
             {content.description}
@@ -700,6 +706,7 @@ export default function Body({
               isPreview
               maxLines={getSharedTopicPreviewMaxLines(resolvedSizing.main)}
               section="content"
+              style={homeFeedPreviewRichTextStyle}
               theme={theme}
             >
               {content.customInstructions}
@@ -1031,6 +1038,7 @@ export default function Body({
                 isPreview
                 maxLines={previewTextMaxLines}
                 section={section}
+                style={homeFeedPreviewRichTextStyle}
                 theme={theme}
               >
                 {text}
@@ -1248,11 +1256,11 @@ export function getRenderableHomeFeedPreviewComments(
 function isRenderableHomeFeedPreviewComment(comment: Comment | undefined) {
   return Boolean(
     comment &&
-      !comment.isDeleted &&
-      !comment.isDeleteNotification &&
-      !comment.isLoadMoreButton &&
-      !comment.isNotification &&
-      !comment.notFound
+    !comment.isDeleted &&
+    !comment.isDeleteNotification &&
+    !comment.isLoadMoreButton &&
+    !comment.isNotification &&
+    !comment.notFound
   );
 }
 

@@ -265,7 +265,7 @@ export const mobilePreviewStyles = `
       > h3.home-feed-card__primary-preview-text,
     .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
       font-size: 1.9rem;
-      line-height: 1.16;
+      line-height: 1.24;
     }
   }
 `;
