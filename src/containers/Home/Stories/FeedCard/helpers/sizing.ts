@@ -271,6 +271,8 @@ const PLAIN_TEXT_PREVIEW_LAYOUT = {
     mobile: 3
   },
   compactRawLengthFallback: 84,
+  desktopLineHeightBonus: 2,
+  mobileLineHeightBonus: 3,
   tallRawLength: 520
 };
 
@@ -500,9 +502,9 @@ function hasResolvedRootObj(rootObj: any) {
 function hasResolvedTargetObj(targetObj: any) {
   return Boolean(
     targetObj?.comment ||
-      targetObj?.subject ||
-      targetObj?.user ||
-      targetObj?.contentType === 'user'
+    targetObj?.subject ||
+    targetObj?.user ||
+    targetObj?.contentType === 'user'
   );
 }
 
@@ -596,7 +598,10 @@ function getMainPanelSize({
     return 'pass';
   }
 
-  if (content?.contentType === 'comment' && hasPreviewableMediaAttachment(content)) {
+  if (
+    content?.contentType === 'comment' &&
+    hasPreviewableMediaAttachment(content)
+  ) {
     return 'media-attachment-with-text';
   }
 
@@ -1217,6 +1222,11 @@ function getTextMaxLines(
   size: FeedCardSize,
   axis: FeedCardLayoutAxis = 'desktop'
 ) {
+  const lineHeightBonus =
+    axis === 'mobile'
+      ? PLAIN_TEXT_PREVIEW_LAYOUT.mobileLineHeightBonus
+      : PLAIN_TEXT_PREVIEW_LAYOUT.desktopLineHeightBonus;
+
   if (size === 'compact' || size === 'attachment-only') {
     return PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines[axis];
   }
@@ -1234,7 +1244,7 @@ function getTextMaxLines(
   }
 
   if (size === 'tall') {
-    return 8;
+    return 8 + lineHeightBonus;
   }
 
   if (size === 'rich-embed') {
@@ -1246,10 +1256,10 @@ function getTextMaxLines(
   }
 
   if (size === 'fallback') {
-    return 5;
+    return 5 + lineHeightBonus;
   }
 
-  return 5;
+  return 5 + lineHeightBonus;
 }
 
 function getReflectionAnswerMaxLines(size: FeedCardSize) {
@@ -1532,8 +1542,7 @@ function getSubjectTitleHeight({
   });
 
   return (
-    titleLines * layout.titleLineHeight[axis] +
-    layout.titlePaddingBottom[axis]
+    titleLines * layout.titleLineHeight[axis] + layout.titlePaddingBottom[axis]
   );
 }
 

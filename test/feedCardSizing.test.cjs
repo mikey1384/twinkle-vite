@@ -87,7 +87,8 @@ test('promotes medium plain comments out of compact bucket', () => {
 
   assert.equal(sizing.main.size, 'standard');
   assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
-  assert.equal(sizing.main.textMaxLines, 5);
+  assert.equal(sizing.main.textMaxLines, 7);
+  assert.equal(sizing.main.mobileTextMaxLines, 8);
   assert.equal(sizing.card.size, 'standard-card');
 });
 
@@ -102,7 +103,37 @@ test('uses tall bucket for long plain comments', () => {
 
   assert.equal(sizing.main.size, 'tall');
   assert.equal(sizing.card.size, 'tall-card');
-  assert.equal(sizing.main.textMaxLines, 8);
+  assert.equal(sizing.main.textMaxLines, 10);
+  assert.equal(sizing.main.mobileTextMaxLines, 11);
+});
+
+test('uses reduced RichText line height space for long comment target cards', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content:
+        'Because I need to learn more things as I grow up. I do not need to live if I am gonna live like a rock by the road. Instead, I get up again because that is the point of living. Yes, I have to face many problems as I grow up, but I like to see myself taller than yesterday, ready to face another day. Also life is '.repeat(
+          2
+        ),
+      rootId: 300,
+      rootType: 'subject',
+      targetObj: {
+        subject: {
+          id: 300,
+          rewardLevel: 3,
+          title: 'Why do you live ?',
+          uploader: { username: 'Roosevelt' }
+        }
+      }
+    },
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'tall');
+  assert.equal(sizing.main.textMaxLines, 10);
+  assert.equal(sizing.main.mobileTextMaxLines, 11);
+  assert.equal(sizing.target?.size, 'standard');
+  assert.equal(sizing.card.hasTarget, true);
 });
 
 test('reserves reply preview height outside the primary body slot', () => {

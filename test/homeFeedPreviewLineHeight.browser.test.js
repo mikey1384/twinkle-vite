@@ -84,6 +84,30 @@ test('Home feed preview RichText computes the standard card line-height in a bro
         reflection text
       </div>
     </div>
+    <div
+      id="desktop-clamp"
+      style="
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 10;
+        font-size: 20px;
+        line-height: 1.36;
+        overflow: hidden;
+        width: 420px;
+      "
+    >one<br>two<br>three<br>four<br>five<br>six<br>seven<br>eight<br>nine<br>ten<br>eleven</div>
+    <div
+      id="mobile-clamp"
+      style="
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 11;
+        font-size: 20px;
+        line-height: 1.36;
+        overflow: hidden;
+        width: 240px;
+      "
+    >one<br>two<br>three<br>four<br>five<br>six<br>seven<br>eight<br>nine<br>ten<br>eleven<br>twelve</div>
   </body>
 </html>
 `,
@@ -125,13 +149,16 @@ test('Home feed preview RichText computes the standard card line-height in a bro
       const lineHeight = Number.parseFloat(style.lineHeight);
       return {
         fontSize,
+        height: element.getBoundingClientRect().height,
         inlineLineHeight: element.style.lineHeight,
         lineHeight,
         ratio: lineHeight / fontSize
       };
     }
     return {
+      clamp: inspect('mobile-clamp'),
       control: inspect('control'),
+      desktopClamp: inspect('desktop-clamp'),
       reflection: inspect('reflection'),
       subject: inspect('subject')
     };
@@ -140,6 +167,18 @@ test('Home feed preview RichText computes the standard card line-height in a bro
   assertLineHeightRatio(computed.subject, 1.36);
   assertLineHeightRatio(computed.reflection, 1.36);
   assertLineHeightRatio(computed.control, 1.7);
+  assert.equal(computed.desktopClamp.lineHeight, 27.2);
+  assert.ok(
+    Math.abs(
+      computed.desktopClamp.height - 10 * computed.desktopClamp.lineHeight
+    ) < 1,
+    `Expected 10 clamped desktop lines, received ${computed.desktopClamp.height}`
+  );
+  assert.equal(computed.clamp.lineHeight, 27.2);
+  assert.ok(
+    Math.abs(computed.clamp.height - 11 * computed.clamp.lineHeight) < 1,
+    `Expected 11 clamped mobile lines, received ${computed.clamp.height}`
+  );
 });
 
 function assertLineHeightRatio(result, expectedRatio) {
