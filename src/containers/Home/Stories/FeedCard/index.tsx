@@ -1182,13 +1182,10 @@ const cardClass = css`
   overflow: hidden;
   content-visibility: auto;
   contain-intrinsic-size: auto var(--home-feed-card-height);
-  transition:
-    border-color 0.18s ease,
-    background 0.18s ease;
+  transition: border-color 0.18s ease;
   @media (hover: hover) and (pointer: fine) {
     &:hover {
       border-color: var(--ui-border-strong);
-      background: ${Color.whiteGray(0.45)};
     }
   }
   @media (hover: none), (pointer: coarse), (max-width: ${mobileMaxWidth}) {
