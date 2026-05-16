@@ -433,6 +433,10 @@ export default function Body({
       hasTitle: Boolean(title),
       maxLines: resolvedSizing.main.textMaxLines
     });
+    const mobileTextMaxLines = getTextMaxLinesForLayout({
+      hasTitle: Boolean(title),
+      maxLines: resolvedSizing.main.mobileTextMaxLines
+    });
 
     return (
       <div
@@ -453,6 +457,7 @@ export default function Body({
               contentType={contentType}
               isPreview
               maxLines={textMaxLines}
+              mobileMaxLines={mobileTextMaxLines}
               section={section}
               theme={theme}
             >

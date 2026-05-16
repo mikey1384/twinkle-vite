@@ -138,6 +138,9 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-subject-rich-embed {
       height: max(32rem, 320px);
     }
+    .home-feed-card__panel-preview--size-subject-secret-compact {
+      height: max(18.5rem, 185px);
+    }
     .home-feed-card__panel-preview--size-subject-secret-media {
       height: max(24rem, 240px);
     }
@@ -160,7 +163,8 @@ export const mobilePreviewStyles = `
     }
       .home-feed-card__text-copy
         > div.home-feed-card__primary-preview-text,
-      .home-feed-card__subject-description,
+      .home-feed-card__subject-copy
+        > .home-feed-card__subject-description,
       .home-feed-card__rich-embed-copy
         > div.home-feed-card__primary-preview-text,
       .home-feed-card__system-prompt-box

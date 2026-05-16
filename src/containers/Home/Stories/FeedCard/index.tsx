@@ -44,7 +44,7 @@ import {
 } from '~/helpers/homeFeedActionIntent';
 
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
-const HOME_FEED_CARD_LAYOUT_VERSION = 'root-user-target-preview-v1';
+const HOME_FEED_CARD_LAYOUT_VERSION = 'root-user-target-preview-v2';
 const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
 const HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX = 10;
 const HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX = 2;
@@ -102,9 +102,10 @@ export default function HomeFeedCard({
   const contentComments = Array.isArray(contentState.comments)
     ? contentState.comments
     : [];
-  const previewComments = contentComments.length
-    ? contentComments
-    : feedPreviewComments;
+  const previewComments = getHomeFeedCardPreviewComments({
+    contentComments,
+    feedPreviewComments
+  });
   const renderablePreviewComments =
     getRenderableHomeFeedPreviewComments(previewComments);
   const feedIdentity =
@@ -850,6 +851,56 @@ function mergeLoadedFeedContentWithPreviewState({
       contentState?.rootType || previewContent?.rootType
     )
   };
+}
+
+function getHomeFeedCardPreviewComments({
+  contentComments,
+  feedPreviewComments
+}: {
+  contentComments: any[];
+  feedPreviewComments: any[];
+}) {
+  const renderableFeedPreviewComments =
+    getRenderableHomeFeedPreviewComments(feedPreviewComments);
+  const renderableContentComments = getRenderableHomeFeedPreviewComments(
+    flattenHomeFeedPreviewComments(contentComments)
+  );
+  const candidates = [
+    ...renderableFeedPreviewComments,
+    ...renderableContentComments
+  ];
+  if (!candidates.length) {
+    return contentComments.length ? contentComments : feedPreviewComments;
+  }
+
+  return [candidates.reduce(getMostRecentHomeFeedPreviewComment)];
+}
+
+function flattenHomeFeedPreviewComments(comments: any[] | undefined): any[] {
+  if (!Array.isArray(comments)) return [];
+
+  const flattenedComments: any[] = [];
+  for (const comment of comments) {
+    flattenedComments.push(comment);
+    flattenedComments.push(...flattenHomeFeedPreviewComments(comment?.replies));
+  }
+  return flattenedComments;
+}
+
+function getMostRecentHomeFeedPreviewComment(current: any, candidate: any) {
+  return compareHomeFeedPreviewComments(candidate, current) > 0
+    ? candidate
+    : current;
+}
+
+function compareHomeFeedPreviewComments(a: any, b: any) {
+  const aTimeStamp = Number(a?.timeStamp || 0);
+  const bTimeStamp = Number(b?.timeStamp || 0);
+  if (aTimeStamp !== bTimeStamp) {
+    return aTimeStamp - bTimeStamp;
+  }
+
+  return Number(a?.id || 0) - Number(b?.id || 0);
 }
 
 function getHomeFeedContentHydrationKey(contentType: string, contentId: number) {

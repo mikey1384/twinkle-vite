@@ -38,6 +38,7 @@ export type FeedCardSize =
   | 'subject-rich-embed'
   | 'subject-root'
   | 'subject-root-text'
+  | 'subject-secret-compact'
   | 'subject-secret-media'
   | 'subject-tall'
   | 'tall';
@@ -65,6 +66,7 @@ export interface MarkdownImageEmbed {
 export interface FeedCardPanelSizing {
   className: string;
   kind: FeedCardPreviewKind;
+  mobileTextMaxLines: number;
   reflectionAnswerMaxLines: number;
   size: FeedCardSize;
   subjectDescriptionMaxLines: number;
@@ -156,6 +158,7 @@ const PANEL_HEIGHT_REM: Record<
   'subject-rich-embed': { desktop: 34, mobile: 32 },
   'subject-root': { desktop: 15.5, mobile: 15.5 },
   'subject-root-text': { desktop: 29, mobile: 27 },
+  'subject-secret-compact': { desktop: 17.5, mobile: 18.5 },
   'subject-secret-media': { desktop: 25, mobile: 24 },
   'subject-tall': { desktop: 32, mobile: 30 },
   tall: { desktop: 30, mobile: 28 }
@@ -215,7 +218,7 @@ const REFLECTION_PREVIEW_LAYOUT_REM = {
 };
 const SUBJECT_PREVIEW_LAYOUT_REM = {
   attachmentSecretMinHeight: 5.9,
-  descriptionLineHeight: 1.9 * 1.7,
+  descriptionLineHeight: 1.9 * 1.36,
   effortHeight: 2.9,
   gap: 0.85,
   minDescriptionLines: 2,
@@ -226,11 +229,17 @@ const SUBJECT_PREVIEW_LAYOUT_REM = {
   secretPaddingY: 1.7,
   titleCharsPerLine: {
     desktop: 44,
-    mobile: 30
+    mobile: 38
   },
-  titleLineHeight: 2 * 1.28,
+  titleLineHeight: {
+    desktop: 2 * 1.28,
+    mobile: 1.5 * 1.28
+  },
   titleMaxLines: 2,
-  titlePaddingBottom: 0.16
+  titlePaddingBottom: {
+    desktop: 2 * 0.08,
+    mobile: 1.5 * 0.08
+  }
 };
 const SUBJECT_ROOT_PREVIEW_LAYOUT_REM = {
   ...SUBJECT_PREVIEW_LAYOUT_REM,
@@ -241,8 +250,26 @@ const SUBJECT_ROOT_PREVIEW_LAYOUT_REM = {
     desktop: 52,
     mobile: 34
   },
-  titleLineHeight: 2.064 * 1.12,
-  titlePaddingBottom: 0
+  titleLineHeight: {
+    desktop: 2.064 * 1.12,
+    mobile: 2.064 * 1.12
+  },
+  titlePaddingBottom: {
+    desktop: 0,
+    mobile: 0
+  }
+};
+const PLAIN_TEXT_PREVIEW_LAYOUT = {
+  charsPerLine: {
+    desktop: 54,
+    mobile: 34
+  },
+  compactMaxLines: {
+    desktop: 2,
+    mobile: 3
+  },
+  compactRawLengthFallback: 84,
+  tallRawLength: 520
 };
 
 export function getFeedCardSizing({
@@ -286,10 +313,11 @@ export function getFeedCardSizing({
   const main = {
     className: getFeedCardPanelClassName({ flags, kind, size }),
     kind,
+    mobileTextMaxLines: getTextMaxLines(size, 'mobile'),
     reflectionAnswerMaxLines: getReflectionAnswerMaxLines(size),
     size,
     subjectDescriptionMaxLines: getSubjectDescriptionMaxLines(size),
-    textMaxLines: getTextMaxLines(size)
+    textMaxLines: getTextMaxLines(size, 'desktop')
   };
   return {
     card: getFeedCardFrameSizing({
@@ -828,7 +856,8 @@ function getFeedCardFrameSize({
     mainSize === 'secret' ||
     mainSize === 'subject-locked' ||
     mainSize === 'subject-minimal' ||
-    mainSize === 'subject-root'
+    mainSize === 'subject-root' ||
+    mainSize === 'subject-secret-compact'
   ) {
     return 'compact-card';
   }
@@ -1079,6 +1108,10 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
     return 'compact';
   }
 
+  if (descriptionLength <= 120 && secretLength > 0 && secretLength <= 80) {
+    return 'subject-secret-compact';
+  }
+
   if (descriptionLength <= 420 && secretLength <= 120) {
     return 'standard';
   }
@@ -1128,11 +1161,11 @@ function isCompactRichTextEmbedContent(content: any) {
 function getPlainTextPanelSize(content: any): FeedCardSize {
   const plainTextLength = getPlainTextLength(content);
 
-  if (plainTextLength <= 84 && !content?.title && !content?.filePath) {
+  if (isCompactPlainTextPreview(content)) {
     return 'compact';
   }
 
-  if (plainTextLength > 520) {
+  if (plainTextLength > PLAIN_TEXT_PREVIEW_LAYOUT.tallRawLength) {
     return 'tall';
   }
 
@@ -1159,9 +1192,12 @@ function getReflectionPanelSize(content: any): FeedCardSize {
   return 'reflection';
 }
 
-function getTextMaxLines(size: FeedCardSize) {
+function getTextMaxLines(
+  size: FeedCardSize,
+  axis: FeedCardLayoutAxis = 'desktop'
+) {
   if (size === 'compact' || size === 'attachment-only') {
-    return 2;
+    return PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines[axis];
   }
 
   if (size === 'media-attachment') {
@@ -1340,6 +1376,7 @@ function getSubjectDescriptionLineBudget({
 }) {
   const maxLines = getSubjectDescriptionMaxLineCap({
     axis,
+    content,
     size
   });
 
@@ -1347,7 +1384,7 @@ function getSubjectDescriptionLineBudget({
     return maxLines;
   }
 
-  const layout = getSubjectPreviewLayout(size);
+  const layout = getSubjectPreviewLayout({ content, size });
   const renderedChildrenCount = [
     hasEffort,
     hasTitle,
@@ -1367,6 +1404,7 @@ function getSubjectDescriptionLineBudget({
     (hasTitle
       ? getSubjectTitleHeight({
           axis,
+          content,
           size,
           title: content?.title
         })
@@ -1393,16 +1431,18 @@ function getSubjectDescriptionLineBudget({
 
 function getSubjectDescriptionMaxLineCap({
   axis,
+  content,
   size
 }: {
   axis: FeedCardLayoutAxis;
+  content: any;
   size: FeedCardSize;
 }) {
   if (!isSubjectDescriptionBudgetedSize(size)) {
     return getSubjectNonTallDescriptionMaxLines(size);
   }
 
-  const layout = getSubjectPreviewLayout(size);
+  const layout = getSubjectPreviewLayout({ content, size });
   const panelHeight =
     PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM['subject-tall'][axis];
   return Math.max(
@@ -1417,6 +1457,7 @@ function isSubjectDescriptionBudgetedSize(size: FeedCardSize) {
   return (
     size === 'subject-root' ||
     size === 'subject-root-text' ||
+    size === 'subject-secret-compact' ||
     size === 'subject-tall' ||
     size === 'standard'
   );
@@ -1452,29 +1493,43 @@ function getSubjectNonTallDescriptionMaxLines(size: FeedCardSize) {
 
 function getSubjectTitleHeight({
   axis,
+  content,
   size,
   title
 }: {
   axis: FeedCardLayoutAxis;
+  content: any;
   size: FeedCardSize;
   title: any;
 }) {
-  const layout = getSubjectPreviewLayout(size);
+  const layout = getSubjectPreviewLayout({ content, size });
   const titleLines = estimatePreviewLineCount({
     charsPerLine: layout.titleCharsPerLine[axis],
     maxLines: layout.titleMaxLines,
     value: title
   });
 
-  return titleLines * layout.titleLineHeight + layout.titlePaddingBottom;
+  return (
+    titleLines * layout.titleLineHeight[axis] +
+    layout.titlePaddingBottom[axis]
+  );
 }
 
-function getSubjectPreviewLayout(size: FeedCardSize) {
+function getSubjectPreviewLayout({
+  content,
+  size
+}: {
+  content: any;
+  size: FeedCardSize;
+}) {
+  const useAttachedRootLayout =
+    hasAttachedRootContent(content) &&
+    (size === 'standard' || size === 'subject-secret-media');
+
   if (
     size === 'subject-root' ||
     size === 'subject-root-text' ||
-    size === 'subject-secret-media' ||
-    size === 'standard'
+    useAttachedRootLayout
   ) {
     return SUBJECT_ROOT_PREVIEW_LAYOUT_REM;
   }
@@ -1523,16 +1578,18 @@ function getSubjectSecretAnswerMaxLines({
 }
 
 function getPlainTextLength(content: any) {
-  return removeMarkdownImageEmbeds(
-    String(
-      content?.content ||
-        content?.description ||
-        content?.answer ||
-        content?.body ||
-        content?.title ||
-        ''
-    )
-  ).length;
+  return getPlainTextValue(content).length;
+}
+
+function getPlainTextValue(content: any) {
+  return getPlainTextValueLengthSource(
+    content?.content ||
+      content?.description ||
+      content?.answer ||
+      content?.body ||
+      content?.title ||
+      ''
+  );
 }
 
 function getSubjectDescriptionTextLength(content: any) {
@@ -1542,7 +1599,33 @@ function getSubjectDescriptionTextLength(content: any) {
 }
 
 function getPlainTextValueLength(value: any) {
-  return removeMarkdownImageEmbeds(String(value || '')).trim().length;
+  return getPlainTextValueLengthSource(value).length;
+}
+
+function getPlainTextValueLengthSource(value: any) {
+  return removeMarkdownImageEmbeds(String(value || '')).trim();
+}
+
+function isCompactPlainTextPreview(content: any) {
+  if (content?.title || content?.filePath) return false;
+
+  const text = getPlainTextValue(content);
+  if (text.length <= PLAIN_TEXT_PREVIEW_LAYOUT.compactRawLengthFallback) {
+    return true;
+  }
+
+  return (
+    estimatePreviewLineCount({
+      charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine.desktop,
+      maxLines: Number.MAX_SAFE_INTEGER,
+      value: text
+    }) <= PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines.desktop &&
+    estimatePreviewLineCount({
+      charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine.mobile,
+      maxLines: Number.MAX_SAFE_INTEGER,
+      value: text
+    }) <= PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines.mobile
+  );
 }
 
 function isTargetCommentCompact(targetComment: any) {

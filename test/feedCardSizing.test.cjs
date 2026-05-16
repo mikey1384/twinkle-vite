@@ -43,6 +43,36 @@ test('uses compact bucket for short plain comments', () => {
   );
 });
 
+test('uses compact body space for visually short comments with target previews', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content:
+        "My korean name is \uD558\uC740 which is \uC5F0\uAF43\u8377, \uC740(silver)\u9280 I don't know my English name meaning hehe",
+      rootId: 10,
+      rootType: 'subject',
+      targetObj: {
+        subject: {
+          id: 10,
+          title: 'What does your name mean?',
+          description: 'What is your name meaning? (English and korean)',
+          rewardLevel: 3,
+          uploader: { username: '_aespa' }
+        }
+      }
+    },
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'compact');
+  assert.equal(sizing.main.textMaxLines, 2);
+  assert.equal(sizing.main.mobileTextMaxLines, 3);
+  assert.equal(sizing.target?.size, 'standard');
+  assert.equal(sizing.card.hasTarget, true);
+  assert.equal(sizing.card.bodyHeight, 'max(24.85rem, 248.5px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(36.75rem, 367.5px) + 2px)');
+});
+
 test('promotes medium plain comments out of compact bucket', () => {
   const sizing = getFeedCardSizing({
     content: {
@@ -96,7 +126,10 @@ test('reserves reply preview height outside the primary body slot', () => {
 
 test('moves mobile reply preview upward without shrinking the card frame', () => {
   const feedCardSource = readFileSync(
-    path.resolve(__dirname, '../src/containers/Home/Stories/FeedCard/index.tsx'),
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/index.tsx'
+    ),
     'utf8'
   );
   const mobileCommentPreviewSlotSource = feedCardSource.slice(
@@ -251,6 +284,39 @@ test('uses compact space for short plain subject descriptions', () => {
   );
 });
 
+test('uses available mobile space for plain effort subject descriptions', () => {
+  const content = {
+    contentType: 'subject',
+    description:
+      "I think we should make people to not change their username i can't know who they are when they come back after a long time.",
+    rewardLevel: 2,
+    title: "i wasn't here for like 5 months....."
+  };
+  const sizing = getFeedCardSizing({
+    content,
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'standard');
+  assert.deepEqual(
+    getSubjectPreviewLineLimits({
+      axis: 'mobile',
+      content,
+      hasDescriptionText: true,
+      hasEffort: true,
+      hasSecretAnswer: false,
+      hasSecretAnswerText: false,
+      hasSecretAttachment: false,
+      hasTitle: true,
+      size: sizing.main.size
+    }),
+    {
+      descriptionMaxLines: 4,
+      secretMaxLines: 0
+    }
+  );
+});
+
 test('keeps secret-answer subjects above the action floor', () => {
   const content = {
     contentType: 'subject',
@@ -288,8 +354,10 @@ test('keeps secret-answer subjects above the action floor', () => {
   );
 });
 
-test('uses standard height for short effort subjects with short secret messages', () => {
+test('uses compact height for short effort subjects with short revealed secrets', () => {
   const content = {
+    __homeFeedHasCommentPreview: true,
+    comments: [{ id: 1, content: 'comment' }],
     contentType: 'subject',
     description: 'Session 2 Week 5 2024',
     rewardLevel: 5,
@@ -303,9 +371,13 @@ test('uses standard height for short effort subjects with short secret messages'
     userId: 1
   });
 
-  assert.equal(sizing.main.size, 'standard');
-  assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(19rem, 190px)');
+  assert.equal(sizing.main.size, 'subject-secret-compact');
+  assert.equal(sizing.card.size, 'compact-card');
+  assert.equal(sizing.card.hasCommentPreview, true);
+  assert.equal(sizing.card.bodyHeight, 'max(17.5rem, 175px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(18.5rem, 185px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(37.65rem, 376.5px) + 2px)');
+  assert.equal(sizing.card.mobileHeight, 'calc(max(38.3rem, 383px) + 2px)');
   assert.deepEqual(
     getSubjectPreviewLineLimits({
       axis: 'desktop',
@@ -636,7 +708,7 @@ test('lets long root-subject descriptions use dedicated text-heavy root space', 
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 4,
+      descriptionMaxLines: 5,
       secretMaxLines: 1
     }
   );
@@ -676,7 +748,7 @@ test('keeps subject description styling separate from secret styling', () => {
   );
   assert.match(
     mobileStylesSource,
-    /\.home-feed-card__subject-description,[\s\S]*line-height: 1\.36;/
+    /\.home-feed-card__subject-copy[\s\S]*>\s+\.home-feed-card__subject-description,[\s\S]*line-height: 1\.36;/
   );
   assert.doesNotMatch(stylesSource, /font-size: max\(1\.28rem, 12\.8px\)/);
   assert.match(stylesSource, /\.home-feed-card__subject-secret-answer \{/);
@@ -697,6 +769,37 @@ test('uses compact rich embed bucket for sparse internal RichText embeds', () =>
 
   assert.equal(sizing.main.size, 'rich-embed-compact');
   assert.equal(sizing.flags.hasRichTextEmbed, true);
+});
+
+test('matches AI card modal coin styling in rich text compact previews', () => {
+  const compactPreviewSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent/AICardComponent/CompactPreview.tsx'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    compactPreviewSource,
+    /compact-ai-card-preview__stat compact-ai-card-preview__stat--listed/
+  );
+  assert.match(
+    compactPreviewSource,
+    /<Icon\s+style=\{\{ color: Color\.brownOrange\(\) \}\}\s+icon="coins"\s+\/>/
+  );
+  assert.match(
+    compactPreviewSource,
+    /className="compact-ai-card-preview__coin-price"/
+  );
+  assert.match(
+    compactPreviewSource,
+    /\.compact-ai-card-preview__stat--listed b \{[\s\S]*gap: 0\.5rem;/
+  );
+  assert.match(
+    compactPreviewSource,
+    /\.compact-ai-card-preview__coin-price \{[\s\S]*color: \$\{Color\.darkerGray\(\)\};/
+  );
 });
 
 test('keeps subject AI-card markdown embeds visible in the rich embed layout', () => {
@@ -922,10 +1025,7 @@ test('expands attachment-only video comments into media frames', () => {
   assert.equal(sizing.card.size, 'media-card');
   assert.equal(sizing.card.bodyHeight, 'max(40rem, 400px)');
   assert.equal(sizing.card.mobileBodyHeight, 'max(25rem, 250px)');
-  assert.match(
-    bodySource,
-    /home-feed-card__attachment-only-preview--media/
-  );
+  assert.match(bodySource, /home-feed-card__attachment-only-preview--media/);
   assert.match(
     bodySource,
     /attachmentFileType === 'image' \|\| attachmentFileType === 'video'/
@@ -1111,7 +1211,7 @@ test('uses layout-aware description lines for subjects with secret answers', () 
   const sizing = getFeedCardSizing({ content, userId: 1 });
 
   assert.equal(sizing.main.size, 'subject-tall');
-  assert.equal(sizing.main.subjectDescriptionMaxLines, 9);
+  assert.equal(sizing.main.subjectDescriptionMaxLines, 11);
   assert.equal(sizing.card.bodyHeight, 'max(32rem, 320px)');
   assert.equal(sizing.card.desktopHeight, 'calc(max(43.9rem, 439px) + 2px)');
   assert.equal(sizing.card.mobileHeight, 'calc(max(41.75rem, 417.5px) + 2px)');
@@ -1128,7 +1228,7 @@ test('uses layout-aware description lines for subjects with secret answers', () 
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 3,
+      descriptionMaxLines: 5,
       secretMaxLines: 1
     }
   );
@@ -1145,7 +1245,7 @@ test('uses layout-aware description lines for subjects with secret answers', () 
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 3,
+      descriptionMaxLines: 4,
       secretMaxLines: 1
     }
   );
@@ -1181,7 +1281,7 @@ test('reserves space for long secret answers in subject previews', () => {
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 2,
+      descriptionMaxLines: 3,
       secretMaxLines: 3
     }
   );
@@ -1296,9 +1396,10 @@ test('clamps AI Story home preview text deterministically on mobile and desktop'
     content: {
       contentType: 'aiStory',
       imagePath: '/ai-story/baby-thalattosauria.png',
-      story: 'The baby thalattosauria wakes up in the warm, blue sea.\nIt is small, with a long tail and shiny, wet skin. '.repeat(
-        4
-      ),
+      story:
+        'The baby thalattosauria wakes up in the warm, blue sea.\nIt is small, with a long tail and shiny, wet skin. '.repeat(
+          4
+        ),
       title:
         'baby thalattosauria adventure: a little sea reptile learns to survive in the warm blue sea'
     },
@@ -1370,10 +1471,7 @@ test('clamps AI Story home preview text deterministically on mobile and desktop'
   );
   assert.match(bodySource, /title\.length > 56/);
   assert.match(bodySource, /home-feed-card__ai-story-preview--has-image/);
-  assert.match(
-    primitivesSource,
-    /story\.trim\(\)\.replace\(\/\\s\+\/g, ' '\)/
-  );
+  assert.match(primitivesSource, /story\.trim\(\)\.replace\(\/\\s\+\/g, ' '\)/);
   assert.match(titleBlock, /display: -webkit-box;/);
   assert.match(titleBlock, /max-height: max\(5\.06rem, 50\.6px\);/);
   assert.match(titleBlock, /-webkit-line-clamp: 2;/);
@@ -1639,9 +1737,49 @@ test('hides target comments when a secret subject locks the feed card', () => {
   assert.match(targetPreviewSource, /if \(secretHidden\) return null;/);
 });
 
+test('home feed cards keep latest preview comments from feed and loaded state', () => {
+  const feedCardSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/index.tsx'
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    feedCardSource,
+    /const previewComments = getHomeFeedCardPreviewComments\(\{[\s\S]*contentComments,[\s\S]*feedPreviewComments[\s\S]*\}\);/
+  );
+  assert.match(feedCardSource, /function getHomeFeedCardPreviewComments/);
+  assert.match(
+    feedCardSource,
+    /const renderableFeedPreviewComments =[\s\S]*getRenderableHomeFeedPreviewComments\(feedPreviewComments\);/
+  );
+  assert.match(
+    feedCardSource,
+    /flattenHomeFeedPreviewComments\(contentComments\)/
+  );
+  assert.match(
+    feedCardSource,
+    /flattenedComments\.push\(\.\.\.flattenHomeFeedPreviewComments\(comment\?\.replies\)\);/
+  );
+  assert.match(
+    feedCardSource,
+    /compareHomeFeedPreviewComments\(candidate, current\)/
+  );
+  assert.match(feedCardSource, /Number\(a\?\.timeStamp \|\| 0\)/);
+  assert.match(
+    feedCardSource,
+    /Number\(a\?\.id \|\| 0\) - Number\(b\?\.id \|\| 0\)/
+  );
+});
+
 test('hides reward and recommend actions when a secret subject locks the feed card', () => {
   const feedCardSource = readFileSync(
-    path.resolve(__dirname, '../src/containers/Home/Stories/FeedCard/index.tsx'),
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/index.tsx'
+    ),
     'utf8'
   );
 

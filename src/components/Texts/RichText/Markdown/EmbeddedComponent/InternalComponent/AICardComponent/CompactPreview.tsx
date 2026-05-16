@@ -23,15 +23,16 @@ export function CompactThumb({
   const cardColor = getCardColor(card);
   const qualityColor = getQualityColor(card) || cardColor;
   const imageSrc = getCardImageSrc(card);
-  const content = imageSrc && !card.isBurned ? (
-    <img src={imageSrc} alt={card.word || `AI card ${card.id}`} />
-  ) : !card.isBurned ? (
-    <span className="compact-ai-card-thumb__unknown">?</span>
-  ) : (
-    <span className="compact-ai-card-thumb__burned">
-      {addCommasToNumber(Number((card as any).burnXP || 0))}
-    </span>
-  );
+  const content =
+    imageSrc && !card.isBurned ? (
+      <img src={imageSrc} alt={card.word || `AI card ${card.id}`} />
+    ) : !card.isBurned ? (
+      <span className="compact-ai-card-thumb__unknown">?</span>
+    ) : (
+      <span className="compact-ai-card-thumb__burned">
+        {addCommasToNumber(Number((card as any).burnXP || 0))}
+      </span>
+    );
 
   if (!onClick) {
     return (
@@ -177,11 +178,13 @@ export default function CompactPreview({
           </div>
         ) : null}
         {price ? (
-          <div className="compact-ai-card-preview__stat">
+          <div className="compact-ai-card-preview__stat compact-ai-card-preview__stat--listed">
             <span>Listed for</span>
             <b>
-              <Icon icon="coins" />
-              {addCommasToNumber(price)}
+              <Icon style={{ color: Color.brownOrange() }} icon="coins" />
+              <span className="compact-ai-card-preview__coin-price">
+                {addCommasToNumber(price)}
+              </span>
             </b>
           </div>
         ) : null}
@@ -526,6 +529,14 @@ const compactPreviewClass = css`
 
   .compact-ai-card-preview__stat--owner b {
     color: ${Color.goldOrange()};
+  }
+
+  .compact-ai-card-preview__stat--listed b {
+    gap: 0.5rem;
+  }
+
+  .compact-ai-card-preview__coin-price {
+    color: ${Color.darkerGray()};
   }
 
   @media (max-width: ${mobileMaxWidth}) {
