@@ -116,6 +116,7 @@ export default function RewardButton({
         tone={tone}
         className={`${className || ''} ${isBlocked ? blockedRewardButtonClass : ''}`}
         color={rewardColor}
+        disabled={isBlocked}
         style={style}
         onClick={handleRewardButtonClick}
       >

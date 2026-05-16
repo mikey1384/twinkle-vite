@@ -36,6 +36,7 @@ const restoreCancelKeys = new Set([
   'PageUp',
   ' '
 ]);
+const scrollableOverflowValues = new Set(['auto', 'overlay', 'scroll']);
 
 export function useScrollAnchorRestoration({
   anchorKey,
@@ -102,18 +103,18 @@ export function useScrollAnchorRestoration({
 
   useLayoutEffect(() => {
     if (!itemsReady || !containerRef.current) return;
-    const scroller = getScroller();
+    const scroller = getAppScroller();
     const container = containerRef.current;
     let frame = 0;
 
     function handleScroll() {
       if (scrollAnchorSavesAreSuppressed()) return;
-      saveCurrentAnchor(anchorKey, container, scroller);
+      saveCurrentAnchor(anchorKey, container, getActiveScroller());
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         frame = 0;
         if (scrollAnchorSavesAreSuppressed()) return;
-        saveCurrentAnchor(anchorKey, container, scroller);
+        saveCurrentAnchor(anchorKey, container, getActiveScroller());
       });
     }
 
@@ -123,7 +124,7 @@ export function useScrollAnchorRestoration({
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       if (!scrollAnchorSavesAreSuppressed()) {
-        saveCurrentAnchor(anchorKey, container, scroller);
+        saveCurrentAnchor(anchorKey, container, getActiveScroller());
       }
       window.removeEventListener('scroll', handleScroll);
       scroller?.removeEventListener('scroll', handleScroll);
@@ -143,7 +144,7 @@ export function useScrollAnchorRestoration({
       if (initialScrollAttemptedRef.current === initialScrollKey) return;
       initialScrollAttemptedRef.current = initialScrollKey;
       applyInitialScroll({
-        scroller: getScroller(),
+        scroller: getActiveScroller(),
         targetRef: initialScrollTargetRef,
         topOffset: initialScrollTopOffset,
         type: initialScrollType
@@ -158,7 +159,6 @@ export function useScrollAnchorRestoration({
     if (restoreAttemptedRef.current === restoreKey) return;
     restoreAttemptedRef.current = restoreKey;
 
-    const scroller = getScroller();
     let attempts = 0;
     let restoreFrame = 0;
     let settleFrame = 0;
@@ -177,6 +177,7 @@ export function useScrollAnchorRestoration({
       }
       const container = containerRef.current;
       if (!container) return;
+      const scroller = getActiveScroller();
       const anchorElement = findAnchorElement(container, anchorToRestore);
       if (!anchorElement) {
         restoreToSavedScrollTop(anchorToRestore, scroller);
@@ -283,6 +284,7 @@ export function useScrollAnchorRestoration({
         settleFrame = 0;
         const container = containerRef.current;
         if (!container) return;
+        const scroller = getActiveScroller();
         const anchorElement = findAnchorElement(container, anchorToRestore);
         if (!anchorElement) {
           restoreToSavedScrollTop(anchorToRestore, scroller);
@@ -320,12 +322,14 @@ function applyInitialScroll({
 }) {
   if (type === 'preserve') return;
   if (type === 'top') {
+    suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
     setScrollTop(scroller, 0);
     return;
   }
 
   const targetElement = targetRef?.current;
   if (!targetElement) return;
+  suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
   scrollElementToTop(targetElement, topOffset || 0, scroller);
 }
 
@@ -334,8 +338,18 @@ function saveCurrentAnchor(
   container: HTMLElement | null,
   scroller: HTMLElement | null
 ) {
-  if (!container?.isConnected) return;
+  if (!container) return;
   const scrollTop = getScrollTop(scroller);
+  if (!container.isConnected) {
+    if (savedScrollAnchors[anchorKey]) return;
+    savedScrollAnchors[anchorKey] = {
+      anchorKey,
+      offset: 0,
+      scrollTop
+    };
+    return;
+  }
+
   const items = getScrollAnchorItems(container);
   if (items.length === 0) {
     savedScrollAnchors[anchorKey] = {
@@ -502,8 +516,18 @@ function scrollElementToTop(
   setScrollTop(scroller, Math.max(0, nextScrollTop));
 }
 
-function getScroller() {
+function getAppScroller() {
   return document.getElementById('App');
+}
+
+function getActiveScroller() {
+  const scroller = getAppScroller();
+  return scroller && elementUsesOwnScroll(scroller) ? scroller : null;
+}
+
+function elementUsesOwnScroll(element: HTMLElement) {
+  const { overflowY } = window.getComputedStyle(element);
+  return scrollableOverflowValues.has(overflowY);
 }
 
 function getViewportTop(scroller: HTMLElement | null) {
@@ -516,7 +540,7 @@ function getViewportBottom(scroller: HTMLElement | null) {
 
 function getScrollTop(scroller: HTMLElement | null) {
   const bodyRef = document.scrollingElement || document.documentElement;
-  return Math.max(scroller?.scrollTop || 0, bodyRef?.scrollTop || 0);
+  return scroller ? scroller.scrollTop : bodyRef?.scrollTop || 0;
 }
 
 function setScrollTop(scroller: HTMLElement | null, scrollTop: number) {
@@ -524,8 +548,7 @@ function setScrollTop(scroller: HTMLElement | null, scrollTop: number) {
   if (scroller) {
     scroller.scrollTop = scrollTop;
     scroller.dispatchEvent(new Event('scroll'));
-  }
-  if (bodyRef) {
+  } else if (bodyRef) {
     bodyRef.scrollTop = scrollTop;
     bodyRef.dispatchEvent(new Event('scroll'));
   }

@@ -33,6 +33,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { charLimit } from '~/constants/defaultValues';
+import { resolveSubjectRewardLevel } from '~/helpers/rewardLevel';
 const commentLabel = 'Comment';
 const editLabel = 'Edit';
 const byLabel = 'By';
@@ -68,7 +69,7 @@ export default function SubjectPanel({
   timeStamp: number;
   numComments: number;
   loadMoreCommentsButton: boolean;
-  rootRewardLevel: number;
+  rootRewardLevel?: number;
   secretAnswer: string;
   secretAttachment: any;
   subjectId: number;
@@ -183,8 +184,16 @@ export default function SubjectPanel({
     return !onEdit && userCanRewardThis;
   }, [onEdit, userCanRewardThis]);
   const finalRewardLevel = useMemo(() => {
-    return byUser ? 5 : rootRewardLevel > 0 ? 1 : 0;
-  }, [byUser, rootRewardLevel]);
+    return resolveSubjectRewardLevel({
+      rootId,
+      rootRewardLevel,
+      rootType,
+      subject: {
+        byUser,
+        rewardLevel
+      }
+    });
+  }, [byUser, rewardLevel, rootId, rootRewardLevel, rootType]);
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(

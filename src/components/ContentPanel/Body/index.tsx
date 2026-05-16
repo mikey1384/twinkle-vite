@@ -31,6 +31,7 @@ import {
   isContentPanelRecommendActionEnabled,
   isContentPanelRewardActionEnabled
 } from '~/helpers/contentActionAvailability';
+import { resolveContentRewardLevel } from '~/helpers/rewardLevel';
 
 const settingCannotBeChangedLabel = 'This setting cannot be changed';
 
@@ -309,17 +310,11 @@ export default function Body({
     userId
   ]);
 
-  const finalRewardLevel = useMemo(() => {
-    const rootRewardLevel =
-      rootType === 'video' || rootType === 'url'
-        ? rootObj.rewardLevel > 0
-          ? 1
-          : 0
-        : rootObj.rewardLevel;
-    return contentObj.byUser
-      ? 5
-      : targetObj.subject?.rewardLevel || rootRewardLevel || 0;
-  }, [contentObj.byUser, rootObj.rewardLevel, rootType, targetObj.subject]);
+  const finalRewardLevel = resolveContentRewardLevel({
+    content: contentObj,
+    rootObj,
+    subject: targetObj.subject
+  });
 
   const rewardContext = useMemo(() => {
     if (

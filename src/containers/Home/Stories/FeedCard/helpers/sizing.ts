@@ -467,7 +467,12 @@ function hasResolvedRootObj(rootObj: any) {
 }
 
 function hasResolvedTargetObj(targetObj: any) {
-  return Boolean(targetObj?.comment || targetObj?.subject);
+  return Boolean(
+    targetObj?.comment ||
+      targetObj?.subject ||
+      targetObj?.user ||
+      targetObj?.contentType === 'user'
+  );
 }
 
 function getMainPanelSize({
@@ -590,6 +595,14 @@ function getTargetPanelSizing({
 }): FeedCardTargetSizing | null {
   const targetSubject = targetObj?.subject;
   const targetComment = targetObj?.comment;
+  const targetUser =
+    targetObj?.user || (targetObj?.contentType === 'user' ? targetObj : null);
+
+  if (content?.contentType === 'comment' && normalizedRootType === 'user') {
+    return targetUser?.id || rootObj?.id || content?.rootId
+      ? buildTargetSizing('standard')
+      : null;
+  }
 
   if (targetComment && !targetComment.notFound) {
     return buildTargetSizing(
@@ -614,10 +627,6 @@ function getTargetPanelSizing({
     content?.contentType !== 'comment' &&
     content?.contentType !== 'subject'
   ) {
-    return null;
-  }
-
-  if (normalizedRootType === 'user') {
     return null;
   }
 

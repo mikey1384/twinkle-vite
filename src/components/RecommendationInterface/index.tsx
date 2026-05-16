@@ -263,7 +263,7 @@ export default function RecommendationInterface({
     () =>
       ({
         ...style,
-        '--recommendation-surface-start-bg': getThemeStyles(themeName, 0.12).bg,
+        '--recommendation-surface-start-bg': Color.gold(),
         '--recommendation-surface-mid-bg': getThemeStyles(themeName, 0.06).bg
       }) as React.CSSProperties,
     [style, themeName]

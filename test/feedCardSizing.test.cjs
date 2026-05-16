@@ -781,20 +781,25 @@ test('keeps non-previewable attachment-only files compact', () => {
   assert.equal(sizing.card.mobileBodyHeight, 'max(11rem, 110px)');
 });
 
-test('uses comment text bucket for comments rooted on profile messages', () => {
+test('uses comment text plus profile target for comments rooted on profile messages', () => {
   const sizing = getFeedCardSizing({
     content: {
       contentType: 'comment',
       content: 'ok',
-      rootType: 'user'
+      rootType: 'user',
+      targetObj: {
+        contentType: 'user',
+        user: { id: 5, username: 'mikey' }
+      }
     },
     rootObj: { id: 5, username: 'mikey' },
     userId: 1
   });
 
   assert.equal(sizing.main.size, 'compact');
-  assert.equal(sizing.card.size, 'compact-card');
-  assert.equal(sizing.target, null);
+  assert.equal(sizing.target?.size, 'standard');
+  assert.equal(sizing.card.hasTarget, true);
+  assert.equal(sizing.card.size, 'comment-with-target-card');
 });
 
 test('uses preview root object when hook state is still empty', () => {

@@ -112,6 +112,7 @@ export default function Body({
     rootObj?.id || rootObj?.notFound ? rootObj : content?.rootObj || {};
   const targetSubject = content?.targetObj?.subject;
   const targetComment = content?.targetObj?.comment;
+  const targetUser = getTargetUser(content?.targetObj);
   const resolvedSizing =
     sizing || getFeedCardSizing({ content, rootObj: resolvedRootObj, userId });
   const secretHidden = resolvedSizing.flags.secretHidden;
@@ -138,6 +139,7 @@ export default function Body({
         targetComment={targetComment}
         targetPanelClassName={targetPanelClassName}
         targetSubject={targetSubject}
+        targetUser={targetUser}
         theme={theme}
         userId={userId}
       />
@@ -1039,6 +1041,13 @@ export default function Body({
       </div>
     );
   }
+}
+
+function getTargetUser(targetObj: any) {
+  if (!targetObj) return null;
+  if (targetObj.user) return targetObj.user;
+  if (targetObj.contentType === 'user') return targetObj;
+  return null;
 }
 
 export function HomeFeedCommentPreview({

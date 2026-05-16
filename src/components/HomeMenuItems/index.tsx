@@ -20,7 +20,6 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RecentGroupItems from './RecentGroupItems';
 import { useRootTheme } from '~/theme/RootThemeProvider';
-const BodyRef = document.scrollingElement || document.documentElement;
 
 const peopleLabel = 'People';
 const postsLabel = 'Posts';
@@ -409,9 +408,6 @@ export default function HomeMenuItems({
 
   function handleStoryClick() {
     if (location.pathname === '/') {
-      const appElement = document.getElementById('App');
-      if (appElement) appElement.scrollTop = 0;
-      BodyRef.scrollTop = 0;
       return;
     }
     navigate('/');

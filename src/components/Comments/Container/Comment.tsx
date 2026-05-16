@@ -58,6 +58,7 @@ import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { Content } from '~/types';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import ScopedTheme from '~/theme/ScopedTheme';
 
 const commentWasDeletedLabel = 'this comment was deleted';
@@ -253,45 +254,12 @@ function Comment({
     );
   }, [rewards, userId]);
 
-  const rewardLevel = useMemo(() => {
-    if (isPreview) return 0;
-    if (parent.contentType === 'subject' && parent.rewardLevel > 0) {
-      return parent.rewardLevel;
-    }
-    if (
-      rootContent.contentType === 'subject' &&
-      (rootContent.rewardLevel || 0) > 0
-    ) {
-      return rootContent.rewardLevel;
-    }
-    if (parent.contentType === 'video' || parent.contentType === 'url') {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if (parent.rewardLevel > 0) {
-        return 1;
-      }
-    }
-    if (
-      rootContent.contentType === 'video' ||
-      rootContent.contentType === 'url'
-    ) {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if ((rootContent.rewardLevel || 0) > 0) {
-        return 1;
-      }
-    }
-    return 0;
-  }, [
+  const rewardLevel = resolveCommentRewardLevel({
     isPreview,
-    parent.contentType,
-    parent.rewardLevel,
-    rootContent.contentType,
-    rootContent.rewardLevel,
+    parent,
+    rootContent,
     subject
-  ]);
+  });
 
   useEffect(() => {
     if (!isPreview) {
@@ -720,15 +688,15 @@ function Comment({
                                     ? '0.75rem'
                                     : '2rem'
                                   : compactMode
-                                  ? '0.45rem'
-                                  : '1rem'
+                                    ? '0.45rem'
+                                    : '1rem'
                                 : fileType === 'audio'
-                                ? compactMode
-                                  ? '0.5rem'
-                                  : '1rem'
-                                : compactMode
-                                ? '0.35rem'
-                                : 0
+                                  ? compactMode
+                                    ? '0.5rem'
+                                    : '1rem'
+                                  : compactMode
+                                    ? '0.35rem'
+                                    : 0
                             }}
                           />
                         </div>
@@ -875,17 +843,17 @@ function Comment({
                                   </Button>
                                 )}
                                 {userCanRewardThis &&
-                                !compactMode &&
-                                !isDeleteNotification && (
-                                  <RewardButton
-                                    contentId={commentId}
-                                    contentType="comment"
-                                    disableReason={xpButtonDisabled}
-                                    style={{ marginLeft: '0.7rem' }}
-                                    theme={theme}
-                                    hideLabel={deviceIsTablet}
-                                  />
-                                )}
+                                  !compactMode &&
+                                  !isDeleteNotification && (
+                                    <RewardButton
+                                      contentId={commentId}
+                                      contentType="comment"
+                                      disableReason={xpButtonDisabled}
+                                      style={{ marginLeft: '0.7rem' }}
+                                      theme={theme}
+                                      hideLabel={deviceIsTablet}
+                                    />
+                                  )}
                               </div>
                               {isDeleteNotification ? null : (
                                 <Likers
@@ -949,20 +917,20 @@ function Comment({
                   {!isPreview &&
                     !compactMode &&
                     recommendationInterfaceShown && (
-                    <RecommendationInterface
-                      style={{
-                        marginTop: likes.length > 0 ? '0.5rem' : '1rem'
-                      }}
-                      contentId={commentId}
-                      contentType="comment"
-                      onHide={() => setRecommendationInterfaceShown(false)}
-                      recommendations={recommendations}
-                      content={comment.content}
-                      rewardLevel={rewardLevel}
-                      theme={theme}
-                      uploaderId={uploader?.id}
-                    />
-                  )}
+                      <RecommendationInterface
+                        style={{
+                          marginTop: likes.length > 0 ? '0.5rem' : '1rem'
+                        }}
+                        contentId={commentId}
+                        contentType="comment"
+                        onHide={() => setRecommendationInterfaceShown(false)}
+                        recommendations={recommendations}
+                        content={comment.content}
+                        rewardLevel={rewardLevel}
+                        theme={theme}
+                        uploaderId={uploader?.id}
+                      />
+                    )}
                   {!isPreview && !compactMode && xpRewardInterfaceShown && (
                     <XPRewardInterface
                       innerRef={RewardInterfaceRef}

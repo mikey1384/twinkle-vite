@@ -34,9 +34,11 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import LocalContext from '../../Context';import ScopedTheme from '~/theme/ScopedTheme';
+import LocalContext from '../../Context';
+import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 
 const pinLabel = 'Pin';
 const unpinLabel = 'Unpin';
@@ -219,43 +221,11 @@ export default function SearchedComment({
     );
   }, [rewards, userId]);
 
-  const rewardLevel = useMemo(() => {
-    if (parent.contentType === 'subject' && parent.rewardLevel > 0) {
-      return parent.rewardLevel;
-    }
-    if (
-      rootContent.contentType === 'subject' &&
-      (rootContent.rewardLevel || 0) > 0
-    ) {
-      return rootContent.rewardLevel;
-    }
-    if (parent.contentType === 'video' || parent.contentType === 'url') {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if (parent.rewardLevel > 0) {
-        return 1;
-      }
-    }
-    if (
-      rootContent.contentType === 'video' ||
-      rootContent.contentType === 'url'
-    ) {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if ((rootContent.rewardLevel || 0) > 0) {
-        return 1;
-      }
-    }
-    return 0;
-  }, [
-    parent.contentType,
-    parent.rewardLevel,
-    rootContent.contentType,
-    rootContent.rewardLevel,
+  const rewardLevel = resolveCommentRewardLevel({
+    parent,
+    rootContent,
     subject
-  ]);
+  });
 
   const userIsUploader = useMemo(
     () => uploader.id === userId,

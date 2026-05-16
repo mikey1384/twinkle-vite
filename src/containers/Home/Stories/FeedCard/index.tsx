@@ -44,9 +44,10 @@ import {
 } from '~/helpers/homeFeedActionIntent';
 
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
-const HOME_FEED_CARD_LAYOUT_VERSION = 'root-subject-preview-v6';
+const HOME_FEED_CARD_LAYOUT_VERSION = 'root-user-target-preview-v1';
 const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
 const HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX = 10;
+const HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX = 2;
 const homeFeedCardSizingCache = new Map<string, FeedCardSizing>();
 
 export default function HomeFeedCard({
@@ -88,6 +89,8 @@ export default function HomeFeedCard({
   const tapNavigationRef = useRef<{
     moved: boolean;
     pointerId: number;
+    scrollLeft: number;
+    scrollTop: number;
     startX: number;
     startY: number;
   } | null>(null);
@@ -151,7 +154,8 @@ export default function HomeFeedCard({
   }, [previewRootObjForSecretState, rootContentState]);
   const preliminaryTargetObj = mergePreviewTargetSecretState(
     previewContentForSecretState.targetObj,
-    contentState.targetObj
+    contentState.targetObj,
+    preliminaryRootType
   );
   const preliminaryContentForSecretState = contentState.loaded
     ? {
@@ -648,6 +652,7 @@ export default function HomeFeedCard({
     tapNavigationRef.current = {
       moved: false,
       pointerId: event.pointerId,
+      ...getHomeFeedScrollPosition(),
       startX: event.clientX,
       startY: event.clientY
     };
@@ -659,10 +664,14 @@ export default function HomeFeedCard({
 
     const xDelta = event.clientX - tapNavigation.startX;
     const yDelta = event.clientY - tapNavigation.startY;
+    const scrollDelta = getHomeFeedScrollDelta(tapNavigation);
     if (
       xDelta * xDelta + yDelta * yDelta >
-      HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX *
-        HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX
+        HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX *
+          HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX ||
+      scrollDelta >
+        HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX *
+          HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX
     ) {
       tapNavigation.moved = true;
     }
@@ -677,6 +686,13 @@ export default function HomeFeedCard({
     const tapNavigation = tapNavigationRef.current;
     tapNavigationRef.current = null;
     if (!tapNavigation || tapNavigation.pointerId !== event.pointerId) return;
+    if (
+      getHomeFeedScrollDelta(tapNavigation) >
+      HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX *
+        HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX
+    ) {
+      return;
+    }
     if (tapNavigation.moved) return;
     if (
       shouldSkipFeedCardNavigation({
@@ -813,15 +829,21 @@ function mergeLoadedFeedContentWithPreviewState({
     ),
     targetObj: mergePreviewTargetSecretState(
       previewContent?.targetObj,
-      contentState?.targetObj
+      contentState?.targetObj,
+      contentState?.rootType || previewContent?.rootType
     )
   };
 }
 
 function mergePreviewTargetSecretState(
   previewTargetObj: any,
-  loadedTargetObj: any
+  loadedTargetObj: any,
+  rootType?: string
 ) {
+  if (normalizeRootType(rootType) === 'user') {
+    return mergeProfileTargetObj(previewTargetObj, loadedTargetObj);
+  }
+
   if (!previewTargetObj && !loadedTargetObj) return loadedTargetObj;
   return {
     ...(previewTargetObj || {}),
@@ -831,6 +853,53 @@ function mergePreviewTargetSecretState(
       loadedTargetObj?.subject
     )
   };
+}
+
+function mergeProfileTargetObj(previewTargetObj: any, loadedTargetObj: any) {
+  const previewProfile = getProfileTargetObj(previewTargetObj);
+  const loadedProfile = getProfileTargetObj(loadedTargetObj);
+  const profile = {
+    ...(previewProfile || {}),
+    ...(loadedProfile || {})
+  };
+  const id =
+    Number(profile.id || profile.contentId || 0) ||
+    Number(previewTargetObj?.id || loadedTargetObj?.id || 0);
+  const username =
+    profile.username ||
+    previewTargetObj?.username ||
+    loadedTargetObj?.username ||
+    previewTargetObj?.content ||
+    loadedTargetObj?.content ||
+    '';
+
+  if (!id && !username) {
+    return previewTargetObj?.contentType === 'user' ||
+      loadedTargetObj?.contentType === 'user'
+      ? { contentType: 'user' }
+      : undefined;
+  }
+
+  const mergedProfile = {
+    ...profile,
+    content: username,
+    contentId: id || profile.contentId,
+    contentType: 'user',
+    id: id || profile.id,
+    username
+  };
+
+  return {
+    ...mergedProfile,
+    user: mergedProfile
+  };
+}
+
+function getProfileTargetObj(targetObj: any) {
+  if (!targetObj) return null;
+  if (targetObj.user) return targetObj.user;
+  if (targetObj.contentType === 'user') return targetObj;
+  return null;
 }
 
 function mergePreviewSubjectSecretState(
@@ -977,6 +1046,35 @@ function hasHomeFeedSubjectSecret(subject: any) {
       subject?.secretAnswer ||
       subject?.secretAttachment
   );
+}
+
+function getHomeFeedScrollPosition() {
+  if (typeof document === 'undefined') {
+    return { scrollLeft: 0, scrollTop: 0 };
+  }
+  const scrollingElement = document.scrollingElement || document.documentElement;
+  const appElement = document.getElementById('App');
+  return {
+    scrollLeft:
+      Number(scrollingElement?.scrollLeft || 0) +
+      Number(appElement?.scrollLeft || 0),
+    scrollTop:
+      Number(scrollingElement?.scrollTop || 0) +
+      Number(appElement?.scrollTop || 0)
+  };
+}
+
+function getHomeFeedScrollDelta({
+  scrollLeft,
+  scrollTop
+}: {
+  scrollLeft: number;
+  scrollTop: number;
+}) {
+  const current = getHomeFeedScrollPosition();
+  const xDelta = current.scrollLeft - scrollLeft;
+  const yDelta = current.scrollTop - scrollTop;
+  return xDelta * xDelta + yDelta * yDelta;
 }
 
 function hasHomeFeedPrimaryTextTruncation(panel: HTMLElement) {

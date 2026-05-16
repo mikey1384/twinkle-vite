@@ -45,6 +45,7 @@ import LocalContext from '../../Context';
 import { Content, Comment as CommentType } from '~/types';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
@@ -175,45 +176,12 @@ function Comment({
     return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
   }, [rewards, userId]);
 
-  const rewardLevel = useMemo(() => {
-    if (isPreview) return 0;
-    if (parent.contentType === 'subject' && parent.rewardLevel > 0) {
-      return parent.rewardLevel;
-    }
-    if (
-      rootContent.contentType === 'subject' &&
-      (rootContent.rewardLevel || 0) > 0
-    ) {
-      return rootContent.rewardLevel;
-    }
-    if (parent.contentType === 'video' || parent.contentType === 'url') {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if (parent.rewardLevel > 0) {
-        return 1;
-      }
-    }
-    if (
-      rootContent.contentType === 'video' ||
-      rootContent.contentType === 'url'
-    ) {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if ((rootContent.rewardLevel || 0) > 0) {
-        return 1;
-      }
-    }
-    return 0;
-  }, [
+  const rewardLevel = resolveCommentRewardLevel({
     isPreview,
-    parent.contentType,
-    parent.rewardLevel,
-    rootContent.contentType,
-    rootContent.rewardLevel,
+    parent,
+    rootContent,
     subject
-  ]);
+  });
 
   const userIsUploader = useMemo(
     () => uploader.id === userId,
@@ -485,11 +453,11 @@ function Comment({
                               ? '0.75rem'
                               : '2rem'
                             : compactMode
-                            ? '0.45rem'
-                            : '1rem'
+                              ? '0.45rem'
+                              : '1rem'
                           : compactMode
-                          ? '0.35rem'
-                          : 0
+                            ? '0.35rem'
+                            : 0
                       }}
                     />
                   </div>
@@ -539,9 +507,7 @@ function Comment({
                           uploader?.id === Number(CIEL_TWINKLE_ID)
                         }
                         voice={
-                          uploader?.id === Number(CIEL_TWINKLE_ID)
-                            ? 'nova'
-                            : ''
+                          uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : ''
                         }
                         contentType="comment"
                         contentId={commentId}
@@ -637,7 +603,9 @@ function Comment({
                             variant={isRecommendedByUser ? 'solid' : 'soft'}
                             tone="raised"
                             disabled={recommendationInterfaceShown}
-                            onClick={() => setRecommendationInterfaceShown(true)}
+                            onClick={() =>
+                              setRecommendationInterfaceShown(true)
+                            }
                           >
                             <Icon icon="heart" />
                           </Button>
@@ -711,15 +679,15 @@ function Comment({
         )}
         {dropdownButtonShown && !isEditing && (
           <div className="dropdown-wrapper">
-              <DropdownButton
-                variant="solid"
-                tone="raised"
-                icon="chevron-down"
-                color="darkerGray"
-                listStyle={compactDropdownListStyle}
-                menuProps={dropdownMenuItems}
-                xAdjustment={compactMode ? -6 : undefined}
-              />
+            <DropdownButton
+              variant="solid"
+              tone="raised"
+              icon="chevron-down"
+              color="darkerGray"
+              listStyle={compactDropdownListStyle}
+              menuProps={dropdownMenuItems}
+              xAdjustment={compactMode ? -6 : undefined}
+            />
           </div>
         )}
       </div>

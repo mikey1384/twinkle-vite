@@ -215,6 +215,7 @@ assert.match(rewardButtonSource, /getXpRewardActionBlockedReason/);
 assert.match(rewardButtonSource, /const blockedRewardButtonClass = css`/);
 assert.match(rewardButtonSource, /cursor: default;/);
 assert.match(rewardButtonSource, /if \(isBlocked\)/);
+assert.match(rewardButtonSource, /disabled={isBlocked}/);
 assert.match(rewardButtonSource, /event\?\.stopPropagation\(\);/);
 assert.doesNotMatch(rewardButtonSource, /disabled={!!disableReason}/);
 assert.match(rewardButtonSource, /text={blockedReason}/);
@@ -271,7 +272,7 @@ assert.match(
   scrollAnchorCoordinatorSource,
   /export function suppressScrollAnchorRestores/
 );
-assert.match(mainNavSource, /suppressScrollAnchorRestores\(\)/);
+assert.doesNotMatch(mainNavSource, /suppressScrollAnchorRestores\(\)/);
 assert.match(contentPageSource, /getMatchingHomeFeedNavigationState/);
 assert.match(
   contentPageSource,

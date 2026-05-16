@@ -45,6 +45,7 @@ import { v1 as uuidv1 } from 'uuid';
 import { Comment as CommentType, Subject } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 
 const commentRemovedLabel = 'Comment removed / no longer available';
 const replyLabel = 'Reply';
@@ -241,15 +242,16 @@ export default function TargetContent({
     () => subject?.uploader?.id || subject?.userId,
     [subject]
   );
-  const finalRewardLevel = useMemo(() => {
-    const rootRewardLevel =
-      rootType === 'video' || rootType === 'url'
-        ? rootObj.rewardLevel > 0
-          ? 1
-          : 0
-        : rootObj.rewardLevel;
-    return subject?.rewardLevel || rootRewardLevel;
-  }, [rootObj.rewardLevel, rootType, subject]);
+  const targetSubject = subjectState?.id ? subjectState : subject;
+  const finalRewardLevel = resolveCommentRewardLevel({
+    parent: {
+      contentId: rootObj?.id || rootObj?.contentId,
+      contentType: rootType,
+      rewardLevel: rootObj?.rewardLevel
+    },
+    rootContent: rootObj,
+    subject: targetSubject
+  });
 
   const isRecommendedByUser = useMemo(() => {
     return comment
@@ -297,10 +299,10 @@ export default function TargetContent({
               type === 'reply'
                 ? 'replied'
                 : type === 'comment'
-                ? rootType === 'user'
-                  ? 'posted a profile message'
-                  : 'commented'
-                : 'responded'
+                  ? rootType === 'user'
+                    ? 'posted a profile message'
+                    : 'commented'
+                  : 'responded'
             }:`}
           />
         </>

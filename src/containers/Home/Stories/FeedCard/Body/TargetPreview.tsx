@@ -23,18 +23,22 @@ import {
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
 import { getHomeFeedContentPath } from '../helpers/navigation';
+import ProfilePanelPreview from './ProfilePanelPreview';
 
 function resolveTargetPreviewTheme({
   resolvedRootObj,
   targetComment,
+  targetUser,
   targetSubject
 }: {
   resolvedRootObj: any;
   targetComment: any;
+  targetUser: any;
   targetSubject: any;
 }) {
   return String(
-    targetComment?.uploader?.profileTheme ||
+    targetUser?.profileTheme ||
+      targetComment?.uploader?.profileTheme ||
       targetComment?.profileTheme ||
       targetSubject?.uploader?.profileTheme ||
       targetSubject?.profileTheme ||
@@ -60,6 +64,7 @@ export default function TargetPreview({
   targetComment,
   targetPanelClassName,
   targetSubject,
+  targetUser,
   theme,
   userId
 }: {
@@ -69,6 +74,7 @@ export default function TargetPreview({
   targetComment: any;
   targetPanelClassName: string;
   targetSubject: any;
+  targetUser: any;
   theme?: string;
   userId: number;
 }) {
@@ -77,6 +83,7 @@ export default function TargetPreview({
     resolveTargetPreviewTheme({
       resolvedRootObj,
       targetComment,
+      targetUser,
       targetSubject
     }) || 'logoBlue';
   const { accentColor: targetAccentColor, borderColor: targetBorderColor } =
@@ -100,6 +107,20 @@ export default function TargetPreview({
       }) as React.CSSProperties,
     [targetAccentColor, targetBorderColor]
   );
+  if (contentType === 'comment' && normalizedRootType === 'user') {
+    const profile = targetUser?.id ? targetUser : resolvedRootObj;
+    if (!profile?.id || profile?.notFound) return null;
+
+    return renderTargetPanel({
+      children: <ProfilePanelPreview profile={profile} theme={theme} />,
+      target: {
+        contentId: Number(profile.id || 0),
+        contentType: 'user',
+        username: profile.username || profile.content
+      }
+    });
+  }
+
   if (targetComment && !targetComment.notFound) {
     return renderTargetPanel({
       children: renderTargetCommentPreview(targetComment),
@@ -139,10 +160,6 @@ export default function TargetPreview({
 
   if (contentType === 'comment' && normalizedRootType === 'dailyReflection') {
     return renderRootPanel(renderTargetDailyReflectionPreview(resolvedRootObj));
-  }
-
-  if (contentType === 'comment' && normalizedRootType === 'user') {
-    return null;
   }
 
   if (
@@ -192,6 +209,7 @@ export default function TargetPreview({
       contentId: number;
       contentType: string;
       rootType?: string;
+      username?: string;
     };
   }) {
     const targetPath = getTargetPath(target);
@@ -217,10 +235,14 @@ export default function TargetPreview({
     contentId: number;
     contentType: string;
     rootType?: string;
+    username?: string;
   }) {
     const targetContentId = Number(target.contentId || 0);
     const targetContentType = String(target.contentType || '').trim();
     if (!targetContentId || !targetContentType) return '';
+    if (targetContentType === 'user') {
+      return target.username ? `/users/${target.username}` : '';
+    }
     return getHomeFeedContentPath({
       contentId: targetContentId,
       contentType: targetContentType,

@@ -42,10 +42,12 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import {
   getFileInfoFromFileName,
   stringIsEmpty
-} from '~/helpers/stringHelpers';import { Comment } from '~/types';
+} from '~/helpers/stringHelpers';
+import { Comment } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -223,37 +225,11 @@ function Reply({
     [level, canReward, recommendations, uploader, userId]
   );
 
-  const rewardLevel = useMemo(() => {
-    if (parent.contentType === 'subject' && parent.rewardLevel > 0) {
-      return parent.rewardLevel;
-    }
-    if (parent.rootType === 'subject' && rootContent?.rewardLevel > 0) {
-      return rootContent.rewardLevel;
-    }
-    if (parent.contentType === 'video' || parent.contentType === 'url') {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if (parent.rewardLevel > 0) {
-        return 1;
-      }
-    }
-    if (parent.rootType === 'video' || parent.rootType === 'url') {
-      if (subject?.rewardLevel) {
-        return subject?.rewardLevel;
-      }
-      if (rootContent?.rewardLevel > 0) {
-        return 1;
-      }
-    }
-    return 0;
-  }, [
-    parent.contentType,
-    parent.rewardLevel,
-    parent.rootType,
+  const rewardLevel = resolveCommentRewardLevel({
+    parent,
     rootContent,
     subject
-  ]);
+  });
 
   const xpButtonDisabled = useMemo(
     () =>
@@ -364,7 +340,10 @@ function Reply({
   return !(isDeleteNotification && !reply.numReplies) && !reply.isDeleted ? (
     <ErrorBoundary componentPath="Comments/Replies/Reply">
       <ScopedTheme theme={themeName} roles={['link', 'reward']}>
-        <div className={`${commentContainer} comment__container`} ref={innerRef}>
+        <div
+          className={`${commentContainer} comment__container`}
+          ref={innerRef}
+        >
           {pinnedCommentId === reply.id && (
             <div
               className={css`
@@ -463,11 +442,11 @@ function Reply({
                                 ? '0.75rem'
                                 : '2rem'
                               : compactMode
-                              ? '0.45rem'
-                              : '1rem'
+                                ? '0.45rem'
+                                : '1rem'
                             : compactMode
-                            ? '0.35rem'
-                            : 0
+                              ? '0.35rem'
+                              : 0
                         }}
                       />
                     </div>

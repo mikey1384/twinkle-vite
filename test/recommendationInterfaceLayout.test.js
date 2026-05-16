@@ -59,7 +59,7 @@ assert.match(source, /border-color: \$\{Color\.logoBlue\(0\.58\)\};/);
 assert.match(source, /background-color: transparent;/);
 assert.match(source, /const profileTheme = useKeyContext/);
 assert.match(source, /theme \|\| profileTheme \|\| 'logoBlue'/);
-assert.match(source, /getThemeStyles\(themeName, 0\.12\)\.bg/);
+assert.match(source, /'--recommendation-surface-start-bg': Color\.gold\(\)/);
 assert.match(source, /getThemeStyles\(themeName, 0\.06\)\.bg/);
 assert.match(source, /--recommendation-surface-start-bg/);
 assert.match(source, /--recommendation-surface-mid-bg/);
