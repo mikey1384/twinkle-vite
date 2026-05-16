@@ -141,6 +141,9 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-subject-secret-compact {
       height: max(18.5rem, 185px);
     }
+    .home-feed-card__panel-preview--size-subject-secret-preview {
+      height: max(22rem, 220px);
+    }
     .home-feed-card__panel-preview--size-subject-secret-media {
       height: max(24rem, 240px);
     }
@@ -256,6 +259,11 @@ export const mobilePreviewStyles = `
     }
     h3 {
       font-size: 1.5rem;
+    }
+    .home-feed-card__subject-preview
+      .home-feed-card__subject-copy
+      > h3.home-feed-card__primary-preview-text {
+      font-size: 1.75rem;
     }
   }
 `;

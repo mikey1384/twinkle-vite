@@ -39,6 +39,7 @@ export type FeedCardSize =
   | 'subject-root'
   | 'subject-root-text'
   | 'subject-secret-compact'
+  | 'subject-secret-preview'
   | 'subject-secret-media'
   | 'subject-tall'
   | 'tall';
@@ -159,6 +160,7 @@ const PANEL_HEIGHT_REM: Record<
   'subject-root': { desktop: 15.5, mobile: 15.5 },
   'subject-root-text': { desktop: 29, mobile: 27 },
   'subject-secret-compact': { desktop: 17.5, mobile: 18.5 },
+  'subject-secret-preview': { desktop: 22, mobile: 22 },
   'subject-secret-media': { desktop: 25, mobile: 24 },
   'subject-tall': { desktop: 32, mobile: 30 },
   tall: { desktop: 30, mobile: 28 }
@@ -1100,6 +1102,10 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
     return 'subject-tall';
   }
 
+  if (descriptionLength <= 180 && secretLength > 0) {
+    return getShortPublicSubjectSecretPanelSize(content);
+  }
+
   if (secretLength > 160 || descriptionLength > 750) {
     return 'subject-tall';
   }
@@ -1108,15 +1114,30 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
     return 'compact';
   }
 
-  if (descriptionLength <= 120 && secretLength > 0 && secretLength <= 80) {
-    return 'subject-secret-compact';
-  }
-
   if (descriptionLength <= 420 && secretLength <= 120) {
     return 'standard';
   }
 
   return 'subject-tall';
+}
+
+function getShortPublicSubjectSecretPanelSize(content: any): FeedCardSize {
+  const maxSecretLines = Math.max(
+    getSubjectSecretAnswerMaxLines({
+      axis: 'desktop',
+      content,
+      hasSecretAnswerText: true
+    }),
+    getSubjectSecretAnswerMaxLines({
+      axis: 'mobile',
+      content,
+      hasSecretAnswerText: true
+    })
+  );
+
+  return maxSecretLines <= 2
+    ? 'subject-secret-compact'
+    : 'subject-secret-preview';
 }
 
 function getLockedSubjectPanelSize(content: any): FeedCardSize {
@@ -1458,6 +1479,7 @@ function isSubjectDescriptionBudgetedSize(size: FeedCardSize) {
     size === 'subject-root' ||
     size === 'subject-root-text' ||
     size === 'subject-secret-compact' ||
+    size === 'subject-secret-preview' ||
     size === 'subject-tall' ||
     size === 'standard'
   );

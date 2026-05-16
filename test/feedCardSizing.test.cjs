@@ -414,6 +414,48 @@ test('uses compact height for short effort subjects with short revealed secrets'
   );
 });
 
+test('uses preview height for short public subjects with long revealed secrets', () => {
+  const content = {
+    __homeFeedHasCommentPreview: true,
+    comments: [{ id: 1, content: 'comment' }],
+    contentType: 'subject',
+    description: 'The Dinosaur Museum (Dorset, UK)',
+    rewardLevel: 2,
+    secretAnswer:
+      'The dinosaur with the longest name was Micropachycephalosaurus meaning tiny thick-headed lizard. It lived during the Late Cretaceous period and was discovered in China.',
+    secretShown: true,
+    title: 'The Longest Dinosaur Name'
+  };
+  const sizing = getFeedCardSizing({
+    content,
+    userId: 1
+  });
+
+  assert.equal(sizing.main.size, 'subject-secret-preview');
+  assert.equal(sizing.card.hasCommentPreview, true);
+  assert.equal(sizing.card.bodyHeight, 'max(22rem, 220px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(22rem, 220px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(42.15rem, 421.5px) + 2px)');
+  assert.equal(sizing.card.mobileHeight, 'calc(max(41.8rem, 418px) + 2px)');
+  assert.deepEqual(
+    getSubjectPreviewLineLimits({
+      axis: 'mobile',
+      content,
+      hasDescriptionText: true,
+      hasEffort: true,
+      hasSecretAnswer: true,
+      hasSecretAnswerText: true,
+      hasSecretAttachment: false,
+      hasTitle: true,
+      size: sizing.main.size
+    }),
+    {
+      descriptionMaxLines: 2,
+      secretMaxLines: 3
+    }
+  );
+});
+
 test('uses compact root sizing for sparse secret subjects with root previews', () => {
   const content = {
     contentType: 'subject',
@@ -755,6 +797,43 @@ test('keeps subject description styling separate from secret styling', () => {
   assert.match(
     stylesSource,
     /\.home-feed-card__subject-secret-answer[\s\S]*background: \$\{Color\.ivory\(\)\}/
+  );
+});
+
+test('standardizes mobile subject title size across feed card subject variants', () => {
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const stylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles.ts'
+    ),
+    'utf8'
+  );
+  const subjectTitleRule = mobileStylesSource.match(
+    /\.home-feed-card__subject-preview\s+\.home-feed-card__subject-copy\s+>\s+h3\.home-feed-card__primary-preview-text \{([\s\S]*?)\n\s+\}/
+  );
+  const genericHeadingRule = mobileStylesSource.match(
+    /\n\s+h3 \{([\s\S]*?)\n\s+\}/
+  );
+
+  assert.ok(subjectTitleRule);
+  assert.ok(genericHeadingRule);
+  assert.match(subjectTitleRule[1], /font-size: 1\.75rem;/);
+  assert.doesNotMatch(subjectTitleRule[1], /max\(/);
+  assert.ok(
+    mobileStylesSource.indexOf(subjectTitleRule[0]) >
+      mobileStylesSource.indexOf(genericHeadingRule[0])
+  );
+  assert.doesNotMatch(genericHeadingRule[1], /font-size: 1\.75rem;/);
+  assert.match(
+    stylesSource,
+    /mainPreviewStyles[\s\S]*mobilePreviewStyles/
   );
 });
 
@@ -1287,7 +1366,7 @@ test('reserves space for long secret answers in subject previews', () => {
   );
 });
 
-test('keeps long effort subjects with secret messages in tall space', () => {
+test('keeps long public subject content with secret messages in tall space', () => {
   assert.equal(
     getFeedCardSizing({
       content: {
@@ -1302,7 +1381,9 @@ test('keeps long effort subjects with secret messages in tall space', () => {
     }).main.size,
     'subject-tall'
   );
+});
 
+test('keeps short public subjects with long secret messages out of tall space', () => {
   assert.equal(
     getFeedCardSizing({
       content: {
@@ -1315,7 +1396,7 @@ test('keeps long effort subjects with secret messages in tall space', () => {
       },
       userId: 1
     }).main.size,
-    'subject-tall'
+    'subject-secret-preview'
   );
 });
 
