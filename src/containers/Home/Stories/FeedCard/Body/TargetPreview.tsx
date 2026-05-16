@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import AchievementItem from '~/components/AchievementItem';
 import CardThumb from '~/components/CardThumb';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
-import Embedly from '~/components/Embedly';
 import Icon from '~/components/Icon';
+import LinkPreviewImage from '~/components/LinkPreviewImage';
 import Loading from '~/components/Loading';
 import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
@@ -19,6 +19,7 @@ import {
   AudioWavePreview,
   CompactEffortStrip,
   getAIStoryDifficultyStyle,
+  getAIStoryImageUrl,
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
 import { getHomeFeedContentPath } from '../helpers/navigation';
@@ -150,7 +151,7 @@ export default function TargetPreview({
   ) {
     return renderRootPanel(
       resolvedRootObj.loaded ? (
-        <Embedly small contentId={resolvedRootObj.id} />
+        renderTargetUrlPreview(resolvedRootObj)
       ) : (
         <Loading theme={theme} />
       )
@@ -465,6 +466,7 @@ export default function TargetPreview({
 
   function renderTargetSubjectPreview(target: any) {
     const attachmentPreview = renderTargetAttachmentPreview(target);
+    const uploaderName = getTargetUploaderName(target);
     return (
       <div
         className={`home-feed-card__target-content home-feed-card__target-subject${
@@ -479,6 +481,11 @@ export default function TargetPreview({
             />
           ) : null}
           {target?.title ? <h4>{target.title}</h4> : null}
+          {uploaderName ? (
+            <span className="home-feed-card__target-subject-meta">
+              Posted by {uploaderName}
+            </span>
+          ) : null}
           {target?.description ? (
             <RichText
               contentId={Number(target.id || 0)}
@@ -507,7 +514,7 @@ export default function TargetPreview({
         }`}
       >
         <div className="home-feed-card__target-copy">
-          <span className="home-feed-card__target-chip">
+          <span className="home-feed-card__target-chip build">
             <Icon icon="rocket" />
             Lumine App
           </span>
@@ -548,9 +555,52 @@ export default function TargetPreview({
     );
   }
 
+  function renderTargetUrlPreview(target: any) {
+    const title =
+      target?.actualTitle ||
+      target?.linkTitle ||
+      target?.title ||
+      target?.content ||
+      'Link';
+    const description =
+      target?.actualDescription ||
+      target?.linkDescription ||
+      target?.description ||
+      '';
+    const siteLabel =
+      target?.siteUrl ||
+      target?.linkUrl ||
+      getTargetUrlSiteLabel(target?.content || target?.url);
+    const imageUrl = getTargetUrlImageUrl(target);
+
+    return (
+      <div className="home-feed-card__target-content home-feed-card__target-url has-media">
+        <LinkPreviewImage
+          className="home-feed-card__target-media"
+          src={imageUrl}
+          alt={`${title} preview`}
+          loading="lazy"
+        />
+        <div className="home-feed-card__target-copy">
+          <span className="home-feed-card__target-chip url">
+            <Icon icon="link" />
+            Link
+          </span>
+          <h4>{title}</h4>
+          {description ? <p>{description}</p> : null}
+          {siteLabel ? (
+            <span className="home-feed-card__target-site">{siteLabel}</span>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   function renderTargetAIStoryPreview(target: any) {
     const difficulty = target?.difficulty || target?.level;
     const difficultyStyle = getAIStoryDifficultyStyle(difficulty);
+    const title = target?.title || target?.topic || 'AI Story';
+    const imageUrl = getAIStoryImageUrl(target);
 
     return (
       <div
@@ -558,7 +608,7 @@ export default function TargetPreview({
           target?.isListening
             ? ' home-feed-card__ai-story-preview--listening'
             : ''
-        }`}
+        }${imageUrl ? ' home-feed-card__ai-story-preview--has-image' : ''}`}
         style={difficultyStyle}
       >
         <div className="home-feed-card__ai-story-topline">
@@ -571,15 +621,28 @@ export default function TargetPreview({
           ) : null}
         </div>
         <div className="home-feed-card__ai-story-main">
-          <h3>{target?.title || target?.topic || 'AI Story'}</h3>
-          {target?.isListening ? (
-            <div className="home-feed-card__ai-story-listening-body">
-              <AudioWavePreview small />
+          <div className="home-feed-card__ai-story-copy">
+            <h3>{title}</h3>
+            {target?.isListening ? (
+              <div className="home-feed-card__ai-story-listening-body">
+                <AudioWavePreview small />
+              </div>
+            ) : getReadableAIStoryPreview(target?.story) ? (
+              <p className="home-feed-card__ai-story-story">
+                {getReadableAIStoryPreview(target.story)}
+              </p>
+            ) : null}
+          </div>
+          {imageUrl ? (
+            <div className="home-feed-card__ai-story-image-frame">
+              <img
+                alt={`${title} image`}
+                className="home-feed-card__ai-story-image"
+                decoding="async"
+                loading="lazy"
+                src={imageUrl}
+              />
             </div>
-          ) : getReadableAIStoryPreview(target?.story) ? (
-            <p className="home-feed-card__ai-story-story">
-              {getReadableAIStoryPreview(target.story)}
-            </p>
           ) : null}
         </div>
       </div>
@@ -597,5 +660,33 @@ export default function TargetPreview({
         userId={userId}
       />
     );
+  }
+}
+
+function getTargetUploaderName(target: any) {
+  const uploader = target?.uploader;
+  if (typeof uploader === 'string') return uploader.trim();
+  return String(
+    uploader?.username ||
+      target?.username ||
+      target?.uploaderUsername ||
+      target?.author?.username ||
+      ''
+  ).trim();
+}
+
+function getTargetUrlImageUrl(target: any) {
+  return String(
+    target?.thumbUrl || target?.thumbnailUrl || target?.imageUrl || ''
+  ).trim();
+}
+
+function getTargetUrlSiteLabel(value: any) {
+  const rawUrl = String(value || '').trim();
+  if (!rawUrl) return '';
+  try {
+    return new URL(rawUrl).hostname.replace(/^www\./, '');
+  } catch {
+    return rawUrl;
   }
 }

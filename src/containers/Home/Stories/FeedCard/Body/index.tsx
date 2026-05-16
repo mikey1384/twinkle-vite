@@ -3,6 +3,7 @@ import AchievementItem from '~/components/AchievementItem';
 import CardThumb from '~/components/CardThumb';
 import Embedly from '~/components/Embedly';
 import Icon from '~/components/Icon';
+import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
 import RichText from '~/components/Texts/RichText';
@@ -32,7 +33,7 @@ import {
   formatBuildForkCount,
   normalizeBuildCollaborationMode
 } from '~/helpers/buildProjectHelpers';
-import { bodyClass, compactSecretCommentStyle } from './styles';
+import { bodyClass, homeFeedSecretGuardBannerStyle } from './styles';
 import {
   AttachmentSurface,
   AudioWavePreview,
@@ -40,6 +41,7 @@ import {
   MarkdownEmbedPreview,
   formatRewardMultiplier,
   getAIStoryDifficultyStyle,
+  getAIStoryImageUrl,
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
 import ProfilePanelPreview from './ProfilePanelPreview';
@@ -85,6 +87,8 @@ type PreviewCommentMedia =
     };
 
 const primaryPreviewTextClass = 'home-feed-card__primary-preview-text';
+const lockedSubjectSecretPreviewLabel =
+  'Submit your response to view the secret message';
 
 export default function Body({
   content,
@@ -142,19 +146,12 @@ export default function Body({
   );
 
   function renderContentPreview() {
-    if (secretHidden) {
-      const secretCommentStyle = {
-        ...compactSecretCommentStyle,
-        background: Color.whiteGray(0.72),
-        border: `1px solid ${Color.borderGray()}`,
-        boxShadow: `0 0.16rem 0 ${Color.black(0.05)}`,
-        color: Color.darkerGray()
-      };
+    if (secretHidden && contentType !== 'subject') {
       return (
         <div className="home-feed-card__secret-preview">
           <SecretComment
             label="Respond to unlock this comment"
-            style={secretCommentStyle}
+            style={homeFeedSecretGuardBannerStyle}
           />
         </div>
       );
@@ -221,18 +218,31 @@ export default function Body({
     const secretAttachment = content?.secretAttachment;
     const hasSecretAnswerText = Boolean(secretAnswer.trim());
     const hasSecretAttachment = Boolean(secretAttachment?.filePath);
+    const hasAnySecret = Boolean(
+      hasSecretAnswerText ||
+        hasSecretAttachment ||
+        content?.hasSecretAnswer ||
+        content?.hasSecretAttachment
+    );
     const secretAnswerDuplicatesDescription =
       hasSecretAnswerText && secretAnswer.trim() === descriptionText.trim();
     const showSecretAnswer =
       !secretHidden &&
       !secretAnswerDuplicatesDescription &&
       (hasSecretAnswerText || hasSecretAttachment);
+    const showLockedSecretAnswer = Boolean(secretHidden && hasAnySecret);
+    const showSecretPreview = showSecretAnswer || showLockedSecretAnswer;
+    const showSecretAttachmentOnly = Boolean(
+      showSecretAnswer && hasSecretAttachment && !hasSecretAnswerText
+    );
     const subjectLineLimits = getSubjectPreviewLineLimitsForLayout({
       hasDescriptionText,
       hasEffort: Number(content?.rewardLevel || 0) > 0,
-      hasSecretAnswer: showSecretAnswer,
-      hasSecretAnswerText,
-      hasSecretAttachment,
+      hasSecretAnswer: showSecretPreview,
+      hasSecretAnswerText: showSecretAnswer
+        ? hasSecretAnswerText
+        : showLockedSecretAnswer,
+      hasSecretAttachment: showSecretAnswer && hasSecretAttachment,
       hasTitle: Boolean(content?.title)
     });
     const hasAttachedRootContent = Boolean(
@@ -244,7 +254,7 @@ export default function Body({
       !attachmentPreview &&
       !hasDescriptionText &&
       !hasDescriptionEmbed &&
-      !showSecretAnswer &&
+      !showSecretPreview &&
       !hasAttachedRootContent;
     const isRootCompactSubject =
       hasAttachedRootContent && !attachmentPreview && !hasDescriptionEmbed;
@@ -277,7 +287,13 @@ export default function Body({
               : ''
           }`}
         >
-          <div className="home-feed-card__subject-copy">
+          <div
+            className={`home-feed-card__subject-copy${
+              showLockedSecretAnswer
+                ? ' home-feed-card__subject-copy--locked-secret'
+                : ''
+            }`}
+          >
             {Number(content?.rewardLevel || 0) > 0 ? (
               <CompactEffortStrip rewardLevel={Number(content.rewardLevel)} />
             ) : null}
@@ -298,15 +314,29 @@ export default function Body({
                 {descriptionText}
               </RichText>
             ) : null}
-            {showSecretAnswer ? (
+            {showSecretPreview ? (
               <div
                 className={`home-feed-card__subject-secret-answer${
-                  hasSecretAttachment
+                  showSecretAnswer && hasSecretAttachment
                     ? ' home-feed-card__subject-secret-answer--has-attachment'
+                    : ''
+                }${
+                  showLockedSecretAnswer
+                    ? ' home-feed-card__subject-secret-answer--locked'
+                    : ''
+                }${
+                  showSecretAttachmentOnly
+                    ? ' home-feed-card__subject-secret-answer--attachment-only'
                     : ''
                 }`}
               >
-                {hasSecretAttachment ? (
+                {showLockedSecretAnswer ? (
+                  <SecretComment
+                    label={lockedSubjectSecretPreviewLabel}
+                    style={homeFeedSecretGuardBannerStyle}
+                  />
+                ) : null}
+                {showSecretAnswer && hasSecretAttachment ? (
                   <AttachmentSurface
                     className="home-feed-card__subject-secret-attachment"
                     source={secretAttachment}
@@ -315,7 +345,7 @@ export default function Body({
                     userId={userId}
                   />
                 ) : null}
-                {hasSecretAnswerText ? (
+                {showSecretAnswer && hasSecretAnswerText ? (
                   <RichText
                     className={`home-feed-card__subject-secret-text ${primaryPreviewTextClass}`}
                     contentId={contentId}
@@ -357,8 +387,17 @@ export default function Body({
     text: string;
     title?: string;
   }) {
+    const attachmentFileType = showAttachment
+      ? getContentAttachmentFileType(content)
+      : '';
+    const attachmentIsPreviewMedia =
+      attachmentFileType === 'image' || attachmentFileType === 'video';
     const attachment = showAttachment
-      ? renderAttachmentPreview('comment')
+      ? renderAttachmentPreview(
+          attachmentFileType === 'image' || attachmentFileType === 'video'
+            ? `comment-${attachmentFileType}`
+            : 'comment'
+        )
       : null;
     const embedPreview = getMarkdownImageEmbedPreview(text);
     const textWithoutEmbeds = embedPreview
@@ -379,7 +418,13 @@ export default function Body({
 
     if (attachment && !hasText) {
       return (
-        <div className="home-feed-card__attachment-only-preview">
+        <div
+          className={`home-feed-card__attachment-only-preview${
+            attachmentIsPreviewMedia
+              ? ' home-feed-card__attachment-only-preview--media'
+              : ''
+          }`}
+        >
           {attachment}
         </div>
       );
@@ -394,6 +439,10 @@ export default function Body({
       <div
         className={`home-feed-card__text-preview${
           attachment ? ' home-feed-card__text-preview--with-attachment' : ''
+        }${
+          attachmentIsPreviewMedia
+            ? ' home-feed-card__text-preview--with-media-attachment'
+            : ''
         }`}
       >
         <div className="home-feed-card__text-copy">
@@ -418,16 +467,33 @@ export default function Body({
   }
 
   function renderAttachmentPreview(classNameSuffix: string) {
-    if (!content?.filePath) return null;
+    const filePath = getContentAttachmentFilePath(content);
+    if (!filePath) return null;
     return (
       <AttachmentSurface
         className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}`}
-        source={content}
+        source={{ ...content, filePath }}
         sourceContentId={contentId}
         sourceContentType={contentType}
         userId={userId}
       />
     );
+  }
+
+  function getContentAttachmentFileType(source: any) {
+    const attachmentName = String(
+      source?.fileName ||
+        source?.actualFileName ||
+        source?.filePath ||
+        source?.actualFilePath ||
+        ''
+    );
+
+    return getFileInfoFromFileName(attachmentName).fileType;
+  }
+
+  function getContentAttachmentFilePath(source: any) {
+    return String(source?.filePath || source?.actualFilePath || '').trim();
   }
 
   function renderDailyReflectionPreview() {
@@ -810,6 +876,7 @@ export default function Body({
     const storyPreview = getReadableAIStoryPreview(content?.story);
     const isListening = Boolean(content?.isListening);
     const title = String(content?.title || content?.topic || 'AI Story');
+    const imageUrl = getAIStoryImageUrl(content);
     const longTitleClass =
       !isListening && title.length > 56
         ? ' home-feed-card__ai-story-preview--long-title'
@@ -821,7 +888,7 @@ export default function Body({
           isListening
             ? ' home-feed-card__ai-story-preview--listening'
             : ' home-feed-card__ai-story-preview--reading'
-        }${longTitleClass}`}
+        }${imageUrl ? ' home-feed-card__ai-story-preview--has-image' : ''}${longTitleClass}`}
         style={difficultyStyle}
       >
         <div className="home-feed-card__ai-story-topline">
@@ -834,17 +901,30 @@ export default function Body({
           ) : null}
         </div>
         <div className="home-feed-card__ai-story-main">
-          <h3 className={primaryPreviewTextClass}>{title}</h3>
-          {isListening ? (
-            <div className="home-feed-card__ai-story-listening-body">
-              <AudioWavePreview />
+          <div className="home-feed-card__ai-story-copy">
+            <h3 className={primaryPreviewTextClass}>{title}</h3>
+            {isListening ? (
+              <div className="home-feed-card__ai-story-listening-body">
+                <AudioWavePreview />
+              </div>
+            ) : storyPreview ? (
+              <p
+                className={`home-feed-card__ai-story-story ${primaryPreviewTextClass}`}
+              >
+                {storyPreview}
+              </p>
+            ) : null}
+          </div>
+          {imageUrl ? (
+            <div className="home-feed-card__ai-story-image-frame">
+              <img
+                alt={`${title} image`}
+                className="home-feed-card__ai-story-image"
+                decoding="async"
+                loading="lazy"
+                src={imageUrl}
+              />
             </div>
-          ) : storyPreview ? (
-            <p
-              className={`home-feed-card__ai-story-story ${primaryPreviewTextClass}`}
-            >
-              {storyPreview}
-            </p>
           ) : null}
         </div>
       </div>
@@ -877,7 +957,7 @@ export default function Body({
             imageOnly
             noLink
             contentId={contentId}
-            defaultThumbUrl={content?.thumbUrl || '/img/link.png'}
+            defaultThumbUrl={content?.thumbUrl || LINK_PREVIEW_FALLBACK_IMAGE}
           />
         </div>
       </div>
@@ -1144,15 +1224,24 @@ function PreviewCommentBuildMedia({
 }
 
 function getRenderablePreviewComment(comments: Comment[] | undefined) {
-  if (!Array.isArray(comments)) return null;
-  return (
-    comments.find(
-      (comment) =>
-        comment &&
-        !comment.isDeleted &&
-        !comment.isLoadMoreButton &&
-        !comment.notFound
-    ) || null
+  return getRenderableHomeFeedPreviewComments(comments)[0] || null;
+}
+
+export function getRenderableHomeFeedPreviewComments(
+  comments: Comment[] | undefined
+) {
+  if (!Array.isArray(comments)) return [];
+  return comments.filter(isRenderableHomeFeedPreviewComment);
+}
+
+function isRenderableHomeFeedPreviewComment(comment: Comment | undefined) {
+  return Boolean(
+    comment &&
+      !comment.isDeleted &&
+      !comment.isDeleteNotification &&
+      !comment.isLoadMoreButton &&
+      !comment.isNotification &&
+      !comment.notFound
   );
 }
 
@@ -1167,9 +1256,6 @@ function getPreviewCommentUploader(comment: Comment) {
 }
 
 function getPreviewCommentText(comment: Comment) {
-  if (comment.isNotification) return 'viewed the secret message';
-  if (comment.isDeleteNotification) return 'this comment was deleted';
-
   const rawContent = String(comment.content || '');
   const markdownEmbed = getMarkdownImageEmbedPreview(rawContent);
   const content = stripMarkdownForCommentPreview(
@@ -1184,7 +1270,6 @@ function getPreviewCommentText(comment: Comment) {
 }
 
 function hasPreviewCommentMessageText(comment: Comment) {
-  if (comment.isNotification || comment.isDeleteNotification) return false;
   const rawContent = String(comment.content || '');
   const content = stripMarkdownForCommentPreview(
     removeMarkdownImageEmbeds(rawContent)
@@ -1318,7 +1403,6 @@ function getPreviewCommentFileIcon(fileType: string) {
 }
 
 function getPreviewCommentLabel(comment: Comment, contentType: string) {
-  if (comment.isNotification || comment.isDeleteNotification) return '';
   return contentType === 'comment' || Number(comment.replyId || 0)
     ? 'replied'
     : 'commented';

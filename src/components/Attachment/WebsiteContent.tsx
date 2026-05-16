@@ -4,9 +4,10 @@ import { truncateText } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
 import YouTubeIcon from '~/assets/YoutubeIcon.svg';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import LinkPreviewImage, {
+  LINK_PREVIEW_FALLBACK_IMAGE
+} from '~/components/LinkPreviewImage';
 import { Attachment } from '~/types';
-
-const fallbackImage = '/img/link.png';
 
 export default function WebsiteContent({
   attachment
@@ -23,7 +24,7 @@ export default function WebsiteContent({
     setImageUrl(
       attachment.contentType === 'video'
         ? `https://img.youtube.com/vi/${content}/mqdefault.jpg`
-        : thumbUrl || fallbackImage
+        : thumbUrl || LINK_PREVIEW_FALLBACK_IMAGE
     );
   }, [attachment.contentType, content, thumbUrl]);
 
@@ -53,10 +54,11 @@ export default function WebsiteContent({
               src={YouTubeIcon}
             />
           )}
-          <img
+          <LinkPreviewImage
             alt="Thumbnail"
             src={imageUrl}
-            onError={handleImageLoadError}
+            fallbackSrc={LINK_PREVIEW_FALLBACK_IMAGE}
+            onFallback={handleImageLoadError}
             loading="lazy"
             style={{
               display: 'block',
@@ -83,6 +85,6 @@ export default function WebsiteContent({
   }
 
   function handleImageLoadError() {
-    setImageUrl(!thumbUrl || imageUrl === thumbUrl ? fallbackImage : thumbUrl);
+    setImageUrl(LINK_PREVIEW_FALLBACK_IMAGE);
   }
 }

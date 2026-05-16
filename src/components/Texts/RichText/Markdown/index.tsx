@@ -50,6 +50,7 @@ function Markdown({
   isAIMessage,
   linkColor,
   markerColor,
+  theme,
   onSetIsParsed,
   embeddedContentRef,
   onSetHasTopEmbeddedContent
@@ -63,6 +64,7 @@ function Markdown({
   children: string;
   linkColor: string;
   markerColor: string;
+  theme?: string;
   onSetIsParsed: (parsed: boolean) => void;
   embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
   onSetHasTopEmbeddedContent?: (hasTop: boolean) => void;
@@ -179,7 +181,8 @@ function Markdown({
     isProfileComponent,
     key,
     linkColor,
-    markerColor
+    markerColor,
+    theme
   ]);
 
   useEffect(() => {
@@ -306,6 +309,7 @@ function Markdown({
                       isProfileComponent={isProfileComponent}
                       src={unescapeEqualSignAndDash(domNode.attribs?.src || '')}
                       alt={unescapeEqualSignAndDash(domNode.attribs?.alt || '')}
+                      theme={theme}
                       embeddedContentRef={embeddedContentRef}
                     />
                   );
@@ -762,6 +766,7 @@ function Markdown({
                   embeddedContentRef={embeddedContentRef}
                   src={unescapeEqualSignAndDash(commonProps?.src || '')}
                   alt={unescapeEqualSignAndDash(commonProps?.alt || '')}
+                  theme={theme}
                   key={key}
                 />
               </ErrorBoundary>

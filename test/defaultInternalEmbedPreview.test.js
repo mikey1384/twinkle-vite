@@ -14,17 +14,30 @@ const internalComponentSource = readSource(
 const previewPrimitivesSource = readSource(
   'src/containers/Home/Stories/FeedCard/Body/PreviewPrimitives.tsx'
 );
+const homeFeedInternalEmbedBranch = previewPrimitivesSource.slice(
+  previewPrimitivesSource.indexOf("if (embed.type === 'internal')"),
+  previewPrimitivesSource.indexOf("if (embed.type === 'youtube')")
+);
 
 assert.match(defaultComponentSource, /getDefaultEmbedPreviewConfig/);
 assert.match(defaultComponentSource, /compact-default-internal-embed__icon/);
-assert.match(defaultComponentSource, /compact-default-internal-embed__description/);
+assert.match(
+  defaultComponentSource,
+  /compact-default-internal-embed__description/
+);
 assert.match(defaultComponentSource, /height: 100%;/);
 assert.match(defaultComponentSource, /min-height: 8\.2rem;/);
 assert.doesNotMatch(defaultComponentSource, /min-height: 6\.4rem;/);
 
 assert.match(defaultComponentSource, /missions:[\s\S]*Browse Missions/);
-assert.match(defaultComponentSource, /case 'missions':[\s\S]*kicker: 'Missions'/);
-assert.match(defaultComponentSource, /case 'ai-cards':[\s\S]*kicker: 'AI Cards'/);
+assert.match(
+  defaultComponentSource,
+  /case 'missions':[\s\S]*kicker: 'Missions'/
+);
+assert.match(
+  defaultComponentSource,
+  /case 'ai-cards':[\s\S]*kicker: 'AI Cards'/
+);
 assert.match(
   defaultComponentSource,
   /case 'shared-prompts':[\s\S]*kicker: 'Shared Prompts'/
@@ -34,7 +47,10 @@ assert.match(
   /case 'achievement-unlocks':[\s\S]*kicker: 'Achievements'/
 );
 assert.match(defaultComponentSource, /case 'app':[\s\S]*case 'builds':/);
-assert.match(defaultComponentSource, /case 'comments':[\s\S]*kicker: 'Comments'/);
+assert.match(
+  defaultComponentSource,
+  /case 'comments':[\s\S]*kicker: 'Comments'/
+);
 assert.match(
   defaultComponentSource,
   /case 'ai-stories':[\s\S]*kicker: 'AI Stories'/
@@ -62,5 +78,14 @@ assert.match(
 );
 assert.match(previewPrimitivesSource, /home-feed-card__rich-embed-internal/);
 assert.match(previewPrimitivesSource, /<InternalComponent[\s\S]*isPreview/);
+assert.match(previewPrimitivesSource, /useNavigate/);
+assert.match(homeFeedInternalEmbedBranch, /data-internal-src={internalSrc}/);
+assert.match(
+  homeFeedInternalEmbedBranch,
+  /onClick={handleInternalPreviewClick}/
+);
+assert.match(previewPrimitivesSource, /function handleInternalPreviewClick/);
+assert.match(previewPrimitivesSource, /navigate\(internalSrc\)/);
+assert.doesNotMatch(homeFeedInternalEmbedBranch, /stopFeedCardNestedClick/);
 
 console.log('Default internal embed preview guard passed.');

@@ -547,6 +547,7 @@ function Comment({
                         contentId={commentId}
                         section="pinned"
                         className="comment__content"
+                        compactEmbedPreview={compactMode}
                       >
                         {(comment.content || '').trimEnd()}
                       </RichText>

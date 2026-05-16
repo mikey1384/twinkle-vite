@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
 import Loading from '~/components/Loading';
-import { CompactThumb } from './CompactPreview';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
@@ -53,7 +52,6 @@ export default function MultiCardComponent({
     (v) => v.actions.onSetDisplayedCardIds
   );
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
-  const cardObj = useChatContext((v) => v.state.cardObj);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
   const loadFilteredAICards = useAppContext(
@@ -130,35 +128,34 @@ export default function MultiCardComponent({
 
   if (isPreview) {
     return (
-      <div className={compactMultiCardClass}>
-        <div className="compact-ai-card-multi__copy">
-          <div className="compact-ai-card-multi__label">AI Cards</div>
-          <strong>{title || 'AI Cards'}</strong>
-        </div>
-        <div className="compact-ai-card-multi__cards">
-          {loading || !cardIds ? (
+      <div
+        className={`${compactMultiCardClass} compact-ai-card-multi`}
+        role="button"
+        tabIndex={0}
+        onClick={handleCompactPreviewOpen}
+        onKeyDown={handleCompactPreviewKeyDown}
+      >
+        <div className="compact-ai-card-multi__title">{title}</div>
+        {loading || !cardIds ? (
+          <div className="compact-ai-card-multi__loading">
             <Loading />
-          ) : cardIds.length > 0 ? (
-            cardIds.slice(0, 4).map((cardId: number) => (
-                  <CompactThumb
-                key={cardId}
-                card={cardObj[cardId] || { id: cardId }}
-                onClick={() => setSelectedCardId(cardId)}
-              />
-            ))
-          ) : (
-            <span>No cards</span>
-          )}
-          {!loading && cardIds && cardIds.length > 4 ? (
-            <button
-              type="button"
-              className="compact-ai-card-multi__more"
-              onClick={handleCompactMoreClick}
-            >
-              +{cardIds.length - 4}
-            </button>
-          ) : null}
-        </div>
+          </div>
+        ) : cardIds.length > 0 ? (
+          <div
+            className="compact-ai-card-multi__preview"
+            onClick={handleCompactCardStripClick}
+          >
+            <AICardsPreview
+              isAICardModalShown={!!selectedCardId}
+              cardIds={cardIds}
+              moreAICardsModalTitle={title}
+              onSetAICardModalCardId={setSelectedCardId}
+              onLoadMoreClick={() => navigate(src)}
+            />
+          </div>
+        ) : (
+          <div className="compact-ai-card-multi__empty">No Cards Found</div>
+        )}
         {selectedCardId && (
           <AICardModal
             cardId={selectedCardId}
@@ -237,73 +234,77 @@ export default function MultiCardComponent({
     </div>
   );
 
-  function handleCompactMoreClick(event: React.MouseEvent<HTMLButtonElement>) {
+  function handleCompactPreviewOpen(event: React.MouseEvent<HTMLElement>) {
+    event.stopPropagation();
+    navigate(src);
+  }
+
+  function handleCompactCardStripClick(event: React.MouseEvent<HTMLElement>) {
+    event.stopPropagation();
+  }
+
+  function handleCompactPreviewKeyDown(
+    event: React.KeyboardEvent<HTMLElement>
+  ) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
     event.stopPropagation();
     navigate(src);
   }
 }
 
 const compactMultiCardClass = css`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
+  justify-content: center;
+  gap: 1rem;
   width: 100%;
-  min-height: 7.25rem;
-  padding: 0.58rem 0.66rem;
+  height: 100%;
+  min-height: 16rem;
+  padding: 1rem;
   overflow: hidden;
-  border: 1.5px solid ${Color.logoBlue()};
+  border: 1px solid ${Color.borderGray()};
   border-radius: 0.8rem;
   background: #fff;
-  .compact-ai-card-multi__copy {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.2rem;
-    line-height: 1.18;
-  }
-  .compact-ai-card-multi__label {
-    color: ${Color.logoBlue()};
-    font-size: 1rem;
-    font-weight: 850;
-  }
-  .compact-ai-card-multi__copy strong {
+  color: ${Color.darkerGray()};
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  .compact-ai-card-multi__title {
+    width: 100%;
     overflow: hidden;
     color: ${Color.black()};
-    font-size: 1.1rem;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.2rem;
     font-weight: 900;
-    line-height: 1.15;
+    line-height: 1.2;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-  .compact-ai-card-multi__cards {
+  .compact-ai-card-multi__preview {
     display: flex;
-    align-items: center;
-    gap: 0.48rem;
-    height: 6.45rem;
-    color: ${Color.darkGray()};
-    font-size: 1rem;
-    font-weight: 800;
-  }
-  .compact-ai-card-multi__more {
-    appearance: none;
-    display: inline-flex;
-    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 100%;
+    height: 14rem;
     align-items: center;
     justify-content: center;
-    min-width: 3.4rem;
-    height: 3.4rem;
-    padding: 0 0.72rem;
-    border: 1px solid ${Color.logoBlue(0.22)};
-    border-radius: 999px;
-    background: ${Color.logoBlue(0.1)};
-    color: ${Color.logoBlue()};
-    font: inherit;
-    font-size: 1.15rem;
+    overflow: hidden;
+  }
+  .compact-ai-card-multi__preview > div {
+    max-width: 100%;
+  }
+  .compact-ai-card-multi__loading,
+  .compact-ai-card-multi__empty {
+    display: flex;
+    width: 100%;
+    min-height: 10rem;
+    align-items: center;
+    justify-content: center;
+    color: ${Color.black()};
+    font-size: 1.1rem;
     font-weight: 900;
-    line-height: 1;
-    white-space: nowrap;
-    cursor: pointer;
   }
 `;

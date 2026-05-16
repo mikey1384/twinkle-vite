@@ -36,7 +36,7 @@ export function CompactThumb({
   if (!onClick) {
     return (
       <div
-        className={`${compactThumbClass} compact-ai-card-thumb--static`}
+        className={`${compactThumbClass} compact-ai-card-thumb compact-ai-card-thumb--static`}
         style={
           {
             '--compact-ai-card-accent': cardColor,
@@ -53,7 +53,7 @@ export function CompactThumb({
   return (
     <button
       type="button"
-      className={compactThumbClass}
+      className={`${compactThumbClass} compact-ai-card-thumb`}
       style={
         {
           '--compact-ai-card-accent': cardColor,
@@ -102,7 +102,7 @@ export default function CompactPreview({
   return (
     <button
       type="button"
-      className={compactPreviewClass}
+      className={`${compactPreviewClass} compact-ai-card-preview`}
       style={
         {
           '--compact-ai-card-accent': cardColor,
@@ -207,6 +207,9 @@ function getLevelLabel(card: Partial<Card>) {
 
 function getQualityColor(card: Partial<Card>) {
   const quality = String(card.quality || '');
+  if (quality === 'common') {
+    return '';
+  }
   return (qualityProps as any)[quality]?.color || '';
 }
 

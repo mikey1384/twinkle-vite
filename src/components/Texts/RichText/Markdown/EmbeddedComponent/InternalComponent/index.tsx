@@ -14,7 +14,8 @@ export default function InternalComponent({
   src,
   isPreview,
   isProfileComponent,
-  showCompactCommentTypeLabel = true
+  showCompactCommentTypeLabel = true,
+  theme
 }: {
   rootId?: number | string;
   rootType?: string;
@@ -22,6 +23,7 @@ export default function InternalComponent({
   isPreview?: boolean;
   isProfileComponent?: boolean;
   showCompactCommentTypeLabel?: boolean;
+  theme?: string;
 }) {
   const InnerComponent = useMemo(() => {
     const urlParts = src.split('/');
@@ -48,6 +50,7 @@ export default function InternalComponent({
           contentId={contentId}
           isPreview={isPreview}
           showCompactCommentTypeLabel={showCompactCommentTypeLabel}
+          theme={theme}
         />
       );
     }
@@ -59,6 +62,7 @@ export default function InternalComponent({
           contentId={contentId}
           isPreview={isPreview}
           showCompactCommentTypeLabel={showCompactCommentTypeLabel}
+          theme={theme}
         />
       );
     }
@@ -97,7 +101,8 @@ export default function InternalComponent({
     isPreview,
     rootId,
     rootType,
-    showCompactCommentTypeLabel
+    showCompactCommentTypeLabel,
+    theme
   ]);
 
   return (

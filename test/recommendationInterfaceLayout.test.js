@@ -46,26 +46,24 @@ assert.equal(
   2
 );
 assert.match(source, /color: #fff;/);
-assert.match(
-  source,
-  /background-color: var\(--recommendation-action-start-bg\);/
-);
-assert.match(source, /border-color: var\(--recommendation-action-start-bg\);/);
-assert.match(
-  source,
-  /background-color: var\(--recommendation-action-soft-bg\);/
-);
+assert.match(source, /color: var\(--recommendation-action-start-color\);/);
+assert.match(source, /border-color: var\(--recommendation-action-start-color\);/);
+assert.doesNotMatch(source, /background-color: var\(--recommendation-action/);
 assert.match(source, /color: Color\.darkBlue\(\)/);
-assert.match(source, /softColor: Color\.darkBlue\(0\.08\)/);
 assert.match(source, /color: Color\.rose\(\)/);
-assert.match(source, /softColor: Color\.rose\(0\.08\)/);
-assert.match(source, /color: \$\{Color\.darkGold\(\)\};/);
+assert.doesNotMatch(source, /softColor:/);
+assert.doesNotMatch(source, /color: \$\{Color\.darkGold\(\)\};/);
 assert.match(source, /color: \$\{Color\.logoBlue\(\)\};/);
 assert.match(source, /border-color: \$\{Color\.darkGold\(0\.72\)\};/);
 assert.match(source, /border-color: \$\{Color\.logoBlue\(0\.58\)\};/);
 assert.match(source, /background-color: transparent;/);
-assert.match(source, /background-color: \$\{Color\.logoBlue\(0\.08\)\};/);
-assert.match(source, /background-color: \$\{Color\.darkGold\(0\.11\)\};/);
+assert.match(source, /const profileTheme = useKeyContext/);
+assert.match(source, /theme \|\| profileTheme \|\| 'logoBlue'/);
+assert.match(source, /getThemeStyles\(themeName, 0\.12\)\.bg/);
+assert.match(source, /getThemeStyles\(themeName, 0\.06\)\.bg/);
+assert.match(source, /--recommendation-surface-start-bg/);
+assert.match(source, /--recommendation-surface-mid-bg/);
+assert.doesNotMatch(source, /background-color: \$\{Color\.darkGold\(0\.11\)\};/);
 assert.match(source, /ariaLabel={rewardableLabel}/);
 assert.doesNotMatch(source, /label={rewardableLabel}/);
 assert.equal(source.match(/variant="outline"/g)?.length, 2);

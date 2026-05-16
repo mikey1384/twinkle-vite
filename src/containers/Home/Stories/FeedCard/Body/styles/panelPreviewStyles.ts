@@ -101,6 +101,12 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-media {
     height: max(22rem, 220px);
   }
+  .home-feed-card__panel-preview--size-media-attachment {
+    height: max(40rem, 400px);
+  }
+  .home-feed-card__panel-preview--size-media-attachment-with-text {
+    height: max(45rem, 450px);
+  }
   .home-feed-card__panel-preview--pass,
   .home-feed-card__panel-preview--size-pass {
     height: max(18.5rem, 185px);
@@ -135,11 +141,20 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-subject-minimal {
     height: max(12rem, 120px);
   }
+  .home-feed-card__panel-preview--size-subject-locked {
+    height: max(16.5rem, 165px);
+  }
   .home-feed-card__panel-preview--size-subject-root {
-    height: max(14.5rem, 145px);
+    height: max(15.5rem, 155px);
+  }
+  .home-feed-card__panel-preview--size-subject-root-text {
+    height: max(29rem, 290px);
   }
   .home-feed-card__panel-preview--size-subject-rich-embed {
     height: max(34rem, 340px);
+  }
+  .home-feed-card__panel-preview--size-subject-secret-media {
+    height: max(25rem, 250px);
   }
   .home-feed-card__panel-preview--size-subject-tall,
   .home-feed-card__panel-preview--size-tall {

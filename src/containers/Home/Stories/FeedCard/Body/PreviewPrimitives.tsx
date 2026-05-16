@@ -5,7 +5,7 @@ import InternalComponent from '~/components/Texts/RichText/Markdown/EmbeddedComp
 import YouTubeVideo from '~/components/Texts/RichText/Markdown/EmbeddedComponent/YouTubeVideo';
 import RankBadge from '~/components/RankBadge';
 import { Color } from '~/constants/css';
-import { cardLevelHash } from '~/constants/defaultValues';
+import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
 import {
@@ -14,6 +14,7 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import type { MarkdownImageEmbed } from '../helpers/sizing';
+import { useNavigate } from 'react-router-dom';
 
 export function AttachmentSurface({
   className,
@@ -28,7 +29,8 @@ export function AttachmentSurface({
   sourceContentType: string;
   userId: number;
 }) {
-  const fileName = source?.fileName || '';
+  const filePath = source?.filePath || source?.actualFilePath || '';
+  const fileName = getAttachmentSurfaceFileName(source, filePath);
   const { extension, fileType } = getFileInfoFromFileName(fileName);
   if (fileType === 'video') {
     return (
@@ -36,7 +38,7 @@ export function AttachmentSurface({
         <HomeVideoAttachmentPreview
           fileName={fileName}
           src={buildAttachmentUrl({
-            filePath: source.filePath,
+            filePath,
             fileName,
             contentType: sourceContentType
           })}
@@ -57,8 +59,11 @@ export function AttachmentSurface({
           contentId={sourceContentId}
           contentType={sourceContentType}
           fileName={fileName}
-          filePath={source.filePath}
+          filePath={filePath}
           fileSize={source?.fileSize}
+          fillPreview={fileType === 'image'}
+          fillUnavailablePreview
+          previewObjectFit={fileType === 'image' ? 'contain' : undefined}
           thumbUrl={source?.thumbUrl}
           userIsUploader={Number(source?.uploader?.id || 0) === userId}
           videoHeight="100%"
@@ -74,6 +79,21 @@ export function AttachmentSurface({
       )}
     </div>
   );
+}
+
+function getAttachmentSurfaceFileName(source: any, filePath: string) {
+  const fileName = source?.fileName || source?.actualFileName;
+  if (fileName) return String(fileName);
+
+  const pathName = String(filePath || '')
+    .split('?')[0]
+    .split('#')[0];
+  const pathFileName = pathName.split('/').filter(Boolean).pop() || '';
+  try {
+    return decodeURIComponent(pathFileName);
+  } catch {
+    return pathFileName;
+  }
 }
 
 export function formatRewardMultiplier(multiplier: number) {
@@ -94,16 +114,26 @@ export function MarkdownEmbedPreview({
   contentType: string;
   embed: MarkdownImageEmbed;
 }) {
+  const navigate = useNavigate();
+
   if (embed.type === 'internal') {
     const { isInternalLink, replacedLink } = processInternalLink(embed.src);
     const internalSrc = (isInternalLink ? replacedLink : embed.src).replace(
       /<u>|<\/u>/g,
       '__'
     );
+    const internalLinkType = internalSrc.split('/')[1] || '';
+    const internalClassName =
+      internalLinkType === 'subjects'
+        ? ' home-feed-card__rich-embed-internal--subject'
+        : '';
     return (
       <div
-        className={`${className || ''} home-feed-card__rich-embed-internal`}
-        onClick={stopFeedCardNestedClick}
+        className={`${
+          className || ''
+        } home-feed-card__rich-embed-internal${internalClassName}`}
+        data-internal-src={internalSrc}
+        onClick={handleInternalPreviewClick}
       >
         <InternalComponent
           rootId={contentId}
@@ -133,6 +163,12 @@ export function MarkdownEmbedPreview({
   }
 
   return <MarkdownImagePreview className={className} imageEmbed={embed} />;
+
+  function handleInternalPreviewClick(event: React.MouseEvent<HTMLElement>) {
+    event.stopPropagation();
+    const internalSrc = event.currentTarget.dataset.internalSrc;
+    if (internalSrc) navigate(internalSrc);
+  }
 }
 
 export function CompactEffortStrip({
@@ -259,6 +295,29 @@ export function getReadableAIStoryPreview(story: unknown) {
   return text;
 }
 
+export function getAIStoryImageUrl(aiStory: any) {
+  const directUrl =
+    typeof aiStory?.imageUrl === 'string' ? aiStory.imageUrl.trim() : '';
+  if (directUrl) return directUrl;
+
+  const imagePath =
+    typeof aiStory?.imagePath === 'string' ? aiStory.imagePath.trim() : '';
+  if (!imagePath) return '';
+  if (
+    imagePath.startsWith('data:') ||
+    imagePath.startsWith('http://') ||
+    imagePath.startsWith('https://')
+  ) {
+    return imagePath;
+  }
+
+  const normalizedPath = imagePath.replace(/^\/+/, '');
+  if (normalizedPath.startsWith('ai-story/')) {
+    return `${cloudFrontURL}/${normalizedPath}`;
+  }
+  return `${cloudFrontURL}/ai-story/${normalizedPath}`;
+}
+
 function stopFeedCardNestedClick(event: React.MouseEvent<HTMLElement>) {
   event.stopPropagation();
 }
@@ -350,13 +409,15 @@ function HomeVideoAttachmentPreview({
 }) {
   return (
     <div className="home-feed-card__video-attachment">
-      <video
-        src={src}
-        poster={thumbUrl || undefined}
-        muted
-        playsInline
-        preload="metadata"
-      />
+      {thumbUrl ? (
+        <img
+          alt={fileName ? `${fileName} video preview` : 'Video preview'}
+          loading="lazy"
+          src={thumbUrl}
+        />
+      ) : (
+        <video src={src} muted playsInline preload="metadata" />
+      )}
       <div className="home-feed-card__video-attachment-play">
         <Icon icon="play" />
       </div>

@@ -78,7 +78,10 @@ export default function CompactCommentEmbedPreview({
     }))
   ];
   const shownMediaItems = mediaItems.slice(0, isTargetRoot ? 1 : 2);
-  const extraMediaCount = Math.max(0, mediaItems.length - shownMediaItems.length);
+  const extraMediaCount = Math.max(
+    0,
+    mediaItems.length - shownMediaItems.length
+  );
   const hasText = Boolean(textContent.trim());
   const hasMedia = shownMediaItems.length > 0;
   const interactive = Boolean(onOpen);
@@ -143,10 +146,7 @@ export default function CompactCommentEmbedPreview({
         )}
       </div>
       {hasMedia ? (
-        <div
-          className="compact-comment-embed__media"
-          onClick={stopNestedClick}
-        >
+        <div className="compact-comment-embed__media">
           {shownMediaItems.map((item, index) => (
             <CommentMediaPreview
               key={`${item.kind}-${index}`}
@@ -211,6 +211,7 @@ function CommentMediaPreview({
           fileName={item.fileName}
           filePath={item.filePath}
           fileSize={item.fileSize}
+          fillPreview={item.fileType === 'image'}
           thumbHeight="100%"
           thumbUrl={item.thumbUrl}
           userIsUploader={Number(item.uploaderId || 0) === Number(userId || 0)}
@@ -222,12 +223,7 @@ function CommentMediaPreview({
   }
 
   if (item.embed.type === 'image') {
-    return (
-      <MarkdownImagePreview
-        alt={item.embed.alt}
-        src={item.embed.src}
-      />
-    );
+    return <MarkdownImagePreview alt={item.embed.alt} src={item.embed.src} />;
   }
 
   if (item.embed.type === 'internal') {
@@ -513,10 +509,6 @@ function getMediaOnlyLabel(
   return `shared ${getMarkdownMediaLabel(item.embed).toLowerCase()}`;
 }
 
-function stopNestedClick(event: React.MouseEvent<HTMLDivElement>) {
-  event.stopPropagation();
-}
-
 const compactCommentEmbedPreviewClass = css`
   display: grid;
   grid-template-columns: 4.8rem minmax(0, 1fr);
@@ -577,7 +569,12 @@ const compactCommentEmbedPreviewClass = css`
     overflow: hidden;
     border: 2px solid #fff;
     border-radius: 999px;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--home-feed-target-accent, ${Color.logoBlue()}) 48%, #ffffff);
+    box-shadow: 0 0 0 1px
+      color-mix(
+        in srgb,
+        var(--home-feed-target-accent, ${Color.logoBlue()}) 48%,
+        #ffffff
+      );
   }
   .compact-comment-embed__copy {
     display: flex;
@@ -767,27 +764,39 @@ const compactCommentEmbedPreviewClass = css`
     min-height: 0;
   }
   &.compact-comment-embed--target-root .compact-comment-embed__media-tile {
-    border-color: color-mix(in srgb, var(--home-feed-target-accent, ${Color.logoBlue()}) 22%, #ffffff);
+    border-color: color-mix(
+      in srgb,
+      var(--home-feed-target-accent, ${Color.logoBlue()}) 22%,
+      #ffffff
+    );
     border-radius: 0.82rem;
     background: #fff;
     box-shadow: 0 0.12rem 0 rgba(15, 23, 42, 0.05);
   }
   &.compact-comment-embed--target-root .compact-comment-embed__media-tile.image,
-  &.compact-comment-embed--target-root .compact-comment-embed__media-tile.video img,
-  &.compact-comment-embed--target-root .compact-comment-embed__media-tile.attachment img {
-    object-fit: contain;
+  &.compact-comment-embed--target-root
+    .compact-comment-embed__media-tile.video
+    img,
+  &.compact-comment-embed--target-root
+    .compact-comment-embed__media-tile.attachment
+    img {
+    object-fit: cover;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__media-tile.fallback {
+  &.compact-comment-embed--target-root
+    .compact-comment-embed__media-tile.fallback {
     gap: 0.48rem;
     padding: 0.7rem;
     background: linear-gradient(180deg, #fff 0%, ${Color.whiteGray(0.65)} 100%);
     font-size: 1.08rem;
   }
   &.compact-comment-embed--target-root .compact-main-content-embed__label,
-  &.compact-comment-embed--target-root .compact-main-content-embed__effort-badge {
+  &.compact-comment-embed--target-root
+    .compact-main-content-embed__effort-badge {
     font-weight: 650;
   }
-  &.compact-comment-embed--target-root .compact-main-content-embed__copy strong {
+  &.compact-comment-embed--target-root
+    .compact-main-content-embed__copy
+    strong {
     font-weight: 600;
   }
   &.compact-comment-embed--target-root .compact-main-content-embed__copy p,

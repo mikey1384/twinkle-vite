@@ -9,9 +9,11 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import VideoThumbnail from '~/components/ContentListItem/VideoThumbnail';
 import { Color, borderRadius } from '~/constants/css';
-import { cardLevelHash } from '~/constants/defaultValues';
+import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import InvalidContent from '../InvalidContent';
 import { css } from '@emotion/css';
 
@@ -21,12 +23,14 @@ export default function MainContentComponent({
   contentId,
   contentType,
   isPreview,
-  showCompactCommentTypeLabel = true
+  showCompactCommentTypeLabel = true,
+  theme
 }: {
   contentId: string;
   contentType: string;
   isPreview?: boolean;
   showCompactCommentTypeLabel?: boolean;
+  theme?: string;
 }) {
   const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
@@ -97,6 +101,7 @@ export default function MainContentComponent({
         content={contentState}
         navigate={navigate}
         showCompactCommentTypeLabel={showCompactCommentTypeLabel}
+        theme={theme}
       />
     );
   }
@@ -134,25 +139,48 @@ function CompactMainContentEmbedPreview({
   contentId,
   contentType,
   navigate,
-  showCompactCommentTypeLabel
+  showCompactCommentTypeLabel,
+  theme
 }: {
   content: any;
   contentId: number;
   contentType: string;
   navigate: (path: string) => void;
   showCompactCommentTypeLabel: boolean;
+  theme?: string;
 }) {
   const label = getContentLabel(contentType, content);
   const title = getContentTitle(contentType, content);
   const body = getContentBody(contentType, content);
   const path = getContentPath(contentType, contentId);
   const accent = getContentAccent(contentType);
+  const previewThemeName = String(
+    theme || content?.uploader?.profileTheme || content?.profileTheme || ''
+  ).trim();
+  const { accentColor: themedAccentColor, borderColor: themedBorderColor } =
+    useThemedCardVars({
+      role: 'sectionPanel',
+      themeName: previewThemeName || undefined
+    });
   const thumbUrl = String(content?.thumbUrl || content?.thumbnailUrl || '');
   const hasVideoThumb = contentType === 'video' && content?.content;
   const hasImageThumb = !hasVideoThumb && thumbUrl;
   const hasAttachment = Boolean(content?.fileName || content?.filePath);
   const isSubject = contentType === 'subject';
+  const isBuild = contentType === 'build';
+  const previewAccent = isBuild ? themedAccentColor : accent;
   const subjectRewardLevel = isSubject ? Number(content?.rewardLevel || 0) : 0;
+  const previewStyle = {
+    '--embed-accent': previewAccent,
+    '--embed-accent-border': isBuild
+      ? themedBorderColor
+      : setAlphaExact(previewAccent, 0.35),
+    '--embed-accent-soft': setAlphaExact(previewAccent, 0.1)
+  } as React.CSSProperties & {
+    '--embed-accent': string;
+    '--embed-accent-border': string;
+    '--embed-accent-soft': string;
+  };
 
   if (contentType === 'aiStory') {
     return (
@@ -173,6 +201,7 @@ function CompactMainContentEmbedPreview({
         maxTextLines={2}
         onOpen={() => navigate(path)}
         showTypeLabel={showCompactCommentTypeLabel}
+        theme={theme}
       />
     );
   }
@@ -189,7 +218,7 @@ function CompactMainContentEmbedPreview({
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{ '--embed-accent': accent } as React.CSSProperties}
+      style={previewStyle}
       onClick={handleClick}
     >
       <div className="compact-main-content-embed__copy">
@@ -202,7 +231,10 @@ function CompactMainContentEmbedPreview({
             </span>
           )
         ) : (
-          <span className="compact-main-content-embed__label">{label}</span>
+          <span className="compact-main-content-embed__label">
+            {isBuild ? <Icon icon="rocket" /> : null}
+            <span>{label}</span>
+          </span>
         )}
         {title ? <strong>{title}</strong> : null}
         {body ? <p>{body}</p> : null}
@@ -251,12 +283,24 @@ function CompactAIStoryEmbedPreview({
   const level = Number(
     content?.difficulty || content?.level || content?.storyLevel || 0
   );
+  const imageUrl = getCompactAIStoryImageUrl(content);
+  const storyPreview = isListening ? '' : getReadableCompactAIStoryPreview(body);
+  const levelStyle = getCompactAIStoryLevelStyle(level);
 
   return (
     <button
       type="button"
-      className={`${compactMainContentPreviewClass} compact-main-content-embed--ai-story-card`}
-      style={{ '--embed-accent': Color.logoBlue() } as React.CSSProperties}
+      className={[
+        compactMainContentPreviewClass,
+        'compact-main-content-embed--ai-story-card',
+        isListening
+          ? 'compact-main-content-embed--ai-story-listening'
+          : 'compact-main-content-embed--ai-story-reading',
+        imageUrl ? 'compact-main-content-embed--ai-story-has-image' : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={levelStyle}
       onClick={onClick}
     >
       <div className="compact-main-content-embed__story-topline">
@@ -270,15 +314,44 @@ function CompactAIStoryEmbedPreview({
           </span>
         ) : null}
       </div>
-      {title ? (
-        <strong className="compact-main-content-embed__story-title">
-          {title}
-        </strong>
-      ) : null}
-      {body ? (
-        <p className="compact-main-content-embed__story-body">{body}</p>
-      ) : null}
+      <div className="compact-main-content-embed__story-main">
+        <span className="compact-main-content-embed__story-copy">
+          {title ? (
+            <strong className="compact-main-content-embed__story-title">
+              {title}
+            </strong>
+          ) : null}
+          {isListening ? (
+            <CompactAIStoryAudioWave />
+          ) : storyPreview ? (
+            <p className="compact-main-content-embed__story-body">
+              {storyPreview}
+            </p>
+          ) : null}
+        </span>
+        {imageUrl ? (
+          <span className="compact-main-content-embed__story-image-frame">
+            <img
+              alt={`${title || 'AI Story'} image`}
+              className="compact-main-content-embed__story-image"
+              decoding="async"
+              loading="lazy"
+              src={imageUrl}
+            />
+          </span>
+        ) : null}
+      </div>
     </button>
+  );
+}
+
+function CompactAIStoryAudioWave() {
+  return (
+    <span className="compact-main-content-embed__story-wave">
+      {Array.from({ length: 13 }, (_, index) => (
+        <span key={index} />
+      ))}
+    </span>
   );
 }
 
@@ -323,6 +396,9 @@ function getContentLabel(contentType: string, content: any) {
 }
 
 function getContentTitle(contentType: string, content: any) {
+  if (contentType === 'build') {
+    return getPlainPreviewText(getBuildDisplayTitle(content) || 'Lumine App');
+  }
   if (contentType === 'url') {
     return getPlainPreviewText(
       content?.actualTitle || content?.linkTitle || content?.title || content?.content
@@ -386,8 +462,74 @@ function getPlainPreviewText(value: unknown) {
     .trim();
 }
 
+function setAlphaExact(rgba: string, alpha: number) {
+  const match = rgba.match(
+    /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+  );
+  if (!match) return rgba;
+  const [, red, green, blue] = match;
+  return `rgba(${red}, ${green}, ${blue}, ${Math.max(0, Math.min(1, alpha))})`;
+}
+
+function getCompactAIStoryLevelStyle(levelValue: number) {
+  const level = Math.max(1, Math.floor(Number(levelValue || 1)));
+  const colorKey = cardLevelHash[level]?.color || 'logoBlue';
+  const colorGetter = (Color as any)[colorKey] || Color.logoBlue;
+
+  return {
+    '--embed-accent': colorGetter(),
+    '--embed-accent-soft': colorGetter(0.2),
+    '--embed-accent-muted': colorGetter(0.72)
+  } as React.CSSProperties & {
+    '--embed-accent': string;
+    '--embed-accent-soft': string;
+    '--embed-accent-muted': string;
+  };
+}
+
+function getCompactAIStoryImageUrl(content: any) {
+  const directUrl =
+    typeof content?.imageUrl === 'string' ? content.imageUrl.trim() : '';
+  if (directUrl) return directUrl;
+
+  const imagePath =
+    typeof content?.imagePath === 'string' ? content.imagePath.trim() : '';
+  if (!imagePath) return '';
+  if (
+    imagePath.startsWith('data:') ||
+    imagePath.startsWith('http://') ||
+    imagePath.startsWith('https://')
+  ) {
+    return imagePath;
+  }
+
+  const normalizedPath = imagePath.replace(/^\/+/, '');
+  if (normalizedPath.startsWith('ai-story/')) {
+    return `${cloudFrontURL}/${normalizedPath}`;
+  }
+  return `${cloudFrontURL}/ai-story/${normalizedPath}`;
+}
+
+function getReadableCompactAIStoryPreview(value: unknown) {
+  const text = getPlainPreviewText(value);
+  if (!text) return '';
+
+  if (text.startsWith('[') || text.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return '';
+      if (parsed && typeof parsed === 'object') return '';
+    } catch {
+      return text;
+    }
+  }
+
+  return text;
+}
+
 const compactMainContentPreviewClass = css`
   appearance: none;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
@@ -406,6 +548,19 @@ const compactMainContentPreviewClass = css`
   &.compact-main-content-embed--has-media {
     grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 28%);
   }
+  &.compact-main-content-embed--build {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    height: 100%;
+    min-height: 10.5rem;
+    padding: 0.85rem;
+    border: 1px solid ${Color.borderGray()};
+    border-left: 0.35rem solid var(--embed-accent);
+    box-shadow: none;
+  }
+  &.compact-main-content-embed--build.compact-main-content-embed--has-media {
+    grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 32%);
+  }
   .compact-main-content-embed__copy {
     display: flex;
     min-width: 0;
@@ -419,6 +574,36 @@ const compactMainContentPreviewClass = css`
     font-size: 1rem;
     font-weight: 900;
     line-height: 1.1;
+  }
+  &.compact-main-content-embed--build .compact-main-content-embed__copy {
+    justify-content: center;
+    gap: 0.42rem;
+  }
+  &.compact-main-content-embed--build .compact-main-content-embed__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    min-height: 1.9rem;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0.32rem 0.58rem;
+    border: 1px solid ${Color.logoBlue(0.25)};
+    border-radius: 999px;
+    background: ${Color.logoBlue(0.1)};
+    color: ${Color.logoBlue()};
+    font-size: 1.05rem;
+    font-weight: 850;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  &.compact-main-content-embed--build .compact-main-content-embed__label svg {
+    flex: 0 0 auto;
+    font-size: 0.98em;
+  }
+  &.compact-main-content-embed--build .compact-main-content-embed__label span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .compact-main-content-embed__label--neutral {
     padding: 0.15rem 0.55rem;
@@ -436,48 +621,168 @@ const compactMainContentPreviewClass = css`
     gap: 0.35rem;
   }
   &.compact-main-content-embed--ai-story-card {
-    align-content: center;
-    gap: 0.38rem;
-    min-height: 8.8rem;
-    border-color: ${Color.borderGray()};
+    box-sizing: border-box;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+    align-items: stretch;
+    gap: 0.72rem;
+    height: 100%;
+    min-height: 13.6rem;
+    max-height: 100%;
+    padding: 0.9rem 1rem;
+    border-color: var(--embed-accent-soft);
+    border-radius: 1rem;
     background: #fff;
-    box-shadow: inset 0 0 0 1px ${Color.whiteGray()};
+    color: ${Color.darkerGray()};
+    box-shadow: none;
+  }
+  &.compact-main-content-embed--ai-story-listening {
+    text-align: center;
   }
   .compact-main-content-embed__story-topline {
     display: flex;
     min-width: 0;
     align-items: center;
     justify-content: space-between;
-    gap: 0.7rem;
+    gap: 0.5rem;
+    min-height: 2.25rem;
   }
   .compact-main-content-embed__story-topline span {
     display: inline-flex;
     min-width: 0;
     align-items: center;
-    gap: 0.34rem;
+    gap: 0.36rem;
     overflow: hidden;
-    padding: 0.18rem 0.58rem;
-    border: 1px solid ${Color.logoBlue(0.32)};
+    padding: 0;
+    border: 0;
     border-radius: 999px;
-    background: ${Color.logoBlue(0.08)};
-    color: ${Color.logoBlue()};
-    font-size: 1rem;
+    background: transparent;
+    color: var(--embed-accent);
+    font-size: 1.18rem;
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .compact-main-content-embed__story-topline span:first-child {
+    overflow: visible;
+    padding-block: 0.08rem;
+    line-height: 1.35;
+  }
   .compact-main-content-embed__story-topline .compact-main-content-embed__story-level {
     flex-shrink: 0;
-    border-color: ${Color.logoBlue()};
-    background: ${Color.logoBlue()};
+    padding: 0.32rem 0.62rem;
+    background: var(--embed-accent);
     color: #fff;
   }
+  .compact-main-content-embed__story-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.7rem;
+    min-height: 0;
+    overflow: hidden;
+  }
+  &.compact-main-content-embed--ai-story-has-image
+    .compact-main-content-embed__story-main {
+    grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 34%);
+    align-items: stretch;
+  }
+  .compact-main-content-embed__story-copy {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.65rem;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  &.compact-main-content-embed--ai-story-listening
+    .compact-main-content-embed__story-copy {
+    align-content: center;
+    grid-template-rows: auto auto;
+    gap: 0.82rem;
+  }
+  &.compact-main-content-embed--ai-story-listening.compact-main-content-embed--ai-story-has-image {
+    text-align: left;
+  }
   .compact-main-content-embed__story-title {
+    display: -webkit-box;
     margin-top: 0.08rem;
+    max-height: calc(2 * 1.34em);
+    min-height: 0;
+    overflow: hidden;
+    color: ${Color.black()};
+    font-size: max(1.6rem, 16px);
+    line-height: 1.34;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  &.compact-main-content-embed--ai-story-listening
+    .compact-main-content-embed__story-title {
+    color: ${Color.darkGray()};
+    font-size: max(1.52rem, 15.2px);
+    line-height: 1.3;
   }
   .compact-main-content-embed__story-body {
+    display: -webkit-box;
+    max-height: calc(3 * 1.46em);
+    min-height: 0;
+    overflow: hidden;
+    color: ${Color.darkGray()};
+    font-size: max(1.38rem, 13.8px);
+    font-weight: 600;
+    line-height: 1.46;
+    text-overflow: ellipsis;
+    white-space: pre-line;
+    -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+  }
+  .compact-main-content-embed__story-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.24rem;
+    width: 100%;
+    min-width: 0;
+    min-height: 3.05rem;
+    overflow: hidden;
+    padding: 0.58rem;
+    border: 1px solid var(--embed-accent-soft);
+    border-radius: 0.76rem;
+    background: #fff;
+  }
+  .compact-main-content-embed__story-wave span {
+    width: 0.3rem;
+    height: 0.85rem;
+    border-radius: 999px;
+    background: var(--embed-accent-muted);
+  }
+  .compact-main-content-embed__story-wave span:nth-child(2n) {
+    height: 1.45rem;
+  }
+  .compact-main-content-embed__story-wave span:nth-child(3n) {
+    height: 2.12rem;
+    background: var(--embed-accent);
+  }
+  .compact-main-content-embed__story-wave span:nth-child(5n) {
+    height: 1.15rem;
+  }
+  .compact-main-content-embed__story-image-frame {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--embed-accent-soft);
+    border-radius: 0.78rem;
+    background: ${Color.whiteGray()};
+    box-shadow: inset 0 0 0 1px ${Color.white(0.72)};
+  }
+  .compact-main-content-embed__story-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
   }
   .compact-main-content-embed__effort-badge {
     align-self: flex-start;
@@ -516,6 +821,11 @@ const compactMainContentPreviewClass = css`
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
+  &.compact-main-content-embed--build strong {
+    font-size: max(1.9rem, 19px);
+    font-weight: 850;
+    line-height: 1.18;
+  }
   p {
     margin: 0;
     overflow: hidden;
@@ -526,6 +836,12 @@ const compactMainContentPreviewClass = css`
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+  }
+  &.compact-main-content-embed--build p {
+    color: ${Color.darkGray()};
+    font-size: max(1.8rem, 18px);
+    font-weight: 400;
+    line-height: 1.34;
   }
   .compact-main-content-embed__attachment {
     max-width: 100%;
@@ -548,4 +864,11 @@ const compactMainContentPreviewClass = css`
     border-radius: 0.65rem;
     background: ${Color.whiteGray()};
   }
-`;
+  &.compact-main-content-embed--build .compact-main-content-embed__media {
+    min-height: 0;
+    max-height: none;
+    object-fit: contain;
+    border-radius: 0.7rem;
+    background: ${Color.whiteGray()};
+  }
+	`;

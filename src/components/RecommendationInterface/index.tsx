@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, getThemeStyles, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isSupermod } from '~/helpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -34,7 +34,10 @@ const recommendationSurfaceClass = css`
   @keyframes recommendationBorderGlow {
     0% {
       border-color: ${Color.darkGold(0.72)};
-      background-color: ${Color.logoBlue(0.08)};
+      background-color: var(
+        --recommendation-surface-start-bg,
+        ${Color.logoBlue(0.08)}
+      );
       box-shadow:
         0 0 0 0.22rem ${Color.darkGold(0.2)},
         0 0.28rem 0.9rem rgba(15, 23, 42, 0.08);
@@ -42,7 +45,10 @@ const recommendationSurfaceClass = css`
 
     45% {
       border-color: ${Color.logoBlue(0.58)};
-      background-color: ${Color.darkGold(0.11)};
+      background-color: var(
+        --recommendation-surface-mid-bg,
+        ${Color.logoBlue(0.04)}
+      );
       box-shadow:
         0 0 0 0.18rem ${Color.logoBlue(0.16)},
         0 0.28rem 0.9rem rgba(15, 23, 42, 0.08);
@@ -85,7 +91,7 @@ const recommendationTextGlowClass = css`
 
   @keyframes recommendationTextGlow {
     0% {
-      color: ${Color.darkGold()};
+      color: #fff;
     }
 
     45% {
@@ -126,33 +132,31 @@ const recommendationActionsClass = css`
 
 const recommendationActionGlowClass = css`
   animation: recommendationActionGlow 1.6s ease-out 1;
+  background-color: transparent;
 
   @keyframes recommendationActionGlow {
     0% {
-      color: #fff;
-      background-color: var(--recommendation-action-start-bg);
-      border-color: var(--recommendation-action-start-bg);
+      color: var(--recommendation-action-start-color);
+      background-color: transparent;
+      border-color: var(--recommendation-action-start-color);
     }
 
     45% {
-      background-color: var(--recommendation-action-soft-bg);
+      background-color: transparent;
     }
   }
 `;
 
 function getRecommendationActionGlowStyle({
   color,
-  softColor,
   style = {}
 }: {
   color: string;
-  softColor: string;
   style?: React.CSSProperties;
 }) {
   return {
     ...style,
-    '--recommendation-action-start-bg': color,
-    '--recommendation-action-soft-bg': softColor
+    '--recommendation-action-start-color': color
   } as React.CSSProperties;
 }
 
@@ -182,6 +186,7 @@ export default function RecommendationInterface({
   const level = useKeyContext((v) => v.myState.level);
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const recommendContent = useAppContext(
     (v) => v.requestHelpers.recommendContent
@@ -250,12 +255,25 @@ export default function RecommendationInterface({
       contentType !== 'sharedTopic'
     );
   }, [isRecommendedByUser, level, contentType]);
+  const themeName = useMemo(
+    () => theme || profileTheme || 'logoBlue',
+    [profileTheme, theme]
+  );
+  const recommendationSurfaceStyle = useMemo(
+    () =>
+      ({
+        ...style,
+        '--recommendation-surface-start-bg': getThemeStyles(themeName, 0.12).bg,
+        '--recommendation-surface-mid-bg': getThemeStyles(themeName, 0.06).bg
+      }) as React.CSSProperties,
+    [style, themeName]
+  );
 
   return (
     <ErrorBoundary
       className={recommendationSurfaceClass}
       componentPath="RecommendationInterface"
-      style={style}
+      style={recommendationSurfaceStyle}
     >
       {state.recommending && (
         <Loading
@@ -316,8 +334,7 @@ export default function RecommendationInterface({
               color="darkBlue"
               variant="outline"
               style={getRecommendationActionGlowStyle({
-                color: Color.darkBlue(),
-                softColor: Color.darkBlue(0.08)
+                color: Color.darkBlue()
               })}
             >
               {yesLabel}
@@ -327,7 +344,6 @@ export default function RecommendationInterface({
               onClick={onHide}
               style={getRecommendationActionGlowStyle({
                 color: Color.rose(),
-                softColor: Color.rose(0.08),
                 style: { marginLeft: '0.7rem' }
               })}
               color="rose"

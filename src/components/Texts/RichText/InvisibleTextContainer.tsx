@@ -15,9 +15,11 @@ export default function InvisibleTextContainer({
   contentId,
   contentType,
   isAIMessage,
+  isPreview,
   isProfileComponent,
   linkColor,
   markerColor,
+  theme,
   text,
   maxLines,
   onSetContainerNode,
@@ -26,9 +28,11 @@ export default function InvisibleTextContainer({
   contentId?: string | number;
   contentType?: string;
   isAIMessage?: boolean;
+  isPreview?: boolean;
   isProfileComponent?: boolean;
   linkColor: string;
   markerColor: string;
+  theme?: string;
   text: string;
   maxLines: number;
   onSetContainerNode: (node: HTMLDivElement) => void;
@@ -105,10 +109,12 @@ export default function InvisibleTextContainer({
           isInvisible
           contentId={contentId}
           contentType={contentType}
+          isPreview={isPreview}
           isProfileComponent={isProfileComponent}
           isAIMessage={isAIMessage}
           linkColor={linkColor}
           markerColor={markerColor}
+          theme={theme}
           onSetIsParsed={handleSetIsParsed}
         >
           {renderedText}

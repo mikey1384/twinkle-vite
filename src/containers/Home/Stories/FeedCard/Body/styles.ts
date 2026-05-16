@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
 import { mainPreviewStyles } from './styles/mainPreviewStyles';
 import { mobilePreviewStyles } from './styles/mobilePreviewStyles';
 import { panelPreviewStyles } from './styles/panelPreviewStyles';
@@ -18,6 +19,14 @@ export const compactSecretCommentStyle: React.CSSProperties = {
   fontSize: '1.35rem',
   fontWeight: 850,
   lineHeight: 1.15
+};
+
+export const homeFeedSecretGuardBannerStyle: React.CSSProperties = {
+  ...compactSecretCommentStyle,
+  background: Color.whiteGray(0.72),
+  border: `1px solid ${Color.borderGray()}`,
+  boxShadow: `0 0.16rem 0 ${Color.black(0.05)}`,
+  color: Color.darkerGray()
 };
 
 export const bodyClass = css`

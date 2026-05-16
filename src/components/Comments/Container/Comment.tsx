@@ -795,6 +795,7 @@ function Comment({
                             section="comment"
                             maxLines={maxLines}
                             className="comment__content"
+                            compactEmbedPreview={compactMode}
                             isPreview={isPreview}
                           >
                             {(comment.content || '').trimEnd()}

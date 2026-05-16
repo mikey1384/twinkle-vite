@@ -1,5 +1,9 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
-import { scrollAnchorSavesAreSuppressed } from '~/helpers/scrollAnchorRestorationCoordinator';
+import {
+  suppressScrollAnchorSaves,
+  scrollAnchorRestoresAreSuppressed,
+  scrollAnchorSavesAreSuppressed
+} from '~/helpers/scrollAnchorRestorationCoordinator';
 
 interface SavedScrollAnchor {
   anchorKey: string;
@@ -7,6 +11,7 @@ interface SavedScrollAnchor {
   secondaryId?: string;
   contentKey?: string;
   offset: number;
+  scrollTop: number;
 }
 
 type InitialScrollPolicy =
@@ -19,6 +24,7 @@ type InitialScrollPolicy =
     };
 
 const savedScrollAnchors: Record<string, SavedScrollAnchor> = {};
+const restoreSaveSuppressionDurationMs = 250;
 const restoreCancelKeys = new Set([
   'ArrowDown',
   'ArrowLeft',
@@ -116,6 +122,9 @@ export function useScrollAnchorRestoration({
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
+      if (!scrollAnchorSavesAreSuppressed()) {
+        saveCurrentAnchor(anchorKey, container, scroller);
+      }
       window.removeEventListener('scroll', handleScroll);
       scroller?.removeEventListener('scroll', handleScroll);
     };
@@ -123,6 +132,7 @@ export function useScrollAnchorRestoration({
 
   useLayoutEffect(() => {
     if (!itemsReady || !containerRef.current) return;
+    if (scrollAnchorRestoresAreSuppressed()) return;
     if (userCancelledRestoreRef.current === anchorKey) return;
     const savedAnchor =
       ignoredSavedAnchorKeyRef.current === anchorKey
@@ -161,10 +171,15 @@ export function useScrollAnchorRestoration({
 
     function restore() {
       if (restoreCancelled) return;
+      if (scrollAnchorRestoresAreSuppressed()) {
+        cancelPendingRestore();
+        return;
+      }
       const container = containerRef.current;
       if (!container) return;
       const anchorElement = findAnchorElement(container, anchorToRestore);
       if (!anchorElement) {
+        restoreToSavedScrollTop(anchorToRestore, scroller);
         attempts += 1;
         if (attempts < 12) {
           restoreFrame = window.requestAnimationFrame(restore);
@@ -261,11 +276,18 @@ export function useScrollAnchorRestoration({
 
       settleFrame = window.requestAnimationFrame(function settle() {
         if (restoreCancelled) return;
+        if (scrollAnchorRestoresAreSuppressed()) {
+          cancelPendingRestore();
+          return;
+        }
         settleFrame = 0;
         const container = containerRef.current;
         if (!container) return;
         const anchorElement = findAnchorElement(container, anchorToRestore);
-        if (!anchorElement) return;
+        if (!anchorElement) {
+          restoreToSavedScrollTop(anchorToRestore, scroller);
+          return;
+        }
 
         restoreToAnchor(anchorElement, anchorToRestore.offset, scroller);
         settleAttempts += 1;
@@ -313,8 +335,16 @@ function saveCurrentAnchor(
   scroller: HTMLElement | null
 ) {
   if (!container?.isConnected) return;
+  const scrollTop = getScrollTop(scroller);
   const items = getScrollAnchorItems(container);
-  if (items.length === 0) return;
+  if (items.length === 0) {
+    savedScrollAnchors[anchorKey] = {
+      anchorKey,
+      offset: 0,
+      scrollTop
+    };
+    return;
+  }
 
   const viewportTop = getViewportTop(scroller);
   const viewportBottom = getViewportBottom(scroller);
@@ -323,7 +353,14 @@ function saveCurrentAnchor(
     viewportBottom,
     viewportTop
   });
-  if (!anchorElement) return;
+  if (!anchorElement) {
+    savedScrollAnchors[anchorKey] = {
+      anchorKey,
+      offset: 0,
+      scrollTop
+    };
+    return;
+  }
 
   const rect = anchorElement.getBoundingClientRect();
   savedScrollAnchors[anchorKey] = {
@@ -331,7 +368,8 @@ function saveCurrentAnchor(
     primaryId: anchorElement.dataset.scrollAnchorId,
     secondaryId: anchorElement.dataset.scrollAnchorSecondaryId,
     contentKey: anchorElement.dataset.scrollAnchorContentKey,
-    offset: viewportTop - rect.top
+    offset: viewportTop - rect.top,
+    scrollTop
   };
 }
 
@@ -439,7 +477,17 @@ function restoreToAnchor(
   const rect = anchorElement.getBoundingClientRect();
   const currentScrollTop = getScrollTop(scroller);
   const nextScrollTop = currentScrollTop + rect.top - viewportTop + offset;
+  suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
   setScrollTop(scroller, Math.max(0, nextScrollTop));
+}
+
+function restoreToSavedScrollTop(
+  savedAnchor: SavedScrollAnchor,
+  scroller: HTMLElement | null
+) {
+  if (!Number.isFinite(savedAnchor.scrollTop)) return;
+  suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
+  setScrollTop(scroller, Math.max(0, savedAnchor.scrollTop));
 }
 
 function scrollElementToTop(

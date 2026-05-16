@@ -14,7 +14,10 @@ function ImagePreview({
   fileName,
   contentType,
   contentId,
-  isReplaceable
+  isReplaceable,
+  fillPreview = false,
+  fillUnavailablePreview = false,
+  previewObjectFit
 }: {
   compactMode?: boolean;
   isThumb?: boolean;
@@ -25,6 +28,9 @@ function ImagePreview({
   contentType?: string;
   contentId?: number;
   isReplaceable?: boolean;
+  fillPreview?: boolean;
+  fillUnavailablePreview?: boolean;
+  previewObjectFit?: React.CSSProperties['objectFit'];
 }) {
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageWorks, setImageWorks] = useState(true);
@@ -41,17 +47,27 @@ function ImagePreview({
     return (
       <div
         className={css`
+          box-sizing: border-box;
           display: flex;
-          min-height: ${compactMode || isThumb ? '8rem' : '13rem'};
+          height: ${fillUnavailablePreview ? '100%' : 'auto'};
+          min-height: ${fillUnavailablePreview
+            ? '100%'
+            : compactMode || isThumb
+              ? '8rem'
+              : '13rem'};
           width: 100%;
           align-items: center;
           justify-content: center;
           flex-direction: column;
           gap: 0.6rem;
           padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
-          border-radius: 0.8rem;
-          background: ${Color.whiteGray()};
+          border: ${fillUnavailablePreview
+            ? '0'
+            : `1px solid ${Color.borderGray()}`};
+          border-radius: ${fillUnavailablePreview ? '0' : '0.8rem'};
+          background: ${fillUnavailablePreview
+            ? 'transparent'
+            : Color.whiteGray()};
           color: ${Color.darkGray()};
           text-align: center;
           font-size: 1.1rem;
@@ -86,25 +102,33 @@ function ImagePreview({
       style={{
         display: 'flex',
         height: '100%',
-        width: isThumb ? '100%' : 'auto',
-        justifyContent: isThumb ? 'center' : 'flex-start',
+        width: fillPreview || isThumb ? '100%' : 'auto',
+        justifyContent: fillPreview || isThumb ? 'center' : 'flex-start',
         alignItems: 'center'
       }}
     >
       <img
         loading="lazy"
         style={{
+          width: fillPreview ? '100%' : undefined,
+          height: fillPreview ? '100%' : undefined,
           maxWidth: '100%',
-          maxHeight: compactMode ? undefined : '100%',
-          objectFit: isThumb ? 'cover' : 'contain',
+          maxHeight: fillPreview ? 'none' : compactMode ? undefined : '100%',
+          objectFit: fillPreview || isThumb
+            ? previewObjectFit || 'cover'
+            : 'contain',
           cursor: 'pointer'
         }}
         className={css`
-          height: ${compactMode ? 'auto' : '25vw'};
-          max-height: ${compactMode ? '13rem' : '100%'};
+          height: ${fillPreview ? '100%' : compactMode ? 'auto' : '25vw'};
+          max-height: ${fillPreview ? 'none' : compactMode ? '13rem' : '100%'};
           @media (max-width: ${mobileMaxWidth}) {
-            height: ${compactMode ? 'auto' : '50vw'};
-            max-height: ${compactMode ? '11rem' : '100%'};
+            height: ${fillPreview ? '100%' : compactMode ? 'auto' : '50vw'};
+            max-height: ${fillPreview
+              ? 'none'
+              : compactMode
+                ? '11rem'
+                : '100%'};
           }
         `}
         src={appliedSrc}

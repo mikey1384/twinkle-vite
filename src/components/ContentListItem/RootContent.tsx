@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
+import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Thumbnail from '../Thumbnail';
@@ -809,7 +810,9 @@ export default function RootContent({
               imageOnly
               noLink
               contentId={rootId}
-              defaultThumbUrl={rootContent?.thumbUrl || '/img/link.png'}
+              defaultThumbUrl={
+                rootContent?.thumbUrl || LINK_PREVIEW_FALLBACK_IMAGE
+              }
             />
           )}
         </>

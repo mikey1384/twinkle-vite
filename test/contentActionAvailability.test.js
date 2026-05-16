@@ -40,6 +40,12 @@ const homeFeedActionIntentSource = readSource(
 const scrollAnchorRestorationSource = readSource(
   'src/helpers/hooks/useScrollAnchorRestoration.ts'
 );
+const scrollAnchorCoordinatorSource = readSource(
+  'src/helpers/scrollAnchorRestorationCoordinator.ts'
+);
+const mainNavSource = readSource(
+  'src/containers/App/Header/MainNavs/Nav.tsx'
+);
 const contentPageSource = readSource('src/containers/ContentPage.tsx');
 const linkPageSource = readSource('src/containers/LinkPage/index.tsx');
 const videoPageSource = readSource('src/containers/VideoPage/index.tsx');
@@ -71,7 +77,7 @@ assert.match(
 );
 assert.match(
   actionAvailabilitySource,
-  /isContentPanelCommentActionEnabled[\s\S]*actionsReady && !secretHidden/
+  /isContentPanelCommentActionEnabled[\s\S]*actionsReady && \(!secretHidden \|\| contentType === 'subject'\)/
 );
 assert.match(
   actionAvailabilitySource,
@@ -256,10 +262,16 @@ assert.match(
 assert.match(scrollAnchorRestorationSource, /ignoreSavedAnchor = false/);
 assert.match(scrollAnchorRestorationSource, /ignoredSavedAnchorKeyRef/);
 assert.match(scrollAnchorRestorationSource, /scrollAnchorSavesAreSuppressed/);
+assert.match(scrollAnchorRestorationSource, /scrollAnchorRestoresAreSuppressed/);
 assert.match(
   scrollAnchorRestorationSource,
   /if \(scrollAnchorSavesAreSuppressed\(\)\) return;/
 );
+assert.match(
+  scrollAnchorCoordinatorSource,
+  /export function suppressScrollAnchorRestores/
+);
+assert.match(mainNavSource, /suppressScrollAnchorRestores\(\)/);
 assert.match(contentPageSource, /getMatchingHomeFeedNavigationState/);
 assert.match(
   contentPageSource,

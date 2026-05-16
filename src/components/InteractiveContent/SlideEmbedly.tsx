@@ -1,5 +1,8 @@
 import React, { memo, useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
+import LinkPreviewImage, {
+  LINK_PREVIEW_FALLBACK_IMAGE
+} from '~/components/LinkPreviewImage';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useInteractiveContext } from '~/contexts';
@@ -37,7 +40,7 @@ function SlideEmbedly({
     (v) => v.actions.onChangeNumUpdates
   );
   const [loading, setLoading] = useState(false);
-  const fallbackImage = '/img/link.png';
+  const fallbackImage = LINK_PREVIEW_FALLBACK_IMAGE;
 
   useEffect(() => {
     if (!thumbUrl || (prevUrl && url !== prevUrl)) {
@@ -93,11 +96,12 @@ function SlideEmbedly({
           rel="noopener noreferrer"
           href={url}
         >
-          <img
+          <LinkPreviewImage
             style={{ width: '100%', objectFit: 'cover' }}
             src={thumbUrl}
             loading="lazy"
-            onError={handleImageLoadError}
+            fallbackSrc={fallbackImage}
+            onFallback={handleImageLoadError}
             alt={actualTitle || ''}
           />
         </a>
@@ -137,7 +141,7 @@ function SlideEmbedly({
   );
 
   function handleImageLoadError() {
-    onSetEmbedProps({ thumbUrl: thumbUrl || fallbackImage });
+    onSetEmbedProps({ thumbUrl: fallbackImage });
   }
 }
 

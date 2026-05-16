@@ -61,6 +61,17 @@ export const mobilePreviewStyles = `
       max-height: max(7.17rem, 71.7px);
       -webkit-line-clamp: 3;
     }
+    .home-feed-card__ai-story-preview--has-image .home-feed-card__ai-story-main {
+      grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 34%);
+      gap: 0.7rem;
+    }
+    .home-feed-card__ai-story-preview--has-image h3 {
+      font-size: max(1.5rem, 15px);
+    }
+    .home-feed-card__ai-story-preview--has-image .home-feed-card__ai-story-story {
+      font-size: max(1.22rem, 12.2px);
+      line-height: 1.35;
+    }
     .home-feed-card__panel-preview--size-build {
       height: max(17rem, 170px);
     }
@@ -72,6 +83,12 @@ export const mobilePreviewStyles = `
     }
     .home-feed-card__panel-preview--size-media {
       height: max(20rem, 200px);
+    }
+    .home-feed-card__panel-preview--size-media-attachment {
+      height: max(25rem, 250px);
+    }
+    .home-feed-card__panel-preview--size-media-attachment-with-text {
+      height: max(31rem, 310px);
     }
     .home-feed-card__panel-preview--pass,
     .home-feed-card__panel-preview--size-pass {
@@ -107,8 +124,20 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-subject-minimal {
       height: max(11rem, 110px);
     }
+    .home-feed-card__panel-preview--size-subject-locked {
+      height: max(15.5rem, 155px);
+    }
+    .home-feed-card__panel-preview--size-subject-root {
+      height: max(15.5rem, 155px);
+    }
+    .home-feed-card__panel-preview--size-subject-root-text {
+      height: max(27rem, 270px);
+    }
     .home-feed-card__panel-preview--size-subject-rich-embed {
       height: max(32rem, 320px);
+    }
+    .home-feed-card__panel-preview--size-subject-secret-media {
+      height: max(24rem, 240px);
     }
     .home-feed-card__panel-preview--size-subject-tall,
     .home-feed-card__panel-preview--size-tall {
@@ -140,6 +169,10 @@ export const mobilePreviewStyles = `
         grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 34%);
         gap: 0.7rem;
         padding: 0.85rem 1rem;
+      }
+      .home-feed-card__text-preview--with-media-attachment {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
       }
       .home-feed-card__video-preview {
         grid-template-columns: minmax(8rem, 44%) minmax(0, 1fr);

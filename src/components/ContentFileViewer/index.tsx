@@ -18,9 +18,12 @@ export default function ContentFileViewer({
   filePath,
   fileName,
   fileSize,
+  fillUnavailablePreview,
+  fillPreview,
   userIsUploader,
   onMediaPause = () => null,
   onMediaPlay = () => null,
+  previewObjectFit,
   style,
   theme,
   thumbHeight,
@@ -37,9 +40,12 @@ export default function ContentFileViewer({
   filePath: string;
   fileName?: string;
   fileSize?: string | number;
+  fillUnavailablePreview?: boolean;
+  fillPreview?: boolean;
   userIsUploader?: boolean;
   onMediaPause?: () => void;
   onMediaPlay?: () => void;
+  previewObjectFit?: React.CSSProperties['objectFit'];
   style?: React.CSSProperties;
   theme?: string;
   thumbHeight?: string;
@@ -94,6 +100,9 @@ export default function ContentFileViewer({
               fileName={fileName || ''}
               contentType={contentType}
               contentId={contentId}
+              fillPreview={fillPreview}
+              fillUnavailablePreview={fillUnavailablePreview}
+              previewObjectFit={previewObjectFit}
               isReplaceable={
                 ['subject', 'comment'].includes(contentType) && !isThumb
               }

@@ -15,6 +15,7 @@ import {
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
+import { suppressScrollAnchorRestores } from '~/helpers/scrollAnchorRestorationCoordinator';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
@@ -280,6 +281,7 @@ function Nav({
     }
     const appElement = document.getElementById('App');
     if (to === pathname) {
+      suppressScrollAnchorRestores();
       if (appElement) appElement.scrollTop = 0;
       BodyRef.scrollTop = 0;
     }

@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Heading from '~/components/ContentPanel/Heading';
-import Body, { HomeFeedCommentPreview } from './Body';
+import Body, {
+  HomeFeedCommentPreview,
+  getRenderableHomeFeedPreviewComments
+} from './Body';
 import Actions from './Actions';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -41,7 +44,7 @@ import {
 } from '~/helpers/homeFeedActionIntent';
 
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
-const HOME_FEED_CARD_LAYOUT_VERSION = 'mobile-tight-preview-v2';
+const HOME_FEED_CARD_LAYOUT_VERSION = 'root-subject-preview-v5';
 const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
 const homeFeedCardSizingCache = new Map<string, FeedCardSizing>();
 
@@ -81,7 +84,6 @@ export default function HomeFeedCard({
   const loadingRef = useRef(false);
   const previewCommentLoadingRef = useRef(false);
   const PanelRef = useRef<HTMLDivElement | null>(null);
-  const commentSlotStateRef = useRef({ key: '', value: false });
   const feedPreviewContent = feed?.previewContent || {};
   const feedPreviewComments = Array.isArray(feed?.comments)
     ? feed.comments
@@ -92,16 +94,8 @@ export default function HomeFeedCard({
   const previewComments = contentComments.length
     ? contentComments
     : feedPreviewComments;
-  const previewCommentCount = getHomeFeedPreviewCommentCount({
-    ...feed,
-    ...feedPreviewContent,
-    ...contentState,
-    contentType
-  });
-  const hasPreviewCommentCandidate =
-    previewCommentCount > 0 ||
-    feedPreviewComments.length > 0 ||
-    contentComments.length > 0;
+  const renderablePreviewComments =
+    getRenderableHomeFeedPreviewComments(previewComments);
   const feedIdentity =
     feedAnchorId ||
     feed?.feedId ||
@@ -109,27 +103,71 @@ export default function HomeFeedCard({
     feed?.timeStamp ||
     feed?.lastInteraction ||
     index;
-  const commentSlotKey = `${contentType}:${contentId}:${feedIdentity}`;
-  if (commentSlotStateRef.current.key !== commentSlotKey) {
-    commentSlotStateRef.current = {
-      key: commentSlotKey,
-      value: hasPreviewCommentCandidate
-    };
-  } else if (!commentSlotStateRef.current.value && hasPreviewCommentCandidate) {
-    commentSlotStateRef.current = {
-      key: commentSlotKey,
-      value: true
-    };
-  }
-  const hasPreviewCommentSlot = commentSlotStateRef.current.value;
-  const baseFeedContent = {
+  const previewContentForSecretState = {
     ...feed,
     ...feedPreviewContent,
-    __homeFeedHasCommentPreview: hasPreviewCommentSlot,
     id: contentId,
     contentId,
     contentType,
     rootType: feedPreviewContent.rootType || feed?.rootType
+  };
+  const preliminaryRootType = contentState.loaded
+    ? contentState.rootType || previewContentForSecretState.rootType
+    : previewContentForSecretState.rootType;
+  const normalizedRootType = useMemo(
+    () => normalizeRootType(preliminaryRootType),
+    [preliminaryRootType]
+  );
+  const rootContentState = useContentState({
+    contentType: normalizedRootType || '',
+    contentId:
+      (contentState.loaded
+        ? contentState.rootId || previewContentForSecretState.rootId
+        : previewContentForSecretState.rootId) || 0
+  });
+  const previewRootObjForSecretState = mergePreviewSubjectSecretState(
+    previewContentForSecretState.rootObj,
+    contentState.rootObj
+  );
+  const rootObj = useMemo(() => {
+    const previewRootObj = previewRootObjForSecretState || {};
+    if (!(rootContentState?.id || rootContentState?.notFound)) {
+      return previewRootObj;
+    }
+    return {
+      ...previewRootObj,
+      ...rootContentState,
+      secretShown: Boolean(
+        previewRootObj.secretShown || rootContentState.secretShown
+      )
+    };
+  }, [previewRootObjForSecretState, rootContentState]);
+  const preliminaryTargetObj = mergePreviewTargetSecretState(
+    previewContentForSecretState.targetObj,
+    contentState.targetObj
+  );
+  const preliminaryContentForSecretState = contentState.loaded
+    ? {
+        ...previewContentForSecretState,
+        ...contentState,
+        targetObj: preliminaryTargetObj
+      }
+    : {
+        ...previewContentForSecretState,
+        comments: previewComments,
+        loaded: false
+      };
+  const secretHiddenForPreview = getHomeFeedSecretHidden({
+    content: preliminaryContentForSecretState,
+    rootObj,
+    targetObj: preliminaryTargetObj,
+    userId
+  });
+  const hasPreviewCommentSlot =
+    !secretHiddenForPreview && renderablePreviewComments.length > 0;
+  const baseFeedContent = {
+    ...previewContentForSecretState,
+    __homeFeedHasCommentPreview: hasPreviewCommentSlot
   };
   const appliedContent = contentState.loaded
     ? mergeLoadedFeedContentWithPreviewState({
@@ -145,27 +183,6 @@ export default function HomeFeedCard({
           contentState.previewLoaded || previewComments.length
         )
       };
-  const normalizedRootType = useMemo(
-    () => normalizeRootType(appliedContent.rootType),
-    [appliedContent.rootType]
-  );
-  const rootContentState = useContentState({
-    contentType: normalizedRootType || '',
-    contentId: appliedContent.rootId || 0
-  });
-  const rootObj = useMemo(() => {
-    const previewRootObj = appliedContent.rootObj || {};
-    if (!(rootContentState?.id || rootContentState?.notFound)) {
-      return previewRootObj;
-    }
-    return {
-      ...previewRootObj,
-      ...rootContentState,
-      secretShown: Boolean(
-        previewRootObj.secretShown || rootContentState.secretShown
-      )
-    };
-  }, [appliedContent.rootObj, rootContentState]);
   const calculatedSizing = getFeedCardSizing({
     content: appliedContent,
     rootObj,
@@ -223,17 +240,15 @@ export default function HomeFeedCard({
   const shouldHydrate =
     contentShown && contentId > 0 && contentType && !contentState.loaded;
   const commentsCount = getHomeFeedPreviewCommentCount(appliedContent);
-  const previewCommentLoaded = Boolean(
-    contentState.previewLoaded || previewComments.length
-  );
   const shouldLoadPreviewComment =
     contentShown &&
-    hasPreviewCommentSlot &&
+    !secretHiddenForPreview &&
     contentId > 0 &&
     Boolean(contentType) &&
     commentsCount > 0 &&
     (!contentState.commentsLoaded || contentComments.length === 0) &&
-    !previewCommentLoaded;
+    !contentState.previewLoaded &&
+    renderablePreviewComments.length === 0;
 
   useEffect(() => {
     placeholderHeightRef.current = previousPlaceholderHeight;
@@ -294,7 +309,7 @@ export default function HomeFeedCard({
         const data = await loadComments({
           contentId,
           contentType,
-          limit: 1,
+          limit: 5,
           isPreview: true
         });
         if (!data) return;
@@ -848,6 +863,51 @@ function getHomeFeedPreviewCommentCount(content: any) {
   return Array.isArray(content?.comments) ? content.comments.length : 0;
 }
 
+function getHomeFeedSecretHidden({
+  content,
+  rootObj,
+  targetObj,
+  userId
+}: {
+  content: any;
+  rootObj: any;
+  targetObj: any;
+  userId?: number | string;
+}) {
+  const contentUploaderId =
+    content?.uploader?.id || content?.userId || content?.uploaderId || 0;
+  const contentSecretHidden =
+    content?.contentType === 'subject' &&
+    hasHomeFeedSubjectSecret(content) &&
+    !content?.secretShown &&
+    String(contentUploaderId) !== String(userId || '');
+  const subjectUploaderId =
+    targetObj?.subject?.uploader?.id || targetObj?.subject?.userId || 0;
+  const targetSecretHidden =
+    content?.contentType === 'comment' &&
+    hasHomeFeedSubjectSecret(targetObj?.subject) &&
+    !targetObj?.subject?.secretShown &&
+    String(subjectUploaderId) !== String(userId || '');
+  const rootSecretHidden =
+    content?.contentType === 'comment' &&
+    hasHomeFeedSubjectSecret(rootObj) &&
+    !rootObj?.secretShown &&
+    String(
+      rootObj?.uploader?.id || rootObj?.userId || rootObj?.uploaderId || 0
+    ) !== String(userId || '');
+
+  return Boolean(contentSecretHidden || targetSecretHidden || rootSecretHidden);
+}
+
+function hasHomeFeedSubjectSecret(subject: any) {
+  return Boolean(
+    subject?.hasSecretAnswer ||
+      subject?.hasSecretAttachment ||
+      subject?.secretAnswer ||
+      subject?.secretAttachment
+  );
+}
+
 function hasHomeFeedPrimaryTextTruncation(panel: HTMLElement) {
   const mainPreview = panel.querySelector<HTMLElement>(
     '.home-feed-card__panel-preview'
@@ -1104,7 +1164,7 @@ const cardClass = css`
     .home-feed-card__comment-preview-slot {
       flex-basis: var(--home-feed-card-mobile-comment-preview-height);
       height: var(--home-feed-card-mobile-comment-preview-height);
-      margin-top: 0;
+      margin-top: -0.5rem;
     }
   }
 `;

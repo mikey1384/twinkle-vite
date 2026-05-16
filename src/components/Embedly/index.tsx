@@ -10,6 +10,10 @@ import React, {
 import request from 'axios';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
+import LinkPreviewImage, {
+  getLinkPreviewImageSrc,
+  LINK_PREVIEW_FALLBACK_IMAGE
+} from '~/components/LinkPreviewImage';
 import URL from '~/constants/URL';
 import TwinkleVideo from './TwinkleVideo';
 import { css } from '@emotion/css';
@@ -21,7 +25,6 @@ import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { cloudFrontURL } from '~/constants/defaultValues';
 
 const API_URL = `${URL}/content`;
 
@@ -111,10 +114,7 @@ function Embedly({
   );
 
   const thumbUrl = useMemo(() => {
-    if (appliedRawThumbUrl?.split('/')[1] === 'thumbs') {
-      return `${cloudFrontURL}${appliedRawThumbUrl}`;
-    }
-    return appliedRawThumbUrl;
+    return getLinkPreviewImageSrc(appliedRawThumbUrl, '');
   }, [appliedRawThumbUrl]);
 
   const [twinkleVideoId, setTwinkleVideoId] = useState('');
@@ -123,7 +123,7 @@ function Embedly({
     contentType: 'video'
   });
   const loadingRef = useRef(false);
-  const fallbackImage = '/img/link.png';
+  const fallbackImage = LINK_PREVIEW_FALLBACK_IMAGE;
   const contentCss = useMemo(
     () => css`
       display: flex;
@@ -255,7 +255,7 @@ function Embedly({
                 }
               `}
             >
-              <img
+              <LinkPreviewImage
                 className={css`
                   position: absolute;
                   width: 100%;
@@ -264,7 +264,8 @@ function Embedly({
                 `}
                 loading="lazy"
                 src={imageUrl}
-                onError={handleImageLoadError}
+                fallbackSrc={fallbackImage}
+                onFallback={handleImageLoadError}
                 alt={title}
               />
             </section>
@@ -288,7 +289,7 @@ function Embedly({
                 }
               `}
             >
-              <img
+              <LinkPreviewImage
                 className={css`
                   position: absolute;
                   width: 100%;
@@ -297,7 +298,8 @@ function Embedly({
                 `}
                 loading="lazy"
                 src={imageUrl}
-                onError={handleImageLoadError}
+                fallbackSrc={fallbackImage}
+                onFallback={handleImageLoadError}
                 alt={title}
               />
             </section>
@@ -362,11 +364,9 @@ function Embedly({
           )}
       </div>
     );
-    function handleImageLoadError() {
-      const appliedImageUrl =
-        !thumbUrl || imageUrl === thumbUrl ? fallbackImage : thumbUrl;
-      onSetThumbUrl({ contentId, contentType, thumbUrl: appliedImageUrl });
-      setImageUrl(appliedImageUrl);
+    function handleImageLoadError(fallbackSrc = fallbackImage) {
+      onSetThumbUrl({ contentId, contentType, thumbUrl: fallbackSrc });
+      setImageUrl(fallbackSrc);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

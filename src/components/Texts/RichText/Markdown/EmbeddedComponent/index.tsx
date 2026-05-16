@@ -16,6 +16,7 @@ function EmbeddedComponent({
   alt,
   isPreview,
   isProfileComponent,
+  theme,
   embeddedContentRef,
   ...commonProps
 }: {
@@ -25,6 +26,7 @@ function EmbeddedComponent({
   alt?: string;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  theme?: string;
   embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const { isInternalLink, replacedLink } = useMemo(
@@ -103,17 +105,19 @@ function EmbeddedComponent({
   return (
     <div
       ref={embeddedContentRef}
-      className={css`
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        padding: ${cleanReplacedLink.split('/')?.[1] === 'users' &&
-        isProfileComponent
-          ? 'none'
-          : '1rem'};
-        width: 100%;
-      `}
+      className={`rich-text-embedded-component${
+        isPreview ? ' rich-text-embedded-component--preview' : ''
+      } ${css`
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+          padding: ${cleanReplacedLink.split('/')?.[1] === 'users' &&
+          isProfileComponent
+            ? 'none'
+            : '1rem'};
+          width: 100%;
+        `}`}
     >
       {isInternalLink ? (
         <InternalComponent
@@ -122,6 +126,7 @@ function EmbeddedComponent({
           isProfileComponent={isProfileComponent}
           src={cleanReplacedLink}
           isPreview={isPreview}
+          theme={theme}
         />
       ) : isYouTube && src ? (
         <YouTubeVideo
@@ -145,6 +150,7 @@ function EmbeddedComponent({
           fileName={fileNameFromSrc || alt || 'file'}
           fileType={fileType}
           isPreview={isPreview}
+          theme={theme}
         />
       ) : href ? (
         <FileDownload
@@ -152,6 +158,7 @@ function EmbeddedComponent({
           fileName={fileNameFromSrc || alt || 'file'}
           fileType={fileType}
           isPreview={isPreview}
+          theme={theme}
         />
       ) : (
         '![]()'

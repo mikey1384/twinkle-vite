@@ -21,6 +21,8 @@ export type FeedCardSize =
   | 'compact'
   | 'fallback'
   | 'media'
+  | 'media-attachment'
+  | 'media-attachment-with-text'
   | 'pass'
   | 'profile'
   | 'reflection'
@@ -32,8 +34,11 @@ export type FeedCardSize =
   | 'standard'
   | 'subject-media'
   | 'subject-minimal'
+  | 'subject-locked'
   | 'subject-rich-embed'
   | 'subject-root'
+  | 'subject-root-text'
+  | 'subject-secret-media'
   | 'subject-tall'
   | 'tall';
 
@@ -123,7 +128,6 @@ const KNOWN_CONTENT_TYPES = new Set([
   'video',
   'xpChange'
 ]);
-
 const PANEL_HEIGHT_REM: Record<
   FeedCardSize,
   { desktop: number; mobile: number }
@@ -135,6 +139,8 @@ const PANEL_HEIGHT_REM: Record<
   compact: { desktop: 11, mobile: 10 },
   fallback: { desktop: 20, mobile: 19 },
   media: { desktop: 22, mobile: 20 },
+  'media-attachment': { desktop: 40, mobile: 25 },
+  'media-attachment-with-text': { desktop: 45, mobile: 31 },
   pass: { desktop: 18.5, mobile: 17.5 },
   profile: { desktop: 24, mobile: 23 },
   reflection: { desktop: 27, mobile: 27 },
@@ -146,8 +152,11 @@ const PANEL_HEIGHT_REM: Record<
   standard: { desktop: 20, mobile: 19 },
   'subject-media': { desktop: 21, mobile: 20 },
   'subject-minimal': { desktop: 12, mobile: 11 },
+  'subject-locked': { desktop: 16.5, mobile: 15.5 },
   'subject-rich-embed': { desktop: 34, mobile: 32 },
-  'subject-root': { desktop: 14.5, mobile: 14 },
+  'subject-root': { desktop: 15.5, mobile: 15.5 },
+  'subject-root-text': { desktop: 29, mobile: 27 },
+  'subject-secret-media': { desktop: 25, mobile: 24 },
   'subject-tall': { desktop: 32, mobile: 30 },
   tall: { desktop: 30, mobile: 28 }
 };
@@ -178,7 +187,7 @@ const CARD_FRAME_REM = {
   },
   mobile: {
     actions: 3.1,
-    commentPreviewGap: 0.75,
+    commentPreviewGap: 1,
     gapAfterBody: 0.75,
     gapAfterHeading: 0.75,
     heading: 6.2,
@@ -206,12 +215,12 @@ const REFLECTION_PREVIEW_LAYOUT_REM = {
 };
 const SUBJECT_PREVIEW_LAYOUT_REM = {
   attachmentSecretMinHeight: 5.9,
-  descriptionLineHeight: 1.9 * 1.36,
+  descriptionLineHeight: 1.9 * 1.7,
   effortHeight: 2.9,
   gap: 0.85,
   minDescriptionLines: 2,
   previewPaddingY: 1.6,
-  secretLineHeight: 1.42 * 1.3,
+  secretLineHeight: 1.8 * 1.3,
   secretMaxLines: 3,
   secretMinHeight: 5.4,
   secretPaddingY: 1.7,
@@ -222,6 +231,18 @@ const SUBJECT_PREVIEW_LAYOUT_REM = {
   titleLineHeight: 2 * 1.28,
   titleMaxLines: 2,
   titlePaddingBottom: 0.16
+};
+const SUBJECT_ROOT_PREVIEW_LAYOUT_REM = {
+  ...SUBJECT_PREVIEW_LAYOUT_REM,
+  effortHeight: 2.6,
+  gap: 0.72,
+  previewPaddingY: 0.8,
+  titleCharsPerLine: {
+    desktop: 52,
+    mobile: 34
+  },
+  titleLineHeight: 2.064 * 1.12,
+  titlePaddingBottom: 0
 };
 
 export function getFeedCardSizing({
@@ -429,6 +450,19 @@ function hasSubjectSecret(subject: any) {
   );
 }
 
+function shouldShowPublicSubjectPreview(content: any) {
+  if (content?.contentType !== 'subject') return false;
+
+  return Boolean(
+    String(content?.title || '').trim() ||
+    String(content?.description || content?.content || '').trim() ||
+    content?.filePath ||
+    content?.actualFilePath ||
+    Number(content?.rewardLevel || 0) > 0 ||
+    hasAttachedRootContent(content)
+  );
+}
+
 function hasResolvedRootObj(rootObj: any) {
   return Boolean(rootObj?.id || rootObj?.notFound);
 }
@@ -448,7 +482,7 @@ function getMainPanelSize({
   kind: FeedCardPreviewKind;
   normalizedRootType: string;
 }): FeedCardSize {
-  if (flags.secretHidden) {
+  if (flags.secretHidden && !shouldShowPublicSubjectPreview(content)) {
     return 'secret';
   }
 
@@ -463,9 +497,11 @@ function getMainPanelSize({
   if (
     content?.contentType === 'comment' &&
     !String(content?.content || '').trim() &&
-    Boolean(content?.filePath)
+    hasAttachment(content)
   ) {
-    return 'attachment-only';
+    return hasPreviewableMediaAttachment(content)
+      ? 'media-attachment'
+      : 'attachment-only';
   }
 
   if (content?.contentType === 'subject' && flags.hasRichTextEmbed) {
@@ -497,6 +533,14 @@ function getMainPanelSize({
   }
 
   if (kind === 'subject') {
+    if (flags.secretHidden) {
+      return getLockedSubjectPanelSize(content);
+    }
+
+    if (hasAttachedRootContent(content) && !content?.filePath) {
+      return getSubjectWithRootPanelSize(content);
+    }
+
     if (
       !content?.description &&
       !content?.content &&
@@ -512,15 +556,7 @@ function getMainPanelSize({
       return 'subject-media';
     }
 
-    if (
-      hasAttachedRootContent(content) &&
-      !content?.filePath &&
-      isSparseSubjectContent(content)
-    ) {
-      return 'subject-root';
-    }
-
-    return 'subject-tall';
+    return getPlainSubjectPanelSize(content);
   }
 
   if (kind === 'build') {
@@ -529,6 +565,10 @@ function getMainPanelSize({
 
   if (kind === 'pass') {
     return 'pass';
+  }
+
+  if (content?.contentType === 'comment' && hasPreviewableMediaAttachment(content)) {
+    return 'media-attachment-with-text';
   }
 
   if (
@@ -589,10 +629,7 @@ function getTargetPanelSizing({
   }
 
   if (normalizedRootType === 'url') {
-    const subjectRootUrl = content?.contentType === 'subject';
-    return buildTargetSizing(subjectRootUrl ? 'compact' : 'standard', [
-      subjectRootUrl ? 'url-target-compact' : 'url-target'
-    ]);
+    return buildTargetSizing('standard', ['url-target']);
   }
 
   const standardRootTypes =
@@ -760,9 +797,12 @@ function getFeedCardFrameSize({
     mainSize === 'ai-story-listening' ||
     mainSize === 'ai-story-reading' ||
     mainSize === 'media' ||
+    mainSize === 'media-attachment' ||
+    mainSize === 'media-attachment-with-text' ||
     mainSize === 'build' ||
     mainSize === 'pass' ||
-    mainSize === 'subject-media'
+    mainSize === 'subject-media' ||
+    mainSize === 'subject-secret-media'
   ) {
     return 'media-card';
   }
@@ -779,6 +819,7 @@ function getFeedCardFrameSize({
     mainSize === 'compact' ||
     mainSize === 'attachment-only' ||
     mainSize === 'secret' ||
+    mainSize === 'subject-locked' ||
     mainSize === 'subject-minimal' ||
     mainSize === 'subject-root'
   ) {
@@ -870,6 +911,52 @@ function hasAttachment(content: any) {
   return Boolean(content?.filePath || content?.actualFilePath);
 }
 
+function hasPreviewableMediaAttachment(content: any) {
+  if (!hasAttachment(content)) return false;
+
+  const fileType = getAttachmentFileType(content);
+  return fileType === 'image' || fileType === 'video';
+}
+
+function getAttachmentFileType(content: any) {
+  const attachmentName = String(
+    content?.fileName ||
+      content?.actualFileName ||
+      content?.filePath ||
+      content?.actualFilePath ||
+      ''
+  );
+  const extension =
+    attachmentName
+      .split('?')[0]
+      .split('#')[0]
+      .split('.')
+      .pop()
+      ?.toLowerCase?.() || '';
+
+  if (
+    [
+      'jpg',
+      'png',
+      'jpeg',
+      'bmp',
+      'gif',
+      'webp',
+      'svg',
+      'heic',
+      'heif'
+    ].includes(extension)
+  ) {
+    return 'image';
+  }
+
+  if (['wmv', 'mov', 'mp4', '3gp', 'ogg', 'm4v'].includes(extension)) {
+    return 'video';
+  }
+
+  return '';
+}
+
 function hasCommentPreview(content: any) {
   if (typeof content?.__homeFeedHasCommentPreview === 'boolean') {
     return content.__homeFeedHasCommentPreview;
@@ -917,6 +1004,98 @@ function isSparseSubjectContent(content: any) {
     !String(content?.instructions || '').trim() &&
     !String(content?.rewardDescription || '').trim()
   );
+}
+
+function getSubjectWithRootPanelSize(content: any): FeedCardSize {
+  const descriptionLength = getSubjectDescriptionTextLength(content);
+  const secretLength = getPlainTextValueLength(content?.secretAnswer);
+  const hasDescription = descriptionLength > 0;
+  const hasSecret = secretLength > 0 || Boolean(content?.secretAttachment);
+  const hasEffort = Number(content?.rewardLevel || 0) > 0;
+
+  if (content?.secretAttachment) {
+    if (!secretLength && !hasEffort && descriptionLength <= 420) {
+      return 'subject-secret-media';
+    }
+    return 'subject-tall';
+  }
+
+  if (!hasDescription && !hasSecret && !hasEffort) {
+    return 'compact';
+  }
+
+  if (!hasDescription) {
+    return secretLength > 80 ? 'standard' : 'subject-root';
+  }
+
+  if (secretLength > 160) {
+    return 'subject-tall';
+  }
+
+  if (descriptionLength <= 180 && secretLength <= 80) {
+    return 'subject-root';
+  }
+
+  if (descriptionLength <= 420 && secretLength <= 120) {
+    return 'standard';
+  }
+
+  if (descriptionLength > 950) {
+    return 'subject-tall';
+  }
+
+  return 'subject-root-text';
+}
+
+function getPlainSubjectPanelSize(content: any): FeedCardSize {
+  const descriptionLength = getSubjectDescriptionTextLength(content);
+  const secretLength = getPlainTextValueLength(content?.secretAnswer);
+  const hasEffort = Number(content?.rewardLevel || 0) > 0;
+  const hasSecret = secretLength > 0 || Boolean(content?.secretAttachment);
+
+  if (content?.secretAttachment || content?.filePath) {
+    if (
+      content?.secretAttachment &&
+      !secretLength &&
+      !content?.filePath &&
+      descriptionLength <= 420
+    ) {
+      return 'subject-secret-media';
+    }
+    return 'subject-tall';
+  }
+
+  if (secretLength > 160 || descriptionLength > 750) {
+    return 'subject-tall';
+  }
+
+  if (hasEffort && hasSecret) {
+    return 'subject-tall';
+  }
+
+  if (!hasEffort && secretLength === 0 && descriptionLength <= 120) {
+    return 'compact';
+  }
+
+  if (descriptionLength <= 420 && secretLength <= 120) {
+    return 'standard';
+  }
+
+  return 'subject-tall';
+}
+
+function getLockedSubjectPanelSize(content: any): FeedCardSize {
+  const descriptionLength = getSubjectDescriptionTextLength(content);
+
+  if (content?.filePath && isSparseSubjectContent(content)) {
+    return 'subject-media';
+  }
+
+  if (descriptionLength > 420 || content?.filePath) {
+    return 'subject-tall';
+  }
+
+  return 'subject-locked';
 }
 
 function hasAttachedRootContent(content: any) {
@@ -980,6 +1159,14 @@ function getReflectionPanelSize(content: any): FeedCardSize {
 
 function getTextMaxLines(size: FeedCardSize) {
   if (size === 'compact' || size === 'attachment-only') {
+    return 2;
+  }
+
+  if (size === 'media-attachment') {
+    return 0;
+  }
+
+  if (size === 'media-attachment-with-text') {
     return 2;
   }
 
@@ -1084,7 +1271,7 @@ function estimatePreviewLineCount({
 }
 
 function getSubjectDescriptionMaxLines(size: FeedCardSize) {
-  if (size === 'subject-tall') {
+  if (isSubjectDescriptionBudgetedSize(size)) {
     return getSubjectDescriptionLineBudget({
       axis: 'desktop',
       content: {},
@@ -1115,8 +1302,12 @@ function getSubjectDescriptionMaxLines(size: FeedCardSize) {
     return 5;
   }
 
-  if (size === 'subject-minimal' || size === 'subject-root') {
+  if (size === 'subject-minimal') {
     return 3;
+  }
+
+  if (size === 'compact') {
+    return 2;
   }
 
   return 5;
@@ -1150,11 +1341,11 @@ function getSubjectDescriptionLineBudget({
     size
   });
 
-  if (!hasDescriptionText || size !== 'subject-tall') {
+  if (!hasDescriptionText || !isSubjectDescriptionBudgetedSize(size)) {
     return maxLines;
   }
 
-  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const layout = getSubjectPreviewLayout(size);
   const renderedChildrenCount = [
     hasEffort,
     hasTitle,
@@ -1162,13 +1353,19 @@ function getSubjectDescriptionLineBudget({
     hasSecretAnswer
   ].filter(Boolean).length;
   const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
+  const secretAnswerOverflowBuffer =
+    hasDescriptionText && hasSecretAnswer
+      ? layout.descriptionLineHeight * 1.45
+      : 0;
   const occupiedHeight =
     layout.previewPaddingY +
     gapHeight +
+    secretAnswerOverflowBuffer +
     (hasEffort ? layout.effortHeight : 0) +
     (hasTitle
       ? getSubjectTitleHeight({
           axis,
+          size,
           title: content?.title
         })
       : 0) +
@@ -1199,11 +1396,11 @@ function getSubjectDescriptionMaxLineCap({
   axis: FeedCardLayoutAxis;
   size: FeedCardSize;
 }) {
-  if (size !== 'subject-tall') {
+  if (!isSubjectDescriptionBudgetedSize(size)) {
     return getSubjectNonTallDescriptionMaxLines(size);
   }
 
-  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const layout = getSubjectPreviewLayout(size);
   const panelHeight =
     PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM['subject-tall'][axis];
   return Math.max(
@@ -1211,6 +1408,15 @@ function getSubjectDescriptionMaxLineCap({
     Math.floor(
       (panelHeight - layout.previewPaddingY) / layout.descriptionLineHeight
     )
+  );
+}
+
+function isSubjectDescriptionBudgetedSize(size: FeedCardSize) {
+  return (
+    size === 'subject-root' ||
+    size === 'subject-root-text' ||
+    size === 'subject-tall' ||
+    size === 'standard'
   );
 }
 
@@ -1231,8 +1437,12 @@ function getSubjectNonTallDescriptionMaxLines(size: FeedCardSize) {
     return 5;
   }
 
-  if (size === 'subject-minimal' || size === 'subject-root') {
+  if (size === 'subject-minimal') {
     return 3;
+  }
+
+  if (size === 'compact') {
+    return 2;
   }
 
   return 5;
@@ -1240,12 +1450,14 @@ function getSubjectNonTallDescriptionMaxLines(size: FeedCardSize) {
 
 function getSubjectTitleHeight({
   axis,
+  size,
   title
 }: {
   axis: FeedCardLayoutAxis;
+  size: FeedCardSize;
   title: any;
 }) {
-  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const layout = getSubjectPreviewLayout(size);
   const titleLines = estimatePreviewLineCount({
     charsPerLine: layout.titleCharsPerLine[axis],
     maxLines: layout.titleMaxLines,
@@ -1253,6 +1465,19 @@ function getSubjectTitleHeight({
   });
 
   return titleLines * layout.titleLineHeight + layout.titlePaddingBottom;
+}
+
+function getSubjectPreviewLayout(size: FeedCardSize) {
+  if (
+    size === 'subject-root' ||
+    size === 'subject-root-text' ||
+    size === 'subject-secret-media' ||
+    size === 'standard'
+  ) {
+    return SUBJECT_ROOT_PREVIEW_LAYOUT_REM;
+  }
+
+  return SUBJECT_PREVIEW_LAYOUT_REM;
 }
 
 function getSubjectSecretAnswerHeight({
@@ -1306,6 +1531,16 @@ function getPlainTextLength(content: any) {
         ''
     )
   ).length;
+}
+
+function getSubjectDescriptionTextLength(content: any) {
+  return getPlainTextValueLength(
+    content?.description || content?.content || ''
+  );
+}
+
+function getPlainTextValueLength(value: any) {
+  return removeMarkdownImageEmbeds(String(value || '')).trim().length;
 }
 
 function isTargetCommentCompact(targetComment: any) {

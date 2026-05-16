@@ -521,6 +521,7 @@ function Reply({
                         contentId={reply.id}
                         section="reply"
                         className="comment__content"
+                        compactEmbedPreview={compactMode}
                       >
                         {(reply.content || '').trimEnd()}
                       </RichText>

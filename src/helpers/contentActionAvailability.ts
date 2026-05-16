@@ -39,9 +39,10 @@ export function isContentPanelLikeActionEnabled({
 
 export function isContentPanelCommentActionEnabled({
   actionsReady = true,
+  contentType,
   secretHidden
 }: ContentActionAvailabilityParams) {
-  return Boolean(actionsReady && !secretHidden);
+  return Boolean(actionsReady && (!secretHidden || contentType === 'subject'));
 }
 
 export function isContentPanelRewardActionSupported(contentType: string) {
