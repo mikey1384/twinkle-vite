@@ -121,18 +121,19 @@ export const targetPreviewStyles = `
       display: flex;
       min-height: 0;
       min-width: 0;
-      align-items: center;
+      align-items: flex-start;
       overflow: hidden;
+      padding-top: 0.15rem;
       color: ${Color.black()};
       font-size: max(1.62rem, 16.2px);
       font-weight: 400;
-      line-height: 1.22;
+      line-height: 1.25;
     }
     .home-feed-card__target-daily-reflection-answer p {
       color: ${Color.black()};
       font-size: max(1.62rem, 16.2px);
       font-weight: 400;
-      line-height: 1.22;
+      line-height: 1.25;
     }
     .home-feed-card__target-shared-topic {
       border-left: 0.35rem solid var(--home-feed-target-accent, ${Color.logoBlue()});
