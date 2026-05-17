@@ -181,9 +181,21 @@ const forumThreadMainClass = css`
 const forumThreadTitleClass = css`
   font-size: 1.1rem;
   font-weight: 900;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+`;
+
+const forumThreadDetailTitleClass = css`
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 `;
 
 const forumThreadPreviewClass = css`
@@ -407,7 +419,7 @@ function ThreadDetail({
           <div className={forumPostMainClass}>
             <div className={forumPostHeaderClass}>
               <div className={forumAuthorMetaClass}>
-                <strong className={forumThreadTitleClass}>
+                <strong className={forumThreadDetailTitleClass}>
                   {selectedThread.title}
                 </strong>
                 <div className={forumThreadMetaClass}>
@@ -757,7 +769,10 @@ function userCanDeleteForumItem({
 }
 
 function getForumUser(
-  item: Pick<BuildForumThread | BuildForumReply, 'userId' | 'username' | 'profilePicUrl'>
+  item: Pick<
+    BuildForumThread | BuildForumReply,
+    'userId' | 'username' | 'profilePicUrl'
+  >
 ): User {
   return {
     id: Number(item.userId || 0),

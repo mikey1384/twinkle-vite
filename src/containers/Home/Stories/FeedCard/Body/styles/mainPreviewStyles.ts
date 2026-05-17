@@ -56,6 +56,10 @@ export const mainPreviewStyles = `
     font-size: inherit;
     min-height: 0;
   }
+  .home-feed-card__subject-description
+    + .home-feed-card__subject-secret-answer:not(.home-feed-card__subject-secret-answer--locked) {
+    margin-top: 0.15rem;
+  }
   .home-feed-card__text-copy {
     align-self: start;
   }
