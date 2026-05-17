@@ -1,4 +1,5 @@
 import { normalizeRootType } from './navigation';
+import { isAICardEmbedSrc } from '~/helpers/aiCardEmbedHelpers';
 
 export type FeedCardPreviewKind =
   | 'ai-story'
@@ -1193,6 +1194,13 @@ function isCompactRichTextEmbedContent(content: any) {
   }
 
   const plainTextLength = getPlainTextLength(content);
+  if (
+    plainTextLength === 0 &&
+    embedPreview.type === 'internal' &&
+    isAICardEmbedSrc(embedPreview.src)
+  ) {
+    return false;
+  }
   if (embedPreview.type === 'image') {
     return plainTextLength > 0 && plainTextLength <= 120;
   }
