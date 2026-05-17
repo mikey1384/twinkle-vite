@@ -18,6 +18,7 @@ import {
   AttachmentSurface,
   AudioWavePreview,
   CompactEffortStrip,
+  MarkdownEmbedPreview,
   getAIStoryDifficultyStyle,
   getAIStoryImageUrl,
   getReadableAIStoryPreview
@@ -283,10 +284,41 @@ export default function TargetPreview({
         contentId={commentId}
         isNested
         maxTextLines={3}
+        renderInternalEmbedPreview={renderTargetCommentInternalEmbedPreview}
         showTypeLabel={false}
         theme={theme}
         userId={userId}
         variant="targetRoot"
+      />
+    );
+  }
+
+  function renderTargetCommentInternalEmbedPreview({
+    commentId,
+    embed
+  }: {
+    commentId: number;
+    embed: {
+      alt: string;
+      internalInfo?: { kind?: string };
+      src: string;
+      type: string;
+    };
+  }) {
+    if (embed.internalInfo?.kind === 'aiCard') {
+      return null;
+    }
+
+    return (
+      <MarkdownEmbedPreview
+        className="compact-comment-embed__media-tile home-feed-card__target-comment-embed home-feed-card__rich-embed-image"
+        contentId={commentId}
+        contentType="comment"
+        embed={{
+          alt: embed.alt,
+          src: embed.src,
+          type: 'internal'
+        }}
       />
     );
   }

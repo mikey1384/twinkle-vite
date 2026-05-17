@@ -28,6 +28,13 @@ interface CompactCommentEmbedPreviewProps {
   isNested?: boolean;
   maxTextLines?: number;
   onOpen?: () => void;
+  renderInternalEmbedPreview?: (args: {
+    commentId: number;
+    embed: MarkdownMediaEmbed;
+    theme?: string;
+    userId?: number;
+    variant: 'compact' | 'targetRoot';
+  }) => React.ReactNode;
   showTypeLabel?: boolean;
   theme?: string;
   userId?: number;
@@ -52,6 +59,7 @@ export default function CompactCommentEmbedPreview({
   isNested = false,
   maxTextLines = 3,
   onOpen,
+  renderInternalEmbedPreview,
   showTypeLabel = true,
   theme,
   userId,
@@ -152,6 +160,7 @@ export default function CompactCommentEmbedPreview({
               key={`${item.kind}-${index}`}
               commentId={commentId}
               item={item}
+              renderInternalEmbedPreview={renderInternalEmbedPreview}
               theme={theme}
               userId={userId}
               variant={variant}
@@ -183,6 +192,7 @@ export default function CompactCommentEmbedPreview({
 function CommentMediaPreview({
   commentId,
   item,
+  renderInternalEmbedPreview,
   theme,
   userId,
   variant
@@ -194,6 +204,7 @@ function CommentMediaPreview({
         embed: MarkdownMediaEmbed;
         kind: 'markdown';
       };
+  renderInternalEmbedPreview?: CompactCommentEmbedPreviewProps['renderInternalEmbedPreview'];
   theme?: string;
   userId?: number;
   variant: 'compact' | 'targetRoot';
@@ -227,6 +238,15 @@ function CommentMediaPreview({
   }
 
   if (item.embed.type === 'internal') {
+    const sharedInternalPreview = renderInternalEmbedPreview?.({
+      commentId,
+      embed: item.embed,
+      theme,
+      userId,
+      variant
+    });
+    if (sharedInternalPreview) return <>{sharedInternalPreview}</>;
+
     if (
       item.embed.internalInfo?.kind === 'aiCard' &&
       item.embed.internalInfo.cardId
@@ -676,6 +696,16 @@ const compactCommentEmbedPreviewClass = css`
     font-size: 1.55rem;
   }
   .compact-comment-embed__media-tile.attachment > div {
+    height: 100%;
+  }
+  .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal {
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+  .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal > * {
+    width: 100%;
     height: 100%;
   }
   .compact-comment-embed__media-tile.attachment img {

@@ -139,25 +139,45 @@ const forumPostBodyClass = css`
 `;
 
 const forumReplyContextClass = css`
-  border-left: 0.25rem solid rgba(65, 140, 235, 0.38);
-  padding: 0.32rem 0.5rem;
-  background: rgba(65, 140, 235, 0.06);
-  border-radius: 0 6px 6px 0;
+  border-left: 0.22rem solid rgba(100, 116, 139, 0.42);
+  padding: 0.08rem 0 0.08rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
   color: var(--chat-text);
-  font-size: 1.05rem;
+  max-width: 100%;
+`;
+
+const forumReplyContextLabelClass = css`
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0;
+  color: #334155;
+  font-size: 1rem;
   font-weight: 800;
-  line-height: 1.25;
+  line-height: 1.2;
+`;
+
+const forumReplyContextUsernameClass = css`
+  font-size: 1rem;
+  font-weight: 900;
 `;
 
 const forumReplyContextBodyClass = css`
   display: -webkit-box;
-  margin-top: 0.18rem;
+  color: #4b5563;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.25;
   opacity: 0.72;
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  word-break: break-word;
 `;
 
 const forumReplyTargetClass = css`
@@ -876,8 +896,13 @@ function ForumReply({
         </div>
         {replyToUser ? (
           <div className={forumReplyContextClass}>
-            Replying to{' '}
-            <UsernameText className={forumUsernameClass} user={replyToUser} />
+            <div className={forumReplyContextLabelClass}>
+              Replying to @
+              <UsernameText
+                className={forumReplyContextUsernameClass}
+                user={replyToUser}
+              />
+            </div>
             {reply.replyToBody ? (
               <div className={forumReplyContextBodyClass}>
                 {reply.replyToBody}
