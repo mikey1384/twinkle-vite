@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
+import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import FavoriteButton, {
   type BuildFavoriteChange
 } from '~/components/Build/FavoriteButton';
@@ -917,14 +918,31 @@ export default function ProjectListItem({
       border: 'rgba(147, 51, 234, 0.36)',
       color: '#6b21a8'
     });
-    return (
-      <span
-        className={buildTagClass}
-        style={forkBadgeStyle}
-        title={formatBuildForkCount(forkCount)}
-      >
+    const badgeContent = (
+      <>
         <Icon icon="code-branch" /> {formatBuildForkCount(forkCount)}
-      </span>
+      </>
+    );
+    if (forkCount <= 0) {
+      return (
+        <span
+          className={buildTagClass}
+          style={forkBadgeStyle}
+          title={formatBuildForkCount(forkCount)}
+        >
+          {badgeContent}
+        </span>
+      );
+    }
+    return (
+      <BuildForkersTrigger
+        buildId={Number(build.id)}
+        className={cx(buildTagClass, clickableBuildTagClass)}
+        style={forkBadgeStyle}
+        title="People who forked this app"
+      >
+        {badgeContent}
+      </BuildForkersTrigger>
     );
   }
 

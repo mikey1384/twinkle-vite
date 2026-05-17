@@ -15,29 +15,7 @@ import {
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
-import {
-  cancelScrollAnchorRestores,
-  suppressScrollAnchorSaves
-} from '~/helpers/scrollAnchorRestorationCoordinator';
-
-const sameRouteNavScrollSaveSuppressionMs = 250;
-
-function scrollCurrentPageToTop() {
-  const appElement = document.getElementById('App');
-  const bodyRef = document.scrollingElement || document.documentElement;
-
-  cancelScrollAnchorRestores();
-  suppressScrollAnchorSaves(sameRouteNavScrollSaveSuppressionMs);
-  setScrollSurfaceTop(appElement);
-  setScrollSurfaceTop(bodyRef);
-  window.dispatchEvent(new Event('scroll'));
-}
-
-function setScrollSurfaceTop(element: Element | null) {
-  if (!element) return;
-  element.scrollTop = 0;
-  element.dispatchEvent(new Event('scroll'));
-}
+import { resetAppShellScroll } from '~/helpers/appShellScroll';
 
 function Nav({
   alert,
@@ -172,7 +150,6 @@ function Nav({
 
   return (
     <div
-      onClick={handleNavClick}
       className={`${className} ${css`
         display: flex;
         align-items: center;
@@ -263,6 +240,7 @@ function Nav({
           alignItems: 'center',
           ...(alert ? { color: alertHue } : {})
         }}
+        onClick={handleNavClick}
         to={to}
       >
         <Icon icon={isHome ? 'home' : imgLabel} />
@@ -273,8 +251,10 @@ function Nav({
     </div>
   );
 
-  function handleNavClick() {
+  function handleNavClick(event: React.MouseEvent<HTMLAnchorElement>) {
     if (!to) return;
+    if (navClickShouldKeepCurrentScroll(event)) return;
+    resetAppShellScroll();
     if (to.includes('/users/') && to === pathname) {
       const username = to.split('/users/')[1].split('/')[0];
       const { profileId } = profileState[username] || {};
@@ -299,13 +279,19 @@ function Nav({
       onSetSubjectsLoaded(false);
       onClearVideosLoaded();
     }
-    if (navTargetIsCurrentLocation()) {
-      scrollCurrentPageToTop();
-    }
   }
 
-  function navTargetIsCurrentLocation() {
-    return to === pathname || to === `${pathname}${search || ''}`;
+  function navClickShouldKeepCurrentScroll(
+    event: React.MouseEvent<HTMLAnchorElement>
+  ) {
+    return (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey
+    );
   }
 }
 

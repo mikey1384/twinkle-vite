@@ -69,6 +69,7 @@ registerMethods('build', [
   'createBuild',
   'loadBuild',
   'loadBuildForkHistory',
+  'loadBuildForkers',
   'loadBuildBranch',
   'loadBuildRuntimeUploads',
   'deleteBuildRuntimeUpload',

@@ -3,6 +3,7 @@ import AchievementItem from '~/components/AchievementItem';
 import CardThumb from '~/components/CardThumb';
 import Embedly from '~/components/Embedly';
 import Icon from '~/components/Icon';
+import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
@@ -775,10 +776,14 @@ export default function Body({
               </span>
             ) : null}
             {showOpenSource ? (
-              <span className="home-feed-card__build-status fork-count">
+              <BuildForkersTrigger
+                buildId={contentId}
+                className="home-feed-card__build-status fork-count"
+                disabled={forkCount <= 0}
+              >
                 <Icon icon="code-branch" />
                 {formatBuildForkCount(forkCount)}
-              </span>
+              </BuildForkersTrigger>
             ) : null}
           </div>
           <div className="home-feed-card__build-actions">

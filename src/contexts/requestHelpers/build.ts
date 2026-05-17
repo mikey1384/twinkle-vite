@@ -394,6 +394,35 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildForkers(
+      buildId: number,
+      options?: {
+        cursor?: { forkBuildId?: number; forkedAt?: number } | null;
+        fromWriter?: boolean;
+        limit?: number;
+      }
+    ) {
+      try {
+        const params = new URLSearchParams();
+        if (options?.fromWriter) params.set('fromWriter', '1');
+        if (options?.limit) params.set('limit', String(options.limit));
+        if (options?.cursor?.forkBuildId) {
+          params.set('cursorForkBuildId', String(options.cursor.forkBuildId));
+        }
+        if (options?.cursor?.forkedAt) {
+          params.set('cursorForkedAt', String(options.cursor.forkedAt));
+        }
+        const qs = params.toString() ? `?${params.toString()}` : '';
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/forkers${qs}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildBranch({
       buildId,
       branchNumber,

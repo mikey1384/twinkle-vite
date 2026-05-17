@@ -16,6 +16,7 @@ export default function UserListModal({
   description = '',
   descriptionColor = Color.green(),
   descriptionShown,
+  emptyMessage = 'No users found.',
   loadMoreButtonShown,
   loading,
   loadingMore,
@@ -28,6 +29,7 @@ export default function UserListModal({
   description?: string;
   descriptionColor?: string;
   descriptionShown?: ((v: User) => boolean) | boolean;
+  emptyMessage?: string;
   loadMoreButtonShown?: boolean;
   loading?: boolean;
   loadingMore?: boolean;
@@ -78,6 +80,20 @@ export default function UserListModal({
           <RoundList>
             {loading ? (
               <Loading />
+            ) : allUsers.length === 0 ? (
+              <nav
+                style={{
+                  background: '#fff',
+                  color: '#555',
+                  display: 'flex',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  justifyContent: 'center',
+                  padding: '1.2rem'
+                }}
+              >
+                {emptyMessage}
+              </nav>
             ) : (
               allUsers.map((user) => {
                 const userStatusDisplayed =

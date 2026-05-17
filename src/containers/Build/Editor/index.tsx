@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type {
   ChatPanelCommunicationMode,
@@ -84,6 +84,10 @@ import {
   mergeChatMessagesWithBuildRun,
   mergeDisplayedChatMessages
 } from './helpers/chatMessages';
+import {
+  lockAppShellScrollSurface,
+  resetAppShellScroll
+} from '~/helpers/appShellScroll';
 import type {
   Build,
   BuildCopilotPolicy,
@@ -191,6 +195,11 @@ export default function BuildEditor({
   const routeOpenForkHistory = Boolean(routeState.openForkHistory);
   const routeOpenPeoplePanel = Boolean(routeState.openPeoplePanel);
   const routeOpenVersionsPanel = Boolean(routeState.openVersionsPanel);
+  useLayoutEffect(() => {
+    const unlockAppShellScrollSurface = lockAppShellScrollSurface();
+    resetAppShellScroll();
+    return unlockAppShellScrollSurface;
+  }, [location.pathname]);
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState(
     routeOpenForkHistory ? Number(build.id || 0) : 0
   );

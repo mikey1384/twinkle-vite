@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FavoriteButton from '~/components/Build/FavoriteButton';
+import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import Icon from '~/components/Icon';
@@ -213,10 +214,14 @@ export default function BuildDetails({
           </div>
         ) : null}
         {showForkCountBadge ? (
-          <div className="build-collaborator-badge build-fork-count-badge">
+          <BuildForkersTrigger
+            buildId={buildId}
+            className="build-collaborator-badge build-fork-count-badge"
+            disabled={normalizedForkCount <= 0}
+          >
             <Icon icon="code-branch" />
             <span>{formatBuildForkCount(normalizedForkCount)}</span>
-          </div>
+          </BuildForkersTrigger>
         ) : null}
         <div className="build-collaborator-badge build-visit-count-badge">
           <Icon icon="eye" />
