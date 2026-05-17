@@ -124,15 +124,15 @@ export const targetPreviewStyles = `
       align-items: center;
       overflow: hidden;
       color: ${Color.black()};
-      font-size: var(--home-feed-secondary-content-font-size);
+      font-size: max(1.62rem, 16.2px);
       font-weight: 400;
-      line-height: 1.34;
+      line-height: 1.22;
     }
     .home-feed-card__target-daily-reflection-answer p {
       color: ${Color.black()};
-      font-size: var(--home-feed-secondary-content-font-size);
+      font-size: max(1.62rem, 16.2px);
       font-weight: 400;
-      line-height: 1.34;
+      line-height: 1.22;
     }
     .home-feed-card__target-shared-topic {
       border-left: 0.35rem solid var(--home-feed-target-accent, ${Color.logoBlue()});
