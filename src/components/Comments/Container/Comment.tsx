@@ -547,6 +547,9 @@ function Comment({
     <ScopedTheme theme={themeName} roles={['link', 'reward']}>
       <div ref={ComponentRef} style={{ marginBottom: '1.25rem' }}>
         <div
+          data-scroll-anchor-id={`comment:${commentId}`}
+          data-scroll-anchor-secondary-id={String(commentId)}
+          data-scroll-anchor-content-key={`comment:${commentId}`}
           style={{
             marginBottom: 0,
             ...(isPreview ? { cursor: 'pointer' } : {})

@@ -11,10 +11,10 @@ import {
   buildActivityRailBreakpoint,
   buildPageTopGap
 } from './constants/layout';
+import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 
-const desktopHeaderHeight = '4.5rem';
 const buildActivityPanelInitialViewportTop = `calc(
-  ${desktopHeaderHeight} + ${buildPageTopGap}
+  ${APP_SHELL_HEADER_OFFSET_STYLE} + ${buildPageTopGap}
 )`;
 
 const buildActivityRailClass = css`

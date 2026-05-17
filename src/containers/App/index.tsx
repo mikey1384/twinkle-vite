@@ -14,6 +14,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import API_URL from '~/constants/URL';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import {
   localStorageKeys,
   ZERO_TWINKLE_ID,
@@ -50,6 +51,7 @@ import {
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import useOrientationReflow from './hooks/useOrientationReflow';
+import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -335,6 +337,10 @@ export default function App() {
     () => /^\/(app|app-capture)\/[^/]+/.test(location.pathname),
     [location.pathname]
   );
+  useAppShellHeaderOffset({
+    headerVisible: !usingBuildRuntime,
+    routeKey: location.pathname
+  });
 
   useEffect(() => {
     window.gtag('event', 'page_view', {
@@ -466,7 +472,9 @@ export default function App() {
       componentPath="App/index"
       className={css`
         ${usingChat ? 'border-top: 1px solid transparent;' : ''}
-        height: ${usingBuildRuntime ? '100%' : 'CALC(100% - 4.5rem)'};
+        height: ${usingBuildRuntime
+          ? '100%'
+          : `calc(100% - ${APP_SHELL_HEADER_OFFSET_STYLE})`};
         width: 100%;
         @media (max-width: ${mobileMaxWidth}) {
           height: 100%;
@@ -493,7 +501,9 @@ export default function App() {
         <div
           id="App"
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
-            margin-top: ${usingBuildRuntime ? '0' : '4.5rem'};
+            margin-top: ${usingBuildRuntime
+              ? '0'
+              : APP_SHELL_HEADER_OFFSET_STYLE};
             height: 100%;
             min-height: 100%;
             @media (max-width: ${mobileMaxWidth}) {

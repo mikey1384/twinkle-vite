@@ -46,10 +46,13 @@ function Heading({
   });
   // For pass content, contentObj.rootType tells us if it's mission or achievement
   const passRootType = contentObj?.rootType;
+  const feedActivityHasActor = Boolean(feedActivityType && feedUploader?.id);
+  const displayedFeedActivityType = feedActivityHasActor
+    ? feedActivityType
+    : null;
   const displayedTimeStamp =
-    feedActivityType && feedTimeStamp ? feedTimeStamp : timeStamp;
-  const headingUser =
-    feedActivityType && feedUploader ? feedUploader : uploader;
+    displayedFeedActivityType && feedTimeStamp ? feedTimeStamp : timeStamp;
+  const headingUser = displayedFeedActivityType ? feedUploader : uploader;
   const timeStampLink = useMemo(() => {
     if (contentType === 'pass') {
       const isAchievement = passRootType === 'achievement';
@@ -88,7 +91,10 @@ function Heading({
 
   return (
     <ErrorBoundary componentPath="ContentPanel/Heading">
-      <header className={`heading${compactFeed ? ' compact-feed' : ''}`}>
+      <header
+        className={`heading${compactFeed ? ' compact-feed' : ''}`}
+        data-feed-card-interactive={compactFeed ? 'true' : undefined}
+      >
         <ProfilePic
           style={{ width: '3.8rem', flexShrink: 0 }}
           userId={headingUser.id}
@@ -107,7 +113,7 @@ function Heading({
               action={action}
               compactFeed={compactFeed}
               contentObj={contentObj}
-              feedActivityType={feedActivityType}
+              feedActivityType={displayedFeedActivityType}
               feedUploader={feedUploader}
               rootObj={rootObj}
               theme={theme}

@@ -10,6 +10,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
+import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -126,7 +127,7 @@ export default function AccountMenu({
           tone="flat"
           xAdjustment={-30}
           listStyle={{
-            top: '4.5rem'
+            top: APP_SHELL_HEADER_OFFSET_STYLE
           }}
           text={
             <div

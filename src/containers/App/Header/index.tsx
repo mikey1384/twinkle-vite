@@ -12,6 +12,7 @@ import AccountMenu from './AccountMenu';
 import useAPISocket from './hooks/useAPISocket';
 
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
+import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
 import { userIdRef } from '~/constants/state';
 
 import {
@@ -241,6 +242,7 @@ export default function Header({
       autoRecoverDomMutationError
     >
       <nav
+        data-app-shell-header="true"
         className={`notranslate unselectable ${css`
           z-index: 99999;
           position: relative;
@@ -252,7 +254,7 @@ export default function Header({
           align-items: center;
           width: 100%;
           margin-bottom: 0px;
-          height: 4.5rem;
+          height: ${APP_SHELL_HEADER_OFFSET_FALLBACK};
           &::after {
             content: '';
             position: absolute;

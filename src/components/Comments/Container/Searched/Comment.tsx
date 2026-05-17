@@ -389,7 +389,12 @@ export default function SearchedComment({
 
   return isDeleted ? null : (
     <ScopedTheme theme={themeName} roles={['link', 'reward']}>
-      <div className={commentContainer}>
+      <div
+        className={commentContainer}
+        data-scroll-anchor-id={`comment:${comment.id}`}
+        data-scroll-anchor-secondary-id={String(comment.id)}
+        data-scroll-anchor-content-key={`comment:${comment.id}`}
+      >
         {pinnedCommentId === comment.id && (
           <div
             style={{

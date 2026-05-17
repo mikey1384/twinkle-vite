@@ -341,6 +341,9 @@ function Reply({
     <ErrorBoundary componentPath="Comments/Replies/Reply">
       <ScopedTheme theme={themeName} roles={['link', 'reward']}>
         <div
+          data-scroll-anchor-id={`comment:${reply.id}`}
+          data-scroll-anchor-secondary-id={String(reply.id)}
+          data-scroll-anchor-content-key={`comment:${reply.id}`}
           className={`${commentContainer} comment__container`}
           ref={innerRef}
         >
