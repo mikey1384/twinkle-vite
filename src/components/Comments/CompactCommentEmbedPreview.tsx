@@ -803,6 +803,12 @@ const compactCommentEmbedPreviewClass = css`
     background: #fff;
     box-shadow: 0 0.12rem 0 rgba(15, 23, 42, 0.05);
   }
+  &.compact-comment-embed--target-root
+    .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
   &.compact-comment-embed--target-root .compact-comment-embed__media-tile.image,
   &.compact-comment-embed--target-root
     .compact-comment-embed__media-tile.video
@@ -823,6 +829,11 @@ const compactCommentEmbedPreviewClass = css`
   &.compact-comment-embed--target-root
     .compact-main-content-embed__effort-badge {
     font-weight: 650;
+  }
+  &.compact-comment-embed--target-root
+    .home-feed-card__rich-embed-internal--subject
+    .compact-main-content-embed__effort-xp {
+    display: none;
   }
   &.compact-comment-embed--target-root
     .compact-main-content-embed__copy
