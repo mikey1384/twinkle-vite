@@ -122,11 +122,21 @@ export function MarkdownEmbedPreview({
       /<u>|<\/u>/g,
       '__'
     );
-    const internalLinkType = internalSrc.split('/')[1] || '';
-    const internalClassName =
+    const internalSrcParts = internalSrc.split('/');
+    const internalLinkType = internalSrcParts[1] || '';
+    const internalLinkSubType = (internalSrcParts[2] || '').split('?')[0];
+    const internalClassName = [
       internalLinkType === 'subjects'
-        ? ' home-feed-card__rich-embed-internal--subject'
-        : '';
+        ? 'home-feed-card__rich-embed-internal--subject'
+        : '',
+      internalLinkType === 'ai-cards' ||
+      (internalLinkType === 'chat' && internalLinkSubType === 'ai-cards')
+        ? 'home-feed-card__rich-embed-internal--ai-card'
+        : ''
+    ]
+      .filter(Boolean)
+      .map((className) => ` ${className}`)
+      .join('');
     return (
       <div
         className={`${
