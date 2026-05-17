@@ -157,6 +157,7 @@ export const mainPreviewStyles = `
       aspect-ratio: 4.7 / 6.45;
       max-width: 100%;
       max-height: 100%;
+      cursor: pointer;
     }
     .home-feed-card__rich-embed-video > div {
       width: 100%;
