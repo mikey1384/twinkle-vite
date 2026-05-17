@@ -355,8 +355,8 @@ export const targetPreviewStyles = `
       white-space: nowrap;
     }
     .home-feed-card__target-subject .home-feed-card__target-subject-meta {
-      flex: 0 1 auto;
-      min-height: 0;
+      flex: 0 0 auto;
+      min-height: max(1.37rem, 13.7px);
     }
     .home-feed-card__target-copy p {
       margin: 0;

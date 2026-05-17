@@ -268,6 +268,7 @@ const PLAIN_TEXT_PREVIEW_LAYOUT = {
     desktop: 54,
     mobile: 34
   },
+  compactDesktopCharsPerLine: 62,
   compactMaxLines: {
     desktop: 2,
     mobile: 3
@@ -1696,7 +1697,7 @@ function isDesktopCompactPlainTextPreview(content: any) {
 
   return (
     estimatePreviewLineCount({
-      charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine.desktop,
+      charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.compactDesktopCharsPerLine,
       maxLines: Number.MAX_SAFE_INTEGER,
       value: getPlainTextValue(content)
     }) <= PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines.desktop

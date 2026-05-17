@@ -1001,7 +1001,7 @@ function getStableHomeFeedCardSizing(
 ) {
   const cachedSizing = homeFeedCardSizingCache.get(key);
   if (cachedSizing) {
-    if (shouldUpgradeHomeFeedCardSizing(cachedSizing, calculatedSizing)) {
+    if (shouldReplaceHomeFeedCardSizing(cachedSizing, calculatedSizing)) {
       rememberHomeFeedLayoutCacheEntry(
         homeFeedCardSizingCache,
         key,
@@ -1024,10 +1024,17 @@ function getStableHomeFeedCardSizing(
   return calculatedSizing;
 }
 
-function shouldUpgradeHomeFeedCardSizing(
+function shouldReplaceHomeFeedCardSizing(
   cachedSizing: FeedCardSizing,
   calculatedSizing: FeedCardSizing
 ) {
+  if (
+    getHomeFeedCardSizingSignature(cachedSizing) !==
+    getHomeFeedCardSizingSignature(calculatedSizing)
+  ) {
+    return true;
+  }
+
   const cachedDesktopHeight = getFixedRemValue(cachedSizing.card.desktopHeight);
   const calculatedDesktopHeight = getFixedRemValue(
     calculatedSizing.card.desktopHeight
@@ -1041,6 +1048,18 @@ function shouldUpgradeHomeFeedCardSizing(
     calculatedDesktopHeight > cachedDesktopHeight + 0.01 ||
     calculatedMobileHeight > cachedMobileHeight + 0.01
   );
+}
+
+function getHomeFeedCardSizingSignature(sizing: FeedCardSizing) {
+  return [
+    sizing.main.kind,
+    sizing.main.size,
+    sizing.target?.size || 'no-target',
+    sizing.card.hasCommentPreview ? 'comment-preview' : 'no-comment-preview',
+    sizing.flags.hasAttachment ? 'attachment' : 'no-attachment',
+    sizing.flags.hasRichTextEmbed ? 'rich-embed' : 'no-rich-embed',
+    sizing.flags.secretHidden ? 'secret-hidden' : 'secret-open'
+  ].join(':');
 }
 
 function getFixedRemValue(cssValue: string) {

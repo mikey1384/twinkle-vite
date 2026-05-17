@@ -27,11 +27,11 @@ const glowingRewardAmountMarkClass = css`
 
   @keyframes rewardAmountMarkGlow {
     0% {
-      color: ${Color.darkGold()};
+      color: ${Color.strongPink()};
     }
 
     45% {
-      color: ${Color.darkGold(0.82)};
+      color: ${Color.pink(0.82)};
     }
 
     100% {
