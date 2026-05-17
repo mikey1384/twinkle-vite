@@ -20,13 +20,19 @@ import { mobileMaxWidth } from '~/constants/css';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
+const collapsedLineHeight = 1.7;
+
+type RichTextRootStyle = React.CSSProperties & {
+  '--rich-text-line-height'?: number;
+};
+
 const RichTextCss = css`
   width: 100%;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
   word-break: break-word;
-  line-height: 1.7;
+  line-height: var(--rich-text-line-height, ${collapsedLineHeight});
   position: relative;
   .katex-html {
     display: none !important;
@@ -249,7 +255,6 @@ const RichTextCss = css`
     margin-top: 1em;
   }
 `;
-const collapsedLineHeight = 1.7;
 
 function RichText({
   style,
@@ -270,6 +275,7 @@ function RichText({
   voice,
   maxLines = 10,
   mobileMaxLines,
+  lineHeight,
   section = '',
   showMoreButtonStyle,
   readMoreColor,
@@ -294,6 +300,7 @@ function RichText({
   section?: string;
   maxLines?: number;
   mobileMaxLines?: number;
+  lineHeight?: number;
   readMoreHeightFixed?: boolean;
   readMoreColor?: string;
   showMoreButtonStyle?: React.CSSProperties;
@@ -381,6 +388,7 @@ function RichText({
   );
   const isLineClampedPreview = Boolean(isPreview && !hasMarkdownEmbed);
   const previewMobileMaxLines = mobileMaxLines || maxLines;
+  const effectiveCollapsedLineHeight = lineHeight ?? collapsedLineHeight;
 
   useEffect(() => {
     if (isPreview) {
@@ -562,16 +570,21 @@ function RichText({
     >
       <div
         ref={TextRef}
-        style={{
-          opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
-          minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
-          maxHeight:
-            fullTextShown || isLineClampedPreview
-              ? undefined
-              : `calc(${collapsedLineHeight}em * ${maxLines})`,
-          overflow: fullTextShown ? undefined : 'hidden',
-          ...style
-        }}
+        style={
+          {
+            opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
+            minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
+            maxHeight:
+              fullTextShown || isLineClampedPreview
+                ? undefined
+                : `calc(${effectiveCollapsedLineHeight}em * ${maxLines})`,
+            overflow: fullTextShown ? undefined : 'hidden',
+            ...(lineHeight === undefined
+              ? {}
+              : { '--rich-text-line-height': lineHeight }),
+            ...style
+          } as RichTextRootStyle
+        }
         className={`${className} ${
           compactEmbedPreview ? 'rich-text--compact-comment-embeds' : ''
         } ${RichTextCss} ${css`

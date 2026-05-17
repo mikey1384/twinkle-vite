@@ -127,13 +127,14 @@ export const targetPreviewStyles = `
       color: ${Color.black()};
       font-size: max(1.62rem, 16.2px);
       font-weight: 400;
-      line-height: 1.25;
+      line-height: 1.22;
     }
-    .home-feed-card__target-daily-reflection-answer p {
+    .home-feed-card__target-daily-reflection-answer-text,
+    .home-feed-card__target-daily-reflection-answer-text p {
       color: ${Color.black()};
       font-size: max(1.62rem, 16.2px);
       font-weight: 400;
-      line-height: 1.25;
+      line-height: 1.22;
     }
     .home-feed-card__target-shared-topic {
       border-left: 0.35rem solid var(--home-feed-target-accent, ${Color.logoBlue()});

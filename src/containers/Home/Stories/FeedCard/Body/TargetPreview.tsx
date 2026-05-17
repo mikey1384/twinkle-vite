@@ -452,9 +452,11 @@ export default function TargetPreview({
         {answer ? (
           <div className="home-feed-card__target-daily-reflection-answer">
             <RichText
+              className="home-feed-card__target-daily-reflection-answer-text"
               contentId={Number(reflection.id || 0)}
               contentType="dailyReflection"
               isPreview
+              lineHeight={1.22}
               maxLines={reflection?.question ? 3 : 4}
               section="description"
               theme={theme}
