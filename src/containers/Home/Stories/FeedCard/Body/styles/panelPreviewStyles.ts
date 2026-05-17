@@ -95,6 +95,9 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-compact {
     height: max(11rem, 110px);
   }
+  .home-feed-card__panel-preview--size-compact-desktop {
+    height: max(11rem, 110px);
+  }
   .home-feed-card__panel-preview--size-fallback {
     height: max(20rem, 200px);
   }

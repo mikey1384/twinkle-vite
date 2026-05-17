@@ -515,7 +515,7 @@ export default function ActivityPanel({
 
 function getActivityNavigationBuildId(activity: ActivityItem) {
   if (
-    activity.activityType === 'buildBranchMerged' &&
+    isBranchMergeTargetActivity(activity) &&
     Number(activity.targetBranch?.id || 0) > 0
   ) {
     return Number(activity.targetBranch?.id || 0);
@@ -524,7 +524,7 @@ function getActivityNavigationBuildId(activity: ActivityItem) {
     (activity.activityType === 'buildTeamForumThread' ||
       activity.activityType === 'buildTeamForumReply' ||
       activity.activityType === 'buildBranchUpdate' ||
-      activity.activityType === 'buildBranchMerged' ||
+      isBranchMergeTargetActivity(activity) ||
       activity.activityType === 'buildContributor') &&
     Number(activity.branch?.id || 0) > 0
   ) {
@@ -616,6 +616,13 @@ function getActivityMessage(activity: ActivityItem, currentUserId: number) {
       return 'updated';
     case 'buildBranchUpdate':
       return 'updated branch';
+    case 'buildBranchReplacedMain': {
+      const branchTitle = String(activity.branch?.title || 'branch').trim();
+      if (!actorIsCurrentUser && targetIsCurrentUser) {
+        return `replaced Main with your branch ${branchTitle} in`;
+      }
+      return `replaced Main with branch ${branchTitle} in`;
+    }
     case 'buildBranchMerged': {
       const branchTitle = String(activity.branch?.title || 'branch').trim();
       const targetBranchTitle = String(
@@ -654,6 +661,7 @@ function getActivityIcon(activity: ActivityItem) {
     case 'buildFork':
     case 'buildContributor':
     case 'buildBranchMerged':
+    case 'buildBranchReplacedMain':
       return 'code-branch';
     case 'buildCollaborator':
       return 'users';
@@ -674,7 +682,7 @@ function getActivityNavigationState(activity: ActivityItem) {
   }
   if (
     activity.activityType === 'buildBranchUpdate' ||
-    activity.activityType === 'buildBranchMerged' ||
+    isBranchMergeTargetActivity(activity) ||
     activity.activityType === 'buildContributor'
   ) {
     return { openVersionsPanel: true };
@@ -689,6 +697,13 @@ function getActivityNavigationState(activity: ActivityItem) {
     };
   }
   return undefined;
+}
+
+function isBranchMergeTargetActivity(activity: ActivityItem) {
+  return (
+    activity.activityType === 'buildBranchMerged' ||
+    activity.activityType === 'buildBranchReplacedMain'
+  );
 }
 
 function getActivityDetailText(activity: ActivityItem) {

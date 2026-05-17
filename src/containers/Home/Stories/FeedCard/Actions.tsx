@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile =
+  typeof navigator !== 'undefined' && isMobile(navigator);
 
 export default function Actions({
   commentsCount,
@@ -54,6 +58,7 @@ export default function Actions({
   signInRequired?: boolean;
 }) {
   const [rewardReasonShown, setRewardReasonShown] = useState(false);
+  const rewardActionRef = useRef<HTMLDivElement | null>(null);
   const rewardBlockedReason =
     rewardDisableReason ||
     (rewardDisabled ? 'You cannot reward this right now.' : '');
@@ -95,6 +100,7 @@ export default function Actions({
         </button>
         {rewardShown && (
           <div
+            ref={rewardActionRef}
             className="home-feed-card__action-wrapper"
             onMouseEnter={handleRewardMouseEnter}
             onMouseLeave={handleRewardMouseLeave}
@@ -107,7 +113,7 @@ export default function Actions({
               } ${rewardIsBlocked ? 'blocked' : ''}`}
               data-feed-card-interactive="true"
               type="button"
-              onClick={onReward}
+              onClick={handleRewardClick}
             >
               <span className="home-feed-card__action-icon">
                 <Icon icon="certificate" />
@@ -116,6 +122,10 @@ export default function Actions({
               <em>{rewardsCount}</em>
             </button>
             <FullTextReveal
+              alignment="center"
+              anchorRef={rewardActionRef}
+              dismissTouchMoveThreshold={10}
+              onDismiss={handleRewardReasonDismiss}
               show={rewardReasonShown && rewardIsBlocked}
               text={rewardBlockedReason}
               style={{
@@ -161,12 +171,28 @@ export default function Actions({
   );
 
   function handleRewardMouseEnter() {
-    if (rewardIsBlocked) {
+    if (!deviceIsMobile && rewardIsBlocked) {
       setRewardReasonShown(true);
     }
   }
 
   function handleRewardMouseLeave() {
+    if (!deviceIsMobile) {
+      setRewardReasonShown(false);
+    }
+  }
+
+  function handleRewardClick(event: React.MouseEvent<HTMLButtonElement>) {
+    if (!rewardIsBlocked) {
+      onReward(event);
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    setRewardReasonShown((shown) => !shown);
+  }
+
+  function handleRewardReasonDismiss() {
     setRewardReasonShown(false);
   }
 }

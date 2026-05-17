@@ -19,6 +19,7 @@ export type FeedCardSize =
   | 'ai-story-reading'
   | 'build'
   | 'compact'
+  | 'compact-desktop'
   | 'fallback'
   | 'media'
   | 'media-attachment'
@@ -140,6 +141,7 @@ const PANEL_HEIGHT_REM: Record<
   'ai-story-reading': { desktop: 20, mobile: 19 },
   build: { desktop: 18, mobile: 14 },
   compact: { desktop: 11, mobile: 10 },
+  'compact-desktop': { desktop: 11, mobile: 19 },
   fallback: { desktop: 20, mobile: 19 },
   media: { desktop: 22, mobile: 20 },
   'media-attachment': { desktop: 40, mobile: 25 },
@@ -1204,6 +1206,10 @@ function getPlainTextPanelSize(content: any): FeedCardSize {
     return 'compact';
   }
 
+  if (isDesktopCompactPlainTextPreview(content)) {
+    return 'compact-desktop';
+  }
+
   if (plainTextLength > PLAIN_TEXT_PREVIEW_LAYOUT.tallRawLength) {
     return 'tall';
   }
@@ -1242,6 +1248,10 @@ function getTextMaxLines(
 
   if (size === 'compact' || size === 'attachment-only') {
     return PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines[axis];
+  }
+
+  if (size === 'compact-desktop' && axis === 'desktop') {
+    return PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines.desktop;
   }
 
   if (size === 'media-attachment') {
@@ -1678,6 +1688,18 @@ function isCompactPlainTextPreview(content: any) {
       maxLines: Number.MAX_SAFE_INTEGER,
       value: text
     }) <= PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines.mobile
+  );
+}
+
+function isDesktopCompactPlainTextPreview(content: any) {
+  if (content?.title || content?.filePath) return false;
+
+  return (
+    estimatePreviewLineCount({
+      charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine.desktop,
+      maxLines: Number.MAX_SAFE_INTEGER,
+      value: getPlainTextValue(content)
+    }) <= PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines.desktop
   );
 }
 
