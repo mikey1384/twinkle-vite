@@ -79,6 +79,7 @@ export interface ActivityItem {
     title: string;
     body: string;
     threadUserId: number;
+    replyTargetUserId?: number | null;
     viewerHasReplied?: boolean;
   } | null;
 }
@@ -108,12 +109,10 @@ const panelClass = css`
   display: flex;
   flex-direction: column;
   max-height: calc(
-    100dvh -
-      var(
+    100dvh - var(
         --build-activity-panel-top-offset,
         var(--build-activity-rail-top, 6.5rem)
-      ) -
-      var(--build-activity-rail-bottom-gap, 2rem)
+      ) - var(--build-activity-rail-bottom-gap, 2rem)
   );
   border: 1px solid var(--ui-border);
   border-radius: 16px;
@@ -481,10 +480,13 @@ export default function ActivityPanel({
                 </span>{' '}
                 {getActivityMessage(activity, currentUserId)}
               </span>
-              <span className={buildTitleClass}>{getSubjectLabel(activity)}</span>
+              <span className={buildTitleClass}>
+                {getSubjectLabel(activity)}
+              </span>
               {getActivityDetailText(activity) ? (
                 <span className={activityDetailClass}>
-                  &quot;{truncateActivityText(getActivityDetailText(activity))}&quot;
+                  &quot;{truncateActivityText(getActivityDetailText(activity))}
+                  &quot;
                 </span>
               ) : null}
               <span className={rowMetaClass}>
@@ -570,10 +572,7 @@ function getSubjectLabel(activity: ActivityItem) {
   return activity.build.title || 'Untitled Build';
 }
 
-function getActivityActorLabel(
-  activity: ActivityItem,
-  currentUserId: number
-) {
+function getActivityActorLabel(activity: ActivityItem, currentUserId: number) {
   if (isActivityActorCurrentUser(activity, currentUserId)) return 'You';
   return activity.actor.username || 'Someone';
 }
@@ -594,6 +593,10 @@ function getActivityMessage(activity: ActivityItem, currentUserId: number) {
   const targetIsCurrentUser =
     Number(activity.targetId || 0) > 0 &&
     Number(activity.targetId || 0) === Number(currentUserId || 0);
+  const replyTargetIsCurrentUser =
+    Number(activity.forum?.replyTargetUserId || 0) > 0 &&
+    Number(activity.forum?.replyTargetUserId || 0) ===
+      Number(currentUserId || 0);
 
   switch (activity.activityType) {
     case 'buildFork':
@@ -605,6 +608,9 @@ function getActivityMessage(activity: ActivityItem, currentUserId: number) {
     case 'buildTeamForumThread':
       return 'started a team topic in';
     case 'buildTeamForumReply':
+      if (!actorIsCurrentUser && replyTargetIsCurrentUser) {
+        return 'replied to your team forum message in';
+      }
       if (!actorIsCurrentUser && targetIsCurrentUser) {
         return 'replied to your team topic in';
       }

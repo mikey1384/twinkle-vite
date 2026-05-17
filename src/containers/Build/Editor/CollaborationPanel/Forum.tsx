@@ -126,6 +126,9 @@ const forumTimestampClass = css`
 
 const forumPostActionsClass = css`
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 `;
 
 const forumPostBodyClass = css`
@@ -133,6 +136,76 @@ const forumPostBodyClass = css`
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+`;
+
+const forumReplyContextClass = css`
+  border-left: 0.25rem solid rgba(65, 140, 235, 0.38);
+  padding: 0.32rem 0.5rem;
+  background: rgba(65, 140, 235, 0.06);
+  border-radius: 0 6px 6px 0;
+  color: var(--chat-text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+`;
+
+const forumReplyContextBodyClass = css`
+  display: -webkit-box;
+  margin-top: 0.18rem;
+  opacity: 0.72;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+`;
+
+const forumReplyTargetClass = css`
+  border: 1px solid rgba(65, 140, 235, 0.28);
+  border-radius: 8px;
+  background: rgba(65, 140, 235, 0.06);
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+`;
+
+const forumReplyTargetHeaderClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  color: var(--chat-text);
+  font-size: 1.05rem;
+  font-weight: 900;
+`;
+
+const forumReplyTargetPreviewClass = css`
+  color: var(--chat-text);
+  opacity: 0.72;
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.25;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+`;
+
+const forumReplyTargetClearClass = css`
+  border: 0;
+  background: transparent;
+  color: var(--chat-text);
+  cursor: pointer;
+  opacity: 0.62;
+  padding: 0.2rem;
+  font-size: 1.05rem;
+  line-height: 1;
+  &:hover {
+    opacity: 1;
+  }
 `;
 
 const forumTitleInputClass = css`
@@ -296,6 +369,7 @@ export default function Forum({
   loading,
   recentlyCreatedThreadId,
   replyInput,
+  replyTarget,
   replies,
   selectedThread,
   threads,
@@ -309,6 +383,7 @@ export default function Forum({
   onDeleteThread,
   onOpenThread,
   onReplyInputChange,
+  onReplyTargetChange,
   onTitleInputChange
 }: {
   actionLoading: string;
@@ -318,6 +393,7 @@ export default function Forum({
   loading: boolean;
   recentlyCreatedThreadId: number;
   replyInput: string;
+  replyTarget: BuildForumReply | null;
   replies: BuildForumReply[];
   selectedThread: BuildForumThread | null;
   threads: BuildForumThread[];
@@ -331,6 +407,7 @@ export default function Forum({
   onDeleteThread: (threadId: number) => void;
   onOpenThread: (threadId: number) => void;
   onReplyInputChange: (value: string) => void;
+  onReplyTargetChange: (reply: BuildForumReply | null) => void;
   onTitleInputChange: (value: string) => void;
 }) {
   if (selectedThread) {
@@ -340,6 +417,7 @@ export default function Forum({
         canModerate={canModerate}
         error={error}
         replyInput={replyInput}
+        replyTarget={replyTarget}
         replies={replies}
         selectedThread={selectedThread}
         userId={userId}
@@ -348,6 +426,7 @@ export default function Forum({
         onDeleteReply={onDeleteReply}
         onDeleteThread={onDeleteThread}
         onReplyInputChange={onReplyInputChange}
+        onReplyTargetChange={onReplyTargetChange}
       />
     );
   }
@@ -376,6 +455,7 @@ function ThreadDetail({
   canModerate,
   error,
   replyInput,
+  replyTarget,
   replies,
   selectedThread,
   userId,
@@ -383,12 +463,14 @@ function ThreadDetail({
   onCreateReply,
   onDeleteReply,
   onDeleteThread,
-  onReplyInputChange
+  onReplyInputChange,
+  onReplyTargetChange
 }: {
   actionLoading: string;
   canModerate: boolean;
   error: string;
   replyInput: string;
+  replyTarget: BuildForumReply | null;
   replies: BuildForumReply[];
   selectedThread: BuildForumThread;
   userId: number | string | null;
@@ -397,8 +479,10 @@ function ThreadDetail({
   onDeleteReply: (replyId: number) => void;
   onDeleteThread: (threadId: number) => void;
   onReplyInputChange: (value: string) => void;
+  onReplyTargetChange: (reply: BuildForumReply | null) => void;
 }) {
   const threadUser = getForumUser(selectedThread);
+  const replyTargetUser = replyTarget ? getForumUser(replyTarget) : null;
   return (
     <div className={detailClass}>
       <div className={forumDetailHeaderClass}>
@@ -483,6 +567,7 @@ function ThreadDetail({
               reply={reply}
               userId={userId}
               onDeleteReply={onDeleteReply}
+              onReplyToReply={onReplyTargetChange}
             />
           ))
         )}
@@ -492,6 +577,29 @@ function ThreadDetail({
           <Icon icon="reply" />
           Reply
         </div>
+        {replyTarget && replyTargetUser ? (
+          <div className={forumReplyTargetClass}>
+            <div className={forumReplyTargetHeaderClass}>
+              <span>
+                Replying to{' '}
+                <UsernameText
+                  className={forumUsernameClass}
+                  user={replyTargetUser}
+                />
+              </span>
+              <button
+                type="button"
+                className={forumReplyTargetClearClass}
+                onClick={() => onReplyTargetChange(null)}
+              >
+                <Icon icon="times" />
+              </button>
+            </div>
+            <div className={forumReplyTargetPreviewClass}>
+              {replyTarget.body}
+            </div>
+          </div>
+        ) : null}
         <Textarea
           className={textareaClass}
           value={replyInput}
@@ -711,15 +819,19 @@ function ForumReply({
   canModerate,
   reply,
   userId,
-  onDeleteReply
+  onDeleteReply,
+  onReplyToReply
 }: {
   actionLoading: string;
   canModerate: boolean;
   reply: BuildForumReply;
   userId: number | string | null;
   onDeleteReply: (replyId: number) => void;
+  onReplyToReply: (reply: BuildForumReply) => void;
 }) {
   const replyUser = getForumUser(reply);
+  const replyToUser = getReplyTargetUser(reply);
+  const canReplyToReply = Number(reply.userId || 0) !== Number(userId || 0);
   return (
     <article className={forumPostClass}>
       <ProfilePic
@@ -737,19 +849,42 @@ function ForumReply({
               </span>
             ) : null}
           </div>
-          {userCanDeleteForumItem({ item: reply, userId, canModerate }) ? (
+          {canReplyToReply ||
+          userCanDeleteForumItem({ item: reply, userId, canModerate }) ? (
             <div className={forumPostActionsClass}>
-              <GameCTAButton
-                variant="neutral"
-                size="sm"
-                icon="trash-alt"
-                loading={actionLoading === `delete-reply-${reply.id}`}
-                disabled={Boolean(actionLoading)}
-                onClick={() => onDeleteReply(reply.id)}
-              />
+              {canReplyToReply ? (
+                <GameCTAButton
+                  variant="neutral"
+                  size="sm"
+                  icon="reply"
+                  disabled={Boolean(actionLoading)}
+                  onClick={() => onReplyToReply(reply)}
+                />
+              ) : null}
+              {userCanDeleteForumItem({ item: reply, userId, canModerate }) ? (
+                <GameCTAButton
+                  variant="neutral"
+                  size="sm"
+                  icon="trash-alt"
+                  loading={actionLoading === `delete-reply-${reply.id}`}
+                  disabled={Boolean(actionLoading)}
+                  onClick={() => onDeleteReply(reply.id)}
+                />
+              ) : null}
             </div>
           ) : null}
         </div>
+        {replyToUser ? (
+          <div className={forumReplyContextClass}>
+            Replying to{' '}
+            <UsernameText className={forumUsernameClass} user={replyToUser} />
+            {reply.replyToBody ? (
+              <div className={forumReplyContextBodyClass}>
+                {reply.replyToBody}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <div className={forumPostBodyClass}>{reply.body}</div>
       </div>
     </article>
@@ -778,5 +913,15 @@ function getForumUser(
     id: Number(item.userId || 0),
     username: item.username || 'User',
     profilePicUrl: item.profilePicUrl || ''
+  };
+}
+
+function getReplyTargetUser(reply: BuildForumReply): User | null {
+  const userId = Number(reply.replyToUserId || 0);
+  if (!userId) return null;
+  return {
+    id: userId,
+    profilePicUrl: reply.replyToProfilePicUrl || '',
+    username: reply.replyToUsername || ''
   };
 }

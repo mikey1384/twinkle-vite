@@ -1,10 +1,6 @@
 export type BuildCollaborationMode = 'private' | 'open_source';
 export type BuildContributionAccess = 'anyone' | 'invite_only';
-export type BuildContributionStatus =
-  | 'none'
-  | 'draft'
-  | 'merging'
-  | 'merged';
+export type BuildContributionStatus = 'none' | 'draft' | 'merging' | 'merged';
 
 export interface BuildContributionFileDiff {
   path: string;
@@ -64,6 +60,11 @@ export interface BuildForumReply {
   buildId: number;
   contributionBuildId?: number | null;
   userId: number;
+  replyToReplyId?: number | null;
+  replyToUserId?: number | null;
+  replyToUsername?: string | null;
+  replyToProfilePicUrl?: string | null;
+  replyToBody?: string | null;
   body: string;
   username?: string | null;
   profilePicUrl?: string | null;

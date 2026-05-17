@@ -213,6 +213,7 @@ export default function CollaborationPanel({
   const [threadTitleInput, setThreadTitleInput] = useState('');
   const [threadBodyInput, setThreadBodyInput] = useState('');
   const [replyInput, setReplyInput] = useState('');
+  const [replyTarget, setReplyTarget] = useState<BuildForumReply | null>(null);
   const [recentlyCreatedForumThreadId, setRecentlyCreatedForumThreadId] =
     useState(0);
   const embeddedScrollRef = useRef<HTMLDivElement | null>(null);
@@ -1206,6 +1207,7 @@ export default function CollaborationPanel({
       });
       if (!selectedThreadStillExists) {
         setThreadReplies([]);
+        setReplyTarget(null);
       }
       if (selectedThreadId > 0 && !selectedThreadStillExists) {
         commitSelectedForumThreadId(0);
@@ -1300,6 +1302,7 @@ export default function CollaborationPanel({
       });
       setSelectedThread(result?.thread || null);
       setThreadReplies(Array.isArray(result?.replies) ? result.replies : []);
+      setReplyTarget(null);
       if (options?.persistSelection !== false) {
         commitSelectedForumThreadId(result?.thread?.id || threadId);
       }
@@ -1329,11 +1332,13 @@ export default function CollaborationPanel({
       const result = await createBuildContributionForumReply({
         buildId: rootBuildId,
         threadId: selectedThread.id,
-        body: replyInput.trim()
+        body: replyInput.trim(),
+        replyToReplyId: replyTarget?.id || null
       });
       if (result?.reply) {
         setThreadReplies((current) => [...current, result.reply]);
         setReplyInput('');
+        setReplyTarget(null);
       }
       if (result?.thread) {
         setSelectedThread(result.thread);
@@ -1370,6 +1375,7 @@ export default function CollaborationPanel({
         if (Number(selectedThread?.id || 0) === Number(threadId)) {
           setSelectedThread(null);
           setThreadReplies([]);
+          setReplyTarget(null);
           commitSelectedForumThreadId(0);
         } else if (
           Number(initialSelectedForumThreadIdRef.current || 0) ===
@@ -1402,6 +1408,9 @@ export default function CollaborationPanel({
         replyId
       });
       if (result?.success) {
+        if (Number(replyTarget?.id || 0) === Number(replyId)) {
+          setReplyTarget(null);
+        }
         await handleOpenForumThread(selectedThread.id);
       }
     } catch (error: any) {
@@ -1489,6 +1498,7 @@ export default function CollaborationPanel({
         loading={forumLoading}
         recentlyCreatedThreadId={recentlyCreatedForumThreadId}
         replyInput={replyInput}
+        replyTarget={replyTarget}
         replies={threadReplies}
         selectedThread={selectedThread}
         threads={forumThreads}
@@ -1498,6 +1508,7 @@ export default function CollaborationPanel({
           setSelectedThread(null);
           setThreadReplies([]);
           setReplyInput('');
+          setReplyTarget(null);
           commitSelectedForumThreadId(0);
         }}
         onBodyInputChange={setThreadBodyInput}
@@ -1509,6 +1520,7 @@ export default function CollaborationPanel({
           void handleOpenForumThread(threadId);
         }}
         onReplyInputChange={setReplyInput}
+        onReplyTargetChange={setReplyTarget}
         onTitleInputChange={setThreadTitleInput}
       />
     );

@@ -2150,16 +2150,18 @@ export default function buildRequestHelpers({
     async createBuildContributionForumReply({
       buildId,
       threadId,
-      body
+      body,
+      replyToReplyId
     }: {
       buildId: number;
       threadId: number;
       body: string;
+      replyToReplyId?: number | null;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contribution-forum-threads/${threadId}/replies`,
-          { body },
+          { body, replyToReplyId },
           auth()
         );
         return data;
