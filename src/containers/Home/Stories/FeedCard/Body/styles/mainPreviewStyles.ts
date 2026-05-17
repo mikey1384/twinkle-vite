@@ -75,12 +75,6 @@ export const mainPreviewStyles = `
     .home-feed-card__rich-embed-preview--image-only {
       padding: 0.25rem;
     }
-    .home-feed-card__panel-preview--rich-embed-compact
-      .home-feed-card__rich-embed-preview {
-      align-items: flex-start;
-      justify-content: flex-start;
-      padding: 0.85rem;
-    }
     .home-feed-card__rich-embed-preview--with-text {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(11rem, 34%);
@@ -126,30 +120,55 @@ export const mainPreviewStyles = `
     }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
       .compact-ai-card-preview {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+    }
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+      .compact-ai-card-preview,
+    .home-feed-card__panel-preview--size-rich-embed-compact
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+      .compact-ai-card-preview {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      height: 100%;
       min-height: 0;
       padding: 0;
       border: 0;
       background: transparent;
     }
-    .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
       .compact-ai-card-preview__details,
-    .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+      .compact-ai-card-preview__market,
+    .home-feed-card__panel-preview--size-rich-embed-compact
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+      .compact-ai-card-preview__details,
+    .home-feed-card__panel-preview--size-rich-embed-compact
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
       .compact-ai-card-preview__market {
       display: none;
     }
-    .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+      .compact-ai-card-preview__card-stage,
+    .home-feed-card__panel-preview--size-rich-embed-compact
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
       .compact-ai-card-preview__card-stage {
       width: 100%;
       height: 100%;
       min-width: 0;
       align-self: center;
     }
-    .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+      .compact-ai-card-preview__card-stage
+      .compact-ai-card-thumb--static,
+    .home-feed-card__panel-preview--size-rich-embed-compact
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
       .compact-ai-card-preview__card-stage
       .compact-ai-card-thumb--static {
       width: clamp(7.6rem, 76%, 12rem) !important;

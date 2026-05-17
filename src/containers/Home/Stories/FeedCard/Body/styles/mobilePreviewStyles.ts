@@ -18,9 +18,6 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--rich-embed {
       height: max(25rem, 250px);
     }
-    .home-feed-card__panel-preview--rich-embed-compact {
-      height: max(20rem, 200px);
-    }
     .home-feed-card__panel-preview--reflection {
       height: max(32rem, 320px);
     }

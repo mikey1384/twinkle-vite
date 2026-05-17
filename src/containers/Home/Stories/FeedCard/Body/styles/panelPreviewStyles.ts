@@ -41,9 +41,6 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--rich-embed {
     height: max(27rem, 270px);
   }
-  .home-feed-card__panel-preview--rich-embed-compact {
-    height: max(21rem, 210px);
-  }
   .home-feed-card__panel-preview--reflection {
     height: max(34rem, 340px);
   }
