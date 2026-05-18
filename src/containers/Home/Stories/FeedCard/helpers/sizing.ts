@@ -1,4 +1,5 @@
 import { normalizeRootType } from './navigation';
+import { isRenderableHomeFeedTargetComment } from './targetComment';
 import { isAICardEmbedSrc } from '~/helpers/aiCardEmbedHelpers';
 
 export type FeedCardPreviewKind =
@@ -645,7 +646,7 @@ function getTargetPanelSizing({
       : null;
   }
 
-  if (targetComment && !targetComment.notFound) {
+  if (isRenderableHomeFeedTargetComment(targetComment)) {
     if (flags.secretHidden) return null;
 
     return buildTargetSizing(

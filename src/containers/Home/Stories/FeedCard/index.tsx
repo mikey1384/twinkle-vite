@@ -861,20 +861,81 @@ function getHomeFeedCardPreviewComments({
   contentComments: any[];
   feedPreviewComments: any[];
 }) {
+  const flattenedContentComments =
+    flattenHomeFeedPreviewComments(contentComments);
   const renderableFeedPreviewComments =
     getRenderableHomeFeedPreviewComments(feedPreviewComments);
   const renderableContentComments = getRenderableHomeFeedPreviewComments(
-    flattenHomeFeedPreviewComments(contentComments)
+    flattenedContentComments
   );
-  const candidates = [
-    ...renderableFeedPreviewComments,
-    ...renderableContentComments
-  ];
+  const contentCommentsById = getHomeFeedPreviewCommentsById(
+    flattenedContentComments
+  );
+  const keyedCandidates = new Map<number, any>();
+  const unkeyedCandidates = [];
+
+  for (const comment of renderableContentComments) {
+    const commentId = getHomeFeedPreviewCommentId(comment);
+    if (commentId) {
+      keyedCandidates.set(commentId, comment);
+    } else {
+      unkeyedCandidates.push(comment);
+    }
+  }
+
+  for (const feedComment of renderableFeedPreviewComments) {
+    const commentId = getHomeFeedPreviewCommentId(feedComment);
+    if (!commentId) {
+      unkeyedCandidates.push(feedComment);
+      continue;
+    }
+
+    const contentComment = contentCommentsById.get(commentId);
+    if (
+      contentComment &&
+      !isRenderableHomeFeedPreviewComment(contentComment)
+    ) {
+      keyedCandidates.delete(commentId);
+      continue;
+    }
+
+    keyedCandidates.set(
+      commentId,
+      chooseHomeFeedPreviewComment(keyedCandidates.get(commentId), feedComment)
+    );
+  }
+
+  const candidates = [...unkeyedCandidates, ...keyedCandidates.values()];
   if (!candidates.length) {
     return contentComments.length ? contentComments : feedPreviewComments;
   }
 
   return [candidates.reduce(getMostRecentHomeFeedPreviewComment)];
+}
+
+function getHomeFeedPreviewCommentsById(comments: any[]) {
+  const commentsById = new Map<number, any>();
+  for (const comment of comments) {
+    const commentId = getHomeFeedPreviewCommentId(comment);
+    if (commentId) {
+      commentsById.set(commentId, comment);
+    }
+  }
+  return commentsById;
+}
+
+function isRenderableHomeFeedPreviewComment(comment: any) {
+  return getRenderableHomeFeedPreviewComments([comment]).length > 0;
+}
+
+function chooseHomeFeedPreviewComment(
+  contentComment: any | undefined,
+  feedComment: any
+) {
+  if (!contentComment) return feedComment;
+  const contentTimeStamp = Number(contentComment?.timeStamp || 0);
+  const feedTimeStamp = Number(feedComment?.timeStamp || 0);
+  return contentTimeStamp > feedTimeStamp ? contentComment : feedComment;
 }
 
 function flattenHomeFeedPreviewComments(comments: any[] | undefined): any[] {
@@ -889,9 +950,8 @@ function flattenHomeFeedPreviewComments(comments: any[] | undefined): any[] {
 }
 
 function getMostRecentHomeFeedPreviewComment(current: any, candidate: any) {
-  return compareHomeFeedPreviewComments(candidate, current) > 0
-    ? candidate
-    : current;
+  const comparison = compareHomeFeedPreviewComments(candidate, current);
+  return comparison > 0 ? candidate : current;
 }
 
 function compareHomeFeedPreviewComments(a: any, b: any) {
@@ -902,6 +962,10 @@ function compareHomeFeedPreviewComments(a: any, b: any) {
   }
 
   return Number(a?.id || 0) - Number(b?.id || 0);
+}
+
+function getHomeFeedPreviewCommentId(comment: any) {
+  return Number(comment?.id || 0);
 }
 
 function getHomeFeedContentHydrationKey(contentType: string, contentId: number) {

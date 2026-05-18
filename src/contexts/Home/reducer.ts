@@ -44,6 +44,16 @@ export default function HomeReducer(
             feed.contentType + feed.contentId !== contentKey
         )
       };
+    case 'DELETE_COMMENT': {
+      const commentId = Number(action.commentId || 0);
+      if (!commentId) return state;
+      return {
+        ...state,
+        feeds: state.feeds
+          .map((feed: any) => removeDeletedCommentFromHomeFeed(feed, commentId))
+          .filter(Boolean)
+      };
+    }
     case 'SET_CURRENT_FEATURED_INDEX':
       return {
         ...state,
@@ -246,4 +256,146 @@ export default function HomeReducer(
     default:
       return state;
   }
+}
+
+function removeDeletedCommentFromHomeFeed(feed: any, commentId: number) {
+  if (
+    String(feed?.contentType || '') === 'comment' &&
+    Number(feed?.contentId || 0) === commentId
+  ) {
+    return null;
+  }
+
+  let changed = false;
+  const nextFeed = { ...feed };
+  const nextComments = removeDeletedCommentFromCommentList(
+    feed?.comments,
+    commentId
+  );
+  if (nextComments !== feed?.comments) {
+    nextFeed.comments = nextComments;
+    changed = true;
+  }
+
+  const nextPreviewContent = removeDeletedCommentFromFeedObject(
+    feed?.previewContent,
+    commentId
+  );
+  if (nextPreviewContent !== feed?.previewContent) {
+    nextFeed.previewContent = nextPreviewContent;
+    changed = true;
+  }
+
+  const nextTargetObj = removeDeletedCommentFromTargetObj(
+    feed?.targetObj,
+    commentId
+  );
+  if (nextTargetObj !== feed?.targetObj) {
+    nextFeed.targetObj = nextTargetObj;
+    changed = true;
+  }
+
+  return changed ? nextFeed : feed;
+}
+
+function removeDeletedCommentFromFeedObject(value: any, commentId: number) {
+  if (!value) return value;
+  let changed = false;
+  const nextValue = { ...value };
+  const nextComments = removeDeletedCommentFromCommentList(
+    value.comments,
+    commentId
+  );
+  if (nextComments !== value.comments) {
+    nextValue.comments = nextComments;
+    changed = true;
+  }
+
+  const nextTargetObj = removeDeletedCommentFromTargetObj(
+    value.targetObj,
+    commentId
+  );
+  if (nextTargetObj !== value.targetObj) {
+    nextValue.targetObj = nextTargetObj;
+    changed = true;
+  }
+
+  return changed ? nextValue : value;
+}
+
+function removeDeletedCommentFromTargetObj(targetObj: any, commentId: number) {
+  if (!targetObj) return targetObj;
+  let changed = false;
+  const nextTargetObj = { ...targetObj };
+  const targetComment = targetObj.comment;
+  if (commentMatchesDeletedComment(targetComment, commentId)) {
+    nextTargetObj.comment = {
+      ...targetComment,
+      isDeleted: true,
+      notFound: true
+    };
+    changed = true;
+  } else if (targetComment) {
+    const nextTargetCommentComments = removeDeletedCommentFromCommentList(
+      targetComment.comments,
+      commentId
+    );
+    if (nextTargetCommentComments !== targetComment.comments) {
+      nextTargetObj.comment = {
+        ...targetComment,
+        comments: nextTargetCommentComments
+      };
+      changed = true;
+    }
+  }
+
+  const targetSubject = targetObj.subject;
+  if (targetSubject) {
+    const nextSubjectComments = removeDeletedCommentFromCommentList(
+      targetSubject.comments,
+      commentId
+    );
+    if (nextSubjectComments !== targetSubject.comments) {
+      nextTargetObj.subject = {
+        ...targetSubject,
+        comments: nextSubjectComments
+      };
+      changed = true;
+    }
+  }
+
+  return changed ? nextTargetObj : targetObj;
+}
+
+function removeDeletedCommentFromCommentList(
+  comments: any[] | undefined,
+  commentId: number
+): any[] | undefined {
+  if (!Array.isArray(comments)) return comments;
+  let changed = false;
+  const nextComments = [];
+  for (const comment of comments) {
+    if (commentMatchesDeletedComment(comment, commentId)) {
+      changed = true;
+      continue;
+    }
+    const nextReplies: any[] | undefined = removeDeletedCommentFromCommentList(
+      comment?.replies,
+      commentId
+    );
+    if (nextReplies !== comment?.replies) {
+      nextComments.push({
+        ...comment,
+        replies: nextReplies
+      });
+      changed = true;
+      continue;
+    }
+    nextComments.push(comment);
+  }
+  return changed ? nextComments : comments;
+}
+
+function commentMatchesDeletedComment(comment: any, commentId: number) {
+  return Number(comment?.id || 0) === commentId;
 }

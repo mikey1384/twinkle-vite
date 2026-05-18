@@ -17,7 +17,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { Color } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { useAppContext, useContentContext } from '~/contexts';
+import { useAppContext, useContentContext, useHomeContext } from '~/contexts';
 import { Comment as CommentType } from '~/types';
 
 function Comment({
@@ -41,6 +41,9 @@ function Comment({
   const navigate = useNavigate();
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
+  const onDeleteHomeFeedComment = useHomeContext(
+    (v) => v.actions.onDeleteComment
+  );
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const { isEditing } = useContentState({
     contentType: 'comment',
@@ -213,6 +216,7 @@ function Comment({
     await deleteContent({ id: comment.id, contentType: 'comment' });
     setConfirmModalShown(false);
     onDelete(comment.id);
+    onDeleteHomeFeedComment(comment.id);
   }
 
   async function handleEditComment(editedComment: string) {

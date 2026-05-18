@@ -7,6 +7,7 @@ const defaultScrollResetSaveSuppressionMs = 250;
 
 interface ScrollLockStyleSnapshot {
   overflow: string;
+  overflowX: string;
   overflowY: string;
   overscrollBehavior: string;
 }
@@ -27,8 +28,8 @@ export function resetAppShellScroll({
     suppressScrollAnchorSaves(suppressAnchorSavesMs);
   }
 
-  setScrollSurfaceTop(document.getElementById('App'));
-  setScrollSurfaceTop(document.scrollingElement || document.documentElement);
+  setScrollSurfaceOrigin(document.getElementById('App'));
+  setScrollSurfaceOrigin(document.scrollingElement || document.documentElement);
   window.dispatchEvent(new Event('scroll'));
 }
 
@@ -39,15 +40,13 @@ export function lockAppShellScrollSurface() {
     document.scrollingElement || document.documentElement;
   const root = document.documentElement;
   const body = document.body;
-  const previousAppOverflowY = appElement?.style.overflowY || '';
+  const previousAppStyle = snapshotScrollLockStyle(appElement);
   const previousRootStyle = snapshotScrollLockStyle(root);
   const previousBodyStyle = snapshotScrollLockStyle(body);
   let resetFrame = 0;
   let resettingScroll = false;
 
-  if (appElement) {
-    appElement.style.overflowY = 'hidden';
-  }
+  applyScrollLockStyle(appElement);
   applyScrollLockStyle(root);
   applyScrollLockStyle(body);
   runScrollReset();
@@ -70,15 +69,14 @@ export function lockAppShellScrollSurface() {
     });
     appElement?.removeEventListener('scroll', scheduleScrollReset);
     scrollingElement?.removeEventListener('scroll', scheduleScrollReset);
-    if (appElement) {
-      appElement.style.overflowY = previousAppOverflowY;
-    }
+    restoreScrollLockStyle(appElement, previousAppStyle);
     restoreScrollLockStyle(root, previousRootStyle);
     restoreScrollLockStyle(body, previousBodyStyle);
   };
 
   function scheduleScrollReset() {
     if (resettingScroll) return;
+    runScrollReset();
     if (resetFrame) return;
     resetFrame = window.requestAnimationFrame(() => {
       resetFrame = 0;
@@ -101,6 +99,7 @@ function snapshotScrollLockStyle(
 ): ScrollLockStyleSnapshot {
   return {
     overflow: element?.style.overflow || '',
+    overflowX: element?.style.overflowX || '',
     overflowY: element?.style.overflowY || '',
     overscrollBehavior: element?.style.overscrollBehavior || ''
   };
@@ -109,6 +108,7 @@ function snapshotScrollLockStyle(
 function applyScrollLockStyle(element: HTMLElement | null) {
   if (!element) return;
   element.style.overflow = 'hidden';
+  element.style.overflowX = 'hidden';
   element.style.overflowY = 'hidden';
   element.style.overscrollBehavior = 'none';
 }
@@ -119,12 +119,14 @@ function restoreScrollLockStyle(
 ) {
   if (!element) return;
   element.style.overflow = snapshot.overflow;
+  element.style.overflowX = snapshot.overflowX;
   element.style.overflowY = snapshot.overflowY;
   element.style.overscrollBehavior = snapshot.overscrollBehavior;
 }
 
-function setScrollSurfaceTop(element: Element | null) {
+function setScrollSurfaceOrigin(element: Element | null) {
   if (!element) return;
   element.scrollTop = 0;
+  element.scrollLeft = 0;
   element.dispatchEvent(new Event('scroll'));
 }

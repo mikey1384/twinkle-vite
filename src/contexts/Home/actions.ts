@@ -20,6 +20,12 @@ export default function HomeActions(dispatch: Dispatch) {
         subFilter
       });
     },
+    onDeleteComment(commentId: number) {
+      return dispatch({
+        type: 'DELETE_COMMENT',
+        commentId
+      });
+    },
     onLoadFeeds({
       feeds,
       loadMoreButton

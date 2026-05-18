@@ -476,6 +476,7 @@ export default function App() {
           ? '100%'
           : `calc(100% - ${APP_SHELL_HEADER_OFFSET_STYLE})`};
         width: 100%;
+        display: flow-root;
         @media (max-width: ${mobileMaxWidth}) {
           height: 100%;
         }

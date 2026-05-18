@@ -17,7 +17,12 @@ import {
   determineXpButtonDisabled
 } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useContentContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import BottomInterface from './BottomInterface';
 import {
@@ -97,6 +102,9 @@ export default function Body({
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
+  );
+  const onDeleteHomeFeedComment = useHomeContext(
+    (v) => v.actions.onDeleteComment
   );
 
   const {
@@ -755,6 +763,7 @@ export default function Body({
 
     if (contentType === 'comment') {
       onDeleteComment(id);
+      onDeleteHomeFeedComment(id);
     } else {
       onDeleteContent({ contentType, contentId: id });
     }

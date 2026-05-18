@@ -17,6 +17,7 @@ import { generateFileName } from '~/helpers/stringHelpers';
 import {
   useAppContext,
   useContentContext,
+  useHomeContext,
   useInputContext,
   useKeyContext
 } from '~/contexts';
@@ -129,6 +130,9 @@ function Comments({
   );
   const onUpdateCommentFileUploadProgress = useContentContext(
     (v) => v.actions.onUpdateCommentFileUploadProgress
+  );
+  const onDeleteHomeFeedComment = useHomeContext(
+    (v) => v.actions.onDeleteComment
   );
   const [deleting, setDeleting] = useState(false);
   const [commentSubmitted, setCommentSubmitted] = useState(false);
@@ -320,6 +324,7 @@ function Comments({
       setDeleting(true);
       await deleteContent({ id: commentId, contentType: 'comment' });
       onDelete(commentId);
+      onDeleteHomeFeedComment(commentId);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [onDelete]

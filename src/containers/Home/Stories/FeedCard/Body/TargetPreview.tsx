@@ -24,6 +24,7 @@ import {
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
 import { getHomeFeedContentPath } from '../helpers/navigation';
+import { isRenderableHomeFeedTargetComment } from '../helpers/targetComment';
 import ProfilePanelPreview from './ProfilePanelPreview';
 
 function resolveTargetPreviewTheme({
@@ -124,7 +125,7 @@ export default function TargetPreview({
     });
   }
 
-  if (targetComment && !targetComment.notFound) {
+  if (isRenderableHomeFeedTargetComment(targetComment)) {
     if (secretHidden) return null;
 
     return renderTargetPanel({
