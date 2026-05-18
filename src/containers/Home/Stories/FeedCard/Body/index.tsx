@@ -761,7 +761,7 @@ export default function Body({
                 className={`home-feed-card__build-status ${label}`}
               >
                 <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
-                {label === 'fork' ? 'Fork' : 'Branch'}
+                {label === 'fork' ? 'Forked' : 'Branch'}
               </span>
             ))}
             {showOpenSource ? (

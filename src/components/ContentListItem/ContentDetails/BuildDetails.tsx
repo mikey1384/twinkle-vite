@@ -191,7 +191,7 @@ export default function BuildDetails({
               className="build-collaborator-badge build-fork-badge"
             >
               <Icon icon="code-branch" />
-              <span>Fork</span>
+              <span>Forked</span>
             </ForkHistoryTrigger>
           ) : (
             <div

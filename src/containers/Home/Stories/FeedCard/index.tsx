@@ -978,6 +978,12 @@ function mergePreviewTargetSecretState(
   rootType?: string
 ) {
   if (normalizeRootType(rootType) === 'user') {
+    if (
+      isProfileCommentTargetObj(previewTargetObj) ||
+      isProfileCommentTargetObj(loadedTargetObj)
+    ) {
+      return mergeCommentTargetObj(previewTargetObj, loadedTargetObj);
+    }
     return mergeProfileTargetObj(previewTargetObj, loadedTargetObj);
   }
 
@@ -990,6 +996,39 @@ function mergePreviewTargetSecretState(
       loadedTargetObj?.subject
     )
   };
+}
+
+function mergeCommentTargetObj(previewTargetObj: any, loadedTargetObj: any) {
+  const previewComment = previewTargetObj?.comment;
+  const loadedComment = loadedTargetObj?.comment;
+  const mergedComment =
+    previewComment || loadedComment
+      ? {
+          ...(previewComment || {}),
+          ...(loadedComment || {})
+        }
+      : undefined;
+
+  return {
+    ...(previewTargetObj || {}),
+    ...(loadedTargetObj || {}),
+    contentType:
+      getCommentTargetContentType(loadedTargetObj) ||
+      getCommentTargetContentType(previewTargetObj) ||
+      'comment',
+    ...(mergedComment ? { comment: mergedComment } : {})
+  };
+}
+
+function isProfileCommentTargetObj(targetObj: any) {
+  return Boolean(targetObj?.comment && targetObj?.contentType !== 'user');
+}
+
+function getCommentTargetContentType(targetObj: any) {
+  const contentType = String(targetObj?.contentType || '');
+  return contentType === 'comment' || contentType === 'reply'
+    ? contentType
+    : '';
 }
 
 function mergeProfileTargetObj(previewTargetObj: any, loadedTargetObj: any) {

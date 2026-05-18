@@ -869,11 +869,15 @@ export const mainPreviewStyles = `
     background: rgba(34, 197, 94, 0.12);
     color: #15803d;
   }
-  .home-feed-card__build-status.fork,
-  .home-feed-card__build-status.fork-count {
+  .home-feed-card__build-status.fork {
     border-color: rgba(147, 51, 234, 0.36);
     background: rgba(147, 51, 234, 0.14);
     color: #6b21a8;
+  }
+  .home-feed-card__build-status.fork-count {
+    border-color: rgba(192, 38, 211, 0.34);
+    background: rgba(192, 38, 211, 0.12);
+    color: #a21caf;
   }
   .home-feed-card__build-status.open-source {
     border-color: rgba(59, 130, 246, 0.32);

@@ -111,6 +111,18 @@ export default function TargetPreview({
       }) as React.CSSProperties,
     [targetAccentColor, targetBorderColor]
   );
+  if (isRenderableHomeFeedTargetComment(targetComment)) {
+    if (secretHidden) return null;
+
+    return renderTargetPanel({
+      children: renderTargetCommentPreview(targetComment),
+      target: {
+        contentId: Number(targetComment.id || targetComment.commentId || 0),
+        contentType: 'comment'
+      }
+    });
+  }
+
   if (contentType === 'comment' && normalizedRootType === 'user') {
     const profile = targetUser?.id ? targetUser : resolvedRootObj;
     if (!profile?.id || profile?.notFound) return null;
@@ -121,18 +133,6 @@ export default function TargetPreview({
         contentId: Number(profile.id || 0),
         contentType: 'user',
         username: profile.username || profile.content
-      }
-    });
-  }
-
-  if (isRenderableHomeFeedTargetComment(targetComment)) {
-    if (secretHidden) return null;
-
-    return renderTargetPanel({
-      children: renderTargetCommentPreview(targetComment),
-      target: {
-        contentId: Number(targetComment.id || targetComment.commentId || 0),
-        contentType: 'comment'
       }
     });
   }

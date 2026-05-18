@@ -890,7 +890,7 @@ export default function ProjectListItem({
     });
     const badgeContent = (
       <>
-        <Icon icon="code-branch" /> Fork
+        <Icon icon="code-branch" /> Forked
       </>
     );
     if (!onOpenForkHistory) {
@@ -916,9 +916,9 @@ export default function ProjectListItem({
 
   function renderForkCountBadge() {
     const forkBadgeStyle = toTagStyle({
-      background: 'rgba(147, 51, 234, 0.14)',
-      border: 'rgba(147, 51, 234, 0.36)',
-      color: '#6b21a8'
+      background: 'rgba(192, 38, 211, 0.12)',
+      border: 'rgba(192, 38, 211, 0.34)',
+      color: '#a21caf'
     });
     const badgeContent = (
       <>

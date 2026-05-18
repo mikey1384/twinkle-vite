@@ -281,11 +281,15 @@ const rootContentCSS = css`
       background: rgba(59, 130, 246, 0.12);
       color: #1d4ed8;
     }
-    .build-fork-count-badge,
     .build-fork-badge {
       border-color: rgba(147, 51, 234, 0.36);
       background: rgba(147, 51, 234, 0.14);
       color: #6b21a8;
+    }
+    .build-fork-count-badge {
+      border-color: rgba(192, 38, 211, 0.34);
+      background: rgba(192, 38, 211, 0.12);
+      color: #a21caf;
     }
     .build-visit-count-badge {
       border-color: rgba(100, 116, 139, 0.28);

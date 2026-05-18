@@ -435,14 +435,6 @@ export default function HeadingText({
   }
 
   function renderCompactCommentHeading() {
-    if (rootType === 'user') {
-      return (
-        <>
-          {renderCompactUser()} {renderCompactAction('posted a profile message')}
-        </>
-      );
-    }
-
     if (targetObj?.comment && !targetObj.comment.notFound) {
       return (
         <>
@@ -463,6 +455,14 @@ export default function HeadingText({
           ) : (
             renderCompactRootContext()
           )}
+        </>
+      );
+    }
+
+    if (rootType === 'user') {
+      return (
+        <>
+          {renderCompactUser()} {renderCompactAction('posted a profile message')}
         </>
       );
     }
@@ -578,7 +578,7 @@ export default function HeadingText({
               style={buildRelationshipBadgeStyle(label)}
             >
               <Icon icon="code-branch" />
-              Fork
+              Forked
             </ForkHistoryTrigger>
           ) : (
             <span key={label} style={buildRelationshipBadgeStyle(label)}>
