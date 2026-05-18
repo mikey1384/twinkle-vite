@@ -95,11 +95,17 @@ export default function notificationRequestHelpers({
         return handleError(error);
       }
     },
-    async loadMoreNotifications(lastId: number) {
+    async loadMoreNotifications(lastId: number, lastTimeStamp?: number) {
       try {
+        const cursorTimeStamp = Number(lastTimeStamp || 0);
         const {
           data: { loadMoreNotifications, notifications }
-        } = await request.get(`${URL}/notification?lastId=${lastId}`, auth());
+        } = await request.get(
+          `${URL}/notification?lastId=${lastId}${
+            cursorTimeStamp ? `&lastTimeStamp=${cursorTimeStamp}` : ''
+          }`,
+          auth()
+        );
         return { loadMoreNotifications, notifications };
       } catch (error) {
         return handleError(error);

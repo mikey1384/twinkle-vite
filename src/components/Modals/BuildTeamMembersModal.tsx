@@ -1,13 +1,13 @@
 import React from 'react';
 import { BuildUserListTrigger } from '~/components/Modals/BuildUserListModal';
 
-export function BuildForkersTrigger({
+export function BuildTeamMembersTrigger({
   buildId,
   children,
   className,
   disabled,
   style,
-  title = 'People who forked this app'
+  title = 'Team members'
 }: {
   buildId: number;
   children: React.ReactNode;
@@ -21,8 +21,8 @@ export function BuildForkersTrigger({
       buildId={buildId}
       className={className}
       disabled={disabled}
-      emptyMessage="No current forks found."
-      requestHelperName="loadBuildForkers"
+      emptyMessage="No team members found."
+      requestHelperName="loadBuildTeamMembers"
       style={style}
       title={title}
     >

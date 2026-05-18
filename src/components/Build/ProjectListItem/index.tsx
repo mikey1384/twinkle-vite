@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
+import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
 import FavoriteButton, {
   type BuildFavoriteChange
 } from '~/components/Build/FavoriteButton';
@@ -655,8 +656,9 @@ export default function ProjectListItem({
             ) : null}
             {showForkCountBadge ? renderForkCountBadge() : null}
             {collaboratorCount > 0 ? (
-              <span
-                className={buildTagClass}
+              <BuildTeamMembersTrigger
+                buildId={Number(build.id)}
+                className={cx(buildTagClass, clickableBuildTagClass)}
                 style={toTagStyle({
                   background: 'rgba(34, 197, 94, 0.12)',
                   border: 'rgba(34, 197, 94, 0.32)',
@@ -665,7 +667,7 @@ export default function ProjectListItem({
               >
                 <Icon icon="users" />{' '}
                 {formatBuildCollaboratorCount(collaboratorCount)}
-              </span>
+              </BuildTeamMembersTrigger>
             ) : null}
             {pendingRequestCount > 0 ? (
               <span

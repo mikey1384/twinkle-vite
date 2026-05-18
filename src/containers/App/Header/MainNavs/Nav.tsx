@@ -254,7 +254,9 @@ function Nav({
   function handleNavClick(event: React.MouseEvent<HTMLAnchorElement>) {
     if (!to) return;
     if (navClickShouldKeepCurrentScroll(event)) return;
-    resetAppShellScroll();
+    if (navClickTargetsCurrentLocation(to, pathname, search)) {
+      resetAppShellScroll();
+    }
     if (to.includes('/users/') && to === pathname) {
       const username = to.split('/users/')[1].split('/')[0];
       const { profileId } = profileState[username] || {};
@@ -292,6 +294,35 @@ function Nav({
       event.metaKey ||
       event.shiftKey
     );
+  }
+
+  function navClickTargetsCurrentLocation(
+    target: string,
+    currentPathname: string,
+    currentSearch: string
+  ) {
+    const targetLocation = getNavTargetLocation(target);
+    return (
+      targetLocation.pathname === currentPathname &&
+      targetLocation.search === currentSearch
+    );
+  }
+
+  function getNavTargetLocation(target: string) {
+    try {
+      const url = new URL(target, window.location.origin);
+      return {
+        pathname: url.pathname,
+        search: url.search
+      };
+    } catch {
+      const [pathnameSearch] = target.split('#');
+      const [pathname, targetSearch = ''] = pathnameSearch.split('?');
+      return {
+        pathname,
+        search: targetSearch ? `?${targetSearch}` : ''
+      };
+    }
   }
 }
 

@@ -70,6 +70,7 @@ registerMethods('build', [
   'loadBuild',
   'loadBuildForkHistory',
   'loadBuildForkers',
+  'loadBuildTeamMembers',
   'loadBuildBranch',
   'loadBuildRuntimeUploads',
   'deleteBuildRuntimeUpload',

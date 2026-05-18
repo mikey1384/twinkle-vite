@@ -423,6 +423,35 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildTeamMembers(
+      buildId: number,
+      options?: {
+        cursor?: { acceptedAt?: number; membershipId?: number } | null;
+        fromWriter?: boolean;
+        limit?: number;
+      }
+    ) {
+      try {
+        const params = new URLSearchParams();
+        if (options?.fromWriter) params.set('fromWriter', '1');
+        if (options?.limit) params.set('limit', String(options.limit));
+        if (options?.cursor?.acceptedAt) {
+          params.set('cursorAcceptedAt', String(options.cursor.acceptedAt));
+        }
+        if (options?.cursor?.membershipId) {
+          params.set('cursorMembershipId', String(options.cursor.membershipId));
+        }
+        const qs = params.toString() ? `?${params.toString()}` : '';
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/team-members${qs}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildBranch({
       buildId,
       branchNumber,

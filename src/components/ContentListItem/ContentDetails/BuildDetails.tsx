@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
+import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import Icon from '~/components/Icon';
@@ -228,12 +229,15 @@ export default function BuildDetails({
           <span>{formatVisitLabel(viewCount)}</span>
         </div>
         {normalizedCollaboratorCount > 0 ? (
-          <div className="build-collaborator-badge">
+          <BuildTeamMembersTrigger
+            buildId={buildId}
+            className="build-collaborator-badge"
+          >
             <Icon icon="users" />
             <span>
               {formatBuildCollaboratorCount(normalizedCollaboratorCount)}
             </span>
-          </div>
+          </BuildTeamMembersTrigger>
         ) : null}
       </div>
       {description && <div className="description">{description}</div>}

@@ -436,9 +436,11 @@ export default function MainFeeds({
     setLoading(true);
     try {
       if (activeTab === 'notification') {
+        const cursorNotification = notifications[notifications.length - 1];
         const { loadMoreNotifications: loadMore, notifications: notis } =
           await loadMoreNotifications(
-            notifications[notifications.length - 1].id
+            cursorNotification.id,
+            cursorNotification.timeStamp
           );
         onLoadMoreNotifications({
           loadMoreNotifications: loadMore,

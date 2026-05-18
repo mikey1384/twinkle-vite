@@ -4,6 +4,7 @@ import CardThumb from '~/components/CardThumb';
 import Embedly from '~/components/Embedly';
 import Icon from '~/components/Icon';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
+import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
 import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
@@ -770,10 +771,13 @@ export default function Body({
               </span>
             ) : null}
             {collaboratorCount > 0 ? (
-              <span className="home-feed-card__build-status team">
+              <BuildTeamMembersTrigger
+                buildId={contentId}
+                className="home-feed-card__build-status team"
+              >
                 <Icon icon="users" />
                 {formatBuildCollaboratorCount(collaboratorCount)}
-              </span>
+              </BuildTeamMembersTrigger>
             ) : null}
             {showOpenSource ? (
               <BuildForkersTrigger

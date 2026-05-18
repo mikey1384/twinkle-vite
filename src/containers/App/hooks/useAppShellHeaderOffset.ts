@@ -1,5 +1,6 @@
 import { useLayoutEffect } from 'react';
 import {
+  APP_SHELL_HEADER_OFFSET_FALLBACK,
   APP_SHELL_HEADER_SELECTOR,
   APP_SHELL_TOP_OFFSET_VAR
 } from '~/constants/appShell';
@@ -17,6 +18,7 @@ export default function useAppShellHeaderOffset({
     const visualViewport = window.visualViewport;
     let measureFrame: number | null = null;
     let repairFrame: number | null = null;
+    let mutationObserver: MutationObserver | null = null;
     let resizeObserver: ResizeObserver | null = null;
 
     function getHeaderElement() {
@@ -31,15 +33,24 @@ export default function useAppShellHeaderOffset({
     }
 
     function readHeaderOffset() {
-      if (!shouldOffsetDesktopHeader()) return 0;
+      if (!headerVisible) return '0px';
+      if (!shouldOffsetDesktopHeader()) return '0px';
       const headerElement = getHeaderElement();
-      if (!headerElement) return 0;
+      if (!headerElement) return APP_SHELL_HEADER_OFFSET_FALLBACK;
       const { height } = headerElement.getBoundingClientRect();
-      return Math.max(0, Math.ceil(height));
+      const measuredHeight = Math.max(0, Math.ceil(height));
+      return measuredHeight > 0
+        ? `${measuredHeight}px`
+        : APP_SHELL_HEADER_OFFSET_FALLBACK;
     }
 
-    function setHeaderOffset(offsetPx: number) {
-      root.style.setProperty(APP_SHELL_TOP_OFFSET_VAR, `${offsetPx}px`);
+    function setHeaderOffset(offset: string) {
+      if (
+        root.style.getPropertyValue(APP_SHELL_TOP_OFFSET_VAR).trim() === offset
+      ) {
+        return;
+      }
+      root.style.setProperty(APP_SHELL_TOP_OFFSET_VAR, offset);
     }
 
     function repairOverlapIfNeeded() {
@@ -52,7 +63,7 @@ export default function useAppShellHeaderOffset({
       const headerBottom = headerElement.getBoundingClientRect().bottom;
       const appTop = appElement.getBoundingClientRect().top;
       if (appTop >= headerBottom - 1) return;
-      setHeaderOffset(Math.max(0, Math.ceil(headerBottom)));
+      setHeaderOffset(readHeaderOffset());
     }
 
     function measureAndApplyOffset() {
@@ -78,6 +89,13 @@ export default function useAppShellHeaderOffset({
       resizeObserver = new ResizeObserver(scheduleMeasure);
       resizeObserver.observe(headerElement);
     }
+    if (typeof MutationObserver !== 'undefined') {
+      mutationObserver = new MutationObserver(scheduleMeasure);
+      mutationObserver.observe(root, {
+        attributeFilter: ['style'],
+        attributes: true
+      });
+    }
 
     window.addEventListener('resize', scheduleMeasure);
     window.addEventListener('orientationchange', scheduleMeasure);
@@ -91,6 +109,7 @@ export default function useAppShellHeaderOffset({
       if (repairFrame !== null) {
         window.cancelAnimationFrame(repairFrame);
       }
+      mutationObserver?.disconnect();
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleMeasure);
       window.removeEventListener('orientationchange', scheduleMeasure);

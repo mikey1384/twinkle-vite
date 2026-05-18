@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import Button from '~/components/Button';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
+import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -308,7 +309,8 @@ export default function BuildContent({
             )
           )}
           {collaboratorCount > 0 ? (
-            <div
+            <BuildTeamMembersTrigger
+              buildId={buildId}
               className={css`
                 display: inline-flex;
                 align-items: center;
@@ -326,7 +328,7 @@ export default function BuildContent({
             >
               <Icon icon="users" />
               <span>{formatBuildCollaboratorCount(collaboratorCount)}</span>
-            </div>
+            </BuildTeamMembersTrigger>
           ) : null}
         </div>
         <div
