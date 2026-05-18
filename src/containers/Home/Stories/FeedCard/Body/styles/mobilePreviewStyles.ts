@@ -190,7 +190,7 @@ export const mobilePreviewStyles = `
       }
       .home-feed-card__text-preview--with-media-attachment {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto auto;
+        grid-template-rows: auto minmax(0, 1fr);
       }
       .home-feed-card__video-preview {
         grid-template-columns: minmax(8rem, 44%) minmax(0, 1fr);

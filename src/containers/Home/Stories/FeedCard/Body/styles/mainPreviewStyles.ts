@@ -23,8 +23,8 @@ export const mainPreviewStyles = `
   }
   .home-feed-card__text-preview--with-media-attachment {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    align-content: center;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
   }
   .home-feed-card__text-copy,
   .home-feed-card__subject-copy {
@@ -557,6 +557,12 @@ export const mainPreviewStyles = `
     max-height: 100%;
     border-color: ${Color.black(0.18)};
     background: #111827;
+  }
+  .home-feed-card__text-preview--with-media-attachment
+    .home-feed-card__attachment-preview--comment-image,
+  .home-feed-card__text-preview--with-media-attachment
+    .home-feed-card__attachment-preview--comment-video {
+    align-self: end;
   }
   .home-feed-card__attachment-preview--comment-image img,
   .home-feed-card__attachment-preview--comment-video img,
