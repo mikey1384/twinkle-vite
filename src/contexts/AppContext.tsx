@@ -27,7 +27,6 @@ import {
   getErrorMessageFromResponseData
 } from '~/helpers/errorMessageHelpers';
 
-export const AppContext = createContext({});
 export const initialMyState = {
   achievementPoints: 0,
   level: 1,
@@ -50,6 +49,42 @@ export const initialMyState = {
   communityFunds: 0,
   communityFundsLoaded: false
 };
+
+const initialUserState = {
+  myState: initialMyState,
+  loadMoreButton: false,
+  loaded: false,
+  missions: {},
+  orderUsersBy: LAST_ONLINE_FILTER_LABEL,
+  profiles: [],
+  profilesLoaded: false,
+  searchedProfiles: [],
+  signinModalShown: false,
+  userObj: {},
+  achievementsObj: {},
+  achieverObj: {}
+};
+
+const noopDispatch = () => undefined;
+
+function createNoopFunctionShape(source: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.keys(source).map((key) => [key, () => undefined])
+  );
+}
+
+const defaultUserActions = createNoopFunctionShape(UserActions(noopDispatch));
+const defaultRequestHelpers = requestHelpers((error) => Promise.reject(error));
+
+const defaultAppContextValue = {
+  user: {
+    state: initialUserState,
+    actions: defaultUserActions
+  },
+  requestHelpers: defaultRequestHelpers
+};
+
+export const AppContext = createContext<any>(defaultAppContextValue);
 
 const REDIRECT_RELOAD_STORAGE_KEY = 'twinkleRedirectReloadAt';
 const REDIRECT_RELOAD_COOLDOWN_MS = 60 * 1000;
@@ -78,20 +113,7 @@ function shouldReloadForRedirect() {
 }
 
 export function AppContextProvider({ children }: { children: ReactNode }) {
-  const [userState, userDispatch] = useReducer(UserReducer, {
-    myState: initialMyState,
-    loadMoreButton: false,
-    loaded: false,
-    missions: {},
-    orderUsersBy: LAST_ONLINE_FILTER_LABEL,
-    profiles: [],
-    profilesLoaded: false,
-    searchedProfiles: [],
-    signinModalShown: false,
-    userObj: {},
-    achievementsObj: {},
-    achieverObj: {}
-  });
+  const [userState, userDispatch] = useReducer(UserReducer, initialUserState);
 
   const handleError = useCallback(
     (error: any) => {
@@ -103,9 +125,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
         if (status === 401) {
           removeStoredItem('token');
-          Object.keys(localStorageKeys).forEach((key) =>
-            removeStoredItem(key)
-          );
+          Object.keys(localStorageKeys).forEach((key) => removeStoredItem(key));
           userDispatch({
             type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
           });

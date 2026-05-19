@@ -304,7 +304,7 @@ export default function Stories() {
 
       setLoadingFeeds(true);
       try {
-        categoryRef.current = 'uploads';
+        categoryRef.current = 'recommended';
         onChangeCategory('recommended');
         onChangeSubFilter('all');
         onResetNumNewPosts();
@@ -749,6 +749,7 @@ export default function Stories() {
         feedsReturnedCount,
         filter,
         isRecommended,
+        loadingMore: true,
         loadMoreButtonAtStart,
         loadMoreRequestCount,
         orderBy,

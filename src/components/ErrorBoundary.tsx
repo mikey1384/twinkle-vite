@@ -210,8 +210,14 @@ function isRecoverableDomMutationError(error: Error) {
   );
 }
 
+function isLocalDevelopmentRuntime() {
+  if (import.meta.env.DEV) return true;
+  if (typeof window === 'undefined') return false;
+  return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+}
+
 function shouldSuppressErrorReport(error: Error) {
-  return isLazyImportLoadError(error);
+  return isLazyImportLoadError(error) || isLocalDevelopmentRuntime();
 }
 
 function handleLazyImportRecoveryReload() {
