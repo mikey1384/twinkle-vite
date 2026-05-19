@@ -115,6 +115,11 @@ export default function ContentActions(dispatch: Dispatch) {
         contentType
       });
     },
+    onResetContent() {
+      return dispatch({
+        type: 'RESET_CONTENT'
+      });
+    },
     onDeleteComment(commentId: number) {
       return dispatch({
         type: 'DELETE_COMMENT',

@@ -73,6 +73,8 @@ export default function ContentReducer(
   };
   const prevContentState = state[contentKey] || defaultState;
   switch (action.type) {
+    case 'RESET_CONTENT':
+      return {};
     case 'INIT_CONTENT':
       return {
         ...state,

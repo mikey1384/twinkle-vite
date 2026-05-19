@@ -1,4 +1,9 @@
-import { Color, borderRadius } from '~/constants/css';
+import {
+  Color,
+  borderRadius,
+  desktopMinWidth,
+  tabletMaxWidth
+} from '~/constants/css';
 
 export const panelPreviewStyles = `
   .home-feed-card__panel-preview,
@@ -181,6 +186,22 @@ export const panelPreviewStyles = `
   }
   .home-feed-card__target-preview > * {
     pointer-events: none;
+  }
+  @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__panel-preview--size-media-attachment-with-text {
+      height: max(31rem, 310px);
+    }
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-compact {
+      height: max(8.5rem, 85px);
+    }
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-fallback,
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-standard {
+      height: max(12rem, 120px);
+    }
   }
   h3 {
     margin: 0;

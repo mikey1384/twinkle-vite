@@ -28,6 +28,7 @@ import {
   isContentPanelRewardActionSupported
 } from '~/helpers/contentActionAvailability';
 import { useContentContext, useMissionContext } from '~/contexts';
+import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 const copiedLabel = 'Copied!';
@@ -203,19 +204,8 @@ export default function BottomInterface({
     [finalRewardLevel, rewards, userId, xpRewardInterfaceShown]
   );
 
-  const isCommentForSecretSubject = useMemo(() => {
-    if (targetObj?.comment) {
-      return false;
-    }
-    return (
-      !!targetObj?.subject?.secretAnswer ||
-      !!targetObj?.subject?.secretAttachment
-    );
-  }, [
-    targetObj?.comment,
-    targetObj?.subject?.secretAnswer,
-    targetObj?.subject?.secretAttachment
-  ]);
+  const isCommentForSecretSubject =
+    !targetObj?.comment && hasSubjectSecretSignal(targetObj?.subject);
 
   const userCanDeleteThis = useMemo(() => {
     if (contentType === 'aiStory') return false;

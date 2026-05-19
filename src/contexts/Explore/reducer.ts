@@ -534,6 +534,31 @@ export default function ExploreReducer(
           featuredLoaded: true
         }
       };
+    case 'RESET_FEATURED_SUBJECTS':
+      return {
+        ...state,
+        subjects: {
+          ...state.subjects,
+          featureds: [],
+          featuredLoaded: false
+        }
+      };
+    case 'RESET_SUBJECTS':
+      return {
+        ...state,
+        subjects: {
+          ...state.subjects,
+          byUsers: [],
+          byUsersLoadMoreButton: false,
+          byUsersLoaded: false,
+          featureds: [],
+          featuredLoaded: false,
+          recommendeds: [],
+          recommendedLoadMoreButton: false,
+          recommendedLoaded: false,
+          loaded: false
+        }
+      };
     case 'LOAD_BY_USER_SUBJECTS':
       return {
         ...state,

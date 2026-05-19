@@ -76,7 +76,9 @@ export default function Stories() {
   const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
+  const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const alertRole = useRoleColor('alert', { fallback: 'gold' });
   const alertColorKey = alertRole.colorKey;
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
@@ -170,6 +172,15 @@ export default function Stories() {
     numNewPostsRef.current = numNewPosts;
   }, [numNewPosts]);
 
+  useEffect(() => {
+    loadingMoreRef.current = false;
+    setLoadingFeeds(false);
+    setLoadingFilteredFeeds(false);
+    setLoadingCategorizedFeeds(false);
+    setLoadingMore(false);
+    setLoadingNewFeeds(false);
+  }, [userId]);
+
   useInfiniteScroll({
     scrollable: feeds?.length > 0 && !loadingMoreRef.current,
     feedsLength: feeds?.length,
@@ -197,6 +208,8 @@ export default function Stories() {
 
     async function handleLoadFeeds(attempts = 0) {
       if (!mountedRef.current) return;
+      const requestUserId = userId;
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
 
       setLoadingFeeds(true);
       try {
@@ -206,22 +219,23 @@ export default function Stories() {
         onResetNumNewPosts();
 
         const { data } = await loadFeeds({ isRecommended: true });
-        if (mountedRef.current) {
+        if (!shouldIgnoreStoryRequest(requestUserId)) {
           onLoadFeeds(data);
         }
       } catch (error: any) {
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
         console.error(error);
-        if (mountedRef.current && attempts < maxRetries) {
+        if (attempts < maxRetries) {
           setTimeout(() => handleLoadFeeds(attempts + 1), retryDelay);
         }
       } finally {
-        if (mountedRef.current) {
+        if (!shouldIgnoreStoryRequest(requestUserId)) {
           setLoadingFeeds(false);
         }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [loaded, userId]);
 
   const beTheFirstLabel = useMemo(() => {
     return `Hello ${username}, be the first to post something`;
@@ -383,6 +397,7 @@ export default function Stories() {
     const maxRetries = 3;
     const retryDelay = 1000;
     let success = false;
+    const requestUserId = userId;
 
     if (filter !== subFilterRef.current) {
       subFilterRef.current = filter || null;
@@ -391,6 +406,7 @@ export default function Stories() {
 
     async function attemptLoad(attempts = 0) {
       try {
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
         setLoadingFilteredFeeds(true);
         categoryRef.current = 'uploads';
         onChangeCategory('uploads');
@@ -398,6 +414,7 @@ export default function Stories() {
         onResetNumNewPosts();
 
         const { data, filter: newFilter } = await loadFeeds({ filter });
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
 
         if (
           subFilterRef.current === newFilter &&
@@ -408,13 +425,17 @@ export default function Stories() {
           success = true;
         }
       } catch (error: any) {
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
         console.error(error);
         if (attempts < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return attemptLoad(attempts + 1);
         }
       } finally {
-        if (success || attempts >= maxRetries) {
+        if (
+          !shouldIgnoreStoryRequest(requestUserId) &&
+          (success || attempts >= maxRetries)
+        ) {
           setLoadingFilteredFeeds(false);
         }
       }
@@ -422,6 +443,7 @@ export default function Stories() {
   }
 
   async function handleLoadMoreFeeds() {
+    const requestUserId = userId;
     const lastFeedId =
       feeds?.length > 0 ? feeds[feeds?.length - 1].feedId : null;
     if (loadingMoreRef.current) return;
@@ -442,12 +464,16 @@ export default function Stories() {
         lastViewDuration:
           feeds?.length > 0 ? feeds[feeds?.length - 1].totalViewDuration : null
       });
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
       onLoadMoreFeeds(data);
     } catch (error) {
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
       console.error(error);
     } finally {
-      setLoadingMore(false);
-      loadingMoreRef.current = false;
+      if (!shouldIgnoreStoryRequest(requestUserId)) {
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
+      }
     }
   }
 
@@ -455,11 +481,13 @@ export default function Stories() {
     const maxRetries = 3;
     const retryDelay = 1000;
     let success = false;
+    const requestUserId = userId;
 
     await attemptLoadFeeds();
 
     async function attemptLoadFeeds(attempts = 0) {
       try {
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
         categoryRef.current = newCategory;
         onResetNumNewPosts();
         setLoadingCategorizedFeeds(true);
@@ -472,6 +500,7 @@ export default function Stories() {
           orderBy: categoryObj[newCategory].orderBy,
           isRecommended: categoryObj[newCategory].isRecommended
         });
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
 
         if (
           loadedFilter === categoryObj[categoryRef.current].filter &&
@@ -482,13 +511,17 @@ export default function Stories() {
           success = true;
         }
       } catch (error: any) {
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
         console.error(error);
         if (attempts < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return attemptLoadFeeds(attempts + 1);
         }
       } finally {
-        if (success || attempts >= maxRetries) {
+        if (
+          !shouldIgnoreStoryRequest(requestUserId) &&
+          (success || attempts >= maxRetries)
+        ) {
           setLoadingCategorizedFeeds(false);
         }
       }
@@ -497,12 +530,14 @@ export default function Stories() {
 
   async function handleFetchNewFeeds() {
     const initialNumNewPosts = numNewPostsRef.current;
+    const requestUserId = userId;
     try {
       if (!loadingNewFeeds) {
         setLoadingNewFeeds(true);
         const data = await loadNewFeeds({
           lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0
         });
+        if (shouldIgnoreStoryRequest(requestUserId)) return;
 
         if (data) {
           onChangeSubFilter('all');
@@ -517,6 +552,7 @@ export default function Stories() {
             onChangeCategory('uploads');
 
             const { data } = await loadFeeds();
+            if (shouldIgnoreStoryRequest(requestUserId)) return;
             if (categoryRef.current === 'uploads') {
               onLoadFeeds(data);
               reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
@@ -528,14 +564,18 @@ export default function Stories() {
         }
       }
     } catch (error) {
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
       console.error('Error fetching new feeds:', error);
     } finally {
-      setLoadingNewFeeds(false);
+      if (!shouldIgnoreStoryRequest(requestUserId)) {
+        setLoadingNewFeeds(false);
+      }
     }
   }
 
   async function handleRefreshOutdatedFeed() {
     if (loadingNewFeeds) return;
+    const requestUserId = userId;
     const initialNumNewPosts = numNewPostsRef.current;
     const currentCategory = categoryRef.current;
     const currentSubFilter = subFilterRef.current;
@@ -556,6 +596,7 @@ export default function Stories() {
         orderBy: currentOrderBy,
         isRecommended
       });
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
       if (categoryRef.current !== currentCategory) return;
       if (
         currentCategory === 'uploads' &&
@@ -568,9 +609,12 @@ export default function Stories() {
       onSetDisplayOrder(currentDisplayOrder);
       reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
     } catch (error) {
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
       console.error('Error refreshing outdated feed:', error);
     } finally {
-      setLoadingNewFeeds(false);
+      if (!shouldIgnoreStoryRequest(requestUserId)) {
+        setLoadingNewFeeds(false);
+      }
     }
   }
 
@@ -586,6 +630,7 @@ export default function Stories() {
   }
 
   async function handleDisplayOrder() {
+    const requestUserId = userId;
     const newDisplayOrder = displayOrder === 'desc' ? 'asc' : 'desc';
     const initialFilter =
       category === 'uploads' ? subFilter : categoryObj[category].filter;
@@ -594,15 +639,28 @@ export default function Stories() {
       onSetFeedsOutdated(false);
     }
     setLoadingFeeds(true);
-    const { data, filter } = await loadFeeds({
-      order: newDisplayOrder,
-      orderBy: categoryObj[category].orderBy,
-      filter: initialFilter
-    });
-    if (filter === initialFilter) {
-      onLoadFeeds(data);
-      onSetDisplayOrder(newDisplayOrder);
-      setLoadingFeeds(false);
+    try {
+      const { data, filter } = await loadFeeds({
+        order: newDisplayOrder,
+        orderBy: categoryObj[category].orderBy,
+        filter: initialFilter
+      });
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
+      if (filter === initialFilter) {
+        onLoadFeeds(data);
+        onSetDisplayOrder(newDisplayOrder);
+      }
+    } catch (error) {
+      if (shouldIgnoreStoryRequest(requestUserId)) return;
+      console.error(error);
+    } finally {
+      if (!shouldIgnoreStoryRequest(requestUserId)) {
+        setLoadingFeeds(false);
+      }
     }
+  }
+
+  function shouldIgnoreStoryRequest(requestUserId: number | null | undefined) {
+    return !mountedRef.current || checkUserChange(requestUserId);
   }
 }

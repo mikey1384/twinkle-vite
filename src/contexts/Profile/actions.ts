@@ -199,6 +199,11 @@ export default function ProfileActions(dispatch: Dispatch) {
         username
       });
     },
+    onResetProfileViewerState() {
+      return dispatch({
+        type: 'RESET_PROFILE_VIEWER_STATE'
+      });
+    },
     onSetFeaturedSubjects({
       subjects,
       username

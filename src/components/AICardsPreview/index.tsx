@@ -10,6 +10,7 @@ import { isMobile } from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 
 export default function AICardsPreview({
+  compact,
   isAICardModalShown,
   isOnModal,
   cardIds,
@@ -19,6 +20,7 @@ export default function AICardsPreview({
   onSetAICardModalCardId,
   themeColor
 }: {
+  compact?: boolean;
   isAICardModalShown: boolean;
   isOnModal?: boolean;
   cardIds: number[];
@@ -71,6 +73,7 @@ export default function AICardsPreview({
         })}
         {(!!numMore || exploreUrl) && (
           <ShowMoreCardsButton
+            compact={compact}
             onClick={handleShowMoreClick}
             hideNumMore={!!onLoadMoreClick || !numMore}
             numMore={numMore}

@@ -34,6 +34,7 @@ import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { charLimit } from '~/constants/defaultValues';
 import { resolveDirectSubjectRewardLevel } from '~/helpers/rewardLevel';
+import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 const commentLabel = 'Comment';
 const editLabel = 'Edit';
 const byLabel = 'By';
@@ -54,6 +55,8 @@ export default function SubjectPanel({
   numComments,
   loadMoreCommentsButton,
   rootRewardLevel,
+  hasSecretAnswer,
+  hasSecretAttachment,
   secretAnswer,
   secretAttachment,
   subjectId
@@ -70,6 +73,8 @@ export default function SubjectPanel({
   numComments: number;
   loadMoreCommentsButton: boolean;
   rootRewardLevel?: number;
+  hasSecretAnswer?: boolean;
+  hasSecretAttachment?: boolean;
   secretAnswer: string;
   secretAttachment: any;
   subjectId: number;
@@ -78,10 +83,12 @@ export default function SubjectPanel({
   const descriptionMaxChar = charLimit.subject.description;
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onEditRewardComment = useContentContext(
     (v) => v.actions.onEditRewardComment
   );
@@ -91,6 +98,7 @@ export default function SubjectPanel({
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const myId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const { canDelete, canEdit, canReward } = useMyLevel();
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const contentColor = useKeyContext((v) => v.theme.content.color);
@@ -116,7 +124,12 @@ export default function SubjectPanel({
     byUser,
     comments,
     isDeleted,
+    loaded: subjectStateLoaded,
     secretShown,
+    hasSecretAnswer: stateHasSecretAnswer,
+    hasSecretAttachment: stateHasSecretAttachment,
+    secretAnswer: stateSecretAnswer,
+    secretAttachment: stateSecretAttachment,
     pinnedCommentId,
     recommendations,
     rewards,
@@ -163,11 +176,37 @@ export default function SubjectPanel({
     const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
     return userIsUploader || userCanEditThis;
   }, [level, canDelete, canEdit, uploaderLevel, userIsUploader]);
-  const secretHidden = useMemo(
+  const displayedSecretAnswer = subjectStateLoaded
+    ? stateSecretAnswer
+    : secretAnswer;
+  const displayedSecretAnswerForEdit = displayedSecretAnswer || '';
+  const displayedSecretAttachment = subjectStateLoaded
+    ? stateSecretAttachment
+    : secretAttachment;
+  const displayedHasSecretAnswer = subjectStateLoaded
+    ? stateHasSecretAnswer
+    : hasSecretAnswer;
+  const displayedHasSecretAttachment = subjectStateLoaded
+    ? stateHasSecretAttachment
+    : hasSecretAttachment;
+  const subjectHasSecretMessage = useMemo(
     () =>
-      (!!secretAnswer || !!secretAttachment) &&
-      !(secretShown || userIsUploader),
-    [secretAnswer, secretAttachment, secretShown, userIsUploader]
+      hasSubjectSecretSignal({
+        hasSecretAnswer: displayedHasSecretAnswer,
+        hasSecretAttachment: displayedHasSecretAttachment,
+        secretAnswer: displayedSecretAnswer,
+        secretAttachment: displayedSecretAttachment
+      }),
+    [
+      displayedHasSecretAnswer,
+      displayedHasSecretAttachment,
+      displayedSecretAnswer,
+      displayedSecretAttachment
+    ]
+  );
+  const secretHidden = useMemo(
+    () => subjectHasSecretMessage && !(secretShown || userIsUploader),
+    [secretShown, subjectHasSecretMessage, userIsUploader]
   );
   const userCanRewardThis = useMemo(
     () =>
@@ -200,6 +239,11 @@ export default function SubjectPanel({
   }, [recommendations, myId]);
 
   useEffect(() => {
+    if (onEdit) return;
+    setEditedSecretAnswer(displayedSecretAnswerForEdit);
+  }, [displayedSecretAnswerForEdit, onEdit]);
+
+  useEffect(() => {
     const titleIsEmpty = stringIsEmpty(editedTitle);
     const titleChanged = editedTitle !== title;
     const titleExceedsCharLimit = editedTitle.length > titleMaxChar;
@@ -208,7 +252,8 @@ export default function SubjectPanel({
     const secretAnswerExceedsCharLimit =
       editedSecretAnswer.length > descriptionMaxChar;
     const descriptionChanged = editedDescription !== description;
-    const secretAnswerChanged = editedSecretAnswer !== secretAnswer;
+    const secretAnswerChanged =
+      editedSecretAnswer !== displayedSecretAnswerForEdit;
     const editDoneButtonDisabled =
       titleExceedsCharLimit ||
       descriptionExceedsCharLimit ||
@@ -222,7 +267,7 @@ export default function SubjectPanel({
     editedSecretAnswer,
     title,
     description,
-    secretAnswer,
+    displayedSecretAnswerForEdit,
     titleMaxChar,
     descriptionMaxChar
   ]);
@@ -313,11 +358,11 @@ export default function SubjectPanel({
         {!onEdit && !!description && (
           <RichText style={{ padding: '1rem 0' }}>{description}</RichText>
         )}
-        {(secretAnswer || secretAttachment) && !onEdit && (
+        {subjectHasSecretMessage && !onEdit && (
           <SecretAnswer
             style={{ marginTop: '1rem' }}
-            answer={secretAnswer}
-            attachment={secretAttachment}
+            answer={displayedSecretAnswer}
+            attachment={displayedSecretAttachment}
             subjectId={subjectId}
             onClick={handleExpand}
             uploaderId={userId}
@@ -383,7 +428,7 @@ export default function SubjectPanel({
                   setOnEdit(false);
                   setEditedTitle(title);
                   setEditedDescription(description);
-                  setEditedSecretAnswer(secretAnswer);
+                  setEditedSecretAnswer(displayedSecretAnswerForEdit);
                 }}
               >
                 Cancel
@@ -553,8 +598,10 @@ export default function SubjectPanel({
                 contentId: rootId,
                 contentType: rootType,
                 rewardLevel: rootRewardLevel,
-                secretAnswer,
-                secretAttachment,
+                hasSecretAnswer: displayedHasSecretAnswer,
+                hasSecretAttachment: displayedHasSecretAttachment,
+                secretAnswer: displayedSecretAnswer,
+                secretAttachment: displayedSecretAttachment,
                 uploader: {
                   id: userId,
                   username,
@@ -569,8 +616,10 @@ export default function SubjectPanel({
                 id: subjectId,
                 comments,
                 rewardLevel,
-                secretAnswer,
-                secretAttachment,
+                hasSecretAnswer: displayedHasSecretAnswer,
+                hasSecretAttachment: displayedHasSecretAttachment,
+                secretAnswer: displayedSecretAnswer,
+                secretAttachment: displayedSecretAttachment,
                 title,
                 pinnedCommentId,
                 uploader: {
@@ -624,6 +673,7 @@ export default function SubjectPanel({
         prevSecretViewerId: userId
       });
       if (secretHidden) {
+        await refreshSubjectAfterSecretUnlock();
         await handleExpand(true);
       } else {
         onUploadComment({
@@ -636,6 +686,16 @@ export default function SubjectPanel({
     } catch (error) {
       console.error(error);
     }
+  }
+
+  async function refreshSubjectAfterSecretUnlock() {
+    const requestUserId = myId;
+    const data = await loadContent({
+      contentId: subjectId,
+      contentType: 'subject'
+    });
+    if (!data || checkUserChange(requestUserId)) return;
+    onInitContent(data);
   }
 
   async function handleExpand(revealingSecret: boolean) {

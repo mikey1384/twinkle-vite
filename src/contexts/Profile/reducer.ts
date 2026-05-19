@@ -99,6 +99,24 @@ export default function ProfileReducer(
   const username = action.username;
   const prevContentState = state[action.username] || defaultState;
   switch (action.type) {
+    case 'RESET_PROFILE_VIEWER_STATE': {
+      const nextState: Record<string, any> = {};
+      for (const profileUsername of Object.keys(state)) {
+        const profileState = state[profileUsername] || defaultState;
+        nextState[profileUsername] = {
+          ...profileState,
+          subjects: {
+            ...profileState.subjects,
+            posts: [],
+            loaded: false,
+            loadMoreButton: false
+          },
+          posts: { ...defaultState.posts },
+          likes: { ...defaultState.likes }
+        };
+      }
+      return nextState;
+    }
     case 'LOAD_FEATURED_SUBJECTS':
       return {
         ...state,

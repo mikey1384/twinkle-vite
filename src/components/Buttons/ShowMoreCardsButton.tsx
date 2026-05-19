@@ -3,10 +3,12 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function ShowMoreCardsButton({
+  compact,
   onClick,
   hideNumMore,
   numMore
 }: {
+  compact?: boolean;
   onClick?: () => void;
   hideNumMore?: boolean;
   numMore?: number;
@@ -18,8 +20,8 @@ export default function ShowMoreCardsButton({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '1rem',
-          marginLeft: '2rem',
+          padding: compact ? '0.4rem' : '1rem',
+          marginLeft: compact ? '1rem' : '2rem',
           borderRadius,
           cursor: onClick ? 'pointer' : 'inherit',
           border: '1px solid var(--ui-border)',
@@ -28,26 +30,33 @@ export default function ShowMoreCardsButton({
           marginBottom: '3rem',
           flexGrow: 1
         }}
+        aria-label={compact ? 'Show more cards' : undefined}
         className={css`
-          min-width: 9rem;
-          font-size: 1.4rem;
+          min-width: ${compact ? '5.2rem' : '9rem'};
+          font-size: ${compact ? '1rem' : '1.4rem'};
           ${onClick
             ? `&:hover {
             background-color: ${Color.highlightGray()};
-            font-size: 1.3rem;
+            font-size: ${compact ? '1rem' : '1.3rem'};
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.4rem;
+              font-size: ${compact ? '1rem' : '1.4rem'};
             }
           }`
             : ''}
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.1rem;
-            min-width: 6rem;
+            font-size: ${compact ? '1rem' : '1.1rem'};
+            min-width: ${compact ? '5.2rem' : '6rem'};
           }
         `}
         onClick={onClick}
       >
-        {hideNumMore ? '...more' : numMore ? `...${numMore} more` : '+ Add'}
+        {compact
+          ? '...more'
+          : hideNumMore
+            ? '...more'
+            : numMore
+              ? `...${numMore} more`
+              : '+ Add'}
       </div>
     </div>
   );

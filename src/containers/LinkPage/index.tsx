@@ -56,6 +56,9 @@ export default function LinkPage() {
   const pageRef = useRef<HTMLDivElement | null>(null);
   const CommentInputAreaRef = useRef<any>(null);
   const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
+  const contentLoadKeyRef = useRef('');
+  const commentsLoadKeyRef = useRef('');
+  const subjectsLoadKeyRef = useRef('');
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -65,6 +68,7 @@ export default function LinkPage() {
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
 
   const { canDelete, canEdit, canReward } = useMyLevel();
 
@@ -226,55 +230,97 @@ export default function LinkPage() {
   const RecommendationInterfaceRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!loaded) {
-      handleLoadLinkPage();
+    const requestUserId = userId;
+    const pageLoadKey = `${linkId}:${requestUserId || 0}`;
+    if (!loaded && contentLoadKeyRef.current !== pageLoadKey) {
+      contentLoadKeyRef.current = pageLoadKey;
+      handleLoadLinkPage(pageLoadKey, requestUserId);
     }
-    if (!commentsLoaded) {
-      handleLoadComments();
+    if (!commentsLoaded && commentsLoadKeyRef.current !== pageLoadKey) {
+      commentsLoadKeyRef.current = pageLoadKey;
+      handleLoadComments(pageLoadKey, requestUserId);
     }
-    if (!subjectsLoaded) {
-      handleLoadSubjects();
+    if (!subjectsLoaded && subjectsLoadKeyRef.current !== pageLoadKey) {
+      subjectsLoadKeyRef.current = pageLoadKey;
+      handleLoadSubjects(pageLoadKey, requestUserId);
     }
-    async function handleLoadLinkPage() {
-      const data = await loadContent({
-        contentId: linkId,
-        contentType: 'url'
-      });
-      if (data.notFound) return setNotFound(true);
-      onInitContent({
-        ...data,
-        contentId: linkId,
-        contentType: 'url'
-      });
+    async function handleLoadLinkPage(loadKey: string, requestUserId: number) {
+      try {
+        const data = await loadContent({
+          contentId: linkId,
+          contentType: 'url'
+        });
+        if (
+          checkUserChange(requestUserId) ||
+          contentLoadKeyRef.current !== loadKey
+        ) {
+          return;
+        }
+        if (data.notFound) return setNotFound(true);
+        onInitContent({
+          ...data,
+          contentId: linkId,
+          contentType: 'url'
+        });
+      } finally {
+        if (contentLoadKeyRef.current === loadKey) {
+          contentLoadKeyRef.current = '';
+        }
+      }
     }
-    async function handleLoadComments() {
+    async function handleLoadComments(loadKey: string, requestUserId: number) {
       setLoadingComments(true);
-      const { comments: loadedComments, loadMoreButton } = await loadComments({
-        contentType: 'url',
-        contentId: linkId
-      });
-      onLoadComments({
-        comments: loadedComments,
-        contentId: linkId,
-        contentType: 'url',
-        loadMoreButton
-      });
-      setLoadingComments(false);
+      try {
+        const { comments: loadedComments, loadMoreButton } =
+          await loadComments({
+            contentType: 'url',
+            contentId: linkId
+          });
+        if (
+          checkUserChange(requestUserId) ||
+          commentsLoadKeyRef.current !== loadKey
+        ) {
+          return;
+        }
+        onLoadComments({
+          comments: loadedComments,
+          contentId: linkId,
+          contentType: 'url',
+          loadMoreButton
+        });
+      } finally {
+        if (commentsLoadKeyRef.current === loadKey) {
+          commentsLoadKeyRef.current = '';
+          setLoadingComments(false);
+        }
+      }
     }
-    async function handleLoadSubjects() {
-      const { results, loadMoreButton } = await loadSubjects({
-        contentType: 'url',
-        contentId: linkId
-      });
-      onLoadSubjects({
-        contentId: linkId,
-        contentType: 'url',
-        subjects: results,
-        loadMoreButton
-      });
+    async function handleLoadSubjects(loadKey: string, requestUserId: number) {
+      try {
+        const { results, loadMoreButton } = await loadSubjects({
+          contentType: 'url',
+          contentId: linkId
+        });
+        if (
+          checkUserChange(requestUserId) ||
+          subjectsLoadKeyRef.current !== loadKey
+        ) {
+          return;
+        }
+        onLoadSubjects({
+          contentId: linkId,
+          contentType: 'url',
+          subjects: results,
+          loadMoreButton
+        });
+      } finally {
+        if (subjectsLoadKeyRef.current === loadKey) {
+          subjectsLoadKeyRef.current = '';
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, loaded, commentsLoaded, subjectsLoaded, userId]);
 
   const isRecommendedByUser = useMemo(() => {
     return (

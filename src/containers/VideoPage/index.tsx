@@ -53,6 +53,11 @@ export default function VideoPage() {
   const [isNotFound, setIsNotFound] = useState(false);
   const CommentInputAreaRef = useRef<any>(null);
   const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
+  const contentLoadKeyRef = useRef('');
+  const commentsLoadKeyRef = useRef('');
+  const subjectsLoadKeyRef = useRef('');
+  const tagsLoadKeyRef = useRef('');
+  const tagsHydratedKeyRef = useRef('');
   const isMounted = useRef(true);
   const navigate = useNavigate();
 
@@ -64,6 +69,7 @@ export default function VideoPage() {
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
   const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onChangeVideoByUserStatus = useExploreContext(
     (v) => v.actions.onChangeVideoByUserStatus
   );
@@ -233,24 +239,41 @@ export default function VideoPage() {
   }, [title]);
 
   useEffect(() => {
-    setChangingPage(true);
+    const requestUserId = userId;
+    const pageLoadKey = `${videoId}:${requestUserId || 0}`;
     setIsNotFound(false);
-    if (!loaded) {
-      handleLoadVideoPage();
+    if (!loaded && contentLoadKeyRef.current !== pageLoadKey) {
+      contentLoadKeyRef.current = pageLoadKey;
+      handleLoadVideoPage(pageLoadKey, requestUserId);
     }
-    handleLoadTags();
-    if (!commentsLoaded) {
-      handleLoadComments();
+    if (
+      tags.length === 0 &&
+      tagsHydratedKeyRef.current !== pageLoadKey &&
+      tagsLoadKeyRef.current !== pageLoadKey
+    ) {
+      tagsLoadKeyRef.current = pageLoadKey;
+      handleLoadTags(pageLoadKey, requestUserId);
     }
-    if (!subjectsLoaded) {
-      handleLoadSubjects();
+    if (!commentsLoaded && commentsLoadKeyRef.current !== pageLoadKey) {
+      commentsLoadKeyRef.current = pageLoadKey;
+      handleLoadComments(pageLoadKey, requestUserId);
     }
-    setChangingPage(false);
-    async function handleLoadVideoPage() {
+    if (!subjectsLoaded && subjectsLoadKeyRef.current !== pageLoadKey) {
+      subjectsLoadKeyRef.current = pageLoadKey;
+      handleLoadSubjects(pageLoadKey, requestUserId);
+    }
+    async function handleLoadVideoPage(loadKey: string, requestUserId: number) {
       try {
+        setChangingPage(true);
         const { data } = await request.get(
           `${URL}/video/page?videoId=${videoId}`
         );
+        if (
+          checkUserChange(requestUserId) ||
+          contentLoadKeyRef.current !== loadKey
+        ) {
+          return;
+        }
         if (data.notFound) {
           return setIsNotFound(true);
         }
@@ -263,40 +286,83 @@ export default function VideoPage() {
         }
       } catch (error: any) {
         console.error(error.response || error);
+      } finally {
+        if (contentLoadKeyRef.current === loadKey) {
+          contentLoadKeyRef.current = '';
+          setChangingPage(false);
+        }
       }
     }
-    async function handleLoadComments() {
+    async function handleLoadComments(loadKey: string, requestUserId: number) {
       setLoadingComments(true);
-      const { comments: loadedComments, loadMoreButton } = await loadComments({
-        contentType: 'video',
-        contentId: videoId
-      });
-      onLoadComments({
-        comments: loadedComments,
-        contentId: videoId,
-        contentType: 'video',
-        loadMoreButton
-      });
-      setLoadingComments(false);
+      try {
+        const { comments: loadedComments, loadMoreButton } =
+          await loadComments({
+            contentType: 'video',
+            contentId: videoId
+          });
+        if (
+          checkUserChange(requestUserId) ||
+          commentsLoadKeyRef.current !== loadKey
+        ) {
+          return;
+        }
+        onLoadComments({
+          comments: loadedComments,
+          contentId: videoId,
+          contentType: 'video',
+          loadMoreButton
+        });
+      } finally {
+        if (commentsLoadKeyRef.current === loadKey) {
+          commentsLoadKeyRef.current = '';
+          setLoadingComments(false);
+        }
+      }
     }
-    async function handleLoadSubjects() {
-      const { results, loadMoreButton } = await loadSubjects({
-        contentType: 'video',
-        contentId: videoId
-      });
-      onLoadSubjects({
-        contentId: videoId,
-        contentType: 'video',
-        subjects: results,
-        loadMoreButton
-      });
+    async function handleLoadSubjects(loadKey: string, requestUserId: number) {
+      try {
+        const { results, loadMoreButton } = await loadSubjects({
+          contentType: 'video',
+          contentId: videoId
+        });
+        if (
+          checkUserChange(requestUserId) ||
+          subjectsLoadKeyRef.current !== loadKey
+        ) {
+          return;
+        }
+        onLoadSubjects({
+          contentId: videoId,
+          contentType: 'video',
+          subjects: results,
+          loadMoreButton
+        });
+      } finally {
+        if (subjectsLoadKeyRef.current === loadKey) {
+          subjectsLoadKeyRef.current = '';
+        }
+      }
     }
-    async function handleLoadTags() {
-      const tags = await fetchPlaylistsContaining({ videoId });
-      onLoadTags({ tags, contentId: videoId, contentType: 'video' });
+    async function handleLoadTags(loadKey: string, requestUserId: number) {
+      try {
+        const tags = await fetchPlaylistsContaining({ videoId });
+        if (
+          checkUserChange(requestUserId) ||
+          tagsLoadKeyRef.current !== loadKey
+        ) {
+          return;
+        }
+        tagsHydratedKeyRef.current = loadKey;
+        onLoadTags({ tags, contentId: videoId, contentType: 'video' });
+      } finally {
+        if (tagsLoadKeyRef.current === loadKey) {
+          tagsLoadKeyRef.current = '';
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId]);
+  }, [videoId, loaded, commentsLoaded, subjectsLoaded, tags.length, userId]);
 
   useEffect(() => {
     nextVideosRef.current = nextVideos;

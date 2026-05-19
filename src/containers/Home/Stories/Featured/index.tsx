@@ -4,7 +4,13 @@ import FeaturedSubjects from './Subjects';
 import CallZero from './CallZero';
 import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import {
+  desktopMinWidth,
+  mobileMaxWidth,
+  tabletMaxWidth
+} from '~/constants/css';
+
+const portraitTabletMediaQuery = `(min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) and (orientation: portrait)`;
 
 export default function Featured() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -77,6 +83,10 @@ export default function Featured() {
             transform: ${isZeroInterfaceExpanded
               ? 'translateX(-100%)'
               : 'translateX(0)'};
+
+            @media ${portraitTabletMediaQuery} {
+              width: 84%;
+            }
           `}
         >
           <FeaturedSubjects isLoggedIn={!!userId} />
@@ -90,6 +100,10 @@ export default function Featured() {
             width: ${isZeroInterfaceExpanded ? '100%' : '25%'};
             transition: width 0.5s ease-in-out;
             overflow: visible;
+
+            @media ${portraitTabletMediaQuery} {
+              width: ${isZeroInterfaceExpanded ? '100%' : '20%'};
+            }
           `}
         >
           <CallZero

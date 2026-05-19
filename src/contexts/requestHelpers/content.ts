@@ -642,7 +642,10 @@ export default function contentRequestHelpers({
     },
     async loadFeaturedSubjects() {
       try {
-        const { data } = await request.get(`${URL}/content/featured/subjects`);
+        const { data } = await request.get(
+          `${URL}/content/featured/subjects`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1353,7 +1356,8 @@ export default function contentRequestHelpers({
         const {
           data: { results, loadMoreButton }
         } = await request.get(
-          `${URL}/content/subjects?contentId=${contentId}&contentType=${contentType}&lastSubjectId=${lastSubjectId}`
+          `${URL}/content/subjects?contentId=${contentId}&contentType=${contentType}&lastSubjectId=${lastSubjectId}`,
+          auth()
         );
         return { results, loadMoreButton };
       } catch (error) {
@@ -1375,7 +1379,8 @@ export default function contentRequestHelpers({
         } = await request.get(
           `${URL}/content/uploads/byUser?numberToLoad=${limit}&contentType=${contentType}${
             lastId ? `&lastId=${lastId}` : ''
-          }`
+          }`,
+          auth()
         );
         return { results, loadMoreButton };
       } catch (error) {
@@ -1401,7 +1406,8 @@ export default function contentRequestHelpers({
             lastRecommendationId
               ? `&lastRecommendationId=${lastRecommendationId}&lastInteraction=${lastInteraction}`
               : ''
-          }`
+          }`,
+          auth()
         );
         return { results, loadMoreButton };
       } catch (error) {
@@ -1432,7 +1438,8 @@ export default function contentRequestHelpers({
                   destinationVar: 'excludes'
                 })}`
               : ''
-          }${includeRoot ? '&includeRoot=true' : ''}`
+          }${includeRoot ? '&includeRoot=true' : ''}`,
+          auth()
         );
         return { results, loadMoreButton };
       } catch (error) {

@@ -46,6 +46,8 @@ export default function MainContent({
     fileName,
     filePath,
     fileSize,
+    hasSecretAnswer,
+    hasSecretAttachment,
     thumbUrl,
     imagePath,
     imageStyle,
@@ -196,6 +198,8 @@ export default function MainContent({
           imagePath={imagePath}
           imageStyle={imageStyle}
           filePath={filePath}
+          hasSecretAnswer={hasSecretAnswer}
+          hasSecretAttachment={hasSecretAttachment}
           navigate={navigate}
           secretAnswer={secretAnswer}
           secretAttachment={secretAttachment}

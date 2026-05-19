@@ -1,7 +1,13 @@
 import React from 'react';
 import { css, keyframes } from '@emotion/css';
 import Icon from '~/components/Icon';
-import { Color, getStreakColor, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  desktopMinWidth,
+  getStreakColor,
+  mobileMaxWidth,
+  tabletMaxWidth
+} from '~/constants/css';
 import { useAppContext, useNotiContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -11,6 +17,7 @@ import { useSectionPanelVars } from '~/theme/hooks/useSectionPanelVars';
 type Focus = 'all' | 'wordle' | 'grammarbles' | 'aiStory';
 type TaskKey = Exclude<Focus, 'all'>;
 const WORDLE_EXCELLENCE_MAX_GUESSES = 4;
+const stackedCompactBoostQuery = `(max-width: ${mobileMaxWidth}), (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) and (orientation: portrait)`;
 type Tone = 'logoBlue' | 'orange' | 'magenta' | 'gold' | 'green' | 'gray';
 
 interface BoostRow {
@@ -139,7 +146,7 @@ export default function DailyRewardBoostStrip({
             justify-content: space-between;
             gap: 1rem;
 
-            @media (max-width: ${mobileMaxWidth}) {
+            @media ${stackedCompactBoostQuery} {
               padding: 1rem 3.8rem 1rem 1rem;
               flex-direction: column;
               text-align: center;
@@ -160,7 +167,7 @@ export default function DailyRewardBoostStrip({
               min-width: 0;
               flex: 1;
 
-              @media (max-width: ${mobileMaxWidth}) {
+              @media ${stackedCompactBoostQuery} {
                 display: ${hideCompactSummaryOnMobile ? 'none' : 'flex'};
                 width: 100%;
                 justify-content: center;
@@ -200,7 +207,7 @@ export default function DailyRewardBoostStrip({
                   gap: 0.55rem;
                   flex-wrap: wrap;
 
-                  @media (max-width: ${mobileMaxWidth}) {
+                  @media ${stackedCompactBoostQuery} {
                     justify-content: center;
                   }
                 `}
@@ -290,7 +297,7 @@ export default function DailyRewardBoostStrip({
                 width: min(100%, 29rem);
               }
 
-              @media (max-width: ${mobileMaxWidth}) {
+              @media ${stackedCompactBoostQuery} {
                 width: 100%;
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 margin-left: 0;
@@ -616,7 +623,7 @@ function ViewModeButton({
           background: ${disabled ? 'rgba(255, 255, 255, 0.96)' : 'white'};
         }
 
-        @media (max-width: ${mobileMaxWidth}) {
+        @media ${stackedCompactBoostQuery} {
           top: 0.85rem;
           right: 0.85rem;
         }
@@ -644,7 +651,7 @@ function CompactStatusChip({ row }: { row: BoostRow }) {
         background: ${withAlpha(toneColor, 0.08)};
         min-height: 4.3rem;
 
-        @media (max-width: ${mobileMaxWidth}) {
+        @media ${stackedCompactBoostQuery} {
           padding-left: 0.7rem;
           padding-right: 0.7rem;
         }

@@ -1,12 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
-import {
-  Color,
-  mobileMaxWidth,
-  tabletMaxWidth,
-  borderRadius
-} from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import Button from '~/components/Button';
 import Checkbox from '~/components/Checkbox';
 import Icon from '~/components/Icon';
@@ -18,6 +13,7 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 const deviceIsMobile = isMobile(navigator);
+const singleColumnMaxWidth = '899px';
 
 const panelClass = css`
   width: 100%;
@@ -76,7 +72,7 @@ const ownerSectionClass = css`
   justify-content: center;
   gap: 0.8rem;
   text-align: center;
-  @media (min-width: 821px) {
+  @media (min-width: 900px) {
     align-items: flex-start;
     text-align: left;
   }
@@ -95,7 +91,7 @@ const checkboxClass = css`
       font-size: 1.1rem;
     }
   }
-  @media (min-width: 821px) {
+  @media (min-width: 900px) {
     justify-content: flex-start;
   }
 `;
@@ -107,9 +103,6 @@ const filtersGroupClass = css`
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  @media (max-width: ${tabletMaxWidth}) {
-    justify-content: flex-start;
-  }
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.6rem;
     flex-direction: row;
@@ -144,8 +137,11 @@ const searchSectionClass = css`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
+  @media (min-width: 900px) {
+    align-items: flex-start;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     flex-direction: row;
     align-items: center;
@@ -222,10 +218,10 @@ const cardInputClass = css`
 const inlineFieldRowClass = css`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.8rem;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.6rem;
-    justify-content: center;
   }
 `;
 
@@ -273,7 +269,7 @@ const embedClass = css`
     color: var(--search-panel-accent, ${Color.logoBlue()});
     transform: translateY(-1px);
   }
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${singleColumnMaxWidth}) {
     justify-content: center;
     justify-self: center;
   }

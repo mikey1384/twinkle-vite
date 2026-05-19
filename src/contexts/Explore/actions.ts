@@ -350,6 +350,16 @@ export default function ExploreActions(dispatch: Dispatch) {
         subjects
       });
     },
+    onResetFeaturedSubjects() {
+      return dispatch({
+        type: 'RESET_FEATURED_SUBJECTS'
+      });
+    },
+    onResetSubjects() {
+      return dispatch({
+        type: 'RESET_SUBJECTS'
+      });
+    },
     onLoadMoreSearchResults({
       filter,
       results,

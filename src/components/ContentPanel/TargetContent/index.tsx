@@ -46,6 +46,7 @@ import { Comment as CommentType, Subject } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
+import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 
 const commentRemovedLabel = 'Comment removed / no longer available';
 const replyLabel = 'Reply';
@@ -252,6 +253,7 @@ export default function TargetContent({
     rootContent: rootObj,
     subject: targetSubject
   });
+  const subjectHasSecretMessage = hasSubjectSecretSignal(targetSubject);
 
   const isRecommendedByUser = useMemo(() => {
     return comment
@@ -327,12 +329,11 @@ export default function TargetContent({
   }, [userId]);
 
   const contentHidden = useMemo(() => {
-    const hasSecretAnswer = subject?.secretAnswer;
     const secretShown =
       subjectState.secretShown || subjectUploaderId === userId;
-    return hasSecretAnswer && !secretShown;
+    return subjectHasSecretMessage && !secretShown;
   }, [
-    subject?.secretAnswer,
+    subjectHasSecretMessage,
     subjectState.secretShown,
     subjectUploaderId,
     userId

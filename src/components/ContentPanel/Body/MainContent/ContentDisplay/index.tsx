@@ -20,6 +20,8 @@ export default function ContentDisplay({
   isFavorited,
   isListening,
   filePath,
+  hasSecretAnswer,
+  hasSecretAttachment,
   navigate,
   secretAnswer,
   secretAttachment,
@@ -48,6 +50,8 @@ export default function ContentDisplay({
   displayedContent: string;
   description: string;
   filePath: string;
+  hasSecretAnswer?: boolean;
+  hasSecretAttachment?: boolean;
   navigate: (url: string, options?: Record<string, any>) => void;
   secretAnswer: string;
   secretAttachment: any;
@@ -116,6 +120,8 @@ export default function ContentDisplay({
             description={description}
             imagePath={imagePath}
             imageStyle={imageStyle}
+            hasSecretAnswer={hasSecretAnswer}
+            hasSecretAttachment={hasSecretAttachment}
             isListening={isListening}
             isFavorited={isFavorited}
             isNotification={isNotification}

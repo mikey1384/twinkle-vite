@@ -48,6 +48,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 
 function Comment({
   comment,
@@ -156,14 +157,10 @@ function Comment({
     () => subjectState?.id || subject?.id,
     [subject?.id, subjectState?.id]
   );
-  const subjectHasSecretMessage = useMemo(
-    () => !!subjectState?.secretAnswer || !!subject?.secretAnswer,
-    [subject?.secretAnswer, subjectState?.secretAnswer]
-  );
-  const isCommentForASubjectWithSecretMessage = useMemo(
-    () => !!parent?.secretAnswer || !!parent?.secretAttachment,
-    [parent?.secretAnswer, parent?.secretAttachment]
-  );
+  const subjectHasSecretMessage =
+    hasSubjectSecretSignal(subjectState) || hasSubjectSecretSignal(subject);
+  const isCommentForASubjectWithSecretMessage =
+    hasSubjectSecretSignal(parent);
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(

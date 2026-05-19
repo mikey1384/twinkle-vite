@@ -1,11 +1,22 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useAppContext, useExploreContext, useHomeContext } from '~/contexts';
+import {
+  useAppContext,
+  useExploreContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
 import ContentListItem from '~/components/ContentListItem';
 import { Content } from '~/types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
-import { mobileMaxWidth } from '~/constants/css';
+import {
+  desktopMinWidth,
+  mobileMaxWidth,
+  tabletMaxWidth
+} from '~/constants/css';
 import { css } from '@emotion/css';
+
+const portraitTabletMediaQuery = `(min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) and (orientation: portrait)`;
 
 export default function FeaturedSubject({
   isLoggedIn,
@@ -17,6 +28,8 @@ export default function FeaturedSubject({
   const loadFeaturedSubjects = useAppContext(
     (v) => v.requestHelpers.loadFeaturedSubjects
   );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const featuredSubjectsLoaded = useHomeContext(
     (v) => v.state.featuredSubjectsLoaded
   );
@@ -41,23 +54,28 @@ export default function FeaturedSubject({
   }, [currentFeaturedIndex]);
 
   useEffect(() => {
-    if (!featuredSubjectsLoaded) {
-      init();
-    }
+    if (featuredSubjectsLoaded) return;
+    const requestUserId = userId;
+    init();
 
     async function init() {
       try {
         const subjects = await loadFeaturedSubjects();
+        if (checkUserChange(requestUserId)) return;
         onLoadFeaturedSubjects(subjects);
       } catch (error) {
+        if (checkUserChange(requestUserId)) return;
         console.error('Failed to load featured subjects:', error);
         onLoadFeaturedSubjects([]);
       } finally {
-        onSetFeaturedSubjectsLoaded(true);
+        if (!checkUserChange(requestUserId)) {
+          onSetFeaturedSubjectsLoaded(true);
+        }
       }
     }
+    // checkUserChange/loadFeaturedSubjects/onLoadFeaturedSubjects/onSetFeaturedSubjectsLoaded are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [featuredSubjectsLoaded, userId]);
 
   useEffect(() => {
     if (featureds.length === 0) return;
@@ -121,6 +139,9 @@ export default function FeaturedSubject({
               @media (max-width: ${mobileMaxWidth}) {
                 width: 3rem;
               }
+              @media ${portraitTabletMediaQuery} {
+                width: 3rem;
+              }
             `}
           >
             <Icon icon="chevron-left" />
@@ -156,6 +177,9 @@ export default function FeaturedSubject({
                 background-color: rgba(220, 220, 220, 1);
               }
               @media (max-width: ${mobileMaxWidth}) {
+                width: 3rem;
+              }
+              @media ${portraitTabletMediaQuery} {
                 width: 3rem;
               }
             `}

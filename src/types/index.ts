@@ -150,11 +150,14 @@ export interface Reward {
 
 export interface Subject {
   comments: Comment[];
+  hasSecretAnswer?: boolean;
+  hasSecretAttachment?: boolean;
   id: number;
   pinnedCommentId: number;
   rewards?: Reward[];
   secretAnswer: string;
   secretAttachment: Attachment;
+  secretShown?: boolean;
   title: string;
   rewardLevel: number;
   userId?: number;

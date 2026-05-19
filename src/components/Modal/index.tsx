@@ -117,6 +117,10 @@ const sizeMap: Record<ModalSize, { width: string; maxWidth: string }> = {
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 
+function stopModalEventPropagation(event: React.SyntheticEvent) {
+  event.stopPropagation();
+}
+
 let modalCounter = 0;
 const openModals = new Set<number>();
 
@@ -345,8 +349,8 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
 
     const handleBackdropClick = useCallback(
       (event: React.MouseEvent) => {
+        event.stopPropagation();
         if (closeOnBackdropClick && event.target === backdropRef.current) {
-          event.stopPropagation();
           onClose();
         }
       },
@@ -385,6 +389,14 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
             touch-action: manipulation;
           `} notranslate`}
           onClick={handleBackdropClick}
+          onMouseDown={stopModalEventPropagation}
+          onMouseUp={stopModalEventPropagation}
+          onPointerCancel={stopModalEventPropagation}
+          onPointerDown={stopModalEventPropagation}
+          onPointerMove={stopModalEventPropagation}
+          onPointerUp={stopModalEventPropagation}
+          onTouchEnd={stopModalEventPropagation}
+          onTouchStart={stopModalEventPropagation}
           aria-hidden="true"
         >
           <div

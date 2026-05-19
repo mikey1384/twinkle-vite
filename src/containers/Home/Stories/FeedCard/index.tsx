@@ -7,7 +7,13 @@ import Body, {
 import Actions from './Actions';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  borderRadius,
+  desktopMinWidth,
+  mobileMaxWidth,
+  tabletMaxWidth
+} from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
 import { useInView } from 'react-intersection-observer';
 import { useNavigate } from 'react-router-dom';
@@ -78,14 +84,15 @@ export default function HomeFeedCard({
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
   const onLoadComments = useContentContext((v) => v.actions.onLoadComments);
   const contentState = useContentState({ contentId, contentType });
   const [likeLoading, setLikeLoading] = useState(false);
   const [primaryTextTruncated, setPrimaryTextTruncated] = useState(false);
-  const loadingRef = useRef(false);
-  const previewCommentLoadingRef = useRef(false);
+  const loadingRef = useRef<string | null>(null);
+  const previewCommentLoadingRef = useRef<string | null>(null);
   const PanelRef = useRef<HTMLDivElement | null>(null);
   const tapNavigationRef = useRef<{
     moved: boolean;
@@ -212,6 +219,10 @@ export default function HomeFeedCard({
     [placeholderHeightKey]
   );
   const sizing = getStableHomeFeedCardSizing(sizingKey, calculatedSizing);
+  const tabletMediaAttachmentClassName =
+    sizing.main.size === 'media-attachment-with-text'
+      ? 'home-feed-card--tablet-media-attachment'
+      : '';
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [placeholderHeightState, setPlaceholderHeightState] = useState(() => ({
     height: previousPlaceholderHeight,
@@ -254,7 +265,8 @@ export default function HomeFeedCard({
     contentId > 0 && Boolean(contentType) && !contentState.loaded;
   const hydrationRequestKey = getHomeFeedContentHydrationKey(
     contentType,
-    contentId
+    contentId,
+    userId
   );
   const commentsCount = getHomeFeedPreviewCommentCount(appliedContent);
   const shouldLoadPreviewComment =
@@ -284,9 +296,10 @@ export default function HomeFeedCard({
   }, [placeholderHeightKey]);
 
   useEffect(() => {
-    if (!shouldHydrate || loadingRef.current) return;
+    if (!shouldHydrate || loadingRef.current === hydrationRequestKey) return;
     if (homeFeedContentHydrationRequests.has(hydrationRequestKey)) return;
-    loadingRef.current = true;
+    const requestUserId = userId;
+    loadingRef.current = hydrationRequestKey;
     homeFeedContentHydrationRequests.add(hydrationRequestKey);
     hydrateContent();
 
@@ -298,6 +311,7 @@ export default function HomeFeedCard({
           rootType: feed?.rootType
         });
         if (!data) return;
+        if (checkUserChange(requestUserId)) return;
         onInitContent({
           ...(feed?.feedId ? { ...data, feedId: feed.feedId } : data)
         });
@@ -309,26 +323,41 @@ export default function HomeFeedCard({
           });
         }
       } catch (error) {
+        if (checkUserChange(requestUserId)) return;
         console.error(error);
       } finally {
-        loadingRef.current = false;
+        if (loadingRef.current === hydrationRequestKey) {
+          loadingRef.current = null;
+        }
         homeFeedContentHydrationRequests.delete(hydrationRequestKey);
       }
     }
-    // loadContent/onInitContent are stable context helpers.
+    // checkUserChange/loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     shouldHydrate,
     hydrationRequestKey,
     contentId,
     contentType,
+    userId,
     feed?.rootType,
     feed?.feedId
   ]);
 
   useEffect(() => {
-    if (!shouldLoadPreviewComment || previewCommentLoadingRef.current) return;
-    previewCommentLoadingRef.current = true;
+    setLikeLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    const requestKey = `${userId || 0}:${contentType}:${contentId}:preview-comments`;
+    if (
+      !shouldLoadPreviewComment ||
+      previewCommentLoadingRef.current === requestKey
+    ) {
+      return;
+    }
+    const requestUserId = userId;
+    previewCommentLoadingRef.current = requestKey;
     loadPreviewComment();
 
     async function loadPreviewComment() {
@@ -340,6 +369,7 @@ export default function HomeFeedCard({
           isPreview: true
         });
         if (!data) return;
+        if (checkUserChange(requestUserId)) return;
         onLoadComments({
           comments: Array.isArray(data.comments) ? data.comments : [],
           contentId,
@@ -348,14 +378,17 @@ export default function HomeFeedCard({
           loadMoreButton: Boolean(data.loadMoreButton)
         });
       } catch (error) {
+        if (checkUserChange(requestUserId)) return;
         console.error(error);
       } finally {
-        previewCommentLoadingRef.current = false;
+        if (previewCommentLoadingRef.current === requestKey) {
+          previewCommentLoadingRef.current = null;
+        }
       }
     }
-    // loadComments/onLoadComments are stable context helpers.
+    // checkUserChange/loadComments/onLoadComments are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldLoadPreviewComment, contentId, contentType]);
+  }, [shouldLoadPreviewComment, contentId, contentType, userId]);
 
   useEffect(() => {
     if (!contentShown) {
@@ -553,9 +586,13 @@ export default function HomeFeedCard({
         style={{ position: 'relative', zIndex: totalCount - index }}
       >
         {contentShown ? (
-          <div ref={PanelRef} className={visiblePanelClass} style={sizingStyle}>
+          <div
+            ref={PanelRef}
+            className={`${visiblePanelClass} ${tabletMediaAttachmentClassName}`}
+            style={sizingStyle}
+          >
             <article
-              className={`${cardClass} ${sizing.card.className}`}
+              className={`${cardClass} ${sizing.card.className} ${tabletMediaAttachmentClassName}`}
               style={sizingStyle}
               tabIndex={0}
               onClick={handleCardClick}
@@ -628,7 +665,10 @@ export default function HomeFeedCard({
             </article>
           </div>
         ) : (
-          <div className={placeholderClass} style={placeholderStyle} />
+          <div
+            className={`${placeholderClass} ${tabletMediaAttachmentClassName}`}
+            style={placeholderStyle}
+          />
         )}
       </div>
     </ErrorBoundary>
@@ -737,6 +777,7 @@ export default function HomeFeedCard({
     }
     if (likeDisabled) return;
 
+    const requestUserId = userId;
     try {
       setLikeLoading(true);
       const newLikes = await likeContent({
@@ -744,11 +785,15 @@ export default function HomeFeedCard({
         contentType,
         rootType: appliedContent.rootType || feed?.rootType
       });
+      if (checkUserChange(requestUserId)) return;
       onLikeContent({ likes: newLikes, contentId, contentType });
     } catch (error) {
+      if (checkUserChange(requestUserId)) return;
       console.error(error);
     } finally {
-      setLikeLoading(false);
+      if (!checkUserChange(requestUserId)) {
+        setLikeLoading(false);
+      }
     }
   }
 
@@ -968,8 +1013,12 @@ function getHomeFeedPreviewCommentId(comment: any) {
   return Number(comment?.id || 0);
 }
 
-function getHomeFeedContentHydrationKey(contentType: string, contentId: number) {
-  return `${contentType}:${contentId}`;
+function getHomeFeedContentHydrationKey(
+  contentType: string,
+  contentId: number,
+  userId?: number | string
+) {
+  return `${userId || 0}:${contentType}:${contentId}`;
 }
 
 function mergePreviewTargetSecretState(
@@ -1364,6 +1413,11 @@ const placeholderClass = css`
   box-sizing: border-box;
   width: 100%;
   height: var(--home-feed-card-height);
+  @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+    &.home-feed-card--tablet-media-attachment {
+      height: var(--home-feed-card-mobile-height);
+    }
+  }
   @media (max-width: ${mobileMaxWidth}) {
     height: var(--home-feed-card-mobile-height);
   }
@@ -1373,6 +1427,11 @@ const visiblePanelClass = css`
   box-sizing: border-box;
   width: 100%;
   height: var(--home-feed-card-height);
+  @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+    &.home-feed-card--tablet-media-attachment {
+      height: var(--home-feed-card-mobile-height);
+    }
+  }
   @media (max-width: ${mobileMaxWidth}) {
     height: var(--home-feed-card-mobile-height);
   }
@@ -1408,6 +1467,15 @@ const cardClass = css`
   &:focus-visible {
     outline: 2px solid ${Color.logoBlue(0.45)};
     outline-offset: 2px;
+  }
+  @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+    &.home-feed-card--tablet-media-attachment {
+      height: var(--home-feed-card-mobile-height);
+      min-height: var(--home-feed-card-mobile-height);
+      max-height: var(--home-feed-card-mobile-height);
+      gap: max(0.75rem, 7.5px);
+      contain-intrinsic-size: auto var(--home-feed-card-mobile-height);
+    }
   }
   .heading {
     box-sizing: border-box;
@@ -1470,6 +1538,30 @@ const cardClass = css`
     min-height: 0;
     margin-top: 0.1rem;
     overflow: hidden;
+  }
+  @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+    &.home-feed-card--tablet-media-attachment .heading {
+      flex-basis: var(--home-feed-card-mobile-heading-height);
+      height: var(--home-feed-card-mobile-heading-height);
+    }
+    &.home-feed-card--tablet-media-attachment
+      .home-feed-card__heading-skeleton {
+      min-height: var(--home-feed-card-mobile-heading-height);
+    }
+    &.home-feed-card--tablet-media-attachment .home-feed-card__body {
+      flex-basis: var(--home-feed-card-mobile-body-height);
+      height: var(--home-feed-card-mobile-body-height);
+    }
+    &.home-feed-card--tablet-media-attachment .home-feed-card__actions {
+      flex-basis: max(3.1rem, 31px);
+      height: max(3.1rem, 31px);
+    }
+    &.home-feed-card--tablet-media-attachment
+      .home-feed-card__comment-preview-slot {
+      flex-basis: var(--home-feed-card-mobile-comment-preview-height);
+      height: var(--home-feed-card-mobile-comment-preview-height);
+      margin-top: -0.5rem;
+    }
   }
   .home-feed-card__avatar-skeleton,
   .home-feed-card__heading-lines > div,

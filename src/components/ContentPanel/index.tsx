@@ -105,6 +105,8 @@ export default function ContentPanel({
   );
   const [ComponentRef, inView] = useInView();
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const PanelRef = useRef(null);
   const navigate = useNavigate();
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
@@ -190,7 +192,7 @@ export default function ContentPanel({
       placeholderHeightRef.current = height;
     }
   });
-  const loading = useRef(false);
+  const hydrationRequestKeyRef = useRef('');
   const buildForkabilityHydrationKeyRef = useRef('');
   const inputAtBottom = contentType === 'comment';
   const { started: rootStarted } = useContentState({
@@ -212,41 +214,62 @@ export default function ContentPanel({
   }, [contentId, contentType]);
 
   useEffect(() => {
-    const hydrationKey = `${contentType}-${contentId}`;
+    const requestUserId = userId;
+    const hydrationKey = `${contentType}-${contentId}-${
+      appliedRootType || ''
+    }-${requestUserId || 0}`;
     const shouldHydrateBuildForkability =
       buildNeedsForkabilityHydration &&
       buildForkabilityHydrationKeyRef.current !== hydrationKey;
     if (
       (!loaded || shouldHydrateBuildForkability) &&
-      !loading.current &&
+      hydrationRequestKeyRef.current !== hydrationKey &&
       contentId
     ) {
       if (shouldHydrateBuildForkability) {
         buildForkabilityHydrationKeyRef.current = hydrationKey;
       }
-      onMount();
+      onMount(hydrationKey, requestUserId);
     }
-    async function onMount() {
-      loading.current = true;
-      const data = await loadContent({
-        contentId,
-        contentType,
-        rootType: appliedRootType
-      });
-      onInitContent({
-        ...(feedId ? { ...data, feedId } : data)
-      });
-      if (data.rootObj) {
-        onInitContent({
-          contentId: data.rootId,
-          contentType: data.rootType,
-          ...data.rootObj
+    async function onMount(hydrationKey: string, requestUserId: number) {
+      hydrationRequestKeyRef.current = hydrationKey;
+      try {
+        const data = await loadContent({
+          contentId,
+          contentType,
+          rootType: appliedRootType
         });
+        if (
+          checkUserChange(requestUserId) ||
+          hydrationRequestKeyRef.current !== hydrationKey
+        ) {
+          return;
+        }
+        onInitContent({
+          ...(feedId ? { ...data, feedId } : data)
+        });
+        if (data.rootObj) {
+          onInitContent({
+            contentId: data.rootId,
+            contentType: data.rootType,
+            ...data.rootObj
+          });
+        }
+      } finally {
+        if (hydrationRequestKeyRef.current === hydrationKey) {
+          hydrationRequestKeyRef.current = '';
+        }
       }
-      loading.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildNeedsForkabilityHydration, loaded]);
+  }, [
+    appliedRootType,
+    buildNeedsForkabilityHydration,
+    contentId,
+    contentType,
+    loaded,
+    userId
+  ]);
 
   const contentShown = useMemo(
     () => alwaysShow || inView || isVisible || started || rootStarted,

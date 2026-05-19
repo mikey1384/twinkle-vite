@@ -146,6 +146,7 @@ export default function MultiCardComponent({
             onClick={handleCompactCardStripClick}
           >
             <AICardsPreview
+              compact
               isAICardModalShown={!!selectedCardId}
               cardIds={cardIds}
               moreAICardsModalTitle={title}

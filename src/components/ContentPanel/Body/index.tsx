@@ -37,6 +37,7 @@ import {
   isContentPanelRewardActionEnabled
 } from '~/helpers/contentActionAvailability';
 import { resolveContentRewardLevel } from '~/helpers/rewardLevel';
+import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 
 const settingCannotBeChangedLabel = 'This setting cannot be changed';
 
@@ -90,6 +91,7 @@ export default function Body({
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
   const { colorKey: rewardColor } = useRoleColor('reward', {
@@ -108,6 +110,8 @@ export default function Body({
   );
 
   const {
+    hasSecretAnswer,
+    hasSecretAttachment,
     isEditing,
     secretAnswer,
     secretAttachment,
@@ -133,18 +137,22 @@ export default function Body({
     contentId: targetObj.subject?.id
   });
 
-  const subjectHasSecretMessage = useMemo(
+  const targetSubjectHasSecretMessage = hasSubjectSecretSignal(
+    targetObj.subject
+  );
+  const subjectHasSecretMessage =
+    hasSubjectSecretSignal(subjectState) || targetSubjectHasSecretMessage;
+  const rootObjHasSecretMessage = hasSubjectSecretSignal(rootObj);
+
+  const contentHasSecretMessage = useMemo(
     () =>
-      !!subjectState?.secretAnswer ||
-      !!subjectState?.secretAttachment ||
-      !!targetObj.subject?.secretAnswer ||
-      !!targetObj.subject?.secretAttachment,
-    [
-      targetObj.subject?.secretAnswer,
-      targetObj.subject?.secretAttachment,
-      subjectState?.secretAnswer,
-      subjectState?.secretAttachment
-    ]
+      hasSubjectSecretSignal({
+        hasSecretAnswer,
+        hasSecretAttachment,
+        secretAnswer,
+        secretAttachment
+      }),
+    [hasSecretAnswer, hasSecretAttachment, secretAnswer, secretAttachment]
   );
 
   const subjectId = useMemo(() => {
@@ -206,6 +214,7 @@ export default function Body({
   const RewardInterfaceRef = useRef(null);
   const RecommendationInterfaceRef = useRef<HTMLDivElement | null>(null);
   const consumedHomeFeedActionIntentRef = useRef<string | null>(null);
+  const rootLoadKeyRef = useRef('');
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -215,18 +224,41 @@ export default function Body({
   }, []);
 
   useEffect(() => {
-    if (rootId && normalizedRootType && !rootObj?.loaded) {
-      initRoot();
+    const requestUserId = userId;
+    const rootLoadKey = `${normalizedRootType || ''}-${rootId || 0}-${
+      requestUserId || 0
+    }`;
+    if (
+      rootId &&
+      normalizedRootType &&
+      !rootObj?.loaded &&
+      rootLoadKeyRef.current !== rootLoadKey
+    ) {
+      rootLoadKeyRef.current = rootLoadKey;
+      initRoot(rootLoadKey, requestUserId);
     }
-    async function initRoot() {
-      const data = await loadContent({
-        contentId: rootId,
-        contentType: normalizedRootType
-      });
-      onInitContent(data);
+    async function initRoot(rootLoadKey: string, requestUserId: number) {
+      try {
+        const data = await loadContent({
+          contentId: rootId,
+          contentType: normalizedRootType
+        });
+        if (
+          !mountedRef.current ||
+          checkUserChange(requestUserId) ||
+          rootLoadKeyRef.current !== rootLoadKey
+        ) {
+          return;
+        }
+        onInitContent(data);
+      } finally {
+        if (rootLoadKeyRef.current === rootLoadKey) {
+          rootLoadKeyRef.current = '';
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootId, normalizedRootType]);
+  }, [rootId, normalizedRootType, rootObj?.loaded, userId]);
 
   useEffect(() => {
     if (
@@ -297,22 +329,20 @@ export default function Body({
     const rootObjSecretHidden = !(
       rootSecretShown || rootObj?.uploader?.id === userId
     );
-    return contentType === 'subject' && (secretAnswer || secretAttachment)
+    return contentType === 'subject' && contentHasSecretMessage
       ? contentSecretHidden
-      : targetObj.subject?.secretAnswer || targetObj.subject?.secretAttachment
+      : targetSubjectHasSecretMessage
         ? targetSubjectSecretHidden
-        : !!rootObj?.secretAnswer && rootObjSecretHidden;
+        : rootObjHasSecretMessage && rootObjSecretHidden;
   }, [
+    contentHasSecretMessage,
     contentType,
-    rootObj?.secretAnswer,
+    rootObjHasSecretMessage,
     rootObj?.uploader?.id,
     rootSecretShown,
-    secretAnswer,
-    secretAttachment,
     secretShown,
     subjectSecretShown,
-    targetObj.subject?.secretAnswer,
-    targetObj.subject?.secretAttachment,
+    targetSubjectHasSecretMessage,
     subjectUploaderId,
     uploader.id,
     userId
@@ -717,9 +747,10 @@ export default function Body({
   async function handleCommentSubmit(params: object) {
     if (
       contentType === 'subject' &&
-      (contentObj.secretAnswer || contentObj.secretAttachment) &&
+      contentHasSecretMessage &&
       !secretShown
     ) {
+      await refreshSubjectAfterSecretUnlock();
       await handleExpandComments();
       if (!mountedRef.current) return;
       onChangeSpoilerStatus({
@@ -730,6 +761,17 @@ export default function Body({
     } else {
       onCommentSubmit(params);
     }
+  }
+
+  async function refreshSubjectAfterSecretUnlock() {
+    if (!subjectId) return;
+    const requestUserId = userId;
+    const data = await loadContent({
+      contentId: subjectId,
+      contentType: 'subject'
+    });
+    if (!mountedRef.current || !data || checkUserChange(requestUserId)) return;
+    onInitContent(data);
   }
 
   function onSecretAnswerClick() {

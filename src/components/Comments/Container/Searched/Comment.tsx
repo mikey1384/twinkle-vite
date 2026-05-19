@@ -39,6 +39,7 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
+import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 
 const pinLabel = 'Pin';
 const unpinLabel = 'Unpin';
@@ -197,14 +198,10 @@ export default function SearchedComment({
     () => subjectState?.id || subject?.id,
     [subject?.id, subjectState?.id]
   );
-  const subjectHasSecretMessage = useMemo(
-    () => !!subjectState?.secretAnswer || !!subject?.secretAnswer,
-    [subject?.secretAnswer, subjectState?.secretAnswer]
-  );
-  const isCommentForASubjectWithSecretMessage = useMemo(
-    () => !!parent?.secretAnswer || !!parent?.secretAttachment,
-    [parent?.secretAnswer, parent?.secretAttachment]
-  );
+  const subjectHasSecretMessage =
+    hasSubjectSecretSignal(subjectState) || hasSubjectSecretSignal(subject);
+  const isCommentForASubjectWithSecretMessage =
+    hasSubjectSecretSignal(parent);
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(

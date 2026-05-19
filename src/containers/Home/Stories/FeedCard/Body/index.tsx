@@ -18,7 +18,7 @@ import {
   getInternalEmbedPreviewInfo
 } from '~/helpers/aiCardEmbedHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
-import { useAppContext, useContentContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import {
   addCommasToNumber,
@@ -135,7 +135,13 @@ export default function Body({
   }
 
   return (
-    <div className={`${bodyClass} home-feed-card__body`}>
+    <div
+      className={`${bodyClass} home-feed-card__body${
+        resolvedSizing.main.size === 'media-attachment-with-text'
+          ? ' home-feed-card__body--tablet-media-attachment'
+          : ''
+      }`}
+    >
       <section className={panelClassName}>{renderContentPreview()}</section>
       <TargetPreview
         contentType={contentType}
@@ -1205,9 +1211,11 @@ function PreviewCommentBuildMedia({
   contentId: number;
   label: string;
 }) {
-  const loadingRef = useRef(false);
+  const loadingRef = useRef<string | null>(null);
   const contentState = useContentState({ contentId, contentType: 'build' });
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const thumbnailUrl = String(
     contentState?.thumbnailUrl || contentState?.thumbUrl || ''
@@ -1215,10 +1223,15 @@ function PreviewCommentBuildMedia({
   const title = getBuildDisplayTitle(contentState) || label;
 
   useEffect(() => {
-    if (!contentId || contentState.loaded || loadingRef.current) return;
-    loadingRef.current = true;
+    const requestKey = `${userId || 0}:${contentId}:build`;
+    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+      return;
+    }
+    const requestUserId = userId;
+    loadingRef.current = requestKey;
     loadContent({ contentId, contentType: 'build' })
       .then((data: any) => {
+        if (checkUserChange(requestUserId)) return;
         if (!data?.notFound) {
           onInitContent({
             ...data,
@@ -1228,14 +1241,17 @@ function PreviewCommentBuildMedia({
         }
       })
       .catch((error: unknown) => {
+        if (checkUserChange(requestUserId)) return;
         console.error(error);
       })
       .finally(() => {
-        loadingRef.current = false;
+        if (loadingRef.current === requestKey) {
+          loadingRef.current = null;
+        }
       });
-    // loadContent/onInitContent are stable context helpers.
+    // checkUserChange/loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, contentState.loaded]);
+  }, [contentId, contentState.loaded, userId]);
 
   return (
     <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--build">

@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -40,6 +41,9 @@ import {
   useAppContext,
   useManagementContext,
   useHomeContext,
+  useContentContext,
+  useExploreContext,
+  useProfileContext,
   useInputContext,
   useViewContext,
   useNotiContext,
@@ -233,6 +237,12 @@ export default function App() {
   );
   const onSetChessStats = useChessContext((v) => v.actions.onSetChessStats);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
+  const onResetFeeds = useHomeContext((v) => v.actions.onResetFeeds);
+  const onResetContent = useContentContext((v) => v.actions.onResetContent);
+  const onResetSubjects = useExploreContext((v) => v.actions.onResetSubjects);
+  const onResetProfileViewerState = useProfileContext(
+    (v) => v.actions.onResetProfileViewerState
+  );
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
   );
@@ -455,6 +465,17 @@ export default function App() {
   const outgoingShown = useMemo(() => {
     return channelOnCall.imCalling || channelOnCall.outgoingShown;
   }, [channelOnCall.imCalling, channelOnCall.outgoingShown]);
+
+  useLayoutEffect(() => {
+    if (prevUserId.current === userId) return;
+    onResetContent();
+    onResetFeeds();
+    onResetSubjects();
+    onResetProfileViewerState();
+    prevUserId.current = userId;
+    // These reset helpers are stable context helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     prevUserId.current = userId;

@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  desktopMinWidth,
+  mobileMaxWidth,
+  tabletMaxWidth
+} from '~/constants/css';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -40,6 +45,7 @@ const EMPTY_BG = 'rgba(148,163,184,0.18)';
 const EMPTY_BORDER = 'rgba(148,163,184,0.4)';
 const EMPTY_FLAT = 'rgba(148,163,184,0.22)';
 const CHARGE_CTA_ACK_STORAGE_KEY = 'twinkle_ai_energy_charge_cta_ack';
+const compactInlineEnergyQuery = `(max-width: ${mobileMaxWidth}), (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) and (orientation: portrait)`;
 
 export default function AiEnergyCard({
   energyPercent,
@@ -107,6 +113,11 @@ export default function AiEnergyCard({
     ? mode === 'low_energy'
       ? 'Lite Mode'
       : 'Max Mode'
+    : '';
+  const compactModeLabel = mode
+    ? mode === 'low_energy'
+      ? 'Lite'
+      : 'Max'
     : '';
   const statusLabel = modeLabel;
   const hasEnoughCoins = twinkleCoins >= resetCost;
@@ -296,8 +307,18 @@ export default function AiEnergyCard({
               <span className={inlinePercentCls}>{percent}%</span>
             </div>
             {statusLabel && (
-              <span className={inlineModeCls} style={modeBadgeStyle}>
-                {statusLabel}
+              <span
+                aria-label={statusLabel}
+                className={inlineModeCls}
+                style={modeBadgeStyle}
+                title={statusLabel}
+              >
+                <span className={inlineModeFullTextCls} aria-hidden="true">
+                  {statusLabel}
+                </span>
+                <span className={inlineModeCompactTextCls} aria-hidden="true">
+                  {compactModeLabel}
+                </span>
               </span>
             )}
           </div>
@@ -502,7 +523,7 @@ const energyBadgeCls = css`
 `;
 
 const inlineTitleTextCls = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${compactInlineEnergyQuery} {
     display: none;
   }
 `;
@@ -554,6 +575,20 @@ const inlineModeCls = css`
   line-height: 1;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
   white-space: nowrap;
+`;
+
+const inlineModeFullTextCls = css`
+  @media ${compactInlineEnergyQuery} {
+    display: none;
+  }
+`;
+
+const inlineModeCompactTextCls = css`
+  display: none;
+
+  @media ${compactInlineEnergyQuery} {
+    display: inline;
+  }
 `;
 
 const headerCls = css`

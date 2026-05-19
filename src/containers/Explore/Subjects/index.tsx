@@ -8,6 +8,7 @@ import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 export default function Subjects() {
   const canPinPlaylists = useKeyContext((v) => v.myState.canPinPlaylists);
   const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const loadByUserUploads = useAppContext(
     (v) => v.requestHelpers.loadByUserUploads
   );
@@ -69,18 +70,23 @@ export default function Subjects() {
   );
 
   useEffect(() => {
+    const requestUserId = userId;
     init();
+
     async function init() {
       if (!loaded || userId !== prevUserId) {
         handleLoadFeaturedSubjects();
         handleLoadByUserSubjects();
         handleLoadRecommendedSubjects();
-        onSetSubjectsLoaded(true);
+        if (!checkUserChange(requestUserId)) {
+          onSetSubjectsLoaded(true);
+        }
       }
     }
 
     async function handleLoadFeaturedSubjects() {
       const subjects = await loadFeaturedSubjects();
+      if (checkUserChange(requestUserId)) return;
       onLoadFeaturedSubjects(subjects);
     }
 
@@ -89,6 +95,7 @@ export default function Subjects() {
         contentType: 'subject',
         limit: 5
       });
+      if (checkUserChange(requestUserId)) return;
       onLoadByUserSubjects({
         subjects: results,
         loadMoreButton
@@ -101,11 +108,13 @@ export default function Subjects() {
           contentType: 'subject',
           limit: 5
         });
+      if (checkUserChange(requestUserId)) return;
       onLoadRecommendedSubjects({
         subjects: results,
         loadMoreButton: loadMoreRecommendsButton
       });
     }
+    // checkUserChange/loadFeaturedSubjects/loadByUserUploads/loadRecommendedUploads and context actions are stable helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, userId, prevUserId]);
 

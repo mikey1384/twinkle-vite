@@ -65,6 +65,11 @@ export default function HomeActions(dispatch: Dispatch) {
         loadMoreButton
       });
     },
+    onResetFeeds() {
+      return dispatch({
+        type: 'RESET_FEEDS'
+      });
+    },
     onLoadNewFeeds(data: object) {
       return dispatch({
         type: 'LOAD_NEW_FEEDS',

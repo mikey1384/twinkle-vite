@@ -24,6 +24,7 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
+import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 
 export default function Content({
   audioPath,
@@ -33,6 +34,8 @@ export default function Content({
   contentObj,
   description,
   difficulty,
+  hasSecretAnswer,
+  hasSecretAttachment,
   imagePath,
   imageStyle,
   isNotification,
@@ -57,6 +60,8 @@ export default function Content({
   contentObj: Content;
   description: string;
   difficulty?: number;
+  hasSecretAnswer?: boolean;
+  hasSecretAttachment?: boolean;
   imagePath?: string;
   imageStyle?: string;
   isListening?: boolean;
@@ -115,6 +120,23 @@ export default function Content({
     }
     return contentObj;
   }, [contentObj, contentType]);
+  const subjectHasSecretMessage = useMemo(
+    () =>
+      contentType === 'subject' &&
+      hasSubjectSecretSignal({
+        hasSecretAnswer,
+        hasSecretAttachment,
+        secretAnswer,
+        secretAttachment
+      }),
+    [
+      contentType,
+      hasSecretAnswer,
+      hasSecretAttachment,
+      secretAnswer,
+      secretAttachment
+    ]
+  );
 
   const displayedXPEarned = useMemo(() => {
     return addCommasToNumber(xpEarned);
@@ -620,7 +642,7 @@ export default function Content({
         </div>
       )}
       {RenderedContent}
-      {(secretAnswer || secretAttachment) && (
+      {subjectHasSecretMessage && (
         <SecretAnswer
           answer={secretAnswer}
           theme={theme}

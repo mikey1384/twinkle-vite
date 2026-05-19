@@ -100,6 +100,19 @@ export default function HomeReducer(
         ],
         loadMoreButton: action.loadMoreButton
       };
+    case 'RESET_FEEDS':
+      return {
+        ...state,
+        category: 'recommended',
+        currentFeaturedIndex: 0,
+        displayOrder: 'desc',
+        feeds: [],
+        feedsOutdated: false,
+        featuredSubjectsLoaded: false,
+        loaded: false,
+        loadMoreButton: false,
+        subFilter: 'all'
+      };
     case 'LOAD_NEW_FEEDS':
       return {
         ...state,

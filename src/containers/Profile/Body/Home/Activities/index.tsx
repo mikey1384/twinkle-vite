@@ -16,6 +16,7 @@ export default function Activities({
   selectedTheme: string;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const [isNotablesLoading, setIsNotablesLoading] = useState(false);
   const [isSubjectsLoading, setIsSubjectsLoading] = useState(false);
   const loadNotableContent = useAppContext(
@@ -37,6 +38,7 @@ export default function Activities({
     subjects: { posts: featuredSubjects, loaded: isSubjectsLoaded }
   } = useProfileState(username);
   useEffect(() => {
+    const requestUserId = userId;
     if (!isNotablesLoaded) {
       initNotables();
     }
@@ -60,15 +62,18 @@ export default function Activities({
       setIsSubjectsLoading(true);
       try {
         const subjects = await loadFeaturedSubjectsOnProfile(id);
+        if (checkUserChange(requestUserId)) return;
         onLoadFeaturedSubjects({ username, subjects });
       } catch (error) {
         console.error(error);
       } finally {
-        setIsSubjectsLoading(false);
+        if (!checkUserChange(requestUserId)) {
+          setIsSubjectsLoading(false);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, isNotablesLoaded, isSubjectsLoaded, username]);
+  }, [id, isNotablesLoaded, isSubjectsLoaded, username, userId]);
 
   const isSubjectSectionShown = useMemo(() => {
     if (profile.id === userId) {

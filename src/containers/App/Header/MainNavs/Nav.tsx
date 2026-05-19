@@ -178,6 +178,14 @@ function Nav({
             color: ${highlightColor}!important;
           }
         }
+        > a:focus {
+          outline: none;
+        }
+        > a:focus-visible {
+          text-decoration: none;
+          outline: none;
+          border-bottom-color: ${hoverUnderlineColor};
+        }
         @keyframes colorChange {
           0% {
             color: #6a11cb;
