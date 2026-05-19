@@ -20,8 +20,11 @@ import {
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { useScrollAnchor } from './hooks/useScrollAnchor';
+import { getStoredItem } from '~/helpers/userDataHelpers';
 
 const hiThereLabel = 'Hi there!';
+const HOME_FEED_PERFORMANCE_FORCE_KEY = 'twinkleHomeFeedPerformance';
+const HOME_FEED_CLIENT_PERFORMANCE_DEFAULT_PROD_SAMPLE_RATE = 0.02;
 
 const categoryObj: Record<string, any> = {
   uploads: {
@@ -43,10 +46,94 @@ const categoryObj: Record<string, any> = {
   }
 };
 
-function getHomeFeedAnchorId(
-  feed: { [key: string]: any } = {},
-  index: number
-) {
+type HomeFeedLoadMoreSource = 'button' | 'scroll';
+
+function getHomeFeedPerformanceNow() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now();
+}
+
+function getHomeFeedClientPerformanceSampleRate() {
+  const configuredRate = Number(
+    import.meta.env.VITE_HOME_FEED_CLIENT_PERF_SAMPLE_RATE
+  );
+  if (Number.isFinite(configuredRate)) {
+    return Math.min(Math.max(configuredRate, 0), 1);
+  }
+  return import.meta.env.PROD
+    ? HOME_FEED_CLIENT_PERFORMANCE_DEFAULT_PROD_SAMPLE_RATE
+    : 0;
+}
+
+function shouldSampleHomeFeedClientPerformance() {
+  if (getStoredItem(HOME_FEED_PERFORMANCE_FORCE_KEY) === '1') return true;
+  const sampleRate = getHomeFeedClientPerformanceSampleRate();
+  return sampleRate > 0 && Math.random() < sampleRate;
+}
+
+function createHomeFeedClientRequestId() {
+  const randomId =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+  return `home-feed:${Date.now().toString(36)}:${randomId}`;
+}
+
+function getHomeFeedScrollSnapshot() {
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    return {
+      remainingPx: 0,
+      scrollHeight: 0,
+      scrollTop: 0,
+      viewportHeight: 0
+    };
+  }
+
+  const appElement = document.getElementById('App');
+  const scrollingElement =
+    document.scrollingElement || document.documentElement;
+  const scrollHeight = Math.max(
+    appElement?.scrollHeight || 0,
+    scrollingElement?.scrollHeight || 0
+  );
+  const scrollTop = Math.max(
+    appElement?.scrollTop || 0,
+    scrollingElement?.scrollTop || 0
+  );
+  const viewportHeight = window.innerHeight || 0;
+
+  return {
+    remainingPx: Math.max(0, scrollHeight - scrollTop - viewportHeight),
+    scrollHeight,
+    scrollTop,
+    viewportHeight
+  };
+}
+
+function getHomeFeedIds(feeds: any[] = []) {
+  return feeds
+    .map((feed) => Number(feed?.feedId || 0))
+    .filter((feedId) => feedId > 0);
+}
+
+function countDuplicateHomeFeedIds(feeds: any[] = []) {
+  const feedIds = getHomeFeedIds(feeds);
+  return feedIds.length - new Set(feedIds).size;
+}
+
+function countReturnedExistingFeedIds({
+  existingFeeds,
+  returnedFeeds
+}: {
+  existingFeeds: any[];
+  returnedFeeds: any[];
+}) {
+  const existingFeedIds = new Set(getHomeFeedIds(existingFeeds));
+  return getHomeFeedIds(returnedFeeds).filter((feedId) =>
+    existingFeedIds.has(feedId)
+  ).length;
+}
+
+function getHomeFeedAnchorId(feed: { [key: string]: any } = {}, index: number) {
   const parts = [
     getHomeFeedAnchorPart('feed', feed.feedId),
     getHomeFeedAnchorPart('type', feed.contentType),
@@ -76,6 +163,9 @@ export default function Stories() {
   const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
+  const recordHomeFeedPerformance = useAppContext(
+    (v) => v.requestHelpers.recordHomeFeedPerformance
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
@@ -127,6 +217,7 @@ export default function Stories() {
   const displayOrderRef = useRef(displayOrder);
   const numNewPostsRef = useRef(numNewPosts);
   const mountedRef = useRef(true);
+  const loadMoreRequestCountRef = useRef(0);
 
   const loadingPosts = useMemo(
     () => loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds,
@@ -182,9 +273,9 @@ export default function Stories() {
   }, [userId]);
 
   useInfiniteScroll({
-    scrollable: feeds?.length > 0 && !loadingMoreRef.current,
+    scrollable: feeds?.length > 0 && loadMoreButton && !loadingMoreRef.current,
     feedsLength: feeds?.length,
-    onScrollToBottom: handleLoadMoreFeeds
+    onScrollToBottom: () => handleLoadMoreFeeds('scroll')
   });
 
   const homeFeedAnchorKey = useMemo(
@@ -370,7 +461,7 @@ export default function Stories() {
                 {loadMoreButton ? (
                   <LoadMoreButton
                     style={{ marginTop: '0.6rem' }}
-                    onClick={handleLoadMoreFeeds}
+                    onClick={() => handleLoadMoreFeeds('button')}
                     loading={loadingMore}
                     filled
                   />
@@ -442,30 +533,147 @@ export default function Stories() {
     }
   }
 
-  async function handleLoadMoreFeeds() {
+  async function handleLoadMoreFeeds(source: HomeFeedLoadMoreSource) {
     const requestUserId = userId;
+    const requestCategory = category;
+    const requestSubFilter = subFilter;
+    const requestDisplayOrder = displayOrder;
+    const requestCategoryConfig = categoryObj[requestCategory];
+    const requestFilter =
+      requestCategory === 'uploads'
+        ? requestSubFilter
+        : requestCategoryConfig.filter;
+    const requestOrderBy = requestCategoryConfig.orderBy;
+    const requestIsRecommended = requestCategoryConfig.isRecommended;
+    const feedsBeforeRequest = feeds || [];
     const lastFeedId =
-      feeds?.length > 0 ? feeds[feeds?.length - 1].feedId : null;
+      feedsBeforeRequest.length > 0
+        ? feedsBeforeRequest[feedsBeforeRequest.length - 1].feedId
+        : null;
+    const shouldRecordPerformance = shouldSampleHomeFeedClientPerformance();
+    const clientRequestId = shouldRecordPerformance
+      ? createHomeFeedClientRequestId()
+      : '';
+
+    if (!loadMoreButton) {
+      if (shouldRecordPerformance) {
+        void recordHomeFeedPerformance({
+          category: requestCategory,
+          clientRequestId,
+          displayOrder: requestDisplayOrder,
+          event: 'home_feed_load_more_skipped',
+          filter: requestFilter,
+          isRecommended: Boolean(requestIsRecommended),
+          loadMoreButtonAtStart: false,
+          loadMoreRequestCount: loadMoreRequestCountRef.current,
+          skippedNoLoadMoreButton: true,
+          source,
+          subFilter: requestSubFilter
+        });
+      }
+      return;
+    }
     if (loadingMoreRef.current) return;
+    const loadMoreRequestCount = loadMoreRequestCountRef.current + 1;
+    loadMoreRequestCountRef.current = loadMoreRequestCount;
+    const triggerAt = getHomeFeedPerformanceNow();
+    const startScrollSnapshot = getHomeFeedScrollSnapshot();
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
+      const requestStartAt = getHomeFeedPerformanceNow();
       const { data } = await loadFeeds({
-        filter:
-          category === 'uploads' ? subFilter : categoryObj[category].filter,
-        order: displayOrder,
-        orderBy: categoryObj[category].orderBy,
-        isRecommended: categoryObj[category].isRecommended,
+        filter: requestFilter,
+        order: requestDisplayOrder,
+        orderBy: requestOrderBy,
+        isRecommended: requestIsRecommended,
         lastFeedId,
+        clientRequestId,
+        feedPerformanceSample: shouldRecordPerformance,
         lastRewardLevel:
-          feeds?.length > 0 ? feeds[feeds?.length - 1].rewardLevel : null,
+          feedsBeforeRequest.length > 0
+            ? feedsBeforeRequest[feedsBeforeRequest.length - 1].rewardLevel
+            : null,
         lastTimeStamp:
-          feeds?.length > 0 ? feeds[feeds?.length - 1].lastInteraction : null,
+          feedsBeforeRequest.length > 0
+            ? feedsBeforeRequest[feedsBeforeRequest.length - 1].lastInteraction
+            : null,
         lastViewDuration:
-          feeds?.length > 0 ? feeds[feeds?.length - 1].totalViewDuration : null
+          feedsBeforeRequest.length > 0
+            ? feedsBeforeRequest[feedsBeforeRequest.length - 1]
+                .totalViewDuration
+            : null
       });
-      if (shouldIgnoreStoryRequest(requestUserId)) return;
+      const responseAt = getHomeFeedPerformanceNow();
+      const responseScrollSnapshot = getHomeFeedScrollSnapshot();
+      const returnedFeeds = Array.isArray(data?.feeds) ? data.feeds : [];
+      const staleIgnored =
+        shouldIgnoreStoryRequest(requestUserId) ||
+        categoryRef.current !== requestCategory ||
+        subFilterRef.current !== requestSubFilter ||
+        displayOrderRef.current !== requestDisplayOrder;
+      if (staleIgnored) {
+        if (shouldRecordPerformance) {
+          recordHomeFeedLoadMorePerformance({
+            category: requestCategory,
+            clientRequestId,
+            displayOrder: requestDisplayOrder,
+            duplicateExistingFeedCount: countReturnedExistingFeedIds({
+              existingFeeds: feedsBeforeRequest,
+              returnedFeeds
+            }),
+            duplicateReturnedFeedCount:
+              countDuplicateHomeFeedIds(returnedFeeds),
+            feedsBeforeCount: feedsBeforeRequest.length,
+            feedsReturnedCount: returnedFeeds.length,
+            filter: requestFilter,
+            isRecommended: Boolean(requestIsRecommended),
+            loadMoreButtonAtStart: loadMoreButton,
+            loadMoreRequestCount,
+            orderBy: requestOrderBy,
+            requestDurationMs: responseAt - requestStartAt,
+            responseRemainingPx: responseScrollSnapshot.remainingPx,
+            responseToDispatchMs: 0,
+            source,
+            staleIgnored: true,
+            startRemainingPx: startScrollSnapshot.remainingPx,
+            subFilter: requestSubFilter,
+            triggerAt,
+            triggerToPaintMs: responseAt - triggerAt
+          });
+        }
+        return;
+      }
+      const dispatchAt = getHomeFeedPerformanceNow();
       onLoadMoreFeeds(data);
+      if (shouldRecordPerformance) {
+        recordHomeFeedLoadMorePerformance({
+          category: requestCategory,
+          clientRequestId,
+          dispatchAt,
+          displayOrder: requestDisplayOrder,
+          duplicateExistingFeedCount: countReturnedExistingFeedIds({
+            existingFeeds: feedsBeforeRequest,
+            returnedFeeds
+          }),
+          duplicateReturnedFeedCount: countDuplicateHomeFeedIds(returnedFeeds),
+          feedsBeforeCount: feedsBeforeRequest.length,
+          feedsReturnedCount: returnedFeeds.length,
+          filter: requestFilter,
+          isRecommended: Boolean(requestIsRecommended),
+          loadMoreButtonAtStart: loadMoreButton,
+          loadMoreRequestCount,
+          orderBy: requestOrderBy,
+          requestDurationMs: responseAt - requestStartAt,
+          responseRemainingPx: responseScrollSnapshot.remainingPx,
+          responseToDispatchMs: dispatchAt - responseAt,
+          source,
+          staleIgnored: false,
+          startRemainingPx: startScrollSnapshot.remainingPx,
+          subFilter: requestSubFilter,
+          triggerAt
+        });
+      }
     } catch (error) {
       if (shouldIgnoreStoryRequest(requestUserId)) return;
       console.error(error);
@@ -475,6 +683,99 @@ export default function Stories() {
         loadingMoreRef.current = false;
       }
     }
+  }
+
+  function recordHomeFeedLoadMorePerformance({
+    category,
+    clientRequestId,
+    dispatchAt,
+    displayOrder,
+    duplicateExistingFeedCount,
+    duplicateReturnedFeedCount,
+    feedsBeforeCount,
+    feedsReturnedCount,
+    filter,
+    isRecommended,
+    loadMoreButtonAtStart,
+    loadMoreRequestCount,
+    orderBy,
+    requestDurationMs,
+    responseRemainingPx,
+    responseToDispatchMs,
+    source,
+    staleIgnored,
+    startRemainingPx,
+    subFilter,
+    triggerAt,
+    triggerToPaintMs
+  }: {
+    category: string;
+    clientRequestId: string;
+    dispatchAt?: number;
+    displayOrder: string;
+    duplicateExistingFeedCount: number;
+    duplicateReturnedFeedCount: number;
+    feedsBeforeCount: number;
+    feedsReturnedCount: number;
+    filter: string;
+    isRecommended: boolean;
+    loadMoreButtonAtStart: boolean;
+    loadMoreRequestCount: number;
+    orderBy: string;
+    requestDurationMs: number;
+    responseRemainingPx: number;
+    responseToDispatchMs: number;
+    source: HomeFeedLoadMoreSource;
+    staleIgnored: boolean;
+    startRemainingPx: number;
+    subFilter: string;
+    triggerAt: number;
+    triggerToPaintMs?: number;
+  }) {
+    const sendMetric = () => {
+      const paintAt = getHomeFeedPerformanceNow();
+      const paintScrollSnapshot = getHomeFeedScrollSnapshot();
+      void recordHomeFeedPerformance({
+        appendToPaintMs: dispatchAt ? paintAt - dispatchAt : 0,
+        category,
+        clientRequestId,
+        displayOrder,
+        duplicateExistingFeedCount,
+        duplicateReturnedFeedCount,
+        event: 'home_feed_load_more',
+        feedsBeforeCount,
+        feedsDomCountAfterPaint:
+          FeedListRef.current?.querySelectorAll('[data-feed-id]').length || 0,
+        feedsReturnedCount,
+        filter,
+        isRecommended,
+        loadMoreButtonAtStart,
+        loadMoreRequestCount,
+        orderBy,
+        paintRemainingPx: paintScrollSnapshot.remainingPx,
+        requestDurationMs,
+        responseRemainingPx,
+        responseToDispatchMs,
+        reachedLoadedEndDuringRequest: responseRemainingPx <= 0,
+        source,
+        staleIgnored,
+        startRemainingPx,
+        subFilter,
+        triggerToPaintMs: triggerToPaintMs ?? paintAt - triggerAt
+      });
+    };
+
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.requestAnimationFrame === 'function'
+    ) {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(sendMetric);
+      });
+      return;
+    }
+
+    setTimeout(sendMetric, 0);
   }
 
   async function handleChangeCategory(newCategory: string) {

@@ -7,7 +7,10 @@ import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
+import {
+  ADMIN_MANAGEMENT_LEVEL,
+  ADMIN_USER_ID
+} from '~/constants/defaultValues';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useManagementContext, useKeyContext } from '~/contexts';
 
@@ -21,6 +24,7 @@ export default function Management() {
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const canViewAiCosts = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
+  const canViewHomeFeedPerformance = userId === ADMIN_USER_ID;
 
   useEffect(() => {
     onLoadManagement();
@@ -64,6 +68,15 @@ export default function Management() {
             <span style={{ marginLeft: '1.1rem' }}>AI Costs</span>
           </NavLink>
         )}
+        {canViewHomeFeedPerformance && (
+          <NavLink
+            to="/management/home-feed-performance"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="chart-line" />
+            <span style={{ marginLeft: '1.1rem' }}>Home Feed Performance</span>
+          </NavLink>
+        )}
       </SideMenu>
       <FilterBar
         style={{ height: '5rem', marginBottom: 0 }}
@@ -101,6 +114,18 @@ export default function Management() {
             onClick={() => navigate('/management/ai-costs')}
           >
             AI Costs
+          </nav>
+        )}
+        {canViewHomeFeedPerformance && (
+          <nav
+            className={
+              location.pathname === `/management/home-feed-performance`
+                ? 'active'
+                : ''
+            }
+            onClick={() => navigate('/management/home-feed-performance')}
+          >
+            Feed Perf
           </nav>
         )}
       </FilterBar>

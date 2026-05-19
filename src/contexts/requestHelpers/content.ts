@@ -656,6 +656,8 @@ export default function contentRequestHelpers({
       lastTimeStamp,
       lastRewardLevel,
       lastViewDuration,
+      clientRequestId,
+      feedPerformanceSample,
       isRecommended,
       filter = 'all',
       order = 'desc',
@@ -666,6 +668,8 @@ export default function contentRequestHelpers({
       lastTimeStamp?: string;
       lastRewardLevel?: number;
       lastViewDuration?: number;
+      clientRequestId?: string;
+      feedPerformanceSample?: boolean;
       isRecommended?: boolean;
       filter?: string;
       order?: string;
@@ -673,19 +677,42 @@ export default function contentRequestHelpers({
       username?: string;
     } = {}) {
       try {
+        const params = new URLSearchParams({
+          filter,
+          username: String(username),
+          order,
+          orderByLabel: orderBy
+        });
+        if (isRecommended) {
+          params.set('isRecommended', '1');
+        }
+        if (lastFeedId) {
+          params.set('lastFeedId', String(lastFeedId));
+          params.set('lastTimeStamp', String(lastTimeStamp));
+          params.set('lastRewardLevel', String(lastRewardLevel));
+          params.set('lastViewDuration', String(lastViewDuration));
+        }
+        if (clientRequestId) {
+          params.set('clientRequestId', clientRequestId);
+        }
+        if (feedPerformanceSample) {
+          params.set('feedPerf', '1');
+        }
         const { data } = await request.get(
-          `${URL}/content/feeds?filter=${filter}&username=${username}&order=${order}&orderByLabel=${orderBy}${
-            isRecommended ? `&isRecommended=1` : ''
-          }${
-            lastFeedId
-              ? `&lastFeedId=${lastFeedId}&lastTimeStamp=${lastTimeStamp}&lastRewardLevel=${lastRewardLevel}&lastViewDuration=${lastViewDuration}`
-              : ''
-          }`,
+          `${URL}/content/feeds?${params.toString()}`,
           auth()
         );
         return { data, filter };
       } catch (error) {
         return handleError(error);
+      }
+    },
+    async recordHomeFeedPerformance(payload: Record<string, unknown>) {
+      try {
+        await request.post(`${URL}/content/feeds/performance`, payload, auth());
+        return { success: true };
+      } catch {
+        return { success: false };
       }
     },
     async loadAIStoryTopic(difficulty: number) {

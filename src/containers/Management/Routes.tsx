@@ -10,6 +10,9 @@ const Main = lazyWithRetry(() => import('./Main'));
 const Tools = lazyWithRetry(() => import('./Tools'));
 const ModActivities = lazyWithRetry(() => import('./ModActivities'));
 const AiCosts = lazyWithRetry(() => import('./AiCosts'));
+const HomeFeedPerformance = lazyWithRetry(
+  () => import('./HomeFeedPerformance')
+);
 
 export default function ManagementRoutes({ className }: { className: string }) {
   const location = useLocation();
@@ -32,6 +35,10 @@ export default function ManagementRoutes({ className }: { className: string }) {
             <Route path="tools" element={<Tools />} />
             <Route path="mod-activities" element={<ModActivities />} />
             <Route path="ai-costs" element={<AiCosts />} />
+            <Route
+              path="home-feed-performance"
+              element={<HomeFeedPerformance />}
+            />
           </Routes>
         </Suspense>
       </div>

@@ -187,6 +187,48 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadHomeFeedPerformanceReport(hours: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/home-feed-performance/report?hours=${hours}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadHomeFeedPerformanceExport({
+      hours,
+      format
+    }: {
+      hours: number;
+      format: 'csv' | 'json';
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/home-feed-performance/export.${format}?hours=${hours}`,
+          {
+            ...auth(),
+            responseType: 'blob'
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async clearHomeFeedPerformanceData(hours: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/management/home-feed-performance/events?hours=${hours}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addModerators(newModerators: number[]) {
       try {
         const { data } = await request.post(
@@ -495,15 +537,14 @@ export default function managementRequestHelpers({
           }
     ) {
       try {
-        const contentType = typeof params === 'string' ? params : params.contentType;
+        const contentType =
+          typeof params === 'string' ? params : params.contentType;
         const limit =
           typeof params === 'string' ? undefined : Number(params.limit);
         const offset =
           typeof params === 'string' ? undefined : Number(params.offset);
         const cursorTimeStamp =
-          typeof params === 'string'
-            ? NaN
-            : Number(params.cursor?.timeStamp);
+          typeof params === 'string' ? NaN : Number(params.cursor?.timeStamp);
         const cursorId =
           typeof params === 'string' ? NaN : Number(params.cursor?.id);
         const searchParams = new URLSearchParams();
