@@ -21,9 +21,9 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { useScrollAnchor } from './hooks/useScrollAnchor';
 import { getStoredItem } from '~/helpers/userDataHelpers';
+import { HOME_FEED_PERFORMANCE_FORCE_KEY } from '~/constants/defaultValues';
 
 const hiThereLabel = 'Hi there!';
-const HOME_FEED_PERFORMANCE_FORCE_KEY = 'twinkleHomeFeedPerformance';
 const HOME_FEED_CLIENT_PERFORMANCE_DEFAULT_PROD_SAMPLE_RATE = 0.02;
 
 const categoryObj: Record<string, any> = {

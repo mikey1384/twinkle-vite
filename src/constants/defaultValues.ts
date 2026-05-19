@@ -26,6 +26,7 @@ export const months = [
   'December'
 ];
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
+export const HOME_FEED_PERFORMANCE_FORCE_KEY = 'twinkleHomeFeedPerformance';
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
 export const ZERO_TWINKLE_ID = Number(import.meta.env.VITE_ZERO_TWINKLE_ID);

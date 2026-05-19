@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import Button from '~/components/Button';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 import Icon from '~/components/Icon';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { ADMIN_USER_ID } from '~/constants/defaultValues';
+import {
+  ADMIN_USER_ID,
+  HOME_FEED_PERFORMANCE_FORCE_KEY
+} from '~/constants/defaultValues';
+import {
+  getStoredItem,
+  removeStoredItem,
+  setStoredItem
+} from '~/helpers/userDataHelpers';
 import {
   formatCompact,
   formatNumber,
@@ -106,6 +115,10 @@ const RANGE_OPTIONS: {
   { label: '7 days', value: 168 }
 ];
 
+function isHomeFeedPerformanceCaptureEnabled() {
+  return getStoredItem(HOME_FEED_PERFORMANCE_FORCE_KEY) === '1';
+}
+
 export default function HomeFeedPerformance() {
   const [hours, setHours] = useState<HomeFeedPerformanceRangeOption>(24);
   const [reloadKey, setReloadKey] = useState(0);
@@ -116,6 +129,9 @@ export default function HomeFeedPerformance() {
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState('');
   const [report, setReport] = useState<HomeFeedPerformanceReport | null>(null);
+  const [captureEnabled, setCaptureEnabled] = useState(
+    isHomeFeedPerformanceCaptureEnabled
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const loadHomeFeedPerformanceReport = useAppContext(
     (v) => v.requestHelpers.loadHomeFeedPerformanceReport
@@ -178,6 +194,14 @@ export default function HomeFeedPerformance() {
           ) : null}
         </div>
         <div className={actionsClass}>
+          <SwitchButton
+            ariaLabel="Toggle home feed performance capture in this browser"
+            checked={captureEnabled}
+            color={Color.logoBlue()}
+            label="Capture"
+            onChange={handleToggleCapture}
+            small
+          />
           <div className={rangeClass}>
             {RANGE_OPTIONS.map((option) => (
               <button
@@ -330,6 +354,18 @@ export default function HomeFeedPerformance() {
 
   function handleRefresh() {
     setReloadKey((key) => key + 1);
+  }
+
+  function handleToggleCapture() {
+    setCaptureEnabled((enabled) => {
+      const nextEnabled = !enabled;
+      if (nextEnabled) {
+        setStoredItem(HOME_FEED_PERFORMANCE_FORCE_KEY, '1');
+      } else {
+        removeStoredItem(HOME_FEED_PERFORMANCE_FORCE_KEY);
+      }
+      return nextEnabled;
+    });
   }
 
   async function handleExport(format: 'csv' | 'json') {
