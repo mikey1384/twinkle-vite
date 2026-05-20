@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useBuildContext, useChatContext } from '~/contexts';
 
 interface BuildContributionInvitePayload {
   type?: string;
@@ -62,6 +62,9 @@ export default function BuildContributionInvite({
   );
   const onUpdateBuildContributionMembership = useChatContext(
     (v) => v.actions.onUpdateBuildContributionMembership
+  );
+  const onInvalidateBuildStudioBrowseTab = useBuildContext(
+    (v) => v.actions.onInvalidateBuildStudioBrowseTab
   );
   const payload = useMemo(
     () => invite || parseBuildInvitePayload(content),
@@ -248,6 +251,7 @@ export default function BuildContributionInvite({
           eventTimeMs: Number(result.eventTimeMs || Date.now()),
           timeStamp: Math.floor(Date.now() / 1000)
         });
+        invalidateBuildStudioCollaboratingBuilds();
         handleOpenWorkspace();
       }
     } catch (error: any) {
@@ -270,6 +274,7 @@ export default function BuildContributionInvite({
           eventTimeMs: Number(result.eventTimeMs || Date.now()),
           timeStamp: Math.floor(Date.now() / 1000)
         });
+        invalidateBuildStudioCollaboratingBuilds();
       }
     } catch (error: any) {
       if (applyBuildInviteActionState(error)) return;
@@ -298,6 +303,7 @@ export default function BuildContributionInvite({
       eventTimeMs,
       timeStamp: Math.floor(Date.now() / 1000)
     });
+    invalidateBuildStudioCollaboratingBuilds();
     return true;
   }
 
@@ -307,6 +313,10 @@ export default function BuildContributionInvite({
         openVersionsPanel: true
       }
     });
+  }
+
+  function invalidateBuildStudioCollaboratingBuilds() {
+    onInvalidateBuildStudioBrowseTab({ tab: 'collaborating' });
   }
 
   function handleOpenApp() {

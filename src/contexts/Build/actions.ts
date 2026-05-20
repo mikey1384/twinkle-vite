@@ -180,6 +180,18 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildStudio: { userId }
       });
     },
+    onInvalidateBuildStudioBrowseTab({
+      tab,
+      userId
+    }: {
+      tab: BuildStudioTab;
+      userId?: number | null;
+    }) {
+      return dispatch({
+        type: 'INVALIDATE_BUILD_STUDIO_BROWSE_TAB',
+        buildStudio: { tab, userId }
+      });
+    },
     onSetBuildStudioActivityItems(buildStudio: BuildStudioActionPayload) {
       return dispatch({
         type: 'SET_BUILD_STUDIO_ACTIVITY_ITEMS',

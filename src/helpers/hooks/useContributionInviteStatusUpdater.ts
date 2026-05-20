@@ -1,4 +1,4 @@
-import { useChatContext, useNotiContext } from '~/contexts';
+import { useBuildContext, useChatContext, useNotiContext } from '~/contexts';
 
 type BuildContributionInviteStatus =
   | 'pending'
@@ -12,6 +12,9 @@ export function useContributionInviteStatusUpdater() {
   );
   const onUpdateBuildContributionInviteNotification = useNotiContext(
     (v) => v.actions.onUpdateBuildContributionInviteNotification
+  );
+  const onInvalidateBuildStudioBrowseTab = useBuildContext(
+    (v) => v.actions.onInvalidateBuildStudioBrowseTab
   );
 
   function updateBuildContributionInviteStatus({
@@ -36,6 +39,7 @@ export function useContributionInviteStatusUpdater() {
       inviteStatus: status,
       eventTimeMs: Number(eventTimeMs || Date.now())
     });
+    onInvalidateBuildStudioBrowseTab({ tab: 'collaborating' });
   }
 
   return updateBuildContributionInviteStatus;

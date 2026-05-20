@@ -345,6 +345,35 @@ function getLocationPath(location: Location) {
   return `${location.pathname}${location.search}${location.hash}`;
 }
 
+function getLocationStateObject(location: Location): Record<string, unknown> {
+  const state = location.state;
+  return state && typeof state === 'object' && !Array.isArray(state)
+    ? (state as Record<string, unknown>)
+    : {};
+}
+
+function getRuntimeBackLabelForLocation(location: Location) {
+  const pathname = location.pathname;
+  if (pathname === '/') return 'Back to Home';
+  if (pathname.startsWith('/build')) return 'Back to Workspace';
+  if (pathname.startsWith('/chat')) return 'Back to Chat';
+  if (pathname.startsWith('/users/')) return 'Back to Profile';
+  if (pathname === '/users') return 'Back to People';
+  if (pathname === '/groups') return 'Back to Groups';
+  if (pathname === '/settings') return 'Back to Settings';
+  if (pathname === '/earn') return 'Back to Earn';
+  if (pathname.startsWith('/missions')) return 'Back to Missions';
+  if (
+    pathname.startsWith('/ai-cards') ||
+    pathname.startsWith('/videos') ||
+    pathname.startsWith('/links') ||
+    pathname.startsWith('/subjects')
+  ) {
+    return 'Back to Explore';
+  }
+  return 'Back';
+}
+
 function clampTrayPosition(x: number, y: number, tray: HTMLElement | null) {
   const rect = tray?.getBoundingClientRect();
   const width = rect?.width || 340;
@@ -702,7 +731,13 @@ export default function BuildRuntimeKeepAliveHost() {
 
   function handleRestoreSession() {
     if (!session) return;
-    navigate(session.path, { state: session.location.state });
+    navigate(session.path, {
+      state: {
+        ...getLocationStateObject(session.location),
+        runtimeBackTo: getLocationPath(location),
+        runtimeBackLabel: getRuntimeBackLabelForLocation(location)
+      }
+    });
   }
 
   function handleKillSession() {

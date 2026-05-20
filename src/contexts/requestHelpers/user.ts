@@ -848,6 +848,24 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async updateBuildStudioState(buildStudio: {
+      activeTab?: string;
+      browseModes?: {
+        community?: string;
+        open_source?: string;
+      };
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/state/build-studio`,
+          { buildStudio },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setTheme({ color }: { color: string }) {
       try {
         await request.put(`${URL}/user/theme`, { color }, auth());

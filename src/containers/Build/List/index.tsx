@@ -26,6 +26,7 @@ import {
   getPublicBuildScope,
   getPublicBuildSort,
   isPublicBrowseTab,
+  normalizeBuildListBrowseMode,
   normalizeBuildListSearchQuery,
   normalizeBuildListTab,
   shouldExcludeMineFromPublicBrowse
@@ -101,6 +102,9 @@ export default function BuildList() {
   const buildQuickAccessMode = useKeyContext(
     (v) => v.myState.buildQuickAccessMode
   );
+  const persistedBuildStudioState = useKeyContext(
+    (v) => v.myState.state?.buildStudio
+  );
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const loadMyBuilds = useAppContext((v) => v.requestHelpers.loadMyBuilds);
@@ -115,6 +119,10 @@ export default function BuildList() {
     (v) => v.requestHelpers.updateBuildMetadata
   );
   const deleteBuild = useAppContext((v) => v.requestHelpers.deleteBuild);
+  const updateBuildStudioState = useAppContext(
+    (v) => v.requestHelpers.updateBuildStudioState
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const buildStudio = useBuildContext((v) => v.state.buildStudio);
   const onSetBuildStudioActiveTab = useBuildContext(
     (v) => v.actions.onSetBuildStudioActiveTab
@@ -147,10 +155,18 @@ export default function BuildList() {
     activeTab,
     buildStudio
   });
+  const persistedBuildStudioStateKey = getPersistedBuildStudioStateKey(
+    persistedBuildStudioState
+  );
   const [buildSearchInput, setBuildSearchInput] = useState('');
   const [buildSearchQuery, setBuildSearchQuery] = useState('');
   const collaboratingBrowseState =
     buildStudio?.browse?.collaborating || createEmptyBrowseState();
+  const collaboratingCacheRefreshKey =
+    getCollaboratingBuildsCacheRefreshKey(numNewNotis);
+  const collaboratingCacheGeneration = getBuildStudioBrowseCacheGeneration(
+    collaboratingBrowseState.cacheGeneration
+  );
   const activeBrowseLoadedForCurrentUser = Boolean(
     normalizedUserId &&
     activeBrowseState.userId === normalizedUserId &&
@@ -163,6 +179,10 @@ export default function BuildList() {
     collaboratingBrowseState.userId === normalizedUserId &&
     collaboratingBrowseState.searchQuery === '' &&
     collaboratingBrowseState.loaded
+  );
+  const collaboratingCacheFreshForCurrentUser = Boolean(
+    collaboratingLoadedForCurrentUser &&
+      collaboratingBrowseState.cacheRefreshKey === collaboratingCacheRefreshKey
   );
   const collaboratingBuildCount = collaboratingLoadedForCurrentUser
     ? collaboratingBrowseState.builds.length
@@ -199,6 +219,11 @@ export default function BuildList() {
   const activeBrowseLoaded =
     activeTab === 'mine' ? true : activeBrowseLoadedForCurrentUser;
   const activeTabRef = useRef<BuildListTab>(activeTab);
+  const buildStudioHydrationKeyRef = useRef('');
+  const buildStudioPreferenceSaveIdRef = useRef(0);
+  const buildStudioPreferenceSaveQueueRef = useRef<Promise<void>>(
+    Promise.resolve()
+  );
   const tabChangeInitialScrollRef = useRef(false);
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
@@ -292,6 +317,47 @@ export default function BuildList() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (!normalizedUserId || !persistedBuildStudioStateKey) return;
+    const hydrationKey = `${normalizedUserId}:${persistedBuildStudioStateKey}`;
+    if (buildStudioHydrationKeyRef.current === hydrationKey) return;
+    buildStudioHydrationKeyRef.current = hydrationKey;
+
+    const nextActiveTab = normalizeBuildListTab(
+      persistedBuildStudioState?.activeTab
+    );
+    const nextCommunityBrowseMode = normalizeBuildListBrowseMode(
+      persistedBuildStudioState?.browseModes?.community
+    );
+    const nextOpenSourceBrowseMode = normalizeBuildListBrowseMode(
+      persistedBuildStudioState?.browseModes?.open_source
+    );
+
+    if (activeTabRef.current !== nextActiveTab) {
+      onSetBuildStudioActiveTab(nextActiveTab);
+    }
+    if (
+      getBuildListBrowseMode({ activeTab: 'community', buildStudio }) !==
+      nextCommunityBrowseMode
+    ) {
+      onSetBuildStudioBrowseMode({
+        tab: 'community',
+        browseMode: nextCommunityBrowseMode
+      });
+    }
+    if (
+      getBuildListBrowseMode({ activeTab: 'open_source', buildStudio }) !==
+      nextOpenSourceBrowseMode
+    ) {
+      onSetBuildStudioBrowseMode({
+        tab: 'open_source',
+        browseMode: nextOpenSourceBrowseMode
+      });
+    }
+    // Context actions and request helpers are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedUserId, persistedBuildStudioStateKey]);
+
+  useEffect(() => {
     setEditingBuild(null);
     setDeletingBuild(null);
     setForkHistoryBuildId(null);
@@ -345,6 +411,7 @@ export default function BuildList() {
 
   useEffect(() => {
     if (!normalizedUserId) return;
+    if (collaboratingCacheFreshForCurrentUser) return;
     let canceled = false;
     handleLoadCollaboratingBuilds();
 
@@ -358,6 +425,8 @@ export default function BuildList() {
             loadMoreToken: getLoadMoreToken(data),
             browseMode: 'recent',
             searchQuery: '',
+            cacheRefreshKey: collaboratingCacheRefreshKey,
+            cacheGeneration: collaboratingCacheGeneration,
             userId: normalizedUserId
           });
         }
@@ -370,6 +439,8 @@ export default function BuildList() {
             loadMoreToken: null,
             browseMode: 'recent',
             searchQuery: '',
+            cacheRefreshKey: collaboratingCacheRefreshKey,
+            cacheGeneration: collaboratingCacheGeneration,
             userId: normalizedUserId
           });
         }
@@ -380,7 +451,12 @@ export default function BuildList() {
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, numNewNotis]);
+  }, [
+    normalizedUserId,
+    collaboratingCacheFreshForCurrentUser,
+    collaboratingCacheRefreshKey,
+    collaboratingCacheGeneration
+  ]);
 
   useEffect(() => {
     if (activeTab !== 'collaborating') return;
@@ -433,6 +509,14 @@ export default function BuildList() {
             loadMoreToken: getLoadMoreToken(data),
             browseMode: activeBrowseMode,
             searchQuery: buildSearchQuery,
+            cacheRefreshKey:
+              activeTab === 'collaborating'
+                ? collaboratingCacheRefreshKey
+                : undefined,
+            cacheGeneration:
+              activeTab === 'collaborating'
+                ? collaboratingCacheGeneration
+                : undefined,
             userId: normalizedUserId
           });
         }
@@ -445,6 +529,14 @@ export default function BuildList() {
             loadMoreToken: null,
             browseMode: activeBrowseMode,
             searchQuery: buildSearchQuery,
+            cacheRefreshKey:
+              activeTab === 'collaborating'
+                ? collaboratingCacheRefreshKey
+                : undefined,
+            cacheGeneration:
+              activeTab === 'collaborating'
+                ? collaboratingCacheGeneration
+                : undefined,
             userId: normalizedUserId
           });
         }
@@ -699,6 +791,7 @@ export default function BuildList() {
     if (tab !== activeTab) {
       tabChangeInitialScrollRef.current = true;
       onSetBuildStudioActiveTab(tab);
+      void persistBuildStudioState({ activeTab: tab });
     }
   }
 
@@ -707,6 +800,10 @@ export default function BuildList() {
       return;
     }
     onSetBuildStudioBrowseMode({ tab: activeTab, browseMode });
+    void persistBuildStudioState({
+      browseMode,
+      browseModeTab: activeTab
+    });
   }
 
   async function handleLoadMoreBrowseBuilds() {
@@ -735,6 +832,10 @@ export default function BuildList() {
         loadMoreToken: getLoadMoreToken(data),
         browseMode: activeBrowseMode,
         searchQuery: buildSearchQuery,
+        cacheGeneration:
+          activeTab === 'collaborating'
+            ? collaboratingCacheGeneration
+            : undefined,
         userId: normalizedUserId
       });
     } catch (error) {
@@ -788,6 +889,46 @@ export default function BuildList() {
     });
   }
 
+  async function persistBuildStudioState({
+    activeTab: nextActiveTab = activeTab,
+    browseMode,
+    browseModeTab
+  }: {
+    activeTab?: BuildListTab;
+    browseMode?: BuildStudioBrowseMode;
+    browseModeTab?: BuildListTab;
+  }) {
+    if (!normalizedUserId) return;
+    const nextBuildStudioState = getSerializableBuildStudioState({
+      activeTab: nextActiveTab,
+      browseMode,
+      browseModeTab,
+      buildStudio
+    });
+    const saveId = buildStudioPreferenceSaveIdRef.current + 1;
+    buildStudioPreferenceSaveIdRef.current = saveId;
+    const savePreference = async () => {
+      try {
+        const data = await updateBuildStudioState(nextBuildStudioState);
+        if (saveId !== buildStudioPreferenceSaveIdRef.current) return;
+        if (data?.state) {
+          onSetUserState({
+            userId: normalizedUserId,
+            newState: { state: data.state }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to save Build Studio view preference:', error);
+      }
+    };
+    const savePromise = buildStudioPreferenceSaveQueueRef.current.then(
+      savePreference,
+      savePreference
+    );
+    buildStudioPreferenceSaveQueueRef.current = savePromise;
+    await savePromise;
+  }
+
 }
 
 function getIsActivityRailVisible() {
@@ -799,4 +940,55 @@ function getIsActivityRailVisible() {
 
 function getBuildListScrollPositionPathname(tab: BuildListTab) {
   return `/build:${tab}`;
+}
+
+function getCollaboratingBuildsCacheRefreshKey(numNewNotis: unknown) {
+  const refreshKey = Math.floor(Number(numNewNotis) || 0);
+  if (!Number.isFinite(refreshKey)) return 0;
+  return Math.max(0, refreshKey);
+}
+
+function getBuildStudioBrowseCacheGeneration(value: unknown) {
+  const generation = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(generation)) return 0;
+  return Math.max(0, generation);
+}
+
+function getPersistedBuildStudioStateKey(value: any) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+  return JSON.stringify({
+    activeTab: normalizeBuildListTab(value.activeTab),
+    browseModes: {
+      community: normalizeBuildListBrowseMode(value.browseModes?.community),
+      open_source: normalizeBuildListBrowseMode(value.browseModes?.open_source)
+    }
+  });
+}
+
+function getSerializableBuildStudioState({
+  activeTab,
+  browseMode,
+  browseModeTab,
+  buildStudio
+}: {
+  activeTab: BuildListTab;
+  browseMode?: BuildStudioBrowseMode;
+  browseModeTab?: BuildListTab;
+  buildStudio: any;
+}) {
+  const communityBrowseMode =
+    browseModeTab === 'community' && browseMode
+      ? browseMode
+      : getBuildListBrowseMode({ activeTab: 'community', buildStudio });
+  const openSourceBrowseMode =
+    browseModeTab === 'open_source' && browseMode
+      ? browseMode
+      : getBuildListBrowseMode({ activeTab: 'open_source', buildStudio });
+  return {
+    activeTab: normalizeBuildListTab(activeTab),
+    browseModes: {
+      community: communityBrowseMode,
+      open_source: openSourceBrowseMode
+    }
+  };
 }

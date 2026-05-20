@@ -137,6 +137,8 @@ export interface BuildStudioBrowseTabState {
   browseMode: BuildStudioBrowseMode;
   searchQuery: string;
   userId: number | null;
+  cacheRefreshKey: number;
+  cacheGeneration: number;
 }
 
 export interface BuildStudioActivityPanelState {
@@ -272,6 +274,8 @@ export interface BuildStudioActionPayload {
   loadMoreToken?: string | null;
   browseMode?: BuildStudioBrowseMode | string | null;
   searchQuery?: string | null;
+  cacheRefreshKey?: number | null;
+  cacheGeneration?: number | null;
   activityTab?: BuildActivityTab | string | null;
   activitySubtab?: BuildActivitySubtab | string | null;
   activities?: any[];
@@ -320,6 +324,7 @@ export interface BuildAction {
     | 'SET_BUILD_STUDIO_BROWSE_MODE'
     | 'SET_BUILD_STUDIO_ACTIVITY_FILTER'
     | 'INVALIDATE_BUILD_STUDIO_ACTIVITY_FEEDS'
+    | 'INVALIDATE_BUILD_STUDIO_BROWSE_TAB'
     | 'SET_BUILD_STUDIO_ACTIVITY_ITEMS'
     | 'APPEND_BUILD_STUDIO_ACTIVITY_ITEMS'
     | 'SET_BUILD_STUDIO_ACTIVITY_VIEWED'
@@ -412,7 +417,9 @@ function createInitialBuildStudioBrowseState(): BuildStudioBrowseTabState {
     loaded: false,
     browseMode: 'recent',
     searchQuery: '',
-    userId: null
+    userId: null,
+    cacheRefreshKey: 0,
+    cacheGeneration: 0
   };
 }
 
@@ -520,6 +527,18 @@ function normalizeBuildActivitySubtab(
 function normalizeBuildStudioUserId(value: unknown) {
   const userId = Math.floor(Number(value) || 0);
   return userId > 0 ? userId : null;
+}
+
+function normalizeBuildStudioCacheRefreshKey(value: unknown) {
+  const refreshKey = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(refreshKey)) return 0;
+  return Math.max(0, refreshKey);
+}
+
+function normalizeBuildStudioCacheGeneration(value: unknown) {
+  const generation = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(generation)) return 0;
+  return Math.max(0, generation);
 }
 
 function normalizeBuildStudioActivityLoadedAt(value: unknown) {
@@ -2089,6 +2108,34 @@ export default function BuildReducer(
         }
       };
     }
+    case 'INVALIDATE_BUILD_STUDIO_BROWSE_TAB': {
+      const buildStudio = getBuildStudioState(state);
+      const tab = normalizeBuildStudioBrowseTab(action.buildStudio?.tab);
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const browseState =
+        buildStudio.browse?.[tab] || createInitialBuildStudioBrowseState();
+      if (userId && browseState.userId && browseState.userId !== userId) {
+        return state;
+      }
+      const currentCacheGeneration = normalizeBuildStudioCacheGeneration(
+        browseState.cacheGeneration
+      );
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          browse: {
+            ...buildStudio.browse,
+            [tab]: {
+              ...browseState,
+              loaded: false,
+              cacheRefreshKey: 0,
+              cacheGeneration: currentCacheGeneration + 1
+            }
+          }
+        }
+      };
+    }
     case 'SET_BUILD_STUDIO_ACTIVITY_ITEMS': {
       const buildStudio = getBuildStudioState(state);
       const activityTab = normalizeBuildActivityTab(
@@ -2273,6 +2320,32 @@ export default function BuildReducer(
       const searchQuery = normalizeBuildStudioSearchQuery(
         action.buildStudio?.searchQuery
       );
+      const currentTabState =
+        buildStudio.browse?.[tab] || createInitialBuildStudioBrowseState();
+      const currentCacheGeneration = normalizeBuildStudioCacheGeneration(
+        currentTabState.cacheGeneration
+      );
+      const hasActionCacheGeneration =
+        action.buildStudio &&
+        Object.prototype.hasOwnProperty.call(
+          action.buildStudio,
+          'cacheGeneration'
+        );
+      const actionCacheGeneration = normalizeBuildStudioCacheGeneration(
+        action.buildStudio?.cacheGeneration
+      );
+      if (
+        hasActionCacheGeneration &&
+        actionCacheGeneration !== currentCacheGeneration
+      ) {
+        return state;
+      }
+      const hasActionCacheRefreshKey =
+        action.buildStudio &&
+        Object.prototype.hasOwnProperty.call(
+          action.buildStudio,
+          'cacheRefreshKey'
+        );
       return {
         ...state,
         buildStudio: {
@@ -2280,7 +2353,7 @@ export default function BuildReducer(
           browse: {
             ...buildStudio.browse,
             [tab]: {
-              ...buildStudio.browse[tab],
+              ...currentTabState,
               builds: Array.isArray(action.buildStudio?.builds)
                 ? action.buildStudio.builds
                 : [],
@@ -2291,7 +2364,13 @@ export default function BuildReducer(
               loaded: true,
               browseMode,
               searchQuery,
-              userId: normalizeBuildStudioUserId(action.buildStudio?.userId)
+              userId: normalizeBuildStudioUserId(action.buildStudio?.userId),
+              cacheRefreshKey: hasActionCacheRefreshKey
+                ? normalizeBuildStudioCacheRefreshKey(
+                    action.buildStudio?.cacheRefreshKey
+                  )
+                : currentTabState.cacheRefreshKey,
+              cacheGeneration: currentCacheGeneration
             }
           }
         }
@@ -2307,8 +2386,23 @@ export default function BuildReducer(
       const searchQuery = normalizeBuildStudioSearchQuery(
         action.buildStudio?.searchQuery
       );
-      const currentTabState = buildStudio.browse[tab];
+      const currentTabState =
+        buildStudio.browse?.[tab] || createInitialBuildStudioBrowseState();
+      const currentCacheGeneration = normalizeBuildStudioCacheGeneration(
+        currentTabState.cacheGeneration
+      );
+      const hasActionCacheGeneration =
+        action.buildStudio &&
+        Object.prototype.hasOwnProperty.call(
+          action.buildStudio,
+          'cacheGeneration'
+        );
+      const actionCacheGeneration = normalizeBuildStudioCacheGeneration(
+        action.buildStudio?.cacheGeneration
+      );
       const canAppend =
+        (!hasActionCacheGeneration ||
+          actionCacheGeneration === currentCacheGeneration) &&
         currentTabState.userId === userId &&
         currentTabState.browseMode === browseMode &&
         currentTabState.searchQuery === searchQuery;

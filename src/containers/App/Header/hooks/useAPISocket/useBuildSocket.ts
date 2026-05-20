@@ -61,6 +61,9 @@ export default function useBuildSocket() {
   const onInvalidateBuildStudioActivityFeeds = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioActivityFeeds
   );
+  const onInvalidateBuildStudioBrowseTab = useBuildContext(
+    (v) => v.actions.onInvalidateBuildStudioBrowseTab
+  );
   const onUpdateBuildCollaborationState = useChatContext(
     (v) => v.actions.onUpdateBuildCollaborationState
   );
@@ -981,6 +984,10 @@ export default function useBuildSocket() {
         requestStatus,
         eventTimeMs,
         timeStamp
+      });
+      onInvalidateBuildStudioBrowseTab({
+        tab: 'collaborating',
+        userId: userIdRef.current
       });
       if (invite || inviteId) {
         onUpdateBuildContributionInviteNotification({

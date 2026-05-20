@@ -640,6 +640,7 @@ registerMethods('user', [
   'sendVerificationOTPEmailForSignup',
   'setDefaultSearchFilter',
   'setBuildQuickAccessMode',
+  'updateBuildStudioState',
   'setTheme',
   'signup',
   'toggleHideWatched',

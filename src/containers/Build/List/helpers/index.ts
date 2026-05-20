@@ -263,7 +263,9 @@ export function createEmptyBrowseState() {
     loaded: false,
     browseMode: 'recent' as BuildStudioBrowseMode,
     searchQuery: '',
-    userId: null
+    userId: null,
+    cacheRefreshKey: 0,
+    cacheGeneration: 0
   };
 }
 
