@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
+import { socket } from '~/constants/sockets/api';
 import {
   useAppContext
 } from '~/contexts';
@@ -152,6 +153,36 @@ export default function useQuickAccess({
     );
     setModalPage((page) => Math.min(page, pageCount - 1));
   }, [modalBuilds.length, modalMode]);
+
+  useEffect(() => {
+    if (!normalizedUserId) return;
+    socket.on('build_deleted', handleSocketBuildDeleted);
+    return () => {
+      socket.off('build_deleted', handleSocketBuildDeleted);
+    };
+
+    function handleSocketBuildDeleted({
+      buildIds
+    }: {
+      buildIds?: number[];
+    }) {
+      const deletedBuildIds = new Set(
+        (Array.isArray(buildIds) ? buildIds : [])
+          .map((buildId) => Number(buildId || 0))
+          .filter((buildId) => buildId > 0)
+      );
+      if (deletedBuildIds.size === 0) return;
+      setRecentlyUsedBuilds((builds) =>
+        builds.filter((build) => !deletedBuildIds.has(Number(build.id || 0)))
+      );
+      setFavoriteBuilds((builds) =>
+        builds.filter((build) => !deletedBuildIds.has(Number(build.id || 0)))
+      );
+      setTodayTopViewedBuild((build) =>
+        build && deletedBuildIds.has(Number(build.id || 0)) ? null : build
+      );
+    }
+  }, [normalizedUserId]);
 
   return {
     activeBuilds,

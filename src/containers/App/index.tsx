@@ -65,6 +65,7 @@ const BuildThumbnailCaptureHost = lazyWithRetry(
   () => import('~/containers/Build/ThumbnailCaptureHost')
 );
 const Chat = lazyWithRetry(() => import('~/containers/Chat'));
+const CliDeviceAuth = lazyWithRetry(() => import('~/containers/CliDeviceAuth'));
 const ContentPage = lazyWithRetry(() => import('~/containers/ContentPage'));
 const Explore = lazyWithRetry(() => import('~/containers/Explore'));
 const ExploreRedirect = lazyWithRetry(
@@ -590,6 +591,7 @@ export default function App() {
                 element={<BuildThumbnailCaptureHost />}
               />
               <Route path="/app/:buildId" element={<BuildRuntime />} />
+              <Route path="/cli" element={<CliDeviceAuth />} />
               <Route
                 path="/chat/*"
                 element={<Chat onFileUpload={handleFileUploadOnChat} />}

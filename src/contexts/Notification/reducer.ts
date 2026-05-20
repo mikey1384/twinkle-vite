@@ -266,7 +266,7 @@ export default function NotiReducer(
             loadMore: action.loadMoreNotifications
           }
         },
-        numNewNotis: 0,
+        numNewNotis: action.preserveUnreadCount ? state.numNewNotis : 0,
         notificationsLoaded: true
       };
     case 'UPDATE_BUILD_CONTRIBUTION_INVITE_NOTIFICATION':

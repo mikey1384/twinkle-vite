@@ -61,6 +61,7 @@ export default function useNotiSocket({
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
 
   useEffect(() => {
+    socket.on('build_deleted', handleBuildDeleted);
     socket.on('content_closed', handleContentClose);
     socket.on('content_edited', handleEditContent);
     socket.on('content_opened', handleContentOpen);
@@ -72,6 +73,7 @@ export default function useNotiSocket({
     socket.on('new_recommendation_posted', handleNewRecommendation);
 
     return function cleanUp() {
+      socket.off('build_deleted', handleBuildDeleted);
       socket.off('content_closed', handleContentClose);
       socket.off('content_edited', handleEditContent);
       socket.off('content_opened', handleContentOpen);
@@ -85,6 +87,21 @@ export default function useNotiSocket({
 
     function handleNewLogForAdmin(message: string) {
       onAddAdminLog(message);
+    }
+
+    async function handleBuildDeleted({ buildIds }: { buildIds?: number[] }) {
+      if (!userId || !Array.isArray(buildIds) || buildIds.length === 0) {
+        return;
+      }
+      const { currentChatSubject, loadMoreNotifications, notifications } =
+        await fetchNotifications({ fromWriter: true });
+      onLoadNotifications({
+        currentChatSubject,
+        loadMoreNotifications,
+        notifications,
+        preserveUnreadCount: true,
+        userId
+      });
     }
 
     function handleContentClose({

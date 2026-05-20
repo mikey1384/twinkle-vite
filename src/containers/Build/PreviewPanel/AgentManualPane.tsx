@@ -67,6 +67,16 @@ const guideSections: GuideSection[] = [
     ]
   },
   {
+    title: 'External CLI launch',
+    items: [
+      'For external agents or Codex CLI sessions, use the public Lumine CLI instead of browser automation when the user provides a Twinkle build URL.',
+      'Run npx @twinkle/lumine@latest login once. It opens a device-code approval flow at /cli and stores only a scoped CLI token locally.',
+      'Run npx @twinkle/lumine@latest check <build-url> before launch. The CLI accepts Twinkle app, build, preview, and Lumine preview URLs.',
+      'Run npx @twinkle/lumine@latest launch <build-url> to publish the saved build when checks pass. The command runs server-side readiness checks and only publishes with scoped owner permission.',
+      'Do not paste or ask for raw auth tokens; use the CLI login flow.'
+    ]
+  },
+  {
     title: 'Vendor libraries',
     items: [
       'Do not use CDN imports, package imports, or pasted library bundles for project code.',

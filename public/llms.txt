@@ -1,0 +1,19 @@
+# Twinkle / Lumine
+
+Use the Lumine CLI for terminal-based help with Twinkle Build apps.
+
+Install-free commands:
+
+```bash
+npx @twinkle/lumine@latest login
+npx @twinkle/lumine@latest check <twinkle-build-url>
+npx @twinkle/lumine@latest launch <twinkle-build-url>
+```
+
+The CLI accepts Twinkle app, build, and preview URLs, resolves the build id,
+runs server-side launch checks, publishes through Twinkle's API, and verifies
+the production URL.
+
+Authentication uses Twinkle's device-code approval flow. The user approves
+access at `https://www.twin-kle.com/cli`; the CLI stores a scoped local token
+for build launch actions.

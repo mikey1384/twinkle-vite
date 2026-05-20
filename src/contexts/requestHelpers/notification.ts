@@ -19,11 +19,12 @@ export default function notificationRequestHelpers({
         return handleError(error);
       }
     },
-    async fetchNotifications() {
+    async fetchNotifications(options?: { fromWriter?: boolean }) {
       try {
+        const query = options?.fromWriter ? '?fromWriter=1' : '';
         const {
           data: { currentChatSubject, loadMoreNotifications, notifications }
-        } = await request.get(`${URL}/notification`, auth());
+        } = await request.get(`${URL}/notification${query}`, auth());
         return {
           currentChatSubject,
           loadMoreNotifications,
@@ -36,22 +37,22 @@ export default function notificationRequestHelpers({
     async fetchTodayStats() {
       try {
         const {
-	        data: {
-	            achievedDailyGoals,
-              dailyTaskStreak,
-              dailyTaskBestStreak,
-              dailyTaskStatus,
-	            aiCallDuration,
-	            aiUsagePolicy,
-	            dailyHasBonus,
-	            dailyBonusAttempted,
-	            dailyRewardResultViewed,
-	            dailyQuestionCompleted,
-	            xpEarned,
-	            coinsEarned,
-	            nextDayTimeStamp,
-	            nextMission,
-	            standardTimeStamp
+          data: {
+            achievedDailyGoals,
+            dailyTaskStreak,
+            dailyTaskBestStreak,
+            dailyTaskStatus,
+            aiCallDuration,
+            aiUsagePolicy,
+            dailyHasBonus,
+            dailyBonusAttempted,
+            dailyRewardResultViewed,
+            dailyQuestionCompleted,
+            xpEarned,
+            coinsEarned,
+            nextDayTimeStamp,
+            nextMission,
+            standardTimeStamp
           }
         } = await request.get(`${URL}/notification/today`, auth());
         return {
@@ -61,16 +62,16 @@ export default function notificationRequestHelpers({
           dailyTaskStatus,
           aiCallDuration,
           aiUsagePolicy,
-	          dailyHasBonus,
-	          dailyBonusAttempted,
-	          dailyRewardResultViewed,
-	          dailyQuestionCompleted,
-	          xpEarned,
-	          coinsEarned,
-	          nextDayTimeStamp,
-	          nextMission,
-	          standardTimeStamp
-	        };
+          dailyHasBonus,
+          dailyBonusAttempted,
+          dailyRewardResultViewed,
+          dailyQuestionCompleted,
+          xpEarned,
+          coinsEarned,
+          nextDayTimeStamp,
+          nextMission,
+          standardTimeStamp
+        };
       } catch (error) {
         return handleError(error);
       }

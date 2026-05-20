@@ -46,6 +46,7 @@ export default function ProfilePic({
   userId,
   online,
   profilePicUrl,
+  preferProvidedProfilePicUrl,
   statusShown,
   style,
   statusSize = 'auto',
@@ -60,6 +61,7 @@ export default function ProfilePic({
   userId: number;
   online?: boolean;
   profilePicUrl?: string;
+  preferProvidedProfilePicUrl?: boolean;
   statusShown?: boolean;
   style?: React.CSSProperties;
   statusSize?: 'auto' | 'medium' | 'large' | 'dot';
@@ -72,11 +74,14 @@ export default function ProfilePic({
   const [hasError, setHasError] = useState(false);
   const [changePictureShown, setChangePictureShown] = useState(false);
   const displayedProfilePicUrl = useMemo(() => {
+    if (preferProvidedProfilePicUrl && profilePicUrl) {
+      return profilePicUrl;
+    }
     if (userProfile?.profilePicUrl) {
       return userProfile.profilePicUrl;
     }
     return profilePicUrl;
-  }, [profilePicUrl, userProfile?.profilePicUrl]);
+  }, [preferProvidedProfilePicUrl, profilePicUrl, userProfile?.profilePicUrl]);
 
   const statusTagShown = useMemo(
     () => Boolean(statusShown && (myId === userId || online)),

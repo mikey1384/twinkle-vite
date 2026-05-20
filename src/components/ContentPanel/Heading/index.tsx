@@ -99,6 +99,7 @@ function Heading({
           style={{ width: '3.8rem', flexShrink: 0 }}
           userId={headingUser.id}
           profilePicUrl={headingUser.profilePicUrl || ''}
+          preferProvidedProfilePicUrl={Boolean(displayedFeedActivityType)}
         />
         <div
           className={css`

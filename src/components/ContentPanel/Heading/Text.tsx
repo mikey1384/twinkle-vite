@@ -392,7 +392,7 @@ export default function HeadingText({
       case 'build':
         return (
           <>
-            {renderCompactUser()}{' '}
+            {renderCompactUser(feedActivityType ? feedUploader || uploader : uploader)}{' '}
             {renderCompactAction(
               feedActivityType
                 ? getBuildActivityText(feedActivityType)

@@ -24,11 +24,13 @@ export default function NotiActions(dispatch: Dispatch) {
       currentChatSubject,
       loadMoreNotifications,
       notifications,
+      preserveUnreadCount,
       userId
     }: {
       currentChatSubject: string;
       loadMoreNotifications: boolean;
       notifications: object[];
+      preserveUnreadCount?: boolean;
       userId: number;
     }) {
       return dispatch({
@@ -36,6 +38,7 @@ export default function NotiActions(dispatch: Dispatch) {
         currentChatSubject,
         loadMoreNotifications,
         notifications,
+        preserveUnreadCount,
         userId
       });
     },
