@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "npm run verify:prod-jsx",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "verify:prod-jsx": "node scripts/assert-no-jsxdev-in-dist.mjs"
   },
   "dependencies": {
     "@emotion/css": "^11.13.5",

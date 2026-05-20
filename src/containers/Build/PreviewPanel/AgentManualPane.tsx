@@ -70,9 +70,11 @@ const guideSections: GuideSection[] = [
     title: 'External CLI launch',
     items: [
       'For external agents or Codex CLI sessions, use the public Lumine CLI instead of browser automation when the user provides a Twinkle build URL.',
-      'Run npx @twinkle/lumine@latest login once. It opens a device-code approval flow at /cli and stores only a scoped CLI token locally.',
-      'Run npx @twinkle/lumine@latest check <build-url> before launch. The CLI accepts Twinkle app, build, preview, and Lumine preview URLs.',
-      'Run npx @twinkle/lumine@latest launch <build-url> to publish the saved build when checks pass. The command runs server-side readiness checks and only publishes with scoped owner permission.',
+      'Run npx @twinkle/lumine@latest for the guided flow. It logs in when needed, lets the user choose an owned or team project, saves that selection, and pulls the saved project files locally.',
+      'Run npx @twinkle/lumine@latest login once for explicit login. It opens the Twinkle approval page automatically and stores only a scoped CLI token locally. Use --no-open for SSH, CI, or agent-only terminals.',
+      'Run npx @twinkle/lumine@latest projects, select, or pull to list accessible projects, change the selected project, or refresh local project files.',
+      'Run npx @twinkle/lumine@latest check or launch after selecting a project. You can still pass a Twinkle app, build, preview, or Lumine preview URL explicitly.',
+      'Publishing only works with scoped owner permission; team projects can be selected and pulled for code access.',
       'Do not paste or ask for raw auth tokens; use the CLI login flow.'
     ]
   },
