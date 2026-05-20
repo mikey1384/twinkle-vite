@@ -367,6 +367,7 @@ export default function CommentsDrawer({
   loadMoreButton,
   parent,
   inputAreaInnerRef,
+  active,
   userId,
   visible,
   onCommentSubmit,
@@ -387,6 +388,7 @@ export default function CommentsDrawer({
   loadMoreButton: any;
   parent: Content | null;
   inputAreaInnerRef?: React.RefObject<any>;
+  active: boolean;
   userId: number;
   visible: boolean;
   onCommentSubmit: (data: any) => void;
@@ -433,7 +435,7 @@ export default function CommentsDrawer({
             </GameCTAButton>
           </div>
         ) : null}
-        {visible || loaded ? (
+        {active && (visible || loaded) ? (
           <Comments
             alwaysShowInput
             autoExpand

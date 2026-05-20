@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import {
+  type Location,
+  useLocation,
+  useNavigate,
+  useParams
+} from 'react-router-dom';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
@@ -386,10 +391,27 @@ const previewShellClass = css`
   background: #fff;
 `;
 
-export default function BuildRuntime() {
-  const { buildId } = useParams();
+interface BuildRuntimeProps {
+  buildIdOverride?: number | null;
+  locationOverride?: Location;
+  onRuntimeBuildLoaded?: (build: RuntimeBuild) => void;
+  runtimeIsActive?: boolean;
+}
+
+export default function BuildRuntime({
+  buildIdOverride = null,
+  locationOverride,
+  onRuntimeBuildLoaded,
+  runtimeIsActive = true
+}: BuildRuntimeProps = {}) {
+  const { buildId: routeBuildId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
+  const routeLocation = useLocation();
+  const buildId =
+    typeof buildIdOverride === 'number' && buildIdOverride > 0
+      ? String(buildIdOverride)
+      : routeBuildId;
+  const location = locationOverride || routeLocation;
   const loadRuntimeBuild = useAppContext(
     (v) => v.requestHelpers.loadRuntimeBuild
   );
@@ -636,11 +658,13 @@ export default function BuildRuntime() {
 
   function applyRuntimeBuildPayload(data: any) {
     if (!data?.build) return false;
-    setBuild({
+    const nextBuild = {
       ...data.build,
       capabilitySnapshot: data.capabilitySnapshot || null,
       projectFiles: Array.isArray(data.projectFiles) ? data.projectFiles : []
-    });
+    };
+    setBuild(nextBuild);
+    onRuntimeBuildLoaded?.(nextBuild);
     return true;
   }
 
@@ -896,6 +920,12 @@ export default function BuildRuntime() {
     // loadMyBuildCollaborationRequest is a stable context request helper.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build?.id, isBuildOwner, userId]);
+
+  useEffect(() => {
+    if (runtimeIsActive) return;
+    setCollaborationRequestModalShown(false);
+    setCommentsDrawerShown(false);
+  }, [runtimeIsActive]);
 
   async function handleCreateStandaloneFork() {
     if (!build || forkingBuild) return;
@@ -1218,6 +1248,7 @@ export default function BuildRuntime() {
   }, [build?.id]);
 
   useEffect(() => {
+    if (!runtimeIsActive) return;
     const intent = homeFeedActionIntent;
     if (!intent || intent.action !== 'comment') return;
     if (consumedHomeFeedActionIntentRef.current === intent.nonce) return;
@@ -1243,6 +1274,7 @@ export default function BuildRuntime() {
     homeFeedActionIntent?.nonce,
     loading,
     numericBuildId,
+    runtimeIsActive,
     runtimeCommentsLoaded
   ]);
 
@@ -1433,6 +1465,7 @@ export default function BuildRuntime() {
                   className={runtimeEnergyCardClass}
                   energyPercent={energyPercent}
                   energySegments={energySegments}
+                  portaledUiActive={runtimeIsActive}
                   overflowed={aiUsagePolicy.lastUsageOverflowed}
                   resetNeeded={energyIsEmpty}
                   resetCost={aiUsagePolicy.resetCost || 0}
@@ -1528,6 +1561,7 @@ export default function BuildRuntime() {
             </div>
           </div>
           <CommentsDrawer
+            active={runtimeIsActive}
             comments={runtimeComments}
             error={runtimeCommentsError}
             loaded={runtimeCommentsLoaded}

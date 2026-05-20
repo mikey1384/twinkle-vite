@@ -67,7 +67,8 @@ export default function AiEnergyCard({
   style,
   cardRef,
   themeColor,
-  chargeCtaAttentionKey
+  chargeCtaAttentionKey,
+  portaledUiActive = true
 }: {
   energyPercent: number;
   energySegments?: number;
@@ -90,6 +91,7 @@ export default function AiEnergyCard({
   cardRef?: React.Ref<HTMLDivElement>;
   themeColor?: string;
   chargeCtaAttentionKey?: string;
+  portaledUiActive?: boolean;
 }) {
   const [aiEnergyDashboardModalShown, setAiEnergyDashboardModalShown] =
     useState(false);
@@ -175,6 +177,12 @@ export default function AiEnergyCard({
       storedKey === effectiveChargeAttentionKey ? storedKey : null
     );
   }, [effectiveChargeAttentionKey]);
+
+  useEffect(() => {
+    if (portaledUiActive) return;
+    setAiEnergyDashboardModalShown(false);
+    setPaidRechargeConfirmShown(false);
+  }, [portaledUiActive]);
 
   function handleOpenDashboard() {
     if (effectiveChargeAttentionKey && typeof window !== 'undefined') {

@@ -12,7 +12,11 @@ export interface RuntimeBuild {
   numComments?: number;
   pinnedCommentId?: number | null;
   primaryArtifactId?: number | null;
+  currentArtifactVersionId?: number | null;
+  publishedArtifactVersionId?: number | null;
   isPublic: boolean;
+  thumbnailUrl?: string | null;
+  updatedAt?: number | null;
   releaseStatus?: RuntimeBuildReleaseStatus | null;
   collaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionAccess?: 'anyone' | 'invite_only';

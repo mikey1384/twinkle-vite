@@ -22,9 +22,11 @@ import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { useScrollAnchor } from './hooks/useScrollAnchor';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { HOME_FEED_PERFORMANCE_FORCE_KEY } from '~/constants/defaultValues';
+import { resetAppShellScroll } from '~/helpers/appShellScroll';
 
 const hiThereLabel = 'Hi there!';
 const HOME_FEED_CLIENT_PERFORMANCE_DEFAULT_PROD_SAMPLE_RATE = 0.02;
+const homeFeedNewPostsScrollResetSuppressionMs = 1200;
 
 const categoryObj: Record<string, any> = {
   uploads: {
@@ -857,11 +859,13 @@ export default function Stories() {
             if (shouldIgnoreStoryRequest(requestUserId)) return;
             if (categoryRef.current === 'uploads') {
               onLoadFeeds(data);
+              scrollToNewestHomeFeed();
               reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
             }
             return;
           }
           onLoadNewFeeds(data);
+          scrollToNewestHomeFeed();
           reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
         }
       }
@@ -964,5 +968,11 @@ export default function Stories() {
 
   function shouldIgnoreStoryRequest(requestUserId: number | null | undefined) {
     return !mountedRef.current || checkUserChange(requestUserId);
+  }
+
+  function scrollToNewestHomeFeed() {
+    resetAppShellScroll({
+      suppressAnchorRestoresMs: homeFeedNewPostsScrollResetSuppressionMs
+    });
   }
 }

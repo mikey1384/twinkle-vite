@@ -1,5 +1,6 @@
 import {
   cancelScrollAnchorRestores,
+  suppressScrollAnchorRestores,
   suppressScrollAnchorSaves
 } from '~/helpers/scrollAnchorRestorationCoordinator';
 
@@ -14,15 +15,20 @@ interface ScrollLockStyleSnapshot {
 
 export function resetAppShellScroll({
   cancelPendingAnchorRestores = true,
+  suppressAnchorRestoresMs = 0,
   suppressAnchorSavesMs = defaultScrollResetSaveSuppressionMs
 }: {
   cancelPendingAnchorRestores?: boolean;
+  suppressAnchorRestoresMs?: number;
   suppressAnchorSavesMs?: number;
 } = {}) {
   if (typeof document === 'undefined') return;
 
   if (cancelPendingAnchorRestores) {
     cancelScrollAnchorRestores();
+  }
+  if (suppressAnchorRestoresMs > 0) {
+    suppressScrollAnchorRestores(suppressAnchorRestoresMs);
   }
   if (suppressAnchorSavesMs > 0) {
     suppressScrollAnchorSaves(suppressAnchorSavesMs);

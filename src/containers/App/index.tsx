@@ -13,7 +13,13 @@ import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import API_URL from '~/constants/URL';
-import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
+import {
+  matchPath,
+  useLocation,
+  useNavigate,
+  Routes,
+  Route
+} from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import {
@@ -60,7 +66,9 @@ import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const Build = lazyWithRetry(() => import('~/containers/Build'));
-const BuildRuntime = lazyWithRetry(() => import('~/containers/Build/Runtime'));
+const BuildRuntimeKeepAliveHost = lazyWithRetry(
+  () => import('~/containers/Build/Runtime/KeepAliveHost')
+);
 const BuildThumbnailCaptureHost = lazyWithRetry(
   () => import('~/containers/Build/ThumbnailCaptureHost')
 );
@@ -93,6 +101,40 @@ const DailyRewardModal = lazyWithRetry(
 const AICallWindow = lazyWithRetry(() => import('./AICallWindow'));
 const AdminLogWindow = lazyWithRetry(() => import('./AdminLogWindow'));
 const UpdateNotice = lazyWithRetry(() => import('./UpdateNotice'));
+
+const buildRuntimeLoadingClass = css`
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  background: #fff;
+  z-index: 70;
+`;
+
+const buildRuntimeLoadingInnerClass = css`
+  width: 100%;
+  height: 15rem;
+`;
+
+function BuildRuntimeLoading() {
+  return (
+    <div
+      className={buildRuntimeLoadingClass}
+      data-build-runtime-loading="true"
+    >
+      <Loading className={buildRuntimeLoadingInnerClass} />
+    </div>
+  );
+}
+
+function BuildRuntimeKeepAliveRoute() {
+  return <BuildRuntimeLoading />;
+}
+
+function routeMatches(path: string, pathname: string) {
+  return Boolean(matchPath({ path, end: true }, pathname));
+}
 
 function BuildPreviewPassthrough() {
   const location = useLocation();
@@ -344,14 +386,28 @@ export default function App() {
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
     [location?.pathname]
   );
-  const usingBuildRuntime = useMemo(
-    () => /^\/(app|app-capture)\/[^/]+/.test(location.pathname),
+  const usingBuildAppRuntime = useMemo(
+    () => routeMatches('/app/:buildId', location.pathname),
     [location.pathname]
   );
+  const usingBuildRuntime = useMemo(
+    () =>
+      usingBuildAppRuntime ||
+      routeMatches('/app-capture/:buildId', location.pathname),
+    [location.pathname, usingBuildAppRuntime]
+  );
+  const [runtimeKeepAliveHostEnabled, setRuntimeKeepAliveHostEnabled] =
+    useState(usingBuildAppRuntime);
   useAppShellHeaderOffset({
     headerVisible: !usingBuildRuntime,
     routeKey: location.pathname
   });
+
+  useEffect(() => {
+    if (usingBuildAppRuntime) {
+      setRuntimeKeepAliveHostEnabled(true);
+    }
+  }, [usingBuildAppRuntime]);
 
   useEffect(() => {
     window.gtag('event', 'page_view', {
@@ -590,7 +646,10 @@ export default function App() {
                 path="/app-capture/:buildId"
                 element={<BuildThumbnailCaptureHost />}
               />
-              <Route path="/app/:buildId" element={<BuildRuntime />} />
+              <Route
+                path="/app/:buildId"
+                element={<BuildRuntimeKeepAliveRoute />}
+              />
               <Route path="/cli" element={<CliDeviceAuth />} />
               <Route
                 path="/chat/*"
@@ -619,6 +678,13 @@ export default function App() {
             </Routes>
           </Suspense>
         </div>
+        {usingBuildAppRuntime || runtimeKeepAliveHostEnabled ? (
+          <Suspense
+            fallback={usingBuildAppRuntime ? <BuildRuntimeLoading /> : null}
+          >
+            <BuildRuntimeKeepAliveHost />
+          </Suspense>
+        ) : null}
         {dailyRewardModalShown && (
           <Suspense fallback={null}>
             <DailyRewardModal
