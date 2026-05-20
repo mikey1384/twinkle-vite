@@ -4,10 +4,18 @@ import { resolve } from 'path';
 import inject from '@rollup/plugin-inject';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+export default defineConfig(({ command, mode }) => {
+  if (command === 'build') {
+    process.env.NODE_ENV = 'production';
+    // Guard against NODE_ENV=development in env files. Vite mirrors it through
+    // VITE_USER_NODE_ENV and can otherwise emit dev JSX in production builds.
+    process.env.VITE_USER_NODE_ENV = '';
+  }
+
+  const env =
+    command === 'serve' ? loadEnv(mode, process.cwd(), '') : process.env;
   const previewProxyTarget = env.VITE_URL || 'http://localhost:3500';
-  const nodeEnv = mode === 'production' ? 'production' : 'development';
+  const nodeEnv = command === 'build' ? 'production' : 'development';
 
   return {
     plugins: [
