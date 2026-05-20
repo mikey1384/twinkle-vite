@@ -240,6 +240,8 @@ function scopeDescription(scope: string) {
   switch (scope) {
     case 'build:read':
       return 'Read the build and saved project files.';
+    case 'build:write':
+      return 'Save edited project files back to Twinkle.';
     case 'build:check':
       return 'Run launch readiness checks.';
     case 'build:publish':

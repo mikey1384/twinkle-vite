@@ -73,8 +73,9 @@ const guideSections: GuideSection[] = [
       'Run npx @twinkle/lumine@latest for the guided flow. It logs in when needed, lets the user choose an owned or team project, saves that selection, and pulls the saved project files locally.',
       'Run npx @twinkle/lumine@latest login once for explicit login. It opens the Twinkle approval page automatically and stores only a scoped CLI token locally. Use --no-open for SSH, CI, or agent-only terminals.',
       'Run npx @twinkle/lumine@latest projects, select, or pull to list accessible projects, change the selected project, or refresh local project files.',
-      'Run npx @twinkle/lumine@latest check or launch after selecting a project. You can still pass a Twinkle app, build, preview, or Lumine preview URL explicitly.',
-      'Publishing only works with scoped owner permission; team projects can be selected and pulled for code access.',
+      'After editing pulled files, run npx @twinkle/lumine@latest save from the local project folder. CLI saves use the same /build/:id/project-files route as the Code tab, create a project artifact version, and mark public builds as having unpublished changes.',
+      'Run npx @twinkle/lumine@latest check, launch, launch --save, or save --publish after selecting a project. You can still pass a Twinkle app, build, preview, or Lumine preview URL explicitly.',
+      'Saving and publishing require scoped owner permission; team projects can be selected and pulled for code access.',
       'Do not paste or ask for raw auth tokens; use the CLI login flow.'
     ]
   },
