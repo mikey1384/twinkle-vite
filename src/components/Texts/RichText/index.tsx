@@ -22,6 +22,17 @@ const Markdown = lazyWithRetry(() => import('./Markdown'));
 
 const collapsedLineHeight = 1.7;
 
+function hasStructuredPreviewMarkdown(text: string) {
+  return (
+    /(^|\n)\s{0,3}#{1,6}\s+\S/.test(text) ||
+    /(^|\n)\s{0,3}(?:[-*+]|\d+[.)])\s+\S/.test(text) ||
+    /(^|\n)\s{0,3}>\s+\S/.test(text) ||
+    /(^|\n)\s{0,3}(?:```|~~~)/.test(text) ||
+    /(^|\n)\s{0,3}\|.+\|/.test(text) ||
+    /\\\[|\\\(|\$\$/.test(text)
+  );
+}
+
 type RichTextRootStyle = React.CSSProperties & {
   '--rich-text-line-height'?: number;
 };
@@ -386,9 +397,20 @@ function RichText({
     () => /!\[[^\]]*\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/.test(String(text)),
     [text]
   );
-  const isLineClampedPreview = Boolean(isPreview && !hasMarkdownEmbed);
+  const hasStructuredMarkdown = useMemo(
+    () => hasStructuredPreviewMarkdown(String(text || '')),
+    [text]
+  );
+  const isBlockPreservingPreview = Boolean(isPreview && hasStructuredMarkdown);
+  const isLineClampedPreview = Boolean(
+    isPreview && !hasMarkdownEmbed && !isBlockPreservingPreview
+  );
   const previewMobileMaxLines = mobileMaxLines || maxLines;
   const effectiveCollapsedLineHeight = lineHeight ?? collapsedLineHeight;
+  const previewCollapsedMaxHeight = `calc(${effectiveCollapsedLineHeight}em * ${maxLines})`;
+  const previewMobileCollapsedMaxHeight = `calc(${effectiveCollapsedLineHeight}em * ${previewMobileMaxLines})`;
+  const shouldUseBlockPreviewMaxHeight =
+    isBlockPreservingPreview && !fullTextShown;
 
   useEffect(() => {
     if (isPreview) {
@@ -575,9 +597,11 @@ function RichText({
             opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
             minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
             maxHeight:
-              fullTextShown || isLineClampedPreview
+              fullTextShown ||
+              isLineClampedPreview ||
+              shouldUseBlockPreviewMaxHeight
                 ? undefined
-                : `calc(${effectiveCollapsedLineHeight}em * ${maxLines})`,
+                : previewCollapsedMaxHeight,
             overflow: fullTextShown ? undefined : 'hidden',
             ...(lineHeight === undefined
               ? {}
@@ -587,7 +611,51 @@ function RichText({
         }
         className={`${className} ${
           compactEmbedPreview ? 'rich-text--compact-comment-embeds' : ''
+        } ${
+          isBlockPreservingPreview ? 'rich-text--block-preview' : ''
         } ${RichTextCss} ${css`
+          ${shouldUseBlockPreviewMaxHeight
+            ? `
+              max-height: ${previewCollapsedMaxHeight};
+
+              ${
+                previewMobileMaxLines !== maxLines
+                  ? `
+                    @media (max-width: ${mobileMaxWidth}) {
+                      max-height: ${previewMobileCollapsedMaxHeight};
+                    }
+                  `
+                  : ''
+              }
+            `
+            : ''}
+
+          ${isBlockPreservingPreview
+            ? `
+              > h1:first-child,
+              > h2:first-child,
+              > h3:first-child,
+              > h4:first-child,
+              > h5:first-child,
+              > h6:first-child,
+              > p:first-child,
+              > ul:first-child,
+              > ol:first-child,
+              > pre:first-child,
+              > div:first-child {
+                margin-top: 0;
+              }
+
+              > h1,
+              > h2,
+              > h3,
+              > h4,
+              > h5,
+              > h6 {
+                line-height: 1.18;
+              }
+            `
+            : ''}
           ${isLineClampedPreview
             ? `
               display: -webkit-box;

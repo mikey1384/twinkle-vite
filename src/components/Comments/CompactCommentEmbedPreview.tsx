@@ -6,6 +6,7 @@ import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { useAppContext, useContentContext } from '~/contexts';
 import {
   getInternalEmbedCommentLabel,
@@ -68,6 +69,7 @@ export default function CompactCommentEmbedPreview({
   const commentId = Number(comment?.id || comment?.commentId || contentId || 0);
   const isTargetRoot = variant === 'targetRoot';
   const uploader = getCommentUploader(comment);
+  const isAIMessage = isAICommentAuthor(uploader.id);
   const rawContent = String(comment?.content || '');
   const markdownMedia = useMemo(
     () => getMarkdownMediaEmbeds(rawContent).slice(0, 3),
@@ -140,6 +142,8 @@ export default function CompactCommentEmbedPreview({
           <RichText
             contentId={commentId}
             contentType="comment"
+            hideDictation={isAIMessage}
+            isAIMessage={isAIMessage}
             isPreview
             maxLines={maxTextLines}
             section="content"
@@ -412,6 +416,13 @@ function getCommentUploader(comment: any) {
     profilePicUrl: uploader.profilePicUrl || comment?.profilePicUrl || '',
     username: uploader.username || comment?.username || ''
   };
+}
+
+function isAICommentAuthor(uploaderId: number) {
+  return (
+    uploaderId === Number(ZERO_TWINKLE_ID) ||
+    uploaderId === Number(CIEL_TWINKLE_ID)
+  );
 }
 
 function getAttachmentInfo(comment: any) {

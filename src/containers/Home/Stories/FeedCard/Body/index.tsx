@@ -12,7 +12,11 @@ import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
-import { cardLevelHash } from '~/constants/defaultValues';
+import {
+  cardLevelHash,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID
+} from '~/constants/defaultValues';
 import {
   getInternalEmbedCommentLabel,
   getInternalEmbedPreviewInfo
@@ -88,8 +92,9 @@ type PreviewCommentMedia =
     };
 
 const primaryPreviewTextClass = 'home-feed-card__primary-preview-text';
+const homeFeedPreviewLineHeight = 1.36;
 const homeFeedPreviewRichTextStyle: React.CSSProperties = {
-  lineHeight: 1.36
+  lineHeight: homeFeedPreviewLineHeight
 };
 const lockedSubjectSecretPreviewLabel =
   'Submit your response to view the secret message';
@@ -112,6 +117,7 @@ export default function Body({
   const navigate = useNavigate();
   const contentId = Number(content?.contentId || content?.id || 0);
   const contentType = String(content?.contentType || '');
+  const isContentAIMessage = isAIContentAuthor(content);
   const normalizedRootType = normalizeRootType(content?.rootType);
   const resolvedRootObj =
     rootObj?.id || rootObj?.notFound ? rootObj : content?.rootObj || {};
@@ -315,7 +321,10 @@ export default function Body({
                 className={`home-feed-card__subject-description ${primaryPreviewTextClass}`}
                 contentId={contentId}
                 contentType={contentType}
+                hideDictation={isContentAIMessage}
+                isAIMessage={isContentAIMessage}
                 isPreview
+                lineHeight={homeFeedPreviewLineHeight}
                 maxLines={subjectLineLimits.desktop.descriptionMaxLines}
                 mobileMaxLines={subjectLineLimits.mobile.descriptionMaxLines}
                 section="description"
@@ -361,7 +370,10 @@ export default function Body({
                     className={`home-feed-card__subject-secret-text ${primaryPreviewTextClass}`}
                     contentId={contentId}
                     contentType={contentType}
+                    hideDictation={isContentAIMessage}
+                    isAIMessage={isContentAIMessage}
                     isPreview
+                    lineHeight={homeFeedPreviewLineHeight}
                     maxLines={subjectLineLimits.desktop.secretMaxLines}
                     mobileMaxLines={subjectLineLimits.mobile.secretMaxLines}
                     section="secret"
@@ -467,7 +479,10 @@ export default function Body({
               className={primaryPreviewTextClass}
               contentId={contentId}
               contentType={contentType}
+              hideDictation={isContentAIMessage}
+              isAIMessage={isContentAIMessage}
               isPreview
+              lineHeight={homeFeedPreviewLineHeight}
               maxLines={textMaxLines}
               mobileMaxLines={mobileTextMaxLines}
               section={section}
@@ -536,7 +551,10 @@ export default function Body({
             className={`home-feed-card__reflection-answer ${primaryPreviewTextClass}`}
             contentId={contentId}
             contentType={contentType}
+            hideDictation={isContentAIMessage}
+            isAIMessage={isContentAIMessage}
             isPreview
+            lineHeight={homeFeedPreviewLineHeight}
             maxLines={answerLineLimits.desktop}
             mobileMaxLines={answerLineLimits.mobile}
             section="description"
@@ -711,7 +729,10 @@ export default function Body({
               className={primaryPreviewTextClass}
               contentId={contentId}
               contentType={contentType}
+              hideDictation={isContentAIMessage}
+              isAIMessage={isContentAIMessage}
               isPreview
+              lineHeight={homeFeedPreviewLineHeight}
               maxLines={getSharedTopicPreviewMaxLines(resolvedSizing.main)}
               section="content"
               style={homeFeedPreviewRichTextStyle}
@@ -1050,7 +1071,10 @@ export default function Body({
                 className={primaryPreviewTextClass}
                 contentId={contentId}
                 contentType={contentType}
+                hideDictation={isContentAIMessage}
+                isAIMessage={isContentAIMessage}
                 isPreview
+                lineHeight={homeFeedPreviewLineHeight}
                 maxLines={previewTextMaxLines}
                 section={section}
                 style={homeFeedPreviewRichTextStyle}
@@ -1444,6 +1468,21 @@ function getPreviewCommentFileIcon(fileType: string) {
   if (fileType === 'archive') return 'file-archive';
   if (fileType === 'word') return 'file-word';
   return 'file';
+}
+
+function isAIContentAuthor(source: any) {
+  const uploaderId = Number(
+    source?.uploader?.id ||
+      source?.user?.id ||
+      source?.userId ||
+      source?.uploaderId ||
+      0
+  );
+
+  return (
+    uploaderId === Number(ZERO_TWINKLE_ID) ||
+    uploaderId === Number(CIEL_TWINKLE_ID)
+  );
 }
 
 function getPreviewCommentLabel(comment: Comment, contentType: string) {
