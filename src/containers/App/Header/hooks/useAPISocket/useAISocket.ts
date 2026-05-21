@@ -45,9 +45,11 @@ export default function useAISocket({
   const selectedChannelIdRef = useRef(selectedChannelId);
   const channelsObjRef = useRef(channelsObj);
   const pageVisibleRef = useRef(pageVisible);
+  const aiCallChannelIdRef = useRef(aiCallChannelId);
   selectedChannelIdRef.current = selectedChannelId;
   channelsObjRef.current = channelsObj;
   pageVisibleRef.current = pageVisible;
+  aiCallChannelIdRef.current = aiCallChannelId;
   const onUpdateLastUsedFiles = useChatContext(
     (v) => v.actions.onUpdateLastUsedFiles
   );
@@ -532,7 +534,7 @@ export default function useAISocket({
   }, []);
 
   function sendAIUIInformation() {
-    if (!aiCallChannelId) {
+    if (!aiCallChannelIdRef.current) {
       return;
     }
     const mainContent = document.getElementById('react-view');
