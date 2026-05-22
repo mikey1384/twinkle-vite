@@ -166,7 +166,7 @@ export const mobilePreviewStyles = `
     }
     .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) max-content;
       grid-template-rows: auto auto;
       align-items: center;
       column-gap: 0.75rem;
@@ -200,7 +200,19 @@ export const mobilePreviewStyles = `
       grid-column: 2;
       grid-row: 1 / span 2;
       align-self: center;
+      flex-shrink: 0;
       justify-self: end;
+      min-width: max-content;
+      max-width: none;
+      padding-right: 0.35rem;
+      overflow: visible;
+      white-space: nowrap;
+      word-break: keep-all;
+    }
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
+      .daily-reflection-meta-badges__refined span {
+      white-space: nowrap;
+      word-break: keep-all;
     }
       .home-feed-card__text-copy
         > div.home-feed-card__primary-preview-text,
