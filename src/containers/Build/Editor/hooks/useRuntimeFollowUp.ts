@@ -8,6 +8,8 @@ import type {
 
 type BuildRunMode = 'user' | 'greeting' | 'runtime-autofix';
 
+const RUNTIME_OBSERVATION_ISSUE_BUFFER_LIMIT = 8;
+
 interface RuntimeObservationChatNote {
   id: number;
   role: 'assistant';
@@ -19,6 +21,10 @@ interface RuntimeObservationChatNote {
   createdAt: number;
   persisted: false;
   source: 'runtime_observation';
+  runtimeObservationIssueKey: string;
+  runtimeObservationOriginalContent?: string | null;
+  runtimeObservationResolved?: boolean;
+  runtimeObservationResolvedAt?: number | null;
 }
 
 interface PendingRuntimeVerification {
@@ -167,6 +173,56 @@ function formatRuntimeObservationChatNote(issue: BuildRuntimeObservationIssue) {
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+function formatResolvedRuntimeObservationChatNote(content: string) {
+  const lines = String(content || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const detailLines = lines.filter(
+    (line) => line !== 'Preview issue detected.'
+  );
+  if (!detailLines.length) {
+    return 'Preview issue resolved.';
+  }
+  return [
+    'Preview issue resolved.',
+    ...detailLines.map((line, index) =>
+      index === 0 ? `Previously: ${line}` : line
+    )
+  ].join('\n');
+}
+
+function restoreRuntimeObservationChatNoteContent(content: string) {
+  const lines = String(content || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines[0] !== 'Preview issue resolved.') {
+    return lines.join('\n');
+  }
+  const detailLines = lines.slice(1);
+  if (detailLines[0]?.startsWith('Previously: ')) {
+    detailLines[0] = detailLines[0].replace(/^Previously:\s*/, '');
+  }
+  return ['Preview issue detected.', ...detailLines].join('\n').trim();
+}
+
+function hasHealthyRuntimeObservationForNoteResolution(
+  observationState: BuildRuntimeObservationState
+) {
+  const health = observationState.health;
+  if (!health?.meaningfulRender) return false;
+  if (health.gameplayTelemetry?.status === 'out-of-bounds') return false;
+  if (
+    health.gameLike &&
+    ((health.viewportOverflowY || 0) > 48 ||
+      (health.viewportOverflowX || 0) > 24)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function buildRuntimeObservationIssueChatKey({
@@ -655,6 +711,16 @@ export default function useRuntimeFollowUp({
       )
     );
     const nextChatNotes: RuntimeObservationChatNote[] = [];
+    const nextIssueContentByKey = new Map<string, string>();
+    const unresolvedIssueKeys = new Set(
+      nextState.issues.map((issue) =>
+        buildRuntimeObservationIssueChatKey({
+          buildId: nextState.buildId,
+          codeSignature: nextState.codeSignature || null,
+          issue
+        })
+      )
+    );
     for (const issue of nextState.issues) {
       if (!shouldSurfaceRuntimeObservationIssueInChat(issue)) {
         continue;
@@ -664,6 +730,8 @@ export default function useRuntimeFollowUp({
         codeSignature: nextState.codeSignature || null,
         issue
       });
+      const issueContent = formatRuntimeObservationChatNote(issue);
+      nextIssueContentByKey.set(issueKey, issueContent);
       if (
         previousIssueKeys.has(issueKey) ||
         runtimeObservationChatNoteKeysRef.current.has(issueKey)
@@ -674,7 +742,7 @@ export default function useRuntimeFollowUp({
       nextChatNotes.push({
         id: -(Date.now() + Math.floor(Math.random() * 1000)),
         role: 'assistant',
-        content: formatRuntimeObservationChatNote(issue),
+        content: issueContent,
         codeGenerated: null,
         billingState: null,
         streamCodePreview: null,
@@ -683,14 +751,63 @@ export default function useRuntimeFollowUp({
           Math.floor(Number(issue.createdAt || Date.now()) / 1000)
         ),
         persisted: false,
-        source: 'runtime_observation'
+        source: 'runtime_observation',
+        runtimeObservationIssueKey: issueKey,
+        runtimeObservationOriginalContent: issueContent
       });
     }
-    if (externalRef.current.isOwner && nextChatNotes.length > 0) {
-      setRuntimeObservationChatNotes((prev) =>
-        [...prev, ...nextChatNotes].slice(-12)
+    if (externalRef.current.isOwner) {
+      const resolvedAt = Date.now();
+      const canTrustMissingIssueKeys = Boolean(
+        hasHealthyRuntimeObservationForNoteResolution(nextState) &&
+          nextState.issues.length < RUNTIME_OBSERVATION_ISSUE_BUFFER_LIMIT
       );
-      externalRef.current.onScrollChatToBottom('smooth');
+      setRuntimeObservationChatNotes((prev) => {
+        let changed = nextChatNotes.length > 0;
+        const resolvedPreviousNotes = prev.map((note) => {
+          const issueKey = note.runtimeObservationIssueKey;
+          if (issueKey && unresolvedIssueKeys.has(issueKey)) {
+            if (!note.runtimeObservationResolved) {
+              return note;
+            }
+            const activeContent =
+              nextIssueContentByKey.get(issueKey) ||
+              note.runtimeObservationOriginalContent ||
+              restoreRuntimeObservationChatNoteContent(note.content);
+            changed = true;
+            return {
+              ...note,
+              content: activeContent,
+              runtimeObservationOriginalContent: activeContent,
+              runtimeObservationResolved: false,
+              runtimeObservationResolvedAt: null
+            };
+          }
+          if (
+            !canTrustMissingIssueKeys ||
+            note.runtimeObservationResolved ||
+            !note.runtimeObservationIssueKey
+          ) {
+            return note;
+          }
+          changed = true;
+          return {
+            ...note,
+            content: formatResolvedRuntimeObservationChatNote(
+              note.runtimeObservationOriginalContent || note.content
+            ),
+            runtimeObservationOriginalContent:
+              note.runtimeObservationOriginalContent || note.content,
+            runtimeObservationResolved: true,
+            runtimeObservationResolvedAt: resolvedAt
+          };
+        });
+        if (!changed) return prev;
+        return [...resolvedPreviousNotes, ...nextChatNotes].slice(-12);
+      });
+      if (nextChatNotes.length > 0) {
+        externalRef.current.onScrollChatToBottom('smooth');
+      }
     }
     const health = nextState.health;
     if (health) {

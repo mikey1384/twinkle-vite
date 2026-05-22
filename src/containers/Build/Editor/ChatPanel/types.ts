@@ -46,6 +46,10 @@ export interface ChatMessage {
   clientMessageId?: string | null;
   createdAt: number;
   source?: 'runtime_observation';
+  runtimeObservationIssueKey?: string | null;
+  runtimeObservationOriginalContent?: string | null;
+  runtimeObservationResolved?: boolean;
+  runtimeObservationResolvedAt?: number | null;
 }
 
 export interface BuildCopilotPolicy {

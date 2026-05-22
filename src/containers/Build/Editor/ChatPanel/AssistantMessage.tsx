@@ -78,7 +78,12 @@ export default function AssistantMessage({
   )
     ? ''
     : message.content;
-  const visibleMessageContent = rawVisibleMessageContent;
+  const runtimeObservationResolved = Boolean(
+    message.runtimeObservationResolved
+  );
+  const visibleMessageContent = runtimeObservationResolved
+    ? stripRuntimeObservationResolvedHeader(rawVisibleMessageContent)
+    : rawVisibleMessageContent;
   const hasStreamingCodePreview =
     generating &&
     isStreamingTarget &&
@@ -134,6 +139,7 @@ export default function AssistantMessage({
   const showFixRuntimeObservationButton =
     isOwner &&
     message.source === 'runtime_observation' &&
+    !runtimeObservationResolved &&
     Boolean(String(message.content || '').trim());
 
   return (
@@ -335,6 +341,22 @@ export default function AssistantMessage({
           </div>
         </div>
       ) : null}
+      {runtimeObservationResolved ? (
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: ${visibleMessageContent ? '0.55rem' : '0'};
+            color: ${Color.green()};
+            font-size: var(--build-workshop-meta-font-size);
+            font-weight: 800;
+          `}
+        >
+          <Icon icon="check-circle" />
+          <span>Preview issue resolved</span>
+        </div>
+      ) : null}
       {visibleMessageContent ? (
         <RichText isAIMessage aiActionPlacement="inline" maxLines={15}>
           {visibleMessageContent}
@@ -402,6 +424,16 @@ export default function AssistantMessage({
       ) : null}
     </div>
   );
+}
+
+function stripRuntimeObservationResolvedHeader(content: string) {
+  return String(content || '')
+    .split('\n')
+    .filter((line, index) => {
+      return index !== 0 || line.trim() !== 'Preview issue resolved.';
+    })
+    .join('\n')
+    .trim();
 }
 
 function StatusStepLog({ steps }: { steps: BuildStatusStepEntry[] }) {
