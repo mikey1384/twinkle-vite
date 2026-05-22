@@ -23,6 +23,17 @@ export interface InternalEmbedPreviewInfo {
   normalizedSrc: string;
 }
 
+export interface AICardCollectionPreviewTitleFilters {
+  cardCount?: number | null;
+  color?: string | null;
+  engine?: string | null;
+  isBuyNow?: string | null;
+  owner?: string | null;
+  quality?: string | null;
+  style?: string | null;
+  word?: string | null;
+}
+
 const internalHosts = new Set([
   'localhost',
   '127.0.0.1',
@@ -35,6 +46,87 @@ const internalHosts = new Set([
 
 export function isAICardEmbedSrc(src: string) {
   return getInternalEmbedPreviewInfo(src)?.kind === 'aiCard';
+}
+
+export function getAICardCollectionEmbedPreviewTitle(src: string) {
+  const parsed = parseInternalEmbedSrc(src);
+  if (!parsed) return '';
+
+  const { parts, searchParams } = parsed;
+  const linkType = parts[0] || '';
+  const linkSubType = parts[1] || '';
+  const isAICardsLink =
+    linkType === 'ai-cards' ||
+    (linkType === 'chat' && linkSubType === 'ai-cards');
+  if (!isAICardsLink) return '';
+
+  const cardId = getPositiveNumber(
+    searchParams.get('cardId') ||
+      (linkType === 'ai-cards' ? parts[1] : parts[2])
+  );
+  if (cardId) return '';
+
+  return getAICardCollectionPreviewTitle({
+    color: getAICardSearchParam(searchParams, 'color'),
+    engine: getAICardSearchParam(searchParams, 'engine'),
+    isBuyNow: getAICardSearchParam(searchParams, 'isBuyNow'),
+    owner: getAICardSearchParam(searchParams, 'owner'),
+    quality: getAICardSearchParam(searchParams, 'quality'),
+    style: getAICardSearchParam(searchParams, 'style'),
+    word: getAICardSearchParam(searchParams, 'word')
+  });
+}
+
+export function getAICardCollectionPreviewTitle({
+  cardCount,
+  color,
+  engine,
+  isBuyNow,
+  owner,
+  quality,
+  style,
+  word
+}: AICardCollectionPreviewTitleFilters) {
+  if (
+    !color &&
+    !engine &&
+    !isBuyNow &&
+    !owner &&
+    !quality &&
+    !style &&
+    !word
+  ) {
+    return '';
+  }
+
+  const cardNoun = Number(cardCount) === 1 ? 'card' : 'cards';
+  const titleParts = [];
+  if (owner) {
+    titleParts.push(`${owner}'s`);
+  }
+  if (color) {
+    titleParts.push(
+      `${color} ${quality ? `${quality} ` : ''}${
+        engine ? `${engine} ` : ''
+      }${cardNoun}`
+    );
+  } else if (quality) {
+    titleParts.push(
+      `${quality ? `${quality} ` : ''}${engine ? `${engine} ` : ''}${cardNoun}`
+    );
+  } else {
+    titleParts.push(`${engine ? `${engine} ` : ''}${cardNoun}`);
+  }
+  if (style) {
+    titleParts.push(`with "${style}" art style`);
+  }
+  if (word) {
+    titleParts.push(`containing the word "${word}"`);
+  }
+  if (isBuyNow) {
+    titleParts.push('you can buy now');
+  }
+  return titleParts.filter(Boolean).join(' ');
 }
 
 export function getInternalEmbedPreviewInfo(
@@ -284,4 +376,8 @@ function parseInternalEmbedSrc(src: string) {
 function getPositiveNumber(value: string | number | null | undefined) {
   const number = Math.floor(Number(value || 0));
   return number > 0 ? number : undefined;
+}
+
+function getAICardSearchParam(searchParams: URLSearchParams, key: string) {
+  return searchParams.get(`search[${key}]`) || searchParams.get(key);
 }

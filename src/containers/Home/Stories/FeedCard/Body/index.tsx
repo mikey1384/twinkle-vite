@@ -18,6 +18,7 @@ import {
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
 import {
+  getAICardCollectionEmbedPreviewTitle,
   getInternalEmbedCommentLabel,
   getInternalEmbedPreviewInfo
 } from '~/helpers/aiCardEmbedHelpers';
@@ -68,6 +69,10 @@ import {
 } from '../helpers/sizing';
 
 type PreviewCommentMedia =
+  | {
+      kind: 'aiCardCollection';
+      label: string;
+    }
   | {
       cardId: number;
       kind: 'aiCard';
@@ -1169,6 +1174,20 @@ export function HomeFeedCommentPreview({
   );
 
   function renderPreviewCommentMedia(media: PreviewCommentMedia) {
+    if (media.kind === 'aiCardCollection') {
+      return (
+        <span
+          className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--ai-card-collection"
+          title={media.label}
+        >
+          <Icon
+            className="home-feed-card__comment-preview-media-icon"
+            icon="cards-blank"
+          />
+        </span>
+      );
+    }
+
     if (media.kind === 'aiCard') {
       return <PreviewCommentAICardMedia cardId={media.cardId} />;
     }
@@ -1401,6 +1420,15 @@ function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
         label: getInternalEmbedCommentLabel(internalInfo)
       };
     }
+    const aiCardCollectionTitle = getAICardCollectionEmbedPreviewTitle(
+      markdownEmbed.src
+    );
+    if (aiCardCollectionTitle) {
+      return {
+        kind: 'aiCardCollection',
+        label: aiCardCollectionTitle
+      };
+    }
     if (internalInfo?.kind === 'build' && internalInfo.contentId) {
       return {
         contentId: internalInfo.contentId,
@@ -1442,6 +1470,10 @@ function getPreviewCommentAttachmentText(comment: Comment) {
 function getPreviewCommentEmbedText(embed: MarkdownImageEmbed) {
   if (embed.type === 'youtube') return 'shared a video';
   if (embed.type === 'internal') {
+    const aiCardCollectionTitle = getAICardCollectionEmbedPreviewTitle(
+      embed.src
+    );
+    if (aiCardCollectionTitle) return aiCardCollectionTitle;
     return getInternalEmbedCommentLabel(getInternalEmbedPreviewInfo(embed.src));
   }
   return 'shared an image';

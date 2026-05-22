@@ -5,6 +5,7 @@ import Loading from '~/components/Loading';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import { getAICardCollectionPreviewTitle } from '~/helpers/aiCardEmbedHelpers';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 
@@ -93,37 +94,16 @@ export default function MultiCardComponent({
   }, [color, engine, isBuyNow, owner, quality, style, word]);
 
   const title = useMemo(() => {
-    const titleParts = [];
-    if (owner) {
-      titleParts.push(`${owner}'s`);
-    }
-    if (color) {
-      titleParts.push(
-        `${color} ${quality ? `${quality} ` : ''}${
-          engine ? `${engine} ` : ''
-        }card${cardIds?.length === 1 ? '' : 's'}`
-      );
-    } else if (quality) {
-      titleParts.push(
-        `${quality ? `${quality} ` : ''}${engine ? `${engine} ` : ''}card${
-          cardIds?.length === 1 ? '' : 's'
-        }`
-      );
-    } else {
-      titleParts.push(
-        `${engine ? `${engine} ` : ''}card${cardIds?.length === 1 ? '' : 's'}`
-      );
-    }
-    if (style) {
-      titleParts.push(`with "${style}" art style`);
-    }
-    if (word) {
-      titleParts.push(`containing the word "${word}"`);
-    }
-    if (isBuyNow) {
-      titleParts.push('you can buy now');
-    }
-    return titleParts.filter(Boolean).join(' ');
+    return getAICardCollectionPreviewTitle({
+      cardCount: cardIds?.length,
+      color,
+      engine,
+      isBuyNow,
+      owner,
+      quality,
+      style,
+      word
+    });
   }, [owner, color, quality, style, word, isBuyNow, engine, cardIds?.length]);
 
   if (isPreview) {

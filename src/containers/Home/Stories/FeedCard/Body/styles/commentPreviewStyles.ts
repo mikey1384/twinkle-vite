@@ -109,6 +109,14 @@ export const commentPreviewStyles = `
     align-items: center;
     background: color-mix(in srgb, var(--home-feed-comment-accent, ${Color.logoBlue()}) 7%, #ffffff);
   }
+  .home-feed-card__comment-preview-media--ai-card-collection {
+    background: color-mix(in srgb, var(--home-feed-comment-accent, ${Color.logoBlue()}) 8%, #ffffff);
+    color: var(--home-feed-comment-accent, ${Color.logoBlue()});
+  }
+  .home-feed-card__comment-preview-media--ai-card-collection svg {
+    color: inherit;
+    font-size: 2.25rem;
+  }
   .home-feed-card__comment-preview-media--ai-card > div {
     width: 4.1rem;
     height: 5.15rem;
@@ -186,6 +194,9 @@ export const commentPreviewStyles = `
       width: 3.75rem;
       height: 4.75rem;
       transform: scale(0.78);
+    }
+    .home-feed-card__comment-preview-media--ai-card-collection svg {
+      font-size: 2rem;
     }
     .home-feed-card__comment-preview-media-icon {
       font-size: 1.7rem;
