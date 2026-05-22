@@ -7,10 +7,12 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
 
 export default function XPAndStreakDisplay({
+  className,
   xpAwarded,
   streak,
   style
 }: {
+  className?: string;
   xpAwarded?: number;
   streak?: number;
   style?: React.CSSProperties;
@@ -27,12 +29,12 @@ export default function XPAndStreakDisplay({
 
   return (
     <div
-      className={css`
+      className={`${css`
         display: flex;
         align-items: center;
-        gap: 1rem;
         flex-wrap: wrap;
-      `}
+        gap: 1rem;
+      `} ${className || ''}`}
       style={style}
     >
       {!!showXP && (

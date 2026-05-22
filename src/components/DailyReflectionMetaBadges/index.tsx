@@ -91,33 +91,43 @@ export default function DailyReflectionMetaBadges({
   }
 
   const isCompact = density === 'compact';
+  const rootClassName = [
+    rootClass,
+    isCompact ? compactRootClass : '',
+    masterpieceLabel ? 'daily-reflection-meta-badges--has-masterpiece' : '',
+    showProgress ? 'daily-reflection-meta-badges--has-progress' : '',
+    isRefined ? 'daily-reflection-meta-badges--has-refined' : '',
+    className || ''
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <div
-      className={`${rootClass} ${isCompact ? compactRootClass : ''} ${
-        className || ''
-      }`}
-      style={style}
-    >
+    <div className={rootClassName} style={style}>
       {masterpieceLabel ? (
         <span
-          className={`${masterpieceBadgeClass} ${
+          className={`${masterpieceBadgeClass} daily-reflection-meta-badges__masterpiece ${
             isCompact ? compactMasterpieceBadgeClass : ''
           }`}
         >
           <span>★</span>
-          <span>{masterpieceLabel}</span>
+          <span className="daily-reflection-meta-badges__masterpiece-label">
+            {masterpieceLabel}
+          </span>
         </span>
       ) : null}
       {showProgress ? (
         <XPAndStreakDisplay
+          className="daily-reflection-meta-badges__progress"
           xpAwarded={Number(xpAwarded) || 0}
           streak={Number(streak) || 0}
           style={{ marginTop: 0 }}
         />
       ) : null}
       {isRefined ? (
-        <span className={refinedBadgeClass}>
+        <span
+          className={`${refinedBadgeClass} daily-reflection-meta-badges__refined`}
+        >
           <span className={refinedIconClass}>✨</span>
           <span style={{ fontStyle: 'italic' }}>AI-polished</span>
         </span>

@@ -209,6 +209,7 @@ const REFLECTION_PREVIEW_LAYOUT_REM = {
   answerLineHeight: 1.9 * 1.36,
   footerMinHeight: 2.35,
   minAnswerLines: 2,
+  mobileMasterpieceFooterMinHeight: 4.7,
   paddingY: 2,
   questionBorderY: 0.13,
   questionCharsPerLine: {
@@ -1325,7 +1326,7 @@ function getDailyReflectionAnswerLineBudget({
     layout.paddingY +
     gapCount * layout.rowGap +
     (hasQuestion ? getDailyReflectionQuestionBoxHeight(questionLines) : 0) +
-    (hasFooter ? layout.footerMinHeight : 0);
+    (hasFooter ? getDailyReflectionFooterMinHeight({ axis, content }) : 0);
   const panelHeight =
     PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM.reflection[axis];
   const availableAnswerHeight = panelHeight - occupiedHeight;
@@ -1334,6 +1335,26 @@ function getDailyReflectionAnswerLineBudget({
   );
 
   return Math.max(layout.minAnswerLines, answerLines);
+}
+
+function getDailyReflectionFooterMinHeight({
+  axis,
+  content
+}: {
+  axis: FeedCardLayoutAxis;
+  content: any;
+}) {
+  const layout = REFLECTION_PREVIEW_LAYOUT_REM;
+  const hasMasterpiece = content?.grade === 'Masterpiece';
+  const hasProgress =
+    Number(content?.xpAwarded || 0) > 0 ||
+    Number(content?.streakAtTime || 0) > 0;
+
+  if (axis === 'mobile' && hasMasterpiece && hasProgress) {
+    return layout.mobileMasterpieceFooterMinHeight;
+  }
+
+  return layout.footerMinHeight;
 }
 
 function getDailyReflectionQuestionBoxHeight(questionLines: number) {

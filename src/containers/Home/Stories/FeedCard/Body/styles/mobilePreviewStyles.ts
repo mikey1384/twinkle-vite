@@ -164,6 +164,44 @@ export const mobilePreviewStyles = `
       border-right: 0;
       border-radius: 0;
     }
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      align-items: center;
+      column-gap: 0.75rem;
+      row-gap: 0.35rem;
+      width: 100%;
+      min-height: 4.7rem;
+    }
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
+      .daily-reflection-meta-badges__masterpiece {
+      grid-column: 1;
+      grid-row: 1;
+      max-width: 100%;
+      overflow: hidden;
+      justify-self: start;
+    }
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
+      .daily-reflection-meta-badges__masterpiece-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
+      .daily-reflection-meta-badges__progress {
+      grid-column: 1;
+      grid-row: 2;
+      min-width: 0;
+      gap: 0.6rem;
+      flex-wrap: nowrap;
+    }
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
+      .daily-reflection-meta-badges__refined {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+      justify-self: end;
+    }
       .home-feed-card__text-copy
         > div.home-feed-card__primary-preview-text,
       .home-feed-card__subject-copy
