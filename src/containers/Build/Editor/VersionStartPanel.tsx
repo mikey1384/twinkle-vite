@@ -117,19 +117,27 @@ const versionStartActionsClass = css`
 
 const branchListsClass = css`
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
 `;
 
 const branchSectionClass = css`
+  width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+`;
+
+const branchCardsGridClass = css`
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+  gap: 0.85rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const versionLoadTitleClass = css`
@@ -775,124 +783,128 @@ export default function VersionStartPanel({
         {versionsLoading ? (
           <span className={branchEmptyTextClass}>Loading branches...</span>
         ) : branchList.length > 0 ? (
-          branchList.map((version) => {
-            const branchUser = getBranchUser(version);
-            const branchStatus = String(
-              version.contributionStatus || ''
-            ).trim();
-            const branchName = getBranchDisplayTitle(version);
-            const updatedLabel = getBranchUpdatedLabel(version);
-            const thumbnailUrl = String(version.thumbnailUrl || '').trim();
-            const isCurrentBranch =
-              Number(version.id || 0) === Number(activeBuildId || 0);
-            const canDeleteBranch =
-              !isCurrentBranch &&
-              Number(
-                version.contributionContributorId || version.userId || 0
-              ) === Number(currentUserId || 0) &&
-              canDeleteBuildBranchStatus(branchStatus);
-            const deleteTarget = {
-              id: version.id,
-              title: branchName,
-              confirmTitle: String(version.title || branchName).trim()
-            };
-            return (
-              <div
-                key={version.id}
-                className={branchCardClass}
-                role="button"
-                tabIndex={0}
-                onClick={() => onLoadVersion(version)}
-                onKeyDown={(event) => handleBranchCardKeyDown(event, version)}
-              >
-                <PreviewFrame
-                  className={branchPreviewClass}
-                  thumbnailUrl={thumbnailUrl}
-                  alt={`${branchName} preview`}
-                  ariaLabel={`${branchName} preview`}
+          <div className={branchCardsGridClass}>
+            {branchList.map((version) => {
+              const branchUser = getBranchUser(version);
+              const branchStatus = String(
+                version.contributionStatus || ''
+              ).trim();
+              const branchName = getBranchDisplayTitle(version);
+              const updatedLabel = getBranchUpdatedLabel(version);
+              const thumbnailUrl = String(version.thumbnailUrl || '').trim();
+              const isCurrentBranch =
+                Number(version.id || 0) === Number(activeBuildId || 0);
+              const canDeleteBranch =
+                !isCurrentBranch &&
+                Number(
+                  version.contributionContributorId || version.userId || 0
+                ) === Number(currentUserId || 0) &&
+                canDeleteBuildBranchStatus(branchStatus);
+              const deleteTarget = {
+                id: version.id,
+                title: branchName,
+                confirmTitle: String(version.title || branchName).trim()
+              };
+              return (
+                <div
+                  key={version.id}
+                  className={branchCardClass}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onLoadVersion(version)}
+                  onKeyDown={(event) =>
+                    handleBranchCardKeyDown(event, version)
+                  }
                 >
-                  {isCurrentBranch ? (
-                    <span className={branchPreviewCurrentBadgeClass}>
-                      Current
-                    </span>
-                  ) : null}
-                </PreviewFrame>
-                <div className={branchCardBodyClass}>
-                  <div className={branchCardHeaderClass}>
-                    <ProfilePic
-                      className={branchAvatarClass}
-                      userId={branchUser.id}
-                      profilePicUrl={branchUser.profilePicUrl}
-                    />
-                    <span className={branchLoadTextClass}>
-                      <BranchTitleReveal title={branchName} />
-                      <span className={branchLoadMetaClass}>
-                        <span
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                        >
-                          <UsernameText user={branchUser as any} />
-                        </span>
-                        {updatedLabel ? (
-                          <>
-                            <span>·</span>
-                            <span>{updatedLabel}</span>
-                          </>
-                        ) : null}
+                  <PreviewFrame
+                    className={branchPreviewClass}
+                    thumbnailUrl={thumbnailUrl}
+                    alt={`${branchName} preview`}
+                    ariaLabel={`${branchName} preview`}
+                  >
+                    {isCurrentBranch ? (
+                      <span className={branchPreviewCurrentBadgeClass}>
+                        Current
                       </span>
+                    ) : null}
+                  </PreviewFrame>
+                  <div className={branchCardBodyClass}>
+                    <div className={branchCardHeaderClass}>
+                      <ProfilePic
+                        className={branchAvatarClass}
+                        userId={branchUser.id}
+                        profilePicUrl={branchUser.profilePicUrl}
+                      />
+                      <span className={branchLoadTextClass}>
+                        <BranchTitleReveal title={branchName} />
+                        <span className={branchLoadMetaClass}>
+                          <span
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
+                          >
+                            <UsernameText user={branchUser as any} />
+                          </span>
+                          {updatedLabel ? (
+                            <>
+                              <span>·</span>
+                              <span>{updatedLabel}</span>
+                            </>
+                          ) : null}
+                        </span>
+                      </span>
+                    </div>
+                    <span className={branchLoadBadgeRowClass}>
+                      <button
+                        type="button"
+                        className={versionLoadButtonClass}
+                        disabled={isCurrentBranch}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onLoadVersion(version);
+                        }}
+                      >
+                        <Icon icon="eye" />
+                        {isCurrentBranch
+                          ? 'Viewing'
+                          : isProjectOwner
+                            ? 'Review'
+                            : 'Open'}
+                      </button>
+                      {branchStatus && branchStatus !== 'draft' ? (
+                        <span className={versionLoadStatusClass}>
+                          {branchStatus}
+                        </span>
+                      ) : null}
                     </span>
                   </div>
-                  <span className={branchLoadBadgeRowClass}>
+                  {canDeleteBranch ? (
                     <button
                       type="button"
-                      className={versionLoadButtonClass}
-                      disabled={isCurrentBranch}
+                      className={branchDeleteButtonClass}
+                      disabled={deletingBranchId === version.id}
+                      title="Delete branch"
+                      aria-label={`Delete ${branchName}`}
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        onLoadVersion(version);
+                        onDeleteBranch(deleteTarget);
                       }}
                     >
-                      <Icon icon="eye" />
-                      {isCurrentBranch
-                        ? 'Viewing'
-                        : isProjectOwner
-                          ? 'Review'
-                          : 'Open'}
+                      <Icon
+                        icon={
+                          deletingBranchId === version.id
+                            ? 'spinner'
+                            : 'trash-alt'
+                        }
+                        pulse={deletingBranchId === version.id}
+                      />
                     </button>
-                    {branchStatus && branchStatus !== 'draft' ? (
-                      <span className={versionLoadStatusClass}>
-                        {branchStatus}
-                      </span>
-                    ) : null}
-                  </span>
+                  ) : null}
                 </div>
-                {canDeleteBranch ? (
-                  <button
-                    type="button"
-                    className={branchDeleteButtonClass}
-                    disabled={deletingBranchId === version.id}
-                    title="Delete branch"
-                    aria-label={`Delete ${branchName}`}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      onDeleteBranch(deleteTarget);
-                    }}
-                  >
-                    <Icon
-                      icon={
-                        deletingBranchId === version.id
-                          ? 'spinner'
-                          : 'trash-alt'
-                      }
-                      pulse={deletingBranchId === version.id}
-                    />
-                  </button>
-                ) : null}
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         ) : (
           <span className={branchEmptyTextClass}>No branches yet.</span>
         )}

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Loading from '~/components/Loading';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import TabFilter from '../TabFilter';
@@ -226,7 +225,7 @@ export default function BuildList() {
   );
   const tabChangeInitialScrollRef = useRef(false);
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [myBuildsLoading, setMyBuildsLoading] = useState(true);
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseLoadingMore, setBrowseLoadingMore] = useState(false);
   const [editingBuild, setEditingBuild] =
@@ -377,13 +376,11 @@ export default function BuildList() {
 
   useEffect(() => {
     if (!normalizedUserId) {
-      setLoading(false);
+      setMyBuildsLoading(false);
       return;
     }
     let canceled = false;
-    setLoading(
-      activeTabRef.current === 'mine' && !myBuildsLoadedForCurrentUser
-    );
+    setMyBuildsLoading(!myBuildsLoadedForCurrentUser);
     handleLoad();
 
     async function handleLoad() {
@@ -399,7 +396,7 @@ export default function BuildList() {
         console.error('Failed to load builds:', error);
       } finally {
         if (!canceled) {
-          setLoading(false);
+          setMyBuildsLoading(false);
         }
       }
     }
@@ -574,10 +571,6 @@ export default function BuildList() {
     );
   }
 
-  if (loading && isMyBuildsTab) {
-    return <Loading />;
-  }
-
   return (
     <div className={pageClass}>
       <div className={buildStudioLayoutClass}>
@@ -670,6 +663,9 @@ export default function BuildList() {
               displayedMyBuilds={displayedMyBuilds}
               isBuildSearchActive={isBuildSearchActive}
               isMyBuildsTab={isMyBuildsTab}
+              myBuildsLoading={
+                myBuildsLoading && !myBuildsLoadedForCurrentUser
+              }
               promptInput={promptInput}
               searchQuery={buildSearchQuery}
               creatingFromPrompt={creatingFromPrompt}

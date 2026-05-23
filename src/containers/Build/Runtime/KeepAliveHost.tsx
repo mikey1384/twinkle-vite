@@ -45,6 +45,8 @@ interface RuntimeRouteMatch {
   buildId: number | null;
 }
 
+const RUNNING_APP_TRAY_Z_INDEX = 1_000_000;
+
 const runtimeLayerClass = css`
   position: fixed;
   inset: 0;
@@ -71,7 +73,7 @@ const trayClass = css`
   position: fixed;
   right: 1rem;
   bottom: calc(1rem + env(safe-area-inset-bottom));
-  z-index: 90;
+  z-index: ${RUNNING_APP_TRAY_Z_INDEX};
   width: min(34rem, calc(100vw - 2rem));
   border: 1px solid rgba(148, 163, 184, 0.55);
   border-radius: 12px;

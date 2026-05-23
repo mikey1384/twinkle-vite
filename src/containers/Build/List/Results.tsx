@@ -109,6 +109,7 @@ export default function Results({
   displayedMyBuilds,
   isBuildSearchActive,
   isMyBuildsTab,
+  myBuildsLoading,
   promptInput,
   searchQuery,
   creatingFromPrompt,
@@ -137,6 +138,7 @@ export default function Results({
   displayedMyBuilds: BuildProjectListItemData[];
   isBuildSearchActive: boolean;
   isMyBuildsTab: boolean;
+  myBuildsLoading: boolean;
   promptInput: string;
   searchQuery: string;
   creatingFromPrompt: boolean;
@@ -178,6 +180,9 @@ export default function Results({
   });
 
   if (isMyBuildsTab) {
+    if (myBuildsLoading) {
+      return <Loading className={browseLoadingClass} />;
+    }
     if (builds.length === 0 && !isBuildSearchActive) {
       return (
         <div className={emptyStateClass}>
