@@ -11,6 +11,7 @@ export default function ContentDetails({
   collaboratorCount,
   collaborationMode,
   contentType,
+  createdAt,
   description = '',
   favoritedAt,
   forkCount,
@@ -21,7 +22,9 @@ export default function ContentDetails({
   story,
   title = '',
   uploader,
+  updatedAt,
   viewCount,
+  publishedAt,
   contentId,
   topic,
   thumbUrl,
@@ -37,6 +40,7 @@ export default function ContentDetails({
   collaboratorCount?: number;
   collaborationMode?: 'private' | 'contribution' | 'open_source' | null;
   contentType: string;
+  createdAt?: number | null;
   description?: string;
   favoritedAt?: number | null;
   forkCount?: number;
@@ -47,7 +51,9 @@ export default function ContentDetails({
   story?: string;
   title?: string;
   uploader: User;
+  updatedAt?: number | null;
   viewCount?: number;
+  publishedAt?: number | null;
   contentId: number;
   topic?: string;
   thumbUrl?: string;
@@ -101,14 +107,18 @@ export default function ContentDetails({
           buildUserId={buildUserId}
           collaboratorCount={collaboratorCount}
           collaborationMode={collaborationMode}
+          createdAt={createdAt}
           description={description}
           favoritedAt={favoritedAt}
           forkCount={forkCount}
           isFavorited={isFavorited}
           isPublic={isPublic}
+          thumbUrl={thumbUrl}
           title={title}
+          updatedAt={updatedAt}
           uploader={uploader}
           viewCount={viewCount}
+          publishedAt={publishedAt}
           sourceBuildId={sourceBuildId}
           contributionStatus={contributionStatus}
           rootBuildSourceBuildId={rootBuildSourceBuildId}

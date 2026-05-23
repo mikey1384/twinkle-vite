@@ -824,24 +824,11 @@ export const mainPreviewStyles = `
   }
   .home-feed-card__build-preview {
     box-sizing: border-box;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(11rem, 28%);
-    gap: 0.85rem;
     height: 100%;
     padding: 0.85rem 1rem;
     border-left: 0.45rem solid ${Color.logoBlue()};
     background: #fff;
   }
-  .home-feed-card__build-preview--no-thumb {
-    grid-template-columns: 1fr;
-  }
-  .home-feed-card__build-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    min-width: 0;
-  }
-  .home-feed-card__build-copy p,
   .home-feed-card__url-copy p,
   .home-feed-card__video-copy p {
     color: ${Color.darkGray()};
@@ -851,93 +838,6 @@ export const mainPreviewStyles = `
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-  }
-  .home-feed-card__build-badge {
-    display: inline-flex;
-    align-items: center;
-    align-self: flex-start;
-    gap: 0.45rem;
-    padding: 0.38rem 0.68rem;
-    border: 1px solid ${Color.logoBlue(0.2)};
-    border-radius: 999px;
-    background: ${Color.logoBlue(0.12)};
-    color: ${Color.logoBlue()};
-    font-size: 1.1rem;
-    font-weight: 800;
-  }
-  .home-feed-card__build-status {
-    border: 1px solid rgba(34, 197, 94, 0.28);
-    background: rgba(34, 197, 94, 0.12);
-    color: #15803d;
-  }
-  .home-feed-card__build-status.fork {
-    border-color: rgba(147, 51, 234, 0.36);
-    background: rgba(147, 51, 234, 0.14);
-    color: #6b21a8;
-  }
-  .home-feed-card__build-status.fork-count {
-    border-color: rgba(192, 38, 211, 0.34);
-    background: rgba(192, 38, 211, 0.12);
-    color: #a21caf;
-  }
-  .home-feed-card__build-status.open-source {
-    border-color: rgba(59, 130, 246, 0.32);
-    background: rgba(59, 130, 246, 0.12);
-    color: #1d4ed8;
-  }
-  .home-feed-card__build-actions button {
-    appearance: none;
-    border: 1px solid ${Color.logoBlue(0.28)};
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    min-height: 2.5rem;
-    padding: 0.46rem 0.72rem;
-    border-radius: 0.65rem;
-    background: ${Color.logoBlue(0.11)};
-    color: ${Color.logoBlue()};
-    font: inherit;
-    font-size: 1.1rem;
-    font-weight: 800;
-    cursor: pointer;
-  }
-  .home-feed-card__build-actions button.primary {
-    border-color: ${Color.logoBlue()};
-    background: ${Color.logoBlue()};
-    color: #fff;
-  }
-  .home-feed-card__build-thumb {
-    position: relative;
-    min-width: 0;
-    height: 100%;
-    overflow: hidden;
-    border: 1px solid var(--ui-border);
-    border-radius: 0.85rem;
-    background: #101828;
-  }
-  .home-feed-card__build-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .home-feed-card__build-thumb-toolbar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    height: 1.55rem;
-    padding: 0 0.55rem;
-    background: rgba(255, 255, 255, 0.86);
-  }
-  .home-feed-card__build-thumb-toolbar span {
-    width: 0.42rem;
-    height: 0.42rem;
-    border-radius: 999px;
-    background: rgba(50, 65, 90, 0.42);
   }
     .home-feed-card__pass-preview {
       box-sizing: border-box;

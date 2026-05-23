@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useBuildContext,
+  useContentContext,
+  useKeyContext
+} from '~/contexts';
 import { css, cx } from '@emotion/css';
 
 const buildFavoriteButtonClass = css`
@@ -124,6 +129,9 @@ export default function FavoriteButton({
   const onUpdateBuildFavorite = useContentContext(
     (v) => v.actions.onUpdateBuildFavorite
   );
+  const onPatchBuildSummary = useBuildContext(
+    (v) => v.actions.onPatchBuildSummary
+  );
   const [requestLoading, setRequestLoading] = useState(false);
   const buttonLoading = Boolean(loading || requestLoading);
   const title = favorited ? 'Remove favorite' : 'Add favorite';
@@ -188,6 +196,15 @@ export default function FavoriteButton({
         result
       };
       onUpdateBuildFavorite(nextState);
+      onPatchBuildSummary({
+        buildId,
+        patch: {
+          favoriteActivityAt: nextState.favoriteActivityAt,
+          favoriteStateUserId: Number(userId) || null,
+          favoritedAt: nextState.favoritedAt,
+          isFavorited: nextState.isFavorited
+        }
+      });
       onChange?.(nextState);
     } catch (error) {
       if (onError) {

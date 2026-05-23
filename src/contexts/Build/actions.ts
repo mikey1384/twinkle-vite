@@ -14,6 +14,36 @@ import {
 
 export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
   return {
+    onUpsertBuildSummary(build: any) {
+      return dispatch({
+        type: 'UPSERT_BUILD_SUMMARIES',
+        buildSummary: { build }
+      });
+    },
+    onUpsertBuildSummaries(builds: any[]) {
+      return dispatch({
+        type: 'UPSERT_BUILD_SUMMARIES',
+        buildSummary: { builds }
+      });
+    },
+    onPatchBuildSummary({
+      buildId,
+      patch
+    }: {
+      buildId: number;
+      patch: Record<string, unknown>;
+    }) {
+      return dispatch({
+        type: 'PATCH_BUILD_SUMMARY',
+        buildSummary: { buildId, patch }
+      });
+    },
+    onRemoveBuildSummary(buildId: number) {
+      return dispatch({
+        type: 'REMOVE_BUILD_SUMMARY',
+        buildSummary: { buildId }
+      });
+    },
     onRegisterBuildRun(buildRun: BuildLiveRunActionPayload) {
       return dispatch({
         type: 'REGISTER_BUILD_RUN',

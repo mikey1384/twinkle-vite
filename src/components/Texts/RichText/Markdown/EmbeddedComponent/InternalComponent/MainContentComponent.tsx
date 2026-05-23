@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { BuildMiniCard } from '~/components/Build/Cards';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -182,6 +183,33 @@ function CompactMainContentEmbedPreview({
     '--embed-accent-soft': string;
   };
 
+  if (isBuild) {
+    return (
+      <div
+        className={[
+          compactMainContentPreviewClass,
+          'compact-main-content-embed--build-card'
+        ].join(' ')}
+        role="button"
+        style={previewStyle}
+        tabIndex={0}
+        onClick={handleBuildClick}
+        onKeyDown={handleBuildKeyDown}
+      >
+        <BuildMiniCard
+          build={{
+            ...content,
+            contentId,
+            contentType: 'build',
+            id: contentId
+          }}
+          className="compact-main-content-embed__build-card"
+          interactiveBadges={false}
+        />
+      </div>
+    );
+  }
+
   if (contentType === 'aiStory') {
     return (
       <CompactAIStoryEmbedPreview
@@ -263,6 +291,18 @@ function CompactMainContentEmbedPreview({
   );
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    navigate(path);
+  }
+
+  function handleBuildClick(event: React.MouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    navigate(path);
+  }
+
+  function handleBuildKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
     event.stopPropagation();
     navigate(path);
   }
@@ -561,6 +601,16 @@ const compactMainContentPreviewClass = css`
   &.compact-main-content-embed--build.compact-main-content-embed--has-media {
     grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 32%);
   }
+  &.compact-main-content-embed--build-card {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    height: 100%;
+    min-height: 10.5rem;
+    padding: 0.85rem;
+    border: 1px solid ${Color.borderGray()};
+    border-left: 0.35rem solid var(--embed-accent);
+    box-shadow: none;
+  }
   .compact-main-content-embed__copy {
     display: flex;
     min-width: 0;
@@ -604,6 +654,15 @@ const compactMainContentPreviewClass = css`
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .compact-main-content-embed__build-card {
+    height: 100%;
+    min-height: 0;
+  }
+  .compact-main-content-embed__build-card p {
+    font-size: 1.1rem;
+    font-weight: 400;
+    line-height: 1.3;
   }
   .compact-main-content-embed__label--neutral {
     padding: 0.15rem 0.55rem;

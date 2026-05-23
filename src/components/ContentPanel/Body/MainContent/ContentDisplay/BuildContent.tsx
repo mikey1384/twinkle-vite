@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import FavoriteButton from '~/components/Build/FavoriteButton';
+import { useBuildCardData } from '~/components/Build/Cards';
+import { useEnsureBuildViewerCollaborationRequest } from '~/components/Build/hooks/useEnsureBuildViewerCollaborationRequest';
 import Button from '~/components/Button';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
@@ -8,7 +10,12 @@ import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useBuildContext,
+  useContentContext,
+  useKeyContext
+} from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 import { BUILD_APP_IFRAME_ALLOW } from '~/helpers/buildIframePermissions';
 import {
@@ -26,14 +33,6 @@ import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContribut
 
 type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
-
-interface BuildCollaborationRequest {
-  id: number;
-  inviteId?: number;
-  status: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
-  message?: string;
-  ownerHidden?: number;
-}
 
 export default function BuildContent({
   build,
@@ -53,6 +52,7 @@ export default function BuildContent({
     collaborationMode?: BuildCollaborationMode | 'contribution';
     contributionAccess?: BuildContributionAccess;
     collaboratorCount?: number;
+    forkCount?: number;
     favoritedAt?: number | null;
     isFavorited?: boolean;
     thumbnailUrl?: unknown;
@@ -82,6 +82,12 @@ export default function BuildContent({
   const declineBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.declineBuildContributorInvite
   );
+  const onPatchBuildSummary = useBuildContext(
+    (v) => v.actions.onPatchBuildSummary
+  );
+  const onUpsertBuildSummary = useBuildContext(
+    (v) => v.actions.onUpsertBuildSummary
+  );
   const updateBuildContributionInviteStatus =
     useContributionInviteStatusUpdater();
   const updateBuildCollaborationDirectMessage =
@@ -102,12 +108,19 @@ export default function BuildContent({
     useState(false);
   const [collaborationRequestMessage, setCollaborationRequestMessage] =
     useState('');
-  const [collaborationRequest, setCollaborationRequest] =
-    useState<BuildCollaborationRequest | null>(null);
   const [collaborationRequestLoading, setCollaborationRequestLoading] =
     useState(false);
   const [collaborationRequestError, setCollaborationRequestError] =
     useState('');
+  const buildId = Number(build?.id || contentId || 0);
+  const buildSummary = useBuildCardData({
+    ...build,
+    contentId: buildId,
+    contentType: 'build',
+    id: buildId
+  });
+  const buildSource = buildSummary || build;
+  const collaborationRequest = buildSummary?.viewerCollaborationRequest || null;
   const collaborationStatus = collaborationRequest?.status || '';
   const collaborationRequestActionLabel = !userId
     ? 'Ask to join'
@@ -124,31 +137,30 @@ export default function BuildContent({
       : collaborationStatus === 'accepted'
         ? 'users'
         : 'user-plus';
-  const buildId = Number(build?.id || 0);
   const normalizedBuild = {
-    ...build,
-    title: getBuildText(build?.title),
-    description: getBuildText(build?.description),
-    thumbnailUrl: getBuildText(build?.thumbnailUrl)
+    ...buildSource,
+    title: getBuildText(buildSource?.title),
+    description: getBuildText(buildSource?.description),
+    thumbnailUrl: getBuildText(buildSource?.thumbnailUrl)
   };
   const displayTitle = getBuildDisplayTitle(normalizedBuild);
   const relationshipLabels = getBuildRelationshipLabels(normalizedBuild);
   const buildDescription = normalizedBuild.description.trim();
-  const ownerId = Number(build?.userId || 0);
+  const ownerId = Number(buildSource?.userId || 0);
   const isOwner = Boolean(userId && ownerId && Number(userId) === ownerId);
   const collaborationMode = normalizeBuildCollaborationMode(
-    build?.collaborationMode
+    buildSource?.collaborationMode
   );
-  const buildIsPublic = Number(build?.isPublic || 0) === 1;
+  const buildIsPublic = Boolean(buildSource?.isPublic);
   const showForkAction =
     !isOwner && buildIsPublic && collaborationMode === 'open_source';
   const showCollaborationRequestAction = !isOwner;
   const showBuildWorkspaceAction = isOwner;
   const showFavoriteAction = buildIsPublic && Boolean(buildId);
-  const favorited = Boolean(build?.isFavorited);
+  const favorited = Boolean(buildSource?.isFavorited);
   const collaboratorCount = Math.max(
     0,
-    Math.floor(Number(build?.collaboratorCount) || 0)
+    Math.floor(Number(buildSource?.collaboratorCount) || 0)
   );
   const thumbnailUrl = normalizedBuild.thumbnailUrl.trim();
   const hasThumbnail = Boolean(thumbnailUrl);
@@ -172,11 +184,11 @@ export default function BuildContent({
     const searchParams = new URLSearchParams({
       embedded: '1'
     });
-    if (Number(build?.updatedAt) > 0) {
-      searchParams.set('rev', String(Number(build.updatedAt)));
+    if (Number(buildSource?.updatedAt) > 0) {
+      searchParams.set('rev', String(Number(buildSource.updatedAt)));
     }
     return `${appPath}?${searchParams.toString()}`;
-  }, [appPath, build?.updatedAt]);
+  }, [appPath, buildSource?.updatedAt]);
 
   useEffect(() => {
     setIframeReady(false);
@@ -188,29 +200,18 @@ export default function BuildContent({
   }, [iframeActivated, iframeReady, previewInView]);
 
   useEffect(() => {
-    if (!showCollaborationRequestAction || !buildId || !userId) {
-      setCollaborationRequest(null);
-      return;
-    }
-    let canceled = false;
-    loadMyBuildCollaborationRequest(buildId)
-      .then((result: any) => {
-        if (canceled) return;
-        const nextRequest = result?.request || null;
-        setCollaborationRequest(nextRequest);
-        setCollaborationRequestMessage(String(nextRequest?.message || ''));
-      })
-      .catch(() => {
-        if (!canceled) {
-          setCollaborationRequest(null);
-        }
-      });
-    return () => {
-      canceled = true;
-    };
-    // loadMyBuildCollaborationRequest is a stable context request helper.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, showCollaborationRequestAction, userId]);
+    setCollaborationRequestMessage(String(collaborationRequest?.message || ''));
+  }, [collaborationRequest?.id, collaborationRequest?.message]);
+
+  useEnsureBuildViewerCollaborationRequest({
+    buildId,
+    enabled: showCollaborationRequestAction,
+    isOwner,
+    loaded: Boolean(buildSummary?.viewerCollaborationRequestLoaded),
+    loading: Boolean(buildSummary?.viewerCollaborationRequestLoading),
+    viewerStateUserId: buildSummary?.viewerStateUserId,
+    userId
+  });
 
   if (!buildId || !embeddedAppPath) {
     return (
@@ -656,7 +657,15 @@ export default function BuildContent({
     try {
       const result = await loadMyBuildCollaborationRequest(buildId);
       const nextRequest = result?.request || null;
-      setCollaborationRequest(nextRequest);
+      onPatchBuildSummary({
+        buildId,
+        patch: {
+          viewerCollaborationRequest: nextRequest,
+          viewerCollaborationRequestLoaded: true,
+          viewerCollaborationRequestLoading: false,
+          viewerStateUserId: Number(userId)
+        }
+      });
       setCollaborationRequestMessage(String(nextRequest?.message || ''));
     } catch (error: any) {
       setCollaborationRequestError(
@@ -680,7 +689,15 @@ export default function BuildContent({
         directMessage: result?.directMessage
       });
       if (result?.request) {
-        setCollaborationRequest(result.request);
+        onPatchBuildSummary({
+          buildId,
+          patch: {
+            viewerCollaborationRequest: result.request,
+            viewerCollaborationRequestLoaded: true,
+            viewerCollaborationRequestLoading: false,
+            viewerStateUserId: Number(userId)
+          }
+        });
         setCollaborationRequestMessage(String(result.request.message || ''));
       }
     } catch (error: any) {
@@ -704,7 +721,15 @@ export default function BuildContent({
         requestId: collaborationRequest.id
       });
       if (result?.success) {
-        setCollaborationRequest(null);
+        onPatchBuildSummary({
+          buildId,
+          patch: {
+            viewerCollaborationRequest: null,
+            viewerCollaborationRequestLoaded: true,
+            viewerCollaborationRequestLoading: false,
+            viewerStateUserId: Number(userId)
+          }
+        });
         setCollaborationRequestMessage('');
       }
     } catch (error: any) {
@@ -733,9 +758,18 @@ export default function BuildContent({
           eventTimeMs: result.eventTimeMs,
           status: 'accepted'
         });
-        setCollaborationRequest((current) =>
-          current ? { ...current, status: 'accepted' } : current
-        );
+        onPatchBuildSummary({
+          buildId,
+          patch: {
+            hasActiveContributionInvite: true,
+            viewerCollaborationRequest: collaborationRequest
+              ? { ...collaborationRequest, status: 'accepted' }
+              : null,
+            viewerCollaborationRequestLoaded: true,
+            viewerCollaborationRequestLoading: false,
+            viewerStateUserId: Number(userId)
+          }
+        });
         handleOpenCollaborationWorkspace();
       }
     } catch (error: any) {
@@ -764,7 +798,16 @@ export default function BuildContent({
           eventTimeMs: result.eventTimeMs,
           status: 'declined'
         });
-        setCollaborationRequest(null);
+        onPatchBuildSummary({
+          buildId,
+          patch: {
+            hasActiveContributionInvite: false,
+            viewerCollaborationRequest: null,
+            viewerCollaborationRequestLoaded: true,
+            viewerCollaborationRequestLoading: false,
+            viewerStateUserId: Number(userId)
+          }
+        });
         setCollaborationRequestMessage('');
       }
     } catch (error: any) {
@@ -786,6 +829,15 @@ export default function BuildContent({
     setActionError('');
     try {
       const result = await forkBuild(buildId);
+      if (result?.build) {
+        onUpsertBuildSummary(result.build);
+      }
+      if (result?.sourceBuild) {
+        onUpsertBuildSummary({
+          ...result.sourceBuild,
+          serverCountFields: ['forkCount']
+        });
+      }
       if (result?.success && result?.build?.id) {
         navigate(`/build/${result.build.id}`);
       }

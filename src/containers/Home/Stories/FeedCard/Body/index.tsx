@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import AchievementItem from '~/components/AchievementItem';
+import { BuildMiniCard } from '~/components/Build/Cards';
 import CardThumb from '~/components/CardThumb';
 import Embedly from '~/components/Embedly';
 import Icon from '~/components/Icon';
-import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
-import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
 import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
@@ -32,14 +31,8 @@ import {
   stripTextSizeMarkers
 } from '~/helpers/stringHelpers';
 import {
-  getBuildDisplayTitle,
-  getBuildRelationshipLabels
+  getBuildDisplayTitle
 } from '~/helpers/buildRelationshipHelpers';
-import {
-  formatBuildCollaboratorCount,
-  formatBuildForkCount,
-  normalizeBuildCollaborationMode
-} from '~/helpers/buildProjectHelpers';
 import { bodyClass, homeFeedSecretGuardBannerStyle } from './styles';
 import {
   AttachmentSurface,
@@ -752,107 +745,22 @@ export default function Body({
   }
 
   function renderBuildPreview() {
-    const displayTitle = getBuildDisplayTitle(content);
-    const relationshipLabels = getBuildRelationshipLabels(content);
-    const collaboratorCount = Math.max(
-      0,
-      Math.floor(Number(content?.collaboratorCount) || 0)
-    );
-    const forkCount = Math.max(0, Math.floor(Number(content?.forkCount) || 0));
-    const collaborationMode = normalizeBuildCollaborationMode(
-      content?.collaborationMode
-    );
-    const showOpenSource = collaborationMode === 'open_source';
-    const thumbnailUrl = String(
-      content?.thumbnailUrl || content?.thumbUrl || ''
-    );
     const ownerId = Number(content?.userId || content?.uploader?.id || 0);
     const isOwner = Boolean(userId && ownerId && ownerId === userId);
 
     return (
-      <div
-        className={`home-feed-card__build-preview${
-          thumbnailUrl ? '' : ' home-feed-card__build-preview--no-thumb'
-        }`}
-      >
-        <div className="home-feed-card__build-copy">
-          <div className="home-feed-card__build-badge">
-            <Icon icon="rocket" />
-            <span>Lumine App</span>
-          </div>
-          <h3 className={primaryPreviewTextClass}>
-            {displayTitle || 'Lumine App'}
-          </h3>
-          {content?.description ? (
-            <p className={primaryPreviewTextClass}>{content.description}</p>
-          ) : null}
-          <div className="home-feed-card__build-status-row">
-            {relationshipLabels.map((label) => (
-              <span
-                key={label}
-                className={`home-feed-card__build-status ${label}`}
-              >
-                <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
-                {label === 'fork' ? 'Forked' : 'Branch'}
-              </span>
-            ))}
-            {showOpenSource ? (
-              <span className="home-feed-card__build-status open-source">
-                <Icon icon="code-branch" />
-                Open Source
-              </span>
-            ) : null}
-            {collaboratorCount > 0 ? (
-              <BuildTeamMembersTrigger
-                buildId={contentId}
-                className="home-feed-card__build-status team"
-              >
-                <Icon icon="users" />
-                {formatBuildCollaboratorCount(collaboratorCount)}
-              </BuildTeamMembersTrigger>
-            ) : null}
-            {showOpenSource ? (
-              <BuildForkersTrigger
-                buildId={contentId}
-                className="home-feed-card__build-status fork-count"
-                disabled={forkCount <= 0}
-              >
-                <Icon icon="code-branch" />
-                {formatBuildForkCount(forkCount)}
-              </BuildForkersTrigger>
-            ) : null}
-          </div>
-          <div className="home-feed-card__build-actions">
-            {isOwner ? (
-              <button
-                type="button"
-                onClick={() => navigate(`/build/${contentId}`)}
-              >
-                <Icon icon="wrench" />
-                Build
-              </button>
-            ) : null}
-            <button
-              className="primary"
-              type="button"
-              onClick={() => navigate(`/app/${contentId}`)}
-            >
-              <Icon icon="external-link-alt" />
-              Open App
-            </button>
-          </div>
-        </div>
-        {thumbnailUrl ? (
-          <div className="home-feed-card__build-thumb">
-            <div className="home-feed-card__build-thumb-toolbar">
-              <span />
-              <span />
-              <span />
-            </div>
-            <img src={thumbnailUrl} alt={displayTitle || 'Lumine App'} />
-          </div>
-        ) : null}
-      </div>
+      <BuildMiniCard
+        build={{
+          ...content,
+          contentId,
+          contentType: 'build',
+          id: contentId
+        }}
+        className="home-feed-card__build-preview"
+        showActions
+        onBuild={isOwner ? () => navigate(`/build/${contentId}`) : undefined}
+        onOpen={() => navigate(`/app/${contentId}`)}
+      />
     );
   }
 

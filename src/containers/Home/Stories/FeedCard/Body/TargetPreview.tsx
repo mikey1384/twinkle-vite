@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AchievementItem from '~/components/AchievementItem';
+import { BuildMiniCard } from '~/components/Build/Cards';
 import CardThumb from '~/components/CardThumb';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
 import Icon from '~/components/Icon';
@@ -11,7 +12,6 @@ import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
-import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
@@ -570,31 +570,17 @@ export default function TargetPreview({
   }
 
   function renderTargetBuildPreview(target: any) {
-    const displayTitle = getBuildDisplayTitle(target);
-    const thumbnailUrl = String(target?.thumbnailUrl || target?.thumbUrl || '');
     return (
-      <div
-        className={`home-feed-card__target-content home-feed-card__target-build${
-          thumbnailUrl ? ' has-media' : ''
-        }`}
-      >
-        <div className="home-feed-card__target-copy">
-          <span className="home-feed-card__target-chip build">
-            <Icon icon="rocket" />
-            Lumine App
-          </span>
-          <h4>{displayTitle || 'Lumine App'}</h4>
-          {target?.description ? <p>{target.description}</p> : null}
-        </div>
-        {thumbnailUrl ? (
-          <img
-            className="home-feed-card__target-media"
-            src={thumbnailUrl}
-            alt={displayTitle || 'Lumine App'}
-            loading="lazy"
-          />
-        ) : null}
-      </div>
+      <BuildMiniCard
+        build={{
+          ...target,
+          contentId: Number(target?.contentId || target?.id || 0),
+          contentType: 'build',
+          id: Number(target?.id || target?.contentId || 0)
+        }}
+        className="home-feed-card__target-build-card"
+        interactiveBadges={false}
+      />
     );
   }
 

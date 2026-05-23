@@ -609,8 +609,14 @@ export const targetPreviewStyles = `
       align-self: stretch;
       object-fit: cover;
     }
-    .home-feed-card__target-build {
+    .home-feed-card__target-build-card {
+      box-sizing: border-box;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      padding: 0.85rem;
       border-left: 0.35rem solid var(--home-feed-target-accent, ${Color.logoBlue()});
+      background: #fff;
     }
     .home-feed-card__target-preview .home-feed-card__ai-story-preview--target {
       gap: 0.5rem;

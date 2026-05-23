@@ -1,24 +1,15 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import FavoriteButton, {
-  type BuildFavoriteChange
-} from '~/components/Build/FavoriteButton';
+import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import { BuildMiniCard } from '~/components/Build/Cards';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
-import UsernameText from '~/components/Texts/UsernameText';
-import PreviewFrame from '~/components/Build/PreviewFrame';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import { mobileMaxWidth } from '~/constants/css';
-import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
 import type { TodayTopViewedBuild } from './types';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
-const inheritedUsernameTextStyle: React.CSSProperties = {
-  color: 'inherit',
-  fontSize: 'inherit',
-  fontWeight: 'inherit'
-};
 
 const heroClass = css`
   position: relative;
@@ -103,99 +94,14 @@ const heroBodyClass = css`
 
 const topViewedShowcaseClass = css`
   min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
-  gap: 1.2rem;
-  align-items: center;
   padding-left: 1.6rem;
   border-left: 1px solid rgba(65, 140, 235, 0.18);
 
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: minmax(0, 0.82fr) minmax(8.5rem, 1.18fr);
-    gap: 0.85rem;
     padding-left: 0;
     padding-top: 1rem;
     border-left: 0;
     border-top: 1px solid rgba(65, 140, 235, 0.18);
-  }
-`;
-
-const topViewedCopyClass = css`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.5rem;
-  }
-`;
-
-const topViewedKickerClass = css`
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.36rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(255, 213, 100, 0.22);
-  border: 1px solid rgba(245, 190, 70, 0.55);
-  color: #9a5c00;
-  font-size: 1.1rem;
-  font-weight: 900;
-  font-family: ${displayFontFamily};
-
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.32rem 0.58rem;
-    font-size: 1rem;
-  }
-`;
-
-const topViewedTitleClass = css`
-  margin: 0;
-  color: var(--chat-text);
-  font-size: 1.65rem;
-  font-weight: 900;
-  line-height: 1.1;
-  font-family: ${displayFontFamily};
-  overflow-wrap: anywhere;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.3rem;
-  }
-`;
-
-const topViewedMetaClass = css`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem 0.9rem;
-  color: var(--chat-text);
-  font-size: 1.1rem;
-  font-weight: 800;
-  opacity: 0.76;
-
-  span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.38rem;
-  }
-`;
-
-const topViewedActionRowClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-`;
-
-const topViewedPreviewClass = css`
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  min-height: 11rem;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    aspect-ratio: 16 / 9;
-    min-height: 0;
   }
 `;
 
@@ -286,53 +192,16 @@ function TodayTopViewedShowcase({
   ) => void;
   onOpen: (build: TodayTopViewedBuild) => void;
 }) {
-  const displayTitle = build.title || 'Untitled Build';
-  const isFavorited = Boolean(build.isFavorited);
   return (
     <aside className={topViewedShowcaseClass} aria-label="Trending app today">
-      <div className={topViewedCopyClass}>
-        <div className={topViewedKickerClass}>
-          <Icon icon="eye" />
-          Trending today
-        </div>
-        <h2 className={topViewedTitleClass}>{displayTitle}</h2>
-        <div className={topViewedMetaClass}>
-          {build.username ? (
-            <span>
-              <Icon icon="user" />
-              by{' '}
-              <UsernameText
-                color="inherit"
-                textStyle={inheritedUsernameTextStyle}
-                user={getBuildUsernameUser(build)}
-              />
-            </span>
-          ) : null}
-        </div>
-        <div className={topViewedActionRowClass}>
-          <GameCTAButton
-            variant="logoBlue"
-            size="md"
-            icon="external-link-alt"
-            onClick={() => onOpen(build)}
-          >
-            Open app
-          </GameCTAButton>
-          <FavoriteButton
-            buildId={Number(build.id)}
-            favorited={isFavorited}
-            size="pill"
-            onChange={(change) => onFavoriteChange(build, change)}
-            onError={(error, params) => onFavoriteError(build, error, params)}
-            onStart={(params) => onFavoriteStart(build, params)}
-          />
-        </div>
-      </div>
-      <PreviewFrame
-        className={topViewedPreviewClass}
-        thumbnailUrl={build.thumbnailUrl}
-        alt={`${displayTitle} screenshot`}
-        ariaLabel={`${displayTitle} preview`}
+      <BuildMiniCard
+        build={build}
+        showActions
+        showFavoriteAction
+        onFavoriteChange={onFavoriteChange}
+        onFavoriteError={onFavoriteError}
+        onFavoriteStart={onFavoriteStart}
+        onOpen={onOpen}
       />
     </aside>
   );

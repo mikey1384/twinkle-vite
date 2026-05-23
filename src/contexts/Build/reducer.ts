@@ -1,4 +1,10 @@
 import {
+  BuildSummary,
+  mergeBuildSummaryMap,
+  patchBuildSummaryMap,
+  removeBuildSummaryFromMap
+} from '~/helpers/buildSummaryHelpers';
+import {
   getBuildRunEventLogicalIdentity,
   normalizeBuildRunEventCreatedAt
 } from './runEventIdentity';
@@ -294,6 +300,7 @@ export interface BuildWorkspaceUiActionPayload {
 }
 
 export interface BuildState {
+  buildsById: Record<string, BuildSummary>;
   buildRuns: Record<string, BuildLiveRunState>;
   buildRunRequestMap: Record<string, number>;
   buildWorkspaces: Record<string, BuildWorkspaceSnapshot>;
@@ -330,6 +337,9 @@ export interface BuildAction {
     | 'SET_BUILD_STUDIO_ACTIVITY_VIEWED'
     | 'SET_BUILD_STUDIO_BROWSE_BUILDS'
     | 'APPEND_BUILD_STUDIO_BROWSE_BUILDS'
+    | 'UPSERT_BUILD_SUMMARIES'
+    | 'PATCH_BUILD_SUMMARY'
+    | 'REMOVE_BUILD_SUMMARY'
     | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUN'
@@ -338,6 +348,12 @@ export interface BuildAction {
   runtimeVerifyResult?: BuildRuntimeVerifyResultPayload;
   buildStudio?: BuildStudioActionPayload;
   buildWorkspaceUi?: BuildWorkspaceUiActionPayload;
+  buildSummary?: {
+    build?: any;
+    builds?: any[];
+    buildId?: number;
+    patch?: Record<string, unknown>;
+  };
 }
 
 export function createInitialBuildStudioState(): BuildStudioState {
@@ -1282,6 +1298,44 @@ export default function BuildReducer(
   action: BuildAction
 ): BuildState {
   switch (action.type) {
+    case 'UPSERT_BUILD_SUMMARIES': {
+      const values =
+        action.buildSummary?.builds !== undefined
+          ? action.buildSummary.builds
+          : action.buildSummary?.build;
+      const buildsById = mergeBuildSummaryMap(state.buildsById || {}, values);
+      return buildsById === state.buildsById
+        ? state
+        : {
+            ...state,
+            buildsById
+          };
+    }
+    case 'PATCH_BUILD_SUMMARY': {
+      const buildsById = patchBuildSummaryMap(
+        state.buildsById || {},
+        Number(action.buildSummary?.buildId || 0),
+        action.buildSummary?.patch || {}
+      );
+      return buildsById === state.buildsById
+        ? state
+        : {
+            ...state,
+            buildsById
+          };
+    }
+    case 'REMOVE_BUILD_SUMMARY': {
+      const buildsById = removeBuildSummaryFromMap(
+        state.buildsById || {},
+        Number(action.buildSummary?.buildId || 0)
+      );
+      return buildsById === state.buildsById
+        ? state
+        : {
+            ...state,
+            buildsById
+          };
+    }
     case 'REGISTER_BUILD_RUN': {
       const buildId = Number(action.buildRun?.buildId || 0);
       const requestId = String(action.buildRun?.requestId || '').trim();
@@ -1878,6 +1932,10 @@ export default function BuildReducer(
       }
       return {
         ...state,
+        buildsById: mergeBuildSummaryMap(
+          state.buildsById || {},
+          action.buildRun.build
+        ),
         buildWorkspaces: {
           ...state.buildWorkspaces,
           [key]: {
@@ -1977,13 +2035,15 @@ export default function BuildReducer(
     case 'SET_BUILD_STUDIO_MY_BUILDS': {
       const buildStudio = getBuildStudioState(state);
       const userId = Number(action.buildStudio?.userId || 0) || null;
+      const builds = Array.isArray(action.buildStudio?.builds)
+        ? action.buildStudio.builds
+        : [];
       return {
         ...state,
+        buildsById: mergeBuildSummaryMap(state.buildsById || {}, builds),
         buildStudio: {
           ...buildStudio,
-          myBuilds: Array.isArray(action.buildStudio?.builds)
-            ? action.buildStudio.builds
-            : [],
+          myBuilds: builds,
           myBuildsLoaded: true,
           myBuildsUserId: userId
         }
@@ -1995,6 +2055,10 @@ export default function BuildReducer(
       if (userId && buildStudio.myBuildsUserId !== userId) return state;
       return {
         ...state,
+        buildsById: mergeBuildSummaryMap(
+          state.buildsById || {},
+          action.buildStudio?.build
+        ),
         buildStudio: {
           ...buildStudio,
           myBuilds: patchBuildStudioMyBuild(
@@ -2012,6 +2076,7 @@ export default function BuildReducer(
       if (userId && buildStudio.myBuildsUserId !== userId) return state;
       return {
         ...state,
+        buildsById: removeBuildSummaryFromMap(state.buildsById || {}, buildId),
         buildStudio: {
           ...buildStudio,
           myBuilds: buildStudio.myBuilds.filter(
@@ -2346,17 +2411,19 @@ export default function BuildReducer(
           action.buildStudio,
           'cacheRefreshKey'
         );
+      const builds = Array.isArray(action.buildStudio?.builds)
+        ? action.buildStudio.builds
+        : [];
       return {
         ...state,
+        buildsById: mergeBuildSummaryMap(state.buildsById || {}, builds),
         buildStudio: {
           ...buildStudio,
           browse: {
             ...buildStudio.browse,
             [tab]: {
               ...currentTabState,
-              builds: Array.isArray(action.buildStudio?.builds)
-                ? action.buildStudio.builds
-                : [],
+              builds,
               loadMoreToken:
                 typeof action.buildStudio?.loadMoreToken === 'string'
                   ? action.buildStudio.loadMoreToken
@@ -2407,20 +2474,19 @@ export default function BuildReducer(
         currentTabState.browseMode === browseMode &&
         currentTabState.searchQuery === searchQuery;
       if (!canAppend) return state;
+      const builds = Array.isArray(action.buildStudio?.builds)
+        ? action.buildStudio.builds
+        : [];
       return {
         ...state,
+        buildsById: mergeBuildSummaryMap(state.buildsById || {}, builds),
         buildStudio: {
           ...buildStudio,
           browse: {
             ...buildStudio.browse,
             [tab]: {
               ...currentTabState,
-              builds: [
-                ...currentTabState.builds,
-                ...(Array.isArray(action.buildStudio?.builds)
-                  ? action.buildStudio.builds
-                  : [])
-              ],
+              builds: [...currentTabState.builds, ...builds],
               loadMoreToken:
                 typeof action.buildStudio?.loadMoreToken === 'string'
                   ? action.buildStudio.loadMoreToken

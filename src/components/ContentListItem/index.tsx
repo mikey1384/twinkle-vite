@@ -110,6 +110,7 @@ function ContentListItem({
     content,
     collaboratorCount,
     collaborationMode,
+    createdAt,
     description,
     fileName,
     filePath,
@@ -126,7 +127,9 @@ function ContentListItem({
     title,
     thumbUrl,
     thumbnailUrl,
+    updatedAt,
     viewCount,
+    publishedAt,
     sourceBuildId,
     contributionStatus,
     rootBuildSourceBuildId,
@@ -222,6 +225,7 @@ function ContentListItem({
               contentType={contentType}
               collaboratorCount={collaboratorCount}
               collaborationMode={collaborationMode}
+              createdAt={createdAt}
               description={description}
               fileName={fileName}
               filePath={filePath}
@@ -253,7 +257,9 @@ function ContentListItem({
               title={title}
               topic={topic}
               uploader={uploader}
+              updatedAt={updatedAt}
               viewCount={viewCount}
+              publishedAt={publishedAt}
               sourceBuildId={sourceBuildId}
               contributionStatus={contributionStatus}
               rootBuildSourceBuildId={rootBuildSourceBuildId}

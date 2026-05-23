@@ -27,6 +27,7 @@ interface BuildCtx {
 export const BuildContext = createContext<BuildCtx | undefined>(undefined);
 
 const initialBuildState: BuildState = {
+  buildsById: {},
   buildRuns: {},
   buildRunRequestMap: {},
   buildWorkspaces: {},

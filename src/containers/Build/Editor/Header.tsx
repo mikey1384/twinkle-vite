@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
+import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import Icon from '~/components/Icon';
@@ -109,35 +110,6 @@ const headerTitleMainClass = css`
   gap: 0.55rem;
   flex-wrap: wrap;
   min-width: 0;
-`;
-
-const headerTitleEditButtonClass = css`
-  width: 2.15rem;
-  height: 2.15rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--ui-border);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--chat-text);
-  cursor: pointer;
-  opacity: 0.78;
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease,
-    border-color 0.18s ease,
-    background-color 0.18s ease;
-  &:hover {
-    opacity: 1;
-    transform: translateY(-1px);
-    border-color: var(--ui-border-strong);
-    background: #f8faff;
-  }
-  &:focus-visible {
-    outline: 2px solid var(--ui-border-strong);
-    outline-offset: 2px;
-  }
 `;
 
 const headerSubtitleClass = css`
@@ -736,15 +708,7 @@ export default function Header({
               )
             )}
             {canEditMetadata ? (
-              <button
-                type="button"
-                className={headerTitleEditButtonClass}
-                onClick={onOpenDescriptionModal}
-                aria-label="Edit build details"
-                title="Edit build details"
-              >
-                <Icon icon="pencil-alt" />
-              </button>
+              <EditBuildDetailsButton onClick={onOpenDescriptionModal} />
             ) : null}
           </div>
           <div className={mobileTitleBadgeGroupClass}>

@@ -286,6 +286,14 @@ export default function Results({
                       runtimeBackLabel: 'Back to Build Studio'
                     })
               }}
+              openAppNavigationState={
+                activeTab === 'collaborating'
+                  ? {
+                      runtimeBackTo,
+                      runtimeBackLabel: 'Back to Build Studio'
+                    }
+                  : undefined
+              }
               primaryActionLabel={
                 activeTab === 'collaborating' ? 'Work together' : undefined
               }
@@ -294,6 +302,7 @@ export default function Results({
               }
               showCollaborationRequestAction={activeTab !== 'collaborating'}
               showFavoriteAction
+              showOpenAppAction={activeTab === 'collaborating' ? true : undefined}
               onFavoriteChange={onFavoriteChange}
               onFavoriteError={onFavoriteError}
               onFavoriteStart={onFavoriteStart}

@@ -1,15 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import FavoriteButton, {
-  type BuildFavoriteChange
-} from '~/components/Build/FavoriteButton';
+import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import { BuildThumbCard } from '~/components/Build/Cards';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
-import UsernameText from '~/components/Texts/UsernameText';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
-import PreviewFrame from '~/components/Build/PreviewFrame';
 import { mobileMaxWidth } from '~/constants/css';
-import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
 import TabFilter from '../TabFilter';
 import { formatQuickAccessRelativeTime } from './helpers';
 import type { BuildQuickAccessMode, QuickAccessBuild } from './types';
@@ -18,11 +14,6 @@ export const QUICK_ACCESS_MODAL_PAGE_SIZE = 12;
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
-const inheritedUsernameTextStyle: React.CSSProperties = {
-  color: 'inherit',
-  fontSize: 'inherit',
-  fontWeight: 'inherit'
-};
 
 const quickAccessDesktopStripLimit = 5;
 const quickAccessCompactStripLimit = 3;
@@ -136,168 +127,6 @@ const quickAccessCardGridClass = css`
   @media (max-width: 620px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.5rem;
-  }
-`;
-
-const quickAccessCardClass = css`
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--ui-border, rgba(65, 140, 235, 0.24));
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 620px) {
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
-  }
-`;
-
-const quickAccessCardPreviewButtonClass = css`
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-
-  &:focus-visible {
-    outline: 2px solid var(--theme-bg, #418ceb);
-    outline-offset: -2px;
-  }
-`;
-
-const quickAccessCardPreviewClass = css`
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-
-  @media (max-width: 620px) {
-    aspect-ratio: 16 / 8;
-  }
-`;
-
-const quickAccessCardBodyClass = css`
-  min-width: 0;
-  padding: 0.7rem 0.75rem 0.78rem;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.45rem;
-
-  @media (max-width: 620px) {
-    padding: 0.45rem 0.5rem 0.5rem;
-    gap: 0.25rem;
-  }
-`;
-
-const quickAccessCardTitleButtonClass = css`
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--chat-text);
-  cursor: pointer;
-  display: -webkit-box;
-  width: 100%;
-  overflow: hidden;
-  text-align: left;
-  font-size: 1.3rem;
-  font-weight: 900;
-  line-height: 1.15;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-
-  @media (max-width: 620px) {
-    font-size: 1.2rem;
-    -webkit-line-clamp: 1;
-  }
-
-  &:hover {
-    color: var(--theme-bg, #1d4ed8);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--theme-bg, #418ceb);
-    outline-offset: 2px;
-  }
-`;
-
-const quickAccessCardMetaClass = css`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.28rem;
-  color: var(--chat-text);
-  font-size: 1.1rem;
-  font-weight: 800;
-  opacity: 0.74;
-
-  @media (max-width: 620px) {
-    gap: 0.15rem;
-  }
-
-  span {
-    min-width: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.34rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-`;
-
-const quickAccessCardFooterClass = css`
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-
-  @media (max-width: 620px) {
-    gap: 0.25rem;
-  }
-`;
-
-const quickAccessCardOpenButtonClass = css`
-  height: 2.1rem;
-  min-width: 0;
-  padding: 0 0.62rem;
-  border: 1px solid
-    var(--build-open-app-border, var(--ui-border, rgba(65, 140, 235, 0.32)));
-  border-radius: 7px;
-  background: var(--build-open-app-bg, var(--theme-bg, #418ceb));
-  color: var(--theme-text, #fff);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  font-size: 1rem;
-  font-weight: 900;
-  cursor: pointer;
-
-  @media (max-width: 620px) {
-    width: 2.1rem;
-    padding: 0;
-  }
-
-  &:hover {
-    background: var(--build-open-app-hover-bg, var(--theme-hover-bg, #1d4ed8));
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--build-open-app-focus, var(--theme-bg, #93c5fd));
-    outline-offset: 2px;
-  }
-`;
-
-const quickAccessCardOpenTextClass = css`
-  @media (max-width: 620px) {
-    display: none;
   }
 `;
 
@@ -539,8 +368,6 @@ function BuildQuickAccessCard({
   onOpen: (build: QuickAccessBuild) => void;
   openButtonStyle?: React.CSSProperties;
 }) {
-  const title = build.title || 'Untitled Build';
-  const isFavorited = Boolean(build.isFavorited);
   const favoriteActivityAt = build.favoriteActivityAt || build.favoritedAt;
   const favoriteActivityIsUse =
     Boolean(build.favoriteActivityAt) &&
@@ -554,72 +381,16 @@ function BuildQuickAccessCard({
         )}`
       : `Used ${formatQuickAccessRelativeTime(timestamp)}`;
   return (
-    <article className={quickAccessCardClass}>
-      <button
-        type="button"
-        className={quickAccessCardPreviewButtonClass}
-        onClick={() => onOpen(build)}
-        aria-label={`Open ${title}`}
-      >
-        <PreviewFrame
-          className={quickAccessCardPreviewClass}
-          thumbnailUrl={build.thumbnailUrl}
-          alt={`${title} screenshot`}
-          ariaLabel={`${title} preview`}
-        />
-      </button>
-      <div className={quickAccessCardBodyClass}>
-        <button
-          type="button"
-          className={quickAccessCardTitleButtonClass}
-          onClick={() => onOpen(build)}
-        >
-          {title}
-        </button>
-        <div className={quickAccessCardMetaClass}>
-          {build.username ? (
-            <span>
-              <Icon icon="user" />
-              by{' '}
-              <UsernameText
-                color="inherit"
-                textStyle={inheritedUsernameTextStyle}
-                user={getBuildUsernameUser(build)}
-              />
-            </span>
-          ) : null}
-          <span>
-            <Icon
-              icon={
-                mode === 'favorites' && !favoriteActivityIsUse
-                  ? 'star'
-                  : 'clock'
-              }
-            />
-            {timestampLabel}
-          </span>
-        </div>
-        <div className={quickAccessCardFooterClass}>
-          <button
-            type="button"
-            className={quickAccessCardOpenButtonClass}
-            style={openButtonStyle}
-            onClick={() => onOpen(build)}
-          >
-            <Icon icon="external-link-alt" />
-            <span className={quickAccessCardOpenTextClass}>Open</span>
-          </button>
-          <FavoriteButton
-            buildId={Number(build.id)}
-            favorited={isFavorited}
-            size="sm"
-            onChange={(change) => onFavoriteChange(build, change)}
-            onError={(error, params) => onFavoriteError(build, error, params)}
-            onStart={(params) => onFavoriteStart(build, params)}
-          />
-        </div>
-      </div>
-    </article>
+    <BuildThumbCard
+      build={build}
+      metaIcon={mode === 'favorites' && !favoriteActivityIsUse ? 'star' : 'clock'}
+      metaLabel={timestampLabel}
+      openButtonStyle={openButtonStyle}
+      onFavoriteChange={onFavoriteChange}
+      onFavoriteError={onFavoriteError}
+      onFavoriteStart={onFavoriteStart}
+      onOpen={onOpen}
+    />
   );
 }
 

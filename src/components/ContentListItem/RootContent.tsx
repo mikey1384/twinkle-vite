@@ -7,7 +7,6 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Thumbnail from '../Thumbnail';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
-import Icon from '~/components/Icon';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import {
   Color,
@@ -185,9 +184,9 @@ const rootContentCSS = css`
   &.is-build {
     position: relative;
     min-height: 17rem;
-    grid-template-columns: minmax(0, 1fr) minmax(22rem, 34%);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 1fr;
-    grid-template-areas: 'buildDetails thumb';
+    grid-template-areas: 'buildDetails';
     align-items: stretch;
     align-content: start;
     gap: 0.9rem 1.5rem;
@@ -215,6 +214,7 @@ const rootContentCSS = css`
       justify-content: flex-start;
       gap: 0.75rem;
       min-width: 0;
+      width: 100%;
     }
     .title {
       position: relative;
@@ -461,8 +461,8 @@ const rootContentCSS = css`
     }
     &.is-build {
       min-height: 10.5rem;
-      grid-template-columns: minmax(0, 1fr) minmax(8.25rem, 38%);
-      grid-template-areas: 'buildDetails thumb';
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'buildDetails';
       gap: 0.75rem;
       padding: 0.9rem 1rem;
       &::before {
@@ -470,6 +470,7 @@ const rootContentCSS = css`
       }
       .build-details {
         gap: 0.5rem;
+        width: 100%;
       }
       .title > p {
         font-size: 1.55rem;
@@ -553,6 +554,7 @@ export default function RootContent({
   collaborationMode,
   contentType,
   contentId,
+  createdAt,
   description,
   fileName,
   filePath,
@@ -579,8 +581,10 @@ export default function RootContent({
   thumbUrl,
   title,
   topic,
+  updatedAt,
   uploader,
   viewCount,
+  publishedAt,
   sourceBuildId,
   contributionStatus,
   rootBuildSourceBuildId,
@@ -596,6 +600,7 @@ export default function RootContent({
   content: string;
   contentType: string;
   contentId: number;
+  createdAt?: number | null;
   description: string;
   expandable?: boolean;
   fileName?: string;
@@ -624,8 +629,10 @@ export default function RootContent({
   thumbUrl?: string;
   title: string;
   topic?: string;
+  updatedAt?: number | null;
   uploader: { id: number; username: string; profileTheme?: string | null };
   viewCount?: number;
+  publishedAt?: number | null;
   sourceBuildId?: number | null;
   contributionStatus?: string | null;
   rootBuildSourceBuildId?: number | null;
@@ -724,10 +731,9 @@ export default function RootContent({
     return (
       (contentType === 'subject' && rootId) ||
       (filePath && userId) ||
-      (contentType === 'build' && thumbUrl) ||
       contentType === 'video'
     );
-  }, [contentType, filePath, rootId, thumbUrl, userId]);
+  }, [contentType, filePath, rootId, userId]);
 
   return (
     <div
@@ -752,6 +758,7 @@ export default function RootContent({
         <ContentDetails
           collaboratorCount={collaboratorCount}
           collaborationMode={collaborationMode}
+          createdAt={createdAt}
         isListening={isListening}
         contentType={contentType}
         description={description}
@@ -764,7 +771,9 @@ export default function RootContent({
         topic={topic}
         title={title}
         uploader={uploader}
+        updatedAt={updatedAt}
         viewCount={viewCount}
+        publishedAt={publishedAt}
         sourceBuildId={sourceBuildId}
         contributionStatus={contributionStatus}
         rootBuildSourceBuildId={rootBuildSourceBuildId}
@@ -782,20 +791,6 @@ export default function RootContent({
           contentId={contentId}
           rewardLevel={rewardLevel}
         />
-      )}
-      {contentType === 'build' && thumbUrl && (
-        <div className="thumb build-thumb">
-          <div className="build-thumb-toolbar">
-            <span />
-            <span />
-            <span />
-          </div>
-          <img src={thumbUrl} alt={title || 'Lumine App'} />
-          <div className="build-thumb-label">
-            <Icon icon="external-link-alt" />
-            <span>Live app</span>
-          </div>
-        </div>
       )}
       {contentType === 'subject' && rootId && (
         <>

@@ -307,6 +307,9 @@ export default function Content({
               collaborationMode: contentObj.collaborationMode,
               contributionAccess: contentObj.contributionAccess,
               collaboratorCount: contentObj.collaboratorCount,
+              ...(typeof contentObj.forkCount === 'number'
+                ? { forkCount: contentObj.forkCount }
+                : {}),
               favoritedAt: contentObj.favoritedAt,
               isFavorited: contentObj.isFavorited,
               thumbnailUrl: contentObj.thumbnailUrl,

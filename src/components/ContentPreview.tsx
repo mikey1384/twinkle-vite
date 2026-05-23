@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { BuildMiniCard } from '~/components/Build/Cards';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -18,23 +19,7 @@ import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { css } from '@emotion/css';
 
 export default function ContentPreview({
-  contentObj: {
-    id: contentId,
-    isListening = false,
-    contentType,
-    uploader,
-    content = '',
-    description = '',
-    story,
-    question,
-    fileName = '',
-    filePath,
-    fileSize,
-    topic,
-    thumbUrl,
-    title,
-    difficulty
-  },
+  contentObj,
   style,
   hideUploader
 }: {
@@ -56,12 +41,31 @@ export default function ContentPreview({
     fileSize?: number;
     topic?: string;
     thumbUrl?: string;
+    thumbnailUrl?: string;
     title?: string;
     difficulty?: number;
-  };
+  } & Record<string, any>;
   style?: React.CSSProperties;
   hideUploader?: boolean;
 }) {
+  const {
+    id: contentId,
+    isListening = false,
+    contentType,
+    uploader,
+    content = '',
+    description = '',
+    story,
+    question,
+    fileName = '',
+    filePath,
+    fileSize,
+    topic,
+    thumbUrl,
+    thumbnailUrl,
+    title,
+    difficulty
+  } = contentObj;
   const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
   const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
@@ -352,26 +356,16 @@ export default function ContentPreview({
 
     if (contentType === 'build') {
       return (
-        <div className={previewContentClass}>
-          <div className={storyTitleClass}>{title || 'Published app'}</div>
-          <div
-            className={css`
-              display: inline-flex;
-              align-items: center;
-              gap: 0.6rem;
-              align-self: flex-start;
-              padding: 0.6rem 1rem;
-              border-radius: 999px;
-              background: ${Color.logoBlue(0.12)};
-              color: ${Color.logoBlue()};
-              font-size: 1.3rem;
-              font-weight: 700;
-            `}
-          >
-            <Icon icon="rocket" />
-            <span>Open Lumine App</span>
-          </div>
-        </div>
+        <BuildMiniCard
+          build={{
+            ...contentObj,
+            contentId,
+            contentType: 'build',
+            id: contentId,
+            thumbnailUrl: thumbnailUrl || thumbUrl
+          }}
+          interactiveBadges={false}
+        />
       );
     }
 
