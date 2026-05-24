@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
+import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
@@ -71,6 +72,11 @@ type PreviewCommentMedia =
   | {
       contentId: number;
       kind: 'build';
+      label: string;
+    }
+  | {
+      contentId: number;
+      kind: 'subject';
       label: string;
     }
   | {
@@ -1040,6 +1046,15 @@ export function HomeFeedCommentPreview({
       );
     }
 
+    if (media.kind === 'subject') {
+      return (
+        <PreviewCommentSubjectMedia
+          contentId={media.contentId}
+          label={media.label}
+        />
+      );
+    }
+
     if (media.kind === 'image') {
       return (
         <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--image">
@@ -1145,6 +1160,65 @@ function PreviewCommentBuildMedia({
           icon="rocket"
         />
       )}
+    </span>
+  );
+}
+
+function PreviewCommentSubjectMedia({
+  contentId,
+  label
+}: {
+  contentId: number;
+  label: string;
+}) {
+  const loadingRef = useRef<string | null>(null);
+  const contentState = useContentState({ contentId, contentType: 'subject' });
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const previewContent =
+    contentState.loaded && !contentState.notFound ? contentState : { title: label };
+
+  useEffect(() => {
+    const requestKey = `${userId || 0}:${contentId}:subject`;
+    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+      return;
+    }
+    const requestUserId = userId;
+    loadingRef.current = requestKey;
+    loadContent({ contentId, contentType: 'subject' })
+      .then((data: any) => {
+        if (checkUserChange(requestUserId)) return;
+        if (!data?.notFound) {
+          onInitContent({
+            ...data,
+            contentId,
+            contentType: 'subject'
+          });
+        }
+      })
+      .catch((error: unknown) => {
+        if (checkUserChange(requestUserId)) return;
+        console.error(error);
+      })
+      .finally(() => {
+        if (loadingRef.current === requestKey) {
+          loadingRef.current = null;
+        }
+      });
+    // checkUserChange/loadContent/onInitContent are stable context helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, contentState.loaded, userId]);
+
+  return (
+    <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--subject">
+      <CompactSubjectEmbedPreview
+        as="span"
+        content={previewContent}
+        contentId={contentId}
+        showThumbnail={false}
+      />
     </span>
   );
 }
@@ -1275,6 +1349,13 @@ function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
         label: getInternalEmbedCommentLabel(internalInfo)
       };
     }
+    if (internalInfo?.kind === 'subject' && internalInfo.contentId) {
+      return {
+        contentId: internalInfo.contentId,
+        kind: 'subject',
+        label: getInternalEmbedCommentLabel(internalInfo)
+      };
+    }
     return {
       extension: '',
       icon: internalInfo?.icon || 'globe',
@@ -1365,7 +1446,7 @@ function getPreviewCommentLabel(comment: Comment, contentType: string) {
 function stripMarkdownForCommentPreview(text: string) {
   return stripTextSizeMarkers(text)
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-    .replace(/[`*_>#~-]+/g, '')
+    .replace(/[`*_>#~]+/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }

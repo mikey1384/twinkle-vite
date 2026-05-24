@@ -127,6 +127,11 @@ export const commentPreviewStyles = `
     background: color-mix(in srgb, ${Color.logoBlue()} 7%, #ffffff);
     color: ${Color.logoBlue()};
   }
+  .home-feed-card__comment-preview-media--subject {
+    width: 7.2rem;
+    border: 0;
+    background: transparent;
+  }
   .home-feed-card__comment-preview-media--file {
     gap: 0.35rem;
     background: color-mix(in srgb, var(--home-feed-comment-accent, ${Color.logoBlue()}) 8%, #ffffff);
@@ -189,6 +194,9 @@ export const commentPreviewStyles = `
     .home-feed-card__comment-preview-media {
       width: 5.35rem;
       height: 4.75rem;
+    }
+    .home-feed-card__comment-preview-media--subject {
+      width: 5.8rem;
     }
     .home-feed-card__comment-preview-media--ai-card > div {
       width: 3.75rem;

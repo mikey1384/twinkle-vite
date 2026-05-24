@@ -8,11 +8,11 @@ import ContentListItem from '~/components/ContentListItem';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
+import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import VideoThumbnail from '~/components/ContentListItem/VideoThumbnail';
 import { Color, borderRadius } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import InvalidContent from '../InvalidContent';
@@ -170,7 +170,6 @@ function CompactMainContentEmbedPreview({
   const isSubject = contentType === 'subject';
   const isBuild = contentType === 'build';
   const previewAccent = isBuild ? themedAccentColor : accent;
-  const subjectRewardLevel = isSubject ? Number(content?.rewardLevel || 0) : 0;
   const previewStyle = {
     '--embed-accent': previewAccent,
     '--embed-accent-border': isBuild
@@ -207,6 +206,18 @@ function CompactMainContentEmbedPreview({
           interactiveBadges={false}
         />
       </div>
+    );
+  }
+
+  if (isSubject) {
+    return (
+      <CompactSubjectEmbedPreview
+        content={content}
+        contentId={contentId}
+        onClick={handleSubjectClick}
+        showThumbnail={Boolean(thumbUrl)}
+        thumbnailUrl={thumbUrl}
+      />
     );
   }
 
@@ -250,20 +261,10 @@ function CompactMainContentEmbedPreview({
       onClick={handleClick}
     >
       <div className="compact-main-content-embed__copy">
-        {isSubject ? (
-          subjectRewardLevel > 0 ? (
-            <CompactSubjectEffortBadge rewardLevel={subjectRewardLevel} />
-          ) : (
-            <span className="compact-main-content-embed__label compact-main-content-embed__label--neutral">
-              Subject
-            </span>
-          )
-        ) : (
-          <span className="compact-main-content-embed__label">
-            {isBuild ? <Icon icon="rocket" /> : null}
-            <span>{label}</span>
-          </span>
-        )}
+        <span className="compact-main-content-embed__label">
+          {isBuild ? <Icon icon="rocket" /> : null}
+          <span>{label}</span>
+        </span>
         {title ? <strong>{title}</strong> : null}
         {body ? <p>{body}</p> : null}
         {hasAttachment ? (
@@ -291,6 +292,11 @@ function CompactMainContentEmbedPreview({
   );
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    navigate(path);
+  }
+
+  function handleSubjectClick(event: React.MouseEvent<HTMLElement>) {
     event.stopPropagation();
     navigate(path);
   }
@@ -391,36 +397,6 @@ function CompactAIStoryAudioWave() {
       {Array.from({ length: 13 }, (_, index) => (
         <span key={index} />
       ))}
-    </span>
-  );
-}
-
-function CompactSubjectEffortBadge({ rewardLevel }: { rewardLevel: number }) {
-  const level = Math.max(1, Math.floor(Number(rewardLevel || 1)));
-  const starCount = Math.min(level, 5);
-  const colorKey = cardLevelHash[level]?.color || 'logoBlue';
-  const colorGetter = (Color as any)[colorKey];
-  const color =
-    typeof colorGetter === 'function' ? colorGetter() : Color.logoBlue();
-
-  return (
-    <span
-      className="compact-main-content-embed__effort-badge"
-      style={
-        { '--subject-effort-color': color } as React.CSSProperties & {
-          '--subject-effort-color': string;
-        }
-      }
-    >
-      <span>Effort</span>
-      <span className="compact-main-content-embed__effort-stars">
-        {Array.from({ length: starCount }, (_, index) => (
-          <Icon key={index} icon="star" />
-        ))}
-      </span>
-      <span className="compact-main-content-embed__effort-xp">
-        {addCommasToNumber(level * 2000)} XP
-      </span>
     </span>
   );
 }
@@ -664,21 +640,6 @@ const compactMainContentPreviewClass = css`
     font-weight: 400;
     line-height: 1.3;
   }
-  .compact-main-content-embed__label--neutral {
-    padding: 0.15rem 0.55rem;
-    border: 1px solid ${Color.borderGray()};
-    border-radius: 999px;
-    color: ${Color.darkGray()};
-    background: #fff;
-  }
-  &.compact-main-content-embed--subject {
-    min-height: 7.6rem;
-    border-color: ${Color.borderGray()};
-    box-shadow: inset 0 0 0 1px ${Color.whiteGray()};
-  }
-  &.compact-main-content-embed--subject .compact-main-content-embed__copy {
-    gap: 0.35rem;
-  }
   &.compact-main-content-embed--ai-story-card {
     box-sizing: border-box;
     grid-template-rows: auto minmax(0, 1fr);
@@ -842,33 +803,6 @@ const compactMainContentPreviewClass = css`
     height: 100%;
     min-height: 0;
     object-fit: cover;
-  }
-  .compact-main-content-embed__effort-badge {
-    align-self: flex-start;
-    display: inline-flex;
-    max-width: 100%;
-    align-items: center;
-    gap: 0.35rem;
-    overflow: hidden;
-    padding: 0.17rem 0.6rem;
-    border: 1px solid var(--subject-effort-color);
-    border-radius: 999px;
-    color: var(--subject-effort-color);
-    background: #fff;
-    font-size: 1rem;
-    font-weight: 900;
-    line-height: 1.1;
-    white-space: nowrap;
-  }
-  .compact-main-content-embed__effort-stars {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.12rem;
-    color: ${Color.gold()};
-    font-size: 0.92em;
-  }
-  .compact-main-content-embed__effort-xp {
-    color: var(--subject-effort-color);
   }
   strong {
     overflow: hidden;
