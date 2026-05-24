@@ -16,6 +16,7 @@ function EmbeddedComponent({
   alt,
   isPreview,
   isProfileComponent,
+  disableImageModal,
   theme,
   embeddedContentRef,
   ...commonProps
@@ -26,6 +27,7 @@ function EmbeddedComponent({
   alt?: string;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  disableImageModal?: boolean;
   theme?: string;
   embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
 }) {
@@ -142,6 +144,7 @@ function EmbeddedComponent({
           src={src}
           alt={alt}
           isPreview={isPreview}
+          disableImageModal={disableImageModal}
           onSetErrorLoadingImage={setErrorLoadingImage}
         />
       ) : src ? (

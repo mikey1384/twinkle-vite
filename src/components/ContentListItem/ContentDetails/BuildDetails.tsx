@@ -8,6 +8,8 @@ type BuildCollaborationMode = 'private' | 'open_source';
 export default function BuildDetails({
   buildId,
   buildUserId,
+  clickable = false,
+  embedded = false,
   collaboratorCount,
   collaborationMode,
   createdAt,
@@ -23,10 +25,15 @@ export default function BuildDetails({
   updatedAt,
   uploader,
   viewCount,
-  publishedAt
+  publishedAt,
+  themeName,
+  to,
+  onCardClick
 }: {
   buildId: number;
   buildUserId?: number | null;
+  clickable?: boolean;
+  embedded?: boolean;
   collaboratorCount?: number;
   collaborationMode?: BuildCollaborationMode | 'contribution' | null;
   createdAt?: number | null;
@@ -44,6 +51,9 @@ export default function BuildDetails({
   uploader: User;
   viewCount?: number;
   publishedAt?: number | null;
+  themeName?: string | null;
+  to?: string;
+  onCardClick?: () => void;
 }) {
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState(0);
   return (
@@ -71,8 +81,12 @@ export default function BuildDetails({
           viewCount,
           publishedAt
         }}
-        clickable={false}
+        clickable={clickable}
+        embedded={embedded}
+        themeName={themeName || undefined}
+        to={to}
         showFavoriteAction
+        onCardClick={onCardClick}
         onOpenForkHistory={setForkHistoryBuildId}
       />
       {forkHistoryBuildId ? (

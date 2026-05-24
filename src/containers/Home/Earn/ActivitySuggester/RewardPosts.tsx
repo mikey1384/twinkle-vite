@@ -60,7 +60,13 @@ export default function RewardPosts() {
                   username: string;
                   profilePicUrl: string;
                 };
-              }) => <ContentPreview key={post.id} contentObj={post} />
+              }) => (
+                <ContentPreview
+                  key={post.id}
+                  contentObj={post}
+                  disableImageModal
+                />
+              )
             )
           )}
         </div>

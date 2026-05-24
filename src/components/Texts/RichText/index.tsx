@@ -279,6 +279,7 @@ function RichText({
   isStatusMsg,
   isProfileComponent,
   isAIMessage,
+  disableImageModal,
   isAudioButtonShown = true,
   aiActionPlacement = 'floating',
   compactEmbedPreview,
@@ -308,6 +309,7 @@ function RichText({
   isProfileComponent?: boolean;
   isShowMoreButtonCentered?: boolean;
   isAIMessage?: boolean;
+  disableImageModal?: boolean;
   section?: string;
   maxLines?: number;
   mobileMaxLines?: number;
@@ -559,6 +561,7 @@ function RichText({
           isPreview={embedPreview}
           isProfileComponent={isProfileComponent}
           isAIMessage={isAIMessage}
+          disableImageModal={disableImageModal}
           linkColor={appliedLinkColor}
           markerColor={markerColor}
           theme={theme}
@@ -575,6 +578,7 @@ function RichText({
     cleanString,
     contentId,
     contentType,
+    disableImageModal,
     embedPreview,
     isAIMessage,
     isProfileComponent,

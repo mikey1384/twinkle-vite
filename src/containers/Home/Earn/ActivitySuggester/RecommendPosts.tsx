@@ -62,7 +62,13 @@ export default function RecommendPosts() {
                   username: string;
                   profilePicUrl: string;
                 };
-              }) => <ContentPreview key={post.id} contentObj={post} />
+              }) => (
+                <ContentPreview
+                  key={post.id}
+                  contentObj={post}
+                  disableImageModal
+                />
+              )
             )
           )}
         </div>

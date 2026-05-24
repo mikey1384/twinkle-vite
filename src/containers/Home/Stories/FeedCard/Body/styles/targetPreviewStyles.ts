@@ -141,8 +141,67 @@ export const targetPreviewStyles = `
       background: #fff;
     }
     .home-feed-card__target-daily-goals {
-      border-left: 0.35rem solid ${Color.logoGreen()};
+      border-left: 0;
       background: #fff;
+    }
+    .home-feed-card__target-daily-goals.home-feed-card__daily-goals-preview--target {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: center;
+      gap: 0.75rem;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      padding: 0.7rem 0.85rem;
+    }
+    .home-feed-card__target-daily-goals.home-feed-card__daily-goals-preview--target.has-media {
+      grid-template-columns: minmax(5.8rem, 20%) minmax(0, 1fr);
+    }
+    .home-feed-card__daily-goals-preview--target .home-feed-card__daily-goals-card {
+      transform: scale(0.72);
+      transform-origin: center;
+    }
+    .home-feed-card__daily-goals-preview--target .home-feed-card__daily-goals-copy {
+      justify-content: center;
+      gap: 0.28rem;
+      overflow: hidden;
+    }
+    .home-feed-card__daily-goals-preview--target .home-feed-card__reward-chips {
+      gap: 0.35rem;
+    }
+    .home-feed-card__daily-goals-preview--target .home-feed-card__reward-chip {
+      min-height: 1.65rem;
+      padding: 0.26rem 0.52rem;
+      font-size: 1.05rem;
+    }
+    .home-feed-card__daily-goals-preview--target h3 {
+      margin: 0;
+      padding-bottom: 0.02em;
+      display: block;
+      font-size: max(1.72rem, 17.2px);
+      font-weight: 900;
+      line-height: 1.08;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .home-feed-card__daily-goals-preview--target .home-feed-card__bonus-question {
+      font-size: max(1.28rem, 12.8px);
+      line-height: 1.18;
+      -webkit-line-clamp: 1;
+    }
+    .home-feed-card__daily-goals-preview--target .home-feed-card__choice-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.3rem;
+    }
+    .home-feed-card__daily-goals-preview--target .home-feed-card__choice-list span {
+      max-width: none;
+      min-width: 0;
+      padding: 0.3rem 0.45rem;
+      border-radius: 0.45rem;
+      font-size: max(1.08rem, 10.8px);
+      line-height: 1.1;
     }
     .home-feed-card__mini-profile-panel {
       display: flex;
@@ -478,7 +537,6 @@ export const targetPreviewStyles = `
       display: none;
     }
     .home-feed-card__target-achievement-badge,
-    .home-feed-card__target-card-thumb,
     .home-feed-card__target-mission-icon {
       display: flex;
       min-width: 0;
@@ -487,10 +545,6 @@ export const targetPreviewStyles = `
     }
     .home-feed-card__target-achievement-badge > div {
       padding: 0;
-    }
-    .home-feed-card__target-card-thumb {
-      transform: scale(0.72);
-      transform-origin: center;
     }
     .home-feed-card__target-mission-icon {
       width: 4.7rem;

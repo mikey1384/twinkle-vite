@@ -11,12 +11,14 @@ export default function ImageComponent({
   src,
   alt,
   isPreview,
+  disableImageModal,
   onSetErrorLoadingImage,
   ...commonProps
 }: {
   src: string;
   alt?: string;
   isPreview?: boolean;
+  disableImageModal?: boolean;
   onSetErrorLoadingImage: (v: boolean) => void;
 }) {
   const [loaded, setLoaded] = useState(false);
@@ -52,7 +54,10 @@ export default function ImageComponent({
   }, [appliedSrc]);
 
   const isClickable =
-    isInternalImage && isStaticImage && (!isSecret || isRevealed);
+    !disableImageModal &&
+    isInternalImage &&
+    isStaticImage &&
+    (!isSecret || isRevealed);
 
   return (
     <div
@@ -72,7 +77,11 @@ export default function ImageComponent({
       <img
         {...commonProps}
         className={css`
-          cursor: ${isClickable ? 'pointer' : 'default'};
+          cursor: ${disableImageModal
+            ? 'inherit'
+            : isClickable
+              ? 'pointer'
+              : 'default'};
           ${isPreview
             ? `
               display: block;

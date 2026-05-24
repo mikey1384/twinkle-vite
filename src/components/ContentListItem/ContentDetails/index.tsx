@@ -34,6 +34,10 @@ export default function ContentDetails({
   contributionStatus,
   rootBuildSourceBuildId,
   buildUserId,
+  buildCardClickable,
+  buildCardEmbedded,
+  buildCardTo,
+  buildCardOnClick,
   siteUrl
 }: {
   audioPath?: string;
@@ -63,6 +67,10 @@ export default function ContentDetails({
   contributionStatus?: string | null;
   rootBuildSourceBuildId?: number | null;
   buildUserId?: number | null;
+  buildCardClickable?: boolean;
+  buildCardEmbedded?: boolean;
+  buildCardTo?: string;
+  buildCardOnClick?: () => void;
   siteUrl?: string;
 }) {
   return (
@@ -122,6 +130,11 @@ export default function ContentDetails({
           sourceBuildId={sourceBuildId}
           contributionStatus={contributionStatus}
           rootBuildSourceBuildId={rootBuildSourceBuildId}
+          clickable={buildCardClickable}
+          embedded={buildCardEmbedded}
+          themeName={uploader?.profileTheme || null}
+          to={buildCardTo}
+          onCardClick={buildCardOnClick}
         />
       )}
     </>

@@ -53,6 +53,15 @@ const wideCardClass = css`
   color: var(--chat-text, #1f2937);
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
 
+  &.embedded {
+    padding: 0;
+    border: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   &.clickable {
     cursor: pointer;
   }
@@ -76,6 +85,10 @@ const wideCardClass = css`
     align-items: start;
     gap: 0.7rem 0.75rem;
     padding: 1rem;
+
+    &.embedded {
+      padding: 0;
+    }
 
     &.has-error {
       grid-template-areas:
@@ -342,10 +355,13 @@ export default function BuildWideCard({
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
-  onOpenForkHistory
+  onCardClick,
+  onOpenForkHistory,
+  embedded = false
 }: {
   build: BuildProjectListItemData | Record<string, any>;
   clickable?: boolean;
+  embedded?: boolean;
   isOwner?: boolean;
   navigationState?: Record<string, any>;
   openAppNavigationState?: Record<string, any>;
@@ -372,6 +388,7 @@ export default function BuildWideCard({
     build: BuildProjectListItemData,
     params: { buildId: number; requestedFavorited: boolean }
   ) => void;
+  onCardClick?: () => void;
   onOpenForkHistory?: (buildId: number) => void;
 }) {
   const navigate = useNavigate();
@@ -519,6 +536,7 @@ export default function BuildWideCard({
         tabIndex={clickable ? 0 : undefined}
         className={cx(
           wideCardClass,
+          embedded && 'embedded',
           clickable && 'clickable',
           !hasPreview && 'no-preview',
           actionError && 'has-error'
@@ -731,6 +749,10 @@ export default function BuildWideCard({
   );
 
   function handleNavigate() {
+    if (onCardClick) {
+      onCardClick();
+      return;
+    }
     if (!targetPath) return;
     navigate(
       targetPath,

@@ -12,7 +12,6 @@ import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
 import {
-  cardLevelHash,
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
@@ -27,7 +26,6 @@ import { useContentState } from '~/helpers/hooks';
 import {
   addCommasToNumber,
   getFileInfoFromFileName,
-  getRenderedTextForVocabQuestions,
   stripTextSizeMarkers
 } from '~/helpers/stringHelpers';
 import {
@@ -39,16 +37,15 @@ import {
   AudioWavePreview,
   CompactEffortStrip,
   MarkdownEmbedPreview,
-  formatRewardMultiplier,
   getAIStoryDifficultyStyle,
   getAIStoryImageUrl,
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
 import TargetPreview from './TargetPreview';
-import SanitizedHTML from 'react-sanitized-html';
 import { useNavigate } from 'react-router-dom';
 import { normalizeRootType } from '../helpers/navigation';
 import type { Comment } from '~/types';
+import DailyGoalsPreview from './DailyGoalsPreview';
 import {
   type FeedCardSizing,
   getDailyReflectionAnswerPreviewMaxLines,
@@ -645,73 +642,7 @@ export default function Body({
   }
 
   function renderDailyGoalsPreview() {
-    const bonusQuestion = content?.bonusQuestion || {};
-    const word = content?.word || content?.card?.word || '';
-    const level = Number(content?.level || content?.card?.level || 0);
-    const levelColor = cardLevelHash[level]?.color || 'logoGreen';
-    const renderedQuestion = bonusQuestion?.question
-      ? getRenderedTextForVocabQuestions(
-          bonusQuestion.question,
-          word,
-          levelColor
-        )
-      : '';
-    const choices = Array.isArray(bonusQuestion?.choices)
-      ? bonusQuestion.choices.slice(0, 4)
-      : [];
-
-    return (
-      <div className="home-feed-card__daily-goals-preview">
-        {content?.card ? (
-          <div className="home-feed-card__daily-goals-card">
-            <CardThumb card={content.card} />
-          </div>
-        ) : null}
-        <div className="home-feed-card__daily-goals-copy">
-          <div className="home-feed-card__reward-chips">
-            {content?.dailyTaskReward ? (
-              <span className="home-feed-card__reward-chip">
-                <Icon icon="bolt" />
-                {`x${formatRewardMultiplier(
-                  Number(content.dailyTaskReward.finalMultiplier || 1)
-                )}`}
-              </span>
-            ) : null}
-            {Number(content?.xpEarned || 0) > 0 ? (
-              <span className="home-feed-card__reward-chip xp">
-                {addCommasToNumber(Number(content.xpEarned))} XP
-              </span>
-            ) : null}
-            {Number(content?.coinEarned || 0) > 0 ? (
-              <span className="home-feed-card__reward-chip coins">
-                <Icon icon="coins" />
-                {addCommasToNumber(Number(content.coinEarned))}
-              </span>
-            ) : null}
-          </div>
-          {word ? (
-            <h3 style={{ color: Color[levelColor]?.() || Color.logoGreen() }}>
-              {word}
-            </h3>
-          ) : null}
-          {renderedQuestion ? (
-            <div className="home-feed-card__bonus-question">
-              <SanitizedHTML
-                allowedAttributes={{ b: ['style'] }}
-                html={renderedQuestion}
-              />
-            </div>
-          ) : null}
-          {choices.length > 0 ? (
-            <div className="home-feed-card__choice-list">
-              {choices.map((choice: string, index: number) => (
-                <span key={`${choice}-${index}`}>{choice}</span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
+    return <DailyGoalsPreview dailyGoals={content} />;
   }
 
   function renderSharedTopicPreview() {

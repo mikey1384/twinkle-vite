@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AchievementItem from '~/components/AchievementItem';
 import { BuildMiniCard } from '~/components/Build/Cards';
-import CardThumb from '~/components/CardThumb';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
 import Icon from '~/components/Icon';
 import LinkPreviewImage from '~/components/LinkPreviewImage';
@@ -10,8 +9,6 @@ import Loading from '~/components/Loading';
 import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
-import { Color } from '~/constants/css';
-import { cardLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
@@ -26,6 +23,7 @@ import {
 import { getHomeFeedContentPath } from '../helpers/navigation';
 import { isRenderableHomeFeedTargetComment } from '../helpers/targetComment';
 import ProfilePanelPreview from './ProfilePanelPreview';
+import DailyGoalsPreview from './DailyGoalsPreview';
 
 function resolveTargetPreviewTheme({
   resolvedRootObj,
@@ -389,46 +387,12 @@ export default function TargetPreview({
   }
 
   function renderTargetDailyGoalsPreview(dailyGoals: any) {
-    const word = dailyGoals?.word || dailyGoals?.card?.word || '';
-    const level = Number(dailyGoals?.level || dailyGoals?.card?.level || 0);
-    const levelColor = cardLevelHash[level]?.color || 'logoGreen';
-
     return (
-      <div
-        className={`home-feed-card__target-content home-feed-card__target-daily-goals${
-          dailyGoals?.card ? ' has-media' : ''
-        }`}
-      >
-        {dailyGoals?.card ? (
-          <div className="home-feed-card__target-card-thumb">
-            <CardThumb card={dailyGoals.card} />
-          </div>
-        ) : null}
-        <div className="home-feed-card__target-copy">
-          <span className="home-feed-card__target-chip daily-goals">
-            <Icon icon="bolt" />
-            Daily Goals
-          </span>
-          {word ? (
-            <h4 style={{ color: Color[levelColor]?.() || Color.logoGreen() }}>
-              {word}
-            </h4>
-          ) : null}
-          <div className="home-feed-card__target-reward-row">
-            {Number(dailyGoals?.xpEarned || 0) > 0 ? (
-              <span className="home-feed-card__target-reward xp">
-                {addCommasToNumber(Number(dailyGoals.xpEarned))} XP
-              </span>
-            ) : null}
-            {Number(dailyGoals?.coinEarned || 0) > 0 ? (
-              <span className="home-feed-card__target-reward coins">
-                <Icon icon="coins" />
-                {addCommasToNumber(Number(dailyGoals.coinEarned))}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
+      <DailyGoalsPreview
+        className="home-feed-card__target-content home-feed-card__target-daily-goals"
+        dailyGoals={dailyGoals}
+        variant="target"
+      />
     );
   }
 

@@ -14,6 +14,7 @@ function ImagePreview({
   fileName,
   contentType,
   contentId,
+  disableImageModal,
   isReplaceable,
   fillPreview = false,
   fillUnavailablePreview = false,
@@ -27,6 +28,7 @@ function ImagePreview({
   fileName: string;
   contentType?: string;
   contentId?: number;
+  disableImageModal?: boolean;
   isReplaceable?: boolean;
   fillPreview?: boolean;
   fillUnavailablePreview?: boolean;
@@ -117,7 +119,7 @@ function ImagePreview({
           objectFit: fillPreview || isThumb
             ? previewObjectFit || 'cover'
             : 'contain',
-          cursor: 'pointer'
+          cursor: disableImageModal ? 'inherit' : 'pointer'
         }}
         className={css`
           height: ${fillPreview ? '100%' : compactMode ? 'auto' : '25vw'};
@@ -134,6 +136,7 @@ function ImagePreview({
         src={appliedSrc}
         rel={fileName}
         onClick={(event) => {
+          if (disableImageModal) return;
           event.stopPropagation();
           setImageModalShown(true);
         }}

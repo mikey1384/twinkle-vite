@@ -21,7 +21,8 @@ import { css } from '@emotion/css';
 export default function ContentPreview({
   contentObj,
   style,
-  hideUploader
+  hideUploader,
+  disableImageModal = false
 }: {
   contentObj: {
     id: number;
@@ -47,6 +48,7 @@ export default function ContentPreview({
   } & Record<string, any>;
   style?: React.CSSProperties;
   hideUploader?: boolean;
+  disableImageModal?: boolean;
 }) {
   const {
     id: contentId,
@@ -267,6 +269,7 @@ export default function ContentPreview({
       return (
         <RichText
           isPreview
+          disableImageModal={disableImageModal}
           maxLines={6}
           contentId={contentId}
           contentType={contentType}
@@ -342,6 +345,7 @@ export default function ContentPreview({
           )}
           <RichText
             isPreview
+            disableImageModal={disableImageModal}
             maxLines={8}
             contentId={contentId}
             contentType={contentType}
@@ -372,6 +376,7 @@ export default function ContentPreview({
     return (
       <RichText
         isPreview
+        disableImageModal={disableImageModal}
         maxLines={10}
         contentId={contentId}
         contentType={contentType}
@@ -425,11 +430,16 @@ export default function ContentPreview({
       {filePath && (
         <div
           className={attachmentWrapperClass}
-          onClick={(event) => event.stopPropagation()}
+          onClick={
+            disableImageModal
+              ? undefined
+              : (event) => event.stopPropagation()
+          }
         >
           {userId ? (
             <ContentFileViewer
               isThumb
+              disableImageModal={disableImageModal}
               contentId={contentId}
               contentType={contentType}
               fileName={fileName}

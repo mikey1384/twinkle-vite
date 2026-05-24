@@ -302,10 +302,28 @@ export const mobilePreviewStyles = `
         font-size: max(1.18rem, 11.8px);
         line-height: 1.24;
       }
-      .home-feed-card__daily-goals-preview {
+      .home-feed-card__daily-goals-preview.has-media {
         grid-template-columns: 6.8rem minmax(0, 1fr);
         gap: 0.6rem;
-      padding: 0.85rem 1rem;
+        padding: 0.85rem 1rem;
+      }
+      .home-feed-card__target-daily-goals.home-feed-card__daily-goals-preview--target {
+        gap: 0.55rem;
+        padding: 0.62rem 0.72rem;
+      }
+      .home-feed-card__target-daily-goals.home-feed-card__daily-goals-preview--target.has-media {
+        grid-template-columns: minmax(5.2rem, 26%) minmax(0, 1fr);
+      }
+      .home-feed-card__daily-goals-preview--target h3 {
+        font-size: max(1.48rem, 14.8px);
+      }
+      .home-feed-card__daily-goals-preview--target .home-feed-card__bonus-question {
+        font-size: max(1.12rem, 11.2px);
+      }
+      .home-feed-card__daily-goals-preview--target .home-feed-card__choice-list span {
+        padding: 0.24rem 0.36rem;
+        font-size: max(1.02rem, 10.2px);
+      }
     }
     h3 {
       font-size: 1.5rem;

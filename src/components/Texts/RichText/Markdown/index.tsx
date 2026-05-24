@@ -48,6 +48,7 @@ function Markdown({
   isPreview,
   isProfileComponent,
   isAIMessage,
+  disableImageModal,
   linkColor,
   markerColor,
   theme,
@@ -61,6 +62,7 @@ function Markdown({
   isPreview?: boolean;
   isProfileComponent?: boolean;
   isAIMessage?: boolean;
+  disableImageModal?: boolean;
   children: string;
   linkColor: string;
   markerColor: string;
@@ -176,6 +178,7 @@ function Markdown({
   }, [
     children,
     componentPath,
+    disableImageModal,
     isAIMessage,
     isPreview,
     isProfileComponent,
@@ -307,6 +310,7 @@ function Markdown({
                       contentType={contentType}
                       isPreview={isPreview}
                       isProfileComponent={isProfileComponent}
+                      disableImageModal={disableImageModal}
                       src={unescapeEqualSignAndDash(domNode.attribs?.src || '')}
                       alt={unescapeEqualSignAndDash(domNode.attribs?.alt || '')}
                       theme={theme}
@@ -761,6 +765,7 @@ function Markdown({
                   {...commonProps}
                   isProfileComponent={isProfileComponent}
                   isPreview={isPreview}
+                  disableImageModal={disableImageModal}
                   contentId={contentId}
                   contentType={contentType}
                   embeddedContentRef={embeddedContentRef}

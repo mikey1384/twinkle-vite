@@ -759,11 +759,14 @@ export const mainPreviewStyles = `
   .home-feed-card__daily-goals-preview {
     box-sizing: border-box;
     display: grid;
-    grid-template-columns: 8.8rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
     height: 100%;
     padding: 1rem;
     align-items: center;
+  }
+  .home-feed-card__daily-goals-preview.has-media {
+    grid-template-columns: 8.8rem minmax(0, 1fr);
   }
   .home-feed-card__daily-goals-card {
     display: flex;

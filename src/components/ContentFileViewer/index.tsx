@@ -18,6 +18,7 @@ export default function ContentFileViewer({
   filePath,
   fileName,
   fileSize,
+  disableImageModal,
   fillUnavailablePreview,
   fillPreview,
   userIsUploader,
@@ -40,6 +41,7 @@ export default function ContentFileViewer({
   filePath: string;
   fileName?: string;
   fileSize?: string | number;
+  disableImageModal?: boolean;
   fillUnavailablePreview?: boolean;
   fillPreview?: boolean;
   userIsUploader?: boolean;
@@ -100,6 +102,7 @@ export default function ContentFileViewer({
               fileName={fileName || ''}
               contentType={contentType}
               contentId={contentId}
+              disableImageModal={disableImageModal}
               fillPreview={fillPreview}
               fillUnavailablePreview={fillUnavailablePreview}
               previewObjectFit={previewObjectFit}

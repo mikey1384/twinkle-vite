@@ -778,6 +778,7 @@ export default function RootContent({
         contributionStatus={contributionStatus}
         rootBuildSourceBuildId={rootBuildSourceBuildId}
         buildUserId={buildUserId}
+        buildCardEmbedded={contentType === 'build'}
         contentId={contentId}
         thumbUrl={thumbUrl}
         actualTitle={actualTitle}
