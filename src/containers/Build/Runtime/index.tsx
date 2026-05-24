@@ -32,11 +32,17 @@ import {
 } from '~/helpers/homeFeedActionIntent';
 import type { Content } from '~/types';
 import PreviewPanel from '../PreviewPanel';
-import type { PreviewMountContext } from '../PreviewPanel/types';
+import type {
+  PreviewLaunchTarget,
+  PreviewMountContext
+} from '../PreviewPanel/types';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
 import { formatVisitLabel } from '~/helpers/stringHelpers';
 import CommentsDrawer from './CommentsDrawer';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
+import BuildAppNotificationSettingsModal, {
+  type BuildAppNotificationPreferences
+} from '~/components/Notification/MainFeeds/NotiItem/BuildAppNotificationSettingsModal';
 import type {
   AiUsagePolicy,
   BuildCollaborationRequest,
@@ -62,6 +68,32 @@ function parseRuntimeMountContext(search: string): PreviewMountContext | null {
     return { type: 'subject', id: Number(match[1]) };
   }
 
+  return null;
+}
+
+function normalizeBuildLaunchTarget(value: unknown): PreviewLaunchTarget | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as PreviewLaunchTarget;
+}
+
+function parseBuildNotificationId({
+  search,
+  state
+}: {
+  search: string;
+  state: any;
+}) {
+  const params = new URLSearchParams(search);
+  const queryId = Number(params.get('notificationId') || 0);
+  if (Number.isFinite(queryId) && queryId > 0) {
+    return Math.floor(queryId);
+  }
+  const stateId = Number(
+    state?.buildNotificationId || state?.notificationId || 0
+  );
+  if (Number.isFinite(stateId) && stateId > 0) {
+    return Math.floor(stateId);
+  }
   return null;
 }
 
@@ -273,11 +305,42 @@ const titleTextStackClass = css`
 const commentsCtaSlotClass = css`
   flex: 0 0 auto;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.55rem;
   align-self: center;
 
   @media (max-width: ${mobileMaxWidth}) {
     align-self: flex-start;
+  }
+`;
+
+const notificationSettingsButtonClass = css`
+  border: 1px solid var(--ui-border);
+  background: rgba(65, 140, 235, 0.08);
+  color: #1d4ed8;
+  border-radius: 999px;
+  width: 2.65rem;
+  height: 2.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+  &:hover {
+    background: rgba(65, 140, 235, 0.14);
+    border-color: rgba(65, 140, 235, 0.28);
+    transform: translateY(-1px);
+  }
+  &[data-muted='true'] {
+    background: rgba(190, 18, 60, 0.08);
+    border-color: rgba(190, 18, 60, 0.28);
+    color: #be123c;
   }
 `;
 
@@ -384,11 +447,28 @@ const runtimeBodyClass = css`
 `;
 
 const previewShellClass = css`
+  position: relative;
   height: 100%;
   min-height: 0;
   display: grid;
   overflow: hidden;
   background: #fff;
+`;
+
+const launchTargetLoadingClass = css`
+  height: 100%;
+  min-height: 15rem;
+  width: 100%;
+`;
+
+const launchTargetLoadingOverlayClass = css`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.74);
 `;
 
 interface BuildRuntimeProps {
@@ -443,6 +523,12 @@ export default function BuildRuntime({
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
+  const loadBuildAppNotificationLaunchTarget = useAppContext(
+    (v) => v.requestHelpers.loadBuildAppNotificationLaunchTarget
+  );
+  const getBuildAppNotificationPreferences = useAppContext(
+    (v) => v.requestHelpers.getBuildAppNotificationPreferences
+  );
   const onDeleteComment = useContentContext((v) => v.actions.onDeleteComment);
   const onEditComment = useContentContext((v) => v.actions.onEditComment);
   const onEditRewardComment = useContentContext(
@@ -492,12 +578,31 @@ export default function BuildRuntime({
   const [contributionForkError, setContributionForkError] = useState('');
   const [runtimeFavoriteError, setRuntimeFavoriteError] = useState('');
   const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
+  const [buildLaunchTarget, setBuildLaunchTarget] =
+    useState<PreviewLaunchTarget | null>(null);
+  const [resolvedBuildLaunchTargetKey, setResolvedBuildLaunchTargetKey] =
+    useState('');
+  const [previewMountedBuildId, setPreviewMountedBuildId] = useState<
+    number | null
+  >(null);
+  const [buildNotificationPreferences, setBuildNotificationPreferences] =
+    useState<BuildAppNotificationPreferences | null>(null);
+  const [
+    buildNotificationSettingsShown,
+    setBuildNotificationSettingsShown
+  ] = useState(false);
   const [commentsDrawerShown, setCommentsDrawerShown] = useState(false);
   const [runtimeCommentsLoading, setRuntimeCommentsLoading] = useState(false);
   const [runtimeCommentsError, setRuntimeCommentsError] = useState('');
   const [aiUsagePolicyLoadAttempted, setAiUsagePolicyLoadAttempted] =
     useState(false);
   const getAiEnergyPolicyRef = useRef(getAiEnergyPolicy);
+  const loadBuildAppNotificationLaunchTargetRef = useRef(
+    loadBuildAppNotificationLaunchTarget
+  );
+  const getBuildAppNotificationPreferencesRef = useRef(
+    getBuildAppNotificationPreferences
+  );
   const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
   const runtimeCommentsLoadTokenRef = useRef(0);
   const RuntimeCommentInputAreaRef = useRef<any>(null);
@@ -568,6 +673,26 @@ export default function BuildRuntime({
     () => parseRuntimeMountContext(location.search),
     [location.search]
   );
+  const buildNotificationId = useMemo(
+    () =>
+      parseBuildNotificationId({
+        search: location.search,
+        state: location.state
+      }),
+    [location.search, location.state]
+  );
+  const routeBuildLaunchTarget = useMemo(
+    () => normalizeBuildLaunchTarget((location.state as any)?.buildLaunchTarget),
+    [location.state]
+  );
+  const buildLaunchTargetAuthKey = userId ? `user:${userId}` : 'guest';
+  const buildLaunchTargetLookupKey = useMemo(() => {
+    if (!numericBuildId || !buildNotificationId) return '';
+    return `${numericBuildId}:${buildNotificationId}:${buildLaunchTargetAuthKey}`;
+  }, [buildLaunchTargetAuthKey, buildNotificationId, numericBuildId]);
+  const buildLaunchTargetReady =
+    !buildLaunchTargetLookupKey ||
+    resolvedBuildLaunchTargetKey === buildLaunchTargetLookupKey;
   const explicitBackTo =
     typeof location.state?.runtimeBackTo === 'string'
       ? normalizeRuntimeBackTo(location.state.runtimeBackTo)
@@ -655,6 +780,19 @@ export default function BuildRuntime({
   const runtimeCommentsButtonLabel = `${
     runtimeCommentsCount === 1 ? 'Comment' : 'Comments'
   } (${runtimeCommentsCountLabel})`;
+  const runtimeBuildId = Math.floor(Number(build?.id || 0));
+  const runtimeNotificationEventKey = String(
+    buildLaunchTarget?.eventKey || ''
+  ).trim();
+  const runtimeNotificationEventLabel = String(
+    buildLaunchTarget?.eventLabel || ''
+  ).trim();
+  const previewMountedForCurrentBuild =
+    runtimeBuildId > 0 &&
+    runtimeBuildId === numericBuildId &&
+    previewMountedBuildId === runtimeBuildId;
+  const shouldRenderPreviewPanel =
+    buildLaunchTargetReady || previewMountedForCurrentBuild;
 
   function applyRuntimeBuildPayload(data: any) {
     if (!data?.build) return false;
@@ -695,6 +833,15 @@ export default function BuildRuntime({
     if (shouldOpen && !runtimeCommentsLoaded) {
       void loadRuntimeComments();
     }
+  }
+
+  function handleOpenBuildNotificationSettings() {
+    if (!build?.id) return;
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    setBuildNotificationSettingsShown(true);
   }
 
   function handleConsumeHomeFeedActionIntent() {
@@ -1163,6 +1310,10 @@ export default function BuildRuntime({
 
   useEffect(() => {
     getAiEnergyPolicyRef.current = getAiEnergyPolicy;
+    loadBuildAppNotificationLaunchTargetRef.current =
+      loadBuildAppNotificationLaunchTarget;
+    getBuildAppNotificationPreferencesRef.current =
+      getBuildAppNotificationPreferences;
     onUpdateTodayStatsRef.current = onUpdateTodayStats;
   });
 
@@ -1198,6 +1349,62 @@ export default function BuildRuntime({
   }, [userId, aiUsagePolicy, aiUsagePolicyLoadAttempted]);
 
   useEffect(() => {
+    if (!numericBuildId) {
+      setBuildLaunchTarget(null);
+      setResolvedBuildLaunchTargetKey('');
+      return;
+    }
+    if (!buildNotificationId) {
+      setBuildLaunchTarget(routeBuildLaunchTarget);
+      setResolvedBuildLaunchTargetKey('');
+      return;
+    }
+    const lookupKey = buildLaunchTargetLookupKey;
+    if (!lookupKey) {
+      setBuildLaunchTarget(null);
+      setResolvedBuildLaunchTargetKey('');
+      return;
+    }
+
+    let cancelled = false;
+    setBuildLaunchTarget(null);
+    setResolvedBuildLaunchTargetKey('');
+
+    async function loadLaunchTarget() {
+      try {
+        const result =
+          await loadBuildAppNotificationLaunchTargetRef.current(
+            buildNotificationId
+          );
+        if (cancelled) return;
+        if (Number(result?.buildId || 0) === numericBuildId) {
+          setBuildLaunchTarget(normalizeBuildLaunchTarget(result));
+          return;
+        }
+        setBuildLaunchTarget(null);
+      } catch (_error) {
+        if (!cancelled) {
+          setBuildLaunchTarget(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setResolvedBuildLaunchTargetKey(lookupKey);
+        }
+      }
+    }
+
+    void loadLaunchTarget();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    buildLaunchTargetLookupKey,
+    buildNotificationId,
+    numericBuildId,
+    routeBuildLaunchTarget
+  ]);
+
+  useEffect(() => {
     if (!numericBuildId) return;
     void handleLoad();
 
@@ -1219,6 +1426,47 @@ export default function BuildRuntime({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numericBuildId, runtimeViewSource, userId]);
+
+  useEffect(() => {
+    if (!runtimeBuildId || !userId) {
+      setBuildNotificationPreferences(null);
+      return;
+    }
+    let cancelled = false;
+
+    async function loadBuildNotificationPreferences() {
+      try {
+        const result =
+          await getBuildAppNotificationPreferencesRef.current({
+            buildId: runtimeBuildId,
+            eventKey: runtimeNotificationEventKey
+          });
+        if (!cancelled) {
+          setBuildNotificationPreferences(result);
+        }
+      } catch (_error) {
+        if (!cancelled) {
+          setBuildNotificationPreferences(null);
+        }
+      }
+    }
+
+    void loadBuildNotificationPreferences();
+    return () => {
+      cancelled = true;
+    };
+  }, [runtimeBuildId, runtimeNotificationEventKey, userId]);
+
+  useEffect(() => {
+    const currentBuildId = Math.floor(Number(build?.id || 0));
+    if (!currentBuildId || currentBuildId !== numericBuildId) {
+      setPreviewMountedBuildId(null);
+      return;
+    }
+    if (buildLaunchTargetReady) {
+      setPreviewMountedBuildId(currentBuildId);
+    }
+  }, [build?.id, buildLaunchTargetReady, numericBuildId]);
 
   useEffect(() => {
     if (!isEmbedded) return;
@@ -1509,6 +1757,24 @@ export default function BuildRuntime({
                 </div>
               </div>
               <div className={commentsCtaSlotClass}>
+                <button
+                  aria-label="Notification settings"
+                  className={notificationSettingsButtonClass}
+                  data-muted={
+                    buildNotificationPreferences?.mutedBuild ? 'true' : 'false'
+                  }
+                  onClick={handleOpenBuildNotificationSettings}
+                  title="Notification settings"
+                  type="button"
+                >
+                  <Icon
+                    icon={
+                      buildNotificationPreferences?.mutedBuild
+                        ? 'bell-slash'
+                        : 'bell'
+                    }
+                  />
+                </button>
                 <GameCTAButton
                   onClick={handleToggleCommentsDrawer}
                   variant="neutral"
@@ -1536,6 +1802,17 @@ export default function BuildRuntime({
                 onSubmitRequest={handleSubmitCollaborationRequest}
               />
             ) : null}
+            {build?.id ? (
+              <BuildAppNotificationSettingsModal
+                buildId={build.id}
+                buildTitle={build.title || 'this app'}
+                eventKey={runtimeNotificationEventKey}
+                eventLabel={runtimeNotificationEventLabel}
+                isOpen={buildNotificationSettingsShown}
+                onClose={() => setBuildNotificationSettingsShown(false)}
+                onPreferencesChange={setBuildNotificationPreferences}
+              />
+            ) : null}
           </div>
         )}
         <div
@@ -1544,20 +1821,30 @@ export default function BuildRuntime({
         >
           <div className={panelWrapClass}>
             <div className={previewShellClass}>
-              <PreviewPanel
-                build={build}
-                code={build.code}
-                projectFiles={build.projectFiles || []}
-                isOwner={false}
-                runtimeOnly
-                runtimeHostVisible={runtimeHostVisible}
-                mountContext={runtimeMountContext}
-                capabilitySnapshot={build.capabilitySnapshot || null}
-                onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
-                onReplaceCode={() => {}}
-                onApplyRestoredProjectFiles={() => {}}
-                onSaveProjectFiles={async () => ({ success: false })}
-              />
+              {shouldRenderPreviewPanel ? (
+                <>
+                  <PreviewPanel
+                    build={build}
+                    code={build.code}
+                    projectFiles={build.projectFiles || []}
+                    isOwner={false}
+                    runtimeOnly
+                    runtimeHostVisible={runtimeHostVisible}
+                    mountContext={runtimeMountContext}
+                    launchTarget={buildLaunchTarget}
+                    capabilitySnapshot={build.capabilitySnapshot || null}
+                    onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
+                    onReplaceCode={() => {}}
+                    onApplyRestoredProjectFiles={() => {}}
+                    onSaveProjectFiles={async () => ({ success: false })}
+                  />
+                  {!buildLaunchTargetReady ? (
+                    <Loading className={launchTargetLoadingOverlayClass} />
+                  ) : null}
+                </>
+              ) : (
+                <Loading className={launchTargetLoadingClass} />
+              )}
             </div>
           </div>
           <CommentsDrawer

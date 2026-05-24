@@ -348,6 +348,9 @@ registerMethods('interactive', [
 registerMethods('notification', [
   'checkVersion',
   'fetchNotifications',
+  'getBuildAppNotificationPreferences',
+  'updateBuildAppNotificationPreferences',
+  'loadBuildAppNotificationLaunchTarget',
   'fetchTodayStats',
   'checkUnansweredChess',
   'checkUnansweredOmok',

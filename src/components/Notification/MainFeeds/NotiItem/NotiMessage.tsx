@@ -41,8 +41,12 @@ function NotiMessage({
     acceptedAt?: number;
     buildId?: number;
     declinedAt?: number;
+    eventKey?: string;
+    eventLabel?: string;
+    eventSummary?: string;
     id: number;
     revokedAt?: number;
+    target?: Record<string, any> | null;
     userId: number;
   };
   actionColor: string;
@@ -262,6 +266,21 @@ function NotiMessage({
   );
 
   switch (actionObj.contentType) {
+    case 'buildApp': {
+      const summary = actionObj.eventSummary || 'sent an update';
+      const buildTitle = targetObj.content || actionObj.eventLabel || 'Build';
+      return (
+        <>
+          <span style={{ color: infoColorValue, fontWeight: 'bold' }}>
+            {summary}
+          </span>{' '}
+          in{' '}
+          <span style={{ color: targetLinkColor, fontWeight: 'bold' }}>
+            {buildTitle}
+          </span>
+        </>
+      );
+    }
     case 'like':
       return (
         <>

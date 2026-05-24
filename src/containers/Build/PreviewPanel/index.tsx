@@ -122,6 +122,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       currentBuildRuntimeAssets = EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
       previewSrcOverride = null,
       mountContext = null,
+      launchTarget = null,
       viewerOverride = null,
       onCaptureReadyChange
     }: PreviewPanelProps,
@@ -925,6 +926,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       resolvedCapabilitySnapshot,
       resolvedRuntimeExplorationPlan,
       mountContext,
+      launchTarget,
       capabilitySnapshotRef,
       runtimeExplorationPlanRef,
       messageTargetFrameRef,

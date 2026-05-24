@@ -32,6 +32,15 @@ export interface PreviewMountContext {
   id: number;
 }
 
+export interface PreviewLaunchTarget {
+  notificationId?: number | null;
+  buildId?: number | null;
+  eventKey?: string;
+  eventLabel?: string;
+  target?: Record<string, any> | null;
+  [key: string]: any;
+}
+
 export interface PreviewPanelProps {
   className?: string;
   build: Build;
@@ -85,6 +94,7 @@ export interface PreviewPanelProps {
   currentBuildRuntimeAssets?: PreviewRuntimeUploadAsset[];
   previewSrcOverride?: string | null;
   mountContext?: PreviewMountContext | null;
+  launchTarget?: PreviewLaunchTarget | null;
   viewerOverride?: {
     id: number | null;
     username: string | null;

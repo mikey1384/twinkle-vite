@@ -34,6 +34,61 @@ export default function notificationRequestHelpers({
         return handleError(error);
       }
     },
+    async getBuildAppNotificationPreferences({
+      buildId,
+      eventKey
+    }: {
+      buildId: number;
+      eventKey?: string;
+    }) {
+      try {
+        const query = new URLSearchParams();
+        query.set('buildId', String(buildId));
+        if (eventKey) {
+          query.set('eventKey', eventKey);
+        }
+        const { data } = await request.get(
+          `${URL}/notification/build-app/preferences?${query.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateBuildAppNotificationPreferences({
+      buildId,
+      eventKey,
+      mutedBuild,
+      mutedEvent
+    }: {
+      buildId: number;
+      eventKey?: string;
+      mutedBuild?: boolean;
+      mutedEvent?: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/notification/build-app/preferences`,
+          { buildId, eventKey, mutedBuild, mutedEvent },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadBuildAppNotificationLaunchTarget(notificationId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/notification/build-app/${notificationId}/launch-target`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async fetchTodayStats() {
       try {
         const {

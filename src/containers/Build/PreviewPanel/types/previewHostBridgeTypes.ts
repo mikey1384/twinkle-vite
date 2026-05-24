@@ -11,6 +11,7 @@ import type {
 import type {
   PreviewFrameMeta,
   PreviewFrameRetiredHandler,
+  PreviewLaunchTarget,
   PreviewMountContext,
   PreviewRuntimeUploadsSyncPayload
 } from './index';
@@ -30,6 +31,7 @@ export interface UsePreviewHostBridgeArgs {
   resolvedCapabilitySnapshot: BuildCapabilitySnapshot | null;
   resolvedRuntimeExplorationPlan: BuildRuntimeExplorationPlan | null;
   mountContext: PreviewMountContext | null;
+  launchTarget: PreviewLaunchTarget | null;
   capabilitySnapshotRef: RefObject<BuildCapabilitySnapshot | null>;
   runtimeExplorationPlanRef: RefObject<BuildRuntimeExplorationPlan | null>;
   messageTargetFrameRef: RefObject<'primary' | 'secondary'>;

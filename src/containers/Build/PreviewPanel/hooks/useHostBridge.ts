@@ -89,6 +89,7 @@ export function useHostBridge({
   resolvedCapabilitySnapshot,
   resolvedRuntimeExplorationPlan,
   mountContext,
+  launchTarget,
   capabilitySnapshotRef,
   runtimeExplorationPlanRef,
   messageTargetFrameRef,
@@ -106,11 +107,14 @@ export function useHostBridge({
   onAiUsagePolicyUpdateRef
 }: UsePreviewHostBridgeArgs) {
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
+  const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
+  const launchTargetBroadcastReadyRef = useRef(false);
   const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(
     null
   );
   const worldViewerIdentityKeyRef = useRef<string | null>(null);
   mountContextRef.current = mountContext;
+  launchTargetRef.current = launchTarget;
 
   useEffect(() => {
     const viewer = getViewerInfo(previewAuth);
@@ -176,6 +180,24 @@ export function useHostBridge({
       }
     );
   }, [mountContext, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
+
+  useEffect(() => {
+    if (!launchTargetBroadcastReadyRef.current) {
+      launchTargetBroadcastReadyRef.current = true;
+      return;
+    }
+
+    postToPreviewFrames(
+      primaryIframeRef,
+      secondaryIframeRef,
+      previewFrameMetaRef,
+      {
+        source: 'twinkle-parent',
+        type: 'notifications:launch-target',
+        launchTarget
+      }
+    );
+  }, [launchTarget, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
 
   useEffect(() => {
     postToPreviewFrames(
@@ -777,6 +799,7 @@ export function useHostBridge({
               username: activeBuild.username,
               viewer: getViewerInfo(previewAuth),
               mount: mountContextRef.current,
+              launchTarget: launchTargetRef.current,
               capabilities: capabilitySnapshotRef.current,
               explorationPlan: runtimeExplorationPlanRef.current
             };
@@ -1366,6 +1389,7 @@ export function useHostBridge({
               topicName: payload?.topicName,
               topicId: payload?.topicId,
               data: payload?.data,
+              notify: payload?.notify,
               token: sharedDbAddEntryToken
             });
             break;
@@ -1380,6 +1404,7 @@ export function useHostBridge({
               buildId: activeBuild.id,
               entryId: payload?.entryId,
               data: payload?.data,
+              notify: payload?.notify,
               token: sharedDbUpdateEntryToken
             });
             break;

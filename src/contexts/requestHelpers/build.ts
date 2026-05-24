@@ -3071,18 +3071,20 @@ export default function buildRequestHelpers({
       topicName,
       topicId,
       data: entryData,
+      notify,
       token
     }: {
       buildId: number;
       topicName?: string;
       topicId?: number;
       data: Record<string, any>;
+      notify?: Record<string, any>;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entry`,
-          { topicName, topicId, data: entryData },
+          { topicName, topicId, data: entryData, notify },
           {
             ...auth(),
             headers: {
@@ -3101,17 +3103,19 @@ export default function buildRequestHelpers({
       buildId,
       entryId,
       data: entryData,
+      notify,
       token
     }: {
       buildId: number;
       entryId: number;
       data: Record<string, any>;
+      notify?: Record<string, any>;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entry/update`,
-          { entryId, data: entryData },
+          { entryId, data: entryData, notify },
           {
             ...auth(),
             headers: {
