@@ -52,6 +52,7 @@ const guideSections: GuideSection[] = [
       'Use the Code tab to edit project files directly. The app preview runs from the saved project files.',
       'Keep /index.html or /index.htm as the entry file. Split CSS and JavaScript into supporting files before a file approaches the server effective-line limit.',
       `The current project-file limit is ${DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT} effective lines per file. Long physical lines count as additional effective lines every ${PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS} characters. If save fails for size, split the file and save again.`,
+      'Build apps run in sandboxed iframes without form-submit permission. Do not use <form> or native form submission; use JavaScript-handled inputs and buttons.',
       'Use workspace project assets for bundled images/audio. Use Twinkle.files only for viewer-created runtime uploads after the app is running.',
       'Save files before relying on Preview, Publish, or Download zip.'
     ]
@@ -73,6 +74,7 @@ const guideSections: GuideSection[] = [
       'Run npx @twinkle/lumine@latest for the guided flow. It logs in when needed, lets the user choose an owned or team project, saves that selection, and pulls the saved project files locally.',
       'Run npx @twinkle/lumine@latest login once for explicit login. It opens the Twinkle approval page automatically and stores only a scoped CLI token locally. Use --no-open for SSH, CI, or agent-only terminals.',
       'Run npx @twinkle/lumine@latest projects, select, or pull to list accessible projects, change the selected project, or refresh local project files.',
+      'Pulled workspaces include AGENTS.md with Twinkle Build constraints for local coding agents.',
       'After editing pulled files, run npx @twinkle/lumine@latest save from the local project folder. CLI saves use the same /build/:id/project-files route as the Code tab, create a project artifact version, and mark public builds as having unpublished changes.',
       'Run npx @twinkle/lumine@latest check, launch, launch --save, or save --publish after selecting a project. You can still pass a Twinkle app, build, preview, or Lumine preview URL explicitly.',
       'Saving and publishing require scoped owner permission; team projects can be selected and pulled for code access.',
