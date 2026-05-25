@@ -14,6 +14,7 @@ export type AsyncRequestRef = RefObject<(...args: any[]) => Promise<any>>;
 
 interface BuildApiTokenState {
   buildId?: number;
+  userId?: number;
   token: string;
   scopes: string[];
   expiresAt: number;
@@ -82,10 +83,17 @@ export async function ensureBuildApiToken(
   if (!activeBuild?.id) {
     throw new Error('Build not found');
   }
+  const activeUserId = Number(previewAuth.userIdRef.current || 0) || null;
   const cached = previewAuth.buildApiTokenRef.current;
+  const cachedMatchesBuild =
+    Number(cached?.buildId || 0) === Number(activeBuild.id || 0);
+  const cachedMatchesViewer =
+    Number(cached?.userId || 0) === Number(activeUserId || 0) &&
+    Number(activeUserId || 0) > 0;
   if (
     cached &&
-    Number(cached.buildId || 0) === Number(activeBuild.id || 0) &&
+    cachedMatchesBuild &&
+    cachedMatchesViewer &&
     cached.expiresAt - 30 > now &&
     requiredScopes.every((scope) => cached.scopes.includes(scope))
   ) {
@@ -93,9 +101,7 @@ export async function ensureBuildApiToken(
   }
 
   const scopeSet = new Set<string>([
-    ...(Number(cached?.buildId || 0) === Number(activeBuild.id || 0)
-      ? cached?.scopes || []
-      : []),
+    ...(cachedMatchesBuild && cachedMatchesViewer ? cached?.scopes || [] : []),
     ...requiredScopes
   ]);
   const requestedScopes = Array.from(scopeSet);
@@ -109,6 +115,7 @@ export async function ensureBuildApiToken(
   }
   previewAuth.buildApiTokenRef.current = {
     buildId: Number(activeBuild.id || 0) || undefined,
+    userId: activeUserId || undefined,
     token: result.token,
     scopes: result.scopes || requestedScopes,
     expiresAt: result.expiresAt || now + 600

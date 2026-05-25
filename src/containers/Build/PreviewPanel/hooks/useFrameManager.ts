@@ -283,6 +283,71 @@ export function useFrameManager({
       return;
     }
 
+    if (runtimeOnly) {
+      const currentPrimarySrc = currentSources.primary;
+      const primaryMatchesPreviewSrc = currentPrimarySrc === previewSrc;
+      const currentPrimaryMeta = previewFrameMetaRef.current.primary;
+      const nextPrimaryNonce = primaryMatchesPreviewSrc
+        ? currentPrimaryMeta.messageNonce
+        : createPreviewFrameMessageNonce();
+
+      if (currentPrimarySrc && !primaryMatchesPreviewSrc) {
+        notifyPreviewFrameRetired({
+          frame: 'primary',
+          onPreviewFrameRetiredRef,
+          primaryIframeRef,
+          reason: 'replaced',
+          secondaryIframeRef
+        });
+        revokePreviewUrl(currentPrimarySrc);
+      }
+      if (currentSources.secondary) {
+        notifyPreviewFrameRetired({
+          frame: 'secondary',
+          onPreviewFrameRetiredRef,
+          primaryIframeRef,
+          reason: 'runtime-reset',
+          secondaryIframeRef
+        });
+        if (
+          currentSources.secondary !== currentPrimarySrc &&
+          currentSources.secondary !== previewSrc
+        ) {
+          revokePreviewUrl(currentSources.secondary);
+        }
+      }
+
+      const nextSources = { primary: previewSrc, secondary: null };
+      previewFrameSourcesRef.current = nextSources;
+      setPreviewFrameSources(nextSources);
+      previewFrameMetaRef.current = {
+        primary: {
+          buildId,
+          codeSignature: previewCodeSignature,
+          messageNonce: nextPrimaryNonce
+        },
+        secondary: {
+          buildId: null,
+          codeSignature: null,
+          messageNonce: null
+        }
+      };
+      const nextReady = {
+        primary: primaryMatchesPreviewSrc
+          ? previewFrameReadyRef.current.primary
+          : false,
+        secondary: false
+      };
+      previewFrameReadyRef.current = nextReady;
+      setPreviewFrameReady(nextReady);
+      messageTargetFrameRef.current = 'primary';
+      activePreviewFrameRef.current = 'primary';
+      setActivePreviewFrame('primary');
+      previewTransitioningRef.current = !primaryMatchesPreviewSrc;
+      setPreviewTransitioning(!primaryMatchesPreviewSrc);
+      return;
+    }
+
     if (!activeSrc) {
       const nextSources = {
         ...currentSources,
@@ -371,6 +436,7 @@ export function useFrameManager({
     previewCodeSignature,
     previewSrc,
     primaryIframeRef,
+    runtimeOnly,
     secondaryIframeRef
   ]);
 

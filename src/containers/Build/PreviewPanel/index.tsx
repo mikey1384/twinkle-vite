@@ -33,6 +33,7 @@ import {
 } from './hooks/useHostBridge';
 import {
   buildPreviewBaseSrc,
+  useRuntimePreviewSrc,
   useWorkspacePreviewSrc
 } from './hooks/useSource';
 import {
@@ -550,6 +551,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
 
     const buildApiTokenRef = useRef<{
       buildId?: number;
+      userId?: number;
       token: string;
       scopes: string[];
       expiresAt: number;
@@ -623,6 +625,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       savingProjectFiles,
       savingProjectFilesRef,
       selectedFolderPath,
+      userId: resolvedUserId || null,
       setActiveFilePath,
       setCollapsedFolders,
       setDownloadingProjectArchive,
@@ -727,13 +730,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       );
     }, [code, previewProjectFiles, runtimeOnly]);
 
-    const runtimePreviewSrc = useMemo(() => {
-      if (normalizedPreviewSrcOverride) {
-        return normalizedPreviewSrcOverride;
-      }
-      if (!runtimeOnly || !hasRuntimePreview) return null;
-      return buildPreviewBaseSrc(build);
-    }, [build, hasRuntimePreview, normalizedPreviewSrcOverride, runtimeOnly]);
+    const runtimePreviewSrc = useRuntimePreviewSrc({
+      build,
+      enabled: runtimeOnly && hasRuntimePreview,
+      previewSrcOverride: normalizedPreviewSrcOverride,
+      userId: resolvedUserId || null,
+      previewAuth
+    });
 
     const workspacePreviewSrc = useWorkspacePreviewSrc({
       build,

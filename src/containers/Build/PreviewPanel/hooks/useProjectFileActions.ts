@@ -46,6 +46,7 @@ export default function useProjectFileActions({
   savingProjectFiles,
   savingProjectFilesRef,
   selectedFolderPath,
+  userId,
   setActiveFilePath,
   setCollapsedFolders,
   setDownloadingProjectArchive,
@@ -63,6 +64,7 @@ export default function useProjectFileActions({
   build: Build;
   buildApiTokenRef: RefObject<{
     buildId?: number;
+    userId?: number;
     token: string;
     scopes: string[];
     expiresAt: number;
@@ -94,6 +96,7 @@ export default function useProjectFileActions({
   savingProjectFiles: boolean;
   savingProjectFilesRef: RefObject<boolean>;
   selectedFolderPath: string | null;
+  userId: number | null;
   setActiveFilePath: Dispatch<SetStateAction<string>>;
   setCollapsedFolders: Dispatch<SetStateAction<Record<string, boolean>>>;
   setDownloadingProjectArchive: Dispatch<SetStateAction<boolean>>;
@@ -159,10 +162,17 @@ export default function useProjectFileActions({
       throw new Error('Build not found');
     }
     const now = Math.floor(Date.now() / 1000);
+    const activeUserId = Number(userId || 0) || null;
     const cached = buildApiTokenRef.current;
+    const cachedMatchesBuild =
+      Number(cached?.buildId || 0) === Number(targetBuildId || 0);
+    const cachedMatchesViewer =
+      Number(cached?.userId || 0) === Number(activeUserId || 0) &&
+      Number(activeUserId || 0) > 0;
     if (
       cached &&
-      cached.buildId === targetBuildId &&
+      cachedMatchesBuild &&
+      cachedMatchesViewer &&
       cached.expiresAt - 30 > now &&
       requiredScopes.every((scope) => cached.scopes.includes(scope))
     ) {
@@ -171,8 +181,8 @@ export default function useProjectFileActions({
 
     const requestedScopes = Array.from(
       new Set<string>([
-        ...(cached?.buildId === targetBuildId
-          ? cached.scopes || []
+        ...(cachedMatchesBuild && cachedMatchesViewer
+          ? cached?.scopes || []
           : []),
         ...requiredScopes
       ])
@@ -186,6 +196,7 @@ export default function useProjectFileActions({
     }
     buildApiTokenRef.current = {
       buildId: targetBuildId,
+      userId: activeUserId || undefined,
       token: result.token,
       scopes: result.scopes || requestedScopes,
       expiresAt: result.expiresAt || now + 600
