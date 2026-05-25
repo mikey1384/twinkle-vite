@@ -180,14 +180,12 @@ export default function ContributionDetail({
   return (
     <div className={detailClass}>
       <div className={rowClass}>
-        <strong>
-          {ownerReview ? 'Review branch' : 'Branch needs attention'}
-        </strong>
+        <strong>{ownerReview ? 'Review branch' : 'Main has updates'}</strong>
         {ownerReview ? (
           <span className={mutedTextClass}>{changedFiles.length} changed</span>
         ) : canUpdateFromMain ? (
           <span className={mutedTextClass}>
-            Main has new changes for this branch.
+            Update this branch with the latest main changes.
           </span>
         ) : null}
         {contributionStatus !== 'draft' ? (

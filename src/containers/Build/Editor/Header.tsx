@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
@@ -400,15 +400,7 @@ function HeaderActionItem({
   );
 }
 
-function BuildVisibilityBadge({
-  buildId,
-  isPublic,
-  runtimeBackState
-}: {
-  buildId: number;
-  isPublic: boolean;
-  runtimeBackState: RuntimeBackState;
-}) {
+function BuildVisibilityBadge({ isPublic }: { isPublic: boolean }) {
   const badgeContent = (
     <>
       <Icon icon={isPublic ? 'globe' : 'lock'} />
@@ -416,39 +408,48 @@ function BuildVisibilityBadge({
     </>
   );
 
-  if (!isPublic) {
-    return (
-      <span
-        className={badgePillClass}
-        style={getVisibilityBadgeStyle(isPublic)}
-        title="Private build"
-      >
-        {badgeContent}
-      </span>
-    );
-  }
-
   return (
-    <Link
-      to={getBuildRuntimePath(buildId)}
-      state={runtimeBackState}
+    <span
       className={badgePillClass}
       style={getVisibilityBadgeStyle(isPublic)}
-      title="Open App"
+      title={isPublic ? 'Public build' : 'Private build'}
     >
       {badgeContent}
-    </Link>
+    </span>
   );
 }
 
-function BuildReleaseStatusBadge({
+function BuildViewAppButton({
   buildId,
-  releaseStatus,
-  runtimeBackState
+  runtimeBackState,
+  size = 'md'
 }: {
   buildId: number;
-  releaseStatus: NonNullable<ReturnType<typeof normalizeBuildReleaseStatus>>;
   runtimeBackState: RuntimeBackState;
+  size?: 'sm' | 'md';
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <GameCTAButton
+      onClick={handleViewApp}
+      variant="logoBlue"
+      size={size}
+      icon="eye"
+    >
+      View App
+    </GameCTAButton>
+  );
+
+  function handleViewApp() {
+    navigate(getBuildRuntimePath(buildId), { state: runtimeBackState });
+  }
+}
+
+function BuildReleaseStatusBadge({
+  releaseStatus
+}: {
+  releaseStatus: NonNullable<ReturnType<typeof normalizeBuildReleaseStatus>>;
 }) {
   const hasUnpublishedChanges =
     releaseStatus.hasUnpublishedChanges ||
@@ -463,15 +464,13 @@ function BuildReleaseStatusBadge({
   );
 
   return (
-    <Link
-      to={getBuildRuntimePath(buildId)}
-      state={runtimeBackState}
+    <span
       className={badgePillClass}
       style={getReleaseStatusBadgeStyle(releaseStatus.state)}
-      title="Open App"
+      title="Published app status"
     >
       {badgeContent}
-    </Link>
+    </span>
   );
 }
 
@@ -597,6 +596,7 @@ export default function Header({
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
   const thumbnailButtonShiny = !String(build.thumbnailUrl || '').trim();
   const showVisibilityBadge = !isContributionFork;
+  const canOpenRuntimeApp = Boolean(build.isPublic || isOwner);
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
@@ -713,18 +713,19 @@ export default function Header({
           </div>
           <div className={mobileTitleBadgeGroupClass}>
             {showVisibilityBadge ? (
-              <BuildVisibilityBadge
-                buildId={Number(build.id)}
-                isPublic={Boolean(build.isPublic)}
-                runtimeBackState={runtimeBackState}
-              />
+              <>
+                <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
+                {canOpenRuntimeApp ? (
+                  <BuildViewAppButton
+                    buildId={Number(build.id)}
+                    runtimeBackState={runtimeBackState}
+                    size="sm"
+                  />
+                ) : null}
+              </>
             ) : null}
             {build.isPublic && releaseStatus ? (
-              <BuildReleaseStatusBadge
-                buildId={Number(build.id)}
-                releaseStatus={releaseStatus}
-                runtimeBackState={runtimeBackState}
-              />
+              <BuildReleaseStatusBadge releaseStatus={releaseStatus} />
             ) : null}
             {showContributionStatusBadge ? (
               <span
@@ -749,21 +750,23 @@ export default function Header({
       </div>
       <div className={headerActionsClass}>
         {showVisibilityBadge ? (
-          <HeaderActionItem mobileOrder={1}>
-            <BuildVisibilityBadge
-              buildId={Number(build.id)}
-              isPublic={Boolean(build.isPublic)}
-              runtimeBackState={runtimeBackState}
-            />
-          </HeaderActionItem>
+          <>
+            <HeaderActionItem mobileOrder={1}>
+              <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
+            </HeaderActionItem>
+            {canOpenRuntimeApp ? (
+              <HeaderActionItem mobileOrder={2}>
+                <BuildViewAppButton
+                  buildId={Number(build.id)}
+                  runtimeBackState={runtimeBackState}
+                />
+              </HeaderActionItem>
+            ) : null}
+          </>
         ) : null}
         {build.isPublic && releaseStatus ? (
-          <HeaderActionItem mobileOrder={2}>
-            <BuildReleaseStatusBadge
-              buildId={Number(build.id)}
-              releaseStatus={releaseStatus}
-              runtimeBackState={runtimeBackState}
-            />
+          <HeaderActionItem mobileOrder={3}>
+            <BuildReleaseStatusBadge releaseStatus={releaseStatus} />
           </HeaderActionItem>
         ) : null}
         {isOwner && !isContributionFork ? (
