@@ -134,6 +134,17 @@ const sdkSections: GuideSection[] = [
     ]
   },
   {
+    title: 'Twinkle.notifications',
+    items: [
+      'Twinkle.notifications.getLaunchTarget() returns the Build app notification target that opened this app, or null.',
+      'Twinkle.notifications.onLaunchTarget(listener) receives future notification launch targets while the app stays mounted.',
+      'await Twinkle.notifications.getSubjectUpdateSubscription(subjectId) returns the current viewer subscription for new subject pages.',
+      'await Twinkle.notifications.subscribeToSubjectUpdates(subjectId, { target }) subscribes the viewer to new pages on that subject and stores a notification launch target.',
+      'await Twinkle.notifications.unsubscribeFromSubjectUpdates(subjectId) turns off that subject update subscription for the viewer.',
+      'Notification preferences and type-level mutes are enforced by Twinkle; app code should create canonical writes with notify payloads and let the server deliver notifications.'
+    ]
+  },
+  {
     title: 'Twinkle.ai',
     items: [
       'Do not build prompt-preset selection UIs from Twinkle.ai.listPrompts(); runtime chat uses message, history, and systemPrompt.',
@@ -265,6 +276,7 @@ const sdkSections: GuideSection[] = [
       'Twinkle.subjects.getMySubjects({ limit, cursor }), search({ query, limit, cursor }), and getSubject(subjectId) are read-only subject metadata APIs. getSubjectComments(subjectId, { limit, cursor }) is the legacy viewer-own-comments helper.',
       'Twinkle.subjectComments.list(subjectId, { sortBy, author, authorUserId, includeReplies, replyScope, limit, cursor }) reads subject-wide comment streams. Use sortBy: "oldest", author: "subjectPoster", includeReplies: true, and replyScope: "ownThread" when subject-poster replies should appear only inside the poster\'s own thread.',
       'Twinkle.aiStories.search/list/get reads existing user-generated AI Stories, including story text, explanations, imageUrl, audioUrl, and normalized questions. It is read-only and does not generate new AI Stories.',
+      "Twinkle.grammarbles.listQuestions({ level, limit, cursor }) reads public Grammarbles questions and answers by level. getMyQuestionHistory({ level, limit, cursor }) reads the signed-in viewer's real attempt rows for trainer filtering.",
       'Twinkle.profileComments.getProfileComments(...), getProfileCommentIds(...), getCommentsByIds(idsOrOpts), and getProfileCommentCounts(idsOrOpts) are focused profile-comment reads.',
       'Twinkle.users.getUser(userId) returns { id, username, profilePicUrl } or null; getUsers({ search, userIds, cursor, limit }) returns a paged user list.',
       'Twinkle.reflections.getDailyReflections(...) and getDailyReflectionsByUser(userId, ...) return daily reflection feed rows.',
@@ -307,8 +319,8 @@ export default function AgentManualPane({
           <div>
             <h2 className={manualTitleClass}>Agent manual</h2>
             <div className={manualSubtitleClass}>
-              Workspace instructions and SDK reference for browser-based
-              coding agents.
+              Workspace instructions and SDK reference for browser-based coding
+              agents.
             </div>
           </div>
         </div>
@@ -316,9 +328,7 @@ export default function AgentManualPane({
           type="button"
           className={copyButtonClass}
           onClick={handleCopyManual}
-          disabled={
-            typeof navigator === 'undefined' || !navigator.clipboard
-          }
+          disabled={typeof navigator === 'undefined' || !navigator.clipboard}
           data-testid="build-agent-manual-copy"
           aria-label="Copy Build agent manual"
         >

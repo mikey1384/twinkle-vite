@@ -10,6 +10,8 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'files:save-as',
   'files:upload-selected',
   'leaderboards:submit',
+  'notifications:subscribe-subject-updates',
+  'notifications:unsubscribe-subject-updates',
   'private-db:remove',
   'private-db:set',
   'reminders:create',

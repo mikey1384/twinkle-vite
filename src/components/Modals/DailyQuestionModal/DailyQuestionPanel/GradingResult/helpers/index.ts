@@ -5,7 +5,8 @@ import {
 } from '../../helpers/questionPreferences';
 
 export function getVibeLabel(category: string | null) {
-  const normalized = category || 'default';
+  const normalized =
+    category === 'autobiography' ? 'build_project' : category || 'default';
   const option = VIBE_OPTIONS.find((entry) => entry.id === normalized);
   return option ? option.title : 'Let Twinkle Pick';
 }

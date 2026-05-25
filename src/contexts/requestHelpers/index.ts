@@ -163,6 +163,8 @@ registerMethods('build', [
   'listBuildAiStories',
   'searchBuildAiStories',
   'getBuildAiStory',
+  'listBuildGrammarblesQuestions',
+  'getBuildGrammarblesHistory',
   'getBuildSubject',
   'getBuildSubjectComments',
   'listBuildSubjectComments',
@@ -191,7 +193,10 @@ registerMethods('build', [
   'createBuildReminder',
   'updateBuildReminder',
   'deleteBuildReminder',
-  'getDueBuildReminders'
+  'getDueBuildReminders',
+  'getBuildSubjectUpdateSubscription',
+  'subscribeToBuildSubjectUpdates',
+  'unsubscribeFromBuildSubjectUpdates'
 ]);
 
 registerMethods('community', [

@@ -30,9 +30,9 @@ export const VIBE_OPTIONS = [
     description: 'Ask for your opinion and why you see it that way.'
   },
   {
-    id: 'autobiography',
-    title: 'My Story',
-    description: 'Reflect on one chapter from your life story.'
+    id: 'build_project',
+    title: 'Build Project',
+    description: 'Reflect on a project, app, idea, or thing you want to build.'
   },
   {
     id: 'connection',
@@ -173,7 +173,8 @@ export function isFocusOptionId(
 }
 
 export function getVibeLabel(category: string | null) {
-  const normalized = category || 'default';
+  const normalized =
+    category === 'autobiography' ? 'build_project' : category || 'default';
   const option = VIBE_OPTIONS.find((entry) => entry.id === normalized);
   return option ? option.title : 'Let Twinkle Pick';
 }

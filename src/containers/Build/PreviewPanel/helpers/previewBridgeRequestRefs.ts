@@ -21,6 +21,8 @@ export interface PreviewHostBridgeRequestRefs {
   listBuildAiStoriesRef: AsyncRequestRef;
   searchBuildAiStoriesRef: AsyncRequestRef;
   getBuildAiStoryRef: AsyncRequestRef;
+  listBuildGrammarblesQuestionsRef: AsyncRequestRef;
+  getBuildGrammarblesHistoryRef: AsyncRequestRef;
   getBuildSubjectRef: AsyncRequestRef;
   getBuildSubjectCommentsRef: AsyncRequestRef;
   listBuildSubjectCommentsRef: AsyncRequestRef;
@@ -50,4 +52,7 @@ export interface PreviewHostBridgeRequestRefs {
   updateBuildReminderRef: AsyncRequestRef;
   deleteBuildReminderRef: AsyncRequestRef;
   getDueBuildRemindersRef: AsyncRequestRef;
+  getBuildSubjectUpdateSubscriptionRef: AsyncRequestRef;
+  subscribeToBuildSubjectUpdatesRef: AsyncRequestRef;
+  unsubscribeFromBuildSubjectUpdatesRef: AsyncRequestRef;
 }

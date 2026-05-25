@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useRef
-} from 'react';
+import { useEffect, useRef } from 'react';
 import {
   ensureBuildApiToken,
   ensureGuestSessionId,
@@ -33,9 +30,7 @@ export {
   ensureBuildApiToken,
   type PreviewHostBridgeAuth
 } from '../helpers/previewBridgeAuth';
-export type {
-  PreviewHostBridgeRequestRefs
-} from '../helpers/previewBridgeRequestRefs';
+export type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
 import {
   executeGuestViewerDbExec,
   executeGuestViewerDbQuery
@@ -109,9 +104,7 @@ export function useHostBridge({
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
   const launchTargetBroadcastReadyRef = useRef(false);
-  const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(
-    null
-  );
+  const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(null);
   const worldViewerIdentityKeyRef = useRef<string | null>(null);
   mountContextRef.current = mountContext;
   launchTargetRef.current = launchTarget;
@@ -340,9 +333,8 @@ export function useHostBridge({
       timeoutMs = 8000
     ) {
       return new Promise<Record<string, any>>((resolve, reject) => {
-        const useReliableEmit = shouldUseReliableBuildRuntimeWorldEmit(
-          eventName
-        );
+        const useReliableEmit =
+          shouldUseReliableBuildRuntimeWorldEmit(eventName);
         if (!socket.connected) {
           reject(new Error('Socket is not connected'));
           return;
@@ -434,16 +426,12 @@ export function useHostBridge({
           resolve();
         }, 1000);
         try {
-          socket.emit(
-            'enter_my_notification_channel',
-            userId,
-            () => {
-              if (settled) return;
-              settled = true;
-              window.clearTimeout(timeout);
-              resolve();
-            }
-          );
+          socket.emit('enter_my_notification_channel', userId, () => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeout);
+            resolve();
+          });
         } catch {
           if (settled) return;
           settled = true;
@@ -503,9 +491,7 @@ export function useHostBridge({
     }) {
       if (response?.success === false) {
         const errorMessage =
-          response.error ||
-          response.message ||
-          'Image generation failed';
+          response.error || response.message || 'Image generation failed';
         return {
           requestId,
           stage: 'error',
@@ -863,16 +849,15 @@ export function useHostBridge({
             if (!previewAuth.userIdRef.current) {
               triggerGuestRestriction(previewAuth);
             }
-            response =
-              await requestRefs.callBuildRuntimeAiObjectRef.current({
-                buildId: activeBuild.id,
-                prompt: payload.prompt,
-                expectedStructure: payload.expectedStructure,
-                thinkingMode: payload.thinkingMode,
-                mode: payload.mode,
-                instructions: payload.instructions,
-                systemPrompt: payload.systemPrompt
-              });
+            response = await requestRefs.callBuildRuntimeAiObjectRef.current({
+              buildId: activeBuild.id,
+              prompt: payload.prompt,
+              expectedStructure: payload.expectedStructure,
+              thinkingMode: payload.thinkingMode,
+              mode: payload.mode,
+              instructions: payload.instructions,
+              systemPrompt: payload.systemPrompt
+            });
             if (
               response?.aiUsagePolicy &&
               typeof response.aiUsagePolicy === 'object'
@@ -1220,6 +1205,37 @@ export function useHostBridge({
             break;
           }
 
+          case 'content:grammarbles:questions': {
+            const contentGrammarblesToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response =
+              await requestRefs.listBuildGrammarblesQuestionsRef.current({
+                buildId: activeBuild.id,
+                level: payload?.level,
+                limit: payload?.limit,
+                cursor: payload?.cursor,
+                token: contentGrammarblesToken
+              });
+            break;
+          }
+
+          case 'content:grammarbles:history': {
+            const contentGrammarblesToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildGrammarblesHistoryRef.current({
+              buildId: activeBuild.id,
+              level: payload?.level,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: contentGrammarblesToken
+            });
+            break;
+          }
+
           case 'content:subject': {
             const contentSubjectToken = await ensureBuildApiToken(
               ['content:read'],
@@ -1437,15 +1453,16 @@ export function useHostBridge({
 
           case 'leaderboards:submit': {
             const viewer = getViewerInfo(previewAuth);
-            response =
-              await requestRefs.submitBuildLeaderboardScoreRef.current({
+            response = await requestRefs.submitBuildLeaderboardScoreRef.current(
+              {
                 buildId: activeBuild.id,
                 boardKey: payload?.boardKey,
                 score: payload?.score,
                 displayName: payload?.displayName,
                 meta: payload?.meta,
                 guestSessionId: viewer.isGuest ? viewer.id : null
-              });
+              }
+            );
             break;
           }
 
@@ -1763,6 +1780,49 @@ export function useHostBridge({
             break;
           }
 
+          case 'notifications:get-subject-update-subscription': {
+            const notificationsReadToken = await ensureBuildApiToken(
+              ['notifications:read'],
+              previewAuth
+            );
+            response =
+              await requestRefs.getBuildSubjectUpdateSubscriptionRef.current({
+                buildId: activeBuild.id,
+                subjectId: payload?.subjectId,
+                token: notificationsReadToken
+              });
+            break;
+          }
+
+          case 'notifications:subscribe-subject-updates': {
+            const notificationsWriteToken = await ensureBuildApiToken(
+              ['notifications:write'],
+              previewAuth
+            );
+            response =
+              await requestRefs.subscribeToBuildSubjectUpdatesRef.current({
+                buildId: activeBuild.id,
+                subjectId: payload?.subjectId,
+                target: payload?.target,
+                token: notificationsWriteToken
+              });
+            break;
+          }
+
+          case 'notifications:unsubscribe-subject-updates': {
+            const notificationsWriteToken = await ensureBuildApiToken(
+              ['notifications:write'],
+              previewAuth
+            );
+            response =
+              await requestRefs.unsubscribeFromBuildSubjectUpdatesRef.current({
+                buildId: activeBuild.id,
+                subjectId: payload?.subjectId,
+                token: notificationsWriteToken
+              });
+            break;
+          }
+
           default:
             throw new Error(`Unknown request type: ${type}`);
         }
@@ -1777,10 +1837,7 @@ export function useHostBridge({
           previewMessageTargetOrigin
         );
       } catch (error: any) {
-        if (
-          error?.aiUsagePolicy &&
-          typeof error.aiUsagePolicy === 'object'
-        ) {
+        if (error?.aiUsagePolicy && typeof error.aiUsagePolicy === 'object') {
           onAiUsagePolicyUpdateRef.current?.(error.aiUsagePolicy);
         }
         sourceWindow.postMessage(

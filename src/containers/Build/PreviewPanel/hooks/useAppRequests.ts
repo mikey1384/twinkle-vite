@@ -77,6 +77,12 @@ export default function useAppRequests() {
   const getBuildAiStory = useAppContext(
     (v) => v.requestHelpers.getBuildAiStory
   );
+  const listBuildGrammarblesQuestions = useAppContext(
+    (v) => v.requestHelpers.listBuildGrammarblesQuestions
+  );
+  const getBuildGrammarblesHistory = useAppContext(
+    (v) => v.requestHelpers.getBuildGrammarblesHistory
+  );
   const getBuildSubject = useAppContext(
     (v) => v.requestHelpers.getBuildSubject
   );
@@ -164,6 +170,15 @@ export default function useAppRequests() {
   const getDueBuildReminders = useAppContext(
     (v) => v.requestHelpers.getDueBuildReminders
   );
+  const getBuildSubjectUpdateSubscription = useAppContext(
+    (v) => v.requestHelpers.getBuildSubjectUpdateSubscription
+  );
+  const subscribeToBuildSubjectUpdates = useAppContext(
+    (v) => v.requestHelpers.subscribeToBuildSubjectUpdates
+  );
+  const unsubscribeFromBuildSubjectUpdates = useAppContext(
+    (v) => v.requestHelpers.unsubscribeFromBuildSubjectUpdates
+  );
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
@@ -196,6 +211,10 @@ export default function useAppRequests() {
   const listBuildAiStoriesRef = useRef(listBuildAiStories);
   const searchBuildAiStoriesRef = useRef(searchBuildAiStories);
   const getBuildAiStoryRef = useRef(getBuildAiStory);
+  const listBuildGrammarblesQuestionsRef = useRef(
+    listBuildGrammarblesQuestions
+  );
+  const getBuildGrammarblesHistoryRef = useRef(getBuildGrammarblesHistory);
   const getBuildSubjectRef = useRef(getBuildSubject);
   const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
   const listBuildSubjectCommentsRef = useRef(listBuildSubjectComments);
@@ -227,6 +246,15 @@ export default function useAppRequests() {
   const updateBuildReminderRef = useRef(updateBuildReminder);
   const deleteBuildReminderRef = useRef(deleteBuildReminder);
   const getDueBuildRemindersRef = useRef(getDueBuildReminders);
+  const getBuildSubjectUpdateSubscriptionRef = useRef(
+    getBuildSubjectUpdateSubscription
+  );
+  const subscribeToBuildSubjectUpdatesRef = useRef(
+    subscribeToBuildSubjectUpdates
+  );
+  const unsubscribeFromBuildSubjectUpdatesRef = useRef(
+    unsubscribeFromBuildSubjectUpdates
+  );
 
   const previewRequestRefs = useRef<PreviewHostBridgeRequestRefs>({
     loadBuildAiPromptsRef,
@@ -249,6 +277,8 @@ export default function useAppRequests() {
     listBuildAiStoriesRef,
     searchBuildAiStoriesRef,
     getBuildAiStoryRef,
+    listBuildGrammarblesQuestionsRef,
+    getBuildGrammarblesHistoryRef,
     getBuildSubjectRef,
     getBuildSubjectCommentsRef,
     listBuildSubjectCommentsRef,
@@ -277,7 +307,10 @@ export default function useAppRequests() {
     createBuildReminderRef,
     updateBuildReminderRef,
     deleteBuildReminderRef,
-    getDueBuildRemindersRef
+    getDueBuildRemindersRef,
+    getBuildSubjectUpdateSubscriptionRef,
+    subscribeToBuildSubjectUpdatesRef,
+    unsubscribeFromBuildSubjectUpdatesRef
   }).current;
 
   return {

@@ -8,6 +8,15 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
+function stopPopupEventPropagation(event: React.SyntheticEvent) {
+  event.stopPropagation();
+}
+
+function stopPopupKeyboardEventPropagation(event: React.KeyboardEvent) {
+  if (event.key === 'Escape') return;
+  event.stopPropagation();
+}
+
 export default function Popup({
   children,
   popupContext,
@@ -69,7 +78,21 @@ export default function Popup({
         pointerEvents: 'none'
       }}
     >
-      <div ref={MenuRef} style={{ pointerEvents: 'auto' }}>
+      <div
+        ref={MenuRef}
+        style={{ pointerEvents: 'auto' }}
+        onClick={stopPopupEventPropagation}
+        onKeyDown={stopPopupKeyboardEventPropagation}
+        onKeyUp={stopPopupKeyboardEventPropagation}
+        onMouseDown={stopPopupEventPropagation}
+        onMouseUp={stopPopupEventPropagation}
+        onPointerCancel={stopPopupEventPropagation}
+        onPointerDown={stopPopupEventPropagation}
+        onPointerMove={stopPopupEventPropagation}
+        onPointerUp={stopPopupEventPropagation}
+        onTouchEnd={stopPopupEventPropagation}
+        onTouchStart={stopPopupEventPropagation}
+      >
         <div
           style={style}
           onMouseEnter={onMouseEnter}

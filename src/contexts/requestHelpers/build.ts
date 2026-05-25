@@ -2715,6 +2715,68 @@ export default function buildRequestHelpers({
       }
     },
 
+    async listBuildGrammarblesQuestions({
+      buildId,
+      level,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      level?: number;
+      limit?: number;
+      cursor?: { rating?: number; id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/grammarbles/questions`,
+          { level, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildGrammarblesHistory({
+      buildId,
+      level,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      level?: number;
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/grammarbles/history`,
+          { level, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getBuildSubject({
       buildId,
       subjectId,
@@ -3602,6 +3664,89 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/reminders/due`,
           { now, autoAcknowledge, limit },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildSubjectUpdateSubscription({
+      buildId,
+      subjectId,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subject-update-subscription`,
+          { subjectId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async subscribeToBuildSubjectUpdates({
+      buildId,
+      subjectId,
+      target,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      target?: any;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subject-update-subscription/subscribe`,
+          { subjectId, target },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async unsubscribeFromBuildSubjectUpdates({
+      buildId,
+      subjectId,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subject-update-subscription/unsubscribe`,
+          { subjectId },
           {
             ...auth(),
             headers: {
