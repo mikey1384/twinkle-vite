@@ -14,6 +14,7 @@ import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
 } from '~/helpers/buildRelationshipHelpers';
+import { formatVisitLabel } from '~/helpers/stringHelpers';
 import { useBuildCardData } from './useBuildCardData';
 
 const miniCardClass = css`
@@ -172,6 +173,10 @@ export default function BuildMiniCard({
     0,
     Math.floor(Number(build.collaboratorCount) || 0)
   );
+  const serverCountFields = Array.isArray(build.serverCountFields)
+    ? build.serverCountFields.map((field) => String(field))
+    : [];
+  const showVisitBadge = serverCountFields.includes('viewCount');
 
   return (
     <div className={cx(miniCardClass, !thumbnailUrl && 'no-preview', className)}>
@@ -213,6 +218,12 @@ export default function BuildMiniCard({
                 {formatBuildForkCount(forkCount)}
               </span>
             )
+          ) : null}
+          {showVisitBadge ? (
+            <span className={statusClass}>
+              <Icon icon="eye" />
+              {formatVisitLabel(build.viewCount)}
+            </span>
           ) : null}
           {collaboratorCount > 0 ? (
             interactiveBadges ? (
