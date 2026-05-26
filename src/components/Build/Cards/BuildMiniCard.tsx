@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
+import ViewCount from '~/components/ViewCount';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
 import {
@@ -14,7 +15,6 @@ import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
 } from '~/helpers/buildRelationshipHelpers';
-import { formatVisitLabel } from '~/helpers/stringHelpers';
 import { useBuildCardData } from './useBuildCardData';
 
 const miniCardClass = css`
@@ -220,10 +220,11 @@ export default function BuildMiniCard({
             )
           ) : null}
           {showVisitBadge ? (
-            <span className={statusClass}>
-              <Icon icon="eye" />
-              {formatVisitLabel(build.viewCount)}
-            </span>
+            <ViewCount
+              count={build.viewCount}
+              unit="visits"
+              className={statusClass}
+            />
           ) : null}
           {collaboratorCount > 0 ? (
             interactiveBadges ? (

@@ -16,6 +16,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
@@ -69,6 +70,7 @@ export default function ContentPanel({
   feedUploader,
   homeFeedActionIntent,
   contentId,
+  contentPageExistsConfirmed,
   contentType,
   rootType,
   numPreviewComments = 0,
@@ -89,6 +91,7 @@ export default function ContentPanel({
   feedUploader?: any;
   homeFeedActionIntent?: HomeFeedActionIntent | null;
   contentId: number;
+  contentPageExistsConfirmed?: boolean;
   contentType: string;
   rootType?: string;
   numPreviewComments?: number;
@@ -156,7 +159,10 @@ export default function ContentPanel({
   const {
     commentId,
     commentsShown,
+    isDeleted,
+    isDeleteNotification,
     loaded,
+    notFound,
     rootType: rootTypeFromState,
     started,
     targetObj,
@@ -270,6 +276,19 @@ export default function ContentPanel({
     loaded,
     userId
   ]);
+
+  useRecordContentPageView({
+    contentId,
+    contentType,
+    enabled:
+      Boolean(isContentPage) &&
+      Boolean(contentPageExistsConfirmed) &&
+      loaded &&
+      !notFound &&
+      !isDeleted &&
+      !isDeleteNotification,
+    rootType: appliedRootType
+  });
 
   const contentShown = useMemo(
     () => alwaysShow || inView || isVisible || started || rootStarted,

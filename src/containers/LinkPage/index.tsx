@@ -26,6 +26,7 @@ import {
   determineXpButtonDisabled
 } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
+import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   centerHomeFeedActionIntentTarget,
@@ -170,7 +171,26 @@ export default function LinkPage() {
       }),
     [linkId, location.state]
   );
-  const pageReady = loaded && !isDeleted;
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [notFoundState, setNotFoundState] = useState({
+    linkId: 0,
+    notFound: false
+  });
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [likesModalShown, setLikesModalShown] = useState(false);
+  const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
+    useState(false);
+  const RewardInterfaceRef = useRef(null);
+  const RecommendationInterfaceRef = useRef<HTMLDivElement | null>(null);
+  const notFound =
+    notFoundState.linkId === linkId && Boolean(notFoundState.notFound);
+  const pageReady = loaded && !isDeleted && !notFound;
+
+  useRecordContentPageView({
+    contentId: linkId,
+    contentType: 'url',
+    enabled: pageReady
+  });
 
   useScrollAnchorRestoration({
     anchorKey: linkAnchorKey,
@@ -220,15 +240,6 @@ export default function LinkPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [notFound, setNotFound] = useState(false);
-  const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [likesModalShown, setLikesModalShown] = useState(false);
-  const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
-    useState(false);
-  const RewardInterfaceRef = useRef(null);
-  const RecommendationInterfaceRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     const requestUserId = userId;
     const pageLoadKey = `${linkId}:${requestUserId || 0}`;
@@ -256,7 +267,14 @@ export default function LinkPage() {
         ) {
           return;
         }
-        if (data.notFound) return setNotFound(true);
+        if (data.notFound) {
+          return setNotFoundState({ linkId, notFound: true });
+        }
+        setNotFoundState((state) =>
+          state.linkId === linkId && state.notFound
+            ? { linkId, notFound: false }
+            : state
+        );
         onInitContent({
           ...data,
           contentId: linkId,

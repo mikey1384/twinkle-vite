@@ -10,6 +10,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
+import ViewCount from '~/components/ViewCount';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -37,7 +38,6 @@ import type {
   PreviewMountContext
 } from '../PreviewPanel/types';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
-import { formatVisitLabel } from '~/helpers/stringHelpers';
 import CommentsDrawer from './CommentsDrawer';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import BuildAppNotificationSettingsModal, {
@@ -1746,9 +1746,7 @@ export default function BuildRuntime({
                       }}
                     />
                   </div>
-                  <span>
-                    <Icon icon="eye" /> {formatVisitLabel(build.viewCount)}
-                  </span>
+                  <ViewCount count={build.viewCount} unit="visits" />
                   {build.description?.trim() ? (
                     <span className={metaDescriptionClass}>
                       {build.description.trim()}

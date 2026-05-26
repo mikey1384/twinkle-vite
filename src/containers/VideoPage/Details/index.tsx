@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import ViewCount from '~/components/ViewCount';
 import XPRewardInterface from '~/components/XPRewardInterface';
 import RewardButton from '~/components/Buttons/RewardButton';
 import AlreadyPosted from '~/components/AlreadyPosted';
@@ -23,7 +24,6 @@ import {
 } from '~/helpers';
 import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import {
-  addCommasToNumber,
   addEmoji,
   exceedsCharLimit,
   stringIsEmpty,
@@ -73,6 +73,7 @@ export default function Details({
   rewards,
   timeStamp,
   videoId,
+  viewCount,
   videoViews
 }: {
   addTags: (tags: string[]) => void;
@@ -96,6 +97,7 @@ export default function Details({
   uploader: { id: number; username: string; level: number };
   userId: number;
   videoId: number;
+  viewCount?: number;
   videoViews: number;
 }) {
   const { colorKey: rewardColor } = useRoleColor('reward', {
@@ -325,15 +327,6 @@ export default function Details({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const viewsLabel = useMemo(() => {
-    return (
-      <>
-        {addCommasToNumber(videoViews)} view
-        {`${videoViews > 1 ? 's' : ''}`}
-      </>
-    );
-  }, [videoViews]);
-
   return (
     <ErrorBoundary componentPath="VideoPage/Details">
       <div
@@ -535,19 +528,21 @@ export default function Details({
                 )}
               </div>
               {/* Row 3: Views */}
-              {videoViews > 10 && (
-                <div
-                  style={{
-                    paddingTop: '0.25rem',
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: Color.darkerGray(),
-                    textAlign: 'right'
-                  }}
-                >
-                  {viewsLabel}
-                </div>
-              )}
+              <ViewCount
+                count={viewCount}
+                fallbackCount={videoViews}
+                fallbackMode="max"
+                minimumCount={10}
+                showIcon={false}
+                className={css`
+                  display: block;
+                  padding-top: 0.25rem;
+                  font-size: 2rem;
+                  font-weight: bold;
+                  color: ${Color.darkerGray()};
+                  text-align: right;
+                `}
+              />
               {/* Row 4: Edit/Delete */}
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 {editButtonShown && !isEditing && (

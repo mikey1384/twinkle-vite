@@ -36,16 +36,32 @@ function resolveTargetPreviewTheme({
   targetUser: any;
   targetSubject: any;
 }) {
+  if (isRenderableHomeFeedTargetComment(targetComment)) {
+    return resolveCommentUserProfileTheme(targetComment);
+  }
+
+  if (targetUser?.id) {
+    return resolveUserProfileTheme(targetUser);
+  }
+
   return String(
-    targetUser?.profileTheme ||
-      targetComment?.uploader?.profileTheme ||
-      targetComment?.profileTheme ||
-      targetSubject?.uploader?.profileTheme ||
+    targetSubject?.uploader?.profileTheme ||
       targetSubject?.profileTheme ||
       resolvedRootObj?.uploader?.profileTheme ||
       resolvedRootObj?.profileTheme ||
       ''
   ).trim();
+}
+
+function resolveUserProfileTheme(user: any) {
+  return String(user?.profileTheme || '').trim() || 'logoBlue';
+}
+
+function resolveCommentUserProfileTheme(comment: any) {
+  return (
+    String(comment?.uploader?.profileTheme || comment?.profileTheme || '').trim() ||
+    'logoBlue'
+  );
 }
 
 function setAlphaExact(rgba: string, alpha: number) {

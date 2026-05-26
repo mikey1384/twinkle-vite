@@ -614,6 +614,30 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async recordContentView({
+      contentId,
+      contentType,
+      rootType
+    }: {
+      contentId: number;
+      contentType: string;
+      rootType?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/view`,
+          {
+            contentId,
+            contentType,
+            ...(rootType ? { rootType } : {})
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadContinueWatching(lastTimeStamp: number) {
       try {
         const {

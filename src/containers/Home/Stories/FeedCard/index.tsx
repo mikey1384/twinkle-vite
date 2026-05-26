@@ -48,6 +48,7 @@ import {
   createHomeFeedActionIntent,
   createHomeFeedNavigationState
 } from '~/helpers/homeFeedActionIntent';
+import { normalizeViewCount } from '~/helpers/viewCount';
 
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
 const HOME_FEED_CARD_LAYOUT_VERSION = 'root-user-target-preview-v2';
@@ -496,6 +497,10 @@ export default function HomeFeedCard({
   const recommendationsCount = Number(
     recommendations.length || appliedContent.numRecommendations || 0
   );
+  const viewCount =
+    contentType === 'build'
+      ? undefined
+      : normalizeViewCount(appliedContent.viewCount);
   const likedByUser = likes.some(
     (like: any) => Number(like.id) === Number(userId)
   );
@@ -654,12 +659,12 @@ export default function HomeFeedCard({
                 rewardShown={rewardShown}
                 rewardsCount={rewardsCount}
                 signInRequired={signInRequired}
+                viewCount={viewCount}
               />
               {appliedContent.loaded && sizing.card.hasCommentPreview ? (
                 <HomeFeedCommentPreview
                   comments={appliedContent.comments}
                   contentType={contentType}
-                  theme={appliedTheme}
                 />
               ) : null}
             </article>
@@ -936,10 +941,7 @@ function getHomeFeedCardPreviewComments({
     }
 
     const contentComment = contentCommentsById.get(commentId);
-    if (
-      contentComment &&
-      !isRenderableHomeFeedPreviewComment(contentComment)
-    ) {
+    if (contentComment && !isRenderableHomeFeedPreviewComment(contentComment)) {
       keyedCandidates.delete(commentId);
       continue;
     }
@@ -1305,9 +1307,9 @@ function getHomeFeedSecretHidden({
 function hasHomeFeedSubjectSecret(subject: any) {
   return Boolean(
     subject?.hasSecretAnswer ||
-      subject?.hasSecretAttachment ||
-      subject?.secretAnswer ||
-      subject?.secretAttachment
+    subject?.hasSecretAttachment ||
+    subject?.secretAnswer ||
+    subject?.secretAttachment
   );
 }
 
@@ -1315,7 +1317,8 @@ function getHomeFeedScrollPosition() {
   if (typeof document === 'undefined') {
     return { scrollLeft: 0, scrollTop: 0 };
   }
-  const scrollingElement = document.scrollingElement || document.documentElement;
+  const scrollingElement =
+    document.scrollingElement || document.documentElement;
   const appElement = document.getElementById('App');
   return {
     scrollLeft:

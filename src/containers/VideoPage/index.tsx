@@ -23,6 +23,7 @@ import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
+import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   clearHomeFeedActionIntentState,
@@ -152,6 +153,7 @@ export default function VideoPage() {
     timeStamp,
     title,
     uploader,
+    viewCount,
     views
   } = useContentState({ contentType: 'video', contentId: videoId });
   const isVideoUnavailable = useMemo(
@@ -182,6 +184,12 @@ export default function VideoPage() {
     [location.state, videoId]
   );
   const pageReady = loaded && !isVideoUnavailable;
+
+  useRecordContentPageView({
+    contentId: videoId,
+    contentType: 'video',
+    enabled: pageReady
+  });
 
   useScrollAnchorRestoration({
     anchorKey: videoAnchorKey,
@@ -515,6 +523,7 @@ export default function VideoPage() {
                 uploader={uploader}
                 userId={userId}
                 videoId={videoId}
+                viewCount={viewCount}
                 videoViews={views}
               />
               {rewards?.length > 0 && (

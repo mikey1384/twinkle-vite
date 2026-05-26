@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
 import Icon from '~/components/Icon';
+import ViewCount from '~/components/ViewCount';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { isMobile } from '~/helpers';
 
-const deviceIsMobile =
-  typeof navigator !== 'undefined' && isMobile(navigator);
+const deviceIsMobile = typeof navigator !== 'undefined' && isMobile(navigator);
 
 export default function Actions({
   commentsCount,
@@ -31,7 +31,8 @@ export default function Actions({
   rewardDisabled,
   rewardShown = true,
   rewardsCount,
-  signInRequired
+  signInRequired,
+  viewCount
 }: {
   commentsCount: number;
   commentDisabled?: boolean;
@@ -56,6 +57,7 @@ export default function Actions({
   rewardShown?: boolean;
   rewardsCount: number;
   signInRequired?: boolean;
+  viewCount?: number;
 }) {
   const [rewardReasonShown, setRewardReasonShown] = useState(false);
   const rewardActionRef = useRef<HTMLDivElement | null>(null);
@@ -155,6 +157,13 @@ export default function Actions({
             <em>{recommendationsCount}</em>
           </button>
         )}
+        <ViewCount
+          count={viewCount}
+          minimumCount={10}
+          variant="feedAction"
+          className="home-feed-card__action-button view-count"
+          iconClassName="home-feed-card__action-icon"
+        />
       </div>
       <button
         className={`home-feed-card__open${
@@ -279,7 +288,7 @@ const actionsClass = css`
         font-size: 0.9rem;
       }
       @media (hover: hover) and (pointer: fine) {
-        &:not(:disabled):not(.blocked):hover {
+        &:not(:disabled):not(.blocked):not(.view-count):hover {
           box-shadow:
             0 0.08rem 0 rgba(17, 24, 39, 0.08),
             0 0.38rem 1rem rgba(17, 24, 39, 0.08);
@@ -349,6 +358,13 @@ const actionsClass = css`
     .home-feed-card__action-button.recommend.selected {
       background: ${Color.rose()};
       color: #fff;
+    }
+    .home-feed-card__action-button.view-count {
+      --home-feed-action-color: ${Color.darkGray()};
+      border-color: rgba(71, 85, 105, 0.2);
+      background: rgba(248, 250, 252, 0.82);
+      color: ${Color.darkGray()};
+      cursor: default;
     }
   }
   .home-feed-card__open {

@@ -8,6 +8,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
 import Icon from '~/components/Icon';
+import ViewCount from '~/components/ViewCount';
 import { css } from '@emotion/css';
 import {
   mobileMaxWidth,
@@ -15,7 +16,7 @@ import {
   desktopMinWidth
 } from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
-import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   determineXpButtonDisabled,
   scrollElementToCenter,
@@ -29,6 +30,7 @@ import {
 } from '~/helpers/contentActionAvailability';
 import { useContentContext, useMissionContext } from '~/contexts';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
+import { normalizeViewCount } from '~/helpers/viewCount';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 const copiedLabel = 'Copied!';
@@ -183,6 +185,7 @@ export default function BottomInterface({
     rewardLevel,
     targetObj,
     uploader = {},
+    viewCount,
     views
   } = contentObj;
   const [copiedShown, setCopiedShown] = useState(false);
@@ -329,14 +332,10 @@ export default function BottomInterface({
   const editButtonShown = useMemo(() => {
     return !!editMenuItems?.length;
   }, [editMenuItems?.length]);
-  const viewsLabel = useMemo(() => {
-    return (
-      <>
-        {addCommasToNumber(views)} view
-        {`${views > 1 ? 's' : ''}`}
-      </>
-    );
-  }, [views]);
+  const displayViewCount = useMemo(() => {
+    return normalizeViewCount(viewCount, views);
+  }, [viewCount, views]);
+  const viewCountShown = displayViewCount > 10;
 
   const numCommentsShown = useMemo(() => {
     if (commentsShown || autoExpand) {
@@ -361,8 +360,7 @@ export default function BottomInterface({
   const deviceIsTablet = isTablet(navigator);
   const isSharedTopic = contentType === 'sharedTopic';
   const sharedTopicLikeStatusShown = isSharedTopic && likes.length > 0;
-  const bottomStatsRowShown =
-    !isSharedTopic || (views > 10 && contentType === 'video');
+  const bottomStatsRowShown = !isSharedTopic || viewCountShown;
   const commentActionLabel = getContentPanelCommentActionLabel(contentType);
   const rewardActionSupported =
     isContentPanelRewardActionSupported(contentType);
@@ -575,15 +573,16 @@ export default function BottomInterface({
               theme={theme}
             />
           )}
-          {views > 10 && contentType === 'video' && (
-            <div
+          {viewCountShown && (
+            <ViewCount
+              count={displayViewCount}
+              minimumCount={10}
+              showIcon={false}
               className={css`
                 font-weight: bold;
                 font-size: 1.7rem;
               `}
-            >
-              {viewsLabel}
-            </div>
+            />
           )}
         </div>
       )}

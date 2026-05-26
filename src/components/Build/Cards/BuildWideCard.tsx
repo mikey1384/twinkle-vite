@@ -5,6 +5,7 @@ import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
+import ViewCount from '~/components/ViewCount';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
@@ -25,7 +26,6 @@ import {
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
-import { formatVisitLabel } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { useEnsureBuildViewerCollaborationRequest } from '../hooks/useEnsureBuildViewerCollaborationRequest';
 import { useBuildCardData } from './useBuildCardData';
@@ -599,10 +599,11 @@ export default function BuildWideCard({
               </span>
             ) : null}
             {showForkCountBadge ? renderForkCountBadge() : null}
-            <span className={badgeClass}>
-              <Icon icon="eye" />
-              {formatVisitLabel(build.viewCount)}
-            </span>
+            <ViewCount
+              count={build.viewCount}
+              unit="visits"
+              className={badgeClass}
+            />
             {collaboratorCount > 0 ? (
               <BuildTeamMembersTrigger
                 buildId={buildId}

@@ -955,12 +955,10 @@ function getTargetUser(targetObj: any) {
 
 export function HomeFeedCommentPreview({
   comments,
-  contentType,
-  theme
+  contentType
 }: {
   comments?: Comment[];
   contentType: string;
-  theme?: string;
 }) {
   const navigate = useNavigate();
   const comment = getRenderablePreviewComment(comments);
@@ -971,8 +969,9 @@ export function HomeFeedCommentPreview({
   const commentTextIsMessage = hasPreviewCommentMessageText(comment);
   const previewLabel = getPreviewCommentLabel(comment, contentType);
   const previewMedia = getPreviewCommentMedia(comment);
+  const profileTheme = String(uploader.profileTheme || '').trim() || 'logoBlue';
   const accentColor =
-    Color[uploader.profileTheme || theme || 'logoBlue']?.() || Color.logoBlue();
+    Color[profileTheme]?.() || Color.logoBlue();
 
   return (
     <div className={`${bodyClass} home-feed-card__comment-preview-slot`}>

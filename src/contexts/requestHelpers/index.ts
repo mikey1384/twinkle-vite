@@ -238,6 +238,7 @@ registerMethods('content', [
   'loadFeaturedPlaylists',
   'loadFeaturedSubjects',
   'loadFeeds',
+  'recordContentView',
   'recordHomeFeedPerformance',
   'loadAIStoryTopic',
   'loadAIStoryClear',

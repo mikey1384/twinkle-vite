@@ -18,6 +18,11 @@ import {
 } from '~/helpers/homeFeedActionIntent';
 import { scrollAnchorSavesAreSuppressed } from '~/helpers/scrollAnchorRestorationCoordinator';
 
+interface ContentExistenceCheck {
+  key: string;
+  exists: boolean | null;
+}
+
 export default function ContentPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -50,8 +55,16 @@ export default function ContentPage() {
     contentType,
     contentId
   });
-  const [exists, setExists] = useState(true);
   const contentAnchorKey = `content:${rootType || 'root'}:${contentType}:${contentId}`;
+  const [existenceCheck, setExistenceCheck] = useState<ContentExistenceCheck>({
+    key: '',
+    exists: null
+  });
+  const contentCheckKey = `${rootType || 'root'}:${contentType}:${contentId}`;
+  const contentExistsConfirmed =
+    existenceCheck.key === contentCheckKey && existenceCheck.exists === true;
+  const contentExistsRejected =
+    existenceCheck.key === contentCheckKey && existenceCheck.exists === false;
   const homeFeedActionIntent = useMemo(
     () =>
       getMatchingHomeFeedActionIntent({
@@ -70,7 +83,8 @@ export default function ContentPage() {
       }),
     [contentId, contentType, location.state]
   );
-  const contentReady = exists && !isDeleted && !isDeleteNotification;
+  const contentReady =
+    contentExistsConfirmed && !isDeleted && !isDeleteNotification;
 
   useScrollAnchorRestoration({
     anchorKey: contentAnchorKey,
@@ -117,6 +131,9 @@ export default function ContentPage() {
   ]);
 
   useEffect(() => {
+    const requestKey = contentCheckKey;
+    setExistenceCheck({ key: requestKey, exists: null });
+    let active = true;
     checkExists();
     async function checkExists() {
       try {
@@ -127,14 +144,21 @@ export default function ContentPage() {
             rootType ? `&rootType=${rootType}` : ''
           }`
         );
-        setExists(exists);
+        if (active) {
+          setExistenceCheck({ key: requestKey, exists });
+        }
       } catch (error) {
         console.error(error);
-        setExists(false);
+        if (active) {
+          setExistenceCheck({ key: requestKey, exists: false });
+        }
       }
     }
+    return function cleanUp() {
+      active = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, location.pathname, rootType]);
+  }, [contentCheckKey, location.pathname]);
 
   return (
     <ErrorBoundary
@@ -164,7 +188,7 @@ export default function ContentPage() {
             }
           `}
         >
-          {exists && !isDeleted && !isDeleteNotification ? (
+          {!contentExistsRejected && !isDeleted && !isDeleteNotification ? (
             <div
               data-scroll-anchor-id={contentAnchorKey}
               data-scroll-anchor-secondary-id={String(contentId)}
@@ -173,6 +197,7 @@ export default function ContentPage() {
               <ContentPanel
                 key={contentType + contentId}
                 isContentPage
+                contentPageExistsConfirmed={contentExistsConfirmed}
                 showActualDate
                 className={css`
                   margin-top: 1rem;
