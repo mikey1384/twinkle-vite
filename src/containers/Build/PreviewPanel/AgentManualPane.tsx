@@ -71,12 +71,12 @@ const guideSections: GuideSection[] = [
     title: 'External CLI launch',
     items: [
       'For external agents or Codex CLI sessions, use the public Lumine CLI instead of browser automation when the user provides a Twinkle build URL.',
-      'Run npx @twinkle/lumine@latest for the guided flow. It logs in when needed, lets the user choose an owned or team project, saves that selection, and pulls the saved project files locally.',
-      'Run npx @twinkle/lumine@latest login once for explicit login. It opens the Twinkle approval page automatically and stores only a scoped CLI token locally. Use --no-open for SSH, CI, or agent-only terminals.',
-      'Run npx @twinkle/lumine@latest projects, select, or pull to list accessible projects, change the selected project, or refresh local project files.',
+      'Run npx @stage5/lumine@latest for the guided flow. It logs in when needed, lets the user choose an owned or team project, saves that selection, and pulls the saved project files locally.',
+      'Run npx @stage5/lumine@latest login once for explicit login. It opens the Twinkle approval page automatically and stores only a scoped CLI token locally. Use --no-open for SSH, CI, or agent-only terminals.',
+      'Run npx @stage5/lumine@latest projects, select, or pull to list accessible projects, change the selected project, or refresh local project files.',
       'Pulled workspaces include AGENTS.md with Twinkle Build constraints for local coding agents.',
-      'After editing pulled files, run npx @twinkle/lumine@latest save from the local project folder. CLI saves use the same /build/:id/project-files route as the Code tab, create a project artifact version, and mark public builds as having unpublished changes.',
-      'Run npx @twinkle/lumine@latest check, launch, launch --save, or save --publish after selecting a project. You can still pass a Twinkle app, build, preview, or Lumine preview URL explicitly.',
+      'After editing pulled files, run npx @stage5/lumine@latest save from the local project folder. CLI saves use the same /build/:id/project-files route as the Code tab, create a project artifact version, and mark public builds as having unpublished changes.',
+      'Run npx @stage5/lumine@latest check, launch, launch --save, or save --publish after selecting a project. You can still pass a Twinkle app, build, preview, or Lumine preview URL explicitly.',
       'Saving and publishing require scoped owner permission; team projects can be selected and pulled for code access.',
       'Do not paste or ask for raw auth tokens; use the CLI login flow.'
     ]
@@ -138,6 +138,8 @@ const sdkSections: GuideSection[] = [
     items: [
       'Twinkle.notifications.getLaunchTarget() returns the Build app notification target that opened this app, or null.',
       'Twinkle.notifications.onLaunchTarget(listener) receives future notification launch targets while the app stays mounted.',
+      'await Twinkle.notifications.getSubscription(channelKey, { targetKey }), subscribe(channelKey, { targetKey, launchTarget }), and unsubscribe(channelKey, { targetKey }) manage app-defined notification subscriptions.',
+      'await Twinkle.notifications.notifySubscribers(channelKey, { targetKey, eventKey, label, summary, launchTarget, payload }) notifies opted-in subscribers without requiring a sharedDb write.',
       'await Twinkle.notifications.getSubjectUpdateSubscription(subjectId) returns the current viewer subscription for new subject pages.',
       'await Twinkle.notifications.subscribeToSubjectUpdates(subjectId, { target }) subscribes the viewer to new pages on that subject and stores a notification launch target.',
       'await Twinkle.notifications.unsubscribeFromSubjectUpdates(subjectId) turns off that subject update subscription for the viewer.',
@@ -278,7 +280,7 @@ const sdkSections: GuideSection[] = [
       'Twinkle.aiStories.search/list/get reads existing user-generated AI Stories, including story text, explanations, imageUrl, audioUrl, and normalized questions. It is read-only and does not generate new AI Stories.',
       "Twinkle.grammarbles.listQuestions({ level, limit, cursor }) reads public Grammarbles questions and answers by level. getMyQuestionHistory({ level, limit, cursor }) reads the signed-in viewer's real attempt rows for trainer filtering.",
       'Twinkle.profileComments.getProfileComments(...), getProfileCommentIds(...), getCommentsByIds(idsOrOpts), and getProfileCommentCounts(idsOrOpts) are focused profile-comment reads.',
-      'Twinkle.users.getUser(userId) returns { id, username, profilePicUrl } or null; getUsers({ search, userIds, cursor, limit }) returns a paged user list.',
+      'Twinkle.users.getUser(userId) returns { id, username, profilePicUrl, realName } or null; getUsers({ search, userIds, cursor, limit }) returns { users, cursor }.',
       'Twinkle.reflections.getDailyReflections(...) and getDailyReflectionsByUser(userId, ...) return daily reflection feed rows.',
       'Twinkle.chat.listRooms(), createRoom({ roomKey, name }), listMessages(roomKey, ...), deleteMessage(messageId), and subscribe(roomKey, listener) support app-scoped chat.',
       'Twinkle.chat.sendMessage(roomKey, "hi") or Twinkle.chat.sendMessage(roomKey, { text, metadata, clientMessageId }) posts app-scoped chat messages.',

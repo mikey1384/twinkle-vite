@@ -3705,6 +3705,148 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getBuildNotificationSubscription({
+      buildId,
+      channelKey,
+      targetKey,
+      token
+    }: {
+      buildId: number;
+      channelKey: string;
+      targetKey: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subscription`,
+          { channelKey, targetKey },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async subscribeToBuildNotifications({
+      buildId,
+      channelKey,
+      targetKey,
+      launchTarget,
+      token
+    }: {
+      buildId: number;
+      channelKey: string;
+      targetKey: string;
+      launchTarget?: any;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subscription/subscribe`,
+          { channelKey, targetKey, launchTarget },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async unsubscribeFromBuildNotifications({
+      buildId,
+      channelKey,
+      targetKey,
+      token
+    }: {
+      buildId: number;
+      channelKey: string;
+      targetKey: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subscription/unsubscribe`,
+          { channelKey, targetKey },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async notifyBuildSubscribers({
+      buildId,
+      channelKey,
+      targetKey,
+      eventKey,
+      label,
+      title,
+      summary,
+      body,
+      launchTarget,
+      payload,
+      token
+    }: {
+      buildId: number;
+      channelKey: string;
+      targetKey: string;
+      eventKey?: string;
+      label?: string;
+      title?: string;
+      summary?: string;
+      body?: string;
+      launchTarget?: any;
+      payload?: any;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/notify-subscribers`,
+          {
+            channelKey,
+            targetKey,
+            eventKey,
+            label,
+            title,
+            summary,
+            body,
+            launchTarget,
+            payload
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async subscribeToBuildSubjectUpdates({
       buildId,
       subjectId,

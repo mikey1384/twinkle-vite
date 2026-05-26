@@ -173,6 +173,18 @@ export default function useAppRequests() {
   const getBuildSubjectUpdateSubscription = useAppContext(
     (v) => v.requestHelpers.getBuildSubjectUpdateSubscription
   );
+  const getBuildNotificationSubscription = useAppContext(
+    (v) => v.requestHelpers.getBuildNotificationSubscription
+  );
+  const subscribeToBuildNotifications = useAppContext(
+    (v) => v.requestHelpers.subscribeToBuildNotifications
+  );
+  const unsubscribeFromBuildNotifications = useAppContext(
+    (v) => v.requestHelpers.unsubscribeFromBuildNotifications
+  );
+  const notifyBuildSubscribers = useAppContext(
+    (v) => v.requestHelpers.notifyBuildSubscribers
+  );
   const subscribeToBuildSubjectUpdates = useAppContext(
     (v) => v.requestHelpers.subscribeToBuildSubjectUpdates
   );
@@ -249,6 +261,16 @@ export default function useAppRequests() {
   const getBuildSubjectUpdateSubscriptionRef = useRef(
     getBuildSubjectUpdateSubscription
   );
+  const getBuildNotificationSubscriptionRef = useRef(
+    getBuildNotificationSubscription
+  );
+  const subscribeToBuildNotificationsRef = useRef(
+    subscribeToBuildNotifications
+  );
+  const unsubscribeFromBuildNotificationsRef = useRef(
+    unsubscribeFromBuildNotifications
+  );
+  const notifyBuildSubscribersRef = useRef(notifyBuildSubscribers);
   const subscribeToBuildSubjectUpdatesRef = useRef(
     subscribeToBuildSubjectUpdates
   );
@@ -309,6 +331,10 @@ export default function useAppRequests() {
     deleteBuildReminderRef,
     getDueBuildRemindersRef,
     getBuildSubjectUpdateSubscriptionRef,
+    getBuildNotificationSubscriptionRef,
+    subscribeToBuildNotificationsRef,
+    unsubscribeFromBuildNotificationsRef,
+    notifyBuildSubscribersRef,
     subscribeToBuildSubjectUpdatesRef,
     unsubscribeFromBuildSubjectUpdatesRef
   }).current;

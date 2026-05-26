@@ -18,13 +18,26 @@ test('Build notification subscription writes are transition-safe preview request
     'utf8'
   );
 
+  assert.match(policySource, /'notifications:subscribe-subject-updates'/);
+  assert.match(policySource, /'notifications:subscribe'/);
+  assert.match(policySource, /'notifications:unsubscribe-subject-updates'/);
+  assert.match(policySource, /'notifications:unsubscribe'/);
+  assert.match(policySource, /'notifications:notify-subscribers'/);
   assert.match(
-    policySource,
-    /'notifications:subscribe-subject-updates'/
+    bridgeSource,
+    /case 'notifications:get-subscription':[\s\S]*\['notifications:read'\]/
   );
   assert.match(
-    policySource,
-    /'notifications:unsubscribe-subject-updates'/
+    bridgeSource,
+    /case 'notifications:subscribe':[\s\S]*\['notifications:write'\][\s\S]*subscribeToBuildNotificationsRef/
+  );
+  assert.match(
+    bridgeSource,
+    /case 'notifications:unsubscribe':[\s\S]*\['notifications:write'\][\s\S]*unsubscribeFromBuildNotificationsRef/
+  );
+  assert.match(
+    bridgeSource,
+    /case 'notifications:notify-subscribers':[\s\S]*\['notifications:emit'\][\s\S]*notifyBuildSubscribersRef/
   );
   assert.match(
     bridgeSource,

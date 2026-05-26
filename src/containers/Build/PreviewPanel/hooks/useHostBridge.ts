@@ -1794,6 +1794,73 @@ export function useHostBridge({
             break;
           }
 
+          case 'notifications:get-subscription': {
+            const notificationsReadToken = await ensureBuildApiToken(
+              ['notifications:read'],
+              previewAuth
+            );
+            response =
+              await requestRefs.getBuildNotificationSubscriptionRef.current({
+                buildId: activeBuild.id,
+                channelKey: payload?.channelKey,
+                targetKey: payload?.targetKey,
+                token: notificationsReadToken
+              });
+            break;
+          }
+
+          case 'notifications:subscribe': {
+            const notificationsWriteToken = await ensureBuildApiToken(
+              ['notifications:write'],
+              previewAuth
+            );
+            response =
+              await requestRefs.subscribeToBuildNotificationsRef.current({
+                buildId: activeBuild.id,
+                channelKey: payload?.channelKey,
+                targetKey: payload?.targetKey,
+                launchTarget: payload?.launchTarget,
+                token: notificationsWriteToken
+              });
+            break;
+          }
+
+          case 'notifications:unsubscribe': {
+            const notificationsWriteToken = await ensureBuildApiToken(
+              ['notifications:write'],
+              previewAuth
+            );
+            response =
+              await requestRefs.unsubscribeFromBuildNotificationsRef.current({
+                buildId: activeBuild.id,
+                channelKey: payload?.channelKey,
+                targetKey: payload?.targetKey,
+                token: notificationsWriteToken
+              });
+            break;
+          }
+
+          case 'notifications:notify-subscribers': {
+            const notificationsEmitToken = await ensureBuildApiToken(
+              ['notifications:emit'],
+              previewAuth
+            );
+            response = await requestRefs.notifyBuildSubscribersRef.current({
+              buildId: activeBuild.id,
+              channelKey: payload?.channelKey,
+              targetKey: payload?.targetKey,
+              eventKey: payload?.eventKey,
+              label: payload?.label,
+              title: payload?.title,
+              summary: payload?.summary,
+              body: payload?.body,
+              launchTarget: payload?.launchTarget,
+              payload: payload?.payload,
+              token: notificationsEmitToken
+            });
+            break;
+          }
+
           case 'notifications:subscribe-subject-updates': {
             const notificationsWriteToken = await ensureBuildApiToken(
               ['notifications:write'],

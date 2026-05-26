@@ -113,12 +113,14 @@ function NotiItem({
             buildId,
             eventKey: actionObj.eventKey || '',
             eventLabel: actionObj.eventLabel || '',
-            target: actionObj.target || null
+            target: actionObj.target || null,
+            payload: actionObj.payload || null
           }
         : null,
     [
       actionObj.eventKey,
       actionObj.eventLabel,
+      actionObj.payload,
       actionObj.target,
       buildId,
       id,
@@ -132,8 +134,7 @@ function NotiItem({
           <UsernameText
             user={user}
             color={resolveColorValue(linkColor) || linkColor}
-          />
-          {' '}
+          />{' '}
         </div>
       );
     }
@@ -159,9 +160,7 @@ function NotiItem({
     });
   }
 
-  function handleBuildAppItemKeyDown(
-    event: React.KeyboardEvent<HTMLElement>
-  ) {
+  function handleBuildAppItemKeyDown(event: React.KeyboardEvent<HTMLElement>) {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     openBuildAppNotification();

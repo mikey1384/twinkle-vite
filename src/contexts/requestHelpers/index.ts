@@ -195,6 +195,10 @@ registerMethods('build', [
   'deleteBuildReminder',
   'getDueBuildReminders',
   'getBuildSubjectUpdateSubscription',
+  'getBuildNotificationSubscription',
+  'subscribeToBuildNotifications',
+  'unsubscribeFromBuildNotifications',
+  'notifyBuildSubscribers',
   'subscribeToBuildSubjectUpdates',
   'unsubscribeFromBuildSubjectUpdates'
 ]);

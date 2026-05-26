@@ -5,9 +5,9 @@ Use the Lumine CLI for terminal-based help with Twinkle Build apps.
 Install-free commands:
 
 ```bash
-npx @twinkle/lumine@latest login
-npx @twinkle/lumine@latest check <twinkle-build-url>
-npx @twinkle/lumine@latest launch <twinkle-build-url>
+npx @stage5/lumine@latest login
+npx @stage5/lumine@latest check <twinkle-build-url>
+npx @stage5/lumine@latest launch <twinkle-build-url>
 ```
 
 The CLI accepts Twinkle app, build, and preview URLs, resolves the build id,
