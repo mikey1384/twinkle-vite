@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { css } from '@emotion/css';
 import API_URL from '~/constants/URL';
-import Button from '~/components/Button';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import Icon from '~/components/Icon';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 interface CliDeviceSession {
@@ -13,6 +14,9 @@ interface CliDeviceSession {
   status: 'pending' | 'approved' | 'completed' | 'expired' | string;
   expiresAt: number | null;
 }
+
+const displayFontFamily =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 export default function CliDeviceAuth() {
   const auth = useAppContext((v) => v.requestHelpers.auth);
@@ -85,14 +89,19 @@ export default function CliDeviceAuth() {
   return (
     <main className={pageClass}>
       <section className={panelClass}>
-        <div className={eyebrowClass}>Twinkle CLI</div>
-        <h1 className={titleClass}>Connect Lumine</h1>
-        <p className={bodyClass}>
-          Review the code from your terminal before granting this CLI access to
-          your Twinkle builds.
-        </p>
+        <div className={headerClass}>
+          <span className={eyebrowClass}>
+            <Icon icon="sparkles" />
+            Twinkle Build
+          </span>
+          <h1 className={titleClass}>Connect Lumine</h1>
+          <p className={bodyClass}>
+            Check that this code matches your terminal. If it does, Lumine can
+            help with your Build projects when you ask it to.
+          </p>
+        </div>
         <label className={labelClass}>
-          Code
+          Code from your terminal
           <input
             className={inputClass}
             value={codeInput}
@@ -105,6 +114,10 @@ export default function CliDeviceAuth() {
             autoComplete="one-time-code"
           />
         </label>
+        <p className={safetyNoteClass}>
+          <Icon icon="lock" />
+          Only approve if you started Lumine yourself.
+        </p>
         {userId && hasCompleteCode ? (
           <CliSessionDetails
             session={session}
@@ -112,20 +125,31 @@ export default function CliDeviceAuth() {
             error={sessionError}
           />
         ) : null}
-        {userId ? (
-          <Button
-            variant="solid"
-            color="green"
-            disabled={!canApprove}
-            onClick={handleApprove}
-          >
-            {approving ? 'Approving...' : 'Approve'}
-          </Button>
-        ) : (
-          <Button variant="solid" color="blue" onClick={onOpenSigninModal}>
-            Sign in to approve
-          </Button>
-        )}
+        <div className={buttonWrapClass}>
+          {userId ? (
+            <GameCTAButton
+              variant="success"
+              size="lg"
+              shiny={canApprove}
+              loading={approving}
+              style={{ width: '100%' }}
+              disabled={!canApprove}
+              onClick={handleApprove}
+            >
+              {approving ? 'Approving...' : 'Approve Lumine'}
+            </GameCTAButton>
+          ) : (
+            <GameCTAButton
+              variant="logoBlue"
+              size="lg"
+              shiny
+              style={{ width: '100%' }}
+              onClick={onOpenSigninModal}
+            >
+              Sign in to approve
+            </GameCTAButton>
+          )}
+        </div>
         {status && <p className={statusClass}>{status}</p>}
       </section>
     </main>
@@ -141,7 +165,7 @@ export default function CliDeviceAuth() {
         { userCode: normalizedCode },
         auth()
       );
-      setStatus('Approved. You can return to your terminal.');
+      setStatus('Approved. You can go back to your terminal.');
       setSession((current) =>
         current ? { ...current, status: 'approved' } : current
       );
@@ -167,46 +191,84 @@ function CliSessionDetails({
   error: string;
 }) {
   if (loading) {
-    return <p className={statusClass}>Loading CLI request...</p>;
+    return <p className={statusClass}>Checking your code...</p>;
   }
   if (error) {
     return <p className={errorClass}>{error}</p>;
   }
   if (!session) return null;
 
+  const permissionItems = getPracticalPermissionItems(session.scopes);
+  const showPermissionItems =
+    session.status === 'pending' && permissionItems.length > 0;
+
   return (
     <div className={detailsClass}>
-      <div className={detailRowClass}>
-        <span>Client</span>
-        <strong>{session.clientName || 'Lumine CLI'}</strong>
+      <div className={requestHeaderClass}>
+        <span className={requestIconClass}>
+          <Icon icon="wand-magic-sparkles" />
+        </span>
+        <div className={requestTextClass}>
+          <h2>{getFriendlyClientName(session.clientName)} wants to connect.</h2>
+          <p>{sessionStatusMessage(session.status)}</p>
+        </div>
       </div>
-      <div className={detailRowClass}>
-        <span>Code</span>
-        <strong>{session.userCode}</strong>
-      </div>
-      <div className={detailBlockClass}>
-        <span>Permissions</span>
-        <ul className={scopeListClass}>
-          {session.scopes.map((scope) => (
-            <li key={scope}>
-              <strong>{scope}</strong>
-              <span>{scopeDescription(scope)}</span>
+      {showPermissionItems ? (
+        <ul className={permissionListClass}>
+          {permissionItems.map((item) => (
+            <li key={item}>
+              <Icon icon="check" />
+              <span>{item}</span>
             </li>
           ))}
         </ul>
-      </div>
-      <div className={detailRowClass}>
-        <span>Status</span>
-        <strong>{formatSessionStatus(session.status)}</strong>
-      </div>
-      {session.expiresAt ? (
-        <div className={detailRowClass}>
-          <span>Expires</span>
-          <strong>{formatUnixTime(session.expiresAt)}</strong>
-        </div>
       ) : null}
     </div>
   );
+}
+
+function getFriendlyClientName(clientName: string) {
+  const trimmed = String(clientName || '').trim();
+  if (!trimmed || trimmed.toLowerCase() === 'lumine cli') {
+    return 'Lumine';
+  }
+  return trimmed;
+}
+
+function getPracticalPermissionItems(scopes: string[] | null | undefined) {
+  const scopeSet = new Set(Array.isArray(scopes) ? scopes : []);
+  const items: string[] = [];
+
+  if (scopeSet.has('build:read')) {
+    items.push('Open your saved Build projects.');
+  }
+  if (scopeSet.has('build:write')) {
+    items.push('Save changes to your Build projects.');
+  }
+  if (scopeSet.has('build:check') && scopeSet.has('build:publish')) {
+    items.push('Check and launch your Build when you choose.');
+  } else if (scopeSet.has('build:check')) {
+    items.push('Check whether a Build is ready to launch.');
+  } else if (scopeSet.has('build:publish')) {
+    items.push('Launch your Build when you choose.');
+  }
+
+  return items;
+}
+
+function sessionStatusMessage(status: string) {
+  switch (status) {
+    case 'pending':
+      return 'After you approve, Lumine can help in these ways.';
+    case 'approved':
+      return 'Approved. You can go back to your terminal.';
+    case 'completed':
+      return 'This code was already used. Start Lumine again to get a new code.';
+    case 'expired':
+      return 'This code expired. Start Lumine again to get a new code.';
+    default:
+      return 'Start Lumine again if this does not look right.';
+  }
 }
 
 function readCodeFromLocation() {
@@ -236,112 +298,133 @@ function formatCompactCliCode(compact: string) {
   return `${compact.slice(0, 4)}-${compact.slice(4)}`;
 }
 
-function scopeDescription(scope: string) {
-  switch (scope) {
-    case 'build:read':
-      return 'Read the build and saved project files.';
-    case 'build:write':
-      return 'Save edited project files back to Twinkle.';
-    case 'build:check':
-      return 'Run launch readiness checks.';
-    case 'build:publish':
-      return 'Publish saved build changes.';
-    default:
-      return 'Requested CLI permission.';
-  }
-}
-
-function formatSessionStatus(status: string) {
-  switch (status) {
-    case 'pending':
-      return 'Waiting for approval';
-    case 'approved':
-      return 'Approved';
-    case 'completed':
-      return 'Already used';
-    case 'expired':
-      return 'Expired';
-    default:
-      return status || 'Unknown';
-  }
-}
-
-function formatUnixTime(value: number) {
-  const date = new Date(value * 1000);
-  if (Number.isNaN(date.getTime())) return 'Unknown';
-  return date.toLocaleString();
-}
-
 const pageClass = css`
   min-height: 100%;
   display: grid;
   place-items: center;
   padding: 4rem 1.25rem;
-  background: ${Color.wellGray()};
+  background:
+    linear-gradient(
+      180deg,
+      rgba(248, 251, 255, 0.98),
+      rgba(255, 248, 252, 0.9)
+    ),
+    #f8fbff;
 `;
 
 const panelClass = css`
-  width: min(100%, 34rem);
+  width: min(100%, 36rem);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.2rem;
   padding: 2rem;
-  border: 1px solid ${Color.borderGray()};
-  border-radius: 8px;
+  border: 1px solid rgba(65, 140, 235, 0.2);
+  border-radius: ${borderRadius};
   background: #fff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.1);
 
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 1.5rem;
+    padding: 1.4rem;
   }
 `;
 
+const headerClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+`;
+
 const eyebrowClass = css`
-  color: ${Color.logoBlue()};
-  font-size: 1rem;
-  font-weight: 700;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgba(65, 140, 235, 0.28);
+  border-radius: 999px;
+  background: rgba(65, 140, 235, 0.14);
+  color: #1d4ed8;
+  font-family: ${displayFontFamily};
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0;
   text-transform: uppercase;
 `;
 
 const titleClass = css`
   margin: 0;
-  color: ${Color.black()};
-  font-size: 2rem;
-  line-height: 1.15;
+  color: #172033;
+  font-family: ${displayFontFamily};
+  font-size: 2.65rem;
+  font-weight: 900;
+  line-height: 1.08;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 2.25rem;
+  }
 `;
 
 const bodyClass = css`
+  max-width: 32rem;
   margin: 0;
-  color: ${Color.darkerGray()};
-  font-size: 1.1rem;
-  line-height: 1.5;
+  color: #344055;
+  font-size: 1.15rem;
+  line-height: 1.6;
 `;
 
 const labelClass = css`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  color: ${Color.black()};
+  gap: 0.55rem;
+  color: #172033;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 800;
 `;
 
 const inputClass = css`
   width: 100%;
-  min-height: 3rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid ${Color.borderGray()};
-  border-radius: 6px;
-  color: ${Color.black()};
-  font-size: 1.35rem;
-  font-weight: 700;
+  min-height: 3.4rem;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid rgba(65, 140, 235, 0.28);
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: #172033;
+  font-size: 1.55rem;
+  font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #418ceb;
+    box-shadow: 0 0 0 3px rgba(65, 140, 235, 0.14);
+  }
+`;
+
+const safetyNoteClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: -0.35rem 0 0;
+  color: #4b5563;
+  font-size: 1.1rem;
+  line-height: 1.4;
+
+  svg {
+    color: ${Color.logoBlue()};
+  }
+`;
+
+const buttonWrapClass = css`
+  display: flex;
 `;
 
 const statusClass = css`
   margin: 0;
-  color: ${Color.black()};
+  color: #172033;
   font-size: 1.1rem;
   line-height: 1.4;
 `;
@@ -356,56 +439,70 @@ const errorClass = css`
 const detailsClass = css`
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding: 1rem;
-  border: 1px solid ${Color.borderGray()};
-  border-radius: 8px;
-  background: ${Color.wellGray()};
+  gap: 0.95rem;
+  padding-top: 0.2rem;
 `;
 
-const detailRowClass = css`
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  color: ${Color.darkerGray()};
-  font-size: 1.1rem;
-  line-height: 1.4;
+const requestHeaderClass = css`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.9rem 0;
+  border-top: 1px solid rgba(65, 140, 235, 0.16);
+  border-bottom: 1px solid rgba(65, 140, 235, 0.16);
+`;
 
-  strong {
-    color: ${Color.black()};
-    text-align: right;
+const requestIconClass = css`
+  width: 2.7rem;
+  height: 2.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 213, 100, 0.26);
+  color: #d97706;
+  font-size: 1.2rem;
+`;
+
+const requestTextClass = css`
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1.25;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: #556070;
+    font-size: 1.1rem;
+    line-height: 1.35;
   }
 `;
 
-const detailBlockClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  color: ${Color.darkerGray()};
-  font-size: 1.1rem;
-  line-height: 1.4;
-`;
-
-const scopeListClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
+const permissionListClass = css`
+  display: grid;
+  gap: 0.65rem;
   margin: 0;
-  padding-left: 1.2rem;
-  color: ${Color.black()};
+  padding: 0;
+  list-style: none;
+  color: #172033;
   font-size: 1.1rem;
   line-height: 1.4;
 
   li {
-    padding-left: 0.1rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: start;
   }
 
-  strong,
-  span {
-    display: block;
-  }
-
-  span {
-    color: ${Color.darkerGray()};
+  svg {
+    margin-top: 0.15rem;
+    color: ${Color.green()};
   }
 `;
