@@ -303,11 +303,13 @@ const searchIconClass = css`
 export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
+  onMysterySwitchClick,
   onSetSelectedFilter,
   onCardNumberSearch
 }: {
   filters: any;
   onBuyNowSwitchClick: () => any;
+  onMysterySwitchClick: () => any;
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
@@ -537,6 +539,12 @@ export default function CardSearchPanel({
             label="Buy Now"
             onChange={onBuyNowSwitchClick}
           />
+          <SwitchButton
+            small={deviceIsMobile}
+            checked={!!filters.isMystery}
+            label="Mystery"
+            onChange={onMysterySwitchClick}
+          />
         </div>
         {location.search && (
           <div
@@ -582,10 +590,24 @@ export default function CardSearchPanel({
     if (maxPrice) searchParams.set('search[maxPrice]', maxPrice);
 
     if (obj.isBuyNow) searchParams.set('search[isBuyNow]', 'true');
-    if (obj.engine) searchParams.set('search[engine]', obj.engine);
+    if (obj.isMystery) {
+      searchParams.set('search[isMystery]', 'true');
+      searchParams.delete('search[style]');
+      searchParams.delete('search[engine]');
+      delete obj.style;
+      delete obj.engine;
+    }
+    if (obj.engine && !obj.isMystery) {
+      searchParams.set('search[engine]', obj.engine);
+    }
 
     Object.entries(obj).forEach(([key, value]) => {
-      if (value && key !== 'isBuyNow' && key !== 'engine') {
+      if (
+        value &&
+        key !== 'isBuyNow' &&
+        key !== 'isMystery' &&
+        key !== 'engine'
+      ) {
         searchParams.set(`search[${key}]`, value as string);
       }
     });

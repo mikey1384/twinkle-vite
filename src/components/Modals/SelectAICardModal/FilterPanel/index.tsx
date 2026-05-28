@@ -5,6 +5,7 @@ import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
 import CardIdFilter from './CardIdFilter';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 import { css } from '@emotion/css';
 import {
   Color,
@@ -47,7 +48,10 @@ export default function FilterPanel({
           {renderCardIdFilter(true)}
           {renderQualityFilter()}
         </div>
-        <div className={switchRowClass}>{renderModelFilter()}</div>
+        <div className={switchRowClass}>
+          {renderModelFilter()}
+          {renderMysteryFilter()}
+        </div>
       </>
     );
   }
@@ -65,7 +69,10 @@ export default function FilterPanel({
           {renderCardIdFilter(false)}
         </div>
         <div className={defaultCenteredFilterRowClass}>
-          <div className={switchRowClass}>{renderModelFilter()}</div>
+          <div className={switchRowClass}>
+            {renderModelFilter()}
+            {renderMysteryFilter()}
+          </div>
         </div>
       </div>
     );
@@ -160,6 +167,16 @@ export default function FilterPanel({
     );
   }
 
+  function renderMysteryFilter() {
+    return (
+      <SwitchButton
+        checked={Boolean(filters.isMystery)}
+        label="Mystery"
+        onChange={handleToggleMystery}
+      />
+    );
+  }
+
   function handleSelectColor(color: string) {
     onSetFilters((prevFilters: any) => ({
       ...prevFilters,
@@ -182,10 +199,19 @@ export default function FilterPanel({
   }
 
   function handleSelectStyle(style: string) {
-    onSetFilters((prevFilters: any) => ({
-      ...prevFilters,
-      style
-    }));
+    onSetFilters((prevFilters: any) => {
+      if (!style) {
+        return {
+          ...prevFilters,
+          style
+        };
+      }
+      const { isMystery: _unusedMystery, ...rest } = prevFilters;
+      return {
+        ...rest,
+        style
+      };
+    });
   }
 
   function handleSelectWord(word: string) {
@@ -204,16 +230,31 @@ export default function FilterPanel({
       | 'image-2'
       | 'Nano Banana'
   ) {
-    onSetFilters((prevFilters: any) => ({
-      ...prevFilters,
-      engine
-    }));
+    onSetFilters((prevFilters: any) => {
+      const { isMystery: _unusedMystery, ...rest } = prevFilters;
+      return {
+        ...rest,
+        engine
+      };
+    });
   }
 
   function handleClearEngine() {
     onSetFilters((prevFilters: any) => {
       const { engine: _unusedEngine, ...rest } = prevFilters;
       return rest;
+    });
+  }
+
+  function handleToggleMystery() {
+    onSetFilters((prevFilters: any) => {
+      const {
+        isMystery: wasMystery,
+        style: _unusedStyle,
+        engine: _unusedEngine,
+        ...rest
+      } = prevFilters;
+      return wasMystery ? rest : { ...rest, isMystery: true };
     });
   }
 }
@@ -331,7 +372,7 @@ const defaultCompactFilterRowClass = css`
 
 const defaultCenteredFilterRowClass = css`
   width: 100%;
-  max-width: ${stackedFilterControlWidth};
+  max-width: 42rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -371,6 +412,8 @@ const switchRowClass = css`
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 1.4rem;
   padding-top: 0.4rem;
   @media (max-width: ${mobileMaxWidth}) {
     justify-content: center;

@@ -28,6 +28,7 @@ export interface AICardCollectionPreviewTitleFilters {
   color?: string | null;
   engine?: string | null;
   isBuyNow?: string | null;
+  isMystery?: string | boolean | null;
   owner?: string | null;
   quality?: string | null;
   style?: string | null;
@@ -70,6 +71,7 @@ export function getAICardCollectionEmbedPreviewTitle(src: string) {
     color: getAICardSearchParam(searchParams, 'color'),
     engine: getAICardSearchParam(searchParams, 'engine'),
     isBuyNow: getAICardSearchParam(searchParams, 'isBuyNow'),
+    isMystery: getAICardSearchParam(searchParams, 'isMystery'),
     owner: getAICardSearchParam(searchParams, 'owner'),
     quality: getAICardSearchParam(searchParams, 'quality'),
     style: getAICardSearchParam(searchParams, 'style'),
@@ -82,15 +84,19 @@ export function getAICardCollectionPreviewTitle({
   color,
   engine,
   isBuyNow,
+  isMystery,
   owner,
   quality,
   style,
   word
 }: AICardCollectionPreviewTitleFilters) {
+  const mysteryFilterEnabled = isMystery === true || isMystery === 'true';
+  const displayedEngine = mysteryFilterEnabled ? '' : engine;
   if (
     !color &&
-    !engine &&
+    !displayedEngine &&
     !isBuyNow &&
+    !mysteryFilterEnabled &&
     !owner &&
     !quality &&
     !style &&
@@ -100,6 +106,7 @@ export function getAICardCollectionPreviewTitle({
   }
 
   const cardNoun = Number(cardCount) === 1 ? 'card' : 'cards';
+  const mysteryLabel = mysteryFilterEnabled ? 'mystery ' : '';
   const titleParts = [];
   if (owner) {
     titleParts.push(`${owner}'s`);
@@ -107,17 +114,21 @@ export function getAICardCollectionPreviewTitle({
   if (color) {
     titleParts.push(
       `${color} ${quality ? `${quality} ` : ''}${
-        engine ? `${engine} ` : ''
-      }${cardNoun}`
+        displayedEngine ? `${displayedEngine} ` : ''
+      }${mysteryLabel}${cardNoun}`
     );
   } else if (quality) {
     titleParts.push(
-      `${quality ? `${quality} ` : ''}${engine ? `${engine} ` : ''}${cardNoun}`
+      `${quality ? `${quality} ` : ''}${
+        displayedEngine ? `${displayedEngine} ` : ''
+      }${mysteryLabel}${cardNoun}`
     );
   } else {
-    titleParts.push(`${engine ? `${engine} ` : ''}${cardNoun}`);
+    titleParts.push(
+      `${displayedEngine ? `${displayedEngine} ` : ''}${mysteryLabel}${cardNoun}`
+    );
   }
-  if (style) {
+  if (style && !mysteryFilterEnabled) {
     titleParts.push(`with "${style}" art style`);
   }
   if (word) {

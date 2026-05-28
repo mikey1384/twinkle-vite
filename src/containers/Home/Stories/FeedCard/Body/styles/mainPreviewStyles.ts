@@ -795,6 +795,58 @@ export const mainPreviewStyles = `
     background: ${Color.black(0.05)};
     color: ${Color.darkGray()};
   }
+  .home-feed-card__reward-chip.multiplier {
+    border: 1px solid var(--reward-multiplier-border, transparent);
+    background: var(--reward-multiplier-bg, ${Color.black(0.05)});
+    color: var(--reward-multiplier-color, ${Color.darkGray()});
+    box-shadow: var(--reward-multiplier-shadow, none);
+  }
+  .home-feed-card__reward-chip.multiplier svg {
+    color: currentColor;
+    font-size: 1rem;
+  }
+  .home-feed-card__reward-chip.multiplier--base {
+    --reward-multiplier-bg: ${Color.black(0.05)};
+    --reward-multiplier-color: ${Color.darkGray()};
+  }
+  .home-feed-card__reward-chip.multiplier--active {
+    --reward-multiplier-bg: ${Color.logoBlue(0.12)};
+    --reward-multiplier-border: ${Color.logoBlue(0.2)};
+    --reward-multiplier-color: ${Color.logoBlue()};
+  }
+  .home-feed-card__reward-chip.multiplier--strong {
+    --reward-multiplier-bg: ${Color.logoGreen(0.14)};
+    --reward-multiplier-border: ${Color.logoGreen(0.3)};
+    --reward-multiplier-color: ${Color.green()};
+  }
+  .home-feed-card__reward-chip.multiplier--major {
+    --reward-multiplier-bg: ${Color.gold(0.17)};
+    --reward-multiplier-border: ${Color.gold(0.38)};
+    --reward-multiplier-color: ${Color.orange()};
+    --reward-multiplier-shadow: 0 0.08rem 0.32rem ${Color.gold(0.2)};
+  }
+  .home-feed-card__reward-chip.multiplier--epic {
+    --reward-multiplier-bg: ${Color.pink(0.13)};
+    --reward-multiplier-border: ${Color.strongPink(0.28)};
+    --reward-multiplier-color: ${Color.rose()};
+    --reward-multiplier-shadow: 0 0.08rem 0.42rem ${Color.pink(0.17)};
+    min-height: 2.12rem;
+    padding-inline: 0.72rem;
+    font-size: 1.14rem;
+  }
+  .home-feed-card__reward-chip.multiplier--legendary {
+    --reward-multiplier-bg: linear-gradient(
+      135deg,
+      ${Color.black()},
+      rgba(98, 73, 18, 1)
+    );
+    --reward-multiplier-border: ${Color.gold(0.55)};
+    --reward-multiplier-color: ${Color.brightGold()};
+    --reward-multiplier-shadow: 0 0.1rem 0.55rem ${Color.gold(0.22)};
+    min-height: 2.18rem;
+    padding-inline: 0.78rem;
+    font-size: 1.18rem;
+  }
   .home-feed-card__reward-chip.xp {
     background: ${Color.gold(0.13)};
     color: ${Color.gold()};

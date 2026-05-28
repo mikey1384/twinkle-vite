@@ -12,6 +12,7 @@ export default function Filtered({
   color,
   quality,
   engine,
+  isMystery,
   cardStyle,
   loadFilteredAICards,
   myId,
@@ -38,6 +39,7 @@ export default function Filtered({
     | 'image-1.5'
     | 'image-2'
     | 'Nano Banana';
+  isMystery?: boolean;
   loadFilteredAICards: (v: any) => any;
   myId: number;
   myUsername: string;
@@ -77,9 +79,10 @@ export default function Filtered({
             ...(!color || color === 'any' ? {} : { color }),
             ...(!quality || quality === 'any' ? {} : { quality }),
             ...(!word ? {} : { word }),
-            ...(!cardStyle ? {} : { style: cardStyle }),
+            ...(!cardStyle || isMystery ? {} : { style: cardStyle }),
             ...(!cardId ? {} : { cardId }),
-            ...(engine ? { engine } : {})
+            ...(isMystery ? { isMystery: true } : {}),
+            ...(engine && !isMystery ? { engine } : {})
           }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
@@ -95,7 +98,7 @@ export default function Filtered({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardStyle, color, quality, word, cardId, engine]);
+  }, [cardStyle, color, quality, word, cardId, engine, isMystery]);
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
@@ -175,8 +178,11 @@ export default function Filtered({
           owner: aiCardModalType === 'want' ? partnerName : myUsername,
           ...(!color || color === 'any' ? {} : { color }),
           ...(!quality || quality === 'any' ? {} : { quality }),
-          ...(!cardStyle ? {} : { style: cardStyle }),
-          ...(engine ? { engine } : {})
+          ...(!word ? {} : { word }),
+          ...(!cardStyle || isMystery ? {} : { style: cardStyle }),
+          ...(!cardId ? {} : { cardId }),
+          ...(isMystery ? { isMystery: true } : {}),
+          ...(engine && !isMystery ? { engine } : {})
         }
       });
       for (const card of newCards) {

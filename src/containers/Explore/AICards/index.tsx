@@ -80,6 +80,16 @@ export default function AICards() {
         searchObj.search.isBuyNow =
           searchObj.search.isBuyNow === 'true' ? true : false;
       }
+      if (searchObj.search.isMystery) {
+        searchObj.search.isMystery =
+          searchObj.search.isMystery === 'true' ? true : false;
+        if (searchObj.search.isMystery) {
+          delete searchObj.search.style;
+          delete searchObj.search.engine;
+        } else {
+          delete searchObj.search.isMystery;
+        }
+      }
       setFilters(searchObj.search);
     } else {
       setFilters({});
@@ -135,6 +145,7 @@ export default function AICards() {
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
+          onMysterySwitchClick={handleMysterySwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
         <div
@@ -313,6 +324,19 @@ export default function AICards() {
       setPriceRange({ min: '', max: '' });
     } else {
       searchParams.set('search[isBuyNow]', 'true');
+    }
+    const decodedURL = decodeURIComponent(searchParams.toString());
+    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
+  }
+
+  function handleMysterySwitchClick() {
+    const searchParams = new URLSearchParams(search);
+    if (filters.isMystery) {
+      searchParams.delete('search[isMystery]');
+    } else {
+      searchParams.set('search[isMystery]', 'true');
+      searchParams.delete('search[style]');
+      searchParams.delete('search[engine]');
     }
     const decodedURL = decodeURIComponent(searchParams.toString());
     navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);

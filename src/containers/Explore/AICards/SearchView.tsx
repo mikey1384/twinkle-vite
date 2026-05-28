@@ -56,6 +56,7 @@ export default function SearchView({
         prevFilters.color !== filters?.color ||
         prevFilters.word !== filters?.word ||
         prevFilters.isBuyNow !== filters?.isBuyNow ||
+        prevFilters.isMystery !== filters?.isMystery ||
         prevFilters.engine !== filters?.engine ||
         prevFilters.minPrice !== filters?.minPrice ||
         prevFilters.maxPrice !== filters?.maxPrice;
@@ -92,6 +93,7 @@ export default function SearchView({
     filters?.quality,
     filters?.color,
     filters?.isBuyNow,
+    filters?.isMystery,
     filters?.engine,
     filters?.minPrice,
     filters?.maxPrice

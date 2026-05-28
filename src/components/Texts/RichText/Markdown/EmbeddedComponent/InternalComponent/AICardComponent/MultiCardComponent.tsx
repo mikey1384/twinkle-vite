@@ -12,6 +12,7 @@ import { css } from '@emotion/css';
 export default function MultiCardComponent({
   color,
   isBuyNow,
+  isMystery,
   engine,
   isPreview,
   quality,
@@ -24,6 +25,7 @@ export default function MultiCardComponent({
 }: {
   color?: string | null;
   isBuyNow?: string | null;
+  isMystery?: string | null;
   engine?: string | null;
   isPreview?: boolean;
   quality?: string | null;
@@ -34,14 +36,16 @@ export default function MultiCardComponent({
   word?: string | null;
   src: string;
 }) {
+  const mysteryFilterEnabled = isMystery === 'true';
   const filters = {
     color,
     isBuyNow,
-    engine,
+    isMystery,
+    engine: mysteryFilterEnabled ? null : engine,
     quality,
     owner,
     word,
-    style
+    style: mysteryFilterEnabled ? null : style
   };
   const { cardIds } = useContentState({
     contentType: rootType,
@@ -91,7 +95,7 @@ export default function MultiCardComponent({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, engine, isBuyNow, owner, quality, style, word]);
+  }, [color, engine, isBuyNow, isMystery, owner, quality, style, word]);
 
   const title = useMemo(() => {
     return getAICardCollectionPreviewTitle({
@@ -99,12 +103,23 @@ export default function MultiCardComponent({
       color,
       engine,
       isBuyNow,
+      isMystery,
       owner,
       quality,
       style,
       word
     });
-  }, [owner, color, quality, style, word, isBuyNow, engine, cardIds?.length]);
+  }, [
+    owner,
+    color,
+    quality,
+    style,
+    word,
+    isBuyNow,
+    isMystery,
+    engine,
+    cardIds?.length
+  ]);
 
   if (isPreview) {
     return (

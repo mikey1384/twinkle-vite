@@ -81,6 +81,7 @@ export default function SelectAICardModal({
     filters?.word,
     filters?.style,
     filters?.cardId,
+    filters?.isMystery,
     filters?.engine
   ]);
 
