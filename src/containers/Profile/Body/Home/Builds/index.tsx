@@ -13,12 +13,14 @@ import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
 import DescriptionModal from '~/components/Modals/BuildDescriptionModal';
 import SelectPinnedBuildsModal from './SelectPinnedBuildsModal';
+import ReorderPinnedBuildsModal from './ReorderPinnedBuildsModal';
 import { useLocation } from 'react-router-dom';
 
 const panelTitle = 'Builds';
 const defaultVisibleBuildCount = 3;
 const maxPinnedProfileBuilds = 10;
 const pinBuildsLabel = 'Pin Builds';
+const reorderBuildsLabel = 'Reorder';
 const emptyOwnLabel = 'Pin your favorite public builds to show them here';
 const emptyVisitorLabel = 'No featured builds yet';
 
@@ -64,6 +66,7 @@ export default function Builds({
     useState<BuildProjectListItemData | null>(null);
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [selectModalShown, setSelectModalShown] = useState(false);
+  const [reorderModalShown, setReorderModalShown] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState<number | null>(
     null
@@ -114,14 +117,24 @@ export default function Builds({
       ? displayedBuilds
       : displayedBuilds.slice(0, defaultVisibleBuildCount);
   }, [displayedBuilds, isExpanded]);
+  const displayedBuildIds = useMemo(() => {
+    return displayedBuilds
+      .map((build) => Number(build?.id))
+      .filter((id) => Number.isFinite(id) && id > 0);
+  }, [displayedBuilds]);
   const pinnedBuildCount = cachedIsTopBuilds
     ? 0
     : pinnedBuildIds.length || displayedBuilds.length;
   const buttonLabel = `${pinBuildsLabel} (${pinnedBuildCount}/${maxPinnedProfileBuilds})`;
+  const reorderButtonShown =
+    !cachedIsTopBuilds &&
+    pinnedBuildIds.length > 1 &&
+    displayedBuildIds.length > 1;
 
   useEffect(() => {
     setIsExpanded(false);
     setForkHistoryBuildId(null);
+    setReorderModalShown(false);
   }, [profile.id]);
 
   useEffect(() => {
@@ -150,13 +163,14 @@ export default function Builds({
       try {
         const data = await loadPinnedBuildsOnProfile(profile.id);
         if (canceled) return;
-        const nextBuilds = Array.isArray(data?.builds) ? data.builds : [];
+        if (!Array.isArray(data?.buildIds) || !Array.isArray(data?.builds)) {
+          throw new Error(
+            'Pinned builds response did not include canonical data'
+          );
+        }
+        const nextBuilds = data.builds as BuildProjectListItemData[];
         const isTopBuilds = Boolean(data?.isTopBuilds);
-        const nextBuildIds = Array.isArray(data?.buildIds)
-          ? data.buildIds
-          : nextBuilds
-              .map((build: BuildProjectListItemData) => Number(build?.id))
-              .filter((id: number) => Number.isFinite(id) && id > 0);
+        const nextBuildIds = normalizeBuildIds(data.buildIds);
         setDisplayedBuilds(nextBuilds);
         onLoadPinnedBuilds({
           username: profile.username,
@@ -216,15 +230,37 @@ export default function Builds({
         onLoadMore={() => setIsExpanded(true)}
         button={
           isOwnProfile ? (
-            <Button
-              color="darkerGray"
-              variant="solid"
-              tone="raised"
-              onClick={() => setSelectModalShown(true)}
+            <div
+              className={css`
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+              `}
             >
-              <Icon icon={['fas', 'thumbtack']} />
-              <span style={{ marginLeft: '0.7rem' }}>{buttonLabel}</span>
-            </Button>
+              <Button
+                color="darkerGray"
+                variant="solid"
+                tone="raised"
+                onClick={() => setSelectModalShown(true)}
+              >
+                <Icon icon={['fas', 'thumbtack']} />
+                <span style={{ marginLeft: '0.7rem' }}>{buttonLabel}</span>
+              </Button>
+              {reorderButtonShown ? (
+                <Button
+                  color="darkerGray"
+                  variant="solid"
+                  tone="raised"
+                  onClick={() => setReorderModalShown(true)}
+                >
+                  <Icon icon="sort" />
+                  <span style={{ marginLeft: '0.7rem' }}>
+                    {reorderBuildsLabel}
+                  </span>
+                </Button>
+              ) : null}
+            </div>
           ) : null
         }
         isEmpty={displayedBuilds.length === 0}
@@ -267,6 +303,14 @@ export default function Builds({
           onSubmit={handlePinBuilds}
         />
       )}
+      {reorderModalShown && (
+        <ReorderPinnedBuildsModal
+          builds={displayedBuilds}
+          initialBuildIds={displayedBuildIds}
+          onHide={() => setReorderModalShown(false)}
+          onSubmit={handleReorderPinnedBuilds}
+        />
+      )}
       {editingBuild && (
         <DescriptionModal
           initialTitle={editingBuild.title}
@@ -289,33 +333,51 @@ export default function Builds({
   async function handlePinBuilds(buildIds: number[]) {
     try {
       const data = await pinBuildsOnProfile({ buildIds });
-      const nextBuildIds = Array.isArray(data?.buildIds)
-        ? data.buildIds
-        : buildIds;
-      const nextBuilds = Array.isArray(data?.builds) ? data.builds : [];
-      const nextState = {
-        ...(profile.state || {}),
-        profile: {
-          ...(profile.state?.profile || {}),
-          pinnedBuildIds: nextBuildIds
-        }
-      };
-      onSetUserState({
-        userId: profile.id,
-        newState: { state: nextState }
-      });
-      onSetPinnedBuilds({
-        username: profile.username,
-        builds: nextBuilds,
-        isTopBuilds: false,
-        favoriteViewerId: viewerId
-      });
-      setDisplayedBuilds(nextBuilds);
+      applyPinnedBuildsPayload(data);
       setIsExpanded(false);
       setSelectModalShown(false);
     } catch (error) {
       console.error('Failed to pin builds on profile:', error);
     }
+  }
+
+  async function handleReorderPinnedBuilds(buildIds: number[]) {
+    try {
+      const data = await pinBuildsOnProfile({ buildIds });
+      applyPinnedBuildsPayload(data);
+      setReorderModalShown(false);
+    } catch (error) {
+      console.error('Failed to reorder pinned builds on profile:', error);
+    }
+  }
+
+  function applyPinnedBuildsPayload(data: {
+    buildIds?: unknown;
+    builds?: unknown;
+  }) {
+    if (!Array.isArray(data?.buildIds) || !Array.isArray(data?.builds)) {
+      throw new Error('Pinned builds response did not include canonical data');
+    }
+    const nextBuildIds = normalizeBuildIds(data.buildIds);
+    const nextBuilds = data.builds as BuildProjectListItemData[];
+    const nextState = {
+      ...(profile.state || {}),
+      profile: {
+        ...(profile.state?.profile || {}),
+        pinnedBuildIds: nextBuildIds
+      }
+    };
+    onSetUserState({
+      userId: profile.id,
+      newState: { state: nextState }
+    });
+    onSetPinnedBuilds({
+      username: profile.username,
+      builds: nextBuilds,
+      isTopBuilds: false,
+      favoriteViewerId: viewerId
+    });
+    setDisplayedBuilds(nextBuilds);
   }
 
   async function handleSubmitMetadata({
@@ -389,4 +451,11 @@ export default function Builds({
       error
     );
   }
+}
+
+function normalizeBuildIds(buildIds: unknown) {
+  if (!Array.isArray(buildIds)) return [];
+  return buildIds
+    .map((buildId) => Number(buildId))
+    .filter((buildId) => Number.isFinite(buildId) && buildId > 0);
 }
