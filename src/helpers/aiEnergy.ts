@@ -1,4 +1,4 @@
-const DEFAULT_AI_ENERGY_RECHARGE_COST = 1000000;
+const DEFAULT_AI_ENERGY_RECHARGE_COST = 500000;
 
 export interface CommunityFundRechargePolicy {
   resetCost?: number | null;

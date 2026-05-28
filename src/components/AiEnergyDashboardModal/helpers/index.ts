@@ -7,7 +7,7 @@ import type {
   SectionMeta
 } from '../types';
 
-export const FULL_RECHARGE_COST = 1000000;
+export const FULL_RECHARGE_COST = 500000;
 
 export const defaultFundStats: FundStats = {
   sponsoredMessagesToday: 0,
