@@ -96,13 +96,6 @@ function getAttachmentSurfaceFileName(source: any, filePath: string) {
   }
 }
 
-export function formatRewardMultiplier(multiplier: number) {
-  if (Math.abs(multiplier - Math.round(multiplier)) < 0.001) {
-    return `${Math.round(multiplier)}`;
-  }
-  return multiplier.toFixed(1).replace(/\.0$/, '');
-}
-
 export function MarkdownEmbedPreview({
   className,
   contentId,

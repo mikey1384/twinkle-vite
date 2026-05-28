@@ -68,6 +68,15 @@ export default function useAppRequests() {
   const searchBuildSubjects = useAppContext(
     (v) => v.requestHelpers.searchBuildSubjects
   );
+  const listBuildAiCards = useAppContext(
+    (v) => v.requestHelpers.listBuildAiCards
+  );
+  const searchBuildAiCards = useAppContext(
+    (v) => v.requestHelpers.searchBuildAiCards
+  );
+  const getBuildAiCard = useAppContext(
+    (v) => v.requestHelpers.getBuildAiCard
+  );
   const listBuildAiStories = useAppContext(
     (v) => v.requestHelpers.listBuildAiStories
   );
@@ -220,6 +229,9 @@ export default function useAppRequests() {
   const uploadBuildRuntimeFilesRef = useRef(uploadBuildRuntimeFiles);
   const getBuildMySubjectsRef = useRef(getBuildMySubjects);
   const searchBuildSubjectsRef = useRef(searchBuildSubjects);
+  const listBuildAiCardsRef = useRef(listBuildAiCards);
+  const searchBuildAiCardsRef = useRef(searchBuildAiCards);
+  const getBuildAiCardRef = useRef(getBuildAiCard);
   const listBuildAiStoriesRef = useRef(listBuildAiStories);
   const searchBuildAiStoriesRef = useRef(searchBuildAiStories);
   const getBuildAiStoryRef = useRef(getBuildAiStory);
@@ -296,6 +308,9 @@ export default function useAppRequests() {
     uploadBuildRuntimeFilesRef,
     getBuildMySubjectsRef,
     searchBuildSubjectsRef,
+    listBuildAiCardsRef,
+    searchBuildAiCardsRef,
+    getBuildAiCardRef,
     listBuildAiStoriesRef,
     searchBuildAiStoriesRef,
     getBuildAiStoryRef,

@@ -18,6 +18,9 @@ export interface PreviewHostBridgeRequestRefs {
   uploadBuildRuntimeFilesRef: AsyncRequestRef;
   getBuildMySubjectsRef: AsyncRequestRef;
   searchBuildSubjectsRef: AsyncRequestRef;
+  listBuildAiCardsRef: AsyncRequestRef;
+  searchBuildAiCardsRef: AsyncRequestRef;
+  getBuildAiCardRef: AsyncRequestRef;
   listBuildAiStoriesRef: AsyncRequestRef;
   searchBuildAiStoriesRef: AsyncRequestRef;
   getBuildAiStoryRef: AsyncRequestRef;

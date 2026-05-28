@@ -848,7 +848,14 @@ export const mainPreviewStyles = `
     font-size: 1.18rem;
   }
   .home-feed-card__reward-chip.xp {
-    background: ${Color.gold(0.13)};
+    gap: 0.24rem;
+    border: 1px solid ${Color.logoGreen(0.18)};
+    background: ${Color.logoGreen(0.09)};
+  }
+  .home-feed-card__reward-chip-xp-number {
+    color: ${Color.logoGreen()};
+  }
+  .home-feed-card__reward-chip-xp-label {
     color: ${Color.gold()};
   }
   .home-feed-card__reward-chip.coins {

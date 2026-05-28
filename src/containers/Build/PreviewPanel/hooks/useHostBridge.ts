@@ -1151,6 +1151,62 @@ export function useHostBridge({
             break;
           }
 
+          case 'content:ai-cards:list': {
+            const contentAiCardsToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.listBuildAiCardsRef.current({
+              buildId: activeBuild.id,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              level: payload?.level,
+              minLevel: payload?.minLevel,
+              maxLevel: payload?.maxLevel,
+              quality: payload?.quality,
+              userId: payload?.userId,
+              hasImage: payload?.hasImage,
+              hasExample: payload?.hasExample,
+              token: contentAiCardsToken
+            });
+            break;
+          }
+
+          case 'content:ai-cards:search': {
+            const contentAiCardsToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.searchBuildAiCardsRef.current({
+              buildId: activeBuild.id,
+              query: payload?.query,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              level: payload?.level,
+              minLevel: payload?.minLevel,
+              maxLevel: payload?.maxLevel,
+              quality: payload?.quality,
+              userId: payload?.userId,
+              hasImage: payload?.hasImage,
+              hasExample: payload?.hasExample,
+              token: contentAiCardsToken
+            });
+            break;
+          }
+
+          case 'content:ai-card': {
+            const contentAiCardToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildAiCardRef.current({
+              buildId: activeBuild.id,
+              cardId: payload?.cardId,
+              token: contentAiCardToken
+            });
+            break;
+          }
+
           case 'content:ai-stories:list': {
             const contentAiStoriesToken = await ensureBuildApiToken(
               ['content:read'],

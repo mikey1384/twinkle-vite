@@ -8,7 +8,11 @@ import {
   addCommasToNumber,
   getRenderedTextForVocabQuestions
 } from '~/helpers/stringHelpers';
-import { formatRewardMultiplier } from './PreviewPrimitives';
+import {
+  formatRewardMultiplier,
+  getDailyTaskRewardMultiplier,
+  getDailyTaskRewardMultiplierTier
+} from '~/helpers/dailyTaskRewardDisplay';
 
 export default function DailyGoalsPreview({
   className,
@@ -33,9 +37,12 @@ export default function DailyGoalsPreview({
   const choices = Array.isArray(bonusQuestion?.choices)
     ? bonusQuestion.choices.slice(0, 4)
     : [];
-  const rewardMultiplier = getRewardMultiplier(dailyGoals?.dailyTaskReward);
+  const rewardMultiplier = getDailyTaskRewardMultiplier(
+    dailyGoals?.dailyTaskReward
+  );
   const rewardMultiplierLabel = formatRewardMultiplier(rewardMultiplier);
-  const rewardMultiplierTier = getRewardMultiplierTier(rewardMultiplier);
+  const rewardMultiplierTier =
+    getDailyTaskRewardMultiplierTier(rewardMultiplier);
   const rootClassName = [
     'home-feed-card__daily-goals-preview',
     variant === 'target' ? 'home-feed-card__daily-goals-preview--target' : '',
@@ -65,7 +72,10 @@ export default function DailyGoalsPreview({
           ) : null}
           {Number(dailyGoals?.xpEarned || 0) > 0 ? (
             <span className="home-feed-card__reward-chip xp">
-              {addCommasToNumber(Number(dailyGoals.xpEarned))} XP
+              <span className="home-feed-card__reward-chip-xp-number">
+                {addCommasToNumber(Number(dailyGoals.xpEarned))}
+              </span>
+              <span className="home-feed-card__reward-chip-xp-label">XP</span>
             </span>
           ) : null}
           {Number(dailyGoals?.coinEarned || 0) > 0 ? (
@@ -98,18 +108,4 @@ export default function DailyGoalsPreview({
       </div>
     </div>
   );
-}
-
-function getRewardMultiplier(dailyTaskReward: any) {
-  const multiplier = Number(dailyTaskReward?.finalMultiplier);
-  return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
-}
-
-function getRewardMultiplierTier(multiplier: number) {
-  if (multiplier >= 50) return 'legendary';
-  if (multiplier >= 25) return 'epic';
-  if (multiplier >= 10) return 'major';
-  if (multiplier >= 5) return 'strong';
-  if (multiplier >= 2) return 'active';
-  return 'base';
 }

@@ -16,6 +16,7 @@ import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
+import Icon from '~/components/Icon';
 import AICardModal from '~/components/Modals/AICardModal';
 import AIStoryView from './AIStoryView';
 import BuildContent from './BuildContent';
@@ -25,6 +26,12 @@ import { Subject, User, Content } from '~/types';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
+import {
+  formatRewardMultiplier,
+  getDailyTaskRewardMultiplier,
+  getDailyTaskRewardMultiplierTier,
+  type DailyTaskRewardMultiplierTier
+} from '~/helpers/dailyTaskRewardDisplay';
 
 export default function Content({
   audioPath,
@@ -222,6 +229,17 @@ export default function Content({
       dailyTaskRewardSummaryText
     };
   }, [dailyTaskReward, displayedCoinEarned]);
+  const dailyTaskRewardMultiplier =
+    getDailyTaskRewardMultiplier(dailyTaskReward);
+  const dailyTaskRewardMultiplierLabel = formatRewardMultiplier(
+    dailyTaskRewardMultiplier
+  );
+  const dailyTaskRewardMultiplierTier =
+    getDailyTaskRewardMultiplierTier(dailyTaskRewardMultiplier);
+  const dailyTaskRewardMultiplierChipStyle = useMemo(
+    () => getDailyTaskRewardMultiplierChipStyle(dailyTaskRewardMultiplierTier),
+    [dailyTaskRewardMultiplierTier]
+  );
 
   const Description = useMemo(() => {
     return !stringIsEmpty(description)
@@ -392,19 +410,16 @@ export default function Content({
                   >
                     {dailyTaskRewardTone.label}
                   </div>
-                  <div
-                    style={{
-                      padding: '0.35rem 0.8rem',
-                      borderRadius: '999px',
-                      background: Color.logoBlue(0.12),
-                      color: Color.logoBlue(),
-                      fontWeight: 700
-                    }}
+                  <span
+                    aria-label={`Daily goals reward multiplier x${dailyTaskRewardMultiplierLabel}`}
+                    style={dailyTaskRewardMultiplierChipStyle}
                   >
-                    {`x${formatRewardMultiplier(
-                      Number(dailyTaskReward.finalMultiplier || 1)
-                    )}`}
-                  </div>
+                    <Icon
+                      icon="bolt"
+                      style={{ color: 'currentColor', fontSize: '1rem' }}
+                    />
+                    {`x${dailyTaskRewardMultiplierLabel}`}
+                  </span>
                 </div>
                 <div
                   style={{
@@ -618,6 +633,12 @@ export default function Content({
     xpNumberColor,
     displayedXPEarned,
     displayedCoinEarned,
+    dailyTaskReward,
+    dailyTaskRewardTone,
+    dailyTaskBreakdownText,
+    dailyTaskRewardSummaryText,
+    dailyTaskRewardMultiplierChipStyle,
+    dailyTaskRewardMultiplierLabel,
     card,
     card?.id
   ]);
@@ -662,9 +683,73 @@ export default function Content({
   );
 }
 
-function formatRewardMultiplier(multiplier: number) {
-  if (Math.abs(multiplier - Math.round(multiplier)) < 0.001) {
-    return `${Math.round(multiplier)}`;
+function getDailyTaskRewardMultiplierChipStyle(
+  tier: DailyTaskRewardMultiplierTier
+): React.CSSProperties {
+  const baseStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.35rem',
+    minHeight: '2rem',
+    padding: '0.35rem 0.8rem',
+    border: '1px solid transparent',
+    borderRadius: '999px',
+    background: Color.black(0.05),
+    color: Color.darkGray(),
+    fontWeight: 800,
+    lineHeight: 1,
+    whiteSpace: 'nowrap'
+  };
+
+  if (tier === 'active') {
+    return {
+      ...baseStyle,
+      borderColor: Color.logoBlue(0.2),
+      background: Color.logoBlue(0.12),
+      color: Color.logoBlue()
+    };
   }
-  return multiplier.toFixed(1).replace(/\.0$/, '');
+  if (tier === 'strong') {
+    return {
+      ...baseStyle,
+      borderColor: Color.logoGreen(0.3),
+      background: Color.logoGreen(0.14),
+      color: Color.green()
+    };
+  }
+  if (tier === 'major') {
+    return {
+      ...baseStyle,
+      borderColor: Color.gold(0.38),
+      background: Color.gold(0.17),
+      color: Color.orange(),
+      boxShadow: `0 0.08rem 0.32rem ${Color.gold(0.2)}`
+    };
+  }
+  if (tier === 'epic') {
+    return {
+      ...baseStyle,
+      minHeight: '2.12rem',
+      padding: '0.35rem 0.72rem',
+      borderColor: Color.strongPink(0.28),
+      background: Color.pink(0.13),
+      color: Color.rose(),
+      fontSize: '1.14rem',
+      boxShadow: `0 0.08rem 0.42rem ${Color.pink(0.17)}`
+    };
+  }
+  if (tier === 'legendary') {
+    return {
+      ...baseStyle,
+      minHeight: '2.18rem',
+      padding: '0.35rem 0.78rem',
+      borderColor: Color.gold(0.55),
+      background: `linear-gradient(135deg, ${Color.black()}, rgba(98, 73, 18, 1))`,
+      color: Color.brightGold(),
+      fontSize: '1.18rem',
+      boxShadow: `0 0.1rem 0.55rem ${Color.gold(0.22)}`
+    };
+  }
+
+  return baseStyle;
 }

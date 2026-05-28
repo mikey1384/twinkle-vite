@@ -2,37 +2,34 @@ import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 import { useAppContext } from '~/contexts';
 import { Color, borderRadius } from '~/constants/css';
 
 const settingsBodyClass = css`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
+  width: 100%;
   font-size: 1.1rem;
 `;
 
 const optionClass = css`
-  border: 1px solid var(--ui-border);
+  width: 100%;
+  border: 1px solid ${Color.borderGray()};
   border-radius: ${borderRadius};
-  padding: 1rem;
+  padding: 1rem 1.2rem;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  cursor: pointer;
-  color: var(--chat-text);
-  input {
-    width: 1.1rem;
-    height: 1.1rem;
-    flex: 0 0 auto;
-  }
+  background: ${Color.wellGray(0.18)};
+  color: ${Color.black()};
   &[data-disabled='true'] {
-    cursor: progress;
     opacity: 0.7;
   }
 `;
 
 const optionTextClass = css`
+  flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 700;
@@ -41,11 +38,6 @@ const optionTextClass = css`
 const errorClass = css`
   color: ${Color.rose()};
   font-size: 1.1rem;
-`;
-
-const footerClass = css`
-  display: flex;
-  justify-content: flex-end;
 `;
 
 export interface BuildAppNotificationPreferences {
@@ -161,46 +153,60 @@ export default function BuildAppNotificationSettingsModal({
       isOpen={isOpen}
       modalKey="BuildAppNotificationSettingsModal"
       onClose={onClose}
-      size="sm"
+      size="md"
       title="Notification settings"
+      footer={
+        <Button color="darkerGray" onClick={onClose} size="sm" variant="soft">
+          Done
+        </Button>
+      }
     >
       <div className={settingsBodyClass}>
         {eventKey ? (
-          <label
+          <div
             className={optionClass}
-            data-disabled={loading || saving === 'event' ? 'true' : 'false'}
+            data-disabled={loading || saving ? 'true' : 'false'}
           >
-            <input
+            <SwitchButton
+              ariaLabel={`Mute ${eventMuteLabel}`}
               checked={Boolean(preferences?.mutedEvent)}
               disabled={loading || Boolean(saving)}
-              onChange={(event) =>
-                void updatePreference('event', event.currentTarget.checked)
+              label={
+                <span className={optionTextClass}>Mute {eventMuteLabel}</span>
               }
-              type="checkbox"
+              labelStyle={{ flex: 1, marginRight: 0 }}
+              onChange={() =>
+                void updatePreference('event', !preferences?.mutedEvent)
+              }
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                width: '100%'
+              }}
             />
-            <span className={optionTextClass}>Mute {eventMuteLabel}</span>
-          </label>
+          </div>
         ) : null}
-        <label
+        <div
           className={optionClass}
-          data-disabled={loading || saving === 'build' ? 'true' : 'false'}
+          data-disabled={loading || saving ? 'true' : 'false'}
         >
-          <input
+          <SwitchButton
+            ariaLabel={buildMuteLabel}
             checked={Boolean(preferences?.mutedBuild)}
             disabled={loading || Boolean(saving)}
-            onChange={(event) =>
-              void updatePreference('build', event.currentTarget.checked)
+            label={<span className={optionTextClass}>{buildMuteLabel}</span>}
+            labelStyle={{ flex: 1, marginRight: 0 }}
+            onChange={() =>
+              void updatePreference('build', !preferences?.mutedBuild)
             }
-            type="checkbox"
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '100%'
+            }}
           />
-          <span className={optionTextClass}>{buildMuteLabel}</span>
-        </label>
-        {error ? <div className={errorClass}>{error}</div> : null}
-        <div className={footerClass}>
-          <Button color="darkerGray" onClick={onClose} size="sm" variant="soft">
-            Done
-          </Button>
         </div>
+        {error ? <div className={errorClass}>{error}</div> : null}
       </div>
     </Modal>
   );

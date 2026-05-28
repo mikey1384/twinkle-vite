@@ -2585,6 +2585,124 @@ export default function buildRequestHelpers({
       }
     },
 
+    async listBuildAiCards({
+      buildId,
+      limit,
+      cursor,
+      level,
+      minLevel,
+      maxLevel,
+      quality,
+      userId,
+      hasImage,
+      hasExample,
+      token
+    }: {
+      buildId: number;
+      limit?: number;
+      cursor?: { id?: number };
+      level?: number | null;
+      minLevel?: number | null;
+      maxLevel?: number | null;
+      quality?: string | null;
+      userId?: number | null;
+      hasImage?: boolean | null;
+      hasExample?: boolean | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/ai-cards/list`,
+          {
+            limit,
+            cursor,
+            level,
+            minLevel,
+            maxLevel,
+            quality,
+            userId,
+            hasImage,
+            hasExample
+          },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async searchBuildAiCards({
+      buildId,
+      query,
+      limit,
+      cursor,
+      level,
+      minLevel,
+      maxLevel,
+      quality,
+      userId,
+      hasImage,
+      hasExample,
+      token
+    }: {
+      buildId: number;
+      query: string;
+      limit?: number;
+      cursor?: { id?: number };
+      level?: number | null;
+      minLevel?: number | null;
+      maxLevel?: number | null;
+      quality?: string | null;
+      userId?: number | null;
+      hasImage?: boolean | null;
+      hasExample?: boolean | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/ai-cards/search`,
+          {
+            query,
+            limit,
+            cursor,
+            level,
+            minLevel,
+            maxLevel,
+            quality,
+            userId,
+            hasImage,
+            hasExample
+          },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildAiCard({
+      buildId,
+      cardId,
+      token
+    }: {
+      buildId: number;
+      cardId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/ai-card`,
+          { cardId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async listBuildAiStories({
       buildId,
       limit,
