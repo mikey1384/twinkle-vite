@@ -129,6 +129,27 @@ const previewClass = css`
   aspect-ratio: 16 / 10;
 `;
 
+const previewButtonClass = css`
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #418ceb;
+    outline-offset: 3px;
+    border-radius: 0.65rem;
+  }
+`;
+
+const clickablePreviewClass = css`
+  height: 100%;
+`;
+
 export default function BuildMiniCard({
   build: buildInput,
   className,
@@ -279,12 +300,28 @@ export default function BuildMiniCard({
         ) : null}
       </div>
       {thumbnailUrl ? (
-        <PreviewFrame
-          className={previewClass}
-          thumbnailUrl={thumbnailUrl}
-          alt={`${displayTitle} screenshot`}
-          ariaLabel={`${displayTitle} preview`}
-        />
+        onOpen ? (
+          <button
+            type="button"
+            className={previewButtonClass}
+            onClick={() => onOpen(build)}
+            aria-label={`Open ${displayTitle}`}
+          >
+            <PreviewFrame
+              className={cx(previewClass, clickablePreviewClass)}
+              thumbnailUrl={thumbnailUrl}
+              alt={`${displayTitle} screenshot`}
+              ariaLabel={`${displayTitle} preview`}
+            />
+          </button>
+        ) : (
+          <PreviewFrame
+            className={previewClass}
+            thumbnailUrl={thumbnailUrl}
+            alt={`${displayTitle} screenshot`}
+            ariaLabel={`${displayTitle} preview`}
+          />
+        )
       ) : null}
     </div>
   );
