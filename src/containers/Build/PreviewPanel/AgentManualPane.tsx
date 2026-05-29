@@ -177,7 +177,7 @@ const sdkSections: GuideSection[] = [
       'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
       'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
       'thinkingMode low is Lite Mode and free AI Energy; medium is normal battery use; high is high battery use.',
-      'Zero uses GPT nano/mini/full for low/medium/high. Ciel uses Claude Haiku/Sonnet/Opus 4.7 for low/medium/high.',
+      'Zero uses GPT nano/mini/full for low/medium/high. Ciel uses Claude Haiku/Sonnet/Opus 4.8 for low/medium/high.',
       'If medium or high is requested after AI Energy is empty, the server falls back to low and returns thinkingMode: "low".',
       'Use Twinkle.characters.chat for Zero/Ciel NPCs instead of pretending with Twinkle.ai.chat systemPrompt.'
     ]
