@@ -138,7 +138,7 @@ const sdkSections: GuideSection[] = [
     items: [
       'Twinkle.notifications.getLaunchTarget() returns the Build app notification target that opened this app, or null.',
       'Twinkle.notifications.onLaunchTarget(listener) receives future notification launch targets while the app stays mounted.',
-      'await Twinkle.notifications.getSubscription(channelKey, { targetKey }), subscribe(channelKey, { targetKey, launchTarget }), and unsubscribe(channelKey, { targetKey }) manage app-defined notification subscriptions.',
+      'await Twinkle.notifications.getSubscription(channelKey, { targetKey }), subscribe(channelKey, { targetKey, launchTarget }), subscribeMany(subscriptions), unsubscribe(channelKey, { targetKey }), and unsubscribeMany(subscriptions) manage app-defined notification subscriptions.',
       'await Twinkle.notifications.notifySubscribers(channelKey, { targetKey, eventKey, label, summary, launchTarget, payload }) notifies opted-in subscribers without requiring a sharedDb write.',
       'await Twinkle.notifications.getSubjectUpdateSubscription(subjectId) returns the current viewer subscription for new subject pages.',
       'await Twinkle.notifications.subscribeToSubjectUpdates(subjectId, { target }) subscribes the viewer to new pages on that subject and stores a notification launch target.',

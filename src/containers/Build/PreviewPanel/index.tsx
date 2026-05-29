@@ -62,6 +62,7 @@ import {
   type PreviewLifecycleState
 } from './helpers/previewHelpers';
 import AgentManualPane from './AgentManualPane';
+import ApiUsagePane from './ApiUsagePane';
 import PreviewStage from './PreviewStage';
 import ProjectFileInputs from './ProjectFileInputs';
 import WorkspaceToolbar from './WorkspaceToolbar';
@@ -140,10 +141,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
     const availableWorkspaceViewOptions = useMemo(
       () =>
-        codeWorkspaceAvailable
-          ? workspaceViewOptions
-          : workspaceViewOptions.filter((option) => option.value !== 'code'),
-      [codeWorkspaceAvailable]
+        workspaceViewOptions.filter((option) => {
+          if (option.value === 'code' && !codeWorkspaceAvailable) return false;
+          if (option.value === 'api' && !isOwner) return false;
+          return true;
+        }),
+      [codeWorkspaceAvailable, isOwner]
     );
     const [editableProjectFiles, setEditableProjectFiles] = useState<
       EditableProjectFile[]
@@ -171,10 +174,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       useState(false);
 
     useEffect(() => {
-      if (!codeWorkspaceAvailable && viewMode === 'code') {
+      const viewModeAvailable = availableWorkspaceViewOptions.some(
+        (option) => option.value === viewMode
+      );
+      if (!viewModeAvailable) {
         setViewMode('preview');
       }
-    }, [codeWorkspaceAvailable, viewMode]);
+    }, [availableWorkspaceViewOptions, viewMode]);
     const [runtimeObservationState, setRuntimeObservationState] =
       useState<BuildRuntimeObservationState>(() =>
         buildEmptyRuntimeObservationState({
@@ -1151,6 +1157,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     function handleViewModeChange(nextMode: WorkspaceViewMode) {
       if (nextMode === viewMode) return;
       if (nextMode === 'code' && !codeWorkspaceAvailable) return;
+      if (nextMode === 'api' && !isOwner) return;
       if (isShowingStreamingCode) {
         streamingAutoFollowEnabledRef.current = nextMode === 'code';
       }
@@ -1251,6 +1258,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             <AgentManualPane
               capabilitySnapshot={resolvedCapabilitySnapshot}
             />
+          ) : viewMode === 'api' ? (
+            <ApiUsagePane buildId={build.id} isOwner={isOwner} />
           ) : (
             <CodeWorkspacePane
               displayedProjectFiles={displayedProjectFiles}

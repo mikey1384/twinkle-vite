@@ -4,6 +4,7 @@ import {
   type PreviewHostBridgeAuth
 } from './useHostBridge';
 import type { Build } from '../types';
+import type { WorkspaceViewMode } from '../constants/workspaceView';
 import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 
 interface RuntimePreviewSrcState {
@@ -176,7 +177,7 @@ export function useWorkspacePreviewSrc({
   build: Build;
   runtimeOnly: boolean;
   previewRevision?: string | null;
-  viewMode: 'preview' | 'code' | 'manual';
+  viewMode: WorkspaceViewMode;
   userId: number | null;
   previewAuth: PreviewHostBridgeAuth;
 }) {

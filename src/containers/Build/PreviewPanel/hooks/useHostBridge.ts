@@ -1896,6 +1896,36 @@ export function useHostBridge({
             break;
           }
 
+          case 'notifications:subscribe-many': {
+            const notificationsWriteToken = await ensureBuildApiToken(
+              ['notifications:write'],
+              previewAuth
+            );
+            response =
+              await requestRefs.subscribeToBuildNotificationsBatchRef.current({
+                buildId: activeBuild.id,
+                subscriptions: payload?.subscriptions,
+                token: notificationsWriteToken
+              });
+            break;
+          }
+
+          case 'notifications:unsubscribe-many': {
+            const notificationsWriteToken = await ensureBuildApiToken(
+              ['notifications:write'],
+              previewAuth
+            );
+            response =
+              await requestRefs.unsubscribeFromBuildNotificationsBatchRef.current(
+                {
+                  buildId: activeBuild.id,
+                  subscriptions: payload?.subscriptions,
+                  token: notificationsWriteToken
+                }
+              );
+            break;
+          }
+
           case 'notifications:notify-subscribers': {
             const notificationsEmitToken = await ensureBuildApiToken(
               ['notifications:emit'],

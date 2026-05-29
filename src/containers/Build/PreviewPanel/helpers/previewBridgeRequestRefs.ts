@@ -59,6 +59,8 @@ export interface PreviewHostBridgeRequestRefs {
   getBuildNotificationSubscriptionRef: AsyncRequestRef;
   subscribeToBuildNotificationsRef: AsyncRequestRef;
   unsubscribeFromBuildNotificationsRef: AsyncRequestRef;
+  subscribeToBuildNotificationsBatchRef: AsyncRequestRef;
+  unsubscribeFromBuildNotificationsBatchRef: AsyncRequestRef;
   notifyBuildSubscribersRef: AsyncRequestRef;
   subscribeToBuildSubjectUpdatesRef: AsyncRequestRef;
   unsubscribeFromBuildSubjectUpdatesRef: AsyncRequestRef;

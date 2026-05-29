@@ -191,6 +191,12 @@ export default function useAppRequests() {
   const unsubscribeFromBuildNotifications = useAppContext(
     (v) => v.requestHelpers.unsubscribeFromBuildNotifications
   );
+  const subscribeToBuildNotificationsBatch = useAppContext(
+    (v) => v.requestHelpers.subscribeToBuildNotificationsBatch
+  );
+  const unsubscribeFromBuildNotificationsBatch = useAppContext(
+    (v) => v.requestHelpers.unsubscribeFromBuildNotificationsBatch
+  );
   const notifyBuildSubscribers = useAppContext(
     (v) => v.requestHelpers.notifyBuildSubscribers
   );
@@ -282,6 +288,12 @@ export default function useAppRequests() {
   const unsubscribeFromBuildNotificationsRef = useRef(
     unsubscribeFromBuildNotifications
   );
+  const subscribeToBuildNotificationsBatchRef = useRef(
+    subscribeToBuildNotificationsBatch
+  );
+  const unsubscribeFromBuildNotificationsBatchRef = useRef(
+    unsubscribeFromBuildNotificationsBatch
+  );
   const notifyBuildSubscribersRef = useRef(notifyBuildSubscribers);
   const subscribeToBuildSubjectUpdatesRef = useRef(
     subscribeToBuildSubjectUpdates
@@ -349,6 +361,8 @@ export default function useAppRequests() {
     getBuildNotificationSubscriptionRef,
     subscribeToBuildNotificationsRef,
     unsubscribeFromBuildNotificationsRef,
+    subscribeToBuildNotificationsBatchRef,
+    unsubscribeFromBuildNotificationsBatchRef,
     notifyBuildSubscribersRef,
     subscribeToBuildSubjectUpdatesRef,
     unsubscribeFromBuildSubjectUpdatesRef

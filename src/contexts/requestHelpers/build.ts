@@ -2327,6 +2327,29 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildApiUsage({
+      buildId,
+      minutes
+    }: {
+      buildId: number;
+      minutes?: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/api-usage`,
+          {
+            ...auth(),
+            params: {
+              minutes
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async uploadBuildRuntimeFiles({
       buildId,
       files,
@@ -3898,6 +3921,68 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/notifications/subscription/unsubscribe`,
           { channelKey, targetKey },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async subscribeToBuildNotificationsBatch({
+      buildId,
+      subscriptions,
+      token
+    }: {
+      buildId: number;
+      subscriptions: Array<{
+        channelKey: string;
+        targetKey: string;
+        launchTarget?: any;
+        target?: any;
+      }>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subscriptions/subscribe`,
+          { subscriptions },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async unsubscribeFromBuildNotificationsBatch({
+      buildId,
+      subscriptions,
+      token
+    }: {
+      buildId: number;
+      subscriptions: Array<{
+        channelKey: string;
+        targetKey: string;
+      }>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/notifications/subscriptions/unsubscribe`,
+          { subscriptions },
           {
             ...auth(),
             headers: {
