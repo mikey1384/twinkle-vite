@@ -152,6 +152,7 @@ registerMethods('build', [
   'queryViewerDb',
   'execViewerDb',
   'getBuildApiToken',
+  'loadBuildApiUsage',
   'uploadBuildRuntimeFiles',
   'listBuildRuntimeFiles',
   'deleteBuildRuntimeFile',
@@ -201,6 +202,8 @@ registerMethods('build', [
   'getBuildNotificationSubscription',
   'subscribeToBuildNotifications',
   'unsubscribeFromBuildNotifications',
+  'subscribeToBuildNotificationsBatch',
+  'unsubscribeFromBuildNotificationsBatch',
   'notifyBuildSubscribers',
   'subscribeToBuildSubjectUpdates',
   'unsubscribeFromBuildSubjectUpdates'

@@ -181,7 +181,7 @@ export default function ApiUsagePane({ buildId, isOwner }: ApiUsagePaneProps) {
                           <span className={methodClass}>{route.method}</span>
                           <span className={routeClass}>{route.routeKey}</span>
                         </td>
-                        <td>{route.rateLimitKind}</td>
+                        <td>{route.bucket}</td>
                         <td>{formatNumber(route.requestCount)}</td>
                         <td>{formatNumber(route.limitedCount)}</td>
                         <td>{route.maxStatusCode || '-'}</td>
