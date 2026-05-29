@@ -85,25 +85,6 @@ const loadMoreWrapClass = css`
   justify-content: center;
 `;
 
-const resultsLoadingClass = css`
-  height: 12rem;
-  width: 100%;
-  margin-top: 1rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: #fafbff;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    height: 10rem;
-  }
-`;
-
-const loadingInnerStyle: React.CSSProperties = {
-  color: 'var(--chat-text)',
-  fontSize: '1.15rem',
-  fontWeight: 800
-};
-
 export default function Results({
   activeTab,
   activeTabLabel,
@@ -191,13 +172,7 @@ export default function Results({
 
   if (isMyBuildsTab) {
     if (myBuildsLoading) {
-      return (
-        <Loading
-          className={resultsLoadingClass}
-          innerStyle={loadingInnerStyle}
-          text="Loading builds..."
-        />
-      );
+      return <Loading text="Loading builds..." />;
     }
     if (builds.length === 0 && !isBuildSearchActive) {
       return (
@@ -266,8 +241,6 @@ export default function Results({
   if (browseLoading) {
     return (
       <Loading
-        className={resultsLoadingClass}
-        innerStyle={loadingInnerStyle}
         text={isBuildSearchActive ? 'Searching builds...' : 'Loading builds...'}
       />
     );
