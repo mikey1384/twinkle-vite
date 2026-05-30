@@ -662,6 +662,7 @@ registerMethods('user', [
   'updateBuildStudioState',
   'setTheme',
   'signup',
+  'createDevAccount',
   'toggleHideWatched',
   'toggleWordleStrictMode',
   'updateCollectType',

@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
+import Banner from '~/components/Banner';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
+import { useAppContext } from '~/contexts';
+const createDevAccountLabel = 'Create dev account';
 const iForgotMyPasswordLabel = 'I forgot my password';
 const noIDontHaveAnAccountLabel = `No, I don't have an account`;
 const welcomeLabel = 'Welcome to Twinkle. Do you have a Twinkle account?';
@@ -15,9 +19,18 @@ export default function Main({
   onShowLoginForm: () => void;
   onShowSignUpForm: () => void;
 }) {
+  const onSignup = useAppContext((v) => v.user.actions.onSignup);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const createDevAccount = useAppContext(
+    (v) => v.requestHelpers.createDevAccount
+  );
+  const [creatingDevAccount, setCreatingDevAccount] = useState(false);
+  const [devAccountError, setDevAccountError] = useState('');
+
   return (
     <ErrorBoundary componentPath="Signin/Main">
       <header>{welcomeLabel}</header>
+      {devAccountError ? <Banner>{devAccountError}</Banner> : null}
       <main
         style={{
           display: 'flex',
@@ -46,6 +59,21 @@ export default function Main({
         >
           {noIDontHaveAnAccountLabel}
         </Button>
+        {import.meta.env.DEV ? (
+          <Button
+            color="green"
+            variant="soft"
+            tone="raised"
+            loading={creatingDevAccount}
+            style={{ marginTop: '1rem', fontSize: '2rem', padding: '1rem' }}
+            onClick={handleCreateDevAccount}
+          >
+            <Icon icon="user-plus" />
+            <span style={{ marginLeft: '0.7rem' }}>
+              {createDevAccountLabel}
+            </span>
+          </Button>
+        ) : null}
         <Button
           color="purple"
           variant="soft"
@@ -62,4 +90,22 @@ export default function Main({
       </main>
     </ErrorBoundary>
   );
+
+  async function handleCreateDevAccount() {
+    try {
+      setCreatingDevAccount(true);
+      setDevAccountError('');
+      const data = await createDevAccount();
+      onSignup(data);
+      onSetUserState({ userId: data.id, newState: data });
+    } catch (error: any) {
+      setDevAccountError(
+        typeof error === 'string'
+          ? error
+          : error?.message || 'Failed to create dev account'
+      );
+    } finally {
+      setCreatingDevAccount(false);
+    }
+  }
 }

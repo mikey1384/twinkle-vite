@@ -915,6 +915,17 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async createDevAccount() {
+      try {
+        const { data } = await request.post(`${URL}/user/dev/signup`);
+        if (data.token) {
+          setStoredItem('token', data.token);
+        }
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async toggleHideWatched() {
       try {
         const {
