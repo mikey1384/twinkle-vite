@@ -318,6 +318,34 @@ export function useScrollAnchorRestoration({
   ]);
 }
 
+export function saveScrollAnchorForElement(sourceElement: HTMLElement | null) {
+  if (!sourceElement) return;
+  const contentPagePanel = sourceElement.closest<HTMLElement>(
+    '[data-content-page="true"]'
+  );
+  const contentAnchorContainer = contentPagePanel?.closest<HTMLElement>(
+    '[data-scroll-anchor-id^="content:"]'
+  );
+  const anchorKey = contentAnchorContainer?.dataset.scrollAnchorId;
+  if (!anchorKey || !contentAnchorContainer) return;
+
+  const anchorElement = sourceElement.closest<HTMLElement>(
+    '[data-scroll-anchor-id], [data-scroll-anchor-content-key]'
+  );
+  if (
+    anchorElement &&
+    anchorElement !== contentAnchorContainer &&
+    contentAnchorContainer.contains(anchorElement)
+  ) {
+    saveAnchorElement(anchorKey, anchorElement, getActiveScroller());
+    suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
+    return;
+  }
+
+  saveCurrentAnchor(anchorKey, contentAnchorContainer, getActiveScroller());
+  suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
+}
+
 function applyInitialScroll({
   scroller,
   targetRef,
@@ -340,6 +368,23 @@ function applyInitialScroll({
   if (!targetElement) return;
   suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
   scrollElementToTop(targetElement, topOffset || 0, scroller);
+}
+
+function saveAnchorElement(
+  anchorKey: string,
+  anchorElement: HTMLElement,
+  scroller: HTMLElement | null
+) {
+  const viewportTop = getViewportTop(scroller);
+  const rect = anchorElement.getBoundingClientRect();
+  savedScrollAnchors[anchorKey] = {
+    anchorKey,
+    primaryId: anchorElement.dataset.scrollAnchorId,
+    secondaryId: anchorElement.dataset.scrollAnchorSecondaryId,
+    contentKey: anchorElement.dataset.scrollAnchorContentKey,
+    offset: viewportTop - rect.top,
+    scrollTop: getScrollTop(scroller)
+  };
 }
 
 function saveCurrentAnchor(

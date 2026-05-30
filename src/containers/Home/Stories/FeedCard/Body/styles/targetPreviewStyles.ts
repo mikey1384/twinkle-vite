@@ -235,6 +235,8 @@ export const targetPreviewStyles = `
     }
     .home-feed-card__mini-profile-avatar {
       flex-shrink: 0;
+      --profile-status-dot-top: 78%;
+      --profile-status-dot-left: 78%;
     }
     .home-feed-card__mini-profile-details {
       display: flex;

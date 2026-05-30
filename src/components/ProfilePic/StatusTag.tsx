@@ -146,8 +146,8 @@ export default function StatusTag({
   ) : (
     <div
       style={{
-        top: '70%',
-        left: '67%',
+        top: 'var(--profile-status-dot-top, 70%)',
+        left: 'var(--profile-status-dot-left, 67%)',
         background: '#fff',
         position: 'absolute',
         border: `${large ? '3px' : '2px'} solid #fff`,

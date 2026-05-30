@@ -46,6 +46,7 @@ import {
   isMobile
 } from '~/helpers';
 import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
+import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { borderRadius, Color } from '~/constants/css';
 import {
   getFileInfoFromFileName,
@@ -619,11 +620,7 @@ function Comment({
                                 ? 'default'
                                 : 'pointer'
                           }}
-                          onClick={() =>
-                            isNotification || isDeleteNotification
-                              ? null
-                              : navigate(`/comments/${comment.id}`)
-                          }
+                          onClick={handleTimestampClick}
                         >
                           {timeSincePost}
                         </a>
@@ -1059,6 +1056,12 @@ function Comment({
     } catch (error) {
       Promise.reject(error);
     }
+  }
+
+  function handleTimestampClick(event: React.MouseEvent<HTMLElement>) {
+    if (isNotification || isDeleteNotification) return;
+    saveScrollAnchorForElement(event.currentTarget);
+    navigate(`/comments/${comment.id}`);
   }
 
   function handleLikeClick({

@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import { commentContainer } from '../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
+import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
@@ -445,9 +446,7 @@ export default function SearchedComment({
                     }
                   `}
                   style={{ cursor: isNotification ? 'default' : 'pointer' }}
-                  onClick={() =>
-                    isNotification ? null : navigate(`/comments/${comment.id}`)
-                  }
+                  onClick={handleTimestampClick}
                 >
                   {timeSince(comment.timeStamp)}
                 </a>
@@ -570,7 +569,7 @@ export default function SearchedComment({
                             color="darkerGray"
                             variant="ghost"
                             style={{ marginLeft: '1rem' }}
-                            onClick={() => navigate(`/comments/${comment.id}`)}
+                            onClick={handleCommentDetailClick}
                           >
                             <Icon icon="comment-alt" />
                             {!isTablet(navigator) && (
@@ -724,6 +723,16 @@ export default function SearchedComment({
     } catch (error) {
       Promise.reject(error);
     }
+  }
+
+  function handleTimestampClick(event: React.MouseEvent<HTMLElement>) {
+    if (isNotification) return;
+    handleCommentDetailClick(event);
+  }
+
+  function handleCommentDetailClick(event: React.MouseEvent<HTMLElement>) {
+    saveScrollAnchorForElement(event.currentTarget);
+    navigate(`/comments/${comment.id}`);
   }
 
   function handleLikeClick({

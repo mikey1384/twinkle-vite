@@ -36,6 +36,7 @@ import {
   isMobile
 } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
+import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -401,7 +402,12 @@ function Reply({
                 )}{' '}
                 {isDeleteNotification ? null : (
                   <small className="timestamp">
-                    <Link to={`/comments/${reply.id}`}>{timeSincePost}</Link>
+                    <Link
+                      to={`/comments/${reply.id}`}
+                      onClick={handleCommentDetailClick}
+                    >
+                      {timeSincePost}
+                    </Link>
                   </small>
                 )}
               </div>
@@ -786,6 +792,10 @@ function Reply({
     } catch (err) {
       return Promise.reject(err);
     }
+  }
+
+  function handleCommentDetailClick(event: React.MouseEvent<HTMLElement>) {
+    saveScrollAnchorForElement(event.currentTarget);
   }
 
   function handleLikeClick({

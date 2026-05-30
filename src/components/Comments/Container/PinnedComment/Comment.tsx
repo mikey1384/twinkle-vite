@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { commentContainer } from '../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
+import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
@@ -366,6 +367,9 @@ function Comment({
   return (
     <ScopedTheme theme={themeName} roles={['link', 'reward']}>
       <div
+        data-scroll-anchor-id={`pinned-comment:${comment.id}`}
+        data-scroll-anchor-secondary-id={`pinned-comment:${comment.id}`}
+        data-scroll-anchor-content-key={`pinned-comment:${comment.id}`}
         style={isPreview ? { cursor: 'pointer' } : {}}
         className={`${commentContainer} comment__container`}
         ref={innerRef}
@@ -398,9 +402,7 @@ function Comment({
                     }
                   `}
                   style={{ cursor: isNotification ? 'default' : 'pointer' }}
-                  onClick={() =>
-                    isNotification ? null : navigate(`/comments/${comment.id}`)
-                  }
+                  onClick={handleTimestampClick}
                 >
                   {timeSince(comment.timeStamp)}
                 </a>
@@ -538,7 +540,7 @@ function Comment({
                             color="darkerGray"
                             variant="ghost"
                             style={{ marginLeft: '1rem' }}
-                            onClick={() => navigate(`/comments/${comment.id}`)}
+                            onClick={handleCommentDetailClick}
                           >
                             <Icon icon="comment-alt" />
                             {!isTablet(navigator) && (
@@ -715,6 +717,16 @@ function Comment({
     } catch (error) {
       Promise.reject(error);
     }
+  }
+
+  function handleTimestampClick(event: React.MouseEvent<HTMLElement>) {
+    if (isNotification) return;
+    handleCommentDetailClick(event);
+  }
+
+  function handleCommentDetailClick(event: React.MouseEvent<HTMLElement>) {
+    saveScrollAnchorForElement(event.currentTarget);
+    navigate(`/comments/${comment.id}`);
   }
 
   function handleLikeClick({

@@ -13,8 +13,36 @@ const homeMenuItemsSource = readFileSync(
   new URL('../src/components/HomeMenuItems/index.tsx', import.meta.url),
   'utf8'
 );
+const commentSource = readFileSync(
+  new URL(
+    '../src/components/Comments/Container/Comment.tsx',
+    import.meta.url
+  ),
+  'utf8'
+);
+const pinnedCommentSource = readFileSync(
+  new URL(
+    '../src/components/Comments/Container/PinnedComment/Comment.tsx',
+    import.meta.url
+  ),
+  'utf8'
+);
+const searchedCommentSource = readFileSync(
+  new URL(
+    '../src/components/Comments/Container/Searched/Comment.tsx',
+    import.meta.url
+  ),
+  'utf8'
+);
+const replySource = readFileSync(
+  new URL(
+    '../src/components/Comments/Container/Replies/Reply.tsx',
+    import.meta.url
+  ),
+  'utf8'
+);
 const handleNavClickSource = mainNavSource.slice(
-  mainNavSource.indexOf('function handleNavClick()')
+  mainNavSource.indexOf('function handleNavClick(')
 );
 const handleStoryClickSource = homeMenuItemsSource.slice(
   homeMenuItemsSource.indexOf('function handleStoryClick()')
@@ -34,6 +62,24 @@ assert.match(
 assert.match(
   source,
   /if \(type === 'top'\) \{[\s\S]*suppressScrollAnchorSaves\(restoreSaveSuppressionDurationMs\);[\s\S]*setScrollTop\(scroller, 0\);[\s\S]*\}/
+);
+assert.match(source, /export function saveScrollAnchorForElement/);
+assert.match(
+  source,
+  /sourceElement\.closest<HTMLElement>\([\s\S]*'\[data-content-page="true"\]'/
+);
+assert.match(
+  source,
+  /contentPagePanel\?\.closest<HTMLElement>\([\s\S]*'\[data-scroll-anchor-id\^="content:"\]'/
+);
+assert.match(
+  source,
+  /saveAnchorElement\(anchorKey, anchorElement, getActiveScroller\(\)\);[\s\S]*suppressScrollAnchorSaves\(restoreSaveSuppressionDurationMs\);[\s\S]*return;[\s\S]*saveCurrentAnchor\(anchorKey, contentAnchorContainer, getActiveScroller\(\)\);[\s\S]*suppressScrollAnchorSaves\(restoreSaveSuppressionDurationMs\);/
+);
+assert.match(source, /anchorElement !== contentAnchorContainer/);
+assert.match(
+  source,
+  /function saveAnchorElement\([\s\S]*savedScrollAnchors\[anchorKey\] = \{[\s\S]*primaryId: anchorElement\.dataset\.scrollAnchorId[\s\S]*scrollTop: getScrollTop\(scroller\)[\s\S]*\}/
 );
 assert.match(
   source,
@@ -77,32 +123,68 @@ assert.match(
 );
 assert.match(
   mainNavSource,
-  /import \{[\s\S]*cancelScrollAnchorRestores,[\s\S]*suppressScrollAnchorSaves[\s\S]*\} from '~\/helpers\/scrollAnchorRestorationCoordinator';/
+  /import \{ resetAppShellScroll \} from '~\/helpers\/appShellScroll';/
 );
 assert.match(
-  mainNavSource,
-  /const sameRouteNavScrollSaveSuppressionMs = 250;/
+  handleNavClickSource,
+  /function handleNavClick\(event: React\.MouseEvent<HTMLAnchorElement>\)/
 );
-assert.match(
-  mainNavSource,
-  /function scrollCurrentPageToTop\(\) \{[\s\S]*document\.getElementById\('App'\)[\s\S]*document\.scrollingElement \|\| document\.documentElement[\s\S]*cancelScrollAnchorRestores\(\);[\s\S]*suppressScrollAnchorSaves\(sameRouteNavScrollSaveSuppressionMs\);[\s\S]*setScrollSurfaceTop\(appElement\);[\s\S]*setScrollSurfaceTop\(bodyRef\);[\s\S]*window\.dispatchEvent\(new Event\('scroll'\)\);[\s\S]*\}/
-);
-assert.match(
-  mainNavSource,
-  /function setScrollSurfaceTop\(element: Element \| null\) \{[\s\S]*if \(!element\) return;[\s\S]*element\.scrollTop = 0;[\s\S]*element\.dispatchEvent\(new Event\('scroll'\)\);[\s\S]*\}/
-);
-assert.match(handleNavClickSource, /function handleNavClick\(\)/);
 assert.doesNotMatch(handleNavClickSource, /suppressScrollAnchorRestores/);
-assert.match(handleNavClickSource, /scrollCurrentPageToTop\(\);/);
 assert.match(
   handleNavClickSource,
-  /if \(navTargetIsCurrentLocation\(\)\) \{[\s\S]*scrollCurrentPageToTop\(\);[\s\S]*\}/
+  /if \(navClickShouldKeepCurrentScroll\(event\)\) return;/
 );
 assert.match(
   handleNavClickSource,
-  /function navTargetIsCurrentLocation\(\) \{[\s\S]*return to === pathname \|\| to === `\$\{pathname\}\$\{search \|\| ''\}`;[\s\S]*\}/
+  /if \(navClickTargetsCurrentLocation\(to, pathname, search\)\) \{[\s\S]*resetAppShellScroll\(\);[\s\S]*\}/
+);
+assert.match(
+  handleNavClickSource,
+  /function navClickTargetsCurrentLocation\([\s\S]*targetLocation\.pathname === currentPathname[\s\S]*targetLocation\.search === currentSearch/
 );
 assert.match(handleStoryClickSource, /function handleStoryClick\(\)/);
 assert.doesNotMatch(handleStoryClickSource, /scrollTop = 0/);
+assert.match(
+  commentSource,
+  /import \{ saveScrollAnchorForElement \} from '~\/helpers\/hooks\/useScrollAnchorRestoration';/
+);
+assert.match(commentSource, /onClick=\{handleTimestampClick\}/);
+assert.match(
+  commentSource,
+  /function handleTimestampClick\(event: React\.MouseEvent<HTMLElement>\) \{[\s\S]*saveScrollAnchorForElement\(event\.currentTarget\);[\s\S]*navigate\(`\/comments\/\$\{comment\.id\}`\);[\s\S]*\}/
+);
+assert.match(pinnedCommentSource, /onClick=\{handleTimestampClick\}/);
+assert.match(pinnedCommentSource, /onClick=\{handleCommentDetailClick\}/);
+assert.match(
+  pinnedCommentSource,
+  /data-scroll-anchor-id=\{`pinned-comment:\$\{comment\.id\}`\}/
+);
+assert.match(
+  pinnedCommentSource,
+  /data-scroll-anchor-secondary-id=\{`pinned-comment:\$\{comment\.id\}`\}/
+);
+assert.match(
+  pinnedCommentSource,
+  /data-scroll-anchor-content-key=\{`pinned-comment:\$\{comment\.id\}`\}/
+);
+assert.doesNotMatch(
+  pinnedCommentSource,
+  /data-scroll-anchor-id=\{`comment:\$\{comment\.id\}`\}/
+);
+assert.match(
+  pinnedCommentSource,
+  /function handleCommentDetailClick\(event: React\.MouseEvent<HTMLElement>\) \{[\s\S]*saveScrollAnchorForElement\(event\.currentTarget\);[\s\S]*navigate\(`\/comments\/\$\{comment\.id\}`\);[\s\S]*\}/
+);
+assert.match(searchedCommentSource, /onClick=\{handleTimestampClick\}/);
+assert.match(searchedCommentSource, /onClick=\{handleCommentDetailClick\}/);
+assert.match(
+  searchedCommentSource,
+  /function handleCommentDetailClick\(event: React\.MouseEvent<HTMLElement>\) \{[\s\S]*saveScrollAnchorForElement\(event\.currentTarget\);[\s\S]*navigate\(`\/comments\/\$\{comment\.id\}`\);[\s\S]*\}/
+);
+assert.match(replySource, /onClick=\{handleCommentDetailClick\}/);
+assert.match(
+  replySource,
+  /function handleCommentDetailClick\(event: React\.MouseEvent<HTMLElement>\) \{[\s\S]*saveScrollAnchorForElement\(event\.currentTarget\);[\s\S]*\}/
+);
 
 console.log('Scroll anchor restoration verifier passed.');
