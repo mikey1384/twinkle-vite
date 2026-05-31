@@ -12,10 +12,7 @@ import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
-import {
-  CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID
-} from '~/constants/defaultValues';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import {
   getAICardCollectionEmbedPreviewTitle,
   getInternalEmbedCommentLabel,
@@ -29,9 +26,6 @@ import {
   getFileInfoFromFileName,
   stripTextSizeMarkers
 } from '~/helpers/stringHelpers';
-import {
-  getBuildDisplayTitle
-} from '~/helpers/buildRelationshipHelpers';
 import { bodyClass, homeFeedSecretGuardBannerStyle } from './styles';
 import {
   AttachmentSurface,
@@ -392,6 +386,7 @@ export default function Body({
               contentId={contentId}
               contentType={contentType}
               embed={descriptionEmbed}
+              internalPreviewVariant="wide"
             />
           ) : null}
           {attachmentPreview}
@@ -940,6 +935,7 @@ export default function Body({
           contentId={contentId}
           contentType={contentType}
           embed={imageEmbed}
+          internalPreviewVariant={hasText ? 'compact' : 'wide'}
         />
       </div>
     );
@@ -970,8 +966,7 @@ export function HomeFeedCommentPreview({
   const previewLabel = getPreviewCommentLabel(comment, contentType);
   const previewMedia = getPreviewCommentMedia(comment);
   const profileTheme = String(uploader.profileTheme || '').trim() || 'logoBlue';
-  const accentColor =
-    Color[profileTheme]?.() || Color.logoBlue();
+  const accentColor = Color[profileTheme]?.() || Color.logoBlue();
 
   return (
     <div className={`${bodyClass} home-feed-card__comment-preview-slot`}>
@@ -1113,14 +1108,24 @@ function PreviewCommentBuildMedia({
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
-  const thumbnailUrl = String(
-    contentState?.thumbnailUrl || contentState?.thumbUrl || ''
-  );
-  const title = getBuildDisplayTitle(contentState) || label;
+  const hasLoadedBuild = Boolean(contentState.loaded && !contentState.notFound);
+  const previewContent =
+    hasLoadedBuild
+      ? contentState
+      : {
+          contentId,
+          contentType: 'build',
+          id: contentId,
+          title: label
+        };
 
   useEffect(() => {
     const requestKey = `${userId || 0}:${contentId}:build`;
-    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+    if (
+      !contentId ||
+      contentState.loaded ||
+      loadingRef.current === requestKey
+    ) {
       return;
     }
     const requestUserId = userId;
@@ -1151,14 +1156,12 @@ function PreviewCommentBuildMedia({
 
   return (
     <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--build">
-      {thumbnailUrl ? (
-        <img src={thumbnailUrl} alt={title} loading="lazy" />
-      ) : (
-        <Icon
-          className="home-feed-card__comment-preview-media-icon"
-          icon="rocket"
-        />
-      )}
+      <BuildMiniCard
+        build={previewContent}
+        cacheInput={hasLoadedBuild}
+        interactiveBadges={false}
+        variant="thumbEmbed"
+      />
     </span>
   );
 }
@@ -1177,11 +1180,17 @@ function PreviewCommentSubjectMedia({
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const previewContent =
-    contentState.loaded && !contentState.notFound ? contentState : { title: label };
+    contentState.loaded && !contentState.notFound
+      ? contentState
+      : { title: label };
 
   useEffect(() => {
     const requestKey = `${userId || 0}:${contentId}:subject`;
-    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+    if (
+      !contentId ||
+      contentState.loaded ||
+      loadingRef.current === requestKey
+    ) {
       return;
     }
     const requestUserId = userId;

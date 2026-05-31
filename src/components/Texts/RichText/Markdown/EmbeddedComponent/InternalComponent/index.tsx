@@ -12,11 +12,13 @@ export default function InternalComponent({
   rootId,
   rootType,
   src,
+  buildPreviewVariant,
   isPreview,
   isProfileComponent,
   showCompactCommentTypeLabel = true,
   theme
 }: {
+  buildPreviewVariant?: 'compact' | 'wide';
   rootId?: number | string;
   rootType?: string;
   src: string;
@@ -48,6 +50,7 @@ export default function InternalComponent({
         <MainContentComponent
           contentType="build"
           contentId={contentId}
+          buildPreviewVariant={buildPreviewVariant}
           isPreview={isPreview}
           showCompactCommentTypeLabel={showCompactCommentTypeLabel}
           theme={theme}
@@ -97,6 +100,7 @@ export default function InternalComponent({
     );
   }, [
     src,
+    buildPreviewVariant,
     isProfileComponent,
     isPreview,
     rootId,

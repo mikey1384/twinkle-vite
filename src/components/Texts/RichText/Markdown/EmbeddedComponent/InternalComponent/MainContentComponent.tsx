@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import { useContentState } from '~/helpers/hooks';
-import { useAppContext, useContentContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ContentListItem from '~/components/ContentListItem';
@@ -23,12 +23,14 @@ const displayIsMobile = isMobile(navigator);
 export default function MainContentComponent({
   contentId,
   contentType,
+  buildPreviewVariant = 'compact',
   isPreview,
   showCompactCommentTypeLabel = true,
   theme
 }: {
   contentId: string;
   contentType: string;
+  buildPreviewVariant?: 'compact' | 'wide';
   isPreview?: boolean;
   showCompactCommentTypeLabel?: boolean;
   theme?: string;
@@ -52,6 +54,7 @@ export default function MainContentComponent({
   const { loaded, content, notFound, rewardLevel } = contentState;
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const userId = useKeyContext((v) => v.myState.userId);
 
   useEffect(() => {
     if (!loaded && !loadingRef.current && !isNaN(Number(contentId))) {
@@ -97,12 +100,14 @@ export default function MainContentComponent({
   if (isPreview) {
     return (
       <CompactMainContentEmbedPreview
+        buildPreviewVariant={buildPreviewVariant}
         contentId={Number(contentId)}
         contentType={appliedContentType}
         content={contentState}
         navigate={navigate}
         showCompactCommentTypeLabel={showCompactCommentTypeLabel}
         theme={theme}
+        userId={userId}
       />
     );
   }
@@ -139,16 +144,20 @@ function CompactMainContentEmbedPreview({
   content,
   contentId,
   contentType,
+  buildPreviewVariant,
   navigate,
   showCompactCommentTypeLabel,
-  theme
+  theme,
+  userId
 }: {
   content: any;
   contentId: number;
   contentType: string;
+  buildPreviewVariant: 'compact' | 'wide';
   navigate: (path: string) => void;
   showCompactCommentTypeLabel: boolean;
   theme?: string;
+  userId?: number;
 }) {
   const label = getContentLabel(contentType, content);
   const title = getContentTitle(contentType, content);
@@ -183,29 +192,36 @@ function CompactMainContentEmbedPreview({
   };
 
   if (isBuild) {
-    return (
-      <div
-        className={[
-          compactMainContentPreviewClass,
-          'compact-main-content-embed--build-card'
-        ].join(' ')}
-        role="button"
-        style={previewStyle}
-        tabIndex={0}
-        onClick={handleBuildClick}
-        onKeyDown={handleBuildKeyDown}
-      >
+    const buildPreview = {
+      ...content,
+      contentId,
+      contentType: 'build',
+      id: contentId,
+      thumbnailUrl: thumbUrl
+    };
+
+    if (buildPreviewVariant === 'wide') {
+      const ownerId = Number(content?.userId || content?.uploader?.id || 0);
+      const isOwner = Boolean(userId && ownerId && ownerId === Number(userId));
+
+      return (
         <BuildMiniCard
-          build={{
-            ...content,
-            contentId,
-            contentType: 'build',
-            id: contentId
-          }}
-          className="compact-main-content-embed__build-card"
-          interactiveBadges={false}
+          build={buildPreview}
+          className="home-feed-card__build-preview"
+          showActions
+          onBuild={isOwner ? () => navigate(`/build/${contentId}`) : undefined}
+          onOpen={() => navigate(path)}
         />
-      </div>
+      );
+    }
+
+    return (
+      <BuildMiniCard
+        build={buildPreview}
+        interactiveBadges={false}
+        onOpen={() => navigate(path)}
+        variant="compactEmbed"
+      />
     );
   }
 
@@ -300,18 +316,6 @@ function CompactMainContentEmbedPreview({
     event.stopPropagation();
     navigate(path);
   }
-
-  function handleBuildClick(event: React.MouseEvent<HTMLDivElement>) {
-    event.stopPropagation();
-    navigate(path);
-  }
-
-  function handleBuildKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    event.stopPropagation();
-    navigate(path);
-  }
 }
 
 function CompactAIStoryEmbedPreview({
@@ -330,7 +334,9 @@ function CompactAIStoryEmbedPreview({
     content?.difficulty || content?.level || content?.storyLevel || 0
   );
   const imageUrl = getCompactAIStoryImageUrl(content);
-  const storyPreview = isListening ? '' : getReadableCompactAIStoryPreview(body);
+  const storyPreview = isListening
+    ? ''
+    : getReadableCompactAIStoryPreview(body);
   const levelStyle = getCompactAIStoryLevelStyle(level);
 
   return (
@@ -417,7 +423,10 @@ function getContentTitle(contentType: string, content: any) {
   }
   if (contentType === 'url') {
     return getPlainPreviewText(
-      content?.actualTitle || content?.linkTitle || content?.title || content?.content
+      content?.actualTitle ||
+        content?.linkTitle ||
+        content?.title ||
+        content?.content
     );
   }
   if (contentType === 'dailyReflection') {
@@ -454,14 +463,16 @@ function getContentBody(contentType: string, content: any) {
 function getContentPath(contentType: string, contentId: number) {
   if (contentType === 'build') return `/app/${contentId}`;
   if (contentType === 'aiStory') return `/ai-stories/${contentId}`;
-  if (contentType === 'dailyReflection') return `/daily-reflections/${contentId}`;
+  if (contentType === 'dailyReflection')
+    return `/daily-reflections/${contentId}`;
   if (contentType === 'url') return `/links/${contentId}`;
   return `/${contentType}s/${contentId}`;
 }
 
 function getContentAccent(contentType: string) {
   if (contentType === 'dailyReflection') return Color.pink();
-  if (contentType === 'build' || contentType === 'video') return Color.logoBlue();
+  if (contentType === 'build' || contentType === 'video')
+    return Color.logoBlue();
   if (contentType === 'subject') return Color.orange();
   if (contentType === 'aiStory') return Color.purple();
   if (contentType === 'url') return Color.orange();
@@ -689,7 +700,8 @@ const compactMainContentPreviewClass = css`
     padding-block: 0.08rem;
     line-height: 1.35;
   }
-  .compact-main-content-embed__story-topline .compact-main-content-embed__story-level {
+  .compact-main-content-embed__story-topline
+    .compact-main-content-embed__story-level {
     flex-shrink: 0;
     padding: 0.32rem 0.62rem;
     background: var(--embed-accent);
@@ -864,4 +876,4 @@ const compactMainContentPreviewClass = css`
     border-radius: 0.7rem;
     background: ${Color.whiteGray()};
   }
-	`;
+`;

@@ -238,6 +238,11 @@ export const mobilePreviewStyles = `
         gap: 0.7rem;
         padding: 0.85rem 1rem;
       }
+      .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--build {
+        flex-basis: max(14rem, 140px);
+        height: max(14rem, 140px);
+        max-height: max(14rem, 140px);
+      }
       .home-feed-card__text-preview--with-media-attachment {
         grid-template-columns: minmax(0, 1fr);
         grid-template-rows: auto minmax(0, 1fr);

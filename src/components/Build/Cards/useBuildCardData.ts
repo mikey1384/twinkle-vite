@@ -16,7 +16,10 @@ const SERVER_COUNT_FIELD_ALIASES = {
 
 type ServerCountField = keyof typeof SERVER_COUNT_FIELD_ALIASES;
 
-export function useBuildCardData(buildInput: unknown): BuildSummary | null {
+export function useBuildCardData(
+  buildInput: unknown,
+  { cacheInput = true }: { cacheInput?: boolean } = {}
+): BuildSummary | null {
   const buildId = getBuildSummaryId(buildInput);
   const buildKey = buildId ? String(buildId) : '';
   const buildSummary = useBuildContext((v) =>
@@ -44,13 +47,13 @@ export function useBuildCardData(buildInput: unknown): BuildSummary | null {
 
   useEffect(() => {
     lastInputFingerprintRef.current = inputFingerprint;
-    if (!buildId || !build) return;
+    if (!cacheInput || !buildId || !build) return;
     onUpsertBuildSummary(build);
     // build is intentionally excluded so context-only changes do not
     // re-dispatch the cached summary back into BuildContext.
     // onUpsertBuildSummary is a stable BuildContext action helper.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, inputFingerprint, viewerId]);
+  }, [buildId, cacheInput, inputFingerprint, viewerId]);
 
   return build;
 }

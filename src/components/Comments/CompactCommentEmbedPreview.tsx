@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import CardThumb from '~/components/CardThumb';
+import { BuildMiniCard } from '~/components/Build/Cards';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
@@ -13,7 +14,6 @@ import {
   getInternalEmbedPreviewInfo,
   type InternalEmbedPreviewInfo
 } from '~/helpers/aiCardEmbedHelpers';
-import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
 import { useContentState } from '~/helpers/hooks';
 import {
@@ -294,10 +294,16 @@ function MarkdownBuildPreview({
   const contentState = useContentState({ contentId, contentType: 'build' });
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
-  const thumbnailUrl = String(
-    contentState?.thumbnailUrl || contentState?.thumbUrl || ''
-  );
-  const title = getBuildDisplayTitle(contentState) || label;
+  const hasLoadedBuild = Boolean(contentState.loaded && !contentState.notFound);
+  const previewContent =
+    hasLoadedBuild
+      ? contentState
+      : {
+          contentId,
+          contentType: 'build',
+          id: contentId,
+          title: label
+        };
 
   useEffect(() => {
     if (!contentId || contentState.loaded || loadingRef.current) return;
@@ -324,14 +330,12 @@ function MarkdownBuildPreview({
 
   return (
     <div className="compact-comment-embed__media-tile build">
-      {thumbnailUrl ? (
-        <img src={thumbnailUrl} alt={title} loading="lazy" />
-      ) : (
-        <>
-          <Icon icon="rocket" />
-          <span>{label}</span>
-        </>
-      )}
+      <BuildMiniCard
+        build={previewContent}
+        cacheInput={hasLoadedBuild}
+        interactiveBadges={false}
+        variant="thumbEmbed"
+      />
     </div>
   );
 }
@@ -676,8 +680,7 @@ const compactCommentEmbedPreviewClass = css`
   .compact-comment-embed__media-tile.video {
     position: relative;
   }
-  .compact-comment-embed__media-tile.video img,
-  .compact-comment-embed__media-tile.build img {
+  .compact-comment-embed__media-tile.video img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -696,15 +699,11 @@ const compactCommentEmbedPreviewClass = css`
     transform-origin: center;
   }
   .compact-comment-embed__media-tile.build {
-    gap: 0.35rem;
+    padding: 0;
     background: color-mix(in srgb, ${Color.logoBlue()} 7%, #ffffff);
     color: ${Color.logoBlue()};
     font-size: 1rem;
     font-weight: 850;
-  }
-  .compact-comment-embed__media-tile.build svg {
-    color: ${Color.logoBlue()};
-    font-size: 1.55rem;
   }
   .compact-comment-embed__media-tile.attachment > div {
     height: 100%;

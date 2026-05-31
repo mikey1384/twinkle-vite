@@ -117,6 +117,16 @@ export const mainPreviewStyles = `
     .home-feed-card__rich-embed-internal > * {
       width: 100%;
     }
+    .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build {
+      align-items: stretch;
+      justify-content: stretch;
+      border: 0;
+      background: transparent;
+    }
+    .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build
+      > * {
+      height: 100%;
+    }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card {
       align-items: center;
       justify-content: center;
@@ -398,6 +408,14 @@ export const mainPreviewStyles = `
     border-radius: 0.9rem;
     background: #fff;
   }
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--build {
+    flex: 0 0 max(18rem, 180px);
+    height: max(18rem, 180px);
+    max-height: max(18rem, 180px);
+    margin-block: auto;
+    border: 0;
+    background: transparent;
+  }
   .home-feed-card__subject-embed-preview:has(
       .compact-main-content-embed--ai-story-card:not(
           .compact-main-content-embed--ai-story-has-image
@@ -406,14 +424,13 @@ export const mainPreviewStyles = `
     flex: 0 0 auto;
     align-self: start;
   }
-  .home-feed-card__subject-embed-preview > *,
-  .home-feed-card__subject-embed-preview button {
+  .home-feed-card__subject-embed-preview > * {
     box-sizing: border-box;
     width: 100%;
     height: 100%;
     min-height: 0;
   }
-  .home-feed-card__subject-embed-preview button {
+  .home-feed-card__subject-embed-preview > button {
     border: 0;
     border-radius: 0.9rem;
   }

@@ -1,6 +1,8 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import FavoriteButton, {
+  type BuildFavoriteChange
+} from '~/components/Build/FavoriteButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
@@ -28,6 +30,101 @@ const miniCardClass = css`
   &.no-preview {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  &.compact-embed {
+    position: relative;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    border-radius: inherit;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    padding: 0.58rem 0.62rem;
+    background: #fff;
+    container-type: inline-size;
+  }
+
+  &.compact-embed.clickable-embed {
+    cursor: pointer;
+  }
+
+  &.compact-embed.clickable-embed:focus-visible {
+    outline: 2px solid #418ceb;
+    outline-offset: 3px;
+  }
+
+  &.thumb-embed {
+    place-items: center;
+    padding: 0;
+  }
+
+  &.compact-embed .build-mini-card__copy {
+    height: 100%;
+    gap: 0.35rem;
+  }
+
+  &.compact-embed .build-mini-card__main {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.34rem;
+  }
+
+  &.compact-embed .build-mini-card__badge {
+    gap: 0.36rem;
+    padding: 0.22rem 0.58rem;
+    font-size: 1rem;
+    line-height: 1.05;
+  }
+
+  &.compact-embed .build-mini-card__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 1.35rem;
+    line-height: 1.12;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  &.compact-embed .build-mini-card__description {
+    font-size: 1.1rem;
+    line-height: 1.12;
+    -webkit-line-clamp: 1;
+  }
+
+  &.compact-embed .build-mini-card__status-row.compact {
+    gap: 0.22rem;
+    margin-top: auto;
+    overflow: hidden;
+  }
+
+  &.compact-embed .build-mini-card__status.compact {
+    gap: 0.22rem;
+    min-width: 0;
+    padding: 0.12rem 0.36rem;
+    font-size: 1rem;
+    line-height: 1.05;
+  }
+
+  @container (max-width: 19rem) {
+    &.compact-embed .build-mini-card__main {
+      gap: 0.3rem;
+    }
+
+    &.compact-embed .build-mini-card__badge {
+      gap: 0.28rem;
+      padding: 0.16rem 0.48rem;
+    }
+
+    &.compact-embed .build-mini-card__title {
+      font-size: 1.12rem;
+      line-height: 1.08;
+    }
+  }
 `;
 
 const copyClass = css`
@@ -35,6 +132,51 @@ const copyClass = css`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+`;
+
+const compactBackgroundClass = css`
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: inherit;
+  pointer-events: none;
+
+  img {
+    opacity: 1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.42);
+  }
+`;
+
+const compactCopyClass = css`
+  position: relative;
+  z-index: 3;
+`;
+
+const thumbIconClass = css`
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  border: 1px solid rgba(65, 140, 235, 0.36);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #1d4ed8;
+  font-size: 1.28rem;
+  box-shadow: 0 0.08rem 0.25rem rgba(15, 23, 42, 0.12);
 `;
 
 const badgeClass = css`
@@ -152,10 +294,12 @@ const clickablePreviewClass = css`
 
 export default function BuildMiniCard({
   build: buildInput,
+  cacheInput = true,
   className,
   interactiveBadges = true,
   showActions = false,
   showFavoriteAction = false,
+  variant = 'default',
   onBuild,
   onFavoriteChange,
   onFavoriteError,
@@ -163,10 +307,12 @@ export default function BuildMiniCard({
   onOpen
 }: {
   build: Record<string, any>;
+  cacheInput?: boolean;
   className?: string;
   interactiveBadges?: boolean;
   showActions?: boolean;
   showFavoriteAction?: boolean;
+  variant?: 'compactEmbed' | 'default' | 'thumbEmbed';
   onBuild?: (build: any) => void;
   onFavoriteChange?: (build: any, change: BuildFavoriteChange) => void;
   onFavoriteError?: (
@@ -180,10 +326,15 @@ export default function BuildMiniCard({
   ) => void;
   onOpen?: (build: any) => void;
 }) {
-  const build = useBuildCardData(buildInput);
+  const build = useBuildCardData(buildInput, { cacheInput });
   if (!build) return null;
+  const buildId = build.id;
+  const viewCount = build.viewCount;
+  const isThumbEmbed = variant === 'thumbEmbed';
+  const isCompactEmbed = variant === 'compactEmbed' || isThumbEmbed;
   const displayTitle = getBuildDisplayTitle(build) || 'Lumine App';
   const thumbnailUrl = String(build.thumbnailUrl || '').trim();
+  const showCompactBackground = Boolean(isCompactEmbed && thumbnailUrl);
   const relationshipLabels = getBuildRelationshipLabels(build);
   const collaborationMode = normalizeBuildCollaborationMode(
     build.collaborationMode
@@ -198,113 +349,113 @@ export default function BuildMiniCard({
     ? build.serverCountFields.map((field) => String(field))
     : [];
   const showVisitBadge = serverCountFields.includes('viewCount');
+  const hasStatusBadges = Boolean(
+    relationshipLabels.length > 0 ||
+      showOpenSource ||
+      showVisitBadge ||
+      collaboratorCount > 0
+  );
+  const shouldShowCompactStatusBadges = Boolean(
+    isCompactEmbed && !isThumbEmbed && hasStatusBadges
+  );
+  const compactOpenEnabled = Boolean(isCompactEmbed && !showActions && onOpen);
 
   return (
-    <div className={cx(miniCardClass, !thumbnailUrl && 'no-preview', className)}>
-      <div className={copyClass}>
-        <div className={badgeClass}>
+    <div
+      className={cx(
+        miniCardClass,
+        (!thumbnailUrl || isCompactEmbed) && 'no-preview',
+        isCompactEmbed && 'compact-embed',
+        compactOpenEnabled && 'clickable-embed',
+        isThumbEmbed && 'thumb-embed',
+        className
+      )}
+      role={compactOpenEnabled ? 'button' : undefined}
+      tabIndex={compactOpenEnabled ? 0 : undefined}
+      aria-label={compactOpenEnabled ? `Open ${displayTitle}` : undefined}
+      onClick={compactOpenEnabled ? handleCompactOpenClick : undefined}
+      onKeyDown={compactOpenEnabled ? handleCompactOpenKeyDown : undefined}
+    >
+      {showCompactBackground ? (
+        <PreviewFrame
+          className={compactBackgroundClass}
+          thumbnailUrl={thumbnailUrl}
+          alt=""
+          fallbackLabel=""
+        />
+      ) : null}
+      {isThumbEmbed ? (
+        <span className={thumbIconClass} aria-label="Lumine App">
           <Icon icon="rocket" />
-          <span>Lumine App</span>
-        </div>
-        <h3 className={titleClass}>{displayTitle}</h3>
-        {build.description ? (
-          <p className={descriptionClass}>{String(build.description)}</p>
-        ) : null}
-        <div className={statusRowClass}>
-          {relationshipLabels.map((label) => (
-            <span key={label} className={statusClass}>
-              <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
-              {label === 'fork' ? 'Forked' : 'Branch'}
-            </span>
-          ))}
-          {showOpenSource ? (
-            <span className={statusClass}>
-              <Icon icon="code-branch" />
-              Open Source
-            </span>
-          ) : null}
-          {showOpenSource ? (
-            interactiveBadges ? (
-              <BuildForkersTrigger
-                buildId={build.id}
-                className={statusClass}
-                disabled={forkCount <= 0}
+        </span>
+      ) : (
+        <div
+          className={cx(
+            copyClass,
+            'build-mini-card__copy',
+            isCompactEmbed && compactCopyClass
+          )}
+        >
+          <div className="build-mini-card__main">
+            <div className={cx(badgeClass, 'build-mini-card__badge')}>
+              <Icon icon="rocket" />
+              <span>Lumine App</span>
+            </div>
+            <h3 className={cx(titleClass, 'build-mini-card__title')}>
+              {displayTitle}
+            </h3>
+            {build.description ? (
+              <p
+                className={cx(descriptionClass, 'build-mini-card__description')}
               >
-                <Icon icon="code-branch" />
-                {formatBuildForkCount(forkCount)}
-              </BuildForkersTrigger>
-            ) : (
-              <span className={statusClass}>
-                <Icon icon="code-branch" />
-                {formatBuildForkCount(forkCount)}
-              </span>
-            )
-          ) : null}
-          {showVisitBadge ? (
-            <ViewCount
-              count={build.viewCount}
-              unit="visits"
-              className={statusClass}
-            />
-          ) : null}
-          {collaboratorCount > 0 ? (
-            interactiveBadges ? (
-              <BuildTeamMembersTrigger
-                buildId={build.id}
-                className={statusClass}
-              >
-                <Icon icon="users" />
-                {formatBuildCollaboratorCount(collaboratorCount)}
-              </BuildTeamMembersTrigger>
-            ) : (
-              <span className={statusClass}>
-                <Icon icon="users" />
-                {formatBuildCollaboratorCount(collaboratorCount)}
-              </span>
-            )
-          ) : null}
-        </div>
-        {showActions ? (
-          <div className={actionRowClass}>
-            {onBuild ? (
-              <button
-                type="button"
-                className={cx(actionButtonClass, 'secondary')}
-                onClick={() => onBuild(build)}
-              >
-                <Icon icon="wrench" />
-                Build
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className={actionButtonClass}
-              onClick={() => onOpen?.(build)}
-            >
-              <Icon icon="external-link-alt" />
-              Open app
-            </button>
-            {showFavoriteAction ? (
-              <FavoriteButton
-                buildId={build.id}
-                favorited={Boolean(build.isFavorited)}
-                size="sm"
-                onChange={(change) => onFavoriteChange?.(build, change)}
-                onError={(error, params) =>
-                  onFavoriteError?.(build, error, params)
-                }
-                onStart={(params) => onFavoriteStart?.(build, params)}
-              />
+                {String(build.description)}
+              </p>
             ) : null}
           </div>
-        ) : null}
-      </div>
-      {thumbnailUrl ? (
+          {isCompactEmbed ? null : renderStatusBadges()}
+          {shouldShowCompactStatusBadges ? renderStatusBadges(true) : null}
+          {showActions ? (
+            <div className={actionRowClass}>
+              {onBuild ? (
+                <button
+                  type="button"
+                  className={cx(actionButtonClass, 'secondary')}
+                  onClick={handleBuildClick}
+                >
+                  <Icon icon="wrench" />
+                  Build
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className={actionButtonClass}
+                onClick={handleOpenClick}
+              >
+                <Icon icon="external-link-alt" />
+                Open app
+              </button>
+              {showFavoriteAction ? (
+                <FavoriteButton
+                  buildId={build.id}
+                  favorited={Boolean(build.isFavorited)}
+                  size="sm"
+                  onChange={(change) => onFavoriteChange?.(build, change)}
+                  onError={(error, params) =>
+                    onFavoriteError?.(build, error, params)
+                  }
+                  onStart={(params) => onFavoriteStart?.(build, params)}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      )}
+      {thumbnailUrl && !isCompactEmbed ? (
         onOpen ? (
           <button
             type="button"
             className={previewButtonClass}
-            onClick={() => onOpen(build)}
+            onClick={handleOpenClick}
             aria-label={`Open ${displayTitle}`}
           >
             <PreviewFrame
@@ -325,4 +476,101 @@ export default function BuildMiniCard({
       ) : null}
     </div>
   );
+
+  function handleBuildClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    onBuild?.(build);
+  }
+
+  function handleOpenClick(event: React.MouseEvent<HTMLButtonElement>) {
+    handleOpenEvent(event);
+  }
+
+  function handleCompactOpenClick(event: React.MouseEvent<HTMLDivElement>) {
+    handleOpenEvent(event);
+  }
+
+  function handleCompactOpenKeyDown(
+    event: React.KeyboardEvent<HTMLDivElement>
+  ) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    handleOpenEvent(event);
+  }
+
+  function handleOpenEvent(event: React.SyntheticEvent<HTMLElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    onOpen?.(build);
+  }
+
+  function renderStatusBadges(compact = false) {
+    const statusBadgeClass = cx(
+      statusClass,
+      'build-mini-card__status',
+      compact && 'compact'
+    );
+    return (
+      <div
+        className={cx(
+          statusRowClass,
+          'build-mini-card__status-row',
+          compact && 'compact'
+        )}
+      >
+        {relationshipLabels.map((label) => (
+          <span key={label} className={statusBadgeClass}>
+            <Icon icon={label === 'fork' ? 'code-branch' : 'users'} />
+            {label === 'fork' ? 'Forked' : 'Branch'}
+          </span>
+        ))}
+        {showOpenSource ? (
+          <span className={statusBadgeClass}>
+            <Icon icon="code-branch" />
+            Open Source
+          </span>
+        ) : null}
+        {showOpenSource ? (
+          compact || !interactiveBadges ? (
+            <span className={statusBadgeClass}>
+              <Icon icon="code-branch" />
+              {formatBuildForkCount(forkCount)}
+            </span>
+          ) : (
+            <BuildForkersTrigger
+              buildId={buildId}
+              className={statusBadgeClass}
+              disabled={forkCount <= 0}
+            >
+              <Icon icon="code-branch" />
+              {formatBuildForkCount(forkCount)}
+            </BuildForkersTrigger>
+          )
+        ) : null}
+        {showVisitBadge ? (
+          <ViewCount
+            count={viewCount}
+            unit="visits"
+            className={statusBadgeClass}
+          />
+        ) : null}
+        {collaboratorCount > 0 ? (
+          compact || !interactiveBadges ? (
+            <span className={statusBadgeClass}>
+              <Icon icon="users" />
+              {formatBuildCollaboratorCount(collaboratorCount)}
+            </span>
+          ) : (
+            <BuildTeamMembersTrigger
+              buildId={buildId}
+              className={statusBadgeClass}
+            >
+              <Icon icon="users" />
+              {formatBuildCollaboratorCount(collaboratorCount)}
+            </BuildTeamMembersTrigger>
+          )
+        ) : null}
+      </div>
+    );
+  }
 }

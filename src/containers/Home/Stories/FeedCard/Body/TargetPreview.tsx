@@ -11,6 +11,7 @@ import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
+import { getInternalEmbedPreviewInfo } from '~/helpers/aiCardEmbedHelpers';
 import {
   AttachmentSurface,
   AudioWavePreview,
@@ -21,6 +22,10 @@ import {
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
 import { getHomeFeedContentPath } from '../helpers/navigation';
+import {
+  getMarkdownImageEmbedPreview,
+  removeMarkdownImageEmbeds
+} from '../helpers/sizing';
 import { isRenderableHomeFeedTargetComment } from '../helpers/targetComment';
 import ProfilePanelPreview from './ProfilePanelPreview';
 import DailyGoalsPreview from './DailyGoalsPreview';
@@ -59,8 +64,9 @@ function resolveUserProfileTheme(user: any) {
 
 function resolveCommentUserProfileTheme(comment: any) {
   return (
-    String(comment?.uploader?.profileTheme || comment?.profileTheme || '').trim() ||
-    'logoBlue'
+    String(
+      comment?.uploader?.profileTheme || comment?.profileTheme || ''
+    ).trim() || 'logoBlue'
   );
 }
 
@@ -334,6 +340,7 @@ export default function TargetPreview({
           src: embed.src,
           type: 'internal'
         }}
+        internalPreviewVariant="compact"
       />
     );
   }
@@ -507,12 +514,38 @@ export default function TargetPreview({
 
   function renderTargetSubjectPreview(target: any) {
     const attachmentPreview = renderTargetAttachmentPreview(target);
+    const description = String(target?.description || '');
+    const descriptionEmbed = getMarkdownImageEmbedPreview(description);
+    const descriptionBuildEmbed =
+      descriptionEmbed?.type === 'internal' &&
+      getInternalEmbedPreviewInfo(descriptionEmbed.src)?.kind === 'build'
+        ? descriptionEmbed
+        : null;
+    const shouldPromoteDescriptionBuildEmbed = Boolean(
+      descriptionBuildEmbed && !attachmentPreview
+    );
+    const descriptionText = shouldPromoteDescriptionBuildEmbed
+      ? removeMarkdownImageEmbeds(description)
+      : description;
+    const descriptionBuildEmbedPreview =
+      shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed ? (
+        <MarkdownEmbedPreview
+          className="home-feed-card__target-subject-build-embed-preview"
+          contentId={Number(target.id || 0)}
+          contentType="subject"
+          embed={descriptionBuildEmbed}
+          internalPreviewVariant="compact"
+        />
+      ) : null;
+    const mediaPreview = attachmentPreview || descriptionBuildEmbedPreview;
     const hasReward = Number(target?.rewardLevel || 0) > 0;
     const uploaderName = getTargetUploaderName(target);
     return (
       <div
         className={`home-feed-card__target-content home-feed-card__target-subject${
-          attachmentPreview ? ' has-media' : ''
+          mediaPreview ? ' has-media' : ''
+        }${
+          descriptionBuildEmbedPreview ? ' has-build-embed-media' : ''
         }${hasReward ? ' has-reward' : ''}`}
       >
         <div className="home-feed-card__target-copy">
@@ -528,7 +561,7 @@ export default function TargetPreview({
               Posted by {uploaderName}
             </span>
           ) : null}
-          {target?.description ? (
+          {descriptionText ? (
             <div className="home-feed-card__target-subject-description-slot">
               <RichText
                 className="home-feed-card__target-subject-description"
@@ -539,12 +572,12 @@ export default function TargetPreview({
                 section="description"
                 theme={theme}
               >
-                {target.description}
+                {descriptionText}
               </RichText>
             </div>
           ) : null}
         </div>
-        {attachmentPreview}
+        {mediaPreview}
       </div>
     );
   }
@@ -556,7 +589,8 @@ export default function TargetPreview({
           ...target,
           contentId: Number(target?.contentId || target?.id || 0),
           contentType: 'build',
-          id: Number(target?.id || target?.contentId || 0)
+          id: Number(target?.id || target?.contentId || 0),
+          thumbnailUrl: target?.thumbnailUrl || target?.thumbUrl
         }}
         className="home-feed-card__target-build-card"
         interactiveBadges={false}

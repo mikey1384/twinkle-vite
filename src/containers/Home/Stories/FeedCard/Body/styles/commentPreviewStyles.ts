@@ -99,8 +99,7 @@ export const commentPreviewStyles = `
     background: #fff;
     pointer-events: none;
   }
-  .home-feed-card__comment-preview-media--image img,
-  .home-feed-card__comment-preview-media--build img {
+  .home-feed-card__comment-preview-media--image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -124,8 +123,8 @@ export const commentPreviewStyles = `
     transform-origin: center;
   }
   .home-feed-card__comment-preview-media--build {
-    background: color-mix(in srgb, ${Color.logoBlue()} 7%, #ffffff);
-    color: ${Color.logoBlue()};
+    width: 7.2rem;
+    background: color-mix(in srgb, var(--home-feed-comment-accent, ${Color.logoBlue()}) 7%, #ffffff);
   }
   .home-feed-card__comment-preview-media--subject {
     width: 7.2rem;

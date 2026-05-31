@@ -100,20 +100,21 @@ export function MarkdownEmbedPreview({
   className,
   contentId,
   contentType,
-  embed
+  embed,
+  internalPreviewVariant = 'wide'
 }: {
   className?: string;
   contentId: number;
   contentType: string;
   embed: MarkdownImageEmbed;
+  internalPreviewVariant?: 'compact' | 'wide';
 }) {
   const navigate = useNavigate();
 
   if (embed.type === 'internal') {
     const { isInternalLink, replacedLink } = processInternalLink(embed.src);
-    const internalSrc = (isInternalLink ? replacedLink : embed.src).replace(
-      /<u>|<\/u>/g,
-      '__'
+    const internalSrc = normalizeInternalEmbedSrc(
+      (isInternalLink ? replacedLink : embed.src).replace(/<u>|<\/u>/g, '__')
     );
     const internalSrcParts = internalSrc.split('/');
     const internalLinkType = internalSrcParts[1] || '';
@@ -121,6 +122,9 @@ export function MarkdownEmbedPreview({
     const internalClassName = [
       internalLinkType === 'subjects'
         ? 'home-feed-card__rich-embed-internal--subject'
+        : '',
+      ['app', 'apps', 'build', 'builds'].includes(internalLinkType)
+        ? 'home-feed-card__rich-embed-internal--build'
         : '',
       internalLinkType === 'ai-cards' ||
       (internalLinkType === 'chat' && internalLinkSubType === 'ai-cards')
@@ -141,6 +145,7 @@ export function MarkdownEmbedPreview({
         <InternalComponent
           rootId={contentId}
           rootType={contentType}
+          buildPreviewVariant={internalPreviewVariant}
           isPreview
           showCompactCommentTypeLabel={false}
           src={internalSrc}
@@ -323,6 +328,24 @@ export function getAIStoryImageUrl(aiStory: any) {
 
 function stopFeedCardNestedClick(event: React.MouseEvent<HTMLElement>) {
   event.stopPropagation();
+}
+
+function normalizeInternalEmbedSrc(src: string) {
+  try {
+    const url = new URL(src, 'https://twinkle.local');
+    const parts = url.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    const linkType = parts[0] || '';
+    if (!['app', 'apps', 'build', 'builds'].includes(linkType)) return src;
+
+    const buildId =
+      parts[1] === 'build' || parts[1] === 'builds' ? parts[2] : parts[1];
+    const buildIdNumber = Math.floor(Number(buildId || 0));
+    if (buildIdNumber <= 0) return src;
+
+    return `/app/${buildIdNumber}${url.search}${url.hash}`;
+  } catch {
+    return src;
+  }
 }
 
 function MarkdownImagePreview({
