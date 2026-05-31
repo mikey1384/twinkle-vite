@@ -101,13 +101,15 @@ export function MarkdownEmbedPreview({
   contentId,
   contentType,
   embed,
-  internalPreviewVariant = 'wide'
+  internalPreviewVariant = 'wide',
+  theme
 }: {
   className?: string;
   contentId: number;
   contentType: string;
   embed: MarkdownImageEmbed;
   internalPreviewVariant?: 'compact' | 'wide';
+  theme?: string;
 }) {
   const navigate = useNavigate();
 
@@ -149,6 +151,7 @@ export function MarkdownEmbedPreview({
           isPreview
           showCompactCommentTypeLabel={false}
           src={internalSrc}
+          theme={theme}
         />
       </div>
     );

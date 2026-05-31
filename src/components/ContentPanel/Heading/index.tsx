@@ -91,10 +91,7 @@ function Heading({
 
   return (
     <ErrorBoundary componentPath="ContentPanel/Heading">
-      <header
-        className={`heading${compactFeed ? ' compact-feed' : ''}`}
-        data-feed-card-interactive={compactFeed ? 'true' : undefined}
-      >
+      <header className={`heading${compactFeed ? ' compact-feed' : ''}`}>
         <ProfilePic
           style={{ width: '3.8rem', flexShrink: 0 }}
           userId={headingUser.id}
@@ -110,15 +107,19 @@ function Heading({
           `}
         >
           <span className="title">
-            <HeadingText
-              action={action}
-              compactFeed={compactFeed}
-              contentObj={contentObj}
-              feedActivityType={displayedFeedActivityType}
-              feedUploader={feedUploader}
-              rootObj={rootObj}
-              theme={theme}
-            />
+            <span
+              data-feed-card-interactive={compactFeed ? 'true' : undefined}
+            >
+              <HeadingText
+                action={action}
+                compactFeed={compactFeed}
+                contentObj={contentObj}
+                feedActivityType={displayedFeedActivityType}
+                feedUploader={feedUploader}
+                rootObj={rootObj}
+                theme={theme}
+              />
+            </span>
           </span>
           {formattedTime ? (
             <small

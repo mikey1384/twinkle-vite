@@ -21,9 +21,11 @@ import {
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
   addCommasToNumber,
   getFileInfoFromFileName,
+  processInternalLink,
   stripTextSizeMarkers
 } from '~/helpers/stringHelpers';
 import { bodyClass, homeFeedSecretGuardBannerStyle } from './styles';
@@ -126,6 +128,22 @@ export default function Body({
   const targetPanelClassName =
     resolvedSizing.target?.className ||
     'home-feed-card__target-preview home-feed-card__target-preview--size-standard';
+  const buildPreviewThemeName = String(
+    content?.uploader?.profileTheme || content?.profileTheme || theme || ''
+  ).trim();
+  const { accentColor: buildPreviewAccentColor } = useThemedCardVars({
+    role: 'sectionPanel',
+    themeName: buildPreviewThemeName || undefined
+  });
+  const buildPreviewStyle = useMemo(
+    () =>
+      ({
+        '--home-feed-build-accent': buildPreviewAccentColor
+      }) as React.CSSProperties & {
+        '--home-feed-build-accent': string;
+      },
+    [buildPreviewAccentColor]
+  );
   if (loading || !contentId || !contentType) {
     return (
       <div className={`${bodyClass} home-feed-card__body`}>
@@ -497,9 +515,14 @@ export default function Body({
   function renderAttachmentPreview(classNameSuffix: string) {
     const filePath = getContentAttachmentFilePath(content);
     if (!filePath) return null;
+    const fileType = getContentAttachmentFileType({ ...content, filePath });
+    const subjectImageClass =
+      classNameSuffix === 'subject' && fileType === 'image'
+        ? ' home-feed-card__attachment-preview--subject-image'
+        : '';
     return (
       <AttachmentSurface
-        className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}`}
+        className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}${subjectImageClass}`}
         source={{ ...content, filePath }}
         sourceContentId={contentId}
         sourceContentType={contentType}
@@ -690,6 +713,7 @@ export default function Body({
         }}
         className="home-feed-card__build-preview"
         showActions
+        style={buildPreviewStyle}
         onBuild={isOwner ? () => navigate(`/build/${contentId}`) : undefined}
         onOpen={() => navigate(`/app/${contentId}`)}
       />
@@ -900,6 +924,7 @@ export default function Body({
       hasTitle: Boolean(title),
       maxLines: textMaxLines
     });
+    const embedTheme = getMatchedRootBuildEmbedTheme(imageEmbed);
     return (
       <div
         className={`home-feed-card__rich-embed-preview${
@@ -936,9 +961,49 @@ export default function Body({
           contentType={contentType}
           embed={imageEmbed}
           internalPreviewVariant={hasText ? 'compact' : 'wide'}
+          theme={embedTheme}
         />
       </div>
     );
+  }
+
+  function getMatchedRootBuildEmbedTheme(embed: MarkdownImageEmbed) {
+    if (embed.type !== 'internal' || normalizedRootType !== 'build') {
+      return undefined;
+    }
+
+    const embedBuildId = getInternalBuildEmbedId(embed.src);
+    const rootBuildId = Number(resolvedRootObj?.id || content?.rootId || 0);
+    if (!embedBuildId || !rootBuildId || embedBuildId !== rootBuildId) {
+      return undefined;
+    }
+
+    return (
+      String(
+        resolvedRootObj?.uploader?.profileTheme ||
+          resolvedRootObj?.profileTheme ||
+          ''
+      ).trim() || undefined
+    );
+  }
+}
+
+function getInternalBuildEmbedId(src: string) {
+  const { isInternalLink, replacedLink } = processInternalLink(
+    String(src || '').replace(/<u>|<\/u>/g, '__')
+  );
+  const internalSrc = isInternalLink ? replacedLink : src;
+  try {
+    const url = new URL(internalSrc, 'https://twinkle.local');
+    const parts = url.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    const linkType = parts[0] || '';
+    if (!['app', 'apps', 'build', 'builds'].includes(linkType)) return 0;
+
+    const buildId =
+      parts[1] === 'build' || parts[1] === 'builds' ? parts[2] : parts[1];
+    return Math.floor(Number(buildId || 0));
+  } catch {
+    return 0;
   }
 }
 

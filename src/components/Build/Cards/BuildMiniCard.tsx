@@ -299,6 +299,7 @@ export default function BuildMiniCard({
   interactiveBadges = true,
   showActions = false,
   showFavoriteAction = false,
+  style,
   variant = 'default',
   onBuild,
   onFavoriteChange,
@@ -312,6 +313,7 @@ export default function BuildMiniCard({
   interactiveBadges?: boolean;
   showActions?: boolean;
   showFavoriteAction?: boolean;
+  style?: React.CSSProperties;
   variant?: 'compactEmbed' | 'default' | 'thumbEmbed';
   onBuild?: (build: any) => void;
   onFavoriteChange?: (build: any, change: BuildFavoriteChange) => void;
@@ -370,6 +372,7 @@ export default function BuildMiniCard({
         isThumbEmbed && 'thumb-embed',
         className
       )}
+      style={style}
       role={compactOpenEnabled ? 'button' : undefined}
       tabIndex={compactOpenEnabled ? 0 : undefined}
       aria-label={compactOpenEnabled ? `Open ${displayTitle}` : undefined}

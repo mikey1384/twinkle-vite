@@ -47,7 +47,11 @@ export type FeedCardSize =
   | 'subject-tall'
   | 'tall';
 
-export type FeedCardTargetSize = 'compact' | 'fallback' | 'standard';
+export type FeedCardTargetSize =
+  | 'compact'
+  | 'fallback'
+  | 'media-comment'
+  | 'standard';
 export type FeedCardLayoutAxis = 'desktop' | 'mobile';
 
 export type FeedCardFrameSize =
@@ -176,6 +180,7 @@ const TARGET_HEIGHT_REM: Record<
 > = {
   compact: { desktop: 8.5, mobile: 8.5 },
   fallback: { desktop: 13, mobile: 12 },
+  'media-comment': { desktop: 20, mobile: 18 },
   standard: { desktop: 13, mobile: 12 }
 };
 
@@ -649,6 +654,10 @@ function getTargetPanelSizing({
 
   if (isRenderableHomeFeedTargetComment(targetComment)) {
     if (flags.secretHidden) return null;
+
+    if (hasTargetCommentMedia(targetComment)) {
+      return buildTargetSizing('media-comment');
+    }
 
     return buildTargetSizing(
       isTargetCommentCompact(targetComment) ? 'compact' : 'standard',
@@ -1744,6 +1753,16 @@ function isTargetCommentCompact(targetComment: any) {
   return (
     !textWithoutEmbeds.trim() &&
     Boolean(targetComment?.filePath || embedPreview)
+  );
+}
+
+function hasTargetCommentMedia(targetComment: any) {
+  const content = String(targetComment?.content || '');
+  return Boolean(
+    targetComment?.filePath ||
+      targetComment?.actualFilePath ||
+      targetComment?.thumbUrl ||
+      getMarkdownImageEmbedPreview(content)
   );
 }
 

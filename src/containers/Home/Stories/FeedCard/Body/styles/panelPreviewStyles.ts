@@ -22,6 +22,7 @@ export const panelPreviewStyles = `
   }
   .home-feed-card__target-preview {
     border: 1px solid ${Color.borderGray()};
+    container-type: inline-size;
   }
   .home-feed-card__target-preview[data-feed-card-interactive='true'] {
     cursor: pointer;
@@ -184,6 +185,9 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview--size-standard {
     height: max(13rem, 130px);
   }
+  .home-feed-card__target-preview--size-media-comment {
+    height: max(20rem, 200px);
+  }
   .home-feed-card__target-preview > * {
     pointer-events: none;
   }
@@ -201,6 +205,10 @@ export const panelPreviewStyles = `
     &.home-feed-card__body--tablet-media-attachment
       .home-feed-card__target-preview--size-standard {
       height: max(12rem, 120px);
+    }
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-media-comment {
+      height: max(18rem, 180px);
     }
   }
   h3 {

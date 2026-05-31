@@ -158,6 +158,9 @@ export const mobilePreviewStyles = `
     .home-feed-card__target-preview--size-standard {
       height: max(12rem, 120px);
     }
+    .home-feed-card__target-preview--size-media-comment {
+      height: max(18rem, 180px);
+    }
     .home-feed-card__panel-preview,
     .home-feed-card__target-preview {
       border-left: 0;

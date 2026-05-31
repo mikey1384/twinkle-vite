@@ -165,7 +165,7 @@ function CompactMainContentEmbedPreview({
   const path = getContentPath(contentType, contentId);
   const accent = getContentAccent(contentType);
   const previewThemeName = String(
-    theme || content?.uploader?.profileTheme || content?.profileTheme || ''
+    content?.uploader?.profileTheme || content?.profileTheme || theme || ''
   ).trim();
   const { accentColor: themedAccentColor, borderColor: themedBorderColor } =
     useThemedCardVars({
@@ -184,11 +184,13 @@ function CompactMainContentEmbedPreview({
     '--embed-accent-border': isBuild
       ? themedBorderColor
       : setAlphaExact(previewAccent, 0.35),
-    '--embed-accent-soft': setAlphaExact(previewAccent, 0.1)
+    '--embed-accent-soft': setAlphaExact(previewAccent, 0.1),
+    '--home-feed-build-accent': previewAccent
   } as React.CSSProperties & {
     '--embed-accent': string;
     '--embed-accent-border': string;
     '--embed-accent-soft': string;
+    '--home-feed-build-accent': string;
   };
 
   if (isBuild) {
@@ -209,6 +211,7 @@ function CompactMainContentEmbedPreview({
           build={buildPreview}
           className="home-feed-card__build-preview"
           showActions
+          style={previewStyle}
           onBuild={isOwner ? () => navigate(`/build/${contentId}`) : undefined}
           onOpen={() => navigate(path)}
         />
