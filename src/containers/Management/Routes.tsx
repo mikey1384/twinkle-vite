@@ -9,6 +9,7 @@ import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 const Main = lazyWithRetry(() => import('./Main'));
 const Tools = lazyWithRetry(() => import('./Tools'));
 const ModActivities = lazyWithRetry(() => import('./ModActivities'));
+const NotableUsers = lazyWithRetry(() => import('./NotableUsers'));
 const AiCosts = lazyWithRetry(() => import('./AiCosts'));
 const HomeFeedPerformance = lazyWithRetry(
   () => import('./HomeFeedPerformance')
@@ -34,6 +35,7 @@ export default function ManagementRoutes({ className }: { className: string }) {
             <Route path="*" element={<Main />} />
             <Route path="tools" element={<Tools />} />
             <Route path="mod-activities" element={<ModActivities />} />
+            <Route path="notable-users" element={<NotableUsers />} />
             <Route path="ai-costs" element={<AiCosts />} />
             <Route
               path="home-feed-performance"

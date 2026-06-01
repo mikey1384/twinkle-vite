@@ -24,6 +24,7 @@ export default function Management() {
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const canViewAiCosts = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
+  const canViewNotableUsers = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
   const canViewHomeFeedPerformance = userId === ADMIN_USER_ID;
 
   useEffect(() => {
@@ -59,6 +60,15 @@ export default function Management() {
           <Icon icon="clipboard-check" />
           <span style={{ marginLeft: '1.1rem' }}>Moderation</span>
         </NavLink>
+        {canViewNotableUsers && (
+          <NavLink
+            to="/management/notable-users"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="star" />
+            <span style={{ marginLeft: '1.1rem' }}>Notable Users</span>
+          </NavLink>
+        )}
         {canViewAiCosts && (
           <NavLink
             to="/management/ai-costs"
@@ -106,6 +116,16 @@ export default function Management() {
         >
           Mod Activities
         </nav>
+        {canViewNotableUsers && (
+          <nav
+            className={
+              location.pathname === `/management/notable-users` ? 'active' : ''
+            }
+            onClick={() => navigate('/management/notable-users')}
+          >
+            Notable Users
+          </nav>
+        )}
         {canViewAiCosts && (
           <nav
             className={

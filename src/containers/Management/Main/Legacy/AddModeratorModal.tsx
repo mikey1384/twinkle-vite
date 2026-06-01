@@ -2,16 +2,16 @@ import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
-import Loading from '~/components/Loading';
-import SearchInput from '~/components/Texts/SearchInput';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Table from '../../Table';
 import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
-import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import ManagementUserSearchInput, {
+  ManagementUserSearchResult
+} from '../../UserSearchInput';
 
 const searchUsersLabel = 'Search Users';
 
@@ -30,19 +30,11 @@ export default function AddModeratorModal({
   );
   const level = useKeyContext((v) => v.myState.level);
   const addModerators = useAppContext((v) => v.requestHelpers.addModerators);
-  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const onEditModerators = useManagementContext(
     (v) => v.actions.onEditModerators
   );
   const [dropdownShown, setDropdownShown] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [searchedUsers, setSearchedUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
-  const { handleSearch, searching } = useSearch({
-    onSearch: handleUserSearch,
-    onClear: () => setSearchedUsers([]),
-    onSetSearchText: setSearchText
-  });
   const TableContent = useMemo(() => {
     return selectedUsers.map(
       (user: {
@@ -122,22 +114,12 @@ export default function AddModeratorModal({
       <LegacyModalLayout>
         <header>Add / Edit Moderators</header>
         <main>
-          <SearchInput
+          <ManagementUserSearchInput
             autoFocus
-            onChange={handleSearch}
             onSelect={handleSelectUser}
             placeholder={`${searchUsersLabel}...`}
-            onClickOutSide={() => {
-              setSearchText('');
-              setSearchedUsers([]);
-            }}
-            renderItemLabel={(item) => (
-              <span>
-                {item.username} <small>{`(${item.realName})`}</small>
-              </span>
-            )}
-            searchResults={searchedUsers}
-            value={searchText}
+            excludeUserIds={selectedUsers.map((user) => user.id)}
+            filterUser={isAllowedModeratorCandidate}
           />
           {selectedUsers.length > 0 && (
             <Table columns="2fr 1fr" style={{ marginTop: '1.5rem' }}>
@@ -161,9 +143,6 @@ export default function AddModeratorModal({
             >
               No users selected
             </div>
-          )}
-          {searching && (
-            <Loading style={{ position: 'absolute', marginTop: '1rem' }} />
           )}
         </main>
         <footer>
@@ -201,10 +180,8 @@ export default function AddModeratorModal({
     );
   }
 
-  function handleSelectUser(user: any) {
+  function handleSelectUser(user: ManagementUserSearchResult) {
     setSelectedUsers((users) => users.concat(user));
-    setSearchedUsers([]);
-    setSearchText('');
   }
 
   async function handleSubmit() {
@@ -215,11 +192,7 @@ export default function AddModeratorModal({
     onHide();
   }
 
-  async function handleUserSearch(text: string) {
-    const users = await searchUsers(text);
-    const result = users.filter((user: { level: number }) => {
-      return level > user.level;
-    });
-    setSearchedUsers(result);
+  function isAllowedModeratorCandidate(user: ManagementUserSearchResult) {
+    return level > (user.level || 0);
   }
 }

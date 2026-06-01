@@ -218,6 +218,42 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadNotableUsers() {
+      try {
+        const {
+          data: { notableUsers }
+        } = await request.get(`${URL}/management/notable-users`, auth());
+        return notableUsers;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadNotableUsersCSV() {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/notable-users.csv`,
+          {
+            ...auth(),
+            responseType: 'blob'
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addNotableUser(userId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/notable-users`,
+          { userId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async clearHomeFeedPerformanceData(hours: number) {
       try {
         const { data } = await request.delete(

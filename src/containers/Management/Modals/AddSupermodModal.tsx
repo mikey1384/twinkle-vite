@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
-import Loading from '~/components/Loading';
-import SearchInput from '~/components/Texts/SearchInput';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Table from '../Table';
 import Icon from '~/components/Icon';
@@ -17,9 +15,11 @@ import {
   FOUNDER_LABEL,
   roles
 } from '~/constants/defaultValues';
-import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import ManagementUserSearchInput, {
+  ManagementUserSearchResult
+} from '../UserSearchInput';
 
 const searchUsersLabel = 'Search Users';
 
@@ -32,19 +32,11 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   );
   const level = useKeyContext((v) => v.myState.level);
   const addSupermods = useAppContext((v) => v.requestHelpers.addSupermods);
-  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const onEditSupermods = useManagementContext(
     (v) => v.actions.onEditSupermods
   );
   const [dropdownShown, setDropdownShown] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [searchedUsers, setSearchedUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
-  const { handleSearch, searching } = useSearch({
-    onSearch: handleUserSearch,
-    onClear: () => setSearchedUsers([]),
-    onSetSearchText: setSearchText
-  });
   const TableContent = useMemo(() => {
     return selectedUsers.map(
       (user: {
@@ -155,33 +147,12 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
       <LegacyModalLayout wrapped>
         <header>Add / Edit Supermods</header>
         <main>
-          <SearchInput
+          <ManagementUserSearchInput
             autoFocus
-            onChange={handleSearch}
             onSelect={handleSelectUser}
             placeholder={`${searchUsersLabel}...`}
-            onClickOutSide={() => {
-              setSearchText('');
-              setSearchedUsers([]);
-            }}
-            renderItemLabel={(item) => (
-              <span>
-                {item.username} <small>{`(${item.realName})`}</small>
-              </span>
-            )}
-            searchResults={searchedUsers.filter(
-              (user: { unlockedAchievementIds: number[] }) => {
-                const supermodAchievementIds = [
-                  MENTOR_ACHIEVEMENT_ID,
-                  SAGE_ACHIEVEMENT_ID,
-                  TWINKLE_FOUNDER_ACHIEVEMENT_ID
-                ];
-                return !(user.unlockedAchievementIds || []).some((id: number) =>
-                  supermodAchievementIds.includes(id)
-                );
-              }
-            )}
-            value={searchText}
+            excludeUserIds={selectedUsers.map((user) => user.id)}
+            filterUser={isAllowedSupermodCandidate}
           />
           {selectedUsers.length > 0 && (
             <Table columns="2fr 1fr" style={{ marginTop: '1.5rem' }}>
@@ -205,9 +176,6 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
             >
               No users selected
             </div>
-          )}
-          {searching && (
-            <Loading style={{ position: 'absolute', marginTop: '1rem' }} />
           )}
         </main>
         <footer>
@@ -239,7 +207,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
     );
   }
 
-  function handleSelectUser(user: any) {
+  function handleSelectUser(user: ManagementUserSearchResult) {
     setSelectedUsers((users) => {
       const isMentor = user.unlockedAchievementIds?.includes(
         MENTOR_ACHIEVEMENT_ID
@@ -257,8 +225,6 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
         role
       });
     });
-    setSearchedUsers([]);
-    setSearchText('');
   }
 
   async function handleSubmit() {
@@ -272,11 +238,17 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
     onHide();
   }
 
-  async function handleUserSearch(text: string) {
-    const users = await searchUsers(text);
-    const result = users.filter((user: { level: number }) => {
-      return level > user.level;
-    });
-    setSearchedUsers(result);
+  function isAllowedSupermodCandidate(user: ManagementUserSearchResult) {
+    const supermodAchievementIds = [
+      MENTOR_ACHIEVEMENT_ID,
+      SAGE_ACHIEVEMENT_ID,
+      TWINKLE_FOUNDER_ACHIEVEMENT_ID
+    ];
+    return (
+      level > (user.level || 0) &&
+      !(user.unlockedAchievementIds || []).some((id: number) =>
+        supermodAchievementIds.includes(id)
+      )
+    );
   }
 }
