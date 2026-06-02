@@ -19,6 +19,7 @@ export default function useEnsureRankingsLoaded({
   enabled = true
 }: { enabled?: boolean } = {}) {
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
+  const sessionLoaded = useAppContext((v) => v.user.state.loaded);
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const rankingsLoaded = useNotiContext((v) => v.state.rankingsLoaded);
@@ -27,26 +28,29 @@ export default function useEnsureRankingsLoaded({
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
   const [loading, setLoading] = useState(false);
   const loadRef = useRef(0);
+  const currentUserId = Number(userId || 0) || null;
+  const userRankingsCanLoad =
+    currentUserId !== null && typeof twinkleXP === 'number';
   const rankingsAreCurrent = Boolean(
-    userId &&
-      typeof twinkleXP === 'number' &&
-      rankingsLoaded &&
-      rankingsUserId === userId &&
-      rankingsTwinkleXP === twinkleXP
+    rankingsLoaded &&
+      (currentUserId === null
+        ? rankingsUserId === null
+        : rankingsUserId === currentUserId && rankingsTwinkleXP === twinkleXP)
   );
 
   useEffect(() => {
     if (
       !enabled ||
-      !userId ||
-      typeof twinkleXP !== 'number' ||
+      !sessionLoaded ||
+      (currentUserId !== null && !userRankingsCanLoad) ||
       rankingsAreCurrent
     ) {
       return;
     }
 
     const loadId = loadRef.current + 1;
-    const requestKey = `${userId}:${twinkleXP}`;
+    const requestKey =
+      currentUserId === null ? 'guest' : `${currentUserId}:${twinkleXP}`;
     loadRef.current = loadId;
     setLoading(true);
     handleLoadRankings();
@@ -73,8 +77,8 @@ export default function useEnsureRankingsLoaded({
           myAllTimeRank,
           myAllTimeXP,
           myMonthlyXP,
-          rankingsTwinkleXP: twinkleXP,
-          userId
+          rankingsTwinkleXP: currentUserId === null ? null : twinkleXP,
+          userId: currentUserId
         });
       } catch (error) {
         console.error(error);
@@ -90,7 +94,14 @@ export default function useEnsureRankingsLoaded({
     };
     // loadRankings and onGetRanks are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, userId, twinkleXP, rankingsAreCurrent]);
+  }, [
+    enabled,
+    sessionLoaded,
+    currentUserId,
+    twinkleXP,
+    userRankingsCanLoad,
+    rankingsAreCurrent
+  ]);
 
   useEffect(() => {
     if (!enabled || rankingsAreCurrent) {

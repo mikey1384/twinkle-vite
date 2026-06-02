@@ -25,6 +25,7 @@ export default function Management() {
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const canViewAiCosts = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
   const canViewNotableUsers = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
+  const canViewPayment = userId === ADMIN_USER_ID;
   const canViewHomeFeedPerformance = userId === ADMIN_USER_ID;
 
   useEffect(() => {
@@ -36,7 +37,11 @@ export default function Management() {
     <Loading />
   ) : managementLevel > 0 ? (
     <div>
-      <SideMenu variant="card">
+      <SideMenu
+        variant="card"
+        topOffset="50%"
+        style={{ transform: 'translateY(-50%)' }}
+      >
         <NavLink
           to="/management"
           end
@@ -76,6 +81,15 @@ export default function Management() {
           >
             <Icon icon="chart-line" />
             <span style={{ marginLeft: '1.1rem' }}>AI Costs</span>
+          </NavLink>
+        )}
+        {canViewPayment && (
+          <NavLink
+            to="/management/payment"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="badge-dollar" />
+            <span style={{ marginLeft: '1.1rem' }}>Payment</span>
           </NavLink>
         )}
         {canViewHomeFeedPerformance && (
@@ -134,6 +148,16 @@ export default function Management() {
             onClick={() => navigate('/management/ai-costs')}
           >
             AI Costs
+          </nav>
+        )}
+        {canViewPayment && (
+          <nav
+            className={
+              location.pathname === `/management/payment` ? 'active' : ''
+            }
+            onClick={() => navigate('/management/payment')}
+          >
+            Payment
           </nav>
         )}
         {canViewHomeFeedPerformance && (

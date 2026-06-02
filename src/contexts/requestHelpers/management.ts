@@ -136,6 +136,47 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadTwinkleAiCostsPaymentOverview() {
+      try {
+        const { data } = await request.get(
+          `${URL}/billing/twinkle-ai-costs/payment?invoiceLimit=24&subscriptionLimit=10`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setTwinkleAiCostsPaymentActive(active: boolean) {
+      try {
+        const { data } = await request.post(
+          `${URL}/billing/twinkle-ai-costs/payment-active`,
+          {
+            active,
+            successPath: '/management/payment',
+            cancelPath: '/management/payment'
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async createTwinkleAiCostsPortalSession() {
+      try {
+        const { data } = await request.post(
+          `${URL}/billing/twinkle-ai-costs/portal-session`,
+          {
+            returnPath: '/management/payment'
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAiCostRiskGroup({
       days,
       riskKeyType,
