@@ -383,6 +383,12 @@ export default function Payment() {
   const paymentActive = Boolean(
     subscription?.active && !subscription.cancelAtPeriodEnd
   );
+  const latestPaidInvoice = invoices.find(
+    (invoice) => invoice.paid || invoice.status === 'paid'
+  );
+  const lastPaidAt = subscription?.lastPaidAt || latestPaidInvoice?.createdAt;
+  const latestInvoiceStatus =
+    subscription?.latestInvoiceStatus || latestPaidInvoice?.status;
 
   return (
     <div className={pageClass}>
@@ -421,12 +427,8 @@ export default function Payment() {
         <>
           <section className={switchPanelClass}>
             <div>
-              <h2>Stripe Payment</h2>
-              <p>
-                Turning this on starts the $500/month recurring Stripe
-                subscription. Turning it off schedules the subscription to stop
-                renewing at the end of the current billing period.
-              </p>
+              <h2>AI Service Subscription</h2>
+              <p>{getSubscriptionSummary(subscription)}</p>
             </div>
             <label className={toggleClass}>
               <input
@@ -461,8 +463,8 @@ export default function Payment() {
             />
             <Metric
               label="Last Paid"
-              value={formatDate(subscription?.lastPaidAt)}
-              detail={formatInvoiceStatus(subscription?.latestInvoiceStatus)}
+              value={formatDate(lastPaidAt)}
+              detail={formatInvoiceStatus(latestInvoiceStatus)}
             />
           </section>
 
@@ -482,8 +484,8 @@ export default function Payment() {
                         <th>Status</th>
                         <th>Amount</th>
                         <th>Created</th>
-                        <th>Period</th>
-                        <th>Links</th>
+                        <th>Billing period</th>
+                        <th>Files</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -607,6 +609,19 @@ function formatStatus(value: unknown) {
   const text = typeof value === 'string' ? value.trim() : '';
   if (!text) return 'No subscription';
   return formatInvoiceStatus(text);
+}
+
+function getSubscriptionSummary(subscription: AiCostsSubscription | null) {
+  if (subscription?.cancelAtPeriodEnd) {
+    return 'The $500/month AI service subscription is active until the current billing period ends.';
+  }
+  if (subscription?.active) {
+    return 'The $500/month AI service subscription is active and renews through Stripe.';
+  }
+  if (subscription?.stripeSubscriptionId) {
+    return 'The AI service subscription is connected but is not currently active.';
+  }
+  return 'No active AI service subscription is connected.';
 }
 
 function formatInvoiceStatus(value: unknown) {
