@@ -462,6 +462,9 @@ const ownerAttentionItemClass = css`
     background: #fff7ed;
     border-color: rgba(249, 115, 22, 0.24);
   }
+  &[data-has-action='false'] {
+    grid-template-columns: auto 1fr;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: auto 1fr;
   }
@@ -556,7 +559,6 @@ export default function VersionStartPanel({
   onFork,
   onFixMergeConflicts,
   onOpenTeamPanel,
-  onOpenBranchesPanel,
   onUpdatePublishedApp,
   initialScrollTop = 0,
   onScrollTopChange
@@ -588,7 +590,6 @@ export default function VersionStartPanel({
   onFork: () => void;
   onFixMergeConflicts?: () => void | Promise<void>;
   onOpenTeamPanel: () => void;
-  onOpenBranchesPanel: () => void;
   onUpdatePublishedApp: () => void;
   initialScrollTop?: number;
   onScrollTopChange?: (scrollTop: number) => void;
@@ -924,10 +925,10 @@ export default function VersionStartPanel({
       icon: string;
       label: string;
       detail: string;
-      actionLabel: string;
-      actionIcon: string;
+      actionLabel?: string;
+      actionIcon?: string;
       disabled?: boolean;
-      onClick: () => void;
+      onClick?: () => void;
     }> = [];
 
     if (pendingRequestCount > 0) {
@@ -956,10 +957,7 @@ export default function VersionStartPanel({
           'team branch',
           'team branches'
         )}`,
-        detail: 'Preview teammate ideas and merge the ones you want.',
-        actionLabel: 'Branches',
-        actionIcon: 'code-branch',
-        onClick: onOpenBranchesPanel
+        detail: 'Preview teammate ideas and merge the ones you want.'
       });
     }
 
@@ -984,14 +982,16 @@ export default function VersionStartPanel({
         detail:
           mainProjectConflictMarkerCount > 0
             ? 'Send the main project conflict cleanup to Lumine.'
-            : 'Open branches to finish the legacy merge record.',
-        actionLabel: canFixWithLumine ? 'Fix' : 'Open Branches',
-        actionIcon: canFixWithLumine ? 'wand-magic-sparkles' : 'code-branch',
-        onClick: canFixWithLumine
-          ? () => {
-              void onFixMergeConflicts?.();
+            : 'Finish the legacy merge record from the branch list below.',
+        ...(canFixWithLumine
+          ? {
+              actionLabel: 'Fix',
+              actionIcon: 'wand-magic-sparkles',
+              onClick: () => {
+                void onFixMergeConflicts?.();
+              }
             }
-          : onOpenBranchesPanel
+          : {})
       });
     }
 
@@ -1034,6 +1034,9 @@ export default function VersionStartPanel({
               key={item.key}
               className={ownerAttentionItemClass}
               data-tone={item.tone}
+              data-has-action={
+                item.onClick && item.actionLabel ? 'true' : 'false'
+              }
             >
               <span className={ownerAttentionIconClass}>
                 <Icon icon={item.icon as any} />
@@ -1042,15 +1045,19 @@ export default function VersionStartPanel({
                 <span className={ownerAttentionLabelClass}>{item.label}</span>
                 <span className={ownerAttentionDetailClass}>{item.detail}</span>
               </span>
-              <button
-                type="button"
-                className={ownerAttentionActionClass}
-                disabled={item.disabled}
-                onClick={item.onClick}
-              >
-                <Icon icon={item.actionIcon as any} />
-                {item.actionLabel}
-              </button>
+              {item.onClick && item.actionLabel ? (
+                <button
+                  type="button"
+                  className={ownerAttentionActionClass}
+                  disabled={item.disabled}
+                  onClick={item.onClick}
+                >
+                  {item.actionIcon ? (
+                    <Icon icon={item.actionIcon as any} />
+                  ) : null}
+                  {item.actionLabel}
+                </button>
+              ) : null}
             </div>
           ))}
         </div>

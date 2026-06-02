@@ -1214,9 +1214,6 @@ export default function BuildEditor({
       onOpenTeamPanel={() =>
         handleBuildWorkspaceCommunicationModeChange('people')
       }
-      onOpenBranchesPanel={() =>
-        handleBuildWorkspaceCommunicationModeChange('versions')
-      }
       onUpdatePublishedApp={handlePublish}
       initialScrollTop={buildWorkspaceScrollTops.versions || 0}
       onScrollTopChange={(scrollTop) =>
