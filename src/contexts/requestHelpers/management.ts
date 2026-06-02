@@ -136,10 +136,21 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async loadTwinkleAiCostsPaymentOverview() {
+    async loadTwinkleAiCostsPaymentOverview({
+      checkoutSessionId
+    }: {
+      checkoutSessionId?: string;
+    } = {}) {
       try {
+        const params = new URLSearchParams({
+          invoiceLimit: '24',
+          subscriptionLimit: '10'
+        });
+        if (checkoutSessionId) {
+          params.set('checkoutSessionId', checkoutSessionId);
+        }
         const { data } = await request.get(
-          `${URL}/billing/twinkle-ai-costs/payment?invoiceLimit=24&subscriptionLimit=10`,
+          `${URL}/billing/twinkle-ai-costs/payment?${params.toString()}`,
           auth()
         );
         return data;

@@ -7,6 +7,7 @@ import Loading from '~/components/Loading';
 import { Color, mediumBorderRadius, mobileMaxWidth } from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useLocation } from 'react-router-dom';
 
 interface AiCostsSubscription {
   id: number;
@@ -315,6 +316,7 @@ const errorClass = css`
 `;
 
 export default function Payment() {
+  const location = useLocation();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadTwinkleAiCostsPaymentOverview = useAppContext(
     (v) => v.requestHelpers.loadTwinkleAiCostsPaymentOverview
@@ -333,6 +335,7 @@ export default function Payment() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const checkoutSessionId = getCheckoutSessionId(location.search);
 
   useEffect(() => {
     if (!canView) return;
@@ -343,7 +346,9 @@ export default function Payment() {
       setLoading(true);
       setError('');
       try {
-        const data = await loadTwinkleAiCostsPaymentOverview();
+        const data = await loadTwinkleAiCostsPaymentOverview({
+          checkoutSessionId
+        });
         if (canceled) return;
         setPayment(data);
       } catch (loadError: any) {
@@ -361,7 +366,7 @@ export default function Payment() {
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canView, reloadKey]);
+  }, [canView, checkoutSessionId, reloadKey]);
 
   if (!canView) {
     return (
@@ -628,4 +633,11 @@ function formatCurrencyCents(amount: unknown, currency: string) {
     style: 'currency',
     currency: normalizedCurrency
   }).format(normalizedAmount / 100);
+}
+
+function getCheckoutSessionId(search: string) {
+  const params = new URLSearchParams(search);
+  const checkoutSessionId =
+    params.get('stripeCheckoutSessionId') || params.get('session_id') || '';
+  return checkoutSessionId.trim();
 }
