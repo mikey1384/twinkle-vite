@@ -305,6 +305,7 @@ registerMethods('content', [
   'updateTotalViewDuration',
   'uploadComment',
   'sponsorAiEnergyCommentReply',
+  'loadAiEnergyCommentReplySponsorStatus',
   'uploadContent',
   'uploadFeaturedPlaylists',
   'uploadFeaturedSubjects',

@@ -1864,6 +1864,29 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAiEnergyCommentReplySponsorStatus({
+      placeholderCommentId,
+      statusToken
+    }: {
+      placeholderCommentId: number;
+      statusToken?: string;
+    }) {
+      try {
+        const params = new URLSearchParams({
+          placeholderCommentId: String(placeholderCommentId)
+        });
+        if (statusToken) {
+          params.set('statusToken', statusToken);
+        }
+        const { data } = await request.get(
+          `${URL}/content/comments/ai-energy/sponsor/status?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadContent({
       byUser,
       url,

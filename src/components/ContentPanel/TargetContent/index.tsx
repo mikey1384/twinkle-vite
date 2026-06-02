@@ -19,6 +19,9 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import SecretComment from '~/components/SecretComment';
 import Icon from '~/components/Icon';
 import LoginToViewContent from '~/components/LoginToViewContent';
+import AiEnergySponsorButton, {
+  shouldRenderAiEnergySponsorNotice
+} from '~/components/Comments/AiEnergySponsorButton';
 import RewardButton from '~/components/Buttons/RewardButton';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -440,6 +443,15 @@ export default function TargetContent({
                         <SecretComment
                           style={{ marginBottom: '1rem' }}
                           onClick={() => navigate(`/subjects/${subject.id}`)}
+                        />
+                      ) : shouldRenderAiEnergySponsorNotice(comment) ? (
+                        <AiEnergySponsorButton
+                          key={comment.id}
+                          comment={comment}
+                          theme={theme}
+                          style={{
+                            margin: '0.5rem 0 1rem'
+                          }}
                         />
                       ) : (
                         <RichText
