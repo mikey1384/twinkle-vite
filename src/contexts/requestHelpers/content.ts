@@ -979,7 +979,7 @@ export default function contentRequestHelpers({
       engine?: 'gemini' | 'openai';
     }) {
       try {
-        // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
+        // Hardcoded to OpenAI image generation - Gemini is unstable
         const forcedEngine = 'openai' as const;
         const {
           data: { imageUrl, aiUsagePolicy }
