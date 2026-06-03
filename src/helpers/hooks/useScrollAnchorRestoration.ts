@@ -59,8 +59,16 @@ export function useScrollAnchorRestoration({
     initialScroll.type === 'element' ? initialScroll.topOffset : undefined;
   const initialScrollAttemptedRef = useRef('');
   const ignoredSavedAnchorKeyRef = useRef('');
+  const activeAnchorKeyRef = useRef('');
   const restoreAttemptedRef = useRef('');
+  const restoreSettledSignatureRef = useRef('');
   const userCancelledRestoreRef = useRef('');
+
+  if (activeAnchorKeyRef.current !== anchorKey) {
+    activeAnchorKeyRef.current = anchorKey;
+    restoreAttemptedRef.current = '';
+    restoreSettledSignatureRef.current = '';
+  }
 
   if (ignoreSavedAnchor && ignoredSavedAnchorKeyRef.current !== anchorKey) {
     ignoredSavedAnchorKeyRef.current = anchorKey;
@@ -113,13 +121,30 @@ export function useScrollAnchorRestoration({
 
     function handleScroll() {
       if (scrollAnchorSavesAreSuppressed()) return;
-      saveCurrentAnchor(anchorKey, container, getActiveScroller());
+      if (saveShouldWaitForPendingRestore()) return;
+      saveAnchorAndMarkSettled();
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         frame = 0;
         if (scrollAnchorSavesAreSuppressed()) return;
-        saveCurrentAnchor(anchorKey, container, getActiveScroller());
+        if (saveShouldWaitForPendingRestore()) return;
+        saveAnchorAndMarkSettled();
       });
+    }
+
+    function saveAnchorAndMarkSettled() {
+      saveCurrentAnchor(anchorKey, container, getActiveScroller());
+      restoreSettledSignatureRef.current =
+        getSavedAnchorRestoreSignature(anchorKey);
+    }
+
+    function saveShouldWaitForPendingRestore() {
+      if (ignoredSavedAnchorKeyRef.current === anchorKey) return false;
+      const restoreSignature = getSavedAnchorRestoreSignature(anchorKey);
+      return (
+        !!restoreSignature &&
+        restoreSettledSignatureRef.current !== restoreSignature
+      );
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -127,8 +152,11 @@ export function useScrollAnchorRestoration({
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
-      if (!scrollAnchorSavesAreSuppressed()) {
-        saveCurrentAnchor(anchorKey, container, getActiveScroller());
+      if (
+        !scrollAnchorSavesAreSuppressed() &&
+        !saveShouldWaitForPendingRestore()
+      ) {
+        saveAnchorAndMarkSettled();
       }
       window.removeEventListener('scroll', handleScroll);
       scroller?.removeEventListener('scroll', handleScroll);
@@ -137,12 +165,21 @@ export function useScrollAnchorRestoration({
 
   useLayoutEffect(() => {
     if (!itemsReady || !containerRef.current) return;
-    if (scrollAnchorRestoresAreSuppressed()) return;
-    if (userCancelledRestoreRef.current === anchorKey) return;
     const savedAnchor =
       ignoredSavedAnchorKeyRef.current === anchorKey
         ? undefined
         : savedScrollAnchors[anchorKey];
+    const restoreSignature = savedAnchor
+      ? getSavedAnchorRestoreSignature(anchorKey)
+      : '';
+    if (scrollAnchorRestoresAreSuppressed()) {
+      markSavedAnchorRestoreSettled();
+      return;
+    }
+    if (userCancelledRestoreRef.current === anchorKey) {
+      markSavedAnchorRestoreSettled();
+      return;
+    }
     if (!savedAnchor) {
       const initialScrollKey = `${anchorKey}:initial`;
       if (initialScrollAttemptedRef.current === initialScrollKey) return;
@@ -160,7 +197,10 @@ export function useScrollAnchorRestoration({
     const restoreKey = `${anchorKey}:${anchorToRestore.primaryId || ''}:${
       anchorToRestore.secondaryId || ''
     }:${anchorToRestore.contentKey || ''}`;
-    if (restoreAttemptedRef.current === restoreKey) return;
+    if (restoreAttemptedRef.current === restoreKey) {
+      markSavedAnchorRestoreSettled();
+      return;
+    }
     restoreAttemptedRef.current = restoreKey;
 
     let attempts = 0;
@@ -186,13 +226,17 @@ export function useScrollAnchorRestoration({
       const anchorElement = findAnchorElement(container, anchorToRestore);
       if (!anchorElement) {
         restoreToSavedScrollTop(anchorToRestore, scroller);
+        markRestoreSettledIfNoAnchorIdentity();
         attempts += 1;
         if (attempts < 12) {
           restoreFrame = window.requestAnimationFrame(restore);
+        } else if (!resizeObserver && !mutationObserver) {
+          markRestoreSettled();
         }
         return;
       }
       restoreToAnchor(anchorElement, anchorToRestore.offset, scroller);
+      markRestoreSettled();
       settleAnchor();
     }
 
@@ -218,6 +262,7 @@ export function useScrollAnchorRestoration({
       observerTimer = window.setTimeout(() => {
         resizeObserver?.disconnect();
         mutationObserver?.disconnect();
+        markRestoreSettled();
         removeRestoreCancelListeners();
       }, 3000);
     }
@@ -272,6 +317,7 @@ export function useScrollAnchorRestoration({
 
     function cancelPendingRestore() {
       restoreCancelled = true;
+      markRestoreSettled();
       if (restoreFrame) window.cancelAnimationFrame(restoreFrame);
       if (settleFrame) window.cancelAnimationFrame(settleFrame);
       if (observerTimer) window.clearTimeout(observerTimer);
@@ -297,15 +343,33 @@ export function useScrollAnchorRestoration({
         const anchorElement = findAnchorElement(container, anchorToRestore);
         if (!anchorElement) {
           restoreToSavedScrollTop(anchorToRestore, scroller);
+          markRestoreSettledIfNoAnchorIdentity();
           return;
         }
 
         restoreToAnchor(anchorElement, anchorToRestore.offset, scroller);
+        markRestoreSettled();
         settleAttempts += 1;
         if (settleAttempts < 12 && !restoreCancelled) {
           settleFrame = window.requestAnimationFrame(settle);
         }
       });
+    }
+
+    function markRestoreSettled() {
+      restoreSettledSignatureRef.current = restoreSignature;
+    }
+
+    function markRestoreSettledIfNoAnchorIdentity() {
+      if (!savedAnchorHasElementIdentity(anchorToRestore)) {
+        markRestoreSettled();
+      }
+    }
+
+    function markSavedAnchorRestoreSettled() {
+      if (restoreSignature) {
+        restoreSettledSignatureRef.current = restoreSignature;
+      }
     }
   }, [
     anchorKey,
@@ -316,6 +380,20 @@ export function useScrollAnchorRestoration({
     itemsReady,
     ignoreSavedAnchor
   ]);
+}
+
+function savedAnchorHasElementIdentity(savedAnchor: SavedScrollAnchor) {
+  return Boolean(
+    savedAnchor.primaryId || savedAnchor.secondaryId || savedAnchor.contentKey
+  );
+}
+
+function getSavedAnchorRestoreSignature(anchorKey: string) {
+  const savedAnchor = savedScrollAnchors[anchorKey];
+  if (!savedAnchor) return '';
+  return `${anchorKey}:${savedAnchor.primaryId || ''}:${
+    savedAnchor.secondaryId || ''
+  }:${savedAnchor.contentKey || ''}:${savedAnchor.offset}:${savedAnchor.scrollTop}`;
 }
 
 export function saveScrollAnchorForElement(sourceElement: HTMLElement | null) {

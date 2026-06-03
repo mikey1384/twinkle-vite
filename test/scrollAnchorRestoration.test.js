@@ -50,6 +50,36 @@ const handleStoryClickSource = homeMenuItemsSource.slice(
 
 assert.match(source, /scrollTop: number;/);
 assert.match(source, /const scrollTop = getScrollTop\(scroller\);/);
+assert.match(source, /restoreSettledSignatureRef/);
+assert.match(source, /function savedAnchorHasElementIdentity/);
+assert.match(source, /function getSavedAnchorRestoreSignature/);
+assert.match(source, /function saveShouldWaitForPendingRestore\(\)/);
+assert.match(
+  source,
+  /if \(activeAnchorKeyRef\.current !== anchorKey\) \{[\s\S]*restoreAttemptedRef\.current = '';[\s\S]*restoreSettledSignatureRef\.current = '';[\s\S]*\}/
+);
+assert.match(
+  source,
+  /!!restoreSignature &&[\s\S]*restoreSettledSignatureRef\.current !== restoreSignature/
+);
+assert.match(source, /!saveShouldWaitForPendingRestore\(\)/);
+assert.match(source, /function markSavedAnchorRestoreSettled\(\)/);
+assert.match(
+  source,
+  /if \(scrollAnchorRestoresAreSuppressed\(\)\) \{[\s\S]*markSavedAnchorRestoreSettled\(\);[\s\S]*return;[\s\S]*\}/
+);
+assert.match(
+  source,
+  /if \(userCancelledRestoreRef\.current === anchorKey\) \{[\s\S]*markSavedAnchorRestoreSettled\(\);[\s\S]*return;[\s\S]*\}/
+);
+assert.match(
+  source,
+  /if \(restoreAttemptedRef\.current === restoreKey\) \{[\s\S]*markSavedAnchorRestoreSettled\(\);[\s\S]*return;[\s\S]*\}/
+);
+assert.match(
+  source,
+  /function markRestoreSettledIfNoAnchorIdentity\(\) \{[\s\S]*!savedAnchorHasElementIdentity\(anchorToRestore\)[\s\S]*markRestoreSettled\(\);[\s\S]*\}/
+);
 assert.match(source, /const scrollableOverflowValues = new Set/);
 assert.match(
   source,
@@ -111,7 +141,7 @@ assert.match(
 );
 assert.match(
   source,
-  /if \(!anchorElement\) \{[\s\S]*restoreToSavedScrollTop\(anchorToRestore, scroller\);[\s\S]*attempts \+= 1;/
+  /if \(!anchorElement\) \{[\s\S]*restoreToSavedScrollTop\(anchorToRestore, scroller\);[\s\S]*markRestoreSettledIfNoAnchorIdentity\(\);[\s\S]*attempts \+= 1;/
 );
 assert.match(
   source,
