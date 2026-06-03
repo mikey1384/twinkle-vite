@@ -11,6 +11,7 @@ import ViewCount from '~/components/ViewCount';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import { mobileMaxWidth } from '~/constants/css';
 import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
+import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
 import type { TodayTopViewedBuild } from './types';
 
 const displayFontFamily =
@@ -190,12 +191,6 @@ const topViewedVisitCountClass = css`
   background: rgba(65, 140, 235, 0.1);
   color: #1d4ed8;
   opacity: 1;
-
-  &::after {
-    content: 'total';
-    color: var(--chat-text);
-    opacity: 0.64;
-  }
 `;
 
 const topViewedActionRowClass = css`
@@ -213,6 +208,25 @@ const topViewedPreviewClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     aspect-ratio: 16 / 9;
     min-height: 0;
+  }
+`;
+
+const topViewedPreviewLinkClass = css`
+  appearance: none;
+  display: block;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 2px solid #418ceb;
+    outline-offset: 3px;
+    border-radius: 0.65rem;
   }
 `;
 
@@ -304,6 +318,7 @@ function TodayTopViewedShowcase({
   onOpen: (build: TodayTopViewedBuild) => void;
 }) {
   const displayTitle = build.title || 'Untitled Build';
+  const topViewedAppHref = `/app/${build.id}?viewSource=${BUILD_TRENDING_SHOWCASE_VIEW_SOURCE}`;
   const isFavorited = Boolean(build.isFavorited);
   return (
     <aside className={topViewedShowcaseClass} aria-label="Trending app today">
@@ -350,12 +365,38 @@ function TodayTopViewedShowcase({
           />
         </div>
       </div>
-      <PreviewFrame
-        className={topViewedPreviewClass}
-        thumbnailUrl={build.thumbnailUrl}
-        alt={`${displayTitle} screenshot`}
-        ariaLabel={`${displayTitle} preview`}
-      />
+      <a
+        href={topViewedAppHref}
+        className={topViewedPreviewLinkClass}
+        onClick={handlePreviewLinkClick}
+        aria-label={`Open ${displayTitle}`}
+      >
+        <PreviewFrame
+          className={topViewedPreviewClass}
+          thumbnailUrl={build.thumbnailUrl}
+          alt={`${displayTitle} screenshot`}
+          ariaLabel={`${displayTitle} preview`}
+        />
+      </a>
     </aside>
+  );
+
+  function handlePreviewLinkClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (linkClickShouldUseBrowserNavigation(event)) return;
+    event.preventDefault();
+    onOpen(build);
+  }
+}
+
+function linkClickShouldUseBrowserNavigation(
+  event: React.MouseEvent<HTMLAnchorElement>
+) {
+  return (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey
   );
 }
