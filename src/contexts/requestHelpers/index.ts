@@ -403,6 +403,7 @@ registerMethods('management', [
   'loadAiCostRiskGroupEvents',
   'loadAiEnergyManualIdentityBuckets',
   'createAiEnergyManualIdentityBucket',
+  'updateAiEnergyManualIdentityBucket',
   'saveAiEnergyManualIdentityRule',
   'disableAiEnergyManualIdentityRule',
   'loadHomeFeedPerformanceReport',

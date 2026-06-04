@@ -94,6 +94,9 @@ export interface AiEnergyManualIdentityRule {
   createdAt?: number;
   updatedAt?: number;
   disabledAt?: number;
+  userId?: number;
+  username?: string;
+  accountVerifiedEmail?: string;
 }
 
 export interface AiEnergyManualIdentityBucket {
@@ -126,6 +129,28 @@ export interface AiEnergyManualIdentityRawSignal {
   riskKeyValue: string;
   label: string;
 }
+
+export type AiEnergyManualIdentityBucketAction =
+  | {
+      actionType: 'event_row';
+      row: AiCostRow;
+    }
+  | {
+      actionType: 'user';
+      row: AiCostRow;
+    }
+  | {
+      actionType: 'email';
+      row: AiCostRow;
+    }
+  | {
+      actionType: 'risk_key';
+      row: AiCostRow;
+    }
+  | {
+      actionType: 'raw_signal';
+      signal: AiEnergyManualIdentityRawSignal;
+    };
 
 export interface AiEnergyManualIdentityRecommendations {
   accounts: AiEnergyManualIdentityRecommendation[];

@@ -280,6 +280,24 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async updateAiEnergyManualIdentityBucket({
+      bucketId,
+      label
+    }: {
+      bucketId: number;
+      label: string;
+    }) {
+      try {
+        const { data } = await request.patch(
+          `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}`,
+          { label },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async saveAiEnergyManualIdentityRule({
       bucketId,
       matchType,

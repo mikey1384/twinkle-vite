@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
+import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import { Color } from '~/constants/css';
 import RiskGroupDetail from './RiskGroupDetail';
 import { DataTable, EmptyMessage, PaginationFooter } from './DataTable';
@@ -15,6 +17,7 @@ import {
   formatTime,
   formatTokenLabel,
   formatUsd,
+  getBucketLabelForRow,
   getEventActionKey,
   getEventSignalLabel,
   getRiskGroupRowKey,
@@ -28,6 +31,7 @@ import {
 import {
   actionsClass,
   barRowClass,
+  bucketActionModalClass,
   barsClass,
   emptyStateClass,
   headerClass,
@@ -44,6 +48,7 @@ import {
 } from './styles';
 import {
   AiEnergyManualIdentityBucket,
+  AiEnergyManualIdentityBucketAction,
   AiEnergyManualIdentityRecommendations,
   AiEnergyManualIdentityRawSignal,
   AiEnergyManualIdentityRule,
@@ -71,25 +76,26 @@ export default function Content({
   onLoadMoreEvents,
   onLoadMoreRiskGroupEvents,
   onBucketDraftLabelChange,
+  onAddPendingBucketActionToBucket,
+  onCloseBucketActionModal,
   onCreateBucket,
-  onCreateBucketFromRow,
+  onCreateBucketForPendingAction,
   onRefresh,
   onDisableManualIdentityRule,
+  onOpenBucketActionModal,
   onSelectBucket,
-  onAddEmailToBucket,
-  onAddEventRowToBucket,
-  onAddRiskGroupToBucket,
-  onAddRawSignalToBucket,
-  onAddUserToBucket,
   onRiskGroupSelect,
   onSelectDays,
   onCloseRiskGroup,
   report,
   bucketDraftLabel,
+  pendingBucketAction,
   bucketRecommendations,
   identityBuckets,
   manualIdentityError,
+  manualIdentityLoading,
   manualIdentitySavingKey,
+  onBucketTitleSave,
   selectedBucketId,
   riskGroupDetail,
   riskGroupError,
@@ -108,25 +114,34 @@ export default function Content({
   onLoadMoreEvents: () => void;
   onLoadMoreRiskGroupEvents: () => void;
   onBucketDraftLabelChange: (value: string) => void;
+  onAddPendingBucketActionToBucket: (bucketId: number) => void;
+  onCloseBucketActionModal: () => void;
   onCreateBucket: () => void;
-  onCreateBucketFromRow: (row: AiCostRow) => void;
+  onCreateBucketForPendingAction: (label: string) => void;
   onRefresh: () => void;
   onDisableManualIdentityRule: (rule: AiEnergyManualIdentityRule) => void;
+  onOpenBucketActionModal: (
+    action: AiEnergyManualIdentityBucketAction
+  ) => void;
   onSelectBucket: (bucketId: number) => void;
-  onAddEmailToBucket: (row: AiCostRow) => void;
-  onAddEventRowToBucket: (row: AiCostRow) => void;
-  onAddRiskGroupToBucket: (row: AiCostRow) => void;
-  onAddRawSignalToBucket: (signal: AiEnergyManualIdentityRawSignal) => void;
-  onAddUserToBucket: (row: AiCostRow) => void;
   onRiskGroupSelect: (row: AiCostRow) => void;
   onSelectDays: (days: RangeOption) => void;
   onCloseRiskGroup: () => void;
   report: AiCostReport | null;
   bucketDraftLabel: string;
+  pendingBucketAction: AiEnergyManualIdentityBucketAction | null;
   bucketRecommendations: AiEnergyManualIdentityRecommendations;
   identityBuckets: AiEnergyManualIdentityBucket[];
   manualIdentityError: string;
+  manualIdentityLoading: boolean;
   manualIdentitySavingKey: string;
+  onBucketTitleSave: ({
+    bucketId,
+    label
+  }: {
+    bucketId: number;
+    label: string;
+  }) => void;
   selectedBucketId: number;
   riskGroupDetail: AiCostRiskGroupDetail | null;
   riskGroupError: string;
@@ -146,6 +161,10 @@ export default function Content({
   }, [report]);
   const selectedBucket =
     identityBuckets.find((bucket) => bucket.id === selectedBucketId) || null;
+  const [bucketTitleDraft, setBucketTitleDraft] = useState('');
+  useEffect(() => {
+    setBucketTitleDraft(selectedBucket?.label || '');
+  }, [selectedBucket?.id, selectedBucket?.label]);
   const linkedRuleRows = useMemo<AiCostRow[]>(() => {
     return (selectedBucket?.rules || []).map((rule) => ({
       ...rule
@@ -232,6 +251,11 @@ export default function Content({
           </Button>
         </div>
         <div className="bucket-list-row">
+          {manualIdentityLoading ? (
+            <div className="bucket-loading">
+              <Loading />
+            </div>
+          ) : null}
           {identityBuckets.map((bucket) => (
             <button
               key={bucket.id}
@@ -239,7 +263,8 @@ export default function Content({
               className={bucket.id === selectedBucketId ? 'active' : ''}
               onClick={() => onSelectBucket(bucket.id)}
             >
-              {bucket.label}
+              <strong>{bucket.label}</strong>
+              <small>{formatNumber(bucket.rules.length)} items</small>
             </button>
           ))}
         </div>
@@ -289,11 +314,43 @@ export default function Content({
           </section>
 
           <Panel
-            title="Selected Identity Bucket"
+            title="Editing Bucket"
             note={selectedBucket ? selectedBucket.label : 'Create a bucket'}
           >
             {selectedBucket ? (
               <>
+                <div className="bucket-title-row">
+                  <label htmlFor="manual-ai-selected-bucket-title">
+                    Bucket Title
+                  </label>
+                  <input
+                    id="manual-ai-selected-bucket-title"
+                    value={bucketTitleDraft}
+                    onChange={(event) =>
+                      setBucketTitleDraft(event.currentTarget.value)
+                    }
+                  />
+                  <Button
+                    color="logoBlue"
+                    variant="solid"
+                    loading={
+                      manualIdentitySavingKey ===
+                      `bucket:update:${selectedBucket.id}`
+                    }
+                    disabled={
+                      !bucketTitleDraft.trim() ||
+                      bucketTitleDraft.trim() === selectedBucket.label
+                    }
+                    onClick={() =>
+                      onBucketTitleSave({
+                        bucketId: selectedBucket.id,
+                        label: bucketTitleDraft
+                      })
+                    }
+                  >
+                    Save Title
+                  </Button>
+                </div>
                 <SubsectionHeader
                   title="Linked Items"
                   note={`${formatNumber(linkedRuleRows.length)} items`}
@@ -381,7 +438,12 @@ export default function Content({
                               manualIdentitySavingKey ===
                                 getAddUserSavingKey(row)
                             }
-                            onClick={() => onAddUserToBucket(row)}
+                            onClick={() =>
+                              onOpenBucketActionModal({
+                                actionType: 'user',
+                                row
+                              })
+                            }
                           >
                             Add User
                           </button>
@@ -393,7 +455,12 @@ export default function Content({
                               manualIdentitySavingKey ===
                                 getAddEmailSavingKey(row)
                             }
-                            onClick={() => onAddEmailToBucket(row)}
+                            onClick={() =>
+                              onOpenBucketActionModal({
+                                actionType: 'email',
+                                row
+                              })
+                            }
                           >
                             Add Email
                           </button>
@@ -438,7 +505,12 @@ export default function Content({
                             manualIdentitySavingKey ===
                               getAddEmailSavingKey(row)
                           }
-                          onClick={() => onAddEmailToBucket(row)}
+                          onClick={() =>
+                            onOpenBucketActionModal({
+                              actionType: 'email',
+                              row
+                            })
+                          }
                         >
                           Add Email
                         </button>
@@ -487,7 +559,12 @@ export default function Content({
                             !row.riskKeyHash ||
                             manualIdentitySavingKey === getAddRiskSavingKey(row)
                           }
-                          onClick={() => onAddRiskGroupToBucket(row)}
+                          onClick={() =>
+                            onOpenBucketActionModal({
+                              actionType: 'risk_key',
+                              row
+                            })
+                          }
                         >
                           Add Signal
                         </button>
@@ -645,11 +722,15 @@ export default function Content({
                           type="button"
                           className={inlineActionClass}
                           disabled={
-                            !selectedBucketId ||
                             !row.userId ||
                             manualIdentitySavingKey === getAddUserSavingKey(row)
                           }
-                          onClick={() => onAddUserToBucket(row)}
+                          onClick={() =>
+                            onOpenBucketActionModal({
+                              actionType: 'user',
+                              row
+                            })
+                          }
                         >
                           Add User
                         </button>
@@ -657,12 +738,16 @@ export default function Content({
                           type="button"
                           className={inlineActionClass}
                           disabled={
-                            !selectedBucketId ||
                             !getRowEmail(row) ||
                             manualIdentitySavingKey ===
                               getAddEmailSavingKey(row)
                           }
-                          onClick={() => onAddEmailToBucket(row)}
+                          onClick={() =>
+                            onOpenBucketActionModal({
+                              actionType: 'email',
+                              row
+                            })
+                          }
                         >
                           Add Email
                         </button>
@@ -733,14 +818,16 @@ export default function Content({
                         type="button"
                         className={inlineActionClass}
                         disabled={
-                          !selectedBucketId ||
                           !row.riskKeyType ||
                           !row.riskKeyHash ||
                           manualIdentitySavingKey === getAddRiskSavingKey(row)
                         }
                         onClick={(event) => {
                           event.stopPropagation();
-                          onAddRiskGroupToBucket(row);
+                          onOpenBucketActionModal({
+                            actionType: 'risk_key',
+                            row
+                          });
                         }}
                       >
                         Add Signal
@@ -782,12 +869,9 @@ export default function Content({
                 loading={riskGroupLoading}
                 loadingMore={riskGroupEventsLoadingMore}
                 onLoadMore={onLoadMoreRiskGroupEvents}
-                onAddEmail={onAddEmailToBucket}
-                onAddRawSignal={onAddRawSignalToBucket}
-                onAddUser={onAddUserToBucket}
+                onOpenBucketActionModal={onOpenBucketActionModal}
                 eventsError={riskGroupEventsError}
                 manualIdentitySavingKey={manualIdentitySavingKey}
-                selectedBucketId={selectedBucketId}
               />
             </Panel>
           ) : null}
@@ -838,9 +922,7 @@ export default function Content({
                     <EventBucketActions
                       row={row}
                       manualIdentitySavingKey={manualIdentitySavingKey}
-                      selectedBucketId={selectedBucketId}
-                      onAddEventRow={onAddEventRowToBucket}
-                      onCreateBucketFromRow={onCreateBucketFromRow}
+                      onOpenBucketActionModal={onOpenBucketActionModal}
                     />
                   )
                 }
@@ -886,8 +968,7 @@ export default function Content({
                     <EvidenceSignalActions
                       row={row}
                       manualIdentitySavingKey={manualIdentitySavingKey}
-                      selectedBucketId={selectedBucketId}
-                      onAddRawSignal={onAddRawSignalToBucket}
+                      onOpenBucketActionModal={onOpenBucketActionModal}
                     />
                   )
                 }
@@ -896,6 +977,18 @@ export default function Content({
             />
           </Panel>
         </>
+      ) : null}
+      {pendingBucketAction ? (
+        <BucketActionModal
+          key={getBucketActionKey(pendingBucketAction)}
+          action={pendingBucketAction}
+          buckets={identityBuckets}
+          error={manualIdentityError}
+          manualIdentitySavingKey={manualIdentitySavingKey}
+          onAddToBucket={onAddPendingBucketActionToBucket}
+          onClose={onCloseBucketActionModal}
+          onCreateBucket={onCreateBucketForPendingAction}
+        />
       ) : null}
     </div>
   );
@@ -980,13 +1073,13 @@ function BarRow({
 function EvidenceSignalActions({
   row,
   manualIdentitySavingKey,
-  selectedBucketId,
-  onAddRawSignal
+  onOpenBucketActionModal
 }: {
   row: AiCostRow;
   manualIdentitySavingKey: string;
-  selectedBucketId: number;
-  onAddRawSignal: (signal: AiEnergyManualIdentityRawSignal) => void;
+  onOpenBucketActionModal: (
+    action: AiEnergyManualIdentityBucketAction
+  ) => void;
 }) {
   const signals = getEvidenceRawSignals(row);
   if (signals.length === 0) return null;
@@ -998,11 +1091,15 @@ function EvidenceSignalActions({
           type="button"
           className={inlineActionClass}
           disabled={
-            !selectedBucketId ||
             manualIdentitySavingKey ===
               `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`
           }
-          onClick={() => onAddRawSignal(signal)}
+          onClick={() =>
+            onOpenBucketActionModal({
+              actionType: 'raw_signal',
+              signal
+            })
+          }
         >
           {signal.label}
         </button>
@@ -1014,15 +1111,13 @@ function EvidenceSignalActions({
 function EventBucketActions({
   row,
   manualIdentitySavingKey,
-  selectedBucketId,
-  onAddEventRow,
-  onCreateBucketFromRow
+  onOpenBucketActionModal
 }: {
   row: AiCostRow;
   manualIdentitySavingKey: string;
-  selectedBucketId: number;
-  onAddEventRow: (row: AiCostRow) => void;
-  onCreateBucketFromRow: (row: AiCostRow) => void;
+  onOpenBucketActionModal: (
+    action: AiEnergyManualIdentityBucketAction
+  ) => void;
 }) {
   const hasEvidence = hasBucketEvidence(row);
   const actionKey = getEventActionKey(row);
@@ -1033,25 +1128,119 @@ function EventBucketActions({
         className={inlineActionClass}
         disabled={
           !hasEvidence ||
-          manualIdentitySavingKey === `event-bucket:${actionKey}`
-        }
-        onClick={() => onCreateBucketFromRow(row)}
-      >
-        New Bucket
-      </button>
-      <button
-        type="button"
-        className={inlineActionClass}
-        disabled={
-          !selectedBucketId ||
-          !hasEvidence ||
           manualIdentitySavingKey === `event-row:${actionKey}`
         }
-        onClick={() => onAddEventRow(row)}
+        onClick={() =>
+          onOpenBucketActionModal({
+            actionType: 'event_row',
+            row
+          })
+        }
       >
-        Add Row
+        Add to Bucket
       </button>
     </div>
+  );
+}
+
+function BucketActionModal({
+  action,
+  buckets,
+  error,
+  manualIdentitySavingKey,
+  onAddToBucket,
+  onClose,
+  onCreateBucket
+}: {
+  action: AiEnergyManualIdentityBucketAction;
+  buckets: AiEnergyManualIdentityBucket[];
+  error: string;
+  manualIdentitySavingKey: string;
+  onAddToBucket: (bucketId: number) => void;
+  onClose: () => void;
+  onCreateBucket: (label: string) => void;
+}) {
+  const [newBucketLabel, setNewBucketLabel] = useState(
+    getDefaultBucketLabelForAction(action)
+  );
+  const isSaving = Boolean(manualIdentitySavingKey);
+
+  return (
+    <Modal
+      modalKey="AiCostBucketActionModal"
+      isOpen
+      onClose={onClose}
+      hasHeader={false}
+      bodyPadding={0}
+      size="lg"
+    >
+      <LegacyModalLayout className={bucketActionModalClass}>
+        <header>{getBucketActionTitle(action)}</header>
+        <main>
+          <div className="target-summary">
+            <span>Target</span>
+            <strong>{getBucketActionSummary(action)}</strong>
+          </div>
+          {isSaving ? (
+            <div className="modal-saving">
+              <span className="mini-spinner" />
+              Saving...
+            </div>
+          ) : null}
+
+          <div className="bucket-choice-section">
+            <span>Existing Buckets</span>
+            {buckets.length ? (
+              <div className="bucket-choice-list">
+                {buckets.map((bucket) => (
+                  <button
+                    key={bucket.id}
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => onAddToBucket(bucket.id)}
+                  >
+                    <strong>{bucket.label}</strong>
+                    <small>{formatNumber(bucket.rules.length)} items</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-bucket-list">No buckets yet.</div>
+            )}
+          </div>
+
+          <div className="bucket-choice-section">
+            <span>New Bucket</span>
+            <div className="new-bucket-row">
+              <input
+                value={newBucketLabel}
+                onChange={(event) =>
+                  setNewBucketLabel(event.currentTarget.value)
+                }
+                placeholder="Bucket name"
+              />
+              <Button
+                color="logoBlue"
+                variant="solid"
+                loading={manualIdentitySavingKey.startsWith(
+                  'bucket-action-create:'
+                )}
+                disabled={isSaving || !newBucketLabel.trim()}
+                onClick={() => onCreateBucket(newBucketLabel)}
+              >
+                Create and Add
+              </Button>
+            </div>
+          </div>
+          {error ? <div className="modal-error">{error}</div> : null}
+        </main>
+        <footer>
+          <Button variant="ghost" disabled={isSaving} onClick={onClose}>
+            Cancel
+          </Button>
+        </footer>
+      </LegacyModalLayout>
+    </Modal>
   );
 }
 
@@ -1090,9 +1279,69 @@ function getEvidenceRawSignals(
   ].filter(Boolean) as AiEnergyManualIdentityRawSignal[];
 }
 
+function getBucketActionKey(action: AiEnergyManualIdentityBucketAction) {
+  if (action.actionType === 'event_row') {
+    return `event:${getEventActionKey(action.row)}`;
+  }
+  if (action.actionType === 'user') {
+    return `user:${Number(action.row.userId || 0)}`;
+  }
+  if (action.actionType === 'email') {
+    return `email:${getRowEmail(action.row)}`;
+  }
+  if (action.actionType === 'risk_key') {
+    return `risk:${action.row.riskKeyType || ''}:${action.row.riskKeyHash || ''}`;
+  }
+  return `raw-risk:${action.signal.riskKeyType}:${action.signal.riskKeyValue}`;
+}
+
+function getBucketActionTitle(action: AiEnergyManualIdentityBucketAction) {
+  if (action.actionType === 'event_row') return 'Add Event Evidence';
+  if (action.actionType === 'user') return 'Add User';
+  if (action.actionType === 'email') return 'Add Email';
+  return 'Add Signal';
+}
+
+function getDefaultBucketLabelForAction(
+  action: AiEnergyManualIdentityBucketAction
+) {
+  if (action.actionType === 'raw_signal') return action.signal.label;
+  return getBucketLabelForRow(action.row);
+}
+
+function getBucketActionSummary(action: AiEnergyManualIdentityBucketAction) {
+  if (action.actionType === 'event_row') {
+    return getBucketLabelForRow(action.row) || 'Spend event';
+  }
+  if (action.actionType === 'user') {
+    const username = String(action.row.username || '').trim();
+    const userId = Number(action.row.userId || 0);
+    return username && userId ? `${username} (${userId})` : `User ${userId}`;
+  }
+  if (action.actionType === 'email') {
+    return getRowEmail(action.row) || 'Email';
+  }
+  if (action.actionType === 'risk_key') {
+    return `${action.row.riskKeyType || 'signal'} ${shortenHash(
+      String(action.row.riskKeyHash || '')
+    )}`;
+  }
+  return action.signal.label;
+}
+
 function getRuleMatchLabel(row: AiCostRow) {
   if (row.matchType === 'email') return `Email: ${row.matchValue || ''}`;
-  if (row.matchType === 'user') return `User: ${row.matchValue || ''}`;
+  if (row.matchType === 'user') {
+    const username = String(row.username || '').trim();
+    const userId = Number(row.userId || row.matchValue || 0);
+    const email = getRowEmail(row);
+    if (username) {
+      return [userId ? `${username} (${userId})` : username, email || '']
+        .filter(Boolean)
+        .join(' · ');
+    }
+    return userId ? `User ${userId}` : `User: ${row.matchValue || ''}`;
+  }
   if (row.matchType === 'risk_key') {
     return `${row.riskKeyType || 'risk'}:${shortenHash(
       String(row.riskKeyHash || '')

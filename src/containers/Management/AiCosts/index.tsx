@@ -4,14 +4,13 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import Content from './Content';
 import {
-  getBucketLabelForRow,
   getEventActionKey,
   getEventSignals,
-  getRowEmail,
-  hasBucketEvidence
+  getRowEmail
 } from './helpers/formatters';
 import {
   AiEnergyManualIdentityBucket,
+  AiEnergyManualIdentityBucketAction,
   AiEnergyManualIdentityRecommendations,
   AiEnergyManualIdentityRawSignal,
   AiEnergyManualIdentityRule,
@@ -48,6 +47,9 @@ export default function AiCosts() {
     useState<AiEnergyManualIdentityRecommendations>(
       getEmptyBucketRecommendations
     );
+  const [manualIdentityLoading, setManualIdentityLoading] = useState(false);
+  const [pendingBucketAction, setPendingBucketAction] =
+    useState<AiEnergyManualIdentityBucketAction | null>(null);
   const [manualIdentityError, setManualIdentityError] = useState('');
   const [manualIdentitySavingKey, setManualIdentitySavingKey] = useState('');
   const [selectedRiskGroup, setSelectedRiskGroup] = useState<{
@@ -82,6 +84,9 @@ export default function AiCosts() {
   );
   const createAiEnergyManualIdentityBucket = useAppContext(
     (v) => v.requestHelpers.createAiEnergyManualIdentityBucket
+  );
+  const updateAiEnergyManualIdentityBucket = useAppContext(
+    (v) => v.requestHelpers.updateAiEnergyManualIdentityBucket
   );
   const saveAiEnergyManualIdentityRule = useAppContext(
     (v) => v.requestHelpers.saveAiEnergyManualIdentityRule
@@ -127,6 +132,7 @@ export default function AiCosts() {
     void init();
 
     async function init() {
+      setManualIdentityLoading(true);
       try {
         const manualBucketData = await loadAiEnergyManualIdentityBuckets({
           days,
@@ -139,6 +145,10 @@ export default function AiCosts() {
         setManualIdentityError(
           loadError?.message || 'Failed to load manual identity buckets'
         );
+      } finally {
+        if (!canceled) {
+          setManualIdentityLoading(false);
+        }
       }
     }
 
@@ -216,28 +226,29 @@ export default function AiCosts() {
       eventsLoadingMore={eventsLoadingMore}
       loading={loading}
       bucketDraftLabel={bucketDraftLabel}
+      pendingBucketAction={pendingBucketAction}
       bucketRecommendations={bucketRecommendations}
       identityBuckets={identityBuckets}
+      onAddPendingBucketActionToBucket={handleAddPendingBucketActionToBucket}
       onCloseRiskGroup={() => setSelectedRiskGroup(null)}
+      onCloseBucketActionModal={handleCloseBucketActionModal}
       onBucketDraftLabelChange={handleBucketDraftLabelChange}
       onCreateBucket={handleCreateBucket}
-      onCreateBucketFromRow={handleCreateBucketFromRow}
+      onCreateBucketForPendingAction={handleCreateBucketForPendingAction}
       onDownloadCSV={handleDownloadCSV}
       onLoadMoreEvents={handleLoadMoreEvents}
       onLoadMoreRiskGroupEvents={handleLoadMoreRiskGroupEvents}
       onRefresh={handleRefresh}
       onDisableManualIdentityRule={handleDisableManualIdentityRule}
+      onOpenBucketActionModal={handleOpenBucketActionModal}
       onSelectBucket={handleSelectBucket}
-      onAddEmailToBucket={handleAddEmailToBucket}
-      onAddEventRowToBucket={handleAddEventRowToBucket}
-      onAddRiskGroupToBucket={handleAddRiskGroupToBucket}
-      onAddRawSignalToBucket={handleAddRawSignalToBucket}
-      onAddUserToBucket={handleAddUserToBucket}
       onRiskGroupSelect={handleRiskGroupSelect}
       onSelectDays={setDays}
       report={report}
       manualIdentityError={manualIdentityError}
+      manualIdentityLoading={manualIdentityLoading}
       manualIdentitySavingKey={manualIdentitySavingKey}
+      onBucketTitleSave={handleBucketTitleSave}
       selectedBucketId={selectedBucketId}
       riskGroupDetail={riskGroupDetail}
       riskGroupError={riskGroupError}
@@ -277,17 +288,28 @@ export default function AiCosts() {
   }
 
   async function refreshManualIdentityBuckets(bucketId = selectedBucketId) {
-    const data = await loadAiEnergyManualIdentityBuckets({
-      days,
-      bucketId
-    });
-    applyManualIdentityBucketData(data);
+    setManualIdentityLoading(true);
+    try {
+      const data = await loadAiEnergyManualIdentityBuckets({
+        days,
+        bucketId
+      });
+      applyManualIdentityBucketData(data);
+    } finally {
+      setManualIdentityLoading(false);
+    }
   }
 
-  function getSelectedBucketId() {
-    if (selectedBucketId) return selectedBucketId;
-    setManualIdentityError('Create or select a bucket first.');
-    return 0;
+  function handleOpenBucketActionModal(
+    action: AiEnergyManualIdentityBucketAction
+  ) {
+    setPendingBucketAction(action);
+    setManualIdentityError('');
+  }
+
+  function handleCloseBucketActionModal() {
+    if (manualIdentitySavingKey) return;
+    setPendingBucketAction(null);
   }
 
   async function handleCreateBucket() {
@@ -317,179 +339,91 @@ export default function AiCosts() {
     }
   }
 
-  async function handleCreateBucketFromRow(row: AiCostRow) {
-    const label = getBucketLabelForRow(row);
-    if (!label || !hasBucketEvidence(row)) {
-      setManualIdentityError('This event row has no account or signal.');
+  async function handleBucketTitleSave({
+    bucketId,
+    label
+  }: {
+    bucketId: number;
+    label: string;
+  }) {
+    const normalizedLabel = label.trim();
+    if (!bucketId || !normalizedLabel) {
+      setManualIdentityError('Bucket name is required.');
       return;
     }
-    const savingKey = `event-bucket:${getEventActionKey(row)}`;
+    const savingKey = `bucket:update:${bucketId}`;
     setManualIdentitySavingKey(savingKey);
     setManualIdentityError('');
     try {
-      const data = await createAiEnergyManualIdentityBucket({ label });
+      await updateAiEnergyManualIdentityBucket({
+        bucketId,
+        label: normalizedLabel
+      });
+      await refreshManualIdentityBuckets(bucketId);
+    } catch (saveError: any) {
+      setManualIdentityError(saveError?.message || 'Failed to update bucket');
+    } finally {
+      setManualIdentitySavingKey('');
+    }
+  }
+
+  async function handleAddPendingBucketActionToBucket(bucketId: number) {
+    if (!pendingBucketAction || !bucketId) return;
+    const savingKey = getPendingBucketActionSavingKey(pendingBucketAction);
+    setManualIdentitySavingKey(savingKey);
+    setManualIdentityError('');
+    try {
+      await addPendingActionRulesToBucket({
+        bucketId,
+        action: pendingBucketAction,
+        notePrefix: 'Added from AI Costs'
+      });
+      await refreshManualIdentityBuckets(bucketId);
+      setSelectedBucketId(bucketId);
+      setPendingBucketAction(null);
+      setReloadKey((key) => key + 1);
+    } catch (saveError: any) {
+      setManualIdentityError(
+        saveError?.message || 'Failed to add item to bucket'
+      );
+    } finally {
+      setManualIdentitySavingKey('');
+    }
+  }
+
+  async function handleCreateBucketForPendingAction(label: string) {
+    if (!pendingBucketAction) return;
+    const normalizedLabel = label.trim();
+    if (!normalizedLabel) {
+      setManualIdentityError('Bucket name is required.');
+      return;
+    }
+    const savingKey = `bucket-action-create:${getPendingBucketActionSavingKey(
+      pendingBucketAction
+    )}`;
+    setManualIdentitySavingKey(savingKey);
+    setManualIdentityError('');
+    try {
+      const data = await createAiEnergyManualIdentityBucket({
+        label: normalizedLabel
+      });
       const bucketId = Number(data?.bucket?.id || 0);
       if (!bucketId) {
         await refreshManualIdentityBuckets();
         return;
       }
-      setBucketRecommendations(getEmptyBucketRecommendations());
+      await addPendingActionRulesToBucket({
+        bucketId,
+        action: pendingBucketAction,
+        notePrefix: 'Seeded from AI Costs'
+      });
+      await refreshManualIdentityBuckets(bucketId);
       setSelectedBucketId(bucketId);
-      await addEventRowRulesToBucket({
-        bucketId,
-        row,
-        notePrefix: 'Seeded from AI Costs event'
-      });
-      await refreshManualIdentityBuckets(bucketId);
+      setPendingBucketAction(null);
       setReloadKey((key) => key + 1);
     } catch (saveError: any) {
       setManualIdentityError(
-        saveError?.message || 'Failed to create bucket from event'
-      );
-    } finally {
-      setManualIdentitySavingKey('');
-    }
-  }
-
-  async function handleAddEventRowToBucket(row: AiCostRow) {
-    const bucketId = getSelectedBucketId();
-    if (!bucketId) return;
-    if (!hasBucketEvidence(row)) {
-      setManualIdentityError('This event row has no account or signal.');
-      return;
-    }
-    const savingKey = `event-row:${getEventActionKey(row)}`;
-    setManualIdentitySavingKey(savingKey);
-    setManualIdentityError('');
-    try {
-      await addEventRowRulesToBucket({
-        bucketId,
-        row,
-        notePrefix: 'Added from AI Costs event'
-      });
-      await refreshManualIdentityBuckets(bucketId);
-      setReloadKey((key) => key + 1);
-    } catch (saveError: any) {
-      setManualIdentityError(
-        saveError?.message || 'Failed to add event row to bucket'
-      );
-    } finally {
-      setManualIdentitySavingKey('');
-    }
-  }
-
-  async function handleAddUserToBucket(row: AiCostRow) {
-    const bucketId = getSelectedBucketId();
-    if (!bucketId) return;
-    const userId = Number(row.userId || 0);
-    if (!userId) {
-      setManualIdentityError('This row has no user id.');
-      return;
-    }
-    const savingKey = `user:${userId}`;
-    setManualIdentitySavingKey(savingKey);
-    setManualIdentityError('');
-    try {
-      await saveAiEnergyManualIdentityRule({
-        bucketId,
-        matchType: 'user',
-        userId,
-        note: `Added from AI Costs account ${userId}`
-      });
-      await refreshManualIdentityBuckets(bucketId);
-      setReloadKey((key) => key + 1);
-    } catch (saveError: any) {
-      setManualIdentityError(
-        saveError?.message || 'Failed to add user to bucket'
-      );
-    } finally {
-      setManualIdentitySavingKey('');
-    }
-  }
-
-  async function handleAddEmailToBucket(row: AiCostRow) {
-    const bucketId = getSelectedBucketId();
-    if (!bucketId) return;
-    const email = getRowEmail(row);
-    if (!email) {
-      setManualIdentityError('This row has no verified email.');
-      return;
-    }
-    const savingKey = `email:${email}`;
-    setManualIdentitySavingKey(savingKey);
-    setManualIdentityError('');
-    try {
-      await saveAiEnergyManualIdentityRule({
-        bucketId,
-        matchType: 'email',
-        email,
-        note: `Added from AI Costs account ${row.userId || ''}`.trim()
-      });
-      await refreshManualIdentityBuckets(bucketId);
-      setReloadKey((key) => key + 1);
-    } catch (saveError: any) {
-      setManualIdentityError(
-        saveError?.message || 'Failed to add email to bucket'
-      );
-    } finally {
-      setManualIdentitySavingKey('');
-    }
-  }
-
-  async function handleAddRiskGroupToBucket(row: AiCostRow) {
-    const bucketId = getSelectedBucketId();
-    if (!bucketId) return;
-    if (!row.riskKeyType || !row.riskKeyHash) {
-      setManualIdentityError('This row has no risk key.');
-      return;
-    }
-    const savingKey = `risk:${row.riskKeyType}:${row.riskKeyHash}`;
-    setManualIdentitySavingKey(savingKey);
-    setManualIdentityError('');
-    try {
-      await saveAiEnergyManualIdentityRule({
-        bucketId,
-        matchType: 'risk_key',
-        riskKeyType: row.riskKeyType,
-        riskKeyHash: row.riskKeyHash,
-        note: `Added from AI Costs ${row.riskKeyType}`
-      });
-      await refreshManualIdentityBuckets(bucketId);
-      setReloadKey((key) => key + 1);
-    } catch (saveError: any) {
-      setManualIdentityError(
-        saveError?.message || 'Failed to add signal to bucket'
-      );
-    } finally {
-      setManualIdentitySavingKey('');
-    }
-  }
-
-  async function handleAddRawSignalToBucket(
-    signal: AiEnergyManualIdentityRawSignal
-  ) {
-    const bucketId = getSelectedBucketId();
-    if (!bucketId) return;
-    if (!signal.riskKeyType || !signal.riskKeyValue) {
-      setManualIdentityError('This row has no signal value.');
-      return;
-    }
-    const savingKey = `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`;
-    setManualIdentitySavingKey(savingKey);
-    setManualIdentityError('');
-    try {
-      await saveAiEnergyManualIdentityRule({
-        bucketId,
-        matchType: 'risk_key',
-        riskKeyType: signal.riskKeyType,
-        riskKeyValue: signal.riskKeyValue,
-        note: `Added from session evidence ${signal.label}`
-      });
-      await refreshManualIdentityBuckets(bucketId);
-      setReloadKey((key) => key + 1);
-    } catch (saveError: any) {
-      setManualIdentityError(
-        saveError?.message || 'Failed to add signal to bucket'
+        saveError?.message || 'Failed to create bucket'
       );
     } finally {
       setManualIdentitySavingKey('');
@@ -661,4 +595,166 @@ export default function AiCosts() {
       });
     }
   }
+
+  async function addPendingActionRulesToBucket({
+    bucketId,
+    action,
+    notePrefix
+  }: {
+    bucketId: number;
+    action: AiEnergyManualIdentityBucketAction;
+    notePrefix: string;
+  }) {
+    if (action.actionType === 'event_row') {
+      await addEventRowRulesToBucket({
+        bucketId,
+        row: action.row,
+        notePrefix: `${notePrefix} event`
+      });
+      return;
+    }
+
+    if (action.actionType === 'user') {
+      await addUserRuleToBucket({
+        bucketId,
+        row: action.row,
+        notePrefix
+      });
+      return;
+    }
+
+    if (action.actionType === 'email') {
+      await addEmailRuleToBucket({
+        bucketId,
+        row: action.row,
+        notePrefix
+      });
+      return;
+    }
+
+    if (action.actionType === 'risk_key') {
+      await addRiskGroupRuleToBucket({
+        bucketId,
+        row: action.row,
+        notePrefix
+      });
+      return;
+    }
+
+    await addRawSignalRuleToBucket({
+      bucketId,
+      signal: action.signal,
+      notePrefix
+    });
+  }
+
+  async function addUserRuleToBucket({
+    bucketId,
+    row,
+    notePrefix
+  }: {
+    bucketId: number;
+    row: AiCostRow;
+    notePrefix: string;
+  }) {
+    const userId = Number(row.userId || 0);
+    if (!userId) {
+      const error: any = new Error('This row has no user id.');
+      error.status = 400;
+      throw error;
+    }
+    await saveAiEnergyManualIdentityRule({
+      bucketId,
+      matchType: 'user',
+      userId,
+      note: `${notePrefix} account ${userId}`
+    });
+  }
+
+  async function addEmailRuleToBucket({
+    bucketId,
+    row,
+    notePrefix
+  }: {
+    bucketId: number;
+    row: AiCostRow;
+    notePrefix: string;
+  }) {
+    const email = getRowEmail(row);
+    if (!email) {
+      const error: any = new Error('This row has no verified email.');
+      error.status = 400;
+      throw error;
+    }
+    await saveAiEnergyManualIdentityRule({
+      bucketId,
+      matchType: 'email',
+      email,
+      note: `${notePrefix} email ${row.userId || ''}`.trim()
+    });
+  }
+
+  async function addRiskGroupRuleToBucket({
+    bucketId,
+    row,
+    notePrefix
+  }: {
+    bucketId: number;
+    row: AiCostRow;
+    notePrefix: string;
+  }) {
+    if (!row.riskKeyType || !row.riskKeyHash) {
+      const error: any = new Error('This row has no risk key.');
+      error.status = 400;
+      throw error;
+    }
+    await saveAiEnergyManualIdentityRule({
+      bucketId,
+      matchType: 'risk_key',
+      riskKeyType: row.riskKeyType,
+      riskKeyHash: row.riskKeyHash,
+      note: `${notePrefix} ${row.riskKeyType}`
+    });
+  }
+
+  async function addRawSignalRuleToBucket({
+    bucketId,
+    signal,
+    notePrefix
+  }: {
+    bucketId: number;
+    signal: AiEnergyManualIdentityRawSignal;
+    notePrefix: string;
+  }) {
+    if (!signal.riskKeyType || !signal.riskKeyValue) {
+      const error: any = new Error('This row has no signal value.');
+      error.status = 400;
+      throw error;
+    }
+    await saveAiEnergyManualIdentityRule({
+      bucketId,
+      matchType: 'risk_key',
+      riskKeyType: signal.riskKeyType,
+      riskKeyValue: signal.riskKeyValue,
+      note: `${notePrefix} session evidence ${signal.label}`
+    });
+  }
+}
+
+function getPendingBucketActionSavingKey(
+  action: AiEnergyManualIdentityBucketAction
+) {
+  if (action.actionType === 'event_row') {
+    return `event-row:${getEventActionKey(action.row)}`;
+  }
+  if (action.actionType === 'user') {
+    return `user:${Number(action.row.userId || 0)}`;
+  }
+  if (action.actionType === 'email') {
+    return `email:${getRowEmail(action.row)}`;
+  }
+  if (action.actionType === 'risk_key') {
+    return `risk:${action.row.riskKeyType}:${action.row.riskKeyHash}`;
+  }
+  return `raw-risk:${action.signal.riskKeyType}:${action.signal.riskKeyValue}`;
 }

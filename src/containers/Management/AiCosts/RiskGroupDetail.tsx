@@ -10,6 +10,7 @@ import {
   subsectionHeaderClass
 } from './styles';
 import {
+  AiEnergyManualIdentityBucketAction,
   AiCostRiskGroupDetail,
   AiCostRow,
   AiEnergyManualIdentityRawSignal
@@ -30,11 +31,8 @@ export default function RiskGroupDetail({
   loading,
   loadingMore,
   onLoadMore,
-  onAddEmail,
-  onAddRawSignal,
-  onAddUser,
+  onOpenBucketActionModal,
   manualIdentitySavingKey,
-  selectedBucketId,
   eventsError
 }: {
   detail: AiCostRiskGroupDetail | null;
@@ -42,11 +40,10 @@ export default function RiskGroupDetail({
   loading: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
-  onAddEmail: (row: AiCostRow) => void;
-  onAddRawSignal: (signal: AiEnergyManualIdentityRawSignal) => void;
-  onAddUser: (row: AiCostRow) => void;
+  onOpenBucketActionModal: (
+    action: AiEnergyManualIdentityBucketAction
+  ) => void;
   manualIdentitySavingKey: string;
-  selectedBucketId: number;
   eventsError: string;
 }) {
   if (loading) {
@@ -115,12 +112,16 @@ export default function RiskGroupDetail({
                     type="button"
                     className={inlineActionClass}
                     disabled={
-                      !selectedBucketId ||
                       !row.userId ||
                       manualIdentitySavingKey ===
                         `user:${Number(row.userId || 0)}`
                     }
-                    onClick={() => onAddUser(row)}
+                    onClick={() =>
+                      onOpenBucketActionModal({
+                        actionType: 'user',
+                        row
+                      })
+                    }
                   >
                     Add User
                   </button>
@@ -128,11 +129,15 @@ export default function RiskGroupDetail({
                     type="button"
                     className={inlineActionClass}
                     disabled={
-                      !selectedBucketId ||
                       !email ||
                       manualIdentitySavingKey === `email:${email}`
                     }
-                    onClick={() => onAddEmail(row)}
+                    onClick={() =>
+                      onOpenBucketActionModal({
+                        actionType: 'email',
+                        row
+                      })
+                    }
                   >
                     Add Email
                   </button>
@@ -177,8 +182,7 @@ export default function RiskGroupDetail({
               <EvidenceSignalActions
                 row={row}
                 manualIdentitySavingKey={manualIdentitySavingKey}
-                selectedBucketId={selectedBucketId}
-                onAddRawSignal={onAddRawSignal}
+                onOpenBucketActionModal={onOpenBucketActionModal}
               />
             )
           }
@@ -247,13 +251,13 @@ function getRowEmail(row: AiCostRow) {
 function EvidenceSignalActions({
   row,
   manualIdentitySavingKey,
-  selectedBucketId,
-  onAddRawSignal
+  onOpenBucketActionModal
 }: {
   row: AiCostRow;
   manualIdentitySavingKey: string;
-  selectedBucketId: number;
-  onAddRawSignal: (signal: AiEnergyManualIdentityRawSignal) => void;
+  onOpenBucketActionModal: (
+    action: AiEnergyManualIdentityBucketAction
+  ) => void;
 }) {
   const signals = getEvidenceRawSignals(row);
   if (signals.length === 0) return null;
@@ -265,11 +269,15 @@ function EvidenceSignalActions({
           type="button"
           className={inlineActionClass}
           disabled={
-            !selectedBucketId ||
             manualIdentitySavingKey ===
               `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`
           }
-          onClick={() => onAddRawSignal(signal)}
+          onClick={() =>
+            onOpenBucketActionModal({
+              actionType: 'raw_signal',
+              signal
+            })
+          }
         >
           {signal.label}
         </button>
