@@ -7,6 +7,7 @@ import ProfilePic from '~/components/ProfilePic';
 import RankBar from '~/components/RankBar';
 import UserDetails from '~/components/UserDetails';
 import AchievementBadges from '~/components/AchievementBadges';
+import ChessLevelBadge from '~/components/ChessLevelBadge';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { ThemeName } from '~/theme';
 import ActionButtons from './ActionButtons';
@@ -208,6 +209,13 @@ export default function Content({
                   <div className={detailsColumnClass}>
                     <UserDetails
                       profile={profile}
+                      identityBadge={
+                        <ChessLevelBadge
+                          user={profile}
+                          size="md"
+                          style={{ marginTop: '0.75rem' }}
+                        />
+                      }
                       removeStatusMsg={onRemoveStatusMsg}
                       updateStatusMsg={onUpdateStatusMsg}
                       onSetBioEditModalShown={onOpenBioEditModal}

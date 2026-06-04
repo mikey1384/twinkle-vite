@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
-import { User } from '~/types';import UserPopup from '~/components/UserPopup';
+import { User } from '~/types';
+import UserPopup from '~/components/UserPopup';
 const deviceIsMobile = isMobile(navigator);
 const deletedLabel = 'Deleted';
-const EMPTY_USER_STATE = {};
 
 export default function UsernameText({
   className,
@@ -46,8 +46,21 @@ export default function UsernameText({
   activityPoints?: number;
 }) {
   const [loading, setLoading] = useState(false);
-  const { level, twinkleXP } =
-    useAppContext((v) => v.user.state.userObj[user.id]) || EMPTY_USER_STATE;
+  const cachedLoaded = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.loaded
+  );
+  const cachedLevel = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.level
+  );
+  const cachedTwinkleXP = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.twinkleXP
+  );
+  const cachedUnlockedAchievementIds = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.unlockedAchievementIds
+  );
+  const cachedChessMaxLevelUnlocked = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.chessMaxLevelUnlocked
+  );
   const coolDownRef = useRef(false);
   const showTimerRef: React.RefObject<any> = useRef(0);
   const hideTimerRef: React.RefObject<any> = useRef(0);
@@ -68,11 +81,23 @@ export default function UsernameText({
 
   const shouldLoadProfile = useMemo(() => {
     return (
-      (twinkleXP == null && user.twinkleXP == null) ||
-      level == null ||
-      !user.unlockedAchievementIds
+      (cachedTwinkleXP == null && user.twinkleXP == null) ||
+      cachedLevel == null ||
+      (!cachedUnlockedAchievementIds && !user.unlockedAchievementIds) ||
+      (!cachedLoaded &&
+        cachedChessMaxLevelUnlocked == null &&
+        user.chessMaxLevelUnlocked == null)
     );
-  }, [twinkleXP, user.twinkleXP, level, user.unlockedAchievementIds]);
+  }, [
+    cachedChessMaxLevelUnlocked,
+    cachedLevel,
+    cachedLoaded,
+    cachedTwinkleXP,
+    cachedUnlockedAchievementIds,
+    user.chessMaxLevelUnlocked,
+    user.twinkleXP,
+    user.unlockedAchievementIds
+  ]);
 
   useEffect(() => {
     menuShownRef.current = !!dropdownContext;

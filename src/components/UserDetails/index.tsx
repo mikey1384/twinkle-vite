@@ -28,6 +28,7 @@ const doesNotHaveBioLabel = ' does not have a bio, yet';
 
 export default function UserDetails({
   noLink,
+  identityBadge,
   profile,
   removeStatusMsg,
   small,
@@ -37,6 +38,7 @@ export default function UserDetails({
   updateStatusMsg,
   userId
 }: {
+  identityBadge?: React.ReactNode;
   noLink?: boolean;
   onSetBioEditModalShown?: (v: any) => any;
   profile: any;
@@ -155,6 +157,7 @@ export default function UserDetails({
             {profile.realName}
           </span>
         </div>
+        {identityBadge}
       </div>
       {userId === profile.id && !unEditable && (
         <StatusInput

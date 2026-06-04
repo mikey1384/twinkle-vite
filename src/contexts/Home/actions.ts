@@ -236,6 +236,12 @@ export default function HomeActions(dispatch: Dispatch) {
         shown
       });
     },
+    onSetChessOptionsTargetUser(targetUser: object | null) {
+      return dispatch({
+        type: 'SET_CHESS_OPTIONS_TARGET_USER',
+        targetUser
+      });
+    },
     onSetInputModalShown({
       shown,
       modalType

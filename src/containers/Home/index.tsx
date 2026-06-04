@@ -12,7 +12,6 @@ import Stories from './Stories';
 import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
 import GrammarGameModal from './GrammarGameModal';
-import ChessPuzzleModal from './ChessPuzzleModal';
 import DailyQuestionModal from '~/components/Modals/DailyQuestionModal';
 import Achievements from './Achievements';
 import { useHomeContext } from '~/contexts';
@@ -31,9 +30,6 @@ function Home({
   const grammarGameModalShown = useHomeContext(
     (v) => v.state.grammarGameModalShown
   );
-  const chessPuzzleModalShown = useHomeContext(
-    (v) => v.state.chessPuzzleModalShown
-  );
   const dailyQuestionModalShown = useHomeContext(
     (v) => v.state.dailyQuestionModalShown
   );
@@ -42,9 +38,6 @@ function Home({
   );
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
-  );
-  const onSetChessPuzzleModalShown = useHomeContext(
-    (v) => v.actions.onSetChessPuzzleModalShown
   );
   const onSetDailyQuestionModalShown = useHomeContext(
     (v) => v.actions.onSetDailyQuestionModalShown
@@ -88,11 +81,6 @@ function Home({
           )}
           {aiStoriesModalShown && (
             <AIStoriesModal onHide={() => onSetAIStoriesModalShown(false)} />
-          )}
-          {chessPuzzleModalShown && (
-            <ChessPuzzleModal
-              onHide={() => onSetChessPuzzleModalShown(false)}
-            />
           )}
           {dailyQuestionModalShown && (
             <DailyQuestionModal

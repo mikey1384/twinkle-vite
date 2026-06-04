@@ -80,6 +80,12 @@ const ExploreRedirect = lazyWithRetry(
   () => import('~/containers/Explore/Redirect')
 );
 const Home = lazyWithRetry(() => import('~/containers/Home'));
+const ChessOptionsModal = lazyWithRetry(
+  () => import('~/containers/Home/TopMenu/ChessOptionsModal')
+);
+const ChessPuzzleModal = lazyWithRetry(
+  () => import('~/containers/Home/ChessPuzzleModal')
+);
 const LinkPage = lazyWithRetry(() => import('~/containers/LinkPage'));
 const PlaylistPage = lazyWithRetry(() => import('~/containers/PlaylistPage'));
 const Privacy = lazyWithRetry(() => import('~/containers/Privacy'));
@@ -177,6 +183,9 @@ export default function App() {
   const onCloseSigninModal = useAppContext(
     (v) => v.user.actions.onCloseSigninModal
   );
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
@@ -192,6 +201,18 @@ export default function App() {
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
+  );
+  const chessPuzzleModalShown = useHomeContext(
+    (v) => v.state.chessPuzzleModalShown
+  );
+  const chessOptionsTargetUser = useHomeContext(
+    (v) => v.state.chessOptionsTargetUser
+  );
+  const onSetChessPuzzleModalShown = useHomeContext(
+    (v) => v.actions.onSetChessPuzzleModalShown
+  );
+  const onSetChessOptionsTargetUser = useHomeContext(
+    (v) => v.actions.onSetChessOptionsTargetUser
   );
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const onSetSessionLoaded = useAppContext(
@@ -246,6 +267,13 @@ export default function App() {
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
+  const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
+  const onSetChessModalShown = useChatContext(
+    (v) => v.actions.onSetChessModalShown
+  );
   const onDisplayAttachedFile = useChatContext(
     (v) => v.actions.onDisplayAttachedFile
   );
@@ -685,6 +713,28 @@ export default function App() {
             <BuildRuntimeKeepAliveHost />
           </Suspense>
         ) : null}
+        {chessOptionsTargetUser && (
+          <Suspense fallback={null}>
+            <ChessOptionsModal
+              onHide={handleHideChessOptionsModal}
+              targetUsername={chessOptionsTargetUser.username}
+              unansweredChessMsgChannelId={null}
+              onStartTargetChess={
+                Number(chessOptionsTargetUser.id) !== Number(userId)
+                  ? handleStartTargetChess
+                  : undefined
+              }
+              onPlayPuzzles={handleGlobalPlayPuzzles}
+            />
+          </Suspense>
+        )}
+        {chessPuzzleModalShown && (
+          <Suspense fallback={null}>
+            <ChessPuzzleModal
+              onHide={() => onSetChessPuzzleModalShown(false)}
+            />
+          </Suspense>
+        )}
         {dailyRewardModalShown && (
           <Suspense fallback={null}>
             <DailyRewardModal
@@ -774,6 +824,59 @@ export default function App() {
       />
     </ErrorBoundary>
   );
+
+  function handleHideChessOptionsModal() {
+    onSetChessOptionsTargetUser(null);
+  }
+
+  function handleGlobalPlayPuzzles() {
+    onSetChessOptionsTargetUser(null);
+    onSetChessPuzzleModalShown(true);
+  }
+
+  async function handleStartTargetChess() {
+    const targetUser = chessOptionsTargetUser;
+    onSetChessOptionsTargetUser(null);
+
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+
+    if (!targetUser?.id || Number(targetUser.id) === Number(userId)) {
+      return;
+    }
+
+    try {
+      const { channelId, pathId } = await loadDMChannel({
+        recipient: targetUser
+      });
+      if (!pathId) {
+        onOpenNewChatTab({
+          user: { username, id: userId, profilePicUrl },
+          recipient: {
+            username: targetUser.username,
+            id: targetUser.id,
+            profilePicUrl: targetUser.profilePicUrl
+          }
+        });
+      }
+      onUpdateSelectedChannelId(channelId);
+      setTimeout(() => {
+        navigate(pathId ? `/chat/${pathId}` : `/chat/new`);
+        setTimeout(() => onSetChessModalShown(true), 1000);
+      }, 0);
+    } catch (error) {
+      reportError({
+        componentPath: 'containers/App/index',
+        message: `handleStartTargetChess failed: ${JSON.stringify({
+          targetUserId: targetUser.id,
+          targetUsername: targetUser.username
+        })}`,
+        info: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
 
   function handleSetDailyBonusAttempted() {
     onUpdateTodayStats({

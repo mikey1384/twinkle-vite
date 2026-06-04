@@ -233,6 +233,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       }
 
       if (response.maxLevelUnlocked !== undefined) {
+        onSetUserState({
+          userId,
+          newState: {
+            chessMaxLevelUnlocked: response.maxLevelUnlocked
+          }
+        });
         onUpdateChessStats({
           maxLevelUnlocked: response.maxLevelUnlocked,
           currentLevelStreak: response.currentLevelStreak,

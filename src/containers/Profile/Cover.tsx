@@ -9,6 +9,7 @@ import ProfilePicModal from '~/components/Modals/ProfilePicModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import UserTitle from '~/components/Texts/UserTitle';
 import AchievementBadges from '~/components/AchievementBadges';
+import ChessLevelBadge from '~/components/ChessLevelBadge';
 import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -181,6 +182,14 @@ export default function Cover({
                 `}`}
               />
             </div>
+            <ChessLevelBadge
+              user={profile}
+              size="lg"
+              style={{
+                marginTop: '0.8rem',
+                width: 'fit-content'
+              }}
+            />
             <div
               className={css`
                 margin-bottom: 0.5rem;

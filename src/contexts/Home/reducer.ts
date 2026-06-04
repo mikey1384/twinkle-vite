@@ -216,6 +216,11 @@ export default function HomeReducer(
         ...state,
         chessPuzzleModalShown: action.shown
       };
+    case 'SET_CHESS_OPTIONS_TARGET_USER':
+      return {
+        ...state,
+        chessOptionsTargetUser: action.targetUser
+      };
     case 'SET_LEADERBOARDS_EXPANDED':
       return {
         ...state,

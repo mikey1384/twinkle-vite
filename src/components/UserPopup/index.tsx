@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
 import AchievementBadges from '~/components/AchievementBadges';
+import ChessLevelBadge from '~/components/ChessLevelBadge';
 import UserTitle from '~/components/Texts/UserTitle';
 import Loading from '~/components/Loading';
 import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
@@ -100,6 +101,9 @@ export default function UserPopup({
   const profileFirstRow = useAppContext(
     (v) => v.user.state.userObj[user.id]?.profileFirstRow
   );
+  const chessMaxLevelUnlocked = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.chessMaxLevelUnlocked
+  );
   const xpThisMonth = useAppContext(
     (v) => v.user.state.userObj[user.id]?.xpThisMonth
   );
@@ -160,6 +164,9 @@ export default function UserPopup({
     }
     return addCommasToNumber(xpThisMonth);
   }, [xpThisMonth, user.xpThisMonth]);
+  const appliedChessMaxLevelUnlocked = useMemo(() => {
+    return user.chessMaxLevelUnlocked ?? chessMaxLevelUnlocked;
+  }, [chessMaxLevelUnlocked, user.chessMaxLevelUnlocked]);
 
   const xpContent = useMemo(() => {
     const renderBadge = (rank: number | undefined) => {
@@ -361,6 +368,13 @@ export default function UserPopup({
                   />
                   {appliedRealName}
                 </div>
+                <ChessLevelBadge
+                  level={appliedChessMaxLevelUnlocked}
+                  size="sm"
+                  user={user}
+                  onOpenOptions={() => onSetPopupContext(null)}
+                  style={{ marginTop: '0.45rem' }}
+                />
               </div>
             </div>
             {bio && (

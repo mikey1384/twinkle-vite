@@ -108,6 +108,7 @@ export default function Puzzle({
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   const [startingPromotion, setStartingPromotion] = useState(false);
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
@@ -875,6 +876,14 @@ export default function Puzzle({
       runId,
       solved
     } as any);
+    if (typeof resp?.stats?.maxLevelUnlocked === 'number') {
+      onSetUserState({
+        userId,
+        newState: {
+          chessMaxLevelUnlocked: resp.stats.maxLevelUnlocked
+        }
+      });
+    }
     if (resp && resp.nextPuzzle) {
       setPromoSolved((prev) => prev + 1);
     }
