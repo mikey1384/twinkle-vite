@@ -39,6 +39,10 @@ import {
   shouldUseExplicitFeedCardNavigation,
   shouldSkipFeedCardNavigation
 } from './helpers/navigation';
+import {
+  consumePopupDismissNavigationSuppression,
+  popupDismissNavigationFeedCardTargetProps
+} from '~/helpers/popupDismissNavigation';
 import { getFeedCardSizing, type FeedCardSizing } from './helpers/sizing';
 import {
   getHomeFeedFinalRewardLevel,
@@ -597,6 +601,7 @@ export default function HomeFeedCard({
             style={sizingStyle}
           >
             <article
+              {...popupDismissNavigationFeedCardTargetProps}
               className={`${cardClass} ${sizing.card.className} ${tabletMediaAttachmentClassName}`}
               style={sizingStyle}
               tabIndex={0}
@@ -749,6 +754,7 @@ export default function HomeFeedCard({
   function handleCardPointerUp(event: React.PointerEvent<HTMLElement>) {
     const tapNavigation = tapNavigationRef.current;
     tapNavigationRef.current = null;
+    if (consumePopupDismissNavigationSuppression(event.nativeEvent)) return;
     if (!tapNavigation || tapNavigation.pointerId !== event.pointerId) return;
     if (
       getHomeFeedScrollDelta(tapNavigation) >

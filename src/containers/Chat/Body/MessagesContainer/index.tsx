@@ -83,6 +83,12 @@ export default function MessagesContainer({
   const onLoadTopicMessages = useChatContext(
     (v) => v.actions.onLoadTopicMessages
   );
+  const pendingChessModalChannelId = useChatContext(
+    (v) => v.state.pendingChessModalChannelId
+  );
+  const onSetPendingChessModalChannelId = useChatContext(
+    (v) => v.actions.onSetPendingChessModalChannelId
+  );
   const navigate = useNavigate();
   const {
     actions: {
@@ -521,6 +527,36 @@ export default function MessagesContainer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [banned?.chess, boardCountdownObj, currentChannel?.id]);
+
+  useEffect(() => {
+    if (pendingChessModalChannelId == null) return;
+    if (Number(pendingChessModalChannelId) !== Number(selectedChannelId)) {
+      onSetPendingChessModalChannelId(null);
+      return;
+    }
+    if (banned?.chess) {
+      onSetPendingChessModalChannelId(null);
+      return;
+    }
+    if (currentChannel?.id == null || !currentChannel?.twoPeople || !partner) {
+      return;
+    }
+
+    const currentCountdown = boardCountdownObj[selectedChannelId]?.chess;
+    onSetPendingChessModalChannelId(null);
+    if (currentCountdown === 0) return;
+    onSetReplyTarget({ channelId: selectedChannelId, target: null });
+    onSetChessModalShown(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    banned?.chess,
+    boardCountdownObj,
+    currentChannel?.id,
+    currentChannel?.twoPeople,
+    partner?.id,
+    pendingChessModalChannelId,
+    selectedChannelId
+  ]);
 
   const handleOmokModalShown = useCallback(() => {
     if (banned?.chess) {

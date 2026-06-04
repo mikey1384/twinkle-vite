@@ -51,6 +51,7 @@ const handleStoryClickSource = homeMenuItemsSource.slice(
 assert.match(source, /scrollTop: number;/);
 assert.match(source, /const scrollTop = getScrollTop\(scroller\);/);
 assert.match(source, /restoreSettledSignatureRef/);
+assert.match(source, /ignoredSavedAnchorSignaturesRef/);
 assert.match(source, /function savedAnchorHasElementIdentity/);
 assert.match(source, /function getSavedAnchorRestoreSignature/);
 assert.match(source, /function saveShouldWaitForPendingRestore\(\)/);
@@ -61,6 +62,18 @@ assert.match(
 assert.match(
   source,
   /!!restoreSignature &&[\s\S]*restoreSettledSignatureRef\.current !== restoreSignature/
+);
+assert.match(
+  source,
+  /ignoredSavedAnchorSignaturesRef\.current\[anchorKey\] ===[\s\S]*restoreSignature[\s\S]*return false;/
+);
+assert.match(
+  source,
+  /const savedAnchorIsIgnored =[\s\S]*activeIgnoredSavedAnchorKeyRef\.current === anchorKey[\s\S]*ignoredSavedAnchorSignaturesRef\.current\[anchorKey\] ===[\s\S]*savedAnchorRestoreSignature/
+);
+assert.match(
+  source,
+  /const savedAnchor =[\s\S]*savedAnchorIsIgnored \? undefined : savedScrollAnchors\[anchorKey\];/
 );
 assert.match(source, /!saveShouldWaitForPendingRestore\(\)/);
 assert.match(source, /function markSavedAnchorRestoreSettled\(\)/);

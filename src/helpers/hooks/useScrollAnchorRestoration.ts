@@ -58,7 +58,8 @@ export function useScrollAnchorRestoration({
   const initialScrollTopOffset =
     initialScroll.type === 'element' ? initialScroll.topOffset : undefined;
   const initialScrollAttemptedRef = useRef('');
-  const ignoredSavedAnchorKeyRef = useRef('');
+  const activeIgnoredSavedAnchorKeyRef = useRef('');
+  const ignoredSavedAnchorSignaturesRef = useRef<Record<string, string>>({});
   const activeAnchorKeyRef = useRef('');
   const restoreAttemptedRef = useRef('');
   const restoreSettledSignatureRef = useRef('');
@@ -68,10 +69,21 @@ export function useScrollAnchorRestoration({
     activeAnchorKeyRef.current = anchorKey;
     restoreAttemptedRef.current = '';
     restoreSettledSignatureRef.current = '';
+    userCancelledRestoreRef.current = '';
   }
 
-  if (ignoreSavedAnchor && ignoredSavedAnchorKeyRef.current !== anchorKey) {
-    ignoredSavedAnchorKeyRef.current = anchorKey;
+  if (ignoreSavedAnchor) {
+    activeIgnoredSavedAnchorKeyRef.current = anchorKey;
+    const ignoredRestoreSignature = getSavedAnchorRestoreSignature(anchorKey);
+    if (ignoredRestoreSignature) {
+      ignoredSavedAnchorSignaturesRef.current[anchorKey] =
+        ignoredRestoreSignature;
+    }
+  } else if (
+    !ignoreSavedAnchor &&
+    activeIgnoredSavedAnchorKeyRef.current === anchorKey
+  ) {
+    activeIgnoredSavedAnchorKeyRef.current = '';
   }
 
   useLayoutEffect(() => {
@@ -139,8 +151,15 @@ export function useScrollAnchorRestoration({
     }
 
     function saveShouldWaitForPendingRestore() {
-      if (ignoredSavedAnchorKeyRef.current === anchorKey) return false;
       const restoreSignature = getSavedAnchorRestoreSignature(anchorKey);
+      if (
+        activeIgnoredSavedAnchorKeyRef.current === anchorKey ||
+        (!!restoreSignature &&
+          ignoredSavedAnchorSignaturesRef.current[anchorKey] ===
+            restoreSignature)
+      ) {
+        return false;
+      }
       return (
         !!restoreSignature &&
         restoreSettledSignatureRef.current !== restoreSignature
@@ -165,13 +184,23 @@ export function useScrollAnchorRestoration({
 
   useLayoutEffect(() => {
     if (!itemsReady || !containerRef.current) return;
+    const savedAnchorRestoreSignature =
+      getSavedAnchorRestoreSignature(anchorKey);
+    if (
+      activeIgnoredSavedAnchorKeyRef.current === anchorKey &&
+      savedAnchorRestoreSignature
+    ) {
+      ignoredSavedAnchorSignaturesRef.current[anchorKey] =
+        savedAnchorRestoreSignature;
+    }
+    const savedAnchorIsIgnored =
+      activeIgnoredSavedAnchorKeyRef.current === anchorKey ||
+      (!!savedAnchorRestoreSignature &&
+        ignoredSavedAnchorSignaturesRef.current[anchorKey] ===
+          savedAnchorRestoreSignature);
     const savedAnchor =
-      ignoredSavedAnchorKeyRef.current === anchorKey
-        ? undefined
-        : savedScrollAnchors[anchorKey];
-    const restoreSignature = savedAnchor
-      ? getSavedAnchorRestoreSignature(anchorKey)
-      : '';
+      savedAnchorIsIgnored ? undefined : savedScrollAnchors[anchorKey];
+    const restoreSignature = savedAnchor ? savedAnchorRestoreSignature : '';
     if (scrollAnchorRestoresAreSuppressed()) {
       markSavedAnchorRestoreSettled();
       return;

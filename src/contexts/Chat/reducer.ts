@@ -4463,6 +4463,11 @@ export default function ChatReducer(
         ...state,
         chessModalShown: action.shown
       };
+    case 'SET_PENDING_CHESS_MODAL_CHANNEL_ID':
+      return {
+        ...state,
+        pendingChessModalChannelId: action.channelId
+      };
     case 'SET_OMOK_MODAL_SHOWN':
       return {
         ...state,

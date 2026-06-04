@@ -39,7 +39,10 @@ export default function Popup({
 }) {
   const MenuRef = useRef(null);
   const { x, y, width, height } = popupContext;
-  useOutsideClick(MenuRef, onHideMenu, { closeOnScroll: deviceIsMobile });
+  useOutsideClick(MenuRef, onHideMenu, {
+    closeOnScroll: deviceIsMobile,
+    suppressFeedCardNavigation: true
+  });
   const [portalContainer] = useState(() => {
     if (typeof document === 'undefined') return null;
     const el = document.createElement('div');

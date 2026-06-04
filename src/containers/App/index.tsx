@@ -271,8 +271,8 @@ export default function App() {
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const onSetChessModalShown = useChatContext(
-    (v) => v.actions.onSetChessModalShown
+  const onSetPendingChessModalChannelId = useChatContext(
+    (v) => v.actions.onSetPendingChessModalChannelId
   );
   const onDisplayAttachedFile = useChatContext(
     (v) => v.actions.onDisplayAttachedFile
@@ -862,10 +862,8 @@ export default function App() {
         });
       }
       onUpdateSelectedChannelId(channelId);
-      setTimeout(() => {
-        navigate(pathId ? `/chat/${pathId}` : `/chat/new`);
-        setTimeout(() => onSetChessModalShown(true), 1000);
-      }, 0);
+      onSetPendingChessModalChannelId(channelId);
+      navigate(pathId ? `/chat/${pathId}` : `/chat/new`);
     } catch (error) {
       reportError({
         componentPath: 'containers/App/index',

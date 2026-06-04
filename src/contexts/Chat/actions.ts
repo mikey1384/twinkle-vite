@@ -1727,6 +1727,12 @@ export default function ChatActions(dispatch: Dispatch) {
         shown
       });
     },
+    onSetPendingChessModalChannelId(channelId: number | null) {
+      return dispatch({
+        type: 'SET_PENDING_CHESS_MODAL_CHANNEL_ID',
+        channelId
+      });
+    },
     onSetOmokModalShown(shown: boolean) {
       return dispatch({
         type: 'SET_OMOK_MODAL_SHOWN',

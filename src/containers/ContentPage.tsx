@@ -28,7 +28,7 @@ export default function ContentPage() {
   const navigate = useNavigate();
   const { contentId: initialContentId } = useParams();
   const contentId = Number(initialContentId);
-  const pageRef = useRef<HTMLDivElement | null>(null);
+  const contentAnchorRef = useRef<HTMLDivElement | null>(null);
   const { contentType, rootType } = useMemo(() => {
     const rawContentType = location.pathname.split('/')[1].slice(0, -1);
     if (rawContentType === 'ai-storie') {
@@ -88,7 +88,7 @@ export default function ContentPage() {
 
   useScrollAnchorRestoration({
     anchorKey: contentAnchorKey,
-    containerRef: pageRef,
+    containerRef: contentAnchorRef,
     ignoreSavedAnchor: Boolean(homeFeedNavigationState),
     initialScroll: { type: 'top' },
     itemsReady: contentReady
@@ -170,7 +170,6 @@ export default function ContentPage() {
       }}
     >
       <div
-        ref={pageRef}
         className={css`
           width: 100%;
           display: flex;
@@ -190,6 +189,8 @@ export default function ContentPage() {
         >
           {!contentExistsRejected && !isDeleted && !isDeleteNotification ? (
             <div
+              key={contentAnchorKey}
+              ref={contentAnchorRef}
               data-scroll-anchor-id={contentAnchorKey}
               data-scroll-anchor-secondary-id={String(contentId)}
               data-scroll-anchor-content-key={`${contentType}:${contentId}`}

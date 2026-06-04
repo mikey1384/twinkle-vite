@@ -113,7 +113,9 @@ export default function Cover({
             position: relative;
             overflow: hidden;
             @media (max-width: ${mobileMaxWidth}) {
-              height: 12rem;
+              height: 13rem;
+              margin-top: 0;
+              overflow: visible;
             }
           `}
         >
@@ -130,20 +132,33 @@ export default function Cover({
               text-overflow: ellipsis;
               text-shadow: ${coverShadowLarge};
               @media (max-width: ${mobileMaxWidth}) {
+                box-sizing: border-box;
+                height: 100%;
+                justify-content: center;
                 margin-left: 15rem;
+                overflow: visible;
+                padding: 0.6rem 0;
                 text-shadow: ${coverShadowSmall};
               }
             `}
           >
             <div
-              style={{
-                marginBottom: '1rem',
-                display: 'flex',
-                justifyContent: 'flex-start'
-              }}
+              className={css`
+                display: flex;
+                justify-content: flex-start;
+                margin-bottom: 1rem;
+                min-height: 3rem;
+
+                @media (max-width: ${mobileMaxWidth}) {
+                  align-items: center;
+                  margin-bottom: 0.3rem;
+                  min-height: 2.4rem;
+                  overflow: visible;
+                }
+              `}
             >
               <AchievementBadges
-                thumbSize="3rem"
+                thumbSize={deviceIsMobile ? '2.4rem' : '3rem'}
                 unlockedAchievementIds={unlockedAchievementIds}
               />
             </div>
@@ -182,26 +197,37 @@ export default function Cover({
                 `}`}
               />
             </div>
-            <ChessLevelBadge
-              user={profile}
-              size="lg"
-              style={{
-                marginTop: '0.8rem',
-                width: 'fit-content'
-              }}
-            />
             <div
               className={css`
-                margin-bottom: 0.5rem;
+                margin-bottom: 0;
                 margin-top: 0.5rem;
                 font-size: 1.7rem;
+                line-height: 1.15;
                 @media (max-width: ${mobileMaxWidth}) {
                   font-size: 1.1rem;
+                  margin-bottom: 0;
+                  margin-top: 0.25rem;
                 }
               `}
             >
               ({realName})
             </div>
+            <ChessLevelBadge
+              className={css`
+                margin-bottom: 1.2rem;
+                margin-top: 1.2rem;
+
+                @media (max-width: ${mobileMaxWidth}) {
+                  margin-bottom: 0;
+                  margin-top: 0.45rem;
+                }
+              `}
+              user={profile}
+              size="lg"
+              style={{
+                width: 'fit-content'
+              }}
+            />
           </div>
           {profile.id === userId && (
             <div

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
+import { mobileMaxWidth } from '~/constants/css';
 import { User } from '~/types';
 
 type BadgeSize = 'sm' | 'md' | 'lg';
@@ -16,6 +17,10 @@ const sizeStyles: Record<
     fontSize: string;
     iconSize: string;
     minHeight: string;
+    mobileFontSize: string;
+    mobileIconSize: string;
+    mobileMinHeight: string;
+    mobilePadding: string;
     padding: string;
   }
 > = {
@@ -23,18 +28,30 @@ const sizeStyles: Record<
     fontSize: '1.05rem',
     iconSize: '1rem',
     minHeight: '2.2rem',
+    mobileFontSize: '1rem',
+    mobileIconSize: '1rem',
+    mobileMinHeight: '2rem',
+    mobilePadding: '0.28rem 0.55rem',
     padding: '0.3rem 0.65rem'
   },
   md: {
     fontSize: '1.2rem',
     iconSize: '1.1rem',
     minHeight: '2.6rem',
+    mobileFontSize: '1rem',
+    mobileIconSize: '1rem',
+    mobileMinHeight: '2.1rem',
+    mobilePadding: '0.3rem 0.6rem',
     padding: '0.4rem 0.8rem'
   },
   lg: {
     fontSize: '1.35rem',
     iconSize: '1.2rem',
     minHeight: '3rem',
+    mobileFontSize: '1rem',
+    mobileIconSize: '1rem',
+    mobileMinHeight: '2.2rem',
+    mobilePadding: '0.32rem 0.65rem',
     padding: '0.45rem 1rem'
   }
 };
@@ -63,7 +80,7 @@ export default function ChessLevelBadge({
   );
   const normalizedLevel = useMemo(() => {
     const rawLevel = Number(level ?? user?.chessMaxLevelUnlocked);
-    return Number.isInteger(rawLevel) && rawLevel > 0 ? rawLevel : null;
+    return Number.isInteger(rawLevel) && rawLevel >= 5 ? rawLevel : null;
   }, [level, user?.chessMaxLevelUnlocked]);
 
   if (!normalizedLevel || !user?.id || !user.username) return null;
@@ -101,6 +118,13 @@ export default function ChessLevelBadge({
         text-shadow: none;
         white-space: nowrap;
 
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: ${dimensions.mobileFontSize};
+          gap: 0.35rem;
+          min-height: ${dimensions.mobileMinHeight};
+          padding: ${dimensions.mobilePadding};
+        }
+
         &:hover {
           filter: brightness(0.96);
           transform: translateY(1px);
@@ -114,7 +138,15 @@ export default function ChessLevelBadge({
       style={style}
       onClick={handleClick}
     >
-      <Icon icon="chess" style={{ fontSize: dimensions.iconSize }} />
+      <Icon
+        icon="chess"
+        className={css`
+          font-size: ${dimensions.iconSize};
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: ${dimensions.mobileIconSize};
+          }
+        `}
+      />
       <span>{displayLevel}</span>
     </button>
   );

@@ -32,6 +32,10 @@ import { levels } from '~/constants/userLevels';
 import { User, UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { throttle } from '~/helpers';
+import {
+  eventTargetsPopupDismissNavigationFeedCard,
+  markPopupDismissNavigationSuppressed
+} from '~/helpers/popupDismissNavigation';
 
 const allContentState: Record<string, any> = {};
 const EMPTY_PROFILE_FEEDS: any[] = [];
@@ -80,6 +84,7 @@ type OutsideRef =
 interface OutsideClickListener {
   refs: OutsideRef[];
   handler: () => void;
+  suppressFeedCardNavigation: boolean;
 }
 
 const outsideClickListeners = new Set<OutsideClickListener>();
@@ -121,13 +126,20 @@ function shouldTriggerOutside(
 function handleGlobalPointerDown(event: Event) {
   const listeners = Array.from(outsideClickListeners);
   const target = event.target as Node | null;
+  const triggeredListeners = listeners.filter((listener) =>
+    shouldTriggerOutside(listener.refs, target)
+  );
+  if (
+    triggeredListeners.some((listener) => listener.suppressFeedCardNavigation) &&
+    eventTargetsPopupDismissNavigationFeedCard(event)
+  ) {
+    markPopupDismissNavigationSuppressed(event);
+  }
   // Defer execution to avoid blocking tap/click events on iOS
   // This allows the click to reach its target first, then outside-click handlers fire
   requestAnimationFrame(() => {
-    for (const listener of listeners) {
-      if (shouldTriggerOutside(listener.refs, target)) {
-        listener.handler();
-      }
+    for (const listener of triggeredListeners) {
+      listener.handler();
     }
   });
 }
@@ -407,9 +419,17 @@ export function useMyState() {
 export function useOutsideClick(
   ref: any,
   callback?: () => any,
-  options?: { enabled?: boolean; closeOnScroll?: boolean }
+  options?: {
+    enabled?: boolean;
+    closeOnScroll?: boolean;
+    suppressFeedCardNavigation?: boolean;
+  }
 ) {
-  const { enabled = true, closeOnScroll = false } = options || {};
+  const {
+    enabled = true,
+    closeOnScroll = false,
+    suppressFeedCardNavigation = false
+  } = options || {};
   const callbackRef = useRef(callback);
   useEffect(() => {
     callbackRef.current = callback;
@@ -420,14 +440,15 @@ export function useOutsideClick(
     const refs = Array.isArray(ref) ? ref : [ref];
     const listener: OutsideClickListener = {
       refs,
-      handler: () => callbackRef.current?.()
+      handler: () => callbackRef.current?.(),
+      suppressFeedCardNavigation
     };
     registerOutsideClickListener(listener);
     return function cleanup() {
       unregisterOutsideClickListener(listener);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref, enabled]);
+  }, [ref, enabled, suppressFeedCardNavigation]);
 
   useEffect(() => {
     if (

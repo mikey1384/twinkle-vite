@@ -21,6 +21,14 @@ test('User popup portal stops events before feed-card navigation can intercept a
     ),
     'utf8'
   );
+  const hooksSource = readFileSync(
+    new URL('../src/helpers/hooks/index.tsx', import.meta.url),
+    'utf8'
+  );
+  const popupDismissNavigationSource = readFileSync(
+    new URL('../src/helpers/popupDismissNavigation.ts', import.meta.url),
+    'utf8'
+  );
 
   assert.match(popupSource, /createPortal\(/);
   assert.match(
@@ -70,6 +78,50 @@ test('User popup portal stops events before feed-card navigation can intercept a
   assert.match(
     feedCardSource,
     /onPointerDown=\{handleCardPointerDown\}[\s\S]*onPointerUp=\{handleCardPointerUp\}/
+  );
+  assert.match(
+    popupDismissNavigationSource,
+    /popupDismissNavigationFeedCardTargetProps/
+  );
+  assert.match(
+    popupDismissNavigationSource,
+    /'data-popup-dismiss-navigation-target': 'feed-card'/
+  );
+  assert.match(
+    popupDismissNavigationSource,
+    /function eventTargetsPopupDismissNavigationFeedCard/
+  );
+  assert.match(
+    popupDismissNavigationSource,
+    /function addSuppressionEndListeners/
+  );
+  assert.match(
+    popupDismissNavigationSource,
+    /window\.setTimeout\([\s\S]*clearPopupDismissNavigationSuppression\(\);[\s\S]*\}, 0\);/
+  );
+  assert.match(
+    popupDismissNavigationSource,
+    /function suppressionHasActiveEndListeners\(\) \{[\s\S]*return removeSuppressionEndListeners !== null;[\s\S]*\}/
+  );
+  assert.match(
+    popupDismissNavigationSource,
+    /Date\.now\(\) - suppressedAt > POPUP_DISMISS_NAVIGATION_SUPPRESSION_MS &&[\s\S]*!suppressionHasActiveEndListeners\(\)/
+  );
+  assert.match(
+    hooksSource,
+    /eventTargetsPopupDismissNavigationFeedCard\(event\)[\s\S]*markPopupDismissNavigationSuppressed\(event\)/
+  );
+  assert.match(
+    feedCardSource,
+    /\{\.\.\.popupDismissNavigationFeedCardTargetProps\}/
+  );
+  const cardPointerUpSource = feedCardSource.slice(
+    feedCardSource.indexOf('function handleCardPointerUp('),
+    feedCardSource.indexOf('async function handleLikeActionClick(')
+  );
+  assert.match(
+    cardPointerUpSource,
+    /consumePopupDismissNavigationSuppression\(event\.nativeEvent\)[\s\S]*if \(!tapNavigation \|\| tapNavigation\.pointerId !== event\.pointerId\)/
   );
   assert.match(
     navigationSource,
