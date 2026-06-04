@@ -1,6 +1,11 @@
 import React from 'react';
 
 export type RangeOption = 1 | 7 | 30 | 90;
+export type AiEnergyManualIdentityMatchType = 'email' | 'user' | 'risk_key';
+export type AiEnergyManualIdentityRecommendationType =
+  | 'email'
+  | 'user'
+  | 'risk_key';
 
 export interface AiCostSummary {
   accountCount?: number;
@@ -20,6 +25,7 @@ export interface AiCostSummary {
 }
 
 export interface AiCostRow extends Partial<AiCostSummary> {
+  id?: number;
   eventId?: number;
   source?: string;
   sourceRank?: number;
@@ -42,7 +48,89 @@ export interface AiCostRow extends Partial<AiCostSummary> {
   identities?: string;
   riskKeyType?: string;
   riskKeyHash?: string;
+  eventType?: string;
+  firstVerifiedEmail?: string;
+  deviceId?: string;
+  reqIp?: string;
+  reqIpPrefix?: string;
+  reqIpIsPrivate?: number;
+  forwardedIpPrefix?: string;
+  forwardedIpIsPrivate?: number;
+  socketRemoteIp?: string;
+  socketRemoteIpPrefix?: string;
+  socketRemoteIpIsPrivate?: number;
+  userAgentHash?: string;
+  sharedRiskKeyTypes?: string;
+  sharedRiskKeyHashes?: string;
+  sharedRiskKeys?: string;
+  manualIdentityKey?: string;
+  bucketId?: number;
+  bucketLabel?: string;
+  matchType?: AiEnergyManualIdentityMatchType;
+  matchValue?: string;
+  recommendationType?: AiEnergyManualIdentityRecommendationType;
+  email?: string;
+  label?: string;
+  reason?: string;
+  evidenceCount?: number;
+  confidenceScore?: number;
+  note?: string;
+  disabledAt?: number;
   createdAt?: number;
+}
+
+export interface AiEnergyManualIdentityRule {
+  id: number;
+  bucketId: number;
+  bucketLabel?: string;
+  manualIdentityKey: string;
+  matchType: AiEnergyManualIdentityMatchType;
+  matchValue: string;
+  riskKeyType?: string;
+  riskKeyHash?: string;
+  note?: string;
+  createdBy?: number;
+  disabledBy?: number;
+  createdAt?: number;
+  updatedAt?: number;
+  disabledAt?: number;
+}
+
+export interface AiEnergyManualIdentityBucket {
+  id: number;
+  label: string;
+  manualIdentityKey: string;
+  note?: string;
+  createdBy?: number;
+  createdAt?: number;
+  updatedAt?: number;
+  disabledAt?: number;
+  rules: AiEnergyManualIdentityRule[];
+}
+
+export interface AiEnergyManualIdentityRecommendation {
+  recommendationType: AiEnergyManualIdentityRecommendationType;
+  userId?: number;
+  username?: string;
+  email?: string;
+  riskKeyType?: string;
+  riskKeyHash?: string;
+  label?: string;
+  reason?: string;
+  evidenceCount: number;
+  confidenceScore: number;
+}
+
+export interface AiEnergyManualIdentityRawSignal {
+  riskKeyType: string;
+  riskKeyValue: string;
+  label: string;
+}
+
+export interface AiEnergyManualIdentityRecommendations {
+  accounts: AiEnergyManualIdentityRecommendation[];
+  emails: AiEnergyManualIdentityRecommendation[];
+  riskKeys: AiEnergyManualIdentityRecommendation[];
 }
 
 export interface AiCostEventCursor {
@@ -75,6 +163,7 @@ export interface AiCostReport {
   recentEventsCursor: AiCostEventCursor | null;
   recentEventsHasMore: boolean;
   recentEventsPageSize: number;
+  recentSessionEvidence: AiCostRow[];
 }
 
 export interface AiCostRiskGroupDetail {
@@ -89,6 +178,7 @@ export interface AiCostRiskGroupDetail {
     riskKeyHash?: string;
   };
   accounts: AiCostRow[];
+  sessionEvidence: AiCostRow[];
   events: AiCostRow[];
   eventsCursor: AiCostEventCursor | null;
   eventsHasMore: boolean;

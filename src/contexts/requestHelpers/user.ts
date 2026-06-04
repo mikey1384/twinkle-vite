@@ -4,7 +4,7 @@ import URL from '~/constants/URL';
 import { clientVersion } from '~/constants/defaultValues';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray } from '~/helpers/stringHelpers';
-import { setStoredItem } from '~/helpers/userDataHelpers';
+import { getTwinkleDeviceId, setStoredItem } from '~/helpers/userDataHelpers';
 
 export default function userRequestHelpers({
   auth,
@@ -657,7 +657,11 @@ export default function userRequestHelpers({
     },
     async login(params: { username: string; password: string }) {
       try {
-        const { data } = await axios.post(`${URL}/user/login`, params);
+        const { data } = await axios.post(`${URL}/user/login`, params, {
+          headers: {
+            'x-twinkle-device-id': getTwinkleDeviceId()
+          }
+        });
         setStoredItem('token', data.token);
         return data;
       } catch (error: any) {
@@ -665,6 +669,15 @@ export default function userRequestHelpers({
           return Promise.reject('Wrong username/password combination');
         }
         return handleError(error);
+      }
+    },
+    async recordLogout(authorization = auth()) {
+      try {
+        await request.post(`${URL}/user/logout`, null, authorization);
+        return true;
+      } catch (error) {
+        console.error('Failed to record logout:', error);
+        return false;
       }
     },
     async reorderProfilePictures(reorderedPictureIds: number[]) {
@@ -896,17 +909,25 @@ export default function userRequestHelpers({
       userType: string;
     }) {
       try {
-        const { data } = await request.post(`${URL}/user/signup`, {
-          username,
-          firstname,
-          lastname,
-          branchName,
-          className,
-          email,
-          verifiedEmail,
-          password,
-          userType
-        });
+        const { data } = await request.post(
+          `${URL}/user/signup`,
+          {
+            username,
+            firstname,
+            lastname,
+            branchName,
+            className,
+            email,
+            verifiedEmail,
+            password,
+            userType
+          },
+          {
+            headers: {
+              'x-twinkle-device-id': getTwinkleDeviceId()
+            }
+          }
+        );
         if (data.token) {
           setStoredItem('token', data.token);
         }
@@ -917,7 +938,11 @@ export default function userRequestHelpers({
     },
     async createDevAccount() {
       try {
-        const { data } = await request.post(`${URL}/user/dev/signup`);
+        const { data } = await request.post(`${URL}/user/dev/signup`, null, {
+          headers: {
+            'x-twinkle-device-id': getTwinkleDeviceId()
+          }
+        });
         if (data.token) {
           setStoredItem('token', data.token);
         }

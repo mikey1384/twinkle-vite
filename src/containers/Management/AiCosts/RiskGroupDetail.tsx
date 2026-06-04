@@ -5,9 +5,15 @@ import {
   detailErrorClass,
   detailHeadingClass,
   detailSummaryClass,
+  inlineActionClass,
+  inlineActionGroupClass,
   subsectionHeaderClass
 } from './styles';
-import { AiCostRiskGroupDetail } from './types';
+import {
+  AiCostRiskGroupDetail,
+  AiCostRow,
+  AiEnergyManualIdentityRawSignal
+} from './types';
 import {
   formatAccountName,
   formatCompact,
@@ -24,6 +30,11 @@ export default function RiskGroupDetail({
   loading,
   loadingMore,
   onLoadMore,
+  onAddEmail,
+  onAddRawSignal,
+  onAddUser,
+  manualIdentitySavingKey,
+  selectedBucketId,
   eventsError
 }: {
   detail: AiCostRiskGroupDetail | null;
@@ -31,6 +42,11 @@ export default function RiskGroupDetail({
   loading: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
+  onAddEmail: (row: AiCostRow) => void;
+  onAddRawSignal: (signal: AiEnergyManualIdentityRawSignal) => void;
+  onAddUser: (row: AiCostRow) => void;
+  manualIdentitySavingKey: string;
+  selectedBucketId: number;
   eventsError: string;
 }) {
   if (loading) {
@@ -87,9 +103,87 @@ export default function RiskGroupDetail({
             label: 'Cost',
             align: 'right',
             render: formatUsd
+          },
+          {
+            key: 'manualIdentityKey',
+            label: 'Action',
+            render: (_value, row) => {
+              const email = getRowEmail(row);
+              return (
+                <div className={inlineActionGroupClass}>
+                  <button
+                    type="button"
+                    className={inlineActionClass}
+                    disabled={
+                      !selectedBucketId ||
+                      !row.userId ||
+                      manualIdentitySavingKey ===
+                        `user:${Number(row.userId || 0)}`
+                    }
+                    onClick={() => onAddUser(row)}
+                  >
+                    Add User
+                  </button>
+                  <button
+                    type="button"
+                    className={inlineActionClass}
+                    disabled={
+                      !selectedBucketId ||
+                      !email ||
+                      manualIdentitySavingKey === `email:${email}`
+                    }
+                    onClick={() => onAddEmail(row)}
+                  >
+                    Add Email
+                  </button>
+                </div>
+              );
+            }
           }
         ]}
         rows={detail.accounts}
+      />
+
+      <SubsectionHeader
+        title="Session Evidence"
+        note={`Showing ${formatNumber(
+          detail.sessionEvidence?.length || 0
+        )} recent events for these accounts.`}
+      />
+      <DataTable
+        columns={[
+          {
+            key: 'createdAt',
+            label: 'Time',
+            render: (value) => formatTime(numberValue(value))
+          },
+          { key: 'eventType', label: 'Event' },
+          {
+            key: 'username',
+            label: 'Account',
+            render: (value, row) => formatAccountName({ value, row })
+          },
+          { key: 'verifiedEmail', label: 'Email' },
+          {
+            key: 'reqIpPrefix',
+            label: 'IP',
+            render: (_value, row) => getEvidenceIp(row)
+          },
+          { key: 'deviceId', label: 'Device' },
+          {
+            key: 'manualIdentityKey',
+            label: 'Action',
+            render: (_value, row) => (
+              <EvidenceSignalActions
+                row={row}
+                manualIdentitySavingKey={manualIdentitySavingKey}
+                selectedBucketId={selectedBucketId}
+                onAddRawSignal={onAddRawSignal}
+              />
+            )
+          }
+        ]}
+        rows={detail.sessionEvidence || []}
       />
 
       <SubsectionHeader
@@ -142,13 +236,118 @@ export default function RiskGroupDetail({
   );
 }
 
-function SubsectionHeader({
-  title,
-  note
+function getRowEmail(row: AiCostRow) {
+  return String(
+    row.accountVerifiedEmail || row.verifiedEmail || row.email || ''
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function EvidenceSignalActions({
+  row,
+  manualIdentitySavingKey,
+  selectedBucketId,
+  onAddRawSignal
 }: {
-  title: string;
-  note: string;
+  row: AiCostRow;
+  manualIdentitySavingKey: string;
+  selectedBucketId: number;
+  onAddRawSignal: (signal: AiEnergyManualIdentityRawSignal) => void;
 }) {
+  const signals = getEvidenceRawSignals(row);
+  if (signals.length === 0) return null;
+  return (
+    <div className={inlineActionGroupClass}>
+      {signals.map((signal) => (
+        <button
+          key={`${signal.riskKeyType}:${signal.riskKeyValue}`}
+          type="button"
+          className={inlineActionClass}
+          disabled={
+            !selectedBucketId ||
+            manualIdentitySavingKey ===
+              `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`
+          }
+          onClick={() => onAddRawSignal(signal)}
+        >
+          {signal.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function getEvidenceRawSignals(
+  row: AiCostRow
+): AiEnergyManualIdentityRawSignal[] {
+  return [
+    row.deviceId
+      ? {
+          riskKeyType: 'device_id',
+          riskKeyValue: row.deviceId,
+          label: 'Add Device'
+        }
+      : null,
+    row.forwardedIpPrefix && !row.forwardedIpIsPrivate
+      ? {
+          riskKeyType: 'xff_ip_prefix',
+          riskKeyValue: row.forwardedIpPrefix,
+          label: 'Add Fwd IP'
+        }
+      : null,
+    row.reqIpPrefix && !row.reqIpIsPrivate
+      ? {
+          riskKeyType: 'req_ip_prefix',
+          riskKeyValue: row.reqIpPrefix,
+          label: 'Add Req IP'
+        }
+      : null,
+    row.socketRemoteIpPrefix && !row.socketRemoteIpIsPrivate
+      ? {
+          riskKeyType: 'socket_ip_prefix',
+          riskKeyValue: row.socketRemoteIpPrefix,
+          label: 'Add Socket IP'
+        }
+      : null
+  ].filter(Boolean) as AiEnergyManualIdentityRawSignal[];
+}
+
+function getEvidenceIp(row: AiCostRow) {
+  const values = [
+    getEvidencePrefixLabel({
+      label: 'Forwarded',
+      prefix: row.forwardedIpPrefix,
+      isPrivate: row.forwardedIpIsPrivate
+    }),
+    getEvidencePrefixLabel({
+      label: 'Request',
+      prefix: row.reqIpPrefix || row.reqIp,
+      isPrivate: row.reqIpIsPrivate
+    }),
+    getEvidencePrefixLabel({
+      label: 'Socket',
+      prefix: row.socketRemoteIpPrefix || row.socketRemoteIp,
+      isPrivate: row.socketRemoteIpIsPrivate
+    })
+  ].filter(Boolean);
+  return values.join(' | ');
+}
+
+function getEvidencePrefixLabel({
+  label,
+  prefix,
+  isPrivate
+}: {
+  label: string;
+  prefix?: string;
+  isPrivate?: number;
+}) {
+  if (!prefix) return '';
+  return `${label}: ${prefix}${isPrivate ? ' (private)' : ''}`;
+}
+
+function SubsectionHeader({ title, note }: { title: string; note: string }) {
   return (
     <div className={subsectionHeaderClass}>
       <h3>{title}</h3>

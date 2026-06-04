@@ -1,9 +1,5 @@
 import { css } from '@emotion/css';
-import {
-  Color,
-  mediumBorderRadius,
-  mobileMaxWidth
-} from '~/constants/css';
+import { Color, mediumBorderRadius, mobileMaxWidth } from '~/constants/css';
 
 export const pageClass = css`
   width: 100%;
@@ -83,6 +79,87 @@ export const rangeClass = css`
   button.active {
     background: ${Color.logoBlue(0.14)};
     color: ${Color.logoBlue()};
+  }
+`;
+
+export const identityToolClass = css`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.8rem;
+  margin-bottom: 1.6rem;
+  padding: 1.2rem;
+  border: 1px solid ${Color.borderGray()};
+  border-radius: ${mediumBorderRadius};
+  background: ${Color.white()};
+
+  label {
+    color: ${Color.darkGray()};
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .bucket-create-row,
+  .bucket-list-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  input {
+    min-width: 24rem;
+    flex: 1;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: ${mediumBorderRadius};
+    padding: 0.9rem 1rem;
+    font-size: 1.3rem;
+  }
+
+  span {
+    color: ${Color.red()};
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .bucket-list-row button {
+    border: 1px solid ${Color.borderGray()};
+    border-radius: ${mediumBorderRadius};
+    background: ${Color.white()};
+    color: ${Color.darkGray()};
+    padding: 0.65rem 0.9rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .bucket-list-row button.active {
+    border-color: ${Color.logoBlue(0.45)};
+    background: ${Color.logoBlue(0.12)};
+    color: ${Color.logoBlue()};
+  }
+`;
+
+export const inlineActionGroupClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+`;
+
+export const inlineActionClass = css`
+  border: 1px solid ${Color.logoBlue(0.35)};
+  border-radius: ${mediumBorderRadius};
+  background: ${Color.logoBlue(0.1)};
+  color: ${Color.logoBlue()};
+  padding: 0.45rem 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 `;
 
@@ -216,11 +293,7 @@ export const barRowClass = css`
   .bar-track > div {
     height: 100%;
     border-radius: 999px;
-    background: linear-gradient(
-      90deg,
-      ${Color.logoBlue()},
-      ${Color.green()}
-    );
+    background: linear-gradient(90deg, ${Color.logoBlue()}, ${Color.green()});
   }
 
   @media (max-width: ${mobileMaxWidth}) {

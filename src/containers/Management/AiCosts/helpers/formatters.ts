@@ -119,6 +119,70 @@ export function formatAccountName({
   return row.userId ? `User ${row.userId}` : 'System';
 }
 
+export function getRowEmail(row: AiCostRow) {
+  return String(
+    row.accountVerifiedEmail || row.verifiedEmail || row.email || ''
+  )
+    .trim()
+    .toLowerCase();
+}
+
+export function hasBucketEvidence(row: AiCostRow) {
+  return Boolean(
+    Number(row.userId || 0) || getRowEmail(row) || getEventSignals(row).length
+  );
+}
+
+export function getBucketLabelForRow(row: AiCostRow) {
+  const username = String(row.username || '').trim();
+  const email = getRowEmail(row);
+  const userId = Number(row.userId || 0);
+  if (username && userId) return `${username} (${userId})`;
+  if (email) return email;
+  if (userId) return `User ${userId}`;
+  const [signal] = getEventSignals(row);
+  return signal
+    ? `${signal.riskKeyType} ${signal.riskKeyHash.slice(0, 8)}`
+    : '';
+}
+
+export function getEventSignalLabel(row: AiCostRow) {
+  const signals = getEventSignals(row);
+  if (signals.length === 0) return '';
+  const typeLabels = Array.from(
+    new Set(signals.map((signal) => signal.riskKeyType))
+  );
+  return `${formatNumber(signals.length)} ${typeLabels.join(', ')}`;
+}
+
+export function getEventSignals(row: AiCostRow) {
+  const signalPairs = String(row.sharedRiskKeys || '')
+    .split('|')
+    .map((pair) => pair.trim())
+    .filter(Boolean);
+  const seen = new Set<string>();
+  return signalPairs
+    .map((pair) => {
+      const separatorIndex = pair.lastIndexOf(':');
+      if (separatorIndex <= 0) return null;
+      const riskKeyType = pair.slice(0, separatorIndex).trim();
+      const riskKeyHash = pair
+        .slice(separatorIndex + 1)
+        .trim()
+        .toLowerCase();
+      if (!riskKeyType || !/^[a-f0-9]{64}$/.test(riskKeyHash)) return null;
+      const key = `${riskKeyType}:${riskKeyHash}`;
+      if (seen.has(key)) return null;
+      seen.add(key);
+      return { riskKeyType, riskKeyHash };
+    })
+    .filter(Boolean) as { riskKeyType: string; riskKeyHash: string }[];
+}
+
+export function getEventActionKey(row: AiCostRow) {
+  return `${row.source || ''}:${Number(row.eventId || row.id || 0)}`;
+}
+
 export function shortenHash(value: string) {
   if (value.length <= 16) return value || '—';
   return `${value.slice(0, 8)}...${value.slice(-6)}`;

@@ -239,6 +239,96 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAiEnergyManualIdentityBuckets({
+      bucketId,
+      days
+    }: {
+      bucketId?: number;
+      days: number;
+    }) {
+      try {
+        const params = new URLSearchParams({
+          days: String(days)
+        });
+        if (bucketId) {
+          params.set('bucketId', String(bucketId));
+        }
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/manual-identity-buckets?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async createAiEnergyManualIdentityBucket({
+      label,
+      note
+    }: {
+      label: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/ai-costs/manual-identity-buckets`,
+          { label, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveAiEnergyManualIdentityRule({
+      bucketId,
+      matchType,
+      userId,
+      email,
+      riskKeyType,
+      riskKeyHash,
+      riskKeyValue,
+      note
+    }: {
+      bucketId: number;
+      matchType: 'email' | 'user' | 'risk_key';
+      userId?: number;
+      email?: string;
+      riskKeyType?: string;
+      riskKeyHash?: string;
+      riskKeyValue?: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}/rules`,
+          {
+            matchType,
+            userId,
+            email,
+            riskKeyType,
+            riskKeyHash,
+            riskKeyValue,
+            note
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async disableAiEnergyManualIdentityRule(ruleId: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/management/ai-costs/manual-identity-rules/${ruleId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadHomeFeedPerformanceReport(hours: number) {
       try {
         const { data } = await request.get(

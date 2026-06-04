@@ -19,6 +19,8 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
   });
   const displayedRef = useRef(false);
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
+  const recordLogout = useAppContext((v) => v.requestHelpers.recordLogout);
+  const auth = useAppContext((v) => v.requestHelpers.auth);
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const username = useKeyContext((v) => v.myState.username);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -108,7 +110,9 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
   );
 
   function handleLogout() {
+    const logoutRecord = recordLogout(auth());
     onLogout();
     onResetChat(userId);
+    void logoutRecord;
   }
 }

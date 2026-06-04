@@ -40,6 +40,8 @@ export default function AccountMenu({
   const loginRole = useRoleColor('login', { fallback: 'green' });
   const loginColorKey = loginRole.colorKey;
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
+  const recordLogout = useAppContext((v) => v.requestHelpers.recordLogout);
+  const auth = useAppContext((v) => v.requestHelpers.auth);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
@@ -162,6 +164,7 @@ export default function AccountMenu({
   );
 
   function handleLogout() {
+    const logoutRecord = recordLogout(auth());
     socket.emit('leave_my_notification_channel', userId);
     socket.disconnect();
     onLogout();
@@ -171,5 +174,6 @@ export default function AccountMenu({
     setTimeout(() => {
       socket.connect();
     }, 500);
+    void logoutRecord;
   }
 }
