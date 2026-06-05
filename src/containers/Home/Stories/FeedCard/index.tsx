@@ -52,6 +52,7 @@ import {
   createHomeFeedActionIntent,
   createHomeFeedNavigationState
 } from '~/helpers/homeFeedActionIntent';
+import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { normalizeViewCount } from '~/helpers/viewCount';
 
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
@@ -65,12 +66,14 @@ const homeFeedContentHydrationRequests = new Set<string>();
 export default function HomeFeedCard({
   feed,
   feedAnchorId,
+  homeFeedAnchorKey,
   index,
   totalCount,
   theme
 }: {
   feed: any;
   feedAnchorId?: string;
+  homeFeedAnchorKey?: string;
   index: number;
   totalCount: number;
   theme?: string;
@@ -695,13 +698,13 @@ export default function HomeFeedCard({
       return;
     }
     if (shouldUseExplicitFeedCardNavigation()) return;
-    navigateToContentPageFromHomeFeed();
+    navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
   function handleOpenButtonClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
-    navigateToContentPageFromHomeFeed();
+    navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
   function handleCardPointerDown(event: React.PointerEvent<HTMLElement>) {
@@ -774,7 +777,7 @@ export default function HomeFeedCard({
       return;
     }
 
-    navigateToContentPageFromHomeFeed();
+    navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
   async function handleLikeActionClick(
@@ -839,7 +842,7 @@ export default function HomeFeedCard({
     if (action === 'recommend' && (!recommendShown || recommendDisabled)) {
       return;
     }
-    navigateToContentPageFromHomeFeed(action);
+    navigateToContentPageFromHomeFeed(event.currentTarget, action);
   }
 
   function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -854,10 +857,14 @@ export default function HomeFeedCard({
       return;
     }
     if (shouldUseExplicitFeedCardNavigation()) return;
-    navigateToContentPageFromHomeFeed();
+    navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
-  function navigateToContentPageFromHomeFeed(action?: HomeFeedActionType) {
+  function navigateToContentPageFromHomeFeed(
+    sourceElement: HTMLElement | null,
+    action?: HomeFeedActionType
+  ) {
+    saveScrollAnchorForElement(sourceElement, homeFeedAnchorKey);
     navigate(contentPath, {
       state: {
         homeFeedNavigation: createHomeFeedNavigationState({

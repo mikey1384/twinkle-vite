@@ -21,6 +21,10 @@ export interface BuildProjectListItemData {
   userId?: number;
   username?: string;
   profilePicUrl?: string | null;
+  profileTheme?: string | null;
+  owner?: {
+    profileTheme?: string | null;
+  } | null;
   title: string;
   description: string | null;
   isPublic: boolean;

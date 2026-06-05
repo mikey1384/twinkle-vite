@@ -117,7 +117,7 @@ assert.match(
 );
 assert.match(
   source,
-  /saveAnchorElement\(anchorKey, anchorElement, getActiveScroller\(\)\);[\s\S]*suppressScrollAnchorSaves\(restoreSaveSuppressionDurationMs\);[\s\S]*return;[\s\S]*saveCurrentAnchor\(anchorKey, contentAnchorContainer, getActiveScroller\(\)\);[\s\S]*suppressScrollAnchorSaves\(restoreSaveSuppressionDurationMs\);/
+  /saveAnchorElement\(contentAnchorKey, anchorElement, getActiveScroller\(\)\);[\s\S]*suppressScrollAnchorSaves\(restoreSaveSuppressionDurationMs\);[\s\S]*return;[\s\S]*saveCurrentAnchor\([\s\S]*contentAnchorKey,[\s\S]*contentAnchorContainer,[\s\S]*getActiveScroller\(\)[\s\S]*\);[\s\S]*suppressScrollAnchorSaves\(restoreSaveSuppressionDurationMs\);/
 );
 assert.match(source, /anchorElement !== contentAnchorContainer/);
 assert.match(

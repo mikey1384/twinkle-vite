@@ -425,31 +425,44 @@ function getSavedAnchorRestoreSignature(anchorKey: string) {
   }:${savedAnchor.contentKey || ''}:${savedAnchor.offset}:${savedAnchor.scrollTop}`;
 }
 
-export function saveScrollAnchorForElement(sourceElement: HTMLElement | null) {
+export function saveScrollAnchorForElement(
+  sourceElement: HTMLElement | null,
+  anchorKey?: string
+) {
   if (!sourceElement) return;
+  const anchorElement = sourceElement.closest<HTMLElement>(
+    '[data-scroll-anchor-id], [data-scroll-anchor-content-key]'
+  );
+  if (anchorKey && anchorElement) {
+    saveAnchorElement(anchorKey, anchorElement, getActiveScroller());
+    suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
+    return;
+  }
+
   const contentPagePanel = sourceElement.closest<HTMLElement>(
     '[data-content-page="true"]'
   );
   const contentAnchorContainer = contentPagePanel?.closest<HTMLElement>(
     '[data-scroll-anchor-id^="content:"]'
   );
-  const anchorKey = contentAnchorContainer?.dataset.scrollAnchorId;
-  if (!anchorKey || !contentAnchorContainer) return;
+  const contentAnchorKey = contentAnchorContainer?.dataset.scrollAnchorId;
+  if (!contentAnchorKey || !contentAnchorContainer) return;
 
-  const anchorElement = sourceElement.closest<HTMLElement>(
-    '[data-scroll-anchor-id], [data-scroll-anchor-content-key]'
-  );
   if (
     anchorElement &&
     anchorElement !== contentAnchorContainer &&
     contentAnchorContainer.contains(anchorElement)
   ) {
-    saveAnchorElement(anchorKey, anchorElement, getActiveScroller());
+    saveAnchorElement(contentAnchorKey, anchorElement, getActiveScroller());
     suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
     return;
   }
 
-  saveCurrentAnchor(anchorKey, contentAnchorContainer, getActiveScroller());
+  saveCurrentAnchor(
+    contentAnchorKey,
+    contentAnchorContainer,
+    getActiveScroller()
+  );
   suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
 }
 

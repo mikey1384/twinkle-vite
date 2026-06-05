@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BuildMiniCard } from '~/components/Build/Cards';
+import { BuildMiniCard, BuildWideCard } from '~/components/Build/Cards';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ContentListItem from '~/components/ContentListItem';
+import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
@@ -19,6 +20,19 @@ import InvalidContent from '../InvalidContent';
 import { css } from '@emotion/css';
 
 const displayIsMobile = isMobile(navigator);
+
+function getBuildOwnerProfileTheme(build?: any) {
+  const owner = build?.owner && typeof build.owner === 'object' ? build.owner : {};
+  const uploader =
+    build?.uploader && typeof build.uploader === 'object' ? build.uploader : {};
+  return String(
+    owner.profileTheme ||
+      build?.ownerProfileTheme ||
+      build?.profileTheme ||
+      uploader.profileTheme ||
+      ''
+  ).trim();
+}
 
 export default function MainContentComponent({
   contentId,
@@ -128,16 +142,75 @@ export default function MainContentComponent({
     case 'comment':
     case 'aiStory':
     case 'dailyReflection':
-    case 'build':
       return (
         <ContentListItem
           style={{ minWidth: displayIsMobile ? '100%' : '80%' }}
           contentObj={contentState}
         />
       );
+    case 'build':
+      return (
+        <BuildRichTextEmbed
+          build={contentState}
+          contentId={Number(contentId)}
+        />
+      );
     default:
       return <InvalidContent />;
   }
+}
+
+function BuildRichTextEmbed({
+  build,
+  contentId
+}: {
+  build: any;
+  contentId: number;
+}) {
+  const [forkHistoryBuildId, setForkHistoryBuildId] = useState(0);
+  const uploader = build?.uploader || {};
+  const ownerProfileTheme = String(
+    build?.owner?.profileTheme ||
+      build?.ownerProfileTheme ||
+      build?.profileTheme ||
+      uploader?.profileTheme ||
+      ''
+  ).trim();
+  const buildCardInput = {
+    ...build,
+    id: contentId,
+    contentId,
+    contentType: 'build',
+    userId: Number(build?.userId || uploader?.id || 0),
+    username: build?.username || uploader?.username || '',
+    profilePicUrl: build?.profilePicUrl || uploader?.profilePicUrl || '',
+    profileTheme: ownerProfileTheme || null,
+    owner: {
+      ...(build?.owner || {}),
+      profileTheme: ownerProfileTheme || build?.owner?.profileTheme || null
+    },
+    thumbnailUrl: build?.thumbnailUrl || build?.thumbUrl || ''
+  };
+
+  if (!contentId) return null;
+
+  return (
+    <>
+      <BuildWideCard
+        build={buildCardInput}
+        showFavoriteAction
+        to={`/app/${contentId}`}
+        onOpenForkHistory={setForkHistoryBuildId}
+      />
+      {forkHistoryBuildId ? (
+        <ForkHistoryModal
+          buildId={forkHistoryBuildId}
+          isOpen
+          onClose={() => setForkHistoryBuildId(0)}
+        />
+      ) : null}
+    </>
+  );
 }
 
 function CompactMainContentEmbedPreview({
@@ -164,8 +237,13 @@ function CompactMainContentEmbedPreview({
   const body = getContentBody(contentType, content);
   const path = getContentPath(contentType, contentId);
   const accent = getContentAccent(contentType);
+  const isSubject = contentType === 'subject';
+  const isBuild = contentType === 'build';
+  const buildOwnerThemeName = getBuildOwnerProfileTheme(content);
   const previewThemeName = String(
-    content?.uploader?.profileTheme || content?.profileTheme || theme || ''
+    isBuild
+      ? buildOwnerThemeName
+      : content?.uploader?.profileTheme || content?.profileTheme || theme || ''
   ).trim();
   const { accentColor: themedAccentColor, borderColor: themedBorderColor } =
     useThemedCardVars({
@@ -176,8 +254,6 @@ function CompactMainContentEmbedPreview({
   const hasVideoThumb = contentType === 'video' && content?.content;
   const hasImageThumb = !hasVideoThumb && thumbUrl;
   const hasAttachment = Boolean(content?.fileName || content?.filePath);
-  const isSubject = contentType === 'subject';
-  const isBuild = contentType === 'build';
   const previewAccent = isBuild ? themedAccentColor : accent;
   const previewStyle = {
     '--embed-accent': previewAccent,

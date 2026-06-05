@@ -38,6 +38,27 @@ const inheritedUsernameTextStyle: React.CSSProperties = {
   fontWeight: 'inherit'
 };
 
+function getBuildOwnerProfileTheme(
+  build?: BuildProjectListItemData | Record<string, any> | null
+) {
+  const buildRecord = (build || {}) as Record<string, any>;
+  const owner =
+    buildRecord.owner && typeof buildRecord.owner === 'object'
+      ? buildRecord.owner
+      : {};
+  const uploader =
+    buildRecord.uploader && typeof buildRecord.uploader === 'object'
+      ? buildRecord.uploader
+      : {};
+  return String(
+    owner.profileTheme ||
+      buildRecord.profileTheme ||
+      buildRecord.ownerProfileTheme ||
+      uploader.profileTheme ||
+      ''
+  ).trim();
+}
+
 const wideCardClass = css`
   width: 100%;
   min-width: 0;
@@ -135,6 +156,10 @@ const cardHeaderClass = css`
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+
+  .build-wide-card__title {
+    margin: 0;
+  }
 
   @media (max-width: ${mobileMaxWidth}) {
     grid-area: header;
@@ -433,9 +458,12 @@ export default function BuildWideCard({
     useState(false);
   const [collaborationRequestError, setCollaborationRequestError] =
     useState('');
+  const buildOwnerThemeName = getBuildOwnerProfileTheme(build);
+  const cardThemeName =
+    buildOwnerThemeName || String(themeName || '').trim() || undefined;
   const { accentColor: buildAccentColor } = useThemedCardVars({
     role: 'sectionPanel',
-    themeName
+    themeName: cardThemeName
   });
   const normalizedBuild = build as BuildProjectListItemData | null;
   const buildId = Number(build?.id || 0);
@@ -502,6 +530,8 @@ export default function BuildWideCard({
   const previewLabel = primaryActionLabel || (ownerMode ? 'Build' : 'Open app');
   const previewIcon =
     primaryActionIcon || (ownerMode ? 'wrench' : 'external-link-alt');
+  const primaryActionClass =
+    ownerMode ? 'blue' : primaryActionIcon === 'users' ? 'pink' : 'primary';
   const thumbnailUrl = String(build?.thumbnailUrl || '').trim();
   const hasPreview = Boolean(thumbnailUrl);
 
@@ -552,7 +582,9 @@ export default function BuildWideCard({
               <span>Lumine App</span>
             </div>
             <div className={titleRowClass}>
-              <h3 className={titleClass}>{displayTitle || 'Lumine App'}</h3>
+              <h3 className={cx(titleClass, 'build-wide-card__title')}>
+                {displayTitle || 'Lumine App'}
+              </h3>
               {ownerMode && onAddDescription ? (
                 <EditBuildDetailsButton onClick={handleAddDescriptionClick} />
               ) : null}
@@ -692,7 +724,7 @@ export default function BuildWideCard({
             {separatePrimaryActionShown ? (
               <button
                 type="button"
-                className={cx(actionButtonClass, ownerMode ? 'blue' : 'primary')}
+                className={cx(actionButtonClass, primaryActionClass)}
                 disabled={Boolean(actionLoading)}
                 onClick={handlePrimaryActionClick}
               >

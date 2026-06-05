@@ -46,6 +46,10 @@ const miniCardClass = css`
     container-type: inline-size;
   }
 
+  &.compact-embed.has-thumbnail-background {
+    background: transparent;
+  }
+
   &.compact-embed.clickable-embed {
     cursor: pointer;
   }
@@ -77,6 +81,8 @@ const miniCardClass = css`
   &.compact-embed .build-mini-card__badge {
     gap: 0.36rem;
     padding: 0.22rem 0.58rem;
+    border-color: rgba(65, 140, 235, 0.46);
+    background: #fff;
     font-size: 1rem;
     line-height: 1.05;
   }
@@ -90,7 +96,22 @@ const miniCardClass = css`
     -webkit-line-clamp: 2;
   }
 
+  &.compact-embed .build-mini-card__title-text {
+    display: inline;
+    padding: 0.02rem 0.24rem;
+    border-radius: 0.35rem;
+    background: #fff;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
   &.compact-embed .build-mini-card__description {
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.06rem 0.24rem;
+    border-radius: 0.35rem;
+    background: rgba(255, 255, 255, 0.94);
+    color: #1f2937;
     font-size: 1.1rem;
     line-height: 1.12;
     -webkit-line-clamp: 1;
@@ -106,6 +127,8 @@ const miniCardClass = css`
     gap: 0.22rem;
     min-width: 0;
     padding: 0.12rem 0.36rem;
+    border-color: rgba(100, 116, 139, 0.34);
+    background: #fff;
     font-size: 1rem;
     line-height: 1.05;
   }
@@ -146,15 +169,7 @@ const compactBackgroundClass = css`
   pointer-events: none;
 
   img {
-    opacity: 1;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: rgba(255, 255, 255, 0.42);
+    opacity: 0.8;
   }
 `;
 
@@ -368,6 +383,7 @@ export default function BuildMiniCard({
         miniCardClass,
         (!thumbnailUrl || isCompactEmbed) && 'no-preview',
         isCompactEmbed && 'compact-embed',
+        showCompactBackground && 'has-thumbnail-background',
         compactOpenEnabled && 'clickable-embed',
         isThumbEmbed && 'thumb-embed',
         className
@@ -405,7 +421,9 @@ export default function BuildMiniCard({
               <span>Lumine App</span>
             </div>
             <h3 className={cx(titleClass, 'build-mini-card__title')}>
-              {displayTitle}
+              <span className="build-mini-card__title-text">
+                {displayTitle}
+              </span>
             </h3>
             {build.description ? (
               <p

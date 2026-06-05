@@ -23,7 +23,7 @@ assert.match(
 );
 assert.match(
   source,
-  /\{contentShown \? \([\s\S]*?<div ref=\{PanelRef\}[\s\S]*?\) : \([\s\S]*?<div className=\{placeholderClass\}/
+  /\{contentShown \? \([\s\S]*?<div[\s\S]*ref=\{PanelRef\}[\s\S]*?\) : \([\s\S]*?<div[\s\S]*className=\{`\$\{placeholderClass\}/
 );
 
 assert.match(

@@ -451,6 +451,7 @@ export default function Stories() {
                         data-scroll-anchor-content-key={contentKey}
                       >
                         <HomeFeedCard
+                          homeFeedAnchorKey={homeFeedAnchorKey}
                           feedAnchorId={feedAnchorId}
                           feed={feed}
                           index={index}

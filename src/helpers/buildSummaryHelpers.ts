@@ -98,6 +98,13 @@ export function normalizeBuildSummary(
   const thumbnailUrl = normalizeText(
     build.thumbnailUrl ?? build.thumbUrl ?? current?.thumbnailUrl
   );
+  const ownerProfileTheme = normalizeText(
+    build.owner?.profileTheme ??
+      build.profileTheme ??
+      build.ownerProfileTheme ??
+      uploader.profileTheme ??
+      current?.owner?.profileTheme
+  );
   const viewerRequest =
     Object.prototype.hasOwnProperty.call(build, 'viewerCollaborationRequest') ||
     Object.prototype.hasOwnProperty.call(build, 'collaborationRequest') ||
@@ -130,12 +137,7 @@ export function normalizeBuildSummary(
       id: ownerId,
       username,
       profilePicUrl,
-      profileTheme:
-        typeof build.profileTheme === 'string'
-          ? build.profileTheme
-          : typeof uploader.profileTheme === 'string'
-            ? uploader.profileTheme
-            : current?.owner?.profileTheme || null
+      profileTheme: ownerProfileTheme || null
     },
     title: normalizeText(build.title ?? current?.title),
     description: normalizeText(build.description ?? current?.description),
