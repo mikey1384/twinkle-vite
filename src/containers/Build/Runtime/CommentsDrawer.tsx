@@ -51,17 +51,15 @@ const commentsDrawerClass = css`
     transform: translateY(0.65rem);
 
     &[data-visible='true'] {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
       z-index: 40;
-      height: min(48vh, 34rem);
-      max-height: calc(100vh - 5rem);
+      height: 100%;
+      min-height: 0;
+      max-height: none;
       border-top-color: rgba(148, 163, 184, 0.35);
       box-shadow: 0 -0.8rem 2rem rgba(15, 23, 42, 0.08);
       transform: translateY(0);
     }
+
   }
 `;
 
@@ -109,6 +107,10 @@ const commentsDrawerBodyClass = css`
   min-height: 0;
   overflow-y: auto;
   padding: 0.9rem 1.05rem 1.2rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
 `;
 
 const commentsDrawerErrorClass = css`

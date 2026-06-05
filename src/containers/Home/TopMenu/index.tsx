@@ -468,7 +468,7 @@ export default function TopMenu({
     onPlayAIStories();
   }
 
-  function handleNavigateToChessMessage(): any {
+  async function handleNavigateToChessMessage(): Promise<void> {
     if (!isMountedRef.current) return;
     setLoadingChess(true);
     setChessModalShown(false);
@@ -479,18 +479,39 @@ export default function TopMenu({
       );
       return;
     }
-    onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
-    onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId: null } });
+
+    let unansweredChessMsgChannelId: number | null = null;
+    try {
+      const result = await checkUnansweredChess();
+      unansweredChessMsgChannelId =
+        Number(result?.unansweredChessMsgChannelId) || null;
+    } catch (error) {
+      console.error('Error checking unanswered chess:', error);
+      if (isMountedRef.current) {
+        setLoadingChess(false);
+      }
+      return;
+    }
+
+    if (!isMountedRef.current) return;
+    onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId } });
+    if (!unansweredChessMsgChannelId) {
+      setLoadingChess(false);
+      return;
+    }
+
+    onUpdateSelectedChannelId(unansweredChessMsgChannelId);
     chessTimerIdRef.current = setTimeout(() => {
       if (!isMountedRef.current) return;
       navigate(
         `/chat/${
-          Number(CHAT_ID_BASE_NUMBER) +
-          Number(todayStats.unansweredChessMsgChannelId)
+          Number(CHAT_ID_BASE_NUMBER) + Number(unansweredChessMsgChannelId)
         }`
       );
       setTimeout(() => {
+        if (!isMountedRef.current) return;
         onSetChessModalShown(true);
+        setLoadingChess(false);
       }, 1000);
     }, 10);
   }

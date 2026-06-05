@@ -40,6 +40,7 @@ export default function useChatSocket({
   const subchannelIdRef = useRef(subchannelId);
   const chatStatusRef = useRef(chatStatus);
   const pageVisibleRef = useRef(pageVisible);
+  const chessShortcutRefreshIdRef = useRef(0);
 
   channelsObjRef.current = channelsObj;
   onUpdateMyXpRef.current = onUpdateMyXp;
@@ -93,6 +94,9 @@ export default function useChatSocket({
   const onNotifyChatSubjectChange = useNotiContext(
     (v) => v.actions.onNotifyChatSubjectChange
   );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const onReceiveFirstMsg = useChatContext((v) => v.actions.onReceiveFirstMsg);
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onReceiveMessageOnDifferentChannel = useChatContext(
@@ -126,6 +130,9 @@ export default function useChatSocket({
   );
   const updateSubchannelLastRead = useAppContext(
     (v) => v.requestHelpers.updateSubchannelLastRead
+  );
+  const checkUnansweredChess = useAppContext(
+    (v) => v.requestHelpers.checkUnansweredChess
   );
 
   // Reactions can come in bursts. We only need to persist lastRead once per second per
@@ -184,6 +191,7 @@ export default function useChatSocket({
     socket.on('topic_settings_changed', onChangeTopicSettings);
 
     return function cleanUp() {
+      chessShortcutRefreshIdRef.current += 1;
       socket.off('ai_thinking_status_updated', onChangeAIThinkingStatus);
       socket.off('ai_thought_streamed', handleAIThoughtStream);
       socket.off('away_status_changed', handleAwayStatusChange);
@@ -433,6 +441,9 @@ export default function useChatSocket({
       const messageIsForCurrentChannel =
         message.channelId === selectedChannelIdRef.current;
       const senderIsUser = message.userId === userId && !isNotification;
+      if (isChessGameMessage(message)) {
+        void refreshUnansweredChessShortcut();
+      }
       if (senderIsUser && currentPageVisible) return;
       if (messageIsForCurrentChannel) {
         if (usingChatRef.current) {
@@ -611,6 +622,27 @@ export default function useChatSocket({
         isComplete,
         isThinkingHard
       });
+    }
+
+    async function refreshUnansweredChessShortcut() {
+      const refreshId = ++chessShortcutRefreshIdRef.current;
+      try {
+        const { unansweredChessMsgChannelId } = await checkUnansweredChess();
+        if (refreshId !== chessShortcutRefreshIdRef.current) return;
+        onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId } });
+      } catch (error) {
+        if (refreshId !== chessShortcutRefreshIdRef.current) return;
+        console.error('Failed to refresh unanswered chess shortcut:', error);
+      }
+    }
+
+    function isChessGameMessage(message: any) {
+      if (!message?.isChessMsg || message?.omokState) return false;
+      if (message.gameType === 'omok') return false;
+      if (message.gameType === 'chess') return true;
+      const content =
+        typeof message.content === 'string' ? message.content.toLowerCase() : '';
+      return !content.includes('omok');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);

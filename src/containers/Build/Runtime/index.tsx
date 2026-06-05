@@ -435,6 +435,7 @@ const runtimeBodyClass = css`
   }
 
   @media (max-width: 760px) {
+    --runtime-comments-drawer-height: 66vh;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) 0rem;
     transition: grid-template-rows 0.24s cubic-bezier(0.22, 1, 0.36, 1);
