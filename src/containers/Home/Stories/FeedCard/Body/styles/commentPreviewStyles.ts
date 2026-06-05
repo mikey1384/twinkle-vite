@@ -26,10 +26,19 @@ export const commentPreviewStyles = `
   .home-feed-card__comment-preview--has-media {
     grid-template-columns: auto minmax(0, 1fr) minmax(5.6rem, 7.2rem) auto;
   }
+  .home-feed-card__comment-preview--ai-energy {
+    border-color: ${Color.borderGray()};
+    background: #fff;
+    box-shadow: none;
+  }
   .home-feed-card__comment-preview:hover {
     background: #fff;
     border-color: color-mix(in srgb, var(--home-feed-comment-accent, ${Color.logoBlue()}) 62%, #ffffff);
     box-shadow: 0 0.22rem 0 rgba(15, 23, 42, 0.07);
+  }
+  .home-feed-card__comment-preview--ai-energy:hover {
+    border-color: ${Color.borderGray()};
+    box-shadow: none;
   }
   .home-feed-card__comment-preview:focus-visible {
     outline: 2px solid var(--home-feed-comment-accent, ${Color.logoBlue()});
@@ -83,6 +92,89 @@ export const commentPreviewStyles = `
   }
   .home-feed-card__comment-preview-text--message {
     font-weight: 500;
+  }
+  .home-feed-card__comment-preview-ai-energy-banner {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 3.8rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+    width: 100%;
+    padding: 0.48rem 0.68rem;
+    border: 1px solid var(--ui-border, ${Color.borderGray()});
+    border-radius: 0.8rem;
+    background: var(--chat-bg, #fff);
+  }
+  .home-feed-card__comment-preview-ai-energy-battery {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.8rem;
+    height: 3rem;
+    border: 1px solid var(--ui-border, ${Color.borderGray()});
+    border-radius: 0.58rem;
+    background: #fff;
+  }
+  .home-feed-card__comment-preview-ai-energy-battery-shell {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.16rem;
+    width: 2.55rem;
+    height: 1.35rem;
+    padding: 0.18rem;
+    border: 2px solid var(--theme-border, ${Color.darkerGray()});
+    border-radius: 0.4rem;
+  }
+  .home-feed-card__comment-preview-ai-energy-battery-shell::after {
+    position: absolute;
+    top: 0.26rem;
+    right: -0.42rem;
+    width: 0.32rem;
+    height: 0.65rem;
+    border-radius: 0 0.24rem 0.24rem 0;
+    background: var(--theme-border, ${Color.darkerGray()});
+    content: '';
+  }
+  .home-feed-card__comment-preview-ai-energy-battery-segment {
+    border-radius: 0.16rem;
+    background: var(--chat-border, ${Color.borderGray()});
+    opacity: 0.32;
+  }
+  .home-feed-card__comment-preview-ai-energy-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.18rem;
+  }
+  .home-feed-card__comment-preview-ai-energy-meta {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.38rem;
+    color: ${Color.gray()};
+    font-size: 1.08rem;
+    font-weight: 800;
+    line-height: 1.08;
+    white-space: nowrap;
+  }
+  .home-feed-card__comment-preview-ai-energy-meta b {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--home-feed-comment-accent, ${Color.logoBlue()});
+    font-weight: 900;
+    text-overflow: ellipsis;
+  }
+  .home-feed-card__comment-preview-ai-energy-title {
+    min-width: 0;
+    overflow: hidden;
+    color: ${Color.darkerGray()};
+    font-size: 1.28rem;
+    font-weight: 850;
+    line-height: 1.12;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .home-feed-card__comment-preview-media {
     position: relative;
@@ -189,6 +281,25 @@ export const commentPreviewStyles = `
     }
     .home-feed-card__comment-preview-text {
       font-size: 1.9rem;
+    }
+    .home-feed-card__comment-preview-ai-energy-banner {
+      grid-template-columns: 3.35rem minmax(0, 1fr);
+      gap: 0.58rem;
+      padding: 0.42rem 0.58rem;
+    }
+    .home-feed-card__comment-preview-ai-energy-battery {
+      width: 3.35rem;
+      height: 2.72rem;
+    }
+    .home-feed-card__comment-preview-ai-energy-battery-shell {
+      width: 2.28rem;
+      height: 1.22rem;
+    }
+    .home-feed-card__comment-preview-ai-energy-meta {
+      font-size: 1rem;
+    }
+    .home-feed-card__comment-preview-ai-energy-title {
+      font-size: 1.16rem;
     }
     .home-feed-card__comment-preview-media {
       width: 5.35rem;

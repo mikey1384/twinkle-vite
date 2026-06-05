@@ -299,7 +299,6 @@ const sponsorNoticeCls = css`
   background: var(--chat-bg);
   border: 1px solid var(--ui-border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;

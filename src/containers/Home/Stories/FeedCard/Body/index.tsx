@@ -1048,10 +1048,14 @@ export function HomeFeedCommentPreview({
   if (!comment) return null;
 
   const uploader = getPreviewCommentUploader(comment);
-  const commentText = getPreviewCommentText(comment);
-  const commentTextIsMessage = hasPreviewCommentMessageText(comment);
+  const aiEnergyPlaceholderName = getAiEnergyPlaceholderName(comment);
+  const commentText = aiEnergyPlaceholderName ? '' : getPreviewCommentText(comment);
+  const commentTextIsMessage =
+    !aiEnergyPlaceholderName && hasPreviewCommentMessageText(comment);
   const previewLabel = getPreviewCommentLabel(comment, contentType);
-  const previewMedia = getPreviewCommentMedia(comment);
+  const previewMedia = aiEnergyPlaceholderName
+    ? null
+    : getPreviewCommentMedia(comment);
   const profileTheme = String(uploader.profileTheme || '').trim() || 'logoBlue';
   const accentColor = Color[profileTheme]?.() || Color.logoBlue();
 
@@ -1060,6 +1064,10 @@ export function HomeFeedCommentPreview({
       <button
         className={`home-feed-card__comment-preview${
           previewMedia ? ' home-feed-card__comment-preview--has-media' : ''
+        }${
+          aiEnergyPlaceholderName
+            ? ' home-feed-card__comment-preview--ai-energy'
+            : ''
         }`}
         data-comment-id={comment.id}
         data-feed-card-interactive="true"
@@ -1079,19 +1087,48 @@ export function HomeFeedCommentPreview({
           />
         </span>
         <span className="home-feed-card__comment-preview-body">
-          <span className="home-feed-card__comment-preview-meta">
-            <b>{uploader.username || 'Someone'}</b>
-            {previewLabel ? <span>{previewLabel}</span> : null}
-          </span>
-          <span
-            className={`home-feed-card__comment-preview-text${
-              commentTextIsMessage
-                ? ' home-feed-card__comment-preview-text--message'
-                : ''
-            }`}
-          >
-            {commentText}
-          </span>
+          {aiEnergyPlaceholderName ? (
+            <span className="home-feed-card__comment-preview-ai-energy-banner">
+              <span
+                className="home-feed-card__comment-preview-ai-energy-battery"
+                aria-hidden="true"
+              >
+                <span className="home-feed-card__comment-preview-ai-energy-battery-shell">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <span
+                      key={index}
+                      className="home-feed-card__comment-preview-ai-energy-battery-segment"
+                    />
+                  ))}
+                </span>
+              </span>
+              <span className="home-feed-card__comment-preview-ai-energy-copy">
+                <span className="home-feed-card__comment-preview-ai-energy-meta">
+                  <b>{uploader.username || aiEnergyPlaceholderName}</b>
+                  {previewLabel ? <span>{previewLabel}</span> : null}
+                </span>
+                <span className="home-feed-card__comment-preview-ai-energy-title">
+                  {aiEnergyPlaceholderName} needs AI Energy
+                </span>
+              </span>
+            </span>
+          ) : (
+            <>
+              <span className="home-feed-card__comment-preview-meta">
+                <b>{uploader.username || 'Someone'}</b>
+                {previewLabel ? <span>{previewLabel}</span> : null}
+              </span>
+              <span
+                className={`home-feed-card__comment-preview-text${
+                  commentTextIsMessage
+                    ? ' home-feed-card__comment-preview-text--message'
+                    : ''
+                }`}
+              >
+                {commentText}
+              </span>
+            </>
+          )}
         </span>
         {previewMedia ? renderPreviewCommentMedia(previewMedia) : null}
         <Icon className="home-feed-card__comment-preview-icon" icon="comment" />
