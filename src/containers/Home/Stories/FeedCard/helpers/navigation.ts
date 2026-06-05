@@ -72,6 +72,16 @@ export function shouldSkipFeedCardNavigation({
         : null;
   if (!targetElement) return false;
 
+  const buildEmbedWrapper = targetElement.closest(
+    '.home-feed-card__rich-embed-internal--build'
+  );
+  if (buildEmbedWrapper && currentTarget.contains(buildEmbedWrapper)) {
+    const embedContent = buildEmbedWrapper.firstElementChild;
+    if (embedContent && embedContent.contains(targetElement)) {
+      return true;
+    }
+  }
+
   const nestedInteractiveElement = targetElement.closest(
     nestedInteractiveSelector
   );

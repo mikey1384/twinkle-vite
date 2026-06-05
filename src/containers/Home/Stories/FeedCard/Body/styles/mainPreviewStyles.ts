@@ -126,14 +126,14 @@ export const mainPreviewStyles = `
       width: 100%;
     }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build {
-      align-items: stretch;
-      justify-content: stretch;
+      align-items: center;
+      justify-content: center;
       border: 0;
       background: transparent;
     }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build
       > * {
-      height: 100%;
+      height: auto;
     }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card {
       align-items: center;

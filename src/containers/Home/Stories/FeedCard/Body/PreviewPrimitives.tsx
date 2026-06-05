@@ -180,6 +180,23 @@ export function MarkdownEmbedPreview({
   return <MarkdownImagePreview className={className} imageEmbed={embed} />;
 
   function handleInternalPreviewClick(event: React.MouseEvent<HTMLElement>) {
+    if (event.currentTarget.classList.contains(
+      'home-feed-card__rich-embed-internal--build'
+    )) {
+      const targetElement =
+        event.target instanceof Element
+          ? event.target
+          : event.target instanceof Node
+            ? event.target.parentElement
+            : null;
+      const embedContent = event.currentTarget.firstElementChild;
+      if (
+        embedContent &&
+        (!targetElement || !embedContent.contains(targetElement))
+      ) {
+        return;
+      }
+    }
     event.stopPropagation();
     const internalSrc = event.currentTarget.dataset.internalSrc;
     if (internalSrc) onNavigate(internalSrc, event.currentTarget);
