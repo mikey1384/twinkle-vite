@@ -30,6 +30,7 @@ import ChessOptionsModal from './ChessOptionsModal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { getDailyRewardPreviewStreak } from '~/helpers';
+import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 
@@ -77,8 +78,8 @@ export default function TopMenu({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const onSetChessModalShown = useChatContext(
-    (v) => v.actions.onSetChessModalShown
+  const onSetPendingChessModalChannelId = useChatContext(
+    (v) => v.actions.onSetPendingChessModalChannelId
   );
   const onSetOmokModalShown = useChatContext(
     (v) => v.actions.onSetOmokModalShown
@@ -500,20 +501,16 @@ export default function TopMenu({
       return;
     }
 
-    onUpdateSelectedChannelId(unansweredChessMsgChannelId);
-    chessTimerIdRef.current = setTimeout(() => {
-      if (!isMountedRef.current) return;
-      navigate(
-        `/chat/${
-          Number(CHAT_ID_BASE_NUMBER) + Number(unansweredChessMsgChannelId)
-        }`
-      );
-      setTimeout(() => {
-        if (!isMountedRef.current) return;
-        onSetChessModalShown(true);
-        setLoadingChess(false);
-      }, 1000);
-    }, 10);
+    navigateToChatWithPendingChessModal({
+      channelId: unansweredChessMsgChannelId,
+      chatPath: `/chat/${
+        Number(CHAT_ID_BASE_NUMBER) + Number(unansweredChessMsgChannelId)
+      }`,
+      navigate,
+      onSetPendingChessModalChannelId,
+      onUpdateSelectedChannelId
+    });
+    setLoadingChess(false);
   }
 
   function handleNavigateToOmokMessage(): any {

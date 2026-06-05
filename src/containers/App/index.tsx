@@ -32,6 +32,7 @@ import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import { setStoredItem } from '~/helpers/userDataHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState } from '~/helpers/hooks';
@@ -861,9 +862,13 @@ export default function App() {
           }
         });
       }
-      onUpdateSelectedChannelId(channelId);
-      onSetPendingChessModalChannelId(channelId);
-      navigate(pathId ? `/chat/${pathId}` : `/chat/new`);
+      navigateToChatWithPendingChessModal({
+        channelId,
+        chatPath: pathId ? `/chat/${pathId}` : `/chat/new`,
+        navigate,
+        onSetPendingChessModalChannelId,
+        onUpdateSelectedChannelId
+      });
     } catch (error) {
       reportError({
         componentPath: 'containers/App/index',

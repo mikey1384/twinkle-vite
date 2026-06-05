@@ -2,7 +2,7 @@ import React, { Children, useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
 import ReactionText from './ReactionText';
-import { useSpring, animated } from 'react-spring';
+import { useSpring, animated } from '@react-spring/web';
 
 export default function SlideContainer({
   children,

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
+import { useChain, useSpring, useSpringRef, animated } from '@react-spring/web';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';

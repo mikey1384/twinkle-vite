@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { scrollElementToCenter } from '~/helpers';
-import { useSpring, animated } from 'react-spring';
+import { useSpring, animated } from '@react-spring/web';
 import { css } from '@emotion/css';
 import { QRCodeSVG } from 'qrcode.react';
 

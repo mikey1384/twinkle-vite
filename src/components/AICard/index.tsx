@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import Card from './Card';
 import { useGesture } from '@use-gesture/react';
 import { cardProps } from '~/constants/defaultValues';
-import { useSpring } from 'react-spring';
+import { useSpring } from '@react-spring/web';
 import { Card as CardType } from '~/types';
 import { isMobile, isTablet } from '~/helpers';
 import $ from 'jquery';

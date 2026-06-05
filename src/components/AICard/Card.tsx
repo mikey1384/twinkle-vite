@@ -8,7 +8,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
-import { animated } from 'react-spring';
+import { animated, type AnimatedProps } from '@react-spring/web';
 import { isMobile, isTablet } from '~/helpers';
 import { Card as CardType } from '~/types';
 
@@ -63,7 +63,7 @@ export default function Card({
 }: {
   bind: () => any;
   card: CardType;
-  cardStyle: React.CSSProperties;
+  cardStyle: AnimatedProps<React.ComponentPropsWithoutRef<'div'>>['style'];
   detailShown?: boolean;
   innerRef: any;
   isAnimated: boolean;

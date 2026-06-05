@@ -11,7 +11,7 @@ import {
 } from '../../constants';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
-import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
+import { useChain, useSpring, useSpringRef, animated } from '@react-spring/web';
 import ResultLevelRow from './ResultLevelRow';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
