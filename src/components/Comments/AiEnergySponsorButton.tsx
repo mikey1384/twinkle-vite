@@ -239,56 +239,71 @@ export default function AiEnergySponsorButton({
   }
 
   return (
-    <div className={sponsorNoticeCls} style={style}>
-      <div className={batteryIconCls} aria-hidden="true">
-        <div className={batteryShellCls}>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <span key={index} className={batterySegmentCls} />
-          ))}
+    <div
+      className={sponsorFrameCls}
+      data-ai-energy-sponsor-frame="true"
+      style={style}
+    >
+      <div className={sponsorNoticeCls} data-ai-energy-sponsor-notice="true">
+        <div className={batteryIconCls} aria-hidden="true">
+          <div className={batteryShellCls}>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <span key={index} className={batterySegmentCls} />
+            ))}
+          </div>
         </div>
-      </div>
-      <div className={sponsorCopyCls}>
-        <div className={sponsorTitleCls}>{aiName} needs AI Energy</div>
-        <div className={sponsorBodyCls}>
-          Sponsor this reply with your Energy so {aiName} can answer here.
+        <div className={sponsorCopyCls}>
+          <div className={sponsorTitleCls}>{aiName} needs AI Energy</div>
+          <div className={sponsorBodyCls}>
+            Sponsor this reply with your Energy so {aiName} can answer here.
+          </div>
+          {message && <div className={sponsorMessageCls}>{message}</div>}
         </div>
-        {message && <div className={sponsorMessageCls}>{message}</div>}
+        <Button
+          variant="soft"
+          tone="raised"
+          size="sm"
+          disabled={disabled}
+          disabledOpacity={disabled ? 0.72 : undefined}
+          onClick={handleSponsorReply}
+          color={themeName}
+        >
+          <Icon
+            icon={buttonIcon}
+            pulse={
+              sponsorState === 'sponsoring' ||
+              sponsorState === 'replying' ||
+              sponsorState === 'checkingExisting'
+            }
+          />
+          <span style={{ marginLeft: '0.6rem' }}>{buttonLabel}</span>
+        </Button>
       </div>
-      <Button
-        variant="soft"
-        tone="raised"
-        size="sm"
-        disabled={disabled}
-        disabledOpacity={disabled ? 0.72 : undefined}
-        onClick={handleSponsorReply}
-        color={themeName}
-      >
-        <Icon
-          icon={buttonIcon}
-          pulse={
-            sponsorState === 'sponsoring' ||
-            sponsorState === 'replying' ||
-            sponsorState === 'checkingExisting'
-          }
-        />
-        <span style={{ marginLeft: '0.6rem' }}>{buttonLabel}</span>
-      </Button>
     </div>
   );
 }
 
+const sponsorFrameCls = css`
+  align-items: center;
+  align-self: center;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  justify-self: center;
+  margin: 0.6rem auto 0;
+  width: 100%;
+`;
+
 const sponsorNoticeCls = css`
   align-items: center;
-  background: linear-gradient(180deg, var(--chat-title-bg), var(--chat-bg));
+  background: var(--chat-bg);
   border: 1px solid var(--ui-border);
-  border-left: 4px solid var(--theme-bg);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
-  margin: 0.6rem auto 0;
   max-width: 62rem;
   padding: 1rem 1.1rem;
   width: min(100%, 62rem);

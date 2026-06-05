@@ -295,7 +295,7 @@ export default function Content({
           return (
             <AiEnergySponsorButton
               comment={commentForAiEnergySponsor}
-              style={{ margin: '0.5rem 0 1rem' }}
+              style={{ margin: '0.5rem auto 1rem' }}
               theme={theme}
             />
           );

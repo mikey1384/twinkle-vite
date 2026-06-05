@@ -450,7 +450,7 @@ export default function TargetContent({
                           comment={comment}
                           theme={theme}
                           style={{
-                            margin: '0.5rem 0 1rem'
+                            margin: '0.5rem auto 1rem'
                           }}
                         />
                       ) : (

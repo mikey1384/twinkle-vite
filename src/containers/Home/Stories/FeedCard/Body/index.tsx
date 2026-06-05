@@ -239,11 +239,13 @@ export default function Body({
     } as Comment;
     if (shouldRenderAiEnergySponsorNotice(commentForAiEnergySponsor)) {
       return (
-        <AiEnergySponsorButton
-          comment={commentForAiEnergySponsor}
-          style={{ margin: 0, width: '100%' }}
-          theme={theme}
-        />
+        <div className="home-feed-card__ai-energy-sponsor-preview">
+          <AiEnergySponsorButton
+            comment={commentForAiEnergySponsor}
+            style={{ margin: 0 }}
+            theme={theme}
+          />
+        </div>
       );
     }
 

@@ -8,6 +8,13 @@ export const mainPreviewStyles = `
     min-height: 100%;
     padding: 1rem;
   }
+  .home-feed-card__ai-energy-sponsor-preview {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
   .home-feed-card__text-preview,
   .home-feed-card__subject-main {
     box-sizing: border-box;
