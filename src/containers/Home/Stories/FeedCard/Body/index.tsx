@@ -38,12 +38,12 @@ import {
   AudioWavePreview,
   CompactEffortStrip,
   MarkdownEmbedPreview,
+  type HomeFeedNestedNavigate,
   getAIStoryDifficultyStyle,
   getAIStoryImageUrl,
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
 import TargetPreview from './TargetPreview';
-import { useNavigate } from 'react-router-dom';
 import { normalizeRootType } from '../helpers/navigation';
 import type { Comment } from '~/types';
 import DailyGoalsPreview from './DailyGoalsPreview';
@@ -103,6 +103,7 @@ const lockedSubjectSecretPreviewLabel =
 export default function Body({
   content,
   loading,
+  onNavigate,
   rootObj,
   sizing,
   theme,
@@ -110,12 +111,13 @@ export default function Body({
 }: {
   content: any;
   loading: boolean;
+  onNavigate: HomeFeedNestedNavigate;
   rootObj: any;
   sizing?: FeedCardSizing;
   theme?: string;
   userId: number;
 }) {
-  const navigate = useNavigate();
+  const BodyRef = useRef<HTMLDivElement | null>(null);
   const contentId = Number(content?.contentId || content?.id || 0);
   const contentType = String(content?.contentType || '');
   const isContentAIMessage = isAIContentAuthor(content);
@@ -159,6 +161,7 @@ export default function Body({
 
   return (
     <div
+      ref={BodyRef}
       className={`${bodyClass} home-feed-card__body${
         resolvedSizing.main.size === 'media-attachment-with-text'
           ? ' home-feed-card__body--tablet-media-attachment'
@@ -169,6 +172,7 @@ export default function Body({
       <TargetPreview
         contentType={contentType}
         normalizedRootType={normalizedRootType}
+        onNavigate={onNavigate}
         resolvedRootObj={resolvedRootObj}
         secretHidden={secretHidden}
         targetComment={targetComment}
@@ -427,6 +431,7 @@ export default function Body({
               contentType={contentType}
               embed={descriptionEmbed}
               internalPreviewVariant="wide"
+              onNavigate={onNavigate}
             />
           ) : null}
           {attachmentPreview}
@@ -736,8 +741,12 @@ export default function Body({
         className="home-feed-card__build-preview"
         showActions
         style={buildPreviewStyle}
-        onBuild={isOwner ? () => navigate(`/build/${contentId}`) : undefined}
-        onOpen={() => navigate(`/app/${contentId}`)}
+        onBuild={
+          isOwner
+            ? () => onNavigate(`/build/${contentId}`, BodyRef.current)
+            : undefined
+        }
+        onOpen={() => onNavigate(`/app/${contentId}`, BodyRef.current)}
       />
     );
   }
@@ -983,6 +992,7 @@ export default function Body({
           contentType={contentType}
           embed={imageEmbed}
           internalPreviewVariant={hasText ? 'compact' : 'wide'}
+          onNavigate={onNavigate}
           theme={embedTheme}
         />
       </div>
@@ -1038,12 +1048,13 @@ function getTargetUser(targetObj: any) {
 
 export function HomeFeedCommentPreview({
   comments,
-  contentType
+  contentType,
+  onNavigate
 }: {
   comments?: Comment[];
   contentType: string;
+  onNavigate: HomeFeedNestedNavigate;
 }) {
-  const navigate = useNavigate();
   const comment = getRenderablePreviewComment(comments);
   if (!comment) return null;
 
@@ -1205,7 +1216,9 @@ export function HomeFeedCommentPreview({
     event.preventDefault();
     event.stopPropagation();
     const commentId = Number(event.currentTarget.dataset.commentId || 0);
-    if (commentId > 0) navigate(`/comments/${commentId}`);
+    if (commentId > 0) {
+      onNavigate(`/comments/${commentId}`, event.currentTarget);
+    }
   }
 }
 

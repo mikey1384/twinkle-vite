@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import AchievementItem from '~/components/AchievementItem';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
@@ -17,6 +16,7 @@ import {
   AudioWavePreview,
   CompactEffortStrip,
   MarkdownEmbedPreview,
+  type HomeFeedNestedNavigate,
   getAIStoryDifficultyStyle,
   getAIStoryImageUrl,
   getReadableAIStoryPreview
@@ -82,6 +82,7 @@ function setAlphaExact(rgba: string, alpha: number) {
 export default function TargetPreview({
   contentType,
   normalizedRootType,
+  onNavigate,
   resolvedRootObj,
   secretHidden,
   targetComment,
@@ -93,6 +94,7 @@ export default function TargetPreview({
 }: {
   contentType: string;
   normalizedRootType: string;
+  onNavigate: HomeFeedNestedNavigate;
   resolvedRootObj: any;
   secretHidden: boolean;
   targetComment: any;
@@ -102,7 +104,6 @@ export default function TargetPreview({
   theme?: string;
   userId: number;
 }) {
-  const navigate = useNavigate();
   const targetThemeName =
     resolveTargetPreviewTheme({
       resolvedRootObj,
@@ -282,7 +283,7 @@ export default function TargetPreview({
   ) {
     event.preventDefault();
     event.stopPropagation();
-    navigate(targetPath);
+    onNavigate(targetPath, event.currentTarget);
   }
 
   function handleTargetPanelKeyDown(
@@ -292,7 +293,7 @@ export default function TargetPreview({
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     event.stopPropagation();
-    navigate(targetPath);
+    onNavigate(targetPath, event.currentTarget);
   }
 
   function renderTargetCommentPreview(comment: any) {
@@ -341,6 +342,7 @@ export default function TargetPreview({
           type: 'internal'
         }}
         internalPreviewVariant="compact"
+        onNavigate={onNavigate}
       />
     );
   }
@@ -535,6 +537,7 @@ export default function TargetPreview({
           contentType="subject"
           embed={descriptionBuildEmbed}
           internalPreviewVariant="compact"
+          onNavigate={onNavigate}
         />
       ) : null;
     const mediaPreview = attachmentPreview || descriptionBuildEmbedPreview;

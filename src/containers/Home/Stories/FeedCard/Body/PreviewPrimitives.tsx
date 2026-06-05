@@ -14,7 +14,11 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import type { MarkdownImageEmbed } from '../helpers/sizing';
-import { useNavigate } from 'react-router-dom';
+
+export type HomeFeedNestedNavigate = (
+  path: string,
+  sourceElement: HTMLElement | null
+) => void;
 
 export function AttachmentSurface({
   className,
@@ -102,6 +106,7 @@ export function MarkdownEmbedPreview({
   contentType,
   embed,
   internalPreviewVariant = 'wide',
+  onNavigate,
   theme
 }: {
   className?: string;
@@ -109,10 +114,9 @@ export function MarkdownEmbedPreview({
   contentType: string;
   embed: MarkdownImageEmbed;
   internalPreviewVariant?: 'compact' | 'wide';
+  onNavigate: HomeFeedNestedNavigate;
   theme?: string;
 }) {
-  const navigate = useNavigate();
-
   if (embed.type === 'internal') {
     const { isInternalLink, replacedLink } = processInternalLink(embed.src);
     const internalSrc = normalizeInternalEmbedSrc(
@@ -178,7 +182,7 @@ export function MarkdownEmbedPreview({
   function handleInternalPreviewClick(event: React.MouseEvent<HTMLElement>) {
     event.stopPropagation();
     const internalSrc = event.currentTarget.dataset.internalSrc;
-    if (internalSrc) navigate(internalSrc);
+    if (internalSrc) onNavigate(internalSrc, event.currentTarget);
   }
 }
 

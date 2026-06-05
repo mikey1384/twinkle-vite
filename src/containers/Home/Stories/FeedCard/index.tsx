@@ -638,6 +638,7 @@ export default function HomeFeedCard({
               <Body
                 content={appliedContent}
                 loading={!appliedContent.loaded}
+                onNavigate={handleNestedNavigate}
                 rootObj={rootObj}
                 sizing={sizing}
                 theme={appliedTheme}
@@ -673,6 +674,7 @@ export default function HomeFeedCard({
                 <HomeFeedCommentPreview
                   comments={appliedContent.comments}
                   contentType={contentType}
+                  onNavigate={handleNestedNavigate}
                 />
               ) : null}
             </article>
@@ -883,6 +885,14 @@ export default function HomeFeedCard({
           : {})
       }
     });
+  }
+
+  function handleNestedNavigate(
+    path: string,
+    sourceElement: HTMLElement | null
+  ) {
+    saveScrollAnchorForElement(sourceElement, homeFeedAnchorKey);
+    navigate(path);
   }
 }
 
