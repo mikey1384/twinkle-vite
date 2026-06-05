@@ -12,6 +12,9 @@ import {
 } from '~/helpers/stringHelpers';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import RichText from '~/components/Texts/RichText';
+import AiEnergySponsorButton, {
+  shouldRenderAiEnergySponsorNotice
+} from '~/components/Comments/AiEnergySponsorButton';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -22,7 +25,7 @@ import AIStoryView from './AIStoryView';
 import BuildContent from './BuildContent';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { Subject, User, Content } from '~/types';
+import { Subject, User, Content, Comment } from '~/types';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
@@ -251,7 +254,13 @@ export default function Content({
 
   const RenderedContent = useMemo(() => {
     switch (contentType) {
-      case 'comment':
+      case 'comment': {
+        const commentForAiEnergySponsor = {
+          ...contentObj,
+          id: contentId,
+          content,
+          uploader
+        } as unknown as Comment;
         if (secretHidden) {
           return (
             <SecretComment
@@ -282,6 +291,15 @@ export default function Content({
             </div>
           );
         }
+        if (shouldRenderAiEnergySponsorNotice(commentForAiEnergySponsor)) {
+          return (
+            <AiEnergySponsorButton
+              comment={commentForAiEnergySponsor}
+              style={{ margin: '0.5rem 0 1rem' }}
+              theme={theme}
+            />
+          );
+        }
         return (
           <RichText
             isAIMessage={
@@ -297,6 +315,7 @@ export default function Content({
             {(content || '').trimEnd()}
           </RichText>
         );
+      }
       case 'aiStory':
         return (
           <AIStoryView
@@ -608,6 +627,7 @@ export default function Content({
     contentType,
     secretHidden,
     isNotification,
+    contentObj,
     uploader,
     contentId,
     theme,

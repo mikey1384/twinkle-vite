@@ -30,6 +30,7 @@ export default function Simple({
   borderColor,
   cardColor,
   displayedBurnXP,
+  style,
   xpNumberColor = 'logoBlue'
 }: {
   card: any;
@@ -37,6 +38,7 @@ export default function Simple({
   borderColor?: string;
   cardColor?: string;
   displayedBurnXP: number | string;
+  style?: React.CSSProperties;
   xpNumberColor: string;
 }) {
   return isLoading ? (
@@ -62,7 +64,8 @@ export default function Simple({
         border:
           cardProps[card.quality]?.includes('glowy') && !card.isBurned
             ? `3px solid ${borderColor}`
-            : 'none'
+            : 'none',
+        ...style
       }}
     >
       {card.imagePath && !card.isBurned ? (

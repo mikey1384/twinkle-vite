@@ -22,7 +22,8 @@ export default function CardThumb({
   style?: React.CSSProperties;
   onClick?: (e: React.MouseEvent) => void;
 }) {
-  const cardObj = useChatContext((v) => v.state.cardObj);
+  const cardId = Number(card?.id || 0);
+  const cardState = useChatContext((v) => v.state.cardObj[cardId]);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColor = useMemo(
@@ -31,18 +32,18 @@ export default function CardThumb({
   );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
-  const cardState = cardObj[card.id];
 
   useEffect(() => {
     if (!card?.quality && !cardState?.quality) {
       initCard();
     }
     async function initCard() {
+      if (!cardId) return;
       setLoading(true);
       try {
-        const { card: loadedCard } = await loadAICard(card.id);
+        const { card: loadedCard } = await loadAICard(cardId);
         onUpdateAICard({
-          cardId: card.id,
+          cardId,
           newState: loadedCard
         });
       } catch (error) {
@@ -52,7 +53,7 @@ export default function CardThumb({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card, cardState?.word]);
+  }, [card, cardId, cardState?.word]);
 
   const finalCard = useMemo(
     () => ({
@@ -106,6 +107,7 @@ export default function CardThumb({
       cardColor={cardColor}
       borderColor={borderColor}
       displayedBurnXP={displayedBurnXP}
+      style={style}
       xpNumberColor={xpNumberColor}
     />
   );

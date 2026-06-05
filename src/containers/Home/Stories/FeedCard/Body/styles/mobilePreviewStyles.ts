@@ -310,9 +310,10 @@ export const mobilePreviewStyles = `
         font-size: max(1.18rem, 11.8px);
         line-height: 1.24;
       }
-      .home-feed-card__daily-goals-preview.has-media {
-        grid-template-columns: 6.8rem minmax(0, 1fr);
-        gap: 0.6rem;
+      .home-feed-card__daily-goals-preview.has-media:not(.home-feed-card__daily-goals-preview--target) {
+        --home-feed-daily-goals-thumb-height: 15rem;
+        --home-feed-daily-goals-thumb-width: 10.72rem;
+        gap: 2rem;
         padding: 0.85rem 1rem;
       }
       .home-feed-card__target-daily-goals.home-feed-card__daily-goals-preview--target {

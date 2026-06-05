@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import CardThumb from '~/components/CardThumb';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import ContentFileViewer from '~/components/ContentFileViewer';
+import { getAiEnergyPlaceholderName } from '~/components/Comments/AiEnergySponsorButton';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
@@ -71,13 +72,17 @@ export default function CompactCommentEmbedPreview({
   const uploader = getCommentUploader(comment);
   const isAIMessage = isAICommentAuthor(uploader.id);
   const rawContent = String(comment?.content || '');
+  const aiEnergyPlaceholderName = getAiEnergyPlaceholderName(comment);
   const markdownMedia = useMemo(
     () => getMarkdownMediaEmbeds(rawContent).slice(0, 3),
     [rawContent]
   );
   const textContent = useMemo(
-    () => removeMarkdownMediaEmbeds(rawContent),
-    [rawContent]
+    () =>
+      aiEnergyPlaceholderName
+        ? `${aiEnergyPlaceholderName} needs AI Energy`
+        : removeMarkdownMediaEmbeds(rawContent),
+    [aiEnergyPlaceholderName, rawContent]
   );
   const attachment = getAttachmentInfo(comment);
   const mediaItems = [

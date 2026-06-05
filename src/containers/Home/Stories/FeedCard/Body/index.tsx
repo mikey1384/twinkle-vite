@@ -7,6 +7,10 @@ import Icon from '~/components/Icon';
 import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
+import AiEnergySponsorButton, {
+  getAiEnergyPlaceholderName,
+  shouldRenderAiEnergySponsorNotice
+} from '~/components/Comments/AiEnergySponsorButton';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
@@ -227,6 +231,22 @@ export default function Body({
   }
 
   function renderCommentPreview() {
+    const commentForAiEnergySponsor = {
+      ...content,
+      id: contentId,
+      content: content?.content || '',
+      uploader: content?.uploader
+    } as Comment;
+    if (shouldRenderAiEnergySponsorNotice(commentForAiEnergySponsor)) {
+      return (
+        <AiEnergySponsorButton
+          comment={commentForAiEnergySponsor}
+          style={{ margin: 0, width: '100%' }}
+          theme={theme}
+        />
+      );
+    }
+
     return renderTextPreview({
       text: content?.content || '',
       section: 'content',
@@ -1329,6 +1349,9 @@ function getPreviewCommentUploader(comment: Comment) {
 }
 
 function getPreviewCommentText(comment: Comment) {
+  const aiName = getAiEnergyPlaceholderName(comment);
+  if (aiName) return `${aiName} needs AI Energy`;
+
   const rawContent = String(comment.content || '');
   const markdownEmbed = getMarkdownImageEmbedPreview(rawContent);
   const content = stripMarkdownForCommentPreview(

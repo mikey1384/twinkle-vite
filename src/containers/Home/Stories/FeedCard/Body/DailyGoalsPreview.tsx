@@ -51,12 +51,21 @@ export default function DailyGoalsPreview({
   ]
     .filter(Boolean)
     .join(' ');
+  const cardThumbStyle: React.CSSProperties | undefined =
+    variant === 'main'
+      ? {
+          aspectRatio: '5 / 7',
+          height: 'var(--home-feed-daily-goals-thumb-height)',
+          maxHeight: '100%',
+          width: 'var(--home-feed-daily-goals-thumb-width)'
+        }
+      : undefined;
 
   return (
     <div className={rootClassName}>
       {dailyGoals?.card ? (
         <div className="home-feed-card__daily-goals-card">
-          <CardThumb card={dailyGoals.card} />
+          <CardThumb card={dailyGoals.card} style={cardThumbStyle} />
         </div>
       ) : null}
       <div className="home-feed-card__daily-goals-copy">

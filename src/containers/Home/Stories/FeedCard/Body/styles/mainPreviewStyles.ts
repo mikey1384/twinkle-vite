@@ -793,15 +793,21 @@ export const mainPreviewStyles = `
     padding: 1rem;
     align-items: center;
   }
-  .home-feed-card__daily-goals-preview.has-media {
-    grid-template-columns: 8.8rem minmax(0, 1fr);
+  .home-feed-card__daily-goals-preview.has-media:not(.home-feed-card__daily-goals-preview--target) {
+    --home-feed-daily-goals-thumb-height: 16.5rem;
+    --home-feed-daily-goals-thumb-width: 11.79rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
   }
   .home-feed-card__daily-goals-card {
     display: flex;
+    align-items: center;
     justify-content: center;
+    height: 100%;
+    flex: 0 0 auto;
     min-width: 0;
-    transform: scale(0.86);
-    transform-origin: center;
+    min-height: 0;
   }
   .home-feed-card__daily-goals-copy {
     display: flex;

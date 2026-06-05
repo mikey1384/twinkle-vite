@@ -34,7 +34,10 @@ export default function Cover({
   profile: any;
   selectedTheme: string;
 }) {
-  const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const profileId = profile.id;
+  const profileChatStatus = useChatContext(
+    (v) => v.state.chatStatus[profileId]
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const userId = useKeyContext((v) => v.myState.userId);
   const {
@@ -122,17 +125,18 @@ export default function Cover({
           <div
             style={{ position: 'relative', zIndex: 5 }}
             className={css`
+              box-sizing: border-box;
               display: flex;
               flex-direction: column;
               justify-content: flex-end;
               margin-left: 29rem;
               font-weight: bold;
               overflow: hidden;
+              padding-bottom: 1.2rem;
               white-space: nowrap;
               text-overflow: ellipsis;
               text-shadow: ${coverShadowLarge};
               @media (max-width: ${mobileMaxWidth}) {
-                box-sizing: border-box;
                 height: 100%;
                 justify-content: center;
                 margin-left: 15rem;
@@ -214,7 +218,7 @@ export default function Cover({
             </div>
             <ChessLevelBadge
               className={css`
-                margin-bottom: 1.2rem;
+                margin-bottom: 0;
                 margin-top: 1.2rem;
 
                 @media (max-width: ${mobileMaxWidth}) {
@@ -358,9 +362,9 @@ export default function Cover({
                 : undefined
             }
             profilePicUrl={profilePicUrl}
-            online={chatStatus[profile.id]?.isOnline}
-            isBusy={chatStatus[profile.id]?.isBusy}
-            isAway={chatStatus[profile.id]?.isAway}
+            online={profileChatStatus?.isOnline}
+            isBusy={profileChatStatus?.isBusy}
+            isAway={profileChatStatus?.isAway}
             large
             statusShown
             statusSize={coverStatusSize}
