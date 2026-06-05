@@ -375,6 +375,7 @@ export default function BuildWideCard({
   showOpenAppAction,
   themeName,
   to,
+  updatedAtSource = 'workspace',
   onAddDescription,
   onDelete,
   onFavoriteChange,
@@ -398,6 +399,7 @@ export default function BuildWideCard({
   showOpenAppAction?: boolean;
   themeName?: string;
   to?: string;
+  updatedAtSource?: 'workspace' | 'publicVersion';
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
   onFavoriteChange?: (
@@ -468,6 +470,7 @@ export default function BuildWideCard({
   const normalizedBuild = build as BuildProjectListItemData | null;
   const buildId = Number(build?.id || 0);
   const displayTitle = build ? getBuildDisplayTitle(build) : '';
+  const displayUpdatedAt = getDisplayUpdatedAt(build, updatedAtSource);
   const targetPath = to || (buildId ? `/build/${buildId}` : '');
   const description = String(build?.description || '').trim();
   const isCurrentUserOwner = Boolean(
@@ -664,10 +667,10 @@ export default function BuildWideCard({
             ) : null}
           </div>
           <div className={metaRowClass}>
-            {build.updatedAt ? (
+            {displayUpdatedAt ? (
               <span className={metaItemClass}>
                 <Icon icon="clock-rotate-left" />
-                Updated {formatRelativeTime(build.updatedAt)}
+                Updated {formatRelativeTime(displayUpdatedAt)}
               </span>
             ) : null}
             {build.createdAt ? (
@@ -1173,4 +1176,21 @@ function isBuildAppTargetPath(targetPath: string, buildId: number) {
   if (!targetPath || !buildId) return false;
   const pathname = targetPath.split(/[?#]/)[0];
   return pathname === `/app/${buildId}`;
+}
+
+function getDisplayUpdatedAt(
+  build:
+    | {
+        publishedAt?: unknown;
+        updatedAt?: unknown;
+      }
+    | null
+    | undefined,
+  updatedAtSource: 'workspace' | 'publicVersion'
+) {
+  if (!build) return 0;
+  if (updatedAtSource === 'publicVersion') {
+    return Number(build.publishedAt || 0);
+  }
+  return Number(build.updatedAt || 0);
 }

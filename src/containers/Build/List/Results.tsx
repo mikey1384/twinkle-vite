@@ -289,6 +289,11 @@ export default function Results({
                     }
                   : undefined
               }
+              updatedAtSource={
+                activeTab === 'community' || activeTab === 'open_source'
+                  ? 'publicVersion'
+                  : 'workspace'
+              }
               primaryActionLabel={
                 activeTab === 'collaborating' ? 'Work together' : undefined
               }

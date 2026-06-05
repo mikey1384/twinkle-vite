@@ -18,6 +18,7 @@ export default function ProjectListItem({
   showFavoriteAction = false,
   showForkBadge = true,
   showOpenAppAction,
+  updatedAtSource = 'workspace',
   onAddDescription,
   onDelete,
   onFavoriteChange,
@@ -37,6 +38,7 @@ export default function ProjectListItem({
   showFavoriteAction?: boolean;
   showForkBadge?: boolean;
   showOpenAppAction?: boolean;
+  updatedAtSource?: 'workspace' | 'publicVersion';
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
   onFavoriteChange?: (
@@ -68,6 +70,7 @@ export default function ProjectListItem({
       showOpenAppAction={showOpenAppAction}
       themeName={themeName}
       to={to}
+      updatedAtSource={updatedAtSource}
       onAddDescription={onAddDescription}
       onDelete={onDelete}
       onFavoriteChange={onFavoriteChange}
