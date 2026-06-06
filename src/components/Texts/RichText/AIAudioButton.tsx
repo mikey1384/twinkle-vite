@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useViewContext } from '~/contexts';
 import { audioRef } from '~/constants/state';
+import { Color } from '~/constants/css';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -26,19 +27,18 @@ function AIAudioButton({
     audioKey === contentKey && audioRef.player
   );
   const [preparing, setPreparing] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isPrepared, setIsPrepared] = useState(
+    audioKey === contentKey && Boolean(audioRef.player)
+  );
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsLoaded(
-      !deviceIsMobile || (audioRef.key === contentKey && audioRef.player)
-    );
-  }, [contentKey]);
+  const [audioError, setAudioError] = useState('');
 
   useEffect(() => {
     const isPlaying =
       audioKey === contentKey && audioRef.player && !audioRef.player.paused;
+    const hasPreparedAudio = audioKey === contentKey && Boolean(audioRef.player);
     setIsPlaying(isPlaying);
+    setIsPrepared(hasPreparedAudio);
     if (isPlaying) {
       audioRef.player.onended = () => {
         setIsPlaying(false);
@@ -48,7 +48,14 @@ function AIAudioButton({
   }, [audioKey, contentKey]);
 
   return (
-    <>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        flexWrap: 'wrap'
+      }}
+    >
       <Button
         loading={preparing}
         variant="soft"
@@ -58,9 +65,11 @@ function AIAudioButton({
           padding: '0.5rem 0.7rem',
           lineHeight: 1
         }}
-        color="darkerGray"
+        color={
+          audioError ? 'redOrange' : isPrepared ? 'logoBlue' : 'darkerGray'
+        }
       >
-        <Icon icon={isPlaying ? 'stop' : isLoaded ? 'volume' : 'volume-mute'} />
+        <Icon icon={isPlaying ? 'stop' : 'volume'} />
       </Button>
       {isDownloadButtonShown && (
         <Button
@@ -77,13 +86,29 @@ function AIAudioButton({
           <Icon icon="download" />
         </Button>
       )}
-    </>
+      {audioError && (
+        <span
+          role="alert"
+          style={{
+            color: Color.redOrange(),
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            lineHeight: 1.2
+          }}
+        >
+          {audioError}
+        </span>
+      )}
+    </span>
   );
 
   async function handleAudioClick() {
+    setAudioError('');
+    const hasCurrentAudio =
+      audioRef.key === contentKey && Boolean(audioRef.player);
     if (audioRef.player) {
       audioRef.player.pause();
-      if (contentKey !== audioRef.key) {
+      if (!hasCurrentAudio) {
         audioRef.player = null;
       }
     }
@@ -96,6 +121,7 @@ function AIAudioButton({
 
     setPreparing(true);
     try {
+      let preparedAudioOnThisClick = false;
       if (!audioRef.player) {
         const data = await textToSpeech(text, voice);
         const audioBlob = new Blob([data], { type: 'audio/mp3' });
@@ -103,16 +129,36 @@ function AIAudioButton({
         const audio = new Audio(audioUrl);
         audioRef.player = audio;
         setAudioUrl(audioUrl);
+        setIsPrepared(true);
+        preparedAudioOnThisClick = true;
       }
-      if (!isLoaded) return setIsLoaded(true);
+      if (deviceIsMobile && preparedAudioOnThisClick) {
+        return;
+      }
+      const player = audioRef.player as HTMLAudioElement;
       setIsPlaying(true);
-      setIsDownloadButtonShown(true);
-      audioRef.player.play();
-      audioRef.player.onended = () => {
+      player.onended = () => {
         setIsPlaying(false);
       };
+      try {
+        await player.play();
+      } catch (error) {
+        if (
+          isInterruptedPlaybackError(error) ||
+          audioRef.player !== player ||
+          audioRef.key !== contentKey
+        ) {
+          setIsPlaying(false);
+          return;
+        }
+        throw error;
+      }
+      setIsDownloadButtonShown(true);
     } catch (error) {
       console.error(error);
+      setIsPlaying(false);
+      setIsPrepared(false);
+      setAudioError('Could not prepare voice audio.');
     } finally {
       setPreparing(false);
     }
@@ -133,6 +179,18 @@ function AIAudioButton({
       }
     }
   }
+}
+
+function isInterruptedPlaybackError(error: unknown) {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return true;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return /interrupted|abort|pause/i.test(error.message);
 }
 
 export default memo(AIAudioButton);

@@ -2,6 +2,7 @@ import React from 'react';
 import Icon from '~/components/Icon';
 import SanitizedHTML from 'react-sanitized-html';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
 import {
   cardLevelHash,
   cloudFrontURL,
@@ -23,6 +24,7 @@ export function CompactThumb({
   const cardColor = getCardColor(card);
   const qualityColor = getQualityColor(card) || cardColor;
   const imageSrc = getCardImageSrc(card);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const burnXP = returnCardBurnXP({
     cardLevel: Number(card.level || 1),
     cardQuality: card.quality || 'common'
@@ -56,7 +58,8 @@ export function CompactThumb({
         style={
           {
             '--compact-ai-card-accent': cardColor,
-            '--compact-ai-card-quality': qualityColor
+            '--compact-ai-card-quality': qualityColor,
+            '--compact-ai-card-xp-number': Color[xpNumberColor]()
           } as React.CSSProperties
         }
       >
@@ -75,7 +78,8 @@ export function CompactThumb({
       style={
         {
           '--compact-ai-card-accent': cardColor,
-          '--compact-ai-card-quality': qualityColor
+          '--compact-ai-card-quality': qualityColor,
+          '--compact-ai-card-xp-number': Color[xpNumberColor]()
         } as React.CSSProperties
       }
       onClick={handleClick}
@@ -347,7 +351,7 @@ const compactThumbClass = css`
     white-space: nowrap;
   }
   .compact-ai-card-thumb__burned b {
-    color: ${Color.green()};
+    color: var(--compact-ai-card-xp-number);
     font-size: 1.34em;
     font-weight: 900;
   }
