@@ -1,4 +1,4 @@
-import { Color } from '~/constants/css';
+import { Color, desktopMinWidth } from '~/constants/css';
 
 export const mainPreviewStyles = `
   .home-feed-card__secret-preview {
@@ -189,6 +189,111 @@ export const mainPreviewStyles = `
       width: 100%;
       height: 100%;
       max-height: 100%;
+    }
+    @media (min-width: ${desktopMinWidth}) {
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview {
+        grid-template-columns: minmax(7.2rem, 0.88fr) minmax(0, 1.12fr);
+        grid-template-rows: auto auto;
+        grid-template-areas:
+          'card details'
+          'card market';
+        align-content: center;
+        align-items: center;
+        gap: 0.5rem 0.65rem;
+        min-height: 0;
+        padding: 0.55rem 0.65rem;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__card-stage {
+        grid-area: card;
+        align-self: center;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__card-stage
+        .compact-ai-card-thumb--static {
+        width: clamp(7.1rem, 35cqw, 9.2rem);
+        height: clamp(9.9rem, 49cqw, 12.8rem);
+        max-width: 100%;
+        max-height: calc(100% - 0.2rem);
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__details {
+        grid-area: details;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.18rem;
+        text-align: center;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__header,
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__meta,
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__quality-line {
+        justify-content: center;
+        text-align: center;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__prompt,
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__summoned,
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__stat--listed {
+        display: none;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__word {
+        font-size: 1.25rem;
+        line-height: 1.08;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__quality-line {
+        font-size: 1rem;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__market {
+        grid-area: market;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-evenly;
+        gap: 0.4rem;
+        height: auto;
+        padding: 0.4rem 0 0;
+        border-top: 1px solid ${Color.borderGray()};
+        border-left: 0;
+        text-align: center;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__stat {
+        align-items: center;
+        text-align: center;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__stat b {
+        justify-content: center;
+        font-size: 1.05rem;
+      }
+      .home-feed-card__rich-embed-preview--with-text
+        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
+        .compact-ai-card-preview__stat--burn b {
+        font-size: 1.12rem;
+      }
     }
     .home-feed-card__rich-embed-video > div {
       width: 100%;

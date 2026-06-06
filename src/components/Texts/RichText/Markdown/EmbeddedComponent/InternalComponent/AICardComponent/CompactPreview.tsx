@@ -383,6 +383,10 @@ const compactPreviewClass = css`
   text-align: left;
   cursor: pointer;
 
+  .compact-ai-card-thumb--static {
+    cursor: pointer;
+  }
+
   .compact-ai-card-preview__card-stage {
     display: flex;
     min-width: 0;
