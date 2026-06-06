@@ -467,17 +467,11 @@ export const mobilePreviewStyles = `
         padding: 0.24rem 0.36rem;
         font-size: max(1.02rem, 10.2px);
       }
-    }
     h3 {
       font-size: 1.5rem;
     }
-    .home-feed-card__subject-preview
-      .home-feed-card__subject-text-stack
-      > h3.home-feed-card__primary-preview-text,
-    .home-feed-card__subject-preview
-      .home-feed-card__subject-copy
-      > h3.home-feed-card__primary-preview-text {
-      font-size: max(1.725rem, 17.25px);
+    .home-feed-card__subject-preview .home-feed-card__subject-title {
+      font-size: max(1.811rem, 18.11px) !important;
       line-height: 1.24;
     }
     .home-feed-card__target-subject .home-feed-card__target-copy > h4 {

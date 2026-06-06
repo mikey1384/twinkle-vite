@@ -369,7 +369,11 @@ export default function Body({
                   <CompactEffortStrip rewardLevel={Number(content.rewardLevel)} />
                 ) : null}
                 {hasTitle ? (
-                  <h3 className={primaryPreviewTextClass}>{content.title}</h3>
+                  <h3
+                    className={`${primaryPreviewTextClass} home-feed-card__subject-title`}
+                  >
+                    {content.title}
+                  </h3>
                 ) : null}
                 {hasDescriptionText ? (
                   <RichText
