@@ -472,11 +472,27 @@ export const mobilePreviewStyles = `
       font-size: 1.5rem;
     }
     .home-feed-card__subject-preview
-      .home-feed-card__subject-copy
+      .home-feed-card__subject-text-stack
       > h3.home-feed-card__primary-preview-text,
+    .home-feed-card__subject-preview
+      .home-feed-card__subject-copy
+      > h3.home-feed-card__primary-preview-text {
+      font-size: max(1.725rem, 17.25px);
+      line-height: 1.24;
+    }
     .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
       font-size: 1.9rem;
       line-height: 1.24;
+    }
+    .home-feed-card__subject-preview .home-feed-card__subject-secret-answer,
+    .home-feed-card__subject-preview .home-feed-card__subject-secret-text,
+    .home-feed-card__subject-preview .home-feed-card__subject-secret-text p {
+      font-size: max(1.62rem, 16.2px);
+    }
+    .home-feed-card__subject-preview
+      .home-feed-card__subject-secret-answer--locked
+      > div {
+      font-size: max(1.215rem, 12.15px) !important;
     }
     .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
       min-height: max(2.36rem, 23.6px);
