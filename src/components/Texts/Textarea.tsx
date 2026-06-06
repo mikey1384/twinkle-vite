@@ -341,30 +341,13 @@ export default function Textarea({
             scheduleResize(false);
           }
 
-          // iOS idle timer: after 3 seconds of no typing, allow shrinking
+          // iOS: while focused, do not run the delayed shrink/reflow routine.
+          // It can make Safari adjust the page scroll under the open keyboard.
           if (isIOS) {
             if (idleTimerRef.current) {
               clearTimeout(idleTimerRef.current);
+              idleTimerRef.current = null;
             }
-            idleTimerRef.current = setTimeout(() => {
-              allowShrinkRef.current = true;
-              scheduleResize(true);
-              // iOS workaround: Force layout recalculation to reset touch hit-testing
-              const el = textareaRef.current;
-              if (el) {
-                setTimeout(() => {
-                  if (el) {
-                    el.offsetHeight;
-                    el.style.transform = 'translateZ(0)';
-                    requestAnimationFrame(() => {
-                      if (el) {
-                        el.style.transform = '';
-                      }
-                    });
-                  }
-                }, 150);
-              }
-            }, 3000);
           }
 
           if (rest.onInput) (rest.onInput as any)(e);
