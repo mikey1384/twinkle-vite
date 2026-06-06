@@ -23,15 +23,28 @@ export function CompactThumb({
   const cardColor = getCardColor(card);
   const qualityColor = getQualityColor(card) || cardColor;
   const imageSrc = getCardImageSrc(card);
+  const burnXP = returnCardBurnXP({
+    cardLevel: Number(card.level || 1),
+    cardQuality: card.quality || 'common'
+  });
+  const ownerName = card.owner?.username;
   const content =
     imageSrc && !card.isBurned ? (
       <img src={imageSrc} alt={card.word || `AI card ${card.id}`} />
     ) : !card.isBurned ? (
       <span className="compact-ai-card-thumb__unknown">?</span>
     ) : (
-      <span className="compact-ai-card-thumb__burned">
-        {addCommasToNumber(Number((card as any).burnXP || 0))}
-      </span>
+      <div className="compact-ai-card-thumb__burned">
+        {ownerName ? (
+          <strong className="compact-ai-card-thumb__burned-owner">
+            {ownerName}
+          </strong>
+        ) : null}
+        <span>burned this card and earned</span>
+        <b>
+          {addCommasToNumber(burnXP)} <span>XP</span>
+        </b>
+      </div>
     );
 
   if (!onClick) {
@@ -260,6 +273,7 @@ const compactThumbClass = css`
   border-radius: 0.45rem;
   background: var(--compact-ai-card-accent);
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
+  container-type: inline-size;
   cursor: pointer;
   .compact-ai-card-thumb__art {
     display: flex;
@@ -292,15 +306,45 @@ const compactThumbClass = css`
   &.compact-ai-card-thumb--static {
     cursor: default;
   }
-  .compact-ai-card-thumb__unknown,
-  .compact-ai-card-thumb__burned {
+  .compact-ai-card-thumb__unknown {
     color: ${Color.gold()};
     font-size: 1.8rem;
     font-weight: 900;
     line-height: 1;
   }
   .compact-ai-card-thumb__burned {
-    font-size: 1rem;
+    box-sizing: border-box;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.28em;
+    padding: 0.45rem;
+    color: ${Color.darkerGray()};
+    font-size: clamp(0.72rem, 9cqw, 1rem);
+    font-weight: 800;
+    line-height: 1.16;
+    text-align: center;
+  }
+  .compact-ai-card-thumb__burned-owner {
+    overflow: hidden;
+    max-width: 100%;
+    color: var(--compact-ai-card-accent);
+    font-size: 1.05em;
+    font-weight: 900;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .compact-ai-card-thumb__burned b {
+    color: ${Color.green()};
+    font-size: 1.25em;
+    font-weight: 900;
+  }
+  .compact-ai-card-thumb__burned b span {
+    color: ${Color.gold()};
   }
 `;
 

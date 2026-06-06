@@ -387,10 +387,10 @@ export default function Textarea({
           border: hasError
             ? `1px solid ${Color.red()}`
             : dropEnabled
-            ? isDragging
-              ? '2px dashed #00aaff'
-              : style?.border
-            : style?.border,
+              ? isDragging
+                ? '2px dashed #00aaff'
+                : style?.border
+              : style?.border,
           pointerEvents: uploading ? 'none' : style?.pointerEvents,
           minHeight: style?.minHeight,
           height: style?.height
@@ -409,7 +409,9 @@ export default function Textarea({
           resize: none;
           touch-action: manipulation;
           overflow-anchor: none;
-          transition: border-color 0.18s ease, box-shadow 0.18s ease,
+          transition:
+            border-color 0.18s ease,
+            box-shadow 0.18s ease,
             background 0.18s ease;
           &:focus {
             outline: none;
@@ -565,8 +567,7 @@ export default function Textarea({
     let fileToUpload = file;
     if (needsImageConversion(file.name)) {
       try {
-        const { file: convertedFile } =
-          await convertToWebFriendlyFormat(file);
+        const { file: convertedFile } = await convertToWebFriendlyFormat(file);
         // Re-check size after conversion (converted file could be larger)
         if (convertedFile.size / mb > maxSize) {
           setUploading(false);
