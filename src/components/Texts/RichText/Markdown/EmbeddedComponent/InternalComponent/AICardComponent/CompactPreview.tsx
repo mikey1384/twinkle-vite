@@ -317,19 +317,20 @@ const compactThumbClass = css`
     line-height: 1;
   }
   &.compact-ai-card-thumb--burned .compact-ai-card-thumb__art {
-    background: #fff;
+    background: transparent;
   }
   .compact-ai-card-thumb__burned {
     box-sizing: border-box;
     display: flex;
     width: 100%;
-    height: 100%;
+    height: auto;
     min-width: 0;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.34em;
-    padding: 0.55rem;
+    padding: 0.55rem 0.42rem;
+    background: #fff;
     color: ${Color.darkerGray()};
     font-size: clamp(0.76rem, 10.6cqw, 1.14rem);
     font-weight: 800;
@@ -405,7 +406,7 @@ const compactPreviewClass = css`
   .compact-ai-card-preview__card-stage
     .compact-ai-card-thumb--static.compact-ai-card-thumb--burned
     .compact-ai-card-thumb__art {
-    background: #fff;
+    background: transparent;
   }
 
   .compact-ai-card-preview__card-stage .compact-ai-card-thumb--static img {
