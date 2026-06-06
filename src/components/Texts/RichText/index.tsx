@@ -116,28 +116,32 @@ const RichTextCss = css`
       -webkit-line-clamp: 3;
     }
     .compact-ai-card-preview {
-      grid-template-columns: 5.6rem minmax(0, 1fr);
-      gap: 0.72rem;
+      grid-template-columns: minmax(5.6rem, 0.82fr) minmax(0, 1.18fr) minmax(
+          4.6rem,
+          0.58fr
+        );
+      gap: 0.45rem;
       min-height: 9.8rem;
-      padding: 0.76rem;
+      padding: 0.58rem;
     }
     .compact-ai-card-preview__card-stage .compact-ai-card-thumb--static {
       width: 5.1rem !important;
       height: 7.2rem !important;
     }
     .compact-ai-card-preview__market {
-      display: none;
+      gap: 0.32rem;
+      padding-left: 0.35rem;
     }
     .compact-ai-card-preview__details {
-      align-items: flex-start;
-      text-align: left;
+      align-items: center;
+      text-align: center;
     }
     .compact-ai-card-preview__header {
-      justify-content: flex-start;
+      justify-content: center;
       max-width: 100%;
     }
     .compact-ai-card-preview__owner--inline {
-      display: inline;
+      display: none;
     }
     .compact-ai-card-preview__word {
       max-width: 100%;
@@ -150,6 +154,10 @@ const RichTextCss = css`
     .compact-ai-card-preview__prompt {
       margin: 0.12rem 0;
       -webkit-line-clamp: 2;
+    }
+    .compact-ai-card-preview__stat > span,
+    .compact-ai-card-preview__stat b {
+      font-size: 1rem;
     }
     .compact-ai-card-multi {
       gap: 0.55rem;

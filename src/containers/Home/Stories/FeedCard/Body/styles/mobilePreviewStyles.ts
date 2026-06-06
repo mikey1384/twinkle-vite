@@ -253,6 +253,35 @@ export const mobilePreviewStyles = `
         gap: 0.7rem;
         padding: 0.85rem 1rem;
       }
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject {
+        align-self: center;
+        height: auto;
+        max-height: none;
+      }
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject
+        > .home-feed-card__target-subject {
+        height: auto;
+        min-height: 0;
+        align-items: start;
+      }
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject
+        .home-feed-card__target-copy {
+        height: auto;
+        justify-content: flex-start;
+      }
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject
+        .home-feed-card__target-media-wrap {
+        align-self: start;
+        justify-self: center;
+        height: auto;
+        aspect-ratio: 1 / 1;
+        max-height: none;
+      }
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject
+        .home-feed-card__target-media-wrap
+        > * {
+        height: 100%;
+      }
       .home-feed-card__url-preview {
         grid-template-columns: minmax(0, 1fr) minmax(13rem, 40%);
       }
@@ -279,106 +308,33 @@ export const mobilePreviewStyles = `
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card {
         padding: 0;
       }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview {
-        display: grid !important;
-        grid-template-columns: minmax(9.4rem, 0.78fr) minmax(0, 1.28fr) minmax(
-            6.3rem,
-            0.54fr
-          ) !important;
-        align-items: center !important;
-        gap: 0.36rem !important;
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 0 !important;
-        max-height: 100% !important;
-        padding: 0.45rem !important;
-        border: 1px solid ${Color.borderGray()} !important;
-        border-radius: 0.8rem !important;
-        background: #fff !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__details {
-        display: flex !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__card-stage {
-        width: 100%;
-        height: 100%;
-        min-width: 0;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__card-stage
-        .compact-ai-card-thumb--static {
-        width: clamp(9.2rem, 22vw, 13rem) !important;
-        height: clamp(12.6rem, 30.2vw, 17.8rem) !important;
-        max-width: 100%;
-        max-height: 100%;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__details {
-        gap: 0.24rem !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__header {
-        gap: 0.28rem !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__owner--inline {
-        display: none !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__word {
-        font-size: max(1.35rem, 13.5px) !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__quality-line {
-        font-size: max(1.18rem, 11.8px) !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__prompt {
-        margin: 0.1rem 0 !important;
-        font-size: max(1.1rem, 11px) !important;
-        line-height: 1.28 !important;
-        -webkit-line-clamp: 3 !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__meta {
-        gap: 0.14rem 0.34rem !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__summoned {
-        margin-top: 0.14rem !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__market {
-        display: flex !important;
-        gap: 0.36rem !important;
-        padding-left: 0.38rem !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__stat
-        > span {
-        font-size: max(1rem, 10px) !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__stat
-        b {
-        gap: 0.16rem !important;
-        font-size: max(1.1rem, 11px) !important;
-      }
-      .home-feed-card__rich-embed-preview--ai-card
-        .compact-ai-card-preview__stat--burn
-        b {
-        font-size: max(1.18rem, 11.8px) !important;
-      }
       .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--build {
         flex-basis: max(14rem, 140px);
         height: max(14rem, 140px);
         max-height: max(14rem, 140px);
+      }
+      .home-feed-card__subject-embed-preview .compact-default-internal-embed {
+        grid-template-columns: clamp(5rem, 16cqw, 6.4rem) minmax(0, 1fr);
+        gap: 0.78rem;
+        padding: 1rem;
+      }
+      .home-feed-card__subject-embed-preview
+        .compact-default-internal-embed__icon {
+        width: clamp(4.7rem, 14cqw, 5.8rem);
+        height: clamp(4.7rem, 14cqw, 5.8rem);
+        font-size: max(2rem, 20px);
+      }
+      .home-feed-card__subject-embed-preview
+        .compact-default-internal-embed__label {
+        font-size: max(1.12rem, 11.2px);
+      }
+      .home-feed-card__subject-embed-preview
+        .compact-default-internal-embed strong {
+        font-size: max(1.72rem, 17.2px);
+      }
+      .home-feed-card__subject-embed-preview
+        .compact-default-internal-embed__description {
+        font-size: max(1.18rem, 11.8px);
       }
       .home-feed-card__text-preview--with-media-attachment {
         grid-template-columns: minmax(0, 1fr);

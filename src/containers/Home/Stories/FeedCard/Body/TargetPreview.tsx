@@ -5,6 +5,7 @@ import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbe
 import Icon from '~/components/Icon';
 import LinkPreviewImage from '~/components/LinkPreviewImage';
 import Loading from '~/components/Loading';
+import HomeFeedSubjectTargetPreview from '~/components/Subjects/HomeFeedSubjectTargetPreview';
 import RichText from '~/components/Texts/RichText';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
@@ -544,47 +545,23 @@ export default function TargetPreview({
         />
       ) : null;
     const mediaPreview = attachmentPreview || descriptionBuildEmbedPreview;
-    const hasReward = Number(target?.rewardLevel || 0) > 0;
-    const uploaderName = getTargetUploaderName(target);
     return (
-      <div
-        className={`home-feed-card__target-content home-feed-card__target-subject${
-          mediaPreview ? ' has-media' : ''
-        }${
-          descriptionBuildEmbedPreview ? ' has-build-embed-media' : ''
-        }${hasReward ? ' has-reward' : ''}`}
-      >
-        <div className="home-feed-card__target-copy">
-          {hasReward ? (
+      <HomeFeedSubjectTargetPreview
+        contentId={Number(target.id || 0)}
+        descriptionText={descriptionText}
+        hasBuildEmbedMedia={Boolean(descriptionBuildEmbedPreview)}
+        mediaPreview={mediaPreview}
+        rewardPreview={
+          Number(target?.rewardLevel || 0) > 0 ? (
             <CompactEffortStrip
               rewardLevel={Number(target.rewardLevel)}
               className="home-feed-card__target-reward-bar"
             />
-          ) : null}
-          {target?.title ? <h4>{target.title}</h4> : null}
-          {uploaderName ? (
-            <span className="home-feed-card__target-subject-meta">
-              Posted by {uploaderName}
-            </span>
-          ) : null}
-          {descriptionText ? (
-            <div className="home-feed-card__target-subject-description-slot">
-              <RichText
-                className="home-feed-card__target-subject-description"
-                contentId={Number(target.id || 0)}
-                contentType="subject"
-                isPreview
-                maxLines={2}
-                section="description"
-                theme={theme}
-              >
-                {descriptionText}
-              </RichText>
-            </div>
-          ) : null}
-        </div>
-        {mediaPreview}
-      </div>
+          ) : null
+        }
+        subject={target}
+        theme={theme}
+      />
     );
   }
 
@@ -732,18 +709,6 @@ export default function TargetPreview({
       />
     );
   }
-}
-
-function getTargetUploaderName(target: any) {
-  const uploader = target?.uploader;
-  if (typeof uploader === 'string') return uploader.trim();
-  return String(
-    uploader?.username ||
-      target?.username ||
-      target?.uploaderUsername ||
-      target?.author?.username ||
-      ''
-  ).trim();
 }
 
 function getTargetUrlImageUrl(target: any) {

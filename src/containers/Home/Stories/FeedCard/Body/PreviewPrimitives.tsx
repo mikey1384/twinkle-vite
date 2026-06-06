@@ -1,19 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Icon from '~/components/Icon';
+import HomeFeedSubjectTargetPreview from '~/components/Subjects/HomeFeedSubjectTargetPreview';
 import InternalComponent from '~/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent';
 import YouTubeVideo from '~/components/Texts/RichText/Markdown/EmbeddedComponent/YouTubeVideo';
 import RankBadge from '~/components/RankBadge';
 import { Color } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { getInternalEmbedPreviewInfo } from '~/helpers/aiCardEmbedHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
+import { useContentState } from '~/helpers/hooks';
 import {
   addCommasToNumber,
   getFileInfoFromFileName,
   processInternalLink
 } from '~/helpers/stringHelpers';
-import type { MarkdownImageEmbed } from '../helpers/sizing';
+import {
+  getMarkdownImageEmbedPreview,
+  removeMarkdownImageEmbeds,
+  type MarkdownImageEmbed
+} from '../helpers/sizing';
 
 export type HomeFeedNestedNavigate = (
   path: string,
@@ -140,6 +148,25 @@ export function MarkdownEmbedPreview({
       .filter(Boolean)
       .map((className) => ` ${className}`)
       .join('');
+    if (internalLinkType === 'subjects' && internalPreviewVariant === 'wide') {
+      const subjectId = getSubjectIdFromInternalSrc(internalSrc);
+      return (
+        <div
+          className={`${
+            className || ''
+          } home-feed-card__rich-embed-internal home-feed-card__rich-embed-internal--subject`}
+          data-internal-src={internalSrc}
+          onClick={handleInternalPreviewClick}
+        >
+          <HomeFeedWideSubjectEmbedPreview
+            fallbackLabel={embed.alt || 'Subject'}
+            onNavigate={onNavigate}
+            subjectId={subjectId}
+            theme={theme}
+          />
+        </div>
+      );
+    }
     return (
       <div
         className={`${
@@ -200,6 +227,140 @@ export function MarkdownEmbedPreview({
     event.stopPropagation();
     const internalSrc = event.currentTarget.dataset.internalSrc;
     if (internalSrc) onNavigate(internalSrc, event.currentTarget);
+  }
+}
+
+function HomeFeedWideSubjectEmbedPreview({
+  fallbackLabel,
+  onNavigate,
+  subjectId,
+  theme
+}: {
+  fallbackLabel: string;
+  onNavigate: HomeFeedNestedNavigate;
+  subjectId: number;
+  theme?: string;
+}) {
+  const loadingRef = useRef<string | null>(null);
+  const contentState = useContentState({
+    contentId: subjectId,
+    contentType: 'subject'
+  });
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const hasLoadedSubject = Boolean(
+    contentState.loaded && !contentState.notFound
+  );
+  const subject = hasLoadedSubject
+    ? contentState
+    : {
+        contentId: subjectId,
+        contentType: 'subject',
+        id: subjectId,
+        title: fallbackLabel
+      };
+  const description = String(subject?.description || subject?.content || '');
+  const descriptionEmbed = getMarkdownImageEmbedPreview(description);
+  const descriptionBuildEmbed =
+    descriptionEmbed?.type === 'internal' &&
+    getInternalEmbedPreviewInfo(descriptionEmbed.src)?.kind === 'build'
+      ? descriptionEmbed
+      : null;
+  const shouldPromoteDescriptionBuildEmbed = Boolean(
+    descriptionBuildEmbed && !getContentAttachmentFilePath(subject)
+  );
+  const descriptionText = shouldPromoteDescriptionBuildEmbed
+    ? removeMarkdownImageEmbeds(description)
+    : description;
+  const mediaPreview = renderMediaPreview();
+
+  useEffect(() => {
+    const requestKey = `${userId || 0}:${subjectId}:subject`;
+    if (
+      !subjectId ||
+      contentState.loaded ||
+      loadingRef.current === requestKey
+    ) {
+      return;
+    }
+    const requestUserId = userId;
+    loadingRef.current = requestKey;
+    loadContent({ contentId: subjectId, contentType: 'subject' })
+      .then((data: any) => {
+        if (checkUserChange(requestUserId)) return;
+        if (!data?.notFound) {
+          onInitContent({
+            ...data,
+            contentId: subjectId,
+            contentType: 'subject'
+          });
+        }
+      })
+      .catch((error: unknown) => {
+        if (checkUserChange(requestUserId)) return;
+        console.error(error);
+      })
+      .finally(() => {
+        if (loadingRef.current === requestKey) {
+          loadingRef.current = null;
+        }
+      });
+    // checkUserChange/loadContent/onInitContent are stable context helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentState.loaded, subjectId, userId]);
+
+  return (
+    <HomeFeedSubjectTargetPreview
+      contentId={subjectId}
+      descriptionText={descriptionText}
+      hasBuildEmbedMedia={Boolean(
+        shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed
+      )}
+      mediaPreview={mediaPreview}
+      rewardPreview={
+        Number(subject?.rewardLevel || 0) > 0 ? (
+          <CompactEffortStrip
+            rewardLevel={Number(subject.rewardLevel)}
+            className="home-feed-card__target-reward-bar"
+          />
+        ) : null
+      }
+      subject={subject}
+      theme={theme}
+    />
+  );
+
+  function renderMediaPreview() {
+    const filePath = getContentAttachmentFilePath(subject);
+    if (filePath) {
+      return (
+        <AttachmentSurface
+          className="home-feed-card__target-media-wrap"
+          source={{ ...subject, filePath }}
+          sourceContentId={subjectId}
+          sourceContentType="subject"
+          userId={Number(userId || 0)}
+        />
+      );
+    }
+
+    if (!shouldPromoteDescriptionBuildEmbed || !descriptionBuildEmbed) {
+      return null;
+    }
+
+    return (
+      <MarkdownEmbedPreview
+        className="home-feed-card__target-subject-build-embed-preview"
+        contentId={subjectId}
+        contentType="subject"
+        embed={descriptionBuildEmbed}
+        internalPreviewVariant="compact"
+        onNavigate={onNavigate}
+        theme={theme}
+      />
+    );
   }
 }
 
@@ -370,6 +531,21 @@ function normalizeInternalEmbedSrc(src: string) {
   } catch {
     return src;
   }
+}
+
+function getSubjectIdFromInternalSrc(src: string) {
+  try {
+    const url = new URL(src, 'https://twinkle.local');
+    const parts = url.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    if (parts[0] !== 'subjects') return 0;
+    return Math.floor(Number(parts[1] || 0));
+  } catch {
+    return 0;
+  }
+}
+
+function getContentAttachmentFilePath(source: any) {
+  return String(source?.filePath || source?.actualFilePath || '').trim();
 }
 
 function MarkdownImagePreview({

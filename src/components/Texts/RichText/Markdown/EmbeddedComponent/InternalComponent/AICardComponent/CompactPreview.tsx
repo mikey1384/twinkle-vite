@@ -540,31 +540,72 @@ const compactPreviewClass = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: minmax(6.8rem, 0.8fr) minmax(0, 1.4fr);
-    gap: 0.9rem;
-    min-height: 15rem;
-    padding: 1rem;
+    grid-template-columns: minmax(9.4rem, 0.78fr) minmax(0, 1.28fr) minmax(
+        6.3rem,
+        0.54fr
+      );
+    gap: 0.36rem;
+    min-height: 0;
+    padding: 0.45rem;
 
     .compact-ai-card-preview__card-stage .compact-ai-card-thumb--static {
-      width: clamp(6.6rem, 27vw, 8rem) !important;
-      height: clamp(9.3rem, 39vw, 11.3rem) !important;
+      width: clamp(9.2rem, 22vw, 13rem) !important;
+      height: clamp(12.6rem, 30.2vw, 17.8rem) !important;
+      max-width: 100%;
+      max-height: 100%;
     }
 
     .compact-ai-card-preview__market {
-      display: none;
+      gap: 0.36rem;
+      padding-left: 0.38rem;
     }
 
     .compact-ai-card-preview__owner--inline {
-      display: inline;
+      display: none;
     }
 
     .compact-ai-card-preview__word {
-      font-size: 1.35rem;
+      font-size: max(1.35rem, 13.5px);
+    }
+
+    .compact-ai-card-preview__quality-line {
+      font-size: max(1.18rem, 11.8px);
     }
 
     .compact-ai-card-preview__prompt {
-      font-size: 1.05rem;
+      margin: 0.1rem 0;
+      font-size: max(1.1rem, 11px);
+      line-height: 1.28;
       -webkit-line-clamp: 3;
+    }
+
+    .compact-ai-card-preview__details {
+      gap: 0.24rem;
+    }
+
+    .compact-ai-card-preview__header {
+      gap: 0.28rem;
+    }
+
+    .compact-ai-card-preview__meta {
+      gap: 0.14rem 0.34rem;
+    }
+
+    .compact-ai-card-preview__summoned {
+      margin-top: 0.14rem;
+    }
+
+    .compact-ai-card-preview__stat > span {
+      font-size: max(1rem, 10px);
+    }
+
+    .compact-ai-card-preview__stat b {
+      gap: 0.16rem;
+      font-size: max(1.1rem, 11px);
+    }
+
+    .compact-ai-card-preview__stat--burn b {
+      font-size: max(1.18rem, 11.8px);
     }
   }
 `;

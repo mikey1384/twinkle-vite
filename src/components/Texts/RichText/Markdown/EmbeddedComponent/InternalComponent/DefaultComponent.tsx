@@ -132,7 +132,7 @@ export default function DefaultComponent({
   if (isPreview) {
     return (
       <Link
-        className={compactDefaultEmbedClass}
+        className={`${compactDefaultEmbedClass} compact-default-internal-embed`}
         style={
           {
             '--default-embed-accent': previewConfig.accent,
@@ -190,6 +190,18 @@ const compactDefaultEmbedClass = css`
   color: ${Color.darkerGray()};
   text-decoration: none;
   box-shadow: inset 0 0 0 1px var(--default-embed-accent-soft);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+  &:hover,
+  &:focus-visible {
+    border-color: var(--default-embed-accent);
+    text-decoration: none;
+    box-shadow: inset 0 0 0 1px var(--default-embed-accent),
+      0 0 0 3px var(--default-embed-accent-soft);
+  }
+  &:hover *,
+  &:focus-visible * {
+    text-decoration: none;
+  }
   .compact-default-internal-embed__icon {
     display: inline-flex;
     width: 4.4rem;

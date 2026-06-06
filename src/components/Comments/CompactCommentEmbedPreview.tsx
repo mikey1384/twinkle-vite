@@ -859,6 +859,18 @@ const compactCommentEmbedPreviewClass = css`
     background: transparent;
     box-shadow: none;
   }
+  &.compact-comment-embed--target-root
+    .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal--subject {
+    box-sizing: border-box;
+    align-self: center;
+    justify-self: end;
+    width: calc(100% - 0.72rem);
+    height: auto;
+    max-width: calc(100% - 0.72rem);
+    max-height: calc(100% - 0.72rem);
+    aspect-ratio: 1 / 1;
+    margin: 0.36rem 0.36rem 0.36rem 0;
+  }
   &.compact-comment-embed--target-root .compact-comment-embed__media-tile.image,
   &.compact-comment-embed--target-root
     .compact-comment-embed__media-tile.video
