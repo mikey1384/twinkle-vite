@@ -871,6 +871,10 @@ export const targetPreviewStyles = `
       > div {
       width: min(100%, 12.6rem) !important;
       height: min(100%, 17.6rem) !important;
+      border-radius: 0.62rem !important;
+      box-shadow:
+        0 0 0.62rem rgba(236, 72, 153, 0.5),
+        0 0.85rem 1.35rem -0.72rem rgba(15, 23, 42, 0.62);
       transform: none !important;
     }
 `;

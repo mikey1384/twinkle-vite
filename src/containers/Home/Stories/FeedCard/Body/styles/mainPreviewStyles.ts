@@ -46,21 +46,52 @@ export const mainPreviewStyles = `
     height: 100%;
     min-height: 0;
     flex-direction: column;
+    gap: 0;
+  }
+  .home-feed-card__subject-text-stack {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
     gap: 0.85rem;
+  }
+  .home-feed-card__subject-copy:not(
+      .home-feed-card__subject-copy--with-secret-preview
+    )
+    .home-feed-card__subject-text-stack {
+    height: 100%;
+  }
+  .home-feed-card__subject-copy--with-secret-preview {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-content: stretch;
+    row-gap: 1rem;
+  }
+  .home-feed-card__subject-copy--with-secret-preview
+    .home-feed-card__subject-text-stack {
+    overflow: hidden;
+  }
+  .home-feed-card__subject-copy--with-secret-preview
+    .home-feed-card__subject-description {
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+  .home-feed-card__subject-copy--with-secret-preview
+    .home-feed-card__subject-secret-answer {
+    align-self: end;
+  }
+  .home-feed-card__subject-copy--secret-only {
+    display: flex;
+    justify-content: center;
   }
   .home-feed-card__subject-copy--locked-secret
     .home-feed-card__subject-secret-answer--locked {
-    margin-top: auto;
-    margin-bottom: auto;
-  }
-  .home-feed-card__subject-copy--locked-secret
-    .home-feed-card__subject-description
-    + .home-feed-card__subject-secret-answer--locked {
-    margin-top: 1rem;
     margin-bottom: 0;
+    margin-top: 0;
   }
-  .home-feed-card__subject-copy > h3,
-  .home-feed-card__subject-copy > .home-feed-card__compact-effort,
+  .home-feed-card__subject-text-stack > h3,
+  .home-feed-card__subject-text-stack > .home-feed-card__compact-effort,
   .home-feed-card__subject-secret-answer {
     flex: 0 0 auto;
   }
@@ -272,6 +303,9 @@ export const mainPreviewStyles = `
     align-content: start;
   }
   .home-feed-card__subject-preview--with-root .home-feed-card__subject-copy {
+    gap: 0;
+  }
+  .home-feed-card__subject-preview--with-root .home-feed-card__subject-text-stack {
     gap: 0.75rem;
   }
   .home-feed-card__subject-preview--with-root .home-feed-card__subject-description {
@@ -284,6 +318,9 @@ export const mainPreviewStyles = `
     padding: 0;
   }
   .home-feed-card__subject-preview--root-compact .home-feed-card__subject-copy {
+    gap: 0;
+  }
+  .home-feed-card__subject-preview--root-compact .home-feed-card__subject-text-stack {
     gap: 0.72rem;
   }
   .home-feed-card__subject-preview--root-compact .home-feed-card__compact-effort {

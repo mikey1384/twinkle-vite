@@ -291,9 +291,14 @@ export default function Body({
     const showSecretAttachmentOnly = Boolean(
       showSecretAnswer && hasSecretAttachment && !hasSecretAnswerText
     );
+    const hasEffort = Number(content?.rewardLevel || 0) > 0;
+    const hasTitle = Boolean(content?.title);
+    const hasSubjectTextStack = Boolean(
+      hasEffort || hasTitle || hasDescriptionText
+    );
     const subjectLineLimits = getSubjectPreviewLineLimitsForLayout({
       hasDescriptionText,
-      hasEffort: Number(content?.rewardLevel || 0) > 0,
+      hasEffort,
       hasSecretAnswer: showSecretPreview,
       hasSecretAnswerText: showSecretAnswer
         ? hasSecretAnswerText
@@ -348,31 +353,43 @@ export default function Body({
               showLockedSecretAnswer
                 ? ' home-feed-card__subject-copy--locked-secret'
                 : ''
+            }${
+              showSecretPreview
+                ? ' home-feed-card__subject-copy--with-secret-preview'
+                : ''
+            }${
+              showSecretPreview && !hasSubjectTextStack
+                ? ' home-feed-card__subject-copy--secret-only'
+                : ''
             }`}
           >
-            {Number(content?.rewardLevel || 0) > 0 ? (
-              <CompactEffortStrip rewardLevel={Number(content.rewardLevel)} />
-            ) : null}
-            {content?.title ? (
-              <h3 className={primaryPreviewTextClass}>{content.title}</h3>
-            ) : null}
-            {hasDescriptionText ? (
-              <RichText
-                className={`home-feed-card__subject-description ${primaryPreviewTextClass}`}
-                contentId={contentId}
-                contentType={contentType}
-                hideDictation={isContentAIMessage}
-                isAIMessage={isContentAIMessage}
-                isPreview
-                lineHeight={homeFeedPreviewLineHeight}
-                maxLines={subjectLineLimits.desktop.descriptionMaxLines}
-                mobileMaxLines={subjectLineLimits.mobile.descriptionMaxLines}
-                section="description"
-                style={homeFeedPreviewRichTextStyle}
-                theme={theme}
-              >
-                {descriptionText}
-              </RichText>
+            {hasSubjectTextStack ? (
+              <div className="home-feed-card__subject-text-stack">
+                {hasEffort ? (
+                  <CompactEffortStrip rewardLevel={Number(content.rewardLevel)} />
+                ) : null}
+                {hasTitle ? (
+                  <h3 className={primaryPreviewTextClass}>{content.title}</h3>
+                ) : null}
+                {hasDescriptionText ? (
+                  <RichText
+                    className={`home-feed-card__subject-description ${primaryPreviewTextClass}`}
+                    contentId={contentId}
+                    contentType={contentType}
+                    hideDictation={isContentAIMessage}
+                    isAIMessage={isContentAIMessage}
+                    isPreview
+                    lineHeight={homeFeedPreviewLineHeight}
+                    maxLines={subjectLineLimits.desktop.descriptionMaxLines}
+                    mobileMaxLines={subjectLineLimits.mobile.descriptionMaxLines}
+                    section="description"
+                    style={homeFeedPreviewRichTextStyle}
+                    theme={theme}
+                  >
+                    {descriptionText}
+                  </RichText>
+                ) : null}
+              </div>
             ) : null}
             {showSecretPreview ? (
               <div
@@ -982,11 +999,16 @@ export default function Body({
       maxLines: textMaxLines
     });
     const embedTheme = getMatchedRootBuildEmbedTheme(imageEmbed);
+    const isAICardEmbed =
+      imageEmbed.type === 'internal' &&
+      getInternalEmbedPreviewInfo(imageEmbed.src)?.kind === 'aiCard';
     return (
       <div
         className={`home-feed-card__rich-embed-preview${
           hasText ? ' home-feed-card__rich-embed-preview--with-text' : ''
-        }${!hasText ? ' home-feed-card__rich-embed-preview--image-only' : ''}`}
+        }${!hasText ? ' home-feed-card__rich-embed-preview--image-only' : ''}${
+          isAICardEmbed ? ' home-feed-card__rich-embed-preview--ai-card' : ''
+        }`}
       >
         {hasText ? (
           <div className="home-feed-card__rich-embed-copy">

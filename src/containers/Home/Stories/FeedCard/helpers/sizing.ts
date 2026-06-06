@@ -1181,9 +1181,15 @@ function getShortPublicSubjectSecretPanelSize(content: any): FeedCardSize {
 
 function getLockedSubjectPanelSize(content: any): FeedCardSize {
   const descriptionLength = getSubjectDescriptionTextLength(content);
+  const hasLockedSecret = Boolean(
+    content?.hasSecretAnswer ||
+      content?.hasSecretAttachment ||
+      content?.secretAnswer ||
+      content?.secretAttachment
+  );
 
   if (content?.filePath && isSparseSubjectContent(content)) {
-    return 'subject-media';
+    return hasLockedSecret ? 'subject-secret-media' : 'subject-media';
   }
 
   if (descriptionLength > 420 || content?.filePath) {
@@ -1556,6 +1562,7 @@ function isSubjectDescriptionBudgetedSize(size: FeedCardSize) {
   return (
     size === 'subject-root' ||
     size === 'subject-root-text' ||
+    size === 'subject-secret-media' ||
     size === 'subject-secret-compact' ||
     size === 'subject-secret-preview' ||
     size === 'subject-tall' ||
