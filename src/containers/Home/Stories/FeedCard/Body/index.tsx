@@ -120,6 +120,7 @@ export default function Body({
   const BodyRef = useRef<HTMLDivElement | null>(null);
   const contentId = Number(content?.contentId || content?.id || 0);
   const contentType = String(content?.contentType || '');
+  const liveContentState = useContentState({ contentId, contentType });
   const isContentAIMessage = isAIContentAuthor(content);
   const normalizedRootType = normalizeRootType(content?.rootType);
   const resolvedRootObj =
@@ -543,13 +544,18 @@ export default function Body({
     const filePath = getContentAttachmentFilePath(content);
     if (!filePath) return null;
     const fileType = getContentAttachmentFileType({ ...content, filePath });
-    const subjectImageClass =
-      classNameSuffix === 'subject' && fileType === 'image'
-        ? ' home-feed-card__attachment-preview--subject-image'
-        : '';
+    let subjectAttachmentClass = '';
+    if (classNameSuffix === 'subject' && fileType === 'image') {
+      subjectAttachmentClass =
+        ' home-feed-card__attachment-preview--subject-image';
+    }
+    if (classNameSuffix === 'subject' && fileType === 'video') {
+      subjectAttachmentClass =
+        ' home-feed-card__attachment-preview--subject-video';
+    }
     return (
       <AttachmentSurface
-        className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}${subjectImageClass}`}
+        className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}${subjectAttachmentClass}`}
         source={{ ...content, filePath }}
         sourceContentId={contentId}
         sourceContentType={contentType}
@@ -799,14 +805,17 @@ export default function Body({
               {passRootObj.rootMission.title}
             </p>
           ) : null}
-          <div className="home-feed-card__mission-reward-row">
+          <div className="home-feed-card__mission-reward-row home-feed-card__reward-chips">
             {passRootObj.xpReward ? (
-              <span className="home-feed-card__mission-reward xp">
-                {addCommasToNumber(Number(passRootObj.xpReward))} XP
+              <span className="home-feed-card__reward-chip xp">
+                <span className="home-feed-card__reward-chip-xp-number">
+                  {addCommasToNumber(Number(passRootObj.xpReward))}
+                </span>
+                <span className="home-feed-card__reward-chip-xp-label">XP</span>
               </span>
             ) : null}
             {passRootObj.coinReward ? (
-              <span className="home-feed-card__mission-reward coins">
+              <span className="home-feed-card__reward-chip coins">
                 <Icon icon="coins" />
                 {addCommasToNumber(Number(passRootObj.coinReward))}
               </span>
@@ -879,33 +888,50 @@ export default function Body({
   }
 
   function renderUrlPreview() {
+    const linkTitle =
+      liveContentState.actualTitle ||
+      liveContentState.linkTitle ||
+      content?.actualTitle ||
+      content?.linkTitle ||
+      content?.title ||
+      content?.content;
+    const linkMetaDescription =
+      liveContentState.actualDescription ||
+      liveContentState.linkDescription ||
+      content?.actualDescription ||
+      content?.linkDescription ||
+      '';
+    const linkDescription = content?.description || '';
+    const siteLabel =
+      liveContentState.siteUrl ||
+      liveContentState.linkUrl ||
+      content?.siteUrl ||
+      content?.linkUrl ||
+      '';
+
     return (
       <div className="home-feed-card__url-preview">
         <div className="home-feed-card__url-copy">
-          <h3 className={primaryPreviewTextClass}>
-            {content?.actualTitle ||
-              content?.linkTitle ||
-              content?.title ||
-              content?.content}
-          </h3>
-          {content?.siteUrl ? <span>{content.siteUrl}</span> : null}
-          {content?.actualDescription ||
-          content?.linkDescription ||
-          content?.description ? (
-            <p className={primaryPreviewTextClass}>
-              {content.actualDescription ||
-                content.linkDescription ||
-                content.description}
-            </p>
+          <h3 className={primaryPreviewTextClass}>{linkTitle}</h3>
+          {siteLabel ? <span>{siteLabel}</span> : null}
+          {linkDescription ? (
+            <p className={primaryPreviewTextClass}>{linkDescription}</p>
           ) : null}
         </div>
-        <div className="home-feed-card__url-thumb">
-          <Embedly
-            imageOnly
-            noLink
-            contentId={contentId}
-            defaultThumbUrl={content?.thumbUrl || LINK_PREVIEW_FALLBACK_IMAGE}
-          />
+        <div className="home-feed-card__url-media">
+          <div className="home-feed-card__url-thumb">
+            <Embedly
+              imageOnly
+              noLink
+              contentId={contentId}
+              defaultThumbUrl={content?.thumbUrl || LINK_PREVIEW_FALLBACK_IMAGE}
+            />
+          </div>
+          {linkMetaDescription ? (
+            <p className="home-feed-card__url-meta-description">
+              {linkMetaDescription}
+            </p>
+          ) : null}
         </div>
       </div>
     );

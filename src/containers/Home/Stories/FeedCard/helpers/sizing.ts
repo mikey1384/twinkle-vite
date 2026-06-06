@@ -45,7 +45,8 @@ export type FeedCardSize =
   | 'subject-secret-preview'
   | 'subject-secret-media'
   | 'subject-tall'
-  | 'tall';
+  | 'tall'
+  | 'url';
 
 export type FeedCardTargetSize =
   | 'compact'
@@ -171,7 +172,8 @@ const PANEL_HEIGHT_REM: Record<
   'subject-secret-preview': { desktop: 22, mobile: 22 },
   'subject-secret-media': { desktop: 25, mobile: 24 },
   'subject-tall': { desktop: 32, mobile: 30 },
-  tall: { desktop: 30, mobile: 28 }
+  tall: { desktop: 30, mobile: 28 },
+  url: { desktop: 25, mobile: 23 }
 };
 
 const TARGET_HEIGHT_REM: Record<
@@ -604,6 +606,10 @@ function getMainPanelSize({
     return 'build';
   }
 
+  if (kind === 'url') {
+    return 'url';
+  }
+
   if (kind === 'pass') {
     return 'pass';
   }
@@ -618,7 +624,6 @@ function getMainPanelSize({
   if (
     kind === 'daily-goals' ||
     kind === 'shared-topic' ||
-    kind === 'url' ||
     kind === 'video' ||
     flags.hasAttachment
   ) {
@@ -855,6 +860,7 @@ function getFeedCardFrameSize({
     mainSize === 'media' ||
     mainSize === 'media-attachment' ||
     mainSize === 'media-attachment-with-text' ||
+    mainSize === 'url' ||
     mainSize === 'build' ||
     mainSize === 'pass' ||
     mainSize === 'subject-media' ||
@@ -1282,7 +1288,7 @@ function getTextMaxLines(
     return 2;
   }
 
-  if (size === 'media') {
+  if (size === 'media' || size === 'url') {
     return 4;
   }
 

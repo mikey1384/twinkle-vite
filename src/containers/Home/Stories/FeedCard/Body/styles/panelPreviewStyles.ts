@@ -107,6 +107,10 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-media {
     height: max(22rem, 220px);
   }
+  .home-feed-card__panel-preview--url,
+  .home-feed-card__panel-preview--size-url {
+    height: max(25rem, 250px);
+  }
   .home-feed-card__panel-preview--size-media-attachment {
     height: max(40rem, 400px);
   }

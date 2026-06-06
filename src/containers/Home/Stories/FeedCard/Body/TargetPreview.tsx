@@ -393,14 +393,17 @@ export default function TargetPreview({
           {passRootObj.rootMission?.title ? (
             <p>{passRootObj.rootMission.title}</p>
           ) : null}
-          <div className="home-feed-card__target-reward-row">
+          <div className="home-feed-card__target-reward-row home-feed-card__reward-chips">
             {passRootObj.xpReward ? (
-              <span className="home-feed-card__target-reward xp">
-                {addCommasToNumber(Number(passRootObj.xpReward))} XP
+              <span className="home-feed-card__reward-chip xp">
+                <span className="home-feed-card__reward-chip-xp-number">
+                  {addCommasToNumber(Number(passRootObj.xpReward))}
+                </span>
+                <span className="home-feed-card__reward-chip-xp-label">XP</span>
               </span>
             ) : null}
             {passRootObj.coinReward ? (
-              <span className="home-feed-card__target-reward coins">
+              <span className="home-feed-card__reward-chip coins">
                 <Icon icon="coins" />
                 {addCommasToNumber(Number(passRootObj.coinReward))}
               </span>

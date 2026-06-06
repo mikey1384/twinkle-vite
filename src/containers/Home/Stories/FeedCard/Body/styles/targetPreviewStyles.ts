@@ -596,7 +596,7 @@ export const targetPreviewStyles = `
     .home-feed-card__target-daily-reflection--question-only .home-feed-card__target-reflection-footer {
       display: none;
     }
-    .home-feed-card__target-reward,
+    .home-feed-card__target-reward-row .home-feed-card__reward-chip,
     .home-feed-card__target-reflection-badge {
       display: inline-flex;
       align-items: center;
@@ -608,14 +608,6 @@ export const targetPreviewStyles = `
       font-weight: 800;
       line-height: 1;
       white-space: nowrap;
-    }
-    .home-feed-card__target-reward.xp {
-      background: ${Color.gold(0.16)};
-      color: ${Color.gold()};
-    }
-    .home-feed-card__target-reward.coins {
-      background: ${Color.brownOrange(0.14)};
-      color: ${Color.brownOrange()};
     }
     .home-feed-card__target-reflection-badge--refined {
       border: 0;
@@ -658,7 +650,7 @@ export const targetPreviewStyles = `
     .home-feed-card__target-reflection-fire {
       color: var(--home-feed-target-streak-color, ${Color.orange()});
     }
-    .home-feed-card__target-reward svg,
+    .home-feed-card__target-reward-row .home-feed-card__reward-chip svg,
     .home-feed-card__target-reflection-badge svg {
       font-size: 1rem;
     }
@@ -849,6 +841,10 @@ export const targetPreviewStyles = `
       .home-feed-card__target-comment-embed:first-child {
       grid-column: 1 / -1;
     }
+    .home-feed-card__target-comment-preview.compact-comment-embed--target-root.compact-comment-embed--has-media,
+    .home-feed-card__target-comment-preview.compact-comment-embed--target-root.compact-comment-embed--media-only {
+      grid-template-columns: 4.8rem minmax(0, 1fr) minmax(15rem, 22rem);
+    }
     .home-feed-card__target-comment-embed {
       width: 100%;
       height: 100%;
@@ -869,5 +865,12 @@ export const targetPreviewStyles = `
       border: 0;
       border-radius: 0;
       background: transparent;
+    }
+    .home-feed-card__target-comment-preview
+      .compact-comment-embed__media-tile.ai-card
+      > div {
+      width: min(100%, 12.6rem) !important;
+      height: min(100%, 17.6rem) !important;
+      transform: none !important;
     }
 `;
