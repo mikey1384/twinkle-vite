@@ -8,7 +8,6 @@ export default function DraftSaveIndicator({
   savingState: 'idle' | 'saved';
 }) {
   const [visible, setVisible] = useState(false);
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (savingState !== 'idle') {
@@ -19,20 +18,13 @@ export default function DraftSaveIndicator({
     }
   }, [savingState]);
 
-  useEffect(() => {
-    if (isIOS) {
-      requestAnimationFrame(() => {
-        // Touch the DOM to force reflow
-        document.body.offsetHeight;
-      });
-    }
-  }, [visible, isIOS]);
-
   return (
     <div
+      aria-live="polite"
       className={css`
         display: flex;
         align-items: center;
+        min-width: 6.8rem;
         font-size: 1.3rem;
         color: ${Color.lightGray()};
         transition: opacity 0.3s ease-in-out;
@@ -40,7 +32,7 @@ export default function DraftSaveIndicator({
         visibility: ${visible ? 'visible' : 'hidden'};
       `}
     >
-      {savingState === 'saved' && <span>Draft saved</span>}
+      <span>Draft saved</span>
     </div>
   );
 }
