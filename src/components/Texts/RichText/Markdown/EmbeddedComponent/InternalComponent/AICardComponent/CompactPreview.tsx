@@ -50,7 +50,9 @@ export function CompactThumb({
   if (!onClick) {
     return (
       <div
-        className={`${compactThumbClass} compact-ai-card-thumb compact-ai-card-thumb--static`}
+        className={`${compactThumbClass} compact-ai-card-thumb compact-ai-card-thumb--static${
+          card.isBurned ? ' compact-ai-card-thumb--burned' : ''
+        }`}
         style={
           {
             '--compact-ai-card-accent': cardColor,
@@ -67,7 +69,9 @@ export function CompactThumb({
   return (
     <button
       type="button"
-      className={`${compactThumbClass} compact-ai-card-thumb`}
+      className={`${compactThumbClass} compact-ai-card-thumb${
+        card.isBurned ? ' compact-ai-card-thumb--burned' : ''
+      }`}
       style={
         {
           '--compact-ai-card-accent': cardColor,
@@ -312,6 +316,9 @@ const compactThumbClass = css`
     font-weight: 900;
     line-height: 1;
   }
+  &.compact-ai-card-thumb--burned .compact-ai-card-thumb__art {
+    background: #fff;
+  }
   .compact-ai-card-thumb__burned {
     box-sizing: border-box;
     display: flex;
@@ -321,26 +328,26 @@ const compactThumbClass = css`
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.28em;
-    padding: 0.45rem;
+    gap: 0.34em;
+    padding: 0.55rem;
     color: ${Color.darkerGray()};
-    font-size: clamp(0.72rem, 9cqw, 1rem);
+    font-size: clamp(0.76rem, 10.6cqw, 1.14rem);
     font-weight: 800;
-    line-height: 1.16;
+    line-height: 1.15;
     text-align: center;
   }
   .compact-ai-card-thumb__burned-owner {
     overflow: hidden;
     max-width: 100%;
-    color: var(--compact-ai-card-accent);
-    font-size: 1.05em;
+    color: ${Color.logoBlue()};
+    font-size: 1.12em;
     font-weight: 900;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .compact-ai-card-thumb__burned b {
     color: ${Color.green()};
-    font-size: 1.25em;
+    font-size: 1.34em;
     font-weight: 900;
   }
   .compact-ai-card-thumb__burned b span {
@@ -394,6 +401,11 @@ const compactPreviewClass = css`
     .compact-ai-card-thumb__art {
     border-radius: 0.22rem;
     background: transparent;
+  }
+  .compact-ai-card-preview__card-stage
+    .compact-ai-card-thumb--static.compact-ai-card-thumb--burned
+    .compact-ai-card-thumb__art {
+    background: #fff;
   }
 
   .compact-ai-card-preview__card-stage .compact-ai-card-thumb--static img {
