@@ -168,7 +168,7 @@ const PANEL_HEIGHT_REM: Record<
   'subject-rich-embed': { desktop: 34, mobile: 32 },
   'subject-root': { desktop: 15.5, mobile: 15.5 },
   'subject-root-text': { desktop: 29, mobile: 27 },
-  'subject-secret-compact': { desktop: 17.5, mobile: 18.5 },
+  'subject-secret-compact': { desktop: 19, mobile: 20 },
   'subject-secret-preview': { desktop: 22, mobile: 22 },
   'subject-secret-media': { desktop: 25, mobile: 24 },
   'subject-tall': { desktop: 32, mobile: 30 },

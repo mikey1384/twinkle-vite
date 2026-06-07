@@ -6,6 +6,7 @@ import ProfilePic from '~/components/ProfilePic';
 import Textarea from '~/components/Texts/Textarea';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
+import { getBuildBranchDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import type { User } from '~/types';
 import type { BuildForumReply, BuildForumThread } from './types';
@@ -122,6 +123,34 @@ const forumTimestampClass = css`
   opacity: 0.58;
   font-size: 1.1rem;
   font-weight: 800;
+`;
+
+const forumScopeTagClass = css`
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  padding: 0.18rem 0.58rem;
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  font-weight: 900;
+  white-space: nowrap;
+  &.branch {
+    border-color: rgba(65, 140, 235, 0.34);
+    background: rgba(65, 140, 235, 0.08);
+    color: #1d4ed8;
+  }
+  &.clickable {
+    cursor: pointer;
+  }
+  &.clickable:hover {
+    border-color: rgba(65, 140, 235, 0.56);
+    background: rgba(65, 140, 235, 0.14);
+  }
 `;
 
 const forumPostActionsClass = css`
@@ -392,6 +421,7 @@ export default function Forum({
   replyTarget,
   replies,
   selectedThread,
+  showScopeTags,
   threads,
   titleInput,
   userId,
@@ -401,6 +431,7 @@ export default function Forum({
   onCreateThread,
   onDeleteReply,
   onDeleteThread,
+  onOpenThreadBranch,
   onOpenThread,
   onReplyInputChange,
   onReplyTargetChange,
@@ -416,6 +447,7 @@ export default function Forum({
   replyTarget: BuildForumReply | null;
   replies: BuildForumReply[];
   selectedThread: BuildForumThread | null;
+  showScopeTags: boolean;
   threads: BuildForumThread[];
   titleInput: string;
   userId: number | string | null;
@@ -425,6 +457,7 @@ export default function Forum({
   onCreateThread: () => void;
   onDeleteReply: (replyId: number) => void;
   onDeleteThread: (threadId: number) => void;
+  onOpenThreadBranch: (thread: BuildForumThread) => void;
   onOpenThread: (threadId: number) => void;
   onReplyInputChange: (value: string) => void;
   onReplyTargetChange: (reply: BuildForumReply | null) => void;
@@ -440,11 +473,13 @@ export default function Forum({
         replyTarget={replyTarget}
         replies={replies}
         selectedThread={selectedThread}
+        showScopeTags={showScopeTags}
         userId={userId}
         onBackToThreads={onBackToThreads}
         onCreateReply={onCreateReply}
         onDeleteReply={onDeleteReply}
         onDeleteThread={onDeleteThread}
+        onOpenThreadBranch={onOpenThreadBranch}
         onReplyInputChange={onReplyInputChange}
         onReplyTargetChange={onReplyTargetChange}
       />
@@ -458,12 +493,14 @@ export default function Forum({
       error={error}
       loading={loading}
       recentlyCreatedThreadId={recentlyCreatedThreadId}
+      showScopeTags={showScopeTags}
       threads={threads}
       titleInput={titleInput}
       userId={userId}
       onBodyInputChange={onBodyInputChange}
       onCreateThread={onCreateThread}
       onDeleteThread={onDeleteThread}
+      onOpenThreadBranch={onOpenThreadBranch}
       onOpenThread={onOpenThread}
       onTitleInputChange={onTitleInputChange}
     />
@@ -478,11 +515,13 @@ function ThreadDetail({
   replyTarget,
   replies,
   selectedThread,
+  showScopeTags,
   userId,
   onBackToThreads,
   onCreateReply,
   onDeleteReply,
   onDeleteThread,
+  onOpenThreadBranch,
   onReplyInputChange,
   onReplyTargetChange
 }: {
@@ -493,11 +532,13 @@ function ThreadDetail({
   replyTarget: BuildForumReply | null;
   replies: BuildForumReply[];
   selectedThread: BuildForumThread;
+  showScopeTags: boolean;
   userId: number | string | null;
   onBackToThreads: () => void;
   onCreateReply: () => void;
   onDeleteReply: (replyId: number) => void;
   onDeleteThread: (threadId: number) => void;
+  onOpenThreadBranch: (thread: BuildForumThread) => void;
   onReplyInputChange: (value: string) => void;
   onReplyTargetChange: (reply: BuildForumReply | null) => void;
 }) {
@@ -527,6 +568,12 @@ function ThreadDetail({
                   {selectedThread.title}
                 </strong>
                 <div className={forumThreadMetaClass}>
+                  {showScopeTags ? (
+                    <ForumScopeTag
+                      thread={selectedThread}
+                      onOpenThreadBranch={onOpenThreadBranch}
+                    />
+                  ) : null}
                   <span
                     onClick={(event) => event.stopPropagation()}
                     onKeyDown={(event) => event.stopPropagation()}
@@ -653,12 +700,14 @@ function ThreadList({
   error,
   loading,
   recentlyCreatedThreadId,
+  showScopeTags,
   threads,
   titleInput,
   userId,
   onBodyInputChange,
   onCreateThread,
   onDeleteThread,
+  onOpenThreadBranch,
   onOpenThread,
   onTitleInputChange
 }: {
@@ -668,12 +717,14 @@ function ThreadList({
   error: string;
   loading: boolean;
   recentlyCreatedThreadId: number;
+  showScopeTags: boolean;
   threads: BuildForumThread[];
   titleInput: string;
   userId: number | string | null;
   onBodyInputChange: (value: string) => void;
   onCreateThread: () => void;
   onDeleteThread: (threadId: number) => void;
+  onOpenThreadBranch: (thread: BuildForumThread) => void;
   onOpenThread: (threadId: number) => void;
   onTitleInputChange: (value: string) => void;
 }) {
@@ -734,7 +785,9 @@ function ThreadList({
               thread={thread}
               userId={userId}
               onDeleteThread={onDeleteThread}
+              onOpenThreadBranch={onOpenThreadBranch}
               onOpenThread={onOpenThread}
+              showScopeTags={showScopeTags}
             />
           ))
         )}
@@ -750,7 +803,9 @@ function ForumThread({
   thread,
   userId,
   onDeleteThread,
-  onOpenThread
+  onOpenThread,
+  onOpenThreadBranch,
+  showScopeTags
 }: {
   actionLoading: string;
   canModerate: boolean;
@@ -759,6 +814,8 @@ function ForumThread({
   userId: number | string | null;
   onDeleteThread: (threadId: number) => void;
   onOpenThread: (threadId: number) => void;
+  onOpenThreadBranch: (thread: BuildForumThread) => void;
+  showScopeTags: boolean;
 }) {
   const threadUser = getForumUser(thread);
   const canDeleteThread = userCanDeleteForumItem({
@@ -785,6 +842,12 @@ function ForumThread({
           <span className={forumThreadPreviewClass}>{thread.body}</span>
         ) : null}
         <div className={forumThreadMetaClass}>
+          {showScopeTags ? (
+            <ForumScopeTag
+              thread={thread}
+              onOpenThreadBranch={onOpenThreadBranch}
+            />
+          ) : null}
           <span
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
@@ -939,6 +1002,72 @@ function getForumUser(
     username: item.username || 'User',
     profilePicUrl: item.profilePicUrl || ''
   };
+}
+
+function ForumScopeTag({
+  thread,
+  onOpenThreadBranch
+}: {
+  thread: BuildForumThread;
+  onOpenThreadBranch: (thread: BuildForumThread) => void;
+}) {
+  const branchId = getForumThreadBranchId(thread);
+  const label = getForumThreadScopeLabel(thread);
+  if (!branchId) {
+    return <span className={forumScopeTagClass}>Main</span>;
+  }
+  const branchTitle = getForumThreadBranchTitle(thread);
+  const branchNumber = getForumThreadBranchNumber(thread);
+  const title = branchTitle && branchTitle !== label ? branchTitle : undefined;
+  if (branchNumber <= 0) {
+    return (
+      <span className={`${forumScopeTagClass} branch`} title={title}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className={`${forumScopeTagClass} branch clickable`}
+      title={title}
+      aria-label={`Open ${label}`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpenThreadBranch(thread);
+      }}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      {label}
+    </button>
+  );
+}
+
+function getForumThreadBranchId(thread: BuildForumThread) {
+  return Number(thread.branchId || 0) || Number(thread.contributionBuildId || 0);
+}
+
+function getForumThreadBranchNumber(thread: BuildForumThread) {
+  return Math.max(
+    0,
+    Math.floor(Number(thread.branchContributionBranchNumber || 0))
+  );
+}
+
+function getForumThreadScopeLabel(thread: BuildForumThread) {
+  if (!getForumThreadBranchId(thread)) return 'Main';
+  const branchNumber = getForumThreadBranchNumber(thread);
+  if (branchNumber > 0) return `Branch ${branchNumber}`;
+  return getForumThreadBranchTitle(thread) || 'Branch';
+}
+
+function getForumThreadBranchTitle(thread: BuildForumThread) {
+  return getBuildBranchDisplayTitle({
+    title: thread.branchTitle || '',
+    username: thread.branchContributorUsername || '',
+    contributionBranchNumber: getForumThreadBranchNumber(thread),
+    contributionStatus: thread.branchContributionStatus || 'draft'
+  });
 }
 
 function getReplyTargetUser(reply: BuildForumReply): User | null {

@@ -152,7 +152,6 @@ registerMethods('build', [
   'queryViewerDb',
   'execViewerDb',
   'getBuildApiToken',
-  'loadBuildApiUsage',
   'uploadBuildRuntimeFiles',
   'listBuildRuntimeFiles',
   'deleteBuildRuntimeFile',

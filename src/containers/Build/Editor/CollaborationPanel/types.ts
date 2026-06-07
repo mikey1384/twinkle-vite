@@ -40,6 +40,13 @@ export interface BuildForumThread {
   id: number;
   buildId: number;
   contributionBuildId?: number | null;
+  branchId?: number | null;
+  branchTitle?: string | null;
+  branchContributorId?: number | null;
+  branchContributionBranchNumber?: number | null;
+  branchContributionStatus?: BuildContributionStatus | null;
+  branchContributorUsername?: string | null;
+  branchContributorProfilePicUrl?: string | null;
   userId: number;
   title: string;
   body: string;

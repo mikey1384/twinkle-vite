@@ -608,7 +608,7 @@ const compactCommentEmbedPreviewClass = css`
     align-items: center;
     justify-content: center;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__avatar {
+  &.compact-comment-embed--target-root > .compact-comment-embed__avatar {
     grid-column: 1;
     width: 6rem;
     height: 6rem;
@@ -623,9 +623,9 @@ const compactCommentEmbedPreviewClass = css`
       );
   }
   &.compact-comment-embed--target-root.compact-comment-embed--has-media
-    .compact-comment-embed__avatar,
+    > .compact-comment-embed__avatar,
   &.compact-comment-embed--target-root.compact-comment-embed--media-only
-    .compact-comment-embed__avatar {
+    > .compact-comment-embed__avatar {
     grid-column: 1;
     grid-row: auto;
     align-self: center;
@@ -791,76 +791,94 @@ const compactCommentEmbedPreviewClass = css`
     font-weight: 900;
     line-height: 1;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__copy {
+  &.compact-comment-embed--target-root > .compact-comment-embed__copy {
     grid-column: 2;
     gap: 0.48rem;
   }
   &.compact-comment-embed--target-root.compact-comment-embed--has-media
-    .compact-comment-embed__copy,
+    > .compact-comment-embed__copy,
   &.compact-comment-embed--target-root.compact-comment-embed--media-only
-    .compact-comment-embed__copy {
+    > .compact-comment-embed__copy {
     grid-column: 2;
     grid-row: auto;
     align-self: center;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__meta {
+  &.compact-comment-embed--target-root
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta {
     gap: 0.42rem;
     color: ${Color.gray()};
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__meta > div,
-  &.compact-comment-embed--target-root .compact-comment-embed__meta strong {
+  &.compact-comment-embed--target-root
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    > div,
+  &.compact-comment-embed--target-root
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    strong {
     color: var(--home-feed-target-accent, ${Color.logoBlue()});
     font-size: 1.62rem;
     font-weight: 650;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__copy p {
+  &.compact-comment-embed--target-root > .compact-comment-embed__copy p {
     color: ${Color.darkerGray()};
     font-size: max(1.78rem, 17.8px);
     font-weight: 500;
     line-height: 1.22;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__empty {
+  &.compact-comment-embed--target-root
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__empty {
     color: ${Color.darkerGray()};
     font-size: max(1.72rem, 17.2px);
     font-weight: 500;
     line-height: 1.2;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__media {
+  &.compact-comment-embed--target-root > .compact-comment-embed__media {
     grid-column: 3;
     justify-self: end;
     align-self: center;
-    width: 100%;
-    height: auto;
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
     aspect-ratio: 1 / 1;
     min-height: 0;
   }
   &.compact-comment-embed--target-root.compact-comment-embed--has-media
-    .compact-comment-embed__media,
+    > .compact-comment-embed__media,
   &.compact-comment-embed--target-root.compact-comment-embed--media-only
-    .compact-comment-embed__media {
+    > .compact-comment-embed__media {
     grid-column: 3;
     grid-row: auto;
     justify-self: end;
     align-self: center;
-    width: 100%;
-    height: auto;
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
     aspect-ratio: 1 / 1;
     min-height: 0;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__media-tile {
+  &.compact-comment-embed--target-root
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile {
     border: 0;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
   }
   &.compact-comment-embed--target-root
-    .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal {
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal {
     border: 0;
     background: transparent;
     box-shadow: none;
   }
   &.compact-comment-embed--target-root
-    .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal--subject {
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal--subject {
     box-sizing: border-box;
     align-self: center;
     justify-self: end;
@@ -871,17 +889,22 @@ const compactCommentEmbedPreviewClass = css`
     aspect-ratio: 1 / 1;
     margin: 0.36rem 0.36rem 0.36rem 0;
   }
-  &.compact-comment-embed--target-root .compact-comment-embed__media-tile.image,
   &.compact-comment-embed--target-root
-    .compact-comment-embed__media-tile.video
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile.image,
+  &.compact-comment-embed--target-root
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile.video
     img,
   &.compact-comment-embed--target-root
-    .compact-comment-embed__media-tile.attachment
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile.attachment
     img {
     object-fit: cover;
   }
   &.compact-comment-embed--target-root
-    .compact-comment-embed__media-tile.fallback {
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile.fallback {
     gap: 0.48rem;
     padding: 0.7rem;
     background: linear-gradient(180deg, #fff 0%, ${Color.whiteGray(0.65)} 100%);
@@ -940,25 +963,33 @@ const compactCommentEmbedPreviewClass = css`
     &.compact-comment-embed--target-root.compact-comment-embed--media-only {
       grid-template-columns: 4.2rem minmax(0, 1fr) minmax(6.8rem, 9.2rem);
     }
-    &.compact-comment-embed--target-root .compact-comment-embed__meta > div,
-    &.compact-comment-embed--target-root .compact-comment-embed__meta strong {
+    &.compact-comment-embed--target-root
+      > .compact-comment-embed__copy
+      > .compact-comment-embed__meta
+      > div,
+    &.compact-comment-embed--target-root
+      > .compact-comment-embed__copy
+      > .compact-comment-embed__meta
+      strong {
       font-size: 1.34rem;
     }
-    &.compact-comment-embed--target-root .compact-comment-embed__avatar {
+    &.compact-comment-embed--target-root > .compact-comment-embed__avatar {
       width: 5rem;
       height: 5rem;
     }
     &.compact-comment-embed--target-root.compact-comment-embed--has-media
-      .compact-comment-embed__avatar,
+      > .compact-comment-embed__avatar,
     &.compact-comment-embed--target-root.compact-comment-embed--media-only
-      .compact-comment-embed__avatar {
+      > .compact-comment-embed__avatar {
       width: 4.2rem;
       height: 4.2rem;
     }
-    &.compact-comment-embed--target-root .compact-comment-embed__copy p {
+    &.compact-comment-embed--target-root > .compact-comment-embed__copy p {
       font-size: max(1.42rem, 14.2px);
     }
-    &.compact-comment-embed--target-root .compact-comment-embed__empty {
+    &.compact-comment-embed--target-root
+      > .compact-comment-embed__copy
+      > .compact-comment-embed__empty {
       font-size: max(1.42rem, 14.2px);
     }
   }
@@ -972,25 +1003,25 @@ const compactCommentEmbedPreviewClass = css`
       padding: 0.6rem;
     }
     &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root)
-      .compact-comment-embed__avatar,
+      > .compact-comment-embed__avatar,
     &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root)
-      .compact-comment-embed__avatar {
+      > .compact-comment-embed__avatar {
       grid-column: 1;
       grid-row: 2;
       align-self: center;
     }
     &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root)
-      .compact-comment-embed__copy,
+      > .compact-comment-embed__copy,
     &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root)
-      .compact-comment-embed__copy {
+      > .compact-comment-embed__copy {
       grid-column: 2;
       grid-row: 2;
       align-self: center;
     }
     &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root)
-      .compact-comment-embed__media,
+      > .compact-comment-embed__media,
     &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root)
-      .compact-comment-embed__media {
+      > .compact-comment-embed__media {
       grid-column: 1 / -1;
       grid-row: 1;
       width: 100%;

@@ -843,7 +843,6 @@ export default function CollaborationPanel({
   async function handleSelectContribution(nextContributionBuildId: number) {
     setSelectedContributionId(nextContributionBuildId);
     await reloadContributionDetail(nextContributionBuildId);
-    await reloadForumThreads(nextContributionBuildId);
   }
 
   function handlePreviewContribution(nextContributionBuildId: number) {
@@ -1183,7 +1182,9 @@ export default function CollaborationPanel({
     try {
       const result = await loadBuildContributionForumThreads({
         buildId: rootBuildId,
-        contributionBuildId: nextContributionBuildId || null
+        contributionBuildId: nextContributionBuildId || null,
+        scope:
+          !isContributionFork && !nextContributionBuildId ? 'all' : undefined
       });
       const nextThreads = Array.isArray(result?.threads) ? result.threads : [];
       const selectedThreadId = Number(selectedThread?.id || 0);
@@ -1240,8 +1241,7 @@ export default function CollaborationPanel({
     try {
       const result = await createBuildContributionForumThread({
         buildId: rootBuildId,
-        contributionBuildId:
-          selectedContributionId || contributionBuildId || null,
+        contributionBuildId: isContributionFork ? contributionBuildId : null,
         title: threadTitleInput.trim(),
         body: threadBodyInput.trim()
       });
@@ -1315,6 +1315,26 @@ export default function CollaborationPanel({
         setForumActionLoading('');
       }
     }
+  }
+
+  function handleOpenForumThreadBranch(thread: BuildForumThread) {
+    const branchId =
+      Number(thread.branchId || 0) || Number(thread.contributionBuildId || 0);
+    const branchNumber = Number(thread.branchContributionBranchNumber || 0);
+    if (!rootBuildId || !branchId || !branchNumber) return;
+    navigate(
+      getBuildWorkspacePath({
+        id: branchId,
+        contributionRootBuildId: rootBuildId,
+        contributionBranchNumber: branchNumber
+      }),
+      {
+        state: {
+          openPeoplePanel: true,
+          forumThreadId: Number(thread.id || 0)
+        }
+      }
+    );
   }
 
   async function handleCreateForumReply() {
@@ -1501,6 +1521,7 @@ export default function CollaborationPanel({
         replyTarget={replyTarget}
         replies={threadReplies}
         selectedThread={selectedThread}
+        showScopeTags={!isContributionFork}
         threads={forumThreads}
         titleInput={threadTitleInput}
         userId={userId}
@@ -1516,6 +1537,7 @@ export default function CollaborationPanel({
         onCreateThread={handleCreateForumThread}
         onDeleteReply={handleDeleteForumReply}
         onDeleteThread={handleDeleteForumThread}
+        onOpenThreadBranch={handleOpenForumThreadBranch}
         onOpenThread={(threadId) => {
           void handleOpenForumThread(threadId);
         }}

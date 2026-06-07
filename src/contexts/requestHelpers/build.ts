@@ -2145,17 +2145,23 @@ export default function buildRequestHelpers({
 
     async loadBuildContributionForumThreads({
       buildId,
-      contributionBuildId
+      contributionBuildId,
+      scope
     }: {
       buildId: number;
       contributionBuildId?: number | null;
+      scope?: 'all';
     }) {
       try {
+        const params = {
+          ...(contributionBuildId ? { contributionBuildId } : {}),
+          ...(scope === 'all' ? { scope: 'all' } : {})
+        };
         const { data } = await request.get(
           `${URL}/build/${buildId}/contribution-forum-threads`,
           {
             ...auth(),
-            params: contributionBuildId ? { contributionBuildId } : undefined
+            params: Object.keys(params).length > 0 ? params : undefined
           }
         );
         return data;
@@ -2320,29 +2326,6 @@ export default function buildRequestHelpers({
           `${URL}/build/${buildId}/api/token`,
           { scopes },
           auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async loadBuildApiUsage({
-      buildId,
-      minutes
-    }: {
-      buildId: number;
-      minutes?: number;
-    }) {
-      try {
-        const { data } = await request.get(
-          `${URL}/build/${buildId}/api-usage`,
-          {
-            ...auth(),
-            params: {
-              minutes
-            }
-          }
         );
         return data;
       } catch (error) {

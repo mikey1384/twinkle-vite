@@ -143,7 +143,7 @@ export const mobilePreviewStyles = `
       height: max(32rem, 320px);
     }
     .home-feed-card__panel-preview--size-subject-secret-compact {
-      height: max(18.5rem, 185px);
+      height: max(20rem, 200px);
     }
     .home-feed-card__panel-preview--size-subject-secret-preview {
       height: max(22rem, 220px);
