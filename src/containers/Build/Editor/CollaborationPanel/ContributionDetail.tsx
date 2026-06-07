@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
 import RuntimeAssetTransferProgressBar from '../RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from '../helpers/runtimeAssetTransferProgress';
 import type {
@@ -179,21 +180,15 @@ export default function ContributionDetail({
 
   return (
     <div className={detailClass}>
-      <div className={rowClass}>
-        <strong>{ownerReview ? 'Review branch' : 'Main has updates'}</strong>
-        {ownerReview ? (
+      {ownerReview ? (
+        <div className={rowClass}>
+          <strong>Review branch</strong>
           <span className={mutedTextClass}>{changedFiles.length} changed</span>
-        ) : canUpdateFromMain ? (
-          <span className={mutedTextClass}>
-            Update this branch with the latest main changes.
-          </span>
-        ) : null}
-        {contributionStatus !== 'draft' ? (
-          <span className={statusPillClass}>
-            {formatContributionStatusLabel(contributionStatus)}
-          </span>
-        ) : null}
-        {ownerReview ? (
+          {contributionStatus !== 'draft' ? (
+            <span className={statusPillClass}>
+              {formatContributionStatusLabel(contributionStatus)}
+            </span>
+          ) : null}
           <GameCTAButton
             variant="neutral"
             size="sm"
@@ -202,8 +197,15 @@ export default function ContributionDetail({
           >
             Preview
           </GameCTAButton>
-        ) : null}
-      </div>
+        </div>
+      ) : (
+        <BranchMainUpdateNotice
+          canUpdate={canUpdateFromMain}
+          loading={actionLoading === 'update-from-main'}
+          disabled={Boolean(actionLoading)}
+          onUpdate={onUpdateVersionFromMain}
+        />
+      )}
       {ownerReview ? (
         <ChangedFiles
           changedFiles={changedFiles}
@@ -213,21 +215,6 @@ export default function ContributionDetail({
           onPreviewPathChange={onPreviewPathChange}
           onToggleSelectedPath={onToggleSelectedPath}
         />
-      ) : null}
-      {canUpdateFromMain ? (
-        <div className={rowClass}>
-          <GameCTAButton
-            variant="magenta"
-            size="sm"
-            icon="redo"
-            shiny
-            loading={actionLoading === 'update-from-main'}
-            disabled={Boolean(actionLoading)}
-            onClick={onUpdateVersionFromMain}
-          >
-            Update from Main
-          </GameCTAButton>
-        </div>
       ) : null}
       {!ownerReview &&
       contributionStatus === 'draft' &&
