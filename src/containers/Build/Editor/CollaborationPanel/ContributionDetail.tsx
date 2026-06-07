@@ -217,9 +217,10 @@ export default function ContributionDetail({
       {canUpdateFromMain ? (
         <div className={rowClass}>
           <GameCTAButton
-            variant="neutral"
+            variant="magenta"
             size="sm"
             icon="redo"
+            shiny
             loading={actionLoading === 'update-from-main'}
             disabled={Boolean(actionLoading)}
             onClick={onUpdateVersionFromMain}

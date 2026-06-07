@@ -713,16 +713,14 @@ export default function Header({
           </div>
           <div className={mobileTitleBadgeGroupClass}>
             {showVisibilityBadge ? (
-              <>
-                <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
-                {canOpenRuntimeApp ? (
-                  <BuildViewAppButton
-                    buildId={Number(build.id)}
-                    runtimeBackState={runtimeBackState}
-                    size="sm"
-                  />
-                ) : null}
-              </>
+              <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
+            ) : null}
+            {canOpenRuntimeApp ? (
+              <BuildViewAppButton
+                buildId={Number(build.id)}
+                runtimeBackState={runtimeBackState}
+                size="sm"
+              />
             ) : null}
             {build.isPublic && releaseStatus ? (
               <BuildReleaseStatusBadge releaseStatus={releaseStatus} />
@@ -750,19 +748,17 @@ export default function Header({
       </div>
       <div className={headerActionsClass}>
         {showVisibilityBadge ? (
-          <>
-            <HeaderActionItem mobileOrder={1}>
-              <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
-            </HeaderActionItem>
-            {canOpenRuntimeApp ? (
-              <HeaderActionItem mobileOrder={2}>
-                <BuildViewAppButton
-                  buildId={Number(build.id)}
-                  runtimeBackState={runtimeBackState}
-                />
-              </HeaderActionItem>
-            ) : null}
-          </>
+          <HeaderActionItem mobileOrder={1}>
+            <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
+          </HeaderActionItem>
+        ) : null}
+        {canOpenRuntimeApp ? (
+          <HeaderActionItem mobileOrder={2}>
+            <BuildViewAppButton
+              buildId={Number(build.id)}
+              runtimeBackState={runtimeBackState}
+            />
+          </HeaderActionItem>
         ) : null}
         {build.isPublic && releaseStatus ? (
           <HeaderActionItem mobileOrder={3}>

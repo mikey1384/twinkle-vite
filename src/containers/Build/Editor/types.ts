@@ -124,6 +124,7 @@ export interface Build {
   contributionBranchNumber?: number | null;
   contributionStatus?: 'none' | 'draft' | 'merging' | 'merged';
   contributionBaseBuildUpdatedAt?: number | null;
+  contributionBaseFilesHash?: string | null;
   contributionMergedAt?: number | null;
   contributionClosedAt?: number | null;
   contributionMergedByUserId?: number | null;

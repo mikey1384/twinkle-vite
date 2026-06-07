@@ -215,6 +215,14 @@ export interface LumineModelSelectionControl {
   ) => Promise<boolean | void> | boolean | void;
 }
 
+export interface MainUpdateNoticeControl {
+  shown: boolean;
+  canUpdate: boolean;
+  loading: boolean;
+  error: string;
+  onUpdate: () => Promise<void> | void;
+}
+
 export interface LimitProgressItem {
   id: string;
   label: string;
@@ -243,6 +251,7 @@ export interface ChatPanelProps {
   lumineTabIcon?: string;
   lumineChatVisibilityControl?: LumineChatVisibilityControl | null;
   lumineModelSelectionControl?: LumineModelSelectionControl | null;
+  mainUpdateNoticeControl?: MainUpdateNoticeControl | null;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;

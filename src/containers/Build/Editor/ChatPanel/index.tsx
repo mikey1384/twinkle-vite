@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import Icon from '~/components/Icon';
 import { useViewContext } from '~/contexts';
@@ -8,7 +9,11 @@ import Composer from './Composer';
 import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
-import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
+import {
+  type ChatPanelCommunicationMode,
+  type ChatPanelProps,
+  type MainUpdateNoticeControl
+} from './types';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
 import { formatScaledRem } from './helpers/utils';
 
@@ -141,6 +146,47 @@ const peoplePaneClass = css`
   background: #fff;
 `;
 
+const mainUpdateNoticeClass = css`
+  margin: 0.85rem 1.2rem 0;
+  border: 2px solid #db2777;
+  border-radius: 8px;
+  background: color-mix(in srgb, #ec4899 10%, #ffffff);
+  color: #831843;
+  padding: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  box-shadow: 0 2px 0 rgba(190, 24, 93, 0.16);
+  @media (max-width: ${mobileMaxWidth}) {
+    margin: 0.75rem 1rem 0;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+`;
+
+const mainUpdateNoticeCopyClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  strong {
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+  span {
+    color: #4b5563;
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+`;
+
+const mainUpdateNoticeErrorClass = css`
+  color: #be123c !important;
+  overflow-wrap: anywhere;
+`;
+
 type CommunicationMode = ChatPanelCommunicationMode;
 const LUMINE_BOTTOM_SCROLL_THRESHOLD = 120;
 
@@ -160,6 +206,7 @@ export default function ChatPanel({
   lumineTabIcon = 'sparkles',
   lumineChatVisibilityControl,
   lumineModelSelectionControl,
+  mainUpdateNoticeControl,
   messages,
   executionPlan,
   scopedPlanQuestion,
@@ -630,6 +677,9 @@ export default function ChatPanel({
         <div className={peoplePaneClass}>{luminePanelOverride}</div>
       ) : (
         <>
+          {mainUpdateNoticeControl?.shown ? (
+            <MainUpdateNotice control={mainUpdateNoticeControl} />
+          ) : null}
           <Header
             copilotPolicy={copilotPolicy}
             aiUsagePolicy={aiUsagePolicy}
@@ -707,6 +757,42 @@ export default function ChatPanel({
         onCreateGeneratedRuntimeAsset={onCreateGeneratedRuntimeAsset}
         onLoadMoreRuntimeUploads={onLoadMoreRuntimeUploads}
       />
+    </div>
+  );
+}
+
+function MainUpdateNotice({ control }: { control: MainUpdateNoticeControl }) {
+  const title = control.canUpdate
+    ? 'Main has updates'
+    : 'Branch needs attention';
+  const body = control.canUpdate
+    ? 'Update this branch with the latest main changes.'
+    : 'Resolve the branch update issue before continuing.';
+
+  return (
+    <div className={mainUpdateNoticeClass} aria-live="polite">
+      <div className={mainUpdateNoticeCopyClass}>
+        <strong>{title}</strong>
+        <span>{body}</span>
+        {control.error ? (
+          <span className={mainUpdateNoticeErrorClass}>{control.error}</span>
+        ) : null}
+      </div>
+      {control.canUpdate ? (
+        <GameCTAButton
+          variant="magenta"
+          size="sm"
+          icon="redo"
+          shiny
+          loading={control.loading}
+          disabled={control.loading}
+          onClick={() => {
+            void control.onUpdate();
+          }}
+        >
+          Update from Main
+        </GameCTAButton>
+      ) : null}
     </div>
   );
 }

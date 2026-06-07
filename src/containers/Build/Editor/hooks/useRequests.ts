@@ -78,6 +78,9 @@ export default function useRequests() {
   const replaceBuildContributionIntoMyBranch = useAppContext(
     (v) => v.requestHelpers.replaceBuildContributionIntoMyBranch
   );
+  const updateBuildContributionFromMain = useAppContext(
+    (v) => v.requestHelpers.updateBuildContributionFromMain
+  );
   const updateBuildLumineChatVisibility = useAppContext(
     (v) => v.requestHelpers.updateBuildLumineChatVisibility
   );
@@ -120,6 +123,7 @@ export default function useRequests() {
     routeBuildChatUpload,
     saveFileData,
     unpublishBuild,
+    updateBuildContributionFromMain,
     updateBuildLumineChatVisibility,
     updateBuildLumineModelPreference,
     updateBuildMetadata,

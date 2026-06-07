@@ -46,7 +46,10 @@ import useSharedRunReconciliation from './hooks/useSharedRunReconciliation';
 import useSharedRunCleanup from './hooks/useSharedRunCleanup';
 import useSharedTerminalRunReconciliation from './hooks/useSharedTerminalRunReconciliation';
 import useWorkspaceCommunicationActions from './hooks/useWorkspaceCommunicationActions';
-import { getContributionConflictMarkerPaths } from './CollaborationPanel/helpers/collaborationConflicts';
+import {
+  UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE,
+  getContributionConflictMarkerPaths
+} from './CollaborationPanel/helpers/collaborationConflicts';
 import resolveCurrentBuildRunView from './helpers/resolveCurrentBuildRunView';
 import type {
   PreviewPanelHandle,
@@ -103,6 +106,13 @@ import type {
   QueuedBuildRequest
 } from './types';
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
+
+interface BranchMainUpdateState {
+  checking: boolean;
+  rootDrifted: boolean;
+  loading: boolean;
+  error: string;
+}
 
 const pageClass = css`
   display: grid;
@@ -241,6 +251,7 @@ export default function BuildEditor({
     routeBuildChatUpload,
     saveFileData,
     unpublishBuild,
+    updateBuildContributionFromMain,
     updateBuildLumineChatVisibility,
     updateBuildMetadata,
     updateBuildProjectFiles,
@@ -259,8 +270,20 @@ export default function BuildEditor({
     }));
   const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
     useState(false);
+  const [branchMainUpdateState, setBranchMainUpdateState] =
+    useState<BranchMainUpdateState>({
+      checking: false,
+      rootDrifted: false,
+      loading: false,
+      error: ''
+    });
   const [dismissedFollowUpPromptKey, setDismissedFollowUpPromptKey] =
     useState('');
+  const branchMainUpdateCheckIdRef = useRef(0);
+  const branchMainUpdateTarget = getBranchMainUpdateTarget({ build, userId });
+  const branchMainUpdateRootBuildId = branchMainUpdateTarget?.rootBuildId || 0;
+  const branchMainUpdateContributionBuildId =
+    branchMainUpdateTarget?.contributionBuildId || 0;
   const communicationPanelShown =
     isOwner ||
     (!isOwner &&
@@ -906,6 +929,67 @@ export default function BuildEditor({
   });
 
   useEffect(() => {
+    if (!branchMainUpdateRootBuildId || !branchMainUpdateContributionBuildId) {
+      branchMainUpdateCheckIdRef.current += 1;
+      setBranchMainUpdateState((current) =>
+        current.checking || current.rootDrifted || current.error
+          ? {
+              ...current,
+              checking: false,
+              rootDrifted: false,
+              error: ''
+            }
+          : current
+      );
+      return;
+    }
+    const checkId = branchMainUpdateCheckIdRef.current + 1;
+    branchMainUpdateCheckIdRef.current = checkId;
+    let canceled = false;
+    setBranchMainUpdateState((current) => ({
+      ...current,
+      checking: true,
+      error: current.loading ? current.error : ''
+    }));
+    loadBuildContribution({
+      buildId: branchMainUpdateRootBuildId,
+      contributionBuildId: branchMainUpdateContributionBuildId
+    })
+      .then((result: any) => {
+        if (canceled || branchMainUpdateCheckIdRef.current !== checkId) {
+          return;
+        }
+        setBranchMainUpdateState((current) => ({
+          ...current,
+          checking: false,
+          rootDrifted: Boolean(result?.rootDrifted),
+          error: ''
+        }));
+      })
+      .catch((error: any) => {
+        if (canceled || branchMainUpdateCheckIdRef.current !== checkId) {
+          return;
+        }
+        console.error('Failed to check branch main update state:', error);
+        setBranchMainUpdateState((current) => ({
+          ...current,
+          checking: false
+        }));
+      });
+    return () => {
+      canceled = true;
+    };
+    // loadBuildContribution is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    branchMainUpdateContributionBuildId,
+    branchMainUpdateRootBuildId,
+    build.contributionBaseBuildUpdatedAt,
+    build.contributionBaseFilesHash,
+    build.contributionStatus
+  ]);
+
+  useEffect(() => {
     setDismissedFollowUpPromptKey('');
   }, [build.id]);
 
@@ -1134,6 +1218,79 @@ export default function BuildEditor({
     return sendBuildMessageText(messageText, options);
   }
 
+  async function handleUpdateCurrentBranchFromMain() {
+    if (branchMainUpdateState.loading) return;
+    const target = getBranchMainUpdateTarget({
+      build: getLatestBuild(),
+      userId
+    });
+    if (!target) return;
+    setBranchMainUpdateState((current) => ({
+      ...current,
+      loading: true,
+      error: ''
+    }));
+    try {
+      const preparedFiles = await prepareProjectFilesForContributionAction({
+        action: 'update-from-main'
+      });
+      if (!preparedFiles.ready) return;
+      const result = await updateBuildContributionFromMain({
+        buildId: target.rootBuildId,
+        contributionBuildId: target.contributionBuildId
+      });
+      if (result?.code === 'build_contribution_conflict_markers_remaining') {
+        const markerPaths = normalizeUpdateFromMainConflictMarkerPaths(
+          result.conflictMarkerPaths
+        );
+        setBranchMainUpdateState((current) => ({
+          ...current,
+          error:
+            markerPaths.length > 0
+              ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
+              : 'Fix overlapping branch changes before updating from main.'
+        }));
+        return;
+      }
+      if (!result?.success) {
+        setBranchMainUpdateState((current) => ({
+          ...current,
+          error: result?.error || 'Failed to update from main'
+        }));
+        return;
+      }
+      handleBuildContributionMerge({
+        build: result.contribution || null,
+        projectFiles: Array.isArray(result.projectFiles)
+          ? result.projectFiles
+          : null
+      });
+      const conflictPaths = Array.isArray(result.conflicts)
+        ? result.conflicts
+            .map((conflict: any) => String(conflict?.path || '').trim())
+            .filter(Boolean)
+        : [];
+      setBranchMainUpdateState((current) => ({
+        ...current,
+        rootDrifted: false,
+        error:
+          conflictPaths.length > 0
+            ? UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE
+            : ''
+      }));
+    } catch (error: any) {
+      setBranchMainUpdateState((current) => ({
+        ...current,
+        error: getUpdateFromMainErrorMessage(error)
+      }));
+    } finally {
+      setBranchMainUpdateState((current) => ({
+        ...current,
+        loading: false
+      }));
+    }
+  }
+
   function handleStopGenerationForQueue(options?: {
     stopReason?: 'user' | 'replacement';
   }) {
@@ -1179,6 +1336,10 @@ export default function BuildEditor({
   const mainProjectConflictMarkerPaths = getContributionConflictMarkerPaths(
     build.projectFiles
   );
+  const branchMainUpdateNoticeError =
+    branchMainUpdateTarget && mainProjectConflictMarkerPaths.length > 0
+      ? UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE
+      : branchMainUpdateState.error;
   const versionNavigationPanel = (
     <VersionStartPanel
       rootBuildId={Number(build.contributionRootBuildId || 0)}
@@ -1259,6 +1420,17 @@ export default function BuildEditor({
         }
       : null,
     lumineModelSelectionControl,
+    mainUpdateNoticeControl: branchMainUpdateTarget
+      ? {
+          shown:
+            branchMainUpdateState.rootDrifted ||
+            Boolean(branchMainUpdateNoticeError),
+          canUpdate: branchMainUpdateState.rootDrifted,
+          loading: branchMainUpdateState.loading,
+          error: branchMainUpdateNoticeError,
+          onUpdate: handleUpdateCurrentBranchFromMain
+        }
+      : null,
     peoplePanel: (
       <CollaborationPanel
         build={build}
@@ -1506,4 +1678,43 @@ export default function BuildEditor({
       });
     }
   }
+}
+
+function getBranchMainUpdateTarget({
+  build,
+  userId
+}: {
+  build: Build;
+  userId?: number | null;
+}) {
+  if (!isBuildContributionFork(build)) return null;
+  const normalizedUserId = Number(userId || 0);
+  const contributorUserId =
+    Number(build.contributionContributorId || build.userId || 0) || 0;
+  if (!normalizedUserId || contributorUserId !== normalizedUserId) {
+    return null;
+  }
+  const status = String(build.contributionStatus || '').trim();
+  if (status !== 'draft' && status !== 'merged') return null;
+  const rootBuildId = Number(build.contributionRootBuildId || 0);
+  const contributionBuildId = Number(build.id || 0);
+  if (!rootBuildId || !contributionBuildId) return null;
+  return {
+    rootBuildId,
+    contributionBuildId
+  };
+}
+
+function normalizeUpdateFromMainConflictMarkerPaths(value: unknown) {
+  return Array.isArray(value)
+    ? value.map((path) => String(path || '').trim()).filter(Boolean)
+    : [];
+}
+
+function getUpdateFromMainErrorMessage(error: any) {
+  return (
+    error?.response?.data?.error ||
+    error?.message ||
+    'Failed to update from main'
+  );
 }
