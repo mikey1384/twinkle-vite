@@ -98,8 +98,13 @@ export default function BuildEditorRoute() {
 
   const locationState = (location.state as any) || null;
   const seedGreeting = Boolean(locationState?.seedGreeting);
+  const routeForumThreadId = Math.max(
+    0,
+    Math.floor(Number(locationState?.forumThreadId || 0))
+  );
   const skipDefaultContributionBranchRedirect = Boolean(
-    locationState?.skipDefaultContributionBranchRedirect
+    locationState?.skipDefaultContributionBranchRedirect ||
+      routeForumThreadId > 0
   );
   const initialPrompt =
     typeof locationState?.initialPrompt === 'string'

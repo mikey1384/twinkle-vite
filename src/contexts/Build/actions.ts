@@ -5,6 +5,7 @@ import {
   BuildAction,
   BuildLiveRunActionPayload,
   BuildRuntimeVerifyResultPayload,
+  BuildWorkspaceForumCacheActionPayload,
   BuildWorkspaceCommunicationMode,
   BuildWorkspaceUiActionPayload,
   BuildStudioActionPayload,
@@ -132,6 +133,38 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'SET_BUILD_WORKSPACE_FORUM_THREAD',
         buildWorkspaceUi: { buildId, forumThreadId }
+      });
+    },
+    onSetBuildWorkspaceForumThreads(
+      buildWorkspaceForumCache: BuildWorkspaceForumCacheActionPayload
+    ) {
+      return dispatch({
+        type: 'SET_BUILD_WORKSPACE_FORUM_THREADS',
+        buildWorkspaceForumCache
+      });
+    },
+    onSetBuildWorkspaceForumThreadDetail(
+      buildWorkspaceForumCache: BuildWorkspaceForumCacheActionPayload
+    ) {
+      return dispatch({
+        type: 'SET_BUILD_WORKSPACE_FORUM_THREAD_DETAIL',
+        buildWorkspaceForumCache
+      });
+    },
+    onRemoveBuildWorkspaceForumThread(
+      buildWorkspaceForumCache: BuildWorkspaceForumCacheActionPayload
+    ) {
+      return dispatch({
+        type: 'REMOVE_BUILD_WORKSPACE_FORUM_THREAD',
+        buildWorkspaceForumCache
+      });
+    },
+    onClearBuildWorkspaceForumCache(
+      buildWorkspaceForumCache: BuildWorkspaceForumCacheActionPayload
+    ) {
+      return dispatch({
+        type: 'CLEAR_BUILD_WORKSPACE_FORUM_CACHE',
+        buildWorkspaceForumCache
       });
     },
     onSetBuildStudioActiveTab(activeTab: BuildStudioTab) {

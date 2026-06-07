@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useBuildContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
@@ -161,6 +161,28 @@ export default function CollaborationPanel({
   const deleteBuildContributionForumReply = useAppContext(
     (v) => v.requestHelpers.deleteBuildContributionForumReply
   );
+  const forumViewerKey = getBuildForumViewerKey(userId);
+  const buildWorkspaceForumCache = useBuildContext(
+    (v) => {
+      const forumCache =
+        v.state.buildWorkspaceUi[String(build.id)]?.forumCache || null;
+      return isBuildForumCacheForViewer(forumCache, forumViewerKey)
+        ? forumCache
+        : null;
+    }
+  );
+  const cacheBuildWorkspaceForumThreads = useBuildContext(
+    (v) => v.actions.onSetBuildWorkspaceForumThreads
+  );
+  const cacheBuildWorkspaceForumThreadDetail = useBuildContext(
+    (v) => v.actions.onSetBuildWorkspaceForumThreadDetail
+  );
+  const removeCachedBuildWorkspaceForumThread = useBuildContext(
+    (v) => v.actions.onRemoveBuildWorkspaceForumThread
+  );
+  const clearCachedBuildWorkspaceForumCache = useBuildContext(
+    (v) => v.actions.onClearBuildWorkspaceForumCache
+  );
 
   const isContributionFork =
     normalizeContributionStatus(build.contributionStatus) !== 'none';
@@ -169,6 +191,26 @@ export default function CollaborationPanel({
     ? Number(build.contributionRootBuildId || 0)
     : Number(build.id || 0);
   const contributionBuildId = isContributionFork ? Number(build.id || 0) : 0;
+  const forumScopeKey = getBuildForumScopeKey({
+    contributionBuildId,
+    scope: !isContributionFork ? 'all' : 'branch'
+  });
+  const forumScopeIdentity = getBuildForumScopeIdentity({
+    buildId: build.id,
+    viewerKey: forumViewerKey,
+    scopeKey: forumScopeKey
+  });
+  const initialForumThreadId = normalizePanelForumThreadId(
+    initialSelectedForumThreadId
+  );
+  const cachedForumThreads = getCachedForumThreads(
+    buildWorkspaceForumCache,
+    forumScopeKey
+  );
+  const forumScopeCached = hasCachedForumScope(
+    buildWorkspaceForumCache,
+    forumScopeKey
+  );
   const canShowPanel = isOwner || isContributionFork || embedded;
   const [collaborationMode, setCollaborationMode] =
     useState<BuildCollaborationMode>(
@@ -206,10 +248,12 @@ export default function CollaborationPanel({
   const [conflictMarkerPaths, setConflictMarkerPaths] = useState<string[]>([]);
   const [requestActionError, setRequestActionError] = useState('');
   const [forumThreads, setForumThreads] = useState<BuildForumThread[]>([]);
-  const [selectedThread, setSelectedThread] = useState<BuildForumThread | null>(
-    null
-  );
+  const [selectedThread, setSelectedThread] =
+    useState<BuildForumThread | null>(null);
   const [threadReplies, setThreadReplies] = useState<BuildForumReply[]>([]);
+  const forumThreadsRef = useRef<BuildForumThread[]>([]);
+  const selectedThreadRef = useRef<BuildForumThread | null>(null);
+  const threadRepliesRef = useRef<BuildForumReply[]>([]);
   const [threadTitleInput, setThreadTitleInput] = useState('');
   const [threadBodyInput, setThreadBodyInput] = useState('');
   const [replyInput, setReplyInput] = useState('');
@@ -227,6 +271,14 @@ export default function CollaborationPanel({
   const scrollSaveTimeoutRef = useRef<number | null>(null);
   const recentlyCreatedForumThreadTimeoutRef = useRef<number | null>(null);
   const pendingScrollTopRef = useRef<number | null>(null);
+  const pendingForumThreadLoadRef = useRef(0);
+  const activeForumScopeIdentityRef = useRef(forumScopeIdentity);
+  const lastHydratedForumScopeIdentityRef = useRef(forumScopeIdentity);
+  const confirmedForumScopeIdentityRef = useRef('');
+  const lastRefreshedForumScopeIdentityRef = useRef('');
+  const lastRefreshedForumThreadIdentityRef = useRef('');
+  const forumScopeMutationVersionsRef = useRef<Record<string, number>>({});
+  const forumThreadMutationVersionsRef = useRef<Record<string, number>>({});
   const lastSavedScrollTopRef = useRef(
     normalizePanelScrollTop(initialScrollTop)
   );
@@ -287,6 +339,7 @@ export default function CollaborationPanel({
       ).length,
     [contributors]
   );
+  activeForumScopeIdentityRef.current = forumScopeIdentity;
   const canInviteContributors = true;
   const contributorsCardShown = true;
 
@@ -345,9 +398,6 @@ export default function CollaborationPanel({
     if (isContributionFork && rootBuildId && contributionBuildId) {
       setSelectedContributionId(contributionBuildId);
       void reloadContributionDetail(contributionBuildId);
-      void reloadForumThreads(contributionBuildId);
-    } else if (!isContributionFork) {
-      void reloadForumThreads(0);
     }
     // request helpers are stable context helpers; do not include them in deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -361,6 +411,98 @@ export default function CollaborationPanel({
     rootBuildId,
     showHiddenCollaborationRequests,
     userId
+  ]);
+
+  useEffect(() => {
+    if (!canShowPanel) return;
+    const forumScopeChanged =
+      lastHydratedForumScopeIdentityRef.current !== forumScopeIdentity;
+    lastHydratedForumScopeIdentityRef.current = forumScopeIdentity;
+    if (forumScopeChanged) {
+      setForumLoading(false);
+      setForumActionLoading('');
+      setForumError('');
+    }
+    if (isContributionFork && (!rootBuildId || !contributionBuildId)) {
+      if (forumScopeChanged) {
+        replaceForumThreadsFromCache([]);
+        clearSelectedForumThread();
+        setReplyTarget(null);
+      }
+      return;
+    }
+    if (!forumScopeCached) {
+      if (
+        forumScopeChanged ||
+        forumThreadsRef.current.length > 0 ||
+        selectedThreadRef.current
+      ) {
+        replaceForumThreadsFromCache([]);
+        clearSelectedForumThread();
+        setReplyTarget(null);
+      }
+      refreshForumScopeFromServer();
+      return;
+    }
+    const forumScopeAccessConfirmed =
+      confirmedForumScopeIdentityRef.current === forumScopeIdentity;
+    if (!forumScopeAccessConfirmed) {
+      if (
+        forumScopeChanged ||
+        forumThreadsRef.current.length > 0 ||
+        selectedThreadRef.current
+      ) {
+        replaceForumThreadsFromCache([]);
+        clearSelectedForumThread();
+        setReplyTarget(null);
+      }
+      refreshForumScopeFromServer();
+      return;
+    }
+    replaceForumThreadsFromCache(cachedForumThreads);
+    if (initialForumThreadId > 0) {
+      const cachedThreadDetail = getCachedForumThreadDetail(
+        buildWorkspaceForumCache,
+        initialForumThreadId
+      );
+      if (cachedThreadDetail) {
+        replaceSelectedThreadFromCache(
+          cachedThreadDetail.thread,
+          cachedThreadDetail.replies
+        );
+        setReplyTarget(null);
+        refreshForumThreadFromServer(initialForumThreadId);
+        refreshForumScopeFromServer();
+        return;
+      }
+      if (
+        forumScopeChanged ||
+        (pendingForumThreadLoadRef.current !== initialForumThreadId &&
+          Number(selectedThreadRef.current?.id || 0) !== initialForumThreadId)
+      ) {
+        void handleOpenForumThread(initialForumThreadId, {
+          persistSelection: false
+        });
+      }
+      refreshForumScopeFromServer();
+      return;
+    }
+    if (forumScopeChanged || selectedThreadRef.current) {
+      clearSelectedForumThread();
+      setReplyTarget(null);
+    }
+    refreshForumScopeFromServer();
+    // request helpers are stable context helpers; do not include them in deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    build.id,
+    canShowPanel,
+    contributionBuildId,
+    forumScopeCached,
+    forumScopeIdentity,
+    initialForumThreadId,
+    isContributionFork,
+    rootBuildId
   ]);
 
   useEffect(() => {
@@ -440,6 +582,152 @@ export default function CollaborationPanel({
     onSelectedForumThreadChangeRef.current?.(
       normalizePanelForumThreadId(threadId)
     );
+  }
+
+  function refreshForumScopeFromServer(
+    options: { force?: boolean } = {}
+  ) {
+    if (
+      !options.force &&
+      lastRefreshedForumScopeIdentityRef.current === forumScopeIdentity
+    ) {
+      return;
+    }
+    lastRefreshedForumScopeIdentityRef.current = forumScopeIdentity;
+    void reloadForumThreads(isContributionFork ? contributionBuildId : 0);
+  }
+
+  function refreshForumThreadFromServer(threadId: number) {
+    const threadRefreshIdentity = getBuildForumThreadRefreshIdentity({
+      scopeIdentity: forumScopeIdentity,
+      threadId
+    });
+    if (
+      lastRefreshedForumThreadIdentityRef.current === threadRefreshIdentity
+    ) {
+      return;
+    }
+    lastRefreshedForumThreadIdentityRef.current = threadRefreshIdentity;
+    void handleOpenForumThread(threadId, {
+      onlyIfSelected: true,
+      persistSelection: false,
+      showLoading: false
+    });
+  }
+
+  function getForumScopeMutationVersion(scopeIdentity = forumScopeIdentity) {
+    return Number(forumScopeMutationVersionsRef.current[scopeIdentity] || 0);
+  }
+
+  function markForumScopeMutated(scopeIdentity = forumScopeIdentity) {
+    forumScopeMutationVersionsRef.current[scopeIdentity] =
+      getForumScopeMutationVersion(scopeIdentity) + 1;
+  }
+
+  function getForumThreadMutationVersion(threadId: number) {
+    const threadKey = getBuildForumThreadMutationKey(threadId);
+    return Number(forumThreadMutationVersionsRef.current[threadKey] || 0);
+  }
+
+  function markForumThreadMutated(threadId: number) {
+    const threadKey = getBuildForumThreadMutationKey(threadId);
+    forumThreadMutationVersionsRef.current[threadKey] =
+      getForumThreadMutationVersion(threadId) + 1;
+  }
+
+  function replaceForumThreadsFromServer(
+    nextThreads: BuildForumThread[],
+    nextScopeKey = forumScopeKey
+  ) {
+    replaceForumThreadsFromCache(nextThreads);
+    cacheBuildWorkspaceForumThreads({
+      buildId: build.id,
+      viewerKey: forumViewerKey,
+      scopeKey: nextScopeKey,
+      threads: nextThreads
+    });
+  }
+
+  function replaceForumThreadsFromMutation(nextThreads: BuildForumThread[]) {
+    replaceForumThreadsFromCache(nextThreads);
+    refreshForumScopeFromServer({ force: true });
+  }
+
+  function replaceForumThreadsFromCache(nextThreads: BuildForumThread[]) {
+    forumThreadsRef.current = nextThreads;
+    setForumThreads(nextThreads);
+  }
+
+  function replaceSelectedThreadFromServer(
+    nextThread: BuildForumThread | null,
+    nextReplies: BuildForumReply[]
+  ) {
+    replaceSelectedThreadFromCache(nextThread, nextReplies);
+    if (!nextThread) return;
+    cacheBuildWorkspaceForumThreadDetail({
+      buildId: build.id,
+      viewerKey: forumViewerKey,
+      thread: nextThread,
+      replies: nextReplies
+    });
+  }
+
+  function replaceSelectedThreadFromCache(
+    nextThread: BuildForumThread | null,
+    nextReplies: BuildForumReply[]
+  ) {
+    selectedThreadRef.current = nextThread;
+    threadRepliesRef.current = nextReplies;
+    setSelectedThread(nextThread);
+    setThreadReplies(nextReplies);
+  }
+
+  function clearSelectedForumThread() {
+    replaceSelectedThreadFromCache(null, []);
+  }
+
+  function clearForumStateAfterDeniedAccess() {
+    if (confirmedForumScopeIdentityRef.current === forumScopeIdentity) {
+      confirmedForumScopeIdentityRef.current = '';
+    }
+    replaceForumThreadsFromCache([]);
+    clearSelectedForumThread();
+    setReplyTarget(null);
+    commitSelectedForumThreadId(0);
+    clearCachedBuildWorkspaceForumCache({
+      buildId: build.id,
+      viewerKey: forumViewerKey
+    });
+  }
+
+  function appendForumReplyFromServer(nextReply: BuildForumReply) {
+    const replyId = Number(nextReply?.id || 0);
+    if (!replyId) {
+      const nextReplies = [...threadRepliesRef.current, nextReply];
+      threadRepliesRef.current = nextReplies;
+      setThreadReplies(nextReplies);
+      return;
+    }
+    let replyExists = false;
+    const nextReplies = threadRepliesRef.current.map((reply) => {
+      if (Number(reply?.id || 0) !== replyId) return reply;
+      replyExists = true;
+      return nextReply;
+    });
+    if (!replyExists) {
+      nextReplies.push(nextReply);
+    }
+    threadRepliesRef.current = nextReplies;
+    setThreadReplies(nextReplies);
+  }
+
+  function patchForumThreadInCurrentList(nextThread: BuildForumThread) {
+    const nextThreadId = Number(nextThread.id || 0);
+    if (!nextThreadId) return;
+    const nextThreads = forumThreadsRef.current.map((thread) =>
+      Number(thread.id || 0) === nextThreadId ? nextThread : thread
+    );
+    replaceForumThreadsFromCache(nextThreads);
   }
 
   if (!canShowPanel) return null;
@@ -1177,6 +1465,19 @@ export default function CollaborationPanel({
 
   async function reloadForumThreads(nextContributionBuildId: number) {
     if (!rootBuildId) return;
+    const nextScopeKey = getBuildForumScopeKey({
+      contributionBuildId: nextContributionBuildId || 0,
+      scope:
+        !isContributionFork && !nextContributionBuildId ? 'all' : 'branch'
+    });
+    const requestForumScopeIdentity = getBuildForumScopeIdentity({
+      buildId: build.id,
+      viewerKey: forumViewerKey,
+      scopeKey: nextScopeKey
+    });
+    const requestScopeMutationVersion = getForumScopeMutationVersion(
+      requestForumScopeIdentity
+    );
     setForumLoading(true);
     setForumError('');
     try {
@@ -1187,7 +1488,15 @@ export default function CollaborationPanel({
           !isContributionFork && !nextContributionBuildId ? 'all' : undefined
       });
       const nextThreads = Array.isArray(result?.threads) ? result.threads : [];
-      const selectedThreadId = Number(selectedThread?.id || 0);
+      if (
+        activeForumScopeIdentityRef.current !== requestForumScopeIdentity ||
+        getForumScopeMutationVersion(requestForumScopeIdentity) !==
+          requestScopeMutationVersion
+      ) {
+        return;
+      }
+      confirmedForumScopeIdentityRef.current = requestForumScopeIdentity;
+      const selectedThreadId = Number(selectedThreadRef.current?.id || 0);
       const persistedThreadId = selectedThreadId
         ? 0
         : initialSelectedForumThreadIdRef.current;
@@ -1201,19 +1510,18 @@ export default function CollaborationPanel({
         nextThreads.some(
           (thread: BuildForumThread) => Number(thread.id) === persistedThreadId
         );
-      setForumThreads(nextThreads);
-      setSelectedThread((current) => {
-        if (!current) return current;
-        return selectedThreadStillExists ? current : null;
-      });
-      if (!selectedThreadStillExists) {
-        setThreadReplies([]);
-        setReplyTarget(null);
-      }
+      replaceForumThreadsFromServer(nextThreads, nextScopeKey);
       if (selectedThreadId > 0 && !selectedThreadStillExists) {
+        clearSelectedForumThread();
+        setReplyTarget(null);
         commitSelectedForumThreadId(0);
       }
       if (persistedThreadStillExists) {
+        lastRefreshedForumThreadIdentityRef.current =
+          getBuildForumThreadRefreshIdentity({
+            scopeIdentity: forumScopeIdentity,
+            threadId: persistedThreadId
+          });
         await handleOpenForumThread(persistedThreadId, {
           persistSelection: false,
           showLoading: false
@@ -1222,13 +1530,27 @@ export default function CollaborationPanel({
         commitSelectedForumThreadId(0);
       }
     } catch (error: any) {
+      if (
+        activeForumScopeIdentityRef.current !== requestForumScopeIdentity ||
+        getForumScopeMutationVersion(requestForumScopeIdentity) !==
+          requestScopeMutationVersion
+      ) {
+        return;
+      }
+      if (isForumAccessDeniedError(error)) {
+        clearForumStateAfterDeniedAccess();
+      }
       setForumError(
         error?.response?.data?.error ||
           error?.message ||
           'Failed to load team forum'
       );
     } finally {
-      setForumLoading(false);
+      if (
+        activeForumScopeIdentityRef.current === requestForumScopeIdentity
+      ) {
+        setForumLoading(false);
+      }
     }
   }
 
@@ -1246,13 +1568,14 @@ export default function CollaborationPanel({
         body: threadBodyInput.trim()
       });
       if (result?.thread) {
-        setForumThreads((current) => [
+        markForumScopeMutated();
+        replaceForumThreadsFromMutation([
           result.thread,
-          ...current.filter(
+          ...forumThreadsRef.current.filter(
             (thread) => Number(thread.id) !== Number(result.thread.id)
           )
         ]);
-        setThreadReplies([]);
+        clearSelectedForumThread();
         commitSelectedForumThreadId(0);
         markForumThreadPosted(result.thread.id);
         setThreadTitleInput('');
@@ -1285,11 +1608,15 @@ export default function CollaborationPanel({
   async function handleOpenForumThread(
     threadId: number,
     options?: {
+      onlyIfSelected?: boolean;
       persistSelection?: boolean;
       showLoading?: boolean;
     }
   ) {
     if (!rootBuildId || !threadId) return;
+    const requestForumScopeIdentity = forumScopeIdentity;
+    const requestMutationVersion = getForumThreadMutationVersion(threadId);
+    pendingForumThreadLoadRef.current = threadId;
     const showLoading = options?.showLoading !== false;
     if (showLoading) {
       setForumActionLoading(`load-thread-${threadId}`);
@@ -1300,18 +1627,53 @@ export default function CollaborationPanel({
         buildId: rootBuildId,
         threadId
       });
-      setSelectedThread(result?.thread || null);
-      setThreadReplies(Array.isArray(result?.replies) ? result.replies : []);
+      if (
+        activeForumScopeIdentityRef.current !== requestForumScopeIdentity ||
+        getForumThreadMutationVersion(threadId) !== requestMutationVersion ||
+        (options?.onlyIfSelected &&
+          (Number(selectedThreadRef.current?.id || 0) !== Number(threadId) ||
+            (pendingForumThreadLoadRef.current > 0 &&
+              pendingForumThreadLoadRef.current !== Number(threadId))))
+      ) {
+        return;
+      }
+      replaceSelectedThreadFromServer(
+        result?.thread || null,
+        Array.isArray(result?.replies) ? result.replies : []
+      );
+      if (result?.thread) {
+        lastRefreshedForumThreadIdentityRef.current =
+          getBuildForumThreadRefreshIdentity({
+            scopeIdentity: requestForumScopeIdentity,
+            threadId: result.thread.id || threadId
+          });
+      }
       setReplyTarget(null);
       if (options?.persistSelection !== false) {
         commitSelectedForumThreadId(result?.thread?.id || threadId);
       }
     } catch (error: any) {
+      if (
+        activeForumScopeIdentityRef.current !== requestForumScopeIdentity ||
+        getForumThreadMutationVersion(threadId) !== requestMutationVersion ||
+        (options?.onlyIfSelected &&
+          (Number(selectedThreadRef.current?.id || 0) !== Number(threadId) ||
+            (pendingForumThreadLoadRef.current > 0 &&
+              pendingForumThreadLoadRef.current !== Number(threadId))))
+      ) {
+        return;
+      }
       setForumError(
         error?.response?.data?.error || error?.message || 'Failed to open topic'
       );
     } finally {
-      if (showLoading) {
+      if (pendingForumThreadLoadRef.current === threadId) {
+        pendingForumThreadLoadRef.current = 0;
+      }
+      if (
+        showLoading &&
+        activeForumScopeIdentityRef.current === requestForumScopeIdentity
+      ) {
         setForumActionLoading('');
       }
     }
@@ -1355,20 +1717,24 @@ export default function CollaborationPanel({
         body: replyInput.trim(),
         replyToReplyId: replyTarget?.id || null
       });
+      if (result?.reply || result?.thread) {
+        markForumScopeMutated();
+        markForumThreadMutated(selectedThread.id);
+      }
       if (result?.reply) {
-        setThreadReplies((current) => [...current, result.reply]);
+        appendForumReplyFromServer(result.reply);
         setReplyInput('');
         setReplyTarget(null);
       }
       if (result?.thread) {
-        setSelectedThread(result.thread);
-        setForumThreads((current) =>
-          current.map((thread) =>
-            Number(thread.id) === Number(result.thread.id)
-              ? result.thread
-              : thread
-          )
+        replaceSelectedThreadFromServer(
+          result.thread,
+          threadRepliesRef.current
         );
+        patchForumThreadInCurrentList(result.thread);
+      }
+      if (result?.reply || result?.thread) {
+        refreshForumScopeFromServer({ force: true });
       }
     } catch (error: any) {
       setForumError(
@@ -1389,12 +1755,19 @@ export default function CollaborationPanel({
         threadId
       });
       if (result?.success) {
-        setForumThreads((current) =>
-          current.filter((thread) => Number(thread.id) !== Number(threadId))
+        markForumScopeMutated();
+        markForumThreadMutated(threadId);
+        const nextThreads = forumThreadsRef.current.filter(
+          (thread) => Number(thread.id) !== Number(threadId)
         );
-        if (Number(selectedThread?.id || 0) === Number(threadId)) {
-          setSelectedThread(null);
-          setThreadReplies([]);
+        replaceForumThreadsFromMutation(nextThreads);
+        removeCachedBuildWorkspaceForumThread({
+          buildId: build.id,
+          viewerKey: forumViewerKey,
+          threadId
+        });
+        if (Number(selectedThreadRef.current?.id || 0) === Number(threadId)) {
+          clearSelectedForumThread();
           setReplyTarget(null);
           commitSelectedForumThreadId(0);
         } else if (
@@ -1431,6 +1804,9 @@ export default function CollaborationPanel({
         if (Number(replyTarget?.id || 0) === Number(replyId)) {
           setReplyTarget(null);
         }
+        markForumScopeMutated();
+        markForumThreadMutated(selectedThread.id);
+        refreshForumScopeFromServer({ force: true });
         await handleOpenForumThread(selectedThread.id);
       }
     } catch (error: any) {
@@ -1526,8 +1902,7 @@ export default function CollaborationPanel({
         titleInput={threadTitleInput}
         userId={userId}
         onBackToThreads={() => {
-          setSelectedThread(null);
-          setThreadReplies([]);
+          clearSelectedForumThread();
           setReplyInput('');
           setReplyTarget(null);
           commitSelectedForumThreadId(0);
@@ -1553,6 +1928,83 @@ function getContributionAccessForCollaborationMode(
   _mode: BuildCollaborationMode
 ): BuildContributionAccess {
   return 'invite_only';
+}
+
+function getBuildForumScopeKey({
+  contributionBuildId,
+  scope
+}: {
+  contributionBuildId: number;
+  scope: 'all' | 'branch';
+}) {
+  if (scope === 'all') return 'scope:all';
+  return `branch:${Math.max(0, Math.floor(Number(contributionBuildId || 0)))}`;
+}
+
+function getBuildForumViewerKey(userId: number | null) {
+  const normalizedUserId = Math.max(0, Math.floor(Number(userId || 0)));
+  return normalizedUserId > 0 ? `user:${normalizedUserId}` : 'anonymous';
+}
+
+function isBuildForumCacheForViewer(cache: any, viewerKey: string) {
+  return Boolean(cache && String(cache.viewerKey || '') === viewerKey);
+}
+
+function getBuildForumScopeIdentity({
+  buildId,
+  viewerKey,
+  scopeKey
+}: {
+  buildId: number;
+  viewerKey: string;
+  scopeKey: string;
+}) {
+  return `${Math.max(0, Math.floor(Number(buildId || 0)))}:${viewerKey}:${scopeKey}`;
+}
+
+function getBuildForumThreadRefreshIdentity({
+  scopeIdentity,
+  threadId
+}: {
+  scopeIdentity: string;
+  threadId: number;
+}) {
+  return `${scopeIdentity}:thread:${normalizePanelForumThreadId(threadId)}`;
+}
+
+function getBuildForumThreadMutationKey(threadId: number) {
+  return String(normalizePanelForumThreadId(threadId));
+}
+
+function getCachedForumThreads(
+  cache: any,
+  scopeKey: string
+): BuildForumThread[] {
+  const threads = cache?.scopes?.[scopeKey]?.threads;
+  return Array.isArray(threads) ? threads : [];
+}
+
+function hasCachedForumScope(cache: any, scopeKey: string) {
+  return Boolean(cache?.scopes?.[scopeKey]);
+}
+
+function getCachedForumThreadDetail(
+  cache: any,
+  threadId: number
+): { thread: BuildForumThread; replies: BuildForumReply[] } | null {
+  const normalizedThreadId = Math.max(0, Math.floor(Number(threadId || 0)));
+  if (!normalizedThreadId) return null;
+  const detail = cache?.threadsById?.[String(normalizedThreadId)] || null;
+  if (!detail?.thread) return null;
+  return {
+    thread: detail.thread,
+    replies: Array.isArray(detail.replies) ? detail.replies : []
+  };
+}
+
+function isForumAccessDeniedError(error: any) {
+  const status = Number(error?.status || error?.response?.status || 0);
+  return status === 403 || status === 404;
 }
 
 function normalizeContributionStatus(value: unknown): BuildContributionStatus {

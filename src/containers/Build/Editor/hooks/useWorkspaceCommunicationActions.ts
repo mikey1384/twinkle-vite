@@ -79,6 +79,7 @@ export default function useWorkspaceCommunicationActions({
     if (routeForumThreadId > 0) {
       const nextRouteState = { ...routeState };
       delete nextRouteState.forumThreadId;
+      nextRouteState.skipDefaultContributionBranchRedirect = true;
       navigate(locationPathname, {
         replace: true,
         state: Object.keys(nextRouteState).length > 0 ? nextRouteState : null

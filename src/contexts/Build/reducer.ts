@@ -132,8 +132,26 @@ export type BuildWorkspaceCommunicationMode = 'lumine' | 'versions' | 'people';
 
 export interface BuildWorkspaceUiState {
   communicationMode: BuildWorkspaceCommunicationMode;
+  forumCache: BuildWorkspaceForumCacheState;
   scrollTops: Partial<Record<BuildWorkspaceCommunicationMode, number>>;
   selectedForumThreadId: number;
+}
+
+export interface BuildWorkspaceForumScopeCacheState {
+  threads: any[];
+  loadedAt: number;
+}
+
+export interface BuildWorkspaceForumThreadCacheState {
+  thread: any;
+  replies: any[];
+  loadedAt: number;
+}
+
+export interface BuildWorkspaceForumCacheState {
+  viewerKey: string;
+  scopes: Record<string, BuildWorkspaceForumScopeCacheState>;
+  threadsById: Record<string, BuildWorkspaceForumThreadCacheState>;
 }
 
 export interface BuildStudioBrowseTabState {
@@ -299,6 +317,16 @@ export interface BuildWorkspaceUiActionPayload {
   forumThreadId?: number | null;
 }
 
+export interface BuildWorkspaceForumCacheActionPayload {
+  buildId?: number | null;
+  viewerKey?: string | null;
+  scopeKey?: string | null;
+  threads?: any[];
+  thread?: any | null;
+  threadId?: number | null;
+  replies?: any[] | null;
+}
+
 export interface BuildState {
   buildsById: Record<string, BuildSummary>;
   buildRuns: Record<string, BuildLiveRunState>;
@@ -324,6 +352,10 @@ export interface BuildAction {
     | 'SET_BUILD_WORKSPACE_COMMUNICATION_MODE'
     | 'SET_BUILD_WORKSPACE_SCROLL'
     | 'SET_BUILD_WORKSPACE_FORUM_THREAD'
+    | 'SET_BUILD_WORKSPACE_FORUM_THREADS'
+    | 'SET_BUILD_WORKSPACE_FORUM_THREAD_DETAIL'
+    | 'REMOVE_BUILD_WORKSPACE_FORUM_THREAD'
+    | 'CLEAR_BUILD_WORKSPACE_FORUM_CACHE'
     | 'SET_BUILD_STUDIO_ACTIVE_TAB'
     | 'SET_BUILD_STUDIO_MY_BUILDS'
     | 'PATCH_BUILD_STUDIO_MY_BUILD'
@@ -348,6 +380,7 @@ export interface BuildAction {
   runtimeVerifyResult?: BuildRuntimeVerifyResultPayload;
   buildStudio?: BuildStudioActionPayload;
   buildWorkspaceUi?: BuildWorkspaceUiActionPayload;
+  buildWorkspaceForumCache?: BuildWorkspaceForumCacheActionPayload;
   buildSummary?: {
     build?: any;
     builds?: any[];
@@ -461,8 +494,19 @@ function getBuildWorkspaceUiKey(buildId: number) {
 function createInitialBuildWorkspaceUiState(): BuildWorkspaceUiState {
   return {
     communicationMode: 'lumine',
+    forumCache: createInitialBuildWorkspaceForumCacheState(),
     scrollTops: {},
     selectedForumThreadId: 0
+  };
+}
+
+function createInitialBuildWorkspaceForumCacheState(
+  viewerKey = ''
+): BuildWorkspaceForumCacheState {
+  return {
+    viewerKey: normalizeBuildWorkspaceForumViewerKey(viewerKey),
+    scopes: {},
+    threadsById: {}
   };
 }
 
@@ -471,7 +515,13 @@ function getBuildWorkspaceUiState(
   buildId: number
 ): BuildWorkspaceUiState {
   const key = getBuildWorkspaceUiKey(buildId);
-  return state.buildWorkspaceUi?.[key] || createInitialBuildWorkspaceUiState();
+  const currentUi =
+    state.buildWorkspaceUi?.[key] || createInitialBuildWorkspaceUiState();
+  return {
+    ...currentUi,
+    forumCache:
+      currentUi.forumCache || createInitialBuildWorkspaceForumCacheState()
+  };
 }
 
 function normalizeBuildWorkspaceCommunicationMode(
@@ -674,6 +724,84 @@ function normalizeBuildWorkspaceForumThreadId(value: unknown) {
   const normalized = Number(value || 0);
   if (!Number.isFinite(normalized)) return 0;
   return Math.max(0, Math.floor(normalized));
+}
+
+function normalizeBuildWorkspaceForumScopeKey(value: unknown) {
+  const key = String(value || '').trim();
+  return key || 'default';
+}
+
+function normalizeBuildWorkspaceForumViewerKey(value: unknown) {
+  const key = String(value || '').trim();
+  return key || 'viewer:unknown';
+}
+
+function getBuildWorkspaceForumThreadCacheKey(threadId: number) {
+  return String(normalizeBuildWorkspaceForumThreadId(threadId));
+}
+
+function getBuildWorkspaceForumCacheForViewer(
+  currentUi: BuildWorkspaceUiState,
+  viewerKeyValue: unknown
+) {
+  const viewerKey = normalizeBuildWorkspaceForumViewerKey(viewerKeyValue);
+  const currentForumCache =
+    currentUi.forumCache || createInitialBuildWorkspaceForumCacheState();
+  return currentForumCache.viewerKey === viewerKey
+    ? currentForumCache
+    : createInitialBuildWorkspaceForumCacheState(viewerKey);
+}
+
+function patchBuildWorkspaceForumThreadInScopes(
+  scopes: Record<string, BuildWorkspaceForumScopeCacheState>,
+  nextThread: any
+) {
+  const threadId = Number(nextThread?.id || 0);
+  if (!threadId) return scopes;
+  let changed = false;
+  const nextScopes: Record<string, BuildWorkspaceForumScopeCacheState> = {};
+  for (const [scopeKey, scope] of Object.entries(scopes || {})) {
+    let scopeChanged = false;
+    const nextThreads = (scope.threads || []).map((thread) => {
+      if (Number(thread?.id || 0) !== threadId) return thread;
+      scopeChanged = true;
+      return nextThread;
+    });
+    changed = changed || scopeChanged;
+    nextScopes[scopeKey] = scopeChanged
+      ? {
+          ...scope,
+          threads: nextThreads,
+          loadedAt: Date.now()
+        }
+      : scope;
+  }
+  return changed ? nextScopes : scopes;
+}
+
+function removeBuildWorkspaceForumThreadFromScopes(
+  scopes: Record<string, BuildWorkspaceForumScopeCacheState>,
+  threadId: number
+) {
+  const normalizedThreadId = normalizeBuildWorkspaceForumThreadId(threadId);
+  if (!normalizedThreadId) return scopes;
+  let changed = false;
+  const nextScopes: Record<string, BuildWorkspaceForumScopeCacheState> = {};
+  for (const [scopeKey, scope] of Object.entries(scopes || {})) {
+    const nextThreads = (scope.threads || []).filter(
+      (thread) => Number(thread?.id || 0) !== normalizedThreadId
+    );
+    const scopeChanged = nextThreads.length !== (scope.threads || []).length;
+    changed = changed || scopeChanged;
+    nextScopes[scopeKey] = scopeChanged
+      ? {
+          ...scope,
+          threads: nextThreads,
+          loadedAt: Date.now()
+        }
+      : scope;
+  }
+  return changed ? nextScopes : scopes;
 }
 
 function patchBuildStudioMyBuild(builds: any[], nextBuild?: any | null) {
@@ -2016,6 +2144,144 @@ export default function BuildReducer(
           [key]: {
             ...currentUi,
             selectedForumThreadId
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_WORKSPACE_FORUM_THREADS': {
+      const buildId = Number(action.buildWorkspaceForumCache?.buildId || 0);
+      if (!buildId) return state;
+      const scopeKey = normalizeBuildWorkspaceForumScopeKey(
+        action.buildWorkspaceForumCache?.scopeKey
+      );
+      const threads = Array.isArray(action.buildWorkspaceForumCache?.threads)
+        ? action.buildWorkspaceForumCache.threads
+        : [];
+      const key = getBuildWorkspaceUiKey(buildId);
+      const currentUi = getBuildWorkspaceUiState(state, buildId);
+      const currentForumCache = getBuildWorkspaceForumCacheForViewer(
+        currentUi,
+        action.buildWorkspaceForumCache?.viewerKey
+      );
+      return {
+        ...state,
+        buildWorkspaceUi: {
+          ...(state.buildWorkspaceUi || {}),
+          [key]: {
+            ...currentUi,
+            forumCache: {
+              ...currentForumCache,
+              scopes: {
+                ...(currentForumCache.scopes || {}),
+                [scopeKey]: {
+                  threads,
+                  loadedAt: Date.now()
+                }
+              }
+            }
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_WORKSPACE_FORUM_THREAD_DETAIL': {
+      const buildId = Number(action.buildWorkspaceForumCache?.buildId || 0);
+      if (!buildId) return state;
+      const providedThread = action.buildWorkspaceForumCache?.thread || null;
+      const threadId = normalizeBuildWorkspaceForumThreadId(
+        providedThread?.id || action.buildWorkspaceForumCache?.threadId
+      );
+      if (!threadId) return state;
+      const key = getBuildWorkspaceUiKey(buildId);
+      const currentUi = getBuildWorkspaceUiState(state, buildId);
+      const currentForumCache = getBuildWorkspaceForumCacheForViewer(
+        currentUi,
+        action.buildWorkspaceForumCache?.viewerKey
+      );
+      const threadKey = getBuildWorkspaceForumThreadCacheKey(threadId);
+      const currentThreadCache = currentForumCache.threadsById?.[threadKey];
+      const thread = providedThread || currentThreadCache?.thread || null;
+      if (!thread) return state;
+      const replies = Array.isArray(action.buildWorkspaceForumCache?.replies)
+        ? action.buildWorkspaceForumCache.replies
+        : currentThreadCache?.replies || [];
+      return {
+        ...state,
+        buildWorkspaceUi: {
+          ...(state.buildWorkspaceUi || {}),
+          [key]: {
+            ...currentUi,
+            forumCache: {
+              ...currentForumCache,
+              scopes: patchBuildWorkspaceForumThreadInScopes(
+                currentForumCache.scopes || {},
+                thread
+              ),
+              threadsById: {
+                ...(currentForumCache.threadsById || {}),
+                [threadKey]: {
+                  thread,
+                  replies,
+                  loadedAt: Date.now()
+                }
+              }
+            }
+          }
+        }
+      };
+    }
+    case 'REMOVE_BUILD_WORKSPACE_FORUM_THREAD': {
+      const buildId = Number(action.buildWorkspaceForumCache?.buildId || 0);
+      if (!buildId) return state;
+      const threadId = normalizeBuildWorkspaceForumThreadId(
+        action.buildWorkspaceForumCache?.threadId
+      );
+      if (!threadId) return state;
+      const key = getBuildWorkspaceUiKey(buildId);
+      const currentUi = getBuildWorkspaceUiState(state, buildId);
+      const currentForumCache = getBuildWorkspaceForumCacheForViewer(
+        currentUi,
+        action.buildWorkspaceForumCache?.viewerKey
+      );
+      const threadKey = getBuildWorkspaceForumThreadCacheKey(threadId);
+      const nextThreadsById = { ...(currentForumCache.threadsById || {}) };
+      delete nextThreadsById[threadKey];
+      return {
+        ...state,
+        buildWorkspaceUi: {
+          ...(state.buildWorkspaceUi || {}),
+          [key]: {
+            ...currentUi,
+            selectedForumThreadId:
+              currentUi.selectedForumThreadId === threadId
+                ? 0
+                : currentUi.selectedForumThreadId,
+            forumCache: {
+              ...currentForumCache,
+              scopes: removeBuildWorkspaceForumThreadFromScopes(
+                currentForumCache.scopes || {},
+                threadId
+              ),
+              threadsById: nextThreadsById
+            }
+          }
+        }
+      };
+    }
+    case 'CLEAR_BUILD_WORKSPACE_FORUM_CACHE': {
+      const buildId = Number(action.buildWorkspaceForumCache?.buildId || 0);
+      if (!buildId) return state;
+      const key = getBuildWorkspaceUiKey(buildId);
+      const currentUi = getBuildWorkspaceUiState(state, buildId);
+      return {
+        ...state,
+        buildWorkspaceUi: {
+          ...(state.buildWorkspaceUi || {}),
+          [key]: {
+            ...currentUi,
+            selectedForumThreadId: 0,
+            forumCache: createInitialBuildWorkspaceForumCacheState(
+              action.buildWorkspaceForumCache?.viewerKey || ''
+            )
           }
         }
       };
