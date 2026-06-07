@@ -134,6 +134,9 @@ const forumScopeTagClass = css`
   background: #f8fafc;
   color: #334155;
   padding: 0.18rem 0.58rem;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font: inherit;
   font-size: 1.1rem;
   line-height: 1.2;
@@ -150,6 +153,9 @@ const forumScopeTagClass = css`
   &.clickable:hover {
     border-color: rgba(65, 140, 235, 0.56);
     background: rgba(65, 140, 235, 0.14);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    max-width: 10.5rem;
   }
 `;
 
@@ -1018,7 +1024,7 @@ function ForumScopeTag({
   }
   const branchTitle = getForumThreadBranchTitle(thread);
   const branchNumber = getForumThreadBranchNumber(thread);
-  const title = branchTitle && branchTitle !== label ? branchTitle : undefined;
+  const title = branchTitle || label;
   if (branchNumber <= 0) {
     return (
       <span className={`${forumScopeTagClass} branch`} title={title}>
@@ -1056,9 +1062,11 @@ function getForumThreadBranchNumber(thread: BuildForumThread) {
 
 function getForumThreadScopeLabel(thread: BuildForumThread) {
   if (!getForumThreadBranchId(thread)) return 'Main';
+  const branchTitle = getForumThreadBranchTitle(thread);
+  if (branchTitle) return branchTitle;
   const branchNumber = getForumThreadBranchNumber(thread);
   if (branchNumber > 0) return `Branch ${branchNumber}`;
-  return getForumThreadBranchTitle(thread) || 'Branch';
+  return 'Branch';
 }
 
 function getForumThreadBranchTitle(thread: BuildForumThread) {

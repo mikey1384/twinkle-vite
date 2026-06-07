@@ -57,4 +57,8 @@ test('main forum composer posts to Main and branch tags open branches', () => {
     forumSource,
     /aria-label=\{`Open \$\{label\}`\}/
   );
+  assert.match(
+    forumSource,
+    /const branchTitle = getForumThreadBranchTitle\(thread\);[\s\S]*?if \(branchTitle\) return branchTitle;[\s\S]*?if \(branchNumber > 0\) return `Branch \$\{branchNumber\}`;/
+  );
 });
