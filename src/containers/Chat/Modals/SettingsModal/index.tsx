@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import Loading from '~/components/Loading';
 import SelectNewOwnerModal from '../SelectNewOwnerModal';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -590,14 +591,7 @@ export default function SettingsModal({
             `}
           >
             {deletedTopicsLoading ? (
-              <div
-                className={css`
-                  font-size: 1.1rem;
-                  color: ${Color.darkerGray()};
-                `}
-              >
-                Loading deleted topics...
-              </div>
+              <Loading style={{ height: '12rem' }} />
             ) : deletedTopics.length > 0 ? (
               <div
                 className={css`
@@ -684,7 +678,10 @@ export default function SettingsModal({
             ) : (
               <div
                 className={css`
-                  font-size: 1.1rem;
+                  width: 100%;
+                  text-align: center;
+                  padding: 3rem 0;
+                  font-size: 1.5rem;
                   color: ${Color.darkerGray()};
                 `}
               >
