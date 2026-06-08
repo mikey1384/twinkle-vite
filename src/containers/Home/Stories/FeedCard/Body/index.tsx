@@ -13,6 +13,7 @@ import AiEnergySponsorButton, {
 } from '~/components/Comments/AiEnergySponsorButton';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
+import UsernameText from '~/components/Texts/UsernameText';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
@@ -96,6 +97,13 @@ const primaryPreviewTextClass = 'home-feed-card__primary-preview-text';
 const homeFeedPreviewLineHeight = 1.36;
 const homeFeedPreviewRichTextStyle: React.CSSProperties = {
   lineHeight: homeFeedPreviewLineHeight
+};
+const previewUsernameContainerStyle: React.CSSProperties = {
+  maxWidth: '55%',
+  minWidth: 0
+};
+const previewUsernameTextStyle: React.CSSProperties = {
+  fontWeight: 900
 };
 const lockedSubjectSecretPreviewLabel =
   'Submit your response to view the secret message';
@@ -1219,7 +1227,16 @@ export function HomeFeedCommentPreview({
               </span>
               <span className="home-feed-card__comment-preview-ai-energy-copy">
                 <span className="home-feed-card__comment-preview-ai-energy-meta">
-                  <b>{uploader.username || aiEnergyPlaceholderName}</b>
+                  {uploader.username ? (
+                    <UsernameText
+                      color={accentColor}
+                      style={{ minWidth: 0 }}
+                      textStyle={previewUsernameTextStyle}
+                      user={uploader}
+                    />
+                  ) : (
+                    <b>{aiEnergyPlaceholderName}</b>
+                  )}
                   {previewLabel ? <span>{previewLabel}</span> : null}
                 </span>
                 <span className="home-feed-card__comment-preview-ai-energy-title">
@@ -1230,7 +1247,16 @@ export function HomeFeedCommentPreview({
           ) : (
             <>
               <span className="home-feed-card__comment-preview-meta">
-                <b>{uploader.username || 'Someone'}</b>
+                {uploader.username ? (
+                  <UsernameText
+                    color={accentColor}
+                    style={previewUsernameContainerStyle}
+                    textStyle={previewUsernameTextStyle}
+                    user={uploader}
+                  />
+                ) : (
+                  <b>Someone</b>
+                )}
                 {previewLabel ? <span>{previewLabel}</span> : null}
               </span>
               <span
@@ -1497,9 +1523,12 @@ function isRenderableHomeFeedPreviewComment(comment: Comment | undefined) {
 function getPreviewCommentUploader(comment: Comment) {
   const uploader = comment.uploader || {};
   return {
-    id: Number(uploader.id || (comment as any).userId || 0),
+    id: Number(
+      uploader.id || (comment as any).userId || (comment as any).uploaderId || 0
+    ),
     profilePicUrl: uploader.profilePicUrl || (comment as any).profilePicUrl,
     profileTheme: uploader.profileTheme || (comment as any).profileTheme,
+    realName: uploader.realName || (comment as any).realName,
     username: uploader.username || (comment as any).username || ''
   };
 }

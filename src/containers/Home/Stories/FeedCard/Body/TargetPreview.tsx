@@ -22,7 +22,10 @@ import {
   getAIStoryImageUrl,
   getReadableAIStoryPreview
 } from './PreviewPrimitives';
-import { getHomeFeedContentPath } from '../helpers/navigation';
+import {
+  getHomeFeedContentPath,
+  shouldSkipFeedCardNavigation
+} from '../helpers/navigation';
 import {
   getMarkdownImageEmbedPreview,
   removeMarkdownImageEmbeds
@@ -286,6 +289,15 @@ export default function TargetPreview({
     event: React.MouseEvent<HTMLDivElement>,
     targetPath: string
   ) {
+    if (
+      shouldSkipFeedCardNavigation({
+        currentTarget: event.currentTarget,
+        defaultPrevented: event.defaultPrevented,
+        target: event.target
+      })
+    ) {
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     onNavigate(targetPath, event.currentTarget);
@@ -296,6 +308,15 @@ export default function TargetPreview({
     targetPath: string
   ) {
     if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (
+      shouldSkipFeedCardNavigation({
+        currentTarget: event.currentTarget,
+        defaultPrevented: event.defaultPrevented,
+        target: event.target
+      })
+    ) {
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     onNavigate(targetPath, event.currentTarget);

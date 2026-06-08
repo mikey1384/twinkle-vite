@@ -51,6 +51,7 @@ const nestedInteractiveSelector = [
   '[role="textbox"]',
   '[contenteditable="true"]',
   '[data-feed-card-interactive="true"]',
+  '.compact-comment-embed__username',
   '[tabindex]:not([tabindex="-1"])'
 ].join(',');
 

@@ -195,6 +195,13 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview > * {
     pointer-events: none;
   }
+  .home-feed-card__target-preview .home-feed-card__target-comment-preview,
+  .home-feed-card__target-preview .compact-comment-embed__copy,
+  .home-feed-card__target-preview .compact-comment-embed__meta,
+  .home-feed-card__target-preview .compact-comment-embed__username,
+  .home-feed-card__target-preview .compact-comment-embed__username * {
+    pointer-events: auto;
+  }
   @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
     &.home-feed-card__body--tablet-media-attachment
       .home-feed-card__panel-preview--size-media-attachment-with-text {

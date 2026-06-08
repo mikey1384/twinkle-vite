@@ -133,11 +133,9 @@ export default function CompactCommentEmbedPreview({
           {showTypeLabel ? <span>Comment</span> : null}
           {uploader.username ? (
             <UsernameText
+              className="compact-comment-embed__username"
               textStyle={isTargetRoot ? targetRootUsernameTextStyle : undefined}
-              user={{
-                id: uploader.id,
-                username: uploader.username
-              }}
+              user={uploader}
             />
           ) : (
             <strong>Unknown user</strong>
@@ -421,8 +419,10 @@ function MarkdownImagePreview({ alt, src }: { alt: string; src: string }) {
 function getCommentUploader(comment: any) {
   const uploader = comment?.uploader || {};
   return {
-    id: Number(uploader.id || comment?.userId || 0),
+    id: Number(uploader.id || comment?.userId || comment?.uploaderId || 0),
     profilePicUrl: uploader.profilePicUrl || comment?.profilePicUrl || '',
+    profileTheme: uploader.profileTheme || comment?.profileTheme || '',
+    realName: uploader.realName || comment?.realName || '',
     username: uploader.username || comment?.username || ''
   };
 }

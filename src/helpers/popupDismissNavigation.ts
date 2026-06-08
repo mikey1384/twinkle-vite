@@ -1,4 +1,5 @@
 const POPUP_DISMISS_NAVIGATION_SUPPRESSION_MS = 1200;
+const POPUP_DISMISS_NAVIGATION_FOLLOW_UP_CLICK_MS = 500;
 const POPUP_DISMISS_NAVIGATION_FEED_CARD_TARGET_SELECTOR =
   '[data-popup-dismiss-navigation-target="feed-card"]';
 
@@ -62,8 +63,26 @@ export function consumePopupDismissNavigationSuppression(
     return false;
   }
 
-  clearPopupDismissNavigationSuppression();
+  if (suppressionHasActiveEndListeners()) {
+    queueSuppressionClear(
+      suppressionSequence,
+      isSuppressionEndEvent(event)
+        ? POPUP_DISMISS_NAVIGATION_FOLLOW_UP_CLICK_MS
+        : 0
+    );
+  } else {
+    clearPopupDismissNavigationSuppression();
+  }
   return true;
+}
+
+export function shouldSuppressPopupDismissNavigation(
+  event: PointerLikeEvent | null | undefined
+) {
+  return (
+    consumePopupDismissNavigationSuppression(event) ||
+    hasOpenPopupDismissNavigationMenu()
+  );
 }
 
 function clearPopupDismissNavigationSuppression() {
@@ -71,6 +90,11 @@ function clearPopupDismissNavigationSuppression() {
   removeSuppressionEndListeners = null;
   suppressedAt = 0;
   suppressedPointerId = null;
+}
+
+function hasOpenPopupDismissNavigationMenu() {
+  if (typeof document === 'undefined') return false;
+  return Boolean(document.querySelector('[data-portal="user-popup"]'));
 }
 
 function suppressionHasActiveEndListeners() {
@@ -91,7 +115,10 @@ function addSuppressionEndListeners(sourceEvent: Event, sequence: number) {
     ) {
       return;
     }
-    queueSuppressionClear(sequence);
+    queueSuppressionClear(
+      sequence,
+      POPUP_DISMISS_NAVIGATION_FOLLOW_UP_CLICK_MS
+    );
   }
 
   for (const eventName of eventNames) {
@@ -111,10 +138,19 @@ function getSuppressionEndEventNames(sourceEvent: Event) {
   return [];
 }
 
-function queueSuppressionClear(sequence: number) {
+function isSuppressionEndEvent(event: PointerLikeEvent | null | undefined) {
+  const eventType = (event as Event | undefined)?.type;
+  return (
+    eventType === 'mouseup' ||
+    eventType === 'pointerup' ||
+    eventType === 'touchend'
+  );
+}
+
+function queueSuppressionClear(sequence: number, delay = 0) {
   if (typeof window === 'undefined') return;
   window.setTimeout(() => {
     if (suppressionSequence !== sequence) return;
     clearPopupDismissNavigationSuppression();
-  }, 0);
+  }, delay);
 }

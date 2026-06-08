@@ -41,7 +41,8 @@ import {
 } from './helpers/navigation';
 import {
   consumePopupDismissNavigationSuppression,
-  popupDismissNavigationFeedCardTargetProps
+  popupDismissNavigationFeedCardTargetProps,
+  shouldSuppressPopupDismissNavigation
 } from '~/helpers/popupDismissNavigation';
 import { getFeedCardSizing, type FeedCardSizing } from './helpers/sizing';
 import {
@@ -690,6 +691,7 @@ export default function HomeFeedCard({
   );
 
   function handleCardClick(event: React.MouseEvent<HTMLElement>) {
+    if (shouldSuppressPopupDismissNavigation(event.nativeEvent)) return;
     if (
       shouldSkipFeedCardNavigation({
         currentTarget: event.currentTarget,
@@ -706,6 +708,7 @@ export default function HomeFeedCard({
   function handleOpenButtonClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
+    if (shouldSuppressPopupDismissNavigation(event.nativeEvent)) return;
     navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
@@ -787,6 +790,7 @@ export default function HomeFeedCard({
   ) {
     event.preventDefault();
     event.stopPropagation();
+    if (shouldSuppressPopupDismissNavigation(event.nativeEvent)) return;
     if (signInRequired) {
       onOpenSigninModal();
       return;
@@ -835,6 +839,7 @@ export default function HomeFeedCard({
   ) {
     event.preventDefault();
     event.stopPropagation();
+    if (shouldSuppressPopupDismissNavigation(event.nativeEvent)) return;
     if (signInRequired) {
       onOpenSigninModal();
       return;
@@ -891,6 +896,7 @@ export default function HomeFeedCard({
     path: string,
     sourceElement: HTMLElement | null
   ) {
+    if (shouldSuppressPopupDismissNavigation(null)) return;
     saveScrollAnchorForElement(sourceElement, homeFeedAnchorKey);
     navigate(path);
   }
@@ -1075,11 +1081,16 @@ function mergePreviewTargetSecretState(
 function mergeCommentTargetObj(previewTargetObj: any, loadedTargetObj: any) {
   const previewComment = previewTargetObj?.comment;
   const loadedComment = loadedTargetObj?.comment;
+  const mergedUploader = mergeCommentTargetUploader({
+    loadedComment,
+    previewComment
+  });
   const mergedComment =
     previewComment || loadedComment
       ? {
           ...(previewComment || {}),
-          ...(loadedComment || {})
+          ...(loadedComment || {}),
+          ...(mergedUploader ? { uploader: mergedUploader } : {})
         }
       : undefined;
 
@@ -1092,6 +1103,71 @@ function mergeCommentTargetObj(previewTargetObj: any, loadedTargetObj: any) {
       'comment',
     ...(mergedComment ? { comment: mergedComment } : {})
   };
+}
+
+function mergeCommentTargetUploader({
+  loadedComment,
+  previewComment
+}: {
+  loadedComment: any;
+  previewComment: any;
+}) {
+  const previewUploader = previewComment?.uploader || {};
+  const loadedUploader = loadedComment?.uploader || {};
+  const id = Number(
+    loadedUploader.id ||
+      loadedComment?.userId ||
+      loadedComment?.uploaderId ||
+      previewUploader.id ||
+      previewComment?.userId ||
+      previewComment?.uploaderId ||
+      0
+  );
+  const username =
+    getFirstPresentCommentUploaderField([
+      [loadedUploader, 'username'],
+      [loadedComment, 'username'],
+      [previewUploader, 'username'],
+      [previewComment, 'username']
+    ]) || '';
+
+  if (!id && !username) return null;
+
+  return {
+    ...previewUploader,
+    ...loadedUploader,
+    id,
+    profilePicUrl: getFirstPresentCommentUploaderField([
+      [loadedUploader, 'profilePicUrl'],
+      [loadedComment, 'profilePicUrl'],
+      [previewUploader, 'profilePicUrl'],
+      [previewComment, 'profilePicUrl']
+    ]),
+    profileTheme: getFirstPresentCommentUploaderField([
+      [loadedUploader, 'profileTheme'],
+      [loadedComment, 'profileTheme'],
+      [previewUploader, 'profileTheme'],
+      [previewComment, 'profileTheme']
+    ]),
+    realName: getFirstPresentCommentUploaderField([
+      [loadedUploader, 'realName'],
+      [loadedComment, 'realName'],
+      [previewUploader, 'realName'],
+      [previewComment, 'realName']
+    ]),
+    username
+  };
+}
+
+function getFirstPresentCommentUploaderField(
+  candidates: Array<[Record<string, any> | null | undefined, string]>
+) {
+  for (const [source, field] of candidates) {
+    if (source && Object.prototype.hasOwnProperty.call(source, field)) {
+      return source[field];
+    }
+  }
+  return undefined;
 }
 
 function isProfileCommentTargetObj(targetObj: any) {
