@@ -164,6 +164,7 @@ registerMethods('build', [
   'searchBuildAiCards',
   'getBuildAiCard',
   'listBuildAiStories',
+  'listBuildAiStoryChapters',
   'searchBuildAiStories',
   'getBuildAiStory',
   'listBuildGrammarblesQuestions',

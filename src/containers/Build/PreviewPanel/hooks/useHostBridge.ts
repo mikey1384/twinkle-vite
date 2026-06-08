@@ -1216,14 +1216,38 @@ export function useHostBridge({
               buildId: activeBuild.id,
               limit: payload?.limit,
               cursor: payload?.cursor,
+              order: payload?.order,
               difficulty: payload?.difficulty,
               type: payload?.type,
+              topicKey: payload?.topicKey,
               isListening: payload?.isListening,
               userId: payload?.userId,
               hasImage: payload?.hasImage,
               hasQuestions: payload?.hasQuestions,
               token: contentAiStoriesToken
             });
+            break;
+          }
+
+          case 'content:ai-stories:chapters': {
+            const contentAiStoriesToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response =
+              await requestRefs.listBuildAiStoryChaptersRef.current({
+                buildId: activeBuild.id,
+                limit: payload?.limit,
+                cursor: payload?.cursor,
+                difficulty: payload?.difficulty,
+                type: payload?.type,
+                topicKey: payload?.topicKey,
+                isListening: payload?.isListening,
+                userId: payload?.userId,
+                hasImage: payload?.hasImage,
+                hasQuestions: payload?.hasQuestions,
+                token: contentAiStoriesToken
+              });
             break;
           }
 
@@ -1237,8 +1261,10 @@ export function useHostBridge({
               query: payload?.query,
               limit: payload?.limit,
               cursor: payload?.cursor,
+              order: payload?.order,
               difficulty: payload?.difficulty,
               type: payload?.type,
+              topicKey: payload?.topicKey,
               isListening: payload?.isListening,
               userId: payload?.userId,
               hasImage: payload?.hasImage,

@@ -22,6 +22,7 @@ export interface PreviewHostBridgeRequestRefs {
   searchBuildAiCardsRef: AsyncRequestRef;
   getBuildAiCardRef: AsyncRequestRef;
   listBuildAiStoriesRef: AsyncRequestRef;
+  listBuildAiStoryChaptersRef: AsyncRequestRef;
   searchBuildAiStoriesRef: AsyncRequestRef;
   getBuildAiStoryRef: AsyncRequestRef;
   listBuildGrammarblesQuestionsRef: AsyncRequestRef;

@@ -80,6 +80,9 @@ export default function useAppRequests() {
   const listBuildAiStories = useAppContext(
     (v) => v.requestHelpers.listBuildAiStories
   );
+  const listBuildAiStoryChapters = useAppContext(
+    (v) => v.requestHelpers.listBuildAiStoryChapters
+  );
   const searchBuildAiStories = useAppContext(
     (v) => v.requestHelpers.searchBuildAiStories
   );
@@ -239,6 +242,7 @@ export default function useAppRequests() {
   const searchBuildAiCardsRef = useRef(searchBuildAiCards);
   const getBuildAiCardRef = useRef(getBuildAiCard);
   const listBuildAiStoriesRef = useRef(listBuildAiStories);
+  const listBuildAiStoryChaptersRef = useRef(listBuildAiStoryChapters);
   const searchBuildAiStoriesRef = useRef(searchBuildAiStories);
   const getBuildAiStoryRef = useRef(getBuildAiStory);
   const listBuildGrammarblesQuestionsRef = useRef(
@@ -324,6 +328,7 @@ export default function useAppRequests() {
     searchBuildAiCardsRef,
     getBuildAiCardRef,
     listBuildAiStoriesRef,
+    listBuildAiStoryChaptersRef,
     searchBuildAiStoriesRef,
     getBuildAiStoryRef,
     listBuildGrammarblesQuestionsRef,

@@ -2713,8 +2713,10 @@ export default function buildRequestHelpers({
       buildId,
       limit,
       cursor,
+      order,
       difficulty,
       type,
+      topicKey,
       isListening,
       userId,
       hasImage,
@@ -2723,9 +2725,11 @@ export default function buildRequestHelpers({
     }: {
       buildId: number;
       limit?: number;
-      cursor?: { id?: number };
+      cursor?: { id?: number; timeStamp?: number };
+      order?: 'newest' | 'oldest';
       difficulty?: number | null;
       type?: string | null;
+      topicKey?: string | null;
       isListening?: boolean | null;
       userId?: number | null;
       hasImage?: boolean | null;
@@ -2738,8 +2742,63 @@ export default function buildRequestHelpers({
           {
             limit,
             cursor,
+            order,
             difficulty,
             type,
+            topicKey,
+            isListening,
+            userId,
+            hasImage,
+            hasQuestions
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildAiStoryChapters({
+      buildId,
+      limit,
+      cursor,
+      difficulty,
+      type,
+      topicKey,
+      isListening,
+      userId,
+      hasImage,
+      hasQuestions,
+      token
+    }: {
+      buildId: number;
+      limit?: number;
+      cursor?: { type?: string; topicKey?: string };
+      difficulty?: number | null;
+      type?: string | null;
+      topicKey?: string | null;
+      isListening?: boolean | null;
+      userId?: number | null;
+      hasImage?: boolean | null;
+      hasQuestions?: boolean | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/ai-stories/chapters`,
+          {
+            limit,
+            cursor,
+            difficulty,
+            type,
+            topicKey,
             isListening,
             userId,
             hasImage,
@@ -2764,8 +2823,10 @@ export default function buildRequestHelpers({
       query,
       limit,
       cursor,
+      order,
       difficulty,
       type,
+      topicKey,
       isListening,
       userId,
       hasImage,
@@ -2775,9 +2836,11 @@ export default function buildRequestHelpers({
       buildId: number;
       query: string;
       limit?: number;
-      cursor?: { id?: number };
+      cursor?: { id?: number; timeStamp?: number };
+      order?: 'newest' | 'oldest';
       difficulty?: number | null;
       type?: string | null;
+      topicKey?: string | null;
       isListening?: boolean | null;
       userId?: number | null;
       hasImage?: boolean | null;
@@ -2791,8 +2854,10 @@ export default function buildRequestHelpers({
             query,
             limit,
             cursor,
+            order,
             difficulty,
             type,
+            topicKey,
             isListening,
             userId,
             hasImage,
