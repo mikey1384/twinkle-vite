@@ -330,11 +330,60 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
-        await request.delete(
+        const { data } = await request.delete(
           `${URL}/chat/topic?topicId=${topicId}&channelId=${channelId}`,
           auth()
         );
-        return;
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadDeletedTopics({ channelId }: { channelId: number }) {
+      try {
+        const {
+          data: { topics }
+        } = await request.get(
+          `${URL}/chat/topic/deleted?channelId=${channelId}`,
+          auth()
+        );
+        return topics;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async restoreDeletedTopic({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/topic/restore`,
+          { channelId, topicId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async permanentlyDeleteTopic({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/topic/permanentlyDelete`,
+          { channelId, topicId },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1061,7 +1110,8 @@ export default function chatRequestHelpers({
       invitationSourceChannelId,
       invitationMessageId,
       subchannelPath,
-      skipUpdateChannelId
+      skipUpdateChannelId,
+      fromWriter
     }: {
       channelId: number;
       isForInvitation?: boolean;
@@ -1069,6 +1119,7 @@ export default function chatRequestHelpers({
       invitationMessageId?: number;
       subchannelPath?: string;
       skipUpdateChannelId?: boolean;
+      fromWriter?: boolean;
     }) {
       try {
         const { data } = await request.get(
@@ -1084,7 +1135,7 @@ export default function chatRequestHelpers({
             isForInvitation && invitationMessageId
               ? `&invitationMessageId=${invitationMessageId}`
               : ''
-          }`,
+          }${fromWriter ? '&fromWriter=1' : ''}`,
           {
             ...auth(),
             meta: {

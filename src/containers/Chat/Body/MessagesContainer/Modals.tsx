@@ -211,7 +211,7 @@ export default function Modals({
           currentChannel={currentChannel}
           selectedChannelId={selectedChannelId}
           onDone={onInviteUsersDone}
-          isOwner={currentChannel.creatorId === userId}
+          isOwner={Number(currentChannel.creatorId) === Number(userId)}
         />
       )}
       {buyTopicModalShown && (
@@ -227,7 +227,9 @@ export default function Modals({
           channelId={selectedChannelId}
           onPurchaseSubject={onPurchaseSubject}
           onScrollToBottom={onScrollToBottom}
-          userIsChannelOwner={currentChannel.creatorId === userId}
+          userIsChannelOwner={
+            Number(currentChannel.creatorId) === Number(userId)
+          }
         />
       )}
       {settingsModalShown && (
@@ -250,7 +252,9 @@ export default function Modals({
           theme={currentChannel.theme}
           thumbPath={currentChannel.thumbPath}
           unlockedThemes={currentChannel.unlockedThemes}
-          userIsChannelOwner={currentChannel.creatorId === userId}
+          userIsChannelOwner={
+            Number(currentChannel.creatorId) === Number(userId)
+          }
         />
       )}
       {leaveConfirmModalShown && (

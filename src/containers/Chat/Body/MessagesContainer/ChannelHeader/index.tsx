@@ -14,7 +14,6 @@ import LocalContext from '../../../Context';
 const deviceIsMobile = isMobile(navigator);
 const addToFavoritesLabel = 'Add to favorites';
 const changeTopicLabel = 'Change Topic';
-const editGroupNameLabel = 'Edit Group Name';
 const invitePeopleLabel = 'Invite People';
 const leaveLabel = 'Leave';
 const menuLabel = deviceIsMobile ? '' : 'Menu';
@@ -88,6 +87,7 @@ export default function ChannelHeader({
       return true;
     }
     if (subchannel) {
+      // Modern topics are channel-level only; subchannels use legacyTopicObj.
       if (subchannel?.legacyTopicObj) {
         return subchannel?.canChangeSubject;
       }
@@ -182,7 +182,7 @@ export default function ChannelHeader({
     if (selectedChannelId !== GENERAL_CHAT_ID) {
       if (
         !currentChannel.isClosed ||
-        currentChannel.creatorId === userId ||
+        Number(currentChannel.creatorId) === Number(userId) ||
         currentChannel.isPublic
       ) {
         result.push({
@@ -196,18 +196,12 @@ export default function ChannelHeader({
         });
       }
       result.push({
-        label:
-          currentChannel.creatorId === userId ? (
-            <>
-              <Icon icon="sliders-h" />
-              <span style={{ marginLeft: '1rem' }}>{settingsLabel}</span>
-            </>
-          ) : (
-            <>
-              <Icon icon="pencil-alt" />
-              <span style={{ marginLeft: '1rem' }}>{editGroupNameLabel}</span>
-            </>
-          ),
+        label: (
+          <>
+            <Icon icon="sliders-h" />
+            <span style={{ marginLeft: '1rem' }}>{settingsLabel}</span>
+          </>
+        ),
         onClick: () => onSetSettingsModalShown(true)
       });
       result.push({

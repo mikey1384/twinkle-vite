@@ -558,11 +558,24 @@ function MarkdownImagePreview({
   const [src, setSrc] = useState(imageEmbed.src);
   const [failed, setFailed] = useState(false);
   const fileName = getFileNameFromEmbedSrc(imageEmbed.src);
+  const { extension, fileType } = getFileInfoFromFileName(fileName);
 
   useEffect(() => {
     setSrc(imageEmbed.src);
     setFailed(false);
   }, [imageEmbed.src]);
+
+  if (fileType && fileType !== 'image') {
+    return (
+      <div className={className}>
+        <AttachmentCard
+          extension={extension}
+          fileName={imageEmbed.alt || fileName}
+          fileType={fileType}
+        />
+      </div>
+    );
+  }
 
   if (failed) {
     return (

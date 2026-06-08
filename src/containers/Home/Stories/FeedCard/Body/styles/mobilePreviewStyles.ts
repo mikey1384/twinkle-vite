@@ -1,4 +1,4 @@
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export const mobilePreviewStyles = `
   @media (max-width: ${mobileMaxWidth}) {
@@ -171,6 +171,10 @@ export const mobilePreviewStyles = `
       border-right: 0;
       border-radius: 0;
     }
+    .home-feed-card__target-preview--type-video {
+      border: 1px solid ${Color.borderGray()};
+      border-radius: ${borderRadius};
+    }
     .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress {
       display: grid;
       grid-template-columns: minmax(0, 1fr) max-content;
@@ -252,6 +256,9 @@ export const mobilePreviewStyles = `
         grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 34%);
         gap: 0.7rem;
         padding: 0.85rem 1rem;
+      }
+      .home-feed-card__target-video.has-media {
+        grid-template-columns: minmax(18rem, 50%) minmax(0, 1fr);
       }
       .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject {
         align-self: center;

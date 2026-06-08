@@ -5,10 +5,12 @@ import moment from 'moment';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
 import TopicSettingsModal from '../TopicSettingsModal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useNavigate } from 'react-router-dom';
 
 function TopicItem({
   channelId,
@@ -19,11 +21,11 @@ function TopicItem({
   onSelectTopic,
   id,
   isFeatured,
-  isTwoPeopleChat,
+  isTwoPeopleChat = false,
   isAIChannel,
   isOwner,
-  onEditTopic,
-  onDeleteTopic,
+  onEditTopic = () => {},
+  onDeleteTopic = () => {},
   pinnedTopicIds,
   content,
   userId,
@@ -41,10 +43,10 @@ function TopicItem({
   onSelectTopic: (id: number) => void;
   id: number;
   isFeatured: boolean;
-  isTwoPeopleChat: boolean;
+  isTwoPeopleChat?: boolean;
   isAIChannel: boolean;
   isOwner: boolean;
-  onEditTopic: ({
+  onEditTopic?: ({
     topicText,
     isOwnerPostingOnly,
     customInstructions,
@@ -55,7 +57,7 @@ function TopicItem({
     customInstructions?: string;
     isSharedWithOtherUsers?: boolean;
   }) => void;
-  onDeleteTopic: (id: number) => void;
+  onDeleteTopic?: (id: number) => void;
   pinnedTopicIds: number[];
   content: string;
   userId: number;
@@ -69,17 +71,27 @@ function TopicItem({
   style?: React.CSSProperties;
   pathId: string;
 }) {
+  const navigate = useNavigate();
   const myId = useKeyContext((v) => v.myState.userId);
   const updateFeaturedTopic = useAppContext(
     (v) => v.requestHelpers.updateFeaturedTopic
+  );
+  const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
+  const loadChatChannel = useAppContext(
+    (v) => v.requestHelpers.loadChatChannel
   );
   const isOwnerPostingOnly = settings?.isOwnerPostingOnly || false;
   const customInstructions = settings?.customInstructions || '';
   const isSharedWithOtherUsers = settings?.isSharedWithOtherUsers || false;
   const pinChatTopic = useAppContext((v) => v.requestHelpers.pinChatTopic);
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
+  const onEnterChannelWithId = useChatContext(
+    (v) => v.actions.onEnterChannelWithId
+  );
   const onPinTopic = useChatContext((v) => v.actions.onPinTopic);
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
+  const [deleteConfirmShown, setDeleteConfirmShown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
@@ -100,10 +112,18 @@ function TopicItem({
     if (isBasicallyOwner) {
       return true;
     }
-    if (isTwoPeopleChat && userId === myId) {
+    if (isTwoPeopleChat && Number(userId) === Number(myId)) {
       return true;
     }
   }, [isBasicallyOwner, isTwoPeopleChat, myId, userId]);
+
+  const canDeleteHumanTopic = useMemo(() => {
+    return !isAIChannel && (isOwner || Number(userId) === Number(myId));
+  }, [isAIChannel, isOwner, myId, userId]);
+
+  const directDeleteButtonShown = useMemo(() => {
+    return canDeleteHumanTopic && !canEditTopic;
+  }, [canDeleteHumanTopic, canEditTopic]);
 
   const isPinned = useMemo(
     () => (pinnedTopicIds || []).includes(id),
@@ -206,6 +226,20 @@ function TopicItem({
           {isFeatured ? <span>Featured</span> : <Icon icon="star" />}
         </Button>
       )}
+      {directDeleteButtonShown && (
+        <Button
+          color="red"
+          style={{
+            maxHeight: '3.5rem',
+            marginLeft: '0.5rem'
+          }}
+          variant="soft"
+          onClick={() => setDeleteConfirmShown(true)}
+          disabled={selectButtonDisabled}
+        >
+          <Icon icon="trash-alt" />
+        </Button>
+      )}
       {currentTopicId !== id && (
         <Button
           color="green"
@@ -231,9 +265,21 @@ function TopicItem({
           onHide={() => setIsEditing(false)}
           topicText={content}
           onEditTopic={onEditTopic}
+          canDeleteTopic={canDeleteHumanTopic}
+          currentTopicId={currentTopicId}
           onDeleteTopic={() => onDeleteTopic(id)}
           isSharedWithOtherUsers={isSharedWithOtherUsers}
           pathId={pathId}
+        />
+      )}
+      {deleteConfirmShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setDeleteConfirmShown(false)}
+          title="Delete Topic"
+          descriptionFontSize="1.7rem"
+          description="Remove this topic?"
+          onConfirm={handleDeleteTopic}
         />
       )}
     </div>
@@ -263,6 +309,43 @@ function TopicItem({
   function handleSelectTopic() {
     setSelectButtonDisabled(true);
     onSelectTopic(id);
+  }
+
+  async function handleDeleteTopic() {
+    try {
+      setSelectButtonDisabled(true);
+      await deleteTopic({ topicId: id, channelId });
+      const data = await loadChatChannel({ channelId, fromWriter: true });
+      onEnterChannelWithId(data);
+      const canonicalChannel = data?.channel || {};
+      const deletedTopicIsActive = Number(currentTopicId) === Number(id);
+      onSetChannelState({
+        channelId,
+        newState: {
+          featuredTopicId: canonicalChannel.featuredTopicId || null,
+          lastTopicId: canonicalChannel.lastTopicId || null,
+          pinnedTopicIds: canonicalChannel.pinnedTopicIds || [],
+          topicObj: canonicalChannel.topicObj || {},
+          ...(deletedTopicIsActive
+            ? {
+                selectedTab: 'all',
+                selectedTopicId: null,
+                topicHistory: [],
+                currentTopicIndex: -1
+              }
+            : {})
+        }
+      });
+      if (deletedTopicIsActive) {
+        navigate(`/chat/${pathId}`);
+      }
+      onDeleteTopic(id);
+      setDeleteConfirmShown(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSelectButtonDisabled(false);
+    }
   }
 }
 

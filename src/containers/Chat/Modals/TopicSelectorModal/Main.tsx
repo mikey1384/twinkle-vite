@@ -10,6 +10,14 @@ import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { Content } from '~/types';
 
+function isRenderableTopic(topic: any) {
+  return (
+    Number(topic?.id || 0) > 0 &&
+    typeof topic?.content === 'string' &&
+    topic.content.trim().length > 0
+  );
+}
+
 export default function Main({
   allTopicObj,
   canAddTopic,
@@ -123,6 +131,22 @@ export default function Main({
     () => (pinnedTopicIds || []).filter((id) => !!subjectObj[id]),
     [pinnedTopicIds, subjectObj]
   );
+  const activeCurrentTopic = useMemo(() => {
+    if (!currentTopic?.id) return null;
+    const loadedTopic = subjectObj[currentTopic.id];
+    if (isRenderableTopic(loadedTopic)) return loadedTopic;
+    if (isRenderableTopic(currentTopic)) return currentTopic;
+    return null;
+  }, [currentTopic, subjectObj]);
+  const activeFeaturedTopic = useMemo(() => {
+    if (!featuredTopic?.id) return null;
+    const loadedTopic = subjectObj[featuredTopic.id];
+    if (isRenderableTopic(loadedTopic)) return loadedTopic;
+    if (isRenderableTopic(featuredTopic)) return featuredTopic;
+    return null;
+  }, [featuredTopic, subjectObj]);
+  const activeCurrentTopicId = Number(activeCurrentTopic?.id || 0);
+  const activeFeaturedTopicId = Number(activeFeaturedTopic?.id || 0);
 
   return (
     <div style={{ width: '100%', paddingBottom: '1rem' }}>
@@ -130,94 +154,102 @@ export default function Main({
       <div style={{ width: '100%', marginTop: '3rem' }}>
         {!isTwoPeopleChat && (
           <>
-            <h3
-              style={{
-                color: Color[displayedThemeColor](),
-                marginBottom: '1rem'
-              }}
-            >
-              Current Topic
-            </h3>
-            <TopicItem
-              key="current"
-              channelId={channelId}
-              hideCurrentLabel
-              isFeatured={featuredTopic?.id === currentTopic?.id}
-              isOwner={isOwner}
-              isTwoPeopleChat={isTwoPeopleChat}
-              isAIChannel={isAIChannel}
-              currentTopicId={currentTopic?.id}
-              displayedThemeColor={displayedThemeColor}
-              onSelectTopic={onSelectTopic}
-              pinnedTopicIds={effectivePinnedTopicIds}
-              pathId={pathId}
-              {...((subjectObj[currentTopic?.id] || currentTopic) as any)}
-              onEditTopic={({
-                topicText,
-                isOwnerPostingOnly,
-                customInstructions,
-                isSharedWithOtherUsers
-              }: {
-                topicText: string;
-                isOwnerPostingOnly: boolean;
-                customInstructions?: string;
-                isSharedWithOtherUsers?: boolean;
-              }) =>
-                handleEditTopic({
-                  topicText,
-                  isOwnerPostingOnly,
-                  topicId: currentTopic.id,
-                  customInstructions,
-                  isSharedWithOtherUsers
-                })
-              }
-              onDeleteTopic={onDeleteTopic}
-            />
-            <h3
-              style={{
-                color: Color[displayedThemeColor](),
-                marginTop: '3rem',
-                marginBottom: '1rem'
-              }}
-            >
-              Featured Topic
-            </h3>
-            <TopicItem
-              key="featured"
-              channelId={channelId}
-              hideCurrentLabel
-              hideFeatureButton
-              isFeatured
-              isOwner={isOwner}
-              isTwoPeopleChat={isTwoPeopleChat}
-              isAIChannel={isAIChannel}
-              currentTopicId={currentTopic.id}
-              displayedThemeColor={displayedThemeColor}
-              onSelectTopic={onSelectTopic}
-              pinnedTopicIds={effectivePinnedTopicIds}
-              pathId={pathId}
-              {...((subjectObj[featuredTopic?.id] || featuredTopic) as any)}
-              onEditTopic={({
-                topicText,
-                isOwnerPostingOnly,
-                customInstructions,
-                isSharedWithOtherUsers
-              }: {
-                topicText: string;
-                isOwnerPostingOnly: boolean;
-                customInstructions?: string;
-                isSharedWithOtherUsers?: boolean;
-              }) =>
-                handleEditTopic({
-                  topicText,
-                  isOwnerPostingOnly,
-                  topicId: featuredTopic?.id,
-                  customInstructions,
-                  isSharedWithOtherUsers
-                })
-              }
-              onDeleteTopic={onDeleteTopic}
-            />
+            {activeCurrentTopic && activeCurrentTopicId > 0 && (
+              <>
+                <h3
+                  style={{
+                    color: Color[displayedThemeColor](),
+                    marginBottom: '1rem'
+                  }}
+                >
+                  Current Topic
+                </h3>
+                <TopicItem
+                  key="current"
+                  channelId={channelId}
+                  hideCurrentLabel
+                  isFeatured={activeFeaturedTopicId === activeCurrentTopicId}
+                  isOwner={isOwner}
+                  isTwoPeopleChat={isTwoPeopleChat}
+                  isAIChannel={isAIChannel}
+                  currentTopicId={activeCurrentTopicId}
+                  displayedThemeColor={displayedThemeColor}
+                  onSelectTopic={onSelectTopic}
+                  pinnedTopicIds={effectivePinnedTopicIds}
+                  pathId={pathId}
+                  {...(activeCurrentTopic as any)}
+                  onEditTopic={({
+                    topicText,
+                    isOwnerPostingOnly,
+                    customInstructions,
+                    isSharedWithOtherUsers
+                  }: {
+                    topicText: string;
+                    isOwnerPostingOnly: boolean;
+                    customInstructions?: string;
+                    isSharedWithOtherUsers?: boolean;
+                  }) =>
+                    handleEditTopic({
+                      topicText,
+                      isOwnerPostingOnly,
+                      topicId: activeCurrentTopicId,
+                      customInstructions,
+                      isSharedWithOtherUsers
+                    })
+                  }
+                  onDeleteTopic={onDeleteTopic}
+                />
+              </>
+            )}
+            {activeFeaturedTopic && activeFeaturedTopicId > 0 && (
+              <>
+                <h3
+                  style={{
+                    color: Color[displayedThemeColor](),
+                    marginTop: '3rem',
+                    marginBottom: '1rem'
+                  }}
+                >
+                  Featured Topic
+                </h3>
+                <TopicItem
+                  key="featured"
+                  channelId={channelId}
+                  hideCurrentLabel
+                  hideFeatureButton
+                  isFeatured
+                  isOwner={isOwner}
+                  isTwoPeopleChat={isTwoPeopleChat}
+                  isAIChannel={isAIChannel}
+                  currentTopicId={activeCurrentTopicId}
+                  displayedThemeColor={displayedThemeColor}
+                  onSelectTopic={onSelectTopic}
+                  pinnedTopicIds={effectivePinnedTopicIds}
+                  pathId={pathId}
+                  {...(activeFeaturedTopic as any)}
+                  onEditTopic={({
+                    topicText,
+                    isOwnerPostingOnly,
+                    customInstructions,
+                    isSharedWithOtherUsers
+                  }: {
+                    topicText: string;
+                    isOwnerPostingOnly: boolean;
+                    customInstructions?: string;
+                    isSharedWithOtherUsers?: boolean;
+                  }) =>
+                    handleEditTopic({
+                      topicText,
+                      isOwnerPostingOnly,
+                      topicId: activeFeaturedTopicId,
+                      customInstructions,
+                      isSharedWithOtherUsers
+                    })
+                  }
+                  onDeleteTopic={onDeleteTopic}
+                />
+              </>
+            )}
           </>
         )}
         {isLoaded && !showSharedOnly && (
@@ -301,10 +333,10 @@ export default function Main({
                   key={subject.id}
                   channelId={channelId}
                   isOwner={isOwner}
-                  isFeatured={subject.id === featuredTopic?.id}
+                  isFeatured={subject.id === activeFeaturedTopicId}
                   isTwoPeopleChat={isTwoPeopleChat}
                   isAIChannel={isAIChannel}
-                  currentTopicId={currentTopic.id}
+                  currentTopicId={activeCurrentTopicId}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
                   pinnedTopicIds={effectivePinnedTopicIds}
@@ -357,11 +389,11 @@ export default function Main({
                 <TopicItem
                   key={subject.id}
                   channelId={channelId}
-                  isFeatured={subject.id === featuredTopic?.id}
+                  isFeatured={subject.id === activeFeaturedTopicId}
                   isTwoPeopleChat={isTwoPeopleChat}
                   isAIChannel={isAIChannel}
                   isOwner={isOwner}
-                  currentTopicId={currentTopic.id}
+                  currentTopicId={activeCurrentTopicId}
                   displayedThemeColor={displayedThemeColor}
                   pinnedTopicIds={effectivePinnedTopicIds}
                   onSelectTopic={onSelectTopic}

@@ -215,7 +215,7 @@ export default function LeftMenu({
             selectedTopicId={currentChannel?.selectedTopicId}
             isAIChat={isAIChat}
             isTwoPeopleChat={currentChannel?.twoPeople}
-            isOwner={currentChannel?.creatorId === userId}
+            isOwner={Number(currentChannel?.creatorId) === Number(userId)}
             isFixed={isChannelsScrolling}
             onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
             pathId={String(currentChannel?.pathId)}

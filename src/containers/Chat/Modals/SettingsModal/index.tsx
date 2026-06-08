@@ -11,6 +11,7 @@ import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
 import GroupThumbnail from './GroupThumbnail';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
+import { buildCanonicalChannelMessagesState } from '../helpers';
 import { cloudFrontURL, priceTable } from '~/constants/defaultValues';
 import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -72,9 +73,25 @@ export default function SettingsModal({
     (v) => v.actions.onEnableChatSubject
   );
   const onEnableTheme = useChatContext((v) => v.actions.onEnableTheme);
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const currentMessagesObj = useChatContext(
+    (v) => v.state.channelsObj[channelId]?.messagesObj
+  );
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
   const doneColor = useKeyContext((v) => v.theme.done.color);
+  const loadChatChannel = useAppContext(
+    (v) => v.requestHelpers.loadChatChannel
+  );
+  const loadDeletedTopics = useAppContext(
+    (v) => v.requestHelpers.loadDeletedTopics
+  );
+  const restoreDeletedTopic = useAppContext(
+    (v) => v.requestHelpers.restoreDeletedTopic
+  );
+  const permanentlyDeleteTopic = useAppContext(
+    (v) => v.requestHelpers.permanentlyDeleteTopic
+  );
   const [hovered, setHovered] = useState(false);
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
     useState(false);
@@ -99,6 +116,11 @@ export default function SettingsModal({
   const [newThumbUri, setNewThumbUri] = useState<string | null>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [deletedTopics, setDeletedTopics] = useState<any[]>([]);
+  const [deletedTopicsLoading, setDeletedTopicsLoading] = useState(false);
+  const [deletedTopicsModalShown, setDeletedTopicsModalShown] = useState(false);
+  const [topicActionLoadingId, setTopicActionLoadingId] = useState(0);
+  const [permanentDeleteTopic, setPermanentDeleteTopic] = useState<any>(null);
   const imageUrlRef = useRef<string | null>(null);
 
   const descriptionExceedsCharLimit = useMemo(
@@ -174,7 +196,7 @@ export default function SettingsModal({
       modalKey="SettingsModal"
       isOpen={true}
       onClose={onHide}
-      title={userIsChannelOwner ? 'Settings' : 'Edit Group Name'}
+      title="Settings"
       size="lg"
       closeOnBackdropClick={false}
       modalLevel={0}
@@ -507,6 +529,29 @@ export default function SettingsModal({
             </div>
           </div>
         )}
+        {userIsChannelOwner && (
+          <div
+            className={css`
+              margin-top: 2rem;
+              border-top: 1px solid ${Color.borderGray()};
+              padding-top: 1.5rem;
+              padding-bottom: 1.5rem;
+              display: flex;
+              justify-content: flex-end;
+            `}
+          >
+            <Button
+              variant="soft"
+              disabled={deletedTopicsLoading || isSubmitting}
+              loading={deletedTopicsLoading}
+              onClick={handleOpenDeletedTopics}
+              style={{ fontSize: '1.2rem' }}
+            >
+              <Icon icon="undo" />
+              <span style={{ marginLeft: '0.7rem' }}>Deleted Topics</span>
+            </Button>
+          </div>
+        )}
       </div>
       {selectNewOwnerModalShown && (
         <SelectNewOwnerModal
@@ -521,6 +566,133 @@ export default function SettingsModal({
           isClass={isClass}
           channelId={channelId}
         />
+      )}
+      {userIsChannelOwner && deletedTopicsModalShown && (
+        <Modal
+          modalKey="DeletedTopicsModal"
+          isOpen
+          onClose={() => setDeletedTopicsModalShown(false)}
+          title="Deleted Topics"
+          size="md"
+          modalLevel={1}
+          footer={
+            <Button
+              variant="ghost"
+              onClick={() => setDeletedTopicsModalShown(false)}
+            >
+              Close
+            </Button>
+          }
+        >
+          <div
+            className={css`
+              width: 100%;
+            `}
+          >
+            {deletedTopicsLoading ? (
+              <div
+                className={css`
+                  font-size: 1.1rem;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                Loading deleted topics...
+              </div>
+            ) : deletedTopics.length > 0 ? (
+              <div
+                className={css`
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.8rem;
+                `}
+              >
+                {deletedTopics.map((topic, index) => (
+                  <div
+                    key={topic.id}
+                    className={css`
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      gap: 1rem;
+                      padding: 0.9rem 0;
+                      ${index < deletedTopics.length - 1
+                        ? `border-bottom: 1px solid ${Color.borderGray()};`
+                        : ''}
+                    `}
+                  >
+                    <div
+                      className={css`
+                        min-width: 0;
+                        flex: 1;
+                      `}
+                    >
+                      <div
+                        className={css`
+                          font-size: 1.2rem;
+                          font-weight: bold;
+                          overflow-wrap: break-word;
+                        `}
+                      >
+                        {topic.content}
+                      </div>
+                      <div
+                        className={css`
+                          font-size: 1.1rem;
+                          color: ${Color.darkerGray()};
+                          margin-top: 0.2rem;
+                        `}
+                      >
+                        {topic.username}
+                      </div>
+                    </div>
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        flex-shrink: 0;
+                      `}
+                    >
+                      <Button
+                        color="green"
+                        variant="soft"
+                        disabled={
+                          isSubmitting || topicActionLoadingId === topic.id
+                        }
+                        loading={topicActionLoadingId === topic.id}
+                        onClick={() => handleRestoreTopic(topic.id)}
+                        style={{ fontSize: '1.1rem' }}
+                      >
+                        <Icon icon="undo" />
+                        <span style={{ marginLeft: '0.5rem' }}>Restore</span>
+                      </Button>
+                      <Button
+                        color="red"
+                        variant="soft"
+                        disabled={
+                          isSubmitting || topicActionLoadingId === topic.id
+                        }
+                        onClick={() => setPermanentDeleteTopic(topic)}
+                        style={{ fontSize: '1.1rem' }}
+                      >
+                        <Icon icon="trash-alt" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                className={css`
+                  font-size: 1.1rem;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                No deleted topics
+              </div>
+            )}
+          </div>
+        </Modal>
       )}
       {confirmModalShown && (
         <ConfirmModal
@@ -546,6 +718,16 @@ export default function SettingsModal({
           }
           descriptionFontSize="2rem"
           onConfirm={handlePurchaseTheme}
+        />
+      )}
+      {userIsChannelOwner && !!permanentDeleteTopic && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setPermanentDeleteTopic(null)}
+          title="Delete Topic Permanently"
+          description={`Permanently delete "${permanentDeleteTopic.content}"?`}
+          descriptionFontSize="1.7rem"
+          onConfirm={handlePermanentlyDeleteTopic}
         />
       )}
       {imageEditModalShown && (
@@ -590,6 +772,78 @@ export default function SettingsModal({
       return setSelectedTheme(color);
     }
     setThemeToPurchase(color);
+  }
+
+  async function handleOpenDeletedTopics() {
+    if (!userIsChannelOwner) return;
+    setDeletedTopicsModalShown(true);
+    await handleLoadDeletedTopics();
+  }
+
+  async function handleLoadDeletedTopics() {
+    if (!userIsChannelOwner) return;
+    try {
+      setDeletedTopicsLoading(true);
+      const topics = await loadDeletedTopics({ channelId });
+      setDeletedTopics(Array.isArray(topics) ? topics : []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDeletedTopicsLoading(false);
+    }
+  }
+
+  async function reloadCanonicalChannelTopicState() {
+    const data = await loadChatChannel({
+      channelId,
+      skipUpdateChannelId: true,
+      fromWriter: true
+    });
+    const canonicalChannel = data?.channel || {};
+    onSetChannelState({
+      channelId,
+      newState: {
+        featuredTopicId: canonicalChannel.featuredTopicId || null,
+        lastTopicId: canonicalChannel.lastTopicId || null,
+        pinnedTopicIds: canonicalChannel.pinnedTopicIds || [],
+        topicObj: canonicalChannel.topicObj || {},
+        ...(Array.isArray(data?.messages)
+          ? buildCanonicalChannelMessagesState({
+              messages: data.messages,
+              existingMessagesObj: currentMessagesObj
+            })
+          : {})
+      }
+    });
+  }
+
+  async function handleRestoreTopic(topicId: number) {
+    try {
+      setTopicActionLoadingId(topicId);
+      await restoreDeletedTopic({ channelId, topicId });
+      await reloadCanonicalChannelTopicState();
+      await handleLoadDeletedTopics();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setTopicActionLoadingId(0);
+    }
+  }
+
+  async function handlePermanentlyDeleteTopic() {
+    const topicId = Number(permanentDeleteTopic?.id || 0);
+    if (!topicId) return;
+    try {
+      setTopicActionLoadingId(topicId);
+      await permanentlyDeleteTopic({ channelId, topicId });
+      await reloadCanonicalChannelTopicState();
+      await handleLoadDeletedTopics();
+      setPermanentDeleteTopic(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setTopicActionLoadingId(0);
+    }
   }
 
   async function handlePurchaseSubject() {

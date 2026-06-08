@@ -76,7 +76,7 @@ export default function ChatFilter({
     return '';
   }, [topicId, topicObj]);
   const currentTopic = useMemo(() => {
-    return topicObj?.[topicId] || { id: topicId };
+    return topicObj?.[topicId] || {};
   }, [topicId, topicObj]);
 
   return (
@@ -89,7 +89,7 @@ export default function ChatFilter({
         `}
       >
         <ChatFilterBar
-          isOwner={creatorId === userId}
+          isOwner={Number(creatorId) === Number(userId)}
           isSearchActive={isSearchActive}
           themeColor={themeColor}
           channelId={channelId}

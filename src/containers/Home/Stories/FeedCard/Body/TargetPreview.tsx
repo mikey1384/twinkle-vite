@@ -241,12 +241,16 @@ export default function TargetPreview({
     };
   }) {
     const targetPath = getTargetPath(target);
+    const typedTargetPanelClassName = [
+      targetPanelClassName,
+      `home-feed-card__target-preview--type-${target.contentType}`
+    ].join(' ');
     if (!targetPath) {
-      return <div className={targetPanelClassName}>{children}</div>;
+      return <div className={typedTargetPanelClassName}>{children}</div>;
     }
     return (
       <div
-        className={targetPanelClassName}
+        className={typedTargetPanelClassName}
         data-feed-card-interactive="true"
         role="link"
         style={targetThemeVars}

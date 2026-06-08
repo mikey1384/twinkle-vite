@@ -6,6 +6,7 @@ import SwitchButton from '~/components/Buttons/SwitchButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
 import AIChatTopicMenu from './AIChatTopicMenu';
+import { buildCanonicalChannelMessagesState } from '../helpers';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -18,6 +19,8 @@ export default function TopicSettingsModal({
   isOwnerPostingOnly,
   isTwoPeopleChat,
   isAIChannel,
+  canDeleteTopic = false,
+  currentTopicId,
   topicId,
   onHide,
   onDeleteTopic,
@@ -31,6 +34,8 @@ export default function TopicSettingsModal({
   isOwnerPostingOnly: boolean;
   isTwoPeopleChat: boolean;
   isAIChannel: boolean;
+  canDeleteTopic?: boolean;
+  currentTopicId?: number;
   topicId: number;
   onHide: () => void;
   onDeleteTopic: () => void;
@@ -40,7 +45,7 @@ export default function TopicSettingsModal({
     customInstructions?: string;
     isSharedWithOtherUsers?: boolean;
   }) => void;
-  topicText: string;
+  topicText?: string;
   isSharedWithOtherUsers?: boolean;
   pathId: string;
 }) {
@@ -56,13 +61,16 @@ export default function TopicSettingsModal({
     (v) => v.actions.onEnterChannelWithId
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const currentMessagesObj = useChatContext(
+    (v) => v.state.channelsObj[channelId]?.messagesObj
+  );
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
   const updateTopicShareState = useAppContext(
     (v) => v.requestHelpers.updateTopicShareState
   );
   const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [editedTopicText, setEditedTopicText] = useState(topicText);
+  const [editedTopicText, setEditedTopicText] = useState(topicText || '');
   const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(
     !!isOwnerPostingOnly
   );
@@ -81,7 +89,7 @@ export default function TopicSettingsModal({
   }, [isSharedWithOtherUsers]);
 
   const trimmedCustomInstructions = useMemo(
-    () => newCustomInstructions.trim(),
+    () => (newCustomInstructions || '').trim(),
     [newCustomInstructions]
   );
   const canShareTopic = useMemo(
@@ -95,12 +103,22 @@ export default function TopicSettingsModal({
     () => (canShareTopic ? isShared : false),
     [canShareTopic, isShared]
   );
+  const deleteButtonShown = useMemo(
+    () => isAIChannel || canDeleteTopic,
+    [canDeleteTopic, isAIChannel]
+  );
+  const deleteDescription = useMemo(() => {
+    if (isAIChannel) {
+      return 'Are you sure you want to delete this AI topic?';
+    }
+    return 'Remove this topic?';
+  }, [isAIChannel]);
 
   const isSubmitDisabled = useMemo(() => {
-    const trimmedTopicText = editedTopicText.trim();
+    const trimmedTopicText = (editedTopicText || '').trim();
     if (isAIChannel) {
       const baseUnchanged =
-        topicText === editedTopicText &&
+        (topicText || '') === editedTopicText &&
         !!isOwnerPostingOnly === ownerOnlyPosting &&
         !!customInstructions === isCustomInstructionsOn &&
         customInstructions === newCustomInstructions;
@@ -115,7 +133,7 @@ export default function TopicSettingsModal({
       );
     }
     return (
-      (topicText === editedTopicText &&
+      ((topicText || '') === editedTopicText &&
         !!isOwnerPostingOnly === ownerOnlyPosting) ||
       trimmedTopicText.length === 0
     );
@@ -222,7 +240,7 @@ export default function TopicSettingsModal({
                 width: 100%;
               }
             `}
-            value={editedTopicText}
+            value={editedTopicText || ''}
             onChange={(text) => setEditedTopicText(text)}
             placeholder="Enter topic text"
           />
@@ -298,7 +316,7 @@ export default function TopicSettingsModal({
             />
           </div>
         )}
-        {isAIChannel && (
+        {deleteButtonShown && (
           <div
             style={{
               width: '100%',
@@ -329,7 +347,7 @@ export default function TopicSettingsModal({
           onHide={() => setConfirmModalShown(false)}
           title="Delete Topic"
           descriptionFontSize="1.7rem"
-          description="Are you sure? This will also delete all messages in this topic."
+          description={deleteDescription}
           onConfirm={handleDeleteTopic}
         />
       )}
@@ -339,12 +357,42 @@ export default function TopicSettingsModal({
   async function handleDeleteTopic() {
     try {
       await deleteTopic({ topicId, channelId });
-      const data = await loadChatChannel({ channelId });
-      onEnterChannelWithId(data);
+      const data = await loadChatChannel({
+        channelId,
+        skipUpdateChannelId: true,
+        fromWriter: true
+      });
+      const canonicalChannel = data?.channel || {};
+      const deletedTopicIsActive = Number(currentTopicId) === Number(topicId);
+      if (isAIChannel) {
+        onEnterChannelWithId(data);
+      }
       onSetChannelState({
         channelId,
-        newState: { selectedTab: 'all' }
+        newState: {
+          featuredTopicId: canonicalChannel.featuredTopicId || null,
+          lastTopicId: canonicalChannel.lastTopicId || null,
+          pinnedTopicIds: canonicalChannel.pinnedTopicIds || [],
+          topicObj: canonicalChannel.topicObj || {},
+          ...(!isAIChannel && Array.isArray(data?.messages)
+            ? buildCanonicalChannelMessagesState({
+                messages: data.messages,
+                existingMessagesObj: currentMessagesObj
+              })
+            : {}),
+          ...(deletedTopicIsActive
+            ? {
+                selectedTab: 'all',
+                selectedTopicId: null,
+                topicHistory: [],
+                currentTopicIndex: -1
+              }
+            : {})
+        }
       });
+      if (deletedTopicIsActive) {
+        navigate(`/chat/${pathId}`);
+      }
       onDeleteTopic();
       onHide();
     } catch (error) {

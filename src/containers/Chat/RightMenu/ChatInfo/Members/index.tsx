@@ -77,7 +77,7 @@ export default function Members({
   );
 
   const userIsOwner = useMemo(() => {
-    return creatorId === userId;
+    return Number(creatorId) === Number(userId);
   }, [creatorId, userId]);
 
   return (

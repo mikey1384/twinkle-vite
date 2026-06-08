@@ -1,4 +1,4 @@
-import { Color, desktopMinWidth } from '~/constants/css';
+import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 
 export const mainPreviewStyles = `
   .home-feed-card__secret-preview {
@@ -63,13 +63,14 @@ export const mainPreviewStyles = `
     height: 100%;
   }
   .home-feed-card__subject-copy--with-secret-preview {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    align-content: stretch;
-    row-gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 1rem;
   }
   .home-feed-card__subject-copy--with-secret-preview
     .home-feed-card__subject-text-stack {
+    flex: 0 1 auto;
     overflow: hidden;
   }
   .home-feed-card__subject-copy--with-secret-preview
@@ -79,7 +80,8 @@ export const mainPreviewStyles = `
   }
   .home-feed-card__subject-copy--with-secret-preview
     .home-feed-card__subject-secret-answer {
-    align-self: end;
+    flex: 0 0 auto;
+    align-self: stretch;
   }
   .home-feed-card__subject-copy--secret-only {
     display: flex;
@@ -104,6 +106,44 @@ export const mainPreviewStyles = `
     font-family: inherit;
     font-size: inherit;
     min-height: 0;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    .home-feed-card__subject-description.rich-text--block-preview {
+      display: -webkit-box;
+      max-height: none;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: var(--rich-text-preview-mobile-max-lines);
+      text-overflow: ellipsis;
+    }
+    .home-feed-card__subject-description.rich-text--block-preview > p,
+    .home-feed-card__subject-description.rich-text--block-preview > h1,
+    .home-feed-card__subject-description.rich-text--block-preview > h2,
+    .home-feed-card__subject-description.rich-text--block-preview > h3,
+    .home-feed-card__subject-description.rich-text--block-preview > h4,
+    .home-feed-card__subject-description.rich-text--block-preview > h5,
+    .home-feed-card__subject-description.rich-text--block-preview > h6,
+    .home-feed-card__subject-description.rich-text--block-preview > ol,
+    .home-feed-card__subject-description.rich-text--block-preview > ul {
+      display: inline;
+    }
+    .home-feed-card__subject-description.rich-text--block-preview > p + p::before {
+      content: '\\A\\A';
+      white-space: pre;
+    }
+    .home-feed-card__subject-description.rich-text--block-preview > ol,
+    .home-feed-card__subject-description.rich-text--block-preview > ul {
+      padding: 0;
+    }
+    .home-feed-card__subject-description.rich-text--block-preview > ol > li,
+    .home-feed-card__subject-description.rich-text--block-preview > ul > li {
+      display: inline;
+      margin-left: 0;
+    }
+    .home-feed-card__subject-description.rich-text--block-preview > ol > li + li::before,
+    .home-feed-card__subject-description.rich-text--block-preview > ul > li + li::before {
+      content: ' ';
+    }
   }
   .home-feed-card__subject-description
     + .home-feed-card__subject-secret-answer:not(.home-feed-card__subject-secret-answer--locked) {
@@ -354,7 +394,8 @@ export const mainPreviewStyles = `
   .home-feed-card__subject-preview--with-root .home-feed-card__subject-main {
     align-content: start;
   }
-  .home-feed-card__subject-preview--with-root .home-feed-card__subject-copy {
+  .home-feed-card__subject-preview--with-root
+    .home-feed-card__subject-copy:not(.home-feed-card__subject-copy--with-secret-preview) {
     gap: 0;
   }
   .home-feed-card__subject-preview--with-root .home-feed-card__subject-text-stack {
@@ -369,7 +410,8 @@ export const mainPreviewStyles = `
   .home-feed-card__subject-preview--root-compact .home-feed-card__subject-main {
     padding: 0;
   }
-  .home-feed-card__subject-preview--root-compact .home-feed-card__subject-copy {
+  .home-feed-card__subject-preview--root-compact
+    .home-feed-card__subject-copy:not(.home-feed-card__subject-copy--with-secret-preview) {
     gap: 0;
   }
   .home-feed-card__subject-preview--root-compact .home-feed-card__subject-text-stack {
@@ -726,6 +768,15 @@ export const mainPreviewStyles = `
     border: 0;
     background: transparent;
     box-shadow: none;
+  }
+  .home-feed-card__attachment-preview--subject-file {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  img.home-feed-card__attachment-preview--subject-embed-image {
+    max-height: none;
+    object-fit: contain;
   }
   .home-feed-card__attachment-preview--subject-video {
     align-self: center;

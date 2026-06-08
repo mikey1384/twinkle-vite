@@ -41,6 +41,7 @@ export default function useChatSocket({
   const chatStatusRef = useRef(chatStatus);
   const pageVisibleRef = useRef(pageVisible);
   const chessShortcutRefreshIdRef = useRef(0);
+  const humanTopicRefreshSeqRef = useRef<Record<number, number>>({});
 
   channelsObjRef.current = channelsObj;
   onUpdateMyXpRef.current = onUpdateMyXp;
@@ -112,6 +113,10 @@ export default function useChatSocket({
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
   );
+  const onEnterChannelWithId = useChatContext(
+    (v) => v.actions.onEnterChannelWithId
+  );
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
@@ -133,6 +138,9 @@ export default function useChatSocket({
   );
   const checkUnansweredChess = useAppContext(
     (v) => v.requestHelpers.checkUnansweredChess
+  );
+  const loadChatChannel = useAppContext(
+    (v) => v.requestHelpers.loadChatChannel
   );
 
   // Reactions can come in bursts. We only need to persist lastRead once per second per
@@ -181,6 +189,7 @@ export default function useChatSocket({
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
+    socket.on('human_topic_state_changed', handleHumanTopicStateChanged);
     socket.on('new_message_received', handleReceiveMessage);
     socket.on('new_vocab_feed_received', handleReceiveVocabFeed);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
@@ -205,6 +214,7 @@ export default function useChatSocket({
       socket.off('chat_subject_purchased', onEnableChatSubject);
       socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
       socket.off('message_attachment_hid', onHideAttachment);
+      socket.off('human_topic_state_changed', handleHumanTopicStateChanged);
       socket.off('new_message_received', handleReceiveMessage);
       socket.off('new_vocab_feed_received', handleReceiveVocabFeed);
       socket.off('online_status_changed', handleOnlineStatusChange);
@@ -600,6 +610,165 @@ export default function useChatSocket({
         channelId,
         topic
       });
+    }
+
+    async function handleHumanTopicStateChanged({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+      status: 'active' | 'deleted' | 'permanently_deleted';
+    }) {
+      const normalizedChannelId = Number(channelId || 0);
+      const normalizedTopicId = Number(topicId || 0);
+      if (!normalizedChannelId) {
+        return;
+      }
+      const isSelectedChannel =
+        normalizedChannelId === Number(selectedChannelIdRef.current || 0);
+      const initialChannel = channelsObjRef.current[normalizedChannelId] || {};
+      if (!isSelectedChannel && !initialChannel.id) return;
+      const refreshSeq =
+        (humanTopicRefreshSeqRef.current[normalizedChannelId] || 0) + 1;
+      humanTopicRefreshSeqRef.current[normalizedChannelId] = refreshSeq;
+
+      try {
+        // Human topic deletion/restoration is for channel-level topics. Subchannels
+        // use legacyTopicObj; passing subchannelPath here would mark that subchannel read.
+        const data = await loadChatChannel({
+          channelId: normalizedChannelId,
+          skipUpdateChannelId: true,
+          fromWriter: true
+        });
+        if (
+          humanTopicRefreshSeqRef.current[normalizedChannelId] !== refreshSeq
+        ) {
+          return;
+        }
+        const currentlySelectedChannel =
+          normalizedChannelId === Number(selectedChannelIdRef.current || 0);
+        const currentChannel =
+          channelsObjRef.current[normalizedChannelId] || {};
+        if (!currentlySelectedChannel && !currentChannel.id) return;
+        const activeSubchannelId = Number(subchannelIdRef.current || 0);
+        const activeVisibleChat = usingChatRef.current && pageVisibleRef.current;
+        // Channel-level topic refreshes must not enter the root channel while the
+        // user is away or in a subchannel; ENTER_CHANNEL would reset unrelated local state.
+        const shouldEnterSelectedChannel =
+          isSelectedChannel &&
+          currentlySelectedChannel &&
+          activeVisibleChat &&
+          !activeSubchannelId;
+        const shouldApplyCanonicalMessages =
+          !currentlySelectedChannel || !shouldEnterSelectedChannel;
+        const canonicalChannel = data?.channel || {};
+        if (!canonicalChannel.id) return;
+        const canonicalMessages = Array.isArray(data?.messages)
+          ? data.messages
+          : [];
+        const canonicalPreviewMessages =
+          canonicalMessages.length === 21
+            ? canonicalMessages.slice(0, 20)
+            : canonicalMessages;
+        const canonicalMessagesObj: Record<number, any> = {};
+        for (const message of canonicalPreviewMessages) {
+          canonicalMessagesObj[message.id] = {
+            ...message,
+            isLoaded: false
+          };
+        }
+
+        if (shouldEnterSelectedChannel) {
+          onEnterChannelWithId(data);
+        }
+        const canonicalTopicObj = canonicalChannel.topicObj || {};
+        const mergedTopicObj: Record<string, any> = {};
+        for (const topicIdKey in canonicalTopicObj) {
+          const existingTopic = currentChannel.topicObj?.[topicIdKey];
+          const serverTopic = canonicalTopicObj[topicIdKey];
+          mergedTopicObj[topicIdKey] = {
+            ...existingTopic,
+            ...serverTopic,
+            ...(existingTopic?.loaded
+              ? {
+                  loaded: true,
+                  messageIds: existingTopic.messageIds,
+                  messagesObj: existingTopic.messagesObj,
+                  loadMoreButtonShown: existingTopic.loadMoreButtonShown,
+                  searchedMessageIds: existingTopic.searchedMessageIds,
+                  searchedMessagesObj: existingTopic.searchedMessagesObj,
+                  searchText: existingTopic.searchText
+                }
+              : {})
+          };
+        }
+        const topicWasHidden =
+          normalizedTopicId > 0 && !canonicalTopicObj[normalizedTopicId];
+        const selectedTopicWasHidden =
+          topicWasHidden &&
+          Number(currentChannel.selectedTopicId || 0) === normalizedTopicId &&
+          !canonicalTopicObj[normalizedTopicId];
+        const currentTopicHistory = Array.isArray(currentChannel.topicHistory)
+          ? currentChannel.topicHistory
+          : [];
+        const prunedTopicHistory = topicWasHidden
+          ? currentTopicHistory.filter(
+              (historyTopicId: number) => !!canonicalTopicObj[historyTopicId]
+            )
+          : currentTopicHistory;
+        const topicHistoryWasPruned =
+          prunedTopicHistory.length !== currentTopicHistory.length;
+        const prunedCurrentTopicIndex = topicHistoryWasPruned
+          ? Math.max(
+              -1,
+              prunedTopicHistory.findIndex(
+                (historyTopicId: number) =>
+                  Number(historyTopicId) ===
+                  Number(currentChannel.selectedTopicId || 0)
+              )
+            )
+          : currentChannel.currentTopicIndex;
+        onSetChannelState({
+          channelId: normalizedChannelId,
+          newState: {
+            featuredTopicId: canonicalChannel.featuredTopicId || null,
+            lastTopicId: canonicalChannel.lastTopicId || null,
+            pinnedTopicIds: canonicalChannel.pinnedTopicIds || [],
+            topicObj: mergedTopicObj,
+            ...(shouldApplyCanonicalMessages
+              ? {
+                  messageIds: canonicalPreviewMessages.map(
+                    (message: { id: number }) => message.id
+                  ),
+                  messagesObj: {
+                    ...currentChannel.messagesObj,
+                    ...canonicalMessagesObj
+                  },
+                  messagesLoadMoreButton: canonicalMessages.length === 21
+                }
+              : {}),
+            ...(selectedTopicWasHidden
+              ? {
+                  selectedTab: 'all',
+                  selectedTopicId: null,
+                  topicHistory: [],
+                  currentTopicIndex: -1
+                }
+              : topicHistoryWasPruned
+                ? {
+                    topicHistory: prunedTopicHistory,
+                    currentTopicIndex: prunedCurrentTopicIndex
+                  }
+                : {}),
+          }
+        });
+        if (shouldEnterSelectedChannel && selectedTopicWasHidden) {
+          navigate(`/chat/${canonicalChannel.pathId}`);
+        }
+      } catch (error) {
+        console.error('Failed to refresh channel after topic state change:', error);
+      }
     }
 
     function handleAIThoughtStream({

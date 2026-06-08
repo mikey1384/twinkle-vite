@@ -169,7 +169,7 @@ const PANEL_HEIGHT_REM: Record<
   'subject-root': { desktop: 15.5, mobile: 15.5 },
   'subject-root-text': { desktop: 29, mobile: 27 },
   'subject-secret-compact': { desktop: 19, mobile: 20 },
-  'subject-secret-preview': { desktop: 22, mobile: 22 },
+  'subject-secret-preview': { desktop: 22.5, mobile: 22 },
   'subject-secret-media': { desktop: 25, mobile: 24 },
   'subject-tall': { desktop: 32, mobile: 30 },
   tall: { desktop: 30, mobile: 28 },
@@ -576,11 +576,15 @@ function getMainPanelSize({
   }
 
   if (kind === 'subject') {
+    const hasSubjectMediaPreview =
+      Boolean(content?.filePath) ||
+      hasPromotableSubjectAttachmentEmbed(content);
+
     if (flags.secretHidden) {
       return getLockedSubjectPanelSize(content);
     }
 
-    if (hasAttachedRootContent(content) && !content?.filePath) {
+    if (hasAttachedRootContent(content) && !hasSubjectMediaPreview) {
       return getSubjectWithRootPanelSize(content);
     }
 
@@ -589,13 +593,13 @@ function getMainPanelSize({
       !content?.content &&
       !content?.secretAnswer &&
       !content?.secretAttachment &&
-      !content?.filePath &&
+      !hasSubjectMediaPreview &&
       !hasAttachedRootContent(content)
     ) {
       return 'subject-minimal';
     }
 
-    if (content?.filePath && isSparseSubjectContent(content)) {
+    if (hasSubjectMediaPreview && isSparseSubjectContent(content)) {
       return 'subject-media';
     }
 
@@ -1052,7 +1056,33 @@ function hasRichTextEmbed(content: any) {
     content?.body ||
     '';
 
-  return Boolean(getMarkdownImageEmbedPreview(String(text)));
+  const embedPreview = getMarkdownImageEmbedPreview(String(text));
+  if (!embedPreview) {
+    return false;
+  }
+
+  if (hasPromotableSubjectAttachmentEmbed(content, embedPreview)) {
+    return false;
+  }
+
+  return true;
+}
+
+function hasPromotableSubjectAttachmentEmbed(
+  content: any,
+  embed?: MarkdownImageEmbed
+) {
+  if (content?.contentType !== 'subject' || hasAttachment(content)) {
+    return false;
+  }
+
+  const embedPreview =
+    embed ||
+    getMarkdownImageEmbedPreview(
+      String(content?.description || content?.content || '')
+    );
+
+  return embedPreview?.type === 'image';
 }
 
 function isSparseSubjectContent(content: any) {
@@ -1112,6 +1142,9 @@ function getSubjectWithRootPanelSize(content: any): FeedCardSize {
 
 function getPlainSubjectPanelSize(content: any): FeedCardSize {
   const descriptionLength = getSubjectDescriptionTextLength(content);
+  const hasSubjectMediaPreview =
+    Boolean(content?.filePath) ||
+    hasPromotableSubjectAttachmentEmbed(content);
   const fitsCompactDescription =
     getSubjectDescriptionPreviewLineCount({
       axis: 'desktop',
@@ -1124,11 +1157,11 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
   const secretLength = getPlainTextValueLength(content?.secretAnswer);
   const hasEffort = Number(content?.rewardLevel || 0) > 0;
 
-  if (content?.secretAttachment || content?.filePath) {
+  if (content?.secretAttachment || hasSubjectMediaPreview) {
     if (
       content?.secretAttachment &&
       !secretLength &&
-      !content?.filePath &&
+      !hasSubjectMediaPreview &&
       descriptionLength <= 420
     ) {
       return 'subject-secret-media';
@@ -1154,7 +1187,7 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
   }
 
   if (descriptionLength <= 420 && secretLength <= 120) {
-    return 'standard';
+    return secretLength > 0 ? 'subject-secret-preview' : 'standard';
   }
 
   return 'subject-tall';
@@ -1181,6 +1214,9 @@ function getShortPublicSubjectSecretPanelSize(content: any): FeedCardSize {
 
 function getLockedSubjectPanelSize(content: any): FeedCardSize {
   const descriptionLength = getSubjectDescriptionTextLength(content);
+  const hasSubjectMediaPreview =
+    Boolean(content?.filePath) ||
+    hasPromotableSubjectAttachmentEmbed(content);
   const hasLockedSecret = Boolean(
     content?.hasSecretAnswer ||
       content?.hasSecretAttachment ||
@@ -1188,12 +1224,16 @@ function getLockedSubjectPanelSize(content: any): FeedCardSize {
       content?.secretAttachment
   );
 
-  if (content?.filePath && isSparseSubjectContent(content)) {
+  if (hasSubjectMediaPreview && isSparseSubjectContent(content)) {
     return hasLockedSecret ? 'subject-secret-media' : 'subject-media';
   }
 
-  if (descriptionLength > 420 || content?.filePath) {
+  if (descriptionLength > 420 || hasSubjectMediaPreview) {
     return 'subject-tall';
+  }
+
+  if (descriptionLength > 0) {
+    return 'subject-secret-preview';
   }
 
   return 'subject-locked';
@@ -1498,7 +1538,7 @@ function getSubjectDescriptionLineBudget({
   ].filter(Boolean).length;
   const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
   const secretAnswerOverflowBuffer =
-    hasDescriptionText && hasSecretAnswer
+    axis === 'desktop' && hasDescriptionText && hasSecretAnswer
       ? layout.descriptionLineHeight * 1.45
       : 0;
   const occupiedHeight =

@@ -174,6 +174,12 @@ function SubjectInput({
   );
   const isMadeByUserRef = useRef(subject.isMadeByUser);
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
+  const preserveLocalDraftStateRef = useRef(
+    !stringIsEmpty(titleRef.current) ||
+      !stringIsEmpty(descriptionRef.current) ||
+      !stringIsEmpty(secretAnswerRef.current) ||
+      !!subject.hasSecretAnswer
+  );
 
   const [draftId, setDraftId] = useState<number | null>(null);
   const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
@@ -226,26 +232,28 @@ function SubjectInput({
       const { id, title, description, secretAnswer, hasSecretAnswer } =
         subjectDraft;
       setDraftId(id);
-      const nextTitle = titleRef.current || title || '';
-      onSetTitle(nextTitle);
-      titleRef.current = nextTitle;
-
-      const nextDescription = descriptionRef.current || description || '';
-      setDescription(nextDescription);
-      descriptionRef.current = nextDescription;
-
-      const nextSecretAnswer = secretAnswerRef.current || secretAnswer || '';
-      setSecretAnswer(nextSecretAnswer);
-      secretAnswerRef.current = nextSecretAnswer;
+      if (preserveLocalDraftStateRef.current) {
+        return;
+      }
+      const nextTitle = title || '';
+      const nextDescription = normalizeDraftDescription({
+        description: description || '',
+        title: nextTitle
+      });
+      const nextSecretAnswer = secretAnswer || '';
 
       const nextHasSecretAnswer =
-        typeof hasSecretAnswerRef.current === 'boolean'
-          ? hasSecretAnswerRef.current
-          : !!hasSecretAnswer;
-      setHasSecretAnswer(nextHasSecretAnswer);
-      hasSecretAnswerRef.current = nextHasSecretAnswer;
+        typeof hasSecretAnswer === 'boolean' ? hasSecretAnswer : false;
+      const nextDescriptionFieldShown =
+        !stringIsEmpty(nextTitle) || !stringIsEmpty(nextDescription);
 
-      setDescriptionFieldShown(!!nextTitle);
+      applySubjectDraftState({
+        description: nextDescription,
+        descriptionFieldShown: nextDescriptionFieldShown,
+        hasSecretAnswer: nextHasSecretAnswer,
+        secretAnswer: nextSecretAnswer,
+        title: nextTitle
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drafts]);
@@ -781,27 +789,15 @@ function SubjectInput({
   function handleSetTitle(text: string) {
     onSetTitle(text);
     titleRef.current = text;
-    saveDraftWithTimeout({
-      title: text,
-      description,
-      secretAnswer: hasSecretAnswer ? secretAnswer : '',
-      rootType: attachment?.contentType,
-      rootId: attachment?.id,
-      rewardLevel
-    });
+    preserveLocalDraftStateRef.current = true;
+    saveCurrentDraft();
   }
 
   function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
-    saveDraftWithTimeout({
-      title,
-      description: text,
-      secretAnswer: hasSecretAnswer ? secretAnswer : '',
-      rootType: attachment?.contentType,
-      rootId: attachment?.id,
-      rewardLevel
-    });
+    preserveLocalDraftStateRef.current = true;
+    saveCurrentDraft();
   }
 
   function handleSetDescriptionFieldShown(shown: boolean) {
@@ -817,19 +813,60 @@ function SubjectInput({
   function handleSetHasSecretAnswer(has: boolean) {
     setHasSecretAnswer(has);
     hasSecretAnswerRef.current = has;
+    preserveLocalDraftStateRef.current = true;
   }
 
   function handleSetSecretAnswer(text: string) {
     setSecretAnswer(text);
     secretAnswerRef.current = text;
+    preserveLocalDraftStateRef.current = true;
+    saveCurrentDraft();
+  }
+
+  function saveCurrentDraft() {
     saveDraftWithTimeout({
-      title,
-      description,
-      secretAnswer: hasSecretAnswer ? text : '',
+      title: titleRef.current,
+      description: descriptionRef.current,
+      secretAnswer: hasSecretAnswerRef.current ? secretAnswerRef.current : '',
       rootType: attachment?.contentType,
       rootId: attachment?.id,
       rewardLevel
     });
+  }
+
+  function applySubjectDraftState({
+    description,
+    descriptionFieldShown,
+    hasSecretAnswer,
+    secretAnswer,
+    title
+  }: {
+    description: string;
+    descriptionFieldShown: boolean;
+    hasSecretAnswer: boolean;
+    secretAnswer: string;
+    title: string;
+  }) {
+    onSetTitle(title);
+    titleRef.current = title;
+    onSetSubjectTitle(title);
+
+    setDescription(description);
+    descriptionRef.current = description;
+    onSetSubjectDescription(description);
+
+    setSecretAnswer(secretAnswer);
+    secretAnswerRef.current = secretAnswer;
+    onSetSecretAnswer(secretAnswer);
+
+    setHasSecretAnswer(hasSecretAnswer);
+    hasSecretAnswerRef.current = hasSecretAnswer;
+    onSetHasSecretAnswer(hasSecretAnswer);
+
+    setDescriptionFieldShown(descriptionFieldShown);
+    descriptionFieldShownRef.current = descriptionFieldShown;
+    onSetSubjectDescriptionFieldShown(descriptionFieldShown);
+    preserveLocalDraftStateRef.current = true;
   }
 
   async function handleUploadSubject() {
@@ -867,3 +904,29 @@ function SubjectInput({
 }
 
 export default memo(SubjectInput);
+
+function normalizeDraftDescription({
+  description,
+  title
+}: {
+  description: string;
+  title: string;
+}) {
+  const normalizedTitle = title.trim();
+  if (stringIsEmpty(description) || stringIsEmpty(normalizedTitle)) {
+    return description || '';
+  }
+
+  const normalizedDescription = description.replace(/\r\n/g, '\n');
+  if (!normalizedDescription.startsWith(normalizedTitle)) {
+    return description;
+  }
+
+  const remainder = normalizedDescription.slice(normalizedTitle.length);
+  if (!/^\n{3,}/.test(remainder)) {
+    return description;
+  }
+
+  const nextDescription = remainder.replace(/^\n+/, '');
+  return stringIsEmpty(nextDescription) ? description : nextDescription;
+}

@@ -72,6 +72,7 @@ export default function Textarea({
     lineHeight: number;
   } | null>(null);
   const scheduleResizeRef = useRef<(immediate?: boolean) => void>(() => {});
+  const textareaSizingStyleKey = getTextareaSizingStyleKey(style);
 
   const normalizedProgress = useMemo(() => {
     if (!Number.isFinite(uploadProgress) || uploadProgress <= 0) return 0;
@@ -188,7 +189,7 @@ export default function Textarea({
   // Invalidate cached styles when style-affecting props change
   useEffect(() => {
     cachedStylesRef.current = null;
-  }, [className, style, theme]);
+  }, [className, textareaSizingStyleKey, theme]);
 
   // Initial resize and value change handling
   useEffect(() => {
@@ -210,7 +211,7 @@ export default function Textarea({
     minRows,
     disableAutoResize,
     className,
-    style,
+    textareaSizingStyleKey,
     theme
   ]);
 
@@ -363,9 +364,12 @@ export default function Textarea({
             clearTimeout(idleTimerRef.current);
             idleTimerRef.current = null;
           }
-          // Do a full resize when focus leaves to handle shrinking
-          allowShrinkRef.current = true;
-          scheduleResize(true);
+          if (isIOS) {
+            // On iOS, delayed shrinking avoids keyboard/layout scroll jumps while
+            // typing; blur is the safe point to reconcile height.
+            allowShrinkRef.current = true;
+            scheduleResize(true);
+          }
           if (rest.onBlur) (rest.onBlur as any)(e);
         }}
         onDragEnter={() => {
@@ -628,4 +632,26 @@ export default function Textarea({
     }
     setUploadProgress(Math.max(0, Math.min(1, ratio)));
   }
+}
+
+function getTextareaSizingStyleKey(style?: React.CSSProperties) {
+  if (!style) return '';
+
+  const sizingKeys: (keyof React.CSSProperties)[] = [
+    'height',
+    'minHeight',
+    'fontFamily',
+    'fontSize',
+    'fontWeight',
+    'letterSpacing',
+    'lineHeight',
+    'textIndent',
+    'textTransform',
+    'whiteSpace',
+    'wordSpacing'
+  ];
+
+  return sizingKeys
+    .map((key) => `${key}:${String(style[key] ?? '')}`)
+    .join('|');
 }

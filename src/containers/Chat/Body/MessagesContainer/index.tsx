@@ -731,7 +731,7 @@ export default function MessagesContainer({
         theme: editedTheme,
         newThumbPath
       });
-      if (userId === currentChannel.creatorId) {
+      if (Number(userId) === Number(currentChannel.creatorId)) {
         socket.emit('new_channel_settings', {
           channelName: editedChannelName,
           description: editedDescription,
@@ -877,7 +877,7 @@ export default function MessagesContainer({
 
   const handleLeaveConfirm = useCallback(() => {
     try {
-      if (currentChannel.creatorId === userId) {
+      if (Number(currentChannel.creatorId) === Number(userId)) {
         setLeaveConfirmModalShown(false);
         if (currentChannel.members.length === 1) {
           handleLeaveChannel();
@@ -1254,7 +1254,7 @@ export default function MessagesContainer({
     isCielChannel,
     isRestrictedChannel: !!isRestrictedChannel,
     isBanned: !!banned?.chat,
-    isOwner: currentChannel.creatorId === userId,
+    isOwner: Number(currentChannel.creatorId) === Number(userId),
     isOnlyOwnerPostingTopic,
     isOwnerPostingOnly: currentChannel.isOwnerPostingOnly,
     innerRef: ChatInputRef,

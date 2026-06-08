@@ -147,7 +147,7 @@ export default function LegacyTopic({
         ) : isEditingTopic ? (
           <EditSubjectForm
             autoFocus
-            userIsOwner={currentChannel.creatorId === userId}
+            userIsOwner={Number(currentChannel.creatorId) === Number(userId)}
             channelId={selectedChannelId}
             displayedThemeColor={displayedThemeColor}
             maxLength={charLimit.chat.subject}

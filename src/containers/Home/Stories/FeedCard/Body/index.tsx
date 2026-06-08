@@ -265,11 +265,18 @@ export default function Body({
     const attachmentPreview = renderAttachmentPreview('subject');
     const description = String(content?.description || content?.content || '');
     const descriptionEmbed = getMarkdownImageEmbedPreview(description);
+    const promotedDescriptionAttachmentEmbed =
+      !attachmentPreview && descriptionEmbed?.type === 'image'
+        ? descriptionEmbed
+        : null;
+    const richDescriptionEmbed = promotedDescriptionAttachmentEmbed
+      ? null
+      : descriptionEmbed;
     const descriptionText = descriptionEmbed
       ? removeMarkdownImageEmbeds(description)
       : description;
     const hasDescriptionText = Boolean(descriptionText.trim());
-    const hasDescriptionEmbed = Boolean(descriptionEmbed);
+    const hasDescriptionEmbed = Boolean(richDescriptionEmbed);
     const secretAnswer = String(content?.secretAnswer || '');
     const secretAttachment = content?.secretAttachment;
     const hasSecretAnswerText = Boolean(secretAnswer.trim());
@@ -314,11 +321,26 @@ export default function Body({
     const isMinimalSubject =
       !attachmentPreview &&
       !hasDescriptionText &&
+      !promotedDescriptionAttachmentEmbed &&
       !hasDescriptionEmbed &&
       !showSecretPreview &&
       !hasAttachedRootContent;
+    const subjectMediaPreview =
+      attachmentPreview ||
+      (promotedDescriptionAttachmentEmbed ? (
+        <MarkdownEmbedPreview
+          className={getSubjectMarkdownAttachmentClassName(
+            promotedDescriptionAttachmentEmbed
+          )}
+          contentId={contentId}
+          contentType={contentType}
+          embed={promotedDescriptionAttachmentEmbed}
+          internalPreviewVariant="wide"
+          onNavigate={onNavigate}
+        />
+      ) : null);
     const isRootCompactSubject =
-      hasAttachedRootContent && !attachmentPreview && !hasDescriptionEmbed;
+      hasAttachedRootContent && !subjectMediaPreview && !hasDescriptionEmbed;
     return (
       <div
         className={`home-feed-card__subject-preview${
@@ -339,7 +361,7 @@ export default function Body({
       >
         <div
           className={`home-feed-card__subject-main${
-            attachmentPreview
+            subjectMediaPreview
               ? ' home-feed-card__subject-main--with-attachment'
               : ''
           }${
@@ -446,17 +468,17 @@ export default function Body({
               </div>
             ) : null}
           </div>
-          {descriptionEmbed ? (
+          {richDescriptionEmbed ? (
             <MarkdownEmbedPreview
               className="home-feed-card__subject-embed-preview"
               contentId={contentId}
               contentType={contentType}
-              embed={descriptionEmbed}
+              embed={richDescriptionEmbed}
               internalPreviewVariant="wide"
               onNavigate={onNavigate}
             />
           ) : null}
-          {attachmentPreview}
+          {subjectMediaPreview}
         </div>
       </div>
     );
@@ -573,6 +595,14 @@ export default function Body({
     if (classNameSuffix === 'subject' && fileType === 'video') {
       subjectAttachmentClass =
         ' home-feed-card__attachment-preview--subject-video';
+    }
+    if (
+      classNameSuffix === 'subject' &&
+      fileType !== 'image' &&
+      fileType !== 'video'
+    ) {
+      subjectAttachmentClass =
+        ' home-feed-card__attachment-preview--subject-file';
     }
     return (
       <AttachmentSurface
@@ -1069,6 +1099,28 @@ export default function Body({
           ''
       ).trim() || undefined
     );
+  }
+}
+
+function getSubjectMarkdownAttachmentClassName(embed: MarkdownImageEmbed) {
+  const { fileType } = getFileInfoFromFileName(getEmbedFileName(embed.src));
+  const mediaClass =
+    fileType && fileType !== 'image'
+      ? 'home-feed-card__attachment-preview--subject-file home-feed-card__attachment-preview--subject-embed-file'
+      : 'home-feed-card__attachment-preview--subject-image home-feed-card__attachment-preview--subject-embed-image';
+
+  return `home-feed-card__attachment-preview ${mediaClass}`;
+}
+
+function getEmbedFileName(src: string) {
+  const path = String(src || '')
+    .split('?')[0]
+    .split('#')[0];
+  const fileName = path.split('/').pop() || '';
+  try {
+    return decodeURIComponent(fileName);
+  } catch {
+    return fileName;
   }
 }
 

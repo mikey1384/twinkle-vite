@@ -35,6 +35,8 @@ function hasStructuredPreviewMarkdown(text: string) {
 
 type RichTextRootStyle = React.CSSProperties & {
   '--rich-text-line-height'?: number;
+  '--rich-text-preview-max-lines'?: number;
+  '--rich-text-preview-mobile-max-lines'?: number;
 };
 
 const RichTextCss = css`
@@ -618,6 +620,8 @@ function RichText({
             ...(lineHeight === undefined
               ? {}
               : { '--rich-text-line-height': lineHeight }),
+            '--rich-text-preview-max-lines': maxLines,
+            '--rich-text-preview-mobile-max-lines': previewMobileMaxLines,
             ...style
           } as RichTextRootStyle
         }
