@@ -8,9 +8,12 @@ import ContentLink from '~/components/ContentLink';
 import { useAppContext } from '~/contexts';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { resolveColorValue } from '~/theme/resolveColor';
-
-const DAILY_GOAL_COMPLETION_LABEL = 'daily goal completion';
-const SHARED_SYSTEM_PROMPT_LABEL = 'shared system prompt';
+import {
+  DAILY_TASKS_BONUS_LABEL,
+  getNotificationContentTypeLabel,
+  getRecommendationTargetLabel,
+  shouldShowNotificationContentDetail
+} from '../../notificationLabels';
 
 function NotiMessage({
   actionObj,
@@ -140,34 +143,13 @@ function NotiMessage({
     targetObj.passType
   ]);
   const contentPreview = useMemo(() => {
-    const missionPassPreview = isTask
-      ? 'task accomplishment'
-      : 'mission completion';
-    const passPreview =
-      targetObj.contentType === 'pass'
-        ? targetObj.passType === 'achievement'
-          ? 'achievement'
-          : missionPassPreview
-        : targetObj.contentType === 'achievementPass'
-          ? 'achievement'
-          : targetObj.contentType === 'missionPass'
-            ? missionPassPreview
-            : '';
-    return `${
-      targetObj.contentType === 'aiStory'
-        ? 'AI Story'
-        : targetObj.contentType === 'url'
-          ? 'link'
-          : passPreview
-            ? passPreview
-            : targetObj.contentType === 'xpChange'
-              ? DAILY_GOAL_COMPLETION_LABEL
-              : targetObj.contentType === 'dailyReflection'
-                ? 'reflection'
-                : targetObj.contentType === 'sharedTopic'
-                  ? SHARED_SYSTEM_PROMPT_LABEL
-                  : targetObj.contentType
-    } ${
+    const label = getNotificationContentTypeLabel({
+      contentType: targetObj.contentType,
+      isTask,
+      passType: targetObj.passType
+    });
+    return `${label} ${
+      shouldShowNotificationContentDetail(targetObj.contentType) &&
       !stringIsEmpty(displayedContent)
         ? `(${truncateText({
             text: displayedContent,
@@ -373,7 +355,7 @@ function NotiMessage({
                 color: missionLinkColor
               }}
             >
-              Daily Tasks bonus
+              {DAILY_TASKS_BONUS_LABEL}
             </b>
           ) : (
             <ContentLink
@@ -415,24 +397,11 @@ function NotiMessage({
           </>
         );
       } else {
-        let rewardRootLabel = '';
-        if (rewardRootType === 'pass') {
-          if (rewardRootTargetType === 'achievement') {
-            rewardRootLabel = 'achievement';
-          } else {
-            if (isTask) {
-              rewardRootLabel = 'task accomplishment';
-            } else {
-              rewardRootLabel = 'mission accomplishment';
-            }
-          }
-        } else if (rewardRootType === 'aiStory') {
-          rewardRootLabel = 'AI Story';
-        } else if (rewardRootType === 'xpChange') {
-          rewardRootLabel = 'Daily Tasks bonus';
-        } else {
-          rewardRootLabel = rewardRootType;
-        }
+        const rewardRootLabel = getRecommendationTargetLabel({
+          rootTargetType: rewardRootTargetType,
+          rootType: rewardRootType,
+          isTask
+        });
 
         return (
           <>
@@ -480,28 +449,18 @@ function NotiMessage({
         const threadContentType = targetSubject?.id
           ? 'subject'
           : targetObj.contentType;
-        const threadLabelBase =
-          threadContentType === 'aiStory'
-            ? 'AI Story'
-            : threadContentType === 'user'
-              ? 'profile'
-              : threadContentType === 'url'
-                ? 'link'
-                : threadContentType === 'pass'
-                  ? 'mission completion'
-                  : threadContentType === 'xpChange'
-                    ? DAILY_GOAL_COMPLETION_LABEL
-                    : threadContentType === 'sharedTopic'
-                      ? SHARED_SYSTEM_PROMPT_LABEL
-                      : threadContentType === 'dailyReflection'
-                        ? 'reflection'
-                        : threadContentType;
+        const threadLabelBase = getNotificationContentTypeLabel({
+          contentType: threadContentType,
+          isTask,
+          passType: targetObj.passType
+        });
         const threadLabelSuffix =
           threadContentType === 'subject'
             ? stringIsEmpty(targetSubject?.content)
               ? ''
               : ` (${truncatedTargetSubjectText})`
-            : stringIsEmpty(targetObj.content)
+            : !shouldShowNotificationContentDetail(threadContentType) ||
+                stringIsEmpty(targetObj.content)
               ? ''
               : ` (${truncatedTargetObjectText})`;
         const threadLabel = `${threadLabelBase}${threadLabelSuffix}`;
@@ -604,26 +563,16 @@ function NotiMessage({
                 ? 'comment'
                 : isSubjectResponse
                   ? 'subject'
-                  : targetObj.contentType === 'aiStory'
-                    ? 'AI Story'
-                    : targetObj.contentType === 'user'
-                      ? 'profile'
-                      : targetObj.contentType === 'url'
-                        ? 'link'
-                        : targetObj.contentType === 'pass' ||
-                            targetObj.contentType === 'missionPass'
-                          ? 'mission completion'
-                          : targetObj.contentType === 'achievementPass'
-                            ? 'achievement'
-                            : targetObj.contentType === 'xpChange'
-                              ? DAILY_GOAL_COMPLETION_LABEL
-                              : targetObj.contentType === 'sharedTopic'
-                                ? SHARED_SYSTEM_PROMPT_LABEL
-                                : targetObj.contentType === 'dailyReflection'
-                                  ? 'reflection'
-                                  : targetObj.contentType
+                  : getNotificationContentTypeLabel({
+                      contentType: targetObj.contentType,
+                      isTask,
+                      passType: targetObj.passType
+                    })
             }${
               (!isReply && targetObj.contentType === 'user') ||
+              (!isReply &&
+                !isSubjectResponse &&
+                !shouldShowNotificationContentDetail(targetObj.contentType)) ||
               stringIsEmpty(contentString)
                 ? ''
                 : ` (${truncatedContentText})`
@@ -663,15 +612,16 @@ function NotiMessage({
             contentType={targetObj.contentType}
             content={{
               id: targetObj.id,
-              title: `${
-                targetObj.contentType === 'url'
-                  ? 'link'
-                  : targetObj.contentType === 'missionPass'
-                    ? 'mission completion'
-                    : targetObj.contentType === 'achievementPass'
-                      ? 'achievement'
-                      : targetObj.contentType
-              } (${truncatedTargetObjectText})`
+              title: `${getNotificationContentTypeLabel({
+                contentType: targetObj.contentType,
+                isTask,
+                passType: targetObj.passType
+              })}${
+                shouldShowNotificationContentDetail(targetObj.contentType) &&
+                !stringIsEmpty(targetObj.content)
+                  ? ` (${truncatedTargetObjectText})`
+                  : ''
+              }`
             }}
             label=""
           />

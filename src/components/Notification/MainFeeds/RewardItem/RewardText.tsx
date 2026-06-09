@@ -4,6 +4,11 @@ import ContentLink from '~/components/ContentLink';
 import { Color } from '~/constants/css';
 import { truncateText } from '~/helpers/stringHelpers';
 import { resolveColorValue } from '~/theme/resolveColor';
+import {
+  getNotificationContentTypeLabel,
+  getRecommendationTargetLabel,
+  shouldShowNotificationContentDetail
+} from '../../notificationLabels';
 
 export default function RewardText({
   actionColor,
@@ -53,32 +58,18 @@ export default function RewardText({
   const rewardColorValue =
     resolveColorValue(rewardColor) || Color.pink();
   const recommendationTargetLabel = useMemo(() => {
-    let target = '';
-    if (rootType === 'pass') {
-      if (rootTargetType === 'achievement') {
-        target = 'achievement';
-      } else {
-        if (isTask) {
-          target = 'task accomplishment';
-        } else {
-          target = 'mission accomplishment';
-        }
-      }
-    } else if (rootType === 'aiStory') {
-      target = 'AI Story';
-    } else if (rootType === 'dailyReflection') {
-      target = 'daily reflection';
-    } else if (rootType === 'xpChange') {
-      target = 'Daily Tasks bonus';
-    } else {
-      target = rootType;
-    }
+    const target = getRecommendationTargetLabel({
+      rootTargetType,
+      rootType,
+      isTask
+    });
     return `${
       rootType === 'pass' || rootType === 'xpChange'
         ? `${targetObj?.user?.username}'s`
         : 'this'
     } ${target}`;
   }, [isTask, rootTargetType, rootType, targetObj?.user?.username]);
+  const rewardContentLabel = getRewardContentLabel();
 
   if (rewardType === 'Twinkle') {
     return (
@@ -110,21 +101,7 @@ export default function RewardText({
             id: contentId
           }}
           contentType={contentType}
-          label={`${contentType}${
-            !targetObj ||
-            targetObj.notFound ||
-            (contentType === 'comment' && targetObj?.filePath)
-              ? ''
-              : contentType === 'comment'
-              ? ` (${truncateText({
-                  text: targetObj.content,
-                  limit: 100
-                })})`
-              : ` (${truncateText({
-                  text: targetObj.title,
-                  limit: 100
-                })})`
-          }`}
+          label={rewardContentLabel}
         />
       </div>
     );
@@ -162,4 +139,29 @@ export default function RewardText({
       </p>
     </div>
   );
+
+  function getRewardContentLabel() {
+    const label = getNotificationContentTypeLabel({
+      contentType,
+      isTask
+    });
+    if (
+      !targetObj ||
+      targetObj.notFound ||
+      !shouldShowNotificationContentDetail(contentType) ||
+      (contentType === 'comment' && targetObj?.filePath)
+    ) {
+      return label;
+    }
+    if (contentType === 'comment') {
+      return `${label} (${truncateText({
+        text: targetObj.content,
+        limit: 100
+      })})`;
+    }
+    return `${label} (${truncateText({
+      text: targetObj.title,
+      limit: 100
+    })})`;
+  }
 }

@@ -73,6 +73,18 @@ function isBuildRuntimeWorldSocketWritable() {
   return socket.connected && (!transport || transport.writable !== false);
 }
 
+function createPreviewBridgeError(message: string, code: string) {
+  const error = new Error(message) as Error & { code?: string };
+  error.code = code;
+  return error;
+}
+
+function getPreviewBridgeErrorCode(error: any) {
+  return typeof error?.code === 'string' && error.code.trim()
+    ? error.code.trim()
+    : null;
+}
+
 export function useHostBridge({
   runtimeOnly,
   buildId,
@@ -336,18 +348,33 @@ export function useHostBridge({
         const useReliableEmit =
           shouldUseReliableBuildRuntimeWorldEmit(eventName);
         if (!socket.connected) {
-          reject(new Error('Socket is not connected'));
+          reject(
+            createPreviewBridgeError(
+              'Socket is not connected',
+              'WORLD_SOCKET_DISCONNECTED'
+            )
+          );
           return;
         }
         if (useReliableEmit && !isBuildRuntimeWorldSocketWritable()) {
-          reject(new Error('Socket transport is not ready'));
+          reject(
+            createPreviewBridgeError(
+              'Socket transport is not ready',
+              'WORLD_SOCKET_NOT_READY'
+            )
+          );
           return;
         }
         let settled = false;
         const timeout = window.setTimeout(() => {
           if (settled) return;
           settled = true;
-          reject(new Error('World request timed out'));
+          reject(
+            createPreviewBridgeError(
+              'World request timed out',
+              'WORLD_REQUEST_TIMED_OUT'
+            )
+          );
         }, timeoutMs);
         const emitter = useReliableEmit ? socket : socket.volatile;
         emitter.emit(eventName, payload, (response: any) => {
@@ -355,7 +382,12 @@ export function useHostBridge({
           settled = true;
           window.clearTimeout(timeout);
           if (!response?.ok) {
-            reject(new Error(response?.error || 'World request failed'));
+            reject(
+              createPreviewBridgeError(
+                response?.error || 'World request failed',
+                response?.code || 'WORLD_REQUEST_FAILED'
+              )
+            );
             return;
           }
           resolve(response);
@@ -401,10 +433,19 @@ export function useHostBridge({
 
     function leaveWorldSessionsForWindow(sourceWindow: Window | null) {
       if (!sourceWindow) return;
+      const sessionIds: string[] = [];
       for (const [sessionId, session] of Array.from(activeWorldSessions)) {
         if (session.sourceWindow !== sourceWindow) continue;
         socket.emit('build_app_world_leave', { sessionId });
         activeWorldSessions.delete(sessionId);
+        sessionIds.push(sessionId);
+      }
+      if (sessionIds.length > 0) {
+        postBuildRuntimeWorldResetToFrame({
+          reason: 'frame-retired',
+          sessionIds,
+          sourceWindow
+        });
       }
     }
 
@@ -766,7 +807,8 @@ export function useHostBridge({
               id,
               previewNonce: previewMessageNonce,
               error:
-                'Preview is updating. This request was skipped to prevent duplicate side effects.'
+                'Preview is updating. This request was skipped to prevent duplicate side effects.',
+              errorCode: 'PREVIEW_UPDATING'
             },
             previewMessageTargetOrigin
           );
@@ -2024,7 +2066,8 @@ export function useHostBridge({
             source: 'twinkle-parent',
             id,
             previewNonce: previewMessageNonce,
-            error: error.message || 'Unknown error'
+            error: error.message || 'Unknown error',
+            errorCode: getPreviewBridgeErrorCode(error)
           },
           previewMessageTargetOrigin
         );
