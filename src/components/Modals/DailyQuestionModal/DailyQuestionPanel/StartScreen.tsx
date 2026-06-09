@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import {
   INACTIVITY_LIMIT,
+  MAX_RESPONSE_LENGTH,
   MIN_RESPONSE_LENGTH,
   STREAK_REPAIR_COST
 } from './constants';
@@ -340,6 +341,12 @@ export default function StartScreen({
               </span>{' '}
               before the timer runs out, or it's an{' '}
               <span className={ruleWarningCls}>automatic fail</span>
+            </li>
+            <li>
+              <span className={ruleTitleCls}>Maximum length</span> — up to{' '}
+              <span className={ruleSuccessCls}>
+                {MAX_RESPONSE_LENGTH.toLocaleString()} characters
+              </span>
             </li>
             <li>
               <span className={ruleTitleCls}>No going back</span> —{' '}

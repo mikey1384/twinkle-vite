@@ -1,5 +1,6 @@
 export const INACTIVITY_LIMIT = 10;
 export const MIN_RESPONSE_LENGTH = 50;
+export const MAX_RESPONSE_LENGTH = 12_000;
 export const PROGRESS_TICK_MS = 80;
 export const PROGRESS_MILESTONE_HOLD = 0.8;
 export const QUESTION_PROGRESS_DURATIONS = {

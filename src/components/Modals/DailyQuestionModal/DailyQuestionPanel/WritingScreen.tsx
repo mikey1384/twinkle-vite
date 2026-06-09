@@ -19,9 +19,13 @@ export default function WritingScreen({
   minEffortDisplayLabel,
   minEffortProgress,
   minLengthMet,
+  maxResponseLength,
   question,
+  remainingMaxChars,
   remainingChars,
   response,
+  responseTooLong,
+  charsOverLimit,
   restoredDraftNeedsFreshTyping,
   textareaRef,
   timeWarning,
@@ -42,17 +46,19 @@ export default function WritingScreen({
   minEffortDisplayLabel: React.ReactNode;
   minEffortProgress: number;
   minLengthMet: boolean;
+  maxResponseLength: number;
   question: string;
+  remainingMaxChars: number;
   remainingChars: number;
   response: string;
+  responseTooLong: boolean;
+  charsOverLimit: number;
   restoredDraftNeedsFreshTyping: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   timeWarning: boolean;
   wordCount: number;
   onBeforeInput: (e: React.FormEvent<HTMLTextAreaElement>) => void;
-  onCompositionEnd: (
-    e: React.CompositionEvent<HTMLTextAreaElement>
-  ) => void;
+  onCompositionEnd: (e: React.CompositionEvent<HTMLTextAreaElement>) => void;
   onCompositionStart: () => void;
   onCut: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
   onDragOver: (e: React.DragEvent<HTMLTextAreaElement>) => void;
@@ -69,20 +75,28 @@ export default function WritingScreen({
             className={css`
               font-size: 2.5rem;
               font-weight: bold;
-              color: ${timeWarning ? Color.rose() : Color.black()};
-              ${!restoredDraftNeedsFreshTyping && timeWarning
+              color: ${timeWarning && !responseTooLong
+                ? Color.rose()
+                : Color.black()};
+              ${!restoredDraftNeedsFreshTyping &&
+              !responseTooLong &&
+              timeWarning
                 ? `animation: ${pulseAnimation} 0.5s infinite;`
                 : ''}
             `}
           >
-            {restoredDraftNeedsFreshTyping ? '--' : `${inactivityTimer}s`}
+            {restoredDraftNeedsFreshTyping || responseTooLong
+              ? '--'
+              : `${inactivityTimer}s`}
           </div>
           <div style={{ color: Color.darkerGray(), fontSize: '1.2rem' }}>
-            {restoredDraftNeedsFreshTyping
-              ? 'Make one small edit to resume'
-              : inactivityTimer <= 3
-                ? 'Done?'
-                : 'Keep typing!'}
+            {responseTooLong
+              ? 'Shorten to continue'
+              : restoredDraftNeedsFreshTyping
+                ? 'Make one small edit to resume'
+                : inactivityTimer <= 3
+                  ? 'Done?'
+                  : 'Keep typing!'}
           </div>
         </div>
 
@@ -102,6 +116,7 @@ export default function WritingScreen({
           onDrop={onDrop}
           placeholder="Just start typing... don't stop to think, just write..."
           className={textareaCls}
+          maxLength={maxResponseLength}
           autoCapitalize="off"
           autoComplete="off"
           autoCorrect="off"
@@ -133,8 +148,17 @@ export default function WritingScreen({
 
         <div className={statsRowCls}>
           <span style={{ color: Color.lightGray() }}>{wordCount} words</span>
-          <span style={{ color: Color.lightGray(), fontSize: '1.1rem' }}>
-            {minLengthMet ? 'Minimum met' : `${remainingChars} chars to go`}
+          <span
+            style={{
+              color: responseTooLong ? Color.rose() : Color.lightGray(),
+              fontSize: '1.1rem'
+            }}
+          >
+            {responseTooLong
+              ? `${charsOverLimit} chars over limit`
+              : minLengthMet
+                ? `${remainingMaxChars.toLocaleString()} chars left`
+                : `${remainingChars} chars to go`}
           </span>
         </div>
         {minEffortBarShown && (

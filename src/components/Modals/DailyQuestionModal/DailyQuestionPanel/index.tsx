@@ -20,6 +20,7 @@ import {
   DAILY_QUESTION_RECOVERY_POLL_MS,
   GRADING_DURATION_MULTIPLIER,
   INACTIVITY_LIMIT,
+  MAX_RESPONSE_LENGTH,
   MIN_GRADING_DURATION_MS,
   MIN_RESPONSE_LENGTH,
   PROGRESS_MILESTONE_HOLD,
@@ -50,6 +51,10 @@ import type {
   TypingMetadata
 } from './types';
 import WritingScreen from './WritingScreen';
+
+function isResponseOverMaxLength(text: string) {
+  return text.trim().length > MAX_RESPONSE_LENGTH;
+}
 
 export default function DailyQuestionPanel({
   onClose
@@ -119,6 +124,7 @@ export default function DailyQuestionPanel({
   const [restoredDraftNeedsFreshTyping, setRestoredDraftNeedsFreshTyping] =
     useState(false);
   const [error, setError] = useState<string | null>(null);
+  const responseTooLong = isResponseOverMaxLength(response);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const gradingCompleteRef = useRef(false);
@@ -719,7 +725,7 @@ export default function DailyQuestionPanel({
     lastActivityRef.current = Date.now();
     setInactivityTimer(INACTIVITY_LIMIT);
 
-    if (restoredDraftNeedsFreshTyping) {
+    if (restoredDraftNeedsFreshTyping || responseTooLong) {
       return;
     }
 
@@ -739,7 +745,7 @@ export default function DailyQuestionPanel({
     return () => {
       clearInterval(interval);
     };
-  }, [screen, restoredDraftNeedsFreshTyping]);
+  }, [screen, restoredDraftNeedsFreshTyping, responseTooLong]);
 
   function handleStart() {
     setRecoveryNotice(null);
@@ -824,7 +830,14 @@ export default function DailyQuestionPanel({
         return;
       }
 
+      const canShortenOverLimitResponse = isResponseOverMaxLength(
+        committedResponseRef.current
+      );
+
       if (e.key === 'Backspace' || e.key === 'Delete') {
+        if (canShortenOverLimitResponse) {
+          return;
+        }
         e.preventDefault();
         return;
       }
@@ -834,6 +847,12 @@ export default function DailyQuestionPanel({
         (e.ctrlKey || e.metaKey) &&
         (lowerCaseKey === 'x' || lowerCaseKey === 'a' || lowerCaseKey === 'z')
       ) {
+        if (
+          canShortenOverLimitResponse &&
+          (lowerCaseKey === 'x' || lowerCaseKey === 'a')
+        ) {
+          return;
+        }
         e.preventDefault();
         return;
       }
@@ -848,12 +867,26 @@ export default function DailyQuestionPanel({
       }
 
       const inputType = (e.nativeEvent as InputEvent).inputType;
+      const canShortenOverLimitResponse = isResponseOverMaxLength(
+        committedResponseRef.current
+      );
+      if (
+        canShortenOverLimitResponse &&
+        inputType &&
+        !inputType.startsWith('delete')
+      ) {
+        e.preventDefault();
+        return;
+      }
       if (
         inputType?.startsWith('delete') ||
         inputType === 'insertFromPaste' ||
         inputType === 'insertFromDrop' ||
         inputType === 'historyUndo'
       ) {
+        if (canShortenOverLimitResponse && inputType?.startsWith('delete')) {
+          return;
+        }
         e.preventDefault();
       }
     },
@@ -872,10 +905,25 @@ export default function DailyQuestionPanel({
 
       isComposingRef.current = false;
 
+      const isShorterChange = finalValue.length < committedResponse.length;
       const looksLikeDeletionOnly =
-        finalValue.length < committedResponse.length &&
-        isDeletionOnlyChange(committedResponse, finalValue);
-      if (looksLikeDeletionOnly) {
+        isShorterChange && isDeletionOnlyChange(committedResponse, finalValue);
+      if (isShorterChange) {
+        if (
+          looksLikeDeletionOnly &&
+          isResponseOverMaxLength(committedResponse)
+        ) {
+          if (restoredDraftNeedsFreshTypingRef.current) {
+            setRestoredDraftNeedsFreshTyping(false);
+          }
+          committedResponseRef.current = finalValue;
+          if (responseRef.current !== finalValue) {
+            responseRef.current = finalValue;
+            setResponse(finalValue);
+          }
+          lastActivityRef.current = now;
+          return;
+        }
         e.currentTarget.value = committedResponse;
         if (responseRef.current !== committedResponse) {
           responseRef.current = committedResponse;
@@ -917,11 +965,35 @@ export default function DailyQuestionPanel({
         return;
       }
 
+      const isShorterChange = newValue.length < committedResponse.length;
       const looksLikeDeletionOnly =
-        newValue.length < committedResponse.length &&
-        isDeletionOnlyChange(committedResponse, newValue);
+        isShorterChange && isDeletionOnlyChange(committedResponse, newValue);
       const isUndo = nativeEvent.inputType === 'historyUndo';
-      if (looksLikeDeletionOnly || isUndo) {
+      if (isShorterChange) {
+        if (
+          looksLikeDeletionOnly &&
+          isResponseOverMaxLength(committedResponse)
+        ) {
+          if (restoredDraftNeedsFreshTypingRef.current) {
+            setRestoredDraftNeedsFreshTyping(false);
+          }
+          committedResponseRef.current = newValue;
+          if (responseRef.current !== newValue) {
+            responseRef.current = newValue;
+            setResponse(newValue);
+          }
+          lastActivityRef.current = now;
+          return;
+        }
+        e.target.value = committedResponse;
+        if (responseRef.current !== committedResponse) {
+          responseRef.current = committedResponse;
+          setResponse(committedResponse);
+        }
+        return;
+      }
+
+      if (isUndo) {
         e.target.value = committedResponse;
         if (responseRef.current !== committedResponse) {
           responseRef.current = committedResponse;
@@ -956,6 +1028,9 @@ export default function DailyQuestionPanel({
 
   const handleCut = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (isResponseOverMaxLength(committedResponseRef.current)) {
+        return;
+      }
       e.preventDefault();
     },
     []
@@ -985,6 +1060,13 @@ export default function DailyQuestionPanel({
     const endTime = Date.now();
     const timestamps = metadata.keystrokeTimestamps;
     const trimmedResponse = response.trim() || '(no response)';
+
+    if (trimmedResponse.length > MAX_RESPONSE_LENGTH) {
+      setScreen('writing');
+      isSubmittingRef.current = false;
+      return;
+    }
+
     const clientRequestId =
       activeClientRequestIdRef.current || createDailyQuestionClientRequestId();
     activeClientRequestIdRef.current = clientRequestId;
@@ -1110,6 +1192,14 @@ export default function DailyQuestionPanel({
     0,
     MIN_RESPONSE_LENGTH - trimmedResponseLength
   );
+  const remainingMaxChars = Math.max(
+    0,
+    MAX_RESPONSE_LENGTH - trimmedResponseLength
+  );
+  const charsOverLimit = Math.max(
+    0,
+    trimmedResponseLength - MAX_RESPONSE_LENGTH
+  );
   const minEffortProgress = useMemo(
     () => Math.min(100 * (trimmedResponseLength / MIN_RESPONSE_LENGTH), 100),
     [trimmedResponseLength]
@@ -1186,9 +1276,13 @@ export default function DailyQuestionPanel({
         minEffortDisplayLabel={minEffortDisplayLabel}
         minEffortProgress={minEffortProgress}
         minLengthMet={minLengthMet}
+        maxResponseLength={MAX_RESPONSE_LENGTH}
         question={question}
+        remainingMaxChars={remainingMaxChars}
         remainingChars={remainingChars}
         response={response}
+        responseTooLong={responseTooLong}
+        charsOverLimit={charsOverLimit}
         restoredDraftNeedsFreshTyping={restoredDraftNeedsFreshTyping}
         textareaRef={textareaRef}
         timeWarning={timeWarning}
