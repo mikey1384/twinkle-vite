@@ -40,6 +40,10 @@ export interface PreviewHostBridgeRequestRefs {
   addSharedDbEntryRef: AsyncRequestRef;
   updateSharedDbEntryRef: AsyncRequestRef;
   deleteSharedDbEntryRef: AsyncRequestRef;
+  getSharedDbKvItemRef: AsyncRequestRef;
+  listSharedDbKvItemsRef: AsyncRequestRef;
+  setSharedDbKvItemsRef: AsyncRequestRef;
+  deleteSharedDbKvItemRef: AsyncRequestRef;
   getBuildLeaderboardRef: AsyncRequestRef;
   submitBuildLeaderboardScoreRef: AsyncRequestRef;
   listBuildChatRoomsRef: AsyncRequestRef;

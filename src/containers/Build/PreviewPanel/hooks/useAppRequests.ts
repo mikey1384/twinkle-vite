@@ -134,6 +134,18 @@ export default function useAppRequests() {
   const deleteSharedDbEntry = useAppContext(
     (v) => v.requestHelpers.deleteSharedDbEntry
   );
+  const getSharedDbKvItem = useAppContext(
+    (v) => v.requestHelpers.getSharedDbKvItem
+  );
+  const listSharedDbKvItems = useAppContext(
+    (v) => v.requestHelpers.listSharedDbKvItems
+  );
+  const setSharedDbKvItems = useAppContext(
+    (v) => v.requestHelpers.setSharedDbKvItems
+  );
+  const deleteSharedDbKvItem = useAppContext(
+    (v) => v.requestHelpers.deleteSharedDbKvItem
+  );
   const getBuildLeaderboard = useAppContext(
     (v) => v.requestHelpers.getBuildLeaderboard
   );
@@ -262,6 +274,10 @@ export default function useAppRequests() {
   const addSharedDbEntryRef = useRef(addSharedDbEntry);
   const updateSharedDbEntryRef = useRef(updateSharedDbEntry);
   const deleteSharedDbEntryRef = useRef(deleteSharedDbEntry);
+  const getSharedDbKvItemRef = useRef(getSharedDbKvItem);
+  const listSharedDbKvItemsRef = useRef(listSharedDbKvItems);
+  const setSharedDbKvItemsRef = useRef(setSharedDbKvItems);
+  const deleteSharedDbKvItemRef = useRef(deleteSharedDbKvItem);
   const getBuildLeaderboardRef = useRef(getBuildLeaderboard);
   const submitBuildLeaderboardScoreRef = useRef(submitBuildLeaderboardScore);
   const listBuildChatRoomsRef = useRef(listBuildChatRooms);
@@ -346,6 +362,10 @@ export default function useAppRequests() {
     addSharedDbEntryRef,
     updateSharedDbEntryRef,
     deleteSharedDbEntryRef,
+    getSharedDbKvItemRef,
+    listSharedDbKvItemsRef,
+    setSharedDbKvItemsRef,
+    deleteSharedDbKvItemRef,
     getBuildLeaderboardRef,
     submitBuildLeaderboardScoreRef,
     listBuildChatRoomsRef,

@@ -26,6 +26,8 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'shared-db:add-entry',
   'shared-db:create-topic',
   'shared-db:delete-entry',
+  'shared-db:kv-delete',
+  'shared-db:kv-set',
   'shared-db:update-entry',
   'user-db:exec',
   'world:heartbeat',

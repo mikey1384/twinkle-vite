@@ -3408,6 +3408,126 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getSharedDbKvItem({
+      buildId,
+      namespace,
+      key,
+      token
+    }: {
+      buildId: number;
+      namespace: string;
+      key: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/kv/get`,
+          { namespace, key },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listSharedDbKvItems({
+      buildId,
+      namespace,
+      limit,
+      cursor,
+      since,
+      token
+    }: {
+      buildId: number;
+      namespace: string;
+      limit?: number;
+      cursor?: { changeSeq?: number; id?: number };
+      since?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/kv/list`,
+          { namespace, limit, cursor, since },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async setSharedDbKvItems({
+      buildId,
+      namespace,
+      items,
+      token
+    }: {
+      buildId: number;
+      namespace: string;
+      items: Array<{ key: string; value: any }>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/kv/set`,
+          { namespace, items },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteSharedDbKvItem({
+      buildId,
+      namespace,
+      key,
+      token
+    }: {
+      buildId: number;
+      namespace: string;
+      key: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/kv/delete`,
+          { namespace, key },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getBuildLeaderboard({
       buildId,
       boardKey,

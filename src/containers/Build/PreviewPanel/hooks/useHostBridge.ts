@@ -1563,6 +1563,64 @@ export function useHostBridge({
             break;
           }
 
+          case 'shared-db:kv-get': {
+            const sharedDbKvGetToken = await ensureBuildApiToken(
+              ['sharedDb:read'],
+              previewAuth
+            );
+            response = await requestRefs.getSharedDbKvItemRef.current({
+              buildId: activeBuild.id,
+              namespace: payload?.namespace,
+              key: payload?.key,
+              token: sharedDbKvGetToken
+            });
+            break;
+          }
+
+          case 'shared-db:kv-list': {
+            const sharedDbKvListToken = await ensureBuildApiToken(
+              ['sharedDb:read'],
+              previewAuth
+            );
+            response = await requestRefs.listSharedDbKvItemsRef.current({
+              buildId: activeBuild.id,
+              namespace: payload?.namespace,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              since: payload?.since,
+              token: sharedDbKvListToken
+            });
+            break;
+          }
+
+          case 'shared-db:kv-set': {
+            const sharedDbKvSetToken = await ensureBuildApiToken(
+              ['sharedDb:write'],
+              previewAuth
+            );
+            response = await requestRefs.setSharedDbKvItemsRef.current({
+              buildId: activeBuild.id,
+              namespace: payload?.namespace,
+              items: payload?.items,
+              token: sharedDbKvSetToken
+            });
+            break;
+          }
+
+          case 'shared-db:kv-delete': {
+            const sharedDbKvDeleteToken = await ensureBuildApiToken(
+              ['sharedDb:write'],
+              previewAuth
+            );
+            response = await requestRefs.deleteSharedDbKvItemRef.current({
+              buildId: activeBuild.id,
+              namespace: payload?.namespace,
+              key: payload?.key,
+              token: sharedDbKvDeleteToken
+            });
+            break;
+          }
+
           case 'leaderboards:get': {
             const viewer = getViewerInfo(previewAuth);
             response = await requestRefs.getBuildLeaderboardRef.current({
