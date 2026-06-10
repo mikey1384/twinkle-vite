@@ -43,6 +43,7 @@ export default function CliDeviceAuth() {
     session?.status === 'pending' &&
     !sessionLoading &&
     !approving;
+  const isApproved = session?.status === 'approved';
 
   useEffect(() => {
     authRef.current = auth;
@@ -96,8 +97,9 @@ export default function CliDeviceAuth() {
           </span>
           <h1 className={titleClass}>Connect Lumine</h1>
           <p className={bodyClass}>
-            Check that this code matches your terminal. If it does, Lumine can
-            help with your Build projects when you ask it to.
+            {isApproved
+              ? 'Lumine is now connected to your terminal.'
+              : 'Make sure this code matches the one in your terminal.'}
           </p>
         </div>
         <label className={labelClass}>
@@ -118,39 +120,56 @@ export default function CliDeviceAuth() {
           <Icon icon="lock" />
           Only approve if you started Lumine yourself.
         </p>
-        {userId && hasCompleteCode ? (
-          <CliSessionDetails
-            session={session}
-            loading={sessionLoading}
-            error={sessionError}
-          />
-        ) : null}
-        <div className={buttonWrapClass}>
-          {userId ? (
-            <GameCTAButton
-              variant="success"
-              size="lg"
-              shiny={canApprove}
-              loading={approving}
-              style={{ width: '100%' }}
-              disabled={!canApprove}
-              onClick={handleApprove}
-            >
-              {approving ? 'Approving...' : 'Approve Lumine'}
-            </GameCTAButton>
-          ) : (
-            <GameCTAButton
-              variant="logoBlue"
-              size="lg"
-              shiny
-              style={{ width: '100%' }}
-              onClick={onOpenSigninModal}
-            >
-              Sign in to approve
-            </GameCTAButton>
-          )}
-        </div>
-        {status && <p className={statusClass}>{status}</p>}
+        {isApproved ? (
+          <div className={successClass} role="status">
+            <span className={successIconClass}>
+              <Icon icon="check" />
+            </span>
+            <div>
+              <h2>You&rsquo;re connected!</h2>
+              <p>
+                All done &mdash; you can close this tab and go back to your
+                terminal.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {userId && hasCompleteCode ? (
+              <CliSessionDetails
+                session={session}
+                loading={sessionLoading}
+                error={sessionError}
+              />
+            ) : null}
+            <div className={buttonWrapClass}>
+              {userId ? (
+                <GameCTAButton
+                  variant="success"
+                  size="lg"
+                  shiny={canApprove}
+                  loading={approving}
+                  style={{ width: '100%' }}
+                  disabled={!canApprove}
+                  onClick={handleApprove}
+                >
+                  {approving ? 'Approving...' : 'Approve Lumine'}
+                </GameCTAButton>
+              ) : (
+                <GameCTAButton
+                  variant="logoBlue"
+                  size="lg"
+                  shiny
+                  style={{ width: '100%' }}
+                  onClick={onOpenSigninModal}
+                >
+                  Sign in to approve
+                </GameCTAButton>
+              )}
+            </div>
+            {status && <p className={statusClass}>{status}</p>}
+          </>
+        )}
       </section>
     </main>
   );
@@ -165,7 +184,7 @@ export default function CliDeviceAuth() {
         { userCode: normalizedCode },
         auth()
       );
-      setStatus('Approved. You can go back to your terminal.');
+      setStatus('');
       setSession((current) =>
         current ? { ...current, status: 'approved' } : current
       );
@@ -251,6 +270,12 @@ function getPracticalPermissionItems(scopes: string[] | null | undefined) {
     items.push('Check whether a Build is ready to launch.');
   } else if (scopeSet.has('build:publish')) {
     items.push('Launch your Build when you choose.');
+  }
+  if (scopeSet.has('build:sdk')) {
+    items.push(
+      "Read and update your Build's app data the way the app does, " +
+        'including saved app data, shared app data, and app notifications.'
+    );
   }
 
   return items;
@@ -441,6 +466,44 @@ const detailsClass = css`
   flex-direction: column;
   gap: 0.95rem;
   padding-top: 0.2rem;
+`;
+
+const successClass = css`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 1.1rem 1.15rem;
+  border-radius: ${borderRadius};
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.42);
+
+  h2 {
+    margin: 0;
+    color: #14532d;
+    font-size: 1.4rem;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: #166534;
+    font-size: 1.15rem;
+    line-height: 1.45;
+  }
+`;
+
+const successIconClass = css`
+  width: 2.9rem;
+  height: 2.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  font-size: 1.4rem;
 `;
 
 const requestHeaderClass = css`

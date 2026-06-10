@@ -190,6 +190,7 @@ export default function ChatPanel({
   runError,
   activeStreamMessageIds,
   isOwner,
+  buildId,
   chatScrollRef,
   chatEndRef,
   onChatScroll,
@@ -692,6 +693,7 @@ export default function ChatPanel({
             AI_FEATURES_DISABLED={AI_FEATURES_DISABLED}
             aiInputDisabled={aiInputDisabled}
             aiInputDisabledNotice={aiInputDisabledNotice}
+            buildId={buildId}
             draftMessage={draftMessage}
             generating={generating}
             inputRef={inputRef}

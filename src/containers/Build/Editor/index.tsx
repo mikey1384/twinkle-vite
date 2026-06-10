@@ -1474,6 +1474,7 @@ export default function BuildEditor({
     runError: currentBuildRunView.error,
     activeStreamMessageIds: currentBuildRunView.activeStreamMessageIds,
     isOwner: canEditCurrentBuildProject,
+    buildId: build.id,
     chatScrollRef,
     chatEndRef,
     onChatScroll: handleChatScroll,

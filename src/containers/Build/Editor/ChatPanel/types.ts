@@ -270,6 +270,7 @@ export interface ChatPanelProps {
   runError: string | null;
   activeStreamMessageIds: number[];
   isOwner: boolean;
+  buildId: number;
   chatScrollRef: RefObject<HTMLDivElement | null>;
   chatEndRef: RefObject<HTMLDivElement | null>;
   onChatScroll: () => void;

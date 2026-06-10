@@ -1,6 +1,7 @@
 import React, { RefObject } from 'react';
 import { css } from '@emotion/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
+import OwnAiCliNotice from './OwnAiCliNotice';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { Color } from '~/constants/css';
 
@@ -8,6 +9,7 @@ interface ComposerProps {
   AI_FEATURES_DISABLED: boolean;
   aiInputDisabled: boolean;
   aiInputDisabledNotice: string;
+  buildId: number;
   draftMessage: string;
   generating: boolean;
   inputRef: RefObject<HTMLTextAreaElement | null>;
@@ -33,6 +35,7 @@ export default function Composer({
   AI_FEATURES_DISABLED,
   aiInputDisabled,
   aiInputDisabledNotice,
+  buildId,
   draftMessage,
   generating,
   inputRef,
@@ -199,6 +202,9 @@ export default function Composer({
           notice={aiInputDisabledNotice}
           style={{ marginBottom: '0.6rem' }}
         />
+      ) : null}
+      {aiInputDisabled && !AI_FEATURES_DISABLED ? (
+        <OwnAiCliNotice buildId={buildId} />
       ) : null}
       <div
         className={css`
