@@ -1281,6 +1281,7 @@ export function useHostBridge({
                 buildId: activeBuild.id,
                 limit: payload?.limit,
                 cursor: payload?.cursor,
+                groupBy: payload?.groupBy,
                 difficulty: payload?.difficulty,
                 type: payload?.type,
                 topicKey: payload?.topicKey,

@@ -2769,6 +2769,7 @@ export default function buildRequestHelpers({
       buildId,
       limit,
       cursor,
+      groupBy,
       difficulty,
       type,
       topicKey,
@@ -2781,6 +2782,7 @@ export default function buildRequestHelpers({
       buildId: number;
       limit?: number;
       cursor?: { type?: string; topicKey?: string };
+      groupBy?: 'topicKey' | 'type' | null;
       difficulty?: number | null;
       type?: string | null;
       topicKey?: string | null;
@@ -2796,6 +2798,7 @@ export default function buildRequestHelpers({
           {
             limit,
             cursor,
+            groupBy,
             difficulty,
             type,
             topicKey,
