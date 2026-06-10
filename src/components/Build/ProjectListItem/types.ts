@@ -29,6 +29,7 @@ export interface BuildProjectListItemData {
   description: string | null;
   isPublic: boolean;
   updatedAt: number;
+  lastActivityAt?: number;
   createdAt: number;
   hasCode?: boolean;
   viewCount?: number;

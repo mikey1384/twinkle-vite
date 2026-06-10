@@ -1183,6 +1183,7 @@ function getDisplayUpdatedAt(
     | {
         publishedAt?: unknown;
         updatedAt?: unknown;
+        lastActivityAt?: unknown;
       }
     | null
     | undefined,
@@ -1192,5 +1193,11 @@ function getDisplayUpdatedAt(
   if (updatedAtSource === 'publicVersion') {
     return Number(build.publishedAt || 0);
   }
-  return Number(build.updatedAt || 0);
+  // lastActivityAt includes contribution-branch saves; lists are ordered by
+  // it, so display the same timestamp to keep the order legible. updatedAt
+  // can be fresher when the cached build was just saved in this session.
+  return Math.max(
+    Number(build.lastActivityAt || 0),
+    Number(build.updatedAt || 0)
+  );
 }

@@ -39,6 +39,7 @@ export interface BuildSummary {
   hasCode?: boolean;
   viewCount: number;
   updatedAt: number;
+  lastActivityAt: number | null;
   createdAt: number;
   publishedAt: number | null;
   sourceBuildId: number | null;
@@ -151,6 +152,9 @@ export function normalizeBuildSummary(
       build.viewCount ?? build.visits ?? current?.viewCount
     ),
     updatedAt: normalizeNonNegativeInteger(build.updatedAt ?? current?.updatedAt),
+    lastActivityAt: normalizeNullablePositiveInteger(
+      build.lastActivityAt ?? current?.lastActivityAt
+    ),
     createdAt: normalizeNonNegativeInteger(build.createdAt ?? current?.createdAt),
     publishedAt: normalizeNullablePositiveInteger(
       build.publishedAt ?? current?.publishedAt
