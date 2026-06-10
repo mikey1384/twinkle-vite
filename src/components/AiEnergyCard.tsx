@@ -8,7 +8,7 @@ import {
 } from '~/constants/css';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
+import RechargeAiEnergyConfirmModal from '~/components/Modals/RechargeAiEnergyConfirmModal';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import AiEnergyDashboardModal from '~/components/AiEnergyDashboardModal';
 
@@ -421,19 +421,9 @@ export default function AiEnergyCard({
         />
       )}
       {paidRechargeConfirmShown && (
-        <ConfirmModal
-          modalOverModal
-          title="Recharge AI Energy"
-          description={
-            <div style={{ textAlign: 'center', lineHeight: 1.45 }}>
-              Spend <b>{formattedResetCost} Twinkle Coins</b> to recharge one
-              full AI Energy battery?
-            </div>
-          }
-          descriptionFontSize="1.35rem"
-          confirmButtonColor="orange"
-          confirmButtonLabel="Recharge"
-          disabled={rechargeLoading}
+        <RechargeAiEnergyConfirmModal
+          cost={resetCost}
+          loading={rechargeLoading}
           onHide={() => setPaidRechargeConfirmShown(false)}
           onConfirm={handleConfirmPaidRecharge}
         />

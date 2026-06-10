@@ -27,6 +27,13 @@ const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
 
 const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
   {
+    model: 'claude-fable-5',
+    label: 'Claude Fable 5',
+    description: 'Deepest thinker for the hardest builds.',
+    defaultReasoningEffort: 'high',
+    supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
+  },
+  {
     model: 'gpt-5.5',
     label: 'GPT-5.5',
     description: 'Best for tricky builds.',
@@ -43,7 +50,9 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
 ];
 
 function isLumineModel(value: unknown): value is BuildLumineModel {
-  return value === 'gpt-5.5' || value === 'gpt-5.4';
+  return (
+    value === 'claude-fable-5' || value === 'gpt-5.5' || value === 'gpt-5.4'
+  );
 }
 
 function isSelectableLumineThinkLevel(

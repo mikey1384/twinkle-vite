@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Modal from '~/components/Modal';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
+import RechargeAiEnergyConfirmModal from '~/components/Modals/RechargeAiEnergyConfirmModal';
 import { Color } from '~/constants/css';
 import {
   useAppContext,
@@ -515,20 +515,10 @@ export default function AiEnergyDashboardModal({
         )}
       </Modal>
       {paidChargeConfirmShown && (
-        <ConfirmModal
-          modalOverModal
+        <RechargeAiEnergyConfirmModal
           modalLevel={(modalLevel ?? 1) + 1}
-          title="Recharge AI Energy"
-          description={
-            <div style={{ textAlign: 'center', lineHeight: 1.45 }}>
-              Spend <b>{formattedRechargeCost} Twinkle Coins</b> to recharge
-              one full AI Energy battery?
-            </div>
-          }
-          descriptionFontSize="1.35rem"
-          confirmButtonColor="orange"
-          confirmButtonLabel="Recharge"
-          disabled={chargeLoading}
+          cost={rechargeCost}
+          loading={chargeLoading}
           onHide={() => setPaidChargeConfirmShown(false)}
           onConfirm={handleConfirmPaidCharge}
         />
