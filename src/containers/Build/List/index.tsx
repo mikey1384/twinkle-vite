@@ -48,6 +48,7 @@ import {
   buildBrowseModeTabs,
   buildListTabs
 } from './constants/tabs';
+import { getBuildListTabPath } from './helpers/url';
 import {
   buildActivityRailBreakpoint,
   buildActivityRailWidth,
@@ -91,13 +92,20 @@ const browseModeFilterWrapClass = css`
   margin-bottom: 1rem;
 `;
 
-export default function BuildList() {
+export default function BuildList({
+  tab: urlTab,
+  browseMode: urlBrowseMode
+}: {
+  tab?: BuildListTab;
+  browseMode?: BuildStudioBrowseMode;
+} = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [activityRailVisible, setActivityRailVisible] = useState(
     getIsActivityRailVisible
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const sessionLoaded = useAppContext((v) => v.user.state.loaded);
   const buildQuickAccessMode = useKeyContext(
     (v) => v.myState.buildQuickAccessMode
   );
@@ -146,14 +154,20 @@ export default function BuildList() {
   );
 
   const normalizedUserId = Number(userId || 0) || null;
-  const activeTab = normalizeBuildListTab(buildStudio?.activeTab);
+  const activeTab = urlTab ?? normalizeBuildListTab(buildStudio?.activeTab);
   const activeBrowseTab = getBuildListBrowseTab(activeTab);
   const activeBrowseState =
     buildStudio?.browse?.[activeBrowseTab] || createEmptyBrowseState();
-  const activeBrowseMode = getBuildListBrowseMode({
-    activeTab,
-    buildStudio
-  });
+  const activeBrowseMode =
+    urlBrowseMode && isPublicBrowseTab(activeTab)
+      ? urlBrowseMode
+      : getBuildListBrowseMode({
+          activeTab,
+          buildStudio
+        });
+  const hasCanonicalListUrl = Boolean(
+    urlTab && (!isPublicBrowseTab(urlTab) || urlBrowseMode)
+  );
   const persistedBuildStudioStateKey = getPersistedBuildStudioStateKey(
     persistedBuildStudioState
   );
@@ -357,6 +371,36 @@ export default function BuildList() {
   }, [normalizedUserId, persistedBuildStudioStateKey]);
 
   useEffect(() => {
+    if (hasCanonicalListUrl || !normalizedUserId || !sessionLoaded) return;
+    // Resolve from the server-persisted preference, not context: on cold
+    // loads this effect runs before the hydration effect's context update
+    // is visible.
+    const targetTab =
+      urlTab ?? normalizeBuildListTab(persistedBuildStudioState?.activeTab);
+    const targetBrowseMode = isPublicBrowseTab(targetTab)
+      ? normalizeBuildListBrowseMode(
+          persistedBuildStudioState?.browseModes?.[
+            targetTab as 'community' | 'open_source'
+          ]
+        )
+      : undefined;
+    navigate(
+      `${getBuildListTabPath(targetTab, targetBrowseMode)}${location.search}${
+        location.hash
+      }`,
+      { replace: true }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    hasCanonicalListUrl,
+    normalizedUserId,
+    sessionLoaded,
+    urlTab,
+    persistedBuildStudioStateKey,
+    location.pathname
+  ]);
+
+  useEffect(() => {
     setEditingBuild(null);
     setDeletingBuild(null);
     setForkHistoryBuildId(null);
@@ -461,6 +505,7 @@ export default function BuildList() {
     if (!collaboratingLoadedForCurrentUser) return;
     if (collaboratingBuildCount > 0) return;
     onSetBuildStudioActiveTab('mine');
+    navigate(getBuildListTabPath('mine'), { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeTab,
@@ -787,6 +832,14 @@ export default function BuildList() {
     if (tab !== activeTab) {
       tabChangeInitialScrollRef.current = true;
       onSetBuildStudioActiveTab(tab);
+      navigate(
+        getBuildListTabPath(
+          tab,
+          isPublicBrowseTab(tab)
+            ? getBuildListBrowseMode({ activeTab: tab, buildStudio })
+            : undefined
+        )
+      );
       void persistBuildStudioState({ activeTab: tab });
     }
   }
@@ -796,6 +849,7 @@ export default function BuildList() {
       return;
     }
     onSetBuildStudioBrowseMode({ tab: activeTab, browseMode });
+    navigate(getBuildListTabPath(activeTab, browseMode));
     void persistBuildStudioState({
       browseMode,
       browseModeTab: activeTab
