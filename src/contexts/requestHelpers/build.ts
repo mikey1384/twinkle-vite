@@ -2717,6 +2717,7 @@ export default function buildRequestHelpers({
       difficulty,
       type,
       topicKey,
+      storyBy,
       isListening,
       userId,
       hasImage,
@@ -2730,6 +2731,7 @@ export default function buildRequestHelpers({
       difficulty?: number | null;
       type?: string | null;
       topicKey?: string | null;
+      storyBy?: string | string[] | null;
       isListening?: boolean | null;
       userId?: number | null;
       hasImage?: boolean | null;
@@ -2746,6 +2748,7 @@ export default function buildRequestHelpers({
             difficulty,
             type,
             topicKey,
+            storyBy,
             isListening,
             userId,
             hasImage,
@@ -2773,6 +2776,7 @@ export default function buildRequestHelpers({
       difficulty,
       type,
       topicKey,
+      storyBy,
       isListening,
       userId,
       hasImage,
@@ -2781,11 +2785,12 @@ export default function buildRequestHelpers({
     }: {
       buildId: number;
       limit?: number;
-      cursor?: { type?: string; topicKey?: string };
-      groupBy?: 'topicKey' | 'type' | null;
+      cursor?: { type?: string; topicKey?: string; storyBy?: string };
+      groupBy?: 'topicKey' | 'type' | 'author' | null;
       difficulty?: number | null;
       type?: string | null;
       topicKey?: string | null;
+      storyBy?: string | string[] | null;
       isListening?: boolean | null;
       userId?: number | null;
       hasImage?: boolean | null;
@@ -2802,6 +2807,7 @@ export default function buildRequestHelpers({
             difficulty,
             type,
             topicKey,
+            storyBy,
             isListening,
             userId,
             hasImage,
@@ -2830,6 +2836,7 @@ export default function buildRequestHelpers({
       difficulty,
       type,
       topicKey,
+      storyBy,
       isListening,
       userId,
       hasImage,
@@ -2844,6 +2851,7 @@ export default function buildRequestHelpers({
       difficulty?: number | null;
       type?: string | null;
       topicKey?: string | null;
+      storyBy?: string | string[] | null;
       isListening?: boolean | null;
       userId?: number | null;
       hasImage?: boolean | null;
@@ -2861,6 +2869,7 @@ export default function buildRequestHelpers({
             difficulty,
             type,
             topicKey,
+            storyBy,
             isListening,
             userId,
             hasImage,
