@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
+import { CURRENT_THREE_VENDOR_PREFIX } from '../Editor/helpers/threeVendorUpgrade';
 import {
   DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT,
   PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS
@@ -85,8 +86,10 @@ const guideSections: GuideSection[] = [
     title: 'Vendor libraries',
     items: [
       'Do not use CDN imports, package imports, or pasted library bundles for project code.',
-      'For Three.js, use import * as THREE from "/build/vendor/three/0.160.0/three.module.min.js"; inside a type="module" project file.',
-      'The Three.js vendor path is served by Twinkle and is stable for preview and published builds.'
+      `For Three.js, use import * as THREE from "${CURRENT_THREE_VENDOR_PREFIX}three.module.min.js"; inside a type="module" project file.`,
+      `Three.js addons (OrbitControls, GLTFLoader, CSS2DRenderer, ...) are served under ${CURRENT_THREE_VENDOR_PREFIX}addons/, e.g. import { OrbitControls } from "${CURRENT_THREE_VENDOR_PREFIX}addons/controls/OrbitControls.js";.`,
+      `Loader runtime assets are served too: point decoder/transcoder paths at the vendor prefix, e.g. dracoLoader.setDecoderPath("${CURRENT_THREE_VENDOR_PREFIX}addons/libs/draco/");, never at a CDN.`,
+      'The Three.js vendor paths are served by Twinkle and are stable for preview and published builds; projects saved with the older 0.160.0 path keep working.'
     ]
   },
   {

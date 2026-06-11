@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type {
   ChatPanelCommunicationMode,
@@ -81,6 +81,7 @@ import {
   normalizeProjectFilesForBuild,
   serializedComparableValue
 } from './helpers/projectFiles';
+import { getLegacyThreeVendorPaths } from './helpers/threeVendorUpgrade';
 import { resolveScopedPlanQuestion } from './helpers/promptBindings';
 import {
   chatMessagesEqual,
@@ -269,6 +270,8 @@ export default function BuildEditor({
       version: 0
     }));
   const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
+    useState(false);
+  const [threeUpgradeNoticeDismissed, setThreeUpgradeNoticeDismissed] =
     useState(false);
   const [branchMainUpdateState, setBranchMainUpdateState] =
     useState<BranchMainUpdateState>({
@@ -890,6 +893,7 @@ export default function BuildEditor({
   const {
     handleAcceptFollowUpPrompt,
     handleAskLumineToResolveMergeConflicts,
+    handleAskLumineToUpgradeThreeVendor,
     handleCancelScopedPlan,
     handleContinueScopedPlan,
     handleDeleteMessage,
@@ -1081,6 +1085,15 @@ export default function BuildEditor({
     resetProjectFilesDraftState(normalizedFiles);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
+
+  function handleDismissThreeUpgradeNotice() {
+    setThreeUpgradeNoticeDismissed(true);
+    try {
+      localStorage.setItem(threeUpgradeDismissKey, '1');
+    } catch {
+      // Storage may be unavailable; the notice stays dismissed for the session.
+    }
+  }
 
   function discardCurrentProjectFileDraft() {
     const discardedFiles = previewPanelRef.current?.discardProjectFileDraft();
@@ -1336,6 +1349,27 @@ export default function BuildEditor({
   const mainProjectConflictMarkerPaths = getContributionConflictMarkerPaths(
     build.projectFiles
   );
+  // Scans every project file's content, so keep it off the render hot path.
+  // Legacy single-file builds keep their app in build.code with no project
+  // files, so scan the same normalized set the editor edits and previews.
+  const legacyThreeVendorPaths = useMemo(
+    () =>
+      getLegacyThreeVendorPaths(
+        normalizeProjectFilesForBuild(build.projectFiles || [], build.code || '')
+      ),
+    [build.projectFiles, build.code]
+  );
+  const threeUpgradeDismissKey = `build-three-upgrade-dismissed:${build.id}`;
+  useEffect(() => {
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem(threeUpgradeDismissKey) === '1';
+    } catch {
+      dismissed = false;
+    }
+    setThreeUpgradeNoticeDismissed(dismissed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id]);
   const branchMainUpdateNoticeError =
     branchMainUpdateTarget && mainProjectConflictMarkerPaths.length > 0
       ? UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE
@@ -1431,6 +1465,17 @@ export default function BuildEditor({
           onUpdate: handleUpdateCurrentBranchFromMain
         }
       : null,
+    threeUpgradeNoticeControl:
+      canEditCurrentBuildProject &&
+      !threeUpgradeNoticeDismissed &&
+      legacyThreeVendorPaths.length > 0
+        ? {
+            shown: true,
+            onUpgrade: () =>
+              handleAskLumineToUpgradeThreeVendor(legacyThreeVendorPaths),
+            onDismiss: handleDismissThreeUpgradeNotice
+          }
+        : null,
     peoplePanel: (
       <CollaborationPanel
         build={build}

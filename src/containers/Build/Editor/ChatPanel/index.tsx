@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import { useViewContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
+import ThreeVendorUpgradeNotice from '../ThreeVendorUpgradeNotice';
 import Composer from './Composer';
 import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
@@ -172,6 +173,7 @@ export default function ChatPanel({
   lumineChatVisibilityControl,
   lumineModelSelectionControl,
   mainUpdateNoticeControl,
+  threeUpgradeNoticeControl,
   messages,
   executionPlan,
   scopedPlanQuestion,
@@ -650,6 +652,15 @@ export default function ChatPanel({
               loading={mainUpdateNoticeControl.loading}
               error={mainUpdateNoticeControl.error}
               onUpdate={mainUpdateNoticeControl.onUpdate}
+            />
+          ) : null}
+          {threeUpgradeNoticeControl?.shown ? (
+            <ThreeVendorUpgradeNotice
+              className={mainUpdateNoticePlacementClass}
+              loading={generating}
+              disabled={aiInputDisabled}
+              onUpgrade={threeUpgradeNoticeControl.onUpgrade}
+              onDismiss={threeUpgradeNoticeControl.onDismiss}
             />
           ) : null}
           <Header

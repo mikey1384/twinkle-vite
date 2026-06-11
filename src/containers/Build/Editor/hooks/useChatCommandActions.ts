@@ -1,5 +1,9 @@
 import { socket } from '~/constants/sockets/api';
 import {
+  CURRENT_THREE_VENDOR_PREFIX,
+  LEGACY_THREE_VENDOR_PREFIX
+} from '../helpers/threeVendorUpgrade';
+import {
   buildFollowUpAcceptPromptBinding,
   buildScopedPlanContinuePromptBinding,
   resolveBuildFollowUpPromptKey
@@ -186,6 +190,32 @@ export default function useChatCommandActions({
     openLumineChatShortcutTarget();
     return await sendBuildMessageText(prompt, {
       messageContext: mergeConflictContext
+    });
+  }
+
+  async function handleAskLumineToUpgradeThreeVendor(paths: string[] = []) {
+    if (!isOwner) return false;
+    const normalizedPaths = Array.from(
+      new Set(
+        (Array.isArray(paths) ? paths : [])
+          .map((path) => String(path || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const prompt = 'Upgrade this project to the current Three.js vendor version.';
+    const upgradeContext = [
+      'THREE_VENDOR_UPGRADE_CONTEXT:',
+      `Replace every reference to ${LEGACY_THREE_VENDOR_PREFIX} with ${CURRENT_THREE_VENDOR_PREFIX} across all project files.`,
+      normalizedPaths.length > 0
+        ? `Known files using the old path: ${normalizedPaths.join(', ')}. There may be more; verify with workspace tools.`
+        : 'Scan the project files for the old vendor path.',
+      `Three.js addons are available under ${CURRENT_THREE_VENDOR_PREFIX}addons/ (for example controls/OrbitControls.js or loaders/GLTFLoader.js). Do not refactor working code to use them as part of this upgrade.`,
+      'After switching the imports, check the project for Three.js APIs whose behavior changed between r160 and r184 (renamed or removed APIs, color management and lighting defaults) and adjust only what the project actually uses.',
+      'Keep behavior identical, confirm the preview renders without errors, then save the project.'
+    ].join('\n');
+    openLumineChatShortcutTarget();
+    return await sendBuildMessageText(prompt, {
+      messageContext: upgradeContext
     });
   }
 
@@ -393,6 +423,7 @@ export default function useChatCommandActions({
   return {
     handleAcceptFollowUpPrompt,
     handleAskLumineToResolveMergeConflicts,
+    handleAskLumineToUpgradeThreeVendor,
     handleCancelScopedPlan,
     handleContinueScopedPlan,
     handleDeleteMessage,

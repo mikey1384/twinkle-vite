@@ -223,6 +223,12 @@ export interface MainUpdateNoticeControl {
   onUpdate: () => Promise<void> | void;
 }
 
+export interface ThreeUpgradeNoticeControl {
+  shown: boolean;
+  onUpgrade: () => Promise<boolean | void> | boolean | void;
+  onDismiss: () => void;
+}
+
 export interface LimitProgressItem {
   id: string;
   label: string;
@@ -252,6 +258,7 @@ export interface ChatPanelProps {
   lumineChatVisibilityControl?: LumineChatVisibilityControl | null;
   lumineModelSelectionControl?: LumineModelSelectionControl | null;
   mainUpdateNoticeControl?: MainUpdateNoticeControl | null;
+  threeUpgradeNoticeControl?: ThreeUpgradeNoticeControl | null;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;
