@@ -57,7 +57,8 @@ const DEFAULT_PROFILE_PINNED_AI_CARDS = {
 const DEFAULT_PROFILE_PINNED_BUILDS = {
   builds: EMPTY_PROFILE_FEEDS,
   loaded: false,
-  isTopBuilds: false
+  isTopBuilds: false,
+  expanded: false
 };
 const DEFAULT_PROFILE_LIKES = {
   all: EMPTY_PROFILE_FEEDS,

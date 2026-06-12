@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import OwnAiCliNotice from './OwnAiCliNotice';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import { Color } from '~/constants/css';
 
 interface ComposerProps {
   AI_FEATURES_DISABLED: boolean;
@@ -15,19 +14,10 @@ interface ComposerProps {
   inputRef: RefObject<HTMLTextAreaElement | null>;
   isOwner: boolean;
   limitsExpanded: boolean;
-  normalizedFollowUpQuestion: string;
-  normalizedScopedPlanQuestion: string;
-  onAcceptFollowUpPrompt: () => void;
-  onCancelScopedPlan: () => void;
-  onContinueScopedPlan: () => void;
-  onDismissFollowUpPrompt: () => void;
   onDraftMessageChange: (value: string) => void;
   onOpenBuildChatUpload: () => void;
-  onPrefillRedirect: () => void;
   onStopGeneration: () => void;
   onSubmitMessage: () => void;
-  showGenericFollowUpQuickReplies: boolean;
-  showScopedPlanQuickReplies: boolean;
   uploadInFlight: boolean;
 }
 
@@ -41,19 +31,10 @@ export default function Composer({
   inputRef,
   isOwner,
   limitsExpanded,
-  normalizedFollowUpQuestion,
-  normalizedScopedPlanQuestion,
-  onAcceptFollowUpPrompt,
-  onCancelScopedPlan,
-  onContinueScopedPlan,
-  onDismissFollowUpPrompt,
   onDraftMessageChange,
   onOpenBuildChatUpload,
-  onPrefillRedirect,
   onStopGeneration,
   onSubmitMessage,
-  showGenericFollowUpQuickReplies,
-  showScopedPlanQuickReplies,
   uploadInFlight
 }: ComposerProps) {
   if (!isOwner || limitsExpanded) {
@@ -74,124 +55,6 @@ export default function Composer({
         background: #fff;
       `}
     >
-      {showScopedPlanQuickReplies || showGenericFollowUpQuickReplies ? (
-        <div
-          className={css`
-            display: grid;
-            gap: 0.65rem;
-            margin-bottom: 0.7rem;
-          `}
-        >
-          {showScopedPlanQuickReplies || normalizedFollowUpQuestion ? (
-            <div
-              className={css`
-                font-size: var(--build-workshop-prompt-font-size);
-                line-height: 1.45;
-                color: var(--chat-text);
-                font-weight: 700;
-              `}
-            >
-              {showScopedPlanQuickReplies
-                ? normalizedScopedPlanQuestion
-                : normalizedFollowUpQuestion}
-            </div>
-          ) : null}
-          <div
-            className={css`
-              display: flex;
-              flex-wrap: wrap;
-              gap: 0.45rem;
-            `}
-          >
-            <button
-              type="button"
-              onClick={
-                showScopedPlanQuickReplies
-                  ? onContinueScopedPlan
-                  : onAcceptFollowUpPrompt
-              }
-              className={css`
-                border: 1px solid ${Color.green(0.24)};
-                background: ${Color.green(0.12)};
-                color: ${Color.green()};
-                border-radius: 999px;
-                padding: 0.5rem 0.9rem;
-                font-size: var(--build-workshop-choice-font-size);
-                font-weight: 800;
-                cursor: pointer;
-                transition:
-                  background-color 0.16s ease,
-                  border-color 0.16s ease,
-                  color 0.16s ease;
-                &:hover,
-                &:focus-visible {
-                  border-color: ${Color.green(0.42)};
-                  background: ${Color.green(0.2)};
-                  color: ${Color.green()};
-                }
-              `}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              onClick={
-                showScopedPlanQuickReplies
-                  ? onCancelScopedPlan
-                  : onDismissFollowUpPrompt
-              }
-              className={css`
-                border: 1px solid rgba(148, 163, 184, 0.28);
-                background: rgba(148, 163, 184, 0.1);
-                color: #334155;
-                border-radius: 999px;
-                padding: 0.5rem 0.9rem;
-                font-size: var(--build-workshop-choice-font-size);
-                font-weight: 800;
-                cursor: pointer;
-                transition:
-                  background-color 0.16s ease,
-                  border-color 0.16s ease,
-                  color 0.16s ease;
-                &:hover,
-                &:focus-visible {
-                  border-color: rgba(100, 116, 139, 0.42);
-                  background: rgba(148, 163, 184, 0.18);
-                  color: #1e293b;
-                }
-              `}
-            >
-              No
-            </button>
-            <button
-              type="button"
-              onClick={onPrefillRedirect}
-              className={css`
-                border: 1px solid rgba(217, 119, 6, 0.2);
-                background: rgba(245, 158, 11, 0.11);
-                color: #b45309;
-                border-radius: 999px;
-                padding: 0.5rem 0.9rem;
-                font-size: var(--build-workshop-choice-font-size);
-                font-weight: 800;
-                cursor: pointer;
-                transition:
-                  background-color 0.16s ease,
-                  border-color 0.16s ease,
-                  color 0.16s ease;
-                &:hover,
-                &:focus-visible {
-                  border-color: rgba(217, 119, 6, 0.36);
-                  background: rgba(245, 158, 11, 0.18);
-                  color: #92400e;
-                }
-              `}
-            >
-              No (explain what you want instead)
-            </button>
-          </div>
-        </div>
-      ) : null}
       {aiInputDisabled ? (
         <AIDisabledNotice
           title={

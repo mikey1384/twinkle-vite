@@ -179,6 +179,7 @@ import { faStarHalfAlt as farStarHalfAlt } from '@fortawesome/pro-regular-svg-ic
 import { faStop } from '@fortawesome/pro-solid-svg-icons/faStop';
 import { faSurprise } from '@fortawesome/pro-solid-svg-icons/faSurprise';
 import { faSync } from '@fortawesome/pro-solid-svg-icons/faSync';
+import { faTag } from '@fortawesome/pro-solid-svg-icons/faTag';
 import { faTasks } from '@fortawesome/pro-solid-svg-icons/faTasks';
 import { faThumbtack } from '@fortawesome/pro-solid-svg-icons/faThumbtack';
 import { faThumbsDown } from '@fortawesome/pro-solid-svg-icons/faThumbsDown';
@@ -401,6 +402,7 @@ library.add(
   farStarHalfAlt,
   faSurprise,
   faSync,
+  faTag,
   faTasks,
   faThumbsDown,
   faThumbsUp,

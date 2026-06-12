@@ -17,6 +17,12 @@ import { aiCardScrollHeight } from '~/constants/state';
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 
+// column-reverse: scrollTop is 0 at the bottom and negative when scrolled up.
+// Native bottom-pinning only happens at exactly 0; past that, scroll anchoring
+// keeps the old content in view when a new card is inserted, so anything within
+// this band must be treated as "at bottom" and re-pinned manually.
+const SCROLL_AT_BOTTOM_BAND = 100;
+
 export default function ActivitiesContainer({
   displayedThemeColor
 }: {
@@ -44,10 +50,23 @@ export default function ActivitiesContainer({
   const [showGoToBottom, setShowGoToBottom] = useState(false);
 
   const ActivitiesRef = useRef<any>(null);
-  const isScrollAtBottomRef = useRef(false);
+  // seeded from the persisted position: the mount restore effect runs before
+  // the scroll listener is attached, so a hardcoded `true` would let a feed
+  // arriving within the first frame re-pin to bottom and wipe the restore
+  const isScrollAtBottomRef = useRef(
+    aiCardScrollHeight.current > -SCROLL_AT_BOTTOM_BAND
+  );
   const prevScrollPosition = useRef<number | null>(null);
 
   const loadMoreButtonLock = useRef(false);
+
+  // scroll events can invoke a handleLoadMore closure from a previous render
+  // after the lock is released; reading the cursor from a ref instead of the
+  // closure prevents refetching a page that was already appended
+  const aiCardFeedsRef = useRef(aiCardFeeds);
+  useEffect(() => {
+    aiCardFeedsRef.current = aiCardFeeds;
+  }, [aiCardFeeds]);
 
   const handleLoadMore = useCallback(async () => {
     if (!aiCardLoadMoreButton || loadMoreButtonLock.current) return;
@@ -57,8 +76,9 @@ export default function ActivitiesContainer({
     prevScrollPosition.current = ActivitiesRef.current?.scrollTop;
 
     try {
+      const loadedFeeds = aiCardFeedsRef.current;
       const { cardFeeds, cardObj, loadMoreShown, mostRecentOfferTimeStamp } =
-        await loadAICardFeeds(aiCardFeeds?.[aiCardFeeds.length - 1]?.id);
+        await loadAICardFeeds(loadedFeeds?.[loadedFeeds.length - 1]?.id);
       onLoadMoreAICards({
         cardFeeds,
         cardObj,
@@ -80,7 +100,7 @@ export default function ActivitiesContainer({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCardLoadMoreButton, aiCardFeeds]);
+  }, [aiCardLoadMoreButton]);
 
   useEffect(() => {
     if (isScrollAtBottomRef.current) handleScrollToBottom();
@@ -107,7 +127,7 @@ export default function ActivitiesContainer({
         handleLoadMore();
       }
       isScrollAtBottomRef.current =
-        (ActivitiesRef.current || {}).scrollTop > -10;
+        (ActivitiesRef.current || {}).scrollTop > -SCROLL_AT_BOTTOM_BAND;
       setShowGoToBottom(scrollTop < -5000);
       aiCardScrollHeight.current = scrollTop;
     }

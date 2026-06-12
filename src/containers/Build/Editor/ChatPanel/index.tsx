@@ -15,7 +15,6 @@ import {
   type ChatPanelProps
 } from './types';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
-import { formatScaledRem } from './helpers/utils';
 
 const panelClass = css`
   display: flex;
@@ -41,21 +40,88 @@ const panelClass = css`
   --chat-hover-title-bg: #e2edff;
   --chat-text: #2f3747;
   --chat-border: rgba(148, 163, 184, 0.34);
-  --build-workshop-title-font-size: 1.2rem;
-  --build-workshop-body-font-size: 1.1rem;
-  --build-workshop-label-font-size: 1.1rem;
-  --build-workshop-meta-font-size: 1.1rem;
-  --build-workshop-small-font-size: 1.1rem;
-  --build-workshop-tiny-font-size: 1.1rem;
-  --build-workshop-message-font-size: 1.1rem;
-  --build-workshop-message-meta-font-size: 1.1rem;
-  --build-workshop-input-font-size: 1.1rem;
-  --build-workshop-prompt-font-size: 1.1rem;
-  --build-workshop-choice-font-size: 1.1rem;
+  /* Reading text (messages, input, prompts) is sized close to the main site
+     chat (1.6rem messages); chrome and fine print (label/meta/small/tiny)
+     stay compact so the dense header/settings rows don't overflow.
+     --build-workshop-font-scale is set inline by the component (desktop
+     panel-width scaling); the bases must stay here in CSS so the mobile
+     breakpoint below can override them. */
+  --build-workshop-font-scale: 1;
+  --build-workshop-title-font-size: calc(
+    1.6rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-body-font-size: calc(
+    1.4rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-label-font-size: calc(
+    1.2rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-meta-font-size: calc(
+    1.1rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-small-font-size: calc(
+    1.1rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-tiny-font-size: max(
+    1rem,
+    1rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-message-font-size: calc(
+    1.5rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-message-meta-font-size: calc(
+    1.1rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-input-font-size: calc(
+    1.5rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-prompt-font-size: calc(
+    1.4rem * var(--build-workshop-font-scale)
+  );
+  --build-workshop-choice-font-size: calc(
+    1.3rem * var(--build-workshop-font-scale)
+  );
   font-size: var(--build-workshop-body-font-size);
   @media (max-width: ${mobileMaxWidth}) {
     border-right: none;
     border-bottom: 1px solid var(--ui-border);
+    /* The site root font drops from 10px to 8px at this breakpoint
+       (styles.css), which would shrink all the sizes above by 20% on
+       phones; these overrides restore roughly the same physical px sizes
+       as desktop. */
+    --build-workshop-title-font-size: calc(
+      2rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-body-font-size: calc(
+      1.7rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-label-font-size: calc(
+      1.4rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-meta-font-size: calc(
+      1.3rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-small-font-size: calc(
+      1.3rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-tiny-font-size: calc(
+      1.2rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-message-font-size: calc(
+      1.8rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-message-meta-font-size: calc(
+      1.3rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-input-font-size: calc(
+      1.8rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-prompt-font-size: calc(
+      1.7rem * var(--build-workshop-font-scale)
+    );
+    --build-workshop-choice-font-size: calc(
+      1.6rem * var(--build-workshop-font-scale)
+    );
   }
 `;
 
@@ -155,6 +221,10 @@ const mainUpdateNoticePlacementClass = css`
 
 type CommunicationMode = ChatPanelCommunicationMode;
 const LUMINE_BOTTOM_SCROLL_THRESHOLD = 120;
+// Persisted in place of a px scrollTop when the user was at the bottom, so a
+// later restore can target the *current* bottom; saved px positions go stale
+// whenever layout reflows (font loads, message clamping, resized panel).
+const LUMINE_SCROLL_BOTTOM_SENTINEL = Number.MAX_SAFE_INTEGER;
 
 export default function ChatPanel({
   className,
@@ -246,6 +316,7 @@ export default function ChatPanel({
     scrollTop: number;
     stickToBottom: boolean;
   } | null>(null);
+  const lumineStickToBottomRef = useRef(true);
   communicationScrollTopsRef.current = communicationScrollTops;
   onCommunicationScrollChangeRef.current = onCommunicationScrollChange;
   const hasPeoplePanel = Boolean(peoplePanel);
@@ -438,16 +509,19 @@ export default function ChatPanel({
     const savedScrollTop = Number(
       communicationScrollTopsRef.current?.lumine || 0
     );
+    const restoreToBottom = snapshot
+      ? snapshot.stickToBottom
+      : savedScrollTop <= 0 || savedScrollTop >= LUMINE_SCROLL_BOTTOM_SENTINEL;
     const frame = window.requestAnimationFrame(() => {
+      lumineStickToBottomRef.current = restoreToBottom;
       const container = chatScrollRef.current;
       if (container) {
         container.scrollTo({
-          top:
-            snapshot && !snapshot.stickToBottom
+          top: restoreToBottom
+            ? container.scrollHeight
+            : snapshot
               ? snapshot.scrollTop
-              : savedScrollTop > 0
-                ? savedScrollTop
-                : container.scrollHeight,
+              : savedScrollTop,
           behavior: 'auto'
         });
         return;
@@ -460,6 +534,25 @@ export default function ChatPanel({
     });
     return () => window.cancelAnimationFrame(frame);
   }, [activeCommunicationMode, chatEndRef, chatScrollRef]);
+
+  // A single scrollTo lands short whenever content keeps growing after the
+  // frame it was issued in (markdown layout, message clamping, font loads,
+  // streaming). While the user is at the bottom, keep them pinned through
+  // any content growth.
+  useEffect(() => {
+    if (activeCommunicationMode !== 'lumine') return;
+    const container = chatScrollRef.current;
+    const content = container?.firstElementChild;
+    if (!container || !content || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      if (!lumineStickToBottomRef.current) return;
+      container.scrollTop = container.scrollHeight;
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [activeCommunicationMode, chatScrollRef]);
 
   useEffect(() => {
     return () => {
@@ -486,10 +579,14 @@ export default function ChatPanel({
       if (container) {
         const distanceFromBottom =
           container.scrollHeight - container.scrollTop - container.clientHeight;
-        commitLumineScrollTop(container.scrollTop);
+        const stickToBottom =
+          distanceFromBottom <= LUMINE_BOTTOM_SCROLL_THRESHOLD;
+        commitLumineScrollTop(
+          stickToBottom ? LUMINE_SCROLL_BOTTOM_SENTINEL : container.scrollTop
+        );
         lumineScrollSnapshotRef.current = {
           scrollTop: container.scrollTop,
-          stickToBottom: distanceFromBottom <= LUMINE_BOTTOM_SCROLL_THRESHOLD
+          stickToBottom
         };
       }
     }
@@ -499,8 +596,15 @@ export default function ChatPanel({
 
   function handleLumineScroll() {
     onChatScroll();
-    const scrollTop = chatScrollRef.current?.scrollTop || 0;
-    scheduleLumineScrollTopSave(scrollTop);
+    const container = chatScrollRef.current;
+    if (!container) return;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const stickToBottom = distanceFromBottom <= LUMINE_BOTTOM_SCROLL_THRESHOLD;
+    lumineStickToBottomRef.current = stickToBottom;
+    scheduleLumineScrollTopSave(
+      stickToBottom ? LUMINE_SCROLL_BOTTOM_SENTINEL : container.scrollTop
+    );
   }
 
   function scheduleLumineScrollTopSave(scrollTop: number) {
@@ -554,50 +658,7 @@ export default function ChatPanel({
       className={className ? `${panelClass} ${className}` : panelClass}
       style={
         {
-          '--build-workshop-title-font-size': formatScaledRem(
-            1.2,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-body-font-size': formatScaledRem(
-            1,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-label-font-size': formatScaledRem(
-            0.96,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-meta-font-size': formatScaledRem(
-            0.88,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-small-font-size': formatScaledRem(
-            0.84,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-tiny-font-size': formatScaledRem(
-            0.78,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-message-font-size': formatScaledRem(
-            1.1,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-message-meta-font-size': formatScaledRem(
-            0.82,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-input-font-size': formatScaledRem(
-            1.06,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-prompt-font-size': formatScaledRem(
-            1.08,
-            normalizedWorkshopScale
-          ),
-          '--build-workshop-choice-font-size': formatScaledRem(
-            1,
-            normalizedWorkshopScale
-          )
+          '--build-workshop-font-scale': String(normalizedWorkshopScale)
         } as React.CSSProperties
       }
     >
@@ -696,6 +757,25 @@ export default function ChatPanel({
               activeStreamMessageIds={activeStreamMessageIds}
               isOwner={isOwner}
               chatEndRef={chatEndRef}
+              quickReplyShown={
+                showScopedPlanQuickReplies || showGenericFollowUpQuickReplies
+              }
+              quickReplyQuestion={
+                showScopedPlanQuickReplies
+                  ? normalizedScopedPlanQuestion
+                  : normalizedFollowUpQuestion
+              }
+              onQuickReplyYes={
+                showScopedPlanQuickReplies
+                  ? onContinueScopedPlan
+                  : onAcceptFollowUpPrompt
+              }
+              onQuickReplyNo={
+                showScopedPlanQuickReplies
+                  ? onCancelScopedPlan
+                  : onDismissFollowUpPrompt
+              }
+              onQuickReplyRedirect={handlePrefillRedirect}
               onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
               onDeleteMessage={onDeleteMessage}
             />
@@ -710,19 +790,10 @@ export default function ChatPanel({
             inputRef={inputRef}
             isOwner={isOwner}
             limitsExpanded={limitsExpanded}
-            normalizedFollowUpQuestion={normalizedFollowUpQuestion}
-            normalizedScopedPlanQuestion={normalizedScopedPlanQuestion}
-            onAcceptFollowUpPrompt={onAcceptFollowUpPrompt}
-            onCancelScopedPlan={onCancelScopedPlan}
-            onContinueScopedPlan={onContinueScopedPlan}
-            onDismissFollowUpPrompt={onDismissFollowUpPrompt}
             onDraftMessageChange={onDraftMessageChange}
             onOpenBuildChatUpload={onOpenBuildChatUpload}
-            onPrefillRedirect={handlePrefillRedirect}
             onStopGeneration={onStopGeneration}
             onSubmitMessage={handleSubmitMessage}
-            showGenericFollowUpQuickReplies={showGenericFollowUpQuickReplies}
-            showScopedPlanQuickReplies={showScopedPlanQuickReplies}
             uploadInFlight={uploadInFlight}
           />
         </>

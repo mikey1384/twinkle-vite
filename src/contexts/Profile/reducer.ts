@@ -24,7 +24,8 @@ export default function ProfileReducer(
       builds: [],
       favoriteViewerId: 0,
       loaded: false,
-      isTopBuilds: false
+      isTopBuilds: false,
+      expanded: false
     },
     likes: {
       ['ai-stories']: [],
@@ -322,6 +323,17 @@ export default function ProfileReducer(
             ...prevContentState.pinnedAICards,
             cardIds: action.cardIds,
             loaded: true
+          }
+        }
+      };
+    case 'SET_PINNED_BUILDS_EXPANDED':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          pinnedBuilds: {
+            ...prevContentState.pinnedBuilds,
+            expanded: Boolean(action.expanded)
           }
         }
       };

@@ -249,6 +249,19 @@ export default function ProfileActions(dispatch: Dispatch) {
         username
       });
     },
+    onSetPinnedBuildsExpanded({
+      expanded,
+      username
+    }: {
+      expanded: boolean;
+      username: string;
+    }) {
+      return dispatch({
+        type: 'SET_PINNED_BUILDS_EXPANDED',
+        expanded,
+        username
+      });
+    },
     onSetProfileId({
       username,
       profileId

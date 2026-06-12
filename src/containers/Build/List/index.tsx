@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
-import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
+import type {
+  BuildProjectListItemData,
+  BuildTag
+} from '~/components/Build/ProjectListItem';
 import TabFilter from '../TabFilter';
 import {
   useAppContext,
@@ -37,7 +40,9 @@ import Overlays from './Overlays';
 import RequestQueue from './RequestQueue';
 import Results from './Results';
 import Search from './Search';
+import SearchResults from './SearchResults';
 import useActivityPanel from './hooks/useActivityPanel';
+import useGlobalBuildSearch from './hooks/useGlobalBuildSearch';
 import useQuickAccess from './hooks/useQuickAccess';
 import type {
   BuildListTab,
@@ -173,6 +178,8 @@ export default function BuildList({
   );
   const [buildSearchInput, setBuildSearchInput] = useState('');
   const [buildSearchQuery, setBuildSearchQuery] = useState('');
+  const [buildSearchSort, setBuildSearchSort] =
+    useState<PublicBuildSort>('recent');
   const collaboratingBrowseState =
     buildStudio?.browse?.collaborating || createEmptyBrowseState();
   const collaboratingCacheRefreshKey =
@@ -184,7 +191,7 @@ export default function BuildList({
     normalizedUserId &&
     activeBrowseState.userId === normalizedUserId &&
     activeBrowseState.browseMode === activeBrowseMode &&
-    activeBrowseState.searchQuery === buildSearchQuery &&
+    activeBrowseState.searchQuery === '' &&
     activeBrowseState.loaded
   );
   const collaboratingLoadedForCurrentUser = Boolean(
@@ -221,6 +228,21 @@ export default function BuildList({
   const displayedMyBuilds = isBuildSearchActive
     ? builds.filter((build) => buildMatchesSearchQuery(build, buildSearchQuery))
     : builds;
+  const {
+    loadingMorePublic: searchLoadingMorePublic,
+    loadingMoreTeam: searchLoadingMoreTeam,
+    publicBuilds: searchPublicBuilds,
+    publicHasMore: searchPublicHasMore,
+    searching,
+    teamBuilds: searchTeamBuilds,
+    teamHasMore: searchTeamHasMore,
+    onLoadMorePublic: handleLoadMoreSearchPublicBuilds,
+    onLoadMoreTeam: handleLoadMoreSearchTeamBuilds
+  } = useGlobalBuildSearch({
+    searchQuery: buildSearchQuery,
+    sort: buildSearchSort,
+    userId: normalizedUserId
+  });
   const browseBuilds =
     activeTab === 'mine' || !activeBrowseLoadedForCurrentUser
       ? []
@@ -515,7 +537,7 @@ export default function BuildList({
   ]);
 
   useEffect(() => {
-    if (!userId || activeTab === 'mine') {
+    if (!userId || activeTab === 'mine' || isBuildSearchActive) {
       setBrowseLoading(false);
       return;
     }
@@ -532,17 +554,14 @@ export default function BuildList({
       try {
         const data =
           activeTab === 'collaborating'
-            ? await loadCollaboratingBuilds({
-                search: buildSearchQuery || undefined
-              })
+            ? await loadCollaboratingBuilds()
             : await loadPublicBuilds({
                 sort: getPublicBuildSort(activeTab, activeBrowseMode),
                 scope: getPublicBuildScope(activeTab),
                 excludeMine: shouldExcludeMineFromPublicBrowse(
                   activeTab,
                   activeBrowseMode
-                ),
-                search: buildSearchQuery || undefined
+                )
               });
         if (!canceled) {
           onSetBuildStudioBrowseBuilds({
@@ -550,7 +569,7 @@ export default function BuildList({
             builds: data?.builds || [],
             loadMoreToken: getLoadMoreToken(data),
             browseMode: activeBrowseMode,
-            searchQuery: buildSearchQuery,
+            searchQuery: '',
             cacheRefreshKey:
               activeTab === 'collaborating'
                 ? collaboratingCacheRefreshKey
@@ -570,7 +589,7 @@ export default function BuildList({
             builds: [],
             loadMoreToken: null,
             browseMode: activeBrowseMode,
-            searchQuery: buildSearchQuery,
+            searchQuery: '',
             cacheRefreshKey:
               activeTab === 'collaborating'
                 ? collaboratingCacheRefreshKey
@@ -597,7 +616,7 @@ export default function BuildList({
     activeTab,
     activeBrowseMode,
     activeBrowseLoaded,
-    buildSearchQuery
+    isBuildSearchActive
   ]);
 
   if (!userId) {
@@ -649,14 +668,25 @@ export default function BuildList({
             ref={listInitialScrollRef}
             data-scroll-initial-target="build-list"
           >
-            <TabFilter
-              activeTab={activeTab}
-              color={profileTheme}
-              onChange={handleTabChange}
-              tabs={visibleBuildListTabs}
+            <Search
+              value={buildSearchInput}
+              sort={buildSearchSort}
+              sortShown={isBuildSearchActive}
+              onChange={setBuildSearchInput}
+              onClear={handleClearBuildSearch}
+              onSortChange={setBuildSearchSort}
             />
 
-            {isPublicBrowseTab(activeTab) ? (
+            {!isBuildSearchActive ? (
+              <TabFilter
+                activeTab={activeTab}
+                color={profileTheme}
+                onChange={handleTabChange}
+                tabs={visibleBuildListTabs}
+              />
+            ) : null}
+
+            {!isBuildSearchActive && isPublicBrowseTab(activeTab) ? (
               <div className={browseModeFilterWrapClass}>
                 <TabFilter
                   activeTab={activeBrowseMode}
@@ -668,15 +698,6 @@ export default function BuildList({
               </div>
             ) : null}
 
-            <Search
-              value={buildSearchInput}
-              onChange={setBuildSearchInput}
-              onClear={() => {
-                setBuildSearchInput('');
-                setBuildSearchQuery('');
-              }}
-            />
-
             <ActivityPanels
               {...buildActivityPanelProps}
               hasNewActivity={hasNewBuildActivity}
@@ -685,7 +706,7 @@ export default function BuildList({
               variant="mobile"
             />
 
-            {isMyBuildsTab ? (
+            {!isBuildSearchActive && isMyBuildsTab ? (
               <RequestQueue
                 builds={buildsWithPendingRequests}
                 totalCount={totalPendingCollaborationRequests}
@@ -693,7 +714,31 @@ export default function BuildList({
               />
             ) : null}
 
-            <Results
+            {isBuildSearchActive ? (
+              <SearchResults
+                color={profileTheme}
+                loadingMorePublic={searchLoadingMorePublic}
+                loadingMoreTeam={searchLoadingMoreTeam}
+                myBuilds={displayedMyBuilds}
+                publicBuilds={searchPublicBuilds}
+                publicHasMore={searchPublicHasMore}
+                runtimeBackTo={`${location.pathname}${location.search}${location.hash}`}
+                searching={searching}
+                searchQuery={buildSearchQuery}
+                teamBuilds={searchTeamBuilds}
+                teamHasMore={searchTeamHasMore}
+                onAddDescription={setEditingBuild}
+                onDelete={setDeletingBuild}
+                onFavoriteChange={handleBuildFavoriteChange}
+                onFavoriteError={handleBuildFavoriteError}
+                onFavoriteStart={handleBuildFavoriteStart}
+                onLoadMorePublic={handleLoadMoreSearchPublicBuilds}
+                onLoadMoreTeam={handleLoadMoreSearchTeamBuilds}
+                onOpenForkHistory={setForkHistoryBuildId}
+                onTagClick={handleBuildTagClick}
+              />
+            ) : (
+              <Results
               activeTab={activeTab}
               activeTabLabel={activeTabConfig.label}
               anchorKey={getBuildListScrollPositionPathname(activeTab)}
@@ -724,7 +769,9 @@ export default function BuildList({
               onOpenForkHistory={setForkHistoryBuildId}
               onPromptInputChange={setPromptInput}
               onStartFromPrompt={handleStartFromPrompt}
+              onTagClick={handleBuildTagClick}
             />
+            )}
           </div>
         </main>
         <ActivityPanels {...buildActivityPanelProps} variant="rail" />
@@ -828,6 +875,17 @@ export default function BuildList({
     }
   }
 
+  function handleClearBuildSearch() {
+    setBuildSearchInput('');
+    setBuildSearchQuery('');
+    setBuildSearchSort('recent');
+  }
+
+  function handleBuildTagClick(tag: BuildTag) {
+    setBuildSearchInput(tag.label);
+    setBuildSearchQuery(normalizeBuildListSearchQuery(tag.label));
+  }
+
   function handleTabChange(tab: BuildListTab) {
     if (tab !== activeTab) {
       tabChangeInitialScrollRef.current = true;
@@ -865,15 +923,13 @@ export default function BuildList({
       const data =
         activeTab === 'collaborating'
           ? await loadCollaboratingBuilds({
-              cursor: browseLoadMoreButton,
-              search: buildSearchQuery || undefined
+              cursor: browseLoadMoreButton
             })
           : await loadPublicBuilds(
               buildPublicLoadMoreParams(
                 activeTab,
                 activeBrowseMode,
-                browseLoadMoreButton,
-                buildSearchQuery
+                browseLoadMoreButton
               )
             );
       onAppendBuildStudioBrowseBuilds({
@@ -881,7 +937,7 @@ export default function BuildList({
         builds: data?.builds || [],
         loadMoreToken: getLoadMoreToken(data),
         browseMode: activeBrowseMode,
-        searchQuery: buildSearchQuery,
+        searchQuery: '',
         cacheGeneration:
           activeTab === 'collaborating'
             ? collaboratingCacheGeneration
@@ -898,15 +954,13 @@ export default function BuildList({
   function buildPublicLoadMoreParams(
     tab: BuildListTab,
     browseMode: BuildStudioBrowseMode,
-    loadMoreToken: string,
-    searchQuery: string
+    loadMoreToken: string
   ): {
     sort: PublicBuildSort;
     scope: PublicBuildScope;
     excludeMine: boolean;
     cursor?: string;
     lastId?: number;
-    search?: string;
   } {
     const loadMoreParams: {
       sort: PublicBuildSort;
@@ -914,15 +968,11 @@ export default function BuildList({
       excludeMine: boolean;
       cursor?: string;
       lastId?: number;
-      search?: string;
     } = {
       sort: getPublicBuildSort(tab, browseMode),
       scope: getPublicBuildScope(tab),
       excludeMine: shouldExcludeMineFromPublicBrowse(tab, browseMode)
     };
-    if (searchQuery) {
-      loadMoreParams.search = searchQuery;
-    }
     if (/^\d+$/.test(loadMoreToken)) {
       loadMoreParams.lastId = Number(loadMoreToken);
     } else {

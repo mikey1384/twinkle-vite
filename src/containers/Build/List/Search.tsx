@@ -1,12 +1,20 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
-import { borderRadius } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import type { PublicBuildSort } from './types';
+
+const sortOptions: Array<{ value: PublicBuildSort; label: string }> = [
+  { value: 'recent', label: 'Newest' },
+  { value: 'popular', label: 'Most Viewed' },
+  { value: 'forks', label: 'Most Forked' }
+];
 
 const searchWrapClass = css`
-  margin: 0 0 1.2rem;
+  margin: 0 0 2rem;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
 `;
 
@@ -81,14 +89,62 @@ const searchClearButtonClass = css`
   }
 `;
 
+const sortRowClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 100%;
+  }
+`;
+
+const sortButtonClass = css`
+  appearance: none;
+  height: 3.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: rgba(31, 41, 55, 0.76);
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+
+  &.active {
+    border-color: #418ceb;
+    background: rgba(65, 140, 235, 0.12);
+    color: #1d4ed8;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    flex: 1;
+    padding: 0 0.5rem;
+  }
+`;
+
 export default function Search({
   value,
+  sort,
+  sortShown,
   onChange,
-  onClear
+  onClear,
+  onSortChange
 }: {
   value: string;
+  sort: PublicBuildSort;
+  sortShown: boolean;
   onChange: (value: string) => void;
   onClear: () => void;
+  onSortChange: (sort: PublicBuildSort) => void;
 }) {
   return (
     <div className={searchWrapClass}>
@@ -99,7 +155,7 @@ export default function Search({
           className={searchInputClass}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Search builds"
+          placeholder="Search apps by title, creator, or type"
         />
         {value ? (
           <button
@@ -112,6 +168,20 @@ export default function Search({
           </button>
         ) : null}
       </label>
+      {sortShown ? (
+        <div className={sortRowClass} role="group" aria-label="Sort results">
+          {sortOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={cx(sortButtonClass, sort === option.value && 'active')}
+              onClick={() => onSortChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

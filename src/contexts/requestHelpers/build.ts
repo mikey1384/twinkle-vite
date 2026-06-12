@@ -1568,6 +1568,19 @@ export default function buildRequestHelpers({
       }
     },
 
+    async generateBuildTags(buildId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/tags/generate`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async forkBuild(buildId: number) {
       try {
         const { data } = await request.post(

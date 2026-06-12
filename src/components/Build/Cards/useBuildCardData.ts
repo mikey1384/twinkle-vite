@@ -272,10 +272,26 @@ function mergeBuildCardState(
   const inputViewerStateUserId =
     inputBuild.viewerStateUserId ||
     (inputHasViewerState && viewerId ? viewerId : null);
+  const inputTags = Array.isArray(inputBuild.tags)
+    ? (inputBuild.tags as unknown[])
+    : undefined;
+  const cachedTags = Array.isArray(cachedBuild.tags)
+    ? (cachedBuild.tags as unknown[])
+    : undefined;
+  const inputTagsUpdatedAt = Number(inputBuild.tagsUpdatedAt || 0);
+  const cachedTagsUpdatedAt = Number(cachedBuild.tagsUpdatedAt || 0);
+  // tagsUpdatedAt is the server-side generation time, so recency decides
+  // stale-row vs fresh-cache conflicts: list/profile rows that lag behind a
+  // confirmed (re)tag can neither clear nor revert the cached tags.
+  const useInputTags =
+    inputTags != null &&
+    (cachedTags == null || inputTagsUpdatedAt > cachedTagsUpdatedAt);
 
   return {
     ...build,
     serverCountFields: serverCountFields.nextFields,
+    tags: useInputTags ? inputTags : cachedTags,
+    tagsUpdatedAt: useInputTags ? inputTagsUpdatedAt : cachedTagsUpdatedAt,
     viewCount: inputCanRefreshServerCountField('viewCount')
       ? inputBuild.viewCount
       : cachedBuild.viewCount,
@@ -450,7 +466,11 @@ function getBuildCardInputFingerprint(buildInput: unknown) {
     build.viewerCollaborationRequestLoading,
     build.viewerStateUserId,
     build.releaseStatus?.state,
-    build.releaseStatus?.hasUnpublishedChanges
+    build.releaseStatus?.hasUnpublishedChanges,
+    Array.isArray(build.tags)
+      ? build.tags.map((tag: any) => tag?.slug).join(',')
+      : '',
+    build.tagsUpdatedAt
   ]
     .map((value) => String(value ?? ''))
     .join('|');

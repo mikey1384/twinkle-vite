@@ -8,6 +8,13 @@ export interface BuildTone {
 
 export type BuildProjectListItemReleaseStatus = BuildReleaseStatus;
 
+export interface BuildTag {
+  id: number;
+  slug: string;
+  label: string;
+  category: string;
+}
+
 export interface BuildCollaborationRequest {
   id: number;
   inviteId?: number;
@@ -51,4 +58,6 @@ export interface BuildProjectListItemData {
   releaseStatus?: BuildProjectListItemReleaseStatus | null;
   isFavorited?: boolean;
   favoritedAt?: number | null;
+  tags?: BuildTag[];
+  tagsUpdatedAt?: number;
 }

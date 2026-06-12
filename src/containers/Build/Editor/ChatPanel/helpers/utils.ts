@@ -26,10 +26,6 @@ export function isBuildAssistantPlaceholderContent(
   );
 }
 
-export function formatScaledRem(baseRem: number, scale: number) {
-  return `${Math.max(1.1, baseRem * scale).toFixed(3)}rem`;
-}
-
 export function formatStepLabel(status: string): string {
   if (STATUS_LABEL_MAP[status]) return STATUS_LABEL_MAP[status];
   if (status.includes(' ')) return status.replace(/\.+$/, '');

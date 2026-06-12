@@ -30,7 +30,12 @@ import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { useEnsureBuildViewerCollaborationRequest } from '../hooks/useEnsureBuildViewerCollaborationRequest';
 import { useBuildCardData } from './useBuildCardData';
 import { formatRelativeTime } from '../ProjectListItem/helpers';
-import type { BuildProjectListItemData } from '../ProjectListItem/types';
+import type {
+  BuildProjectListItemData,
+  BuildTag
+} from '../ProjectListItem/types';
+
+const TAGS_OUTDATED_GRACE_SECONDS = 180;
 
 const inheritedUsernameTextStyle: React.CSSProperties = {
   color: 'inherit',
@@ -253,6 +258,34 @@ const badgeClass = css`
   }
 `;
 
+const outdatedTagChipClass = css`
+  border-color: rgba(245, 158, 11, 0.34);
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+`;
+
+const tagChipClass = css`
+  appearance: none;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.32rem 0.62rem;
+  border: 1px solid rgba(99, 102, 241, 0.32);
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4338ca;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
+
+  &.clickable {
+    cursor: pointer;
+  }
+`;
+
 const metaRowClass = css`
   display: flex;
   align-items: center;
@@ -383,6 +416,7 @@ export default function BuildWideCard({
   onFavoriteStart,
   onCardClick,
   onOpenForkHistory,
+  onTagClick,
   embedded = false
 }: {
   build: BuildProjectListItemData | Record<string, any>;
@@ -417,14 +451,19 @@ export default function BuildWideCard({
   ) => void;
   onCardClick?: () => void;
   onOpenForkHistory?: (buildId: number) => void;
+  onTagClick?: (tag: BuildTag) => void;
 }) {
   const navigate = useNavigate();
   const build = useBuildCardData(buildInput);
   const userId = useKeyContext((v) => v.myState.userId);
+  const canEditPlaylists = useKeyContext((v) => v.myState.canEditPlaylists);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
+  const generateBuildTags = useAppContext(
+    (v) => v.requestHelpers.generateBuildTags
+  );
   const loadMyBuildCollaborationRequest = useAppContext(
     (v) => v.requestHelpers.loadMyBuildCollaborationRequest
   );
@@ -442,6 +481,9 @@ export default function BuildWideCard({
   );
   const onPatchBuildSummary = useBuildContext(
     (v) => v.actions.onPatchBuildSummary
+  );
+  const onPatchBuildStudioMyBuild = useBuildContext(
+    (v) => v.actions.onPatchBuildStudioMyBuild
   );
   const onUpsertBuildSummary = useBuildContext(
     (v) => v.actions.onUpsertBuildSummary
@@ -537,6 +579,29 @@ export default function BuildWideCard({
     ownerMode ? 'blue' : primaryActionIcon === 'users' ? 'pink' : 'primary';
   const thumbnailUrl = String(build?.thumbnailUrl || '').trim();
   const hasPreview = Boolean(thumbnailUrl);
+  // Some card surfaces (feed content lists, embedded components) don't
+  // include tags in their payloads; missing tag state must not be treated as
+  // "untagged" or the Add tags action would overwrite existing tags.
+  const buildTagsLoaded = Array.isArray(build?.tags);
+  const buildTags = buildTagsLoaded
+    ? (build?.tags as BuildTag[]).filter((tag) => tag?.slug)
+    : [];
+  const canTagBuild =
+    buildTagsLoaded &&
+    buildIsPublic &&
+    Boolean(buildId) &&
+    (ownerMode || Boolean(canEditPlaylists));
+  const addTagsActionShown = canTagBuild && buildTags.length === 0;
+  const retagActionShown = canTagBuild && buildTags.length > 0;
+  // publishedAt newer than the tag generation time (beyond the grace window
+  // that normal post-publish regeneration needs) means the visible tags
+  // provably describe a previous published version.
+  const buildTagsUpdatedAt = Math.floor(Number(build?.tagsUpdatedAt) || 0);
+  const tagsOutdated =
+    retagActionShown &&
+    buildTagsUpdatedAt > 0 &&
+    Math.floor(Number(build?.publishedAt) || 0) >
+      buildTagsUpdatedAt + TAGS_OUTDATED_GRACE_SECONDS;
 
   useEffect(() => {
     setCollaborationRequestMessage(String(collaborationRequest?.message || ''));
@@ -664,6 +729,50 @@ export default function BuildWideCard({
                   ? '1 request'
                   : `${pendingRequestCount} requests`}
               </span>
+            ) : null}
+            {buildTags.map((tag) => renderTagChip(tag))}
+            {addTagsActionShown ? (
+              <button
+                type="button"
+                className={cx(tagChipClass, 'clickable')}
+                disabled={actionLoading === 'tags'}
+                title="Let AI tag this app"
+                onClick={handleGenerateTagsClick}
+              >
+                <Icon
+                  icon={actionLoading === 'tags' ? 'spinner' : 'tag'}
+                  {...(actionLoading === 'tags' ? { pulse: true } : {})}
+                />
+                <span>
+                  {actionLoading === 'tags' ? 'Tagging...' : 'Add tags'}
+                </span>
+              </button>
+            ) : null}
+            {retagActionShown ? (
+              <button
+                type="button"
+                className={cx(
+                  tagChipClass,
+                  'clickable',
+                  tagsOutdated && outdatedTagChipClass
+                )}
+                disabled={actionLoading === 'tags'}
+                title={
+                  tagsOutdated
+                    ? 'Tags are from a previous version of this app — click to regenerate'
+                    : 'Re-generate tags'
+                }
+                aria-label={
+                  tagsOutdated ? 'Update outdated tags' : 'Re-generate tags'
+                }
+                onClick={handleGenerateTagsClick}
+              >
+                <Icon
+                  icon={actionLoading === 'tags' ? 'spinner' : 'redo'}
+                  {...(actionLoading === 'tags' ? { pulse: true } : {})}
+                />
+                {tagsOutdated ? <span>Update tags</span> : null}
+              </button>
             ) : null}
           </div>
           <div className={metaRowClass}>
@@ -797,6 +906,10 @@ export default function BuildWideCard({
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    // Only navigate for keys pressed on the card itself; a bubbled Enter or
+    // Space from a focused inner button (fork, favorite, tag chips, ...)
+    // must activate that button, and preventDefault here would suppress it.
+    if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       handleNavigate();
@@ -1099,6 +1212,63 @@ export default function BuildWideCard({
       );
     } finally {
       setCollaborationRequestLoading(false);
+    }
+  }
+
+  function renderTagChip(tag: BuildTag) {
+    if (!onTagClick) {
+      return (
+        <span key={tag.slug} className={tagChipClass}>
+          <Icon icon="tag" />
+          {tag.label}
+        </span>
+      );
+    }
+    return (
+      <button
+        key={tag.slug}
+        type="button"
+        className={cx(tagChipClass, 'clickable')}
+        title={`Search ${tag.label} apps`}
+        onClick={(event) => {
+          stopButtonEvent(event);
+          onTagClick(tag);
+        }}
+      >
+        <Icon icon="tag" />
+        {tag.label}
+      </button>
+    );
+  }
+
+  async function handleGenerateTagsClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    stopButtonEvent(event);
+    if (actionLoading) return;
+    setActionLoading('tags');
+    setActionError('');
+    try {
+      const result = await generateBuildTags(buildId);
+      if (!result?.success || !Array.isArray(result?.tags)) {
+        throw new Error('Tag generation failed');
+      }
+      const tagsUpdatedAt = Number(result.tagsUpdatedAt) || 0;
+      onPatchBuildSummary({
+        buildId,
+        patch: { tags: result.tags, tagsUpdatedAt }
+      });
+      // Also patch the Build Studio my-builds row: the My Builds tag search
+      // filters on that list's raw rows, not the summary cache. No-ops when
+      // the build is not in the viewer's list.
+      onPatchBuildStudioMyBuild({
+        build: { id: buildId, tags: result.tags, tagsUpdatedAt },
+        userId: Number(userId) || null
+      });
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'Unable to generate tags'));
+    } finally {
+      setActionLoading('');
     }
   }
 

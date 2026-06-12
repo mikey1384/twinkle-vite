@@ -243,12 +243,14 @@ export function buildMatchesSearchQuery(
     normalizeBuildListSearchQuery(searchQuery).toLowerCase();
   if (!normalizedSearchQuery) return true;
   const searchTokens = normalizedSearchQuery.split(' ').filter(Boolean);
+  const tags = Array.isArray(build.tags) ? build.tags : [];
   const searchableText = [
     build.title,
     build.description,
     build.username,
     build.rootBuildTitle,
-    build.rootBuildUsername
+    build.rootBuildUsername,
+    ...tags.flatMap((tag) => [tag?.slug, tag?.label])
   ]
     .filter(Boolean)
     .join(' ')

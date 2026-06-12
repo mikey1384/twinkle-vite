@@ -114,6 +114,7 @@ registerMethods('build', [
   'unpublishBuild',
   'purchaseBuildGenerationReset',
   'loadPublicBuilds',
+  'generateBuildTags',
   'forkBuild',
   'updateBuildCollaboration',
   'updateBuildLumineChatVisibility',

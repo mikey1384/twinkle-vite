@@ -205,6 +205,7 @@ export default function Header({
         >
           {dailyGenerationUsage != null ? (
             <AiEnergyCard
+              variant="inline"
               energyPercent={dailyGenerationUsage}
               energySegments={aiUsagePolicy?.energySegments}
               energySegmentsRemaining={aiUsagePolicy?.energySegmentsRemaining}

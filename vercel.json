@@ -30,6 +30,6 @@
       "source": "/build/vendor/(.*)",
       "destination": "https://api.twinkle.network/build/vendor/$1"
     },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/((?!assets/).*)", "destination": "/" }
   ]
 }

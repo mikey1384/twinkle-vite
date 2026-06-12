@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import MessageRow from './MessageRow';
+import FollowUpPromptBubble from './FollowUpPromptBubble';
 import {
   BuildCurrentActivity,
   BuildRuntimeDebugSnapshot,
@@ -25,6 +26,11 @@ interface TranscriptProps {
   activeStreamMessageIds: number[];
   isOwner: boolean;
   chatEndRef: RefObject<HTMLDivElement | null>;
+  quickReplyShown?: boolean;
+  quickReplyQuestion?: string;
+  onQuickReplyYes?: () => void;
+  onQuickReplyNo?: () => void;
+  onQuickReplyRedirect?: () => void;
   onFixRuntimeObservationMessage: (
     message: ChatMessage
   ) => Promise<boolean> | boolean;
@@ -44,6 +50,11 @@ const Transcript = React.memo(function Transcript({
   activeStreamMessageIds,
   isOwner,
   chatEndRef,
+  quickReplyShown,
+  quickReplyQuestion,
+  onQuickReplyYes,
+  onQuickReplyNo,
+  onQuickReplyRedirect,
   onFixRuntimeObservationMessage,
   onDeleteMessage
 }: TranscriptProps) {
@@ -140,6 +151,17 @@ const Transcript = React.memo(function Transcript({
       ))}
       {runtimeDebugSnapshot ? (
         <RuntimeDebugProjection snapshot={runtimeDebugSnapshot} />
+      ) : null}
+      {quickReplyShown &&
+      onQuickReplyYes &&
+      onQuickReplyNo &&
+      onQuickReplyRedirect ? (
+        <FollowUpPromptBubble
+          question={quickReplyQuestion || ''}
+          onYes={onQuickReplyYes}
+          onNo={onQuickReplyNo}
+          onRedirect={onQuickReplyRedirect}
+        />
       ) : null}
       <div ref={chatEndRef} />
     </div>

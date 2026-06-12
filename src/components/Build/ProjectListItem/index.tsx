@@ -1,9 +1,9 @@
 import React from 'react';
 import { BuildWideCard } from '~/components/Build/Cards';
 import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
-import type { BuildProjectListItemData } from './types';
+import type { BuildProjectListItemData, BuildTag } from './types';
 
-export type { BuildProjectListItemData } from './types';
+export type { BuildProjectListItemData, BuildTag } from './types';
 
 export default function ProjectListItem({
   build,
@@ -24,7 +24,8 @@ export default function ProjectListItem({
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
-  onOpenForkHistory
+  onOpenForkHistory,
+  onTagClick
 }: {
   build: BuildProjectListItemData;
   to?: string;
@@ -55,6 +56,7 @@ export default function ProjectListItem({
     params: { buildId: number; requestedFavorited: boolean }
   ) => void;
   onOpenForkHistory?: (buildId: number) => void;
+  onTagClick?: (tag: BuildTag) => void;
 }) {
   return (
     <BuildWideCard
@@ -77,6 +79,7 @@ export default function ProjectListItem({
       onFavoriteError={onFavoriteError}
       onFavoriteStart={onFavoriteStart}
       onOpenForkHistory={onOpenForkHistory}
+      onTagClick={onTagClick}
     />
   );
 }

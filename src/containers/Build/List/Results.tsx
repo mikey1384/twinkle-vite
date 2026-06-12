@@ -5,7 +5,8 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import ProjectListItem, {
-  type BuildProjectListItemData
+  type BuildProjectListItemData,
+  type BuildTag
 } from '~/components/Build/ProjectListItem';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
@@ -113,7 +114,8 @@ export default function Results({
   onLoadMoreBrowseBuilds,
   onOpenForkHistory,
   onPromptInputChange,
-  onStartFromPrompt
+  onStartFromPrompt,
+  onTagClick
 }: {
   activeTab: BuildListTab;
   activeTabLabel: string;
@@ -153,6 +155,7 @@ export default function Results({
   onOpenForkHistory: (buildId: number) => void;
   onPromptInputChange: (value: string) => void;
   onStartFromPrompt: () => void;
+  onTagClick?: (tag: BuildTag) => void;
 }) {
   const buildGridRef = React.useRef<HTMLDivElement | null>(null);
   const visibleBuilds = isMyBuildsTab ? displayedMyBuilds : browseBuilds;
@@ -231,6 +234,7 @@ export default function Results({
               onFavoriteError={onFavoriteError}
               onFavoriteStart={onFavoriteStart}
               onOpenForkHistory={onOpenForkHistory}
+              onTagClick={onTagClick}
             />
           </div>
         ))}
@@ -307,6 +311,7 @@ export default function Results({
               onFavoriteError={onFavoriteError}
               onFavoriteStart={onFavoriteStart}
               onOpenForkHistory={onOpenForkHistory}
+              onTagClick={onTagClick}
             />
           </div>
         ))}

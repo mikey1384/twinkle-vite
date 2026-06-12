@@ -57,6 +57,9 @@ export default function Builds({
   const onSetPinnedBuilds = useProfileContext(
     (v) => v.actions.onSetPinnedBuilds
   );
+  const onSetPinnedBuildsExpanded = useProfileContext(
+    (v) => v.actions.onSetPinnedBuildsExpanded
+  );
   const [loading, setLoading] = useState(true);
   const [displayedBuilds, setDisplayedBuilds] = useState<
     BuildProjectListItemData[]
@@ -67,7 +70,7 @@ export default function Builds({
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [selectModalShown, setSelectModalShown] = useState(false);
   const [reorderModalShown, setReorderModalShown] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const isExpanded = Boolean(cachedPinnedBuilds?.expanded);
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState<number | null>(
     null
   );
@@ -132,7 +135,6 @@ export default function Builds({
     displayedBuildIds.length > 1;
 
   useEffect(() => {
-    setIsExpanded(false);
     setForkHistoryBuildId(null);
     setReorderModalShown(false);
   }, [profile.id]);
@@ -227,7 +229,12 @@ export default function Builds({
         loadMoreButtonShown={
           !isExpanded && displayedBuilds.length > defaultVisibleBuildCount
         }
-        onLoadMore={() => setIsExpanded(true)}
+        onLoadMore={() =>
+          onSetPinnedBuildsExpanded({
+            username: profile.username,
+            expanded: true
+          })
+        }
         button={
           isOwnProfile ? (
             <div
@@ -334,7 +341,10 @@ export default function Builds({
     try {
       const data = await pinBuildsOnProfile({ buildIds });
       applyPinnedBuildsPayload(data);
-      setIsExpanded(false);
+      onSetPinnedBuildsExpanded({
+        username: profile.username,
+        expanded: false
+      });
       setSelectModalShown(false);
     } catch (error) {
       console.error('Failed to pin builds on profile:', error);

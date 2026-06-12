@@ -6,6 +6,11 @@ const LAZY_IMPORT_OVERLAY_ID = 'twinkle-lazy-import-reload-overlay';
 const LAZY_IMPORT_RELOAD_STORAGE_KEY = 'twinkleLazyImportReloadAt';
 const LAZY_IMPORT_RELOAD_COOLDOWN_MS = 60 * 1000;
 const LAZY_IMPORT_RELOAD_PARAM = '_twinkleLazyImportReload';
+const LAZY_IMPORT_RELOAD_COUNTS_KEY = 'twinkleLazyImportReloadCounts';
+// Reloading can only fix a stale bundle. If a page keeps failing for another
+// reason (device memory pressure, content blockers), more reloads make it
+// worse, so auto-reloads are capped per pathname for the session.
+const LAZY_IMPORT_MAX_RELOADS_PER_PATH = 2;
 
 export function lazyWithRetry<T extends ComponentType<any>>(
   importer: () => Promise<{ default: T }>
@@ -70,11 +75,14 @@ async function shouldReloadForLazyImportFailure(
     const staleAsset = await isLikelyStaleLazyImportAsset(failedUrl);
     if (!staleAsset) return false;
   } else {
-    // Without a failed asset URL we cannot prove staleness, so keep the
-    // conservative retry-first behavior for transient network failures.
+    // Without a failed asset URL we cannot prove staleness from the asset
+    // itself (Safari import errors carry no URL), so only reload if the
+    // deployed index.html actually references different entry assets than the
+    // running document. If nothing was deployed, a reload cannot fix the
+    // failure and would just loop on devices with transient fetch failures.
     if (confirmedStaleOnly) return false;
-    const documentReachable = await isFreshDocumentReachable();
-    if (!documentReachable) return false;
+    const deployDetected = await hasNewDeployedIndexHtml();
+    if (!deployDetected) return false;
   }
   try {
     if (typeof window.sessionStorage === 'undefined') return false;
@@ -86,6 +94,16 @@ async function shouldReloadForLazyImportFailure(
     if (lastReload && now - lastReload <= LAZY_IMPORT_RELOAD_COOLDOWN_MS) {
       return false;
     }
+    const reloadCounts = readLazyImportReloadCounts();
+    const pathname = window.location.pathname;
+    if ((reloadCounts[pathname] || 0) >= LAZY_IMPORT_MAX_RELOADS_PER_PATH) {
+      return false;
+    }
+    reloadCounts[pathname] = (reloadCounts[pathname] || 0) + 1;
+    window.sessionStorage.setItem(
+      LAZY_IMPORT_RELOAD_COUNTS_KEY,
+      JSON.stringify(reloadCounts)
+    );
     window.sessionStorage.setItem(
       LAZY_IMPORT_RELOAD_STORAGE_KEY,
       String(now)
@@ -93,6 +111,16 @@ async function shouldReloadForLazyImportFailure(
     return true;
   } catch {
     return false;
+  }
+}
+
+function readLazyImportReloadCounts(): Record<string, number> {
+  try {
+    const raw = window.sessionStorage.getItem(LAZY_IMPORT_RELOAD_COUNTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
   }
 }
 
@@ -200,18 +228,35 @@ function getLazyImportAssetExtension(pathname: string) {
   return '';
 }
 
-async function isFreshDocumentReachable() {
+async function hasNewDeployedIndexHtml() {
   try {
-    const response = await fetch(window.location.href, {
-      cache: 'no-store',
-      method: 'HEAD'
+    const response = await fetch(`${window.location.origin}/`, {
+      cache: 'no-store'
     });
     if (!response.ok) return false;
     const contentType = response.headers.get('content-type') || '';
-    return /text\/html/i.test(contentType);
+    if (!/text\/html/i.test(contentType)) return false;
+    const deployedAssets = extractEntryAssetUrls(await response.text());
+    const runningAssets = extractEntryAssetUrls(
+      document.documentElement.outerHTML
+    );
+    if (deployedAssets.length === 0 || runningAssets.length === 0) {
+      // Cannot compare (unexpected html shape); allow the reload rather than
+      // stranding a genuinely stale client.
+      return true;
+    }
+    return deployedAssets.join('|') !== runningAssets.join('|');
   } catch {
     return false;
   }
+}
+
+// Hashed entry asset urls only change when a new bundle is deployed; Vite's
+// content hashing cascades from any changed chunk up to the entries.
+function extractEntryAssetUrls(html: string) {
+  return Array.from(
+    new Set(html.match(/\/assets\/[^"'\s>]+\.js/g) || [])
+  ).sort();
 }
 
 function wait(ms: number) {

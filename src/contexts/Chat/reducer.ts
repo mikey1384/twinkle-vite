@@ -2796,6 +2796,12 @@ export default function ChatReducer(
       };
     }
     case 'LOAD_MORE_AI_CARDS': {
+      // a stale-cursor refetch can return feeds that are already loaded;
+      // appending them again would duplicate React keys and corrupt the list
+      const loadedFeedIds = new Set(state.aiCardFeedIds);
+      const newCardFeeds = action.cardFeeds.filter(
+        (feed: { id: number }) => !loadedFeedIds.has(feed.id)
+      );
       return {
         ...state,
         cardObj: {
@@ -2803,11 +2809,11 @@ export default function ChatReducer(
           ...action.cardObj
         },
         aiCardFeedIds: state.aiCardFeedIds.concat(
-          action.cardFeeds.map((feed: { id: number }) => feed.id)
+          newCardFeeds.map((feed: { id: number }) => feed.id)
         ),
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
-          ...objectify(action.cardFeeds)
+          ...objectify(newCardFeeds)
         },
         aiCardLoadMoreButton: action.loadMoreShown
       };
@@ -2919,7 +2925,11 @@ export default function ChatReducer(
             isLoaded: true
           }
         },
-        aiCardFeedIds: [action.feed.id].concat(state.aiCardFeedIds || []),
+        aiCardFeedIds: [action.feed.id].concat(
+          (state.aiCardFeedIds || []).filter(
+            (feedId: number) => feedId !== action.feed.id
+          )
+        ),
         myCardIds: action.isSummon
           ? [action.card?.id].concat(
               state.myCardIds.filter(
@@ -3910,7 +3920,11 @@ export default function ChatReducer(
           ...state.cardObj,
           [action.card.id]: action.card
         },
-        aiCardFeedIds: [action.feed.id].concat(state.aiCardFeedIds),
+        aiCardFeedIds: [action.feed.id].concat(
+          state.aiCardFeedIds.filter(
+            (feedId: number) => feedId !== action.feed.id
+          )
+        ),
         aiCardFeedObj: {
           ...state.aiCardFeedObj,
           [action.feed.id]: {

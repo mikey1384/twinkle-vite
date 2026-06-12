@@ -8,6 +8,7 @@ import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import TransferActivity from './TransferActivity';
 import LoadingPlaceholder from '~/components/LoadingPlaceholder';
+import Button from '~/components/Button';
 
 export default function Activity({
   isLastActivity,
@@ -25,6 +26,7 @@ export default function Activity({
   const loadAICardFeed = useAppContext((v) => v.requestHelpers.loadAICardFeed);
   const onLoadAICardFeed = useChatContext((v) => v.actions.onLoadAICardFeed);
   const [usermenuShown, setUsermenuShown] = useState(false);
+  const [hydrateFailed, setHydrateFailed] = useState(false);
   const navigate = useNavigate();
   const card = useMemo(() => {
     if (feed?.type === 'summon') {
@@ -46,34 +48,34 @@ export default function Activity({
   ]);
 
   useEffect(() => {
-    init();
-    async function init() {
-      if (!feed?.isLoaded) {
-        let retryCount = 0;
-        const maxRetries = 5;
-        while (retryCount < maxRetries) {
-          try {
-            const loadedFeed = await loadAICardFeed({ feedId: feed?.id });
-            onLoadAICardFeed({ feed: loadedFeed });
-            break;
-          } catch (error) {
-            retryCount++;
-            if (retryCount === maxRetries) {
-              console.error(
-                'Failed to load AI card feed after max retries:',
-                error
-              );
-              break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
-        }
-      }
+    if (!feed?.isLoaded) {
+      hydrateFeed();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feed?.isLoaded]);
 
   if (!feed?.isLoaded || !card) {
+    if (hydrateFailed) {
+      return (
+        <div
+          style={{
+            width: '100%',
+            padding: '2rem 1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem'
+          }}
+        >
+          <span style={{ fontSize: '1.3rem', color: Color.darkerGray() }}>
+            This activity failed to load.
+          </span>
+          <Button variant="outline" color="darkerGray" onClick={hydrateFeed}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
     return (
       <LoadingPlaceholder
         height={feed.type === 'summon' ? 'clamp(20vw, 46vh, 42vw)' : '4rem'}
@@ -136,6 +138,30 @@ export default function Activity({
     }
     if (feed.type === 'transfer') {
       navigate(`./?cardId=${feed.transfer.cardId}`);
+    }
+  }
+
+  async function hydrateFeed() {
+    setHydrateFailed(false);
+    let retryCount = 0;
+    const maxRetries = 5;
+    while (retryCount < maxRetries) {
+      try {
+        const loadedFeed = await loadAICardFeed({ feedId: feed?.id });
+        onLoadAICardFeed({ feed: loadedFeed });
+        return;
+      } catch (error) {
+        retryCount++;
+        if (retryCount === maxRetries) {
+          console.error(
+            'Failed to load AI card feed after max retries:',
+            error
+          );
+          setHydrateFailed(true);
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
   }
 }
