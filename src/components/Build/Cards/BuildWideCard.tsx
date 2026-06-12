@@ -592,16 +592,23 @@ export default function BuildWideCard({
     Boolean(buildId) &&
     (ownerMode || Boolean(canEditPlaylists));
   const addTagsActionShown = canTagBuild && buildTags.length === 0;
-  const retagActionShown = canTagBuild && buildTags.length > 0;
   // publishedAt newer than the tag generation time (beyond the grace window
   // that normal post-publish regeneration needs) means the visible tags
   // provably describe a previous published version.
   const buildTagsUpdatedAt = Math.floor(Number(build?.tagsUpdatedAt) || 0);
   const tagsOutdated =
-    retagActionShown &&
+    canTagBuild &&
+    buildTags.length > 0 &&
     buildTagsUpdatedAt > 0 &&
     Math.floor(Number(build?.publishedAt) || 0) >
       buildTagsUpdatedAt + TAGS_OUTDATED_GRACE_SECONDS;
+  // Refreshing existing tags costs the clicker AI energy, so owners only see
+  // the action when the tags are provably outdated (self-limiting: success
+  // clears the state). Mods keep it unconditionally for fixing bad tags.
+  const retagActionShown =
+    canTagBuild &&
+    buildTags.length > 0 &&
+    (Boolean(canEditPlaylists) || tagsOutdated);
 
   useEffect(() => {
     setCollaborationRequestMessage(String(collaborationRequest?.message || ''));
@@ -737,7 +744,7 @@ export default function BuildWideCard({
                 className={cx(tagChipClass, 'clickable')}
                 disabled={actionLoading === 'tags'}
                 title="Let AI tag this app"
-                onClick={handleGenerateTagsClick}
+                onClick={(event) => handleGenerateTagsClick(event, 'add')}
               >
                 <Icon
                   icon={actionLoading === 'tags' ? 'spinner' : 'tag'}
@@ -759,13 +766,13 @@ export default function BuildWideCard({
                 disabled={actionLoading === 'tags'}
                 title={
                   tagsOutdated
-                    ? 'Tags are from a previous version of this app — click to regenerate'
-                    : 'Re-generate tags'
+                    ? 'Tags are from a previous version of this app — click to regenerate (uses AI Energy)'
+                    : 'Re-generate tags (uses AI Energy)'
                 }
                 aria-label={
                   tagsOutdated ? 'Update outdated tags' : 'Re-generate tags'
                 }
-                onClick={handleGenerateTagsClick}
+                onClick={(event) => handleGenerateTagsClick(event, 'refresh')}
               >
                 <Icon
                   icon={actionLoading === 'tags' ? 'spinner' : 'redo'}
@@ -1242,14 +1249,15 @@ export default function BuildWideCard({
   }
 
   async function handleGenerateTagsClick(
-    event: React.MouseEvent<HTMLButtonElement>
+    event: React.MouseEvent<HTMLButtonElement>,
+    mode: 'add' | 'refresh'
   ) {
     stopButtonEvent(event);
     if (actionLoading) return;
     setActionLoading('tags');
     setActionError('');
     try {
-      const result = await generateBuildTags(buildId);
+      const result = await generateBuildTags({ buildId, mode });
       if (!result?.success || !Array.isArray(result?.tags)) {
         throw new Error('Tag generation failed');
       }

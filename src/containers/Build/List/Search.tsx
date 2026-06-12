@@ -89,6 +89,42 @@ const searchClearButtonClass = css`
   }
 `;
 
+const ownerChipClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 3.45rem;
+  box-sizing: border-box;
+  padding: 0 0.9rem;
+  border: 1px solid rgba(65, 140, 235, 0.4);
+  border-radius: ${borderRadius};
+  background: rgba(65, 140, 235, 0.1);
+  color: #1d4ed8;
+  font-size: 1.15rem;
+  font-weight: 800;
+  white-space: nowrap;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(29, 78, 216, 0.1);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.18s ease;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(29, 78, 216, 0.22);
+      outline: none;
+    }
+  }
+`;
+
 const sortRowClass = css`
   display: inline-flex;
   align-items: center;
@@ -135,19 +171,37 @@ export default function Search({
   value,
   sort,
   sortShown,
+  ownerFilter,
   onChange,
   onClear,
+  onClearOwner,
   onSortChange
 }: {
   value: string;
   sort: PublicBuildSort;
   sortShown: boolean;
+  ownerFilter?: string;
   onChange: (value: string) => void;
   onClear: () => void;
+  onClearOwner?: () => void;
   onSortChange: (sort: PublicBuildSort) => void;
 }) {
   return (
     <div className={searchWrapClass}>
+      {ownerFilter ? (
+        <span className={ownerChipClass}>
+          by {ownerFilter}
+          {onClearOwner ? (
+            <button
+              type="button"
+              aria-label={`Stop filtering by ${ownerFilter}`}
+              onClick={onClearOwner}
+            >
+              <Icon icon="times" />
+            </button>
+          ) : null}
+        </span>
+      ) : null}
       <label className={searchFieldClass}>
         <Icon icon="search" />
         <input
@@ -155,7 +209,11 @@ export default function Search({
           className={searchInputClass}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Search apps by title, creator, or type"
+          placeholder={
+            ownerFilter
+              ? `Search ${ownerFilter}'s builds`
+              : 'Search apps by title, creator, or type'
+          }
         />
         {value ? (
           <button

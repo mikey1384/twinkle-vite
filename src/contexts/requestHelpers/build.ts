@@ -1533,7 +1533,8 @@ export default function buildRequestHelpers({
       limit = 20,
       lastId,
       cursor,
-      search
+      search,
+      owner
     }: {
       sort?: 'recent' | 'popular' | 'forks';
       scope?: 'all' | 'open_source';
@@ -1542,6 +1543,7 @@ export default function buildRequestHelpers({
       lastId?: number;
       cursor?: string;
       search?: string;
+      owner?: string;
     } = {}) {
       try {
         const params: Record<string, any> = { sort, scope, limit };
@@ -1550,6 +1552,9 @@ export default function buildRequestHelpers({
         }
         if (search) {
           params.search = search;
+        }
+        if (owner) {
+          params.owner = owner;
         }
         if (cursor) {
           params.cursor = cursor;
@@ -1568,11 +1573,17 @@ export default function buildRequestHelpers({
       }
     },
 
-    async generateBuildTags(buildId: number) {
+    async generateBuildTags({
+      buildId,
+      mode
+    }: {
+      buildId: number;
+      mode: 'add' | 'refresh';
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/tags/generate`,
-          {},
+          { mode },
           auth()
         );
         return data;

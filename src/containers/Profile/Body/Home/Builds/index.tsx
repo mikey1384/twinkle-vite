@@ -14,7 +14,7 @@ import { useProfileState } from '~/helpers/hooks';
 import DescriptionModal from '~/components/Modals/BuildDescriptionModal';
 import SelectPinnedBuildsModal from './SelectPinnedBuildsModal';
 import ReorderPinnedBuildsModal from './ReorderPinnedBuildsModal';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const panelTitle = 'Builds';
 const defaultVisibleBuildCount = 3;
@@ -301,6 +301,27 @@ export default function Builds({
               />
             </div>
           ))}
+          {/* Build Studio is auth-gated (LoggedOutPrompt), so the link is a
+              dead end for logged-out visitors */}
+          {viewerId > 0 && displayedBuilds.length > 0 ? (
+            <div
+              className={css`
+                display: flex;
+                justify-content: center;
+                margin-top: 0.5rem;
+              `}
+            >
+              <Link
+                to={`/build?owner=${encodeURIComponent(profile.username)}`}
+                className={css`
+                  font-size: 1.3rem;
+                  font-weight: 700;
+                `}
+              >
+                See all builds by {profile.username}
+              </Link>
+            </div>
+          ) : null}
         </div>
       </SectionPanel>
       {selectModalShown && (

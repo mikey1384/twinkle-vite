@@ -7,10 +7,12 @@ import type { PublicBuildSort } from '../types';
 export default function useGlobalBuildSearch({
   searchQuery,
   sort,
+  owner = '',
   userId
 }: {
   searchQuery: string;
   sort: PublicBuildSort;
+  owner?: string;
   userId: number | null;
 }) {
   const loadPublicBuilds = useAppContext(
@@ -35,7 +37,7 @@ export default function useGlobalBuildSearch({
   const requestIdRef = useRef(0);
 
   useEffect(() => {
-    if (!searchQuery || !userId) {
+    if ((!searchQuery && !owner) || !userId) {
       requestIdRef.current += 1;
       setPublicBuilds([]);
       setTeamBuilds([]);
@@ -61,14 +63,18 @@ export default function useGlobalBuildSearch({
 
     async function handleSearch() {
       try {
+        // With an owner filter, results are that user's public builds: the
+        // viewer's own builds must not be excluded (the owner may be the
+        // viewer), and the viewer-scoped team-builds search does not apply.
         const [publicData, teamData] = await Promise.all([
           loadPublicBuilds({
             sort,
             scope: 'all',
-            excludeMine: true,
-            search: searchQuery
+            excludeMine: !owner,
+            search: searchQuery,
+            owner
           }),
-          loadCollaboratingBuilds({ search: searchQuery })
+          owner ? Promise.resolve(null) : loadCollaboratingBuilds({ search: searchQuery })
         ]);
         if (requestId !== requestIdRef.current) return;
         setPublicBuilds(publicData?.builds || []);
@@ -90,7 +96,7 @@ export default function useGlobalBuildSearch({
     }
     // Request helpers are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, sort, userId]);
+  }, [searchQuery, sort, owner, userId]);
 
   return {
     loadingMorePublic,
@@ -112,8 +118,9 @@ export default function useGlobalBuildSearch({
       const data = await loadPublicBuilds({
         sort,
         scope: 'all',
-        excludeMine: true,
+        excludeMine: !owner,
         search: searchQuery,
+        owner,
         ...(/^\d+$/.test(publicLoadMoreToken)
           ? { lastId: Number(publicLoadMoreToken) }
           : { cursor: publicLoadMoreToken })

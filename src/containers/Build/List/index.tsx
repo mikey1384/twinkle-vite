@@ -176,10 +176,33 @@ export default function BuildList({
   const persistedBuildStudioStateKey = getPersistedBuildStudioStateKey(
     persistedBuildStudioState
   );
-  const [buildSearchInput, setBuildSearchInput] = useState('');
-  const [buildSearchQuery, setBuildSearchQuery] = useState('');
-  const [buildSearchSort, setBuildSearchSort] =
-    useState<PublicBuildSort>('recent');
+  // Search state is mirrored into the URL (?q=...&owner=...&sort=...) so a
+  // copied link reproduces the exact search; read it back on mount.
+  const [initialBuildSearch] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const query = normalizeBuildListSearchQuery(params.get('q') || '');
+    const owner = normalizeBuildSearchOwner(params.get('owner'));
+    const sortParam = params.get('sort');
+    // sort only means something attached to a search; honoring it alone would
+    // leave a hidden non-default sort that contaminates the next search
+    const sort: PublicBuildSort =
+      (query || owner) && (sortParam === 'popular' || sortParam === 'forks')
+        ? sortParam
+        : 'recent';
+    return { query, owner, sort };
+  });
+  const [buildSearchInput, setBuildSearchInput] = useState(
+    initialBuildSearch.query
+  );
+  const [buildSearchQuery, setBuildSearchQuery] = useState(
+    initialBuildSearch.query
+  );
+  const [buildSearchOwner, setBuildSearchOwner] = useState(
+    initialBuildSearch.owner
+  );
+  const [buildSearchSort, setBuildSearchSort] = useState<PublicBuildSort>(
+    initialBuildSearch.sort
+  );
   const collaboratingBrowseState =
     buildStudio?.browse?.collaborating || createEmptyBrowseState();
   const collaboratingCacheRefreshKey =
@@ -224,10 +247,17 @@ export default function BuildList({
     myBuildsLoadedForCurrentUser && Array.isArray(buildStudio?.myBuilds)
       ? (buildStudio.myBuilds as BuildProjectListItemData[])
       : [];
-  const isBuildSearchActive = buildSearchQuery.length > 0;
-  const displayedMyBuilds = isBuildSearchActive
-    ? builds.filter((build) => buildMatchesSearchQuery(build, buildSearchQuery))
-    : builds;
+  const isBuildSearchActive =
+    buildSearchQuery.length > 0 || buildSearchOwner.length > 0;
+  // Owner mode shows the owner's PUBLIC builds only (the Community section);
+  // the viewer's own builds — including private ones — must not leak in.
+  const displayedMyBuilds = buildSearchOwner
+    ? []
+    : isBuildSearchActive
+      ? builds.filter((build) =>
+          buildMatchesSearchQuery(build, buildSearchQuery)
+        )
+      : builds;
   const {
     loadingMorePublic: searchLoadingMorePublic,
     loadingMoreTeam: searchLoadingMoreTeam,
@@ -241,6 +271,7 @@ export default function BuildList({
   } = useGlobalBuildSearch({
     searchQuery: buildSearchQuery,
     sort: buildSearchSort,
+    owner: buildSearchOwner,
     userId: normalizedUserId
   });
   const browseBuilds =
@@ -440,6 +471,81 @@ export default function BuildList({
     return () => window.clearTimeout(timeoutId);
   }, [buildSearchInput]);
 
+  // Resync state from the URL when location.search changes while this
+  // instance stays mounted (back/forward, in-app navigation to a shared
+  // search link). No-ops when URL and state already agree, so it cannot
+  // loop with the state->URL mirror effect below.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlQuery = normalizeBuildListSearchQuery(params.get('q') || '');
+    const urlOwner = normalizeBuildSearchOwner(params.get('owner'));
+    const sortParam = params.get('sort');
+    const urlSort: PublicBuildSort =
+      (urlQuery || urlOwner) &&
+      (sortParam === 'popular' || sortParam === 'forks')
+        ? sortParam
+        : 'recent';
+    const expectedUrlSort =
+      (buildSearchQuery || buildSearchOwner) && buildSearchSort !== 'recent'
+        ? buildSearchSort
+        : 'recent';
+    if (
+      urlQuery === buildSearchQuery &&
+      urlOwner === buildSearchOwner &&
+      urlSort === expectedUrlSort
+    ) {
+      return;
+    }
+    setBuildSearchInput(urlQuery);
+    setBuildSearchQuery(urlQuery);
+    setBuildSearchOwner(urlOwner);
+    setBuildSearchSort(urlSort);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  // Mirror the (debounced) search into the URL so the address bar is always
+  // shareable. Replace navigation: typing should not spam browser history.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlQuery = params.get('q') || '';
+    const urlOwner = params.get('owner') || '';
+    const urlSort = params.get('sort') || '';
+    const nextSort =
+      (buildSearchQuery || buildSearchOwner) && buildSearchSort !== 'recent'
+        ? buildSearchSort
+        : '';
+    if (
+      urlQuery === buildSearchQuery &&
+      urlOwner === buildSearchOwner &&
+      urlSort === nextSort
+    ) {
+      return;
+    }
+    if (buildSearchQuery) {
+      params.set('q', buildSearchQuery);
+    } else {
+      params.delete('q');
+    }
+    if (buildSearchOwner) {
+      params.set('owner', buildSearchOwner);
+    } else {
+      params.delete('owner');
+    }
+    if (nextSort) {
+      params.set('sort', nextSort);
+    } else {
+      params.delete('sort');
+    }
+    const nextSearch = params.toString();
+    navigate(
+      `${location.pathname}${nextSearch ? `?${nextSearch}` : ''}${
+        location.hash
+      }`,
+      { replace: true }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildSearchQuery, buildSearchOwner, buildSearchSort]);
+
   useEffect(() => {
     if (!normalizedUserId) {
       setMyBuildsLoading(false);
@@ -523,7 +629,8 @@ export default function BuildList({
 
   useEffect(() => {
     if (activeTab !== 'collaborating') return;
-    if (buildSearchQuery) return;
+    // covers owner-only searches too: redirecting would drop the search params
+    if (isBuildSearchActive) return;
     if (!collaboratingLoadedForCurrentUser) return;
     if (collaboratingBuildCount > 0) return;
     onSetBuildStudioActiveTab('mine');
@@ -531,7 +638,7 @@ export default function BuildList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeTab,
-    buildSearchQuery,
+    isBuildSearchActive,
     collaboratingLoadedForCurrentUser,
     collaboratingBuildCount
   ]);
@@ -672,8 +779,10 @@ export default function BuildList({
               value={buildSearchInput}
               sort={buildSearchSort}
               sortShown={isBuildSearchActive}
+              ownerFilter={buildSearchOwner}
               onChange={setBuildSearchInput}
               onClear={handleClearBuildSearch}
+              onClearOwner={handleClearBuildSearchOwner}
               onSortChange={setBuildSearchSort}
             />
 
@@ -875,10 +984,22 @@ export default function BuildList({
     }
   }
 
+  // Clears the text query only; the owner chip has its own dedicated clear.
+  // With an owner active, clearing the text should land on all of that
+  // user's builds, not exit the owner's list.
   function handleClearBuildSearch() {
     setBuildSearchInput('');
     setBuildSearchQuery('');
-    setBuildSearchSort('recent');
+    if (!buildSearchOwner) {
+      setBuildSearchSort('recent');
+    }
+  }
+
+  function handleClearBuildSearchOwner() {
+    setBuildSearchOwner('');
+    if (!buildSearchQuery) {
+      setBuildSearchSort('recent');
+    }
   }
 
   function handleBuildTagClick(tag: BuildTag) {
@@ -1029,6 +1150,12 @@ export default function BuildList({
     await savePromise;
   }
 
+}
+
+function normalizeBuildSearchOwner(value: string | null) {
+  return String(value || '')
+    .trim()
+    .slice(0, 64);
 }
 
 function getIsActivityRailVisible() {
