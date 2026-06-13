@@ -753,7 +753,7 @@ export default function BuildRuntime({
       : collaborationStatus === 'invited'
         ? 'Join team'
         : collaborationStatus === 'accepted'
-          ? 'Work together'
+          ? 'Open workspace'
           : collaborationRequestActionLabel;
   const showStandaloneForkButton =
     !!build && !isBuildOwner && buildAcceptsStandaloneForks;
@@ -1593,7 +1593,7 @@ export default function BuildRuntime({
                       onClick={handleGoToWorkspace}
                     >
                       <Icon icon="wrench" />
-                      <span>Build</span>
+                      <span>Open workspace</span>
                     </button>
                   ) : null}
                   {showRuntimeFavoriteButton ? (
@@ -1648,10 +1648,11 @@ export default function BuildRuntime({
                     <button
                       type="button"
                       className={
-                        collaborationStatus === 'accepted' ||
-                        collaborationStatus === 'invited'
-                          ? runtimeActionButtonClass
-                          : runtimeActionPinkClass
+                        collaborationStatus === 'accepted'
+                          ? runtimeActionBlueClass
+                          : collaborationStatus === 'invited'
+                            ? runtimeActionButtonClass
+                            : runtimeActionPinkClass
                       }
                       onClick={handleCollaborateClick}
                       disabled={
@@ -1665,7 +1666,7 @@ export default function BuildRuntime({
                             : collaborationStatus === 'pending'
                               ? 'clock'
                               : collaborationStatus === 'accepted'
-                                ? 'users'
+                                ? 'wrench'
                                 : 'user-plus'
                         }
                         pulse={runtimeActionBusy}

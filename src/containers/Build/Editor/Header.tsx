@@ -352,7 +352,7 @@ interface HeaderProps {
   savingThumbnail: boolean;
   showContributionButton: boolean;
   contributionActionError?: string;
-  contributionActionLoading?: 'merge' | 'replace-main' | '';
+  contributionActionLoading?: 'merge' | 'replace-main' | 'reset-to-main' | '';
   runtimeAssetTransferProgress?: RuntimeAssetTransferProgressPayload | null;
   canMergeBranch?: boolean;
   showMergeBranch?: boolean;
@@ -366,11 +366,13 @@ interface HeaderProps {
   showReplaceBranch?: boolean;
   replaceBranchDisabled?: boolean;
   replaceBranchButtonLabel?: string;
+  showResetBranchToMain?: boolean;
   showForkButton: boolean;
   onContribute: () => void;
   onFork: () => void;
   onMergeBranch?: () => void;
   onReplaceMainBranch?: () => void;
+  onResetBranchToMain?: () => void;
   onMergeBranchTargetChange?: (targetBranchId: number) => void;
   onOpenCollaborationSettings: () => void;
   onOpenDescriptionModal: () => void;
@@ -499,11 +501,13 @@ export default function Header({
   showReplaceBranch = false,
   replaceBranchDisabled = false,
   replaceBranchButtonLabel = 'Replace Branch',
+  showResetBranchToMain = false,
   showForkButton,
   onContribute,
   onFork,
   onMergeBranch,
   onReplaceMainBranch,
+  onResetBranchToMain,
   onMergeBranchTargetChange,
   onOpenCollaborationSettings,
   onOpenDescriptionModal,
@@ -574,7 +578,7 @@ export default function Header({
     contributionStatus !== 'draft';
   const shouldShowMergeButton = Boolean(showMergeBranch || canMergeBranch);
   const shouldShowMergeBranch = Boolean(
-    shouldShowMergeButton || showReplaceBranch
+    shouldShowMergeButton || showReplaceBranch || showResetBranchToMain
   );
   const mergeBranchButtonDisabled = Boolean(
     mergeBranchDisabled || !canMergeBranch || contributionActionLoading
@@ -582,6 +586,7 @@ export default function Header({
   const replaceMainBranchButtonDisabled = Boolean(
     replaceBranchDisabled || contributionActionLoading
   );
+  const resetBranchToMainButtonDisabled = Boolean(contributionActionLoading);
   const shouldHighlightMergeBranch =
     mergeBranchShiny && !mergeBranchButtonDisabled;
   const normalizedMergeBranchTargetOptions = mergeBranchTargetOptions.filter(
@@ -664,6 +669,18 @@ export default function Header({
             icon="copy"
           >
             {replaceBranchButtonLabel}
+          </GameCTAButton>
+        ) : null}
+        {showResetBranchToMain ? (
+          <GameCTAButton
+            onClick={onResetBranchToMain || (() => {})}
+            disabled={resetBranchToMainButtonDisabled}
+            loading={contributionActionLoading === 'reset-to-main'}
+            variant="orange"
+            size="md"
+            icon="copy"
+          >
+            Reset to Main
           </GameCTAButton>
         ) : null}
       </span>

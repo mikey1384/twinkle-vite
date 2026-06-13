@@ -129,13 +129,13 @@ export default function BuildContent({
       : collaborationStatus === 'invited'
         ? 'Join team'
         : collaborationStatus === 'accepted'
-          ? 'Work together'
+          ? 'Open workspace'
           : 'Ask to join';
   const collaborationRequestActionIcon =
     collaborationStatus === 'pending'
       ? 'clock'
       : collaborationStatus === 'accepted'
-        ? 'users'
+        ? 'wrench'
         : 'user-plus';
   const normalizedBuild = {
     ...buildSource,
@@ -359,7 +359,9 @@ export default function BuildContent({
           ) : null}
           {showCollaborationRequestAction ? (
             <Button
-              color="pink"
+              color={
+                collaborationStatus === 'accepted' ? 'logoBlue' : 'pink'
+              }
               variant="soft"
               shape="pill"
               size="sm"
@@ -387,7 +389,7 @@ export default function BuildContent({
               style={{ whiteSpace: 'nowrap' }}
             >
               <Icon icon="wrench" />
-              <span>Build</span>
+              <span>Open workspace</span>
             </Button>
           ) : null}
           <Button

@@ -1972,6 +1972,29 @@ export default function buildRequestHelpers({
       }
     },
 
+    async resetBuildContributionToMain({
+      buildId,
+      contributionBuildId,
+      assetTransferOperationId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      assetTransferOperationId?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/reset-to-main`,
+          {
+            ...(assetTransferOperationId ? { assetTransferOperationId } : {})
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async updateBuildContributionFromMain({
       buildId,
       contributionBuildId,

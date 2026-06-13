@@ -5,6 +5,7 @@ import type {
   BuildStudioActivityFeedState,
   BuildStudioBrowseMode
 } from '~/contexts/Build/reducer';
+import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import type { ActivityItem } from '../../ActivityPanel';
 import type {
   BuildActivityPosition,
@@ -256,6 +257,21 @@ export function buildMatchesSearchQuery(
     .join(' ')
     .toLowerCase();
   return searchTokens.every((token) => searchableText.includes(token));
+}
+
+export function canOpenBuildListItemRuntime(
+  build: BuildProjectListItemData
+) {
+  return Boolean(build.isPublic);
+}
+
+export function getCollaboratingBuildListItemTargetPath(
+  build: BuildProjectListItemData
+) {
+  if (canOpenBuildListItemRuntime(build)) {
+    return `/app/${build.id}`;
+  }
+  return getBuildWorkspacePath(build);
 }
 
 export function createEmptyBrowseState() {

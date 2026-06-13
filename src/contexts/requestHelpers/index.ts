@@ -137,6 +137,7 @@ registerMethods('build', [
   'ensureDefaultBuildContributionBranch',
   'loadBuildContributions',
   'loadBuildContribution',
+  'resetBuildContributionToMain',
   'updateBuildContributionFromMain',
   'loadBuildContributionMergeIntoMyBranch',
   'mergeBuildContributionIntoMyBranch',

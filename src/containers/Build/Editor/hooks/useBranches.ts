@@ -6,6 +6,7 @@ import {
   canMergeBuildBranch,
   canMergeBuildBranchIntoOwnBranch,
   canReplaceBuildBranchMain,
+  canResetBuildBranchToMain,
   canStartProjectScopedContribution,
   canStartStandaloneFork,
   canUseBuildBranchAsMergeTarget,
@@ -71,6 +72,7 @@ interface UseBuildEditorBranchesOptions {
   replaceMainWithBuildContribution: (
     options: Record<string, any>
   ) => Promise<any>;
+  resetBuildContributionToMain: (options: Record<string, any>) => Promise<any>;
   userId: number;
 }
 
@@ -93,18 +95,20 @@ export default function useBranches({
   prepareProjectFilesForContributionAction,
   replaceBuildContributionIntoMyBranch,
   replaceMainWithBuildContribution,
+  resetBuildContributionToMain,
   userId
 }: UseBuildEditorBranchesOptions) {
   const navigate = useNavigate();
   const [forking, setForking] = useState(false);
   const [contributionActionLoading, setContributionActionLoading] = useState<
-    'merge' | 'replace-main' | ''
+    'merge' | 'replace-main' | 'reset-to-main' | ''
   >('');
   const [contributionActionError, setContributionActionError] = useState('');
   const [runtimeAssetTransferProgress, setRuntimeAssetTransferProgress] =
     useState<RuntimeAssetTransferProgressPayload | null>(null);
   const runtimeAssetTransferOperationIdRef = useRef('');
   const [replaceMainConfirmShown, setReplaceMainConfirmShown] = useState(false);
+  const [resetBranchConfirmShown, setResetBranchConfirmShown] = useState(false);
   const [currentBranchMergeableFileCount, setCurrentBranchMergeableFileCount] =
     useState<number | null>(null);
   const [
@@ -150,6 +154,7 @@ export default function useBranches({
     build,
     userId
   );
+  const canResetCurrentBranchToMain = canResetBuildBranchToMain(build, userId);
   const canMergeCurrentBranchIntoOwnBranch = canMergeBuildBranchIntoOwnBranch({
     build,
     userId,
@@ -680,6 +685,67 @@ export default function useBranches({
     setReplaceMainConfirmShown(false);
   }
 
+  function handleOpenResetBranchConfirm() {
+    if (!canResetCurrentBranchToMain || contributionActionLoading) return;
+    setContributionActionError('');
+    setResetBranchConfirmShown(true);
+  }
+
+  function handleCloseResetBranchConfirm() {
+    if (contributionActionLoading) return;
+    setResetBranchConfirmShown(false);
+  }
+
+  async function handleResetBranchToMain() {
+    const latestBuild = getLatestBuild();
+    const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
+    const contributionBuildId = Number(latestBuild.id || 0);
+    if (
+      !rootBuildId ||
+      !contributionBuildId ||
+      !canResetCurrentBranchToMain ||
+      contributionActionLoading
+    ) {
+      return;
+    }
+    setContributionActionLoading('reset-to-main');
+    setContributionActionError('');
+    const assetTransferOperationId = beginRuntimeAssetTransferProgress();
+    try {
+      const preparedFiles = await handleBeforeContributionAction('reset-to-main');
+      if (!preparedFiles.ready) return;
+      const result = await resetBuildContributionToMain({
+        buildId: rootBuildId,
+        contributionBuildId,
+        assetTransferOperationId
+      });
+      if (result?.success) {
+        // The branch's own changes are discarded by design; apply the
+        // canonical reset files to the workspace in place.
+        handleBuildContributionMerge({
+          build: result.contribution || null,
+          projectFiles: Array.isArray(result.projectFiles)
+            ? result.projectFiles
+            : null
+        });
+      } else {
+        setContributionActionError(
+          result?.error || 'Failed to reset branch to Main'
+        );
+      }
+    } catch (error: any) {
+      setContributionActionError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to reset branch to Main'
+      );
+    } finally {
+      setContributionActionLoading('');
+      clearRuntimeAssetTransferProgress();
+      setResetBranchConfirmShown(false);
+    }
+  }
+
   async function handleReplaceMainWithCurrentBranch() {
     const latestBuild = getLatestBuild();
     const rootBuildId = Number(latestBuild.contributionRootBuildId || 0);
@@ -860,6 +926,7 @@ export default function useBranches({
     branchNameDraft,
     canMergeCurrentBranch,
     canReplaceCurrentBranchTarget,
+    canResetCurrentBranchToMain,
     canShowMergeCurrentBranch,
     canShowVersionStartActions,
     contributionActionError,
@@ -873,6 +940,7 @@ export default function useBranches({
     handleBuildContributionMerge,
     handleCloseDeleteBranch,
     handleCloseReplaceMainConfirm,
+    handleCloseResetBranchConfirm,
     handleContributionBranchCreated,
     handleCreateContribution,
     handleDeleteBranch,
@@ -883,8 +951,10 @@ export default function useBranches({
     handleMergeCurrentBranch,
     handleOpenMainProject,
     handleOpenReplaceMainConfirm,
+    handleOpenResetBranchConfirm,
     handleReplaceMainWithCurrentBranch,
     handleRequestDeleteBranch,
+    handleResetBranchToMain,
     mergeBranchButtonLabel,
     mergeBranchTargetLabel,
     mergeBranchTargetTitle,
@@ -894,6 +964,7 @@ export default function useBranches({
     refreshCurrentBranchMergeability,
     refreshCurrentBranchMergeabilityForBuild,
     replaceMainConfirmShown,
+    resetBranchConfirmShown,
     runtimeAssetTransferProgress,
     setBranchNameDraft,
     showContributionButton,

@@ -108,6 +108,13 @@ function getProjectFileDraftActionCopy(
       discardLabel: 'Discard draft and continue'
     };
   }
+  if (action === 'reset-to-main') {
+    return {
+      actionText: 'resetting to main',
+      saveLabel: 'Save and reset',
+      discardLabel: 'Discard draft and reset'
+    };
+  }
   return {
     actionText: 'completing the merge',
     saveLabel: 'Save and continue',

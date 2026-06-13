@@ -444,7 +444,7 @@ export default function BuildMiniCard({
                   onClick={handleBuildClick}
                 >
                   <Icon icon="wrench" />
-                  Build
+                  Open workspace
                 </button>
               ) : null}
               <button

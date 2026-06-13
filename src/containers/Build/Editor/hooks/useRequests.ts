@@ -78,6 +78,9 @@ export default function useRequests() {
   const replaceBuildContributionIntoMyBranch = useAppContext(
     (v) => v.requestHelpers.replaceBuildContributionIntoMyBranch
   );
+  const resetBuildContributionToMain = useAppContext(
+    (v) => v.requestHelpers.resetBuildContributionToMain
+  );
   const updateBuildContributionFromMain = useAppContext(
     (v) => v.requestHelpers.updateBuildContributionFromMain
   );
@@ -120,6 +123,7 @@ export default function useRequests() {
     purchaseBuildGenerationReset,
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
+    resetBuildContributionToMain,
     routeBuildChatUpload,
     saveFileData,
     unpublishBuild,

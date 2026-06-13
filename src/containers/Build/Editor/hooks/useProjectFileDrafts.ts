@@ -4,7 +4,8 @@ export type BuildProjectFileContributionAction =
   | 'merge'
   | 'replace'
   | 'update-from-main'
-  | 'complete-merge';
+  | 'complete-merge'
+  | 'reset-to-main';
 
 export type BuildProjectFileDraftActionChoice =
   | 'save'
@@ -154,6 +155,7 @@ export default function useProjectFileDrafts({
       if (action === 'update-from-main') return 'updating from main';
       if (action === 'replace') return 'replacing';
       if (action === 'complete-merge') return 'completing this merge';
+      if (action === 'reset-to-main') return 'resetting to main';
       return 'merging';
     }
 

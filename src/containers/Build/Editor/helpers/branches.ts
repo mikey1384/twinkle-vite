@@ -148,6 +148,18 @@ export function getBuildContributionContributorUserId(build?: {
   return Number(build?.contributionContributorId || build?.userId || 0) || 0;
 }
 
+export function canResetBuildBranchToMain(
+  build: Build,
+  userId?: number | null
+) {
+  const status = build.contributionStatus || 'none';
+  return (
+    isBuildContributionFork(build) &&
+    getBuildContributionContributorUserId(build) === Number(userId || 0) &&
+    (status === 'draft' || status === 'merged')
+  );
+}
+
 export function canReceiveBranchMergeStatus(status?: string | null) {
   const normalizedStatus = String(status || '').trim();
   return normalizedStatus === 'draft' || normalizedStatus === 'merged';

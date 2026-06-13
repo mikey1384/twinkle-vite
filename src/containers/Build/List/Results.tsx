@@ -10,7 +10,11 @@ import ProjectListItem, {
 } from '~/components/Build/ProjectListItem';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
-import { getBrowseEmptyCopy } from './helpers';
+import {
+  canOpenBuildListItemRuntime,
+  getBrowseEmptyCopy,
+  getCollaboratingBuildListItemTargetPath
+} from './helpers';
 import type { BuildListTab } from './types';
 
 const displayFontFamily =
@@ -263,58 +267,61 @@ export default function Results({
   return (
     <>
       <div ref={buildGridRef} className={buildGridClass}>
-        {browseBuilds.map((build) => (
-          <div
-            key={build.id}
-            data-scroll-anchor-id={getBuildScrollAnchorId(build)}
-            data-scroll-anchor-secondary-id={String(build.id)}
-            data-scroll-anchor-content-key={`build:${build.id}`}
-          >
-            <ProjectListItem
-              build={build}
-              to={
-                activeTab === 'collaborating'
-                  ? `/build/${build.id}`
-                  : `/app/${build.id}`
-              }
-              navigationState={{
-                ...(activeTab === 'collaborating'
-                  ? { openPeoplePanel: true }
-                  : {
-                      runtimeBackTo,
-                      runtimeBackLabel: 'Back to Build Studio'
-                    })
-              }}
-              openAppNavigationState={
-                activeTab === 'collaborating'
-                  ? {
-                      runtimeBackTo,
-                      runtimeBackLabel: 'Back to Build Studio'
-                    }
-                  : undefined
-              }
-              updatedAtSource={
-                activeTab === 'community' || activeTab === 'open_source'
-                  ? 'publicVersion'
-                  : 'workspace'
-              }
-              primaryActionLabel={
-                activeTab === 'collaborating' ? 'Work together' : undefined
-              }
-              primaryActionIcon={
-                activeTab === 'collaborating' ? 'users' : undefined
-              }
-              showCollaborationRequestAction={activeTab !== 'collaborating'}
-              showFavoriteAction
-              showOpenAppAction={activeTab === 'collaborating' ? true : undefined}
-              onFavoriteChange={onFavoriteChange}
-              onFavoriteError={onFavoriteError}
-              onFavoriteStart={onFavoriteStart}
-              onOpenForkHistory={onOpenForkHistory}
-              onTagClick={onTagClick}
-            />
-          </div>
-        ))}
+        {browseBuilds.map((build) => {
+          const isCollaboratingBuild = activeTab === 'collaborating';
+          const canOpenRuntime = canOpenBuildListItemRuntime(build);
+          const targetPath = isCollaboratingBuild
+            ? getCollaboratingBuildListItemTargetPath(build)
+            : `/app/${build.id}`;
+          const navigationState = isCollaboratingBuild
+            ? canOpenRuntime
+              ? {
+                  runtimeBackTo,
+                  runtimeBackLabel: 'Back to Build Studio'
+                }
+              : { openPeoplePanel: true }
+            : {
+                runtimeBackTo,
+                runtimeBackLabel: 'Back to Build Studio'
+              };
+          return (
+            <div
+              key={build.id}
+              data-scroll-anchor-id={getBuildScrollAnchorId(build)}
+              data-scroll-anchor-secondary-id={String(build.id)}
+              data-scroll-anchor-content-key={`build:${build.id}`}
+            >
+              <ProjectListItem
+                build={build}
+                to={targetPath}
+                navigationState={navigationState}
+                updatedAtSource={
+                  activeTab === 'community' || activeTab === 'open_source'
+                    ? 'publicVersion'
+                    : 'workspace'
+                }
+                primaryActionLabel={
+                  isCollaboratingBuild ? 'Open workspace' : undefined
+                }
+                primaryActionIcon={isCollaboratingBuild ? 'wrench' : undefined}
+                primaryActionTo={
+                  isCollaboratingBuild ? `/build/${build.id}` : undefined
+                }
+                primaryActionNavigationState={
+                  isCollaboratingBuild ? { openPeoplePanel: true } : undefined
+                }
+                showCollaborationRequestAction={!isCollaboratingBuild}
+                showFavoriteAction
+                showOpenAppAction={isCollaboratingBuild ? canOpenRuntime : undefined}
+                onFavoriteChange={onFavoriteChange}
+                onFavoriteError={onFavoriteError}
+                onFavoriteStart={onFavoriteStart}
+                onOpenForkHistory={onOpenForkHistory}
+                onTagClick={onTagClick}
+              />
+            </div>
+          );
+        })}
       </div>
       {browseHasMore ? (
         <div className={loadMoreWrapClass}>

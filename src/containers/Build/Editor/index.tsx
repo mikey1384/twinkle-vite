@@ -249,6 +249,7 @@ export default function BuildEditor({
     purchaseBuildGenerationReset,
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
+    resetBuildContributionToMain,
     routeBuildChatUpload,
     saveFileData,
     unpublishBuild,
@@ -552,8 +553,10 @@ export default function BuildEditor({
     forking,
     handleBeforeContributionAction,
     handleBuildContributionMerge,
+    canResetCurrentBranchToMain,
     handleCloseDeleteBranch,
     handleCloseReplaceMainConfirm,
+    handleCloseResetBranchConfirm,
     handleContributionBranchCreated,
     handleCreateContribution,
     handleDeleteBranch,
@@ -564,8 +567,10 @@ export default function BuildEditor({
     handleMergeCurrentBranch,
     handleOpenMainProject,
     handleOpenReplaceMainConfirm,
+    handleOpenResetBranchConfirm,
     handleReplaceMainWithCurrentBranch,
     handleRequestDeleteBranch,
+    handleResetBranchToMain,
     mergeBranchButtonLabel,
     mergeBranchTargetLabel,
     mergeBranchTargetTitle,
@@ -574,6 +579,7 @@ export default function BuildEditor({
     replaceBranchTargetLabel,
     refreshCurrentBranchMergeabilityForBuild,
     replaceMainConfirmShown,
+    resetBranchConfirmShown,
     runtimeAssetTransferProgress,
     setBranchNameDraft,
     showContributionButton,
@@ -600,6 +606,7 @@ export default function BuildEditor({
       prepareProjectFilesForContributionAction(options),
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
+    resetBuildContributionToMain,
     userId
   });
   const {
@@ -1606,11 +1613,13 @@ export default function BuildEditor({
         showReplaceBranch={canReplaceCurrentBranchTarget}
         replaceBranchDisabled={!canReplaceCurrentBranchTarget}
         replaceBranchButtonLabel={replaceBranchButtonLabel}
+        showResetBranchToMain={canResetCurrentBranchToMain}
         showForkButton={showForkButton}
         onContribute={handleCreateContribution}
         onFork={handleFork}
         onMergeBranch={handleMergeCurrentBranch}
         onReplaceMainBranch={handleOpenReplaceMainConfirm}
+        onResetBranchToMain={handleOpenResetBranchConfirm}
         onMergeBranchTargetChange={handleMergeBranchTargetChange}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         onOpenDescriptionModal={handleOpenDescriptionModal}
@@ -1697,10 +1706,13 @@ export default function BuildEditor({
         replaceMainConfirmShown={replaceMainConfirmShown}
         replaceBranchButtonLabel={replaceBranchButtonLabel}
         replaceBranchTargetLabel={replaceBranchTargetLabel}
+        resetBranchConfirmShown={resetBranchConfirmShown}
         onCloseDeleteBranch={handleCloseDeleteBranch}
         onCloseReplaceMainConfirm={handleCloseReplaceMainConfirm}
+        onCloseResetBranchConfirm={handleCloseResetBranchConfirm}
         onDeleteBranch={handleDeleteBranch}
         onReplaceMainWithCurrentBranch={handleReplaceMainWithCurrentBranch}
+        onResetBranchToMain={handleResetBranchToMain}
       />
       <ProjectFileDraftActionModal
         prompt={draftActionPrompt}

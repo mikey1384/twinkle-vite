@@ -8,6 +8,10 @@ import ProjectListItem, {
   type BuildTag
 } from '~/components/Build/ProjectListItem';
 import { borderRadius } from '~/constants/css';
+import {
+  canOpenBuildListItemRuntime,
+  getCollaboratingBuildListItemTargetPath
+} from './helpers';
 
 const sectionClass = css`
   display: flex;
@@ -173,28 +177,35 @@ export default function SearchResults({
       {teamSectionShown ? (
         <section className={sectionClass}>
           <h3 className={sectionTitleClass}>Team Builds</h3>
-          {displayedTeamBuilds.map((build) => (
-            <ProjectListItem
-              key={build.id}
-              build={build}
-              to={`/build/${build.id}`}
-              navigationState={{ openPeoplePanel: true }}
-              openAppNavigationState={{
-                runtimeBackTo,
-                runtimeBackLabel: 'Back to Build Studio'
-              }}
-              primaryActionLabel="Work together"
-              primaryActionIcon="users"
-              showCollaborationRequestAction={false}
-              showFavoriteAction
-              showOpenAppAction
-              onFavoriteChange={onFavoriteChange}
-              onFavoriteError={onFavoriteError}
-              onFavoriteStart={onFavoriteStart}
-              onOpenForkHistory={onOpenForkHistory}
-              onTagClick={onTagClick}
-            />
-          ))}
+          {displayedTeamBuilds.map((build) => {
+            const canOpenRuntime = canOpenBuildListItemRuntime(build);
+            const navigationState = canOpenRuntime
+              ? {
+                  runtimeBackTo,
+                  runtimeBackLabel: 'Back to Build Studio'
+                }
+              : { openPeoplePanel: true };
+            return (
+              <ProjectListItem
+                key={build.id}
+                build={build}
+                to={getCollaboratingBuildListItemTargetPath(build)}
+                navigationState={navigationState}
+                primaryActionLabel="Open workspace"
+                primaryActionIcon="wrench"
+                primaryActionTo={`/build/${build.id}`}
+                primaryActionNavigationState={{ openPeoplePanel: true }}
+                showCollaborationRequestAction={false}
+                showFavoriteAction
+                showOpenAppAction={canOpenRuntime}
+                onFavoriteChange={onFavoriteChange}
+                onFavoriteError={onFavoriteError}
+                onFavoriteStart={onFavoriteStart}
+                onOpenForkHistory={onOpenForkHistory}
+                onTagClick={onTagClick}
+              />
+            );
+          })}
           {teamHasMore ? (
             <div className={loadMoreWrapClass}>
               <LoadMoreButton

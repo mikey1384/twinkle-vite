@@ -9,11 +9,12 @@ export default function ProjectListItem({
   build,
   to,
   navigationState,
-  openAppNavigationState,
   isOwner = false,
   themeName,
   primaryActionLabel,
   primaryActionIcon,
+  primaryActionTo,
+  primaryActionNavigationState,
   showCollaborationRequestAction = true,
   showFavoriteAction = false,
   showForkBadge = true,
@@ -30,11 +31,12 @@ export default function ProjectListItem({
   build: BuildProjectListItemData;
   to?: string;
   navigationState?: Record<string, any>;
-  openAppNavigationState?: Record<string, any>;
   isOwner?: boolean;
   themeName?: string;
   primaryActionLabel?: string;
   primaryActionIcon?: string;
+  primaryActionTo?: string;
+  primaryActionNavigationState?: Record<string, any>;
   showCollaborationRequestAction?: boolean;
   showFavoriteAction?: boolean;
   showForkBadge?: boolean;
@@ -63,9 +65,10 @@ export default function ProjectListItem({
       build={build}
       isOwner={isOwner}
       navigationState={navigationState}
-      openAppNavigationState={openAppNavigationState}
       primaryActionIcon={primaryActionIcon}
       primaryActionLabel={primaryActionLabel}
+      primaryActionTo={primaryActionTo}
+      primaryActionNavigationState={primaryActionNavigationState}
       showCollaborationRequestAction={showCollaborationRequestAction}
       showFavoriteAction={showFavoriteAction}
       showForkBadge={showForkBadge}

@@ -68,7 +68,7 @@ const wideCardClass = css`
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 22rem);
+  grid-template-columns: minmax(0, 1fr) auto minmax(14rem, 22rem);
   gap: 1rem;
   align-items: stretch;
   padding: 1.25rem;
@@ -92,7 +92,15 @@ const wideCardClass = css`
     cursor: pointer;
   }
 
+  &.no-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 22rem);
+  }
+
   &.no-preview {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  &.no-preview.no-actions {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -308,32 +316,52 @@ const metaItemClass = css`
 
 const actionRowClass = css`
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  margin-top: auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.6rem;
 
   @media (max-width: ${mobileMaxWidth}) {
     grid-area: actions;
-    margin-top: 0;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+`;
+
+const favoriteActionClass = css`
+  height: 3.2rem;
+  width: 100%;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    height: 2.75rem;
+    width: auto;
   }
 `;
 
 const actionButtonClass = css`
   appearance: none;
-  height: 2.7rem;
+  height: 3.2rem;
+  min-width: 14rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  padding: 0 0.88rem;
+  padding: 0 1rem;
   border: 1px solid rgba(100, 116, 139, 0.22);
   border-radius: 8px;
   background: #fff;
   color: #334155;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 950;
   cursor: pointer;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    height: 2.7rem;
+    min-width: 0;
+    padding: 0 0.88rem;
+    font-size: 1.05rem;
+  }
 
   &:disabled {
     cursor: default;
@@ -399,9 +427,10 @@ export default function BuildWideCard({
   clickable = true,
   isOwner = false,
   navigationState,
-  openAppNavigationState,
   primaryActionIcon,
   primaryActionLabel,
+  primaryActionTo,
+  primaryActionNavigationState,
   showCollaborationRequestAction = true,
   showFavoriteAction = false,
   showForkBadge = true,
@@ -424,9 +453,10 @@ export default function BuildWideCard({
   embedded?: boolean;
   isOwner?: boolean;
   navigationState?: Record<string, any>;
-  openAppNavigationState?: Record<string, any>;
   primaryActionIcon?: string;
   primaryActionLabel?: string;
+  primaryActionTo?: string;
+  primaryActionNavigationState?: Record<string, any>;
   showCollaborationRequestAction?: boolean;
   showFavoriteAction?: boolean;
   showForkBadge?: boolean;
@@ -545,13 +575,13 @@ export default function BuildWideCard({
       : collaborationStatus === 'invited'
         ? 'Join team'
         : collaborationStatus === 'accepted'
-          ? 'Work together'
+          ? 'Open workspace'
           : 'Ask to join';
   const listCollaborationActionIcon =
     collaborationStatus === 'pending'
       ? 'clock'
       : collaborationStatus === 'accepted'
-        ? 'users'
+        ? 'wrench'
         : 'user-plus';
   const showListCollaborationAction =
     showCollaborationRequestAction && !ownerMode && Boolean(buildId);
@@ -568,15 +598,29 @@ export default function BuildWideCard({
     showFavoriteAction && buildIsPublic && Boolean(buildId);
   const separatePrimaryActionShown = ownerMode || Boolean(primaryActionLabel);
   const primaryActionTargetsApp =
-    Boolean(primaryActionLabel) && isBuildAppTargetPath(targetPath, buildId);
+    Boolean(primaryActionLabel) &&
+    isBuildAppTargetPath(primaryActionTo || targetPath, buildId);
   const openAppAccessAllowed = showOpenAppAction ?? (buildIsPublic || ownerMode);
   const openAppActionShown =
     Boolean(buildId) && openAppAccessAllowed && !primaryActionTargetsApp;
-  const previewLabel = primaryActionLabel || (ownerMode ? 'Build' : 'Open app');
+  const deleteActionShown = ownerMode && Boolean(onDelete);
+  const hasActions =
+    showStandaloneForkAction ||
+    showListCollaborationAction ||
+    separatePrimaryActionShown ||
+    openAppActionShown ||
+    favoriteActionShown ||
+    deleteActionShown;
+  const previewLabel =
+    primaryActionLabel || (ownerMode ? 'Open workspace' : 'Open app');
   const previewIcon =
     primaryActionIcon || (ownerMode ? 'wrench' : 'external-link-alt');
   const primaryActionClass =
-    ownerMode ? 'blue' : primaryActionIcon === 'users' ? 'pink' : 'primary';
+    ownerMode || previewIcon === 'wrench'
+      ? 'blue'
+      : primaryActionIcon === 'users'
+        ? 'pink'
+        : 'primary';
   const thumbnailUrl = String(build?.thumbnailUrl || '').trim();
   const hasPreview = Boolean(thumbnailUrl);
   // Some card surfaces (feed content lists, embedded components) don't
@@ -644,6 +688,7 @@ export default function BuildWideCard({
           embedded && 'embedded',
           clickable && 'clickable',
           !hasPreview && 'no-preview',
+          !hasActions && 'no-actions',
           actionError && 'has-error'
         )}
         style={buildCardStyle}
@@ -803,6 +848,8 @@ export default function BuildWideCard({
             ) : null}
           </div>
           {actionError ? <div className={errorClass}>{actionError}</div> : null}
+        </div>
+        {hasActions ? (
           <div className={actionRowClass}>
             {showStandaloneForkAction ? (
               <button
@@ -821,7 +868,10 @@ export default function BuildWideCard({
             {showListCollaborationAction ? (
               <button
                 type="button"
-                className={cx(actionButtonClass, 'pink')}
+                className={cx(
+                  actionButtonClass,
+                  collaborationStatus === 'accepted' ? 'blue' : 'pink'
+                )}
                 disabled={
                   Boolean(actionLoading) || collaborationStatus === 'pending'
                 }
@@ -865,6 +915,7 @@ export default function BuildWideCard({
             {favoriteActionShown ? (
               <FavoriteButton
                 buildId={buildId}
+                className={favoriteActionClass}
                 favorited={Boolean(build.isFavorited)}
                 label={build.isFavorited ? 'Favorited' : 'Favorite'}
                 preventDefault
@@ -875,7 +926,7 @@ export default function BuildWideCard({
                 onStart={handleFavoriteStart}
               />
             ) : null}
-            {ownerMode && onDelete ? (
+            {deleteActionShown ? (
               <button
                 type="button"
                 className={cx(actionButtonClass, 'danger')}
@@ -886,7 +937,7 @@ export default function BuildWideCard({
               </button>
             ) : null}
           </div>
-        </div>
+        ) : null}
         {hasPreview ? (
           <PreviewFrame
             className={previewClass}
@@ -971,6 +1022,15 @@ export default function BuildWideCard({
 
   function handlePrimaryActionClick(event: React.MouseEvent<HTMLButtonElement>) {
     stopButtonEvent(event);
+    if (primaryActionTo) {
+      navigate(
+        primaryActionTo,
+        primaryActionNavigationState
+          ? { state: primaryActionNavigationState }
+          : undefined
+      );
+      return;
+    }
     if (ownerMode && !primaryActionLabel) {
       navigate(`/build/${buildId}`);
       return;
@@ -988,10 +1048,7 @@ export default function BuildWideCard({
       handleNavigate();
       return;
     }
-    navigate(
-      `/app/${buildId}`,
-      openAppNavigationState ? { state: openAppNavigationState } : undefined
-    );
+    navigate(`/app/${buildId}`);
   }
 
   async function handleForkActionClick(event: React.MouseEvent<HTMLButtonElement>) {
