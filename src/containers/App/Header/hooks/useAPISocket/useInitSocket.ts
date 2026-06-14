@@ -14,7 +14,8 @@ import {
 } from '~/helpers/socketAuthReady';
 import {
   nextChatBootstrapId,
-  recordChatBootstrapEvent
+  recordChatBootstrapEvent,
+  flushChatBootstrapHistory
 } from '~/helpers/chatBootstrapDebug';
 import {
   getStoredItem,
@@ -125,6 +126,9 @@ export default function useInitSocket({
   const loadedForUserIdRef = useRef(loadedForUserId);
   const didSocketDisconnectRef = useRef(false);
   const isLoadingChatRef = useRef(false);
+  // When the currently-owning bootstrap attempt began its loadChat (0 = none in
+  // flight). The watchdog uses this to tell a healthy slow load from a hung one.
+  const bootstrapStartedAtRef = useRef(0);
   const activeBootstrapIdRef = useRef<string | null>(null);
   const lastFailedBootstrapIdRef = useRef<string | null>(null);
   const loadChatRetryTimerRef = useRef<number | null>(null);
@@ -597,6 +601,7 @@ export default function useInitSocket({
         : '';
       const bootstrapId = nextChatBootstrapId();
       activeBootstrapIdRef.current = bootstrapId;
+      bootstrapStartedAtRef.current = Date.now();
 
       recordChatBootstrapEvent('chat-bootstrap-attempt-start', {
         bootstrapId,
@@ -652,6 +657,23 @@ export default function useInitSocket({
             : null,
           chatType: data?.chatType ?? null
         });
+
+        // A newer bootstrap has superseded this one — e.g. the stuck-chat
+        // watchdog started a fresh attempt while this loadChat was merely slow
+        // (throttled tab / poor network) rather than hung. Bail before touching
+        // any shared chat state so this older snapshot can't clobber the newer
+        // load's onInitChat or its channel/route reconciliation. The active
+        // (latest-started) attempt owns the result. The finally below leaves the
+        // in-flight gate to that owner.
+        if (activeBootstrapIdRef.current !== bootstrapId) {
+          recordChatBootstrapEvent('chat-bootstrap-superseded-skip-init', {
+            bootstrapId,
+            activeBootstrapId: activeBootstrapIdRef.current,
+            userId: userIdRef.current
+          });
+          return;
+        }
+
         loadChatRetryCountRef.current = 0;
         if (loadChatRetryTimerRef.current) {
           clearTimeout(loadChatRetryTimerRef.current);
@@ -794,35 +816,61 @@ export default function useInitSocket({
           socketConnected: socket.connected
         });
         if (!didInitChat) {
-          lastFailedBootstrapIdRef.current = bootstrapId;
-          console.error('Failed to load chat:', error);
-          if (socket.connected) {
-            scheduleLoadChatRetry();
+          const isOwningBootstrap =
+            activeBootstrapIdRef.current === bootstrapId;
+          const alreadyLoaded =
+            chatLoadedRef.current &&
+            loadedForUserIdRef.current === userIdRef.current;
+          if (!isOwningBootstrap || alreadyLoaded) {
+            // A superseded/stale attempt rejecting (e.g. one the watchdog
+            // abandoned) must not schedule a retry: the active attempt owns
+            // recovery, and if chat already loaded a retry would needlessly
+            // onSetReconnecting() and reload over the recovered state.
+            recordChatBootstrapEvent('chat-bootstrap-retry-skipped-stale', {
+              sourceBootstrapId: bootstrapId,
+              activeBootstrapId: activeBootstrapIdRef.current,
+              alreadyLoaded,
+              userId: userIdRef.current,
+              selectedChannelId: selectedChannelIdRef.current
+            });
           } else {
-            recordChatBootstrapEvent(
-              'chat-bootstrap-retry-skipped-disconnected',
-              {
-                sourceBootstrapId: bootstrapId,
-                retryCount: loadChatRetryCountRef.current,
-                userId: userIdRef.current,
-                selectedChannelId: selectedChannelIdRef.current
-              }
-            );
+            lastFailedBootstrapIdRef.current = bootstrapId;
+            console.error('Failed to load chat:', error);
+            if (socket.connected) {
+              scheduleLoadChatRetry();
+            } else {
+              recordChatBootstrapEvent(
+                'chat-bootstrap-retry-skipped-disconnected',
+                {
+                  sourceBootstrapId: bootstrapId,
+                  retryCount: loadChatRetryCountRef.current,
+                  userId: userIdRef.current,
+                  selectedChannelId: selectedChannelIdRef.current
+                }
+              );
+            }
           }
         } else {
           console.error('Failed to sync post-load chat state:', error);
         }
       } finally {
-        isLoadingChatRef.current = false;
+        // Only the owning (latest-started) attempt clears the shared in-flight
+        // gate and active id. A superseded older attempt finishing must leave both
+        // alone, or it would reopen the gate while the newer attempt is still
+        // running and invite yet another overlapping bootstrap.
+        const isOwningBootstrap = activeBootstrapIdRef.current === bootstrapId;
+        if (isOwningBootstrap) {
+          isLoadingChatRef.current = false;
+          activeBootstrapIdRef.current = null;
+          bootstrapStartedAtRef.current = 0;
+        }
         recordChatBootstrapEvent('chat-bootstrap-attempt-finished', {
           bootstrapId,
           didInitChat,
+          isOwningBootstrap,
           isLoadingChat: isLoadingChatRef.current,
           hasRetryTimer: !!loadChatRetryTimerRef.current
         });
-        if (activeBootstrapIdRef.current === bootstrapId) {
-          activeBootstrapIdRef.current = null;
-        }
       }
     }
 
@@ -862,6 +910,20 @@ export default function useInitSocket({
           return;
         }
         if (isLoadingChatRef.current) return;
+        if (
+          chatLoadedRef.current &&
+          loadedForUserIdRef.current === userIdRef.current
+        ) {
+          // Chat already recovered (e.g. a newer attempt succeeded) — don't
+          // reload over it.
+          loadChatRetryCountRef.current = 0;
+          recordChatBootstrapEvent('chat-bootstrap-retry-skipped-loaded', {
+            sourceBootstrapId: lastFailedBootstrapIdRef.current,
+            userId: userIdRef.current,
+            selectedChannelId: selectedChannelIdRef.current
+          });
+          return;
+        }
         recordChatBootstrapEvent('chat-bootstrap-retry-fired', {
           sourceBootstrapId: lastFailedBootstrapIdRef.current,
           retryCount: loadChatRetryCountRef.current,
@@ -959,6 +1021,97 @@ export default function useInitSocket({
       selectedChannelId: selectedChannelIdRef.current
     });
   }, [chatLoaded, loadedForUserId, loadChatHandlerVersion, userId]);
+
+  // Self-heal watchdog. The bootstrap request (loadChat) runs with no timeout and
+  // no stall guard (meta.enforceTimeout:false + ui/normal policy progress guard
+  // off), and every recovery path is gated behind isLoadingChatRef, which clears
+  // only when loadChat settles. So a single stalled loadChat — e.g. issued by a
+  // reconnect while the tab is throttled behind a Build game window — wedges chat
+  // on "Loading Twinkle Chat..." forever with no error and no retry.
+  //
+  // The watchdog must NOT preempt a healthy-but-slow load (a throttled tab can
+  // legitimately take a while), or it would supersede every attempt before it can
+  // resolve and chat would never load. So it acts only when (a) nothing is in
+  // flight, or (b) the in-flight attempt has overrun a generous deadline that
+  // backs off each time — letting slow successful loads settle while still
+  // rescuing a genuinely hung one. Runs only while the loader shows; clears on
+  // load.
+  const WATCHDOG_TICK_MS = 15000;
+  const WATCHDOG_BASE_STUCK_MS = 60000;
+  const WATCHDOG_MAX_STUCK_MS = 240000;
+  useEffect(() => {
+    if (!userId) return;
+    if (chatLoaded && loadedForUserId === userId) return;
+    // Closure-scoped because this effect persists for the whole stuck window
+    // (its deps don't change while wedged) and resets naturally on recovery.
+    let forcedRetries = 0;
+    let warned = false;
+    const interval = window.setInterval(() => {
+      if (!userIdRef.current) return;
+      if (
+        chatLoadedRef.current &&
+        loadedForUserIdRef.current === userIdRef.current
+      ) {
+        return;
+      }
+      // Save the trace the moment trouble is suspected, so it survives even a hard
+      // quit (not just the reload used to escape the hang).
+      flushChatBootstrapHistory();
+      if (!socket.connected) {
+        recordChatBootstrapEvent('chat-bootstrap-watchdog-reconnect', {
+          userId: userIdRef.current,
+          selectedChannelId: selectedChannelIdRef.current
+        });
+        try {
+          socket.connect();
+        } catch {}
+        return;
+      }
+      // Let a healthy in-flight attempt finish. Only intervene once nothing is
+      // loading, or the in-flight attempt has clearly overrun its (backing-off)
+      // deadline — i.e. it is hung, not merely slow.
+      const stuckDeadline = Math.min(
+        WATCHDOG_BASE_STUCK_MS * 2 ** forcedRetries,
+        WATCHDOG_MAX_STUCK_MS
+      );
+      const inFlightAge = bootstrapStartedAtRef.current
+        ? Date.now() - bootstrapStartedAtRef.current
+        : Infinity;
+      if (isLoadingChatRef.current && inFlightAge < stuckDeadline) {
+        return;
+      }
+      forcedRetries += 1;
+      recordChatBootstrapEvent('chat-bootstrap-watchdog-force-retry', {
+        userId: userIdRef.current,
+        selectedChannelId: selectedChannelIdRef.current,
+        wasLoadingChat: isLoadingChatRef.current,
+        inFlightAge: Number.isFinite(inFlightAge) ? inFlightAge : null,
+        stuckDeadline,
+        forcedRetries,
+        hadRetryTimer: !!loadChatRetryTimerRef.current
+      });
+      // After more than one forced retry it is clearly wedged (not a slow first
+      // load) — tell the user how to hand over a diagnostic, once, loudly.
+      if (forcedRetries >= 2 && !warned) {
+        warned = true;
+        console.warn(
+          `[twinkle-chat] Chat has been stuck loading. To capture a diagnostic log, run:\n\n    copy(window.dumpChatBootstrap())\n\nand send it over.`
+        );
+      }
+      // Clear the gates the stuck attempt left set, then re-bootstrap. The
+      // superseded check in handleLoadChat stops the abandoned attempt from
+      // clobbering this fresh one if it resolves late.
+      isLoadingChatRef.current = false;
+      if (loadChatRetryTimerRef.current) {
+        clearTimeout(loadChatRetryTimerRef.current);
+        loadChatRetryTimerRef.current = null;
+      }
+      void handleLoadChatRef.current?.({
+        selectedChannelId: selectedChannelIdRef.current
+      });
+    }, WATCHDOG_TICK_MS);
+    return () => clearInterval(interval);
+  }, [userId, chatLoaded, loadedForUserId]);
 
   // Track previous userId to properly leave old notification channel
   const prevUserIdRef = useRef<number | undefined>(undefined);
