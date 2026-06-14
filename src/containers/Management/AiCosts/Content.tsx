@@ -6,6 +6,9 @@ import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import { Color } from '~/constants/css';
 import RiskGroupDetail from './RiskGroupDetail';
+import ManagementUserSearchInput, {
+  ManagementUserSearchResult
+} from '../UserSearchInput';
 import { DataTable, EmptyMessage, PaginationFooter } from './DataTable';
 import {
   formatAccountName,
@@ -82,6 +85,8 @@ export default function Content({
   onCreateBucketForPendingAction,
   onRefresh,
   onDisableManualIdentityRule,
+  onAddAccountToBucket,
+  onAddIpSignalToBucket,
   onOpenBucketActionModal,
   onSelectBucket,
   onRiskGroupSelect,
@@ -120,6 +125,8 @@ export default function Content({
   onCreateBucketForPendingAction: (label: string) => void;
   onRefresh: () => void;
   onDisableManualIdentityRule: (rule: AiEnergyManualIdentityRule) => void;
+  onAddAccountToBucket: (user: ManagementUserSearchResult) => void;
+  onAddIpSignalToBucket: (ip: string) => void;
   onOpenBucketActionModal: (
     action: AiEnergyManualIdentityBucketAction
   ) => void;
@@ -162,9 +169,13 @@ export default function Content({
   const selectedBucket =
     identityBuckets.find((bucket) => bucket.id === selectedBucketId) || null;
   const [bucketTitleDraft, setBucketTitleDraft] = useState('');
+  const [ipDraft, setIpDraft] = useState('');
   useEffect(() => {
     setBucketTitleDraft(selectedBucket?.label || '');
   }, [selectedBucket?.id, selectedBucket?.label]);
+  const manualAddSaving =
+    manualIdentitySavingKey.startsWith('manual-account:') ||
+    manualIdentitySavingKey.startsWith('manual-ip:');
   const linkedRuleRows = useMemo<AiCostRow[]>(() => {
     return (selectedBucket?.rules || []).map((rule) => ({
       ...rule
@@ -350,6 +361,48 @@ export default function Content({
                   >
                     Save Title
                   </Button>
+                </div>
+                <SubsectionHeader
+                  title="Add to Bucket"
+                  note="Search an account or add an IP"
+                />
+                <div className="bucket-manual-add">
+                  <div className="manual-add-field">
+                    <label>Account</label>
+                    <ManagementUserSearchInput
+                      placeholder="Search username, name, or email..."
+                      onSelect={onAddAccountToBucket}
+                    />
+                  </div>
+                  <div className="manual-add-field">
+                    <label htmlFor="manual-ai-add-ip">IP Address</label>
+                    <div className="manual-add-ip">
+                      <input
+                        id="manual-ai-add-ip"
+                        value={ipDraft}
+                        placeholder="Public IPv4 or IPv6 address"
+                        onChange={(event) =>
+                          setIpDraft(event.currentTarget.value)
+                        }
+                        onKeyDown={handleIpKeyDown}
+                      />
+                      <Button
+                        color="logoBlue"
+                        variant="solid"
+                        loading={
+                          manualIdentitySavingKey ===
+                          `manual-ip:${ipDraft.trim()}`
+                        }
+                        disabled={!ipDraft.trim() || manualAddSaving}
+                        onClick={handleAddIp}
+                      >
+                        Add IP Signal
+                      </Button>
+                    </div>
+                  </div>
+                  {manualAddSaving ? (
+                    <div className="manual-add-status">Adding…</div>
+                  ) : null}
                 </div>
                 <SubsectionHeader
                   title="Linked Items"
@@ -992,6 +1045,20 @@ export default function Content({
       ) : null}
     </div>
   );
+
+  function handleAddIp() {
+    const ip = ipDraft.trim();
+    if (!ip) return;
+    onAddIpSignalToBucket(ip);
+    setIpDraft('');
+  }
+
+  function handleIpKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleAddIp();
+    }
+  }
 }
 
 function Panel({

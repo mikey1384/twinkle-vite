@@ -20,7 +20,9 @@ import {
 
 interface QuizQuestion {
   id: number;
-  word: string;
+  // word is withheld pre-submission (it is the answer for definition-first
+  // questions); it arrives in the answer response and is read from there.
+  word?: string;
   question: string;
   choices: string[];
   answerIndex?: number;
@@ -1000,7 +1002,7 @@ export default function VocabQuizModal({
       (answerResult.collected || answerResult.discovered)
     ) {
       const isDiscovered = answerResult.discovered;
-      const word = currentQuestion?.word || '';
+      const word = answerResult?.word || '';
       const wordLevel = answerResult?.wordLevel || currentQuestion?.wordLevel || 3;
       const levelInfo = wordLevelHash[wordLevel] || wordLevelHash[3];
       const wordColor =
@@ -1123,7 +1125,7 @@ export default function VocabQuizModal({
         setQuizResults((prev) => [
           ...prev,
           {
-            word: currentQuestion.word,
+            word: result.word || '',
             wordLevel: result.wordLevel || currentQuestion.wordLevel || 3,
             isCorrect: result.isCorrect,
             collected: result.collected || false,

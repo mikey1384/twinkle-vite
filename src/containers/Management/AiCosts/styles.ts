@@ -433,12 +433,65 @@ export const panelClass = css`
     font-size: 1.3rem;
   }
 
+  .bucket-manual-add {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 1.2rem;
+    margin-bottom: 1.4rem;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: ${mediumBorderRadius};
+    background: ${Color.whiteGray()};
+    padding: 1rem;
+  }
+
+  .bucket-manual-add .manual-add-field {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .bucket-manual-add label {
+    color: ${Color.darkGray()};
+    font-size: 1.15rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .bucket-manual-add .manual-add-ip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .bucket-manual-add .manual-add-ip input {
+    min-width: 0;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: ${mediumBorderRadius};
+    padding: 0.85rem 1rem;
+    font-size: 1.3rem;
+  }
+
+  .bucket-manual-add .manual-add-status {
+    grid-column: 1 / -1;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
     border-left: 0;
     border-right: 0;
 
     .bucket-title-row {
+      grid-template-columns: 1fr;
+    }
+
+    .bucket-manual-add {
       grid-template-columns: 1fr;
     }
   }

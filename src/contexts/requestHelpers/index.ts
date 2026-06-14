@@ -412,6 +412,8 @@ registerMethods('management', [
   'updateAiEnergyManualIdentityBucket',
   'saveAiEnergyManualIdentityRule',
   'disableAiEnergyManualIdentityRule',
+  'addAiEnergyManualIdentityAccount',
+  'addAiEnergyManualIdentityIpSignal',
   'loadHomeFeedPerformanceReport',
   'loadHomeFeedPerformanceExport',
   'loadNotableUsers',

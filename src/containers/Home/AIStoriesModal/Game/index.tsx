@@ -205,31 +205,32 @@ export default function Game({
   }
 
   async function handleGrade() {
-    let numCorrect = 0;
     const choiceObj = userChoiceObjRef.current;
+    // The answer key is withheld until submission, so grading is done by the
+    // server. We only send the selected positions; the server returns the
+    // score and the reveal.
     const answers = questions.map((question) => {
       const selectedChoiceIndex = choiceObj[question.id];
-      if (
-        typeof selectedChoiceIndex === 'number' &&
-        selectedChoiceIndex === Number(question.answerIndex)
-      ) {
-        numCorrect++;
-      }
       return {
         questionId: question.id,
         selectedChoiceIndex:
-          typeof selectedChoiceIndex === 'number'
-            ? selectedChoiceIndex
-            : null
+          typeof selectedChoiceIndex === 'number' ? selectedChoiceIndex : null
       };
     });
     try {
       setIsGrading(true);
-      const { dailyTaskStatus, newXp, newCoins, isPassed, dailyTask } =
-        await uploadAIStoryAttempt({
-          attemptId,
-          answers
-        });
+      const {
+        dailyTaskStatus,
+        newXp,
+        newCoins,
+        isPassed,
+        numCorrect,
+        answers: gradedAnswers,
+        dailyTask
+      } = await uploadAIStoryAttempt({
+        attemptId,
+        answers
+      });
       onSetDailyTask(dailyTaskStatus?.aiStory || dailyTask || null);
       if (dailyTaskStatus) {
         onApplyTodayStatsProgress({
@@ -241,6 +242,21 @@ export default function Game({
           userId,
           newState: { twinkleCoins: newCoins, twinkleXP: newXp }
         });
+      }
+      // Merge the server's reveal (answerIndex per question) back into the
+      // questions so the graded view can highlight correct/incorrect choices.
+      if (Array.isArray(gradedAnswers)) {
+        const answerByQuestionId = new Map<number, any>(
+          gradedAnswers.map((answer: any) => [answer.questionId, answer])
+        );
+        onSetQuestions(
+          questions.map((question) => {
+            const graded = answerByQuestionId.get(question.id);
+            return graded
+              ? { ...question, answerIndex: graded.answerIndex }
+              : question;
+          })
+        );
       }
       onSetSolveObj({
         numCorrect,

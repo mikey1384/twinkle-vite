@@ -936,7 +936,16 @@ export default function contentRequestHelpers({
     }) {
       try {
         const {
-          data: { newXp, newCoins, isPassed, dailyTaskStatus, dailyTask }
+          data: {
+            newXp,
+            newCoins,
+            isPassed,
+            numCorrect,
+            totalQuestions,
+            answers: gradedAnswers,
+            dailyTaskStatus,
+            dailyTask
+          }
         } = await request.post(
           `${URL}/content/game/story/attempt`,
           { attemptId, answers },
@@ -946,6 +955,9 @@ export default function contentRequestHelpers({
           newXp,
           newCoins,
           isPassed,
+          numCorrect,
+          totalQuestions,
+          answers: gradedAnswers,
           dailyTaskStatus,
           dailyTask
         };

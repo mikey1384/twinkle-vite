@@ -3,6 +3,7 @@ import InvalidPage from '~/components/InvalidPage';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import Content from './Content';
+import { ManagementUserSearchResult } from '../UserSearchInput';
 import {
   getEventActionKey,
   getEventSignals,
@@ -93,6 +94,12 @@ export default function AiCosts() {
   );
   const disableAiEnergyManualIdentityRule = useAppContext(
     (v) => v.requestHelpers.disableAiEnergyManualIdentityRule
+  );
+  const addAiEnergyManualIdentityAccount = useAppContext(
+    (v) => v.requestHelpers.addAiEnergyManualIdentityAccount
+  );
+  const addAiEnergyManualIdentityIpSignal = useAppContext(
+    (v) => v.requestHelpers.addAiEnergyManualIdentityIpSignal
   );
   const canView = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
 
@@ -240,6 +247,8 @@ export default function AiCosts() {
       onLoadMoreRiskGroupEvents={handleLoadMoreRiskGroupEvents}
       onRefresh={handleRefresh}
       onDisableManualIdentityRule={handleDisableManualIdentityRule}
+      onAddAccountToBucket={handleAddAccountToBucket}
+      onAddIpSignalToBucket={handleAddIpSignalToBucket}
       onOpenBucketActionModal={handleOpenBucketActionModal}
       onSelectBucket={handleSelectBucket}
       onRiskGroupSelect={handleRiskGroupSelect}
@@ -425,6 +434,51 @@ export default function AiCosts() {
       setManualIdentityError(
         saveError?.message || 'Failed to create bucket'
       );
+    } finally {
+      setManualIdentitySavingKey('');
+    }
+  }
+
+  async function handleAddAccountToBucket(user: ManagementUserSearchResult) {
+    const bucketId = selectedBucketId;
+    const userId = Number(user?.id || 0);
+    if (!bucketId || !userId) return;
+    const savingKey = `manual-account:${userId}`;
+    setManualIdentitySavingKey(savingKey);
+    setManualIdentityError('');
+    try {
+      await addAiEnergyManualIdentityAccount({
+        bucketId,
+        userId,
+        note: 'Added manually'
+      });
+      await refreshManualIdentityBuckets(bucketId);
+      setReloadKey((key) => key + 1);
+    } catch (saveError: any) {
+      setManualIdentityError(
+        saveError?.message || 'Failed to add account to bucket'
+      );
+    } finally {
+      setManualIdentitySavingKey('');
+    }
+  }
+
+  async function handleAddIpSignalToBucket(ip: string) {
+    const bucketId = selectedBucketId;
+    const normalizedIp = String(ip || '').trim();
+    if (!bucketId || !normalizedIp) return;
+    const savingKey = `manual-ip:${normalizedIp}`;
+    setManualIdentitySavingKey(savingKey);
+    setManualIdentityError('');
+    try {
+      await addAiEnergyManualIdentityIpSignal({
+        bucketId,
+        ip: normalizedIp
+      });
+      await refreshManualIdentityBuckets(bucketId);
+      setReloadKey((key) => key + 1);
+    } catch (saveError: any) {
+      setManualIdentityError(saveError?.message || 'Failed to add IP to bucket');
     } finally {
       setManualIdentitySavingKey('');
     }

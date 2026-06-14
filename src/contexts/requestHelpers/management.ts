@@ -347,6 +347,46 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async addAiEnergyManualIdentityAccount({
+      bucketId,
+      userId,
+      note
+    }: {
+      bucketId: number;
+      userId: number;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}/account`,
+          { userId, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addAiEnergyManualIdentityIpSignal({
+      bucketId,
+      ip,
+      note
+    }: {
+      bucketId: number;
+      ip: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}/ip`,
+          { ip, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadHomeFeedPerformanceReport(hours: number) {
       try {
         const { data } = await request.get(
