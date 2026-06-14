@@ -694,9 +694,9 @@ export default function Header({
           as="span"
           theme={(profileTheme || DEFAULT_PROFILE_THEME) as any}
         >
-          <Link to="/build" className={badgeClass} title="Back to main menu">
+          <Link to="/build" className={badgeClass} title="Back to builds">
             <Icon icon="arrow-left" />
-            Back to Main Menu
+            Back to Builds
           </Link>
         </ScopedTheme>
         <div className={headerTitleRowClass}>

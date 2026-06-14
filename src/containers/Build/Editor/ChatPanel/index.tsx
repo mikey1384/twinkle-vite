@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import Icon from '~/components/Icon';
-import { useViewContext } from '~/contexts';
-import { mobileMaxWidth } from '~/constants/css';
+import { useKeyContext, useViewContext } from '~/contexts';
+import { getThemeStyles, mobileMaxWidth } from '~/constants/css';
 import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
 import ThreeVendorUpgradeNotice from '../ThreeVendorUpgradeNotice';
 import Composer from './Composer';
@@ -135,26 +135,19 @@ const communicationTabsClass = css`
 
 const communicationHeaderClass = css`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(0, 1fr);
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
-  container-type: inline-size;
-  @media (max-width: 44rem) {
-    grid-template-columns: 1fr;
-    justify-items: start;
-  }
 `;
 
 const communicationHeaderTabsSlotClass = css`
   justify-self: center;
+  min-width: 0;
   max-width: 100%;
-  @media (max-width: 44rem) {
-    justify-self: start;
-    overflow-x: auto;
-  }
+  overflow-x: auto;
 `;
 
 const communicationHeaderSpacerClass = css`
@@ -165,10 +158,10 @@ const mainProjectButtonClass = css`
   justify-self: start;
   width: max-content;
   max-width: 100%;
-  border: 1px solid var(--ui-border);
+  border: 1px solid var(--main-btn-border, #285a9c);
   border-radius: 999px;
-  background: #fff;
-  color: var(--chat-text);
+  background: var(--main-btn-bg, #418ceb);
+  color: var(--main-btn-text, #fff);
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -176,23 +169,10 @@ const mainProjectButtonClass = css`
   font: inherit;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.1);
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.18);
   white-space: nowrap;
   &:hover {
-    border-color: var(--ui-border-strong);
-    background: #f8fbff;
-  }
-  @container (max-width: 42rem) {
-    width: 2.75rem;
-    height: 2.75rem;
-    justify-content: center;
-    padding: 0;
-  }
-`;
-
-const mainProjectButtonLabelClass = css`
-  @container (max-width: 42rem) {
-    display: none;
+    background: var(--main-btn-hover, #357abd);
   }
 `;
 
@@ -302,6 +282,16 @@ export default function ChatPanel({
     (v) => v.state.aiFeaturesDisabled
   );
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const mainProjectButtonStyle = useMemo(() => {
+    const themed = getThemeStyles(profileTheme || 'logoBlue', 1);
+    return {
+      '--main-btn-bg': themed.bg,
+      '--main-btn-hover': themed.hoverBg,
+      '--main-btn-border': themed.border,
+      '--main-btn-text': themed.text
+    } as React.CSSProperties;
+  }, [profileTheme]);
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const [communicationMode, setCommunicationMode] = useState<CommunicationMode>(
     () => normalizeCommunicationMode(preferredCommunicationMode)
@@ -667,10 +657,11 @@ export default function ChatPanel({
           <button
             type="button"
             className={mainProjectButtonClass}
+            style={mainProjectButtonStyle}
             onClick={onOpenMainProject}
           >
             <Icon icon="home" />
-            <span className={mainProjectButtonLabelClass}>Main</span>
+            <span>Main</span>
           </button>
           {communicationOptions.length > 1 ? (
             <div className={communicationHeaderTabsSlotClass}>
