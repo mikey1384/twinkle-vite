@@ -47,6 +47,15 @@ export default function Questions({
     }
   }, [loadingProgress, questionsLoaded]);
 
+  // Every question must have a selected choice before the attempt can be
+  // submitted — an unanswered question would be sent as null and auto-marked
+  // wrong (also enforced server-side).
+  const allAnswered =
+    questions.length > 0 &&
+    questions.every(
+      (question: any) => typeof userChoiceObj[question.id] === 'number'
+    );
+
   return (
     <div
       className={css`
@@ -200,7 +209,11 @@ export default function Questions({
                     paddingBottom: '10rem'
                   }}
                 >
-                  <GradientButton loading={isGrading} onClick={onGrade}>
+                  <GradientButton
+                    loading={isGrading}
+                    disabled={!allAnswered}
+                    onClick={onGrade}
+                  >
                     Finish
                   </GradientButton>
                   <div style={{ marginTop: '2rem' }}>
