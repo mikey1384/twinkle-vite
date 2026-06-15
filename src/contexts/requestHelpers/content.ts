@@ -686,7 +686,8 @@ export default function contentRequestHelpers({
       filter = 'all',
       order = 'desc',
       orderBy = 'lastInteraction',
-      username
+      username,
+      signal
     }: {
       lastFeedId?: number;
       lastTimeStamp?: string;
@@ -699,6 +700,7 @@ export default function contentRequestHelpers({
       order?: string;
       orderBy?: string;
       username?: string;
+      signal?: AbortSignal;
     } = {}) {
       try {
         const params = new URLSearchParams({
@@ -724,7 +726,17 @@ export default function contentRequestHelpers({
         }
         const { data } = await request.get(
           `${URL}/content/feeds?${params.toString()}`,
-          auth()
+          signal
+            ? {
+                ...auth(),
+                signal,
+                // A cancelable load-more must not collapse onto (or be
+                // collapsed into) another in-flight feeds GET: the watchdog
+                // aborts THIS request, and a retry needs to issue a fresh one
+                // rather than re-await the dying promise.
+                meta: { collapseKey: null }
+              }
+            : auth()
         );
         return { data, filter };
       } catch (error) {

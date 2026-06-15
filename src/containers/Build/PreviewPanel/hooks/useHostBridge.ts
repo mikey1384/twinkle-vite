@@ -482,44 +482,51 @@ export function useHostBridge({
       });
     }
 
+    function postAiImageStatusToTarget(
+      target: {
+        requestId: string;
+        sourceWindow: Window;
+        statusCount: number;
+        terminalStatusForwarded: boolean;
+      },
+      payload: any
+    ) {
+      if (payload?.aiUsagePolicy && typeof payload.aiUsagePolicy === 'object') {
+        onAiUsagePolicyUpdateRef.current?.(payload.aiUsagePolicy);
+      }
+      target.statusCount += 1;
+      const stage = String(payload?.stage || '').trim();
+      if (stage === 'completed' || stage === 'error') {
+        target.terminalStatusForwarded = true;
+      }
+      const targetWindow = target.sourceWindow;
+      const targetBridge = getMessageTargetBridgeForWindow(targetWindow);
+      try {
+        targetWindow.postMessage(
+          {
+            source: 'twinkle-parent',
+            type: 'ai:image-generation-status',
+            previewNonce: targetBridge.previewNonce,
+            payload
+          },
+          targetBridge.targetOrigin
+        );
+      } catch (error) {
+        console.error(
+          'Failed to forward AI image generation status to build preview:',
+          error
+        );
+      }
+    }
+
+    // Fan-out path for status events pushed from the server (no specific target
+    // known): route to whichever registered in-flight target owns the requestId.
     function handleAiImageGenerationStatus(payload: any) {
-      let appliedAiUsagePolicy = false;
+      const payloadRequestId = String(payload?.requestId || '').trim();
+      if (!payloadRequestId) return;
       for (const target of activeAiImageStatusTargets.values()) {
-        const payloadRequestId = String(payload?.requestId || '').trim();
-        if (!payloadRequestId || payloadRequestId !== target.requestId) {
-          continue;
-        }
-        if (
-          !appliedAiUsagePolicy &&
-          payload?.aiUsagePolicy &&
-          typeof payload.aiUsagePolicy === 'object'
-        ) {
-          appliedAiUsagePolicy = true;
-          onAiUsagePolicyUpdateRef.current?.(payload.aiUsagePolicy);
-        }
-        target.statusCount += 1;
-        const stage = String(payload?.stage || '').trim();
-        if (stage === 'completed' || stage === 'error') {
-          target.terminalStatusForwarded = true;
-        }
-        const targetWindow = target.sourceWindow;
-        const targetBridge = getMessageTargetBridgeForWindow(targetWindow);
-        try {
-          targetWindow.postMessage(
-            {
-              source: 'twinkle-parent',
-              type: 'ai:image-generation-status',
-              previewNonce: targetBridge.previewNonce,
-              payload
-            },
-            targetBridge.targetOrigin
-          );
-        } catch (error) {
-          console.error(
-            'Failed to forward AI image generation status to build preview:',
-            error
-          );
-        }
+        if (payloadRequestId !== target.requestId) continue;
+        postAiImageStatusToTarget(target, payload);
       }
     }
 
@@ -582,7 +589,12 @@ export function useHostBridge({
         requestId: target.requestId
       });
       if (!terminalStatus) return;
-      handleAiImageGenerationStatus(terminalStatus);
+      // Deliver straight to this specific target. Routing through
+      // handleAiImageGenerationStatus would re-resolve the recipient by
+      // requestId against the registered in-flight targets, which drops the
+      // event for an unregistered duplicate target (and misroutes it to the
+      // first request when a duplicate reuses an in-flight requestId).
+      postAiImageStatusToTarget(target, terminalStatus);
     }
 
     function buildAiImageErrorResponse(error: any) {

@@ -27,6 +27,13 @@ import { resetAppShellScroll } from '~/helpers/appShellScroll';
 const hiThereLabel = 'Hi there!';
 const HOME_FEED_CLIENT_PERFORMANCE_DEFAULT_PROD_SAMPLE_RATE = 0.02;
 const homeFeedNewPostsScrollResetSuppressionMs = 1200;
+// If a load-more request neither resolves nor rejects within this window (e.g. a
+// page that stalls behind the request scheduler's retry/circuit-breaker logic),
+// release the in-flight guard so the button and scroll-to-bottom re-arm instead
+// of wedging the feed until a full page reload. The request itself is not
+// aborted; latest-request bookkeeping (loadMoreRequestCountRef) keeps a late
+// straggler from clobbering newer state.
+const HOME_FEED_LOAD_MORE_WATCHDOG_MS = 20000;
 
 const categoryObj: Record<string, any> = {
   uploads: {
@@ -220,6 +227,8 @@ export default function Stories() {
   const numNewPostsRef = useRef(numNewPosts);
   const mountedRef = useRef(true);
   const loadMoreRequestCountRef = useRef(0);
+  const loadMoreWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadMoreAbortRef = useRef<AbortController | null>(null);
 
   const loadingPosts = useMemo(
     () => loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds,
@@ -266,6 +275,12 @@ export default function Stories() {
   }, [numNewPosts]);
 
   useEffect(() => {
+    if (loadMoreWatchdogRef.current) {
+      clearTimeout(loadMoreWatchdogRef.current);
+      loadMoreWatchdogRef.current = null;
+    }
+    loadMoreAbortRef.current?.abort();
+    loadMoreAbortRef.current = null;
     loadingMoreRef.current = false;
     setLoadingFeeds(false);
     setLoadingFilteredFeeds(false);
@@ -338,6 +353,12 @@ export default function Stories() {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (loadMoreWatchdogRef.current) {
+        clearTimeout(loadMoreWatchdogRef.current);
+        loadMoreWatchdogRef.current = null;
+      }
+      loadMoreAbortRef.current?.abort();
+      loadMoreAbortRef.current = null;
     };
   }, []);
 
@@ -583,6 +604,30 @@ export default function Stories() {
     const startScrollSnapshot = getHomeFeedScrollSnapshot();
     loadingMoreRef.current = true;
     setLoadingMore(true);
+    const abortController = new AbortController();
+    loadMoreAbortRef.current = abortController;
+    if (loadMoreWatchdogRef.current) {
+      clearTimeout(loadMoreWatchdogRef.current);
+    }
+    const watchdogTimer = setTimeout(() => {
+      // Only act if this request is still the in-flight one (a newer request
+      // already owns these flags). Aborting is what actually re-arms load-more:
+      // it settles the otherwise-pending promise, which lets useInfiniteScroll's
+      // awaited onScrollToBottom resolve (clearing its internal loadingRef),
+      // frees the scheduler slot, and drops the request-collapse entry so a
+      // fresh scroll/button retry issues a new request instead of re-awaiting
+      // the dead one. The flag flip just re-enables the button immediately; the
+      // abort's catch/finally clears the same flags once it settles.
+      if (
+        loadMoreRequestCountRef.current === loadMoreRequestCount &&
+        loadingMoreRef.current
+      ) {
+        abortController.abort();
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
+    }, HOME_FEED_LOAD_MORE_WATCHDOG_MS);
+    loadMoreWatchdogRef.current = watchdogTimer;
     try {
       const requestStartAt = getHomeFeedPerformanceNow();
       const { data } = await loadFeeds({
@@ -592,6 +637,7 @@ export default function Stories() {
         isRecommended: requestIsRecommended,
         lastFeedId,
         clientRequestId,
+        signal: abortController.signal,
         feedPerformanceSample: shouldRecordPerformance,
         lastRewardLevel:
           feedsBeforeRequest.length > 0
@@ -612,6 +658,7 @@ export default function Stories() {
       const returnedFeeds = Array.isArray(data?.feeds) ? data.feeds : [];
       const staleIgnored =
         shouldIgnoreStoryRequest(requestUserId) ||
+        loadMoreRequestCountRef.current !== loadMoreRequestCount ||
         categoryRef.current !== requestCategory ||
         subFilterRef.current !== requestSubFilter ||
         displayOrderRef.current !== requestDisplayOrder;
@@ -679,9 +726,24 @@ export default function Stories() {
       }
     } catch (error) {
       if (shouldIgnoreStoryRequest(requestUserId)) return;
+      // A watchdog-initiated abort is expected recovery, not a failure.
+      if (abortController.signal.aborted) return;
       console.error(error);
     } finally {
-      if (!shouldIgnoreStoryRequest(requestUserId)) {
+      clearTimeout(watchdogTimer);
+      if (loadMoreWatchdogRef.current === watchdogTimer) {
+        loadMoreWatchdogRef.current = null;
+      }
+      if (loadMoreAbortRef.current === abortController) {
+        loadMoreAbortRef.current = null;
+      }
+      // Only clear the guard if this is still the latest request; a superseded
+      // straggler resolving late must not re-open the guard the newer request
+      // now owns (or the watchdog has already handed control back).
+      if (
+        !shouldIgnoreStoryRequest(requestUserId) &&
+        loadMoreRequestCountRef.current === loadMoreRequestCount
+      ) {
         setLoadingMore(false);
         loadingMoreRef.current = false;
       }
