@@ -131,6 +131,47 @@ export const memberRowClass = css`
   }
 `;
 
+export const migrateCardClass = css`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid ${Color.borderGray()};
+  border-radius: ${mediumBorderRadius};
+  background: ${Color.white()};
+
+  .migrate-text {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .migrate-text strong {
+    display: block;
+    font-size: 1.25rem;
+  }
+
+  .migrate-text span {
+    display: block;
+    margin-top: 0.2rem;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+
+  .migrate-text span.migrate-result {
+    color: ${Color.logoBlue()};
+    font-weight: 700;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+`;
+
 export const emptyMembersClass = css`
   border: 1px dashed ${Color.borderGray()};
   border-radius: ${mediumBorderRadius};

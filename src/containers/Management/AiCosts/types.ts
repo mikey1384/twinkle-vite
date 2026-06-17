@@ -91,6 +91,7 @@ export interface AiEnergyManualIdentityRule {
   manualIdentityKey: string;
   matchType: AiEnergyManualIdentityMatchType;
   matchValue: string;
+  scope?: 'full' | 'signup';
   riskKeyType?: string;
   riskKeyHash?: string;
   note?: string;

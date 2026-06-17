@@ -26,6 +26,7 @@ import {
   emptyMembersClass,
   memberListClass,
   memberRowClass,
+  migrateCardClass,
   typeSummaryClass
 } from './styles';
 
@@ -51,17 +52,22 @@ export default function UserBuckets() {
   const disableRuleHelper = useAppContext(
     (v) => v.requestHelpers.disableAiEnergyManualIdentityRule
   );
+  const migrateLegacyHelper = useAppContext(
+    (v) => v.requestHelpers.migrateLegacyBansIntoBucket
+  );
 
   const [buckets, setBuckets] = useState<AiEnergyManualIdentityBucket[]>([]);
   const [selectedBucketId, setSelectedBucketId] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [migrateMsg, setMigrateMsg] = useState('');
   const [newBucketLabel, setNewBucketLabel] = useState('');
   const [banMessageDraft, setBanMessageDraft] = useState('');
   const [emailDraft, setEmailDraft] = useState('');
   const [ipDraft, setIpDraft] = useState('');
   const [ipIncludePrefix, setIpIncludePrefix] = useState(false);
+  const [ipSignupOnly, setIpSignupOnly] = useState(false);
   const [deviceDraft, setDeviceDraft] = useState('');
 
   const selectedBucket = useMemo(
@@ -185,6 +191,29 @@ export default function UserBuckets() {
           {error ? <span>{error}</span> : null}
         </div>
 
+        <div className={migrateCardClass}>
+          <div className="migrate-text">
+            <strong>Legacy bans</strong>
+            {migrateMsg ? (
+              <span className="migrate-result">{migrateMsg}</span>
+            ) : (
+              <span>
+                Import old banned_ips / banned_emails entries into a single
+                banned bucket so the new system is the one source of truth.
+              </span>
+            )}
+          </div>
+          <Button
+            color="logoBlue"
+            variant="soft"
+            loading={busy}
+            onClick={handleMigrateLegacy}
+          >
+            <Icon icon="sync" />
+            Import legacy bans
+          </Button>
+        </div>
+
         {selectedBucket ? (
           <section className={panelClass}>
             <header>
@@ -203,7 +232,7 @@ export default function UserBuckets() {
                     onClick={() => handleSetBan(false)}
                   >
                     <Icon icon="undo" />
-                    <span style={{ marginLeft: '0.5rem' }}>Unban bucket</span>
+                    Unban bucket
                   </Button>
                 ) : (
                   <Button
@@ -214,7 +243,7 @@ export default function UserBuckets() {
                     onClick={() => handleSetBan(true)}
                   >
                     <Icon icon="ban" />
-                    <span style={{ marginLeft: '0.5rem' }}>Ban bucket</span>
+                    Ban bucket
                   </Button>
                 )}
               </div>
@@ -391,6 +420,16 @@ export default function UserBuckets() {
                     />
                     Also ban whole prefix (/24)
                   </label>
+                  <label className="prefix-toggle">
+                    <input
+                      type="checkbox"
+                      checked={ipSignupOnly}
+                      onChange={(event) =>
+                        setIpSignupOnly(event.currentTarget.checked)
+                      }
+                    />
+                    Signup-only (block account creation, not login/recovery)
+                  </label>
                   {ipIncludePrefix ? (
                     <div className="add-warn">
                       Prefix bans can also block unrelated users sharing the same
@@ -448,7 +487,9 @@ export default function UserBuckets() {
     riskKeyType?: string;
     riskKeyHash?: string;
     note?: string;
+    scope?: string;
   }): { icon: string; label: string; value: string } {
+    const signupOnly = rule.scope === 'signup';
     if (rule.matchType === 'user') {
       return {
         icon: 'user',
@@ -468,7 +509,7 @@ export default function UserBuckets() {
     if (rule.matchType === 'ip') {
       return {
         icon: 'globe',
-        label: 'IP (exact)',
+        label: signupOnly ? 'IP (exact) · signup-only' : 'IP (exact)',
         value: String(rule.matchValue || '')
       };
     }
@@ -483,7 +524,7 @@ export default function UserBuckets() {
     }
     return {
       icon: 'globe',
-      label: 'IP prefix',
+      label: signupOnly ? 'IP prefix · signup-only' : 'IP prefix',
       value: rule.note || rule.riskKeyType || 'prefix'
     };
   }
@@ -541,6 +582,49 @@ export default function UserBuckets() {
       await loadBuckets(data?.bucket?.id);
     } catch {
       setError('Failed to create bucket.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleMigrateLegacy() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    setMigrateMsg('');
+    try {
+      const result = await migrateLegacyHelper();
+      const parts: string[] = [];
+      const fullIpCount =
+        (result?.migratedIps || 0) + (result?.migratedSignupIps || 0);
+      if (fullIpCount) {
+        parts.push(`${fullIpCount} IP${fullIpCount === 1 ? '' : 's'}`);
+      }
+      if (result?.migratedEmails) {
+        parts.push(
+          `${result.migratedEmails} email${
+            result.migratedEmails === 1 ? '' : 's'
+          }`
+        );
+      }
+      let message = parts.length
+        ? `Imported ${parts.join(' + ')} into "${result.bucketLabel}".`
+        : 'No legacy IP/email bans to import.';
+      if (result?.migratedSignupIps) {
+        message += ` ${result.migratedSignupIps} kept signup-only scope.`;
+      }
+      if (parts.length && result?.banned === false && result?.banError) {
+        message += ` Imported but not auto-banned: ${result.banError}`;
+      }
+      if (result?.failed) {
+        message += ` ${result.failed} row${
+          result.failed === 1 ? '' : 's'
+        } skipped (invalid).`;
+      }
+      setMigrateMsg(message);
+      await loadBuckets(result?.bucketId || undefined);
+    } catch {
+      setError('Failed to import legacy bans.');
     } finally {
       setBusy(false);
     }
@@ -607,7 +691,8 @@ export default function UserBuckets() {
       await addIpHelper({
         bucketId: selectedBucket.id,
         ip,
-        includePrefix: ipIncludePrefix
+        includePrefix: ipIncludePrefix,
+        scope: ipSignupOnly ? 'signup' : 'full'
       });
       setIpDraft('');
       await loadBuckets(selectedBucket.id);

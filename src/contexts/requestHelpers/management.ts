@@ -347,6 +347,18 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async migrateLegacyBansIntoBucket() {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/ai-costs/manual-identity-buckets/migrate-legacy`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addAiEnergyManualIdentityAccount({
       bucketId,
       userId,
@@ -371,17 +383,19 @@ export default function managementRequestHelpers({
       bucketId,
       ip,
       note,
-      includePrefix
+      includePrefix,
+      scope
     }: {
       bucketId: number;
       ip: string;
       note?: string;
       includePrefix?: boolean;
+      scope?: 'full' | 'signup';
     }) {
       try {
         const { data } = await request.post(
           `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}/ip`,
-          { ip, note, includePrefix },
+          { ip, note, includePrefix, scope },
           auth()
         );
         return data;
