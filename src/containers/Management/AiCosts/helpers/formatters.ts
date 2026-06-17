@@ -26,6 +26,29 @@ export function formatTime(value: number) {
   return new Date(value * 1000).toLocaleString();
 }
 
+// Fraction of input-side tokens served from the prompt cache. The backend
+// supplies `cacheEligibleInputTokens` as a provider-aware denominator (Anthropic
+// counts cache reads on top of input; OpenAI/Google fold them into input), so a
+// single division is correct at every aggregation level. Returns null when the
+// row has no eligible input tokens (e.g. rows that predate the field).
+export function cacheHitRate(row: {
+  cachedInputTokens?: number;
+  cacheEligibleInputTokens?: number;
+}) {
+  const eligible = numberValue(row?.cacheEligibleInputTokens);
+  if (eligible <= 0) return null;
+  return numberValue(row?.cachedInputTokens) / eligible;
+}
+
+export function formatCacheHitRate(row: {
+  cachedInputTokens?: number;
+  cacheEligibleInputTokens?: number;
+}) {
+  const rate = cacheHitRate(row);
+  if (rate === null) return '—';
+  return `${(rate * 100).toFixed(1)}%`;
+}
+
 export function formatCell(value: unknown) {
   if (typeof value === 'number') return formatNumber(value);
   if (value === null || value === undefined || value === '') return '—';

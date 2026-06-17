@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
-import { useViewContext } from '~/contexts';
+import { useKeyContext, useViewContext } from '~/contexts';
 import { MAX_NUM_SUMMONS } from '~/constants/defaultValues';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
@@ -25,6 +25,7 @@ export default function GenerateCardInterface({
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
+  const banned = useKeyContext((v) => v.myState.banned);
   const maxSummoned = useMemo(
     () => numSummoned >= MAX_NUM_SUMMONS,
     [numSummoned]
@@ -48,13 +49,16 @@ export default function GenerateCardInterface({
             energyLoading ||
             loading ||
             !canGenerateAICard ||
-            maxSummoned
+            maxSummoned ||
+            !!banned?.aiCards
           }
           onClick={onGenerateAICard}
           fontSize="1.5rem"
           mobileFontSize="1.1rem"
         >
-          {!canGenerateAICard ? (
+          {banned?.aiCards ? (
+            'Restricted'
+          ) : !canGenerateAICard ? (
             'Need License'
           ) : maxSummoned ? (
             'Daily Limit Reached'

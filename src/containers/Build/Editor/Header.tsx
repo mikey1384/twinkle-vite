@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useKeyContext } from '~/contexts';
 import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
@@ -516,6 +517,7 @@ export default function Header({
   onUnpublish
 }: HeaderProps) {
   const location = useLocation();
+  const banned = useKeyContext((v) => v.myState.banned);
   const runtimeBackState = React.useMemo(
     () => ({
       runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
@@ -870,7 +872,7 @@ export default function Header({
             <HeaderActionItem mobileOrder={4}>
               <GameCTAButton
                 onClick={onTogglePublish}
-                disabled={publishButtonDisabled}
+                disabled={publishButtonDisabled || banned?.build}
                 loading={publishing}
                 variant="magenta"
                 size="md"
@@ -890,7 +892,7 @@ export default function Header({
               <HeaderActionItem mobileOrder={7}>
                 <GameCTAButton
                   onClick={onUnpublish || (() => {})}
-                  disabled={publishing}
+                  disabled={publishing || banned?.build}
                   variant="neutral"
                   size="md"
                   icon="eye-slash"
@@ -905,7 +907,7 @@ export default function Header({
           <HeaderActionItem mobileOrder={3}>
             <GameCTAButton
               onClick={onContribute}
-              disabled={forking}
+              disabled={forking || banned?.build}
               loading={forking}
               variant="primary"
               size="md"
@@ -919,7 +921,7 @@ export default function Header({
           <HeaderActionItem mobileOrder={4}>
             <GameCTAButton
               onClick={onFork}
-              disabled={forking}
+              disabled={forking || banned?.build}
               loading={forking}
               variant={showContributionButton ? 'neutral' : 'primary'}
               size="md"
@@ -969,7 +971,7 @@ export default function Header({
           {showContributionButton ? (
             <GameCTAButton
               onClick={onContribute}
-              disabled={forking}
+              disabled={forking || banned?.build}
               loading={forking}
               variant="primary"
               size="md"
@@ -981,7 +983,7 @@ export default function Header({
           {showForkButton ? (
             <GameCTAButton
               onClick={onFork}
-              disabled={forking}
+              disabled={forking || banned?.build}
               loading={forking}
               variant={showContributionButton ? 'neutral' : 'primary'}
               size="md"
@@ -1000,7 +1002,7 @@ export default function Header({
           <div className={mobileButtonRowClass}>
             <GameCTAButton
               onClick={onTogglePublish}
-              disabled={publishButtonDisabled}
+              disabled={publishButtonDisabled || banned?.build}
               loading={publishing}
               variant="magenta"
               size="md"
@@ -1018,7 +1020,7 @@ export default function Header({
             {build.isPublic ? (
               <GameCTAButton
                 onClick={onUnpublish || (() => {})}
-                disabled={publishing}
+                disabled={publishing || banned?.build}
                 variant="neutral"
                 size="md"
                 icon="eye-slash"

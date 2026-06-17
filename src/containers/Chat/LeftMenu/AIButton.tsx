@@ -8,21 +8,24 @@ import { Color } from '~/constants/css';
 export default function AIButton({
   aiName,
   loading,
+  disabled,
   onClick
 }: {
   aiName: string;
   loading: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }) {
   const src = aiName === 'ciel' ? ciel : zero;
   const alt = aiName === 'ciel' ? 'Ciel' : 'Zero';
+  const isDisabled = loading || disabled;
 
   return (
     <button
       className={css`
         border: none;
-        cursor: pointer;
-        opacity: ${loading ? 0.5 : 1};
+        cursor: ${isDisabled ? 'default' : 'pointer'};
+        opacity: ${isDisabled ? 0.5 : 1};
         background: none;
         padding: 0;
         transition: all 0.2s;
@@ -38,7 +41,7 @@ export default function AIButton({
         }
       `}
       onClick={onClick}
-      disabled={loading}
+      disabled={isDisabled}
     >
       <div
         className={css`

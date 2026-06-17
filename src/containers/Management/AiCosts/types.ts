@@ -1,7 +1,11 @@
 import React from 'react';
 
 export type RangeOption = 1 | 7 | 30 | 90;
-export type AiEnergyManualIdentityMatchType = 'email' | 'user' | 'risk_key';
+export type AiEnergyManualIdentityMatchType =
+  | 'email'
+  | 'user'
+  | 'risk_key'
+  | 'ip';
 export type AiEnergyManualIdentityRecommendationType =
   | 'email'
   | 'user'
@@ -14,6 +18,7 @@ export interface AiCostSummary {
   estimatedCostUsd: number;
   inputTokens: number;
   cachedInputTokens: number;
+  cacheEligibleInputTokens: number;
   outputTokens: number;
   totalTokens: number;
   imageCount: number;
@@ -104,6 +109,10 @@ export interface AiEnergyManualIdentityBucket {
   label: string;
   manualIdentityKey: string;
   note?: string;
+  isBanned?: boolean;
+  banMessage?: string;
+  bannedBy?: number;
+  bannedAt?: number;
   createdBy?: number;
   createdAt?: number;
   updatedAt?: number;

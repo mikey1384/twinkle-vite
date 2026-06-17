@@ -1253,7 +1253,8 @@ export default function MessagesContainer({
     isZeroChannel,
     isCielChannel,
     isRestrictedChannel: !!isRestrictedChannel,
-    isBanned: !!banned?.chat,
+    isBanned:
+      isZeroChannel || isCielChannel ? !!banned?.aiChat : !!banned?.chat,
     isOwner: Number(currentChannel.creatorId) === Number(userId),
     isOnlyOwnerPostingTopic,
     isOwnerPostingOnly: currentChannel.isOwnerPostingOnly,

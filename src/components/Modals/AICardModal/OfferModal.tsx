@@ -4,7 +4,7 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 export default function OfferModal({
@@ -30,6 +30,7 @@ export default function OfferModal({
     (v) => v.requestHelpers.postAICardOffer
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const banned = useKeyContext((v) => v.myState.banned);
   const askPriceIsLargerThanOne = askPrice > 1;
 
   return (
@@ -87,7 +88,7 @@ export default function OfferModal({
               color="oceanBlue"
               loading={posting}
               onClick={handlePostOffer}
-              disabled={!(amount || myId)}
+              disabled={!(amount || myId) || !!banned?.aiCards}
               style={{
                 fontSize: '1.4rem',
                 marginTop: '2rem'

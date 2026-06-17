@@ -56,6 +56,7 @@ export default function LeftMenu({
 }) {
   const [isChannelsScrolling, setIsChannelsScrolling] = useState(false);
   const collectType = useKeyContext((v) => v.myState.collectType);
+  const banned = useKeyContext((v) => v.myState.banned);
   const username = useKeyContext((v) => v.myState.username);
   const userId = useKeyContext((v) => v.myState.userId);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -156,11 +157,13 @@ export default function LeftMenu({
               <AIButton
                 aiName="ciel"
                 loading={cielChatLoading}
+                disabled={!!banned?.aiChat}
                 onClick={() => handleAIClick('ciel')}
               />
               <AIButton
                 aiName="zero"
                 loading={zeroChatLoading}
+                disabled={!!banned?.aiChat}
                 onClick={() => handleAIClick('zero')}
               />
             </div>

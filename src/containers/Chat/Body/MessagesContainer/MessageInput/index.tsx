@@ -466,6 +466,9 @@ export default function MessageInput({
     if (stringIsEmpty(inputText)) return;
 
     if (isAICallOngoing) {
+      // An AI voice call is a Zero/Ciel session — gate it on the aiChat ban
+      // (not banned.chat, which is human chat) before emitting over the socket.
+      if (banned?.aiChat) return;
       if (inputCoolingDown.current) {
         resetCoolingDown(700);
         return;
@@ -516,7 +519,9 @@ export default function MessageInput({
 
     startCoolingDown(500);
 
-    if (banned?.chat) return;
+    // Human-chat ban only blocks human channels; AI channels use aiChat.
+    if (!isAIChannel && banned?.chat) return;
+    if (isAIChannel && banned?.aiChat) return;
 
     innerRef.current?.focus();
 
@@ -570,6 +575,7 @@ export default function MessageInput({
   }, [
     aiInputDisabled,
     banned?.chat,
+    banned?.aiChat,
     selectedChannelId,
     subchannelId,
     innerRef,
@@ -729,7 +735,8 @@ export default function MessageInput({
                 isAIActuallyStreaming ||
                 coolingDown ||
                 isExceedingCharLimit ||
-                aiUsageBlocked
+                aiUsageBlocked ||
+                (isAIChannel && !!banned?.aiChat)
               }
               color={sendButtonColorKey}
               hoverColor={sendButtonHoverColorKey}
@@ -745,7 +752,7 @@ export default function MessageInput({
             currentTransactionId={currentTransactionId}
             inputText={inputText}
             currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}
-            isChatBanned={!!banned?.chat}
+            isChatBanned={isAIChannel ? !!banned?.aiChat : !!banned?.chat}
             isLoading={loading}
             isAiUsageBlocked={aiUsageBlocked}
             isTwoPeopleChannel={!!isTwoPeopleChannel}

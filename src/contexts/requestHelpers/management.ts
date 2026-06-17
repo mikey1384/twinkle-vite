@@ -370,16 +370,38 @@ export default function managementRequestHelpers({
     async addAiEnergyManualIdentityIpSignal({
       bucketId,
       ip,
-      note
+      note,
+      includePrefix
     }: {
       bucketId: number;
       ip: string;
       note?: string;
+      includePrefix?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}/ip`,
-          { ip, note },
+          { ip, note, includePrefix },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setAiEnergyManualIdentityBucketBan({
+      bucketId,
+      isBanned,
+      banMessage
+    }: {
+      bucketId: number;
+      isBanned: boolean;
+      banMessage?: string;
+    }) {
+      try {
+        const { data } = await request.patch(
+          `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}/ban`,
+          { isBanned, banMessage },
           auth()
         );
         return data;

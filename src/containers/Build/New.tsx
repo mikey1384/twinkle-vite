@@ -11,6 +11,7 @@ import { displayFontFamily } from './styles';
 export default function New() {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
+  const banned = useKeyContext((v) => v.myState.banned);
   const createBuild = useAppContext((v) => v.requestHelpers.createBuild);
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState('');
@@ -18,9 +19,17 @@ export default function New() {
   if (!userId) {
     return <InvalidPage text="Please log in to create a build" />;
   }
+  if (banned?.build) {
+    return (
+      <InvalidPage
+        title="Builds are restricted"
+        text="Your account is currently restricted from creating builds."
+      />
+    );
+  }
 
   async function handleCreate() {
-    if (!title.trim() || creating) return;
+    if (!title.trim() || creating || banned?.build) return;
     setCreating(true);
     try {
       const { build } = await createBuild({

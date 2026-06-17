@@ -13,6 +13,7 @@ import { isEqual } from 'lodash';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
+import { BAN_DIMENSIONS, EMPTY_BAN_STATUS } from '../constants/banDimensions';
 
 const searchUsersLabel = 'Search Users';
 
@@ -42,20 +43,10 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
     onSetSearchText: setSearchText
   });
   const [banStatus, setBanStatus] = useState<Record<string, boolean>>({
-    all: false,
-    chat: false,
-    chess: false,
-    posting: false
+    ...EMPTY_BAN_STATUS
   });
   useEffect(() => {
-    setBanStatus(
-      selectedUser.banned || {
-        all: false,
-        chat: false,
-        chess: false,
-        posting: false
-      }
-    );
+    setBanStatus(selectedUser.banned || { ...EMPTY_BAN_STATUS });
   }, [selectedUser]);
   const submitDisabled = useMemo(() => {
     if (!selectedUser.banned) return true;
@@ -120,30 +111,19 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
                         }
                       `} unselectable`}
                     >
-                      <tr onClick={() => handleBanStatusClick('all')}>
-                        <td style={{ fontWeight: 'bold' }}>Log In</td>
-                        <td style={{ textAlign: 'center' }}>
-                          {banStatus.all && <RedTimes />}
-                        </td>
-                      </tr>
-                      <tr onClick={() => handleBanStatusClick('chat')}>
-                        <td style={{ fontWeight: 'bold' }}>Chat</td>
-                        <td style={{ textAlign: 'center' }}>
-                          {banStatus.chat && <RedTimes />}
-                        </td>
-                      </tr>
-                      <tr onClick={() => handleBanStatusClick('chess')}>
-                        <td style={{ fontWeight: 'bold' }}>Chess</td>
-                        <td style={{ textAlign: 'center' }}>
-                          {banStatus.chess && <RedTimes />}
-                        </td>
-                      </tr>
-                      <tr onClick={() => handleBanStatusClick('posting')}>
-                        <td style={{ fontWeight: 'bold' }}>Posting</td>
-                        <td style={{ textAlign: 'center' }}>
-                          {banStatus.posting && <RedTimes />}
-                        </td>
-                      </tr>
+                      {BAN_DIMENSIONS.map((dimension) => (
+                        <tr
+                          key={dimension.key}
+                          onClick={() => handleBanStatusClick(dimension.key)}
+                        >
+                          <td style={{ fontWeight: 'bold' }}>
+                            {dimension.label}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            {banStatus[dimension.key] && <RedTimes />}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </Table>
                 </div>

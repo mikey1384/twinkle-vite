@@ -13,6 +13,7 @@ import { DataTable, EmptyMessage, PaginationFooter } from './DataTable';
 import {
   formatAccountName,
   formatBillingPolicy,
+  formatCacheHitRate,
   formatCompact,
   formatNumber,
   formatProviderModel,
@@ -321,6 +322,14 @@ export default function Content({
               value={formatNumber(report.summary.imageCount)}
               detail="image events"
               color="rose"
+            />
+            <MetricCard
+              label="Cache Hit Rate"
+              value={formatCacheHitRate(report.summary)}
+              detail={`${formatCompact(
+                report.summary.cachedInputTokens
+              )} cached tokens`}
+              color="purple"
             />
           </section>
 
@@ -674,6 +683,12 @@ export default function Content({
                     label: 'Req',
                     align: 'right',
                     render: formatNumber
+                  },
+                  {
+                    key: 'cachedInputTokens',
+                    label: 'Cache',
+                    align: 'right',
+                    render: (_value, row) => formatCacheHitRate(row)
                   }
                 ]}
                 rows={report.bySurface}
@@ -706,6 +721,12 @@ export default function Content({
                     label: 'Cost',
                     align: 'right',
                     render: formatUsd
+                  },
+                  {
+                    key: 'cachedInputTokens',
+                    label: 'Cache',
+                    align: 'right',
+                    render: (_value, row) => formatCacheHitRate(row)
                   }
                 ]}
                 rows={report.byProviderModel}
@@ -1421,6 +1442,7 @@ function formatBucketItemType(value: unknown) {
   if (value === 'risk_key') return 'Signal';
   if (value === 'user') return 'User';
   if (value === 'email') return 'Email';
+  if (value === 'ip') return 'IP';
   return String(value || '');
 }
 

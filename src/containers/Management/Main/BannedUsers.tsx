@@ -7,12 +7,10 @@ import EditBanStatusModal from '../Modals/EditBanStatusModal';
 import AddBanModal from '../Modals/AddBanModal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useManagementContext } from '~/contexts';import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { useManagementContext } from '~/contexts';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { BAN_DIMENSIONS } from '../constants/banDimensions';
 
-const chatLabel = 'Chat';
-const chessLabel = 'Chess';
-const logInLabel = 'Log In';
-const postingLabel = 'Posting';
 const restrictedAccountsLabel = 'Restricted Accounts';
 const restrictAccountLabel = 'Restrict Account';
 const userLabel = 'User';
@@ -28,12 +26,7 @@ export default function BannedUsers({ canManage }: { canManage: boolean }) {
   const [banStatusModalTarget, setEditBanStatusModalTarget] = useState<{
     id: number;
     username: string;
-    banned: {
-      all: boolean;
-      chat: boolean;
-      chess: boolean;
-      posting: boolean;
-    };
+    banned: Record<string, boolean>;
   } | null>(null);
 
   return (
@@ -63,21 +56,18 @@ export default function BannedUsers({ canManage }: { canManage: boolean }) {
         <Table
           color={tableHeaderColor}
           headerFontSize="1.5rem"
-          columns={`
-          minmax(10rem, 1fr)
-          minmax(10rem, 1fr)
-          minmax(10rem, 1fr)
-          minmax(10rem, 1fr)
-          minmax(10rem, 1fr)
-        `}
+          columns={Array(BAN_DIMENSIONS.length + 1)
+            .fill('minmax(10rem, 1fr)')
+            .join('\n')}
         >
           <thead>
             <tr>
               <th>{userLabel}</th>
-              <th style={{ textAlign: 'center' }}>{logInLabel}</th>
-              <th style={{ textAlign: 'center' }}>{chatLabel}</th>
-              <th style={{ textAlign: 'center' }}>{chessLabel}</th>
-              <th style={{ textAlign: 'center' }}>{postingLabel}</th>
+              {BAN_DIMENSIONS.map((dimension) => (
+                <th key={dimension.key} style={{ textAlign: 'center' }}>
+                  {dimension.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -89,12 +79,7 @@ export default function BannedUsers({ canManage }: { canManage: boolean }) {
               }: {
                 id: number;
                 username: string;
-                banned: {
-                  all: boolean;
-                  chat: boolean;
-                  chess: boolean;
-                  posting: boolean;
-                };
+                banned: Record<string, boolean>;
               }) => (
                 <tr
                   onClick={() =>
@@ -113,18 +98,11 @@ export default function BannedUsers({ canManage }: { canManage: boolean }) {
                   >
                     {username}
                   </td>
-                  <td style={{ textAlign: 'center' }}>
-                    {banned?.all && <RedTimes />}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    {banned?.chat && <RedTimes />}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    {banned?.chess && <RedTimes />}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    {banned?.posting && <RedTimes />}
-                  </td>
+                  {BAN_DIMENSIONS.map((dimension) => (
+                    <td key={dimension.key} style={{ textAlign: 'center' }}>
+                      {banned?.[dimension.key] && <RedTimes />}
+                    </td>
+                  ))}
                 </tr>
               )
             )}

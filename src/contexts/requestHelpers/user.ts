@@ -799,11 +799,18 @@ export default function userRequestHelpers({
       isPasswordReset: boolean;
     }) {
       try {
-        const { data } = await request.put(`${URL}/user/email/verify`, {
-          email,
-          userId,
-          isPasswordReset
-        });
+        const { data } = await request.put(
+          `${URL}/user/email/verify`,
+          {
+            email,
+            userId,
+            isPasswordReset
+          },
+          // Carry x-twinkle-device-id so device-id bans suppress this recovery/
+          // verification send (this is an unauthenticated flow, so the header is
+          // only delivered when passed explicitly).
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -829,9 +836,15 @@ export default function userRequestHelpers({
       try {
         const {
           data: { success }
-        } = await request.put(`${URL}/user/signup/email/otp`, {
-          email
-        });
+        } = await request.put(
+          `${URL}/user/signup/email/otp`,
+          {
+            email
+          },
+          // Carry x-twinkle-device-id so device-id bans suppress this signup OTP
+          // send (unauthenticated flow — header only sent when passed explicitly).
+          auth()
+        );
         return success;
       } catch (error) {
         return handleError(error);

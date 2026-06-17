@@ -83,6 +83,15 @@ export default function Management() {
             <span style={{ marginLeft: '1.1rem' }}>AI Costs</span>
           </NavLink>
         )}
+        {canViewAiCosts && (
+          <NavLink
+            to="/management/user-buckets"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="ban" />
+            <span style={{ marginLeft: '1.1rem' }}>User Buckets</span>
+          </NavLink>
+        )}
         {canViewPayment && (
           <NavLink
             to="/management/payment"
@@ -148,6 +157,16 @@ export default function Management() {
             onClick={() => navigate('/management/ai-costs')}
           >
             AI Costs
+          </nav>
+        )}
+        {canViewAiCosts && (
+          <nav
+            className={
+              location.pathname === `/management/user-buckets` ? 'active' : ''
+            }
+            onClick={() => navigate('/management/user-buckets')}
+          >
+            User Buckets
           </nav>
         )}
         {canViewPayment && (

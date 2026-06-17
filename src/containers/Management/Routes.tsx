@@ -11,6 +11,7 @@ const Tools = lazyWithRetry(() => import('./Tools'));
 const ModActivities = lazyWithRetry(() => import('./ModActivities'));
 const NotableUsers = lazyWithRetry(() => import('./NotableUsers'));
 const AiCosts = lazyWithRetry(() => import('./AiCosts'));
+const UserBuckets = lazyWithRetry(() => import('./UserBuckets'));
 const Payment = lazyWithRetry(() => import('./Payment'));
 const HomeFeedPerformance = lazyWithRetry(
   () => import('./HomeFeedPerformance')
@@ -38,6 +39,7 @@ export default function ManagementRoutes({ className }: { className: string }) {
             <Route path="mod-activities" element={<ModActivities />} />
             <Route path="notable-users" element={<NotableUsers />} />
             <Route path="ai-costs" element={<AiCosts />} />
+            <Route path="user-buckets" element={<UserBuckets />} />
             <Route path="payment" element={<Payment />} />
             <Route
               path="home-feed-performance"

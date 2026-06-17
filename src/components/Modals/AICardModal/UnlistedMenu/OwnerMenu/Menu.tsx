@@ -7,6 +7,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useKeyContext } from '~/contexts';
 
 const burnPrice: Record<number, number> = {
   1: 500,
@@ -36,6 +37,7 @@ export default function Menu({
 }) {
   const [isBurning, setIsBurning] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const banned = useKeyContext((v) => v.myState.banned);
   const appliedBurnPrice = useMemo(() => burnPrice[cardLevel], [cardLevel]);
   const hasEnoughTwinkleCoins = twinkleCoins >= appliedBurnPrice;
 
@@ -63,6 +65,7 @@ export default function Menu({
           onClick={() => onSetSellModalShown(true)}
           color="oceanBlue"
           variant="solid"
+          disabled={!!banned?.aiCards}
         >
           <Icon icon="shopping-cart" />
           <span style={{ marginLeft: '0.7rem' }}>List for sale</span>
@@ -105,7 +108,7 @@ export default function Menu({
         <Button
           onClick={() => setConfirmModalShown(true)}
           color="redOrange"
-          disabled={!hasEnoughTwinkleCoins || isBurning}
+          disabled={!hasEnoughTwinkleCoins || isBurning || !!banned?.aiCards}
           variant="solid"
         >
           <Icon icon="fire" />
