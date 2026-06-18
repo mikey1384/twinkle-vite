@@ -6,7 +6,11 @@ import type {
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
-export type BuildLumineModel = 'claude-fable-5' | 'gpt-5.5' | 'gpt-5.4';
+export type BuildLumineModel =
+  | 'gpt-5.5'
+  | 'claude-opus-4-8'
+  | 'claude-fable-5'
+  | 'gpt-5.4';
 export type BuildLumineThinkLevel =
   | 'none'
   | 'low'
