@@ -131,6 +131,49 @@ export const memberRowClass = css`
   }
 `;
 
+export const mergeFormClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.8rem;
+  margin-bottom: 1.4rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid ${Color.logoBlue(0.4)};
+  border-radius: ${mediumBorderRadius};
+  background: ${Color.logoBlue(0.06)};
+
+  .merge-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 14rem;
+    flex: 1;
+  }
+
+  .merge-field label {
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .merge-field select,
+  .merge-field input {
+    min-width: 0;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: ${mediumBorderRadius};
+    padding: 0.8rem 1rem;
+    font-size: 1.25rem;
+    background: ${Color.white()};
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    .merge-field {
+      flex-basis: 100%;
+    }
+  }
+`;
+
 export const migrateCardClass = css`
   display: flex;
   align-items: center;

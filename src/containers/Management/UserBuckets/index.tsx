@@ -26,6 +26,7 @@ import {
   emptyMembersClass,
   memberListClass,
   memberRowClass,
+  mergeFormClass,
   migrateCardClass,
   typeSummaryClass
 } from './styles';
@@ -55,6 +56,9 @@ export default function UserBuckets() {
   const migrateLegacyHelper = useAppContext(
     (v) => v.requestHelpers.migrateLegacyBansIntoBucket
   );
+  const mergeBucketsHelper = useAppContext(
+    (v) => v.requestHelpers.mergeAiEnergyManualIdentityBuckets
+  );
 
   const [buckets, setBuckets] = useState<AiEnergyManualIdentityBucket[]>([]);
   const [selectedBucketId, setSelectedBucketId] = useState(0);
@@ -69,6 +73,9 @@ export default function UserBuckets() {
   const [ipIncludePrefix, setIpIncludePrefix] = useState(false);
   const [ipSignupOnly, setIpSignupOnly] = useState(false);
   const [deviceDraft, setDeviceDraft] = useState('');
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeTargetId, setMergeTargetId] = useState(0);
+  const [mergeName, setMergeName] = useState('');
 
   const selectedBucket = useMemo(
     () => buckets.find((bucket) => bucket.id === selectedBucketId) || null,
@@ -82,6 +89,9 @@ export default function UserBuckets() {
 
   useEffect(() => {
     setBanMessageDraft(selectedBucket?.banMessage || '');
+    setMergeMode(false);
+    setMergeTargetId(0);
+    setMergeName('');
   }, [selectedBucket?.id, selectedBucket?.banMessage]);
 
   const memberUserIds = useMemo(
@@ -223,7 +233,25 @@ export default function UserBuckets() {
                   {memberCount} member{memberCount === 1 ? '' : 's'}
                 </span>
               </div>
-              <div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.6rem',
+                  flexWrap: 'wrap',
+                  justifyContent: 'flex-end'
+                }}
+              >
+                {buckets.length > 1 ? (
+                  <Button
+                    color="logoBlue"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => setMergeMode((value) => !value)}
+                  >
+                    <Icon icon="layer-group" />
+                    Merge…
+                  </Button>
+                ) : null}
                 {selectedBucket.isBanned ? (
                   <Button
                     color="green"
@@ -249,6 +277,68 @@ export default function UserBuckets() {
               </div>
             </header>
             <div>
+              {mergeMode ? (
+                <div className={mergeFormClass}>
+                  <div className="merge-field">
+                    <label>Merge with</label>
+                    <select
+                      value={mergeTargetId || ''}
+                      onChange={(event) =>
+                        setMergeTargetId(Number(event.currentTarget.value))
+                      }
+                    >
+                      <option value="">Select a bucket…</option>
+                      {buckets
+                        .filter((bucket) => bucket.id !== selectedBucket.id)
+                        .map((bucket) => {
+                          const count = (bucket.rules || []).length;
+                          return (
+                            <option key={bucket.id} value={bucket.id}>
+                              {bucket.label}
+                              {bucket.isBanned ? ' (banned)' : ''} · {count}{' '}
+                              member{count === 1 ? '' : 's'}
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </div>
+                  <div className="merge-field">
+                    <label>New bucket name</label>
+                    <input
+                      value={mergeName}
+                      onChange={(event) =>
+                        setMergeName(event.currentTarget.value)
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') handleMergeBuckets();
+                      }}
+                      placeholder={`${selectedBucket.label} + …`}
+                    />
+                  </div>
+                  <Button
+                    color="logoBlue"
+                    variant="solid"
+                    loading={busy}
+                    disabled={busy || !mergeTargetId || !mergeName.trim()}
+                    onClick={handleMergeBuckets}
+                  >
+                    <Icon icon="layer-group" />
+                    Merge buckets
+                  </Button>
+                  <Button
+                    color="darkerGray"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => {
+                      setMergeMode(false);
+                      setMergeTargetId(0);
+                      setMergeName('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : null}
               <div
                 className={`${banStatusClass} ${
                   selectedBucket.isBanned ? 'banned' : 'ok'
@@ -625,6 +715,30 @@ export default function UserBuckets() {
       await loadBuckets(result?.bucketId || undefined);
     } catch {
       setError('Failed to import legacy bans.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleMergeBuckets() {
+    const label = mergeName.trim();
+    if (!selectedBucket || !mergeTargetId || !label || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const result = await mergeBucketsHelper({
+        sourceBucketIds: [selectedBucket.id, mergeTargetId],
+        label
+      });
+      setMergeMode(false);
+      setMergeTargetId(0);
+      setMergeName('');
+      await loadBuckets(result?.bucketId || undefined);
+    } catch (mergeError: any) {
+      // A failed re-ban aborts the merge server-side (sources untouched) and
+      // rejects with a reason — surface it. The reject skips loadBuckets above,
+      // so nothing clears this error.
+      setError(mergeError?.message || 'Failed to merge buckets.');
     } finally {
       setBusy(false);
     }

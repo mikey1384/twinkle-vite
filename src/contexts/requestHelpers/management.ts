@@ -359,6 +359,24 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async mergeAiEnergyManualIdentityBuckets({
+      sourceBucketIds,
+      label
+    }: {
+      sourceBucketIds: number[];
+      label: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/ai-costs/manual-identity-buckets/merge`,
+          { sourceBucketIds, label },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addAiEnergyManualIdentityAccount({
       bucketId,
       userId,
