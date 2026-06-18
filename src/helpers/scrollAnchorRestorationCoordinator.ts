@@ -1,6 +1,7 @@
 const defaultSuppressionDurationMs = 1200;
 const scrollAnchorRestoreCancelEventName =
   'twinkle-scroll-anchor-restore-cancel';
+const scrollAnchorTopResetEventName = 'twinkle-scroll-anchor-top-reset';
 
 let scrollAnchorSaveSuppressedUntil = 0;
 let scrollAnchorRestoreSuppressedUntil = 0;
@@ -16,6 +17,19 @@ export function addScrollAnchorRestoreCancelListener(listener: () => void) {
   window.addEventListener(scrollAnchorRestoreCancelEventName, eventListener);
   return () =>
     window.removeEventListener(scrollAnchorRestoreCancelEventName, eventListener);
+}
+
+export function requestActiveScrollAnchorTopReset() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(scrollAnchorTopResetEventName));
+}
+
+export function addScrollAnchorTopResetListener(listener: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  const eventListener = () => listener();
+  window.addEventListener(scrollAnchorTopResetEventName, eventListener);
+  return () =>
+    window.removeEventListener(scrollAnchorTopResetEventName, eventListener);
 }
 
 export function suppressScrollAnchorSaves(

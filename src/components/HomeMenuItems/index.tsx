@@ -9,6 +9,7 @@ import {
   getThemeStyles
 } from '~/constants/css';
 import { isMobile } from '~/helpers';
+import { resetAppShellScroll } from '~/helpers/appShellScroll';
 import {
   useAppContext,
   useHomeContext,
@@ -27,9 +28,11 @@ const achievementsLabel = 'Achievements';
 const deviceIsMobile = isMobile(navigator);
 
 export default function HomeMenuItems({
-  style = {}
+  style = {},
+  onClose
 }: {
   style?: React.CSSProperties;
+  onClose?: () => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const { themeName } = useRootTheme();
@@ -408,6 +411,8 @@ export default function HomeMenuItems({
 
   function handleStoryClick() {
     if (location.pathname === '/') {
+      resetAppShellScroll();
+      onClose?.();
       return;
     }
     navigate('/');
@@ -416,6 +421,11 @@ export default function HomeMenuItems({
   function handleOnPeopleClick() {
     if (deviceIsMobile) {
       onSetProfilesLoaded(false);
+    }
+    if (location.pathname === '/users') {
+      resetAppShellScroll();
+      onClose?.();
+      return;
     }
     navigate('/users');
   }

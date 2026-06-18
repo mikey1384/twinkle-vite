@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import {
   addScrollAnchorRestoreCancelListener,
+  addScrollAnchorTopResetListener,
   suppressScrollAnchorSaves,
   scrollAnchorRestoresAreSuppressed,
   scrollAnchorSavesAreSuppressed
@@ -97,6 +98,17 @@ export function useScrollAnchorRestoration({
       markUserScrollInput();
     }
 
+    function handleTopReset() {
+      savedScrollAnchors[anchorKey] = {
+        anchorKey,
+        offset: 0,
+        scrollTop: 0
+      };
+      restoreSettledSignatureRef.current =
+        getSavedAnchorRestoreSignature(anchorKey);
+      userCancelledRestoreRef.current = '';
+    }
+
     window.addEventListener('wheel', markUserScrollInput, {
       capture: true,
       passive: true
@@ -110,6 +122,8 @@ export function useScrollAnchorRestoration({
     });
     const removeRestoreCancelListener =
       addScrollAnchorRestoreCancelListener(markUserScrollInput);
+    const removeTopResetListener =
+      addScrollAnchorTopResetListener(handleTopReset);
 
     return () => {
       window.removeEventListener('wheel', markUserScrollInput, {
@@ -122,6 +136,7 @@ export function useScrollAnchorRestoration({
         capture: true
       });
       removeRestoreCancelListener();
+      removeTopResetListener();
     };
   }, [anchorKey]);
 

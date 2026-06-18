@@ -62,7 +62,7 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
             `}`}
           >
             <ProfileWidget />
-            <HomeMenuItems style={{ marginTop: '1rem' }} />
+            <HomeMenuItems style={{ marginTop: '1rem' }} onClose={onClose} />
             <Notification location="home" />
             {username && (
               <div

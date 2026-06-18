@@ -1,5 +1,6 @@
 import {
   cancelScrollAnchorRestores,
+  requestActiveScrollAnchorTopReset,
   suppressScrollAnchorRestores,
   suppressScrollAnchorSaves
 } from '~/helpers/scrollAnchorRestorationCoordinator';
@@ -37,6 +38,7 @@ export function resetAppShellScroll({
   setScrollSurfaceOrigin(document.getElementById('App'));
   setScrollSurfaceOrigin(document.scrollingElement || document.documentElement);
   window.dispatchEvent(new Event('scroll'));
+  requestActiveScrollAnchorTopReset();
 }
 
 export function lockAppShellScrollSurface() {
