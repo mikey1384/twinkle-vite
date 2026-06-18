@@ -13,6 +13,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
 import { getSectionFromPathname } from '~/helpers';
+import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';import RankBadge from '~/components/RankBadge';
 
@@ -39,6 +40,7 @@ export default function UserPopup({
   onMouseLeave,
   onSetPopupContext,
   popupContext,
+  triggerRef,
   user,
   wordMasterContext,
   wordMasterPoints,
@@ -50,6 +52,7 @@ export default function UserPopup({
   bio?: string;
   isOnline?: boolean;
   myId: number;
+  triggerRef?: React.RefObject<HTMLElement | null>;
   onHide: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
@@ -418,6 +421,7 @@ export default function UserPopup({
                   }
                 `}
                 to={`/users/${user.username}`}
+                onClick={handleSaveScrollAnchor}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = Color.highlightGray())
                 }
@@ -448,6 +452,7 @@ export default function UserPopup({
                   }
                 `}
                 to={`/ai-cards/?search[owner]=${user.username}`}
+                onClick={handleSaveScrollAnchor}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = Color.highlightGray())
                 }
@@ -550,7 +555,12 @@ export default function UserPopup({
     }
   }
 
+  function handleSaveScrollAnchor() {
+    saveScrollAnchorForElement(triggerRef?.current || null);
+  }
+
   async function handleLinkClick() {
+    handleSaveScrollAnchor();
     onSetPopupContext(null);
 
     if (!userId) {

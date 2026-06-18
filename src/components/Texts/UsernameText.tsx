@@ -152,6 +152,7 @@ export default function UsernameText({
       {dropdownContext && (
         <UserPopup
           isLoading={loading}
+          triggerRef={UsernameTextRef}
           popupContext={dropdownContext}
           onMouseEnter={() => {
             clearTimeout(hideTimerRef.current);

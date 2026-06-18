@@ -439,6 +439,17 @@ export function saveScrollAnchorForElement(
     return;
   }
 
+  if (!anchorKey && anchorElement) {
+    const groupKey = anchorElement.closest<HTMLElement>(
+      '[data-scroll-anchor-group-key]'
+    )?.dataset.scrollAnchorGroupKey;
+    if (groupKey) {
+      saveAnchorElement(groupKey, anchorElement, getActiveScroller());
+      suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
+      return;
+    }
+  }
+
   const contentPagePanel = sourceElement.closest<HTMLElement>(
     '[data-content-page="true"]'
   );
