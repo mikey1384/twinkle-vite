@@ -422,6 +422,7 @@ registerMethods('management', [
   'loadEffortLevelPerformanceReport',
   'loadGrammarPerformanceReport',
   'loadHomeFeedPerformanceExport',
+  'loadPerformanceExport',
   'loadNotableUsers',
   'loadNotableUsersCSV',
   'addNotableUser',

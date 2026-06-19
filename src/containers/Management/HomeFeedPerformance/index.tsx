@@ -576,6 +576,69 @@ interface EffortLevelReport {
   recentEvents: EffortLevelEventRow[];
 }
 
+function PerformanceExportButtons({
+  hours,
+  source
+}: {
+  hours: HomeFeedPerformanceRangeOption;
+  source: string;
+}) {
+  const [exportingFormat, setExportingFormat] = useState<'csv' | 'json' | ''>(
+    ''
+  );
+  const loadPerformanceExport = useAppContext(
+    (v) => v.requestHelpers.loadPerformanceExport
+  );
+
+  return (
+    <>
+      <Button
+        color="darkerGray"
+        variant="outline"
+        loading={exportingFormat === 'csv'}
+        onClick={() => handleExport('csv')}
+      >
+        <Icon icon="file-csv" />
+        CSV
+      </Button>
+      <Button
+        color="darkerGray"
+        variant="outline"
+        loading={exportingFormat === 'json'}
+        onClick={() => handleExport('json')}
+      >
+        <Icon icon="code" />
+        JSON
+      </Button>
+    </>
+  );
+
+  async function handleExport(format: 'csv' | 'json') {
+    setExportingFormat(format);
+    try {
+      const response = await loadPerformanceExport({ hours, source, format });
+      const blob =
+        response instanceof Blob
+          ? response
+          : new Blob([response], {
+              type: format === 'json' ? 'application/json' : 'text/csv'
+            });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${source}-performance-${hours}h.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (exportError) {
+      console.error(exportError);
+    } finally {
+      setExportingFormat('');
+    }
+  }
+}
+
 function EffortLevelFactor() {
   const [hours, setHours] = useState<HomeFeedPerformanceRangeOption>(24);
   const [reloadKey, setReloadKey] = useState(0);
@@ -648,6 +711,7 @@ function EffortLevelFactor() {
           >
             Refresh
           </Button>
+          <PerformanceExportButtons hours={hours} source="effortLevel" />
         </div>
       </header>
       <div>
@@ -840,6 +904,7 @@ function GrammarFactor() {
           >
             Refresh
           </Button>
+          <PerformanceExportButtons hours={hours} source="grammarGame" />
         </div>
       </header>
       <div>

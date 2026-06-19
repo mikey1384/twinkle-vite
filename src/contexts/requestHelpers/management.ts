@@ -494,6 +494,30 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadPerformanceExport({
+      hours,
+      source,
+      format
+    }: {
+      hours: number;
+      source: string;
+      format: 'csv' | 'json';
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/performance/export.${format}?source=${encodeURIComponent(
+            source
+          )}&hours=${hours}`,
+          {
+            ...auth(),
+            responseType: 'blob'
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadNotableUsers() {
       try {
         const {
