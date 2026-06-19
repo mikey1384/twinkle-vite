@@ -682,10 +682,32 @@ export default function BuildRuntime({
       }),
     [location.search, location.state]
   );
-  const routeBuildLaunchTarget = useMemo(
-    () => normalizeBuildLaunchTarget((location.state as any)?.buildLaunchTarget),
-    [location.state]
-  );
+  // The trailing segment of /app/:buildId/<segment> is an app-defined deep link
+  // (e.g. a shareable book permalink). It is forwarded verbatim to the build as
+  // a launch target; the build owns parsing its own URL scheme. A launch target
+  // explicitly passed through navigation state still wins.
+  const routeDeepLinkPath = useMemo(() => {
+    const match = /^\/app\/\d+\/(.+)$/.exec(location.pathname || '');
+    if (!match) return '';
+    try {
+      return decodeURIComponent(match[1]).trim();
+    } catch {
+      return match[1].trim();
+    }
+  }, [location.pathname]);
+  const routeBuildLaunchTarget = useMemo(() => {
+    const stateTarget = normalizeBuildLaunchTarget(
+      (location.state as any)?.buildLaunchTarget
+    );
+    if (stateTarget) return stateTarget;
+    if (routeDeepLinkPath) {
+      return {
+        source: 'deepLink',
+        target: { path: routeDeepLinkPath }
+      } as PreviewLaunchTarget;
+    }
+    return null;
+  }, [location.state, routeDeepLinkPath]);
   const buildLaunchTargetAuthKey = userId ? `user:${userId}` : 'guest';
   const buildLaunchTargetLookupKey = useMemo(() => {
     if (!numericBuildId || !buildNotificationId) return '';

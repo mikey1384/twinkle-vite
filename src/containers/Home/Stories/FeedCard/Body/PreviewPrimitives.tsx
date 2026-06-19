@@ -271,9 +271,27 @@ function HomeFeedWideSubjectEmbedPreview({
   const shouldPromoteDescriptionBuildEmbed = Boolean(
     descriptionBuildEmbed && !getContentAttachmentFilePath(subject)
   );
-  const descriptionText = shouldPromoteDescriptionBuildEmbed
-    ? removeMarkdownImageEmbeds(description)
-    : description;
+  // A content embed left inside the description renders as a block that the
+  // line-clamped description RichText clips to its header. We strip every embed
+  // from the text and promote it to its own slot so it renders in full and
+  // nothing is dropped. Build-without-attachment goes to the media slot (below);
+  // ANY other embed — internal, image, or YouTube — renders in the content-embed
+  // slot via MarkdownEmbedPreview (which handles every type).
+  const descriptionContentEmbed =
+    descriptionEmbed && !shouldPromoteDescriptionBuildEmbed
+      ? descriptionEmbed
+      : null;
+  const descriptionText = removeMarkdownImageEmbeds(description);
+  const descriptionContentEmbedPreview = descriptionContentEmbed ? (
+    <MarkdownEmbedPreview
+      className="home-feed-card__target-subject-nested-embed"
+      contentId={subjectId}
+      contentType="subject"
+      embed={descriptionContentEmbed}
+      internalPreviewVariant="compact"
+      onNavigate={onNavigate}
+    />
+  ) : null;
   const mediaPreview = renderMediaPreview();
 
   useEffect(() => {
@@ -314,6 +332,7 @@ function HomeFeedWideSubjectEmbedPreview({
   return (
     <HomeFeedSubjectTargetPreview
       contentId={subjectId}
+      descriptionEmbedPreview={descriptionContentEmbedPreview}
       descriptionText={descriptionText}
       hasBuildEmbedMedia={Boolean(
         shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed

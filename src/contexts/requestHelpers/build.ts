@@ -3382,6 +3382,7 @@ export default function buildRequestHelpers({
       topicId,
       data: entryData,
       notify,
+      subjectRef,
       token
     }: {
       buildId: number;
@@ -3389,12 +3390,13 @@ export default function buildRequestHelpers({
       topicId?: number;
       data: Record<string, any>;
       notify?: Record<string, any>;
+      subjectRef?: number;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entry`,
-          { topicName, topicId, data: entryData, notify },
+          { topicName, topicId, data: entryData, notify, subjectRef },
           {
             ...auth(),
             headers: {
@@ -3452,6 +3454,33 @@ export default function buildRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entry/delete`,
+          { entryId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async claimSharedDbEntry({
+      buildId,
+      entryId,
+      token
+    }: {
+      buildId: number;
+      entryId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entry/claim`,
           { entryId },
           {
             ...auth(),

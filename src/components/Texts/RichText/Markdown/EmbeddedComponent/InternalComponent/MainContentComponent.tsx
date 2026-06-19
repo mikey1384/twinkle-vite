@@ -15,6 +15,7 @@ import { Color, borderRadius } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
+import { getPlainPreviewText } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import InvalidContent from '../InvalidContent';
 import { css } from '@emotion/css';
@@ -556,16 +557,6 @@ function getContentAccent(contentType: string) {
   if (contentType === 'aiStory') return Color.purple();
   if (contentType === 'url') return Color.orange();
   return Color.darkGray();
-}
-
-function getPlainPreviewText(value: unknown) {
-  if (typeof value !== 'string') return '';
-  return value
-    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
-    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 function setAlphaExact(rgba: string, alpha: number) {

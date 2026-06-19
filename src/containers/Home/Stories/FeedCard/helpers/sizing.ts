@@ -1,6 +1,9 @@
 import { normalizeRootType } from './navigation';
 import { isRenderableHomeFeedTargetComment } from './targetComment';
-import { isAICardEmbedSrc } from '~/helpers/aiCardEmbedHelpers';
+import {
+  getInternalEmbedPreviewInfo,
+  isAICardEmbedSrc
+} from '~/helpers/aiCardEmbedHelpers';
 
 export type FeedCardPreviewKind =
   | 'ai-story'
@@ -38,6 +41,7 @@ export type FeedCardSize =
   | 'subject-media'
   | 'subject-minimal'
   | 'subject-locked'
+  | 'subject-comment-embed'
   | 'subject-rich-embed'
   | 'subject-root'
   | 'subject-root-text'
@@ -95,12 +99,14 @@ export interface FeedCardTargetSizing {
 export interface FeedCardFrameSizing {
   bodyHeight: string;
   className: string;
+  commentEmbedPanelHeight: string;
   commentPreviewHeight: string;
   desktopHeight: string;
   hasCommentPreview: boolean;
   hasTarget: boolean;
   headingHeight: string;
   mobileBodyHeight: string;
+  mobileCommentEmbedPanelHeight: string;
   mobileCommentPreviewHeight: string;
   mobileHeight: string;
   mobileHeadingHeight: string;
@@ -165,6 +171,7 @@ const PANEL_HEIGHT_REM: Record<
   'subject-media': { desktop: 21, mobile: 20 },
   'subject-minimal': { desktop: 12, mobile: 11 },
   'subject-locked': { desktop: 16.5, mobile: 15.5 },
+  'subject-comment-embed': { desktop: 29, mobile: 28 },
   'subject-rich-embed': { desktop: 34, mobile: 32 },
   'subject-root': { desktop: 15.5, mobile: 15.5 },
   'subject-root-text': { desktop: 29, mobile: 27 },
@@ -337,8 +344,10 @@ export function getFeedCardSizing({
   };
   return {
     card: getFeedCardFrameSizing({
+      content,
       hasCommentPreview: flags.hasCommentPreview,
       mainSize: size,
+      secretHidden: flags.secretHidden,
       target
     }),
     flags,
@@ -548,6 +557,9 @@ function getMainPanelSize({
   }
 
   if (content?.contentType === 'subject' && flags.hasRichTextEmbed) {
+    if (isSubjectCommentRichTextEmbed(content)) {
+      return 'subject-comment-embed';
+    }
     return 'subject-rich-embed';
   }
 
@@ -744,22 +756,30 @@ function buildTargetSizing(
 }
 
 function getFeedCardFrameSizing({
+  content,
   hasCommentPreview,
   mainSize,
+  secretHidden,
   target
 }: {
+  content: any;
   hasCommentPreview: boolean;
   mainSize: FeedCardSize;
+  secretHidden: boolean;
   target: FeedCardTargetSizing | null;
 }): FeedCardFrameSizing {
   const desktopBodyHeight = getBodyHeight({
     axis: 'desktop',
+    content,
     mainSize,
+    secretHidden,
     target
   });
   const mobileBodyHeight = getBodyHeight({
     axis: 'mobile',
+    content,
     mainSize,
+    secretHidden,
     target
   });
   const desktopCommentPreviewFrameHeight = hasCommentPreview
@@ -791,15 +811,34 @@ function getFeedCardFrameSizing({
 
   const size = getFeedCardFrameSize({ mainSize, target });
 
+  // The subject-comment-embed panel is content-sized, so its CSS height can't be
+  // a static rem like the fixed sizes. Expose the panel-only height (excludes
+  // the target) so the panel takes exactly its share and the target sibling
+  // keeps its space (height: 100% would make the panel claim the whole body and
+  // starve/clip the target). '100%' for other sizes is an unused fallback.
+  const isCommentEmbedPanel = mainSize === 'subject-comment-embed';
+  const commentEmbedPanelHeight = isCommentEmbedPanel
+    ? toCssFixedHeight(
+        estimateCommentEmbedBodyHeight(content, 'desktop', secretHidden)
+      )
+    : '100%';
+  const mobileCommentEmbedPanelHeight = isCommentEmbedPanel
+    ? toCssFixedHeight(
+        estimateCommentEmbedBodyHeight(content, 'mobile', secretHidden)
+      )
+    : '100%';
+
   return {
     bodyHeight: toCssFixedHeight(desktopBodyHeight),
     className: `home-feed-card--size-${size}`,
+    commentEmbedPanelHeight,
     commentPreviewHeight: toCssFixedHeight(COMMENT_PREVIEW_HEIGHT_REM.desktop),
     desktopHeight: toCssFixedHeight(desktopHeight, CARD_BORDER_PX),
     hasCommentPreview,
     hasTarget: Boolean(target),
     headingHeight: toCssFixedHeight(desktopFrame.heading),
     mobileBodyHeight: toCssFixedHeight(mobileBodyHeight),
+    mobileCommentEmbedPanelHeight,
     mobileCommentPreviewHeight: toCssFixedHeight(
       COMMENT_PREVIEW_HEIGHT_REM.mobile
     ),
@@ -812,19 +851,127 @@ function getFeedCardFrameSizing({
 
 function getBodyHeight({
   axis,
+  content,
   mainSize,
+  secretHidden,
   target
 }: {
   axis: 'desktop' | 'mobile';
+  content: any;
   mainSize: FeedCardSize;
+  secretHidden: boolean;
   target: FeedCardTargetSizing | null;
 }) {
-  const panelHeight = PANEL_HEIGHT_REM[mainSize][axis];
+  const panelHeight =
+    mainSize === 'subject-comment-embed'
+      ? estimateCommentEmbedBodyHeight(content, axis, secretHidden)
+      : PANEL_HEIGHT_REM[mainSize][axis];
   const targetHeight = target
     ? CARD_FRAME_REM[axis].targetGap + TARGET_HEIGHT_REM[target.size][axis]
     : 0;
 
   return panelHeight + targetHeight;
+}
+
+// Fixed allowance for the embedded comment card (avatar + header + up to two
+// text lines + padding). The comment body is lazy-loaded by id, so its exact
+// height is unknown at sizing time; this is sized for the common max and any
+// media tile is constrained to fit within it via CSS.
+const COMMENT_EMBED_PREVIEW_HEIGHT_REM = {
+  desktop: 8.2,
+  mobile: 7.6
+};
+
+function estimateCommentEmbedBodyHeight(
+  content: any,
+  axis: FeedCardLayoutAxis,
+  secretHidden: boolean
+) {
+  const layout = getSubjectPreviewLayout({
+    content,
+    size: 'subject-comment-embed'
+  });
+  const hasEffort = Number(content?.rewardLevel || 0) > 0;
+  const hasTitle = Boolean(content?.title);
+  const descriptionText = removeMarkdownImageEmbeds(
+    String(content?.description || content?.content || '')
+  ).trim();
+  const hasDescriptionText = Boolean(descriptionText);
+  const descriptionLineCap = getSubjectNonTallDescriptionMaxLines(
+    'subject-comment-embed'
+  );
+  const descriptionLines = hasDescriptionText
+    ? Math.min(
+        descriptionLineCap,
+        estimatePreviewLineCount({
+          charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine[axis],
+          maxLines: descriptionLineCap,
+          value: descriptionText
+        })
+      )
+    : 0;
+
+  // Body renders a secret answer/attachment or a locked-secret banner AFTER the
+  // comment embed (Body/index.tsx). This size is selected before the normal
+  // subject sizing that budgets secrets, so mirror Body's showSecretPreview
+  // logic here and reserve the secret block height — otherwise the secret clips.
+  const secretAnswer = String(content?.secretAnswer || '');
+  const hasSecretAnswerText = Boolean(secretAnswer.trim());
+  const hasSecretAttachment = Boolean(content?.secretAttachment?.filePath);
+  const hasAnySecret = Boolean(
+    hasSecretAnswerText ||
+    hasSecretAttachment ||
+    content?.hasSecretAnswer ||
+    content?.hasSecretAttachment
+  );
+  const secretAnswerDuplicatesDescription =
+    hasSecretAnswerText && secretAnswer.trim() === descriptionText;
+  const showSecretAnswer =
+    !secretHidden &&
+    !secretAnswerDuplicatesDescription &&
+    (hasSecretAnswerText || hasSecretAttachment);
+  const showLockedSecretAnswer = Boolean(secretHidden && hasAnySecret);
+  const showSecretPreview = showSecretAnswer || showLockedSecretAnswer;
+  const secretHeight = showSecretPreview
+    ? getSubjectSecretAnswerHeight({
+        hasSecretAnswerText: showSecretAnswer && hasSecretAnswerText,
+        hasSecretAttachment: showSecretAnswer && hasSecretAttachment,
+        secretMaxLines:
+          showSecretAnswer && hasSecretAnswerText
+            ? getSubjectSecretAnswerMaxLines({
+                axis,
+                content,
+                hasSecretAnswerText
+              })
+            : 0
+      })
+    : 0;
+
+  const renderedChildrenCount = [
+    hasEffort,
+    hasTitle,
+    hasDescriptionText,
+    true,
+    showSecretPreview
+  ].filter(Boolean).length;
+  const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
+
+  return (
+    layout.previewPaddingY +
+    gapHeight +
+    (hasEffort ? layout.effortHeight : 0) +
+    (hasTitle
+      ? getSubjectTitleHeight({
+          axis,
+          content,
+          size: 'subject-comment-embed',
+          title: content?.title
+        })
+      : 0) +
+    descriptionLines * layout.descriptionLineHeight +
+    COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis] +
+    secretHeight
+  );
 }
 
 function getFeedCardFrameSize({
@@ -876,6 +1023,7 @@ function getFeedCardFrameSize({
   if (
     mainSize === 'tall' ||
     mainSize === 'subject-tall' ||
+    mainSize === 'subject-comment-embed' ||
     mainSize === 'subject-rich-embed'
   ) {
     return 'tall-card';
@@ -1066,6 +1214,16 @@ function hasRichTextEmbed(content: any) {
   }
 
   return true;
+}
+
+function isSubjectCommentRichTextEmbed(content: any) {
+  const embedPreview = getMarkdownImageEmbedPreview(
+    String(content?.description || content?.content || '')
+  );
+  if (!embedPreview || embedPreview.type !== 'internal') {
+    return false;
+  }
+  return getInternalEmbedPreviewInfo(embedPreview.src)?.kind === 'comment';
 }
 
 function hasPromotableSubjectAttachmentEmbed(
@@ -1473,6 +1631,10 @@ function getSubjectDescriptionMaxLines(size: FeedCardSize) {
     return 3;
   }
 
+  if (size === 'subject-comment-embed') {
+    return 3;
+  }
+
   if (size === 'rich-embed') {
     return 5;
   }
@@ -1612,6 +1774,10 @@ function isSubjectDescriptionBudgetedSize(size: FeedCardSize) {
 
 function getSubjectNonTallDescriptionMaxLines(size: FeedCardSize) {
   if (size === 'subject-rich-embed') {
+    return 3;
+  }
+
+  if (size === 'subject-comment-embed') {
     return 3;
   }
 

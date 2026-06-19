@@ -243,6 +243,10 @@ export default function HomeFeedCard({
       : previousPlaceholderHeight;
   const sizingStyle = {
     '--home-feed-card-body-height': sizing.card.bodyHeight,
+    '--home-feed-card-comment-embed-panel-height':
+      sizing.card.commentEmbedPanelHeight,
+    '--home-feed-card-comment-embed-mobile-panel-height':
+      sizing.card.mobileCommentEmbedPanelHeight,
     '--home-feed-card-comment-preview-height': sizing.card.commentPreviewHeight,
     '--home-feed-card-heading-height': sizing.card.headingHeight,
     '--home-feed-card-height': sizing.card.desktopHeight,

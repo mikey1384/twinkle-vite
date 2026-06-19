@@ -416,7 +416,9 @@ export default function App() {
     [location?.pathname]
   );
   const usingBuildAppRuntime = useMemo(
-    () => routeMatches('/app/:buildId', location.pathname),
+    // Match the deep-link splat too (e.g. /app/884/432-some-slug) so the keep-
+    // alive host actually mounts for shared book links, not just /app/:buildId.
+    () => routeMatches('/app/:buildId/*', location.pathname),
     [location.pathname]
   );
   const usingBuildRuntime = useMemo(
@@ -676,7 +678,7 @@ export default function App() {
                 element={<BuildThumbnailCaptureHost />}
               />
               <Route
-                path="/app/:buildId"
+                path="/app/:buildId/*"
                 element={<BuildRuntimeKeepAliveRoute />}
               />
               <Route path="/cli" element={<CliDeviceAuth />} />

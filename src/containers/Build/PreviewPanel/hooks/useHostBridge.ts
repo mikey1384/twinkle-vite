@@ -1022,6 +1022,18 @@ export function useHostBridge({
             response = { viewer: getViewerInfo(previewAuth) };
             break;
 
+          case 'app:get-info':
+            // Host-computed app identity so a build can build its own canonical
+            // share/deep-link URLs (the sandboxed iframe has an opaque origin and
+            // can't read the parent site origin itself).
+            response = {
+              app: {
+                buildId: activeBuild.id,
+                appUrl: `${window.location.origin}/app/${activeBuild.id}`
+              }
+            };
+            break;
+
           case 'chess:best-move':
           case 'chess:evaluate':
             response = await evaluateBuildChessPosition(payload);
@@ -1536,8 +1548,15 @@ export function useHostBridge({
           }
 
           case 'shared-db:add-entry': {
+            // A subjectRef add is get-or-create: it may return an existing
+            // (possibly another user's) canonical entry, which is a read. Only
+            // then request read scope too — a plain append stays write-only.
+            const sharedDbAddEntryScopes =
+              payload?.subjectRef != null
+                ? ['sharedDb:write', 'sharedDb:read']
+                : ['sharedDb:write'];
             const sharedDbAddEntryToken = await ensureBuildApiToken(
-              ['sharedDb:write'],
+              sharedDbAddEntryScopes,
               previewAuth
             );
             response = await requestRefs.addSharedDbEntryRef.current({
@@ -1546,6 +1565,7 @@ export function useHostBridge({
               topicId: payload?.topicId,
               data: payload?.data,
               notify: payload?.notify,
+              subjectRef: payload?.subjectRef,
               token: sharedDbAddEntryToken
             });
             break;
@@ -1575,6 +1595,19 @@ export function useHostBridge({
               buildId: activeBuild.id,
               entryId: payload?.entryId,
               token: sharedDbDeleteEntryToken
+            });
+            break;
+          }
+
+          case 'shared-db:claim-entry': {
+            const sharedDbClaimEntryToken = await ensureBuildApiToken(
+              ['sharedDb:write'],
+              previewAuth
+            );
+            response = await requestRefs.claimSharedDbEntryRef.current({
+              buildId: activeBuild.id,
+              entryId: payload?.entryId,
+              token: sharedDbClaimEntryToken
             });
             break;
           }

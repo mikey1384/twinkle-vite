@@ -329,7 +329,10 @@ function createRuntimeSession({
 }
 
 function getRuntimeRouteMatch(pathname: string): RuntimeRouteMatch | null {
-  const match = matchPath({ path: '/app/:buildId', end: true }, pathname);
+  // The trailing splat is an app-defined shareable deep link
+  // (e.g. /app/884/432-the-great-gatsby) parsed by the build itself; the host
+  // only needs the buildId here. The build reads the segment from its location.
+  const match = matchPath({ path: '/app/:buildId/*', end: true }, pathname);
   if (!match) return null;
   const rawBuildId = String(match.params.buildId || '').trim();
   const buildId = Number(rawBuildId);

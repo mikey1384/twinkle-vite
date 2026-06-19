@@ -802,6 +802,34 @@ export function stripTextSizeMarkers(string: string): string {
   return outputString;
 }
 
+export function stripTextColorMarkers(string: string): string {
+  // color effects use `code|text|code` (e.g. b|hi|b, lb|hi|lb, pf|hi|pf)
+  const colorMarkerRegex = /(gr|lb|pf|pu|b|g|l|o|p|r|y)\|([^|\n]+?)\|\1/gi;
+  let outputString = String(string || '');
+  let previousString = '';
+
+  while (outputString !== previousString) {
+    previousString = outputString;
+    outputString = outputString.replace(colorMarkerRegex, '$2');
+  }
+
+  return outputString;
+}
+
+// Plain-text preview of rich content: strips Twinkle text-size/color markers,
+// underline, image/link markdown, and HTML, then collapses whitespace. Use for
+// compact embed previews so editor markup never leaks as raw characters.
+export function getPlainPreviewText(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  return stripTextColorMarkers(stripTextSizeMarkers(value))
+    .replace(/__([^_\n]+?)__/g, '$1')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function applyTextEffects({ string }: { string: string }) {
   const underlineRegex =
     /([^@]|^)(((?![0-9.])__([^\s][^_\n ]+)__(?![0-9]))|(((__[^_ ]){1}((?!(__))[^\n])+([^_ ]__){1})))/gi;

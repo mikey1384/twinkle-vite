@@ -413,7 +413,17 @@ function RichText({
     () => hasStructuredPreviewMarkdown(String(text || '')),
     [text]
   );
-  const isBlockPreservingPreview = Boolean(isPreview && hasStructuredMarkdown);
+  // Multi-paragraph content must use the block-preview (max-height) clamp, not
+  // the line-clamp mode. Line-clamp forces blocks to display:inline and joins
+  // paragraphs with a `\A\A` (white-space: pre) hack inside -webkit-line-clamp,
+  // which iOS Safari mis-lays-out (later lines/mentions overlap earlier text).
+  const hasMultipleParagraphs = useMemo(
+    () => /\n\s*\n/.test(String(text || '')),
+    [text]
+  );
+  const isBlockPreservingPreview = Boolean(
+    isPreview && (hasStructuredMarkdown || hasMultipleParagraphs)
+  );
   const isLineClampedPreview = Boolean(
     isPreview && !hasMarkdownEmbed && !isBlockPreservingPreview
   );

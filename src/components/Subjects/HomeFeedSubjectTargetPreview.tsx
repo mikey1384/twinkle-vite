@@ -5,6 +5,7 @@ export default function HomeFeedSubjectTargetPreview({
   className = '',
   contentId,
   contentType = 'subject',
+  descriptionEmbedPreview,
   descriptionText,
   hasBuildEmbedMedia = false,
   maxDescriptionLines = 2,
@@ -17,6 +18,7 @@ export default function HomeFeedSubjectTargetPreview({
   className?: string;
   contentId?: number;
   contentType?: string;
+  descriptionEmbedPreview?: React.ReactNode;
   descriptionText?: string;
   hasBuildEmbedMedia?: boolean;
   maxDescriptionLines?: number;
@@ -70,6 +72,11 @@ export default function HomeFeedSubjectTargetPreview({
             >
               {body}
             </RichText>
+          </div>
+        ) : null}
+        {descriptionEmbedPreview ? (
+          <div className="home-feed-card__target-subject-embed-slot">
+            {descriptionEmbedPreview}
           </div>
         ) : null}
       </div>

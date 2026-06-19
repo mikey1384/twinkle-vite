@@ -464,6 +464,25 @@ export const targetPreviewStyles = `
       .home-feed-card__target-subject-description {
       -webkit-line-clamp: 1;
     }
+    .home-feed-card__target-subject-embed-slot {
+      flex: 0 0 auto;
+      min-height: 0;
+      margin-top: 0.4rem;
+    }
+    .home-feed-card__target-subject-embed-slot,
+    .home-feed-card__target-subject-embed-slot > *,
+    .home-feed-card__target-subject-embed-slot
+      .home-feed-card__target-subject-nested-embed {
+      height: auto;
+      max-height: none;
+    }
+    .home-feed-card__target-subject-embed-slot
+      .home-feed-card__target-subject-nested-embed {
+      display: block;
+      width: 100%;
+      border: 0;
+      background: transparent;
+    }
     .home-feed-card__target-chip {
       display: inline-flex;
       align-items: center;

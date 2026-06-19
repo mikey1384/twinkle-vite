@@ -425,6 +425,16 @@ export default function Body({
                 ) : null}
               </div>
             ) : null}
+            {richDescriptionEmbed ? (
+              <MarkdownEmbedPreview
+                className="home-feed-card__subject-embed-preview"
+                contentId={contentId}
+                contentType={contentType}
+                embed={richDescriptionEmbed}
+                internalPreviewVariant="wide"
+                onNavigate={onNavigate}
+              />
+            ) : null}
             {showSecretPreview ? (
               <div
                 className={`home-feed-card__subject-secret-answer${
@@ -476,16 +486,6 @@ export default function Body({
               </div>
             ) : null}
           </div>
-          {richDescriptionEmbed ? (
-            <MarkdownEmbedPreview
-              className="home-feed-card__subject-embed-preview"
-              contentId={contentId}
-              contentType={contentType}
-              embed={richDescriptionEmbed}
-              internalPreviewVariant="wide"
-              onNavigate={onNavigate}
-            />
-          ) : null}
           {subjectMediaPreview}
         </div>
       </div>

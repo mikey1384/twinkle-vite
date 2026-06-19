@@ -119,7 +119,7 @@ function isHomeFeedPerformanceCaptureEnabled() {
   return getStoredItem(HOME_FEED_PERFORMANCE_FORCE_KEY) === '1';
 }
 
-export default function HomeFeedPerformance() {
+function HomeFeedFactor() {
   const [hours, setHours] = useState<HomeFeedPerformanceRangeOption>(24);
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -186,7 +186,7 @@ export default function HomeFeedPerformance() {
     <section className={panelClass}>
       <header>
         <div>
-          <h2>Home Feed Performance</h2>
+          <h2>Home Feed</h2>
           {report ? (
             <span>
               {formatNumber(report.summary.eventCount)} events over {hours}h
@@ -500,4 +500,430 @@ function EventRow({ row }: { row: HomeFeedPerformanceEventRow }) {
 function formatMs(value: number) {
   if (!Number.isFinite(Number(value)) || Number(value) <= 0) return '-';
   return `${formatNumber(Math.round(Number(value)))} ms`;
+}
+
+type PerformanceFactor = 'homeFeed' | 'effortLevel' | 'grammarbles';
+
+const PERFORMANCE_FACTORS: { key: PerformanceFactor; label: string }[] = [
+  { key: 'homeFeed', label: 'Home Feed' },
+  { key: 'effortLevel', label: 'Effort Level' },
+  { key: 'grammarbles', label: 'Grammarbles' }
+];
+
+export default function Performance() {
+  const userId = useKeyContext((v) => v.myState.userId);
+  const [factor, setFactor] = useState<PerformanceFactor>('homeFeed');
+
+  if (userId !== ADMIN_USER_ID) {
+    return (
+      <InvalidPage
+        title="Owner only"
+        text="Performance insights are only available to the owner account."
+      />
+    );
+  }
+
+  return (
+    <div>
+      <div className={rangeClass} style={{ marginBottom: '1.5rem' }}>
+        {PERFORMANCE_FACTORS.map((option) => (
+          <button
+            key={option.key}
+            className={factor === option.key ? 'active' : ''}
+            onClick={() => setFactor(option.key)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      {factor === 'homeFeed' ? (
+        <HomeFeedFactor />
+      ) : factor === 'effortLevel' ? (
+        <EffortLevelFactor />
+      ) : (
+        <GrammarFactor />
+      )}
+    </div>
+  );
+}
+
+interface EffortLevelEventRow {
+  id: number;
+  createdAt: number;
+  userId: number;
+  statusCode: number;
+  contentType: string;
+  contentId: number;
+  totalMs: number;
+  settingsMs: number;
+  moderatorMs: number;
+  contentUpdateMs: number;
+  notiFeedsMs: number;
+  cannotChange: boolean;
+}
+
+interface EffortLevelReport {
+  hours: number;
+  generatedAt: number;
+  slowThresholdMs: number;
+  summary: {
+    eventCount: number;
+    p50TotalMs: number;
+    p95TotalMs: number;
+    maxTotalMs: number;
+    avgTotalMs: number;
+  };
+  recentEvents: EffortLevelEventRow[];
+}
+
+function EffortLevelFactor() {
+  const [hours, setHours] = useState<HomeFeedPerformanceRangeOption>(24);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [report, setReport] = useState<EffortLevelReport | null>(null);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const loadEffortLevelPerformanceReport = useAppContext(
+    (v) => v.requestHelpers.loadEffortLevelPerformanceReport
+  );
+
+  const recentEvents = report?.recentEvents || [];
+
+  useEffect(() => {
+    if (userId !== ADMIN_USER_ID) return;
+    let canceled = false;
+    void loadReport();
+
+    async function loadReport() {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await loadEffortLevelPerformanceReport(hours);
+        if (canceled) return;
+        setReport(data);
+      } catch (loadError: any) {
+        if (canceled) return;
+        setError(loadError?.message || 'Failed to load effort level performance');
+      } finally {
+        if (!canceled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    return () => {
+      canceled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hours, reloadKey, userId]);
+
+  return (
+    <section className={panelClass}>
+      <header>
+        <div>
+          <h2>Effort Level</h2>
+          {report ? (
+            <span>
+              {formatNumber(report.summary.eventCount)} slow assignments (≥
+              {report.slowThresholdMs}ms) over {hours}h
+            </span>
+          ) : null}
+        </div>
+        <div className={actionsClass}>
+          <div className={rangeClass}>
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                className={hours === option.value ? 'active' : ''}
+                onClick={() => setHours(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <Button
+            color="darkerGray"
+            variant="outline"
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
+            Refresh
+          </Button>
+        </div>
+      </header>
+      <div>
+        {loading ? <Loading /> : null}
+
+        {!loading && error ? (
+          <div className={emptyStateClass}>
+            <div>{error}</div>
+            <Button
+              color="logoBlue"
+              variant="soft"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : null}
+
+        {!loading && !error && report ? (
+          <>
+            <section className={summaryGridClass}>
+              <MetricCard
+                label="Total p95"
+                value={formatMs(report.summary.p95TotalMs)}
+                detail={`${formatMs(report.summary.p50TotalMs)} p50`}
+                color="logoBlue"
+              />
+              <MetricCard
+                label="Total max"
+                value={formatMs(report.summary.maxTotalMs)}
+                detail={`${formatMs(report.summary.avgTotalMs)} avg`}
+                color="rose"
+              />
+              <MetricCard
+                label="Slow events"
+                value={formatNumber(report.summary.eventCount)}
+                detail={`≥ ${report.slowThresholdMs} ms`}
+                color="orange"
+              />
+            </section>
+
+            {recentEvents.length === 0 ? (
+              <div className={emptyInlineClass}>
+                No slow effort-level assignments captured in this range. 🎉
+              </div>
+            ) : (
+              <div className={tableWrapClass}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Content</th>
+                      <th>Total</th>
+                      <th>Settings read</th>
+                      <th>Moderator</th>
+                      <th>Content UPDATE</th>
+                      <th>noti_feeds</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentEvents.map((row) => (
+                      <EffortLevelEventRowView key={row.id} row={row} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function EffortLevelEventRowView({ row }: { row: EffortLevelEventRow }) {
+  return (
+    <tr>
+      <td>{formatTime(row.createdAt)}</td>
+      <td>
+        {row.contentType || '-'}
+        {row.contentId ? ` #${row.contentId}` : ''}
+      </td>
+      <td>{formatMs(row.totalMs)}</td>
+      <td>{formatMs(row.settingsMs)}</td>
+      <td>{formatMs(row.moderatorMs)}</td>
+      <td>{formatMs(row.contentUpdateMs)}</td>
+      <td>{formatMs(row.notiFeedsMs)}</td>
+    </tr>
+  );
+}
+
+interface GrammarEventRow {
+  id: number;
+  createdAt: number;
+  userId: number;
+  statusCode: number;
+  isPerfect: boolean;
+  level: number;
+  totalMs: number;
+  scoringMs: number;
+  ratingHistoryMs: number;
+  dailyTaskMs: number;
+}
+
+interface GrammarReport {
+  hours: number;
+  generatedAt: number;
+  slowThresholdMs: number;
+  summary: {
+    eventCount: number;
+    perfectCount: number;
+    p50TotalMs: number;
+    p95TotalMs: number;
+    maxTotalMs: number;
+    avgTotalMs: number;
+  };
+  recentEvents: GrammarEventRow[];
+}
+
+function GrammarFactor() {
+  const [hours, setHours] = useState<HomeFeedPerformanceRangeOption>(24);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [report, setReport] = useState<GrammarReport | null>(null);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const loadGrammarPerformanceReport = useAppContext(
+    (v) => v.requestHelpers.loadGrammarPerformanceReport
+  );
+
+  const recentEvents = report?.recentEvents || [];
+
+  useEffect(() => {
+    if (userId !== ADMIN_USER_ID) return;
+    let canceled = false;
+    void loadReport();
+
+    async function loadReport() {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await loadGrammarPerformanceReport(hours);
+        if (canceled) return;
+        setReport(data);
+      } catch (loadError: any) {
+        if (canceled) return;
+        setError(loadError?.message || 'Failed to load grammar performance');
+      } finally {
+        if (!canceled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    return () => {
+      canceled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hours, reloadKey, userId]);
+
+  return (
+    <section className={panelClass}>
+      <header>
+        <div>
+          <h2>Grammarbles</h2>
+          {report ? (
+            <span>
+              {formatNumber(report.summary.eventCount)} slow finishes (≥
+              {report.slowThresholdMs}ms) over {hours}h ·{' '}
+              {formatNumber(report.summary.perfectCount)} perfect
+            </span>
+          ) : null}
+        </div>
+        <div className={actionsClass}>
+          <div className={rangeClass}>
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                className={hours === option.value ? 'active' : ''}
+                onClick={() => setHours(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <Button
+            color="darkerGray"
+            variant="outline"
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
+            Refresh
+          </Button>
+        </div>
+      </header>
+      <div>
+        {loading ? <Loading /> : null}
+
+        {!loading && error ? (
+          <div className={emptyStateClass}>
+            <div>{error}</div>
+            <Button
+              color="logoBlue"
+              variant="soft"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : null}
+
+        {!loading && !error && report ? (
+          <>
+            <section className={summaryGridClass}>
+              <MetricCard
+                label="Total p95"
+                value={formatMs(report.summary.p95TotalMs)}
+                detail={`${formatMs(report.summary.p50TotalMs)} p50`}
+                color="logoBlue"
+              />
+              <MetricCard
+                label="Total max"
+                value={formatMs(report.summary.maxTotalMs)}
+                detail={`${formatMs(report.summary.avgTotalMs)} avg`}
+                color="rose"
+              />
+              <MetricCard
+                label="Slow finishes"
+                value={formatNumber(report.summary.eventCount)}
+                detail={`≥ ${report.slowThresholdMs} ms`}
+                color="orange"
+              />
+            </section>
+
+            {recentEvents.length === 0 ? (
+              <div className={emptyInlineClass}>
+                No slow Grammarbles finishes captured in this range. 🎉
+              </div>
+            ) : (
+              <div className={tableWrapClass}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Level</th>
+                      <th>Perfect</th>
+                      <th>Total</th>
+                      <th>Scoring</th>
+                      <th>Ratings + history</th>
+                      <th>Daily tasks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentEvents.map((row) => (
+                      <GrammarEventRowView key={row.id} row={row} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function GrammarEventRowView({ row }: { row: GrammarEventRow }) {
+  return (
+    <tr>
+      <td>{formatTime(row.createdAt)}</td>
+      <td>{row.level || '-'}</td>
+      <td>{row.isPerfect ? 'PERFECT' : '-'}</td>
+      <td>{formatMs(row.totalMs)}</td>
+      <td>{formatMs(row.scoringMs)}</td>
+      <td>{formatMs(row.ratingHistoryMs)}</td>
+      <td>{formatMs(row.dailyTaskMs)}</td>
+    </tr>
+  );
 }

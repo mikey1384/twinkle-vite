@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { addCommasToNumber, getPlainPreviewText } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
 interface CompactSubjectEmbedPreviewProps {
@@ -141,16 +141,6 @@ function getSubjectBody(content: any) {
   return getPlainPreviewText(content?.description || content?.content || '');
 }
 
-function getPlainPreviewText(value: unknown) {
-  if (typeof value !== 'string') return '';
-  return value
-    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
-    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 const compactSubjectEmbedPreviewClass = css`
   appearance: none;
   box-sizing: border-box;
@@ -238,7 +228,7 @@ const compactSubjectEmbedPreviewClass = css`
     color: var(--subject-effort-color);
   }
 
-  strong {
+  .compact-subject-embed-preview__copy strong {
     display: -webkit-box;
     overflow: hidden;
     color: ${Color.black()};
@@ -249,7 +239,7 @@ const compactSubjectEmbedPreviewClass = css`
     -webkit-line-clamp: 2;
   }
 
-  p {
+  .compact-subject-embed-preview__copy p {
     display: -webkit-box;
     margin: 0;
     overflow: hidden;

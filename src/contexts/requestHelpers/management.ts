@@ -452,6 +452,28 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadEffortLevelPerformanceReport(hours: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/performance/effort-level/report?hours=${hours}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadGrammarPerformanceReport(hours: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/performance/grammar/report?hours=${hours}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadHomeFeedPerformanceExport({
       hours,
       format

@@ -160,6 +160,9 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-subject-root-text {
     height: max(29rem, 290px);
   }
+  .home-feed-card__panel-preview--size-subject-comment-embed {
+    height: var(--home-feed-card-comment-embed-panel-height, 100%);
+  }
   .home-feed-card__panel-preview--size-subject-rich-embed {
     height: max(34rem, 340px);
   }

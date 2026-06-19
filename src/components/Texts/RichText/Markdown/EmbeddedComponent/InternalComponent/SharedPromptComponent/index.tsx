@@ -10,6 +10,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { getPlainPreviewText } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
 interface SharedPrompt {
@@ -184,15 +185,6 @@ export default function SharedPromptComponent({
       navigate(`/shared-prompts/${prompt.id}`);
     }
   }
-}
-
-function getPlainPreviewText(value: string) {
-  return value
-    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
-    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 const compactSharedPromptClass = css`

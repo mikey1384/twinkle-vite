@@ -7,9 +7,10 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
+import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
-import { useAppContext, useContentContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import {
   getInternalEmbedCommentLabel,
   getInternalEmbedPreviewInfo,
@@ -21,6 +22,7 @@ import {
   fetchedVideoCodeFromURL,
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
+import { timeSince } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
 
 interface CompactCommentEmbedPreviewProps {
@@ -140,6 +142,11 @@ export default function CompactCommentEmbedPreview({
           ) : (
             <strong>Unknown user</strong>
           )}
+          {comment?.timeStamp ? (
+            <span className="compact-comment-embed__timestamp">
+              {timeSince(comment.timeStamp)}
+            </span>
+          ) : null}
         </div>
         {hasText ? (
           <RichText
@@ -271,9 +278,74 @@ function CommentMediaPreview({
         />
       );
     }
+    if (
+      item.embed.internalInfo?.kind === 'subject' &&
+      item.embed.internalInfo.contentId
+    ) {
+      return (
+        <MarkdownSubjectPreview
+          contentId={item.embed.internalInfo.contentId}
+          label={item.embed.internalInfo.label}
+        />
+      );
+    }
   }
 
   return <MarkdownLinkPreview embed={item.embed} variant={variant} />;
+}
+
+function MarkdownSubjectPreview({
+  contentId,
+  label
+}: {
+  contentId: number;
+  label: string;
+}) {
+  const loadingRef = useRef<string | null>(null);
+  const contentState = useContentState({ contentId, contentType: 'subject' });
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
+  const hasLoadedSubject = Boolean(
+    contentState.loaded && !contentState.notFound
+  );
+  const previewContent = hasLoadedSubject
+    ? contentState
+    : { contentId, contentType: 'subject', id: contentId, title: label };
+
+  useEffect(() => {
+    const requestKey = `${userId || 0}:${contentId}:subject`;
+    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+      return;
+    }
+    const requestUserId = userId;
+    loadingRef.current = requestKey;
+    loadContent({ contentId, contentType: 'subject' })
+      .then((data: any) => {
+        if (checkUserChange(requestUserId)) return;
+        if (!data?.notFound) {
+          onInitContent({ ...data, contentId, contentType: 'subject' });
+        }
+      })
+      .catch((error: unknown) => {
+        if (checkUserChange(requestUserId)) return;
+        console.error(error);
+      })
+      .finally(() => {
+        if (loadingRef.current === requestKey) {
+          loadingRef.current = null;
+        }
+      });
+    // checkUserChange/loadContent/onInitContent are stable context helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, contentState.loaded, userId]);
+
+  return (
+    <div className="compact-comment-embed__media-tile subject">
+      <CompactSubjectEmbedPreview content={previewContent} contentId={contentId} />
+    </div>
+  );
 }
 
 function MarkdownAICardPreview({ cardId }: { cardId: number }) {
@@ -293,10 +365,12 @@ function MarkdownBuildPreview({
   contentId: number;
   label: string;
 }) {
-  const loadingRef = useRef(false);
+  const loadingRef = useRef<string | null>(null);
   const contentState = useContentState({ contentId, contentType: 'build' });
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const hasLoadedBuild = Boolean(contentState.loaded && !contentState.notFound);
   const previewContent =
     hasLoadedBuild
@@ -309,10 +383,15 @@ function MarkdownBuildPreview({
         };
 
   useEffect(() => {
-    if (!contentId || contentState.loaded || loadingRef.current) return;
-    loadingRef.current = true;
+    const requestKey = `${userId || 0}:${contentId}:build`;
+    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+      return;
+    }
+    const requestUserId = userId;
+    loadingRef.current = requestKey;
     loadContent({ contentId, contentType: 'build' })
       .then((data: any) => {
+        if (checkUserChange(requestUserId)) return;
         if (!data?.notFound) {
           onInitContent({
             ...data,
@@ -322,14 +401,17 @@ function MarkdownBuildPreview({
         }
       })
       .catch((error: unknown) => {
+        if (checkUserChange(requestUserId)) return;
         console.error(error);
       })
       .finally(() => {
-        loadingRef.current = false;
+        if (loadingRef.current === requestKey) {
+          loadingRef.current = null;
+        }
       });
-    // loadContent/onInitContent are stable context helpers.
+    // checkUserChange/loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, contentState.loaded]);
+  }, [contentId, contentState.loaded, userId]);
 
   return (
     <div className="compact-comment-embed__media-tile build">
@@ -651,6 +733,12 @@ const compactCommentEmbedPreviewClass = css`
     font-size: 1rem;
     font-weight: 850;
   }
+  .compact-comment-embed__meta .compact-comment-embed__timestamp {
+    color: ${Color.gray()};
+    font-size: 1.1rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
   .compact-comment-embed__meta a,
   .compact-comment-embed__meta > div,
   .compact-comment-embed__meta strong {
@@ -725,6 +813,16 @@ const compactCommentEmbedPreviewClass = css`
     color: ${Color.logoBlue()};
     font-size: 1rem;
     font-weight: 850;
+  }
+  .compact-comment-embed__media-tile.subject {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .compact-comment-embed__media-tile.subject > * {
+    width: 100%;
+    height: 100%;
   }
   .compact-comment-embed__media-tile.attachment > div {
     height: 100%;

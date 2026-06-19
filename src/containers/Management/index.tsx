@@ -107,7 +107,7 @@ export default function Management() {
             className={(navData) => (navData.isActive ? 'active' : '')}
           >
             <Icon icon="chart-line" />
-            <span style={{ marginLeft: '1.1rem' }}>Home Feed Performance</span>
+            <span style={{ marginLeft: '1.1rem' }}>Performance</span>
           </NavLink>
         )}
       </SideMenu>

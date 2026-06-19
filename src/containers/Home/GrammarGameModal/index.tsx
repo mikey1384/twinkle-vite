@@ -17,6 +17,8 @@ import {
 } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 
+const RESULT_SCREEN_MIN_DISPLAY_MS = 1500;
+
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const [gameLoading, setGameLoading] = useState(false);
@@ -396,7 +398,12 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             }
           })(),
           (async () => {
-            await new Promise<void>((resolve) => setTimeout(resolve, 3000));
+            // Minimum time the result screen (e.g. PERFECT) stays up before
+            // advancing, so the celebration is visible without dragging. The
+            // upload runs in parallel; the screen shows for max(upload, this).
+            await new Promise<void>((resolve) =>
+              setTimeout(resolve, RESULT_SCREEN_MIN_DISPLAY_MS)
+            );
           })()
         ];
         await Promise.all(promises);

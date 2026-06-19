@@ -24,6 +24,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'reminders:remove',
   'reminders:update',
   'shared-db:add-entry',
+  'shared-db:claim-entry',
   'shared-db:create-topic',
   'shared-db:delete-entry',
   'shared-db:kv-delete',

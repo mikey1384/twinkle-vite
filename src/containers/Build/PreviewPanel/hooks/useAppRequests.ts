@@ -134,6 +134,9 @@ export default function useAppRequests() {
   const deleteSharedDbEntry = useAppContext(
     (v) => v.requestHelpers.deleteSharedDbEntry
   );
+  const claimSharedDbEntry = useAppContext(
+    (v) => v.requestHelpers.claimSharedDbEntry
+  );
   const getSharedDbKvItem = useAppContext(
     (v) => v.requestHelpers.getSharedDbKvItem
   );
@@ -274,6 +277,7 @@ export default function useAppRequests() {
   const addSharedDbEntryRef = useRef(addSharedDbEntry);
   const updateSharedDbEntryRef = useRef(updateSharedDbEntry);
   const deleteSharedDbEntryRef = useRef(deleteSharedDbEntry);
+  const claimSharedDbEntryRef = useRef(claimSharedDbEntry);
   const getSharedDbKvItemRef = useRef(getSharedDbKvItem);
   const listSharedDbKvItemsRef = useRef(listSharedDbKvItems);
   const setSharedDbKvItemsRef = useRef(setSharedDbKvItems);
@@ -362,6 +366,7 @@ export default function useAppRequests() {
     addSharedDbEntryRef,
     updateSharedDbEntryRef,
     deleteSharedDbEntryRef,
+    claimSharedDbEntryRef,
     getSharedDbKvItemRef,
     listSharedDbKvItemsRef,
     setSharedDbKvItemsRef,
