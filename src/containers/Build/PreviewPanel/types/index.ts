@@ -137,7 +137,6 @@ export interface ArtifactVersion {
   id: number;
   version: number;
   summary: string | null;
-  gitCommitSha: string | null;
   createdAt: number;
   createdByRole: 'user' | 'assistant';
 }

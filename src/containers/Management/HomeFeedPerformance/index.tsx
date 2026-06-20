@@ -814,6 +814,17 @@ interface GrammarEventRow {
   scoringMs: number;
   ratingHistoryMs: number;
   dailyTaskMs: number;
+  xpRewardMs: number;
+  coinUpdateMs: number;
+  statsMs: number;
+  achievementMs: number;
+}
+
+interface PerformanceByUserRow {
+  userId: number;
+  eventCount: number;
+  p95TotalMs: number;
+  maxTotalMs: number;
 }
 
 interface GrammarReport {
@@ -828,6 +839,7 @@ interface GrammarReport {
     maxTotalMs: number;
     avgTotalMs: number;
   };
+  byUser: PerformanceByUserRow[];
   recentEvents: GrammarEventRow[];
 }
 
@@ -946,32 +958,65 @@ function GrammarFactor() {
               />
             </section>
 
-            {recentEvents.length === 0 ? (
-              <div className={emptyInlineClass}>
-                No slow Grammarbles finishes captured in this range. 🎉
-              </div>
-            ) : (
-              <div className={tableWrapClass}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Time</th>
-                      <th>Level</th>
-                      <th>Perfect</th>
-                      <th>Total</th>
-                      <th>Scoring</th>
-                      <th>Ratings + history</th>
-                      <th>Daily tasks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentEvents.map((row) => (
-                      <GrammarEventRowView key={row.id} row={row} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {report.byUser.length > 0 ? (
+              <Subsection title="Slow finishes by user">
+                <div className={tableWrapClass}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Slow finishes</th>
+                        <th>p95 total</th>
+                        <th>Max total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {report.byUser.map((user) => (
+                        <tr key={user.userId}>
+                          <td>{user.userId}</td>
+                          <td>{formatNumber(user.eventCount)}</td>
+                          <td>{formatMs(user.p95TotalMs)}</td>
+                          <td>{formatMs(user.maxTotalMs)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Subsection>
+            ) : null}
+
+            <Subsection title="Recent slow finishes">
+              {recentEvents.length === 0 ? (
+                <div className={emptyInlineClass}>
+                  No slow Grammarbles finishes captured in this range. 🎉
+                </div>
+              ) : (
+                <div className={tableWrapClass}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Level</th>
+                        <th>Perfect</th>
+                        <th>Total</th>
+                        <th>Scoring</th>
+                        <th>XP</th>
+                        <th>Coins</th>
+                        <th>Stats</th>
+                        <th>Achv</th>
+                        <th>Ratings + history</th>
+                        <th>Daily tasks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentEvents.map((row) => (
+                        <GrammarEventRowView key={row.id} row={row} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Subsection>
           </>
         ) : null}
       </div>
@@ -987,6 +1032,10 @@ function GrammarEventRowView({ row }: { row: GrammarEventRow }) {
       <td>{row.isPerfect ? 'PERFECT' : '-'}</td>
       <td>{formatMs(row.totalMs)}</td>
       <td>{formatMs(row.scoringMs)}</td>
+      <td>{formatMs(row.xpRewardMs)}</td>
+      <td>{formatMs(row.coinUpdateMs)}</td>
+      <td>{formatMs(row.statsMs)}</td>
+      <td>{formatMs(row.achievementMs)}</td>
       <td>{formatMs(row.ratingHistoryMs)}</td>
       <td>{formatMs(row.dailyTaskMs)}</td>
     </tr>

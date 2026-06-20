@@ -30,7 +30,10 @@ export default function ContentPage() {
   const contentId = Number(initialContentId);
   const contentAnchorRef = useRef<HTMLDivElement | null>(null);
   const { contentType, rootType } = useMemo(() => {
-    const rawContentType = location.pathname.split('/')[1].slice(0, -1);
+    const rawContentType = location.pathname
+      .split('/')[1]
+      .slice(0, -1)
+      .toLowerCase();
     if (rawContentType === 'ai-storie') {
       return { contentType: 'aiStory', rootType: undefined };
     }

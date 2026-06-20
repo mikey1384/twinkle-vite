@@ -158,9 +158,6 @@ export default function VersionHistoryModal({
                   <div className={versionMetaClass}>
                     {timeSince(version.createdAt)} ·{' '}
                     {version.createdByRole === 'assistant' ? 'AI' : 'You'}
-                    {version.gitCommitSha
-                      ? ` · ${String(version.gitCommitSha).slice(0, 7)}`
-                      : ''}
                   </div>
                 </div>
                 <GameCTAButton
