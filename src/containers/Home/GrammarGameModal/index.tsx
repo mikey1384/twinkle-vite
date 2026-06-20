@@ -17,7 +17,7 @@ import {
 } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 
-const RESULT_SCREEN_MIN_DISPLAY_MS = 1500;
+const RESULT_SCREEN_MIN_DISPLAY_MS = 3000;
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
