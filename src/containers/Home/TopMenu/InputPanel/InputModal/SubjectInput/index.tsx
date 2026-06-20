@@ -11,8 +11,10 @@ import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Textarea from '~/components/Texts/Textarea';
 import AttachContentModal from './AttachContentModal';
+import AlertModal from '~/components/Modals/AlertModal';
 import Attachment from '~/components/Attachment';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import useEmbedFileUpload from '~/helpers/hooks/useEmbedFileUpload';
 import LocalContext from '../../../../Context';
 import {
   addEmoji,
@@ -104,6 +106,13 @@ function SubjectInput({
   const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
   const [draggedFile, setDraggedFile] = useState();
+  const {
+    uploadForEmbed,
+    uploading: embedUploading,
+    uploadErrorType: embedUploadErrorType,
+    setUploadErrorType: setEmbedUploadErrorType,
+    errorModalContent: embedErrorModalContent
+  } = useEmbedFileUpload();
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
@@ -435,6 +444,7 @@ function SubjectInput({
                 {attachment ? (
                   <Attachment
                     attachment={attachment}
+                    embedUploading={embedUploading}
                     onDragStart={() => {
                       const file = attachment?.file;
                       if (file) {
@@ -442,6 +452,7 @@ function SubjectInput({
                       }
                     }}
                     onDragEnd={() => setDraggedFile(undefined)}
+                    onDragEmbed={handleDragEmbed}
                     onThumbnailLoad={handleThumbnailLoad}
                     onClose={() => onSetSubjectAttachment(null)}
                   />
@@ -647,6 +658,13 @@ function SubjectInput({
           uploadProgress={secretAttachmentUploadProgress}
         />
       )}
+      {embedUploadErrorType && (
+        <AlertModal
+          title={embedErrorModalContent.title}
+          content={embedErrorModalContent.content}
+          onHide={() => setEmbedUploadErrorType('')}
+        />
+      )}
       <AttachContentModal
         isOpen={attachContentModalShown}
         onHide={() => setAttachContentModalShown(false)}
@@ -667,14 +685,35 @@ function SubjectInput({
     </ErrorBoundary>
   );
 
-  function handleDrop(filePath: string) {
-    handleSetDescription(
-      `${stringIsEmpty(description) ? '' : `${description}\n`}![](${filePath})`
-    );
-    if (draggedFile) {
-      setDraggedFile(undefined);
-      onSetSubjectAttachment(null);
+  function handleDrop(
+    filePath: string,
+    options?: { fromAttachment?: boolean }
+  ) {
+    insertImageEmbed(filePath);
+    if (options?.fromAttachment) {
+      clearAttachment();
     }
+  }
+
+  async function handleDragEmbed() {
+    const file = attachment?.file;
+    if (!file) return;
+    const url = await uploadForEmbed(file);
+    if (!url) return;
+    insertImageEmbed(url);
+    clearAttachment();
+  }
+
+  function insertImageEmbed(filePath: string) {
+    const currentText = descriptionRef.current || '';
+    handleSetDescription(
+      `${stringIsEmpty(currentText) ? '' : `${currentText}\n`}![](${filePath})`
+    );
+  }
+
+  function clearAttachment() {
+    setDraggedFile(undefined);
+    onSetSubjectAttachment(null);
   }
 
   function handleThumbnailLoad({

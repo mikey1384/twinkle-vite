@@ -1,20 +1,9 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext, useKeyContext } from '~/contexts';
-import { v1 as uuidv1 } from 'uuid';
-import {
-  cloudFrontURL,
-  mb,
-  returnMaxUploadSize
-} from '~/constants/defaultValues';
-import { addCommasToNumber, generateFileName } from '~/helpers/stringHelpers';
-import {
-  needsImageConversion,
-  convertToWebFriendlyFormat
-} from '~/helpers/imageHelpers';
 import { getImageAttachmentIdFromDataTransfer } from '~/helpers/imageAttachmentEmbedHelpers';
+import useEmbedFileUpload from '~/helpers/hooks/useEmbedFileUpload';
 
 const isIOS =
   typeof navigator !== 'undefined' &&
@@ -40,25 +29,24 @@ export default function Textarea({
   innerRef?: React.Ref<HTMLTextAreaElement> | ((instance: any) => void);
   minRows?: number;
   maxRows?: number;
-  onDrop?: (filePath: string) => void;
+  onDrop?: (
+    filePath: string,
+    options?: { fromAttachment?: boolean }
+  ) => void;
   onAttachmentDrop?: (attachmentId: string) => Promise<void> | void;
   theme?: string;
   disableFocusGlow?: boolean;
   disableAutoResize?: boolean;
 }) {
   const dropEnabled = !!onDrop || !!onAttachmentDrop;
-  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
-  const userId = useKeyContext((v) => v.myState.userId);
-  const maxSize = useMemo(
-    () => returnMaxUploadSize(fileUploadLvl),
-    [fileUploadLvl]
-  );
-  const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
-  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
+  const {
+    uploadForEmbed,
+    uploading,
+    normalizedProgress,
+    uploadErrorType,
+    errorModalContent
+  } = useEmbedFileUpload();
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadErrorType, setUploadErrorType] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const rafIdRef = useRef<number | null>(null);
   const isPastingRef = useRef(false);
@@ -73,12 +61,6 @@ export default function Textarea({
   } | null>(null);
   const scheduleResizeRef = useRef<(immediate?: boolean) => void>(() => {});
   const textareaSizingStyleKey = getTextareaSizingStyleKey(style);
-
-  const normalizedProgress = useMemo(() => {
-    if (!Number.isFinite(uploadProgress) || uploadProgress <= 0) return 0;
-    if (uploadProgress >= 1) return 1;
-    return uploadProgress;
-  }, [uploadProgress]);
 
   // Cache computed styles to avoid repeated style recalculations
   const getCachedStyles = (el: HTMLTextAreaElement) => {
@@ -259,24 +241,6 @@ export default function Textarea({
       }
     };
   }, []);
-
-  const errorModalContent = useMemo(() => {
-    switch (uploadErrorType) {
-      case 'size':
-        return {
-          title: 'File too large',
-          content: `The file size exceeds the maximum allowed upload size of ${addCommasToNumber(
-            maxSize / mb
-          )}MB.`
-        };
-      default:
-        return {
-          title: 'Upload error',
-          content:
-            'An error occurred while trying to upload your file. Please try again.'
-        };
-    }
-  }, [maxSize, uploadErrorType]);
 
   return (
     <div
@@ -495,9 +459,12 @@ export default function Textarea({
       }
     }
     if (!onDrop) return;
+    const fromAttachment = !!draggedFile;
     const file = draggedFile || e.dataTransfer.files[0];
     if (file) {
-      await handleFileUpload(file);
+      setIsDragging(false);
+      const url = await uploadForEmbed(file);
+      if (url) onDrop(url, { fromAttachment });
     }
   }
 
@@ -549,88 +516,15 @@ export default function Textarea({
           (isImage ? `image.${ext || 'png'}` : `pasted-file.${ext || 'bin'}`);
         const file = new File([blob], name, { type: blob.type });
 
-        handleFileUpload(file);
+        uploadForEmbed(file).then((url) => {
+          if (url) onDrop?.(url);
+        });
       }
     };
 
     if (fileItems.length > 0) {
       uploadFromItems(fileItems);
     }
-  }
-
-  async function handleFileUpload(file: File) {
-    setIsDragging(false);
-    if (uploadErrorType) setUploadErrorType('');
-    if (!file || !maxSize || !userId) return;
-    if (file.size / mb > maxSize) {
-      return setUploadErrorType('size');
-    }
-    setUploading(true);
-
-    // Convert image if needed (HEIC, TIFF, BMP, etc.)
-    let fileToUpload = file;
-    if (needsImageConversion(file.name)) {
-      try {
-        const { file: convertedFile } = await convertToWebFriendlyFormat(file);
-        // Re-check size after conversion (converted file could be larger)
-        if (convertedFile.size / mb > maxSize) {
-          setUploading(false);
-          return setUploadErrorType('size');
-        }
-        fileToUpload = convertedFile;
-      } catch (error) {
-        console.warn('Image conversion failed:', error);
-      }
-    }
-
-    const filePath = uuidv1();
-    const appliedFileName = generateFileName(fileToUpload.name);
-    try {
-      await uploadFile({
-        filePath,
-        fileName: appliedFileName,
-        file: fileToUpload,
-        context: 'embed',
-        onUploadProgress: handleUploadProgress
-      });
-      await saveFileData({
-        fileName: appliedFileName,
-        filePath,
-        actualFileName: fileToUpload.name,
-        rootType: 'embed'
-      });
-
-      if (uploadErrorType) setUploadErrorType('');
-      onDrop?.(
-        `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
-          appliedFileName
-        )}`
-      );
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
-  }
-
-  function handleUploadProgress({
-    loaded,
-    total
-  }: {
-    loaded: number;
-    total: number;
-  }) {
-    if (!total || !Number.isFinite(total) || total <= 0) {
-      setUploadProgress(0);
-      return;
-    }
-    const ratio = loaded / total;
-    if (!Number.isFinite(ratio)) {
-      setUploadProgress(0);
-      return;
-    }
-    setUploadProgress(Math.max(0, Math.min(1, ratio)));
   }
 }
 

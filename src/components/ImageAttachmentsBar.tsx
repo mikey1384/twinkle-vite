@@ -85,6 +85,7 @@ export default function ImageAttachmentsBar({
           <img
             src={attachment.previewUrl}
             alt={attachment.fileName}
+            draggable={false}
             style={{
               width: '100%',
               height: '100%',

@@ -23,7 +23,9 @@ import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import AlertModal from '~/components/Modals/AlertModal';
 import Attachment from '~/components/Attachment';
-import FullTextReveal from '~/components/Texts/FullTextReveal';import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import FullTextReveal from '~/components/Texts/FullTextReveal';
+import useEmbedFileUpload from '~/helpers/hooks/useEmbedFileUpload';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const secretMessageLabel = 'Secret Message';
 const enterSecretMessageLabel = 'Enter Secret Message';
@@ -50,6 +52,11 @@ export default function SecretMessageInput({
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [draggedFile, setDraggedFile] = useState();
   const FileInputRef: React.RefObject<any> = useRef(null);
+  // Track the latest secret text so an embed that lands after an async upload
+  // appends to the current value instead of a stale closure (matches the
+  // textRef/descriptionRef pattern in the sibling inputs).
+  const secretAnswerRef = useRef(secretAnswer);
+  secretAnswerRef.current = secretAnswer;
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const level = useKeyContext((v) => v.myState.level);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
@@ -85,6 +92,13 @@ export default function SecretMessageInput({
     () => !userId || (level === 0 && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT),
     [level, twinkleXP, userId]
   );
+  const {
+    uploadForEmbed,
+    uploading: embedUploading,
+    uploadErrorType: embedUploadErrorType,
+    setUploadErrorType: setEmbedUploadErrorType,
+    errorModalContent: embedErrorModalContent
+  } = useEmbedFileUpload();
 
   return (
     <div style={{ marginTop: '0.5rem' }}>
@@ -130,12 +144,15 @@ export default function SecretMessageInput({
             <Attachment
               style={{ marginLeft: '1rem', fontSize: '1.1rem' }}
               attachment={secretAttachment}
+              embedUploading={embedUploading}
               onDragStart={() => {
                 const file = secretAttachment?.file;
                 if (file) {
                   setDraggedFile(file);
                 }
               }}
+              onDragEnd={() => setDraggedFile(undefined)}
+              onDragEmbed={handleDragEmbed}
               onThumbnailLoad={onThumbnailLoad}
               onClose={() => onSetSecretAttachment(null)}
             />
@@ -201,19 +218,45 @@ export default function SecretMessageInput({
           onHide={() => setAlertModalShown(false)}
         />
       )}
+      {embedUploadErrorType && (
+        <AlertModal
+          title={embedErrorModalContent.title}
+          content={embedErrorModalContent.content}
+          onHide={() => setEmbedUploadErrorType('')}
+        />
+      )}
     </div>
   );
 
-  function handleDrop(filePath: string) {
-    onSetSecretAnswer(
-      `${
-        stringIsEmpty(secretAnswer) ? '' : `${secretAnswer}\n`
-      }![](${filePath})`
-    );
-    if (draggedFile) {
-      setDraggedFile(undefined);
-      onSetSecretAttachment(null);
+  function handleDrop(
+    filePath: string,
+    options?: { fromAttachment?: boolean }
+  ) {
+    insertImageEmbed(filePath);
+    if (options?.fromAttachment) {
+      clearAttachment();
     }
+  }
+
+  async function handleDragEmbed() {
+    const file = secretAttachment?.file;
+    if (!file) return;
+    const url = await uploadForEmbed(file);
+    if (!url) return;
+    insertImageEmbed(url);
+    clearAttachment();
+  }
+
+  function insertImageEmbed(filePath: string) {
+    const currentText = secretAnswerRef.current || '';
+    onSetSecretAnswer(
+      `${stringIsEmpty(currentText) ? '' : `${currentText}\n`}![](${filePath})`
+    );
+  }
+
+  function clearAttachment() {
+    setDraggedFile(undefined);
+    onSetSecretAttachment(null);
   }
 
   async function handleUpload(event: any) {

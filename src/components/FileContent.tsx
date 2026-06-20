@@ -13,6 +13,8 @@ export default function FileContent({
   fileNameStyle = {},
   fileNameLength,
   imageBackgroundColor,
+  imageDraggable,
+  imageCursor,
   onThumbnailLoad
 }: {
   imageUrl?: string;
@@ -23,6 +25,8 @@ export default function FileContent({
   fileNameStyle?: React.CSSProperties;
   fileNameLength?: number;
   imageBackgroundColor?: string;
+  imageDraggable?: boolean;
+  imageCursor?: string;
   onThumbnailLoad?: (data: {
     thumbnails: string[];
     selectedIndex: number;
@@ -53,7 +57,12 @@ export default function FileContent({
         />
       )}
       {fileType === 'image' && imageUrl ? (
-        <Image backgroundColor={imageBackgroundColor} imageUrl={imageUrl} />
+        <Image
+          backgroundColor={imageBackgroundColor}
+          imageUrl={imageUrl}
+          draggable={imageDraggable}
+          cursor={imageCursor}
+        />
       ) : (
         <FileIcon size={fileIconSize} fileType={fileType} />
       )}

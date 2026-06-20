@@ -25,6 +25,7 @@ export default class ErrorBoundary extends Component<
     autoRecoverDomMutationError?: boolean;
     children?: React.ReactNode;
     className?: string;
+    draggable?: boolean;
     innerRef?: React.RefObject<any> | ((instance: any) => void);
     onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
     onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;

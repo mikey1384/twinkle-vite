@@ -35,6 +35,7 @@ import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
 import { useDraft } from '~/helpers/hooks';
+import useEmbedFileUpload from '~/helpers/hooks/useEmbedFileUpload';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import {
   needsImageConversion,
@@ -174,6 +175,13 @@ function InputForm({
   const onSetUploadingFile = useContentContext(
     (v) => v.actions.onSetUploadingFile
   );
+  const {
+    uploadForEmbed,
+    uploading: embedUploading,
+    uploadErrorType: embedUploadErrorType,
+    setUploadErrorType: setEmbedUploadErrorType,
+    errorModalContent: embedErrorModalContent
+  } = useEmbedFileUpload();
 
   const inputState = inputStates[`${contentType}${contentId}`] as any;
   const initialText = disableReason ? '' : inputState?.text || '';
@@ -553,6 +561,7 @@ function InputForm({
         <Attachment
           style={{ marginLeft: '1rem', fontSize: '1.1rem' }}
           attachment={attachment}
+          embedUploading={embedUploading}
           onDragStart={() => {
             const file = attachment?.file;
             if (file) {
@@ -560,6 +569,7 @@ function InputForm({
             }
           }}
           onDragEnd={() => setDraggedFile(undefined)}
+          onDragEmbed={handleDragEmbed}
           onThumbnailLoad={handleThumbnailLoad}
           onClose={() => {
             onSetCommentAttachment({
@@ -614,6 +624,13 @@ function InputForm({
             maxSize / mb
           } MB`}
           onHide={() => setAlertModalShown(false)}
+        />
+      )}
+      {embedUploadErrorType && (
+        <AlertModal
+          title={embedErrorModalContent.title}
+          content={embedErrorModalContent.content}
+          onHide={() => setEmbedUploadErrorType('')}
         />
       )}
       {multiSelectAlertShown && (
@@ -671,19 +688,39 @@ function InputForm({
     }
   }
 
-  function handleDrop(filePath: string) {
+  function handleDrop(
+    filePath: string,
+    options?: { fromAttachment?: boolean }
+  ) {
+    insertImageEmbed(filePath);
+    if (options?.fromAttachment) {
+      clearAttachment();
+    }
+  }
+
+  async function handleDragEmbed() {
+    const file = attachment?.file;
+    if (!file) return;
+    const url = await uploadForEmbed(file);
+    if (!url) return;
+    insertImageEmbed(url);
+    clearAttachment();
+  }
+
+  function insertImageEmbed(filePath: string) {
     const currentText = textRef.current || '';
     handleSetText(
       `${stringIsEmpty(currentText) ? '' : `${currentText}\n`}![](${filePath})`
     );
-    if (draggedFile) {
-      setDraggedFile(undefined);
-      onSetCommentAttachment({
-        attachment: null,
-        contentType,
-        contentId
-      });
-    }
+  }
+
+  function clearAttachment() {
+    setDraggedFile(undefined);
+    onSetCommentAttachment({
+      attachment: null,
+      contentType,
+      contentId
+    });
   }
 
   function handleOnChange(event: React.ChangeEvent<HTMLTextAreaElement>) {

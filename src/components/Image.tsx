@@ -5,10 +5,14 @@ import { Color } from '~/constants/css';
 function Image({
   imageUrl,
   backgroundColor,
+  draggable,
+  cursor,
   onClick
 }: {
   backgroundColor?: string;
   imageUrl: string;
+  draggable?: boolean;
+  cursor?: string;
   onClick?: () => void;
 }) {
   return (
@@ -17,13 +21,14 @@ function Image({
         <div
           onClick={onClick}
           style={{
-            cursor: onClick ? 'pointer' : 'default',
+            cursor: onClick ? 'pointer' : cursor || 'default',
             width: '100%',
             height: '100%',
             background: backgroundColor || Color.black()
           }}
         >
           <img
+            draggable={draggable}
             style={{
               width: '100%',
               height: '100%',
