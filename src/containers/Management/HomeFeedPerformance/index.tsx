@@ -94,6 +94,25 @@ interface HomeFeedPerformanceEventRow {
   reachedLoadedEndDuringRequest: boolean;
   staleIgnored: boolean;
   skippedNoLoadMoreButton: boolean;
+  metrics?: {
+    explain?: Record<string, QueryExplain>;
+  };
+}
+
+interface QueryExplainTable {
+  table: string;
+  access: string;
+  key: string | null;
+  keyLen: string | null;
+  rows: number | null;
+  filtered: number | null;
+  fullScan: boolean;
+}
+
+interface QueryExplain {
+  tables: QueryExplainTable[];
+  usingFilesort: boolean;
+  usingTemporary: boolean;
 }
 
 interface HomeFeedPerformanceReport {
@@ -480,20 +499,69 @@ function EventRow({ row }: { row: HomeFeedPerformanceEventRow }) {
     row.eventType === 'server'
       ? row.visibleRowsReturned
       : row.feedsReturnedCount;
+  const explainEntries = Object.entries(row.metrics?.explain || {});
 
   return (
-    <tr>
-      <td>{formatTime(row.createdAt)}</td>
-      <td>{row.eventType}</td>
-      <td>{requestId}</td>
-      <td>{`${row.category || row.feedFilter}/${row.subFilter || 'all'}`}</td>
-      <td>{formatMs(row.requestDurationMs)}</td>
-      <td>{formatMs(row.totalMs)}</td>
-      <td>{formatMs(row.triggerToPaintMs)}</td>
-      <td>{formatCompact(row.responseRemainingPx || row.startRemainingPx)}</td>
-      <td>{formatNumber(rows)}</td>
-      <td>{flags.join(', ')}</td>
-    </tr>
+    <>
+      <tr>
+        <td>{formatTime(row.createdAt)}</td>
+        <td>{row.eventType}</td>
+        <td>{requestId}</td>
+        <td>{`${row.category || row.feedFilter}/${row.subFilter || 'all'}`}</td>
+        <td>{formatMs(row.requestDurationMs)}</td>
+        <td>{formatMs(row.totalMs)}</td>
+        <td>{formatMs(row.triggerToPaintMs)}</td>
+        <td>{formatCompact(row.responseRemainingPx || row.startRemainingPx)}</td>
+        <td>{formatNumber(rows)}</td>
+        <td>{flags.join(', ')}</td>
+      </tr>
+      {explainEntries.map(([label, explain]) => (
+        <tr key={`${row.id}-${label}`}>
+          <td colSpan={10} style={{ paddingLeft: '1.5rem' }}>
+            <ExplainSummaryView label={label} explain={explain} />
+          </td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
+function ExplainSummaryView({
+  label,
+  explain
+}: {
+  label: string;
+  explain: QueryExplain;
+}) {
+  const warn = '#c0392b';
+  const muted = '#7f8c8d';
+  return (
+    <div style={{ fontFamily: 'monospace' }}>
+      <span style={{ color: muted }}>{label}: </span>
+      {explain.tables.map((table, index) => {
+        const noIndex = !table.key;
+        const danger = table.fullScan || noIndex;
+        return (
+          <span key={`${table.table}-${index}`}>
+            {index > 0 ? ' → ' : ''}
+            <span style={{ color: danger ? warn : 'inherit' }}>
+              {table.table} {table.access || '?'}
+              {table.key ? ` ${table.key}` : ' (no index)'}
+              {table.rows != null
+                ? ` ·${formatNumber(table.rows)}r`
+                : ''}
+              {table.fullScan ? ' ⚠FULL SCAN' : ''}
+            </span>
+          </span>
+        );
+      })}
+      {explain.usingFilesort ? (
+        <span style={{ color: warn }}> ·⚠filesort</span>
+      ) : null}
+      {explain.usingTemporary ? (
+        <span style={{ color: warn }}> ·⚠temp table</span>
+      ) : null}
+    </div>
   );
 }
 

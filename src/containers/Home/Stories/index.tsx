@@ -84,7 +84,12 @@ function createHomeFeedClientRequestId() {
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : Math.random().toString(36).slice(2);
-  return `home-feed:${Date.now().toString(36)}:${randomId}`;
+  // The "force" prefix is set ONLY when the owner's Capture toggle is on, never
+  // for the random client sample (which also sends clientRequestId/feedPerf).
+  // The server uses it as the distinct opt-in signal that gates the expensive
+  // EXPLAIN capture, so random samples stay cheap.
+  const forced = getStoredItem(HOME_FEED_PERFORMANCE_FORCE_KEY) === '1';
+  return `home-feed${forced ? '-force' : ''}:${Date.now().toString(36)}:${randomId}`;
 }
 
 function getHomeFeedScrollSnapshot() {
