@@ -6,6 +6,19 @@ import {
   scrollAnchorRestoresAreSuppressed,
   scrollAnchorSavesAreSuppressed
 } from '~/helpers/scrollAnchorRestorationCoordinator';
+import {
+  isScrollDiagnosticsLoggingEnabled,
+  isScrollRestoreFixEnabled,
+  recordScrollDiagnostic
+} from '~/helpers/scrollAnchorDiagnostics';
+
+// While the candidate fix is active, an incidental pointer event (iOS momentum
+// from the swipe-to-reveal-nav, or the navigation tap itself) must not cancel an
+// in-flight restore before it has actually pinned the saved anchor — otherwise
+// the scroll is stranded at the not-yet-settled fallback position. After this
+// grace window we honor user input even if the anchor never rendered, so we
+// never fight a deliberate scroll for long.
+const restoreCancelGraceMs = 900;
 
 interface SavedScrollAnchor {
   anchorKey: string;
@@ -107,6 +120,7 @@ export function useScrollAnchorRestoration({
       restoreSettledSignatureRef.current =
         getSavedAnchorRestoreSignature(anchorKey);
       userCancelledRestoreRef.current = '';
+      recordScrollDiagnostic({ type: 'top-reset', anchorKey, scrollTop: 0 });
     }
 
     window.addEventListener('wheel', markUserScrollInput, {
@@ -228,6 +242,14 @@ export function useScrollAnchorRestoration({
       const initialScrollKey = `${anchorKey}:initial`;
       if (initialScrollAttemptedRef.current === initialScrollKey) return;
       initialScrollAttemptedRef.current = initialScrollKey;
+      recordScrollDiagnostic({
+        type: 'initial-scroll',
+        anchorKey,
+        scrollTop: Math.round(getScrollTop(getActiveScroller())),
+        itemsReady,
+        reason: initialScrollType,
+        note: savedAnchorIsIgnored ? 'saved-anchor-ignored' : 'no-saved-anchor'
+      });
       applyInitialScroll({
         scroller: getActiveScroller(),
         targetRef: initialScrollTargetRef,
@@ -257,11 +279,31 @@ export function useScrollAnchorRestoration({
     let restoreCancelled = false;
     let cancelListenersAttached = false;
     let removeRestoreCancelSignalListener: (() => void) | null = null;
+    let landedOnAnchor = false;
+    const fixActive = isScrollRestoreFixEnabled();
+    const restoreStartedAt = nowMs();
+
+    function diag(type: string, extra: Record<string, unknown> = {}) {
+      recordScrollDiagnostic({
+        type,
+        anchorKey,
+        scrollTop: Math.round(getScrollTop(getActiveScroller())),
+        itemsReady,
+        primaryId: anchorToRestore.primaryId,
+        secondaryId: anchorToRestore.secondaryId,
+        savedScrollTop: anchorToRestore.scrollTop,
+        savedOffset: anchorToRestore.offset,
+        ...extra
+      });
+    }
+
+    diag('restore-start');
 
     function restore() {
       if (restoreCancelled) return;
       if (scrollAnchorRestoresAreSuppressed()) {
-        cancelPendingRestore();
+        diag('restore-suppressed');
+        cancelPendingRestore('suppressed');
         return;
       }
       const container = containerRef.current;
@@ -270,6 +312,7 @@ export function useScrollAnchorRestoration({
       const anchorElement = findAnchorElement(container, anchorToRestore);
       if (!anchorElement) {
         restoreToSavedScrollTop(anchorToRestore, scroller);
+        diag('anchor-missing-fallback-scrolltop', { attempt: attempts });
         markRestoreSettledIfNoAnchorIdentity();
         attempts += 1;
         if (attempts < 12) {
@@ -279,7 +322,13 @@ export function useScrollAnchorRestoration({
         }
         return;
       }
-      restoreToAnchor(anchorElement, anchorToRestore.offset, scroller);
+      const computedScrollTop = restoreToAnchor(
+        anchorElement,
+        anchorToRestore.offset,
+        scroller
+      );
+      landedOnAnchor = true;
+      diag('restore-to-anchor', { computedScrollTop });
       markRestoreSettled();
       settleAnchor();
     }
@@ -312,17 +361,17 @@ export function useScrollAnchorRestoration({
     }
 
     return () => {
-      cancelPendingRestore();
+      cancelPendingRestore('cleanup');
     };
 
     function addRestoreCancelListeners() {
       if (cancelListenersAttached) return;
       cancelListenersAttached = true;
-      window.addEventListener('wheel', handleUserScrollInput, {
+      window.addEventListener('wheel', handleWheelCancel, {
         capture: true,
         passive: true
       });
-      window.addEventListener('touchmove', handleUserScrollInput, {
+      window.addEventListener('touchmove', handleTouchCancel, {
         capture: true,
         passive: true
       });
@@ -330,16 +379,18 @@ export function useScrollAnchorRestoration({
         capture: true
       });
       removeRestoreCancelSignalListener =
-        addScrollAnchorRestoreCancelListener(cancelPendingRestore);
+        addScrollAnchorRestoreCancelListener(() =>
+          cancelPendingRestore('signal')
+        );
     }
 
     function removeRestoreCancelListeners() {
       if (!cancelListenersAttached) return;
       cancelListenersAttached = false;
-      window.removeEventListener('wheel', handleUserScrollInput, {
+      window.removeEventListener('wheel', handleWheelCancel, {
         capture: true
       });
-      window.removeEventListener('touchmove', handleUserScrollInput, {
+      window.removeEventListener('touchmove', handleTouchCancel, {
         capture: true
       });
       window.removeEventListener('keydown', handleRestoreKeyDown, {
@@ -349,18 +400,51 @@ export function useScrollAnchorRestoration({
       removeRestoreCancelSignalListener = null;
     }
 
-    function handleUserScrollInput() {
-      cancelPendingRestore();
+    function handleWheelCancel() {
+      handleUserScrollInput('wheel');
+    }
+
+    function handleTouchCancel() {
+      handleUserScrollInput('touchmove');
+    }
+
+    // The candidate fix: while a restore is in flight and has NOT yet pinned the
+    // saved anchor, ignore incidental pointer input for a short grace window so
+    // iOS momentum / the navigation tap can't strand the scroll at the fallback
+    // position. Once the anchor is pinned (or the grace elapses) we honor input
+    // normally so a deliberate scroll is never fought.
+    function handleUserScrollInput(reason: string) {
+      if (
+        fixActive &&
+        !landedOnAnchor &&
+        nowMs() - restoreStartedAt < restoreCancelGraceMs
+      ) {
+        diag('cancel-suppressed', { reason });
+        return;
+      }
+      diag('cancel', { reason });
+      cancelPendingRestore(reason);
     }
 
     function handleRestoreKeyDown(event: KeyboardEvent) {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       if (!restoreCancelKeys.has(event.key)) return;
-      cancelPendingRestore();
+      diag('cancel', { reason: 'keydown' });
+      cancelPendingRestore('keydown');
     }
 
-    function cancelPendingRestore() {
+    function cancelPendingRestore(reason = 'cancel') {
+      if (restoreCancelled) return;
       restoreCancelled = true;
+      // Effect teardown on ordinary unmount/navigation is normal bookkeeping,
+      // not an interrupted restore — log it as a distinct teardown so it never
+      // counts toward the "restores cancelled" signal. Genuine cancels (touch /
+      // wheel / key / coordinator signal) stay as restore-cancelled, and the
+      // note records whether the restore had pinned the anchor before it ended.
+      diag(reason === 'cleanup' ? 'restore-teardown' : 'restore-cancelled', {
+        reason,
+        note: landedOnAnchor ? 'landed' : 'not-landed'
+      });
       markRestoreSettled();
       if (restoreFrame) window.cancelAnimationFrame(restoreFrame);
       if (settleFrame) window.cancelAnimationFrame(settleFrame);
@@ -377,7 +461,7 @@ export function useScrollAnchorRestoration({
       settleFrame = window.requestAnimationFrame(function settle() {
         if (restoreCancelled) return;
         if (scrollAnchorRestoresAreSuppressed()) {
-          cancelPendingRestore();
+          cancelPendingRestore('suppressed');
           return;
         }
         settleFrame = 0;
@@ -391,9 +475,17 @@ export function useScrollAnchorRestoration({
           return;
         }
 
-        restoreToAnchor(anchorElement, anchorToRestore.offset, scroller);
+        const computedScrollTop = restoreToAnchor(
+          anchorElement,
+          anchorToRestore.offset,
+          scroller
+        );
+        landedOnAnchor = true;
         markRestoreSettled();
         settleAttempts += 1;
+        if (settleAttempts >= 11) {
+          diag('settle-final', { computedScrollTop, attempt: settleAttempts });
+        }
         if (settleAttempts < 12 && !restoreCancelled) {
           settleFrame = window.requestAnimationFrame(settle);
         }
@@ -531,6 +623,23 @@ function saveAnchorElement(
     offset: viewportTop - rect.top,
     scrollTop: getScrollTop(scroller)
   };
+  recordAnchorSave(anchorKey, 'element');
+}
+
+function recordAnchorSave(anchorKey: string, note: string) {
+  if (!isScrollDiagnosticsLoggingEnabled()) return;
+  const saved = savedScrollAnchors[anchorKey];
+  if (!saved) return;
+  recordScrollDiagnostic({
+    type: 'save',
+    anchorKey,
+    primaryId: saved.primaryId,
+    secondaryId: saved.secondaryId,
+    savedScrollTop: saved.scrollTop,
+    savedOffset: Math.round(saved.offset),
+    scrollTop: Math.round(saved.scrollTop),
+    note
+  });
 }
 
 function saveCurrentAnchor(
@@ -547,6 +656,7 @@ function saveCurrentAnchor(
       offset: 0,
       scrollTop
     };
+    recordAnchorSave(anchorKey, 'disconnected');
     return;
   }
 
@@ -557,6 +667,7 @@ function saveCurrentAnchor(
       offset: 0,
       scrollTop
     };
+    recordAnchorSave(anchorKey, 'no-items');
     return;
   }
 
@@ -573,6 +684,7 @@ function saveCurrentAnchor(
       offset: 0,
       scrollTop
     };
+    recordAnchorSave(anchorKey, 'no-anchor-in-view');
     return;
   }
 
@@ -585,6 +697,7 @@ function saveCurrentAnchor(
     offset: viewportTop - rect.top,
     scrollTop
   };
+  recordAnchorSave(anchorKey, 'current');
 }
 
 function findCurrentAnchorElement({
@@ -690,9 +803,21 @@ function restoreToAnchor(
   const viewportTop = getViewportTop(scroller);
   const rect = anchorElement.getBoundingClientRect();
   const currentScrollTop = getScrollTop(scroller);
-  const nextScrollTop = currentScrollTop + rect.top - viewportTop + offset;
+  const nextScrollTop = Math.max(
+    0,
+    currentScrollTop + rect.top - viewportTop + offset
+  );
   suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
-  setScrollTop(scroller, Math.max(0, nextScrollTop));
+  setScrollTop(scroller, nextScrollTop);
+  return Math.round(nextScrollTop);
+}
+
+function nowMs() {
+  try {
+    return performance.now();
+  } catch {
+    return Date.now();
+  }
 }
 
 function restoreToSavedScrollTop(

@@ -16,6 +16,7 @@ const Payment = lazyWithRetry(() => import('./Payment'));
 const HomeFeedPerformance = lazyWithRetry(
   () => import('./HomeFeedPerformance')
 );
+const ScrollDiagnostics = lazyWithRetry(() => import('./ScrollDiagnostics'));
 
 export default function ManagementRoutes({ className }: { className: string }) {
   const location = useLocation();
@@ -44,6 +45,10 @@ export default function ManagementRoutes({ className }: { className: string }) {
             <Route
               path="home-feed-performance"
               element={<HomeFeedPerformance />}
+            />
+            <Route
+              path="scroll-diagnostics"
+              element={<ScrollDiagnostics />}
             />
           </Routes>
         </Suspense>
