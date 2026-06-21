@@ -686,6 +686,11 @@ export const targetPreviewStyles = `
       border-radius: 0.7rem;
       background: ${Color.whiteGray()};
     }
+    .home-feed-card__target-media-wrap:has(.home-feed-card__attachment-card) {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
     .home-feed-card__target-media img,
     .home-feed-card__target-media-wrap img {
       width: 100%;
