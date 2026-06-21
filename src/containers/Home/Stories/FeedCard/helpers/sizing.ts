@@ -46,6 +46,7 @@ export type FeedCardSize =
   | 'subject-root'
   | 'subject-root-text'
   | 'subject-secret-compact'
+  | 'subject-secret-fit'
   | 'subject-secret-preview'
   | 'subject-secret-media'
   | 'subject-tall'
@@ -110,8 +111,10 @@ export interface FeedCardFrameSizing {
   mobileCommentPreviewHeight: string;
   mobileHeight: string;
   mobileHeadingHeight: string;
+  mobileSubjectSecretPanelHeight: string;
   placeholderHeight: string;
   size: FeedCardFrameSize;
+  subjectSecretPanelHeight: string;
 }
 
 export interface FeedCardSizing {
@@ -176,6 +179,9 @@ const PANEL_HEIGHT_REM: Record<
   'subject-root': { desktop: 15.5, mobile: 15.5 },
   'subject-root-text': { desktop: 29, mobile: 27 },
   'subject-secret-compact': { desktop: 19, mobile: 20 },
+  // Content-sized at runtime via estimateSubjectSecretBodyHeight; this entry is
+  // only a type-required fallback and is not used for the rendered height.
+  'subject-secret-fit': { desktop: 16, mobile: 16 },
   'subject-secret-preview': { desktop: 22.5, mobile: 22 },
   'subject-secret-media': { desktop: 25, mobile: 24 },
   'subject-tall': { desktop: 32, mobile: 30 },
@@ -611,7 +617,17 @@ function getMainPanelSize({
       return 'subject-minimal';
     }
 
-    if (hasSubjectMediaPreview && isSparseSubjectContent(content)) {
+    // A shown secret attachment renders a tall attachment box (min-height
+    // ~12.6rem) in the copy column; the compact subject-media height (21rem)
+    // can't fit effort + title + that box, so the flex text stack shrinks and
+    // clips the title. Let those fall through to getPlainSubjectPanelSize, which
+    // sizes secret-media/tall to fit. (Hidden secrets are handled above by
+    // getLockedSubjectPanelSize and render only a short locked banner.)
+    if (
+      hasSubjectMediaPreview &&
+      isSparseSubjectContent(content) &&
+      !content?.secretAttachment
+    ) {
       return 'subject-media';
     }
 
@@ -828,10 +844,23 @@ function getFeedCardFrameSizing({
       )
     : '100%';
 
+  // No-description subject-secret panels are content-sized like the comment
+  // embed above; expose the exact panel height so the CSS var (not a fixed rem)
+  // drives it. '100%' for other sizes is an unused fallback.
+  const isSubjectSecretFitPanel = mainSize === 'subject-secret-fit';
+  const subjectSecretPanelHeight = isSubjectSecretFitPanel
+    ? toCssFixedHeight(estimateSubjectSecretBodyHeight(content, 'desktop'))
+    : '100%';
+  const mobileSubjectSecretPanelHeight = isSubjectSecretFitPanel
+    ? toCssFixedHeight(estimateSubjectSecretBodyHeight(content, 'mobile'))
+    : '100%';
+
   return {
     bodyHeight: toCssFixedHeight(desktopBodyHeight),
     className: `home-feed-card--size-${size}`,
     commentEmbedPanelHeight,
+    mobileSubjectSecretPanelHeight,
+    subjectSecretPanelHeight,
     commentPreviewHeight: toCssFixedHeight(COMMENT_PREVIEW_HEIGHT_REM.desktop),
     desktopHeight: toCssFixedHeight(desktopHeight, CARD_BORDER_PX),
     hasCommentPreview,
@@ -865,7 +894,9 @@ function getBodyHeight({
   const panelHeight =
     mainSize === 'subject-comment-embed'
       ? estimateCommentEmbedBodyHeight(content, axis, secretHidden)
-      : PANEL_HEIGHT_REM[mainSize][axis];
+      : mainSize === 'subject-secret-fit'
+        ? estimateSubjectSecretBodyHeight(content, axis)
+        : PANEL_HEIGHT_REM[mainSize][axis];
   const targetHeight = target
     ? CARD_FRAME_REM[axis].targetGap + TARGET_HEIGHT_REM[target.size][axis]
     : 0;
@@ -1327,6 +1358,10 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
     return 'subject-tall';
   }
 
+  if (descriptionLength === 0 && secretLength > 0) {
+    return 'subject-secret-fit';
+  }
+
   if (descriptionLength <= 180 && secretLength > 0 && fitsCompactDescription) {
     return getShortPublicSubjectSecretPanelSize(content);
   }
@@ -1349,6 +1384,84 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
   }
 
   return 'subject-tall';
+}
+
+// Extra breathing room (rem) added on top of the measured content height for a
+// content-sized subject-secret panel. Covers the slight under-count in the
+// shared layout model (it uses a single 0.85rem gap for every child, while the
+// rendered secret-preview layout uses a 1rem gap between the text stack and the
+// secret box) plus normal rounding, so the secret box never clips.
+const SUBJECT_SECRET_FIT_BUFFER_REM = 0.85;
+
+// Rendered `.home-feed-card__subject-title` metrics (mainPreviewStyles): font
+// 2.675rem, line-height 1.14, padding-bottom 0.08em. The shared layout model's
+// titleLineHeight is derived from the base h3 (2rem / 1.28) and under-counts the
+// real title by ~0.5rem per line, so the content-sized fit panel measures the
+// title from these rendered values directly — otherwise a two-line title can be
+// under-budgeted and clip under the panel's overflow:hidden.
+const RENDERED_SUBJECT_TITLE_LINE_HEIGHT_REM = 2.675 * 1.14;
+const RENDERED_SUBJECT_TITLE_PADDING_REM = 2.675 * 0.08;
+
+function getRenderedSubjectTitleHeight({
+  axis,
+  content
+}: {
+  axis: FeedCardLayoutAxis;
+  content: any;
+}) {
+  const titleLines = estimatePreviewLineCount({
+    charsPerLine: SUBJECT_PREVIEW_LAYOUT_REM.titleCharsPerLine[axis],
+    maxLines: SUBJECT_PREVIEW_LAYOUT_REM.titleMaxLines,
+    value: content?.title
+  });
+
+  return (
+    titleLines * RENDERED_SUBJECT_TITLE_LINE_HEIGHT_REM +
+    RENDERED_SUBJECT_TITLE_PADDING_REM
+  );
+}
+
+// Plain (non-root) subject with a secret answer but no description text or
+// embed. Such cards render only effort + title + secret, so rather than snap to
+// a fixed tier — which reserves description-sized height (empty gap below the
+// secret box) or clips a 2-line title / multi-line secret under the panel's
+// overflow:hidden — we content-size the panel. This mirrors the
+// subject-comment-embed pattern: compute the exact body height per axis from the
+// shared layout model and expose it as a CSS var. Plain subjects render
+// full-size (never the denser `--root-compact` layout), so the title estimate
+// is forced onto the plain layout model via size 'standard'. Only reached after
+// the media/secret-attachment guard, so the secret is always text-only here.
+function estimateSubjectSecretBodyHeight(
+  content: any,
+  axis: FeedCardLayoutAxis
+) {
+  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const hasEffort = Number(content?.rewardLevel || 0) > 0;
+  const hasTitle = Boolean(content?.title);
+  const hasSecretAnswerText = getPlainTextValueLength(content?.secretAnswer) > 0;
+  const secretMaxLines = getSubjectSecretAnswerMaxLines({
+    axis,
+    content,
+    hasSecretAnswerText
+  });
+  // Rendered children in the with-secret-preview column: effort, title, secret.
+  const renderedChildrenCount = [hasEffort, hasTitle, true].filter(
+    Boolean
+  ).length;
+  const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
+
+  return (
+    layout.previewPaddingY +
+    gapHeight +
+    (hasEffort ? layout.effortHeight : 0) +
+    (hasTitle ? getRenderedSubjectTitleHeight({ axis, content }) : 0) +
+    getSubjectSecretAnswerHeight({
+      hasSecretAnswerText,
+      hasSecretAttachment: false,
+      secretMaxLines
+    }) +
+    SUBJECT_SECRET_FIT_BUFFER_REM
+  );
 }
 
 function getShortPublicSubjectSecretPanelSize(content: any): FeedCardSize {

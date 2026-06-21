@@ -254,7 +254,11 @@ export default function HomeFeedCard({
     '--home-feed-card-mobile-comment-preview-height':
       sizing.card.mobileCommentPreviewHeight,
     '--home-feed-card-mobile-heading-height': sizing.card.mobileHeadingHeight,
-    '--home-feed-card-mobile-height': sizing.card.mobileHeight
+    '--home-feed-card-mobile-height': sizing.card.mobileHeight,
+    '--home-feed-card-subject-secret-panel-height':
+      sizing.card.subjectSecretPanelHeight,
+    '--home-feed-card-subject-secret-mobile-panel-height':
+      sizing.card.mobileSubjectSecretPanelHeight
   } as React.CSSProperties & Record<string, string>;
   const placeholderStyle: React.CSSProperties = placeholderHeight
     ? { ...sizingStyle, height: placeholderHeight }

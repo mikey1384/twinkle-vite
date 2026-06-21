@@ -83,6 +83,18 @@ export const mainPreviewStyles = `
     flex: 0 0 auto;
     align-self: stretch;
   }
+  /* The content-sized no-description secret panel (subject-secret-fit) leaves a
+     small residual slack (the mobile root-font/px-floor mismatch can't tighten
+     it further without clipping text-heavy cards). Center the secret box in
+     that leftover space instead of dumping it all below the box, so the slack
+     reads as balanced padding. The auto margins collapse to 0 when there is no
+     free space, so description-bearing secret cards are unaffected. */
+  .home-feed-card__panel-preview--size-subject-secret-fit
+    .home-feed-card__subject-copy--with-secret-preview
+    .home-feed-card__subject-secret-answer {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
   .home-feed-card__subject-copy--secret-only {
     display: flex;
     justify-content: center;

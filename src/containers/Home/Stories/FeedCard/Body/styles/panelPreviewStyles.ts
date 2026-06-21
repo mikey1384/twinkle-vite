@@ -169,6 +169,9 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-subject-secret-compact {
     height: max(19rem, 190px);
   }
+  .home-feed-card__panel-preview--size-subject-secret-fit {
+    height: var(--home-feed-card-subject-secret-panel-height, 100%);
+  }
   .home-feed-card__panel-preview--size-subject-secret-preview {
     height: max(22.5rem, 225px);
   }
