@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import playButtonImg from '~/assets/play-button-image.png';
+import PlayButton, { PLAYER_PLAY_BUTTON_SIZE } from '~/components/PlayButton';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useLazyLoadForImage } from '~/helpers/hooks';
@@ -123,15 +123,7 @@ export default function MediaPlayer({
                 {isPending ? (
                   <div>Loading...</div>
                 ) : (
-                  <img
-                    loading="lazy"
-                    style={{
-                      width: '45px',
-                      height: '45px'
-                    }}
-                    src={playButtonImg}
-                    alt="Play"
-                  />
+                  <PlayButton size={PLAYER_PLAY_BUTTON_SIZE} />
                 )}
               </div>
             ) : (
@@ -139,6 +131,7 @@ export default function MediaPlayer({
                 ref={PlayerRef}
                 initialTime={currentTime}
                 fileType={fileType as 'audio' | 'video'}
+                customControls={!deviceIsMobile}
                 onPlay={onPlay}
                 onPause={onPause}
                 onProgress={handleVideoProgress}

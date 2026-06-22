@@ -6,8 +6,10 @@ import VideoPlayer from '~/components/VideoPlayer';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { mobileMaxWidth } from '~/constants/css';
+import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 
+const deviceIsMobile = isMobile(navigator);
 const closelLabel = 'Close';
 
 export default function VideoModal({
@@ -102,6 +104,7 @@ export default function VideoModal({
                 width="100%"
                 height="100%"
                 fileType="video"
+                customControls={!deviceIsMobile}
                 src={src}
                 playing={playing}
                 initialTime={currentTime}

@@ -3,7 +3,7 @@ import FileInfo from './FileInfo';
 import VideoPlayer from '~/components/VideoPlayer';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ImageModal from '~/components/Modals/ImageModal';
-import playButtonImg from '~/assets/play-button-image.png';
+import PlayButton, { PLAYER_PLAY_BUTTON_SIZE } from '~/components/PlayButton';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useLazyLoadForImage } from '~/helpers/hooks';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
@@ -125,15 +125,7 @@ export default function FileViewer({
               }}
               onClick={handlePlay}
             >
-              <img
-                style={{
-                  width: '45px',
-                  height: '45px'
-                }}
-                loading="lazy"
-                src={playButtonImg}
-                alt="Play"
-              />
+              <PlayButton size={PLAYER_PLAY_BUTTON_SIZE} />
             </div>
           ) : (
             <VideoPlayer
@@ -152,6 +144,7 @@ export default function FileViewer({
               width="100%"
               height={fileType === 'video' ? '100%' : '5rem'}
               fileType={fileType as 'video' | 'audio'}
+              customControls={!deviceIsMobile}
               src={`${cloudFrontURL}${src}`}
               playsInline
               playing={playing}

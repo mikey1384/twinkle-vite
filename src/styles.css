@@ -72,6 +72,14 @@ video {
   outline: none !important;
 }
 
+/* Video theater (cinema) mode hides the app-shell header so the stage can fill
+   the full viewport. The header sits in a higher stacking context than the
+   player, so hiding it is how we let the (in-place, non-remounted) player cover
+   the whole tab without a portal. */
+body.cinema-mode-active [data-app-shell-header='true'] {
+  visibility: hidden !important;
+}
+
 @media (any-hover: hover) {
   a:hover {
     text-decoration: underline;

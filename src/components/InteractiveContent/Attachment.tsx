@@ -6,8 +6,10 @@ import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useAppContext, useInteractiveContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import { css } from '@emotion/css';
-import { returnImageFileFromUrl } from '~/helpers';
+import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import VideoPlayer from '~/components/VideoPlayer';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function Attachment({
   small,
@@ -107,6 +109,7 @@ export default function Attachment({
               }}
               src={fetchedVideoCodeFromURL(linkUrl)}
               fileType="youtube"
+              customControls={!deviceIsMobile}
               onPlay={() => {}}
               onPause={() => {}}
               onProgress={() => {}}

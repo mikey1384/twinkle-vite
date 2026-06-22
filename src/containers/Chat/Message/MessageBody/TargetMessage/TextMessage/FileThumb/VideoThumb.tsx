@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import LocalContext from '../../../../../Context';
-import playButtonImg from '~/assets/play-button-image.png';
+import PlayButton from '~/components/PlayButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { returnImageFileFromUrl } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -57,16 +57,13 @@ export default function VideoThumb({
             onThumbnailLoadFail={() => setThumbnailLoadFail(true)}
           />
         )}
-        <img
-          loading="lazy"
+        <PlayButton
+          size="3rem"
           style={{
             top: 'CALC(50% - 1.5rem)',
             left: 'CALC(50% - 1.5rem)',
-            position: 'absolute',
-            width: '3rem',
-            height: '3rem'
+            position: 'absolute'
           }}
-          src={playButtonImg}
         />
       </div>
     </ErrorBoundary>

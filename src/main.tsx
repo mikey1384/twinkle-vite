@@ -88,6 +88,8 @@ import { faExclamationTriangle } from '@fortawesome/pro-solid-svg-icons/faExclam
 import { faEye } from '@fortawesome/pro-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/pro-solid-svg-icons/faEyeSlash';
 import { faExchangeAlt } from '@fortawesome/pro-solid-svg-icons/faExchangeAlt';
+import { faExpand } from '@fortawesome/pro-solid-svg-icons/faExpand';
+import { faCompress } from '@fortawesome/pro-solid-svg-icons/faCompress';
 import { faExternalLinkAlt } from '@fortawesome/pro-solid-svg-icons/faExternalLinkAlt';
 import { faEyeDropper } from '@fortawesome/pro-solid-svg-icons/faEyeDropper';
 import { faFilm } from '@fortawesome/pro-solid-svg-icons/faFilm';
@@ -145,6 +147,7 @@ import { faPencilAlt } from '@fortawesome/pro-solid-svg-icons/faPencilAlt';
 import { faPhoneSlash } from '@fortawesome/pro-solid-svg-icons/faPhoneSlash';
 import { faPhoneVolume } from '@fortawesome/pro-solid-svg-icons/faPhoneVolume';
 import { faPlay } from '@fortawesome/pro-solid-svg-icons/faPlay';
+import { faPause } from '@fortawesome/pro-solid-svg-icons/faPause';
 import { faPlus } from '@fortawesome/pro-solid-svg-icons/faPlus';
 import { faPortalEnter } from '@fortawesome/pro-solid-svg-icons/faPortalEnter';
 import { faPuzzlePiece } from '@fortawesome/pro-solid-svg-icons/faPuzzlePiece';
@@ -324,6 +327,8 @@ library.add(
   faFileImage,
   faFillDrip,
   faFilm,
+  faExpand,
+  faCompress,
   faFire,
   faFlag,
   faFolderOpen,
@@ -368,6 +373,7 @@ library.add(
   faPhoneSlash,
   faPhoneVolume,
   faPlay,
+  faPause,
   faPlus,
   faPortalEnter,
   faPuzzlePiece,

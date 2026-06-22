@@ -183,6 +183,7 @@ function VideoAttachment({
                 height="100%"
                 src={fetchedVideoCodeFromURL(extractedUrl)}
                 fileType="youtube"
+                customControls={!deviceIsMobile}
                 onPlay={handlePlay}
                 onProgress={(currentTime) => {
                   timeAtRef.current = currentTime;

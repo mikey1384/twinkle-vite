@@ -5,8 +5,11 @@ import Button from '~/components/Button';
 import VideoPlayer from '~/components/VideoPlayer';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { isMobile } from '~/helpers';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+
+const deviceIsMobile = isMobile(navigator);
 
 const closelLabel = 'Close';
 
@@ -84,6 +87,7 @@ export default function YTVideoModal({
                 width="100%"
                 height="100%"
                 fileType="youtube"
+                customControls={!deviceIsMobile}
                 src={videoId || ''}
                 playing={playing}
                 initialTime={currentTime}

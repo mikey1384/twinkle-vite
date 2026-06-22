@@ -10,10 +10,11 @@ import VideoPlayer from '~/components/VideoPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPBar from './XPBar';
 import Link from '~/components/Link';
-import playButtonImg from '~/assets/play-button-image.png';
+import PlayButton, { PLAYER_PLAY_BUTTON_SIZE } from '~/components/PlayButton';
 import { videoRewardHash } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { useCinemaMode, cinemaBoxClass } from '~/components/CinemaMode';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
@@ -192,6 +193,16 @@ function XPVideoPlayer({
   const [currentInitialTime, setCurrentInitialTime] = useState<number | null>(
     null
   );
+
+  const { isCinema, toggleCinema, exitCinema } = useCinemaMode();
+  // Cinema is desktop-only and incompatible with the floating mini-player.
+  const canCinema =
+    !minimized && !deviceIsMobile && !isLink && playerActivated && !!videoCode;
+  useEffect(() => {
+    if (minimized && isCinema) {
+      exitCinema();
+    }
+  }, [minimized, isCinema, exitCinema]);
 
   const requiredDurationForCoin = 60;
   const timerRef = useRef<any>(null);
@@ -374,11 +385,15 @@ function XPVideoPlayer({
       {userId ? (
         <>
           <div
-            className={`${css`
-              user-select: none;
-              position: relative;
-              padding-top: 56.25%;
-            `}${minimized ? ' desktop' : ''}`}
+            className={cx(
+              css`
+                user-select: none;
+                position: relative;
+                padding-top: 56.25%;
+              `,
+              minimized && 'desktop',
+              isCinema && cinemaBoxClass
+            )}
             style={{
               display: minimized && !started ? 'none' : '',
               width: started && minimized ? '39rem' : '100%',
@@ -391,7 +406,7 @@ function XPVideoPlayer({
             }}
           >
             {isLink && (
-              <Link to={`/videos/${videoId}`}>
+              <Link aria-label="Watch video" to={`/videos/${videoId}`}>
                 <div
                   className={css`
                     position: absolute;
@@ -408,12 +423,7 @@ function XPVideoPlayer({
                     background-size: 100% auto;
                   `}
                 >
-                  <img
-                    loading="lazy"
-                    style={{ width: '45px', height: '45px' }}
-                    src={playButtonImg}
-                    alt="play button"
-                  />
+                  <PlayButton size="45px" />
                 </div>
               </Link>
             )}
@@ -421,6 +431,7 @@ function XPVideoPlayer({
               <div
                 role="button"
                 tabIndex={0}
+                aria-label="Play video"
                 onClick={() => {
                   setPlayerActivated(true);
                   setShouldAutoPlay(true);
@@ -445,21 +456,9 @@ function XPVideoPlayer({
                     no-repeat center;
                   background-size: cover;
                   cursor: pointer;
-                  &:hover img {
-                    transform: scale(1.1);
-                  }
                 `}
               >
-                <img
-                  loading="lazy"
-                  style={{
-                    width: '68px',
-                    height: '68px',
-                    transition: 'transform 0.2s ease'
-                  }}
-                  src={playButtonImg}
-                  alt="Click to play video"
-                />
+                <PlayButton size={PLAYER_PLAY_BUTTON_SIZE} />
               </div>
             )}
             {!isLink &&
@@ -486,6 +485,10 @@ function XPVideoPlayer({
                   autoPlay={shouldAutoPlay}
                   playing={playing && !isEditing}
                   initialTime={currentInitialTime}
+                  customControls={!deviceIsMobile}
+                  showCinema={canCinema}
+                  isCinema={isCinema}
+                  onToggleCinema={toggleCinema}
                   onPlay={() => {
                     onPlay?.();
                     handleVideoPlay({ userId: userIdRef.current });

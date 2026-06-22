@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import playButtonImg from '~/assets/play-button-image.png';
+import PlayButton from '~/components/PlayButton';
 import { Color } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
@@ -58,17 +58,7 @@ export default function Thumbnail({
             cursor: 'pointer'
           }}
         >
-          {playButtonShown && isVideo && (
-            <img
-              loading="lazy"
-              style={{
-                width: '35px',
-                height: '35px'
-              }}
-              src={playButtonImg}
-              alt="Play"
-            />
-          )}
+          {playButtonShown && isVideo && <PlayButton size="35px" />}
         </div>
       ) : (
         <>

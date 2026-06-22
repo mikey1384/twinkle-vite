@@ -1,14 +1,15 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import playButtonImg from '~/assets/play-button-image.png';
+import PlayButton, { PLAYER_PLAY_BUTTON_SIZE } from '~/components/PlayButton';
 import VideoPlayer from '~/components/VideoPlayer';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { useLazyLoadForImage } from '~/helpers/hooks';
 import { currentTimes } from '~/constants/state';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { useCinemaMode, cinemaBoxClass } from '~/components/CinemaMode';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -76,6 +77,11 @@ function MediaPlayer({
     return thumbUrl;
   }, [isNotLight, thumbUrl]);
 
+  const { isCinema, toggleCinema } = useCinemaMode();
+  const showPlayer = !(displayedThumb && !hasStartedPlaying);
+  const canCinema =
+    fileType === 'video' && !isThumb && !deviceIsMobile && showPlayer;
+
   return (
     <div
       className={css`
@@ -106,6 +112,7 @@ function MediaPlayer({
       <ErrorBoundary componentPath="ContentFileViewer/MediaPlayer/VideoPlayer">
         {!isThumb && (
           <div
+            className={cx(isCinema && cinemaBoxClass)}
             style={{
               position: 'relative',
               paddingTop:
@@ -138,15 +145,7 @@ function MediaPlayer({
                 }}
                 onClick={handlePlay}
               >
-                <img
-                  loading="lazy"
-                  style={{
-                    width: '45px',
-                    height: '45px'
-                  }}
-                  src={playButtonImg}
-                  alt="Play"
-                />
+                <PlayButton size={PLAYER_PLAY_BUTTON_SIZE} />
               </div>
             ) : (
               <VideoPlayer
@@ -160,6 +159,10 @@ function MediaPlayer({
                 width="100%"
                 height={fileType === 'video' ? videoHeight || '100%' : '5rem'}
                 playing={playing}
+                customControls={!deviceIsMobile}
+                showCinema={canCinema}
+                isCinema={isCinema}
+                onToggleCinema={toggleCinema}
                 style={{
                   position: 'absolute',
                   top: 0,

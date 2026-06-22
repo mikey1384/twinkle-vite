@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import { isMobile } from '~/helpers';
 import { mobileMaxWidth } from '~/constants/css';
 import YoutubeIcon from '~/assets/YoutubeIcon.svg';
 import VideoPlayer from '~/components/VideoPlayer';
+import { useCinemaMode, cinemaBoxClass } from '~/components/CinemaMode';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function YouTubeVideo({
   contentType,
@@ -35,6 +39,8 @@ export default function YouTubeVideo({
   });
   const [isStarted, setIsStarted] = useState(started);
   const [playing, setPlaying] = useState(false);
+  const { isCinema, toggleCinema } = useCinemaMode();
+  const canCinema = isStarted && !isPreview && !deviceIsMobile;
 
   const thumbnailUrl = `https://img.youtube.com/vi/${videoCode}/0.jpg`;
 
@@ -71,12 +77,15 @@ export default function YouTubeVideo({
     >
       {isStarted ? (
         <div
-          className={css`
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%;
-          `}
+          className={cx(
+            css`
+              position: relative;
+              width: 100%;
+              height: 0;
+              padding-bottom: 56.25%;
+            `,
+            isCinema && cinemaBoxClass
+          )}
         >
           <VideoPlayer
             ref={PlayerRef}
@@ -91,6 +100,10 @@ export default function YouTubeVideo({
             onPause={() => setPlaying(false)}
             playing={playing}
             initialTime={currentTime}
+            customControls={!deviceIsMobile && !isPreview}
+            showCinema={canCinema}
+            isCinema={isCinema}
+            onToggleCinema={toggleCinema}
             style={{
               position: 'absolute',
               top: 0,
