@@ -893,6 +893,12 @@ const compactCommentEmbedPreviewClass = css`
   &.compact-comment-embed--target-root > .compact-comment-embed__copy {
     grid-column: 2;
     gap: 0.48rem;
+    /* Sets the em base inherited by the RichText root, which owns the
+       block-preview max-height clamp. Must match the rendered <p> font-size
+       below so multi-paragraph previews clamp to exactly maxLines (with
+       lineHeight=1.22), not fewer. RichText adds no literal .rich-text class,
+       so the root can only be reached via inheritance from here. */
+    font-size: max(1.78rem, 17.8px);
   }
   &.compact-comment-embed--target-root.compact-comment-embed--has-media
     > .compact-comment-embed__copy,
@@ -919,11 +925,6 @@ const compactCommentEmbedPreviewClass = css`
     color: var(--home-feed-target-accent, ${Color.logoBlue()});
     font-size: 1.62rem;
     font-weight: 650;
-  }
-  &.compact-comment-embed--target-root > .compact-comment-embed__copy .rich-text {
-    /* em base for RichText's block-preview max-height clamp must match the
-       rendered <p> font-size below, or the clamp slices the last line. */
-    font-size: max(1.78rem, 17.8px);
   }
   &.compact-comment-embed--target-root > .compact-comment-embed__copy p {
     color: ${Color.darkerGray()};
@@ -1088,9 +1089,7 @@ const compactCommentEmbedPreviewClass = css`
       width: 4.2rem;
       height: 4.2rem;
     }
-    &.compact-comment-embed--target-root
-      > .compact-comment-embed__copy
-      .rich-text {
+    &.compact-comment-embed--target-root > .compact-comment-embed__copy {
       font-size: max(1.42rem, 14.2px);
     }
     &.compact-comment-embed--target-root > .compact-comment-embed__copy p {
