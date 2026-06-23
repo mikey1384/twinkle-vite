@@ -134,6 +134,10 @@ interface FeedCardSizingParams {
   rootObj?: any;
   targetObj?: any;
   userId?: number | string;
+  // Showcase mode (e.g. profile Notable Activities) renders only the Body —
+  // no uploader heading, no actions footer, no comment preview — so the frame
+  // height must exclude those reserved regions.
+  showcase?: boolean;
 }
 
 const KNOWN_CONTENT_TYPES = new Set([
@@ -305,7 +309,8 @@ export function getFeedCardSizing({
   content,
   rootObj,
   targetObj,
-  userId
+  userId,
+  showcase = false
 }: FeedCardSizingParams): FeedCardSizing {
   const normalizedRootType = normalizeRootType(content?.rootType);
   const resolvedRootObj = hasResolvedRootObj(rootObj)
@@ -323,14 +328,15 @@ export function getFeedCardSizing({
   const kind = getPreviewKind(content);
   const flags = {
     hasAttachment: hasAttachment(content),
-    hasCommentPreview: hasCommentPreview(content),
+    hasCommentPreview: showcase ? false : hasCommentPreview(content),
     hasRichTextEmbed: hasRichTextEmbed(content),
     secretHidden
   };
   const size = getMainPanelSize({
     content,
     flags,
-    kind
+    kind,
+    showcase
   });
   const target = getTargetPanelSizing({
     content,
@@ -354,6 +360,7 @@ export function getFeedCardSizing({
       hasCommentPreview: flags.hasCommentPreview,
       mainSize: size,
       secretHidden: flags.secretHidden,
+      showcase,
       target
     }),
     flags,
@@ -538,11 +545,13 @@ function hasResolvedTargetObj(targetObj: any) {
 function getMainPanelSize({
   content,
   flags,
-  kind
+  kind,
+  showcase = false
 }: {
   content: any;
   flags: FeedCardSizing['flags'];
   kind: FeedCardPreviewKind;
+  showcase?: boolean;
 }): FeedCardSize {
   if (flags.secretHidden && !shouldShowPublicSubjectPreview(content)) {
     return 'secret';
@@ -553,6 +562,7 @@ function getMainPanelSize({
   }
 
   if (
+    !showcase &&
     content?.contentType === 'comment' &&
     !String(content?.content || '').trim() &&
     hasAttachment(content)
@@ -647,6 +657,7 @@ function getMainPanelSize({
   }
 
   if (
+    !showcase &&
     content?.contentType === 'comment' &&
     hasPreviewableMediaAttachment(content)
   ) {
@@ -776,12 +787,14 @@ function getFeedCardFrameSizing({
   hasCommentPreview,
   mainSize,
   secretHidden,
+  showcase = false,
   target
 }: {
   content: any;
   hasCommentPreview: boolean;
   mainSize: FeedCardSize;
   secretHidden: boolean;
+  showcase?: boolean;
   target: FeedCardTargetSizing | null;
 }): FeedCardFrameSizing {
   const desktopBodyHeight = getBodyHeight({
@@ -808,21 +821,29 @@ function getFeedCardFrameSizing({
     : 0;
   const desktopFrame = CARD_FRAME_REM.desktop;
   const mobileFrame = CARD_FRAME_REM.mobile;
+  // Showcase cards render the Body only — drop the heading + actions regions
+  // (and the gaps that flank them) so the frame hugs the preview.
+  const desktopChromeHeight = showcase
+    ? 0
+    : desktopFrame.heading +
+      desktopFrame.gapAfterHeading +
+      desktopFrame.gapAfterBody +
+      desktopFrame.actions;
+  const mobileChromeHeight = showcase
+    ? 0
+    : mobileFrame.heading +
+      mobileFrame.gapAfterHeading +
+      mobileFrame.gapAfterBody +
+      mobileFrame.actions;
   const desktopHeight =
     desktopFrame.padding +
-    desktopFrame.heading +
-    desktopFrame.gapAfterHeading +
+    desktopChromeHeight +
     desktopBodyHeight +
-    desktopFrame.gapAfterBody +
-    desktopFrame.actions +
     desktopCommentPreviewFrameHeight;
   const mobileHeight =
     mobileFrame.padding +
-    mobileFrame.heading +
-    mobileFrame.gapAfterHeading +
+    mobileChromeHeight +
     mobileBodyHeight +
-    mobileFrame.gapAfterBody +
-    mobileFrame.actions +
     mobileCommentPreviewFrameHeight;
 
   const size = getFeedCardFrameSize({ mainSize, target });

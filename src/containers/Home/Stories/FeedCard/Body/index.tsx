@@ -113,6 +113,7 @@ export default function Body({
   loading,
   onNavigate,
   rootObj,
+  showcase = false,
   sizing,
   theme,
   userId
@@ -121,6 +122,9 @@ export default function Body({
   loading: boolean;
   onNavigate: HomeFeedNestedNavigate;
   rootObj: any;
+  // Showcase (profile Notable Activities): always render media attachments as a
+  // right-side column thumb (never the full-width row) so images stay compact.
+  showcase?: boolean;
   sizing?: FeedCardSizing;
   theme?: string;
   userId: number;
@@ -508,6 +512,9 @@ export default function Body({
       : '';
     const attachmentIsPreviewMedia =
       attachmentFileType === 'image' || attachmentFileType === 'video';
+    // In showcase, media attachments use the same right-column thumb layout as
+    // file attachments instead of the full-width media row.
+    const useMediaRowLayout = attachmentIsPreviewMedia && !showcase;
     const attachment = showAttachment
       ? renderAttachmentPreview(
           attachmentFileType === 'image' || attachmentFileType === 'video'
@@ -532,11 +539,11 @@ export default function Body({
       });
     }
 
-    if (attachment && !hasText) {
+    if (attachment && !hasText && !(showcase && attachmentIsPreviewMedia)) {
       return (
         <div
           className={`home-feed-card__attachment-only-preview${
-            attachmentIsPreviewMedia
+            useMediaRowLayout
               ? ' home-feed-card__attachment-only-preview--media'
               : ''
           }`}
@@ -560,7 +567,7 @@ export default function Body({
         className={`home-feed-card__text-preview${
           attachment ? ' home-feed-card__text-preview--with-attachment' : ''
         }${
-          attachmentIsPreviewMedia
+          useMediaRowLayout
             ? ' home-feed-card__text-preview--with-media-attachment'
             : ''
         }`}

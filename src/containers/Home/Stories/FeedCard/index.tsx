@@ -56,6 +56,7 @@ import {
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { normalizeViewCount } from '~/helpers/viewCount';
 
+const SHOWCASE_CARD_CLASS = 'home-feed-card--showcase';
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
 const HOME_FEED_CARD_LAYOUT_VERSION = 'root-user-target-preview-v2';
 const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
@@ -69,6 +70,7 @@ export default function HomeFeedCard({
   feedAnchorId,
   homeFeedAnchorKey,
   index,
+  showcase = false,
   totalCount,
   theme
 }: {
@@ -76,6 +78,9 @@ export default function HomeFeedCard({
   feedAnchorId?: string;
   homeFeedAnchorKey?: string;
   index: number;
+  // Showcase mode (profile Notable Activities) hides the uploader heading,
+  // actions footer, and comment preview — leaving a read-only rich preview.
+  showcase?: boolean;
   totalCount: number;
   theme?: string;
 }) {
@@ -193,7 +198,9 @@ export default function HomeFeedCard({
     userId
   });
   const hasPreviewCommentSlot =
-    !secretHiddenForPreview && renderablePreviewComments.length > 0;
+    !showcase &&
+    !secretHiddenForPreview &&
+    renderablePreviewComments.length > 0;
   const baseFeedContent = {
     ...previewContentForSecretState,
     __homeFeedHasCommentPreview: hasPreviewCommentSlot
@@ -215,9 +222,12 @@ export default function HomeFeedCard({
   const calculatedSizing = getFeedCardSizing({
     content: appliedContent,
     rootObj,
+    showcase,
     userId
   });
-  const sizingKey = `${HOME_FEED_CARD_LAYOUT_VERSION}:${contentType}:${contentId}:${feedIdentity}:${
+  const sizingKey = `${HOME_FEED_CARD_LAYOUT_VERSION}:${
+    showcase ? 'showcase' : 'feed'
+  }:${contentType}:${contentId}:${feedIdentity}:${
     userId || 0
   }:${hasPreviewCommentSlot ? 'comment-preview' : 'no-comment-preview'}:${
     calculatedSizing.flags.secretHidden ? 'secret-hidden' : 'secret-open'
@@ -277,7 +287,12 @@ export default function HomeFeedCard({
       placeholderHeightRef.current = nextHeight;
     }
   });
-  const contentShown = useMemo(() => inView || isVisible, [inView, isVisible]);
+  // Showcase lists are short and not virtualized, so skip the lazy placeholder
+  // (its fixed height would mismatch the content-height showcase card).
+  const contentShown = useMemo(
+    () => showcase || inView || isVisible,
+    [inView, isVisible, showcase]
+  );
   const shouldHydrate =
     contentId > 0 && Boolean(contentType) && !contentState.loaded;
   const hydrationRequestKey = getHomeFeedContentHydrationKey(
@@ -287,6 +302,7 @@ export default function HomeFeedCard({
   );
   const commentsCount = getHomeFeedPreviewCommentCount(appliedContent);
   const shouldLoadPreviewComment =
+    !showcase &&
     contentShown &&
     !secretHiddenForPreview &&
     contentId > 0 &&
@@ -609,12 +625,16 @@ export default function HomeFeedCard({
         {contentShown ? (
           <div
             ref={PanelRef}
-            className={`${visiblePanelClass} ${tabletMediaAttachmentClassName}`}
+            className={`${visiblePanelClass} ${tabletMediaAttachmentClassName} ${
+              showcase ? SHOWCASE_CARD_CLASS : ''
+            }`}
             style={sizingStyle}
           >
             <article
               {...popupDismissNavigationFeedCardTargetProps}
-              className={`${cardClass} ${sizing.card.className} ${tabletMediaAttachmentClassName}`}
+              className={`${cardClass} ${sizing.card.className} ${tabletMediaAttachmentClassName} ${
+                showcase ? SHOWCASE_CARD_CLASS : ''
+              }`}
               style={sizingStyle}
               tabIndex={0}
               onClick={handleCardClick}
@@ -624,7 +644,7 @@ export default function HomeFeedCard({
               onPointerMove={handleCardPointerMove}
               onPointerUp={handleCardPointerUp}
             >
-              {appliedContent.loaded ? (
+              {showcase ? null : appliedContent.loaded ? (
                 <Heading
                   compactFeed
                   feedActivityType={feed?.feedActivityType}
@@ -649,37 +669,40 @@ export default function HomeFeedCard({
                 loading={!appliedContent.loaded}
                 onNavigate={handleNestedNavigate}
                 rootObj={rootObj}
+                showcase={showcase}
                 sizing={sizing}
                 theme={appliedTheme}
                 userId={userId}
               />
-              <Actions
-                commentDisabled={commentDisabled}
-                commentLabel={commentLabel}
-                commentsCount={commentsCount}
-                likedByUser={likedByUser}
-                likeDisabled={likeDisabled}
-                likeLoading={likeLoading}
-                likesCount={likesCount}
-                onComment={handleCommentActionClick}
-                onLike={handleLikeActionClick}
-                onOpen={handleOpenButtonClick}
-                openProminent={primaryTextTruncated}
-                onRecommend={handleRecommendActionClick}
-                onReward={handleRewardActionClick}
-                recommendedByUser={recommendedByUser}
-                recommendDisabled={recommendDisabled}
-                recommendShown={recommendShown}
-                recommendationsCount={recommendationsCount}
-                rewardedByUser={rewardedByUser}
-                rewardDisableReason={rewardDisableReason}
-                rewardDisabled={rewardDisabled}
-                rewardShown={rewardShown}
-                rewardsCount={rewardsCount}
-                signInRequired={signInRequired}
-                viewCount={viewCount}
-              />
-              {appliedContent.loaded && sizing.card.hasCommentPreview ? (
+              {showcase ? null : (
+                <Actions
+                  commentDisabled={commentDisabled}
+                  commentLabel={commentLabel}
+                  commentsCount={commentsCount}
+                  likedByUser={likedByUser}
+                  likeDisabled={likeDisabled}
+                  likeLoading={likeLoading}
+                  likesCount={likesCount}
+                  onComment={handleCommentActionClick}
+                  onLike={handleLikeActionClick}
+                  onOpen={handleOpenButtonClick}
+                  openProminent={primaryTextTruncated}
+                  onRecommend={handleRecommendActionClick}
+                  onReward={handleRewardActionClick}
+                  recommendedByUser={recommendedByUser}
+                  recommendDisabled={recommendDisabled}
+                  recommendShown={recommendShown}
+                  recommendationsCount={recommendationsCount}
+                  rewardedByUser={rewardedByUser}
+                  rewardDisableReason={rewardDisableReason}
+                  rewardDisabled={rewardDisabled}
+                  rewardShown={rewardShown}
+                  rewardsCount={rewardsCount}
+                  signInRequired={signInRequired}
+                  viewCount={viewCount}
+                />
+              )}
+              {!showcase && appliedContent.loaded && sizing.card.hasCommentPreview ? (
                 <HomeFeedCommentPreview
                   comments={appliedContent.comments}
                   contentType={contentType}
@@ -1537,6 +1560,9 @@ const visiblePanelClass = css`
   box-sizing: border-box;
   width: 100%;
   height: var(--home-feed-card-height);
+  &.${SHOWCASE_CARD_CLASS} {
+    height: auto;
+  }
   @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
     &.home-feed-card--tablet-media-attachment {
       height: var(--home-feed-card-mobile-height);
@@ -1577,6 +1603,33 @@ const cardClass = css`
   &:focus-visible {
     outline: 2px solid ${Color.logoBlue(0.45)};
     outline-offset: 2px;
+  }
+  /* Showcase (profile Notable Activities): drop the fixed card/body/panel
+     heights so the card hugs its content instead of reserving feed-sized
+     space. Scoped to the modifier class — the home feed never matches it. */
+  &.${SHOWCASE_CARD_CLASS} {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    contain-intrinsic-size: auto;
+  }
+  &.${SHOWCASE_CARD_CLASS} .home-feed-card__body {
+    flex: 0 0 auto;
+    height: auto;
+  }
+  /* Text panels hug their content (no slack). Media/embed panels (images, rich
+     internal embeds) can be intrinsically tall and used to be bounded by the
+     fixed feed height — cap them here so a tall embed can't inflate the card,
+     showing the top (clipped) like the feed does. */
+  &.${SHOWCASE_CARD_CLASS} .home-feed-card__panel-preview {
+    height: auto;
+    max-height: 24rem;
+  }
+  &.${SHOWCASE_CARD_CLASS} .home-feed-card__rich-embed-preview {
+    align-items: flex-start;
+  }
+  &.${SHOWCASE_CARD_CLASS} .home-feed-card__rich-embed-image {
+    max-height: 22rem;
   }
   @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
     &.home-feed-card--tablet-media-attachment {
