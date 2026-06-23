@@ -5,7 +5,6 @@ import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
-import ViewCount from '~/components/ViewCount';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
@@ -23,6 +22,8 @@ import {
   getBuildDisplayTitle,
   getBuildRelationshipLabels
 } from '~/helpers/buildRelationshipHelpers';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { normalizeViewCount } from '~/helpers/viewCount';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
@@ -223,6 +224,70 @@ const bylineClass = css`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+const heroVisitsClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: fit-content;
+
+  .build-wide-card__visits-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 999px;
+    background: rgba(234, 88, 12, 0.12);
+    color: #ea580c;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .build-wide-card__visits-text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.42rem;
+  }
+
+  .build-wide-card__visits-count {
+    color: #0f172a;
+    font-size: 1.9rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .build-wide-card__visits-label {
+    color: rgba(31, 41, 55, 0.5);
+    font-size: 1.05rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &.is-empty .build-wide-card__visits-icon {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+  }
+
+  &.is-empty .build-wide-card__visits-label {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    .build-wide-card__visits-icon {
+      width: 2.3rem;
+      height: 2.3rem;
+      font-size: 1.1rem;
+    }
+
+    .build-wide-card__visits-count {
+      font-size: 1.65rem;
+    }
+  }
 `;
 
 const descriptionClass = css`
@@ -545,6 +610,7 @@ export default function BuildWideCard({
   const displayUpdatedAt = getDisplayUpdatedAt(build, updatedAtSource);
   const targetPath = to || (buildId ? `/build/${buildId}` : '');
   const description = String(build?.description || '').trim();
+  const visitCount = normalizeViewCount(build?.viewCount);
   const isCurrentUserOwner = Boolean(
     userId && build?.userId && Number(userId) === Number(build.userId)
   );
@@ -725,6 +791,30 @@ export default function BuildWideCard({
                 </span>
               </div>
             ) : null}
+            {visitCount > 0 ? (
+              <div className={heroVisitsClass}>
+                <span className="build-wide-card__visits-icon">
+                  <Icon icon="eye" />
+                </span>
+                <span className="build-wide-card__visits-text">
+                  <span className="build-wide-card__visits-count">
+                    {addCommasToNumber(visitCount)}
+                  </span>
+                  <span className="build-wide-card__visits-label">
+                    {visitCount === 1 ? 'visit' : 'visits'}
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <div className={cx(heroVisitsClass, 'is-empty')}>
+                <span className="build-wide-card__visits-icon">
+                  <Icon icon="eye" />
+                </span>
+                <span className="build-wide-card__visits-label">
+                  No visits yet
+                </span>
+              </div>
+            )}
             {description ? <p className={descriptionClass}>{description}</p> : null}
           </div>
           <div className={badgeRowClass}>
@@ -751,11 +841,6 @@ export default function BuildWideCard({
               </span>
             ) : null}
             {showForkCountBadge ? renderForkCountBadge() : null}
-            <ViewCount
-              count={build.viewCount}
-              unit="visits"
-              className={badgeClass}
-            />
             {collaboratorCount > 0 ? (
               <BuildTeamMembersTrigger
                 buildId={buildId}
