@@ -547,6 +547,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       messageId,
       isSubject,
+      isAIEdited,
       subchannelId,
       subjectChanged
     }: {
@@ -554,6 +555,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       messageId: number;
       isSubject: boolean;
+      isAIEdited?: boolean;
       subchannelId: number;
       subjectChanged: boolean;
     }) {
@@ -563,6 +565,7 @@ export default function ChatActions(dispatch: Dispatch) {
         editedMessage,
         messageId,
         isSubject,
+        isAIEdited,
         subchannelId,
         subjectChanged
       });

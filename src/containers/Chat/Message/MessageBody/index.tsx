@@ -213,12 +213,14 @@ function MessageBody({
       ((canEdit &&
         level > uploaderLevel &&
         (channelId === GENERAL_CHAT_ID || isSupermod(level))) ||
-        userIsUploader)
+        userIsUploader ||
+        isAIMessage)
     );
   }, [
     canEdit,
     channelId,
     invitePath,
+    isAIMessage,
     isDrawOffer,
     level,
     rewardAmount,
@@ -542,6 +544,7 @@ function MessageBody({
           channelId,
           messageId,
           isSubject: messageIsSubject,
+          isAIEdited: isAIMessage,
           subchannelId,
           subjectChanged
         });
@@ -550,7 +553,8 @@ function MessageBody({
           editedMessage,
           subchannelId,
           messageId,
-          isSubject: messageIsSubject
+          isSubject: messageIsSubject,
+          isAIEdited: isAIMessage
         });
         Promise.resolve();
       } catch (error) {
@@ -565,7 +569,7 @@ function MessageBody({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [channelId, isReloadedSubject, isSubject, messageId, subjectId]
+    [channelId, isAIMessage, isReloadedSubject, isSubject, messageId, subjectId]
   );
 
   const handleAddReaction = useCallback(

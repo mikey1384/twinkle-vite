@@ -351,6 +351,7 @@ export default function Content({
               displayedThemeColor={displayedThemeColor}
               extractedUrl={extractedUrl}
               isAIMessage={isAIMessage}
+              isAIEdited={!!parsedSettings?.aiEdit || !!message.isAIEdited}
               isCurrentlyStreaming={isCurrentlyStreaming}
               messageId={messageId}
               numMsgs={numMsgs}

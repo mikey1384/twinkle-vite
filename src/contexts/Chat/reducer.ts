@@ -1404,7 +1404,8 @@ export default function ChatReducer(
                 [action.messageId]: {
                   ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                     ?.messagesObj?.[action.messageId],
-                  content: action.editedMessage
+                  content: action.editedMessage,
+                  ...(action.isAIEdited ? { isAIEdited: true } : {})
                 }
               }
             }
@@ -1434,7 +1435,8 @@ export default function ChatReducer(
                         ...prevChannelObj?.messagesObj,
                         [action.messageId]: {
                           ...prevChannelObj?.messagesObj[action.messageId],
-                          content: action.editedMessage
+                          content: action.editedMessage,
+                          ...(action.isAIEdited ? { isAIEdited: true } : {})
                         }
                       }
                     }

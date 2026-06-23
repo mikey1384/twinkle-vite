@@ -1,7 +1,9 @@
 import React, { memo, useMemo } from 'react';
+import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
 import VideoAttachment from './VideoAttachment';
 import { Color } from '~/constants/css';
@@ -33,6 +35,7 @@ function TextMessage({
   isReloadedSubject,
   isSubject,
   isAIMessage,
+  isAIEdited,
   isLastMsg,
   messageId,
   MessageStyle,
@@ -60,6 +63,7 @@ function TextMessage({
   isReloadedSubject: boolean;
   isSubject: boolean;
   isAIMessage: boolean;
+  isAIEdited?: boolean;
   isLastMsg: boolean;
   messageId: number;
   MessageStyle: any;
@@ -207,6 +211,27 @@ function TextMessage({
                     <ThinkingIndicator status={aiThinkingStatus} compact />
                   )}
                 </>
+              )}
+              {isAIMessage && isAIEdited && !isCurrentlyStreaming && (
+                <div
+                  className={css`
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    margin-top: 0.7rem;
+                    padding: 0.2rem 0.7rem;
+                    border-radius: 1rem;
+                    background: ${Color.highlightGray()};
+                    border: 1px solid ${Color.borderGray()};
+                    color: ${Color.gray()};
+                    font-size: 1rem;
+                    font-style: italic;
+                  `}
+                  title="This message was edited by a user and is no longer the AI's original response."
+                >
+                  <Icon icon="pencil-alt" />
+                  <span>edited by user</span>
+                </div>
               )}
             </div>
             {!!isReloadedSubject && !!numMsgs && numMsgs > 0 && (
