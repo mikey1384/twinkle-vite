@@ -74,7 +74,7 @@ const trayClass = css`
   right: 1rem;
   bottom: calc(1rem + env(safe-area-inset-bottom));
   z-index: ${RUNNING_APP_TRAY_Z_INDEX};
-  width: min(34rem, calc(100vw - 2rem));
+  width: min(23rem, calc(100vw - 2rem));
   border: 1px solid rgba(148, 163, 184, 0.55);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.96);
@@ -83,6 +83,14 @@ const trayClass = css`
   overflow: hidden;
   backdrop-filter: blur(8px);
   touch-action: none;
+  opacity: 0.42;
+  transition: opacity 0.18s ease;
+
+  &:hover,
+  &:focus-within,
+  &[data-revealed='true'] {
+    opacity: 1;
+  }
 
   &[data-positioned='true'] {
     right: auto;
@@ -98,7 +106,7 @@ const trayClass = css`
   }
 
   @media (max-width: ${tabletMaxWidth}) {
-    width: min(31rem, calc(100vw - 1.5rem));
+    width: min(23rem, calc(100vw - 1.5rem));
   }
 
   @media (max-width: ${mobileMaxWidth}) {
@@ -427,9 +435,11 @@ function RunningAppTray({
   const dragStartRef = useRef<DragStart | null>(null);
   const dragListenerCleanupRef = useRef<(() => void) | null>(null);
   const suppressNextClickRef = useRef(false);
+  const revealTimeoutRef = useRef<number | null>(null);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(
     null
   );
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -440,8 +450,23 @@ function RunningAppTray({
     return () => {
       removeDragListeners();
       dragStartRef.current = null;
+      if (revealTimeoutRef.current) {
+        window.clearTimeout(revealTimeoutRef.current);
+        revealTimeoutRef.current = null;
+      }
     };
   }, []);
+
+  function revealTray() {
+    setRevealed(true);
+    if (revealTimeoutRef.current) {
+      window.clearTimeout(revealTimeoutRef.current);
+    }
+    revealTimeoutRef.current = window.setTimeout(() => {
+      setRevealed(false);
+      revealTimeoutRef.current = null;
+    }, 1000);
+  }
 
   function removeDragListeners() {
     dragListenerCleanupRef.current?.();
@@ -482,6 +507,7 @@ function RunningAppTray({
 
   function handleDragPointerDown(event: React.PointerEvent) {
     if (event.button !== 0) return;
+    revealTray();
     const rect = trayRef.current?.getBoundingClientRect();
     if (!rect) return;
     dragStartRef.current = {
@@ -542,6 +568,7 @@ function RunningAppTray({
       className={trayClass}
       data-collapsed={collapsed ? 'true' : 'false'}
       data-positioned={position ? 'true' : 'false'}
+      data-revealed={revealed ? 'true' : 'false'}
       data-runtime-app-tray="true"
       onPointerDown={handleDragPointerDown}
       style={trayStyle}
