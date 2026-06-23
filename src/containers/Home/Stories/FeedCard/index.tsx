@@ -1631,6 +1631,24 @@ const cardClass = css`
   &.${SHOWCASE_CARD_CLASS} .home-feed-card__rich-embed-image {
     max-height: 22rem;
   }
+  /* The target preview (replied-to content) is the last element in a showcase
+     card, so its bottom border doubles up with the card's own bottom border.
+     Drop it so the card reads as one clean box. */
+  &.${SHOWCASE_CARD_CLASS} .home-feed-card__target-preview {
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  /* On mobile the feed drops L/R borders + radius so cards form flush
+     edge-to-edge rows. Showcase cards have a gap between them, so that leaves a
+     doubled divider (one card's bottom border + the next's top border). Keep
+     showcase cards as self-contained rounded single-border boxes on mobile. */
+  @media (max-width: ${mobileMaxWidth}) {
+    &.${SHOWCASE_CARD_CLASS} {
+      border: 1px solid var(--ui-border);
+      border-radius: ${borderRadius};
+    }
+  }
   @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
     &.home-feed-card--tablet-media-attachment {
       height: var(--home-feed-card-mobile-height);
