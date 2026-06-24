@@ -93,6 +93,9 @@ const getDescriptionForLinkType: { [key: string]: (src: string) => string } = {
   'daily-reflections': () => 'Browse Daily Reflections',
   'achievement-unlocks': (src) => {
     return getPathParts(src)[1] ? 'View Achievement' : 'Achievement Unlocks';
+  },
+  achievements: (src) => {
+    return getPathParts(src)[1] ? 'View Achievement' : 'Achievements';
   }
 };
 
@@ -329,6 +332,16 @@ function getDefaultEmbedPreviewConfig({
         border: Color.goldOrange(0.42),
         description: 'Open recent unlocks and achievement progress.',
         icon: 'trophy',
+        kicker: 'Achievements',
+        softAccent: Color.goldOrange(0.12),
+        title: linkLabel
+      };
+    case 'achievements':
+      return {
+        accent: Color.goldOrange(),
+        border: Color.goldOrange(0.42),
+        description: 'Explore this achievement and how to earn it.',
+        icon: 'certificate',
         kicker: 'Achievements',
         softAccent: Color.goldOrange(0.12),
         title: linkLabel

@@ -10,6 +10,8 @@ import ProgressBar from '~/components/ProgressBar';
 import ProfilePic from '~/components/ProfilePic';
 import UserPopup from '~/components/UserPopup';
 import UserListModal from '~/components/Modals/UserListModal';
+import DropdownButton from '~/components/Buttons/DropdownButton';
+import { Link } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
@@ -79,6 +81,27 @@ export default function ItemPanel({
   const [dropdownContext, setDropdownContext] =
     useState<DropdownContext | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copiedTimerRef: React.RefObject<any> = useRef(null);
+
+  const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
+  const achievementType = useMemo(() => {
+    if (!achievementsObj) return '';
+    for (const key in achievementsObj) {
+      if (achievementsObj[key]?.id === itemId) return key;
+    }
+    return '';
+  }, [achievementsObj, itemId]);
+  const achievementPath = achievementType
+    ? `/achievements/${achievementType}`
+    : '';
+  const shareShown = !isThumb && !isNotification && !!achievementType;
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
   const ProfilePicRef = useRef(null);
   const showTimerRef: React.RefObject<any> = useRef(0);
   const hideTimerRef: React.RefObject<any> = useRef(0);
@@ -123,6 +146,11 @@ export default function ItemPanel({
   const handleProfileInteraction = useCallback(
     async (user: any, event: React.MouseEvent | React.TouchEvent) => {
       if (!user?.id) return;
+
+      // Keep avatar profile-popup interactions self-contained so they never
+      // trigger ancestor navigation (e.g. the full achievement embed wrapper,
+      // whose avatars are clickable divs not caught by its anchor/button guard).
+      event.stopPropagation();
 
       const target = event.currentTarget;
       mouseEntered.current = true;
@@ -204,6 +232,7 @@ export default function ItemPanel({
       className={cx(
         homePanelClass,
         css`
+          position: relative;
           display: grid;
           grid-template-columns: auto 1fr 1fr;
           grid-template-areas:
@@ -232,6 +261,48 @@ export default function ItemPanel({
       )}
       style={panelStyle}
     >
+      {shareShown && (
+        <div
+          className={css`
+            position: absolute;
+            top: 1.2rem;
+            right: 1.2rem;
+            z-index: 2;
+            @media (max-width: ${mobileMaxWidth}) {
+              top: 0.8rem;
+              right: 0.8rem;
+            }
+          `}
+        >
+          <DropdownButton
+            icon={copied ? 'check' : 'share'}
+            text={copied ? 'Copied!' : 'Share'}
+            variant="soft"
+            color={copied ? 'green' : 'darkerGray'}
+            buttonStyle={{ fontSize: '1.1rem' }}
+            menuProps={[
+              {
+                label: (
+                  <>
+                    <Icon icon="link" />
+                    <span style={{ marginLeft: '1rem' }}>Copy link</span>
+                  </>
+                ),
+                onClick: handleCopyLink
+              },
+              {
+                label: (
+                  <>
+                    <Icon icon="code" />
+                    <span style={{ marginLeft: '1rem' }}>Copy embed</span>
+                  </>
+                ),
+                onClick: handleCopyEmbed
+              }
+            ]}
+          />
+        </div>
+      )}
       {badgeSrc && (
         <img
           src={badgeSrc}
@@ -251,10 +322,29 @@ export default function ItemPanel({
             grid-area: title;
             font-weight: bold;
             font-size: 2rem;
+            ${shareShown ? 'padding-right: 9rem;' : ''}
+            @media (max-width: ${mobileMaxWidth}) {
+              padding-right: 0;
+            }
           `}
           style={{ color: Color.black() }}
         >
-          {itemName}
+          {shareShown ? (
+            <Link
+              to={achievementPath}
+              className={css`
+                color: ${Color.black()};
+                &:hover {
+                  color: ${Color.black()};
+                  text-decoration: underline;
+                }
+              `}
+            >
+              {itemName}
+            </Link>
+          ) : (
+            itemName
+          )}
           {displayedAP && (
             <span
               className={css`
@@ -586,4 +676,27 @@ export default function ItemPanel({
       )}
     </div>
   );
+
+  async function handleCopyLink() {
+    await copyToClipboard(
+      `${window.location.origin}/achievements/${achievementType}`
+    );
+  }
+
+  async function handleCopyEmbed() {
+    await copyToClipboard(
+      `![](${window.location.origin}/achievements/${achievementType})`
+    );
+  }
+
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  }
 }

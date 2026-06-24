@@ -76,6 +76,9 @@ const BuildThumbnailCaptureHost = lazyWithRetry(
 const Chat = lazyWithRetry(() => import('~/containers/Chat'));
 const CliDeviceAuth = lazyWithRetry(() => import('~/containers/CliDeviceAuth'));
 const ContentPage = lazyWithRetry(() => import('~/containers/ContentPage'));
+const AchievementPage = lazyWithRetry(
+  () => import('~/containers/AchievementPage')
+);
 const Explore = lazyWithRetry(() => import('~/containers/Explore'));
 const ExploreRedirect = lazyWithRetry(
   () => import('~/containers/Explore/Redirect')
@@ -695,6 +698,10 @@ export default function App() {
               <Route
                 path="/achievements"
                 element={<Home section="achievement" />}
+              />
+              <Route
+                path="/achievements/:achievementType"
+                element={<AchievementPage />}
               />
               <Route path="/settings" element={<Home section="store" />} />
               <Route path="/earn" element={<Home section="earn" />} />

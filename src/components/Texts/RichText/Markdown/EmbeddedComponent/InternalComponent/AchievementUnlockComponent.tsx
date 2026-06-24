@@ -5,7 +5,7 @@ import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
-import Icon from '~/components/Icon';
+import CompactAchievementCard from './CompactAchievementCard';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import Loading from '~/components/Loading';
@@ -13,7 +13,6 @@ import InvalidContent from '../InvalidContent';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { isMobile } from '~/helpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 const displayIsMobile = isMobile(navigator);
 
@@ -89,33 +88,10 @@ export default function AchievementUnlockComponent({
 
   if (isPreview) {
     return (
-      <button
-        type="button"
-        className={compactAchievementUnlockClass}
+      <CompactAchievementCard
+        achievement={rootObj}
         onClick={handlePreviewClick}
-      >
-        <div className="compact-achievement-unlock__badge">
-          <AchievementItem
-            isSmall
-            isThumb
-            achievement={rootObj}
-            thumbSize="5.8rem"
-          />
-        </div>
-        <div className="compact-achievement-unlock__copy">
-          <span className="compact-achievement-unlock__chip">
-            <Icon icon="certificate" />
-            Achievement
-          </span>
-          <strong>
-            {rootObj.title || 'Achievement'}
-            {rootObj.ap ? (
-              <span>({addCommasToNumber(Number(rootObj.ap))} AP)</span>
-            ) : null}
-          </strong>
-          {rootObj.description ? <p>{rootObj.description}</p> : null}
-        </div>
-      </button>
+      />
     );
   }
 
@@ -190,84 +166,3 @@ export default function AchievementUnlockComponent({
     navigate(`/achievement-unlocks/${passId}`);
   }
 }
-
-const compactAchievementUnlockClass = css`
-  appearance: none;
-  box-sizing: border-box;
-  display: grid;
-  grid-template-columns: minmax(6.2rem, 28%) minmax(0, 1fr);
-  align-items: center;
-  gap: 0.8rem;
-  width: 100%;
-  height: 100%;
-  min-height: 10.5rem;
-  padding: 0.85rem;
-  overflow: hidden;
-  border: 1px solid ${Color.borderGray()};
-  border-left: 0.35rem solid ${Color.gold()};
-  border-radius: ${borderRadius};
-  background: #fff;
-  color: ${Color.darkerGray()};
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  .compact-achievement-unlock__badge {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    justify-content: center;
-  }
-  .compact-achievement-unlock__badge > div {
-    padding: 0;
-  }
-  .compact-achievement-unlock__copy {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.42rem;
-  }
-  .compact-achievement-unlock__chip {
-    display: inline-flex;
-    align-items: center;
-    align-self: flex-start;
-    gap: 0.38rem;
-    min-height: 1.9rem;
-    padding: 0.32rem 0.58rem;
-    border: 1px solid ${Color.gold(0.36)};
-    border-radius: 999px;
-    background: ${Color.gold(0.14)};
-    color: ${Color.gold()};
-    font-size: 1.05rem;
-    font-weight: 850;
-    line-height: 1;
-    white-space: nowrap;
-  }
-  strong {
-    overflow: hidden;
-    color: ${Color.black()};
-    font-size: max(1.9rem, 19px);
-    font-weight: 850;
-    line-height: 1.18;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-  strong span {
-    margin-left: 0.38rem;
-    color: ${Color.darkGray()};
-    font-size: 1.12rem;
-    font-weight: 700;
-  }
-  p {
-    margin: 0;
-    overflow: hidden;
-    color: ${Color.darkGray()};
-    font-size: max(1.8rem, 18px);
-    font-weight: 400;
-    line-height: 1.34;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-`;

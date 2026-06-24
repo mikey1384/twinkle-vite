@@ -7,6 +7,7 @@ import DefaultComponent from './DefaultComponent';
 import AICardComponent from './AICardComponent';
 import SharedPromptComponent from './SharedPromptComponent';
 import AchievementUnlockComponent from './AchievementUnlockComponent';
+import AchievementComponent from './AchievementComponent';
 
 export default function InternalComponent({
   rootId,
@@ -94,6 +95,9 @@ export default function InternalComponent({
     }
     if (linkType === 'achievement-unlocks' && contentId) {
       return <AchievementUnlockComponent src={src} isPreview={isPreview} />;
+    }
+    if (linkType === 'achievements' && contentId) {
+      return <AchievementComponent src={src} isPreview={isPreview} />;
     }
     return (
       <DefaultComponent linkType={linkType} src={src} isPreview={isPreview} />

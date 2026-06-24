@@ -289,6 +289,15 @@ export function getInternalEmbedPreviewInfo(
     };
   }
 
+  if (linkType === 'achievements') {
+    return {
+      icon: 'certificate',
+      kind: 'achievement',
+      label: 'Achievement',
+      normalizedSrc
+    };
+  }
+
   return {
     icon: 'globe',
     kind: 'genericInternal',
