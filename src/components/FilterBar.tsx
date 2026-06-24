@@ -159,6 +159,10 @@ export default function FilterBar({
 
       > .nav-section {
         width: 100%;
+        /* In the column layout, keep the nav row at its natural height so a
+           caller-forced short bar height can't squash it. A squashed section
+           clips its own overflow and cuts off the active tab's 2px underbar. */
+        flex-shrink: 0;
       }
 
       > .nav-section > nav {
