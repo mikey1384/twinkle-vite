@@ -69,6 +69,7 @@ interface TelemetryReport {
     };
     bridge: {
       total: number;
+      failures: number;
       byOutcome: CountRow[];
       byStage: CountRow[];
       byMessageType: CountRow[];
@@ -315,9 +316,11 @@ export default function BuildWorlds() {
             />
             <MetricCard
               label="Bridge failures (client)"
-              value={formatNumber(summary.bridge.total)}
-              detail="world requests dropped before reaching the server"
-              color={summary.bridge.total > 0 ? 'rose' : 'green'}
+              value={formatNumber(summary.bridge.failures)}
+              detail={`${formatNumber(
+                summary.bridge.total
+              )} bridge events (incl. init snapshots)`}
+              color={summary.bridge.failures > 0 ? 'rose' : 'green'}
             />
           </div>
 
