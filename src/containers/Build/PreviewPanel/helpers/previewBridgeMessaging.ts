@@ -35,7 +35,9 @@ export function postToPreviewFrames(
       {
         ...message,
         previewNonce:
-          previewFrameMetaRef.current[targetFrame.frame].messageNonce
+          previewFrameMetaRef.current[targetFrame.frame].bridgeConfirmed
+            ? previewFrameMetaRef.current[targetFrame.frame].messageNonce
+            : null
       },
       getBuildPreviewMessageTargetOrigin(
         targetFrame.element.getAttribute('src') || targetFrame.element.src

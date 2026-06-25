@@ -36,12 +36,15 @@ import {
   executeGuestViewerDbQuery
 } from '../helpers/guestViewerDb';
 import { socket } from '~/constants/sockets/api';
-import type { PreviewMountContext } from '../types';
+import type { PreviewFrameMeta, PreviewMountContext } from '../types';
 import { triggerPreviewLocalDownload } from '../helpers/previewDownloads';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import {
+  BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM,
+  extractBuildIdFromPreviewPath,
   getBuildPreviewMessageTargetOrigin,
-  isAllowedBuildPreviewMessageOrigin
+  isAllowedBuildPreviewMessageOrigin,
+  normalizeAllowedBuildPreviewFrameSrc
 } from '~/helpers/buildPreviewOriginHelpers';
 import {
   disposeBuildChessEngine,
@@ -85,6 +88,58 @@ function getPreviewBridgeErrorCode(error: any) {
     : null;
 }
 
+function isWorldPreviewBridgeMessageType(type: unknown) {
+  return String(type || '').startsWith('world:');
+}
+
+function getPreviewSrcBridgeLoadId(previewSrc: string | null | undefined) {
+  const normalizedPreviewSrc = String(previewSrc || '').trim();
+  if (!normalizedPreviewSrc) return '';
+  try {
+    const parsedUrl = new URL(normalizedPreviewSrc, window.location.href);
+    return String(
+      parsedUrl.searchParams.get(BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM) || ''
+    ).trim();
+  } catch {
+    return '';
+  }
+}
+
+function isBridgeNonceRequestOpen(frameMeta: PreviewFrameMeta) {
+  if (!frameMeta.bridgeNonceRequestOpen) return false;
+  const expiresAt = Number(frameMeta.bridgeNonceRequestExpiresAt || 0);
+  return !expiresAt || expiresAt > Date.now();
+}
+
+// Client-side capture of where a build's world request dies BEFORE it reaches
+// the backend (the host nonce gate / auth wait / emit), so the Management
+// "Build Worlds" page can see failures that never produce a server-side row.
+// Bounded per page load so a misbehaving build can never flood the socket/db.
+let worldBridgeTelemetryCount = 0;
+const WORLD_BRIDGE_TELEMETRY_CAP = 200;
+
+function emitWorldBridgeTelemetry(data: {
+  buildId?: number | null;
+  worldKey?: unknown;
+  roomKey?: unknown;
+  instanceId?: unknown;
+  outcome: string;
+  stage: string;
+  messageType?: string;
+  errorCode?: string | null;
+  message?: string;
+  hadNonce?: boolean;
+}) {
+  if (!data.buildId) return;
+  if (worldBridgeTelemetryCount >= WORLD_BRIDGE_TELEMETRY_CAP) return;
+  worldBridgeTelemetryCount += 1;
+  try {
+    socket.emit('build_app_world_bridge_telemetry', data);
+  } catch {
+    // Bridge telemetry must never affect the preview bridge.
+  }
+}
+
 export function useHostBridge({
   runtimeOnly,
   buildId,
@@ -100,6 +155,7 @@ export function useHostBridge({
   capabilitySnapshotRef,
   runtimeExplorationPlanRef,
   messageTargetFrameRef,
+  navigatePreviewFrameRef,
   previewCodeSignatureRef,
   previewFrameMetaRef,
   previewFrameSourcesRef,
@@ -382,12 +438,15 @@ export function useHostBridge({
           settled = true;
           window.clearTimeout(timeout);
           if (!response?.ok) {
-            reject(
-              createPreviewBridgeError(
-                response?.error || 'World request failed',
-                response?.code || 'WORLD_REQUEST_FAILED'
-              )
-            );
+            const serverError = createPreviewBridgeError(
+              response?.error || 'World request failed',
+              response?.code || 'WORLD_REQUEST_FAILED'
+            ) as Error & { reachedServer?: boolean };
+            // The backend acked with a failure (room full / validation / auth),
+            // so it already recorded its own join telemetry row. Mark it so we
+            // don't ALSO log a client-side "bridge" failure for the same event.
+            serverError.reachedServer = true;
+            reject(serverError);
             return;
           }
           resolve(response);
@@ -642,25 +701,31 @@ export function useHostBridge({
     function getMessageTargetBridgeForWindow(targetWindow: Window) {
       const primaryWindow = primaryIframeRef.current?.contentWindow || null;
       if (primaryWindow && targetWindow === primaryWindow) {
+        const primaryMeta = previewFrameMetaRef.current.primary;
         return {
           targetOrigin: getBuildPreviewMessageTargetOrigin(
             previewFrameSourcesRef.current.primary ||
               primaryIframeRef.current?.getAttribute('src') ||
               primaryIframeRef.current?.src
           ),
-          previewNonce: previewFrameMetaRef.current.primary.messageNonce
+          previewNonce: primaryMeta.bridgeConfirmed
+            ? primaryMeta.messageNonce
+            : null
         };
       }
 
       const secondaryWindow = secondaryIframeRef.current?.contentWindow || null;
       if (secondaryWindow && targetWindow === secondaryWindow) {
+        const secondaryMeta = previewFrameMetaRef.current.secondary;
         return {
           targetOrigin: getBuildPreviewMessageTargetOrigin(
             previewFrameSourcesRef.current.secondary ||
               secondaryIframeRef.current?.getAttribute('src') ||
               secondaryIframeRef.current?.src
           ),
-          previewNonce: previewFrameMetaRef.current.secondary.messageNonce
+          previewNonce: secondaryMeta.bridgeConfirmed
+            ? secondaryMeta.messageNonce
+            : null
         };
       }
 
@@ -711,12 +776,6 @@ export function useHostBridge({
             : null;
       if (!sourceFrame) return;
       const sourceFrameMeta = previewFrameMetaRef.current[sourceFrame];
-      if (
-        !sourceFrameMeta.messageNonce ||
-        previewNonce !== sourceFrameMeta.messageNonce
-      ) {
-        return;
-      }
       const sourcePreviewSrc =
         previewFrameSourcesRef.current[sourceFrame] ||
         (sourceFrame === 'primary'
@@ -724,13 +783,71 @@ export function useHostBridge({
             primaryIframeRef.current?.src
           : secondaryIframeRef.current?.getAttribute('src') ||
             secondaryIframeRef.current?.src);
-      if (
-        !isAllowedBuildPreviewMessageOrigin({
-          eventOrigin: event.origin,
-          previewSrc: sourcePreviewSrc
-        })
-      ) {
+      const sourceOriginAllowed = isAllowedBuildPreviewMessageOrigin({
+        eventOrigin: event.origin,
+        previewSrc: sourcePreviewSrc
+      });
+      if (type === 'bridge:request-nonce') {
+        const requestedBridgeLoadId = String(
+          payload?.bridgeLoadId || ''
+        ).trim();
+        const sourceBridgeLoadId = getPreviewSrcBridgeLoadId(sourcePreviewSrc);
+        if (
+          sourceOriginAllowed &&
+          sourceFrameMeta.messageNonce &&
+          isBridgeNonceRequestOpen(sourceFrameMeta) &&
+          requestedBridgeLoadId &&
+          requestedBridgeLoadId === sourceFrameMeta.bridgeLoadId &&
+          requestedBridgeLoadId === sourceBridgeLoadId
+        ) {
+          previewFrameMetaRef.current = {
+            ...previewFrameMetaRef.current,
+            [sourceFrame]: {
+              ...sourceFrameMeta,
+              bridgeNonceRequestOpen: false,
+              bridgeNonceRequestExpiresAt: null
+            }
+          };
+          sourceWindow.postMessage(
+            {
+              source: 'twinkle-parent',
+              type: 'bridge:nonce',
+              previewNonce: sourceFrameMeta.messageNonce
+            },
+            getBuildPreviewMessageTargetOrigin(sourcePreviewSrc)
+          );
+        }
         return;
+      }
+      if (
+        !sourceFrameMeta.messageNonce ||
+        previewNonce !== sourceFrameMeta.messageNonce
+      ) {
+        if (isWorldPreviewBridgeMessageType(type)) {
+          emitWorldBridgeTelemetry({
+            buildId: previewAuth.buildRef.current?.id ?? null,
+            worldKey: payload?.worldKey,
+            roomKey: payload?.roomKey,
+            instanceId: payload?.instanceId,
+            outcome: 'nonce_drop',
+            stage: 'gate',
+            messageType: type,
+            hadNonce: !!previewNonce
+          });
+        }
+        return;
+      }
+      if (!sourceOriginAllowed) {
+        return;
+      }
+      if (!sourceFrameMeta.bridgeConfirmed) {
+        previewFrameMetaRef.current = {
+          ...previewFrameMetaRef.current,
+          [sourceFrame]: {
+            ...sourceFrameMeta,
+            bridgeConfirmed: true
+          }
+        };
       }
       const previewMessageTargetOrigin =
         getBuildPreviewMessageTargetOrigin(sourcePreviewSrc);
@@ -844,6 +961,36 @@ export function useHostBridge({
               explorationPlan: runtimeExplorationPlanRef.current
             };
             break;
+
+          case 'app:navigate': {
+            const nextPreviewSrc = normalizeAllowedBuildPreviewFrameSrc(
+              payload?.url
+            );
+            if (!nextPreviewSrc) {
+              throw createPreviewBridgeError(
+                'Navigation target must be a Build preview URL',
+                'INVALID_NAVIGATION_TARGET'
+              );
+            }
+            const nextPreviewBuildId =
+              extractBuildIdFromPreviewPath(nextPreviewSrc);
+            if (nextPreviewBuildId !== activeBuild.id) {
+              throw createPreviewBridgeError(
+                'Navigation target must belong to the current build',
+                'INVALID_NAVIGATION_TARGET'
+              );
+            }
+            const navigatedPreviewSrc =
+              navigatePreviewFrameRef.current?.(nextPreviewSrc) || null;
+            if (!navigatedPreviewSrc) {
+              throw createPreviewBridgeError(
+                'Navigation target is invalid',
+                'INVALID_NAVIGATION_TARGET'
+              );
+            }
+            response = { success: true, src: navigatedPreviewSrc };
+            break;
+          }
 
           case 'mount:get':
             response = { mount: mountContextRef.current };
@@ -2168,6 +2315,23 @@ export function useHostBridge({
         if (error?.aiUsagePolicy && typeof error.aiUsagePolicy === 'object') {
           onAiUsagePolicyUpdateRef.current?.(error.aiUsagePolicy);
         }
+        if (type === 'world:join' && !error?.reachedServer) {
+          // Only count failures that never reached the backend (auth wait
+          // timeout, socket disconnected/not-ready, no ack). Server-acked
+          // rejections are excluded — the backend already logged those as join
+          // rows, so emitting a bridge row would double-count them.
+          emitWorldBridgeTelemetry({
+            buildId: previewAuth.buildRef.current?.id ?? null,
+            worldKey: payload?.worldKey,
+            roomKey: payload?.roomKey,
+            instanceId: payload?.instanceId,
+            outcome: 'error',
+            stage: 'handler',
+            messageType: 'world:join',
+            errorCode: getPreviewBridgeErrorCode(error),
+            message: error?.message
+          });
+        }
         sourceWindow.postMessage(
           {
             source: 'twinkle-parent',
@@ -2228,6 +2392,7 @@ export function useHostBridge({
     buildId,
     capabilitySnapshotRef,
     messageTargetFrameRef,
+    navigatePreviewFrameRef,
     previewAuth,
     previewCodeSignatureRef,
     previewFrameMetaRef,

@@ -782,6 +782,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       activePreviewFrame,
       handlePreviewFrameLoad,
       messageTargetFrameRef,
+      navigatePreviewFrameRef,
       previewCodeSignatureRef,
       previewFrameMetaRef,
       previewFrameReady,
@@ -897,8 +898,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             : previewFrameSources.secondary;
         const frameMessageNonce =
           frame === 'primary'
-            ? previewFrameMetaRef.current.primary.messageNonce
-            : previewFrameMetaRef.current.secondary.messageNonce;
+            ? previewFrameMetaRef.current.primary.bridgeConfirmed
+              ? previewFrameMetaRef.current.primary.messageNonce
+              : null
+            : previewFrameMetaRef.current.secondary.bridgeConfirmed
+              ? previewFrameMetaRef.current.secondary.messageNonce
+              : null;
         const targetOrigin = getBuildPreviewMessageTargetOrigin(
           frameSource
         );
@@ -937,6 +942,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       capabilitySnapshotRef,
       runtimeExplorationPlanRef,
       messageTargetFrameRef,
+      navigatePreviewFrameRef,
       previewCodeSignatureRef,
       previewFrameMetaRef,
       previewFrameSourcesRef,

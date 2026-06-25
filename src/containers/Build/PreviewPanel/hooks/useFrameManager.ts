@@ -11,9 +11,12 @@ import type {
   PreviewFrameRetiredHandler,
   PreviewSeedCacheEntry
 } from '../types';
+import { BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM } from '~/helpers/buildPreviewOriginHelpers';
 
 const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
+const PREVIEW_BRIDGE_NONCE_REQUEST_TTL_MS = 35 * 1000;
+const PREVIEW_TOKEN_REFRESH_QUERY_PARAMS = ['buildApiToken'];
 
 const previewSeedCache = new Map<number, PreviewSeedCacheEntry>();
 
@@ -90,6 +93,151 @@ function createPreviewFrameMessageNonce() {
   }
 }
 
+function createPreviewFrameBridgeLoadId() {
+  try {
+    const values = new Uint32Array(3);
+    window.crypto.getRandomValues(values);
+    return Array.from(values)
+      .map((value) => value.toString(36))
+      .join('');
+  } catch {
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+function createEmptyPreviewFrameMeta(): PreviewFrameMeta {
+  return {
+    buildId: null,
+    codeSignature: null,
+    messageNonce: null,
+    bridgeLoadId: null,
+    bridgeConfirmed: false,
+    bridgeNonceRequestOpen: false,
+    bridgeNonceRequestExpiresAt: null,
+    hasLoaded: false
+  };
+}
+
+function createPreviewFrameMeta({
+  buildId,
+  bridgeLoadId = null,
+  codeSignature,
+  messageNonce
+}: {
+  buildId: number;
+  bridgeLoadId?: string | null;
+  codeSignature: string | null;
+  messageNonce: string | null;
+}): PreviewFrameMeta {
+  return {
+    buildId,
+    codeSignature,
+    messageNonce,
+    bridgeLoadId,
+    bridgeConfirmed: false,
+    bridgeNonceRequestOpen: Boolean(bridgeLoadId),
+    bridgeNonceRequestExpiresAt: bridgeLoadId
+      ? Date.now() + PREVIEW_BRIDGE_NONCE_REQUEST_TTL_MS
+      : null,
+    hasLoaded: false
+  };
+}
+
+function formatPreviewFrameSrc(parsedUrl: URL, rawSrc: string) {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(rawSrc)) {
+    return parsedUrl.toString();
+  }
+  return `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
+}
+
+function getParsedPreviewFrameSrc(src: string | null | undefined) {
+  const trimmedSrc = String(src || '').trim();
+  if (!trimmedSrc) return null;
+
+  try {
+    return new URL(trimmedSrc, window.location.href);
+  } catch {
+    return null;
+  }
+}
+
+function normalizePreviewFrameSrcForTokenRefreshComparison(
+  src: string | null | undefined
+) {
+  const parsedUrl = getParsedPreviewFrameSrc(src);
+  if (!parsedUrl) return '';
+  for (const paramName of PREVIEW_TOKEN_REFRESH_QUERY_PARAMS) {
+    parsedUrl.searchParams.delete(paramName);
+  }
+  return parsedUrl.toString();
+}
+
+function isPreviewFrameTokenOnlyRefresh(
+  previousSrc: string | null | undefined,
+  nextSrc: string | null | undefined
+) {
+  if (!previousSrc || !nextSrc) return false;
+  const previousNormalized =
+    normalizePreviewFrameSrcForTokenRefreshComparison(previousSrc);
+  const nextNormalized = normalizePreviewFrameSrcForTokenRefreshComparison(nextSrc);
+  return (
+    Boolean(previousNormalized && nextNormalized) &&
+    previousNormalized === nextNormalized
+  );
+}
+
+function refreshPreviewFrameNavigationQuery({
+  bridgeLoadId,
+  canonicalSrc,
+  navigationSrc
+}: {
+  bridgeLoadId: string;
+  canonicalSrc: string;
+  navigationSrc: string;
+}) {
+  const parsedNavigationSrc = getParsedPreviewFrameSrc(navigationSrc);
+  const parsedCanonicalSrc = getParsedPreviewFrameSrc(canonicalSrc);
+  if (!parsedNavigationSrc || !parsedCanonicalSrc) {
+    return appendPreviewFrameBridgeLoadId(navigationSrc, bridgeLoadId);
+  }
+
+  for (const paramName of PREVIEW_TOKEN_REFRESH_QUERY_PARAMS) {
+    const nextValue = parsedCanonicalSrc.searchParams.get(paramName);
+    if (nextValue === null) {
+      parsedNavigationSrc.searchParams.delete(paramName);
+    } else {
+      parsedNavigationSrc.searchParams.set(paramName, nextValue);
+    }
+  }
+  parsedNavigationSrc.searchParams.set(
+    BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM,
+    bridgeLoadId
+  );
+  return formatPreviewFrameSrc(parsedNavigationSrc, navigationSrc);
+}
+
+function appendPreviewFrameBridgeLoadId(src: string, bridgeLoadId: string) {
+  const trimmedSrc = String(src || '').trim();
+  if (!trimmedSrc || !bridgeLoadId) return trimmedSrc;
+
+  try {
+    const parsedUrl = new URL(trimmedSrc, window.location.href);
+    parsedUrl.searchParams.delete(BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM);
+    parsedUrl.searchParams.set(
+      BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM,
+      bridgeLoadId
+    );
+    return formatPreviewFrameSrc(parsedUrl, trimmedSrc);
+  } catch {
+    const [withoutHash, hash = ''] = trimmedSrc.split('#');
+    const [path, search = ''] = withoutHash.split('?');
+    const params = new URLSearchParams(search);
+    params.delete(BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM);
+    params.set(BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM, bridgeLoadId);
+    return `${path}?${params.toString()}${hash ? `#${hash}` : ''}`;
+  }
+}
+
 interface UsePreviewFrameManagerArgs {
   buildId: number;
   runtimeOnly: boolean;
@@ -109,7 +257,7 @@ function notifyPreviewFrameRetired({
   frame: PreviewFrameKey;
   onPreviewFrameRetiredRef?: RefObject<PreviewFrameRetiredHandler | null>;
   primaryIframeRef: RefObject<HTMLIFrameElement | null>;
-  reason: 'cleared' | 'replaced' | 'runtime-reset';
+  reason: 'cleared' | 'replaced' | 'runtime-reset' | 'navigated';
   secondaryIframeRef: RefObject<HTMLIFrameElement | null>;
 }) {
   const sourceWindow =
@@ -157,8 +305,8 @@ export function useFrameManager({
     primary: PreviewFrameMeta;
     secondary: PreviewFrameMeta;
   }>({
-    primary: { buildId: null, codeSignature: null, messageNonce: null },
-    secondary: { buildId: null, codeSignature: null, messageNonce: null }
+    primary: createEmptyPreviewFrameMeta(),
+    secondary: createEmptyPreviewFrameMeta()
   });
   const previewFrameSourcesRef = useRef<{
     primary: string | null;
@@ -176,11 +324,49 @@ export function useFrameManager({
   });
   const previewCodeSignatureRef = useRef<string | null>(null);
   const buildIdRef = useRef(buildId);
+  const canonicalPreviewSrcRef = useRef<string | null>(null);
+  const navigatePreviewFrameRef = useRef<((src: string) => string | null) | null>(
+    null
+  );
+  const [parentNavigation, setParentNavigation] = useState<{
+    src: string;
+    bridgeLoadId: string;
+  } | null>(null);
 
-  const previewSrc = useMemo(
+  const canonicalPreviewSrc = useMemo(
     () => (runtimeOnly ? runtimePreviewSrc : workspacePreviewSrc),
     [runtimeOnly, runtimePreviewSrc, workspacePreviewSrc]
   );
+  const previewSrc = parentNavigation?.src || canonicalPreviewSrc;
+  const previewBridgeLoadId = parentNavigation?.bridgeLoadId || null;
+
+  useEffect(() => {
+    const previousCanonicalPreviewSrc = canonicalPreviewSrcRef.current;
+    if (previousCanonicalPreviewSrc === canonicalPreviewSrc) return;
+    canonicalPreviewSrcRef.current = canonicalPreviewSrc;
+    setParentNavigation((currentNavigation) => {
+      if (
+        currentNavigation &&
+        canonicalPreviewSrc &&
+        isPreviewFrameTokenOnlyRefresh(
+          previousCanonicalPreviewSrc,
+          canonicalPreviewSrc
+        )
+      ) {
+        const bridgeLoadId = createPreviewFrameBridgeLoadId();
+        const nextSrc = refreshPreviewFrameNavigationQuery({
+          bridgeLoadId,
+          canonicalSrc: canonicalPreviewSrc,
+          navigationSrc: currentNavigation.src
+        });
+        return {
+          src: nextSrc,
+          bridgeLoadId
+        };
+      }
+      return null;
+    });
+  }, [canonicalPreviewSrc]);
 
   useEffect(() => {
     buildIdRef.current = buildId;
@@ -213,11 +399,11 @@ export function useFrameManager({
         setPreviewFrameSources(seededSources);
         previewFrameMetaRef.current = {
           ...previewFrameMetaRef.current,
-          [activeFrame]: {
+          [activeFrame]: createPreviewFrameMeta({
             buildId,
             codeSignature: cached.codeSignature || previewCodeSignature,
             messageNonce: createPreviewFrameMessageNonce()
-          }
+          })
         };
         const seededReady = {
           ...previewFrameReadyRef.current,
@@ -264,8 +450,8 @@ export function useFrameManager({
       previewFrameSourcesRef.current = cleared;
       setPreviewFrameSources(cleared);
       previewFrameMetaRef.current = {
-        primary: { buildId: null, codeSignature: null, messageNonce: null },
-        secondary: { buildId: null, codeSignature: null, messageNonce: null }
+        primary: createEmptyPreviewFrameMeta(),
+        secondary: createEmptyPreviewFrameMeta()
       };
       const clearedReady = { primary: false, secondary: false };
       previewFrameReadyRef.current = clearedReady;
@@ -321,16 +507,15 @@ export function useFrameManager({
       previewFrameSourcesRef.current = nextSources;
       setPreviewFrameSources(nextSources);
       previewFrameMetaRef.current = {
-        primary: {
+        primary: createPreviewFrameMeta({
           buildId,
+          bridgeLoadId: primaryMatchesPreviewSrc
+            ? currentPrimaryMeta.bridgeLoadId
+            : previewBridgeLoadId,
           codeSignature: previewCodeSignature,
           messageNonce: nextPrimaryNonce
-        },
-        secondary: {
-          buildId: null,
-          codeSignature: null,
-          messageNonce: null
-        }
+        }),
+        secondary: createEmptyPreviewFrameMeta()
       };
       const nextReady = {
         primary: primaryMatchesPreviewSrc
@@ -357,11 +542,12 @@ export function useFrameManager({
       setPreviewFrameSources(nextSources);
       previewFrameMetaRef.current = {
         ...previewFrameMetaRef.current,
-        [activeFrame]: {
+        [activeFrame]: createPreviewFrameMeta({
           buildId,
+          bridgeLoadId: previewBridgeLoadId,
           codeSignature: previewCodeSignature,
           messageNonce: createPreviewFrameMessageNonce()
-        }
+        })
       };
       const nextReady = {
         ...previewFrameReadyRef.current,
@@ -387,6 +573,7 @@ export function useFrameManager({
         previewFrameMetaRef.current = {
           ...previewFrameMetaRef.current,
           [reusedFrame]: {
+            ...currentMeta,
             buildId,
             codeSignature: nextSignature,
             messageNonce: currentMeta?.messageNonce || null
@@ -415,11 +602,12 @@ export function useFrameManager({
     setPreviewFrameSources(nextSources);
     previewFrameMetaRef.current = {
       ...previewFrameMetaRef.current,
-      [inactiveFrame]: {
+      [inactiveFrame]: createPreviewFrameMeta({
         buildId,
+        bridgeLoadId: previewBridgeLoadId,
         codeSignature: previewCodeSignature,
         messageNonce: createPreviewFrameMessageNonce()
-      }
+      })
     };
     const nextReady = {
       ...previewFrameReadyRef.current,
@@ -434,6 +622,7 @@ export function useFrameManager({
     buildId,
     onPreviewFrameRetiredRef,
     previewCodeSignature,
+    previewBridgeLoadId,
     previewSrc,
     primaryIframeRef,
     runtimeOnly,
@@ -469,16 +658,12 @@ export function useFrameManager({
     }
 
     previewFrameMetaRef.current = {
-      primary: {
+      primary: createPreviewFrameMeta({
         buildId,
         codeSignature: previewCodeSignature,
         messageNonce: previewFrameMetaRef.current.primary.messageNonce
-      },
-      secondary: {
-        buildId: null,
-        codeSignature: null,
-        messageNonce: null
-      }
+      }),
+      secondary: createEmptyPreviewFrameMeta()
     };
     messageTargetFrameRef.current = 'primary';
     activePreviewFrameRef.current = 'primary';
@@ -555,6 +740,37 @@ export function useFrameManager({
     previewFrameReadyRef.current = nextReadyState;
     setPreviewFrameReady(nextReadyState);
 
+    const loadedMeta = previewFrameMetaRef.current[frame];
+    if (loadedMeta.hasLoaded) {
+      notifyPreviewFrameRetired({
+        frame,
+        onPreviewFrameRetiredRef,
+        primaryIframeRef,
+        reason: 'navigated',
+        secondaryIframeRef
+      });
+      previewFrameMetaRef.current = {
+        ...previewFrameMetaRef.current,
+        [frame]: {
+          // Keep the nonce stable because PreviewStage uses it as the
+          // iframe key/mount signal for the current browsing context.
+          ...loadedMeta,
+          bridgeLoadId: null,
+          bridgeConfirmed: false,
+          bridgeNonceRequestOpen: false,
+          bridgeNonceRequestExpiresAt: null
+        }
+      };
+    } else if (loadedMeta.bridgeNonceRequestOpen || !loadedMeta.hasLoaded) {
+      previewFrameMetaRef.current = {
+        ...previewFrameMetaRef.current,
+        [frame]: {
+          ...loadedMeta,
+          hasLoaded: true
+        }
+      };
+    }
+
     const activeFrame = activePreviewFrameRef.current;
     const inactiveFrame = activeFrame === 'primary' ? 'secondary' : 'primary';
 
@@ -595,11 +811,7 @@ export function useFrameManager({
     setPreviewFrameSources(nextSources);
     previewFrameMetaRef.current = {
       ...previewFrameMetaRef.current,
-      [activeFrame]: {
-        buildId: null,
-        codeSignature: null,
-        messageNonce: null
-      }
+      [activeFrame]: createEmptyPreviewFrameMeta()
     };
     const nextReady = {
       ...previewFrameReadyRef.current,
@@ -609,10 +821,25 @@ export function useFrameManager({
     setPreviewFrameReady(nextReady);
   }
 
+  function navigatePreviewFrame(src: string) {
+    const normalizedSrc = String(src || '').trim();
+    if (!normalizedSrc) return null;
+
+    const bridgeLoadId = createPreviewFrameBridgeLoadId();
+    const nextNavigation = {
+      src: appendPreviewFrameBridgeLoadId(normalizedSrc, bridgeLoadId),
+      bridgeLoadId
+    };
+    setParentNavigation(nextNavigation);
+    return nextNavigation.src;
+  }
+  navigatePreviewFrameRef.current = navigatePreviewFrame;
+
   return {
     activePreviewFrame,
     handlePreviewFrameLoad,
     messageTargetFrameRef,
+    navigatePreviewFrameRef,
     previewCodeSignatureRef,
     previewFrameMetaRef,
     previewFrameReady,

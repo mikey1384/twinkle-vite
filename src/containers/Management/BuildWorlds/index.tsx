@@ -67,6 +67,12 @@ interface TelemetryReport {
       byReason: CountRow[];
       avgSessionDurationMs: number;
     };
+    bridge: {
+      total: number;
+      byOutcome: CountRow[];
+      byStage: CountRow[];
+      byMessageType: CountRow[];
+    };
     distinct: {
       sessions: number;
       rooms: number;
@@ -307,6 +313,12 @@ export default function BuildWorlds() {
               detail={`peak ${formatNumber(summary.maxPlayerCount)} players`}
               color="darkerGray"
             />
+            <MetricCard
+              label="Bridge failures (client)"
+              value={formatNumber(summary.bridge.total)}
+              detail="world requests dropped before reaching the server"
+              color={summary.bridge.total > 0 ? 'rose' : 'green'}
+            />
           </div>
 
           <CountTable
@@ -326,6 +338,18 @@ export default function BuildWorlds() {
             emptyText="No leaves in this window."
             rows={summary.leave.byReason}
             keyLabel="Reason"
+          />
+          <CountTable
+            title="Bridge failures by outcome (client)"
+            emptyText="No client-side bridge failures in this window."
+            rows={summary.bridge.byOutcome}
+            keyLabel="Outcome"
+          />
+          <CountTable
+            title="Bridge failures by message type (client)"
+            emptyText="No client-side bridge failures in this window."
+            rows={summary.bridge.byMessageType}
+            keyLabel="Message type"
           />
 
           <div className={sectionClass}>

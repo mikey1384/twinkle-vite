@@ -152,6 +152,11 @@ export interface PreviewFrameMeta {
   buildId: number | null;
   codeSignature: string | null;
   messageNonce: string | null;
+  bridgeLoadId: string | null;
+  bridgeConfirmed: boolean;
+  bridgeNonceRequestOpen: boolean;
+  bridgeNonceRequestExpiresAt: number | null;
+  hasLoaded: boolean;
 }
 
 export type PreviewFrameKey = 'primary' | 'secondary';
@@ -159,7 +164,7 @@ export type PreviewFrameKey = 'primary' | 'secondary';
 export interface PreviewFrameRetiredPayload {
   frame: PreviewFrameKey;
   sourceWindow: Window | null;
-  reason: 'cleared' | 'replaced' | 'runtime-reset';
+  reason: 'cleared' | 'replaced' | 'runtime-reset' | 'navigated';
 }
 
 export type PreviewFrameRetiredHandler = (

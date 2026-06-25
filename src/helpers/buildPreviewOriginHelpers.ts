@@ -1,5 +1,6 @@
 const DEFAULT_BUILD_PREVIEW_ORIGIN = 'https://preview.lumine.app';
 const BUILD_PREVIEW_ORIGIN_TEMPLATE_BUILD_ID_TOKEN = '{buildId}';
+export const BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM = 'twinkleBridgeLoadId';
 
 function normalizeOrigin(value: unknown) {
   const rawValue = String(value || '').trim();
@@ -26,7 +27,9 @@ function isLocalPreviewHost() {
   );
 }
 
-function extractBuildIdFromPreviewPath(previewPath: string | null | undefined) {
+export function extractBuildIdFromPreviewPath(
+  previewPath: string | null | undefined
+) {
   const normalizedPreviewPath = String(previewPath || '').trim();
   if (!normalizedPreviewPath) return null;
 

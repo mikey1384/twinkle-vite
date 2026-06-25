@@ -35,6 +35,7 @@ export interface UsePreviewHostBridgeArgs {
   capabilitySnapshotRef: RefObject<BuildCapabilitySnapshot | null>;
   runtimeExplorationPlanRef: RefObject<BuildRuntimeExplorationPlan | null>;
   messageTargetFrameRef: RefObject<'primary' | 'secondary'>;
+  navigatePreviewFrameRef: RefObject<((src: string) => string | null) | null>;
   previewCodeSignatureRef: RefObject<string | null>;
   previewFrameMetaRef: RefObject<{
     primary: PreviewFrameMeta;
