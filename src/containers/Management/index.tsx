@@ -28,6 +28,7 @@ export default function Management() {
   const canViewPayment = userId === ADMIN_USER_ID;
   const canViewHomeFeedPerformance = userId === ADMIN_USER_ID;
   const canViewScrollDiagnostics = userId === ADMIN_USER_ID;
+  const canViewBuildWorlds = userId === ADMIN_USER_ID;
 
   useEffect(() => {
     onLoadManagement();
@@ -118,6 +119,15 @@ export default function Management() {
           >
             <Icon icon="chart-line" />
             <span style={{ marginLeft: '1.1rem' }}>Scroll Diagnostics</span>
+          </NavLink>
+        )}
+        {canViewBuildWorlds && (
+          <NavLink
+            to="/management/build-worlds"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="cubes" />
+            <span style={{ marginLeft: '1.1rem' }}>Build Worlds</span>
           </NavLink>
         )}
       </SideMenu>
@@ -211,6 +221,16 @@ export default function Management() {
             onClick={() => navigate('/management/scroll-diagnostics')}
           >
             Scroll Diag
+          </nav>
+        )}
+        {canViewBuildWorlds && (
+          <nav
+            className={
+              location.pathname === `/management/build-worlds` ? 'active' : ''
+            }
+            onClick={() => navigate('/management/build-worlds')}
+          >
+            Build Worlds
           </nav>
         )}
       </FilterBar>

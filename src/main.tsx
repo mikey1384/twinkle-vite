@@ -77,6 +77,7 @@ import { faComments } from '@fortawesome/pro-solid-svg-icons/faComments';
 import { faCopy } from '@fortawesome/pro-solid-svg-icons/faCopy';
 import { faClone } from '@fortawesome/pro-solid-svg-icons/faClone';
 import { faCrown } from '@fortawesome/pro-solid-svg-icons/faCrown';
+import { faCubes } from '@fortawesome/pro-solid-svg-icons/faCubes';
 import { faDharmachakra } from '@fortawesome/pro-solid-svg-icons/faDharmachakra';
 import { faDesktop } from '@fortawesome/pro-solid-svg-icons/faDesktop';
 import { faDownload } from '@fortawesome/pro-solid-svg-icons/faDownload';
@@ -303,6 +304,7 @@ library.add(
   faClone,
   faCopy,
   faCrown,
+  faCubes,
   faEye,
   faDharmachakra,
   faDesktop,

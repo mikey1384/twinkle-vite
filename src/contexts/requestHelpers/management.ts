@@ -565,6 +565,62 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadBuildWorldTelemetryReport({
+      buildId,
+      hours
+    }: {
+      buildId: number;
+      hours: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/build-world-telemetry/report?buildId=${buildId}&hours=${hours}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadBuildWorldTelemetryExport({
+      buildId,
+      hours,
+      format
+    }: {
+      buildId: number;
+      hours: number;
+      format: 'csv' | 'json';
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/build-world-telemetry/export.${format}?buildId=${buildId}&hours=${hours}`,
+          {
+            ...auth(),
+            responseType: 'blob'
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async clearBuildWorldTelemetry({
+      buildId,
+      hours
+    }: {
+      buildId: number;
+      hours: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/management/build-world-telemetry/events?buildId=${buildId}&hours=${hours}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addModerators(newModerators: number[]) {
       try {
         const { data } = await request.post(

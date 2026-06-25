@@ -36,6 +36,7 @@ import {
 import { BuildQuickAccessStrip } from './QuickAccess';
 import ActivityPanels from './ActivityPanels';
 import Hero from './Hero';
+import LoggedOutCommunity from './LoggedOutCommunity';
 import Overlays from './Overlays';
 import RequestQueue from './RequestQueue';
 import Results from './Results';
@@ -728,6 +729,16 @@ export default function BuildList({
   ]);
 
   if (!userId) {
+    // Logged-out visitors may browse the Community tab only. The default
+    // /build route also lands here so the Build nav item shows public builds
+    // rather than a bare login wall.
+    if (urlTab === undefined || urlTab === 'community') {
+      return (
+        <LoggedOutCommunity
+          browseMode={normalizeBuildListBrowseMode(urlBrowseMode)}
+        />
+      );
+    }
     return (
       <LoggedOutPrompt
         title="Build apps with AI"
