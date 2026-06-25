@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 import Header from './Header';
+import SocketManager from './SocketManager';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -595,6 +596,7 @@ export default function App() {
       `}
     >
       <KeyContext.Provider value={keyContextValue}>
+        <SocketManager onInit={handleInit} />
         {mobileMenuShown && (
           <Suspense fallback={null}>
             <MobileMenu onClose={() => setMobileMenuShown(false)} />
@@ -606,10 +608,7 @@ export default function App() {
           </Suspense>
         )}
         {!usingBuildRuntime && (
-          <Header
-            onInit={handleInit}
-            onMobileMenuOpen={() => setMobileMenuShown(true)}
-          />
+          <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
         )}
         <div
           id="App"

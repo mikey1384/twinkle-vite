@@ -690,6 +690,7 @@ registerMethods('user', [
   'sendVerificationOTPEmailForSignup',
   'setDefaultSearchFilter',
   'setBuildQuickAccessMode',
+  'setBuildHeaderCollapsed',
   'updateBuildStudioState',
   'setTheme',
   'signup',

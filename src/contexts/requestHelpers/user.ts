@@ -874,6 +874,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async setBuildHeaderCollapsed(collapsed: boolean) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/buildHeaderCollapsed`,
+          { collapsed },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateBuildStudioState(buildStudio: {
       activeTab?: string;
       browseModes?: {

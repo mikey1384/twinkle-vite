@@ -123,6 +123,7 @@ const shellClass = css`
 
 const headerClass = css`
   position: relative;
+  grid-row: 1;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
   padding: 1.1rem 1.3rem 1rem;
@@ -132,6 +133,98 @@ const headerClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     padding: calc(env(safe-area-inset-top, 0px) + 0.8rem) 0.95rem 0.75rem;
     gap: 0.3rem;
+  }
+`;
+
+const headerCollapsibleClass = css`
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 6;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+`;
+
+const headerHiddenClass = css`
+  transform: translateY(-101%);
+  pointer-events: none;
+`;
+
+const headerToggleClass = css`
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  border: 1px solid var(--ui-border);
+  background: #fff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  width: 3.4rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+  &:hover {
+    background: rgba(65, 140, 235, 0.12);
+    border-color: rgba(65, 140, 235, 0.32);
+  }
+  &:disabled {
+    cursor: default;
+  }
+`;
+
+const headerRevealZoneClass = css`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  height: 1.4rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+`;
+
+const headerRevealHandleClass = css`
+  border: 1px solid var(--ui-border);
+  border-top: none;
+  background: #fff;
+  color: #1d4ed8;
+  border-radius: 0 0 999px 999px;
+  width: 4rem;
+  height: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.16);
+  opacity: 0.45;
+  transition:
+    opacity 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+  &:hover {
+    opacity: 1;
+    background: rgba(65, 140, 235, 0.12);
+    border-color: rgba(65, 140, 235, 0.32);
+  }
+  &:disabled {
+    opacity: 1;
+    cursor: default;
   }
 `;
 
@@ -424,6 +517,7 @@ const panelWrapClass = css`
 const runtimeBodyClass = css`
   --runtime-comments-drawer-width: clamp(24rem, 31vw, 31rem);
   --runtime-comments-drawer-height: 42vh;
+  grid-row: 2;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 0rem;
@@ -531,6 +625,12 @@ export default function BuildRuntime({
   const getBuildAppNotificationPreferences = useAppContext(
     (v) => v.requestHelpers.getBuildAppNotificationPreferences
   );
+  const setBuildHeaderCollapsed = useAppContext(
+    (v) => v.requestHelpers.setBuildHeaderCollapsed
+  );
+  const onSetBuildHeaderCollapsed = useAppContext(
+    (v) => v.user.actions.onSetBuildHeaderCollapsed
+  );
   const onDeleteComment = useContentContext((v) => v.actions.onDeleteComment);
   const onEditComment = useContentContext((v) => v.actions.onEditComment);
   const onEditRewardComment = useContentContext(
@@ -554,6 +654,10 @@ export default function BuildRuntime({
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const userId = useKeyContext((v) => v.myState.userId);
+  const headerCollapsed = !!useAppContext(
+    (v) => v.user.state.myState.buildHeaderCollapsed
+  );
+  const [headerCollapsePending, setHeaderCollapsePending] = useState(false);
   const communityFunds = useKeyContext((v) => v.myState.communityFunds);
   const communityFundsLoaded = useKeyContext(
     (v) => v.myState.communityFundsLoaded
@@ -856,6 +960,27 @@ export default function BuildRuntime({
     setCommentsDrawerShown(shouldOpen);
     if (shouldOpen && !runtimeCommentsLoaded) {
       void loadRuntimeComments();
+    }
+  }
+
+  async function handleSetHeaderCollapsed(collapsed: boolean) {
+    if (headerCollapsePending) return;
+    if (!userId) {
+      // Guests have no server-stored preference to diverge from, so client
+      // state is the source of truth for the session.
+      onSetBuildHeaderCollapsed(collapsed);
+      return;
+    }
+    setHeaderCollapsePending(true);
+    try {
+      const data = await setBuildHeaderCollapsed(collapsed);
+      // Update shared user state only from the server-confirmed value.
+      onSetBuildHeaderCollapsed(!!data?.buildHeaderCollapsed);
+    } catch {
+      // Save failed: leave canonical state untouched so the toolbar never
+      // shows a preference that was never persisted.
+    } finally {
+      setHeaderCollapsePending(false);
     }
   }
 
@@ -1583,10 +1708,46 @@ export default function BuildRuntime({
     <ErrorBoundary componentPath="Build/Runtime">
       <div
         className={shellClass}
-        style={{ gridTemplateRows: isEmbedded ? '1fr' : undefined }}
+        style={{ gridTemplateRows: isEmbedded ? '0px 1fr' : undefined }}
       >
+        {!isEmbedded && headerCollapsed && (
+          <div className={headerRevealZoneClass}>
+            <button
+              type="button"
+              className={headerRevealHandleClass}
+              onClick={() => void handleSetHeaderCollapsed(false)}
+              disabled={headerCollapsePending}
+              title="Show toolbar"
+              aria-label="Show toolbar"
+            >
+              <Icon
+                icon={headerCollapsePending ? 'spinner' : 'chevron-down'}
+                pulse={headerCollapsePending}
+              />
+            </button>
+          </div>
+        )}
         {!isEmbedded && (
-          <div className={headerClass}>
+          <div
+            className={`${headerClass}${
+              headerCollapsed
+                ? ` ${headerCollapsibleClass} ${headerHiddenClass}`
+                : ''
+            }`}
+          >
+            <button
+              type="button"
+              className={headerToggleClass}
+              onClick={() => void handleSetHeaderCollapsed(true)}
+              disabled={headerCollapsePending}
+              title="Hide toolbar"
+              aria-label="Hide toolbar"
+            >
+              <Icon
+                icon={headerCollapsePending ? 'spinner' : 'chevron-up'}
+                pulse={headerCollapsePending}
+              />
+            </button>
             <div className={headerTopRowClass}>
               <div className={headerButtonGroupClass}>
                 <button

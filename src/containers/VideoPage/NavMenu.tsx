@@ -425,10 +425,17 @@ export default function NavMenu({
   }
 
   async function handleToggleHideWatched() {
+    if (filtering) return;
     setFiltering(true);
-    const hideWatched = await toggleHideWatched();
-    onToggleHideWatched(hideWatched);
-    setFiltering(false);
+    try {
+      // Update shared user state only from the server-confirmed value.
+      const hideWatched = await toggleHideWatched();
+      onToggleHideWatched(hideWatched);
+    } catch (err) {
+      console.error('Failed to save hide-watched preference:', err);
+    } finally {
+      setFiltering(false);
+    }
   }
 
   async function handleLoadMorePlaylistVideos() {

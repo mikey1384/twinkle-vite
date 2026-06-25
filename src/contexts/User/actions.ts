@@ -19,6 +19,12 @@ export default function UserActions(dispatch: Dispatch) {
         mode
       });
     },
+    onSetBuildHeaderCollapsed(collapsed: boolean) {
+      return dispatch({
+        type: 'SET_BUILD_HEADER_COLLAPSED',
+        collapsed
+      });
+    },
     onClearUserSearch() {
       return dispatch({
         type: 'CLEAR_USER_SEARCH'

@@ -40,6 +40,14 @@ export default function UserReducer(
             action.mode === 'favorites' ? 'favorites' : 'recent'
         }
       };
+    case 'SET_BUILD_HEADER_COLLAPSED':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          buildHeaderCollapsed: !!action.collapsed
+        }
+      };
     case 'CLEAR_USER_SEARCH':
       return {
         ...state,

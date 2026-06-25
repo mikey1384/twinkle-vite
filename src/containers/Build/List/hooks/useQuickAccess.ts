@@ -80,6 +80,7 @@ export default function useQuickAccess({
   >(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [savingMode, setSavingMode] = useState(false);
   const [error, setError] = useState('');
   const [modalMode, setModalMode] = useState<BuildQuickAccessMode | null>(null);
   const [modalPage, setModalPage] = useState(0);
@@ -190,6 +191,7 @@ export default function useQuickAccess({
     error,
     loading,
     loadingMore,
+    savingMode,
     modalBuilds,
     modalCursor,
     modalMode,
@@ -487,14 +489,20 @@ export default function useQuickAccess({
   }
 
   async function handleModeChange(mode: BuildQuickAccessMode) {
-    if (mode === quickAccessMode) {
+    if (mode === quickAccessMode || savingMode) {
       return;
     }
-    onChangeBuildQuickAccessMode(mode);
+    setSavingMode(true);
     try {
-      await setBuildQuickAccessMode(mode);
+      const data = await setBuildQuickAccessMode(mode);
+      const confirmedMode =
+        data?.buildQuickAccessMode === 'favorites' ? 'favorites' : 'recent';
+      // Update shared user state only from the server-confirmed value.
+      onChangeBuildQuickAccessMode(confirmedMode);
     } catch (err) {
       console.error('Failed to save build quick access preference:', err);
+    } finally {
+      setSavingMode(false);
     }
   }
 }

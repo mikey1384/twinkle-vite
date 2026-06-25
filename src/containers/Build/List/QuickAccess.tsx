@@ -212,6 +212,7 @@ export function BuildQuickAccessStrip({
   error,
   hasMore,
   loading,
+  savingMode,
   openButtonStyle,
   onModeChange,
   onFavoriteChange,
@@ -226,6 +227,7 @@ export function BuildQuickAccessStrip({
   error: string;
   hasMore: boolean;
   loading: boolean;
+  savingMode: boolean;
   openButtonStyle?: React.CSSProperties;
   onModeChange: (mode: BuildQuickAccessMode) => void;
   onFavoriteChange: (
@@ -291,7 +293,12 @@ export function BuildQuickAccessStrip({
           Quick Access
         </h2>
         <div className={quickAccessHeaderActionsClass}>
-          <div className={quickAccessFilterWrapClass}>
+          <div
+            className={quickAccessFilterWrapClass}
+            style={
+              savingMode ? { opacity: 0.7, pointerEvents: 'none' } : undefined
+            }
+          >
             <TabFilter
               activeTab={activeMode}
               color={color}
@@ -300,6 +307,9 @@ export function BuildQuickAccessStrip({
               tabs={buildQuickAccessTabs}
             />
           </div>
+          {savingMode ? (
+            <Icon icon="spinner" pulse style={{ color: '#1d4ed8' }} />
+          ) : null}
           {moreButtonShown ? (
             <button
               type="button"

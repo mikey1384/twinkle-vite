@@ -38,6 +38,7 @@ export const initialMyState = {
   canPinPlaylists: false,
   collectType: '',
   buildQuickAccessMode: 'recent',
+  buildHeaderCollapsed: false,
   hideWatched: false,
   isAdmin: false,
   lastChatPath: '',

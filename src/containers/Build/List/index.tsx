@@ -329,6 +329,7 @@ export default function BuildList({
     error: quickAccessError,
     loading: quickAccessLoading,
     loadingMore: quickAccessLoadingMore,
+    savingMode: quickAccessSavingMode,
     modalBuilds: quickAccessModalBuilds,
     modalCursor: quickAccessModalCursor,
     modalMode: quickAccessModalMode,
@@ -753,6 +754,7 @@ export default function BuildList({
             error={quickAccessError}
             hasMore={Boolean(activeQuickAccessCursor)}
             loading={quickAccessLoading}
+            savingMode={quickAccessSavingMode}
             openButtonStyle={quickAccessOpenButtonStyle}
             onModeChange={handleQuickAccessModeChange}
             onOpenBuild={handleOpenQuickAccessBuild}

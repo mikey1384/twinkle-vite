@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 
@@ -9,21 +9,16 @@ import { getSectionFromPathname } from '~/helpers';
 import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';
-import useAPISocket from './hooks/useAPISocket';
+import useIsAIChat from '../hooks/useIsAIChat';
 
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
-import { userIdRef } from '~/constants/state';
 
 import {
-  CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID,
   VOCAB_CHAT_TYPE,
   AI_CARD_CHAT_TYPE,
   DEFAULT_PROFILE_THEME
 } from '~/constants/defaultValues';
-
-import { User } from '~/types';
 
 import {
   useViewContext,
@@ -36,7 +31,6 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 const BalanceModal = lazyWithRetry(() => import('./BalanceModal'));
 
 interface HeaderProps {
-  onInit: () => void;
   onMobileMenuOpen: any;
   style?: React.CSSProperties;
 }
@@ -58,7 +52,6 @@ const contentSubsectionTitles: Record<string, string> = {
 };
 
 export default function Header({
-  onInit,
   onMobileMenuOpen,
   style = {}
 }: HeaderProps) {
@@ -73,7 +66,6 @@ export default function Header({
   const searchFilter = useKeyContext((v) => v.myState.searchFilter);
   const userId = useKeyContext((v) => v.myState.userId);
   const loggedIn = useKeyContext((v) => v.myState.loggedIn);
-  const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const viewerTheme =
     useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;
   const headerRole = useRoleColor('header', {
@@ -82,7 +74,6 @@ export default function Header({
   });
   const headerColor = headerRole.getColor() || Color.white();
   const chatType = useChatContext((v) => v.state.chatType);
-  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
@@ -97,68 +88,12 @@ export default function Header({
     (v) => v.actions.onShowUpdateNotice
   );
 
-  const currentPathId = useMemo(
-    () => pathname?.split('chat/')[1]?.split('/')?.[0],
-    [pathname]
-  );
-
-  const subchannelPath = useMemo(() => {
-    if (!currentPathId) return null;
-    const [, result] = pathname?.split(currentPathId)?.[1]?.split('/') || [];
-    return result;
-  }, [currentPathId, pathname]);
-
-  const currentChannel = useMemo<{
-    subchannelObj: Record<string, any>;
-    twoPeople: boolean;
-    members: User[];
-  }>(
-    () => channelsObj[selectedChannelId] || {},
-    [channelsObj, selectedChannelId]
-  );
-
-  const subchannelId = useMemo(() => {
-    if (!subchannelPath || !currentChannel?.subchannelObj) return null;
-    for (const subchannel of Object.values(currentChannel?.subchannelObj)) {
-      if (subchannel.path === subchannelPath) {
-        return subchannel.id;
-      }
-    }
-    return null;
-  }, [currentChannel?.subchannelObj, subchannelPath]);
-
   const totalRewardedTwinkles = myRewardStats?.totalRewardedTwinkles || 0;
 
   const totalRewardedTwinkleCoins =
     myRewardStats?.totalRewardedTwinkleCoins || 0;
 
-  const partner = useMemo(() => {
-    return currentChannel?.twoPeople
-      ? currentChannel?.members?.filter(
-          (member) => Number(member.id) !== userId
-        )?.[0]
-      : null;
-  }, [currentChannel?.members, currentChannel?.twoPeople, userId]);
-
-  const isAIChat = useMemo(() => {
-    return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
-  }, [partner?.id]);
-
-  useAPISocket({
-    chatType,
-    currentPathId,
-    channelsObj,
-    isAIChat,
-    onInit,
-    pathname,
-    selectedChannelId,
-    subchannelId,
-    subchannelPath
-  });
-
-  useEffect(() => {
-    userIdRef.current = userId;
-  }, [userId]);
+  const isAIChat = useIsAIChat();
 
   useEffect(() => {
     let cancelled = false;
