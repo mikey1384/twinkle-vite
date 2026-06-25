@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
@@ -397,6 +398,9 @@ const actionRowClass = css`
 const favoriteActionClass = css`
   height: 3.2rem;
   width: 100%;
+  &&& {
+    box-shadow: none;
+  }
 
   @media (max-width: ${mobileMaxWidth}) {
     height: 2.75rem;
@@ -1011,6 +1015,31 @@ export default function BuildWideCard({
                 onStart={handleFavoriteStart}
               />
             ) : null}
+            <span
+              onClick={stopEvent}
+              onKeyDown={stopEvent}
+              style={{ display: 'block', width: '100%' }}
+            >
+              <ShareButton
+                variant="full"
+                buttonVariant="ghost"
+                buttonTone="flat"
+                uppercase={false}
+                linkPath={`/app/${buildId}`}
+                buttonStyle={{
+                  height: '3.2rem',
+                  width: '100%',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(100, 116, 139, 0.22)',
+                  background: '#fff',
+                  color: '#334155',
+                  fontSize: '1.15rem',
+                  fontWeight: 950,
+                  padding: '0 0.82rem',
+                  boxShadow: 'none'
+                }}
+              />
+            </span>
             {deleteActionShown ? (
               <button
                 type="button"

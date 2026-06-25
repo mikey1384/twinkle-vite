@@ -16,6 +16,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import LikeButton from '~/components/Buttons/LikeButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import RichText from '~/components/Texts/RichText';
 import RewardStatus from '~/components/RewardStatus';
@@ -885,6 +886,13 @@ function Comment({
                                     hideLabel={deviceIsMobile || deviceIsTablet}
                                   />
                                 )}
+                                <ShareButton
+                                  variant="compact"
+                                  buttonVariant="solid"
+                                  color="darkerGray"
+                                  linkPath={`/comments/${commentId}`}
+                                  style={{ marginLeft: '1rem' }}
+                                />
                               </div>
                             ) : null}
                           </div>

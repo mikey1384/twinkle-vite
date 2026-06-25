@@ -540,6 +540,27 @@ export default function ContentPanel({
                       contentObj={rootObj}
                     />
                   )}
+                {contentType === 'comment' &&
+                  appliedRootType === 'mission' &&
+                  rootObj?.missionType && (
+                    <ContentListItem
+                      hideSideBordersOnMobile
+                      noTopBorderRadius
+                      style={{
+                        position: 'relative',
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                      expandable
+                      contentObj={rootObj}
+                      onClick={() =>
+                        navigate(
+                          rootObj.rootMission?.missionType
+                            ? `/missions/${rootObj.rootMission.missionType}/${rootObj.missionType}`
+                            : `/missions/${rootObj.missionType}`
+                        )
+                      }
+                    />
+                  )}
                 {(contentType === 'comment' || contentType === 'subject') &&
                   appliedRootType === 'url' &&
                   !contentState.rootObj?.notFound &&

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
@@ -543,8 +544,19 @@ export default function Details({
                   text-align: right;
                 `}
               />
-              {/* Row 4: Edit/Delete */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              {/* Row 4: Share + Edit/Delete */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '1rem'
+                }}
+              >
+                <ShareButton
+                  buttonVariant="solid"
+                  color="darkerGray"
+                  linkPath={`/videos/${videoId}`}
+                />
                 {editButtonShown && !isEditing && (
                   <DropdownButton
                     variant="solid"

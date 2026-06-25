@@ -731,9 +731,10 @@ export default function RootContent({
     return (
       (contentType === 'subject' && rootId) ||
       (filePath && userId) ||
-      contentType === 'video'
+      contentType === 'video' ||
+      (contentType === 'mission' && !!thumbUrl)
     );
-  }, [contentType, filePath, rootId, userId]);
+  }, [contentType, filePath, rootId, thumbUrl, userId]);
 
   return (
     <div
@@ -791,6 +792,13 @@ export default function RootContent({
           content={content}
           contentId={contentId}
           rewardLevel={rewardLevel}
+        />
+      )}
+      {contentType === 'mission' && thumbUrl && (
+        <Thumbnail
+          className="thumb"
+          thumbUrl={thumbUrl}
+          playButtonShown={false}
         />
       )}
       {contentType === 'subject' && rootId && (

@@ -10,16 +10,12 @@ import type { MyTopic } from './types';
 
 export default function ManagePromptRow({
   topic,
-  copiedId,
   updatingTopicId,
-  onCopyEmbed,
   onToggleShare,
   onOpen
 }: {
   topic: MyTopic;
-  copiedId: number | null;
   updatingTopicId: number | null;
-  onCopyEmbed: (topicId: number) => void;
   onToggleShare: (topic: MyTopic) => void;
   onOpen: (topicId: number) => void;
 }) {
@@ -64,8 +60,6 @@ export default function ManagePromptRow({
               cloneCount={topic.cloneCount}
               messageCount={topic.messageCount}
               numComments={topic.numComments}
-              copiedId={copiedId}
-              onCopyEmbed={onCopyEmbed}
             />
           )}
         </div>

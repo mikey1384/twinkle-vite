@@ -2,6 +2,7 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import CloneButtons from '~/components/Buttons/CloneButtons';
 import Icon from '~/components/Icon';
+import ShareButton from '~/components/Buttons/ShareButton';
 import Input from '~/components/Texts/Input';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -42,23 +43,19 @@ function SharedPromptCard({
   topic,
   isOwnTopic,
   userId,
-  copiedId,
   commentText,
   commentSubmitting,
   onCommentTextChange,
   onCommentSubmit,
-  onCopyEmbed,
   onCloneSuccess
 }: {
   topic: SharedTopic;
   isOwnTopic: boolean;
   userId: number;
-  copiedId: number | null;
   commentText: string;
   commentSubmitting: boolean;
   onCommentTextChange: (text: string) => void;
   onCommentSubmit: () => void;
-  onCopyEmbed: () => void;
   onCloneSuccess: (data: {
     sharedTopicId: number;
     target: 'zero' | 'ciel';
@@ -151,15 +148,10 @@ function SharedPromptCard({
                   <span className={boldClass}>{topic.numComments || 0}</span>
                   {Number(topic.numComments) === 1 ? 'comment' : 'comments'}
                 </div>
-                <div
-                  className={`${statPillClass} ${copyPillClass}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopyEmbed();
-                  }}
-                >
-                  <Icon icon={copiedId === topic.id ? 'check' : 'copy'} />
-                </div>
+                <ShareButton
+                  variant="compact"
+                  linkPath={`/shared-prompts/${topic.id}`}
+                />
               </div>
             </div>
           </div>
@@ -275,15 +267,6 @@ const statPillClass = css`
   border: 1px solid var(--ui-border);
   font-size: 1.1rem;
   font-weight: 500;
-`;
-
-const copyPillClass = css`
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  &:hover {
-    background: ${Color.highlightGray(0.4)};
-    border-color: ${Color.darkerBorderGray()};
-  }
 `;
 
 const titleClass = css`

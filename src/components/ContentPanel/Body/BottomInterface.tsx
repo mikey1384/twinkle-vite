@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import LikeButton from '~/components/Buttons/LikeButton';
 import StarButton from '~/components/Buttons/StarButton';
 import CloneButtons from '~/components/Buttons/CloneButtons';
@@ -7,6 +7,7 @@ import Likers from '~/components/Likers';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
 import { css } from '@emotion/css';
@@ -33,7 +34,6 @@ import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import { normalizeViewCount } from '~/helpers/viewCount';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
-const copiedLabel = 'Copied!';
 const nonEditableContentTypes = ['build', 'pass', 'xpChange', 'sharedTopic'];
 
 const bottomInterfaceCSS = css`
@@ -188,7 +188,23 @@ export default function BottomInterface({
     viewCount,
     views
   } = contentObj;
-  const [copiedShown, setCopiedShown] = useState(false);
+  const sharePath = useMemo(() => {
+    const contentPath =
+      contentType === 'build'
+        ? `app/${contentId}`
+        : `${
+            contentType === 'aiStory'
+              ? 'ai-storie'
+              : contentType === 'url'
+                ? 'link'
+                : contentType === 'sharedTopic'
+                  ? 'shared-prompt'
+                  : contentType === 'dailyReflection'
+                    ? 'daily-reflection'
+                    : contentType
+          }s/${contentId}`;
+    return `/${contentPath}`;
+  }, [contentType, contentId]);
   const isRewardedByUser = useMemo(() => {
     return (
       rewards.filter(
@@ -476,33 +492,13 @@ export default function BottomInterface({
             contentType !== 'pass' &&
             contentType !== 'xpChange' &&
             contentType !== 'sharedTopic' && (
-              <div style={{ position: 'relative' }}>
-                <Button
-                  onClick={() => {
-                    setCopiedShown(true);
-                    handleCopyToClipboard();
-                    setTimeout(() => setCopiedShown(false), 700);
-                  }}
-                  variant="ghost"
-                >
-                  <Icon icon="copy" />
-                </Button>
-                <div
-                  className={css`
-                    z-index: 300;
-                    display: ${copiedShown ? 'block' : 'none'};
-                    margin-top: 0.2rem;
-                    position: absolute;
-                    background: #fff;
-                    font-size: 1.2rem;
-                    padding: 1rem;
-                    word-break: keep-all;
-                    border: 1px solid var(--ui-border);
-                  `}
-                >
-                  {copiedLabel}
-                </div>
-              </div>
+              <ShareButton
+                variant="compact"
+                buttonVariant="solid"
+                buttonTone="raised"
+                color="darkerGray"
+                linkPath={sharePath}
+              />
             )}
           {editButtonShown &&
           !isNotification &&
@@ -642,29 +638,6 @@ export default function BottomInterface({
     }
     if (!isUnlike && !commentsShown) {
       onExpandComments();
-    }
-  }
-
-  async function handleCopyToClipboard() {
-    const contentPath =
-      contentType === 'build'
-        ? `app/${contentId}`
-        : `${
-            contentType === 'aiStory'
-              ? 'ai-storie'
-              : contentType === 'url'
-                ? 'link'
-                : contentType === 'sharedTopic'
-                  ? 'shared-prompt'
-                  : contentType === 'dailyReflection'
-                    ? 'daily-reflection'
-                    : contentType
-          }s/${contentId}`;
-    const contentUrl = `https://www.twin-kle.com/${contentPath}`;
-    try {
-      await navigator.clipboard.writeText(contentUrl);
-    } catch (err) {
-      console.error(err);
     }
   }
 

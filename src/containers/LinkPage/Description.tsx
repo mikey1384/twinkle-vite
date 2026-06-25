@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import RichText from '~/components/Texts/RichText';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
@@ -230,6 +231,11 @@ export default function Description({
 
   return (
     <div style={{ position: 'relative', padding: '2rem 1rem 0 1rem' }}>
+      <ShareButton
+        variant="compact"
+        linkPath={`/links/${linkId}`}
+        style={{ position: 'absolute', top: '1rem', left: '1rem' }}
+      />
       {editButtonShown && !isEditing && (
         <DropdownButton
           variant="solid"

@@ -1,4 +1,10 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -8,6 +14,8 @@ import { isMobile } from '~/helpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
+const pointerEventsSupported =
+  typeof window !== 'undefined' && 'PointerEvent' in window;
 
 function getDropdownPortalTarget() {
   if (typeof document === 'undefined') return null;
@@ -71,6 +79,31 @@ export default function DropdownList({
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const { x, y, width, height } = dropdownContext;
   useOutsideClick(MenuRef, onHideMenu, { closeOnScroll: deviceIsMobile });
+
+  // The shared outside-click coordinator listens in the bubble phase, which a
+  // Modal swallows (it stopPropagation()s pointer/mouse/touch events to isolate
+  // itself). A capture-phase listener fires top-down before that stop, so the
+  // menu still dismisses when open inside a modal. We never preventDefault, so
+  // click-through to the underlying target is preserved exactly as before.
+  const onHideMenuRef = useRef(onHideMenu);
+  useEffect(() => {
+    onHideMenuRef.current = onHideMenu;
+  }, [onHideMenu]);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    function handleCaptureOutside(event: Event) {
+      const menu = MenuRef.current as HTMLElement | null;
+      const target = event.target as Node | null;
+      if (!menu || (target && menu.contains(target))) return;
+      // Defer so the underlying tap/click reaches its target first (iOS-safe).
+      requestAnimationFrame(() => onHideMenuRef.current?.());
+    }
+    const eventName = pointerEventsSupported ? 'pointerdown' : 'mousedown';
+    document.addEventListener(eventName, handleCaptureOutside, true);
+    return () => {
+      document.removeEventListener(eventName, handleCaptureOutside, true);
+    };
+  }, []);
   const displaysToTheRight = useMemo(() => {
     return window.innerWidth / 2 - x > 0;
   }, [x]);

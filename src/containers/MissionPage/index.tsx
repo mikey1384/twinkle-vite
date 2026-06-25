@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import GoBack from '~/components/GoBack';
+import ShareButton from '~/components/Buttons/ShareButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -58,6 +59,17 @@ export default function MissionPage() {
   const missionId = useMemo(() => {
     return missionTypeIdHash?.[missionType];
   }, [missionTypeIdHash, missionType]);
+
+  const missionSharePath = useMemo(() => {
+    // Preserve a nested task segment (e.g. /missions/<missionType>/<taskType>)
+    // so shares from a task page point at the task, not the parent mission.
+    // Management sub-routes (manage/workshop/shared) aren't real task types, so
+    // validating against missionTypeIdHash excludes them.
+    const subSegment = location.pathname.split('/')[3] || '';
+    return subSegment && missionTypeIdHash?.[subSegment]
+      ? `/missions/${missionType}/${subSegment}`
+      : `/missions/${missionType}`;
+  }, [location.pathname, missionType, missionTypeIdHash]);
 
   useEffect(() => {
     if (missionId && userId) {
@@ -173,7 +185,9 @@ export default function MissionPage() {
           <div
             className={css`
               display: flex;
-              flex-direction: column;
+              flex-direction: row;
+              align-items: center;
+              justify-content: space-between;
               gap: 1rem;
               width: ${hasSideMenu ? '85%' : '75%'};
               margin: 1rem 1.5rem 0 1.5rem;
@@ -194,6 +208,7 @@ export default function MissionPage() {
               to="/missions"
               text="Missions"
             />
+            <ShareButton linkPath={missionSharePath} />
           </div>
         </div>
         <div

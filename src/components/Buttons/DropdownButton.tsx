@@ -43,6 +43,7 @@ export default function DropdownButton({
   xAdjustment?: number;
   variant?: 'solid' | 'soft' | 'outline' | 'ghost';
   tone?: 'flat' | 'raised';
+  uppercase?: boolean;
 }) {
   const [dropdownContext, setDropdownContext] = useState(null);
   const coolDownRef: React.RefObject<any> = useRef(null);

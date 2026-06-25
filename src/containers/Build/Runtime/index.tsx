@@ -14,6 +14,7 @@ import ViewCount from '~/components/ViewCount';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
 import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
@@ -1779,6 +1780,24 @@ export default function BuildRuntime({
                 </div>
               </div>
               <div className={commentsCtaSlotClass}>
+                <ShareButton
+                  variant="compact"
+                  buttonVariant="ghost"
+                  icon="share"
+                  color="logoBlue"
+                  iconSize="1x"
+                  linkPath={`/app/${build.id}`}
+                  buttonStyle={{
+                    borderRadius: '999px',
+                    width: '2.65rem',
+                    height: '2.65rem',
+                    padding: 0,
+                    fontSize: '1.1rem',
+                    background: 'rgba(65, 140, 235, 0.08)',
+                    border: '1px solid var(--ui-border)',
+                    color: '#1d4ed8'
+                  }}
+                />
                 <button
                   aria-label="Notification settings"
                   className={notificationSettingsButtonClass}

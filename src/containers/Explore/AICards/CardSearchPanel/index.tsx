@@ -6,6 +6,7 @@ import Button from '~/components/Button';
 import Checkbox from '~/components/Checkbox';
 import Icon from '~/components/Icon';
 import SwitchButton from '~/components/Buttons/SwitchButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
@@ -13,8 +14,6 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 
 const deviceIsMobile = isMobile(navigator);
-const singleColumnMaxWidth = '899px';
-
 const panelClass = css`
   width: 100%;
   font-size: 1.6rem;
@@ -251,33 +250,6 @@ const switchesSectionClass = css`
   }
 `;
 
-const embedClass = css`
-  grid-area: embed;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.8rem;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 1.3rem;
-  color: var(--role-search-color, ${Color.darkerGray()});
-  transition: color 0.15s ease, transform 0.15s ease;
-  justify-self: flex-end;
-  align-self: center;
-  width: max-content;
-  &:hover {
-    color: var(--search-panel-accent, ${Color.logoBlue()});
-    transform: translateY(-1px);
-  }
-  @media (max-width: ${singleColumnMaxWidth}) {
-    justify-content: center;
-    justify-self: center;
-  }
-  @media (min-width: 900px) and (max-width: 1259px) {
-    justify-self: center;
-  }
-`;
-
 const iconButtonClass = css`
   padding: 0.5rem;
   line-height: 0;
@@ -317,7 +289,6 @@ export default function CardSearchPanel({
   const location = useLocation();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
   const { themeName, themeRoles, accentColor } = useHomePanelVars();
 
@@ -547,30 +518,14 @@ export default function CardSearchPanel({
           />
         </div>
         {location.search && (
-          <div
-            className={embedClass}
-            onClick={() => {
-              setCopied(true);
-              handleCopyToClipboard();
-              setTimeout(() => setCopied(false), 1000);
-            }}
-          >
-            {copied ? <Icon icon="check" /> : <Icon icon="copy" />}
-            <span className="desktop">{copied ? 'Copied!' : 'Embed'}</span>
-          </div>
+          <ShareButton
+            variant="compact"
+            linkPath={`${location.pathname}${location.search}`}
+          />
         )}
       </div>
     </ScopedTheme>
   );
-
-  async function handleCopyToClipboard() {
-    const contentUrl = `![](https://www.twin-kle.com${location.pathname}${location.search})`;
-    try {
-      await navigator.clipboard.writeText(contentUrl);
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
   function handleMyCardsClick() {
     const searchParams = new URLSearchParams(location.search);

@@ -85,7 +85,6 @@ export default function SystemPromptShared() {
   const [commentSubmitting, setCommentSubmitting] = useState<{
     [key: number]: boolean;
   }>({});
-  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   // Track the previous sortBy to detect actual sort changes
   const prevSortByRef = React.useRef(sortBy);
@@ -331,7 +330,6 @@ export default function SystemPromptShared() {
                   topic={topic}
                   isOwnTopic={topic.userId === userId}
                   userId={userId}
-                  copiedId={copiedId}
                   commentText={commentTexts[topic.id] || ''}
                   commentSubmitting={commentSubmitting[topic.id] || false}
                   onCommentTextChange={(text: string) =>
@@ -341,7 +339,6 @@ export default function SystemPromptShared() {
                     }))
                   }
                   onCommentSubmit={() => handleCommentSubmit(topic.id)}
-                  onCopyEmbed={() => handleCopyEmbed(topic.id)}
                   onCloneSuccess={handleCloneSuccess}
                 />
               </div>
@@ -499,17 +496,6 @@ export default function SystemPromptShared() {
       );
     } finally {
       setCommentSubmitting((prev) => ({ ...prev, [topicId]: false }));
-    }
-  }
-
-  async function handleCopyEmbed(topicId: number) {
-    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
-    try {
-      await navigator.clipboard.writeText(embedUrl);
-      setCopiedId(topicId);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
     }
   }
 

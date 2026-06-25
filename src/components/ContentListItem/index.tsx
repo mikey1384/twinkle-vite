@@ -7,6 +7,7 @@ import { useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 import { placeholderHeights } from '~/constants/state';
+import { returnMissionThumb } from '~/constants/defaultValues';
 
 function ContentListItem({
   onClick,
@@ -133,10 +134,16 @@ function ContentListItem({
     sourceBuildId,
     contributionStatus,
     rootBuildSourceBuildId,
+    missionType,
     userId: buildUserId,
     uploader = {}
   } = currentContent;
-  const displayThumbUrl = thumbUrl || thumbnailUrl;
+  const displayThumbUrl =
+    thumbUrl ||
+    thumbnailUrl ||
+    (contentType === 'mission' && missionType
+      ? returnMissionThumb(missionType)
+      : undefined);
   const isBuildItem = contentType === 'build';
   const placeholderHeightKey = `list-item-${contentType}-${contentId}`;
   const previousPlaceholderHeight = useMemo(

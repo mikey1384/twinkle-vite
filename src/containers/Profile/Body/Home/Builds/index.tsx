@@ -219,6 +219,9 @@ export default function Builds({
     return null;
   }
 
+  const loadMoreButtonShown =
+    !isExpanded && displayedBuilds.length > defaultVisibleBuildCount;
+
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Builds">
       <SectionPanel
@@ -226,9 +229,7 @@ export default function Builds({
         title={panelTitle}
         loaded={!loading}
         customColorTheme={selectedTheme}
-        loadMoreButtonShown={
-          !isExpanded && displayedBuilds.length > defaultVisibleBuildCount
-        }
+        loadMoreButtonShown={loadMoreButtonShown}
         onLoadMore={() =>
           onSetPinnedBuildsExpanded({
             username: profile.username,
@@ -303,7 +304,9 @@ export default function Builds({
           ))}
           {/* Build Studio is auth-gated (LoggedOutPrompt), so the link is a
               dead end for logged-out visitors */}
-          {viewerId > 0 && displayedBuilds.length > 0 ? (
+          {viewerId > 0 &&
+          displayedBuilds.length > 0 &&
+          !loadMoreButtonShown ? (
             <div
               className={css`
                 display: flex;
@@ -314,8 +317,8 @@ export default function Builds({
               <Link
                 to={`/build?owner=${encodeURIComponent(profile.username)}`}
                 className={css`
-                  font-size: 1.3rem;
-                  font-weight: 700;
+                  font-size: 1.5rem;
+                  font-weight: bold;
                 `}
               >
                 See all builds by {profile.username}

@@ -28,7 +28,6 @@ export default function MyTopicsManager() {
   const [sharedSearchResults, setSharedSearchResults] = useState<MyTopic[]>([]);
   const [sharedSearchLoadMoreButton, setSharedSearchLoadMoreButton] =
     useState(false);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingSharedPrompts, setLoadingSharedPrompts] = useState(true);
   const [loadingSharedSearch, setLoadingSharedSearch] = useState(false);
@@ -379,9 +378,7 @@ export default function MyTopicsManager() {
                     <SharedPromptRow
                       key={topic.id}
                       topic={topic}
-                      copiedId={copiedId}
                       updatingTopicId={updatingTopicId}
-                      onCopyEmbed={handleCopyEmbed}
                       onToggleShare={handleToggleShare}
                       onOpen={handleOpenSharedPrompt}
                     />
@@ -464,9 +461,7 @@ export default function MyTopicsManager() {
                   <ManagePromptRow
                     key={topic.id}
                     topic={topic}
-                    copiedId={copiedId}
                     updatingTopicId={updatingTopicId}
-                    onCopyEmbed={handleCopyEmbed}
                     onToggleShare={handleToggleShare}
                     onOpen={handleOpenSharedPrompt}
                   />
@@ -775,14 +770,4 @@ export default function MyTopicsManager() {
     }
   }
 
-  async function handleCopyEmbed(topicId: number) {
-    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
-    try {
-      await navigator.clipboard.writeText(embedUrl);
-      setCopiedId(topicId);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  }
 }

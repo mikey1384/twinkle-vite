@@ -7,6 +7,7 @@ import ImageModal from '~/components/Modals/ImageModal';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import ProfilePicModal from '~/components/Modals/ProfilePicModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import ShareButton from '~/components/Buttons/ShareButton';
 import UserTitle from '~/components/Texts/UserTitle';
 import AchievementBadges from '~/components/AchievementBadges';
 import ChessLevelBadge from '~/components/ChessLevelBadge';
@@ -233,6 +234,20 @@ export default function Cover({
               }}
             />
           </div>
+          {!colorSelectorShown && (
+            <ShareButton
+              variant="full"
+              buttonVariant="solid"
+              color="black"
+              linkPath={`/users/${username}`}
+              style={{
+                position: 'absolute',
+                bottom: profile.id === userId ? '5.5rem' : '1rem',
+                right: '1rem',
+                zIndex: 15
+              }}
+            />
+          )}
           {profile.id === userId && (
             <div
               className={css`

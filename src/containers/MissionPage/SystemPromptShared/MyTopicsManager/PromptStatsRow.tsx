@@ -1,22 +1,19 @@
 import React from 'react';
-import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
+import ShareButton from '~/components/Buttons/ShareButton';
+import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 export default function PromptStatsRow({
   topicId,
   cloneCount,
   messageCount,
-  numComments,
-  copiedId,
-  onCopyEmbed
+  numComments
 }: {
   topicId: number;
   cloneCount?: number;
   messageCount?: number;
   numComments?: number;
-  copiedId: number | null;
-  onCopyEmbed: (topicId: number) => void;
 }) {
   return (
     <div className={statsRowClass}>
@@ -33,19 +30,9 @@ export default function PromptStatsRow({
         <span className={boldClass}>{numComments || 0}</span>
         {Number(numComments) === 1 ? 'comment' : 'comments'}
       </div>
-      <div
-        className={`${statPillClass} ${copyPillClass}`}
-        onClick={handleCopyClick}
-      >
-        <Icon icon={copiedId === topicId ? 'check' : 'copy'} />
-      </div>
+      <ShareButton variant="compact" linkPath={`/shared-prompts/${topicId}`} />
     </div>
   );
-
-  function handleCopyClick(e: React.MouseEvent) {
-    e.stopPropagation();
-    onCopyEmbed(topicId);
-  }
 }
 
 const statsRowClass = css`
@@ -68,15 +55,6 @@ const statPillClass = css`
   border: 1px solid var(--ui-border);
   font-size: 1.1rem;
   font-weight: 500;
-`;
-
-const copyPillClass = css`
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  &:hover {
-    background: ${Color.highlightGray(0.4)};
-    border-color: ${Color.darkerBorderGray()};
-  }
 `;
 
 const boldClass = css`

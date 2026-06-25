@@ -147,8 +147,14 @@ function Embedly({
   );
 
   useEffect(() => {
-    if (imageUrl !== '') {
-      setImageUrl(thumbUrlIsNotAvailable ? fallbackImage : thumbUrl);
+    // Populate the image as soon as a thumbnail (or confirmed fallback) is
+    // available — even if imageUrl is still '' from the initial render. The
+    // content-state thumbUrl/url for list items is loaded post-mount, so the
+    // previous `imageUrl !== ''` guard never copied the loaded thumb in and the
+    // preview stayed stuck on <Loading/> forever.
+    const resolvedImage = thumbUrlIsNotAvailable ? fallbackImage : thumbUrl;
+    if (resolvedImage && resolvedImage !== imageUrl) {
+      setImageUrl(resolvedImage);
     }
     const extractedVideoId = extractVideoIdFromTwinkleVideoUrl(url);
     if (extractedVideoId && contentType === 'chat') {

@@ -1,6 +1,7 @@
 import React from 'react';
 import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
+import MissionDetails from './MissionDetails';
 import UrlDetails from './UrlDetails';
 import AIStoryDetails from './AIStoryDetails';
 import DailyReflectionDetails from './DailyReflectionDetails';
@@ -88,6 +89,9 @@ export default function ContentDetails({
           title={title}
           uploader={uploader}
         />
+      )}
+      {contentType === 'mission' && (
+        <MissionDetails description={description} title={title} />
       )}
       {contentType === 'url' && (
         <UrlDetails

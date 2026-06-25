@@ -26,6 +26,7 @@ import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
 import AICardDetails from '~/components/AICardDetails';
+import ShareButton from '~/components/Buttons/ShareButton';
 
 type CardImageStage =
   | 'not_started'
@@ -141,7 +142,6 @@ export default function AICardModal({
   const [offersLoaded, setOffersLoaded] = useState(false);
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
   const [offerPrice, setOfferPrice] = useState(0);
-  const [copied, setCopied] = useState(false);
   const userSwitchedTab = useRef(false);
   const isMountedRef = useRef(true);
   const card = cardObj[cardId];
@@ -394,19 +394,11 @@ export default function AICardModal({
       }
       footer={
         <>
-          <Button
-            onClick={() => {
-              setCopied(true);
-              handleCopyToClipboard();
-              setTimeout(() => setCopied(false), 1000);
-            }}
-            variant="ghost"
-          >
-            {copied ? null : <Icon icon="copy" />}
-            <span style={{ marginLeft: copied ? 0 : '1rem' }}>
-              {copied ? 'Copied!' : 'Copy'}
-            </span>
-          </Button>
+          <ShareButton
+            variant="full"
+            buttonVariant="ghost"
+            linkPath={`/ai-cards/?cardId=${cardId}`}
+          />
           <div
             className={css`
               font-size: 1.5rem;
@@ -687,15 +679,6 @@ export default function AICardModal({
       )}
     </Modal>
   );
-
-  async function handleCopyToClipboard() {
-    const contentUrl = `![](https://www.twin-kle.com/ai-cards/?cardId=${cardId})`;
-    try {
-      await navigator.clipboard.writeText(contentUrl);
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
   async function handleWithdrawOffer() {
     const coins = await deleteAICardOffer({

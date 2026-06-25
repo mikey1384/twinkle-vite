@@ -10,7 +10,7 @@ import ProgressBar from '~/components/ProgressBar';
 import ProfilePic from '~/components/ProfilePic';
 import UserPopup from '~/components/UserPopup';
 import UserListModal from '~/components/Modals/UserListModal';
-import DropdownButton from '~/components/Buttons/DropdownButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import { Link } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -81,8 +81,6 @@ export default function ItemPanel({
   const [dropdownContext, setDropdownContext] =
     useState<DropdownContext | null>(null);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copiedTimerRef: React.RefObject<any> = useRef(null);
 
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const achievementType = useMemo(() => {
@@ -96,12 +94,6 @@ export default function ItemPanel({
     ? `/achievements/${achievementType}`
     : '';
   const shareShown = !isThumb && !isNotification && !!achievementType;
-
-  useEffect(() => {
-    return () => {
-      clearTimeout(copiedTimerRef.current);
-    };
-  }, []);
   const ProfilePicRef = useRef(null);
   const showTimerRef: React.RefObject<any> = useRef(0);
   const hideTimerRef: React.RefObject<any> = useRef(0);
@@ -274,32 +266,9 @@ export default function ItemPanel({
             }
           `}
         >
-          <DropdownButton
-            icon={copied ? 'check' : 'share'}
-            text={copied ? 'Copied!' : 'Share'}
-            variant="soft"
-            color={copied ? 'green' : 'darkerGray'}
+          <ShareButton
+            linkPath={achievementPath}
             buttonStyle={{ fontSize: '1.1rem' }}
-            menuProps={[
-              {
-                label: (
-                  <>
-                    <Icon icon="link" />
-                    <span style={{ marginLeft: '1rem' }}>Copy link</span>
-                  </>
-                ),
-                onClick: handleCopyLink
-              },
-              {
-                label: (
-                  <>
-                    <Icon icon="code" />
-                    <span style={{ marginLeft: '1rem' }}>Copy embed</span>
-                  </>
-                ),
-                onClick: handleCopyEmbed
-              }
-            ]}
           />
         </div>
       )}
@@ -676,27 +645,4 @@ export default function ItemPanel({
       )}
     </div>
   );
-
-  async function handleCopyLink() {
-    await copyToClipboard(
-      `${window.location.origin}/achievements/${achievementType}`
-    );
-  }
-
-  async function handleCopyEmbed() {
-    await copyToClipboard(
-      `![](${window.location.origin}/achievements/${achievementType})`
-    );
-  }
-
-  async function copyToClipboard(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      clearTimeout(copiedTimerRef.current);
-      copiedTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  }
 }

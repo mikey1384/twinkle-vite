@@ -10,6 +10,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import LikeButton from '~/components/Buttons/LikeButton';
+import ShareButton from '~/components/Buttons/ShareButton';
 import ReplyInputArea from './ReplyInputArea';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import RichText from '~/components/Texts/RichText';
@@ -646,6 +647,13 @@ function Reply({
                               }
                             />
                           )}
+                          <ShareButton
+                            variant="compact"
+                            buttonVariant="solid"
+                            color="darkerGray"
+                            linkPath={`/comments/${reply.id}`}
+                            style={{ marginLeft: '1rem' }}
+                          />
                         </div>
                       ) : null}
                     </div>
