@@ -17,7 +17,6 @@ export default function OfferPriceListItem({
   offerers,
   hiddenOfferIds,
   onHideOffer,
-  onUnhideOffer,
   ownerId,
   onSetActiveTab,
   onUserMenuShownChange,
@@ -29,7 +28,6 @@ export default function OfferPriceListItem({
   offerers: any[];
   hiddenOfferIds: number[];
   onHideOffer: (offerId: number) => Promise<void>;
-  onUnhideOffer: (offerId: number) => Promise<void>;
   ownerId: number;
   onSetActiveTab: (v: string) => void;
   onUserMenuShownChange: (v: boolean) => void;
@@ -105,7 +103,6 @@ export default function OfferPriceListItem({
           cardId={cardId}
           hiddenOfferIds={hiddenOfferIds}
           onHideOffer={onHideOffer}
-          onUnhideOffer={onUnhideOffer}
           onHide={() => setOfferDetailModalShown(false)}
           ownerId={ownerId}
           onSetActiveTab={onSetActiveTab}

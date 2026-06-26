@@ -114,9 +114,6 @@ export default function AICardModal({
   const hideAICardOffer = useAppContext(
     (v) => v.requestHelpers.hideAICardOffer
   );
-  const unhideAICardOffer = useAppContext(
-    (v) => v.requestHelpers.unhideAICardOffer
-  );
   const generateAICardImage = useAppContext(
     (v) => v.requestHelpers.generateAICardImage
   );
@@ -604,7 +601,6 @@ export default function AICardModal({
                   offers={offers}
                   hiddenOfferIds={hiddenOfferIds}
                   onHideOffer={handleHideOffer}
-                  onUnhideOffer={handleUnhideOffer}
                   onSetOffers={setOffers}
                   onSetLoadMoreShown={setOffersLoadMoreShown}
                   onSetOfferModalShown={setOfferModalShown}
@@ -745,14 +741,6 @@ export default function AICardModal({
   // confirm, then reflect it in local view state; no optimistic toggling.
   async function handleHideOffer(offerId: number) {
     const result = await hideAICardOffer({ cardId, offerId });
-    if (result?.success) {
-      setHiddenOfferIds(result.hiddenOfferIds || []);
-      await refreshSharedIncomingOffers();
-    }
-  }
-
-  async function handleUnhideOffer(offerId: number) {
-    const result = await unhideAICardOffer({ cardId, offerId });
     if (result?.success) {
       setHiddenOfferIds(result.hiddenOfferIds || []);
       await refreshSharedIncomingOffers();

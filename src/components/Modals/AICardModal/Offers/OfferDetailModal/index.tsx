@@ -16,7 +16,6 @@ export default function OfferDetailModal({
   cardId,
   hiddenOfferIds,
   onHideOffer,
-  onUnhideOffer,
   onUserMenuShownChange,
   onSetActiveTab,
   ownerId,
@@ -29,7 +28,6 @@ export default function OfferDetailModal({
   cardId: number;
   hiddenOfferIds: number[];
   onHideOffer: (offerId: number) => Promise<void>;
-  onUnhideOffer: (offerId: number) => Promise<void>;
   onUserMenuShownChange: (v: boolean) => void;
   onSetActiveTab: (v: string) => void;
   ownerId: number;
@@ -51,8 +49,6 @@ export default function OfferDetailModal({
     (v) => v.requestHelpers.getOffersForCardByPrice
   );
   const sellAICard = useAppContext((v) => v.requestHelpers.sellAICard);
-  const [showHidden, setShowHidden] = useState(false);
-  const isOwner = ownerId === userId;
   const hiddenSet = useMemo(
     () => new Set(hiddenOfferIds),
     [hiddenOfferIds]
@@ -61,8 +57,6 @@ export default function OfferDetailModal({
     () => offers.filter((offer) => !hiddenSet.has(offer.id)),
     [offers, hiddenSet]
   );
-  const hiddenCount = offers.length - visibleOffers.length;
-  const displayedOffers = showHidden ? offers : visibleOffers;
   useEffect(() => {
     init();
     async function init() {
@@ -102,43 +96,28 @@ export default function OfferDetailModal({
       }
     >
       <div style={{ width: '100%' }}>
-        {isOwner && hiddenCount > 0 && (
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginBottom: '0.5rem'
-            }}
-          >
-            <Button
-              variant="ghost"
-              onClick={() => setShowHidden((v) => !v)}
-            >
-              <Icon icon={showHidden ? 'eye-slash' : 'eye'} />
-              <span style={{ marginLeft: '0.5rem' }}>
-                {showHidden
-                  ? 'Hide hidden offers'
-                  : `Show ${hiddenCount} hidden offer${
-                      hiddenCount > 1 ? 's' : ''
-                    }`}
-              </span>
-            </Button>
-          </div>
-        )}
         <RoundList>
           {loading ? (
             <Loading />
+          ) : visibleOffers.length === 0 ? (
+            <div
+              style={{
+                padding: '2rem',
+                textAlign: 'center',
+                color: Color.darkGray(),
+                fontSize: '1.3rem'
+              }}
+            >
+              There is no offer for this price
+            </div>
           ) : (
-            displayedOffers.map((offer) => (
+            visibleOffers.map((offer) => (
               <OfferListItem
                 key={offer.id}
                 cardId={cardId}
                 ownerId={ownerId}
                 offer={offer}
-                isHidden={hiddenSet.has(offer.id)}
                 onHideOffer={onHideOffer}
-                onUnhideOffer={onUnhideOffer}
                 onAcceptClick={(offer) => setOfferAcceptModalObj(offer)}
                 userLinkColor={userLinkColor}
                 onUserMenuShownChange={onUserMenuShownChange}

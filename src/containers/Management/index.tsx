@@ -7,6 +7,7 @@ import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import {
   ADMIN_MANAGEMENT_LEVEL,
   ADMIN_USER_ID
@@ -40,11 +41,7 @@ export default function Management() {
     <Loading />
   ) : managementLevel > 0 ? (
     <div>
-      <SideMenu
-        variant="card"
-        topOffset="50%"
-        style={{ transform: 'translateY(-50%)' }}
-      >
+      <SideMenu variant="card" className={sideMenuClass}>
         <NavLink
           to="/management"
           end
@@ -275,3 +272,28 @@ export default function Management() {
     />
   );
 }
+
+// The management nav keeps growing (Accounts → AI Card Image and counting). A
+// vertically-centered fixed menu silently runs off the top and bottom of the
+// viewport as items are added, so instead anchor it just below the app header
+// and cap it to the viewport height. A denser, slightly smaller item layout
+// lets the current tabs fit without scrolling, and internal scrolling is the
+// safety net that keeps every future tab reachable on one screen. The `&&`
+// raises specificity so these win over the shared SideMenu base styles without
+// changing that component for its other (short-menu) consumers.
+const sideMenuClass = css`
+  && {
+    top: calc(${APP_SHELL_HEADER_OFFSET_STYLE} + 1rem);
+    max-height: calc(100vh - ${APP_SHELL_HEADER_OFFSET_STYLE} - 3rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: 1.5rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+    > a,
+    > nav {
+      margin: 0.3rem 0.9rem;
+      padding: 0.65rem 1.1rem;
+    }
+  }
+`;

@@ -29,23 +29,3 @@ export function getVisibleOfferGroups(
   }
   return result;
 }
-
-// Flattened list of the offers the owner has hidden, so they can review and
-// unhide them — even when a whole price group was hidden and is no longer in the
-// visible list.
-export function getHiddenOfferEntries(
-  offers: OfferGroup[],
-  hiddenOfferIds: number[]
-): { price: number; user: OfferUser; offerId: number }[] {
-  if (!hiddenOfferIds?.length) return [];
-  const hidden = new Set(hiddenOfferIds);
-  const result: { price: number; user: OfferUser; offerId: number }[] = [];
-  for (const group of offers) {
-    for (const user of group.users) {
-      if (user.offerId && hidden.has(user.offerId)) {
-        result.push({ price: group.price, user, offerId: user.offerId });
-      }
-    }
-  }
-  return result;
-}

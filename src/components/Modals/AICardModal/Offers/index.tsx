@@ -2,11 +2,10 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import OfferPriceListItem from './OfferPriceListItem';
-import HiddenOffersSection from './HiddenOffersSection';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import { useKeyContext } from '~/contexts';
-import { getVisibleOfferGroups, getHiddenOfferEntries } from './helpers';
+import { getVisibleOfferGroups } from './helpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
@@ -16,7 +15,6 @@ export default function Offers({
   offers,
   hiddenOfferIds,
   onHideOffer,
-  onUnhideOffer,
   onSetOffers,
   onSetLoadMoreShown,
   onUserMenuShownChange,
@@ -32,7 +30,6 @@ export default function Offers({
   offers: any[];
   hiddenOfferIds: number[];
   onHideOffer: (offerId: number) => Promise<void>;
-  onUnhideOffer: (offerId: number) => Promise<void>;
   onSetOffers: (v: any) => void;
   onSetLoadMoreShown: (v: boolean) => void;
   onUserMenuShownChange: (v: boolean) => void;
@@ -49,10 +46,6 @@ export default function Offers({
 
   const visibleOffers = useMemo(
     () => getVisibleOfferGroups(offers, isOwner ? hiddenOfferIds : []),
-    [isOwner, offers, hiddenOfferIds]
-  );
-  const hiddenEntries = useMemo(
-    () => (isOwner ? getHiddenOfferEntries(offers, hiddenOfferIds) : []),
     [isOwner, offers, hiddenOfferIds]
   );
 
@@ -72,7 +65,7 @@ export default function Offers({
         }}
       >
         {loaded ? (
-          visibleOffers.length === 0 && hiddenEntries.length === 0 ? (
+          visibleOffers.length === 0 ? (
             <div
               className={css`
                 font-size: 1.6rem;
@@ -141,7 +134,6 @@ export default function Offers({
                     offerers={offerers}
                     hiddenOfferIds={isOwner ? hiddenOfferIds : []}
                     onHideOffer={onHideOffer}
-                    onUnhideOffer={onUnhideOffer}
                     onSetActiveTab={onSetActiveTab}
                     onUserMenuShownChange={onUserMenuShownChange}
                     ownerId={ownerId}
@@ -150,14 +142,6 @@ export default function Offers({
                   />
                 );
               })}
-              {isOwner && hiddenEntries.length > 0 && (
-                <HiddenOffersSection
-                  hiddenEntries={hiddenEntries}
-                  onUnhideOffer={onUnhideOffer}
-                  onUserMenuShownChange={onUserMenuShownChange}
-                  userId={userId}
-                />
-              )}
             </>
           )
         ) : (

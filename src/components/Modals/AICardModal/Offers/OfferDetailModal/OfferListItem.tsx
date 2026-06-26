@@ -11,9 +11,7 @@ import { css } from '@emotion/css';
 
 export default function OfferListItem({
   offer,
-  isHidden,
   onHideOffer,
-  onUnhideOffer,
   onUserMenuShownChange,
   onAcceptClick,
   cardId,
@@ -22,9 +20,7 @@ export default function OfferListItem({
   userId
 }: {
   offer: any;
-  isHidden: boolean;
   onHideOffer: (offerId: number) => Promise<void>;
-  onUnhideOffer: (offerId: number) => Promise<void>;
   onUserMenuShownChange: (v: boolean) => void;
   onAcceptClick: (offer: any) => void;
   cardId: number;
@@ -63,8 +59,7 @@ export default function OfferListItem({
             width: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between ',
-            opacity: isHidden ? 0.5 : 1
+            justifyContent: 'space-between '
           }}
         >
           <div
@@ -138,7 +133,7 @@ export default function OfferListItem({
                   mobileBorderRadius="3px"
                   loading={togglingHide}
                 >
-                  <Icon icon={isHidden ? 'eye' : 'eye-slash'} />
+                  <Icon icon="eye-slash" />
                   <span
                     className={css`
                       margin-left: 0.5rem;
@@ -148,7 +143,7 @@ export default function OfferListItem({
                       }
                     `}
                   >
-                    {isHidden ? 'Unhide' : 'Hide'}
+                    Hide
                   </span>
                 </Button>
               )}
@@ -162,11 +157,7 @@ export default function OfferListItem({
   async function handleToggleHide() {
     setTogglingHide(true);
     try {
-      if (isHidden) {
-        await onUnhideOffer(offer.id);
-      } else {
-        await onHideOffer(offer.id);
-      }
+      await onHideOffer(offer.id);
     } finally {
       setTogglingHide(false);
     }
