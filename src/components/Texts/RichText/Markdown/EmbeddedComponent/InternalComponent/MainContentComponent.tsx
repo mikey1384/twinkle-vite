@@ -18,6 +18,7 @@ import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { getPlainPreviewText } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import InvalidContent from '../InvalidContent';
+import UnpublishedBuildContent from '../UnpublishedBuildContent';
 import { css } from '@emotion/css';
 
 const displayIsMobile = isMobile(navigator);
@@ -52,6 +53,7 @@ export default function MainContentComponent({
 }) {
   const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
+  const [isUnpublished, setIsUnpublished] = useState(false);
   const loadingRef = useRef(false);
   const appliedContentType = useMemo(() => {
     if (contentType === 'ai-storie') {
@@ -71,17 +73,34 @@ export default function MainContentComponent({
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const userId = useKeyContext((v) => v.myState.userId);
 
+  // Reset locally-derived load state when this embed instance is reused for a
+  // different target (e.g. the markdown src is edited). Without this, a prior
+  // unpublished/error result would keep rendering for the new contentId.
+  const embedKey = `${appliedContentType}:${contentId}`;
+  const embedKeyRef = useRef(embedKey);
+  if (embedKeyRef.current !== embedKey) {
+    embedKeyRef.current = embedKey;
+    loadingRef.current = false;
+    if (hasError) setHasError(false);
+    if (isUnpublished) setIsUnpublished(false);
+  }
+
   useEffect(() => {
     if (!loaded && !loadingRef.current && !isNaN(Number(contentId))) {
       onMount();
     }
     async function onMount() {
+      const requestKey = embedKey;
       try {
         loadingRef.current = true;
         const data = await loadContent({
           contentId,
           contentType: appliedContentType
         });
+        if (embedKeyRef.current !== requestKey) return;
+        if (data.unpublished) {
+          return setIsUnpublished(true);
+        }
         if (data.notFound) {
           return setHasError(true);
         }
@@ -97,16 +116,28 @@ export default function MainContentComponent({
           });
         }
       } catch (_error) {
-        setHasError(true);
+        if (embedKeyRef.current === requestKey) {
+          setHasError(true);
+        }
       } finally {
-        loadingRef.current = false;
+        if (embedKeyRef.current === requestKey) {
+          loadingRef.current = false;
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [loaded, contentId, appliedContentType]);
 
+  // Read the unpublished flag from shared content state too (not just this
+  // component's own request) so a cached unpublished placeholder never falls
+  // through to the notFound -> Invalid Content branch below.
+  if (isUnpublished || contentState.unpublished) {
+    return <UnpublishedBuildContent bare={isPreview} />;
+  }
   if (hasError || notFound || isNaN(Number(contentId))) {
-    return <InvalidContent />;
+    return (
+      <InvalidContent bare={isPreview && appliedContentType === 'build'} />
+    );
   }
   if (!loaded) {
     return <Loading />;

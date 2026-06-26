@@ -202,6 +202,9 @@ export default function App() {
   const onSetTodayStatsLoading = useNotiContext(
     (v) => v.actions.onSetTodayStatsLoading
   );
+  const onResetNumNewNotis = useNotiContext(
+    (v) => v.actions.onResetNumNewNotis
+  );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
   const onSetTopMenuSectionSection = useHomeContext(
@@ -577,6 +580,9 @@ export default function App() {
     onSetUploadingFile(false);
     onResetSharedPrompts();
     onResetTodayStats();
+    if (!userId) {
+      onResetNumNewNotis();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 

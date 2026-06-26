@@ -92,8 +92,9 @@ export default function Notification({
   const loadMoreRewards = myNotiState?.loadMoreRewards || false;
   const notifications = myNotiState?.notifications || [];
   const [activeTab, setActiveTab] = useState(
-    notifications?.length > 0 ? 'notifications' : 'rankings'
+    notifications?.length > 0 ? 'notification' : 'rankings'
   );
+  const activeFeedTab = userId ? activeTab : 'rankings';
   const activeTabRef = useRef(activeTab);
   const loadMoreNotifications = myNotiState?.loadMore || false;
   const todayStats = useNotiContext((v) => v.state.todayStats);
@@ -221,7 +222,7 @@ export default function Notification({
       trackScrollPosition &&
       !deviceIsMobile &&
       scrollPositions[`notification-${location}`] &&
-      activeTab === 'notification'
+      activeFeedTab === 'notification'
     ) {
       setTimeout(() => {
         ContainerRef.current.scrollTop =
@@ -229,7 +230,7 @@ export default function Notification({
       }, 10);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeFeedTab]);
 
   return (
     <ErrorBoundary componentPath="Notification/index">
@@ -277,7 +278,7 @@ export default function Notification({
                 }}
               >
                 <nav
-                  className={`${activeTab === 'notification' && 'active'} ${
+                  className={`${activeFeedTab === 'notification' && 'active'} ${
                     numNewNotis > 0 && 'alert'
                   }`}
                   onClick={() => {
@@ -288,7 +289,7 @@ export default function Notification({
                   {newsLabel}
                 </nav>
                 <nav
-                  className={activeTab === 'rankings' ? 'active' : ''}
+                  className={activeFeedTab === 'rankings' ? 'active' : ''}
                   onClick={() => {
                     userChangedTab.current = true;
                     setActiveTab('rankings');
@@ -298,7 +299,7 @@ export default function Notification({
                 </nav>
                 {rewards.length > 0 && (
                   <nav
-                    className={`${activeTab === 'reward' ? 'active' : ''} ${
+                    className={`${activeFeedTab === 'reward' ? 'active' : ''} ${
                       totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
                       'super-alert'
                     }`}
@@ -318,7 +319,7 @@ export default function Notification({
                 loadingNotifications={loadingNotifications}
                 loadMoreRewardsButton={loadMoreRewards}
                 loadMoreNotificationsButton={loadMoreNotifications}
-                activeTab={activeTab}
+                activeTab={activeFeedTab}
                 notifications={notifications}
                 onSetCollectingReward={(isCollecting) => {
                   if (isCollecting) {
@@ -376,7 +377,7 @@ export default function Notification({
     }
   }
 
-  async function handleFetchNotifications(userId: number) {
+  async function handleFetchNotifications(userId: number | null) {
     if (notifications.length === 0 && userId) {
       try {
         await handleFetchNews(userId);
@@ -441,7 +442,7 @@ export default function Notification({
   }
 
   function handleScroll(event: any) {
-    if (!trackScrollPosition || activeTab !== 'notification') return;
+    if (!trackScrollPosition || activeFeedTab !== 'notification') return;
     scrollPositions[`notification-${location}`] = event.target.scrollTop;
   }
 }

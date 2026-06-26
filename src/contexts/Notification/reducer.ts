@@ -325,6 +325,12 @@ export default function NotiReducer(
         ...state,
         numNewPosts: 0
       };
+    case 'RESET_NUM_NEW_NOTIS':
+      if (state.numNewNotis === 0) return state;
+      return {
+        ...state,
+        numNewNotis: 0
+      };
     case 'SET_DAILY_REWARD_MODAL_SHOWN':
       return {
         ...state,

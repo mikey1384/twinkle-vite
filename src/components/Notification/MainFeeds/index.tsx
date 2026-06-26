@@ -267,7 +267,8 @@ export default function MainFeeds({
 
   return (
     <ErrorBoundary componentPath="Notification/MainFeeds/index" style={style}>
-      {numNewNotis > 0 &&
+      {!!userId &&
+        numNewNotis > 0 &&
         !(activeTab === 'reward' && totalRewardAmount > 0) && (
           <Banner
             loading={loadingNewFeeds}

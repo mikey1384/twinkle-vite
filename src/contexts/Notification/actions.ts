@@ -167,6 +167,11 @@ export default function NotiActions(dispatch: Dispatch) {
         type: 'RESET_NUM_NEW_POSTS'
       });
     },
+    onResetNumNewNotis() {
+      return dispatch({
+        type: 'RESET_NUM_NEW_NOTIS'
+      });
+    },
     onResetTodayStats() {
       return dispatch({
         type: 'RESET_TODAY_STATS'
