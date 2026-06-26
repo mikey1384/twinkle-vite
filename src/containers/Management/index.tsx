@@ -7,7 +7,6 @@ import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import {
   ADMIN_MANAGEMENT_LEVEL,
   ADMIN_USER_ID
@@ -273,20 +272,19 @@ export default function Management() {
   );
 }
 
-// The management nav keeps growing (Accounts → AI Card Image and counting). A
-// vertically-centered fixed menu silently runs off the top and bottom of the
-// viewport as items are added, so instead anchor it just below the app header
-// and cap it to the viewport height. A denser, slightly smaller item layout
-// lets the current tabs fit without scrolling, and internal scrolling is the
-// safety net that keeps every future tab reachable on one screen. The `&&`
-// raises specificity so these win over the shared SideMenu base styles without
+// The management nav keeps growing (Accounts → AI Card Image and counting),
+// which is what pushed it off-screen. Keep it floating and vertically centered
+// like the other card menus (Explore etc.), but shrink the font and tighten the
+// item spacing so the full list fits within the viewport on one screen. We
+// deliberately do NOT make this element scrollable: overflow on a flex column
+// forces horizontal clipping too, which would cut the active item's pill/shadow
+// and make the menu read as sitting *behind* the content. The `&&` raises
+// specificity so these win over the shared SideMenu base styles without
 // changing that component for its other (short-menu) consumers.
 const sideMenuClass = css`
   && {
-    top: calc(${APP_SHELL_HEADER_OFFSET_STYLE} + 1rem);
-    max-height: calc(100vh - ${APP_SHELL_HEADER_OFFSET_STYLE} - 3rem);
-    overflow-y: auto;
-    overflow-x: hidden;
+    top: 50%;
+    transform: translateY(-50%);
     font-size: 1.5rem;
     padding-top: 0.8rem;
     padding-bottom: 0.8rem;
