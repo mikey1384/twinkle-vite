@@ -11,6 +11,9 @@ import { css } from '@emotion/css';
 
 export default function OfferListItem({
   offer,
+  isHidden,
+  onHideOffer,
+  onUnhideOffer,
   onUserMenuShownChange,
   onAcceptClick,
   cardId,
@@ -19,6 +22,9 @@ export default function OfferListItem({
   userId
 }: {
   offer: any;
+  isHidden: boolean;
+  onHideOffer: (offerId: number) => Promise<void>;
+  onUnhideOffer: (offerId: number) => Promise<void>;
   onUserMenuShownChange: (v: boolean) => void;
   onAcceptClick: (offer: any) => void;
   cardId: number;
@@ -27,6 +33,9 @@ export default function OfferListItem({
   userId: number;
 }) {
   const [accepting, setAccepting] = useState(false);
+  const [togglingHide, setTogglingHide] = useState(false);
+  const isOwner = ownerId === userId;
+  const isOwnOffer = offer.userId === userId;
   const deleteAICardOffer = useAppContext(
     (v) => v.requestHelpers.deleteAICardOffer
   );
@@ -54,7 +63,8 @@ export default function OfferListItem({
             width: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between '
+            justifyContent: 'space-between ',
+            opacity: isHidden ? 0.5 : 1
           }}
         >
           <div
@@ -98,8 +108,8 @@ export default function OfferListItem({
               </span>
             </div>
           </div>
-          {ownerId === userId && (
-            <div>
+          {isOwner && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Button
                 onClick={handleAcceptClick}
                 color="oceanBlue"
@@ -116,15 +126,51 @@ export default function OfferListItem({
                     }
                   `}
                 >
-                  {offer.userId === userId ? 'Take Coins' : 'Accept'}
+                  {isOwnOffer ? 'Take Coins' : 'Accept'}
                 </span>
               </Button>
+              {!isOwnOffer && (
+                <Button
+                  onClick={handleToggleHide}
+                  color="darkGray"
+                  variant="ghost"
+                  mobilePadding="0.5rem"
+                  mobileBorderRadius="3px"
+                  loading={togglingHide}
+                >
+                  <Icon icon={isHidden ? 'eye' : 'eye-slash'} />
+                  <span
+                    className={css`
+                      margin-left: 0.5rem;
+                      font-size: 1.5rem;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.1rem;
+                      }
+                    `}
+                  >
+                    {isHidden ? 'Unhide' : 'Hide'}
+                  </span>
+                </Button>
+              )}
             </div>
           )}
         </div>
       </nav>
     </ErrorBoundary>
   );
+
+  async function handleToggleHide() {
+    setTogglingHide(true);
+    try {
+      if (isHidden) {
+        await onUnhideOffer(offer.id);
+      } else {
+        await onHideOffer(offer.id);
+      }
+    } finally {
+      setTogglingHide(false);
+    }
+  }
 
   async function handleAcceptClick() {
     if (offer.userId === userId) {

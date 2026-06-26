@@ -23,6 +23,7 @@ import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import Offers from './Offers';
+import { getVisibleOfferGroups } from './Offers/helpers';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
 import AICardDetails from '~/components/AICardDetails';
@@ -110,18 +111,36 @@ export default function AICardModal({
   const deleteAICardOffer = useAppContext(
     (v) => v.requestHelpers.deleteAICardOffer
   );
+  const hideAICardOffer = useAppContext(
+    (v) => v.requestHelpers.hideAICardOffer
+  );
+  const unhideAICardOffer = useAppContext(
+    (v) => v.requestHelpers.unhideAICardOffer
+  );
   const generateAICardImage = useAppContext(
     (v) => v.requestHelpers.generateAICardImage
   );
   const getOffersForCard = useAppContext(
     (v) => v.requestHelpers.getOffersForCard
   );
+  const getIncomingCardOffers = useAppContext(
+    (v) => v.requestHelpers.getIncomingCardOffers
+  );
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const onLoadIncomingOffers = useChatContext(
+    (v) => v.actions.onLoadIncomingOffers
+  );
+  const onUpdateMostRecentAICardOfferTimeStamp = useChatContext(
+    (v) => v.actions.onUpdateMostRecentAICardOfferTimeStamp
+  );
   const onWithdrawOutgoingOffer = useChatContext(
     (v) => v.actions.onWithdrawOutgoingOffer
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateAICardOfferCheckTimeStamp = useAppContext(
+    (v) => v.user.actions.onUpdateAICardOfferCheckTimeStamp
+  );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -139,13 +158,31 @@ export default function AICardModal({
   const [prevCardId, setPrevCardId] = useState(null);
   const [nextCardId, setNextCardId] = useState(null);
   const [offers, setOffers] = useState<any[]>([]);
+  const [hiddenOfferIds, setHiddenOfferIds] = useState<number[]>([]);
   const [offersLoaded, setOffersLoaded] = useState(false);
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
-  const [offerPrice, setOfferPrice] = useState(0);
   const userSwitchedTab = useRef(false);
   const isMountedRef = useRef(true);
   const card = cardObj[cardId];
-  const userIsOwner = card?.ownerId === userId;
+  const cardOwnerId = Number(card?.ownerId || card?.owner?.id || 0) || null;
+  const userIsOwner = !!userId && cardOwnerId === userId;
+  const visibleOfferGroups = useMemo(
+    () => getVisibleOfferGroups(offers, userIsOwner ? hiddenOfferIds : []),
+    [hiddenOfferIds, offers, userIsOwner]
+  );
+  const highestActiveOfferPrice = useMemo(
+    () =>
+      offers.reduce(
+        (highestPrice, offer) =>
+          Math.max(highestPrice, Number(offer.price || 0)),
+        0
+      ),
+    [offers]
+  );
+  const visibleSellOfferPrice = useMemo(
+    () => (visibleOfferGroups.length ? visibleOfferGroups[0].price : 0),
+    [visibleOfferGroups]
+  );
   const cardIsLive = useMemo(() => {
     return Number(card?.isLive) === 1;
   }, [card?.isLive]);
@@ -210,23 +247,39 @@ export default function AICardModal({
   }, [cardId, userId]);
 
   useEffect(() => {
+    let cancelled = false;
+    setOffersLoaded(false);
     loadOffers();
     async function loadOffers() {
-      const { offers: loadedOffers, loadMoreShown } = await getOffersForCard({
-        cardId
-      });
-      setOfferPrice(loadedOffers?.length ? loadedOffers?.[0]?.price : 0);
+      const {
+        offers: loadedOffers,
+        loadMoreShown,
+        hiddenOfferIds: loadedHiddenOfferIds
+      } = await getOffersForCard({ cardId });
+      const loadedHidden = loadedHiddenOfferIds || [];
+      const activeHidden = userIsOwner ? loadedHidden : [];
+      const visibleOffers = getVisibleOfferGroups(
+        loadedOffers || [],
+        activeHidden
+      );
+      if (cancelled) return;
       if (!userSwitchedTab.current) {
+        // Only auto-open the Offers tab for the owner when there are offers they
+        // haven't hidden - an all-hidden card stays on the Menu tab.
         setActiveTab(
-          card?.ownerId === userId && loadedOffers?.length ? 'offers' : 'myMenu'
+          userIsOwner && visibleOffers.length ? 'offers' : 'myMenu'
         );
       }
       setOffers(loadedOffers);
+      setHiddenOfferIds(activeHidden);
       setOffersLoaded(true);
       setOffersLoadMoreShown(loadMoreShown);
     }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardId]);
+  }, [cardId, cardOwnerId, userId]);
 
   useEffect(() => {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
@@ -236,6 +289,10 @@ export default function AICardModal({
     function handleAICardOfferPosted({ card, feed }: { card: any; feed: any }) {
       const { offer: incomingOffer } = feed;
       if (card.id === cardId) {
+        const incomingUser = {
+          ...incomingOffer.user,
+          offerId: incomingOffer.id
+        };
         setOffers((prevOffers) => {
           const result = [];
           let found = false;
@@ -243,14 +300,14 @@ export default function AICardModal({
             const newOffer = { ...offer };
             if (offer.price === incomingOffer.price) {
               found = true;
-              newOffer.users = [...offer.users, incomingOffer.user];
+              newOffer.users = [...offer.users, incomingUser];
             }
             result.push(newOffer);
           }
           if (!found) {
             result.unshift({
               price: incomingOffer.price,
-              users: [incomingOffer.user]
+              users: [incomingUser]
             });
           }
           return result;
@@ -545,10 +602,13 @@ export default function AICardModal({
                   cardId={cardId}
                   getOffersForCard={getOffersForCard}
                   offers={offers}
+                  hiddenOfferIds={hiddenOfferIds}
+                  onHideOffer={handleHideOffer}
+                  onUnhideOffer={handleUnhideOffer}
                   onSetOffers={setOffers}
                   onSetLoadMoreShown={setOffersLoadMoreShown}
                   onSetOfferModalShown={setOfferModalShown}
-                  ownerId={card.owner?.id}
+                  ownerId={cardOwnerId || 0}
                   onSetActiveTab={setActiveTab}
                   loaded={offersLoaded}
                   loadMoreShown={offersLoadMoreShown}
@@ -663,8 +723,9 @@ export default function AICardModal({
       {sellModalShown && (
         <SellModal
           card={card}
-          offerPrice={offerPrice}
-          offers={offers}
+          displayOfferPrice={visibleSellOfferPrice}
+          minimumOfferPrice={highestActiveOfferPrice}
+          offers={visibleOfferGroups}
           offersLoaded={offersLoaded}
           onHide={() => setSellModalShown(false)}
         />
@@ -679,6 +740,38 @@ export default function AICardModal({
       )}
     </Modal>
   );
+
+  // Hidden state is server-owned (ai_card_offer_hides). Wait for the write to
+  // confirm, then reflect it in local view state; no optimistic toggling.
+  async function handleHideOffer(offerId: number) {
+    const result = await hideAICardOffer({ cardId, offerId });
+    if (result?.success) {
+      setHiddenOfferIds(result.hiddenOfferIds || []);
+      await refreshSharedIncomingOffers();
+    }
+  }
+
+  async function handleUnhideOffer(offerId: number) {
+    const result = await unhideAICardOffer({ cardId, offerId });
+    if (result?.success) {
+      setHiddenOfferIds(result.hiddenOfferIds || []);
+      await refreshSharedIncomingOffers();
+    }
+  }
+
+  async function refreshSharedIncomingOffers() {
+    const result = await getIncomingCardOffers(undefined, false);
+    if (!result) return;
+    const {
+      offers,
+      loadMoreShown,
+      mostRecentOfferTimeStamp,
+      recentAICardOfferCheckTimeStamp
+    } = result;
+    onLoadIncomingOffers({ offers, loadMoreShown });
+    onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
+    onUpdateMostRecentAICardOfferTimeStamp(mostRecentOfferTimeStamp || 0);
+  }
 
   async function handleWithdrawOffer() {
     const coins = await deleteAICardOffer({

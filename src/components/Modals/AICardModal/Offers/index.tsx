@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import OfferPriceListItem from './OfferPriceListItem';
+import HiddenOffersSection from './HiddenOffersSection';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import { useKeyContext } from '~/contexts';
+import { getVisibleOfferGroups, getHiddenOfferEntries } from './helpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
@@ -12,6 +14,9 @@ export default function Offers({
   cardId,
   getOffersForCard,
   offers,
+  hiddenOfferIds,
+  onHideOffer,
+  onUnhideOffer,
   onSetOffers,
   onSetLoadMoreShown,
   onUserMenuShownChange,
@@ -25,6 +30,9 @@ export default function Offers({
   cardId: number;
   getOffersForCard: any;
   offers: any[];
+  hiddenOfferIds: number[];
+  onHideOffer: (offerId: number) => Promise<void>;
+  onUnhideOffer: (offerId: number) => Promise<void>;
   onSetOffers: (v: any) => void;
   onSetLoadMoreShown: (v: boolean) => void;
   onUserMenuShownChange: (v: boolean) => void;
@@ -37,6 +45,16 @@ export default function Offers({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const [loadingMore, setLoadingMore] = useState(false);
+  const isOwner = ownerId === userId;
+
+  const visibleOffers = useMemo(
+    () => getVisibleOfferGroups(offers, isOwner ? hiddenOfferIds : []),
+    [isOwner, offers, hiddenOfferIds]
+  );
+  const hiddenEntries = useMemo(
+    () => (isOwner ? getHiddenOfferEntries(offers, hiddenOfferIds) : []),
+    [isOwner, offers, hiddenOfferIds]
+  );
 
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/UnlistedMenu/OwnerMenu/Offers">
@@ -54,7 +72,7 @@ export default function Offers({
         }}
       >
         {loaded ? (
-          offers.length === 0 ? (
+          visibleOffers.length === 0 && hiddenEntries.length === 0 ? (
             <div
               className={css`
                 font-size: 1.6rem;
@@ -102,32 +120,45 @@ export default function Offers({
               )}
             </div>
           ) : (
-            offers.map((offer) => {
-              let offerers = offer.users;
-              const myOffer = offerers.find(
-                (offerer: { id: number }) => offerer.id === userId
-              );
-              if (myOffer) {
-                offerers = [myOffer].concat(
-                  offerers.filter(
-                    (offerer: { id: number }) => offerer.id !== userId
-                  )
+            <>
+              {visibleOffers.map((offer) => {
+                let offerers = offer.users;
+                const myOffer = offerers.find(
+                  (offerer: { id: number }) => offerer.id === userId
                 );
-              }
-              return (
-                <OfferPriceListItem
-                  key={offer.price}
-                  cardId={cardId}
-                  offer={offer}
-                  offerers={offerers}
-                  onSetActiveTab={onSetActiveTab}
+                if (myOffer) {
+                  offerers = [myOffer].concat(
+                    offerers.filter(
+                      (offerer: { id: number }) => offerer.id !== userId
+                    )
+                  );
+                }
+                return (
+                  <OfferPriceListItem
+                    key={offer.price}
+                    cardId={cardId}
+                    offer={offer}
+                    offerers={offerers}
+                    hiddenOfferIds={isOwner ? hiddenOfferIds : []}
+                    onHideOffer={onHideOffer}
+                    onUnhideOffer={onUnhideOffer}
+                    onSetActiveTab={onSetActiveTab}
+                    onUserMenuShownChange={onUserMenuShownChange}
+                    ownerId={ownerId}
+                    userId={userId}
+                    usermenuShown={usermenuShown}
+                  />
+                );
+              })}
+              {isOwner && hiddenEntries.length > 0 && (
+                <HiddenOffersSection
+                  hiddenEntries={hiddenEntries}
+                  onUnhideOffer={onUnhideOffer}
                   onUserMenuShownChange={onUserMenuShownChange}
-                  ownerId={ownerId}
                   userId={userId}
-                  usermenuShown={usermenuShown}
                 />
-              );
-            })
+              )}
+            </>
           )
         ) : (
           <Loading style={{ height: 'CALC(100% - 3rem)' }} />
@@ -150,12 +181,13 @@ export default function Offers({
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const lastId = offers[offers.length - 1].id;
+    const lastPrice = offers[offers.length - 1].price;
     const { offers: loadedOffers, loadMoreShown } = await getOffersForCard({
       cardId,
-      lastId
+      lastPrice
     });
     onSetOffers((prevOffers: any[]) => [...prevOffers, ...loadedOffers]);
     onSetLoadMoreShown(loadMoreShown);
+    setLoadingMore(false);
   }
 }

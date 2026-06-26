@@ -776,13 +776,53 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { offers, loadMoreShown }
+          data: { offers, loadMoreShown, hiddenOfferIds }
         } = await request.get(
           `${URL}/chat/aiCard/offer/card?cardId=${cardId}${
             lastPrice ? `&lastPrice=${lastPrice}` : ''
-          }`
+          }`,
+          auth()
         );
-        return { offers, loadMoreShown };
+        return { offers, loadMoreShown, hiddenOfferIds };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async hideAICardOffer({
+      cardId,
+      offerId
+    }: {
+      cardId: number;
+      offerId: number;
+    }) {
+      try {
+        const {
+          data: { success, hiddenOfferIds }
+        } = await request.post(
+          `${URL}/chat/aiCard/offer/hide`,
+          { cardId, offerId },
+          auth()
+        );
+        return { success, hiddenOfferIds };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async unhideAICardOffer({
+      cardId,
+      offerId
+    }: {
+      cardId: number;
+      offerId: number;
+    }) {
+      try {
+        const {
+          data: { success, hiddenOfferIds }
+        } = await request.delete(
+          `${URL}/chat/aiCard/offer/hide?offerId=${offerId}&cardId=${cardId}`,
+          auth()
+        );
+        return { success, hiddenOfferIds };
       } catch (error) {
         return handleError(error);
       }
@@ -810,19 +850,33 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async getIncomingCardOffers(lastPrice: number) {
+    async getIncomingCardOffers(lastPrice?: number, markChecked = true) {
       try {
+        const query = new URLSearchParams();
+        if (typeof lastPrice === 'number') {
+          query.set('lastPrice', String(lastPrice));
+        }
+        if (!markChecked) {
+          query.set('markChecked', '0');
+        }
+        const queryString = query.toString();
         const {
-          data: { offers, loadMoreShown, recentAICardOfferCheckTimeStamp }
+          data: {
+            offers,
+            loadMoreShown,
+            mostRecentOfferTimeStamp,
+            recentAICardOfferCheckTimeStamp
+          }
         } = await request.get(
           `${URL}/chat/aiCard/offer/incoming${
-            typeof lastPrice === 'number' ? `?lastPrice=${lastPrice}` : ''
+            queryString ? `?${queryString}` : ''
           }`,
           auth()
         );
         return {
           offers,
           loadMoreShown,
+          mostRecentOfferTimeStamp,
           recentAICardOfferCheckTimeStamp
         };
       } catch (error) {

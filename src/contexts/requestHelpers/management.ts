@@ -1090,6 +1090,35 @@ export default function managementRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async loadAICardForImageRegeneration(cardId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/ai-card-image?cardId=${cardId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async regenerateAICardImage({
+      cardId,
+      prompt
+    }: {
+      cardId: number;
+      prompt?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/ai-card-image/regenerate`,
+          { cardId, prompt },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }

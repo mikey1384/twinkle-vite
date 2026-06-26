@@ -15,6 +15,9 @@ export default function OfferPriceListItem({
   cardId,
   offer,
   offerers,
+  hiddenOfferIds,
+  onHideOffer,
+  onUnhideOffer,
   ownerId,
   onSetActiveTab,
   onUserMenuShownChange,
@@ -24,6 +27,9 @@ export default function OfferPriceListItem({
   cardId: number;
   offer: any;
   offerers: any[];
+  hiddenOfferIds: number[];
+  onHideOffer: (offerId: number) => Promise<void>;
+  onUnhideOffer: (offerId: number) => Promise<void>;
   ownerId: number;
   onSetActiveTab: (v: string) => void;
   onUserMenuShownChange: (v: boolean) => void;
@@ -97,6 +103,9 @@ export default function OfferPriceListItem({
         <OfferDetailModal
           price={offer.price}
           cardId={cardId}
+          hiddenOfferIds={hiddenOfferIds}
+          onHideOffer={onHideOffer}
+          onUnhideOffer={onUnhideOffer}
           onHide={() => setOfferDetailModalShown(false)}
           ownerId={ownerId}
           onSetActiveTab={onSetActiveTab}

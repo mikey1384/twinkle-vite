@@ -18,6 +18,7 @@ const HomeFeedPerformance = lazyWithRetry(
 );
 const ScrollDiagnostics = lazyWithRetry(() => import('./ScrollDiagnostics'));
 const BuildWorlds = lazyWithRetry(() => import('./BuildWorlds'));
+const AiCards = lazyWithRetry(() => import('./AiCards'));
 
 export default function ManagementRoutes({ className }: { className: string }) {
   const location = useLocation();
@@ -52,6 +53,7 @@ export default function ManagementRoutes({ className }: { className: string }) {
               element={<ScrollDiagnostics />}
             />
             <Route path="build-worlds" element={<BuildWorlds />} />
+            <Route path="ai-card-image" element={<AiCards />} />
           </Routes>
         </Suspense>
       </div>

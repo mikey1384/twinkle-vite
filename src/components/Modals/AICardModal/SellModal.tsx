@@ -9,13 +9,15 @@ import { borderRadius, Color } from '~/constants/css';
 
 export default function SellModal({
   card,
-  offerPrice,
+  displayOfferPrice,
+  minimumOfferPrice,
   offers,
   offersLoaded,
   onHide
 }: {
   card: any;
-  offerPrice: number;
+  displayOfferPrice: number;
+  minimumOfferPrice: number;
   offers: any[];
   offersLoaded: boolean;
   onHide: () => void;
@@ -114,8 +116,9 @@ export default function SellModal({
                 }}
               >
                 {offerers.length} user{offerers.length === 1 ? '' : 's'} made
-                offer for this card at {offerPrice} Twinkle Coins. You can
-                either accept their offer or list it for sale at a higher price.
+                offer for this card at {displayOfferPrice} Twinkle Coins. You
+                can either accept their offer or list it for sale at a higher
+                price.
               </div>
             )}
           </div>
@@ -136,8 +139,8 @@ export default function SellModal({
   }
 
   async function handleCompleteListing() {
-    if (amount < offerPrice + 1) {
-      setErrorMessage(`The minimum price is ${offerPrice + 1}`);
+    if (amount < minimumOfferPrice + 1) {
+      setErrorMessage(`The minimum price is ${minimumOfferPrice + 1}`);
       return;
     }
     setPosting(true);

@@ -457,7 +457,9 @@ registerMethods('management', [
   'revertApproval',
   'submitDobForApproval',
   'submitMeetupForApproval',
-  'updateBanStatus'
+  'updateBanStatus',
+  'loadAICardForImageRegeneration',
+  'regenerateAICardImage'
 ]);
 
 registerMethods('mission', [
@@ -556,6 +558,8 @@ registerMethods('chat', [
   'submitWordMasterQuizAnswer',
   'postAICardOffer',
   'deleteAICardOffer',
+  'hideAICardOffer',
+  'unhideAICardOffer',
   'generateAICard',
   'getCurrentNextDayTimeStamp',
   'getNumberOfUnreadMessages',

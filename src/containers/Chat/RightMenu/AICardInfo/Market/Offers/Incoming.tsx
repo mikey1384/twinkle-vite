@@ -31,6 +31,9 @@ export default function Incoming() {
   const onLoadIncomingOffers = useChatContext(
     (v) => v.actions.onLoadIncomingOffers
   );
+  const onUpdateMostRecentAICardOfferTimeStamp = useChatContext(
+    (v) => v.actions.onUpdateMostRecentAICardOfferTimeStamp
+  );
   const onLoadMoreIncomingOffers = useChatContext(
     (v) => v.actions.onLoadMoreIncomingOffers
   );
@@ -63,10 +66,17 @@ export default function Incoming() {
     async function init(retryCount = 0) {
       try {
         setLoaded(false);
-        const { offers, loadMoreShown, recentAICardOfferCheckTimeStamp } =
-          await getIncomingCardOffers();
+        const {
+          offers,
+          loadMoreShown,
+          mostRecentOfferTimeStamp,
+          recentAICardOfferCheckTimeStamp
+        } = await getIncomingCardOffers();
         if (isMounted) {
           onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
+          onUpdateMostRecentAICardOfferTimeStamp(
+            mostRecentOfferTimeStamp || 0
+          );
           onLoadIncomingOffers({ offers, loadMoreShown });
           success = true;
         }
@@ -119,9 +129,14 @@ export default function Incoming() {
 
     async function refreshOffers() {
       setLoaded(false);
-      const { offers, loadMoreShown, recentAICardOfferCheckTimeStamp } =
-        await getIncomingCardOffers();
+      const {
+        offers,
+        loadMoreShown,
+        mostRecentOfferTimeStamp,
+        recentAICardOfferCheckTimeStamp
+      } = await getIncomingCardOffers();
       onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
+      onUpdateMostRecentAICardOfferTimeStamp(mostRecentOfferTimeStamp || 0);
       onLoadIncomingOffers({ offers, loadMoreShown });
       setLoaded(true);
     }

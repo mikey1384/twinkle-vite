@@ -29,6 +29,7 @@ export default function Management() {
   const canViewHomeFeedPerformance = userId === ADMIN_USER_ID;
   const canViewScrollDiagnostics = userId === ADMIN_USER_ID;
   const canViewBuildWorlds = userId === ADMIN_USER_ID;
+  const canViewAiCardImage = userId === ADMIN_USER_ID;
 
   useEffect(() => {
     onLoadManagement();
@@ -128,6 +129,15 @@ export default function Management() {
           >
             <Icon icon="cubes" />
             <span style={{ marginLeft: '1.1rem' }}>Build Worlds</span>
+          </NavLink>
+        )}
+        {canViewAiCardImage && (
+          <NavLink
+            to="/management/ai-card-image"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="image" />
+            <span style={{ marginLeft: '1.1rem' }}>AI Card Image</span>
           </NavLink>
         )}
       </SideMenu>
@@ -231,6 +241,16 @@ export default function Management() {
             onClick={() => navigate('/management/build-worlds')}
           >
             Build Worlds
+          </nav>
+        )}
+        {canViewAiCardImage && (
+          <nav
+            className={
+              location.pathname === `/management/ai-card-image` ? 'active' : ''
+            }
+            onClick={() => navigate('/management/ai-card-image')}
+          >
+            AI Card Image
           </nav>
         )}
       </FilterBar>
