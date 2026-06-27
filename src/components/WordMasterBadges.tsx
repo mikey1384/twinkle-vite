@@ -6,7 +6,6 @@ import { wordLevelHash } from '~/constants/defaultValues';
 export function getRGBA(colorName: string, opacity = 1) {
   switch (colorName) {
     case 'logoBlue':
-      // Softer, pastel blue that's easier on the eyes
       return `rgba(62, 138, 230, ${opacity})`;
     case 'pink':
       return `rgba(255, 105, 180, ${opacity})`;

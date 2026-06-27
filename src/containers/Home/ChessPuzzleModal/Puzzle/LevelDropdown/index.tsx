@@ -30,7 +30,6 @@ export default function LevelDropdown({
   const menuRef = React.useRef<HTMLUListElement | null>(null);
   const didInitialScrollRef = React.useRef<boolean>(false);
 
-  // Outside click to close
   useEffect(() => {
     function handleOutside(e: MouseEvent | TouchEvent) {
       if (!open) return;
@@ -57,7 +56,6 @@ export default function LevelDropdown({
     }
     handleResize();
     function handleScroll(e: Event) {
-      // Ignore scrolls that originate from inside the menu
       const target = e.target as Node | null;
       if (target && menuRef.current && menuRef.current.contains(target)) return;
       handleResize();

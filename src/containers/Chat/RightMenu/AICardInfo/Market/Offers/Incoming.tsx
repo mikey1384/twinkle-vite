@@ -104,9 +104,15 @@ export default function Incoming() {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
     socket.on('ai_card_sold', handleAICardSold);
+    socket.on('ai_card_offer_hidden', handleAICardOfferHidden);
 
     function handleAICardOfferPosted({ card }: { card: any }) {
       if (card.ownerId === userId) {
+        refreshOffers();
+      }
+    }
+    function handleAICardOfferHidden({ ownerId }: { ownerId: number }) {
+      if (ownerId === userId) {
         refreshOffers();
       }
     }
@@ -145,6 +151,7 @@ export default function Incoming() {
       socket.off('ai_card_offer_posted', handleAICardOfferPosted);
       socket.off('ai_card_offer_cancelled', handleAICardOfferCancel);
       socket.off('ai_card_sold', handleAICardSold);
+      socket.off('ai_card_offer_hidden', handleAICardOfferHidden);
     };
   });
 

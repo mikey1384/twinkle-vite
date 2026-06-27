@@ -443,7 +443,6 @@ export default function OmokModal({
         await setOmokMoveViewTimeStamp({ channelId, message });
         onUpdateLastOmokMoveViewerId({ channelId, viewerId: myId });
       }
-      // Use unified event name with gameType for omok
       socket.emit('end_chess_game', {
         channel: {
           id: currentChannel.id,

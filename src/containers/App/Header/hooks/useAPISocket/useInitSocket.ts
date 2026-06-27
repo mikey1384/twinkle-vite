@@ -491,7 +491,6 @@ export default function useInitSocket({
 
       onChangeSocketStatus(true);
 
-      // Start capturing user actions immediately upon connect
       handleStartUserActionCapture();
 
       const shouldResyncLoadedChat =
@@ -529,7 +528,6 @@ export default function useInitSocket({
           },
           (result?: { authError?: boolean }) => {
             if (result?.authError) {
-              // Token is invalid (e.g., password was changed)
               window.location.reload();
               return;
             }
@@ -560,7 +558,6 @@ export default function useInitSocket({
             selectedChannelId: selectedChannelIdRef.current
           });
         }
-        // Start heartbeat to keep presence accurate (handles sleep/network drops)
         if (heartbeatTimerRef.current) {
           clearInterval(heartbeatTimerRef.current);
         }
@@ -1113,7 +1110,6 @@ export default function useInitSocket({
     return () => clearInterval(interval);
   }, [userId, chatLoaded, loadedForUserId]);
 
-  // Track previous userId to properly leave old notification channel
   const prevUserIdRef = useRef<number | undefined>(undefined);
 
   // Rebind socket when user changes (login/logout/switch account)
@@ -1123,7 +1119,6 @@ export default function useInitSocket({
       return;
     }
 
-    // Leave previous user's notification channel if switching users
     if (prevUserIdRef.current && prevUserIdRef.current !== userId) {
       socket.emit('leave_my_notification_channel', prevUserIdRef.current);
     }

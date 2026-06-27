@@ -80,7 +80,6 @@ export default function ReorderInterface({
       const sourceIndex = reorderedPictureIds.indexOf(sourceId);
       const targetIndex = reorderedPictureIds.indexOf(targetId);
 
-      // Validate indices
       if (sourceIndex === -1 || targetIndex === -1) {
         console.error('Invalid source or target ID in drag and drop operation');
         return;

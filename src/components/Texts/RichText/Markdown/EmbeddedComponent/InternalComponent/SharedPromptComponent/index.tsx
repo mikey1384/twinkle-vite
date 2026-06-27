@@ -49,7 +49,6 @@ export default function SharedPromptComponent({
       const pathname = parts[0];
       const search = parts[1] || '';
 
-      // Check for query param first: /shared-prompts/?promptId=123
       if (search) {
         const params = new URLSearchParams(search);
         const queryId = params.get('promptId');

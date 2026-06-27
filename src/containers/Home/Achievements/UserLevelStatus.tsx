@@ -50,7 +50,6 @@ export default function UserLevelStatus({
       )}
       style={{
         ...panelVars,
-        // Force neutral text colors regardless of theme
         ['--home-panel-color' as any]: Color.darkerGray(),
         ['--home-panel-heading' as any]: Color.black(),
         ...style

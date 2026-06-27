@@ -123,7 +123,6 @@ export default function WordleModal({
       const measuredGameHeight = gameEl.scrollHeight; // current scaled height
       const baseCandidate = measuredGameHeight / currentScale || 1;
 
-      // Track max base to allow scaling back up cleanly
       if (
         !baseGameHeightRef.current ||
         baseCandidate > baseGameHeightRef.current + 1

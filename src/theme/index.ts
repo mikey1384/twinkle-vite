@@ -83,7 +83,6 @@ export interface RoleToken {
 
 export type RoleTokens = Record<string, RoleToken>;
 
-// Theme registry: centralized tokens for each theme
 export const strongColors = ['rose', 'red', 'purple'] as const;
 const strongColorSet = new Set<string>(strongColors);
 
@@ -648,7 +647,6 @@ export function getThemeRoles(color: ThemeName): RoleTokens {
   return roleCache[color] as RoleTokens;
 }
 
-// Apply CSS variables for the current theme on :root
 export function applyThemeVars(theme: ThemeName) {
   const tokens = themeRegistry[theme] || themeRegistry.logoBlue;
   const root = document.documentElement;
@@ -660,7 +658,6 @@ export function applyThemeVars(theme: ThemeName) {
     const [_, r, g, b] = m;
     return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
   };
-  // General pack
   root.style.setProperty('--theme-bg', tokens.general.bg);
   root.style.setProperty('--theme-hover-bg', tokens.general.hoverBg);
   root.style.setProperty('--theme-text', tokens.general.text);
@@ -685,7 +682,6 @@ export function applyThemeVars(theme: ThemeName) {
     tokens.general.perfectStarColor
   );
 
-  // Chat pack
   root.style.setProperty('--chat-bg', tokens.chat.bg);
   root.style.setProperty('--chat-title-bg', tokens.chat.titleBg);
   root.style.setProperty('--chat-hover-bg', tokens.chat.hoverBg);

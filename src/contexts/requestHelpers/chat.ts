@@ -769,10 +769,12 @@ export default function chatRequestHelpers({
     },
     async getOffersForCard({
       cardId,
-      lastPrice
+      lastPrice,
+      fromWriter
     }: {
       cardId: number;
       lastPrice?: number;
+      fromWriter?: boolean;
     }) {
       try {
         const {
@@ -780,7 +782,7 @@ export default function chatRequestHelpers({
         } = await request.get(
           `${URL}/chat/aiCard/offer/card?cardId=${cardId}${
             lastPrice ? `&lastPrice=${lastPrice}` : ''
-          }`,
+          }${fromWriter ? '&fromWriter=1' : ''}`,
           auth()
         );
         return { offers, loadMoreShown, hiddenOfferIds };

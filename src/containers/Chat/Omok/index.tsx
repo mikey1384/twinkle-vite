@@ -202,7 +202,6 @@ export default function Omok({
   const stonesPlaced = countPlaced(boardToRender);
   const nextColor: OmokColor = stonesPlaced % 2 === 0 ? 'black' : 'white';
 
-  // Determine effective assigned colors, preferring in-flight state
   const effectivePlayerColors: PlayerColors = useMemo(() => {
     return (
       pendingMove?.playerColors || newOmokState?.playerColors || playerColors
@@ -434,7 +433,6 @@ export default function Omok({
     [gameStatusMessageShown, hasTopInfo]
   );
 
-  // Compute winning line (for pending or committed wins)
   const winningLine = useMemo(() => {
     if (pendingMove?.isWinning) {
       return (

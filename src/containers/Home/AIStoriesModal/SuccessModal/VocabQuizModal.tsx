@@ -102,7 +102,6 @@ export default function VocabQuizModal({
       ? answerResult.selectedIndex
       : selectedIndex;
 
-  // Keep storyIdRef updated
   useEffect(() => {
     storyIdRef.current = storyId;
   }, [storyId]);
@@ -114,7 +113,6 @@ export default function VocabQuizModal({
       return;
     }
 
-    // Reset state
     setLoading(true);
     setLoadError('');
     setQuestions([]);
@@ -178,7 +176,6 @@ export default function VocabQuizModal({
     socket.on('ai_story_vocab_quiz_complete', handleQuizComplete);
     socket.on('ai_story_vocab_quiz_error', handleQuizError);
 
-    // Start the quiz
     socket.emit('start_ai_story_vocab_quiz', { storyId });
 
     return () => {
@@ -996,7 +993,6 @@ export default function VocabQuizModal({
   function renderStatusMessage() {
     if (!answerResult) return null;
 
-    // For collected/discovered, show word with level color
     if (
       answerResult.isCorrect &&
       (answerResult.collected || answerResult.discovered)
@@ -1070,7 +1066,6 @@ export default function VocabQuizModal({
     }
     // Move to next question index
     setCurrentIndex((prev) => prev + 1);
-    // Request next question from server (on-demand generation)
     setLoadingNextQuestion(true);
     socket.emit('request_next_ai_story_vocab_question', { storyId });
   }
@@ -1121,7 +1116,6 @@ export default function VocabQuizModal({
           setStatusTone('error');
         }
 
-        // Store result for summary screen
         setQuizResults((prev) => [
           ...prev,
           {

@@ -166,7 +166,6 @@ export default function Chess({
     (value: string) => {
       setCurrentTheme(value);
       setStoredItem(`tw-chat-chess-theme-${userId}`, value);
-      // Notify chat to re-render other messages to pick up new theme
       onBumpChessThemeVersion();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

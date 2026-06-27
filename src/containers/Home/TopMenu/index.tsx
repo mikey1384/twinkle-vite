@@ -122,7 +122,6 @@ export default function TopMenu({
     const headingShadowColor = resolveColorValue(
       themeRoles.sectionPanelText?.shadow
     );
-    // Centralized border color
     const borderColor = 'var(--ui-border)';
     // Do not theme this panel's background; keep it neutral
     const backgroundColor = '#ffffff';

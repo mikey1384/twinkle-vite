@@ -181,7 +181,6 @@ function ChatInfo({
     currentChannel?.id
   ]);
 
-  // Build members label (online count or total members)
   const showMembersLabel = useMemo(() => {
     return (
       ((onlineChannelMembers.length > 1 && !currentChannel.twoPeople) ||
@@ -329,7 +328,6 @@ function ChatInfo({
       return;
     }
 
-    // If call is ongoing, handle hang up
     if (callOngoing || aiCallOngoing) {
       if (isZeroChat || isCielChat) {
         onSetAICallEnding(true);
@@ -350,7 +348,6 @@ function ChatInfo({
       return;
     }
 
-    // Check microphone access for new calls
     const hasAccess = await checkMicrophoneAccess();
     if (hasAccess) {
       initiateCall();

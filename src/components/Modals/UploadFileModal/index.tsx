@@ -171,7 +171,6 @@ function UploadFileModal({
   const { fileType: originalFileType } = useMemo(() => {
     return getFileInfoFromFileName(primaryFileObj?.name || '');
   }, [primaryFileObj?.name]);
-  // Track effective file type - may differ from original if conversion succeeded
   const [effectiveFileType, setEffectiveFileType] = useState(originalFileType);
 
   useEffect(() => {
@@ -266,7 +265,6 @@ function UploadFileModal({
                 const outputFormat = extension === 'png' ? 'png' : 'jpeg';
                 const image = img.toDataURL(`image/${outputFormat}`);
                 setImageUrl(image);
-                // Use correct extension to match actual content type
                 const outputFileName =
                   outputFormat === 'png'
                     ? primaryFileObj.name
@@ -290,11 +288,9 @@ function UploadFileModal({
     }
 
     async function processFile() {
-      // First try to convert if needed (HEIC, TIFF, AVIF, etc.)
       const wasConverted = await processConvertibleImage();
       if (wasConverted) return;
 
-      // Then handle web-friendly images
       if (originalFileType === 'image') {
         processWebFriendlyImage();
       } else {

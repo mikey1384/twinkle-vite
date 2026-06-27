@@ -53,7 +53,6 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Scroll to top when tab changes
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;

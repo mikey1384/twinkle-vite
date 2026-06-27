@@ -523,7 +523,6 @@ export function throttle<T extends (...args: any[]) => any>(
     const now = Date.now();
     const timeSinceLastCall = now - lastCall;
 
-    // Clear any existing timeout
     if (timeoutId !== null) {
       window.clearTimeout(timeoutId);
       timeoutId = null;
@@ -701,7 +700,6 @@ export async function attemptUpload({
   const parts = [];
   let start = 0;
 
-  // Upload parts sequentially
   for (let partNumber = 0; partNumber < urls.length; partNumber++) {
     const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
     const chunk = selectedFile.slice(start, end);

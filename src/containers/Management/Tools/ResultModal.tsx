@@ -35,7 +35,6 @@ export default function ResultModal({
         backdropFilter: 'blur(3px)'
       }}
       onClick={(e) => {
-        // Close modal when clicking outside
         if (e.target === e.currentTarget) {
           onClose();
         }

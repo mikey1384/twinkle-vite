@@ -97,7 +97,6 @@ export default function CloneButtons({
 
   const isOwnTopic = uploaderId === userId;
 
-  // Combine API clones with newly created clones from this session
   const existingClones = useMemo(() => {
     const cloneMap: Partial<
       Record<CloneTarget, { channelId: number; topicId: number }>
@@ -349,7 +348,6 @@ export default function CloneButtons({
         typeof data?.subjectId === 'number' &&
         typeof data?.channelId === 'number'
       ) {
-        // Store new clone in local state
         setNewClones((prev) => [
           ...prev.filter((c) => c.target !== target),
           { target, channelId: data.channelId, topicId: data.subjectId }
@@ -363,7 +361,6 @@ export default function CloneButtons({
           title: sharedTopicTitle || ''
         });
 
-        // Set thinkHard to false for the new topic
         onSetThinkHardForTopic({
           aiType: target,
           topicId: data.subjectId,
@@ -385,7 +382,6 @@ export default function CloneButtons({
           // Ignore localStorage errors
         }
 
-        // Navigate to the topic chat
         const pathId = Number(data.channelId) + Number(CHAT_ID_BASE_NUMBER);
         onUpdateSelectedChannelId(data.channelId);
         onEnterTopic({ channelId: data.channelId, topicId: data.subjectId });

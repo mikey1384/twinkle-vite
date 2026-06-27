@@ -43,16 +43,13 @@ export default function KarmaStatus({
     neutralSurface: true
   });
   const panelBg = useMemo(() => {
-    // Settings page requires a clean white surface for this panel
     return '#ffffff';
   }, []);
   const karmaPanelVars = useMemo(
     () =>
       ({
         ...panelVars,
-        // Drive the actual surface background used by homePanelClass
         ['--home-panel-surface' as const]: panelBg,
-        // Keep tint for any decorative usages
         ['--home-panel-tint' as const]:
           themeStyles.hoverBg ||
           homeMenuItemActiveRole.getColor(0.14) ||

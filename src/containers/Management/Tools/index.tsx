@@ -11,7 +11,6 @@ import Section from './Section';
 import { subtitlesState, subtitleVideoPlayer } from '~/constants/state';
 import { SrtSegment } from '~/types';
 
-// Modern design system constants
 const colors = {
   primary: '#4361ee',
   primaryLight: '#4895ef',
@@ -29,14 +28,12 @@ const colors = {
   white: '#ffffff'
 };
 
-// Main container styles
 const containerStyles = css`
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
 `;
 
-// Main title styles
 const mainTitleStyles = css`
   font-size: 2.5rem;
   color: ${colors.dark};
@@ -44,7 +41,6 @@ const mainTitleStyles = css`
   font-weight: 700;
 `;
 
-// Error styles
 const errorStyles = css`
   background-color: ${colors.danger};
   color: ${colors.white};
@@ -101,7 +97,6 @@ export default function Tools() {
     (v) => v.state.subtitleMergeProgress
   );
 
-  // Initialize subtitlesState with data from props
   useEffect(() => {
     if (subtitles.length > 0 && subtitlesState.segments.length === 0) {
       subtitlesState.segments = [...subtitles];
@@ -255,7 +250,6 @@ export default function Tools() {
   );
 
   function handleSetVideoFile(file: File | null) {
-    // Clear the subtitleVideoPlayer global reference first
     if (subtitleVideoPlayer.instance) {
       try {
         subtitleVideoPlayer.instance.dispose();
@@ -281,7 +275,6 @@ export default function Tools() {
         const fileExt = file.name.split('.').pop()?.toLowerCase() || 'mp4';
         const mimeType = file.type || `video/${fileExt}` || 'video/mp4';
 
-        // Adding type hints as URL hash parameters
         const typeHint = `${url}#type=${encodeURIComponent(
           mimeType
         )}&ext=${encodeURIComponent(fileExt)}`;

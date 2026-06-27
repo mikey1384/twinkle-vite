@@ -41,7 +41,6 @@ export default function useAISocket({
     (v) => v.actions.onUpdateAIGeneratedFile
   );
 
-  // Refs for frequently changing values
   const selectedChannelIdRef = useRef(selectedChannelId);
   const channelsObjRef = useRef(channelsObj);
   const pageVisibleRef = useRef(pageVisible);
@@ -65,12 +64,10 @@ export default function useAISocket({
     (v) => v.actions.onUpdateGrammarGenerationProgress
   );
 
-  // Add Management context for subtitle translation progress
   const onSetSubtitleTranslationProgress = useManagementContext(
     (v) => v.actions.onSetSubtitleTranslationProgress
   );
 
-  // Add Management context for subtitle merge progress
   const onSetSubtitleMergeProgress = useManagementContext(
     (v) => v.actions.onSetSubtitleMergeProgress
   );
@@ -79,7 +76,6 @@ export default function useAISocket({
     (v) => v.requestHelpers.updateChatLastRead
   );
 
-  // References for audio playback
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
@@ -117,25 +113,21 @@ export default function useAISocket({
 
           audioWorkletNode.port.onmessage = (event) => {
             const pcmData = event.data; // Int16Array
-            // Append pcmData to audioBuffer
             if (Array.isArray(audioBuffer)) {
               audioBuffer.push(...pcmData);
             } else {
               audioBuffer = Array.from(audioBuffer).concat(pcmData);
             }
 
-            // Send data every 100ms or when buffer reaches a certain size
             const elapsedTime = Date.now() - startTime;
             if (elapsedTime >= 100) {
               const arrayBuffer = new Int16Array(audioBuffer).buffer;
 
-              // Convert ArrayBuffer to base64
               const base64Audio = arrayBufferToBase64(arrayBuffer);
 
               // Send AI UI information before sending audio data
               socket.emit('ai_user_audio', base64Audio);
 
-              // Reset buffer and timer
               audioBuffer = [];
               startTime = Date.now();
             }
@@ -228,7 +220,6 @@ export default function useAISocket({
       error?: string;
       warning?: string;
     }) {
-      // Update the subtitle translation progress in the Management context
       onSetSubtitleTranslationProgress({
         progress: data.progress,
         stage: data.stage,
@@ -281,7 +272,6 @@ export default function useAISocket({
       stage: string;
       error?: string;
     }) {
-      // Update the subtitle merge progress in the Management context
       onSetSubtitleMergeProgress({
         progress: data.progress,
         stage: data.stage,
@@ -330,7 +320,6 @@ export default function useAISocket({
             latencyHint: 'interactive'
           });
 
-          // Resume audio context on mobile
           if (audioContextRef.current.state === 'suspended') {
             await audioContextRef.current.resume();
           }
@@ -345,7 +334,6 @@ export default function useAISocket({
         const sourceNode = audioContext.createBufferSource();
         const gainNode = audioContext.createGain();
 
-        // Increase the gain/volume
         gainNode.gain.value = 2.5;
 
         sourceNode.buffer = decodedAudioBuffer;
@@ -365,7 +353,6 @@ export default function useAISocket({
           nextStartTimeRef.current = now + duration;
         }
 
-        // Force audio context to be running
         if (audioContext.state !== 'running') {
           await audioContext.resume();
         }
@@ -457,13 +444,11 @@ export default function useAISocket({
       error?: string;
       errorType?: 'moderation' | 'general';
     }) {
-      // Stop the streaming state for this message
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }
       });
 
-      // Set an error state for this specific message
       onSetChannelState({
         channelId,
         newState: {

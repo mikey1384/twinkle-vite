@@ -25,7 +25,7 @@ function revokePreviewUrl(src: string | null | undefined) {
   try {
     URL.revokeObjectURL(src);
   } catch {
-    // Ignore invalid or already revoked object URLs.
+    // Blob URL cleanup is best effort.
   }
 }
 

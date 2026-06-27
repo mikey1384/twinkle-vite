@@ -19,13 +19,10 @@ export function computeLineDiff(oldText: string, newText: string): DiffResult {
   const oldLines = (oldText || '').split('\n');
   const newLines = (newText || '').split('\n');
 
-  // Build LCS table
   const lcs = buildLCSTable(oldLines, newLines);
 
-  // Backtrack to find diff
   const lines = backtrackDiff(oldLines, newLines, lcs);
 
-  // Calculate stats
   const stats = {
     added: lines.filter((l) => l.type === 'added').length,
     removed: lines.filter((l) => l.type === 'removed').length

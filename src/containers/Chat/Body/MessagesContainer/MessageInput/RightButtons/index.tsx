@@ -81,7 +81,6 @@ export default function RightButtons({
             channelId: selectedChannelId,
             hasContent
           }).catch(() => {
-            // Silent fail - user already got immediate feedback
           });
         }}
       >

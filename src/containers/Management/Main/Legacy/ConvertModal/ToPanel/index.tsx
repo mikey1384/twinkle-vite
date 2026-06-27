@@ -23,7 +23,6 @@ export default function ToPanel({
       (achievement) => achievement.type
     );
 
-    // Get the achievements for the given user type
     const unlockableAchievementTypes =
       statsPerUserTypes[target.userType]?.achievements || [];
 
@@ -34,13 +33,11 @@ export default function ToPanel({
   }, [unlockedAchievements, target?.userType]);
 
   const newStats: StatsProp = useMemo(() => {
-    // Calculate total achievement points (AP)
     let totalAP = 0;
     for (const newAchievementType of newAchievementTypes) {
       totalAP += achievementsObj[newAchievementType]?.ap || 0;
     }
 
-    // Determine the user's level based on total AP
     let userLevel = levels[0].level; // Default to the first level
     for (let i = levels.length - 1; i >= 0; i--) {
       if (totalAP >= levels[i].ap) {
@@ -49,7 +46,6 @@ export default function ToPanel({
       }
     }
 
-    // Get the perks for the determined level
     const perks: {
       level: number;
       canEdit: boolean;
@@ -68,7 +64,6 @@ export default function ToPanel({
       canEditRewardLevel: false
     };
 
-    // Create the new stats object
     return {
       ...perks,
       username: target?.username,

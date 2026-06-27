@@ -654,7 +654,6 @@ export default function RootContent({
     uploader?.profileTheme === 'gold' ? Color.logoBlue() : buildAccentColor;
   const buildOpenAppHoverAccentColor =
     uploader?.profileTheme === 'gold' ? Color.darkBlue() : buildAccentColor;
-  // Use global UI border vars for consistency with ContentPanel
 
   const buildCardVars = useMemo(
     () =>

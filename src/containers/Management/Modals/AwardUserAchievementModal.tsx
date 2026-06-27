@@ -257,7 +257,6 @@ export default function AwardUserAchievementModal({
         });
       } catch (error) {
         console.error('Error granting achievements:', error);
-        // Handle the error (e.g., show an error message to the user)
       } finally {
         setPosting(false);
         onHide();

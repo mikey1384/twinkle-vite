@@ -174,6 +174,13 @@ export default function useAICardSocket() {
         ) {
           newState.imagePath = normalizeToPath(finalImagePath);
           newState.imageGenerationPreviewUrl = '';
+          // Commit the canonical engine only here, alongside the persisted image
+          // path. The server just wrote this engine to ai_cards, so it is real
+          // source-of-truth state — not a speculative in-flight value that a
+          // later generation failure could leave stale in the client.
+          if (typeof status?.engine === 'string' && status.engine) {
+            newState.engine = status.engine;
+          }
         } else if (isDataUrl && rawImageUrl) {
           newState.imageGenerationPreviewUrl = rawImageUrl;
         }

@@ -46,7 +46,6 @@ export default function RewardLayout({
   const [wordModalShown, setWordModalShown] = useState(false);
   const navigate = useNavigate();
 
-  // For the background styling
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.1);
   const borderColor = getRGBA(colorName, 0.7);
@@ -54,7 +53,6 @@ export default function RewardLayout({
   // For the "badge" color (the label that says "Monthly Champion Reward," etc.)
   const actionColor = getActionColor(action);
 
-  // 1) Determine the color to use for the reward badge
   const rewardBadgeColor = useMemo(() => {
     switch (rewardType) {
       case 'monthly':
@@ -67,7 +65,6 @@ export default function RewardLayout({
     }
   }, [rewardType, actionColor]);
 
-  // 2) Determine what text to show for the reward
   const rewardDescription = useMemo(() => {
     switch (rewardType) {
       case 'monthly':

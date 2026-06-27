@@ -72,7 +72,6 @@ export default function useEmbedFileUpload() {
     }
     setUploading(true);
 
-    // Convert image if needed (HEIC, TIFF, BMP, etc.)
     let fileToUpload = file;
     if (needsImageConversion(file.name)) {
       try {

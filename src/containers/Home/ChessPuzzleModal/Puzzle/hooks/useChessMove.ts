@@ -109,7 +109,6 @@ export function useChessMove({
             pendingRequests.current.delete(requestId);
           }
         } else if (type === 'debug') {
-          // Suppress debug messages
         }
       };
 
@@ -627,9 +626,6 @@ export function useChessMove({
   }
 }
 
-// -----------------------------
-// Board/UI action creators
-// -----------------------------
 
 export function createHandleCastling({
   chessRef,
@@ -657,7 +653,6 @@ export function createHandleCastling({
       return;
     }
 
-    // Disallow any user moves if time-attack has ended
     if (inTimeAttack) {
       const allowed = runResult === 'PLAYING' && timeLeft > 0;
       if (!allowed) return;

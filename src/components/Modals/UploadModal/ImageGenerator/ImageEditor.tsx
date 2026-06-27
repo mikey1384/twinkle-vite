@@ -97,7 +97,6 @@ export default function ImageEditor({
     onZoomChange: setZoomPercent
   });
 
-  // Keep the ref updated with the latest updateDisplay function
   useEffect(() => {
     updateDisplayRef.current = updateDisplay;
   }, [updateDisplay]);
@@ -115,13 +114,11 @@ export default function ImageEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load image and draw to canvases.
   useEffect(() => {
     setIsImageReady(false);
     setImageLoadError(null);
     let isCancelled = false;
 
-    // Wait a frame so the container is laid out and we can measure its width
     const frameId = requestAnimationFrame(() => {
       if (isCancelled) return;
       const displayWidth = resolveDisplayWidth();
@@ -214,7 +211,6 @@ export default function ImageEditor({
       canvasHeight = Math.floor(canvasHeight * scale);
     }
 
-    // Scale up small images so brush sizes match displayed pixels
     if (canvasWidth < displayWidth) {
       const scale = Math.min(displayWidth / canvasWidth, maxCanvasSize / canvasHeight);
       canvasWidth = Math.floor(canvasWidth * scale);
@@ -239,7 +235,6 @@ export default function ImageEditor({
     });
   }
 
-  // Handle scroll and resize to trigger redraw and canvas resizing
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -517,7 +512,6 @@ export default function ImageEditor({
   }
 
   function handleCancel() {
-    // Check if user has made any changes (canvas history has entries)
     if (toolsAPI.canvasHistory.length > 0) {
       setConfirmModalShown(true);
     } else {

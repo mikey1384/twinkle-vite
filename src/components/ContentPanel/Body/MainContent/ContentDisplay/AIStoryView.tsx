@@ -128,7 +128,6 @@ export default function AIStoryView({
     return filterColor;
   }, [filterColor]);
 
-  // Shadow color
   const cardShadow = useMemo(() => Color.black(0.2), []);
 
   const { buttonBaseColor, buttonHoverColor } = useMemo(() => {

@@ -77,7 +77,6 @@ export default function ImageEditModal({
 
       if (needsConversion) {
         try {
-          // Convert data URL to File and then use convertToWebFriendlyFormat
           const response = await fetch(imageUri);
           const blob = await response.blob();
           const file = new File([blob], `image.${mimeType}`, { type: `image/${mimeType}` });

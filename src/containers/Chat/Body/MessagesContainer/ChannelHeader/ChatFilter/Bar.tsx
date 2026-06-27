@@ -359,7 +359,6 @@ export default function ChatFilterBar({
       return onShowTopicSelectorModal();
     }
     if (tabName === 'topic') {
-      // Save scroll position when switching from 'all' to 'topic'
       if (selectedTab !== 'topic') {
         onSaveScrollPositionForAll?.();
       }
@@ -368,7 +367,6 @@ export default function ChatFilterBar({
         channelId,
         topicId
       }).catch(() => {
-        // Silently ignore - this is just a preference update
       });
       navigate(
         `/chat/${pathId}${

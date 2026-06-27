@@ -9,7 +9,6 @@ import {
 import holoUrl from './holo.webp';
 import sparklesUrl from './sparkles.gif';
 
-// Rainbow gradient colors
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
 const color3 = '#69e4a5';

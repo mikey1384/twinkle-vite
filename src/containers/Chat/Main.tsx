@@ -873,7 +873,6 @@ export default function Main({
     return result;
   }, [chatStatus]);
 
-  // Refresh online and recent-offline lists whenever channel changes
   useEffect(() => {
     if (!selectedChannelId) return;
     socket.emit('join_chat_group', selectedChannelId);
@@ -1385,7 +1384,6 @@ export default function Main({
         if (topicId) {
           const subjectId = Number(topicId);
           if (subjectId) {
-            // Set topic state immediately so it persists even if user navigates away
             onSetChannelState({
               channelId,
               newState: { selectedTab: 'topic' }

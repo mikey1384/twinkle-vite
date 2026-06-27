@@ -33,7 +33,6 @@ export default function ActionButtons({
   onSetInTimeAttack: (v: boolean) => void;
   onShowSolution?: () => void;
 }) {
-  // Helpers (no logic change, just DRY up markup)
   const startUnlockedLevel = () => {
     onSetInTimeAttack(false);
     onLevelChange(maxLevelUnlocked);

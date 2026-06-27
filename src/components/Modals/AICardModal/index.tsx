@@ -160,9 +160,12 @@ export default function AICardModal({
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
   const userSwitchedTab = useRef(false);
   const isMountedRef = useRef(true);
+  const cardIdRef = useRef(cardId);
+  const offerReloadRequestIdRef = useRef(0);
   const card = cardObj[cardId];
   const cardOwnerId = Number(card?.ownerId || card?.owner?.id || 0) || null;
   const userIsOwner = !!userId && cardOwnerId === userId;
+  cardIdRef.current = cardId;
   const visibleOfferGroups = useMemo(
     () => getVisibleOfferGroups(offers, userIsOwner ? hiddenOfferIds : []),
     [hiddenOfferIds, offers, userIsOwner]
@@ -204,6 +207,7 @@ export default function AICardModal({
     // Ensure we are in the notification room to receive stream events
     // This is idempotent and guards cases where the global socket join
     // may not have completed before opening this modal.
+    isMountedRef.current = true;
     if (userId) {
       try {
         socket.emit('enter_my_notification_channel', userId);
@@ -244,37 +248,7 @@ export default function AICardModal({
   }, [cardId, userId]);
 
   useEffect(() => {
-    let cancelled = false;
-    setOffersLoaded(false);
-    loadOffers();
-    async function loadOffers() {
-      const {
-        offers: loadedOffers,
-        loadMoreShown,
-        hiddenOfferIds: loadedHiddenOfferIds
-      } = await getOffersForCard({ cardId });
-      const loadedHidden = loadedHiddenOfferIds || [];
-      const activeHidden = userIsOwner ? loadedHidden : [];
-      const visibleOffers = getVisibleOfferGroups(
-        loadedOffers || [],
-        activeHidden
-      );
-      if (cancelled) return;
-      if (!userSwitchedTab.current) {
-        // Only auto-open the Offers tab for the owner when there are offers they
-        // haven't hidden - an all-hidden card stays on the Menu tab.
-        setActiveTab(
-          userIsOwner && visibleOffers.length ? 'offers' : 'myMenu'
-        );
-      }
-      setOffers(loadedOffers);
-      setHiddenOfferIds(activeHidden);
-      setOffersLoaded(true);
-      setOffersLoadMoreShown(loadMoreShown);
-    }
-    return () => {
-      cancelled = true;
-    };
+    reloadCardOffers({ showLoading: true, updateActiveTab: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardId, cardOwnerId, userId]);
 
@@ -282,82 +256,37 @@ export default function AICardModal({
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
     socket.on('ai_card_sold', handleAICardSold);
+    socket.on('ai_card_offer_hidden', handleAICardOfferHidden);
 
-    function handleAICardOfferPosted({ card, feed }: { card: any; feed: any }) {
-      const { offer: incomingOffer } = feed;
-      if (card.id === cardId) {
-        const incomingUser = {
-          ...incomingOffer.user,
-          offerId: incomingOffer.id
-        };
-        setOffers((prevOffers) => {
-          const result = [];
-          let found = false;
-          for (const offer of prevOffers) {
-            const newOffer = { ...offer };
-            if (offer.price === incomingOffer.price) {
-              found = true;
-              newOffer.users = [...offer.users, incomingUser];
-            }
-            result.push(newOffer);
-          }
-          if (!found) {
-            result.unshift({
-              price: incomingOffer.price,
-              users: [incomingUser]
-            });
-          }
-          return result;
-        });
+    function handleAICardOfferPosted({ card }: { card: any }) {
+      if (card?.id === cardId) {
+        reloadCardOffers({ fromWriter: true });
       }
     }
     function handleAICardOfferCancel({
-      cardId,
-      price,
-      offererId
+      cardId: eventCardId
     }: {
       cardId: number;
-      price: number;
-      offererId: number;
     }) {
-      if (card.id === cardId) {
-        setOffers((prevOffers) => {
-          const result = [];
-          for (const offer of prevOffers) {
-            const newOffer = { ...offer };
-            if (offer.price === price) {
-              newOffer.users = offer.users.filter(
-                (user: { id: number }) => user.id !== offererId
-              );
-            }
-            if (newOffer.users?.length) {
-              result.push(newOffer);
-            }
-          }
-          return result;
-        });
+      if (eventCardId === cardId) {
+        reloadCardOffers({ fromWriter: true });
+      }
+    }
+    function handleAICardOfferHidden({
+      ownerId,
+      cardId: eventCardId
+    }: {
+      ownerId: number;
+      cardId: number;
+    }) {
+      if (ownerId === userId && eventCardId === cardId) {
+        reloadCardOffers({ fromWriter: true });
       }
     }
 
-    function handleAICardSold({ card, feed }: { card: any; feed: any }) {
-      if (card.id === cardId) {
-        setOffers((prevOffers) => {
-          const result = [];
-          for (const offer of prevOffers) {
-            const newOffer = { ...offer };
-            const { transfer } = feed;
-            const { offer: acceptedOffer } = transfer;
-            if (offer.price === acceptedOffer.price) {
-              newOffer.users = offer.users.filter(
-                (user: { id: number }) => user.id !== acceptedOffer.userId
-              );
-            }
-            if (newOffer.users?.length) {
-              result.push(newOffer);
-            }
-          }
-          return result;
-        });
+    function handleAICardSold({ card }: { card: any }) {
+      if (card?.id === cardId) {
+        reloadCardOffers({ fromWriter: true });
       }
     }
 
@@ -365,8 +294,10 @@ export default function AICardModal({
       socket.off('ai_card_offer_posted', handleAICardOfferPosted);
       socket.off('ai_card_offer_cancelled', handleAICardOfferCancel);
       socket.off('ai_card_sold', handleAICardSold);
+      socket.off('ai_card_offer_hidden', handleAICardOfferHidden);
     };
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardId, userId, userIsOwner]);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -744,6 +675,57 @@ export default function AICardModal({
     if (result?.success) {
       setHiddenOfferIds(result.hiddenOfferIds || []);
       await refreshSharedIncomingOffers();
+    }
+  }
+
+  async function reloadCardOffers({
+    fromWriter = false,
+    showLoading = false,
+    updateActiveTab = false
+  }: {
+    fromWriter?: boolean;
+    showLoading?: boolean;
+    updateActiveTab?: boolean;
+  } = {}) {
+    const requestId = ++offerReloadRequestIdRef.current;
+    if (showLoading) {
+      setOffersLoaded(false);
+    }
+    try {
+      const result = await getOffersForCard({ cardId, fromWriter });
+      if (
+        !result ||
+        !isMountedRef.current ||
+        requestId !== offerReloadRequestIdRef.current ||
+        cardIdRef.current !== cardId
+      ) {
+        return;
+      }
+      const loadedOffers = result.offers || [];
+      const loadedHidden = result.hiddenOfferIds || [];
+      const activeHidden = userIsOwner ? loadedHidden : [];
+      if (updateActiveTab && !userSwitchedTab.current) {
+        const visibleOffers = getVisibleOfferGroups(
+          loadedOffers,
+          activeHidden
+        );
+        // Only auto-open the Offers tab for the owner when there are offers they
+        // haven't hidden - an all-hidden card stays on the Menu tab.
+        setActiveTab(userIsOwner && visibleOffers.length ? 'offers' : 'myMenu');
+      }
+      setOffers(loadedOffers);
+      setHiddenOfferIds(activeHidden);
+      setOffersLoadMoreShown(result.loadMoreShown);
+    } catch (error) {
+      console.error('Error fetching card offers:', error);
+    } finally {
+      if (
+        isMountedRef.current &&
+        requestId === offerReloadRequestIdRef.current &&
+        cardIdRef.current === cardId
+      ) {
+        setOffersLoaded(true);
+      }
     }
   }
 

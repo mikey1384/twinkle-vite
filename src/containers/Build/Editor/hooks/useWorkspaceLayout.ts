@@ -166,7 +166,7 @@ export default function useWorkspaceLayout({
       try {
         handleElement.releasePointerCapture(pointerId);
       } catch {
-        // The pointer may already be released by the browser.
+        // Pointer capture release is best effort.
       }
       persistBuildChatPanelWidth(latestWidth);
       workspaceResizeCleanupRef.current = null;

@@ -426,12 +426,10 @@ export default function Notification({
             userId
           });
 
-          // If successful, break out of the retry loop
           break;
         } catch (error) {
           console.error(`Attempt ${attempt} failed:`, error);
           if (attempt === maxRetries) {
-            // If all retries failed, throw the error
             throw error;
           }
           // Wait for the cooldown period before the next attempt

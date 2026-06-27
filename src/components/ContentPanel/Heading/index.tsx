@@ -35,7 +35,6 @@ function Heading({
   theme: string;
   contentObj: Content;
 }) {
-  // Normalize pass types for content state lookup
   const normalizedRootType =
     rootType === 'missionPass' || rootType === 'achievementPass'
       ? 'pass'

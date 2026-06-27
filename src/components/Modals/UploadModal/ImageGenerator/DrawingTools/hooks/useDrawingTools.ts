@@ -153,16 +153,13 @@ export default function useDrawingTools({
     displayCtx.globalCompositeOperation = 'source-over';
     displayCtx.clearRect(0, 0, w, h);
 
-    // Draw reference image backdrop if exists
     if (hasReferenceImage) {
       displayCtx.drawImage(referenceCanvas, 0, 0);
     } else {
-      // White background for empty canvas
       displayCtx.fillStyle = '#ffffff';
       displayCtx.fillRect(0, 0, w, h);
     }
 
-    // Draw all drawing operations on top
     if (rasterCanvas && rasterCanvas !== displayCanvas) {
       displayCtx.globalCompositeOperation = 'source-over';
       displayCtx.drawImage(rasterCanvas, 0, 0);
@@ -170,7 +167,6 @@ export default function useDrawingTools({
       displayCtx.putImageData(originalDrawingContentRef.current, 0, 0);
     }
 
-    // Render all text, handling dragged text separately
     textElementsRef.current.forEach((element) => {
       if (isDraggingText && draggedTextId === element.id) {
         return; // Skip the dragged one
@@ -181,7 +177,6 @@ export default function useDrawingTools({
       displayCtx.fillText(element.text, element.x, element.y);
     });
 
-    // Render dragged text at temp position if dragging
     if (isDraggingText && draggedElementRef.current) {
       const element = draggedElementRef.current;
       displayCtx.font = `${element.fontSize}px Arial`;
@@ -190,7 +185,6 @@ export default function useDrawingTools({
       displayCtx.fillText(element.text, element.x, element.y);
     }
 
-    // Render temporary stroke if drawing
     if (currentStrokePointsRef.current.length > 1) {
       displayCtx.globalCompositeOperation =
         tool === 'eraser' ? 'destination-out' : 'source-over';
@@ -220,12 +214,9 @@ export default function useDrawingTools({
       if (!rasterCanvas) return;
       const rasterCtx = rasterCanvas.getContext('2d');
       if (!rasterCtx) return;
-      // Wait until canvas has valid dimensions
       if (rasterCanvas.width === 0 || rasterCanvas.height === 0) return;
 
-      // Initialize originalDrawingContentRef for both cases
       if (!originalDrawingContentRef.current) {
-        // Start with a transparent drawing layer
         rasterCtx.clearRect(0, 0, rasterCanvas.width, rasterCanvas.height);
         originalDrawingContentRef.current = rasterCtx.getImageData(
           0,
@@ -241,7 +232,6 @@ export default function useDrawingTools({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-redraw on state changes (text, tool, etc.)
   useEffect(() => {
     if (canvasRef.current) {
       updateDisplay();
@@ -268,7 +258,6 @@ export default function useDrawingTools({
         -10
       )
     );
-    // Clear redo history when a new action is performed
     setRedoHistory([]);
   }
 
@@ -433,7 +422,7 @@ export default function useDrawingTools({
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
-      // Ignore capture failures and continue drawing.
+      // Pointer capture can fail; drawing still works with move/up handlers.
     }
     handleCanvasInteractionStart(e);
   };
@@ -546,7 +535,7 @@ export default function useDrawingTools({
         e.currentTarget.releasePointerCapture(e.pointerId);
       }
     } catch {
-      // Ignore release failures.
+      // The pointer may already be released by the browser.
     }
   };
 
@@ -558,7 +547,7 @@ export default function useDrawingTools({
         e.currentTarget.releasePointerCapture(e.pointerId);
       }
     } catch {
-      // Ignore release failures.
+      // The pointer may already be released by the browser.
     }
   };
 

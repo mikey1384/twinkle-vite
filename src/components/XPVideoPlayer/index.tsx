@@ -224,7 +224,6 @@ function XPVideoPlayer({
         if (typeof currentTime === 'number') {
           setStartingPosition(currentTime);
           setCurrentInitialTime(currentTime);
-          // Auto-activate player if user has existing progress
           if (currentTime > 0) {
             setPlayerActivated(true);
           }

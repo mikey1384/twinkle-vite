@@ -261,12 +261,10 @@ export function useLazyLoad({
     onSetPlaceholderHeightRef.current = onSetPlaceholderHeight;
   }, [onSetPlaceholderHeight]);
 
-  // Update store when inView changes
   useEffect(() => {
     lazyLoadStore.setVisibility(id, inView, inView ? 0 : delay);
   }, [id, inView, delay]);
 
-  // Handle placeholder height measurement (unchanged - doesn't cause parent re-renders)
   useEffect(() => {
     if (!PanelRef || !hasPlaceholderHeightCallback) return;
 
@@ -312,17 +310,13 @@ export function useLazyLoad({
 }
 
 export function useMyState() {
-  // Retrieve various user state values from the global app context
   const contextValues = useAppContext((v) => v.user.state.myState);
 
-  // Current user's uid
   const userId = useAppContext((v) => v.user.state.myState.userId);
 
-  // Retrieve the current user's state from 'userObj'
   const myStateFromUserObj =
     useAppContext((v) => v.user.state.userObj[userId]) || EMPTY_USER_STATE;
 
-  // Key values from the global app context
   const missions = useAppContext((v) => v.user.state.missions);
   const notifications = useAppContext(
     (v) => v.user.state.myState.state?.notifications
@@ -338,7 +332,6 @@ export function useMyState() {
     (v) => v.user.state.myState.wordleStrictMode
   );
 
-  // Other global user context values
   const loaded = useAppContext((v) => v.user.state.loaded);
   const signinModalShown = useAppContext((v) => v.user.state.signinModalShown);
 
@@ -346,7 +339,6 @@ export function useMyState() {
   const getStoredItems = (config: { [key: string]: any }) => {
     return Object.keys(config).reduce((acc: { [key: string]: any }, key) => {
       const storedValue = getStoredItem(key, config[key]);
-      // Process and normalize specific stored values
       if (key === 'userId') {
         acc[key] = storedValue ? Number(storedValue) : null;
       } else if (

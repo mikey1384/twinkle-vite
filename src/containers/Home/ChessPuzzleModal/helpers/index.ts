@@ -93,14 +93,12 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  // Get engine analysis to check for forced mate sequences
   const beforeResult = await engineBestMove(fen, 15, 5000);
   if (
     beforeResult.success &&
     beforeResult.mate !== undefined &&
     beforeResult.mate > 0
   ) {
-    // Position had a forced mate - check if this move maintains it
     const afterResult = await engineBestMove(game.fen(), 15, 5000);
     if (afterResult.success) {
       const afterMateRaw = afterResult.mate;
@@ -356,9 +354,6 @@ export function clearArrivedStatesExcept({
   });
 }
 
-// ---------------------------------------------
-// DRY helpers
-// ---------------------------------------------
 
 export function mapPromotionLetterToType({
   letter

@@ -73,7 +73,6 @@ export function removeEvent(
   elem.removeEventListener(type, handler as any, capture);
 }
 
-// Optional convenience that returns a disposer:
 export function on(
   elem: EventTargetLike,
   type: string,

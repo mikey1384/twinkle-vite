@@ -189,7 +189,6 @@ export default function FileField({
               if (img && typeof img.toDataURL === 'function') {
                 const outputFormat = extension === 'png' ? 'png' : 'jpeg';
                 const imageUri = img.toDataURL(`image/${outputFormat}`);
-                // Use correct extension to match actual content type
                 const outputFileName =
                   outputFormat === 'png'
                     ? fileObj.name

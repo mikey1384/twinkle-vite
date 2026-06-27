@@ -1,8 +1,5 @@
 import { Color } from '~/constants/css';
 
-// ===========================
-// General Configurations
-// ===========================
 
 export const clientVersion = '2.0.64';
 
@@ -44,9 +41,6 @@ export const mobileFullTextRevealShowDuration = 2000;
 export const returnMissionThumb = (missionType: string): string =>
   `${cloudFrontURL}/missions/${missionType}/thumb.jpeg`;
 
-// ===========================
-// Chat
-// ===========================
 
 export const CHAT_ID_BASE_NUMBER = import.meta.env.VITE_CHAT_ID_BASE_NUMBER;
 export const GENERAL_CHAT_ID = 2;
@@ -89,9 +83,6 @@ export const reactionsObj: Record<string, any> = {
   }
 };
 
-// ===========================
-// Content
-// ===========================
 
 export const charLimit: {
   [key: string]: any;
@@ -161,9 +152,6 @@ export const defaultContentState = {
   loaded: false
 };
 
-// ===========================
-// Users & Rewards
-// ===========================
 
 export const DEFAULT_PROFILE_THEME = 'logoBlue';
 export const localStorageKeys: {
@@ -292,9 +280,6 @@ export const videoRewardHash: { [key: string]: any } = {
   }
 };
 
-// ===========================
-// Achievements & Roles
-// ===========================
 
 export const JR_MOD_LEVEL = 2;
 export const MOD_LEVEL = 3;
@@ -386,9 +371,6 @@ export const statsPerUserTypes: {
   }
 };
 
-// ===========================
-// Coins & AI Cards & Store
-// ===========================
 
 export const cardLevelHash: {
   [key: number]: {
@@ -555,9 +537,6 @@ export const returnCardBurnXP = ({
   return Math.round(xp);
 };
 
-// ===========================
-// Games
-// ===========================
 
 export const vocabRouletteChances = {
   better_luck: 50,

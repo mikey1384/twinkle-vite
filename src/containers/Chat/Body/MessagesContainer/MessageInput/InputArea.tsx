@@ -60,7 +60,6 @@ export default function InputArea({
     onHeightChangeRef.current = onHeightChange;
   }, [onHeightChange]);
 
-  // Use ResizeObserver to detect when textarea actually changes size
   useEffect(() => {
     const el = innerRef.current;
     if (!el) return;
@@ -79,7 +78,6 @@ export default function InputArea({
       ro.observe(el);
     }
 
-    // Initial height report
     onHeightChangeRef.current(el.clientHeight);
 
     return () => {
@@ -205,7 +203,6 @@ export default function InputArea({
   }
 
   function handleChange(event: any) {
-    // ResizeObserver handles height updates automatically
     onSetText(event.target.value);
   }
 
@@ -221,7 +218,6 @@ export default function InputArea({
     const newText = stringIsEmpty(inputText)
       ? `![](${url})`
       : `${inputText}\n![](${url})`;
-    // ResizeObserver handles height updates automatically
     onSetText(newText);
   }
 }

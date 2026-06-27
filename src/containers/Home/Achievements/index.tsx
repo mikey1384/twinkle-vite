@@ -101,7 +101,6 @@ export default function Achievements() {
               <UserLevelStatus
                 style={{
                   marginBottom: '4rem',
-                  // Force neutral text colors (theme-independent)
                   ['--home-panel-color' as any]: Color.darkerGray(),
                   ['--home-panel-heading' as any]: Color.black(),
                 }}

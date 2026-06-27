@@ -173,7 +173,6 @@ export default function ContentPanel({
     () => rootTypeFromState || rootType,
     [rootType, rootTypeFromState]
   );
-  // Normalize pass types for content state lookup
   const normalizedRootType = useMemo(
     () =>
       appliedRootType === 'missionPass' || appliedRootType === 'achievementPass'

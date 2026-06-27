@@ -63,7 +63,6 @@ export default function TargetSelector({
   }>({});
   const progressIntervalRef = useRef<{ [key: string]: number }>({});
 
-  // Progress bar animation for export buttons
   useEffect(() => {
     const targets = ['zero', 'ciel'] as const;
     const currentIntervals = progressIntervalRef.current;
@@ -317,7 +316,6 @@ export default function TargetSelector({
       </section>
     ) : null;
 
-  // Show "Chat with cloned prompt" button when user has cloned a shared topic
   const step3Complete = hasSharedTopic && sharedMessageCount >= 1;
   const sharedProgress = Math.min(sharedMessageCount, 1);
   const sharedProgressPercent = (sharedProgress / 1) * 100;

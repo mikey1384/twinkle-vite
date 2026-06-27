@@ -38,7 +38,6 @@ export default function ResultScreen({
   } | null;
 }) {
   const { isPassed, grades } = result;
-  // Theme colors for each letter grade
   const colorS = useKeyContext((v) => v.theme.grammarGameScoreS.color);
   const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
   const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
@@ -64,13 +63,11 @@ export default function ResultScreen({
     F: 0
   };
 
-  // Count grades
   const counts: Record<string, number> = { S: 0, A: 0, B: 0, C: 0, D: 0, F: 0 };
   for (const g of grades) {
     const key = counts[g] != null ? g : 'F';
     counts[key]++;
   }
-  // Compute total score and perfect
   const baseQuestionPoints = grades.reduce(
     (acc, g) => acc + (gradePoints[g] || 0),
     0

@@ -89,8 +89,6 @@ export default function PinnedAICards({
       setDisplayedCardIds(cachedCardIds);
       return;
     }
-    // Reset state when profile changes - wait for API validation
-    // This prevents showing previous profile's cards
     setDisplayedCardIds([]);
     setLoadedForProfileId(null);
   }, [cachedCardIds, hasCachedPinnedCards, pinnedCardIdsKey, profile?.id]);
@@ -136,7 +134,6 @@ export default function PinnedAICards({
             username: profile.username,
             cardIds: nextCardIds
           });
-          // Sync user state if backend returned different cards
           const nextCardIdsKey = nextCardIds
             .map((id: number) => Number(id))
             .filter((id: number) => Number.isFinite(id) && id > 0)
@@ -190,7 +187,6 @@ export default function PinnedAICards({
       : `${pinCardsLabel} (${displayedCardIds.length}/${MAX_PINNED_AI_CARDS})`
     : '';
 
-  // Hide section for visitors if no cards to display
   if (!isOwnProfile && !hasCards && !loading) {
     return null;
   }

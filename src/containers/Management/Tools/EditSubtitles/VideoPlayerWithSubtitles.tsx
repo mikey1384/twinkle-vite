@@ -4,7 +4,6 @@ import 'video.js/dist/video-js.css';
 import { subtitleVideoPlayer } from '~/constants/state';
 import { SrtSegment } from '~/types';
 
-// Define types based on videojs
 type VideoJsPlayer = ReturnType<typeof videojs>;
 interface VideoJsPlayerOptions {
   controls?: boolean;
@@ -49,11 +48,9 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
   const maxRetries = 2;
   const [currentVideoType, setCurrentVideoType] = useState<string>('');
 
-  // Update videoUrlRef when videoUrl changes
   useEffect(() => {
     videoUrlRef.current = videoUrl;
 
-    // If player exists and URL changes, update the source
     if (playerRef.current && videoUrl) {
       const videoType = detectVideoType(videoUrl);
       playerRef.current.src({ src: videoUrl, type: videoType });
@@ -61,11 +58,9 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     }
   }, [videoUrl]);
 
-  // Initialize player
   useEffect(() => {
     if (!videoRef.current) return;
 
-    // Always ensure we clean up the global instance
     if (subtitleVideoPlayer.instance) {
       try {
         subtitleVideoPlayer.instance.dispose();
@@ -76,7 +71,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       subtitleVideoPlayer.isReady = false;
     }
 
-    // Then clean up our local player ref
     if (playerRef.current) {
       try {
         playerRef.current.dispose();
@@ -86,7 +80,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       playerRef.current = null;
     }
 
-    // Clear any error state
     setErrorMessage(null);
     setRetryCount(0);
 
@@ -130,9 +123,7 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       player = videojs(videoRef.current, options);
       playerRef.current = player;
 
-      // Make sure time display is visible
       try {
-        // Use type assertion to access controlBar components
         const playerAny = player as any;
         if (playerAny.controlBar) {
           if (playerAny.controlBar.currentTimeDisplay)
@@ -147,33 +138,27 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
       }
 
       player.ready(() => {
-        // Store player in global state
         subtitleVideoPlayer.instance = player;
         subtitleVideoPlayer.isReady = true;
         subtitleVideoPlayer.lastAccessed = Date.now();
 
-        // Force reload the source to ensure proper loading
         if (videoUrl) {
           player.src({ src: videoUrl, type: currentVideoType });
         }
 
-        // Then notify parent component
         onPlayerReady(player);
       });
 
-      // Handle source changes
       player.on('sourceset', () => {
         if (subtitles && subtitles.length > 0) {
           updateSubtitles(player, subtitles);
         }
       });
 
-      // Handle errors
       player.on('error', (_e: any) => {
         const error = player.error();
         console.error('Video.js error:', error);
 
-        // Set user-friendly error message based on error code
         if (error) {
           let message = 'An error occurred while playing the video.';
 
@@ -198,7 +183,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
               if (retryCount < maxRetries && videoUrl) {
                 setRetryCount((prev) => prev + 1);
 
-                // Try different formats based on retry count
                 const formats = ['video/mp4', 'video/webm', 'video/ogg'];
                 const nextFormat = formats[retryCount % formats.length];
 
@@ -243,11 +227,9 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoUrl]); // Only re-run on videoUrl changes
 
-  // Handle video source updates
   useEffect(() => {
     if (playerRef.current && videoUrl !== videoUrlRef.current) {
       try {
-        // Reset error message and retry count when changing source
         setErrorMessage(null);
         setRetryCount(0);
 
@@ -260,7 +242,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
           }
         }
 
-        // Clear any previous errors
         try {
           if (playerRef.current) {
             playerRef.current.error(null as any);
@@ -269,10 +250,8 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
           console.error('Error clearing player error state:', err);
         }
 
-        // Update the source with a small delay to ensure clean state
         setTimeout(() => {
           if (playerRef.current) {
-            // Detect video type based on URL
             const videoType = detectVideoType(videoUrl);
             setCurrentVideoType(videoType);
 
@@ -289,7 +268,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
         setErrorMessage('Error loading video. Please try again.');
       }
     } else if (playerRef.current && !videoUrl) {
-      // Handle case when videoUrl is null/empty
       try {
         if (playerRef.current) {
           playerRef.current.pause();
@@ -302,14 +280,12 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     }
   }, [videoUrl]);
 
-  // Handle subtitle changes
   useEffect(() => {
     let vttUrl: string | null = null;
     if (playerRef.current && subtitles && subtitles.length > 0) {
       vttUrl = updateSubtitles(playerRef.current, subtitles);
     }
 
-    // Clean up the URL when component unmounts or subtitles changes
     return () => {
       if (vttUrl) {
         try {
@@ -321,10 +297,8 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     };
   }, [subtitles]);
 
-  // Add another effect with more comprehensive cleanup when component unmounts
   useEffect(() => {
     return () => {
-      // Clean up the player on unmount
       if (playerRef.current) {
         try {
           // Make sure to pause before disposal to avoid any race conditions
@@ -416,14 +390,12 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
   );
 };
 
-// Helper function to detect video type based on URL
 function detectVideoType(url: string): string {
   if (!url) return 'video/mp4';
 
   // Default MIME type
   const defaultType = 'video/mp4';
 
-  // Check for type hints added via URL hash (format: blob:url#type=video/mp4&ext=mp4)
   if (url.includes('#type=')) {
     try {
       // Extract the MIME type from our custom hint
@@ -439,7 +411,6 @@ function detectVideoType(url: string): string {
 
   // For blob URLs without hints, we'll try to infer from any patterns
   if (url.startsWith('blob:')) {
-    // Try to extract extension information from URL
     const extMatch = url.match(/#.*?ext=([^&]+)/);
     if (extMatch && extMatch[1]) {
       const ext = decodeURIComponent(extMatch[1]).toLowerCase();
@@ -475,7 +446,6 @@ function detectVideoType(url: string): string {
     return defaultType;
   }
 
-  // For non-blob URLs, try to extract the file extension
   const extension = url.split('.').pop()?.toLowerCase();
 
   if (!extension) return defaultType;
@@ -522,13 +492,11 @@ function formatTimeForVtt(seconds: number): string {
   )}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
 }
 
-// Generate VTT content directly from subtitle segments
 function generateVttFromSegments(segments: SrtSegment[]): string {
   if (!segments || segments.length === 0) {
     return 'WEBVTT\n\n';
   }
 
-  // Sort segments by start time
   const sortedSegments = [...segments].sort((a, b) => a.start - b.start);
 
   const lines = ['WEBVTT', ''];
@@ -551,19 +519,16 @@ function updateSubtitles(
   let vttUrl: string | null = null;
 
   try {
-    // Use type assertion to access remoteTextTracks
     const tracks = (player as any).remoteTextTracks();
     for (let i = tracks.length - 1; i >= 0; i--) {
       player.removeRemoteTextTrack(tracks[i]);
     }
 
-    // Generate VTT directly from subtitle segments
     const vttContent = generateVttFromSegments(subtitleSegments);
 
     const vttBlob = new Blob([vttContent], { type: 'text/vtt' });
     vttUrl = URL.createObjectURL(vttBlob);
 
-    // Add the track with showing mode
     const newTrack = player.addRemoteTextTrack(
       {
         kind: 'subtitles',
@@ -576,17 +541,14 @@ function updateSubtitles(
       false
     );
 
-    // Force the track to be shown
     if (newTrack) {
       // Use type assertion since TypeScript doesn't know about track property
       (newTrack as any).track.mode = 'showing';
     }
 
-    // Refresh the player to ensure subtitles are shown
     const currentTime = player.currentTime();
     player.currentTime(currentTime);
 
-    // Return the URL for cleanup later
     return vttUrl;
   } catch (err) {
     console.error('Error updating subtitles:', err);

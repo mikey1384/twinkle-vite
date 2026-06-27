@@ -85,13 +85,11 @@ function TextMessage({
     );
   }, [extractedUrl]);
 
-  // Show full indicator when AI message has no content yet
   const showFullIndicator = useMemo(
     () => isAIMessage && !content && (isLastMsg || isCurrentlyStreaming),
     [isAIMessage, content, isLastMsg, isCurrentlyStreaming]
   );
 
-  // Show compact indicator when content exists but there's an active tool/thinking status
   const showCompactIndicator = useMemo(() => {
     if (!isAIMessage || !content) return false;
 

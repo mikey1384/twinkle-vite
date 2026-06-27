@@ -979,25 +979,20 @@ export default function ChatReducer(
       const notificationId = uuidv1();
       if (!state.channelsObj[action.channelId]) return state;
 
-      // Get current channel data
       const channel = state.channelsObj[action.channelId];
 
-      // Ensure newOwner is in members array
       let members = [...(channel.members || [])];
       const memberIds = new Set(members.map((member) => member.id));
       const allMemberIds = [...(channel.allMemberIds || [])];
 
-      // If newOwner isn't in members array, add them
       if (!memberIds.has(action.newOwner.id) && action.newOwner.username) {
         members = [action.newOwner, ...members];
       }
 
-      // Remove newOwner from allMemberIds (if present) to re-add at beginning
       const filteredMemberIds = allMemberIds.filter(
         (id) => id !== action.newOwner.id
       );
 
-      // Add newOwner's ID to the beginning of allMemberIds
       const updatedAllMemberIds = [action.newOwner.id, ...filteredMemberIds];
 
       return {
@@ -1006,7 +1001,6 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            // Always push the notification as the most recent message
             messageIds: [notificationId].concat(
               state.channelsObj[action.channelId].messageIds
             ),
@@ -1636,7 +1630,6 @@ export default function ChatReducer(
             ...(action.data.currentSubchannelId
               ? { subchannelObj: newSubchannelObj }
               : {}),
-            // Compute partnerUsername for DM channels
             ...(loadedChannel.twoPeople &&
             loadedChannel.members &&
             state.prevUserId
@@ -1924,7 +1917,6 @@ export default function ChatReducer(
       const newChannelsObj: Record<string, any> = {
         ...state.channelsObj
       };
-      // Merge server channels while preserving client-side UI state (selectedTab, selectedTopicId, topicObj)
       for (const channelId in action.data.channelsObj) {
         const existingChannel = state.channelsObj[channelId];
         const serverChannel = action.data.channelsObj[channelId];
@@ -2005,7 +1997,6 @@ export default function ChatReducer(
         Number(newCurrentChannel?.lastUpdated || 0),
         Number(mergedCurrentSettings?.lastReaction?.timeStamp || 0)
       );
-      // Deep merge topicObj for current channel
       const mergedCurrentTopicObj: Record<string, any> = {
         ...existingCurrentChannel?.topicObj
       };
@@ -3589,7 +3580,6 @@ export default function ChatReducer(
             gameState,
             isHidden: false,
             ...(subchannelObj ? { subchannelObj } : {}),
-            // Update creatorId when receiving an owner_change message
             ...(action.message.notificationType === 'owner_change' &&
             action.message.newOwner?.id
               ? { creatorId: action.message.newOwner.id }
@@ -3729,7 +3719,6 @@ export default function ChatReducer(
                     isLoaded: true
                   }
                 },
-                // Update creatorId when receiving an owner_change message
                 ...(action.message.notificationType === 'owner_change' &&
                 action.message.newOwner?.id
                   ? { creatorId: action.message.newOwner.id }

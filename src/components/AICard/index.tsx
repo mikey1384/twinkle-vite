@@ -13,7 +13,6 @@ const $style = $('#animation');
 const MAX_ROTATE_X = 15;
 const MAX_ROTATE_Y = 15;
 
-// Constants used to calculate the card's rotation.
 const ROTATE_X_FACTOR = -0.05;
 const ROTATE_Y_FACTOR = 0.1;
 
@@ -48,11 +47,9 @@ export default function AICard({
             const { left, top, width, height } =
               CardRef.current.getBoundingClientRect();
 
-            // Calculate the position of the center of the card.
             const centerX = left + width / 2;
             const centerY = top + height / 2;
 
-            // Calculate the position of the mouse relative to the center of the card.
             const relativeX = px - centerX;
             const relativeY = py - centerY;
             return api.start({

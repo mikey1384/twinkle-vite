@@ -35,16 +35,13 @@ import {
 import { mergeAiUsagePolicyWithCurrent } from '~/helpers/aiUsagePolicy';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
-// Helper to get proxied URL for CloudFront images
 function getProxiedUrl(imageUrl: string): string {
-  // If it's a CloudFront URL, proxy through backend
   if (
     imageUrl.includes('cloudfront.net') ||
     imageUrl.includes('s3.amazonaws.com')
   ) {
     return `${API_URL}/content/image/proxy?url=${encodeURIComponent(imageUrl)}`;
   }
-  // If it's already a data URL or local URL, use directly
   return imageUrl;
 }
 
@@ -169,14 +166,12 @@ export default function ImageEditModal({
   }, [aiUsagePolicy, aiUsagePolicyLoading, energyDepleted]);
   const aiModificationDisabled = AI_FEATURES_DISABLED;
 
-  // Handle "Use This Image" for embedded mode
   const handleUseThisImage = useCallback(() => {
     if (!canvasRef.current || !onConfirm) return;
     const dataUrl = canvasRef.current.toDataURL('image/png');
     onConfirm(dataUrl);
   }, [onConfirm]);
 
-  // Notify parent about image availability and register handler
   useEffect(() => {
     if (embedded) {
       onUseImageAvailabilityChange?.(isImageReady && !isGenerating);
@@ -249,7 +244,6 @@ export default function ImageEditModal({
   clearDrawingOverlayRef.current = toolsAPI.clearDrawingOverlay;
   updateDisplayRef.current = updateDisplay;
 
-  // Load image onto canvas
   useEffect(() => {
     setIsImageReady(false);
 
@@ -289,7 +283,6 @@ export default function ImageEditModal({
             canvasHeight = Math.floor(canvasHeight * scale);
           }
 
-          // Set all canvas dimensions
           canvas.width = canvasWidth;
           canvas.height = canvasHeight;
           originalCanvas.width = canvasWidth;
@@ -297,16 +290,13 @@ export default function ImageEditModal({
           drawingCanvas.width = canvasWidth;
           drawingCanvas.height = canvasHeight;
 
-          // Let CSS handle responsive sizing - canvas fills its container
           canvas.style.width = '100%';
           canvas.style.height = 'auto';
 
-          // Setup reference canvas with white background and image
           originalCtx.fillStyle = '#ffffff';
           originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
           originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
-          // Setup drawing canvas with transparent background
           drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
           requestAnimationFrame(() => {
@@ -331,7 +321,6 @@ export default function ImageEditModal({
   }, [imageUrl]);
 
   const loadImageOntoCanvas = useCallback((newImageUrl: string) => {
-    // Use proxied URL for CloudFront images
     const proxiedUrl = getProxiedUrl(newImageUrl);
 
     const img = new Image();
@@ -347,7 +336,6 @@ export default function ImageEditModal({
       const drawingCtx = drawingCanvas.getContext('2d');
       if (!originalCtx || !drawingCtx) return;
 
-      // Use AI image's natural dimensions
       const maxCanvasSize = 2048;
       let canvasWidth = img.naturalWidth;
       let canvasHeight = img.naturalHeight;
@@ -361,7 +349,6 @@ export default function ImageEditModal({
         canvasHeight = Math.floor(canvasHeight * scale);
       }
 
-      // Resize all canvases to match AI image dimensions
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
       originalCanvas.width = canvasWidth;
@@ -369,16 +356,13 @@ export default function ImageEditModal({
       drawingCanvas.width = canvasWidth;
       drawingCanvas.height = canvasHeight;
 
-      // Let CSS handle responsive sizing - canvas fills its container
       canvas.style.width = '100%';
       canvas.style.height = 'auto';
 
-      // Draw AI image at its natural size
       originalCtx.fillStyle = '#ffffff';
       originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
       originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
-      // Clear drawing canvas
       drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
       requestAnimationFrame(() => {
@@ -420,7 +404,6 @@ export default function ImageEditModal({
           }
           // Clear any existing drawings before loading the new AI image
           clearDrawingOverlayRef.current();
-          // Load the new AI-generated image onto the canvas
           loadImageOntoCanvas(status.imageUrl);
 
           if (status.aiUsagePolicy) {
@@ -971,7 +954,6 @@ export default function ImageEditModal({
     const requestId = startImageRequest();
 
     try {
-      // Get current canvas state as base64
       const canvas = canvasRef.current;
       if (!canvas) {
         throw new Error('Canvas not available');

@@ -61,7 +61,6 @@ export default function AIChatTopicMenu({
 
   const hasDraftToRestore = useMemo(() => {
     if (!savedDraftContent) return false;
-    // Show restore button if draft differs from current content
     return savedDraftContent.trim() !== newCustomInstructions.trim();
   }, [savedDraftContent, newCustomInstructions]);
 
@@ -72,7 +71,6 @@ export default function AIChatTopicMenu({
     }
   }, [deleteDraft, onSetDeleteDraft]);
 
-  // Auto-scroll textarea to bottom during generation/improvement
   useEffect(() => {
     if ((generating || improving) && textareaRef.current) {
       textareaRef.current.scrollTop = textareaRef.current.scrollHeight;

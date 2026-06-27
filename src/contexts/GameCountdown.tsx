@@ -10,7 +10,6 @@ interface CountdownStore {
   subscribe: (listener: Listener) => () => void;
 }
 
-// Simple store that doesn't cause React re-renders on its own
 export const countdownStore: CountdownStore = {
   values: {},
   listeners: new Set(),
@@ -44,9 +43,7 @@ export function useCountdownValue(
 
   useEffect(() => {
     if (!channelId) return;
-    // Set initial value
     setValue(countdownStore.get(channelId, gameType));
-    // Subscribe to changes
     return countdownStore.subscribe(() => {
       setValue(countdownStore.get(channelId, gameType));
     });

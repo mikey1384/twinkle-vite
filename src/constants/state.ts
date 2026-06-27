@@ -29,7 +29,6 @@ export const audioRef: Record<string, any> = {
   key: ''
 };
 
-// Add global merge state information
 export const mergeStates: Record<
   string,
   {
@@ -40,7 +39,6 @@ export const mergeStates: Record<
   }
 > = {};
 
-// Add global translation state information
 export const translationStates: Record<
   string,
   {
@@ -56,7 +54,6 @@ export const translationStates: Record<
   }
 > = {};
 
-// Add global subtitle video player reference
 export const subtitleVideoPlayer: {
   instance: any;
   isReady: boolean;
@@ -67,7 +64,6 @@ export const subtitleVideoPlayer: {
   lastAccessed: 0
 };
 
-// Add global subtitles state
 export const subtitlesState: {
   segments: Array<{
     index: number;

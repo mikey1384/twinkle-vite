@@ -182,7 +182,6 @@ export default function UserPopup({
       );
     };
 
-    // Word Master context
     if (
       (wordMasterContext && typeof wordMasterPoints === 'number') ||
       (activityContext === 'wordMaster' && typeof activityPoints === 'number')
@@ -198,7 +197,6 @@ export default function UserPopup({
       );
     }
 
-    // Monthly XP context
     if (activityContext === 'monthlyXP') {
       return (
         <>
@@ -208,7 +206,6 @@ export default function UserPopup({
       );
     }
 
-    // Wordle XP context
     if (activityContext === 'wordleXP') {
       return (
         <>
@@ -218,7 +215,6 @@ export default function UserPopup({
       );
     }
 
-    // Activity-specific context (AI Stories, Grammar, etc.)
     if (activityContext && typeof activityPoints === 'number') {
       let contextLabel = '';
       if (activityContext === 'aiStories') contextLabel = 'from AI Stories';
@@ -232,7 +228,6 @@ export default function UserPopup({
       );
     }
 
-    // Default - show total XP
     return (
       <>
         {userXP} XP

@@ -107,7 +107,8 @@ export default function Card({
       cardObj?.[card.id]?.owner?.username,
       cardObj?.[card.id]?.askPrice,
       cardObj?.[card.id]?.imagePath,
-      cardObj?.[card.id]?.imageGenerationPreviewUrl
+      cardObj?.[card.id]?.imageGenerationPreviewUrl,
+      cardObj?.[card.id]?.imageGenerationInProgress
     ]
   );
 
@@ -138,8 +139,13 @@ export default function Card({
     () =>
       finalCard?.engine === 'image-1' ||
       finalCard?.engine === 'image-1.5' ||
-      finalCard?.engine === 'image-2',
-    [finalCard?.engine]
+      finalCard?.engine === 'image-2' ||
+      // A reveal-in-progress is always an OpenAI image generation, so apply the
+      // cover/contain treatment while the preview streams in — before the
+      // canonical engine is committed on completion. This avoids letterboxing
+      // the streaming preview without persisting a speculative engine value.
+      !!finalCard?.imageGenerationInProgress,
+    [finalCard?.engine, finalCard?.imageGenerationInProgress]
   );
   const { cardCss, cardColor } = useAICard(finalCard);
 

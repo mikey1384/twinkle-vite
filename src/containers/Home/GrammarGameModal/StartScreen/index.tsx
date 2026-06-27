@@ -602,7 +602,6 @@ export default function StartScreen({
   function handleStartClick() {
     if (!userId) return;
     try {
-      // Immediate local update for responsiveness
       onUpdateGrammarLoadingStatus?.('loading...');
     } catch {
       // no-op

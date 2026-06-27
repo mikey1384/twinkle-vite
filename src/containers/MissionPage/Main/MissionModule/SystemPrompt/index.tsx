@@ -178,7 +178,6 @@ export default function SystemPromptMission({
     };
   }, []);
 
-  // Reset state when user changes
   useEffect(() => {
     if (userId && mission.prevUserId && userId !== mission.prevUserId) {
       onResetSystemPromptStateForUser({ missionId: mission.id, userId });
@@ -888,7 +887,6 @@ export default function SystemPromptMission({
           missionPromptId: data.missionPromptId
         });
       }
-      // Set thinkHard to false for the new topic
       if (typeof data?.topicId === 'number') {
         onSetThinkHardForTopic({
           aiType: target,

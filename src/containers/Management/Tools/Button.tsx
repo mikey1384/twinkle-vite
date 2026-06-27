@@ -1,7 +1,6 @@
 import React, { ButtonHTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
 
-// Define the button variants and sizes
 type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'success';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -15,7 +14,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
-// Base button styles
 const baseButtonStyles = css`
   display: inline-flex;
   align-items: center;
@@ -38,7 +36,6 @@ const baseButtonStyles = css`
   }
 `;
 
-// Size variants
 const buttonSizes = {
   sm: css`
     font-size: 1.1rem;
@@ -57,7 +54,6 @@ const buttonSizes = {
   `
 };
 
-// Style variants
 const buttonVariants = {
   primary: css`
     background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
@@ -137,12 +133,10 @@ const buttonVariants = {
   `
 };
 
-// Full width style
 const fullWidthStyle = css`
   width: 100%;
 `;
 
-// Loading spinner style
 const loadingSpinnerStyle = css`
   @keyframes spin {
     to {
@@ -161,7 +155,6 @@ const loadingSpinnerStyle = css`
   vertical-align: text-bottom;
 `;
 
-// Icon spacing styles
 const iconLeftStyle = css`
   margin-right: 8px;
 `;

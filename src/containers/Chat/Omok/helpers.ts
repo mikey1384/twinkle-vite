@@ -149,7 +149,6 @@ export function getWinningLine({
         c -= dc;
       }
       if (cells.length >= 5) {
-        // return exactly 5 contiguous cells centered at the segment that includes r0,c0
         return cells.slice(0, Math.max(5, cells.length));
       }
     }

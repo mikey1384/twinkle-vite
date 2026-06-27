@@ -113,12 +113,10 @@ export default function Profile() {
     username
   ]);
 
-  // Ensure viewing a profile applies that user's theme (even when logged out)
   useEffect(() => {
     if (!profile?.id) return;
     const isViewingOwnProfile = userId ? profile.id === userId : false;
     if (isViewingOwnProfile) {
-      // Clear any lingering route override when viewing own profile
       setRouteThemeOverride(null);
       return;
     }

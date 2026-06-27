@@ -12,7 +12,6 @@ export default function GameModalFooter({
   drawOfferPending,
   isAbortable,
   gameFinished,
-  // actions
   onOpenConfirmModal,
   onOfferDraw,
   onClose,
@@ -20,7 +19,6 @@ export default function GameModalFooter({
   onStartNewGame,
   onDone,
   onHowToPlay,
-  // UI state
   doneDisabled,
   // colors
   warningColor,

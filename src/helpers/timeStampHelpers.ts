@@ -61,7 +61,6 @@ export function formatDate(dateText: string | number) {
   });
 }
 
-// Compact relative time: 3s, 1m, 2h, 3d
 export function timeSinceShort(dateText: string | number) {
   const date = new Date(Number(dateText) * 1000);
   const now = new Date();

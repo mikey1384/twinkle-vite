@@ -14,7 +14,6 @@ export default function TopMenu() {
   );
   const [allSelected, setAllSelected] = useState(all?.length > 0);
 
-  // Show loading if vocabulary is loading OR if rankings haven't been loaded yet
   const showLoading =
     loadingVocabulary || (!vocabRankingsLoaded && !all?.length && !top30s?.length);
 

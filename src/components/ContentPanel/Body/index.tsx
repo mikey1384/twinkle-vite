@@ -122,7 +122,6 @@ export default function Body({
     contentId
   });
 
-  // Normalize pass types for content state lookup
   const normalizedRootType =
     rootType === 'missionPass' || rootType === 'achievementPass'
       ? 'pass'

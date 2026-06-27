@@ -457,9 +457,7 @@ export default function DonorLicenseItem({
   }
 
   function handleAmountChange(value: string) {
-    // Remove all non-digits
     const numbers = value.replace(/\D/g, '');
-    // Add commas for formatting
     const formatted = addCommasToNumber(parseInt(numbers) || 0);
     setDonationAmount(numbers === '0' ? '' : formatted);
   }

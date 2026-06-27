@@ -24,9 +24,7 @@ export default function CurrentLevelBadge({
       };
     }
 
-    // Progressive styling based on level ranges
     if (level >= 37) {
-      // Genius levels (37-41)
       return {
         background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
         border: '2px solid #d97706',
@@ -43,7 +41,6 @@ export default function CurrentLevelBadge({
     }
 
     if (level >= 31) {
-      // Legendary levels (31-36)
       return {
         background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
         border: '2px solid #991b1b',
@@ -60,7 +57,6 @@ export default function CurrentLevelBadge({
     }
 
     if (level >= 25) {
-      // Expert levels (25-30)
       return {
         background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
         border: '2px solid #7c3aed',
@@ -77,7 +73,6 @@ export default function CurrentLevelBadge({
     }
 
     if (level >= 20) {
-      // Advanced levels (20-24)
       return {
         background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
         border: '2px solid #334155',
@@ -94,7 +89,6 @@ export default function CurrentLevelBadge({
     }
 
     if (level >= 15) {
-      // Intermediate levels (15-19)
       return {
         background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
         border: '2px solid #1d4ed8',
@@ -110,7 +104,6 @@ export default function CurrentLevelBadge({
       };
     }
 
-    // Beginner levels (1-14)
     return {
       background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
       border: '2px solid #22c55e',

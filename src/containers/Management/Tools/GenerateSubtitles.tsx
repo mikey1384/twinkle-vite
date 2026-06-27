@@ -192,7 +192,6 @@ export default function GenerateSubtitles({
     onSetTranslationProgress(0);
     onSetTranslationStage('');
 
-    // Update both UI and global state
     onSetIsTranslationInProgress(true);
     translationStates[sessionIdRef.current] = {
       inProgress: true,
@@ -217,7 +216,6 @@ export default function GenerateSubtitles({
       return;
     }
 
-    // Pass the file to parent's handler which creates URL
     onSetVideoFile(selectedFile);
 
     const isLargeFile = selectedFile.size > 100 * 1024 * 1024;
@@ -375,7 +373,6 @@ export default function GenerateSubtitles({
                 showOriginalText
               );
 
-              // Update the subtitles state in the parent component
 
               onSetSubtitles(parsedSegments);
 

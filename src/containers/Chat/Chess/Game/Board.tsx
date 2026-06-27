@@ -40,7 +40,6 @@ export default function Board({
   const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   if (myColor === 'black') letters.reverse();
 
-  // Smaller axis fonts for compact view on mobile
   const axisFontClass =
     size !== 'regular'
       ? css`

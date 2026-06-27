@@ -74,7 +74,6 @@ export default function SystemPromptShared() {
     (v) => v.actions.onUpdateSharedPromptClone
   );
 
-  // Local state (doesn't need to persist)
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
@@ -86,7 +85,6 @@ export default function SystemPromptShared() {
     [key: number]: boolean;
   }>({});
 
-  // Track the previous sortBy to detect actual sort changes
   const prevSortByRef = React.useRef(sortBy);
 
   useEffect(() => {
@@ -122,7 +120,6 @@ export default function SystemPromptShared() {
       try {
         const { prompts: fetchedPrompts } = await loadSharedPromptsBySort(sortBy);
         if (ignore) return;
-        // Check if the first item is different from what we have
         if (fetchedPrompts?.length > 0 && topics?.length > 0) {
           const newestFetched = fetchedPrompts[0].id;
           const newestCached = topics[0].id;
@@ -133,11 +130,10 @@ export default function SystemPromptShared() {
           setNewPromptsAvailable(true);
         }
       } catch {
-        // Silently fail background check
+        // Background freshness checks are non-blocking.
       }
     }
 
-    // If no cached data or sort changed, do full load
     if (!sharedPromptsLoaded || sortByChanged) {
       init();
     } else {

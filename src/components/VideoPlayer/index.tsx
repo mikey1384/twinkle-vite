@@ -465,7 +465,6 @@ const VideoPlayer = memo(
           const shouldUnmute = liveMuted() || liveVolume() === 0;
           if (shouldUnmute) {
             this.setMuted(false);
-            // If the level itself is 0 (slider dragged down), restore audio.
             if (liveVolume() === 0) {
               this.setVolume(
                 lastNonZeroVolumeRef.current > 0

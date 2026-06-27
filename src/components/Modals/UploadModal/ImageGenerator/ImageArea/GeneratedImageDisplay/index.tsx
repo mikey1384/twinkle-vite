@@ -434,7 +434,6 @@ export default function GeneratedImageDisplay({
       let fileExtension = 'png';
 
       if (currentImageSrc.startsWith('data:image')) {
-        // Convert data URL to Blob
         const [header, data] = currentImageSrc.split(',');
         const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
         const binary = atob(data);
@@ -445,7 +444,6 @@ export default function GeneratedImageDisplay({
         blob = new Blob([array], { type: mime });
         fileExtension = mime.split('/')[1] || 'png';
       } else {
-        // Fetch remote image as Blob
         const response = await fetch(currentImageSrc, { mode: 'cors' });
         if (!response.ok) throw new Error('Failed to fetch image');
         blob = await response.blob();

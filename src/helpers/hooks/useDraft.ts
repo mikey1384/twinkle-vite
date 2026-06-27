@@ -127,7 +127,6 @@ export default function useDraft({
         const draft = drafts.find(
           (d: { type: string; rootType?: string; rootId?: number }) => {
             if (d.type !== contentType) return false;
-            // Always filter by rootType/rootId if they're provided
             if (rootType && rootId) {
               return d.rootType === rootType && d.rootId === rootId;
             }

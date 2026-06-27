@@ -129,7 +129,6 @@ export default function CloneSharedTopicButton({
           selectedTab: 'all'
         }
       });
-      // Set thinkHard to false for the cloned topic
       if (subjectId) {
         const aiType =
           channelName?.toLowerCase() === 'ciel' ? 'ciel' : 'zero';

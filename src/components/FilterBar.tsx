@@ -36,7 +36,6 @@ export default function FilterBar({
   const alertColorVar = `var(--role-alert-color, ${alertRoleColor})`;
   const isVanta = resolvedThemeName === 'vantaBlack';
 
-  // Surface and text (single design: underline tabs)
   const barBackground = '#fff';
   // no borders
   const navTextColor = Color.darkGray();
@@ -47,7 +46,6 @@ export default function FilterBar({
     ? 'rgba(0, 0, 0, 0.18)'
     : getFilterColor(0.28) || Color.logoBlue(0.28);
 
-  // Make the selected tab underline opaque
   const tabActiveBorder = getFilterColor() || Color.logoBlue();
 
   const formatCssValue = (

@@ -54,7 +54,6 @@ export function RootThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Clear route override when navigating away from profile pages
   useLayoutEffect(() => {
     const path = location?.pathname || '';
     if (!path.startsWith('/users/') && routeThemeOverride) {

@@ -1,7 +1,6 @@
 import React, { ButtonHTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
 
-// Define the button variants and sizes
 type IconButtonVariant = 'primary' | 'secondary' | 'transparent';
 type IconButtonSize = 'sm' | 'md' | 'lg';
 
@@ -14,7 +13,6 @@ export interface IconButtonProps
   isLoading?: boolean;
 }
 
-// Base icon button styles
 const baseIconButtonStyles = css`
   display: inline-flex;
   align-items: center;
@@ -35,7 +33,6 @@ const baseIconButtonStyles = css`
   }
 `;
 
-// Size variants
 const iconButtonSizes = {
   sm: css`
     width: 36px;
@@ -54,7 +51,6 @@ const iconButtonSizes = {
   `
 };
 
-// Style variants
 const iconButtonVariants = {
   primary: css`
     background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
@@ -107,7 +103,6 @@ const iconButtonVariants = {
   `
 };
 
-// Loading spinner style
 const loadingSpinnerStyle = css`
   @keyframes spin {
     to {
@@ -123,7 +118,6 @@ const loadingSpinnerStyle = css`
   animation: spin 0.75s linear infinite;
 `;
 
-// Entry animation
 const entryAnimation = css`
   @keyframes fadeIn {
     from {

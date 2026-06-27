@@ -7,7 +7,6 @@ interface BackToTopButtonProps {
   onClick?: () => void;
 }
 
-// Modern button styles with refined animation
 const buttonContainerStyles = css`
   position: fixed;
   bottom: 30px;

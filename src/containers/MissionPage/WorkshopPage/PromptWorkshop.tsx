@@ -65,7 +65,6 @@ export default function PromptWorkshop({
     (v) => v.actions.onSetThinkHardForTopic
   );
 
-  // State from mission context
   const systemPromptState = useMemo(() => {
     return (
       mission?.systemPromptState || {
@@ -118,7 +117,6 @@ export default function PromptWorkshop({
   const showTitleGenerateButton =
     !showPromptSection || (generating && !hasPrompt);
 
-  // Update mission state helper
   function setSystemPromptState(nextState: {
     title?: string;
     prompt?: string;
@@ -382,14 +380,12 @@ export default function PromptWorkshop({
     };
   }, []);
 
-  // Auto-scroll chat
   useEffect(() => {
     if (messageListRef.current) {
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
     }
   }, [chatMessages]);
 
-  // Auto-scroll textarea during generation
   useEffect(() => {
     if ((generating || improving) && textareaRef.current) {
       textareaRef.current.scrollTop = textareaRef.current.scrollHeight;

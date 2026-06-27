@@ -28,43 +28,35 @@ export default function UploadButton({
   onMouseLeave = () => {},
   enableAIGeneration = true
 }: {
-  // Core functionality
   onFileSelect: (file: File) => void;
   onFilesSelect?: (files: File[]) => void;
   accept?: string;
   multiple?: boolean;
   disabled?: boolean;
 
-  // Button appearance
   icon?: IconName;
   iconSize?: string;
   text?: string;
 
-  // Button styling
   color?: string;
   hoverColor?: string;
   style?: React.CSSProperties;
   className?: string;
 
-  // Button variants
   transparent?: boolean;
   filled?: boolean;
 
-  // Size and spacing
   mobilePadding?: string;
 
   // Accessibility
   title?: string;
   'aria-label'?: string;
 
-  // Additional props to pass to Button
   buttonProps?: Record<string, any>;
 
-  // Mouse events
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 
-  // New: Enable AI generation option
   enableAIGeneration?: boolean;
 }) {
   const { colorKey: defaultButtonColor } = useRoleColor('button', {

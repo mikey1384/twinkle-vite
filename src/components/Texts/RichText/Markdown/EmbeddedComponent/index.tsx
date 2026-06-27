@@ -49,7 +49,6 @@ function EmbeddedComponent({
     return replacedLink?.replace(/<u>|<\/u>/g, '__') || replacedLink;
   }, [replacedLink]);
 
-  // Infer file extension/type when the src looks like a file URL
   const { fileType } = useMemo(() => {
     const url = (src || '').split('?')[0].split('#')[0];
     const last = url.split('/').pop() || '';

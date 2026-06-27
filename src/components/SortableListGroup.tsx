@@ -92,7 +92,6 @@ export default function SortableListGroup<T extends number | string = number>({
 
       e.preventDefault();
 
-      // Find which item we're over
       for (const [id, element] of itemRefs.current.entries()) {
         if (id === currentDraggedId) continue;
         const rect = element.getBoundingClientRect();

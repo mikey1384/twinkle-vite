@@ -55,7 +55,6 @@ export default function AddButtons({
     ? 'darkerGray'
     : buttonHoverColorKey;
 
-  // Helper to tint Color keys
   const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
     const fn = (Color as any)[key];
     if (typeof fn === 'function') return fn(alpha);
@@ -63,7 +62,6 @@ export default function AddButtons({
     return typeof fallbackFn === 'function' ? fallbackFn(alpha) : fallbackKey;
   };
 
-  // All glow effects are gold regardless of theme
   const glowHoverKey = 'gold';
   const hoveredSoftBg = getTint(glowHoverKey, 0.18);
   const hoveredSoftBorder = getTint(glowHoverKey, 0.32);

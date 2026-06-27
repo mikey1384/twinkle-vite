@@ -1083,7 +1083,6 @@ export default function MessagesContainer({
           newOwner
         });
 
-        // Update local state using the same pattern as chess/omok
         const timeStamp = Math.floor(Date.now() / 1000);
         const messagePayload = {
           id: messageId,

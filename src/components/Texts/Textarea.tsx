@@ -168,12 +168,10 @@ export default function Textarea({
   // Keep ref in sync so ResizeObserver always uses latest resize logic
   scheduleResizeRef.current = scheduleResize;
 
-  // Invalidate cached styles when style-affecting props change
   useEffect(() => {
     cachedStylesRef.current = null;
   }, [className, textareaSizingStyleKey, theme]);
 
-  // Initial resize and value change handling
   useEffect(() => {
     const currentValue = String(rest.value ?? '');
     const previousValue = lastValueRef.current ?? '';
@@ -197,7 +195,6 @@ export default function Textarea({
     theme
   ]);
 
-  // ResizeObserver for container width changes
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -213,7 +210,6 @@ export default function Textarea({
         const nextWidth = Math.round(entry.contentRect.width);
         if (nextWidth !== Math.round(lastWidth)) {
           lastWidth = nextWidth;
-          // Invalidate cached styles on width change
           cachedStylesRef.current = null;
           scheduleResizeRef.current(false);
         }
@@ -271,7 +267,6 @@ export default function Textarea({
         }}
         onDrop={dropEnabled ? handleDrop : undefined}
         onPaste={(e) => {
-          // Mark that we're pasting so resize uses longer delay
           isPastingRef.current = true;
           if (onDrop || (rest as any).onPaste) {
             handleCombinedPaste(e);
@@ -284,11 +279,9 @@ export default function Textarea({
           if (isIOS) {
             const el = textareaRef.current;
             if (el) {
-              // Force reflow by reading offsetHeight then toggling a property
               setTimeout(() => {
                 if (el) {
                   el.offsetHeight; // Force reflow
-                  // Toggle transform to force layer recalculation
                   el.style.transform = 'translateZ(0)';
                   requestAnimationFrame(() => {
                     if (el) {
@@ -323,7 +316,6 @@ export default function Textarea({
         }}
         onBlur={(e) => {
           isFocusedRef.current = false;
-          // Clear idle timer on blur
           if (idleTimerRef.current) {
             clearTimeout(idleTimerRef.current);
             idleTimerRef.current = null;

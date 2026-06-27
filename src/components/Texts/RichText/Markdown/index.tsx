@@ -109,7 +109,6 @@ function Markdown({
       if (isAIMessage) {
         textToProcess = children
           .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1: string) => {
-            // Replace newlines with space - KaTeX handles single-line better
             const content = p1.trim().replace(/\n/g, ' ');
             return '\n\n$$' + content + '$$\n\n';
           })
@@ -120,7 +119,6 @@ function Markdown({
 
       const preprocessedText = preprocessText(textToProcess, { isAIMessage });
 
-      // For AI messages, protect currency from being interpreted as math
       let textForMarkdown = preprocessedText;
       if (isAIMessage) {
         textForMarkdown =
@@ -145,7 +143,6 @@ function Markdown({
             .processSync(preprocessedText)
             .toString();
 
-      // Restore currency symbols
       const finalString = isAIMessage
         ? restoreCurrencyPlaceholders(markupString)
         : markupString;

@@ -1055,7 +1055,6 @@ export default function ImageGenerator({
       setGeneratedImageId(null);
       setPartialImageData(null);
 
-      // Check if image needs conversion (HEIC, TIFF, BMP, etc.)
       if (needsImageConversion(file.name)) {
         try {
           const { file: convertedFile } =
@@ -1072,7 +1071,6 @@ export default function ImageGenerator({
   }
 
   function handleCanvasSave(dataUrl: string) {
-    // Convert the drawn canvas to a reference image
     const blob = dataUrlToBlob(dataUrl);
     const timestamp = Date.now();
     const file = new File([blob], `drawn-reference-${timestamp}.png`, {

@@ -56,7 +56,6 @@ export default function LeftButtons({
     ? 'darkerGray'
     : buttonHoverColor;
 
-  // Helper to tint Color keys
   const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
     const fn = (Color as any)[key];
     if (typeof fn === 'function') return fn(alpha);

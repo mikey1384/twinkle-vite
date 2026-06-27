@@ -312,7 +312,6 @@ function PinnedTopics({
   }
 
   function handleTopicNavClick(topicId: number) {
-    // Save scroll position when switching from 'all' to 'topic'
     if (selectedTab !== 'topic') {
       onSaveScrollPositionForAll?.();
     }

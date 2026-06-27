@@ -79,10 +79,8 @@ export function useAnalysisMode({
   }
 
   return {
-    // state
     fenHistory,
     analysisIndex,
-    // actions
     initStartFen,
     appendCurrentFen,
     prev,

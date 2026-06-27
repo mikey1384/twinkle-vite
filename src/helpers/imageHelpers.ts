@@ -36,14 +36,12 @@ export async function convertToWebFriendlyFormat(
 ): Promise<{ file: File; dataUrl: string; converted: boolean }> {
   const ext = getFileExtension(file.name);
 
-  // If already web-friendly, just read and return
   if (!NEEDS_CONVERSION_FORMATS.has(ext)) {
     const dataUrl = await fileToDataUrl(file);
     return { file, dataUrl, converted: true };
   }
 
   try {
-    // Handle HEIC/HEIF with heic2any
     if (ext === 'heic' || ext === 'heif') {
       const { default: heic2any } = await import('heic2any');
       const convertedBlob = await heic2any({

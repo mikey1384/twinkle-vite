@@ -17,7 +17,6 @@ interface TranslationProgressAreaProps {
   onSetIsTranslationInProgress: (isInProgress: boolean) => void;
 }
 
-// Progress area styles
 const progressContainerStyles = css`
   position: fixed;
   top: 0;

@@ -171,12 +171,10 @@ class RequestChannel {
     context: ResolvedRequestContext,
     attempt: number
   ): Promise<AxiosResponse<T>> {
-    // Respect pause on resume
     if (this.pauseUntil && Date.now() < this.pauseUntil) {
       await sleep(this.pauseUntil - Date.now());
     }
 
-    // Circuit breaker gate: block until a probe is permitted
     while (!this.breakerAllowsAttempt()) {
       await sleep(RequestChannel.BREAKER.PROBE_EVERY_MS);
     }
@@ -262,7 +260,6 @@ class RequestChannel {
     }
   }
 
-  // Breaker helpers
   private noteRetryableError() {
     const now = Date.now();
     this.recentErrors.push(now);
@@ -353,7 +350,6 @@ export class RequestScheduler {
     this.baselinePolicies = JSON.parse(JSON.stringify(mergedPolicies));
     this.defaultChannel = options?.defaultChannel ?? 'normal';
 
-    // Create channels with latency measurement callback
     const measureLatency = (latency: number) =>
       this.updateNetworkQuality(latency);
     (Object.keys(this.policies) as ChannelName[]).forEach((name) => {
@@ -422,7 +418,6 @@ export class RequestScheduler {
       this.networkQuality = 'good';
     }
 
-    // If network quality has degraded, adjust policies
     if (previousQuality !== this.networkQuality) {
       this.adjustPoliciesForNetworkQuality();
     }
@@ -583,13 +578,11 @@ function parseRetryAfter(error?: AxiosError): number | null {
   const headerVal = headers['retry-after'] ?? headers['Retry-After'];
   if (!headerVal) return null;
 
-  // Numeric seconds
   const seconds = parseInt(headerVal as string, 10);
   if (!isNaN(seconds)) {
     return Math.max(0, seconds * 1000);
   }
 
-  // HTTP-date
   const dateMs = new Date(headerVal as string).getTime();
   if (!isNaN(dateMs)) {
     const diff = dateMs - Date.now();

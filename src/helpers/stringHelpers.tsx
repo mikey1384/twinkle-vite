@@ -387,17 +387,14 @@ const emoticonBuckets = (() => {
 })();
 
 export function addEmoji(string: string): string {
-  // Guard against non-strings
   if (typeof string !== 'string') return '';
 
-  // If no regex buckets compiled, return string unchanged
   if (emoticonBuckets.length === 0) {
     return string;
   }
 
   try {
     let result = string;
-    // Apply each regex bucket sequentially
     for (const regex of emoticonBuckets) {
       if (regex) {
         result = result.replace(regex, (match) => emoticons[match] || match);
@@ -452,10 +449,8 @@ const shortcutRegex = (() => {
 })();
 
 export function expandShortcut(string: string): string {
-  // Guard against non-strings
   if (typeof string !== 'string') return '';
 
-  // If regex compilation failed, return string unchanged
   if (!shortcutRegex) {
     return string;
   }
@@ -535,7 +530,6 @@ export function fetchedVideoCodeFromURL(url: string): string {
 }
 
 export function finalizeEmoji(string: string): string {
-  // Guard against non-strings and empty strings
   if (typeof string !== 'string' || stringIsEmpty(string)) return '';
 
   let finalizedString = addEmoji(expandShortcut(string + ' '));
@@ -1015,7 +1009,6 @@ export function generateFileName(fileName: string): string {
   const fileInfo = getFileInfoFromFileName(fileName);
   const extension = fileInfo.extension;
 
-  // Generate a unique identifier using timestamp + random string
   const timestamp = Date.now();
   const randomString = Math.random().toString(36).substring(2, 8);
   const uniqueId = `${timestamp}-${randomString}`;
@@ -1075,7 +1068,6 @@ export function truncateText({
 }
 
 export function truncateTopic(topic: string): string {
-  // Remove quotes if enclosed in them
   if (topic.startsWith('"') && topic.endsWith('"')) {
     topic = topic.slice(1, -1);
   } else if (topic.startsWith("'") && topic.endsWith("'")) {
@@ -1084,7 +1076,6 @@ export function truncateTopic(topic: string): string {
   if (topic.endsWith('.')) {
     topic = topic.slice(0, -1);
   }
-  // Truncate if over 100 characters
   if (topic.length > 100) {
     topic = topic.slice(0, 100) + '...';
   }

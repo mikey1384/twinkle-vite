@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 
-// Form input styles
 export const inputStyles = css`
   padding: 10px 14px;
   border-radius: 6px;
@@ -101,7 +100,6 @@ export const textAreaStyles = css`
   }
 `;
 
-// Colors system
 export const colors = {
   primary: '#4361ee',
   primaryLight: '#4895ef',

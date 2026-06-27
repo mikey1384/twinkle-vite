@@ -286,7 +286,6 @@ function ChessBoard({
     }
   }, [selectedSquare, isSelectionValid, calculatedLegalTargets, game]);
 
-  // Clear move targets if board becomes non-interactable (e.g., engine's turn)
   useEffect(() => {
     if (!interactable) {
       setHighlightedSquares([]);

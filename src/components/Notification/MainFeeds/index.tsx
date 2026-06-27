@@ -166,7 +166,6 @@ export default function MainFeeds({
   }, [activeTab, totalRewardAmount]);
 
   const NotificationsItems = useMemo(() => {
-    // Group notifications by day label (Today, Yesterday, or date)
     const sections: { label: string; items: any[] }[] = [];
     const now = new Date();
     const todayKey = now.toDateString();
@@ -223,7 +222,6 @@ export default function MainFeeds({
   ]);
 
   const RewardSections = useMemo(() => {
-    // Group rewards by day label (Today, Yesterday, or date)
     const sections: { label: string; items: any[] }[] = [];
     const now = new Date();
     const todayKey = now.toDateString();

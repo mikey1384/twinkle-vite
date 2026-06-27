@@ -508,7 +508,6 @@ export default function App() {
       initAchievements();
     }
     if (!token) {
-      // Clear authRef so next login triggers handleInit even if token is the same
       authRef.current = null;
       if (!signinModalShown) {
         onLogout();
@@ -832,7 +831,6 @@ export default function App() {
       <Global
         styles={{
           body: {
-            // Prefer CSS variable, fall back to computed background color
             background: `var(--page-bg, ${resolvedBackgroundColor})`
           }
         }}
@@ -1298,7 +1296,6 @@ export default function App() {
           newState: data
         });
         onInitMyState(data);
-        // Load community funds
         try {
           const { totalFunds } = await loadCommunityFunds();
           if (checkUserChange(userId)) return;
@@ -1307,7 +1304,6 @@ export default function App() {
           console.error('Failed to load community funds:', error);
         }
 
-        // Load chess stats
         try {
           const chessStats = await loadChessStats();
           if (checkUserChange(userId)) return;

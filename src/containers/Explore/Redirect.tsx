@@ -9,7 +9,6 @@ export default function ExploreRedirect() {
   const searchFilter = useKeyContext((v) => v.myState.searchFilter);
 
   useEffect(() => {
-    // If user has a default search filter set, use it
     if (searchFilter && EXPLORE_CATEGORIES.includes(searchFilter)) {
       navigate(`/${searchFilter}`, { replace: true });
     } else {

@@ -349,7 +349,6 @@ export default function PromotionCTA({
       }
     } catch (error) {
       console.error('Failed to unlock promotion with coins:', error);
-      // Could add toast notification here
     } finally {
       setUnlocking(false);
     }

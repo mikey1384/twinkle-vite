@@ -22,7 +22,6 @@ interface ButtonProps {
   style?: CSSProperties;
   mobilePadding?: string;
   mobileBorderRadius?: string;
-  // New API
   variant?: Variant; // supports 'solid' | 'soft' | 'outline'
   shape?: Shape; // defaults to 'rounded'
   size?: Size; // defaults to 'md'
@@ -48,7 +47,6 @@ export default function Button(props: ButtonProps) {
     style = {},
     mobilePadding,
     mobileBorderRadius,
-    // New
     variant,
     shape = 'rounded',
     size = 'md',
@@ -75,7 +73,6 @@ export default function Button(props: ButtonProps) {
   }, [tone]);
 
   const baseColorKey = useMemo(() => {
-    // Treat 'theme' as unsupported: fall back to defaults
     const normalized = color === 'theme' ? undefined : color;
     if (!normalized) {
       return resolvedVariant === 'ghost' ? 'darkerGray' : 'black';
@@ -101,13 +98,11 @@ export default function Button(props: ButtonProps) {
   const cssClass = useMemo(() => {
     const v = resolvedVariant;
 
-    // Tokens per variant
     const solidBg = tint(baseColorKey, 1);
     const solidBorder = tint(baseColorKey, 1);
     const solidHoverBg = tint(hoverColorKey, 0.9);
     const solidHoverBorder = solidHoverBg;
 
-    // Soft tokens
     const softBg = tint(baseColorKey, 0.12);
     const softBorder = tint(baseColorKey, 0.28);
     const softHoverBg = tint(hoverColorKey, 0.18);
@@ -123,7 +118,6 @@ export default function Button(props: ButtonProps) {
     const ghostHoverBg = tint(hoverColorKey, 0.08);
     const ghostHoverBorder = tint(hoverColorKey, 0.28);
 
-    // Background / Border / Text
     const bg =
       v === 'solid'
         ? solidBg
@@ -158,7 +152,6 @@ export default function Button(props: ButtonProps) {
         : ghostHoverBorder;
     const baseIsWhite = baseColorKey === 'white';
     if (baseIsWhite && v !== 'ghost') {
-      // Ensure visible border when using white button color
       border = tint('borderGray', 1);
       hoverBorder = tint('darkerBorderGray', 1);
     }

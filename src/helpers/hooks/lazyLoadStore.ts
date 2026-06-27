@@ -13,7 +13,6 @@ export const lazyLoadStore = {
   },
 
   setVisibility(id: string, visible: boolean, delay = 0): void {
-    // Clear any pending timer for this id
     const existingTimer = timers.get(id);
     if (existingTimer) {
       clearTimeout(existingTimer);
@@ -21,7 +20,6 @@ export const lazyLoadStore = {
     }
 
     if (visible) {
-      // Show immediately
       if (visibilityState.get(id) !== true) {
         visibilityState.set(id, true);
         this.notify(id);
@@ -65,7 +63,6 @@ export const lazyLoadStore = {
         idListeners.delete(callback);
         if (idListeners.size === 0) {
           listeners.delete(id);
-          // Clean up state when no more subscribers
           visibilityState.delete(id);
           const timer = timers.get(id);
           if (timer) {
@@ -77,7 +74,6 @@ export const lazyLoadStore = {
     };
   },
 
-  // For debugging
   getState(): Record<string, boolean> {
     return Object.fromEntries(visibilityState);
   }

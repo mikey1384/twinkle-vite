@@ -14,7 +14,6 @@ import { useLazyLoad } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import moment from 'moment';
 
-// Store heights outside component to persist across re-renders
 const cardHeights: Record<number, number> = {};
 
 interface CloneEntry {

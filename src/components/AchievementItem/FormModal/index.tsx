@@ -65,7 +65,6 @@ export default function FormModal({
       submitForApproval: submitMeetupForApproval,
       retryApproval: retryMeetupApproval
     }
-    // Add more types here as needed
   };
 
   const [approvalItem, setApprovalItem] = useState({

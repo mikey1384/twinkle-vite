@@ -45,7 +45,6 @@ export function useChessPuzzle() {
   const [levelsLoading, setLevelsLoading] = useState(true);
   const [levelsError, setLevelsError] = useState<string>();
 
-  // Time attack state
   const [inTimeAttack, setInTimeAttack] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(TIME_ATTACK_DURATION);
   const [runResult, setRunResult] = useState<
@@ -53,7 +52,6 @@ export function useChessPuzzle() {
   >('PLAYING');
   const runIdRef = useRef<number | null>(null);
 
-  // Additional state that handlePromotionClick needs to control
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
   const [puzzleState, setPuzzleState] = useState<MultiPlyPuzzleState>({
@@ -209,7 +207,6 @@ export function useChessPuzzle() {
     fetchPuzzle,
     submitAttempt,
     updatePuzzle,
-    // Chess levels
     levels,
     currentLevel,
     maxLevelUnlocked,
@@ -217,12 +214,10 @@ export function useChessPuzzle() {
     levelsError,
     refreshLevels,
     persistCurrentLevel,
-    // Chess stats
     stats,
     statsLoading,
     statsError,
     refreshStats,
-    // Time attack state
     inTimeAttack,
     timeLeft,
     onSetInTimeAttack: setInTimeAttack,
@@ -230,7 +225,6 @@ export function useChessPuzzle() {
     runResult,
     setRunResult,
     runIdRef,
-    // Puzzle state
     selectedSquare,
     onSetSelectedSquare: setSelectedSquare,
     phase,

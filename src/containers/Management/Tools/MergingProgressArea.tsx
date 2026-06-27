@@ -8,7 +8,6 @@ interface MergingProgressAreaProps {
   onSetIsMergingInProgress: (isInProgress: boolean) => void;
 }
 
-// Progress area styles
 const progressContainerStyles = css`
   position: fixed;
   left: 0;

@@ -5,7 +5,6 @@ export function buildSrt(segments: SrtSegment[]): string {
     return '';
   }
 
-  // Sort segments by start time and ensure valid data
   const validSegments = segments
     .filter(
       (seg) =>
@@ -60,7 +59,6 @@ export function parseSrt(
   }
 
   const segments: SrtSegment[] = [];
-  // Normalize line endings and handle different formats
   const normalizedSrt = srtString.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const blocks = normalizedSrt.trim().split(/\n\s*\n/);
 
@@ -70,7 +68,6 @@ export function parseSrt(
     const lines = block.split('\n');
     if (lines.length < 2) return;
 
-    // Find the timing line (contains -->)
     const timingLineIndex = lines.findIndex((line) => line.includes('-->'));
     if (timingLineIndex === -1) return;
 
@@ -80,7 +77,6 @@ export function parseSrt(
       ? parseInt(indexLine, 10)
       : blockIndex + 1;
 
-    // Parse timing
     const timingLine = lines[timingLineIndex].trim();
     const timeParts = timingLine.split('-->');
     if (timeParts.length !== 2) return;
@@ -99,7 +95,6 @@ export function parseSrt(
       .join('\n')
       .trim();
 
-    // Process text based on translation marker
     if (text.includes('###TRANSLATION_MARKER###')) {
       const [_originalText, translatedText] = text.split(
         '###TRANSLATION_MARKER###'

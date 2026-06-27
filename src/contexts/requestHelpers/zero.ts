@@ -58,7 +58,6 @@ export default function zeroRequestHelpers({
           {
             onUploadProgress: (progressEvent) => {
               if (progressEvent.total && onProgress) {
-                // Calculate upload percentage
                 const percentCompleted = Math.round(
                   (progressEvent.loaded * 100) / progressEvent.total
                 );
@@ -145,7 +144,6 @@ export default function zeroRequestHelpers({
           }
         );
 
-        // Handle the download when the video URL is returned (last chunk)
         if (response.data.videoUrl) {
           const downloadUrl = `${URL}${response.data.videoUrl}`;
           const a = document.createElement('a');
