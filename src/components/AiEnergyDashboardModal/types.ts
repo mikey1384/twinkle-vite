@@ -1,4 +1,21 @@
-export type DashboardSection = 'overview' | 'community' | 'leaderboard';
+export type DashboardSection =
+  | 'overview'
+  | 'usage'
+  | 'community'
+  | 'leaderboard';
+
+export interface AiUsageHistoryEvent {
+  id: number;
+  aiUsername: string;
+  targetType: string;
+  provider: string;
+  model: string;
+  energyMode: string;
+  energyUnits: number;
+  energyChargedUnits: number;
+  energyOverflowUnits: number;
+  createdAt: number;
+}
 
 export interface AiEnergyDashboardModalProps {
   onHide: () => void;

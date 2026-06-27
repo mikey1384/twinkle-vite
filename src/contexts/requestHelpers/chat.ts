@@ -2110,6 +2110,17 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAiUsageHistory(lastId?: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/ai-usage-history${lastId ? `?lastId=${lastId}` : ''}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async purchaseAiEnergyRecharge({
       useCommunityFunds = false
     }: {

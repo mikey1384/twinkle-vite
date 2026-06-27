@@ -35,6 +35,12 @@ export function isCommunityRechargeRequirement(
 
 export function getSectionMeta(section: DashboardSection): SectionMeta {
   switch (section) {
+    case 'usage':
+      return {
+        icon: 'clock-rotate-left',
+        title: "Today's Usage",
+        subtitle: 'How much energy each request used today.'
+      };
     case 'community':
       return {
         icon: 'heart',
@@ -69,6 +75,57 @@ export function formatCoins(amount: number) {
 
 export function formatEnergyUnits(amount: number) {
   return `${addCommasToNumber(Math.max(0, Math.trunc(amount || 0)))} units`;
+}
+
+// Maps the ai_usage_events `aiUsername` (the AI Energy surface) to a friendly
+// label. Values are already display-grade (Zero, Ciel, Lumine, AI Card, ...);
+// the chat characters get a clearer label.
+const AI_USAGE_SURFACE_LABELS: Record<string, string> = {
+  Zero: 'Chat with Zero',
+  Ciel: 'Chat with Ciel',
+  Lumine: 'Build (Lumine)'
+};
+
+export function getAiUsageSurfaceLabel(aiUsername: string) {
+  const normalized = (aiUsername || '').trim();
+  if (!normalized) return 'AI Usage';
+  return AI_USAGE_SURFACE_LABELS[normalized] || normalized;
+}
+
+// Prettifies the ai_usage_events `targetType` for a small context line.
+const AI_USAGE_TARGET_LABELS: Record<string, string> = {
+  voice_call: 'voice call',
+  message_tts: 'text-to-speech',
+  build_generation: 'build generation',
+  build_ai_chat: 'build chat',
+  build_tag_refresh: 'tag refresh',
+  ai_card_generation: 'card summon',
+  ai_card_image_reveal: 'card reveal',
+  ai_story_image_generation: 'story image',
+  ai_image_generation: 'image',
+  ai_image_followup: 'image edit',
+  daily_reflection_share: 'reflection',
+  chat_topic: 'topic'
+};
+
+export function getAiUsageTargetLabel(targetType: string) {
+  const normalized = (targetType || '').trim();
+  if (!normalized) return '';
+  return (
+    AI_USAGE_TARGET_LABELS[normalized] || normalized.split('_').join(' ')
+  );
+}
+
+// Converts raw energy units into the battery scale where 100 = a full battery
+// and 1 = one unit of the battery (no percent sign). `fullBatteryUnits` is the
+// raw unit count for a full battery, returned alongside the usage history.
+export function formatBatteryUnits(rawUnits: number, fullBatteryUnits: number) {
+  const rawPerDisplayUnit = Math.max(1, (fullBatteryUnits || 0) / 100);
+  const value = Math.max(0, Number(rawUnits) || 0) / rawPerDisplayUnit;
+  if (value <= 0) return '0';
+  if (value < 0.1) return '<0.1';
+  if (value < 10) return value.toFixed(1);
+  return addCommasToNumber(Math.round(value));
 }
 
 export function formatSignedXp(amount: number) {

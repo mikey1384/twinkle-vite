@@ -25,6 +25,7 @@ import {
 } from './helpers';
 import Leaderboard from './Leaderboard';
 import Overview from './Overview';
+import UsageHistory from './UsageHistory';
 import {
   bodyCls,
   headerIconCls,
@@ -400,6 +401,17 @@ export default function AiEnergyDashboardModal({
                 Overview
               </Button>
               <Button
+                color="green"
+                variant={activeSection === 'usage' ? 'solid' : 'soft'}
+                tone="flat"
+                size="sm"
+                shape="pill"
+                uppercase={false}
+                onClick={() => setActiveSection('usage')}
+              >
+                Usage
+              </Button>
+              <Button
                 color="rose"
                 variant={activeSection === 'community' ? 'solid' : 'soft'}
                 tone="flat"
@@ -476,6 +488,19 @@ export default function AiEnergyDashboardModal({
                   setUserMenuShown={setUserMenuShown}
                 />
               </div>
+            )}
+
+            {activeSection === 'usage' && (
+              <UsageHistory
+                accentColor={energyAccentColor}
+                accentSoft={energyAccentSoft}
+                energyUsedToday={
+                  typeof aiUsagePolicy?.energyUsed === 'number'
+                    ? aiUsagePolicy.energyUsed
+                    : null
+                }
+                energyPercent={energyPercentValue}
+              />
             )}
 
             {activeSection === 'community' && (

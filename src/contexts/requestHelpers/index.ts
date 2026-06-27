@@ -615,6 +615,7 @@ registerMethods('chat', [
   'rewindChessMove',
   'collectVocabulary',
   'getAiEnergyPolicy',
+  'loadAiUsageHistory',
   'purchaseAiEnergyRecharge',
   'saveChatMessage',
   'checkIfDuplicateWordleAttempt',
