@@ -714,7 +714,6 @@ function MessageBody({
   return (
     <ErrorBoundary
       componentPath="Chat/Message/MessageBody"
-      autoRecoverDomMutationError
     >
       <div
         className={css`

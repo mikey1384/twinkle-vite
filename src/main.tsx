@@ -17,6 +17,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary';
 import installSafeHistory from './helpers/installSafeHistory';
+import installDomMutationGuard from './helpers/installDomMutationGuard';
 import { BrowserRouter } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faAlignJustify } from '@fortawesome/pro-solid-svg-icons/faAlignJustify';
@@ -453,6 +454,7 @@ library.add(
   }
   await loadPolyfills();
   installSafeHistory();
+  installDomMutationGuard();
 
   const rootElement = document.getElementById('react-view');
 

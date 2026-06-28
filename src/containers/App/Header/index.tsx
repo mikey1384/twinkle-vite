@@ -174,7 +174,6 @@ export default function Header({
   return (
     <ErrorBoundary
       componentPath="App/Header/index"
-      autoRecoverDomMutationError
     >
       <nav
         data-app-shell-header="true"

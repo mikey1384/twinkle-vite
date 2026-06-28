@@ -5,6 +5,7 @@ import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import API_URL from '~/constants/URL';
 import { isLazyImportLoadError } from '~/helpers/lazyImportHelpers';
+import reportDomMutationEvent from '~/helpers/reportDomMutationEvent';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
 
@@ -14,15 +15,26 @@ if (import.meta.env.SSR) {
 
 const token = () => getStoredItem('token');
 
+// Bounded auto-recovery for the third-party-DOM-mutation crash class (see
+// installDomMutationGuard.ts). The guard prevents most of these throws at the
+// source; this boundary is the backstop for any that still reach React (unknown
+// variants / browsers where the prototype patch didn't take). We remount the
+// subtree, but cap it on a sliding window so a translator that keeps re-wrapping
+// can't drive an infinite remount loop — past the cap we show the error UI.
+const RECOVERY_WINDOW_MS = 10000;
+const MAX_RECOVERIES_PER_WINDOW = 3;
+// Marker that forces the rare cap-exceeded crash through the server's email
+// suppression for this otherwise-silenced class. Keep in sync with
+// twinkle-api/helpers/errorReporting.ts.
+const DOM_MUTATION_UNRECOVERABLE_MARKER = '[dom-mutation-unrecoverable]';
+
 interface State {
   hasError: boolean;
   lastErrorIsLazyImportLoadError: boolean;
   recoveryKey: number;
-  recoverableErrorCount: number;
 }
 export default class ErrorBoundary extends Component<
   {
-    autoRecoverDomMutationError?: boolean;
     children?: React.ReactNode;
     className?: string;
     draggable?: boolean;
@@ -36,38 +48,77 @@ export default class ErrorBoundary extends Component<
   },
   State
 > {
+  // Timestamps of recent DOM-mutation recoveries (sliding window). Instance
+  // field, not state: it must survive the child remount and never trigger a
+  // render. The boundary instance itself persists across recoveries (only its
+  // children remount via recoveryKey).
+  private recoveryTimestamps: number[] = [];
+
   constructor(props: any) {
     super(props);
     this.state = {
       hasError: false,
       lastErrorIsLazyImportLoadError: false,
-      recoveryKey: 0,
-      recoverableErrorCount: 0
+      recoveryKey: 0
     };
   }
 
   async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    const lazyImportLoadError = isLazyImportLoadError(error);
-    const shouldAutoRecover =
-      this.props.autoRecoverDomMutationError &&
-      isRecoverableDomMutationError(error) &&
-      this.state.recoverableErrorCount < 1;
+    // Third-party DOM corruption (translators/extensions/in-app webviews). The
+    // app did nothing wrong; recover the subtree instead of emailing an alert,
+    // and capture sampled telemetry instead. Bounded so a relentless mutator
+    // can't loop forever.
+    if (isRecoverableDomMutationError(error)) {
+      const now = Date.now();
+      this.recoveryTimestamps = this.recoveryTimestamps.filter(
+        (timestamp) => now - timestamp < RECOVERY_WINDOW_MS
+      );
+      const canRecover =
+        this.recoveryTimestamps.length < MAX_RECOVERIES_PER_WINDOW;
 
+      reportDomMutationEvent({
+        method: 'recover',
+        surface: this.props.componentPath,
+        componentPath: this.props.componentPath,
+        recovered: canRecover
+      });
+
+      if (canRecover) {
+        this.recoveryTimestamps.push(now);
+        this.setState((state) => ({
+          hasError: false,
+          recoveryKey: state.recoveryKey + 1
+        }));
+        return;
+      }
+
+      // Cap exceeded: the guard didn't catch it AND recovery couldn't keep up,
+      // so the user is about to see the error UI. That's a genuine unhandled
+      // crash worth an alert — force it past the server-side suppression for
+      // this class with the marker.
+      if (!isLocalDevelopmentRuntime()) {
+        reportError({
+          componentPath: this.props.componentPath,
+          message: `${DOM_MUTATION_UNRECOVERABLE_MARKER} ${buildErrorMessage(
+            error
+          )}`,
+          info: buildErrorInfo(errorInfo)
+        });
+      }
+      this.setState({
+        hasError: true,
+        lastErrorIsLazyImportLoadError: false
+      });
+      return;
+    }
+
+    const lazyImportLoadError = isLazyImportLoadError(error);
     if (!shouldSuppressErrorReport(error)) {
       reportError({
         componentPath: this.props.componentPath,
         message: buildErrorMessage(error),
         info: buildErrorInfo(errorInfo)
       });
-    }
-
-    if (shouldAutoRecover) {
-      this.setState((state) => ({
-        hasError: false,
-        recoveryKey: state.recoveryKey + 1,
-        recoverableErrorCount: state.recoverableErrorCount + 1
-      }));
-      return;
     }
 
     this.setState({
@@ -78,7 +129,6 @@ export default class ErrorBoundary extends Component<
 
   render() {
     const { children, innerRef, componentPath, ...props } = this.props;
-    delete (props as any).autoRecoverDomMutationError;
     const { hasError, lastErrorIsLazyImportLoadError, recoveryKey } =
       this.state;
     if (hasError) {
@@ -200,15 +250,12 @@ function buildErrorMessage(error: Error) {
 }
 
 function isRecoverableDomMutationError(error: Error) {
-  const message = String(error?.message || '');
-  return (
-    message.includes(`Failed to execute 'removeChild' on 'Node'`) ||
-    message.includes(`Failed to execute 'insertBefore' on 'Node'`) ||
-    message.includes('The node to be removed is not a child of this node') ||
-    message.includes(
-      'The node before which the new node is to be inserted is not a child of this node'
-    )
-  );
+  // Gate on the SPECIFIC NotFoundError reparenting failure ("not a child of this
+  // node"), NOT the generic "Failed to execute 'removeChild'/'insertBefore' on
+  // 'Node'" prefix — that prefix also covers unrelated argument TypeErrors (e.g.
+  // "parameter 1 is not of type 'Node'"), which are genuine app bugs we must
+  // keep reporting instead of silently remounting/suppressing.
+  return String(error?.message || '').includes('not a child of this node');
 }
 
 function isLocalDevelopmentRuntime() {
