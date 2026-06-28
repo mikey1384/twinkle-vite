@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import InvalidPage from '~/components/InvalidPage';
 import FilterBar from '~/components/FilterBar';
 import ManagementRoutes from './Routes';
@@ -13,10 +13,12 @@ import {
 } from '~/constants/defaultValues';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useManagementContext, useKeyContext } from '~/contexts';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 export default function Management() {
   const location = useLocation();
   const navigate = useNavigate();
+  const managementContentRef = useRef<HTMLDivElement | null>(null);
   const loaded = useManagementContext((v) => v.state.loaded);
   const onLoadManagement = useManagementContext(
     (v) => v.actions.onLoadManagement
@@ -36,10 +38,17 @@ export default function Management() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managementLevel]);
 
+  useScrollAnchorRestoration({
+    anchorKey: `management:${location.pathname}`,
+    containerRef: managementContentRef,
+    initialScroll: { type: 'top' },
+    itemsReady: loaded && managementLevel > 0
+  });
+
   return !loaded ? (
     <Loading />
   ) : managementLevel > 0 ? (
-    <div>
+    <div ref={managementContentRef}>
       <SideMenu variant="card" className={sideMenuClass}>
         <NavLink
           to="/management"

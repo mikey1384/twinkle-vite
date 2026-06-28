@@ -8,7 +8,11 @@ import InvalidPage from '~/components/InvalidPage';
 import SectionPanel from '~/components/SectionPanel';
 import { mobileMaxWidth } from '~/constants/css';
 import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
-import { useAppContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useKeyContext,
+  useManagementContext
+} from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { rangeClass } from '../AiCosts/styles';
 import Table from '../Table';
@@ -66,7 +70,10 @@ export default function NotableUsers() {
   const [loaded, setLoaded] = useState(false);
   const [notableUsers, setNotableUsers] = useState<NotableUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [view, setView] = useState<'overview' | 'roster'>('overview');
+  const view = useManagementContext((v) => v.state.notableUsersView);
+  const onSetNotableUsersView = useManagementContext(
+    (v) => v.actions.onSetNotableUsersView
+  );
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const loadNotableUsers = useAppContext(
     (v) => v.requestHelpers.loadNotableUsers
@@ -155,13 +162,13 @@ export default function NotableUsers() {
         <div className={rangeClass}>
           <button
             className={view === 'overview' ? 'active' : ''}
-            onClick={() => setView('overview')}
+            onClick={() => onSetNotableUsersView('overview')}
           >
             Overview
           </button>
           <button
             className={view === 'roster' ? 'active' : ''}
-            onClick={() => setView('roster')}
+            onClick={() => onSetNotableUsersView('roster')}
           >
             Roster
           </button>

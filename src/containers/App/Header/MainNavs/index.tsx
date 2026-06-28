@@ -40,7 +40,8 @@ const contentLabels: Record<string, string> = {
   'mission-passes': 'Mission Pass',
   'achievement-unlocks': 'Achievement',
   'daily-rewards': 'Daily Goal',
-  'shared-prompts': 'Shared Prompt'
+  'shared-prompts': 'Shared Prompt',
+  management: 'Management'
 };
 
 export default function MainNavs({
@@ -70,6 +71,7 @@ export default function MainNavs({
 }) {
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+  const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const banned = useKeyContext((v) => v.myState.banned);
   const lastChatPath = useKeyContext((v) => v.myState.lastChatPath);
   const userLoaded = useAppContext((v) => v.user.state.loaded);
@@ -351,6 +353,15 @@ export default function MainNavs({
         onSetBuildNav(nextBuildNav);
       }
     }
+    if (section === 'management' && managementLevel > 0) {
+      if (contentNav !== 'management') {
+        onSetContentNav('management');
+      }
+      onSetContentPath(pathname.substring(1) + (search || ''));
+    } else if (contentNav === 'management' && managementLevel <= 0) {
+      onSetContentNav('');
+      onSetContentPath('');
+    }
 
     if (profilePageMatch) {
       onSetProfileNav(pathname);
@@ -368,11 +379,13 @@ export default function MainNavs({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultSearchFilter, pathname, search]);
+  }, [defaultSearchFilter, managementLevel, pathname, search]);
 
   const contentIconType = useMemo(
     () =>
-      contentNav === 'videos' || contentNav === 'playlists'
+      contentNav === 'management'
+        ? 'user-group-crown'
+        : contentNav === 'videos' || contentNav === 'playlists'
         ? 'film'
         : contentNav === 'ai-cards'
           ? 'cards-blank'
@@ -455,7 +468,7 @@ export default function MainNavs({
         alert={pathname === '/' && (numNewPosts > 0 || feedsOutdated)}
       />
       <Nav to={`/${exploreCategory}`} className="mobile" imgLabel="search" />
-      {contentNav && (
+      {contentNav && (contentNav !== 'management' || managementLevel > 0) && (
         <Nav
           to={`/${contentPath}`}
           className="mobile"
@@ -502,7 +515,7 @@ export default function MainNavs({
       >
         {deviceIsTablet ? '' : exploreLabel}
       </Nav>
-      {contentNav && (
+      {contentNav && (contentNav !== 'management' || managementLevel > 0) && (
         <Nav
           to={`/${contentPath}`}
           className="desktop"

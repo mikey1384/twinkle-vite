@@ -230,6 +230,12 @@ export default function ManagementActions(dispatch: Dispatch) {
         type: 'SET_VIDEO_URL',
         videoUrl
       });
+    },
+    onSetNotableUsersView(view: 'overview' | 'roster') {
+      return dispatch({
+        type: 'SET_NOTABLE_USERS_VIEW',
+        view
+      });
     }
   };
 }

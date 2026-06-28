@@ -22,6 +22,7 @@ export const initialManagementState = {
   numSupermodsShown: 5,
   wealthData: [],
   wealthDataLoaded: false,
+  notableUsersView: 'overview',
   subtitleTranslationProgress: {
     progress: 0,
     stage: '',

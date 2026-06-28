@@ -142,6 +142,9 @@ function Nav({
     if (to.startsWith('/build') && pathname.startsWith('/build')) {
       return 'active';
     }
+    if (to.startsWith('/management') && pathname.startsWith('/management')) {
+      return 'active';
+    }
     if (pathname + (search || '') === to) {
       return 'active';
     }

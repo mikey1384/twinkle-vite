@@ -246,6 +246,11 @@ export default function ManagementReducer(
         ...state,
         videoUrl: action.videoUrl
       };
+    case 'SET_NOTABLE_USERS_VIEW':
+      return {
+        ...state,
+        notableUsersView: action.view
+      };
     default:
       return state;
   }
