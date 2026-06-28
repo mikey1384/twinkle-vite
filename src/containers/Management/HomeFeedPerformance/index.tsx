@@ -23,13 +23,13 @@ import {
   actionsClass,
   emptyInlineClass,
   emptyStateClass,
-  metricCardClass,
   panelClass,
   rangeClass,
   summaryGridClass,
   tableWrapClass
 } from '../AiCosts/styles';
 import { Color } from '~/constants/css';
+import MetricCard from '../MetricCard';
 
 type HomeFeedPerformanceRangeOption = 1 | 6 | 24 | 168;
 
@@ -442,32 +442,6 @@ function Subsection({
     <div style={{ marginTop: '1.4rem' }}>
       <h3 style={{ fontSize: '1.45rem', margin: '0 0 0.8rem' }}>{title}</h3>
       {children}
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  detail,
-  color
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  color: string;
-}) {
-  return (
-    <div
-      className={metricCardClass}
-      style={{
-        borderColor: Color[color](0.35),
-        background: Color[color](0.07)
-      }}
-    >
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{detail}</small>
     </div>
   );
 }

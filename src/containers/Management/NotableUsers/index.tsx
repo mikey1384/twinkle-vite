@@ -10,8 +10,10 @@ import { mobileMaxWidth } from '~/constants/css';
 import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { rangeClass } from '../AiCosts/styles';
 import Table from '../Table';
 import AddNotableUserModal from './AddNotableUserModal';
+import Overview from './Overview';
 
 interface NotableUser {
   id: number;
@@ -64,6 +66,7 @@ export default function NotableUsers() {
   const [loaded, setLoaded] = useState(false);
   const [notableUsers, setNotableUsers] = useState<NotableUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [view, setView] = useState<'overview' | 'roster'>('overview');
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const loadNotableUsers = useAppContext(
     (v) => v.requestHelpers.loadNotableUsers
@@ -142,8 +145,32 @@ export default function NotableUsers() {
 
   return (
     <ErrorBoundary componentPath="Management/NotableUsers">
-      <SectionPanel
-        title="Notable Users"
+      <div
+        className={css`
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 1rem;
+        `}
+      >
+        <div className={rangeClass}>
+          <button
+            className={view === 'overview' ? 'active' : ''}
+            onClick={() => setView('overview')}
+          >
+            Overview
+          </button>
+          <button
+            className={view === 'roster' ? 'active' : ''}
+            onClick={() => setView('roster')}
+          >
+            Roster
+          </button>
+        </div>
+      </div>
+      {view === 'overview' && <Overview />}
+      {view === 'roster' && (
+        <SectionPanel
+          title="Notable Users"
         isEmpty={!error && filteredNotableUsers.length === 0}
         emptyMessage="No notable users found"
         searchPlaceholder="Search Notable Users"
@@ -224,7 +251,11 @@ export default function NotableUsers() {
             <tbody>
               {filteredNotableUsers.map((row) => (
                 <tr key={row.id}>
-                  <td>{row.userId}</td>
+                  <td>
+                    <Link to={`/management/notable-users/${row.userId}`}>
+                      {row.userId}
+                    </Link>
+                  </td>
                   <td style={{ fontWeight: 'bold' }}>
                     <Link to={`/users/${row.username}`}>{row.username}</Link>
                   </td>
@@ -248,6 +279,7 @@ export default function NotableUsers() {
           </Table>
         </div>
       </SectionPanel>
+      )}
       {addModalShown && (
         <AddNotableUserModal
           existingUserIds={notableUsers.map((row) => row.userId)}

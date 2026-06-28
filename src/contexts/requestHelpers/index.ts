@@ -429,6 +429,8 @@ registerMethods('management', [
   'loadNotableUsers',
   'loadNotableUsersCSV',
   'addNotableUser',
+  'loadNotableUsersAnalytics',
+  'loadNotableUserAnalytics',
   'clearHomeFeedPerformanceData',
   'addModerators',
   'addSupermods',

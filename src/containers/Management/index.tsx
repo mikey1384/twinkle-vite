@@ -168,7 +168,9 @@ export default function Management() {
         {canViewNotableUsers && (
           <nav
             className={
-              location.pathname === `/management/notable-users` ? 'active' : ''
+              location.pathname.startsWith('/management/notable-users')
+                ? 'active'
+                : ''
             }
             onClick={() => navigate('/management/notable-users')}
           >

@@ -10,6 +10,9 @@ const Main = lazyWithRetry(() => import('./Main'));
 const Tools = lazyWithRetry(() => import('./Tools'));
 const ModActivities = lazyWithRetry(() => import('./ModActivities'));
 const NotableUsers = lazyWithRetry(() => import('./NotableUsers'));
+const NotableUserDetail = lazyWithRetry(
+  () => import('./NotableUsers/UserDetail')
+);
 const AiCosts = lazyWithRetry(() => import('./AiCosts'));
 const UserBuckets = lazyWithRetry(() => import('./UserBuckets'));
 const Payment = lazyWithRetry(() => import('./Payment'));
@@ -41,6 +44,10 @@ export default function ManagementRoutes({ className }: { className: string }) {
             <Route path="tools" element={<Tools />} />
             <Route path="mod-activities" element={<ModActivities />} />
             <Route path="notable-users" element={<NotableUsers />} />
+            <Route
+              path="notable-users/:userId"
+              element={<NotableUserDetail />}
+            />
             <Route path="ai-costs" element={<AiCosts />} />
             <Route path="user-buckets" element={<UserBuckets />} />
             <Route path="payment" element={<Payment />} />

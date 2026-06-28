@@ -554,6 +554,46 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadNotableUsersAnalytics({
+      start,
+      end,
+      granularity
+    }: {
+      start: number;
+      end: number;
+      granularity: 'day' | 'month' | 'year';
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/notable-users/analytics?start=${start}&end=${end}&granularity=${granularity}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadNotableUserAnalytics({
+      userId,
+      start,
+      end,
+      granularity
+    }: {
+      userId: number;
+      start: number;
+      end: number;
+      granularity: 'day' | 'month' | 'year';
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/notable-users/${userId}/analytics?start=${start}&end=${end}&granularity=${granularity}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async clearHomeFeedPerformanceData(hours: number) {
       try {
         const { data } = await request.delete(
