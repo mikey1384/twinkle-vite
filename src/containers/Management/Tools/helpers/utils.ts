@@ -71,7 +71,6 @@ export function parseSrt(
     const timingLineIndex = lines.findIndex((line) => line.includes('-->'));
     if (timingLineIndex === -1) return;
 
-    // Parse index (use block index + 1 if not a valid number)
     const indexLine = lines[0].trim();
     const index = /^\d+$/.test(indexLine)
       ? parseInt(indexLine, 10)
@@ -89,7 +88,6 @@ export function parseSrt(
     const endSec = srtTimeToSeconds(endStr);
     if (isNaN(startSec) || isNaN(endSec) || startSec >= endSec) return;
 
-    // Get text (all lines after timing line)
     let text = lines
       .slice(timingLineIndex + 1)
       .join('\n')

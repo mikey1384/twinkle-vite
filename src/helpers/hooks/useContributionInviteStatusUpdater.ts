@@ -4,7 +4,8 @@ type BuildContributionInviteStatus =
   | 'pending'
   | 'accepted'
   | 'declined'
-  | 'revoked';
+  | 'revoked'
+  | 'left';
 
 export function useContributionInviteStatusUpdater() {
   const onUpdateBuildCollaborationState = useChatContext(
@@ -28,16 +29,18 @@ export function useContributionInviteStatusUpdater() {
     eventTimeMs?: number;
     status?: BuildContributionInviteStatus;
   }) {
+    const resolvedEventTimeMs = Number(eventTimeMs || Date.now());
     onUpdateBuildContributionInviteNotification({
       invite,
       inviteId,
-      status
+      status,
+      eventTimeMs: resolvedEventTimeMs
     });
     onUpdateBuildCollaborationState({
       invite,
       inviteId,
       inviteStatus: status,
-      eventTimeMs: Number(eventTimeMs || Date.now())
+      eventTimeMs: resolvedEventTimeMs
     });
     onInvalidateBuildStudioBrowseTab({ tab: 'collaborating' });
   }

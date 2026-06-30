@@ -239,10 +239,8 @@ function UploadFileModal({
             setEffectiveFileType('image');
             return true;
           }
-          // Conversion failed - fall through to non-image handling
         } catch (error) {
           console.warn('Image conversion failed:', error);
-          // Fall through to non-image handling
         }
       }
       return false;

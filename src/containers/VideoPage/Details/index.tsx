@@ -416,7 +416,6 @@ export default function Details({
                 urlExceedsCharLimit={urlExceedsCharLimit}
               />
             </div>
-            {/* Left column: Description */}
             <div
               className={css`
                 grid-column: 1;
@@ -451,7 +450,6 @@ export default function Details({
                 min-width: 0;
               `}
             >
-              {/* Row 1: Like + Reward */}
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <LikeButton
                   contentType="video"
@@ -471,7 +469,6 @@ export default function Details({
                   </div>
                 )}
               </div>
-              {/* Row 1.5: Likers (appears only when there are likes) */}
               {likes?.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Likers
@@ -488,7 +485,6 @@ export default function Details({
                   />
                 </div>
               )}
-              {/* Row 2: Star + Heart */}
               <div
                 style={{
                   display: 'flex',
@@ -528,7 +524,6 @@ export default function Details({
                   </div>
                 )}
               </div>
-              {/* Row 3: Views */}
               <ViewCount
                 count={viewCount}
                 fallbackCount={videoViews}
@@ -544,7 +539,6 @@ export default function Details({
                   text-align: right;
                 `}
               />
-              {/* Row 4: Share + Edit/Delete */}
               <div
                 style={{
                   display: 'flex',

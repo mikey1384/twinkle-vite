@@ -102,7 +102,6 @@ export default function MergingProgressArea({
         />
       </div>
 
-      {/* Merge Progress */}
       <div className={progressBlockStyles}>
         <div className={progressLabelStyles}>
           <span>

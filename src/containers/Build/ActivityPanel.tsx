@@ -51,6 +51,7 @@ export interface ActivityItem {
   activitySortId: number;
   isNotification: boolean;
   targetId: number;
+  transferredBranchCount?: number;
   build: {
     id: number;
     title: string;
@@ -605,6 +606,8 @@ function getActivityMessage(activity: ActivityItem, currentUserId: number) {
       return 'started a branch for';
     case 'buildCollaborator':
       return 'joined the team for';
+    case 'buildMemberLeft':
+      return 'left the team for';
     case 'buildTeamForumThread':
       return 'started a team topic in';
     case 'buildTeamForumReply':
@@ -670,6 +673,7 @@ function getActivityIcon(activity: ActivityItem) {
     case 'buildBranchReplacedMain':
       return 'code-branch';
     case 'buildCollaborator':
+    case 'buildMemberLeft':
       return 'users';
     case 'buildTeamForumThread':
     case 'buildTeamForumReply':
@@ -683,7 +687,10 @@ function getActivityIcon(activity: ActivityItem) {
 }
 
 function getActivityNavigationState(activity: ActivityItem) {
-  if (activity.activityType === 'buildCollaborator') {
+  if (
+    activity.activityType === 'buildCollaborator' ||
+    activity.activityType === 'buildMemberLeft'
+  ) {
     return { openPeoplePanel: true };
   }
   if (
@@ -714,6 +721,14 @@ function isBranchMergeTargetActivity(activity: ActivityItem) {
 
 function getActivityDetailText(activity: ActivityItem) {
   if (activity.forum?.body) return activity.forum.body;
+  if (activity.activityType === 'buildMemberLeft') {
+    const count = Number(activity.transferredBranchCount || 0);
+    if (count > 0) {
+      return `${count} ${
+        count === 1 ? 'branch' : 'branches'
+      } transferred to the owner.`;
+    }
+  }
   return '';
 }
 

@@ -26,7 +26,6 @@ export default function ToPanel({
     const unlockableAchievementTypes =
       statsPerUserTypes[target.userType]?.achievements || [];
 
-    // Combine current and unlockable achievement types and remove duplicates
     return Array.from(
       new Set([...currentAchievementTypes, ...unlockableAchievementTypes])
     );

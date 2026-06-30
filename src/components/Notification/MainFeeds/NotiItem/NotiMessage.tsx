@@ -48,6 +48,7 @@ function NotiMessage({
     eventLabel?: string;
     eventSummary?: string;
     id: number;
+    leftAt?: number;
     revokedAt?: number;
     target?: Record<string, any> | null;
     userId: number;
@@ -671,9 +672,11 @@ function NotiMessage({
           ? 'revoked'
           : Number(actionObj.declinedAt || 0) > 0
             ? 'declined'
-            : Number(actionObj.acceptedAt || 0) > 0
-              ? 'accepted'
-              : 'pending');
+            : Number(actionObj.leftAt || 0) > 0
+              ? 'left'
+              : Number(actionObj.acceptedAt || 0) > 0
+                ? 'accepted'
+                : 'pending');
       return (
         <>
           <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
@@ -727,6 +730,11 @@ function NotiMessage({
             <span style={{ color: infoColor, fontWeight: 800 }}>
               {' '}
               (declined)
+            </span>
+          ) : inviteStatus === 'left' ? (
+            <span style={{ color: infoColor, fontWeight: 800 }}>
+              {' '}
+              (left)
             </span>
           ) : null}
           {buildInviteActionError ? (

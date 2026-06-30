@@ -110,7 +110,6 @@ export default function GeneratedImageDisplay({
         border: 1px solid var(--ui-border);
       `}
     >
-      {/* Image */}
       <div
         className={css`
           background: ${Color.highlightGray()};
@@ -274,7 +273,6 @@ export default function GeneratedImageDisplay({
             </button>
           )}
 
-        {/* Hover overlay */}
         {canEdit && (
           <div
             className={`edit-overlay ${css`

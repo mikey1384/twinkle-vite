@@ -125,7 +125,6 @@ export default function TranslationProgressArea({
         />
       </div>
 
-      {/* Audio Processing Progress */}
       {(progress > 0 || progressStage) && (
         <div className={progressBlockStyles}>
           <div className={progressLabelStyles}>
@@ -149,7 +148,6 @@ export default function TranslationProgressArea({
         </div>
       )}
 
-      {/* Translation Progress */}
       {(translationProgress > 0 || translationStage) && (
         <div className={progressBlockStyles}>
           <div className={progressLabelStyles}>

@@ -1249,7 +1249,6 @@ export default function Main({
               });
             }
           } else {
-            // Check if this is an AI DM channel before forcing navigation to general
             const existingChannel = channelsObj[channelId];
             const isAIDM =
               existingChannel?.twoPeople &&

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
+import Toast from '~/components/Toast';
 import type {
   BuildProjectListItemData,
   BuildTag
@@ -107,9 +108,23 @@ export default function BuildList({
 } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [toastMessage, setToastMessage] = useState('');
   const [activityRailVisible, setActivityRailVisible] = useState(
     getIsActivityRailVisible
   );
+
+  useEffect(() => {
+    const leaveMessage = (
+      location.state as { buildTeamLeaveMessage?: string } | null
+    )?.buildTeamLeaveMessage;
+    if (!leaveMessage) return;
+    setToastMessage(leaveMessage);
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: {}
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
   const userId = useKeyContext((v) => v.myState.userId);
   const sessionLoaded = useAppContext((v) => v.user.state.loaded);
   const buildQuickAccessMode = useKeyContext(
@@ -756,6 +771,7 @@ export default function BuildList({
 
   return (
     <div className={pageClass}>
+      <Toast message={toastMessage} onClose={() => setToastMessage('')} />
       <div className={buildStudioLayoutClass}>
         <main className={buildStudioMainClass}>
           <BuildQuickAccessStrip

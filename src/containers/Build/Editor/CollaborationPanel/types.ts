@@ -106,6 +106,7 @@ export interface CollaborationPanelProps {
   embedded?: boolean;
   isOwner: boolean;
   onBuildPatch: (patch: Record<string, any>) => void;
+  onBuildReload?: () => Promise<void> | void;
   onContributionBranchCreated?: (branch: BuildLike) => void;
   onCanonicalMerge: (payload: {
     build?: Record<string, any> | null;

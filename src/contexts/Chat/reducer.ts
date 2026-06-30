@@ -88,12 +88,14 @@ function getBuildContributionInviteStatus(invite: any, fallbackStatus?: string) 
   if (
     status === 'accepted' ||
     status === 'declined' ||
-    status === 'revoked'
+    status === 'revoked' ||
+    status === 'left'
   ) {
     return status;
   }
   if (Number(invite?.revokedAt || 0) > 0) return 'revoked';
   if (Number(invite?.declinedAt || 0) > 0) return 'declined';
+  if (Number(invite?.leftAt || 0) > 0) return 'left';
   if (Number(invite?.acceptedAt || 0) > 0) return 'accepted';
   return 'pending';
 }
@@ -117,7 +119,12 @@ function getBuildCollaborationRequestStatus(
 
 function getStatusRank(status: string) {
   if (status === 'accepted') return 3;
-  if (status === 'declined' || status === 'rejected' || status === 'canceled') {
+  if (
+    status === 'declined' ||
+    status === 'rejected' ||
+    status === 'canceled' ||
+    status === 'left'
+  ) {
     return 2;
   }
   if (status === 'revoked') return 1;
@@ -141,6 +148,7 @@ function getInviteEventTime(
     normalizeEventTimeMs(Number(invite?.acceptedAt || 0)),
     normalizeEventTimeMs(Number(invite?.declinedAt || 0)),
     normalizeEventTimeMs(Number(invite?.revokedAt || 0)),
+    normalizeEventTimeMs(Number(invite?.leftAt || 0)),
     normalizeEventTimeMs(Number(invite?.createdAt || 0)),
     normalizeEventTimeMs(fallbackTimeStamp),
     normalizeEventTimeMs(eventTimeMs)
@@ -230,6 +238,7 @@ function upsertBuildContributionMembershipState({
     __eventTime: Math.max(
       normalizeEventTimeMs(Number(membership?.acceptedAt || 0)),
       normalizeEventTimeMs(Number(membership?.createdAt || 0)),
+      normalizeEventTimeMs(Number(membership?.leftAt || 0)),
       normalizeEventTimeMs(timeStamp),
       normalizeEventTimeMs(eventTimeMs)
     )
@@ -264,7 +273,7 @@ function upsertBuildContributionInviteState({
   state: any;
   invite?: Record<string, any> | null;
   inviteId?: number;
-  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+  status?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
   eventTimeMs?: number;
   timeStamp?: number;
 }) {
@@ -381,7 +390,7 @@ function updateBuildCollaborationState(
   }: {
     invite?: Record<string, any> | null;
     inviteId?: number;
-    inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked';
+    inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
     request?: Record<string, any> | null;
     requestId?: number;
     requestStatus?:
@@ -395,14 +404,32 @@ function updateBuildCollaborationState(
   }
 ) {
   let nextState = state;
-  if (
-    getBuildContributionInviteStatus(invite, inviteStatus) === 'accepted' &&
-    Number(invite?.buildId || 0) > 0 &&
-    Number(invite?.userId || 0) > 0
-  ) {
+  const resolvedInviteStatus = getBuildContributionInviteStatus(
+    invite,
+    inviteStatus
+  );
+  const inviteHasMembershipKeys =
+    Number(invite?.buildId || 0) > 0 && Number(invite?.userId || 0) > 0;
+  if (resolvedInviteStatus === 'accepted' && inviteHasMembershipKeys) {
     nextState = upsertBuildContributionMembershipState({
       state: nextState,
       active: true,
+      buildId: Number(invite?.buildId || 0),
+      eventTimeMs,
+      membership: invite,
+      timeStamp,
+      userId: Number(invite?.userId || 0)
+    });
+  } else if (
+    inviteHasMembershipKeys &&
+    (resolvedInviteStatus === 'pending' ||
+      resolvedInviteStatus === 'left' ||
+      resolvedInviteStatus === 'revoked' ||
+      resolvedInviteStatus === 'declined')
+  ) {
+    nextState = upsertBuildContributionMembershipState({
+      state: nextState,
+      active: false,
       buildId: Number(invite?.buildId || 0),
       eventTimeMs,
       membership: invite,
@@ -3481,6 +3508,8 @@ export default function ChatReducer(
           ? action.message.userId
           : prevChannelObj.lastOmokMoveViewerId;
       const messageIds = subchannelId
+        ? prevChannelObj.messageIds
+        : prevChannelObj.messageIds?.includes(messageId)
         ? prevChannelObj.messageIds
         : [messageId].concat(prevChannelObj.messageIds);
       const messagesObj = subchannelId

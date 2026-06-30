@@ -112,7 +112,7 @@ export default function ChatActions(dispatch: Dispatch) {
     }: {
       invite?: Record<string, any> | null;
       inviteId?: number;
-      inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked';
+      inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
       request?: Record<string, any> | null;
       requestId?: number;
       requestStatus?:

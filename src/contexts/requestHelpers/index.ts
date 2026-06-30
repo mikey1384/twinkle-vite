@@ -126,6 +126,7 @@ registerMethods('build', [
   'revokeBuildContributor',
   'acceptBuildContributorInvite',
   'declineBuildContributorInvite',
+  'leaveBuildTeam',
   'loadMyBuildCollaborationRequest',
   'createBuildCollaborationRequest',
   'loadBuildCollaborationRequests',

@@ -25,7 +25,6 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 const intervalLength = 2000;
 const deviceIsMobile = isMobile(navigator);
 
-// Simple helpers to derive readable text over a given RGBA color
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }

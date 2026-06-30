@@ -104,7 +104,6 @@ export default function RewardLayout({
         }
       `}
     >
-      {/* User Info */}
       <div
         className={css`
           display: flex;
@@ -136,7 +135,6 @@ export default function RewardLayout({
         />
       </div>
 
-      {/* Reward Label */}
       <div
         className={css`
           ${badgeStyle(rewardBadgeColor, 0.85)}
@@ -154,7 +152,6 @@ export default function RewardLayout({
         {rewardDescription}
       </div>
 
-      {/* Display time */}
       <div
         className={css`
           margin-bottom: 1rem;
@@ -165,7 +162,6 @@ export default function RewardLayout({
         <span>{displayedTime}</span>
       </div>
 
-      {/* AI Card (if applicable) */}
       {aiCard && (
         <div
           className={css`
@@ -189,7 +185,6 @@ export default function RewardLayout({
         </div>
       )}
 
-      {/* XP and Coins */}
       <div
         className={css`
           display: flex;

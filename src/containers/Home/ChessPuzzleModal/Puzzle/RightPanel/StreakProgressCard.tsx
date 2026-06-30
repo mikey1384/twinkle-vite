@@ -96,7 +96,6 @@ function StreakProgressCard({
         />
       </div>
 
-      {/* Status text */}
       <div
         style={{
           fontSize: '1.1rem',

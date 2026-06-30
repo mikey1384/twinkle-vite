@@ -48,7 +48,6 @@ export default function UploadButton({
 
   mobilePadding?: string;
 
-  // Accessibility
   title?: string;
   'aria-label'?: string;
 

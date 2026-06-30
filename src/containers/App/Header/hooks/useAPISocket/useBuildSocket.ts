@@ -963,7 +963,7 @@ export default function useBuildSocket() {
     }: {
       invite?: Record<string, any> | null;
       inviteId?: number;
-      inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked';
+      inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
       request?: Record<string, any> | null;
       requestId?: number;
       requestStatus?:
@@ -993,7 +993,8 @@ export default function useBuildSocket() {
         onUpdateBuildContributionInviteNotification({
           invite,
           inviteId: Number(invite?.id || inviteId || 0),
-          status: inviteStatus
+          status: inviteStatus,
+          eventTimeMs
         });
       }
     }

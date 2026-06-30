@@ -466,7 +466,6 @@ export default function TodayResult({ results }: { results: any[] }) {
           </span>
         </AnimatedDiv>
       )}
-      {/* rows */}
       {rowsData.map((row, idx) => (
         <ResultLevelRow
           key={row.levelNumber}

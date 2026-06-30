@@ -568,7 +568,6 @@ export default function SuccessModal({
                     </div>
                   )}
 
-                  {/* Engine selector hidden - hardcoded to OpenAI image generation */}
                   {false && (
                     <div
                       style={{

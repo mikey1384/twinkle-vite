@@ -133,7 +133,6 @@ export default function Mission({
         ...style
       }}
     >
-      {/* Mission Header Card */}
       <div
         className={css`
           background: #fff;
@@ -148,7 +147,6 @@ export default function Mission({
           }
         `}
       >
-        {/* Header Section */}
         <div
           className={css`
             padding: 2rem 2.4rem;
@@ -167,7 +165,6 @@ export default function Mission({
               }
             `}
           >
-            {/* Thumbnail */}
             <div
               className={css`
                 flex-shrink: 0;
@@ -190,7 +187,6 @@ export default function Mission({
               />
             </div>
 
-            {/* Title & Subtitle */}
             <div
               className={css`
                 flex: 1;
@@ -228,7 +224,6 @@ export default function Mission({
           </div>
         </div>
 
-        {/* Description */}
         {description && (
           <div
             className={css`
@@ -257,7 +252,6 @@ export default function Mission({
         )}
       </div>
 
-      {/* Objective & Reward Card */}
       {myAttempt?.status !== 'pending' && (
         <div
           className={css`
@@ -273,7 +267,6 @@ export default function Mission({
             }
           `}
         >
-          {/* Objective Section */}
           <div
             className={css`
               padding: 2rem 2.4rem;
@@ -309,7 +302,6 @@ export default function Mission({
             </RichText>
           </div>
 
-          {/* Rewards Section */}
           <div
             className={css`
               padding: 1.8rem 2.4rem;

@@ -311,10 +311,8 @@ function InputForm({
             });
             return;
           }
-          // Conversion failed - fall through to non-image handling
         } catch (error) {
           console.warn('Image conversion failed:', error);
-          // Fall through to non-image handling
         }
       }
 
@@ -339,7 +337,6 @@ function InputForm({
               payload,
               function (img) {
                 // loadImage returns a canvas on success, or an error/HTMLImageElement on failure
-                // Check if we got a valid canvas with toDataURL method
                 if (img && typeof img.toDataURL === 'function') {
                   const outputFormat = extension === 'png' ? 'png' : 'jpeg';
                   const imageUrl = img.toDataURL(`image/${outputFormat}`);

@@ -20,6 +20,7 @@ interface BuildContributionInvitePayload {
   acceptedAt?: number;
   declinedAt?: number;
   revokedAt?: number;
+  leftAt?: number;
 }
 
 interface BuildPublishedAppReleaseStatus {
@@ -31,7 +32,8 @@ type BuildContributionInviteStatus =
   | 'pending'
   | 'accepted'
   | 'declined'
-  | 'revoked';
+  | 'revoked'
+  | 'left';
 
 export default function BuildContributionInvite({
   content,
@@ -100,7 +102,34 @@ export default function BuildContributionInvite({
   const isActiveMember = Boolean(membershipState?.active);
   const membershipLoaded = !membershipKey || Boolean(membershipState);
   const rowStatus = getBuildInviteRowStatus(canonicalInvite || payload);
-  const status = isActiveMember ? 'accepted' : rowStatus;
+  const rowStatusIsClosed =
+    rowStatus === 'left' ||
+    rowStatus === 'revoked' ||
+    rowStatus === 'declined';
+  const inviteEventTime = getBuildInviteEventTime(canonicalInvite || payload);
+  const membershipEventTime = Number(membershipState?.__eventTime || 0);
+  const membershipIsCurrent =
+    isActiveMember && membershipEventTime >= inviteEventTime;
+  const inviteAccepted =
+    Number((canonicalInvite || payload)?.acceptedAt || 0) > 0;
+  const inviteAcceptedIsCurrent =
+    inviteAccepted &&
+    (!membershipLoaded || inviteEventTime > membershipEventTime);
+  const membershipShowsLeft =
+    membershipLoaded &&
+    Boolean(membershipState) &&
+    !isActiveMember &&
+    inviteAccepted &&
+    membershipEventTime >= inviteEventTime;
+  const status = membershipIsCurrent
+    ? 'accepted'
+    : rowStatusIsClosed
+      ? rowStatus
+      : membershipShowsLeft
+        ? 'left'
+        : inviteAcceptedIsCurrent
+          ? 'accepted'
+          : 'pending';
   const canOpenApp = canOpenPublishedBuildApp(payload);
   const canOpenWorkspaceFromTitle = sentByMe || status === 'accepted';
   const titleNode = canOpenWorkspaceFromTitle ? (
@@ -142,9 +171,34 @@ export default function BuildContributionInvite({
     return () => {
       isMounted = false;
     };
-    // Context request/action helpers are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId, membershipUserId, Boolean(membershipState)]);
+
+  useEffect(() => {
+    if (!membershipKey || !isActiveMember || membershipIsCurrent) {
+      return;
+    }
+    if (!rowStatusIsClosed && inviteAccepted) {
+      return;
+    }
+    onUpdateBuildContributionMembership({
+      active: false,
+      buildId,
+      eventTimeMs: inviteEventTime,
+      membership: canonicalInvite || payload,
+      userId: membershipUserId
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    membershipKey,
+    isActiveMember,
+    membershipIsCurrent,
+    rowStatusIsClosed,
+    inviteAccepted,
+    inviteEventTime,
+    buildId,
+    membershipUserId
+  ]);
 
   if (!buildId || !inviteId) {
     return <span>{content}</span>;
@@ -165,7 +219,9 @@ export default function BuildContributionInvite({
                 ? 'This invite was declined for '
                 : status === 'revoked'
                   ? 'This invite was revoked for '
-                  : 'You invited this user to join the team for '}
+                  : status === 'left'
+                    ? 'This member left the team for '
+                    : 'You invited this user to join the team for '}
             {titleNode}.
           </span>
         ) : status === 'accepted' ? (
@@ -182,6 +238,8 @@ export default function BuildContributionInvite({
           <span>
             {sender.username}&apos;s invite for {titleNode} was revoked.
           </span>
+        ) : status === 'left' ? (
+          <span>You left the team for {titleNode}.</span>
         ) : (
           <span>
             {sender.username} invited you to join the team for{' '}
@@ -354,7 +412,8 @@ function getBuildInviteStatus(
   if (
     status === 'accepted' ||
     status === 'declined' ||
-    status === 'revoked'
+    status === 'revoked' ||
+    status === 'left'
   ) {
     return status;
   }
@@ -363,6 +422,9 @@ function getBuildInviteStatus(
   }
   if (Number(invite?.declinedAt || 0) > 0) {
     return 'declined';
+  }
+  if (Number(invite?.leftAt || 0) > 0) {
+    return 'left';
   }
   if (Number(invite?.acceptedAt || 0) > 0) {
     return 'accepted';
@@ -379,6 +441,9 @@ function getBuildInviteRowStatus(
   if (Number(invite?.declinedAt || 0) > 0 || invite?.status === 'declined') {
     return 'declined';
   }
+  if (Number(invite?.leftAt || 0) > 0 || invite?.status === 'left') {
+    return 'left';
+  }
   return 'pending';
 }
 
@@ -394,16 +459,18 @@ function getBuildInviteEventTime(invite?: Record<string, any> | null) {
   if (!invite) return 0;
   return Math.max(
     normalizeEventTimeMs(Number(invite.__eventTime || 0)),
+    normalizeEventTimeMs(Number(invite.eventTimeMs || 0)),
     normalizeEventTimeMs(Number(invite.acceptedAt || 0)),
     normalizeEventTimeMs(Number(invite.declinedAt || 0)),
     normalizeEventTimeMs(Number(invite.revokedAt || 0)),
+    normalizeEventTimeMs(Number(invite.leftAt || 0)),
     normalizeEventTimeMs(Number(invite.createdAt || 0))
   );
 }
 
 function getBuildInviteStatusRank(status: BuildContributionInviteStatus) {
   if (status === 'accepted') return 3;
-  if (status === 'declined') return 2;
+  if (status === 'declined' || status === 'left') return 2;
   if (status === 'revoked') return 1;
   return 0;
 }

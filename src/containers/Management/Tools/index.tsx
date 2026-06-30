@@ -268,10 +268,8 @@ export default function Tools() {
 
     if (file) {
       try {
-        // Don't create a new Blob, use the File directly (File extends Blob)
         const url = URL.createObjectURL(file);
 
-        // Extract file extension and ensure we have a valid MIME type
         const fileExt = file.name.split('.').pop()?.toLowerCase() || 'mp4';
         const mimeType = file.type || `video/${fileExt}` || 'video/mp4';
 

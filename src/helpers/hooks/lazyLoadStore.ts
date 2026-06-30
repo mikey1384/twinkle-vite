@@ -1,6 +1,3 @@
-// External store for lazy load visibility state
-// Using useSyncExternalStore pattern to isolate re-renders to individual components
-
 type Listener = () => void;
 
 const visibilityState = new Map<string, boolean>();
@@ -25,7 +22,6 @@ export const lazyLoadStore = {
         this.notify(id);
       }
     } else {
-      // Hide after delay
       if (delay > 0) {
         const timer = setTimeout(() => {
           timers.delete(id);

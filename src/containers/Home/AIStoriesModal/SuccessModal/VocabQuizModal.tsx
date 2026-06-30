@@ -128,7 +128,6 @@ export default function VocabQuizModal({
     setShowResults(false);
     setResultTab('all');
 
-    // Socket event handlers
     function handleQuizStarted(data: {
       storyId: number;
       totalQuestions: number;
@@ -150,7 +149,6 @@ export default function VocabQuizModal({
     }) {
       if (data.storyId !== storyIdRef.current) return;
       setQuestions((prev) => {
-        // Avoid duplicates
         if (prev.some((q) => q.id === data.question.id)) return prev;
         return [...prev, data.question];
       });
@@ -170,7 +168,6 @@ export default function VocabQuizModal({
       setLoadingNextQuestion(false);
     }
 
-    // Subscribe to socket events
     socket.on('ai_story_vocab_quiz_started', handleQuizStarted);
     socket.on('ai_story_vocab_quiz_question', handleQuizQuestion);
     socket.on('ai_story_vocab_quiz_complete', handleQuizComplete);
@@ -1024,7 +1021,6 @@ export default function VocabQuizModal({
       );
     }
 
-    // For warning/error messages
     if (statusMessage) {
       return (
         <div
@@ -1064,7 +1060,6 @@ export default function VocabQuizModal({
       setShowResults(true);
       return;
     }
-    // Move to next question index
     setCurrentIndex((prev) => prev + 1);
     setLoadingNextQuestion(true);
     socket.emit('request_next_ai_story_vocab_question', { storyId });

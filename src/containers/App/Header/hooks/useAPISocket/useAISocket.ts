@@ -125,7 +125,6 @@ export default function useAISocket({
 
               const base64Audio = arrayBufferToBase64(arrayBuffer);
 
-              // Send AI UI information before sending audio data
               socket.emit('ai_user_audio', base64Audio);
 
               audioBuffer = [];
@@ -229,7 +228,6 @@ export default function useAISocket({
         warning: data.warning
       });
 
-      // Also update channel state for the channel where this is happening
       onSetChannelState({
         channelId: data.channelId,
         newState: {
@@ -338,7 +336,6 @@ export default function useAISocket({
 
         sourceNode.buffer = decodedAudioBuffer;
 
-        // Connect source -> gain -> destination
         sourceNode.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
@@ -569,7 +566,6 @@ export default function useAISocket({
         const elem = allElements[i];
         const computedStyle = window.getComputedStyle(elem);
 
-        // Preserve layout information before removing attributes
         let layoutInfo = '';
         if (computedStyle.display === 'flex') {
           layoutInfo = `[flex ${computedStyle.flexDirection} ${computedStyle.justifyContent}]`;
@@ -577,7 +573,6 @@ export default function useAISocket({
           layoutInfo = '[grid]';
         }
 
-        // A) If <svg> has data-icon or data-prefix => replace with [icon {prefix}-{iconName}]
         if (
           elem.tagName.toLowerCase() === 'svg' &&
           (elem.hasAttribute('data-icon') || elem.hasAttribute('data-prefix'))
@@ -592,7 +587,6 @@ export default function useAISocket({
           continue;
         }
 
-        // B) Remove sub-elements like <path> if not replaced above
         if (elem.tagName.toLowerCase() === 'path') {
           elem.remove();
           continue;
@@ -604,7 +598,6 @@ export default function useAISocket({
         }
 
         if (!isPreservedInteractiveElement(elem)) {
-          // Add layout info before removing attributes if it exists
           if (layoutInfo) {
             const layoutNode = document.createTextNode(layoutInfo);
             elem.parentNode?.insertBefore(layoutNode, elem);

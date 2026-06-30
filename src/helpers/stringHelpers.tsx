@@ -21,7 +21,6 @@ export function addCommasToNumber(number: number) {
   return integerPart + decimalPart;
 }
 
-// Pre-compile the emoticon data for optimal performance
 const emoticons: { [key: string]: string } = {
   ':alien:': '👽',
   ':america:': '🇺🇸',
@@ -429,7 +428,6 @@ export function extractVideoIdFromTwinkleVideoUrl(
   return videoId;
 }
 
-// Pre-compile shortcut replacements to avoid rebuilding regexes
 const shortcuts = {
   brb: 'be right back',
   gtg: 'got to go',

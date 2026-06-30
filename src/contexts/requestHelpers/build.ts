@@ -1783,6 +1783,19 @@ export default function buildRequestHelpers({
       }
     },
 
+    async leaveBuildTeam({ buildId }: { buildId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/team-members/leave`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleBuildCollaborationActionError(error);
+      }
+    },
+
     async loadMyBuildCollaborationRequest(buildId: number) {
       try {
         const { data } = await request.get(

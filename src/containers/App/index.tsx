@@ -519,7 +519,6 @@ export default function App() {
       if (token === prevToken) {
         onSetSessionLoaded();
       } else {
-        // Token exists and is different from previous (including first load where prevToken is undefined)
         handleInit();
       }
       authRef.current = auth();
@@ -778,7 +777,6 @@ export default function App() {
               openBonus
               onHide={() => onSetDailyBonusModalShown(false)}
               onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
-              // No-ops for unrelated callbacks when in bonus-only mode
               onSetHasBonus={() => {}}
               onSetIsDailyRewardChecked={() => {}}
               onCountdownComplete={() => {}}

@@ -466,7 +466,6 @@ export default function ImageEditModal({
           overflow-y: auto;
         `}
       >
-        {/* Error Display - at top for visibility */}
         {error && (
           <div
             className={css`
@@ -491,7 +490,6 @@ export default function ImageEditModal({
           </div>
         )}
 
-        {/* Canvas Container - THE MAIN FOCUS */}
         <div
           ref={containerRef}
           className={css`
@@ -533,7 +531,6 @@ export default function ImageEditModal({
             flex-shrink: 0;
           `}
         >
-          {/* Loading State */}
           {!isImageReady && (
             <div
               className={css`
@@ -548,7 +545,6 @@ export default function ImageEditModal({
             </div>
           )}
 
-          {/* Partial Image Preview (during AI generation) */}
           {partialImageData && (
             <div
               className={css`
@@ -571,7 +567,6 @@ export default function ImageEditModal({
             </div>
           )}
 
-          {/* Main Canvas */}
           <canvas
             ref={canvasRef}
             onMouseDown={toolsAPI.handleCanvasClick}
@@ -597,7 +592,6 @@ export default function ImageEditModal({
           />
         </div>
 
-        {/* Drawing Tools Section */}
         <div
           className={css`
             background: ${Color.highlightGray()};
@@ -621,7 +615,6 @@ export default function ImageEditModal({
           {toolsUI}
         </div>
 
-        {/* AI Modification Section */}
         <div
           className={css`
             background: ${energyThemeRole.getColor(0.035)};
@@ -746,7 +739,6 @@ export default function ImageEditModal({
         </div>
       </div>
 
-      {/* Hidden canvases for drawing operations */}
       <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
       <canvas ref={drawingCanvasRef} style={{ display: 'none' }} />
     </>

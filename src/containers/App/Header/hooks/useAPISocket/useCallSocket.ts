@@ -41,7 +41,6 @@ export default function useCallSocket({
   const myStream = useChatContext((v) => v.state.myStream);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
 
-  // Refs for values used in socket handlers
   const selectedChannelIdRef = useRef(selectedChannelId);
   const channelsObjRef = useRef(channelsObj);
   const channelOnCallRef = useRef(channelOnCall);

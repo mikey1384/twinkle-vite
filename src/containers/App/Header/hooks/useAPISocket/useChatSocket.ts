@@ -33,7 +33,6 @@ export default function useChatSocket({
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
-  // Refs for frequently changing values to avoid effect re-runs
   const channelsObjRef = useRef(channelsObj);
   const onUpdateMyXpRef = useRef(onUpdateMyXp);
   const selectedChannelIdRef = useRef(selectedChannelId);

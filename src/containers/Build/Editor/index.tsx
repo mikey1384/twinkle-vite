@@ -536,6 +536,21 @@ export default function BuildEditor({
     routeState,
     setCollaborationSettingsModalShown
   });
+
+  async function handleBuildReloadFromServer() {
+    const buildPayload = await loadBuild(build.id, { fromWriter: true });
+    if (!buildPayload?.build) return;
+    applyBuildUpdate({
+      ...buildPayload.build,
+      executionPlan: buildPayload.executionPlan || null,
+      followUpPrompt: buildPayload.followUpPrompt || null,
+      runtimeExplorationPlan: buildPayload.runtimeExplorationPlan || null,
+      projectManifest: buildPayload.projectManifest || null,
+      projectFiles: Array.isArray(buildPayload.projectFiles)
+        ? buildPayload.projectFiles
+        : []
+    });
+  }
   const {
     availableVersions,
     availableVersionsLoading,
@@ -1489,6 +1504,7 @@ export default function BuildEditor({
         embedded
         isOwner={isOwner}
         onBuildPatch={handleBuildCollaborationPatch}
+        onBuildReload={handleBuildReloadFromServer}
         onContributionBranchCreated={handleContributionBranchCreated}
         onCanonicalMerge={handleBuildContributionMerge}
         onVersionProjectFilesUpdate={handleBuildContributionMerge}

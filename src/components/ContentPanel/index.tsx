@@ -42,7 +42,6 @@ const urlCss = css`
   }
 `;
 
-// Tucked profile target container to visually attach under main panel
 const profileTargetCss = css`
   cursor: pointer;
   background: #fff;

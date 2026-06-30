@@ -283,10 +283,8 @@ export default function SecretMessageInput({
           event.target.value = null;
           return;
         }
-        // Conversion failed - fall through to non-image handling
       } catch (error) {
         console.warn('Image conversion failed:', error);
-        // Fall through to non-image handling
       }
     }
 

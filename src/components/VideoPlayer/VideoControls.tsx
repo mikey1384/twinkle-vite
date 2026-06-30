@@ -120,7 +120,6 @@ function VideoControls({
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
     >
-      {/* Seek bar */}
       <div
         ref={trackRef}
         className={css`
@@ -199,7 +198,6 @@ function VideoControls({
         </div>
       </div>
 
-      {/* Button row */}
       <div
         className={css`
           display: flex;
@@ -217,7 +215,6 @@ function VideoControls({
           <Icon icon={playing ? 'pause' : 'play'} />
         </button>
 
-        {/* Volume */}
         <div
           className={css`
             display: flex;
@@ -309,7 +306,6 @@ function VideoControls({
           `}
         />
 
-        {/* Playback speed */}
         <div
           className={css`
             position: relative;

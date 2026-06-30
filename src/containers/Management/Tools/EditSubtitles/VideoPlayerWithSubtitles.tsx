@@ -179,7 +179,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
                 `The video format (${currentVideoType}) is not supported by your browser. ` +
                 'Trying alternative formats...';
 
-              // Try to recover with alternative formats if we haven't exceeded max retries
               if (retryCount < maxRetries && videoUrl) {
                 setRetryCount((prev) => prev + 1);
 
@@ -192,7 +191,7 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
                     setCurrentVideoType(nextFormat);
                   }
                 }, 1000);
-                return; // Early return as we're retrying
+                return;
               } else {
                 message = `The video format could not be played after multiple attempts. Please try converting the video to a different format.`;
               }
@@ -203,7 +202,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
 
           setErrorMessage(message);
 
-          // Mark global state as not ready
           subtitleVideoPlayer.isReady = false;
         }
       });
@@ -233,7 +231,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
         setErrorMessage(null);
         setRetryCount(0);
 
-        // Pause the player before changing source
         if (playerRef.current && !playerRef.current.paused()) {
           try {
             playerRef.current.pause();
@@ -301,7 +298,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
     return () => {
       if (playerRef.current) {
         try {
-          // Make sure to pause before disposal to avoid any race conditions
           if (!playerRef.current.paused()) {
             try {
               playerRef.current.pause();
@@ -314,7 +310,6 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
         } catch (e) {
           console.error('Error disposing video player on unmount:', e);
         }
-        // Make sure to set to null after disposal
         playerRef.current = null;
       }
     };
@@ -393,12 +388,10 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
 function detectVideoType(url: string): string {
   if (!url) return 'video/mp4';
 
-  // Default MIME type
   const defaultType = 'video/mp4';
 
   if (url.includes('#type=')) {
     try {
-      // Extract the MIME type from our custom hint
       const typeMatch = url.match(/#type=([^&]+)/);
       if (typeMatch && typeMatch[1]) {
         const mimeType = decodeURIComponent(typeMatch[1]);
@@ -409,7 +402,6 @@ function detectVideoType(url: string): string {
     }
   }
 
-  // For blob URLs without hints, we'll try to infer from any patterns
   if (url.startsWith('blob:')) {
     const extMatch = url.match(/#.*?ext=([^&]+)/);
     if (extMatch && extMatch[1]) {
@@ -542,7 +534,6 @@ function updateSubtitles(
     );
 
     if (newTrack) {
-      // Use type assertion since TypeScript doesn't know about track property
       (newTrack as any).track.mode = 'showing';
     }
 

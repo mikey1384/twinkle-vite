@@ -70,7 +70,6 @@ export default function ImageEditModal({
 
       setLoading(true);
 
-      // Check if the data URL's MIME type indicates a format that needs conversion
       const mimeMatch = imageUri.match(/^data:image\/([^;]+);/);
       const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : '';
       const needsConversion = ['heic', 'heif', 'tiff', 'tif', 'bmp', 'mpo', 'avif'].includes(mimeType);

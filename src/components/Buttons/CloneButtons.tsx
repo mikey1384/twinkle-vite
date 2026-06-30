@@ -366,7 +366,6 @@ export default function CloneButtons({
           topicId: data.subjectId,
           thinkHard: false
         });
-        // Also persist to localStorage
         try {
           const stored = getStoredItem('thinkHard', '{}');
           const parsed = JSON.parse(stored);
@@ -378,9 +377,7 @@ export default function CloneButtons({
             }
           };
           setStoredItem('thinkHard', JSON.stringify(updated));
-        } catch {
-          // Ignore localStorage errors
-        }
+        } catch {}
 
         const pathId = Number(data.channelId) + Number(CHAT_ID_BASE_NUMBER);
         onUpdateSelectedChannelId(data.channelId);

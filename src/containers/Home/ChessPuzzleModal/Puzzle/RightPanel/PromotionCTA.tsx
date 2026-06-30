@@ -216,7 +216,6 @@ export default function PromotionCTA({
           </div>
         </div>
 
-        {/* Coin unlock button */}
         <button
           onClick={() => setConfirmShown(true)}
           disabled={!canAffordUnlock || unlocking}

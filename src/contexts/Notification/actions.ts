@@ -136,17 +136,20 @@ export default function NotiActions(dispatch: Dispatch) {
     onUpdateBuildContributionInviteNotification({
       invite,
       inviteId,
-      status
+      status,
+      eventTimeMs
     }: {
       invite?: Record<string, any> | null;
       inviteId: number;
-      status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+      status?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
+      eventTimeMs?: number;
     }) {
       return dispatch({
         type: 'UPDATE_BUILD_CONTRIBUTION_INVITE_NOTIFICATION',
         invite,
         inviteId,
-        status
+        status,
+        eventTimeMs
       });
     },
     onLoadMoreRewards({ userId, data }: { userId: number; data: object }) {

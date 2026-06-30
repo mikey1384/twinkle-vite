@@ -27,7 +27,6 @@ interface ButtonProps {
   size?: Size; // defaults to 'md'
   uppercase?: boolean; // defaults to true
   onHover?: boolean; // ignored
-  // New optional tone for slight elevation without shadows everywhere
   tone?: 'flat' | 'raised';
 }
 

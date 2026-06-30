@@ -64,7 +64,6 @@ export default function useAICard(card: any) {
   const isGrad = memoizedCardQuality.includes('grad') && !card.isBurned;
   const isSparky = memoizedCardQuality.includes('sparky') && !card.isBurned;
   const isPrism = memoizedCardQuality.includes('prism') && !card.isBurned;
-  // Quality color for glow (green for superior, purple for rare, etc.)
   const qualityColor = memoizedQualityProps.color || cardColor;
 
   return {
@@ -81,7 +80,6 @@ export default function useAICard(card: any) {
         border-radius: 5% / 3.5%;
         transform-origin: center;
 
-        /* Base shadow - varies by quality */
         box-shadow: ${
           isPrism
             ? `0px 0px 7px ${qualityColor},
@@ -107,12 +105,10 @@ export default function useAICard(card: any) {
 
         background-color: ${cardColor};
 
-        /* Smooth transitions */
         transition:
           transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
           box-shadow 0.2s ease;
 
-        /* Hover: lift + enhanced glow */
         &:hover {
           transform: translateY(-6px);
           ${
@@ -153,7 +149,6 @@ export default function useAICard(card: any) {
           }
         }
 
-        /* Shine layer (::before) */
         &:before {
           content: '';
           position: absolute;
@@ -186,7 +181,6 @@ export default function useAICard(card: any) {
           ${isGlossy ? 'transition: none; animation: gloss 7s ease-in-out infinite;' : ''}
         }
 
-        /* Sparkle/holo layer (::after) - now pure CSS! */
         &:after {
           content: '';
           position: absolute;
@@ -206,7 +200,6 @@ export default function useAICard(card: any) {
             ? `
           &:after {
             background-image:
-              /* Prismatic light refraction - diagonal bands */
               linear-gradient(
                 45deg,
                 transparent 0%,
@@ -220,7 +213,6 @@ export default function useAICard(card: any) {
                 transparent 80%,
                 transparent 100%
               ),
-              /* Crystalline shimmer */
               conic-gradient(
                 from 0deg at 50% 50%,
                 #ff000070 0deg, #ff880070 30deg, #ffff0070 60deg,
@@ -230,7 +222,6 @@ export default function useAICard(card: any) {
               ),
               url(${sparklesUrl}),
               url(${holoUrl}),
-              /* Rainbow gradient */
               linear-gradient(
                 125deg,
                 #ff008460 15%,
@@ -313,7 +304,6 @@ export default function useAICard(card: any) {
           animation: none;
         }
 
-        /* Idle animation class */
         &.animated {
           transition: none;
           animation: holoCard 12s ease 0s 1;
@@ -327,7 +317,6 @@ export default function useAICard(card: any) {
           }
         }
 
-        /* Card dimensions */
         width: clamp(12.9vw, 32vh, 30vw);
         height: clamp(20vw, 46vh, 42vw);
         @media (max-width: ${mobileMaxWidth}) {
@@ -336,7 +325,6 @@ export default function useAICard(card: any) {
         }
       }
 
-      /* Sparkle idle animation */
       @keyframes holoSparkle {
         0%, 100% {
           opacity: 0.75;
@@ -365,7 +353,6 @@ export default function useAICard(card: any) {
         }
       }
 
-      /* Glossy shine animation */
       @keyframes gloss {
         0%, 100% {
           background-position: 0% 50%;
@@ -377,7 +364,6 @@ export default function useAICard(card: any) {
         }
       }
 
-      /* Holographic rainbow rotation */
       @keyframes holoRainbow {
         0% {
           filter: brightness(1) contrast(1) hue-rotate(0deg);
@@ -387,7 +373,6 @@ export default function useAICard(card: any) {
         }
       }
 
-      /* Gradient idle animation */
       @keyframes holoGradient {
         0%, 100% {
           opacity: 0.5;
@@ -415,7 +400,6 @@ export default function useAICard(card: any) {
         }
       }
 
-      /* Card rotation idle animation */
       @keyframes holoCard {
         0%, 100% {
           transform: rotateZ(0deg) rotateX(0deg) rotateY(0deg);
@@ -434,7 +418,6 @@ export default function useAICard(card: any) {
         }
       }
 
-      /* Prism shift animation - diagonal light band movement */
       @keyframes prismShift {
         0%, 100% {
           background-position: 0% 0%, 50% 50%, 50% 50%, 50% 50%, 50% 50%;

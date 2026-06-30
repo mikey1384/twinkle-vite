@@ -71,7 +71,7 @@ function buildContributionInviteMatches({
   actionObj: Record<string, any>;
   invite?: Record<string, any> | null;
   inviteId: number;
-  status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+  status?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
 }) {
   if (Number(actionObj.id || 0) === inviteId) return true;
   const acceptedMembership =
@@ -85,20 +85,37 @@ function buildContributionInviteMatches({
   );
 }
 
+function normalizeInviteEventTimeMs(value?: number) {
+  const normalized = Number(value || 0);
+  if (!normalized) return 0;
+  return normalized > 1000000000000 ? normalized : normalized * 1000;
+}
+
 function updateBuildContributionInviteNotification(
   state: any,
   {
     invite,
     inviteId,
-    status
+    status,
+    eventTimeMs
   }: {
     invite?: Record<string, any> | null;
     inviteId: number;
-    status?: 'pending' | 'accepted' | 'declined' | 'revoked';
+    status?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
+    eventTimeMs?: number;
   }
 ) {
   const resolvedInviteId = Number(invite?.id || inviteId || 0);
   if (!resolvedInviteId || !state?.notiObj) return state;
+
+  const incomingEventTimeMs = Math.max(
+    normalizeInviteEventTimeMs(eventTimeMs),
+    normalizeInviteEventTimeMs(Number(invite?.acceptedAt || 0)),
+    normalizeInviteEventTimeMs(Number(invite?.declinedAt || 0)),
+    normalizeInviteEventTimeMs(Number(invite?.revokedAt || 0)),
+    normalizeInviteEventTimeMs(Number(invite?.leftAt || 0)),
+    normalizeInviteEventTimeMs(Number(invite?.createdAt || 0))
+  );
 
   const hasAcceptedAt = Object.prototype.hasOwnProperty.call(
     invite || {},
@@ -111,6 +128,10 @@ function updateBuildContributionInviteNotification(
   const hasRevokedAt = Object.prototype.hasOwnProperty.call(
     invite || {},
     'revokedAt'
+  );
+  const hasLeftAt = Object.prototype.hasOwnProperty.call(
+    invite || {},
+    'leftAt'
   );
   const invitePatch = {
     ...(invite?.buildId ? { buildId: Number(invite.buildId) } : {}),
@@ -128,6 +149,11 @@ function updateBuildContributionInviteNotification(
     revokedAt: hasRevokedAt
       ? Number(invite?.revokedAt || 0)
       : status === 'revoked'
+        ? 1
+        : 0,
+    leftAt: hasLeftAt
+      ? Number(invite?.leftAt || 0)
+      : status === 'left'
         ? 1
         : 0
   };
@@ -154,11 +180,24 @@ function updateBuildContributionInviteNotification(
       ) {
         return notification;
       }
+      const appliedEventTimeMs = actionObj.__inviteEventTimeMs
+        ? Number(actionObj.__inviteEventTimeMs)
+        : Math.max(
+            normalizeInviteEventTimeMs(Number(actionObj.acceptedAt || 0)),
+            normalizeInviteEventTimeMs(Number(actionObj.declinedAt || 0)),
+            normalizeInviteEventTimeMs(Number(actionObj.revokedAt || 0)),
+            normalizeInviteEventTimeMs(Number(actionObj.leftAt || 0)),
+            normalizeInviteEventTimeMs(Number(actionObj.createdAt || 0))
+          );
+      if (appliedEventTimeMs > incomingEventTimeMs) {
+        return notification;
+      }
       const actionInviteId = Number(actionObj.id || 0);
       const nextActionObj = {
         ...actionObj,
         ...invitePatch,
-        id: actionInviteId || resolvedInviteId
+        id: actionInviteId || resolvedInviteId,
+        __inviteEventTimeMs: incomingEventTimeMs
       };
       if (shallowEqualObject(actionObj, nextActionObj)) {
         return notification;
@@ -273,7 +312,8 @@ export default function NotiReducer(
       return updateBuildContributionInviteNotification(state, {
         invite: action.invite,
         inviteId: action.inviteId,
-        status: action.status
+        status: action.status,
+        eventTimeMs: action.eventTimeMs
       });
     case 'LOAD_REWARDS':
       return {

@@ -98,7 +98,19 @@ export default function BuildCollaborationRequest({
   const rowStatus = getBuildCollaborationRequestRowStatus(
     canonicalRequest || payload
   );
-  const status = isActiveMember ? 'accepted' : rowStatus;
+  const requestEventTime = getBuildRequestEventTime(canonicalRequest || payload);
+  const membershipEventTime = Number(membershipState?.__eventTime || 0);
+  const membershipIsCurrent =
+    isActiveMember && membershipEventTime >= requestEventTime;
+  const status = membershipIsCurrent ? 'accepted' : rowStatus;
+  const requestWasAccepted =
+    getBuildCollaborationRequestStatus(canonicalRequest || payload) ===
+    'accepted';
+  const memberLeft =
+    requestWasAccepted &&
+    membershipLoaded &&
+    Boolean(membershipState) &&
+    !membershipIsCurrent;
   const canOpenApp = canOpenPublishedBuildApp(payload);
 
   useEffect(() => {
@@ -128,9 +140,35 @@ export default function BuildCollaborationRequest({
     return () => {
       isMounted = false;
     };
-    // Context request/action helpers are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId, membershipUserId, Boolean(membershipState)]);
+
+  useEffect(() => {
+    if (
+      !membershipKey ||
+      !isActiveMember ||
+      membershipIsCurrent ||
+      requestWasAccepted
+    ) {
+      return;
+    }
+    onUpdateBuildContributionMembership({
+      active: false,
+      buildId,
+      eventTimeMs: requestEventTime,
+      membership: canonicalRequest || payload,
+      userId: membershipUserId
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    membershipKey,
+    isActiveMember,
+    membershipIsCurrent,
+    requestWasAccepted,
+    requestEventTime,
+    buildId,
+    membershipUserId
+  ]);
 
   if (!buildId || !requestId) {
     return <span>{content}</span>;
@@ -143,7 +181,19 @@ export default function BuildCollaborationRequest({
         <strong>Build join request</strong>
       </div>
       <div className={requestBodyClass}>
-        {sentByMe ? (
+        {memberLeft ? (
+          <span>
+            {sentByMe ? (
+              <>
+                You left the team for <strong>{title}</strong>.
+              </>
+            ) : (
+              <>
+                {sender.username} left the team for <strong>{title}</strong>.
+              </>
+            )}
+          </span>
+        ) : sentByMe ? (
           <span>
             {status === 'accepted'
               ? 'Your request was accepted for '
@@ -189,7 +239,7 @@ export default function BuildCollaborationRequest({
             Open App
           </Button>
         ) : null}
-        {!sentByMe && membershipLoaded && status === 'pending' ? (
+        {!sentByMe && membershipLoaded && status === 'pending' && !memberLeft ? (
           <>
             <Button
               color="logoBlue"
@@ -373,6 +423,7 @@ function getBuildRequestEventTime(request?: Record<string, any> | null) {
   if (!request) return 0;
   return Math.max(
     normalizeEventTimeMs(Number(request.__eventTime || 0)),
+    normalizeEventTimeMs(Number(request.eventTimeMs || 0)),
     normalizeEventTimeMs(Number(request.respondedAt || 0)),
     normalizeEventTimeMs(Number(request.canceledAt || 0)),
     normalizeEventTimeMs(Number(request.hiddenAt || 0)),

@@ -734,7 +734,6 @@ export default function useInitSocket({
                 });
               }
             } else {
-              // Check if this is an AI DM channel before forcing navigation to general
               const channel = channelsObjRef.current[channelId];
               const isAIDM =
                 channel?.twoPeople &&
@@ -1124,7 +1123,6 @@ export default function useInitSocket({
     }
 
     if (userId) {
-      // User logged in - bind socket to new user
       const token = getStoredItem('token');
       const deviceId = getTwinkleDeviceId();
       socket.emit(

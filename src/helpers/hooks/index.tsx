@@ -246,7 +246,6 @@ export function useLazyLoad({
   onSetPlaceholderHeight?: (height: number) => void;
   delay?: number;
 }): boolean {
-  // Subscribe to visibility changes for this specific id only
   const subscribe = useCallback(
     (callback: () => void) => lazyLoadStore.subscribe(id, callback),
     [id]
@@ -335,7 +334,6 @@ export function useMyState() {
   const loaded = useAppContext((v) => v.user.state.loaded);
   const signinModalShown = useAppContext((v) => v.user.state.signinModalShown);
 
-  // Function to retrieve stored items from local storage
   const getStoredItems = (config: { [key: string]: any }) => {
     return Object.keys(config).reduce((acc: { [key: string]: any }, key) => {
       const storedValue = getStoredItem(key, config[key]);

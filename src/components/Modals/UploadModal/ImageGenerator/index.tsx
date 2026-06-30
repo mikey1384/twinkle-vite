@@ -916,7 +916,7 @@ export default function ImageGenerator({
     try {
       let referenceB64: string | undefined;
       if (generatedImageUrl) {
-        referenceB64 = generatedImageUrl.split(',')[1]; // Extract base64 part
+        referenceB64 = generatedImageUrl.split(',')[1];
       }
 
       const result = await generateAIImage({

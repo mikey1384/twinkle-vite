@@ -502,7 +502,6 @@ export default function PromptWorkshop({
       `}
       style={style}
     >
-      {/* Title Section */}
       <section className={sectionClass}>
         <div className={labelClass}>Title</div>
         <Input
@@ -530,7 +529,6 @@ export default function PromptWorkshop({
         )}
       </section>
 
-      {/* Prompt Section */}
       {showPromptSection && (
         <section className={sectionClass}>
           <div
@@ -598,7 +596,6 @@ export default function PromptWorkshop({
         </section>
       )}
 
-      {/* Chat Preview */}
       {hasPrompt && (
         <section className={sectionClass}>
           <div
@@ -721,7 +718,6 @@ export default function PromptWorkshop({
         </section>
       )}
 
-      {/* Save Buttons */}
       {hasPrompt && (
         <section className={sectionClass}>
           <div className={labelClass}>Save Prompt</div>
@@ -892,7 +888,6 @@ export default function PromptWorkshop({
         </section>
       )}
 
-      {/* Share with AI Buttons */}
       {hasPrompt && (
         <section className={sectionClass}>
           <div className={labelClass}>Share with AI</div>

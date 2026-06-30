@@ -72,10 +72,13 @@ export default function Invitation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invitationChannelId]);
 
+  const invitationChannelMemberCount =
+    channelsObj[invitationChannelId]?.members?.length;
+  const invitationChannelName = channelsObj[invitationChannelId]?.channelName;
   const invitationChannel = useMemo(
     () => channelsObj[invitationChannelId],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [invitationChannelId, channelsObj[invitationChannelId]?.members?.length]
+    [invitationChannelId, invitationChannelMemberCount, invitationChannelName]
   );
 
   const alreadyJoined = useMemo(() => {
@@ -133,7 +136,7 @@ export default function Invitation({
         }
       `}
     >
-      {invitationChannel && (
+      {invitationChannel?.channelName && (
         <ChannelDetail
           invitePath={invitePath}
           alreadyJoined={alreadyJoined}
