@@ -6,6 +6,7 @@ const LAZY_IMPORT_OVERLAY_ID = 'twinkle-lazy-import-reload-overlay';
 const LAZY_IMPORT_RELOAD_STORAGE_KEY = 'twinkleLazyImportReloadAt';
 const LAZY_IMPORT_RELOAD_COOLDOWN_MS = 60 * 1000;
 const LAZY_IMPORT_RELOAD_PARAM = '_twinkleLazyImportReload';
+const LAZY_IMPORT_MANUAL_RECOVERY_PARAM = '_twinkleLazyImportRecovery';
 const LAZY_IMPORT_RELOAD_COUNTS_KEY = 'twinkleLazyImportReloadCounts';
 // Reloading can only fix a stale bundle. If a page keeps failing for another
 // reason (device memory pressure, content blockers), more reloads make it
@@ -35,12 +36,10 @@ async function retryLazyImport<T extends ComponentType<any>>(
       // recovers by retrying, so reload immediately instead of burning the
       // retry delays while the user stares at the previous page.
       if (
-        await shouldReloadForLazyImportFailure(error, {
+        await recoverFromLazyImportLoadError(error, {
           confirmedStaleOnly: !isFinalAttempt
         })
       ) {
-        showLazyImportReloadOverlay();
-        reloadAfterLazyImportFailure();
         return await new Promise<{ default: T }>(() => {});
       }
       if (isFinalAttempt) {
@@ -63,6 +62,34 @@ export function isLazyImportLoadError(error: unknown) {
     message.includes('ChunkLoadError') ||
     message.includes('Loading chunk')
   );
+}
+
+export async function recoverFromLazyImportLoadError(
+  error: unknown,
+  { confirmedStaleOnly = false }: { confirmedStaleOnly?: boolean } = {}
+) {
+  if (!isLazyImportLoadError(error)) return false;
+  if (
+    await shouldReloadForLazyImportFailure(error, {
+      confirmedStaleOnly
+    })
+  ) {
+    showLazyImportReloadOverlay();
+    reloadAfterLazyImportFailure();
+    return true;
+  }
+  return false;
+}
+
+export function reloadForLazyImportRecovery() {
+  try {
+    clearLazyImportReloadGuards();
+    const url = new URL(window.location.href);
+    url.searchParams.set(LAZY_IMPORT_MANUAL_RECOVERY_PARAM, String(Date.now()));
+    window.location.replace(url.toString());
+  } catch {
+    window.location.reload();
+  }
 }
 
 async function shouldReloadForLazyImportFailure(
@@ -112,6 +139,15 @@ async function shouldReloadForLazyImportFailure(
   } catch {
     return false;
   }
+}
+
+function clearLazyImportReloadGuards() {
+  try {
+    if (typeof window === 'undefined') return;
+    if (typeof window.sessionStorage === 'undefined') return;
+    window.sessionStorage.removeItem(LAZY_IMPORT_RELOAD_STORAGE_KEY);
+    window.sessionStorage.removeItem(LAZY_IMPORT_RELOAD_COUNTS_KEY);
+  } catch {}
 }
 
 function readLazyImportReloadCounts(): Record<string, number> {

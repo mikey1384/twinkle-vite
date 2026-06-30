@@ -4,7 +4,10 @@ import { css } from '@emotion/css';
 
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { capitalize } from '~/helpers/stringHelpers';
-import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import {
+  lazyWithRetry,
+  recoverFromLazyImportLoadError
+} from '~/helpers/lazyImportHelpers';
 import { getSectionFromPathname } from '~/helpers';
 import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
@@ -110,6 +113,7 @@ export default function Header({
           onSetAiFeaturesDisabled(aiFeaturesDisabled);
         }
       } catch (error) {
+        if (await recoverFromLazyImportLoadError(error)) return;
         console.error('Failed to load AI feature flags:', error);
         if (!cancelled) {
           onSetAiFeaturesDisabled(true);

@@ -1,4 +1,5 @@
 import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
+import { recoverFromLazyImportLoadError } from '~/helpers/lazyImportHelpers';
 
 type RequestHelperModuleName =
   | 'build'
@@ -750,14 +751,20 @@ export default function requestHelpers(handleError: (error: unknown) => void) {
 
   function loadHelperModule(moduleName: RequestHelperModuleName) {
     if (!loadedModules[moduleName]) {
-      loadedModules[moduleName] = helperModuleLoaders[moduleName]().then(
-        ({ default: factory }) =>
+      loadedModules[moduleName] = helperModuleLoaders[moduleName]()
+        .then(({ default: factory }) =>
           factory({
             auth,
             handleError,
             token
           })
-      );
+        )
+        .catch(async (error) => {
+          if (await recoverFromLazyImportLoadError(error)) {
+            return await new Promise<Record<string, any>>(() => {});
+          }
+          throw error;
+        });
     }
     return loadedModules[moduleName]!;
   }

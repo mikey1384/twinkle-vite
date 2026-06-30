@@ -4,6 +4,22 @@ import { resolve } from 'path';
 import inject from '@rollup/plugin-inject';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
+function getVercelDeploymentAssetOrigin({
+  command,
+  vercelUrl
+}: {
+  command: string;
+  vercelUrl?: string;
+}): string | null {
+  if (command !== 'build') return null;
+  const host = String(vercelUrl || '')
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/.*$/, '');
+  if (!host) return null;
+  return `https://${host}`;
+}
+
 export default defineConfig(({ command, mode }) => {
   if (command === 'build') {
     process.env.NODE_ENV = 'production';
@@ -16,8 +32,23 @@ export default defineConfig(({ command, mode }) => {
     command === 'serve' ? loadEnv(mode, process.cwd(), '') : process.env;
   const previewProxyTarget = env.VITE_URL || 'http://localhost:3500';
   const nodeEnv = command === 'build' ? 'production' : 'development';
+  const deploymentAssetOrigin = getVercelDeploymentAssetOrigin({
+    command,
+    vercelUrl: env.VERCEL_URL
+  });
 
   return {
+    experimental: deploymentAssetOrigin
+      ? {
+          renderBuiltUrl(filename, { type }) {
+            // Vercel deployments are immutable. Emitting built assets against
+            // the deployment URL keeps old tabs from revalidating chunks
+            // against the mutable production alias after a newer promotion.
+            if (type === 'asset') return `${deploymentAssetOrigin}/${filename}`;
+            return undefined;
+          }
+        }
+      : undefined,
     plugins: [
       react(),
       viteStaticCopy({

@@ -4,7 +4,10 @@ import UpdateRecoveryNotice from '~/components/UpdateRecoveryNotice';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import API_URL from '~/constants/URL';
-import { isLazyImportLoadError } from '~/helpers/lazyImportHelpers';
+import {
+  isLazyImportLoadError,
+  reloadForLazyImportRecovery
+} from '~/helpers/lazyImportHelpers';
 import reportDomMutationEvent from '~/helpers/reportDomMutationEvent';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
@@ -137,7 +140,7 @@ export default class ErrorBoundary extends Component<
           <UpdateRecoveryNotice
             buttonLabel="Reload to Update"
             message="The app has been updated. Reload to get the newest version."
-            onAction={handleLazyImportRecoveryReload}
+            onAction={reloadForLazyImportRecovery}
             title="Update Available"
           />
         );
@@ -266,16 +269,6 @@ function isLocalDevelopmentRuntime() {
 
 function shouldSuppressErrorReport(error: Error) {
   return isLazyImportLoadError(error) || isLocalDevelopmentRuntime();
-}
-
-function handleLazyImportRecoveryReload() {
-  try {
-    const url = new URL(window.location.href);
-    url.searchParams.set('_twinkleLazyImportRecovery', String(Date.now()));
-    window.location.replace(url.toString());
-  } catch {
-    window.location.reload();
-  }
 }
 
 function buildErrorInfo(errorInfo: React.ErrorInfo) {
