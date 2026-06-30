@@ -518,6 +518,11 @@ export function useHostBridge({
     async function ensureAiImageNotificationChannel() {
       const userId = previewAuth.userIdRef.current;
       if (!userId) return;
+      try {
+        await waitForSocketAuthReady(userId, 1000);
+      } catch {
+        return;
+      }
       await new Promise<void>((resolve) => {
         let settled = false;
         const timeout = window.setTimeout(() => {

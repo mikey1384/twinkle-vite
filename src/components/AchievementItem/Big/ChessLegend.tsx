@@ -26,9 +26,6 @@ export default function ChessLegend({
     (v) => v.myState.unlockedAchievementIds
   );
 
-  const filteredProgress =
-    progressObj && progressObj.currentValue > 0 ? progressObj : undefined;
-
   return (
     <ItemPanel
       isThumb={isThumb}
@@ -40,9 +37,9 @@ export default function ChessLegend({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirements={['Solve 1,000 Legendary+ chess puzzles']}
+      requirements={['Solve 100 Legendary+ chess puzzles']}
       milestones={milestones}
-      progressObj={filteredProgress}
+      progressObj={progressObj}
       badgeSrc={ChessLegendBadge}
     />
   );

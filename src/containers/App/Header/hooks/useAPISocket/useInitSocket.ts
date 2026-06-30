@@ -532,6 +532,7 @@ export default function useInitSocket({
               return;
             }
             dispatchSocketAuthReady(userIdRef.current);
+            socket.emit('enter_my_notification_channel', userIdRef.current);
             socket.emit('change_busy_status', !usingChatRef.current);
             userActionAckedRef.current = false;
             userActionAttemptsRef.current = 0;
@@ -543,7 +544,6 @@ export default function useInitSocket({
             });
           }
         );
-        socket.emit('enter_my_notification_channel', userIdRef.current);
 
         if (!shouldSkipReload) {
           recordChatBootstrapEvent('chat-bootstrap-triggered-by-connect', {
@@ -1134,13 +1134,13 @@ export default function useInitSocket({
             return;
           }
           dispatchSocketAuthReady(userId);
+          socket.emit('enter_my_notification_channel', userId);
           socket.emit('change_busy_status', !usingChatRef.current);
           userActionAckedRef.current = false;
           userActionAttemptsRef.current = 0;
           handleStartUserActionCapture();
         }
       );
-      socket.emit('enter_my_notification_channel', userId);
     }
 
     prevUserIdRef.current = userId;

@@ -5,10 +5,12 @@ import { mobileMaxWidth } from '~/constants/css';
 export default function Toast({
   message,
   onClose,
+  onClick,
   duration = 4000
 }: {
   message: string;
   onClose: () => void;
+  onClick?: () => void;
   duration?: number;
 }) {
   const onCloseRef = useRef(onClose);
@@ -29,13 +31,13 @@ export default function Toast({
     <div
       role="status"
       aria-live="polite"
-      onClick={onClose}
+      onClick={onClick || onClose}
       className={css`
         position: fixed;
         left: 50%;
         bottom: 3rem;
         transform: translateX(-50%);
-        z-index: 100000;
+        z-index: 2147483000;
         max-width: 90vw;
         padding: 1.2rem 1.6rem;
         border-radius: 0.7rem;
@@ -48,7 +50,8 @@ export default function Toast({
         cursor: pointer;
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.1rem;
-          bottom: 1.5rem;
+          /* Clear the mobile bottom nav (Header pinned bottom). */
+          bottom: calc(var(--mobile-nav-height, 7rem) + 1rem);
         }
       `}
     >

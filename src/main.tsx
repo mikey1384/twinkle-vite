@@ -212,6 +212,7 @@ import { faWindows } from '@fortawesome/free-brands-svg-icons/faWindows';
 import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
 import { faYoutube } from '@fortawesome/free-brands-svg-icons/faYoutube';
 import { AppContextProvider } from './contexts';
+import { ToastProvider } from './contexts/Toast';
 import { RootThemeProvider } from './theme/RootThemeProvider';
 import App from './containers/App';
 import { applyThemeVars, type ThemeName } from './theme';
@@ -465,7 +466,9 @@ library.add(
         <ErrorBoundary componentPath="AppContext">
           <AppContextProvider>
             <RootThemeProvider>
-              <App />
+              <ToastProvider>
+                <App />
+              </ToastProvider>
             </RootThemeProvider>
           </AppContextProvider>
         </ErrorBoundary>

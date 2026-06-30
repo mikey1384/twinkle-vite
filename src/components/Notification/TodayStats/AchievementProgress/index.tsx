@@ -2,7 +2,13 @@ import React, { useEffect } from 'react';
 import AchievementItem from './AchievementItem';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 
-const shownAchievements = ['mission', 'gold', 'grammar'];
+const shownAchievements = [
+  'mission',
+  'gold',
+  'grammar',
+  'donor',
+  'chess_legend'
+];
 
 export default function AchievementProgress({
   myAchievementsObj,

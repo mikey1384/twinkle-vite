@@ -2,6 +2,8 @@ import React from 'react';
 import Mission from './Mission';
 import Grammar from './Grammar';
 import Gold from './Gold';
+import Donor from './Donor';
+import ChessLegend from './ChessLegend';
 import { Content } from '~/types';
 
 export default function AchievementItem({
@@ -25,7 +27,9 @@ export default function AchievementItem({
   } = {
     mission: Mission,
     grammar: Grammar,
-    gold: Gold
+    gold: Gold,
+    donor: Donor,
+    chess_legend: ChessLegend
   };
 
   const Component = achievement?.type

@@ -28,6 +28,7 @@ import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
 import AICardDetails from '~/components/AICardDetails';
 import ShareButton from '~/components/Buttons/ShareButton';
+import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
 
 type CardImageStage =
   | 'not_started'
@@ -208,16 +209,24 @@ export default function AICardModal({
     // This is idempotent and guards cases where the global socket join
     // may not have completed before opening this modal.
     isMountedRef.current = true;
+    let cancelled = false;
     if (userId) {
+      void enterNotificationChannel(userId);
+    }
+    return () => {
+      cancelled = true;
+      isMountedRef.current = false;
+    };
+
+    async function enterNotificationChannel(nextUserId: number) {
       try {
-        socket.emit('enter_my_notification_channel', userId);
+        await waitForSocketAuthReady(nextUserId);
+        if (cancelled) return;
+        socket.emit('enter_my_notification_channel', nextUserId);
       } catch {
         // no-op
       }
     }
-    return () => {
-      isMountedRef.current = false;
-    };
   }, [userId]);
 
   const burnXP = useMemo(() => {

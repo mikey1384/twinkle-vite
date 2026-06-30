@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { User } from '~/types';
+import { useToast } from '~/contexts/Toast';
+import { getAchievementBadge } from '~/components/AchievementItem/achievementBadges';
+import { achievementTypeToId } from '~/constants/defaultValues';
 import {
   useKeyContext,
   useMissionContext,
@@ -60,11 +63,32 @@ export default function useNotiSocket({
   const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
 
+  const showToast = useToast();
+  const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
+  const achievementsObjRef = useRef(achievementsObj);
+  achievementsObjRef.current = achievementsObj;
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
+  const unlockedAchievementIdsRef = useRef(unlockedAchievementIds);
+  unlockedAchievementIdsRef.current = unlockedAchievementIds;
+  // Last progress value seen per achievement type. Doubles as a dedup guard and
+  // the baseline for the "+delta" the user just gained.
+  const progressByTypeRef = useRef<Record<string, number>>({});
+
+  // Clear the per-type progress cache on account switch in the same tab, so user
+  // B never inherits user A's dedup/baseline values (which would wrongly
+  // suppress a toast or animate from A's old value).
+  useEffect(() => {
+    progressByTypeRef.current = {};
+  }, [userId]);
+
   useEffect(() => {
     socket.on('build_deleted', handleBuildDeleted);
     socket.on('content_closed', handleContentClose);
     socket.on('content_edited', handleEditContent);
     socket.on('content_opened', handleContentOpen);
+    socket.on('achievement_progress', handleAchievementProgress);
     socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_notification_received', handleNewNotification);
     socket.on('new_log_for_admin_received', handleNewLogForAdmin);
@@ -73,6 +97,7 @@ export default function useNotiSocket({
     socket.on('new_recommendation_posted', handleNewRecommendation);
 
     return function cleanUp() {
+      socket.off('achievement_progress', handleAchievementProgress);
       socket.off('build_deleted', handleBuildDeleted);
       socket.off('content_closed', handleContentClose);
       socket.off('content_edited', handleEditContent);
@@ -182,6 +207,20 @@ export default function useNotiSocket({
           achievementType,
           isUnlocked: isAchievementUnlocked
         });
+        if (isAchievementUnlocked) {
+          const achievement = achievementsObjRef.current?.[achievementType];
+          if (achievement) {
+            showToast({
+              kind: 'achievement',
+              mode: 'unlock',
+              title: achievement.title,
+              badgeSrc: getAchievementBadge(achievementType),
+              ap: achievement.ap,
+              linkTo: `/achievements/${achievementType}`,
+              duration: 6500
+            });
+          }
+        }
       }
       if (likes) {
         onLikeContent({
@@ -193,6 +232,48 @@ export default function useNotiSocket({
       if (type !== 'achievement' || isAchievementUnlocked) {
         onIncreaseNumNewNotis();
       }
+    }
+
+    function handleAchievementProgress({
+      type,
+      currentValue,
+      targetValue
+    }: {
+      type: string;
+      currentValue: number;
+      targetValue: number;
+    }) {
+      if (!type || !targetValue) return;
+      // Never show progress for an achievement the user already owns (e.g. Gold
+      // can re-enter the server's milestone branch if XP is revoked below 10M
+      // then re-earned).
+      const achievementId = achievementTypeToId[type];
+      if (
+        achievementId &&
+        unlockedAchievementIdsRef.current?.includes(achievementId)
+      ) {
+        return;
+      }
+      const prev = progressByTypeRef.current[type];
+      if (prev === currentValue) return;
+      const delta =
+        typeof prev === 'number' && currentValue > prev
+          ? currentValue - prev
+          : undefined;
+      progressByTypeRef.current[type] = currentValue;
+      const achievement = achievementsObjRef.current?.[type];
+      showToast({
+        kind: 'achievement',
+        mode: 'progress',
+        title: achievement?.title || 'Achievement',
+        badgeSrc: getAchievementBadge(type),
+        currentValue,
+        targetValue,
+        prevValue: prev,
+        delta,
+        linkTo: `/achievements/${type}`,
+        duration: 5200
+      });
     }
 
     function handleNewPost({ comment, target }: { comment: any; target: any }) {
