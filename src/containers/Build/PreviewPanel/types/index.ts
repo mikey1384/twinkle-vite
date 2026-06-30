@@ -152,6 +152,7 @@ export interface PreviewFrameMeta {
   buildId: number | null;
   codeSignature: string | null;
   messageNonce: string | null;
+  viewerKey: string | null;
   bridgeLoadId: string | null;
   bridgeConfirmed: boolean;
   bridgeNonceRequestOpen: boolean;

@@ -527,6 +527,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const keyProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
     const resolvedUserId =
       typeof viewerOverride?.id === 'number' ? viewerOverride.id : keyUserId;
+    const previewViewerKey = resolvedUserId ? `user:${resolvedUserId}` : 'guest';
     const resolvedUsername =
       typeof viewerOverride?.username === 'string'
         ? viewerOverride.username
@@ -798,6 +799,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       runtimeOnly,
       previewCodeSignature,
       runtimePreviewSrc: previewFrameSuspended ? null : runtimePreviewSrc,
+      viewerKey: previewViewerKey,
       workspacePreviewSrc:
         previewFrameSuspended
           ? null

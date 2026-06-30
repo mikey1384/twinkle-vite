@@ -11,7 +11,11 @@ import type {
   PreviewFrameRetiredHandler,
   PreviewSeedCacheEntry
 } from '../types';
-import { BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM } from '~/helpers/buildPreviewOriginHelpers';
+import {
+  BUILD_PREVIEW_BRIDGE_LOAD_ID_QUERY_PARAM,
+  canUseSameOriginBuildPreviewSandbox,
+  getBuildPreviewMessageTargetOrigin
+} from '~/helpers/buildPreviewOriginHelpers';
 
 const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
@@ -110,6 +114,7 @@ function createEmptyPreviewFrameMeta(): PreviewFrameMeta {
     buildId: null,
     codeSignature: null,
     messageNonce: null,
+    viewerKey: null,
     bridgeLoadId: null,
     bridgeConfirmed: false,
     bridgeNonceRequestOpen: false,
@@ -122,17 +127,20 @@ function createPreviewFrameMeta({
   buildId,
   bridgeLoadId = null,
   codeSignature,
-  messageNonce
+  messageNonce,
+  viewerKey
 }: {
   buildId: number;
   bridgeLoadId?: string | null;
   codeSignature: string | null;
   messageNonce: string | null;
+  viewerKey: string;
 }): PreviewFrameMeta {
   return {
     buildId,
     codeSignature,
     messageNonce,
+    viewerKey,
     bridgeLoadId,
     bridgeConfirmed: false,
     bridgeNonceRequestOpen: Boolean(bridgeLoadId),
@@ -183,6 +191,39 @@ function isPreviewFrameTokenOnlyRefresh(
   return (
     Boolean(previousNormalized && nextNormalized) &&
     previousNormalized === nextNormalized
+  );
+}
+
+function hasPreviewFrameRefreshToken(src: string | null | undefined) {
+  const parsedUrl = getParsedPreviewFrameSrc(src);
+  if (!parsedUrl) return false;
+  return PREVIEW_TOKEN_REFRESH_QUERY_PARAMS.some((paramName) => {
+    return Boolean(String(parsedUrl.searchParams.get(paramName) || '').trim());
+  });
+}
+
+function postPreviewTokenRefreshToFrame({
+  previewNonce,
+  previewSrc,
+  targetSrc,
+  targetWindow
+}: {
+  previewNonce: string | null;
+  previewSrc: string;
+  targetSrc: string | null | undefined;
+  targetWindow: Window | null | undefined;
+}) {
+  if (!targetWindow || !previewNonce) return;
+  targetWindow.postMessage(
+    {
+      source: 'twinkle-parent',
+      type: 'preview:token-refresh',
+      previewNonce,
+      payload: {
+        previewSrc
+      }
+    },
+    getBuildPreviewMessageTargetOrigin(targetSrc)
   );
 }
 
@@ -243,6 +284,7 @@ interface UsePreviewFrameManagerArgs {
   runtimeOnly: boolean;
   previewCodeSignature: string | null;
   runtimePreviewSrc: string | null;
+  viewerKey: string;
   workspacePreviewSrc: string | null;
   onPreviewFrameRetiredRef?: RefObject<PreviewFrameRetiredHandler | null>;
 }
@@ -276,6 +318,7 @@ export function useFrameManager({
   runtimeOnly,
   previewCodeSignature,
   runtimePreviewSrc,
+  viewerKey,
   workspacePreviewSrc,
   onPreviewFrameRetiredRef
 }: UsePreviewFrameManagerArgs) {
@@ -324,6 +367,7 @@ export function useFrameManager({
   });
   const previewCodeSignatureRef = useRef<string | null>(null);
   const buildIdRef = useRef(buildId);
+  const viewerKeyRef = useRef(viewerKey);
   const canonicalPreviewSrcRef = useRef<string | null>(null);
   const navigatePreviewFrameRef = useRef<((src: string) => string | null) | null>(
     null
@@ -373,6 +417,10 @@ export function useFrameManager({
   }, [buildId]);
 
   useEffect(() => {
+    viewerKeyRef.current = viewerKey;
+  }, [viewerKey]);
+
+  useEffect(() => {
     previewCodeSignatureRef.current = previewCodeSignature;
   }, [previewCodeSignature]);
 
@@ -402,7 +450,8 @@ export function useFrameManager({
           [activeFrame]: createPreviewFrameMeta({
             buildId,
             codeSignature: cached.codeSignature || previewCodeSignature,
-            messageNonce: createPreviewFrameMessageNonce()
+            messageNonce: createPreviewFrameMessageNonce(),
+            viewerKey
           })
         };
         const seededReady = {
@@ -473,11 +522,34 @@ export function useFrameManager({
       const currentPrimarySrc = currentSources.primary;
       const primaryMatchesPreviewSrc = currentPrimarySrc === previewSrc;
       const currentPrimaryMeta = previewFrameMetaRef.current.primary;
-      const nextPrimaryNonce = primaryMatchesPreviewSrc
+      const primaryHasTokenOnlyRefresh =
+        Boolean(currentPrimarySrc) &&
+        !primaryMatchesPreviewSrc &&
+        isPreviewFrameTokenOnlyRefresh(currentPrimarySrc, previewSrc) &&
+        hasPreviewFrameRefreshToken(currentPrimarySrc) &&
+        hasPreviewFrameRefreshToken(previewSrc) &&
+        canUseSameOriginBuildPreviewSandbox(currentPrimarySrc) &&
+        currentPrimaryMeta.viewerKey === viewerKey &&
+        currentPrimaryMeta.hasLoaded &&
+        currentPrimaryMeta.bridgeConfirmed;
+      const shouldPreservePrimaryFrame =
+        primaryMatchesPreviewSrc || primaryHasTokenOnlyRefresh;
+      const nextPrimaryNonce = shouldPreservePrimaryFrame
         ? currentPrimaryMeta.messageNonce
         : createPreviewFrameMessageNonce();
+      const nextPrimarySrc = primaryHasTokenOnlyRefresh
+        ? currentPrimarySrc
+        : previewSrc;
+      if (primaryHasTokenOnlyRefresh) {
+        postPreviewTokenRefreshToFrame({
+          previewNonce: currentPrimaryMeta.messageNonce,
+          previewSrc,
+          targetSrc: currentPrimarySrc,
+          targetWindow: primaryIframeRef.current?.contentWindow
+        });
+      }
 
-      if (currentPrimarySrc && !primaryMatchesPreviewSrc) {
+      if (currentPrimarySrc && !shouldPreservePrimaryFrame) {
         notifyPreviewFrameRetired({
           frame: 'primary',
           onPreviewFrameRetiredRef,
@@ -503,22 +575,29 @@ export function useFrameManager({
         }
       }
 
-      const nextSources = { primary: previewSrc, secondary: null };
+      const nextSources = { primary: nextPrimarySrc, secondary: null };
       previewFrameSourcesRef.current = nextSources;
       setPreviewFrameSources(nextSources);
       previewFrameMetaRef.current = {
-        primary: createPreviewFrameMeta({
-          buildId,
-          bridgeLoadId: primaryMatchesPreviewSrc
-            ? currentPrimaryMeta.bridgeLoadId
-            : previewBridgeLoadId,
-          codeSignature: previewCodeSignature,
-          messageNonce: nextPrimaryNonce
-        }),
+        primary: shouldPreservePrimaryFrame
+          ? {
+              ...currentPrimaryMeta,
+              buildId,
+              codeSignature: previewCodeSignature,
+              messageNonce: nextPrimaryNonce,
+              viewerKey
+            }
+          : createPreviewFrameMeta({
+              buildId,
+              bridgeLoadId: previewBridgeLoadId,
+              codeSignature: previewCodeSignature,
+              messageNonce: nextPrimaryNonce,
+              viewerKey
+            }),
         secondary: createEmptyPreviewFrameMeta()
       };
       const nextReady = {
-        primary: primaryMatchesPreviewSrc
+        primary: shouldPreservePrimaryFrame
           ? previewFrameReadyRef.current.primary
           : false,
         secondary: false
@@ -528,8 +607,8 @@ export function useFrameManager({
       messageTargetFrameRef.current = 'primary';
       activePreviewFrameRef.current = 'primary';
       setActivePreviewFrame('primary');
-      previewTransitioningRef.current = !primaryMatchesPreviewSrc;
-      setPreviewTransitioning(!primaryMatchesPreviewSrc);
+      previewTransitioningRef.current = !shouldPreservePrimaryFrame;
+      setPreviewTransitioning(!shouldPreservePrimaryFrame);
       return;
     }
 
@@ -546,7 +625,8 @@ export function useFrameManager({
           buildId,
           bridgeLoadId: previewBridgeLoadId,
           codeSignature: previewCodeSignature,
-          messageNonce: createPreviewFrameMessageNonce()
+          messageNonce: createPreviewFrameMessageNonce(),
+          viewerKey
         })
       };
       const nextReady = {
@@ -568,7 +648,8 @@ export function useFrameManager({
       const nextSignature = previewCodeSignature || currentMeta?.codeSignature;
       if (
         currentMeta?.buildId !== buildId ||
-        currentMeta?.codeSignature !== nextSignature
+        currentMeta?.codeSignature !== nextSignature ||
+        currentMeta?.viewerKey !== viewerKey
       ) {
         previewFrameMetaRef.current = {
           ...previewFrameMetaRef.current,
@@ -576,7 +657,8 @@ export function useFrameManager({
             ...currentMeta,
             buildId,
             codeSignature: nextSignature,
-            messageNonce: currentMeta?.messageNonce || null
+            messageNonce: currentMeta?.messageNonce || null,
+            viewerKey
           }
         };
       }
@@ -606,7 +688,8 @@ export function useFrameManager({
         buildId,
         bridgeLoadId: previewBridgeLoadId,
         codeSignature: previewCodeSignature,
-        messageNonce: createPreviewFrameMessageNonce()
+        messageNonce: createPreviewFrameMessageNonce(),
+        viewerKey
       })
     };
     const nextReady = {
@@ -626,7 +709,8 @@ export function useFrameManager({
     previewSrc,
     primaryIframeRef,
     runtimeOnly,
-    secondaryIframeRef
+    secondaryIframeRef,
+    viewerKey
   ]);
 
   useEffect(() => {
@@ -661,7 +745,8 @@ export function useFrameManager({
       primary: createPreviewFrameMeta({
         buildId,
         codeSignature: previewCodeSignature,
-        messageNonce: previewFrameMetaRef.current.primary.messageNonce
+        messageNonce: previewFrameMetaRef.current.primary.messageNonce,
+        viewerKey: viewerKeyRef.current
       }),
       secondary: createEmptyPreviewFrameMeta()
     };
