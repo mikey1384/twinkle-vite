@@ -4,6 +4,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { isTablet } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Chess } from 'chess.js';
+import type { PieceColor, PuzzlePhase } from '~/types/chess';
 import {
   algebraicToIndex,
   indexToAlgebraic,
@@ -53,13 +54,8 @@ interface ChessBoardProps {
   game?: Chess;
   children?: React.ReactNode;
   squareColors?: { light?: string; dark?: string };
-  phase?:
-    | 'WAIT_USER'
-    | 'SUCCESS'
-    | 'FAIL'
-    | 'TA_CLEAR'
-    | 'SOLUTION'
-    | 'ANALYSIS';
+  phase?: PuzzlePhase;
+  currentTurnColor?: PieceColor | null;
 }
 
 const squareCls = css`
@@ -206,7 +202,8 @@ function ChessBoard({
   game,
   children,
   squareColors,
-  phase
+  phase,
+  currentTurnColor
 }: ChessBoardProps) {
   const [highlightedSquares, setHighlightedSquares] = useState<number[]>([]);
   const varsClass = useMemo(
@@ -219,13 +216,11 @@ function ChessBoard({
   );
 
   const selectableColor = useMemo(() => {
-    try {
-      if (phase === 'ANALYSIS' && game) {
-        return game.turn() === 'w' ? 'white' : 'black';
-      }
-    } catch {}
+    if (phase === 'ANALYSIS' && currentTurnColor) {
+      return currentTurnColor;
+    }
     return playerColor;
-  }, [phase, game, playerColor]);
+  }, [phase, currentTurnColor, playerColor]);
 
   const isSelectionValid = useMemo(() => {
     if (selectedSquare == null) return false;
@@ -250,6 +245,7 @@ function ChessBoard({
     const abs = viewToBoard(selectedSquare, playerColor === 'black');
     const alg = indexToAlgebraic(abs);
     const piece = squares[abs] as any;
+    if (!piece?.isPiece || piece.color !== selectableColor) return [];
 
     let moves: any[] = game.moves({
       square: alg as any,
@@ -268,7 +264,7 @@ function ChessBoard({
     return moves.map((m: any) =>
       boardToView(algebraicToIndex(m.to), playerColor === 'black')
     );
-  }, [game, selectedSquare, playerColor, squares]);
+  }, [game, selectedSquare, playerColor, squares, selectableColor]);
 
   useEffect(() => {
     if (

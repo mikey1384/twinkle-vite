@@ -77,7 +77,10 @@ function LikeButton({
           }
         }}
       >
-        <Icon icon="thumbs-up" />
+        <Icon
+          icon="thumbs-up"
+          {...(hideLabel ? { title: liked ? likedLabel : likeLabel } : {})}
+        />
         {!hideLabel && (
           <span className={labelClassName} style={{ marginLeft: '0.7rem' }}>
             {liked ? `${likedLabel}!` : likeLabel}

@@ -75,6 +75,7 @@ export default function PuzzleBoard({
   }, [levelCategory, currentLevel]);
 
   const playerColor = chessBoardState?.playerColor || 'white';
+  const currentTurnColor = getCurrentTurnColor();
   const overlayPlayerColor = React.useMemo(() => {
     try {
       if (phase === 'ANALYSIS' && chessRef.current) {
@@ -97,6 +98,7 @@ export default function PuzzleBoard({
         selectedSquare={null}
         game={undefined}
         squareColors={squareColors}
+        phase={phase}
       />
     );
   }
@@ -113,23 +115,27 @@ export default function PuzzleBoard({
     userId,
     side: 'queenside'
   });
-  const overlayInteractable = phase === 'WAIT_USER' || phase === 'ANALYSIS';
+  const boardInteractable =
+    phase === 'ANALYSIS' ||
+    (phase === 'WAIT_USER' && currentTurnColor === playerColor);
 
   return (
     <ChessBoard
       className={phase === 'ANALYSIS' ? analysisFadeCls : ''}
       squares={chessBoardState!.board as any[]}
       playerColor={playerColor}
-      interactable={overlayInteractable}
+      interactable={boardInteractable}
       onSquareClick={onSquareClick}
       showSpoiler={false}
       enPassantTarget={chessBoardState!.enPassantTarget || undefined}
       selectedSquare={selectedSquare}
       game={chessRef.current || undefined}
       squareColors={squareColors}
+      phase={phase}
+      currentTurnColor={currentTurnColor}
     >
       <CastlingOverlay
-        interactable={overlayInteractable}
+        interactable={boardInteractable}
         playerColor={overlayPlayerColor}
         onCastling={handleCastlingClick}
         canKingside={canKingside}
@@ -165,5 +171,14 @@ export default function PuzzleBoard({
         appendCurrentFen();
       } catch {}
     }
+  }
+
+  function getCurrentTurnColor() {
+    try {
+      const turn = chessRef.current?.turn();
+      if (turn === 'w') return 'white';
+      if (turn === 'b') return 'black';
+    } catch {}
+    return null;
   }
 }

@@ -571,7 +571,9 @@ export default function Puzzle({
               onSetPhase('ANALYSIS');
             }
             resetToOriginalPosition();
-            kickOffFirstEngineMove({ phaseAfter: previousPhaseRef.current });
+            kickOffFirstEngineMove({
+              phaseAfter: getResetPhaseAfter()
+            });
           }}
           onGiveUp={handleGiveUpWithSolution}
           onLevelChange={(level) => {
@@ -640,6 +642,14 @@ export default function Puzzle({
     if (inTimeAttack) {
       const allowed = runResult === 'PLAYING' && timeLeft > 0;
       if (!allowed && phase !== 'ANALYSIS') return;
+    }
+
+    if (phase === 'WAIT_USER') {
+      const turnColor = getCurrentTurnColor();
+      if (turnColor !== chessBoardState.playerColor) {
+        setSelectedSquare(null);
+        return;
+      }
     }
 
     const isBlack = chessBoardState.playerColor === 'black';
@@ -762,10 +772,18 @@ export default function Puzzle({
     onSetPhase('ANALYSIS');
   }
 
-  function kickOffFirstEngineMove(options?: { phaseAfter?: any }) {
+  function kickOffFirstEngineMove(options?: { phaseAfter?: PuzzlePhase }) {
     if (!puzzle) return;
     const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+    if (phaseAfter === 'WAIT_USER') {
+      setSelectedSquare(null);
+    }
     animationTimeoutRef.current = setTimeout(() => {
+      animationTimeoutRef.current = null;
       executeEngineMove(puzzle.moves[0]);
       onSetPhase(phaseAfter);
       setPuzzleState((prev) => ({
@@ -792,6 +810,25 @@ export default function Puzzle({
     }));
 
     kickOffFirstEngineMove({ phaseAfter: 'SOLUTION' });
+  }
+
+  function getResetPhaseAfter(): PuzzlePhase {
+    if (phase === 'ANALYSIS') {
+      return 'ANALYSIS';
+    }
+    if (phase === 'SOLUTION' && previousPhaseRef.current === 'ANALYSIS') {
+      return 'ANALYSIS';
+    }
+    return 'WAIT_USER';
+  }
+
+  function getCurrentTurnColor() {
+    try {
+      const turn = chessRef.current?.turn();
+      if (turn === 'w') return 'white';
+      if (turn === 'b') return 'black';
+    } catch {}
+    return null;
   }
 
   function executeEngineMove(moveUci: string) {

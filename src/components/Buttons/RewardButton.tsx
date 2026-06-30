@@ -120,7 +120,10 @@ export default function RewardButton({
         style={style}
         onClick={handleRewardButtonClick}
       >
-        <Icon icon="certificate" />
+        <Icon
+          icon="certificate"
+          {...(hideLabel ? { title: rewardLabel } : {})}
+        />
         {!hideLabel && (
           <span className={labelClassName} style={{ marginLeft: '0.7rem' }}>
             {rewardLabel}

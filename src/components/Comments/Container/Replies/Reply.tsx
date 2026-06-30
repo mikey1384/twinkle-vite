@@ -601,7 +601,9 @@ function Reply({
                                 contentType="comment"
                                 disableReason={xpButtonDisabled}
                                 theme={theme}
-                                hideLabel={isTablet(navigator)}
+                                hideLabel={
+                                  isTablet(navigator) || isMobile(navigator)
+                                }
                               />
                             )}
                         </div>

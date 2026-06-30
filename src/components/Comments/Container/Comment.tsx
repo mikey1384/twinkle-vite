@@ -778,7 +778,7 @@ function Comment({
                                     onClick={handleLikeClick}
                                     likes={likes}
                                     theme={theme}
-                                    hideLabel={deviceIsTablet}
+                                    hideLabel={deviceIsTablet || deviceIsMobile}
                                   />
                                 )}
                                 {isDeleteNotification &&
@@ -800,8 +800,19 @@ function Comment({
                                     }}
                                     onClick={handleReplyButtonClick}
                                   >
-                                    <Icon icon="comment-alt" />
-                                    {!deviceIsTablet && (
+                                    <Icon
+                                      icon="comment-alt"
+                                      {...(deviceIsTablet || deviceIsMobile
+                                        ? {
+                                            title:
+                                              numReplies > 1 &&
+                                              parent.contentType === 'comment'
+                                                ? repliesLabel
+                                                : replyLabel
+                                          }
+                                        : {})}
+                                    />
+                                    {!deviceIsTablet && !deviceIsMobile && (
                                       <span style={{ marginLeft: '1rem' }}>
                                         {numReplies > 1 &&
                                         parent.contentType === 'comment'
@@ -821,9 +832,10 @@ function Comment({
                                       parent.contentType === 'comment' ? (
                                       <span
                                         style={{
-                                          marginLeft: deviceIsTablet
-                                            ? '0.5rem'
-                                            : '0.3rem'
+                                          marginLeft:
+                                            deviceIsTablet || deviceIsMobile
+                                              ? '0.5rem'
+                                              : '0.3rem'
                                         }}
                                       >
                                         ({numReplies})
@@ -840,7 +852,7 @@ function Comment({
                                       disableReason={xpButtonDisabled}
                                       style={{ marginLeft: '0.7rem' }}
                                       theme={theme}
-                                      hideLabel={deviceIsTablet}
+                                      hideLabel={deviceIsTablet || deviceIsMobile}
                                     />
                                   )}
                               </div>
