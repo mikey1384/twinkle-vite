@@ -193,6 +193,12 @@ const RichTextCss = css`
     .compact-ai-card-preview__summoned {
       display: none;
     }
+    /* The outer feed-card target panel already draws a border, so the profile
+       embed must not draw its own or it reads as a double border. */
+    .profile-embed-card.profile-embed-card--bordered {
+      border: 0;
+      border-radius: 0;
+    }
   }
   p + p {
     margin-top: 1em;

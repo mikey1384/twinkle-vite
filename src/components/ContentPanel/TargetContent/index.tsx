@@ -67,6 +67,12 @@ const targetContentCSS = css`
   background: #fff;
   margin-top: -1rem;
   transition: background 0.5s;
+  /* This wrapper already draws a border, so a profile embed inside the target
+     must not draw its own or it reads as a double border. */
+  .profile-embed-card.profile-embed-card--bordered {
+    border: 0;
+    border-radius: 0;
+  }
   .left {
     margin-top: 2rem;
     display: flex;

@@ -378,7 +378,9 @@ export const mainPreviewStyles = `
     .home-feed-card__rich-embed-preview--with-text
       .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject,
     .home-feed-card__rich-embed-preview--with-text
-      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card {
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card,
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--user {
       border: 0;
       background: transparent;
     }
@@ -830,10 +832,48 @@ export const mainPreviewStyles = `
     background: transparent;
     box-shadow: none;
   }
+  /* Subject file attachments render as a centered SQUARE tile (mirrors the
+     square-video treatment below) rather than a card stretched to the full
+     height of the text-matched column. */
   .home-feed-card__attachment-preview--subject-file {
+    align-self: center;
+    aspect-ratio: 1 / 1;
+    height: auto;
+    max-height: 100%;
     border: 0;
     background: transparent;
     box-shadow: none;
+  }
+  .home-feed-card__attachment-preview--subject-file
+    .home-feed-card__attachment-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    height: 100%;
+    padding: 1.2rem;
+    text-align: center;
+  }
+  .home-feed-card__attachment-preview--subject-file
+    .home-feed-card__attachment-card-icon {
+    width: 5.6rem;
+    height: 5.6rem;
+    border-radius: 1.4rem;
+    font-size: 2.7rem;
+  }
+  .home-feed-card__attachment-preview--subject-file
+    .home-feed-card__attachment-card-copy {
+    align-items: center;
+    width: 100%;
+    gap: 0.24rem;
+    text-align: center;
+  }
+  .home-feed-card__attachment-preview--subject-file
+    .home-feed-card__attachment-card-copy strong {
+    display: block;
+    width: 100%;
+    max-width: 100%;
   }
   img.home-feed-card__attachment-preview--subject-embed-image {
     max-height: none;

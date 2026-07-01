@@ -4,7 +4,6 @@ import Icon from '~/components/Icon';
 import HomeFeedSubjectTargetPreview from '~/components/Subjects/HomeFeedSubjectTargetPreview';
 import InternalComponent from '~/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent';
 import YouTubeVideo from '~/components/Texts/RichText/Markdown/EmbeddedComponent/YouTubeVideo';
-import RankBadge from '~/components/RankBadge';
 import { Color } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -143,6 +142,9 @@ export function MarkdownEmbedPreview({
       internalLinkType === 'ai-cards' ||
       (internalLinkType === 'chat' && internalLinkSubType === 'ai-cards')
         ? 'home-feed-card__rich-embed-internal--ai-card'
+        : '',
+      internalLinkType === 'users'
+        ? 'home-feed-card__rich-embed-internal--user'
         : ''
     ]
       .filter(Boolean)
@@ -423,30 +425,6 @@ export function CompactEffortStrip({
       </span>
       <span className="home-feed-card__compact-effort-xp">
         Earn up to {addCommasToNumber(level * 2000)} XP
-      </span>
-    </div>
-  );
-}
-
-export function CompactProfileRankStrip({ profile }: { profile: any }) {
-  const rank = Number(profile?.rank || 0);
-  if (!rank) return null;
-
-  const isTopRank = rank <= 3;
-
-  return (
-    <div
-      className={`home-feed-card__mini-profile-rank-strip${
-        isTopRank ? ' top-rank' : ''
-      }`}
-    >
-      <div className="home-feed-card__mini-profile-rank-left">
-        <Icon icon={isTopRank ? 'trophy' : 'award'} />
-        <RankBadge rank={rank} />
-      </div>
-      <span className="home-feed-card__mini-profile-rank-xp">
-        {addCommasToNumber(Number(profile?.twinkleXP || 0))}
-        <span> XP</span>
       </span>
     </div>
   );

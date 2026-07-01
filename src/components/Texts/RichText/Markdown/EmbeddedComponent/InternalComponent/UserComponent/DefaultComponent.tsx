@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 import UserDetails from '~/components/UserDetails';
 import ProfilePic from '~/components/ProfilePic';
-import RichText from '~/components/Texts/RichText';
-import UserTitle from '~/components/Texts/UserTitle';
-import StatusMsg from '~/components/UserDetails/StatusMsg';
+import ProfileEmbedCard from '~/components/ProfileEmbedCard';
 import { useNavigate } from 'react-router-dom';
 import { useChatContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -61,85 +59,13 @@ export default function DefaultComponent({
   }, [pageType, profile?.username, subPageType]);
 
   if (isPreview) {
-    const bioRows = getProfileBioRows(profile);
-    const statusColor =
-      profile.statusColor || profile.profileTheme || 'logoBlue';
-
     return (
-      <div
-        className={`${compactUserPreviewClass} compact-profile-embed`}
-        role="button"
-        tabIndex={0}
-        onClick={handlePreviewClick}
-        onKeyDown={handlePreviewKeyDown}
-      >
-        {heading ? (
-          <div className="compact-user-embed__heading">{heading}</div>
-        ) : null}
-        <div className="compact-profile-embed__body">
-          <div className="compact-profile-embed__avatar-panel">
-            <ProfilePic
-              className="compact-profile-embed__avatar"
-              size="100%"
-              userId={profile.id}
-              profilePicUrl={profile.profilePicUrl || ''}
-              online={chatStatus[profile.id]?.isOnline}
-              statusShown
-            />
-          </div>
-          <div className="compact-profile-embed__details">
-            <strong className="compact-profile-embed__username">
-              {profile.username || 'User'}
-            </strong>
-            <div className="compact-profile-embed__title-row">
-              <UserTitle
-                user={profile}
-                className="compact-profile-embed__title"
-              />
-              {profile.realName ? (
-                <span className="compact-profile-embed__real-name">
-                  {profile.realName}
-                </span>
-              ) : null}
-            </div>
-            {profile.statusMsg ? (
-              <StatusMsg
-                statusColor={statusColor}
-                statusMsg={profile.statusMsg}
-                userId={profile.id}
-                style={{
-                  marginTop: '0.55rem',
-                  padding: '0.65rem 0.8rem',
-                  fontSize: '1.12rem',
-                  lineHeight: 1.34,
-                  maxHeight: '7rem',
-                  overflow: 'hidden',
-                  boxShadow: `0 0.18rem 0.45rem ${Color.black(0.14)}`
-                }}
-              />
-            ) : null}
-            {bioRows.length ? (
-              <div className="compact-profile-embed__bio">
-                {bioRows.slice(0, 2).map((row) => (
-                  <div key={row.section}>
-                    <span className="compact-profile-embed__bio-dot">•</span>
-                    <RichText
-                      contentId={profile.id}
-                      contentType="user"
-                      isPreview
-                      isProfileComponent
-                      maxLines={1}
-                      section={row.section}
-                    >
-                      {row.text}
-                    </RichText>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
+      <ProfileEmbedCard
+        profile={profile}
+        heading={heading}
+        online={chatStatus[profile.id]?.isOnline}
+        onActivate={handleActivatePreview}
+      />
     );
   }
 
@@ -220,130 +146,7 @@ export default function DefaultComponent({
     </div>
   );
 
-  function handlePreviewClick(event: React.MouseEvent<HTMLDivElement>) {
-    event.stopPropagation();
-    navigate(src);
-  }
-
-  function handlePreviewKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    event.stopPropagation();
+  function handleActivatePreview() {
     navigate(src);
   }
 }
-
-function getProfileBioRows(profile: any) {
-  return [
-    { section: 'bio1', text: profile.profileFirstRow },
-    { section: 'bio2', text: profile.profileSecondRow },
-    { section: 'bio3', text: profile.profileThirdRow }
-  ].filter((row) => Boolean(row.text));
-}
-
-const compactUserPreviewClass = css`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.65rem;
-  width: 100%;
-  min-height: 13rem;
-  padding: 0.85rem 1rem;
-  overflow: hidden;
-  border: 1px solid ${Color.borderGray()};
-  border-radius: ${borderRadius};
-  background: #fff;
-  color: ${Color.darkerGray()};
-  text-align: left;
-  cursor: pointer;
-  .compact-user-embed__heading {
-    max-width: 100%;
-    overflow: hidden;
-    color: ${Color.logoBlue()};
-    font-size: 1rem;
-    font-weight: 900;
-    line-height: 1.12;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .compact-profile-embed__body {
-    display: grid;
-    grid-template-columns: minmax(5.8rem, 24%) minmax(0, 1fr);
-    align-items: center;
-    gap: 1rem;
-    min-width: 0;
-    height: 100%;
-  }
-  .compact-profile-embed__avatar-panel {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-  }
-  .compact-profile-embed__avatar {
-    width: min(9.6rem, 100%);
-    max-width: 100%;
-  }
-  .compact-profile-embed__details {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .compact-profile-embed__username {
-    overflow: hidden;
-    color: ${Color.darkerGray()};
-    font-size: 1.55rem;
-    font-weight: 900;
-    line-height: 1.12;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .compact-profile-embed__title-row {
-    display: flex;
-    min-width: 0;
-    align-items: baseline;
-    gap: 0.45rem;
-    color: ${Color.gray()};
-    font-size: 1.02rem;
-    font-weight: 800;
-    line-height: 1.2;
-  }
-  .compact-profile-embed__title {
-    flex: 0 0 auto;
-    color: ${Color.darkGray()};
-    font-size: 1.02rem;
-    font-weight: 900;
-  }
-  .compact-profile-embed__real-name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .compact-profile-embed__bio {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin-top: 0.55rem;
-    color: ${Color.black()};
-    font-size: 1.05rem;
-    line-height: 1.25;
-  }
-  .compact-profile-embed__bio > div {
-    display: grid;
-    grid-template-columns: 1.2rem minmax(0, 1fr);
-    min-width: 0;
-  }
-  .compact-profile-embed__bio-dot {
-    color: ${Color.black()};
-    font-size: 1.1rem;
-    line-height: 1.25;
-  }
-  .compact-profile-embed__bio .rich-text {
-    min-width: 0;
-    margin: 0;
-    font-size: inherit;
-    line-height: inherit;
-  }
-`;
