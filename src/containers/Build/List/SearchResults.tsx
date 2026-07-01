@@ -162,6 +162,11 @@ export default function SearchResults({
               key={build.id}
               build={build}
               isOwner
+              to={`/app/${build.id}`}
+              navigationState={{
+                runtimeBackTo,
+                runtimeBackLabel: 'Back to Build Studio'
+              }}
               showFavoriteAction
               onAddDescription={onAddDescription}
               onDelete={onDelete}

@@ -231,6 +231,11 @@ export default function Results({
             <ProjectListItem
               build={build}
               isOwner
+              to={`/app/${build.id}`}
+              navigationState={{
+                runtimeBackTo,
+                runtimeBackLabel: 'Back to Build Studio'
+              }}
               onAddDescription={onAddDescription}
               onDelete={onDelete}
               showFavoriteAction
