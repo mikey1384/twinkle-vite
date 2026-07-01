@@ -14,7 +14,6 @@ import AiEnergySponsorButton, {
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
-import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
@@ -48,6 +47,7 @@ import TargetPreview from './TargetPreview';
 import { normalizeRootType } from '../helpers/navigation';
 import type { Comment } from '~/types';
 import DailyGoalsPreview from './DailyGoalsPreview';
+import VideoPreview from './VideoPreview';
 import {
   type FeedCardSizing,
   getDailyReflectionAnswerPreviewMaxLines,
@@ -1004,23 +1004,7 @@ export default function Body({
   }
 
   function renderVideoPreview() {
-    return (
-      <div className="home-feed-card__video-preview">
-        <VideoThumbImage
-          className="home-feed-card__video-thumb"
-          rewardLevel={content?.rewardLevel}
-          videoId={contentId}
-          noPaddingBottom
-          src={`https://img.youtube.com/vi/${content?.content}/mqdefault.jpg`}
-        />
-        <div className="home-feed-card__video-copy">
-          <h3 className={primaryPreviewTextClass}>{content?.title}</h3>
-          {content?.description ? (
-            <p className={primaryPreviewTextClass}>{content.description}</p>
-          ) : null}
-        </div>
-      </div>
-    );
+    return <VideoPreview content={content} contentId={contentId} />;
   }
 
   function renderRichTextEmbedPreview({

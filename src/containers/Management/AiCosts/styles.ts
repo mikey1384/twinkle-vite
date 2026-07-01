@@ -384,6 +384,12 @@ export const panelClass = css`
     gap: 1rem;
     padding: 1.2rem 1.4rem;
     border-bottom: 1px solid ${Color.borderGray()};
+
+    @media (max-width: ${mobileMaxWidth}) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.8rem;
+    }
   }
 
   > header > div:first-child {
@@ -400,6 +406,10 @@ export const panelClass = css`
     color: ${Color.darkGray()};
     font-size: 1.2rem;
     text-align: right;
+
+    @media (max-width: ${mobileMaxWidth}) {
+      text-align: left;
+    }
   }
 
   > div {

@@ -31,6 +31,7 @@ export default function ManagementRoutes({ className }: { className: string }) {
         className={css`
           margin-top: 1rem;
           width: CALC(100vw - 54rem);
+          min-width: 0;
           margin-left: 1rem;
           @media (max-width: ${mobileMaxWidth}) {
             margin-left: 0;

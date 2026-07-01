@@ -157,6 +157,9 @@ export default function NotableUsers() {
           display: flex;
           justify-content: flex-end;
           margin-bottom: 1rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            justify-content: center;
+          }
         `}
       >
         <div className={rangeClass}>

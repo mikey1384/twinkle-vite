@@ -1535,6 +1535,61 @@ export const mainPreviewStyles = `
     min-width: 0;
     justify-content: center;
   }
+  .home-feed-card__video-channel {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    color: ${Color.darkGray()};
+    font-size: max(1.35rem, 13.5px);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .home-feed-card__video-channel svg {
+    flex-shrink: 0;
+    color: #ff0000;
+    font-size: 1.35rem;
+  }
+  .home-feed-card__video-channel span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .home-feed-card__video-reward {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 0.55rem;
+    max-width: 100%;
+    font-size: max(1.3rem, 13px);
+    font-weight: 850;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .home-feed-card__video-reward-xp,
+  .home-feed-card__video-reward-coins {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+  }
+  .home-feed-card__video-reward-xp-number {
+    color: ${Color.logoGreen()};
+  }
+  .home-feed-card__video-reward-xp-label {
+    color: ${Color.gold()};
+  }
+  .home-feed-card__video-reward-coins {
+    color: ${Color.brownOrange()};
+  }
+  .home-feed-card__video-reward-per {
+    color: ${Color.darkGray()};
+    font-weight: 700;
+  }
+  .home-feed-card__video-reward svg {
+    flex-shrink: 0;
+    font-size: 1.2rem;
+  }
   .home-feed-card__url-copy h3 {
     font-size: max(2.4rem, 24px);
   }
