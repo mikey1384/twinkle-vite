@@ -48,6 +48,13 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
   },
   {
+    model: 'claude-sonnet-5',
+    label: 'Claude Sonnet 5',
+    description: 'Fast and sharp for most builds.',
+    defaultReasoningEffort: 'high',
+    supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
+  },
+  {
     model: 'claude-fable-5',
     label: 'Claude Fable 5',
     description: 'Deepest thinker for the hardest builds.',
@@ -60,6 +67,7 @@ function isLumineModel(value: unknown): value is BuildLumineModel {
   return (
     value === 'gpt-5.5' ||
     value === 'claude-opus-4-8' ||
+    value === 'claude-sonnet-5' ||
     value === 'claude-fable-5' ||
     value === 'gpt-5.4'
   );

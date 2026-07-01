@@ -9,6 +9,7 @@ export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
   | 'gpt-5.5'
   | 'claude-opus-4-8'
+  | 'claude-sonnet-5'
   | 'claude-fable-5'
   | 'gpt-5.4';
 export type BuildLumineThinkLevel =

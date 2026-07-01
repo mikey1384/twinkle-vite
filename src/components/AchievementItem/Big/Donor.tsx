@@ -1,13 +1,22 @@
 import React from 'react';
 import DonorBadge from '~/assets/donor.png';
-import ItemPanel from './ItemPanel';
+import ItemPanel, { AchievementPhase } from './ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
 
 export default function Donor({
   isThumb,
   isNotification,
-  data: { id, ap, title, description, progressObj, milestones, unlockMessage },
+  data: {
+    id,
+    ap,
+    title,
+    description,
+    progressObj,
+    phases,
+    milestones,
+    unlockMessage
+  },
   style
 }: {
   isThumb?: boolean;
@@ -19,6 +28,7 @@ export default function Donor({
     description: string;
     unlockMessage: string;
     progressObj?: { label: string; currentValue: number; targetValue: number };
+    phases?: AchievementPhase[];
     milestones?: { name: string; completed: boolean }[];
   };
   style?: React.CSSProperties;
@@ -40,6 +50,7 @@ export default function Donor({
         unlockMessage={unlockMessage}
         requirements={['Get Donor License', 'Donate 10,000,000 Twinkle Coins']}
         progressObj={progressObj}
+        phases={phases}
         milestones={milestones}
         badgeSrc={DonorBadge}
       />

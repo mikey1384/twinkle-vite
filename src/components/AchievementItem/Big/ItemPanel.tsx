@@ -40,6 +40,15 @@ interface User extends Achiever {
   username: string;
 }
 
+export interface AchievementPhase {
+  label: string;
+  type?: 'bar' | 'check';
+  currentValue?: number;
+  targetValue?: number;
+  floor?: number;
+  completed: boolean;
+}
+
 export default function ItemPanel({
   ap,
   itemId,
@@ -53,6 +62,7 @@ export default function ItemPanel({
   badgeSrc,
   milestones,
   progressObj,
+  phases,
   style
 }: {
   ap: number;
@@ -67,6 +77,7 @@ export default function ItemPanel({
   badgeSrc?: string;
   milestones?: { name: string; completed: boolean }[];
   progressObj?: { label: string; currentValue: number; targetValue: number };
+  phases?: AchievementPhase[];
   style?: React.CSSProperties;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
@@ -128,6 +139,16 @@ export default function ItemPanel({
       return 0;
     }
   }, [progressObj]);
+
+  const phasesShown = !!(phases && phases.length > 0 && !isUnlocked);
+  // Phases reveal sequentially: show every completed phase plus the first
+  // incomplete one (the active step); hide everything after it.
+  const visiblePhases = useMemo(() => {
+    if (!phasesShown || !phases) return [];
+    const firstIncomplete = phases.findIndex((p) => !p.completed);
+    const cutoff = firstIncomplete === -1 ? phases.length : firstIncomplete + 1;
+    return phases.slice(0, cutoff);
+  }, [phasesShown, phases]);
 
   const displayedAccomplishers = useMemo(
     () => achievers.slice(0, 10),
@@ -416,7 +437,67 @@ export default function ItemPanel({
               {requirement}
             </div>
           ))}
-          {progressObj && !isUnlocked && (
+          {phasesShown &&
+            visiblePhases.map((phase, index) => {
+              const isCurrent = !phase.completed;
+              const floor = phase.floor || 0;
+              const denom = (phase.targetValue || 0) - floor;
+              const fraction =
+                phase.type === 'bar' && denom > 0
+                  ? Math.min(
+                      100,
+                      Math.max(
+                        0,
+                        Math.ceil(
+                          100 * (((phase.currentValue || 0) - floor) / denom)
+                        )
+                      )
+                    )
+                  : phase.completed
+                  ? 100
+                  : 0;
+              return (
+                <div
+                  key={index}
+                  style={{ width: '100%', marginTop: '1.5rem' }}
+                >
+                  <h3
+                    className={css`
+                      margin-bottom: -0.5rem;
+                      font-weight: bold;
+                      font-size: 1.5rem;
+                      color: ${Color.black()};
+                      display: flex;
+                      align-items: center;
+                      gap: 0.6rem;
+                    `}
+                  >
+                    <Icon
+                      color={
+                        phase.completed ? Color.green() : Color.darkerGray()
+                      }
+                      icon={phase.completed ? 'check' : 'times'}
+                    />
+                    <span>
+                      {phase.label}
+                      {phase.type === 'bar' &&
+                      isCurrent &&
+                      typeof phase.currentValue === 'number'
+                        ? `: ${addCommasToNumber(phase.currentValue)}${
+                            typeof phase.targetValue === 'number'
+                              ? ` / ${addCommasToNumber(phase.targetValue)}`
+                              : ''
+                          }`
+                        : ''}
+                    </span>
+                  </h3>
+                  {phase.type === 'bar' && isCurrent && (
+                    <ProgressBar progress={fraction} />
+                  )}
+                </div>
+              );
+            })}
+          {progressObj && !isUnlocked && !phasesShown && (
             <div style={{ width: '100%', marginTop: '1.5rem' }}>
               <h3
                 className={css`
@@ -427,7 +508,7 @@ export default function ItemPanel({
                   color: ${Color.black()};
                 `}
               >
-                {progressObj.label}:{' '}
+                {progressObj.label ? `${progressObj.label}: ` : ''}
                 {addCommasToNumber(progressObj.currentValue)}
               </h3>
               <ProgressBar progress={progress} />
@@ -502,7 +583,7 @@ export default function ItemPanel({
                   color: ${Color.black()};
                 `}
               >
-                {progressObj.label}:{' '}
+                {progressObj.label ? `${progressObj.label}: ` : ''}
                 {addCommasToNumber(progressObj.currentValue)}
               </h3>
               <ProgressBar progress={progress} />

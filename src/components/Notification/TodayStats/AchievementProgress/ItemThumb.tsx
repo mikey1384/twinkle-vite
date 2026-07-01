@@ -13,7 +13,7 @@ export default function ItemThumb({
   thumbSize = '4rem',
   badgeSrc,
   achievement,
-  achievement: { title, progressObj }
+  achievement: { title, progressObj, phases }
 }: {
   isUnlocked?: boolean;
   thumbSize?: string;
@@ -21,6 +21,13 @@ export default function ItemThumb({
     title: string;
     milestones?: { name: string; completed: boolean }[];
     progressObj?: { currentValue: number; targetValue: number };
+    phases?: {
+      type?: 'bar' | 'check';
+      currentValue?: number;
+      targetValue?: number;
+      floor?: number;
+      completed: boolean;
+    }[];
   };
   badgeSrc?: string;
 }) {
@@ -37,12 +44,27 @@ export default function ItemThumb({
     }
   }, [titleContext]);
   const progress = useMemo(() => {
+    // Phased achievements: equal weight per phase (3 phases -> 33.3% each).
+    if (phases && phases.length > 0) {
+      const weight = 100 / phases.length;
+      const total = phases.reduce((sum, p) => {
+        const floor = p.floor || 0;
+        const denom = (p.targetValue || 0) - floor;
+        const fraction = p.completed
+          ? 1
+          : p.type === 'bar' && denom > 0
+          ? Math.min(1, Math.max(0, ((p.currentValue || 0) - floor) / denom))
+          : 0;
+        return sum + fraction * weight;
+      }, 0);
+      return Math.min(100, Math.round(total));
+    }
     if (progressObj) {
       const { currentValue, targetValue } = progressObj;
       return Math.min(100, Math.ceil(100 * (currentValue / targetValue)));
     }
     return 0;
-  }, [progressObj]);
+  }, [phases, progressObj]);
 
   const thumbRadius = useMemo(() => parseInt(thumbSize) / 2, [thumbSize]);
   const circumference = useMemo(() => 2 * Math.PI * thumbRadius, [thumbRadius]);

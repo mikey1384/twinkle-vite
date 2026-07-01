@@ -19,6 +19,13 @@ export default function Achievements() {
         currentValue: number;
         targetValue: number;
       };
+      phases?: {
+        label: string;
+        type?: 'bar' | 'check';
+        currentValue?: number;
+        targetValue?: number;
+        completed: boolean;
+      }[];
     };
   }>({});
   const userId = useKeyContext((v) => v.myState.userId);
@@ -118,7 +125,8 @@ export default function Achievements() {
                 achievement={{
                   ...achievementsObj[key],
                   milestones: myAchievementsObj[key]?.milestones,
-                  progressObj: myAchievementsObj[key]?.progressObj
+                  progressObj: myAchievementsObj[key]?.progressObj,
+                  phases: myAchievementsObj[key]?.phases
                 }}
               />
             </div>

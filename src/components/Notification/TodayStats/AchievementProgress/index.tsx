@@ -23,6 +23,13 @@ export default function AchievementProgress({
         currentValue: number;
         targetValue: number;
       };
+      phases?: {
+        label: string;
+        type?: 'bar' | 'check';
+        currentValue?: number;
+        targetValue?: number;
+        completed: boolean;
+      }[];
     };
   };
   onSetMyAchievementsObj: (myAchievementsObj: any) => void;
@@ -98,6 +105,7 @@ export default function AchievementProgress({
               isUnlocked={isUnlocked}
               achievement={{
                 ...achievementsObj[key],
+                phases: myAchievementsObj[key]?.phases,
                 progressObj: myAchievementsObj[key]?.progressObj || {
                   currentValue: isUnlocked ? 1 : numCompletedMilestones,
                   targetValue: isUnlocked ? 1 : numMilestones

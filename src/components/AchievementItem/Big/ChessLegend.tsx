@@ -1,12 +1,21 @@
 import React from 'react';
-import ItemPanel from './ItemPanel';
+import ItemPanel, { AchievementPhase } from './ItemPanel';
 import ChessLegendBadge from '~/assets/chess-legend.png';
 import { useKeyContext } from '~/contexts';
 
 export default function ChessLegend({
   isThumb,
   isNotification,
-  data: { id, ap, title, description, unlockMessage, milestones, progressObj },
+  data: {
+    id,
+    ap,
+    title,
+    description,
+    unlockMessage,
+    milestones,
+    progressObj,
+    phases
+  },
   style
 }: {
   isThumb?: boolean;
@@ -19,6 +28,7 @@ export default function ChessLegend({
     unlockMessage: string;
     milestones?: { name: string; completed: boolean }[];
     progressObj?: { label: string; currentValue: number; targetValue: number };
+    phases?: AchievementPhase[];
   };
   style?: React.CSSProperties;
 }) {
@@ -37,9 +47,13 @@ export default function ChessLegend({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirements={['Solve 100 Legendary+ chess puzzles']}
+      requirements={[
+        'Reach level 31+',
+        'Solve 100 Legendary+ chess puzzles'
+      ]}
       milestones={milestones}
       progressObj={progressObj}
+      phases={phases}
       badgeSrc={ChessLegendBadge}
     />
   );

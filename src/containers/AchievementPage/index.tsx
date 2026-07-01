@@ -11,6 +11,13 @@ import { useAppContext, useKeyContext } from '~/contexts';
 interface MyAchievementProgress {
   milestones?: { name: string; completed: boolean }[];
   progressObj?: { label: string; currentValue: number; targetValue: number };
+  phases?: {
+    label: string;
+    type?: 'bar' | 'check';
+    currentValue?: number;
+    targetValue?: number;
+    completed: boolean;
+  }[];
 }
 
 export default function AchievementPage() {
@@ -65,7 +72,8 @@ export default function AchievementPage() {
     return {
       ...achievement,
       milestones: myAchievement?.milestones ?? achievement.milestones,
-      progressObj: myAchievement?.progressObj ?? achievement.progressObj
+      progressObj: myAchievement?.progressObj ?? achievement.progressObj,
+      phases: myAchievement?.phases ?? achievement.phases
     };
   }, [achievement, myAchievement]);
 
