@@ -68,6 +68,84 @@ const headerActionsClass = css`
   flex-wrap: wrap;
 `;
 
+const minimizedRowClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--build-workspace-header-height);
+`;
+
+const headerIconButtonClass = css`
+  flex: 0 0 auto;
+  width: 2.45rem;
+  height: 2.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chat-text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+  &:hover,
+  &:focus-visible {
+    border-color: var(--theme-border);
+    background: rgba(65, 140, 235, 0.08);
+    transform: translateY(-1px);
+    outline: none;
+  }
+`;
+
+const headerPillButtonClass = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid var(--ui-border);
+  background: #fff;
+  color: var(--chat-text);
+  border-radius: 999px;
+  min-width: 8.5rem;
+  padding: 0.42rem 1.1rem;
+  font-size: var(--build-workshop-small-font-size);
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+  &:hover,
+  &:focus-visible {
+    border-color: var(--theme-border);
+    transform: translateY(-1px);
+    outline: none;
+  }
+`;
+
+function HeaderMinimizeToggle({
+  minimized,
+  onToggle
+}: {
+  minimized: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={minimized ? 'Expand Lumine header' : 'Minimize Lumine header'}
+      title={minimized ? 'Expand header' : 'Minimize header'}
+      className={headerIconButtonClass}
+    >
+      <Icon icon={minimized ? 'expand' : 'compress'} />
+    </button>
+  );
+}
+
 interface HeaderProps {
   copilotPolicy: BuildCopilotPolicy | null;
   aiUsagePolicy: BuildAiUsagePolicy | null;
@@ -90,9 +168,11 @@ interface HeaderProps {
     resetPurchasesToday: number;
   } | null;
   limitsExpanded: boolean;
+  minimized: boolean;
   onPurchaseGenerationReset: () => Promise<void> | void;
   onOpenRuntimeUploadsManager: () => void;
   onToggleLimitsExpanded: () => void;
+  onToggleMinimized: () => void;
 }
 
 export default function Header({
@@ -106,9 +186,11 @@ export default function Header({
   generationResetError,
   generationResetUi,
   limitsExpanded,
+  minimized,
   onPurchaseGenerationReset,
   onOpenRuntimeUploadsManager,
-  onToggleLimitsExpanded
+  onToggleLimitsExpanded,
+  onToggleMinimized
 }: HeaderProps) {
   const dailyGenerationUsage = useMemo(() => {
     if (!aiUsagePolicy) return null;
@@ -169,6 +251,73 @@ export default function Header({
   }, [copilotPolicy]);
   const visiblePageFeedbackEvents = pageFeedbackEvents.slice(-3).reverse();
 
+  const energyCard =
+    dailyGenerationUsage != null ? (
+      <AiEnergyCard
+        variant="inline"
+        energyPercent={dailyGenerationUsage}
+        energySegments={aiUsagePolicy?.energySegments}
+        energySegmentsRemaining={aiUsagePolicy?.energySegmentsRemaining}
+        resetNeeded={!!generationResetUi}
+        resetCost={generationResetUi?.resetCost}
+        resetPurchaseNumber={
+          generationResetUi
+            ? generationResetUi.resetPurchasesToday + 1
+            : undefined
+        }
+        twinkleCoins={twinkleCoins}
+        rechargeLoading={purchasingGenerationReset}
+        rechargeError={generationResetError}
+        onRecharge={
+          generationResetUi ? () => onPurchaseGenerationReset() : undefined
+        }
+      />
+    ) : null;
+
+  if (minimized) {
+    return (
+      <div className={headerClass}>
+        <div className={minimizedRowClass}>
+          {lumineModelSelectionControl ? (
+            <LumineModelSelectionSettings
+              control={lumineModelSelectionControl}
+              compact
+            />
+          ) : null}
+          {lumineChatVisibilityControl ? (
+            <LumineChatVisibilitySettings
+              control={lumineChatVisibilityControl}
+              compact
+            />
+          ) : null}
+          {energyCard ? (
+            <div
+              className={css`
+                flex: 1;
+                min-width: 0;
+              `}
+            >
+              {energyCard}
+            </div>
+          ) : null}
+          <HeaderMinimizeToggle minimized onToggle={onToggleMinimized} />
+        </div>
+        {visiblePageFeedbackEvents.length > 0 ? (
+          <div
+            className={css`
+              display: grid;
+              gap: 0.55rem;
+            `}
+          >
+            {visiblePageFeedbackEvents.map((event) => (
+              <FeedbackNotice key={event.id} event={event} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className={headerClass}>
       <div className={headerTopRowClass}>
@@ -203,29 +352,7 @@ export default function Header({
             color: var(--chat-text);
           `}
         >
-          {dailyGenerationUsage != null ? (
-            <AiEnergyCard
-              variant="inline"
-              energyPercent={dailyGenerationUsage}
-              energySegments={aiUsagePolicy?.energySegments}
-              energySegmentsRemaining={aiUsagePolicy?.energySegmentsRemaining}
-              resetNeeded={!!generationResetUi}
-              resetCost={generationResetUi?.resetCost}
-              resetPurchaseNumber={
-                generationResetUi
-                  ? generationResetUi.resetPurchasesToday + 1
-                  : undefined
-              }
-              twinkleCoins={twinkleCoins}
-              rechargeLoading={purchasingGenerationReset}
-              rechargeError={generationResetError}
-              onRecharge={
-                generationResetUi
-                  ? () => onPurchaseGenerationReset()
-                  : undefined
-              }
-            />
-          ) : null}
+          {energyCard}
           {limitsExpanded ? (
             <div
               className={css`
@@ -395,32 +522,27 @@ export default function Header({
             className={css`
               display: flex;
               justify-content: center;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 0.5rem;
               padding-top: 0.65rem;
             `}
           >
             <button
               type="button"
-              onClick={onToggleLimitsExpanded}
-              className={css`
-                border: 1px solid var(--ui-border);
-                background: #fff;
-                color: var(--chat-text);
-                border-radius: 999px;
-                min-width: 8.5rem;
-                padding: 0.42rem 1.1rem;
-                font-size: var(--build-workshop-small-font-size);
-                font-weight: 800;
-                cursor: pointer;
-                transition:
-                  border-color 0.15s ease,
-                  transform 0.15s ease;
-                &:hover,
-                &:focus-visible {
-                  border-color: var(--theme-border);
-                  transform: translateY(-1px);
-                }
-              `}
+              onClick={onToggleMinimized}
+              className={headerPillButtonClass}
+              aria-label="Minimize Lumine header"
             >
+              <Icon icon="compress" />
+              Minimize
+            </button>
+            <button
+              type="button"
+              onClick={onToggleLimitsExpanded}
+              className={headerPillButtonClass}
+            >
+              <Icon icon={limitsExpanded ? 'chevron-up' : 'chevron-down'} />
               {limitsExpanded ? 'Collapse' : 'Expand'}
             </button>
           </div>
@@ -443,9 +565,11 @@ export default function Header({
 }
 
 function LumineModelSelectionSettings({
-  control
+  control,
+  compact = false
 }: {
   control: LumineModelSelectionControl;
+  compact?: boolean;
 }) {
   const selectedOption = getLumineModelOption(
     control.modelOptions,
@@ -467,6 +591,8 @@ function LumineModelSelectionSettings({
         label="Model"
         value={control.value.model}
         disabled={control.loading}
+        compact={compact}
+        icon="robot"
         onChange={handleModelChange}
       >
         {control.modelOptions.map((option) => (
@@ -479,6 +605,8 @@ function LumineModelSelectionSettings({
         label="Think level"
         value={control.value.reasoningEffort}
         disabled={control.loading}
+        compact={compact}
+        icon="brain"
         onChange={handleThinkLevelChange}
       >
         {allowedThinkLevels.map((effort) => (
@@ -537,15 +665,79 @@ function LumineSelect({
   label,
   value,
   disabled,
+  compact = false,
+  icon,
   children,
   onChange
 }: {
   label: string;
   value: string;
   disabled?: boolean;
+  compact?: boolean;
+  icon?: string;
   children: React.ReactNode;
   onChange: (value: string) => void;
 }) {
+  if (compact) {
+    return (
+      <label
+        title={label}
+        className={css`
+          position: relative;
+          flex: 0 0 auto;
+          width: 2.45rem;
+          height: 2.45rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid var(--ui-border);
+          border-radius: 999px;
+          background: #fff;
+          color: #1d4ed8;
+          font-size: 1.1rem;
+          cursor: ${disabled ? 'not-allowed' : 'pointer'};
+          transition:
+            border-color 0.15s ease,
+            background-color 0.15s ease,
+            transform 0.15s ease;
+          &:hover,
+          &:focus-within {
+            border-color: var(--theme-border);
+            background: rgba(65, 140, 235, 0.08);
+            transform: translateY(-1px);
+          }
+        `}
+      >
+        {icon ? <Icon icon={icon} /> : null}
+        <select
+          value={value}
+          disabled={disabled}
+          aria-label={label}
+          onChange={(event) => onChange(event.target.value)}
+          className={css`
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: transparent;
+            font: inherit;
+            cursor: ${disabled ? 'not-allowed' : 'pointer'};
+            &:focus,
+            &:focus-visible {
+              outline: none;
+              box-shadow: none;
+            }
+          `}
+        >
+          {children}
+        </select>
+      </label>
+    );
+  }
   return (
     <label
       className={css`
@@ -597,7 +789,8 @@ function LumineSelect({
 }
 
 function LumineChatVisibilitySettings({
-  control
+  control,
+  compact = false
 }: {
   control: {
     value: BuildLumineChatVisibility;
@@ -608,6 +801,7 @@ function LumineChatVisibilitySettings({
       value: BuildLumineChatVisibility
     ) => Promise<boolean | void> | boolean | void;
   };
+  compact?: boolean;
 }) {
   const [modalShown, setModalShown] = useState(false);
   const [draftValue, setDraftValue] = useState<BuildLumineChatVisibility>(
@@ -624,57 +818,73 @@ function LumineChatVisibilitySettings({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={handleOpenModal}
-        className={css`
-          border: 1px solid rgba(36, 99, 235, 0.22);
-          background: #fff;
-          color: var(--chat-text);
-          border-radius: 999px;
-          min-height: 2.45rem;
-          padding: 0.35rem 0.85rem;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.45rem;
-          font-family: inherit;
-          font-size: var(--build-workshop-small-font-size);
-          font-weight: 900;
-          cursor: pointer;
-          transition:
-            border-color 0.15s ease,
-            background-color 0.15s ease,
-            transform 0.15s ease;
-          &:hover,
-          &:focus-visible {
-            border-color: var(--theme-border);
-            background: rgba(65, 140, 235, 0.08);
-            transform: translateY(-1px);
-            outline: none;
-          }
-        `}
-        aria-label="Change Lumine chat sharing"
-      >
-        <span
-          className={css`
-            opacity: 0.72;
-          `}
-        >
-          Share Lumine chat with
-        </span>
-        <span
-          className={css`
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            color: #1d4ed8;
-          `}
+      {compact ? (
+        <button
+          type="button"
+          onClick={handleOpenModal}
+          className={`${headerIconButtonClass} ${css`
+            && {
+              color: #1d4ed8;
+            }
+          `}`}
+          aria-label={`Share Lumine chat with ${selectedOption.title}`}
+          title={`Share Lumine chat with ${selectedOption.title}`}
         >
           <Icon icon={selectedOption.icon} />
-          {selectedOption.title}
-        </span>
-      </button>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleOpenModal}
+          className={css`
+            border: 1px solid rgba(36, 99, 235, 0.22);
+            background: #fff;
+            color: var(--chat-text);
+            border-radius: 999px;
+            min-height: 2.45rem;
+            padding: 0.35rem 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            font-family: inherit;
+            font-size: var(--build-workshop-small-font-size);
+            font-weight: 900;
+            cursor: pointer;
+            transition:
+              border-color 0.15s ease,
+              background-color 0.15s ease,
+              transform 0.15s ease;
+            &:hover,
+            &:focus-visible {
+              border-color: var(--theme-border);
+              background: rgba(65, 140, 235, 0.08);
+              transform: translateY(-1px);
+              outline: none;
+            }
+          `}
+          aria-label="Change Lumine chat sharing"
+        >
+          <span
+            className={css`
+              opacity: 0.72;
+            `}
+          >
+            Share Lumine chat with
+          </span>
+          <span
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              gap: 0.35rem;
+              color: #1d4ed8;
+            `}
+          >
+            <Icon icon={selectedOption.icon} />
+            {selectedOption.title}
+          </span>
+        </button>
+      )}
 
       {modalShown ? (
         <Modal

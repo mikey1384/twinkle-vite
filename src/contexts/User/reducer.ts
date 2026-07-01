@@ -48,6 +48,14 @@ export default function UserReducer(
           buildHeaderCollapsed: !!action.collapsed
         }
       };
+    case 'SET_LUMINE_HEADER_MINIMIZED':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          lumineHeaderMinimized: !!action.minimized
+        }
+      };
     case 'CLEAR_USER_SEARCH':
       return {
         ...state,

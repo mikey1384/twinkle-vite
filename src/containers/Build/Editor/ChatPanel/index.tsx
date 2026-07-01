@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import Icon from '~/components/Icon';
-import { useKeyContext, useViewContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import { getThemeStyles, mobileMaxWidth } from '~/constants/css';
 import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
 import ThreeVendorUpgradeNotice from '../ThreeVendorUpgradeNotice';
@@ -292,6 +292,17 @@ export default function ChatPanel({
       '--main-btn-text': themed.text
     } as React.CSSProperties;
   }, [profileTheme]);
+  const setLumineHeaderMinimized = useAppContext(
+    (v) => v.requestHelpers.setLumineHeaderMinimized
+  );
+  const onSetLumineHeaderMinimized = useAppContext(
+    (v) => v.user.actions.onSetLumineHeaderMinimized
+  );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const lumineHeaderMinimized = !!useAppContext(
+    (v) => v.user.state.myState.lumineHeaderMinimized
+  );
+  const [minimizedPending, setMinimizedPending] = useState(false);
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const [communicationMode, setCommunicationMode] = useState<CommunicationMode>(
     () => normalizeCommunicationMode(preferredCommunicationMode)
@@ -563,6 +574,24 @@ export default function ChatPanel({
     setLimitsExpanded((prev) => !prev);
   }
 
+  async function handleToggleMinimized() {
+    if (minimizedPending) return;
+    const next = !lumineHeaderMinimized;
+    if (!userId) {
+      onSetLumineHeaderMinimized(next);
+      return;
+    }
+    setMinimizedPending(true);
+    try {
+      const data = await setLumineHeaderMinimized(next);
+      onSetLumineHeaderMinimized(!!data?.lumineHeaderMinimized);
+    } catch {
+      // Fail silently to avoid showing unsaved state
+    } finally {
+      setMinimizedPending(false);
+    }
+  }
+
   function handleCommunicationModeChange(nextMode: CommunicationMode) {
     if (activeCommunicationMode === 'lumine' && nextMode !== 'lumine') {
       const container = chatScrollRef.current;
@@ -726,9 +755,11 @@ export default function ChatPanel({
             generationResetError={generationResetError}
             generationResetUi={generationResetUi}
             limitsExpanded={limitsExpanded}
+            minimized={lumineHeaderMinimized}
             onPurchaseGenerationReset={onPurchaseGenerationReset}
             onOpenRuntimeUploadsManager={onOpenRuntimeUploadsManager}
             onToggleLimitsExpanded={handleToggleLimitsExpanded}
+            onToggleMinimized={handleToggleMinimized}
           />
           <div
             ref={chatScrollRef}

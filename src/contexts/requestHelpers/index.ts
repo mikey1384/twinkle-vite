@@ -703,6 +703,7 @@ registerMethods('user', [
   'setDefaultSearchFilter',
   'setBuildQuickAccessMode',
   'setBuildHeaderCollapsed',
+  'setLumineHeaderMinimized',
   'updateBuildStudioState',
   'setTheme',
   'signup',

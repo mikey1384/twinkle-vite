@@ -25,6 +25,12 @@ export default function UserActions(dispatch: Dispatch) {
         collapsed
       });
     },
+    onSetLumineHeaderMinimized(minimized: boolean) {
+      return dispatch({
+        type: 'SET_LUMINE_HEADER_MINIMIZED',
+        minimized
+      });
+    },
     onClearUserSearch() {
       return dispatch({
         type: 'CLEAR_USER_SEARCH'

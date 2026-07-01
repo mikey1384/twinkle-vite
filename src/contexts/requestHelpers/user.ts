@@ -886,6 +886,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async setLumineHeaderMinimized(minimized: boolean) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/lumineHeaderMinimized`,
+          { minimized },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateBuildStudioState(buildStudio: {
       activeTab?: string;
       browseModes?: {

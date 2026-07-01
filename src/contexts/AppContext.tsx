@@ -39,6 +39,7 @@ export const initialMyState = {
   collectType: '',
   buildQuickAccessMode: 'recent',
   buildHeaderCollapsed: false,
+  lumineHeaderMinimized: false,
   hideWatched: false,
   isAdmin: false,
   lastChatPath: '',
