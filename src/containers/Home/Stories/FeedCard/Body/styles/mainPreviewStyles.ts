@@ -228,6 +228,24 @@ export const mainPreviewStyles = `
       > * {
       height: auto;
     }
+    /* With adjacent text the embed sits in a full-height grid cell that can be
+       much taller than a Lumine app window; give the build embed a fixed
+       app-window aspect and vertically center it so it renders like the target
+       subject's build thumbnail (toolbar + cover) instead of a squashed strip. */
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build {
+      align-self: center;
+      align-items: stretch;
+      justify-content: stretch;
+      height: auto;
+      aspect-ratio: 16 / 10;
+      max-height: 100%;
+    }
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build
+      > * {
+      height: 100%;
+    }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card {
       align-items: center;
       justify-content: center;
@@ -1242,7 +1260,7 @@ export const mainPreviewStyles = `
     }
     .home-feed-card__mission-status {
       color: ${Color.gold()};
-      font-size: 1.12rem;
+      font-size: 1.35rem;
       font-weight: 900;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -1266,9 +1284,17 @@ export const mainPreviewStyles = `
     .home-feed-card__mission-reward-row {
       margin-top: 0.1rem;
     }
+    .home-feed-card__mission-copy .home-feed-card__reward-chip {
+      min-height: 2.3rem;
+      padding: 0.42rem 0.78rem;
+      font-size: 1.35rem;
+    }
     .home-feed-card__mission-copy h3,
     .home-feed-card__achievement-copy h3 {
       color: ${Color.black()};
+      font-size: max(2.1rem, 21px);
+      font-weight: 800;
+      line-height: 1.2;
     }
   .home-feed-card__ai-story-preview {
     --home-feed-ai-story-color: ${Color.logoBlue()};

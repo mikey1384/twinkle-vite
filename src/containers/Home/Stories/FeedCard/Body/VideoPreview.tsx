@@ -9,10 +9,12 @@ const primaryPreviewTextClass = 'home-feed-card__primary-preview-text';
 
 export default function VideoPreview({
   content,
-  contentId
+  contentId,
+  variant = 'main'
 }: {
   content: any;
   contentId: number;
+  variant?: 'main' | 'target';
 }) {
   const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
   const videoCode = String(content?.content || '').trim();
@@ -34,17 +36,34 @@ export default function VideoPreview({
   );
   const canEarnCoins = rewardLevel >= 3;
 
+  const isTarget = variant === 'target';
+  const wrapperClass = isTarget
+    ? 'home-feed-card__target-content home-feed-card__target-video has-media'
+    : 'home-feed-card__video-preview';
+  const thumbClass = isTarget
+    ? 'home-feed-card__target-media'
+    : 'home-feed-card__video-thumb';
+  const copyClass = isTarget
+    ? 'home-feed-card__target-copy'
+    : 'home-feed-card__video-copy';
+
   return (
-    <div className="home-feed-card__video-preview">
+    <div className={wrapperClass}>
       <VideoThumbImage
-        className="home-feed-card__video-thumb"
+        className={thumbClass}
         rewardLevel={rewardLevel}
         videoId={contentId}
         noPaddingBottom
         src={thumbUrl}
       />
-      <div className="home-feed-card__video-copy">
-        <h3 className={primaryPreviewTextClass}>{content?.title}</h3>
+      <div className={copyClass}>
+        {isTarget ? (
+          <h4 className="home-feed-card__target-video-title">
+            {content?.title}
+          </h4>
+        ) : (
+          <h3 className={primaryPreviewTextClass}>{content?.title}</h3>
+        )}
         {channelName ? (
           <span className="home-feed-card__video-channel">
             <Icon icon={['fab', 'youtube']} />
@@ -69,7 +88,9 @@ export default function VideoPreview({
           </span>
         ) : null}
         {description ? (
-          <p className={primaryPreviewTextClass}>{description}</p>
+          <p className={isTarget ? undefined : primaryPreviewTextClass}>
+            {description}
+          </p>
         ) : null}
       </div>
     </div>

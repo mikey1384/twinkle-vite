@@ -38,6 +38,21 @@ export const targetPreviewStyles = `
     .home-feed-card__target-video.has-media {
       grid-template-columns: minmax(8.5rem, 32%) minmax(0, 1fr);
     }
+    .home-feed-card__target-video .home-feed-card__target-copy {
+      justify-content: center;
+      gap: 0.3rem;
+    }
+    .home-feed-card__target-video .home-feed-card__target-video-title {
+      margin: 0;
+      color: ${Color.black()};
+      font-size: max(1.7rem, 17px);
+      font-weight: 850;
+      line-height: 1.2;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
     .home-feed-card__target-url.has-media {
       grid-template-columns: minmax(8.5rem, 32%) minmax(0, 1fr);
       align-items: stretch;

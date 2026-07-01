@@ -266,6 +266,12 @@ export const mobilePreviewStyles = `
       .home-feed-card__target-video.has-media {
         grid-template-columns: minmax(18rem, 50%) minmax(0, 1fr);
       }
+      /* target-url puts its thumbnail in the FIRST column (thumb-left), so the
+         shared thumb-right rule above would drop it into the wide 1fr column and
+         blow the thumb up past 60%. Keep the thumb column narrow instead. */
+      .home-feed-card__target-url.has-media {
+        grid-template-columns: minmax(8.5rem, 34%) minmax(0, 1fr);
+      }
       .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject {
         align-self: center;
         height: auto;
@@ -298,10 +304,12 @@ export const mobilePreviewStyles = `
       .home-feed-card__url-preview {
         grid-template-columns: minmax(0, 1fr) minmax(13rem, 40%);
       }
-      .home-feed-card__url-copy h3 {
+      .home-feed-card__url-copy h3,
+      .home-feed-card__video-copy h3 {
         font-size: max(1.8rem, 18px);
       }
-      .home-feed-card__url-copy p {
+      .home-feed-card__url-copy p,
+      .home-feed-card__video-copy p {
         font-size: max(1.52rem, 15.2px);
       }
       .home-feed-card__url-thumb {

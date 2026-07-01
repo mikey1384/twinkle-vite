@@ -7,7 +7,6 @@ import LinkPreviewImage from '~/components/LinkPreviewImage';
 import Loading from '~/components/Loading';
 import HomeFeedSubjectTargetPreview from '~/components/Subjects/HomeFeedSubjectTargetPreview';
 import RichText from '~/components/Texts/RichText';
-import VideoThumbImage from '~/components/VideoThumbImage';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
@@ -33,6 +32,7 @@ import {
 import { isRenderableHomeFeedTargetComment } from '../helpers/targetComment';
 import ProfilePanelPreview from './ProfilePanelPreview';
 import DailyGoalsPreview from './DailyGoalsPreview';
+import VideoPreview from './VideoPreview';
 
 function resolveTargetPreviewTheme({
   resolvedRootObj,
@@ -627,23 +627,11 @@ export default function TargetPreview({
 
   function renderTargetVideoPreview(target: any) {
     return (
-      <div className="home-feed-card__target-content home-feed-card__target-video has-media">
-        <VideoThumbImage
-          className="home-feed-card__target-media"
-          rewardLevel={target?.rewardLevel}
-          videoId={Number(target.id || 0)}
-          noPaddingBottom
-          src={`https://img.youtube.com/vi/${target?.content}/mqdefault.jpg`}
-        />
-        <div className="home-feed-card__target-copy">
-          <span className="home-feed-card__target-chip">
-            <Icon icon="play" />
-            Video
-          </span>
-          {target?.title ? <h4>{target.title}</h4> : null}
-          {target?.description ? <p>{target.description}</p> : null}
-        </div>
-      </div>
+      <VideoPreview
+        content={target}
+        contentId={Number(target?.id || 0)}
+        variant="target"
+      />
     );
   }
 
