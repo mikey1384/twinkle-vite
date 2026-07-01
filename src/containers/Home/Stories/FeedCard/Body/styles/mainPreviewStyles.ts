@@ -819,6 +819,12 @@ export const mainPreviewStyles = `
     border-radius: 0.75rem;
     background: ${Color.whiteGray()};
   }
+  /* File attachments render an AttachmentCard that already has its own border,
+     so drop the wrapper's border/background to avoid a double border. */
+  .home-feed-card__attachment-preview:has(.home-feed-card__attachment-card) {
+    border: 0;
+    background: transparent;
+  }
   .home-feed-card__attachment-preview--subject-image {
     border: 0;
     background: transparent;
