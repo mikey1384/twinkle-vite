@@ -28,12 +28,11 @@ const invalidContentClass = css`
   padding: 1.5rem;
   border: 1px solid var(--ui-border);
   border-radius: ${borderRadius};
-  color: ${Color.gray()};
+  color: ${Color.darkGray()};
   text-align: center;
 
   svg {
     font-size: 2.2rem;
-    opacity: 0.65;
   }
 
   span {
