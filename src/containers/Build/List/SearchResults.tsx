@@ -75,7 +75,6 @@ export default function SearchResults({
   teamBuilds,
   teamHasMore,
   onAddDescription,
-  onDelete,
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
@@ -96,7 +95,6 @@ export default function SearchResults({
   teamBuilds: BuildProjectListItemData[];
   teamHasMore: boolean;
   onAddDescription: (build: BuildProjectListItemData) => void;
-  onDelete: (build: BuildProjectListItemData) => void;
   onFavoriteChange: (
     build: BuildProjectListItemData,
     change: BuildFavoriteChange
@@ -169,7 +167,6 @@ export default function SearchResults({
               }}
               showFavoriteAction
               onAddDescription={onAddDescription}
-              onDelete={onDelete}
               onFavoriteChange={onFavoriteChange}
               onFavoriteError={onFavoriteError}
               onFavoriteStart={onFavoriteStart}

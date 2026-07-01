@@ -349,6 +349,7 @@ export interface BuildAction {
     | 'STOP_BUILD_RUN'
     | 'REMOVE_BUILD_RUN_MESSAGE'
     | 'SET_BUILD_WORKSPACE'
+    | 'REMOVE_BUILD_WORKSPACE'
     | 'SET_BUILD_WORKSPACE_COMMUNICATION_MODE'
     | 'SET_BUILD_WORKSPACE_SCROLL'
     | 'SET_BUILD_WORKSPACE_FORUM_THREAD'
@@ -376,6 +377,7 @@ export interface BuildAction {
     | 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUN'
     | 'RESET_BUILD_RUNS';
+  buildId?: number;
   buildRun?: BuildLiveRunActionPayload;
   runtimeVerifyResult?: BuildRuntimeVerifyResultPayload;
   buildStudio?: BuildStudioActionPayload;
@@ -2078,6 +2080,18 @@ export default function BuildReducer(
             updatedAt: Date.now()
           }
         }
+      };
+    }
+    case 'REMOVE_BUILD_WORKSPACE': {
+      const buildId = Number(action.buildId || 0);
+      if (!buildId) return state;
+      const key = getBuildRunKey(buildId);
+      if (!(key in state.buildWorkspaces)) return state;
+      const nextBuildWorkspaces = { ...state.buildWorkspaces };
+      delete nextBuildWorkspaces[key];
+      return {
+        ...state,
+        buildWorkspaces: nextBuildWorkspaces
       };
     }
     case 'SET_BUILD_WORKSPACE_COMMUNICATION_MODE': {

@@ -2,10 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import Button from '~/components/Button';
 import { useAppContext, useBuildContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
@@ -131,10 +130,6 @@ export default function CollaborationPanel({
   const revokeBuildContributor = useAppContext(
     (v) => v.requestHelpers.revokeBuildContributor
   );
-  const leaveBuildTeam = useAppContext((v) => v.requestHelpers.leaveBuildTeam);
-  const loadBuildContributionMembership = useAppContext(
-    (v) => v.requestHelpers.loadBuildContributionMembership
-  );
   const loadBuildContribution = useAppContext(
     (v) => v.requestHelpers.loadBuildContribution
   );
@@ -200,12 +195,6 @@ export default function CollaborationPanel({
     : Number(build.id || 0);
   const contributionBuildId = isContributionFork ? Number(build.id || 0) : 0;
   const isRootOwner = Number(build.rootBuildUserId || 0) === Number(userId || 0);
-  const isOwnTeamBranch =
-    isContributionFork &&
-    rootBuildId > 0 &&
-    Number(build.rootBuildUserId || 0) > 0 &&
-    !isRootOwner &&
-    Number(build.contributionContributorId || 0) === Number(userId || 0);
   const forumScopeKey = getBuildForumScopeKey({
     contributionBuildId,
     scope: !isContributionFork ? 'all' : 'branch'
@@ -260,10 +249,6 @@ export default function CollaborationPanel({
     useState<RuntimeAssetTransferProgressPayload | null>(null);
   const runtimeAssetTransferOperationIdRef = useRef('');
   const [replaceMainConfirmShown, setReplaceMainConfirmShown] = useState(false);
-  const [canLeaveTeam, setCanLeaveTeam] = useState(false);
-  const [leaveConfirmShown, setLeaveConfirmShown] = useState(false);
-  const [leaving, setLeaving] = useState(false);
-  const [leaveError, setLeaveError] = useState('');
   const [conflictMarkerPaths, setConflictMarkerPaths] = useState<string[]>([]);
   const [requestActionError, setRequestActionError] = useState('');
   const [forumThreads, setForumThreads] = useState<BuildForumThread[]>([]);
@@ -391,29 +376,6 @@ export default function CollaborationPanel({
       );
     };
   }, []);
-
-  useEffect(() => {
-    let canceled = false;
-    if (!isOwnTeamBranch) {
-      setCanLeaveTeam(false);
-      return;
-    }
-    (async () => {
-      try {
-        const result = await loadBuildContributionMembership({
-          buildId: rootBuildId,
-          userId: Number(userId || 0)
-        });
-        if (!canceled) setCanLeaveTeam(Boolean(result?.active));
-      } catch {
-        if (!canceled) setCanLeaveTeam(false);
-      }
-    })();
-    return () => {
-      canceled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOwnTeamBranch, rootBuildId, userId]);
 
   const collaborationEventRef = useRef<(payload: any) => void>(() => {});
   collaborationEventRef.current = (payload: any) => {
@@ -864,7 +826,6 @@ export default function CollaborationPanel({
                 ) : (
                   <div className={splitClass}>
                     {renderForum()}
-                    {renderMemberLeaveTeam()}
                   </div>
                 )}
               </>
@@ -903,35 +864,6 @@ export default function CollaborationPanel({
           }
         />
       ) : null}
-      {leaveConfirmShown ? (
-        <ConfirmModal
-          title="Leave team?"
-          descriptionFontSize="1.6rem"
-          confirmButtonColor="red"
-          confirmButtonLabel="Leave Team"
-          disabled={leaving}
-          onHide={() => (leaving ? null : setLeaveConfirmShown(false))}
-          onConfirm={handleLeaveTeam}
-          description={
-            <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
-              Your team branches will transfer to the Build owner, and
-              you&apos;ll lose access to this team&apos;s branches, forum, and
-              activity.
-              {leaveError ? (
-                <div
-                  style={{
-                    marginTop: '1rem',
-                    color: Color.red(),
-                    fontSize: '1.3rem'
-                  }}
-                >
-                  {leaveError}
-                </div>
-              ) : null}
-            </div>
-          }
-        />
-      ) : null}
     </>
   );
 
@@ -954,7 +886,6 @@ export default function CollaborationPanel({
       <div className={embeddedBodyStackClass}>
         {renderContributionDetail(canCompleteConflictMerge)}
         {renderForum()}
-        {renderMemberLeaveTeam()}
       </div>
     );
   }
@@ -2006,79 +1937,6 @@ export default function CollaborationPanel({
         onUpdateVersionFromMain={handleUpdateVersionFromMain}
       />
     );
-  }
-
-  function renderMemberLeaveTeam() {
-    if (!canLeaveTeam) return null;
-    return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginTop: '1.5rem',
-          paddingTop: '1.2rem',
-          borderTop: `1px solid ${Color.borderGray()}`
-        }}
-      >
-        <Button
-          color="red"
-          variant="ghost"
-          size="sm"
-          uppercase={false}
-          loading={leaving}
-          onClick={() => {
-            setLeaveError('');
-            setLeaveConfirmShown(true);
-          }}
-        >
-          Leave team
-        </Button>
-      </div>
-    );
-  }
-
-  async function handleLeaveTeam() {
-    if (leaving) return;
-    setLeaving(true);
-    setLeaveError('');
-    try {
-      const result = await leaveBuildTeam({ buildId: rootBuildId });
-      if (result?.success) {
-        const count = Number(result.transferredBranchCount || 0);
-        const message =
-          count > 0
-            ? `You left the team. ${count} ${
-                count === 1 ? 'branch was' : 'branches were'
-              } transferred to the owner.`
-            : 'You left the team.';
-        setLeaveConfirmShown(false);
-        applyContributionInviteStatus({
-          invite: {
-            id: Number(result.inviteId || 0),
-            buildId: rootBuildId,
-            userId: Number(userId || 0),
-            acceptedAt: 0,
-            declinedAt: 0,
-            revokedAt: 0,
-            leftAt: Number(result.leftAt || 0)
-          },
-          inviteId: Number(result.inviteId || 0),
-          status: 'left',
-          eventTimeMs: Number(result.eventTimeMs || Date.now())
-        });
-        navigate('/build', { state: { buildTeamLeaveMessage: message } });
-        return;
-      }
-      setLeaveError('Failed to leave the team. Please try again.');
-      setLeaving(false);
-    } catch (error: any) {
-      setLeaveError(
-        error?.responseData?.error ||
-          error?.message ||
-          'Failed to leave the team. Please try again.'
-      );
-      setLeaving(false);
-    }
   }
 
   function renderForum() {

@@ -66,8 +66,11 @@ import {
   useNotiContext,
   useViewContext
 } from '~/contexts';
+import DeleteModal from '../DeleteModal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { useBuildTeamLeave } from './useBuildTeamLeave';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   getBuildDisplayTitle,
   isBuildContributionFork
@@ -195,6 +198,12 @@ export default function BuildEditor({
     (v) => v.actions.onClearBuildRuntimeVerifyResult
   );
   const navigate = useNavigate();
+  const onRemoveBuildStudioMyBuild = useBuildContext(
+    (v) => v.actions.onRemoveBuildStudioMyBuild
+  );
+  const onRemoveBuildWorkspace = useBuildContext(
+    (v) => v.actions.onRemoveBuildWorkspace
+  );
   const routeState = (location.state || {}) as BuildEditorRouteState;
   const routeForumThreadId = Math.max(
     0,
@@ -215,6 +224,7 @@ export default function BuildEditor({
     routeOpenForkHistory ? Number(build.id || 0) : 0
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const teamLeave = useBuildTeamLeave({ build, userId });
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const todayAiUsagePolicy = useNotiContext(
@@ -272,6 +282,8 @@ export default function BuildEditor({
     }));
   const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
     useState(false);
+  const [deleteModalShown, setDeleteModalShown] = useState(false);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
   const [threeUpgradeNoticeDismissed, setThreeUpgradeNoticeDismissed] =
     useState(false);
   const [branchMainUpdateState, setBranchMainUpdateState] =
@@ -1108,6 +1120,40 @@ export default function BuildEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
 
+  function handleOpenDeleteModal() {
+    setDeleteModalShown(true);
+  }
+
+  function handleCloseDeleteModal() {
+    if (deleteInProgress) return;
+    setDeleteModalShown(false);
+  }
+
+  async function handleConfirmDeleteBuild(confirmTitle: string) {
+    if (deleteInProgress) return;
+    setDeleteInProgress(true);
+    try {
+      const result = await deleteBuild({
+        buildId: Number(build.id),
+        confirmTitle
+      });
+      if (result?.success) {
+        onRemoveBuildStudioMyBuild({
+          buildId: Number(build.id),
+          userId: Number(userId || 0)
+        });
+        onRemoveBuildWorkspace({ buildId: Number(build.id) });
+        setDeleteModalShown(false);
+        navigate('/build');
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to delete build:', error);
+    } finally {
+      setDeleteInProgress(false);
+    }
+  }
+
   function handleDismissThreeUpgradeNotice() {
     setThreeUpgradeNoticeDismissed(true);
     try {
@@ -1642,12 +1688,56 @@ export default function BuildEditor({
         onOpenThumbnailModal={handleOpenThumbnailModal}
         onTogglePublish={handlePublish}
         onUnpublish={handleUnpublish}
+        onDelete={
+          isOwner && !currentBuildIsContributionFork
+            ? handleOpenDeleteModal
+            : undefined
+        }
+        canLeaveTeam={teamLeave.canLeaveTeam}
+        onLeaveTeam={teamLeave.openLeaveConfirm}
       />
       {forkHistoryBuildId ? (
         <ForkHistoryModal
           buildId={forkHistoryBuildId}
           isOpen
           onClose={() => setForkHistoryBuildId(0)}
+        />
+      ) : null}
+      {deleteModalShown ? (
+        <DeleteModal
+          buildTitle={String(build.title || '')}
+          loading={deleteInProgress}
+          onHide={handleCloseDeleteModal}
+          onSubmit={handleConfirmDeleteBuild}
+        />
+      ) : null}
+      {teamLeave.leaveConfirmShown ? (
+        <ConfirmModal
+          title="Leave team?"
+          descriptionFontSize="1.6rem"
+          confirmButtonColor="red"
+          confirmButtonLabel="Leave Team"
+          disabled={teamLeave.leaving}
+          onHide={teamLeave.closeLeaveConfirm}
+          onConfirm={teamLeave.handleLeaveTeam}
+          description={
+            <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
+              Your team branches will transfer to the Build owner, and
+              you&apos;ll lose access to this team&apos;s branches, forum, and
+              activity.
+              {teamLeave.leaveError ? (
+                <div
+                  style={{
+                    marginTop: '1rem',
+                    color: Color.red(),
+                    fontSize: '1.3rem'
+                  }}
+                >
+                  {teamLeave.leaveError}
+                </div>
+              ) : null}
+            </div>
+          }
         />
       ) : null}
       <Workspace

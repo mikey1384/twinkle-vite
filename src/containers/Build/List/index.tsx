@@ -146,7 +146,6 @@ export default function BuildList({
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
   );
-  const deleteBuild = useAppContext((v) => v.requestHelpers.deleteBuild);
   const updateBuildStudioState = useAppContext(
     (v) => v.requestHelpers.updateBuildStudioState
   );
@@ -160,9 +159,6 @@ export default function BuildList({
   );
   const onPatchBuildStudioMyBuild = useBuildContext(
     (v) => v.actions.onPatchBuildStudioMyBuild
-  );
-  const onRemoveBuildStudioMyBuild = useBuildContext(
-    (v) => v.actions.onRemoveBuildStudioMyBuild
   );
   const onSetBuildStudioBrowseMode = useBuildContext(
     (v) => v.actions.onSetBuildStudioBrowseMode
@@ -313,13 +309,10 @@ export default function BuildList({
   const [browseLoadingMore, setBrowseLoadingMore] = useState(false);
   const [editingBuild, setEditingBuild] =
     useState<BuildProjectListItemData | null>(null);
-  const [deletingBuild, setDeletingBuild] =
-    useState<BuildProjectListItemData | null>(null);
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState<number | null>(
     null
   );
   const [savingMetadata, setSavingMetadata] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [promptInput, setPromptInput] = useState('');
   const [creatingFromPrompt, setCreatingFromPrompt] = useState(false);
   const buildsWithPendingRequests = builds
@@ -350,7 +343,6 @@ export default function BuildList({
     modalCursor: quickAccessModalCursor,
     modalMode: quickAccessModalMode,
     modalPage: quickAccessModalPage,
-    onBuildDeleted: handleQuickAccessBuildDeleted,
     onBuildFavoriteChange: handleBuildFavoriteChange,
     onBuildFavoriteError: handleBuildFavoriteError,
     onBuildFavoriteStart: handleBuildFavoriteStart,
@@ -472,7 +464,6 @@ export default function BuildList({
 
   useEffect(() => {
     setEditingBuild(null);
-    setDeletingBuild(null);
     setForkHistoryBuildId(null);
   }, [normalizedUserId]);
 
@@ -866,7 +857,6 @@ export default function BuildList({
                 teamBuilds={searchTeamBuilds}
                 teamHasMore={searchTeamHasMore}
                 onAddDescription={setEditingBuild}
-                onDelete={setDeletingBuild}
                 onFavoriteChange={handleBuildFavoriteChange}
                 onFavoriteError={handleBuildFavoriteError}
                 onFavoriteStart={handleBuildFavoriteStart}
@@ -899,7 +889,6 @@ export default function BuildList({
               creatingFromPrompt={creatingFromPrompt}
               runtimeBackTo={`${location.pathname}${location.search}${location.hash}`}
               onAddDescription={setEditingBuild}
-              onDelete={setDeletingBuild}
               onFavoriteChange={handleBuildFavoriteChange}
               onFavoriteError={handleBuildFavoriteError}
               onFavoriteStart={handleBuildFavoriteStart}
@@ -915,8 +904,6 @@ export default function BuildList({
         <ActivityPanels {...buildActivityPanelProps} variant="rail" />
       </div>
       <Overlays
-        deleting={deleting}
-        deletingBuild={deletingBuild}
         editingBuild={editingBuild}
         forkHistoryBuildId={forkHistoryBuildId}
         quickAccessLoadingMore={quickAccessLoadingMore}
@@ -926,11 +913,9 @@ export default function BuildList({
         quickAccessModalPage={quickAccessModalPage}
         quickAccessOpenButtonStyle={quickAccessOpenButtonStyle}
         savingMetadata={savingMetadata}
-        onCloseDelete={() => (deleting ? null : setDeletingBuild(null))}
         onCloseEdit={() => (savingMetadata ? null : setEditingBuild(null))}
         onCloseForkHistory={() => setForkHistoryBuildId(null)}
         onCloseQuickAccess={handleCloseQuickAccessModal}
-        onDeleteBuild={handleDeleteBuild}
         onFavoriteChange={handleBuildFavoriteChange}
         onFavoriteError={handleBuildFavoriteError}
         onFavoriteStart={handleBuildFavoriteStart}
@@ -989,29 +974,6 @@ export default function BuildList({
     }
   }
 
-  async function handleDeleteBuild(confirmTitle: string) {
-    if (!deletingBuild || deleting) return;
-    setDeleting(true);
-    try {
-      const result = await deleteBuild({
-        buildId: deletingBuild.id,
-        confirmTitle
-      });
-      if (result?.success) {
-        const deletedBuildId = Number(deletingBuild.id);
-        onRemoveBuildStudioMyBuild({
-          buildId: deletingBuild.id,
-          userId: normalizedUserId
-        });
-        handleQuickAccessBuildDeleted(deletedBuildId);
-        setDeletingBuild(null);
-      }
-    } catch (error) {
-      console.error('Failed to delete build:', error);
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   // Clears the text query only; the owner chip has its own dedicated clear.
   // With an owner active, clearing the text should land on all of that

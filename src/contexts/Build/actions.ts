@@ -105,6 +105,12 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildRun
       });
     },
+    onRemoveBuildWorkspace({ buildId }: { buildId: number }) {
+      return dispatch({
+        type: 'REMOVE_BUILD_WORKSPACE',
+        buildId
+      });
+    },
     onSetBuildWorkspaceCommunicationMode({
       buildId,
       communicationMode

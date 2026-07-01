@@ -111,7 +111,6 @@ export default function Results({
   creatingFromPrompt,
   runtimeBackTo,
   onAddDescription,
-  onDelete,
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
@@ -141,7 +140,6 @@ export default function Results({
   creatingFromPrompt: boolean;
   runtimeBackTo: string;
   onAddDescription: (build: BuildProjectListItemData) => void;
-  onDelete: (build: BuildProjectListItemData) => void;
   onFavoriteChange: (
     build: BuildProjectListItemData,
     change: BuildFavoriteChange
@@ -237,7 +235,6 @@ export default function Results({
                 runtimeBackLabel: 'Back to Build Studio'
               }}
               onAddDescription={onAddDescription}
-              onDelete={onDelete}
               showFavoriteAction
               onFavoriteChange={onFavoriteChange}
               onFavoriteError={onFavoriteError}

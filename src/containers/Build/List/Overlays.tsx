@@ -3,13 +3,10 @@ import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
 import DescriptionModal from '~/components/Modals/BuildDescriptionModal';
-import DeleteModal from '../DeleteModal';
 import { BuildQuickAccessModal } from './QuickAccess';
 import type { BuildQuickAccessMode, QuickAccessBuild } from './types';
 
 export default function Overlays({
-  deleting,
-  deletingBuild,
   editingBuild,
   forkHistoryBuildId,
   quickAccessLoadingMore,
@@ -19,11 +16,9 @@ export default function Overlays({
   quickAccessModalPage,
   quickAccessOpenButtonStyle,
   savingMetadata,
-  onCloseDelete,
   onCloseEdit,
   onCloseForkHistory,
   onCloseQuickAccess,
-  onDeleteBuild,
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
@@ -32,8 +27,6 @@ export default function Overlays({
   onPreviousQuickAccessPage,
   onSubmitMetadata
 }: {
-  deleting: boolean;
-  deletingBuild: BuildProjectListItemData | null;
   editingBuild: BuildProjectListItemData | null;
   forkHistoryBuildId: number | null;
   quickAccessLoadingMore: boolean;
@@ -43,11 +36,9 @@ export default function Overlays({
   quickAccessModalPage: number;
   quickAccessOpenButtonStyle?: React.CSSProperties;
   savingMetadata: boolean;
-  onCloseDelete: () => void;
   onCloseEdit: () => void;
   onCloseForkHistory: () => void;
   onCloseQuickAccess: () => void;
-  onDeleteBuild: (confirmTitle: string) => void;
   onFavoriteChange: (
     build: BuildProjectListItemData,
     change: BuildFavoriteChange
@@ -78,14 +69,6 @@ export default function Overlays({
           loading={savingMetadata}
           onHide={onCloseEdit}
           onSubmit={onSubmitMetadata}
-        />
-      ) : null}
-      {deletingBuild ? (
-        <DeleteModal
-          buildTitle={deletingBuild.title}
-          loading={deleting}
-          onHide={onCloseDelete}
-          onSubmit={onDeleteBuild}
         />
       ) : null}
       {forkHistoryBuildId ? (

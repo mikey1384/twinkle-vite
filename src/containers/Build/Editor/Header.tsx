@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
+import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
 import type { User } from '~/types';
@@ -380,6 +381,9 @@ interface HeaderProps {
   onOpenThumbnailModal: () => void;
   onTogglePublish: () => void;
   onUnpublish?: () => void;
+  onDelete?: () => void;
+  canLeaveTeam?: boolean;
+  onLeaveTeam?: () => void;
 }
 
 function HeaderActionItem({
@@ -401,6 +405,83 @@ function HeaderActionItem({
       {children}
     </span>
   );
+}
+
+// A settings dropdown whose trigger is a GameCTAButton so it visually matches
+// the other header CTAs. Mirrors DropdownButton's open/cooldown handling so a
+// click on the trigger while open doesn't immediately re-open it.
+function SettingsMenuButton({ menuProps }: { menuProps: any[] }) {
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const coolDownRef = useRef(false);
+  const [dropdownContext, setDropdownContext] = useState<DOMRect | null>(null);
+
+  return (
+    <div ref={triggerRef} style={{ position: 'relative' }}>
+      <GameCTAButton
+        variant="neutral"
+        size="md"
+        icon="gear"
+        toggled={!!dropdownContext}
+        onClick={handleToggle}
+      >
+        Settings
+      </GameCTAButton>
+      {dropdownContext ? (
+        <DropdownList
+          dropdownContext={dropdownContext}
+          onHideMenu={handleHide}
+          style={{ minWidth: '15rem' }}
+        >
+          {menuProps.map((item, index) =>
+            item.separator ? (
+              <hr key={index} />
+            ) : (
+              <li
+                key={index}
+                style={item.style}
+                className={css`
+                  opacity: ${item.disabled ? 0.3 : 1};
+                  cursor: ${item.disabled ? 'default' : 'pointer'};
+                  @media (hover: hover) and (pointer: fine) {
+                    &:hover {
+                      background: ${item.disabled ? '#fff !important' : ''};
+                    }
+                  }
+                `}
+                onClick={
+                  item.disabled
+                    ? undefined
+                    : () => {
+                        setDropdownContext(null);
+                        item.onClick?.();
+                      }
+                }
+              >
+                {item.label}
+              </li>
+            )
+          )}
+        </DropdownList>
+      ) : null}
+    </div>
+  );
+
+  function handleToggle() {
+    if (coolDownRef.current) return;
+    setDropdownContext(
+      dropdownContext
+        ? null
+        : triggerRef.current?.getBoundingClientRect() ?? null
+    );
+  }
+
+  function handleHide() {
+    coolDownRef.current = true;
+    setDropdownContext(null);
+    window.setTimeout(() => {
+      coolDownRef.current = false;
+    }, 100);
+  }
 }
 
 function BuildVisibilityBadge({ isPublic }: { isPublic: boolean }) {
@@ -510,6 +591,9 @@ export default function Header({
   onReplaceMainBranch,
   onResetBranchToMain,
   onMergeBranchTargetChange,
+  onDelete,
+  canLeaveTeam,
+  onLeaveTeam,
   onOpenCollaborationSettings,
   onOpenDescriptionModal,
   onOpenThumbnailModal,
@@ -601,13 +685,104 @@ export default function Header({
     !releaseStatus.hasUnpublishedChanges
   );
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
-  const thumbnailButtonShiny = !String(build.thumbnailUrl || '').trim();
+  const hasThumbnail = Boolean(String(build.thumbnailUrl || '').trim());
+  // Nudge owners to set a thumbnail: while unset, keep the Thumbnail button
+  // out front (shiny pink); once set, it lives in the Settings menu.
+  const showThumbnailNudge = canEditThumbnail && !hasThumbnail;
   const showVisibilityBadge = !isContributionFork;
   const canOpenRuntimeApp = Boolean(build.isPublic || isOwner);
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
     Boolean(build.isPublic && publicAppIsUpToDate);
+
+  function renderSettingsMenu() {
+    const items: any[] = [];
+    if (canEditMetadata) {
+      items.push({
+        label: (
+          <>
+            <Icon icon="pencil-alt" />
+            <span style={{ marginLeft: '1rem' }}>
+              {build.description?.trim() ? 'Edit details' : 'Add details'}
+            </span>
+          </>
+        ),
+        onClick: onOpenDescriptionModal
+      });
+    }
+    if (canEditThumbnail && hasThumbnail) {
+      items.push({
+        label: (
+          <>
+            <Icon icon="image" />
+            <span style={{ marginLeft: '1rem' }}>Thumbnail</span>
+          </>
+        ),
+        disabled: savingThumbnail || publishing,
+        onClick: onOpenThumbnailModal
+      });
+    }
+    if (isOwner && !isContributionFork) {
+      items.push({
+        label: (
+          <>
+            <Icon
+              icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
+            />
+            <span style={{ marginLeft: '1rem' }}>
+              {getCollaborationButtonLabel(collaborationMode)}
+            </span>
+          </>
+        ),
+        onClick: onOpenCollaborationSettings
+      });
+    }
+    if (isOwner && !isContributionFork && build.isPublic) {
+      items.push({
+        label: (
+          <>
+            <Icon icon="eye-slash" />
+            <span style={{ marginLeft: '1rem' }}>Unpublish</span>
+          </>
+        ),
+        disabled: publishing || banned?.build,
+        onClick: onUnpublish || (() => {})
+      });
+    }
+    if (onDelete) {
+      if (items.length > 0) {
+        items.push({ separator: true });
+      }
+      items.push({
+        label: (
+          <>
+            <Icon icon="trash-alt" />
+            <span style={{ marginLeft: '1rem' }}>Delete</span>
+          </>
+        ),
+        style: { color: Color.red(), fontWeight: 800 },
+        onClick: onDelete
+      });
+    }
+    if (canLeaveTeam && onLeaveTeam) {
+      if (items.length > 0) {
+        items.push({ separator: true });
+      }
+      items.push({
+        label: (
+          <>
+            <Icon icon="right-from-bracket" />
+            <span style={{ marginLeft: '1rem' }}>Leave team</span>
+          </>
+        ),
+        style: { color: Color.red(), fontWeight: 800 },
+        onClick: onLeaveTeam
+      });
+    }
+    if (items.length === 0) return null;
+    return <SettingsMenuButton menuProps={items} />;
+  }
 
   function renderMergeTargetControl() {
     const targetLabel = String(mergeBranchTargetLabel || '').trim();
@@ -688,6 +863,8 @@ export default function Header({
       </span>
     );
   }
+
+  const settingsMenu = renderSettingsMenu();
 
   return (
     <header className={headerClass}>
@@ -784,45 +961,6 @@ export default function Header({
             <BuildReleaseStatusBadge releaseStatus={releaseStatus} />
           </HeaderActionItem>
         ) : null}
-        {isOwner && !isContributionFork ? (
-          <HeaderActionItem mobileOrder={3}>
-            <GameCTAButton
-              onClick={onOpenCollaborationSettings}
-              variant={collaborationMode === 'private' ? 'pink' : 'logoBlue'}
-              size="md"
-              icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
-            >
-              {getCollaborationButtonLabel(collaborationMode)}
-            </GameCTAButton>
-          </HeaderActionItem>
-        ) : null}
-        {canEditMetadata ? (
-          <HeaderActionItem mobileOrder={5}>
-            <GameCTAButton
-              onClick={onOpenDescriptionModal}
-              variant="neutral"
-              size="md"
-              icon="pencil-alt"
-            >
-              {build.description?.trim() ? 'Edit Details' : 'Add Details'}
-            </GameCTAButton>
-          </HeaderActionItem>
-        ) : null}
-        {canEditThumbnail ? (
-          <HeaderActionItem mobileOrder={6}>
-            <GameCTAButton
-              onClick={onOpenThumbnailModal}
-              disabled={savingThumbnail || publishing}
-              loading={savingThumbnail}
-              variant="neutral"
-              size="md"
-              icon="image"
-              shiny={thumbnailButtonShiny}
-            >
-              Thumbnail
-            </GameCTAButton>
-          </HeaderActionItem>
-        ) : null}
         {showContributionStatusBadge || shouldShowMergeBranch ? (
           <>
             {showContributionStatusBadge ? (
@@ -867,41 +1005,41 @@ export default function Header({
             ) : null}
           </>
         ) : null}
+        {showThumbnailNudge ? (
+          <HeaderActionItem mobileOrder={5}>
+            <GameCTAButton
+              onClick={onOpenThumbnailModal}
+              disabled={savingThumbnail || publishing}
+              loading={savingThumbnail}
+              variant="pink"
+              size="md"
+              icon="image"
+              shiny
+            >
+              Thumbnail
+            </GameCTAButton>
+          </HeaderActionItem>
+        ) : null}
         {isOwner && !isContributionFork ? (
-          <>
-            <HeaderActionItem mobileOrder={4}>
-              <GameCTAButton
-                onClick={onTogglePublish}
-                disabled={publishButtonDisabled || banned?.build}
-                loading={publishing}
-                variant="magenta"
-                size="md"
-                icon="globe"
-                shiny={publicAppNeedsUpdate}
-              >
-                {publishing
-                  ? 'Processing...'
-                  : build.isPublic
-                    ? publicAppIsUpToDate
-                      ? 'Up to Date'
-                      : 'Update App'
-                    : 'Publish'}
-              </GameCTAButton>
-            </HeaderActionItem>
-            {build.isPublic ? (
-              <HeaderActionItem mobileOrder={7}>
-                <GameCTAButton
-                  onClick={onUnpublish || (() => {})}
-                  disabled={publishing || banned?.build}
-                  variant="neutral"
-                  size="md"
-                  icon="eye-slash"
-                >
-                  Unpublish
-                </GameCTAButton>
-              </HeaderActionItem>
-            ) : null}
-          </>
+          <HeaderActionItem mobileOrder={4}>
+            <GameCTAButton
+              onClick={onTogglePublish}
+              disabled={publishButtonDisabled || banned?.build}
+              loading={publishing}
+              variant="magenta"
+              size="md"
+              icon="globe"
+              shiny={publicAppNeedsUpdate}
+            >
+              {publishing
+                ? 'Processing...'
+                : build.isPublic
+                  ? publicAppIsUpToDate
+                    ? 'Up to Date'
+                    : 'Update App'
+                  : 'Publish'}
+            </GameCTAButton>
+          </HeaderActionItem>
         ) : null}
         {showContributionButton ? (
           <HeaderActionItem mobileOrder={3}>
@@ -931,42 +1069,12 @@ export default function Header({
             </GameCTAButton>
           </HeaderActionItem>
         ) : null}
+        {settingsMenu ? (
+          <HeaderActionItem mobileOrder={10}>{settingsMenu}</HeaderActionItem>
+        ) : null}
       </div>
       <div className={mobileButtonRowsClass}>
         <div className={mobileButtonRowClass}>
-          {isOwner && !isContributionFork ? (
-            <GameCTAButton
-              onClick={onOpenCollaborationSettings}
-              variant={collaborationMode === 'private' ? 'pink' : 'logoBlue'}
-              size="md"
-              icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
-            >
-              {getCollaborationButtonLabel(collaborationMode)}
-            </GameCTAButton>
-          ) : null}
-          {canEditMetadata ? (
-            <GameCTAButton
-              onClick={onOpenDescriptionModal}
-              variant="neutral"
-              size="md"
-              icon="pencil-alt"
-            >
-              {build.description?.trim() ? 'Edit Details' : 'Add Details'}
-            </GameCTAButton>
-          ) : null}
-          {canEditThumbnail ? (
-            <GameCTAButton
-              onClick={onOpenThumbnailModal}
-              disabled={savingThumbnail || publishing}
-              loading={savingThumbnail}
-              variant="neutral"
-              size="md"
-              icon="image"
-              shiny={thumbnailButtonShiny}
-            >
-              Thumbnail
-            </GameCTAButton>
-          ) : null}
           {shouldShowMergeBranch ? renderMergeBranchAction() : null}
           {showContributionButton ? (
             <GameCTAButton
@@ -992,6 +1100,20 @@ export default function Header({
               {forking ? 'Working...' : 'Fork'}
             </GameCTAButton>
           ) : null}
+          {showThumbnailNudge ? (
+            <GameCTAButton
+              onClick={onOpenThumbnailModal}
+              disabled={savingThumbnail || publishing}
+              loading={savingThumbnail}
+              variant="pink"
+              size="md"
+              icon="image"
+              shiny
+            >
+              Thumbnail
+            </GameCTAButton>
+          ) : null}
+          {settingsMenu}
         </div>
         {runtimeAssetTransferProgress ? (
           <RuntimeAssetTransferProgressBar
@@ -1017,17 +1139,6 @@ export default function Header({
                     : 'Update App'
                   : 'Publish'}
             </GameCTAButton>
-            {build.isPublic ? (
-              <GameCTAButton
-                onClick={onUnpublish || (() => {})}
-                disabled={publishing || banned?.build}
-                variant="neutral"
-                size="md"
-                icon="eye-slash"
-              >
-                Unpublish
-              </GameCTAButton>
-            ) : null}
           </div>
         ) : null}
         {contributionActionError ? (
