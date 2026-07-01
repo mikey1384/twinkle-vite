@@ -476,7 +476,7 @@ export default function ItemPanel({
                       color={
                         phase.completed ? Color.green() : Color.darkerGray()
                       }
-                      icon={phase.completed ? 'check' : 'times'}
+                      icon={phase.completed ? 'check' : ['far', 'circle']}
                     />
                     <span>
                       {phase.label}
@@ -563,7 +563,7 @@ export default function ItemPanel({
                   {milestone.completed ? (
                     <Icon color={Color.green()} icon="check" />
                   ) : !isNotification ? (
-                    <Icon icon="times" />
+                    <Icon color={Color.darkerGray()} icon={['far', 'circle']} />
                   ) : (
                     ' '
                   )}
