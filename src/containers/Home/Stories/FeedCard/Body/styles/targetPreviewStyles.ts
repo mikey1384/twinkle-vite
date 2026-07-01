@@ -676,6 +676,9 @@ export const targetPreviewStyles = `
     .home-feed-card__target-media,
     .home-feed-card__target-media-wrap {
       box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: 100%;
       height: 100%;
       min-width: 0;

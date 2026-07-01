@@ -92,7 +92,7 @@ const rootContentCSS = css`
     grid-area: thumb;
     display: flex;
     justify-content: end;
-    align-items: start;
+    align-items: center;
     > img {
       max-height: 100%;
       object-fit: contain;
