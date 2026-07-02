@@ -225,7 +225,13 @@ export default function notificationRequestHelpers({
         } = await request.post(
           `${URL}/notification/today/dailyReward`,
           {},
-          auth()
+          // Non-GET requests get no scheduler timeout; without one a stalled
+          // connection or slow server-side bonus assessment holds the daily
+          // reward modal on its spinner forever. The server's worst inline
+          // path is ~53s (30s bonus-guard wait + ~23s timeboxed assessment),
+          // so this must stay above that or the client aborts right before
+          // the fallback reward arrives.
+          { ...auth(), timeout: 60000 }
         );
         return {
           cards,
@@ -309,7 +315,7 @@ export default function notificationRequestHelpers({
         const { data } = await request.put(
           `${URL}/notification/today/dailyReward`,
           {},
-          auth()
+          { ...auth(), timeout: 30000 }
         );
         return data;
       } catch (error) {
@@ -326,10 +332,12 @@ export default function notificationRequestHelpers({
             isUnavailable,
             dailyTaskReward
           }
-        } = await axios.get(
-          `${URL}/notification/today/dailyReward/bonus`,
-          auth()
-        );
+        } = await axios.get(`${URL}/notification/today/dailyReward/bonus`, {
+          // Raw axios (not the scheduler), so no timeout applies by default;
+          // the server generates the bonus question inline so allow a while.
+          ...auth(),
+          timeout: 60000
+        });
         return {
           questions,
           chosenCard,
@@ -348,7 +356,7 @@ export default function notificationRequestHelpers({
         } = await request.post(
           `${URL}/notification/today/dailyReward/bonus`,
           { selectedIndex },
-          auth()
+          { ...auth(), timeout: 30000 }
         );
         return { isCorrect, isAlreadyAttempted, rewardAmount, dailyTaskReward };
       } catch (error) {

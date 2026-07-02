@@ -11,6 +11,7 @@ import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 import Header from './Header';
 import SocketManager from './SocketManager';
 import InvalidPage from '~/components/InvalidPage';
+import LazyModalFallback from '~/components/Modals/LazyModalFallback';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import API_URL from '~/constants/URL';
@@ -749,7 +750,13 @@ export default function App() {
           </Suspense>
         )}
         {dailyRewardModalShown && (
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <LazyModalFallback
+                onHide={() => onSetDailyRewardModalShown(false)}
+              />
+            }
+          >
             <DailyRewardModal
               onSetHasBonus={(hasBonus: boolean) => {
                 onUpdateTodayStats({
@@ -772,7 +779,13 @@ export default function App() {
           </Suspense>
         )}
         {dailyBonusModalShown && (
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <LazyModalFallback
+                onHide={() => onSetDailyBonusModalShown(false)}
+              />
+            }
+          >
             <DailyRewardModal
               openBonus
               onHide={() => onSetDailyBonusModalShown(false)}

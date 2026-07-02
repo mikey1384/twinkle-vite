@@ -18,6 +18,7 @@ export default function Content({
   bonusAttempted,
   bonusIsCorrect,
   bonusIsGraded,
+  bonusLoadFailed,
   bonusLoading,
   bonusQuestions,
   bonusSelectedChoiceIndex,
@@ -47,14 +48,19 @@ export default function Content({
   isRevealPressed,
   levelColorHex,
   linkColor,
+  loadFailed,
   loading,
   nextDayTimeStamp,
   numCoinsAdjustedToCardOwnership,
   onHideBonusSummary,
   onOpenBonusSummary,
+  onRetryBonusLoad,
+  onRetryLoad,
+  onRetryReveal,
   onSelectBonusChoice,
   onSetCardModalShown,
   openedFromSummary,
+  revealFailed,
   showBonusLine1,
   showBonusLine2,
   showBonusLine3,
@@ -79,6 +85,7 @@ export default function Content({
   bonusAttempted: boolean;
   bonusIsCorrect: boolean | null;
   bonusIsGraded: boolean;
+  bonusLoadFailed: boolean;
   bonusLoading: boolean;
   bonusQuestions: any[];
   bonusSelectedChoiceIndex?: number;
@@ -108,14 +115,19 @@ export default function Content({
   isRevealPressed: boolean;
   levelColorHex: string;
   linkColor: string;
+  loadFailed: boolean;
   loading: boolean;
   nextDayTimeStamp: number;
   numCoinsAdjustedToCardOwnership: string;
   onHideBonusSummary: () => void;
   onOpenBonusSummary: () => void;
+  onRetryBonusLoad: () => void;
+  onRetryLoad: () => void;
+  onRetryReveal: () => void;
   onSelectBonusChoice: (index: number) => void;
   onSetCardModalShown: (shown: boolean) => void;
   openedFromSummary: boolean;
+  revealFailed: boolean;
   showBonusLine1: boolean;
   showBonusLine2: boolean;
   showBonusLine3: boolean;
@@ -297,6 +309,45 @@ export default function Content({
           {loading ? (
             <div className={loadingWrapClass}>
               <Loading />
+            </div>
+          ) : loadFailed || revealFailed || (bonusLoadFailed && showBonusUI) ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '200px',
+                gap: '1.5rem'
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '1.5rem',
+                  color: Color.darkerGray(),
+                  textAlign: 'center'
+                }}
+              >
+                {loadFailed
+                  ? `We couldn't load your daily reward. Check your connection and try again.`
+                  : revealFailed
+                    ? `We couldn't confirm your reward with the server. Check your connection and try again.`
+                    : `We couldn't load your bonus question. It may still be getting prepared, so try again in a moment.`}
+              </p>
+              <Button
+                color="logoBlue"
+                variant="solid"
+                onClick={
+                  loadFailed
+                    ? onRetryLoad
+                    : revealFailed
+                      ? onRetryReveal
+                      : onRetryBonusLoad
+                }
+              >
+                <Icon icon="redo" />
+                <span style={{ marginLeft: '0.7rem' }}>Try again</span>
+              </Button>
             </div>
           ) : showBonusUI ? (
             <BonusView

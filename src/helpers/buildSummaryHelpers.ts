@@ -124,10 +124,22 @@ export function normalizeBuildSummary(
           Object.prototype.hasOwnProperty.call(build, 'request')
         ? true
         : Boolean(current?.viewerCollaborationRequestLoaded);
+  // Server payloads that carry tag state always pair `tags` with
+  // `tagsUpdatedAt` (annotateBuildTags). A tags array WITHOUT it is not tag
+  // state — notably Content-context state, where defaultContentState merges
+  // `tags: []` (a video playlist-tags default) into every content object.
+  // Treating that as "loaded and untagged" put a false "Add tags" action on
+  // tagged builds, so fall back to the cached tag state instead.
+  const hasTagState =
+    Object.prototype.hasOwnProperty.call(build, 'tagsUpdatedAt') &&
+    build.tagsUpdatedAt !== undefined;
 
   return {
     ...(current || {}),
     ...build,
+    ...(hasTagState
+      ? {}
+      : { tags: current?.tags, tagsUpdatedAt: current?.tagsUpdatedAt }),
     id,
     contentId: id,
     contentType: 'build',

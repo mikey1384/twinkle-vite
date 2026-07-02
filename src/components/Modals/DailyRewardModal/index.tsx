@@ -100,6 +100,10 @@ export default function DailyRewardModal({
   const [showBonusLine4, setShowBonusLine4] = useState(false);
   const [showBonusLine5, setShowBonusLine5] = useState(false);
   const [imagesPreloaded, setImagesPreloaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [revealFailed, setRevealFailed] = useState(false);
+  const [bonusLoadFailed, setBonusLoadFailed] = useState(false);
+  const [bonusLoadAttempt, setBonusLoadAttempt] = useState(0);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
   const isCoinReceivedRef = useRef(false);
@@ -116,73 +120,7 @@ export default function DailyRewardModal({
   }, []);
 
   useEffect(() => {
-    init();
-
-    async function init() {
-      if (openBonus) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        setImagesPreloaded(false);
-        const {
-          cards,
-          chosenCardId,
-          hasBonus,
-          bonusAttempted,
-          bonusAchieved,
-          dailyTaskReward,
-          nextDayTimeStamp: newNextDayTimeStamp,
-          xpEarned,
-          isAlreadyChecked,
-          coinEarned,
-          isCardOwned
-        } = await unlockDailyReward();
-        if (isAlreadyChecked) {
-          isAlreadyCheckedRef.current = true;
-          setCurrentCardId(chosenCardId);
-          setAlreadyChecked(true);
-          setShowFirstSentence(true);
-          setShowSecondSentence(true);
-          setShowThirdSentence(true);
-          setShowFourthSentence(true);
-          setShowFifthSentence(true);
-          if (bonusAttempted) {
-            setBonusAttempted(true);
-            setBonusAchieved(bonusAchieved);
-            setShowBonusSentence(true);
-            setXPEarned(xpEarned);
-          }
-          onSetIsDailyRewardChecked(true);
-        }
-        setCardIds(cards.map((card: Card) => card.id));
-        setDailyTaskReward(dailyTaskReward || null);
-        for (const card of cards) {
-          onUpdateAICard({
-            cardId: card.id,
-            newState: card
-          });
-        }
-        await preloadCardImages(cards);
-        onUpdateTodayStats({
-          newStats: {
-            nextDayTimeStamp: newNextDayTimeStamp
-          }
-        });
-        setCoinEarned(coinEarned);
-        setIsCardOwned(isCardOwned);
-        setChosenCardId(chosenCardId);
-        hasBonusRef.current = hasBonus;
-        if (openBonus) {
-          setShowBonusUI(true);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    }
+    handleInit();
 
     return () => {
       setAnimateReveal(false);
@@ -227,6 +165,7 @@ export default function DailyRewardModal({
     (async () => {
       try {
         setBonusLoading(true);
+        setBonusLoadFailed(false);
         if (bonusQuestions.length === 0) {
           const {
             questions,
@@ -254,7 +193,13 @@ export default function DailyRewardModal({
           applyGradedIfNeeded(bonusQuestions);
         }
       } catch (error) {
+        // The bonus question is generated inline server-side, so slow AI or a
+        // timeout can land here; without a failure state BonusView renders no
+        // questions and a dead Confirm button.
         console.error(error);
+        if (!ignore) {
+          setBonusLoadFailed(true);
+        }
       } finally {
         setBonusLoading(false);
       }
@@ -264,7 +209,7 @@ export default function DailyRewardModal({
       ignore = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showBonusUI, bonusAttempted, bonusAchieved]);
+  }, [showBonusUI, bonusAttempted, bonusAchieved, bonusLoadAttempt]);
 
   useEffect(() => {
     return () => {
@@ -420,6 +365,7 @@ export default function DailyRewardModal({
       bonusAttempted={bonusAttempted}
       bonusIsCorrect={bonusIsCorrect}
       bonusIsGraded={bonusIsGraded}
+      bonusLoadFailed={bonusLoadFailed}
       bonusLoading={bonusLoading}
       bonusQuestions={bonusQuestions}
       bonusSelectedChoiceIndex={bonusSelectedChoiceIndex}
@@ -451,6 +397,7 @@ export default function DailyRewardModal({
       isRevealPressed={isRevealPressed}
       levelColorHex={levelColorHex}
       linkColor={linkColor}
+      loadFailed={loadFailed}
       loading={loading}
       nextDayTimeStamp={nextDayTimeStamp}
       numCoinsAdjustedToCardOwnership={numCoinsAdjustedToCardOwnership}
@@ -459,9 +406,13 @@ export default function DailyRewardModal({
         setOpenedFromSummary(true);
         setShowBonusUI(true);
       }}
+      onRetryBonusLoad={() => setBonusLoadAttempt((count) => count + 1)}
+      onRetryLoad={handleInit}
+      onRetryReveal={handleReveal}
       onSelectBonusChoice={setBonusSelectedChoiceIndex}
       onSetCardModalShown={setCardModalShown}
       openedFromSummary={openedFromSummary}
+      revealFailed={revealFailed}
       showBonusLine1={showBonusLine1}
       showBonusLine2={showBonusLine2}
       showBonusLine3={showBonusLine3}
@@ -481,6 +432,78 @@ export default function DailyRewardModal({
       xpNumberColor={xpNumberColor}
     />
   );
+
+  async function handleInit() {
+    if (openBonus) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadFailed(false);
+    try {
+      setImagesPreloaded(false);
+      const {
+        cards,
+        chosenCardId,
+        hasBonus,
+        bonusAttempted,
+        bonusAchieved,
+        dailyTaskReward,
+        nextDayTimeStamp: newNextDayTimeStamp,
+        xpEarned,
+        isAlreadyChecked,
+        coinEarned,
+        isCardOwned
+      } = await unlockDailyReward();
+      if (isAlreadyChecked) {
+        isAlreadyCheckedRef.current = true;
+        setCurrentCardId(chosenCardId);
+        setAlreadyChecked(true);
+        setShowFirstSentence(true);
+        setShowSecondSentence(true);
+        setShowThirdSentence(true);
+        setShowFourthSentence(true);
+        setShowFifthSentence(true);
+        if (bonusAttempted) {
+          setBonusAttempted(true);
+          setBonusAchieved(bonusAchieved);
+          setShowBonusSentence(true);
+          setXPEarned(xpEarned);
+        }
+        onSetIsDailyRewardChecked(true);
+      }
+      setCardIds(cards.map((card: Card) => card.id));
+      setDailyTaskReward(dailyTaskReward || null);
+      for (const card of cards) {
+        onUpdateAICard({
+          cardId: card.id,
+          newState: card
+        });
+      }
+      await preloadCardImages(cards);
+      onUpdateTodayStats({
+        newStats: {
+          nextDayTimeStamp: newNextDayTimeStamp
+        }
+      });
+      setCoinEarned(coinEarned);
+      setIsCardOwned(isCardOwned);
+      setChosenCardId(chosenCardId);
+      hasBonusRef.current = hasBonus;
+      if (openBonus) {
+        setShowBonusUI(true);
+      }
+    } catch (error) {
+      console.error(error);
+      if (isComponentMounted.current) {
+        setLoadFailed(true);
+      }
+    } finally {
+      if (isComponentMounted.current) {
+        setLoading(false);
+      }
+    }
+  }
 
   async function preloadCardImages(cardsToLoad: Card[]) {
     const uniqueImagePaths = Array.from(
@@ -538,6 +561,7 @@ export default function DailyRewardModal({
   async function handleReveal() {
     setIsRevealPressed(true);
     isRevealPressedRef.current = true;
+    setRevealFailed(false);
     let finalizedCoinEarned = coinEarned;
     let finalizedCoinBalance = twinkleCoins + finalizedCoinEarned;
     newCoinsRef.current = finalizedCoinBalance;
@@ -546,7 +570,20 @@ export default function DailyRewardModal({
     let isFirstIteration = true;
     let fastIterations = 0;
 
-    const finalizedReward = await updateDailyRewardViewStatus();
+    let finalizedReward: any = null;
+    try {
+      finalizedReward = await updateDailyRewardViewStatus();
+    } catch (error) {
+      // The server still has resultViewed = 0 and owns the finalized amount,
+      // so don't run the reveal (it marks the reward viewed and writes a
+      // locally-synthesized coin balance to shared state). Resetting the
+      // pressed refs also disarms the unmount cleanup's coin write.
+      console.error(error);
+      setIsRevealPressed(false);
+      isRevealPressedRef.current = false;
+      setRevealFailed(true);
+      return;
+    }
     if (typeof finalizedReward?.coinEarned === 'number') {
       finalizedCoinEarned = finalizedReward.coinEarned;
       setCoinEarned(finalizedCoinEarned);

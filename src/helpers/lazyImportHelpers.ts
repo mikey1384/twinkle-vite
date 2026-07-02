@@ -12,6 +12,21 @@ const LAZY_IMPORT_RELOAD_COUNTS_KEY = 'twinkleLazyImportReloadCounts';
 // reason (device memory pressure, content blockers), more reloads make it
 // worse, so auto-reloads are capped per pathname for the session.
 const LAZY_IMPORT_MAX_RELOADS_PER_PATH = 2;
+// The staleness probes run while the user is staring at a Suspense fallback
+// (or, for request-helper modules, a pending request). On a stalled connection
+// an un-timeboxed fetch can hang for minutes, so cap the probes.
+const LAZY_IMPORT_PROBE_TIMEOUT_MS = 8000;
+
+function fetchWithProbeTimeout(url: string, init: RequestInit) {
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(),
+    LAZY_IMPORT_PROBE_TIMEOUT_MS
+  );
+  return fetch(url, { ...init, signal: controller.signal }).finally(() =>
+    clearTimeout(timer)
+  );
+}
 
 export function lazyWithRetry<T extends ComponentType<any>>(
   importer: () => Promise<{ default: T }>
@@ -243,7 +258,7 @@ async function isLikelyStaleLazyImportAsset(rawUrl: string) {
     if (!url.pathname.startsWith('/assets/') || !assetExtension) {
       return false;
     }
-    const response = await fetch(url.toString(), {
+    const response = await fetchWithProbeTimeout(url.toString(), {
       cache: 'no-store',
       method: 'HEAD'
     });
@@ -266,7 +281,7 @@ function getLazyImportAssetExtension(pathname: string) {
 
 async function hasNewDeployedIndexHtml() {
   try {
-    const response = await fetch(`${window.location.origin}/`, {
+    const response = await fetchWithProbeTimeout(`${window.location.origin}/`, {
       cache: 'no-store'
     });
     if (!response.ok) return false;
