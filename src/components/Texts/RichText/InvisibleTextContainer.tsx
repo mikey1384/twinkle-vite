@@ -11,6 +11,11 @@ import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 const collapsedLineHeight = 1.7;
 
+export function stripMarkdownLinkUrls(text: string) {
+  const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+  return text.replace(linkRegex, (_, label: string) => label);
+}
+
 export default function InvisibleTextContainer({
   contentId,
   contentType,
@@ -52,10 +57,7 @@ export default function InvisibleTextContainer({
     [onSetContainerNode]
   );
 
-  const renderedText = useMemo(() => {
-    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
-    return text.replace(linkRegex, (_, text: string) => text);
-  }, [text]);
+  const renderedText = useMemo(() => stripMarkdownLinkUrls(text), [text]);
 
   const handleSetContainerRef = useCallback(
     (node: HTMLDivElement | null) => {

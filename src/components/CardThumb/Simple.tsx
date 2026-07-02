@@ -1,28 +1,9 @@
 import React from 'react';
 import Loading from '~/components/Loading';
+import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-
-const thumbMystery = css`
-  width: 100%;
-  height: 75%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: ${Color.midnightBlack(0.96)};
-`;
-
-const thumbQuestion = css`
-  font-size: 2.6rem;
-  line-height: 1;
-  font-weight: 800;
-  color: ${Color.gold()};
-  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.6), 0 0 12px ${Color.gold(0.35)};
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 2rem;
-  }
-`;
 
 export default function Simple({
   card,
@@ -79,9 +60,7 @@ export default function Simple({
           src={`${cloudFrontURL}${card.imagePath}`}
         />
       ) : !card.isBurned ? (
-        <div className={thumbMystery}>
-          <span className={thumbQuestion}>?</span>
-        </div>
+        <MysteryCardArt level={card.level} style={{ height: '75%' }} />
       ) : null}
       {!!card.isBurned && (
         <div

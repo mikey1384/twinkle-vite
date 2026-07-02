@@ -7,8 +7,9 @@ import React, {
   Suspense
 } from 'react';
 import AIAudioButton from './AIAudioButton';
-import InvisibleTextContainer from './InvisibleTextContainer';
-import Loading from '~/components/Loading';
+import InvisibleTextContainer, {
+  stripMarkdownLinkUrls
+} from './InvisibleTextContainer';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -579,8 +580,13 @@ function RichText({
     if (cleanString || tooLongNonUrlToken) {
       return text;
     }
+    // The root div is opacity: 0 until parsing completes, so this fallback is
+    // never visible — only its height matters. Render the text with link URLs
+    // stripped (same transform as the measurement path) so the reserved space
+    // approximates the rendered content; a fixed-height spinner made
+    // containers like the profile popup jump ~15rem while the chunk loaded.
     return (
-      <Suspense fallback={<Loading />}>
+      <Suspense fallback={<>{stripMarkdownLinkUrls(text)}</>}>
         <Markdown
           contentId={contentId}
           contentType={contentType}

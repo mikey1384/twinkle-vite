@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState, useEffect } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
+import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -11,45 +12,6 @@ import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated, type AnimatedProps } from '@react-spring/web';
 import { isMobile, isTablet } from '~/helpers';
 import { Card as CardType } from '~/types';
-
-const mysteryCardPlaceholder = css`
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  padding: 1.5rem;
-  text-align: center;
-  background: ${Color.midnightBlack(0.96)};
-  color: ${Color.gold()};
-  overflow: hidden;
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      circle at 50% 50%,
-      rgba(255, 255, 255, 0.07),
-      transparent 70%
-    );
-    opacity: 0.5;
-  }
-  & > * {
-    position: relative;
-    z-index: 1;
-  }
-`;
-const questionMarkIcon = css`
-  font-size: clamp(7rem, 22vmin, 13rem);
-  line-height: 1;
-  font-weight: 800;
-  color: ${Color.gold()};
-  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 22px ${Color.gold(0.35)};
-`;
-
-// caption removed per design feedback
 
 export default function Card({
   bind,
@@ -244,9 +206,7 @@ export default function Card({
               <img loading="lazy" style={{ width: '100%' }} src={frontPicUrl} />
             )
           ) : !finalCard.isBurned ? (
-            <div className={mysteryCardPlaceholder}>
-              <span className={questionMarkIcon}>?</span>
-            </div>
+            <MysteryCardArt level={finalCard.level} />
           ) : null}
           {!!finalCard.isBurned && (
             <div

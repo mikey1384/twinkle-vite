@@ -10,6 +10,7 @@ import {
   returnCardBurnXP
 } from '~/constants/defaultValues';
 import useAICard from '~/helpers/hooks/useAICard';
+import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Card } from '~/types';
 import { css } from '@emotion/css';
@@ -34,7 +35,7 @@ export function CompactThumb({
     imageSrc && !card.isBurned ? (
       <img src={imageSrc} alt={card.word || `AI card ${card.id}`} />
     ) : !card.isBurned ? (
-      <span className="compact-ai-card-thumb__unknown">?</span>
+      <MysteryCardArt level={card.level} />
     ) : (
       <div className="compact-ai-card-thumb__burned">
         {ownerName ? (
@@ -313,12 +314,6 @@ const compactThumbClass = css`
   }
   &.compact-ai-card-thumb--static {
     cursor: default;
-  }
-  .compact-ai-card-thumb__unknown {
-    color: ${Color.gold()};
-    font-size: 1.8rem;
-    font-weight: 900;
-    line-height: 1;
   }
   &.compact-ai-card-thumb--burned .compact-ai-card-thumb__art {
     background: transparent;
