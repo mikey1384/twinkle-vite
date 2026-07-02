@@ -478,6 +478,26 @@ function RichText({
     }
   }, [isPreview, fullTextShown, containerNode, hasTopEmbeddedContent]);
 
+  // The tooLongNonUrlToken fallback renders raw text without the invisible
+  // measuring container, so containerNode never arrives; measure the visible
+  // node directly or the max-height clamp hides content with no Show More.
+  useEffect(() => {
+    if (isPreview || !tooLongNonUrlToken || fullTextShown) {
+      return;
+    }
+    const node = TextRef.current;
+    if (!node) {
+      return;
+    }
+    const overflown = node.scrollHeight > node.clientHeight + 2;
+    setIsOverflown(overflown);
+    overflownRef.current = overflown;
+    if (!overflown) {
+      setFullTextShown(true);
+      fullTextShownRef.current = true;
+    }
+  }, [isPreview, tooLongNonUrlToken, fullTextShown, text]);
+
   useEffect(() => {
     if (!TextRef.current) {
       return;
@@ -527,8 +547,11 @@ function RichText({
 
   useEffect(() => {
     let resizeObserver: any;
+    // Raw-text fallback renders synchronously; no height reservation needed,
+    // and with isParsed never set the observed min-height would stick forever.
     if (
       !isPreview &&
+      !tooLongNonUrlToken &&
       typeof ResizeObserver === 'function' &&
       TextRef.current &&
       !defaultMinHeightRef.current
@@ -543,7 +566,7 @@ function RichText({
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [isPreview]);
+  }, [isPreview, tooLongNonUrlToken]);
 
   useEffect(() => {
     minHeightRef.current = minHeight;
@@ -630,7 +653,10 @@ function RichText({
         style={
           {
             opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
-            minHeight: !isParsed && minHeight ? `${minHeight}px` : undefined,
+            minHeight:
+              !isParsed && !tooLongNonUrlToken && minHeight
+                ? `${minHeight}px`
+                : undefined,
             maxHeight:
               fullTextShown ||
               isLineClampedPreview ||

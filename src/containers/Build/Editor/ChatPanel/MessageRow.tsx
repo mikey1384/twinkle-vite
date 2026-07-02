@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
+import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 import { useLazyLoad } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -165,7 +166,12 @@ export default function MessageRow({
                 isStreamingTarget={isStreamingTarget}
               />
             ) : (
-              <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
+              <RichText
+                maxLines={15}
+                readMoreColor="var(--build-chat-user-text)"
+              >
+                {message.content}
+              </RichText>
             )}
           </div>
           <span
