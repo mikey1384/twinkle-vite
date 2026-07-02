@@ -171,6 +171,11 @@ export const mobilePreviewStyles = `
     .home-feed-card__target-preview--size-media-comment {
       height: max(18rem, 180px);
     }
+    /* Mobile counterpart of the subject-embed target height in
+       panelPreviewStyles; must match TARGET_HEIGHT_REM['subject-embed']. */
+    .home-feed-card__target-preview--size-subject-embed {
+      height: max(20rem, 200px);
+    }
     .home-feed-card__panel-preview,
     .home-feed-card__target-preview {
       border-left: 0;

@@ -313,9 +313,16 @@ const profileEmbedCardClass = css`
     font-size: 1rem;
     line-height: 1.45;
   }
-  .profile-embed-card__bio .rich-text {
-    min-width: 0;
+  /* Bio rows are markdown paragraphs. Host surfaces (feed-card target copy,
+     ContentPanel targets) style bare descendant <p> elements for their own
+     copy, which would otherwise out-cascade the sizes this card inherits into
+     its bio, so pin the paragraph typography here. Typography ONLY — no
+     display/overflow/clamp resets, because RichText's line-clamp preview mode
+     clamps on its root and forces direct child paragraphs to display: inline;
+     a higher-specificity structural override here would defeat that clamp. */
+  .profile-embed-card__bio p {
     margin: 0;
+    color: inherit;
     font-size: inherit;
     line-height: inherit;
   }

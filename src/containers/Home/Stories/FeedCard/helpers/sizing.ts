@@ -57,7 +57,8 @@ export type FeedCardTargetSize =
   | 'compact'
   | 'fallback'
   | 'media-comment'
-  | 'standard';
+  | 'standard'
+  | 'subject-embed';
 export type FeedCardLayoutAxis = 'desktop' | 'mobile';
 
 export type FeedCardFrameSize =
@@ -200,7 +201,13 @@ const TARGET_HEIGHT_REM: Record<
   compact: { desktop: 8.5, mobile: 8.5 },
   fallback: { desktop: 13, mobile: 12 },
   'media-comment': { desktop: 20, mobile: 18 },
-  standard: { desktop: 13, mobile: 12 }
+  standard: { desktop: 13, mobile: 12 },
+  // Subject target whose description embed got promoted into the embed slot
+  // (profile card, image, YouTube). Like the comment embed allowance, the
+  // embed's exact height is unknown at sizing time (profile data is
+  // lazy-loaded), so this is sized for the common max; taller embeds clip
+  // inside the overflow-hidden target panel.
+  'subject-embed': { desktop: 23, mobile: 20 }
 };
 
 const COMMENT_PREVIEW_HEIGHT_REM = {
@@ -714,7 +721,7 @@ function getTargetPanelSizing({
   }
 
   if (targetSubject?.id) {
-    return buildTargetSizing('standard');
+    return buildTargetSizing(getSubjectTargetSize(targetSubject));
   }
 
   const hasExpectedRootTarget = Boolean(
@@ -751,10 +758,20 @@ function getTargetPanelSizing({
         ];
 
   if (standardRootTypes.includes(normalizedRootType)) {
-    return buildTargetSizing('standard');
+    return buildTargetSizing(
+      normalizedRootType === 'subject'
+        ? getSubjectTargetSize(rootObj)
+        : 'standard'
+    );
   }
 
   return buildTargetSizing('fallback');
+}
+
+function getSubjectTargetSize(subject: any): FeedCardTargetSize {
+  return getSubjectTargetDescriptionEmbeds(subject).contentEmbed
+    ? 'subject-embed'
+    : 'standard';
 }
 
 function buildTargetSizing(
@@ -1276,6 +1293,30 @@ function isSubjectCommentRichTextEmbed(content: any) {
     return false;
   }
   return getInternalEmbedPreviewInfo(embedPreview.src)?.kind === 'comment';
+}
+
+// Single source of truth for how a subject TARGET preview places its
+// description embed (mirrored by TargetPreview.renderTargetSubjectPreview and
+// by target sizing): a build embed with no attachment is promoted to the media
+// slot; any other markdown embed occupies the content-embed slot below the
+// copy.
+export function getSubjectTargetDescriptionEmbeds(target: any): {
+  contentEmbed: MarkdownImageEmbed | null;
+  promotedBuildEmbed: MarkdownImageEmbed | null;
+} {
+  const embed = getMarkdownImageEmbedPreview(String(target?.description || ''));
+  if (!embed) {
+    return { contentEmbed: null, promotedBuildEmbed: null };
+  }
+  const isBuildEmbed =
+    embed.type === 'internal' &&
+    getInternalEmbedPreviewInfo(embed.src)?.kind === 'build';
+  const promotedBuildEmbed =
+    isBuildEmbed && !target?.filePath ? embed : null;
+  return {
+    contentEmbed: promotedBuildEmbed ? null : embed,
+    promotedBuildEmbed
+  };
 }
 
 function hasPromotableSubjectAttachmentEmbed(

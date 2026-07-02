@@ -276,7 +276,13 @@ export const targetPreviewStyles = `
       flex: 0 0 auto;
       min-height: max(1.37rem, 13.7px);
     }
-    .home-feed-card__target-copy p {
+    /* Copy paragraphs of the target preview itself. The embed slot hosts
+       self-styled foreign components (e.g. ProfileEmbedCard), so their
+       paragraphs must not be caught by this element selector; :where() keeps
+       the exclusion at zero specificity so the url/mobile overrides below
+       still win exactly as before. */
+    .home-feed-card__target-copy
+      p:where(:not(.home-feed-card__target-subject-embed-slot p)) {
       margin: 0;
       color: ${Color.darkGray()};
       font-size: var(--home-feed-secondary-content-font-size);

@@ -198,6 +198,12 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview--size-media-comment {
     height: max(20rem, 200px);
   }
+  /* Subject target carrying a promoted description embed (profile card,
+     image, YouTube). Must match TARGET_HEIGHT_REM['subject-embed'] in
+     helpers/sizing.ts — the card frame budgets this exact height. */
+  .home-feed-card__target-preview--size-subject-embed {
+    height: max(23rem, 230px);
+  }
   .home-feed-card__target-preview > * {
     pointer-events: none;
   }
@@ -226,6 +232,10 @@ export const panelPreviewStyles = `
     &.home-feed-card__body--tablet-media-attachment
       .home-feed-card__target-preview--size-media-comment {
       height: max(18rem, 180px);
+    }
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-subject-embed {
+      height: max(20rem, 200px);
     }
   }
   h3 {

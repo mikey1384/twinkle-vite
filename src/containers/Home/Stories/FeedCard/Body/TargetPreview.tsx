@@ -10,7 +10,6 @@ import RichText from '~/components/Texts/RichText';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
-import { getInternalEmbedPreviewInfo } from '~/helpers/aiCardEmbedHelpers';
 import {
   AttachmentSurface,
   AudioWavePreview,
@@ -26,7 +25,7 @@ import {
   shouldSkipFeedCardNavigation
 } from '../helpers/navigation';
 import {
-  getMarkdownImageEmbedPreview,
+  getSubjectTargetDescriptionEmbeds,
   removeMarkdownImageEmbeds
 } from '../helpers/sizing';
 import { isRenderableHomeFeedTargetComment } from '../helpers/targetComment';
@@ -545,27 +544,21 @@ export default function TargetPreview({
 
   function renderTargetSubjectPreview(target: any) {
     const attachmentPreview = renderTargetAttachmentPreview(target);
-    const description = String(target?.description || '');
-    const descriptionEmbed = getMarkdownImageEmbedPreview(description);
-    const descriptionBuildEmbed =
-      descriptionEmbed?.type === 'internal' &&
-      getInternalEmbedPreviewInfo(descriptionEmbed.src)?.kind === 'build'
-        ? descriptionEmbed
-        : null;
-    const shouldPromoteDescriptionBuildEmbed = Boolean(
-      descriptionBuildEmbed && !attachmentPreview
-    );
     // A content embed left inside the description renders as a block that the
     // line-clamped description RichText clips to its header. We strip every
     // embed from the text and promote it to its own slot so it renders in full
     // and nothing is dropped. Build-without-attachment goes to the media slot
     // (below); ANY other embed — internal, image, or YouTube — renders in the
     // content-embed slot via MarkdownEmbedPreview (which handles every type).
-    const descriptionContentEmbed =
-      descriptionEmbed && !shouldPromoteDescriptionBuildEmbed
-        ? descriptionEmbed
-        : null;
-    const descriptionText = removeMarkdownImageEmbeds(description);
+    // The placement logic is shared with target sizing (which budgets extra
+    // height for an occupied content-embed slot) via the sizing helper.
+    const {
+      contentEmbed: descriptionContentEmbed,
+      promotedBuildEmbed: promotedDescriptionBuildEmbed
+    } = getSubjectTargetDescriptionEmbeds(target);
+    const descriptionText = removeMarkdownImageEmbeds(
+      String(target?.description || '')
+    );
     const descriptionContentEmbedPreview = descriptionContentEmbed ? (
       <MarkdownEmbedPreview
         className="home-feed-card__target-subject-nested-embed"
@@ -576,17 +569,16 @@ export default function TargetPreview({
         onNavigate={onNavigate}
       />
     ) : null;
-    const descriptionBuildEmbedPreview =
-      shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed ? (
-        <MarkdownEmbedPreview
-          className="home-feed-card__target-subject-build-embed-preview"
-          contentId={Number(target.id || 0)}
-          contentType="subject"
-          embed={descriptionBuildEmbed}
-          internalPreviewVariant="compact"
-          onNavigate={onNavigate}
-        />
-      ) : null;
+    const descriptionBuildEmbedPreview = promotedDescriptionBuildEmbed ? (
+      <MarkdownEmbedPreview
+        className="home-feed-card__target-subject-build-embed-preview"
+        contentId={Number(target.id || 0)}
+        contentType="subject"
+        embed={promotedDescriptionBuildEmbed}
+        internalPreviewVariant="compact"
+        onNavigate={onNavigate}
+      />
+    ) : null;
     const mediaPreview = attachmentPreview || descriptionBuildEmbedPreview;
     return (
       <HomeFeedSubjectTargetPreview
