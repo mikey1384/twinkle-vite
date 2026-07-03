@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
+import { showDesktopNotification } from '~/helpers/desktopNotifications';
 import {
   useAppContext,
   useChatContext,
@@ -25,6 +27,7 @@ export default function useAISocket({
   usingChatRef: React.RefObject<boolean>;
   aiCallChannelId: number;
 }) {
+  const navigate = useNavigate();
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
@@ -43,6 +46,15 @@ export default function useAISocket({
 
   const selectedChannelIdRef = useRef(selectedChannelId);
   const channelsObjRef = useRef(channelsObj);
+  const pendingAIReplyRef = useRef<
+    Record<
+      number,
+      { aiName: string; messageId: number; pathId: number; topicId: number }
+    >
+  >({});
+  const scheduledAIReplyNotifyRef = useRef<
+    Record<number, { timer: ReturnType<typeof setTimeout>; messageId: number }>
+  >({});
   const pageVisibleRef = useRef(pageVisible);
   const aiCallChannelIdRef = useRef(aiCallChannelId);
   selectedChannelIdRef.current = selectedChannelId;
@@ -168,6 +180,7 @@ export default function useAISocket({
     socket.on('ai_realtime_input_received', sendAIUIInformation);
 
     socket.on('ai_message_done', handleAIMessageDone);
+    socket.on('chat_message_deleted', handleAIMessageDiscardedForNotify);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('ai_message_error', handleAIMessageError);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
@@ -189,6 +202,12 @@ export default function useAISocket({
       );
       socket.off('ai_realtime_input_received', sendAIUIInformation);
       socket.off('ai_message_done', handleAIMessageDone);
+      socket.off('chat_message_deleted', handleAIMessageDiscardedForNotify);
+      for (const scheduled of Object.values(scheduledAIReplyNotifyRef.current)) {
+        clearTimeout(scheduled.timer);
+      }
+      scheduledAIReplyNotifyRef.current = {};
+      pendingAIReplyRef.current = {};
       socket.off('new_ai_message_received', handleReceiveAIMessage);
       socket.off('ai_message_error', handleAIMessageError);
       socket.off('ai_call_duration_updated', handleAICallDurationUpdate);
@@ -359,10 +378,69 @@ export default function useAISocket({
     }
 
     function handleAIMessageDone(channelId: number) {
+      const pendingReply = pendingAIReplyRef.current[channelId];
+      delete pendingAIReplyRef.current[channelId];
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }
       });
+      if (!pendingReply || !document.hidden) return;
+      // On failed/cancelled generations the server emits done BEFORE
+      // ai_message_error / chat_message_deleted, so hold the notification for
+      // a grace period during which those events can cancel it.
+      cancelScheduledAIReplyNotification({ channelId });
+      scheduledAIReplyNotifyRef.current[channelId] = {
+        messageId: pendingReply.messageId,
+        timer: setTimeout(() => {
+          delete scheduledAIReplyNotifyRef.current[channelId];
+          if (
+            !document.hidden ||
+            channelsObjRef.current[channelId]?.cancelledMessageIds?.has(
+              pendingReply.messageId
+            )
+          ) {
+            return;
+          }
+          showDesktopNotification({
+            title: `${pendingReply.aiName} replied`,
+            body: 'Click to view the reply',
+            tag: `chat-${channelId}`,
+            onClick: () =>
+              navigate(
+                `/chat/${pendingReply.pathId}${
+                  pendingReply.topicId ? `/topic/${pendingReply.topicId}` : ''
+                }`
+              )
+          });
+        }, 2000)
+      };
+    }
+
+    function cancelScheduledAIReplyNotification({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId?: number;
+    }) {
+      const scheduled = scheduledAIReplyNotifyRef.current[channelId];
+      if (!scheduled) return;
+      if (messageId && scheduled.messageId !== messageId) return;
+      clearTimeout(scheduled.timer);
+      delete scheduledAIReplyNotifyRef.current[channelId];
+    }
+
+    function handleAIMessageDiscardedForNotify({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId: number;
+    }) {
+      if (pendingAIReplyRef.current[channelId]?.messageId === messageId) {
+        delete pendingAIReplyRef.current[channelId];
+      }
+      cancelScheduledAIReplyNotification({ channelId, messageId });
     }
 
     function handleReceiveAIMessage({
@@ -385,6 +463,16 @@ export default function useAISocket({
           currentlyStreamingAIMsgId: message.id
         }
       });
+      const isZeroMessage = message.userId === ZERO_TWINKLE_ID;
+      const computedPathId =
+        currentChannelsObj[channelId]?.pathId ??
+        Number(channelId) + Number(CHAT_ID_BASE_NUMBER);
+      pendingAIReplyRef.current[channelId] = {
+        aiName: isZeroMessage ? 'Zero' : 'Ciel',
+        messageId: message.id,
+        pathId: computedPathId,
+        topicId: Number(message.subjectId || message.targetSubject?.id) || 0
+      };
       const messageIsForCurrentChannel = channelId === selectedChannelIdRef.current;
       const appliedMessage = {
         ...message,
@@ -403,10 +491,6 @@ export default function useAISocket({
         });
       } else {
         const prevChannelObj = currentChannelsObj[channelId];
-        const computedPathId =
-          prevChannelObj?.pathId ??
-          Number(channelId) + Number(CHAT_ID_BASE_NUMBER);
-        const isZeroMessage = message.userId === ZERO_TWINKLE_ID;
         const aiUsername = isZeroMessage ? 'Zero' : 'Ciel';
         const aiUserId = isZeroMessage ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
         const aiProfilePicUrl = isZeroMessage ? ZERO_PFP_URL : CIEL_PFP_URL;
@@ -441,6 +525,7 @@ export default function useAISocket({
       error?: string;
       errorType?: 'moderation' | 'general';
     }) {
+      handleAIMessageDiscardedForNotify({ channelId, messageId });
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }

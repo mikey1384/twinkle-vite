@@ -13,6 +13,7 @@ import {
   useViewContext,
   useHomeContext
 } from '~/contexts';
+import { showDesktopNotification } from '~/helpers/desktopNotifications';
 
 export default function useChatSocket({
   channelsObj,
@@ -350,6 +351,9 @@ export default function useChatSocket({
         }
       }
       socket.emit('join_chat_group', message.channelId);
+      if (message.userId !== userId && document.hidden) {
+        notifyMessageReceivedWhileAway({ message, channel: { pathId } });
+      }
       onReceiveFirstMsg({
         message,
         isDuplicate,
@@ -453,6 +457,9 @@ export default function useChatSocket({
       if (isChessGameMessage(message)) {
         void refreshUnansweredChessShortcut();
       }
+      if (message.userId !== userId && document.hidden) {
+        notifyMessageReceivedWhileAway({ message, channel });
+      }
       if (senderIsUser && currentPageVisible) return;
       if (messageIsForCurrentChannel) {
         if (usingChatRef.current) {
@@ -491,6 +498,49 @@ export default function useChatSocket({
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
         onUpdateMyXpRef.current();
       }
+    }
+
+    function notifyMessageReceivedWhileAway({
+      message,
+      channel
+    }: {
+      message: any;
+      channel: any;
+    }) {
+      const channelObj =
+        channelsObjRef.current?.[message.channelId] || channel || {};
+      const senderName = message.username || 'Someone';
+      const title =
+        channelObj.channelName && !channelObj.twoPeople
+          ? `${senderName} in ${channelObj.channelName}`
+          : senderName;
+      const content =
+        typeof message.content === 'string' ? message.content.trim() : '';
+      const body = content
+        ? content.length > 150
+          ? `${content.slice(0, 150)}…`
+          : content
+        : message.fileName
+        ? 'Sent an attachment'
+        : 'Sent a message';
+      const pathId = channelObj.pathId || channel?.pathId;
+      const subchannelPath = message.subchannelId
+        ? channelObj.subchannelObj?.[message.subchannelId]?.path
+        : null;
+      const topicPath = message.subjectId ? `/topic/${message.subjectId}` : '';
+      showDesktopNotification({
+        title,
+        body,
+        tag: `chat-${message.channelId}`,
+        onClick: pathId
+          ? () =>
+              navigate(
+                `/chat/${pathId}${
+                  subchannelPath ? `/${subchannelPath}` : ''
+                }${topicPath}`
+              )
+          : undefined
+      });
     }
 
     function handleRemovedFromChannel({
