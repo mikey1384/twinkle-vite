@@ -586,7 +586,7 @@ function getMainPanelSize({
   }
 
   if (content?.contentType === 'subject' && flags.hasRichTextEmbed) {
-    if (isSubjectCommentRichTextEmbed(content)) {
+    if (getSubjectContentSizedEmbedKind(content)) {
       return 'subject-comment-embed';
     }
     return 'subject-rich-embed';
@@ -958,6 +958,16 @@ const COMMENT_EMBED_PREVIEW_HEIGHT_REM = {
   mobile: 7.6
 };
 
+// Fixed allowance for the embedded AI-story card (topline chip + 2-line title
+// + 3-line body + padding, per compactMainContentPreviewClass). Like the
+// comment embed, the story is lazy-loaded by id, so this is the worst-case
+// natural height; shorter cards center in the leftover via margin-block auto
+// (mainPreviewStyles).
+const AI_STORY_EMBED_PREVIEW_HEIGHT_REM = {
+  desktop: 15.8,
+  mobile: 15.8
+};
+
 function estimateCommentEmbedBodyHeight(
   content: any,
   axis: FeedCardLayoutAxis,
@@ -1031,6 +1041,10 @@ function estimateCommentEmbedBodyHeight(
     showSecretPreview
   ].filter(Boolean).length;
   const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
+  const embedHeight =
+    getSubjectContentSizedEmbedKind(content) === 'aiStory'
+      ? AI_STORY_EMBED_PREVIEW_HEIGHT_REM[axis]
+      : COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis];
 
   return (
     layout.previewPaddingY +
@@ -1045,7 +1059,7 @@ function estimateCommentEmbedBodyHeight(
         })
       : 0) +
     descriptionLines * layout.descriptionLineHeight +
-    COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis] +
+    embedHeight +
     secretHeight
   );
 }
@@ -1292,14 +1306,21 @@ function hasRichTextEmbed(content: any) {
   return true;
 }
 
-function isSubjectCommentRichTextEmbed(content: any) {
+// Subject description embeds that render a natural-height card (instead of
+// stretching to fill the panel) get the content-sized 'subject-comment-embed'
+// panel: comment embeds and AI-story embeds. A fixed 34rem subject-rich-embed
+// panel would leave a large empty gap under them.
+function getSubjectContentSizedEmbedKind(
+  content: any
+): 'comment' | 'aiStory' | null {
   const embedPreview = getMarkdownImageEmbedPreview(
     String(content?.description || content?.content || '')
   );
   if (!embedPreview || embedPreview.type !== 'internal') {
-    return false;
+    return null;
   }
-  return getInternalEmbedPreviewInfo(embedPreview.src)?.kind === 'comment';
+  const kind = getInternalEmbedPreviewInfo(embedPreview.src)?.kind;
+  return kind === 'comment' || kind === 'aiStory' ? kind : null;
 }
 
 // Single source of truth for how a subject TARGET preview places its

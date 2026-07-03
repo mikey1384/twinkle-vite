@@ -58,7 +58,7 @@ import { normalizeViewCount } from '~/helpers/viewCount';
 
 const SHOWCASE_CARD_CLASS = 'home-feed-card--showcase';
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
-const HOME_FEED_CARD_LAYOUT_VERSION = 'root-user-target-preview-v2';
+const HOME_FEED_CARD_LAYOUT_VERSION = 'subject-ai-story-embed-v1';
 const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
 const HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX = 10;
 const HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX = 2;

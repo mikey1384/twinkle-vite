@@ -601,8 +601,14 @@ export const mainPreviewStyles = `
           .compact-main-content-embed--ai-story-has-image
         )
     ) {
+    /* keep natural height, but stay on the default cross-axis stretch:
+       align-self: start here shrink-wraps the column-flex item to its
+       min-content width (~0 for clamped text), collapsing the card to a
+       2px vertical line. The panel reserves the worst-case card height
+       (AI_STORY_EMBED_PREVIEW_HEIGHT_REM); margin-block centers shorter
+       cards in the leftover. */
     flex: 0 0 auto;
-    align-self: start;
+    margin-block: auto;
   }
   .home-feed-card__subject-embed-preview:has(.compact-default-internal-embed) {
     border: 0;
