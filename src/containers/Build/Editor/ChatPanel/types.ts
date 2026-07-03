@@ -10,8 +10,7 @@ export type BuildLumineModel =
   | 'gpt-5.5'
   | 'claude-opus-4-8'
   | 'claude-sonnet-5'
-  | 'claude-fable-5'
-  | 'gpt-5.4';
+  | 'claude-fable-5';
 export type BuildLumineThinkLevel =
   | 'none'
   | 'low'

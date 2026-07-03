@@ -358,6 +358,10 @@ export default function Body({
         className={`home-feed-card__subject-preview${
           isMinimalSubject ? ' home-feed-card__subject-preview--minimal' : ''
         }${
+          showSecretPreview
+            ? ' home-feed-card__subject-preview--with-secret'
+            : ''
+        }${
           hasDescriptionEmbed
             ? ' home-feed-card__subject-preview--with-embed'
             : ''

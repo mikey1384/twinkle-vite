@@ -6,7 +6,7 @@ import type {
   BuildLumineThinkLevel
 } from '../ChatPanel/types';
 
-export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'gpt-5.4';
+export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'claude-sonnet-5';
 export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'medium';
 
 export const LUMINE_THINK_LEVEL_LABELS: Record<BuildLumineThinkLevel, string> =
@@ -26,13 +26,6 @@ const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
 ];
 
 const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
-  {
-    model: 'gpt-5.4',
-    label: 'GPT-5.4',
-    description: 'Quick and steady.',
-    defaultReasoningEffort: DEFAULT_LUMINE_THINK_LEVEL,
-    supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
-  },
   {
     model: 'gpt-5.5',
     label: 'GPT-5.5',
@@ -63,13 +56,17 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
   }
 ];
 
+const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
+  FALLBACK_LUMINE_MODEL_OPTIONS.find(
+    (option) => option.model === DEFAULT_LUMINE_MODEL
+  ) || FALLBACK_LUMINE_MODEL_OPTIONS[0];
+
 function isLumineModel(value: unknown): value is BuildLumineModel {
   return (
     value === 'gpt-5.5' ||
     value === 'claude-opus-4-8' ||
     value === 'claude-sonnet-5' ||
-    value === 'claude-fable-5' ||
-    value === 'gpt-5.4'
+    value === 'claude-fable-5'
   );
 }
 
@@ -176,6 +173,6 @@ export function getLumineModelOption(
     modelOptions.find((option) => option.model === model) ||
     modelOptions.find((option) => option.model === DEFAULT_LUMINE_MODEL) ||
     modelOptions[0] ||
-    FALLBACK_LUMINE_MODEL_OPTIONS[1]
+    DEFAULT_FALLBACK_LUMINE_MODEL_OPTION
   );
 }

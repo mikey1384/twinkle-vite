@@ -78,20 +78,15 @@ export const mainPreviewStyles = `
     flex: 1 1 auto;
     overflow: hidden;
   }
+  /* Whatever vertical slack the panel's fixed/estimated height leaves is
+     distributed around the secret box (auto margins) instead of pooling below
+     it, so the box reads as centered in the leftover space. The margins
+     collapse to 0 when the copy column is exactly filled, so tight cards are
+     unaffected. */
   .home-feed-card__subject-copy--with-secret-preview
     .home-feed-card__subject-secret-answer {
     flex: 0 0 auto;
     align-self: stretch;
-  }
-  /* The content-sized no-description secret panel (subject-secret-fit) leaves a
-     small residual slack (the mobile root-font/px-floor mismatch can't tighten
-     it further without clipping text-heavy cards). Center the secret box in
-     that leftover space instead of dumping it all below the box, so the slack
-     reads as balanced padding. The auto margins collapse to 0 when there is no
-     free space, so description-bearing secret cards are unaffected. */
-  .home-feed-card__panel-preview--size-subject-secret-fit
-    .home-feed-card__subject-copy--with-secret-preview
-    .home-feed-card__subject-secret-answer {
     margin-top: auto;
     margin-bottom: auto;
   }
@@ -425,6 +420,13 @@ export const mainPreviewStyles = `
   }
   .home-feed-card__subject-preview--with-root .home-feed-card__subject-main {
     align-content: start;
+  }
+  /* Secret-bearing previews need the grid row to stretch to the panel height —
+     with align-content: start the copy column ends at its content and the
+     panel's leftover height sits outside it, so the secret box's centering
+     auto-margins (below) would have no free space to distribute. */
+  .home-feed-card__subject-preview--with-secret .home-feed-card__subject-main {
+    align-content: stretch;
   }
   .home-feed-card__subject-preview--with-root
     .home-feed-card__subject-copy:not(.home-feed-card__subject-copy--with-secret-preview) {

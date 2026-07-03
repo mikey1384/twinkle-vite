@@ -255,7 +255,13 @@ const REFLECTION_PREVIEW_LAYOUT_REM = {
   rowGap: 0.75
 };
 const SUBJECT_PREVIEW_LAYOUT_REM = {
-  attachmentSecretMinHeight: 5.9,
+  // .home-feed-card__subject-secret-answer--attachment-only min-height (14.8rem;
+  // the media-column variant is 12.6rem, so this can over-count by 2.2rem there,
+  // which errs toward reserving space rather than clipping).
+  attachmentOnlySecretMinHeight: 14.8,
+  // .home-feed-card__subject-secret-attachment thumbnail height in the
+  // --has-attachment grid (side thumbnail next to the secret text).
+  attachmentThumbHeight: 5.4,
   descriptionLineHeight: 1.9 * 1.36,
   effortHeight: 2.9,
   gap: 0.85,
@@ -634,12 +640,13 @@ function getMainPanelSize({
       return 'subject-minimal';
     }
 
-    // A shown secret attachment renders a tall attachment box (min-height
+    // A shown attachment-only secret renders a tall attachment box (min-height
     // ~12.6rem) in the copy column; the compact subject-media height (21rem)
     // can't fit effort + title + that box, so the flex text stack shrinks and
     // clips the title. Let those fall through to getPlainSubjectPanelSize, which
-    // sizes secret-media/tall to fit. (Hidden secrets are handled above by
-    // getLockedSubjectPanelSize and render only a short locked banner.)
+    // sizes secret subjects to fit (secret-media / secret-fit / tall). (Hidden
+    // secrets are handled above by getLockedSubjectPanelSize and render only a
+    // short locked banner.)
     if (
       hasSubjectMediaPreview &&
       isSparseSubjectContent(content) &&
@@ -1358,6 +1365,13 @@ function getSubjectWithRootPanelSize(content: any): FeedCardSize {
   const hasEffort = Number(content?.rewardLevel || 0) > 0;
 
   if (content?.secretAttachment) {
+    // Same as the plain path: a no-description secret subject content-sizes
+    // (the estimator uses the denser --root-compact layout metrics for
+    // root-attached subjects). Only reached without a media preview —
+    // getMainPanelSize routes media-preview subjects elsewhere.
+    if (!hasDescription) {
+      return 'subject-secret-fit';
+    }
     if (!secretLength && !hasEffort && descriptionLength <= 420) {
       return 'subject-secret-media';
     }
@@ -1409,6 +1423,19 @@ function getPlainSubjectPanelSize(content: any): FeedCardSize {
   const hasEffort = Number(content?.rewardLevel || 0) > 0;
 
   if (content?.secretAttachment || hasSubjectMediaPreview) {
+    // A no-description secret subject renders only effort + title + the secret
+    // box, whose height the layout model knows exactly for every variant
+    // (text-only, --has-attachment side thumbnail, --attachment-only tall box),
+    // so content-size it like the text-only fit path below. A fixed tier here
+    // (secret-media/tall) reserves description-sized height that renders as
+    // empty space under the secret.
+    if (
+      content?.secretAttachment &&
+      !hasSubjectMediaPreview &&
+      descriptionLength === 0
+    ) {
+      return 'subject-secret-fit';
+    }
     if (
       content?.secretAttachment &&
       !secretLength &&
@@ -1460,9 +1487,12 @@ const SUBJECT_SECRET_FIT_BUFFER_REM = 0.85;
 // titleLineHeight is derived from the base h3 (2rem / 1.28) and under-counts the
 // real title by ~0.5rem per line, so the content-sized fit panel measures the
 // title from these rendered values directly — otherwise a two-line title can be
-// under-budgeted and clip under the panel's overflow:hidden.
+// under-budgeted and clip under the panel's overflow:hidden. Root-attached
+// subjects render the denser `--root-compact` title (2.48rem / 1.12).
 const RENDERED_SUBJECT_TITLE_LINE_HEIGHT_REM = 2.675 * 1.14;
 const RENDERED_SUBJECT_TITLE_PADDING_REM = 2.675 * 0.08;
+const RENDERED_ROOT_COMPACT_TITLE_LINE_HEIGHT_REM = 2.48 * 1.12;
+const RENDERED_ROOT_COMPACT_TITLE_PADDING_REM = 2.48 * 0.08;
 
 function getRenderedSubjectTitleHeight({
   axis,
@@ -1471,36 +1501,47 @@ function getRenderedSubjectTitleHeight({
   axis: FeedCardLayoutAxis;
   content: any;
 }) {
+  const isRootCompact = hasAttachedRootContent(content);
+  const layout = isRootCompact
+    ? SUBJECT_ROOT_PREVIEW_LAYOUT_REM
+    : SUBJECT_PREVIEW_LAYOUT_REM;
   const titleLines = estimatePreviewLineCount({
-    charsPerLine: SUBJECT_PREVIEW_LAYOUT_REM.titleCharsPerLine[axis],
-    maxLines: SUBJECT_PREVIEW_LAYOUT_REM.titleMaxLines,
+    charsPerLine: layout.titleCharsPerLine[axis],
+    maxLines: layout.titleMaxLines,
     value: content?.title
   });
 
-  return (
-    titleLines * RENDERED_SUBJECT_TITLE_LINE_HEIGHT_REM +
-    RENDERED_SUBJECT_TITLE_PADDING_REM
-  );
+  return isRootCompact
+    ? titleLines * RENDERED_ROOT_COMPACT_TITLE_LINE_HEIGHT_REM +
+        RENDERED_ROOT_COMPACT_TITLE_PADDING_REM
+    : titleLines * RENDERED_SUBJECT_TITLE_LINE_HEIGHT_REM +
+        RENDERED_SUBJECT_TITLE_PADDING_REM;
 }
 
-// Plain (non-root) subject with a secret answer but no description text or
-// embed. Such cards render only effort + title + secret, so rather than snap to
-// a fixed tier — which reserves description-sized height (empty gap below the
-// secret box) or clips a 2-line title / multi-line secret under the panel's
-// overflow:hidden — we content-size the panel. This mirrors the
-// subject-comment-embed pattern: compute the exact body height per axis from the
-// shared layout model and expose it as a CSS var. Plain subjects render
-// full-size (never the denser `--root-compact` layout), so the title estimate
-// is forced onto the plain layout model via size 'standard'. Only reached after
-// the media/secret-attachment guard, so the secret is always text-only here.
+// Subject with a secret answer but no description text or embed. Such cards
+// render only effort + title + secret, so rather than snap to a fixed tier —
+// which reserves description-sized height (empty gap below the secret box) or
+// clips a 2-line title / multi-line secret under the panel's overflow:hidden —
+// we content-size the panel. This mirrors the subject-comment-embed pattern:
+// compute the exact body height per axis from the shared layout model and
+// expose it as a CSS var. Root-attached subjects render the denser
+// `--root-compact` layout, so the layout model and title metrics switch on
+// that. Handles every secret variant: text-only, text + attachment (compact
+// --has-attachment side thumbnail), and attachment-only (tall box).
 function estimateSubjectSecretBodyHeight(
   content: any,
   axis: FeedCardLayoutAxis
 ) {
-  const layout = SUBJECT_PREVIEW_LAYOUT_REM;
+  const layout = getSubjectPreviewLayout({
+    content,
+    size: 'subject-secret-fit'
+  });
   const hasEffort = Number(content?.rewardLevel || 0) > 0;
   const hasTitle = Boolean(content?.title);
   const hasSecretAnswerText = getPlainTextValueLength(content?.secretAnswer) > 0;
+  // Body renders the attachment surface only when filePath exists, so mirror
+  // that here rather than keying off secretAttachment truthiness.
+  const hasSecretAttachment = Boolean(content?.secretAttachment?.filePath);
   const secretMaxLines = getSubjectSecretAnswerMaxLines({
     axis,
     content,
@@ -1519,7 +1560,7 @@ function estimateSubjectSecretBodyHeight(
     (hasTitle ? getRenderedSubjectTitleHeight({ axis, content }) : 0) +
     getSubjectSecretAnswerHeight({
       hasSecretAnswerText,
-      hasSecretAttachment: false,
+      hasSecretAttachment,
       secretMaxLines
     }) +
     SUBJECT_SECRET_FIT_BUFFER_REM
@@ -2011,7 +2052,9 @@ function getSubjectPreviewLayout({
 }) {
   const useAttachedRootLayout =
     hasAttachedRootContent(content) &&
-    (size === 'standard' || size === 'subject-secret-media');
+    (size === 'standard' ||
+      size === 'subject-secret-media' ||
+      size === 'subject-secret-fit');
 
   if (
     size === 'subject-root' ||
@@ -2037,11 +2080,22 @@ function getSubjectSecretAnswerHeight({
   const textHeight = hasSecretAnswerText
     ? layout.secretPaddingY + secretMaxLines * layout.secretLineHeight
     : 0;
-  const minHeight = hasSecretAttachment
-    ? layout.attachmentSecretMinHeight
-    : layout.secretMinHeight;
 
-  return Math.max(minHeight, textHeight);
+  // Text + attachment renders the --has-attachment grid: the 5.4rem thumbnail
+  // sits beside the text, so the box is padding + whichever column is taller.
+  if (hasSecretAttachment && hasSecretAnswerText) {
+    return Math.max(
+      layout.secretPaddingY + layout.attachmentThumbHeight,
+      textHeight
+    );
+  }
+
+  // Attachment with no text renders the tall --attachment-only box.
+  if (hasSecretAttachment) {
+    return layout.attachmentOnlySecretMinHeight;
+  }
+
+  return Math.max(layout.secretMinHeight, textHeight);
 }
 
 function getSubjectSecretAnswerMaxLines({
