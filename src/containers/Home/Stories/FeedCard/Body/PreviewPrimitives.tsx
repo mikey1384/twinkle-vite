@@ -109,6 +109,8 @@ function getAttachmentSurfaceFileName(source: any, filePath: string) {
 
 export function MarkdownEmbedPreview({
   className,
+  commentPreviewMaxTextLines,
+  commentPreviewVariant,
   contentId,
   contentType,
   embed,
@@ -117,6 +119,8 @@ export function MarkdownEmbedPreview({
   theme
 }: {
   className?: string;
+  commentPreviewMaxTextLines?: number;
+  commentPreviewVariant?: 'column' | 'compact';
   contentId: number;
   contentType: string;
   embed: MarkdownImageEmbed;
@@ -145,6 +149,9 @@ export function MarkdownEmbedPreview({
         : '',
       internalLinkType === 'users'
         ? 'home-feed-card__rich-embed-internal--user'
+        : '',
+      internalLinkType === 'comments'
+        ? 'home-feed-card__rich-embed-internal--comment'
         : ''
     ]
       .filter(Boolean)
@@ -181,6 +188,8 @@ export function MarkdownEmbedPreview({
           rootId={contentId}
           rootType={contentType}
           buildPreviewVariant={internalPreviewVariant}
+          commentPreviewMaxTextLines={commentPreviewMaxTextLines}
+          commentPreviewVariant={commentPreviewVariant}
           isPreview
           showCompactCommentTypeLabel={false}
           src={internalSrc}

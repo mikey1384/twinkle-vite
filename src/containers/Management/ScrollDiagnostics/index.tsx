@@ -10,10 +10,8 @@ import {
   clearScrollDiagnostics,
   getScrollDiagnosticEvents,
   isScrollDiagnosticsLoggingEnabled,
-  isScrollRestoreFixEnabled,
   scrollDiagnosticsToCsv,
   setScrollDiagnosticsLoggingEnabled,
-  setScrollRestoreFixEnabled,
   type ScrollDiagnosticEvent
 } from '~/helpers/scrollAnchorDiagnostics';
 import {
@@ -32,7 +30,6 @@ export default function ScrollDiagnostics() {
   const [loggingEnabled, setLoggingEnabled] = useState(
     isScrollDiagnosticsLoggingEnabled
   );
-  const [fixEnabled, setFixEnabled] = useState(isScrollRestoreFixEnabled);
   const [events, setEvents] = useState<ScrollDiagnosticEvent[]>(
     getScrollDiagnosticEvents
   );
@@ -79,14 +76,6 @@ export default function ScrollDiagnostics() {
             onChange={handleToggleLogging}
             small
           />
-          <SwitchButton
-            ariaLabel="Toggle the candidate scroll-restore fix in this browser"
-            checked={fixEnabled}
-            color={Color.green()}
-            label="Fix"
-            onChange={handleToggleFix}
-            small
-          />
           <Button color="darkerGray" variant="outline" onClick={handleRefresh}>
             <Icon icon="sync" />
             Refresh
@@ -120,9 +109,8 @@ export default function ScrollDiagnostics() {
         }}
       >
         Turn on <b>Logging</b>, reproduce the bug (scroll the home feed, go to
-        Explore, come back), then download the CSV. Use the <b>Fix</b> toggle to
-        capture a run with the candidate fix on vs. off and compare. Capture is
-        local to this device and survives a reload.
+        Explore, come back), then download the CSV. Capture is local to this
+        device and survives a reload.
       </p>
 
       <div className={summaryGridClass}>
@@ -138,7 +126,7 @@ export default function ScrollDiagnostics() {
           highlight={summary.cancelled > 0}
         />
         <SummaryCard
-          label="Cancels suppressed (fix)"
+          label="Cancels suppressed (grace)"
           value={summary.cancelSuppressed}
         />
         <SummaryCard label="Initial scroll (top)" value={summary.initialScroll} />
@@ -192,14 +180,6 @@ export default function ScrollDiagnostics() {
     setLoggingEnabled((enabled) => {
       const next = !enabled;
       setScrollDiagnosticsLoggingEnabled(next);
-      return next;
-    });
-  }
-
-  function handleToggleFix() {
-    setFixEnabled((enabled) => {
-      const next = !enabled;
-      setScrollRestoreFixEnabled(next);
       return next;
     });
   }

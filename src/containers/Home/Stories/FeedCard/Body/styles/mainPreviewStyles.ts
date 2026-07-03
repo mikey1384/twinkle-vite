@@ -379,6 +379,13 @@ export const mainPreviewStyles = `
       border: 0;
       background: transparent;
     }
+    /* Comment embeds keep the slot border but stay white: the generic
+       rich-embed-image rule inside CompactCommentEmbedPreview makes the card
+       background transparent, which would show this slot's whiteGray. */
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--comment {
+      background: #fff;
+    }
     .home-feed-card__embed-fallback {
       display: flex;
       flex-direction: column;

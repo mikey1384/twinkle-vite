@@ -40,6 +40,8 @@ export default function MainContentComponent({
   contentId,
   contentType,
   buildPreviewVariant = 'compact',
+  commentPreviewMaxTextLines,
+  commentPreviewVariant = 'compact',
   isPreview,
   showCompactCommentTypeLabel = true,
   theme
@@ -47,6 +49,8 @@ export default function MainContentComponent({
   contentId: string;
   contentType: string;
   buildPreviewVariant?: 'compact' | 'wide';
+  commentPreviewMaxTextLines?: number;
+  commentPreviewVariant?: 'column' | 'compact';
   isPreview?: boolean;
   showCompactCommentTypeLabel?: boolean;
   theme?: string;
@@ -147,6 +151,8 @@ export default function MainContentComponent({
     return (
       <CompactMainContentEmbedPreview
         buildPreviewVariant={buildPreviewVariant}
+        commentPreviewMaxTextLines={commentPreviewMaxTextLines}
+        commentPreviewVariant={commentPreviewVariant}
         contentId={Number(contentId)}
         contentType={appliedContentType}
         content={contentState}
@@ -250,6 +256,8 @@ function CompactMainContentEmbedPreview({
   contentId,
   contentType,
   buildPreviewVariant,
+  commentPreviewMaxTextLines,
+  commentPreviewVariant,
   navigate,
   showCompactCommentTypeLabel,
   theme,
@@ -259,6 +267,8 @@ function CompactMainContentEmbedPreview({
   contentId: number;
   contentType: string;
   buildPreviewVariant: 'compact' | 'wide';
+  commentPreviewMaxTextLines?: number;
+  commentPreviewVariant: 'column' | 'compact';
   navigate: (path: string) => void;
   showCompactCommentTypeLabel: boolean;
   theme?: string;
@@ -364,10 +374,11 @@ function CompactMainContentEmbedPreview({
       <CompactCommentEmbedPreview
         comment={content}
         contentId={contentId}
-        maxTextLines={2}
+        maxTextLines={commentPreviewMaxTextLines ?? 2}
         onOpen={() => navigate(path)}
         showTypeLabel={showCompactCommentTypeLabel}
         theme={theme}
+        variant={commentPreviewVariant}
       />
     );
   }

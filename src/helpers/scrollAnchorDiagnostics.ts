@@ -9,12 +9,9 @@ import {
 // Management → Scroll Diagnostics, so it adds nothing for normal users. When
 // enabled it records save/restore/cancel events into a capped in-memory ring
 // buffer (mirrored to localStorage so the capture survives an iOS tab reload),
-// which Management exports as CSV. The companion fix flag lets the restore hook
-// behave with or without the candidate fix so the two can be compared from the
-// same captured insights.
+// which Management exports as CSV.
 
 const LOGGING_KEY = 'twinkleScrollDiagnosticsLogging';
-const FIX_KEY = 'twinkleScrollDiagnosticsFix';
 const EVENTS_KEY = 'twinkleScrollDiagnosticsEvents';
 const MAX_EVENTS = 4000;
 
@@ -22,7 +19,6 @@ export interface ScrollDiagnosticEvent {
   seq: number;
   t: number;
   type: string;
-  fixActive: boolean;
   anchorKey: string;
   path: string;
   scrollTop: number;
@@ -41,7 +37,6 @@ const CSV_COLUMNS: Array<keyof ScrollDiagnosticEvent> = [
   'seq',
   't',
   'type',
-  'fixActive',
   'anchorKey',
   'path',
   'scrollTop',
@@ -57,7 +52,6 @@ const CSV_COLUMNS: Array<keyof ScrollDiagnosticEvent> = [
 ];
 
 let loggingEnabled = getStoredItem(LOGGING_KEY) === '1';
-let fixEnabled = getStoredItem(FIX_KEY) === '1';
 let seqCounter = 0;
 let events: ScrollDiagnosticEvent[] = loadPersistedEvents();
 let flushScheduled = false;
@@ -79,19 +73,6 @@ export function setScrollDiagnosticsLoggingEnabled(enabled: boolean) {
   }
 }
 
-export function isScrollRestoreFixEnabled() {
-  return fixEnabled;
-}
-
-export function setScrollRestoreFixEnabled(enabled: boolean) {
-  fixEnabled = enabled;
-  if (enabled) {
-    setStoredItem(FIX_KEY, '1');
-  } else {
-    removeStoredItem(FIX_KEY);
-  }
-}
-
 export function recordScrollDiagnostic(
   event: Partial<ScrollDiagnosticEvent> & { type: string }
 ) {
@@ -100,10 +81,6 @@ export function recordScrollDiagnostic(
     seq: ++seqCounter,
     t: Math.round(getMonotonicMs()),
     type: event.type,
-    // Stamp the live fix state on every row so a fix-on run is always
-    // distinguishable from a fix-off run in the exported CSV, even when the
-    // run produced no suppressed cancels and even if the toggle flips mid-capture.
-    fixActive: fixEnabled,
     anchorKey: event.anchorKey ?? '',
     path: event.path ?? getPathname(),
     scrollTop: event.scrollTop ?? -1,

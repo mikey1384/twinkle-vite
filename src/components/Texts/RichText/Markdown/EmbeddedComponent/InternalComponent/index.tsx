@@ -14,12 +14,16 @@ export default function InternalComponent({
   rootType,
   src,
   buildPreviewVariant,
+  commentPreviewMaxTextLines,
+  commentPreviewVariant,
   isPreview,
   isProfileComponent,
   showCompactCommentTypeLabel = true,
   theme
 }: {
   buildPreviewVariant?: 'compact' | 'wide';
+  commentPreviewMaxTextLines?: number;
+  commentPreviewVariant?: 'column' | 'compact';
   rootId?: number | string;
   rootType?: string;
   src: string;
@@ -64,6 +68,8 @@ export default function InternalComponent({
         <MainContentComponent
           contentType={contentType}
           contentId={contentId}
+          commentPreviewMaxTextLines={commentPreviewMaxTextLines}
+          commentPreviewVariant={commentPreviewVariant}
           isPreview={isPreview}
           showCompactCommentTypeLabel={showCompactCommentTypeLabel}
           theme={theme}
@@ -105,6 +111,8 @@ export default function InternalComponent({
   }, [
     src,
     buildPreviewVariant,
+    commentPreviewMaxTextLines,
+    commentPreviewVariant,
     isProfileComponent,
     isPreview,
     rootId,

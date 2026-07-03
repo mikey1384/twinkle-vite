@@ -1073,6 +1073,14 @@ export default function Body({
         ) : null}
         <MarkdownEmbedPreview
           className="home-feed-card__rich-embed-image"
+          commentPreviewMaxTextLines={
+            hasText
+              ? resolvedSizing.main.size === 'rich-embed-compact'
+                ? 3
+                : 6
+              : undefined
+          }
+          commentPreviewVariant={hasText ? 'column' : 'compact'}
           contentId={contentId}
           contentType={contentType}
           embed={imageEmbed}

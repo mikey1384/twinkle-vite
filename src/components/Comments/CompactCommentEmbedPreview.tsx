@@ -37,12 +37,12 @@ interface CompactCommentEmbedPreviewProps {
     embed: MarkdownMediaEmbed;
     theme?: string;
     userId?: number;
-    variant: 'compact' | 'targetRoot';
+    variant: 'column' | 'compact' | 'targetRoot';
   }) => React.ReactNode;
   showTypeLabel?: boolean;
   theme?: string;
   userId?: number;
-  variant?: 'compact' | 'targetRoot';
+  variant?: 'column' | 'compact' | 'targetRoot';
 }
 
 interface MarkdownMediaEmbed {
@@ -71,6 +71,7 @@ export default function CompactCommentEmbedPreview({
 }: CompactCommentEmbedPreviewProps) {
   const commentId = Number(comment?.id || comment?.commentId || contentId || 0);
   const isTargetRoot = variant === 'targetRoot';
+  const isColumn = variant === 'column';
   const uploader = getCommentUploader(comment);
   const isAIMessage = isAICommentAuthor(uploader.id);
   const rawContent = String(comment?.content || '');
@@ -94,7 +95,7 @@ export default function CompactCommentEmbedPreview({
       embed
     }))
   ];
-  const shownMediaItems = mediaItems.slice(0, isTargetRoot ? 1 : 2);
+  const shownMediaItems = mediaItems.slice(0, isTargetRoot || isColumn ? 1 : 2);
   const extraMediaCount = Math.max(
     0,
     mediaItems.length - shownMediaItems.length
@@ -111,7 +112,8 @@ export default function CompactCommentEmbedPreview({
         hasMedia ? 'compact-comment-embed--has-media' : '',
         !hasText ? 'compact-comment-embed--media-only' : '',
         isNested ? 'compact-comment-embed--nested' : '',
-        isTargetRoot ? 'compact-comment-embed--target-root' : ''
+        isTargetRoot ? 'compact-comment-embed--target-root' : '',
+        isColumn ? 'compact-comment-embed--column' : ''
       ]
         .filter(Boolean)
         .join(' ')}
@@ -126,7 +128,13 @@ export default function CompactCommentEmbedPreview({
           userId={uploader.id}
           profilePicUrl={uploader.profilePicUrl}
           style={{
-            width: isTargetRoot ? '5.45rem' : isNested ? '3.4rem' : '4.1rem'
+            width: isTargetRoot
+              ? '5.45rem'
+              : isColumn
+              ? '6rem'
+              : isNested
+              ? '3.4rem'
+              : '4.1rem'
           }}
         />
       </div>
@@ -155,7 +163,7 @@ export default function CompactCommentEmbedPreview({
             hideDictation={isAIMessage}
             isAIMessage={isAIMessage}
             isPreview
-            lineHeight={isTargetRoot ? 1.22 : undefined}
+            lineHeight={isTargetRoot ? 1.22 : isColumn ? 1.35 : undefined}
             maxLines={maxTextLines}
             section="content"
             theme={theme}
@@ -222,7 +230,7 @@ function CommentMediaPreview({
   renderInternalEmbedPreview?: CompactCommentEmbedPreviewProps['renderInternalEmbedPreview'];
   theme?: string;
   userId?: number;
-  variant: 'compact' | 'targetRoot';
+  variant: 'column' | 'compact' | 'targetRoot';
 }) {
   if (!item) return null;
 
@@ -431,7 +439,7 @@ function MarkdownLinkPreview({
   variant
 }: {
   embed: MarkdownMediaEmbed;
-  variant: 'compact' | 'targetRoot';
+  variant: 'column' | 'compact' | 'targetRoot';
 }) {
   const videoCode =
     embed.type === 'video' ? fetchedVideoCodeFromURL(embed.src) : '';
@@ -1102,38 +1110,133 @@ const compactCommentEmbedPreviewClass = css`
     }
   }
   @container (max-width: 28rem) {
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root),
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root) {
+    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column),
+    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column) {
       grid-template-columns: 4.2rem minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) auto;
       align-items: stretch;
       gap: 0.55rem 0.7rem;
       padding: 0.6rem;
     }
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root)
+    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
       > .compact-comment-embed__avatar,
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root)
+    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
       > .compact-comment-embed__avatar {
       grid-column: 1;
       grid-row: 2;
       align-self: center;
     }
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root)
+    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
       > .compact-comment-embed__copy,
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root)
+    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
       > .compact-comment-embed__copy {
       grid-column: 2;
       grid-row: 2;
       align-self: center;
     }
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root)
+    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
       > .compact-comment-embed__media,
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root)
+    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
       > .compact-comment-embed__media {
       grid-column: 1 / -1;
       grid-row: 1;
       width: 100%;
       min-height: 0;
     }
+  }
+  /* Column variant: fills the home-feed rich-embed hero column (a tall,
+     narrow slot sized for image/build heroes). The default horizontal row
+     is content-height and leaves the column mostly empty, so stack instead:
+     avatar on top, username under it, then timestamp, then the text.
+     Kept last in this block so it wins equal-specificity rules above, and
+     the frame is dropped because the slot (rich-embed-image) draws its own
+     border. align-content centers the whole stack in any leftover slack. */
+  &.compact-comment-embed--column {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: auto;
+    align-items: start;
+    align-content: center;
+    justify-items: center;
+    gap: 0.6rem;
+    height: 100%;
+    min-height: 0;
+    padding: 1rem 0.9rem;
+    border: 0;
+    border-radius: inherit;
+  }
+  &.compact-comment-embed--column.compact-comment-embed--has-media,
+  &.compact-comment-embed--column.compact-comment-embed--media-only {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem 0.9rem;
+  }
+  &.compact-comment-embed--column > .compact-comment-embed__avatar {
+    grid-column: 1;
+    grid-row: auto;
+    width: auto;
+    height: auto;
+    align-self: start;
+  }
+  &.compact-comment-embed--column > .compact-comment-embed__copy {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+    min-height: 0;
+    align-self: start;
+    justify-content: flex-start;
+    /* meta (username + time) reads as part of the avatar block above, so the
+       meta -> content gap is larger than the avatar -> meta grid gap */
+    gap: 1.1rem;
+    font-size: max(1.25rem, 12.5px);
+  }
+  &.compact-comment-embed--column
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.18rem;
+  }
+  &.compact-comment-embed--column
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    a,
+  &.compact-comment-embed--column
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    > div,
+  &.compact-comment-embed--column
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    strong {
+    max-width: 100%;
+    font-size: 1.3rem;
+  }
+  &.compact-comment-embed--column
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    .compact-comment-embed__timestamp {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  &.compact-comment-embed--column > .compact-comment-embed__copy p {
+    font-size: max(1.25rem, 12.5px);
+    line-height: 1.35;
+  }
+  &.compact-comment-embed--column
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__empty {
+    white-space: normal;
+    text-align: center;
+  }
+  &.compact-comment-embed--column > .compact-comment-embed__media {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+    height: auto;
+    min-height: 4.5rem;
+    max-height: 9rem;
+    align-self: start;
+    justify-self: stretch;
+    aspect-ratio: auto;
   }
 `;

@@ -8,16 +8,15 @@ import {
 } from '~/helpers/scrollAnchorRestorationCoordinator';
 import {
   isScrollDiagnosticsLoggingEnabled,
-  isScrollRestoreFixEnabled,
   recordScrollDiagnostic
 } from '~/helpers/scrollAnchorDiagnostics';
 
-// While the candidate fix is active, an incidental pointer event (iOS momentum
-// from the swipe-to-reveal-nav, or the navigation tap itself) must not cancel an
-// in-flight restore before it has actually pinned the saved anchor — otherwise
-// the scroll is stranded at the not-yet-settled fallback position. After this
-// grace window we honor user input even if the anchor never rendered, so we
-// never fight a deliberate scroll for long.
+// An incidental pointer event (iOS momentum from the swipe-to-reveal-nav, or
+// the navigation tap itself) must not cancel an in-flight restore before it has
+// actually pinned the saved anchor — otherwise the scroll is stranded at the
+// not-yet-settled fallback position. After this grace window we honor user
+// input even if the anchor never rendered, so we never fight a deliberate
+// scroll for long.
 const restoreCancelGraceMs = 900;
 
 interface SavedScrollAnchor {
@@ -280,7 +279,6 @@ export function useScrollAnchorRestoration({
     let cancelListenersAttached = false;
     let removeRestoreCancelSignalListener: (() => void) | null = null;
     let landedOnAnchor = false;
-    const fixActive = isScrollRestoreFixEnabled();
     const restoreStartedAt = nowMs();
 
     function diag(type: string, extra: Record<string, unknown> = {}) {
@@ -408,14 +406,13 @@ export function useScrollAnchorRestoration({
       handleUserScrollInput('touchmove');
     }
 
-    // The candidate fix: while a restore is in flight and has NOT yet pinned the
-    // saved anchor, ignore incidental pointer input for a short grace window so
-    // iOS momentum / the navigation tap can't strand the scroll at the fallback
-    // position. Once the anchor is pinned (or the grace elapses) we honor input
-    // normally so a deliberate scroll is never fought.
+    // While a restore is in flight and has NOT yet pinned the saved anchor,
+    // ignore incidental pointer input for a short grace window so iOS momentum
+    // / the navigation tap can't strand the scroll at the fallback position.
+    // Once the anchor is pinned (or the grace elapses) we honor input normally
+    // so a deliberate scroll is never fought.
     function handleUserScrollInput(reason: string) {
       if (
-        fixActive &&
         !landedOnAnchor &&
         nowMs() - restoreStartedAt < restoreCancelGraceMs
       ) {
