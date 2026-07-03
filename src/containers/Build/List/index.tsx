@@ -342,16 +342,14 @@ export default function BuildList({
     modalBuilds: quickAccessModalBuilds,
     modalCursor: quickAccessModalCursor,
     modalMode: quickAccessModalMode,
-    modalPage: quickAccessModalPage,
     onBuildFavoriteChange: handleBuildFavoriteChange,
     onBuildFavoriteError: handleBuildFavoriteError,
     onBuildFavoriteStart: handleBuildFavoriteStart,
     onCloseModal: handleCloseQuickAccessModal,
+    onLoadMoreModalBuilds: handleLoadMoreQuickAccessModalBuilds,
     onModeChange: handleQuickAccessModeChange,
-    onNextModalPage: handleNextQuickAccessModalPage,
     onOpenBuild: handleOpenQuickAccessBuild,
     onOpenTodayTopViewedBuild: handleOpenTodayTopViewedBuild,
-    onPreviousModalPage: handlePreviousQuickAccessModalPage,
     onShowMore: handleShowMoreQuickAccess,
     openButtonStyle: quickAccessOpenButtonStyle,
     quickAccessMode,
@@ -906,11 +904,12 @@ export default function BuildList({
       <Overlays
         editingBuild={editingBuild}
         forkHistoryBuildId={forkHistoryBuildId}
+        quickAccessColor={profileTheme}
+        quickAccessError={quickAccessError}
         quickAccessLoadingMore={quickAccessLoadingMore}
         quickAccessModalBuilds={quickAccessModalBuilds}
         quickAccessModalCursor={quickAccessModalCursor}
         quickAccessModalMode={quickAccessModalMode}
-        quickAccessModalPage={quickAccessModalPage}
         quickAccessOpenButtonStyle={quickAccessOpenButtonStyle}
         savingMetadata={savingMetadata}
         onCloseEdit={() => (savingMetadata ? null : setEditingBuild(null))}
@@ -919,9 +918,8 @@ export default function BuildList({
         onFavoriteChange={handleBuildFavoriteChange}
         onFavoriteError={handleBuildFavoriteError}
         onFavoriteStart={handleBuildFavoriteStart}
-        onNextQuickAccessPage={handleNextQuickAccessModalPage}
+        onLoadMoreQuickAccess={handleLoadMoreQuickAccessModalBuilds}
         onOpenQuickAccessBuild={handleOpenQuickAccessBuild}
-        onPreviousQuickAccessPage={handlePreviousQuickAccessModalPage}
         onSubmitMetadata={handleSubmitMetadata}
       />
     </div>

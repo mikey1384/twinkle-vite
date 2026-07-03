@@ -19,7 +19,7 @@ import {
   TodayTopViewedBuild
 } from '../types';
 import { buildBrowseTabs } from '../constants/tabs';
-import { QUICK_ACCESS_MODAL_PAGE_SIZE } from '../QuickAccess';
+import { QUICK_ACCESS_FETCH_LIMIT } from '../QuickAccess';
 import { logoBlueOpenAppButtonStyle } from '../constants/layout';
 
 export default function useQuickAccess({
@@ -83,7 +83,6 @@ export default function useQuickAccess({
   const [savingMode, setSavingMode] = useState(false);
   const [error, setError] = useState('');
   const [modalMode, setModalMode] = useState<BuildQuickAccessMode | null>(null);
-  const [modalPage, setModalPage] = useState(0);
   const loadRef = useRef(0);
   const activeBuilds =
     quickAccessMode === 'favorites' ? favoriteBuilds : recentlyUsedBuilds;
@@ -130,7 +129,6 @@ export default function useQuickAccess({
     setRecentlyUsedCursor(null);
     setFavoriteBuildsCursor(null);
     setModalMode(null);
-    setModalPage(0);
     setLoading(false);
     setLoadingMore(false);
     setError('');
@@ -145,15 +143,6 @@ export default function useQuickAccess({
     // loadRecentlyUsedBuilds and loadFavoriteBuilds are stable request helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId]);
-
-  useEffect(() => {
-    if (!modalMode) return;
-    const pageCount = Math.max(
-      1,
-      Math.ceil(modalBuilds.length / QUICK_ACCESS_MODAL_PAGE_SIZE)
-    );
-    setModalPage((page) => Math.min(page, pageCount - 1));
-  }, [modalBuilds.length, modalMode]);
 
   useEffect(() => {
     if (!normalizedUserId) return;
@@ -195,17 +184,15 @@ export default function useQuickAccess({
     modalBuilds,
     modalCursor,
     modalMode,
-    modalPage,
     onBuildDeleted: handleBuildDeleted,
     onBuildFavoriteChange: handleBuildFavoriteChange,
     onBuildFavoriteError: handleBuildFavoriteError,
     onBuildFavoriteStart: handleBuildFavoriteStart,
     onCloseModal: handleCloseModal,
+    onLoadMoreModalBuilds: handleLoadMoreModalBuilds,
     onModeChange: handleModeChange,
-    onNextModalPage: handleNextModalPage,
     onOpenBuild: handleOpenBuild,
     onOpenTodayTopViewedBuild: handleOpenTodayTopViewedBuild,
-    onPreviousModalPage: handlePreviousModalPage,
     onShowMore: handleShowMore,
     openButtonStyle,
     quickAccessMode,
@@ -222,8 +209,8 @@ export default function useQuickAccess({
     setError('');
     try {
       const [recentResult, favoriteResult] = await Promise.all([
-        loadRecentlyUsedBuilds({ limit: QUICK_ACCESS_MODAL_PAGE_SIZE }),
-        loadFavoriteBuilds({ limit: QUICK_ACCESS_MODAL_PAGE_SIZE })
+        loadRecentlyUsedBuilds({ limit: QUICK_ACCESS_FETCH_LIMIT }),
+        loadFavoriteBuilds({ limit: QUICK_ACCESS_FETCH_LIMIT })
       ]);
       if (loadRef.current !== loadId) return;
       setRecentlyUsedBuilds(normalizeQuickAccessBuilds(recentResult?.builds));
@@ -273,26 +260,14 @@ export default function useQuickAccess({
 
   function handleShowMore() {
     setModalMode(quickAccessMode);
-    setModalPage(0);
   }
 
   function handleCloseModal() {
     setModalMode(null);
-    setModalPage(0);
   }
 
-  function handlePreviousModalPage() {
-    setModalPage((page) => Math.max(0, page - 1));
-  }
-
-  function handleNextModalPage() {
-    if (!modalMode) return;
-    const nextPageStart = (modalPage + 1) * QUICK_ACCESS_MODAL_PAGE_SIZE;
-    if (nextPageStart < modalBuilds.length) {
-      setModalPage((page) => page + 1);
-      return;
-    }
-    if (!modalCursor || loadingMore) return;
+  function handleLoadMoreModalBuilds() {
+    if (!modalMode || !modalCursor || loadingMore) return;
     void loadMoreBuilds(modalMode);
   }
 
@@ -307,18 +282,14 @@ export default function useQuickAccess({
         mode === 'favorites'
           ? await loadFavoriteBuilds({
               cursor,
-              limit: QUICK_ACCESS_MODAL_PAGE_SIZE
+              limit: QUICK_ACCESS_FETCH_LIMIT
             })
           : await loadRecentlyUsedBuilds({
               cursor,
-              limit: QUICK_ACCESS_MODAL_PAGE_SIZE
+              limit: QUICK_ACCESS_FETCH_LIMIT
             });
-      const nextBuilds = normalizeQuickAccessBuilds(result?.builds);
-      appendBuilds(mode, nextBuilds);
+      appendBuilds(mode, normalizeQuickAccessBuilds(result?.builds));
       setCursor(mode, normalizeQuickAccessCursor(result?.cursor));
-      if (nextBuilds.length > 0) {
-        setModalPage((page) => page + 1);
-      }
     } catch (err: any) {
       console.error('Failed to load more quick access builds:', err);
       setError(

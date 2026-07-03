@@ -9,11 +9,12 @@ import type { BuildQuickAccessMode, QuickAccessBuild } from './types';
 export default function Overlays({
   editingBuild,
   forkHistoryBuildId,
+  quickAccessColor,
+  quickAccessError,
   quickAccessLoadingMore,
   quickAccessModalBuilds,
   quickAccessModalCursor,
   quickAccessModalMode,
-  quickAccessModalPage,
   quickAccessOpenButtonStyle,
   savingMetadata,
   onCloseEdit,
@@ -22,18 +23,18 @@ export default function Overlays({
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
-  onNextQuickAccessPage,
+  onLoadMoreQuickAccess,
   onOpenQuickAccessBuild,
-  onPreviousQuickAccessPage,
   onSubmitMetadata
 }: {
   editingBuild: BuildProjectListItemData | null;
   forkHistoryBuildId: number | null;
+  quickAccessColor?: string;
+  quickAccessError: string;
   quickAccessLoadingMore: boolean;
   quickAccessModalBuilds: QuickAccessBuild[];
   quickAccessModalCursor: string | null;
   quickAccessModalMode: BuildQuickAccessMode | null;
-  quickAccessModalPage: number;
   quickAccessOpenButtonStyle?: React.CSSProperties;
   savingMetadata: boolean;
   onCloseEdit: () => void;
@@ -52,9 +53,8 @@ export default function Overlays({
     build: BuildProjectListItemData,
     params: { buildId: number; requestedFavorited: boolean }
   ) => void;
-  onNextQuickAccessPage: () => void;
+  onLoadMoreQuickAccess: () => void;
   onOpenQuickAccessBuild: (build: QuickAccessBuild) => void;
-  onPreviousQuickAccessPage: () => void;
   onSubmitMetadata: (args: {
     title: string;
     description: string;
@@ -81,15 +81,15 @@ export default function Overlays({
       {quickAccessModalMode ? (
         <BuildQuickAccessModal
           builds={quickAccessModalBuilds}
+          color={quickAccessColor}
           cursor={quickAccessModalCursor}
+          error={quickAccessError}
           loadingMore={quickAccessLoadingMore}
           mode={quickAccessModalMode}
           openButtonStyle={quickAccessOpenButtonStyle}
-          page={quickAccessModalPage}
           onClose={onCloseQuickAccess}
-          onNextPage={onNextQuickAccessPage}
+          onLoadMore={onLoadMoreQuickAccess}
           onOpenBuild={onOpenQuickAccessBuild}
-          onPreviousPage={onPreviousQuickAccessPage}
           onFavoriteChange={onFavoriteChange}
           onFavoriteError={onFavoriteError}
           onFavoriteStart={onFavoriteStart}

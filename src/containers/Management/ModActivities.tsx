@@ -5,6 +5,7 @@ import DeletedMessage from '~/components/Deleted/Message';
 import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import Button from '~/components/Button';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -271,22 +272,12 @@ export default function ModActivities() {
               )
           )}
         {!loading && !loadError && hasMoreByType[contentType] && (
-          <div
-            style={{
-              marginTop: '1.5rem',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <Button
+          <div style={{ marginTop: '1.5rem' }}>
+            <LoadMoreButton
               color="darkerGray"
-              variant="soft"
               loading={loadingMore}
-              disabled={loadingMore}
               onClick={handleLoadMore}
-            >
-              Load More
-            </Button>
+            />
           </div>
         )}
       </div>

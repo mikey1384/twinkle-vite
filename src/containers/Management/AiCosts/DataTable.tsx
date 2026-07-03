@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '~/components/Button';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { formatCell, getRowKey } from './helpers/formatters';
 import {
   emptyInlineClass,
@@ -106,14 +106,11 @@ export function PaginationFooter({
     <div className={paginationFooterClass}>
       {error ? <span>{error}</span> : null}
       {hasMore ? (
-        <Button
+        <LoadMoreButton
           color="logoBlue"
-          variant="outline"
           loading={loading}
           onClick={onLoadMore}
-        >
-          Load More
-        </Button>
+        />
       ) : null}
     </div>
   );

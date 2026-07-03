@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import { BuildThumbCard } from '~/components/Build/Cards';
 import Icon from '~/components/Icon';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Modal from '~/components/Modal';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import { mobileMaxWidth } from '~/constants/css';
@@ -10,7 +11,7 @@ import TabFilter from '../TabFilter';
 import { formatQuickAccessRelativeTime } from './helpers';
 import type { BuildQuickAccessMode, QuickAccessBuild } from './types';
 
-export const QUICK_ACCESS_MODAL_PAGE_SIZE = 12;
+export const QUICK_ACCESS_FETCH_LIMIT = 12;
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -152,41 +153,10 @@ const quickAccessModalGridClass = css`
   }
 `;
 
-const quickAccessModalPagerClass = css`
+const quickAccessModalLoadMoreClass = css`
+  margin-top: 0.6rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-top: 0.2rem;
-`;
-
-const quickAccessPagerButtonClass = css`
-  height: 2.45rem;
-  padding: 0 0.85rem;
-  border: 1px solid rgba(65, 140, 235, 0.24);
-  border-radius: 8px;
-  background: #fff;
-  color: #1d4ed8;
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  font-size: 1rem;
-  font-weight: 900;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: default;
-    color: #94a3b8;
-    background: #f8fafc;
-  }
-`;
-
-const quickAccessPagerStatusClass = css`
-  color: var(--chat-text);
-  font-size: 1rem;
-  font-weight: 900;
-  opacity: 0.72;
 `;
 
 const quickAccessErrorClass = css`
@@ -406,25 +376,26 @@ function BuildQuickAccessCard({
 
 export function BuildQuickAccessModal({
   builds,
+  color,
   cursor,
+  error,
   loadingMore,
   mode,
   openButtonStyle,
-  page,
   onClose,
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
-  onNextPage,
-  onOpenBuild,
-  onPreviousPage
+  onLoadMore,
+  onOpenBuild
 }: {
   builds: QuickAccessBuild[];
+  color?: string;
   cursor: string | null;
+  error: string;
   loadingMore: boolean;
   mode: BuildQuickAccessMode;
   openButtonStyle?: React.CSSProperties;
-  page: number;
   onClose: () => void;
   onFavoriteChange: (
     build: BuildProjectListItemData,
@@ -439,21 +410,10 @@ export function BuildQuickAccessModal({
     build: BuildProjectListItemData,
     params: { buildId: number; requestedFavorited: boolean }
   ) => void;
-  onNextPage: () => void;
+  onLoadMore: () => void;
   onOpenBuild: (build: QuickAccessBuild) => void;
-  onPreviousPage: () => void;
 }) {
   const title = mode === 'favorites' ? 'Favorite Builds' : 'Recently Used';
-  const pageCount = Math.max(
-    1,
-    Math.ceil(builds.length / QUICK_ACCESS_MODAL_PAGE_SIZE)
-  );
-  const pageStart = page * QUICK_ACCESS_MODAL_PAGE_SIZE;
-  const visibleBuilds = builds.slice(
-    pageStart,
-    pageStart + QUICK_ACCESS_MODAL_PAGE_SIZE
-  );
-  const canGoNext = page < pageCount - 1 || Boolean(cursor);
   return (
     <Modal
       isOpen
@@ -463,9 +423,9 @@ export function BuildQuickAccessModal({
       onClose={onClose}
     >
       <div className={quickAccessModalContentClass}>
-        {visibleBuilds.length > 0 ? (
+        {builds.length > 0 ? (
           <div className={quickAccessModalGridClass}>
-            {visibleBuilds.map((build) => (
+            {builds.map((build) => (
               <BuildQuickAccessCard
                 key={build.id}
                 build={build}
@@ -485,36 +445,18 @@ export function BuildQuickAccessModal({
               : 'No recently used builds yet.'}
           </div>
         )}
-        <div className={quickAccessModalPagerClass}>
-          <button
-            type="button"
-            className={quickAccessPagerButtonClass}
-            disabled={page <= 0 || loadingMore}
-            onClick={onPreviousPage}
-          >
-            <Icon icon="chevron-left" />
-            Previous
-          </button>
-          <span className={quickAccessPagerStatusClass}>Page {page + 1}</span>
-          <button
-            type="button"
-            className={quickAccessPagerButtonClass}
-            disabled={!canGoNext || loadingMore}
-            onClick={onNextPage}
-          >
-            {loadingMore ? (
-              <>
-                <Icon icon="spinner" pulse />
-                Loading
-              </>
-            ) : (
-              <>
-                Next
-                <Icon icon="chevron-right" />
-              </>
-            )}
-          </button>
-        </div>
+        {error ? (
+          <div className={quickAccessErrorClass}>{error}</div>
+        ) : null}
+        {cursor ? (
+          <div className={quickAccessModalLoadMoreClass}>
+            <LoadMoreButton
+              color={color}
+              loading={loadingMore}
+              onClick={onLoadMore}
+            />
+          </div>
+        ) : null}
       </div>
     </Modal>
   );
