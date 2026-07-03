@@ -144,7 +144,18 @@ export default function MainContentComponent({
     );
   }
   if (!loaded) {
-    return <Loading />;
+    // The column comment embed fills the tall hero slot; Loading's default
+    // wrapper is a fixed 15rem block, which leaves the spinner stuck at the
+    // top of the slot instead of vertically centered.
+    return (
+      <Loading
+        style={
+          appliedContentType === 'comment' && commentPreviewVariant === 'column'
+            ? { height: '100%' }
+            : undefined
+        }
+      />
+    );
   }
 
   if (isPreview) {

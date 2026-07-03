@@ -529,6 +529,12 @@ function getSavedAnchorRestoreSignature(anchorKey: string) {
   }:${savedAnchor.contentKey || ''}:${savedAnchor.offset}:${savedAnchor.scrollTop}`;
 }
 
+export function clearSavedScrollAnchors(...anchorKeys: string[]) {
+  for (const anchorKey of anchorKeys) {
+    delete savedScrollAnchors[anchorKey];
+  }
+}
+
 export function saveScrollAnchorForElement(
   sourceElement: HTMLElement | null,
   anchorKey?: string
