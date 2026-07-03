@@ -72,6 +72,10 @@ export function isLazyImportLoadError(error: unknown) {
     message.includes('Failed to fetch dynamically imported module') ||
     message.includes('error loading dynamically imported module') ||
     message.includes('Importing a module script failed') ||
+    // Safari surfaces a failed cross-origin module fetch (assets load from the
+    // *.vercel.app deployment origin) with this message instead of the generic
+    // import failure above.
+    message.includes('Cross-origin script load denied') ||
     message.includes('not a valid JavaScript MIME type') ||
     message.includes('Unable to preload CSS for') ||
     message.includes('ChunkLoadError') ||
