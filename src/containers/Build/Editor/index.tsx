@@ -82,6 +82,7 @@ import {
 import {
   EMPTY_BUILD_PROJECT_FILES,
   normalizeProjectFilesForBuild,
+  resolveIndexHtmlFromProjectFiles,
   serializedComparableValue
 } from './helpers/projectFiles';
 import { getLegacyThreeVendorPaths } from './helpers/threeVendorUpgrade';
@@ -275,9 +276,13 @@ export default function BuildEditor({
   const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
   onUpdateTodayStatsRef.current = onUpdateTodayStats;
 
+  const routeOpensCommunicationPanel =
+    routeOpenPeoplePanel || routeOpenVersionsPanel;
   const [mobilePanelTabIntent, setMobilePanelTabIntent] =
     useState<MobilePanelTabIntent>(() => ({
-      tab: 'chat',
+      tab: routeOpensCommunicationPanel
+        ? 'chat'
+        : getDefaultMobilePanelTab(build),
       version: 0
     }));
   const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
@@ -1032,6 +1037,19 @@ export default function BuildEditor({
   }, [build.id]);
 
   useEffect(() => {
+    setMobilePanelTabIntent((currentIntent) => ({
+      tab: routeOpensCommunicationPanel
+        ? 'chat'
+        : getDefaultMobilePanelTab(getLatestBuild()),
+      version: currentIntent.version + 1
+    }));
+    // Intentionally keyed on build.id only: routeOpensCommunicationPanel is
+    // cleared in place (replace-navigation) once the user changes panels, and
+    // re-running then would yank them out of the chat tab they are using.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id]);
+
+  useEffect(() => {
     if (
       !currentBuildRunView.streamingProjectFiles ||
       currentBuildRunView.streamingProjectFiles.length === 0
@@ -1750,6 +1768,8 @@ export default function BuildEditor({
         onMobilePanelTabChange={setMobilePanelTab}
         onWorkspaceResizeKeyDown={handleWorkspaceResizeKeyDown}
         onWorkspaceResizePointerDown={handleWorkspaceResizePointerDown}
+        showMainProjectNavigation={currentBuildIsContributionFork}
+        onOpenMainProject={handleOpenMainProject}
         previewPanelProps={previewPanelProps}
         previewPanelRef={previewPanelRef}
         workspaceShellRef={workspaceShellRef}
@@ -1842,6 +1862,19 @@ export default function BuildEditor({
       });
     }
   }
+}
+
+function getDefaultMobilePanelTab(build: {
+  projectFiles?: Array<{ path: string; content?: string }> | null;
+  code?: string | null;
+}): MobilePanelTab {
+  const hasPreviewContent = Boolean(
+    resolveIndexHtmlFromProjectFiles(
+      Array.isArray(build?.projectFiles) ? build.projectFiles : [],
+      build?.code || ''
+    ).trim()
+  );
+  return hasPreviewContent ? 'preview' : 'chat';
 }
 
 function getBranchMainUpdateTarget({

@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
-import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
-import { getThemeStyles, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
+import MainProjectButton from '../MainProjectButton';
 import ThreeVendorUpgradeNotice from '../ThreeVendorUpgradeNotice';
 import Composer from './Composer';
 import Header from './Header';
@@ -141,6 +141,13 @@ const communicationHeaderClass = css`
   padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
+  /* The Main button is hidden on mobile (it moves to the Workspace top bar),
+     so center the mode toggle like the plain tabs row instead of letting it
+     slide into the button's grid column. */
+  @media (max-width: ${mobileMaxWidth}) {
+    display: flex;
+    justify-content: center;
+  }
 `;
 
 const communicationHeaderTabsSlotClass = css`
@@ -154,25 +161,12 @@ const communicationHeaderSpacerClass = css`
   min-width: 0;
 `;
 
-const mainProjectButtonClass = css`
-  justify-self: start;
-  width: max-content;
-  max-width: 100%;
-  border: 1px solid var(--main-btn-border, #285a9c);
-  border-radius: 999px;
-  background: var(--main-btn-bg, #418ceb);
-  color: var(--main-btn-text, #fff);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.56rem 0.85rem;
-  font: inherit;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.18);
-  white-space: nowrap;
-  &:hover {
-    background: var(--main-btn-hover, #357abd);
+/* On mobile the Main button renders in the Workspace top bar (next to the
+   Chat/Workspace toggle) so it stays reachable from both tabs; here it is
+   desktop-only to avoid showing it twice on the chat tab. */
+const desktopOnlyMainButtonClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
   }
 `;
 
@@ -282,16 +276,6 @@ export default function ChatPanel({
     (v) => v.state.aiFeaturesDisabled
   );
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const mainProjectButtonStyle = useMemo(() => {
-    const themed = getThemeStyles(profileTheme || 'logoBlue', 1);
-    return {
-      '--main-btn-bg': themed.bg,
-      '--main-btn-hover': themed.hoverBg,
-      '--main-btn-border': themed.border,
-      '--main-btn-text': themed.text
-    } as React.CSSProperties;
-  }, [profileTheme]);
   const setLumineHeaderMinimized = useAppContext(
     (v) => v.requestHelpers.setLumineHeaderMinimized
   );
@@ -683,15 +667,10 @@ export default function ChatPanel({
     >
       {mainProjectNavigationShown ? (
         <div className={communicationHeaderClass}>
-          <button
-            type="button"
-            className={mainProjectButtonClass}
-            style={mainProjectButtonStyle}
+          <MainProjectButton
+            className={desktopOnlyMainButtonClass}
             onClick={onOpenMainProject}
-          >
-            <Icon icon="home" />
-            <span>Main</span>
-          </button>
+          />
           {communicationOptions.length > 1 ? (
             <div className={communicationHeaderTabsSlotClass}>
               <SegmentedToggle

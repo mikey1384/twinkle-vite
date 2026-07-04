@@ -2,6 +2,7 @@ import React, { RefObject, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import MainProjectButton from './MainProjectButton';
 import PreviewPanel from '../PreviewPanel';
 import type {
   PreviewPanelHandle,
@@ -103,6 +104,31 @@ const mobileTabBarClass = css`
   }
 `;
 
+const tabBarWithMainClass = css`
+  display: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: grid;
+    grid-template-columns:
+      minmax(max-content, 1fr)
+      minmax(0, auto)
+      minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem 0;
+  }
+`;
+
+const tabsSlotClass = css`
+  justify-self: center;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+`;
+
+const tabBarSpacerClass = css`
+  min-width: 0;
+`;
+
 const workspaceNoChatClass = css`
   ${workspaceShellBase};
   grid-template-columns: 1fr;
@@ -129,6 +155,8 @@ interface WorkspaceProps {
   onWorkspaceResizePointerDown: (
     event: React.PointerEvent<HTMLButtonElement>
   ) => void;
+  showMainProjectNavigation?: boolean;
+  onOpenMainProject?: () => void;
   previewPanelProps: Omit<PreviewPanelProps, 'className'>;
   previewPanelRef: RefObject<PreviewPanelHandle | null>;
   workspaceShellRef: RefObject<HTMLDivElement | null>;
@@ -145,6 +173,8 @@ export default function Workspace({
   onMobilePanelTabChange,
   onWorkspaceResizeKeyDown,
   onWorkspaceResizePointerDown,
+  showMainProjectNavigation,
+  onOpenMainProject,
   previewPanelProps,
   previewPanelRef,
   workspaceShellRef,
@@ -153,6 +183,8 @@ export default function Workspace({
   const [mobilePanelTab, setMobilePanelTab] = useState<MobilePanelTab>(
     mobilePanelTabIntent.tab
   );
+  const mainProjectNavigationShown =
+    Boolean(showMainProjectNavigation) && Boolean(onOpenMainProject);
   const showChatPanel =
     communicationPanelShown &&
     (isDesktopWorkspaceLayout || mobilePanelTab === 'chat');
@@ -170,21 +202,31 @@ export default function Workspace({
     onMobilePanelTabChange(tab);
   }
 
+  const panelToggle = communicationPanelShown ? (
+    <SegmentedToggle
+      value={mobilePanelTab}
+      options={[
+        { value: 'chat' as const, label: 'Chat', icon: 'comments' },
+        { value: 'preview' as const, label: 'Workspace', icon: 'eye' }
+      ]}
+      onChange={handleMobilePanelTabChange}
+      ariaLabel="Switch between chat and workspace"
+      size="sm"
+    />
+  ) : null;
+
   return (
     <div className={panelShellClass}>
-      {communicationPanelShown ? (
-        <div className={mobileTabBarClass}>
-          <SegmentedToggle
-            value={mobilePanelTab}
-            options={[
-              { value: 'chat' as const, label: 'Chat', icon: 'comments' },
-              { value: 'preview' as const, label: 'Workspace', icon: 'eye' }
-            ]}
-            onChange={handleMobilePanelTabChange}
-            ariaLabel="Switch between chat and workspace"
-            size="sm"
-          />
+      {mainProjectNavigationShown ? (
+        <div className={tabBarWithMainClass}>
+          <MainProjectButton onClick={onOpenMainProject} />
+          {panelToggle ? (
+            <div className={tabsSlotClass}>{panelToggle}</div>
+          ) : null}
+          <span className={tabBarSpacerClass} aria-hidden="true" />
         </div>
+      ) : panelToggle ? (
+        <div className={mobileTabBarClass}>{panelToggle}</div>
       ) : null}
       <div
         ref={workspaceShellRef}
