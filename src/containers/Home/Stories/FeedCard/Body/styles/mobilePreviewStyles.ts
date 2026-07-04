@@ -401,7 +401,9 @@ export const mobilePreviewStyles = `
         padding: 0.62rem 0.72rem;
       }
       .home-feed-card__target-daily-goals.home-feed-card__daily-goals-preview--target.has-media {
-        grid-template-columns: minmax(5.2rem, 26%) minmax(0, 1fr);
+        --home-feed-daily-goals-thumb-height: max(10rem, 100px);
+        --home-feed-daily-goals-thumb-width: max(7.15rem, 71.5px);
+        grid-template-columns: max(7.15rem, 71.5px) minmax(0, 1fr);
       }
       .home-feed-card__daily-goals-preview--target h3 {
         font-size: max(1.48rem, 14.8px);

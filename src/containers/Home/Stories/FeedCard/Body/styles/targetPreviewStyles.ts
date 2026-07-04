@@ -173,11 +173,9 @@ export const targetPreviewStyles = `
       padding: 0.7rem 0.85rem;
     }
     .home-feed-card__target-daily-goals.home-feed-card__daily-goals-preview--target.has-media {
-      grid-template-columns: minmax(5.8rem, 20%) minmax(0, 1fr);
-    }
-    .home-feed-card__daily-goals-preview--target .home-feed-card__daily-goals-card {
-      transform: scale(0.72);
-      transform-origin: center;
+      --home-feed-daily-goals-thumb-height: max(10.5rem, 105px);
+      --home-feed-daily-goals-thumb-width: max(7.5rem, 75px);
+      grid-template-columns: max(7.5rem, 75px) minmax(0, 1fr);
     }
     .home-feed-card__daily-goals-preview--target .home-feed-card__daily-goals-copy {
       justify-content: center;
