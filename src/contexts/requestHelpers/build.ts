@@ -625,6 +625,36 @@ export default function buildRequestHelpers({
       }
     },
 
+    async generateBuildThumbnail({
+      buildId,
+      model,
+      quality,
+      prompt,
+      estimateOnly
+    }: {
+      buildId: number;
+      model: string;
+      quality?: string;
+      prompt?: string;
+      estimateOnly?: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/thumbnail/generate`,
+          {
+            model,
+            ...(quality ? { quality } : {}),
+            ...(prompt ? { prompt } : {}),
+            ...(estimateOnly ? { estimateOnly: true } : {})
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async deleteBuildChatMessage({
       buildId,
       messageId

@@ -12,6 +12,7 @@ import {
 import { socket } from '~/constants/sockets/api';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { teardownChatPushOnLogout } from '~/helpers/desktopNotifications';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
@@ -41,6 +42,9 @@ export default function AccountMenu({
   const loginColorKey = loginRole.colorKey;
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const recordLogout = useAppContext((v) => v.requestHelpers.recordLogout);
+  const deletePushSubscription = useAppContext(
+    (v) => v.requestHelpers.deletePushSubscription
+  );
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
@@ -165,6 +169,7 @@ export default function AccountMenu({
 
   function handleLogout() {
     const logoutRecord = recordLogout(auth());
+    void teardownChatPushOnLogout(deletePushSubscription);
     socket.emit('leave_my_notification_channel', userId);
     socket.disconnect();
     onLogout();

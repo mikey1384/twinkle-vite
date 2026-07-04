@@ -6,6 +6,7 @@ import {
 import {
   buildFollowUpAcceptPromptBinding,
   buildScopedPlanContinuePromptBinding,
+  buildToolApprovalDecisionPromptBinding,
   resolveBuildFollowUpPromptKey
 } from '../helpers/promptBindings';
 import {
@@ -139,7 +140,51 @@ export default function useChatCommandActions({
   }
 
   async function handleSendMessage(messageText: string) {
+    // A typed reply while an approval ask is pending counts as declining it
+    // with an explanation, so the paused tool call resolves instead of
+    // leaving a stale approval note behind.
+    const pendingApproval = currentBuildRunView.pendingToolApproval;
+    if (pendingApproval) {
+      const promptBinding = buildToolApprovalDecisionPromptBinding({
+        approval: pendingApproval,
+        decision: {
+          approved: false,
+          reply: String(messageText || '').trim() || null
+        }
+      });
+      if (promptBinding) {
+        return await sendBuildMessageText(messageText, { promptBinding });
+      }
+    }
     return await sendBuildMessageText(messageText);
+  }
+
+  async function handleApproveToolRequest(modelId: string) {
+    if (!isOwner) return;
+    const approval = currentBuildRunView.pendingToolApproval;
+    const promptBinding = buildToolApprovalDecisionPromptBinding({
+      approval,
+      decision: { approved: true, modelId }
+    });
+    if (!promptBinding) return;
+    const modelLabel =
+      approval?.modelOptions?.find((option) => option.id === modelId)?.label ||
+      modelId;
+    await sendBuildMessageText(`Approve: generate with ${modelLabel}.`, {
+      promptBinding
+    });
+  }
+
+  async function handleDeclineToolRequest() {
+    if (!isOwner) return;
+    const promptBinding = buildToolApprovalDecisionPromptBinding({
+      approval: currentBuildRunView.pendingToolApproval,
+      decision: { approved: false, reply: null }
+    });
+    if (!promptBinding) return;
+    await sendBuildMessageText(`No, don't generate the image.`, {
+      promptBinding
+    });
   }
 
   async function handleAskLumineToResolveMergeConflicts(paths: string[] = []) {
@@ -422,10 +467,12 @@ export default function useChatCommandActions({
 
   return {
     handleAcceptFollowUpPrompt,
+    handleApproveToolRequest,
     handleAskLumineToResolveMergeConflicts,
     handleAskLumineToUpgradeThreeVendor,
     handleCancelScopedPlan,
     handleContinueScopedPlan,
+    handleDeclineToolRequest,
     handleDeleteMessage,
     handleDismissFollowUpPrompt,
     handleFixRuntimeObservationMessage,

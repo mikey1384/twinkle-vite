@@ -4,6 +4,7 @@ import {
   useState,
   type RefObject
 } from 'react';
+import { socket } from '~/constants/sockets/api';
 import { returnImageFileFromUrl } from '~/helpers';
 import type { PreviewPanelHandle } from '../../PreviewPanel/types';
 import {
@@ -20,11 +21,37 @@ import type {
 
 const BRANCH_THUMBNAIL_CAPTURE_SETTLE_MS = 1600;
 
+const THUMBNAIL_NUDGE_MODEL_LABELS: Record<string, string> = {
+  'gpt-image-2': 'GPT Image 2',
+  'gemini-3-pro-image-preview': 'Gemini Image (Nano Banana)'
+};
+
+function thumbnailNudgeDismissalKey(buildId: number) {
+  return `build-thumbnail-nudge-dismissed:${buildId}`;
+}
+
+function readThumbnailNudgeDismissed(buildId: number) {
+  try {
+    return (
+      window.localStorage.getItem(thumbnailNudgeDismissalKey(buildId)) === '1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function formatThumbnailNudgeBatteryDetail(energyUnits: number) {
+  const percent = (Number(energyUnits) || 0) / 10_000;
+  if (percent <= 0) return '';
+  return percent < 1 ? '<1% battery' : `~${Math.round(percent)}% battery`;
+}
+
 export default function useMetadata({
   applyBuildUpdate,
   build,
   canEditCurrentBuildMetadata,
   canEditCurrentBuildThumbnail,
+  generateBuildThumbnail,
   getLatestBuild,
   isOwner,
   loadBuildThumbnailOptions,
@@ -37,6 +64,13 @@ export default function useMetadata({
   build: Build;
   canEditCurrentBuildMetadata: boolean;
   canEditCurrentBuildThumbnail: boolean;
+  generateBuildThumbnail: (options: {
+    buildId: number;
+    model: string;
+    quality?: string;
+    prompt?: string;
+    estimateOnly?: boolean;
+  }) => Promise<any>;
   getLatestBuild: () => Build;
   isOwner: boolean;
   loadBuildThumbnailOptions: (buildId: number) => Promise<any>;
@@ -66,6 +100,17 @@ export default function useMetadata({
     ready: boolean;
     codeSignature: string | null;
   }>({ ready: false, codeSignature: null });
+  const [thumbnailNudgeStage, setThumbnailNudgeStage] = useState<
+    'choice' | 'model'
+  >('choice');
+  const [thumbnailNudgeBusyLabel, setThumbnailNudgeBusyLabel] = useState('');
+  const [thumbnailNudgeError, setThumbnailNudgeError] = useState('');
+  const [thumbnailNudgeModelOptions, setThumbnailNudgeModelOptions] = useState<
+    Array<{ model: string; energyUnits: number }>
+  >([]);
+  const [thumbnailNudgeDismissed, setThumbnailNudgeDismissed] = useState(() =>
+    readThumbnailNudgeDismissed(Number(build.id || 0))
+  );
 
   useEffect(() => {
     savingThumbnailRef.current = savingThumbnail;
@@ -76,7 +121,50 @@ export default function useMetadata({
     setThumbnailModalShown(false);
     setSavingThumbnail(false);
     setThumbnailSaveError('');
+    setThumbnailNudgeStage('choice');
+    setThumbnailNudgeBusyLabel('');
+    setThumbnailNudgeError('');
+    setThumbnailNudgeModelOptions([]);
+    setThumbnailNudgeDismissed(
+      readThumbnailNudgeDismissed(Number(build.id || 0))
+    );
   }, [build.id]);
+
+  useEffect(() => {
+    function handleBuildThumbnailUpdated({
+      buildId,
+      thumbnailUrl,
+      updatedAt
+    }: {
+      buildId?: number;
+      thumbnailUrl?: string | null;
+      updatedAt?: number;
+    }) {
+      const latestBuild = getLatestBuild();
+      // null/empty means the thumbnail was removed; only an absent field is ignored
+      const normalizedThumbnailUrl = String(thumbnailUrl || '').trim() || null;
+      if (
+        Number(buildId || 0) !== Number(latestBuild.id || 0) ||
+        thumbnailUrl === undefined ||
+        String(latestBuild.thumbnailUrl || '') === (normalizedThumbnailUrl || '')
+      ) {
+        return;
+      }
+      const nextBuild = {
+        ...latestBuild,
+        thumbnailUrl: normalizedThumbnailUrl,
+        ...(Number(updatedAt || 0) > 0 ? { updatedAt: Number(updatedAt) } : {})
+      };
+      applyBuildUpdate(nextBuild);
+      syncAvailableBranchSummary(nextBuild);
+    }
+    socket.on('build_thumbnail_updated', handleBuildThumbnailUpdated);
+    return () => {
+      socket.off('build_thumbnail_updated', handleBuildThumbnailUpdated);
+    };
+    // getLatestBuild/applyBuildUpdate/syncAvailableBranchSummary are stable helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -393,7 +481,140 @@ export default function useMetadata({
     }
   }
 
+  function buildThumbnailNudgePromptForDisplay() {
+    if (thumbnailNudgeStage === 'model') {
+      return {
+        question: 'Which image model should I use for the thumbnail?',
+        options: [
+          ...thumbnailNudgeModelOptions.map((option) => ({
+            key: option.model,
+            label:
+              THUMBNAIL_NUDGE_MODEL_LABELS[option.model] || option.model,
+            detail: formatThumbnailNudgeBatteryDetail(option.energyUnits),
+            tone: 'neutral' as const
+          })),
+          { key: 'back', label: 'Back', tone: 'neutral' as const }
+        ],
+        busyLabel: thumbnailNudgeBusyLabel || null,
+        footnote: thumbnailNudgeError || undefined
+      };
+    }
+    return {
+      question:
+        "This build doesn't have a thumbnail yet — want to set one up now?",
+      options: [
+        {
+          key: 'capture',
+          label: 'Screenshot the app',
+          tone: 'positive' as const
+        },
+        {
+          key: 'generate',
+          label: 'Generate one with AI',
+          detail: 'uses battery',
+          tone: 'neutral' as const
+        },
+        { key: 'dismiss', label: 'Not now', tone: 'neutral' as const }
+      ],
+      busyLabel: thumbnailNudgeBusyLabel || null,
+      footnote: thumbnailNudgeError || undefined
+    };
+  }
+
+  async function handleThumbnailNudgeSelect(key: string) {
+    if (!canEditCurrentBuildThumbnail || thumbnailNudgeBusyLabel) return;
+    setThumbnailNudgeError('');
+    const latestBuild = getLatestBuild();
+    if (thumbnailNudgeStage === 'choice') {
+      if (key === 'dismiss') {
+        try {
+          window.localStorage.setItem(
+            thumbnailNudgeDismissalKey(Number(latestBuild.id || 0)),
+            '1'
+          );
+        } catch {
+          // localStorage unavailable; session-only dismissal still applies.
+        }
+        setThumbnailNudgeDismissed(true);
+        return;
+      }
+      if (key === 'capture') {
+        setThumbnailNudgeBusyLabel('Capturing the preview...');
+        try {
+          const capturedImageUrl = await captureThumbnailFromPreview();
+          await persistBuildThumbnailFromDataUrl(capturedImageUrl);
+        } catch (error: any) {
+          console.error('Thumbnail nudge capture failed:', error);
+          setThumbnailNudgeError(
+            'Preview capture failed — you can set a thumbnail from the settings menu instead.'
+          );
+        } finally {
+          setThumbnailNudgeBusyLabel('');
+        }
+        return;
+      }
+      if (key === 'generate') {
+        setThumbnailNudgeBusyLabel('Checking battery cost...');
+        try {
+          const result = await generateBuildThumbnail({
+            buildId: Number(latestBuild.id || 0),
+            model: 'gpt-image-2',
+            estimateOnly: true
+          });
+          const options = Array.isArray(result?.estimate?.options)
+            ? result.estimate.options
+            : [];
+          if (options.length === 0) {
+            throw new Error('No model options returned');
+          }
+          setThumbnailNudgeModelOptions(options);
+          setThumbnailNudgeStage('model');
+        } catch (error: any) {
+          console.error('Thumbnail nudge estimate failed:', error);
+          setThumbnailNudgeError(
+            'Could not load image model options. Please try again.'
+          );
+        } finally {
+          setThumbnailNudgeBusyLabel('');
+        }
+      }
+      return;
+    }
+    if (key === 'back') {
+      setThumbnailNudgeStage('choice');
+      return;
+    }
+    setThumbnailNudgeBusyLabel(
+      'Generating the thumbnail... this can take a minute.'
+    );
+    try {
+      const result = await generateBuildThumbnail({
+        buildId: Number(latestBuild.id || 0),
+        model: key
+      });
+      if (!result?.success || !result?.build) {
+        throw new Error(result?.error || 'Thumbnail generation failed');
+      }
+      const nextBuild = {
+        ...getLatestBuild(),
+        ...result.build
+      };
+      applyBuildUpdate(nextBuild);
+      syncAvailableBranchSummary(nextBuild);
+      setThumbnailNudgeStage('choice');
+    } catch (error: any) {
+      console.error('Thumbnail nudge generation failed:', error);
+      setThumbnailNudgeError(
+        String(error?.message || '').trim() ||
+          'Thumbnail generation failed. Please try again.'
+      );
+    } finally {
+      setThumbnailNudgeBusyLabel('');
+    }
+  }
+
   return {
+    buildThumbnailNudgePromptForDisplay,
     captureThumbnailFromPreview,
     descriptionModalShown,
     ensureBuildThumbnailBeforePublish,
@@ -404,10 +625,13 @@ export default function useMetadata({
     handlePreviewCaptureReadyChange,
     handleSaveMetadata,
     handleSaveThumbnail,
+    handleThumbnailNudgeSelect,
     maybeAutoCaptureBranchThumbnailAfterProgressSave,
     savingDescription,
     savingThumbnail,
     thumbnailModalShown,
+    thumbnailNudgeBusyLabel,
+    thumbnailNudgeDismissed,
     thumbnailOptions,
     thumbnailOptionsLoading,
     thumbnailSaveError

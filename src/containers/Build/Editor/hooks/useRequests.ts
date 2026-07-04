@@ -14,6 +14,9 @@ export default function useRequests() {
   const uploadBuildThumbnail = useAppContext(
     (v) => v.requestHelpers.uploadBuildThumbnail
   );
+  const generateBuildThumbnail = useAppContext(
+    (v) => v.requestHelpers.generateBuildThumbnail
+  );
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
   const loadBuildRuntimeUploads = useAppContext(
     (v) => v.requestHelpers.loadBuildRuntimeUploads
@@ -133,6 +136,7 @@ export default function useRequests() {
     updateBuildMetadata,
     updateBuildProjectFiles,
     uploadBuildRuntimeFiles,
+    generateBuildThumbnail,
     uploadBuildThumbnail,
     uploadFile
   };

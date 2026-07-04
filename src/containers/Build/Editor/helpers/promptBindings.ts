@@ -3,7 +3,9 @@ import type {
   BuildExecutionPlanChunk,
   BuildFollowUpAcceptPromptBinding,
   BuildFollowUpPrompt,
-  BuildScopedPlanContinuePromptBinding
+  BuildPendingToolApproval,
+  BuildScopedPlanContinuePromptBinding,
+  BuildToolApprovalDecisionPromptBinding
 } from '../types';
 
 export function isExecutableBuildExecutionChunkStatus(
@@ -108,6 +110,25 @@ export function buildScopedPlanContinuePromptBinding(
     kind: 'scoped_plan_continue',
     question: question || null,
     executionPlan: plan
+  };
+}
+
+export function buildToolApprovalDecisionPromptBinding({
+  approval,
+  decision
+}: {
+  approval: BuildPendingToolApproval | null | undefined;
+  decision:
+    | { approved: true; modelId: string }
+    | { approved: false; reply: string | null };
+}): BuildToolApprovalDecisionPromptBinding | null {
+  const sourceMessageId = Number(approval?.sourceMessageId || 0);
+  if (!sourceMessageId) return null;
+  return {
+    kind: 'tool_approval_decision',
+    question: String(approval?.question || '').trim() || null,
+    sourceMessageId,
+    decision
   };
 }
 

@@ -145,6 +145,8 @@ export interface Build {
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   executionPlan?: BuildExecutionPlan | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
+  pendingToolApproval?: BuildPendingToolApproval | null;
+  thumbnailNudge?: BuildThumbnailNudge | null;
   runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
   createdAt: number;
   updatedAt: number;
@@ -183,6 +185,27 @@ export interface BuildFollowUpPrompt {
   question?: string | null;
   suggestedMessage?: string | null;
   sourceMessageId?: number | null;
+}
+
+export interface BuildPendingToolApproval {
+  kind: 'generate_image_asset' | 'set_build_thumbnail';
+  sourceMessageId?: number | null;
+  question: string;
+  imagePrompt: string;
+  size?: string | null;
+  modelOptions: Array<{
+    id: string;
+    label: string;
+    qualityLabel: string;
+    speedLabel: string;
+    estimatedUsd: number;
+    estimatedBatteryCost: number;
+  }>;
+  expiresAt?: number;
+}
+
+export interface BuildThumbnailNudge {
+  sourceMessageId: number;
 }
 
 export interface ChatMessage {
@@ -311,9 +334,19 @@ export interface BuildFollowUpAcceptPromptBinding {
   sourceMessageId?: number | null;
 }
 
+export interface BuildToolApprovalDecisionPromptBinding {
+  kind: 'tool_approval_decision';
+  question?: string | null;
+  sourceMessageId: number;
+  decision:
+    | { approved: true; modelId: string }
+    | { approved: false; reply: string | null };
+}
+
 export type BuildPromptBinding =
   | BuildScopedPlanContinuePromptBinding
-  | BuildFollowUpAcceptPromptBinding;
+  | BuildFollowUpAcceptPromptBinding
+  | BuildToolApprovalDecisionPromptBinding;
 
 export interface BuildRuntimeUploadAsset {
   id: number;
@@ -408,6 +441,8 @@ export interface CurrentBuildRunView {
   terminalState: BuildLiveRunState['terminalState'] | null;
   executionPlan: BuildExecutionPlan | null;
   followUpPrompt: BuildFollowUpPrompt | null;
+  pendingToolApproval: BuildPendingToolApproval | null;
+  thumbnailNudge: BuildThumbnailNudge | null;
   runtimeExplorationPlan: BuildRuntimeExplorationPlan | null;
   activeStreamMessageIds: number[];
 }

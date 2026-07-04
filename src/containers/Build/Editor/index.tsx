@@ -268,6 +268,7 @@ export default function BuildEditor({
     updateBuildLumineChatVisibility,
     updateBuildMetadata,
     updateBuildProjectFiles,
+    generateBuildThumbnail,
     uploadBuildRuntimeFiles,
     uploadBuildThumbnail,
     uploadFile,
@@ -561,6 +562,8 @@ export default function BuildEditor({
       ...buildPayload.build,
       executionPlan: buildPayload.executionPlan || null,
       followUpPrompt: buildPayload.followUpPrompt || null,
+      pendingToolApproval: buildPayload.pendingToolApproval || null,
+      thumbnailNudge: buildPayload.thumbnailNudge || null,
       runtimeExplorationPlan: buildPayload.runtimeExplorationPlan || null,
       projectManifest: buildPayload.projectManifest || null,
       projectFiles: Array.isArray(buildPayload.projectFiles)
@@ -642,6 +645,7 @@ export default function BuildEditor({
     userId
   });
   const {
+    buildThumbnailNudgePromptForDisplay,
     captureThumbnailFromPreview,
     descriptionModalShown,
     ensureBuildThumbnailBeforePublish,
@@ -652,10 +656,12 @@ export default function BuildEditor({
     handlePreviewCaptureReadyChange,
     handleSaveMetadata,
     handleSaveThumbnail,
+    handleThumbnailNudgeSelect,
     maybeAutoCaptureBranchThumbnailAfterProgressSave,
     savingDescription,
     savingThumbnail,
     thumbnailModalShown,
+    thumbnailNudgeDismissed,
     thumbnailOptions,
     thumbnailOptionsLoading,
     thumbnailSaveError
@@ -664,6 +670,7 @@ export default function BuildEditor({
     build,
     canEditCurrentBuildMetadata,
     canEditCurrentBuildThumbnail,
+    generateBuildThumbnail,
     getLatestBuild,
     isOwner,
     loadBuildThumbnailOptions,
@@ -931,10 +938,12 @@ export default function BuildEditor({
     });
   const {
     handleAcceptFollowUpPrompt,
+    handleApproveToolRequest,
     handleAskLumineToResolveMergeConflicts,
     handleAskLumineToUpgradeThreeVendor,
     handleCancelScopedPlan,
     handleContinueScopedPlan,
+    handleDeclineToolRequest,
     handleDeleteMessage,
     handleDismissFollowUpPrompt,
     handleFixRuntimeObservationMessage,
@@ -1592,6 +1601,14 @@ export default function BuildEditor({
       currentBuildRunView.executionPlan
     ),
     followUpPrompt: currentBuildRunView.followUpPrompt,
+    pendingToolApproval: currentBuildRunView.pendingToolApproval,
+    thumbnailNudgePrompt:
+      currentBuildRunView.thumbnailNudge &&
+      !thumbnailNudgeDismissed &&
+      canEditCurrentBuildThumbnail &&
+      !String(build.thumbnailUrl || '').trim()
+        ? buildThumbnailNudgePromptForDisplay()
+        : null,
     runMode: currentBuildRunView.runMode,
     generating: currentBuildRunView.generating,
     generatingStatus: currentBuildRunView.status,
@@ -1617,6 +1634,9 @@ export default function BuildEditor({
     onCancelScopedPlan: handleCancelScopedPlan,
     onAcceptFollowUpPrompt: handleAcceptFollowUpPrompt,
     onDismissFollowUpPrompt: handleDismissFollowUpPrompt,
+    onApproveToolRequest: handleApproveToolRequest,
+    onDeclineToolRequest: handleDeclineToolRequest,
+    onThumbnailNudgeSelect: handleThumbnailNudgeSelect,
     onOpenBuildChatUpload: handleOpenBuildChatUpload,
     uploadInFlight: buildChatUploadInFlight,
     runtimeUploadsModalShown,

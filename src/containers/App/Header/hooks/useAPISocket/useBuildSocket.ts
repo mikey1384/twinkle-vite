@@ -329,6 +329,21 @@ export default function useBuildSocket() {
             )
               ? (terminalPayload.followUpPrompt ?? null)
               : undefined,
+            ...(Object.prototype.hasOwnProperty.call(
+              terminalPayload || {},
+              'pendingToolApproval'
+            )
+              ? {
+                  pendingToolApproval:
+                    terminalPayload.pendingToolApproval ?? null
+                }
+              : {}),
+            ...(Object.prototype.hasOwnProperty.call(
+              terminalPayload || {},
+              'thumbnailNudge'
+            )
+              ? { thumbnailNudge: terminalPayload.thumbnailNudge ?? null }
+              : {}),
             deferredBuildRequest: Object.prototype.hasOwnProperty.call(
               terminalPayload || {},
               'deferredBuildRequest'
@@ -603,6 +618,8 @@ export default function useBuildSocket() {
       interruptionReason,
       executionPlan,
       followUpPrompt,
+      pendingToolApproval,
+      thumbnailNudge,
       runtimeExplorationPlan,
       runtimePlanRefined,
       workspaceChanged,
@@ -623,13 +640,19 @@ export default function useBuildSocket() {
       };
       code?: string | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
-      interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
+      interruptionReason?:
+        | 'tool_limit'
+        | 'energy_depleted'
+        | 'awaiting_approval'
+        | null;
       executionPlan?: any | null;
       followUpPrompt?: {
         question?: string | null;
         suggestedMessage?: string | null;
         sourceMessageId?: number | null;
       } | null;
+      pendingToolApproval?: Record<string, any> | null;
+      thumbnailNudge?: { sourceMessageId: number } | null;
       runtimeExplorationPlan?: any | null;
       runtimePlanRefined?: boolean;
       workspaceChanged?: boolean;
@@ -687,6 +710,18 @@ export default function useBuildSocket() {
         )
           ? (followUpPrompt ?? null)
           : undefined,
+        ...(Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'pendingToolApproval'
+        )
+          ? { pendingToolApproval: pendingToolApproval ?? null }
+          : {}),
+        ...(Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'thumbnailNudge'
+        )
+          ? { thumbnailNudge: thumbnailNudge ?? null }
+          : {}),
         deferredBuildRequest: Object.prototype.hasOwnProperty.call(
           arguments[0] || {},
           'deferredBuildRequest'

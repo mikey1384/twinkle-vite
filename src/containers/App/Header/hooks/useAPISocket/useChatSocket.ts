@@ -110,6 +110,9 @@ export default function useChatSocket({
   const onReceiveChatReaction = useChatContext(
     (v) => v.actions.onReceiveChatReaction
   );
+  const onGetNumberOfUnreadMessages = useChatContext(
+    (v) => v.actions.onGetNumberOfUnreadMessages
+  );
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
   );
@@ -142,6 +145,13 @@ export default function useChatSocket({
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
   );
+  const getNumberOfUnreadMessages = useAppContext(
+    (v) => v.requestHelpers.getNumberOfUnreadMessages
+  );
+
+  // Collapses concurrent global-unread resyncs triggered by reaction-removal
+  // bursts into one in-flight request.
+  const unreadResyncInFlightRef = useRef(false);
 
   // Reactions can come in bursts. We only need to persist lastRead once per second per
   // channel/subchannel because all relevant timestamps are second-granularity.
@@ -185,7 +195,7 @@ export default function useChatSocket({
     socket.on('chat_message_deleted', onDeleteMessage);
     socket.on('chat_message_edited', onEditMessage);
     socket.on('chat_reaction_added', handleChatReactionAdded);
-    socket.on('chat_reaction_removed', onRemoveReactionFromMessage);
+    socket.on('chat_reaction_removed', handleChatReactionRemoved);
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
@@ -210,7 +220,7 @@ export default function useChatSocket({
       socket.off('chat_message_deleted', onDeleteMessage);
       socket.off('chat_message_edited', onEditMessage);
       socket.off('chat_reaction_added', handleChatReactionAdded);
-      socket.off('chat_reaction_removed', onRemoveReactionFromMessage);
+      socket.off('chat_reaction_removed', handleChatReactionRemoved);
       socket.off('chat_subject_purchased', onEnableChatSubject);
       socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
       socket.off('message_attachment_hid', onHideAttachment);
@@ -322,6 +332,43 @@ export default function useChatSocket({
         timeStamp: stamped,
         shouldIncrementUnreads
       });
+    }
+
+    async function handleChatReactionRemoved(payload: {
+      channelId: number;
+      messageId: number;
+      reaction: string;
+      subchannelId: number;
+      userId: number;
+    }) {
+      onRemoveReactionFromMessage(payload);
+
+      // A DM reaction add bumps the global unread counter (yellow Chat nav),
+      // but the reducer's removal path only rolls back per-channel state, so
+      // an add→remove pair strands the nav yellow with nothing unread to show.
+      // Resync the counter from the server (the source of truth) instead of
+      // decrementing locally. Skip when the viewer is actively on chat with the
+      // page visible: the add never incremented in that state and Header zeroes
+      // the counter there anyway.
+      const channel = channelsObjRef.current?.[payload.channelId];
+      const removalCouldAffectGlobalUnreads =
+        channel?.twoPeople &&
+        payload.userId !== userId &&
+        !(usingChatRef.current && pageVisibleRef.current);
+      if (!removalCouldAffectGlobalUnreads) return;
+      if (unreadResyncInFlightRef.current) return;
+      unreadResyncInFlightRef.current = true;
+      try {
+        const numUnreads = await getNumberOfUnreadMessages();
+        if (typeof numUnreads === 'number' && !isNaN(numUnreads)) {
+          onGetNumberOfUnreadMessages(numUnreads);
+        }
+      } catch (error) {
+        // Leave the counter as-is on failure; the next connect resyncs it.
+        console.error('Failed to resync unread count:', error);
+      } finally {
+        unreadResyncInFlightRef.current = false;
+      }
     }
 
     function handleChatInvitation({
@@ -632,10 +679,26 @@ export default function useChatSocket({
       });
 
       if (messageIsForCurrentChannel) {
-        onReceiveMessage({ message, pageVisible: currentPageVisible });
+        if (usingChatRef.current) {
+          if (message.subchannelId === subchannelIdRef.current) {
+            maybeUpdateLastRead({
+              channelId: message.channelId,
+              subchannelId: message.subchannelId
+            });
+          } else {
+            maybeUpdateLastRead({ channelId: message.channelId });
+          }
+        }
+        onReceiveMessage({
+          message,
+          pageVisible: currentPageVisible,
+          usingChat: usingChatRef.current,
+          currentSubchannelId: subchannelIdRef.current
+        });
       } else {
         onReceiveMessageOnDifferentChannel({
           pageVisible: currentPageVisible,
+          usingChat: usingChatRef.current,
           message,
           channel: {
             id: channelId,

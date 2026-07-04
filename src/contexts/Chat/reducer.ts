@@ -832,8 +832,14 @@ export default function ChatReducer(
           lastUpdated: getLastMessageTimeStamp()
         };
 
+        // Reaction adds only ever bump unread counts for DMs (twoPeople), so
+        // only DMs roll them back here. A group channel can still carry a
+        // legacy lastReaction in settings; clearing it must not eat unreads
+        // that reaction adds never created.
+        const shouldAdjustUnreads = !!prevChannelObj.twoPeople;
+
         const targetSubchannelId = Number(action.subchannelId) || 0;
-        if (targetSubchannelId > 0) {
+        if (shouldAdjustUnreads && targetSubchannelId > 0) {
           const prevSub = nextChannelState?.subchannelObj?.[targetSubchannelId];
           if (prevSub) {
             const nextSubNumUnreads = Math.max(
@@ -857,7 +863,7 @@ export default function ChatReducer(
             };
             nextChannelState.subchannelObj = subchannelObj;
           }
-        } else {
+        } else if (shouldAdjustUnreads) {
           nextChannelState.numUnreads = Math.max(
             0,
             Number(nextChannelState?.numUnreads || 0) - 1
@@ -875,7 +881,7 @@ export default function ChatReducer(
         })();
 
         // If this removal clears the last unread marker, clear the metadata too.
-        if (totalNumUnreads === 0) {
+        if (shouldAdjustUnreads && totalNumUnreads === 0) {
           nextChannelState.lastUnreadUserId = null;
           nextChannelState.lastUnreadReaction = null;
           nextChannelState.lastUnreadMessageId = null;

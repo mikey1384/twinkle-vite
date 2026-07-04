@@ -65,6 +65,12 @@ export default function resolveCurrentBuildRunView({
   const sharedRunHasFollowUpPrompt =
     Boolean(sharedBuildRun) &&
     Object.prototype.hasOwnProperty.call(sharedBuildRun, 'followUpPrompt');
+  const sharedRunHasPendingToolApproval =
+    Boolean(sharedBuildRun) &&
+    Object.prototype.hasOwnProperty.call(sharedBuildRun, 'pendingToolApproval');
+  const sharedRunHasThumbnailNudge =
+    Boolean(sharedBuildRun) &&
+    Object.prototype.hasOwnProperty.call(sharedBuildRun, 'thumbnailNudge');
   const sharedRunHasRuntimeExplorationPlan =
     Boolean(sharedBuildRun) &&
     Object.prototype.hasOwnProperty.call(
@@ -77,6 +83,12 @@ export default function resolveCurrentBuildRunView({
   const sharedFirstFollowUpPrompt = sharedRunHasFollowUpPrompt
     ? (sharedBuildRun?.followUpPrompt ?? null)
     : (build.followUpPrompt ?? null);
+  const sharedFirstPendingToolApproval = sharedRunHasPendingToolApproval
+    ? (sharedBuildRun?.pendingToolApproval ?? null)
+    : ((build as any).pendingToolApproval ?? null);
+  const sharedFirstThumbnailNudge = sharedRunHasThumbnailNudge
+    ? (sharedBuildRun?.thumbnailNudge ?? null)
+    : ((build as any).thumbnailNudge ?? null);
   const sharedFirstRuntimeExplorationPlan = sharedRunHasRuntimeExplorationPlan
     ? (sharedBuildRun?.runtimeExplorationPlan ?? null)
     : (build.runtimeExplorationPlan ?? null);
@@ -123,6 +135,10 @@ export default function resolveCurrentBuildRunView({
       followUpPromptKey && followUpPromptKey === dismissedFollowUpPromptKey
         ? null
         : sharedFirstFollowUpPrompt,
+    pendingToolApproval: sharedFirstPendingToolApproval,
+    thumbnailNudge: String(build.thumbnailUrl || '').trim()
+      ? null
+      : sharedFirstThumbnailNudge,
     runtimeExplorationPlan: sharedFirstRuntimeExplorationPlan,
     activeStreamMessageIds: sharedGeneratingRun
       ? [

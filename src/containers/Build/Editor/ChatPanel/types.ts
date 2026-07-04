@@ -196,6 +196,42 @@ export interface BuildFollowUpPrompt {
   sourceMessageId?: number | null;
 }
 
+export interface BuildPendingToolApprovalModelOption {
+  id: string;
+  label: string;
+  qualityLabel: string;
+  speedLabel: string;
+  estimatedUsd: number;
+  estimatedBatteryCost: number;
+}
+
+export interface BuildPendingToolApproval {
+  kind: 'generate_image_asset' | 'set_build_thumbnail';
+  sourceMessageId?: number | null;
+  question: string;
+  imagePrompt: string;
+  size?: string | null;
+  modelOptions: BuildPendingToolApprovalModelOption[];
+  expiresAt?: number;
+}
+
+export interface BuildThumbnailNudge {
+  sourceMessageId: number;
+}
+
+export interface BuildThumbnailNudgePrompt {
+  question: string;
+  options: Array<{
+    key: string;
+    label: string;
+    detail?: string;
+    tone?: 'positive' | 'neutral' | 'warning';
+    disabled?: boolean;
+  }>;
+  footnote?: string;
+  busyLabel?: string | null;
+}
+
 export type BuildLumineChatVisibility = 'private' | 'collaborators';
 
 export interface LumineChatVisibilityControl {
@@ -267,6 +303,9 @@ export interface ChatPanelProps {
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
+  pendingToolApproval?: BuildPendingToolApproval | null;
+  thumbnailNudgePrompt?: BuildThumbnailNudgePrompt | null;
+  toolApprovalBusy?: boolean;
   runMode: ChatPanelRunMode;
   generating: boolean;
   generatingStatus: string | null;
@@ -292,6 +331,9 @@ export interface ChatPanelProps {
   onCancelScopedPlan: () => void;
   onAcceptFollowUpPrompt: () => void;
   onDismissFollowUpPrompt: () => void;
+  onApproveToolRequest?: (modelId: string) => void;
+  onDeclineToolRequest?: () => void;
+  onThumbnailNudgeSelect?: (key: string) => void;
   onOpenBuildChatUpload: () => void;
   uploadInFlight: boolean;
   runtimeUploadsModalShown: boolean;

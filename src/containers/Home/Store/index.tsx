@@ -3,7 +3,7 @@ import KarmaStatus from './KarmaStatus';
 import ItemPanel from './ItemPanel';
 import ChangePassword from './ChangePassword';
 import ChangeUsername from './ChangeUsername';
-import DesktopNotificationsItem from './DesktopNotificationsItem';
+import ChatNotificationsItem from './ChatNotificationsItem';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
@@ -128,7 +128,7 @@ export default function Store() {
               userType={userType}
             />
           </div>
-          <DesktopNotificationsItem loading={loading} />
+          <ChatNotificationsItem loading={loading} />
           <div data-scroll-anchor-id="home-settings:change-password">
             <ItemPanel
               itemKey="changePassword"

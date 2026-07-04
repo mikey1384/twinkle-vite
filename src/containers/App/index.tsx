@@ -45,6 +45,10 @@ import {
   toValidNextDayTimeStamp,
   returnImageFileFromUrl
 } from '~/helpers';
+import {
+  chatPushAutoEnrollEligible,
+  subscribeToChatPush
+} from '~/helpers/desktopNotifications';
 import { v1 as uuidv1 } from 'uuid';
 import {
   useAppContext,
@@ -241,6 +245,12 @@ export default function App() {
   const recordUserTraffic = useAppContext(
     (v) => v.requestHelpers.recordUserTraffic
   );
+  const loadPushVapidKey = useAppContext(
+    (v) => v.requestHelpers.loadPushVapidKey
+  );
+  const savePushSubscription = useAppContext(
+    (v) => v.requestHelpers.savePushSubscription
+  );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const loadChessStats = useAppContext((v) => v.requestHelpers.loadChessStats);
@@ -272,6 +282,7 @@ export default function App() {
   } = myState;
 
   const prevUserId = useRef(userId);
+  const chatPushEnsuredUserIdRef = useRef<number | null>(null);
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
@@ -469,6 +480,37 @@ export default function App() {
         onSetZeroChannelId(channelId);
       } else {
         onSetIsZeroCallAvailable(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  useEffect(() => {
+    // Ensure a server-side push subscription exists for devices that enabled
+    // chat notifications before the push rollout (or whose browser rotated
+    // the endpoint, or that re-log-in after logout tore the subscription
+    // down). Runs once per user per session.
+    if (!userId) {
+      // Logout tears the subscription down; clear the guard so the same
+      // account re-enrolls on its next login without a page reload.
+      chatPushEnsuredUserIdRef.current = null;
+      return;
+    }
+    if (chatPushEnsuredUserIdRef.current === userId) return;
+    if (!chatPushAutoEnrollEligible()) return;
+    chatPushEnsuredUserIdRef.current = userId;
+    ensureChatPushSubscription();
+
+    async function ensureChatPushSubscription() {
+      try {
+        const publicKey = await loadPushVapidKey();
+        if (!publicKey) return;
+        const subscription = await subscribeToChatPush(publicKey);
+        if (subscription) {
+          await savePushSubscription(subscription);
+        }
+      } catch {
+        // push is best-effort; the settings toggle can always re-enroll
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

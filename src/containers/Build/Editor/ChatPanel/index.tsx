@@ -222,6 +222,9 @@ export default function ChatPanel({
   executionPlan,
   scopedPlanQuestion,
   followUpPrompt,
+  pendingToolApproval,
+  thumbnailNudgePrompt,
+  toolApprovalBusy,
   runMode,
   generating,
   generatingStatus,
@@ -247,6 +250,9 @@ export default function ChatPanel({
   onCancelScopedPlan,
   onAcceptFollowUpPrompt,
   onDismissFollowUpPrompt,
+  onApproveToolRequest,
+  onDeclineToolRequest,
+  onThumbnailNudgeSelect,
   onOpenBuildChatUpload,
   uploadInFlight,
   runtimeUploadsModalShown,
@@ -486,6 +492,15 @@ export default function ChatPanel({
     !draftMessage.trim() &&
     Boolean(normalizedFollowUpQuestion) &&
     Boolean(normalizedFollowUpSuggestedMessage);
+  const showPendingToolApproval =
+    isOwner &&
+    Boolean(pendingToolApproval?.question) &&
+    (toolApprovalBusy || !generating);
+  const showThumbnailNudge =
+    isOwner &&
+    Boolean(thumbnailNudgePrompt) &&
+    !showPendingToolApproval &&
+    (Boolean(thumbnailNudgePrompt?.busyLabel) || !generating);
 
   useEffect(() => {
     if (activeCommunicationMode !== 'lumine') return;
@@ -777,6 +792,16 @@ export default function ChatPanel({
                   : onDismissFollowUpPrompt
               }
               onQuickReplyRedirect={handlePrefillRedirect}
+              pendingToolApproval={
+                showPendingToolApproval ? pendingToolApproval : null
+              }
+              toolApprovalBusy={toolApprovalBusy}
+              onApproveToolRequest={onApproveToolRequest}
+              onDeclineToolRequest={onDeclineToolRequest}
+              thumbnailNudgePrompt={
+                showThumbnailNudge ? thumbnailNudgePrompt : null
+              }
+              onThumbnailNudgeSelect={onThumbnailNudgeSelect}
               onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
               onDeleteMessage={onDeleteMessage}
             />

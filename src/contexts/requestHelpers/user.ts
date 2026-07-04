@@ -1191,6 +1191,48 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadPushVapidKey() {
+      try {
+        const {
+          data: { publicKey }
+        } = await request.get(`${URL}/user/pushSubscriptions/vapidKey`, auth());
+        return publicKey;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async savePushSubscription(subscription: {
+      endpoint: string;
+      keys: { p256dh: string; auth: string };
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.post(
+          `${URL}/user/pushSubscriptions`,
+          subscription,
+          auth()
+        );
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deletePushSubscription(endpoint: string) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/user/pushSubscriptions?endpoint=${encodeURIComponent(
+            endpoint
+          )}`,
+          auth()
+        );
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadUserPic({
       caption,
       src,

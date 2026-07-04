@@ -89,6 +89,8 @@ export default function useChatSync({
           ...buildPayload.build,
           executionPlan: buildPayload.executionPlan || null,
           followUpPrompt: buildPayload.followUpPrompt || null,
+          pendingToolApproval: buildPayload.pendingToolApproval || null,
+          thumbnailNudge: buildPayload.thumbnailNudge || null,
           runtimeExplorationPlan: buildPayload.runtimeExplorationPlan || null,
           projectManifest: buildPayload.projectManifest || null,
           projectFiles: Array.isArray(buildPayload.projectFiles)

@@ -100,6 +100,8 @@ export interface BuildLiveRunState {
   streamingFocusFilePath: string | null;
   executionPlan?: any | null;
   followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
+  pendingToolApproval?: Record<string, any> | null;
+  thumbnailNudge?: { sourceMessageId: number } | null;
   deferredBuildRequest?: BuildLiveRunDeferredRequest | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
@@ -214,6 +216,8 @@ export interface BuildLiveRunStreamUpdatePayload {
   projectFilesFocusPath?: string | null;
   executionPlan?: any | null;
   followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
+  pendingToolApproval?: Record<string, any> | null;
+  thumbnailNudge?: { sourceMessageId: number } | null;
   deferredBuildRequest?: BuildLiveRunDeferredRequest | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
@@ -1361,6 +1365,18 @@ function applyBuildRunStreamUpdate(
     )
       ? (buildRun?.followUpPrompt ?? null)
       : currentRun.followUpPrompt,
+    pendingToolApproval: Object.prototype.hasOwnProperty.call(
+      buildRun || {},
+      'pendingToolApproval'
+    )
+      ? (buildRun?.pendingToolApproval ?? null)
+      : currentRun.pendingToolApproval,
+    thumbnailNudge: Object.prototype.hasOwnProperty.call(
+      buildRun || {},
+      'thumbnailNudge'
+    )
+      ? (buildRun?.thumbnailNudge ?? null)
+      : currentRun.thumbnailNudge,
     deferredBuildRequest: Object.prototype.hasOwnProperty.call(
       buildRun || {},
       'deferredBuildRequest'
@@ -1506,6 +1522,8 @@ export default function BuildReducer(
         streamingFocusFilePath: null,
         executionPlan: null,
         followUpPrompt: null,
+        pendingToolApproval: null,
+        thumbnailNudge: null,
         deferredBuildRequest: null,
         runtimeExplorationPlan: null,
         runtimePlanRefined: false,
@@ -1809,6 +1827,19 @@ export default function BuildReducer(
           )
             ? (action.buildRun.followUpPrompt ?? null)
             : currentRun.followUpPrompt,
+        pendingToolApproval:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(
+            action.buildRun,
+            'pendingToolApproval'
+          )
+            ? (action.buildRun.pendingToolApproval ?? null)
+            : (currentRun.pendingToolApproval ?? null),
+        thumbnailNudge:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(action.buildRun, 'thumbnailNudge')
+            ? (action.buildRun.thumbnailNudge ?? null)
+            : (currentRun.thumbnailNudge ?? null),
         deferredBuildRequest:
           action.buildRun &&
           Object.prototype.hasOwnProperty.call(

@@ -4,10 +4,14 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import MessageRow from './MessageRow';
 import FollowUpPromptBubble from './FollowUpPromptBubble';
+import ChoicePromptBubble from './ChoicePromptBubble';
+import ToolApprovalPromptBubble from './ToolApprovalPromptBubble';
 import {
   BuildCurrentActivity,
+  BuildPendingToolApproval,
   BuildRuntimeDebugSnapshot,
   BuildStatusStepEntry,
+  BuildThumbnailNudgePrompt,
   ChatMessage,
   ChatPanelRunMode
 } from './types';
@@ -31,6 +35,12 @@ interface TranscriptProps {
   onQuickReplyYes?: () => void;
   onQuickReplyNo?: () => void;
   onQuickReplyRedirect?: () => void;
+  pendingToolApproval?: BuildPendingToolApproval | null;
+  toolApprovalBusy?: boolean;
+  onApproveToolRequest?: (modelId: string) => void;
+  onDeclineToolRequest?: () => void;
+  thumbnailNudgePrompt?: BuildThumbnailNudgePrompt | null;
+  onThumbnailNudgeSelect?: (key: string) => void;
   onFixRuntimeObservationMessage: (
     message: ChatMessage
   ) => Promise<boolean> | boolean;
@@ -55,6 +65,12 @@ const Transcript = React.memo(function Transcript({
   onQuickReplyYes,
   onQuickReplyNo,
   onQuickReplyRedirect,
+  pendingToolApproval,
+  toolApprovalBusy,
+  onApproveToolRequest,
+  onDeclineToolRequest,
+  thumbnailNudgePrompt,
+  onThumbnailNudgeSelect,
   onFixRuntimeObservationMessage,
   onDeleteMessage
 }: TranscriptProps) {
@@ -152,15 +168,31 @@ const Transcript = React.memo(function Transcript({
       {runtimeDebugSnapshot ? (
         <RuntimeDebugProjection snapshot={runtimeDebugSnapshot} />
       ) : null}
-      {quickReplyShown &&
-      onQuickReplyYes &&
-      onQuickReplyNo &&
-      onQuickReplyRedirect ? (
+      {pendingToolApproval && onApproveToolRequest && onDeclineToolRequest ? (
+        <ToolApprovalPromptBubble
+          approval={pendingToolApproval}
+          busy={toolApprovalBusy}
+          onApprove={onApproveToolRequest}
+          onDecline={onDeclineToolRequest}
+        />
+      ) : quickReplyShown &&
+        onQuickReplyYes &&
+        onQuickReplyNo &&
+        onQuickReplyRedirect ? (
         <FollowUpPromptBubble
           question={quickReplyQuestion || ''}
           onYes={onQuickReplyYes}
           onNo={onQuickReplyNo}
           onRedirect={onQuickReplyRedirect}
+        />
+      ) : null}
+      {thumbnailNudgePrompt && onThumbnailNudgeSelect ? (
+        <ChoicePromptBubble
+          question={thumbnailNudgePrompt.question}
+          busyLabel={thumbnailNudgePrompt.busyLabel}
+          footnote={thumbnailNudgePrompt.footnote}
+          options={thumbnailNudgePrompt.options}
+          onSelect={onThumbnailNudgeSelect}
         />
       ) : null}
       <div ref={chatEndRef} />
