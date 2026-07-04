@@ -1,6 +1,10 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
+import {
+  isScrollDiagnosticsLoggingEnabled,
+  recordScrollDiagnostic
+} from '~/helpers/scrollAnchorDiagnostics';
 
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { capitalize } from '~/helpers/stringHelpers';
@@ -175,11 +179,84 @@ export default function Header({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versionMatch]);
 
+  const navRef = useRef<HTMLElement | null>(null);
+
+  // Diagnostics for intermittent dead taps on the mobile bottom nav: window
+  // capture listeners record every pointerdown/click landing within the nav's
+  // rect (regardless of the event's target, so overlay interception is
+  // visible too). A pointerdown without a matching click means the tap was
+  // consumed after dispatch; correlate timestamps against restore events in
+  // the same ring buffer. No-op unless scroll diagnostics logging is enabled.
+  useEffect(() => {
+    window.addEventListener('pointerdown', handleNavDiagnosticPointerDown, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('click', handleNavDiagnosticClick, {
+      capture: true
+    });
+
+    return () => {
+      window.removeEventListener(
+        'pointerdown',
+        handleNavDiagnosticPointerDown,
+        { capture: true }
+      );
+      window.removeEventListener('click', handleNavDiagnosticClick, {
+        capture: true
+      });
+    };
+
+    function handleNavDiagnosticPointerDown(event: PointerEvent) {
+      recordNavDiagnostic('nav-pointerdown', event, event.pointerType || '');
+    }
+
+    function handleNavDiagnosticClick(event: MouseEvent) {
+      recordNavDiagnostic('nav-click', event, '');
+    }
+
+    function recordNavDiagnostic(
+      type: string,
+      event: MouseEvent,
+      reason: string
+    ) {
+      if (!isScrollDiagnosticsLoggingEnabled()) return;
+      const nav = navRef.current;
+      if (!nav) return;
+      const rect = nav.getBoundingClientRect();
+      if (event.clientY < rect.top || event.clientY > rect.bottom) return;
+      const targetElement =
+        event.target instanceof HTMLElement ? event.target : null;
+      const link = targetElement?.closest('a');
+      const targetNote = link
+        ? `link:${link.getAttribute('href') || ''}`
+        : `target:${targetElement?.tagName || 'unknown'}`;
+      recordScrollDiagnostic({
+        type,
+        reason,
+        scrollTop: Math.round(getNavDiagnosticScrollTop()),
+        note: nav.contains(targetElement)
+          ? targetNote
+          : `${targetNote}:outside-nav`
+      });
+    }
+
+    function getNavDiagnosticScrollTop() {
+      const appScroller = document.getElementById('App');
+      const bodyScroller = document.scrollingElement;
+      return Math.max(
+        appScroller?.scrollTop || 0,
+        bodyScroller?.scrollTop || 0
+      );
+    }
+  }, []);
+
   return (
     <ErrorBoundary
       componentPath="App/Header/index"
     >
       <nav
+        ref={navRef}
         data-app-shell-header="true"
         className={`notranslate unselectable ${css`
           z-index: 99999;

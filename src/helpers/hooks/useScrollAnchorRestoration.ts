@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import {
+  addScrollAnchorExternalSaveListener,
   addScrollAnchorRestoreCancelListener,
   addScrollAnchorTopResetListener,
+  notifyScrollAnchorExternalSave,
   suppressScrollAnchorSaves,
   scrollAnchorRestoresAreSuppressed,
   scrollAnchorSavesAreSuppressed
@@ -122,6 +124,17 @@ export function useScrollAnchorRestoration({
       recordScrollDiagnostic({ type: 'top-reset', anchorKey, scrollTop: 0 });
     }
 
+    // An external write to this instance's anchor has no restore in flight;
+    // without marking it settled here, saveShouldWaitForPendingRestore would
+    // block every subsequent natural scroll save until remount (e.g. after a
+    // popup link click that never navigates). Per-instance on purpose: a
+    // remounted hook must still treat that saved anchor as a pending restore.
+    function handleExternalSave(savedAnchorKey: string) {
+      if (savedAnchorKey !== anchorKey) return;
+      restoreSettledSignatureRef.current =
+        getSavedAnchorRestoreSignature(anchorKey);
+    }
+
     window.addEventListener('wheel', markUserScrollInput, {
       capture: true,
       passive: true
@@ -137,6 +150,8 @@ export function useScrollAnchorRestoration({
       addScrollAnchorRestoreCancelListener(markUserScrollInput);
     const removeTopResetListener =
       addScrollAnchorTopResetListener(handleTopReset);
+    const removeExternalSaveListener =
+      addScrollAnchorExternalSaveListener(handleExternalSave);
 
     return () => {
       window.removeEventListener('wheel', markUserScrollInput, {
@@ -150,6 +165,7 @@ export function useScrollAnchorRestoration({
       });
       removeRestoreCancelListener();
       removeTopResetListener();
+      removeExternalSaveListener();
     };
   }, [anchorKey]);
 
@@ -584,6 +600,7 @@ export function saveScrollAnchorForElement(
     contentAnchorContainer,
     getActiveScroller()
   );
+  notifyScrollAnchorExternalSave(contentAnchorKey);
   suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
 }
 
@@ -626,6 +643,7 @@ function saveAnchorElement(
     offset: viewportTop - rect.top,
     scrollTop: getScrollTop(scroller)
   };
+  notifyScrollAnchorExternalSave(anchorKey);
   recordAnchorSave(anchorKey, 'element');
 }
 

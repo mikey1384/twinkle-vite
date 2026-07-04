@@ -54,7 +54,11 @@ export default function ContentPage() {
     }
     return { contentType: rawContentType, rootType: undefined };
   }, [location.pathname]);
-  const { isDeleted, isDeleteNotification } = useContentState({
+  const {
+    isDeleted,
+    isDeleteNotification,
+    loaded: contentLoadedLocally
+  } = useContentState({
     contentType,
     contentId
   });
@@ -89,12 +93,24 @@ export default function ContentPage() {
   const contentReady =
     contentExistsConfirmed && !isDeleted && !isDeleteNotification;
 
+  // The scroll restore must not wait for the /content/check round-trip when
+  // the content is already in ContentContext (back-navigation renders the full
+  // cached body on first paint); the existence check stays authoritative only
+  // for deleted-content handling. The non-loaded terms must mirror the render
+  // condition for the anchor container below, so restoration tears down when
+  // the container is replaced by InvalidPage.
+  const scrollRestoreReady =
+    (contentLoadedLocally || contentExistsConfirmed) &&
+    !contentExistsRejected &&
+    !isDeleted &&
+    !isDeleteNotification;
+
   useScrollAnchorRestoration({
     anchorKey: contentAnchorKey,
     containerRef: contentAnchorRef,
     ignoreSavedAnchor: Boolean(homeFeedNavigationState),
     initialScroll: { type: 'top' },
-    itemsReady: contentReady
+    itemsReady: scrollRestoreReady
   });
 
   useEffect(() => {
