@@ -54,6 +54,7 @@ const guideSections: GuideSection[] = [
       'Keep /index.html or /index.htm as the entry file. Split CSS and JavaScript into supporting files before a file approaches the server effective-line limit.',
       `The current project-file limit is ${DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT} effective lines per file. Long physical lines count as additional effective lines every ${PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS} characters. If save fails for size, split the file and save again.`,
       'Build apps run in sandboxed iframes without form-submit permission. Do not use <form> or native form submission; use JavaScript-handled inputs and buttons.',
+      'Interface text must not be selectable on touch devices. Apply user-select: none plus -webkit-user-select: none and -webkit-touch-callout: none to HUD, buttons, labels, menus, and scores; keep text inputs and user-copyable content selectable.',
       'Use workspace project assets for bundled images/audio. Use Twinkle.files only for viewer-created runtime uploads after the app is running.',
       'Save files before relying on Preview, Publish, or Download zip.'
     ]
