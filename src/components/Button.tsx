@@ -8,6 +8,8 @@ type Shape = 'rounded' | 'pill';
 type Size = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
   className?: string;
   color?: string; // color key in Color or 'theme'
   disabled?: boolean;
@@ -32,6 +34,8 @@ interface ButtonProps {
 
 export default function Button(props: ButtonProps) {
   const {
+    'aria-label': ariaLabel,
+    'aria-pressed': ariaPressed,
     className = '',
     color,
     disabled,
@@ -240,6 +244,8 @@ export default function Button(props: ButtonProps) {
   return (
     <button
       data-filled={resolvedVariant === 'solid' ? 'true' : undefined}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
       aria-disabled={isDisabled}
       disabled={isDisabled}
       style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}

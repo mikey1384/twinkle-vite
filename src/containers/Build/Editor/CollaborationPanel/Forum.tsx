@@ -1,11 +1,13 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import Button from '~/components/Button';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import Textarea from '~/components/Texts/Textarea';
 import UsernameText from '~/components/Texts/UsernameText';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, Theme } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
 import { getBuildBranchDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import type { User } from '~/types';
@@ -442,34 +444,6 @@ const lumineNameClass = css`
   gap: 0.3rem;
 `;
 
-const forumLikeButtonClass = css`
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 999px;
-  background: rgba(248, 250, 252, 0.9);
-  color: var(--chat-text);
-  padding: 0.3rem 0.55rem;
-  font: inherit;
-  font-size: 1.1rem;
-  font-weight: 900;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  cursor: pointer;
-  &:hover {
-    border-color: rgba(225, 29, 72, 0.42);
-    color: #be123c;
-  }
-  &.liked {
-    border-color: rgba(225, 29, 72, 0.48);
-    background: rgba(225, 29, 72, 0.08);
-    color: #be123c;
-  }
-  &:disabled {
-    cursor: default;
-    opacity: 0.6;
-  }
-`;
 
 const forumNewsActionsClass = css`
   display: flex;
@@ -696,10 +670,11 @@ function ThreadDetail({
               </div>
               <div className={forumPostActionsClass}>
                 <ForumLikeButton
+                  ariaLabel="Like this topic"
                   count={Number(selectedThread.likeCount || 0)}
                   liked={isForumItemLiked(selectedThread)}
+                  loading={actionLoading === `like-thread-${selectedThread.id}`}
                   disabled={Boolean(actionLoading)}
-                  ariaLabel="Like this topic"
                   onToggle={() => onToggleThreadLike(selectedThread.id)}
                 />
                 {userCanDeleteForumItem({
@@ -1046,10 +1021,12 @@ function ForumThread({
           onKeyDown={(event) => event.stopPropagation()}
         >
           <ForumLikeButton
+            ariaLabel="Like this topic"
+            compact
             count={Number(thread.likeCount || 0)}
             liked={isForumItemLiked(thread)}
+            loading={actionLoading === `like-thread-${thread.id}`}
             disabled={Boolean(actionLoading)}
-            ariaLabel="Like this topic"
             onToggle={() => onToggleThreadLike(thread.id)}
           />
         </span>
@@ -1126,10 +1103,12 @@ function ForumReply({
           </div>
           <div className={forumPostActionsClass}>
             <ForumLikeButton
+              ariaLabel="Like this reply"
+              compact
               count={Number(reply.likeCount || 0)}
               liked={isForumItemLiked(reply)}
+              loading={actionLoading === `like-reply-${reply.id}`}
               disabled={Boolean(actionLoading)}
-              ariaLabel="Like this reply"
               onToggle={() => onToggleReplyLike(reply.id)}
             />
             {canReplyToReply ? (
@@ -1239,33 +1218,49 @@ function LumineForumName() {
 
 function ForumLikeButton({
   ariaLabel,
+  compact,
   count,
   disabled,
   liked,
+  loading,
   onToggle
 }: {
   ariaLabel: string;
+  compact?: boolean;
   count: number;
   disabled: boolean;
   liked: boolean;
+  loading?: boolean;
   onToggle: () => void;
 }) {
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const {
+    likeButtonPressed: { color: likeButtonPressedColor }
+  } = Theme(profileTheme);
   return (
-    <button
-      type="button"
-      className={`${forumLikeButtonClass}${liked ? ' liked' : ''}`}
+    <Button
       aria-label={ariaLabel}
       aria-pressed={liked}
+      size="sm"
+      color={likeButtonPressedColor}
+      variant={liked ? 'solid' : 'soft'}
+      tone="raised"
+      loading={loading}
       disabled={disabled}
-      onClick={(event) => {
-        event.stopPropagation();
-        onToggle();
-      }}
-      onKeyDown={(event) => event.stopPropagation()}
+      onClick={onToggle}
     >
-      <Icon icon="heart" />
-      {count > 0 ? count : null}
-    </button>
+      <Icon icon="thumbs-up" />
+      {compact ? (
+        count > 0 ? (
+          <span style={{ marginLeft: '0.5rem' }}>{count}</span>
+        ) : null
+      ) : (
+        <span style={{ marginLeft: '0.7rem' }}>
+          {liked ? 'Liked!' : 'Like'}
+          {count > 0 ? ` (${count})` : ''}
+        </span>
+      )}
+    </Button>
   );
 }
 
