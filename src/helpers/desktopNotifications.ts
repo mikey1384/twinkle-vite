@@ -54,7 +54,7 @@ export function showDesktopNotification({
     const notification = new Notification(title, {
       body,
       tag,
-      icon: '/favicon.png'
+      icon: '/icon-192.png'
     });
     notification.onclick = () => {
       window.focus();
@@ -71,7 +71,8 @@ export function showDesktopNotification({
         registration?.showNotification(title, {
           body,
           tag,
-          icon: '/favicon.png',
+          icon: '/icon-192.png',
+          badge: '/badge.png',
           data: { url: '/chat' }
         })
       )

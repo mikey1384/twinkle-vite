@@ -22,8 +22,9 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(payload.title || 'Twinkle', {
       body: payload.body || '',
       tag: payload.tag || 'twinkle-chat',
-      icon: '/favicon.png',
-      badge: '/favicon.png',
+      icon: '/icon-192.png',
+      // badge must be monochrome with alpha; Android tints it for the status bar
+      badge: '/badge.png',
       data: { url: payload.url || '/chat' }
     })
   );
