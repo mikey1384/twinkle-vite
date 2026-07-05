@@ -20,6 +20,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
+import { isBuildListPath } from '~/containers/Build/List/helpers/url';
 
 const deviceIsTablet = isTablet(navigator);
 const homeLabel = 'Home';
@@ -110,10 +111,15 @@ export default function MainNavs({
     () => (isMissionSection ? '/missions' : missionNav || '/missions'),
     [isMissionSection, missionNav]
   );
-  const buildLinkTarget = useMemo(
-    () => (isBuildSection ? '/build' : buildNav || '/build'),
-    [isBuildSection, buildNav]
-  );
+  // On a build list page the target must equal the current canonical URL:
+  // bare /build immediately replace-redirects to a tab path, so Nav's exact
+  // same-location check (which triggers the scroll-to-top) never matches it.
+  const buildLinkTarget = useMemo(() => {
+    if (!isBuildSection) return buildNav || '/build';
+    return isBuildListPath(pathname, { loggedIn: !!userId })
+      ? `${pathname}${search || ''}`
+      : '/build';
+  }, [isBuildSection, buildNav, pathname, search, userId]);
 
   const contentLabel = useMemo(() => {
     if (!contentNav) return null;
