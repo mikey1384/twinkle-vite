@@ -19,8 +19,10 @@ const deviceIsTablet = isTablet(navigator);
 
 // column-reverse: scrollTop is 0 at the bottom and negative when scrolled up.
 // Native bottom-pinning only happens at exactly 0; past that, scroll anchoring
-// keeps the old content in view when a new card is inserted, so anything within
-// this band must be treated as "at bottom" and re-pinned manually.
+// keeps the old content in view when a new card is inserted, so positions
+// within this band are treated as "at bottom" and re-pinned manually when
+// another user's feed arrives. The user's own summons re-pin unconditionally,
+// so the band only governs feeds the user did not initiate.
 const SCROLL_AT_BOTTOM_BAND = 100;
 
 export default function ActivitiesContainer({
@@ -51,12 +53,28 @@ export default function ActivitiesContainer({
 
   const ActivitiesRef = useRef<any>(null);
   // seeded from the persisted position: the mount restore effect runs before
-  // the scroll listener is attached, so a hardcoded `true` would let a feed
-  // arriving within the first frame re-pin to bottom and wipe the restore
-  const isScrollAtBottomRef = useRef(
+  // any feed can arrive, so a hardcoded `true` would let a feed arriving
+  // within the first frame re-pin to bottom and wipe the restore
+  const wasAtBottomBeforeChangeRef = useRef(
     aiCardScrollHeight.current > -SCROLL_AT_BOTTOM_BAND
   );
+  const prevFeedsLengthRef = useRef(aiCardFeeds.length);
+  const prevNewestFeedIdRef = useRef(aiCardFeeds?.[0]?.id);
   const prevScrollPosition = useRef<number | null>(null);
+
+  // Render-phase snapshot: this render was caused by the feed-list change, but
+  // the DOM has not been mutated yet, so scroll anchoring has not had a chance
+  // to shift scrollTop away from the bottom. Deciding "was the user at the
+  // bottom" here is the only reliable read — by the time the post-commit
+  // effect runs, anchoring has already moved scrollTop by a full card height
+  // and fired a scroll event, so any scroll-listener-maintained flag is stale.
+  if (aiCardFeeds.length !== prevFeedsLengthRef.current) {
+    prevFeedsLengthRef.current = aiCardFeeds.length;
+    if (ActivitiesRef.current) {
+      wasAtBottomBeforeChangeRef.current =
+        ActivitiesRef.current.scrollTop > -SCROLL_AT_BOTTOM_BAND;
+    }
+  }
 
   const loadMoreButtonLock = useRef(false);
 
@@ -103,7 +121,21 @@ export default function ActivitiesContainer({
   }, [aiCardLoadMoreButton]);
 
   useEffect(() => {
-    if (isScrollAtBottomRef.current) handleScrollToBottom();
+    const newestFeed = aiCardFeeds?.[0];
+    const newestFeedChanged = newestFeed?.id !== prevNewestFeedIdRef.current;
+    prevNewestFeedIdRef.current = newestFeed?.id;
+    // load-more appends older feeds at the top; only a new newest feed means
+    // something was inserted at the bottom of the view
+    if (!newestFeedChanged) return;
+    // The summoner must always end up looking at their new card, no matter
+    // where their scroll position drifted — they just pressed the button.
+    const isMyOwnSummon =
+      newestFeed?.type === 'summon' &&
+      cardObj[newestFeed?.contentId]?.creator?.id === myId;
+    if (isMyOwnSummon || wasAtBottomBeforeChangeRef.current) {
+      handleScrollToBottom();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiCardFeeds?.length]);
 
   useEffect(() => {
@@ -126,8 +158,6 @@ export default function ActivitiesContainer({
       if (distanceFromTop < 3) {
         handleLoadMore();
       }
-      isScrollAtBottomRef.current =
-        (ActivitiesRef.current || {}).scrollTop > -SCROLL_AT_BOTTOM_BAND;
       setShowGoToBottom(scrollTop < -5000);
       aiCardScrollHeight.current = scrollTop;
     }
