@@ -4,6 +4,7 @@ import ContentListItem from '~/components/ContentListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Link from '~/components/Link';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { trackEvent } from '~/helpers/analytics';
 import { Color } from '~/constants/css';
 import { useAppContext, useExploreContext } from '~/contexts';
 import { User } from '~/types';
@@ -56,6 +57,11 @@ export default function Results({
           searchText: text
         });
         if (cancelled) return;
+        trackEvent('search', {
+          search_term: text,
+          search_filter: filter,
+          result_count: results?.length || 0
+        });
         onLoadSearchResults({ filter, results, loadMoreButton, searchText: text });
       } catch (error) {
         if (!cancelled) {
@@ -99,6 +105,11 @@ export default function Results({
           searchText: text
         });
         if (cancelled) return;
+        trackEvent('search', {
+          search_term: text,
+          search_filter: filter,
+          result_count: results?.length || 0
+        });
         onLoadSearchResults({ filter, results, loadMoreButton, searchText: text });
       } catch (error) {
         if (!cancelled) {

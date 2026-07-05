@@ -4,6 +4,7 @@ import axios from 'axios';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
 import { attemptUpload } from '~/helpers';
+import { trackEvent } from '~/helpers/analytics';
 
 export default function contentRequestHelpers({
   auth,
@@ -1853,6 +1854,13 @@ export default function contentRequestHelpers({
           },
           auth()
         );
+        if (!isNotification) {
+          trackEvent('content_post', {
+            content_type: targetCommentId || rootCommentId ? 'reply' : 'comment',
+            parent_content_type: (parent as any)?.contentType,
+            has_attachment: !!(fileName || attachment)
+          });
+        }
         return data;
       } catch (error) {
         return handleError(error);
@@ -1975,6 +1983,9 @@ export default function contentRequestHelpers({
           },
           auth()
         );
+        trackEvent('content_post', {
+          content_type: isVideo ? 'video' : url ? 'link' : 'subject'
+        });
         return data;
       } catch (error) {
         return handleError(error);

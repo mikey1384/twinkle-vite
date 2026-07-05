@@ -5,6 +5,7 @@ import Input from '~/components/Texts/Input';
 import Banner from '~/components/Banner';
 import { mobileMaxWidth } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { setAnalyticsUser, trackEvent } from '~/helpers/analytics';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 const enterYourUsernameLabel = 'Enter your username';
@@ -143,6 +144,8 @@ export default function LoginForm({
       const data = await login({ username, password });
       onLogin(data);
       onSetUserState({ userId: data.id, newState: data });
+      setAnalyticsUser(data);
+      trackEvent('login', { method: 'password' });
     } catch (error: any) {
       setErrorMessage(error);
     } finally {

@@ -3,6 +3,7 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import ContentContainer from './ContentContainer';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext } from '~/contexts';
+import { trackEvent } from '~/helpers/analytics';
 
 export default function Reading({
   difficulty,
@@ -91,6 +92,10 @@ export default function Reading({
         });
         onSetAttemptId(newAttemptId);
         onSetStoryId(storyObj.id);
+        trackEvent('ai_story_start', {
+          difficulty,
+          story_type: storyType
+        });
         onSetStory(storyObj.story);
         onSetExplanation(storyObj.explanation);
         onSetLoadStoryComplete(true);

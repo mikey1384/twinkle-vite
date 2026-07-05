@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { trackEvent } from '~/helpers/analytics';
 
 interface Props {
   channelId: number;
@@ -186,6 +187,19 @@ export default function useOptimisticSave({
       }
 
       const { messageId, timeStamp, netCoins, aiUsagePolicy } = savedMessage;
+
+      if (!post.isNotification) {
+        trackEvent('chat_message_send', {
+          channel_type: isZeroChat
+            ? 'ai_zero'
+            : isCielChat
+            ? 'ai_ciel'
+            : currentChannel?.twoPeople
+            ? 'dm'
+            : 'group',
+          has_attachment: false
+        });
+      }
 
       if (typeof netCoins === 'number') {
         onSetUserState({

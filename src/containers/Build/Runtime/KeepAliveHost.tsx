@@ -16,6 +16,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { trackEvent } from '~/helpers/analytics';
 import BuildRuntime from '.';
 import type { RuntimeBuild } from './types';
 
@@ -677,6 +678,13 @@ export default function BuildRuntimeKeepAliveHost() {
   const isRuntimeRoute = Boolean(runtimeRouteMatch);
   const [session, setSession] = useState<RuntimeSession | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  // Latest-session ref for handleRuntimeBuildLoaded: the runtime's load
+  // effect has no cancellation, so a stale build's resolve invokes an OLD
+  // closure of that callback — one whose captured `session` still matches
+  // the abandoned build. The ref object is stable across renders, so even
+  // stale closures read the current session through it.
+  const sessionRef = useRef<RuntimeSession | null>(null);
+  sessionRef.current = session;
   const currentUserId = Number(userId) || null;
   const sessionUserId = session?.userId || null;
   const sessionKey = session?.key || '';
@@ -746,7 +754,35 @@ export default function BuildRuntimeKeepAliveHost() {
     setSession(null);
   }, [isRuntimeRoute, session]);
 
+  // The Header (the app's only other document.title writer) is unmounted on
+  // /app routes, so the runtime owns the title while it is the active route.
+  // Header remounts and overwrites the title on exit.
+  const sessionLoaded = session?.loaded || false;
+  const sessionTitle = session?.title || '';
+  useEffect(() => {
+    if (!isRuntimeRoute) return;
+    document.title = sessionLoaded
+      ? `${sessionTitle} | Twinkle`
+      : 'Build App | Twinkle';
+  }, [isRuntimeRoute, sessionLoaded, sessionTitle]);
+
   function handleRuntimeBuildLoaded(build: RuntimeBuild) {
+    // Only count the first load of the build the current session is actually
+    // for. Must read through sessionRef (not the closure's `session`): stale
+    // resolves from abandoned builds arrive via old closures whose captured
+    // session matches the abandoned build by construction.
+    const currentSession = sessionRef.current;
+    if (
+      currentSession &&
+      Number(currentSession.buildId) === Number(build.id) &&
+      !currentSession.loaded
+    ) {
+      trackEvent('build_view', {
+        build_id: Number(build.id),
+        build_title: String(build.title || ''),
+        owner_username: String(build.username || '')
+      });
+    }
     setSession((current) => {
       if (!current || Number(current.buildId) !== Number(build.id)) {
         return current;

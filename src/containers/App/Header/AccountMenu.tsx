@@ -13,6 +13,7 @@ import { socket } from '~/constants/sockets/api';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { teardownChatPushOnLogout } from '~/helpers/desktopNotifications';
+import { trackEvent } from '~/helpers/analytics';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
@@ -168,6 +169,7 @@ export default function AccountMenu({
   );
 
   function handleLogout() {
+    trackEvent('logout');
     const logoutRecord = recordLogout(auth());
     void teardownChatPushOnLogout(deletePushSubscription);
     socket.emit('leave_my_notification_channel', userId);

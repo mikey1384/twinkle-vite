@@ -7,12 +7,12 @@ import {
 } from '~/helpers/scrollAnchorDiagnostics';
 
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { capitalize } from '~/helpers/stringHelpers';
 import {
   lazyWithRetry,
   recoverFromLazyImportLoadError
 } from '~/helpers/lazyImportHelpers';
 import { getSectionFromPathname } from '~/helpers';
+import { getBasePageTitle } from '~/helpers/analytics';
 import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';
@@ -41,22 +41,6 @@ interface HeaderProps {
   onMobileMenuOpen: any;
   style?: React.CSSProperties;
 }
-
-const contentSubsectionTitles: Record<string, string> = {
-  comments: 'Comment',
-  links: 'Link',
-  missions: 'Mission',
-  playlists: 'Playlist',
-  subjects: 'Subject',
-  videos: 'Video',
-  'ai-cards': 'AI Card',
-  'ai-stories': 'AI Story',
-  'daily-reflections': 'Daily Reflection',
-  'mission-passes': 'Mission Pass',
-  'achievement-unlocks': 'Achievement',
-  'daily-rewards': 'Daily Goal',
-  'shared-prompts': 'Shared Prompt'
-};
 
 export default function Header({
   onMobileMenuOpen,
@@ -153,23 +137,9 @@ export default function Header({
     ) {
       document.title = `${pageTitle}${newNotiNum > 0 ? ' *' : ''}`;
     } else {
-      let currentPageTitle = 'Twinkle';
-      if (section !== 'home') {
-        const subsectionTitle = isSubsection
-          ? contentSubsectionTitles[section]
-          : '';
-        const displayedSection =
-          subsectionTitle ||
-          (section === 'ai-cards'
-            ? 'Explore AI Cards'
-            : section === 'ai-stories'
-            ? 'AI Stories'
-            : section);
-        currentPageTitle = `${
-          subsectionTitle ? displayedSection : capitalize(displayedSection)
-        } | ${currentPageTitle}`;
-      }
-      document.title = `${currentPageTitle}${newNotiNum > 0 ? ' *' : ''}`;
+      document.title = `${getBasePageTitle(pathname)}${
+        newNotiNum > 0 ? ' *' : ''
+      }`;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle, chatType]);

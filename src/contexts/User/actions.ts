@@ -4,6 +4,7 @@ import {
   localStorageKeys
 } from '~/constants/defaultValues';
 import { removeStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
+import { clearAnalyticsUser } from '~/helpers/analytics';
 
 export default function UserActions(dispatch: Dispatch) {
   return {
@@ -71,6 +72,7 @@ export default function UserActions(dispatch: Dispatch) {
       );
       removeStoredItem('token');
       setStoredItem('profileTheme', DEFAULT_PROFILE_THEME);
+      clearAnalyticsUser();
       return dispatch({
         type: 'LOGOUT'
       });

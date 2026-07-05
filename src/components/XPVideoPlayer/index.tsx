@@ -18,6 +18,7 @@ import { useCinemaMode, cinemaBoxClass } from '~/components/CinemaMode';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
+import { trackEvent } from '~/helpers/analytics';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -169,7 +170,8 @@ function XPVideoPlayer({
   const {
     started,
     timeWatched: prevTimeWatched = 0,
-    isEditing
+    isEditing,
+    title: videoTitle
   } = useContentState({
     contentType: 'video',
     contentId: videoId
@@ -585,6 +587,11 @@ function XPVideoPlayer({
 
   async function handleVideoPlay({ userId }: { userId: number }) {
     if (playing) return;
+
+    trackEvent('video_play', {
+      video_id: videoId,
+      video_title: videoTitle
+    });
 
     onSetMediaStarted({
       contentType: 'video',

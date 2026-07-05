@@ -19,6 +19,7 @@ import {
   errorHasActualCommunityFundsBalance,
   isCommunityFundRechargeAvailable
 } from '~/helpers/aiEnergy';
+import { trackEvent } from '~/helpers/analytics';
 
 interface AiUsageRequirement {
   key: string;
@@ -391,6 +392,10 @@ export default function AICards({
       onSetAICardStatusMessage(
         isMysteryCard ? 'Mystery Card Summoned' : 'Card Summoned'
       );
+      trackEvent('ai_card_summon', {
+        card_quality: card?.quality,
+        is_mystery_card: !!isMysteryCard
+      });
       onPostAICardFeed({
         feed,
         isSummon: true,

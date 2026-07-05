@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import { Color, getThemeStyles, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isSupermod } from '~/helpers';
+import { trackEvent } from '~/helpers/analytics';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -381,6 +382,10 @@ export default function RecommendationInterface({
         timeout(10000)
       ]);
       const { coins, recommendations } = response;
+      trackEvent('content_recommend', {
+        content_type: contentType,
+        is_unrecommend: isRecommendedByUser
+      });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       if (recommendations) {
         onRecommendContent({ contentId, contentType, recommendations });

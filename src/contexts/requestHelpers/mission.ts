@@ -1,6 +1,7 @@
 import request from './axiosInstance';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
+import { trackEvent } from '~/helpers/analytics';
 
 export default function missionRequestHelpers({
   auth,
@@ -691,7 +692,7 @@ export default function missionRequestHelpers({
     }) {
       try {
         const {
-          data: { success, newXpAndRank, newCoins }
+          data: { success, newXpAndRank, newCoins, deduped }
         } = await request.post(
           `${URL}/mission/attempt`,
           {
@@ -700,6 +701,11 @@ export default function missionRequestHelpers({
           },
           auth()
         );
+        // deduped means the mission was already passed before this request —
+        // not a new completion.
+        if (success && !deduped && (attempt as any)?.status === 'pass') {
+          trackEvent('mission_complete', { mission_id: Number(missionId) });
+        }
         return Promise.resolve({ success, newXpAndRank, newCoins });
       } catch (error) {
         return handleError(error);

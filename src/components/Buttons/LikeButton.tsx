@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Theme } from '~/constants/css';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { trackEvent } from '~/helpers/analytics';
 const likeLabel = 'Like';
 const likedLabel = 'Liked';
 
@@ -67,6 +68,10 @@ function LikeButton({
               rootType
             });
             if (userId) {
+              trackEvent('content_like', {
+                content_type: contentType,
+                is_unlike: liked
+              });
               onLikeContent({ likes: newLikes, contentType, contentId });
               onClick({ likes: newLikes, isUnlike: liked });
             }

@@ -6,6 +6,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { setAnalyticsUser, trackEvent } from '~/helpers/analytics';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 const createMyAccountLabel = 'Create my account!';
@@ -265,6 +266,11 @@ export default function MainForm({
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
+      setAnalyticsUser(data);
+      trackEvent('sign_up', {
+        method: 'password',
+        user_type: userType || 'student'
+      });
     } catch (error: any) {
       const msg =
         typeof error === 'string'

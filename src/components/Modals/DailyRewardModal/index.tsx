@@ -9,6 +9,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { isMobile } from '~/helpers';
+import { trackEvent } from '~/helpers/analytics';
 import { Card } from '~/types';
 import {
   useAppContext,
@@ -584,6 +585,12 @@ export default function DailyRewardModal({
       setRevealFailed(true);
       return;
     }
+    trackEvent('daily_reward_collect', {
+      coins_earned:
+        typeof finalizedReward?.coinEarned === 'number'
+          ? finalizedReward.coinEarned
+          : undefined
+    });
     if (typeof finalizedReward?.coinEarned === 'number') {
       finalizedCoinEarned = finalizedReward.coinEarned;
       setCoinEarned(finalizedCoinEarned);

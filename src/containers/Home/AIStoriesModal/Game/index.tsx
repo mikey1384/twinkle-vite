@@ -4,6 +4,7 @@ import MainMenu from './MainMenu';
 import Reading from './Reading';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
+import { trackEvent } from '~/helpers/analytics';
 
 const MAX_READ_ATTEMPTS = 5;
 const MAX_LISTEN_ATTEMPTS = 5;
@@ -258,6 +259,11 @@ export default function Game({
           })
         );
       }
+      trackEvent('ai_story_complete', {
+        is_passed: !!isPassed,
+        num_correct: numCorrect,
+        difficulty
+      });
       onSetSolveObj({
         numCorrect,
         isGraded: true

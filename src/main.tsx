@@ -237,15 +237,7 @@ declare global {
       callback: (img: any) => void,
       options?: any
     ) => void;
-    gtag: (
-      type: string,
-      eventName: string,
-      options: {
-        page_path?: string;
-        page_search?: string;
-        page_hash?: string;
-      }
-    ) => void;
+    gtag: (command: string, ...args: any[]) => void;
   }
 }
 

@@ -33,6 +33,11 @@ import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
+import {
+  setAnalyticsUser,
+  trackEvent,
+  trackPageView
+} from '~/helpers/analytics';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import { setStoredItem } from '~/helpers/userDataHelpers';
@@ -460,10 +465,8 @@ export default function App() {
   }, [usingBuildAppRuntime]);
 
   useEffect(() => {
-    window.gtag('event', 'page_view', {
-      page_path: location.pathname + location.search + location.hash,
-      page_search: location.search,
-      page_hash: location.hash
+    trackPageView({
+      path: location.pathname + location.search + location.hash
     });
   }, [location]);
 
@@ -1253,6 +1256,16 @@ export default function App() {
     if (alreadyExists) {
       return window.location.reload();
     }
+    trackEvent('chat_message_send', {
+      channel_type: isZeroChat
+        ? 'ai_zero'
+        : isCielChat
+        ? 'ai_ciel'
+        : currentChannel?.twoPeople
+        ? 'dm'
+        : 'group',
+      has_attachment: true
+    });
     onPostUploadComplete({
       path: filePath,
       channelId,
@@ -1349,6 +1362,7 @@ export default function App() {
           newState: data
         });
         onInitMyState(data);
+        setAnalyticsUser(data);
         try {
           const { totalFunds } = await loadCommunityFunds();
           if (checkUserChange(userId)) return;

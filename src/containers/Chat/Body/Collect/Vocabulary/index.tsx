@@ -24,6 +24,7 @@ import {
   LAST_ONLINE_FILTER_LABEL
 } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { trackEvent } from '~/helpers/analytics';
 import { css } from '@emotion/css';
 
 export default function Vocabulary({
@@ -433,6 +434,10 @@ export default function Vocabulary({
           return;
         }
         const { coins, xp, rank } = result;
+        trackEvent('vocab_word_collect', {
+          word: searchedWord.content,
+          is_new_word: !!isNewWord
+        });
         onSetUserState({
           userId,
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }

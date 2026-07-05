@@ -11,6 +11,7 @@ import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { teardownChatPushOnLogout } from '~/helpers/desktopNotifications';
+import { trackEvent } from '~/helpers/analytics';
 
 export default function MobileMenu({ onClose }: { onClose: () => void }) {
   const location = useLocation();
@@ -114,6 +115,7 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
   );
 
   function handleLogout() {
+    trackEvent('logout');
     const logoutRecord = recordLogout(auth());
     void teardownChatPushOnLogout(deletePushSubscription);
     onLogout();

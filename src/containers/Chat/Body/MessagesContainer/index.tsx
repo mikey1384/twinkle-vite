@@ -18,6 +18,7 @@ import {
 } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { isMobile, parseChannelPath } from '~/helpers';
+import { trackEvent } from '~/helpers/analytics';
 import { useNavigate } from 'react-router-dom';
 import {
   useAppContext,
@@ -1016,6 +1017,16 @@ export default function MessagesContainer({
           onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
           navigate(`/chat/${pathId}`, { replace: true });
           onCreateNewDMChannel({ channel, message, withoutMessage: true });
+          trackEvent('chat_message_send', {
+            channel_type:
+              partner?.id === ZERO_TWINKLE_ID
+                ? 'ai_zero'
+                : partner?.id === CIEL_TWINKLE_ID
+                ? 'ai_ciel'
+                : 'dm',
+            has_attachment: false,
+            is_first_message: true
+          });
           return Promise.resolve();
         } catch (error: any) {
           if (error?.aiUsagePolicy) {
