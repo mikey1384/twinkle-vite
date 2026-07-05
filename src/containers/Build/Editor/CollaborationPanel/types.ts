@@ -36,6 +36,14 @@ export interface BuildLike {
   pendingCollaborationRequestCount?: number | null;
 }
 
+export type BuildForumAuthorRole = 'user' | 'lumine';
+
+export type BuildForumNewsEventType =
+  | 'branchUpdates'
+  | 'branchMerged'
+  | 'mainReplaced'
+  | 'mainPublished';
+
 export interface BuildForumThread {
   id: number;
   buildId: number;
@@ -48,9 +56,18 @@ export interface BuildForumThread {
   branchContributorUsername?: string | null;
   branchContributorProfilePicUrl?: string | null;
   userId: number;
+  authorRole?: BuildForumAuthorRole | null;
+  eventType?: BuildForumNewsEventType | string | null;
+  subjectBuildId?: number | null;
+  broadcastToBranches?: number | null;
+  subjectBranchTitle?: string | null;
+  subjectBranchNumber?: number | null;
+  subjectBranchStatus?: BuildContributionStatus | null;
   title: string;
   body: string;
   replyCount?: number | null;
+  likeCount?: number | null;
+  likedByViewer?: number | boolean | null;
   lastReplyAt?: number | null;
   lastReplyUserId?: number | null;
   username?: string | null;
@@ -67,12 +84,15 @@ export interface BuildForumReply {
   buildId: number;
   contributionBuildId?: number | null;
   userId: number;
+  authorRole?: BuildForumAuthorRole | null;
   replyToReplyId?: number | null;
   replyToUserId?: number | null;
   replyToUsername?: string | null;
   replyToProfilePicUrl?: string | null;
   replyToBody?: string | null;
   body: string;
+  likeCount?: number | null;
+  likedByViewer?: number | boolean | null;
   username?: string | null;
   profilePicUrl?: string | null;
   createdAt?: number | null;

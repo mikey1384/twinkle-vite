@@ -665,7 +665,9 @@ export default function BuildWideCard({
   const showUnpublishedChangesBadge =
     ownerMode && buildIsPublic && Boolean(releaseStatus?.hasUnpublishedChanges);
   const favoriteActionShown =
-    showFavoriteAction && buildIsPublic && Boolean(buildId);
+    showFavoriteAction &&
+    Boolean(buildId) &&
+    (buildIsPublic || ownerMode || collaborationStatus === 'accepted');
   const separatePrimaryActionShown = ownerMode || Boolean(primaryActionLabel);
   const primaryActionTargetsApp =
     Boolean(primaryActionLabel) &&

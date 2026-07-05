@@ -416,11 +416,76 @@ const errorClass = css`
   font-size: 1.1rem;
 `;
 
+const lumineAvatarClass = css`
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(65, 140, 235, 1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+`;
+
+const lumineNameClass = css`
+  color: #1d4ed8;
+  font-weight: 900;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+`;
+
+const forumLikeButtonClass = css`
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  color: var(--chat-text);
+  padding: 0.3rem 0.55rem;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 900;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  &:hover {
+    border-color: rgba(225, 29, 72, 0.42);
+    color: #be123c;
+  }
+  &.liked {
+    border-color: rgba(225, 29, 72, 0.48);
+    background: rgba(225, 29, 72, 0.08);
+    color: #be123c;
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+`;
+
+const forumNewsActionsClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+`;
+
+export type BuildForumNewsAction = 'branch' | 'main' | 'app';
+
 export default function Forum({
   actionLoading,
   bodyInput,
   canModerate,
   error,
+  isBranchScope,
   loading,
   recentlyCreatedThreadId,
   replyInput,
@@ -437,16 +502,20 @@ export default function Forum({
   onCreateThread,
   onDeleteReply,
   onDeleteThread,
+  onNewsAction,
   onOpenThreadBranch,
   onOpenThread,
   onReplyInputChange,
   onReplyTargetChange,
-  onTitleInputChange
+  onTitleInputChange,
+  onToggleReplyLike,
+  onToggleThreadLike
 }: {
   actionLoading: string;
   bodyInput: string;
   canModerate: boolean;
   error: string;
+  isBranchScope: boolean;
   loading: boolean;
   recentlyCreatedThreadId: number;
   replyInput: string;
@@ -463,11 +532,14 @@ export default function Forum({
   onCreateThread: () => void;
   onDeleteReply: (replyId: number) => void;
   onDeleteThread: (threadId: number) => void;
+  onNewsAction: (thread: BuildForumThread, action: BuildForumNewsAction) => void;
   onOpenThreadBranch: (thread: BuildForumThread) => void;
   onOpenThread: (threadId: number) => void;
   onReplyInputChange: (value: string) => void;
   onReplyTargetChange: (reply: BuildForumReply | null) => void;
   onTitleInputChange: (value: string) => void;
+  onToggleReplyLike: (replyId: number) => void;
+  onToggleThreadLike: (threadId: number) => void;
 }) {
   if (selectedThread) {
     return (
@@ -475,6 +547,7 @@ export default function Forum({
         actionLoading={actionLoading}
         canModerate={canModerate}
         error={error}
+        isBranchScope={isBranchScope}
         replyInput={replyInput}
         replyTarget={replyTarget}
         replies={replies}
@@ -485,9 +558,12 @@ export default function Forum({
         onCreateReply={onCreateReply}
         onDeleteReply={onDeleteReply}
         onDeleteThread={onDeleteThread}
+        onNewsAction={onNewsAction}
         onOpenThreadBranch={onOpenThreadBranch}
         onReplyInputChange={onReplyInputChange}
         onReplyTargetChange={onReplyTargetChange}
+        onToggleReplyLike={onToggleReplyLike}
+        onToggleThreadLike={onToggleThreadLike}
       />
     );
   }
@@ -497,6 +573,7 @@ export default function Forum({
       bodyInput={bodyInput}
       canModerate={canModerate}
       error={error}
+      isBranchScope={isBranchScope}
       loading={loading}
       recentlyCreatedThreadId={recentlyCreatedThreadId}
       showScopeTags={showScopeTags}
@@ -506,9 +583,11 @@ export default function Forum({
       onBodyInputChange={onBodyInputChange}
       onCreateThread={onCreateThread}
       onDeleteThread={onDeleteThread}
+      onNewsAction={onNewsAction}
       onOpenThreadBranch={onOpenThreadBranch}
       onOpenThread={onOpenThread}
       onTitleInputChange={onTitleInputChange}
+      onToggleThreadLike={onToggleThreadLike}
     />
   );
 }
@@ -517,6 +596,7 @@ function ThreadDetail({
   actionLoading,
   canModerate,
   error,
+  isBranchScope,
   replyInput,
   replyTarget,
   replies,
@@ -527,13 +607,17 @@ function ThreadDetail({
   onCreateReply,
   onDeleteReply,
   onDeleteThread,
+  onNewsAction,
   onOpenThreadBranch,
   onReplyInputChange,
-  onReplyTargetChange
+  onReplyTargetChange,
+  onToggleReplyLike,
+  onToggleThreadLike
 }: {
   actionLoading: string;
   canModerate: boolean;
   error: string;
+  isBranchScope: boolean;
   replyInput: string;
   replyTarget: BuildForumReply | null;
   replies: BuildForumReply[];
@@ -544,12 +628,17 @@ function ThreadDetail({
   onCreateReply: () => void;
   onDeleteReply: (replyId: number) => void;
   onDeleteThread: (threadId: number) => void;
+  onNewsAction: (thread: BuildForumThread, action: BuildForumNewsAction) => void;
   onOpenThreadBranch: (thread: BuildForumThread) => void;
   onReplyInputChange: (value: string) => void;
   onReplyTargetChange: (reply: BuildForumReply | null) => void;
+  onToggleReplyLike: (replyId: number) => void;
+  onToggleThreadLike: (threadId: number) => void;
 }) {
   const threadUser = getForumUser(selectedThread);
+  const threadIsLumine = isLumineForumItem(selectedThread);
   const replyTargetUser = replyTarget ? getForumUser(replyTarget) : null;
+  const newsActions = getForumNewsActions(selectedThread, isBranchScope);
   return (
     <div className={detailClass}>
       <div className={forumDetailHeaderClass}>
@@ -562,11 +651,15 @@ function ThreadDetail({
           Topics
         </button>
         <div className={forumPostClass}>
-          <ProfilePic
-            className={forumAvatarClass}
-            userId={threadUser.id}
-            profilePicUrl={threadUser.profilePicUrl}
-          />
+          {threadIsLumine ? (
+            <LumineForumAvatar />
+          ) : (
+            <ProfilePic
+              className={forumAvatarClass}
+              userId={threadUser.id}
+              profilePicUrl={threadUser.profilePicUrl}
+            />
+          )}
           <div className={forumPostMainClass}>
             <div className={forumPostHeaderClass}>
               <div className={forumAuthorMetaClass}>
@@ -580,15 +673,19 @@ function ThreadDetail({
                       onOpenThreadBranch={onOpenThreadBranch}
                     />
                   ) : null}
-                  <span
-                    onClick={(event) => event.stopPropagation()}
-                    onKeyDown={(event) => event.stopPropagation()}
-                  >
-                    <UsernameText
-                      className={forumUsernameClass}
-                      user={threadUser}
-                    />
-                  </span>
+                  {threadIsLumine ? (
+                    <LumineForumName />
+                  ) : (
+                    <span
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      <UsernameText
+                        className={forumUsernameClass}
+                        user={threadUser}
+                      />
+                    </span>
+                  )}
                   {selectedThread.createdAt ? (
                     <>
                       <span>·</span>
@@ -597,12 +694,19 @@ function ThreadDetail({
                   ) : null}
                 </div>
               </div>
-              {userCanDeleteForumItem({
-                item: selectedThread,
-                userId,
-                canModerate
-              }) ? (
-                <div className={forumPostActionsClass}>
+              <div className={forumPostActionsClass}>
+                <ForumLikeButton
+                  count={Number(selectedThread.likeCount || 0)}
+                  liked={isForumItemLiked(selectedThread)}
+                  disabled={Boolean(actionLoading)}
+                  ariaLabel="Like this topic"
+                  onToggle={() => onToggleThreadLike(selectedThread.id)}
+                />
+                {userCanDeleteForumItem({
+                  item: selectedThread,
+                  userId,
+                  canModerate
+                }) ? (
                   <GameCTAButton
                     variant="neutral"
                     size="sm"
@@ -613,11 +717,27 @@ function ThreadDetail({
                     disabled={Boolean(actionLoading)}
                     onClick={() => onDeleteThread(selectedThread.id)}
                   />
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
             {selectedThread.body ? (
               <div className={forumPostBodyClass}>{selectedThread.body}</div>
+            ) : null}
+            {newsActions.length > 0 ? (
+              <div className={forumNewsActionsClass}>
+                {newsActions.map((action) => (
+                  <GameCTAButton
+                    key={action.key}
+                    variant="logoBlue"
+                    size="sm"
+                    icon={action.icon}
+                    disabled={Boolean(actionLoading)}
+                    onClick={() => onNewsAction(selectedThread, action.key)}
+                  >
+                    {action.label}
+                  </GameCTAButton>
+                ))}
+              </div>
             ) : null}
           </div>
         </div>
@@ -641,6 +761,7 @@ function ThreadDetail({
               userId={userId}
               onDeleteReply={onDeleteReply}
               onReplyToReply={onReplyTargetChange}
+              onToggleReplyLike={onToggleReplyLike}
             />
           ))
         )}
@@ -704,6 +825,7 @@ function ThreadList({
   bodyInput,
   canModerate,
   error,
+  isBranchScope,
   loading,
   recentlyCreatedThreadId,
   showScopeTags,
@@ -713,14 +835,17 @@ function ThreadList({
   onBodyInputChange,
   onCreateThread,
   onDeleteThread,
+  onNewsAction,
   onOpenThreadBranch,
   onOpenThread,
-  onTitleInputChange
+  onTitleInputChange,
+  onToggleThreadLike
 }: {
   actionLoading: string;
   bodyInput: string;
   canModerate: boolean;
   error: string;
+  isBranchScope: boolean;
   loading: boolean;
   recentlyCreatedThreadId: number;
   showScopeTags: boolean;
@@ -730,9 +855,11 @@ function ThreadList({
   onBodyInputChange: (value: string) => void;
   onCreateThread: () => void;
   onDeleteThread: (threadId: number) => void;
+  onNewsAction: (thread: BuildForumThread, action: BuildForumNewsAction) => void;
   onOpenThreadBranch: (thread: BuildForumThread) => void;
   onOpenThread: (threadId: number) => void;
   onTitleInputChange: (value: string) => void;
+  onToggleThreadLike: (threadId: number) => void;
 }) {
   return (
     <div className={detailClass}>
@@ -785,14 +912,17 @@ function ThreadList({
               key={thread.id}
               actionLoading={actionLoading}
               canModerate={canModerate}
+              isBranchScope={isBranchScope}
               recentlyCreated={
                 Number(thread.id) === Number(recentlyCreatedThreadId)
               }
               thread={thread}
               userId={userId}
               onDeleteThread={onDeleteThread}
+              onNewsAction={onNewsAction}
               onOpenThreadBranch={onOpenThreadBranch}
               onOpenThread={onOpenThread}
+              onToggleThreadLike={onToggleThreadLike}
               showScopeTags={showScopeTags}
             />
           ))
@@ -805,25 +935,33 @@ function ThreadList({
 function ForumThread({
   actionLoading,
   canModerate,
+  isBranchScope,
   recentlyCreated,
   thread,
   userId,
   onDeleteThread,
+  onNewsAction,
   onOpenThread,
   onOpenThreadBranch,
+  onToggleThreadLike,
   showScopeTags
 }: {
   actionLoading: string;
   canModerate: boolean;
+  isBranchScope: boolean;
   recentlyCreated: boolean;
   thread: BuildForumThread;
   userId: number | string | null;
   onDeleteThread: (threadId: number) => void;
+  onNewsAction: (thread: BuildForumThread, action: BuildForumNewsAction) => void;
   onOpenThread: (threadId: number) => void;
   onOpenThreadBranch: (thread: BuildForumThread) => void;
+  onToggleThreadLike: (threadId: number) => void;
   showScopeTags: boolean;
 }) {
   const threadUser = getForumUser(thread);
+  const threadIsLumine = isLumineForumItem(thread);
+  const newsActions = getForumNewsActions(thread, isBranchScope);
   const canDeleteThread = userCanDeleteForumItem({
     item: thread,
     userId,
@@ -854,12 +992,16 @@ function ForumThread({
               onOpenThreadBranch={onOpenThreadBranch}
             />
           ) : null}
-          <span
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <UsernameText className={forumUsernameClass} user={threadUser} />
-          </span>
+          {threadIsLumine ? (
+            <LumineForumName />
+          ) : (
+            <span
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <UsernameText className={forumUsernameClass} user={threadUser} />
+            </span>
+          )}
           {thread.createdAt ? (
             <>
               <span>·</span>
@@ -874,11 +1016,43 @@ function ForumThread({
             </>
           ) : null}
         </div>
+        {newsActions.length > 0 ? (
+          <div
+            className={forumNewsActionsClass}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            {newsActions.map((action) => (
+              <GameCTAButton
+                key={action.key}
+                variant="logoBlue"
+                size="sm"
+                icon={action.icon}
+                disabled={Boolean(actionLoading)}
+                onClick={() => onNewsAction(thread, action.key)}
+              >
+                {action.label}
+              </GameCTAButton>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div className={rowClass}>
         {recentlyCreated ? (
           <span className={forumThreadPostedClass}>Posted</span>
         ) : null}
+        <span
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <ForumLikeButton
+            count={Number(thread.likeCount || 0)}
+            liked={isForumItemLiked(thread)}
+            disabled={Boolean(actionLoading)}
+            ariaLabel="Like this topic"
+            onToggle={() => onToggleThreadLike(thread.id)}
+          />
+        </span>
         <span className={forumThreadCountClass}>
           {Number(thread.replyCount || 0)}{' '}
           {Number(thread.replyCount || 0) === 1 ? 'reply' : 'replies'}
@@ -909,7 +1083,8 @@ function ForumReply({
   reply,
   userId,
   onDeleteReply,
-  onReplyToReply
+  onReplyToReply,
+  onToggleReplyLike
 }: {
   actionLoading: string;
   canModerate: boolean;
@@ -917,51 +1092,66 @@ function ForumReply({
   userId: number | string | null;
   onDeleteReply: (replyId: number) => void;
   onReplyToReply: (reply: BuildForumReply) => void;
+  onToggleReplyLike: (replyId: number) => void;
 }) {
   const replyUser = getForumUser(reply);
+  const replyIsLumine = isLumineForumItem(reply);
   const replyToUser = getReplyTargetUser(reply);
-  const canReplyToReply = Number(reply.userId || 0) !== Number(userId || 0);
+  const canReplyToReply =
+    replyIsLumine || Number(reply.userId || 0) !== Number(userId || 0);
   return (
     <article className={forumPostClass}>
-      <ProfilePic
-        className={forumAvatarClass}
-        userId={replyUser.id}
-        profilePicUrl={replyUser.profilePicUrl}
-      />
+      {replyIsLumine ? (
+        <LumineForumAvatar />
+      ) : (
+        <ProfilePic
+          className={forumAvatarClass}
+          userId={replyUser.id}
+          profilePicUrl={replyUser.profilePicUrl}
+        />
+      )}
       <div className={forumPostMainClass}>
         <div className={forumPostHeaderClass}>
           <div className={forumAuthorMetaClass}>
-            <UsernameText className={forumUsernameClass} user={replyUser} />
+            {replyIsLumine ? (
+              <LumineForumName />
+            ) : (
+              <UsernameText className={forumUsernameClass} user={replyUser} />
+            )}
             {reply.createdAt ? (
               <span className={forumTimestampClass}>
                 {timeSince(reply.createdAt)}
               </span>
             ) : null}
           </div>
-          {canReplyToReply ||
-          userCanDeleteForumItem({ item: reply, userId, canModerate }) ? (
-            <div className={forumPostActionsClass}>
-              {canReplyToReply ? (
-                <GameCTAButton
-                  variant="neutral"
-                  size="sm"
-                  icon="reply"
-                  disabled={Boolean(actionLoading)}
-                  onClick={() => onReplyToReply(reply)}
-                />
-              ) : null}
-              {userCanDeleteForumItem({ item: reply, userId, canModerate }) ? (
-                <GameCTAButton
-                  variant="neutral"
-                  size="sm"
-                  icon="trash-alt"
-                  loading={actionLoading === `delete-reply-${reply.id}`}
-                  disabled={Boolean(actionLoading)}
-                  onClick={() => onDeleteReply(reply.id)}
-                />
-              ) : null}
-            </div>
-          ) : null}
+          <div className={forumPostActionsClass}>
+            <ForumLikeButton
+              count={Number(reply.likeCount || 0)}
+              liked={isForumItemLiked(reply)}
+              disabled={Boolean(actionLoading)}
+              ariaLabel="Like this reply"
+              onToggle={() => onToggleReplyLike(reply.id)}
+            />
+            {canReplyToReply ? (
+              <GameCTAButton
+                variant="neutral"
+                size="sm"
+                icon="reply"
+                disabled={Boolean(actionLoading)}
+                onClick={() => onReplyToReply(reply)}
+              />
+            ) : null}
+            {userCanDeleteForumItem({ item: reply, userId, canModerate }) ? (
+              <GameCTAButton
+                variant="neutral"
+                size="sm"
+                icon="trash-alt"
+                loading={actionLoading === `delete-reply-${reply.id}`}
+                disabled={Boolean(actionLoading)}
+                onClick={() => onDeleteReply(reply.id)}
+              />
+            ) : null}
+          </div>
         </div>
         {replyToUser ? (
           <div className={forumReplyContextClass}>
@@ -985,16 +1175,114 @@ function ForumReply({
   );
 }
 
+function isLumineForumItem(item: {
+  authorRole?: BuildForumThread['authorRole'];
+}) {
+  return item.authorRole === 'lumine';
+}
+
+function isForumItemLiked(item: {
+  likedByViewer?: number | boolean | null;
+}) {
+  return Boolean(Number(item.likedByViewer || 0));
+}
+
+function getForumNewsActions(
+  thread: BuildForumThread,
+  isBranchScope: boolean
+): { key: BuildForumNewsAction; label: string; icon: string }[] {
+  if (!isLumineForumItem(thread)) return [];
+  const eventType = String(thread.eventType || '');
+  const hasBranchTarget =
+    Number(thread.subjectBuildId || 0) > 0 &&
+    Number(thread.subjectBranchNumber || 0) > 0;
+  const actions: { key: BuildForumNewsAction; label: string; icon: string }[] =
+    [];
+  if (
+    hasBranchTarget &&
+    (eventType === 'branchUpdates' ||
+      eventType === 'branchMerged' ||
+      eventType === 'mainReplaced')
+  ) {
+    actions.push({ key: 'branch', label: 'Preview branch', icon: 'eye' });
+  }
+  if (
+    isBranchScope &&
+    (eventType === 'branchMerged' ||
+      eventType === 'mainReplaced' ||
+      eventType === 'mainPublished')
+  ) {
+    actions.push({ key: 'main', label: 'Check out Main', icon: 'code-branch' });
+  }
+  if (eventType === 'mainPublished') {
+    actions.push({ key: 'app', label: 'Open the app', icon: 'rocket-launch' });
+  }
+  return actions;
+}
+
+function LumineForumAvatar() {
+  return (
+    <div className={lumineAvatarClass} aria-hidden>
+      <Icon icon="wand-magic-sparkles" />
+    </div>
+  );
+}
+
+function LumineForumName() {
+  return (
+    <span className={lumineNameClass}>
+      <Icon icon="wand-magic-sparkles" />
+      Lumine
+    </span>
+  );
+}
+
+function ForumLikeButton({
+  ariaLabel,
+  count,
+  disabled,
+  liked,
+  onToggle
+}: {
+  ariaLabel: string;
+  count: number;
+  disabled: boolean;
+  liked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${forumLikeButtonClass}${liked ? ' liked' : ''}`}
+      aria-label={ariaLabel}
+      aria-pressed={liked}
+      disabled={disabled}
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      <Icon icon="heart" />
+      {count > 0 ? count : null}
+    </button>
+  );
+}
+
 function userCanDeleteForumItem({
   item,
   userId,
   canModerate
 }: {
-  item: { userId: number };
+  item: { userId: number; authorRole?: BuildForumThread['authorRole'] };
   userId: number | string | null;
   canModerate: boolean;
 }) {
-  return Number(item.userId) === Number(userId) || canModerate;
+  if (canModerate) return true;
+  // Lumine rows store the triggering actor in userId; that actor is not the
+  // visible author and must not own system news.
+  if (isLumineForumItem(item)) return false;
+  return Number(item.userId) === Number(userId);
 }
 
 function getForumUser(

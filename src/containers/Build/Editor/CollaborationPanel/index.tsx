@@ -163,6 +163,12 @@ export default function CollaborationPanel({
   const deleteBuildContributionForumReply = useAppContext(
     (v) => v.requestHelpers.deleteBuildContributionForumReply
   );
+  const likeBuildContributionForumThread = useAppContext(
+    (v) => v.requestHelpers.likeBuildContributionForumThread
+  );
+  const likeBuildContributionForumReply = useAppContext(
+    (v) => v.requestHelpers.likeBuildContributionForumReply
+  );
   const forumViewerKey = getBuildForumViewerKey(userId);
   const buildWorkspaceForumCache = useBuildContext(
     (v) => {
@@ -1875,6 +1881,120 @@ export default function CollaborationPanel({
     }
   }
 
+  async function handleToggleForumThreadLike(threadId: number) {
+    if (!rootBuildId || !threadId || forumActionLoading) return;
+    setForumActionLoading(`like-thread-${threadId}`);
+    setForumError('');
+    try {
+      const result = await likeBuildContributionForumThread({
+        buildId: rootBuildId,
+        threadId
+      });
+      if (result?.success) {
+        markForumScopeMutated();
+        markForumThreadMutated(threadId);
+        const likeCount = Number(result.likeCount || 0);
+        const likedByViewer = Boolean(result.likedByViewer);
+        const nextThreads = forumThreadsRef.current.map((thread) =>
+          Number(thread.id) === Number(threadId)
+            ? { ...thread, likeCount, likedByViewer }
+            : thread
+        );
+        replaceForumThreadsFromServer(nextThreads);
+        if (Number(selectedThreadRef.current?.id || 0) === Number(threadId)) {
+          replaceSelectedThreadFromServer(
+            {
+              ...(selectedThreadRef.current as BuildForumThread),
+              likeCount,
+              likedByViewer
+            },
+            threadRepliesRef.current
+          );
+        }
+      }
+    } catch (error: any) {
+      setForumError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to update like'
+      );
+    } finally {
+      setForumActionLoading('');
+    }
+  }
+
+  async function handleToggleForumReplyLike(replyId: number) {
+    if (!rootBuildId || !selectedThread?.id || !replyId || forumActionLoading) {
+      return;
+    }
+    setForumActionLoading(`like-reply-${replyId}`);
+    setForumError('');
+    try {
+      const result = await likeBuildContributionForumReply({
+        buildId: rootBuildId,
+        threadId: selectedThread.id,
+        replyId
+      });
+      if (result?.success) {
+        markForumScopeMutated();
+        markForumThreadMutated(selectedThread.id);
+        const nextReplies = threadRepliesRef.current.map((reply) =>
+          Number(reply.id) === Number(replyId)
+            ? {
+                ...reply,
+                likeCount: Number(result.likeCount || 0),
+                likedByViewer: Boolean(result.likedByViewer)
+              }
+            : reply
+        );
+        if (
+          Number(selectedThreadRef.current?.id || 0) ===
+          Number(selectedThread.id)
+        ) {
+          replaceSelectedThreadFromServer(
+            selectedThreadRef.current as BuildForumThread,
+            nextReplies
+          );
+        }
+      }
+    } catch (error: any) {
+      setForumError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to update like'
+      );
+    } finally {
+      setForumActionLoading('');
+    }
+  }
+
+  function handleForumNewsAction(
+    thread: BuildForumThread,
+    action: 'branch' | 'main' | 'app'
+  ) {
+    if (!rootBuildId) return;
+    if (action === 'branch') {
+      const branchId = Number(thread.subjectBuildId || 0);
+      const branchNumber = Number(thread.subjectBranchNumber || 0);
+      if (!branchId || !branchNumber) return;
+      navigate(
+        getBuildWorkspacePath({
+          id: branchId,
+          contributionRootBuildId: rootBuildId,
+          contributionBranchNumber: branchNumber
+        })
+      );
+      return;
+    }
+    if (action === 'main') {
+      navigate(`/build/${rootBuildId}`, {
+        state: { skipDefaultContributionBranchRedirect: true }
+      });
+      return;
+    }
+    navigate(`/app/${rootBuildId}`);
+  }
+
   function toggleSelectedPath(path: string) {
     setSelectedPaths((current) =>
       current.includes(path)
@@ -1946,6 +2066,7 @@ export default function CollaborationPanel({
         bodyInput={threadBodyInput}
         canModerate={canModerateForum}
         error={forumError}
+        isBranchScope={isContributionFork}
         loading={forumLoading}
         recentlyCreatedThreadId={recentlyCreatedForumThreadId}
         replyInput={replyInput}
@@ -1967,6 +2088,7 @@ export default function CollaborationPanel({
         onCreateThread={handleCreateForumThread}
         onDeleteReply={handleDeleteForumReply}
         onDeleteThread={handleDeleteForumThread}
+        onNewsAction={handleForumNewsAction}
         onOpenThreadBranch={handleOpenForumThreadBranch}
         onOpenThread={(threadId) => {
           void handleOpenForumThread(threadId);
@@ -1974,6 +2096,8 @@ export default function CollaborationPanel({
         onReplyInputChange={setReplyInput}
         onReplyTargetChange={setReplyTarget}
         onTitleInputChange={setThreadTitleInput}
+        onToggleReplyLike={handleToggleForumReplyLike}
+        onToggleThreadLike={handleToggleForumThreadLike}
       />
     );
   }

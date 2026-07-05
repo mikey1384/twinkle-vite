@@ -2362,6 +2362,46 @@ export default function buildRequestHelpers({
       }
     },
 
+    async likeBuildContributionForumThread({
+      buildId,
+      threadId
+    }: {
+      buildId: number;
+      threadId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contribution-forum-threads/${threadId}/like`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async likeBuildContributionForumReply({
+      buildId,
+      threadId,
+      replyId
+    }: {
+      buildId: number;
+      threadId: number;
+      replyId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contribution-forum-threads/${threadId}/replies/${replyId}/like`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async queryViewerDb({
       buildId,
       sql,

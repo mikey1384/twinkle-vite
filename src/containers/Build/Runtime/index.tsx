@@ -890,7 +890,10 @@ export default function BuildRuntime({
     isBuildOwner &&
     build.releaseStatus?.hasUnpublishedChanges
   );
-  const showRuntimeFavoriteButton = Boolean(build?.id && build.isPublic);
+  const showRuntimeFavoriteButton = Boolean(
+    build?.id &&
+      (build.isPublic || isBuildOwner || collaborationStatus === 'accepted')
+  );
   const showRuntimeActions =
     showWorkspaceButton ||
     showRuntimePublishUpdateButton ||

@@ -154,6 +154,8 @@ registerMethods('build', [
   'createBuildContributionForumReply',
   'deleteBuildContributionForumThread',
   'deleteBuildContributionForumReply',
+  'likeBuildContributionForumThread',
+  'likeBuildContributionForumReply',
   'queryViewerDb',
   'execViewerDb',
   'getBuildApiToken',

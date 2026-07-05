@@ -526,6 +526,7 @@ function getActivityNavigationBuildId(activity: ActivityItem) {
   if (
     (activity.activityType === 'buildTeamForumThread' ||
       activity.activityType === 'buildTeamForumReply' ||
+      activity.activityType === 'buildTeamForumLike' ||
       activity.activityType === 'buildBranchUpdate' ||
       isBranchMergeTargetActivity(activity) ||
       activity.activityType === 'buildContributor') &&
@@ -557,7 +558,8 @@ function getEmptyMessage(
 function getSubjectLabel(activity: ActivityItem) {
   if (
     (activity.activityType === 'buildTeamForumThread' ||
-      activity.activityType === 'buildTeamForumReply') &&
+      activity.activityType === 'buildTeamForumReply' ||
+      activity.activityType === 'buildTeamForumLike') &&
     activity.forum?.title
   ) {
     const projectTitle = activity.build.title || 'Untitled Build';
@@ -621,6 +623,11 @@ function getActivityMessage(activity: ActivityItem, currentUserId: number) {
         return 'replied to a team topic you joined';
       }
       return 'replied in team forum for';
+    case 'buildTeamForumLike':
+      if (Number(activity.forum?.replyId || 0) > 0) {
+        return 'liked your reply in team forum for';
+      }
+      return 'liked your team topic in';
     case 'buildUpdate':
       return 'updated';
     case 'buildBranchUpdate':
@@ -678,6 +685,8 @@ function getActivityIcon(activity: ActivityItem) {
     case 'buildTeamForumThread':
     case 'buildTeamForumReply':
       return 'comments';
+    case 'buildTeamForumLike':
+      return 'heart';
     case 'buildUpdate':
     case 'buildBranchUpdate':
       return 'cloud-upload-alt';
@@ -702,7 +711,8 @@ function getActivityNavigationState(activity: ActivityItem) {
   }
   if (
     activity.activityType === 'buildTeamForumThread' ||
-    activity.activityType === 'buildTeamForumReply'
+    activity.activityType === 'buildTeamForumReply' ||
+    activity.activityType === 'buildTeamForumLike'
   ) {
     return {
       openPeoplePanel: true,
