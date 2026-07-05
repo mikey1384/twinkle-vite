@@ -1,10 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Link } from 'react-router-dom';
 import { useAppContext, useKeyContext, useExploreContext } from '~/contexts';
 import EmptyStateMessage from '~/components/EmptyStateMessage';
+import reportAICardIssueEvent from '~/helpers/reportAICardIssueEvent';
+import {
+  aiCardSearchFiltersDiffer,
+  findAICardFilterMismatches
+} from './searchFilterUtils';
 
 export default function SearchView({
   cardObj,
@@ -44,22 +49,22 @@ export default function SearchView({
   );
   const username = useKeyContext((v) => v.myState.username);
   const prevFilters = useExploreContext((v) => v.state.aiCards.prevFilters);
+  const searchVersionRef = useRef(0);
+  // True from the moment the active filters change until the matching fetch
+  // has committed (prevFilters is only updated alongside the fetched cards).
+  // Rendering Loading off this render-derived flag guarantees stale results
+  // are never painted next to new filter UI, not even for one frame.
+  const filtersDirty = useMemo(
+    () => aiCardSearchFiltersDiffer(prevFilters, filters),
+    [prevFilters, filters]
+  );
 
   useEffect(() => {
     let cancelled = false;
+    searchVersionRef.current += 1;
     init();
     async function init() {
-      const filterChanged =
-        prevFilters.owner !== filters?.owner ||
-        prevFilters.style !== filters?.style ||
-        prevFilters.quality !== filters?.quality ||
-        prevFilters.color !== filters?.color ||
-        prevFilters.word !== filters?.word ||
-        prevFilters.isBuyNow !== filters?.isBuyNow ||
-        prevFilters.isMystery !== filters?.isMystery ||
-        prevFilters.engine !== filters?.engine ||
-        prevFilters.minPrice !== filters?.minPrice ||
-        prevFilters.maxPrice !== filters?.maxPrice;
+      const filterChanged = aiCardSearchFiltersDiffer(prevFilters, filters);
 
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
@@ -69,6 +74,7 @@ export default function SearchView({
           await loadFilteredAICards({
             filters
           });
+        handleReportFilterMismatches({ cards, filters });
         if (cancelled) return;
         onSetTotalBv(totalBv);
         onSetNumCards(numCards);
@@ -124,7 +130,7 @@ export default function SearchView({
         justifyContent: 'center'
       }}
     >
-      {loading || !filteredLoaded ? (
+      {loading || !filteredLoaded || filtersDirty ? (
         <Loading />
       ) : filteredCards?.length ? (
         filteredCards.map((card: any) => {
@@ -182,7 +188,7 @@ export default function SearchView({
           )}
         </div>
       )}
-      {filteredLoadMoreShown && !loading && (
+      {filteredLoadMoreShown && !loading && !filtersDirty && (
         <div
           style={{
             flex: '0 0 100%',
@@ -202,6 +208,7 @@ export default function SearchView({
   );
 
   async function handleLoadMoreAICards() {
+    const searchVersion = searchVersionRef.current;
     const lastCard = filteredCards[filteredCards?.length - 1];
     let lastInteraction, lastPrice, lastId;
     if (filters.isBuyNow) {
@@ -218,7 +225,38 @@ export default function SearchView({
       lastId,
       filters
     });
-    onLoadMoreFilteredAICards({ cards: newCards, loadMoreShown });
+    handleReportFilterMismatches({ cards: newCards, filters, loadMore: true });
+    if (searchVersion === searchVersionRef.current) {
+      onLoadMoreFilteredAICards({ cards: newCards, loadMoreShown });
+    }
     setLoadingMore(false);
+  }
+
+  // Validates every filtered-search response against the filters that
+  // requested it (the request/response pair stays valid evidence even if the
+  // user has already moved on). Fire-and-forget telemetry, surfaced in
+  // Management > Performance > AI Cards.
+  function handleReportFilterMismatches({
+    cards,
+    filters: requestFilters,
+    loadMore
+  }: {
+    cards: any[];
+    filters: any;
+    loadMore?: boolean;
+  }) {
+    const mismatches = findAICardFilterMismatches(cards || [], requestFilters);
+    if (!mismatches.length) return;
+    reportAICardIssueEvent({
+      issueType: 'filter_mismatch',
+      pathname: `${window.location.pathname}${window.location.search}`,
+      filters: requestFilters,
+      details: {
+        mismatches: mismatches.slice(0, 5),
+        mismatchCount: mismatches.length,
+        cardsReturned: cards?.length || 0,
+        loadMore: !!loadMore
+      }
+    });
   }
 }

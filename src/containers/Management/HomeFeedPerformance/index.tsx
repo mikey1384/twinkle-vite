@@ -544,12 +544,17 @@ function formatMs(value: number) {
   return `${formatNumber(Math.round(Number(value)))} ms`;
 }
 
-type PerformanceFactor = 'homeFeed' | 'effortLevel' | 'grammarbles';
+type PerformanceFactor =
+  | 'homeFeed'
+  | 'effortLevel'
+  | 'grammarbles'
+  | 'aiCardIssues';
 
 const PERFORMANCE_FACTORS: { key: PerformanceFactor; label: string }[] = [
   { key: 'homeFeed', label: 'Home Feed' },
   { key: 'effortLevel', label: 'Effort Level' },
-  { key: 'grammarbles', label: 'Grammarbles' }
+  { key: 'grammarbles', label: 'Grammarbles' },
+  { key: 'aiCardIssues', label: 'AI Cards' }
 ];
 
 export default function Performance() {
@@ -582,6 +587,8 @@ export default function Performance() {
         <HomeFeedFactor />
       ) : factor === 'effortLevel' ? (
         <EffortLevelFactor />
+      ) : factor === 'aiCardIssues' ? (
+        <AiCardIssuesFactor />
       ) : (
         <GrammarFactor />
       )}
@@ -841,6 +848,212 @@ function EffortLevelEventRowView({ row }: { row: EffortLevelEventRow }) {
       <td>{formatMs(row.moderatorMs)}</td>
       <td>{formatMs(row.contentUpdateMs)}</td>
       <td>{formatMs(row.notiFeedsMs)}</td>
+    </tr>
+  );
+}
+
+interface AiCardIssueEventRow {
+  id: number;
+  createdAt: number;
+  issueType: string;
+  pathname: string;
+  filters: { [key: string]: any } | null;
+  details: {
+    mismatches?: { cardId: number; reasons: string[] }[];
+    mismatchCount?: number;
+    cardsReturned?: number;
+    loadMore?: boolean;
+  } | null;
+  mismatchCount: number;
+  cardsReturned: number;
+  userId: number | null;
+  username: string;
+  clientVersion: string;
+  userAgent: string;
+}
+
+interface AiCardIssueReport {
+  hours: number;
+  generatedAt: number;
+  summary: {
+    eventCount: number;
+    uniqueUserCount: number;
+  };
+  byType: { issueType: string; eventCount: number }[];
+  recentEvents: AiCardIssueEventRow[];
+  reportLimit: number;
+}
+
+function AiCardIssuesFactor() {
+  const [hours, setHours] = useState<HomeFeedPerformanceRangeOption>(24);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [report, setReport] = useState<AiCardIssueReport | null>(null);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const loadAICardIssueReport = useAppContext(
+    (v) => v.requestHelpers.loadAICardIssueReport
+  );
+
+  const recentEvents = report?.recentEvents || [];
+  const topType = report?.byType?.[0];
+
+  useEffect(() => {
+    if (userId !== ADMIN_USER_ID) return;
+    let canceled = false;
+    void loadReport();
+
+    async function loadReport() {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await loadAICardIssueReport(hours);
+        if (canceled) return;
+        setReport(data);
+      } catch (loadError: any) {
+        if (canceled) return;
+        setError(loadError?.message || 'Failed to load AI card issues');
+      } finally {
+        if (!canceled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    return () => {
+      canceled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hours, reloadKey, userId]);
+
+  return (
+    <section className={panelClass}>
+      <header>
+        <div>
+          <h2>AI Card Issues</h2>
+          {report ? (
+            <span>
+              {formatNumber(report.summary.eventCount)} client-reported issue
+              {report.summary.eventCount === 1 ? '' : 's'} over {hours}h
+            </span>
+          ) : null}
+        </div>
+        <div className={actionsClass}>
+          <div className={rangeClass}>
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                className={hours === option.value ? 'active' : ''}
+                onClick={() => setHours(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <Button
+            color="darkerGray"
+            variant="outline"
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
+            Refresh
+          </Button>
+        </div>
+      </header>
+      <div>
+        {loading ? <Loading /> : null}
+
+        {!loading && error ? (
+          <div className={emptyStateClass}>
+            <div>{error}</div>
+            <Button
+              color="logoBlue"
+              variant="soft"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : null}
+
+        {!loading && !error && report ? (
+          <>
+            <section className={summaryGridClass}>
+              <MetricCard
+                label="Reports"
+                value={formatNumber(report.summary.eventCount)}
+                detail={`last ${hours}h`}
+                color="rose"
+              />
+              <MetricCard
+                label="Affected users"
+                value={formatNumber(report.summary.uniqueUserCount)}
+                detail="distinct reporters"
+                color="logoBlue"
+              />
+              <MetricCard
+                label="Top issue"
+                value={topType ? topType.issueType : '-'}
+                detail={
+                  topType ? `${formatNumber(topType.eventCount)} reports` : ''
+                }
+                color="orange"
+              />
+            </section>
+
+            {recentEvents.length === 0 ? (
+              <div className={emptyInlineClass}>
+                No AI card issues reported in this range. 🎉
+              </div>
+            ) : (
+              <div className={tableWrapClass}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>User</th>
+                      <th>Issue</th>
+                      <th>Filters</th>
+                      <th>Mismatches</th>
+                      <th>Client</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentEvents.map((row) => (
+                      <AiCardIssueEventRowView key={row.id} row={row} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function AiCardIssueEventRowView({ row }: { row: AiCardIssueEventRow }) {
+  const filtersLabel = row.filters
+    ? Object.entries(row.filters)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(', ')
+    : '-';
+  const sampleMismatch = row.details?.mismatches?.[0];
+  const mismatchLabel = sampleMismatch
+    ? `${row.mismatchCount}/${row.cardsReturned} cards (e.g. #${
+        sampleMismatch.cardId
+      }: ${(sampleMismatch.reasons || []).join('; ')})${
+        row.details?.loadMore ? ' — load more' : ''
+      }`
+    : `${row.mismatchCount}/${row.cardsReturned} cards`;
+  return (
+    <tr title={row.userAgent}>
+      <td>{formatTime(row.createdAt)}</td>
+      <td>{row.username || (row.userId ? `#${row.userId}` : 'logged out')}</td>
+      <td>{row.issueType}</td>
+      <td>{filtersLabel}</td>
+      <td>{mismatchLabel}</td>
+      <td>{row.clientVersion || '-'}</td>
     </tr>
   );
 }

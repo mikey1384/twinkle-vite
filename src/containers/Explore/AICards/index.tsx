@@ -19,6 +19,7 @@ import {
   useExploreContext
 } from '~/contexts';
 import PriceRangeSearch from './PriceRangeSearch';
+import { aiCardSearchFiltersDiffer } from './searchFilterUtils';
 
 export default function AICards() {
   const navigate = useNavigate();
@@ -56,6 +57,9 @@ export default function AICards() {
   );
   const onSetFilteredCardsTotalBv = useExploreContext(
     (v) => v.actions.onSetFilteredCardsTotalBv
+  );
+  const prevAICardFilters = useExploreContext(
+    (v) => v.state.aiCards.prevFilters
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
 
@@ -128,6 +132,13 @@ export default function AICards() {
     () => (isFilterSet ? numFilteredCards : numCards),
     [isFilterSet, numCards, numFilteredCards]
   );
+  // While a filter change hasn't been answered by a matching fetch yet, the
+  // count/BV in context still describe the previous search — hide them so the
+  // header never pairs stale numbers with the new filter UI.
+  const searchResultsStale = useMemo(
+    () => isFilterSet && aiCardSearchFiltersDiffer(prevAICardFilters, filters),
+    [isFilterSet, prevAICardFilters, filters]
+  );
 
   const isSell = useMemo(() => {
     if (filters.owner === username) {
@@ -177,7 +188,7 @@ export default function AICards() {
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {displayedNumCards > 0 && (
+              {displayedNumCards > 0 && !searchResultsStale && (
                 <span
                   className={css`
                     font-size: 1.3rem;
@@ -190,6 +201,7 @@ export default function AICards() {
                 </span>
               )}
               {displayedNumCards > 0 &&
+                !searchResultsStale &&
                 filteredCardsTotalBv > 0 &&
                 isFilterSet && (
                   <div>

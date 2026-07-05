@@ -452,6 +452,17 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAICardIssueReport(hours: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/ai-card-issues/report?hours=${hours}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadEffortLevelPerformanceReport(hours: number) {
       try {
         const { data } = await request.get(

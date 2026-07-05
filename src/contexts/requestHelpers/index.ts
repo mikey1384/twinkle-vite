@@ -423,6 +423,7 @@ registerMethods('management', [
   'setAiEnergyManualIdentityBucketBan',
   'migrateLegacyBansIntoBucket',
   'mergeAiEnergyManualIdentityBuckets',
+  'loadAICardIssueReport',
   'loadHomeFeedPerformanceReport',
   'loadEffortLevelPerformanceReport',
   'loadGrammarPerformanceReport',
