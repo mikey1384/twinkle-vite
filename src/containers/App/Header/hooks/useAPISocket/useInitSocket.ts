@@ -817,11 +817,14 @@ export default function useInitSocket({
           const alreadyLoaded =
             chatLoadedRef.current &&
             loadedForUserIdRef.current === userIdRef.current;
-          if (!isOwningBootstrap || alreadyLoaded) {
+          if (!isOwningBootstrap) {
             // A superseded/stale attempt rejecting (e.g. one the watchdog
             // abandoned) must not schedule a retry: the active attempt owns
-            // recovery, and if chat already loaded a retry would needlessly
-            // onSetReconnecting() and reload over the recovered state.
+            // recovery. An OWNING failure must retry even when chat is already
+            // loaded — the reconnect resync always runs over loaded chat, and
+            // it is the only repair path for per-channel unread state (the nav
+            // badge re-syncs from /chat/numUnreads, channelsObj has nothing
+            // else). Skipping it left channels stale until the next reconnect.
             recordChatBootstrapEvent('chat-bootstrap-retry-skipped-stale', {
               sourceBootstrapId: bootstrapId,
               activeBootstrapId: activeBootstrapIdRef.current,
@@ -906,12 +909,12 @@ export default function useInitSocket({
           return;
         }
         if (isLoadingChatRef.current) return;
-        if (
-          chatLoadedRef.current &&
-          loadedForUserIdRef.current === userIdRef.current
-        ) {
-          // Chat already recovered (e.g. a newer attempt succeeded) — don't
-          // reload over it.
+        if (lastFailedBootstrapIdRef.current === null) {
+          // A newer attempt succeeded after the failure that scheduled this
+          // retry (success nulls lastFailedBootstrapIdRef) — don't reload over
+          // it. Chat merely being loaded is NOT recovery: the failed attempt
+          // may have been a reconnect resync over already-loaded chat, whose
+          // retry is the only repair path for per-channel unread state.
           loadChatRetryCountRef.current = 0;
           recordChatBootstrapEvent('chat-bootstrap-retry-skipped-loaded', {
             sourceBootstrapId: lastFailedBootstrapIdRef.current,

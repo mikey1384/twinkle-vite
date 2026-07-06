@@ -824,7 +824,7 @@ export default function BuildWideCard({
             {description ? <p className={descriptionClass}>{description}</p> : null}
           </div>
           <div className={badgeRowClass}>
-            {ownerMode ? (
+            {ownerMode || collaborationStatus === 'accepted' ? (
               <span className={badgeClass}>
                 <Icon icon={buildIsPublic ? 'globe' : 'lock'} />
                 {buildIsPublic ? 'Public' : 'Private'}
