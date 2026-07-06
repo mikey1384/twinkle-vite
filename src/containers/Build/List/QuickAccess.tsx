@@ -154,7 +154,7 @@ const quickAccessModalGridClass = css`
 `;
 
 const quickAccessModalLoadMoreClass = css`
-  margin: 0.6rem 0 1rem;
+  margin: 1rem 0 3rem;
   display: flex;
   justify-content: center;
 `;
