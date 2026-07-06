@@ -451,6 +451,8 @@ export function BuildQuickAccessModal({
         {cursor ? (
           <div className={quickAccessModalLoadMoreClass}>
             <LoadMoreButton
+              style={{ fontSize: '2rem' }}
+              variant="ghost"
               color={color}
               loading={loadingMore}
               onClick={onLoadMore}
