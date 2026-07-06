@@ -143,7 +143,7 @@ export default function SelectFeaturedPlaylists({
                 )}
                 {displayedLoadMoreButton && !searching && (
                   <LoadMoreButton
-                    style={{ marginTop: '2rem', width: '100%' }}
+                    style={{ marginTop: '2rem', fontSize: '2rem' }}
                     variant="ghost"
                     onClick={() => handleLoadMore(lastPlaylistId)}
                     loading={loadingMore}

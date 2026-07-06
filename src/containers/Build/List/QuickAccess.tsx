@@ -154,7 +154,7 @@ const quickAccessModalGridClass = css`
 `;
 
 const quickAccessModalLoadMoreClass = css`
-  margin-top: 0.6rem;
+  margin: 0.6rem 0 1rem;
   display: flex;
   justify-content: center;
 `;
@@ -376,7 +376,6 @@ function BuildQuickAccessCard({
 
 export function BuildQuickAccessModal({
   builds,
-  color,
   cursor,
   error,
   loadingMore,
@@ -390,7 +389,6 @@ export function BuildQuickAccessModal({
   onOpenBuild
 }: {
   builds: QuickAccessBuild[];
-  color?: string;
   cursor: string | null;
   error: string;
   loadingMore: boolean;
@@ -453,7 +451,6 @@ export function BuildQuickAccessModal({
             <LoadMoreButton
               style={{ fontSize: '2rem' }}
               variant="ghost"
-              color={color}
               loading={loadingMore}
               onClick={onLoadMore}
             />

@@ -904,7 +904,6 @@ export default function BuildList({
       <Overlays
         editingBuild={editingBuild}
         forkHistoryBuildId={forkHistoryBuildId}
-        quickAccessColor={profileTheme}
         quickAccessError={quickAccessError}
         quickAccessLoadingMore={quickAccessLoadingMore}
         quickAccessModalBuilds={quickAccessModalBuilds}

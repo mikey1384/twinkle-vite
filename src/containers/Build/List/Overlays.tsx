@@ -9,7 +9,6 @@ import type { BuildQuickAccessMode, QuickAccessBuild } from './types';
 export default function Overlays({
   editingBuild,
   forkHistoryBuildId,
-  quickAccessColor,
   quickAccessError,
   quickAccessLoadingMore,
   quickAccessModalBuilds,
@@ -29,7 +28,6 @@ export default function Overlays({
 }: {
   editingBuild: BuildProjectListItemData | null;
   forkHistoryBuildId: number | null;
-  quickAccessColor?: string;
   quickAccessError: string;
   quickAccessLoadingMore: boolean;
   quickAccessModalBuilds: QuickAccessBuild[];
@@ -81,7 +79,6 @@ export default function Overlays({
       {quickAccessModalMode ? (
         <BuildQuickAccessModal
           builds={quickAccessModalBuilds}
-          color={quickAccessColor}
           cursor={quickAccessModalCursor}
           error={quickAccessError}
           loadingMore={quickAccessLoadingMore}
