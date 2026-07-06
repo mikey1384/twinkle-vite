@@ -133,9 +133,11 @@ const quickAccessCardGridClass = css`
 
 const quickAccessModalContentClass = css`
   width: 100%;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding-bottom: 3rem;
 `;
 
 const quickAccessModalGridClass = css`
@@ -154,7 +156,7 @@ const quickAccessModalGridClass = css`
 `;
 
 const quickAccessModalLoadMoreClass = css`
-  margin: 1rem 0 3rem;
+  margin-top: 1rem;
   display: flex;
   justify-content: center;
 `;
