@@ -10,9 +10,14 @@ import ProjectListItem, {
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import type { BuildStudioBrowseMode } from '~/contexts/Build/reducer';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import TabFilter from '../TabFilter';
 import { buildBrowseModeTabs } from './constants/tabs';
-import { getPublicBuildSort, getLoadMoreToken } from './helpers';
+import {
+  getBuildScrollAnchorId,
+  getPublicBuildSort,
+  getLoadMoreToken
+} from './helpers';
 import { getBuildListTabPath } from './helpers/url';
 import {
   buildPageTopGap,
@@ -129,7 +134,22 @@ export default function LoggedOutCommunity({
   const [loadMoreToken, setLoadMoreToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  // Which browseMode the current `builds` belong to. `loading` alone leaves a
+  // one-render stale window on mode switches (it only flips in the passive
+  // load effect, after the restoration layout effect has already run against
+  // the previous mode's list), so restoration readiness must compare modes.
+  const [loadedBrowseMode, setLoadedBrowseMode] =
+    useState<BuildStudioBrowseMode | null>(null);
   const loadingMoreRef = useRef(false);
+  const buildListRef = useRef<HTMLDivElement | null>(null);
+
+  useScrollAnchorRestoration({
+    anchorKey: `/build:loggedout:${browseMode}`,
+    containerRef: buildListRef,
+    initialScroll: { type: 'top' },
+    itemsReady:
+      !loading && builds.length > 0 && loadedBrowseMode === browseMode
+  });
   // Bumped on every browseMode (re)load so an in-flight load-more from a
   // previous sort can detect it is stale and skip appending.
   const requestIdRef = useRef(0);
@@ -160,6 +180,7 @@ export default function LoggedOutCommunity({
         }
       } finally {
         if (!canceled) {
+          setLoadedBrowseMode(browseMode);
           setLoading(false);
         }
       }
@@ -216,21 +237,27 @@ export default function LoggedOutCommunity({
         </div>
       ) : (
         <>
-          <div className={buildGridClass}>
+          <div ref={buildListRef} className={buildGridClass}>
             {builds.map((build) => (
-              <ProjectListItem
+              <div
                 key={build.id}
-                build={build}
-                to={`/app/${build.id}`}
-                navigationState={{
-                  runtimeBackTo,
-                  runtimeBackLabel: 'Back to Community Builds'
-                }}
-                updatedAtSource="publicVersion"
-                showCollaborationRequestAction={false}
-                showFavoriteAction={false}
-                showVisibilityBadge={false}
-              />
+                data-scroll-anchor-id={getBuildScrollAnchorId(build)}
+                data-scroll-anchor-secondary-id={String(build.id)}
+                data-scroll-anchor-content-key={`build:${build.id}`}
+              >
+                <ProjectListItem
+                  build={build}
+                  to={`/app/${build.id}`}
+                  navigationState={{
+                    runtimeBackTo,
+                    runtimeBackLabel: 'Back to Community Builds'
+                  }}
+                  updatedAtSource="publicVersion"
+                  showCollaborationRequestAction={false}
+                  showFavoriteAction={false}
+                  showVisibilityBadge={false}
+                />
+              </div>
             ))}
           </div>
           {loadMoreToken ? (

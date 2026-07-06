@@ -17,6 +17,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary';
 import installSafeHistory from './helpers/installSafeHistory';
+import { markAppScrollOwnershipTaken } from './helpers/scrollAnchorRestorationCoordinator';
 import installDomMutationGuard from './helpers/installDomMutationGuard';
 import { registerChatPushServiceWorkerIfEnabled } from './helpers/desktopNotifications';
 import { BrowserRouter } from 'react-router-dom';
@@ -450,6 +451,47 @@ library.add(
   }
   await loadPolyfills();
   installSafeHistory();
+  // The app runs its own scroll restoration (useScrollAnchorRestoration), but
+  // its anchor cache is in-memory, so it can only own scroll for
+  // same-document navigation. Ownership hands over at the FIRST in-app
+  // pushState: before it, a fresh document's back/forward targets are all
+  // cross-document, so native restoration must stay on 'auto' to handle
+  // reload and bfcache-evicted returns. Setting 'manual' at the first push
+  // marks the current entry and every entry created after it — exactly the
+  // same-document traversals where the browser's deferred restore (iOS: the
+  // document is the scroller via #App.ios) races the app's restore. The
+  // wrapper is a transparent one-shot pre-hook: errors from the original
+  // pushState propagate untouched (see installSafeHistory's note on why
+  // pushState must not be error-wrapped).
+  //
+  // replace-based navigations deliberately do NOT take ownership: every
+  // path-changing replaceState in the app today is either a load-time
+  // redirect (fires before the user can scroll), a Chat/Build-editor flow
+  // that does not use document scroll restoration, or same-path state
+  // bookkeeping — and same-path replaces fire during initial load, where
+  // flipping to 'manual' would cancel the browser's deferred reload restore.
+  // If a user-triggered, path-changing replace navigation is ever added to a
+  // scroll-restored surface, take ownership at that call site (or extend
+  // this wrapper to replaceState gated on a pathname+search change).
+  try {
+    if ('scrollRestoration' in window.history) {
+      const originalPushState = window.history.pushState.bind(window.history);
+      window.history.pushState = function takeScrollOwnershipThenPush(
+        ...args: Parameters<History['pushState']>
+      ) {
+        window.history.pushState = originalPushState;
+        try {
+          window.history.scrollRestoration = 'manual';
+          markAppScrollOwnershipTaken();
+        } catch (_err) {
+          // sandboxed embeds can block history access
+        }
+        return originalPushState(...args);
+      };
+    }
+  } catch (_err) {
+    // sandboxed embeds can block history access
+  }
   installDomMutationGuard();
   registerChatPushServiceWorkerIfEnabled();
 

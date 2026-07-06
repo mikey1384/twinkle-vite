@@ -275,6 +275,7 @@ export default function BuildList({
     loadingMoreTeam: searchLoadingMoreTeam,
     publicBuilds: searchPublicBuilds,
     publicHasMore: searchPublicHasMore,
+    resultsAreCurrent: searchResultsAreCurrent,
     searching,
     teamBuilds: searchTeamBuilds,
     teamHasMore: searchTeamHasMore,
@@ -843,6 +844,8 @@ export default function BuildList({
 
             {isBuildSearchActive ? (
               <SearchResults
+                anchorKey={`/build:search:${buildSearchOwner}:${buildSearchSort}:${buildSearchQuery}`}
+                resultsAreCurrent={searchResultsAreCurrent}
                 color={profileTheme}
                 loadingMorePublic={searchLoadingMorePublic}
                 loadingMoreTeam={searchLoadingMoreTeam}

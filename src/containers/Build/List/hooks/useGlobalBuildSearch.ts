@@ -34,9 +34,16 @@ export default function useGlobalBuildSearch({
   const [searching, setSearching] = useState(false);
   const [loadingMorePublic, setLoadingMorePublic] = useState(false);
   const [loadingMoreTeam, setLoadingMoreTeam] = useState(false);
+  // Which params the current results belong to. `searching` alone leaves a
+  // one-render stale window on param changes (it only flips in the passive
+  // effect below), during which the previous params' results still render;
+  // consumers gating scroll restoration must not treat those as ready.
+  const [resultsParamsKey, setResultsParamsKey] = useState('');
   const requestIdRef = useRef(0);
+  const paramsKey = `${owner}:${sort}:${searchQuery}`;
 
   useEffect(() => {
+    const effectParamsKey = `${owner}:${sort}:${searchQuery}`;
     if ((!searchQuery && !owner) || !userId) {
       requestIdRef.current += 1;
       setPublicBuilds([]);
@@ -46,6 +53,7 @@ export default function useGlobalBuildSearch({
       setSearching(false);
       setLoadingMorePublic(false);
       setLoadingMoreTeam(false);
+      setResultsParamsKey(effectParamsKey);
       return;
     }
     const requestId = ++requestIdRef.current;
@@ -90,6 +98,7 @@ export default function useGlobalBuildSearch({
         setTeamLoadMoreToken(null);
       } finally {
         if (requestId === requestIdRef.current) {
+          setResultsParamsKey(effectParamsKey);
           setSearching(false);
         }
       }
@@ -103,6 +112,7 @@ export default function useGlobalBuildSearch({
     loadingMoreTeam,
     publicBuilds,
     publicHasMore: Boolean(publicLoadMoreToken),
+    resultsAreCurrent: resultsParamsKey === paramsKey,
     searching,
     teamBuilds,
     teamHasMore: Boolean(teamLoadMoreToken),

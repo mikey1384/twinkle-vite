@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { css } from '@emotion/css';
 import { borderRadius } from '~/constants/css';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 export default function Privacy() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useScrollAnchorRestoration({
+    anchorKey: 'privacy',
+    containerRef,
+    initialScroll: { type: 'top' },
+    itemsReady: true
+  });
+
   return (
     <div
+      ref={containerRef}
       className={css`
         padding: 2rem;
         margin: 2rem auto;

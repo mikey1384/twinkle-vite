@@ -3,6 +3,7 @@ import {
   addScrollAnchorExternalSaveListener,
   addScrollAnchorRestoreCancelListener,
   addScrollAnchorTopResetListener,
+  appOwnsScrollRestoration,
   notifyScrollAnchorExternalSave,
   suppressScrollAnchorSaves,
   scrollAnchorRestoresAreSuppressed,
@@ -20,6 +21,23 @@ import {
 // input even if the anchor never rendered, so we never fight a deliberate
 // scroll for long.
 const restoreCancelGraceMs = 900;
+
+// After a programmatic scroll (anchor restore / initial scroll), a scroll
+// event that arrives without any user scroll input since that scroll was
+// applied is browser-initiated (native history restore, iOS viewport
+// settling) — saving it would persist a position the user never chose as the
+// new anchor. This window bounds only the DETECTION of such scrolls; one that
+// is caught sets a standing taint that keeps blocking saves until user input,
+// a hook-applied scroll, or a top reset clears it.
+const postRestoreNonUserSaveGuardMs = 3000;
+
+// A scroll observed while saves are suppressed is normally the hook's own
+// (setScrollTop's synthetic event and the browser's native echo land exactly
+// at the applied position). Deviation beyond this tolerance means something
+// else — a browser history restore — moved the scroller inside the
+// suppression window, which must taint like any other guarded non-user
+// scroll or it would be saved once suppression lapses.
+const appliedScrollTopTolerancePx = 2;
 
 interface SavedScrollAnchor {
   anchorKey: string;
@@ -79,13 +97,10 @@ export function useScrollAnchorRestoration({
   const restoreAttemptedRef = useRef('');
   const restoreSettledSignatureRef = useRef('');
   const userCancelledRestoreRef = useRef('');
-
-  if (activeAnchorKeyRef.current !== anchorKey) {
-    activeAnchorKeyRef.current = anchorKey;
-    restoreAttemptedRef.current = '';
-    restoreSettledSignatureRef.current = '';
-    userCancelledRestoreRef.current = '';
-  }
+  const restoreAppliedAtRef = useRef(0);
+  const userScrollInputAtRef = useRef(0);
+  const nonUserScrollTaintedRef = useRef(false);
+  const lastAppliedScrollTopRef = useRef(-1);
 
   if (ignoreSavedAnchor) {
     activeIgnoredSavedAnchorKeyRef.current = anchorKey;
@@ -102,8 +117,30 @@ export function useScrollAnchorRestoration({
   }
 
   useLayoutEffect(() => {
+    // Per-key state must reset INSIDE the effect, not during render: the
+    // previous key's effect cleanups (including its teardown save) run at
+    // commit, after render — a render-phase reset would clear the taint and
+    // settled signature before that teardown save reads them, letting a
+    // browser-chosen offset be saved under the old key. Effect order
+    // guarantees this runs after every old-key cleanup and before the new
+    // key's save/restore effects.
+    if (activeAnchorKeyRef.current !== anchorKey) {
+      activeAnchorKeyRef.current = anchorKey;
+      restoreAttemptedRef.current = '';
+      restoreSettledSignatureRef.current = '';
+      userCancelledRestoreRef.current = '';
+      restoreAppliedAtRef.current = 0;
+      userScrollInputAtRef.current = 0;
+      nonUserScrollTaintedRef.current = false;
+      lastAppliedScrollTopRef.current = -1;
+    }
+
     function markUserScrollInput() {
       userCancelledRestoreRef.current = anchorKey;
+      userScrollInputAtRef.current = nowMs();
+      // User input ratifies the current position: any scroll that follows is
+      // theirs to save, so a standing non-user taint no longer applies.
+      nonUserScrollTaintedRef.current = false;
     }
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -121,6 +158,11 @@ export function useScrollAnchorRestoration({
       restoreSettledSignatureRef.current =
         getSavedAnchorRestoreSignature(anchorKey);
       userCancelledRestoreRef.current = '';
+      // The app just re-established the position (top), so any standing
+      // non-user taint is superseded and the browser's async echo of the
+      // reset scroll must compare against 0, not a stale applied position.
+      nonUserScrollTaintedRef.current = false;
+      lastAppliedScrollTopRef.current = 0;
       recordScrollDiagnostic({ type: 'top-reset', anchorKey, scrollTop: 0 });
     }
 
@@ -176,16 +218,101 @@ export function useScrollAnchorRestoration({
     let frame = 0;
 
     function handleScroll() {
-      if (scrollAnchorSavesAreSuppressed()) return;
+      if (scrollAnchorSavesAreSuppressed()) {
+        taintIfScrollLeftAppliedPosition('suppressed-window');
+        return;
+      }
       if (saveShouldWaitForPendingRestore()) return;
+      if (scrollIsNonUserWhileGuarded()) return;
       saveAnchorAndMarkSettled();
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         frame = 0;
-        if (scrollAnchorSavesAreSuppressed()) return;
+        if (scrollAnchorSavesAreSuppressed()) {
+          taintIfScrollLeftAppliedPosition('suppressed-window');
+          return;
+        }
         if (saveShouldWaitForPendingRestore()) return;
+        if (scrollIsNonUserWhileGuarded()) return;
         saveAnchorAndMarkSettled();
       });
+    }
+
+    // Single detection predicate for non-user scrolls, shared by the
+    // suppressed branch, the guarded branch, and the teardown check. The
+    // hook's own scroll events either carry the in-flight flag or sit at the
+    // applied position (including delayed native echoes), so under guard, a
+    // scroll that has LEFT that position is browser-initiated and must
+    // taint. The teardown call also covers an override written in the final
+    // frame whose scroll event never got delivered before unmount.
+    function taintIfScrollLeftAppliedPosition(note: string) {
+      if (applyingProgrammaticScroll) return;
+      if (nonUserScrollTaintedRef.current) return;
+      if (!nonUserScrollGuardHolds()) return;
+      const appliedScrollTop = lastAppliedScrollTopRef.current;
+      if (appliedScrollTop < 0) return;
+      const currentScrollTop = getScrollTop(getActiveScroller());
+      if (
+        Math.abs(currentScrollTop - appliedScrollTop) <=
+        appliedScrollTopTolerancePx
+      ) {
+        return;
+      }
+      nonUserScrollTaintedRef.current = true;
+      recordScrollDiagnostic({
+        type: 'save-skipped-non-user-scroll',
+        anchorKey,
+        scrollTop: Math.round(currentScrollTop),
+        note
+      });
+    }
+
+    // Only guards document-scroller mode (iOS: #App.ios is overflow-y
+    // visible): that is where the browser's own history restore can move the
+    // scroller without user input, and touch/wheel/key input coverage is
+    // exhaustive there. Element-scroller platforms have native scrollbars,
+    // whose drags emit scroll events with no wheel/touch/key signal (Firefox
+    // dispatches no pointer events for them at all) — and no browser-initiated
+    // history restore targets the element scroller, so the guard must stay
+    // inert there or real user scrolls would be dropped.
+    function nonUserScrollGuardHolds() {
+      // Before the first in-app pushState, scrollRestoration is still 'auto'
+      // and a browser-initiated scroll is the LEGITIMATE deferred restore of
+      // a reload / bfcache-evicted return — adopt it as the anchor instead
+      // of tainting it. No same-document traversal (and thus no race) can
+      // exist yet.
+      if (!appOwnsScrollRestoration()) return false;
+      const appliedAt = restoreAppliedAtRef.current;
+      if (!appliedAt) return false;
+      if (nowMs() - appliedAt > postRestoreNonUserSaveGuardMs) return false;
+      if (userScrollInputAtRef.current >= appliedAt) return false;
+      if (getActiveScroller()) return false;
+      return true;
+    }
+
+    // A scroll event arriving under guard that has LEFT the applied position
+    // is browser-initiated: it taints the position as no longer matching what
+    // the hook applied. The position check matters here too, not just in the
+    // suppressed branch — the browser can deliver the native echo of the
+    // hook's own scrollTop write after the 250ms suppression lapses (busy
+    // main thread during a route remount), and that echo sits at the applied
+    // position, so it must save normally rather than taint. Taint is a
+    // STANDING block — a browser-chosen offset must never become the anchor
+    // without ratification, and dwell time is not ratification. It clears
+    // only when user scroll input arrives, when the hook applies a scroll
+    // (e.g. an observer re-pin correcting the override), or on a top reset.
+    function scrollIsNonUserWhileGuarded() {
+      if (nonUserScrollTaintedRef.current) {
+        recordScrollDiagnostic({
+          type: 'save-skipped-non-user-scroll',
+          anchorKey,
+          scrollTop: Math.round(getScrollTop(getActiveScroller())),
+          note: 'standing-taint'
+        });
+        return true;
+      }
+      taintIfScrollLeftAppliedPosition('guarded');
+      return nonUserScrollTaintedRef.current;
     }
 
     function saveAnchorAndMarkSettled() {
@@ -215,9 +342,11 @@ export function useScrollAnchorRestoration({
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
+      taintIfScrollLeftAppliedPosition('teardown-check');
       if (
         !scrollAnchorSavesAreSuppressed() &&
-        !saveShouldWaitForPendingRestore()
+        !saveShouldWaitForPendingRestore() &&
+        !nonUserScrollTaintedRef.current
       ) {
         saveAnchorAndMarkSettled();
       }
@@ -257,6 +386,22 @@ export function useScrollAnchorRestoration({
       const initialScrollKey = `${anchorKey}:initial`;
       if (initialScrollAttemptedRef.current === initialScrollKey) return;
       initialScrollAttemptedRef.current = initialScrollKey;
+      // While the browser still owns scroll (pre-first-push), a programmatic
+      // initial scroll would CANCEL the browser's deferred native restore
+      // (browsers abandon pending restoration once script scrolls the
+      // document), losing the reload / bfcache-evicted-return position.
+      // Fresh navigations start at top anyway, so skipping loses nothing.
+      if (!appOwnsScrollRestoration()) {
+        recordScrollDiagnostic({
+          type: 'initial-scroll',
+          anchorKey,
+          scrollTop: Math.round(getScrollTop(getActiveScroller())),
+          itemsReady,
+          reason: initialScrollType,
+          note: 'skipped-browser-owned'
+        });
+        return;
+      }
       recordScrollDiagnostic({
         type: 'initial-scroll',
         anchorKey,
@@ -271,6 +416,9 @@ export function useScrollAnchorRestoration({
         topOffset: initialScrollTopOffset,
         type: initialScrollType
       });
+      if (initialScrollType !== 'preserve') {
+        markProgrammaticScrollApplied();
+      }
       return;
     }
 
@@ -326,6 +474,7 @@ export function useScrollAnchorRestoration({
       const anchorElement = findAnchorElement(container, anchorToRestore);
       if (!anchorElement) {
         restoreToSavedScrollTop(anchorToRestore, scroller);
+        markProgrammaticScrollApplied();
         diag('anchor-missing-fallback-scrolltop', { attempt: attempts });
         markRestoreSettledIfNoAnchorIdentity();
         attempts += 1;
@@ -341,6 +490,7 @@ export function useScrollAnchorRestoration({
         anchorToRestore.offset,
         scroller
       );
+      markProgrammaticScrollApplied();
       landedOnAnchor = true;
       diag('restore-to-anchor', { computedScrollTop });
       markRestoreSettled();
@@ -484,6 +634,7 @@ export function useScrollAnchorRestoration({
         const anchorElement = findAnchorElement(container, anchorToRestore);
         if (!anchorElement) {
           restoreToSavedScrollTop(anchorToRestore, scroller);
+          markProgrammaticScrollApplied();
           markRestoreSettledIfNoAnchorIdentity();
           return;
         }
@@ -493,6 +644,7 @@ export function useScrollAnchorRestoration({
           anchorToRestore.offset,
           scroller
         );
+        markProgrammaticScrollApplied();
         landedOnAnchor = true;
         markRestoreSettled();
         settleAttempts += 1;
@@ -503,6 +655,18 @@ export function useScrollAnchorRestoration({
           settleFrame = window.requestAnimationFrame(settle);
         }
       });
+    }
+
+    // A hook-applied scroll re-establishes "position matches what we applied":
+    // it restarts the non-user-save guard window and clears any taint from an
+    // earlier browser-initiated scroll (e.g. an observer re-pin correcting it).
+    // The applied position is read back after the write so clamping is
+    // captured; it is the baseline the suppression-window taint check
+    // compares against.
+    function markProgrammaticScrollApplied() {
+      restoreAppliedAtRef.current = nowMs();
+      nonUserScrollTaintedRef.current = false;
+      lastAppliedScrollTopRef.current = getScrollTop(getActiveScroller());
     }
 
     function markRestoreSettled() {
@@ -889,14 +1053,24 @@ function getScrollTop(scroller: HTMLElement | null) {
   return scroller ? scroller.scrollTop : bodyRef?.scrollTop || 0;
 }
 
+// True only during setScrollTop's synchronous dispatch: those scroll events
+// are the hook's own and fire before the caller can record the newly applied
+// position, so the applied-position taint check must not classify them.
+let applyingProgrammaticScroll = false;
+
 function setScrollTop(scroller: HTMLElement | null, scrollTop: number) {
   const bodyRef = document.scrollingElement || document.documentElement;
-  if (scroller) {
-    scroller.scrollTop = scrollTop;
-    scroller.dispatchEvent(new Event('scroll'));
-  } else if (bodyRef) {
-    bodyRef.scrollTop = scrollTop;
-    bodyRef.dispatchEvent(new Event('scroll'));
+  applyingProgrammaticScroll = true;
+  try {
+    if (scroller) {
+      scroller.scrollTop = scrollTop;
+      scroller.dispatchEvent(new Event('scroll'));
+    } else if (bodyRef) {
+      bodyRef.scrollTop = scrollTop;
+      bodyRef.dispatchEvent(new Event('scroll'));
+    }
+    window.dispatchEvent(new Event('scroll'));
+  } finally {
+    applyingProgrammaticScroll = false;
   }
-  window.dispatchEvent(new Event('scroll'));
 }

@@ -13,6 +13,7 @@ import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorResto
 import {
   canOpenBuildListItemRuntime,
   getBrowseEmptyCopy,
+  getBuildScrollAnchorId,
   getCollaboratingBuildListItemTargetPath
 } from './helpers';
 import type { BuildListTab } from './types';
@@ -337,10 +338,6 @@ export default function Results({
       ) : null}
     </>
   );
-}
-
-function getBuildScrollAnchorId(build: BuildProjectListItemData) {
-  return `build:${build.id}`;
 }
 
 function SearchEmptyState({ query }: { query: string }) {

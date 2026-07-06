@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -7,6 +7,7 @@ import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 
 interface MyAchievementProgress {
   milestones?: { name: string; completed: boolean }[];
@@ -77,6 +78,15 @@ export default function AchievementPage() {
     };
   }, [achievement, myAchievement]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useScrollAnchorRestoration({
+    anchorKey: `achievement:${achievementType}`,
+    containerRef,
+    initialScroll: { type: 'top' },
+    itemsReady: achievementsLoaded && !!mergedAchievement
+  });
+
   if (!achievementsLoaded) {
     return <Loading />;
   }
@@ -88,6 +98,7 @@ export default function AchievementPage() {
   return (
     <ErrorBoundary componentPath="AchievementPage">
       <div
+        ref={containerRef}
         className={css`
           width: 100%;
           display: flex;

@@ -22,6 +22,10 @@ export function getPublicBuildScope(tab: BuildListTab): PublicBuildScope {
   return 'all';
 }
 
+export function getBuildScrollAnchorId(build: BuildProjectListItemData) {
+  return `build:${build.id}`;
+}
+
 export function getPublicBuildSort(
   tab: BuildListTab,
   browseMode: BuildStudioBrowseMode

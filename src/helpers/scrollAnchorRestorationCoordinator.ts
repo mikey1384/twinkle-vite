@@ -6,6 +6,22 @@ const scrollAnchorExternalSaveEventName = 'twinkle-scroll-anchor-external-save';
 
 let scrollAnchorSaveSuppressedUntil = 0;
 let scrollAnchorRestoreSuppressedUntil = 0;
+let appOwnsScrollRestorationFlag = false;
+
+// The app can only honor scroll ownership for same-document navigation — its
+// anchor cache is in-memory — and the browser's async-restore race only
+// exists after the first same-document navigation. Ownership is therefore
+// handed over exactly once, at the first in-app pushState (see main.tsx).
+// Before that, native restoration handles cross-document arrivals (reload,
+// bfcache-evicted returns) and the non-user save guard stays disarmed so the
+// browser's deferred restore is adopted as the anchor rather than tainted.
+export function markAppScrollOwnershipTaken() {
+  appOwnsScrollRestorationFlag = true;
+}
+
+export function appOwnsScrollRestoration() {
+  return appOwnsScrollRestorationFlag;
+}
 
 export function cancelScrollAnchorRestores() {
   if (typeof window === 'undefined') return;

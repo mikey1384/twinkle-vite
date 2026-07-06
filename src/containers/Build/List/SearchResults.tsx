@@ -8,8 +8,10 @@ import ProjectListItem, {
   type BuildTag
 } from '~/components/Build/ProjectListItem';
 import { borderRadius } from '~/constants/css';
+import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   canOpenBuildListItemRuntime,
+  getBuildScrollAnchorId,
   getCollaboratingBuildListItemTargetPath
 } from './helpers';
 
@@ -63,7 +65,9 @@ const loadMoreWrapClass = css`
 `;
 
 export default function SearchResults({
+  anchorKey,
   color,
+  resultsAreCurrent,
   loadingMorePublic,
   loadingMoreTeam,
   myBuilds,
@@ -83,7 +87,9 @@ export default function SearchResults({
   onOpenForkHistory,
   onTagClick
 }: {
+  anchorKey: string;
   color?: string;
+  resultsAreCurrent: boolean;
   loadingMorePublic: boolean;
   loadingMoreTeam: boolean;
   myBuilds: BuildProjectListItemData[];
@@ -113,6 +119,8 @@ export default function SearchResults({
   onOpenForkHistory: (buildId: number) => void;
   onTagClick: (tag: BuildTag) => void;
 }) {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+
   // My-builds results may include ids that also exist in the team/public
   // sections (e.g. own public builds when excludeMine fails open); dedupe so
   // a build never appears twice in the unified view.
@@ -134,6 +142,17 @@ export default function SearchResults({
   const hasAnyResults =
     myBuilds.length > 0 || teamSectionShown || publicSectionShown;
 
+  // resultsAreCurrent closes the one-render window where the anchorKey has
+  // already changed but the previous params' results are still rendered
+  // (searching only flips in the search hook's passive effect) — restoring
+  // against that stale list would consume the saved anchor without retry.
+  useScrollAnchorRestoration({
+    anchorKey,
+    containerRef,
+    initialScroll: { type: 'top' },
+    itemsReady: !searching && hasAnyResults && resultsAreCurrent
+  });
+
   if (searching && !hasAnyResults) {
     return <Loading text="Searching apps..." />;
   }
@@ -151,28 +170,34 @@ export default function SearchResults({
   }
 
   return (
-    <div>
+    <div ref={containerRef}>
       {myBuilds.length > 0 ? (
         <section className={sectionClass}>
           <h3 className={sectionTitleClass}>Your Builds</h3>
           {myBuilds.map((build) => (
-            <ProjectListItem
+            <div
               key={build.id}
-              build={build}
-              isOwner
-              to={`/app/${build.id}`}
-              navigationState={{
-                runtimeBackTo,
-                runtimeBackLabel: 'Back to Build Studio'
-              }}
-              showFavoriteAction
-              onAddDescription={onAddDescription}
-              onFavoriteChange={onFavoriteChange}
-              onFavoriteError={onFavoriteError}
-              onFavoriteStart={onFavoriteStart}
-              onOpenForkHistory={onOpenForkHistory}
-              onTagClick={onTagClick}
-            />
+              data-scroll-anchor-id={getBuildScrollAnchorId(build)}
+              data-scroll-anchor-secondary-id={String(build.id)}
+              data-scroll-anchor-content-key={`build:${build.id}`}
+            >
+              <ProjectListItem
+                build={build}
+                isOwner
+                to={`/app/${build.id}`}
+                navigationState={{
+                  runtimeBackTo,
+                  runtimeBackLabel: 'Back to Build Studio'
+                }}
+                showFavoriteAction
+                onAddDescription={onAddDescription}
+                onFavoriteChange={onFavoriteChange}
+                onFavoriteError={onFavoriteError}
+                onFavoriteStart={onFavoriteStart}
+                onOpenForkHistory={onOpenForkHistory}
+                onTagClick={onTagClick}
+              />
+            </div>
           ))}
         </section>
       ) : null}
@@ -188,24 +213,30 @@ export default function SearchResults({
                 }
               : { openPeoplePanel: true };
             return (
-              <ProjectListItem
+              <div
                 key={build.id}
-                build={build}
-                to={getCollaboratingBuildListItemTargetPath(build)}
-                navigationState={navigationState}
-                primaryActionLabel="Open workspace"
-                primaryActionIcon="wrench"
-                primaryActionTo={`/build/${build.id}`}
-                primaryActionNavigationState={{ openPeoplePanel: true }}
-                showCollaborationRequestAction={false}
-                showFavoriteAction
-                showOpenAppAction={canOpenRuntime}
-                onFavoriteChange={onFavoriteChange}
-                onFavoriteError={onFavoriteError}
-                onFavoriteStart={onFavoriteStart}
-                onOpenForkHistory={onOpenForkHistory}
-                onTagClick={onTagClick}
-              />
+                data-scroll-anchor-id={getBuildScrollAnchorId(build)}
+                data-scroll-anchor-secondary-id={String(build.id)}
+                data-scroll-anchor-content-key={`build:${build.id}`}
+              >
+                <ProjectListItem
+                  build={build}
+                  to={getCollaboratingBuildListItemTargetPath(build)}
+                  navigationState={navigationState}
+                  primaryActionLabel="Open workspace"
+                  primaryActionIcon="wrench"
+                  primaryActionTo={`/build/${build.id}`}
+                  primaryActionNavigationState={{ openPeoplePanel: true }}
+                  showCollaborationRequestAction={false}
+                  showFavoriteAction
+                  showOpenAppAction={canOpenRuntime}
+                  onFavoriteChange={onFavoriteChange}
+                  onFavoriteError={onFavoriteError}
+                  onFavoriteStart={onFavoriteStart}
+                  onOpenForkHistory={onOpenForkHistory}
+                  onTagClick={onTagClick}
+                />
+              </div>
             );
           })}
           {teamHasMore ? (
@@ -223,23 +254,29 @@ export default function SearchResults({
         <section className={sectionClass}>
           <h3 className={sectionTitleClass}>Community</h3>
           {displayedPublicBuilds.map((build) => (
-            <ProjectListItem
+            <div
               key={build.id}
-              build={build}
-              to={`/app/${build.id}`}
-              navigationState={{
-                runtimeBackTo,
-                runtimeBackLabel: 'Back to Build Studio'
-              }}
-              updatedAtSource="publicVersion"
-              showFavoriteAction
-              showVisibilityBadge={false}
-              onFavoriteChange={onFavoriteChange}
-              onFavoriteError={onFavoriteError}
-              onFavoriteStart={onFavoriteStart}
-              onOpenForkHistory={onOpenForkHistory}
-              onTagClick={onTagClick}
-            />
+              data-scroll-anchor-id={getBuildScrollAnchorId(build)}
+              data-scroll-anchor-secondary-id={String(build.id)}
+              data-scroll-anchor-content-key={`build:${build.id}`}
+            >
+              <ProjectListItem
+                build={build}
+                to={`/app/${build.id}`}
+                navigationState={{
+                  runtimeBackTo,
+                  runtimeBackLabel: 'Back to Build Studio'
+                }}
+                updatedAtSource="publicVersion"
+                showFavoriteAction
+                showVisibilityBadge={false}
+                onFavoriteChange={onFavoriteChange}
+                onFavoriteError={onFavoriteError}
+                onFavoriteStart={onFavoriteStart}
+                onOpenForkHistory={onOpenForkHistory}
+                onTagClick={onTagClick}
+              />
+            </div>
           ))}
           {publicHasMore ? (
             <div className={loadMoreWrapClass}>
