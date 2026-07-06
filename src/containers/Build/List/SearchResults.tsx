@@ -233,6 +233,7 @@ export default function SearchResults({
               }}
               updatedAtSource="publicVersion"
               showFavoriteAction
+              showVisibilityBadge={false}
               onFavoriteChange={onFavoriteChange}
               onFavoriteError={onFavoriteError}
               onFavoriteStart={onFavoriteStart}

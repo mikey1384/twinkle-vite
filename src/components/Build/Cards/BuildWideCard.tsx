@@ -504,6 +504,7 @@ export default function BuildWideCard({
   showFavoriteAction = false,
   showForkBadge = true,
   showOpenAppAction,
+  showVisibilityBadge = true,
   themeName,
   to,
   updatedAtSource = 'workspace',
@@ -530,6 +531,9 @@ export default function BuildWideCard({
   showFavoriteAction?: boolean;
   showForkBadge?: boolean;
   showOpenAppAction?: boolean;
+  // Show iff the surface can ever contain non-public builds; on public-only
+  // surfaces the badge would always read "Public" and is pure noise.
+  showVisibilityBadge?: boolean;
   themeName?: string;
   to?: string;
   updatedAtSource?: 'workspace' | 'publicVersion';
@@ -824,7 +828,8 @@ export default function BuildWideCard({
             {description ? <p className={descriptionClass}>{description}</p> : null}
           </div>
           <div className={badgeRowClass}>
-            {ownerMode || collaborationStatus === 'accepted' ? (
+            {/* A payload that omits isPublic must not render as "Private" */}
+            {showVisibilityBadge && build?.isPublic != null ? (
               <span className={badgeClass}>
                 <Icon icon={buildIsPublic ? 'globe' : 'lock'} />
                 {buildIsPublic ? 'Public' : 'Private'}

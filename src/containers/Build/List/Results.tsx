@@ -315,6 +315,7 @@ export default function Results({
                 showCollaborationRequestAction={!isCollaboratingBuild}
                 showFavoriteAction
                 showOpenAppAction={isCollaboratingBuild ? canOpenRuntime : undefined}
+                showVisibilityBadge={isCollaboratingBuild}
                 onFavoriteChange={onFavoriteChange}
                 onFavoriteError={onFavoriteError}
                 onFavoriteStart={onFavoriteStart}

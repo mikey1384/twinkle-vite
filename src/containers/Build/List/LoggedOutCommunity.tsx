@@ -229,6 +229,7 @@ export default function LoggedOutCommunity({
                 updatedAtSource="publicVersion"
                 showCollaborationRequestAction={false}
                 showFavoriteAction={false}
+                showVisibilityBadge={false}
               />
             ))}
           </div>

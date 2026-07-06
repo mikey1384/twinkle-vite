@@ -35,7 +35,9 @@ export interface BuildSummary {
   owner: BuildSummaryOwner;
   title: string;
   description: string;
-  isPublic: boolean;
+  // undefined = visibility unknown (payload and cache both lack the field);
+  // consumers that render visibility must treat unknown as "don't show"
+  isPublic?: boolean;
   hasCode?: boolean;
   viewCount: number;
   updatedAt: number;
@@ -154,7 +156,10 @@ export function normalizeBuildSummary(
     },
     title: normalizeText(build.title ?? current?.title),
     description: normalizeText(build.description ?? current?.description),
-    isPublic: normalizeBoolean(build.isPublic ?? current?.isPublic),
+    isPublic:
+      (build.isPublic ?? current?.isPublic) == null
+        ? undefined
+        : normalizeBoolean(build.isPublic ?? current?.isPublic),
     hasCode:
       Object.prototype.hasOwnProperty.call(build, 'hasCode') ||
       current?.hasCode !== undefined

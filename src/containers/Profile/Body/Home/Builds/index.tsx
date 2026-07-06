@@ -295,6 +295,7 @@ export default function Builds({
                 isOwner={isOwnProfile}
                 themeName={selectedTheme}
                 showFavoriteAction
+                showVisibilityBadge={false}
                 onFavoriteChange={handleBuildFavoriteChange}
                 onFavoriteError={handleBuildFavoriteError}
                 onAddDescription={isOwnProfile ? setEditingBuild : undefined}
