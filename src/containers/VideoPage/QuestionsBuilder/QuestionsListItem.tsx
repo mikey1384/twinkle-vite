@@ -1,7 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import Icon from '~/components/Icon';
-import { useDrag, useDrop } from 'react-dnd';
-import ItemTypes from '~/constants/itemTypes';
+import { useDragSort } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 const untitledQuestionLabel = 'Untitled Question';
 
@@ -14,34 +13,18 @@ export default function QuestionsListItem({
   onMove: (arg0: any) => any;
   questionId: number;
 }) {
-  const Draggable = useRef(null);
-  const [{ opacity }, drag] = useDrag({
-    type: ItemTypes.LIST_ITEM,
-    item: { questionId: questionId },
-    collect: (monitor) => ({
-      opacity: monitor.isDragging() ? 0 : 1
-    })
+  const { isDragging, dragProps } = useDragSort({
+    group: 'questionList',
+    id: questionId,
+    onMove
   });
-  const [, drop] = useDrop({
-    accept: ItemTypes.LIST_ITEM,
-    hover(item: any) {
-      if (!Draggable.current) {
-        return;
-      }
-      if (item.questionId === questionId) {
-        return;
-      }
-      onMove({ sourceId: item.questionId, targetId: questionId });
-    }
-  });
-  const NavRef: any = drag(drop(Draggable));
 
   return (
     <nav
-      ref={NavRef}
+      {...dragProps}
       style={{
         background: '#fff',
-        opacity,
+        opacity: isDragging ? 0 : 1,
         color:
           !listItem.title || listItem.deleted ? Color.lighterGray() : undefined,
         display: 'flex',

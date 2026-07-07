@@ -1,10 +1,7 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Picture from './Picture';
-import { isMobile, objectify } from '~/helpers';
-import { DndProvider } from 'react-dnd';
-import { TouchBackend } from 'react-dnd-touch-backend';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { objectify } from '~/helpers';
 
 interface Picture {
   id: number | string;
@@ -15,11 +12,6 @@ interface MoveParams {
   sourceId: number | string;
   targetId: number | string;
 }
-
-const Backend =
-  typeof navigator !== 'undefined' && isMobile(navigator)
-    ? TouchBackend
-    : HTML5Backend;
 
 export default function ReorderInterface({
   numPictures,
@@ -38,40 +30,34 @@ export default function ReorderInterface({
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Pictures/ReorderInterface/index">
-      <DndProvider backend={Backend}>
-        <div
-          style={{
-            width:
-              pictures.length > 5
-                ? '100%'
-                : pictures.length > 3
-                ? '95%'
-                : '75%',
-            height: 'auto',
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
-          {reorderedPictureIds.map((pictureId, index) => {
-            const picture = pictureObj[pictureId];
+      <div
+        style={{
+          width:
+            pictures.length > 5 ? '100%' : pictures.length > 3 ? '95%' : '75%',
+          height: 'auto',
+          display: 'flex',
+          justifyContent: 'center'
+        }}
+      >
+        {reorderedPictureIds.map((pictureId, index) => {
+          const picture = pictureObj[pictureId];
 
-            if (!picture) {
-              console.error(`Picture with id ${pictureId} not found`);
-              return null;
-            }
+          if (!picture) {
+            console.error(`Picture with id ${pictureId} not found`);
+            return null;
+          }
 
-            return (
-              <Picture
-                key={pictureId}
-                numPictures={numPictures}
-                picture={picture}
-                style={{ marginLeft: index === 0 ? 0 : '1rem' }}
-                onMove={handleMove}
-              />
-            );
-          })}
-        </div>
-      </DndProvider>
+          return (
+            <Picture
+              key={pictureId}
+              numPictures={numPictures}
+              picture={picture}
+              style={{ marginLeft: index === 0 ? 0 : '1rem' }}
+              onMove={handleMove}
+            />
+          );
+        })}
+      </div>
     </ErrorBoundary>
   );
 

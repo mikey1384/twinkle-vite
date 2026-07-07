@@ -1,6 +1,5 @@
-import React, { useRef } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
-import ItemTypes from '~/constants/itemTypes';
+import React from 'react';
+import { useDragSort } from '~/helpers/hooks';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 
@@ -23,37 +22,17 @@ export default function ChoiceListItem({
   placeholder: string;
   questionIndex: number;
 }) {
-  const Draggable = useRef(null);
-  const [{ opacity }, drag] = useDrag({
-    type: ItemTypes.LIST_ITEM,
-    item: { id, questionIndex },
-    collect: (monitor) => ({
-      opacity: monitor.isDragging() ? 0 : 1
-    })
+  const { isDragging, dragProps } = useDragSort({
+    group: `choice-${questionIndex}`,
+    id,
+    onMove
   });
-  const [, drop] = useDrop({
-    accept: ItemTypes.LIST_ITEM,
-    hover(item: any) {
-      if (!Draggable.current) {
-        return;
-      }
-      if (item.id === id) {
-        return;
-      }
-      if (item.questionIndex !== questionIndex) {
-        return;
-      }
-      onMove({ sourceId: item.id, targetId: id });
-    }
-  });
-
-  const NavRef: any = drag(drop(Draggable));
 
   return (
     <nav
-      ref={NavRef}
+      {...dragProps}
       style={{
-        opacity,
+        opacity: isDragging ? 0 : 1,
         cursor: !checkDisabled ? 'ns-resize' : '',
         touchAction: 'none'
       }}

@@ -26,7 +26,8 @@ function Nav({
   isUsingChat,
   profileUsername,
   to,
-  style
+  style,
+  variant
 }: {
   alert?: boolean;
   className?: string;
@@ -37,6 +38,7 @@ function Nav({
   profileUsername?: string;
   to: string;
   style?: React.CSSProperties;
+  variant?: 'tab';
 }) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -151,9 +153,84 @@ function Nav({
     return '';
   }, [pathname, profileUsername, search, to]);
 
+  const tabVariantClass = css`
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    a {
+      text-decoration: none;
+      font-weight: 600;
+      color: ${Color.gray()};
+      display: flex;
+      align-items: center;
+      line-height: 1;
+      height: 3.4rem;
+      padding: 0 1.6rem;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      background: transparent;
+      -webkit-tap-highlight-color: transparent;
+    }
+    > a.active {
+      color: ${highlightColor}!important;
+      background: ${Color.white()};
+      border-color: var(--ui-border);
+      position: relative;
+      z-index: 1;
+      > svg {
+        color: ${highlightColor}!important;
+      }
+    }
+    > a:focus {
+      outline: none;
+    }
+    > a:focus-visible {
+      outline: none;
+      background: ${Color.wellGray()};
+    }
+    @keyframes colorChange {
+      0% {
+        color: #6a11cb;
+      }
+      33% {
+        color: #2575fc;
+      }
+      66% {
+        color: #ec008c;
+      }
+      100% {
+        color: #fc6767;
+      }
+    }
+
+    .color-animate {
+      animation: colorChange 6s infinite alternate;
+    }
+    ${!isDailyTaskAlerted
+      ? `@media (min-width: ${desktopMinWidth}) {
+          &:hover {
+            > a:not(.active) {
+              background: ${Color.wellGray()};
+              color: ${highlightColor};
+              > svg {
+                color: ${highlightColor};
+              }
+            }
+          }
+        }`
+      : ''}
+  `;
+
   return (
     <div
-      className={`${className} ${css`
+      className={`${className} ${
+        variant === 'tab'
+          ? tabVariantClass
+          : css`
         display: flex;
         align-items: center;
         justify-content: center;
@@ -253,6 +330,7 @@ function Nav({
         }}
         onClick={handleNavClick}
         to={to}
+        draggable={variant === 'tab' ? false : undefined}
       >
         <Icon icon={isHome ? 'home' : imgLabel} />
         <span className="nav-label" style={{ marginLeft: '0.7rem' }}>

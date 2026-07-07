@@ -1,10 +1,16 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Nav from './Nav';
+import TabStrip, { type NavTabDescriptor } from './TabStrip';
 import MobileSideMenuNav from './MobileSideMenuNav';
 import Icon from '~/components/Icon';
 import { matchPath } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import {
+  loadNavTabOrder,
+  saveNavTabOrder,
+  type NavTabKey
+} from '~/helpers/navTabOrder';
 import { getSectionFromPathname, isTablet } from '~/helpers';
 import {
   AI_CARD_CHAT_TYPE,
@@ -444,6 +450,98 @@ export default function MainNavs({
     return preferredChatPath ? `/chat${preferredChatPath}` : '/chat';
   }, [chatType, lastChatPath, userLoaded]);
 
+  const [tabOrder, setTabOrder] = useState<NavTabKey[]>(() =>
+    loadNavTabOrder()
+  );
+
+  const orderedTabs = useMemo(() => {
+    const homeAlertShown = pathname === '/' && !usersMatch && numNewPosts > 0;
+    const descriptors: Record<NavTabKey, NavTabDescriptor | null> = {
+      profile: profileNav
+        ? {
+            key: 'profile',
+            to: profileNav,
+            imgLabel: 'user',
+            profileUsername,
+            label: truncateText({
+              text: profileUsername.toUpperCase(),
+              limit: 7
+            })
+          }
+        : null,
+      home: {
+        key: 'home',
+        to: homeNav,
+        imgLabel: 'home',
+        isHome: true,
+        isUsingChat: !!chatMatch,
+        alert: homeAlertShown,
+        label: `${deviceIsTablet ? '' : homeLabel}${
+          homeAlertShown ? ` (${numNewPosts})` : ''
+        }`
+      },
+      explore: {
+        key: 'explore',
+        to: `/${exploreCategory}`,
+        imgLabel: 'search',
+        label: deviceIsTablet ? '' : exploreLabel
+      },
+      content:
+        contentNav && (contentNav !== 'management' || managementLevel > 0)
+          ? {
+              key: 'content',
+              to: `/${contentPath}`,
+              imgLabel: contentIconType,
+              label: deviceIsTablet ? '' : contentLabel
+            }
+          : null,
+      missions: {
+        key: 'missions',
+        to: missionLinkTarget,
+        imgLabel: 'tasks',
+        label: deviceIsTablet ? '' : missionsLabel
+      },
+      chat: banned?.chat
+        ? null
+        : {
+            key: 'chat',
+            to: chatButtonPath,
+            imgLabel: 'comments',
+            alert: chatAlertShown,
+            label: deviceIsTablet ? '' : chatLabel
+          },
+      build: {
+        key: 'build',
+        to: buildLinkTarget,
+        imgLabel: 'rocket-launch',
+        label: deviceIsTablet ? '' : buildLabel
+      }
+    };
+    return tabOrder
+      .map((key) => descriptors[key])
+      .filter((tab): tab is NavTabDescriptor => !!tab);
+  }, [
+    banned?.chat,
+    buildLinkTarget,
+    chatAlertShown,
+    chatButtonPath,
+    chatMatch,
+    contentIconType,
+    contentLabel,
+    contentNav,
+    contentPath,
+    exploreCategory,
+    homeNav,
+    managementLevel,
+    missionLinkTarget,
+    numNewPosts,
+    pathname,
+    profileNav,
+    profileUsername,
+    tabOrder,
+    usersMatch
+  ]);
+
   useEffect(() => {
     socket.emit('change_busy_status', !chatMatch || isAIChat);
   }, [chatMatch, isAIChat]);
@@ -489,83 +587,7 @@ export default function MainNavs({
         alert={chatAlertShown}
       />
       <Nav to={buildLinkTarget} className="mobile" imgLabel="rocket-launch" />
-      {profileNav && (
-        <Nav
-          to={profileNav}
-          profileUsername={profileUsername}
-          className="desktop"
-          style={{ marginRight: '2rem' }}
-          imgLabel="user"
-        >
-          {truncateText({ text: profileUsername.toUpperCase(), limit: 7 })}
-        </Nav>
-      )}
-      <Nav
-        to={homeNav}
-        isHome
-        isUsingChat={!!chatMatch}
-        className="desktop"
-        imgLabel="home"
-        alert={pathname === '/' && !usersMatch && numNewPosts > 0}
-      >
-        {deviceIsTablet ? '' : homeLabel}
-        {pathname === '/' && !usersMatch && numNewPosts > 0
-          ? ` (${numNewPosts})`
-          : ''}
-      </Nav>
-      <Nav
-        to={`/${exploreCategory}`}
-        className="desktop"
-        style={{ marginLeft: '2rem' }}
-        imgLabel="search"
-      >
-        {deviceIsTablet ? '' : exploreLabel}
-      </Nav>
-      {contentNav && (contentNav !== 'management' || managementLevel > 0) && (
-        <Nav
-          to={`/${contentPath}`}
-          className="desktop"
-          style={{ marginLeft: '2rem' }}
-          imgLabel={contentIconType}
-        >
-          {deviceIsTablet ? '' : contentLabel}
-        </Nav>
-      )}
-      <Nav
-        to={missionLinkTarget}
-        className="desktop"
-        style={{ marginLeft: '2rem' }}
-        imgLabel="tasks"
-      >
-        {deviceIsTablet ? '' : missionsLabel}
-      </Nav>
-      <div
-        className={css`
-          margin-left: 2rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            margin-left: 0;
-          }
-        `}
-      >
-        {!banned?.chat && (
-          <Nav
-            to={chatButtonPath}
-            className="desktop"
-            imgLabel="comments"
-            alert={chatAlertShown}
-          >
-            {deviceIsTablet ? '' : chatLabel}
-          </Nav>
-        )}
-      </div>
-      <Nav
-        to={buildLinkTarget}
-        className="desktop"
-        style={{ marginLeft: '2rem' }}
-        imgLabel="rocket-launch"
-      >
-        {deviceIsTablet ? '' : buildLabel}
-      </Nav>
+      <TabStrip tabs={orderedTabs} onMove={handleMoveTab} />
       {userId && (
         <div
           className={`mobile ${css`
@@ -590,4 +612,21 @@ export default function MainNavs({
       )}
     </div>
   );
+
+  function handleMoveTab({
+    sourceKey,
+    targetKey
+  }: {
+    sourceKey: NavTabKey;
+    targetKey: NavTabKey;
+  }) {
+    const from = tabOrder.indexOf(sourceKey);
+    const to = tabOrder.indexOf(targetKey);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = [...tabOrder];
+    next.splice(from, 1);
+    next.splice(to, 0, sourceKey);
+    setTabOrder(next);
+    saveNavTabOrder(next);
+  }
 }

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ItemTypes from '~/constants/itemTypes';
-import { useDrag, useDrop } from 'react-dnd';
+import { useDragSort } from '~/helpers/hooks';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import { textIsOverflown, isMobile } from '~/helpers';
@@ -20,27 +19,13 @@ export default function SortableThumb({
   video: any;
 }) {
   const [titleContext, setTitleContext] = useState(null);
-  const Draggable = useRef(null);
   const timerRef: React.RefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
   const ThumbLabelRef: React.RefObject<any> = useRef(null);
-  const [{ isDragging }, drag] = useDrag({
-    type: ItemTypes.THUMB,
-    item: { id },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging()
-    })
-  });
-  const [, drop] = useDrop({
-    accept: ItemTypes.THUMB,
-    hover(item: any) {
-      if (!Draggable.current) {
-        return;
-      }
-      if (item.id !== id) {
-        onMove({ sourceId: item.id, targetId: id });
-      }
-    }
+  const { isDragging, dragProps } = useDragSort({
+    group: 'playlistThumb',
+    id,
+    onMove
   });
 
   useEffect(() => {
@@ -54,7 +39,7 @@ export default function SortableThumb({
 
   return (
     <div
-      ref={drag(drop(Draggable)) as any}
+      {...dragProps}
       key={video.id}
       className={css`
         width: 16%;

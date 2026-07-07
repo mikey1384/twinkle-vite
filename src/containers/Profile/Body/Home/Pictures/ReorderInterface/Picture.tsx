@@ -1,9 +1,8 @@
-import React, { useMemo, useRef } from 'react';
-import ItemTypes from '~/constants/itemTypes';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { borderRadius, innerBorderRadius } from '~/constants/css';
-import { useDrag, useDrop } from 'react-dnd';
+import { useDragSort } from '~/helpers/hooks';
 
 export default function Picture({
   numPictures,
@@ -20,30 +19,15 @@ export default function Picture({
     return picture?.src ? `${cloudFrontURL}${picture?.src}` : '';
   }, [picture]);
   const width = Math.min(100 / (numPictures + 1), 33);
-  const Draggable = useRef(null);
-  const [{ isDragging }, drag] = useDrag({
-    type: ItemTypes.PICTURE,
-    item: { id: picture.id },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging()
-    })
+  const { isDragging, dragProps } = useDragSort({
+    group: 'profilePicture',
+    id: picture.id,
+    onMove
   });
-  const [, drop] = useDrop({
-    accept: ItemTypes.PICTURE,
-    hover(item: { id: number }) {
-      if (!Draggable.current) {
-        return;
-      }
-      if (item.id !== picture.id) {
-        onMove({ sourceId: item.id, targetId: picture.id });
-      }
-    }
-  });
-  const PictureRef: any = drag(drop(Draggable));
 
   return (
     <div
-      ref={PictureRef}
+      {...dragProps}
       className={css`
         cursor: pointer;
         touch-action: none;

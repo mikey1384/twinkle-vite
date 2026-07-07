@@ -19,6 +19,7 @@ import {
 export { default as useScrollToBottom } from './useScrollToBottom';
 export { default as useInfiniteScroll } from './useInfiniteScroll';
 export { default as useDraft } from './useDraft';
+export { default as useDragSort } from './useDragSort';
 import {
   ADMIN_MANAGEMENT_LEVEL,
   defaultContentState,
