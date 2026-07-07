@@ -1678,6 +1678,8 @@ const cardClass = css`
     font-weight: 700;
     line-height: 1.35;
     overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
