@@ -132,6 +132,9 @@ export default function FavoriteButton({
   const onPatchBuildSummary = useBuildContext(
     (v) => v.actions.onPatchBuildSummary
   );
+  const onInvalidateBuildStudioActivityFeeds = useBuildContext(
+    (v) => v.actions.onInvalidateBuildStudioActivityFeeds
+  );
   const [requestLoading, setRequestLoading] = useState(false);
   const buttonLoading = Boolean(loading || requestLoading);
   const title = favorited ? 'Remove favorite' : 'Add favorite';
@@ -205,6 +208,9 @@ export default function FavoriteButton({
           isFavorited: nextState.isFavorited
         }
       });
+      // Favorite membership feeds the Favorites/All activity scopes; mark the
+      // cached feeds stale so the next look refetches from the server.
+      onInvalidateBuildStudioActivityFeeds({ userId: Number(userId) || null });
       onChange?.(nextState);
     } catch (error) {
       if (onError) {

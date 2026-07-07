@@ -128,7 +128,7 @@ type BuildStudioPublicBrowseTab = Exclude<
   'collaborating'
 >;
 export type BuildStudioBrowseMode = 'recent' | 'leaderboard';
-export type BuildActivityTab = 'all' | 'mine' | 'collaborating';
+export type BuildActivityTab = 'all' | 'mine' | 'collaborating' | 'favorites';
 export type BuildActivitySubtab = 'all' | 'notifications' | 'branch_updates';
 export type BuildWorkspaceCommunicationMode = 'lumine' | 'versions' | 'people';
 
@@ -448,6 +448,11 @@ function createInitialBuildStudioActivityFeeds(): Record<
       all: createInitialBuildStudioActivityFeedState(),
       notifications: createInitialBuildStudioActivityFeedState(),
       branch_updates: createInitialBuildStudioActivityFeedState()
+    },
+    favorites: {
+      all: createInitialBuildStudioActivityFeedState(),
+      notifications: createInitialBuildStudioActivityFeedState(),
+      branch_updates: createInitialBuildStudioActivityFeedState()
     }
   };
 }
@@ -585,7 +590,9 @@ function normalizeBuildStudioSearchQuery(value?: string | null) {
 
 function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
   if (value === 'all') return 'all';
-  if (value === 'mine' || value === 'collaborating') return value;
+  if (value === 'mine' || value === 'collaborating' || value === 'favorites') {
+    return value;
+  }
   return 'all';
 }
 

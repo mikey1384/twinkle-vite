@@ -16,6 +16,9 @@ interface TabFilterProps<T extends string = string> {
   density?: 'default' | 'compact' | 'mini';
   onChange: (tab: T) => void;
   tabs: Array<TabFilterOption<T>>;
+  // Flow tabs onto multiple rows instead of the default single scrollable
+  // row. Use in narrow containers where tabs would otherwise be clipped.
+  wrap?: boolean;
 }
 
 const defaultTabFilterClass = css`
@@ -173,28 +176,46 @@ const miniTabFilterClass = css`
   }
 `;
 
+const wrapTabFilterClass = css`
+  > .nav-section {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 0.3rem;
+  }
+
+  > .nav-section > nav {
+    flex: 0 0 auto;
+  }
+`;
+
 export default function TabFilter<T extends string = string>({
   activeTab,
   color,
   density = 'default',
   onChange,
-  tabs
+  tabs,
+  wrap = false
 }: TabFilterProps<T>) {
   const isCompact = density === 'compact';
   const isMini = density === 'mini';
+  const densityClass = isMini
+    ? miniTabFilterClass
+    : isCompact
+      ? compactTabFilterClass
+      : defaultTabFilterClass;
   return (
     <FilterBar
-      className={
-        isMini
-          ? miniTabFilterClass
-          : isCompact
-            ? compactTabFilterClass
-            : defaultTabFilterClass
-      }
+      className={wrap ? `${densityClass} ${wrapTabFilterClass}` : densityClass}
       color={color}
       style={{
         margin: 0,
-        height: isMini ? '2.75rem' : isCompact ? '3.15rem' : '3.4rem',
+        height: wrap
+          ? 'auto'
+          : isMini
+            ? '2.75rem'
+            : isCompact
+              ? '3.15rem'
+              : '3.4rem',
         fontSize: '1.1rem'
       }}
     >

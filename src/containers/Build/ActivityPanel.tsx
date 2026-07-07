@@ -30,7 +30,8 @@ const buildActivityTabs: Array<{
 }> = [
   { value: 'all', label: 'All', icon: 'bell' },
   { value: 'mine', label: 'My Projects', icon: 'rocket-launch' },
-  { value: 'collaborating', label: 'Team Builds', icon: 'users' }
+  { value: 'collaborating', label: 'Team Builds', icon: 'users' },
+  { value: 'favorites', label: 'Favorites', icon: 'star' }
 ];
 
 const buildActivitySubtabs: Array<{
@@ -408,8 +409,9 @@ export default function ActivityPanel({
           density="compact"
           onChange={onTabChange}
           tabs={buildActivityTabs}
+          wrap
         />
-        {activeTab !== 'all' ? (
+        {activeTab !== 'all' && activeTab !== 'favorites' ? (
           <TabFilter
             activeTab={
               activeSubtab === 'branch_updates' ? activeSubtab : 'notifications'
@@ -510,6 +512,15 @@ export default function ActivityPanel({
     const buildId = getActivityNavigationBuildId(activity);
     if (!buildId) return;
     setMobileOpen(false);
+    // Publish/release events point at the live app: favoriters have no
+    // workspace access to builds they merely starred.
+    if (
+      activity.activityType === 'buildPublished' ||
+      activity.activityType === 'buildUpdate'
+    ) {
+      navigate(`/app/${buildId}`);
+      return;
+    }
     navigate(`/build/${buildId}`, {
       state: getActivityNavigationState(activity)
     });
@@ -543,6 +554,9 @@ function getEmptyMessage(
 ) {
   if (activeTab === 'all') {
     return 'No build activity yet.';
+  }
+  if (activeTab === 'favorites') {
+    return 'No updates from apps you favorited yet. Favorite apps with the star button to follow their releases here.';
   }
   if (activeSubtab === 'branch_updates') {
     return activeTab === 'collaborating'

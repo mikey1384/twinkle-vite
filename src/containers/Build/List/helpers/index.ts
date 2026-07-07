@@ -69,7 +69,9 @@ export function normalizeBuildQuickAccessMode(
 
 export function normalizeBuildActivityTab(value?: string | null): BuildActivityTab {
   if (value === 'all') return 'all';
-  if (value === 'mine' || value === 'collaborating') return value;
+  if (value === 'mine' || value === 'collaborating' || value === 'favorites') {
+    return value;
+  }
   return 'all';
 }
 
@@ -84,7 +86,9 @@ export function getBuildActivityFeedSubtab(
   tab: BuildActivityTab,
   subtab: BuildActivitySubtab
 ): BuildActivitySubtab {
-  if (tab === 'all') return 'all';
+  // The favorites feed has no notifications/branch-updates split; it only
+  // carries publish/release events.
+  if (tab === 'all' || tab === 'favorites') return 'all';
   return subtab === 'branch_updates' ? 'branch_updates' : 'notifications';
 }
 
@@ -92,7 +96,7 @@ export function getBuildActivityRequestKind(
   tab: BuildActivityTab,
   subtab: BuildActivitySubtab
 ): 'all' | 'notifications' | 'branch_updates' {
-  if (tab === 'all') return 'all';
+  if (tab === 'all' || tab === 'favorites') return 'all';
   return subtab === 'branch_updates' ? 'branch_updates' : 'notifications';
 }
 

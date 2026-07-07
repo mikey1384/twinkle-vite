@@ -844,7 +844,7 @@ export default function buildRequestHelpers({
       cursor?: string;
       kind?: 'all' | 'notifications' | 'branch_updates';
       limit?: number;
-      scope?: 'all' | 'mine' | 'collaborating';
+      scope?: 'all' | 'mine' | 'collaborating' | 'favorites';
     } = {}) {
       try {
         const params: Record<string, any> = { kind, limit, scope };
