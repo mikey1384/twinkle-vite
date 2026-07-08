@@ -189,6 +189,12 @@ export default function UserActions(dispatch: Dispatch) {
         timeStamp
       });
     },
+    onUpdateNavTabsState(navTabs: object) {
+      return dispatch({
+        type: 'UPDATE_NAV_TABS_STATE',
+        navTabs
+      });
+    },
     onUpdateUserMissionState({
       missionType,
       newState

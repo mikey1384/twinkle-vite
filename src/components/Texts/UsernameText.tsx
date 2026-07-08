@@ -107,6 +107,7 @@ export default function UsernameText({
   return (
     <div
       ref={UsernameTextRef}
+      data-feed-card-interactive="true"
       style={{
         display: 'inline',
         ...(dropdownContext

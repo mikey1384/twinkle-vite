@@ -1,3 +1,5 @@
+import { noteNavAuthTokenChange } from './navTabOrder';
+
 export function checkMultiMissionPassStatus({
   mission,
   myAttempts
@@ -57,14 +59,26 @@ export function getStoredItem(key: string, defaultValue = ''): string {
   return item || defaultValue;
 }
 
-export function setStoredItem(key: string, value: string) {
+export function setStoredItem(
+  key: string,
+  value: string,
+  options: { preserveNavSession?: boolean } = {}
+) {
   const storage = getLocalStorage();
   if (!storage) {
     return false;
   }
 
   try {
+    const previousValue = key === 'token' ? storage.getItem(key) || '' : '';
     storage.setItem(key, value);
+    if (key === 'token' && previousValue !== value) {
+      noteNavAuthTokenChange({
+        previousToken: previousValue,
+        nextToken: value,
+        preserveSameUserSession: options.preserveNavSession
+      });
+    }
     return true;
   } catch {
     return false;
@@ -78,7 +92,14 @@ export function removeStoredItem(key: string) {
   }
 
   try {
+    const previousValue = key === 'token' ? storage.getItem(key) || '' : '';
     storage.removeItem(key);
+    if (key === 'token' && previousValue) {
+      noteNavAuthTokenChange({
+        previousToken: previousValue,
+        nextToken: null
+      });
+    }
     return true;
   } catch {
     return false;

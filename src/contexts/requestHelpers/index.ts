@@ -709,6 +709,7 @@ registerMethods('user', [
   'setBuildHeaderCollapsed',
   'setLumineHeaderMinimized',
   'updateBuildStudioState',
+  'updateNavTabsState',
   'setTheme',
   'signup',
   'createDevAccount',

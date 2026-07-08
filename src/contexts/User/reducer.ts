@@ -18,6 +18,44 @@ function normalizeCommunityFundsState(data: { [key: string]: any } | null) {
   return data;
 }
 
+function preservePrivateViewerState({
+  newState,
+  prevState
+}: {
+  newState: { [key: string]: any } | null;
+  prevState: { [key: string]: any };
+}) {
+  const incomingState = newState?.state;
+  const hasIncomingState = Object.prototype.hasOwnProperty.call(
+    newState || {},
+    'state'
+  );
+  if (
+    !hasIncomingState ||
+    (incomingState &&
+      typeof incomingState === 'object' &&
+      !Array.isArray(incomingState) &&
+      Object.prototype.hasOwnProperty.call(incomingState, 'navTabs')) ||
+    prevState.state?.navTabs === undefined
+  ) {
+    return newState;
+  }
+  const nextPublicState =
+    incomingState && typeof incomingState === 'object'
+      ? incomingState
+      : {};
+  return {
+    ...newState,
+    state: {
+      ...nextPublicState,
+      // Profile/cache state updates are partial and do not carry private
+      // owner nav preferences. Keep the session-owned snapshot unless the
+      // incoming state explicitly includes navTabs.
+      navTabs: prevState.state.navTabs
+    }
+  };
+}
+
 export default function UserReducer(
   state: { [key: string]: any },
   action: { type: string; [key: string]: any }
@@ -257,9 +295,13 @@ export default function UserReducer(
       const isViewer = action.userId === state.myState.userId;
       let nextMyState = state.myState;
       if (isViewer) {
+        const normalizedViewerState = preservePrivateViewerState({
+          newState: normalizedNewState,
+          prevState: state.myState
+        });
         nextMyState = {
           ...state.myState,
-          ...normalizedNewState,
+          ...normalizedViewerState,
           userId: action.userId,
           contentId: action.userId
         } as any;
@@ -307,6 +349,17 @@ export default function UserReducer(
               ...state.myState.state?.notifications,
               recentAICardOfferCheckTimeStamp: action.timeStamp
             }
+          }
+        }
+      };
+    case 'UPDATE_NAV_TABS_STATE':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          state: {
+            ...state.myState.state,
+            navTabs: action.navTabs
           }
         }
       };

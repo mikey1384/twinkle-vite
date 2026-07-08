@@ -258,6 +258,10 @@ export default function Feeds({
                 width: 100%;
                 margin-left: 0;
                 margin-right: 0;
+                /* Without the inner byuser filter bar there is nothing to pull
+                   up against the subtab bar; let the subtab bar's 1rem
+                   margin-bottom act as the content gap. */
+                margin-top: ${filterBarShown ? '-2rem' : '0'};
               }
             `}
           >

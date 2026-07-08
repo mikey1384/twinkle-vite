@@ -27,7 +27,9 @@ function Nav({
   profileUsername,
   to,
   style,
-  variant
+  variant,
+  tabKind,
+  exactActive
 }: {
   alert?: boolean;
   className?: string;
@@ -39,6 +41,8 @@ function Nav({
   to: string;
   style?: React.CSSProperties;
   variant?: 'tab';
+  tabKind?: 'pinned' | 'dynamic';
+  exactActive?: boolean;
 }) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -124,6 +128,12 @@ function Nav({
   ]);
 
   const navClassName = useMemo(() => {
+    // captured (custom) tabs target one specific page; the section-prefix
+    // rules below would light them up across a whole section (e.g. a
+    // pinned /management/a tab on every /management route)
+    if (exactActive) {
+      return pathname + (search || '') === to ? 'active' : '';
+    }
     if ((to || '').split('/')[1] === 'chat') {
       if (pathname.split('/')[1] === 'chat') {
         return 'active';
@@ -151,7 +161,7 @@ function Nav({
       return 'active';
     }
     return '';
-  }, [pathname, profileUsername, search, to]);
+  }, [exactActive, pathname, profileUsername, search, to]);
 
   const tabVariantClass = css`
     position: relative;
@@ -175,6 +185,16 @@ function Nav({
       background: transparent;
       -webkit-tap-highlight-color: transparent;
     }
+    ${tabKind === 'pinned'
+      ? `a {
+          background: ${Color.wellGray(0.6)};
+        }`
+      : ''}
+    ${tabKind === 'dynamic'
+      ? `.nav-label {
+          font-style: italic;
+        }`
+      : ''}
     > a.active {
       color: ${highlightColor}!important;
       background: ${Color.white()};
@@ -333,9 +353,11 @@ function Nav({
         draggable={variant === 'tab' ? false : undefined}
       >
         <Icon icon={isHome ? 'home' : imgLabel} />
-        <span className="nav-label" style={{ marginLeft: '0.7rem' }}>
-          {children}
-        </span>
+        {children ? (
+          <span className="nav-label" style={{ marginLeft: '0.7rem' }}>
+            {children}
+          </span>
+        ) : null}
       </Link>
     </div>
   );

@@ -101,6 +101,7 @@ export function useScrollAnchorRestoration({
   const userScrollInputAtRef = useRef(0);
   const nonUserScrollTaintedRef = useRef(false);
   const lastAppliedScrollTopRef = useRef(-1);
+  const loggedPendingSkipSignatureRef = useRef('');
 
   if (ignoreSavedAnchor) {
     activeIgnoredSavedAnchorKeyRef.current = anchorKey;
@@ -331,10 +332,24 @@ export function useScrollAnchorRestoration({
       ) {
         return false;
       }
-      return (
+      const waiting =
         !!restoreSignature &&
-        restoreSettledSignatureRef.current !== restoreSignature
-      );
+        restoreSettledSignatureRef.current !== restoreSignature;
+      // This branch used to skip silently, which hid a save freeze in field
+      // captures; log once per pending signature so a wedged state is visible
+      // without flooding the ring buffer.
+      if (
+        waiting &&
+        loggedPendingSkipSignatureRef.current !== restoreSignature
+      ) {
+        loggedPendingSkipSignatureRef.current = restoreSignature;
+        recordScrollDiagnostic({
+          type: 'save-skipped-pending-restore',
+          anchorKey,
+          scrollTop: Math.round(getScrollTop(getActiveScroller()))
+        });
+      }
+      return waiting;
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -669,8 +684,17 @@ export function useScrollAnchorRestoration({
       lastAppliedScrollTopRef.current = getScrollTop(getActiveScroller());
     }
 
+    // Re-read the signature at call time instead of using the effect-start
+    // capture: a scroll event that lands between settle re-pins saves a
+    // fresh anchor (layout can drift subpixel while embeds/images settle),
+    // and writing the stale captured signature here afterwards would leave
+    // the settled ref permanently behind the saved anchor — every later
+    // save, including the teardown save, then skips via
+    // saveShouldWaitForPendingRestore and the anchor freezes at the restored
+    // position until reload.
     function markRestoreSettled() {
-      restoreSettledSignatureRef.current = restoreSignature;
+      restoreSettledSignatureRef.current =
+        getSavedAnchorRestoreSignature(anchorKey);
     }
 
     function markRestoreSettledIfNoAnchorIdentity() {

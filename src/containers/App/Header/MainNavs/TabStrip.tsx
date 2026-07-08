@@ -1,23 +1,31 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Nav from './Nav';
+import DropdownList from '~/components/DropdownList';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
-import type { NavTabKey } from '~/helpers/navTabOrder';
 
 export interface NavTabDescriptor {
-  key: NavTabKey;
+  key: string;
   to: string;
   imgLabel: string;
   label: React.ReactNode;
+  kind?: 'pinned' | 'dynamic';
+  exactActive?: boolean;
+  minimized?: boolean;
   alert?: boolean;
   isHome?: boolean;
   isUsingChat?: boolean;
   profileUsername?: string;
 }
 
+export interface TabMenuItem {
+  label: string;
+  onClick: () => void;
+}
+
 interface DragState {
-  key: NavTabKey;
+  key: string;
   fromIndex: number;
   toIndex: number;
   dx: number;
@@ -26,9 +34,34 @@ interface DragState {
 
 const DRAG_THRESHOLD_PX = 5;
 const SETTLE_MS = 160;
+const HINT_DWELL_MS = 1200;
+const HINT_AUTO_HIDE_MS = 5000;
+
+const menuHintClass = css`
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 0.6rem;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+  background: ${Color.black(0.85)};
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 3;
+`;
 
 const stripClass = css`
   height: ${APP_SHELL_HEADER_OFFSET_FALLBACK};
+  display: flex;
+  align-items: flex-end;
+`;
+
+const dragZoneClass = css`
+  height: 100%;
   display: flex;
   align-items: flex-end;
 `;
@@ -47,18 +80,33 @@ const tabItemClass = css`
     height: 1.8rem;
     background: ${Color.borderGray()};
   }
+  /* Chrome hides the separators touching the active or hovered tab */
+  &:hover::before,
+  &:hover + &::before,
+  &:has(a.active)::before,
+  &:has(a.active) + &::before {
+    display: none;
+  }
 `;
 
 export default function TabStrip({
+  pinnedTabs,
   tabs,
-  onMove
+  onMove,
+  menuItemsForTab,
+  showMenuHint,
+  onMenuOpen
 }: {
+  pinnedTabs: NavTabDescriptor[];
   tabs: NavTabDescriptor[];
-  onMove: (arg: { sourceKey: NavTabKey; targetKey: NavTabKey }) => void;
+  onMove: (arg: { sourceKey: string; targetKey: string }) => void;
+  menuItemsForTab?: (key: string) => TabMenuItem[] | null;
+  showMenuHint?: boolean;
+  onMenuOpen?: () => void;
 }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const dragZoneRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef<{
-    key: NavTabKey;
+    key: string;
     index: number;
     startX: number;
   } | null>(null);
@@ -72,61 +120,142 @@ export default function TabStrip({
   const didDragRef = useRef(false);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
+  // only the anchor + tab key are stored; the items are derived LIVE at
+  // render time so callbacks never close over pre-adoption state (server
+  // nav state can arrive while the menu is open)
+  const [menu, setMenu] = useState<{
+    x: number;
+    y: number;
+    tabKey: string;
+  } | null>(null);
+  const menuItems = menu ? menuItemsForTab?.(menu.tabKey) || null : null;
+
+  // the menu's tab can vanish mid-open (e.g. adoption removes a stale
+  // cached pin); close instead of hanging an empty invisible menu
+  const menuIsOrphaned = !!menu && (!menuItems || menuItems.length === 0);
+  useEffect(() => {
+    if (menuIsOrphaned) {
+      setMenu(null);
+    }
+  }, [menuIsOrphaned]);
+  const hintDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hintHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hintShownThisSessionRef = useRef(false);
+  const [hintTabKey, setHintTabKey] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
       if (settleTimerRef.current) {
         clearTimeout(settleTimerRef.current);
       }
+      if (hintDwellTimerRef.current) {
+        clearTimeout(hintDwellTimerRef.current);
+      }
+      if (hintHideTimerRef.current) {
+        clearTimeout(hintHideTimerRef.current);
+      }
     };
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      data-nav-tab-strip="true"
-      className={`desktop ${stripClass}`}
-    >
-      {tabs.map((tab, index) => (
+    <div data-nav-tab-strip="true" className={`desktop ${stripClass}`}>
+      {pinnedTabs.map((tab) => (
         <div
           key={tab.key}
           className={tabItemClass}
-          style={getTabStyle(index, tab.key)}
-          onPointerDown={(event) => handlePointerDown(event, tab.key, index)}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerCancel}
-          onClickCapture={handleClickCapture}
+          title={
+            tab.minimized && typeof tab.label === 'string'
+              ? tab.label
+              : undefined
+          }
+          onContextMenu={(event) => handleContextMenu(event, tab.key)}
+          onMouseEnter={() => handleHintDwellStart(tab.key)}
+          onMouseLeave={handleHintDismiss}
         >
           <Nav
             variant="tab"
+            tabKind="pinned"
             className="desktop"
             to={tab.to}
             imgLabel={tab.imgLabel}
-            alert={tab.alert}
-            isHome={tab.isHome}
-            isUsingChat={tab.isUsingChat}
-            profileUsername={tab.profileUsername}
+            exactActive={tab.exactActive}
           >
-            {tab.label}
+            {tab.minimized ? null : tab.label}
           </Nav>
+          {hintTabKey === tab.key && (
+            <div className={menuHintClass}>Right-click for options</div>
+          )}
         </div>
       ))}
+      <div ref={dragZoneRef} className={dragZoneClass}>
+        {tabs.map((tab, index) => (
+          <div
+            key={tab.key}
+            className={tabItemClass}
+            style={getTabStyle(index, tab.key)}
+            title={
+              tab.minimized && typeof tab.label === 'string'
+                ? tab.label
+                : undefined
+            }
+            onPointerDown={(event) => handlePointerDown(event, tab.key, index)}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
+            onClickCapture={handleClickCapture}
+            onContextMenu={(event) => handleContextMenu(event, tab.key)}
+            onMouseEnter={() => handleHintDwellStart(tab.key)}
+            onMouseLeave={handleHintDismiss}
+          >
+            <Nav
+              variant="tab"
+              tabKind={tab.kind}
+              className="desktop"
+              to={tab.to}
+              imgLabel={tab.imgLabel}
+              exactActive={tab.exactActive}
+              alert={tab.alert}
+              isHome={tab.isHome}
+              isUsingChat={tab.isUsingChat}
+              profileUsername={tab.profileUsername}
+            >
+              {tab.minimized ? null : tab.label}
+            </Nav>
+            {hintTabKey === tab.key && (
+              <div className={menuHintClass}>Right-click for options</div>
+            )}
+          </div>
+        ))}
+      </div>
+      {menu && menuItems && menuItems.length > 0 && (
+        <DropdownList
+          dropdownContext={{ x: menu.x, y: menu.y, width: 0, height: 0 }}
+          onHideMenu={() => setMenu(null)}
+        >
+          {menuItems.map((item) => (
+            <li
+              key={item.label}
+              onClick={() => {
+                setMenu(null);
+                item.onClick();
+              }}
+            >
+              {item.label}
+            </li>
+          ))}
+        </DropdownList>
+      )}
     </div>
   );
 
-  function getTabStyle(
-    index: number,
-    key: NavTabKey
-  ): React.CSSProperties | undefined {
+  function getTabStyle(index: number, key: string): React.CSSProperties | undefined {
     if (!dragState) return undefined;
     const { key: draggedKey, fromIndex, toIndex, dx, settling } = dragState;
     if (key === draggedKey) {
       return {
         transform: `translateX(${dx}px)`,
         transition: settling ? `transform ${SETTLE_MS}ms ease` : 'none',
-        zIndex: 2,
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)'
+        zIndex: 2
       };
     }
     const draggedWidth = rectsRef.current[fromIndex]?.width || 0;
@@ -143,25 +272,64 @@ export default function TabStrip({
     };
   }
 
+  function handleContextMenu(event: React.MouseEvent, key: string) {
+    const items = menuItemsForTab?.(key);
+    if (!items || items.length === 0) return;
+    event.preventDefault();
+    handleHintDismiss();
+    setMenu({ x: event.clientX, y: event.clientY, tabKey: key });
+    onMenuOpen?.();
+  }
+
+  function handleHintDwellStart(key: string) {
+    if (!showMenuHint || hintShownThisSessionRef.current) return;
+    if (dragState || menu) return;
+    if (hintDwellTimerRef.current) {
+      clearTimeout(hintDwellTimerRef.current);
+    }
+    hintDwellTimerRef.current = setTimeout(() => {
+      // only teach once per page load; the flag prop retires it for good
+      hintShownThisSessionRef.current = true;
+      setHintTabKey(key);
+      hintHideTimerRef.current = setTimeout(
+        () => setHintTabKey(null),
+        HINT_AUTO_HIDE_MS
+      );
+    }, HINT_DWELL_MS);
+  }
+
+  function handleHintDismiss() {
+    if (hintDwellTimerRef.current) {
+      clearTimeout(hintDwellTimerRef.current);
+      hintDwellTimerRef.current = null;
+    }
+    if (hintHideTimerRef.current) {
+      clearTimeout(hintHideTimerRef.current);
+      hintHideTimerRef.current = null;
+    }
+    setHintTabKey(null);
+  }
+
   function handlePointerDown(
     event: React.PointerEvent<HTMLDivElement>,
-    key: NavTabKey,
+    key: string,
     index: number
   ) {
     if (event.pointerType !== 'mouse' || event.button !== 0) return;
-    if (dragState || !containerRef.current) return;
-    const items = [...containerRef.current.children] as HTMLElement[];
+    if (dragState || !dragZoneRef.current) return;
+    const items = [...dragZoneRef.current.children] as HTMLElement[];
     rectsRef.current = items.map((el) => {
       const { left, width } = el.getBoundingClientRect();
       return { left, width, center: left + width / 2 };
     });
-    const containerRect = containerRef.current.getBoundingClientRect();
+    const zoneRect = dragZoneRef.current.getBoundingClientRect();
     const tabRect = rectsRef.current[index];
     boundsRef.current = {
-      minDX: containerRect.left - tabRect.left,
-      maxDX: containerRect.right - (tabRect.left + tabRect.width)
+      minDX: zoneRect.left - tabRect.left,
+      maxDX: zoneRect.right - (tabRect.left + tabRect.width)
     };
     pendingRef.current = { key, index, startX: event.clientX };
+    handleHintDismiss();
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {

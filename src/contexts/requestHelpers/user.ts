@@ -74,7 +74,7 @@ export default function userRequestHelpers({
           auth()
         );
         if (isSuccess && token) {
-          setStoredItem('token', token);
+          setStoredItem('token', token, { preserveNavSession: true });
         }
         return { isSuccess };
       } catch (error) {
@@ -909,6 +909,29 @@ export default function userRequestHelpers({
         const { data } = await request.put(
           `${URL}/user/state/build-studio`,
           { buildStudio },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateNavTabsState(navTabs: {
+      order: string[];
+      pinnedTabs: {
+        id: string;
+        to: string;
+        icon: string;
+        label: string;
+        pinned: boolean;
+      }[];
+      minimized: string[];
+      menuDiscovered?: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/state/nav-tabs`,
+          { navTabs },
           auth()
         );
         return data;

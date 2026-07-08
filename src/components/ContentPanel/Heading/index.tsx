@@ -107,19 +107,15 @@ function Heading({
           `}
         >
           <span className="title">
-            <span
-              data-feed-card-interactive={compactFeed ? 'true' : undefined}
-            >
-              <HeadingText
-                action={action}
-                compactFeed={compactFeed}
-                contentObj={contentObj}
-                feedActivityType={displayedFeedActivityType}
-                feedUploader={feedUploader}
-                rootObj={rootObj}
-                theme={theme}
-              />
-            </span>
+            <HeadingText
+              action={action}
+              compactFeed={compactFeed}
+              contentObj={contentObj}
+              feedActivityType={displayedFeedActivityType}
+              feedUploader={feedUploader}
+              rootObj={rootObj}
+              theme={theme}
+            />
           </span>
           {formattedTime ? (
             <small
