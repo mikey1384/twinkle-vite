@@ -525,6 +525,7 @@ function UploadFileModal({
                   onKeyUp={handleCaptionKeyUp}
                   minRows={3}
                   onAttachmentDrop={handleEmbedImageAttachment}
+                  onFileDrop={handleAddMorePhotosDrop}
                 />
                 {captionExceedsCharLimit && (
                   <div
@@ -792,6 +793,19 @@ function UploadFileModal({
       return;
     }
 
+    addMorePhotoFiles(files);
+
+    event.target.value = '';
+  }
+
+  function handleAddMorePhotosDrop(files: File[]) {
+    if (isModalInteractionLocked) return;
+    addMorePhotoFiles(files);
+  }
+
+  function addMorePhotoFiles(files: File[]) {
+    if (files.length === 0) return;
+
     const acceptedFiles = files.filter((file) => isImageCandidate(file));
     const oversizedFiles = acceptedFiles.filter(
       (file) => file.size / mb > maxMultiImageSize
@@ -824,8 +838,6 @@ function UploadFileModal({
       );
       setImageAttachments((prev) => [...prev, ...newAttachments]);
     }
-
-    event.target.value = '';
   }
 
   async function handleSubmitMultipleImages() {

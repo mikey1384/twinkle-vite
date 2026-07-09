@@ -203,6 +203,7 @@ export default function PhotoUploadModal({
                 onKeyUp={handleCaptionKeyUp}
                 minRows={3}
                 onAttachmentDrop={handleEmbedImageAttachment}
+                onFileDrop={handleAddMorePhotosDrop}
               />
               {captionExceedsCharLimit && (
                 <div
@@ -325,6 +326,19 @@ export default function PhotoUploadModal({
       return;
     }
 
+    addMorePhotoFiles(files);
+
+    event.target.value = '';
+  }
+
+  function handleAddMorePhotosDrop(files: File[]) {
+    if (multiImageUploading || !!embeddingAttachmentId) return;
+    addMorePhotoFiles(files);
+  }
+
+  function addMorePhotoFiles(files: File[]) {
+    if (files.length === 0) return;
+
     const acceptedFiles = files.filter((file) => isImageCandidate(file));
     const oversizedFiles = acceptedFiles.filter(
       (file) => file.size / mb > maxSize
@@ -351,8 +365,6 @@ export default function PhotoUploadModal({
       }));
       setImageAttachments((prev) => [...prev, ...newAttachments]);
     }
-
-    event.target.value = '';
   }
 
   async function handleSubmit() {

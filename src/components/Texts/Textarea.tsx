@@ -18,6 +18,7 @@ export default function Textarea({
   maxRows = 20,
   onDrop,
   onAttachmentDrop,
+  onFileDrop,
   style,
   theme,
   disableFocusGlow,
@@ -34,11 +35,12 @@ export default function Textarea({
     options?: { fromAttachment?: boolean }
   ) => void;
   onAttachmentDrop?: (attachmentId: string) => Promise<void> | void;
+  onFileDrop?: (files: File[]) => Promise<void> | void;
   theme?: string;
   disableFocusGlow?: boolean;
   disableAutoResize?: boolean;
 }) {
-  const dropEnabled = !!onDrop || !!onAttachmentDrop;
+  const dropEnabled = !!onDrop || !!onAttachmentDrop || !!onFileDrop;
   const {
     uploadForEmbed,
     uploading,
@@ -450,9 +452,14 @@ export default function Textarea({
         return;
       }
     }
+    const droppedFiles = Array.from(e.dataTransfer.files || []);
+    if (droppedFiles.length > 0 && onFileDrop) {
+      await onFileDrop(droppedFiles);
+      return;
+    }
     if (!onDrop) return;
     const fromAttachment = !!draggedFile;
-    const file = draggedFile || e.dataTransfer.files[0];
+    const file = draggedFile || droppedFiles[0];
     if (file) {
       setIsDragging(false);
       const url = await uploadForEmbed(file);
