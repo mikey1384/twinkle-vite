@@ -6,7 +6,7 @@ import {
 } from 'react';
 import {
   createAgentAssetFile,
-  isSupportedBuildAssetUploadFile,
+  getBuildAssetUploadValidationError,
   normalizeBuildAgentAssetLimit,
   type BuildAgentAssetCreateManyResult,
   type BuildAgentAssetCreateOptions,
@@ -198,14 +198,18 @@ export default function useProjectAssets({
     const files = await Promise.all(
       items.map((item) => createAgentAssetFile(item))
     );
-    const unsupportedFileNames = files
-      .filter((file) => !isSupportedBuildAssetUploadFile(file))
-      .map((file) => file.name);
-    if (unsupportedFileNames.length > 0) {
+    const validationResults = await Promise.all(
+      files.map(async (file) => ({
+        file,
+        error: await getBuildAssetUploadValidationError(file)
+      }))
+    );
+    const invalidFiles = validationResults.filter((result) => result.error);
+    if (invalidFiles.length > 0) {
       throw new Error(
-        `Project assets support image and audio files. Unsupported: ${summarizeUploadedFileNames(
-          unsupportedFileNames
-        )}`
+        invalidFiles
+          .map((result) => `${result.file.name}: ${result.error}`)
+          .join(' ')
       );
     }
 
@@ -386,17 +390,25 @@ export default function useProjectAssets({
       };
     }
 
-    const supportedFiles = uploadedFiles.filter(
-      isSupportedBuildAssetUploadFile
+    const validationResults = await Promise.all(
+      uploadedFiles.map(async (file) => ({
+        file,
+        error: await getBuildAssetUploadValidationError(file)
+      }))
     );
-    const unsupportedFileNames = uploadedFiles
-      .filter((file) => !isSupportedBuildAssetUploadFile(file))
-      .map((file) => file.name);
+    const supportedFiles = validationResults
+      .filter((result) => !result.error)
+      .map((result) => result.file);
+    const invalidFiles = validationResults.filter((result) => result.error);
+    const unsupportedFileNames = invalidFiles.map((result) => result.file.name);
+    const unsupportedFileDetails = invalidFiles.map(
+      (result) => `${result.file.name}: ${result.error}`
+    );
 
     if (supportedFiles.length === 0) {
-      const message = `Only image and audio assets are supported right now. Unsupported: ${summarizeUploadedFileNames(
+      const message = `Only supported runtime asset files can be uploaded. Unsupported: ${summarizeUploadedFileNames(
         unsupportedFileNames
-      )}`;
+      )}${unsupportedFileDetails.length > 0 ? `. ${unsupportedFileDetails.join(' ')}` : ''}`;
       setProjectFileError(message);
       return {
         success: false,
@@ -428,9 +440,7 @@ export default function useProjectAssets({
       const warnings: string[] = [];
       if (unsupportedFileNames.length > 0) {
         warnings.push(
-          `Skipped unsupported assets: ${summarizeUploadedFileNames(
-            unsupportedFileNames
-          )}`
+          `Skipped unsupported assets: ${unsupportedFileDetails.join(' ')}`
         );
       }
       if (failedUploads.length > 0) {

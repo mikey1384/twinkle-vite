@@ -22,6 +22,39 @@ import type {
   ProjectExplorerEntry
 } from './types';
 
+const BROWSER_PREVIEWABLE_IMAGE_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/bmp',
+  'image/avif'
+]);
+
+const BROWSER_PREVIEWABLE_IMAGE_EXTENSIONS = new Set([
+  'png',
+  'jpg',
+  'jpeg',
+  'gif',
+  'webp',
+  'svg',
+  'bmp',
+  'avif'
+]);
+
+function canPreviewRuntimeAssetImage(asset: PreviewRuntimeUploadAsset) {
+  if (asset.fileType !== 'image') return false;
+  if (asset.thumbUrl) return true;
+  const normalizedMimeType = String(asset.mimeType || '').toLowerCase();
+  if (BROWSER_PREVIEWABLE_IMAGE_MIME_TYPES.has(normalizedMimeType)) {
+    return true;
+  }
+  const fileName = String(asset.originalFileName || asset.fileName || '');
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  return BROWSER_PREVIEWABLE_IMAGE_EXTENSIONS.has(extension);
+}
+
 interface CodeWorkspacePaneProps {
   displayedProjectFiles: EditableProjectFile[];
   projectExplorerEntries: ProjectExplorerEntry[];
@@ -898,7 +931,7 @@ export default function CodeWorkspacePane({
                 `}
               >
                 {displayedAssetEntries.map((asset) => {
-                  const isImage = asset.fileType === 'image';
+                  const shouldPreviewImage = canPreviewRuntimeAssetImage(asset);
                   const label = asset.originalFileName || asset.fileName;
                   return (
                     <button
@@ -936,7 +969,7 @@ export default function CodeWorkspacePane({
                           color: #93c5fd;
                         `}
                       >
-                        {isImage ? (
+                        {shouldPreviewImage ? (
                           <img
                             src={asset.thumbUrl || asset.url}
                             alt={label}

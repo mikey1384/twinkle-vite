@@ -530,8 +530,7 @@ export function useFrameManager({
         hasPreviewFrameRefreshToken(previewSrc) &&
         canUseSameOriginBuildPreviewSandbox(currentPrimarySrc) &&
         currentPrimaryMeta.viewerKey === viewerKey &&
-        currentPrimaryMeta.hasLoaded &&
-        currentPrimaryMeta.bridgeConfirmed;
+        currentPrimaryMeta.hasLoaded;
       const shouldPreservePrimaryFrame =
         primaryMatchesPreviewSrc || primaryHasTokenOnlyRefresh;
       const nextPrimaryNonce = shouldPreservePrimaryFrame

@@ -4,7 +4,7 @@ import {
 } from 'react';
 import {
   createAgentAssetFile,
-  isSupportedBuildAssetUploadFile,
+  getBuildAssetUploadValidationError,
   type BuildAgentAssetCreateOptions,
   type BuildAgentAssetCreateResult
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
@@ -227,8 +227,9 @@ export default function useRuntimeUploads({
 
     const file = await createAgentAssetFile(options);
     assertUploadTargetStillActive();
-    if (!isSupportedBuildAssetUploadFile(file)) {
-      throw new Error('Project assets support image and audio files.');
+    const validationError = await getBuildAssetUploadValidationError(file);
+    if (validationError) {
+      throw new Error(validationError);
     }
 
     const tokenPayload = await getBuildApiToken({

@@ -55,7 +55,7 @@ const guideSections: GuideSection[] = [
       `The current project-file limit is ${DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT} effective lines per file. Long physical lines count as additional effective lines every ${PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS} characters. If save fails for size, split the file and save again.`,
       'Build apps run in sandboxed iframes without form-submit permission. Do not use <form> or native form submission; use JavaScript-handled inputs and buttons.',
       'Interface text must not be selectable on touch devices. Apply user-select: none plus -webkit-user-select: none and -webkit-touch-callout: none to HUD, buttons, labels, menus, and scores; keep text inputs and user-copyable content selectable.',
-      'Use workspace project assets for bundled images/audio. Use Twinkle.files only for viewer-created runtime uploads after the app is running.',
+      'Use workspace project assets for bundled runtime media. Use Twinkle.files only for viewer-created runtime uploads after the app is running.',
       'Save files before relying on Preview, Publish, or Download zip.'
     ]
   },
@@ -63,10 +63,10 @@ const guideSections: GuideSection[] = [
     title: 'Workspace project assets',
     items: [
       'Open Manage uploads, use Add generated asset, paste a file name, MIME type when needed, and base64/data URL, then copy the returned asset URL into project code.',
-      'Agents that can run parent-page JavaScript may await window.TwinkleBuildAgent.assets.create({ fileName: "jump.wav", mimeType: "audio/wav", base64 }) to upload a generated audio or image asset.',
+      'Agents that can run parent-page JavaScript may await window.TwinkleBuildAgent.assets.create({ fileName: "env.hdr", mimeType: "image/vnd.radiance", base64 }) to upload a generated media asset.',
       'The create result returns asset.url, stableUrl, and reference. Use that returned URL in project files, such as new Audio(asset.url) or an <img> src value.',
       'Use await window.TwinkleBuildAgent.assets.createMany([...]) for batches, list({ limit, cursor }) to inspect existing assets, delete(assetId) to remove one, and openManager() to open the asset manager.',
-      'Project assets support image and audio files for bundled app media. Video is not supported.'
+      'Project assets support images, audio, GLB/self-contained glTF models, KTX2, HDR, EXR, BIN, and DRC files for bundled app media. Video is not supported. Raw .gltf files with relative companion URIs must be converted to .glb or rewritten to absolute uploaded asset URLs first.'
     ]
   },
   {

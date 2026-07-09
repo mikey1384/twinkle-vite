@@ -1501,7 +1501,10 @@ export default function MainNavs({
             justify-content: space-between;
             gap: 0.4rem;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            /* Keep this off the iOS async scroll layer. In a fixed bottom bar,
+               WebKit can keep that layer intercepting taps after a brief
+               horizontal scroll; global mobile scrollers use the same guard. */
+            -webkit-overflow-scrolling: auto;
             scrollbar-width: none;
             &::-webkit-scrollbar {
               display: none;

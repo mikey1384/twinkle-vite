@@ -57,7 +57,7 @@ export interface BuildAgentWorkspaceAssetsApi {
 }
 
 export const BUILD_PROJECT_ASSET_UPLOAD_ACCEPT =
-  'image/*,audio/*,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff,.tif,.heic,.heif,.avif,.mp3,.wav,.ogg,.m4a,.aac,.flac,.aif,.aiff';
+  'image/*,audio/*,model/gltf-binary,model/gltf+json,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff,.tif,.heic,.heif,.avif,.mp3,.wav,.ogg,.m4a,.aac,.flac,.aif,.aiff,.glb,.gltf,.ktx2,.hdr,.exr,.bin,.drc';
 
 const BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS = [
   '.png',
@@ -79,7 +79,14 @@ const BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS = [
   '.aac',
   '.flac',
   '.aif',
-  '.aiff'
+  '.aiff',
+  '.glb',
+  '.gltf',
+  '.ktx2',
+  '.hdr',
+  '.exr',
+  '.bin',
+  '.drc'
 ] as const;
 
 const AGENT_ASSET_EXTENSION_BY_MIME_TYPE: Record<string, string> = {
@@ -104,8 +111,22 @@ const AGENT_ASSET_EXTENSION_BY_MIME_TYPE: Record<string, string> = {
   'audio/aac': '.aac',
   'audio/flac': '.flac',
   'audio/aiff': '.aiff',
-  'audio/x-aiff': '.aiff'
+  'audio/x-aiff': '.aiff',
+  'model/gltf-binary': '.glb',
+  'model/gltf+json': '.gltf',
+  'image/ktx2': '.ktx2',
+  'image/vnd.radiance': '.hdr',
+  'image/x-exr': '.exr',
+  'application/octet-stream': '.bin'
 };
+
+const BUILD_PROJECT_ASSET_UPLOAD_MIME_TYPES = new Set([
+  'model/gltf-binary',
+  'model/gltf+json'
+]);
+
+const GLTF_RELATIVE_URI_UPLOAD_ERROR =
+  'Raw .gltf files with relative buffer or texture URIs will not load after upload because companion files get separate asset URLs. Use .glb, embed data URIs, or rewrite .gltf URIs to absolute uploaded asset URLs before uploading.';
 
 export function isSupportedBuildAssetUploadFile(file: File) {
   const lowerName = String(file?.name || '').toLowerCase();
@@ -118,8 +139,73 @@ export function isSupportedBuildAssetUploadFile(file: File) {
   }
   const normalizedType = String(file?.type || '').toLowerCase();
   return (
-    normalizedType.startsWith('image/') || normalizedType.startsWith('audio/')
+    normalizedType.startsWith('image/') ||
+    normalizedType.startsWith('audio/') ||
+    BUILD_PROJECT_ASSET_UPLOAD_MIME_TYPES.has(normalizedType)
   );
+}
+
+function isGltfJsonAssetFile(file: File) {
+  const lowerName = String(file?.name || '').toLowerCase();
+  const normalizedType = String(file?.type || '').toLowerCase();
+  return lowerName.endsWith('.gltf') || normalizedType === 'model/gltf+json';
+}
+
+function isExternalOrEmbeddedGltfUri(uri: string) {
+  const normalizedUri = String(uri || '').trim();
+  if (!normalizedUri) return true;
+  if (normalizedUri.startsWith('/') || normalizedUri.startsWith('//')) {
+    return true;
+  }
+  const schemeMatch = normalizedUri.match(/^([A-Za-z][A-Za-z0-9+.-]*):/);
+  if (!schemeMatch) return false;
+  return ['http', 'https', 'data'].includes(schemeMatch[1].toLowerCase());
+}
+
+function collectRelativeGltfUris(parsedGltf: unknown) {
+  const relativeUris: string[] = [];
+  if (!parsedGltf || typeof parsedGltf !== 'object') {
+    return relativeUris;
+  }
+  const gltf = parsedGltf as {
+    buffers?: Array<{ uri?: unknown }>;
+    images?: Array<{ uri?: unknown }>;
+  };
+  const buffers = Array.isArray(gltf.buffers) ? gltf.buffers : [];
+  const images = Array.isArray(gltf.images) ? gltf.images : [];
+  for (const entry of [...buffers, ...images]) {
+    const uri = typeof entry?.uri === 'string' ? entry.uri.trim() : '';
+    if (uri && !isExternalOrEmbeddedGltfUri(uri)) {
+      relativeUris.push(uri);
+    }
+  }
+  return relativeUris;
+}
+
+export async function getBuildAssetUploadValidationError(file: File) {
+  if (!isSupportedBuildAssetUploadFile(file)) {
+    return 'Project assets support images, audio, GLB/self-contained glTF models, KTX2, HDR, EXR, BIN, and DRC files.';
+  }
+  if (!isGltfJsonAssetFile(file)) {
+    return null;
+  }
+  let parsedGltf: unknown;
+  try {
+    parsedGltf = JSON.parse(await file.text());
+  } catch {
+    return '.gltf assets must contain valid JSON.';
+  }
+  const relativeUris = collectRelativeGltfUris(parsedGltf);
+  if (relativeUris.length === 0) {
+    return null;
+  }
+  const sampleUris = relativeUris
+    .slice(0, 3)
+    .map((uri) => `"${uri}"`)
+    .join(', ');
+  return `${GLTF_RELATIVE_URI_UPLOAD_ERROR} Relative URI${
+    relativeUris.length === 1 ? '' : 's'
+  }: ${sampleUris}${relativeUris.length > 3 ? ', ...' : ''}`;
 }
 
 export function normalizeBuildAgentAssetLimit(

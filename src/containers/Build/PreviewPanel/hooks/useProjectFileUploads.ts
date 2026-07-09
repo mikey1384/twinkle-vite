@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import {
+  getBuildAssetUploadValidationError,
   isSupportedBuildAssetUploadFile
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type { ConfirmModalOptions } from '~/components/Modals/hooks/useConfirmModal';
@@ -380,10 +381,31 @@ export default function useProjectFileUploads({
             )
         )
         .map((entry) => entry.file.name);
+      const referencedLocalAssetValidationResults = await Promise.all(
+        referencedLocalAssetEntries.map(async (entry) => ({
+          entry,
+          error: await getBuildAssetUploadValidationError(entry.file)
+        }))
+      );
+      const validReferencedLocalAssetEntries =
+        referencedLocalAssetValidationResults
+          .filter((result) => !result.error)
+          .map((result) => result.entry);
+      const invalidReferencedLocalAssetDetails =
+        referencedLocalAssetValidationResults
+          .filter((result) => result.error)
+          .map((result) => `${result.entry.file.name}: ${result.error}`);
+      if (invalidReferencedLocalAssetDetails.length > 0) {
+        uploadWarnings.push(
+          `Skipped unsupported local assets: ${invalidReferencedLocalAssetDetails.join(
+            ' '
+          )}`
+        );
+      }
 
       if (
         referencedRuntimeAttachmentEntries.length > 0 ||
-        referencedLocalAssetEntries.length > 0
+        validReferencedLocalAssetEntries.length > 0
       ) {
         const uploadedRuntimeAssets: PreviewRuntimeUploadAsset[] = [];
         const replacementUrlByAttachmentPath = new Map<string, string>();
@@ -509,7 +531,7 @@ export default function useProjectFileUploads({
             await uploadRuntimeAttachmentEntry(thumbEntry);
           }
 
-          for (const entry of referencedLocalAssetEntries) {
+          for (const entry of validReferencedLocalAssetEntries) {
             await uploadRuntimeAttachmentEntry(entry);
           }
         } catch (error: any) {
