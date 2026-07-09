@@ -1,5 +1,5 @@
 import React, { CSSProperties, ReactNode, useMemo } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
 
@@ -11,25 +11,40 @@ interface ButtonProps {
   'aria-label'?: string;
   'aria-pressed'?: boolean;
   className?: string;
-  color?: string; // color key in Color or 'theme'
+  color?: string; // a key in `Color` (e.g. 'logoBlue'); defaults per variant
   disabled?: boolean;
-  disabledOpacity?: number;
+  disabledOpacity?: number; // defaults to 0.5
   loading?: boolean;
   onClick: (arg?: any) => any;
   children?: ReactNode;
-  hoverColor?: string; // optional override
-  stretch?: boolean;
+  hoverColor?: string; // a key in `Color`; defaults to `color`
+  stretch?: boolean; // full width; does not affect shape/radius
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   style?: CSSProperties;
   mobilePadding?: string;
   mobileBorderRadius?: string;
-  variant?: Variant; // supports 'solid' | 'soft' | 'outline'
+  variant?: Variant; // defaults to 'solid'
   shape?: Shape; // defaults to 'rounded'
   size?: Size; // defaults to 'md'
   uppercase?: boolean; // defaults to true
-  onHover?: boolean; // ignored
   tone?: 'flat' | 'raised';
+}
+
+// alpha applied to the button's color per variant; null means `transparent`
+const VARIANT_ALPHAS: Record<
+  Variant,
+  { bg: number | null; border: number | null; hoverBg: number; hoverBorder: number }
+> = {
+  solid: { bg: 1, border: 1, hoverBg: 0.9, hoverBorder: 0.9 },
+  soft: { bg: 0.12, border: 0.28, hoverBg: 0.18, hoverBorder: 0.32 },
+  outline: { bg: null, border: 0.5, hoverBg: 0.08, hoverBorder: 0.6 },
+  ghost: { bg: null, border: null, hoverBg: 0.08, hoverBorder: 0.28 }
+};
+
+function tint(key: string, a: number) {
+  const fn = (Color as any)[key];
+  return typeof fn === 'function' ? fn(a) : key;
 }
 
 export default function Button(props: ButtonProps) {
@@ -39,7 +54,7 @@ export default function Button(props: ButtonProps) {
     className = '',
     color,
     disabled,
-    disabledOpacity = 0.2,
+    disabledOpacity = 0.5,
     loading,
     onClick,
     children,
@@ -57,35 +72,13 @@ export default function Button(props: ButtonProps) {
     tone
   } = props;
 
-  const isDisabled = useMemo(
-    () => !!(disabled || loading),
-    [disabled, loading]
-  );
-  const finalChildren = useMemo(
-    () => React.Children.toArray(children),
-    [children]
-  );
+  const isDisabled = !!(disabled || loading);
+  const resolvedVariant: Variant = variant || 'solid';
+  const resolvedTone = tone || 'flat';
 
-  // Resolve variant: 'solid' | 'soft' | 'outline' (ghost when transparent)
-  const resolvedVariant: Variant = useMemo(() => {
-    return (variant || 'solid') as Variant;
-  }, [variant]);
-  const resolvedTone = useMemo(() => {
-    if (tone) return tone;
-    return 'flat';
-  }, [tone]);
-
-  const baseColorKey = useMemo(() => {
-    const normalized = color === 'theme' ? undefined : color;
-    if (!normalized) {
-      return resolvedVariant === 'ghost' ? 'darkerGray' : 'black';
-    }
-    return normalized;
-  }, [color, resolvedVariant]);
-  const hoverColorKey = useMemo(
-    () => (hoverColor === 'theme' || !hoverColor ? baseColorKey : hoverColor),
-    [hoverColor, baseColorKey]
-  );
+  const baseColorKey =
+    color || (resolvedVariant === 'ghost' ? 'darkerGray' : 'black');
+  const hoverColorKey = hoverColor || baseColorKey;
 
   const sizeFont =
     size === 'sm' ? '1.3rem' : size === 'lg' ? '1.7rem' : '1.5rem';
@@ -93,85 +86,30 @@ export default function Button(props: ButtonProps) {
   const padX = size === 'sm' ? '0.9rem' : size === 'lg' ? '1.3rem' : '1rem';
   const radius = shape === 'pill' ? '9999px' : borderRadius;
 
-  function tint(key: string, a: number) {
-    const fn = (Color as any)[key];
-    return typeof fn === 'function' ? fn(a) : key;
-  }
-
   const cssClass = useMemo(() => {
     const v = resolvedVariant;
-
-    const solidBg = tint(baseColorKey, 1);
-    const solidBorder = tint(baseColorKey, 1);
-    const solidHoverBg = tint(hoverColorKey, 0.9);
-    const solidHoverBorder = solidHoverBg;
-
-    const softBg = tint(baseColorKey, 0.12);
-    const softBorder = tint(baseColorKey, 0.28);
-    const softHoverBg = tint(hoverColorKey, 0.18);
-    const softHoverBorder = tint(hoverColorKey, 0.32);
-
-    const outlineBg = 'transparent';
-    const outlineBorder = tint(baseColorKey, 0.5);
-    const outlineHoverBg = tint(hoverColorKey, 0.08);
-    const outlineHoverBorder = tint(hoverColorKey, 0.6);
-
-    const ghostBg = 'transparent';
-    const ghostBorder = 'transparent';
-    const ghostHoverBg = tint(hoverColorKey, 0.08);
-    const ghostHoverBorder = tint(hoverColorKey, 0.28);
-
-    const bg =
-      v === 'solid'
-        ? solidBg
-        : v === 'soft'
-        ? softBg
-        : v === 'outline'
-        ? outlineBg
-        : ghostBg;
-    let border =
-      v === 'solid'
-        ? solidBorder
-        : v === 'soft'
-        ? softBorder
-        : v === 'outline'
-        ? outlineBorder
-        : ghostBorder;
-    const hoverBg =
-      v === 'solid'
-        ? solidHoverBg
-        : v === 'soft'
-        ? softHoverBg
-        : v === 'outline'
-        ? outlineHoverBg
-        : ghostHoverBg;
-    let hoverBorder =
-      v === 'solid'
-        ? solidHoverBorder
-        : v === 'soft'
-        ? softHoverBorder
-        : v === 'outline'
-        ? outlineHoverBorder
-        : ghostHoverBorder;
+    const alphas = VARIANT_ALPHAS[v];
     const baseIsWhite = baseColorKey === 'white';
+
+    const bg = alphas.bg === null ? 'transparent' : tint(baseColorKey, alphas.bg);
+    const hoverBg = tint(hoverColorKey, alphas.hoverBg);
+
+    let border =
+      alphas.border === null ? 'transparent' : tint(baseColorKey, alphas.border);
+    let hoverBorder = tint(hoverColorKey, alphas.hoverBorder);
     if (baseIsWhite && v !== 'ghost') {
       border = tint('borderGray', 1);
       hoverBorder = tint('darkerBorderGray', 1);
     }
-    const textColor =
-      v === 'solid'
-        ? baseIsWhite
-          ? tint('darkerGray', 1)
-          : '#fff'
-        : baseIsWhite
-        ? tint('darkerGray', 1)
-        : tint(baseColorKey, 1);
+
+    const textColor = baseIsWhite
+      ? tint('darkerGray', 1)
+      : v === 'solid'
+      ? '#fff'
+      : tint(baseColorKey, 1);
+    // solid keeps its text color on hover, so this is only read by the others
     const hoverTextColor =
-      v === 'solid'
-        ? textColor
-        : hoverColorKey === 'white'
-        ? tint('darkerGray', 1)
-        : tint(hoverColorKey, 1);
+      hoverColorKey === 'white' ? tint('darkerGray', 1) : tint(hoverColorKey, 1);
 
     const skeuoBox =
       resolvedTone === 'raised'
@@ -193,7 +131,7 @@ export default function Button(props: ButtonProps) {
       color: ${textColor};
       background: ${bg};
       border: 1px solid ${border};
-      ${stretch ? '' : `border-radius: ${radius}`};
+      border-radius: ${radius};
       transition: background 0.18s ease, color 0.18s ease,
         border-color 0.18s ease, box-shadow 0.18s ease;
       ${stretch ? 'width: 100%;' : ''}
@@ -204,9 +142,11 @@ export default function Button(props: ButtonProps) {
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
 
+      /* outline rather than box-shadow, so a raised button keeps its shadow
+         while focused. Matches the focus treatment in components/Modal. */
       &:focus-visible {
-        outline: 0;
-        box-shadow: 0 0 0 3px ${tint(baseColorKey, 0.32)};
+        outline: 2px solid ${Color.logoBlue()};
+        outline-offset: 2px;
       }
 
       @media (hover: hover) and (pointer: fine) {
@@ -220,7 +160,7 @@ export default function Button(props: ButtonProps) {
       @media (max-width: ${mobileMaxWidth}) {
         font-size: ${size === 'lg' ? '1.5rem' : '1.3rem'};
         padding: ${mobilePadding ?? `${padY} ${padX}`};
-        ${stretch ? '' : `border-radius: ${mobileBorderRadius || radius}`};
+        border-radius: ${mobileBorderRadius || radius};
       }
     `;
   }, [
@@ -243,18 +183,18 @@ export default function Button(props: ButtonProps) {
 
   return (
     <button
-      data-filled={resolvedVariant === 'solid' ? 'true' : undefined}
+      type="button"
       aria-label={ariaLabel}
       aria-pressed={ariaPressed}
       aria-disabled={isDisabled}
       disabled={isDisabled}
-      style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
-      className={`${cssClass} ${className} unselectable`}
+      style={style}
+      className={cx(cssClass, className, 'unselectable')}
       onClick={isDisabled ? undefined : (e) => onClick(e)}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {finalChildren}
+      {children}
       {loading && (
         <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
       )}
