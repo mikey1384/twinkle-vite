@@ -182,6 +182,10 @@ export default function BuildList({
           activeTab,
           buildStudio
         });
+  const activeScrollAnchorKey = getBuildListScrollPositionPathname(
+    activeTab,
+    activeBrowseMode
+  );
   const hasCanonicalListUrl = Boolean(
     urlTab && (!isPublicBrowseTab(urlTab) || urlBrowseMode)
   );
@@ -303,7 +307,7 @@ export default function BuildList({
   const buildStudioPreferenceSaveQueueRef = useRef<Promise<void>>(
     Promise.resolve()
   );
-  const tabChangeInitialScrollRef = useRef(false);
+  const initialScrollAnchorKeyRef = useRef('');
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
   const [myBuildsLoading, setMyBuildsLoading] = useState(true);
   const [browseLoading, setBrowseLoading] = useState(false);
@@ -870,37 +874,39 @@ export default function BuildList({
               />
             ) : (
               <Results
-              activeTab={activeTab}
-              activeTabLabel={activeTabConfig.label}
-              anchorKey={getBuildListScrollPositionPathname(activeTab)}
-              initialScrollToList={tabChangeInitialScrollRef.current}
-              initialScrollTargetRef={listInitialScrollRef}
-              browseBuilds={browseBuilds}
-              browseHasMore={Boolean(browseLoadMoreButton)}
-              browseLoading={browseLoading || browsePending}
-              browseLoadingMore={browseLoadingMore}
-              builds={builds}
-              color={profileTheme}
-              displayedMyBuilds={displayedMyBuilds}
-              isBuildSearchActive={isBuildSearchActive}
-              isMyBuildsTab={isMyBuildsTab}
-              myBuildsLoading={
-                myBuildsLoading && !myBuildsLoadedForCurrentUser
-              }
-              promptInput={promptInput}
-              searchQuery={buildSearchQuery}
-              creatingFromPrompt={creatingFromPrompt}
-              runtimeBackTo={`${location.pathname}${location.search}${location.hash}`}
-              onAddDescription={setEditingBuild}
-              onFavoriteChange={handleBuildFavoriteChange}
-              onFavoriteError={handleBuildFavoriteError}
-              onFavoriteStart={handleBuildFavoriteStart}
-              onLoadMoreBrowseBuilds={handleLoadMoreBrowseBuilds}
-              onOpenForkHistory={setForkHistoryBuildId}
-              onPromptInputChange={setPromptInput}
-              onStartFromPrompt={handleStartFromPrompt}
-              onTagClick={handleBuildTagClick}
-            />
+                activeTab={activeTab}
+                activeTabLabel={activeTabConfig.label}
+                anchorKey={activeScrollAnchorKey}
+                initialScrollToList={
+                  initialScrollAnchorKeyRef.current === activeScrollAnchorKey
+                }
+                initialScrollTargetRef={listInitialScrollRef}
+                browseBuilds={browseBuilds}
+                browseHasMore={Boolean(browseLoadMoreButton)}
+                browseLoading={browseLoading || browsePending}
+                browseLoadingMore={browseLoadingMore}
+                builds={builds}
+                color={profileTheme}
+                displayedMyBuilds={displayedMyBuilds}
+                isBuildSearchActive={isBuildSearchActive}
+                isMyBuildsTab={isMyBuildsTab}
+                myBuildsLoading={
+                  myBuildsLoading && !myBuildsLoadedForCurrentUser
+                }
+                promptInput={promptInput}
+                searchQuery={buildSearchQuery}
+                creatingFromPrompt={creatingFromPrompt}
+                runtimeBackTo={`${location.pathname}${location.search}${location.hash}`}
+                onAddDescription={setEditingBuild}
+                onFavoriteChange={handleBuildFavoriteChange}
+                onFavoriteError={handleBuildFavoriteError}
+                onFavoriteStart={handleBuildFavoriteStart}
+                onLoadMoreBrowseBuilds={handleLoadMoreBrowseBuilds}
+                onOpenForkHistory={setForkHistoryBuildId}
+                onPromptInputChange={setPromptInput}
+                onStartFromPrompt={handleStartFromPrompt}
+                onTagClick={handleBuildTagClick}
+              />
             )}
           </div>
         </main>
@@ -1002,16 +1008,15 @@ export default function BuildList({
 
   function handleTabChange(tab: BuildListTab) {
     if (tab !== activeTab) {
-      tabChangeInitialScrollRef.current = true;
-      onSetBuildStudioActiveTab(tab);
-      navigate(
-        getBuildListTabPath(
-          tab,
-          isPublicBrowseTab(tab)
-            ? getBuildListBrowseMode({ activeTab: tab, buildStudio })
-            : undefined
-        )
+      const nextBrowseMode = isPublicBrowseTab(tab)
+        ? getBuildListBrowseMode({ activeTab: tab, buildStudio })
+        : undefined;
+      initialScrollAnchorKeyRef.current = getBuildListScrollPositionPathname(
+        tab,
+        nextBrowseMode
       );
+      onSetBuildStudioActiveTab(tab);
+      navigate(getBuildListTabPath(tab, nextBrowseMode));
       void persistBuildStudioState({ activeTab: tab });
     }
   }
@@ -1020,6 +1025,10 @@ export default function BuildList({
     if (!isPublicBrowseTab(activeTab) || browseMode === activeBrowseMode) {
       return;
     }
+    initialScrollAnchorKeyRef.current = getBuildListScrollPositionPathname(
+      activeTab,
+      browseMode
+    );
     onSetBuildStudioBrowseMode({ tab: activeTab, browseMode });
     navigate(getBuildListTabPath(activeTab, browseMode));
     void persistBuildStudioState({
@@ -1158,7 +1167,13 @@ function getIsActivityRailVisible() {
   return window.innerWidth > breakpoint;
 }
 
-function getBuildListScrollPositionPathname(tab: BuildListTab) {
+function getBuildListScrollPositionPathname(
+  tab: BuildListTab,
+  browseMode?: BuildStudioBrowseMode
+) {
+  if (isPublicBrowseTab(tab)) {
+    return `/build:${tab}:${normalizeBuildListBrowseMode(browseMode)}`;
+  }
   return `/build:${tab}`;
 }
 
