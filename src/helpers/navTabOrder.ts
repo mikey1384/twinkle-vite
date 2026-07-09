@@ -19,6 +19,23 @@ export const NAV_TAB_KEYS = [
 
 export type NavTabKey = (typeof NAV_TAB_KEYS)[number];
 
+// The "sacred" default tabs: a fixed, contiguous block rendered in exactly
+// this order. Pinned tabs sit to their LEFT; every other tab (profile, the
+// dynamic content tab, and extracted/added custom tabs) sits to their RIGHT.
+// Nothing may ever appear between them or reorder them. This is a render-time
+// partition only — the stored order/sync model is unchanged.
+export const SACRED_DEFAULT_KEYS = [
+  'home',
+  'explore',
+  'missions',
+  'chat',
+  'build'
+] as const;
+
+export function isSacredDefaultKey(value: string): boolean {
+  return (SACRED_DEFAULT_KEYS as readonly string[]).includes(value);
+}
+
 // a page the user captured out of the dynamic tab, either pinned
 // (icon-only, far left) or as a regular reorderable tab
 export interface CustomNavTab {

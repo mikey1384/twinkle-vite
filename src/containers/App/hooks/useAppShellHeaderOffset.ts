@@ -1,10 +1,15 @@
 import { useLayoutEffect } from 'react';
 import {
+  APP_SHELL_BOTTOM_OFFSET_VAR,
   APP_SHELL_HEADER_OFFSET_FALLBACK,
   APP_SHELL_HEADER_SELECTOR,
   APP_SHELL_TOP_OFFSET_VAR
 } from '~/constants/appShell';
-import { desktopMinWidth } from '~/constants/css';
+import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+
+// Height of the fixed mobile bottom nav (matches the Header's mobile height).
+const MOBILE_NAV_RESERVE =
+  'calc(var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px))';
 
 export default function useAppShellHeaderOffset({
   headerVisible,
@@ -53,6 +58,27 @@ export default function useAppShellHeaderOffset({
       root.style.setProperty(APP_SHELL_TOP_OFFSET_VAR, offset);
     }
 
+    // Phones show the global nav as a fixed BOTTOM bar. Reserve its height so
+    // the build runtime overlay (which reads this var) sits above it. 0 when the
+    // header is hidden (desktop top-header path, or the build super-collapse).
+    function shouldReserveMobileNav() {
+      return (
+        headerVisible &&
+        window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches
+      );
+    }
+
+    function setBottomOffset() {
+      const offset = shouldReserveMobileNav() ? MOBILE_NAV_RESERVE : '0px';
+      if (
+        root.style.getPropertyValue(APP_SHELL_BOTTOM_OFFSET_VAR).trim() ===
+        offset
+      ) {
+        return;
+      }
+      root.style.setProperty(APP_SHELL_BOTTOM_OFFSET_VAR, offset);
+    }
+
     function repairOverlapIfNeeded() {
       repairFrame = null;
       if (!shouldOffsetDesktopHeader()) return;
@@ -69,6 +95,7 @@ export default function useAppShellHeaderOffset({
     function measureAndApplyOffset() {
       measureFrame = null;
       setHeaderOffset(readHeaderOffset());
+      setBottomOffset();
       if (repairFrame !== null) {
         window.cancelAnimationFrame(repairFrame);
       }

@@ -65,7 +65,9 @@ export default function MobileSideMenuNav({
           }
         }
         @media (max-width: ${mobileMaxWidth}) {
-          width: 100%;
+          /* fixed anchor at the left end of the bottom bar (never scrolls) */
+          width: auto;
+          flex-shrink: 0;
           justify-content: center;
           font-size: 3rem;
           nav {

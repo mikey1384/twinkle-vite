@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Window from './Window';
 
-export default function AdminLogWindow({
+export default function AdminTelemetryWindow({
   initialPosition
 }: {
   initialPosition: { x: number; y: number };

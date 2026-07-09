@@ -1,5 +1,11 @@
 import { Dispatch } from '~/types';
 
+export interface AdminTelemetryEvent {
+  message: string;
+  notifyAdmin: boolean;
+  timestamp: number;
+}
+
 export default function ManagementActions(dispatch: Dispatch) {
   return {
     onAddAccountType(accountType: string) {
@@ -8,15 +14,15 @@ export default function ManagementActions(dispatch: Dispatch) {
         accountType
       });
     },
-    onAddAdminLog(adminLog: object) {
+    onAddAdminTelemetry(adminTelemetryEvent: AdminTelemetryEvent) {
       return dispatch({
-        type: 'ADD_ADMIN_LOG',
-        adminLog
+        type: 'ADD_ADMIN_TELEMETRY',
+        adminTelemetryEvent
       });
     },
-    onClearAdminLogs() {
+    onClearAdminTelemetry() {
       return dispatch({
-        type: 'CLEAR_ADMIN_LOGS'
+        type: 'CLEAR_ADMIN_TELEMETRY'
       });
     },
     onApproveRequest({

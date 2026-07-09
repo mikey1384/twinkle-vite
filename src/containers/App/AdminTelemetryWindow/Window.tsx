@@ -2,15 +2,18 @@ import React, { useState, useCallback, useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useManagementContext } from '~/contexts';
+import type { AdminTelemetryEvent } from '~/contexts/Management/actions';
 
 export default function Window({
   initialPosition
 }: {
   initialPosition: { x: number; y: number };
 }) {
-  const adminLogs = useManagementContext((v) => v.state.adminLogs);
-  const onClearAdminLogs = useManagementContext(
-    (v) => v.actions.onClearAdminLogs
+  const adminTelemetryEvents = useManagementContext(
+    (v) => v.state.adminTelemetryEvents
+  );
+  const onClearAdminTelemetry = useManagementContext(
+    (v) => v.actions.onClearAdminTelemetry
   );
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
@@ -114,7 +117,7 @@ export default function Window({
             align-items: center;
           `}
         >
-          <span>Admin Logs</span>
+          <span>Admin Telemetry</span>
           <button
             className={`close-button ${css`
               background: none;
@@ -128,7 +131,7 @@ export default function Window({
               }
             `}`}
             onClick={() => {
-              onClearAdminLogs();
+              onClearAdminTelemetry();
             }}
           >
             ×
@@ -142,9 +145,18 @@ export default function Window({
           `}
         >
           <div>
-            {adminLogs.map((adminLog: string, index: number) => (
-              <div key={index}>{adminLog}</div>
-            ))}
+            {adminTelemetryEvents.map(
+              (adminTelemetryEvent: AdminTelemetryEvent, index: number) => (
+                <div key={index}>
+                  <span>
+                    {new Date(
+                      adminTelemetryEvent.timestamp
+                    ).toLocaleTimeString()}
+                  </span>
+                  <span> {adminTelemetryEvent.message}</span>
+                </div>
+              )
+            )}
           </div>
         </div>
       </div>

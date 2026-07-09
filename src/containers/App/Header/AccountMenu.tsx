@@ -11,7 +11,11 @@ import {
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import {
+  addCommasToNumber,
+  abbreviateNumber
+} from '~/helpers/stringHelpers';
+import useTabletOrientation from '~/helpers/hooks/useTabletOrientation';
 import { teardownChatPushOnLogout } from '~/helpers/desktopNotifications';
 import { trackEvent } from '~/helpers/analytics';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -35,6 +39,9 @@ export default function AccountMenu({
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  // iPad portrait is tight, so abbreviate the balance (1.2M / 12.3K) like the
+  // mobile nav does; landscape/desktop keep the full comma-grouped number
+  const { isTabletPortrait } = useTabletOrientation();
   const isOnProfilePage = useMemo(
     () => location.pathname === `/users/${username}`,
     [location, username]
@@ -114,15 +121,27 @@ export default function AccountMenu({
   }, [isOnProfilePage, managementLevel, username]);
 
   return (
-    <div className="desktop" style={{ display: 'flex', alignItems: 'center' }}>
+    <div
+      className="desktop"
+      style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
+    >
       {userId &&
         (typeof twinkleCoins === 'number' ? (
           <div
-            style={{ marginRight: '1rem', cursor: 'pointer' }}
+            style={{
+              marginRight: '1rem',
+              cursor: 'pointer',
+              // keep the coin icon + count on one line so a large balance
+              // never wraps and spills below the header (esp. iPad portrait)
+              whiteSpace: 'nowrap',
+              flexShrink: 0
+            }}
             onClick={onSetBalanceModalShown}
           >
             <Icon icon="coins" style={{ marginRight: '0.5rem' }} />{' '}
-            {addCommasToNumber(twinkleCoins)}
+            {isTabletPortrait
+              ? abbreviateNumber(twinkleCoins)
+              : addCommasToNumber(twinkleCoins)}
           </div>
         ) : (
           <Icon style={{ marginRight: '1rem' }} icon="spinner" pulse />

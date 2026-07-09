@@ -37,6 +37,10 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const BalanceModal = lazyWithRetry(() => import('./BalanceModal'));
 
+function isBuildAppRuntimePathname(pathname: string) {
+  return /^\/app\/\d+(?:\/|$)/.test(pathname);
+}
+
 interface HeaderProps {
   onMobileMenuOpen: any;
   style?: React.CSSProperties;
@@ -116,6 +120,7 @@ export default function Header({
   }, []);
 
   useEffect(() => {
+    if (isBuildAppRuntimePathname(pathname)) return;
     const { section, isSubsection } = getSectionFromPathname(pathname) || {};
     const newNotiNum =
       (pathname === '/' ? numNewPosts : 0) + numNewNotis + numUnreads;
@@ -278,7 +283,7 @@ export default function Header({
             width: '100%'
           }}
         >
-          <TwinkleLogo style={{ marginLeft: '3rem' }} />
+          <TwinkleLogo style={{ marginLeft: '3rem', flexShrink: 0 }} />
           <MainNavs
             isAIChat={isAIChat}
             loggedIn={loggedIn}
@@ -297,6 +302,7 @@ export default function Header({
           <AccountMenu
             onSetBalanceModalShown={() => setBalanceModalShown(true)}
             className={css`
+              flex-shrink: 0;
               margin-right: 3rem;
               @media (max-width: ${mobileMaxWidth}) {
                 margin-right: 0;

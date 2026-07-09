@@ -1,5 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState
+} from 'react';
+import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import Nav from './Nav';
+import Icon from '~/components/Icon';
 import DropdownList from '~/components/DropdownList';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -17,15 +25,25 @@ export interface NavTabDescriptor {
   isHome?: boolean;
   isUsingChat?: boolean;
   profileUsername?: string;
+  buildAppId?: string;
+  audioMuted?: boolean;
 }
 
 export interface TabMenuItem {
   label: string;
+  icon?: string;
+  disabled?: boolean;
   onClick: () => void;
 }
 
+// the defaults and the extras are two independent drag zones; a drag is
+// confined to whichever zone it began in, so neither can cross into the other
+// (or into the pinned cluster)
+type DragZone = 'default' | 'extra';
+
 interface DragState {
   key: string;
+  zone: DragZone;
   fromIndex: number;
   toIndex: number;
   dx: number;
@@ -34,15 +52,22 @@ interface DragState {
 
 const DRAG_THRESHOLD_PX = 5;
 const SETTLE_MS = 160;
+// touch: hold this long (finger still) to open a tab's menu (no right-click)
+const LONGPRESS_MENU_MS = 450;
+const LONGPRESS_MOVE_CANCEL_PX = 10;
 const HINT_DWELL_MS = 1200;
 const HINT_AUTO_HIDE_MS = 5000;
+const TAB_MAX_WIDTH = '15rem';
+// the pinned area shows at most this many tabs at once, then pages via its own
+// scroll — it never hides behind the main tabs' scroll
+const PINNED_MAX_VISIBLE = 5;
+// iPad portrait is narrow: show just 1.5 pinned tabs so they don't crowd the
+// bar (the half-tab hints there's more to scroll)
+const PINNED_MAX_VISIBLE_PORTRAIT = 1.5;
 
 const menuHintClass = css`
-  position: absolute;
-  top: 100%;
-  left: 50%;
+  position: fixed;
   transform: translateX(-50%);
-  margin-top: 0.6rem;
   padding: 0.5rem 1rem;
   white-space: nowrap;
   background: ${Color.black(0.85)};
@@ -51,19 +76,102 @@ const menuHintClass = css`
   font-weight: 600;
   border-radius: 8px;
   pointer-events: none;
-  z-index: 3;
+  z-index: 100000000;
 `;
 
 const stripClass = css`
   height: ${APP_SHELL_HEADER_OFFSET_FALLBACK};
   display: flex;
   align-items: flex-end;
+  min-width: 0;
+  flex: 0 1 auto;
+  /* the tab area lives in a bounded lane: it sizes to its tabs (centered by
+     the header's space-between) but never sprawls across the whole header —
+     once the tabs exceed the lane they scroll within it (chevrons) instead of
+     jamming edge-to-edge against the coins */
+  max-width: 76rem;
+  overflow: hidden;
+`;
+
+// the pinned scroll area holds its width (never yields to the main tabs) so
+// pinned tabs are ALWAYS visible; the main area takes the rest and shrinks
+const pinnedAreaClass = css`
+  flex-shrink: 0;
+`;
+const mainAreaClass = css`
+  flex: 0 1 auto;
+  min-width: 0;
+`;
+
+// a self-scrolling row: [chevron] [scroll container] [chevron]
+const scrollRowClass = css`
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+`;
+
+// the dock of defaults that have scrolled out of the main view: fixed between
+// the pinned area and the main scroll, icon-only, never scrolls
+const collapsedDockClass = css`
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+`;
+
+const scrollButtonClass = css`
+  flex-shrink: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 0.9rem;
+  button {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: ${Color.gray()};
+    -webkit-tap-highlight-color: transparent;
+    &:hover {
+      background: ${Color.wellGray()};
+      color: ${Color.darkerGray()};
+    }
+    &:disabled {
+      opacity: 0.25;
+      cursor: default;
+      background: transparent;
+      color: ${Color.gray()};
+    }
+  }
+`;
+
+// pinned cluster + draggable tabs share ONE horizontal scroller so an
+// overcrowded strip can always be scrolled to reach any tab (pinned tabs
+// are not in the drag zone, but they must still be reachable when many)
+const scrollContainerClass = css`
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const dragZoneClass = css`
   height: 100%;
   display: flex;
   align-items: flex-end;
+  flex-shrink: 0;
 `;
 
 const tabItemClass = css`
@@ -71,6 +179,11 @@ const tabItemClass = css`
   display: flex;
   align-items: flex-end;
   height: 100%;
+  flex-shrink: 0;
+  max-width: ${TAB_MAX_WIDTH};
+  /* touch: our long-press opens the tab menu, so suppress the iOS callout /
+     text-selection that a native long-press would trigger */
+  -webkit-touch-callout: none;
   & + &::before {
     content: '';
     position: absolute;
@@ -89,24 +202,301 @@ const tabItemClass = css`
   }
 `;
 
+const audioTabItemClass = css`
+  a {
+    padding-right: 2.85rem !important;
+  }
+`;
+
+const audioMuteButtonClass = css`
+  position: absolute;
+  right: 0.45rem;
+  bottom: 1.18rem;
+  z-index: 3;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: ${Color.gray()};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: ${Color.wellGray()};
+    color: ${Color.darkerGray()};
+  }
+
+  &[data-muted='true'] {
+    color: ${Color.logoBlue()};
+  }
+`;
+
+// the tab being dragged must read as a solid lifted tab (not floating
+// icon+text): give it the active tab's opaque body + outline so it covers
+// whatever it's dragged over. z-index (from getTabStyle) keeps it on top; a
+// drop shadow would be clipped by the strip's overflow, so the outline does
+// the lifting instead. No bottom border (like the active tab, it merges into
+// the header's bottom edge). Also hide the separators flanking it.
+const draggingTabClass = css`
+  z-index: 2;
+  a {
+    background: ${Color.white()} !important;
+    border-color: var(--ui-border) !important;
+  }
+  &::before,
+  & + &::before {
+    display: none;
+  }
+`;
+
+// A horizontally self-scrolling row of tabs with its own overflow chevrons,
+// wheel-to-scroll, and active-tab auto-scroll. Two of these run side by side —
+// pinned and main — so each scrolls INDEPENDENTLY (scrolling the main tabs can
+// never push the pinned tabs out of view). `signature` changes whenever the
+// contained tab set changes, so overflow/cap state recomputes. `maxVisible`
+// caps the row to the first N items' width (pinned = 5), paging to reach more.
+function ScrollableRow({
+  children,
+  signature,
+  maxVisible,
+  wrapperClassName,
+  onScrollChange,
+  scrollToEndOnLoad
+}: {
+  children: React.ReactNode;
+  signature: string;
+  maxVisible?: number;
+  wrapperClassName?: string;
+  // fired on every scroll/resize so the parent can react to the scroll offset
+  // (used to dock defaults that have scrolled out of view)
+  onScrollChange?: () => void;
+  // on first load, if the row overflows, jump to the end (most recent tab)
+  scrollToEndOnLoad?: boolean;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [scrollState, setScrollState] = useState({
+    overflowing: false,
+    atStart: true,
+    atEnd: true
+  });
+  const [capWidth, setCapWidth] = useState<number | undefined>(undefined);
+  const didInitialEndScrollRef = useRef(false);
+  const { pathname, search } = useLocation();
+
+  // First load only: once the row's tabs are present, if it overflows, jump to
+  // the END so the most recently added tab is shown (unless a tab in this row
+  // is active, in which case the active-scroll effect below owns the scroll).
+  useEffect(() => {
+    if (!scrollToEndOnLoad || didInitialEndScrollRef.current) return;
+    if (!signature) return; // tabs not loaded yet
+    const raf = requestAnimationFrame(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      didInitialEndScrollRef.current = true; // one-shot per page load
+      if (el.scrollWidth <= el.clientWidth + 1) return; // fits, nothing to do
+      if (el.querySelector('a.active')) return; // active tab wins
+      el.scrollLeft = el.scrollWidth;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [scrollToEndOnLoad, signature]);
+
+  // cap the visible width to the first `maxVisible` tabs; beyond that the row
+  // pages via its scroll instead of growing
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !maxVisible) {
+      setCapWidth(undefined);
+      return;
+    }
+    const kids = [...el.children] as HTMLElement[];
+    if (kids.length <= maxVisible) {
+      setCapWidth(undefined);
+      return;
+    }
+    // maxVisible may be fractional (e.g. 1.5 shows one whole tab plus half of
+    // the next, hinting there's more to scroll)
+    let width = 0;
+    const whole = Math.floor(maxVisible);
+    for (let i = 0; i < whole && i < kids.length; i++) {
+      width += kids[i].getBoundingClientRect().width;
+    }
+    const frac = maxVisible - whole;
+    if (frac > 0 && kids[whole]) {
+      width += kids[whole].getBoundingClientRect().width * frac;
+    }
+    setCapWidth(width);
+  }, [maxVisible, signature]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateScrollState();
+    const observer = new ResizeObserver(() => updateScrollState());
+    observer.observe(el);
+    return () => observer.disconnect();
+    // updateScrollState only reads refs/setState/the onScrollChange prop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, capWidth]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    function handleWheelNative(event: WheelEvent) {
+      if (!el || el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      el.scrollLeft += event.deltaY;
+      event.preventDefault();
+    }
+    el.addEventListener('wheel', handleWheelNative, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheelNative);
+  }, []);
+
+  // Keep the active tab in view — on route change AND on tab-set change (a
+  // freshly spawned tab is active but starts off-screen far-right). Deferred
+  // two frames so the new tab (and any cap/dock re-layout) has settled, and we
+  // scroll ONLY this container's scrollLeft (native scrollIntoView is flaky in
+  // horizontal overflow rows and can yank ancestor scrollers).
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const raf = requestAnimationFrame(scrollActiveIntoView);
+    // A freshly spawned tab settles over several frames (spawn → state →
+    // reconcile → layout), so re-run a couple times to land it in view even
+    // when it isn't at its final position on the first frame.
+    const timers = [
+      window.setTimeout(scrollActiveIntoView, 120),
+      window.setTimeout(scrollActiveIntoView, 340)
+    ];
+    return () => {
+      cancelAnimationFrame(raf);
+      timers.forEach(clearTimeout);
+    };
+  }, [pathname, search, signature]);
+
+  return (
+    <div className={`${scrollRowClass} ${wrapperClassName || ''}`}>
+      {scrollState.overflowing && (
+        <div className={scrollButtonClass}>
+          <button
+            type="button"
+            disabled={scrollState.atStart}
+            onClick={() => scrollByPage(-1)}
+            aria-label="Scroll tabs left"
+          >
+            <Icon icon="chevron-left" />
+          </button>
+        </div>
+      )}
+      <div
+        ref={scrollRef}
+        className={scrollContainerClass}
+        style={capWidth ? { maxWidth: `${capWidth}px` } : undefined}
+        onScroll={updateScrollState}
+      >
+        {children}
+      </div>
+      {scrollState.overflowing && (
+        <div className={scrollButtonClass}>
+          <button
+            type="button"
+            disabled={scrollState.atEnd}
+            onClick={() => scrollByPage(1)}
+            aria-label="Scroll tabs right"
+          >
+            <Icon icon="chevron-right" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  function updateScrollState() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const overflowing = el.scrollWidth > el.clientWidth + 1;
+    const atStart = el.scrollLeft <= 1;
+    const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+    setScrollState((prev) =>
+      prev.overflowing === overflowing &&
+      prev.atStart === atStart &&
+      prev.atEnd === atEnd
+        ? prev
+        : { overflowing, atStart, atEnd }
+    );
+    onScrollChange?.();
+  }
+
+  function scrollActiveIntoView() {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (el.scrollWidth <= el.clientWidth + 1) return; // nothing to scroll
+    const active = el.querySelector('a.active') as HTMLElement | null;
+    if (!active) return;
+    // measure the whole tab WRAPPER (link + any trailing affordance like the
+    // audio-mute button), not just the <a> — otherwise a build-app tab reveals
+    // only its link and the mute button on the right stays clipped.
+    const wrapper = (active.parentElement?.parentElement ??
+      active) as HTMLElement;
+    const pad = 12;
+    const cRect = el.getBoundingClientRect();
+    const aRect = wrapper.getBoundingClientRect();
+    let delta = 0;
+    // reveal the RIGHT edge first: a freshly focused tab is usually off to the
+    // right, and we want its full width (incl. the mute button) shown
+    if (aRect.right > cRect.right - pad) {
+      delta = aRect.right - (cRect.right - pad);
+    } else if (aRect.left < cRect.left + pad) {
+      delta = aRect.left - (cRect.left + pad);
+    }
+    if (delta !== 0) {
+      el.scrollBy({ left: delta, behavior: 'smooth' });
+    }
+  }
+
+  // page by (almost) the visible width so each chevron click advances a full
+  // "scroll state" (~5 pinned tabs)
+  function scrollByPage(direction: 1 | -1) {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({
+      left: direction * Math.max(120, el.clientWidth * 0.9),
+      behavior: 'smooth'
+    });
+  }
+}
+
 export default function TabStrip({
   pinnedTabs,
+  defaultTabs,
   tabs,
   onMove,
   menuItemsForTab,
   showMenuHint,
-  onMenuOpen
+  onMenuOpen,
+  onToggleAudioMuted,
+  isTabletPortrait
 }: {
   pinnedTabs: NavTabDescriptor[];
+  defaultTabs: NavTabDescriptor[];
   tabs: NavTabDescriptor[];
   onMove: (arg: { sourceKey: string; targetKey: string }) => void;
   menuItemsForTab?: (key: string) => TabMenuItem[] | null;
   showMenuHint?: boolean;
   onMenuOpen?: () => void;
+  onToggleAudioMuted?: (buildAppId: string) => void;
+  isTabletPortrait?: boolean;
 }) {
+  const defaultZoneRef = useRef<HTMLDivElement | null>(null);
   const dragZoneRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef<{
     key: string;
+    zone: DragZone;
     index: number;
     startX: number;
   } | null>(null);
@@ -120,6 +510,21 @@ export default function TabStrip({
   const didDragRef = useRef(false);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
+  // the drag runs off window listeners (see handlePointerDown) so a mid-drag
+  // header re-render remounting the tab node can't strand it; those listeners
+  // must read live values, so mirror everything they touch into refs
+  const dragStateRef = useRef<DragState | null>(dragState);
+  dragStateRef.current = dragState;
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+  const defaultTabsRef = useRef(defaultTabs);
+  defaultTabsRef.current = defaultTabs;
+  const onMoveRef = useRef(onMove);
+  onMoveRef.current = onMove;
+  const windowDragCleanupRef = useRef<null | (() => void)>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchGestureRef = useRef<{ armed: boolean } | null>(null);
+  const didLongPressRef = useRef(false);
   // only the anchor + tab key are stored; the items are derived LIVE at
   // render time so callbacks never close over pre-adoption state (server
   // nav state can arrive while the menu is open)
@@ -141,7 +546,18 @@ export default function TabStrip({
   const hintDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintShownThisSessionRef = useRef(false);
-  const [hintTabKey, setHintTabKey] = useState<string | null>(null);
+  const hintAnchorElRef = useRef<HTMLElement | null>(null);
+  const [hintAnchor, setHintAnchor] = useState<{
+    key: string;
+    rect: DOMRect;
+  } | null>(null);
+  // how many sacred defaults have scrolled out of the main view on each side and
+  // are shown as icon chips in a dock instead (the originals stay in the scroll).
+  // Two docks, one per edge: the active-tab auto-scroll pins whichever tab is
+  // active, so a leading default (e.g. Home) being active pushes the trailing
+  // defaults off the RIGHT — those need a dock too, or they vanish entirely.
+  const [collapsedLeadingCount, setCollapsedLeadingCount] = useState(0);
+  const [collapsedTrailingCount, setCollapsedTrailingCount] = useState(0);
 
   useEffect(() => {
     return () => {
@@ -154,79 +570,92 @@ export default function TabStrip({
       if (hintHideTimerRef.current) {
         clearTimeout(hintHideTimerRef.current);
       }
+      windowDragCleanupRef.current?.();
+      endTouchGesture();
     };
   }, []);
 
+  const pinnedSignature = pinnedTabs.map((tab) => tab.key).join(',');
+  const mainSignature = `${defaultTabs
+    .map((tab) => tab.key)
+    .join(',')}|${tabs.map((tab) => tab.key).join(',')}`;
+
   return (
     <div data-nav-tab-strip="true" className={`desktop ${stripClass}`}>
-      {pinnedTabs.map((tab) => (
-        <div
-          key={tab.key}
-          className={tabItemClass}
-          title={
-            tab.minimized && typeof tab.label === 'string'
-              ? tab.label
-              : undefined
+      {/* pinned area: its OWN scroll, always visible, up to 5 icon tabs */}
+      {pinnedTabs.length > 0 && (
+        <ScrollableRow
+          signature={pinnedSignature}
+          maxVisible={
+            isTabletPortrait
+              ? PINNED_MAX_VISIBLE_PORTRAIT
+              : PINNED_MAX_VISIBLE
           }
-          onContextMenu={(event) => handleContextMenu(event, tab.key)}
-          onMouseEnter={() => handleHintDwellStart(tab.key)}
-          onMouseLeave={handleHintDismiss}
+          wrapperClassName={pinnedAreaClass}
+          scrollToEndOnLoad
         >
-          <Nav
-            variant="tab"
-            tabKind="pinned"
-            className="desktop"
-            to={tab.to}
-            imgLabel={tab.imgLabel}
-            exactActive={tab.exactActive}
-          >
-            {tab.minimized ? null : tab.label}
-          </Nav>
-          {hintTabKey === tab.key && (
-            <div className={menuHintClass}>Right-click for options</div>
+          {pinnedTabs.map((tab) => renderStaticTab(tab, 'pinned'))}
+        </ScrollableRow>
+      )}
+      {/* leading dock: defaults scrolled off the LEFT edge, shown as icon chips
+          (the originals stay in the main scroll — this is additive) */}
+      {collapsedLeadingCount > 0 && (
+        <div
+          data-collapsed-dock="leading"
+          className={collapsedDockClass}
+        >
+          {defaultTabs
+            .slice(0, Math.min(collapsedLeadingCount, defaultTabs.length))
+            .map((tab) => renderDockChip(tab))}
+        </div>
+      )}
+      {/* main area: defaults + extras, its own independent scroll */}
+      <ScrollableRow
+        signature={mainSignature}
+        wrapperClassName={mainAreaClass}
+        onScrollChange={recomputeCollapsedDefaults}
+      >
+        {/* sacred defaults — reorderable AMONG THEMSELVES, but their own zone
+            so a drag can't cross into pinned or extras */}
+        <div ref={defaultZoneRef} className={dragZoneClass}>
+          {defaultTabs.map((tab, index) =>
+            renderDraggableTab(tab, index, 'default')
           )}
         </div>
-      ))}
-      <div ref={dragZoneRef} className={dragZoneClass}>
-        {tabs.map((tab, index) => (
+        {/* extras (profile/dynamic/extracted) — draggable within their own
+            zone, always to the right of the defaults */}
+        <div ref={dragZoneRef} className={dragZoneClass}>
+          {tabs.map((tab, index) => renderDraggableTab(tab, index, 'extra'))}
+        </div>
+      </ScrollableRow>
+      {/* trailing dock: defaults scrolled off the RIGHT edge (e.g. when a
+          leading default like Home is active and pins the scroll), shown as
+          icon chips so a sacred default can never disappear entirely */}
+      {collapsedTrailingCount > 0 && (
+        <div
+          data-collapsed-dock="trailing"
+          className={collapsedDockClass}
+        >
+          {defaultTabs
+            .slice(
+              Math.max(0, defaultTabs.length - collapsedTrailingCount)
+            )
+            .map((tab) => renderDockChip(tab))}
+        </div>
+      )}
+      {hintAnchor &&
+        createPortal(
           <div
-            key={tab.key}
-            className={tabItemClass}
-            style={getTabStyle(index, tab.key)}
-            title={
-              tab.minimized && typeof tab.label === 'string'
-                ? tab.label
-                : undefined
-            }
-            onPointerDown={(event) => handlePointerDown(event, tab.key, index)}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerCancel}
-            onClickCapture={handleClickCapture}
-            onContextMenu={(event) => handleContextMenu(event, tab.key)}
-            onMouseEnter={() => handleHintDwellStart(tab.key)}
-            onMouseLeave={handleHintDismiss}
+            className={menuHintClass}
+            style={{
+              left: hintAnchor.rect.left + hintAnchor.rect.width / 2,
+              top: hintAnchor.rect.bottom + 6
+            }}
           >
-            <Nav
-              variant="tab"
-              tabKind={tab.kind}
-              className="desktop"
-              to={tab.to}
-              imgLabel={tab.imgLabel}
-              exactActive={tab.exactActive}
-              alert={tab.alert}
-              isHome={tab.isHome}
-              isUsingChat={tab.isUsingChat}
-              profileUsername={tab.profileUsername}
-            >
-              {tab.minimized ? null : tab.label}
-            </Nav>
-            {hintTabKey === tab.key && (
-              <div className={menuHintClass}>Right-click for options</div>
-            )}
-          </div>
-        ))}
-      </div>
+            Right-click for options
+          </div>,
+          document.body
+        )}
       {menu && menuItems && menuItems.length > 0 && (
         <DropdownList
           dropdownContext={{ x: menu.x, y: menu.y, width: 0, height: 0 }}
@@ -235,11 +664,24 @@ export default function TabStrip({
           {menuItems.map((item) => (
             <li
               key={item.label}
+              style={
+                item.disabled
+                  ? { opacity: 0.4, cursor: 'default', pointerEvents: 'none' }
+                  : undefined
+              }
+              aria-disabled={item.disabled || undefined}
               onClick={() => {
+                if (item.disabled) return;
                 setMenu(null);
                 item.onClick();
               }}
             >
+              {item.icon ? (
+                <Icon
+                  icon={item.icon}
+                  style={{ width: '1.4rem', opacity: 0.75 }}
+                />
+              ) : null}
               {item.label}
             </li>
           ))}
@@ -248,8 +690,210 @@ export default function TabStrip({
     </div>
   );
 
-  function getTabStyle(index: number, key: string): React.CSSProperties | undefined {
-    if (!dragState) return undefined;
+  // pinned + sacred-default tabs render identically (context menu + hint, no
+  // drag); only the visual kind differs. Shared to avoid duplicating the
+  // wrapper/Nav markup three times.
+  function renderStaticTab(
+    tab: NavTabDescriptor,
+    forcedKind?: 'pinned' | 'dynamic'
+  ) {
+    return (
+      <div
+        key={tab.key}
+        className={`${tabItemClass}${
+          tab.buildAppId ? ` ${audioTabItemClass}` : ''
+        }`}
+        title={typeof tab.label === 'string' ? tab.label : undefined}
+        onPointerDown={(event) => {
+          didLongPressRef.current = false;
+          startTouchGesture(event, tab.key, null);
+        }}
+        onClickCapture={handleClickCapture}
+        onContextMenu={(event) => handleContextMenu(event, tab.key)}
+        onMouseEnter={(event) =>
+          handleHintDwellStart(tab.key, event.currentTarget)
+        }
+        onMouseLeave={handleHintDismiss}
+      >
+        <Nav
+          variant="tab"
+          tabKind={forcedKind ?? tab.kind}
+          className="desktop"
+          to={tab.to}
+          imgLabel={tab.imgLabel}
+          exactActive={tab.exactActive}
+          alert={tab.alert}
+          isHome={tab.isHome}
+          isUsingChat={tab.isUsingChat}
+          profileUsername={tab.profileUsername}
+        >
+          {tab.minimized ? null : tab.label}
+        </Nav>
+        {renderAudioMuteButton(tab)}
+      </div>
+    );
+  }
+
+  function renderDraggableTab(
+    tab: NavTabDescriptor,
+    index: number,
+    zone: DragZone
+  ) {
+    return (
+      <div
+        key={tab.key}
+        className={`${tabItemClass}${
+          tab.buildAppId ? ` ${audioTabItemClass}` : ''
+        }${
+          dragState?.key === tab.key ? ` ${draggingTabClass}` : ''
+        }`}
+        style={getTabStyle(index, tab.key, zone)}
+        title={typeof tab.label === 'string' ? tab.label : undefined}
+        onPointerDown={(event) => handlePointerDown(event, tab.key, index, zone)}
+        onClickCapture={handleClickCapture}
+        onContextMenu={(event) => handleContextMenu(event, tab.key)}
+        onMouseEnter={(event) =>
+          handleHintDwellStart(tab.key, event.currentTarget)
+        }
+        onMouseLeave={handleHintDismiss}
+      >
+        <Nav
+          variant="tab"
+          tabKind={tab.kind}
+          className="desktop"
+          to={tab.to}
+          imgLabel={tab.imgLabel}
+          exactActive={tab.exactActive}
+          alert={tab.alert}
+          isHome={tab.isHome}
+          isUsingChat={tab.isUsingChat}
+          profileUsername={tab.profileUsername}
+        >
+          {tab.minimized ? null : tab.label}
+        </Nav>
+        {renderAudioMuteButton(tab)}
+      </div>
+    );
+  }
+
+  // an icon-only chip in the dock for a default that has scrolled out of the
+  // main view. Click-only (navigates); no drag, no context menu.
+  function renderDockChip(tab: NavTabDescriptor) {
+    return (
+      <div
+        key={tab.key}
+        className={tabItemClass}
+        title={typeof tab.label === 'string' ? tab.label : undefined}
+      >
+        <Nav
+          variant="tab"
+          tabKind={tab.kind}
+          className="desktop"
+          to={tab.to}
+          imgLabel={tab.imgLabel}
+          exactActive={tab.exactActive}
+          alert={tab.alert}
+          isHome={tab.isHome}
+          isUsingChat={tab.isUsingChat}
+        >
+          {null}
+        </Nav>
+      </div>
+    );
+  }
+
+  // A default is "docked" once it is MOSTLY hidden past an edge of the main
+  // viewport — less than half of its width still shows. "Mostly hidden" rather
+  // than "fully off-screen" matters because the active-tab auto-scroll parks the
+  // active tab a few px in from the edge (pad), so the neighbour just past it is
+  // clipped to a thin sliver, not fully gone; a strict fully-off test would
+  // leave that sliver tab undockable and effectively invisible. Because the tab
+  // and the scroller shift together as a dock grows, these tests are independent
+  // of the dock widths — no feedback loop. Leading and trailing counts can never
+  // overlap: trailing is clamped to the tabs not already counted as leading.
+  function recomputeCollapsedDefaults() {
+    const zone = defaultZoneRef.current;
+    const scroller = zone?.parentElement;
+    if (!zone || !scroller) return;
+    const rect = scroller.getBoundingClientRect();
+    const mainLeft = rect.left;
+    const mainRight = rect.right;
+    const children = [...zone.children] as HTMLElement[];
+    let leading = 0;
+    for (const child of children) {
+      const c = child.getBoundingClientRect();
+      // width of this tab still visible inside the viewport's left edge
+      if (c.right - mainLeft < c.width / 2) {
+        leading++;
+      } else {
+        break;
+      }
+    }
+    let trailing = 0;
+    for (let i = children.length - 1; i >= 0; i--) {
+      const c = children[i].getBoundingClientRect();
+      // width of this tab still visible inside the viewport's right edge
+      if (mainRight - c.left < c.width / 2) {
+        trailing++;
+      } else {
+        break;
+      }
+    }
+    trailing = Math.min(trailing, children.length - leading);
+    setCollapsedLeadingCount((prev) => (prev === leading ? prev : leading));
+    setCollapsedTrailingCount((prev) => (prev === trailing ? prev : trailing));
+  }
+
+  function renderAudioMuteButton(tab: NavTabDescriptor) {
+    if (!tab.buildAppId || !onToggleAudioMuted) return null;
+    const muted = tab.audioMuted === true;
+    return (
+      <button
+        type="button"
+        className={audioMuteButtonClass}
+        data-muted={muted ? 'true' : 'false'}
+        aria-label={muted ? 'Unmute app' : 'Mute app'}
+        title={muted ? 'Unmute app' : 'Mute app'}
+        onPointerDown={handleAudioMutePointerDown}
+        onClick={(event) => handleAudioMuteClick(event, tab.buildAppId!)}
+        onContextMenu={handleAudioMuteContextMenu}
+      >
+        <Icon icon={muted ? 'volume-mute' : 'volume'} />
+      </button>
+    );
+  }
+
+  function handleAudioMutePointerDown(
+    event: React.PointerEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleAudioMuteClick(
+    event: React.MouseEvent<HTMLButtonElement>,
+    buildAppId: string
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    onToggleAudioMuted?.(buildAppId);
+  }
+
+  function handleAudioMuteContextMenu(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function getTabStyle(
+    index: number,
+    key: string,
+    zone: DragZone
+  ): React.CSSProperties | undefined {
+    // only the zone that owns the active drag animates; the other zone's tabs
+    // stay put so the two blocks never visually bleed into each other
+    if (!dragState || dragState.zone !== zone) return undefined;
     const { key: draggedKey, fromIndex, toIndex, dx, settling } = dragState;
     if (key === draggedKey) {
       return {
@@ -273,26 +917,148 @@ export default function TabStrip({
   }
 
   function handleContextMenu(event: React.MouseEvent, key: string) {
+    event.preventDefault();
+    openTabMenu(event.clientX, event.clientY, key);
+  }
+
+  function openTabMenu(x: number, y: number, key: string) {
     const items = menuItemsForTab?.(key);
     if (!items || items.length === 0) return;
-    event.preventDefault();
     handleHintDismiss();
-    setMenu({ x: event.clientX, y: event.clientY, tabKey: key });
+    setMenu({ x, y, tabKey: key });
     onMenuOpen?.();
   }
 
-  function handleHintDwellStart(key: string) {
+  // Capture the geometry a drag needs (tab rects + how far the tab may travel
+  // inside its zone) and mark the pending drag. Shared by mouse-down and the
+  // touch long-press-then-drag path. Returns false if the zone isn't ready.
+  function prepareDrag(
+    zone: DragZone,
+    index: number,
+    key: string,
+    startClientX: number
+  ) {
+    const zoneEl =
+      zone === 'default' ? defaultZoneRef.current : dragZoneRef.current;
+    if (dragStateRef.current || !zoneEl) return false;
+    const items = [...zoneEl.children] as HTMLElement[];
+    rectsRef.current = items.map((el) => {
+      const { left, width } = el.getBoundingClientRect();
+      return { left, width, center: left + width / 2 };
+    });
+    const zoneRect = zoneEl.getBoundingClientRect();
+    const tabRect = rectsRef.current[index];
+    if (!tabRect) return false;
+    boundsRef.current = {
+      minDX: zoneRect.left - tabRect.left,
+      maxDX: zoneRect.right - (tabRect.left + tabRect.width)
+    };
+    pendingRef.current = { key, zone, index, startX: startClientX };
+    return true;
+  }
+
+  // Touch has no right-click or mouse-drag. A long-press (finger held still)
+  // ARMS the tab; from there a move reorders (draggable tabs only) and a lift
+  // opens the menu. A real move BEFORE the arm is a scroll and bails out.
+  function startTouchGesture(
+    event: React.PointerEvent,
+    key: string,
+    dragInfo: { index: number; zone: DragZone } | null
+  ) {
+    if (event.pointerType !== 'touch') return;
+    const startX = event.clientX;
+    const startY = event.clientY;
+    endTouchGesture();
+    handleHintDismiss();
+    const gesture = { armed: false };
+    touchGestureRef.current = gesture;
+
+    function movedFar(e: PointerEvent) {
+      return (
+        Math.abs(e.clientX - startX) > LONGPRESS_MOVE_CANCEL_PX ||
+        Math.abs(e.clientY - startY) > LONGPRESS_MOVE_CANCEL_PX
+      );
+    }
+    function onPointerMove(e: PointerEvent) {
+      if (touchGestureRef.current !== gesture) return;
+      if (!gesture.armed) {
+        if (movedFar(e)) endTouchGesture(); // scroll before arm
+        return;
+      }
+      if (dragInfo) {
+        handleDragPointerMove(e); // armed + draggable → reorder
+      } else if (movedFar(e)) {
+        endTouchGesture(); // armed pinned tab, finger moved → let it scroll
+      }
+    }
+    // non-passive: once armed on a draggable tab we must stop the browser from
+    // scrolling the strip so the tab can follow the finger instead
+    function onTouchMoveNative(e: TouchEvent) {
+      if (touchGestureRef.current === gesture && gesture.armed && dragInfo) {
+        e.preventDefault();
+      }
+    }
+    function onPointerUp() {
+      if (touchGestureRef.current !== gesture) return;
+      const ds = dragStateRef.current;
+      if (ds && !ds.settling) {
+        touchGestureRef.current = null; // hand cleanup off to the settle
+        settleThenCommit(ds);
+        return;
+      }
+      if (gesture.armed) {
+        didLongPressRef.current = true; // suppress the tap-nav on lift
+        openTabMenu(startX, startY, key);
+      }
+      endTouchGesture();
+    }
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    window.addEventListener('touchmove', onTouchMoveNative, { passive: false });
+    // reuse windowDragCleanupRef so the shared settle/cleanup path tears these
+    // listeners down too (mouse and touch never run a gesture concurrently)
+    windowDragCleanupRef.current = () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+      window.removeEventListener('touchmove', onTouchMoveNative);
+      windowDragCleanupRef.current = null;
+    };
+
+    longPressTimerRef.current = setTimeout(() => {
+      if (touchGestureRef.current !== gesture) return;
+      gesture.armed = true;
+      if (dragInfo) {
+        prepareDrag(dragInfo.zone, dragInfo.index, key, startX);
+      }
+    }, LONGPRESS_MENU_MS);
+  }
+
+  function endTouchGesture() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    touchGestureRef.current = null;
+    windowDragCleanupRef.current?.();
+  }
+
+  function handleHintDwellStart(key: string, target: HTMLElement) {
     if (!showMenuHint || hintShownThisSessionRef.current) return;
     if (dragState || menu) return;
+    hintAnchorElRef.current = target;
     if (hintDwellTimerRef.current) {
       clearTimeout(hintDwellTimerRef.current);
     }
     hintDwellTimerRef.current = setTimeout(() => {
       // only teach once per page load; the flag prop retires it for good
       hintShownThisSessionRef.current = true;
-      setHintTabKey(key);
+      const el = hintAnchorElRef.current;
+      if (!el) return;
+      setHintAnchor({ key, rect: el.getBoundingClientRect() });
       hintHideTimerRef.current = setTimeout(
-        () => setHintTabKey(null),
+        () => setHintAnchor(null),
         HINT_AUTO_HIDE_MS
       );
     }, HINT_DWELL_MS);
@@ -307,47 +1073,68 @@ export default function TabStrip({
       clearTimeout(hintHideTimerRef.current);
       hintHideTimerRef.current = null;
     }
-    setHintTabKey(null);
+    setHintAnchor(null);
   }
 
   function handlePointerDown(
     event: React.PointerEvent<HTMLDivElement>,
     key: string,
-    index: number
+    index: number,
+    zone: DragZone
   ) {
-    if (event.pointerType !== 'mouse' || event.button !== 0) return;
-    if (dragState || !dragZoneRef.current) return;
-    const items = [...dragZoneRef.current.children] as HTMLElement[];
-    rectsRef.current = items.map((el) => {
-      const { left, width } = el.getBoundingClientRect();
-      return { left, width, center: left + width / 2 };
-    });
-    const zoneRect = dragZoneRef.current.getBoundingClientRect();
-    const tabRect = rectsRef.current[index];
-    boundsRef.current = {
-      minDX: zoneRect.left - tabRect.left,
-      maxDX: zoneRect.right - (tabRect.left + tabRect.width)
-    };
-    pendingRef.current = { key, index, startX: event.clientX };
+    if (event.button > 0) return;
+    didLongPressRef.current = false;
+    if (event.pointerType === 'touch') {
+      // touch: hold to arm, then drag to reorder or lift to open the menu
+      startTouchGesture(event, key, { index, zone });
+      return;
+    }
+    if (event.pointerType !== 'mouse') return;
+    if (!prepareDrag(zone, index, key, event.clientX)) return;
     handleHintDismiss();
+    // Drive the whole drag from window, NOT the tab node: the header
+    // re-renders constantly (chat/noti/todayStats), and pointer capture on the
+    // tab would be lost the instant React reconciles the node during a drag,
+    // stranding dragState and freezing the strip. window listeners settle the
+    // drag regardless of what happens to the element.
+    addWindowDragListeners();
   }
 
-  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+  function addWindowDragListeners() {
+    windowDragCleanupRef.current?.();
+    const onMovePointer = (e: PointerEvent) => handleDragPointerMove(e);
+    const onUpPointer = () => handleDragPointerUp();
+    const onCancelPointer = () => handleDragPointerCancel();
+    window.addEventListener('pointermove', onMovePointer);
+    window.addEventListener('pointerup', onUpPointer);
+    window.addEventListener('pointercancel', onCancelPointer);
+    windowDragCleanupRef.current = () => {
+      window.removeEventListener('pointermove', onMovePointer);
+      window.removeEventListener('pointerup', onUpPointer);
+      window.removeEventListener('pointercancel', onCancelPointer);
+      windowDragCleanupRef.current = null;
+    };
+  }
+
+  function handleDragPointerMove(event: PointerEvent) {
     const pending = pendingRef.current;
-    if (!pending || dragState?.settling) return;
+    if (!pending || dragStateRef.current?.settling) return;
     if (!(event.buttons & 1)) {
-      // the press was released outside the strip before a drag started
+      // The mouse button was released without our window pointerup handler
+      // seeing it. If a drag already started, settle it; otherwise abandon the
+      // pending gesture and clear the click-suppression flag.
+      const ds = dragStateRef.current;
+      if (ds) {
+        settleThenCommit(ds);
+        return;
+      }
       pendingRef.current = null;
+      didDragRef.current = false;
+      windowDragCleanupRef.current?.();
       return;
     }
     const rawDX = event.clientX - pending.startX;
-    if (!dragState) {
-      if (Math.abs(rawDX) < DRAG_THRESHOLD_PX) return;
-      // capture only once a real drag starts; capturing on pointerdown
-      // would retarget the eventual click away from the Link and break
-      // plain tab clicks
-      event.currentTarget.setPointerCapture(event.pointerId);
-    }
+    if (!dragStateRef.current && Math.abs(rawDX) < DRAG_THRESHOLD_PX) return;
     didDragRef.current = true;
     const { minDX, maxDX } = boundsRef.current;
     const dx = Math.min(maxDX, Math.max(minDX, rawDX));
@@ -364,8 +1151,9 @@ export default function TabStrip({
         if (rectsRef.current[i].center < draggedCenter) toIndex++;
       }
     }
-    setDragState({
+    setLiveDragState({
       key: pending.key,
+      zone: pending.zone,
       fromIndex: pending.index,
       toIndex,
       dx,
@@ -373,43 +1161,55 @@ export default function TabStrip({
     });
   }
 
-  function handlePointerUp() {
+  function handleDragPointerUp() {
     const pending = pendingRef.current;
-    if (!pending) return;
-    if (!dragState || dragState.settling) {
+    const ds = dragStateRef.current;
+    if (!pending || !ds || ds.settling) {
       pendingRef.current = null;
+      if (!ds) {
+        didDragRef.current = false;
+      }
+      windowDragCleanupRef.current?.();
       return;
     }
-    settleThenCommit(dragState);
+    settleThenCommit(ds);
   }
 
-  function handlePointerCancel() {
-    if (dragState && !dragState.settling) {
-      settleThenCommit({
-        ...dragState,
-        toIndex: dragState.fromIndex
-      });
+  function handleDragPointerCancel() {
+    const ds = dragStateRef.current;
+    if (ds && !ds.settling) {
+      settleThenCommit({ ...ds, toIndex: ds.fromIndex });
       return;
     }
     pendingRef.current = null;
+    didDragRef.current = false;
+    windowDragCleanupRef.current?.();
   }
 
   function settleThenCommit(state: DragState) {
     const { fromIndex, toIndex } = state;
-    const targetTab = tabs[toIndex];
-    setDragState({
+    const zoneTabs =
+      state.zone === 'default' ? defaultTabsRef.current : tabsRef.current;
+    const targetTab = zoneTabs[toIndex];
+    setLiveDragState({
       ...state,
       dx: computeSettleDX(fromIndex, toIndex),
       settling: true
     });
     settleTimerRef.current = setTimeout(() => {
       if (toIndex !== fromIndex && targetTab) {
-        onMove({ sourceKey: state.key, targetKey: targetTab.key });
+        onMoveRef.current({ sourceKey: state.key, targetKey: targetTab.key });
       }
       pendingRef.current = null;
       didDragRef.current = false;
-      setDragState(null);
+      windowDragCleanupRef.current?.();
+      setLiveDragState(null);
     }, SETTLE_MS + 20);
+  }
+
+  function setLiveDragState(nextDragState: DragState | null) {
+    dragStateRef.current = nextDragState;
+    setDragState(nextDragState);
   }
 
   function computeSettleDX(fromIndex: number, toIndex: number) {
@@ -428,7 +1228,9 @@ export default function TabStrip({
   }
 
   function handleClickCapture(event: React.MouseEvent) {
-    if (!didDragRef.current) return;
+    // suppress the navigation click that follows a real drag OR a long-press
+    // that opened the menu (the flag resets on the next pointerdown)
+    if (!didDragRef.current && !didLongPressRef.current) return;
     event.preventDefault();
     event.stopPropagation();
   }

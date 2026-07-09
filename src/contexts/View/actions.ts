@@ -74,6 +74,63 @@ export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
         type: 'SET_PROFILE_NAV',
         nav
       });
+    },
+    onSetBuildNavHidden(hidden: boolean) {
+      return dispatch({
+        type: 'SET_BUILD_NAV_HIDDEN',
+        hidden
+      });
+    },
+    onSetBuildAppMuted(buildAppId: string, muted: boolean) {
+      return dispatch({
+        type: 'SET_BUILD_APP_MUTED',
+        buildAppId,
+        muted
+      });
+    },
+    onToggleBuildAppMuted(buildAppId: string) {
+      return dispatch({
+        type: 'SET_BUILD_APP_MUTED',
+        buildAppId
+      });
+    },
+    onSetBuildAppNavTabIds(buildAppIds: string[] | null) {
+      return dispatch({
+        type: 'SET_BUILD_APP_NAV_TAB_IDS',
+        buildAppIds
+      });
+    },
+    onSetOpenBuildTab(
+      openBuildTab: {
+        to: string;
+        label: string;
+        kind: 'app' | 'workspace';
+        ownerUserId: number | string | null;
+      } | null
+    ) {
+      return dispatch({
+        type: 'SET_OPEN_BUILD_TAB',
+        openBuildTab
+      });
+    },
+    // pass a build id to request its tab be closed; pass null to clear the
+    // request once consumed
+    onRequestCloseBuildApp(
+      buildAppId: string | null,
+      ownerUserId: number | string | null = null
+    ) {
+      return dispatch({
+        type: 'SET_BUILD_APP_TO_CLOSE',
+        buildAppId: buildAppId ?? undefined,
+        ownerUserId
+      });
+    },
+    // ask the keep-alive host to tear down the running session for this build
+    onKillBuildAppSession(buildAppId: string) {
+      return dispatch({
+        type: 'KILL_BUILD_APP_SESSION',
+        buildAppId
+      });
     }
   };
 }

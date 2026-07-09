@@ -7,7 +7,7 @@ import {
   ZERO_TWINKLE_ID,
   CIEL_TWINKLE_ID
 } from '~/constants/defaultValues';
-import { logForAdmin, parseChannelPath } from '~/helpers';
+import { emitAdminTelemetry, parseChannelPath } from '~/helpers';
 import {
   clearSocketAuthReady,
   markSocketAuthReady
@@ -346,7 +346,7 @@ export default function useInitSocket({
 
     function checkSocketHealth() {
       if (!socket.connected) {
-        logForAdmin({
+        emitAdminTelemetry({
           message:
             'Socket disconnected during health check - attempting reconnect'
         });
@@ -379,7 +379,7 @@ export default function useInitSocket({
         socket.off('pong_received', handlePong);
         currentPongHandler = null;
         if (!pongReceived && socket.connected) {
-          logForAdmin({
+          emitAdminTelemetry({
             message: 'Socket health check failed - forcing reconnect'
           });
           socket.disconnect();
@@ -485,7 +485,7 @@ export default function useInitSocket({
     }
 
     function handleConnect() {
-      logForAdmin({
+      emitAdminTelemetry({
         message: 'connected to socket'
       });
 
@@ -620,7 +620,7 @@ export default function useInitSocket({
           userId: userIdRef.current
         });
 
-        logForAdmin({
+        emitAdminTelemetry({
           message: 'Loading chat...'
         });
         const startTime = Date.now();
@@ -639,7 +639,7 @@ export default function useInitSocket({
 
         const endTime = Date.now();
         const chatLoadingTime = (endTime - startTime) / 1000;
-        logForAdmin({
+        emitAdminTelemetry({
           message: `Chat loaded in ${chatLoadingTime} seconds`
         });
         recordChatBootstrapEvent('chat-bootstrap-request-success', {
@@ -887,7 +887,7 @@ export default function useInitSocket({
         userId: userIdRef.current,
         selectedChannelId: selectedChannelIdRef.current
       });
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Retrying chat load in ${Math.round(delay / 1000)}s`
       });
       loadChatRetryTimerRef.current = window.setTimeout(() => {
@@ -934,7 +934,7 @@ export default function useInitSocket({
     }
 
     function handleDisconnect(reason: string) {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `disconnected from socket. reason: ${reason}`
       });
       clearSocketAuthReady();

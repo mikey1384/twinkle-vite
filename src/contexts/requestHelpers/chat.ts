@@ -2,7 +2,7 @@ import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import request from './axiosInstance';
 import axios from 'axios';
-import { attemptUpload, logForAdmin } from '~/helpers';
+import { attemptUpload, emitAdminTelemetry } from '~/helpers';
 
 export default function chatRequestHelpers({
   auth,
@@ -2543,7 +2543,7 @@ export default function chatRequestHelpers({
       path: string;
     }) {
       try {
-        logForAdmin({
+        emitAdminTelemetry({
           message: `Uploading file ${fileName} to chat`
         });
         await attemptUpload({

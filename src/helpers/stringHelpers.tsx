@@ -21,6 +21,15 @@ export function addCommasToNumber(number: number) {
   return integerPart + decimalPart;
 }
 
+// compact form used where horizontal space is tight (mobile + iPad portrait):
+// 1,234,567 -> 1.2M, 12,345 -> 12.3K
+export function abbreviateNumber(number: number) {
+  if (!number) return '0';
+  if (number > 999999) return `${(number / 1000000).toFixed(1)}M`;
+  if (number > 999) return `${(number / 1000).toFixed(1)}K`;
+  return `${number}`;
+}
+
 const emoticons: { [key: string]: string } = {
   ':alien:': '👽',
   ':america:': '🇺🇸',

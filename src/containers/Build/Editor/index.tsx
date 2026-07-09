@@ -96,6 +96,7 @@ import {
   lockAppShellScrollSurface,
   resetAppShellScroll
 } from '~/helpers/appShellScroll';
+import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import type {
   Build,
   BuildCopilotPolicy,
@@ -152,6 +153,33 @@ export default function BuildEditor({
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
+  const onSetOpenBuildTab = useViewContext((v) => v.actions.onSetOpenBuildTab);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const buildWorkspacePath = useMemo(
+    () =>
+      getBuildWorkspacePath({
+        id: build?.id,
+        contributionBranchNumber: build?.contributionBranchNumber,
+        contributionRootBuildId: build?.contributionRootBuildId
+      }),
+    [
+      build?.id,
+      build?.contributionBranchNumber,
+      build?.contributionRootBuildId
+    ]
+  );
+  // opening the build workspace spawns a nav tab for it (same as the app tab)
+  useEffect(() => {
+    if (buildWorkspacePath && build?.title) {
+      onSetOpenBuildTab({
+        to: buildWorkspacePath,
+        label: build.title,
+        kind: 'workspace',
+        ownerUserId: userId ?? null
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build?.title, buildWorkspacePath, userId]);
   const sharedBuildRun = useBuildContext(
     (v) => v.state.buildRuns[String(build.id)] || null
   );
@@ -224,7 +252,6 @@ export default function BuildEditor({
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState(
     routeOpenForkHistory ? Number(build.id || 0) : 0
   );
-  const userId = useKeyContext((v) => v.myState.userId);
   const teamLeave = useBuildTeamLeave({ build, userId });
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);

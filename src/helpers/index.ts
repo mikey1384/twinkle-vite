@@ -568,19 +568,19 @@ export function debounce<T extends (...args: any[]) => any>(
   };
 }
 
-export function logForAdmin({
+export function emitAdminTelemetry({
   message,
-  showPopup = false
+  notifyAdmin = false
 }: {
   message: string;
-  showPopup?: boolean;
+  notifyAdmin?: boolean;
 }) {
   if (userIdRef.current === ADMIN_USER_ID) {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${message}`);
-    if (showPopup) {
-      socket.emit('new_log_for_admin', message);
-    }
+    socket.emit('admin_telemetry', {
+      message,
+      notifyAdmin,
+      timestamp: Date.now()
+    });
   }
 }
 
@@ -690,11 +690,11 @@ export async function attemptUpload({
     new Promise((resolve) => setTimeout(resolve, ms));
   const { default: axios } = await import('axios');
 
-  logForAdmin({
+  emitAdminTelemetry({
     message: `Attempting to upload file ${fileName}`
   });
   const { uploadId, urls, key } = await initiateUpload();
-  logForAdmin({
+  emitAdminTelemetry({
     message: `Fetched signed S3 URLs for ${fileName}`
   });
   const parts = [];
@@ -703,13 +703,13 @@ export async function attemptUpload({
   for (let partNumber = 0; partNumber < urls.length; partNumber++) {
     const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
     const chunk = selectedFile.slice(start, end);
-    logForAdmin({
+    emitAdminTelemetry({
       message: `Uploading part ${partNumber + 1} of ${
         urls.length
       } for ${fileName}`
     });
     const part = await uploadPart(urls[partNumber], chunk, partNumber);
-    logForAdmin({
+    emitAdminTelemetry({
       message: `Part ${partNumber + 1} of ${
         urls.length
       } for ${fileName} successfully uploaded`
@@ -720,7 +720,7 @@ export async function attemptUpload({
 
   await completeUpload(uploadId, key, parts);
   const result = key.split('.com')?.[1] || `/${key}`;
-  logForAdmin({
+  emitAdminTelemetry({
     message: `Upload completed for ${fileName}. Returning key: ${result}`
   });
   return result;
@@ -729,7 +729,7 @@ export async function attemptUpload({
     attempt = 1
   ): Promise<{ uploadId: string; urls: string[]; key: string }> {
     try {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Getting signed S3 URL for ${fileName}`
       });
       const queryParams = new URLSearchParams();
@@ -752,7 +752,7 @@ export async function attemptUpload({
           profileUploadToken: data?.profileUploadToken
         });
       }
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Got signed S3 URL for ${fileName}`
       });
       return data;
@@ -763,7 +763,7 @@ export async function attemptUpload({
         );
       }
       if (attempt < MAX_RETRIES) {
-        logForAdmin({
+        emitAdminTelemetry({
           message: `Retrying initiation, attempt ${attempt + 1}`
         });
         await sleep(RETRY_DELAY);
@@ -780,7 +780,7 @@ export async function attemptUpload({
     attempt = 1
   ): Promise<{ ETag: string; PartNumber: number }> {
     try {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Making PUT request for part ${partNumber + 1} of ${
           urls.length
         } for ${fileName}`
@@ -805,7 +805,7 @@ export async function attemptUpload({
           });
         }
       });
-      logForAdmin({
+      emitAdminTelemetry({
         message: `PUT request for part ${partNumber + 1} of ${
           urls.length
         } for ${fileName} completed`
@@ -826,7 +826,7 @@ export async function attemptUpload({
       };
     } catch (error) {
       if (attempt < MAX_RETRIES) {
-        logForAdmin({
+        emitAdminTelemetry({
           message: `Retrying part ${partNumber + 1}, attempt ${attempt + 1}`
         });
         await sleep(RETRY_DELAY);
@@ -843,7 +843,7 @@ export async function attemptUpload({
     attempt = 1
   ) {
     try {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Completing upload for ${fileName}`
       });
       await axios.post(
@@ -851,12 +851,12 @@ export async function attemptUpload({
         { uploadId, key, parts },
         auth()
       );
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Completed upload for ${fileName}`
       });
     } catch (error) {
       if (attempt < MAX_RETRIES) {
-        logForAdmin({
+        emitAdminTelemetry({
           message: `Retrying completion, attempt ${attempt + 1}`
         });
         await sleep(RETRY_DELAY);

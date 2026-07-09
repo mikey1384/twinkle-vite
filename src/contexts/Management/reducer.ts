@@ -13,15 +13,17 @@ export default function ManagementReducer(
         ...state,
         accountTypes: state.accountTypes.concat(action.accountType)
       };
-    case 'ADD_ADMIN_LOG':
+    case 'ADD_ADMIN_TELEMETRY':
       return {
         ...state,
-        adminLogs: state.adminLogs.concat(action.adminLog)
+        adminTelemetryEvents: state.adminTelemetryEvents.concat(
+          action.adminTelemetryEvent
+        )
       };
-    case 'CLEAR_ADMIN_LOGS':
+    case 'CLEAR_ADMIN_TELEMETRY':
       return {
         ...state,
-        adminLogs: []
+        adminTelemetryEvents: []
       };
     case 'APPROVE_REQUEST':
       return {

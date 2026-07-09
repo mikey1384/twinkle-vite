@@ -19,7 +19,7 @@ const Payment = lazyWithRetry(() => import('./Payment'));
 const HomeFeedPerformance = lazyWithRetry(
   () => import('./HomeFeedPerformance')
 );
-const ScrollDiagnostics = lazyWithRetry(() => import('./ScrollDiagnostics'));
+const Diagnostics = lazyWithRetry(() => import('./ScrollDiagnostics'));
 const BuildWorlds = lazyWithRetry(() => import('./BuildWorlds'));
 const AiCards = lazyWithRetry(() => import('./AiCards'));
 
@@ -57,8 +57,12 @@ export default function ManagementRoutes({ className }: { className: string }) {
               element={<HomeFeedPerformance />}
             />
             <Route
+              path="diagnostics"
+              element={<Diagnostics />}
+            />
+            <Route
               path="scroll-diagnostics"
-              element={<ScrollDiagnostics />}
+              element={<Diagnostics />}
             />
             <Route path="build-worlds" element={<BuildWorlds />} />
             <Route path="ai-card-image" element={<AiCards />} />

@@ -76,6 +76,8 @@ import useOrientationReflow from './hooks/useOrientationReflow';
 import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+// persists the build "super full screen" (nav-also-hidden) preference
+const BUILD_NAV_HIDDEN_KEY = 'twinkle-build-nav-hidden';
 
 const Build = lazyWithRetry(() => import('~/containers/Build'));
 const BuildRuntimeKeepAliveHost = lazyWithRetry(
@@ -120,7 +122,9 @@ const DailyRewardModal = lazyWithRetry(
   () => import('~/components/Modals/DailyRewardModal')
 );
 const AICallWindow = lazyWithRetry(() => import('./AICallWindow'));
-const AdminLogWindow = lazyWithRetry(() => import('./AdminLogWindow'));
+const AdminTelemetryWindow = lazyWithRetry(
+  () => import('./AdminTelemetryWindow')
+);
 const UpdateNotice = lazyWithRetry(() => import('./UpdateNotice'));
 
 const buildRuntimeLoadingClass = css`
@@ -204,7 +208,12 @@ export default function App() {
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
-  const adminLogs = useManagementContext((v) => v.state.adminLogs);
+  const adminTelemetryEvents = useManagementContext(
+    (v) => v.state.adminTelemetryEvents
+  );
+  const shouldShowAdminTelemetryWindow = adminTelemetryEvents?.some(
+    (event: { notifyAdmin?: boolean }) => event?.notifyAdmin
+  );
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const onHydrateTodayStats = useNotiContext(
     (v) => v.actions.onHydrateTodayStats
@@ -390,6 +399,11 @@ export default function App() {
     (v) => v.actions.onUpdateTodayStats
   );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+  const buildNavHidden = useViewContext((v) => v.state.buildNavHidden);
+  const onSetBuildNavHidden = useViewContext(
+    (v) => v.actions.onSetBuildNavHidden
+  );
+  const userSessionLoaded = useAppContext((v) => v.user.state.loaded);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const onChangePageVisibility = useViewContext(
     (v) => v.actions.onChangePageVisibility
@@ -445,6 +459,14 @@ export default function App() {
     () => routeMatches('/app/:buildId/*', location.pathname),
     [location.pathname]
   );
+  const usingEmbeddedBuildAppRuntime = useMemo(
+    () =>
+      usingBuildAppRuntime &&
+      new URLSearchParams(location.search).get('embedded') === '1',
+    [location.search, usingBuildAppRuntime]
+  );
+  const usingFullBuildAppRuntime =
+    usingBuildAppRuntime && !usingEmbeddedBuildAppRuntime;
   const usingBuildRuntime = useMemo(
     () =>
       usingBuildAppRuntime ||
@@ -453,8 +475,57 @@ export default function App() {
   );
   const [runtimeKeepAliveHostEnabled, setRuntimeKeepAliveHostEnabled] =
     useState(usingBuildAppRuntime);
+  // Build apps use the global nav on every device (phones get it as the fixed
+  // bottom bar, with the runtime overlay reserving space above it). The build
+  // toolbar's two-level collapse still hides the nav for "super full screen".
+  // The thumbnail-capture route (/app-capture) must stay chrome-free — it's in
+  // usingBuildRuntime but NOT usingFullBuildAppRuntime, so it keeps
+  // suppressHeader. Embedded app previews also stay chrome-free inside iframes.
+  const showBuildHeader = usingFullBuildAppRuntime;
+  // the 2nd-level build collapse ALSO hides the global nav (full-screen app)
+  const suppressHeader =
+    (usingBuildRuntime && !showBuildHeader) ||
+    (showBuildHeader && buildNavHidden);
+  const buildHeaderCollapsed = !!myState.buildHeaderCollapsed;
+  const buildNavHiddenStorageReady = !userId || userSessionLoaded;
+  // On (re)entering a full build app page, restore/persist the "super full
+  // screen" preference only when the build toolbar is also collapsed. Embedded
+  // app previews are iframe chrome and must not read or overwrite this state.
+  useEffect(() => {
+    if (usingFullBuildAppRuntime) {
+      if (!buildNavHiddenStorageReady) return;
+      let persistedNavHidden = false;
+      try {
+        persistedNavHidden =
+          localStorage.getItem(BUILD_NAV_HIDDEN_KEY) === '1';
+      } catch {
+        // sandboxed embeds can block storage access
+      }
+      if (persistedNavHidden && buildHeaderCollapsed && !buildNavHidden) {
+        onSetBuildNavHidden(true);
+        return;
+      }
+      try {
+        localStorage.setItem(
+          BUILD_NAV_HIDDEN_KEY,
+          buildNavHidden && buildHeaderCollapsed ? '1' : '0'
+        );
+      } catch {
+        // storage can be unavailable in some browser modes
+      }
+    } else if (buildNavHidden) {
+      onSetBuildNavHidden(false);
+    }
+    // onSetBuildNavHidden is a stable context action — excluded per repo rule
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    buildHeaderCollapsed,
+    buildNavHidden,
+    buildNavHiddenStorageReady,
+    usingFullBuildAppRuntime
+  ]);
   useAppShellHeaderOffset({
-    headerVisible: !usingBuildRuntime,
+    headerVisible: !suppressHeader,
     routeKey: location.pathname
   });
 
@@ -635,7 +706,7 @@ export default function App() {
       componentPath="App/index"
       className={css`
         ${usingChat ? 'border-top: 1px solid transparent;' : ''}
-        height: ${usingBuildRuntime
+        height: ${suppressHeader
           ? '100%'
           : `calc(100% - ${APP_SHELL_HEADER_OFFSET_STYLE})`};
         width: 100%;
@@ -657,13 +728,13 @@ export default function App() {
             <UpdateNotice updateDetail={updateDetail} />
           </Suspense>
         )}
-        {!usingBuildRuntime && (
+        {!suppressHeader && (
           <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
         )}
         <div
           id="App"
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
-            margin-top: ${usingBuildRuntime
+            margin-top: ${suppressHeader
               ? '0'
               : APP_SHELL_HEADER_OFFSET_STYLE};
             height: 100%;
@@ -873,9 +944,9 @@ export default function App() {
             />
           </Suspense>
         )}
-        {isAdmin && !!adminLogs?.length && (
+        {isAdmin && shouldShowAdminTelemetryWindow && (
           <Suspense fallback={null}>
-            <AdminLogWindow
+            <AdminTelemetryWindow
               initialPosition={{
                 x: Math.max(0, window.innerWidth - 520),
                 y: 100

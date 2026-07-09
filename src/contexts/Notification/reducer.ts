@@ -62,6 +62,10 @@ function nullableNumber(value: any) {
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
+function asArray(value: any) {
+  return Array.isArray(value) ? value : [];
+}
+
 function buildContributionInviteMatches({
   actionObj,
   invite,
@@ -344,12 +348,17 @@ export default function NotiReducer(
         }
       };
     case 'LOAD_RANKS':
+      // Guard the four rankings arrays: a malformed-but-2xx /user/leaderBoard
+      // response (e.g. an HTML/empty body from a proxy/crawler middlebox) gets
+      // destructured into `undefined` fields upstream, and Rankings reads
+      // `.length` on each unconditionally. Coerce to [] so bad payloads can
+      // never seat `undefined` into shared state and crash the tab.
       return {
         ...state,
-        allRanks: action.all,
-        top30s: action.top30s,
-        allMonthly: action.allMonthly,
-        top30sMonthly: action.top30sMonthly,
+        allRanks: asArray(action.all),
+        top30s: asArray(action.top30s),
+        allMonthly: asArray(action.allMonthly),
+        top30sMonthly: asArray(action.top30sMonthly),
         myMonthlyRank: action.myMonthlyRank,
         myAllTimeRank: action.myAllTimeRank,
         myAllTimeXP: action.myAllTimeXP,

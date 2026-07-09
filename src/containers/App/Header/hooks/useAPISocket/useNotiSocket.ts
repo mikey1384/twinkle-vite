@@ -13,6 +13,12 @@ import {
   useManagementContext
 } from '~/contexts';
 
+interface AdminTelemetryEvent {
+  message?: string;
+  notifyAdmin?: boolean;
+  timestamp?: number;
+}
+
 export default function useNotiSocket({
   onUpdateMyXp
 }: {
@@ -22,7 +28,9 @@ export default function useNotiSocket({
   onUpdateMyXpRef.current = onUpdateMyXp;
 
   const userId = useKeyContext((v) => v.myState.userId);
-  const onAddAdminLog = useManagementContext((v) => v.actions.onAddAdminLog);
+  const onAddAdminTelemetry = useManagementContext(
+    (v) => v.actions.onAddAdminTelemetry
+  );
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
@@ -91,7 +99,7 @@ export default function useNotiSocket({
     socket.on('achievement_progress', handleAchievementProgress);
     socket.on('mission_rewards_received', handleMissionRewards);
     socket.on('new_notification_received', handleNewNotification);
-    socket.on('new_log_for_admin_received', handleNewLogForAdmin);
+    socket.on('admin_telemetry_received', handleAdminTelemetry);
     socket.on('new_post_uploaded', handleNewPost);
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
@@ -103,15 +111,26 @@ export default function useNotiSocket({
       socket.off('content_edited', handleEditContent);
       socket.off('content_opened', handleContentOpen);
       socket.off('mission_rewards_received', handleMissionRewards);
-      socket.off('new_log_for_admin_received', handleNewLogForAdmin);
+      socket.off('admin_telemetry_received', handleAdminTelemetry);
       socket.off('new_notification_received', handleNewNotification);
       socket.off('new_post_uploaded', handleNewPost);
       socket.off('new_reward_posted', handleNewReward);
       socket.off('new_recommendation_posted', handleNewRecommendation);
     };
 
-    function handleNewLogForAdmin(message: string) {
-      onAddAdminLog(message);
+    function handleAdminTelemetry(event: AdminTelemetryEvent | string) {
+      const message = typeof event === 'string' ? event : event?.message;
+      if (!message) return;
+      const timestamp =
+        typeof event === 'object' && Number(event.timestamp) > 0
+          ? Number(event.timestamp)
+          : Date.now();
+      onAddAdminTelemetry({
+        message,
+        notifyAdmin:
+          typeof event === 'object' ? Boolean(event.notifyAdmin) : false,
+        timestamp
+      });
     }
 
     async function handleBuildDeleted({ buildIds }: { buildIds?: number[] }) {

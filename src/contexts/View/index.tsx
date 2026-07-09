@@ -44,7 +44,13 @@ const initialViewState: ViewState = {
   audioKey: '',
   aiFeaturesDisabled: true,
   aiFeaturesLoaded: false,
-  aiDisabledNotice: AI_DISABLED_NOTICE
+  aiDisabledNotice: AI_DISABLED_NOTICE,
+  buildNavHidden: false,
+  mutedBuildAppIds: [],
+  buildAppNavTabIds: null,
+  openBuildTab: null,
+  buildAppToClose: null,
+  killBuildAppSession: null
 };
 
 export function ViewContextProvider({ children }: { children: ReactNode }) {

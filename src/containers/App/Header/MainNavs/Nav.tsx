@@ -17,6 +17,18 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import { resetAppShellScroll } from '~/helpers/appShellScroll';
 
+function getBuildAppIdFromPath(value: string) {
+  const pathname = String(value || '').split(/[?#]/)[0];
+  const match = /^\/app\/(\d+)(?:\/|$)/.exec(pathname);
+  return match?.[1] || '';
+}
+
+function buildAppTabMatchesPath(to: string, pathname: string) {
+  const targetBuildId = getBuildAppIdFromPath(to);
+  if (!targetBuildId) return false;
+  return targetBuildId === getBuildAppIdFromPath(pathname);
+}
+
 function Nav({
   alert,
   className,
@@ -132,7 +144,15 @@ function Nav({
     // rules below would light them up across a whole section (e.g. a
     // pinned /management/a tab on every /management route)
     if (exactActive) {
-      return pathname + (search || '') === to ? 'active' : '';
+      if (buildAppTabMatchesPath(to, pathname)) {
+        return 'active';
+      }
+      // A captured tab whose `to` carries its own query string (e.g. a
+      // query-identified content page) stays matched on the full path+search.
+      if (to.includes('?')) {
+        return pathname + (search || '') === to ? 'active' : '';
+      }
+      return pathname === to ? 'active' : '';
     }
     if ((to || '').split('/')[1] === 'chat') {
       if (pathname.split('/')[1] === 'chat') {
@@ -178,12 +198,19 @@ function Nav({
       align-items: center;
       line-height: 1;
       height: 3.4rem;
-      padding: 0 1.6rem;
+      max-width: 15rem;
+      padding: 0 1rem;
       border: 1px solid transparent;
       border-bottom: none;
       border-radius: 10px 10px 0 0;
       background: transparent;
       -webkit-tap-highlight-color: transparent;
+    }
+    .nav-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
     ${tabKind === 'pinned'
       ? `a {
@@ -318,7 +345,9 @@ function Nav({
             }`
           : ''}
         @media (max-width: ${mobileMaxWidth}) {
-          width: 100%;
+          /* natural width so the bottom bar can pack + scroll (was 100% for the
+             old evenly-spread fixed bar); centering is handled by the row */
+          width: auto;
           justify-content: center;
           font-size: 3rem;
           a {
@@ -354,7 +383,10 @@ function Nav({
       >
         <Icon icon={isHome ? 'home' : imgLabel} />
         {children ? (
-          <span className="nav-label" style={{ marginLeft: '0.7rem' }}>
+          <span
+            className="nav-label"
+            style={{ marginLeft: variant === 'tab' ? '0.5rem' : '0.7rem' }}
+          >
             {children}
           </span>
         ) : null}

@@ -112,6 +112,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onSaveProjectFiles,
       runtimeOnly = false,
       runtimeHostVisible = true,
+      preventFrameSuspend = false,
+      audioMuted = false,
       capabilitySnapshot = null,
       maxProjectFileLines = null,
       onEditableProjectFilesStateChange,
@@ -756,8 +758,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         ? `artifact:${build.currentArtifactVersionId}:${previewProjectFilesRevision}`
         : `current:${build.id}:${Number(build.updatedAt) || 0}:${previewProjectFilesRevision}`;
     const previewHostVisible = runtimeHostVisible !== false;
+    // In keep-alive mode we still send the host-hidden signal (pauses the loop +
+    // media) and mute audio, but never let the frame fully suspend, because
+    // suspend nulls the src and useFrameManager retires the iframe (state lost).
     const previewFrameSuspended =
-      !previewHostVisible && previewLifecycleState === 'suspended';
+      !preventFrameSuspend &&
+      !previewHostVisible &&
+      previewLifecycleState === 'suspended';
 
     useEffect(() => {
       if (previewHostVisible) {
@@ -939,6 +946,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       profilePicUrl: resolvedProfilePicUrl || null,
       resolvedCapabilitySnapshot,
       resolvedRuntimeExplorationPlan,
+      audioMuted,
       mountContext,
       launchTarget,
       capabilitySnapshotRef,
@@ -947,6 +955,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       navigatePreviewFrameRef,
       previewCodeSignatureRef,
       previewFrameMetaRef,
+      previewFrameReady,
+      previewFrameSources,
       previewFrameSourcesRef,
       previewTransitioningRef,
       onPreviewFrameRetiredRef,

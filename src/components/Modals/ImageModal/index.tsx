@@ -269,7 +269,12 @@ export default function ImageModal({
             : 'chat'
       });
       if (contentType === 'subject') {
-        await replaceSubjectAttachment({
+        const {
+          filePath: replacedFilePath,
+          fileName: replacedFileName,
+          fileSize: replacedFileSize,
+          thumbUrl
+        } = await replaceSubjectAttachment({
           subjectId: contentId,
           filePath,
           fileName: appliedFileName,
@@ -277,15 +282,21 @@ export default function ImageModal({
         });
         onEditContent({
           data: {
-            filePath,
-            fileName: appliedFileName,
-            fileSize: selected.size
+            filePath: replacedFilePath,
+            fileName: replacedFileName,
+            fileSize: replacedFileSize,
+            thumbUrl
           },
           contentType: 'subject',
           contentId
         });
       } else if (contentType === 'comment') {
-        await replaceCommentAttachment({
+        const {
+          filePath: replacedFilePath,
+          fileName: replacedFileName,
+          fileSize: replacedFileSize,
+          thumbUrl
+        } = await replaceCommentAttachment({
           commentId: contentId,
           filePath,
           fileName: appliedFileName,
@@ -293,9 +304,10 @@ export default function ImageModal({
         });
         onEditContent({
           data: {
-            filePath,
-            fileName: appliedFileName,
-            fileSize: selected.size
+            filePath: replacedFilePath,
+            fileName: replacedFileName,
+            fileSize: replacedFileSize,
+            thumbUrl
           },
           contentType: 'comment',
           contentId

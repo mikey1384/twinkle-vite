@@ -12,6 +12,7 @@ import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
 import FavoriteButton from '~/components/Build/FavoriteButton';
+import useTabletOrientation from '~/helpers/hooks/useTabletOrientation';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ShareButton from '~/components/Buttons/ShareButton';
@@ -22,7 +23,8 @@ import {
   useAppContext,
   useContentContext,
   useKeyContext,
-  useNotiContext
+  useNotiContext,
+  useViewContext
 } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
@@ -41,6 +43,7 @@ import type {
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
 import CommentsDrawer from './CommentsDrawer';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import BuildAppNotificationSettingsModal, {
   type BuildAppNotificationPreferences
 } from '~/components/Notification/MainFeeds/NotiItem/BuildAppNotificationSettingsModal';
@@ -104,6 +107,26 @@ function normalizeRuntimeBackTo(value: string) {
   return normalized;
 }
 
+function getBuildAppIdFromPath(value: string) {
+  const pathname = String(value || '').split(/[?#]/)[0];
+  const match = /^\/app\/(\d+)(?:\/|$)/.exec(pathname);
+  return match?.[1] || '';
+}
+
+function getBuildAppTabTarget({
+  buildId,
+  pathname
+}: {
+  buildId: number | string;
+  pathname: string;
+}) {
+  const basePath = `/app/${buildId}`;
+  if (pathname === basePath || pathname.startsWith(`${basePath}/`)) {
+    return pathname;
+  }
+  return basePath;
+}
+
 const RUNTIME_COMMENTS_LOAD_LIMIT = 20;
 
 const shellClass = css`
@@ -115,10 +138,6 @@ const shellClass = css`
   grid-template-rows: auto 1fr;
   overflow: hidden;
   background: #fff;
-  @supports (height: 100dvh) {
-    height: 100dvh;
-    min-height: 100dvh;
-  }
 `;
 
 const headerClass = css`
@@ -126,13 +145,16 @@ const headerClass = css`
   grid-row: 1;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
-  padding: 1.1rem 1.3rem 1rem;
+  /* slim single-row toolbar (~40% of the old stacked height) */
+  padding: 0.35rem 1.3rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: calc(env(safe-area-inset-top, 0px) + 0.8rem) 0.95rem 0.75rem;
-    gap: 0.3rem;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.35rem) 0.95rem 0.35rem;
+    gap: 0.5rem;
   }
 `;
 
@@ -152,12 +174,25 @@ const headerHiddenClass = css`
   pointer-events: none;
 `;
 
-const headerToggleClass = css`
+const headerToggleClusterClass = css`
   position: absolute;
   top: 0.35rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 4;
+  display: flex;
+  gap: 0.4rem;
+  /* On phones the absolute centering collides with the right-aligned action
+     buttons (Favorite lands on top of these). Drop it into normal flow at the
+     start of the toolbar instead, where the title's slack absorbs it. */
+  @media (max-width: ${mobileMaxWidth}) {
+    position: static;
+    transform: none;
+    flex-shrink: 0;
+  }
+`;
+
+const headerToggleClass = css`
   border: 1px solid var(--ui-border);
   background: #fff;
   color: #1d4ed8;
@@ -248,22 +283,47 @@ const headerButtonGroupClass = css`
 `;
 
 const headerEnergySlotClass = css`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(36rem, 38vw);
-  min-width: 18rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(30rem, 34vw);
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translate(-50%, -50%);
   @media (max-width: 900px) {
-    position: static;
-    width: min(100%, 36rem);
-    min-width: 0;
-    margin: 0.1rem auto 0.2rem;
-    transform: none;
+    display: none;
   }
+`;
+
+// left cluster: app icon + title + compact inline meta, all on one line
+const headerTitleLineClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--chat-text);
+`;
+
+const headerMetaInlineClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.1rem;
+  opacity: 0.72;
+  white-space: nowrap;
+  flex-shrink: 0;
+  @media (max-width: 1200px) {
+    display: none;
+  }
+`;
+
+// right cluster: all actions on one line, no wrap
+const headerActionsRowClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  margin-left: auto;
 `;
 
 const runtimeEnergyCardClass = css`
@@ -295,33 +355,6 @@ const titleClass = css`
   white-space: nowrap;
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.1rem;
-  }
-`;
-
-const metaClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.1rem;
-  color: var(--chat-text);
-  opacity: 0.72;
-  flex-wrap: wrap;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.1rem;
-    gap: 0.35rem;
-  }
-`;
-
-const metaCreatorClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 0;
-`;
-
-const metaDescriptionClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
-    display: none;
   }
 `;
 
@@ -357,57 +390,7 @@ const backButtonClass = css`
   }
 `;
 
-const contributionCtaRowClass = css`
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  max-width: min(42rem, 42vw);
-  margin-left: auto;
 
-  @media (max-width: 1100px) {
-    max-width: 100%;
-    margin-left: auto;
-  }
-
-  @media (max-width: ${mobileMaxWidth}) {
-    width: 100%;
-    justify-content: flex-start;
-    margin-left: 0;
-  }
-`;
-
-const titleSectionClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-width: 0;
-  flex-wrap: wrap;
-`;
-
-const titleTextStackClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  min-width: 0;
-  flex: 1 1 18rem;
-`;
-
-const commentsCtaSlotClass = css`
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.55rem;
-  align-self: center;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    align-self: flex-start;
-  }
-`;
 
 const notificationSettingsButtonClass = css`
   border: 1px solid var(--ui-border);
@@ -435,6 +418,32 @@ const notificationSettingsButtonClass = css`
     background: rgba(190, 18, 60, 0.08);
     border-color: rgba(190, 18, 60, 0.28);
     color: #be123c;
+  }
+`;
+
+// "Close app" — the universal kill affordance (all devices). Red to signal it
+// tears the app down, matching its intent: the user chose to close it.
+const closeAppButtonClass = css`
+  border: 1px solid rgba(190, 18, 60, 0.28);
+  background: rgba(190, 18, 60, 0.08);
+  color: #be123c;
+  border-radius: 999px;
+  width: 2.65rem;
+  height: 2.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+  &:hover {
+    background: rgba(190, 18, 60, 0.14);
+    border-color: rgba(190, 18, 60, 0.4);
+    transform: translateY(-1px);
   }
 `;
 
@@ -551,6 +560,33 @@ const previewShellClass = css`
   background: #fff;
 `;
 
+// Tap-to-dismiss scrim over the (paused) app while comments are open. Lives in
+// the parent document ABOVE the sandboxed preview iframe, so it receives the
+// tap that the iframe would otherwise swallow — the literal "tap outside the
+// comments to close" affordance.
+const previewCommentsScrimClass = css`
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.28);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease-out;
+
+  &[data-visible='true'] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+`;
+
 const launchTargetLoadingClass = css`
   height: 100%;
   min-height: 15rem;
@@ -631,6 +667,18 @@ export default function BuildRuntime({
   const onSetBuildHeaderCollapsed = useAppContext(
     (v) => v.user.actions.onSetBuildHeaderCollapsed
   );
+  const onSetBuildNavHidden = useViewContext(
+    (v) => v.actions.onSetBuildNavHidden
+  );
+  const openBuildTab = useViewContext((v) => v.state.openBuildTab);
+  const onSetOpenBuildTab = useViewContext((v) => v.actions.onSetOpenBuildTab);
+  const onRequestCloseBuildApp = useViewContext(
+    (v) => v.actions.onRequestCloseBuildApp
+  );
+  const onKillBuildAppSession = useViewContext(
+    (v) => v.actions.onKillBuildAppSession
+  );
+  const mutedBuildAppIds = useViewContext((v) => v.state.mutedBuildAppIds);
   const onDeleteComment = useContentContext((v) => v.actions.onDeleteComment);
   const onEditComment = useContentContext((v) => v.actions.onEditComment);
   const onEditRewardComment = useContentContext(
@@ -683,6 +731,12 @@ export default function BuildRuntime({
     useState('');
   const [contributionForkError, setContributionForkError] = useState('');
   const [runtimeFavoriteError, setRuntimeFavoriteError] = useState('');
+  // Compact the header actions on small screens. iPad portrait: icon-only
+  // favorite + short "Workspace" label. Phone portrait: even tighter — the
+  // workspace buttons drop their label entirely (icon-only) so they fit
+  // alongside the global bottom nav.
+  const { isTabletPortrait, isMobilePortrait } = useTabletOrientation();
+  const compactActions = isTabletPortrait || isMobilePortrait;
   const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
   const [buildLaunchTarget, setBuildLaunchTarget] =
     useState<PreviewLaunchTarget | null>(null);
@@ -698,6 +752,7 @@ export default function BuildRuntime({
     setBuildNotificationSettingsShown
   ] = useState(false);
   const [commentsDrawerShown, setCommentsDrawerShown] = useState(false);
+  const [closeConfirmShown, setCloseConfirmShown] = useState(false);
   const [runtimeCommentsLoading, setRuntimeCommentsLoading] = useState(false);
   const [runtimeCommentsError, setRuntimeCommentsError] = useState('');
   const [aiUsagePolicyLoadAttempted, setAiUsagePolicyLoadAttempted] =
@@ -771,6 +826,42 @@ export default function BuildRuntime({
   const isEmbedded = useMemo(() => {
     return new URLSearchParams(location.search).get('embedded') === '1';
   }, [location.search]);
+  const buildAppTabTarget = useMemo(() => {
+    if (!build?.id) return '';
+    return getBuildAppTabTarget({
+      buildId: build.id,
+      pathname: location.pathname || ''
+    });
+  }, [build?.id, location.pathname]);
+
+  // publish the open app to the nav so it spawns/keeps a tab for it (desktop).
+  // Preserve app-owned deep-link path segments, but do not persist runtime
+  // query params such as notificationId/viewSource/embedded/mount context.
+  useEffect(() => {
+    if (
+      !runtimeIsActive ||
+      isEmbedded ||
+      !build?.id ||
+      !build?.title ||
+      !buildAppTabTarget
+    ) {
+      return;
+    }
+    onSetOpenBuildTab({
+      to: buildAppTabTarget,
+      label: build.title,
+      kind: 'app',
+      ownerUserId: userId ?? null
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    build?.id,
+    build?.title,
+    buildAppTabTarget,
+    isEmbedded,
+    runtimeIsActive,
+    userId
+  ]);
   const runtimeViewSource = useMemo(() => {
     const source = new URLSearchParams(location.search).get('viewSource');
     return source === BUILD_TRENDING_SHOWCASE_VIEW_SOURCE ? source : '';
@@ -880,7 +971,9 @@ export default function BuildRuntime({
       : collaborationStatus === 'invited'
         ? 'Join team'
         : collaborationStatus === 'accepted'
-          ? 'Open workspace'
+          ? compactActions
+            ? 'Workspace'
+            : 'Open workspace'
           : collaborationRequestActionLabel;
   const showStandaloneForkButton =
     !!build && !isBuildOwner && buildAcceptsStandaloneForks;
@@ -912,6 +1005,21 @@ export default function BuildRuntime({
     runtimeCommentsCount === 1 ? 'Comment' : 'Comments'
   } (${runtimeCommentsCountLabel})`;
   const runtimeBuildId = Math.floor(Number(build?.id || 0));
+  const runtimeAudioMuted =
+    runtimeBuildId > 0 && mutedBuildAppIds.includes(String(runtimeBuildId));
+  // A backgrounded build tab (another build tab is on screen, or we're off
+  // /app entirely) is treated as hidden AND muted so it pauses its loop and
+  // goes silent instead of running/playing behind the active app. host-hidden
+  // makes the SDK queue rAF + pause <audio>/<video> (state preserved, not torn
+  // down); the audio-mute path additionally silences Web Audio, which
+  // host-hidden alone leaves running. Both revert when the tab is active again.
+  // Opening the comments drawer pauses the app: you're reading/answering, so the
+  // game/app should hold (loop + media frozen, state kept) and stay silent until
+  // comments close — same host-hidden path used when the tab is backgrounded.
+  const runtimeEffectiveHostVisible =
+    runtimeHostVisible && runtimeIsActive && !commentsDrawerShown;
+  const runtimeEffectiveAudioMuted =
+    runtimeAudioMuted || !runtimeIsActive || commentsDrawerShown;
   const runtimeNotificationEventKey = String(
     buildLaunchTarget?.eventKey || ''
   ).trim();
@@ -953,6 +1061,31 @@ export default function BuildRuntime({
     navigate('/build');
   }
 
+  // Close the running app: the user chose to kill it. Tear down the running
+  // session, clear the open-tab intent so it can't respawn, ask the nav to
+  // drop its tab, and leave for the build menu. Runs on every device — this is
+  // the universal "close app" affordance now that the mobile resume tray is
+  // gone. Killing the session directly (not just via tab removal) covers the
+  // case where the app was opened and closed without ever spawning a tab.
+  function handleConfirmCloseApp() {
+    setCloseConfirmShown(false);
+    handleCloseApp();
+  }
+
+  function handleCloseApp() {
+    if (build?.id) {
+      const buildAppId = String(build.id);
+      onKillBuildAppSession(buildAppId);
+      // only clear the open-tab intent if it still points at THIS app — with
+      // several apps kept alive, another app's pending tab must survive
+      if (getBuildAppIdFromPath(openBuildTab?.to || '') === buildAppId) {
+        onSetOpenBuildTab(null);
+      }
+      onRequestCloseBuildApp(buildAppId, userId ?? null);
+    }
+    navigate('/build', { replace: true });
+  }
+
   function handleGoToWorkspace() {
     if (!build?.id) return;
     navigate(`/build/${build.id}`);
@@ -967,24 +1100,41 @@ export default function BuildRuntime({
   }
 
   async function handleSetHeaderCollapsed(collapsed: boolean) {
-    if (headerCollapsePending) return;
+    if (headerCollapsePending) return false;
     if (!userId) {
       // Guests have no server-stored preference to diverge from, so client
       // state is the source of truth for the session.
       onSetBuildHeaderCollapsed(collapsed);
-      return;
+      return true;
     }
     setHeaderCollapsePending(true);
     try {
       const data = await setBuildHeaderCollapsed(collapsed);
       // Update shared user state only from the server-confirmed value.
-      onSetBuildHeaderCollapsed(!!data?.buildHeaderCollapsed);
+      if (typeof data?.buildHeaderCollapsed !== 'boolean') return false;
+      onSetBuildHeaderCollapsed(data.buildHeaderCollapsed);
+      return data.buildHeaderCollapsed === collapsed;
     } catch {
       // Save failed: leave canonical state untouched so the toolbar never
       // shows a preference that was never persisted.
+      return false;
     } finally {
       setHeaderCollapsePending(false);
     }
+  }
+
+  // 2nd-level collapse: hide BOTH the build menu and the global nav
+  // (full-screen app). Restore brings both back.
+  async function handleHideEverything() {
+    const collapsed = await handleSetHeaderCollapsed(true);
+    if (collapsed) {
+      onSetBuildNavHidden(true);
+    }
+  }
+
+  function handleRestoreAll() {
+    onSetBuildNavHidden(false);
+    void handleSetHeaderCollapsed(false);
   }
 
   function handleOpenBuildNotificationSettings() {
@@ -1718,10 +1868,10 @@ export default function BuildRuntime({
             <button
               type="button"
               className={headerRevealHandleClass}
-              onClick={() => void handleSetHeaderCollapsed(false)}
+              onClick={handleRestoreAll}
               disabled={headerCollapsePending}
-              title="Show toolbar"
-              aria-label="Show toolbar"
+              title="Show menus"
+              aria-label="Show menus"
             >
               <Icon
                 icon={headerCollapsePending ? 'spinner' : 'chevron-down'}
@@ -1738,57 +1888,103 @@ export default function BuildRuntime({
                 : ''
             }`}
           >
-            <button
-              type="button"
-              className={headerToggleClass}
-              onClick={() => void handleSetHeaderCollapsed(true)}
-              disabled={headerCollapsePending}
-              title="Hide toolbar"
-              aria-label="Hide toolbar"
-            >
-              <Icon
-                icon={headerCollapsePending ? 'spinner' : 'chevron-up'}
-                pulse={headerCollapsePending}
-              />
-            </button>
-            <div className={headerTopRowClass}>
-              <div className={headerButtonGroupClass}>
-                <button
-                  type="button"
-                  className={backButtonClass}
-                  onClick={handleBack}
-                >
-                  <Icon icon="arrow-left" />
-                  <span>{backLabel}</span>
-                </button>
-                <button
-                  type="button"
-                  className={backButtonClass}
-                  onClick={handleGoToBuildMenu}
-                  title="Go to build main menu"
-                >
-                  <Icon icon="rocket-launch" />
-                  <span>Build Menu</span>
-                </button>
+            <div className={headerToggleClusterClass}>
+              <button
+                type="button"
+                className={headerToggleClass}
+                onClick={() => void handleSetHeaderCollapsed(true)}
+                disabled={headerCollapsePending}
+                title="Hide this menu"
+                aria-label="Hide this menu"
+              >
+                <Icon
+                  icon={headerCollapsePending ? 'spinner' : 'chevron-up'}
+                  pulse={headerCollapsePending}
+                />
+              </button>
+              <button
+                type="button"
+                className={headerToggleClass}
+                onClick={() => void handleHideEverything()}
+                disabled={headerCollapsePending}
+                title="Hide this menu and the top nav (full screen)"
+                aria-label="Hide everything (full screen)"
+              >
+                <Icon icon="angles-up" />
+              </button>
+            </div>
+            {/* left: app icon + title + compact inline meta */}
+            <div className={headerTitleLineClass}>
+              <Icon icon="laptop-code" />
+              <h1 className={titleClass}>{build.title}</h1>
+              <span className={headerMetaInlineClass}>
+                <span>by</span>
+                <UsernameText
+                  color="inherit"
+                  textStyle={runtimeCreatorUsernameTextStyle}
+                  user={{
+                    id: build.userId,
+                    username: build.username || '',
+                    profilePicUrl: build.profilePicUrl || ''
+                  }}
+                />
+                <ViewCount count={build.viewCount} unit="visits" />
+              </span>
+            </div>
+            {/* center: battery */}
+            {showAiEnergy && (
+              <div className={headerEnergySlotClass}>
+                <AiEnergyCard
+                  variant="inline"
+                  className={runtimeEnergyCardClass}
+                  energyPercent={energyPercent}
+                  energySegments={energySegments}
+                  portaledUiActive={runtimeIsActive}
+                  overflowed={aiUsagePolicy.lastUsageOverflowed}
+                  resetNeeded={energyIsEmpty}
+                  resetCost={aiUsagePolicy.resetCost || 0}
+                  resetPurchaseNumber={
+                    typeof aiUsagePolicy.resetPurchasesToday === 'number'
+                      ? aiUsagePolicy.resetPurchasesToday + 1
+                      : undefined
+                  }
+                  communityFundsEligible={communityChargeAvailable}
+                  chargeCtaAttentionKey={energyChargeAttentionKey}
+                />
               </div>
+            )}
+            {/* right: all actions on one line */}
+            <div className={headerActionsRowClass}>
               {showRuntimeActions ? (
-                <div className={contributionCtaRowClass}>
+                <>
                   {showWorkspaceButton ? (
                     <button
                       type="button"
                       className={runtimeActionBlueClass}
                       onClick={handleGoToWorkspace}
+                      title={isMobilePortrait ? 'Open workspace' : undefined}
+                      aria-label="Open workspace"
                     >
                       <Icon icon="wrench" />
-                      <span>Open workspace</span>
+                      {!isMobilePortrait && (
+                        <span>
+                          {isTabletPortrait ? 'Workspace' : 'Open workspace'}
+                        </span>
+                      )}
                     </button>
                   ) : null}
                   {showRuntimeFavoriteButton ? (
                     <FavoriteButton
                       buildId={Number(build.id)}
                       favorited={Boolean(build.isFavorited)}
-                      label={build.isFavorited ? 'Favorited' : 'Favorite'}
-                      size="pill"
+                      label={
+                        compactActions
+                          ? undefined
+                          : build.isFavorited
+                          ? 'Favorited'
+                          : 'Favorite'
+                      }
+                      size={compactActions ? 'md' : 'pill'}
                       onChange={({ buildId, favoritedAt, isFavorited }) => {
                         setBuild((current) =>
                           current && Number(current.id) === buildId
@@ -1845,6 +2041,12 @@ export default function BuildRuntime({
                       disabled={
                         runtimeActionBusy || collaborationStatus === 'pending'
                       }
+                      title={
+                        isMobilePortrait && collaborationStatus === 'accepted'
+                          ? collaborationButtonLabel
+                          : undefined
+                      }
+                      aria-label={collaborationButtonLabel}
                     >
                       <Icon
                         icon={
@@ -1858,7 +2060,12 @@ export default function BuildRuntime({
                         }
                         pulse={runtimeActionBusy}
                       />
-                      <span>{collaborationButtonLabel}</span>
+                      {/* phone portrait: accepted "workspace" button goes
+                          icon-only to fit alongside the bottom nav */}
+                      {isMobilePortrait &&
+                      collaborationStatus === 'accepted' ? null : (
+                        <span>{collaborationButtonLabel}</span>
+                      )}
                     </button>
                   ) : null}
                   {showStandaloneForkButton ? (
@@ -1892,105 +2099,76 @@ export default function BuildRuntime({
                       {runtimeFavoriteError}
                     </span>
                   ) : null}
-                </div>
+                </>
               ) : null}
-            </div>
-            {showAiEnergy && (
-              <div className={headerEnergySlotClass}>
-                <AiEnergyCard
-                  variant="inline"
-                  className={runtimeEnergyCardClass}
-                  energyPercent={energyPercent}
-                  energySegments={energySegments}
-                  portaledUiActive={runtimeIsActive}
-                  overflowed={aiUsagePolicy.lastUsageOverflowed}
-                  resetNeeded={energyIsEmpty}
-                  resetCost={aiUsagePolicy.resetCost || 0}
-                  resetPurchaseNumber={
-                    typeof aiUsagePolicy.resetPurchasesToday === 'number'
-                      ? aiUsagePolicy.resetPurchasesToday + 1
-                      : undefined
+              <ShareButton
+                variant="compact"
+                buttonVariant="ghost"
+                icon="share"
+                color="logoBlue"
+                iconSize="1x"
+                linkPath={`/app/${build.id}`}
+                buttonStyle={{
+                  borderRadius: '999px',
+                  width: '2.65rem',
+                  height: '2.65rem',
+                  padding: 0,
+                  fontSize: '1.1rem',
+                  background: 'rgba(65, 140, 235, 0.08)',
+                  border: '1px solid var(--ui-border)',
+                  color: '#1d4ed8'
+                }}
+              />
+              <button
+                aria-label="Notification settings"
+                className={notificationSettingsButtonClass}
+                data-muted={
+                  buildNotificationPreferences?.mutedBuild ? 'true' : 'false'
+                }
+                onClick={handleOpenBuildNotificationSettings}
+                title="Notification settings"
+                type="button"
+              >
+                <Icon
+                  icon={
+                    buildNotificationPreferences?.mutedBuild
+                      ? 'bell-slash'
+                      : 'bell'
                   }
-                  communityFundsEligible={communityChargeAvailable}
-                  chargeCtaAttentionKey={energyChargeAttentionKey}
                 />
-              </div>
-            )}
-            <div className={titleSectionClass}>
-              <div className={titleTextStackClass}>
-                <div className={titleRowClass}>
-                  <Icon icon="laptop-code" />
-                  <h1 className={titleClass}>{build.title}</h1>
-                </div>
-                <div className={metaClass}>
-                  <div className={metaCreatorClass}>
-                    <span>by</span>
-                    <UsernameText
-                      color="inherit"
-                      textStyle={runtimeCreatorUsernameTextStyle}
-                      user={{
-                        id: build.userId,
-                        username: build.username || '',
-                        profilePicUrl: build.profilePicUrl || ''
-                      }}
-                    />
-                  </div>
-                  <ViewCount count={build.viewCount} unit="visits" />
-                  {build.description?.trim() ? (
-                    <span className={metaDescriptionClass}>
-                      {build.description.trim()}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-              <div className={commentsCtaSlotClass}>
-                <ShareButton
-                  variant="compact"
-                  buttonVariant="ghost"
-                  icon="share"
-                  color="logoBlue"
-                  iconSize="1x"
-                  linkPath={`/app/${build.id}`}
-                  buttonStyle={{
-                    borderRadius: '999px',
-                    width: '2.65rem',
-                    height: '2.65rem',
-                    padding: 0,
-                    fontSize: '1.1rem',
-                    background: 'rgba(65, 140, 235, 0.08)',
-                    border: '1px solid var(--ui-border)',
-                    color: '#1d4ed8'
-                  }}
-                />
-                <button
-                  aria-label="Notification settings"
-                  className={notificationSettingsButtonClass}
-                  data-muted={
-                    buildNotificationPreferences?.mutedBuild ? 'true' : 'false'
-                  }
-                  onClick={handleOpenBuildNotificationSettings}
-                  title="Notification settings"
-                  type="button"
-                >
-                  <Icon
-                    icon={
-                      buildNotificationPreferences?.mutedBuild
-                        ? 'bell-slash'
-                        : 'bell'
-                    }
-                  />
-                </button>
-                <GameCTAButton
-                  onClick={handleToggleCommentsDrawer}
-                  variant="neutral"
-                  size="sm"
-                  icon="comments"
-                  toggled={commentsDrawerShown}
-                >
-                  {runtimeCommentsButtonLabel}
-                </GameCTAButton>
-              </div>
+              </button>
+              <GameCTAButton
+                onClick={handleToggleCommentsDrawer}
+                variant="neutral"
+                size="sm"
+                icon="comments"
+                toggled={commentsDrawerShown}
+              >
+                {isMobilePortrait
+                  ? runtimeCommentsCountLabel
+                  : runtimeCommentsButtonLabel}
+              </GameCTAButton>
+              <button
+                type="button"
+                className={closeAppButtonClass}
+                onClick={() => setCloseConfirmShown(true)}
+                title="Close app"
+                aria-label="Close app"
+              >
+                <Icon icon="xmark" />
+              </button>
             </div>
+            {closeConfirmShown ? (
+              <ConfirmModal
+                title="Close app"
+                description={`Close ${build.title || 'this app'}? It will stop running.`}
+                descriptionFontSize="1.7rem"
+                confirmButtonLabel="Close app"
+                confirmButtonColor="rose"
+                onConfirm={handleConfirmCloseApp}
+                onHide={() => setCloseConfirmShown(false)}
+              />
+            ) : null}
             {collaborationRequestModalShown ? (
               <CollaborationRequestModal
                 buildId={build.id}
@@ -2034,7 +2212,9 @@ export default function BuildRuntime({
                     projectFiles={build.projectFiles || []}
                     isOwner={false}
                     runtimeOnly
-                    runtimeHostVisible={runtimeHostVisible}
+                    runtimeHostVisible={runtimeEffectiveHostVisible}
+                    preventFrameSuspend={!isEmbedded}
+                    audioMuted={runtimeEffectiveAudioMuted}
                     mountContext={runtimeMountContext}
                     launchTarget={buildLaunchTarget}
                     capabilitySnapshot={build.capabilitySnapshot || null}
@@ -2050,6 +2230,16 @@ export default function BuildRuntime({
               ) : (
                 <Loading className={launchTargetLoadingClass} />
               )}
+              <button
+                type="button"
+                className={previewCommentsScrimClass}
+                data-visible={commentsDrawerShown ? 'true' : 'false'}
+                aria-hidden={!commentsDrawerShown}
+                tabIndex={commentsDrawerShown ? 0 : -1}
+                title="Close comments"
+                aria-label="Close comments"
+                onClick={() => setCommentsDrawerShown(false)}
+              />
             </div>
           </div>
           <CommentsDrawer

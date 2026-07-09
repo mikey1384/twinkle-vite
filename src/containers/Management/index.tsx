@@ -29,9 +29,12 @@ export default function Management() {
   const canViewNotableUsers = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
   const canViewPayment = userId === ADMIN_USER_ID;
   const canViewHomeFeedPerformance = userId === ADMIN_USER_ID;
-  const canViewScrollDiagnostics = userId === ADMIN_USER_ID;
+  const canViewDiagnostics = userId === ADMIN_USER_ID;
   const canViewBuildWorlds = userId === ADMIN_USER_ID;
   const canViewAiCardImage = userId === ADMIN_USER_ID;
+  const isDiagnosticsActive =
+    location.pathname === '/management/diagnostics' ||
+    location.pathname === '/management/scroll-diagnostics';
 
   useEffect(() => {
     onLoadManagement();
@@ -118,13 +121,13 @@ export default function Management() {
             <span style={{ marginLeft: '1.1rem' }}>Performance</span>
           </NavLink>
         )}
-        {canViewScrollDiagnostics && (
+        {canViewDiagnostics && (
           <NavLink
-            to="/management/scroll-diagnostics"
-            className={(navData) => (navData.isActive ? 'active' : '')}
+            to="/management/diagnostics"
+            className={() => (isDiagnosticsActive ? 'active' : '')}
           >
             <Icon icon="chart-line" />
-            <span style={{ marginLeft: '1.1rem' }}>Scroll Diagnostics</span>
+            <span style={{ marginLeft: '1.1rem' }}>Diagnostics</span>
           </NavLink>
         )}
         {canViewBuildWorlds && (
@@ -228,16 +231,12 @@ export default function Management() {
             Feed Perf
           </nav>
         )}
-        {canViewScrollDiagnostics && (
+        {canViewDiagnostics && (
           <nav
-            className={
-              location.pathname === `/management/scroll-diagnostics`
-                ? 'active'
-                : ''
-            }
-            onClick={() => navigate('/management/scroll-diagnostics')}
+            className={isDiagnosticsActive ? 'active' : ''}
+            onClick={() => navigate('/management/diagnostics')}
           >
-            Scroll Diag
+            Diagnostics
           </nav>
         )}
         {canViewBuildWorlds && (

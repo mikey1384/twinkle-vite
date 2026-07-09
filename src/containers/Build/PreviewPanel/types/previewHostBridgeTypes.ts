@@ -30,6 +30,7 @@ export interface UsePreviewHostBridgeArgs {
   profilePicUrl: string | null;
   resolvedCapabilitySnapshot: BuildCapabilitySnapshot | null;
   resolvedRuntimeExplorationPlan: BuildRuntimeExplorationPlan | null;
+  audioMuted: boolean;
   mountContext: PreviewMountContext | null;
   launchTarget: PreviewLaunchTarget | null;
   capabilitySnapshotRef: RefObject<BuildCapabilitySnapshot | null>;
@@ -45,6 +46,14 @@ export interface UsePreviewHostBridgeArgs {
     primary: string | null;
     secondary: string | null;
   }>;
+  previewFrameSources: {
+    primary: string | null;
+    secondary: string | null;
+  };
+  previewFrameReady: {
+    primary: boolean;
+    secondary: boolean;
+  };
   previewTransitioningRef: RefObject<boolean>;
   onPreviewFrameRetiredRef: RefObject<PreviewFrameRetiredHandler | null>;
   primaryIframeRef: RefObject<HTMLIFrameElement | null>;

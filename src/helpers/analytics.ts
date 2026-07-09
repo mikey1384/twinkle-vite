@@ -72,8 +72,7 @@ function gtagAvailable() {
 
 function send(command: string, ...args: any[]) {
   if (!import.meta.env.PROD) {
-    // Dev traffic must not pollute production analytics; log for E2E checks.
-    console.debug('[analytics]', command, ...args);
+    // Dev traffic must not pollute production analytics.
     return;
   }
   if (!gtagAvailable()) return;

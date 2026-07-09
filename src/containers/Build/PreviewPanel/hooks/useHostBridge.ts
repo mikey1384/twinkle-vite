@@ -150,6 +150,7 @@ export function useHostBridge({
   profilePicUrl,
   resolvedCapabilitySnapshot,
   resolvedRuntimeExplorationPlan,
+  audioMuted,
   mountContext,
   launchTarget,
   capabilitySnapshotRef,
@@ -158,6 +159,8 @@ export function useHostBridge({
   navigatePreviewFrameRef,
   previewCodeSignatureRef,
   previewFrameMetaRef,
+  previewFrameReady,
+  previewFrameSources,
   previewFrameSourcesRef,
   previewTransitioningRef,
   onPreviewFrameRetiredRef,
@@ -171,11 +174,38 @@ export function useHostBridge({
 }: UsePreviewHostBridgeArgs) {
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
+  const audioMutedRef = useRef(audioMuted);
   const launchTargetBroadcastReadyRef = useRef(false);
   const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(null);
   const worldViewerIdentityKeyRef = useRef<string | null>(null);
   mountContextRef.current = mountContext;
   launchTargetRef.current = launchTarget;
+  audioMutedRef.current = audioMuted;
+
+  useEffect(() => {
+    if (!runtimeOnly) return;
+    postToPreviewFrames(
+      primaryIframeRef,
+      secondaryIframeRef,
+      previewFrameMetaRef,
+      {
+        source: 'twinkle-parent',
+        type: 'audio:mute',
+        muted: audioMuted,
+        payload: { muted: audioMuted }
+      }
+    );
+  }, [
+    audioMuted,
+    previewFrameMetaRef,
+    previewFrameReady.primary,
+    previewFrameReady.secondary,
+    previewFrameSources.primary,
+    previewFrameSources.secondary,
+    primaryIframeRef,
+    runtimeOnly,
+    secondaryIframeRef
+  ]);
 
   useEffect(() => {
     const viewer = getViewerInfo(previewAuth);
@@ -845,6 +875,9 @@ export function useHostBridge({
       if (!sourceOriginAllowed) {
         return;
       }
+      const previewMessageTargetOrigin =
+        getBuildPreviewMessageTargetOrigin(sourcePreviewSrc);
+      const previewMessageNonce = sourceFrameMeta.messageNonce;
       if (!sourceFrameMeta.bridgeConfirmed) {
         previewFrameMetaRef.current = {
           ...previewFrameMetaRef.current,
@@ -853,10 +886,19 @@ export function useHostBridge({
             bridgeConfirmed: true
           }
         };
+        if (runtimeOnly) {
+          sourceWindow.postMessage(
+            {
+              source: 'twinkle-parent',
+              type: 'audio:mute',
+              previewNonce: previewMessageNonce,
+              muted: audioMutedRef.current,
+              payload: { muted: audioMutedRef.current }
+            },
+            previewMessageTargetOrigin
+          );
+        }
       }
-      const previewMessageTargetOrigin =
-        getBuildPreviewMessageTargetOrigin(sourcePreviewSrc);
-      const previewMessageNonce = sourceFrameMeta.messageNonce;
       const targetFrame = messageTargetFrameRef.current;
       const targetWindow =
         targetFrame === 'primary' ? primaryWindow : secondaryWindow;

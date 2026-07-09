@@ -7,7 +7,7 @@ import axios, {
   GenericAbortSignal
 } from 'axios';
 import pLimit from 'p-limit';
-import { logForAdmin } from '~/helpers';
+import { emitAdminTelemetry } from '~/helpers';
 
 export type ChannelName = 'ui' | 'normal' | 'bulk';
 
@@ -453,15 +453,15 @@ export class RequestScheduler {
     }
 
     if (this.networkQuality === 'poor') {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Network quality detected as poor. Timeouts scaled by 2x from baseline`
       });
     } else if (this.networkQuality === 'moderate') {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Network quality detected as moderate. Timeouts scaled by 1.5x from baseline`
       });
     } else {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Network quality returned to good. Timeouts restored to baseline`
       });
     }
@@ -692,7 +692,7 @@ function installProgressGuard(
   const reset = () => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
-      logForAdmin({
+      emitAdminTelemetry({
         message: `Progress stall detected after ${stallTimeout}ms for ${config.method?.toUpperCase()} ${
           config.url
         }`

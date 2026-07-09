@@ -75,6 +75,13 @@ export interface PreviewPanelProps {
   ) => Promise<{ success: boolean; error?: string }>;
   runtimeOnly?: boolean;
   runtimeHostVisible?: boolean;
+  // Keep the preview frame MOUNTED even while host-hidden (the keep-alive
+  // full-tab runtime): a hidden frame normally suspends -> its src is nulled ->
+  // useFrameManager retires the iframe, which would destroy a backgrounded
+  // build tab's state. Embedded panels leave this false so scrolled-off
+  // previews still free memory.
+  preventFrameSuspend?: boolean;
+  audioMuted?: boolean;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   maxProjectFileLines?: number | null;
   onEditableProjectFilesStateChange?: (state: {
