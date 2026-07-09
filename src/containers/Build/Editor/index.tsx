@@ -253,7 +253,6 @@ export default function BuildEditor({
     routeOpenForkHistory ? Number(build.id || 0) : 0
   );
   const teamLeave = useBuildTeamLeave({ build, userId });
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const todayAiUsagePolicy = useNotiContext(
     (v) => v.state.todayStats.aiUsagePolicy as BuildRequestLimitsSnapshot | null
@@ -1721,7 +1720,6 @@ export default function BuildEditor({
         canEditMetadata={canEditCurrentBuildMetadata}
         canEditThumbnail={canEditCurrentBuildThumbnail}
         isOwner={isOwner}
-        profileTheme={profileTheme}
         publishing={publishing}
         savingThumbnail={savingThumbnail}
         showContributionButton={showContributionButton}

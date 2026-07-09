@@ -253,7 +253,6 @@ export default function MainNavs({
   const contentPath = useViewContext((v) => v.state.contentPath);
   const contentNav = useViewContext((v) => v.state.contentNav);
   const missionNav = useViewContext((v) => v.state.missionNav);
-  const buildNav = useViewContext((v) => v.state.buildNav);
   const profileNav = useViewContext((v) => v.state.profileNav);
   const homeNav = useViewContext((v) => v.state.homeNav);
   const pageTitle = useViewContext((v) => v.state.pageTitle);
@@ -769,7 +768,6 @@ export default function MainNavs({
   const onSetContentPath = useViewContext((v) => v.actions.onSetContentPath);
   const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
   const onSetMissionNav = useViewContext((v) => v.actions.onSetMissionNav);
-  const onSetBuildNav = useViewContext((v) => v.actions.onSetBuildNav);
   const onSetProfileNav = useViewContext((v) => v.actions.onSetProfileNav);
   const onSetHomeNav = useViewContext((v) => v.actions.onSetHomeNav);
 
@@ -783,24 +781,17 @@ export default function MainNavs({
     () => pathname.startsWith('/missions'),
     [pathname]
   );
-  const isBuildSection = useMemo(
-    () => pathname.startsWith('/build'),
-    [pathname]
+  const isBuildListSection = useMemo(
+    () => isBuildListPath(pathname, { loggedIn: !!userId }),
+    [pathname, userId]
   );
   const missionLinkTarget = useMemo(
     () => (isMissionSection ? '/missions' : missionNav || '/missions'),
     [isMissionSection, missionNav]
   );
-  // On a build list page the target must equal the current canonical URL:
-  // bare /build immediately replace-redirects to a tab path, so Nav's exact
-  // same-location check (which triggers the scroll-to-top) never matches it.
-  const buildLinkTarget = useMemo(() => {
-    if (!isBuildSection) return buildNav || '/build';
-    return isBuildListPath(pathname, { loggedIn: !!userId })
-      ? `${pathname}${search || ''}`
-      : '/build';
-  }, [isBuildSection, buildNav, pathname, search, userId]);
-
+  const buildLinkTarget = isBuildListSection
+    ? `${pathname}${search || ''}`
+    : '/build';
 
   const displayedTwinkleCoins = useMemo(
     () => abbreviateNumber(twinkleCoins),
@@ -1120,12 +1111,6 @@ export default function MainNavs({
       const nextMissionNav = `${pathname}${search || ''}`;
       if (missionNav !== nextMissionNav) {
         onSetMissionNav(nextMissionNav);
-      }
-    }
-    if (section === 'build') {
-      const nextBuildNav = `${pathname}${search || ''}`;
-      if (buildNav !== nextBuildNav) {
-        onSetBuildNav(nextBuildNav);
       }
     }
     if (section === 'management' && managementLevel > 0) {

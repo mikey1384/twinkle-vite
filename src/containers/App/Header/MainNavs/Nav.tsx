@@ -29,6 +29,13 @@ function buildAppTabMatchesPath(to: string, pathname: string) {
   return targetBuildId === getBuildAppIdFromPath(pathname);
 }
 
+function getBuildWorkspaceRouteKey(value: string) {
+  const pathname = String(value || '').split(/[?#]/)[0];
+  const match = /^\/build\/(\d+)(?:\/(\d+))?\/?$/.exec(pathname);
+  if (!match) return '';
+  return match[2] ? `${match[1]}:${match[2]}` : match[1];
+}
+
 function Nav({
   alert,
   className,
@@ -172,6 +179,15 @@ function Nav({
       return 'active';
     }
     if (to.startsWith('/build') && pathname.startsWith('/build')) {
+      const currentWorkspaceKey = getBuildWorkspaceRouteKey(pathname);
+      const targetWorkspaceKey = getBuildWorkspaceRouteKey(to);
+      if (currentWorkspaceKey || targetWorkspaceKey) {
+        return currentWorkspaceKey &&
+          targetWorkspaceKey &&
+          currentWorkspaceKey === targetWorkspaceKey
+          ? 'active'
+          : '';
+      }
       return 'active';
     }
     if (to.startsWith('/management') && pathname.startsWith('/management')) {

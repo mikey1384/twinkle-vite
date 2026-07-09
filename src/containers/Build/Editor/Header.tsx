@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -9,8 +9,6 @@ import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
-import ScopedTheme from '~/theme/ScopedTheme';
 import type { User } from '~/types';
 import {
   getBuildDisplayTitle,
@@ -46,40 +44,6 @@ const headerClass = css`
     align-items: flex-start;
     gap: 0.9rem;
     padding: 1rem;
-  }
-`;
-
-const badgeClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--theme-bg) 12%, white);
-  color: color-mix(in srgb, var(--theme-border) 82%, #24324a);
-  border: 1px solid color-mix(in srgb, var(--theme-bg) 22%, white);
-  font-weight: 900;
-  font-size: 1.1rem;
-  text-transform: none;
-  letter-spacing: normal;
-  font-family: ${displayFontFamily};
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    background-color 0.15s ease;
-  &:hover {
-    transform: translateY(-1px);
-    background: color-mix(in srgb, var(--theme-bg) 18%, white);
-    text-decoration: none;
-  }
-  &:active {
-    text-decoration: none;
-  }
-  &:focus-visible {
-    outline: 2px solid var(--theme-border);
-    outline-offset: 2px;
-    text-decoration: none;
   }
 `;
 
@@ -349,7 +313,6 @@ interface HeaderProps {
   canEditMetadata: boolean;
   canEditThumbnail: boolean;
   isOwner: boolean;
-  profileTheme?: string | null;
   publishing: boolean;
   savingThumbnail: boolean;
   showContributionButton: boolean;
@@ -564,7 +527,6 @@ export default function Header({
   canEditMetadata,
   canEditThumbnail,
   isOwner,
-  profileTheme,
   publishing,
   savingThumbnail,
   showContributionButton,
@@ -869,15 +831,6 @@ export default function Header({
   return (
     <header className={headerClass}>
       <div className={headerInfoClass}>
-        <ScopedTheme
-          as="span"
-          theme={(profileTheme || DEFAULT_PROFILE_THEME) as any}
-        >
-          <Link to="/build" className={badgeClass} title="Back to builds">
-            <Icon icon="arrow-left" />
-            Back to Builds
-          </Link>
-        </ScopedTheme>
         <div className={headerTitleRowClass}>
           <div className={headerTitleMainClass}>
             <h2 className={headerTitleClass}>{displayTitle}</h2>
