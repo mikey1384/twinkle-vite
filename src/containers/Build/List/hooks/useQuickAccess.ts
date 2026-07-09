@@ -4,7 +4,8 @@ import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import { socket } from '~/constants/sockets/api';
 import {
-  useAppContext
+  useAppContext,
+  useBuildContext
 } from '~/contexts';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../../constants/runtimeViewSources';
 import {
@@ -64,26 +65,75 @@ export default function useQuickAccess({
   const onChangeBuildQuickAccessMode = useAppContext(
     (v) => v.user.actions.onChangeBuildQuickAccessMode
   );
+  const quickAccessCache = useBuildContext(
+    (v) => v.state.buildStudio.quickAccess
+  );
+  const onSetBuildStudioTodayTopViewedBuild = useBuildContext(
+    (v) => v.actions.onSetBuildStudioTodayTopViewedBuild
+  );
+  const onSetBuildStudioQuickAccessBuilds = useBuildContext(
+    (v) => v.actions.onSetBuildStudioQuickAccessBuilds
+  );
+  const onAppendBuildStudioQuickAccessBuilds = useBuildContext(
+    (v) => v.actions.onAppendBuildStudioQuickAccessBuilds
+  );
+  const onRemoveBuildStudioQuickAccessBuilds = useBuildContext(
+    (v) => v.actions.onRemoveBuildStudioQuickAccessBuilds
+  );
+  const onPatchBuildStudioQuickAccessFavorite = useBuildContext(
+    (v) => v.actions.onPatchBuildStudioQuickAccessFavorite
+  );
 
   const quickAccessMode = normalizeBuildQuickAccessMode(buildQuickAccessMode);
-  const [todayTopViewedBuild, setTodayTopViewedBuild] =
-    useState<TodayTopViewedBuild | null>(null);
-  const [recentlyUsedBuilds, setRecentlyUsedBuilds] = useState<
-    QuickAccessBuild[]
-  >([]);
-  const [favoriteBuilds, setFavoriteBuilds] = useState<QuickAccessBuild[]>([]);
-  const [recentlyUsedCursor, setRecentlyUsedCursor] = useState<string | null>(
-    null
+  const recentQuickAccessState = quickAccessCache?.recent;
+  const favoriteQuickAccessState = quickAccessCache?.favorites;
+  const todayTopViewedState = quickAccessCache?.todayTopViewed;
+  const recentLoadedForCurrentUser = Boolean(
+    normalizedUserId &&
+      recentQuickAccessState?.loaded &&
+      recentQuickAccessState.userId === normalizedUserId
   );
-  const [favoriteBuildsCursor, setFavoriteBuildsCursor] = useState<
-    string | null
-  >(null);
+  const favoritesLoadedForCurrentUser = Boolean(
+    normalizedUserId &&
+      favoriteQuickAccessState?.loaded &&
+      favoriteQuickAccessState.userId === normalizedUserId
+  );
+  const todayTopViewedLoadedForCurrentUser = Boolean(
+    normalizedUserId &&
+      todayTopViewedState?.loaded &&
+      todayTopViewedState.userId === normalizedUserId
+  );
+  const recentlyUsedBuilds = recentLoadedForCurrentUser
+    ? ((recentQuickAccessState?.builds || []) as QuickAccessBuild[])
+    : [];
+  const favoriteBuilds = favoritesLoadedForCurrentUser
+    ? ((favoriteQuickAccessState?.builds || []) as QuickAccessBuild[])
+    : [];
+  const todayTopViewedBuild = todayTopViewedLoadedForCurrentUser
+    ? ((todayTopViewedState?.build || null) as TodayTopViewedBuild | null)
+    : null;
+  const recentlyUsedCursor = recentLoadedForCurrentUser
+    ? recentQuickAccessState?.cursor || null
+    : null;
+  const favoriteBuildsCursor = favoritesLoadedForCurrentUser
+    ? favoriteQuickAccessState?.cursor || null
+    : null;
+  const quickAccessLoadedForCurrentUser =
+    recentLoadedForCurrentUser && favoritesLoadedForCurrentUser;
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [savingMode, setSavingMode] = useState(false);
   const [error, setError] = useState('');
   const [modalMode, setModalMode] = useState<BuildQuickAccessMode | null>(null);
+  const [todayTopViewedFailedUserId, setTodayTopViewedFailedUserId] =
+    useState<number | null>(null);
   const loadRef = useRef(0);
+  const todayTopViewedLoadRef = useRef(0);
+  const todayTopViewedPending = Boolean(
+    normalizedUserId &&
+      !todayTopViewedLoadedForCurrentUser &&
+      todayTopViewedFailedUserId !== normalizedUserId
+  );
   const activeBuilds =
     quickAccessMode === 'favorites' ? favoriteBuilds : recentlyUsedBuilds;
   const activeCursor =
@@ -96,38 +146,37 @@ export default function useQuickAccess({
     profileTheme === 'gold' ? logoBlueOpenAppButtonStyle : undefined;
 
   useEffect(() => {
-    if (!normalizedUserId) {
-      setTodayTopViewedBuild(null);
-      return;
-    }
-    let canceled = false;
+    if (!normalizedUserId) return;
+    const loadId = todayTopViewedLoadRef.current + 1;
+    todayTopViewedLoadRef.current = loadId;
+    setTodayTopViewedFailedUserId(null);
     handleLoadTodayTopViewedBuild();
 
     async function handleLoadTodayTopViewedBuild() {
       try {
         const data = await loadTodayTopViewedBuild();
-        if (canceled) return;
-        setTodayTopViewedBuild(normalizeTodayTopViewedBuild(data?.build));
+        if (todayTopViewedLoadRef.current !== loadId) return;
+        setTodayTopViewedFailedUserId(null);
+        onSetBuildStudioTodayTopViewedBuild({
+          build: normalizeTodayTopViewedBuild(data?.build),
+          userId: normalizedUserId
+        });
       } catch (err) {
         console.error('Failed to load today top viewed build:', err);
-        if (!canceled) {
-          setTodayTopViewedBuild(null);
+        if (todayTopViewedLoadRef.current === loadId) {
+          setTodayTopViewedFailedUserId(normalizedUserId);
         }
       }
     }
 
     return () => {
-      canceled = true;
+      todayTopViewedLoadRef.current += 1;
     };
-    // loadTodayTopViewedBuild is a stable context request helper.
+    // loadTodayTopViewedBuild and context actions are stable helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId]);
 
   useEffect(() => {
-    setRecentlyUsedBuilds([]);
-    setFavoriteBuilds([]);
-    setRecentlyUsedCursor(null);
-    setFavoriteBuildsCursor(null);
     setModalMode(null);
     setLoading(false);
     setLoadingMore(false);
@@ -135,12 +184,12 @@ export default function useQuickAccess({
     if (!normalizedUserId) {
       return;
     }
-    void loadQuickAccess();
+    void loadQuickAccess({ showLoading: !quickAccessLoadedForCurrentUser });
 
     return () => {
       loadRef.current += 1;
     };
-    // loadRecentlyUsedBuilds and loadFavoriteBuilds are stable request helpers.
+    // Request helpers, context actions, and the initial cache snapshot are stable for this mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId]);
 
@@ -162,16 +211,13 @@ export default function useQuickAccess({
           .filter((buildId) => buildId > 0)
       );
       if (deletedBuildIds.size === 0) return;
-      setRecentlyUsedBuilds((builds) =>
-        builds.filter((build) => !deletedBuildIds.has(Number(build.id || 0)))
-      );
-      setFavoriteBuilds((builds) =>
-        builds.filter((build) => !deletedBuildIds.has(Number(build.id || 0)))
-      );
-      setTodayTopViewedBuild((build) =>
-        build && deletedBuildIds.has(Number(build.id || 0)) ? null : build
-      );
+      onRemoveBuildStudioQuickAccessBuilds({
+        buildIds: [...deletedBuildIds],
+        userId: normalizedUserId
+      });
     }
+    // onRemoveBuildStudioQuickAccessBuilds is a stable context action.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId]);
 
   return {
@@ -196,7 +242,8 @@ export default function useQuickAccess({
     onShowMore: handleShowMore,
     openButtonStyle,
     quickAccessMode,
-    todayTopViewedBuild
+    todayTopViewedBuild,
+    todayTopViewedPending
   };
 
   async function loadQuickAccess({ showLoading = true } = {}) {
@@ -213,12 +260,18 @@ export default function useQuickAccess({
         loadFavoriteBuilds({ limit: QUICK_ACCESS_FETCH_LIMIT })
       ]);
       if (loadRef.current !== loadId) return;
-      setRecentlyUsedBuilds(normalizeQuickAccessBuilds(recentResult?.builds));
-      setFavoriteBuilds(normalizeQuickAccessBuilds(favoriteResult?.builds));
-      setRecentlyUsedCursor(normalizeQuickAccessCursor(recentResult?.cursor));
-      setFavoriteBuildsCursor(
-        normalizeQuickAccessCursor(favoriteResult?.cursor)
-      );
+      onSetBuildStudioQuickAccessBuilds({
+        quickAccessMode: 'recent',
+        builds: normalizeQuickAccessBuilds(recentResult?.builds),
+        cursor: normalizeQuickAccessCursor(recentResult?.cursor),
+        userId: normalizedUserId
+      });
+      onSetBuildStudioQuickAccessBuilds({
+        quickAccessMode: 'favorites',
+        builds: normalizeQuickAccessBuilds(favoriteResult?.builds),
+        cursor: normalizeQuickAccessCursor(favoriteResult?.cursor),
+        userId: normalizedUserId
+      });
     } catch (err: any) {
       console.error('Failed to load build quick access:', err);
       if (loadRef.current === loadId) {
@@ -288,8 +341,12 @@ export default function useQuickAccess({
               cursor,
               limit: QUICK_ACCESS_FETCH_LIMIT
             });
-      appendBuilds(mode, normalizeQuickAccessBuilds(result?.builds));
-      setCursor(mode, normalizeQuickAccessCursor(result?.cursor));
+      onAppendBuildStudioQuickAccessBuilds({
+        quickAccessMode: mode,
+        builds: normalizeQuickAccessBuilds(result?.builds),
+        cursor: normalizeQuickAccessCursor(result?.cursor),
+        userId: normalizedUserId
+      });
     } catch (err: any) {
       console.error('Failed to load more quick access builds:', err);
       setError(
@@ -302,51 +359,15 @@ export default function useQuickAccess({
     }
   }
 
-  function appendBuilds(
-    mode: BuildQuickAccessMode,
-    nextBuilds: QuickAccessBuild[]
-  ) {
-    if (nextBuilds.length === 0) return;
-    const appendUnique = (items: QuickAccessBuild[]) => {
-      const seenIds = new Set(items.map((item) => Number(item.id)));
-      return items.concat(
-        nextBuilds.filter((build) => {
-          const buildId = Number(build.id);
-          if (!buildId || seenIds.has(buildId)) return false;
-          seenIds.add(buildId);
-          return true;
-        })
-      );
-    };
-    if (mode === 'favorites') {
-      setFavoriteBuilds(appendUnique);
-      return;
-    }
-    setRecentlyUsedBuilds(appendUnique);
-  }
-
-  function setCursor(mode: BuildQuickAccessMode, cursor: string | null) {
-    if (mode === 'favorites') {
-      setFavoriteBuildsCursor(cursor);
-      return;
-    }
-    setRecentlyUsedCursor(cursor);
-  }
-
   function handleBuildFavoriteStart() {
     setError('');
   }
 
   function handleBuildDeleted(buildId: number) {
-    setRecentlyUsedBuilds((builds) =>
-      builds.filter((build) => Number(build.id) !== buildId)
-    );
-    setFavoriteBuilds((builds) =>
-      builds.filter((build) => Number(build.id) !== buildId)
-    );
-    setTodayTopViewedBuild((build) =>
-      build && Number(build.id) === buildId ? null : build
-    );
+    onRemoveBuildStudioQuickAccessBuilds({
+      buildId,
+      userId: normalizedUserId
+    });
   }
 
   function handleBuildFavoriteChange(
@@ -395,10 +416,6 @@ export default function useQuickAccess({
       item: BuildProjectListItemData
     ): BuildProjectListItemData =>
       Number(item.id) === buildId
-        ? { ...item, favoritedAt, isFavorited }
-        : item;
-    const patchBuild = (item: QuickAccessBuild): QuickAccessBuild =>
-      Number(item.id) === buildId
         ? {
             ...item,
             favoriteActivityAt: nextFavoriteActivityAt,
@@ -406,30 +423,23 @@ export default function useQuickAccess({
             isFavorited
           }
         : item;
-    setRecentlyUsedBuilds((items) => items.map(patchBuild));
-    setFavoriteBuilds((items) => {
-      if (!isFavorited) {
-        return items.filter((item) => Number(item.id) !== buildId);
-      }
-      const nextBuild: QuickAccessBuild = {
+    onPatchBuildStudioQuickAccessFavorite({
+      build: {
         ...build,
         favoriteActivityAt: nextFavoriteActivityAt,
         favoritedAt,
-        isFavorited: true
-      };
-      return [
-        nextBuild,
-        ...items.filter((item) => Number(item.id) !== buildId).map(patchBuild)
-      ];
+        isFavorited
+      },
+      buildId,
+      favoriteActivityAt: nextFavoriteActivityAt,
+      favoritedAt,
+      isFavorited,
+      userId: normalizedUserId
     });
-    setTodayTopViewedBuild((currentBuild) =>
-      currentBuild && Number(currentBuild.id) === buildId
-        ? { ...currentBuild, favoritedAt, isFavorited }
-        : currentBuild
-    );
     onPatchBuildStudioMyBuild({
       build: {
         ...build,
+        favoriteActivityAt: nextFavoriteActivityAt,
         favoritedAt,
         isFavorited
       },

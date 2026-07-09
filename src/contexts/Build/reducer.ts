@@ -183,11 +183,33 @@ export interface BuildStudioActivityFeedState {
   lastViewedAllActivitySortId: number;
 }
 
+export type BuildStudioQuickAccessMode = 'recent' | 'favorites';
+
+export interface BuildStudioQuickAccessListState {
+  builds: any[];
+  cursor: string | null;
+  loaded: boolean;
+  userId: number | null;
+}
+
+export interface BuildStudioTodayTopViewedState {
+  build: any | null;
+  loaded: boolean;
+  userId: number | null;
+}
+
+export interface BuildStudioQuickAccessState {
+  recent: BuildStudioQuickAccessListState;
+  favorites: BuildStudioQuickAccessListState;
+  todayTopViewed: BuildStudioTodayTopViewedState;
+}
+
 export interface BuildStudioState {
   activeTab: BuildStudioTab;
   myBuilds: any[];
   myBuildsLoaded: boolean;
   myBuildsUserId: number | null;
+  quickAccess: BuildStudioQuickAccessState;
   browse: Record<BuildStudioBrowseTab, BuildStudioBrowseTabState>;
   browseModes: Record<BuildStudioPublicBrowseTab, BuildStudioBrowseMode>;
   activityPanel: BuildStudioActivityPanelState;
@@ -298,10 +320,16 @@ export interface BuildStudioActionPayload {
   builds?: any[];
   build?: any;
   buildId?: number;
+  buildIds?: number[];
   userId?: number | null;
   loadMoreToken?: string | null;
+  cursor?: string | null;
   browseMode?: BuildStudioBrowseMode | string | null;
+  quickAccessMode?: BuildStudioQuickAccessMode | string | null;
   searchQuery?: string | null;
+  isFavorited?: boolean | null;
+  favoritedAt?: number | null;
+  favoriteActivityAt?: number | null;
   cacheRefreshKey?: number | null;
   cacheGeneration?: number | null;
   activityTab?: BuildActivityTab | string | null;
@@ -365,6 +393,11 @@ export interface BuildAction {
     | 'SET_BUILD_STUDIO_MY_BUILDS'
     | 'PATCH_BUILD_STUDIO_MY_BUILD'
     | 'REMOVE_BUILD_STUDIO_MY_BUILD'
+    | 'SET_BUILD_STUDIO_TODAY_TOP_VIEWED_BUILD'
+    | 'SET_BUILD_STUDIO_QUICK_ACCESS_BUILDS'
+    | 'APPEND_BUILD_STUDIO_QUICK_ACCESS_BUILDS'
+    | 'REMOVE_BUILD_STUDIO_QUICK_ACCESS_BUILDS'
+    | 'PATCH_BUILD_STUDIO_QUICK_ACCESS_FAVORITE'
     | 'SET_BUILD_STUDIO_BROWSE_MODE'
     | 'SET_BUILD_STUDIO_ACTIVITY_FILTER'
     | 'INVALIDATE_BUILD_STUDIO_ACTIVITY_FEEDS'
@@ -401,6 +434,7 @@ export function createInitialBuildStudioState(): BuildStudioState {
     myBuilds: [],
     myBuildsLoaded: false,
     myBuildsUserId: null,
+    quickAccess: createInitialBuildStudioQuickAccessState(),
     browse: {
       community: createInitialBuildStudioBrowseState(),
       collaborating: createInitialBuildStudioBrowseState(),
@@ -483,6 +517,31 @@ function createInitialBuildStudioBrowseState(): BuildStudioBrowseTabState {
   };
 }
 
+function createInitialBuildStudioQuickAccessState(): BuildStudioQuickAccessState {
+  return {
+    recent: createInitialBuildStudioQuickAccessListState(),
+    favorites: createInitialBuildStudioQuickAccessListState(),
+    todayTopViewed: createInitialBuildStudioTodayTopViewedState()
+  };
+}
+
+function createInitialBuildStudioQuickAccessListState(): BuildStudioQuickAccessListState {
+  return {
+    builds: [],
+    cursor: null,
+    loaded: false,
+    userId: null
+  };
+}
+
+function createInitialBuildStudioTodayTopViewedState(): BuildStudioTodayTopViewedState {
+  return {
+    build: null,
+    loaded: false,
+    userId: null
+  };
+}
+
 function getBuildRunLookupBuildId(
   state: BuildState,
   buildRun?: BuildLiveRunActionPayload
@@ -554,6 +613,15 @@ function getBuildStudioState(state: BuildState) {
   return state.buildStudio || createInitialBuildStudioState();
 }
 
+function getBuildStudioQuickAccessState(
+  buildStudio: BuildStudioState
+): BuildStudioQuickAccessState {
+  return {
+    ...createInitialBuildStudioQuickAccessState(),
+    ...(buildStudio.quickAccess || {})
+  };
+}
+
 function normalizeBuildStudioTab(value?: string | null): BuildStudioTab {
   return value === 'collaborating' ||
     value === 'community' ||
@@ -581,6 +649,17 @@ function normalizeBuildStudioBrowseMode(
   return value === 'leaderboard' ? 'leaderboard' : 'recent';
 }
 
+function normalizeBuildStudioQuickAccessMode(
+  value?: string | null
+): BuildStudioQuickAccessMode {
+  return value === 'favorites' ? 'favorites' : 'recent';
+}
+
+function normalizeBuildStudioQuickAccessCursor(value: unknown) {
+  const cursor = String(value || '').trim();
+  return cursor || null;
+}
+
 function normalizeBuildStudioSearchQuery(value?: string | null) {
   return String(value || '')
     .replace(/\s+/g, ' ')
@@ -606,6 +685,12 @@ function normalizeBuildActivitySubtab(
 function normalizeBuildStudioUserId(value: unknown) {
   const userId = Math.floor(Number(value) || 0);
   return userId > 0 ? userId : null;
+}
+
+function normalizeBuildStudioNullablePositiveInteger(value: unknown) {
+  const normalized = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(normalized)) return null;
+  return normalized > 0 ? normalized : null;
 }
 
 function normalizeBuildStudioCacheRefreshKey(value: unknown) {
@@ -712,6 +797,131 @@ function getBuildStudioActivityFeeds(buildStudio: BuildStudioState) {
   return {
     ...createInitialBuildStudioActivityFeeds(),
     ...(buildStudio.activityFeeds || {})
+  };
+}
+
+function mergeBuildStudioQuickAccessItems(currentItems: any[], nextItems: any[]) {
+  const seenIds = new Set(currentItems.map((item) => Number(item?.id || 0)));
+  const mergedItems = [...currentItems];
+  for (const item of nextItems || []) {
+    const id = Number(item?.id || 0);
+    if (!id || seenIds.has(id)) continue;
+    seenIds.add(id);
+    mergedItems.push(item);
+  }
+  return mergedItems;
+}
+
+function removeBuildsFromQuickAccessList(
+  listState: BuildStudioQuickAccessListState,
+  buildIds: Set<number>,
+  userId: number | null
+) {
+  if (userId && listState.userId && listState.userId !== userId) {
+    return listState;
+  }
+  const nextBuilds = listState.builds.filter(
+    (build) => !buildIds.has(Number(build?.id || 0))
+  );
+  return nextBuilds.length === listState.builds.length
+    ? listState
+    : {
+        ...listState,
+        builds: nextBuilds
+      };
+}
+
+function patchBuildsForQuickAccessFavorite({
+  buildId,
+  builds,
+  favoriteActivityAt,
+  favoritedAt,
+  isFavorited
+}: {
+  buildId: number;
+  builds: any[];
+  favoriteActivityAt: number | null;
+  favoritedAt: number | null;
+  isFavorited: boolean;
+}) {
+  return builds.map((build) =>
+    Number(build?.id || 0) === buildId
+      ? {
+          ...build,
+          favoriteActivityAt,
+          favoritedAt,
+          isFavorited
+        }
+      : build
+  );
+}
+
+function patchQuickAccessListFavorite({
+  build,
+  buildId,
+  favoriteActivityAt,
+  favoritedAt,
+  isFavorited,
+  listState,
+  mode,
+  userId
+}: {
+  build: any;
+  buildId: number;
+  favoriteActivityAt: number | null;
+  favoritedAt: number | null;
+  isFavorited: boolean;
+  listState: BuildStudioQuickAccessListState;
+  mode: BuildStudioQuickAccessMode;
+  userId: number | null;
+}) {
+  if (userId && listState.userId && listState.userId !== userId) {
+    return listState;
+  }
+  if (!listState.loaded || listState.userId !== userId) {
+    return listState;
+  }
+  if (mode === 'favorites') {
+    if (!isFavorited) {
+      return {
+        ...listState,
+        builds: listState.builds.filter(
+          (item) => Number(item?.id || 0) !== buildId
+        )
+      };
+    }
+    const nextBuild = {
+      ...build,
+      id: buildId,
+      favoriteActivityAt,
+      favoritedAt,
+      isFavorited: true
+    };
+    return {
+      ...listState,
+      builds: [
+        nextBuild,
+        ...patchBuildsForQuickAccessFavorite({
+          buildId,
+          builds: listState.builds.filter(
+            (item) => Number(item?.id || 0) !== buildId
+          ),
+          favoriteActivityAt,
+          favoritedAt,
+          isFavorited
+        })
+      ]
+    };
+  }
+  return {
+    ...listState,
+    builds: patchBuildsForQuickAccessFavorite({
+      buildId,
+      builds: listState.builds,
+      favoriteActivityAt,
+      favoritedAt,
+      isFavorited
+    })
   };
 }
 
@@ -2400,6 +2610,216 @@ export default function BuildReducer(
           myBuilds: buildStudio.myBuilds.filter(
             (build) => Number(build?.id || 0) !== buildId
           )
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_TODAY_TOP_VIEWED_BUILD': {
+      const buildStudio = getBuildStudioState(state);
+      const quickAccess = getBuildStudioQuickAccessState(buildStudio);
+      const build = action.buildStudio?.build || null;
+      return {
+        ...state,
+        buildsById: build
+          ? mergeBuildSummaryMap(state.buildsById || {}, build)
+          : state.buildsById,
+        buildStudio: {
+          ...buildStudio,
+          quickAccess: {
+            ...quickAccess,
+            todayTopViewed: {
+              build,
+              loaded: true,
+              userId: normalizeBuildStudioUserId(action.buildStudio?.userId)
+            }
+          }
+        }
+      };
+    }
+    case 'SET_BUILD_STUDIO_QUICK_ACCESS_BUILDS': {
+      const buildStudio = getBuildStudioState(state);
+      const quickAccess = getBuildStudioQuickAccessState(buildStudio);
+      const mode = normalizeBuildStudioQuickAccessMode(
+        action.buildStudio?.quickAccessMode
+      );
+      const builds = Array.isArray(action.buildStudio?.builds)
+        ? action.buildStudio.builds
+        : [];
+      return {
+        ...state,
+        buildsById: mergeBuildSummaryMap(state.buildsById || {}, builds),
+        buildStudio: {
+          ...buildStudio,
+          quickAccess: {
+            ...quickAccess,
+            [mode]: {
+              builds,
+              cursor: normalizeBuildStudioQuickAccessCursor(
+                action.buildStudio?.cursor
+              ),
+              loaded: true,
+              userId: normalizeBuildStudioUserId(action.buildStudio?.userId)
+            }
+          }
+        }
+      };
+    }
+    case 'APPEND_BUILD_STUDIO_QUICK_ACCESS_BUILDS': {
+      const buildStudio = getBuildStudioState(state);
+      const quickAccess = getBuildStudioQuickAccessState(buildStudio);
+      const mode = normalizeBuildStudioQuickAccessMode(
+        action.buildStudio?.quickAccessMode
+      );
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const currentList =
+        quickAccess[mode] || createInitialBuildStudioQuickAccessListState();
+      if (!currentList.loaded || currentList.userId !== userId) {
+        return state;
+      }
+      const builds = Array.isArray(action.buildStudio?.builds)
+        ? action.buildStudio.builds
+        : [];
+      return {
+        ...state,
+        buildsById: mergeBuildSummaryMap(state.buildsById || {}, builds),
+        buildStudio: {
+          ...buildStudio,
+          quickAccess: {
+            ...quickAccess,
+            [mode]: {
+              ...currentList,
+              builds: mergeBuildStudioQuickAccessItems(
+                currentList.builds,
+                builds
+              ),
+              cursor: normalizeBuildStudioQuickAccessCursor(
+                action.buildStudio?.cursor
+              ),
+              loaded: true,
+              userId
+            }
+          }
+        }
+      };
+    }
+    case 'REMOVE_BUILD_STUDIO_QUICK_ACCESS_BUILDS': {
+      const buildStudio = getBuildStudioState(state);
+      const quickAccess = getBuildStudioQuickAccessState(buildStudio);
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const buildIds = new Set(
+        [
+          ...(Array.isArray(action.buildStudio?.buildIds)
+            ? action.buildStudio.buildIds
+            : []),
+          action.buildStudio?.buildId
+        ]
+          .map((buildId) => Number(buildId || 0))
+          .filter((buildId) => buildId > 0)
+      );
+      if (buildIds.size === 0) return state;
+      const todayTopViewed = quickAccess.todayTopViewed;
+      const todayTopViewedUserMatches =
+        !userId ||
+        !todayTopViewed.userId ||
+        todayTopViewed.userId === userId;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          quickAccess: {
+            ...quickAccess,
+            recent: removeBuildsFromQuickAccessList(
+              quickAccess.recent,
+              buildIds,
+              userId
+            ),
+            favorites: removeBuildsFromQuickAccessList(
+              quickAccess.favorites,
+              buildIds,
+              userId
+            ),
+            todayTopViewed:
+              todayTopViewedUserMatches &&
+              todayTopViewed.build &&
+              buildIds.has(Number(todayTopViewed.build.id || 0))
+                ? {
+                    ...todayTopViewed,
+                    build: null
+                  }
+                : todayTopViewed
+          }
+        }
+      };
+    }
+    case 'PATCH_BUILD_STUDIO_QUICK_ACCESS_FAVORITE': {
+      const buildStudio = getBuildStudioState(state);
+      const quickAccess = getBuildStudioQuickAccessState(buildStudio);
+      const buildId = Number(
+        action.buildStudio?.buildId || action.buildStudio?.build?.id || 0
+      );
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      if (!buildId || !userId) return state;
+      const isFavorited = action.buildStudio?.isFavorited === true;
+      const favoritedAt = isFavorited
+        ? normalizeBuildStudioNullablePositiveInteger(
+            action.buildStudio?.favoritedAt
+          )
+        : null;
+      const favoriteActivityAt = isFavorited
+        ? normalizeBuildStudioNullablePositiveInteger(
+            action.buildStudio?.favoriteActivityAt
+          ) || favoritedAt
+        : null;
+      const build = {
+        ...(action.buildStudio?.build || {}),
+        id: buildId,
+        favoriteActivityAt,
+        favoritedAt,
+        isFavorited
+      };
+      const todayTopViewed = quickAccess.todayTopViewed;
+      const patchedTodayTopViewed =
+        todayTopViewed.userId === userId &&
+        todayTopViewed.build &&
+        Number(todayTopViewed.build.id || 0) === buildId
+          ? {
+              ...todayTopViewed,
+              build: {
+                ...todayTopViewed.build,
+                favoriteActivityAt,
+                favoritedAt,
+                isFavorited
+              }
+            }
+          : todayTopViewed;
+      return {
+        ...state,
+        buildsById: mergeBuildSummaryMap(state.buildsById || {}, build),
+        buildStudio: {
+          ...buildStudio,
+          quickAccess: {
+            ...quickAccess,
+            recent: patchQuickAccessListFavorite({
+              build,
+              buildId,
+              favoriteActivityAt,
+              favoritedAt,
+              isFavorited,
+              listState: quickAccess.recent,
+              mode: 'recent',
+              userId
+            }),
+            favorites: patchQuickAccessListFavorite({
+              build,
+              buildId,
+              favoriteActivityAt,
+              favoritedAt,
+              isFavorited,
+              listState: quickAccess.favorites,
+              mode: 'favorites',
+              userId
+            }),
+            todayTopViewed: patchedTodayTopViewed
+          }
         }
       };
     }

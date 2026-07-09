@@ -354,7 +354,8 @@ export default function BuildList({
     onShowMore: handleShowMoreQuickAccess,
     openButtonStyle: quickAccessOpenButtonStyle,
     quickAccessMode,
-    todayTopViewedBuild
+    todayTopViewedBuild,
+    todayTopViewedPending
   } = useQuickAccess({
     buildQuickAccessMode,
     buildStudio,
@@ -783,6 +784,7 @@ export default function BuildList({
 
           <Hero
             topViewedBuild={todayTopViewedBuild}
+            topViewedPending={todayTopViewedPending}
             onFavoriteChange={handleBuildFavoriteChange}
             onFavoriteError={handleBuildFavoriteError}
             onFavoriteStart={handleBuildFavoriteStart}

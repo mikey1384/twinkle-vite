@@ -163,7 +163,12 @@ const topViewedTitleClass = css`
   overflow-wrap: anywhere;
 
   @media (max-width: ${mobileMaxWidth}) {
+    display: -webkit-box;
     font-size: 1.3rem;
+    min-height: 2.86rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 `;
 
@@ -230,8 +235,26 @@ const topViewedPreviewLinkClass = css`
   }
 `;
 
+const topViewedShowcasePlaceholderClass = css`
+  display: none;
+  pointer-events: none;
+  visibility: hidden;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    display: grid;
+  }
+`;
+
+const topViewedPlaceholderButtonClass = css`
+  width: 7rem;
+  height: calc(2.75rem + 2px);
+  border-radius: 999px;
+  background: #fff;
+`;
+
 export default function Hero({
   topViewedBuild,
+  topViewedPending,
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
@@ -239,6 +262,7 @@ export default function Hero({
   onOpenTopViewedBuild
 }: {
   topViewedBuild: TodayTopViewedBuild | null;
+  topViewedPending: boolean;
   onFavoriteChange: (
     build: BuildProjectListItemData,
     change: BuildFavoriteChange
@@ -288,9 +312,46 @@ export default function Hero({
             onFavoriteStart={onFavoriteStart}
             onOpen={onOpenTopViewedBuild}
           />
+        ) : topViewedPending ? (
+          <TodayTopViewedShowcasePlaceholder />
         ) : null}
       </div>
     </section>
+  );
+}
+
+function TodayTopViewedShowcasePlaceholder() {
+  return (
+    <aside
+      className={`${topViewedShowcaseClass} ${topViewedShowcasePlaceholderClass}`}
+      aria-hidden="true"
+    >
+      <div className={topViewedCopyClass}>
+        <div className={topViewedKickerClass}>
+          <Icon icon="eye" />
+          Trending today
+        </div>
+        <h2 className={topViewedTitleClass}>Featured build preview</h2>
+        <div className={topViewedMetaClass}>
+          <span>
+            <Icon icon="user" />
+            by username
+          </span>
+          <span className={topViewedVisitCountClass}>0 visits</span>
+        </div>
+        <div className={topViewedActionRowClass}>
+          <span className={topViewedPlaceholderButtonClass} />
+          <span className={topViewedPlaceholderButtonClass} />
+        </div>
+      </div>
+      <div className={topViewedPreviewLinkClass}>
+        <PreviewFrame
+          className={topViewedPreviewClass}
+          thumbnailUrl={null}
+          alt="Preview placeholder"
+        />
+      </div>
+    </aside>
   );
 }
 
@@ -341,7 +402,7 @@ function TodayTopViewedShowcase({
             </span>
           ) : null}
           <ViewCount
-            count={build.viewCount}
+            count={build.todayViewCount || build.viewCount}
             unit="visits"
             className={topViewedVisitCountClass}
           />

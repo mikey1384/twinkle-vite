@@ -215,6 +215,42 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildStudio: { buildId, userId }
       });
     },
+    onSetBuildStudioTodayTopViewedBuild(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_TODAY_TOP_VIEWED_BUILD',
+        buildStudio
+      });
+    },
+    onSetBuildStudioQuickAccessBuilds(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_QUICK_ACCESS_BUILDS',
+        buildStudio
+      });
+    },
+    onAppendBuildStudioQuickAccessBuilds(
+      buildStudio: BuildStudioActionPayload
+    ) {
+      return dispatch({
+        type: 'APPEND_BUILD_STUDIO_QUICK_ACCESS_BUILDS',
+        buildStudio
+      });
+    },
+    onRemoveBuildStudioQuickAccessBuilds(
+      buildStudio: BuildStudioActionPayload
+    ) {
+      return dispatch({
+        type: 'REMOVE_BUILD_STUDIO_QUICK_ACCESS_BUILDS',
+        buildStudio
+      });
+    },
+    onPatchBuildStudioQuickAccessFavorite(
+      buildStudio: BuildStudioActionPayload
+    ) {
+      return dispatch({
+        type: 'PATCH_BUILD_STUDIO_QUICK_ACCESS_FAVORITE',
+        buildStudio
+      });
+    },
     onSetBuildStudioBrowseMode({
       tab,
       browseMode

@@ -58,6 +58,7 @@ export interface BuildProjectListItemData {
   releaseStatus?: BuildProjectListItemReleaseStatus | null;
   isFavorited?: boolean;
   favoritedAt?: number | null;
+  favoriteActivityAt?: number | null;
   tags?: BuildTag[];
   tagsUpdatedAt?: number;
 }
