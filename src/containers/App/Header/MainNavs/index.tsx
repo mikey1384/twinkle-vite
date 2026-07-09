@@ -1407,7 +1407,6 @@ export default function MainNavs({
     return unpinned.length ? unpinned[unpinned.length - 1] : null;
   }, [lastSelectedAddedTabId, visibleCustomTabs]);
 
-  const currentPathKey = `${pathname}${search || ''}`;
   // The mobile dynamic tabs mirror the desktop dedup (see `profileCaptured` and
   // the desktopContentTab effect): once a profile/content page is captured as a
   // custom tab, its dynamic (last-viewed) tab is suppressed so the same page
@@ -1706,7 +1705,6 @@ export default function MainNavs({
       {tabSwitcherShown && (
         <MobileTabSwitcher
           sections={switcherSections}
-          currentPathKey={currentPathKey}
           onReorder={handleReorderSection}
           onTogglePin={handleToggleTabPinned}
           onRemove={handleRemoveCustomTab}

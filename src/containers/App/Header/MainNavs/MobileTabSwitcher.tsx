@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -22,6 +23,15 @@ export interface SwitcherSection {
   items: SwitcherItem[];
 }
 
+// how long neighbors take to slide aside, and how long the lifted row takes to
+// drop into its new slot once released
+const SHIFT_MS = 200;
+const SETTLE_MS = 190;
+const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+// header/footer chrome mirrors `components/Modal`: no dividers, white header,
+// wellGray footer bar. This sheet is fullscreen rather than a modal, so the
+// footer also absorbs the bottom safe-area inset.
 const overlayClass = css`
   position: fixed;
   inset: 0;
@@ -30,7 +40,6 @@ const overlayClass = css`
   display: flex;
   flex-direction: column;
   padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 `;
 
 const headerClass = css`
@@ -38,20 +47,32 @@ const headerClass = css`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.2rem 1.5rem;
-  border-bottom: 1px solid ${Color.borderGray()};
+  padding: 1rem 1.5rem;
+  background: #fff;
   .title {
     font-size: 1.6rem;
-    font-weight: 800;
+    font-weight: 600;
     color: ${Color.black()};
   }
   .close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
     border: none;
-    background: transparent;
-    color: ${Color.darkGray()};
-    font-size: 1.9rem;
+    border-radius: 6px;
+    background: none;
+    color: ${Color.gray()};
     cursor: pointer;
-    padding: 0.4rem 0.8rem;
+    transition: all 0.2s ease;
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background-color: ${Color.borderGray()};
+        color: ${Color.black()};
+      }
+    }
   }
 `;
 
@@ -59,6 +80,18 @@ const bodyClass = css`
   flex: 1 1 auto;
   overflow-y: auto;
   padding: 0.5rem 1rem 2rem;
+`;
+
+const footerClass = css`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  /* root font-size drops to 8px under 767px, so keep the gap generous */
+  padding: 2rem 1.5rem;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  background-color: ${Color.wellGray(0.3)};
 `;
 
 const sectionTitleClass = css`
@@ -77,6 +110,7 @@ const emptySectionClass = css`
 `;
 
 const rowClass = css`
+  position: relative;
   display: flex;
   align-items: stretch;
   margin: 0.6rem 0.5rem;
@@ -84,20 +118,13 @@ const rowClass = css`
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
-  &.active {
-    border-color: ${Color.logoBlue()};
-    box-shadow: inset 0 0 0 1px ${Color.logoBlue()};
-  }
+  /* transforms are driven imperatively while dragging; no transform transition
+     lives here so clearing the inline styles on drop never animates */
   &.dragging {
-    border-color: ${Color.logoBlue()};
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-    opacity: 0.95;
-  }
-  &.drop-before {
-    box-shadow: inset 0 3px 0 ${Color.logoBlue()};
-  }
-  &.drop-after {
-    box-shadow: inset 0 -3px 0 ${Color.logoBlue()};
+    z-index: 2;
+    border-color: ${Color.gray()};
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    transition: box-shadow 140ms ease, border-color 140ms ease;
   }
   .handle {
     flex-shrink: 0;
@@ -110,6 +137,10 @@ const rowClass = css`
     cursor: grab;
     touch-action: none;
     border-right: 1px solid ${Color.borderGray()};
+  }
+  &.dragging .handle {
+    cursor: grabbing;
+    color: ${Color.darkGray()};
   }
   .main {
     flex: 1 1 auto;
@@ -152,7 +183,6 @@ const rowClass = css`
 
 export default function MobileTabSwitcher({
   sections,
-  currentPathKey,
   onReorder,
   onTogglePin,
   onRemove,
@@ -160,21 +190,32 @@ export default function MobileTabSwitcher({
   onClose
 }: {
   sections: SwitcherSection[];
-  currentPathKey: string;
   onReorder: (kind: SwitcherKind, fromIndex: number, toIndex: number) => void;
   onTogglePin: (key: string) => void;
   onRemove: (key: string) => void;
   onNavigate: () => void;
   onClose: () => void;
 }) {
-  const [drag, setDrag] = useState<{
+  const [draggingKey, setDraggingKey] = useState<string | null>(null);
+  const dragRef = useRef<{
     kind: SwitcherKind;
+    rows: HTMLElement[];
     index: number;
-    overIndex: number;
+    target: number;
+    step: number;
+    startY: number;
+    minDy: number;
+    maxDy: number;
   } | null>(null);
-  // live row rects for the section being dragged (top→bottom), captured on grab
-  const rowMidsRef = useRef<number[]>([]);
   const cleanupRef = useRef<null | (() => void)>(null);
+  const settleTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      cleanupRef.current?.();
+      if (settleTimerRef.current) window.clearTimeout(settleTimerRef.current);
+    };
+  }, []);
 
   return (
     <div className={overlayClass} role="dialog" aria-label="Your tabs">
@@ -201,14 +242,8 @@ export default function MobileTabSwitcher({
                   <li
                     key={item.key}
                     className={`${rowClass}${
-                      item.to === currentPathKey ? ' active' : ''
-                    }${
-                      drag &&
-                      drag.kind === section.kind &&
-                      drag.index === index
-                        ? ' dragging'
-                        : ''
-                    }${dropHint(section.kind, index)}`}
+                      draggingKey === item.key ? ' dragging' : ''
+                    }`}
                   >
                     {section.items.length > 1 ? (
                       <div
@@ -252,51 +287,52 @@ export default function MobileTabSwitcher({
           </div>
         ))}
       </div>
+      <div className={footerClass}>
+        <Button variant="ghost" onClick={onClose} size="lg">
+          Close
+        </Button>
+      </div>
     </div>
   );
-
-  function dropHint(kind: SwitcherKind, index: number) {
-    if (!drag || drag.kind !== kind || drag.overIndex === drag.index) return '';
-    if (drag.overIndex !== index) return '';
-    return drag.overIndex > drag.index ? ' drop-after' : ' drop-before';
-  }
 
   function handleDragStart(
     event: React.PointerEvent<HTMLDivElement>,
     section: SwitcherSection,
     index: number
   ) {
+    // ignore new grabs while a previous drop is still settling
+    if (dragRef.current || settleTimerRef.current) return;
     event.preventDefault();
-    // capture the vertical midpoint of every row in this section's <ul>
     const ul = event.currentTarget.closest('ul');
     if (!ul) return;
-    const rows = [...ul.children] as HTMLElement[];
-    rowMidsRef.current = rows.map((r) => {
-      const rect = r.getBoundingClientRect();
-      return rect.top + rect.height / 2;
-    });
-    setDrag({ kind: section.kind, index, overIndex: index });
+    const rows = Array.from(ul.children) as HTMLElement[];
+    if (rows.length < 2) return;
+    // rows are uniform height, so one step covers row height + collapsed gap
+    const step =
+      rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().top;
+    if (!step) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
 
-    function onMove(e: PointerEvent) {
-      const mids = rowMidsRef.current;
-      let over = mids.length - 1;
-      for (let i = 0; i < mids.length; i++) {
-        if (e.clientY < mids[i]) {
-          over = i;
-          break;
-        }
+    for (let i = 0; i < rows.length; i++) {
+      rows[i].style.willChange = 'transform';
+      if (i === index) {
+        rows[i].style.transform = 'scale(1.02)';
+      } else {
+        rows[i].style.transition = `transform ${SHIFT_MS}ms ${EASE}`;
       }
-      setDrag((d) => (d ? { ...d, overIndex: over } : d));
     }
-    function onUp() {
-      cleanupRef.current?.();
-      setDrag((d) => {
-        if (d && d.overIndex !== d.index) {
-          onReorder(d.kind, d.index, d.overIndex);
-        }
-        return null;
-      });
-    }
+    dragRef.current = {
+      kind: section.kind,
+      rows,
+      index,
+      target: index,
+      step,
+      startY: event.clientY,
+      minDy: -index * step,
+      maxDy: (rows.length - 1 - index) * step
+    };
+    setDraggingKey(section.items[index].key);
+
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
@@ -306,5 +342,51 @@ export default function MobileTabSwitcher({
       window.removeEventListener('pointercancel', onUp);
       cleanupRef.current = null;
     };
+
+    function onMove(e: PointerEvent) {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const dy = Math.min(
+        drag.maxDy,
+        Math.max(drag.minDy, e.clientY - drag.startY)
+      );
+      drag.target = drag.index + Math.round(dy / drag.step);
+      drag.rows[drag.index].style.transform = `translateY(${dy}px) scale(1.02)`;
+      for (let i = 0; i < drag.rows.length; i++) {
+        if (i === drag.index) continue;
+        const shifted =
+          i < drag.index && i >= drag.target
+            ? drag.step
+            : i > drag.index && i <= drag.target
+            ? -drag.step
+            : 0;
+        drag.rows[i].style.transform = `translateY(${shifted}px)`;
+      }
+    }
+
+    function onUp() {
+      cleanupRef.current?.();
+      const drag = dragRef.current;
+      if (!drag) return;
+      dragRef.current = null;
+
+      // drop the lifted row exactly onto the slot it will occupy after the
+      // reorder, so committing the new order lands without a visual jump
+      const lifted = drag.rows[drag.index];
+      lifted.style.transition = `transform ${SETTLE_MS}ms ${EASE}, box-shadow ${SETTLE_MS}ms ease`;
+      lifted.style.transform = `translateY(${
+        (drag.target - drag.index) * drag.step
+      }px) scale(1)`;
+      lifted.style.boxShadow = 'none';
+
+      settleTimerRef.current = window.setTimeout(() => {
+        settleTimerRef.current = null;
+        for (const row of drag.rows) row.removeAttribute('style');
+        if (drag.target !== drag.index) {
+          onReorder(drag.kind, drag.index, drag.target);
+        }
+        setDraggingKey(null);
+      }, SETTLE_MS);
+    }
   }
 }
