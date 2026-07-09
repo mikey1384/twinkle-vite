@@ -2362,6 +2362,20 @@ export default function contentRequestHelpers({
         totalCharsTyped: number;
         maxBurstSize: number;
         burstCount: number;
+        burstPauseThresholdMs?: number;
+        inputEventCount?: number;
+        inputGapMeanMs?: number;
+        inputGapMedianMs?: number;
+        inputGapP10Ms?: number;
+        inputGapP90Ms?: number;
+        inputGapP95Ms?: number;
+        inputGapStdDevMs?: number;
+        inputGapCoefficientOfVariation?: number;
+        longestPauseMs?: number;
+        typingSpanMs?: number;
+        activeTypingMs?: number;
+        longestBurstDurationMs?: number;
+        fastestBurstEventsPerSecond?: number;
       };
     }) {
       try {

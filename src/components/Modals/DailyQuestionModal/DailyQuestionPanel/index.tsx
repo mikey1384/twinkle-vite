@@ -56,6 +56,135 @@ function isResponseOverMaxLength(text: string) {
   return text.trim().length > MAX_RESPONSE_LENGTH;
 }
 
+const TYPING_BURST_PAUSE_THRESHOLD_MS = 500;
+
+interface TypingCadenceSummary {
+  burstPauseThresholdMs: number;
+  inputEventCount: number;
+  maxBurstSize: number;
+  burstCount: number;
+  inputGapMeanMs?: number;
+  inputGapMedianMs?: number;
+  inputGapP10Ms?: number;
+  inputGapP90Ms?: number;
+  inputGapP95Ms?: number;
+  inputGapStdDevMs?: number;
+  inputGapCoefficientOfVariation?: number;
+  longestPauseMs?: number;
+  typingSpanMs?: number;
+  activeTypingMs?: number;
+  longestBurstDurationMs?: number;
+  fastestBurstEventsPerSecond?: number;
+}
+
+function roundNumber(value: number, decimalPlaces = 0) {
+  const multiplier = 10 ** decimalPlaces;
+  return Math.round(value * multiplier) / multiplier;
+}
+
+function getSortedPercentile(sortedValues: number[], percentile: number) {
+  if (sortedValues.length === 0) return undefined;
+  const index = Math.min(
+    sortedValues.length - 1,
+    Math.max(0, Math.round((sortedValues.length - 1) * percentile))
+  );
+  return sortedValues[index];
+}
+
+function getTypingCadenceSummary(
+  timestamps: number[]
+): TypingCadenceSummary {
+  const inputEventCount = timestamps.length;
+  const summary: TypingCadenceSummary = {
+    burstPauseThresholdMs: TYPING_BURST_PAUSE_THRESHOLD_MS,
+    inputEventCount,
+    maxBurstSize: 0,
+    burstCount: 0
+  };
+
+  if (inputEventCount === 0) {
+    return summary;
+  }
+
+  if (inputEventCount === 1) {
+    summary.typingSpanMs = 0;
+    summary.activeTypingMs = 0;
+    return summary;
+  }
+
+  const gaps: number[] = [];
+  let currentBurst = 1;
+  let currentBurstStartIndex = 0;
+  let activeTypingMs = 0;
+  let longestBurstDurationMs = 0;
+  let fastestBurstEventsPerSecond = 0;
+
+  function commitBurst(endIndex: number) {
+    if (currentBurst <= 1) return;
+
+    summary.burstCount += 1;
+    const durationMs = timestamps[endIndex] - timestamps[currentBurstStartIndex];
+
+    summary.maxBurstSize = Math.max(summary.maxBurstSize, currentBurst);
+    longestBurstDurationMs = Math.max(longestBurstDurationMs, durationMs);
+
+    if (durationMs > 0) {
+      fastestBurstEventsPerSecond = Math.max(
+        fastestBurstEventsPerSecond,
+        currentBurst / (durationMs / 1000)
+      );
+    }
+  }
+
+  for (let i = 1; i < timestamps.length; i++) {
+    const gap = Math.max(0, timestamps[i] - timestamps[i - 1]);
+    gaps.push(gap);
+
+    if (gap <= TYPING_BURST_PAUSE_THRESHOLD_MS) {
+      currentBurst += 1;
+      activeTypingMs += gap;
+      continue;
+    }
+
+    commitBurst(i - 1);
+    currentBurst = 1;
+    currentBurstStartIndex = i;
+  }
+
+  commitBurst(timestamps.length - 1);
+
+  const sortedGaps = [...gaps].sort((a, b) => a - b);
+  const meanGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
+  const gapVariance =
+    gaps.reduce((sum, gap) => sum + (gap - meanGap) ** 2, 0) / gaps.length;
+  const gapStdDev = Math.sqrt(gapVariance);
+
+  summary.inputGapMeanMs = roundNumber(meanGap);
+  summary.inputGapMedianMs = getSortedPercentile(sortedGaps, 0.5);
+  summary.inputGapP10Ms = getSortedPercentile(sortedGaps, 0.1);
+  summary.inputGapP90Ms = getSortedPercentile(sortedGaps, 0.9);
+  summary.inputGapP95Ms = getSortedPercentile(sortedGaps, 0.95);
+  summary.inputGapStdDevMs = roundNumber(gapStdDev);
+  if (meanGap > 0) {
+    summary.inputGapCoefficientOfVariation = roundNumber(
+      gapStdDev / meanGap,
+      2
+    );
+  }
+  summary.longestPauseMs = sortedGaps[sortedGaps.length - 1];
+  summary.typingSpanMs = timestamps[timestamps.length - 1] - timestamps[0];
+  summary.activeTypingMs = activeTypingMs;
+  summary.longestBurstDurationMs = longestBurstDurationMs;
+  if (fastestBurstEventsPerSecond > 0) {
+    summary.fastestBurstEventsPerSecond = roundNumber(
+      fastestBurstEventsPerSecond,
+      1
+    );
+  }
+
+  return summary;
+}
+
 export default function DailyQuestionPanel({
   onClose
 }: {
@@ -1083,33 +1212,7 @@ export default function DailyQuestionPanel({
       });
     }
 
-    let maxBurstSize = 0;
-    let burstCount = 0;
-    const burstPauseThreshold = 500;
-
-    if (timestamps.length > 0) {
-      let currentBurst = 1;
-      for (let i = 1; i < timestamps.length; i++) {
-        const gap = timestamps[i] - timestamps[i - 1];
-        if (gap <= burstPauseThreshold) {
-          currentBurst++;
-        } else {
-          if (currentBurst > 1) {
-            burstCount++;
-            if (currentBurst > maxBurstSize) {
-              maxBurstSize = currentBurst;
-            }
-          }
-          currentBurst = 1;
-        }
-      }
-      if (currentBurst > 1) {
-        burstCount++;
-        if (currentBurst > maxBurstSize) {
-          maxBurstSize = currentBurst;
-        }
-      }
-    }
+    const typingCadenceSummary = getTypingCadenceSummary(timestamps);
 
     gradingProgressRef.current = 0;
     gradingTargetRef.current = 0;
@@ -1133,8 +1236,7 @@ export default function DailyQuestionPanel({
           endTime,
           keystrokeCount: timestamps.length,
           totalCharsTyped: trimmedResponse.length,
-          maxBurstSize,
-          burstCount
+          ...typingCadenceSummary
         }
       });
 
