@@ -40,9 +40,11 @@ import {
 import { getSectionFromPathname } from '~/helpers';
 import {
   AI_CARD_CHAT_TYPE,
+  DEFAULT_PROFILE_THEME,
   GENERAL_CHAT_PATH_ID,
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { truncateText, abbreviateNumber } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -248,6 +250,16 @@ export default function MainNavs({
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const lastChatPath = useKeyContext((v) => v.myState.lastChatPath);
+  const viewerTheme =
+    useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;
+  // same role Nav uses for its active state: the tabs button takes it only
+  // while tabs exist, so the count reads as navigation chrome rather than an
+  // unread badge, and an empty button stays as muted as an inactive nav icon
+  const { getColor: getFilterColor } = useRoleColor('filter', {
+    fallback: 'logoBlue',
+    themeName: viewerTheme
+  });
+  const tabsButtonColor = getFilterColor();
   const userLoaded = useAppContext((v) => v.user.state.loaded);
   const exploreCategory = useViewContext((v) => v.state.exploreCategory);
   const contentPath = useViewContext((v) => v.state.contentPath);
@@ -1618,7 +1630,9 @@ export default function MainNavs({
             position: relative;
             border: none;
             background: transparent;
-            color: inherit;
+            color: ${visibleCustomTabs.length > 0
+              ? tabsButtonColor
+              : Color.gray()};
             font-size: 3rem;
             cursor: pointer;
             padding: 0 0.6rem 0 0.4rem;
@@ -1630,7 +1644,7 @@ export default function MainNavs({
               height: 1.7rem;
               padding: 0 0.45rem;
               border-radius: 0.85rem;
-              background: ${Color.logoBlue()};
+              background: ${tabsButtonColor};
               color: #fff;
               font-size: 1rem;
               font-weight: 800;
