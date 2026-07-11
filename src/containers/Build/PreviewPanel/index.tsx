@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useViewContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
@@ -131,6 +131,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }: PreviewPanelProps,
     ref
   ) {
+    const pageVisible = useViewContext((v) => v.state.pageVisible);
     const [viewMode, setViewMode] = useState<WorkspaceViewMode>('preview');
     const onRuntimeObservationChangeRef = useRef(
       onRuntimeObservationChange || null
@@ -190,7 +191,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       );
     const [previewLifecycleState, setPreviewLifecycleState] =
       useState<PreviewLifecycleState>(() =>
-        runtimeHostVisible === false ? 'suspended' : 'active'
+        runtimeHostVisible === false || !pageVisible ? 'suspended' : 'active'
       );
     const buildRef = useRef(build);
     const projectFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -757,13 +758,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       Number(build.currentArtifactVersionId) > 0
         ? `artifact:${build.currentArtifactVersionId}:${previewProjectFilesRevision}`
         : `current:${build.id}:${Number(build.updatedAt) || 0}:${previewProjectFilesRevision}`;
-    const previewHostVisible = runtimeHostVisible !== false;
-    // In keep-alive mode we still send the host-hidden signal (pauses the loop +
-    // media) and mute audio, but never let the frame fully suspend, because
-    // suspend nulls the src and useFrameManager retires the iframe (state lost).
+    const previewHostEnabled = runtimeHostVisible !== false;
+    const previewHostVisible = previewHostEnabled && pageVisible;
+    const previewAudioMuted = audioMuted || !pageVisible;
+    // Browser visibility pauses the host bridge and mutes audio, but only an
+    // explicit host hide may retire the iframe. Ordinary tab switches must keep
+    // the app's in-memory preview state alive.
     const previewFrameSuspended =
       !preventFrameSuspend &&
-      !previewHostVisible &&
+      !previewHostEnabled &&
       previewLifecycleState === 'suspended';
 
     useEffect(() => {
@@ -886,7 +889,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         source: 'twinkle-parent',
         type: 'host-visibility:update',
         payload: {
-          visible: runtimeHostVisible !== false
+          visible: previewHostVisible
         }
       };
       const previewFrames = [
@@ -932,7 +935,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewFrameSources.secondary,
       previewFrameMetaRef,
       primaryIframeRef,
-      runtimeHostVisible,
+      previewHostVisible,
       secondaryIframeRef
     ]);
 
@@ -946,7 +949,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       profilePicUrl: resolvedProfilePicUrl || null,
       resolvedCapabilitySnapshot,
       resolvedRuntimeExplorationPlan,
-      audioMuted,
+      audioMuted: previewAudioMuted,
       mountContext,
       launchTarget,
       capabilitySnapshotRef,

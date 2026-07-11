@@ -86,6 +86,7 @@ export default function Rewrite({
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
     socket.on('zeros_review_finished', handleZeroReviewFinished);
+    socket.on('zeros_review_error', handleZeroReviewError);
 
     function handleZeroReviewUpdated({
       response,
@@ -127,13 +128,27 @@ export default function Rewrite({
       wordLevel: number;
       response: string;
     }) {
-      if (identifier !== responseIdentifier.current) return setPreparing(false);
+      if (identifier !== responseIdentifier.current) return;
       await handlePrepareAudio(response);
+    }
+
+    function handleZeroReviewError({
+      identifier,
+      error
+    }: {
+      identifier: number;
+      error?: string;
+    }) {
+      if (identifier !== responseIdentifier.current) return;
+      console.error('Zero review generation failed:', error);
+      setPreparing(false);
+      setLoadingType('');
     }
 
     return function cleanUp() {
       socket.off('zeros_review_updated', handleZeroReviewUpdated);
       socket.off('zeros_review_finished', handleZeroReviewFinished);
+      socket.off('zeros_review_error', handleZeroReviewError);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -317,7 +332,12 @@ export default function Rewrite({
             </div>
           )}
           <div style={{ marginBottom: '2rem', display: 'flex' }}>
-            <Button loading={preparing} variant="soft" tone="raised" onClick={handleAudioClick}>
+            <Button
+              loading={preparing}
+              variant="soft"
+              tone="raised"
+              onClick={handleAudioClick}
+            >
               <Icon icon={isPlaying ? 'stop' : 'volume'} />
               <span style={{ marginLeft: '0.7rem' }}>
                 {isPlaying ? 'Stop' : 'Speak'}

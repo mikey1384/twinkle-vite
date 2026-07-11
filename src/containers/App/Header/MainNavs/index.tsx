@@ -1353,7 +1353,7 @@ export default function MainNavs({
               ? mutedBuildAppIds.includes(buildAppId)
               : undefined,
             // pinned tabs are ALWAYS icon-only; the full label lives in the
-            // title tooltip (see renderStaticTab). They never expand.
+            // tab wrapper's title tooltip. They never expand.
             label: tab.label,
             minimized: true
           };
@@ -1654,6 +1654,7 @@ export default function MainNavs({
         defaultTabs={defaultNavTabs}
         tabs={extraNavTabs}
         onMove={handleMoveTab}
+        onMovePinned={handleMovePinnedTab}
         menuItemsForTab={handleGetTabMenuItems}
         showMenuHint={!tabMenuDiscovered}
         onMenuOpen={handleMarkTabMenuDiscovered}
@@ -1858,6 +1859,30 @@ export default function MainNavs({
       navMetaRef.current.canonicalOrderEdited = true;
     }
     persistNavState({ order: next });
+  }
+
+  function handleMovePinnedTab({
+    sourceKey,
+    targetKey
+  }: {
+    sourceKey: string;
+    targetKey: string;
+  }) {
+    const base = getNavEditBase();
+    const visiblePinned = base.customTabs.filter(
+      (tab) =>
+        tab.pinned &&
+        isCustomTabVisibleForNavScope({
+          tab,
+          navScope,
+          userId,
+          managementLevel
+        })
+    );
+    const fromIndex = visiblePinned.findIndex((tab) => tab.id === sourceKey);
+    const toIndex = visiblePinned.findIndex((tab) => tab.id === targetKey);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+    handleReorderSection('pinned', fromIndex, toIndex);
   }
 
   // Reorder within one switcher section. Pinned tabs live in customTabs order;

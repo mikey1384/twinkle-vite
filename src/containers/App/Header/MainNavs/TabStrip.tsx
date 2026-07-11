@@ -36,10 +36,9 @@ export interface TabMenuItem {
   onClick: () => void;
 }
 
-// the defaults and the extras are two independent drag zones; a drag is
-// confined to whichever zone it began in, so neither can cross into the other
-// (or into the pinned cluster)
-type DragZone = 'default' | 'extra';
+// Pinned, defaults, and extras are independent drag zones. A drag is confined
+// to whichever zone it began in, so tabs can only swap with their peers.
+type DragZone = 'pinned' | 'default' | 'extra';
 
 interface DragState {
   key: string;
@@ -150,9 +149,8 @@ const scrollButtonClass = css`
   }
 `;
 
-// pinned cluster + draggable tabs share ONE horizontal scroller so an
-// overcrowded strip can always be scrolled to reach any tab (pinned tabs
-// are not in the drag zone, but they must still be reachable when many)
+// Each scrollable tab cluster remains reachable when overcrowded. Pinned tabs
+// have their own drag zone inside their independently scrolling area.
 const scrollContainerClass = css`
   height: 100%;
   display: flex;
@@ -265,6 +263,7 @@ function ScrollableRow({
   children,
   signature,
   maxVisible,
+  itemContainerRef,
   wrapperClassName,
   onScrollChange,
   scrollToEndOnLoad
@@ -272,6 +271,7 @@ function ScrollableRow({
   children: React.ReactNode;
   signature: string;
   maxVisible?: number;
+  itemContainerRef?: React.RefObject<HTMLDivElement | null>;
   wrapperClassName?: string;
   // fired on every scroll/resize so the parent can react to the scroll offset
   // (used to dock defaults that have scrolled out of view)
@@ -314,7 +314,8 @@ function ScrollableRow({
       setCapWidth(undefined);
       return;
     }
-    const kids = [...el.children] as HTMLElement[];
+    const itemContainer = itemContainerRef?.current || el;
+    const kids = [...itemContainer.children] as HTMLElement[];
     if (kids.length <= maxVisible) {
       setCapWidth(undefined);
       return;
@@ -331,7 +332,7 @@ function ScrollableRow({
       width += kids[whole].getBoundingClientRect().width * frac;
     }
     setCapWidth(width);
-  }, [maxVisible, signature]);
+  }, [itemContainerRef, maxVisible, signature]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -476,6 +477,7 @@ export default function TabStrip({
   defaultTabs,
   tabs,
   onMove,
+  onMovePinned,
   menuItemsForTab,
   showMenuHint,
   onMenuOpen,
@@ -486,12 +488,14 @@ export default function TabStrip({
   defaultTabs: NavTabDescriptor[];
   tabs: NavTabDescriptor[];
   onMove: (arg: { sourceKey: string; targetKey: string }) => void;
+  onMovePinned: (arg: { sourceKey: string; targetKey: string }) => void;
   menuItemsForTab?: (key: string) => TabMenuItem[] | null;
   showMenuHint?: boolean;
   onMenuOpen?: () => void;
   onToggleAudioMuted?: (buildAppId: string) => void;
   isTabletPortrait?: boolean;
 }) {
+  const pinnedZoneRef = useRef<HTMLDivElement | null>(null);
   const defaultZoneRef = useRef<HTMLDivElement | null>(null);
   const dragZoneRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef<{
@@ -517,10 +521,14 @@ export default function TabStrip({
   dragStateRef.current = dragState;
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
+  const pinnedTabsRef = useRef(pinnedTabs);
+  pinnedTabsRef.current = pinnedTabs;
   const defaultTabsRef = useRef(defaultTabs);
   defaultTabsRef.current = defaultTabs;
   const onMoveRef = useRef(onMove);
   onMoveRef.current = onMove;
+  const onMovePinnedRef = useRef(onMovePinned);
+  onMovePinnedRef.current = onMovePinned;
   const windowDragCleanupRef = useRef<null | (() => void)>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchGestureRef = useRef<{ armed: boolean } | null>(null);
@@ -586,6 +594,7 @@ export default function TabStrip({
       {pinnedTabs.length > 0 && (
         <ScrollableRow
           signature={pinnedSignature}
+          itemContainerRef={pinnedZoneRef}
           maxVisible={
             isTabletPortrait
               ? PINNED_MAX_VISIBLE_PORTRAIT
@@ -594,7 +603,15 @@ export default function TabStrip({
           wrapperClassName={pinnedAreaClass}
           scrollToEndOnLoad
         >
-          {pinnedTabs.map((tab) => renderStaticTab(tab, 'pinned'))}
+          <div
+            ref={pinnedZoneRef}
+            data-tab-drag-zone="pinned"
+            className={dragZoneClass}
+          >
+            {pinnedTabs.map((tab, index) =>
+              renderDraggableTab(tab, index, 'pinned')
+            )}
+          </div>
         </ScrollableRow>
       )}
       {/* leading dock: defaults scrolled off the LEFT edge, shown as icon chips
@@ -617,14 +634,22 @@ export default function TabStrip({
       >
         {/* sacred defaults — reorderable AMONG THEMSELVES, but their own zone
             so a drag can't cross into pinned or extras */}
-        <div ref={defaultZoneRef} className={dragZoneClass}>
+        <div
+          ref={defaultZoneRef}
+          data-tab-drag-zone="default"
+          className={dragZoneClass}
+        >
           {defaultTabs.map((tab, index) =>
             renderDraggableTab(tab, index, 'default')
           )}
         </div>
         {/* extras (profile/dynamic/extracted) — draggable within their own
             zone, always to the right of the defaults */}
-        <div ref={dragZoneRef} className={dragZoneClass}>
+        <div
+          ref={dragZoneRef}
+          data-tab-drag-zone="extra"
+          className={dragZoneClass}
+        >
           {tabs.map((tab, index) => renderDraggableTab(tab, index, 'extra'))}
         </div>
       </ScrollableRow>
@@ -690,50 +715,6 @@ export default function TabStrip({
     </div>
   );
 
-  // pinned + sacred-default tabs render identically (context menu + hint, no
-  // drag); only the visual kind differs. Shared to avoid duplicating the
-  // wrapper/Nav markup three times.
-  function renderStaticTab(
-    tab: NavTabDescriptor,
-    forcedKind?: 'pinned' | 'dynamic'
-  ) {
-    return (
-      <div
-        key={tab.key}
-        className={`${tabItemClass}${
-          tab.buildAppId ? ` ${audioTabItemClass}` : ''
-        }`}
-        title={typeof tab.label === 'string' ? tab.label : undefined}
-        onPointerDown={(event) => {
-          didLongPressRef.current = false;
-          startTouchGesture(event, tab.key, null);
-        }}
-        onClickCapture={handleClickCapture}
-        onContextMenu={(event) => handleContextMenu(event, tab.key)}
-        onMouseEnter={(event) =>
-          handleHintDwellStart(tab.key, event.currentTarget)
-        }
-        onMouseLeave={handleHintDismiss}
-      >
-        <Nav
-          variant="tab"
-          tabKind={forcedKind ?? tab.kind}
-          className="desktop"
-          to={tab.to}
-          imgLabel={tab.imgLabel}
-          exactActive={tab.exactActive}
-          alert={tab.alert}
-          isHome={tab.isHome}
-          isUsingChat={tab.isUsingChat}
-          profileUsername={tab.profileUsername}
-        >
-          {tab.minimized ? null : tab.label}
-        </Nav>
-        {renderAudioMuteButton(tab)}
-      </div>
-    );
-  }
-
   function renderDraggableTab(
     tab: NavTabDescriptor,
     index: number,
@@ -759,7 +740,7 @@ export default function TabStrip({
       >
         <Nav
           variant="tab"
-          tabKind={tab.kind}
+          tabKind={zone === 'pinned' ? 'pinned' : tab.kind}
           className="desktop"
           to={tab.to}
           imgLabel={tab.imgLabel}
@@ -939,7 +920,11 @@ export default function TabStrip({
     startClientX: number
   ) {
     const zoneEl =
-      zone === 'default' ? defaultZoneRef.current : dragZoneRef.current;
+      zone === 'pinned'
+        ? pinnedZoneRef.current
+        : zone === 'default'
+          ? defaultZoneRef.current
+          : dragZoneRef.current;
     if (dragStateRef.current || !zoneEl) return false;
     const items = [...zoneEl.children] as HTMLElement[];
     rectsRef.current = items.map((el) => {
@@ -1189,7 +1174,11 @@ export default function TabStrip({
   function settleThenCommit(state: DragState) {
     const { fromIndex, toIndex } = state;
     const zoneTabs =
-      state.zone === 'default' ? defaultTabsRef.current : tabsRef.current;
+      state.zone === 'pinned'
+        ? pinnedTabsRef.current
+        : state.zone === 'default'
+          ? defaultTabsRef.current
+          : tabsRef.current;
     const targetTab = zoneTabs[toIndex];
     setLiveDragState({
       ...state,
@@ -1198,7 +1187,11 @@ export default function TabStrip({
     });
     settleTimerRef.current = setTimeout(() => {
       if (toIndex !== fromIndex && targetTab) {
-        onMoveRef.current({ sourceKey: state.key, targetKey: targetTab.key });
+        const move =
+          state.zone === 'pinned'
+            ? onMovePinnedRef.current
+            : onMoveRef.current;
+        move({ sourceKey: state.key, targetKey: targetTab.key });
       }
       pendingRef.current = null;
       didDragRef.current = false;

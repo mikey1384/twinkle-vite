@@ -19,11 +19,11 @@ export const NAV_TAB_KEYS = [
 
 export type NavTabKey = (typeof NAV_TAB_KEYS)[number];
 
-// The "sacred" default tabs: a fixed, contiguous block rendered in exactly
-// this order. Pinned tabs sit to their LEFT; every other tab (profile, the
-// dynamic content tab, and extracted/added custom tabs) sits to their RIGHT.
-// Nothing may ever appear between them or reorder them. This is a render-time
-// partition only — the stored order/sync model is unchanged.
+// The "sacred" default tabs: a contiguous block that users may reorder only
+// among themselves. Pinned tabs sit to their LEFT; every other tab (profile,
+// the dynamic content tab, and extracted/added custom tabs) sits to their
+// RIGHT. Nothing from another section may enter the block. This is a
+// render-time partition only — the stored order/sync model is unchanged.
 export const SACRED_DEFAULT_KEYS = [
   'home',
   'explore',

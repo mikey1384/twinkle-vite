@@ -1,22 +1,28 @@
 import type {
   BuildCopilotPolicy,
+  BuildLumineMode,
   BuildLumineModel,
   BuildLumineModelOption,
   BuildLumineModelPreference,
   BuildLumineThinkLevel
 } from '../ChatPanel/types';
 
-export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'claude-sonnet-5';
-export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'medium';
+export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'grok-4.5';
+export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'high';
 
-export const LUMINE_THINK_LEVEL_LABELS: Record<BuildLumineThinkLevel, string> =
-  {
-    none: 'none',
-    low: 'low',
-    medium: 'medium',
-    high: 'high',
-    xhigh: 'xhigh'
-  };
+export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
+  light: 'Light',
+  normal: 'Normal',
+  heavy: 'Heavy',
+  superheavy: 'Super Heavy'
+};
+
+export const LUMINE_MODES: BuildLumineMode[] = [
+  'light',
+  'normal',
+  'heavy',
+  'superheavy'
+];
 
 const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
   'low',
@@ -27,32 +33,52 @@ const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
 
 const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
   {
-    model: 'gpt-5.5',
-    label: 'GPT-5.5',
-    description: 'Best for tricky builds.',
-    defaultReasoningEffort: DEFAULT_LUMINE_THINK_LEVEL,
-    supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
+    model: 'grok-4.5',
+    mode: 'light',
+    label: 'Grok 4.5',
+    description: 'Light mode: fast, capable builds at lower cost.',
+    defaultReasoningEffort: 'high',
+    supportedReasoningEfforts: ['high']
   },
   {
-    model: 'claude-opus-4-8',
-    label: 'Claude Opus 4.8',
-    description: 'Powerful reasoning for ambitious builds.',
-    defaultReasoningEffort: 'high',
-    supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
+    model: 'gpt-5.6-terra',
+    mode: 'normal',
+    label: 'GPT-5.6 Terra',
+    description: 'Normal mode: balanced capability and cost.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
   },
   {
     model: 'claude-sonnet-5',
+    mode: 'normal',
     label: 'Claude Sonnet 5',
-    description: 'Fast and sharp for most builds.',
-    defaultReasoningEffort: 'high',
-    supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
+    description: 'Normal mode: efficient agentic coding and tool use.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
+  {
+    model: 'gpt-5.6-sol',
+    mode: 'heavy',
+    label: 'GPT-5.6 Sol',
+    description: 'Heavy mode: deep reasoning for demanding builds.',
+    defaultReasoningEffort: 'xhigh',
+    supportedReasoningEfforts: ['xhigh']
+  },
+  {
+    model: 'claude-opus-4-8',
+    mode: 'heavy',
+    label: 'Claude Opus 4.8',
+    description: 'Heavy mode: powerful reasoning for ambitious builds.',
+    defaultReasoningEffort: 'xhigh',
+    supportedReasoningEfforts: ['xhigh']
   },
   {
     model: 'claude-fable-5',
+    mode: 'superheavy',
     label: 'Claude Fable 5',
-    description: 'Deepest thinker for the hardest builds.',
-    defaultReasoningEffort: 'high',
-    supportedReasoningEfforts: ALL_LUMINE_THINK_LEVELS
+    description: 'Super Heavy mode: deepest thinking for the hardest builds.',
+    defaultReasoningEffort: 'xhigh',
+    supportedReasoningEfforts: ['xhigh']
   }
 ];
 
@@ -63,11 +89,37 @@ const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
 
 function isLumineModel(value: unknown): value is BuildLumineModel {
   return (
-    value === 'gpt-5.5' ||
-    value === 'claude-opus-4-8' ||
+    value === 'grok-4.5' ||
+    value === 'gpt-5.6-terra' ||
     value === 'claude-sonnet-5' ||
+    value === 'gpt-5.6-sol' ||
+    value === 'claude-opus-4-8' ||
     value === 'claude-fable-5'
   );
+}
+
+function isLumineMode(value: unknown): value is BuildLumineMode {
+  return (
+    value === 'light' ||
+    value === 'normal' ||
+    value === 'heavy' ||
+    value === 'superheavy'
+  );
+}
+
+function resolveLegacyLumineOptionMode(
+  option: Pick<
+    BuildLumineModelOption,
+    'model' | 'defaultReasoningEffort'
+  >
+): BuildLumineMode {
+  if (
+    option.model === 'gpt-5.6-sol' &&
+    option.defaultReasoningEffort === 'medium'
+  ) {
+    return 'normal';
+  }
+  return resolveLumineMode({ model: option.model });
 }
 
 function isSelectableLumineThinkLevel(
@@ -97,6 +149,9 @@ export function getSelectableLumineModelOptions(
         : [];
       return {
         ...option,
+        mode: isLumineMode(option.mode)
+          ? option.mode
+          : resolveLegacyLumineOptionMode(option),
         label: String(option.label || option.model),
         description: String(option.description || '').trim(),
         defaultReasoningEffort: isSelectableLumineThinkLevel(
@@ -146,13 +201,87 @@ export function normalizeLumineModelSelection({
   )
     ? selection.reasoningEffort
     : fallbackEffort;
+  const reasoningEffort = allowedEfforts.includes(requestedEffort)
+    ? requestedEffort
+    : fallbackEffort;
+  const selectionModelMatchesOption =
+    isLumineModel(selection?.model) && selection.model === option?.model;
+  const mode =
+    selectionModelMatchesOption && isLumineMode(selection?.mode)
+      ? selection.mode
+      : isLumineMode(option?.mode)
+        ? option.mode
+        : resolveLumineMode({
+            model: option?.model || DEFAULT_LUMINE_MODEL
+          });
   return {
     model: option?.model || DEFAULT_LUMINE_MODEL,
-    reasoningEffort: allowedEfforts.includes(requestedEffort)
-      ? requestedEffort
-      : fallbackEffort,
+    reasoningEffort,
+    mode,
     source: selection?.source || 'default'
   };
+}
+
+export function resolveLumineMode({
+  model
+}: Pick<BuildLumineModelPreference, 'model'>): BuildLumineMode {
+  if (model === 'grok-4.5') return 'light';
+  if (model === 'gpt-5.6-terra' || model === 'claude-sonnet-5') {
+    return 'normal';
+  }
+  if (model === 'gpt-5.6-sol' || model === 'claude-opus-4-8') {
+    return 'heavy';
+  }
+  return 'superheavy';
+}
+
+export function getLumineSelectionForMode({
+  mode,
+  modelOptions
+}: {
+  mode: BuildLumineMode;
+  modelOptions: BuildLumineModelOption[];
+}) {
+  const preferredModel: BuildLumineModel =
+    mode === 'light'
+      ? 'grok-4.5'
+      : mode === 'normal'
+        ? 'gpt-5.6-terra'
+        : mode === 'heavy'
+          ? 'gpt-5.6-sol'
+          : 'claude-fable-5';
+  const preferredOption =
+    modelOptions.find((option) => option.model === preferredModel) ||
+    modelOptions.find((option) => option.mode === mode);
+  if (!preferredOption) return null;
+
+  return normalizeLumineModelSelection({
+    selection: {
+      model: preferredOption.model,
+      reasoningEffort:
+        mode === 'light' ? 'high' : mode === 'normal' ? 'medium' : 'xhigh',
+      mode
+    },
+    modelOptions
+  });
+}
+
+export function getAvailableLumineModes(
+  modelOptions: BuildLumineModelOption[]
+) {
+  return LUMINE_MODES.filter((mode) =>
+    modelOptions.some((option) => option.mode === mode)
+  );
+}
+
+export function getAdvancedLumineModelOptions({
+  mode,
+  modelOptions
+}: {
+  mode: BuildLumineMode;
+  modelOptions: BuildLumineModelOption[];
+}) {
+  return modelOptions.filter((option) => option.mode === mode);
 }
 
 export function resolveLumineModelSelectionFromPolicy(

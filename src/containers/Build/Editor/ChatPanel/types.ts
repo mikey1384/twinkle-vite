@@ -7,19 +7,19 @@ import type {
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
-  | 'gpt-5.5'
-  | 'claude-opus-4-8'
+  | 'grok-4.5'
+  | 'gpt-5.6-terra'
   | 'claude-sonnet-5'
+  | 'gpt-5.6-sol'
+  | 'claude-opus-4-8'
   | 'claude-fable-5';
+export type BuildLumineMode = 'light' | 'normal' | 'heavy' | 'superheavy';
 export type BuildLumineThinkLevel =
-  | 'none'
-  | 'low'
-  | 'medium'
-  | 'high'
-  | 'xhigh';
+  'none' | 'low' | 'medium' | 'high' | 'xhigh';
 
 export interface BuildLumineModelOption {
   model: BuildLumineModel;
+  mode: BuildLumineMode;
   label: string;
   description: string;
   apiContextWindowTokens?: number;
@@ -35,6 +35,7 @@ export interface BuildLumineModelOption {
 export interface BuildLumineModelPreference {
   model: BuildLumineModel;
   reasoningEffort: BuildLumineThinkLevel;
+  mode: BuildLumineMode;
   source?: 'default' | 'stored' | 'explicit' | string;
 }
 

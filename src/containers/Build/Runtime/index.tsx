@@ -1132,9 +1132,11 @@ export default function BuildRuntime({
     }
   }
 
-  function handleRestoreAll() {
-    onSetBuildNavHidden(false);
-    void handleSetHeaderCollapsed(false);
+  async function handleRestoreAll() {
+    const expanded = await handleSetHeaderCollapsed(false);
+    if (expanded) {
+      onSetBuildNavHidden(false);
+    }
   }
 
   function handleOpenBuildNotificationSettings() {

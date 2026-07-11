@@ -403,6 +403,9 @@ export default function App() {
   const onSetBuildNavHidden = useViewContext(
     (v) => v.actions.onSetBuildNavHidden
   );
+  const buildHeaderCollapsed = !!useAppContext(
+    (v) => v.user.state.myState.buildHeaderCollapsed
+  );
   const userSessionLoaded = useAppContext((v) => v.user.state.loaded);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const onChangePageVisibility = useViewContext(
@@ -485,8 +488,7 @@ export default function App() {
   // the 2nd-level build collapse ALSO hides the global nav (full-screen app)
   const suppressHeader =
     (usingBuildRuntime && !showBuildHeader) ||
-    (showBuildHeader && buildNavHidden);
-  const buildHeaderCollapsed = !!myState.buildHeaderCollapsed;
+    (showBuildHeader && buildHeaderCollapsed && buildNavHidden);
   const buildNavHiddenStorageReady = !userId || userSessionLoaded;
   // On (re)entering a full build app page, restore/persist the "super full
   // screen" preference only when the build toolbar is also collapsed. Embedded
@@ -500,6 +502,13 @@ export default function App() {
           localStorage.getItem(BUILD_NAV_HIDDEN_KEY) === '1';
       } catch {
         // sandboxed embeds can block storage access
+      }
+      // The canonical expanded toolbar state always wins. Clear any stale
+      // session-only nav flag left by an interrupted/older restore so the
+      // forbidden "build toolbar shown, global nav hidden" combination cannot
+      // survive reconciliation.
+      if (!buildHeaderCollapsed && buildNavHidden) {
+        onSetBuildNavHidden(false);
       }
       if (persistedNavHidden && buildHeaderCollapsed && !buildNavHidden) {
         onSetBuildNavHidden(true);
@@ -667,6 +676,7 @@ export default function App() {
     }
     const eventName = visibilityChangeRef.current;
     addEvent(document, eventName, handleVisibilityChange);
+    handleVisibilityChange();
     return function cleanUp() {
       removeEvent(document, eventName, handleVisibilityChange);
     };

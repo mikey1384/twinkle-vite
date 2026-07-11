@@ -104,6 +104,7 @@ export function inferProviderFromModel(model: unknown) {
   }
   if (normalizedModel.startsWith('claude')) return 'anthropic';
   if (normalizedModel.startsWith('gemini')) return 'google';
+  if (normalizedModel.startsWith('grok')) return 'xai';
   return '';
 }
 
@@ -115,6 +116,7 @@ export function formatProviderName(value: unknown, row?: AiCostRow) {
   if (resolvedProvider === 'openai') return 'OpenAI';
   if (resolvedProvider === 'anthropic') return 'Anthropic';
   if (resolvedProvider === 'google') return 'Google';
+  if (resolvedProvider === 'xai') return 'xAI';
   if (resolvedProvider) return formatTokenLabel(resolvedProvider);
   return 'No provider captured';
 }

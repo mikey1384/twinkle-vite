@@ -1321,15 +1321,6 @@ export default function DailyQuestionPanel({
   const todayVibeLabel = getVibeLabel(todayVibe);
   const todayCurrentFocusLabel = getFocusLabel(todayCurrentFocus, isAdultUser);
 
-  if (screen === 'loading') {
-    return (
-      <ProgressScreen
-        text={loadingMessage || "Loading today's question..."}
-        progress={loadingProgress}
-      />
-    );
-  }
-
   if (error) {
     return (
       <div className={centeredContainerCls}>
@@ -1340,6 +1331,15 @@ export default function DailyQuestionPanel({
           Close
         </Button>
       </div>
+    );
+  }
+
+  if (screen === 'loading') {
+    return (
+      <ProgressScreen
+        text={loadingMessage || "Loading today's question..."}
+        progress={loadingProgress}
+      />
     );
   }
 

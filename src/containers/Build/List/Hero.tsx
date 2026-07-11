@@ -7,7 +7,6 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import PreviewFrame from '~/components/Build/PreviewFrame';
-import ViewCount from '~/components/ViewCount';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import { mobileMaxWidth } from '~/constants/css';
 import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
@@ -188,16 +187,6 @@ const topViewedMetaClass = css`
   }
 `;
 
-const topViewedVisitCountClass = css`
-  width: fit-content;
-  padding: 0.24rem 0.58rem;
-  border: 1px solid rgba(65, 140, 235, 0.28);
-  border-radius: 999px;
-  background: rgba(65, 140, 235, 0.1);
-  color: #1d4ed8;
-  opacity: 1;
-`;
-
 const topViewedActionRowClass = css`
   display: flex;
   align-items: center;
@@ -337,7 +326,6 @@ function TodayTopViewedShowcasePlaceholder() {
             <Icon icon="user" />
             by username
           </span>
-          <span className={topViewedVisitCountClass}>0 visits</span>
         </div>
         <div className={topViewedActionRowClass}>
           <span className={topViewedPlaceholderButtonClass} />
@@ -389,8 +377,8 @@ function TodayTopViewedShowcase({
           Trending today
         </div>
         <h2 className={topViewedTitleClass}>{displayTitle}</h2>
-        <div className={topViewedMetaClass}>
-          {build.username ? (
+        {build.username ? (
+          <div className={topViewedMetaClass}>
             <span>
               <Icon icon="user" />
               by{' '}
@@ -400,13 +388,8 @@ function TodayTopViewedShowcase({
                 user={getBuildUsernameUser(build)}
               />
             </span>
-          ) : null}
-          <ViewCount
-            count={build.todayViewCount || build.viewCount}
-            unit="visits"
-            className={topViewedVisitCountClass}
-          />
-        </div>
+          </div>
+        ) : null}
         <div className={topViewedActionRowClass}>
           <GameCTAButton
             variant="logoBlue"

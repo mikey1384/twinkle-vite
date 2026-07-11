@@ -42,7 +42,9 @@ export default function useLumineModelSelection({
     useState('');
 
   useEffect(() => {
-    setLumineModelSelection(resolveLumineModelSelectionFromPolicy(copilotPolicy));
+    setLumineModelSelection(
+      resolveLumineModelSelectionFromPolicy(copilotPolicy)
+    );
     setLumineModelSelectionError('');
   }, [buildId, copilotPolicy]);
 
@@ -51,18 +53,29 @@ export default function useLumineModelSelection({
   ) {
     const latestPolicy = getLatestCopilotPolicy();
     const modelOptions = getSelectableLumineModelOptions(latestPolicy);
+    const savedSelection = resolveLumineModelSelectionFromPolicy(latestPolicy);
+    if (!isOwner || savingLumineModelSelection) {
+      return true;
+    }
+    const requestedOption = modelOptions.find(
+      (option) =>
+        option.model === nextSelection.model &&
+        option.mode === nextSelection.mode
+    );
+    if (!requestedOption) {
+      setLumineModelSelection(savedSelection);
+      setLumineModelSelectionError(
+        'That Lumine mode is no longer available. Choose an available mode.'
+      );
+      return false;
+    }
     const normalizedNextSelection = normalizeLumineModelSelection({
       selection: nextSelection,
       modelOptions
     });
-    const savedSelection = resolveLumineModelSelectionFromPolicy(latestPolicy);
-    setLumineModelSelection(normalizedNextSelection);
     if (
-      !isOwner ||
-      savingLumineModelSelection ||
-      (normalizedNextSelection.model === savedSelection.model &&
-        normalizedNextSelection.reasoningEffort ===
-          savedSelection.reasoningEffort)
+      normalizedNextSelection.model === savedSelection.model &&
+      normalizedNextSelection.reasoningEffort === savedSelection.reasoningEffort
     ) {
       return true;
     }
@@ -75,19 +88,18 @@ export default function useLumineModelSelection({
         model: normalizedNextSelection.model,
         reasoningEffort: normalizedNextSelection.reasoningEffort
       });
+      const canonicalSelection =
+        result?.lumineModelPreference ||
+        result?.copilotPolicy?.lumineModelPreference;
+      if (!canonicalSelection) {
+        throw new Error('Server did not return the saved Lumine mode');
+      }
       if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
         replaceCopilotPolicy(result?.copilotPolicy || null);
-      } else if (latestPolicy) {
-        replaceCopilotPolicy({
-          ...latestPolicy,
-          lumineModelPreference:
-            result?.lumineModelPreference || normalizedNextSelection,
-          lumineModelOptions: result?.lumineModelOptions || modelOptions
-        });
       }
       setLumineModelSelection(
         normalizeLumineModelSelection({
-          selection: result?.lumineModelPreference || normalizedNextSelection,
+          selection: canonicalSelection,
           modelOptions: result?.lumineModelOptions || modelOptions
         })
       );

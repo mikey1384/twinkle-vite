@@ -23,6 +23,13 @@ const useRunStartActionsSource = readFileSync(
   ),
   'utf8'
 );
+const modelSelectionHookSource = readFileSync(
+  new URL(
+    '../src/containers/Build/Editor/hooks/useLumineModelSelection.ts',
+    import.meta.url
+  ),
+  'utf8'
+);
 const buildEditorSource = readFileSync(
   new URL('../src/containers/Build/Editor/index.tsx', import.meta.url),
   'utf8'
@@ -36,45 +43,62 @@ const requestHelperIndexSource = readFileSync(
   'utf8'
 );
 
-test('lumine workspace header exposes simple model and think level controls', () => {
-  const thinkLevelLabelsBlock =
-    selectionHelperSource.match(
-      /export const LUMINE_THINK_LEVEL_LABELS[\s\S]*?\n\s*};/
-    )?.[0] || '';
-  const thinkLevelOptionsBlock =
-    selectionHelperSource.match(
-      /const ALL_LUMINE_THINK_LEVELS[\s\S]*?\n];/
-    )?.[0] || '';
-  const selectableThinkLevelGuardBlock =
-    selectionHelperSource.match(
-      /function isSelectableLumineThinkLevel[\s\S]*?\n\}/
-    )?.[0] || '';
-
+test('lumine workspace header exposes simple modes with advanced model choices', () => {
+  assert.match(headerSource, /label="Mode"/);
   assert.match(headerSource, /label="Model"/);
-  assert.match(headerSource, /label="Think level"/);
-  assert.match(selectionHelperSource, /'gpt-5\.5'/);
-  assert.match(selectionHelperSource, /'gpt-5\.4'/);
-  assert.match(thinkLevelLabelsBlock, /low: 'low'/);
-  assert.match(thinkLevelLabelsBlock, /medium: 'medium'/);
-  assert.match(thinkLevelLabelsBlock, /high: 'high'/);
-  assert.match(thinkLevelLabelsBlock, /xhigh: 'xhigh'/);
-  assert.doesNotMatch(thinkLevelLabelsBlock, /Quick|Light|Careful|Deepest/);
+  assert.match(headerSource, /Advanced model choices/);
   assert.match(
-    thinkLevelOptionsBlock,
-    /'low'[\s\S]*'medium'[\s\S]*'high'[\s\S]*'xhigh'/
+    headerSource,
+    /const hasAdvancedModelOptions = advancedModelOptions\.length > 0/
   );
-  assert.doesNotMatch(thinkLevelOptionsBlock, /'none'/);
-  assert.doesNotMatch(selectableThinkLevelGuardBlock, /value === 'none'/);
-  assert.match(selectionHelperSource, /selection\?\.reasoningEffort/);
+  assert.match(headerSource, /\{availableModes\.map\(\(mode\) => \(/);
+  assert.doesNotMatch(headerSource, /\{LUMINE_MODES\.map\(\(mode\) => \(/);
   assert.match(
     selectionHelperSource,
-    /isSelectableLumineThinkLevel\(\s*selection\?\.reasoningEffort\s*\)/
+    /export const LUMINE_MODES[\s\S]*?'light'[\s\S]*?'normal'[\s\S]*?'heavy'[\s\S]*?'superheavy'/
   );
-  assert.doesNotMatch(headerSource, /gpt-5\.4-mini|GPT-5\.4 mini/i);
-  assert.doesNotMatch(selectionHelperSource, /gpt-5\.4-mini|GPT-5\.4 mini/i);
+  assert.match(
+    selectionHelperSource,
+    /export function getAvailableLumineModes\([\s\S]*?LUMINE_MODES\.filter\([\s\S]*?modelOptions\.some\(\(option\) => option\.mode === mode\)/m
+  );
+  assert.match(
+    selectionHelperSource,
+    /DEFAULT_LUMINE_MODEL[^=]*= 'grok-4\.5'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'high'/
+  );
+  assert.match(
+    selectionHelperSource,
+    /const preferredModel[\s\S]*?mode === 'light'[\s\S]*?'grok-4\.5'[\s\S]*?mode === 'normal'[\s\S]*?'gpt-5\.6-terra'[\s\S]*?mode === 'heavy'[\s\S]*?'gpt-5\.6-sol'[\s\S]*?'claude-fable-5'/m
+  );
+  assert.match(
+    selectionHelperSource,
+    /if \(!preferredOption\) return null;[\s\S]*?model: preferredOption\.model/m
+  );
+  assert.match(
+    selectionHelperSource,
+    /reasoningEffort:\s*mode === 'light' \? 'high' : mode === 'normal' \? 'medium' : 'xhigh'/m
+  );
+  assert.match(
+    selectionHelperSource,
+    /model: 'claude-sonnet-5'[\s\S]*?mode: 'normal'/
+  );
+  assert.match(
+    selectionHelperSource,
+    /model: 'claude-opus-4-8'[\s\S]*?mode: 'heavy'/
+  );
+  assert.doesNotMatch(headerSource, /gpt-5\.[1-5]|GPT-5\.[1-5]|Think level/i);
 });
 
 test('lumine model preference saves through the build request helper', () => {
+  const availabilityCheckIndex = modelSelectionHookSource.indexOf(
+    'const requestedOption = modelOptions.find('
+  );
+  const normalizationIndex = modelSelectionHookSource.indexOf(
+    'const normalizedNextSelection = normalizeLumineModelSelection('
+  );
+  const requestIndex = modelSelectionHookSource.indexOf(
+    'await updateBuildLumineModelPreference('
+  );
+
   assert.match(requestHelpersSource, /updateBuildLumineModelPreference/);
   assert.match(
     requestHelpersSource,
@@ -83,6 +107,13 @@ test('lumine model preference saves through the build request helper', () => {
   assert.match(requestHelperIndexSource, /updateBuildLumineModelPreference/);
   assert.match(buildEditorSource, /useLumineModelSelection/);
   assert.match(buildEditorSource, /lumineModelSelectionControl/);
+  assert(availabilityCheckIndex >= 0);
+  assert(normalizationIndex > availabilityCheckIndex);
+  assert(requestIndex > normalizationIndex);
+  assert.match(
+    modelSelectionHookSource,
+    /if \(!requestedOption\) \{[\s\S]*?That Lumine mode is no longer available[\s\S]*?return false;/m
+  );
 });
 
 test('build generate socket payload carries current model and think level', () => {

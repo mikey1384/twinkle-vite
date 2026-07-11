@@ -2338,7 +2338,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.get(`${URL}/content/daily-question`, {
           ...auth(),
-          timeout: 180000,
+          timeout: 195000,
           meta: { allowExtendedTimeout: true, enforceTimeout: false }
         });
         return data;

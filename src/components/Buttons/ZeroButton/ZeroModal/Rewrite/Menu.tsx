@@ -3,10 +3,18 @@ import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
-import { useViewContext } from '~/contexts';
+import { useKeyContext, useViewContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
+import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
 import { ResponseObj } from '../types';
+
+const ZERO_REVIEW_ACCEPT_TIMEOUT_MS = 10000;
+
+interface ZeroReviewAck {
+  accepted: boolean;
+  error?: string;
+}
 
 export default function Menu({
   content,
@@ -33,6 +41,7 @@ export default function Menu({
   onPrepareAudio: (contentToRead: string) => void;
   onUpdateIdentifier: (identifier: number) => void;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
@@ -201,16 +210,25 @@ export default function Menu({
     const responseText = getResponseText();
 
     if (!responseText) {
-      const newIdentifier = Math.floor(Math.random() * 1000000000);
-      socket.emit('get_zeros_review', {
-        type,
-        content,
-        command,
-        wordLevel,
-        identifier: newIdentifier,
-        style: selectedStyle
-      });
-      onUpdateIdentifier(newIdentifier);
+      try {
+        if (!userId) {
+          throw new Error('Socket authentication was not ready');
+        }
+        await waitForSocketAuthReady(userId, ZERO_REVIEW_ACCEPT_TIMEOUT_MS);
+        const newIdentifier = Math.floor(Math.random() * 1000000000);
+        onUpdateIdentifier(newIdentifier);
+        await requestZeroReview({
+          type,
+          content,
+          command,
+          wordLevel,
+          identifier: newIdentifier,
+          style: selectedStyle
+        });
+      } catch (error) {
+        console.error('Failed to start Zero review:', error);
+        onSetLoadingType('');
+      }
     } else {
       await onPrepareAudio(responseText);
     }
@@ -221,5 +239,36 @@ export default function Menu({
       }
       return responseObj[type]?.[selectedStyle]?.[wordLevel];
     }
+  }
+
+  function requestZeroReview(payload: {
+    type: string;
+    content: string;
+    command: string;
+    wordLevel: string;
+    identifier: number;
+    style: string;
+  }) {
+    return new Promise<void>((resolve, reject) => {
+      socket
+        .timeout(ZERO_REVIEW_ACCEPT_TIMEOUT_MS)
+        .emit(
+          'get_zeros_review',
+          payload,
+          (timeoutError: Error | null, result?: ZeroReviewAck) => {
+            if (timeoutError) {
+              reject(new Error('Zero review request was not accepted'));
+              return;
+            }
+            if (!result?.accepted) {
+              reject(
+                new Error(result?.error || 'Zero review request was rejected')
+              );
+              return;
+            }
+            resolve();
+          }
+        );
+    });
   }
 }

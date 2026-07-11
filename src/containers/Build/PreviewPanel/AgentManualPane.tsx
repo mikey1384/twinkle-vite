@@ -161,6 +161,7 @@ const sdkSections: GuideSection[] = [
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
       'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
       'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
+      'generateObject low uses GPT-5.6 Luna and free Lite Mode; medium uses GPT-5.6 Luna and normal AI Energy; high uses Grok 4.5 with high reasoning and high AI Energy.',
       'Use systemPrompt to define the app AI personality, tone, role, or response rules.',
       'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
@@ -181,7 +182,7 @@ const sdkSections: GuideSection[] = [
       'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
       'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
       'thinkingMode low is Lite Mode and free AI Energy; medium is normal battery use; high is high battery use.',
-      'Zero uses GPT nano/mini/full for low/medium/high. Ciel uses Claude Haiku/Sonnet/Opus 4.8 for low/medium/high.',
+      'Zero uses Grok 4.5 with low/medium/high reasoning. Ciel uses Claude Haiku 4.5 for low, Claude Sonnet 5 for medium, and Claude Opus 4.8 with extended thinking for high.',
       'If medium or high is requested after AI Energy is empty, the server falls back to low and returns thinkingMode: "low".',
       'Use Twinkle.characters.chat for Zero/Ciel NPCs instead of pretending with Twinkle.ai.chat systemPrompt.'
     ]

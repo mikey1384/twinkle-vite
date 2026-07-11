@@ -10,9 +10,9 @@ import {
   BuildAiUsagePolicy,
   BuildCopilotPolicy,
   BuildLumineChatVisibility,
+  BuildLumineMode,
   BuildLumineModel,
   BuildLumineModelPreference,
-  BuildLumineThinkLevel,
   BuildRunEvent,
   LimitProgressItem,
   LumineModelSelectionControl
@@ -24,8 +24,11 @@ import {
   formatTokenCount
 } from './helpers/utils';
 import {
+  getAdvancedLumineModelOptions,
+  getAvailableLumineModes,
   getLumineModelOption,
-  LUMINE_THINK_LEVEL_LABELS,
+  getLumineSelectionForMode,
+  LUMINE_MODE_LABELS,
   normalizeLumineModelSelection
 } from '../helpers/lumineModelSelection';
 
@@ -72,7 +75,15 @@ const minimizedRowClass = css`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: var(--build-workspace-header-height);
+  min-height: 2.45rem;
+`;
+
+const minimizedHeaderClass = css`
+  min-height: 0;
+  padding: 0.55rem 1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.55rem 1rem;
+  }
 `;
 
 const headerIconButtonClass = css`
@@ -276,7 +287,7 @@ export default function Header({
 
   if (minimized) {
     return (
-      <div className={headerClass}>
+      <div className={`${headerClass} ${minimizedHeaderClass}`}>
         <div className={minimizedRowClass}>
           {lumineModelSelectionControl ? (
             <LumineModelSelectionSettings
@@ -571,11 +582,17 @@ function LumineModelSelectionSettings({
   control: LumineModelSelectionControl;
   compact?: boolean;
 }) {
+  const [advancedShown, setAdvancedShown] = useState(false);
+  const availableModes = getAvailableLumineModes(control.modelOptions);
   const selectedOption = getLumineModelOption(
     control.modelOptions,
     control.value.model
   );
-  const allowedThinkLevels = selectedOption.supportedReasoningEfforts;
+  const advancedModelOptions = getAdvancedLumineModelOptions({
+    mode: control.value.mode,
+    modelOptions: control.modelOptions
+  });
+  const hasAdvancedModelOptions = advancedModelOptions.length > 0;
 
   return (
     <div
@@ -588,33 +605,63 @@ function LumineModelSelectionSettings({
       `}
     >
       <LumineSelect
-        label="Model"
-        value={control.value.model}
+        label="Mode"
+        value={control.value.mode}
         disabled={control.loading}
         compact={compact}
         icon="robot"
-        onChange={handleModelChange}
+        onChange={handleModeChange}
       >
-        {control.modelOptions.map((option) => (
-          <option key={option.model} value={option.model}>
-            {option.label}
+        {availableModes.map((mode) => (
+          <option key={mode} value={mode}>
+            {LUMINE_MODE_LABELS[mode]}
           </option>
         ))}
       </LumineSelect>
-      <LumineSelect
-        label="Think level"
-        value={control.value.reasoningEffort}
-        disabled={control.loading}
-        compact={compact}
-        icon="brain"
-        onChange={handleThinkLevelChange}
-      >
-        {allowedThinkLevels.map((effort) => (
-          <option key={effort} value={effort}>
-            {LUMINE_THINK_LEVEL_LABELS[effort]}
-          </option>
-        ))}
-      </LumineSelect>
+      {hasAdvancedModelOptions ? (
+        <button
+          type="button"
+          disabled={control.loading}
+          aria-expanded={advancedShown}
+          aria-label="Toggle advanced Lumine model choices"
+          title="Advanced model choices"
+          onClick={() => setAdvancedShown((shown) => !shown)}
+          className={css`
+            min-height: 2.45rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            order: ${compact ? -1 : 0};
+            border: 1px solid var(--ui-border);
+            border-radius: 999px;
+            background: #fff;
+            padding: ${compact ? '0 0.72rem' : '0 0.85rem'};
+            color: #1d4ed8;
+            font-size: 1rem;
+            font-weight: 900;
+            cursor: ${control.loading ? 'not-allowed' : 'pointer'};
+          `}
+        >
+          <Icon icon="gear" />
+          {compact ? '' : ' Advanced'}
+        </button>
+      ) : null}
+      {advancedShown && hasAdvancedModelOptions ? (
+        <LumineSelect
+          label="Model"
+          value={selectedOption.model}
+          disabled={control.loading}
+          compact={compact}
+          icon="bolt"
+          onChange={handleModelChange}
+        >
+          {advancedModelOptions.map((option) => (
+            <option key={option.model} value={option.model}>
+              {option.label}
+            </option>
+          ))}
+        </LumineSelect>
+      ) : null}
       {control.error ? (
         <span
           className={css`
@@ -635,25 +682,28 @@ function LumineModelSelectionSettings({
     void Promise.resolve(control.onSave(nextSelection));
   }
 
-  function handleModelChange(value: string) {
-    const nextModel = value as BuildLumineModel;
-    saveSelection(
-      normalizeLumineModelSelection({
-        selection: {
-          model: nextModel,
-          reasoningEffort: control.value.reasoningEffort
-        },
-        modelOptions: control.modelOptions
-      })
-    );
+  function handleModeChange(value: string) {
+    setAdvancedShown(false);
+    const nextSelection = getLumineSelectionForMode({
+      mode: value as BuildLumineMode,
+      modelOptions: control.modelOptions
+    });
+    if (nextSelection) {
+      saveSelection(nextSelection);
+    }
   }
 
-  function handleThinkLevelChange(value: string) {
+  function handleModelChange(value: string) {
+    const nextOption = getLumineModelOption(
+      control.modelOptions,
+      value as BuildLumineModel
+    );
     saveSelection(
       normalizeLumineModelSelection({
         selection: {
-          model: control.value.model,
-          reasoningEffort: value as BuildLumineThinkLevel
+          model: value as BuildLumineModel,
+          reasoningEffort: nextOption.defaultReasoningEffort,
+          mode: nextOption.mode
         },
         modelOptions: control.modelOptions
       })

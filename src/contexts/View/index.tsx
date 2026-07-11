@@ -52,8 +52,22 @@ const initialViewState: ViewState = {
   killBuildAppSession: null
 };
 
+function initializeViewState(state: ViewState): ViewState {
+  return {
+    ...state,
+    pageVisible:
+      typeof document === 'undefined' || typeof document.hidden === 'undefined'
+        ? true
+        : !document.hidden
+  };
+}
+
 export function ViewContextProvider({ children }: { children: ReactNode }) {
-  const [viewState, viewDispatch] = useReducer(ViewReducer, initialViewState);
+  const [viewState, viewDispatch] = useReducer(
+    ViewReducer,
+    initialViewState,
+    initializeViewState
+  );
 
   const didRandomise = useRef(false);
   useEffect(() => {

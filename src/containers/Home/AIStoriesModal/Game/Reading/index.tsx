@@ -2,8 +2,44 @@ import React, { useEffect, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ContentContainer from './ContentContainer';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { trackEvent } from '~/helpers/analytics';
+import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
+
+const STORY_GENERATION_ACCEPT_TIMEOUT_MS = 10000;
+
+interface AIStoryGenerationAck {
+  accepted: boolean;
+  error?: string;
+}
+
+type AIStoryRequestEvent =
+  'generate_ai_story' | 'generate_ai_story_explanations';
+
+function emitAIStoryRequestWithAck(
+  event: AIStoryRequestEvent,
+  payload: Record<string, unknown>
+) {
+  return new Promise<void>((resolve, reject) => {
+    socket
+      .timeout(STORY_GENERATION_ACCEPT_TIMEOUT_MS)
+      .emit(
+        event,
+        payload,
+        (timeoutError: Error | null, result?: AIStoryGenerationAck) => {
+          if (timeoutError) {
+            reject(new Error('AI Story request was not accepted'));
+            return;
+          }
+          if (!result?.accepted) {
+            reject(new Error(result?.error || 'AI Story request was rejected'));
+            return;
+          }
+          resolve();
+        }
+      );
+  });
+}
 
 export default function Reading({
   difficulty,
@@ -73,17 +109,22 @@ export default function Reading({
   userChoiceObj: any;
 }) {
   const finishedStoryIdRef = useRef(0);
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyLoadError, setStoryLoadError] = useState(false);
 
   useEffect(() => {
-    if (!solveObj.isGraded && !isDisabled) {
+    if (!solveObj.isGraded && !isDisabled && userId) {
       handleGenerateStory();
     }
 
     async function handleGenerateStory() {
       setStoryLoadError(false);
       try {
+        await waitForSocketAuthReady(
+          userId,
+          STORY_GENERATION_ACCEPT_TIMEOUT_MS
+        );
         const { attemptId: newAttemptId, storyObj } = await loadAIStory({
           difficulty,
           topic,
@@ -100,20 +141,20 @@ export default function Reading({
         onSetExplanation(storyObj.explanation);
         onSetLoadStoryComplete(true);
         onSetIsCloseLocked(true);
-        socket.emit('generate_ai_story', {
+        await emitAIStoryRequestWithAck('generate_ai_story', {
           difficulty,
           topic,
           type: storyType,
           storyId: storyObj.id
         });
-        await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (error) {
         console.error(error);
+        onSetIsCloseLocked(false);
         setStoryLoadError(true);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [solveObj?.isGraded]);
+  }, [solveObj?.isGraded, userId]);
 
   useEffect(() => {
     socket.on('ai_story_updated', handleAIStoryUpdated);
@@ -138,18 +179,26 @@ export default function Reading({
       }
     }
 
-    function handleAIStoryFinished(streamedStoryId: number) {
+    async function handleAIStoryFinished(streamedStoryId: number) {
       if (
         streamedStoryId === storyId &&
         finishedStoryIdRef.current !== streamedStoryId
       ) {
         finishedStoryIdRef.current = streamedStoryId;
         onLoadQuestions(streamedStoryId);
-        socket.emit('generate_ai_story_explanations', {
-          storyId: Number(streamedStoryId),
-          story,
-          difficulty
-        });
+        try {
+          await waitForSocketAuthReady(
+            userId,
+            STORY_GENERATION_ACCEPT_TIMEOUT_MS
+          );
+          await emitAIStoryRequestWithAck('generate_ai_story_explanations', {
+            storyId: Number(streamedStoryId),
+            difficulty
+          });
+        } catch (error) {
+          console.error('Failed to start AI Story explanations:', error);
+          onSetQuestionsButtonEnabled(true);
+        }
       }
     }
 
@@ -170,7 +219,13 @@ export default function Reading({
     }
 
     function handleAIStoryError(error: any) {
-      console.error(`Error while streaming AI Story: ${error}`);
+      const failedStoryId = Number(
+        error && typeof error === 'object' ? error.storyId : error
+      );
+      if (failedStoryId && failedStoryId !== storyId) return;
+      console.error('Error while streaming AI Story:', error);
+      onSetIsCloseLocked(false);
+      setStoryLoadError(true);
     }
 
     function handleAIStoryExplanationError() {

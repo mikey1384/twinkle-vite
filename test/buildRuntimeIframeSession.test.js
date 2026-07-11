@@ -9,6 +9,10 @@ const frameManagerSource = readFileSync(
   ),
   'utf8'
 );
+const previewPanelSource = readFileSync(
+  new URL('../src/containers/Build/PreviewPanel/index.tsx', import.meta.url),
+  'utf8'
+);
 
 test('runtime iframe survives signed preview token refresh before bridge confirmation', () => {
   const tokenRefreshBlockStart = frameManagerSource.indexOf(
@@ -42,4 +46,25 @@ test('runtime iframe survives signed preview token refresh before bridge confirm
     /bridgeConfirmed/,
     'token-only refresh must preserve the loaded iframe even if the preview bridge has not confirmed yet'
   );
+});
+
+test('browser visibility pauses previews without retiring their iframe', () => {
+  const suspensionStart = previewPanelSource.indexOf(
+    'const previewFrameSuspended ='
+  );
+  const lifecycleEffectStart = previewPanelSource.indexOf(
+    'useEffect(() => {',
+    suspensionStart
+  );
+  const suspensionSource = previewPanelSource.slice(
+    suspensionStart,
+    lifecycleEffectStart
+  );
+
+  assert.match(
+    previewPanelSource,
+    /const previewHostEnabled = runtimeHostVisible !== false;\s*const previewHostVisible = previewHostEnabled && pageVisible;\s*const previewAudioMuted = audioMuted \|\| !pageVisible;/m
+  );
+  assert.match(suspensionSource, /!previewHostEnabled/);
+  assert.doesNotMatch(suspensionSource, /!previewHostVisible/);
 });
