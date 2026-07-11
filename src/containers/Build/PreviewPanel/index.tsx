@@ -111,6 +111,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onApplyRestoredProjectFiles,
       onSaveProjectFiles,
       runtimeOnly = false,
+      requireSignedPreviewAccess = false,
       runtimeHostVisible = true,
       preventFrameSuspend = false,
       audioMuted = false,
@@ -742,6 +743,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       build,
       enabled: runtimeOnly && hasRuntimePreview,
       previewSrcOverride: normalizedPreviewSrcOverride,
+      requireSignedAccess: requireSignedPreviewAccess,
       userId: resolvedUserId || null,
       previewAuth
     });

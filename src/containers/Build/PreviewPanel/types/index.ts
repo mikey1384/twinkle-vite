@@ -74,6 +74,7 @@ export interface PreviewPanelProps {
     }
   ) => Promise<{ success: boolean; error?: string }>;
   runtimeOnly?: boolean;
+  requireSignedPreviewAccess?: boolean;
   runtimeHostVisible?: boolean;
   // Keep the preview frame MOUNTED even while host-hidden (the keep-alive
   // full-tab runtime): a hidden frame normally suspends -> its src is nulled ->

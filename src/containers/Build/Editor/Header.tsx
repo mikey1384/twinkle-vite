@@ -18,8 +18,13 @@ import {
   normalizeBuildCollaborationMode,
   normalizeBuildReleaseStatus
 } from '~/helpers/buildProjectHelpers';
+import {
+  getBuildRuntimePath,
+  type BuildRuntimeSource
+} from '~/helpers/buildRuntimeSource';
 import RuntimeAssetTransferProgressBar from './RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from './helpers/runtimeAssetTransferProgress';
+import ViewAppVersionModal from './ViewAppVersionModal';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -468,28 +473,51 @@ function BuildVisibilityBadge({ isPublic }: { isPublic: boolean }) {
 
 function BuildViewAppButton({
   buildId,
+  promptForVersion,
   runtimeBackState,
   size = 'md'
 }: {
   buildId: number;
+  promptForVersion: boolean;
   runtimeBackState: RuntimeBackState;
   size?: 'sm' | 'md';
 }) {
   const navigate = useNavigate();
+  const [versionModalShown, setVersionModalShown] = useState(false);
 
   return (
-    <GameCTAButton
-      onClick={handleViewApp}
-      variant="logoBlue"
-      size={size}
-      icon="eye"
-    >
-      View App
-    </GameCTAButton>
+    <>
+      <GameCTAButton
+        onClick={handleViewApp}
+        variant="logoBlue"
+        size={size}
+        icon="eye"
+      >
+        View App
+      </GameCTAButton>
+      {versionModalShown ? (
+        <ViewAppVersionModal
+          onClose={() => setVersionModalShown(false)}
+          onOpenPublished={() => openRuntimeSource('published')}
+          onOpenWorkspace={() => openRuntimeSource('workspace')}
+        />
+      ) : null}
+    </>
   );
 
   function handleViewApp() {
-    navigate(getBuildRuntimePath(buildId), { state: runtimeBackState });
+    if (promptForVersion) {
+      setVersionModalShown(true);
+      return;
+    }
+    openRuntimeSource('published');
+  }
+
+  function openRuntimeSource(source: BuildRuntimeSource) {
+    setVersionModalShown(false);
+    navigate(getBuildRuntimePath(buildId, source), {
+      state: runtimeBackState
+    });
   }
 }
 
@@ -647,6 +675,11 @@ export default function Header({
     !releaseStatus.hasUnpublishedChanges
   );
   const publicAppNeedsUpdate = Boolean(build.isPublic && !publicAppIsUpToDate);
+  const shouldPromptForRuntimeVersion = Boolean(
+    build.isPublic &&
+    releaseStatus?.hasPublishedVersion &&
+    releaseStatus.hasUnpublishedChanges
+  );
   const hasThumbnail = Boolean(String(build.thumbnailUrl || '').trim());
   // Nudge owners to set a thumbnail: while unset, keep the Thumbnail button
   // out front (shiny pink); once set, it lives in the Settings menu.
@@ -867,6 +900,7 @@ export default function Header({
             {canOpenRuntimeApp ? (
               <BuildViewAppButton
                 buildId={Number(build.id)}
+                promptForVersion={shouldPromptForRuntimeVersion}
                 runtimeBackState={runtimeBackState}
                 size="sm"
               />
@@ -905,6 +939,7 @@ export default function Header({
           <HeaderActionItem mobileOrder={2}>
             <BuildViewAppButton
               buildId={Number(build.id)}
+              promptForVersion={shouldPromptForRuntimeVersion}
               runtimeBackState={runtimeBackState}
             />
           </HeaderActionItem>
@@ -1139,10 +1174,6 @@ function renderHeaderUsername(user: User) {
 interface RuntimeBackState {
   runtimeBackTo: string;
   runtimeBackLabel: string;
-}
-
-function getBuildRuntimePath(buildId: number) {
-  return `/app/${buildId}`;
 }
 
 function normalizeContributionStatus(

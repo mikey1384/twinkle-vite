@@ -61,6 +61,9 @@ export default function useBuildSocket() {
   const onInvalidateBuildStudioActivityFeeds = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioActivityFeeds
   );
+  const onInvalidateBuildForum = useBuildContext(
+    (v) => v.actions.onInvalidateBuildForum
+  );
   const onInvalidateBuildStudioBrowseTab = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioBrowseTab
   );
@@ -982,8 +985,17 @@ export default function useBuildSocket() {
       resumeTrackedBuildRuns();
     }
 
-    function handleBuildActivityUpdated() {
+    function handleBuildActivityUpdated({
+      buildId,
+      forumUpdated
+    }: {
+      buildId?: number | null;
+      forumUpdated?: boolean;
+    }) {
       onInvalidateBuildStudioActivityFeeds({ userId: userIdRef.current });
+      if (forumUpdated && Number(buildId || 0) > 0) {
+        onInvalidateBuildForum({ rootBuildId: Number(buildId) });
+      }
     }
 
     function handleBuildCollaborationUpdated({

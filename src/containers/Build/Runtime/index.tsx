@@ -20,6 +20,11 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
 import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
 import {
+  BUILD_RUNTIME_SOURCE_QUERY_PARAM,
+  getBuildRuntimeSourceFromSearch,
+  type BuildRuntimeSource
+} from '~/helpers/buildRuntimeSource';
+import {
   useAppContext,
   useContentContext,
   useKeyContext,
@@ -115,16 +120,22 @@ function getBuildAppIdFromPath(value: string) {
 
 function getBuildAppTabTarget({
   buildId,
-  pathname
+  pathname,
+  runtimeSource
 }: {
   buildId: number | string;
   pathname: string;
+  runtimeSource: BuildRuntimeSource;
 }) {
   const basePath = `/app/${buildId}`;
-  if (pathname === basePath || pathname.startsWith(`${basePath}/`)) {
-    return pathname;
-  }
-  return basePath;
+  const runtimePath =
+    pathname === basePath || pathname.startsWith(`${basePath}/`)
+      ? pathname
+      : basePath;
+  if (runtimeSource === 'published') return runtimePath;
+  const params = new URLSearchParams();
+  params.set(BUILD_RUNTIME_SOURCE_QUERY_PARAM, runtimeSource);
+  return `${runtimePath}?${params.toString()}`;
 }
 
 const RUNTIME_COMMENTS_LOAD_LIMIT = 20;
@@ -606,7 +617,10 @@ const launchTargetLoadingOverlayClass = css`
 interface BuildRuntimeProps {
   buildIdOverride?: number | null;
   locationOverride?: Location;
-  onRuntimeBuildLoaded?: (build: RuntimeBuild) => void;
+  onRuntimeBuildLoaded?: (
+    build: RuntimeBuild,
+    runtimeSource: BuildRuntimeSource
+  ) => void;
   runtimeIsActive?: boolean;
 }
 
@@ -713,6 +727,8 @@ export default function BuildRuntime({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
+  const [loadedRuntimeSource, setLoadedRuntimeSource] =
+    useState<BuildRuntimeSource>('published');
   const [publishingRuntimeUpdate, setPublishingRuntimeUpdate] = useState(false);
   const [publishRuntimeUpdateError, setPublishRuntimeUpdateError] =
     useState('');
@@ -826,17 +842,23 @@ export default function BuildRuntime({
   const isEmbedded = useMemo(() => {
     return new URLSearchParams(location.search).get('embedded') === '1';
   }, [location.search]);
+  const requestedRuntimeSource = useMemo(
+    () => getBuildRuntimeSourceFromSearch(location.search),
+    [location.search]
+  );
   const buildAppTabTarget = useMemo(() => {
     if (!build?.id) return '';
     return getBuildAppTabTarget({
       buildId: build.id,
-      pathname: location.pathname || ''
+      pathname: location.pathname || '',
+      runtimeSource: requestedRuntimeSource
     });
-  }, [build?.id, location.pathname]);
+  }, [build?.id, location.pathname, requestedRuntimeSource]);
 
   // publish the open app to the nav so it spawns/keeps a tab for it (desktop).
-  // Preserve app-owned deep-link path segments, but do not persist runtime
-  // query params such as notificationId/viewSource/embedded/mount context.
+  // Preserve app-owned deep-link path segments and the selected saved/live
+  // runtime source, but do not persist transient query params such as
+  // notificationId/viewSource/embedded/mount context.
   useEffect(() => {
     if (
       !runtimeIsActive ||
@@ -1035,13 +1057,16 @@ export default function BuildRuntime({
 
   function applyRuntimeBuildPayload(data: any) {
     if (!data?.build) return false;
+    const nextRuntimeSource: BuildRuntimeSource =
+      data.runtimeSource === 'workspace' ? 'workspace' : 'published';
     const nextBuild = {
       ...data.build,
       capabilitySnapshot: data.capabilitySnapshot || null,
       projectFiles: Array.isArray(data.projectFiles) ? data.projectFiles : []
     };
+    setLoadedRuntimeSource(nextRuntimeSource);
     setBuild(nextBuild);
-    onRuntimeBuildLoaded?.(nextBuild);
+    onRuntimeBuildLoaded?.(nextBuild, nextRuntimeSource);
     return true;
   }
 
@@ -1267,7 +1292,8 @@ export default function BuildRuntime({
       if (result?.success) {
         try {
           const runtimePayload = await loadRuntimeBuild(requestedBuildId, {
-            fromWriter: true
+            fromWriter: true,
+            runtimeSource: requestedRuntimeSource
           });
           if (applyRuntimeBuildPayload(runtimePayload)) return;
         } catch (reloadError) {
@@ -1717,6 +1743,7 @@ export default function BuildRuntime({
       setError('');
       try {
         const data = await loadRuntimeBuild(numericBuildId, {
+          runtimeSource: requestedRuntimeSource,
           viewSource: runtimeViewSource
         });
         if (!applyRuntimeBuildPayload(data)) {
@@ -1729,7 +1756,7 @@ export default function BuildRuntime({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numericBuildId, runtimeViewSource, userId]);
+  }, [numericBuildId, requestedRuntimeSource, runtimeViewSource, userId]);
 
   useEffect(() => {
     if (!runtimeBuildId || !userId) {
@@ -2214,6 +2241,9 @@ export default function BuildRuntime({
                     projectFiles={build.projectFiles || []}
                     isOwner={false}
                     runtimeOnly
+                    requireSignedPreviewAccess={
+                      loadedRuntimeSource === 'workspace'
+                    }
                     runtimeHostVisible={runtimeEffectiveHostVisible}
                     preventFrameSuspend={!isEmbedded}
                     audioMuted={runtimeEffectiveAudioMuted}

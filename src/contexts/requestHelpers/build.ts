@@ -2,6 +2,7 @@ import axios from 'axios';
 import request from './axiosInstance';
 import URL from '~/constants/URL';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { RequestHelpers } from '~/types';
 
 export default function buildRequestHelpers({
@@ -515,7 +516,11 @@ export default function buildRequestHelpers({
 
     async loadRuntimeBuild(
       buildId: number,
-      options?: { fromWriter?: boolean; viewSource?: string }
+      options?: {
+        fromWriter?: boolean;
+        runtimeSource?: BuildRuntimeSource;
+        viewSource?: string;
+      }
     ) {
       try {
         const params = new URLSearchParams();
@@ -524,6 +529,9 @@ export default function buildRequestHelpers({
         }
         if (options?.viewSource) {
           params.set('viewSource', options.viewSource);
+        }
+        if (options?.runtimeSource === 'workspace') {
+          params.set('runtimeSource', options.runtimeSource);
         }
         const queryString = params.toString();
         const qs = queryString ? `?${queryString}` : '';

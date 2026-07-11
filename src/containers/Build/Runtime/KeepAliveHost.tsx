@@ -14,6 +14,10 @@ import {
 } from 'react-router-dom';
 import { useKeyContext, useViewContext } from '~/contexts';
 import { trackEvent } from '~/helpers/analytics';
+import {
+  getBuildRuntimeSourceFromSearch,
+  type BuildRuntimeSource
+} from '~/helpers/buildRuntimeSource';
 import BuildRuntime from '.';
 import type { RuntimeBuild } from './types';
 
@@ -22,6 +26,7 @@ interface RuntimeSession {
   key: string;
   location: Location;
   loaded: boolean;
+  runtimeSource: BuildRuntimeSource;
   title: string;
   userId: number | null;
 }
@@ -56,24 +61,30 @@ const runtimeLayerClass = css`
   }
 `;
 
-function createRuntimeSessionKey(buildId: number) {
-  return `${buildId}:${Date.now().toString(36)}`;
+function createRuntimeSessionKey(
+  buildId: number,
+  runtimeSource: BuildRuntimeSource
+) {
+  return `${buildId}:${runtimeSource}:${Date.now().toString(36)}`;
 }
 
 function createRuntimeSession({
   buildId,
   location,
+  runtimeSource,
   userId
 }: {
   buildId: number;
   location: Location;
+  runtimeSource: BuildRuntimeSource;
   userId: number | null;
 }): RuntimeSession {
   return {
     buildId,
-    key: createRuntimeSessionKey(buildId),
+    key: createRuntimeSessionKey(buildId, runtimeSource),
     location,
     loaded: false,
+    runtimeSource,
     title: 'Build App',
     userId
   };
@@ -117,6 +128,10 @@ export default function BuildRuntimeKeepAliveHost() {
   );
   const activeBuildId = runtimeRouteMatch?.buildId || null;
   const isRuntimeRoute = Boolean(runtimeRouteMatch);
+  const activeRuntimeSource = useMemo(
+    () => getBuildRuntimeSourceFromSearch(location.search),
+    [location.search]
+  );
   // One session PER opened build app, each kept mounted (hidden) while another
   // tab is active. A single slot only kept the last-viewed app alive, so
   // switching build tab -> build tab tore the previous one down and reloaded it
@@ -151,16 +166,19 @@ export default function BuildRuntimeKeepAliveHost() {
           createRuntimeSession({
             buildId: activeBuildId,
             location,
+            runtimeSource: activeRuntimeSource,
             userId: currentUserId
           })
         ];
       }
       const ownedByDifferentAuthState =
         !!existing.userId && existing.userId !== currentUserId;
-      const replacement = ownedByDifferentAuthState
+      const sourceChanged = existing.runtimeSource !== activeRuntimeSource;
+      const replacement = ownedByDifferentAuthState || sourceChanged
         ? createRuntimeSession({
             buildId: activeBuildId,
             location,
+            runtimeSource: activeRuntimeSource,
             userId: currentUserId
           })
         : {
@@ -172,7 +190,13 @@ export default function BuildRuntimeKeepAliveHost() {
         s.buildId === activeBuildId ? replacement : s
       );
     });
-  }, [activeBuildId, currentUserId, isRuntimeRoute, location]);
+  }, [
+    activeBuildId,
+    activeRuntimeSource,
+    currentUserId,
+    isRuntimeRoute,
+    location
+  ]);
 
   // Auth reconciliation (mirrors the single-session version, applied per
   // session): adopt the current user for anon sessions; drop any background
@@ -274,14 +298,17 @@ export default function BuildRuntimeKeepAliveHost() {
       : 'Build App | Twinkle';
   }, [isRuntimeRoute, activeSessionLoaded, activeSessionTitle]);
 
-  function handleRuntimeBuildLoaded(build: RuntimeBuild) {
+  function handleRuntimeBuildLoaded(
+    sessionKey: string,
+    build: RuntimeBuild,
+    runtimeSource: BuildRuntimeSource
+  ) {
     // Only count the first load of a session that is actually for this build.
     // Must read through sessionsRef (not the closure's `sessions`): stale
     // resolves from abandoned builds arrive via old closures.
-    const target = sessionsRef.current.find(
-      (s) => Number(s.buildId) === Number(build.id)
-    );
-    if (target && !target.loaded) {
+    const target = sessionsRef.current.find((s) => s.key === sessionKey);
+    if (!target || target.runtimeSource !== runtimeSource) return;
+    if (!target.loaded && runtimeSource === 'published') {
       trackEvent('build_view', {
         build_id: Number(build.id),
         build_title: String(build.title || ''),
@@ -290,7 +317,7 @@ export default function BuildRuntimeKeepAliveHost() {
     }
     setSessions((current) =>
       current.map((s) =>
-        Number(s.buildId) === Number(build.id) && !s.loaded
+        s.key === sessionKey && !s.loaded
           ? {
               ...s,
               loaded: true,
@@ -322,7 +349,9 @@ export default function BuildRuntimeKeepAliveHost() {
               key={s.key}
               buildIdOverride={s.buildId}
               locationOverride={isActive ? location : s.location}
-              onRuntimeBuildLoaded={handleRuntimeBuildLoaded}
+              onRuntimeBuildLoaded={(build, runtimeSource) =>
+                handleRuntimeBuildLoaded(s.key, build, runtimeSource)
+              }
               runtimeIsActive={isActive}
             />
           </div>
@@ -339,7 +368,7 @@ export default function BuildRuntimeKeepAliveHost() {
             key={`invalid:${location.pathname}`}
             buildIdOverride={null}
             locationOverride={location}
-            onRuntimeBuildLoaded={handleRuntimeBuildLoaded}
+            onRuntimeBuildLoaded={() => {}}
             runtimeIsActive
           />
         </div>

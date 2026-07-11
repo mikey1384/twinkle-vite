@@ -256,7 +256,8 @@ export interface BuildLiveRunRunningSnapshotPayload {
   updatedAt?: number | null;
 }
 
-export interface BuildLiveRunActionPayload extends BuildLiveRunStreamUpdatePayload {
+export interface BuildLiveRunActionPayload
+  extends BuildLiveRunStreamUpdatePayload {
   buildId?: number;
   build?: any;
   chatMessages?: any[];
@@ -359,12 +360,17 @@ export interface BuildWorkspaceForumCacheActionPayload {
   replies?: any[] | null;
 }
 
+export interface BuildForumInvalidationActionPayload {
+  rootBuildId?: number | null;
+}
+
 export interface BuildState {
   buildsById: Record<string, BuildSummary>;
   buildRuns: Record<string, BuildLiveRunState>;
   buildRunRequestMap: Record<string, number>;
   buildWorkspaces: Record<string, BuildWorkspaceSnapshot>;
   buildWorkspaceUi: Record<string, BuildWorkspaceUiState>;
+  forumInvalidationVersions: Record<string, number>;
   runtimeVerifyResults: Record<string, BuildRuntimeVerifyResult>;
   buildStudio: BuildStudioState;
 }
@@ -389,6 +395,7 @@ export interface BuildAction {
     | 'SET_BUILD_WORKSPACE_FORUM_THREAD_DETAIL'
     | 'REMOVE_BUILD_WORKSPACE_FORUM_THREAD'
     | 'CLEAR_BUILD_WORKSPACE_FORUM_CACHE'
+    | 'INVALIDATE_BUILD_FORUM'
     | 'SET_BUILD_STUDIO_ACTIVE_TAB'
     | 'SET_BUILD_STUDIO_MY_BUILDS'
     | 'PATCH_BUILD_STUDIO_MY_BUILD'
@@ -420,6 +427,7 @@ export interface BuildAction {
   buildStudio?: BuildStudioActionPayload;
   buildWorkspaceUi?: BuildWorkspaceUiActionPayload;
   buildWorkspaceForumCache?: BuildWorkspaceForumCacheActionPayload;
+  buildForumInvalidation?: BuildForumInvalidationActionPayload;
   buildSummary?: {
     build?: any;
     builds?: any[];
@@ -800,7 +808,10 @@ function getBuildStudioActivityFeeds(buildStudio: BuildStudioState) {
   };
 }
 
-function mergeBuildStudioQuickAccessItems(currentItems: any[], nextItems: any[]) {
+function mergeBuildStudioQuickAccessItems(
+  currentItems: any[],
+  nextItems: any[]
+) {
   const seenIds = new Set(currentItems.map((item) => Number(item?.id || 0)));
   const mergedItems = [...currentItems];
   for (const item of nextItems || []) {
@@ -1190,9 +1201,9 @@ function hasBuildRunEventRecordValue(
 ) {
   return Boolean(
     value &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    Object.keys(value).length > 0
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.keys(value).length > 0
   );
 }
 
@@ -2054,7 +2065,10 @@ export default function BuildReducer(
             : (currentRun.pendingToolApproval ?? null),
         thumbnailNudge:
           action.buildRun &&
-          Object.prototype.hasOwnProperty.call(action.buildRun, 'thumbnailNudge')
+          Object.prototype.hasOwnProperty.call(
+            action.buildRun,
+            'thumbnailNudge'
+          )
             ? (action.buildRun.thumbnailNudge ?? null)
             : (currentRun.thumbnailNudge ?? null),
         deferredBuildRequest:
@@ -2548,6 +2562,20 @@ export default function BuildReducer(
         }
       };
     }
+    case 'INVALIDATE_BUILD_FORUM': {
+      const rootBuildId = Number(
+        action.buildForumInvalidation?.rootBuildId || 0
+      );
+      if (!rootBuildId) return state;
+      const key = String(rootBuildId);
+      return {
+        ...state,
+        forumInvalidationVersions: {
+          ...(state.forumInvalidationVersions || {}),
+          [key]: Number(state.forumInvalidationVersions?.[key] || 0) + 1
+        }
+      };
+    }
     case 'SET_BUILD_STUDIO_ACTIVE_TAB': {
       const buildStudio = getBuildStudioState(state);
       const activeTab = normalizeBuildStudioTab(action.buildStudio?.activeTab);
@@ -2718,9 +2746,7 @@ export default function BuildReducer(
       if (buildIds.size === 0) return state;
       const todayTopViewed = quickAccess.todayTopViewed;
       const todayTopViewedUserMatches =
-        !userId ||
-        !todayTopViewed.userId ||
-        todayTopViewed.userId === userId;
+        !userId || !todayTopViewed.userId || todayTopViewed.userId === userId;
       return {
         ...state,
         buildStudio: {

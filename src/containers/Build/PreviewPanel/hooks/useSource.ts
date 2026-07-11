@@ -40,12 +40,14 @@ export function useRuntimePreviewSrc({
   build,
   enabled,
   previewSrcOverride,
+  requireSignedAccess,
   userId,
   previewAuth
 }: {
   build: Build;
   enabled: boolean;
   previewSrcOverride: string | null;
+  requireSignedAccess: boolean;
   userId: number | null;
   previewAuth: PreviewHostBridgeAuth;
 }) {
@@ -56,13 +58,16 @@ export function useRuntimePreviewSrc({
   const runtimePreviewSrcKey = basePreviewSrc
     ? `${basePreviewSrc}|user:${Number(userId || 0)}|public:${
         build.isPublic ? 1 : 0
-      }`
+      }|signed:${requireSignedAccess ? 1 : 0}`
     : null;
   const canUseBasePreviewSrc = Boolean(
-    enabled && basePreviewSrc && build.isPublic
+    enabled && basePreviewSrc && build.isPublic && !requireSignedAccess
   );
   const needsSignedPreviewSrc = Boolean(
-    enabled && basePreviewSrc && !build.isPublic && userId
+    enabled &&
+    basePreviewSrc &&
+    (!build.isPublic || requireSignedAccess) &&
+    userId
   );
   const runtimePreviewRefreshLeadMs = 25 * 1000;
   const [runtimePreviewRefreshNonce, setRuntimePreviewRefreshNonce] =

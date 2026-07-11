@@ -32,6 +32,7 @@ const initialBuildState: BuildState = {
   buildRunRequestMap: {},
   buildWorkspaces: {},
   buildWorkspaceUi: {},
+  forumInvalidationVersions: {},
   runtimeVerifyResults: {},
   buildStudio: createInitialBuildStudioState()
 };
@@ -76,12 +77,16 @@ function readLatestBuildRun(
 }
 
 export function BuildContextProvider({ children }: { children: ReactNode }) {
-  const [buildState, buildDispatch] = useReducer(BuildReducer, initialBuildState);
+  const [buildState, buildDispatch] = useReducer(
+    BuildReducer,
+    initialBuildState
+  );
   const latestBuildStateRef = useRef(initialBuildState);
   latestBuildStateRef.current = buildState;
   const actions = useMemo(() => BuildActions(buildDispatch), []);
   const getLatestBuildRun = useMemo(
-    () => (buildId: number) => readLatestBuildRun(latestBuildStateRef.current, buildId),
+    () => (buildId: number) =>
+      readLatestBuildRun(latestBuildStateRef.current, buildId),
     []
   );
   const getBuildRunIdentity = useMemo(
@@ -97,10 +102,14 @@ export function BuildContextProvider({ children }: { children: ReactNode }) {
       getLatestBuildRun,
       getBuildRunIdentity
     }),
-    [buildState, actions, getLatestBuildRun, getBuildRunIdentity]
+    // Context actions and getter helpers are stable for the provider lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [buildState]
   );
 
-  return <BuildContext.Provider value={value}>{children}</BuildContext.Provider>;
+  return (
+    <BuildContext.Provider value={value}>{children}</BuildContext.Provider>
+  );
 }
 
 export const useBuildContext = () => {

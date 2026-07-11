@@ -3,6 +3,7 @@ import {
   BuildActivitySubtab,
   BuildActivityTab,
   BuildAction,
+  BuildForumInvalidationActionPayload,
   BuildLiveRunActionPayload,
   BuildRuntimeVerifyResultPayload,
   BuildWorkspaceForumCacheActionPayload,
@@ -171,6 +172,14 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'CLEAR_BUILD_WORKSPACE_FORUM_CACHE',
         buildWorkspaceForumCache
+      });
+    },
+    onInvalidateBuildForum(
+      buildForumInvalidation: BuildForumInvalidationActionPayload
+    ) {
+      return dispatch({
+        type: 'INVALIDATE_BUILD_FORUM',
+        buildForumInvalidation
       });
     },
     onSetBuildStudioActiveTab(activeTab: BuildStudioTab) {

@@ -106,6 +106,12 @@ export default function CollaborationPanel({
 }: CollaborationPanelProps) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
+  const isContributionFork =
+    normalizeContributionStatus(build.contributionStatus) !== 'none';
+  const rootBuildId = isContributionFork
+    ? Number(build.contributionRootBuildId || 0)
+    : Number(build.id || 0);
+  const contributionBuildId = isContributionFork ? Number(build.id || 0) : 0;
   const updateBuildCollaboration = useAppContext(
     (v) => v.requestHelpers.updateBuildCollaboration
   );
@@ -170,14 +176,15 @@ export default function CollaborationPanel({
     (v) => v.requestHelpers.likeBuildContributionForumReply
   );
   const forumViewerKey = getBuildForumViewerKey(userId);
-  const buildWorkspaceForumCache = useBuildContext(
-    (v) => {
-      const forumCache =
-        v.state.buildWorkspaceUi[String(build.id)]?.forumCache || null;
-      return isBuildForumCacheForViewer(forumCache, forumViewerKey)
-        ? forumCache
-        : null;
-    }
+  const buildWorkspaceForumCache = useBuildContext((v) => {
+    const forumCache =
+      v.state.buildWorkspaceUi[String(build.id)]?.forumCache || null;
+    return isBuildForumCacheForViewer(forumCache, forumViewerKey)
+      ? forumCache
+      : null;
+  });
+  const forumInvalidationVersion = useBuildContext((v) =>
+    Number(v.state.forumInvalidationVersions[String(rootBuildId)] || 0)
   );
   const cacheBuildWorkspaceForumThreads = useBuildContext(
     (v) => v.actions.onSetBuildWorkspaceForumThreads
@@ -193,14 +200,9 @@ export default function CollaborationPanel({
   );
   const applyContributionInviteStatus = useContributionInviteStatusUpdater();
 
-  const isContributionFork =
-    normalizeContributionStatus(build.contributionStatus) !== 'none';
   const canModerateForum = isOwner && !isContributionFork;
-  const rootBuildId = isContributionFork
-    ? Number(build.contributionRootBuildId || 0)
-    : Number(build.id || 0);
-  const contributionBuildId = isContributionFork ? Number(build.id || 0) : 0;
-  const isRootOwner = Number(build.rootBuildUserId || 0) === Number(userId || 0);
+  const isRootOwner =
+    Number(build.rootBuildUserId || 0) === Number(userId || 0);
   const forumScopeKey = getBuildForumScopeKey({
     contributionBuildId,
     scope: !isContributionFork ? 'all' : 'branch'
@@ -258,8 +260,9 @@ export default function CollaborationPanel({
   const [conflictMarkerPaths, setConflictMarkerPaths] = useState<string[]>([]);
   const [requestActionError, setRequestActionError] = useState('');
   const [forumThreads, setForumThreads] = useState<BuildForumThread[]>([]);
-  const [selectedThread, setSelectedThread] =
-    useState<BuildForumThread | null>(null);
+  const [selectedThread, setSelectedThread] = useState<BuildForumThread | null>(
+    null
+  );
   const [threadReplies, setThreadReplies] = useState<BuildForumReply[]>([]);
   const forumThreadsRef = useRef<BuildForumThread[]>([]);
   const selectedThreadRef = useRef<BuildForumThread | null>(null);
@@ -287,6 +290,9 @@ export default function CollaborationPanel({
   const confirmedForumScopeIdentityRef = useRef('');
   const lastRefreshedForumScopeIdentityRef = useRef('');
   const lastRefreshedForumThreadIdentityRef = useRef('');
+  const lastHandledForumInvalidationVersionRef = useRef(
+    forumInvalidationVersion
+  );
   const forumScopeMutationVersionsRef = useRef<Record<string, number>>({});
   const forumThreadMutationVersionsRef = useRef<Record<string, number>>({});
   const lastSavedScrollTopRef = useRef(
@@ -404,7 +410,9 @@ export default function CollaborationPanel({
     const transferredBranchIds = Array.isArray(payload?.transferredBranchIds)
       ? payload.transferredBranchIds
           .map((branchId: any) => Number(branchId || 0))
-          .filter((branchId: number) => Number.isFinite(branchId) && branchId > 0)
+          .filter(
+            (branchId: number) => Number.isFinite(branchId) && branchId > 0
+          )
       : [];
     if (
       isRootOwner &&
@@ -565,6 +573,26 @@ export default function CollaborationPanel({
   ]);
 
   useEffect(() => {
+    if (
+      !canShowPanel ||
+      lastHandledForumInvalidationVersionRef.current ===
+        forumInvalidationVersion
+    ) {
+      return;
+    }
+    lastHandledForumInvalidationVersionRef.current = forumInvalidationVersion;
+    markForumScopeMutated();
+    refreshForumScopeFromServer({ force: true });
+    const selectedThreadId = Number(selectedThreadRef.current?.id || 0);
+    if (selectedThreadId > 0) {
+      markForumThreadMutated(selectedThreadId);
+      refreshForumThreadFromServer(selectedThreadId, { force: true });
+    }
+    // request helpers and context actions are stable; do not include them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canShowPanel, forumInvalidationVersion, forumScopeIdentity]);
+
+  useEffect(() => {
     if (!embedded) return;
     const scrollTop = normalizePanelScrollTop(initialScrollTopRef.current);
     const restoreKey = [
@@ -643,9 +671,7 @@ export default function CollaborationPanel({
     );
   }
 
-  function refreshForumScopeFromServer(
-    options: { force?: boolean } = {}
-  ) {
+  function refreshForumScopeFromServer(options: { force?: boolean } = {}) {
     if (
       !options.force &&
       lastRefreshedForumScopeIdentityRef.current === forumScopeIdentity
@@ -656,12 +682,16 @@ export default function CollaborationPanel({
     void reloadForumThreads(isContributionFork ? contributionBuildId : 0);
   }
 
-  function refreshForumThreadFromServer(threadId: number) {
+  function refreshForumThreadFromServer(
+    threadId: number,
+    options: { force?: boolean } = {}
+  ) {
     const threadRefreshIdentity = getBuildForumThreadRefreshIdentity({
       scopeIdentity: forumScopeIdentity,
       threadId
     });
     if (
+      !options.force &&
       lastRefreshedForumThreadIdentityRef.current === threadRefreshIdentity
     ) {
       return;
@@ -830,9 +860,7 @@ export default function CollaborationPanel({
                     {renderOwnerContributions(true)}
                   </>
                 ) : (
-                  <div className={splitClass}>
-                    {renderForum()}
-                  </div>
+                  <div className={splitClass}>{renderForum()}</div>
                 )}
               </>
             )}
@@ -1528,8 +1556,7 @@ export default function CollaborationPanel({
     if (!rootBuildId) return;
     const nextScopeKey = getBuildForumScopeKey({
       contributionBuildId: nextContributionBuildId || 0,
-      scope:
-        !isContributionFork && !nextContributionBuildId ? 'all' : 'branch'
+      scope: !isContributionFork && !nextContributionBuildId ? 'all' : 'branch'
     });
     const requestForumScopeIdentity = getBuildForumScopeIdentity({
       buildId: build.id,
@@ -1607,9 +1634,7 @@ export default function CollaborationPanel({
           'Failed to load team forum'
       );
     } finally {
-      if (
-        activeForumScopeIdentityRef.current === requestForumScopeIdentity
-      ) {
+      if (activeForumScopeIdentityRef.current === requestForumScopeIdentity) {
         setForumLoading(false);
       }
     }
