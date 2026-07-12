@@ -20,6 +20,54 @@ const BUILD_UNPUBLISHED_PUBLIC_TEXT =
 const BUILD_PRIVATE_BRANCH_TEXT =
   'Branches are only available to project team members. Log in with a team account or ask the project owner for access.';
 
+// The default-contribution-branch redirect is a one-time convenience per
+// session. Once the user has been in their branch workspace (or has already
+// been redirected once), explicit navigations to the main project — tab strip
+// clicks, back button, pasted URLs — must stay on main instead of bouncing
+// back to the branch.
+const CONTRIBUTION_BRANCH_AWARE_STORAGE_PREFIX =
+  'build-contribution-branch-aware:';
+
+function contributionBranchAwareStorageKey({
+  userId,
+  rootBuildId
+}: {
+  userId: number;
+  rootBuildId: number;
+}) {
+  return `${CONTRIBUTION_BRANCH_AWARE_STORAGE_PREFIX}${userId}:${rootBuildId}`;
+}
+
+function isSessionAwareOfContributionBranch(params: {
+  userId: number;
+  rootBuildId: number;
+}) {
+  try {
+    if (typeof window.sessionStorage === 'undefined') return false;
+    return Boolean(
+      window.sessionStorage.getItem(contributionBranchAwareStorageKey(params))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function markSessionAwareOfContributionBranch(params: {
+  userId: number;
+  rootBuildId: number;
+}) {
+  if (!params.userId || !params.rootBuildId) return;
+  try {
+    if (typeof window.sessionStorage === 'undefined') return;
+    window.sessionStorage.setItem(
+      contributionBranchAwareStorageKey(params),
+      '1'
+    );
+  } catch {
+    // ignore storage failures (private mode, quota)
+  }
+}
+
 export default function BuildEditorRoute() {
   const { buildId, branchNumber } = useParams();
   const location = useLocation();
@@ -184,9 +232,12 @@ export default function BuildEditorRoute() {
           return;
         }
         if (data?.build) {
+          const loadedContributionRootBuildId = Number(
+            data.build.contributionRootBuildId || 0
+          );
           if (
             !numericBranchNumber &&
-            Number(data.build.contributionRootBuildId || 0) > 0 &&
+            loadedContributionRootBuildId > 0 &&
             Number(data.build.contributionBranchNumber || 0) > 0
           ) {
             navigate(getBuildWorkspacePath(data.build), {
@@ -196,22 +247,39 @@ export default function BuildEditorRoute() {
             return;
           }
           const currentUserId = Number(userId) || 0;
+          if (
+            numericBranchNumber &&
+            loadedContributionRootBuildId > 0 &&
+            currentUserId > 0
+          ) {
+            markSessionAwareOfContributionBranch({
+              userId: currentUserId,
+              rootBuildId: loadedContributionRootBuildId
+            });
+          }
+          const mainBuildId = Number(data.build.id || numericBuildId);
           const shouldOpenDefaultContributionBranch =
             !numericBranchNumber &&
             !skipDefaultContributionBranchRedirect &&
             currentUserId > 0 &&
             Number(data.build.userId || 0) !== currentUserId &&
-            Number(data.build.contributionRootBuildId || 0) === 0 &&
+            loadedContributionRootBuildId === 0 &&
             Number(data.build.contributionBranchNumber || 0) === 0 &&
             Boolean(data.build.canOpenContributionWorkspace) &&
-            Boolean(data.build.hasActiveContributionInvite);
+            Boolean(data.build.hasActiveContributionInvite) &&
+            !isSessionAwareOfContributionBranch({
+              userId: currentUserId,
+              rootBuildId: mainBuildId
+            });
           if (shouldOpenDefaultContributionBranch) {
             const defaultBranchResult =
-              await ensureDefaultBuildContributionBranch(
-                Number(data.build.id || numericBuildId)
-              );
+              await ensureDefaultBuildContributionBranch(mainBuildId);
             if (cancelled) return;
             if (defaultBranchResult?.build) {
+              markSessionAwareOfContributionBranch({
+                userId: currentUserId,
+                rootBuildId: mainBuildId
+              });
               navigate(getBuildWorkspacePath(defaultBranchResult.build), {
                 replace: true,
                 state: location.state
