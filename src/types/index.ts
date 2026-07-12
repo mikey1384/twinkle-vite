@@ -40,7 +40,9 @@ export interface Card {
   level: number;
   owner: User;
   ownerId: number;
-  quality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
+  // '???' is the server-side sentinel for an unrevealed total mystery card
+  // whose quality stays hidden until the image reveal.
+  quality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary' | '???';
   style: string;
   timeStamp: number;
   word: string;

@@ -17,7 +17,7 @@ export default function NonOwnerMenu({
   myId,
   myOffer
 }: {
-  burnXP: number;
+  burnXP: number | string;
   xpNumberColor: string;
   owner: any;
   onSetWithdrawOfferModalShown: (v: boolean) => void;

@@ -2,9 +2,10 @@ import React from 'react';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { queueCanonicalAICardBurnTransition } from '~/helpers/aiCardBurnTransition';
 
 export default function UnlistedMenu({
   burnXP,
@@ -20,7 +21,7 @@ export default function UnlistedMenu({
   onSetOfferModalShown,
   onUserMenuShownChange
 }: {
-  burnXP: number;
+  burnXP: number | string;
   cardId: number;
   cardLevel: number;
   cardQuality: string;
@@ -44,6 +45,7 @@ export default function UnlistedMenu({
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const burnAICard = useAppContext((v) => v.requestHelpers.burnAICard);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
 
   return (
     <div
@@ -87,10 +89,15 @@ export default function UnlistedMenu({
   );
 
   async function handleBurn() {
-    const { newXp, newCoins } = await burnAICard(cardId);
+    const { card, newXp, newCoins } = await burnAICard(cardId);
     onSetUserState({
       userId,
       newState: { twinkleXP: newXp, twinkleCoins: newCoins }
+    });
+    queueCanonicalAICardBurnTransition({
+      cardId,
+      card,
+      onUpdateAICard
     });
     return Promise.resolve();
   }

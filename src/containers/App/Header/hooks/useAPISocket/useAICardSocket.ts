@@ -1,6 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { queueCanonicalAICardBurnTransition } from '~/helpers/aiCardBurnTransition';
+import {
+  getConfirmedAICardDirectTransferState,
+  getConfirmedAICardImageState,
+  getConfirmedAICardTransferState,
+  normalizeAICardId
+} from '~/helpers/aiCardCanonicalUpdates';
+import type { Card } from '~/types';
 
 export default function useAICardSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -15,6 +23,9 @@ export default function useAICardSocket() {
   );
   const onAddMyAICard = useChatContext((v) => v.actions.onAddMyAICard);
   const onAddListedAICard = useChatContext((v) => v.actions.onAddListedAICard);
+  const onApplyAICardDirectTransfer = useChatContext(
+    (v) => v.actions.onApplyAICardDirectTransfer
+  );
   const onAICardOfferWithdrawal = useChatContext(
     (v) => v.actions.onAICardOfferWithdrawal
   );
@@ -22,6 +33,7 @@ export default function useAICardSocket() {
     (v) => v.actions.onCancelTransaction
   );
   const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
+  const onListAICard = useChatContext((v) => v.actions.onListAICard);
   const onMakeOutgoingOffer = useChatContext(
     (v) => v.actions.onMakeOutgoingOffer
   );
@@ -31,6 +43,7 @@ export default function useAICardSocket() {
   const onRemoveListedAICard = useChatContext(
     (v) => v.actions.onRemoveListedAICard
   );
+  const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onUpdateCurrentTransactionId = useChatContext(
@@ -97,8 +110,7 @@ export default function useAICardSocket() {
     };
 
     function handleAICardImageStatus(status: any) {
-      const rawId = status?.cardId;
-      const cardId = typeof rawId === 'string' ? Number(rawId) : rawId;
+      const cardId = normalizeAICardId(status?.cardId);
       if (!cardId) return;
 
       const stage = status?.stage as
@@ -113,6 +125,14 @@ export default function useAICardSocket() {
         | 'uploading'
         | 'completed'
         | 'error';
+      const canonicalCard: Record<string, unknown> | undefined =
+        stage === 'completed' &&
+        normalizeAICardId(status?.card?.id) === cardId
+          ? status.card
+          : undefined;
+      const canonicalImageState = canonicalCard
+        ? getConfirmedAICardImageState(canonicalCard)
+        : undefined;
 
       const activeStages = new Set([
         'validating_style',
@@ -133,7 +153,12 @@ export default function useAICardSocket() {
 
       const hasPartial = !!status?.partialImageB64;
       const rawImageUrl: string | undefined = status?.imageUrl;
-      const rawImagePath: string | undefined = status?.imagePath;
+      const canonicalImagePath = canonicalImageState?.imagePath;
+      const rawImagePath: string | undefined =
+        status?.imagePath ||
+        (typeof canonicalImagePath === 'string'
+          ? canonicalImagePath
+          : undefined);
       const isDataUrl =
         typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:');
 
@@ -160,29 +185,32 @@ export default function useAICardSocket() {
         : rawImageUrl || '';
 
       const newState: Record<string, any> = {
+        ...(canonicalImageState || {}),
         imageGenerationStage: stage,
         imageGenerationInProgress: inProgress,
         isImageGenerating: inProgress
       };
 
       if (stage === 'completed') {
-        const finalImagePath = rawImagePath || (isDataUrl ? '' : rawImageUrl);
-        if (
-          finalImagePath &&
-          !finalImagePath.startsWith('data:') &&
-          !isGeneratingImagePath(finalImagePath)
-        ) {
-          newState.imagePath = normalizeToPath(finalImagePath);
+        if (canonicalCard) {
           newState.imageGenerationPreviewUrl = '';
-          // Commit the canonical engine only here, alongside the persisted image
-          // path. The server just wrote this engine to ai_cards, so it is real
-          // source-of-truth state — not a speculative in-flight value that a
-          // later generation failure could leave stale in the client.
-          if (typeof status?.engine === 'string' && status.engine) {
-            newState.engine = status.engine;
+        } else {
+          const finalImagePath = rawImagePath || (isDataUrl ? '' : rawImageUrl);
+          if (
+            finalImagePath &&
+            !finalImagePath.startsWith('data:') &&
+            !isGeneratingImagePath(finalImagePath)
+          ) {
+            newState.imagePath = normalizeToPath(finalImagePath);
+            newState.imageGenerationPreviewUrl = '';
+            // Backward compatibility for servers that predate the canonical
+            // completion payload. Commit only fields confirmed by that server.
+            if (typeof status?.engine === 'string' && status.engine) {
+              newState.engine = status.engine;
+            }
+          } else if (isDataUrl && rawImageUrl) {
+            newState.imageGenerationPreviewUrl = rawImageUrl;
           }
-        } else if (isDataUrl && rawImageUrl) {
-          newState.imageGenerationPreviewUrl = rawImageUrl;
         }
       } else if (previewUrl) {
         newState.imageGenerationPreviewUrl = previewUrl;
@@ -230,14 +258,18 @@ export default function useAICardSocket() {
       onRemoveListedAICard(card.id);
       onUpdateAICard({
         cardId: card.id,
-        newState: card
+        initialState: card,
+        newState: getConfirmedAICardTransferState(card)
       });
       onPostAICardFeed({
         feed,
         card
       });
       if (buyerId === currentUserId) {
-        onAddMyAICard(card);
+        onAddMyAICard({
+          id: card.id,
+          ...getConfirmedAICardTransferState(card)
+        });
       }
       if (sellerId === currentUserId) {
         onDelistAICard(card.id);
@@ -246,23 +278,55 @@ export default function useAICardSocket() {
       }
     }
 
-    async function handleAICardBurned(cardId: number) {
-      onUpdateAICard({ cardId, newState: { isBurning: true } });
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+    async function handleAICardBurned(
+      rawCardId: number | string,
+      burnedCard?: Card
+    ) {
+      const cardId = normalizeAICardId(rawCardId);
+      if (!cardId) return;
+      const confirmedBurnedCard =
+        normalizeAICardId(burnedCard?.id) === cardId
+          ? burnedCard
+          : undefined;
+      const canonicalCard = confirmedBurnedCard
+        ? confirmedBurnedCard
+        : await loadAICard(cardId)
+            .then((result: { card?: Card } | undefined) => result?.card)
+            .catch((error: unknown) => {
+              console.error(error);
+              return undefined;
+            });
+      if (
+        queueCanonicalAICardBurnTransition({
+          cardId,
+          card: canonicalCard,
+          onUpdateAICard
+        })
+      ) {
+        return;
+      }
+      // The event itself confirms the burn even if an older server omits the
+      // card and the compatibility refetch fails. Do not synthesize any other
+      // canonical card fields in that degraded path.
       onUpdateAICard({
         cardId,
-        newState: {
-          isBurned: true
-        }
+        newState: { isBurned: true, isBurning: false }
       });
     }
 
-    function handleAICardDelisted(cardId: number) {
+    function handleAICardDelisted(cardId: number, card?: any) {
       onRemoveListedAICard(cardId);
+      if (Number(card?.id) === Number(cardId)) {
+        onListAICard({ card });
+      } else {
+        onDelistAICard(cardId);
+      }
     }
 
     function handleAICardListed(card: any) {
-      if (card.ownerId !== userIdRef.current) {
+      if (card.ownerId === userIdRef.current) {
+        onListAICard({ card });
+      } else {
         onAddListedAICard(card);
       }
     }
@@ -321,7 +385,10 @@ export default function useAICardSocket() {
       const currentUserId = userIdRef.current;
       if (card.ownerId === currentUserId) {
         onWithdrawOutgoingOffer(offerId);
-        onAddMyAICard(card);
+        onAddMyAICard({
+          id: card.id,
+          ...getConfirmedAICardTransferState(card)
+        });
       }
       if (sellerId === currentUserId) {
         onDelistAICard(card.id);
@@ -330,7 +397,8 @@ export default function useAICardSocket() {
       onRemoveListedAICard(card.id);
       onUpdateAICard({
         cardId: card.id,
-        newState: card
+        initialState: card,
+        newState: getConfirmedAICardTransferState(card)
       });
       onPostAICardFeed({
         feed,
@@ -339,11 +407,13 @@ export default function useAICardSocket() {
     }
 
     function handleAssetsSent({
+      aiCardPayloadVersion,
       cards,
       coins,
       from,
       to
     }: {
+      aiCardPayloadVersion?: number;
       cards: any;
       coins: number;
       from: number;
@@ -364,16 +434,23 @@ export default function useAICardSocket() {
         });
       }
       for (const card of cards) {
-        if (from === currentUserId) {
-          onDelistAICard(card.id);
-          onRemoveMyAICard(card.id);
-        }
-        if (to === currentUserId) {
-          onAddMyAICard(card);
-        }
-        onUpdateAICard({
-          cardId: card.id,
-          newState: { id: card.id, ownerId: to }
+        const cardId = normalizeAICardId(card?.id);
+        if (!cardId) continue;
+        const confirmedTransferState =
+          getConfirmedAICardDirectTransferState({
+            aiCardPayloadVersion,
+            card,
+            ownerId: to
+          });
+        const confirmedCard = {
+          ...card,
+          ...confirmedTransferState,
+          id: cardId
+        };
+        onApplyAICardDirectTransfer({
+          card: confirmedCard,
+          newState: confirmedTransferState,
+          userId: currentUserId
         });
       }
     }

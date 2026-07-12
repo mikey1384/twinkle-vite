@@ -44,12 +44,14 @@ export function useChessMove({
   attemptId,
   onSetTimeLeft,
   onSetPhase,
-  phase
+  phase,
+  boardEpochRef
 }: {
   attemptId: number | null;
   onSetTimeLeft: (v: any) => void;
   onSetPhase: (phase: PuzzlePhase) => void;
   phase: PuzzlePhase;
+  boardEpochRef: React.RefObject<number>;
 }) {
   const phaseRef = useRef<PuzzlePhase | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -168,11 +170,16 @@ export function useChessMove({
     }: MakeEngineMoveParams) => {
       if (!chessInstance) return;
 
-      const move = chessInstance.move({
-        from: moveUci.slice(0, 2),
-        to: moveUci.slice(2, 4),
-        promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
-      });
+      let move;
+      try {
+        move = chessInstance.move({
+          from: moveUci.slice(0, 2),
+          to: moveUci.slice(2, 4),
+          promotion: moveUci.length > 4 ? moveUci.slice(4) : undefined
+        });
+      } catch {
+        move = null;
+      }
 
       if (!move) {
         console.error('Invalid engine move:', moveUci);
@@ -367,8 +374,10 @@ export function useChessMove({
         solved: false
       });
 
+      const epochAtFail = boardEpochRef.current;
       if (inTimeAttack) {
         setTimeout(() => {
+          if (boardEpochRef.current !== epochAtFail) return;
           if (phaseRef.current !== 'SOLUTION') {
             resetToOriginalPosition();
             kickOffFirstEngineMove({ phaseAfter: 'WAIT_USER' });
@@ -376,6 +385,7 @@ export function useChessMove({
         }, 1000);
       } else {
         setTimeout(async () => {
+          if (boardEpochRef.current !== epochAtFail) return;
           let fenAfter = '';
           try {
             const temp = new Chess(fenBeforeMove);
@@ -388,7 +398,8 @@ export function useChessMove({
           } catch {}
           await runFailTransition({
             fen: fenAfter || fenBeforeMove,
-            executeEngineMove
+            executeEngineMove,
+            epochAtFail
           });
         }, 900);
       }
@@ -604,23 +615,25 @@ export function useChessMove({
   async function runFailTransition({
     fen,
     executeEngineMove,
-    scheduledPuzzleId
+    epochAtFail
   }: {
     fen: string;
     executeEngineMove: (uci: string) => void;
-    scheduledPuzzleId?: string;
+    epochAtFail: number;
   }) {
-    if (scheduledPuzzleId) {
-      return;
-    }
     await requestEngineReplyUnified({
       fen,
       evaluatePosition,
-      executeEngineMove,
+      executeEngineMove: (uci: string) => {
+        if (boardEpochRef.current !== epochAtFail) return;
+        executeEngineMove(uci);
+      },
       depth: ANALYSIS_DEPTH,
       timeoutMs: ANALYSIS_TIMEOUT
     });
+    if (boardEpochRef.current !== epochAtFail) return;
     setTimeout(() => {
+      if (boardEpochRef.current !== epochAtFail) return;
       onSetPhase('ANALYSIS');
     }, 1400);
   }

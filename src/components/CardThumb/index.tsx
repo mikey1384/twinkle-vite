@@ -6,6 +6,7 @@ import {
   qualityProps
 } from '~/constants/defaultValues';
 import { useAppContext, useChatContext } from '~/contexts';
+import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
 import Simple from './Simple';
 import Detailed from './Detailed';
 import { Card } from '~/types';
@@ -65,6 +66,14 @@ export default function CardThumb({
 
   const { displayedBurnXP, cardColor, borderColor } = useMemo(() => {
     const cardDetailObj = cardLevelHash[finalCard?.level];
+    if (isTotalMysteryQuality(finalCard?.quality)) {
+      return {
+        displayedBurnXP: '???',
+        cardColor:
+          Color[finalCard?.isBurned ? 'black' : cardDetailObj?.color]?.(),
+        borderColor: undefined
+      };
+    }
     const burnXP = returnCardBurnXP({
       cardLevel: finalCard?.level,
       cardQuality: finalCard?.quality

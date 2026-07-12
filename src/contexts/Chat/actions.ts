@@ -1,4 +1,5 @@
 import { Dispatch } from '~/types';
+import { getConfirmedAICardListingState } from '~/helpers/aiCardCanonicalUpdates';
 
 export default function ChatActions(dispatch: Dispatch) {
   return {
@@ -763,11 +764,11 @@ export default function ChatActions(dispatch: Dispatch) {
         cardId
       });
     },
-    onListAICard({ card, price }: { card: object; price: number }) {
+    onListAICard({ card }: { card: object }) {
       return dispatch({
         type: 'LIST_AI_CARD',
         card,
-        price
+        newState: getConfirmedAICardListingState(card)
       });
     },
     onLoadTopicMessages({
@@ -855,13 +856,30 @@ export default function ChatActions(dispatch: Dispatch) {
     onAddListedAICard(card: object) {
       return dispatch({
         type: 'ADD_LISTED_AI_CARD',
-        card
+        card,
+        newState: getConfirmedAICardListingState(card)
       });
     },
     onAddMyAICard(card: object) {
       return dispatch({
         type: 'ADD_MY_AI_CARD',
         card
+      });
+    },
+    onApplyAICardDirectTransfer({
+      card,
+      newState,
+      userId
+    }: {
+      card: object;
+      newState: object;
+      userId: number | string | null;
+    }) {
+      return dispatch({
+        type: 'APPLY_AI_CARD_DIRECT_TRANSFER',
+        card,
+        newState,
+        userId
       });
     },
     onRemoveListedAICard(cardId: number) {
@@ -2072,16 +2090,19 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onUpdateAICard({
       cardId,
+      initialState,
       newState,
       isInit
     }: {
       cardId: number;
+      initialState?: object;
       newState: object;
-      isInit: boolean;
+      isInit?: boolean;
     }) {
       return dispatch({
         type: 'UPDATE_AI_CARD',
         cardId,
+        initialState,
         newState,
         isInit
       });

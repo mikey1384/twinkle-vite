@@ -63,6 +63,17 @@ function mergeChannelSettings({
   return merged;
 }
 
+function updateCardIdMembership(
+  cardIds: number[],
+  cardId: number,
+  included: boolean
+) {
+  const remainingCardIds = cardIds.filter(
+    (existingCardId) => existingCardId !== cardId
+  );
+  return included ? [cardId, ...remainingCardIds] : remainingCardIds;
+}
+
 function getBuildContributionInviteMembershipKey(invite: any) {
   const buildId = Number(invite?.buildId || 0);
   const userId = Number(invite?.userId || 0);
@@ -598,13 +609,61 @@ export default function ChatReducer(
       };
     }
     case 'ADD_LISTED_AI_CARD': {
+      const existingCard = state.cardObj[action.card.id];
+      const isListed = Number(action.newState.isListed) === 1;
       return {
         ...state,
         cardObj: {
           ...state.cardObj,
-          [action.card.id]: action.card
+          [action.card.id]: existingCard
+            ? { ...existingCard, ...action.newState }
+            : action.card
         },
-        listedCardIds: [action.card.id].concat(state.listedCardIds)
+        listedCardIds: isListed
+          ? [action.card.id].concat(
+              state.listedCardIds.filter(
+                (cardId: number) => cardId !== action.card.id
+              )
+            )
+          : state.listedCardIds.filter(
+              (cardId: number) => cardId !== action.card.id
+            )
+      };
+    }
+    case 'APPLY_AI_CARD_DIRECT_TRANSFER': {
+      const cardId = Number(action.card?.id || 0);
+      if (!Number.isSafeInteger(cardId) || cardId <= 0) return state;
+      const existingCard = state.cardObj[cardId];
+      const nextCard = {
+        ...(existingCard || action.card),
+        ...action.newState,
+        id: cardId
+      };
+      const currentUserId = Number(action.userId || 0);
+      const currentUserOwnsCard =
+        currentUserId > 0 && Number(nextCard.ownerId) === currentUserId;
+      const cardIsListed = Number(nextCard.isListed) === 1;
+      return {
+        ...state,
+        cardObj: {
+          ...state.cardObj,
+          [cardId]: nextCard
+        },
+        myCardIds: updateCardIdMembership(
+          state.myCardIds,
+          cardId,
+          currentUserOwnsCard
+        ),
+        myListedCardIds: updateCardIdMembership(
+          state.myListedCardIds,
+          cardId,
+          currentUserOwnsCard && cardIsListed
+        ),
+        listedCardIds: updateCardIdMembership(
+          state.listedCardIds,
+          cardId,
+          !currentUserOwnsCard && cardIsListed
+        )
       };
     }
     case 'ADD_MY_AI_CARD': {
@@ -614,6 +673,7 @@ export default function ChatReducer(
           ? {
               ...state.cardObj,
               [action.card.id]: {
+                ...state.cardObj[action.card.id],
                 ...action.card,
                 isListed: false,
                 askPrice: null
@@ -2378,18 +2438,25 @@ export default function ChatReducer(
         )
       };
     case 'LIST_AI_CARD': {
+      const existingCard = state.cardObj[action.card.id];
+      const isListed = Number(action.newState.isListed) === 1;
       return {
         ...state,
         cardObj: {
           ...state.cardObj,
-          [action.card.id]: {
-            ...state.cardObj[action.card.id],
-            ...action.card,
-            isListed: true,
-            askPrice: action.price || 0
-          }
+          [action.card.id]: existingCard
+            ? { ...existingCard, ...action.newState }
+            : { ...action.card, ...action.newState }
         },
-        myListedCardIds: [action.card.id].concat(state.myListedCardIds)
+        myListedCardIds: isListed
+          ? [action.card.id].concat(
+              state.myListedCardIds.filter(
+                (cardId: number) => cardId !== action.card.id
+              )
+            )
+          : state.myListedCardIds.filter(
+              (cardId: number) => cardId !== action.card.id
+            )
       };
     }
     case 'DELIST_AI_CARD': {
@@ -2966,15 +3033,16 @@ export default function ChatReducer(
       };
     }
     case 'UPDATE_AI_CARD': {
+      const existingCard = state.cardObj[action.cardId];
       return {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...(action.isInit && state.cardObj[action.cardId]
+          ...(action.isInit && existingCard
             ? {}
             : {
                 [action.cardId]: {
-                  ...state.cardObj[action.cardId],
+                  ...(existingCard || action.initialState || {}),
                   ...action.newState
                 }
               })

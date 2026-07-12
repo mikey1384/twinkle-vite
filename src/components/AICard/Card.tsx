@@ -34,13 +34,13 @@ export default function Card({
 }) {
   const [tapped, setTapped] = useState(false);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
-  const cardObj = useChatContext((v) => v.state.cardObj);
+  const cardState = useChatContext((v) => v.state.cardObj[card.id]);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
 
   useEffect(() => {
-    if (!cardObj?.[card.id]?.word) {
+    if (!cardState?.word) {
       initCard();
     }
     async function initCard() {
@@ -54,24 +54,14 @@ export default function Card({
         console.error(error);
       }
     }
-  }, [card?.id, cardObj?.[card.id]?.word, cardObj?.[card.id]?.isBurned]);
+  }, [card?.id, cardState?.word, cardState?.isBurned]);
 
   const finalCard = useMemo(
     () => ({
       ...card,
-      ...(cardObj?.[card.id] || {})
+      ...cardState
     }),
-
-    [
-      card?.id,
-      cardObj?.[card.id]?.isBurning,
-      cardObj?.[card.id]?.isBurned,
-      cardObj?.[card.id]?.owner?.username,
-      cardObj?.[card.id]?.askPrice,
-      cardObj?.[card.id]?.imagePath,
-      cardObj?.[card.id]?.imageGenerationPreviewUrl,
-      cardObj?.[card.id]?.imageGenerationInProgress
-    ]
+    [card, cardState]
   );
 
   const burnXP = useMemo(

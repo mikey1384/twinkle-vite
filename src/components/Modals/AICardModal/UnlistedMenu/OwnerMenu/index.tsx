@@ -10,7 +10,7 @@ export default function OwnerMenu({
   twinkleCoins,
   xpNumberColor
 }: {
-  burnXP: number;
+  burnXP: number | string;
   cardLevel: number;
   cardQuality: string;
   onSetSellModalShown: (v: boolean) => void;

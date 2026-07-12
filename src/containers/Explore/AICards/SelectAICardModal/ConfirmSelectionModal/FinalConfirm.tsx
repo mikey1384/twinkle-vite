@@ -29,7 +29,6 @@ export default function ConfirmSelectionModal({
   onSetAICardModalCardId: (v: number) => void;
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const onListAICard = useChatContext((v) => v.actions.onListAICard);
   const userId = useKeyContext((v) => v.myState.userId);
   const { color: doneColor } = useRoleColor('done', {
     fallback: 'blue'
@@ -37,6 +36,14 @@ export default function ConfirmSelectionModal({
   const [confirming, setConfirming] = useState(false);
   const batchSellAICards = useAppContext(
     (v) => v.requestHelpers.batchSellAICards
+  );
+  const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
+  const onListAICard = useChatContext((v) => v.actions.onListAICard);
+  const onRemoveListedAICard = useChatContext(
+    (v) => v.actions.onRemoveListedAICard
+  );
+  const onRemoveMyAICard = useChatContext(
+    (v) => v.actions.onRemoveMyAICard
   );
 
   const totalCoinsReceivableFromSelling = useMemo(() => {
@@ -152,20 +159,27 @@ export default function ConfirmSelectionModal({
   async function handleConfirm() {
     setConfirming(true);
     try {
-      const { coins } = await batchSellAICards({
+      const { coins, successes } = await batchSellAICards({
         selectedCardIds,
         cardIdsToSellNow: higherBidCardIds || [],
         price
       });
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      for (const cardId of selectedCardIds) {
-        if (!higherBidCardIds.includes(cardId)) {
-          onListAICard({
-            card: { id: cardId },
-            price: price || 0
-          });
+      for (const success of Array.isArray(successes) ? successes : []) {
+        const cardId = Number(success?.cardId || 0);
+        if (!cardId) continue;
+        if (
+          success?.action === 'listed' &&
+          Number(success?.card?.id) === cardId
+        ) {
+          onListAICard({ card: success.card });
+        }
+        if (success?.action === 'sold') {
+          onDelistAICard(cardId);
+          onRemoveListedAICard(cardId);
+          onRemoveMyAICard(cardId);
         }
       }
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
       onConfirm();
     } catch (error) {
       console.error(error);

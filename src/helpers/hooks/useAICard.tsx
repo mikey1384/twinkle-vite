@@ -8,12 +8,26 @@ import {
 } from '~/constants/defaultValues';
 import holoUrl from './holo.webp';
 import sparklesUrl from './sparkles.gif';
+import {
+  isTotalMysteryQuality,
+  totalMysteryCycleKeyframes,
+  TOTAL_MYSTERY_CYCLE_SECONDS
+} from '~/components/AICard/totalMysteryGlow';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
 const color3 = '#69e4a5';
 const color4 = '#8ec5d6';
 const color5 = '#b98cce';
+
+function totalMysteryGlowShadow(color: string) {
+  return `0px 0px 7px ${color},
+    0px 0px 7px ${color},
+    0 0 7px ${color},
+    0 0 7px ${color},
+    0 0 7px 2px rgba(255, 255, 255, 0.3),
+    0 35px 28px -22px rgba(15, 23, 42, 0.35)`;
+}
 
 export default function useAICard(card: any) {
   const {
@@ -65,6 +79,17 @@ export default function useAICard(card: any) {
   const isSparky = memoizedCardQuality.includes('sparky') && !card.isBurned;
   const isPrism = memoizedCardQuality.includes('prism') && !card.isBurned;
   const qualityColor = memoizedQualityProps.color || cardColor;
+  // Unrevealed total mystery card: quality is hidden, so the glow crossfades
+  // through the four glowy quality colors instead of showing one.
+  const isTotalMystery = isTotalMysteryQuality(card.quality) && !card.isBurned;
+  const totalMysteryGlowFrames = isTotalMystery
+    ? totalMysteryCycleKeyframes(
+        (color) => `box-shadow: ${totalMysteryGlowShadow(color)};`
+      )
+    : '';
+  const totalMysteryGlowAnimation = isTotalMystery
+    ? `${totalMysteryGlowFrames} ${TOTAL_MYSTERY_CYCLE_SECONDS}s linear infinite`
+    : '';
 
   return {
     promptText,
@@ -104,6 +129,8 @@ export default function useAICard(card: any) {
         };
 
         background-color: ${cardColor};
+
+        ${isTotalMystery ? `animation: ${totalMysteryGlowAnimation};` : ''}
 
         transition:
           transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
@@ -306,7 +333,7 @@ export default function useAICard(card: any) {
 
         &.animated {
           transition: none;
-          animation: holoCard 12s ease 0s 1;
+          animation: holoCard 12s ease 0s 1${isTotalMystery ? `, ${totalMysteryGlowAnimation}` : ''};
           &:before {
             transition: none;
             animation: holoGradient 12s ease 0s 1;

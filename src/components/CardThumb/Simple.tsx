@@ -4,6 +4,10 @@ import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import {
+  isTotalMysteryQuality,
+  totalMysteryBorderClass
+} from '~/components/AICard/totalMysteryGlow';
 
 export default function Simple({
   card,
@@ -22,11 +26,13 @@ export default function Simple({
   style?: React.CSSProperties;
   xpNumberColor: string;
 }) {
+  const isTotalMystery = isTotalMysteryQuality(card.quality) && !card.isBurned;
+
   return isLoading ? (
     <Loading />
   ) : (
     <div
-      className={css`
+      className={`${css`
         width: 5rem;
         height: 7rem;
         border-radius: 3px;
@@ -35,17 +41,18 @@ export default function Simple({
           height: 5.5rem;
           border-radius: 2px;
         }
-      `}
+      `}${isTotalMystery ? ` ${totalMysteryBorderClass}` : ''}`}
       style={{
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         backgroundColor: cardColor,
         position: 'relative',
-        border:
-          cardProps[card.quality]?.includes('glowy') && !card.isBurned
-            ? `3px solid ${borderColor}`
-            : 'none',
+        border: isTotalMystery
+          ? '3px solid transparent'
+          : cardProps[card.quality]?.includes('glowy') && !card.isBurned
+          ? `3px solid ${borderColor}`
+          : 'none',
         ...style
       }}
     >

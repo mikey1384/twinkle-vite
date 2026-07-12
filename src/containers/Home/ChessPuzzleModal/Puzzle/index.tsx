@@ -117,11 +117,13 @@ export default function Puzzle({
     moveHistory: [] as any[],
     showingHint: false
   });
+  const boardEpochRef = useRef(0);
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove({
     attemptId,
     onSetTimeLeft: onSetTimeLeft,
     onSetPhase,
-    phase
+    phase,
+    boardEpochRef
   });
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
@@ -775,6 +777,12 @@ export default function Puzzle({
   function kickOffFirstEngineMove(options?: { phaseAfter?: PuzzlePhase }) {
     if (!puzzle) return;
     const phaseAfter = options?.phaseAfter ?? 'WAIT_USER';
+    if (phaseAfter !== 'SOLUTION') {
+      // New live board session: invalidate pending fail/solution
+      // transitions scheduled for the previous position.
+      boardEpochRef.current += 1;
+      solutionPlayingRef.current = false;
+    }
     if (animationTimeoutRef.current) {
       clearTimeout(animationTimeoutRef.current);
       animationTimeoutRef.current = null;
@@ -870,8 +878,10 @@ export default function Puzzle({
 
   async function handleShowSolution() {
     if (!puzzle) return;
+    const epochAtStart = boardEpochRef.current;
     onSetPhase('SOLUTION');
     await hookShowCompleteSolution();
+    if (boardEpochRef.current !== epochAtStart) return;
     onSetPhase('ANALYSIS');
   }
 
@@ -879,6 +889,7 @@ export default function Puzzle({
     if (timeIsAlreadyUpRef.current || phase === 'SOLUTION') return;
     if (!runIdRef.current) return;
     timeIsAlreadyUpRef.current = true;
+    const epochAtStart = boardEpochRef.current;
     onSetRunResult('FAIL');
     onSetPhase('SOLUTION');
     if (timeTrialTimerRef.current) {
@@ -890,7 +901,9 @@ export default function Puzzle({
         solved: false
       });
       await hookShowCompleteSolution();
-      onSetPhase('ANALYSIS');
+      if (boardEpochRef.current === epochAtStart) {
+        onSetPhase('ANALYSIS');
+      }
       try {
         await Promise.all([onRefreshStats(), refreshLevels()]);
       } catch {}

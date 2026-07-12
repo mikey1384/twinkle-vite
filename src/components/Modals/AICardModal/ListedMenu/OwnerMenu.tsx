@@ -14,7 +14,10 @@ export default function OwnerMenu({
 }) {
   const [delisting, setDelisting] = useState(false);
   const delistAICard = useAppContext((v) => v.requestHelpers.delistAICard);
-  const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
+  const onListAICard = useChatContext((v) => v.actions.onListAICard);
+  const onRemoveListedAICard = useChatContext(
+    (v) => v.actions.onRemoveListedAICard
+  );
 
   return (
     <div
@@ -64,9 +67,10 @@ export default function OwnerMenu({
   async function handleCancelListing() {
     try {
       setDelisting(true);
-      const success = await delistAICard(cardId);
-      if (success) {
-        onDelistAICard(cardId);
+      const result = await delistAICard(cardId);
+      if (result?.success && Number(result?.card?.id) === Number(cardId)) {
+        onRemoveListedAICard(cardId);
+        onListAICard({ card: result.card });
       }
     } catch (error) {
       console.error(error);

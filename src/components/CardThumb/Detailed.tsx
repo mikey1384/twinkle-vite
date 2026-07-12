@@ -5,6 +5,10 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { Card } from '~/types';
+import {
+  isTotalMysteryQuality,
+  totalMysteryBorderClass
+} from '~/components/AICard/totalMysteryGlow';
 
 export default function CardThumb({
   card,
@@ -25,6 +29,8 @@ export default function CardThumb({
   onClick?: (e: React.MouseEvent) => void;
   xpNumberColor: string;
 }) {
+  const isTotalMystery = isTotalMysteryQuality(card.quality) && !card.isBurned;
+
   return isLoading ? (
     <Loading />
   ) : (
@@ -43,7 +49,7 @@ export default function CardThumb({
         #{card.id}
       </div>
       <div
-        className={css`
+        className={`${css`
           width: 8rem;
           height: 12rem;
           border-radius: 3px;
@@ -52,16 +58,17 @@ export default function CardThumb({
             height: 9.5rem;
             border-radius: 2px;
           }
-        `}
+        `}${isTotalMystery ? ` ${totalMysteryBorderClass}` : ''}`}
         style={{
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           backgroundColor: cardColor,
-          border:
-            cardProps[card.quality]?.includes('glowy') && !card.isBurned
-              ? `3px solid ${borderColor}`
-              : 'none',
+          border: isTotalMystery
+            ? '3px solid transparent'
+            : cardProps[card.quality]?.includes('glowy') && !card.isBurned
+            ? `3px solid ${borderColor}`
+            : 'none',
           position: 'relative'
         }}
       >

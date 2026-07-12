@@ -1,4 +1,5 @@
 import { Card } from '~/types';
+import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
 import { userIdRef } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
 import { Theme } from '~/constants/css';
@@ -227,7 +228,11 @@ export function calculateTotalBurnValue(cards: Card[]) {
     if (card?.level && card?.quality) {
       totalBv += returnCardBurnXP({
         cardLevel: card.level,
-        cardQuality: card.quality
+        // Unrevealed total mystery cards keep their quality hidden; floor them
+        // to the lowest quality (matching the API's totalBv convention).
+        cardQuality: isTotalMysteryQuality(card.quality)
+          ? 'common'
+          : card.quality
       });
     }
   }

@@ -130,9 +130,6 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-subject-minimal {
       height: max(11rem, 110px);
     }
-    .home-feed-card__panel-preview--size-subject-locked {
-      height: max(15.5rem, 155px);
-    }
     .home-feed-card__panel-preview--size-subject-root {
       height: max(15.5rem, 155px);
     }

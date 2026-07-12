@@ -12,6 +12,10 @@ import {
 import useAICard from '~/helpers/hooks/useAICard';
 import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import {
+  isTotalMysteryQuality,
+  totalMysteryTextClass
+} from '~/components/AICard/totalMysteryGlow';
 import { Card } from '~/types';
 import { css } from '@emotion/css';
 
@@ -26,10 +30,12 @@ export function CompactThumb({
   const qualityColor = getQualityColor(card) || cardColor;
   const imageSrc = getCardImageSrc(card);
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
-  const burnXP = returnCardBurnXP({
-    cardLevel: Number(card.level || 1),
-    cardQuality: card.quality || 'common'
-  });
+  const burnXP = isTotalMysteryQuality(card.quality)
+    ? '???'
+    : returnCardBurnXP({
+        cardLevel: Number(card.level || 1),
+        cardQuality: card.quality || 'common'
+      });
   const ownerName = card.owner?.username;
   const content =
     imageSrc && !card.isBurned ? (
@@ -108,10 +114,12 @@ export default function CompactPreview({
   const qualityColor = getQualityColor(card);
   const ownerName = card.owner?.username;
   const price = Number(card.askPrice || 0);
-  const burnXP = returnCardBurnXP({
-    cardLevel: Number(card.level || 1),
-    cardQuality: card.quality || 'common'
-  });
+  const burnXP = isTotalMysteryQuality(card.quality)
+    ? '???'
+    : returnCardBurnXP({
+        cardLevel: Number(card.level || 1),
+        cardQuality: card.quality || 'common'
+      });
   const { promptText, engine } = useAICard(card) as {
     promptText?: string;
     engine?: string;
@@ -153,7 +161,14 @@ export default function CompactPreview({
         </strong>
         {card.quality ? (
           <div className="compact-ai-card-preview__quality-line">
-            <b style={qualityColor ? { color: qualityColor } : undefined}>
+            <b
+              className={
+                isTotalMysteryQuality(card.quality)
+                  ? totalMysteryTextClass
+                  : undefined
+              }
+              style={qualityColor ? { color: qualityColor } : undefined}
+            >
               {card.quality}
             </b>{' '}
             card

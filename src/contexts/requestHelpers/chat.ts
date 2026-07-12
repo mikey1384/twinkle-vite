@@ -76,12 +76,12 @@ export default function chatRequestHelpers({
     async burnAICard(cardId: number) {
       try {
         const {
-          data: { newXp, newCoins }
+          data: { card, newXp, newCoins }
         } = await request.delete(
           `${URL}/chat/aiCard/burn?cardId=${cardId}`,
           auth()
         );
-        return { newXp, newCoins };
+        return { card, newXp, newCoins };
       } catch (error) {
         return handleError(error);
       }
@@ -1110,27 +1110,23 @@ export default function chatRequestHelpers({
     },
     async listAICard({ cardId, price }: { cardId: number; price: number }) {
       try {
-        const {
-          data: { success }
-        } = await request.post(
+        const { data } = await request.post(
           `${URL}/ai-card/list`,
           { cardId, price },
           auth()
         );
-        return success;
+        return data;
       } catch (error) {
         return handleError(error);
       }
     },
     async delistAICard(cardId: number) {
       try {
-        const {
-          data: { success }
-        } = await request.delete(
+        const { data } = await request.delete(
           `${URL}/chat/aiCard/list?cardId=${cardId}`,
           auth()
         );
-        return success;
+        return data;
       } catch (error) {
         return handleError(error);
       }

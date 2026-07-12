@@ -5,11 +5,19 @@ const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const esbuild = require('esbuild');
 
+const TEST_CIEL_TWINKLE_ID = 434343;
+const TEST_ZERO_TWINKLE_ID = 424242;
 const sizingModule = loadTypeScriptModule(
   path.resolve(
     __dirname,
     '../src/containers/Home/Stories/FeedCard/helpers/sizing.ts'
-  )
+  ),
+  {
+    'import.meta.env': JSON.stringify({
+      VITE_CIEL_TWINKLE_ID: String(TEST_CIEL_TWINKLE_ID),
+      VITE_ZERO_TWINKLE_ID: String(TEST_ZERO_TWINKLE_ID)
+    })
+  }
 );
 const {
   getDailyReflectionAnswerPreviewMaxLines,
@@ -1992,9 +2000,17 @@ test('uses subject secret-message wording for locked subject previews', () => {
   );
 
   assert.equal(sizing.flags.secretHidden, true);
-  assert.equal(sizing.main.size, 'subject-locked');
-  assert.equal(sizing.card.bodyHeight, 'max(16.5rem, 165px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(15.5rem, 155px)');
+  assert.equal(sizing.main.size, 'subject-secret-fit');
+  assert.equal(sizing.card.bodyHeight, 'max(15.71rem, 157.1px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(15.71rem, 157.1px)');
+  assert.equal(
+    sizing.card.subjectSecretPanelHeight,
+    sizing.card.bodyHeight
+  );
+  assert.equal(
+    sizing.card.mobileSubjectSecretPanelHeight,
+    sizing.card.mobileBodyHeight
+  );
   assert.match(bodySource, /Submit your response to view the secret message/);
   assert.match(bodySource, /secretHidden && contentType !== 'subject'/);
   assert.match(bodySource, /home-feed-card__subject-secret-answer--locked/);
@@ -2002,6 +2018,49 @@ test('uses subject secret-message wording for locked subject previews', () => {
   assert.match(bodySource, /style=\{homeFeedSecretGuardBannerStyle\}/);
   assert.match(bodyStylesSource, /homeFeedSecretGuardBannerStyle/);
   assert.match(bodyStylesSource, /\.\.\.compactSecretCommentStyle/);
+});
+
+test('reserves blockquote margins in content-sized locked subjects', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'subject',
+      description: '> quote',
+      hasSecretAnswer: true,
+      secretAnswer: 'hidden answer',
+      title: 'Prompt',
+      uploader: { id: TEST_ZERO_TWINKLE_ID }
+    },
+    userId: 1
+  });
+
+  assert.equal(sizing.flags.secretHidden, true);
+  assert.equal(sizing.main.size, 'subject-secret-fit');
+  assert.equal(sizing.card.bodyHeight, 'max(29.48rem, 294.8px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(29.48rem, 294.8px)');
+  assert.equal(sizing.card.subjectSecretPanelHeight, sizing.card.bodyHeight);
+  assert.equal(
+    sizing.card.mobileSubjectSecretPanelHeight,
+    sizing.card.mobileBodyHeight
+  );
+});
+
+test('reserves one wrap-safety line for locked subject copy', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'subject',
+      description: 'Short description',
+      hasSecretAnswer: true,
+      secretAnswer: 'hidden answer',
+      title: 'Prompt',
+      uploader: { id: 2 }
+    },
+    userId: 1
+  });
+
+  assert.equal(sizing.flags.secretHidden, true);
+  assert.equal(sizing.main.size, 'subject-secret-fit');
+  assert.equal(sizing.card.bodyHeight, 'max(21.73rem, 217.3px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(21.73rem, 217.3px)');
 });
 
 test('hides target comments when a secret subject locks the feed card', () => {
@@ -2218,9 +2277,10 @@ test('uses fallback bucket for malformed content', () => {
   assert.equal(sizing.card.size, 'fallback-card');
 });
 
-function loadTypeScriptModule(entryPoint) {
+function loadTypeScriptModule(entryPoint, define = {}) {
   const output = esbuild.buildSync({
     bundle: true,
+    define,
     entryPoints: [entryPoint],
     format: 'cjs',
     platform: 'node',

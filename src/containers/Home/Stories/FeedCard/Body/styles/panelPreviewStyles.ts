@@ -151,9 +151,6 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-subject-minimal {
     height: max(12rem, 120px);
   }
-  .home-feed-card__panel-preview--size-subject-locked {
-    height: max(16.5rem, 165px);
-  }
   .home-feed-card__panel-preview--size-subject-root {
     height: max(15.5rem, 155px);
   }

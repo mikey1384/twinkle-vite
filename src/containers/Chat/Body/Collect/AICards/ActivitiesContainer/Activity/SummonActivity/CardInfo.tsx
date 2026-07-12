@@ -2,6 +2,10 @@ import React from 'react';
 import { qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import {
+  isTotalMysteryQuality,
+  totalMysteryTextClass
+} from '~/components/AICard/totalMysteryGlow';
 
 export default function CardInfo({
   quality,
@@ -29,7 +33,15 @@ export default function CardInfo({
         >
           summoned {quality === 'elite' ? 'an' : 'a'}{' '}
         </div>
-        <span style={{ ...qualityProps[quality] }}>{quality}</span> card
+        <span
+          className={
+            isTotalMysteryQuality(quality) ? totalMysteryTextClass : undefined
+          }
+          style={{ ...qualityProps[quality] }}
+        >
+          {quality}
+        </span>{' '}
+        card
       </div>
     </div>
   );

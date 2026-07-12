@@ -4,6 +4,11 @@ import {
   getInternalEmbedPreviewInfo,
   isAICardEmbedSrc
 } from '~/helpers/aiCardEmbedHelpers';
+import { hasStructuredPreviewMarkdown } from '~/helpers/stringHelpers';
+import {
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID
+} from '~/constants/defaultValues';
 
 export type FeedCardPreviewKind =
   | 'ai-story'
@@ -40,7 +45,6 @@ export type FeedCardSize =
   | 'standard'
   | 'subject-media'
   | 'subject-minimal'
-  | 'subject-locked'
   | 'subject-comment-embed'
   | 'subject-rich-embed'
   | 'subject-root'
@@ -178,7 +182,6 @@ const PANEL_HEIGHT_REM: Record<
   standard: { desktop: 20, mobile: 19 },
   'subject-media': { desktop: 21, mobile: 20 },
   'subject-minimal': { desktop: 12, mobile: 11 },
-  'subject-locked': { desktop: 16.5, mobile: 15.5 },
   'subject-comment-embed': { desktop: 29, mobile: 28 },
   'subject-rich-embed': { desktop: 34, mobile: 32 },
   'subject-root': { desktop: 15.5, mobile: 15.5 },
@@ -265,6 +268,12 @@ const SUBJECT_PREVIEW_LAYOUT_REM = {
   descriptionLineHeight: 1.9 * 1.36,
   effortHeight: 2.9,
   gap: 0.85,
+  // Rendered locked banner: the SecretComment pill's 4.2rem min-height plus
+  // the secret box's 0.85rem vertical padding × 2 and 1px borders (the
+  // --locked override keeps the base padding/border box, so the box's natural
+  // height exceeds its 4.9rem min-height). Budgeting it at secretMinHeight
+  // (5.4) instead silently eats the whole secret-fit buffer.
+  lockedSecretBannerHeight: 6.1,
   minDescriptionLines: 2,
   previewPaddingY: 1.6,
   secretLineHeight: 1.8 * 1.3,
@@ -889,15 +898,20 @@ function getFeedCardFrameSizing({
       )
     : '100%';
 
-  // No-description subject-secret panels are content-sized like the comment
-  // embed above; expose the exact panel height so the CSS var (not a fixed rem)
-  // drives it. '100%' for other sizes is an unused fallback.
+  // Subject-secret panels (shown secrets with no description, and locked
+  // subjects) are content-sized like the comment embed above; expose the exact
+  // panel height so the CSS var (not a fixed rem) drives it. '100%' for other
+  // sizes is an unused fallback.
   const isSubjectSecretFitPanel = mainSize === 'subject-secret-fit';
   const subjectSecretPanelHeight = isSubjectSecretFitPanel
-    ? toCssFixedHeight(estimateSubjectSecretBodyHeight(content, 'desktop'))
+    ? toCssFixedHeight(
+        estimateSubjectSecretBodyHeight(content, 'desktop', secretHidden)
+      )
     : '100%';
   const mobileSubjectSecretPanelHeight = isSubjectSecretFitPanel
-    ? toCssFixedHeight(estimateSubjectSecretBodyHeight(content, 'mobile'))
+    ? toCssFixedHeight(
+        estimateSubjectSecretBodyHeight(content, 'mobile', secretHidden)
+      )
     : '100%';
 
   return {
@@ -940,7 +954,7 @@ function getBodyHeight({
     mainSize === 'subject-comment-embed'
       ? estimateCommentEmbedBodyHeight(content, axis, secretHidden)
       : mainSize === 'subject-secret-fit'
-        ? estimateSubjectSecretBodyHeight(content, axis)
+        ? estimateSubjectSecretBodyHeight(content, axis, secretHidden)
         : PANEL_HEIGHT_REM[mainSize][axis];
   const targetHeight = target
     ? CARD_FRAME_REM[axis].targetGap + TARGET_HEIGHT_REM[target.size][axis]
@@ -983,19 +997,14 @@ function estimateCommentEmbedBodyHeight(
     String(content?.description || content?.content || '')
   ).trim();
   const hasDescriptionText = Boolean(descriptionText);
-  const descriptionLineCap = getSubjectNonTallDescriptionMaxLines(
-    'subject-comment-embed'
-  );
-  const descriptionLines = hasDescriptionText
-    ? Math.min(
-        descriptionLineCap,
-        estimatePreviewLineCount({
-          charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine[axis],
-          maxLines: descriptionLineCap,
-          value: descriptionText
-        })
-      )
-    : 0;
+  const descriptionHeight = estimatePreviewDescriptionHeight({
+    axis,
+    content,
+    descriptionLineHeight: layout.descriptionLineHeight,
+    descriptionText,
+    maxLines: getSubjectNonTallDescriptionMaxLines('subject-comment-embed'),
+    wrapSafetyLines: secretHidden ? 1 : 0
+  });
 
   // Body renders a secret answer/attachment or a locked-secret banner AFTER the
   // comment embed (Body/index.tsx). This size is selected before the normal
@@ -1018,20 +1027,21 @@ function estimateCommentEmbedBodyHeight(
     (hasSecretAnswerText || hasSecretAttachment);
   const showLockedSecretAnswer = Boolean(secretHidden && hasAnySecret);
   const showSecretPreview = showSecretAnswer || showLockedSecretAnswer;
-  const secretHeight = showSecretPreview
-    ? getSubjectSecretAnswerHeight({
-        hasSecretAnswerText: showSecretAnswer && hasSecretAnswerText,
-        hasSecretAttachment: showSecretAnswer && hasSecretAttachment,
-        secretMaxLines:
-          showSecretAnswer && hasSecretAnswerText
+  const secretHeight = showLockedSecretAnswer
+    ? layout.lockedSecretBannerHeight
+    : showSecretAnswer
+      ? getSubjectSecretAnswerHeight({
+          hasSecretAnswerText,
+          hasSecretAttachment,
+          secretMaxLines: hasSecretAnswerText
             ? getSubjectSecretAnswerMaxLines({
                 axis,
                 content,
                 hasSecretAnswerText
               })
             : 0
-      })
-    : 0;
+        })
+      : 0;
 
   const renderedChildrenCount = [
     hasEffort,
@@ -1051,14 +1061,13 @@ function estimateCommentEmbedBodyHeight(
     gapHeight +
     (hasEffort ? layout.effortHeight : 0) +
     (hasTitle
-      ? getSubjectTitleHeight({
+      ? getRenderedSubjectTitleHeight({
           axis,
           content,
-          size: 'subject-comment-embed',
-          title: content?.title
+          wrapSafetyLines: secretHidden ? 1 : 0
         })
       : 0) +
-    descriptionLines * layout.descriptionLineHeight +
+    descriptionHeight +
     embedHeight +
     secretHeight
   );
@@ -1123,7 +1132,6 @@ function getFeedCardFrameSize({
     mainSize === 'compact' ||
     mainSize === 'attachment-only' ||
     mainSize === 'secret' ||
-    mainSize === 'subject-locked' ||
     mainSize === 'subject-minimal' ||
     mainSize === 'subject-root' ||
     mainSize === 'subject-secret-compact'
@@ -1517,20 +1525,26 @@ const RENDERED_ROOT_COMPACT_TITLE_PADDING_REM = 2.48 * 0.08;
 
 function getRenderedSubjectTitleHeight({
   axis,
-  content
+  content,
+  wrapSafetyLines = 0
 }: {
   axis: FeedCardLayoutAxis;
   content: any;
+  wrapSafetyLines?: number;
 }) {
   const isRootCompact = hasAttachedRootContent(content);
   const layout = isRootCompact
     ? SUBJECT_ROOT_PREVIEW_LAYOUT_REM
     : SUBJECT_PREVIEW_LAYOUT_REM;
-  const titleLines = estimatePreviewLineCount({
+  const estimatedTitleLines = estimatePreviewLineCount({
     charsPerLine: layout.titleCharsPerLine[axis],
     maxLines: layout.titleMaxLines,
     value: content?.title
   });
+  const titleLines = Math.min(
+    layout.titleMaxLines,
+    estimatedTitleLines + wrapSafetyLines
+  );
 
   return isRootCompact
     ? titleLines * RENDERED_ROOT_COMPACT_TITLE_LINE_HEIGHT_REM +
@@ -1539,19 +1553,23 @@ function getRenderedSubjectTitleHeight({
         RENDERED_SUBJECT_TITLE_PADDING_REM;
 }
 
-// Subject with a secret answer but no description text or embed. Such cards
-// render only effort + title + secret, so rather than snap to a fixed tier —
-// which reserves description-sized height (empty gap below the secret box) or
-// clips a 2-line title / multi-line secret under the panel's overflow:hidden —
-// we content-size the panel. This mirrors the subject-comment-embed pattern:
-// compute the exact body height per axis from the shared layout model and
-// expose it as a CSS var. Root-attached subjects render the denser
-// `--root-compact` layout, so the layout model and title metrics switch on
-// that. Handles every secret variant: text-only, text + attachment (compact
-// --has-attachment side thumbnail), and attachment-only (tall box).
+// Subject whose copy column the layout model can measure exactly (or, for
+// structured-markdown descriptions, bound by the preview's own max-height —
+// see estimatePreviewDescriptionHeight): effort + title + (clamped)
+// description + the secret block. Rather than snap to a
+// fixed tier — which reserves unused height (empty gap below the secret box)
+// or clips a 2-line title / multi-line secret under the panel's
+// overflow:hidden — we content-size the panel. This mirrors the
+// subject-comment-embed pattern: compute the exact body height per axis from
+// the shared layout model and expose it as a CSS var. Root-attached subjects
+// render the denser `--root-compact` layout, so the layout model and title
+// metrics switch on that. Handles every secret variant: text-only, text +
+// attachment (compact --has-attachment side thumbnail), attachment-only (tall
+// box), and the hidden-secret locked banner (short fixed-height row).
 function estimateSubjectSecretBodyHeight(
   content: any,
-  axis: FeedCardLayoutAxis
+  axis: FeedCardLayoutAxis,
+  secretHidden: boolean
 ) {
   const layout = getSubjectPreviewLayout({
     content,
@@ -1559,31 +1577,77 @@ function estimateSubjectSecretBodyHeight(
   });
   const hasEffort = Number(content?.rewardLevel || 0) > 0;
   const hasTitle = Boolean(content?.title);
-  const hasSecretAnswerText = getPlainTextValueLength(content?.secretAnswer) > 0;
+  const descriptionText = removeMarkdownImageEmbeds(
+    String(content?.description || content?.content || '')
+  ).trim();
+  const hasDescriptionText = Boolean(descriptionText);
+  const descriptionHeight = estimatePreviewDescriptionHeight({
+    axis,
+    content,
+    descriptionLineHeight: layout.descriptionLineHeight,
+    descriptionText,
+    maxLines: getSubjectNonTallDescriptionMaxLines('subject-secret-fit'),
+    wrapSafetyLines: secretHidden ? 1 : 0
+  });
+  const secretAnswer = String(content?.secretAnswer || '');
+  const hasSecretAnswerText = Boolean(secretAnswer.trim());
   // Body renders the attachment surface only when filePath exists, so mirror
   // that here rather than keying off secretAttachment truthiness.
   const hasSecretAttachment = Boolean(content?.secretAttachment?.filePath);
-  const secretMaxLines = getSubjectSecretAnswerMaxLines({
-    axis,
-    content,
-    hasSecretAnswerText
-  });
-  // Rendered children in the with-secret-preview column: effort, title, secret.
-  const renderedChildrenCount = [hasEffort, hasTitle, true].filter(
-    Boolean
-  ).length;
+  // Mirror Body's showSecretPreview logic: a hidden secret renders only the
+  // short locked banner, so it must be budgeted at the rendered banner height
+  // (lockedSecretBannerHeight), not at the hidden text/attachment's size.
+  const hasAnySecret = Boolean(
+    hasSecretAnswerText ||
+    hasSecretAttachment ||
+    content?.hasSecretAnswer ||
+    content?.hasSecretAttachment
+  );
+  const secretAnswerDuplicatesDescription =
+    hasSecretAnswerText && secretAnswer.trim() === descriptionText;
+  const showSecretAnswer =
+    !secretHidden &&
+    !secretAnswerDuplicatesDescription &&
+    (hasSecretAnswerText || hasSecretAttachment);
+  const showLockedSecretAnswer = Boolean(secretHidden && hasAnySecret);
+  const showSecretPreview = showSecretAnswer || showLockedSecretAnswer;
+  // Rendered children in the with-secret-preview column: effort, title,
+  // description, secret.
+  const renderedChildrenCount = [
+    hasEffort,
+    hasTitle,
+    hasDescriptionText,
+    showSecretPreview
+  ].filter(Boolean).length;
   const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
 
   return (
     layout.previewPaddingY +
     gapHeight +
     (hasEffort ? layout.effortHeight : 0) +
-    (hasTitle ? getRenderedSubjectTitleHeight({ axis, content }) : 0) +
-    getSubjectSecretAnswerHeight({
-      hasSecretAnswerText,
-      hasSecretAttachment,
-      secretMaxLines
-    }) +
+    (hasTitle
+      ? getRenderedSubjectTitleHeight({
+          axis,
+          content,
+          wrapSafetyLines: secretHidden ? 1 : 0
+        })
+      : 0) +
+    descriptionHeight +
+    (showLockedSecretAnswer
+      ? layout.lockedSecretBannerHeight
+      : showSecretAnswer
+        ? getSubjectSecretAnswerHeight({
+            hasSecretAnswerText,
+            hasSecretAttachment,
+            secretMaxLines: hasSecretAnswerText
+              ? getSubjectSecretAnswerMaxLines({
+                  axis,
+                  content,
+                  hasSecretAnswerText
+                })
+              : 0
+          })
+        : 0) +
     SUBJECT_SECRET_FIT_BUFFER_REM
   );
 }
@@ -1627,11 +1691,27 @@ function getLockedSubjectPanelSize(content: any): FeedCardSize {
     return 'subject-tall';
   }
 
-  if (descriptionLength > 0) {
-    return 'subject-secret-preview';
-  }
+  // Only copy + the short locked banner render, and the layout model knows
+  // both heights exactly (structured-markdown descriptions are bounded by the
+  // preview clamp instead — estimatePreviewDescriptionHeight), so content-size
+  // the panel like other secret-fit cards. A fixed tier here reserves
+  // secret-answer-sized height that renders as an empty gap below the banner.
+  return 'subject-secret-fit';
+}
 
-  return 'subject-locked';
+export function isAIContentAuthor(source: any) {
+  const uploaderId = Number(
+    source?.uploader?.id ||
+      source?.user?.id ||
+      source?.userId ||
+      source?.uploaderId ||
+      0
+  );
+
+  return (
+    uploaderId === Number(ZERO_TWINKLE_ID) ||
+    uploaderId === Number(CIEL_TWINKLE_ID)
+  );
 }
 
 function hasAttachedRootContent(content: any) {
@@ -1846,6 +1926,138 @@ function estimatePreviewLineCount({
     }, 0);
 
   return Math.min(maxLines, lineCount);
+}
+
+// Structured blocks whose rendered height per source line the flat line model
+// cannot bound: headings render at larger font sizes, and code fences, tables,
+// and display math render blocks taller than a text line. Lists and paragraph
+// breaks only add inter-block margins (≤1em), which the per-boundary allowance
+// in estimatePreviewDescriptionHeight covers. A blockquote also has outer
+// margins when it is the only block, so it uses the clamp bound below.
+const UNBOUNDED_BLOCK_MARKDOWN_REGEXES = [
+  /(^|\n)\s{0,3}#{1,6}\s+\S/,
+  /(^|\n)\s{0,3}(?:```|~~~)/,
+  /(^|\n)\s{0,3}\|.+\|/,
+  /\\\[|\\\(|\$\$/
+];
+
+// Source lines that render as a real <ul>/<ol> item for human-authored
+// content: '*' bullets, numbered items, and '- [x]' task items. The Markdown
+// preprocessor (RichText/Markdown/helpers preprocessNonCode) escapes plain
+// '-'/'+' bullets and '>' quotes for non-AI content, so those render as flat
+// <br>-joined lines with no block margins.
+const HUMAN_REAL_LIST_LINE_REGEX =
+  /^\s{0,3}(?:\*|\d+[.)])\s+\S|^\s{0,3}-\s\[[x ]\]/;
+// AI-authored content skips that escaping, so every list marker renders as a
+// real list item. Keep blockquotes separate: unlike lists, RichText does not
+// reset their browser-default top and bottom margins.
+const AI_REAL_LIST_LINE_REGEX = /^\s{0,3}(?:[-*+]|\d+[.)])\s+\S/;
+const AI_REAL_BLOCKQUOTE_MARKDOWN_REGEX = /(^|\n)\s{0,3}>\s+\S/;
+
+// Rendered list items are indented — 3.5ch li margin plus ~2ch for ul's
+// list-style-position: inside marker — so their text wraps earlier than the
+// full-width chars-per-line model assumes; even a single item can gain a wrap
+// line the flat count misses. Marker lines are counted at this much narrower a
+// width. The 2-3 marker characters ('1. ', '* ') stay in the counted length
+// even though the renderer strips them, keeping the estimate on the reserving
+// side.
+const LIST_ITEM_INDENT_CH = 6;
+
+// Height (rem) to reserve for a preview description. Plain text renders via
+// RichText's line-clamp, so wrapped lines × line-height is exact. Structured
+// markdown switches RichText to its block-preserving preview — real
+// <ul>/<p>/heading blocks under a max-height of maxLines × line-height — whose
+// inter-block margins (li + li: 0.9em, p + p: 1em), blockquote outer margins,
+// and narrower block lines the flat line model can't see. For list-only
+// structures, count marker lines at the indented width (LIST_ITEM_INDENT_CH)
+// and pad one line-height per source-line boundary; reserve the full clamp
+// bound when block height is unrelated to source lines. Everything caps at the
+// clamp bound: it is the max-height RichText itself enforces, so reserving it
+// can leave spare room below the description but can never clip the blocks that
+// follow it.
+function estimatePreviewDescriptionHeight({
+  axis,
+  content,
+  descriptionLineHeight,
+  descriptionText,
+  maxLines,
+  wrapSafetyLines = 0
+}: {
+  axis: FeedCardLayoutAxis;
+  content: any;
+  descriptionLineHeight: number;
+  descriptionText: string;
+  maxLines: number;
+  wrapSafetyLines?: number;
+}) {
+  if (!descriptionText || maxLines <= 0) {
+    return 0;
+  }
+
+  const textLines = estimatePreviewLineCount({
+    charsPerLine: PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine[axis],
+    maxLines,
+    value: descriptionText
+  });
+  const plainHeight =
+    Math.min(maxLines, textLines + wrapSafetyLines) * descriptionLineHeight;
+
+  if (!hasStructuredPreviewMarkdown(descriptionText)) {
+    return plainHeight;
+  }
+
+  const clampBound = maxLines * descriptionLineHeight;
+  if (
+    UNBOUNDED_BLOCK_MARKDOWN_REGEXES.some((regex) =>
+      regex.test(descriptionText)
+    )
+  ) {
+    return clampBound;
+  }
+
+  const contentIsAIAuthored = isAIContentAuthor(content);
+  const rendersRealBlockquote =
+    contentIsAIAuthored &&
+    AI_REAL_BLOCKQUOTE_MARKDOWN_REGEX.test(descriptionText);
+  if (rendersRealBlockquote) {
+    // A single source line still renders inside <blockquote> with default 1em
+    // margins above and below. Source-line boundaries therefore cannot bound
+    // its height; use the same max-height that RichText itself enforces.
+    return clampBound;
+  }
+
+  const listLineRegex = contentIsAIAuthored
+    ? AI_REAL_LIST_LINE_REGEX
+    : HUMAN_REAL_LIST_LINE_REGEX;
+  const sourceLines = descriptionText.split(/\r?\n/);
+  const rendersRealListBlocks = sourceLines.some((line) =>
+    listLineRegex.test(line)
+  );
+  if (!rendersRealListBlocks) {
+    // Escaped '-'/'+' bullets and '>' quotes render as flat lines, and blank
+    // paragraph-break lines are already counted as full lines by the line
+    // model (over-covering the 1em p + p margin).
+    return plainHeight;
+  }
+
+  const charsPerLine = PLAIN_TEXT_PREVIEW_LAYOUT.charsPerLine[axis];
+  const indentedTextLines = sourceLines.reduce((count, rawLine) => {
+    const line = rawLine.replace(/\s+/g, ' ').trim();
+    const lineWidth = listLineRegex.test(rawLine)
+      ? charsPerLine - LIST_ITEM_INDENT_CH
+      : charsPerLine;
+    return count + Math.max(1, Math.ceil(line.length / lineWidth));
+  }, 0);
+  const blockBoundaries = Math.max(
+    0,
+    sourceLines.filter((line) => line.trim()).length - 1
+  );
+
+  return Math.min(
+    clampBound,
+    (indentedTextLines + blockBoundaries + wrapSafetyLines) *
+      descriptionLineHeight
+  );
 }
 
 function getSubjectDescriptionMaxLines(size: FeedCardSize) {

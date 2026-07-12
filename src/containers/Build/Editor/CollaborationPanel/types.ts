@@ -38,6 +38,10 @@ export interface BuildLike {
 
 export type BuildForumAuthorRole = 'user' | 'lumine';
 
+export interface BuildForumActivityPosition {
+  activitySeq: number;
+}
+
 export type BuildForumNewsEventType =
   | 'branchUpdates'
   | 'branchMerged'

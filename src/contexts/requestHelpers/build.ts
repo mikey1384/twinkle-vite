@@ -2268,6 +2268,35 @@ export default function buildRequestHelpers({
       }
     },
 
+    async markBuildContributionForumViewed({
+      buildId,
+      contributionBuildId,
+      forumActivityPosition,
+      scope
+    }: {
+      buildId: number;
+      contributionBuildId?: number | null;
+      forumActivityPosition: {
+        activitySeq: number;
+      };
+      scope?: 'all';
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/${buildId}/contribution-forum-viewed`,
+          {
+            contributionBuildId: contributionBuildId || null,
+            forumActivityPosition,
+            ...(scope === 'all' ? { scope: 'all' } : {})
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async createBuildContributionForumThread({
       buildId,
       contributionBuildId,

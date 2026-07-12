@@ -9,7 +9,7 @@ const urlRegex =
 const urlRegex2 =
   /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n)\]<* ])+)/i;
 
-export function addCommasToNumber(number: number) {
+export function addCommasToNumber(number: number | string) {
   if (!number) return '0';
 
   const parts = number.toString().split('.');
@@ -613,6 +613,21 @@ export function getRenderedTextForVocabQuestions(
     );
   }
   return text || '';
+}
+
+// Markdown that renders as real block elements (headings, lists, blockquotes,
+// code fences, tables, math) instead of inline text. RichText uses this to
+// pick its block-preserving preview over the line-clamp mode, and the feed
+// card layout model mirrors that decision when budgeting preview heights.
+export function hasStructuredPreviewMarkdown(text: string) {
+  return (
+    /(^|\n)\s{0,3}#{1,6}\s+\S/.test(text) ||
+    /(^|\n)\s{0,3}(?:[-*+]|\d+[.)])\s+\S/.test(text) ||
+    /(^|\n)\s{0,3}>\s+\S/.test(text) ||
+    /(^|\n)\s{0,3}(?:```|~~~)/.test(text) ||
+    /(^|\n)\s{0,3}\|.+\|/.test(text) ||
+    /\\\[|\\\(|\$\$/.test(text)
+  );
 }
 
 export function hashify(string: string): string {

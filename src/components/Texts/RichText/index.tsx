@@ -17,22 +17,12 @@ import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import { hasStructuredPreviewMarkdown } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
 const collapsedLineHeight = 1.7;
-
-function hasStructuredPreviewMarkdown(text: string) {
-  return (
-    /(^|\n)\s{0,3}#{1,6}\s+\S/.test(text) ||
-    /(^|\n)\s{0,3}(?:[-*+]|\d+[.)])\s+\S/.test(text) ||
-    /(^|\n)\s{0,3}>\s+\S/.test(text) ||
-    /(^|\n)\s{0,3}(?:```|~~~)/.test(text) ||
-    /(^|\n)\s{0,3}\|.+\|/.test(text) ||
-    /\\\[|\\\(|\$\$/.test(text)
-  );
-}
 
 type RichTextRootStyle = React.CSSProperties & {
   '--rich-text-line-height'?: number;

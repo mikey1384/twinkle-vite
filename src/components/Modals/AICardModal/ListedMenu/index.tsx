@@ -17,7 +17,7 @@ export default function ListedMenu({
   userIsOwner,
   askPrice
 }: {
-  burnXP: number;
+  burnXP: number | string;
   cardId: number;
   myId: number;
   myOffer: any;

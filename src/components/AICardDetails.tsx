@@ -1,6 +1,10 @@
 import React from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import { qualityProps } from '~/constants/defaultValues';
+import {
+  isTotalMysteryQuality,
+  totalMysteryTextClass
+} from '~/components/AICard/totalMysteryGlow';
 import SanitizedHTML from 'react-sanitized-html';
 import { Card } from '~/types';
 import { css } from '@emotion/css';
@@ -66,7 +70,17 @@ export default function AICardDetails({
             }
           `}
         >
-          <b style={qualityProps[card.quality]}>{card.quality}</b> card
+          <b
+            className={
+              isTotalMysteryQuality(card.quality)
+                ? totalMysteryTextClass
+                : undefined
+            }
+            style={qualityProps[card.quality]}
+          >
+            {card.quality}
+          </b>{' '}
+          card
         </div>
         <div
           className={css`

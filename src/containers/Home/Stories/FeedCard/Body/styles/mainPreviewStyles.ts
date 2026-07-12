@@ -94,11 +94,6 @@ export const mainPreviewStyles = `
     display: flex;
     justify-content: center;
   }
-  .home-feed-card__subject-copy--locked-secret
-    .home-feed-card__subject-secret-answer--locked {
-    margin-bottom: 0;
-    margin-top: 0;
-  }
   .home-feed-card__subject-text-stack > h3,
   .home-feed-card__subject-text-stack > .home-feed-card__compact-effort,
   .home-feed-card__subject-secret-answer {

@@ -158,7 +158,7 @@ export default function AICard({
           .card:hover:before { ${grad_pos} }
           .card:hover:after { ${sprk_pos} ${opc} }
         `;
-    if (cardProps[card.quality].includes('glossy')) {
+    if (cardProps[card.quality]?.includes('glossy')) {
       $style.html(style);
     }
     clearTimeout(timerRef.current);

@@ -144,13 +144,18 @@ export default function SellModal({
       return;
     }
     setPosting(true);
-    const success = await listAICard({ cardId: card.id, price: amount });
-    if (success) {
-      onListAICard({
-        card,
-        price: amount
-      });
-      onHide();
+    try {
+      const result = await listAICard({ cardId: card.id, price: amount });
+      if (result?.success && Number(result?.card?.id) === Number(card.id)) {
+        onListAICard({ card: result.card });
+        onHide();
+      }
+    } catch (error: any) {
+      setErrorMessage(
+        error?.response?.data?.error || error?.message || 'Listing failed'
+      );
+    } finally {
+      setPosting(false);
     }
   }
 }

@@ -374,6 +374,7 @@ export default function AICards({
         feed,
         card,
         isMysteryCard,
+        isTotalMysteryCard,
         aiUsagePolicy: nextAiUsagePolicy
       } = await generateAICard();
       if (nextAiUsagePolicy) {
@@ -390,11 +391,16 @@ export default function AICards({
         onSetUserState({ userId, newState: { twinkleCoins: coins } });
       }
       onSetAICardStatusMessage(
-        isMysteryCard ? 'Mystery Card Summoned' : 'Card Summoned'
+        isTotalMysteryCard
+          ? 'Total Mystery Card Summoned'
+          : isMysteryCard
+          ? 'Mystery Card Summoned'
+          : 'Card Summoned'
       );
       trackEvent('ai_card_summon', {
         card_quality: card?.quality,
-        is_mystery_card: !!isMysteryCard
+        is_mystery_card: !!isMysteryCard,
+        is_total_mystery_card: !!isTotalMysteryCard
       });
       onPostAICardFeed({
         feed,

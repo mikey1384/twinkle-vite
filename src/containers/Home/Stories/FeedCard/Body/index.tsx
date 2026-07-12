@@ -16,7 +16,6 @@ import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
-import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import {
   getAICardCollectionEmbedPreviewTitle,
   getInternalEmbedCommentLabel,
@@ -56,6 +55,7 @@ import {
   getSubjectPreviewLineLimits,
   hasDailyReflectionMetaBadges,
   getMarkdownImageEmbedPreview,
+  isAIContentAuthor,
   removeMarkdownImageEmbeds,
   type MarkdownImageEmbed
 } from '../helpers/sizing';
@@ -388,10 +388,6 @@ export default function Body({
         >
           <div
             className={`home-feed-card__subject-copy${
-              showLockedSecretAnswer
-                ? ' home-feed-card__subject-copy--locked-secret'
-                : ''
-            }${
               showSecretPreview
                 ? ' home-feed-card__subject-copy--with-secret-preview'
                 : ''
@@ -1704,21 +1700,6 @@ function getPreviewCommentFileIcon(fileType: string) {
   if (fileType === 'archive') return 'file-archive';
   if (fileType === 'word') return 'file-word';
   return 'file';
-}
-
-function isAIContentAuthor(source: any) {
-  const uploaderId = Number(
-    source?.uploader?.id ||
-      source?.user?.id ||
-      source?.userId ||
-      source?.uploaderId ||
-      0
-  );
-
-  return (
-    uploaderId === Number(ZERO_TWINKLE_ID) ||
-    uploaderId === Number(CIEL_TWINKLE_ID)
-  );
 }
 
 function getPreviewCommentLabel(comment: Comment, contentType: string) {

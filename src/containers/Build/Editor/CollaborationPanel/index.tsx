@@ -21,8 +21,10 @@ import {
   stringArraysEqual
 } from './helpers/collaborationConflicts';
 import {
+  compareBuildForumActivityPositions,
   normalizePanelForumThreadId,
-  normalizePanelScrollTop
+  normalizePanelScrollTop,
+  parseBuildForumActivityPosition
 } from './helpers/panelState';
 import {
   createRuntimeAssetTransferOperationId,
@@ -36,6 +38,7 @@ import type {
   BuildContributionFileDiff,
   BuildContributionStatus,
   BuildContributorInvite,
+  BuildForumActivityPosition,
   BuildForumReply,
   BuildForumThread,
   BuildLike,
@@ -153,6 +156,9 @@ export default function CollaborationPanel({
   );
   const loadBuildContributionForumThreads = useAppContext(
     (v) => v.requestHelpers.loadBuildContributionForumThreads
+  );
+  const markBuildContributionForumViewed = useAppContext(
+    (v) => v.requestHelpers.markBuildContributionForumViewed
   );
   const createBuildContributionForumThread = useAppContext(
     (v) => v.requestHelpers.createBuildContributionForumThread
@@ -309,6 +315,26 @@ export default function CollaborationPanel({
   const [forumError, setForumError] = useState('');
   const [panelExpanded, setPanelExpanded] = useState(false);
   const contentExpanded = embedded || panelExpanded;
+  const forumRendered = Boolean(
+    canShowPanel &&
+      contentExpanded &&
+      (embedded ||
+        !isOwner ||
+        isContributionFork ||
+        !selectedContribution)
+  );
+  const forumRenderedRef = useRef(forumRendered);
+  const panelMountedRef = useRef(false);
+  const previousForumRenderedRef = useRef(forumRendered);
+  const forumActivityPositionByScopeRef = useRef<
+    Record<string, BuildForumActivityPosition>
+  >({});
+  const lastMarkedForumPositionByScopeRef = useRef<
+    Record<string, BuildForumActivityPosition>
+  >({});
+  const forumMarkInFlightByScopeRef = useRef<
+    Record<string, BuildForumActivityPosition>
+  >({});
   const selectedPreviewFile = useMemo(
     () => changedFiles.find((file) => file.path === previewPath) || null,
     [changedFiles, previewPath]
@@ -358,6 +384,18 @@ export default function CollaborationPanel({
   activeForumScopeIdentityRef.current = forumScopeIdentity;
   const canInviteContributors = true;
   const contributorsCardShown = true;
+
+  useEffect(() => {
+    panelMountedRef.current = true;
+    return () => {
+      panelMountedRef.current = false;
+      forumRenderedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    forumRenderedRef.current = forumRendered;
+  }, [forumRendered]);
 
   useEffect(() => {
     setCollaborationMode(
@@ -568,6 +606,56 @@ export default function CollaborationPanel({
     forumScopeCached,
     forumScopeIdentity,
     initialForumThreadId,
+    isContributionFork,
+    rootBuildId
+  ]);
+
+  useEffect(() => {
+    const wasRendered = previousForumRenderedRef.current;
+    previousForumRenderedRef.current = forumRendered;
+    if (!forumRendered || wasRendered) return;
+    const position =
+      forumActivityPositionByScopeRef.current[forumScopeIdentity];
+    if (position) {
+      void acknowledgeForumScopeViewed({
+        contributionBuildId: isContributionFork ? contributionBuildId : 0,
+        position,
+        scope: isContributionFork ? undefined : 'all',
+        scopeIdentity: forumScopeIdentity
+      });
+      return;
+    }
+    refreshForumScopeFromServer({ force: true });
+    // request helpers and context actions are stable; do not include them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    contributionBuildId,
+    forumRendered,
+    forumScopeIdentity,
+    isContributionFork,
+    rootBuildId
+  ]);
+
+  useEffect(() => {
+    if (!forumRendered) return;
+    const position =
+      forumActivityPositionByScopeRef.current[forumScopeIdentity];
+    if (!position) return;
+    void acknowledgeForumScopeViewed({
+      contributionBuildId: isContributionFork ? contributionBuildId : 0,
+      position,
+      scope: isContributionFork ? undefined : 'all',
+      scopeIdentity: forumScopeIdentity
+    });
+    // Run after the Forum's thread state commits, so a newly hydrated position
+    // cannot be acknowledged before the Forum containing it is rendered.
+    // Request helpers and context actions are stable; do not include them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    contributionBuildId,
+    forumRendered,
+    forumScopeIdentity,
+    forumThreads,
     isContributionFork,
     rootBuildId
   ]);
@@ -1577,6 +1665,7 @@ export default function CollaborationPanel({
       });
       const nextThreads = Array.isArray(result?.threads) ? result.threads : [];
       if (
+        !panelMountedRef.current ||
         activeForumScopeIdentityRef.current !== requestForumScopeIdentity ||
         getForumScopeMutationVersion(requestForumScopeIdentity) !==
           requestScopeMutationVersion
@@ -1599,6 +1688,13 @@ export default function CollaborationPanel({
           (thread: BuildForumThread) => Number(thread.id) === persistedThreadId
         );
       replaceForumThreadsFromServer(nextThreads, nextScopeKey);
+      const forumActivityPosition = parseBuildForumActivityPosition(
+        result?.forumActivityPosition
+      );
+      if (forumActivityPosition) {
+        forumActivityPositionByScopeRef.current[requestForumScopeIdentity] =
+          forumActivityPosition;
+      }
       if (selectedThreadId > 0 && !selectedThreadStillExists) {
         clearSelectedForumThread();
         setReplyTarget(null);
@@ -1619,6 +1715,7 @@ export default function CollaborationPanel({
       }
     } catch (error: any) {
       if (
+        !panelMountedRef.current ||
         activeForumScopeIdentityRef.current !== requestForumScopeIdentity ||
         getForumScopeMutationVersion(requestForumScopeIdentity) !==
           requestScopeMutationVersion
@@ -1634,8 +1731,78 @@ export default function CollaborationPanel({
           'Failed to load team forum'
       );
     } finally {
-      if (activeForumScopeIdentityRef.current === requestForumScopeIdentity) {
+      if (
+        panelMountedRef.current &&
+        activeForumScopeIdentityRef.current === requestForumScopeIdentity
+      ) {
         setForumLoading(false);
+      }
+    }
+  }
+
+  async function acknowledgeForumScopeViewed({
+    contributionBuildId: viewedContributionBuildId,
+    position,
+    scope,
+    scopeIdentity
+  }: {
+    contributionBuildId: number;
+    position: BuildForumActivityPosition;
+    scope?: 'all';
+    scopeIdentity: string;
+  }) {
+    if (
+      !rootBuildId ||
+      !panelMountedRef.current ||
+      !forumRenderedRef.current
+    ) {
+      return;
+    }
+    const lastMarkedPosition =
+      lastMarkedForumPositionByScopeRef.current[scopeIdentity];
+    if (
+      lastMarkedPosition &&
+      compareBuildForumActivityPositions(lastMarkedPosition, position) >= 0
+    ) {
+      return;
+    }
+    const inFlightPosition =
+      forumMarkInFlightByScopeRef.current[scopeIdentity];
+    if (
+      inFlightPosition &&
+      compareBuildForumActivityPositions(inFlightPosition, position) >= 0
+    ) {
+      return;
+    }
+    forumMarkInFlightByScopeRef.current[scopeIdentity] = position;
+    try {
+      const result = await markBuildContributionForumViewed({
+        buildId: rootBuildId,
+        contributionBuildId: viewedContributionBuildId || null,
+        forumActivityPosition: position,
+        scope
+      });
+      const canonicalPosition = parseBuildForumActivityPosition(
+        result?.forumReadPosition
+      );
+      if (!canonicalPosition) return;
+      const currentMarkedPosition =
+        lastMarkedForumPositionByScopeRef.current[scopeIdentity];
+      if (
+        !currentMarkedPosition ||
+        compareBuildForumActivityPositions(
+          canonicalPosition,
+          currentMarkedPosition
+        ) > 0
+      ) {
+        lastMarkedForumPositionByScopeRef.current[scopeIdentity] =
+          canonicalPosition;
+      }
+    } catch (error) {
+      console.error('Failed to mark team forum as viewed:', error);
+    } finally {
+      if (forumMarkInFlightByScopeRef.current[scopeIdentity] === position) {
+        delete forumMarkInFlightByScopeRef.current[scopeIdentity];
       }
     }
   }

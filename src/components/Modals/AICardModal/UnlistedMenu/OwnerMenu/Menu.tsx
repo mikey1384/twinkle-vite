@@ -27,7 +27,7 @@ export default function Menu({
   twinkleCoins,
   xpNumberColor
 }: {
-  burnXP: number;
+  burnXP: number | string;
   cardLevel: number;
   cardQuality: string;
   onBurnConfirm: () => void;

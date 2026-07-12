@@ -19,6 +19,8 @@ import {
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { returnCardBurnXP } from '~/constants/defaultValues';
+import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
+import { getConfirmedAICardImageState } from '~/helpers/aiCardCanonicalUpdates';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '~/components/Icon';
@@ -142,7 +144,7 @@ export default function AICardModal({
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
-  const cardObj = useChatContext((v) => v.state.cardObj);
+  const card = useChatContext((v) => v.state.cardObj[cardId]);
   const [cardNotFound, setCardNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
   const [withdrawOfferModalShown, setWithdrawOfferModalShown] = useState(false);
@@ -163,7 +165,6 @@ export default function AICardModal({
   const isMountedRef = useRef(true);
   const cardIdRef = useRef(cardId);
   const offerReloadRequestIdRef = useRef(0);
-  const card = cardObj[cardId];
   const cardOwnerId = Number(card?.ownerId || card?.owner?.id || 0) || null;
   const userIsOwner = !!userId && cardOwnerId === userId;
   cardIdRef.current = cardId;
@@ -229,7 +230,10 @@ export default function AICardModal({
     }
   }, [userId]);
 
-  const burnXP = useMemo(() => {
+  const burnXP = useMemo<number | string>(() => {
+    // A hidden quality's burn value would give the quality away, so show ???
+    // until the card is revealed.
+    if (isTotalMysteryQuality(card?.quality)) return '???';
     return returnCardBurnXP({
       cardLevel: card?.level,
       cardQuality: card?.quality
@@ -804,7 +808,10 @@ export default function AICardModal({
         });
       }
       if (newState) {
-        onUpdateAICard({ cardId: card.id, newState });
+        onUpdateAICard({
+          cardId: card.id,
+          newState: getConfirmedAICardImageState(newState)
+        });
       }
     } catch (error: any) {
       console.error(error);
