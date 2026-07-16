@@ -219,6 +219,7 @@ import { AppContextProvider } from './contexts';
 import { ToastProvider } from './contexts/Toast';
 import { RootThemeProvider } from './theme/RootThemeProvider';
 import App from './containers/App';
+import { NavigationFeedbackProvider } from './containers/App/navigationFeedback';
 import { applyThemeVars, type ThemeName } from './theme';
 import { DEFAULT_PROFILE_THEME } from './constants/defaultValues';
 import { getStoredItem } from './helpers/userDataHelpers';
@@ -507,7 +508,9 @@ library.add(
           <AppContextProvider>
             <RootThemeProvider>
               <ToastProvider>
-                <App />
+                <NavigationFeedbackProvider>
+                  <App />
+                </NavigationFeedbackProvider>
               </ToastProvider>
             </RootThemeProvider>
           </AppContextProvider>

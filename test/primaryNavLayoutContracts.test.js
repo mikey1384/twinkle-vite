@@ -80,6 +80,128 @@ test('a new tab press cannot inherit stale long-press suppression', () => {
   );
 });
 
+test('tab navigation reports pending intent without claiming the route is active', () => {
+  const navSource = readSource(
+    'src/containers/App/Header/MainNavs/Nav.tsx'
+  );
+  const feedbackSource = readSource(
+    'src/containers/App/navigationFeedback.tsx'
+  );
+  const appSource = readSource('src/containers/App/index.tsx');
+  const mainSource = readSource('src/main.tsx');
+
+  assert.match(
+    feedbackSource,
+    /activeLocation: pendingNavigation \? readyLocation : currentLocation[\s\S]*?pendingTarget: pendingNavigation\?\.targetLocation/m
+  );
+  assert.match(
+    feedbackSource,
+    /requestAnimationFrame[\s\S]*?paint the urgent pending state[\s\S]*?navigate\(pendingNavigation\.target\)/m
+  );
+  assert.match(
+    feedbackSource,
+    /destinationCommitted \|\| redirectedDestinationCommitted/
+  );
+  assert.match(
+    navSource,
+    /if \(onNavigationStart\(to\)\) \{[\s\S]*?event\.preventDefault\(\);/m
+  );
+  assert.match(
+    navSource,
+    /<Icon[\s\S]*?icon=\{navigationLoading \? 'spinner'/m
+  );
+  assert.match(navSource, /aria-busy=\{navigationLoading \|\| undefined\}/);
+  assert.match(
+    navSource,
+    /const tabVariantClass = css`[\s\S]*?touch-action: manipulation;/m
+  );
+  assert.match(navSource, /> a\.pending:not\(\.active\)/);
+  assert.match(
+    navSource,
+    /navTargetIsActive\(\{[\s\S]*?pathname: activeLocation\.pathname[\s\S]*?search: activeLocation\.search/m
+  );
+  assert.match(
+    mainSource,
+    /<NavigationFeedbackProvider>[\s\S]*?<App \/>[\s\S]*?<\/NavigationFeedbackProvider>/m
+  );
+  assert.match(
+    appSource,
+    /<Suspense fallback=\{<Loading \/>\}>[\s\S]*?<NavigationRouteReadyObserver \/>[\s\S]*?<Routes>/m
+  );
+});
+
+test('fast tab navigation finishes before its loading spinner delay', () => {
+  const feedbackSource = readSource(
+    'src/containers/App/navigationFeedback.tsx'
+  );
+  const navSource = readSource(
+    'src/containers/App/Header/MainNavs/Nav.tsx'
+  );
+
+  assert.match(
+    feedbackSource,
+    /const NAVIGATION_LOADING_INDICATOR_DELAY_MS = 200;/
+  );
+  assert.match(
+    feedbackSource,
+    /setLoadingRequestId\(pendingNavigationId\)[\s\S]*?NAVIGATION_LOADING_INDICATOR_DELAY_MS[\s\S]*?clearTimeout\(loadingIndicatorTimer\)/m
+  );
+  assert.match(
+    feedbackSource,
+    /loadingTarget:[\s\S]*?pendingNavigation\?\.id === loadingRequestId[\s\S]*?pendingNavigation\.targetLocation/m
+  );
+  assert.match(
+    navSource,
+    /className=\{`\$\{navClassName\} \$\{navigationPending \? 'pending' : ''\}[\s\S]*?icon=\{navigationLoading \? 'spinner'/m
+  );
+});
+
+test('pending tab navigation dispatches each request id only once', () => {
+  const feedbackSource = readSource(
+    'src/containers/App/navigationFeedback.tsx'
+  );
+
+  assert.match(
+    feedbackSource,
+    /const dispatchedRequestIdRef = useRef<number \| null>\(null\)/
+  );
+  assert.match(
+    feedbackSource,
+    /dispatchedRequestIdRef\.current === pendingNavigation\.id[\s\S]*?dispatchedRequestIdRef\.current = pendingNavigation\.id[\s\S]*?dispatchState: 'dispatched'[\s\S]*?navigate\(pendingNavigation\.target\)/m
+  );
+});
+
+test('route readiness cannot consume a newer scheduled tab request', () => {
+  const feedbackSource = readSource(
+    'src/containers/App/navigationFeedback.tsx'
+  );
+
+  assert.match(
+    feedbackSource,
+    /if \(!current \|\| current\.dispatchState !== 'dispatched'\) return current;/
+  );
+  assert.match(
+    feedbackSource,
+    /current\.expectsLocationChange &&[\s\S]*?nextLocation\.key !== current\.sourceRouteKey/m
+  );
+  assert.match(feedbackSource, /sourceRouteKey: currentLocation\.key/);
+});
+
+test('returning to the dispatched tab navigation source cancels feedback', () => {
+  const feedbackSource = readSource(
+    'src/containers/App/navigationFeedback.tsx'
+  );
+
+  assert.match(
+    feedbackSource,
+    /const routerIsAtSource =[\s\S]*?currentLocation\.key === current\.sourceRouteKey[\s\S]*?currentLocationKey === current\.sourceLocation/m
+  );
+  assert.match(
+    feedbackSource,
+    /if \(!current\.sourceWasExited\)[\s\S]*?sourceWasExited: true[\s\S]*?return routerIsAtSource \? null : current;/m
+  );
+});
+
 test('label controls only appear when the rendered tab can show a label', () => {
   const mainNavSource = readSource(
     'src/containers/App/Header/MainNavs/index.tsx'

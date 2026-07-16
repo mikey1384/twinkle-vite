@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+const buildRuntimeSource = readFileSync(
+  new URL('../src/containers/Build/Runtime/index.tsx', import.meta.url),
+  'utf8'
+);
+
 test('Build runtime only uses client launch target state when no notification id is present', () => {
-  const source = readFileSync(
-    new URL('../src/containers/Build/Runtime/index.tsx', import.meta.url),
-    'utf8'
-  );
+  const source = buildRuntimeSource;
   assert.match(
     source,
     /const \[resolvedBuildLaunchTargetKey, setResolvedBuildLaunchTargetKey\] =\s*useState\(''\);/
@@ -100,6 +102,35 @@ test('Build runtime only uses client launch target state when no notification id
     source,
     /\{shouldRenderPreviewPanel \? \([\s\S]*<PreviewPanel[\s\S]*launchTarget=\{buildLaunchTarget\}[\s\S]*!buildLaunchTargetReady \? \([\s\S]*<Loading className=\{launchTargetLoadingOverlayClass\} \/>[\s\S]*\) : null[\s\S]*\) : \([\s\S]*<Loading className=\{launchTargetLoadingClass\} \/>[\s\S]*\)\}/
   );
+});
+
+test('theater restore chrome only captures pointer input on its button', () => {
+  const revealZoneStart = buildRuntimeSource.indexOf(
+    'const headerRevealZoneClass = css`'
+  );
+  const revealHandleStart = buildRuntimeSource.indexOf(
+    'const headerRevealHandleClass = css`'
+  );
+  const nextClassStart = buildRuntimeSource.indexOf(
+    'const ',
+    revealHandleStart + 1
+  );
+
+  assert.notEqual(revealZoneStart, -1, 'theater reveal zone must exist');
+  assert.notEqual(revealHandleStart, -1, 'theater reveal handle must exist');
+  assert.notEqual(nextClassStart, -1, 'reveal handle style boundary must exist');
+
+  const revealZoneSource = buildRuntimeSource.slice(
+    revealZoneStart,
+    revealHandleStart
+  );
+  const revealHandleSource = buildRuntimeSource.slice(
+    revealHandleStart,
+    nextClassStart
+  );
+
+  assert.match(revealZoneSource, /pointer-events: none;/);
+  assert.match(revealHandleSource, /pointer-events: auto;/);
 });
 
 test('Preview host bridge relies on init for the initial launch target', () => {

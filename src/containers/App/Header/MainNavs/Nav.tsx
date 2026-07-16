@@ -16,6 +16,11 @@ import {
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import { resetAppShellScroll } from '~/helpers/appShellScroll';
+import {
+  getNavigationLocationKey,
+  getNavigationTargetLocation,
+  useNavigationFeedback
+} from '~/containers/App/navigationFeedback';
 
 function getBuildAppIdFromPath(value: string) {
   const pathname = String(value || '').split(/[?#]/)[0];
@@ -129,6 +134,8 @@ function Nav({
     [alertRole]
   );
   const { pathname, search } = useLocation();
+  const { activeLocation, loadingTarget, pendingTarget, onNavigationStart } =
+    useNavigationFeedback();
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
   const profileState = useProfileContext((v) => v.state || {});
   const onReloadContent = useContentContext((v) => v.actions.onReloadContent);
@@ -172,6 +179,13 @@ function Nav({
     () => (alert ? alertHue : hoverBorder),
     [alert, alertHue, hoverBorder]
   );
+  const targetLocation = getNavigationTargetLocation(to);
+  const navigationPending =
+    pendingTarget ===
+    getNavigationLocationKey(targetLocation.pathname, targetLocation.search);
+  const navigationLoading =
+    loadingTarget ===
+    getNavigationLocationKey(targetLocation.pathname, targetLocation.search);
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
   );
@@ -201,14 +215,20 @@ function Nav({
     () =>
       navTargetIsActive({
         exactActive,
-        pathname,
+        pathname: activeLocation.pathname,
         profileUsername,
-        search,
+        search: activeLocation.search,
         to
       })
         ? 'active'
         : '',
-    [exactActive, pathname, profileUsername, search, to]
+    [
+      activeLocation.pathname,
+      activeLocation.search,
+      exactActive,
+      profileUsername,
+      to
+    ]
   );
 
   const tabVariantClass = css`
@@ -217,6 +237,7 @@ function Nav({
     align-items: flex-end;
     height: 100%;
     cursor: pointer;
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     a {
       text-decoration: none;
@@ -257,6 +278,14 @@ function Nav({
       border-bottom: 1px solid ${Color.white()};
       position: relative;
       z-index: 1;
+      > svg {
+        color: ${highlightColor}!important;
+      }
+    }
+    > a.pending:not(.active) {
+      color: ${highlightColor}!important;
+      background: ${Color.wellGray()};
+      border-color: ${Color.borderGray()};
       > svg {
         color: ${highlightColor}!important;
       }
@@ -334,6 +363,13 @@ function Nav({
             color: ${highlightColor}!important;
           }
         }
+        > a.pending:not(.active) {
+          color: ${highlightColor}!important;
+          border-bottom-color: ${hoverUnderlineColor};
+          > svg {
+            color: ${highlightColor}!important;
+          }
+        }
         > a:focus {
           outline: none;
         }
@@ -398,7 +434,7 @@ function Nav({
       style={style}
     >
       <Link
-        className={`${navClassName} ${
+        className={`${navClassName} ${navigationPending ? 'pending' : ''} ${
           isDailyTaskAlerted ? 'color-animate' : ''
         }`}
         style={{
@@ -409,8 +445,12 @@ function Nav({
         onClick={handleNavClick}
         to={to}
         draggable={variant === 'tab' ? false : undefined}
+        aria-busy={navigationLoading || undefined}
       >
-        <Icon icon={isHome ? 'home' : imgLabel} />
+        <Icon
+          icon={navigationLoading ? 'spinner' : isHome ? 'home' : imgLabel}
+          pulse={navigationLoading || undefined}
+        />
         {children ? (
           <span
             className="nav-label"
@@ -426,8 +466,16 @@ function Nav({
   function handleNavClick(event: React.MouseEvent<HTMLAnchorElement>) {
     if (!to) return;
     if (navClickShouldKeepCurrentScroll(event)) return;
-    if (navClickTargetsCurrentLocation(to, pathname, search)) {
+    const targetsCurrentLocation = navClickTargetsCurrentLocation(
+      to,
+      pathname,
+      search
+    );
+    if (targetsCurrentLocation) {
       resetAppShellScroll();
+    }
+    if (onNavigationStart(to)) {
+      event.preventDefault();
     }
     if (to.includes('/users/') && to === pathname) {
       const username = to.split('/users/')[1].split('/')[0];
@@ -473,28 +521,11 @@ function Nav({
     currentPathname: string,
     currentSearch: string
   ) {
-    const targetLocation = getNavTargetLocation(target);
+    const targetLocation = getNavigationTargetLocation(target);
     return (
       targetLocation.pathname === currentPathname &&
       targetLocation.search === currentSearch
     );
-  }
-
-  function getNavTargetLocation(target: string) {
-    try {
-      const url = new URL(target, window.location.origin);
-      return {
-        pathname: url.pathname,
-        search: url.search
-      };
-    } catch {
-      const [pathnameSearch] = target.split('#');
-      const [pathname, targetSearch = ''] = pathnameSearch.split('?');
-      return {
-        pathname,
-        search: targetSearch ? `?${targetSearch}` : ''
-      };
-    }
   }
 }
 

@@ -49,6 +49,7 @@ export default function ChatQuickAccess() {
             flex: 1;
             display: flex;
             align-items: center;
+            justify-content: safe center;
             gap: 0.7rem;
             overflow-x: auto;
             overflow-y: hidden;

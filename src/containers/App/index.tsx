@@ -74,6 +74,7 @@ import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import useOrientationReflow from './hooks/useOrientationReflow';
 import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
+import { NavigationRouteReadyObserver } from './navigationFeedback';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 // persists the build "super full screen" (nav-also-hidden) preference
@@ -752,6 +753,7 @@ export default function App() {
           `}`}
         >
           <Suspense fallback={<Loading />}>
+            <NavigationRouteReadyObserver />
             <Routes>
               <Route path="/users/:username/*" element={<Profile />} />
               <Route path="/ai-stories/:contentId" element={<ContentPage />} />

@@ -240,6 +240,8 @@ const headerRevealZoneClass = css`
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  /* Theater mode must leave the app's top edge interactive for game input. */
+  pointer-events: none;
 `;
 
 const headerRevealHandleClass = css`
@@ -256,6 +258,7 @@ const headerRevealHandleClass = css`
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
+  pointer-events: auto;
   box-shadow: 0 3px 8px rgba(15, 23, 42, 0.16);
   opacity: 0.45;
   transition:
