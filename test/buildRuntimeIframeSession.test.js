@@ -48,7 +48,7 @@ test('runtime iframe survives signed preview token refresh before bridge confirm
   );
 });
 
-test('browser visibility pauses previews without retiring their iframe', () => {
+test('browser visibility does not pause, mute, or retire previews', () => {
   const suspensionStart = previewPanelSource.indexOf(
     'const previewFrameSuspended ='
   );
@@ -63,7 +63,12 @@ test('browser visibility pauses previews without retiring their iframe', () => {
 
   assert.match(
     previewPanelSource,
-    /const previewHostEnabled = runtimeHostVisible !== false;\s*const previewHostVisible = previewHostEnabled && pageVisible;\s*const previewAudioMuted = audioMuted \|\| !pageVisible;/m
+    /const previewHostEnabled = runtimeHostVisible !== false;\s*const previewHostVisible = previewHostEnabled;\s*const previewAudioMuted = audioMuted;/m
+  );
+  assert.doesNotMatch(
+    previewPanelSource,
+    /const previewHostVisible = .*pageVisible|const previewAudioMuted = .*pageVisible/,
+    'browser visibility must not drive Twinkle-owned preview pause or mute state'
   );
   assert.match(suspensionSource, /!previewHostEnabled/);
   assert.doesNotMatch(suspensionSource, /!previewHostVisible/);
