@@ -1588,8 +1588,8 @@ export default function MainNavs({
   for (const key of availableMobileExtraTabKeys) {
     if (!mobileExtraTabKeys.includes(key)) mobileExtraTabKeys.push(key);
   }
-  // The tab switcher doubles as the mobile reorder UI for pinned tabs. Primary
-  // tabs are fixed and added tabs follow the automatic MRU order.
+  // The tab switcher only lists user-managed tabs. Primary tabs stay visible in
+  // the bottom nav but are omitted here because they cannot be modified.
   const switcherSections: SwitcherSection[] = useMemo(() => {
     const pinnedItems = visibleCustomTabs
       .filter((tab) => tab.pinned)
@@ -1598,8 +1598,7 @@ export default function MainNavs({
         to: tab.to,
         icon: tab.icon,
         label: tab.label,
-        pinned: true,
-        managed: true
+        pinned: true
       }));
     const unpinnedTabById = new Map(
       visibleCustomTabs
@@ -1615,27 +1614,16 @@ export default function MainNavs({
               to: tab.to,
               icon: tab.icon,
               label: tab.label,
-              pinned: false,
-              managed: true
+              pinned: false
             }
           ]
         : [];
     });
-    const defaultItems = defaultNavTabs.map((tab) => ({
-      key: tab.key,
-      to: tab.to,
-      icon: tab.imgLabel || 'circle',
-      label:
-        typeof tab.label === 'string' && tab.label.trim() ? tab.label : tab.key,
-      pinned: false,
-      managed: false
-    }));
     return [
       { kind: 'pinned', title: 'Pinned', items: pinnedItems },
-      { kind: 'default', title: 'Default', items: defaultItems },
       { kind: 'added', title: 'Added', items: addedItems }
     ];
-  }, [defaultNavTabs, extraNavTabs, visibleCustomTabs]);
+  }, [extraNavTabs, visibleCustomTabs]);
 
   return (
     <div

@@ -11,11 +11,9 @@ export interface SwitcherItem {
   icon: string;
   label: string;
   pinned: boolean;
-  // pinned/added tabs can be pinned-toggled + removed; defaults cannot
-  managed: boolean;
 }
 
-export type SwitcherKind = 'pinned' | 'default' | 'added';
+export type SwitcherKind = 'pinned' | 'added';
 
 export interface SwitcherSection {
   kind: SwitcherKind;
@@ -260,26 +258,22 @@ export default function MobileTabSwitcher({
                       <Icon className="tab-icon" icon={item.icon || 'clone'} />
                       <span className="label">{item.label}</span>
                     </Link>
-                    {item.managed ? (
-                      <>
-                        <button
-                          type="button"
-                          className={`action${item.pinned ? ' pinned' : ''}`}
-                          onClick={() => onTogglePin(item.key)}
-                          aria-label={item.pinned ? 'Unpin tab' : 'Pin tab'}
-                        >
-                          <Icon icon="thumbtack" />
-                        </button>
-                        <button
-                          type="button"
-                          className="action"
-                          onClick={() => onRemove(item.key)}
-                          aria-label="Close tab"
-                        >
-                          <Icon icon="trash-alt" />
-                        </button>
-                      </>
-                    ) : null}
+                    <button
+                      type="button"
+                      className={`action${item.pinned ? ' pinned' : ''}`}
+                      onClick={() => onTogglePin(item.key)}
+                      aria-label={item.pinned ? 'Unpin tab' : 'Pin tab'}
+                    >
+                      <Icon icon="thumbtack" />
+                    </button>
+                    <button
+                      type="button"
+                      className="action"
+                      onClick={() => onRemove(item.key)}
+                      aria-label="Close tab"
+                    >
+                      <Icon icon="trash-alt" />
+                    </button>
                   </li>
                 ))}
               </ul>

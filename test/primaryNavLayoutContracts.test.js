@@ -59,6 +59,11 @@ test('primary nav reordering and label controls are disabled', () => {
     mobileSwitcherSource,
     /section\.kind === 'pinned' && section\.items\.length > 1/
   );
+  assert.doesNotMatch(mainNavSource, /kind: 'default'/);
+  assert.doesNotMatch(
+    mobileSwitcherSource,
+    /SwitcherKind = [^;]*'default'/
+  );
 });
 
 test('a new tab press cannot inherit stale long-press suppression', () => {
