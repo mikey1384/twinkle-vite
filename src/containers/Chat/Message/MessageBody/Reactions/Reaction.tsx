@@ -223,7 +223,11 @@ function Reaction({
           <Icon
             icon="spinner"
             pulse
-            style={{ marginLeft: '0.4rem', fontSize: '1.1rem' }}
+            style={{
+              color: getReactionButtonColor(0.55),
+              marginLeft: '0.4rem',
+              fontSize: '1.1rem'
+            }}
           />
         ) : (
           <span
