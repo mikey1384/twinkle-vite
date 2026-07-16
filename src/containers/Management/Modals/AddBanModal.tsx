@@ -5,9 +5,9 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Table from '../Table';
 import RedTimes from '../RedTimes';
-import SearchInput from '~/components/Texts/SearchInput';
-import Loading from '~/components/Loading';
-import { useSearch } from '~/helpers/hooks';
+import UserSearchInput, {
+  type UserSearchResult
+} from '~/components/UserSearchInput';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { isEqual } from 'lodash';
 import { css } from '@emotion/css';
@@ -25,23 +25,15 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
     [doneRole]
   );
   const [submitting, setSubmitting] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [searchedUsers, setSearchedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState<Record<string, any>>({
     banned: null
   });
-  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const updateBanStatus = useAppContext(
     (v) => v.requestHelpers.updateBanStatus
   );
   const onUpdateBanStatus = useManagementContext(
     (v) => v.actions.onUpdateBanStatus
   );
-  const { handleSearch, searching } = useSearch({
-    onSearch: handleUserSearch,
-    onClear: () => setSearchedUsers([]),
-    onSetSearchText: setSearchText
-  });
   const [banStatus, setBanStatus] = useState<Record<string, boolean>>({
     ...EMPTY_BAN_STATUS
   });
@@ -67,23 +59,22 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
 
   return (
     <ErrorBoundary componentPath="Management/Modals/AddBanModal">
-      <Modal modalKey="AddBanModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <Modal
+        modalKey="AddBanModal"
+        isOpen
+        onClose={onHide}
+        hasHeader={false}
+        bodyPadding={0}
+      >
         <LegacyModalLayout>
           <header style={{ display: 'block' }}>Restrict Account</header>
           <main>
             <div style={{ position: 'relative', width: '100%' }}>
-              <SearchInput
+              <UserSearchInput
                 autoFocus
-                onChange={handleSearch}
                 onSelect={handleSelectUser}
                 placeholder={`${searchUsersLabel}...`}
-                renderItemLabel={(item) => (
-                  <span>
-                    {item.username} <small>{`(${item.realName})`}</small>
-                  </span>
-                )}
-                searchResults={searchedUsers}
-                value={searchText}
+                filterUser={(user) => level > (user.level || 0)}
               />
               {selectedUser && (
                 <div>
@@ -128,9 +119,6 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
                   </Table>
                 </div>
               )}
-              {searching && (
-                <Loading style={{ position: 'absolute', top: 0 }} />
-              )}
             </div>
           </main>
           <footer>
@@ -165,8 +153,11 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      await updateBanStatus({ userId: selectedUser.id, banStatus });
-      onUpdateBanStatus({ ...selectedUser, banned: banStatus });
+      const { user } = await updateBanStatus({
+        userId: selectedUser.id,
+        banStatus
+      });
+      onUpdateBanStatus(user);
       onHide();
     } catch (error) {
       console.error(error);
@@ -175,17 +166,7 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
     }
   }
 
-  function handleSelectUser(user: Record<string, any>) {
+  function handleSelectUser(user: UserSearchResult) {
     setSelectedUser(user);
-    setSearchedUsers([]);
-    setSearchText('');
-  }
-
-  async function handleUserSearch(text: string) {
-    const users = await searchUsers(text);
-    const result = users.filter((user: { level: number }) => {
-      return level > user.level;
-    });
-    setSearchedUsers(result);
   }
 }

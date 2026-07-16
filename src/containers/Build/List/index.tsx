@@ -32,6 +32,7 @@ import {
   normalizeBuildListBrowseMode,
   normalizeBuildListSearchQuery,
   normalizeBuildListTab,
+  parseBuildListTab,
   shouldExcludeMineFromPublicBrowse
 } from './helpers';
 import { BuildQuickAccessStrip } from './QuickAccess';
@@ -192,6 +193,9 @@ export default function BuildList({
   const persistedBuildStudioStateKey = getPersistedBuildStudioStateKey(
     persistedBuildStudioState
   );
+  const persistedActiveTab = parseBuildListTab(
+    persistedBuildStudioState?.activeTab
+  );
   // Search state is mirrored into the URL (?q=...&owner=...&sort=...) so a
   // copied link reproduces the exact search; read it back on mount.
   const [initialBuildSearch] = useState(() => {
@@ -310,6 +314,14 @@ export default function BuildList({
   const initialScrollAnchorKeyRef = useRef('');
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
   const [myBuildsLoading, setMyBuildsLoading] = useState(true);
+  const [confirmedMyBuildOwnership, setConfirmedMyBuildOwnership] = useState<{
+    userId: number;
+    buildCount: number;
+  } | null>(null);
+  const confirmedMyBuildCount =
+    confirmedMyBuildOwnership?.userId === normalizedUserId
+      ? confirmedMyBuildOwnership.buildCount
+      : null;
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseLoadingMore, setBrowseLoadingMore] = useState(false);
   const [editingBuild, setEditingBuild] =
@@ -438,11 +450,19 @@ export default function BuildList({
 
   useEffect(() => {
     if (hasCanonicalListUrl || !normalizedUserId || !sessionLoaded) return;
+    // An explicit saved tab means the user has used the Build tabs before and
+    // remains authoritative. Only first-time users need the owned-build check,
+    // and that decision waits for the canonical My Builds response.
+    if (!urlTab && !persistedActiveTab && confirmedMyBuildCount == null) {
+      return;
+    }
     // Resolve from the server-persisted preference, not context: on cold
     // loads this effect runs before the hydration effect's context update
     // is visible.
     const targetTab =
-      urlTab ?? normalizeBuildListTab(persistedBuildStudioState?.activeTab);
+      urlTab ??
+      persistedActiveTab ??
+      (Number(confirmedMyBuildCount) > 0 ? 'mine' : 'community');
     const targetBrowseMode = isPublicBrowseTab(targetTab)
       ? normalizeBuildListBrowseMode(
           persistedBuildStudioState?.browseModes?.[
@@ -463,6 +483,8 @@ export default function BuildList({
     sessionLoaded,
     urlTab,
     persistedBuildStudioStateKey,
+    persistedActiveTab,
+    confirmedMyBuildCount,
     location.pathname
   ]);
 
@@ -561,9 +583,12 @@ export default function BuildList({
   useEffect(() => {
     if (!normalizedUserId) {
       setMyBuildsLoading(false);
+      setConfirmedMyBuildOwnership(null);
       return;
     }
+    const currentUserId = normalizedUserId;
     let canceled = false;
+    setConfirmedMyBuildOwnership(null);
     setMyBuildsLoading(!myBuildsLoadedForCurrentUser);
     handleLoad();
 
@@ -571,9 +596,16 @@ export default function BuildList({
       try {
         const data = await loadMyBuilds();
         if (!canceled) {
+          const canonicalBuilds = Array.isArray(data?.builds)
+            ? data.builds
+            : [];
           onSetBuildStudioMyBuilds({
-            builds: data?.builds || [],
-            userId: normalizedUserId
+            builds: canonicalBuilds,
+            userId: currentUserId
+          });
+          setConfirmedMyBuildOwnership({
+            userId: currentUserId,
+            buildCount: canonicalBuilds.length
           });
         }
       } catch (error) {

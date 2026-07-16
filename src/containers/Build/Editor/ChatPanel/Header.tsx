@@ -586,7 +586,8 @@ function LumineModelSelectionSettings({
   const availableModes = getAvailableLumineModes(control.modelOptions);
   const selectedOption = getLumineModelOption(
     control.modelOptions,
-    control.value.model
+    control.value.model,
+    control.value.mode
   );
   const advancedModelOptions = getAdvancedLumineModelOptions({
     mode: control.value.mode,
@@ -696,7 +697,8 @@ function LumineModelSelectionSettings({
   function handleModelChange(value: string) {
     const nextOption = getLumineModelOption(
       control.modelOptions,
-      value as BuildLumineModel
+      value as BuildLumineModel,
+      control.value.mode
     );
     saveSelection(
       normalizeLumineModelSelection({

@@ -1,10 +1,5 @@
 export type PieceType =
-  | 'pawn'
-  | 'knight'
-  | 'bishop'
-  | 'rook'
-  | 'queen'
-  | 'king';
+  'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king';
 
 export type PieceColor = 'white' | 'black';
 
@@ -104,6 +99,7 @@ export interface ChessStats {
   totalXp: number;
   maxLevelUnlocked: number;
   currentLevelStreak: number;
+  promotionUnlocked?: boolean;
   lastPlayedAt: Date | null;
   lastPromotionAt: Date | null;
   promoCooldownUntil: string | null;
@@ -137,14 +133,54 @@ export interface ChessLevelsResponse {
   maxLevelUnlocked: number;
 }
 
-export interface TimeAttackStartResponse {
+export interface TimeAttackActiveStartResponse {
   runId: number;
   puzzle: LichessPuzzle;
+  puzzlesSolved: number;
+  deadlineAt: number;
+  serverNow: number;
+  remainingMs: number;
+  serverProcessingMs: number;
+  responseTransitMs?: number;
+  recovered: boolean;
+}
+
+export interface TimeAttackFinishedStartResponse {
+  runId: number;
+  puzzlesSolved: number;
+  finished: true;
+  success: boolean;
+  reason?: 'puzzle_unavailable' | 'failed';
+  retryable?: boolean;
+  recovered: true;
+  serverProcessingMs?: number;
+  responseTransitMs?: number;
+}
+
+export type TimeAttackStartResponse =
+  TimeAttackActiveStartResponse | TimeAttackFinishedStartResponse;
+
+export interface TimeAttackTimerResponse {
+  deadlineAt: number;
+  serverNow: number;
+  remainingMs: number;
+  serverProcessingMs: number;
+  responseTransitMs?: number;
+  accepted: boolean;
+  applied: boolean;
+  expired: boolean;
+  replayed: boolean;
 }
 
 export interface TimeAttackAttemptResponse {
   runId: number;
   nextPuzzle?: LichessPuzzle;
+  puzzlesSolved?: number;
+  deadlineAt?: number;
+  serverNow?: number;
+  remainingMs?: number;
+  serverProcessingMs?: number;
+  responseTransitMs?: number;
   finished?: true;
   success?: boolean;
   reason?: 'puzzle_unavailable' | string;

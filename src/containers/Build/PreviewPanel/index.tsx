@@ -192,7 +192,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       );
     const [previewLifecycleState, setPreviewLifecycleState] =
       useState<PreviewLifecycleState>(() =>
-        runtimeHostVisible === false || !pageVisible ? 'suspended' : 'active'
+        runtimeHostVisible === false ? 'suspended' : 'active'
       );
     const buildRef = useRef(build);
     const projectFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -761,11 +761,11 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         ? `artifact:${build.currentArtifactVersionId}:${previewProjectFilesRevision}`
         : `current:${build.id}:${Number(build.updatedAt) || 0}:${previewProjectFilesRevision}`;
     const previewHostEnabled = runtimeHostVisible !== false;
-    const previewHostVisible = previewHostEnabled && pageVisible;
-    const previewAudioMuted = audioMuted || !pageVisible;
-    // Browser visibility pauses the host bridge and mutes audio, but only an
-    // explicit host hide may retire the iframe. Ordinary tab switches must keep
-    // the app's in-memory preview state alive.
+    const previewHostVisible = previewHostEnabled;
+    const previewAudioMuted = audioMuted;
+    // Only Twinkle-owned visibility may pause, mute, or retire the iframe.
+    // Browser tab and desktop switches leave the active app running and audible;
+    // the browser remains responsible for native background throttling.
     const previewFrameSuspended =
       !preventFrameSuspend &&
       !previewHostEnabled &&
@@ -865,6 +865,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     useEffect(() => {
       if (!onCaptureReadyChange) return;
       const ready =
+        pageVisible &&
         previewHostVisible &&
         !previewFrameSuspended &&
         Boolean(previewSrc) &&
@@ -877,6 +878,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [
       activePreviewFrame,
       onCaptureReadyChange,
+      pageVisible,
       previewFrameSuspended,
       previewFrameReady,
       previewHostVisible,

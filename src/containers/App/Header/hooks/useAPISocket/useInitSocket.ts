@@ -17,10 +17,7 @@ import {
   recordChatBootstrapEvent,
   flushChatBootstrapHistory
 } from '~/helpers/chatBootstrapDebug';
-import {
-  getStoredItem,
-  getTwinkleDeviceId
-} from '~/helpers/userDataHelpers';
+import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import {
   useAppContext,
   useHomeContext,
@@ -31,6 +28,53 @@ import {
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
+}
+
+// The server can spend up to 16 seconds on its supported cluster presence
+// lookup and then continue the remaining writer hydration and room joins.
+// Keep the client acknowledgement deadline comfortably beyond that path.
+const SOCKET_BIND_ACK_TIMEOUT_MS = 30000;
+const SOCKET_BIND_RETRY_DELAY_MS = 1000;
+
+interface SocketBindPayload {
+  userId: number;
+  username?: string;
+  profilePicUrl?: string;
+  token?: string | null;
+  deviceId?: string;
+}
+
+interface SocketBindResult {
+  authError?: boolean;
+  bindError?: boolean;
+}
+
+function emitSocketBind({
+  payload,
+  onAcknowledged,
+  onFailure
+}: {
+  payload: SocketBindPayload;
+  onAcknowledged: (result?: SocketBindResult) => void;
+  onFailure: (error: Error) => void;
+}) {
+  socket
+    .timeout(SOCKET_BIND_ACK_TIMEOUT_MS)
+    .emit(
+      'bind_uid_to_socket',
+      payload,
+      (error: Error | null, result?: SocketBindResult) => {
+        if (error) {
+          onFailure(error);
+          return;
+        }
+        if (result?.bindError) {
+          onFailure(new Error('Socket bind failed'));
+          return;
+        }
+        onAcknowledged(result);
+      }
+    );
 }
 
 export default function useInitSocket({
@@ -73,9 +117,7 @@ export default function useInitSocket({
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
-  const onSetAICallEnding = useChatContext(
-    (v) => v.actions.onSetAICallEnding
-  );
+  const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
   );
@@ -83,7 +125,13 @@ export default function useInitSocket({
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
   );
+  const onFinishChatBootstrap = useChatContext(
+    (v) => v.actions.onFinishChatBootstrap
+  );
   const onInitChat = useChatContext((v) => v.actions.onInitChat);
+  const onStartChatBootstrap = useChatContext(
+    (v) => v.actions.onStartChatBootstrap
+  );
   const onSetFeedsOutdated = useHomeContext(
     (v) => v.actions.onSetFeedsOutdated
   );
@@ -134,6 +182,9 @@ export default function useInitSocket({
   const loadChatRetryTimerRef = useRef<number | null>(null);
   const loadChatRetryCountRef = useRef(0);
   const heartbeatTimerRef = useRef<number | null>(null);
+  const socketBindRetryTimerRef = useRef<number | null>(null);
+  const socketBindAttemptRef = useRef(0);
+  const bootstrapAwaitingBindUserIdRef = useRef<number | null>(userId || null);
   const userActionAckedRef = useRef(false);
   const userActionAttemptsRef = useRef(0);
   const actionRetryTimersRef = useRef<number[]>([]);
@@ -153,9 +204,11 @@ export default function useInitSocket({
   );
   const handleLoadChatRef = useRef<
     | (({
-        selectedChannelId
+        selectedChannelId,
+        fromWriter
       }: {
         selectedChannelId: number;
+        fromWriter?: boolean;
       }) => Promise<void>)
     | null
   >(null);
@@ -170,7 +223,30 @@ export default function useInitSocket({
   const profilePicUrlRef = useRef(profilePicUrl);
 
   useEffect(() => {
+    const previousUserId = userIdRef.current;
     userIdRef.current = userId;
+    if (previousUserId === userId) return;
+
+    // A bootstrap belongs to the account that started it. Retire that attempt
+    // before the autoload effect considers the replacement account; otherwise
+    // the old request can keep the shared in-flight gate closed and later mark
+    // the new account as loaded with a reducer-rejected snapshot.
+    const staleBootstrapId = activeBootstrapIdRef.current;
+    activeBootstrapIdRef.current = null;
+    isLoadingChatRef.current = false;
+    bootstrapStartedAtRef.current = 0;
+    lastFailedBootstrapIdRef.current = null;
+    loadChatRetryCountRef.current = 0;
+    autoLoadDecisionSignatureRef.current = '';
+    bootstrapAwaitingBindUserIdRef.current = userId || null;
+    if (loadChatRetryTimerRef.current) {
+      clearTimeout(loadChatRetryTimerRef.current);
+      loadChatRetryTimerRef.current = null;
+    }
+    if (staleBootstrapId) {
+      onFinishChatBootstrap(staleBootstrapId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
   useEffect(() => {
     usernameRef.current = username;
@@ -332,6 +408,8 @@ export default function useInitSocket({
   useEffect(() => {
     if (userId) return;
     clearSocketAuthReady();
+    socketBindAttemptRef.current += 1;
+    clearSocketBindRetryTimer();
     if (loadChatRetryTimerRef.current) {
       clearTimeout(loadChatRetryTimerRef.current);
       loadChatRetryTimerRef.current = null;
@@ -448,6 +526,8 @@ export default function useInitSocket({
         clearTimeout(loadChatRetryTimerRef.current);
         loadChatRetryTimerRef.current = null;
       }
+      socketBindAttemptRef.current += 1;
+      clearSocketBindRetryTimer();
       handleLoadChatRef.current = null;
     };
 
@@ -479,12 +559,20 @@ export default function useInitSocket({
       onCheckVersion(data);
     }
 
-    async function handleGetNumberOfUnreadMessages() {
-      const numUnreads = await getNumberOfUnreadMessages();
+    async function handleGetNumberOfUnreadMessages({
+      fromWriter = false,
+      expectedUserId
+    }: {
+      fromWriter?: boolean;
+      expectedUserId?: number;
+    } = {}) {
+      const numUnreads = await getNumberOfUnreadMessages({ fromWriter });
+      if (expectedUserId && userIdRef.current !== expectedUserId) return;
       onGetNumberOfUnreadMessages(numUnreads);
     }
 
     function handleConnect() {
+      clearSocketBindRetryTimer();
       emitAdminTelemetry({
         message: 'connected to socket'
       });
@@ -515,49 +603,36 @@ export default function useInitSocket({
         }
         loadChatRetryCountRef.current = 0;
 
-        const token = getStoredItem('token');
-        const deviceId = getTwinkleDeviceId();
-        socket.emit(
-          'bind_uid_to_socket',
-          {
-            userId: userIdRef.current,
-            username: usernameRef.current,
-            profilePicUrl: profilePicUrlRef.current,
-            token,
-            deviceId
-          },
-          (result?: { authError?: boolean }) => {
-            if (result?.authError) {
-              window.location.reload();
-              return;
-            }
-            dispatchSocketAuthReady(userIdRef.current);
-            socket.emit('enter_my_notification_channel', userIdRef.current);
-            socket.emit('change_busy_status', !usingChatRef.current);
-            userActionAckedRef.current = false;
-            userActionAttemptsRef.current = 0;
-            handleStartUserActionCapture();
+        const bindingUserId = userIdRef.current;
+        bindSocketToUser({
+          bindingUserId,
+          onBound() {
             void handleCheckVersion();
             void checkFeedsOutdated({
               bypassThrottle: true,
               withFallback: true
             });
+            // The bind acknowledgement is the synchronization barrier: the
+            // server has joined every canonical chat room before replying. A
+            // reconnect resync must start after that barrier so activity before
+            // it comes from the writer snapshot and activity after it arrives
+            // through the socket.
+            if (!shouldSkipReload) {
+              recordChatBootstrapEvent('chat-bootstrap-triggered-by-connect', {
+                userId: bindingUserId,
+                selectedChannelId: selectedChannelIdRef.current,
+                currentPathId: currentPathIdRef.current,
+                latestPathId: latestPathIdRef.current,
+                socketConnected: socket.connected,
+                fromWriter: shouldResyncLoadedChat
+              });
+              void handleLoadChat({
+                selectedChannelId: selectedChannelIdRef.current,
+                fromWriter: shouldResyncLoadedChat
+              });
+            }
           }
-        );
-
-        if (!shouldSkipReload) {
-          recordChatBootstrapEvent('chat-bootstrap-triggered-by-connect', {
-            userId: userIdRef.current,
-            selectedChannelId: selectedChannelIdRef.current,
-            currentPathId: currentPathIdRef.current,
-            latestPathId: latestPathIdRef.current,
-            socketConnected: socket.connected
-          });
-          void handleGetNumberOfUnreadMessages();
-          void handleLoadChat({
-            selectedChannelId: selectedChannelIdRef.current
-          });
-        }
+        });
         if (heartbeatTimerRef.current) {
           clearInterval(heartbeatTimerRef.current);
         }
@@ -568,9 +643,11 @@ export default function useInitSocket({
     }
 
     async function handleLoadChat({
-      selectedChannelId
+      selectedChannelId,
+      fromWriter = false
     }: {
       selectedChannelId: number;
+      fromWriter?: boolean;
     }): Promise<void> {
       if (!userIdRef.current) {
         recordChatBootstrapEvent('chat-bootstrap-skip-no-user', {
@@ -580,6 +657,7 @@ export default function useInitSocket({
         });
         return;
       }
+      const bootstrapUserId = userIdRef.current;
       onSetReconnecting();
       isLoadingChatRef.current = true;
       let didInitChat = false;
@@ -598,11 +676,20 @@ export default function useInitSocket({
         : '';
       const bootstrapId = nextChatBootstrapId();
       activeBootstrapIdRef.current = bootstrapId;
-      bootstrapStartedAtRef.current = Date.now();
+      const bootstrapStartedAt = Date.now();
+      bootstrapStartedAtRef.current = bootstrapStartedAt;
+      // The reducer only retains event identities while a bootstrap can race
+      // them. Starting a newer attempt clears identities that its writer read
+      // is guaranteed to follow.
+      onStartChatBootstrap({
+        bootstrapId,
+        userId: bootstrapUserId,
+        startedAt: bootstrapStartedAt
+      });
 
       recordChatBootstrapEvent('chat-bootstrap-attempt-start', {
         bootstrapId,
-        userId: userIdRef.current,
+        userId: bootstrapUserId,
         selectedChannelId,
         bootstrapChannelId,
         requestedSubchannelPath,
@@ -610,14 +697,15 @@ export default function useInitSocket({
         routePathId: hasRoutePathId ? routePathId : null,
         fallbackPathId,
         latestPathId: latestPathIdRef.current,
-        socketConnected: socket.connected
+        socketConnected: socket.connected,
+        fromWriter
       });
 
       try {
         onInit();
         recordChatBootstrapEvent('chat-bootstrap-on-init', {
           bootstrapId,
-          userId: userIdRef.current
+          userId: bootstrapUserId
         });
 
         emitAdminTelemetry({
@@ -634,7 +722,8 @@ export default function useInitSocket({
 
         const data = await loadChat({
           channelId: bootstrapChannelId,
-          subchannelPath: requestedSubchannelPath
+          subchannelPath: requestedSubchannelPath,
+          fromWriter
         });
 
         const endTime = Date.now();
@@ -662,13 +751,20 @@ export default function useInitSocket({
         // load's onInitChat or its channel/route reconciliation. The active
         // (latest-started) attempt owns the result. The finally below leaves the
         // in-flight gate to that owner.
-        if (activeBootstrapIdRef.current !== bootstrapId) {
+        if (
+          activeBootstrapIdRef.current !== bootstrapId ||
+          userIdRef.current !== bootstrapUserId
+        ) {
           recordChatBootstrapEvent('chat-bootstrap-superseded-skip-init', {
             bootstrapId,
             activeBootstrapId: activeBootstrapIdRef.current,
-            userId: userIdRef.current
+            bootstrapUserId,
+            currentUserId: userIdRef.current
           });
           return;
+        }
+        if (!data?.channelsObj) {
+          throw new Error('Chat bootstrap returned no canonical channel state');
         }
 
         loadChatRetryCountRef.current = 0;
@@ -679,20 +775,28 @@ export default function useInitSocket({
 
         recordChatBootstrapEvent('chat-bootstrap-dispatch-init-chat', {
           bootstrapId,
-          userId: userIdRef.current,
+          userId: bootstrapUserId,
           currentChannelId: data?.currentChannelId ?? null,
           hasChannelsObj: !!data?.channelsObj
         });
-        onInitChat({ data, userId: userIdRef.current, bootstrapId });
+        onInitChat({
+          data,
+          userId: bootstrapUserId,
+          bootstrapId
+        });
         chatLoadedRef.current = true;
-        loadedForUserIdRef.current = userIdRef.current;
+        loadedForUserIdRef.current = bootstrapUserId;
         didInitChat = true;
-        void handleGetNumberOfUnreadMessages();
+        void handleGetNumberOfUnreadMessages({
+          fromWriter,
+          expectedUserId: bootstrapUserId
+        });
         lastFailedBootstrapIdRef.current = null;
 
-        const latestPathId = Number(latestPathIdRef.current) > 0
-          ? Number(latestPathIdRef.current)
-          : 0;
+        const latestPathId =
+          Number(latestPathIdRef.current) > 0
+            ? Number(latestPathIdRef.current)
+            : 0;
 
         // Explicit routed numeric chat paths are resolved by Chat/Main.handleChannelEnter().
         // Keep this bootstrap reconciliation for non-routed restore cases like plain /chat.
@@ -705,6 +809,12 @@ export default function useInitSocket({
           const channelId = parseChannelPath(latestPathId);
           const { isAccessible, isPublic } =
             await checkChatAccessible(latestPathId);
+          if (
+            activeBootstrapIdRef.current !== bootstrapId ||
+            userIdRef.current !== bootstrapUserId
+          ) {
+            return;
+          }
           if (!isAccessible) {
             if (isPublic) {
               if (!channelPathIdHashRef.current[latestPathId]) {
@@ -712,6 +822,12 @@ export default function useInitSocket({
               }
               const { channel, joinMessage } =
                 await acceptInvitation(channelId);
+              if (
+                activeBootstrapIdRef.current !== bootstrapId ||
+                userIdRef.current !== bootstrapUserId
+              ) {
+                return;
+              }
               if (channel.id === channelId) {
                 socket.emit('join_chat_group', channel.id);
                 socket.emit('new_chat_message', {
@@ -726,7 +842,7 @@ export default function useInitSocket({
                   },
                   newMembers: [
                     {
-                      id: userIdRef.current,
+                      id: bootstrapUserId,
                       username: usernameRef.current,
                       profilePicUrl: profilePicUrlRef.current
                     }
@@ -762,7 +878,16 @@ export default function useInitSocket({
               channelId,
               subchannelPath: requestedSubchannelPath
             });
-            onEnterChannelWithId(channelData);
+            if (
+              activeBootstrapIdRef.current !== bootstrapId ||
+              userIdRef.current !== bootstrapUserId
+            ) {
+              return;
+            }
+            onEnterChannelWithId({
+              data: channelData,
+              userId: bootstrapUserId
+            });
             for (const member of channelData?.channel?.members || []) {
               onSetUserState({
                 userId: member.id,
@@ -787,6 +912,7 @@ export default function useInitSocket({
             onlineUsers: { userId: number; username: string }[];
             recentOfflineUsers?: any[];
           }) => {
+            if (userIdRef.current !== bootstrapUserId) return;
             onSetOnlineUsers({
               channelId: selectedChannelId,
               onlineUsers,
@@ -816,7 +942,7 @@ export default function useInitSocket({
             activeBootstrapIdRef.current === bootstrapId;
           const alreadyLoaded =
             chatLoadedRef.current &&
-            loadedForUserIdRef.current === userIdRef.current;
+            loadedForUserIdRef.current === bootstrapUserId;
           if (!isOwningBootstrap) {
             // A superseded/stale attempt rejecting (e.g. one the watchdog
             // abandoned) must not schedule a retry: the active attempt owns
@@ -829,21 +955,21 @@ export default function useInitSocket({
               sourceBootstrapId: bootstrapId,
               activeBootstrapId: activeBootstrapIdRef.current,
               alreadyLoaded,
-              userId: userIdRef.current,
+              userId: bootstrapUserId,
               selectedChannelId: selectedChannelIdRef.current
             });
           } else {
             lastFailedBootstrapIdRef.current = bootstrapId;
             console.error('Failed to load chat:', error);
             if (socket.connected) {
-              scheduleLoadChatRetry();
+              scheduleLoadChatRetry({ fromWriter });
             } else {
               recordChatBootstrapEvent(
                 'chat-bootstrap-retry-skipped-disconnected',
                 {
                   sourceBootstrapId: bootstrapId,
                   retryCount: loadChatRetryCountRef.current,
-                  userId: userIdRef.current,
+                  userId: bootstrapUserId,
                   selectedChannelId: selectedChannelIdRef.current
                 }
               );
@@ -862,6 +988,9 @@ export default function useInitSocket({
           isLoadingChatRef.current = false;
           activeBootstrapIdRef.current = null;
           bootstrapStartedAtRef.current = 0;
+          if (!didInitChat) {
+            onFinishChatBootstrap(bootstrapId);
+          }
         }
         recordChatBootstrapEvent('chat-bootstrap-attempt-finished', {
           bootstrapId,
@@ -876,7 +1005,9 @@ export default function useInitSocket({
     handleLoadChatRef.current = handleLoadChat;
     bumpLoadChatHandlerVersion();
 
-    function scheduleLoadChatRetry() {
+    function scheduleLoadChatRetry({
+      fromWriter = false
+    }: { fromWriter?: boolean } = {}) {
       if (loadChatRetryTimerRef.current || !userIdRef.current) return;
       const delay = Math.min(1000 * 2 ** loadChatRetryCountRef.current, 10000);
       loadChatRetryCountRef.current += 1;
@@ -885,7 +1016,8 @@ export default function useInitSocket({
         retryCount: loadChatRetryCountRef.current,
         delayMs: delay,
         userId: userIdRef.current,
-        selectedChannelId: selectedChannelIdRef.current
+        selectedChannelId: selectedChannelIdRef.current,
+        fromWriter
       });
       emitAdminTelemetry({
         message: `Retrying chat load in ${Math.round(delay / 1000)}s`
@@ -929,7 +1061,10 @@ export default function useInitSocket({
           userId: userIdRef.current,
           selectedChannelId: selectedChannelIdRef.current
         });
-        void handleLoadChat({ selectedChannelId: selectedChannelIdRef.current });
+        void handleLoadChat({
+          selectedChannelId: selectedChannelIdRef.current,
+          fromWriter
+        });
       }, delay);
     }
 
@@ -938,6 +1073,7 @@ export default function useInitSocket({
         message: `disconnected from socket. reason: ${reason}`
       });
       clearSocketAuthReady();
+      socketBindAttemptRef.current += 1;
       didSocketDisconnectRef.current = true;
       onSetAICallEnding(false);
       onChangeSocketStatus(false);
@@ -989,6 +1125,9 @@ export default function useInitSocket({
   useEffect(() => {
     if (!userId) return;
     if (chatLoaded && loadedForUserId === userId) return;
+    // Account switches restart only after the replacement socket bind has
+    // completed its room-hydration barrier.
+    if (bootstrapAwaitingBindUserIdRef.current === userId) return;
     const decisionDetails = {
       userId,
       chatLoaded,
@@ -1047,6 +1186,11 @@ export default function useInitSocket({
     let warned = false;
     const interval = window.setInterval(() => {
       if (!userIdRef.current) return;
+      if (
+        bootstrapAwaitingBindUserIdRef.current === userIdRef.current
+      ) {
+        return;
+      }
       if (
         chatLoadedRef.current &&
         loadedForUserIdRef.current === userIdRef.current
@@ -1126,29 +1270,107 @@ export default function useInitSocket({
     }
 
     if (userId) {
-      const token = getStoredItem('token');
-      const deviceId = getTwinkleDeviceId();
-      socket.emit(
-        'bind_uid_to_socket',
-        { userId, username, profilePicUrl, token, deviceId },
-        (result?: { authError?: boolean }) => {
-          if (result?.authError) {
-            window.location.reload();
-            return;
-          }
-          dispatchSocketAuthReady(userId);
-          socket.emit('enter_my_notification_channel', userId);
-          socket.emit('change_busy_status', !usingChatRef.current);
-          userActionAckedRef.current = false;
-          userActionAttemptsRef.current = 0;
-          handleStartUserActionCapture();
-        }
-      );
+      bindSocketToUser({ bindingUserId: userId });
     }
 
     prevUserIdRef.current = userId;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  function bindSocketToUser({
+    bindingUserId,
+    onBound
+  }: {
+    bindingUserId: number;
+    onBound?: () => void;
+  }) {
+    const bindAttempt = ++socketBindAttemptRef.current;
+    emitSocketBind({
+      payload: {
+        userId: bindingUserId,
+        username: usernameRef.current,
+        profilePicUrl: profilePicUrlRef.current,
+        token: getStoredItem('token'),
+        deviceId: getTwinkleDeviceId()
+      },
+      onAcknowledged(result) {
+        if (
+          bindAttempt !== socketBindAttemptRef.current ||
+          bindingUserId !== userIdRef.current ||
+          !socket.connected
+        ) {
+          return;
+        }
+        if (result?.authError) {
+          window.location.reload();
+          return;
+        }
+        const wasAwaitingBootstrapBind =
+          bootstrapAwaitingBindUserIdRef.current === bindingUserId;
+        if (wasAwaitingBootstrapBind) {
+          bootstrapAwaitingBindUserIdRef.current = null;
+        }
+        clearSocketBindRetryTimer();
+        dispatchSocketAuthReady(bindingUserId);
+        socket.emit('enter_my_notification_channel', bindingUserId);
+        socket.emit('change_busy_status', !usingChatRef.current);
+        userActionAckedRef.current = false;
+        userActionAttemptsRef.current = 0;
+        handleStartUserActionCapture();
+        onBound?.();
+        if (
+          wasAwaitingBootstrapBind &&
+          !onBound &&
+          !isLoadingChatRef.current &&
+          (!chatLoadedRef.current ||
+            loadedForUserIdRef.current !== bindingUserId)
+        ) {
+          void handleLoadChatRef.current?.({
+            selectedChannelId: selectedChannelIdRef.current
+          });
+        }
+      },
+      onFailure(error) {
+        if (bindAttempt !== socketBindAttemptRef.current) return;
+        handleSocketBindFailure({ bindingUserId, error });
+      }
+    });
+  }
+
+  function handleSocketBindFailure({
+    bindingUserId,
+    error
+  }: {
+    bindingUserId: number;
+    error: Error;
+  }) {
+    if (bindingUserId !== userIdRef.current) return;
+    clearSocketAuthReady();
+    didSocketDisconnectRef.current = true;
+    recordChatBootstrapEvent('socket-bind-failed', {
+      userId: bindingUserId,
+      socketConnected: socket.connected,
+      error: error.message
+    });
+    emitAdminTelemetry({
+      message: `Socket bind failed; retrying connection: ${error.message}`
+    });
+    if (socketBindRetryTimerRef.current) return;
+    if (socket.connected) socket.disconnect();
+    socketBindRetryTimerRef.current = window.setTimeout(() => {
+      socketBindRetryTimerRef.current = null;
+      if (bindingUserId !== userIdRef.current || socket.connected) return;
+      try {
+        socket.connect();
+      } catch {}
+    }, SOCKET_BIND_RETRY_DELAY_MS);
+  }
+
+  function clearSocketBindRetryTimer() {
+    if (!socketBindRetryTimerRef.current) return;
+    clearTimeout(socketBindRetryTimerRef.current);
+    socketBindRetryTimerRef.current = null;
+  }
 
   function handleStartUserActionCapture() {
     if (userActionAckedRef.current) return;

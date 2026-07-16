@@ -10,6 +10,7 @@ import { determineSelectedChatTab } from './helpers';
 import { objectify } from '~/helpers';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { v1 as uuidv1 } from 'uuid';
+import type { CanonicalChatChannelVisibility } from '~/types/chat';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -51,16 +52,1033 @@ function mergeChannelSettings({
 }) {
   const existing = loadChannelSettings(existingSettings);
   const server = loadChannelSettings(serverSettings);
+  const existingActivityRevision = Number(
+    existing?.reactionActivityRevision || 0
+  );
+  const serverActivityRevision = Number(server?.reactionActivityRevision || 0);
   const existingLastReactionTs = Number(existing?.lastReaction?.timeStamp) || 0;
   const serverLastReactionTs = Number(server?.lastReaction?.timeStamp) || 0;
 
-  // Prefer server settings as the source of truth, but keep the newer lastReaction
-  // so we don't regress preview state due to replica lag.
+  // Message reaction revisions are local to one message and cannot order
+  // channel recency across different messages. Bootstrap and realtime compare
+  // the channel activity revision; timestamps are only a rolling-deploy
+  // fallback for legacy rows that have no channel revision yet.
   const merged = { ...existing, ...server };
-  if (existingLastReactionTs > serverLastReactionTs) {
-    merged.lastReaction = existing.lastReaction;
+  const preserveExistingActivity =
+    existingActivityRevision > serverActivityRevision ||
+    (existingActivityRevision === 0 &&
+      serverActivityRevision === 0 &&
+      existingLastReactionTs > serverLastReactionTs);
+  const activitySource = preserveExistingActivity ? existing : server;
+  if (activitySource.lastReaction) {
+    merged.lastReaction = activitySource.lastReaction;
+  } else {
+    delete merged.lastReaction;
   }
+  merged.reactionActivityRevision = preserveExistingActivity
+    ? existingActivityRevision
+    : serverActivityRevision;
   return merged;
+}
+
+type CanonicalChannelVisibilityById = Record<
+  number,
+  CanonicalChatChannelVisibility
+>;
+
+function getCanonicalChannelVisibilityFromChannel(channel: any) {
+  const channelId = Number(channel?.id || 0);
+  const revision = Number(channel?.visibilityRevision || 0);
+  if (channelId <= 0 || revision <= 0) return null;
+  return {
+    channelId,
+    isHidden: !!channel?.isHidden,
+    revision,
+    lastMessageId: Number(
+      channel?.lastMessageId || channel?.messageIds?.[0] || 0
+    )
+  };
+}
+
+function mergeCanonicalChannelVisibility({
+  visibilityById,
+  visibility
+}: {
+  visibilityById: CanonicalChannelVisibilityById;
+  visibility?: CanonicalChatChannelVisibility | null;
+}) {
+  const channelId = Number(visibility?.channelId || 0);
+  const revision = Number(visibility?.revision || 0);
+  if (channelId <= 0 || revision <= 0) return visibilityById;
+  const currentRevision = Number(visibilityById[channelId]?.revision || 0);
+  if (revision < currentRevision) return visibilityById;
+  return {
+    ...visibilityById,
+    [channelId]: {
+      channelId,
+      isHidden: !!visibility?.isHidden,
+      revision,
+      lastMessageId: Number(visibility?.lastMessageId || 0)
+    }
+  };
+}
+
+function applyCanonicalChannelVisibility({
+  channel,
+  visibility
+}: {
+  channel: any;
+  visibility?: CanonicalChatChannelVisibility | null;
+}) {
+  if (!channel?.id || Number(channel.id) !== Number(visibility?.channelId)) {
+    return channel;
+  }
+  const incomingRevision = Number(visibility?.revision || 0);
+  const currentRevision = Number(channel.visibilityRevision || 0);
+  if (incomingRevision <= 0 || incomingRevision < currentRevision) {
+    return channel;
+  }
+  const visibilityAtLastMessageId = Number(visibility?.lastMessageId || 0);
+  const currentLastMessageId = Number(
+    channel.lastMessageId || channel.messageIds?.[0] || 0
+  );
+  return {
+    ...channel,
+    // A message committed after a hide makes the channel visible again. The
+    // visibility revision and message watermark own those independent axes.
+    isHidden:
+      !!visibility?.isHidden &&
+      currentLastMessageId <= visibilityAtLastMessageId,
+    visibilityRevision: incomingRevision
+  };
+}
+
+function resetTopicMessageCachesForCanonicalChannelLoad(
+  topicObj: Record<string, any> | null | undefined
+) {
+  const invalidatedTopicObj: Record<string, any> = {};
+  for (const [topicId, topic] of Object.entries(topicObj || {})) {
+    // A channel load does not include each topic's message page. Never carry a
+    // pre-snapshot ID list across that boundary: an offline deletion or
+    // moderation event may have made it stale. Keeping `loaded: false` lets
+    // the existing topic loader repopulate the selected topic canonically.
+    invalidatedTopicObj[topicId] = {
+      ...topic,
+      loaded: false,
+      messageIds: []
+    };
+  }
+  return invalidatedTopicObj;
+}
+
+function reconcileCanonicalTopicNavigation({
+  existingChannel,
+  canonicalTopicObj
+}: {
+  existingChannel: any;
+  canonicalTopicObj: Record<string, any>;
+}) {
+  const selectedTopicId = Number(existingChannel?.selectedTopicId || 0);
+  const selectedTopicIsVisible =
+    selectedTopicId <= 0 || Boolean(canonicalTopicObj[selectedTopicId]);
+  const visibleTopicHistory = (existingChannel?.topicHistory || []).filter(
+    (topicId: number) => Boolean(canonicalTopicObj[topicId])
+  );
+
+  if (!selectedTopicIsVisible) {
+    return {
+      selectedTab: 'all',
+      selectedTopicId: null,
+      topicHistory: [],
+      currentTopicIndex: -1
+    };
+  }
+
+  const topicHistory =
+    selectedTopicId > 0 &&
+    !visibleTopicHistory.some(
+      (topicId: number) => Number(topicId) === selectedTopicId
+    )
+      ? [...visibleTopicHistory, selectedTopicId]
+      : visibleTopicHistory;
+  const selectedTopicIndex = topicHistory.findIndex(
+    (topicId: number) => Number(topicId) === selectedTopicId
+  );
+  const existingTopicIndex = Number(existingChannel?.currentTopicIndex ?? -1);
+
+  return {
+    selectedTab: existingChannel?.selectedTab,
+    selectedTopicId: existingChannel?.selectedTopicId,
+    topicHistory,
+    currentTopicIndex:
+      selectedTopicId > 0
+        ? selectedTopicIndex
+        : Math.max(-1, Math.min(existingTopicIndex, topicHistory.length - 1))
+  };
+}
+
+const ROOT_REALTIME_ACTIVITY_SCOPE = 'root';
+
+type ConfirmedRealtimeActivityByChannel = Record<
+  number,
+  Record<string, number | Record<string, number>>
+>;
+
+function getRealtimeActivityScope(subchannelId?: number | null) {
+  const normalizedSubchannelId = Number(subchannelId || 0);
+  return normalizedSubchannelId > 0
+    ? String(normalizedSubchannelId)
+    : ROOT_REALTIME_ACTIVITY_SCOPE;
+}
+
+function getRealtimeMessageEventKey(messageId: number | string) {
+  return `message:${messageId}`;
+}
+
+function getRealtimeReactionEventKey({
+  messageId,
+  reaction,
+  userId
+}: {
+  messageId: number;
+  reaction: string;
+  userId: number;
+}) {
+  return `reaction:${messageId}:${userId}:${reaction}`;
+}
+
+function wasRealtimeActivityConfirmed(scopeActivity?: unknown) {
+  if (typeof scopeActivity === 'number') return scopeActivity > 0;
+  if (!scopeActivity || typeof scopeActivity !== 'object') return false;
+  return Object.keys(scopeActivity).length > 0;
+}
+
+function getLatestConfirmedEventSequence(activityByScope?: unknown) {
+  if (typeof activityByScope === 'number') return activityByScope;
+  if (!activityByScope || typeof activityByScope !== 'object') return 0;
+  let latestSequence = 0;
+  for (const value of Object.values(activityByScope)) {
+    latestSequence = Math.max(
+      latestSequence,
+      getLatestConfirmedEventSequence(value)
+    );
+  }
+  return latestSequence;
+}
+
+function shouldTrackConfirmedRealtimeActivity(state: any) {
+  return Boolean(state.activeChatBootstrap?.id);
+}
+
+function markConfirmedRealtimeActivity({
+  activityByChannel = {},
+  channelId,
+  subchannelId,
+  eventKey,
+  eventSequence
+}: {
+  activityByChannel?: ConfirmedRealtimeActivityByChannel;
+  channelId: number;
+  subchannelId?: number | null;
+  eventKey: string;
+  eventSequence?: number;
+}) {
+  const scope = getRealtimeActivityScope(subchannelId);
+  const channelActivity = activityByChannel[channelId] || {};
+  const existingScopeActivity = channelActivity[scope];
+  const scopeActivity =
+    existingScopeActivity && typeof existingScopeActivity === 'object'
+      ? existingScopeActivity
+      : {};
+  const confirmedSequence = Math.max(Number(eventSequence || 0), 1);
+
+  return {
+    ...activityByChannel,
+    [channelId]: {
+      ...channelActivity,
+      [scope]: {
+        ...scopeActivity,
+        // A socket event and its writer-backed HTTP response can carry the
+        // same canonical mutation. Preserve the first sequence for that
+        // identity so a duplicate delivery cannot masquerade as activity that
+        // happened after an intervening canonical read.
+        [eventKey]: Number(scopeActivity[eventKey] || 0) || confirmedSequence
+      }
+    }
+  };
+}
+
+function removeConfirmedRealtimeActivity({
+  activityByChannel = {},
+  channelId,
+  subchannelId,
+  eventKey
+}: {
+  activityByChannel?: ConfirmedRealtimeActivityByChannel;
+  channelId: number;
+  subchannelId?: number | null;
+  eventKey: string;
+}) {
+  const scope = getRealtimeActivityScope(subchannelId);
+  const channelActivity = activityByChannel[channelId];
+  const existingScopeActivity = channelActivity?.[scope];
+  if (existingScopeActivity == null) return activityByChannel;
+
+  const nextChannelActivity = { ...channelActivity };
+  if (typeof existingScopeActivity === 'object') {
+    const nextScopeActivity = { ...existingScopeActivity };
+    delete nextScopeActivity[eventKey];
+    if (Object.keys(nextScopeActivity).length > 0) {
+      nextChannelActivity[scope] = nextScopeActivity;
+    } else {
+      delete nextChannelActivity[scope];
+    }
+  } else {
+    // Numeric entries are from the previous anonymous-marker shape and cannot
+    // be matched safely. A confirmed reversal supersedes that legacy marker.
+    delete nextChannelActivity[scope];
+  }
+
+  const nextActivityByChannel = { ...activityByChannel };
+  if (Object.keys(nextChannelActivity).length > 0) {
+    nextActivityByChannel[channelId] = nextChannelActivity;
+  } else {
+    delete nextActivityByChannel[channelId];
+  }
+  return nextActivityByChannel;
+}
+
+function toConfirmedRealtimeMessage({
+  message,
+  messageId,
+  eventSequence
+}: {
+  message: any;
+  messageId: number | string;
+  eventSequence?: number;
+}) {
+  return {
+    ...message,
+    id: messageId,
+    isLoaded: true,
+    confirmedRealtimeSequence: Math.max(Number(eventSequence || 0), 1)
+  };
+}
+
+function getChannelMessage({
+  channel,
+  messageId,
+  subchannelId
+}: {
+  channel: any;
+  messageId: number;
+  subchannelId?: number | null;
+}) {
+  return (
+    (subchannelId
+      ? channel?.subchannelObj?.[subchannelId]?.messagesObj?.[messageId]
+      : channel?.messagesObj?.[messageId]) || {}
+  );
+}
+
+function mergeMessagesPreservingNewerReactionState({
+  existingMessagesObj = {},
+  serverMessagesObj = {}
+}: {
+  existingMessagesObj?: Record<string, any>;
+  serverMessagesObj?: Record<string, any>;
+}) {
+  const mergedMessagesObj = {
+    ...existingMessagesObj,
+    ...serverMessagesObj
+  };
+  for (const messageId in serverMessagesObj) {
+    const existingMessage = existingMessagesObj[messageId];
+    const serverMessage = serverMessagesObj[messageId];
+    const existingRevision = Number(
+      existingMessage?.reactionStateServerRevision || 0
+    );
+    const serverRevision = Number(
+      serverMessage?.reactionStateServerRevision || 0
+    );
+    if (existingRevision > serverRevision) {
+      mergedMessagesObj[messageId] = {
+        ...serverMessage,
+        reactions: existingMessage.reactions,
+        reactionStateServerRevision: existingRevision
+      };
+    }
+  }
+  return mergedMessagesObj;
+}
+
+function setMessageReactionsOnChannel({
+  channel,
+  messageId,
+  subchannelId,
+  reactions,
+  reactionStateRevision
+}: {
+  channel: any;
+  messageId: number;
+  subchannelId?: number | null;
+  reactions: any[];
+  reactionStateRevision?: number;
+}) {
+  const message = getChannelMessage({ channel, messageId, subchannelId });
+  const updatedMessage = {
+    ...message,
+    reactions,
+    ...(reactionStateRevision
+      ? {
+          reactionStateServerRevision: Math.max(
+            Number(message.reactionStateServerRevision || 0),
+            reactionStateRevision
+          )
+        }
+      : {})
+  };
+  const subchannelObj = subchannelId
+    ? {
+        ...channel?.subchannelObj,
+        [subchannelId]: {
+          ...channel?.subchannelObj?.[subchannelId],
+          messagesObj: {
+            ...channel?.subchannelObj?.[subchannelId]?.messagesObj,
+            [messageId]: updatedMessage
+          }
+        }
+      }
+    : channel?.subchannelObj;
+
+  return {
+    ...channel,
+    messagesObj: {
+      ...channel?.messagesObj,
+      [messageId]: updatedMessage
+    },
+    ...(subchannelObj ? { subchannelObj } : {})
+  };
+}
+
+function setCanonicalReactionActivityOnChannel({
+  channel,
+  channelActivity
+}: {
+  channel: any;
+  channelActivity: any;
+}) {
+  if (!channel) return channel;
+  const incomingRevision = Number(channelActivity?.revision || 0);
+  const settings = loadChannelSettings(channel.settings);
+  if (
+    incomingRevision <= 0 ||
+    incomingRevision < Number(settings.reactionActivityRevision || 0)
+  ) {
+    return channel;
+  }
+  const nextSettings = {
+    ...settings,
+    reactionActivityRevision: incomingRevision
+  };
+  if (channelActivity.lastReaction) {
+    nextSettings.lastReaction = channelActivity.lastReaction;
+  } else {
+    delete nextSettings.lastReaction;
+  }
+  const hasMessageWatermark = Number.isSafeInteger(
+    channelActivity?.lastMessageId
+  );
+  const currentLastMessageId = Math.max(
+    Number(channel.lastMessageId || 0),
+    Number(channel.messageIds?.[0] || 0)
+  );
+  const messageActivityWasSuperseded =
+    hasMessageWatermark &&
+    currentLastMessageId > Number(channelActivity.lastMessageId);
+  return {
+    ...channel,
+    // Reaction revisions order reaction activity, not message creation. The
+    // server's locked last-message pointer is the cross-domain watermark: a
+    // later local message keeps its recency, while a same-watermark reaction
+    // removal may still move lastUpdated backward canonically.
+    lastUpdated: messageActivityWasSuperseded
+      ? Number(channel.lastUpdated || 0)
+      : Number(channelActivity.lastUpdated || 0),
+    settings: nextSettings
+  };
+}
+
+function reconcileConfirmedReactionMarkers({
+  state,
+  action,
+  update
+}: {
+  state: any;
+  action: any;
+  update: any;
+}) {
+  if (
+    !shouldTrackConfirmedRealtimeActivity(state) ||
+    !update.changed ||
+    !update.twoPeople ||
+    !update.channelActivity?.changed
+  ) {
+    return state;
+  }
+  const eventKey = getRealtimeReactionEventKey({
+    messageId: Number(update.messageId),
+    reaction: String(update.reaction),
+    userId: Number(update.userId)
+  });
+  const markerParams = {
+    channelId: Number(update.channelId),
+    subchannelId: Number(update.subchannelId || 0),
+    eventKey
+  };
+  const confirmedRealtimeActivityByChannel =
+    update.mutation === 'add'
+      ? markConfirmedRealtimeActivity({
+          activityByChannel: state.confirmedRealtimeActivityByChannel,
+          ...markerParams,
+          eventSequence: action.eventSequence
+        })
+      : removeConfirmedRealtimeActivity({
+          activityByChannel: state.confirmedRealtimeActivityByChannel,
+          ...markerParams
+        });
+  let confirmedRealtimeUnreadActivityByChannel =
+    state.confirmedRealtimeUnreadActivityByChannel || {};
+  if (update.mutation === 'add' && action.shouldIncrementUnreads) {
+    confirmedRealtimeUnreadActivityByChannel = markConfirmedRealtimeActivity({
+      activityByChannel: confirmedRealtimeUnreadActivityByChannel,
+      ...markerParams,
+      eventSequence: action.eventSequence
+    });
+  } else if (update.mutation === 'remove') {
+    confirmedRealtimeUnreadActivityByChannel = removeConfirmedRealtimeActivity({
+      activityByChannel: confirmedRealtimeUnreadActivityByChannel,
+      ...markerParams
+    });
+  }
+  return {
+    ...state,
+    confirmedRealtimeActivityByChannel,
+    confirmedRealtimeUnreadActivityByChannel
+  };
+}
+
+function bufferCanonicalReactionUpdateDuringBootstrap({
+  state,
+  action,
+  update
+}: {
+  state: any;
+  action: any;
+  update: any;
+}) {
+  if (!shouldTrackConfirmedRealtimeActivity(state)) {
+    return state;
+  }
+  // Message reactions and DM preview activity are separate projections with
+  // separate revision domains. Buffer every confirmed message snapshot by its
+  // own identity; replaying the envelope after bootstrap lets each projection
+  // independently reject an older revision.
+  const key = [
+    Number(update.channelId),
+    Number(update.subchannelId || 0),
+    Number(update.messageId),
+    Number(update.reactionStateRevision)
+  ].join(':');
+  if (state.canonicalReactionUpdatesDuringBootstrap?.[key]) return state;
+  return {
+    ...state,
+    canonicalReactionUpdatesDuringBootstrap: {
+      ...state.canonicalReactionUpdatesDuringBootstrap,
+      [key]: {
+        update,
+        ownerUserId: action.ownerUserId,
+        pageVisible: action.pageVisible,
+        usingChat: action.usingChat,
+        shouldIncrementUnreads: action.shouldIncrementUnreads,
+        eventSequence: action.eventSequence
+      }
+    }
+  };
+}
+
+function getCanonicalUnreadScopeState(unreadState: any) {
+  return {
+    lastRead: Number(unreadState?.lastRead || 0),
+    numUnreads: Number(unreadState?.numUnreads || 0),
+    lastUnreadUserId:
+      unreadState?.lastUnreadUserId == null
+        ? null
+        : Number(unreadState.lastUnreadUserId),
+    lastUnreadReaction: unreadState?.lastUnreadReaction || null,
+    lastUnreadMessageId:
+      unreadState?.lastUnreadMessageId == null
+        ? null
+        : Number(unreadState.lastUnreadMessageId),
+    lastUnreadReactionTimeStamp:
+      unreadState?.lastUnreadReactionTimeStamp == null
+        ? null
+        : Number(unreadState.lastUnreadReactionTimeStamp)
+  };
+}
+
+function applyCanonicalUnreadScope(source: any, unreadState: any) {
+  return {
+    ...source,
+    ...getCanonicalUnreadScopeState(unreadState)
+  };
+}
+
+function getLatestCanonicalUnreadScopeState({
+  existingSource,
+  serverSource
+}: {
+  existingSource: any;
+  serverSource: any;
+}) {
+  const existingLastRead = Number(existingSource?.lastRead || 0);
+  const serverLastRead = Number(serverSource?.lastRead || 0);
+  return getCanonicalUnreadScopeState(
+    existingLastRead > serverLastRead ? existingSource : serverSource
+  );
+}
+
+function canonicalApplyOwnerMatchesBoundUser(state: any, userId: unknown) {
+  // Confirmed account-bound responses and their canonical revisions are
+  // meaningful only within one account's projection. Once the provider is
+  // bound to a user (a completed or in-flight bootstrap), reject responses
+  // owned by anyone else before they mutate any chat state. Otherwise a late
+  // response from a previously signed-in account could install private
+  // channels/sidebar data and its higher per-user revision could suppress the
+  // current account's own canonical snapshot. With no bound user (after
+  // RESET_CHAT, before the next bootstrap) there is no projection to apply.
+  const ownerUserId = Number(userId || 0);
+  if (ownerUserId <= 0) return false;
+  const boundUserId =
+    state.loadedForUserId ?? state.activeChatBootstrap?.userId ?? null;
+  return boundUserId != null && Number(boundUserId) === ownerUserId;
+}
+
+function bufferCanonicalUnreadStateDuringBootstrap({
+  state,
+  unreadState,
+  eventSequence
+}: {
+  state: any;
+  unreadState: any;
+  eventSequence?: number;
+}) {
+  if (!shouldTrackConfirmedRealtimeActivity(state)) return state;
+  const key = `${Number(unreadState.channelId)}:${Number(
+    unreadState.subchannelId || 0
+  )}`;
+  const existing = state.canonicalUnreadStatesDuringBootstrap?.[key];
+  const existingUnreadState = existing?.unreadState || existing;
+  if (existing) {
+    const existingActivityRevision = Number(
+      existingUnreadState.reactionActivityRevision || 0
+    );
+    const incomingActivityRevision = Number(
+      unreadState.reactionActivityRevision || 0
+    );
+    const normalizedSubchannelId = Number(unreadState.subchannelId || 0);
+    const existingScope = normalizedSubchannelId
+      ? existingUnreadState.subchannel
+      : existingUnreadState.channel;
+    const incomingScope = normalizedSubchannelId
+      ? unreadState.subchannel
+      : unreadState.channel;
+    if (
+      existingActivityRevision > incomingActivityRevision ||
+      (existingActivityRevision === incomingActivityRevision &&
+        Number(existingScope?.lastRead || 0) >
+          Number(incomingScope?.lastRead || 0))
+    ) {
+      return state;
+    }
+  }
+  return {
+    ...state,
+    canonicalUnreadStatesDuringBootstrap: {
+      ...state.canonicalUnreadStatesDuringBootstrap,
+      [key]: {
+        unreadState,
+        eventSequence: Math.max(Number(eventSequence || 0), 1)
+      }
+    }
+  };
+}
+
+function bufferConfirmedMessageDeletionDuringBootstrap({
+  state,
+  action
+}: {
+  state: any;
+  action: any;
+}) {
+  if (!shouldTrackConfirmedRealtimeActivity(state)) return state;
+  const key = `${Number(action.channelId)}:${Number(
+    action.subchannelId || 0
+  )}:${Number(action.messageId)}`;
+  return {
+    ...state,
+    confirmedMessageDeletionsDuringBootstrap: {
+      ...state.confirmedMessageDeletionsDuringBootstrap,
+      [key]: {
+        channelId: Number(action.channelId),
+        subchannelId: Number(action.subchannelId || 0),
+        topicId: Number(action.topicId || 0),
+        messageId: Number(action.messageId),
+        eventSequence: Math.max(Number(action.eventSequence || 0), 1)
+      }
+    }
+  };
+}
+
+function getPostBootstrapMessageIds({
+  source,
+  confirmedScopeActivity
+}: {
+  source: any;
+  confirmedScopeActivity?: unknown;
+}) {
+  if (!confirmedScopeActivity || typeof confirmedScopeActivity !== 'object') {
+    return [];
+  }
+  return (source?.messageIds || []).filter((messageId: number | string) =>
+    Object.prototype.hasOwnProperty.call(
+      confirmedScopeActivity,
+      getRealtimeMessageEventKey(messageId)
+    )
+  );
+}
+
+function getRebasedConfirmedUnreadActivityState({
+  serverSource,
+  existingSource
+}: {
+  serverSource: any;
+  existingSource: any;
+}) {
+  return {
+    // Channel bootstrap unread counts are binary today. Rebase the confirmed
+    // event on the writer snapshot instead of copying a stale absolute count.
+    numUnreads: Math.max(Number(serverSource?.numUnreads || 0), 1),
+    lastUnreadUserId: existingSource?.lastUnreadUserId,
+    lastUnreadReaction: existingSource?.lastUnreadReaction,
+    lastUnreadMessageId: existingSource?.lastUnreadMessageId,
+    lastUnreadReactionTimeStamp: existingSource?.lastUnreadReactionTimeStamp
+  };
+}
+
+function mergeConfirmedChannelOrder(
+  currentOrder: number[] = [],
+  serverOrder: number[] = [],
+  confirmedChannelIds: Set<number>,
+  allowedChannelIds?: Record<number, boolean>
+) {
+  const confirmedOrder = currentOrder.filter((channelId) => {
+    const normalizedChannelId = Number(channelId);
+    return (
+      confirmedChannelIds.has(normalizedChannelId) &&
+      (!allowedChannelIds || Boolean(allowedChannelIds[normalizedChannelId]))
+    );
+  });
+  return confirmedOrder.concat(
+    serverOrder.filter((channelId) => !confirmedOrder.includes(channelId))
+  );
+}
+
+function reconcileCanonicalFavoriteOrder({
+  canonicalChannelsById,
+  canonicalOrder,
+  currentChannelsById,
+  currentOrder
+}: {
+  canonicalChannelsById: Map<number, any>;
+  canonicalOrder: number[];
+  currentChannelsById: Record<number, any>;
+  currentOrder: number[];
+}) {
+  const currentOrderIndex = new Map(
+    currentOrder.map((channelId, index) => [Number(channelId), index])
+  );
+  const canonicalOrderIndex = new Map(
+    canonicalOrder.map((channelId, index) => [Number(channelId), index])
+  );
+
+  return canonicalOrder.slice().sort((firstChannelId, secondChannelId) => {
+    const firstActivity = getFreshestFavoriteActivity({
+      canonicalChannel: canonicalChannelsById.get(Number(firstChannelId)),
+      currentChannel: currentChannelsById[Number(firstChannelId)]
+    });
+    const secondActivity = getFreshestFavoriteActivity({
+      canonicalChannel: canonicalChannelsById.get(Number(secondChannelId)),
+      currentChannel: currentChannelsById[Number(secondChannelId)]
+    });
+    if (firstActivity.lastUpdated !== secondActivity.lastUpdated) {
+      return secondActivity.lastUpdated - firstActivity.lastUpdated;
+    }
+
+    // Message IDs break same-second ties. Reaction revisions are used above to
+    // choose each channel's authoritative lastUpdated projection, including
+    // removals whose timestamp intentionally moves backward.
+    if (firstActivity.lastMessageId !== secondActivity.lastMessageId) {
+      return secondActivity.lastMessageId - firstActivity.lastMessageId;
+    }
+    const firstCurrentIndex = currentOrderIndex.get(Number(firstChannelId));
+    const secondCurrentIndex = currentOrderIndex.get(Number(secondChannelId));
+    if (
+      firstCurrentIndex !== undefined &&
+      secondCurrentIndex !== undefined &&
+      firstCurrentIndex !== secondCurrentIndex
+    ) {
+      return firstCurrentIndex - secondCurrentIndex;
+    }
+    return (
+      Number(canonicalOrderIndex.get(Number(firstChannelId)) || 0) -
+      Number(canonicalOrderIndex.get(Number(secondChannelId)) || 0)
+    );
+  });
+}
+
+function getFavoriteActivityVector(channel: any) {
+  const lastMessageId = Number(
+    channel?.lastMessageId || channel?.messageIds?.[0] || 0
+  );
+  return {
+    lastMessageId:
+      Number.isSafeInteger(lastMessageId) && lastMessageId > 0
+        ? lastMessageId
+        : 0,
+    reactionRevision: Math.max(
+      0,
+      Number(loadChannelSettings(channel?.settings).reactionActivityRevision) ||
+        0
+    )
+  };
+}
+
+function canonicalFavoriteActivityDominates({
+  canonicalChannel,
+  currentChannel
+}: {
+  canonicalChannel: any;
+  currentChannel: any;
+}) {
+  const canonicalActivity = getFavoriteActivityVector(canonicalChannel);
+  const currentActivity = getFavoriteActivityVector(currentChannel);
+  return (
+    canonicalActivity.lastMessageId >= currentActivity.lastMessageId &&
+    canonicalActivity.reactionRevision >= currentActivity.reactionRevision &&
+    (canonicalActivity.lastMessageId > currentActivity.lastMessageId ||
+      canonicalActivity.reactionRevision > currentActivity.reactionRevision)
+  );
+}
+
+function mergeCanonicalFavoriteChannelSummary({
+  canonicalChannel,
+  currentChannel,
+  visibility
+}: {
+  canonicalChannel: any;
+  currentChannel?: any;
+  visibility?: CanonicalChatChannelVisibility | null;
+}) {
+  if (!currentChannel?.id) {
+    return applyCanonicalChannelVisibility({
+      channel: canonicalChannel,
+      visibility
+    });
+  }
+  if (
+    !canonicalFavoriteActivityDominates({
+      canonicalChannel,
+      currentChannel
+    })
+  ) {
+    return applyCanonicalChannelVisibility({
+      channel: currentChannel,
+      visibility
+    });
+  }
+
+  const messagesObj = mergeMessagesPreservingNewerReactionState({
+    existingMessagesObj: currentChannel.messagesObj,
+    serverMessagesObj: canonicalChannel.messagesObj
+  });
+  const mergedChannel = {
+    ...currentChannel,
+    ...canonicalChannel,
+    // The canonical summary owns activity, preview, settings, and unread state
+    // when its message/reaction vector dominates. Keep the fuller channel page
+    // cache so favoriting a loaded channel does not discard history or topic
+    // and subchannel data that summaries intentionally omit.
+    ...getLatestCanonicalUnreadScopeState({
+      existingSource: currentChannel,
+      serverSource: canonicalChannel
+    }),
+    lastUpdated: Number(canonicalChannel.lastUpdated || 0),
+    lastMessageId:
+      getFavoriteActivityVector(canonicalChannel).lastMessageId || null,
+    settings: mergeChannelSettings({
+      existingSettings: currentChannel.settings,
+      serverSettings: canonicalChannel.settings
+    }),
+    messageIds: mergeNewestFirstMessageIds({
+      currentMessageIds: currentChannel.messageIds || [],
+      serverMessageIds: canonicalChannel.messageIds || [],
+      messagesObj
+    }),
+    messagesObj,
+    ...(currentChannel.loaded
+      ? {
+          subchannelIds: currentChannel.subchannelIds || [],
+          subchannelObj: currentChannel.subchannelObj || {},
+          ...(!canonicalChannel.twoPeople
+            ? {
+                allMemberIds: currentChannel.allMemberIds || [],
+                members: currentChannel.members || []
+              }
+            : {})
+        }
+      : {})
+  };
+  return applyCanonicalChannelVisibility({
+    channel: mergedChannel,
+    visibility
+  });
+}
+
+function getFreshestFavoriteActivity({
+  canonicalChannel,
+  currentChannel
+}: {
+  canonicalChannel?: any;
+  currentChannel?: any;
+}) {
+  const canonicalActivity = getFavoriteActivityVector(canonicalChannel);
+  const currentActivity = getFavoriteActivityVector(currentChannel);
+  const canonicalReactionRevision = canonicalActivity.reactionRevision;
+  const currentReactionRevision = currentActivity.reactionRevision;
+  const canonicalLastMessageId = canonicalActivity.lastMessageId;
+  const currentLastMessageId = currentActivity.lastMessageId;
+  const canonicalDominates =
+    canonicalLastMessageId >= currentLastMessageId &&
+    canonicalReactionRevision >= currentReactionRevision &&
+    (canonicalLastMessageId > currentLastMessageId ||
+      canonicalReactionRevision > currentReactionRevision);
+  const currentDominates =
+    currentLastMessageId >= canonicalLastMessageId &&
+    currentReactionRevision >= canonicalReactionRevision &&
+    (currentLastMessageId > canonicalLastMessageId ||
+      currentReactionRevision > canonicalReactionRevision);
+
+  // Message creation and reaction activity are independent monotonic domains.
+  // Treat their pair as a tiny vector clock: one side is authoritative only
+  // when it is at least as new in both. This lets a newer reaction removal
+  // move lastUpdated backward without erasing a message that arrived after the
+  // server captured the favorite response (and vice versa).
+  const source = canonicalDominates
+    ? canonicalChannel
+    : currentDominates
+      ? currentChannel
+      : Number(canonicalChannel?.lastUpdated || 0) >
+          Number(currentChannel?.lastUpdated || 0)
+        ? canonicalChannel
+        : currentChannel || canonicalChannel;
+  return {
+    lastUpdated: Number(source?.lastUpdated || 0),
+    lastMessageId: getFavoriteActivityVector(source).lastMessageId
+  };
+}
+
+function numberOrdersMatch(first: number[] = [], second: number[] = []) {
+  return (
+    first.length === second.length &&
+    first.every(
+      (channelId, index) => Number(channelId) === Number(second[index])
+    )
+  );
+}
+
+function getConfirmedLastMessageId(
+  currentMessageId: unknown,
+  incomingMessageId: unknown
+) {
+  const currentId = Number(currentMessageId || 0);
+  const incomingId = Number(incomingMessageId || 0);
+  return Number.isSafeInteger(incomingId) && incomingId > currentId
+    ? incomingId
+    : currentId || null;
+}
+
+function getConfirmedRealtimeChannelIds({
+  confirmedRealtimeActivityByChannel
+}: {
+  confirmedRealtimeActivityByChannel: ConfirmedRealtimeActivityByChannel;
+}) {
+  const confirmedChannelIds = new Set<number>();
+  for (const [channelId, activityByScope] of Object.entries(
+    confirmedRealtimeActivityByChannel || {}
+  )) {
+    if (
+      Object.values(activityByScope || {}).some((scopeActivity) =>
+        wasRealtimeActivityConfirmed(scopeActivity)
+      )
+    ) {
+      confirmedChannelIds.add(Number(channelId));
+    }
+  }
+  return confirmedChannelIds;
+}
+
+function mergeNewestFirstMessageIds({
+  currentMessageIds = [],
+  serverMessageIds = [],
+  messagesObj
+}: {
+  currentMessageIds?: Array<number | string>;
+  serverMessageIds?: Array<number | string>;
+  messagesObj: Record<string, any>;
+}) {
+  const seenIds = new Set<string>();
+  const mergedIds: Array<{
+    id: number | string;
+    firstSeenIndex: number;
+  }> = [];
+  for (const id of currentMessageIds.concat(serverMessageIds)) {
+    const idKey = String(id);
+    if (seenIds.has(idKey)) continue;
+    seenIds.add(idKey);
+    mergedIds.push({ id, firstSeenIndex: mergedIds.length });
+  }
+
+  mergedIds.sort((first, second) => {
+    const firstNumericId = Number(first.id);
+    const secondNumericId = Number(second.id);
+    if (
+      Number.isFinite(firstNumericId) &&
+      Number.isFinite(secondNumericId) &&
+      firstNumericId !== secondNumericId
+    ) {
+      return secondNumericId - firstNumericId;
+    }
+
+    const firstTimeStamp = Number(messagesObj?.[first.id]?.timeStamp || 0);
+    const secondTimeStamp = Number(messagesObj?.[second.id]?.timeStamp || 0);
+    if (firstTimeStamp !== secondTimeStamp) {
+      return secondTimeStamp - firstTimeStamp;
+    }
+    return first.firstSeenIndex - second.firstSeenIndex;
+  });
+
+  return mergedIds.map(({ id }) => id);
 }
 
 function updateCardIdMembership(
@@ -94,7 +1112,10 @@ function getBuildContributionMembershipKey({
     : '';
 }
 
-function getBuildContributionInviteStatus(invite: any, fallbackStatus?: string) {
+function getBuildContributionInviteStatus(
+  invite: any,
+  fallbackStatus?: string
+) {
   const status = String(invite?.status || fallbackStatus || '').trim();
   if (
     status === 'accepted' ||
@@ -405,11 +1426,7 @@ function updateBuildCollaborationState(
     request?: Record<string, any> | null;
     requestId?: number;
     requestStatus?:
-      | 'pending'
-      | 'invited'
-      | 'accepted'
-      | 'rejected'
-      | 'canceled';
+      'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
     eventTimeMs?: number;
     timeStamp?: number;
   }
@@ -492,7 +1509,7 @@ export default function ChatReducer(
     type: string;
     [key: string]: any;
   }
-) {
+): any {
   switch (action.type) {
     case 'BUMP_CHESS_THEME_VERSION': {
       return {
@@ -721,253 +1738,225 @@ export default function ChatReducer(
         )
       };
     }
-    case 'ADD_REACTION_TO_MESSAGE': {
-      const prevChannelObj = state.channelsObj[action.channelId];
-      const message =
-        (action.subchannelId
-          ? prevChannelObj?.subchannelObj?.[action.subchannelId]?.messagesObj?.[
-              action.messageId
-            ]
-          : prevChannelObj?.messagesObj?.[action.messageId]) || {};
-      const reactions = (message.reactions || [])
-        .filter((reaction: { userId: number; type: string }) => {
-          return (
-            reaction.userId !== action.userId ||
-            reaction.type !== action.reaction
-          );
-        })
-        .concat({
-          userId: action.userId,
-          type: action.reaction
-        });
-      const subchannelObj = action.subchannelId
-        ? {
-            ...prevChannelObj?.subchannelObj,
-            [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-              messagesObj: {
-                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
-                  ?.messagesObj,
-                [action.messageId]: {
-                  ...message,
-                  reactions
-                }
-              }
-            }
-          }
-        : prevChannelObj?.subchannelObj;
-      return {
-        ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...prevChannelObj,
-            messagesObj: {
-              ...prevChannelObj?.messagesObj,
-              [action.messageId]: {
-                ...message,
-                reactions
-              }
-            },
-            ...(subchannelObj ? { subchannelObj } : {})
-          }
-        }
-      };
-    }
-    case 'CLEAR_SUBCHANNEL_UNREADS': {
-      const prevChannelObj = state.channelsObj[action.channelId];
-      const subchannelObj = {
-        ...prevChannelObj?.subchannelObj,
-        [action.subchannelId]: {
-          ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-          numUnreads: 0
-        }
-      };
-      return {
-        ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...prevChannelObj,
-            subchannelObj
-          }
-        }
-      };
-    }
-    case 'REMOVE_REACTION_FROM_MESSAGE': {
-      const prevChannelObj = state.channelsObj[action.channelId];
-      if (!prevChannelObj) return state;
-      const message =
-        (action.subchannelId
-          ? prevChannelObj?.subchannelObj?.[action.subchannelId]?.messagesObj?.[
-              action.messageId
-            ]
-          : prevChannelObj?.messagesObj?.[action.messageId]) || {};
-      const reactions = (message.reactions || []).filter(
-        (reaction: { userId: number; type: string }) => {
-          return (
-            reaction.userId !== action.userId ||
-            reaction.type !== action.reaction
-          );
-        }
+    case 'APPLY_CANONICAL_CHAT_REACTION': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.ownerUserId)) {
+        return state;
+      }
+      const update = action.update || {};
+      const channelId = Number(update.channelId || 0);
+      const messageId = Number(update.messageId || 0);
+      const subchannelId = Number(update.subchannelId || 0);
+      const incomingMessageRevision = Number(update.reactionStateRevision || 0);
+      const incomingActivityRevision = Number(
+        update.channelActivity?.revision || 0
       );
-
-      const loadedSettings = loadChannelSettings(prevChannelObj?.settings);
-      const lastReaction = loadedSettings?.lastReaction || null;
-      const shouldClearLastReaction =
-        !!lastReaction &&
-        Number(lastReaction.messageId) === Number(action.messageId) &&
-        Number(lastReaction.userId) === Number(action.userId) &&
-        lastReaction.reaction === action.reaction &&
-        Number(lastReaction.subchannelId || 0) ===
-          Number(action.subchannelId || 0);
-      const updatedSettings = shouldClearLastReaction
-        ? (() => {
-            const nextSettings = { ...loadedSettings };
-            delete nextSettings.lastReaction;
-            return nextSettings;
-          })()
-        : loadedSettings;
-
-      let subchannelObj = action.subchannelId
-        ? {
-            ...prevChannelObj?.subchannelObj,
-            [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-              messagesObj: {
-                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
-                  ?.messagesObj,
-                [action.messageId]: {
-                  ...message,
-                  reactions
-                }
-              }
-            }
-          }
-        : prevChannelObj?.subchannelObj;
-
-      const updatedMessagesObj = {
-        ...state.channelsObj[action.channelId]?.messagesObj,
-        [action.messageId]: {
-          ...message,
-          reactions
-        }
-      };
-
-      let updatedChannelState: any = {
-        ...state.channelsObj[action.channelId],
-        messagesObj: updatedMessagesObj,
-        ...(subchannelObj ? { subchannelObj } : {})
-      };
-
-      if (shouldClearLastReaction) {
-        const getLastMessageTimeStamp = () => {
-          let result = 0;
-          const lastChannelMessageId = updatedChannelState?.messageIds?.[0];
-          const lastChannelMessageTimeStamp = Number(
-            updatedChannelState?.messagesObj?.[lastChannelMessageId]?.timeStamp
-          );
-          if (!isNaN(lastChannelMessageTimeStamp)) {
-            result = Math.max(result, lastChannelMessageTimeStamp);
-          }
-          for (const sub of Object.values(
-            updatedChannelState?.subchannelObj || {}
-          ) as any[]) {
-            const lastSubMessageId = sub?.messageIds?.[0];
-            const lastSubMessageTimeStamp = Number(
-              sub?.messagesObj?.[lastSubMessageId]?.timeStamp
-            );
-            if (!isNaN(lastSubMessageTimeStamp)) {
-              result = Math.max(result, lastSubMessageTimeStamp);
-            }
-          }
-          return result;
-        };
-
-        const nextChannelState: any = {
-          ...updatedChannelState,
-          settings: updatedSettings,
-          // Mirror the backend behavior: when the latest persisted reaction is removed,
-          // revert lastUpdated to the most recent message timestamp.
-          lastUpdated: getLastMessageTimeStamp()
-        };
-
-        // Reaction adds only ever bump unread counts for DMs (twoPeople), so
-        // only DMs roll them back here. A group channel can still carry a
-        // legacy lastReaction in settings; clearing it must not eat unreads
-        // that reaction adds never created.
-        const shouldAdjustUnreads = !!prevChannelObj.twoPeople;
-
-        const targetSubchannelId = Number(action.subchannelId) || 0;
-        if (shouldAdjustUnreads && targetSubchannelId > 0) {
-          const prevSub = nextChannelState?.subchannelObj?.[targetSubchannelId];
-          if (prevSub) {
-            const nextSubNumUnreads = Math.max(
-              0,
-              Number(prevSub?.numUnreads || 0) - 1
-            );
-            subchannelObj = {
-              ...(nextChannelState?.subchannelObj || {}),
-              [targetSubchannelId]: {
-                ...prevSub,
-                numUnreads: nextSubNumUnreads,
-                ...(nextSubNumUnreads === 0
-                  ? {
-                      lastUnreadUserId: null,
-                      lastUnreadReaction: null,
-                      lastUnreadMessageId: null,
-                      lastUnreadReactionTimeStamp: null
-                    }
-                  : {})
-              }
-            };
-            nextChannelState.subchannelObj = subchannelObj;
-          }
-        } else if (shouldAdjustUnreads) {
-          nextChannelState.numUnreads = Math.max(
-            0,
-            Number(nextChannelState?.numUnreads || 0) - 1
-          );
-        }
-
-        const totalNumUnreads = (() => {
-          let total = Number(nextChannelState?.numUnreads || 0);
-          for (const sub of Object.values(
-            nextChannelState?.subchannelObj || {}
-          ) as any[]) {
-            total += Number(sub?.numUnreads || 0);
-          }
-          return total;
-        })();
-
-        // If this removal clears the last unread marker, clear the metadata too.
-        if (shouldAdjustUnreads && totalNumUnreads === 0) {
-          nextChannelState.lastUnreadUserId = null;
-          nextChannelState.lastUnreadReaction = null;
-          nextChannelState.lastUnreadMessageId = null;
-          nextChannelState.lastUnreadReactionTimeStamp = null;
-        } else if (
-          Number(nextChannelState?.lastUnreadMessageId || 0) ===
-            Number(action.messageId) &&
-          nextChannelState?.lastUnreadReaction === action.reaction &&
-          Number(nextChannelState?.lastUnreadUserId || 0) ===
-            Number(action.userId)
-        ) {
-          nextChannelState.lastUnreadReaction = null;
-          nextChannelState.lastUnreadMessageId = null;
-          nextChannelState.lastUnreadReactionTimeStamp = null;
-        }
-
-        updatedChannelState = nextChannelState;
+      if (
+        channelId <= 0 ||
+        messageId <= 0 ||
+        incomingMessageRevision <= 0 ||
+        (update.mutation !== 'add' && update.mutation !== 'remove') ||
+        !Array.isArray(update.reactions)
+      ) {
+        return state;
       }
 
-      return {
-        ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: updatedChannelState
+      const initialChannel = state.channelsObj[channelId];
+      const existingActivityRevision = Number(
+        loadChannelSettings(initialChannel?.settings)
+          .reactionActivityRevision || 0
+      );
+      // Message snapshots and activity markers are separate projections. A
+      // newer activity snapshot may already have won while an older HTTP
+      // response was in flight; keep its message revision eligible, but never
+      // let the older activity envelope recreate unread/bootstrap markers.
+      const stateWithConfirmedReactionMarkers =
+        incomingActivityRevision > 0 &&
+        incomingActivityRevision < existingActivityRevision
+          ? state
+          : reconcileConfirmedReactionMarkers({ state, action, update });
+      const prevChannelObj =
+        stateWithConfirmedReactionMarkers.channelsObj[channelId];
+      const message = getChannelMessage({
+        channel: prevChannelObj,
+        messageId,
+        subchannelId
+      });
+      const currentMessageRevision = Number(
+        message.reactionStateServerRevision || 0
+      );
+      // The message list and DM preview are independent canonical projections:
+      // a reaction revision from one message cannot order channel activity
+      // against a reaction on another message.
+      const stateWithCanonicalReactions =
+        message?.id && incomingMessageRevision >= currentMessageRevision
+          ? {
+              ...stateWithConfirmedReactionMarkers,
+              channelsObj: {
+                ...stateWithConfirmedReactionMarkers.channelsObj,
+                [channelId]: setMessageReactionsOnChannel({
+                  channel: prevChannelObj,
+                  messageId,
+                  subchannelId,
+                  reactions: update.reactions,
+                  reactionStateRevision: incomingMessageRevision
+                })
+              }
+            }
+          : stateWithConfirmedReactionMarkers;
+      const stateWithCanonicalActivitySnapshot =
+        update.twoPeople &&
+        incomingActivityRevision > 0 &&
+        incomingActivityRevision >= existingActivityRevision &&
+        stateWithCanonicalReactions.channelsObj[channelId]
+          ? {
+              ...stateWithCanonicalReactions,
+              channelsObj: {
+                ...stateWithCanonicalReactions.channelsObj,
+                [channelId]: setCanonicalReactionActivityOnChannel({
+                  channel: stateWithCanonicalReactions.channelsObj[channelId],
+                  channelActivity: update.channelActivity
+                })
+              }
+            }
+          : stateWithCanonicalReactions;
+      const appliedActivityRevision = Math.max(
+        Number(
+          stateWithConfirmedReactionMarkers
+            .appliedReactionActivityRevisionsByChannel?.[channelId] || 0
+        ),
+        existingActivityRevision
+      );
+      const shouldApplyActivityEvent =
+        update.changed &&
+        update.twoPeople &&
+        update.channelActivity?.changed &&
+        incomingActivityRevision > appliedActivityRevision;
+      if (!shouldApplyActivityEvent) {
+        const stateWithActivityWatermark =
+          update.changed && update.twoPeople && incomingActivityRevision > 0
+            ? {
+                ...stateWithCanonicalActivitySnapshot,
+                appliedReactionActivityRevisionsByChannel: {
+                  ...(stateWithCanonicalActivitySnapshot.appliedReactionActivityRevisionsByChannel ||
+                    {}),
+                  [channelId]: Math.max(
+                    appliedActivityRevision,
+                    incomingActivityRevision
+                  )
+                }
+              }
+            : stateWithCanonicalActivitySnapshot;
+        return bufferCanonicalReactionUpdateDuringBootstrap({
+          state: stateWithActivityWatermark,
+          action,
+          update
+        });
+      }
+
+      const stateWithCanonicalActivity =
+        update.mutation === 'add'
+          ? ChatReducer(stateWithCanonicalActivitySnapshot, {
+              type: 'APPLY_CANONICAL_REACTION_ADD_ACTIVITY',
+              channelId,
+              messageId,
+              reaction: update.reaction,
+              subchannelId,
+              userId: Number(update.userId),
+              pageVisible: action.pageVisible,
+              usingChat: action.usingChat,
+              timeStamp: Number(update.timeStamp || 0),
+              shouldIncrementUnreads: action.shouldIncrementUnreads
+            })
+          : stateWithCanonicalActivitySnapshot;
+
+      return bufferCanonicalReactionUpdateDuringBootstrap({
+        state: {
+          ...stateWithCanonicalActivity,
+          appliedReactionActivityRevisionsByChannel: {
+            ...(stateWithCanonicalActivity.appliedReactionActivityRevisionsByChannel ||
+              {}),
+            [channelId]: incomingActivityRevision
+          }
+        },
+        action,
+        update
+      });
+    }
+    case 'APPLY_CANONICAL_CHANNEL_UNREAD_STATE': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
+      const unreadState = action.unreadState || {};
+      const channelId = Number(unreadState.channelId || 0);
+      const subchannelId = Number(unreadState.subchannelId || 0);
+      const incomingActivityRevision = Number(
+        unreadState.reactionActivityRevision || 0
+      );
+      if (channelId <= 0 || !unreadState.channel) return state;
+
+      const prevChannel = state.channelsObj[channelId];
+      const currentActivityRevision = Number(
+        loadChannelSettings(prevChannel?.settings).reactionActivityRevision || 0
+      );
+      if (prevChannel && incomingActivityRevision < currentActivityRevision) {
+        return state;
+      }
+
+      let nextState = state;
+      if (prevChannel) {
+        let nextChannel = prevChannel;
+        let appliedCanonicalReadState = false;
+        const incomingChannelLastRead = Number(
+          unreadState.channel?.lastRead || 0
+        );
+        const currentChannelLastRead = Number(prevChannel.lastRead || 0);
+        if (incomingChannelLastRead >= currentChannelLastRead) {
+          nextChannel = applyCanonicalUnreadScope(
+            nextChannel,
+            unreadState.channel
+          );
+          appliedCanonicalReadState = true;
         }
-      };
+        if (subchannelId > 0 && unreadState.subchannel) {
+          const previousSubchannel =
+            prevChannel.subchannelObj?.[subchannelId] || {};
+          const incomingSubchannelLastRead = Number(
+            unreadState.subchannel.lastRead || 0
+          );
+          const currentSubchannelLastRead = Number(
+            previousSubchannel.lastRead || 0
+          );
+          if (incomingSubchannelLastRead >= currentSubchannelLastRead) {
+            nextChannel = {
+              ...nextChannel,
+              subchannelObj: {
+                ...(nextChannel.subchannelObj || {}),
+                [subchannelId]: applyCanonicalUnreadScope(
+                  previousSubchannel,
+                  unreadState.subchannel
+                )
+              }
+            };
+            appliedCanonicalReadState = true;
+          }
+        }
+        if (!appliedCanonicalReadState) {
+          return state;
+        }
+        nextState = {
+          ...state,
+          channelsObj: {
+            ...state.channelsObj,
+            [channelId]: nextChannel
+          }
+        };
+      }
+
+      return bufferCanonicalUnreadStateDuringBootstrap({
+        state: nextState,
+        unreadState,
+        eventSequence: action.eventSequence
+      });
     }
     case 'EDIT_CHANNEL_SETTINGS':
       return {
@@ -1231,18 +2220,16 @@ export default function ChatReducer(
         }
       };
     case 'CREATE_NEW_CHANNEL': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
       const { channelId } = action.data.message;
       const startMessageId = uuidv1();
-      return {
+      const nextState = {
         ...state,
         chatType: null,
         subject: {},
         homeChannelIds: [channelId].concat(state.homeChannelIds),
-        favoriteChannelIds: [channelId].concat(state.favoriteChannelIds),
-        allFavoriteChannelIds: {
-          ...state.allFavoriteChannelIds,
-          [channelId]: true
-        },
         classChannelIds: action.data.isClass
           ? [channelId].concat(state.classChannelIds)
           : state.classChannelIds,
@@ -1272,10 +2259,20 @@ export default function ChatReducer(
         },
         selectedChannelId: channelId
       };
+      return action.data.favoriteState
+        ? ChatReducer(nextState, {
+            type: 'APPLY_CANONICAL_FAVORITE_STATE',
+            ...action.data.favoriteState,
+            userId: action.userId
+          })
+        : nextState;
     }
     case 'CREATE_NEW_DM_CHANNEL': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
       const messageId = action.message?.id || uuidv1();
-      return {
+      const nextState = {
         ...state,
         subject: {},
         homeChannelIds: [
@@ -1301,6 +2298,13 @@ export default function ChatReducer(
               }
             })
       };
+      return action.quickAccess
+        ? ChatReducer(nextState, {
+            type: 'APPLY_CANONICAL_QUICK_ACCESS',
+            quickAccess: action.quickAccess,
+            userId: action.userId
+          })
+        : nextState;
     }
     case 'DELETE_AI_CHAT_FILE': {
       return {
@@ -1337,6 +2341,15 @@ export default function ChatReducer(
     }
     case 'DELETE_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
+      const deletedMessage = getChannelMessage({
+        channel: prevChannelObj,
+        messageId: action.messageId,
+        subchannelId: action.subchannelId
+      });
+      const deletedSubchannelId =
+        Number(action.subchannelId || deletedMessage?.subchannelId || 0) ||
+        null;
+      const realtimeEventKey = getRealtimeMessageEventKey(action.messageId);
       const subchannelObj = action.subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
@@ -1350,9 +2363,21 @@ export default function ChatReducer(
             }
           }
         : prevChannelObj?.subchannelObj;
-
-      return {
+      const nextState = {
         ...state,
+        confirmedRealtimeActivityByChannel: removeConfirmedRealtimeActivity({
+          activityByChannel: state.confirmedRealtimeActivityByChannel,
+          channelId: action.channelId,
+          subchannelId: deletedSubchannelId,
+          eventKey: realtimeEventKey
+        }),
+        confirmedRealtimeUnreadActivityByChannel:
+          removeConfirmedRealtimeActivity({
+            activityByChannel: state.confirmedRealtimeUnreadActivityByChannel,
+            channelId: action.channelId,
+            subchannelId: deletedSubchannelId,
+            eventKey: realtimeEventKey
+          }),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -1379,6 +2404,13 @@ export default function ChatReducer(
           }
         }
       };
+      return bufferConfirmedMessageDeletionDuringBootstrap({
+        state: nextState,
+        action: {
+          ...action,
+          subchannelId: deletedSubchannelId
+        }
+      });
     }
     case 'CANCEL_AI_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
@@ -1599,8 +2631,30 @@ export default function ChatReducer(
       };
     }
     case 'ENTER_CHANNEL': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
       let messagesLoadMoreButton = false;
-      const loadedChannel = action.data.channel;
+      const serverLoadedChannel = action.data.channel;
+      let channelVisibilityById = mergeCanonicalChannelVisibility({
+        visibilityById: state.channelVisibilityById || {},
+        visibility: getCanonicalChannelVisibilityFromChannel(
+          state.channelsObj[serverLoadedChannel.id]
+        )
+      });
+      channelVisibilityById = mergeCanonicalChannelVisibility({
+        visibilityById: channelVisibilityById,
+        visibility:
+          getCanonicalChannelVisibilityFromChannel(serverLoadedChannel)
+      });
+      channelVisibilityById = mergeCanonicalChannelVisibility({
+        visibilityById: channelVisibilityById,
+        visibility: action.data.channelVisibility
+      });
+      const loadedChannel = applyCanonicalChannelVisibility({
+        channel: serverLoadedChannel,
+        visibility: channelVisibilityById[serverLoadedChannel.id]
+      });
       const existingLoadedChannel = state.channelsObj[loadedChannel.id] || {};
       const mergedChannelSettings = mergeChannelSettings({
         existingSettings: existingLoadedChannel?.settings,
@@ -1630,6 +2684,18 @@ export default function ChatReducer(
             ...action.data.channel?.subchannelObj?.[
               action.data.currentSubchannelId
             ],
+            lastRead: Math.max(
+              Number(
+                state.channelsObj[loadedChannel.id]?.subchannelObj?.[
+                  action.data.currentSubchannelId
+                ]?.lastRead || 0
+              ),
+              Number(
+                action.data.channel?.subchannelObj?.[
+                  action.data.currentSubchannelId
+                ]?.lastRead || 0
+              )
+            ),
             messageIds:
               action.data.channel?.subchannelObj[
                 action.data.currentSubchannelId
@@ -1658,30 +2724,17 @@ export default function ChatReducer(
         };
       }
 
-      // Deep merge topicObj to preserve each topic's loaded state and messageIds (socket reconnect fix)
-      const existingTopicObj =
-        state.channelsObj[loadedChannel.id]?.topicObj || {};
-      const mergedTopicObj: Record<string, any> = { ...existingTopicObj };
-      if (loadedChannel.topicObj) {
-        for (const topicId in loadedChannel.topicObj) {
-          const existingTopic = existingTopicObj[topicId];
-          const serverTopic = loadedChannel.topicObj[topicId];
-          mergedTopicObj[topicId] = {
-            ...existingTopic,
-            ...serverTopic,
-            // Preserve critical client-side state if topic was already loaded
-            ...(existingTopic?.loaded
-              ? {
-                  loaded: true,
-                  messageIds: existingTopic.messageIds
-                }
-              : {})
-          };
-        }
-      }
+      const mergedTopicObj = resetTopicMessageCachesForCanonicalChannelLoad(
+        loadedChannel.topicObj
+      );
+      const canonicalTopicNavigation = reconcileCanonicalTopicNavigation({
+        existingChannel: existingLoadedChannel,
+        canonicalTopicObj: mergedTopicObj
+      });
 
-      return {
+      const enteredState = {
         ...state,
+        channelVisibilityById,
         selectedChatTab: determineSelectedChatTab({
           currentSelectedChatTab: state.selectedChatTab,
           selectedChannel: loadedChannel
@@ -1700,6 +2753,10 @@ export default function ChatReducer(
             : {}),
           [loadedChannel.id]: {
             ...loadedChannel,
+            lastRead: Math.max(
+              Number(existingLoadedChannel.lastRead || 0),
+              Number(loadedChannel.lastRead || 0)
+            ),
             lastUpdated: mergedChannelLastUpdated,
             settings: mergedChannelSettings,
             messagesLoadMoreButton,
@@ -1711,13 +2768,7 @@ export default function ChatReducer(
             numUnreads: 0,
             isReloadRequired: false,
             legacyTopicObj: state.channelsObj[loadedChannel.id]?.legacyTopicObj,
-            topicHistory:
-              state.channelsObj[loadedChannel.id]?.topicHistory || [],
-            currentTopicIndex:
-              state.channelsObj[loadedChannel.id]?.currentTopicIndex ?? -1,
-            selectedTab: state.channelsObj[loadedChannel.id]?.selectedTab,
-            selectedTopicId:
-              state.channelsObj[loadedChannel.id]?.selectedTopicId,
+            ...canonicalTopicNavigation,
             topicObj: mergedTopicObj,
             loaded: true,
             ...(action.data.currentSubchannelId
@@ -1736,6 +2787,13 @@ export default function ChatReducer(
         },
         selectedChannelId: loadedChannel.id
       };
+      return action.data.quickAccess
+        ? ChatReducer(enteredState, {
+            type: 'APPLY_CANONICAL_QUICK_ACCESS',
+            quickAccess: action.data.quickAccess,
+            userId: action.userId
+          })
+        : enteredState;
     }
     case 'ENTER_EMPTY_CHAT':
       return {
@@ -1941,17 +2999,43 @@ export default function ChatReducer(
         }
       };
     }
-    case 'HIDE_CHAT':
+    case 'START_CHAT_BOOTSTRAP': {
+      const isSwitchingUsers =
+        state.prevUserId != null &&
+        Number(state.prevUserId) !== Number(action.userId);
+      // Revisions are meaningful only inside one user's projection. Clear the
+      // previous account's baselines before accepting events for the newly
+      // bound user; otherwise a larger old revision can suppress the new
+      // user's first canonical snapshot.
+      const bootstrapBaseState = isSwitchingUsers
+        ? { ...state, ...initialChatState }
+        : state;
+      return {
+        ...bootstrapBaseState,
+        activeChatBootstrap: {
+          id: action.bootstrapId,
+          userId: action.userId,
+          startedAt: action.startedAt
+        },
+        canonicalReactionUpdatesDuringBootstrap: {},
+        canonicalUnreadStatesDuringBootstrap: {},
+        confirmedRealtimeActivityByChannel: {},
+        confirmedRealtimeUnreadActivityByChannel: {},
+        confirmedMessageDeletionsDuringBootstrap: {}
+      };
+    }
+    case 'FINISH_CHAT_BOOTSTRAP': {
+      if (state.activeChatBootstrap?.id !== action.bootstrapId) return state;
       return {
         ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            isHidden: true
-          }
-        }
+        activeChatBootstrap: null,
+        canonicalReactionUpdatesDuringBootstrap: {},
+        canonicalUnreadStatesDuringBootstrap: {},
+        confirmedRealtimeActivityByChannel: {},
+        confirmedRealtimeUnreadActivityByChannel: {},
+        confirmedMessageDeletionsDuringBootstrap: {}
       };
+    }
     case 'INIT_CHAT': {
       recordChatBootstrapEvent('chat-init-reducer-enter', {
         bootstrapId: action.bootstrapId || null,
@@ -1962,11 +3046,29 @@ export default function ChatReducer(
         currentChannelId: action.data?.currentChannelId ?? null
       });
       if (!action.data?.channelsObj) {
-        recordChatBootstrapEvent('chat-init-reducer-rejected-missing-channels', {
+        recordChatBootstrapEvent(
+          'chat-init-reducer-rejected-missing-channels',
+          {
+            bootstrapId: action.bootstrapId || null,
+            userId: action.userId,
+            prevUserId: state.prevUserId,
+            currentChannelId: action.data?.currentChannelId ?? null
+          }
+        );
+        return state;
+      }
+      const activeBootstrap = state.activeChatBootstrap;
+      const isOwningBootstrap = Boolean(
+        activeBootstrap &&
+        activeBootstrap.id === action.bootstrapId &&
+        Number(activeBootstrap.userId) === Number(action.userId)
+      );
+      if (!isOwningBootstrap) {
+        recordChatBootstrapEvent('chat-init-reducer-rejected-non-owner', {
           bootstrapId: action.bootstrapId || null,
+          activeBootstrapId: activeBootstrap?.id || null,
           userId: action.userId,
-          prevUserId: state.prevUserId,
-          currentChannelId: action.data?.currentChannelId ?? null
+          activeBootstrapUserId: activeBootstrap?.userId || null
         });
         return state;
       }
@@ -1977,15 +3079,16 @@ export default function ChatReducer(
       let messagesLoadMoreButton = false;
       let classLoadMoreButton = false;
       let homeLoadMoreButton = false;
-      let favoriteLoadMoreButton = false;
+      let favoriteLoadMoreButton = Boolean(action.data.favoriteLoadMoreButton);
       let vocabFeedsLoadMoreButton = false;
       const newMessageIds = action.data.messageIds
         ? [...action.data.messageIds]
         : null;
-      const newMessagesObj = {
-        ...state.channelsObj[action.data.currentChannelId]?.messagesObj,
-        ...action.data.messagesObj
-      };
+      const newMessagesObj = mergeMessagesPreservingNewerReactionState({
+        existingMessagesObj:
+          state.channelsObj[action.data.currentChannelId]?.messagesObj,
+        serverMessagesObj: action.data.messagesObj
+      });
       if (newMessageIds && newMessageIds.length === 21) {
         newMessageIds.pop();
         messagesLoadMoreButton = true;
@@ -2010,54 +3113,235 @@ export default function ChatReducer(
       const newChannelsObj: Record<string, any> = {
         ...state.channelsObj
       };
+      let channelVisibilityById: CanonicalChannelVisibilityById = {
+        ...(state.channelVisibilityById || {})
+      };
+      const isSameLoadedUser = action.userId === state.prevUserId;
+      const bufferedReactionUpdates = Object.values(
+        state.canonicalReactionUpdatesDuringBootstrap || {}
+      ).sort(
+        (a: any, b: any) =>
+          Number(a.eventSequence || 0) - Number(b.eventSequence || 0)
+      );
+      const bufferedUnreadStates = Object.values(
+        state.canonicalUnreadStatesDuringBootstrap || {}
+      );
+      const bufferedMessageDeletions = Object.values(
+        state.confirmedMessageDeletionsDuringBootstrap || {}
+      ).sort(
+        (a: any, b: any) =>
+          Number(a.eventSequence || 0) - Number(b.eventSequence || 0)
+      );
+      const confirmedRealtimeChannelIds = getConfirmedRealtimeChannelIds({
+        confirmedRealtimeActivityByChannel:
+          state.confirmedRealtimeActivityByChannel || {}
+      });
+      const preservedRealtimeActivity = confirmedRealtimeChannelIds.size > 0;
+      const currentFavoriteStateRevision = Number(
+        state.favoriteStateRevision || 0
+      );
+      const bootstrapFavoriteStateRevision = Number(
+        action.data.favoriteStateRevision || 0
+      );
+      // A higher local revision may only outrank the bootstrap snapshot when
+      // the bootstrapping user owns it. Revisions are per-user counters, so a
+      // previous account's leftover revision would otherwise beat the current
+      // account's canonical bootstrap and preserve the wrong user's private
+      // sidebar state.
+      const shouldPreserveFavoriteState =
+        currentFavoriteStateRevision > bootstrapFavoriteStateRevision &&
+        Number(state.favoriteStateOwnerId || 0) === Number(action.userId);
+      const shouldPreserveQuickAccess =
+        Number(state.quickAccess?.revision || 0) >
+          Number(action.data.quickAccess?.revision || 0) &&
+        Number(state.quickAccessOwnerId || 0) === Number(action.userId);
       for (const channelId in action.data.channelsObj) {
         const existingChannel = state.channelsObj[channelId];
         const serverChannel = action.data.channelsObj[channelId];
-        const mergedSettings = mergeChannelSettings({
-          existingSettings: existingChannel?.settings,
-          serverSettings: serverChannel?.settings
+        channelVisibilityById = mergeCanonicalChannelVisibility({
+          visibilityById: channelVisibilityById,
+          visibility: getCanonicalChannelVisibilityFromChannel(existingChannel)
         });
-        const mergedLastUpdated = Math.max(
-          Number(existingChannel?.lastUpdated || 0),
-          Number(serverChannel?.lastUpdated || 0),
-          Number(mergedSettings?.lastReaction?.timeStamp || 0)
+        channelVisibilityById = mergeCanonicalChannelVisibility({
+          visibilityById: channelVisibilityById,
+          visibility: getCanonicalChannelVisibilityFromChannel(serverChannel)
+        });
+        const confirmedActivity =
+          state.confirmedRealtimeActivityByChannel?.[channelId] || {};
+        const confirmedUnreadActivity =
+          state.confirmedRealtimeUnreadActivityByChannel?.[channelId] || {};
+        const rootActivityArrivedDuringBootstrap = wasRealtimeActivityConfirmed(
+          confirmedActivity[ROOT_REALTIME_ACTIVITY_SCOPE]
         );
-        // Deep merge topicObj to preserve each topic's loaded state and messageIds
-        const mergedTopicObj: Record<string, any> = {
-          ...existingChannel?.topicObj
-        };
-        if (serverChannel?.topicObj) {
-          for (const topicId in serverChannel.topicObj) {
-            const existingTopic = existingChannel?.topicObj?.[topicId];
-            const serverTopic = serverChannel.topicObj[topicId];
-            mergedTopicObj[topicId] = {
-              ...existingTopic,
-              ...serverTopic,
-              // Preserve critical client-side state if topic was already loaded
-              ...(existingTopic?.loaded
-                ? {
-                    loaded: true,
-                    messageIds: existingTopic.messageIds
-                  }
+        const rootUnreadArrivedDuringBootstrap = wasRealtimeActivityConfirmed(
+          confirmedUnreadActivity[ROOT_REALTIME_ACTIVITY_SCOPE]
+        );
+        const activeSubchannelIds = Object.entries(confirmedActivity)
+          .filter(
+            ([scope, scopeActivity]) =>
+              scope !== ROOT_REALTIME_ACTIVITY_SCOPE &&
+              wasRealtimeActivityConfirmed(scopeActivity)
+          )
+          .map(([scope]) => Number(scope))
+          .filter((subchannelId) => subchannelId > 0);
+        const activeUnreadSubchannelIds = new Set(
+          Object.entries(confirmedUnreadActivity)
+            .filter(
+              ([scope, scopeActivity]) =>
+                scope !== ROOT_REALTIME_ACTIVITY_SCOPE &&
+                wasRealtimeActivityConfirmed(scopeActivity)
+            )
+            .map(([scope]) => Number(scope))
+            .filter((subchannelId) => subchannelId > 0)
+        );
+        const shouldPreserveRealtimeActivity = confirmedRealtimeChannelIds.has(
+          Number(channelId)
+        );
+        const mergedSettings = shouldPreserveRealtimeActivity
+          ? mergeChannelSettings({
+              existingSettings: existingChannel?.settings,
+              serverSettings: serverChannel?.settings
+            })
+          : loadChannelSettings(serverChannel?.settings);
+        const mergedLastUpdated = shouldPreserveRealtimeActivity
+          ? Math.max(
+              Number(existingChannel?.lastUpdated || 0),
+              Number(serverChannel?.lastUpdated || 0),
+              Number(mergedSettings?.lastReaction?.timeStamp || 0)
+            )
+          : Number(serverChannel?.lastUpdated || 0);
+        const hasCanonicalTopicCatalog =
+          Number(channelId) === Number(action.data.currentChannelId);
+        const mergedTopicObj = resetTopicMessageCachesForCanonicalChannelLoad(
+          hasCanonicalTopicCatalog
+            ? serverChannel?.topicObj
+            : existingChannel?.topicObj
+        );
+        // Bootstrap summaries omit topic catalogs for noncurrent channels.
+        // Invalidate their message-page caches, but wait for the later detailed
+        // channel load before deciding whether a topic/navigation entry still
+        // exists. The current channel's detailed writer snapshot can reconcile
+        // that state immediately.
+        const canonicalTopicNavigation = hasCanonicalTopicCatalog
+          ? reconcileCanonicalTopicNavigation({
+              existingChannel,
+              canonicalTopicObj: mergedTopicObj
+            })
+          : {
+              selectedTab: existingChannel?.selectedTab,
+              selectedTopicId: existingChannel?.selectedTopicId,
+              topicHistory: existingChannel?.topicHistory || [],
+              currentTopicIndex: existingChannel?.currentTopicIndex ?? -1
+            };
+        let mergedSubchannelObj = serverChannel?.subchannelObj;
+        if (serverChannel?.subchannelObj) {
+          mergedSubchannelObj = {};
+          for (const subchannelId in serverChannel.subchannelObj) {
+            const existingSubchannel =
+              existingChannel?.subchannelObj?.[subchannelId];
+            const serverSubchannel = serverChannel.subchannelObj[subchannelId];
+            mergedSubchannelObj[subchannelId] = {
+              ...serverSubchannel,
+              ...getLatestCanonicalUnreadScopeState({
+                existingSource: existingSubchannel,
+                serverSource: serverSubchannel
+              }),
+              messagesObj: mergeMessagesPreservingNewerReactionState({
+                existingMessagesObj: existingSubchannel?.messagesObj,
+                serverMessagesObj: serverSubchannel?.messagesObj
+              })
+            };
+          }
+        }
+        if (activeSubchannelIds.length > 0) {
+          mergedSubchannelObj = { ...(mergedSubchannelObj || {}) };
+          for (const subchannelId of activeSubchannelIds) {
+            const existingSubchannel =
+              existingChannel?.subchannelObj?.[subchannelId] || {};
+            const serverSubchannel = mergedSubchannelObj[subchannelId] || {};
+            const mergedMessagesObj = mergeMessagesPreservingNewerReactionState(
+              {
+                existingMessagesObj: existingSubchannel?.messagesObj,
+                serverMessagesObj: serverSubchannel?.messagesObj
+              }
+            );
+            mergedSubchannelObj[subchannelId] = {
+              ...existingSubchannel,
+              ...serverSubchannel,
+              messageIds: mergeNewestFirstMessageIds({
+                currentMessageIds: getPostBootstrapMessageIds({
+                  source: existingSubchannel,
+                  confirmedScopeActivity: confirmedActivity[subchannelId]
+                }),
+                serverMessageIds: serverSubchannel?.messageIds || [],
+                messagesObj: mergedMessagesObj
+              }),
+              messagesObj: mergedMessagesObj,
+              ...getLatestCanonicalUnreadScopeState({
+                existingSource: existingSubchannel,
+                serverSource: serverSubchannel
+              }),
+              ...(activeUnreadSubchannelIds.has(subchannelId)
+                ? getRebasedConfirmedUnreadActivityState({
+                    serverSource: serverSubchannel,
+                    existingSource: existingSubchannel
+                  })
                 : {})
             };
           }
         }
+        if (shouldPreserveRealtimeActivity) {
+          recordChatBootstrapEvent(
+            'chat-init-preserved-confirmed-realtime-activity',
+            {
+              bootstrapId: action.bootstrapId || null,
+              channelId: Number(channelId),
+              rootActivityArrivedDuringBootstrap,
+              activeSubchannelIds,
+              rootUnreadArrivedDuringBootstrap,
+              activeUnreadSubchannelIds: Array.from(activeUnreadSubchannelIds)
+            }
+          );
+        }
+        const mergedMessagesObj = mergeMessagesPreservingNewerReactionState({
+          existingMessagesObj: existingChannel?.messagesObj,
+          serverMessagesObj: serverChannel?.messagesObj
+        });
+        const reconciledRootMessageIds = rootActivityArrivedDuringBootstrap
+          ? mergeNewestFirstMessageIds({
+              currentMessageIds: getPostBootstrapMessageIds({
+                source: existingChannel,
+                confirmedScopeActivity:
+                  confirmedActivity[ROOT_REALTIME_ACTIVITY_SCOPE]
+              }),
+              serverMessageIds: serverChannel?.messageIds || [],
+              messagesObj: mergedMessagesObj
+            })
+          : serverChannel?.messageIds;
         newChannelsObj[channelId] = {
           ...serverChannel,
           lastUpdated: mergedLastUpdated,
           settings: mergedSettings,
+          ...getLatestCanonicalUnreadScopeState({
+            existingSource: existingChannel,
+            serverSource: serverChannel
+          }),
           // Preserve client-side UI state
-          selectedTab: existingChannel?.selectedTab,
-          selectedTopicId: existingChannel?.selectedTopicId,
-          topicHistory: existingChannel?.topicHistory || [],
-          currentTopicIndex: existingChannel?.currentTopicIndex ?? -1,
+          ...canonicalTopicNavigation,
           topicObj: mergedTopicObj,
-          // Preserve existing messagesObj (topic messages)
-          messagesObj: {
-            ...existingChannel?.messagesObj,
-            ...serverChannel?.messagesObj
-          }
+          // messagesObj intentionally remains a cache, but only canonical IDs
+          // and socket messages explicitly received after bootstrap began may
+          // remain renderable. Merging the full pre-bootstrap ID list here can
+          // resurrect messages deleted on the server while this tab was away.
+          messageIds: reconciledRootMessageIds,
+          messagesObj: mergedMessagesObj,
+          ...(rootUnreadArrivedDuringBootstrap
+            ? getRebasedConfirmedUnreadActivityState({
+                serverSource: serverChannel,
+                existingSource: existingChannel
+              })
+            : {}),
+          ...(mergedSubchannelObj ? { subchannelObj: mergedSubchannelObj } : {})
         };
       }
       const newSubchannelObj: {
@@ -2072,46 +3356,58 @@ export default function ChatReducer(
         for (const subchannel of Object.values<{ id: number }>(
           newCurrentChannel?.subchannelObj
         )) {
+          const reconciledSubchannel =
+            newChannelsObj[action.data.currentChannelId]?.subchannelObj?.[
+              subchannel.id
+            ] || subchannel;
           newSubchannelObj[subchannel.id] = {
             ...(state.channelsObj[action.data.currentChannelId]
               ?.subchannelObj?.[subchannel.id] || {}),
-            ...subchannel
+            ...reconciledSubchannel
           };
         }
       }
       const existingCurrentChannel =
         state.channelsObj[action.data.currentChannelId];
-      const mergedCurrentSettings = mergeChannelSettings({
-        existingSettings: existingCurrentChannel?.settings,
-        serverSettings: newCurrentChannel?.settings
-      });
-      const mergedCurrentLastUpdated = Math.max(
-        Number(existingCurrentChannel?.lastUpdated || 0),
-        Number(newCurrentChannel?.lastUpdated || 0),
-        Number(mergedCurrentSettings?.lastReaction?.timeStamp || 0)
+      const reconciledCurrentChannel =
+        newChannelsObj[action.data.currentChannelId] || newCurrentChannel || {};
+      const currentRootActivityArrivedDuringBootstrap =
+        wasRealtimeActivityConfirmed(
+          state.confirmedRealtimeActivityByChannel?.[
+            action.data.currentChannelId
+          ]?.[ROOT_REALTIME_ACTIVITY_SCOPE]
+        );
+      // The summary merge above is the single recency reconciliation point for
+      // every activity scope. Recomputing these fields from root activity here
+      // used to overwrite a newer subchannel timestamp with bootstrap data.
+      const mergedCurrentSettings = loadChannelSettings(
+        reconciledCurrentChannel.settings
       );
-      const mergedCurrentTopicObj: Record<string, any> = {
-        ...existingCurrentChannel?.topicObj
-      };
-      if (newCurrentChannel?.topicObj) {
-        for (const topicId in newCurrentChannel.topicObj) {
-          const existingTopic = existingCurrentChannel?.topicObj?.[topicId];
-          const serverTopic = newCurrentChannel.topicObj[topicId];
-          mergedCurrentTopicObj[topicId] = {
-            ...existingTopic,
-            ...serverTopic,
-            // Preserve critical client-side state if topic was already loaded
-            ...(existingTopic?.loaded
-              ? {
-                  loaded: true,
-                  messageIds: existingTopic.messageIds
-                }
-              : {})
-          };
+      const mergedCurrentLastUpdated = Number(
+        reconciledCurrentChannel.lastUpdated || 0
+      );
+      const reconciledCurrentMessageIds =
+        currentRootActivityArrivedDuringBootstrap
+          ? mergeNewestFirstMessageIds({
+              // reconciledCurrentChannel already contains only canonical
+              // summary IDs plus explicitly stamped post-bootstrap arrivals.
+              currentMessageIds: reconciledCurrentChannel.messageIds || [],
+              serverMessageIds: newMessageIds || [],
+              messagesObj: newMessagesObj
+            })
+          : newMessageIds;
+      const mergedCurrentTopicObj =
+        resetTopicMessageCachesForCanonicalChannelLoad(
+          newCurrentChannel?.topicObj
+        );
+      const canonicalCurrentTopicNavigation = reconcileCanonicalTopicNavigation(
+        {
+          existingChannel: existingCurrentChannel,
+          canonicalTopicObj: mergedCurrentTopicObj
         }
-      }
+      );
       newChannelsObj[action.data.currentChannelId] = {
-        ...(action.data.channelsObj[action.data.currentChannelId] || {}),
+        ...reconciledCurrentChannel,
         allMemberIds:
           newCurrentChannel?.allMemberIds ||
           action.data.channelsObj[action.data.currentChannelId]?.allMemberIds ||
@@ -2119,16 +3415,13 @@ export default function ChatReducer(
         lastUpdated: mergedCurrentLastUpdated,
         settings: mergedCurrentSettings,
         messagesLoadMoreButton,
-        messageIds: newMessageIds,
+        messageIds: reconciledCurrentMessageIds,
         messagesObj: newMessagesObj,
         recentChessMessage: null,
         recentOmokMessage: null,
         loaded: true,
         // Preserve client-side UI state
-        selectedTab: existingCurrentChannel?.selectedTab,
-        selectedTopicId: existingCurrentChannel?.selectedTopicId,
-        topicHistory: existingCurrentChannel?.topicHistory || [],
-        currentTopicIndex: existingCurrentChannel?.currentTopicIndex ?? -1,
+        ...canonicalCurrentTopicNavigation,
         topicObj: mergedCurrentTopicObj,
         ...(action.data.currentSubchannelId
           ? {
@@ -2140,6 +3433,18 @@ export default function ChatReducer(
             }
           : {})
       };
+      // Visibility revisions are retained independently of channel hydration.
+      // Reapply them after both summary and current-channel reconciliation so
+      // a bootstrap snapshot cannot overwrite an event received mid-load.
+      for (const [channelId, visibility] of Object.entries(
+        channelVisibilityById
+      )) {
+        if (!newChannelsObj[channelId]?.id) continue;
+        newChannelsObj[channelId] = applyCanonicalChannelVisibility({
+          channel: newChannelsObj[channelId],
+          visibility
+        });
+      }
       if (alreadyUsingChat) {
         newChannelsObj[state.selectedChannelId] = {
           ...state.channelsObj[state.selectedChannelId],
@@ -2206,29 +3511,67 @@ export default function ChatReducer(
         aiCardLoadMoreButton: aiCardsLoaded
           ? action.data.aiCardLoadMoreButton
           : state.aiCardLoadMoreButton,
-        allFavoriteChannelIds: action.data.allFavoriteChannelIds,
+        allFavoriteChannelIds: shouldPreserveFavoriteState
+          ? state.allFavoriteChannelIds
+          : action.data.allFavoriteChannelIds,
+        activeChatBootstrap: null,
+        appliedReactionActivityRevisionsByChannel:
+          state.appliedReactionActivityRevisionsByChannel || {},
         cardObj: action.data.cardObj
           ? {
               ...state.cardObj,
               ...action.data.cardObj
             }
           : state.cardObj,
+        channelVisibilityById,
         channelsObj: newChannelsObj,
+        // Every confirmed event recorded for this attempt is now reconciled
+        // into channelsObj/order. Events outside a bootstrap need no markers;
+        // the next attempt records only its own writer-read race window.
+        confirmedRealtimeActivityByChannel: {},
+        confirmedRealtimeUnreadActivityByChannel: {},
+        confirmedMessageDeletionsDuringBootstrap: {},
+        favoriteStateRevision: shouldPreserveFavoriteState
+          ? state.favoriteStateRevision
+          : bootstrapFavoriteStateRevision,
+        // The bootstrap payload is the initing user's canonical state, and
+        // preserved state already passed the same-owner gate above.
+        favoriteStateOwnerId: action.userId,
+        quickAccessOwnerId: action.userId,
         chatType:
-          action.userId === state.prevUserId &&
-          (!state.chatType || !action.data.chatType)
+          isSameLoadedUser && (!state.chatType || !action.data.chatType)
             ? state.chatType
             : action.data.chatType,
         classChannelIds: action.data.classChannelIds,
         classLoadMoreButton,
         collectPreviews: action.data.collectPreviews || {},
         customChannelNames: action.data.customChannelNames,
-        favoriteChannelIds: action.data.favoriteChannelIds,
-        favoriteLoadMoreButton,
-        homeChannelIds: action.data.homeChannelIds,
+        favoriteChannelIds: shouldPreserveFavoriteState
+          ? state.favoriteChannelIds
+          : preservedRealtimeActivity
+            ? mergeConfirmedChannelOrder(
+                state.favoriteChannelIds,
+                action.data.favoriteChannelIds,
+                confirmedRealtimeChannelIds,
+                action.data.allFavoriteChannelIds
+              )
+            : action.data.favoriteChannelIds,
+        favoriteLoadMoreButton: shouldPreserveFavoriteState
+          ? state.favoriteLoadMoreButton
+          : favoriteLoadMoreButton,
+        homeChannelIds: preservedRealtimeActivity
+          ? mergeConfirmedChannelOrder(
+              state.homeChannelIds,
+              action.data.homeChannelIds,
+              confirmedRealtimeChannelIds
+            )
+          : action.data.homeChannelIds,
         homeLoadMoreButton: alreadyUsingChat
           ? state.homeLoadMoreButton
           : homeLoadMoreButton,
+        quickAccess: shouldPreserveQuickAccess
+          ? state.quickAccess
+          : action.data.quickAccess || initialChatState.quickAccess,
         incomingOffers:
           action.userId === state.prevUserId
             ? state.incomingOffers
@@ -2246,8 +3589,8 @@ export default function ChatReducer(
                   newSubchannelObj[action.data.currentSubchannelId].path
               }
             : action.userId === state.prevUserId
-            ? state.lastSubchannelPaths
-            : action.data.lastSubchannelPaths || {},
+              ? state.lastSubchannelPaths
+              : action.data.lastSubchannelPaths || {},
         loaded: true,
         loadedForUserId: action.userId,
         listedCardIds:
@@ -2276,7 +3619,8 @@ export default function ChatReducer(
             : action.data.myListedCardsLoadMoreButton || false,
         mostRecentOfferTimeStamp: action.data.mostRecentOfferTimeStamp,
         numCardSummonedToday: action.data.numCardSummonedToday,
-        numUnreads: alreadyUsingChat ? 0 : state.numUnreads,
+        numUnreads:
+          alreadyUsingChat && !preservedRealtimeActivity ? 0 : state.numUnreads,
         outgoingOffers:
           action.userId === state.prevUserId
             ? state.outgoingOffers
@@ -2328,16 +3672,77 @@ export default function ChatReducer(
         prevUserId: action.userId,
         thinkHard: state.thinkHard
       };
+      let reconciledNextState = nextState;
+      for (const bufferedUpdate of bufferedReactionUpdates as any[]) {
+        const appliedReactionActivityRevisionsByChannel = {
+          ...reconciledNextState.appliedReactionActivityRevisionsByChannel
+        };
+        delete appliedReactionActivityRevisionsByChannel[
+          Number(bufferedUpdate.update?.channelId || 0)
+        ];
+        reconciledNextState = ChatReducer(
+          {
+            ...reconciledNextState,
+            appliedReactionActivityRevisionsByChannel
+          },
+          {
+            type: 'APPLY_CANONICAL_CHAT_REACTION',
+            ...bufferedUpdate
+          }
+        );
+      }
+      for (const bufferedUnreadState of bufferedUnreadStates as any[]) {
+        const unreadState =
+          bufferedUnreadState.unreadState || bufferedUnreadState;
+        const unreadEventSequence = Number(
+          bufferedUnreadState.eventSequence || 0
+        );
+        const channelId = Number(unreadState.channelId || 0);
+        const latestChannelEventSequence = Math.max(
+          getLatestConfirmedEventSequence(
+            state.confirmedRealtimeActivityByChannel?.[channelId]
+          ),
+          ...bufferedReactionUpdates
+            .filter(
+              (bufferedUpdate: any) =>
+                Number(bufferedUpdate.update?.channelId || 0) === channelId
+            )
+            .map((bufferedUpdate: any) =>
+              Number(bufferedUpdate.eventSequence || 0)
+            ),
+          ...bufferedMessageDeletions
+            .filter(
+              (deletion: any) => Number(deletion.channelId || 0) === channelId
+            )
+            .map((deletion: any) => Number(deletion.eventSequence || 0))
+        );
+        if (latestChannelEventSequence > unreadEventSequence) continue;
+        reconciledNextState = ChatReducer(reconciledNextState, {
+          type: 'APPLY_CANONICAL_CHANNEL_UNREAD_STATE',
+          unreadState,
+          // Buffered entries passed the owner gate while this bootstrap was
+          // bound, so they belong to the bootstrapping user.
+          userId: action.userId,
+          eventSequence: unreadEventSequence
+        });
+      }
+      for (const deletion of bufferedMessageDeletions as any[]) {
+        reconciledNextState = ChatReducer(reconciledNextState, {
+          type: 'DELETE_MESSAGE',
+          ...deletion
+        });
+      }
+
       recordChatBootstrapEvent('chat-init-reducer-success', {
         bootstrapId: action.bootstrapId || null,
         userId: action.userId,
-        loaded: nextState.loaded,
-        loadedForUserId: nextState.loadedForUserId,
-        selectedChannelId: nextState.selectedChannelId,
-        prevUserId: nextState.prevUserId,
-        channelCount: Object.keys(nextState.channelsObj || {}).length
+        loaded: reconciledNextState.loaded,
+        loadedForUserId: reconciledNextState.loadedForUserId,
+        selectedChannelId: reconciledNextState.selectedChannelId,
+        prevUserId: reconciledNextState.prevUserId,
+        channelCount: Object.keys(reconciledNextState.channelsObj || {}).length
       });
-      return nextState;
+      return reconciledNextState;
     }
 
     case 'INVITE_USERS_TO_CHANNEL':
@@ -2378,8 +3783,11 @@ export default function ChatReducer(
           }
         }
       };
-    case 'LEAVE_CHANNEL':
-      return {
+    case 'LEAVE_CHANNEL': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
+      const nextState = {
         ...state,
         channelsObj: {
           ...state.channelsObj,
@@ -2394,13 +3802,6 @@ export default function ChatReducer(
             )?.filter((member: { id: number }) => member.id !== action.userId)
           }
         },
-        allFavoriteChannelIds: {
-          ...state.allFavoriteChannelIds,
-          [action.channelId]: false
-        },
-        favoriteChannelIds: state.favoriteChannelIds.filter(
-          (channelId: number) => channelId !== action.channelId
-        ),
         homeChannelIds: state.homeChannelIds.filter(
           (channelId: number) => channelId !== action.channelId
         ),
@@ -2408,6 +3809,14 @@ export default function ChatReducer(
           (channelId: number) => channelId !== action.channelId
         )
       };
+      return action.favoriteState
+        ? ChatReducer(nextState, {
+            type: 'APPLY_CANONICAL_FAVORITE_STATE',
+            ...action.favoriteState,
+            userId: action.userId
+          })
+        : nextState;
+    }
     case 'REMOVE_MEMBER_FROM_CHANNEL':
       return {
         ...state,
@@ -2422,20 +3831,7 @@ export default function ChatReducer(
               state.channelsObj[action.channelId]?.members || []
             )?.filter((member: { id: number }) => member.id !== action.memberId)
           }
-        },
-        allFavoriteChannelIds: {
-          ...state.allFavoriteChannelIds,
-          [action.channelId]: false
-        },
-        favoriteChannelIds: state.favoriteChannelIds.filter(
-          (channelId: number) => channelId !== action.channelId
-        ),
-        homeChannelIds: state.homeChannelIds.filter(
-          (channelId: number) => channelId !== action.channelId
-        ),
-        classChannelIds: state.classChannelIds.filter(
-          (channelId: number) => channelId !== action.channelId
-        )
+        }
       };
     case 'LIST_AI_CARD': {
       const existingCard = state.cardObj[action.card.id];
@@ -3559,12 +4955,16 @@ export default function ChatReducer(
     }
     case 'RECEIVE_MESSAGE': {
       const messageId = action.message.id || uuidv1();
+      const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const subchannelId = action.message.subchannelId;
       const numUnreads =
         action.pageVisible && action.usingChat
           ? state.numUnreads
           : state.numUnreads + 1;
       const prevChannelObj = state.channelsObj[action.message.channelId] || {};
+      const didIncrementScopedUnreads = subchannelId
+        ? !(subchannelId === action.currentSubchannelId && action.usingChat)
+        : !(action.usingChat && !action.currentSubchannelId);
       const isChessMoveMessage =
         action.message.isChessMsg &&
         !!action.message.chessState &&
@@ -3584,13 +4984,17 @@ export default function ChatReducer(
       const messageIds = subchannelId
         ? prevChannelObj.messageIds
         : prevChannelObj.messageIds?.includes(messageId)
-        ? prevChannelObj.messageIds
-        : [messageId].concat(prevChannelObj.messageIds);
+          ? prevChannelObj.messageIds
+          : [messageId].concat(prevChannelObj.messageIds);
       const messagesObj = subchannelId
         ? prevChannelObj.messagesObj
         : {
             ...prevChannelObj.messagesObj,
-            [messageId]: { ...action.message, id: messageId, isLoaded: true }
+            [messageId]: toConfirmedRealtimeMessage({
+              message: action.message,
+              messageId,
+              eventSequence: action.eventSequence
+            })
           };
       const members = action.newMembers
         ? [
@@ -3613,13 +5017,13 @@ export default function ChatReducer(
               }
             }
           : action.message.isDrawOffer
-          ? {
-              chess: {
-                ...prevChannelObj.gameState?.chess,
-                drawOfferedBy: action.message.userId
+            ? {
+                chess: {
+                  ...prevChannelObj.gameState?.chess,
+                  drawOfferedBy: action.message.userId
+                }
               }
-            }
-          : {})
+            : {})
       };
       const subchannelObj = subchannelId
         ? {
@@ -3638,12 +5042,16 @@ export default function ChatReducer(
               ),
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
-                [messageId]: {
-                  ...action.message,
-                  id: messageId,
-                  isLoaded: true
-                }
-              }
+                [messageId]: toConfirmedRealtimeMessage({
+                  message: action.message,
+                  messageId,
+                  eventSequence: action.eventSequence
+                })
+              },
+              lastUnreadUserId: null,
+              lastUnreadReaction: null,
+              lastUnreadMessageId: null,
+              lastUnreadReactionTimeStamp: null
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -3651,6 +5059,28 @@ export default function ChatReducer(
       return {
         ...state,
         numUnreads,
+        confirmedRealtimeActivityByChannel:
+          shouldTrackConfirmedRealtimeActivity(state)
+            ? markConfirmedRealtimeActivity({
+                activityByChannel: state.confirmedRealtimeActivityByChannel,
+                channelId: action.message.channelId,
+                subchannelId,
+                eventKey: realtimeEventKey,
+                eventSequence: action.eventSequence
+              })
+            : state.confirmedRealtimeActivityByChannel || {},
+        confirmedRealtimeUnreadActivityByChannel:
+          shouldTrackConfirmedRealtimeActivity(state) &&
+          didIncrementScopedUnreads
+            ? markConfirmedRealtimeActivity({
+                activityByChannel:
+                  state.confirmedRealtimeUnreadActivityByChannel,
+                channelId: action.message.channelId,
+                subchannelId,
+                eventKey: realtimeEventKey,
+                eventSequence: action.eventSequence
+              })
+            : state.confirmedRealtimeUnreadActivityByChannel || {},
         channelsObj: {
           ...state.channelsObj,
           [action.message.channelId]: {
@@ -3675,6 +5105,14 @@ export default function ChatReducer(
             messagesObj,
             lastChessMoveViewerId,
             lastOmokMoveViewerId,
+            lastUpdated: Math.max(
+              Number(prevChannelObj?.lastUpdated || 0),
+              Number(action.message.timeStamp || 0)
+            ),
+            lastMessageId: getConfirmedLastMessageId(
+              prevChannelObj?.lastMessageId,
+              action.message.id
+            ),
             members,
             numUnreads:
               subchannelId || (action.usingChat && !action.currentSubchannelId)
@@ -3682,6 +5120,14 @@ export default function ChatReducer(
                 : Number(prevChannelObj.numUnreads) + 1,
             gameState,
             isHidden: false,
+            ...(!subchannelId
+              ? {
+                  lastUnreadUserId: null,
+                  lastUnreadReaction: null,
+                  lastUnreadMessageId: null,
+                  lastUnreadReactionTimeStamp: null
+                }
+              : {}),
             ...(subchannelObj ? { subchannelObj } : {}),
             ...(action.message.notificationType === 'owner_change' &&
             action.message.newOwner?.id
@@ -3692,9 +5138,33 @@ export default function ChatReducer(
       };
     }
     case 'RECEIVE_FIRST_MSG': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
       const messageId = action.message.id ? action.message.id : uuidv1();
-      return {
+      const realtimeEventKey = getRealtimeMessageEventKey(messageId);
+      const invitationMembers = action.members || action.message.members || [];
+      const nextState = {
         ...state,
+        confirmedRealtimeActivityByChannel:
+          shouldTrackConfirmedRealtimeActivity(state)
+            ? markConfirmedRealtimeActivity({
+                activityByChannel: state.confirmedRealtimeActivityByChannel,
+                channelId: action.message.channelId,
+                eventKey: realtimeEventKey,
+                eventSequence: action.eventSequence
+              })
+            : state.confirmedRealtimeActivityByChannel || {},
+        confirmedRealtimeUnreadActivityByChannel:
+          shouldTrackConfirmedRealtimeActivity(state) && !action.isDuplicate
+            ? markConfirmedRealtimeActivity({
+                activityByChannel:
+                  state.confirmedRealtimeUnreadActivityByChannel,
+                channelId: action.message.channelId,
+                eventKey: realtimeEventKey,
+                eventSequence: action.eventSequence
+              })
+            : state.confirmedRealtimeUnreadActivityByChannel || {},
         numUnreads:
           action.isDuplicate && action.pageVisible
             ? state.numUnreads
@@ -3707,17 +5177,19 @@ export default function ChatReducer(
           [action.message.channelId]: {
             id: action.message.channelId,
             messagesObj: {
-              [messageId]: {
-                id: messageId,
-                ...action.message,
-                isLoaded: true
-              }
+              [messageId]: toConfirmedRealtimeMessage({
+                message: action.message,
+                messageId,
+                eventSequence: action.eventSequence
+              })
             },
             twoPeople: action.isTwoPeople,
             pathId: action.pathId,
             messageIds: [messageId],
+            lastMessageId: getConfirmedLastMessageId(null, action.message.id),
+            lastUpdated: Number(action.message.timeStamp || 0),
             isClass: action.isClass,
-            members: action.message.members,
+            members: invitationMembers,
             channelName: action.message.channelName || action.message.username,
             numUnreads: action.isDuplicate ? 0 : 1
           }
@@ -3728,9 +5200,17 @@ export default function ChatReducer(
           )
         )
       };
+      return action.quickAccess
+        ? ChatReducer(nextState, {
+            type: 'APPLY_CANONICAL_QUICK_ACCESS',
+            quickAccess: action.quickAccess,
+            userId: action.userId
+          })
+        : nextState;
     }
     case 'RECEIVE_MSG_ON_DIFF_CHANNEL': {
       const messageId = action.message.id || uuidv1();
+      const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const prevChannelObj = state.channelsObj[action.channel.id];
       const subchannelId = action.message.subchannelId;
       const subchannelObj = subchannelId
@@ -3741,30 +5221,63 @@ export default function ChatReducer(
               numUnreads:
                 Number(
                   prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
-                ) + 1,
+                ) + (action.isMyMessage ? 0 : 1),
               messageIds: [messageId].concat(
                 prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds
               ),
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
-                [messageId]: {
-                  ...action.message,
-                  id: messageId,
-                  isLoaded: true
-                }
-              }
+                [messageId]: toConfirmedRealtimeMessage({
+                  message: action.message,
+                  messageId,
+                  eventSequence: action.eventSequence
+                })
+              },
+              lastUnreadUserId: null,
+              lastUnreadReaction: null,
+              lastUnreadMessageId: null,
+              lastUnreadReactionTimeStamp: null
             }
           }
         : prevChannelObj?.subchannelObj;
 
       return {
         ...state,
+        confirmedRealtimeActivityByChannel:
+          shouldTrackConfirmedRealtimeActivity(state)
+            ? markConfirmedRealtimeActivity({
+                activityByChannel: state.confirmedRealtimeActivityByChannel,
+                channelId: action.channel.id,
+                subchannelId,
+                eventKey: realtimeEventKey,
+                eventSequence: action.eventSequence
+              })
+            : state.confirmedRealtimeActivityByChannel || {},
+        confirmedRealtimeUnreadActivityByChannel:
+          shouldTrackConfirmedRealtimeActivity(state) && !action.isMyMessage
+            ? markConfirmedRealtimeActivity({
+                activityByChannel:
+                  state.confirmedRealtimeUnreadActivityByChannel,
+                channelId: action.channel.id,
+                subchannelId,
+                eventKey: realtimeEventKey,
+                eventSequence: action.eventSequence
+              })
+            : state.confirmedRealtimeUnreadActivityByChannel || {},
         channelsObj: {
           ...state.channelsObj,
           [action.channel.id]: subchannelId
             ? {
                 ...prevChannelObj,
-                subchannelObj
+                subchannelObj,
+                lastUpdated: Math.max(
+                  Number(prevChannelObj?.lastUpdated || 0),
+                  Number(action.message.timeStamp || 0)
+                ),
+                lastMessageId: getConfirmedLastMessageId(
+                  prevChannelObj?.lastMessageId,
+                  action.message.id
+                )
               }
             : {
                 ...prevChannelObj,
@@ -3816,11 +5329,11 @@ export default function ChatReducer(
                 ),
                 messagesObj: {
                   ...prevChannelObj?.messagesObj,
-                  [messageId]: {
-                    ...action.message,
-                    id: messageId,
-                    isLoaded: true
-                  }
+                  [messageId]: toConfirmedRealtimeMessage({
+                    message: action.message,
+                    messageId,
+                    eventSequence: action.eventSequence
+                  })
                 },
                 ...(action.message.notificationType === 'owner_change' &&
                 action.message.newOwner?.id
@@ -3840,9 +5353,21 @@ export default function ChatReducer(
                   action.message.userId
                     ? action.message.userId
                     : prevChannelObj?.lastOmokMoveViewerId,
+                lastUpdated: Math.max(
+                  Number(prevChannelObj?.lastUpdated || 0),
+                  Number(action.message.timeStamp || 0)
+                ),
+                lastMessageId: getConfirmedLastMessageId(
+                  prevChannelObj?.lastMessageId,
+                  action.message.id
+                ),
                 numUnreads: action.isMyMessage
                   ? Number(prevChannelObj?.numUnreads || 0)
                   : Number(prevChannelObj?.numUnreads || 0) + 1,
+                lastUnreadUserId: null,
+                lastUnreadReaction: null,
+                lastUnreadMessageId: null,
+                lastUnreadReactionTimeStamp: null,
                 // Preserve or compute partnerUsername for DM channels
                 ...(prevChannelObj?.twoPeople || action.channel?.twoPeople
                   ? {
@@ -3865,7 +5390,7 @@ export default function ChatReducer(
               }
         },
         numUnreads:
-          action.pageVisible && action.usingChat
+          action.isMyMessage || (action.pageVisible && action.usingChat)
             ? state.numUnreads
             : Number(state.numUnreads) + 1,
         favoriteChannelIds: state.allFavoriteChannelIds[action.channel.id]
@@ -3882,41 +5407,19 @@ export default function ChatReducer(
         )
       };
     }
-    case 'RECEIVE_CHAT_REACTION': {
+    case 'APPLY_CANONICAL_REACTION_ADD_ACTIVITY': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const shouldIncrementUnreads = action.shouldIncrementUnreads !== false;
+      const subchannelId = Number(action.subchannelId) || null;
       if (!prevChannelObj) {
         return {
           ...state,
           numUnreads:
             !shouldIncrementUnreads || (action.pageVisible && action.usingChat)
               ? state.numUnreads
-              : Number(state.numUnreads) + 1
+              : 1
         };
       }
-
-      const subchannelId = Number(action.subchannelId) || null;
-      let loadedSettings: any = prevChannelObj?.settings || {};
-      if (typeof loadedSettings === 'string') {
-        try {
-          loadedSettings = JSON.parse(loadedSettings);
-        } catch {
-          loadedSettings = {};
-        }
-      }
-      if (typeof loadedSettings !== 'object' || !loadedSettings) {
-        loadedSettings = {};
-      }
-      const updatedSettings = {
-        ...loadedSettings,
-        lastReaction: {
-          userId: action.userId,
-          reaction: action.reaction,
-          messageId: action.messageId,
-          subchannelId: subchannelId || 0,
-          timeStamp: action.timeStamp
-        }
-      };
 
       const updatedSubchannelObj = subchannelId
         ? {
@@ -3925,11 +5428,7 @@ export default function ChatReducer(
               ...prevChannelObj?.subchannelObj?.[subchannelId],
               ...(shouldIncrementUnreads
                 ? {
-                    numUnreads:
-                      Number(
-                        prevChannelObj?.subchannelObj?.[subchannelId]
-                          ?.numUnreads || 0
-                      ) + 1,
+                    numUnreads: 1,
                     lastUnreadUserId: action.userId,
                     lastUnreadReaction: action.reaction,
                     lastUnreadMessageId: action.messageId,
@@ -3947,8 +5446,6 @@ export default function ChatReducer(
           [action.channelId]: subchannelId
             ? {
                 ...prevChannelObj,
-                lastUpdated: action.timeStamp,
-                settings: updatedSettings,
                 ...(shouldIncrementUnreads
                   ? {
                       lastUnreadUserId: action.userId,
@@ -3961,11 +5458,9 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
-                lastUpdated: action.timeStamp,
-                settings: updatedSettings,
                 ...(shouldIncrementUnreads
                   ? {
-                      numUnreads: Number(prevChannelObj?.numUnreads || 0) + 1,
+                      numUnreads: 1,
                       lastUnreadUserId: action.userId,
                       lastUnreadReaction: action.reaction,
                       lastUnreadMessageId: action.messageId,
@@ -3977,7 +5472,7 @@ export default function ChatReducer(
         numUnreads:
           !shouldIncrementUnreads || (action.pageVisible && action.usingChat)
             ? state.numUnreads
-            : Number(state.numUnreads) + 1,
+            : 1,
         favoriteChannelIds: state.allFavoriteChannelIds[action.channelId]
           ? [action.channelId].concat(
               state.favoriteChannelIds.filter(
@@ -4586,19 +6081,151 @@ export default function ChatReducer(
         ...state,
         creatingNewDMChannel: action.creating
       };
-    case 'SET_FAVORITE_CHANNEL': {
-      const filteredFavChannelIds = state.favoriteChannelIds.filter(
-        (channelId: number) => channelId !== action.channelId
+    case 'APPLY_CANONICAL_CHAT_SIDEBAR_STATE': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
+      let nextState = state;
+      if (action.favoriteState) {
+        nextState = ChatReducer(nextState, {
+          type: 'APPLY_CANONICAL_FAVORITE_STATE',
+          ...action.favoriteState,
+          userId: action.userId
+        });
+      }
+      if (action.quickAccess) {
+        nextState = ChatReducer(nextState, {
+          type: 'APPLY_CANONICAL_QUICK_ACCESS',
+          quickAccess: action.quickAccess,
+          userId: action.userId
+        });
+      }
+      if (action.channelVisibility) {
+        const visibilityChannelId = Number(
+          action.channelVisibility.channelId || 0
+        );
+        let channelVisibilityById = mergeCanonicalChannelVisibility({
+          visibilityById: nextState.channelVisibilityById || {},
+          visibility: getCanonicalChannelVisibilityFromChannel(
+            nextState.channelsObj[visibilityChannelId]
+          )
+        });
+        channelVisibilityById = mergeCanonicalChannelVisibility({
+          visibilityById: channelVisibilityById,
+          visibility: action.channelVisibility
+        });
+        const currentChannel = nextState.channelsObj[visibilityChannelId];
+        nextState = {
+          ...nextState,
+          channelVisibilityById,
+          ...(currentChannel?.id
+            ? {
+                channelsObj: {
+                  ...nextState.channelsObj,
+                  [visibilityChannelId]: applyCanonicalChannelVisibility({
+                    channel: currentChannel,
+                    visibility: channelVisibilityById[visibilityChannelId]
+                  })
+                }
+              }
+            : {})
+        };
+      }
+      return nextState;
+    }
+    case 'APPLY_CANONICAL_FAVORITE_STATE': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
+      const incomingFavoriteStateRevision = Number(
+        action.favoriteStateRevision || 0
       );
+      if (
+        incomingFavoriteStateRevision <= 0 ||
+        incomingFavoriteStateRevision < Number(state.favoriteStateRevision || 0)
+      ) {
+        return state;
+      }
+      const favoriteStateOwnerId = Number(action.userId);
+      const favoriteChannelsById = new Map<number, any>();
+      for (const channel of action.favoriteChannels || []) {
+        const channelId = Number(channel?.id || 0);
+        if (channelId > 0) favoriteChannelsById.set(channelId, channel);
+      }
+      const legacyFavoriteChannelId = Number(action.favoriteChannel?.id || 0);
+      if (legacyFavoriteChannelId > 0) {
+        favoriteChannelsById.set(
+          legacyFavoriteChannelId,
+          action.favoriteChannel
+        );
+      }
+      let channelsObj = state.channelsObj;
+      for (const [channelId, channel] of favoriteChannelsById) {
+        const mergedChannel = mergeCanonicalFavoriteChannelSummary({
+          canonicalChannel: channel,
+          currentChannel: state.channelsObj[channelId],
+          visibility: state.channelVisibilityById?.[channelId]
+        });
+        if (mergedChannel === state.channelsObj[channelId]) continue;
+        if (channelsObj === state.channelsObj) {
+          channelsObj = { ...state.channelsObj };
+        }
+        channelsObj[channelId] = mergedChannel;
+      }
+      const reconciledFavoriteChannelIds = reconcileCanonicalFavoriteOrder({
+        canonicalChannelsById: favoriteChannelsById,
+        canonicalOrder: action.favoriteChannelIds || [],
+        currentChannelsById: channelsObj,
+        currentOrder: state.favoriteChannelIds || []
+      });
+      if (
+        incomingFavoriteStateRevision ===
+        Number(state.favoriteStateRevision || 0)
+      ) {
+        // Favorite revisions own membership, not channel recency. Reconcile an
+        // equal snapshot only from the freshest confirmed channel activity on
+        // either side; never restore its captured array order verbatim.
+        const favoriteOrderChanged = !numberOrdersMatch(
+          state.favoriteChannelIds,
+          reconciledFavoriteChannelIds
+        );
+        return channelsObj === state.channelsObj && !favoriteOrderChanged
+          ? state
+          : {
+              ...state,
+              channelsObj,
+              favoriteChannelIds: reconciledFavoriteChannelIds,
+              favoriteStateOwnerId
+            };
+      }
       return {
         ...state,
-        allFavoriteChannelIds: {
-          ...state.allFavoriteChannelIds,
-          [action.channelId]: action.favorited
-        },
-        favoriteChannelIds: action.favorited
-          ? [action.channelId].concat(filteredFavChannelIds)
-          : filteredFavChannelIds
+        allFavoriteChannelIds: action.allFavoriteChannelIds,
+        // The higher revision is authoritative for membership and page
+        // composition only. Ordering is a separate projection of confirmed
+        // message/reaction activity, which may have advanced after the server
+        // captured this membership snapshot.
+        favoriteChannelIds: reconciledFavoriteChannelIds,
+        favoriteLoadMoreButton: action.favoriteLoadMoreButton,
+        favoriteStateRevision: incomingFavoriteStateRevision,
+        favoriteStateOwnerId,
+        channelsObj
+      };
+    }
+    case 'APPLY_CANONICAL_QUICK_ACCESS': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
+      if (
+        Number(action.quickAccess?.revision || 0) <
+        Number(state.quickAccess?.revision || 0)
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        quickAccess: action.quickAccess,
+        quickAccessOwnerId: Number(action.userId)
       };
     }
     case 'SET_IS_RESPONDING_TO_SUBJECT': {
@@ -4712,13 +6339,13 @@ export default function ChatReducer(
           ...(typeof member.isAway === 'boolean'
             ? { isAway: member.isAway }
             : typeof prev.isAway === 'boolean'
-            ? { isAway: prev.isAway }
-            : {}),
+              ? { isAway: prev.isAway }
+              : {}),
           ...(typeof member.isBusy === 'boolean'
             ? { isBusy: member.isBusy }
             : typeof prev.isBusy === 'boolean'
-            ? { isBusy: prev.isBusy }
-            : {})
+              ? { isBusy: prev.isBusy }
+              : {})
         };
       }
 
@@ -4939,13 +6566,13 @@ export default function ChatReducer(
               }
             }
           : action.message.isDrawOffer
-          ? {
-              chess: {
-                ...prevChannelObj?.gameState?.chess,
-                drawOfferedBy: action.message.userId
+            ? {
+                chess: {
+                  ...prevChannelObj?.gameState?.chess,
+                  drawOfferedBy: action.message.userId
+                }
               }
-            }
-          : {})
+            : {})
       };
       const messageIds = action.subchannelId
         ? prevChannelObj?.messageIds
@@ -5187,7 +6814,8 @@ export default function ChatReducer(
               currentTerminalMessageId:
                 state.channelsObj[action.channelId]?.lastChessTerminalMessageId,
               currentPendingTerminalToken:
-                state.channelsObj[action.channelId]?.lastChessPendingTerminalToken,
+                state.channelsObj[action.channelId]
+                  ?.lastChessPendingTerminalToken,
               nextBoardMessageId: action.messageId,
               nextTerminalMessageId: action.terminalMessageId,
               boardMessageKey: 'lastChessMessageId',
@@ -5213,7 +6841,8 @@ export default function ChatReducer(
               currentTerminalMessageId:
                 state.channelsObj[action.channelId]?.lastOmokTerminalMessageId,
               currentPendingTerminalToken:
-                state.channelsObj[action.channelId]?.lastOmokPendingTerminalToken,
+                state.channelsObj[action.channelId]
+                  ?.lastOmokPendingTerminalToken,
               nextBoardMessageId: action.messageId,
               nextTerminalMessageId: action.terminalMessageId,
               boardMessageKey: 'lastOmokMessageId',
@@ -5385,14 +7014,11 @@ function resolveLatestBoardMessageState({
   nextTerminalMessageId?: number | string | null;
   boardMessageKey: 'lastChessMessageId' | 'lastOmokMessageId';
   latestBoardMessageKey:
-    | 'latestChessBoardMessageId'
-    | 'latestOmokBoardMessageId';
+    'latestChessBoardMessageId' | 'latestOmokBoardMessageId';
   terminalMessageKey:
-    | 'lastChessTerminalMessageId'
-    | 'lastOmokTerminalMessageId';
+    'lastChessTerminalMessageId' | 'lastOmokTerminalMessageId';
   pendingTerminalTokenKey:
-    | 'lastChessPendingTerminalToken'
-    | 'lastOmokPendingTerminalToken';
+    'lastChessPendingTerminalToken' | 'lastOmokPendingTerminalToken';
 }) {
   const currentActiveBoardId =
     typeof currentActiveBoardMessageId === 'number'
@@ -5425,8 +7051,8 @@ function resolveLatestBoardMessageState({
     nextBoardId === null
       ? currentLatestBoardId
       : currentLatestBoardId === null
-      ? nextBoardId
-      : Math.max(currentLatestBoardId, nextBoardId);
+        ? nextBoardId
+        : Math.max(currentLatestBoardId, nextBoardId);
 
   if (nextBoardId !== null) {
     if (appliedPendingTerminalToken) {

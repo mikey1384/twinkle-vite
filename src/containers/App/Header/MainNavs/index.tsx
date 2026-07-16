@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Nav from './Nav';
-import TabStrip, {
-  type NavTabDescriptor,
-  type TabMenuItem
-} from './TabStrip';
+import Nav, { navTargetIsActive } from './Nav';
+import TabStrip, { type NavTabDescriptor, type TabMenuItem } from './TabStrip';
 import MobileSideMenuNav from './MobileSideMenuNav';
 import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -17,9 +14,13 @@ import MobileTabSwitcher, {
 import MobileLongPressNav from './MobileLongPressNav';
 import { css } from '@emotion/css';
 import {
+  getDefaultMinimizedNavTabKeys,
   getNavSessionMeta,
+  getPrimaryNavTabOrder,
+  isDefaultMinimizedNavTabKey,
   isNavTabKey,
   isSacredDefaultKey,
+  NAV_TAB_ORDER_VERSION,
   NAV_TAB_KEYS,
   loadCustomNavTabs,
   loadMinimizedNavTabKeys,
@@ -35,7 +36,8 @@ import {
   saveTabMenuDiscovered,
   type CustomNavTab,
   type NavDraftState,
-  type NavTabKey
+  type NavTabKey,
+  type PrimaryNavTabKey
 } from '~/helpers/navTabOrder';
 import { getSectionFromPathname } from '~/helpers';
 import {
@@ -77,6 +79,25 @@ const contentLabels: Record<string, string> = {
   'shared-prompts': 'Shared Prompt',
   management: 'Management'
 };
+
+function getDynamicTabDismissalKey(
+  userId: number | string | null | undefined,
+  to: string
+) {
+  return `${userId || 'guest'}::${to}`;
+}
+
+function isDynamicTabTargetDismissed({
+  dismissedKey,
+  userId,
+  target
+}: {
+  dismissedKey: string | null;
+  userId: number | string | null | undefined;
+  target?: string | null;
+}) {
+  return !!target && dismissedKey === getDynamicTabDismissalKey(userId, target);
+}
 
 function readAuthToken() {
   try {
@@ -163,32 +184,6 @@ function isCustomTabVisibleForNavScope({
     return false;
   }
   return true;
-}
-
-function getUnpinnedCustomTabsInNavOrder({
-  customTabs,
-  order
-}: {
-  customTabs: CustomNavTab[];
-  order: string[];
-}) {
-  const unpinnedById = new Map(
-    customTabs.filter((tab) => !tab.pinned).map((tab) => [tab.id, tab])
-  );
-  const orderedTabs: CustomNavTab[] = [];
-  const seenIds = new Set<string>();
-  for (const key of order) {
-    const tab = unpinnedById.get(key);
-    if (!tab || seenIds.has(tab.id)) continue;
-    orderedTabs.push(tab);
-    seenIds.add(tab.id);
-  }
-  for (const tab of customTabs) {
-    if (tab.pinned || seenIds.has(tab.id)) continue;
-    orderedTabs.push(tab);
-    seenIds.add(tab.id);
-  }
-  return orderedTabs;
 }
 
 function iconForContentNav(nav: string) {
@@ -314,9 +309,17 @@ export default function MainNavs({
       onClick: () => void;
     }[];
   } | null>(null);
-  // iPad landscape shows labelled tabs (desktop-like); portrait goes icon-only
-  // to stay light in the narrow bar. Non-tablets are unaffected.
+  // Tablet portrait keeps customizable extras compact and narrows the pinned
+  // lane. Primary labels are resolved separately below so the active primary
+  // remains labelled in either tablet orientation.
   const { isTabletPortrait } = useTabletOrientation();
+  const [lastActivePrimaryKey, setLastActivePrimaryKey] =
+    useState<PrimaryNavTabKey | null>(
+      () => getNavSessionMeta(userId).lastActivePrimaryKey
+    );
+  const [recentExtraTabKeys, setRecentExtraTabKeys] = useState<string[]>(
+    () => [...getNavSessionMeta(userId).recentExtraTabKeys]
+  );
   // which account the COMMITTED nav state belongs to. On an SPA login the
   // account-reset effect and the adoption effect share one flush: the
   // reset's setStates haven't committed, so adoption's closures still
@@ -357,16 +360,25 @@ export default function MainNavs({
     nav: string;
     path: string;
   } | null>(null);
+  const dismissedDynamicContentTabRef = useRef<string | null>(null);
+  const dismissedDynamicProfileTabRef = useRef<string | null>(null);
 
   useEffect(() => {
     // scope gate (see adoption/readiness effects): during an account
     // switch the closure's customTabs still belong to the previous scope
     if (navScope !== userId) return;
     setDesktopContentTab((prev) => {
+      const contentTarget = `/${contentPath}`;
+      const dynamicTargetDismissed = isDynamicTabTargetDismissed({
+        dismissedKey: dismissedDynamicContentTabRef.current,
+        userId,
+        target: contentTarget
+      });
       if (
         contentNav &&
         contentPath &&
-        !customTabs.some((tab) => tab.to === `/${contentPath}`)
+        !customTabs.some((tab) => tab.to === contentTarget) &&
+        !dynamicTargetDismissed
       ) {
         return prev?.nav === contentNav && prev?.path === contentPath
           ? prev
@@ -466,6 +478,8 @@ export default function MainNavs({
     // logout/relogin within the same page session
     navMetaRef.current = getNavSessionMeta(userId);
     navMetaRef.current.draft = null;
+    setLastActivePrimaryKey(navMetaRef.current.lastActivePrimaryKey);
+    setRecentExtraTabKeys([...navMetaRef.current.recentExtraTabKeys]);
     navServerReadyRef.current = false;
     pendingNavWriteRef.current = null;
     const storedCustomTabs = loadCustomNavTabs(userId);
@@ -509,9 +523,7 @@ export default function MainNavs({
     const hadPendingWrite = !!pendingNavWriteRef.current;
     pendingNavWriteRef.current = null;
     const serverCustomTabs = sanitizeCustomNavTabs(serverNavTabs.pinnedTabs);
-    const serverCustomTabIds = new Set(
-      serverCustomTabs.map((tab) => tab.id)
-    );
+    const serverCustomTabIds = new Set(serverCustomTabs.map((tab) => tab.id));
     // Pins the server now knows are no longer session-created/local-only.
     // If a tab was added, removed before the add ACK reconciled, and then
     // the remove write failed, the server snapshot proves the pending
@@ -541,17 +553,14 @@ export default function MainNavs({
           (server) =>
             !removed.some(
               (r) =>
-                !r.sessionCreated &&
-                (r.id === server.id || r.to === server.to)
+                !r.sessionCreated && (r.id === server.id || r.to === server.to)
             )
         )
         .map((server) => {
           const localVersion = editBase.customTabs.find(
             (local) => local.id === server.id
           );
-          return localVersion && touched.has(server.id)
-            ? localVersion
-            : server;
+          return localVersion && touched.has(server.id) ? localVersion : server;
         });
       // session tabs dedupe against the POST-removal base: a pin the user
       // removed and re-added under the same URL must survive. Unpinned
@@ -576,8 +585,7 @@ export default function MainNavs({
               (local) =>
                 !local.pinned &&
                 !serverCustomTabs.some(
-                  (server) =>
-                    server.id === local.id || server.to === local.to
+                  (server) => server.id === local.id || server.to === local.to
                 )
             )
           ];
@@ -705,6 +713,13 @@ export default function MainNavs({
   // on a switch is sound — the login response already carried the new
   // account's canonical state
   useEffect(() => {
+    // Guests have no server-owned nav row. Their scoped local layout is the
+    // canonical state and is migrated by loadStoredNavLayout; this bootstrap
+    // branch must never reinterpret a missing server row as a reset request.
+    if (!userId) {
+      navServerReadyRef.current = true;
+      return;
+    }
     if (
       !userLoaded ||
       !sessionStateArrived ||
@@ -743,14 +758,19 @@ export default function MainNavs({
     } else {
       const defaultCustomTabs: CustomNavTab[] = [];
       const defaultOrder = [...NAV_TAB_KEYS];
-      const defaultMinimized: string[] = [];
+      const defaultMinimized = getDefaultMinimizedNavTabKeys();
       if (JSON.stringify(customTabsRef.current) !== '[]') {
         setCustomTabs(defaultCustomTabs);
       }
-      if (JSON.stringify(tabOrderRef.current) !== JSON.stringify(defaultOrder)) {
+      if (
+        JSON.stringify(tabOrderRef.current) !== JSON.stringify(defaultOrder)
+      ) {
         setTabOrder(defaultOrder);
       }
-      if (JSON.stringify(minimizedTabKeysRef.current) !== '[]') {
+      if (
+        JSON.stringify(minimizedTabKeysRef.current) !==
+        JSON.stringify(defaultMinimized)
+      ) {
         setMinimizedTabKeys(defaultMinimized);
       }
       // no server row is the canonical default. Do not keep showing stale
@@ -978,38 +998,10 @@ export default function MainNavs({
     },
     pathname
   );
-  const onProfilePage = !!profilePageMatch;
 
-  // opening a profile spawns/moves its tab to the FAR RIGHT (same rule as
-  // build/content tabs), so it lands after whatever the current rightmost tab
-  // is instead of sitting at a fixed leftmost slot
-  useEffect(() => {
-    if (!onProfilePage) return;
-    if (navScope !== userId) return;
-    if (userId && !navServerReadyRef.current) return;
-    const base = getNavEditBase();
-    if (
-      !base.order.includes('profile') ||
-      base.order[base.order.length - 1] === 'profile'
-    ) {
-      return;
-    }
-    persistNavState({
-      order: [...base.order.filter((entry) => entry !== 'profile'), 'profile']
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    onProfilePage,
-    navScope,
-    serverNavTabs,
-    sessionStateArrived,
-    userId,
-    userLoaded
-  ]);
-
-  // opening a Lumine app or build workspace spawns a real (session, pinnable)
-  // tab for it at the far right. App tabs are de-duped by build id so deep-link
-  // route updates move the same session tab instead of creating siblings.
+  // Opening a Lumine app or build workspace spawns a real (session, pinnable)
+  // extra tab. App tabs are de-duped by build id; the active one moves to the
+  // left edge through the shared MRU ordering below.
   // Depends on the nav-readiness signals (serverNavTabs / userLoaded /
   // sessionStateArrived) so an app opened BEFORE the nav is ready still spawns
   // its tab once readiness lands, instead of being dropped by the ready-gate.
@@ -1026,6 +1018,16 @@ export default function MainNavs({
     }
     if (navScope !== userId) return;
     if (userId && !navServerReadyRef.current) return;
+    const openBuildAppId = getBuildAppIdFromTabTarget(openBuildTab.to);
+    const canonicalOpenTab = customTabs.find(
+      (tab) =>
+        tab.to === openBuildTab.to ||
+        (openBuildAppId &&
+          getBuildAppIdFromTabTarget(tab.to) === openBuildAppId)
+    );
+    if (canonicalOpenTab && !canonicalOpenTab.pinned) {
+      rememberExtraTabOpened(canonicalOpenTab.id);
+    }
     handleCaptureTab({
       to: openBuildTab.to,
       icon: openBuildTab.kind === 'workspace' ? 'wrench' : 'rocket-launch',
@@ -1035,6 +1037,7 @@ export default function MainNavs({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     openBuildTab,
+    customTabs,
     navScope,
     userId,
     serverNavTabs,
@@ -1074,6 +1077,7 @@ export default function MainNavs({
 
   useEffect(() => {
     const { section } = getSectionFromPathname(pathname);
+    const currentLocation = `${pathname}${search || ''}`;
     if (homeMatch) {
       onSetHomeNav('/');
     } else if (usersMatch) {
@@ -1102,10 +1106,18 @@ export default function MainNavs({
     // tab customization. The desktop strip hides its duplicate at render
     // time instead (see the content descriptor in orderedTabs).
     if (contentPageMatch) {
-      if (contentNav !== section) {
-        onSetContentNav(section);
+      if (
+        !isDynamicTabTargetDismissed({
+          dismissedKey: dismissedDynamicContentTabRef.current,
+          userId,
+          target: currentLocation
+        })
+      ) {
+        if (contentNav !== section) {
+          onSetContentNav(section);
+        }
+        onSetContentPath(currentLocation.substring(1));
       }
-      onSetContentPath(pathname.substring(1) + search || '');
     }
     if (section === 'missions') {
       const nextMissionNav = `${pathname}${search || ''}`;
@@ -1114,17 +1126,41 @@ export default function MainNavs({
       }
     }
     if (section === 'management' && managementLevel > 0) {
-      if (contentNav !== 'management') {
-        onSetContentNav('management');
+      if (
+        !isDynamicTabTargetDismissed({
+          dismissedKey: dismissedDynamicContentTabRef.current,
+          userId,
+          target: currentLocation
+        })
+      ) {
+        if (contentNav !== 'management') {
+          onSetContentNav('management');
+        }
+        onSetContentPath(currentLocation.substring(1));
       }
-      onSetContentPath(pathname.substring(1) + (search || ''));
     } else if (contentNav === 'management' && managementLevel <= 0) {
       onSetContentNav('');
       onSetContentPath('');
     }
+    if (
+      !contentPageMatch &&
+      !(section === 'management' && managementLevel > 0)
+    ) {
+      dismissedDynamicContentTabRef.current = null;
+    }
 
     if (profilePageMatch) {
-      onSetProfileNav(pathname);
+      if (
+        !isDynamicTabTargetDismissed({
+          dismissedKey: dismissedDynamicProfileTabRef.current,
+          userId,
+          target: pathname
+        })
+      ) {
+        onSetProfileNav(pathname);
+      }
+    } else {
+      dismissedDynamicProfileTabRef.current = null;
     }
     if (['links', 'videos', 'subjects', 'ai-cards'].includes(section)) {
       onSetExploreCategory(`${section}${search ? `/${search}` : ''}`);
@@ -1139,7 +1175,7 @@ export default function MainNavs({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customTabs, defaultSearchFilter, managementLevel, pathname, search]);
+  }, [defaultSearchFilter, managementLevel, pathname, search, userId]);
 
   const contentIconType = useMemo(
     () => iconForContentNav(contentNav),
@@ -1173,7 +1209,13 @@ export default function MainNavs({
     return preferredChatPath ? `/chat${preferredChatPath}` : '/chat';
   }, [chatType, lastChatPath, userLoaded]);
 
-  const { defaultNavTabs, extraNavTabs } = useMemo(() => {
+  const {
+    currentActiveExtraTabKey,
+    currentActivePrimaryKey,
+    defaultNavTabs,
+    extraNavTabs,
+    visibleExtraTabKeys
+  } = useMemo(() => {
     const homeAlertShown = pathname === '/' && !usersMatch && numNewPosts > 0;
     // like the dynamic content tab (see the desktopContentTab effect), suppress
     // the dynamic profile tab once its profile is captured/added as a custom
@@ -1183,27 +1225,33 @@ export default function MainNavs({
     const profileCaptured = visibleCustomTabs.some(
       (tab) => tab.to === profileNav
     );
+    const profileDynamicTargetDismissed = isDynamicTabTargetDismissed({
+      dismissedKey: dismissedDynamicProfileTabRef.current,
+      userId,
+      target: profileNav
+    });
     const descriptors: Record<NavTabKey, NavTabDescriptor | null> = {
       profile:
-        profileNav && !profileCaptured
-        ? {
-            key: 'profile',
-            to: profileNav,
-            imgLabel: 'user',
-            profileUsername,
-            // like the content tab, the profile tab is dynamic (reflects the
-            // last-viewed profile) until pinned/added — italic label
-            kind: 'dynamic' as const,
-            // show the true username casing (matches the captured tab and how
-            // usernames render everywhere else) — no lossy uppercasing.
-            // same truncation limit as the captured profile tab (1133) so the
-            // preview matches what gets pinned (WYSIWYG)
-            label: truncateText({
-              text: profileUsername,
-              limit: 14
-            })
-          }
-        : null,
+        profileNav && !profileCaptured && !profileDynamicTargetDismissed
+          ? {
+              key: 'profile',
+              to: profileNav,
+              imgLabel: 'user',
+              profileUsername,
+              // like the content tab, the profile tab is dynamic (reflects the
+              // last-viewed profile) until pinned/added — italic label
+              kind: 'dynamic' as const,
+              closable: true,
+              // show the true username casing (matches the captured tab and how
+              // usernames render everywhere else) — no lossy uppercasing.
+              // same truncation limit as the captured profile tab (1133) so the
+              // preview matches what gets pinned (WYSIWYG)
+              label: truncateText({
+                text: profileUsername,
+                limit: 14
+              })
+            }
+          : null,
       home: {
         key: 'home',
         to: homeNav,
@@ -1211,15 +1259,13 @@ export default function MainNavs({
         isHome: true,
         isUsingChat: !!chatMatch,
         alert: homeAlertShown,
-        label: `${isTabletPortrait ? '' : homeLabel}${
-          homeAlertShown ? ` (${numNewPosts})` : ''
-        }`
+        label: `${homeLabel}${homeAlertShown ? ` (${numNewPosts})` : ''}`
       },
       explore: {
         key: 'explore',
         to: `/${exploreCategory}`,
         imgLabel: 'search',
-        label: isTabletPortrait ? '' : exploreLabel
+        label: exploreLabel
       },
       content:
         desktopContentTab &&
@@ -1229,20 +1275,19 @@ export default function MainNavs({
               to: `/${desktopContentTab.path}`,
               imgLabel: iconForContentNav(desktopContentTab.nav),
               kind: 'dynamic' as const,
+              closable: true,
               // the slot always targets one SPECIFIC page; without this,
               // Nav's /management prefix rule lights a stale dynamic tab
               // on every management route alongside a captured one
               exactActive: true,
-              label: isTabletPortrait
-                ? ''
-                : contentLabels[desktopContentTab.nav] || null
+              label: contentLabels[desktopContentTab.nav] || null
             }
           : null,
       missions: {
         key: 'missions',
         to: missionLinkTarget,
         imgLabel: 'tasks',
-        label: isTabletPortrait ? '' : missionsLabel
+        label: missionsLabel
       },
       // Chat is always shown, even for chat-banned users: the Chat section is
       // now more than messaging, so a chat ban no longer hides the nav entry.
@@ -1251,13 +1296,13 @@ export default function MainNavs({
         to: chatButtonPath,
         imgLabel: 'comments',
         alert: chatAlertShown,
-        label: isTabletPortrait ? '' : chatLabel
+        label: chatLabel
       },
       build: {
         key: 'build',
         to: buildLinkTarget,
         imgLabel: 'rocket-launch',
-        label: isTabletPortrait ? '' : buildLabel
+        label: buildLabel
       }
     };
     // during an account switch the committed order/minimized still belong
@@ -1280,6 +1325,7 @@ export default function MainNavs({
             imgLabel: customTab.icon,
             exactActive: true,
             label: truncateText({ text: customTab.label, limit: 14 }),
+            closable: true,
             buildAppId: buildAppId || undefined,
             audioMuted: buildAppId
               ? mutedBuildAppIds.includes(buildAppId)
@@ -1293,26 +1339,94 @@ export default function MainNavs({
       return descriptor.label
         ? {
             ...descriptor,
-            minimized: scopeReady && minimizedTabKeys.includes(entry)
+            minimized:
+              isTabletPortrait ||
+              (scopeReady
+                ? minimizedTabKeys.includes(entry)
+                : isDefaultMinimizedNavTabKey(entry))
           }
         : descriptor;
     }
-    const orderSource = scopeReady ? tabOrder : [...NAV_TAB_KEYS];
-    // Sacred defaults: a contiguous block that pinned/extras can never enter,
-    // but reorderable AMONG THEMSELVES — so they follow the saved order,
-    // filtered to just the sacred keys.
-    const defaultNavTabs = orderSource
-      .filter((entry) => isSacredDefaultKey(entry))
-      .map((entry) => resolve(entry))
+    const primaryTabByKey = new Map(
+      getPrimaryNavTabOrder().map((entry) => [entry, resolve(entry)] as const)
+    );
+    const currentActivePrimaryKey = getPrimaryNavTabOrder().find((entry) => {
+      const descriptor = primaryTabByKey.get(entry);
+      return Boolean(
+        descriptor &&
+          navTargetIsActive({
+            exactActive: descriptor.exactActive,
+            pathname,
+            profileUsername: descriptor.profileUsername,
+            search,
+            to: descriptor.to
+          })
+      );
+    });
+    const displayedPrimaryKey =
+      currentActivePrimaryKey || lastActivePrimaryKey;
+    // Primary tabs have one fixed baseline order. The current (or most
+    // recently active) primary moves to the right edge and is the only primary
+    // whose label renders on desktop/tablet. Non-primary navigation therefore
+    // leaves the primary arrangement intact; mobile uses the same icon order.
+    const defaultNavTabs = getPrimaryNavTabOrder(displayedPrimaryKey)
+      .map<NavTabDescriptor | null>((entry) => {
+        const descriptor = primaryTabByKey.get(entry);
+        return descriptor
+          ? { ...descriptor, minimized: entry !== displayedPrimaryKey }
+          : null;
+      })
+      .filter((tab): tab is NonNullable<typeof tab> => tab !== null);
+    // Extras are automatic MRU rather than manually ordered. The currently
+    // open extra is moved left immediately; the remembered sequence keeps the
+    // rest in most-recently-opened order. Pinned tabs are a separate section
+    // and remain the only custom-orderable tabs.
+    const baseExtraNavTabs = [
+      'profile',
+      'content',
+      ...visibleCustomTabs.filter((tab) => !tab.pinned).map((tab) => tab.id)
+    ]
+      .map<NavTabDescriptor | null>((entry) => resolve(entry))
       .filter((tab): tab is NavTabDescriptor => !!tab);
-    // Extras (profile, the dynamic content tab, extracted/added tabs) keep the
-    // user's saved relative order but always sit to the RIGHT of the defaults;
-    // sacred keys are stripped out here so they can never land among extras.
-    const extraNavTabs = orderSource
-      .filter((entry) => !isSacredDefaultKey(entry))
-      .map((entry) => resolve(entry))
-      .filter((tab): tab is NavTabDescriptor => !!tab);
-    return { defaultNavTabs, extraNavTabs };
+    const currentActiveExtraTabKey =
+      baseExtraNavTabs.find((tab) =>
+        navTargetIsActive({
+          exactActive: tab.exactActive,
+          pathname,
+          profileUsername: tab.profileUsername,
+          search,
+          to: tab.to
+        })
+      )?.key || null;
+    const liveRecentExtraTabKeys = currentActiveExtraTabKey
+      ? [
+          currentActiveExtraTabKey,
+          ...recentExtraTabKeys.filter(
+            (key) => key !== currentActiveExtraTabKey
+          )
+        ]
+      : recentExtraTabKeys;
+    const baseExtraTabByKey = new Map(
+      baseExtraNavTabs.map((tab) => [tab.key, tab] as const)
+    );
+    const recentExtraNavTabs = liveRecentExtraTabKeys.flatMap((key) => {
+      const tab = baseExtraTabByKey.get(key);
+      return tab ? [tab] : [];
+    });
+    const recentExtraKeySet = new Set(
+      recentExtraNavTabs.map((tab) => tab.key)
+    );
+    const extraNavTabs = [
+      ...recentExtraNavTabs,
+      ...baseExtraNavTabs.filter((tab) => !recentExtraKeySet.has(tab.key))
+    ];
+    return {
+      currentActiveExtraTabKey,
+      currentActivePrimaryKey,
+      defaultNavTabs,
+      extraNavTabs,
+      visibleExtraTabKeys: baseExtraNavTabs.map((tab) => tab.key)
+    };
   }, [
     minimizedTabKeys,
     buildLinkTarget,
@@ -1323,6 +1437,7 @@ export default function MainNavs({
     exploreCategory,
     homeNav,
     isTabletPortrait,
+    lastActivePrimaryKey,
     managementLevel,
     missionLinkTarget,
     mutedBuildAppIds,
@@ -1331,10 +1446,47 @@ export default function MainNavs({
     pathname,
     profileNav,
     profileUsername,
-    tabOrder,
+    recentExtraTabKeys,
+    search,
     userId,
     usersMatch,
     visibleCustomTabs
+  ]);
+
+  useEffect(() => {
+    if (!currentActivePrimaryKey) return;
+    navMetaRef.current.lastActivePrimaryKey = currentActivePrimaryKey;
+    setLastActivePrimaryKey((previousKey) =>
+      previousKey === currentActivePrimaryKey
+        ? previousKey
+        : currentActivePrimaryKey
+    );
+  }, [currentActivePrimaryKey]);
+
+  useEffect(() => {
+    if (navScope !== userId) return;
+    const visibleKeySet = new Set(visibleExtraTabKeys);
+    const retainedKeys = recentExtraTabKeys.filter((key) =>
+      visibleKeySet.has(key)
+    );
+    const nextKeys = currentActiveExtraTabKey
+      ? [
+          currentActiveExtraTabKey,
+          ...retainedKeys.filter((key) => key !== currentActiveExtraTabKey)
+        ]
+      : retainedKeys;
+    const unchanged =
+      nextKeys.length === recentExtraTabKeys.length &&
+      nextKeys.every((key, index) => key === recentExtraTabKeys[index]);
+    const canonicalKeys = unchanged ? recentExtraTabKeys : nextKeys;
+    navMetaRef.current.recentExtraTabKeys = canonicalKeys;
+    if (!unchanged) setRecentExtraTabKeys(nextKeys);
+  }, [
+    currentActiveExtraTabKey,
+    navScope,
+    recentExtraTabKeys,
+    userId,
+    visibleExtraTabKeys
   ]);
 
   const pinnedNavTabs = useMemo(
@@ -1367,8 +1519,8 @@ export default function MainNavs({
 
   const contentTabShown =
     !!contentNav && (contentNav !== 'management' || managementLevel > 0);
-  // The mobile bar shows ONE custom ("added") tab in the slot between Build and
-  // the tabs icon. It's the most recently SELECTED added tab, and a PINNED tab
+  // The mobile bar shows ONE custom ("added") tab before the tabs icon. It's
+  // the most recently SELECTED added tab, and a PINNED tab
   // is eligible too — a pinned tab is still user-added (unlike the Home/Explore
   // defaults), so selecting one should give it this slot. `lastSelectedAddedTab`
   // remembers which added tab you were last on so it keeps the slot after you
@@ -1402,8 +1554,42 @@ export default function MainNavs({
   const mobileContentCaptured = visibleCustomTabs.some(
     (tab) => tab.to === `/${contentPath}`
   );
-  // the tab switcher doubles as the mobile reorder UI: three sections
-  // (pinned / default / added), each drag-reorderable
+  const mobileProfileDynamicTargetDismissed = isDynamicTabTargetDismissed({
+    dismissedKey: dismissedDynamicProfileTabRef.current,
+    userId,
+    target: profileNav
+  });
+  const mobileContentDynamicTargetDismissed = isDynamicTabTargetDismissed({
+    dismissedKey: dismissedDynamicContentTabRef.current,
+    userId,
+    target: contentPath ? `/${contentPath}` : null
+  });
+  const mobileProfileTabShown = Boolean(
+    profileNav &&
+      !mobileProfileCaptured &&
+      !mobileProfileDynamicTargetDismissed
+  );
+  const mobileContentTabShown = Boolean(
+    contentTabShown &&
+      !mobileContentCaptured &&
+      !mobileContentDynamicTargetDismissed
+  );
+  const availableMobileExtraTabKeys = [
+    ...(mobileProfileTabShown ? ['profile'] : []),
+    ...(mobileContentTabShown ? ['content'] : []),
+    ...(mostRecentAddedTab ? [mostRecentAddedTab.id] : [])
+  ];
+  const availableMobileExtraTabKeySet = new Set(
+    availableMobileExtraTabKeys
+  );
+  const mobileExtraTabKeys = extraNavTabs
+    .map((tab) => tab.key)
+    .filter((key) => availableMobileExtraTabKeySet.has(key));
+  for (const key of availableMobileExtraTabKeys) {
+    if (!mobileExtraTabKeys.includes(key)) mobileExtraTabKeys.push(key);
+  }
+  // The tab switcher doubles as the mobile reorder UI for pinned tabs. Primary
+  // tabs are fixed and added tabs follow the automatic MRU order.
   const switcherSections: SwitcherSection[] = useMemo(() => {
     const pinnedItems = visibleCustomTabs
       .filter((tab) => tab.pinned)
@@ -1415,26 +1601,32 @@ export default function MainNavs({
         pinned: true,
         managed: true
       }));
-    const addedItems = getUnpinnedCustomTabsInNavOrder({
-      customTabs: visibleCustomTabs,
-      order: tabOrder
-    })
-      .map((tab) => ({
-        key: tab.id,
-        to: tab.to,
-        icon: tab.icon,
-        label: tab.label,
-        pinned: false,
-        managed: true
-      }));
+    const unpinnedTabById = new Map(
+      visibleCustomTabs
+        .filter((tab) => !tab.pinned)
+        .map((tab) => [tab.id, tab] as const)
+    );
+    const addedItems = extraNavTabs.flatMap((descriptor) => {
+      const tab = unpinnedTabById.get(descriptor.key);
+      return tab
+        ? [
+            {
+              key: tab.id,
+              to: tab.to,
+              icon: tab.icon,
+              label: tab.label,
+              pinned: false,
+              managed: true
+            }
+          ]
+        : [];
+    });
     const defaultItems = defaultNavTabs.map((tab) => ({
       key: tab.key,
       to: tab.to,
       icon: tab.imgLabel || 'circle',
       label:
-        typeof tab.label === 'string' && tab.label.trim()
-          ? tab.label
-          : tab.key,
+        typeof tab.label === 'string' && tab.label.trim() ? tab.label : tab.key,
       pinned: false,
       managed: false
     }));
@@ -1443,7 +1635,7 @@ export default function MainNavs({
       { kind: 'default', title: 'Default', items: defaultItems },
       { kind: 'added', title: 'Added', items: addedItems }
     ];
-  }, [defaultNavTabs, tabOrder, visibleCustomTabs]);
+  }, [defaultNavTabs, extraNavTabs, visibleCustomTabs]);
 
   return (
     <div
@@ -1515,102 +1707,12 @@ export default function MainNavs({
           }
         `}`}
       >
-        {/* Sacred defaults render in the user's saved order (same source as the
-            desktop strip and the mobile switcher's Default section), so a
-            reorder there actually moves these icons. */}
+        {/* Primary defaults use the fixed baseline order with the active tab
+            rotated to the right, shared by every breakpoint. */}
         {defaultNavTabs.map((tab) => renderMobileDefaultNav(tab))}
-        {/* The dynamic tabs (last-viewed profile + content page) sit to the RIGHT
-            of the default block — after the rightmost default (Build by default)
-            and before the trailing "added" tab and the windows/tabs button. */}
-        {profileNav && !mobileProfileCaptured && (
-          <MobileLongPressNav
-            onLongPress={(rect) =>
-              setLongPressMenu({
-                x: rect.left + rect.width / 2,
-                y: rect.top,
-                items: [
-                  {
-                    icon: 'thumbtack',
-                    label: 'Pin this page',
-                    className: 'pin',
-                    onClick: () => handleCaptureProfileTab(true)
-                  },
-                  {
-                    icon: 'plus',
-                    label: 'Add as tab',
-                    onClick: () => handleCaptureProfileTab(false)
-                  }
-                ]
-              })
-            }
-          >
-            <Nav to={profileNav} className="mobile" imgLabel="user" />
-          </MobileLongPressNav>
-        )}
-        {contentTabShown && !mobileContentCaptured && (
-          <MobileLongPressNav
-            onLongPress={(rect) =>
-              setLongPressMenu({
-                x: rect.left + rect.width / 2,
-                y: rect.top,
-                items: [
-                  {
-                    icon: 'thumbtack',
-                    label: 'Pin this page',
-                    className: 'pin',
-                    onClick: () => handleCaptureContentTab(true)
-                  },
-                  {
-                    icon: 'plus',
-                    label: 'Add as tab',
-                    onClick: () => handleCaptureContentTab(false)
-                  }
-                ]
-              })
-            }
-          >
-            <Nav
-              to={`/${contentPath}`}
-              className="mobile"
-              imgLabel={contentIconType}
-            />
-          </MobileLongPressNav>
-        )}
-        {mostRecentAddedTab && (
-          <MobileLongPressNav
-            onLongPress={(rect) =>
-              setLongPressMenu({
-                x: rect.left + rect.width / 2,
-                y: rect.top,
-                items: [
-                  {
-                    icon: 'thumbtack',
-                    label: mostRecentAddedTab.pinned
-                      ? 'Unpin this tab'
-                      : 'Pin this tab',
-                    className: 'pin',
-                    onClick: () => handleToggleTabPinned(mostRecentAddedTab.id)
-                  },
-                  {
-                    icon: 'trash-alt',
-                    label: 'Close tab',
-                    className: 'danger',
-                    onClick: () => handleRemoveCustomTab(mostRecentAddedTab.id)
-                  }
-                ]
-              })
-            }
-          >
-            <div style={{ display: 'flex' }}>
-              <Nav
-                to={mostRecentAddedTab.to}
-                className="mobile"
-                imgLabel={mostRecentAddedTab.icon || 'clone'}
-                exactActive
-              />
-            </div>
-          </MobileLongPressNav>
-        )}
+        {/* Unpinned extras share the desktop/tablet MRU order. The most
+            recently opened dynamic, Lumine, or added tab is first. */}
+        {mobileExtraTabKeys.map((key) => renderMobileExtraNav(key))}
         <button
           type="button"
           aria-label="Your tabs"
@@ -1653,11 +1755,11 @@ export default function MainNavs({
         pinnedTabs={pinnedNavTabs}
         defaultTabs={defaultNavTabs}
         tabs={extraNavTabs}
-        onMove={handleMoveTab}
         onMovePinned={handleMovePinnedTab}
         menuItemsForTab={handleGetTabMenuItems}
         showMenuHint={!tabMenuDiscovered}
         onMenuOpen={handleMarkTabMenuDiscovered}
+        onCloseTab={handleCloseUnpinnedTab}
         onToggleAudioMuted={handleToggleBuildAppMuted}
         isTabletPortrait={isTabletPortrait}
       />
@@ -1771,9 +1873,9 @@ export default function MainNavs({
     </div>
   );
 
-  // Mobile-only renderer for a sacred default tab. Keyed off the descriptor's
-  // key (not its desktop label/alert props) so the mobile bar keeps its own
-  // alert semantics (e.g. home's feedsOutdated) while honoring the saved order.
+  // Mobile-only renderer for a primary tab. Keyed off the descriptor's key
+  // (not its desktop label/alert props) so the mobile bar keeps its own alert
+  // semantics while following the active-rightmost order.
   function renderMobileDefaultNav(tab: NavTabDescriptor) {
     switch (tab.key) {
       case 'home':
@@ -1830,35 +1932,130 @@ export default function MainNavs({
     }
   }
 
-  function handleMoveTab({
-    sourceKey,
-    targetKey
-  }: {
-    sourceKey: string;
-    targetKey: string;
-  }) {
-    if (userId && !navServerReadyRef.current) return;
-    const base = getNavEditBase();
-    const from = base.order.indexOf(sourceKey);
-    const to = base.order.indexOf(targetKey);
-    if (from < 0 || to < 0 || from === to) return;
-    const next = [...base.order];
-    next.splice(from, 1);
-    next.splice(to, 0, sourceKey);
-    const sessionTabIds = new Set(
-      base.customTabs.filter((tab) => !tab.pinned).map((tab) => tab.id)
-    );
-    const currentCanonicalOrder = base.order.filter(
-      (key) => !sessionTabIds.has(key)
-    );
-    const nextCanonicalOrder = next.filter((key) => !sessionTabIds.has(key));
-    if (
-      JSON.stringify(currentCanonicalOrder) !==
-      JSON.stringify(nextCanonicalOrder)
-    ) {
-      navMetaRef.current.canonicalOrderEdited = true;
+  function renderMobileExtraNav(key: string) {
+    if (key === 'profile' && mobileProfileTabShown) {
+      return (
+        <MobileLongPressNav
+          key="profile"
+          onLongPress={(rect) =>
+            setLongPressMenu({
+              x: rect.left + rect.width / 2,
+              y: rect.top,
+              items: [
+                {
+                  icon: 'thumbtack',
+                  label: 'Pin this page',
+                  className: 'pin',
+                  onClick: () => handleCaptureProfileTab(true)
+                },
+                {
+                  icon: 'plus',
+                  label: 'Add as tab',
+                  onClick: () => handleCaptureProfileTab(false)
+                },
+                {
+                  icon: 'trash-alt',
+                  label: 'Close tab',
+                  className: 'danger',
+                  onClick: handleCloseDynamicProfileTab
+                }
+              ]
+            })
+          }
+        >
+          <Nav to={profileNav} className="mobile" imgLabel="user" />
+        </MobileLongPressNav>
+      );
     }
-    persistNavState({ order: next });
+    if (key === 'content' && mobileContentTabShown) {
+      return (
+        <MobileLongPressNav
+          key="content"
+          onLongPress={(rect) =>
+            setLongPressMenu({
+              x: rect.left + rect.width / 2,
+              y: rect.top,
+              items: [
+                {
+                  icon: 'thumbtack',
+                  label: 'Pin this page',
+                  className: 'pin',
+                  onClick: () => handleCaptureContentTab(true)
+                },
+                {
+                  icon: 'plus',
+                  label: 'Add as tab',
+                  onClick: () => handleCaptureContentTab(false)
+                },
+                {
+                  icon: 'trash-alt',
+                  label: 'Close tab',
+                  className: 'danger',
+                  onClick: handleCloseDynamicContentTab
+                }
+              ]
+            })
+          }
+        >
+          <Nav
+            to={`/${contentPath}`}
+            className="mobile"
+            imgLabel={contentIconType}
+          />
+        </MobileLongPressNav>
+      );
+    }
+    const addedTab = mostRecentAddedTab;
+    if (addedTab?.id === key) {
+      return (
+        <MobileLongPressNav
+          key={addedTab.id}
+          onLongPress={(rect) =>
+            setLongPressMenu({
+              x: rect.left + rect.width / 2,
+              y: rect.top,
+              items: [
+                {
+                  icon: 'thumbtack',
+                  label: addedTab.pinned
+                    ? 'Unpin this tab'
+                    : 'Pin this tab',
+                  className: 'pin',
+                  onClick: () => handleToggleTabPinned(addedTab.id)
+                },
+                {
+                  icon: 'trash-alt',
+                  label: 'Close tab',
+                  className: 'danger',
+                  onClick: () => handleRemoveCustomTab(addedTab.id)
+                }
+              ]
+            })
+          }
+        >
+          <div style={{ display: 'flex' }}>
+            <Nav
+              to={addedTab.to}
+              className="mobile"
+              imgLabel={addedTab.icon || 'clone'}
+              exactActive
+            />
+          </div>
+        </MobileLongPressNav>
+      );
+    }
+    return null;
+  }
+
+  function rememberExtraTabOpened(key: string) {
+    const previousKeys = navMetaRef.current.recentExtraTabKeys;
+    const nextKeys = [key, ...previousKeys.filter((entry) => entry !== key)];
+    const unchanged =
+      nextKeys.length === previousKeys.length &&
+      nextKeys.every((entry, index) => entry === previousKeys[index]);
+    if (unchanged) return;
+    navMetaRef.current.recentExtraTabKeys = nextKeys;
+    setRecentExtraTabKeys(nextKeys);
   }
 
   function handleMovePinnedTab({
@@ -1885,13 +2082,13 @@ export default function MainNavs({
     handleReorderSection('pinned', fromIndex, toIndex);
   }
 
-  // Reorder within one switcher section. Pinned tabs live in customTabs order;
-  // defaults + added live in the `order` array (sacred vs non-sacred subsets).
+  // Pinned tabs are the only manually reorderable section.
   function handleReorderSection(
     kind: SwitcherKind,
     fromIndex: number,
     toIndex: number
   ) {
+    if (kind !== 'pinned') return;
     if (fromIndex === toIndex) return;
     if (userId && !navServerReadyRef.current) return;
     const base = getNavEditBase();
@@ -1903,70 +2100,23 @@ export default function MainNavs({
         managementLevel
       });
     }
-    if (kind === 'pinned') {
-      const visiblePinned = base.customTabs.filter(
-        (tab) => tab.pinned && isVisibleCustomTab(tab)
-      );
-      if (
-        fromIndex >= visiblePinned.length ||
-        toIndex >= visiblePinned.length
-      ) {
-        return;
-      }
-      const [moved] = visiblePinned.splice(fromIndex, 1);
-      visiblePinned.splice(toIndex, 0, moved);
-      const visiblePinnedIds = new Set(visiblePinned.map((tab) => tab.id));
-      let pi = 0;
-      const nextCustomTabs = base.customTabs.map((tab) => {
-        if (!tab.pinned || !visiblePinnedIds.has(tab.id)) return tab;
-        const replacement = visiblePinned[pi];
-        pi += 1;
-        return replacement || tab;
-      });
-      persistNavState({ custom: nextCustomTabs });
+    const visiblePinned = base.customTabs.filter(
+      (tab) => tab.pinned && isVisibleCustomTab(tab)
+    );
+    if (fromIndex >= visiblePinned.length || toIndex >= visiblePinned.length) {
       return;
     }
-    if (kind === 'default') {
-      const sacred = base.order.filter((key) => isSacredDefaultKey(key));
-      if (fromIndex >= sacred.length || toIndex >= sacred.length) return;
-      const [moved] = sacred.splice(fromIndex, 1);
-      sacred.splice(toIndex, 0, moved);
-      let si = 0;
-      const nextOrder = base.order.map((key) =>
-        isSacredDefaultKey(key) ? sacred[si++] : key
-      );
-      navMetaRef.current.canonicalOrderEdited = true;
-      persistNavState({ order: nextOrder });
-      return;
-    }
-    // added: reorder the unpinned customTabs AND mirror into the order array's
-    // non-sacred custom entries so desktop + mobile stay consistent
-    const visibleAdded = getUnpinnedCustomTabsInNavOrder({
-      customTabs: base.customTabs.filter(isVisibleCustomTab),
-      order: base.order
-    });
-    if (fromIndex >= visibleAdded.length || toIndex >= visibleAdded.length) {
-      return;
-    }
-    const [moved] = visibleAdded.splice(fromIndex, 1);
-    visibleAdded.splice(toIndex, 0, moved);
-    const addedIdSet = new Set(visibleAdded.map((tab) => tab.id));
-    const orderedAddedIds = visibleAdded.map((tab) => tab.id);
-    let ci = 0;
+    const [moved] = visiblePinned.splice(fromIndex, 1);
+    visiblePinned.splice(toIndex, 0, moved);
+    const visiblePinnedIds = new Set(visiblePinned.map((tab) => tab.id));
+    let pinnedIndex = 0;
     const nextCustomTabs = base.customTabs.map((tab) => {
-      if (tab.pinned || !addedIdSet.has(tab.id)) return tab;
-      const replacement = visibleAdded[ci];
-      ci += 1;
+      if (!tab.pinned || !visiblePinnedIds.has(tab.id)) return tab;
+      const replacement = visiblePinned[pinnedIndex];
+      pinnedIndex += 1;
       return replacement || tab;
     });
-    let ai = 0;
-    const nextOrder = base.order.map((key) =>
-      addedIdSet.has(key) ? orderedAddedIds[ai++] : key
-    );
-    persistNavState({
-      custom: nextCustomTabs,
-      order: nextOrder
-    });
+    persistNavState({ custom: nextCustomTabs });
   }
 
   function handleToggleBuildAppMuted(buildAppId: string) {
@@ -2126,11 +2276,11 @@ export default function MainNavs({
         const { localCustomTabs, ...serverPayload } = payload;
         const finalPayload = {
           ...serverPayload,
+          orderVersion: NAV_TAB_ORDER_VERSION,
           // discovery is monotonic: a payload built from a stale closure
           // (e.g. the first-ever context menu's item callbacks) must never
           // un-discover the menu
-          menuDiscovered:
-            payload.menuDiscovered || tabMenuDiscoveredRef.current
+          menuDiscovered: payload.menuDiscovered || tabMenuDiscoveredRef.current
         };
         let data = null;
         try {
@@ -2209,6 +2359,7 @@ export default function MainNavs({
   function handleReconcileNavTabs(
     canonical: {
       order?: string[];
+      orderVersion?: number;
       pinnedTabs?: CustomNavTab[];
       minimized?: string[];
       menuDiscovered?: boolean;
@@ -2321,18 +2472,47 @@ export default function MainNavs({
     persistNavState({ menuDiscovered: true });
   }
 
+  function getRenderedTab(key: string) {
+    return (
+      pinnedNavTabs.find((tab) => tab.key === key) ||
+      defaultNavTabs.find((tab) => tab.key === key) ||
+      extraNavTabs.find((tab) => tab.key === key) ||
+      null
+    );
+  }
+
+  function tabSupportsLabelControl(key: string) {
+    const renderedTab = getRenderedTab(key);
+    const customTab = customTabsRef.current.find((tab) => tab.id === key);
+    return Boolean(
+      renderedTab &&
+        !isTabletPortrait &&
+        !isSacredDefaultKey(key) &&
+        renderedTab.label &&
+        !customTab?.pinned
+    );
+  }
+
   function handleGetTabMenuItems(key: string): TabMenuItem[] | null {
-    const minimizeItem: TabMenuItem = minimizedTabKeys.includes(key)
-      ? {
-          label: 'Expand',
-          icon: 'expand',
-          onClick: () => handleToggleTabMinimized(key)
-        }
-      : {
-          label: 'Minimize',
-          icon: 'compress',
-          onClick: () => handleToggleTabMinimized(key)
-        };
+    const renderedTab = getRenderedTab(key);
+    if (!renderedTab || isSacredDefaultKey(key)) return null;
+    const customTab = customTabs.find((tab) => tab.id === key);
+    const labelControlItems: TabMenuItem[] =
+      !tabSupportsLabelControl(key)
+        ? []
+        : [
+            renderedTab.minimized
+              ? {
+                  label: 'Expand',
+                  icon: 'expand',
+                  onClick: () => handleToggleTabMinimized(key)
+                }
+              : {
+                  label: 'Minimize',
+                  icon: 'compress',
+                  onClick: () => handleToggleTabMinimized(key)
+                }
+          ];
     if (key === 'content') {
       return [
         {
@@ -2345,7 +2525,12 @@ export default function MainNavs({
           icon: 'plus',
           onClick: () => handleCaptureContentTab(false)
         },
-        minimizeItem
+        ...labelControlItems,
+        {
+          label: 'Close tab',
+          icon: 'trash-alt',
+          onClick: () => handleCloseUnpinnedTab('content')
+        }
       ];
     }
     // the profile tab is dynamic like the content tab — same capture options
@@ -2361,10 +2546,14 @@ export default function MainNavs({
           icon: 'plus',
           onClick: () => handleCaptureProfileTab(false)
         },
-        minimizeItem
+        ...labelControlItems,
+        {
+          label: 'Close tab',
+          icon: 'trash-alt',
+          onClick: () => handleCloseUnpinnedTab('profile')
+        }
       ];
     }
-    const customTab = customTabs.find((tab) => tab.id === key);
     if (customTab) {
       // pinned tabs are always icon-only — no Minimize/Expand for them
       return customTab.pinned
@@ -2375,7 +2564,7 @@ export default function MainNavs({
               onClick: () => handleToggleTabPinned(key)
             },
             {
-              label: 'Remove',
+              label: 'Close tab',
               icon: 'trash-alt',
               onClick: () => handleRemoveCustomTab(key)
             }
@@ -2386,21 +2575,36 @@ export default function MainNavs({
               icon: 'thumbtack',
               onClick: () => handleToggleTabPinned(key)
             },
-            minimizeItem,
+            ...labelControlItems,
             {
-              label: 'Remove',
+              label: 'Close tab',
               icon: 'trash-alt',
-              onClick: () => handleRemoveCustomTab(key)
+              onClick: () => handleCloseUnpinnedTab(key)
             }
           ];
     }
-    // built-in tabs can be minimized but never removed. Anything else is
-    // a custom-tab key that no longer resolves (e.g. adopted away while
-    // its menu was open) — no items, so the open menu closes itself
-    return isNavTabKey(key) ? [minimizeItem] : null;
+    // Any other rendered built-in can only expose a meaningful label control.
+    return isNavTabKey(key) && labelControlItems.length > 0
+      ? labelControlItems
+      : null;
+  }
+
+  function handleCloseUnpinnedTab(key: string) {
+    if (key === 'content') {
+      handleCloseDynamicContentTab();
+      return;
+    }
+    if (key === 'profile') {
+      handleCloseDynamicProfileTab();
+      return;
+    }
+    const tab = customTabsRef.current.find((item) => item.id === key);
+    if (!tab || tab.pinned) return;
+    handleRemoveCustomTab(key);
   }
 
   function handleToggleTabMinimized(key: string) {
+    if (!tabSupportsLabelControl(key)) return;
     if (userId && !navServerReadyRef.current) return;
     const base = getNavEditBase();
     const nowMinimized = !base.minimized.includes(key);
@@ -2482,8 +2686,8 @@ export default function MainNavs({
       navMetaRef.current.minimizedIntents[newTab.id] = true;
       nextMinimized = [...base.minimized, newTab.id];
     } else {
-      // spawned tabs always open at the FAR RIGHT — after whatever the current
-      // rightmost tab is (consistent rule for content/profile/build tabs)
+      // `order` retains membership for sync/reconciliation. Visible unpinned
+      // order is route-derived MRU, so the newly opened tab renders leftmost.
       nextOrder = [
         ...base.order.filter((entry) => entry !== newTab.id),
         newTab.id
@@ -2521,13 +2725,38 @@ export default function MainNavs({
     });
   }
 
+  function handleCloseDynamicContentTab() {
+    if (desktopContentTab) {
+      dismissedDynamicContentTabRef.current = getDynamicTabDismissalKey(
+        userId,
+        `/${desktopContentTab.path}`
+      );
+    }
+    setDesktopContentTab(null);
+    onSetContentNav('');
+    onSetContentPath('');
+  }
+
+  function handleCloseDynamicProfileTab() {
+    if (profileNav) {
+      dismissedDynamicProfileTabRef.current = getDynamicTabDismissalKey(
+        userId,
+        profileNav
+      );
+    }
+    onSetProfileNav('');
+  }
+
   function handleToggleTabPinned(id: string) {
     if (userId && !navServerReadyRef.current) return;
     const base = getNavEditBase();
     const target = base.customTabs.find((tab) => tab.id === id);
     if (!target) return;
     const nextPinned = !target.pinned;
-    if (nextPinned && base.customTabs.filter((tab) => tab.pinned).length >= MAX_PINNED_TABS) {
+    if (
+      nextPinned &&
+      base.customTabs.filter((tab) => tab.pinned).length >= MAX_PINNED_TABS
+    ) {
       setPinLimitAlertShown(true);
       return;
     }
@@ -2559,6 +2788,7 @@ export default function MainNavs({
     const base = getNavEditBase();
     const removedTab = base.customTabs.find((tab) => tab.id === id);
     if (removedTab) {
+      dismissDynamicReplacementForRemovedTab(removedTab);
       navMetaRef.current.removedTabs.push({
         id: removedTab.id,
         to: removedTab.to,
@@ -2595,6 +2825,32 @@ export default function MainNavs({
       custom: nextCustomTabs,
       minimized: nextMinimized
     });
+  }
+
+  function dismissDynamicReplacementForRemovedTab(removedTab: CustomNavTab) {
+    const currentLocation = `${pathname}${search || ''}`;
+    const { section } = getSectionFromPathname(pathname);
+    const isCurrentContentTarget =
+      removedTab.to === currentLocation &&
+      (contentPageMatch || (section === 'management' && managementLevel > 0));
+    if (isCurrentContentTarget) {
+      dismissedDynamicContentTabRef.current = getDynamicTabDismissalKey(
+        userId,
+        currentLocation
+      );
+      setDesktopContentTab((currentTab) =>
+        currentTab && `/${currentTab.path}` === currentLocation
+          ? null
+          : currentTab
+      );
+    }
+
+    if (profilePageMatch && removedTab.to === pathname) {
+      dismissedDynamicProfileTabRef.current = getDynamicTabDismissalKey(
+        userId,
+        pathname
+      );
+    }
   }
 
   // Close a running build app by its build id: find its tab and remove it

@@ -1,10 +1,13 @@
 import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import ChessGameRecord from '../../Chess/GameRecord';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 function GameOverMessage({
+  channelId,
+  messageId,
   myId,
   opponentName,
   winnerId,
@@ -14,6 +17,8 @@ function GameOverMessage({
   gameType = 'chess',
   omokState
 }: {
+  channelId?: number;
+  messageId?: number;
   myId: number;
   opponentName: string;
   winnerId: number;
@@ -126,6 +131,14 @@ function GameOverMessage({
             failedToMakeMoveInTimeLabel
           )}
         </div>
+        {gameType === 'chess' && !isAbort && channelId && messageId ? (
+          <ChessGameRecord
+            channelId={channelId}
+            messageId={messageId}
+            showPgn
+            style={{ marginTop: '0.5rem' }}
+          />
+        ) : null}
       </div>
     </ErrorBoundary>
   );

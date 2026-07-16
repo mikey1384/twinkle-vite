@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
+import UserSearchResultRow from '~/components/UserSearchResultRow';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function InviteUsersModal({
@@ -69,10 +70,12 @@ export default function InviteUsersModal({
             onRemoveItem={onRemoveUser}
             onSubmit={selectedUsers.length > 0 ? handleDone : undefined}
             renderDropdownLabel={(item) => (
-              <span>
-                {item?.username}{' '}
-                {item?.realName && <small>{`(${item.realName})`}</small>}
-              </span>
+              <UserSearchResultRow
+                userId={Number(item.id)}
+                username={item.username}
+                realName={item.realName}
+                profilePicUrl={item.profilePicUrl}
+              />
             )}
             searchPlaceholder="Search for people you want to chat with"
             selectedItems={selectedUsers}

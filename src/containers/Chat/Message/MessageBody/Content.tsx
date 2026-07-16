@@ -4,6 +4,7 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import Chess from '../../Chess';
+import ChessGameRecord from '../../Chess/GameRecord';
 import Omok from '../../Omok';
 import { MessageStyle } from '../../Styles';
 import ApprovalRequest from './ApprovalRequest';
@@ -243,47 +244,64 @@ export default function Content({
           style={{ marginTop: '1rem', width: '100%' }}
         />
       ) : hasChessBoardState ? (
-        <Chess
-          key={chessThemeVersion}
-          loaded
-          moveViewed={!!moveViewTimeStamp}
-          channelId={channelId}
-          isCountdownActive={isChessCountdownActive}
-          gameWinnerId={gameWinnerId}
-          spoilerOff={chessSpoilerOff}
-          messageId={messageId}
-          myId={myId}
-          initialState={chessState}
-          lastChessMessageId={currentChannel.lastChessMessageId}
-          latestChessBoardMessageId={currentChannel.latestChessBoardMessageId}
-          onBoardClick={onChessBoardClick}
-          onRewindClick={() =>
-            onRequestRewind({
-              ...(chessState.previousState || chessState),
-              isDiscussion: true,
-              isRewindRequest: true
-            })
-          }
-          onDiscussClick={() => {
-            onSetChessTarget({
-              chessState: {
-                ...chessState,
-                isRewinded: false,
-                rewindRequestId: null,
-                isRewindRequest: false
-              },
-              messageId,
-              channelId
-            });
-          }}
-          onSpoilerClick={handleChessSpoilerClick}
-          opponentId={partner?.id}
-          opponentName={partner?.username}
-          senderId={userId}
-          displaySize="inline"
-          style={{ marginTop: '1rem', width: '100%' }}
-          squareColors={getUserChatSquareColors(myId)}
-        />
+        <>
+          <Chess
+            key={chessThemeVersion}
+            loaded
+            moveViewed={!!moveViewTimeStamp}
+            channelId={channelId}
+            isCountdownActive={isChessCountdownActive}
+            gameWinnerId={gameWinnerId}
+            spoilerOff={chessSpoilerOff}
+            messageId={messageId}
+            myId={myId}
+            initialState={chessState}
+            lastChessMessageId={currentChannel.lastChessMessageId}
+            latestChessBoardMessageId={currentChannel.latestChessBoardMessageId}
+            onBoardClick={onChessBoardClick}
+            onRewindClick={() =>
+              onRequestRewind({
+                ...(chessState.previousState || chessState),
+                isDiscussion: true,
+                isRewindRequest: true
+              })
+            }
+            onDiscussClick={() => {
+              onSetChessTarget({
+                chessState: {
+                  ...chessState,
+                  isRewinded: false,
+                  rewindRequestId: null,
+                  isRewindRequest: false
+                },
+                messageId,
+                channelId
+              });
+            }}
+            onSpoilerClick={handleChessSpoilerClick}
+            opponentId={partner?.id}
+            opponentName={partner?.username}
+            senderId={userId}
+            displaySize="inline"
+            style={{ marginTop: '1rem', width: '100%' }}
+            squareColors={getUserChatSquareColors(myId)}
+          />
+          {!chessState?.isDiscussion && !chessState?.isRewindRequest && (
+            <ChessGameRecord
+              channelId={channelId}
+              messageId={messageId}
+              showPgn={Boolean(
+                gameWinnerId ||
+                  isDraw ||
+                  isAbort ||
+                  chessState?.isCheckmate ||
+                  chessState?.isStalemate ||
+                  chessState?.isDraw
+              )}
+              style={{ marginTop: '0.5rem' }}
+            />
+          )}
+        </>
       ) : fileToUpload && !loading ? (
         <FileUploadStatusIndicator
           key={channelId}

@@ -109,7 +109,9 @@ export default function Members({
                   border: none;
                   padding: 0.5rem 1rem;
                   border-radius: 5px;
-                  transition: background 0.2s, color 0.2s;
+                  transition:
+                    background 0.2s,
+                    color 0.2s;
 
                   &:hover {
                     background: ${Color.highlightGray()};
@@ -221,7 +223,10 @@ export default function Members({
   );
 
   async function handleRemoveMember(memberId: number) {
-    await removeMemberFromChannel({ channelId, memberId });
+    await removeMemberFromChannel({
+      channelId,
+      memberId
+    });
     onRemoveMemberFromChannel({ channelId, memberId });
     socket.emit('remove_user_from_channel', {
       channelId,

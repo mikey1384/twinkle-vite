@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
 import {
-  useAppContext,
   useChatContext,
   useNotiContext,
   useViewContext,
@@ -17,6 +16,8 @@ import {
   CIEL_TWINKLE_ID,
   CHAT_ID_BASE_NUMBER
 } from '~/constants/defaultValues';
+import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
+import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
 
 export default function useAISocket({
   selectedChannelId,
@@ -34,6 +35,7 @@ export default function useAISocket({
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
+  const { reconcileChannelLastRead } = useChatLastReadReconciler();
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
@@ -82,10 +84,6 @@ export default function useAISocket({
 
   const onSetSubtitleMergeProgress = useManagementContext(
     (v) => v.actions.onSetSubtitleMergeProgress
-  );
-
-  const updateChatLastRead = useAppContext(
-    (v) => v.requestHelpers.updateChatLastRead
   );
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -457,6 +455,10 @@ export default function useAISocket({
         return;
       }
 
+      // AI replies use their own socket event and never pass through the
+      // generic chat receipt handler. Invalidate older writer snapshots before
+      // either applying this message or reconciling its read watermark.
+      markChatUnreadActivity();
       onSetChannelState({
         channelId,
         newState: {
@@ -482,7 +484,7 @@ export default function useAISocket({
       };
       if (messageIsForCurrentChannel) {
         if (usingChatRef.current) {
-          updateChatLastRead(channelId);
+          void reconcileChannelLastRead(channelId);
         }
         onReceiveMessage({
           message: appliedMessage,

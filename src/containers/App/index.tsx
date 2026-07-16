@@ -144,10 +144,7 @@ const buildRuntimeLoadingInnerClass = css`
 
 function BuildRuntimeLoading() {
   return (
-    <div
-      className={buildRuntimeLoadingClass}
-      data-build-runtime-loading="true"
-    >
+    <div className={buildRuntimeLoadingClass} data-build-runtime-loading="true">
       <Loading className={buildRuntimeLoadingInnerClass} />
     </div>
   );
@@ -498,8 +495,7 @@ export default function App() {
       if (!buildNavHiddenStorageReady) return;
       let persistedNavHidden = false;
       try {
-        persistedNavHidden =
-          localStorage.getItem(BUILD_NAV_HIDDEN_KEY) === '1';
+        persistedNavHidden = localStorage.getItem(BUILD_NAV_HIDDEN_KEY) === '1';
       } catch {
         // sandboxed embeds can block storage access
       }
@@ -716,9 +712,11 @@ export default function App() {
       componentPath="App/index"
       className={css`
         ${usingChat ? 'border-top: 1px solid transparent;' : ''}
-        height: ${suppressHeader
-          ? '100%'
-          : `calc(100% - ${APP_SHELL_HEADER_OFFSET_STYLE})`};
+        height: ${
+          suppressHeader
+            ? '100%'
+            : `calc(100% - ${APP_SHELL_HEADER_OFFSET_STYLE})`
+        };
         width: 100%;
         display: flow-root;
         @media (max-width: ${mobileMaxWidth}) {
@@ -744,9 +742,7 @@ export default function App() {
         <div
           id="App"
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
-            margin-top: ${suppressHeader
-              ? '0'
-              : APP_SHELL_HEADER_OFFSET_STYLE};
+            margin-top: ${suppressHeader ? '0' : APP_SHELL_HEADER_OFFSET_STYLE};
             height: 100%;
             min-height: 100%;
             @media (max-width: ${mobileMaxWidth}) {
@@ -1321,7 +1317,8 @@ export default function App() {
       messageId,
       alreadyExists,
       netCoins,
-      aiUsagePolicy
+      aiUsagePolicy,
+      quickAccess
     } = savedFileMessage;
 
     if (typeof netCoins === 'number') {
@@ -1341,10 +1338,10 @@ export default function App() {
       channel_type: isZeroChat
         ? 'ai_zero'
         : isCielChat
-        ? 'ai_ciel'
-        : currentChannel?.twoPeople
-        ? 'dm'
-        : 'group',
+          ? 'ai_ciel'
+          : currentChannel?.twoPeople
+            ? 'dm'
+            : 'group',
       has_attachment: true
     });
     onPostUploadComplete({
@@ -1393,7 +1390,12 @@ export default function App() {
         channelId: channel.id,
         pathId: channel.pathId
       });
-      onCreateNewDMChannel({ channel, message });
+      onCreateNewDMChannel({
+        channel,
+        message,
+        quickAccess,
+        userId
+      });
       socket.emit('join_chat_group', message.channelId);
       socket.emit('send_bi_chat_invitation', {
         userId: recipientId,

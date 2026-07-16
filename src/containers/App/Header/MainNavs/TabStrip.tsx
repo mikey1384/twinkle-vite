@@ -1,9 +1,4 @@
-import React, {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import Nav from './Nav';
@@ -27,6 +22,7 @@ export interface NavTabDescriptor {
   profileUsername?: string;
   buildAppId?: string;
   audioMuted?: boolean;
+  closable?: boolean;
 }
 
 export interface TabMenuItem {
@@ -36,8 +32,8 @@ export interface TabMenuItem {
   onClick: () => void;
 }
 
-// Pinned, defaults, and extras are independent drag zones. A drag is confined
-// to whichever zone it began in, so tabs can only swap with their peers.
+// Pinned tabs are the only manually draggable section. Primary/default tabs
+// and extras use the same layout machinery but are ordered automatically.
 type DragZone = 'pinned' | 'default' | 'extra';
 
 interface DragState {
@@ -200,13 +196,22 @@ const tabItemClass = css`
   }
 `;
 
-const audioTabItemClass = css`
+const actionTabItemClass = css`
   a {
     padding-right: 2.85rem !important;
   }
 `;
 
-const audioMuteButtonClass = css`
+const audioAndCloseTabItemClass = css`
+  a {
+    padding-right: 4.9rem !important;
+  }
+  button[data-tab-audio='true'] {
+    right: 2.45rem;
+  }
+`;
+
+const tabActionButtonClass = css`
   position: absolute;
   right: 0.45rem;
   bottom: 1.18rem;
@@ -229,9 +234,20 @@ const audioMuteButtonClass = css`
     background: ${Color.wellGray()};
     color: ${Color.darkerGray()};
   }
+`;
 
+const audioMuteButtonClass = css`
   &[data-muted='true'] {
     color: ${Color.logoBlue()};
+  }
+`;
+
+const closeTabButtonClass = css`
+  opacity: 0.72;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
   }
 `;
 
@@ -476,22 +492,22 @@ export default function TabStrip({
   pinnedTabs,
   defaultTabs,
   tabs,
-  onMove,
   onMovePinned,
   menuItemsForTab,
   showMenuHint,
   onMenuOpen,
+  onCloseTab,
   onToggleAudioMuted,
   isTabletPortrait
 }: {
   pinnedTabs: NavTabDescriptor[];
   defaultTabs: NavTabDescriptor[];
   tabs: NavTabDescriptor[];
-  onMove: (arg: { sourceKey: string; targetKey: string }) => void;
   onMovePinned: (arg: { sourceKey: string; targetKey: string }) => void;
   menuItemsForTab?: (key: string) => TabMenuItem[] | null;
   showMenuHint?: boolean;
   onMenuOpen?: () => void;
+  onCloseTab?: (key: string) => void;
   onToggleAudioMuted?: (buildAppId: string) => void;
   isTabletPortrait?: boolean;
 }) {
@@ -525,8 +541,6 @@ export default function TabStrip({
   pinnedTabsRef.current = pinnedTabs;
   const defaultTabsRef = useRef(defaultTabs);
   defaultTabsRef.current = defaultTabs;
-  const onMoveRef = useRef(onMove);
-  onMoveRef.current = onMove;
   const onMovePinnedRef = useRef(onMovePinned);
   onMovePinnedRef.current = onMovePinned;
   const windowDragCleanupRef = useRef<null | (() => void)>(null);
@@ -596,9 +610,7 @@ export default function TabStrip({
           signature={pinnedSignature}
           itemContainerRef={pinnedZoneRef}
           maxVisible={
-            isTabletPortrait
-              ? PINNED_MAX_VISIBLE_PORTRAIT
-              : PINNED_MAX_VISIBLE
+            isTabletPortrait ? PINNED_MAX_VISIBLE_PORTRAIT : PINNED_MAX_VISIBLE
           }
           wrapperClassName={pinnedAreaClass}
           scrollToEndOnLoad
@@ -609,7 +621,7 @@ export default function TabStrip({
             className={dragZoneClass}
           >
             {pinnedTabs.map((tab, index) =>
-              renderDraggableTab(tab, index, 'pinned')
+              renderTab(tab, index, 'pinned')
             )}
           </div>
         </ScrollableRow>
@@ -617,10 +629,7 @@ export default function TabStrip({
       {/* leading dock: defaults scrolled off the LEFT edge, shown as icon chips
           (the originals stay in the main scroll — this is additive) */}
       {collapsedLeadingCount > 0 && (
-        <div
-          data-collapsed-dock="leading"
-          className={collapsedDockClass}
-        >
+        <div data-collapsed-dock="leading" className={collapsedDockClass}>
           {defaultTabs
             .slice(0, Math.min(collapsedLeadingCount, defaultTabs.length))
             .map((tab) => renderDockChip(tab))}
@@ -632,39 +641,34 @@ export default function TabStrip({
         wrapperClassName={mainAreaClass}
         onScrollChange={recomputeCollapsedDefaults}
       >
-        {/* sacred defaults — reorderable AMONG THEMSELVES, but their own zone
-            so a drag can't cross into pinned or extras */}
+        {/* Primary defaults have a fixed baseline order. Their active tab is
+            rotated to the right by MainNavs; this zone is click-only. */}
         <div
           ref={defaultZoneRef}
           data-tab-drag-zone="default"
           className={dragZoneClass}
         >
           {defaultTabs.map((tab, index) =>
-            renderDraggableTab(tab, index, 'default')
+            renderTab(tab, index, 'default')
           )}
         </div>
-        {/* extras (profile/dynamic/extracted) — draggable within their own
-            zone, always to the right of the defaults */}
+        {/* Extras (profile/dynamic/Lumine/added) follow automatic MRU order
+            and always sit to the right of the defaults. */}
         <div
           ref={dragZoneRef}
           data-tab-drag-zone="extra"
           className={dragZoneClass}
         >
-          {tabs.map((tab, index) => renderDraggableTab(tab, index, 'extra'))}
+          {tabs.map((tab, index) => renderTab(tab, index, 'extra'))}
         </div>
       </ScrollableRow>
       {/* trailing dock: defaults scrolled off the RIGHT edge (e.g. when a
           leading default like Home is active and pins the scroll), shown as
           icon chips so a sacred default can never disappear entirely */}
       {collapsedTrailingCount > 0 && (
-        <div
-          data-collapsed-dock="trailing"
-          className={collapsedDockClass}
-        >
+        <div data-collapsed-dock="trailing" className={collapsedDockClass}>
           {defaultTabs
-            .slice(
-              Math.max(0, defaultTabs.length - collapsedTrailingCount)
-            )
+            .slice(Math.max(0, defaultTabs.length - collapsedTrailingCount))
             .map((tab) => renderDockChip(tab))}
         </div>
       )}
@@ -715,28 +719,38 @@ export default function TabStrip({
     </div>
   );
 
-  function renderDraggableTab(
+  function renderTab(
     tab: NavTabDescriptor,
     index: number,
     zone: DragZone
   ) {
+    const isClosable = Boolean(zone === 'extra' && tab.closable && onCloseTab);
+    const hasTabAction = Boolean(tab.buildAppId || isClosable);
     return (
       <div
         key={tab.key}
         className={`${tabItemClass}${
-          tab.buildAppId ? ` ${audioTabItemClass}` : ''
+          hasTabAction ? ` ${actionTabItemClass}` : ''
         }${
-          dragState?.key === tab.key ? ` ${draggingTabClass}` : ''
-        }`}
+          tab.buildAppId && isClosable ? ` ${audioAndCloseTabItemClass}` : ''
+        }${dragState?.key === tab.key ? ` ${draggingTabClass}` : ''}`}
         style={getTabStyle(index, tab.key, zone)}
         title={typeof tab.label === 'string' ? tab.label : undefined}
-        onPointerDown={(event) => handlePointerDown(event, tab.key, index, zone)}
-        onClickCapture={handleClickCapture}
-        onContextMenu={(event) => handleContextMenu(event, tab.key)}
-        onMouseEnter={(event) =>
-          handleHintDwellStart(tab.key, event.currentTarget)
+        onPointerDown={(event) =>
+          handlePointerDown(event, tab.key, index, zone)
         }
-        onMouseLeave={handleHintDismiss}
+        onClickCapture={handleClickCapture}
+        onContextMenu={
+          zone === 'default'
+            ? undefined
+            : (event) => handleContextMenu(event, tab.key)
+        }
+        onMouseEnter={
+          zone === 'default'
+            ? undefined
+            : (event) => handleHintDwellStart(tab.key, event.currentTarget)
+        }
+        onMouseLeave={zone === 'default' ? undefined : handleHintDismiss}
       >
         <Nav
           variant="tab"
@@ -753,6 +767,7 @@ export default function TabStrip({
           {tab.minimized ? null : tab.label}
         </Nav>
         {renderAudioMuteButton(tab)}
+        {isClosable ? renderCloseTabButton(tab) : null}
       </div>
     );
   }
@@ -831,22 +846,45 @@ export default function TabStrip({
     return (
       <button
         type="button"
-        className={audioMuteButtonClass}
+        className={`${tabActionButtonClass} ${audioMuteButtonClass}`}
+        data-tab-audio="true"
         data-muted={muted ? 'true' : 'false'}
         aria-label={muted ? 'Unmute app' : 'Mute app'}
         title={muted ? 'Unmute app' : 'Mute app'}
-        onPointerDown={handleAudioMutePointerDown}
+        onPointerDown={handleTabActionPointerDown}
         onClick={(event) => handleAudioMuteClick(event, tab.buildAppId!)}
-        onContextMenu={handleAudioMuteContextMenu}
+        onContextMenu={handleTabActionContextMenu}
       >
         <Icon icon={muted ? 'volume-mute' : 'volume'} />
       </button>
     );
   }
 
-  function handleAudioMutePointerDown(
+  function renderCloseTabButton(tab: NavTabDescriptor) {
+    const label = typeof tab.label === 'string' ? tab.label : 'this';
+    return (
+      <button
+        type="button"
+        className={`${tabActionButtonClass} ${closeTabButtonClass}`}
+        aria-label={`Close ${label} tab`}
+        title="Close tab"
+        onPointerDown={handleTabActionPointerDown}
+        onClick={(event) => handleCloseTabClick(event, tab.key)}
+        onContextMenu={handleTabActionContextMenu}
+      >
+        <Icon icon="times" />
+      </button>
+    );
+  }
+
+  function handleTabActionPointerDown(
     event: React.PointerEvent<HTMLButtonElement>
   ) {
+    // The wrapper's click-capture guard remembers the previous drag/long
+    // press. An affordance click is a fresh gesture, so clear those flags
+    // before capture runs or the first close/mute click after a drag is lost.
+    didDragRef.current = false;
+    didLongPressRef.current = false;
     event.preventDefault();
     event.stopPropagation();
   }
@@ -860,7 +898,16 @@ export default function TabStrip({
     onToggleAudioMuted?.(buildAppId);
   }
 
-  function handleAudioMuteContextMenu(
+  function handleCloseTabClick(
+    event: React.MouseEvent<HTMLButtonElement>,
+    key: string
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    onCloseTab?.(key);
+  }
+
+  function handleTabActionContextMenu(
     event: React.MouseEvent<HTMLButtonElement>
   ) {
     event.preventDefault();
@@ -1068,12 +1115,23 @@ export default function TabStrip({
     zone: DragZone
   ) {
     if (event.button > 0) return;
+    // A fresh press starts a fresh gesture. In particular, an outside tap can
+    // dismiss a long-press menu before WebKit delivers the suppressed click;
+    // the next primary-tab press must not inherit that stale suppression.
+    didDragRef.current = false;
     didLongPressRef.current = false;
+    if (zone === 'default') return;
     if (event.pointerType === 'touch') {
-      // touch: hold to arm, then drag to reorder or lift to open the menu
-      startTouchGesture(event, key, { index, zone });
+      // All configurable tabs retain their long-press menu, but only pinned
+      // tabs arm a drag after the hold.
+      startTouchGesture(
+        event,
+        key,
+        zone === 'pinned' ? { index, zone } : null
+      );
       return;
     }
+    if (zone !== 'pinned') return;
     if (event.pointerType !== 'mouse') return;
     if (!prepareDrag(zone, index, key, event.clientX)) return;
     handleHintDismiss();
@@ -1186,12 +1244,11 @@ export default function TabStrip({
       settling: true
     });
     settleTimerRef.current = setTimeout(() => {
-      if (toIndex !== fromIndex && targetTab) {
-        const move =
-          state.zone === 'pinned'
-            ? onMovePinnedRef.current
-            : onMoveRef.current;
-        move({ sourceKey: state.key, targetKey: targetTab.key });
+      if (state.zone === 'pinned' && toIndex !== fromIndex && targetTab) {
+        onMovePinnedRef.current({
+          sourceKey: state.key,
+          targetKey: targetTab.key
+        });
       }
       pendingRef.current = null;
       didDragRef.current = false;
@@ -1222,8 +1279,11 @@ export default function TabStrip({
 
   function handleClickCapture(event: React.MouseEvent) {
     // suppress the navigation click that follows a real drag OR a long-press
-    // that opened the menu (the flag resets on the next pointerdown)
+    // that opened the menu. Consume the flags so suppression is one-shot even
+    // if a browser produces an unusual follow-up click sequence.
     if (!didDragRef.current && !didLongPressRef.current) return;
+    didDragRef.current = false;
+    didLongPressRef.current = false;
     event.preventDefault();
     event.stopPropagation();
   }

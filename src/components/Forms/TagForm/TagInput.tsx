@@ -35,7 +35,7 @@ export default function TagInput({
   onChange: (value: string) => void;
   onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
   placeholder?: string;
-  renderDropdownLabel: (item: any) => string;
+  renderDropdownLabel: (item: any) => React.ReactNode;
   searchResults?: { id: number; title: string }[];
   selectedItems: Record<string, { id: number }>;
   searchInputFontSize?: string;

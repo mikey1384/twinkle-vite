@@ -36,6 +36,57 @@ function getBuildWorkspaceRouteKey(value: string) {
   return match[2] ? `${match[1]}:${match[2]}` : match[1];
 }
 
+export function navTargetIsActive({
+  exactActive,
+  pathname,
+  profileUsername,
+  search,
+  to
+}: {
+  exactActive?: boolean;
+  pathname: string;
+  profileUsername?: string;
+  search?: string;
+  to: string;
+}) {
+  // Captured tabs target one specific page; section-prefix matching would
+  // incorrectly light them up across the whole section.
+  if (exactActive) {
+    if (buildAppTabMatchesPath(to, pathname)) return true;
+    if (to.includes('?')) return pathname + (search || '') === to;
+    return pathname === to;
+  }
+  if ((to || '').split('/')[1] === 'chat') {
+    return pathname.split('/')[1] === 'chat';
+  }
+  if (
+    profileUsername &&
+    (pathname.split('/')[1] === profileUsername ||
+      pathname.split('/')[2] === profileUsername)
+  ) {
+    return true;
+  }
+  if (to.startsWith('/missions') && pathname.startsWith('/missions')) {
+    return true;
+  }
+  if (to.startsWith('/build') && pathname.startsWith('/build')) {
+    const currentWorkspaceKey = getBuildWorkspaceRouteKey(pathname);
+    const targetWorkspaceKey = getBuildWorkspaceRouteKey(to);
+    if (currentWorkspaceKey || targetWorkspaceKey) {
+      return Boolean(
+        currentWorkspaceKey &&
+          targetWorkspaceKey &&
+          currentWorkspaceKey === targetWorkspaceKey
+      );
+    }
+    return true;
+  }
+  if (to.startsWith('/management') && pathname.startsWith('/management')) {
+    return true;
+  }
+  return pathname + (search || '') === to;
+}
+
 function Nav({
   alert,
   className,
@@ -146,58 +197,19 @@ function Nav({
     todayStats?.dailyRewardResultViewed
   ]);
 
-  const navClassName = useMemo(() => {
-    // captured (custom) tabs target one specific page; the section-prefix
-    // rules below would light them up across a whole section (e.g. a
-    // pinned /management/a tab on every /management route)
-    if (exactActive) {
-      if (buildAppTabMatchesPath(to, pathname)) {
-        return 'active';
-      }
-      // A captured tab whose `to` carries its own query string (e.g. a
-      // query-identified content page) stays matched on the full path+search.
-      if (to.includes('?')) {
-        return pathname + (search || '') === to ? 'active' : '';
-      }
-      return pathname === to ? 'active' : '';
-    }
-    if ((to || '').split('/')[1] === 'chat') {
-      if (pathname.split('/')[1] === 'chat') {
-        return 'active';
-      }
-      return '';
-    }
-
-    if (
-      profileUsername &&
-      (pathname.split('/')[1] === profileUsername ||
-        pathname.split('/')[2] === profileUsername)
-    ) {
-      return 'active';
-    }
-    if (to.startsWith('/missions') && pathname.startsWith('/missions')) {
-      return 'active';
-    }
-    if (to.startsWith('/build') && pathname.startsWith('/build')) {
-      const currentWorkspaceKey = getBuildWorkspaceRouteKey(pathname);
-      const targetWorkspaceKey = getBuildWorkspaceRouteKey(to);
-      if (currentWorkspaceKey || targetWorkspaceKey) {
-        return currentWorkspaceKey &&
-          targetWorkspaceKey &&
-          currentWorkspaceKey === targetWorkspaceKey
-          ? 'active'
-          : '';
-      }
-      return 'active';
-    }
-    if (to.startsWith('/management') && pathname.startsWith('/management')) {
-      return 'active';
-    }
-    if (pathname + (search || '') === to) {
-      return 'active';
-    }
-    return '';
-  }, [exactActive, pathname, profileUsername, search, to]);
+  const navClassName = useMemo(
+    () =>
+      navTargetIsActive({
+        exactActive,
+        pathname,
+        profileUsername,
+        search,
+        to
+      })
+        ? 'active'
+        : '',
+    [exactActive, pathname, profileUsername, search, to]
+  );
 
   const tabVariantClass = css`
     position: relative;
@@ -242,6 +254,7 @@ function Nav({
       color: ${highlightColor}!important;
       background: ${Color.white()};
       border-color: var(--ui-border);
+      border-bottom: 1px solid ${Color.white()};
       position: relative;
       z-index: 1;
       > svg {

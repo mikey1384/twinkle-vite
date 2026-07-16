@@ -6,6 +6,7 @@ import Modal from '~/components/Modal';
 import ModalContentWrapper from '../ModalContentWrapper';
 import GameModalFooter from '../GameModalFooter';
 import Game from './ChessGame';
+import ChessGameRecord from '~/containers/Chat/Chess/GameRecord';
 import Rewind from './Rewind';
 import { socket } from '~/constants/sockets/api';
 import {
@@ -365,6 +366,14 @@ export default function ChessModal({
                 squareColors={squareColors}
                 interactableOverride={boardInteractable}
               />
+              {gameFinished && (latestStatusMessage?.id || message?.id) ? (
+                <ChessGameRecord
+                  channelId={channelId}
+                  messageId={latestStatusMessage?.id || message?.id}
+                  showPgn
+                  style={{ marginTop: '1rem' }}
+                />
+              ) : null}
             </>
           ) : (
             <Rewind

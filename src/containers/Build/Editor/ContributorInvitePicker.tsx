@@ -5,6 +5,7 @@ import TagForm from '~/components/Forms/TagForm';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import ProfilePic from '~/components/ProfilePic';
+import UserSearchResultRow from '~/components/UserSearchResultRow';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
@@ -20,6 +21,7 @@ interface UserSearchResult {
   id: number;
   username: string;
   realName?: string | null;
+  profilePicUrl?: string | null;
   title: string;
 }
 
@@ -209,10 +211,12 @@ export default function ContributorInvitePicker({
                 selectedUsers.length > 0 ? handleInviteContributors : undefined
               }
               renderDropdownLabel={(item) => (
-                <span>
-                  {item.username}{' '}
-                  {item.realName ? <small>{`(${item.realName})`}</small> : null}
-                </span>
+                <UserSearchResultRow
+                  userId={item.id}
+                  username={item.username}
+                  realName={item.realName}
+                  profilePicUrl={item.profilePicUrl}
+                />
               )}
               searchInputFontSize="1.35rem"
               searchInputHeight="3.4rem"

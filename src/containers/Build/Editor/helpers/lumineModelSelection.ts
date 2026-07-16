@@ -24,11 +24,22 @@ export const LUMINE_MODES: BuildLumineMode[] = [
   'superheavy'
 ];
 
+const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
+  BuildLumineMode,
+  BuildLumineModel
+> = {
+  light: 'grok-4.5',
+  normal: 'gpt-5.6-terra',
+  heavy: 'gpt-5.6-sol',
+  superheavy: 'gpt-5.6-sol'
+};
+
 const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
   'low',
   'medium',
   'high',
-  'xhigh'
+  'xhigh',
+  'max'
 ];
 
 const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
@@ -71,6 +82,14 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     description: 'Heavy mode: powerful reasoning for ambitious builds.',
     defaultReasoningEffort: 'xhigh',
     supportedReasoningEfforts: ['xhigh']
+  },
+  {
+    model: 'gpt-5.6-sol',
+    mode: 'superheavy',
+    label: 'GPT-5.6 Sol',
+    description: 'Super Heavy mode: maximum reasoning for the hardest builds.',
+    defaultReasoningEffort: 'max',
+    supportedReasoningEfforts: ['max']
   },
   {
     model: 'claude-fable-5',
@@ -119,7 +138,10 @@ function resolveLegacyLumineOptionMode(
   ) {
     return 'normal';
   }
-  return resolveLumineMode({ model: option.model });
+  return resolveLumineMode({
+    model: option.model,
+    reasoningEffort: option.defaultReasoningEffort
+  });
 }
 
 function isSelectableLumineThinkLevel(
@@ -129,7 +151,8 @@ function isSelectableLumineThinkLevel(
     value === 'low' ||
     value === 'medium' ||
     value === 'high' ||
-    value === 'xhigh'
+    value === 'xhigh' ||
+    value === 'max'
   );
 }
 
@@ -182,8 +205,28 @@ export function normalizeLumineModelSelection({
   const model = isLumineModel(selection?.model)
     ? selection.model
     : DEFAULT_LUMINE_MODEL;
+  const matchingModelOptions = options.filter(
+    (candidate) => candidate.model === model
+  );
+  const requestedSelectionEffort = isSelectableLumineThinkLevel(
+    selection?.reasoningEffort
+  )
+    ? selection.reasoningEffort
+    : null;
   const option =
-    options.find((candidate) => candidate.model === model) ||
+    (isLumineMode(selection?.mode)
+      ? matchingModelOptions.find(
+          (candidate) => candidate.mode === selection.mode
+        )
+      : undefined) ||
+    (requestedSelectionEffort
+      ? matchingModelOptions.find((candidate) =>
+          candidate.supportedReasoningEfforts.includes(
+            requestedSelectionEffort
+          )
+        )
+      : undefined) ||
+    matchingModelOptions[0] ||
     options.find((candidate) => candidate.model === DEFAULT_LUMINE_MODEL) ||
     options[0];
   const defaultEffort =
@@ -196,11 +239,7 @@ export function normalizeLumineModelSelection({
   const fallbackEffort = allowedEfforts.includes(defaultEffort)
     ? defaultEffort
     : allowedEfforts[0] || DEFAULT_LUMINE_THINK_LEVEL;
-  const requestedEffort = isSelectableLumineThinkLevel(
-    selection?.reasoningEffort
-  )
-    ? selection.reasoningEffort
-    : fallbackEffort;
+  const requestedEffort = requestedSelectionEffort || fallbackEffort;
   const reasoningEffort = allowedEfforts.includes(requestedEffort)
     ? requestedEffort
     : fallbackEffort;
@@ -223,11 +262,16 @@ export function normalizeLumineModelSelection({
 }
 
 export function resolveLumineMode({
-  model
-}: Pick<BuildLumineModelPreference, 'model'>): BuildLumineMode {
+  model,
+  reasoningEffort
+}: Pick<BuildLumineModelPreference, 'model'> &
+  Partial<Pick<BuildLumineModelPreference, 'reasoningEffort'>>): BuildLumineMode {
   if (model === 'grok-4.5') return 'light';
   if (model === 'gpt-5.6-terra' || model === 'claude-sonnet-5') {
     return 'normal';
+  }
+  if (model === 'gpt-5.6-sol' && reasoningEffort === 'max') {
+    return 'superheavy';
   }
   if (model === 'gpt-5.6-sol' || model === 'claude-opus-4-8') {
     return 'heavy';
@@ -242,24 +286,18 @@ export function getLumineSelectionForMode({
   mode: BuildLumineMode;
   modelOptions: BuildLumineModelOption[];
 }) {
-  const preferredModel: BuildLumineModel =
-    mode === 'light'
-      ? 'grok-4.5'
-      : mode === 'normal'
-        ? 'gpt-5.6-terra'
-        : mode === 'heavy'
-          ? 'gpt-5.6-sol'
-          : 'claude-fable-5';
+  const preferredModel = DEFAULT_LUMINE_MODEL_BY_MODE[mode];
   const preferredOption =
-    modelOptions.find((option) => option.model === preferredModel) ||
+    modelOptions.find(
+      (option) => option.model === preferredModel && option.mode === mode
+    ) ||
     modelOptions.find((option) => option.mode === mode);
   if (!preferredOption) return null;
 
   return normalizeLumineModelSelection({
     selection: {
       model: preferredOption.model,
-      reasoningEffort:
-        mode === 'light' ? 'high' : mode === 'normal' ? 'medium' : 'xhigh',
+      reasoningEffort: preferredOption.defaultReasoningEffort,
       mode
     },
     modelOptions
@@ -296,9 +334,15 @@ export function resolveLumineModelSelectionFromPolicy(
 
 export function getLumineModelOption(
   modelOptions: BuildLumineModelOption[],
-  model: BuildLumineModel
+  model: BuildLumineModel,
+  mode?: BuildLumineMode
 ) {
   return (
+    (mode
+      ? modelOptions.find(
+          (option) => option.model === model && option.mode === mode
+        )
+      : undefined) ||
     modelOptions.find((option) => option.model === model) ||
     modelOptions.find((option) => option.model === DEFAULT_LUMINE_MODEL) ||
     modelOptions[0] ||

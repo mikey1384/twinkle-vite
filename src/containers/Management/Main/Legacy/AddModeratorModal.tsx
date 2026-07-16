@@ -9,9 +9,9 @@ import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import ManagementUserSearchInput, {
-  ManagementUserSearchResult
-} from '../../UserSearchInput';
+import UserSearchInput, {
+  type UserSearchResult
+} from '~/components/UserSearchInput';
 
 const searchUsersLabel = 'Search Users';
 
@@ -114,7 +114,7 @@ export default function AddModeratorModal({
       <LegacyModalLayout>
         <header>Add / Edit Moderators</header>
         <main>
-          <ManagementUserSearchInput
+          <UserSearchInput
             autoFocus
             onSelect={handleSelectUser}
             placeholder={`${searchUsersLabel}...`}
@@ -180,19 +180,19 @@ export default function AddModeratorModal({
     );
   }
 
-  function handleSelectUser(user: ManagementUserSearchResult) {
+  function handleSelectUser(user: UserSearchResult) {
     setSelectedUsers((users) => users.concat(user));
   }
 
   async function handleSubmit() {
     setLoading(true);
     const newModerators = selectedUsers.filter((user) => !!user.userType);
-    await addModerators(newModerators);
-    onEditModerators(newModerators);
+    const moderators = await addModerators(newModerators);
+    onEditModerators(moderators);
     onHide();
   }
 
-  function isAllowedModeratorCandidate(user: ManagementUserSearchResult) {
+  function isAllowedModeratorCandidate(user: UserSearchResult) {
     return level > (user.level || 0);
   }
 }

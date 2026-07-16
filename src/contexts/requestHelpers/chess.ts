@@ -3,8 +3,30 @@ import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import type {
   TimeAttackStartResponse,
-  TimeAttackAttemptResponse
+  TimeAttackAttemptResponse,
+  TimeAttackTimerResponse
 } from '~/types/chess';
+
+const PROMOTION_TIME_ATTACK_PROTOCOL_VERSION = 3;
+
+function getMonotonicTime() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now();
+}
+
+function attachPromotionResponseTransit<
+  T extends { serverProcessingMs?: number }
+>(data: T, requestStartedAt: number) {
+  const requestElapsedMs = Math.max(0, getMonotonicTime() - requestStartedAt);
+  const serverProcessingMs = Number(data?.serverProcessingMs);
+  // The server samples remainingMs immediately before serialization and tells
+  // us how much of the request was server work. The remainder is network RTT;
+  // use its midpoint as the response leg instead of subtracting the entire
+  // request (which would double-count work performed before the sample).
+  const responseTransitMs = Number.isFinite(serverProcessingMs)
+    ? Math.max(0, requestElapsedMs - serverProcessingMs) / 2
+    : 0;
+  return { ...data, responseTransitMs };
+}
 
 export default function chessRequestHelpers({
   auth,
@@ -60,11 +82,11 @@ export default function chessRequestHelpers({
           data.puzzle.themes = Array.isArray(data.puzzle.themes)
             ? data.puzzle.themes
             : typeof data.puzzle.themes === 'string'
-            ? (data.puzzle.themes as string)
-                .split(',')
-                .map((t: string) => t.trim())
-                .filter(Boolean)
-            : [];
+              ? (data.puzzle.themes as string)
+                  .split(',')
+                  .map((t: string) => t.trim())
+                  .filter(Boolean)
+              : [];
         }
 
         return data;
@@ -98,11 +120,11 @@ export default function chessRequestHelpers({
           data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
             ? data.nextPuzzle.themes
             : typeof data.nextPuzzle.themes === 'string'
-            ? (data.nextPuzzle.themes as string)
-                .split(',')
-                .map((t: string) => t.trim())
-                .filter(Boolean)
-            : [];
+              ? (data.nextPuzzle.themes as string)
+                  .split(',')
+                  .map((t: string) => t.trim())
+                  .filter(Boolean)
+              : [];
         }
 
         return data;
@@ -145,27 +167,38 @@ export default function chessRequestHelpers({
       }
     },
 
-    async startTimeAttackPromotion() {
+    async startTimeAttackPromotion({
+      recoveryRunId
+    }: { recoveryRunId?: number } = {}) {
       try {
-        const {
-          data: { runId, puzzle }
-        } = await request.post<TimeAttackStartResponse>(
+        const requestStartedAt = getMonotonicTime();
+        const { data } = await request.post<TimeAttackStartResponse>(
           `${URL}/content/game/chess/promotion/timeattack/start`,
-          {},
-          auth()
+          {
+            protocolVersion: PROMOTION_TIME_ATTACK_PROTOCOL_VERSION,
+            ...(recoveryRunId ? { recoveryRunId } : {})
+          },
+          {
+            ...auth(),
+            meta: {
+              enforceTimeout: true,
+              allowExtendedTimeout: false
+            }
+          }
         );
 
+        const puzzle = 'puzzle' in data ? data.puzzle : null;
         if (puzzle) {
           puzzle.themes = Array.isArray(puzzle.themes)
             ? puzzle.themes
             : typeof puzzle.themes === 'string'
-            ? (puzzle.themes as string)
-                .split(',')
-                .map((t: string) => t.trim())
-                .filter(Boolean)
-            : [];
+              ? (puzzle.themes as string)
+                  .split(',')
+                  .map((t: string) => t.trim())
+                  .filter(Boolean)
+              : [];
         }
-        return { runId, puzzle };
+        return attachPromotionResponseTransit(data, requestStartedAt);
       } catch (error) {
         return handleError(error);
       }
@@ -173,41 +206,79 @@ export default function chessRequestHelpers({
 
     async submitTimeAttackAttempt({
       runId,
+      puzzleId,
       solved
     }: {
       runId: number;
+      puzzleId: number;
       solved: boolean;
     }) {
       try {
+        const requestStartedAt = getMonotonicTime();
         const { data } = await request.post<TimeAttackAttemptResponse>(
           `${URL}/content/game/chess/promotion/timeattack/attempt`,
-          { runId, solved },
+          {
+            runId,
+            puzzleId,
+            solved,
+            protocolVersion: PROMOTION_TIME_ATTACK_PROTOCOL_VERSION
+          },
           auth()
         );
         if (data && data.nextPuzzle) {
           data.nextPuzzle.themes = Array.isArray(data.nextPuzzle.themes)
             ? data.nextPuzzle.themes
             : typeof data.nextPuzzle.themes === 'string'
-            ? (data.nextPuzzle.themes as string)
-                .split(',')
-                .map((t: string) => t.trim())
-                .filter(Boolean)
-            : [];
+              ? (data.nextPuzzle.themes as string)
+                  .split(',')
+                  .map((t: string) => t.trim())
+                  .filter(Boolean)
+              : [];
         }
-        return data;
+        return attachPromotionResponseTransit(data, requestStartedAt);
       } catch (error) {
         return handleError(error);
       }
     },
 
-    async completePromotion({ success }: { success: boolean }) {
+    async adjustTimeAttackTimer({
+      runId,
+      puzzleId,
+      moveIndex,
+      commandId,
+      expectedDeadlineAt,
+      outcome
+    }: {
+      runId: number;
+      puzzleId: number;
+      moveIndex: number;
+      commandId: string;
+      expectedDeadlineAt: number;
+      outcome: 'correct' | 'wrong';
+    }) {
       try {
-        const { data } = await request.post(
-          `${URL}/content/game/chess/promotion/complete`,
-          { success },
-          auth()
+        const requestStartedAt = getMonotonicTime();
+        const { data } = await request.post<TimeAttackTimerResponse>(
+          `${URL}/content/game/chess/promotion/timeattack/timer`,
+          {
+            runId,
+            puzzleId,
+            moveIndex,
+            commandId,
+            expectedDeadlineAt,
+            outcome,
+            protocolVersion: PROMOTION_TIME_ATTACK_PROTOCOL_VERSION
+          },
+          {
+            ...auth(),
+            meta: {
+              collapseKey: null,
+              enforceTimeout: true,
+              allowExtendedTimeout: false
+            }
+          }
         );
-        return data;
+        return attachPromotionResponseTransit(data, requestStartedAt);
       } catch (error) {
         return handleError(error);
       }

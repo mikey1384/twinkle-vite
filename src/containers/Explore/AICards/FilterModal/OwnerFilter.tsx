@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import SearchInput from '~/components/Texts/SearchInput';
-import Loading from '~/components/Loading';
+import React from 'react';
 import SelectedUser from '~/components/Texts/SelectedUser';
-import { useAppContext } from '~/contexts';
-import { useSearch } from '~/helpers/hooks';
+import UserSearchInput, {
+  type UserSearchResult
+} from '~/components/UserSearchInput';
 
 export default function OwnerFilter({
   onSelectOwner,
@@ -16,15 +15,6 @@ export default function OwnerFilter({
   selectedOwner: string;
   style: React.CSSProperties;
 }) {
-  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
-  const [searchText, setSearchText] = useState('');
-  const [searchedUsers, setSearchedUsers] = useState([]);
-  const { handleSearch, searching } = useSearch({
-    onSearch: handleUserSearch,
-    onClear: () => setSearchedUsers([]),
-    onSetSearchText: setSearchText
-  });
-
   return (
     <div
       style={{
@@ -50,36 +40,16 @@ export default function OwnerFilter({
           position: 'relative'
         }}
       >
-        <SearchInput
+        <UserSearchInput
           placeholder="Search user..."
           autoFocus={selectedFilter === 'owner'}
-          onChange={handleSearch}
-          value={searchText}
-          searchResults={searchedUsers}
-          renderItemLabel={(item) => (
-            <span>
-              {item.username} <small>{`(${item.realName})`}</small>
-            </span>
-          )}
-          onClickOutSide={() => {
-            setSearchText('');
-            setSearchedUsers([]);
-          }}
           onSelect={handleSelectUser}
         />
-        {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
       </div>
     </div>
   );
 
-  function handleSelectUser(user: any) {
+  function handleSelectUser(user: UserSearchResult) {
     onSelectOwner(user.username);
-    setSearchedUsers([]);
-    setSearchText('');
-  }
-
-  async function handleUserSearch(text: string) {
-    const users = await searchUsers(text);
-    setSearchedUsers(users);
   }
 }

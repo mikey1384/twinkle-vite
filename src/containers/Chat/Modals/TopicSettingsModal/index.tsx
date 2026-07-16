@@ -50,6 +50,7 @@ export default function TopicSettingsModal({
   pathId: string;
 }) {
   const navigate = useNavigate();
+  const userId = useKeyContext((v) => v.myState.userId);
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
   );
@@ -365,7 +366,7 @@ export default function TopicSettingsModal({
       const canonicalChannel = data?.channel || {};
       const deletedTopicIsActive = Number(currentTopicId) === Number(topicId);
       if (isAIChannel) {
-        onEnterChannelWithId(data);
+        onEnterChannelWithId({ data, userId });
       }
       onSetChannelState({
         channelId,

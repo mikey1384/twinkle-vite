@@ -226,15 +226,22 @@ export function getBuildListBrowseTab(tab: BuildListTab) {
   return 'community';
 }
 
-export function normalizeBuildListTab(value?: string | null): BuildListTab {
+export function parseBuildListTab(
+  value?: string | null
+): BuildListTab | null {
   if (
+    value === 'mine' ||
     value === 'collaborating' ||
     value === 'community' ||
     value === 'open_source'
   ) {
     return value;
   }
-  return 'mine';
+  return null;
+}
+
+export function normalizeBuildListTab(value?: string | null): BuildListTab {
+  return parseBuildListTab(value) || 'mine';
 }
 
 export function normalizeBuildListSearchQuery(value: string) {

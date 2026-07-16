@@ -3,9 +3,9 @@ import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Table from '../Table';
-import ManagementUserSearchInput, {
-  ManagementUserSearchResult
-} from '../UserSearchInput';
+import UserSearchInput, {
+  type UserSearchResult
+} from '~/components/UserSearchInput';
 import { Color } from '~/constants/css';
 
 export default function AddNotableUserModal({
@@ -19,8 +19,9 @@ export default function AddNotableUserModal({
 }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedUser, setSelectedUser] =
-    useState<ManagementUserSearchResult | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
+    null
+  );
 
   return (
     <Modal
@@ -33,7 +34,7 @@ export default function AddNotableUserModal({
       <LegacyModalLayout>
         <header>Add Notable User</header>
         <main>
-          <ManagementUserSearchInput
+          <UserSearchInput
             autoFocus
             excludeUserIds={existingUserIds}
             onSelect={setSelectedUser}

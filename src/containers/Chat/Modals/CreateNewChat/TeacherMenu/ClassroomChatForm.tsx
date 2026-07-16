@@ -3,6 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
 import Input from '~/components/Texts/Input';
+import UserSearchResultRow from '~/components/UserSearchResultRow';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
@@ -84,10 +85,12 @@ export default function ClassroomChatForm({
           onAddItem={onAddUser}
           onRemoveItem={onRemoveUser}
           renderDropdownLabel={(item) => (
-            <span>
-              {item?.username}{' '}
-              {item?.realName && <small>{`(${item.realName})`}</small>}
-            </span>
+            <UserSearchResultRow
+              userId={Number(item.id)}
+              username={item.username}
+              realName={item.realName}
+              profilePicUrl={item.profilePicUrl}
+            />
           )}
           searchPlaceholder={addMembersOfClassLabel}
           selectedItems={selectedUsers}
@@ -138,7 +141,7 @@ export default function ClassroomChatForm({
 
   async function handleDone() {
     setCreatingChat(true);
-    const { message, members, pathId } = await createNewChat({
+    const { message, members, pathId, favoriteState } = await createNewChat({
       userId,
       channelName,
       isClass: true,
@@ -146,11 +149,13 @@ export default function ClassroomChatForm({
       selectedUsers
     });
     onCreateNewChannel({
+      userId,
       message,
       isClass: true,
       isClosed: true,
       members,
-      pathId
+      pathId,
+      favoriteState
     });
     const users = selectedUsers.map((user) => user.id);
     socket.emit('join_chat_group', message.channelId);

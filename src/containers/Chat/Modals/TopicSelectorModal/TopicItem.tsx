@@ -316,7 +316,7 @@ function TopicItem({
       setSelectButtonDisabled(true);
       await deleteTopic({ topicId: id, channelId });
       const data = await loadChatChannel({ channelId, fromWriter: true });
-      onEnterChannelWithId(data);
+      onEnterChannelWithId({ data, userId: myId });
       const canonicalChannel = data?.channel || {};
       const deletedTopicIsActive = Number(currentTopicId) === Number(id);
       onSetChannelState({

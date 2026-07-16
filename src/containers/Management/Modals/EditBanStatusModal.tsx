@@ -52,7 +52,13 @@ export default function EditBanStatusModal({
 
   return (
     <ErrorBoundary componentPath="Management/Modals/EditBanStatusModal">
-      <Modal modalKey="EditBanStatusModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <Modal
+        modalKey="EditBanStatusModal"
+        isOpen
+        onClose={onHide}
+        hasHeader={false}
+        bodyPadding={0}
+      >
         <LegacyModalLayout>
           <header style={{ display: 'block' }}>
             Edit Restriction Status of{' '}
@@ -119,8 +125,11 @@ export default function EditBanStatusModal({
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      await updateBanStatus({ userId: target.id, banStatus });
-      onUpdateBanStatus({ ...target, banned: banStatus });
+      const { user } = await updateBanStatus({
+        userId: target.id,
+        banStatus
+      });
+      onUpdateBanStatus(user);
       onHide();
     } catch (error) {
       console.error(error);

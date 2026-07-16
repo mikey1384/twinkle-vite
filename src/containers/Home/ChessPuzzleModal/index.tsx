@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Puzzle from './Puzzle';
@@ -47,6 +47,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   } = useChessPuzzle();
 
   const submittingRef = useRef(false);
+  const initialPuzzleRequestedRef = useRef(false);
+  const levelTransitionPendingRef = useRef(false);
   const effectiveLevel = selectedLevel ?? Math.max(1, maxLevelUnlocked || 1);
 
   useEffect(() => {
@@ -77,24 +79,18 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   }, [levelsLoading, maxLevelUnlocked, currentLevel]);
 
   useEffect(() => {
-    if (selectedLevel == null) return;
+    if (
+      initialPuzzleRequestedRef.current ||
+      levelsLoading ||
+      selectedLevel == null ||
+      inTimeAttack
+    ) {
+      return;
+    }
+    initialPuzzleRequestedRef.current = true;
     fetchPuzzle(selectedLevel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLevel]);
-
-  const handleLevelChange = useCallback(
-    async (level: number) => {
-      const availableMax = Math.max(1, maxLevelUnlocked || 1);
-      const clamped = Math.min(Math.max(1, Number(level) || 1), availableMax);
-      setSelectedLevel(clamped);
-      try {
-        await persistCurrentLevel(clamped);
-      } catch (error) {
-        console.error('Failed to persist chess level preference:', error);
-      }
-    },
-    [maxLevelUnlocked, persistCurrentLevel]
-  );
+  }, [levelsLoading, selectedLevel]);
 
   return (
     <Modal
@@ -171,6 +167,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                   onMoveToNextPuzzle={handleMoveToNextPuzzle}
                   selectedLevel={effectiveLevel}
                   onLevelChange={handleLevelChange}
+                  onStartLevel={handleStartLevel}
                   updatePuzzle={updatePuzzle}
                   levels={levels}
                   maxLevelUnlocked={maxLevelUnlocked}
@@ -208,6 +205,41 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     setRunResult('PLAYING');
     onSetInTimeAttack(false);
     fetchPuzzle(levelForNext);
+  }
+
+  function handleLevelChange(level: number) {
+    void persistAndLoadLevel(level);
+  }
+
+  function handleStartLevel(level: number) {
+    void persistAndLoadLevel(level, { exitTimeAttack: true });
+  }
+
+  async function persistAndLoadLevel(
+    level: number,
+    { exitTimeAttack = false }: { exitTimeAttack?: boolean } = {}
+  ) {
+    if (levelTransitionPendingRef.current) return;
+    levelTransitionPendingRef.current = true;
+    const availableMax = Math.max(1, maxLevelUnlocked || 1);
+    const requestedLevel = Math.min(
+      Math.max(1, Number(level) || 1),
+      availableMax
+    );
+    try {
+      const canonicalLevel = await persistCurrentLevel(requestedLevel);
+      setSelectedLevel(canonicalLevel);
+      setPhase('START_LEVEL');
+      setRunResult('PLAYING');
+      if (exitTimeAttack) {
+        onSetInTimeAttack(false);
+      }
+      await fetchPuzzle(canonicalLevel);
+    } catch (error) {
+      console.error('Failed to load the selected chess level:', error);
+    } finally {
+      levelTransitionPendingRef.current = false;
+    }
   }
 
   async function handlePuzzleComplete(result: PuzzleResult) {

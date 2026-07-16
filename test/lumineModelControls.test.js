@@ -67,7 +67,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const preferredModel[\s\S]*?mode === 'light'[\s\S]*?'grok-4\.5'[\s\S]*?mode === 'normal'[\s\S]*?'gpt-5\.6-terra'[\s\S]*?mode === 'heavy'[\s\S]*?'gpt-5\.6-sol'[\s\S]*?'claude-fable-5'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.5'[\s\S]*?normal: 'gpt-5\.6-terra'[\s\S]*?heavy: 'gpt-5\.6-sol'[\s\S]*?superheavy: 'gpt-5\.6-sol'/m
   );
   assert.match(
     selectionHelperSource,
@@ -75,7 +75,11 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /reasoningEffort:\s*mode === 'light' \? 'high' : mode === 'normal' \? 'medium' : 'xhigh'/m
+    /reasoningEffort:\s*preferredOption\.defaultReasoningEffort/m
+  );
+  assert.match(
+    selectionHelperSource,
+    /model: 'gpt-5\.6-sol'[\s\S]*?mode: 'superheavy'[\s\S]*?defaultReasoningEffort: 'max'[\s\S]*?supportedReasoningEfforts: \['max'\]/m
   );
   assert.match(
     selectionHelperSource,

@@ -1,12 +1,7 @@
-import React, {
-  CSSProperties,
-  memo,
-  useCallback,
-  useMemo,
-  useState
-} from 'react';
+import React, { CSSProperties, memo, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
+import UserSearchResultRow from '~/components/UserSearchResultRow';
 import { useSearch } from '~/helpers/hooks';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
@@ -43,51 +38,11 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
     () => chatGroupRole.getColor() || Color.logoBlue(),
     [chatGroupRole]
   );
-  const handleSearchChat = useCallback(async (text: string) => {
-    const data = await searchChat(text);
-    onSearchChat(data);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const { handleSearch, searching } = useSearch({
     onSearch: handleSearchChat,
     onClear: onClearChatSearchResults,
     onSetSearchText: setSearchText
   });
-  const handleSelect = useCallback(
-    async (item: {
-      id?: number;
-      primary?: boolean;
-      pathId?: number;
-      label?: string;
-      profilePicUrl?: string;
-    }) => {
-      if (item.primary || !!item.pathId) {
-        navigate(`/chat/${item.pathId}`);
-      } else {
-        if (!item?.id) {
-          return reportError({
-            componentPath: 'Chat/LeftMenu/ChatSearchBox',
-            message: `handleSelect: recipient userId is null. recipient: ${JSON.stringify(
-              item
-            )}`
-          });
-        }
-        onOpenNewChatTab({
-          user: { username, id: userId, profilePicUrl },
-          recipient: {
-            username: item.label,
-            id: item.id,
-            profilePicUrl: item.profilePicUrl
-          }
-        });
-        setTimeout(() => navigate(`/chat/new`), 0);
-      }
-      setSearchText('');
-      onClearChatSearchResults();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [navigate, profilePicUrl, userId, username]
-  );
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/ChatSearchBox">
@@ -99,10 +54,12 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
           searchResults={chatSearchResults}
           renderItemLabel={(item) =>
             !item.primary || (item.primary && item.twoPeople) ? (
-              <span>
-                {item.label}{' '}
-                {item.subLabel && <small>{`(${item.subLabel})`}</small>}
-              </span>
+              <UserSearchResultRow
+                userId={Number(item.id)}
+                username={item.label}
+                realName={item.subLabel}
+                profilePicUrl={item.profilePicUrl}
+              />
             ) : (
               <span
                 style={{
@@ -127,6 +84,43 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
       </div>
     </ErrorBoundary>
   );
+
+  async function handleSearchChat(text: string) {
+    const data = await searchChat(text);
+    onSearchChat(data);
+  }
+
+  async function handleSelect(item: {
+    id?: number;
+    primary?: boolean;
+    pathId?: number;
+    label?: string;
+    profilePicUrl?: string;
+  }) {
+    if (item.primary || !!item.pathId) {
+      navigate(`/chat/${item.pathId}`);
+    } else {
+      if (!item?.id) {
+        return reportError({
+          componentPath: 'Chat/LeftMenu/ChatSearchBox',
+          message: `handleSelect: recipient userId is null. recipient: ${JSON.stringify(
+            item
+          )}`
+        });
+      }
+      onOpenNewChatTab({
+        user: { username, id: userId, profilePicUrl },
+        recipient: {
+          username: item.label,
+          id: item.id,
+          profilePicUrl: item.profilePicUrl
+        }
+      });
+      setTimeout(() => navigate(`/chat/new`), 0);
+    }
+    setSearchText('');
+    onClearChatSearchResults();
+  }
 }
 
 export default memo(ChatSearchBox);

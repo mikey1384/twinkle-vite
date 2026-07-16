@@ -245,7 +245,7 @@ export default function MobileTabSwitcher({
                       draggingKey === item.key ? ' dragging' : ''
                     }`}
                   >
-                    {section.items.length > 1 ? (
+                    {section.kind === 'pinned' && section.items.length > 1 ? (
                       <div
                         className="handle"
                         aria-label="Drag to reorder"
@@ -274,7 +274,7 @@ export default function MobileTabSwitcher({
                           type="button"
                           className="action"
                           onClick={() => onRemove(item.key)}
-                          aria-label="Remove tab"
+                          aria-label="Close tab"
                         >
                           <Icon icon="trash-alt" />
                         </button>
@@ -300,6 +300,7 @@ export default function MobileTabSwitcher({
     section: SwitcherSection,
     index: number
   ) {
+    if (section.kind !== 'pinned') return;
     // ignore new grabs while a previous drop is still settling
     if (dragRef.current || settleTimerRef.current) return;
     event.preventDefault();

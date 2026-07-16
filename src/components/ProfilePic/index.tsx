@@ -7,7 +7,6 @@ import StatusTag from './StatusTag';
 import { css, cx } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
-const EMPTY_USER_PROFILE = {};
 
 function toCssSize(value?: number | string) {
   if (typeof value === 'number') {
@@ -67,9 +66,9 @@ export default function ProfilePic({
   statusSize?: 'auto' | 'medium' | 'large' | 'dot';
   size?: number | string;
 }) {
-  const userProfile =
-    useAppContext((v) => v.user?.state?.userObj?.[userId]) ||
-    EMPTY_USER_PROFILE;
+  const cachedProfilePicUrl = useAppContext(
+    (v) => v.user?.state?.userObj?.[userId]?.profilePicUrl
+  );
   const myId = useKeyContext((v) => v.myState.userId);
   const [hasError, setHasError] = useState(false);
   const [changePictureShown, setChangePictureShown] = useState(false);
@@ -77,11 +76,11 @@ export default function ProfilePic({
     if (preferProvidedProfilePicUrl && profilePicUrl) {
       return profilePicUrl;
     }
-    if (userProfile?.profilePicUrl) {
-      return userProfile.profilePicUrl;
+    if (cachedProfilePicUrl) {
+      return cachedProfilePicUrl;
     }
     return profilePicUrl;
-  }, [preferProvidedProfilePicUrl, profilePicUrl, userProfile?.profilePicUrl]);
+  }, [cachedProfilePicUrl, preferProvidedProfilePicUrl, profilePicUrl]);
 
   const statusTagShown = useMemo(
     () => Boolean(statusShown && (myId === userId || online)),
@@ -96,7 +95,7 @@ export default function ProfilePic({
 
   useEffect(() => {
     setHasError(false);
-  }, [userId]);
+  }, [displayedProfilePicUrl, userId]);
 
   const {
     width: styleWidth,

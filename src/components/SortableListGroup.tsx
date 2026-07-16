@@ -6,6 +6,8 @@ import { css } from '@emotion/css';
 export default function SortableListGroup<T extends number | string = number>({
   listItemObj,
   listItemLabel = 'label',
+  renderItemActions,
+  renderItemLabel,
   onMove,
   itemIds,
   numbered,
@@ -13,6 +15,8 @@ export default function SortableListGroup<T extends number | string = number>({
 }: {
   listItemObj: any;
   listItemLabel?: string;
+  renderItemActions?: (item: any, id: T) => React.ReactNode;
+  renderItemLabel?: (item: any, id: T, index: number) => React.ReactNode;
   onMove: (arg0: { sourceId: T; targetId: T }) => void;
   itemIds: T[];
   listItemType?: string;
@@ -203,21 +207,34 @@ export default function SortableListGroup<T extends number | string = number>({
                   {index + 1}
                 </span>
               )}
-              <span>{label}</span>
+              {renderItemLabel ? (
+                renderItemLabel(listItemObj[id], id, index)
+              ) : (
+                <span>{label}</span>
+              )}
             </section>
             <div
               className={css`
-                display: inline-flex;
+                display: flex;
                 align-items: center;
-                justify-content: center;
-                padding: 0.5rem 0.6rem;
-                border-radius: 999px;
-                background: ${Color.highlightGray()};
-                border: 1px solid ${Color.borderGray(0.7)};
-                color: ${Color.darkGray()};
+                gap: 0.8rem;
               `}
             >
-              <Icon icon="grip-lines" />
+              {renderItemActions?.(listItemObj[id], id)}
+              <div
+                className={css`
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 0.5rem 0.6rem;
+                  border-radius: 999px;
+                  background: ${Color.highlightGray()};
+                  border: 1px solid ${Color.borderGray(0.7)};
+                  color: ${Color.darkGray()};
+                `}
+              >
+                <Icon icon="grip-lines" />
+              </div>
             </div>
           </div>
         );

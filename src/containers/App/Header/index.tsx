@@ -254,6 +254,7 @@ export default function Header({
             height: 1px;
             pointer-events: none;
             background: var(--ui-border);
+            z-index: 0;
             @media (max-width: ${mobileMaxWidth}) {
               display: none;
             }

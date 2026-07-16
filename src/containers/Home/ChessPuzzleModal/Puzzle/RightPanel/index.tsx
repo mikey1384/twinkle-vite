@@ -20,6 +20,7 @@ export default function RightPanel({
   cooldownUntilTomorrow,
   nextDayTimestamp,
   startingPromotion,
+  promotionStartError,
   onPromotionClick,
   onUnlockPromotion,
   dailyStats,
@@ -37,6 +38,7 @@ export default function RightPanel({
   cooldownUntilTomorrow: boolean;
   nextDayTimestamp: number | null;
   startingPromotion: boolean;
+  promotionStartError: string;
   onPromotionClick: () => void | Promise<void>;
   onUnlockPromotion: () => void | Promise<void>;
   dailyStats: {
@@ -201,15 +203,34 @@ export default function RightPanel({
           )}
 
           {currentLevel === maxLevelUnlocked && (
-            <PromotionCTA
-              needsPromotion={needsPromotion}
-              inTimeAttack={inTimeAttack}
-              cooldownUntilTomorrow={cooldownUntilTomorrow}
-              nextDayTimestamp={nextDayTimestamp}
-              startingPromotion={startingPromotion}
-              onPromotionClick={onPromotionClick}
-              onUnlockPromotion={onUnlockPromotion}
-            />
+            <>
+              <PromotionCTA
+                needsPromotion={needsPromotion}
+                inTimeAttack={inTimeAttack}
+                cooldownUntilTomorrow={cooldownUntilTomorrow}
+                nextDayTimestamp={nextDayTimestamp}
+                startingPromotion={startingPromotion}
+                onPromotionClick={onPromotionClick}
+                onUnlockPromotion={onUnlockPromotion}
+              />
+              {needsPromotion && promotionStartError && (
+                <div
+                  role="alert"
+                  className={css`
+                    padding: 0.75rem;
+                    border: 1px solid #fca5a5;
+                    border-radius: 8px;
+                    background: #fef2f2;
+                    color: #991b1b;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    line-height: 1.4;
+                  `}
+                >
+                  {promotionStartError}
+                </div>
+              )}
+            </>
           )}
 
           {!inTimeAttack &&

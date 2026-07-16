@@ -5,7 +5,6 @@ import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import { useOutsideClick } from '~/helpers/hooks';
 import { renderText } from '~/helpers/stringHelpers';
 
 export default function SearchInput({
@@ -51,14 +50,42 @@ export default function SearchInput({
 }) {
   const [draftValue, setDraftValue] = useState(value);
   const [indexToHighlight, setIndexToHighlight] = useState(0);
-  const SearchInputRef = useRef(null);
-  const DropdownRef = useRef(null);
+  const SearchInputRef = useRef<HTMLDivElement | null>(null);
+  const DropdownRef = useRef<HTMLDivElement | null>(null);
   const isComposingRef = useRef(false);
   const previousValueRef = useRef(value);
 
-  useOutsideClick([SearchInputRef, DropdownRef], onClickOutSide, {
-    enabled: !!onClickOutSide && searchResults.length > 0
-  });
+  useEffect(() => {
+    if (!onClickOutSide || searchResults.length === 0) return;
+    const eventNames =
+      typeof window !== 'undefined' && 'PointerEvent' in window
+        ? ['pointerdown']
+        : ['mousedown', 'touchstart'];
+    let frameId = 0;
+
+    function handleOutsidePress(event: Event) {
+      const target = event.target as Node | null;
+      if (
+        !target ||
+        SearchInputRef.current?.contains(target) ||
+        DropdownRef.current?.contains(target)
+      ) {
+        return;
+      }
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(onClickOutSide as () => void);
+    }
+
+    for (const eventName of eventNames) {
+      document.addEventListener(eventName, handleOutsidePress, true);
+    }
+    return () => {
+      cancelAnimationFrame(frameId);
+      for (const eventName of eventNames) {
+        document.removeEventListener(eventName, handleOutsidePress, true);
+      }
+    };
+  }, [onClickOutSide, searchResults.length]);
 
   useEffect(() => {
     if (value === previousValueRef.current) return;

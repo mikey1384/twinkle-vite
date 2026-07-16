@@ -17,9 +17,9 @@ import {
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import ManagementUserSearchInput, {
-  ManagementUserSearchResult
-} from '../UserSearchInput';
+import UserSearchInput, {
+  type UserSearchResult
+} from '~/components/UserSearchInput';
 
 const searchUsersLabel = 'Search Users';
 
@@ -147,7 +147,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
       <LegacyModalLayout wrapped>
         <header>Add / Edit Supermods</header>
         <main>
-          <ManagementUserSearchInput
+          <UserSearchInput
             autoFocus
             onSelect={handleSelectUser}
             placeholder={`${searchUsersLabel}...`}
@@ -207,7 +207,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
     );
   }
 
-  function handleSelectUser(user: ManagementUserSearchResult) {
+  function handleSelectUser(user: UserSearchResult) {
     setSelectedUsers((users) => {
       const isMentor = user.unlockedAchievementIds?.includes(
         MENTOR_ACHIEVEMENT_ID
@@ -238,7 +238,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
     onHide();
   }
 
-  function isAllowedSupermodCandidate(user: ManagementUserSearchResult) {
+  function isAllowedSupermodCandidate(user: UserSearchResult) {
     const supermodAchievementIds = [
       MENTOR_ACHIEVEMENT_ID,
       SAGE_ACHIEVEMENT_ID,

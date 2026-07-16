@@ -28,10 +28,7 @@ export default function useGameMoveHandlers({
   userId,
   username
 }: {
-  clearBoardCountdown: (
-    channelId: number,
-    gameType: 'chess' | 'omok'
-  ) => void;
+  clearBoardCountdown: (channelId: number, gameType: 'chess' | 'omok') => void;
   currentChannel: any;
   handleAiUsagePolicyUpdate: (policy: Record<string, any>) => void;
   navigate: (to: string, options?: any) => void;
@@ -152,15 +149,21 @@ export default function useGameMoveHandlers({
         });
         return window.location.reload();
       }
-      const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
-        await startNewDMChannel({
-          userId,
-          chessState,
-          isChessMsg: 1,
-          gameWinnerId,
-          content,
-          recipientId: partner?.id
-        });
+      const {
+        alreadyExists,
+        channel,
+        message,
+        pathId,
+        aiUsagePolicy,
+        quickAccess
+      } = await startNewDMChannel({
+        userId,
+        chessState,
+        isChessMsg: 1,
+        gameWinnerId,
+        content,
+        recipientId: partner?.id
+      });
       if (alreadyExists) {
         return window.location.reload();
       }
@@ -175,7 +178,13 @@ export default function useGameMoveHandlers({
         message
       });
       onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
-      onCreateNewDMChannel({ channel, withoutMessage: true });
+      onCreateNewDMChannel({
+        channel,
+        message,
+        quickAccess,
+        userId,
+        withoutMessage: true
+      });
       navigate(`/chat/${pathId}`, { replace: true });
       onSetChessModalShown(false);
     } catch (error) {
@@ -269,15 +278,21 @@ export default function useGameMoveHandlers({
         });
         return window.location.reload();
       }
-      const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
-        await startNewDMChannel({
-          userId,
-          omokState,
-          isChessMsg: 1,
-          gameWinnerId,
-          content,
-          recipientId: partner?.id
-        });
+      const {
+        alreadyExists,
+        channel,
+        message,
+        pathId,
+        aiUsagePolicy,
+        quickAccess
+      } = await startNewDMChannel({
+        userId,
+        omokState,
+        isChessMsg: 1,
+        gameWinnerId,
+        content,
+        recipientId: partner?.id
+      });
       if (alreadyExists) {
         return window.location.reload();
       }
@@ -292,7 +307,13 @@ export default function useGameMoveHandlers({
         message
       });
       onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
-      onCreateNewDMChannel({ channel, withoutMessage: true });
+      onCreateNewDMChannel({
+        channel,
+        message,
+        quickAccess,
+        userId,
+        withoutMessage: true
+      });
       navigate(`/chat/${pathId}`, { replace: true });
       onSetOmokModalShown(false);
     } catch (error) {

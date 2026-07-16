@@ -672,14 +672,16 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async addModerators(newModerators: number[]) {
+    async addModerators(newModerators: { id: number; userType: string }[]) {
       try {
-        const { data } = await request.post(
+        const {
+          data: { moderators }
+        } = await request.post(
           `${URL}/user/management/moderator`,
           { newModerators },
           auth()
         );
-        return Promise.resolve(data);
+        return moderators;
       } catch (error) {
         return handleError(error);
       }
@@ -1132,12 +1134,12 @@ export default function managementRequestHelpers({
       banStatus: object;
     }) {
       try {
-        await request.put(
+        const { data } = await request.put(
           `${URL}/user/management/banned`,
           { userId, banStatus },
           auth()
         );
-        return { success: true };
+        return data;
       } catch (error) {
         return handleError(error);
       }

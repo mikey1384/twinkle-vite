@@ -3,6 +3,8 @@
 // keys: those only ever existed during pre-release development of this
 // feature, so no production user has data under them.
 const STORAGE_KEY = 'twinkle-desktop-tab-order';
+const ORDER_VERSION_KEY = 'twinkle-desktop-tab-order-version';
+const GUEST_LAYOUT_VERSION_KEY = 'twinkle-desktop-guest-layout-version';
 const CUSTOM_TABS_KEY = 'twinkle-desktop-custom-tabs';
 const MINIMIZED_TABS_KEY = 'twinkle-desktop-minimized-tabs';
 const MENU_DISCOVERED_KEY = 'twinkle-desktop-tab-menu-discovered';
@@ -19,11 +21,11 @@ export const NAV_TAB_KEYS = [
 
 export type NavTabKey = (typeof NAV_TAB_KEYS)[number];
 
-// The "sacred" default tabs: a contiguous block that users may reorder only
-// among themselves. Pinned tabs sit to their LEFT; every other tab (profile,
-// the dynamic content tab, and extracted/added custom tabs) sits to their
-// RIGHT. Nothing from another section may enter the block. This is a
-// render-time partition only — the stored order/sync model is unchanged.
+export const NAV_TAB_ORDER_VERSION = 4;
+
+// The five primary tabs are a fixed contiguous block. Pinned tabs sit to their
+// LEFT; profile, dynamic content, and user-added tabs sit to their RIGHT. The
+// active primary tab is moved to the block's right edge at render time only.
 export const SACRED_DEFAULT_KEYS = [
   'home',
   'explore',
@@ -32,12 +34,34 @@ export const SACRED_DEFAULT_KEYS = [
   'build'
 ] as const;
 
-export function isSacredDefaultKey(value: string): boolean {
+export type PrimaryNavTabKey = (typeof SACRED_DEFAULT_KEYS)[number];
+
+const DEFAULT_MINIMIZED_NAV_TAB_KEYS: readonly string[] = [];
+
+export function getDefaultMinimizedNavTabKeys(): string[] {
+  return [...DEFAULT_MINIMIZED_NAV_TAB_KEYS];
+}
+
+export function isDefaultMinimizedNavTabKey(value: string): boolean {
+  return (DEFAULT_MINIMIZED_NAV_TAB_KEYS as readonly string[]).includes(value);
+}
+
+export function isSacredDefaultKey(
+  value: string
+): value is PrimaryNavTabKey {
   return (SACRED_DEFAULT_KEYS as readonly string[]).includes(value);
 }
 
+export function getPrimaryNavTabOrder(
+  activeKey?: string | null
+): PrimaryNavTabKey[] {
+  const fixedOrder = [...SACRED_DEFAULT_KEYS];
+  if (!activeKey || !isSacredDefaultKey(activeKey)) return fixedOrder;
+  return [...fixedOrder.filter((key) => key !== activeKey), activeKey];
+}
+
 // a page the user captured out of the dynamic tab, either pinned
-// (icon-only, far left) or as a regular reorderable tab
+// (icon-only, far left) or as a regular MRU-ordered tab
 export interface CustomNavTab {
   id: string;
   to: string;
@@ -109,7 +133,7 @@ export function sanitizeNavTabOrder(
       order.push(id);
     }
   }
-  return order;
+  return normalizePrimaryNavTabOrder(order);
 }
 
 export function mergeSessionNavTabsIntoServerOrder({
@@ -171,13 +195,14 @@ export function sanitizeMinimizedNavTabKeys(
   raw: any,
   customTabs: CustomNavTab[] = []
 ): string[] {
-  if (!Array.isArray(raw)) return [];
+  if (!Array.isArray(raw)) return getDefaultMinimizedNavTabKeys();
   const customIds = customTabs.map((tab) => tab.id);
   const keys: string[] = [];
   for (const key of raw) {
     if (
       typeof key === 'string' &&
       (isNavTabKey(key) || customIds.includes(key)) &&
+      !isSacredDefaultKey(key) &&
       !keys.includes(key)
     ) {
       keys.push(key);
@@ -192,14 +217,18 @@ export function loadNavTabOrder(
   customTabs: CustomNavTab[] = [],
   userId?: NavUserId
 ): string[] {
-  return sanitizeNavTabOrder(
-    readJson(scopedKey(STORAGE_KEY, userId)),
-    customTabs
-  );
+  return loadStoredNavLayout(customTabs, userId).order;
 }
 
 export function saveNavTabOrder(order: string[], userId?: NavUserId) {
   writeJson(scopedKey(STORAGE_KEY, userId), order);
+  writeJson(scopedKey(ORDER_VERSION_KEY, userId), NAV_TAB_ORDER_VERSION);
+  if (!userId) {
+    writeJson(
+      scopedKey(GUEST_LAYOUT_VERSION_KEY, userId),
+      NAV_TAB_ORDER_VERSION
+    );
+  }
 }
 
 // the full custom-tab list per account for the current PAGE lifetime.
@@ -236,10 +265,33 @@ export function loadMinimizedNavTabKeys(
   customTabs: CustomNavTab[] = [],
   userId?: NavUserId
 ): string[] {
-  return sanitizeMinimizedNavTabKeys(
-    readJson(scopedKey(MINIMIZED_TABS_KEY, userId)),
-    customTabs
-  );
+  return loadStoredNavLayout(customTabs, userId).minimized;
+}
+
+function loadStoredNavLayout(customTabs: CustomNavTab[], userId?: NavUserId) {
+  const storedMinimized = readJson(scopedKey(MINIMIZED_TABS_KEY, userId));
+  const storedOrder = readJson(scopedKey(STORAGE_KEY, userId));
+  const order = sanitizeNavTabOrder(storedOrder, customTabs);
+  const minimized = sanitizeMinimizedNavTabKeys(storedMinimized, customTabs);
+
+  // Guest layouts existed before the migration-version marker. Migrate the
+  // two fields together: primary order/label state become canonical while
+  // custom-tab order and custom-tab label preferences are retained.
+  if (
+    !userId &&
+    Number(readJson(scopedKey(GUEST_LAYOUT_VERSION_KEY, userId))) <
+      NAV_TAB_ORDER_VERSION
+  ) {
+    writeJson(scopedKey(STORAGE_KEY, userId), order);
+    writeJson(scopedKey(ORDER_VERSION_KEY, userId), NAV_TAB_ORDER_VERSION);
+    writeJson(scopedKey(MINIMIZED_TABS_KEY, userId), minimized);
+    writeJson(
+      scopedKey(GUEST_LAYOUT_VERSION_KEY, userId),
+      NAV_TAB_ORDER_VERSION
+    );
+  }
+
+  return { order, minimized };
 }
 
 export function saveMinimizedNavTabKeys(keys: string[], userId?: NavUserId) {
@@ -253,9 +305,10 @@ export interface NavDraftState {
   menuDiscovered: boolean;
 }
 
-// per-account session metadata for the nav-sync merge: what the user
-// touched/created/removed this PAGE session, which fields they edited, and
-// the latest uncommitted draft. Module scope, like the session tab store
+// Per-account session metadata for nav synchronization and transient ordering:
+// what the user touched/created/removed this PAGE session, the current MRU
+// presentation, which fields they edited, and the latest uncommitted draft.
+// Module scope, like the session tab store
 // above: the header unmounts during normal navigation (/app/:id) and this
 // history must survive that — component refs silently forgot removals,
 // provenance, and pending writes across remounts. Reborn empty on reload
@@ -263,6 +316,8 @@ export interface NavSessionMeta {
   customized: boolean;
   dirtyFields: { order: boolean; custom: boolean; minimized: boolean };
   canonicalOrderEdited: boolean;
+  lastActivePrimaryKey: PrimaryNavTabKey | null;
+  recentExtraTabKeys: string[];
   touchedIds: Set<string>;
   createdIds: Set<string>;
   removedTabs: { id: string; to: string; sessionCreated: boolean }[];
@@ -287,6 +342,8 @@ export function getNavSessionMeta(userId?: NavUserId): NavSessionMeta {
       customized: false,
       dirtyFields: { order: false, custom: false, minimized: false },
       canonicalOrderEdited: false,
+      lastActivePrimaryKey: null,
+      recentExtraTabKeys: [],
       touchedIds: new Set(),
       createdIds: new Set(),
       removedTabs: [],
@@ -312,11 +369,7 @@ export function noteNavAuthTokenChange({
 }) {
   const previousScope = readTokenUserScope(previousToken);
   const nextScope = readTokenUserScope(nextToken);
-  if (
-    preserveSameUserSession &&
-    previousScope &&
-    previousScope === nextScope
-  ) {
+  if (preserveSameUserSession && previousScope && previousScope === nextScope) {
     return;
   }
   const affectedScopes = new Set(
@@ -385,4 +438,12 @@ function writeJson(key: string, value: any) {
   } catch {
     // localStorage unavailable (privacy mode); state stays session-only
   }
+}
+
+function normalizePrimaryNavTabOrder(order: string[]) {
+  const fixedPrimaryOrder = getPrimaryNavTabOrder();
+  let primaryIndex = 0;
+  return order.map((key) =>
+    isSacredDefaultKey(key) ? fixedPrimaryOrder[primaryIndex++] : key
+  );
 }

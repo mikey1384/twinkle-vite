@@ -51,6 +51,7 @@ export function useChessPuzzle() {
     'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'
   >('PLAYING');
   const runIdRef = useRef<number | null>(null);
+  const puzzleRequestEpochRef = useRef(0);
 
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
@@ -60,9 +61,6 @@ export function useChessPuzzle() {
     showingHint: false
   });
 
-  const stats = useChessContext((v) => v.state.stats);
-  const statsLoading = useChessContext((v) => v.state.loading);
-  const statsError = useChessContext((v) => v.state.error);
   const onSetChessStats = useChessContext((v) => v.actions.onSetChessStats);
   const onSetChessLoading = useChessContext((v) => v.actions.onSetChessLoading);
   const onSetChessError = useChessContext((v) => v.actions.onSetChessError);
@@ -121,20 +119,27 @@ export function useChessPuzzle() {
 
   const fetchPuzzle = useCallback(
     async (level: number = 1) => {
+      const requestEpoch = ++puzzleRequestEpochRef.current;
       setLoading(true);
       setPuzzle(null);
       setAttemptId(null);
+      setError(null);
 
       try {
         const { puzzle, attemptId } = await loadChessPuzzle({
           level
         });
 
+        if (requestEpoch !== puzzleRequestEpochRef.current) return;
         setPuzzle(puzzle);
         setAttemptId(attemptId);
-        setLoading(false);
-      } catch (e) {
+      } catch (e: any) {
+        if (requestEpoch !== puzzleRequestEpochRef.current) return;
         setError(String(e));
+      } finally {
+        if (requestEpoch === puzzleRequestEpochRef.current) {
+          setLoading(false);
+        }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -142,6 +147,7 @@ export function useChessPuzzle() {
   );
 
   function updatePuzzle(puzzle: LichessPuzzle) {
+    puzzleRequestEpochRef.current += 1;
     setPuzzle(puzzle);
     setLoading(false);
     setError(null);
@@ -214,9 +220,6 @@ export function useChessPuzzle() {
     levelsError,
     refreshLevels,
     persistCurrentLevel,
-    stats,
-    statsLoading,
-    statsError,
     refreshStats,
     inTimeAttack,
     timeLeft,

@@ -90,6 +90,9 @@ export default function MessagesContainer({
   const onSetPendingChessModalChannelId = useChatContext(
     (v) => v.actions.onSetPendingChessModalChannelId
   );
+  const onApplyCanonicalChatSidebarState = useChatContext(
+    (v) => v.actions.onApplyCanonicalChatSidebarState
+  );
   const navigate = useNavigate();
   const {
     actions: {
@@ -97,7 +100,6 @@ export default function MessagesContainer({
       onEditChannelSettings,
       onEnterComment,
       onEnterChannelWithId,
-      onHideChat,
       onLeaveChannel,
       onReceiveMessageOnDifferentChannel,
       onCreateNewDMChannel,
@@ -108,7 +110,6 @@ export default function MessagesContainer({
       onSetChessModalShown,
       onSetOmokModalShown,
       onSetCreatingNewDMChannel,
-      onSetFavoriteChannel,
       onSetReplyTarget,
       onSetWordleModalShown,
       onSubmitMessage,
@@ -148,7 +149,6 @@ export default function MessagesContainer({
   const userId = useKeyContext((v) => v.myState.userId);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const username = useKeyContext((v) => v.myState.username);
-
   const {
     currentTransactionId,
     isReloadRequired = false,
@@ -205,16 +205,13 @@ export default function MessagesContainer({
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
-  const {
-    boardCountdownObj,
-    clearBoardCountdown,
-    setLatestBoardMessageId
-  } = useBoardTimers({
-    currentChannel,
-    onSetChessModalShown,
-    onSetOmokModalShown,
-    selectedChannelId
-  });
+  const { boardCountdownObj, clearBoardCountdown, setLatestBoardMessageId } =
+    useBoardTimers({
+      currentChannel,
+      onSetChessModalShown,
+      onSetOmokModalShown,
+      selectedChannelId
+    });
 
   const subchannel = useMemo(() => {
     if (!subchannelPath) {
@@ -306,9 +303,7 @@ export default function MessagesContainer({
 
   const containerHeight = `CALC(100% - 1rem - 2px - ${
     socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
-  }${
-    aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''
-  }${
+  }${aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''}${
     socketConnected && appliedIsRespondingToSubject
       ? ' - 8rem - 2px'
       : replyTarget
@@ -442,7 +437,8 @@ export default function MessagesContainer({
     selectedChannelId,
     selectedTab,
     currentChannel.selectedTopicId,
-    currentChannel.featuredTopicId
+    currentChannel.featuredTopicId,
+    currentlySelectedTopic?.loaded
   ]);
 
   useEffect(() => {
@@ -496,7 +492,7 @@ export default function MessagesContainer({
       const data = await loadChatChannel({
         channelId: selectedChannelId
       });
-      onEnterChannelWithId(data);
+      onEnterChannelWithId({ data, userId });
       for (const member of data?.channel?.members || []) {
         onSetUserState({
           userId: member.id,
@@ -606,12 +602,18 @@ export default function MessagesContainer({
   }, [onRegisterSaveScrollPositionForAll, handleSaveScrollPositionForAll]);
 
   const handleHideChat = useCallback(async () => {
-    await hideChat(selectedChannelId);
-    onHideChat(selectedChannelId);
+    const requestUserId = userId;
+    const { channelVisibility, quickAccess } =
+      await hideChat(selectedChannelId);
+    onApplyCanonicalChatSidebarState({
+      channelVisibility,
+      quickAccess,
+      userId: requestUserId
+    });
     setHideModalShown(false);
     navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, selectedChannelId]);
+  }, [navigate, selectedChannelId, userId]);
 
   const handleSubmitChessTargetMessage = useCallback(
     async (message: any) => {
@@ -634,37 +636,36 @@ export default function MessagesContainer({
     [chessTarget, selectedChannelId]
   );
 
-  const {
-    handleConfirmChessMove,
-    handleConfirmOmokMove
-  } = useGameMoveHandlers({
-    clearBoardCountdown,
-    currentChannel,
-    handleAiUsagePolicyUpdate,
-    navigate,
-    onCreateNewDMChannel,
-    onScrollToBottom,
-    onSetChessModalShown,
-    onSetOmokModalShown,
-    onSetReplyTarget,
-    onSubmitMessage,
-    onUpdateChannelPathIdHash,
-    onUpdateLastChessMessageId,
-    onUpdateLastChessMoveViewerId,
-    onUpdateLastOmokMessageId,
-    onUpdateLastOmokMoveViewerId,
-    onUpdateRecentChessMessage,
-    onUpdateRecentOmokMessage,
-    partner,
-    profilePicUrl,
-    reportError,
-    saveChatMessage,
-    selectedChannelId,
-    setLatestBoardMessageId,
-    startNewDMChannel,
-    userId,
-    username
-  });
+  const { handleConfirmChessMove, handleConfirmOmokMove } = useGameMoveHandlers(
+    {
+      clearBoardCountdown,
+      currentChannel,
+      handleAiUsagePolicyUpdate,
+      navigate,
+      onCreateNewDMChannel,
+      onScrollToBottom,
+      onSetChessModalShown,
+      onSetOmokModalShown,
+      onSetReplyTarget,
+      onSubmitMessage,
+      onUpdateChannelPathIdHash,
+      onUpdateLastChessMessageId,
+      onUpdateLastChessMoveViewerId,
+      onUpdateLastOmokMessageId,
+      onUpdateLastOmokMoveViewerId,
+      onUpdateRecentChessMessage,
+      onUpdateRecentOmokMessage,
+      partner,
+      profilePicUrl,
+      reportError,
+      saveChatMessage,
+      selectedChannelId,
+      setLatestBoardMessageId,
+      startNewDMChannel,
+      userId,
+      username
+    }
+  );
 
   const handleDelete = useCallback(async () => {
     const { messageId } = deleteModal;
@@ -850,8 +851,12 @@ export default function MessagesContainer({
       try {
         setIsLeaving(true);
         leavingRef.current = true;
-        await leaveChannel(selectedChannelId);
-        onLeaveChannel({ channelId: selectedChannelId, userId });
+        const { favoriteState } = await leaveChannel(selectedChannelId);
+        onLeaveChannel({
+          channelId: selectedChannelId,
+          userId,
+          favoriteState
+        });
         socket.emit('leave_chat_channel', {
           channelId: selectedChannelId,
           userId,
@@ -947,9 +952,14 @@ export default function MessagesContainer({
   const handleFavoriteClick = useCallback(async () => {
     if (!favoritingRef.current) {
       favoritingRef.current = true;
+      const requestUserId = userId;
       try {
-        const favorited = await putFavoriteChannel(selectedChannelId);
-        onSetFavoriteChannel({ channelId: selectedChannelId, favorited });
+        const favoriteState = await putFavoriteChannel(selectedChannelId);
+        onApplyCanonicalChatSidebarState({
+          quickAccess: favoriteState.quickAccess,
+          favoriteState,
+          userId: requestUserId
+        });
         favoritingRef.current = false;
       } catch (error) {
         console.error(error);
@@ -957,7 +967,7 @@ export default function MessagesContainer({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
+  }, [selectedChannelId, userId]);
 
   const handleMessageSubmit = useCallback(
     async ({
@@ -995,12 +1005,18 @@ export default function MessagesContainer({
         }
         onSetCreatingNewDMChannel(true);
         try {
-          const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
-            await startNewDMChannel({
-              content,
-              userId,
-              recipientId: partner?.id
-            });
+          const {
+            alreadyExists,
+            channel,
+            message,
+            pathId,
+            aiUsagePolicy,
+            quickAccess
+          } = await startNewDMChannel({
+            content,
+            userId,
+            recipientId: partner?.id
+          });
           if (alreadyExists) {
             return window.location.reload();
           }
@@ -1016,14 +1032,20 @@ export default function MessagesContainer({
           });
           onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
           navigate(`/chat/${pathId}`, { replace: true });
-          onCreateNewDMChannel({ channel, message, withoutMessage: true });
+          onCreateNewDMChannel({
+            channel,
+            message,
+            quickAccess,
+            userId,
+            withoutMessage: true
+          });
           trackEvent('chat_message_send', {
             channel_type:
               partner?.id === ZERO_TWINKLE_ID
                 ? 'ai_zero'
                 : partner?.id === CIEL_TWINKLE_ID
-                ? 'ai_ciel'
-                : 'dm',
+                  ? 'ai_ciel'
+                  : 'dm',
             has_attachment: false,
             is_first_message: true
           });
@@ -1499,6 +1521,4 @@ export default function MessagesContainer({
     });
     onSetOmokModalShown(true);
   }
-
-
 }

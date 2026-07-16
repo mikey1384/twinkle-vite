@@ -918,6 +918,7 @@ export default function userRequestHelpers({
     },
     async updateNavTabsState(navTabs: {
       order: string[];
+      orderVersion: number;
       pinnedTabs: {
         id: string;
         to: string;

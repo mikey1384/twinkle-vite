@@ -61,7 +61,29 @@ function getInitialChatState() {
       selectedChannelId: persistedState.selectedChannelId,
       channelCount: Object.keys(persistedState.channelsObj || {}).length
     });
-    return persistedState;
+    return {
+      ...persistedState,
+      // A request owned by an unmounted provider cannot safely reconcile into
+      // the replacement provider. The socket bootstrap hook starts a fresh,
+      // explicitly owned attempt after remount.
+      activeChatBootstrap: null,
+      // Snapshots persisted before owner tracking existed belong to the user
+      // the snapshot was loaded for.
+      favoriteStateOwnerId:
+        persistedState.favoriteStateOwnerId ??
+        persistedState.loadedForUserId ??
+        null,
+      quickAccessOwnerId:
+        persistedState.quickAccessOwnerId ??
+        persistedState.loadedForUserId ??
+        null,
+      channelVisibilityById: persistedState.channelVisibilityById || {},
+      canonicalReactionUpdatesDuringBootstrap: {},
+      canonicalUnreadStatesDuringBootstrap: {},
+      confirmedRealtimeActivityByChannel: {},
+      confirmedRealtimeUnreadActivityByChannel: {},
+      confirmedMessageDeletionsDuringBootstrap: {}
+    };
   }
 
   return {
@@ -73,6 +95,8 @@ function getInitialChatState() {
     aiCardStatusMessage: '',
     aiCardLoadMoreButton: false,
     allFavoriteChannelIds: {},
+    activeChatBootstrap: null,
+    appliedReactionActivityRevisionsByChannel: {},
     cardObj: {},
     channelLoading: false,
     channelOnCall: {},
@@ -81,10 +105,20 @@ function getInitialChatState() {
     buildContributionInvitesById: {},
     buildCollaborationRequestMembershipByKey: {},
     buildCollaborationRequestsById: {},
+    canonicalReactionUpdatesDuringBootstrap: {},
+    canonicalUnreadStatesDuringBootstrap: {},
+    channelVisibilityById: {},
     channelPathIdHash: {},
     channelsObj: {},
     chatSearchResults: [],
     chatStatus: {},
+    confirmedRealtimeActivityByChannel: {},
+    confirmedRealtimeUnreadActivityByChannel: {},
+    confirmedMessageDeletionsDuringBootstrap: {},
+    favoriteStateRevision: 0,
+    favoriteStateOwnerId: null,
+    quickAccess: { revision: 0, mode: 'automatic', partners: [] },
+    quickAccessOwnerId: null,
     collectPreviews: {},
     recentOfflineUsers: [],
     chatType: null,
@@ -168,6 +202,8 @@ export const initialChatState = {
   aiCardStatusMessage: '',
   aiCardLoadMoreButton: false,
   allFavoriteChannelIds: {},
+  activeChatBootstrap: null,
+  appliedReactionActivityRevisionsByChannel: {},
   cardObj: {},
   channelLoading: false,
   channelOnCall: {},
@@ -176,10 +212,20 @@ export const initialChatState = {
   buildContributionInvitesById: {},
   buildCollaborationRequestMembershipByKey: {},
   buildCollaborationRequestsById: {},
+  canonicalReactionUpdatesDuringBootstrap: {},
+  canonicalUnreadStatesDuringBootstrap: {},
+  channelVisibilityById: {},
   channelPathIdHash: {},
   channelsObj: {},
   chatSearchResults: [],
   chatStatus: {},
+  confirmedRealtimeActivityByChannel: {},
+  confirmedRealtimeUnreadActivityByChannel: {},
+  confirmedMessageDeletionsDuringBootstrap: {},
+  favoriteStateRevision: 0,
+  favoriteStateOwnerId: null,
+  quickAccess: { revision: 0, mode: 'automatic', partners: [] },
+  quickAccessOwnerId: null,
   collectPreviews: {},
   recentOfflineUsers: [],
   chatType: null,

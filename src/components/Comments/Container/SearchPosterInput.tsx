@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
-import SearchInput from '~/components/Texts/SearchInput';
-import Loading from '~/components/Loading';
+import React from 'react';
 import SelectedUser from '~/components/Texts/SelectedUser';
+import UserSearchInput from '~/components/UserSearchInput';
 import { css } from '@emotion/css';
-import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
-import { useSearch } from '~/helpers/hooks';
 import { User } from '~/types';
 
 export default function SearchPosterInput({
@@ -15,15 +12,6 @@ export default function SearchPosterInput({
   selectedUser: User;
   onSetSelectedUser: (user: any) => void;
 }) {
-  const [searchedUsers, setSearchedUsers] = useState([]);
-  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
-  const [searchText, setSearchText] = useState('');
-  const { handleSearch, searching } = useSearch({
-    onSearch: handleUserSearch,
-    onClear: () => setSearchedUsers([]),
-    onSetSearchText: setSearchText
-  });
-
   return (
     <div
       style={{
@@ -46,23 +34,10 @@ export default function SearchPosterInput({
       </span>
       {!selectedUser ? (
         <div style={{ marginLeft: '1rem', position: 'relative' }}>
-          <SearchInput
+          <UserSearchInput
             placeholder="Search user..."
-            onChange={handleSearch}
-            value={searchText}
-            searchResults={searchedUsers}
-            renderItemLabel={(item) => (
-              <span>
-                {item.username} <small>{`(${item.realName})`}</small>
-              </span>
-            )}
-            onClickOutSide={() => {
-              setSearchText('');
-              setSearchedUsers([]);
-            }}
-            onSelect={handleSelectUser}
+            onSelect={onSetSelectedUser}
           />
-          {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
         </div>
       ) : (
         <SelectedUser
@@ -73,15 +48,4 @@ export default function SearchPosterInput({
       )}
     </div>
   );
-
-  function handleSelectUser(user: any) {
-    onSetSelectedUser(user);
-    setSearchedUsers([]);
-    setSearchText('');
-  }
-
-  async function handleUserSearch(text: string) {
-    const users = await searchUsers(text);
-    setSearchedUsers(users);
-  }
 }

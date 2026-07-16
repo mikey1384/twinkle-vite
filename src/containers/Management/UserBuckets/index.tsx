@@ -3,9 +3,9 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import ManagementUserSearchInput, {
-  ManagementUserSearchResult
-} from '../UserSearchInput';
+import UserSearchInput, {
+  type UserSearchResult
+} from '~/components/UserSearchInput';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { AiEnergyManualIdentityBucket } from '../AiCosts/types';
@@ -403,9 +403,7 @@ export default function UserBuckets() {
 
               <div className={subsectionHeaderClass}>
                 <h3>Members</h3>
-                <span>
-                  {memberCount} total
-                </span>
+                <span>{memberCount} total</span>
               </div>
               {memberCount === 0 ? (
                 <div className={emptyMembersClass}>
@@ -445,7 +443,7 @@ export default function UserBuckets() {
               <div className={addGridClass}>
                 <div className="add-field">
                   <label>Account</label>
-                  <ManagementUserSearchInput
+                  <UserSearchInput
                     excludeUserIds={memberUserIds}
                     onSelect={handleAddAccount}
                     placeholder="Search users to add..."
@@ -522,9 +520,9 @@ export default function UserBuckets() {
                   </label>
                   {ipIncludePrefix ? (
                     <div className="add-warn">
-                      Prefix bans can also block unrelated users sharing the same
-                      network (carrier / school / NAT). Use exact IP unless you
-                      are sure.
+                      Prefix bans can also block unrelated users sharing the
+                      same network (carrier / school / NAT). Use exact IP unless
+                      you are sure.
                     </div>
                   ) : null}
                 </div>
@@ -553,8 +551,8 @@ export default function UserBuckets() {
                     </Button>
                   </div>
                   <div className="add-hint">
-                    Survives IP changes, but the device id is client-supplied and
-                    can be cleared. Use alongside account/email bans.
+                    Survives IP changes, but the device id is client-supplied
+                    and can be cleared. Use alongside account/email bans.
                   </div>
                 </div>
               </div>
@@ -651,9 +649,7 @@ export default function UserBuckets() {
       });
       const nextBuckets: AiEnergyManualIdentityBucket[] = data?.buckets || [];
       setBuckets(nextBuckets);
-      setSelectedBucketId(
-        data?.selectedBucketId || nextBuckets[0]?.id || 0
-      );
+      setSelectedBucketId(data?.selectedBucketId || nextBuckets[0]?.id || 0);
     } catch {
       setError('Failed to load buckets.');
     } finally {
@@ -762,7 +758,7 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleAddAccount(user: ManagementUserSearchResult) {
+  async function handleAddAccount(user: UserSearchResult) {
     if (!selectedBucket || busy) return;
     setBusy(true);
     setError('');

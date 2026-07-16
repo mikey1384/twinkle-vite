@@ -1,5 +1,19 @@
 import { Dispatch } from '~/types';
 import { getConfirmedAICardListingState } from '~/helpers/aiCardCanonicalUpdates';
+import type {
+  CanonicalChatChannelUnreadState,
+  CanonicalChatFavoriteState,
+  CanonicalChatReactionUpdate,
+  CanonicalChatSidebarState,
+  ChatQuickAccessState
+} from '~/types/chat';
+
+let nextConfirmedChatEventSequence = 0;
+
+function getNextConfirmedChatEventSequence() {
+  nextConfirmedChatEventSequence += 1;
+  return nextConfirmedChatEventSequence;
+}
 
 export default function ChatActions(dispatch: Dispatch) {
   return {
@@ -117,11 +131,7 @@ export default function ChatActions(dispatch: Dispatch) {
       request?: Record<string, any> | null;
       requestId?: number;
       requestStatus?:
-        | 'pending'
-        | 'invited'
-        | 'accepted'
-        | 'rejected'
-        | 'canceled';
+        'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
       eventTimeMs?: number;
       timeStamp?: number;
     }) {
@@ -232,26 +242,46 @@ export default function ChatActions(dispatch: Dispatch) {
         view
       });
     },
-    onAddReactionToMessage({
-      channelId,
-      messageId,
-      reaction,
-      subchannelId,
+    onApplyCanonicalChatReaction({
+      update,
+      ownerUserId,
+      pageVisible = false,
+      usingChat = false,
+      shouldIncrementUnreads = false
+    }: {
+      update: CanonicalChatReactionUpdate;
+      // The account that issued the request or owns the socket session. This
+      // is deliberately separate from update.userId, which is the reactor.
+      ownerUserId: number;
+      pageVisible?: boolean;
+      usingChat?: boolean;
+      shouldIncrementUnreads?: boolean;
+    }) {
+      return dispatch({
+        type: 'APPLY_CANONICAL_CHAT_REACTION',
+        update,
+        ownerUserId,
+        pageVisible,
+        usingChat,
+        shouldIncrementUnreads,
+        eventSequence: getNextConfirmedChatEventSequence()
+      });
+    },
+    onApplyCanonicalChannelUnreadState({
+      unreadState,
       userId
     }: {
-      channelId: number;
-      messageId: number;
-      reaction: string;
-      subchannelId: number;
+      unreadState: CanonicalChatChannelUnreadState;
+      // The account that issued the request or owns the socket session,
+      // captured at request start. The reducer rejects snapshots owned by an
+      // account other than the one the provider currently hosts.
       userId: number;
     }) {
-      dispatch({
-        type: 'ADD_REACTION_TO_MESSAGE',
-        channelId,
-        messageId,
-        reaction,
-        subchannelId,
-        userId
+      return dispatch({
+        type: 'APPLY_CANONICAL_CHANNEL_UNREAD_STATE',
+        unreadState,
+        userId,
+        eventSequence: getNextConfirmedChatEventSequence()
       });
     },
     onAICardOfferWithdrawal(feedId: number) {
@@ -414,19 +444,6 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId
       });
     },
-    onClearSubchannelUnreads({
-      channelId,
-      subchannelId
-    }: {
-      channelId: number;
-      subchannelId: number;
-    }) {
-      return dispatch({
-        type: 'CLEAR_SUBCHANNEL_UNREADS',
-        channelId,
-        subchannelId
-      });
-    },
     onClearChatSearchResults() {
       return dispatch({
         type: 'CLEAR_CHAT_SEARCH_RESULTS'
@@ -442,10 +459,17 @@ export default function ChatActions(dispatch: Dispatch) {
         type: 'CLEAR_USER_SEARCH_RESULTS'
       });
     },
-    onCreateNewChannel(data: object) {
+    onCreateNewChannel({
+      userId,
+      ...data
+    }: {
+      userId: number;
+      [key: string]: any;
+    }) {
       return dispatch({
         type: 'CREATE_NEW_CHANNEL',
-        data
+        data,
+        userId
       });
     },
     onDeleteMessage({
@@ -464,7 +488,8 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId,
         messageId,
         subchannelId,
-        topicId
+        topicId,
+        eventSequence: getNextConfirmedChatEventSequence()
       });
     },
     onDisplayAttachedFile({
@@ -610,10 +635,11 @@ export default function ChatActions(dispatch: Dispatch) {
         theme
       });
     },
-    onEnterChannelWithId(data: object) {
+    onEnterChannelWithId({ data, userId }: { data: object; userId: number }) {
       return dispatch({
         type: 'ENTER_CHANNEL',
-        data
+        data,
+        userId
       });
     },
     onEnterTopic({
@@ -704,12 +730,6 @@ export default function ChatActions(dispatch: Dispatch) {
         subchannelId
       });
     },
-    onHideChat(channelId: number) {
-      return dispatch({
-        type: 'HIDE_CHAT',
-        channelId
-      });
-    },
     onInitChat({
       data,
       userId,
@@ -726,6 +746,25 @@ export default function ChatActions(dispatch: Dispatch) {
         bootstrapId
       });
     },
+    onStartChatBootstrap({
+      bootstrapId,
+      userId,
+      startedAt
+    }: {
+      bootstrapId: string;
+      userId: number;
+      startedAt: number;
+    }) {
+      return dispatch({
+        type: 'START_CHAT_BOOTSTRAP',
+        bootstrapId,
+        userId,
+        startedAt
+      });
+    },
+    onFinishChatBootstrap(bootstrapId: string) {
+      return dispatch({ type: 'FINISH_CHAT_BOOTSTRAP', bootstrapId });
+    },
     onInviteUsersToChannel(data: object) {
       return dispatch({
         type: 'INVITE_USERS_TO_CHANNEL',
@@ -734,15 +773,18 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onLeaveChannel({
       channelId,
-      userId
+      userId,
+      favoriteState
     }: {
       channelId: number;
       userId: number;
+      favoriteState?: CanonicalChatFavoriteState;
     }) {
       return dispatch({
         type: 'LEAVE_CHANNEL',
         channelId,
-        userId
+        userId,
+        favoriteState
       });
     },
     onRemoveMemberFromChannel({
@@ -1348,36 +1390,44 @@ export default function ChatActions(dispatch: Dispatch) {
         currentSubchannelId,
         usingChat,
         pageVisible,
-        message: {
-          ...message,
-          timeStamp: Math.floor(Date.now() / 1000)
-        },
+        message,
+        eventSequence: getNextConfirmedChatEventSequence(),
         newMembers
       });
     },
     onReceiveFirstMsg({
       message,
+      members,
       isClass,
       isTwoPeople,
       isDuplicate,
       pageVisible,
-      pathId
+      pathId,
+      quickAccess,
+      userId
     }: {
       message: object;
+      members: object[];
       isClass: boolean;
       isTwoPeople: boolean;
       isDuplicate: boolean;
       pageVisible: boolean;
       pathId: number;
+      quickAccess?: ChatQuickAccessState;
+      userId: number;
     }) {
       return dispatch({
         type: 'RECEIVE_FIRST_MSG',
         message,
+        members,
         isDuplicate,
         isClass,
         isTwoPeople,
         pageVisible,
-        pathId
+        pathId,
+        quickAccess,
+        userId,
+        eventSequence: getNextConfirmedChatEventSequence()
       });
     },
     onReceiveMessageOnDifferentChannel({
@@ -1385,14 +1435,14 @@ export default function ChatActions(dispatch: Dispatch) {
       channel,
       pageVisible,
       usingChat,
-      isMyMessage,
+      isMyMessage = false,
       newMembers = []
     }: {
       message: object;
       channel: object;
       pageVisible: boolean;
       usingChat: boolean;
-      isMyMessage: boolean;
+      isMyMessage?: boolean;
       newMembers: object[];
     }) {
       return dispatch({
@@ -1402,41 +1452,8 @@ export default function ChatActions(dispatch: Dispatch) {
         pageVisible,
         usingChat,
         isMyMessage,
-        newMembers
-      });
-    },
-    onReceiveChatReaction({
-      channelId,
-      messageId,
-      reaction,
-      subchannelId,
-      userId,
-      pageVisible,
-      usingChat,
-      timeStamp,
-      shouldIncrementUnreads = true
-    }: {
-      channelId: number;
-      messageId: number;
-      reaction: string;
-      subchannelId: number;
-      userId: number;
-      pageVisible: boolean;
-      usingChat: boolean;
-      timeStamp: number;
-      shouldIncrementUnreads?: boolean;
-    }) {
-      return dispatch({
-        type: 'RECEIVE_CHAT_REACTION',
-        channelId,
-        messageId,
-        reaction,
-        subchannelId,
-        userId,
-        pageVisible,
-        usingChat,
-        timeStamp,
-        shouldIncrementUnreads
+        newMembers,
+        eventSequence: getNextConfirmedChatEventSequence()
       });
     },
     onNewAICardSummon({ card, feed }: { card: object; feed: object }) {
@@ -1488,28 +1505,6 @@ export default function ChatActions(dispatch: Dispatch) {
       return dispatch({
         type: 'REMOVE_NEW_LOG_STATE',
         logId
-      });
-    },
-    onRemoveReactionFromMessage({
-      channelId,
-      messageId,
-      reaction,
-      subchannelId,
-      userId
-    }: {
-      channelId: number;
-      messageId: number;
-      reaction: string;
-      subchannelId: number;
-      userId: number;
-    }) {
-      return dispatch({
-        type: 'REMOVE_REACTION_FROM_MESSAGE',
-        channelId,
-        messageId,
-        reaction,
-        subchannelId,
-        userId
       });
     },
     onResetChat(userId: number) {
@@ -1633,16 +1628,22 @@ export default function ChatActions(dispatch: Dispatch) {
     onCreateNewDMChannel({
       channel,
       message,
+      quickAccess,
+      userId,
       withoutMessage
     }: {
       channel: object;
       message: object;
+      quickAccess?: ChatQuickAccessState;
+      userId: number;
       withoutMessage?: boolean;
     }) {
       return dispatch({
         type: 'CREATE_NEW_DM_CHANNEL',
         channel,
         message,
+        quickAccess,
+        userId,
         withoutMessage
       });
     },
@@ -1772,17 +1773,24 @@ export default function ChatActions(dispatch: Dispatch) {
         creating
       });
     },
-    onSetFavoriteChannel({
-      channelId,
-      favorited
-    }: {
-      channelId: number;
-      favorited: boolean;
+    onApplyCanonicalChatSidebarState({
+      quickAccess,
+      favoriteState,
+      channelVisibility,
+      userId
+    }: CanonicalChatSidebarState & {
+      // The account that issued the request or owns the socket session,
+      // captured at request start. Sidebar revisions are monotonic only
+      // within one account, so the reducer rejects snapshots owned by an
+      // account other than the one the provider currently hosts.
+      userId: number;
     }) {
       return dispatch({
-        type: 'SET_FAVORITE_CHANNEL',
-        channelId,
-        favorited
+        type: 'APPLY_CANONICAL_CHAT_SIDEBAR_STATE',
+        quickAccess,
+        favoriteState,
+        channelVisibility,
+        userId
       });
     },
     onSetIsRespondingToSubject({

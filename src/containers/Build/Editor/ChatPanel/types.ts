@@ -15,7 +15,7 @@ export type BuildLumineModel =
   | 'claude-fable-5';
 export type BuildLumineMode = 'light' | 'normal' | 'heavy' | 'superheavy';
 export type BuildLumineThinkLevel =
-  'none' | 'low' | 'medium' | 'high' | 'xhigh';
+  'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
 export interface BuildLumineModelOption {
   model: BuildLumineModel;

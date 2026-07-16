@@ -40,6 +40,57 @@ export default function chatRequestHelpers({
     return handleError(error);
   }
 
+  async function loadCanonicalChatChannelUnreadState({
+    channelId,
+    subchannelId = 0,
+    includeSidebarState = false
+  }: {
+    channelId: number;
+    subchannelId?: number;
+    includeSidebarState?: boolean;
+  }) {
+    const { data } = await request.get(
+      `${URL}/chat/channel/unread-state?channelId=${channelId}&subchannelId=${subchannelId}${
+        includeSidebarState ? '&includeSidebarState=1' : ''
+      }`,
+      {
+        ...auth(),
+        meta: {
+          collapseKey: null,
+          enforceTimeout: true,
+          allowExtendedTimeout: false
+        }
+      }
+    );
+    return data;
+  }
+
+  async function recoverCanonicalChatChannelUnreadState({
+    channelId,
+    subchannelId = 0,
+    writeError
+  }: {
+    channelId: number;
+    subchannelId?: number;
+    writeError: unknown;
+  }) {
+    try {
+      // A lost POST response has an unknown outcome. The writer snapshot is
+      // authoritative whether the mutation committed or failed, so callers
+      // never need to guess or synthesize a read state.
+      return await loadCanonicalChatChannelUnreadState({
+        channelId,
+        subchannelId,
+        includeSidebarState: subchannelId === 0
+      });
+    } catch (readError) {
+      // Prefer the failed canonical read because it reflects the current
+      // connectivity/auth state, falling back to the original write failure
+      // only for runtimes that reject without an error value.
+      return handleError(readError || writeError);
+    }
+  }
+
   return {
     async acceptInvitation(channelId: number) {
       try {
@@ -217,16 +268,13 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { isAccessible, isPublic, channelId }
-        } = await request.get(
-          `${URL}/chat/check/accessible?pathId=${pathId}`,
-          {
-            ...auth(),
-            timeout: 10000,
-            meta: {
-              collapseKey: null
-            }
+        } = await request.get(`${URL}/chat/check/accessible?pathId=${pathId}`, {
+          ...auth(),
+          timeout: 10000,
+          meta: {
+            collapseKey: null
           }
-        );
+        });
         return { isAccessible, isPublic, channelId };
       } catch (error) {
         return handleError(error);
@@ -508,12 +556,24 @@ export default function chatRequestHelpers({
         if (searchText) params.append('searchText', searchText);
         const queryString = params.toString();
         const {
-          data: { prompts, loadMoreButton, totalCount, totalClones, totalMessages }
+          data: {
+            prompts,
+            loadMoreButton,
+            totalCount,
+            totalClones,
+            totalMessages
+          }
         } = await request.get(
           `${URL}/chat/topic/mySharedPrompts${queryString ? `?${queryString}` : ''}`,
           auth()
         );
-        return { prompts, loadMoreButton, totalCount, totalClones, totalMessages };
+        return {
+          prompts,
+          loadMoreButton,
+          totalCount,
+          totalClones,
+          totalMessages
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -649,6 +709,23 @@ export default function chatRequestHelpers({
             recentChessMessage,
             gameType
           },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async fetchChessGameRecord({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/chess/record?channelId=${channelId}&messageId=${messageId}`,
           auth()
         );
         return data;
@@ -1043,13 +1120,34 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async getNumberOfUnreadMessages() {
+    async getNumberOfUnreadMessages({
+      fromWriter = false
+    }: { fromWriter?: boolean } = {}) {
       if (auth() === null) return 0;
       try {
         const {
           data: { numUnreads }
-        } = await request.get(`${URL}/chat/numUnreads`, auth());
+        } = await request.get(
+          `${URL}/chat/numUnreads${fromWriter ? '?fromWriter=1' : ''}`,
+          auth()
+        );
         return Number(numUnreads);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadChatChannelUnreadState({
+      channelId,
+      subchannelId = 0
+    }: {
+      channelId: number;
+      subchannelId?: number;
+    }) {
+      try {
+        return await loadCanonicalChatChannelUnreadState({
+          channelId,
+          subchannelId
+        });
       } catch (error) {
         return handleError(error);
       }
@@ -1064,8 +1162,12 @@ export default function chatRequestHelpers({
     },
     async hideChat(channelId: number) {
       try {
-        await request.put(`${URL}/chat/hide/chat`, { channelId }, auth());
-        return { success: true };
+        const { data } = await request.put(
+          `${URL}/chat/hide/chat`,
+          { channelId },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1082,11 +1184,11 @@ export default function chatRequestHelpers({
     },
     async leaveChannel(channelId: number) {
       try {
-        await request.delete(
+        const { data } = await request.delete(
           `${URL}/chat/channel?channelId=${channelId}`,
           auth()
         );
-        return { success: true };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1099,11 +1201,11 @@ export default function chatRequestHelpers({
       memberId: number;
     }) {
       try {
-        await request.delete(
+        const { data } = await request.delete(
           `${URL}/chat/channel/member?channelId=${channelId}&memberId=${memberId}`,
           auth()
         );
-        return { success: true };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1133,16 +1235,18 @@ export default function chatRequestHelpers({
     },
     async loadChat({
       channelId,
-      subchannelPath
+      subchannelPath,
+      fromWriter = false
     }: {
       channelId: number;
       subchannelPath: string;
+      fromWriter?: boolean;
     }) {
       try {
         const { data } = await request.get(
           `${URL}/chat?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
-          }`,
+          }${fromWriter ? '&fromWriter=1' : ''}`,
           {
             ...auth(),
             meta: {
@@ -1541,6 +1645,17 @@ export default function chatRequestHelpers({
           `${URL}/chat/channel/check?partnerId=${recipient.id}${
             createIfNotExist ? '&createIfNotExist=1' : ''
           }`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadChatQuickAccess() {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/channel/quick-access`,
           auth()
         );
         return data;
@@ -1996,6 +2111,39 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async syncLegacyChatReaction({
+      channelId,
+      messageId,
+      mutation,
+      reaction,
+      reactorId,
+      timeStamp
+    }: {
+      channelId: number;
+      messageId: number;
+      mutation: 'add' | 'remove';
+      reaction: string;
+      reactorId: number;
+      timeStamp?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/reaction/legacy-sync`,
+          {
+            channelId,
+            messageId,
+            mutation,
+            reaction,
+            reactorId,
+            timeStamp
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async postTradeRequest({
       type,
       wanted,
@@ -2034,14 +2182,35 @@ export default function chatRequestHelpers({
     },
     async putFavoriteChannel(channelId: number) {
       try {
-        const {
-          data: { favorited }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/chat/channel/favorite`,
           { channelId },
           auth()
         );
-        return favorited;
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveChatQuickAccess(partnerIds: number[]) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/channel/quick-access`,
+          { partnerIds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async resetChatQuickAccess() {
+      try {
+        const { data } = await request.delete(
+          `${URL}/chat/channel/quick-access`,
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -2237,10 +2406,16 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async searchChat(text: string) {
+    async searchChat(
+      text: string,
+      { peopleOnly = false }: { peopleOnly?: boolean } = {}
+    ) {
       try {
+        const searchParams = new URLSearchParams({ text });
         const { data } = await request.get(
-          `${URL}/chat/search/chat?text=${text}`,
+          `${URL}/chat/search/chat${
+            peopleOnly ? '/people' : ''
+          }?${searchParams.toString()}`,
           auth()
         );
         return data;
@@ -2400,9 +2575,23 @@ export default function chatRequestHelpers({
     async startNewDMChannel(params: object) {
       try {
         const {
-          data: { alreadyExists, channel, message, pathId, aiUsagePolicy }
+          data: {
+            alreadyExists,
+            channel,
+            message,
+            pathId,
+            aiUsagePolicy,
+            quickAccess
+          }
         } = await request.post(`${URL}/chat/channel/twoPeople`, params, auth());
-        return { alreadyExists, channel, message, pathId, aiUsagePolicy };
+        return {
+          alreadyExists,
+          channel,
+          message,
+          pathId,
+          aiUsagePolicy,
+          quickAccess
+        };
       } catch (error) {
         return handleChatError(error);
       }
@@ -2434,24 +2623,55 @@ export default function chatRequestHelpers({
       }
     },
     async updateChatLastRead(channelId: number) {
-      if (channelId < 0) return { success: false };
+      if (channelId <= 0) return { success: false };
       try {
-        await request.post(`${URL}/chat/lastRead`, { channelId }, auth());
-        return { success: true };
+        const { data } = await request.post(
+          `${URL}/chat/lastRead`,
+          { channelId },
+          {
+            ...auth(),
+            meta: {
+              collapseKey: null,
+              enforceTimeout: true,
+              allowExtendedTimeout: false
+            }
+          }
+        );
+        return data;
       } catch (error) {
-        return handleError(error);
+        return recoverCanonicalChatChannelUnreadState({
+          channelId,
+          writeError: error
+        });
       }
     },
-    async updateSubchannelLastRead(subchannelId: number) {
+    async updateSubchannelLastRead({
+      channelId,
+      subchannelId
+    }: {
+      channelId: number;
+      subchannelId: number;
+    }) {
       try {
-        await request.post(
+        const { data } = await request.post(
           `${URL}/chat/lastRead/subchannel`,
-          { subchannelId },
-          auth()
+          { channelId, subchannelId },
+          {
+            ...auth(),
+            meta: {
+              collapseKey: null,
+              enforceTimeout: true,
+              allowExtendedTimeout: false
+            }
+          }
         );
-        return { success: true };
+        return data;
       } catch (error) {
-        return handleError(error);
+        return recoverCanonicalChatChannelUnreadState({
+          channelId,
+          subchannelId,
+          writeError: error
+        });
       }
     },
     async uploadChatTopic({
@@ -2597,7 +2817,8 @@ export default function chatRequestHelpers({
             messageId,
             alreadyExists,
             netCoins,
-            aiUsagePolicy
+            aiUsagePolicy,
+            quickAccess
           }
         } = await request.post(
           `${URL}/chat/file`,
@@ -2627,7 +2848,8 @@ export default function chatRequestHelpers({
           alreadyExists,
           fileName,
           netCoins,
-          aiUsagePolicy
+          aiUsagePolicy,
+          quickAccess
         };
       } catch (error) {
         return handleChatError(error);

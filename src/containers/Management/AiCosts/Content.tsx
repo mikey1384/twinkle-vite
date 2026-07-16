@@ -6,9 +6,9 @@ import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import { Color } from '~/constants/css';
 import RiskGroupDetail from './RiskGroupDetail';
-import ManagementUserSearchInput, {
-  ManagementUserSearchResult
-} from '../UserSearchInput';
+import UserSearchInput, {
+  type UserSearchResult
+} from '~/components/UserSearchInput';
 import { DataTable, EmptyMessage, PaginationFooter } from './DataTable';
 import {
   formatAccountName,
@@ -126,11 +126,9 @@ export default function Content({
   onCreateBucketForPendingAction: (label: string) => void;
   onRefresh: () => void;
   onDisableManualIdentityRule: (rule: AiEnergyManualIdentityRule) => void;
-  onAddAccountToBucket: (user: ManagementUserSearchResult) => void;
+  onAddAccountToBucket: (user: UserSearchResult) => void;
   onAddIpSignalToBucket: (ip: string) => void;
-  onOpenBucketActionModal: (
-    action: AiEnergyManualIdentityBucketAction
-  ) => void;
+  onOpenBucketActionModal: (action: AiEnergyManualIdentityBucketAction) => void;
   onSelectBucket: (bucketId: number) => void;
   onRiskGroupSelect: (row: AiCostRow) => void;
   onSelectDays: (days: RangeOption) => void;
@@ -378,7 +376,7 @@ export default function Content({
                 <div className="bucket-manual-add">
                   <div className="manual-add-field">
                     <label>Account</label>
-                    <ManagementUserSearchInput
+                    <UserSearchInput
                       placeholder="Search username, name, or email..."
                       onSelect={onAddAccountToBucket}
                     />
@@ -1165,9 +1163,7 @@ function EvidenceSignalActions({
 }: {
   row: AiCostRow;
   manualIdentitySavingKey: string;
-  onOpenBucketActionModal: (
-    action: AiEnergyManualIdentityBucketAction
-  ) => void;
+  onOpenBucketActionModal: (action: AiEnergyManualIdentityBucketAction) => void;
 }) {
   const signals = getEvidenceRawSignals(row);
   if (signals.length === 0) return null;
@@ -1180,7 +1176,7 @@ function EvidenceSignalActions({
           className={inlineActionClass}
           disabled={
             manualIdentitySavingKey ===
-              `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`
+            `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`
           }
           onClick={() =>
             onOpenBucketActionModal({
@@ -1203,9 +1199,7 @@ function EventBucketActions({
 }: {
   row: AiCostRow;
   manualIdentitySavingKey: string;
-  onOpenBucketActionModal: (
-    action: AiEnergyManualIdentityBucketAction
-  ) => void;
+  onOpenBucketActionModal: (action: AiEnergyManualIdentityBucketAction) => void;
 }) {
   const hasEvidence = hasBucketEvidence(row);
   const actionKey = getEventActionKey(row);
@@ -1215,8 +1209,7 @@ function EventBucketActions({
         type="button"
         className={inlineActionClass}
         disabled={
-          !hasEvidence ||
-          manualIdentitySavingKey === `event-row:${actionKey}`
+          !hasEvidence || manualIdentitySavingKey === `event-row:${actionKey}`
         }
         onClick={() =>
           onOpenBucketActionModal({

@@ -13,7 +13,11 @@ import {
   LichessPuzzle,
   PuzzleResult,
   ChessBoardState,
-  PuzzlePhase
+  PuzzlePhase,
+  TimeAttackActiveStartResponse,
+  TimeAttackFinishedStartResponse,
+  TimeAttackStartResponse,
+  TimeAttackTimerResponse
 } from '~/types/chess';
 import { useKeyContext, useAppContext, useChessContext } from '~/contexts';
 import { TIME_ATTACK_DURATION } from '../constants';
@@ -45,6 +49,17 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 
 const breakDuration = 1000;
+const PROMOTION_TIMER_RETRY_BASE_DELAY_MS = 750;
+const PROMOTION_TIMER_RETRY_MAX_DELAY_MS = 10_000;
+
+interface PendingPromotionTimerCommand {
+  runId: number;
+  puzzleId: number;
+  moveIndex: number;
+  commandId: string;
+  expectedDeadlineAt: number;
+  outcome: 'correct' | 'wrong';
+}
 
 export default function Puzzle({
   phase,
@@ -55,6 +70,7 @@ export default function Puzzle({
   onMoveToNextPuzzle,
   selectedLevel,
   onLevelChange,
+  onStartLevel,
   updatePuzzle,
   levels,
   maxLevelUnlocked,
@@ -79,6 +95,7 @@ export default function Puzzle({
   onMoveToNextPuzzle: () => void;
   selectedLevel?: number;
   onLevelChange: (level: number) => void;
+  onStartLevel: (level: number) => void;
   updatePuzzle: (puzzle: LichessPuzzle) => void;
   levels: number[];
   maxLevelUnlocked: number;
@@ -98,12 +115,26 @@ export default function Puzzle({
 }) {
   const inTimeAttackStill = useRef(inTimeAttack);
   const userId = useKeyContext((v) => v.myState.userId);
-  const chessStats = useChessContext((v) => v.state.stats as any);
+  const promotionUnlocked = useChessContext(
+    (v) => v.state.stats?.promotionUnlocked
+  );
+  const promotionCooldownUntilTomorrow = useChessContext(
+    (v) => v.state.stats?.cooldownUntilTomorrow
+  );
+  const promotionCurrentStreak = useChessContext(
+    (v) => v.state.stats?.currentLevelStreak
+  );
+  const promotionNextDayTimestamp = useChessContext(
+    (v) => v.state.stats?.nextDayTimestamp
+  );
   const startTimeAttackPromotion = useAppContext(
     (v) => v.requestHelpers.startTimeAttackPromotion
   );
   const submitTimeAttackAttemptApi = useAppContext(
     (v) => v.requestHelpers.submitTimeAttackAttempt
+  );
+  const adjustTimeAttackTimer = useAppContext(
+    (v) => v.requestHelpers.adjustTimeAttackTimer
   );
   const loadChessDailyStats = useAppContext(
     (v) => v.requestHelpers.loadChessDailyStats
@@ -111,6 +142,7 @@ export default function Puzzle({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   const [startingPromotion, setStartingPromotion] = useState(false);
+  const [promotionStartError, setPromotionStartError] = useState('');
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [puzzleState, setPuzzleState] = useState({
     solutionIndex: 0,
@@ -120,7 +152,6 @@ export default function Puzzle({
   const boardEpochRef = useRef(0);
   const { makeEngineMove, processUserMove, evaluatePosition } = useChessMove({
     attemptId,
-    onSetTimeLeft: onSetTimeLeft,
     onSetPhase,
     phase,
     boardEpochRef
@@ -128,7 +159,16 @@ export default function Puzzle({
 
   const [timeTrialCompleted, setTimeTrialCompleted] = useState(false);
   const timeIsAlreadyUpRef = useRef(false);
+  // deadlineRef is the server compare-and-set token. endsAtRef is the local
+  // display clock, anchored to monotonic time from server-provided remaining
+  // duration so device wall-clock skew cannot extend or consume a trial.
   const timeAttackDeadlineRef = useRef<number | null>(null);
+  const timeAttackEndsAtRef = useRef<number | null>(null);
+  const processingMoveRef = useRef(false);
+  const pendingPromotionTimerCommandRef =
+    useRef<PendingPromotionTimerCommand | null>(null);
+  const promotionTimerCommandGenerationRef = useRef(0);
+  const [promotionTimerPending, setPromotionTimerPending] = useState(false);
   const startingPromotionRef = useRef(false);
   const [promoSolved, setPromoSolved] = useState(0);
   const [dailyStats, setDailyStats] = useState<{
@@ -186,11 +226,11 @@ export default function Puzzle({
   const solutionPlayingRef = useRef(false);
 
   const needsPromotion = Boolean(
-    chessStats?.promotionUnlocked && !chessStats?.cooldownUntilTomorrow
+    promotionUnlocked && !promotionCooldownUntilTomorrow
   );
-  const cooldownUntilTomorrow = Boolean(chessStats?.cooldownUntilTomorrow);
-  const currentStreak = Number(chessStats?.currentLevelStreak || 0);
-  const nextDayTimestamp = (chessStats?.nextDayTimestamp as number) || null;
+  const cooldownUntilTomorrow = Boolean(promotionCooldownUntilTomorrow);
+  const currentStreak = Number(promotionCurrentStreak || 0);
+  const nextDayTimestamp = Number(promotionNextDayTimestamp) || null;
 
   const { showCompleteSolution: hookShowCompleteSolution } =
     useSolutionPlayback({
@@ -244,6 +284,8 @@ export default function Puzzle({
       onDailyStatsUpdate: setDailyStats,
       onPuzzleComplete,
       resetToOriginalPosition,
+      onAdjustTimeAttackTimer: adjustCanonicalTimeAttackTimer,
+      onRecoverTimeAttackRun: recoverCanonicalTimeAttackRun,
       submitTimeAttackAttempt,
       refreshLevels,
       onRefreshStats,
@@ -259,7 +301,8 @@ export default function Puzzle({
     puzzle,
     chessBoardState,
     setChessBoardState,
-    executeUserMove
+    executeUserMove,
+    processingMoveRef
   });
 
   const handleFinishMoveAnalysis = createHandleFinishMoveAnalysis({
@@ -406,6 +449,8 @@ export default function Puzzle({
 
   useEffect(() => {
     return () => {
+      promotionTimerCommandGenerationRef.current += 1;
+      pendingPromotionTimerCommandRef.current = null;
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
@@ -435,48 +480,79 @@ export default function Puzzle({
   useEffect(() => {
     if (!inTimeAttack || runResult !== 'PLAYING') return;
     if (!puzzle) return;
-    if (phase === 'ANALYSIS' || phase === 'SOLUTION' || phase === 'PROMO_SUCCESS')
+    if (
+      phase === 'ANALYSIS' ||
+      phase === 'SOLUTION' ||
+      phase === 'PROMO_SUCCESS'
+    )
       return;
-    if (promotionPending) return;
+    const endsAt = timeAttackEndsAtRef.current;
+    if (!endsAt) return;
 
-    if (timeLeft <= 0) {
-      handleTimeUp();
+    const canonicalTimeLeft = getTimeAttackSecondsRemaining(endsAt);
+    if (canonicalTimeLeft !== timeLeft) {
+      onSetTimeLeft(canonicalTimeLeft);
+    }
+    if (canonicalTimeLeft <= 0) {
+      if (!promotionTimerPending) {
+        handleTimeUp();
+      }
       return;
     }
 
-    timeTrialTimerRef.current = setTimeout(() => {
-      onSetTimeLeft((prev) => (prev ? prev - 1 : 0));
-    }, 1000);
+    scheduleCanonicalTimerTick();
 
     return () => {
       if (timeTrialTimerRef.current) {
         clearTimeout(timeTrialTimerRef.current);
       }
     };
+
+    function scheduleCanonicalTimerTick() {
+      const activeEndsAt = timeAttackEndsAtRef.current;
+      if (!activeEndsAt) return;
+      const millisecondsRemaining = Math.max(
+        0,
+        activeEndsAt - performance.now()
+      );
+      const secondsRemaining = getTimeAttackSecondsRemaining(activeEndsAt);
+      const millisecondsUntilNextSecond =
+        millisecondsRemaining - Math.max(0, secondsRemaining - 1) * 1000;
+
+      timeTrialTimerRef.current = setTimeout(
+        () => {
+          const nextEndsAt = timeAttackEndsAtRef.current;
+          if (!nextEndsAt) return;
+          const nextTimeLeft = getTimeAttackSecondsRemaining(nextEndsAt);
+          onSetTimeLeft((previousTimeLeft) =>
+            previousTimeLeft === nextTimeLeft ? previousTimeLeft : nextTimeLeft
+          );
+          if (nextTimeLeft > 0) scheduleCanonicalTimerTick();
+        },
+        Math.min(1000, Math.max(50, millisecondsUntilNextSecond + 5))
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    inTimeAttack,
-    timeLeft,
-    runResult,
-    promotionPending,
-    puzzle,
-    phase
-  ]);
+  }, [inTimeAttack, timeLeft, runResult, promotionTimerPending, puzzle, phase]);
 
   useEffect(() => {
     if (!inTimeAttack && previousPhaseRef.current !== 'ANALYSIS') {
+      promotionTimerCommandGenerationRef.current += 1;
+      pendingPromotionTimerCommandRef.current = null;
+      setPromotionTimerPending(false);
       setTimeTrialCompleted(false);
       timeAttackDeadlineRef.current = null;
-    } else {
-      timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
+      timeAttackEndsAtRef.current = null;
     }
   }, [inTimeAttack]);
 
   useEffect(() => {
     if (!puzzle) return;
     onSetRunResult('PLAYING');
-    onSetTimeLeft(TIME_ATTACK_DURATION);
-  }, [puzzle, onSetRunResult, onSetTimeLeft]);
+    if (!inTimeAttack) {
+      onSetTimeLeft(TIME_ATTACK_DURATION);
+    }
+  }, [puzzle, inTimeAttack, onSetRunResult, onSetTimeLeft]);
 
   const isReady = !!(puzzle && chessBoardState);
 
@@ -491,6 +567,7 @@ export default function Puzzle({
     chessBoardState,
     setChessBoardState,
     executeUserMove,
+    processingMoveRef,
     inTimeAttack,
     runResult,
     timeLeft
@@ -550,6 +627,7 @@ export default function Puzzle({
             currentStreak={currentStreak}
             nextDayTimestamp={nextDayTimestamp}
             startingPromotion={startingPromotion}
+            promotionStartError={promotionStartError}
             onPromotionClick={handlePromotionClick}
             onUnlockPromotion={handleUnlockPromotion}
             dailyStats={dailyStats}
@@ -578,16 +656,12 @@ export default function Puzzle({
             });
           }}
           onGiveUp={handleGiveUpWithSolution}
-          onLevelChange={(level) => {
-            setTimeTrialCompleted(false);
-            onLevelChange(level);
-          }}
           levelsLoading={levelsLoading}
           onShowSolution={handleShowSolution}
           onEnterInteractiveAnalysis={() =>
             handleEnterInteractiveAnalysis({ from: 'final' })
           }
-          onSetInTimeAttack={onSetInTimeAttack}
+          onStartLevel={onStartLevel}
         />
       </div>
 
@@ -712,38 +786,26 @@ export default function Puzzle({
       if (startingPromotionRef.current || startingPromotion) return;
       startingPromotionRef.current = true;
       setStartingPromotion(true);
-      const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
-      if (!promoPuzzle) {
-        throw new Error('Promotion puzzle is temporarily unavailable');
-      }
-
-      if (timeTrialTimerRef.current) {
-        clearTimeout(timeTrialTimerRef.current);
-        timeTrialTimerRef.current = null;
-      }
-      timeIsAlreadyUpRef.current = false;
-      runIdRef.current = runId;
-      onSetPhase('START_LEVEL');
-      timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
-      onSetTimeLeft(TIME_ATTACK_DURATION);
-      onSetRunResult('PLAYING');
-      setPromoSolved(0);
-      updatePuzzle(promoPuzzle);
-      onSetInTimeAttack(true);
+      setPromotionStartError('');
+      const promotionRun = await startTimeAttackPromotion();
+      applyCanonicalPromotionStartResponse(promotionRun);
       promotionStarted = true;
-      setSelectedSquare(null);
-      setPuzzleState({
-        solutionIndex: 0,
-        moveHistory: [],
-        showingHint: false
-      });
 
       setStartingPromotion(false);
       void refreshLevels().catch((refreshError) => {
-        console.warn('Failed to refresh levels after promotion start:', refreshError);
+        console.warn(
+          'Failed to refresh levels after promotion start:',
+          refreshError
+        );
       });
     } catch (err: any) {
       console.error('❌ failed starting time‑attack:', err);
+      setPromotionStartError(
+        err?.status === 409
+          ? 'Your promotion trial is still being prepared. Please wait a moment and try again.'
+          : err?.message ||
+              'The promotion trial could not start. Check your connection and try again.'
+      );
       if (!promotionStarted) {
         onSetInTimeAttack(false);
         runIdRef.current = null;
@@ -890,16 +952,24 @@ export default function Puzzle({
     if (!runIdRef.current) return;
     timeIsAlreadyUpRef.current = true;
     const epochAtStart = boardEpochRef.current;
-    onSetRunResult('FAIL');
-    onSetPhase('SOLUTION');
+    // The local clock is display state, not authority. Ask the server to
+    // confirm expiration before consuming the daily run or revealing the
+    // solution; a conservative clock may reach zero during response transit.
+    onSetRunResult('PENDING');
     if (timeTrialTimerRef.current) {
       clearTimeout(timeTrialTimerRef.current);
     }
     try {
-      await submitTimeAttackAttempt({
+      const timeoutResult = await submitTimeAttackAttempt({
         runId: runIdRef.current,
         solved: false
       });
+      if (!timeoutResult?.finished) {
+        onSetRunResult('PLAYING');
+        return;
+      }
+      onSetRunResult('FAIL');
+      onSetPhase('SOLUTION');
       await hookShowCompleteSolution();
       if (boardEpochRef.current === epochAtStart) {
         onSetPhase('ANALYSIS');
@@ -909,6 +979,7 @@ export default function Puzzle({
       } catch {}
     } catch (error) {
       console.error('Error submitting time up result:', error);
+      await recoverCanonicalTimeAttackRun(error);
     } finally {
       timeIsAlreadyUpRef.current = false;
     }
@@ -922,10 +993,30 @@ export default function Puzzle({
     solved: boolean;
   }) {
     if (runId == null) return {} as any;
+    const puzzleId = Number(puzzle?.id || 0);
+    if (!Number.isSafeInteger(puzzleId) || puzzleId <= 0) {
+      throw new Error('The active promotion puzzle is unavailable');
+    }
     const resp = await submitTimeAttackAttemptApi({
       runId,
+      puzzleId,
       solved
-    } as any);
+    });
+    if (
+      resp?.deadlineAt &&
+      Number.isFinite(resp?.serverNow) &&
+      Number.isFinite(resp?.remainingMs)
+    ) {
+      applyCanonicalTimeAttackClock({
+        deadlineAt: resp.deadlineAt,
+        serverNow: resp.serverNow,
+        remainingMs: resp.remainingMs,
+        responseTransitMs: resp.responseTransitMs
+      });
+    } else if (resp?.finished) {
+      timeAttackDeadlineRef.current = null;
+      timeAttackEndsAtRef.current = null;
+    }
     if (typeof resp?.stats?.maxLevelUnlocked === 'number') {
       onSetUserState({
         userId,
@@ -934,10 +1025,286 @@ export default function Puzzle({
         }
       });
     }
-    if (resp && resp.nextPuzzle) {
-      setPromoSolved((prev) => prev + 1);
+    if (
+      Number.isSafeInteger(resp?.puzzlesSolved) &&
+      Number(resp.puzzlesSolved) >= 0
+    ) {
+      // Promotion progress is server-owned. Install the count committed with
+      // the attempt instead of incrementing a local projection.
+      setPromoSolved(Number(resp.puzzlesSolved));
     }
     return resp;
+  }
+
+  function invalidateLocalPromotionRunWork() {
+    promotionTimerCommandGenerationRef.current += 1;
+    pendingPromotionTimerCommandRef.current = null;
+    setPromotionTimerPending(false);
+    if (timeTrialTimerRef.current) {
+      clearTimeout(timeTrialTimerRef.current);
+      timeTrialTimerRef.current = null;
+    }
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+    boardEpochRef.current += 1;
+    solutionPlayingRef.current = false;
+    timeIsAlreadyUpRef.current = false;
+  }
+
+  function applyCanonicalPromotionStartResponse(
+    promotionRun: TimeAttackStartResponse
+  ) {
+    if ('finished' in promotionRun) {
+      applyCanonicalFinishedPromotionRun(promotionRun);
+      return;
+    }
+    applyCanonicalPromotionRun(promotionRun);
+  }
+
+  function applyCanonicalPromotionRun(
+    promotionRun: TimeAttackActiveStartResponse
+  ) {
+    const promoRunId = Number(promotionRun?.runId || 0);
+    const promoPuzzle = promotionRun?.puzzle;
+    if (!Number.isSafeInteger(promoRunId) || promoRunId <= 0 || !promoPuzzle) {
+      throw new Error('The canonical promotion run was invalid');
+    }
+
+    // Validate and install the canonical clock before replacing the rest of
+    // the local projection. applyCanonicalTimeAttackClock does not mutate on
+    // invalid input, so a malformed response cannot leave a half-loaded run.
+    applyCanonicalTimeAttackClock({
+      deadlineAt: promotionRun.deadlineAt,
+      serverNow: promotionRun.serverNow,
+      remainingMs: promotionRun.remainingMs,
+      responseTransitMs: promotionRun.responseTransitMs
+    });
+
+    invalidateLocalPromotionRunWork();
+    runIdRef.current = promoRunId;
+    setTimeTrialCompleted(false);
+    setPromoSolved(Math.max(0, Number(promotionRun.puzzlesSolved) || 0));
+    setSelectedSquare(null);
+    setPromotionPending(null);
+    setPuzzleState({
+      solutionIndex: 0,
+      moveHistory: [],
+      showingHint: false
+    });
+    setPromotionStartError('');
+    onSetPhase('START_LEVEL');
+    onSetRunResult('PLAYING');
+    updatePuzzle(promoPuzzle);
+    onSetInTimeAttack(true);
+  }
+
+  function applyCanonicalFinishedPromotionRun(
+    promotionRun: TimeAttackFinishedStartResponse
+  ) {
+    const promoRunId = Number(promotionRun?.runId || 0);
+    if (
+      !Number.isSafeInteger(promoRunId) ||
+      promoRunId <= 0 ||
+      promotionRun.finished !== true
+    ) {
+      throw new Error('The canonical promotion result was invalid');
+    }
+
+    invalidateLocalPromotionRunWork();
+    processingMoveRef.current = false;
+    timeAttackDeadlineRef.current = null;
+    timeAttackEndsAtRef.current = null;
+    runIdRef.current = null;
+    setPromotionPending(null);
+    setPromotionStartError('');
+    setPromoSolved(Math.max(0, Number(promotionRun.puzzlesSolved) || 0));
+    if (promotionRun.success) {
+      setTimeTrialCompleted(true);
+      onSetRunResult('SUCCESS');
+      onSetPhase('PROMO_SUCCESS');
+      // Match the normal terminal-success projection: the time-attack success
+      // panel remains visible, while runResult stops the clock and submissions.
+      onSetInTimeAttack(true);
+      return;
+    }
+
+    setTimeTrialCompleted(false);
+    onSetRunResult('FAIL');
+    onSetPhase('FAIL');
+    onSetInTimeAttack(false);
+  }
+
+  async function recoverCanonicalTimeAttackRun(cause: unknown) {
+    const recoveryGeneration = promotionTimerCommandGenerationRef.current;
+    const recoveryRunId = runIdRef.current ?? undefined;
+    try {
+      const promotionRun = await startTimeAttackPromotion({ recoveryRunId });
+      if (promotionTimerCommandGenerationRef.current !== recoveryGeneration) {
+        return false;
+      }
+      applyCanonicalPromotionStartResponse(promotionRun);
+      if ('finished' in promotionRun) {
+        await Promise.allSettled([refreshLevels(), onRefreshStats()]);
+      }
+      return true;
+    } catch (recoveryError: any) {
+      if (promotionTimerCommandGenerationRef.current !== recoveryGeneration) {
+        return false;
+      }
+      console.error('Failed to reload canonical promotion run:', {
+        cause,
+        recoveryError
+      });
+      leaveStaleTimeAttackProjection(recoveryError);
+      await Promise.allSettled([refreshLevels(), onRefreshStats()]);
+      return false;
+    }
+  }
+
+  function leaveStaleTimeAttackProjection(error: any) {
+    invalidateLocalPromotionRunWork();
+    processingMoveRef.current = false;
+    timeAttackDeadlineRef.current = null;
+    timeAttackEndsAtRef.current = null;
+    runIdRef.current = null;
+    setPromotionPending(null);
+    setTimeTrialCompleted(false);
+    onSetRunResult('PENDING');
+    onSetPhase('START_LEVEL');
+    onSetInTimeAttack(false);
+
+    const status = Number(error?.status || error?.response?.status || 0);
+    setPromotionStartError(
+      status === 403
+        ? 'This promotion trial is no longer active. Your promotion status has been refreshed.'
+        : 'We could not reload the promotion trial. Use the promotion button to resume it.'
+    );
+  }
+
+  async function adjustCanonicalTimeAttackTimer({
+    moveIndex,
+    outcome
+  }: {
+    moveIndex: number;
+    outcome: 'correct' | 'wrong';
+  }) {
+    const runId = runIdRef.current;
+    const puzzleId = Number(puzzle?.id || 0);
+    const expectedDeadlineAt = timeAttackDeadlineRef.current;
+    if (
+      runId == null ||
+      !Number.isSafeInteger(puzzleId) ||
+      puzzleId <= 0 ||
+      !Number.isSafeInteger(moveIndex) ||
+      expectedDeadlineAt == null
+    ) {
+      return false;
+    }
+    if (pendingPromotionTimerCommandRef.current) {
+      throw new Error(
+        'The previous promotion timer command is still being reconciled'
+      );
+    }
+    const command: PendingPromotionTimerCommand = {
+      runId,
+      puzzleId,
+      moveIndex,
+      commandId: createPromotionCommandId(),
+      expectedDeadlineAt,
+      outcome
+    };
+    const commandGeneration = promotionTimerCommandGenerationRef.current;
+    pendingPromotionTimerCommandRef.current = command;
+
+    setPromotionTimerPending(true);
+    try {
+      let transportFailureCount = 0;
+      while (
+        pendingPromotionTimerCommandRef.current === command &&
+        promotionTimerCommandGenerationRef.current === commandGeneration
+      ) {
+        try {
+          const timerState = (await adjustTimeAttackTimer(
+            command
+          )) as TimeAttackTimerResponse;
+          if (
+            pendingPromotionTimerCommandRef.current !== command ||
+            promotionTimerCommandGenerationRef.current !== commandGeneration
+          ) {
+            return false;
+          }
+          pendingPromotionTimerCommandRef.current = null;
+          const timerStillActive = applyCanonicalTimeAttackClock({
+            deadlineAt: timerState.deadlineAt,
+            serverNow: timerState.serverNow,
+            remainingMs: timerState.remainingMs,
+            responseTransitMs: timerState.responseTransitMs
+          });
+          return timerState.accepted && timerStillActive && !timerState.expired;
+        } catch (error: any) {
+          if (
+            pendingPromotionTimerCommandRef.current !== command ||
+            promotionTimerCommandGenerationRef.current !== commandGeneration
+          ) {
+            return false;
+          }
+          if (!error?.isTransportError) {
+            pendingPromotionTimerCommandRef.current = null;
+            await recoverCanonicalTimeAttackRun(error);
+            throw error;
+          }
+          // The server may already have committed this command. Keep the
+          // complete identity and original CAS input until its canonical row
+          // can be replayed; a new command would be stale after a lost reply.
+          transportFailureCount += 1;
+          await waitForPromotionTimerRetry(transportFailureCount);
+        }
+      }
+      return false;
+    } finally {
+      if (promotionTimerCommandGenerationRef.current === commandGeneration) {
+        setPromotionTimerPending(false);
+      }
+    }
+  }
+
+  function applyCanonicalTimeAttackClock({
+    deadlineAt,
+    serverNow,
+    remainingMs,
+    responseTransitMs = 0
+  }: {
+    deadlineAt: number;
+    serverNow: number;
+    remainingMs: number;
+    responseTransitMs?: number;
+  }) {
+    if (
+      !Number.isSafeInteger(deadlineAt) ||
+      deadlineAt <= 0 ||
+      !Number.isFinite(serverNow) ||
+      serverNow < 0 ||
+      !Number.isFinite(remainingMs) ||
+      remainingMs < 0 ||
+      !Number.isFinite(responseTransitMs) ||
+      responseTransitMs < 0 ||
+      Math.abs(Math.max(0, deadlineAt - serverNow) - remainingMs) > 1000
+    ) {
+      throw new Error('The promotion timer response was invalid');
+    }
+    timeAttackDeadlineRef.current = deadlineAt;
+    // remainingMs was sampled immediately before the response. Subtract only
+    // the estimated response network leg, not outbound transit or server work
+    // that happened before the sample. Local zero is still advisory:
+    // handleTimeUp asks the server to confirm expiry before failing the run.
+    const endsAt =
+      performance.now() + Math.max(0, remainingMs - responseTransitMs);
+    timeAttackEndsAtRef.current = endsAt;
+    const secondsRemaining = getTimeAttackSecondsRemaining(endsAt);
+    onSetTimeLeft(secondsRemaining);
+    return secondsRemaining > 0;
   }
 
   async function handleUnlockPromotion() {
@@ -945,6 +1312,56 @@ export default function Puzzle({
       await onRefreshStats();
     } catch {}
   }
+}
+
+function getTimeAttackSecondsRemaining(endsAt: number) {
+  return Math.max(0, Math.ceil((endsAt - performance.now()) / 1000));
+}
+
+function createPromotionCommandId() {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+}
+
+async function waitForPromotionTimerRetry(failureCount: number) {
+  const exponentialDelay =
+    PROMOTION_TIMER_RETRY_BASE_DELAY_MS * 2 ** Math.max(0, failureCount - 1);
+  const onlineDelay = Math.min(
+    PROMOTION_TIMER_RETRY_MAX_DELAY_MS,
+    exponentialDelay
+  );
+  const retryDelay =
+    typeof navigator !== 'undefined' && navigator.onLine === false
+      ? PROMOTION_TIMER_RETRY_MAX_DELAY_MS
+      : onlineDelay;
+
+  await new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', finish);
+      }
+      resolve();
+    };
+    const timer = setTimeout(finish, retryDelay);
+    if (
+      typeof window !== 'undefined' &&
+      typeof navigator !== 'undefined' &&
+      navigator.onLine === false
+    ) {
+      window.addEventListener('online', finish, { once: true });
+    }
+  });
 }
 
 function FenBar({ fen }: { fen: string }) {
@@ -963,8 +1380,9 @@ function FenBar({ fen }: { fen: string }) {
   `;
   const inputCls = css`
     flex: 1;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-      'Liberation Mono', 'Courier New', monospace;
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
     font-size: 1.1rem;
     border: none;
     outline: none;
@@ -982,7 +1400,9 @@ function FenBar({ fen }: { fen: string }) {
     border: 1px solid var(--ui-border);
     background: #f8fafc;
     color: #111827;
-    transition: background 0.15s ease, transform 0.08s ease;
+    transition:
+      background 0.15s ease,
+      transform 0.08s ease;
     @media (hover: hover) and (pointer: fine) {
       &:hover {
         background: #eef2f7;

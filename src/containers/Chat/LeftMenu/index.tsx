@@ -5,16 +5,12 @@ import Collect from './Collect';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
-import AIButton from './AIButton';
+import ChatQuickAccess from './QuickAccess';
 import ChatFlatButton from '../FlatButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 import {
-  CIEL_PFP_URL,
-  CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID,
-  ZERO_PFP_URL,
   AI_CARD_CHAT_TYPE,
   GENERAL_CHAT_ID,
   VOCAB_CHAT_TYPE
@@ -56,17 +52,7 @@ export default function LeftMenu({
 }) {
   const [isChannelsScrolling, setIsChannelsScrolling] = useState(false);
   const collectType = useKeyContext((v) => v.myState.collectType);
-  const banned = useKeyContext((v) => v.myState.banned);
-  const username = useKeyContext((v) => v.myState.username);
   const userId = useKeyContext((v) => v.myState.userId);
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
-  const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
-  const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
-  const onUpdateSelectedChannelId = useChatContext(
-    (v) => v.actions.onUpdateSelectedChannelId
-  );
-  const [zeroChatLoading, setZeroChatLoading] = useState(false);
-  const [cielChatLoading, setCielChatLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const vocabMatch = useMemo(
@@ -146,27 +132,7 @@ export default function LeftMenu({
             `}
           >
             <ChatFlatButton label="New Group" onClick={onNewButtonClick} />
-            <div
-              className={css`
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-                margin-top: 1rem;
-              `}
-            >
-              <AIButton
-                aiName="ciel"
-                loading={cielChatLoading}
-                disabled={!!banned?.aiChat}
-                onClick={() => handleAIClick('ciel')}
-              />
-              <AIButton
-                aiName="zero"
-                loading={zeroChatLoading}
-                disabled={!!banned?.aiChat}
-                onClick={() => handleAIClick('zero')}
-              />
-            </div>
+            <ChatQuickAccess />
           </div>
         </div>
         <Collect
@@ -238,44 +204,4 @@ export default function LeftMenu({
       </div>
     </ErrorBoundary>
   );
-
-  async function handleAIClick(type: 'ciel' | 'zero') {
-    if (type === 'zero') {
-      setZeroChatLoading(true);
-    } else {
-      setCielChatLoading(true);
-    }
-
-    try {
-      const { channelId, pathId } = await loadDMChannel({
-        recipient: { id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID }
-      });
-
-      if (!pathId) {
-        onOpenNewChatTab({
-          user: {
-            username,
-            id: userId,
-            profilePicUrl
-          },
-          recipient: {
-            username: type === 'ciel' ? 'Ciel' : 'Zero',
-            id: type === 'ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID,
-            profilePicUrl: type === 'ciel' ? CIEL_PFP_URL : ZERO_PFP_URL
-          }
-        });
-      }
-
-      onUpdateSelectedChannelId(channelId);
-      setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
-    } catch (error) {
-      console.error('Error handling AI Button click:', error);
-    } finally {
-      if (type === 'zero') {
-        setZeroChatLoading(false);
-      } else {
-        setCielChatLoading(false);
-      }
-    }
-  }
 }

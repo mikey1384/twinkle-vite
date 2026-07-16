@@ -13,11 +13,6 @@ import {
 } from '../../helpers';
 import { sleep } from '~/helpers';
 import { PuzzlePhase } from '~/types/chess';
-import {
-  TIME_ATTACK_DURATION,
-  TIME_BONUS_CORRECT_MOVE,
-  TIME_PENALTY_WRONG_MOVE
-} from '../../constants';
 
 interface EngineResult {
   success: boolean;
@@ -42,13 +37,11 @@ interface MakeEngineMoveParams {
 
 export function useChessMove({
   attemptId,
-  onSetTimeLeft,
   onSetPhase,
   phase,
   boardEpochRef
 }: {
   attemptId: number | null;
-  onSetTimeLeft: (v: any) => void;
   onSetPhase: (phase: PuzzlePhase) => void;
   phase: PuzzlePhase;
   boardEpochRef: React.RefObject<number>;
@@ -272,6 +265,8 @@ export function useChessMove({
     onDailyStatsUpdate,
     onPuzzleComplete,
     resetToOriginalPosition,
+    onAdjustTimeAttackTimer,
+    onRecoverTimeAttackRun,
     submitTimeAttackAttempt,
     refreshLevels,
     onRefreshStats,
@@ -287,7 +282,6 @@ export function useChessMove({
     puzzleState: any;
     kickOffFirstEngineMove: (options?: { phaseAfter?: any }) => void;
     inTimeAttack: boolean;
-    timeLeft?: number;
     onClearSelection?: () => void;
     runIdRef: React.RefObject<number | null>;
     animationTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
@@ -305,6 +299,11 @@ export function useChessMove({
     onDailyStatsUpdate: (stats: any) => void;
     onPuzzleComplete: (result: any) => void;
     resetToOriginalPosition: () => void;
+    onAdjustTimeAttackTimer: (params: {
+      moveIndex: number;
+      outcome: 'correct' | 'wrong';
+    }) => Promise<boolean>;
+    onRecoverTimeAttackRun: (cause: unknown) => Promise<boolean>;
     submitTimeAttackAttempt: (params: any) => Promise<any>;
     refreshLevels: () => Promise<void>;
     onRefreshStats: () => Promise<void>;
@@ -313,8 +312,9 @@ export function useChessMove({
     executeEngineMove: (moveUci: string) => void;
     appendCurrentFen: () => void;
   }): Promise<boolean> {
-    const expectedMove = puzzle.moves[puzzleState.solutionIndex];
-    const engineReply = puzzle.moves[puzzleState.solutionIndex + 1];
+    const moveIndex = Number(puzzleState.solutionIndex);
+    const expectedMove = puzzle.moves[moveIndex];
+    const engineReply = puzzle.moves[moveIndex + 1];
 
     if (!isReady) {
       const becameReady = await waitForEngineReady(5000);
@@ -339,6 +339,22 @@ export function useChessMove({
 
     const isCorrect = moveAnalysis.isCorrect;
 
+    if (inTimeAttack) {
+      try {
+        const timerStillActive = await onAdjustTimeAttackTimer({
+          moveIndex,
+          outcome: isCorrect ? 'correct' : 'wrong'
+        });
+        if (!timerStillActive) return false;
+      } catch (error) {
+        // Do not mutate the board from an unconfirmed timer outcome. The
+        // parent reconciles non-transport conflicts to the canonical run
+        // before another move can be attempted.
+        console.error('Failed to reconcile promotion timer:', error);
+        return false;
+      }
+    }
+
     const analysisEntry = {
       userMove: moveAnalysis.userMove,
       expectedMove: moveAnalysis.expectedMove,
@@ -354,9 +370,7 @@ export function useChessMove({
     onMoveAnalysisUpdate(analysisEntry);
 
     if (!isCorrect) {
-      if (inTimeAttack) {
-        onSetTimeLeft((v: any) => (v ? v - TIME_PENALTY_WRONG_MOVE : 0));
-      } else {
+      if (!inTimeAttack) {
         onPuzzleResultUpdate('failed');
       }
       try {
@@ -430,13 +444,6 @@ export function useChessMove({
 
     boardUpdateFn();
 
-    if (inTimeAttack) {
-      onSetTimeLeft((v: any) => {
-        if (!v || v <= 0) return v;
-        return Math.min(v + TIME_BONUS_CORRECT_MOVE, TIME_ATTACK_DURATION);
-      });
-    }
-
     if (isLastMove) {
       onSetPhase('SUCCESS');
       if (inTimeAttack) {
@@ -464,11 +471,7 @@ export function useChessMove({
           });
         } catch (error) {
           console.error('Failed to submit promotion attempt:', error);
-          runIdRef.current = null;
-          onSetRunResult('FAIL');
-          onSetInTimeAttack(false);
-          onSetPhase('FAIL');
-          await Promise.allSettled([refreshLevels(), onRefreshStats()]);
+          await onRecoverTimeAttackRun(error);
           return false;
         }
 
@@ -639,12 +642,12 @@ export function useChessMove({
   }
 }
 
-
 export function createHandleCastling({
   chessRef,
   chessBoardState,
   setChessBoardState,
   executeUserMove,
+  processingMoveRef,
   inTimeAttack,
   runResult,
   timeLeft
@@ -657,6 +660,7 @@ export function createHandleCastling({
     fenBeforeMove: string,
     boardUpdateFn: () => void
   ) => Promise<boolean>;
+  processingMoveRef: React.RefObject<boolean>;
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   timeLeft: number;
@@ -671,44 +675,53 @@ export function createHandleCastling({
       if (!allowed) return;
     }
 
-    const playerColor = chessBoardState.playerColor;
-    const castlingMove = direction === 'kingside' ? 'O-O' : 'O-O-O';
-    const fenBeforeMove = chessRef.current.fen();
+    if (processingMoveRef.current) return;
+    processingMoveRef.current = true;
 
-    const move = chessRef.current.move(castlingMove);
-    if (!move) {
-      console.error('Invalid castling move:', castlingMove);
-      return;
+    try {
+      const playerColor = chessBoardState.playerColor;
+      const castlingMove = direction === 'kingside' ? 'O-O' : 'O-O-O';
+      const fenBeforeMove = chessRef.current.fen();
+
+      const candidatePosition = new Chess(fenBeforeMove);
+      const move = candidatePosition.move(castlingMove);
+      if (!move) {
+        console.error('Invalid castling move:', castlingMove);
+        return;
+      }
+
+      const isBlack = playerColor === 'black';
+      const isKingside = direction === 'kingside';
+
+      const boardUpdateFn = () => {
+        chessRef.current!.move(castlingMove);
+        applyFenToBoard({
+          fen: chessRef.current!.fen(),
+          chessRef,
+          setChessBoardState
+        });
+        const { kingTo, rookTo } = getCastlingIndices({
+          isBlack,
+          isKingside
+        });
+        setChessBoardState((prev) => {
+          if (!prev) return prev;
+          const nb = prev.board.map((sq: any, i: number) =>
+            i === kingTo || i === rookTo ? { ...sq, state: 'arrived' } : sq
+          );
+          return {
+            ...prev,
+            board: nb,
+            isCheck: chessRef.current?.isCheck() || false,
+            isCheckmate: chessRef.current?.isCheckmate() || false
+          } as any;
+        });
+      };
+
+      return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
+    } finally {
+      processingMoveRef.current = false;
     }
-
-    const isBlack = playerColor === 'black';
-    const isKingside = direction === 'kingside';
-
-    const boardUpdateFn = () => {
-      applyFenToBoard({
-        fen: chessRef.current!.fen(),
-        chessRef,
-        setChessBoardState
-      });
-      const { kingTo, rookTo } = getCastlingIndices({
-        isBlack,
-        isKingside
-      });
-      setChessBoardState((prev) => {
-        if (!prev) return prev;
-        const nb = prev.board.map((sq: any, i: number) =>
-          i === kingTo || i === rookTo ? { ...sq, state: 'arrived' } : sq
-        );
-        return {
-          ...prev,
-          board: nb,
-          isCheck: chessRef.current?.isCheck() || false,
-          isCheckmate: chessRef.current?.isCheckmate() || false
-        } as any;
-      });
-    };
-
-    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   };
 }
 
@@ -717,7 +730,8 @@ export function createHandleFinishMove({
   puzzle,
   chessBoardState,
   setChessBoardState,
-  executeUserMove
+  executeUserMove,
+  processingMoveRef
 }: {
   chessRef: React.RefObject<Chess | null>;
   puzzle: any;
@@ -728,6 +742,7 @@ export function createHandleFinishMove({
     fenBeforeMove: string,
     boardUpdateFn: () => void
   ) => Promise<boolean>;
+  processingMoveRef: React.RefObject<boolean>;
 }) {
   return async function handleFinishMove({
     to,
@@ -743,38 +758,50 @@ export function createHandleFinishMove({
     promotion?: string;
   }) {
     if (!chessRef.current || !puzzle) return false;
+    if (processingMoveRef.current) return false;
+    processingMoveRef.current = true;
 
-    let move;
     try {
-      move = chessRef.current.move({
-        from: fromAlgebraic,
-        to: toAlgebraic,
-        ...(promotion && { promotion })
-      });
-    } catch {
-      return false;
+      let move;
+      try {
+        const candidatePosition = new Chess(fenBeforeMove);
+        move = candidatePosition.move({
+          from: fromAlgebraic,
+          to: toAlgebraic,
+          ...(promotion && { promotion })
+        });
+      } catch {
+        return false;
+      }
+
+      if (!move) return false;
+
+      const boardUpdateFn = () => {
+        chessRef.current!.move({
+          from: fromAlgebraic,
+          to: toAlgebraic,
+          ...(promotion && { promotion })
+        });
+        applyFenToBoard({
+          fen: chessRef.current!.fen(),
+          chessRef,
+          setChessBoardState
+        });
+        const isBlack = chessBoardState?.playerColor === 'black';
+        const absTo = viewToBoard(to, isBlack);
+        setChessBoardState((prev) => {
+          if (!prev) return prev;
+          const nb = prev.board.map((sq: any, i: number) =>
+            i === absTo ? { ...sq, state: 'arrived' } : sq
+          );
+          return { ...prev, board: nb };
+        });
+      };
+
+      return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
+    } finally {
+      processingMoveRef.current = false;
     }
-
-    if (!move) return false;
-
-    const boardUpdateFn = () => {
-      applyFenToBoard({
-        fen: chessRef.current!.fen(),
-        chessRef,
-        setChessBoardState
-      });
-      const isBlack = chessBoardState?.playerColor === 'black';
-      const absTo = viewToBoard(to, isBlack);
-      setChessBoardState((prev) => {
-        if (!prev) return prev;
-        const nb = prev.board.map((sq: any, i: number) =>
-          i === absTo ? { ...sq, state: 'arrived' } : sq
-        );
-        return { ...prev, board: nb };
-      });
-    };
-
-    return await executeUserMove(move, fenBeforeMove, boardUpdateFn);
   };
 }
 

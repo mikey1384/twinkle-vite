@@ -130,6 +130,9 @@ function MessageBody({
     (v) => v.requestHelpers.bookmarkChatMessage
   );
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
+  const onApplyCanonicalChatReaction = useChatContext(
+    (v) => v.actions.onApplyCanonicalChatReaction
+  );
   const { canDelete, canEdit, canReward } = useMyLevel();
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
@@ -140,10 +143,8 @@ function MessageBody({
   const {
     actions: {
       onAddBookmarkedMessage,
-      onAddReactionToMessage,
       onEditMessage,
       onHideAttachment,
-      onRemoveReactionFromMessage,
       onSaveMessage,
       onRemoveTempMessage,
       onSetMessageState,
@@ -154,7 +155,8 @@ function MessageBody({
       onUpdateRecentChessMessage,
       onUpdateLastOmokMessageId,
       onUpdateLastOmokMoveViewerId,
-      onUpdateRecentOmokMessage
+      onUpdateRecentOmokMessage,
+      refreshChatQuickAccess
     },
     requests: {
       editChatMessage,
@@ -262,8 +264,7 @@ function MessageBody({
   }, [content, hasChessBoardState, hasOmokBoardState, message.gameType]);
 
   const isTerminalGameMessage = useMemo(
-    () =>
-      typeof gameWinnerId === 'number' || isDraw || isAbort || isResign,
+    () => typeof gameWinnerId === 'number' || isDraw || isAbort || isResign,
     [gameWinnerId, isDraw, isAbort, isResign]
   );
   const isTerminalOmokMessage = useMemo(
@@ -355,7 +356,10 @@ function MessageBody({
     }
 
     const userMadeThisMove = chessState?.move?.by === myId;
-    const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'chess');
+    const latestBoardMessageId = getLatestBoardMessageId(
+      currentChannel,
+      'chess'
+    );
     const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
       currentChannel,
       'chess'
@@ -391,7 +395,10 @@ function MessageBody({
     }
 
     const userMadeThisMove = omokState?.move?.by === myId;
-    const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'omok');
+    const latestBoardMessageId = getLatestBoardMessageId(
+      currentChannel,
+      'omok'
+    );
     const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
       currentChannel,
       'omok'
@@ -572,41 +579,70 @@ function MessageBody({
     [channelId, isAIMessage, isReloadedSubject, isSubject, messageId, subjectId]
   );
 
+  async function reconcileCanonicalReactionResponse({
+    response,
+    ownerUserId
+  }: {
+    response: any;
+    ownerUserId: number;
+  }) {
+    const responseMessageId = Number(response?.messageId || 0);
+    const responseChannelId = Number(response?.channelId || 0);
+    const reactionStateRevision = Number(response?.reactionStateRevision || 0);
+    if (
+      responseMessageId !== Number(messageId) ||
+      responseChannelId <= 0 ||
+      reactionStateRevision <= 0 ||
+      !Array.isArray(response?.reactions)
+    ) {
+      return;
+    }
+    onApplyCanonicalChatReaction({
+      update: response,
+      ownerUserId,
+      pageVisible: true,
+      usingChat: true,
+      shouldIncrementUnreads: false
+    });
+
+    const dmRecencyChanged =
+      response.changed &&
+      response.twoPeople &&
+      response.channelActivity?.changed;
+    if (dmRecencyChanged) {
+      await refreshChatQuickAccess({ automaticOnly: true });
+    }
+  }
+
   const handleAddReaction = useCallback(
     async (reaction: any) => {
-      if (message.reactions) {
-        for (const reactionObj of message.reactions) {
-          if (reactionObj.type === reaction && reactionObj.userId === myId) {
-            return;
-          }
-        }
-      }
-      onAddReactionToMessage({
-        channelId,
-        messageId,
-        subchannelId,
-        reaction,
-        userId: myId
+      // Both accepted paths are canonical: sockets deliver the mutation to
+      // every listener, while this writer-backed HTTP snapshot covers
+      // idempotent responses and missed broadcasts.
+      const ownerUserId = myId;
+      const response = await postChatReaction({ messageId, reaction });
+      await reconcileCanonicalReactionResponse({
+        response,
+        ownerUserId
       });
-      postChatReaction({ messageId, reaction });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [channelId, message?.reactions, messageId, myId]
+    [messageId, myId]
   );
 
   const handleRemoveReaction = useCallback(
     async (reaction: any) => {
-      onRemoveReactionFromMessage({
-        channelId,
-        messageId,
-        reaction,
-        subchannelId,
-        userId: myId
+      // The HTTP response is a writer-backed full snapshot and carries the
+      // same recency rollback metadata as the socket broadcast.
+      const ownerUserId = myId;
+      const response = await removeChatReaction({ messageId, reaction });
+      await reconcileCanonicalReactionResponse({
+        response,
+        ownerUserId
       });
-      removeChatReaction({ messageId, reaction });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [channelId, messageId, myId]
+    [messageId, myId]
   );
 
   if (isTopicPostNotification) {
@@ -684,6 +720,8 @@ function MessageBody({
   if (!chessState && !omokState && (gameWinnerId || isDraw || isAbort)) {
     return (
       <GameOverMessage
+        channelId={channelId}
+        messageId={message.id}
         winnerId={gameWinnerId}
         opponentName={partner?.username}
         myId={myId}
@@ -712,9 +750,7 @@ function MessageBody({
   }
 
   return (
-    <ErrorBoundary
-      componentPath="Chat/Message/MessageBody"
-    >
+    <ErrorBoundary componentPath="Chat/Message/MessageBody">
       <div
         className={css`
           width: 100%;
@@ -725,9 +761,11 @@ function MessageBody({
             display: ${highlighted ? 'block' : 'none'};
           }
           &:hover {
-            ${isMenuButtonsAllowed
-              ? `background-color: ${Color.whiteGray()};`
-              : ''}
+            ${
+              isMenuButtonsAllowed
+                ? `background-color: ${Color.whiteGray()};`
+                : ''
+            }
             .menu-button {
               display: block;
             }

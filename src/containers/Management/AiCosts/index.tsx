@@ -3,7 +3,7 @@ import InvalidPage from '~/components/InvalidPage';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import Content from './Content';
-import { ManagementUserSearchResult } from '../UserSearchInput';
+import { type UserSearchResult } from '~/components/UserSearchInput';
 import {
   getEventActionKey,
   getEventSignals,
@@ -431,15 +431,13 @@ export default function AiCosts() {
       setPendingBucketAction(null);
       setReloadKey((key) => key + 1);
     } catch (saveError: any) {
-      setManualIdentityError(
-        saveError?.message || 'Failed to create bucket'
-      );
+      setManualIdentityError(saveError?.message || 'Failed to create bucket');
     } finally {
       setManualIdentitySavingKey('');
     }
   }
 
-  async function handleAddAccountToBucket(user: ManagementUserSearchResult) {
+  async function handleAddAccountToBucket(user: UserSearchResult) {
     const bucketId = selectedBucketId;
     const userId = Number(user?.id || 0);
     if (!bucketId || !userId) return;
@@ -478,7 +476,9 @@ export default function AiCosts() {
       await refreshManualIdentityBuckets(bucketId);
       setReloadKey((key) => key + 1);
     } catch (saveError: any) {
-      setManualIdentityError(saveError?.message || 'Failed to add IP to bucket');
+      setManualIdentityError(
+        saveError?.message || 'Failed to add IP to bucket'
+      );
     } finally {
       setManualIdentitySavingKey('');
     }

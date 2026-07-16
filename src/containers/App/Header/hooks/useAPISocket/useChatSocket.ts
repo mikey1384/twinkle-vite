@@ -14,6 +14,32 @@ import {
   useHomeContext
 } from '~/contexts';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
+import {
+  getChatUnreadActivityRevision,
+  markChatUnreadActivity
+} from '~/helpers/chatUnreadActivity';
+import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
+import type {
+  CanonicalChatChannelUnreadState,
+  CanonicalChatReactionUpdate,
+  CanonicalChatSidebarState,
+  ChatQuickAccessState
+} from '~/types/chat';
+
+const QUICK_ACCESS_ACTIVITY_DEBOUNCE_MS = 1500;
+const QUICK_ACCESS_ACTIVITY_MIN_INTERVAL_MS = 5000;
+const QUICK_ACCESS_ACTIVITY_MAX_WAIT_MS = 5000;
+const UNREAD_RESYNC_RETRY_DELAY_MS = 500;
+
+interface LegacyChatReactionEvent {
+  channelId: number;
+  messageId: number;
+  reaction: string;
+  subchannelId: number;
+  userId: number;
+  timeStamp?: number;
+  canonicalBridge?: boolean;
+}
 
 export default function useChatSocket({
   channelsObj,
@@ -32,6 +58,13 @@ export default function useChatSocket({
   const userId = useKeyContext((v) => v.myState.userId);
 
   const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const quickAccessMode = useChatContext(
+    (v) => v.state.quickAccess?.mode || 'automatic'
+  );
+  const quickAccessPartners = useChatContext(
+    (v) => v.state.quickAccess?.partners
+  );
+  const numUnreads = useChatContext((v) => v.state.numUnreads || 0);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
   const channelsObjRef = useRef(channelsObj);
@@ -40,8 +73,30 @@ export default function useChatSocket({
   const subchannelIdRef = useRef(subchannelId);
   const chatStatusRef = useRef(chatStatus);
   const pageVisibleRef = useRef(pageVisible);
+  const quickAccessModeRef = useRef(quickAccessMode);
+  const quickAccessPartnersRef = useRef(quickAccessPartners);
+  const numUnreadsRef = useRef(numUnreads);
+  const quickAccessRefreshTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const quickAccessRefreshMaxTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const quickAccessLastActivityRefreshAtRef = useRef(0);
   const chessShortcutRefreshIdRef = useRef(0);
   const humanTopicRefreshSeqRef = useRef<Record<number, number>>({});
+  const unreadResyncGenerationRef = useRef(0);
+  const unreadResyncQueuedRef = useRef(false);
+  const unreadResyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const channelUnreadResyncQueueRef = useRef(
+    new Map<string, { channelId: number; subchannelId: number }>()
+  );
+  const channelUnreadResyncInFlightRef = useRef(false);
+  const channelUnreadResyncTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   channelsObjRef.current = channelsObj;
   onUpdateMyXpRef.current = onUpdateMyXp;
@@ -49,9 +104,15 @@ export default function useChatSocket({
   subchannelIdRef.current = subchannelId;
   chatStatusRef.current = chatStatus;
   pageVisibleRef.current = pageVisible;
+  quickAccessModeRef.current = quickAccessMode;
+  quickAccessPartnersRef.current = quickAccessPartners;
+  numUnreadsRef.current = numUnreads;
 
-  const onAddReactionToMessage = useChatContext(
-    (v) => v.actions.onAddReactionToMessage
+  const onApplyCanonicalChatReaction = useChatContext(
+    (v) => v.actions.onApplyCanonicalChatReaction
+  );
+  const onApplyCanonicalChannelUnreadState = useChatContext(
+    (v) => v.actions.onApplyCanonicalChannelUnreadState
   );
   const onChangeAIThinkingStatus = useChatContext(
     (v) => v.actions.onChangeAIThinkingStatus
@@ -104,12 +165,6 @@ export default function useChatSocket({
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
   const onPostVocabFeed = useChatContext((v) => v.actions.onPostVocabFeed);
-  const onRemoveReactionFromMessage = useChatContext(
-    (v) => v.actions.onRemoveReactionFromMessage
-  );
-  const onReceiveChatReaction = useChatContext(
-    (v) => v.actions.onReceiveChatReaction
-  );
   const onGetNumberOfUnreadMessages = useChatContext(
     (v) => v.actions.onGetNumberOfUnreadMessages
   );
@@ -120,6 +175,9 @@ export default function useChatSocket({
     (v) => v.actions.onEnterChannelWithId
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onApplyCanonicalChatSidebarState = useChatContext(
+    (v) => v.actions.onApplyCanonicalChatSidebarState
+  );
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
@@ -129,6 +187,7 @@ export default function useChatSocket({
   const onSetVocabLeaderboards = useChatContext(
     (v) => v.actions.onSetVocabLeaderboards
   );
+  const refreshCanonicalQuickAccess = useChatQuickAccessRefresh();
 
   const loadVocabularyLeaderboards = useAppContext(
     (v) => v.requestHelpers.loadVocabularyLeaderboards
@@ -148,9 +207,13 @@ export default function useChatSocket({
   const getNumberOfUnreadMessages = useAppContext(
     (v) => v.requestHelpers.getNumberOfUnreadMessages
   );
-
-  // Collapses concurrent global-unread resyncs triggered by reaction-removal
-  // bursts into one in-flight request.
+  const loadChatChannelUnreadState = useAppContext(
+    (v) => v.requestHelpers.loadChatChannelUnreadState
+  );
+  const syncLegacyChatReaction = useAppContext(
+    (v) => v.requestHelpers.syncLegacyChatReaction
+  );
+  // Serializes canonical global-unread resyncs triggered by reaction removals.
   const unreadResyncInFlightRef = useRef(false);
 
   // Reactions can come in bursts. We only need to persist lastRead once per second per
@@ -161,10 +224,27 @@ export default function useChatSocket({
   }>({ channel: {}, subchannel: {} });
 
   useEffect(() => {
-    // Reset throttle state when user changes.
+    const unreadResyncGeneration = ++unreadResyncGenerationRef.current;
+    const channelUnreadResyncQueue = channelUnreadResyncQueueRef.current;
+    // Reset throttle state when user changes. The unread-activity revision is
+    // a monotonic module counter shared with the other last-read reconcilers
+    // and is never reset; equality snapshots stay valid across user changes.
     lastReadWriteSecRef.current = { channel: {}, subchannel: {} };
+    unreadResyncQueuedRef.current = false;
+    unreadResyncInFlightRef.current = false;
+    channelUnreadResyncQueue.clear();
+    channelUnreadResyncInFlightRef.current = false;
 
-    function maybeUpdateLastRead({
+    function markUnreadActivity() {
+      markChatUnreadActivity();
+      if (unreadResyncQueuedRef.current && unreadResyncTimerRef.current) {
+        clearTimeout(unreadResyncTimerRef.current);
+        unreadResyncTimerRef.current = null;
+        queueGlobalUnreadCountResync(UNREAD_RESYNC_RETRY_DELAY_MS);
+      }
+    }
+
+    async function maybeUpdateLastRead({
       channelId,
       subchannelId
     }: {
@@ -172,17 +252,73 @@ export default function useChatSocket({
       subchannelId?: number | null;
     }) {
       const nowSec = Math.floor(Date.now() / 1000);
-      if (channelId > 0 && lastReadWriteSecRef.current.channel[channelId] !== nowSec) {
-        lastReadWriteSecRef.current.channel[channelId] = nowSec;
-        updateChatLastRead(channelId);
-      }
-      if (
+      const shouldUpdateChannel =
+        channelId > 0 &&
+        lastReadWriteSecRef.current.channel[channelId] !== nowSec;
+      const shouldUpdateSubchannel = Boolean(
         subchannelId &&
         subchannelId > 0 &&
         lastReadWriteSecRef.current.subchannel[subchannelId] !== nowSec
-      ) {
+      );
+      if (!shouldUpdateChannel && !shouldUpdateSubchannel) return;
+
+      // A canonical read mutation changes the basis of every unread snapshot,
+      // independently of message/reaction activity. Invalidate older reads at
+      // request start, then apply only the server-returned read watermark.
+      markUnreadActivity();
+      const reconciliations: Promise<void>[] = [];
+      if (shouldUpdateChannel) {
+        lastReadWriteSecRef.current.channel[channelId] = nowSec;
+        reconciliations.push(
+          reconcileCanonicalLastRead({
+            request: updateChatLastRead(channelId),
+            channelId,
+            subchannelId: 0
+          })
+        );
+      }
+      if (shouldUpdateSubchannel && subchannelId) {
         lastReadWriteSecRef.current.subchannel[subchannelId] = nowSec;
-        updateSubchannelLastRead(subchannelId);
+        reconciliations.push(
+          reconcileCanonicalLastRead({
+            request: updateSubchannelLastRead({ channelId, subchannelId }),
+            channelId,
+            subchannelId
+          })
+        );
+      }
+      await Promise.all(reconciliations);
+    }
+
+    async function reconcileCanonicalLastRead({
+      request,
+      channelId,
+      subchannelId
+    }: {
+      request: Promise<CanonicalChatChannelUnreadState>;
+      channelId: number;
+      subchannelId: number;
+    }) {
+      const expectedActivityRevision = getChatUnreadActivityRevision();
+      try {
+        const unreadState = await request;
+        if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
+          // A confirmed socket event landed after the writer snapshotted this
+          // write. Applying the older snapshot would erase that event's
+          // unread state (a plain message does not advance the reaction
+          // revision the reducer checks); re-read the writer instead, like
+          // the queued resync paths below.
+          queueChannelUnreadStateResync({ channelId, subchannelId });
+          return;
+        }
+        if (unreadState?.channel) {
+          onApplyCanonicalChannelUnreadState({ unreadState, userId });
+        }
+      } catch (error) {
+        // The write may have committed before transport failed. Re-read the
+        // writer instead of guessing whether the scope is now read.
+        queueChannelUnreadStateResync({ channelId, subchannelId });
+        console.error('Failed to reconcile canonical chat read state:', error);
       }
     }
 
@@ -192,10 +328,12 @@ export default function useChatSocket({
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('chat_invitation_received', handleChatInvitation);
-    socket.on('chat_message_deleted', onDeleteMessage);
+    socket.on('chat_message_deleted', handleChatMessageDeleted);
     socket.on('chat_message_edited', onEditMessage);
-    socket.on('chat_reaction_added', handleChatReactionAdded);
-    socket.on('chat_reaction_removed', handleChatReactionRemoved);
+    socket.on('chat_reaction_added', handleLegacyChatReactionAdded);
+    socket.on('chat_reaction_removed', handleLegacyChatReactionRemoved);
+    socket.on('chat_reaction_updated', handleChatReactionUpdate);
+    socket.on('chat_sidebar_state_updated', handleChatSidebarStateUpdate);
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
@@ -211,16 +349,33 @@ export default function useChatSocket({
 
     return function cleanUp() {
       chessShortcutRefreshIdRef.current += 1;
+      unreadResyncGenerationRef.current += 1;
+      clearScheduledChatQuickAccessRefresh();
+      quickAccessLastActivityRefreshAtRef.current = 0;
+      unreadResyncQueuedRef.current = false;
+      unreadResyncInFlightRef.current = false;
+      channelUnreadResyncQueue.clear();
+      channelUnreadResyncInFlightRef.current = false;
+      if (unreadResyncTimerRef.current) {
+        clearTimeout(unreadResyncTimerRef.current);
+        unreadResyncTimerRef.current = null;
+      }
+      if (channelUnreadResyncTimerRef.current) {
+        clearTimeout(channelUnreadResyncTimerRef.current);
+        channelUnreadResyncTimerRef.current = null;
+      }
       socket.off('ai_thinking_status_updated', onChangeAIThinkingStatus);
       socket.off('ai_thought_streamed', handleAIThoughtStream);
       socket.off('away_status_changed', handleAwayStatusChange);
       socket.off('busy_status_changed', handleBusyStatusChange);
       socket.off('channel_settings_changed', onChangeChannelSettings);
       socket.off('chat_invitation_received', handleChatInvitation);
-      socket.off('chat_message_deleted', onDeleteMessage);
+      socket.off('chat_message_deleted', handleChatMessageDeleted);
       socket.off('chat_message_edited', onEditMessage);
-      socket.off('chat_reaction_added', handleChatReactionAdded);
-      socket.off('chat_reaction_removed', handleChatReactionRemoved);
+      socket.off('chat_reaction_added', handleLegacyChatReactionAdded);
+      socket.off('chat_reaction_removed', handleLegacyChatReactionRemoved);
+      socket.off('chat_reaction_updated', handleChatReactionUpdate);
+      socket.off('chat_sidebar_state_updated', handleChatSidebarStateUpdate);
       socket.off('chat_subject_purchased', onEnableChatSubject);
       socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
       socket.off('message_attachment_hid', onHideAttachment);
@@ -243,9 +398,40 @@ export default function useChatSocket({
       isAway: boolean;
     }) {
       const currentChatStatus = chatStatusRef.current;
-      if (currentChatStatus[userId] && currentChatStatus[userId].isAway !== isAway) {
+      if (
+        currentChatStatus[userId] &&
+        currentChatStatus[userId].isAway !== isAway
+      ) {
         onChangeAwayStatus({ userId, isAway });
       }
+    }
+
+    function handleChatMessageDeleted(payload: any) {
+      markUnreadActivity();
+      onDeleteMessage(payload);
+      const deletedChannelId = Number(payload?.channelId || 0);
+      if (deletedChannelId > 0) {
+        queueChannelUnreadStateResync({
+          channelId: deletedChannelId,
+          subchannelId: Number(payload?.subchannelId || 0)
+        });
+        queueGlobalUnreadCountResync();
+      }
+    }
+
+    function handleChatSidebarStateUpdate({
+      quickAccess,
+      favoriteState,
+      channelVisibility
+    }: CanonicalChatSidebarState) {
+      onApplyCanonicalChatSidebarState({
+        quickAccess,
+        favoriteState,
+        channelVisibility,
+        // The socket session is authenticated as this effect's user; the
+        // effect re-subscribes when the user changes.
+        userId
+      });
     }
 
     function handleBusyStatusChange({
@@ -256,62 +442,111 @@ export default function useChatSocket({
       isBusy: boolean;
     }) {
       const currentChatStatus = chatStatusRef.current;
-      if (currentChatStatus[userId] && currentChatStatus[userId].isBusy !== isBusy) {
+      if (
+        currentChatStatus[userId] &&
+        currentChatStatus[userId].isBusy !== isBusy
+      ) {
         onChangeBusyStatus({ userId, isBusy });
       }
     }
 
-    function handleChatReactionAdded({
+    function getReactionDirectMessageState({
       channelId,
-      messageId,
-      reaction,
-      subchannelId,
-      userId: reactorId,
-      timeStamp
+      twoPeople
     }: {
       channelId: number;
-      messageId: number;
-      reaction: string;
-      subchannelId: number;
-      userId: number;
-      timeStamp?: number;
+      twoPeople?: boolean;
     }) {
-      onAddReactionToMessage({
-        channelId,
-        messageId,
-        reaction,
-        subchannelId,
-        userId: reactorId
-      });
-
+      if (typeof twoPeople === 'boolean') return twoPeople;
       const channel = channelsObjRef.current?.[channelId];
-      // We only show reaction activity in the left channel list for 1:1 (twoPeople) chats.
-      // Group chat reactions should update the message, but not bump previews/unreads.
-      if (!channel || !channel.twoPeople) return;
+      return channel ? Boolean(channel.twoPeople) : null;
+    }
+
+    function handleLegacyChatReactionAdded(payload: LegacyChatReactionEvent) {
+      void reconcileLegacyChatReaction(payload, 'add');
+    }
+
+    function handleLegacyChatReactionRemoved(payload: LegacyChatReactionEvent) {
+      void reconcileLegacyChatReaction(payload, 'remove');
+    }
+
+    async function reconcileLegacyChatReaction(
+      payload: LegacyChatReactionEvent,
+      mutation: 'add' | 'remove'
+    ) {
+      // New socket workers send the legacy event only so pre-deploy browser
+      // bundles keep working. This bundle has already received the canonical
+      // envelope and must not reconcile it a second time.
+      if (payload?.canonicalBridge) return;
+      try {
+        const reactionUpdate = (await syncLegacyChatReaction({
+          channelId: Number(payload?.channelId || 0),
+          messageId: Number(payload?.messageId || 0),
+          mutation,
+          reaction: payload?.reaction,
+          reactorId: Number(payload?.userId || 0),
+          timeStamp: Number(payload?.timeStamp || 0)
+        })) as CanonicalChatReactionUpdate;
+        if (unreadResyncGenerationRef.current !== unreadResyncGeneration) {
+          return;
+        }
+        if (reactionUpdate?.messageId) {
+          await handleChatReactionUpdate(reactionUpdate);
+        }
+      } catch (error) {
+        // The old delta is deliberately not a fallback source of truth. A
+        // later canonical socket event/bootstrap is safer than guessing.
+        console.error('Failed to reconcile legacy chat reaction:', error);
+      }
+    }
+
+    async function handleChatReactionUpdate(
+      update: CanonicalChatReactionUpdate
+    ) {
+      markUnreadActivity();
+      const { channelId, subchannelId, userId: reactorId, mutation } = update;
+      const requiresSidebarResync = update.requiresSidebarResync === true;
+      const isDirectMessage = getReactionDirectMessageState({
+        channelId,
+        twoPeople: update.twoPeople
+      });
+      if (
+        isDirectMessage !== false &&
+        (requiresSidebarResync || update.channelActivity?.changed)
+      ) {
+        scheduleChatQuickAccessRefresh(channelId, {
+          force: requiresSidebarResync || mutation === 'remove'
+        });
+      }
 
       const currentPageVisible = pageVisibleRef.current;
       const currentSelectedChannelId = selectedChannelIdRef.current;
       const currentSubchannelId = subchannelIdRef.current;
-      const reactionIsForCurrentChannel = channelId === currentSelectedChannelId;
+      const reactionIsForCurrentChannel =
+        channelId === currentSelectedChannelId;
       const reactionIsForCurrentSubchannel =
         Number(subchannelId || 0) === Number(currentSubchannelId || 0);
 
-      const reactionIsVisibleToViewer =
+      const reactionScopeIsVisibleToViewer =
         reactorId !== userId &&
         reactionIsForCurrentChannel &&
         usingChatRef.current &&
         currentPageVisible &&
         reactionIsForCurrentSubchannel;
+      const reactionIsVisibleToViewer =
+        mutation === 'add' && reactionScopeIsVisibleToViewer;
 
       // Keep server unread state consistent: if the viewer is currently seeing the reaction,
       // advance lastRead so it doesn't show up as unread after refresh/other device.
-      if (reactionIsVisibleToViewer) {
-        maybeUpdateLastRead({ channelId, subchannelId });
-      }
+      const lastReadReconciliation = reactionIsVisibleToViewer
+        ? maybeUpdateLastRead({ channelId, subchannelId })
+        : null;
 
       // Update channel preview state for DM reactions.
       // Only increment unread counts if the viewer isn't already seeing the reaction.
       const shouldIncrementUnreads =
+        !requiresSidebarResync &&
+        mutation === 'add' &&
         reactorId !== userId &&
         !(
           reactionIsForCurrentChannel &&
@@ -320,54 +555,181 @@ export default function useChatSocket({
           reactionIsForCurrentSubchannel
         );
 
-      const stamped = Number(timeStamp) || Math.floor(Date.now() / 1000);
-      onReceiveChatReaction({
-        channelId,
-        messageId,
-        reaction,
-        subchannelId,
-        userId: reactorId,
+      onApplyCanonicalChatReaction({
+        update,
+        ownerUserId: userId,
         pageVisible: currentPageVisible,
         usingChat: usingChatRef.current,
-        timeStamp: stamped,
         shouldIncrementUnreads
       });
+      if (requiresSidebarResync) {
+        // Legacy events carry no ordered unread projection. If the addition is
+        // visible, commit and reconcile its canonical read watermark before a
+        // writer reread can project the reaction as unread. Starting the write
+        // without awaiting it would leave the two requests racing.
+        if (lastReadReconciliation) await lastReadReconciliation;
+        if (unreadResyncGenerationRef.current !== unreadResyncGeneration) {
+          return;
+        }
+        if (isDirectMessage !== false) {
+          queueChannelUnreadStateResync({ channelId, subchannelId });
+          if (reactorId !== userId) queueGlobalUnreadCountResync();
+        }
+        return;
+      }
+      if (lastReadReconciliation) void lastReadReconciliation;
+      if (mutation !== 'remove' || !update.channelActivity?.changed) return;
+
+      const removalCouldAffectGlobalUnreads =
+        isDirectMessage !== false &&
+        reactorId !== userId &&
+        !reactionScopeIsVisibleToViewer;
+      if (!removalCouldAffectGlobalUnreads) return;
+      queueChannelUnreadStateResync({ channelId, subchannelId });
+      queueGlobalUnreadCountResync();
     }
 
-    async function handleChatReactionRemoved(payload: {
-      channelId: number;
-      messageId: number;
-      reaction: string;
-      subchannelId: number;
-      userId: number;
-    }) {
-      onRemoveReactionFromMessage(payload);
+    function queueChannelUnreadStateResync(
+      {
+        channelId,
+        subchannelId = 0
+      }: {
+        channelId: number;
+        subchannelId?: number;
+      },
+      delayMs = 0
+    ) {
+      const normalizedSubchannelId = Number(subchannelId || 0);
+      const key = `${Number(channelId)}:${normalizedSubchannelId}`;
+      channelUnreadResyncQueueRef.current.set(key, {
+        channelId: Number(channelId),
+        subchannelId: normalizedSubchannelId
+      });
+      if (
+        channelUnreadResyncInFlightRef.current ||
+        channelUnreadResyncTimerRef.current ||
+        unreadResyncGenerationRef.current !== unreadResyncGeneration
+      ) {
+        return;
+      }
+      if (delayMs > 0) {
+        channelUnreadResyncTimerRef.current = setTimeout(() => {
+          channelUnreadResyncTimerRef.current = null;
+          void resyncNextChannelUnreadState();
+        }, delayMs);
+        return;
+      }
+      void resyncNextChannelUnreadState();
+    }
 
-      // A DM reaction add bumps the global unread counter (yellow Chat nav),
-      // but the reducer's removal path only rolls back per-channel state, so
-      // an add→remove pair strands the nav yellow with nothing unread to show.
-      // Resync the counter from the server (the source of truth) instead of
-      // decrementing locally. Skip when the viewer is actively on chat with the
-      // page visible: the add never incremented in that state and Header zeroes
-      // the counter there anyway.
-      const channel = channelsObjRef.current?.[payload.channelId];
-      const removalCouldAffectGlobalUnreads =
-        channel?.twoPeople &&
-        payload.userId !== userId &&
-        !(usingChatRef.current && pageVisibleRef.current);
-      if (!removalCouldAffectGlobalUnreads) return;
-      if (unreadResyncInFlightRef.current) return;
-      unreadResyncInFlightRef.current = true;
+    async function resyncNextChannelUnreadState() {
+      if (
+        channelUnreadResyncInFlightRef.current ||
+        unreadResyncGenerationRef.current !== unreadResyncGeneration
+      ) {
+        return;
+      }
+      const nextEntry = channelUnreadResyncQueueRef.current.entries().next();
+      if (nextEntry.done) return;
+      const [key, scope] = nextEntry.value;
+      channelUnreadResyncQueueRef.current.delete(key);
+      channelUnreadResyncInFlightRef.current = true;
+      const expectedActivityRevision = getChatUnreadActivityRevision();
       try {
-        const numUnreads = await getNumberOfUnreadMessages();
-        if (typeof numUnreads === 'number' && !isNaN(numUnreads)) {
+        const unreadState = (await loadChatChannelUnreadState(
+          scope
+        )) as CanonicalChatChannelUnreadState;
+        if (unreadResyncGenerationRef.current !== unreadResyncGeneration) {
+          return;
+        }
+        if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
+          channelUnreadResyncQueueRef.current.set(key, scope);
+        } else if (
+          Number(unreadState?.channelId || 0) === scope.channelId &&
+          unreadState?.channel
+        ) {
+          onApplyCanonicalChannelUnreadState({ unreadState, userId });
+        }
+      } catch (error) {
+        // Preserve the last confirmed state on failure. Reconnect bootstrap is
+        // the fallback source of truth; never guess a replacement unread value.
+        console.error('Failed to resync channel unread state:', error);
+      } finally {
+        if (unreadResyncGenerationRef.current === unreadResyncGeneration) {
+          channelUnreadResyncInFlightRef.current = false;
+          if (channelUnreadResyncQueueRef.current.size > 0) {
+            const nextScope = channelUnreadResyncQueueRef.current
+              .values()
+              .next().value;
+            if (nextScope) {
+              queueChannelUnreadStateResync(
+                nextScope,
+                UNREAD_RESYNC_RETRY_DELAY_MS
+              );
+            }
+          }
+        }
+      }
+    }
+
+    function queueGlobalUnreadCountResync(delayMs = 0) {
+      unreadResyncQueuedRef.current = true;
+      if (
+        unreadResyncInFlightRef.current ||
+        unreadResyncTimerRef.current ||
+        unreadResyncGenerationRef.current !== unreadResyncGeneration
+      ) {
+        return;
+      }
+      if (delayMs > 0) {
+        unreadResyncTimerRef.current = setTimeout(() => {
+          unreadResyncTimerRef.current = null;
+          void resyncGlobalUnreadCount();
+        }, delayMs);
+        return;
+      }
+      void resyncGlobalUnreadCount();
+    }
+
+    async function resyncGlobalUnreadCount() {
+      if (
+        !unreadResyncQueuedRef.current ||
+        unreadResyncGenerationRef.current !== unreadResyncGeneration
+      ) {
+        return;
+      }
+      unreadResyncQueuedRef.current = false;
+      unreadResyncInFlightRef.current = true;
+      const expectedActivityRevision = getChatUnreadActivityRevision();
+      const expectedNumUnreads = numUnreadsRef.current;
+      try {
+        const numUnreads = await getNumberOfUnreadMessages({
+          fromWriter: true
+        });
+        if (unreadResyncGenerationRef.current !== unreadResyncGeneration) {
+          return;
+        }
+        if (
+          getChatUnreadActivityRevision() !== expectedActivityRevision ||
+          numUnreadsRef.current !== expectedNumUnreads
+        ) {
+          // A confirmed socket event landed after the writer snapshot. Debounce
+          // a fresh read instead of replacing that event or hammering the
+          // writer while a conversation is busy.
+          unreadResyncQueuedRef.current = true;
+        } else if (typeof numUnreads === 'number' && !isNaN(numUnreads)) {
           onGetNumberOfUnreadMessages(numUnreads);
         }
       } catch (error) {
         // Leave the counter as-is on failure; the next connect resyncs it.
         console.error('Failed to resync unread count:', error);
       } finally {
-        unreadResyncInFlightRef.current = false;
+        if (unreadResyncGenerationRef.current === unreadResyncGeneration) {
+          unreadResyncInFlightRef.current = false;
+          if (unreadResyncQueuedRef.current) {
+            queueGlobalUnreadCountResync(UNREAD_RESYNC_RETRY_DELAY_MS);
+          }
+        }
       }
     }
 
@@ -376,15 +738,23 @@ export default function useChatSocket({
       members,
       isTwoPeople,
       isClass,
-      pathId
+      pathId,
+      quickAccess
     }: {
       message: any;
       members: any[];
       isTwoPeople: boolean;
       isClass: boolean;
       pathId: number;
+      quickAccess?: ChatQuickAccessState;
     }) {
+      markUnreadActivity();
       let isDuplicate = false;
+      // New servers include the writer-backed envelope. The fallback keeps a
+      // rolling deployment correct without locally synthesizing metadata.
+      if (isTwoPeople && !quickAccess) {
+        void refreshChatQuickAccess({ includeCustom: true });
+      }
       const currentSelectedChannelId = selectedChannelIdRef.current;
       const currentChannelsObj = channelsObjRef.current;
       if (currentSelectedChannelId === 0) {
@@ -403,15 +773,23 @@ export default function useChatSocket({
       }
       onReceiveFirstMsg({
         message,
+        members,
         isDuplicate,
         isTwoPeople,
         isClass,
         pageVisible: pageVisibleRef.current,
-        pathId
+        pathId,
+        quickAccess,
+        userId
       });
     }
 
-    async function handleLeftChatFromAnotherTab(channelId: number) {
+    function handleLeftChatFromAnotherTab(
+      payload: number | { channelId: number }
+    ) {
+      const channelId =
+        typeof payload === 'number' ? payload : payload.channelId;
+      markUnreadActivity();
       if (selectedChannelIdRef.current === channelId) {
         onLeaveChannel({ channelId, userId });
         if (usingChatRef.current) {
@@ -438,11 +816,12 @@ export default function useChatSocket({
       message: any;
       pathId: string;
     }) {
+      markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const isForCurrentChannel = channelId === selectedChannelIdRef.current;
       if (isForCurrentChannel) {
         if (usingChatRef.current) {
-          updateChatLastRead(channelId);
+          void maybeUpdateLastRead({ channelId });
         }
         onReceiveMessage({
           message,
@@ -459,7 +838,8 @@ export default function useChatSocket({
             pathId
           },
           pageVisible: currentPageVisible,
-          usingChat: usingChatRef.current
+          usingChat: usingChatRef.current,
+          isMyMessage: message.userId === userId
         });
       }
       if (user.id === userId && user.newXp) {
@@ -496,11 +876,17 @@ export default function useChatSocket({
       newMembers: any[];
       isNotification: boolean;
     }) {
+      markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = subchannelIdRef.current;
       const messageIsForCurrentChannel =
         message.channelId === selectedChannelIdRef.current;
       const senderIsUser = message.userId === userId && !isNotification;
+      const activityChannel =
+        channelsObjRef.current?.[message.channelId] || channel;
+      if (activityChannel?.twoPeople) {
+        scheduleChatQuickAccessRefresh(message.channelId);
+      }
       if (isChessGameMessage(message)) {
         void refreshUnansweredChessShortcut();
       }
@@ -511,12 +897,12 @@ export default function useChatSocket({
       if (messageIsForCurrentChannel) {
         if (usingChatRef.current) {
           if (message.subchannelId === currentSubchannelId) {
-            maybeUpdateLastRead({
+            void maybeUpdateLastRead({
               channelId: message.channelId,
               subchannelId: message.subchannelId
             });
           } else {
-            maybeUpdateLastRead({ channelId: message.channelId });
+            void maybeUpdateLastRead({ channelId: message.channelId });
           }
         }
         onReceiveMessage({
@@ -533,6 +919,7 @@ export default function useChatSocket({
           channel,
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
+          isMyMessage: senderIsUser,
           newMembers
         });
       }
@@ -568,8 +955,8 @@ export default function useChatSocket({
           ? `${content.slice(0, 150)}…`
           : content
         : message.fileName
-        ? 'Sent an attachment'
-        : 'Sent a message';
+          ? 'Sent an attachment'
+          : 'Sent a message';
       const pathId = channelObj.pathId || channel?.pathId;
       const subchannelPath = message.subchannelId
         ? channelObj.subchannelObj?.[message.subchannelId]?.path
@@ -597,6 +984,7 @@ export default function useChatSocket({
       channelId: number;
       memberId: number;
     }) {
+      markUnreadActivity();
       onRemoveMemberFromChannel({ channelId, memberId });
       onSetGroupMemberState({
         groupId: channelId,
@@ -659,6 +1047,7 @@ export default function useChatSocket({
       topicObj: any;
       isFeatured: boolean;
     }) {
+      markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const messageIsForCurrentChannel =
         message.channelId === selectedChannelIdRef.current;
@@ -681,12 +1070,12 @@ export default function useChatSocket({
       if (messageIsForCurrentChannel) {
         if (usingChatRef.current) {
           if (message.subchannelId === subchannelIdRef.current) {
-            maybeUpdateLastRead({
+            void maybeUpdateLastRead({
               channelId: message.channelId,
               subchannelId: message.subchannelId
             });
           } else {
-            maybeUpdateLastRead({ channelId: message.channelId });
+            void maybeUpdateLastRead({ channelId: message.channelId });
           }
         }
         onReceiveMessage({
@@ -764,7 +1153,8 @@ export default function useChatSocket({
           channelsObjRef.current[normalizedChannelId] || {};
         if (!currentlySelectedChannel && !currentChannel.id) return;
         const activeSubchannelId = Number(subchannelIdRef.current || 0);
-        const activeVisibleChat = usingChatRef.current && pageVisibleRef.current;
+        const activeVisibleChat =
+          usingChatRef.current && pageVisibleRef.current;
         // Channel-level topic refreshes must not enter the root channel while the
         // user is away or in a subchannel; ENTER_CHANNEL would reset unrelated local state.
         const shouldEnterSelectedChannel =
@@ -792,7 +1182,7 @@ export default function useChatSocket({
         }
 
         if (shouldEnterSelectedChannel) {
-          onEnterChannelWithId(data);
+          onEnterChannelWithId({ data, userId });
         }
         const canonicalTopicObj = canonicalChannel.topicObj || {};
         const mergedTopicObj: Record<string, any> = {};
@@ -872,14 +1262,17 @@ export default function useChatSocket({
                     topicHistory: prunedTopicHistory,
                     currentTopicIndex: prunedCurrentTopicIndex
                   }
-                : {}),
+                : {})
           }
         });
         if (shouldEnterSelectedChannel && selectedTopicWasHidden) {
           navigate(`/chat/${canonicalChannel.pathId}`);
         }
       } catch (error) {
-        console.error('Failed to refresh channel after topic state change:', error);
+        console.error(
+          'Failed to refresh channel after topic state change:',
+          error
+        );
       }
     }
 
@@ -917,12 +1310,85 @@ export default function useChatSocket({
       }
     }
 
+    async function refreshChatQuickAccess({
+      includeCustom = false
+    }: { includeCustom?: boolean } = {}) {
+      if (includeCustom) clearScheduledChatQuickAccessRefresh();
+      await refreshCanonicalQuickAccess({ automaticOnly: !includeCustom });
+    }
+
+    function scheduleChatQuickAccessRefresh(
+      channelId: number,
+      { force = false }: { force?: boolean } = {}
+    ) {
+      if (quickAccessModeRef.current !== 'automatic') return;
+      if (!force && !automaticQuickAccessOrderCouldChange(channelId)) return;
+      const now = Date.now();
+      const cooldownRemaining = Math.max(
+        0,
+        quickAccessLastActivityRefreshAtRef.current +
+          QUICK_ACCESS_ACTIVITY_MIN_INTERVAL_MS -
+          now
+      );
+      if (quickAccessRefreshTimerRef.current) {
+        clearTimeout(quickAccessRefreshTimerRef.current);
+      }
+      quickAccessRefreshTimerRef.current = setTimeout(
+        flushScheduledChatQuickAccessRefresh,
+        Math.max(QUICK_ACCESS_ACTIVITY_DEBOUNCE_MS, cooldownRemaining)
+      );
+      if (!quickAccessRefreshMaxTimerRef.current) {
+        quickAccessRefreshMaxTimerRef.current = setTimeout(
+          flushScheduledChatQuickAccessRefresh,
+          Math.max(QUICK_ACCESS_ACTIVITY_MAX_WAIT_MS, cooldownRemaining)
+        );
+      }
+    }
+
+    function flushScheduledChatQuickAccessRefresh() {
+      clearScheduledChatQuickAccessRefresh();
+      quickAccessLastActivityRefreshAtRef.current = Date.now();
+      void refreshChatQuickAccess();
+    }
+
+    function automaticQuickAccessOrderCouldChange(channelId: number) {
+      const partners = quickAccessPartnersRef.current || [];
+      const activePartner = partners.find(
+        (partner: any) => Number(partner.channelId) === Number(channelId)
+      );
+      if (!activePartner) return true;
+      if (activePartner.isAi) return false;
+
+      const activeFavorited = Number(activePartner.favorited) === 1;
+      for (const partner of partners) {
+        if (partner.isAi) continue;
+        const partnerFavorited = Number(partner.favorited) === 1;
+        if (partnerFavorited === activeFavorited) {
+          return Number(partner.channelId) !== Number(channelId);
+        }
+      }
+      return true;
+    }
+
+    function clearScheduledChatQuickAccessRefresh() {
+      if (quickAccessRefreshTimerRef.current) {
+        clearTimeout(quickAccessRefreshTimerRef.current);
+        quickAccessRefreshTimerRef.current = null;
+      }
+      if (quickAccessRefreshMaxTimerRef.current) {
+        clearTimeout(quickAccessRefreshMaxTimerRef.current);
+        quickAccessRefreshMaxTimerRef.current = null;
+      }
+    }
+
     function isChessGameMessage(message: any) {
       if (!message?.isChessMsg || message?.omokState) return false;
       if (message.gameType === 'omok') return false;
       if (message.gameType === 'chess') return true;
       const content =
-        typeof message.content === 'string' ? message.content.toLowerCase() : '';
+        typeof message.content === 'string'
+          ? message.content.toLowerCase()
+          : '';
       return !content.includes('omok');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

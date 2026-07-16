@@ -3,12 +3,10 @@ import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import SearchInput from '~/components/Texts/SearchInput';
-import Loading from '~/components/Loading';
+import UserSearchInput from '~/components/UserSearchInput';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
-import { useSearch } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import AchievementBadges from '~/components/AchievementBadges';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -32,16 +30,9 @@ export default function AwardUserAchievementModal({
   );
   const [posting, setPosting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
-  const [searchText, setSearchText] = useState('');
-  const [searchedUsers, setSearchedUsers] = useState([]);
   const searchUsersWithAchievements = useAppContext(
     (v) => v.requestHelpers.searchUsersWithAchievements
   );
-  const { handleSearch, searching } = useSearch({
-    onSearch: handleUserSearch,
-    onClear: () => setSearchedUsers([]),
-    onSetSearchText: setSearchText
-  });
 
   return (
     <ErrorBoundary componentPath="Management/Main/Achievements/AwardUserAchievementModal">
@@ -63,22 +54,12 @@ export default function AwardUserAchievementModal({
               align-items: center;
             `}
           >
-            <SearchInput
+            <UserSearchInput
               autoFocus
-              onChange={handleSearch}
               onSelect={handleSelectUser}
               placeholder={`${searchUsersLabel}...`}
-              onClickOutSide={() => {
-                setSearchText('');
-                setSearchedUsers([]);
-              }}
-              renderItemLabel={(item) => (
-                <span>
-                  {item.username} <small>{`(${item.realName})`}</small>
-                </span>
-              )}
-              searchResults={searchedUsers}
-              value={searchText}
+              excludeUserIds={selectedUsers.map((user) => user.id)}
+              onSearch={searchUsersWithAchievements}
             />
             {selectedUsers.length > 0 && (
               <div
@@ -99,9 +80,11 @@ export default function AwardUserAchievementModal({
                         justify-content: space-between;
                         padding: 0.75rem 1rem;
                         margin-bottom: 0.5rem;
-                        background-color: ${hasAchievement
-                          ? Color.highlightGray()
-                          : Color.whiteGray()};
+                        background-color: ${
+                          hasAchievement
+                            ? Color.highlightGray()
+                            : Color.whiteGray()
+                        };
                         border: 1px solid var(--ui-border);
                         border-radius: 4px;
                         transition: all 0.2s ease-in-out;
@@ -206,9 +189,6 @@ export default function AwardUserAchievementModal({
                 No users selected
               </div>
             )}
-            {searching && (
-              <Loading style={{ position: 'absolute', marginTop: '1rem' }} />
-            )}
           </main>
           <footer>
             <Button onClick={onHide} variant="ghost">
@@ -235,8 +215,6 @@ export default function AwardUserAchievementModal({
 
   function handleSelectUser(user: any) {
     setSelectedUsers((users) => [...users, user]);
-    setSearchedUsers([]);
-    setSearchText('');
   }
 
   function handleRemoveUser(userId: number) {
@@ -262,14 +240,5 @@ export default function AwardUserAchievementModal({
         onHide();
       }
     }
-  }
-
-  async function handleUserSearch(text: string) {
-    const users = await searchUsersWithAchievements(text);
-    const filteredUsers = users.filter(
-      (user: any) =>
-        !selectedUsers.some((selectedUser: any) => selectedUser.id === user.id)
-    );
-    setSearchedUsers(filteredUsers);
   }
 }

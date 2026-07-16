@@ -18,6 +18,7 @@ import queryString from 'query-string';
 import { isMobile, isTablet, parseChannelPath } from '~/helpers';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { aiCardScrollHeight, vocabScrollHeight } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
@@ -41,6 +42,7 @@ import {
   CIEL_TWINKLE_ID
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
 
 const loadingPromises: { [channelId: string]: any } = {};
 const deviceIsMobile = isMobile(navigator);
@@ -73,6 +75,7 @@ export default function Main({
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const refreshChatQuickAccess = useChatQuickAccessRefresh();
   const lastChatPath = useKeyContext((v) => v.myState.lastChatPath);
   const navigate = useNavigate();
   const userObj = useAppContext((v) => v.user.state.userObj);
@@ -148,9 +151,6 @@ export default function Main({
   const startNewDMChannel = useAppContext(
     (v) => v.requestHelpers.startNewDMChannel
   );
-  const updateChatLastRead = useAppContext(
-    (v) => v.requestHelpers.updateChatLastRead
-  );
   const updateLastChannelId = useAppContext(
     (v) => v.requestHelpers.updateLastChannelId
   );
@@ -188,9 +188,6 @@ export default function Main({
   const lastSubchannelPaths = useChatContext(
     (v) => v.state.lastSubchannelPaths
   );
-  const updateSubchannelLastRead = useAppContext(
-    (v) => v.requestHelpers.updateSubchannelLastRead
-  );
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
@@ -217,9 +214,6 @@ export default function Main({
   const onAddBookmarkedMessage = useChatContext(
     (v) => v.actions.onAddBookmarkedMessage
   );
-  const onAddReactionToMessage = useChatContext(
-    (v) => v.actions.onAddReactionToMessage
-  );
   const onClearNumUnreads = useChatContext((v) => v.actions.onClearNumUnreads);
   const onClearSubjectSearchResults = useChatContext(
     (v) => v.actions.onClearSubjectSearchResults
@@ -244,7 +238,6 @@ export default function Main({
     (v) => v.actions.onUpdateLatestPathId
   );
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
-  const onHideChat = useChatContext((v) => v.actions.onHideChat);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onLoadChatSubject = useChatContext((v) => v.actions.onLoadChatSubject);
   const onLoadMoreMessages = useChatContext(
@@ -260,9 +253,6 @@ export default function Main({
   );
   const onReloadChatSubject = useChatContext(
     (v) => v.actions.onReloadChatSubject
-  );
-  const onRemoveReactionFromMessage = useChatContext(
-    (v) => v.actions.onRemoveReactionFromMessage
   );
   const onRemoveTempMessage = useChatContext(
     (v) => v.actions.onRemoveTempMessage
@@ -299,9 +289,6 @@ export default function Main({
   const onSetCreatingNewDMChannel = useChatContext(
     (v) => v.actions.onSetCreatingNewDMChannel
   );
-  const onSetFavoriteChannel = useChatContext(
-    (v) => v.actions.onSetFavoriteChannel
-  );
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
   const onSetSubchannel = useChatContext((v) => v.actions.onSetSubchannel);
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
@@ -319,9 +306,8 @@ export default function Main({
   const onUpdateVisitedChannel = useChatContext(
     (v) => v.actions.onUpdateVisitedChannel
   );
-  const onClearSubchannelUnreads = useChatContext(
-    (v) => v.actions.onClearSubchannelUnreads
-  );
+  const { reconcileChannelLastRead, reconcileSubchannelLastRead } =
+    useChatLastReadReconciler();
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
   const onUpdateLastChessMessageId = useChatContext(
     (v) => v.actions.onUpdateLastChessMessageId
@@ -475,16 +461,14 @@ export default function Main({
 
   useEffect(() => {
     if (selectedSubchannelId) {
-      updateSubchannelLastRead(selectedSubchannelId);
-      onClearSubchannelUnreads({
+      void reconcileSubchannelLastRead({
         channelId: selectedChannelId,
         subchannelId: selectedSubchannelId
       });
     }
     return () => {
       if (selectedSubchannelId) {
-        updateSubchannelLastRead(selectedSubchannelId);
-        onClearSubchannelUnreads({
+        void reconcileSubchannelLastRead({
           channelId: selectedChannelId,
           subchannelId: selectedSubchannelId
         });
@@ -788,7 +772,7 @@ export default function Main({
 
   useEffect(() => {
     if (chatReadyForCurrentUser && selectedChannelId) {
-      updateChatLastRead(selectedChannelId);
+      void reconcileChannelLastRead(selectedChannelId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatReadyForCurrentUser, selectedChannelId]);
@@ -831,7 +815,7 @@ export default function Main({
         profilePicUrl: string;
       };
     }) {
-      updateChatLastRead(channelId);
+      void reconcileChannelLastRead(channelId);
       const { userId, username, profilePicUrl } = leaver;
       onNotifyThatMemberLeftChannel({
         channelId,
@@ -901,12 +885,19 @@ export default function Main({
       isClosed: boolean;
     }) => {
       setCreatingChat(true);
-      const { message, members, pathId } = await createNewChat({
+      const { message, members, pathId, favoriteState } = await createNewChat({
         userId,
         channelName,
         isClosed
       });
-      onCreateNewChannel({ message, isClosed, members, pathId });
+      onCreateNewChannel({
+        userId,
+        message,
+        isClosed,
+        members,
+        pathId,
+        favoriteState
+      });
       socket.emit('join_chat_group', message.channelId);
       navigate(`/chat/${pathId}`);
       setCreateNewChatModalShown(false);
@@ -950,20 +941,18 @@ export default function Main({
           onClearSubjectSearchResults,
           onDeleteMessage,
           onAddBookmarkedMessage,
-          onAddReactionToMessage,
           onEditChannelSettings,
           onEditMessage,
           onEnterChannelWithId,
           onEnterComment,
           onGetRanks,
           onHideAttachment,
-          onHideChat,
           onLeaveChannel,
           onLoadChatSubject,
           onLoadMoreMessages,
           onReceiveMessageOnDifferentChannel,
           onReloadChatSubject,
-          onRemoveReactionFromMessage,
+          refreshChatQuickAccess,
           onRemoveTempMessage,
           onSaveMessage,
           onSearchChatSubject,
@@ -980,7 +969,6 @@ export default function Main({
           onSetIsEditing,
           onSetIsRespondingToSubject,
           onSetIsSearchActive,
-          onSetFavoriteChannel,
           onSetMediaStarted,
           onSetMessageState,
           onRegisterSaveScrollPositionForAll:
@@ -1190,7 +1178,8 @@ export default function Main({
     topicId?: string;
     isChannelChange?: boolean;
   }) {
-    if (!userIdRef.current || !pathId) {
+    const requestUserId = Number(userIdRef.current || 0);
+    if (!requestUserId || !pathId) {
       return;
     }
 
@@ -1199,7 +1188,9 @@ export default function Main({
     if (!channelVisited) {
       onUpdateVisitedChannel(channelId);
     }
-    const requestKey = `${channelId}-${subchannelPath || ''}-${topicId || ''}`;
+    const requestKey = `${requestUserId}:${channelId}-${
+      subchannelPath || ''
+    }-${topicId || ''}`;
 
     if (loadingPromises[requestKey]) {
       return loadingPromises[requestKey];
@@ -1208,6 +1199,7 @@ export default function Main({
     const isStale = () => {
       const curr = activeParamsRef.current;
       return (
+        Number(userIdRef.current || 0) !== requestUserId ||
         String(curr.pathId) !== String(pathId) ||
         curr.subchannelPath !== subchannelPath ||
         curr.topicId !== topicId
@@ -1241,7 +1233,7 @@ export default function Main({
                 },
                 newMembers: [
                   {
-                    id: userIdRef.current,
+                    id: requestUserId,
                     username: usernameRef.current,
                     profilePicUrl: profilePicUrlRef.current
                   }
@@ -1368,7 +1360,7 @@ export default function Main({
           return;
         }
 
-        onEnterChannelWithId(data);
+        onEnterChannelWithId({ data, userId: requestUserId });
         for (const member of data?.channel?.members || []) {
           onSetUserState({
             userId: member.id,

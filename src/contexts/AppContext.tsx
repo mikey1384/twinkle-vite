@@ -151,7 +151,12 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
       return Promise.reject({
         status: 500,
-        message: getErrorMessage(error)
+        message: getErrorMessage(error),
+        // Preserve whether the server produced an HTTP response. Callers with
+        // durable idempotency keys may safely retry an unknown-outcome
+        // transport failure, while still treating a real 5xx response as a
+        // completed server response with an application-level failure.
+        isTransportError: true
       });
     },
     [userDispatch]

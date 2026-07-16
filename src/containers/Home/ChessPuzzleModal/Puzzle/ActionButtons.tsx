@@ -13,10 +13,9 @@ export default function ActionButtons({
   onNewPuzzleClick,
   onResetPosition,
   onGiveUp,
-  onLevelChange,
   levelsLoading,
   onEnterInteractiveAnalysis,
-  onSetInTimeAttack,
+  onStartLevel,
   onShowSolution
 }: {
   inTimeAttack: boolean;
@@ -27,15 +26,13 @@ export default function ActionButtons({
   onNewPuzzleClick: () => void;
   onResetPosition: () => void;
   onGiveUp?: () => void;
-  onLevelChange: (level: number) => void;
   levelsLoading: boolean;
   onEnterInteractiveAnalysis?: () => void;
-  onSetInTimeAttack: (v: boolean) => void;
+  onStartLevel: (level: number) => void;
   onShowSolution?: () => void;
 }) {
   const startUnlockedLevel = () => {
-    onSetInTimeAttack(false);
-    onLevelChange(maxLevelUnlocked);
+    onStartLevel(maxLevelUnlocked);
   };
 
   const AnalysisButton = () =>
