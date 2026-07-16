@@ -34,6 +34,8 @@ export interface RequestMeta {
   allowExtendedTimeout?: boolean;
   priority?: 'low' | 'normal' | 'high' | 'bulk';
   enforceTimeout?: boolean;
+  maxRetries?: number;
+  totalTimeoutMs?: number;
 }
 
 export type ExtendedAxiosRequestConfig<T = any> = AxiosRequestConfig<T> & {
@@ -46,6 +48,8 @@ interface ResolvedRequestContext {
   enableProgressGuard: boolean;
   stallTimeoutMs?: number;
   allowExtendedTimeout: boolean;
+  maxRetries: number;
+  totalTimeoutMs?: number;
 }
 
 interface RequestSchedulerOptions {
@@ -143,7 +147,7 @@ class RequestChannel {
       }
     }
 
-    const promise = this.executeWithRetries(baseConfig, context, 0).finally(
+    const promise = this.executeWithinTotalTimeout(baseConfig, context).finally(
       () => {
         if (collapseKey) {
           this.inflight.delete(collapseKey);
@@ -156,6 +160,38 @@ class RequestChannel {
     }
 
     return promise;
+  }
+
+  private executeWithinTotalTimeout<T>(
+    baseConfig: ExtendedAxiosRequestConfig<T>,
+    context: ResolvedRequestContext
+  ): Promise<AxiosResponse<T>> {
+    if (!context.totalTimeoutMs) {
+      return this.executeWithRetries(baseConfig, context, 0);
+    }
+
+    const totalTimeoutController = new AbortController();
+    const merged = mergeSignals(baseConfig.signal, totalTimeoutController);
+    const timeoutError = new CanceledError('total-timeout');
+    const requestConfig: ExtendedAxiosRequestConfig<T> = {
+      ...baseConfig,
+      signal: merged.signal
+    };
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        totalTimeoutController.abort(timeoutError);
+        reject(timeoutError);
+      }, context.totalTimeoutMs);
+    });
+
+    return Promise.race([
+      this.executeWithRetries(requestConfig, context, 0),
+      timeoutPromise
+    ]).finally(() => {
+      if (timer) clearTimeout(timer);
+      merged.cleanup?.();
+    });
   }
 
   private computeDefaultCollapseKey(config: AxiosRequestConfig) {
@@ -171,12 +207,13 @@ class RequestChannel {
     context: ResolvedRequestContext,
     attempt: number
   ): Promise<AxiosResponse<T>> {
+    throwIfRequestAborted(baseConfig.signal);
     if (this.pauseUntil && Date.now() < this.pauseUntil) {
-      await sleep(this.pauseUntil - Date.now());
+      await sleep(this.pauseUntil - Date.now(), baseConfig.signal);
     }
 
     while (!this.breakerAllowsAttempt()) {
-      await sleep(RequestChannel.BREAKER.PROBE_EVERY_MS);
+      await sleep(RequestChannel.BREAKER.PROBE_EVERY_MS, baseConfig.signal);
     }
 
     const config = cloneConfig(baseConfig);
@@ -210,38 +247,54 @@ class RequestChannel {
     }
 
     try {
-      const response = await this.limiter(async () => {
-        if (timeoutMs > 0) {
-          const timer = setTimeout(() => {
-            controller.abort(new CanceledError('timeout'));
-          }, timeoutMs);
-          clearTimeoutFn = () => clearTimeout(timer);
-        }
-        const httpStartTime = Date.now();
-
-        try {
-          const result = await axios.request<T>(config);
-
-          if (this.onLatencyMeasured) {
-            this.onLatencyMeasured(Date.now() - httpStartTime);
+      const response = await raceWithRequestAbort(
+        this.limiter(async () => {
+          throwIfRequestAborted(baseConfig.signal);
+          if (timeoutMs > 0) {
+            const timer = setTimeout(() => {
+              controller.abort(new CanceledError('timeout'));
+            }, timeoutMs);
+            clearTimeoutFn = () => clearTimeout(timer);
           }
+          const httpStartTime = Date.now();
 
-          return result;
-        } catch (err) {
-          if (
-            this.onLatencyMeasured &&
-            isTimeoutCancellation(err as AxiosError)
-          ) {
-            this.onLatencyMeasured(Date.now() - httpStartTime);
+          try {
+            const result = await axios.request<T>(config);
+
+            if (this.onLatencyMeasured) {
+              this.onLatencyMeasured(Date.now() - httpStartTime);
+            }
+
+            return result;
+          } catch (err) {
+            if (
+              this.onLatencyMeasured &&
+              (isTimeoutCancellation(err as AxiosError) ||
+                isTimeoutAbortSignal(controller.signal))
+            ) {
+              this.onLatencyMeasured(Date.now() - httpStartTime);
+            }
+            throw err;
           }
-          throw err;
-        }
-      });
+        }),
+        baseConfig.signal
+      );
 
       this.onSuccessfulProbe();
       return response;
     } catch (error) {
-      if (!shouldRetry(error, policy, attempt, method)) {
+      if ((baseConfig.signal as any)?.aborted) {
+        throw getRequestAbortError(baseConfig.signal);
+      }
+      if (
+        !shouldRetry(
+          error,
+          context.maxRetries,
+          attempt,
+          method,
+          isTimeoutAbortSignal(controller.signal)
+        )
+      ) {
         throw error;
       }
       this.noteRetryableError();
@@ -251,7 +304,7 @@ class RequestChannel {
         typeof retryAfterMs === 'number'
           ? retryAfterMs
           : computeBackoff(policy, attempt);
-      await sleep(delayMs);
+      await sleep(delayMs, baseConfig.signal);
       return this.executeWithRetries(baseConfig, context, attempt + 1);
     } finally {
       if (removeGuard) removeGuard();
@@ -542,15 +595,34 @@ export class RequestScheduler {
       config.meta?.allowExtendedTimeout ??
       policy.allowExtendedTimeout ??
       (isChatEndpoint && this.networkQuality === 'poor');
+    const totalTimeoutMs = getPositiveFiniteNumber(
+      config.meta?.totalTimeoutMs
+    );
+    const maxRetries = getNonNegativeInteger(
+      config.meta?.maxRetries,
+      policy.maxRetries
+    );
 
     return {
       channel,
       collapseKey,
       enableProgressGuard,
       stallTimeoutMs,
-      allowExtendedTimeout: Boolean(allowExtendedTimeout)
+      allowExtendedTimeout: Boolean(allowExtendedTimeout),
+      maxRetries,
+      totalTimeoutMs
     };
   }
+}
+
+function getPositiveFiniteNumber(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : undefined;
+}
+
+function getNonNegativeInteger(value: unknown, fallback: number) {
+  const number = Number(value);
+  return Number.isInteger(number) && number >= 0 ? number : fallback;
 }
 
 function computeTimeout(
@@ -594,17 +666,23 @@ function parseRetryAfter(error?: AxiosError): number | null {
 
 function shouldRetry(
   error: unknown,
-  policy: RequestPolicy,
+  maxRetries: number,
   attempt: number,
-  method: string
+  method: string,
+  attemptTimedOut = false
 ): boolean {
   const axiosError = error as AxiosError;
 
-  const remaining = policy.maxRetries - attempt;
+  const remaining = maxRetries - attempt;
   if (remaining <= 0) return false;
 
   const idempotent = ['get', 'head', 'options'].includes(method);
   if (!idempotent) return false;
+
+  // Browser Axios adapters often replace AbortSignal.reason with a generic
+  // "canceled" error. The scheduler owns this controller, so its reason is the
+  // reliable source for distinguishing a retryable timeout from user cancel.
+  if (attemptTimedOut) return true;
 
   if (axios.isCancel?.(axiosError)) {
     if (isTimeoutCancellation(axiosError)) {
@@ -624,11 +702,56 @@ function shouldRetry(
   return false;
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+type AnyAbortSignal = AbortSignal | GenericAbortSignal | undefined;
+
+function sleep(ms: number, signal?: AnyAbortSignal) {
+  throwIfRequestAborted(signal);
+  if (!signal?.addEventListener) {
+    return new Promise<void>((resolve) => setTimeout(resolve, ms));
+  }
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal.removeEventListener?.('abort', handleAbort as any);
+      resolve();
+    }, ms);
+    function handleAbort() {
+      clearTimeout(timer);
+      signal?.removeEventListener?.('abort', handleAbort as any);
+      reject(getRequestAbortError(signal));
+    }
+    signal.addEventListener?.('abort', handleAbort as any, { once: true });
+  });
 }
 
-type AnyAbortSignal = AbortSignal | GenericAbortSignal | undefined;
+function getRequestAbortError(signal?: AnyAbortSignal) {
+  const reason = (signal as any)?.reason;
+  return reason instanceof Error ? reason : new CanceledError('canceled');
+}
+
+function throwIfRequestAborted(signal?: AnyAbortSignal) {
+  if ((signal as any)?.aborted) {
+    throw getRequestAbortError(signal);
+  }
+}
+
+function raceWithRequestAbort<T>(
+  promise: Promise<T>,
+  signal?: AnyAbortSignal
+): Promise<T> {
+  throwIfRequestAborted(signal);
+  if (!signal?.addEventListener) return promise;
+
+  let handleAbort: (() => void) | null = null;
+  const abortPromise = new Promise<never>((_, reject) => {
+    handleAbort = () => reject(getRequestAbortError(signal));
+    signal.addEventListener?.('abort', handleAbort, { once: true });
+  });
+  return Promise.race([promise, abortPromise]).finally(() => {
+    if (handleAbort) {
+      signal.removeEventListener?.('abort', handleAbort);
+    }
+  });
+}
 
 function isTimeoutCancellation(error: AxiosError) {
   const message = (error?.message || '').toLowerCase();
@@ -648,6 +771,11 @@ function isTimeoutCancellation(error: AxiosError) {
     }
   }
   return false;
+}
+
+function isTimeoutAbortSignal(signal: AbortSignal) {
+  if (!signal.aborted) return false;
+  return isTimeoutCancellation(getRequestAbortError(signal) as AxiosError);
 }
 
 function mergeSignals(existing: AnyAbortSignal, controller: AbortController) {

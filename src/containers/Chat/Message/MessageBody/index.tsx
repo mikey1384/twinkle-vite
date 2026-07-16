@@ -14,8 +14,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { socket } from '~/constants/sockets/api';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useToast } from '~/contexts/Toast';
 import { useMyLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { LOADING_INDICATOR_GRACE_PERIOD_MS } from '~/constants/ui';
 import { css } from '@emotion/css';
 import { isSupermod } from '~/helpers';
 import {
@@ -41,6 +43,10 @@ import TransferMessage from './TransferMessage';
 import type { MessageBodyProps } from './types';
 import useOptimisticSave from './hooks/useOptimisticSave';
 import WordleResult from './WordleResult';
+import type {
+  PendingReactionMutation,
+  PendingReactionMutations
+} from './Reactions/types';
 
 function MessageBody({
   channelId,
@@ -133,10 +139,17 @@ function MessageBody({
   const onApplyCanonicalChatReaction = useChatContext(
     (v) => v.actions.onApplyCanonicalChatReaction
   );
+  const showToast = useToast();
   const { canDelete, canEdit, canReward } = useMyLevel();
   const spoilerClickedRef = useRef(false);
+  const pendingReactionMutationsRef = useRef<PendingReactionMutations>({});
+  const pendingReactionIndicatorTimersRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);
+  const [visiblePendingReactionMutations, setVisiblePendingReactionMutations] =
+    useState<PendingReactionMutations>({});
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
   const extractedUrl = useMemo(() => fetchURLFromText(content), [content]);
 
@@ -183,6 +196,16 @@ function MessageBody({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLastMsg, isNewMessage, userIsUploader]);
+
+  useEffect(() => {
+    const pendingReactionIndicatorTimers =
+      pendingReactionIndicatorTimersRef.current;
+    return () => {
+      for (const timer of Object.values(pendingReactionIndicatorTimers)) {
+        clearTimeout(timer);
+      }
+    };
+  }, []);
 
   const userCanDeleteThis = useMemo(() => {
     if (isDrawOffer) return false;
@@ -595,7 +618,7 @@ function MessageBody({
       reactionStateRevision <= 0 ||
       !Array.isArray(response?.reactions)
     ) {
-      return;
+      return false;
     }
     onApplyCanonicalChatReaction({
       update: response,
@@ -610,40 +633,22 @@ function MessageBody({
       response.twoPeople &&
       response.channelActivity?.changed;
     if (dmRecencyChanged) {
-      await refreshChatQuickAccess({ automaticOnly: true });
+      try {
+        await refreshChatQuickAccess({ automaticOnly: true });
+      } catch (error) {
+        console.error(error);
+      }
     }
+    return true;
   }
 
-  const handleAddReaction = useCallback(
-    async (reaction: any) => {
-      // Both accepted paths are canonical: sockets deliver the mutation to
-      // every listener, while this writer-backed HTTP snapshot covers
-      // idempotent responses and missed broadcasts.
-      const ownerUserId = myId;
-      const response = await postChatReaction({ messageId, reaction });
-      await reconcileCanonicalReactionResponse({
-        response,
-        ownerUserId
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [messageId, myId]
-  );
+  async function handleAddReaction(reaction: string) {
+    await submitReactionMutation({ mutation: 'add', reaction });
+  }
 
-  const handleRemoveReaction = useCallback(
-    async (reaction: any) => {
-      // The HTTP response is a writer-backed full snapshot and carries the
-      // same recency rollback metadata as the socket broadcast.
-      const ownerUserId = myId;
-      const response = await removeChatReaction({ messageId, reaction });
-      await reconcileCanonicalReactionResponse({
-        response,
-        ownerUserId
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [messageId, myId]
-  );
+  async function handleRemoveReaction(reaction: string) {
+    await submitReactionMutation({ mutation: 'remove', reaction });
+  }
 
   if (isTopicPostNotification) {
     return (
@@ -865,6 +870,7 @@ function MessageBody({
               onSetChessTarget={onSetChessTarget}
               onShowSubjectMsgsModal={onShowSubjectMsgsModal}
               partner={partner}
+              pendingReactionMutations={visiblePendingReactionMutations}
               reactionsMenuShown={reactionsMenuShown}
               recentThumbUrl={recentThumbUrl}
               socketConnected={socketConnected}
@@ -960,6 +966,102 @@ function MessageBody({
     } catch (error) {
       console.error(error);
     }
+  }
+
+  async function submitReactionMutation({
+    mutation,
+    reaction
+  }: {
+    mutation: PendingReactionMutation;
+    reaction: string;
+  }) {
+    if (!messageId || !myId || pendingReactionMutationsRef.current[reaction]) {
+      return;
+    }
+
+    const userAlreadyReacted = (message.reactions || []).some(
+      (messageReaction: { type?: string; userId?: number }) =>
+        messageReaction.type === reaction &&
+        Number(messageReaction.userId) === Number(myId)
+    );
+    if (
+      (mutation === 'add' && userAlreadyReacted) ||
+      (mutation === 'remove' && !userAlreadyReacted)
+    ) {
+      return;
+    }
+
+    setPendingReactionMutation(reaction, mutation);
+    try {
+      // Track the request immediately, but only reveal its spinner after the
+      // shared grace period. Reaction membership and counts stay unchanged
+      // until this writer-backed snapshot supplies canonical state.
+      const ownerUserId = myId;
+      const response =
+        mutation === 'add'
+          ? await postChatReaction({ messageId, reaction })
+          : await removeChatReaction({ messageId, reaction });
+      const applied = await reconcileCanonicalReactionResponse({
+        response,
+        ownerUserId
+      });
+      if (!applied) {
+        if (response?.success === true) {
+          // A pre-revision worker confirms only that the write succeeded. Its
+          // legacy socket event is reconciled separately into canonical state;
+          // do not report that confirmed write as a failure or synthesize it.
+          return;
+        }
+        throw new Error('Invalid canonical chat reaction response');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast({
+        message: 'Couldn’t confirm that reaction. Please try again.'
+      });
+    } finally {
+      setPendingReactionMutation(reaction, null);
+    }
+  }
+
+  function setPendingReactionMutation(
+    reaction: string,
+    mutation: PendingReactionMutation | null
+  ) {
+    const nextPendingReactionMutations = {
+      ...pendingReactionMutationsRef.current
+    };
+    if (mutation) {
+      nextPendingReactionMutations[reaction] = mutation;
+    } else {
+      delete nextPendingReactionMutations[reaction];
+    }
+    pendingReactionMutationsRef.current = nextPendingReactionMutations;
+
+    const existingTimer = pendingReactionIndicatorTimersRef.current[reaction];
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      delete pendingReactionIndicatorTimersRef.current[reaction];
+    }
+
+    if (mutation) {
+      pendingReactionIndicatorTimersRef.current[reaction] = setTimeout(() => {
+        delete pendingReactionIndicatorTimersRef.current[reaction];
+        if (pendingReactionMutationsRef.current[reaction] !== mutation) return;
+        setVisiblePendingReactionMutations((current) => ({
+          ...current,
+          [reaction]: mutation
+        }));
+      }, LOADING_INDICATOR_GRACE_PERIOD_MS);
+      return;
+    }
+
+    setVisiblePendingReactionMutations((current) => {
+      if (!current[reaction]) return current;
+      const nextVisiblePendingReactionMutations = { ...current };
+      delete nextVisiblePendingReactionMutations[reaction];
+      return nextVisiblePendingReactionMutations;
+    });
   }
 }
 

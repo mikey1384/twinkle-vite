@@ -120,8 +120,7 @@ function SubChannels({
           onClick={() =>
             onUpdateLastSubchannelPath({
               channelId: selectedChannelId,
-              path: '',
-              currentSubchannelPath: subchannelPath
+              path: ''
             })
           }
           to={`/chat/${currentPathId}`}

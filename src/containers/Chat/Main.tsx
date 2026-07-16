@@ -460,22 +460,34 @@ export default function Main({
   }, [chatType, userId]);
 
   useEffect(() => {
-    if (selectedSubchannelId) {
+    if (!chatReadyForCurrentUser || !selectedChannelId) return;
+    const routedChannelId =
+      currentPathId && !isNaN(Number(currentPathId))
+        ? parseChannelPath(currentPathId)
+        : 0;
+    if (routedChannelId !== selectedChannelId) return;
+
+    if (subchannelPath) {
+      if (!selectedSubchannelId) return;
       void reconcileSubchannelLastRead({
         channelId: selectedChannelId,
         subchannelId: selectedSubchannelId
       });
+      return;
     }
-    return () => {
-      if (selectedSubchannelId) {
-        void reconcileSubchannelLastRead({
-          channelId: selectedChannelId,
-          subchannelId: selectedSubchannelId
-        });
-      }
-    };
+
+    // selectedSubchannelId is synchronized from the routed path. Wait for an
+    // old subchannel selection to clear before marking Main as read.
+    if (selectedSubchannelId) return;
+    void reconcileChannelLastRead(selectedChannelId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, selectedSubchannelId]);
+  }, [
+    chatReadyForCurrentUser,
+    currentPathId,
+    selectedChannelId,
+    selectedSubchannelId,
+    subchannelPath
+  ]);
 
   useEffect(() => {
     if (currentPathId && !isNaN(Number(currentPathId))) {
@@ -771,13 +783,6 @@ export default function Main({
   }, [chatType]);
 
   useEffect(() => {
-    if (chatReadyForCurrentUser && selectedChannelId) {
-      void reconcileChannelLastRead(selectedChannelId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatReadyForCurrentUser, selectedChannelId]);
-
-  useEffect(() => {
     if (pageVisible) {
       onClearNumUnreads();
     }
@@ -815,7 +820,13 @@ export default function Main({
         profilePicUrl: string;
       };
     }) {
-      void reconcileChannelLastRead(channelId);
+      if (
+        pageVisible &&
+        channelId === selectedChannelId &&
+        !selectedSubchannelId
+      ) {
+        void reconcileChannelLastRead(channelId);
+      }
       const { userId, username, profilePicUrl } = leaver;
       onNotifyThatMemberLeftChannel({
         channelId,

@@ -26,7 +26,6 @@ export default function Channel({
     members,
     numUnreads,
     settings = {},
-    lastUnreadUserId,
     partnerUsername,
     pathId,
     subchannelObj = {}
@@ -53,7 +52,6 @@ export default function Channel({
     members?: { id: number; username: string }[];
     numUnreads?: number;
     settings?: Record<string, any>;
-    lastUnreadUserId?: number;
     partnerUsername?: string;
     pathId?: number;
     subchannelObj?: object;
@@ -140,7 +138,7 @@ export default function Channel({
   }, [members, twoPeople, userId]);
 
   const totalNumUnreads = useMemo(() => {
-    let result = Number(numUnreads);
+    let result = Number(numUnreads || 0);
     for (const subchannel of Object.values(subchannelObj)) {
       result += Number(subchannel.numUnreads || 0);
     }
@@ -384,28 +382,9 @@ export default function Channel({
     selectedChannelId
   ]);
 
-  const lastSenderId = useMemo(
-    () => (lastMessage as any)?.sender?.id ?? (lastMessage as any)?.userId,
-    [lastMessage]
-  );
-
-  const lastUnreadSenderId = useMemo(() => {
-    return typeof lastUnreadUserId === 'number' ? lastUnreadUserId : lastSenderId;
-  }, [lastSenderId, lastUnreadUserId]);
-
   const badgeShown = useMemo(() => {
-    return (
-      channelId !== selectedChannelId &&
-      totalNumUnreads > 0 &&
-      lastUnreadSenderId !== userId
-    );
-  }, [
-    channelId,
-    lastUnreadSenderId,
-    totalNumUnreads,
-    selectedChannelId,
-    userId
-  ]);
+    return channelId !== selectedChannelId && totalNumUnreads > 0;
+  }, [channelId, totalNumUnreads, selectedChannelId]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">

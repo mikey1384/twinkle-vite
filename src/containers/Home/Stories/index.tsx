@@ -23,17 +23,15 @@ import { useScrollAnchor } from './hooks/useScrollAnchor';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { HOME_FEED_PERFORMANCE_FORCE_KEY } from '~/constants/defaultValues';
 import { resetAppShellScroll } from '~/helpers/appShellScroll';
+import type {
+  HomeFeedPage,
+  HomeFeedPaginationCursor,
+  HomeFeedResponseCursor
+} from '~/contexts/Home/types';
 
 const hiThereLabel = 'Hi there!';
 const HOME_FEED_CLIENT_PERFORMANCE_DEFAULT_PROD_SAMPLE_RATE = 0.02;
 const homeFeedNewPostsScrollResetSuppressionMs = 1200;
-// If a load-more request neither resolves nor rejects within this window (e.g. a
-// page that stalls behind the request scheduler's retry/circuit-breaker logic),
-// release the in-flight guard so the button and scroll-to-bottom re-arm instead
-// of wedging the feed until a full page reload. The request itself is not
-// aborted; latest-request bookkeeping (loadMoreRequestCountRef) keeps a late
-// straggler from clobbering newer state.
-const HOME_FEED_LOAD_MORE_WATCHDOG_MS = 20000;
 
 const categoryObj: Record<string, any> = {
   uploads: {
@@ -56,6 +54,108 @@ const categoryObj: Record<string, any> = {
 };
 
 type HomeFeedLoadMoreSource = 'button' | 'scroll';
+
+interface HomeFeedLoadMoreFeedback {
+  message: string;
+  recovery: 'continue' | 'refresh' | 'reset';
+  tone: 'error' | 'notice';
+}
+
+function getCanonicalHomeFeedPage(data: unknown): HomeFeedPage {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    !Array.isArray((data as HomeFeedPage).feeds) ||
+    typeof (data as HomeFeedPage).loadMoreButton !== 'boolean'
+  ) {
+    throw new Error('Invalid home feed response');
+  }
+
+  const page = data as HomeFeedPage;
+  if (!Object.prototype.hasOwnProperty.call(page, 'nextCursor')) {
+    // Transitional compatibility while API instances roll over. The fallback
+    // still comes from confirmed response rows, never locally guessed state.
+    return page;
+  }
+  if (page.nextCursor === null) return page;
+  const nextCursor = normalizeHomeFeedResponseCursor(page.nextCursor);
+  if (!nextCursor) {
+    throw new Error('Invalid home feed pagination cursor');
+  }
+  return { ...page, nextCursor };
+}
+
+function normalizeHomeFeedResponseCursor(
+  value: unknown
+): HomeFeedResponseCursor | null {
+  if (!value || typeof value !== 'object') return null;
+  const cursor = value as HomeFeedResponseCursor;
+  const feedId = Number(cursor.feedId);
+  const lastRewardLevel = Number(cursor.lastRewardLevel);
+  const lastTimeStamp = Number(cursor.lastTimeStamp);
+  const lastViewDuration = Number(cursor.lastViewDuration);
+  if (
+    !Number.isFinite(feedId) ||
+    feedId <= 0 ||
+    !Number.isFinite(lastRewardLevel) ||
+    !Number.isFinite(lastTimeStamp) ||
+    !Number.isFinite(lastViewDuration)
+  ) {
+    return null;
+  }
+  return { feedId, lastRewardLevel, lastTimeStamp, lastViewDuration };
+}
+
+function getHomeFeedPaginationScopeKey({
+  category,
+  displayOrder,
+  orderBy,
+  subFilter
+}: {
+  category: string;
+  displayOrder: string;
+  orderBy: string;
+  subFilter: string | null;
+}) {
+  return `${category}:${subFilter || ''}:${displayOrder}:${orderBy}`;
+}
+
+function getHomeFeedPaginationCursor({
+  feeds,
+  filter,
+  orderBy,
+  page,
+  scopeKey
+}: {
+  feeds: any[];
+  filter: string;
+  orderBy: string;
+  page?: HomeFeedPage;
+  scopeKey: string;
+}): HomeFeedPaginationCursor | null {
+  if (page && Object.prototype.hasOwnProperty.call(page, 'nextCursor')) {
+    const responseCursor = normalizeHomeFeedResponseCursor(page.nextCursor);
+    return responseCursor ? { ...responseCursor, scopeKey } : null;
+  }
+
+  const lastFeed = feeds[feeds.length - 1];
+  const feedId = Number(lastFeed?.feedId || 0);
+  if (feedId <= 0) return null;
+  const lastTimeStamp = Number(
+    filter === 'watched'
+      ? lastFeed?.viewTimeStamp ?? 0
+      : orderBy === 'timeStamp'
+      ? lastFeed?.timeStamp ?? lastFeed?.lastInteraction ?? 0
+      : lastFeed?.lastInteraction ?? lastFeed?.timeStamp ?? 0
+  );
+  return {
+    feedId,
+    lastRewardLevel: Number(lastFeed?.rewardLevel || 0),
+    lastTimeStamp: Number.isFinite(lastTimeStamp) ? lastTimeStamp : 0,
+    lastViewDuration: Number(lastFeed?.totalViewDuration || 0),
+    scopeKey
+  };
+}
 
 function getHomeFeedPerformanceNow() {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -185,6 +285,8 @@ export default function Stories() {
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const alertRole = useRoleColor('alert', { fallback: 'gold' });
   const alertColorKey = alertRole.colorKey;
+  const warningRole = useRoleColor('warning', { fallback: 'redOrange' });
+  const warningColorKey = warningRole.colorKey;
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
   const onResetNumNewPosts = useNotiContext(
     (v) => v.actions.onResetNumNewPosts
@@ -201,6 +303,9 @@ export default function Stories() {
   );
   const category = useHomeContext((v) => v.state.category);
   const displayOrder = useHomeContext((v) => v.state.displayOrder);
+  const feedPaginationCursor = useHomeContext(
+    (v) => v.state.feedPaginationCursor
+  ) as HomeFeedPaginationCursor | null;
   const feeds = useHomeContext((v) => v.state.feeds);
   const loadMoreButton = useHomeContext((v) => v.state.loadMoreButton);
   const loaded = useHomeContext((v) => v.state.loaded);
@@ -223,6 +328,8 @@ export default function Stories() {
   const [loadingFilteredFeeds, setLoadingFilteredFeeds] = useState(false);
   const [loadingCategorizedFeeds, setLoadingCategorizedFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreFeedback, setLoadMoreFeedback] =
+    useState<HomeFeedLoadMoreFeedback | null>(null);
   const [loadingNewFeeds, setLoadingNewFeeds] = useState(false);
   const categoryRef: React.RefObject<any> = useRef(null);
   const ContainerRef = useRef(null);
@@ -231,8 +338,8 @@ export default function Stories() {
   const displayOrderRef = useRef(displayOrder);
   const numNewPostsRef = useRef(numNewPosts);
   const mountedRef = useRef(true);
+  const loadMoreGenerationRef = useRef(0);
   const loadMoreRequestCountRef = useRef(0);
-  const loadMoreWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadMoreAbortRef = useRef<AbortController | null>(null);
 
   const loadingPosts = useMemo(
@@ -280,13 +387,11 @@ export default function Stories() {
   }, [numNewPosts]);
 
   useEffect(() => {
-    if (loadMoreWatchdogRef.current) {
-      clearTimeout(loadMoreWatchdogRef.current);
-      loadMoreWatchdogRef.current = null;
-    }
     loadMoreAbortRef.current?.abort();
     loadMoreAbortRef.current = null;
+    loadMoreGenerationRef.current += 1;
     loadingMoreRef.current = false;
+    setLoadMoreFeedback(null);
     setLoadingFeeds(false);
     setLoadingFilteredFeeds(false);
     setLoadingCategorizedFeeds(false);
@@ -295,7 +400,11 @@ export default function Stories() {
   }, [userId]);
 
   useInfiniteScroll({
-    scrollable: feeds?.length > 0 && loadMoreButton && !loadingMoreRef.current,
+    scrollable:
+      feeds?.length > 0 &&
+      loadMoreButton &&
+      !loadingMoreRef.current &&
+      !loadMoreFeedback,
     feedsLength: feeds?.length,
     onScrollToBottom: () => handleLoadMoreFeeds('scroll')
   });
@@ -333,7 +442,13 @@ export default function Stories() {
 
         const { data } = await loadFeeds({ isRecommended: true });
         if (!shouldIgnoreStoryRequest(requestUserId)) {
-          onLoadFeeds(data);
+          applyCanonicalHomeFeedPage({
+            data,
+            category: 'recommended',
+            displayOrder: 'desc',
+            orderBy: categoryObj.recommended.orderBy,
+            subFilter: 'all'
+          });
         }
       } catch (error: any) {
         if (shouldIgnoreStoryRequest(requestUserId)) return;
@@ -358,10 +473,6 @@ export default function Stories() {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      if (loadMoreWatchdogRef.current) {
-        clearTimeout(loadMoreWatchdogRef.current);
-        loadMoreWatchdogRef.current = null;
-      }
       loadMoreAbortRef.current?.abort();
       loadMoreAbortRef.current = null;
     };
@@ -490,9 +601,21 @@ export default function Stories() {
                 )}
                 {loadMoreButton ? (
                   <LoadMoreButton
+                    color={
+                      loadMoreFeedback?.tone === 'notice'
+                        ? alertColorKey
+                        : loadMoreFeedback
+                        ? warningColorKey
+                        : undefined
+                    }
+                    label={loadMoreFeedback?.message}
                     style={{ marginTop: '0.6rem' }}
-                    onClick={() => handleLoadMoreFeeds('button')}
-                    loading={loadingMore}
+                    onClick={handleLoadMoreButtonClick}
+                    loading={
+                      loadingMore ||
+                      (loadMoreFeedback?.recovery === 'refresh' &&
+                        loadingNewFeeds)
+                    }
                     filled
                   />
                 ) : null}
@@ -541,7 +664,13 @@ export default function Stories() {
           subFilterRef.current === newFilter &&
           categoryRef.current === 'uploads'
         ) {
-          onLoadFeeds(data);
+          applyCanonicalHomeFeedPage({
+            data,
+            category: 'uploads',
+            displayOrder: 'desc',
+            orderBy: categoryObj.uploads.orderBy,
+            subFilter: filter
+          });
           onSetDisplayOrder('desc');
           success = true;
         }
@@ -564,22 +693,42 @@ export default function Stories() {
   }
 
   async function handleLoadMoreFeeds(source: HomeFeedLoadMoreSource) {
+    if (source === 'scroll' && loadMoreFeedback) return;
     const requestUserId = userId;
     const requestCategory = category;
     const requestSubFilter = subFilter;
     const requestDisplayOrder = displayOrder;
     const requestCategoryConfig = categoryObj[requestCategory];
+    if (!requestCategoryConfig) {
+      setLoadMoreFeedback({
+        message: 'Reload Recommended Feed',
+        recovery: 'reset',
+        tone: 'error'
+      });
+      return;
+    }
     const requestFilter =
       requestCategory === 'uploads'
-        ? requestSubFilter
+        ? requestSubFilter || 'all'
         : requestCategoryConfig.filter;
     const requestOrderBy = requestCategoryConfig.orderBy;
     const requestIsRecommended = requestCategoryConfig.isRecommended;
     const feedsBeforeRequest = feeds || [];
-    const lastFeedId =
-      feedsBeforeRequest.length > 0
-        ? feedsBeforeRequest[feedsBeforeRequest.length - 1].feedId
-        : null;
+    const requestScopeKey = getHomeFeedPaginationScopeKey({
+      category: requestCategory,
+      displayOrder: requestDisplayOrder,
+      orderBy: requestOrderBy,
+      subFilter: requestSubFilter
+    });
+    const requestCursor =
+      feedPaginationCursor?.scopeKey === requestScopeKey
+        ? feedPaginationCursor
+        : getHomeFeedPaginationCursor({
+            feeds: feedsBeforeRequest,
+            filter: requestFilter,
+            orderBy: requestOrderBy,
+            scopeKey: requestScopeKey
+          });
     const shouldRecordPerformance = shouldSampleHomeFeedClientPerformance();
     const clientRequestId = shouldRecordPerformance
       ? createHomeFeedClientRequestId()
@@ -604,36 +753,26 @@ export default function Stories() {
       return;
     }
     if (loadingMoreRef.current) return;
+    if (!requestCursor) {
+      setLoadMoreFeedback({
+        message: 'Refresh Feed to Continue',
+        recovery: 'refresh',
+        tone: 'error'
+      });
+      return;
+    }
     const loadMoreRequestCount = loadMoreRequestCountRef.current + 1;
     loadMoreRequestCountRef.current = loadMoreRequestCount;
+    const loadMoreGeneration = loadMoreGenerationRef.current;
     const triggerAt = getHomeFeedPerformanceNow();
     const startScrollSnapshot = getHomeFeedScrollSnapshot();
     loadingMoreRef.current = true;
+    setLoadMoreFeedback(null);
     setLoadingMore(true);
+    // This controller only cancels work when the owning page/account goes
+    // away. Request deadlines and retries belong to the shared scheduler.
     const abortController = new AbortController();
     loadMoreAbortRef.current = abortController;
-    if (loadMoreWatchdogRef.current) {
-      clearTimeout(loadMoreWatchdogRef.current);
-    }
-    const watchdogTimer = setTimeout(() => {
-      // Only act if this request is still the in-flight one (a newer request
-      // already owns these flags). Aborting is what actually re-arms load-more:
-      // it settles the otherwise-pending promise, which lets useInfiniteScroll's
-      // awaited onScrollToBottom resolve (clearing its internal loadingRef),
-      // frees the scheduler slot, and drops the request-collapse entry so a
-      // fresh scroll/button retry issues a new request instead of re-awaiting
-      // the dead one. The flag flip just re-enables the button immediately; the
-      // abort's catch/finally clears the same flags once it settles.
-      if (
-        loadMoreRequestCountRef.current === loadMoreRequestCount &&
-        loadingMoreRef.current
-      ) {
-        abortController.abort();
-        loadingMoreRef.current = false;
-        setLoadingMore(false);
-      }
-    }, HOME_FEED_LOAD_MORE_WATCHDOG_MS);
-    loadMoreWatchdogRef.current = watchdogTimer;
     try {
       const requestStartAt = getHomeFeedPerformanceNow();
       const { data } = await loadFeeds({
@@ -641,29 +780,20 @@ export default function Stories() {
         order: requestDisplayOrder,
         orderBy: requestOrderBy,
         isRecommended: requestIsRecommended,
-        lastFeedId,
+        lastFeedId: requestCursor.feedId,
         clientRequestId,
         signal: abortController.signal,
         feedPerformanceSample: shouldRecordPerformance,
-        lastRewardLevel:
-          feedsBeforeRequest.length > 0
-            ? feedsBeforeRequest[feedsBeforeRequest.length - 1].rewardLevel
-            : null,
-        lastTimeStamp:
-          feedsBeforeRequest.length > 0
-            ? feedsBeforeRequest[feedsBeforeRequest.length - 1].lastInteraction
-            : null,
-        lastViewDuration:
-          feedsBeforeRequest.length > 0
-            ? feedsBeforeRequest[feedsBeforeRequest.length - 1]
-                .totalViewDuration
-            : null
+        lastRewardLevel: requestCursor.lastRewardLevel,
+        lastTimeStamp: requestCursor.lastTimeStamp,
+        lastViewDuration: requestCursor.lastViewDuration
       });
       const responseAt = getHomeFeedPerformanceNow();
       const responseScrollSnapshot = getHomeFeedScrollSnapshot();
       const returnedFeeds = Array.isArray(data?.feeds) ? data.feeds : [];
       const staleIgnored =
         shouldIgnoreStoryRequest(requestUserId) ||
+        loadMoreGenerationRef.current !== loadMoreGeneration ||
         loadMoreRequestCountRef.current !== loadMoreRequestCount ||
         categoryRef.current !== requestCategory ||
         subFilterRef.current !== requestSubFilter ||
@@ -700,8 +830,44 @@ export default function Stories() {
         }
         return;
       }
+      const canonicalPage = getCanonicalHomeFeedPage(data);
+      const nextCursor = getHomeFeedPaginationCursor({
+        feeds: canonicalPage.feeds,
+        filter: requestFilter,
+        orderBy: requestOrderBy,
+        page: canonicalPage,
+        scopeKey: requestScopeKey
+      });
+      const cursorAdvanced = Boolean(
+        nextCursor && nextCursor.feedId !== requestCursor.feedId
+      );
+      const existingFeedIds = new Set(getHomeFeedIds(feedsBeforeRequest));
+      const visibleNewFeedCount = getHomeFeedIds(canonicalPage.feeds).filter(
+        (feedId) => !existingFeedIds.has(feedId)
+      ).length;
       const dispatchAt = getHomeFeedPerformanceNow();
-      onLoadMoreFeeds(data);
+      // Store the confirmed cursor atomically with the retained feed page.
+      // It intentionally advances independently of render-list deduplication,
+      // and survives a Stories route remount with the rest of Home state.
+      onLoadMoreFeeds({ ...canonicalPage, feedPaginationCursor: nextCursor });
+      if (canonicalPage.loadMoreButton && !cursorAdvanced) {
+        setLoadMoreFeedback({
+          message: 'The feed did not advance — Try Again',
+          recovery: 'continue',
+          tone: 'error'
+        });
+      } else if (
+        canonicalPage.loadMoreButton &&
+        visibleNewFeedCount === 0
+      ) {
+        setLoadMoreFeedback({
+          message: canonicalPage.feeds.length
+            ? 'Skipped posts already shown — Continue'
+            : 'Skipped unavailable posts — Continue',
+          recovery: 'continue',
+          tone: 'notice'
+        });
+      }
       if (shouldRecordPerformance) {
         recordHomeFeedLoadMorePerformance({
           category: requestCategory,
@@ -732,28 +898,41 @@ export default function Stories() {
       }
     } catch (error) {
       if (shouldIgnoreStoryRequest(requestUserId)) return;
-      // A watchdog-initiated abort is expected recovery, not a failure.
+      // Page/account teardown is expected cancellation. Scheduler timeouts do
+      // not abort this controller and therefore remain visible retry failures.
       if (abortController.signal.aborted) return;
       console.error(error);
+      setLoadMoreFeedback({
+        message: 'Could not load more posts — Try Again',
+        recovery: 'continue',
+        tone: 'error'
+      });
     } finally {
-      clearTimeout(watchdogTimer);
-      if (loadMoreWatchdogRef.current === watchdogTimer) {
-        loadMoreWatchdogRef.current = null;
-      }
       if (loadMoreAbortRef.current === abortController) {
         loadMoreAbortRef.current = null;
       }
-      // Only clear the guard if this is still the latest request; a superseded
-      // straggler resolving late must not re-open the guard the newer request
-      // now owns (or the watchdog has already handed control back).
+      // Only the latest request may release the click/scroll guard.
       if (
         !shouldIgnoreStoryRequest(requestUserId) &&
+        loadMoreGenerationRef.current === loadMoreGeneration &&
         loadMoreRequestCountRef.current === loadMoreRequestCount
       ) {
         setLoadingMore(false);
         loadingMoreRef.current = false;
       }
     }
+  }
+
+  async function handleLoadMoreButtonClick() {
+    if (loadMoreFeedback?.recovery === 'reset') {
+      await handleChangeCategory('recommended');
+      return;
+    }
+    if (loadMoreFeedback?.recovery === 'refresh') {
+      await handleRefreshOutdatedFeed();
+      return;
+    }
+    await handleLoadMoreFeeds('button');
   }
 
   function recordHomeFeedLoadMorePerformance({
@@ -879,7 +1058,13 @@ export default function Stories() {
           loadedFilter === categoryObj[categoryRef.current].filter &&
           categoryRef.current === newCategory
         ) {
-          onLoadFeeds(data);
+          applyCanonicalHomeFeedPage({
+            data,
+            category: newCategory,
+            displayOrder: 'desc',
+            orderBy: categoryObj[newCategory].orderBy,
+            subFilter: categoryObj[newCategory].filter
+          });
           onSetDisplayOrder('desc');
           success = true;
         }
@@ -927,7 +1112,13 @@ export default function Stories() {
             const { data } = await loadFeeds();
             if (shouldIgnoreStoryRequest(requestUserId)) return;
             if (categoryRef.current === 'uploads') {
-              onLoadFeeds(data);
+              applyCanonicalHomeFeedPage({
+                data,
+                category: 'uploads',
+                displayOrder: 'desc',
+                orderBy: categoryObj.uploads.orderBy,
+                subFilter: 'all'
+              });
               scrollToNewestHomeFeed();
               reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
             }
@@ -980,7 +1171,13 @@ export default function Stories() {
         return;
       }
       if (displayOrderRef.current !== currentDisplayOrder) return;
-      onLoadFeeds(refreshedFeeds);
+      applyCanonicalHomeFeedPage({
+        data: refreshedFeeds,
+        category: currentCategory,
+        displayOrder: currentDisplayOrder,
+        orderBy: currentOrderBy,
+        subFilter: currentSubFilter
+      });
       onSetDisplayOrder(currentDisplayOrder);
       reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
     } catch (error) {
@@ -1022,7 +1219,13 @@ export default function Stories() {
       });
       if (shouldIgnoreStoryRequest(requestUserId)) return;
       if (filter === initialFilter) {
-        onLoadFeeds(data);
+        applyCanonicalHomeFeedPage({
+          data,
+          category,
+          displayOrder: newDisplayOrder,
+          orderBy: categoryObj[category].orderBy,
+          subFilter
+        });
         onSetDisplayOrder(newDisplayOrder);
       }
     } catch (error) {
@@ -1033,6 +1236,49 @@ export default function Stories() {
         setLoadingFeeds(false);
       }
     }
+  }
+
+  function applyCanonicalHomeFeedPage({
+    data,
+    category: nextCategory,
+    displayOrder: nextDisplayOrder,
+    orderBy,
+    subFilter: nextSubFilter
+  }: {
+    data: unknown;
+    category: string;
+    displayOrder: string;
+    orderBy: string;
+    subFilter: string | null;
+  }) {
+    const canonicalPage = getCanonicalHomeFeedPage(data);
+    const scopeKey = getHomeFeedPaginationScopeKey({
+      category: nextCategory,
+      displayOrder: nextDisplayOrder,
+      orderBy,
+      subFilter: nextSubFilter
+    });
+
+    // A full canonical page supersedes any pagination based on its old tail.
+    // Cancel that scoped request and invalidate even a response that won the
+    // transport race immediately before abort reached it.
+    loadMoreGenerationRef.current += 1;
+    loadMoreAbortRef.current?.abort();
+    loadMoreAbortRef.current = null;
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+    setLoadMoreFeedback(null);
+    const nextCursor = getHomeFeedPaginationCursor({
+      feeds: canonicalPage.feeds,
+      filter:
+        nextCategory === 'uploads'
+          ? nextSubFilter || 'all'
+          : categoryObj[nextCategory]?.filter || nextSubFilter || 'all',
+      orderBy,
+      page: canonicalPage,
+      scopeKey
+    });
+    onLoadFeeds({ ...canonicalPage, feedPaginationCursor: nextCursor });
   }
 
   function shouldIgnoreStoryRequest(requestUserId: number | null | undefined) {

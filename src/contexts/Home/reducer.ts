@@ -70,6 +70,9 @@ export default function HomeReducer(
         feedsOutdated: false,
         displayOrder: 'desc',
         feeds: action.feeds,
+        feedPaginationCursor: action.loadMoreButton
+          ? action.feedPaginationCursor
+          : null,
         loadMoreButton: action.loadMoreButton,
         loaded: true
       };
@@ -89,15 +92,10 @@ export default function HomeReducer(
     case 'LOAD_MORE_FEEDS':
       return {
         ...state,
-        feeds: [
-          ...state.feeds,
-          ...action.feeds.filter(
-            (newFeed: any) =>
-              !state.feeds.some(
-                (existingFeed: any) => existingFeed.feedId === newFeed.feedId
-              )
-          )
-        ],
+        feeds: appendUniqueHomeFeeds(state.feeds, action.feeds),
+        feedPaginationCursor: action.loadMoreButton
+          ? action.feedPaginationCursor
+          : null,
         loadMoreButton: action.loadMoreButton
       };
     case 'RESET_FEEDS':
@@ -107,6 +105,7 @@ export default function HomeReducer(
         currentFeaturedIndex: 0,
         displayOrder: 'desc',
         feeds: [],
+        feedPaginationCursor: null,
         feedsOutdated: false,
         featuredSubjectsLoaded: false,
         loaded: false,
@@ -274,6 +273,22 @@ export default function HomeReducer(
     default:
       return state;
   }
+}
+
+function appendUniqueHomeFeeds(existingFeeds: any[], incomingFeeds: any[]) {
+  const knownFeedIds = new Set(
+    existingFeeds
+      .map((feed) => Number(feed?.feedId || 0))
+      .filter((feedId) => feedId > 0)
+  );
+  const uniqueIncomingFeeds = incomingFeeds.filter((feed) => {
+    const feedId = Number(feed?.feedId || 0);
+    if (feedId <= 0) return true;
+    if (knownFeedIds.has(feedId)) return false;
+    knownFeedIds.add(feedId);
+    return true;
+  });
+  return [...existingFeeds, ...uniqueIncomingFeeds];
 }
 
 function removeDeletedCommentFromHomeFeed(feed: any, commentId: number) {

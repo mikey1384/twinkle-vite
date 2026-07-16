@@ -134,6 +134,9 @@ export default function Header({
       } else {
         document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
       }
+      // Entering any Chat route acknowledges the global navigation signal.
+      // Exact unread scopes remain visible in Chat's sidebar; they do not
+      // relight global navigation merely because the user later leaves Chat.
       onGetNumberOfUnreadMessages(0);
     } else if (
       !['chat', 'comments', 'subjects', 'ai-cards'].includes(section) &&

@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';import ScopedTheme from '~/theme/ScopedTheme';
+import { useKeyContext } from '~/contexts';
+import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
@@ -61,7 +62,6 @@ export default function LoadMoreButton({
       } as React.CSSProperties),
     [buttonColorValue]
   );
-
   return (
     <ErrorBoundary componentPath="LoadMoreButton">
       <ScopedTheme
@@ -76,13 +76,13 @@ export default function LoadMoreButton({
         `}
       >
         <Button
-          loading={!!loading}
           color={buttonColorKey}
           onClick={onClick}
           variant="soft"
           shape="pill"
           uppercase={false}
           {...props}
+          loading={!!loading}
         >
           {loading ? loadingLabel : label || loadMoreLabel}
         </Button>

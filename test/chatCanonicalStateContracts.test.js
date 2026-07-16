@@ -89,6 +89,61 @@ test('all reaction transports enter one canonical reducer action', () => {
   );
 });
 
+test('reaction requests expose pending UI without synthesizing canonical counts', () => {
+  const uiConstantsSource = readSource('src/constants/ui.ts');
+  const navigationFeedbackSource = readSource(
+    'src/containers/App/navigationFeedback.tsx'
+  );
+  const messageSource = readSource(
+    'src/containers/Chat/Message/MessageBody/index.tsx'
+  );
+  const reactionsSource = readSource(
+    'src/containers/Chat/Message/MessageBody/Reactions/index.tsx'
+  );
+  const reactionSource = readSource(
+    'src/containers/Chat/Message/MessageBody/Reactions/Reaction.tsx'
+  );
+
+  assert.match(
+    messageSource,
+    /setPendingReactionMutation\(reaction, mutation\)[\s\S]*?await (?:postChatReaction|removeChatReaction)/
+  );
+  assert.match(
+    uiConstantsSource,
+    /LOADING_INDICATOR_GRACE_PERIOD_MS = 200/
+  );
+  assert.match(
+    navigationFeedbackSource,
+    /setTimeout\(\(\) => \{[\s\S]*?LOADING_INDICATOR_GRACE_PERIOD_MS/
+  );
+  assert.match(
+    messageSource,
+    /pendingReactionIndicatorTimersRef\.current\[reaction\] = setTimeout\([\s\S]*?LOADING_INDICATOR_GRACE_PERIOD_MS/
+  );
+  assert.match(
+    reactionsSource,
+    /mutation === 'add'[\s\S]*?result\.push\(reaction\)/
+  );
+  assert.match(
+    reactionsSource,
+    /reactionCount=\{reactionObj\[reaction\]\?\.length \|\| 0\}/
+  );
+  assert.match(reactionSource, /aria-busy=\{isPending\}/);
+  assert.match(reactionSource, /icon="spinner"/);
+  assert.match(
+    messageSource,
+    /finally \{\s*setPendingReactionMutation\(reaction, null\);/
+  );
+  assert.match(
+    messageSource,
+    /if \(response\?\.success === true\) \{[\s\S]*?return;[\s\S]*?throw new Error\('Invalid canonical chat reaction response'\)/
+  );
+  assert.doesNotMatch(
+    messageSource,
+    /onAddReactionToMessage|onRemoveReactionFromMessage/
+  );
+});
+
 test('reaction activity uses the observed message pointer as its recency watermark', () => {
   const reducerSource = readSource('src/contexts/Chat/reducer.ts');
   const typeSource = readSource('src/types/chat.ts');
@@ -192,6 +247,168 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   assert.match(
     aiSocketSource,
     /cancelledMessageIds[\s\S]*?markChatUnreadActivity\(\);[\s\S]*?if \(messageIsForCurrentChannel\)/m
+  );
+});
+
+test('navigation and live activity reconcile only the visible chat scope', () => {
+  const mainSource = readSource('src/containers/Chat/Main.tsx');
+  const socketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+  const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+
+  assert.match(
+    mainSource,
+    /if \(subchannelPath\) \{[\s\S]*?reconcileSubchannelLastRead[\s\S]*?return;[\s\S]*?if \(selectedSubchannelId\) return;[\s\S]*?reconcileChannelLastRead\(selectedChannelId\)/
+  );
+  assert.match(mainSource, /routedChannelId !== selectedChannelId\) return/);
+  assert.match(
+    socketSource,
+    /normalizedSubchannelId === 0[\s\S]*?shouldUpdateSubchannel[\s\S]*?normalizedSubchannelId > 0/
+  );
+  assert.doesNotMatch(
+    socketSource,
+    /else \{\s*void maybeUpdateLastRead\(\{ channelId: message\.channelId \}\)/
+  );
+
+  for (const actionType of [
+    'ENTER_CHANNEL',
+    'ENTER_EMPTY_CHAT',
+    'LOAD_AI_CARD_CHAT',
+    'LOAD_VOCABULARY',
+    'NOTIFY_MEMBER_LEFT',
+    'UPDATE_LAST_SUBCHANNEL_PATH',
+    'UPDATE_SELECTED_CHANNEL_ID'
+  ]) {
+    const actionBlock =
+      reducerSource.match(
+        new RegExp(`case '${actionType}'[\\s\\S]*?(?=\\n    case '|$)`)
+      )?.[0] || '';
+    assert.doesNotMatch(actionBlock, /numUnreads:\s*0/);
+  }
+  assert.match(
+    reducerSource,
+    /numUnreads: action\.subchannelId[\s\S]*?prevChannelObj\.numUnreads[\s\S]*?: 0/
+  );
+});
+
+test('sidebar and member-leave paths consume canonical scoped unread state', () => {
+  const channelSource = readSource(
+    'src/containers/Chat/LeftMenu/Channels/Channel.tsx'
+  );
+  const subchannelSource = readSource(
+    'src/containers/Chat/LeftMenu/Subchannels/Subchannel.tsx'
+  );
+  const mainSource = readSource('src/containers/Chat/Main.tsx');
+  const socketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+
+  assert.match(
+    channelSource,
+    /channelId !== selectedChannelId && totalNumUnreads > 0/
+  );
+  assert.doesNotMatch(channelSource, /lastUnreadSenderId|lastSenderId/);
+  assert.match(
+    subchannelSource,
+    /!subchannelSelected && numUnreads > 0/
+  );
+  assert.doesNotMatch(
+    subchannelSource,
+    /lastUnreadSenderId|lastMessage\?\.userId/
+  );
+  assert.match(
+    mainSource,
+    /pageVisible &&[\s\S]*?channelId === selectedChannelId &&[\s\S]*?!selectedSubchannelId[\s\S]*?reconcileChannelLastRead/
+  );
+  assert.match(socketSource, /socket\.on\('member_left'/);
+  assert.match(
+    socketSource,
+    /handleMemberLeftUnreadState[\s\S]*?mainScopeIsVisible[\s\S]*?queueChannelUnreadStateResync\(\{[\s\S]*?subchannelId: 0[\s\S]*?queueGlobalUnreadCountResync\(\)/
+  );
+});
+
+test('same-account socket messages update caches without becoming unread', () => {
+  const actionSource = readSource('src/contexts/Chat/actions.ts');
+  const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+  const socketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+  const receiveMessageHandler =
+    socketSource.match(
+      /async function handleReceiveMessage[\s\S]*?(?=\n    function notifyMessageReceivedWhileAway)/
+    )?.[0] || '';
+  const receiveMessageCase =
+    reducerSource.match(
+      /case 'RECEIVE_MESSAGE':[\s\S]*?(?=\n    case 'RECEIVE_FIRST_MSG')/
+    )?.[0] || '';
+
+  assert.match(
+    receiveMessageHandler,
+    /const isMyMessage =[\s\S]*?Number\(message\.userId\) === Number\(userId\) && !message\.transferId[\s\S]*?onReceiveMessage\(\{[\s\S]*?isMyMessage/
+  );
+  assert.doesNotMatch(
+    socketSource,
+    /if \(senderIsUser && currentPageVisible\) return/
+  );
+  assert.match(
+    actionSource,
+    /onReceiveMessage\(\{[\s\S]*?isMyMessage = false[\s\S]*?type: 'RECEIVE_MESSAGE'[\s\S]*?isMyMessage/
+  );
+  assert.match(
+    receiveMessageCase,
+    /action\.isMyMessage \|\| \(action\.pageVisible && action\.usingChat\)/
+  );
+  assert.match(
+    receiveMessageCase,
+    /!action\.isMyMessage &&[\s\S]*?didIncrementScopedUnreads/
+  );
+  assert.match(
+    receiveMessageCase,
+    /prependUniqueChatMessageId\(\{[\s\S]*?messageIds: prevChannelObj\.messageIds,[\s\S]*?messageId/
+  );
+});
+
+test('socket echoes and HTTP submit confirmations are idempotent by message id', () => {
+  const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+  const receiveMessageCase =
+    reducerSource.match(
+      /case 'RECEIVE_MESSAGE':[\s\S]*?(?=\n    case 'RECEIVE_FIRST_MSG')/
+    )?.[0] || '';
+  const submitMessageCase =
+    reducerSource.match(
+      /case 'SUBMIT_MESSAGE':[\s\S]*?(?=\n    case 'TRIM_MESSAGES')/
+    )?.[0] || '';
+
+  assert.match(
+    reducerSource,
+    /function prependUniqueChatMessageId\([\s\S]*?String\(messageId\)[\s\S]*?String\(existingMessageId\) === messageIdKey/
+  );
+  assert.match(
+    reducerSource,
+    /function getSubmittedChatMessage\([\s\S]*?if \(existingMessage\) return existingMessage;/
+  );
+  assert.match(receiveMessageCase, /prependUniqueChatMessageId\(\{/);
+  assert.match(
+    submitMessageCase,
+    /existingMessage: action\.subchannelId[\s\S]*?prevChannelObj\?\.messagesObj\?\.\[action\.messageId\]/
+  );
+  assert.match(
+    submitMessageCase,
+    /const messageIds = action\.subchannelId[\s\S]*?prependUniqueChatMessageId\(\{/
+  );
+});
+
+test('equal-activity favorite snapshots still reconcile scoped reads', () => {
+  const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+  const mergeBody = reducerSource.slice(
+    reducerSource.indexOf('function mergeCanonicalFavoriteChannelSummary'),
+    reducerSource.indexOf('function getFreshestFavoriteActivity')
+  );
+
+  assert.match(
+    mergeBody,
+    /canonicalFavoriteActivityIsAtLeastAsNew[\s\S]*?!canonicalFavoriteActivityDominates[\s\S]*?getLatestCanonicalUnreadScopeState[\s\S]*?\.\.\.mergedSubchannelState/
   );
 });
 
@@ -408,4 +625,26 @@ test('bootstrap invalidates noncanonical topic message caches and navigation', (
     /function reconcileCanonicalTopicNavigation[\s\S]*?selectedTopicIsVisible[\s\S]*?selectedTab: 'all'/
   );
   assert.doesNotMatch(reducerSource, /messageIds:\s*existingTopic\.messageIds/);
+});
+
+test('global Chat badge acknowledges known activity until new activity arrives', () => {
+  const headerSource = readSource('src/containers/App/Header/index.tsx');
+  const chatSocketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+  const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+
+  assert.match(
+    headerSource,
+    /if \(section === 'chat'\)[\s\S]*?onGetNumberOfUnreadMessages\(0\)/
+  );
+  assert.doesNotMatch(chatSocketSource, /wasUsingChat|route-exit restoration/);
+  assert.match(
+    reducerSource,
+    /global navigation badge is an acknowledgement signal[\s\S]*?must not relight global navigation after the user leaves[\s\S]*?New activity received while outside Chat increments it/
+  );
+  assert.match(
+    reducerSource,
+    /action\.isMyMessage \|\| \(action\.pageVisible && action\.usingChat\)[\s\S]*?state\.numUnreads \+ 1/
+  );
 });

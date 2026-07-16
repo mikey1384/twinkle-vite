@@ -4,7 +4,8 @@ import {
   VOCAB_CHAT_TYPE,
   AI_CARD_CHAT_TYPE,
   BOOKMARK_VIEWS,
-  BookmarkView
+  BookmarkView,
+  GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { objectify } from '~/helpers';
@@ -881,6 +882,85 @@ function canonicalFavoriteActivityDominates({
   );
 }
 
+function canonicalFavoriteActivityIsAtLeastAsNew({
+  canonicalChannel,
+  currentChannel
+}: {
+  canonicalChannel: any;
+  currentChannel: any;
+}) {
+  const canonicalActivity = getFavoriteActivityVector(canonicalChannel);
+  const currentActivity = getFavoriteActivityVector(currentChannel);
+  return (
+    canonicalActivity.lastMessageId >= currentActivity.lastMessageId &&
+    canonicalActivity.reactionRevision >= currentActivity.reactionRevision
+  );
+}
+
+function mergeCanonicalFavoriteSubchannelState({
+  canonicalChannel,
+  currentChannel
+}: {
+  canonicalChannel: any;
+  currentChannel: any;
+}) {
+  const canonicalSubchannelObj = canonicalChannel?.subchannelObj || {};
+  const currentSubchannelObj = currentChannel?.subchannelObj || {};
+  const canonicalSubchannelIds = canonicalChannel?.subchannelIds || [];
+  const hasCanonicalSubchannelProjection =
+    Number(canonicalChannel?.id) === Number(GENERAL_CHAT_ID) ||
+    canonicalSubchannelIds.length > 0 ||
+    Object.keys(canonicalSubchannelObj).length > 0;
+  if (!hasCanonicalSubchannelProjection) {
+    return {
+      subchannelIds: currentChannel?.subchannelIds || [],
+      subchannelObj: currentSubchannelObj
+    };
+  }
+  const mergedSubchannelObj = currentChannel?.loaded
+    ? { ...currentSubchannelObj }
+    : {};
+
+  for (const subchannelId of Object.keys(canonicalSubchannelObj)) {
+    const canonicalSubchannel = canonicalSubchannelObj[subchannelId];
+    const currentSubchannel = currentSubchannelObj[subchannelId];
+    const messagesObj = mergeMessagesPreservingNewerReactionState({
+      existingMessagesObj: currentSubchannel?.messagesObj,
+      serverMessagesObj: canonicalSubchannel?.messagesObj
+    });
+    mergedSubchannelObj[subchannelId] = {
+      ...currentSubchannel,
+      ...canonicalSubchannel,
+      ...getLatestCanonicalUnreadScopeState({
+        existingSource: currentSubchannel,
+        serverSource: canonicalSubchannel
+      }),
+      messageIds: currentSubchannel?.loaded
+        ? mergeNewestFirstMessageIds({
+            currentMessageIds: currentSubchannel.messageIds || [],
+            serverMessageIds: canonicalSubchannel?.messageIds || [],
+            messagesObj
+          })
+        : canonicalSubchannel?.messageIds || [],
+      messagesObj,
+      loaded: Boolean(
+        currentSubchannel?.loaded || canonicalSubchannel?.loaded
+      )
+    };
+  }
+
+  const subchannelIds = currentChannel?.loaded
+    ? (currentChannel.subchannelIds || []).concat(
+        canonicalSubchannelIds.filter(
+          (subchannelId: number) =>
+            !(currentChannel.subchannelIds || []).includes(subchannelId)
+        )
+      )
+    : canonicalSubchannelIds;
+
+  return { subchannelIds, subchannelObj: mergedSubchannelObj };
+}
+
 function mergeCanonicalFavoriteChannelSummary({
   canonicalChannel,
   currentChannel,
@@ -897,13 +977,40 @@ function mergeCanonicalFavoriteChannelSummary({
     });
   }
   if (
-    !canonicalFavoriteActivityDominates({
+    !canonicalFavoriteActivityIsAtLeastAsNew({
       canonicalChannel,
       currentChannel
     })
   ) {
     return applyCanonicalChannelVisibility({
       channel: currentChannel,
+      visibility
+    });
+  }
+
+  const mergedSubchannelState = mergeCanonicalFavoriteSubchannelState({
+    canonicalChannel,
+    currentChannel
+  });
+  if (
+    !canonicalFavoriteActivityDominates({
+      canonicalChannel,
+      currentChannel
+    })
+  ) {
+    // Favorite revisions own membership, while read watermarks can advance
+    // without message/reaction activity changing. On an equal activity vector,
+    // reconcile each canonical unread scope but preserve the current preview
+    // and message caches.
+    return applyCanonicalChannelVisibility({
+      channel: {
+        ...currentChannel,
+        ...getLatestCanonicalUnreadScopeState({
+          existingSource: currentChannel,
+          serverSource: canonicalChannel
+        }),
+        ...mergedSubchannelState
+      },
       visibility
     });
   }
@@ -916,9 +1023,8 @@ function mergeCanonicalFavoriteChannelSummary({
     ...currentChannel,
     ...canonicalChannel,
     // The canonical summary owns activity, preview, settings, and unread state
-    // when its message/reaction vector dominates. Keep the fuller channel page
-    // cache so favoriting a loaded channel does not discard history or topic
-    // and subchannel data that summaries intentionally omit.
+    // when its message/reaction vector dominates. Keep fuller channel caches
+    // while merging the canonical scoped summary projection above.
     ...getLatestCanonicalUnreadScopeState({
       existingSource: currentChannel,
       serverSource: canonicalChannel
@@ -936,10 +1042,9 @@ function mergeCanonicalFavoriteChannelSummary({
       messagesObj
     }),
     messagesObj,
+    ...mergedSubchannelState,
     ...(currentChannel.loaded
       ? {
-          subchannelIds: currentChannel.subchannelIds || [],
-          subchannelObj: currentChannel.subchannelObj || {},
           ...(!canonicalChannel.twoPeople
             ? {
                 allMemberIds: currentChannel.allMemberIds || [],
@@ -1016,6 +1121,61 @@ function getConfirmedLastMessageId(
   return Number.isSafeInteger(incomingId) && incomingId > currentId
     ? incomingId
     : currentId || null;
+}
+
+function prependUniqueChatMessageId({
+  messageIds = [],
+  messageId
+}: {
+  messageIds?: Array<number | string>;
+  messageId: number | string;
+}) {
+  const messageIdKey = String(messageId);
+  return messageIds.some(
+    (existingMessageId) => String(existingMessageId) === messageIdKey
+  )
+    ? messageIds
+    : [messageId, ...messageIds];
+}
+
+function getSubmittedChatMessage({
+  existingMessage,
+  isRespondingToSubject,
+  message,
+  messageId,
+  replyTarget,
+  subchannelId,
+  targetSubject
+}: {
+  existingMessage?: any;
+  isRespondingToSubject?: boolean;
+  message: any;
+  messageId: number | string;
+  replyTarget?: any;
+  subchannelId?: number;
+  targetSubject?: any;
+}) {
+  // A same-account socket echo can arrive before the HTTP request resolves.
+  // In that order, keep the confirmed server payload instead of replacing it
+  // with the locally reconstructed submit payload.
+  if (existingMessage) return existingMessage;
+
+  return {
+    ...message,
+    isLoaded: true,
+    tempMessageId: messageId,
+    ...(subchannelId ? { subchannelId } : {}),
+    content: message.content,
+    targetMessage: replyTarget,
+    ...(isRespondingToSubject
+      ? {
+          targetSubject: {
+            ...targetSubject,
+            content: targetSubject?.content || defaultChatSubject
+          }
+        }
+      : {})
+  };
 }
 
 function getConfirmedRealtimeChannelIds({
@@ -1425,8 +1585,7 @@ function updateBuildCollaborationState(
     inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
     request?: Record<string, any> | null;
     requestId?: number;
-    requestStatus?:
-      'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
+    requestStatus?: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
     eventTimeMs?: number;
     timeStamp?: number;
   }
@@ -2746,8 +2905,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
-                  recentOmokMessage: null,
-                  numUnreads: 0
+                  recentOmokMessage: null
                 }
               }
             : {}),
@@ -2765,7 +2923,6 @@ export default function ChatReducer(
             subchannelObj: action.data.channel?.subchannelObj,
             messageIds: action.data.messages.map((message: any) => message.id),
             messagesObj,
-            numUnreads: 0,
             isReloadRequired: false,
             legacyTopicObj: state.channelsObj[loadedChannel.id]?.legacyTopicObj,
             ...canonicalTopicNavigation,
@@ -2808,8 +2965,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
-                  recentOmokMessage: null,
-                  numUnreads: 0
+                  recentOmokMessage: null
                 }
               }
             : {}),
@@ -4264,8 +4420,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
-                  recentOmokMessage: null,
-                  numUnreads: 0
+                  recentOmokMessage: null
                 }
               }
             : {})
@@ -4562,8 +4717,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
-                  recentOmokMessage: null,
-                  numUnreads: 0
+                  recentOmokMessage: null
                 }
               }
             : {})
@@ -4757,7 +4911,6 @@ export default function ChatReducer(
                     profilePicUrl: action.profilePicUrl
                   }
                 },
-                numUnreads: 0,
                 members: (
                   state.channelsObj[action.channelId]?.members || []
                 )?.filter(
@@ -4956,15 +5109,24 @@ export default function ChatReducer(
     case 'RECEIVE_MESSAGE': {
       const messageId = action.message.id || uuidv1();
       const realtimeEventKey = getRealtimeMessageEventKey(messageId);
-      const subchannelId = action.message.subchannelId;
+      const subchannelId = Number(action.message.subchannelId || 0);
+      const currentSubchannelId = Number(action.currentSubchannelId || 0);
+      const scopeIsVisible = Boolean(action.pageVisible && action.usingChat);
+      // The global navigation badge is an acknowledgement signal, not a mirror
+      // of every scoped unread. Header clears it when Chat is entered; activity
+      // in any scope while Chat is open stays represented by the exact sidebar
+      // badge and must not relight global navigation after the user leaves.
+      // New activity received while outside Chat increments it below.
       const numUnreads =
-        action.pageVisible && action.usingChat
+        action.isMyMessage || (action.pageVisible && action.usingChat)
           ? state.numUnreads
           : state.numUnreads + 1;
       const prevChannelObj = state.channelsObj[action.message.channelId] || {};
-      const didIncrementScopedUnreads = subchannelId
-        ? !(subchannelId === action.currentSubchannelId && action.usingChat)
-        : !(action.usingChat && !action.currentSubchannelId);
+      const didIncrementScopedUnreads =
+        !action.isMyMessage &&
+        (subchannelId
+          ? !(subchannelId === currentSubchannelId && scopeIsVisible)
+          : !(scopeIsVisible && currentSubchannelId === 0));
       const isChessMoveMessage =
         action.message.isChessMsg &&
         !!action.message.chessState &&
@@ -4983,9 +5145,10 @@ export default function ChatReducer(
           : prevChannelObj.lastOmokMoveViewerId;
       const messageIds = subchannelId
         ? prevChannelObj.messageIds
-        : prevChannelObj.messageIds?.includes(messageId)
-          ? prevChannelObj.messageIds
-          : [messageId].concat(prevChannelObj.messageIds);
+        : prependUniqueChatMessageId({
+            messageIds: prevChannelObj.messageIds,
+            messageId
+          });
       const messagesObj = subchannelId
         ? prevChannelObj.messagesObj
         : {
@@ -5030,16 +5193,18 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[subchannelId],
+              // Visible scopes are cleared only by the canonical last-read
+              // response started by the socket handler. Until then, preserve
+              // the last confirmed count rather than guessing that write won.
               numUnreads:
-                subchannelId === action.currentSubchannelId && action.usingChat
-                  ? 0
-                  : Number(
-                      prevChannelObj?.subchannelObj?.[subchannelId]
-                        ?.numUnreads || 0
-                    ) + 1,
-              messageIds: [messageId].concat(
-                prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds
-              ),
+                Number(
+                  prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
+                ) + (didIncrementScopedUnreads ? 1 : 0),
+              messageIds: prependUniqueChatMessageId({
+                messageIds:
+                  prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds,
+                messageId
+              }),
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
                 [messageId]: toConfirmedRealtimeMessage({
@@ -5048,10 +5213,14 @@ export default function ChatReducer(
                   eventSequence: action.eventSequence
                 })
               },
-              lastUnreadUserId: null,
-              lastUnreadReaction: null,
-              lastUnreadMessageId: null,
-              lastUnreadReactionTimeStamp: null
+              ...(!action.isMyMessage
+                ? {
+                    lastUnreadUserId: null,
+                    lastUnreadReaction: null,
+                    lastUnreadMessageId: null,
+                    lastUnreadReactionTimeStamp: null
+                  }
+                : {})
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -5089,10 +5258,12 @@ export default function ChatReducer(
               ...prevChannelObj?.topicObj,
               [action.message.subjectId]: {
                 ...prevChannelObj?.topicObj?.[action.message.subjectId],
-                messageIds: [messageId].concat(
-                  prevChannelObj?.topicObj?.[action.message.subjectId]
-                    ?.messageIds
-                )
+                messageIds: prependUniqueChatMessageId({
+                  messageIds:
+                    prevChannelObj?.topicObj?.[action.message.subjectId]
+                      ?.messageIds,
+                  messageId
+                })
               }
             },
             allMemberIds: action.newMembers
@@ -5115,12 +5286,11 @@ export default function ChatReducer(
             ),
             members,
             numUnreads:
-              subchannelId || (action.usingChat && !action.currentSubchannelId)
-                ? Number(prevChannelObj.numUnreads)
-                : Number(prevChannelObj.numUnreads) + 1,
+              Number(prevChannelObj.numUnreads || 0) +
+              (!subchannelId && didIncrementScopedUnreads ? 1 : 0),
             gameState,
             isHidden: false,
-            ...(!subchannelId
+            ...(!subchannelId && !action.isMyMessage
               ? {
                   lastUnreadUserId: null,
                   lastUnreadReaction: null,
@@ -5222,9 +5392,11 @@ export default function ChatReducer(
                 Number(
                   prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
                 ) + (action.isMyMessage ? 0 : 1),
-              messageIds: [messageId].concat(
-                prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds
-              ),
+              messageIds: prependUniqueChatMessageId({
+                messageIds:
+                  prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds,
+                messageId
+              }),
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
                 [messageId]: toConfirmedRealtimeMessage({
@@ -5317,16 +5489,19 @@ export default function ChatReducer(
                       ...prevChannelObj?.topicObj,
                       [action.message.subjectId]: {
                         ...prevChannelObj?.topicObj?.[action.message.subjectId],
-                        messageIds: [messageId].concat(
-                          prevChannelObj?.topicObj?.[action.message.subjectId]
-                            ?.messageIds
-                        )
+                        messageIds: prependUniqueChatMessageId({
+                          messageIds:
+                            prevChannelObj?.topicObj?.[action.message.subjectId]
+                              ?.messageIds,
+                          messageId
+                        })
                       }
                     }
                   : prevChannelObj?.topicObj,
-                messageIds: [messageId].concat(
-                  prevChannelObj?.messageIds || []
-                ),
+                messageIds: prependUniqueChatMessageId({
+                  messageIds: prevChannelObj?.messageIds,
+                  messageId
+                }),
                 messagesObj: {
                   ...prevChannelObj?.messagesObj,
                   [messageId]: toConfirmedRealtimeMessage({
@@ -6556,6 +6731,22 @@ export default function ChatReducer(
     }
     case 'SUBMIT_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.message.channelId] || {};
+      const currentSubchannel = action.subchannelId
+        ? prevChannelObj?.subchannelObj?.[action.subchannelId]
+        : null;
+      const submittedMessage = getSubmittedChatMessage({
+        existingMessage: action.subchannelId
+          ? currentSubchannel?.messagesObj?.[action.messageId]
+          : prevChannelObj?.messagesObj?.[action.messageId],
+        isRespondingToSubject: action.isRespondingToSubject,
+        message: action.message,
+        messageId: action.messageId,
+        replyTarget: action.replyTarget,
+        subchannelId: action.subchannelId,
+        targetSubject: action.subchannelId
+          ? currentSubchannel?.legacyTopicObj
+          : prevChannelObj?.legacyTopicObj
+      });
       const gameState = {
         ...prevChannelObj?.gameState,
         ...(action.message.isChessMsg
@@ -6576,61 +6767,29 @@ export default function ChatReducer(
       };
       const messageIds = action.subchannelId
         ? prevChannelObj?.messageIds
-        : [action.messageId].concat(prevChannelObj?.messageIds);
+        : prependUniqueChatMessageId({
+            messageIds: prevChannelObj?.messageIds,
+            messageId: action.messageId
+          });
       const messagesObj = action.subchannelId
         ? prevChannelObj?.messagesObj
         : {
             ...prevChannelObj?.messagesObj,
-            [action.messageId]: {
-              ...action.message,
-              isLoaded: true,
-              tempMessageId: action.messageId,
-              content: action.message.content,
-              targetMessage: action.replyTarget,
-              ...(action.isRespondingToSubject
-                ? {
-                    targetSubject: {
-                      ...prevChannelObj?.legacyTopicObj,
-                      content:
-                        prevChannelObj?.legacyTopicObj?.content ||
-                        defaultChatSubject
-                    }
-                  }
-                : {})
-            }
+            [action.messageId]: submittedMessage
           };
       const subchannelObj = action.subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              ...currentSubchannel,
               isRespondingToSubject: false,
-              messageIds: [action.messageId].concat(
-                prevChannelObj?.subchannelObj?.[action.subchannelId].messageIds
-              ),
+              messageIds: prependUniqueChatMessageId({
+                messageIds: currentSubchannel?.messageIds,
+                messageId: action.messageId
+              }),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
-                  .messagesObj,
-                [action.messageId]: {
-                  ...action.message,
-                  isLoaded: true,
-                  tempMessageId: action.messageId,
-                  subchannelId: action.subchannelId,
-                  content: action.message.content,
-                  targetMessage: action.replyTarget,
-                  ...(action.isRespondingToSubject
-                    ? {
-                        targetSubject: {
-                          ...prevChannelObj?.subchannelObj?.[
-                            action.subchannelId
-                          ]?.legacyTopicObj,
-                          content:
-                            prevChannelObj?.subchannelObj?.[action.subchannelId]
-                              ?.legacyTopicObj?.content || defaultChatSubject
-                        }
-                      }
-                    : {})
-                }
+                ...currentSubchannel?.messagesObj,
+                [action.messageId]: submittedMessage
               }
             }
           }
@@ -6654,9 +6813,11 @@ export default function ChatReducer(
               [action.topicId]: {
                 ...prevChannelObj?.topicObj?.[action.topicId],
                 isSearchActive: false,
-                messageIds: [action.messageId].concat(
-                  prevChannelObj?.topicObj?.[action.topicId]?.messageIds || []
-                )
+                messageIds: prependUniqueChatMessageId({
+                  messageIds:
+                    prevChannelObj?.topicObj?.[action.topicId]?.messageIds,
+                  messageId: action.messageId
+                })
               }
             },
             isSearchActive: false,
@@ -6664,7 +6825,7 @@ export default function ChatReducer(
             gameState,
             messageIds,
             messagesObj,
-            numUnreads: 0,
+            numUnreads: action.subchannelId ? prevChannelObj.numUnreads : 0,
             subchannelObj
           }
         }
@@ -6752,15 +6913,6 @@ export default function ChatReducer(
         lastSubchannelPaths: {
           ...state.lastSubchannelPaths,
           [action.channelId]: action.path
-        },
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            numUnreads: action.currentSubchannelPath
-              ? state.channelsObj?.[action.channelId]?.numUnreads || 0
-              : 0
-          }
         }
       };
     case 'ACCEPT_TRANSACTION':
@@ -6924,20 +7076,7 @@ export default function ChatReducer(
       return {
         ...state,
         chatType: null,
-        selectedChannelId: action.channelId,
-        channelsObj: {
-          ...state.channelsObj,
-          ...(state.selectedChannelId
-            ? {
-                [state.selectedChannelId]: {
-                  ...state.channelsObj[state.selectedChannelId],
-                  numUnreads: state.lastSubchannelPaths[state.selectedChannelId]
-                    ? state.channelsObj[state.selectedChannelId].numUnreads
-                    : 0
-                }
-              }
-            : {})
-        }
+        selectedChannelId: action.channelId
       };
     }
     case 'WITHDRAW_OUTGOING_OFFER': {
@@ -7013,12 +7152,9 @@ function resolveLatestBoardMessageState({
   nextBoardMessageId?: number | null;
   nextTerminalMessageId?: number | string | null;
   boardMessageKey: 'lastChessMessageId' | 'lastOmokMessageId';
-  latestBoardMessageKey:
-    'latestChessBoardMessageId' | 'latestOmokBoardMessageId';
-  terminalMessageKey:
-    'lastChessTerminalMessageId' | 'lastOmokTerminalMessageId';
-  pendingTerminalTokenKey:
-    'lastChessPendingTerminalToken' | 'lastOmokPendingTerminalToken';
+  latestBoardMessageKey: 'latestChessBoardMessageId' | 'latestOmokBoardMessageId';
+  terminalMessageKey: 'lastChessTerminalMessageId' | 'lastOmokTerminalMessageId';
+  pendingTerminalTokenKey: 'lastChessPendingTerminalToken' | 'lastOmokPendingTerminalToken';
 }) {
   const currentActiveBoardId =
     typeof currentActiveBoardMessageId === 'number'

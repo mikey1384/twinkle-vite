@@ -213,7 +213,7 @@ export default function useChatSocket({
   const syncLegacyChatReaction = useAppContext(
     (v) => v.requestHelpers.syncLegacyChatReaction
   );
-  // Serializes canonical global-unread resyncs triggered by reaction removals.
+  // Serializes canonical global-unread resyncs triggered by socket activity.
   const unreadResyncInFlightRef = useRef(false);
 
   // Reactions can come in bursts. We only need to persist lastRead once per second per
@@ -252,22 +252,24 @@ export default function useChatSocket({
       subchannelId?: number | null;
     }) {
       const nowSec = Math.floor(Date.now() / 1000);
-      const shouldUpdateChannel =
+      const normalizedSubchannelId = Number(subchannelId || 0);
+      const shouldUpdateMain =
         channelId > 0 &&
+        normalizedSubchannelId === 0 &&
         lastReadWriteSecRef.current.channel[channelId] !== nowSec;
       const shouldUpdateSubchannel = Boolean(
-        subchannelId &&
-        subchannelId > 0 &&
-        lastReadWriteSecRef.current.subchannel[subchannelId] !== nowSec
+        normalizedSubchannelId > 0 &&
+          lastReadWriteSecRef.current.subchannel[normalizedSubchannelId] !==
+            nowSec
       );
-      if (!shouldUpdateChannel && !shouldUpdateSubchannel) return;
+      if (!shouldUpdateMain && !shouldUpdateSubchannel) return;
 
       // A canonical read mutation changes the basis of every unread snapshot,
       // independently of message/reaction activity. Invalidate older reads at
       // request start, then apply only the server-returned read watermark.
       markUnreadActivity();
       const reconciliations: Promise<void>[] = [];
-      if (shouldUpdateChannel) {
+      if (shouldUpdateMain) {
         lastReadWriteSecRef.current.channel[channelId] = nowSec;
         reconciliations.push(
           reconcileCanonicalLastRead({
@@ -277,13 +279,16 @@ export default function useChatSocket({
           })
         );
       }
-      if (shouldUpdateSubchannel && subchannelId) {
-        lastReadWriteSecRef.current.subchannel[subchannelId] = nowSec;
+      if (shouldUpdateSubchannel) {
+        lastReadWriteSecRef.current.subchannel[normalizedSubchannelId] = nowSec;
         reconciliations.push(
           reconcileCanonicalLastRead({
-            request: updateSubchannelLastRead({ channelId, subchannelId }),
+            request: updateSubchannelLastRead({
+              channelId,
+              subchannelId: normalizedSubchannelId
+            }),
             channelId,
-            subchannelId
+            subchannelId: normalizedSubchannelId
           })
         );
       }
@@ -336,6 +341,7 @@ export default function useChatSocket({
     socket.on('chat_sidebar_state_updated', handleChatSidebarStateUpdate);
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
+    socket.on('member_left', handleMemberLeftUnreadState);
     socket.on('message_attachment_hid', onHideAttachment);
     socket.on('human_topic_state_changed', handleHumanTopicStateChanged);
     socket.on('new_message_received', handleReceiveMessage);
@@ -378,6 +384,7 @@ export default function useChatSocket({
       socket.off('chat_sidebar_state_updated', handleChatSidebarStateUpdate);
       socket.off('chat_subject_purchased', onEnableChatSubject);
       socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
+      socket.off('member_left', handleMemberLeftUnreadState);
       socket.off('message_attachment_hid', onHideAttachment);
       socket.off('human_topic_state_changed', handleHumanTopicStateChanged);
       socket.off('new_message_received', handleReceiveMessage);
@@ -417,6 +424,35 @@ export default function useChatSocket({
         });
         queueGlobalUnreadCountResync();
       }
+    }
+
+    function handleMemberLeftUnreadState({
+      channelId
+    }: {
+      channelId: number;
+    }) {
+      const normalizedChannelId = Number(channelId || 0);
+      if (normalizedChannelId <= 0) return;
+
+      const mainScopeIsVisible =
+        pageVisibleRef.current &&
+        usingChatRef.current &&
+        selectedChannelIdRef.current === normalizedChannelId &&
+        Number(subchannelIdRef.current || 0) === 0;
+      if (mainScopeIsVisible) {
+        // Chat/Main owns the canonical last-read write for visible Main.
+        return;
+      }
+
+      // A private-channel leave persists a Main notification before this
+      // event is emitted. Re-read both projections from the writer instead of
+      // guessing how that row changes scoped or global unread state.
+      markUnreadActivity();
+      queueChannelUnreadStateResync({
+        channelId: normalizedChannelId,
+        subchannelId: 0
+      });
+      queueGlobalUnreadCountResync();
     }
 
     function handleChatSidebarStateUpdate({
@@ -818,15 +854,23 @@ export default function useChatSocket({
     }) {
       markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
-      const isForCurrentChannel = channelId === selectedChannelIdRef.current;
+      const currentSubchannelId = Number(subchannelIdRef.current || 0);
+      const isForCurrentChannel =
+        Number(channelId) === Number(selectedChannelIdRef.current);
       if (isForCurrentChannel) {
-        if (usingChatRef.current) {
+        if (
+          currentPageVisible &&
+          usingChatRef.current &&
+          currentSubchannelId === 0
+        ) {
           void maybeUpdateLastRead({ channelId });
         }
         onReceiveMessage({
           message,
           pageVisible: currentPageVisible,
-          usingChat: usingChatRef.current
+          usingChat: usingChatRef.current,
+          currentSubchannelId,
+          isMyMessage: Number(message.userId) === Number(userId)
         });
       }
       if (!isForCurrentChannel) {
@@ -839,7 +883,7 @@ export default function useChatSocket({
           },
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
-          isMyMessage: message.userId === userId
+          isMyMessage: Number(message.userId) === Number(userId)
         });
       }
       if (user.id === userId && user.newXp) {
@@ -868,20 +912,21 @@ export default function useChatSocket({
     async function handleReceiveMessage({
       message,
       channel,
-      newMembers,
-      isNotification
+      newMembers
     }: {
       message: any;
       channel: any;
       newMembers: any[];
-      isNotification: boolean;
     }) {
       markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = subchannelIdRef.current;
       const messageIsForCurrentChannel =
-        message.channelId === selectedChannelIdRef.current;
-      const senderIsUser = message.userId === userId && !isNotification;
+        Number(message.channelId) === Number(selectedChannelIdRef.current);
+      // Transfer notices are canonical unread activity for both parties, even
+      // though the initiating user's ID is stored as the message author.
+      const isMyMessage =
+        Number(message.userId) === Number(userId) && !message.transferId;
       const activityChannel =
         channelsObjRef.current?.[message.channelId] || channel;
       if (activityChannel?.twoPeople) {
@@ -890,25 +935,26 @@ export default function useChatSocket({
       if (isChessGameMessage(message)) {
         void refreshUnansweredChessShortcut();
       }
-      if (message.userId !== userId && document.hidden) {
+      if (!isMyMessage && document.hidden) {
         notifyMessageReceivedWhileAway({ message, channel });
       }
-      if (senderIsUser && currentPageVisible) return;
       if (messageIsForCurrentChannel) {
-        if (usingChatRef.current) {
-          if (message.subchannelId === currentSubchannelId) {
+        if (currentPageVisible && usingChatRef.current) {
+          if (
+            Number(message.subchannelId || 0) ===
+            Number(currentSubchannelId || 0)
+          ) {
             void maybeUpdateLastRead({
               channelId: message.channelId,
               subchannelId: message.subchannelId
             });
-          } else {
-            void maybeUpdateLastRead({ channelId: message.channelId });
           }
         }
         onReceiveMessage({
           message,
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
+          isMyMessage,
           newMembers,
           currentSubchannelId
         });
@@ -919,7 +965,7 @@ export default function useChatSocket({
           channel,
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
-          isMyMessage: senderIsUser,
+          isMyMessage,
           newMembers
         });
       }
@@ -1068,14 +1114,15 @@ export default function useChatSocket({
       });
 
       if (messageIsForCurrentChannel) {
-        if (usingChatRef.current) {
-          if (message.subchannelId === subchannelIdRef.current) {
+        if (currentPageVisible && usingChatRef.current) {
+          if (
+            Number(message.subchannelId || 0) ===
+            Number(subchannelIdRef.current || 0)
+          ) {
             void maybeUpdateLastRead({
               channelId: message.channelId,
               subchannelId: message.subchannelId
             });
-          } else {
-            void maybeUpdateLastRead({ channelId: message.channelId });
           }
         }
         onReceiveMessage({

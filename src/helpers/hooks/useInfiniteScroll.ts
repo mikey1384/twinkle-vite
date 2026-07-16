@@ -10,7 +10,7 @@ export default function useInfiniteScroll({
 }: {
   feedsLength: number;
   scrollable: boolean;
-  onScrollToBottom: () => void;
+  onScrollToBottom: () => void | Promise<void>;
 }) {
   const loadingRef = useRef(false);
   const prevFeedsLength = useRef(0);
@@ -48,8 +48,13 @@ export default function useInfiniteScroll({
           ) {
             if (!loadingRef.current) {
               loadingRef.current = true;
-              await onScrollToBottom();
-              loadingRef.current = false;
+              try {
+                await onScrollToBottom();
+              } finally {
+                // A rejected page request must not permanently latch every
+                // later bottom-scroll attempt until the component remounts.
+                loadingRef.current = false;
+              }
             }
           }
         }
@@ -57,6 +62,7 @@ export default function useInfiniteScroll({
     }
 
     return function cleanUp() {
+      clearTimeout(timerRef.current);
       removeEvent(window, 'scroll', onScroll);
       removeEvent(document.getElementById('App'), 'scroll', onScroll);
     };

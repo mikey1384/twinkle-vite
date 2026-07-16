@@ -1,4 +1,5 @@
 import { Dispatch } from '~/types';
+import type { HomeFeedPaginationCursor } from './types';
 
 export default function HomeActions(dispatch: Dispatch) {
   return {
@@ -28,15 +29,18 @@ export default function HomeActions(dispatch: Dispatch) {
     },
     onLoadFeeds({
       feeds,
-      loadMoreButton
+      loadMoreButton,
+      feedPaginationCursor
     }: {
       feeds: object[];
       loadMoreButton: boolean;
+      feedPaginationCursor: HomeFeedPaginationCursor | null;
     }) {
       return dispatch({
         type: 'LOAD_FEEDS',
         feeds,
-        loadMoreButton
+        loadMoreButton,
+        feedPaginationCursor
       });
     },
     onLoadMonthlyLeaderboards({
@@ -54,15 +58,18 @@ export default function HomeActions(dispatch: Dispatch) {
     },
     onLoadMoreFeeds({
       feeds,
-      loadMoreButton
+      loadMoreButton,
+      feedPaginationCursor
     }: {
       feeds: object[];
       loadMoreButton: boolean;
+      feedPaginationCursor: HomeFeedPaginationCursor | null;
     }) {
       return dispatch({
         type: 'LOAD_MORE_FEEDS',
         feeds,
-        loadMoreButton
+        loadMoreButton,
+        feedPaginationCursor
       });
     },
     onResetFeeds() {

@@ -2,6 +2,7 @@ import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from '../selectableContext';
 import HomeActions from './actions';
 import HomeReducer from './reducer';
+import type { HomeFeedPaginationCursor } from './types';
 
 export const HomeContext = createContext({});
 export const initialHomeState = {
@@ -10,6 +11,7 @@ export const initialHomeState = {
   displayOrder: 'desc',
   topMenuSection: 'start',
   feeds: [],
+  feedPaginationCursor: null as HomeFeedPaginationCursor | null,
   feedsOutdated: false,
   fileUploadProgress: null,
   aiStoriesModalShown: false,

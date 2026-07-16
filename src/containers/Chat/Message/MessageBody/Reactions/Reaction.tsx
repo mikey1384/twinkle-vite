@@ -17,6 +17,8 @@ import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { isEqual } from 'lodash';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import Icon from '~/components/Icon';
+import type { PendingReactionMutation } from './types';
 
 const deviceIsMobile = isMobile(navigator);
 const youLabel = 'You';
@@ -25,6 +27,7 @@ function Reaction({
   reaction,
   reactionCount,
   reactedUserIds,
+  pendingMutation,
   onRemoveReaction,
   onAddReaction,
   reactionsMenuShown,
@@ -33,6 +36,7 @@ function Reaction({
   reaction: string;
   reactionCount: number;
   reactedUserIds: number[];
+  pendingMutation?: PendingReactionMutation;
   onRemoveReaction: () => void;
   onAddReaction: () => void;
   reactionsMenuShown: boolean;
@@ -61,6 +65,7 @@ function Reaction({
     fallback: 'logoBlue'
   });
   const reactionButtonOpacity = reactionButtonToken?.opacity ?? 0.2;
+  const isPending = Boolean(pendingMutation);
   const userReacted = useMemo(
     () => reactedUserIds.includes(userId),
     [reactedUserIds, userId]
@@ -161,13 +166,6 @@ function Reaction({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactedUserIdsExcludingMine, userObj]);
 
-  const handleClick = useCallback(() => {
-    if (userReacted) {
-      return onRemoveReaction();
-    }
-    onAddReaction();
-  }, [onAddReaction, onRemoveReaction, userReacted]);
-
   return (
     <div
       ref={ReactionRef}
@@ -182,13 +180,26 @@ function Reaction({
         zIndex: 5000
       }}
     >
-      <div
+      <button
+        type="button"
+        aria-busy={isPending}
+        aria-label={
+          isPending
+            ? `${pendingMutation === 'add' ? 'Adding' : 'Removing'} ${reaction} reaction`
+            : `${userReacted ? 'Remove' : 'Add'} ${reaction} reaction`
+        }
+        disabled={isPending}
         style={{
-          ...(userReacted
-            ? { background: getReactionButtonColor(reactionButtonOpacity) }
-            : {}),
+          appearance: 'none',
+          background: userReacted
+            ? getReactionButtonColor(reactionButtonOpacity)
+            : 'transparent',
           borderRadius: innerBorderRadius,
-          cursor: 'pointer',
+          border: 0,
+          boxSizing: 'border-box',
+          color: 'inherit',
+          cursor: isPending ? 'wait' : 'pointer',
+          fontFamily: 'inherit',
           width: '100%',
           height: '100%',
           padding: '0 0.5rem',
@@ -208,16 +219,24 @@ function Reaction({
               ${reactionsObj[reaction].position} / 5100%;
           `}
         />
-        <span
-          className="unselectable"
-          style={{
-            marginLeft: '0.3rem',
-            fontSize: '1.3rem'
-          }}
-        >
-          {reactionCount}
-        </span>
-      </div>
+        {isPending ? (
+          <Icon
+            icon="spinner"
+            pulse
+            style={{ marginLeft: '0.4rem', fontSize: '1.1rem' }}
+          />
+        ) : (
+          <span
+            className="unselectable"
+            style={{
+              marginLeft: '0.3rem',
+              fontSize: '1.3rem'
+            }}
+          >
+            {reactionCount}
+          </span>
+        )}
+      </button>
       {tooltipContext && reactedUsers.length > 0 && (
         <Tooltip
           onMouseEnter={() => {
@@ -278,6 +297,15 @@ function Reaction({
     hideTimerRef.current = setTimeout(() => {
       setTooltipContext(null);
     }, 200);
+  }
+
+  function handleClick() {
+    if (isPending) return;
+    if (userReacted) {
+      onRemoveReaction();
+      return;
+    }
+    onAddReaction();
   }
 }
 

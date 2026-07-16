@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
 
 export default function Subchannel({
@@ -19,37 +18,21 @@ export default function Subchannel({
   subchannelPath?: string;
   onUpdateLastSubchannelPath: ({
     channelId,
-    path,
-    currentSubchannelPath
+    path
   }: {
     channelId: number;
     path: string;
-    currentSubchannelPath: string;
   }) => void;
 }) {
-  const userId = useKeyContext((v) => v.myState.userId);
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
     [subchannel.path, subchannelPath]
   );
 
-  const lastMessage = useMemo(() => {
-    const lastMessageId = subchannel?.messageIds?.[0];
-    return subchannel?.messagesObj?.[lastMessageId];
-  }, [subchannel?.messageIds, subchannel?.messagesObj]);
   const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
-  const lastUnreadSenderId = useMemo(() => {
-    return typeof subchannel?.lastUnreadUserId === 'number'
-      ? subchannel.lastUnreadUserId
-      : lastMessage?.sender?.id ?? lastMessage?.userId;
-  }, [lastMessage?.sender?.id, lastMessage?.userId, subchannel?.lastUnreadUserId]);
   const badgeShown = useMemo(() => {
-    return (
-      !subchannelSelected &&
-      numUnreads > 0 &&
-      lastUnreadSenderId !== userId
-    );
-  }, [lastUnreadSenderId, numUnreads, subchannelSelected, userId]);
+    return !subchannelSelected && numUnreads > 0;
+  }, [numUnreads, subchannelSelected]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels/Subchannel">
@@ -59,8 +42,7 @@ export default function Subchannel({
         onClick={() =>
           onUpdateLastSubchannelPath({
             channelId: selectedChannelId,
-            path: subchannel.path,
-            currentSubchannelPath: subchannelPath
+            path: subchannel.path
           })
         }
       >

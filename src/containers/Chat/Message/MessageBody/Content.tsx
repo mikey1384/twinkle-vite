@@ -15,6 +15,7 @@ import FileAttachment from './FileAttachment';
 import Invitation from './Invitation';
 import ModificationNotice from './ModificationNotice';
 import Reactions from './Reactions';
+import type { PendingReactionMutations } from './Reactions/types';
 import RewardMessage from './RewardMessage';
 import TargetChessPosition from './TargetChessPosition';
 import TargetMessage from './TargetMessage';
@@ -30,13 +31,13 @@ interface Props {
   currentChannel: any;
   displayedThemeColor: string;
   extractedUrl: string;
-  handleAddReaction: (reaction: any) => void;
+  handleAddReaction: (reaction: string) => void;
   handleChessSpoilerClick: () => void;
   handleEditCancel: () => void;
   handleEditDone: (editedMessage: any) => Promise<any>;
   handleHideAttachment: () => Promise<void>;
   handleOmokSpoilerClick: () => void;
-  handleRemoveReaction: (reaction: any) => void;
+  handleRemoveReaction: (reaction: string) => void;
   hasChessBoardState: boolean;
   hasOmokBoardState: boolean;
   isAIMessage: boolean;
@@ -67,6 +68,7 @@ interface Props {
   onSetChessTarget: (v: any) => void;
   onShowSubjectMsgsModal: (v: any) => void;
   partner: any;
+  pendingReactionMutations: PendingReactionMutations;
   reactionsMenuShown: boolean;
   recentThumbUrl: string;
   socketConnected: boolean;
@@ -136,6 +138,7 @@ export default function Content({
   onSetChessTarget,
   onShowSubjectMsgsModal,
   partner,
+  pendingReactionMutations,
   reactionsMenuShown,
   recentThumbUrl,
   socketConnected,
@@ -406,6 +409,7 @@ export default function Content({
             <div style={{ marginTop: '2rem', height: '2.5rem' }}>
               {isMenuButtonsAllowed && (
                 <Reactions
+                  pendingReactionMutations={pendingReactionMutations}
                   reactions={message.reactions}
                   reactionsMenuShown={reactionsMenuShown}
                   onRemoveReaction={handleRemoveReaction}

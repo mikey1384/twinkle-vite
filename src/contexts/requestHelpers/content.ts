@@ -6,6 +6,8 @@ import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
 import { attemptUpload } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
 
+const HOME_FEED_LOAD_MORE_TOTAL_TIMEOUT_MS = 60000;
+
 export default function contentRequestHelpers({
   auth,
   handleError
@@ -691,7 +693,7 @@ export default function contentRequestHelpers({
       signal
     }: {
       lastFeedId?: number;
-      lastTimeStamp?: string;
+      lastTimeStamp?: number | string;
       lastRewardLevel?: number;
       lastViewDuration?: number;
       clientRequestId?: string;
@@ -725,19 +727,26 @@ export default function contentRequestHelpers({
         if (feedPerformanceSample) {
           params.set('feedPerf', '1');
         }
+        const isLoadMoreRequest = Boolean(lastFeedId);
         const { data } = await request.get(
           `${URL}/content/feeds?${params.toString()}`,
-          signal
-            ? {
-                ...auth(),
-                signal,
-                // A cancelable load-more must not collapse onto (or be
-                // collapsed into) another in-flight feeds GET: the watchdog
-                // aborts THIS request, and a retry needs to issue a fresh one
-                // rather than re-await the dying promise.
-                meta: { collapseKey: null }
-              }
-            : auth()
+          {
+            ...auth(),
+            ...(signal ? { signal } : {}),
+            ...(isLoadMoreRequest
+              ? {
+                  // The scheduler is the sole timeout/retry owner. Its total
+                  // deadline includes queue, breaker, backoff, and HTTP time,
+                  // while one automatic retry absorbs a transient failure.
+                  // A component AbortSignal is only for scope/unmount cancel.
+                  meta: {
+                    collapseKey: null,
+                    maxRetries: 1,
+                    totalTimeoutMs: HOME_FEED_LOAD_MORE_TOTAL_TIMEOUT_MS
+                  }
+                }
+              : {})
+          }
         );
         return { data, filter };
       } catch (error) {

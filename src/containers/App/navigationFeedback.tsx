@@ -13,6 +13,7 @@ import {
   useNavigate,
   type Location
 } from 'react-router-dom';
+import { LOADING_INDICATOR_GRACE_PERIOD_MS } from '~/constants/ui';
 
 export interface ReadyNavigationLocation {
   key: string;
@@ -39,7 +40,6 @@ interface NavigationFeedbackContextValue {
   onRouteReady: (location: ReadyNavigationLocation) => void;
 }
 
-const NAVIGATION_LOADING_INDICATOR_DELAY_MS = 200;
 const NavigationFeedbackContext =
   createContext<NavigationFeedbackContextValue | null>(null);
 
@@ -113,7 +113,7 @@ export function NavigationFeedbackProvider({
     if (pendingNavigationId === null) return;
     const loadingIndicatorTimer = window.setTimeout(() => {
       setLoadingRequestId(pendingNavigationId);
-    }, NAVIGATION_LOADING_INDICATOR_DELAY_MS);
+    }, LOADING_INDICATOR_GRACE_PERIOD_MS);
     return () => clearTimeout(loadingIndicatorTimer);
   }, [pendingNavigationId]);
 

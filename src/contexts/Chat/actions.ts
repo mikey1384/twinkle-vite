@@ -130,8 +130,7 @@ export default function ChatActions(dispatch: Dispatch) {
       inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
       request?: Record<string, any> | null;
       requestId?: number;
-      requestStatus?:
-        'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
+      requestStatus?: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
       eventTimeMs?: number;
       timeStamp?: number;
     }) {
@@ -1377,13 +1376,15 @@ export default function ChatActions(dispatch: Dispatch) {
       message,
       newMembers = [],
       usingChat,
-      currentSubchannelId
+      currentSubchannelId = 0,
+      isMyMessage = false
     }: {
       pageVisible: boolean;
       message: object;
       newMembers: object[];
       usingChat: boolean;
-      currentSubchannelId: number;
+      currentSubchannelId?: number;
+      isMyMessage?: boolean;
     }) {
       return dispatch({
         type: 'RECEIVE_MESSAGE',
@@ -1391,6 +1392,7 @@ export default function ChatActions(dispatch: Dispatch) {
         usingChat,
         pageVisible,
         message,
+        isMyMessage,
         eventSequence: getNextConfirmedChatEventSequence(),
         newMembers
       });
@@ -2232,18 +2234,15 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onUpdateLastSubchannelPath({
       channelId,
-      path,
-      currentSubchannelPath
+      path
     }: {
       channelId: number;
       path: string;
-      currentSubchannelPath: string;
     }) {
       return dispatch({
         type: 'UPDATE_LAST_SUBCHANNEL_PATH',
         channelId,
-        path,
-        currentSubchannelPath
+        path
       });
     },
     onUpdateChatType(chatType: string) {
