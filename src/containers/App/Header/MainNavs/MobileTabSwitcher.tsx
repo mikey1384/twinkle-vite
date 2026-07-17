@@ -164,26 +164,13 @@ const rowClass = css`
     flex-shrink: 0;
     color: ${Color.darkGray()};
   }
-  .action {
-    flex-shrink: 0;
-    width: 4.4rem;
-    border: none;
-    border-left: 1px solid ${Color.borderGray()};
-    background: transparent;
-    color: ${Color.darkGray()};
-    font-size: 1.4rem;
-    cursor: pointer;
-  }
-  .action.pinned {
-    color: ${Color.brownOrange()};
-  }
   /* dynamic (last-viewed) tabs match the desktop convention: italic label */
   .main .label.dynamic {
     font-style: italic;
   }
-  /* dynamic rows carry labeled actions — they exist to surface the long-press
-     menu's capabilities to users who never discover the long press */
-  .dynamic-action {
+  /* every row uses the same labeled stacked actions — they exist to surface
+     the long-press menu's capabilities to users who never discover it */
+  .action {
     flex-shrink: 0;
     width: 5.6rem;
     display: flex;
@@ -202,10 +189,10 @@ const rowClass = css`
       font-weight: 600;
     }
   }
-  .dynamic-action.pin {
+  .action.pin {
     color: ${Color.brownOrange()};
   }
-  .dynamic-action.danger {
+  .action.danger {
     color: ${Color.rose()};
   }
 `;
@@ -305,7 +292,7 @@ export default function MobileTabSwitcher({
                       <>
                         <button
                           type="button"
-                          className="dynamic-action pin"
+                          className="action pin"
                           onClick={() => onPinDynamic(item.key)}
                           aria-label="Pin this page"
                         >
@@ -316,7 +303,7 @@ export default function MobileTabSwitcher({
                         </button>
                         <button
                           type="button"
-                          className="dynamic-action"
+                          className="action"
                           onClick={() => onAddDynamic(item.key)}
                           aria-label="Add as tab"
                         >
@@ -325,7 +312,7 @@ export default function MobileTabSwitcher({
                         </button>
                         <button
                           type="button"
-                          className="dynamic-action danger"
+                          className="action danger"
                           onClick={() => onDismissDynamic(item.key)}
                           aria-label="Close tab"
                         >
@@ -337,7 +324,7 @@ export default function MobileTabSwitcher({
                       <>
                         <button
                           type="button"
-                          className={`action${item.pinned ? ' pinned' : ''}`}
+                          className="action pin"
                           onClick={() => onTogglePin(item.key)}
                           aria-label={item.pinned ? 'Unpin tab' : 'Pin tab'}
                         >
@@ -346,14 +333,16 @@ export default function MobileTabSwitcher({
                               item.pinned ? 'thumbtack' : ['far', 'thumbtack']
                             }
                           />
+                          <span>{item.pinned ? 'Unpin' : 'Pin'}</span>
                         </button>
                         <button
                           type="button"
-                          className="action"
+                          className="action danger"
                           onClick={() => onRemove(item.key)}
                           aria-label="Close tab"
                         >
                           <Icon icon="trash-alt" />
+                          <span>Close</span>
                         </button>
                       </>
                     )}

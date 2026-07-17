@@ -9,6 +9,12 @@ import {
 } from '~/constants/state';
 import { Color } from '~/constants/css';
 
+// 48-byte silent WAV. Playing it synchronously inside the tap gesture marks the
+// element as user-activated on iOS, so play() is still allowed after the async
+// TTS fetch swaps in the real source.
+const SILENT_AUDIO_DATA_URI =
+  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAAAA';
+
 function AIAudioButton({
   text,
   voice,
@@ -35,6 +41,7 @@ function AIAudioButton({
   const pendingAudioIntentRef = useRef<number | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioError, setAudioError] = useState('');
+  const [audioHint, setAudioHint] = useState('');
 
   useEffect(() => {
     const player =
@@ -45,7 +52,9 @@ function AIAudioButton({
     setIsPlaying(Boolean(player && !player.paused && !player.ended));
     setIsPrepared(hasPreparedAudio);
     if (player) {
-      bindPlayerEvents({ player, setAudioError, setIsPlaying });
+      bindPlayerEvents({ player, setAudioError, setAudioHint, setIsPlaying });
+    } else {
+      setAudioHint('');
     }
     audioRef.key = audioKey;
   }, [audioKey, contentKey]);
@@ -101,7 +110,7 @@ function AIAudioButton({
           <Icon icon="download" />
         </Button>
       )}
-      {audioError && (
+      {audioError ? (
         <span
           role="alert"
           style={{
@@ -113,12 +122,24 @@ function AIAudioButton({
         >
           {audioError}
         </span>
-      )}
+      ) : audioHint ? (
+        <span
+          role="status"
+          style={{
+            color: Color.darkerGray(),
+            fontSize: '1.1rem',
+            lineHeight: 1.2
+          }}
+        >
+          {audioHint}
+        </span>
+      ) : null}
     </span>
   );
 
   async function handleAudioClick() {
     setAudioError('');
+    setAudioHint('');
     const audioIntentId = claimAudioIntent();
     const currentPlayer =
       audioKey === contentKey
@@ -129,6 +150,7 @@ function AIAudioButton({
       bindPlayerEvents({
         player: currentPlayer,
         setAudioError,
+        setAudioHint,
         setIsPlaying
       });
       if (!currentPlayer.paused && !currentPlayer.ended) {
@@ -146,9 +168,14 @@ function AIAudioButton({
     onSetAudioKey(contentKey);
     pendingAudioIntentRef.current = audioIntentId;
     setPreparing(true);
+    // Play a silent source synchronously in the tap gesture so iOS keeps this
+    // element playable after the async fetch below.
+    const player = new Audio(SILENT_AUDIO_DATA_URI);
+    player.play().catch(() => {});
     try {
       const data = await textToSpeech(text, voice);
       if (!isCurrentAudioIntent(audioIntentId)) {
+        player.pause();
         return;
       }
       const audioBlob =
@@ -156,11 +183,12 @@ function AIAudioButton({
           ? data
           : new Blob([data], { type: 'audio/mpeg' });
       const nextAudioUrl = URL.createObjectURL(audioBlob);
-      const player = new Audio(nextAudioUrl);
+      player.pause();
+      player.src = nextAudioUrl;
       audioRef.player = player;
       setAudioUrl(nextAudioUrl);
       setIsPrepared(true);
-      bindPlayerEvents({ player, setAudioError, setIsPlaying });
+      bindPlayerEvents({ player, setAudioError, setAudioHint, setIsPlaying });
       await playAudio(player);
     } catch (error) {
       if (!isCurrentAudioIntent(audioIntentId)) {
@@ -191,11 +219,11 @@ function AIAudioButton({
       }
       console.error(error);
       setIsPlaying(false);
-      setAudioError(
-        isPlaybackPermissionError(error)
-          ? 'Voice audio is ready. Tap the speaker again to play.'
-          : 'Could not play voice audio.'
-      );
+      if (isPlaybackPermissionError(error)) {
+        setAudioHint('Ready — tap the speaker to play');
+      } else {
+        setAudioError('Could not play voice audio.');
+      }
     }
   }
 
@@ -219,15 +247,18 @@ function AIAudioButton({
 function bindPlayerEvents({
   player,
   setAudioError,
+  setAudioHint,
   setIsPlaying
 }: {
   player: HTMLAudioElement;
   setAudioError: React.Dispatch<React.SetStateAction<string>>;
+  setAudioHint: React.Dispatch<React.SetStateAction<string>>;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   player.onplay = () => {
     if (audioRef.player === player) {
       setAudioError('');
+      setAudioHint('');
       setIsPlaying(true);
     }
   };
