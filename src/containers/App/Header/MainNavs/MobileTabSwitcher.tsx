@@ -13,7 +13,7 @@ export interface SwitcherItem {
   pinned: boolean;
 }
 
-export type SwitcherKind = 'pinned' | 'added';
+export type SwitcherKind = 'pinned' | 'dynamic' | 'added';
 
 export interface SwitcherSection {
   kind: SwitcherKind;
@@ -177,6 +177,37 @@ const rowClass = css`
   .action.pinned {
     color: ${Color.brownOrange()};
   }
+  /* dynamic (last-viewed) tabs match the desktop convention: italic label */
+  .main .label.dynamic {
+    font-style: italic;
+  }
+  /* dynamic rows carry labeled actions — they exist to surface the long-press
+     menu's capabilities to users who never discover the long press */
+  .dynamic-action {
+    flex-shrink: 0;
+    width: 5.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: none;
+    border-left: 1px solid ${Color.borderGray()};
+    background: transparent;
+    color: ${Color.darkGray()};
+    font-size: 1.3rem;
+    cursor: pointer;
+    span {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+  }
+  .dynamic-action.pin {
+    color: ${Color.brownOrange()};
+  }
+  .dynamic-action.danger {
+    color: ${Color.rose()};
+  }
 `;
 
 export default function MobileTabSwitcher({
@@ -184,6 +215,9 @@ export default function MobileTabSwitcher({
   onReorder,
   onTogglePin,
   onRemove,
+  onPinDynamic,
+  onAddDynamic,
+  onDismissDynamic,
   onNavigate,
   onClose
 }: {
@@ -191,6 +225,9 @@ export default function MobileTabSwitcher({
   onReorder: (kind: SwitcherKind, fromIndex: number, toIndex: number) => void;
   onTogglePin: (key: string) => void;
   onRemove: (key: string) => void;
+  onPinDynamic: (key: string) => void;
+  onAddDynamic: (key: string) => void;
+  onDismissDynamic: (key: string) => void;
   onNavigate: () => void;
   onClose: () => void;
 }) {
@@ -256,24 +293,70 @@ export default function MobileTabSwitcher({
                     ) : null}
                     <Link className="main" to={item.to} onClick={onNavigate}>
                       <Icon className="tab-icon" icon={item.icon || 'clone'} />
-                      <span className="label">{item.label}</span>
+                      <span
+                        className={`label${
+                          section.kind === 'dynamic' ? ' dynamic' : ''
+                        }`}
+                      >
+                        {item.label}
+                      </span>
                     </Link>
-                    <button
-                      type="button"
-                      className={`action${item.pinned ? ' pinned' : ''}`}
-                      onClick={() => onTogglePin(item.key)}
-                      aria-label={item.pinned ? 'Unpin tab' : 'Pin tab'}
-                    >
-                      <Icon icon="thumbtack" />
-                    </button>
-                    <button
-                      type="button"
-                      className="action"
-                      onClick={() => onRemove(item.key)}
-                      aria-label="Close tab"
-                    >
-                      <Icon icon="trash-alt" />
-                    </button>
+                    {section.kind === 'dynamic' ? (
+                      <>
+                        <button
+                          type="button"
+                          className="dynamic-action pin"
+                          onClick={() => onPinDynamic(item.key)}
+                          aria-label="Pin this page"
+                        >
+                          {/* outline = pin action; the filled thumbtack is
+                              reserved for the already-pinned state */}
+                          <Icon icon={['far', 'thumbtack']} />
+                          <span>Pin</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="dynamic-action"
+                          onClick={() => onAddDynamic(item.key)}
+                          aria-label="Add as tab"
+                        >
+                          <Icon icon="plus" />
+                          <span>Add</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="dynamic-action danger"
+                          onClick={() => onDismissDynamic(item.key)}
+                          aria-label="Close tab"
+                        >
+                          <Icon icon="trash-alt" />
+                          <span>Close</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className={`action${item.pinned ? ' pinned' : ''}`}
+                          onClick={() => onTogglePin(item.key)}
+                          aria-label={item.pinned ? 'Unpin tab' : 'Pin tab'}
+                        >
+                          <Icon
+                            icon={
+                              item.pinned ? 'thumbtack' : ['far', 'thumbtack']
+                            }
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          className="action"
+                          onClick={() => onRemove(item.key)}
+                          aria-label="Close tab"
+                        >
+                          <Icon icon="trash-alt" />
+                        </button>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -9,6 +9,7 @@ import { matchPath } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import MobileTabSwitcher, {
   SwitcherSection,
+  SwitcherItem,
   SwitcherKind
 } from './MobileTabSwitcher';
 import MobileLongPressNav from './MobileLongPressNav';
@@ -303,7 +304,7 @@ export default function MainNavs({
     x: number;
     y: number;
     items: {
-      icon: string;
+      icon: string | [string, string];
       label: string;
       className?: string;
       onClick: () => void;
@@ -1589,7 +1590,10 @@ export default function MainNavs({
     if (!mobileExtraTabKeys.includes(key)) mobileExtraTabKeys.push(key);
   }
   // The tab switcher only lists user-managed tabs. Primary tabs stay visible in
-  // the bottom nav but are omitted here because they cannot be modified.
+  // the bottom nav but are omitted here because they cannot be modified. The
+  // dynamic (last-viewed) profile/content tabs get their own section with
+  // explicit Pin/Add/Close actions — a plainly visible version of the
+  // long-press popup's capabilities, which most users never discover.
   const switcherSections: SwitcherSection[] = useMemo(() => {
     const pinnedItems = visibleCustomTabs
       .filter((tab) => tab.pinned)
@@ -1619,11 +1623,60 @@ export default function MainNavs({
           ]
         : [];
     });
+    const dynamicItems: SwitcherItem[] = [];
+    if (mobileProfileTabShown && profileNav) {
+      dynamicItems.push({
+        key: 'profile',
+        to: profileNav,
+        icon: 'user',
+        label: profileUsername || 'Profile',
+        pinned: false
+      });
+    }
+    if (mobileContentTabShown && contentPath) {
+      const to = `/${contentPath}`;
+      // pageTitle belongs to the page being viewed; only use it when the
+      // dynamic tab actually points at the current page
+      const isCurrentPage = to === `${pathname}${search || ''}`;
+      dynamicItems.push({
+        key: 'content',
+        to,
+        icon: contentIconType,
+        label: (
+          (isCurrentPage && pageTitle) ||
+          contentLabels[contentNav] ||
+          'Page'
+        ).trim(),
+        pinned: false
+      });
+    }
     return [
       { kind: 'pinned', title: 'Pinned', items: pinnedItems },
+      ...(dynamicItems.length
+        ? [
+            {
+              kind: 'dynamic' as const,
+              title: 'Recently viewed',
+              items: dynamicItems
+            }
+          ]
+        : []),
       { kind: 'added', title: 'Added', items: addedItems }
     ];
-  }, [extraNavTabs, visibleCustomTabs]);
+  }, [
+    extraNavTabs,
+    visibleCustomTabs,
+    mobileProfileTabShown,
+    mobileContentTabShown,
+    profileNav,
+    profileUsername,
+    contentPath,
+    contentNav,
+    contentIconType,
+    pageTitle,
+    pathname,
+    search
+  ]);
 
   return (
     <div
@@ -1787,6 +1840,9 @@ export default function MainNavs({
           onReorder={handleReorderSection}
           onTogglePin={handleToggleTabPinned}
           onRemove={handleRemoveCustomTab}
+          onPinDynamic={handlePinDynamicSwitcherTab}
+          onAddDynamic={handleAddDynamicSwitcherTab}
+          onDismissDynamic={handleDismissDynamicSwitcherTab}
           onNavigate={() => setTabSwitcherShown(false)}
           onClose={() => setTabSwitcherShown(false)}
         />
@@ -1931,7 +1987,7 @@ export default function MainNavs({
               y: rect.top,
               items: [
                 {
-                  icon: 'thumbtack',
+                  icon: ['far', 'thumbtack'],
                   label: 'Pin this page',
                   className: 'pin',
                   onClick: () => handleCaptureProfileTab(true)
@@ -1965,7 +2021,7 @@ export default function MainNavs({
               y: rect.top,
               items: [
                 {
-                  icon: 'thumbtack',
+                  icon: ['far', 'thumbtack'],
                   label: 'Pin this page',
                   className: 'pin',
                   onClick: () => handleCaptureContentTab(true)
@@ -2004,7 +2060,7 @@ export default function MainNavs({
               y: rect.top,
               items: [
                 {
-                  icon: 'thumbtack',
+                  icon: addedTab.pinned ? 'thumbtack' : ['far', 'thumbtack'],
                   label: addedTab.pinned
                     ? 'Unpin this tab'
                     : 'Pin this tab',
@@ -2505,7 +2561,7 @@ export default function MainNavs({
       return [
         {
           label: 'Pin this page',
-          icon: 'thumbtack',
+          icon: ['far', 'thumbtack'],
           onClick: () => handleCaptureContentTab(true)
         },
         {
@@ -2526,7 +2582,7 @@ export default function MainNavs({
       return [
         {
           label: 'Pin this page',
-          icon: 'thumbtack',
+          icon: ['far', 'thumbtack'],
           onClick: () => handleCaptureProfileTab(true)
         },
         {
@@ -2560,7 +2616,7 @@ export default function MainNavs({
         : [
             {
               label: 'Pin',
-              icon: 'thumbtack',
+              icon: ['far', 'thumbtack'],
               onClick: () => handleToggleTabPinned(key)
             },
             ...labelControlItems,
@@ -2711,6 +2767,23 @@ export default function MainNavs({
       label: profileUsername || 'Profile',
       pinned
     });
+  }
+
+  // The tab switcher's dynamic-section actions mirror the long-press popup on
+  // the bottom-nav dynamic icons; `key` is 'profile' or 'content'.
+  function handlePinDynamicSwitcherTab(key: string) {
+    if (key === 'profile') handleCaptureProfileTab(true);
+    else handleCaptureContentTab(true);
+  }
+
+  function handleAddDynamicSwitcherTab(key: string) {
+    if (key === 'profile') handleCaptureProfileTab(false);
+    else handleCaptureContentTab(false);
+  }
+
+  function handleDismissDynamicSwitcherTab(key: string) {
+    if (key === 'profile') handleCloseDynamicProfileTab();
+    else handleCloseDynamicContentTab();
   }
 
   function handleCloseDynamicContentTab() {

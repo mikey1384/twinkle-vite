@@ -27,7 +27,7 @@ export interface NavTabDescriptor {
 
 export interface TabMenuItem {
   label: string;
-  icon?: string;
+  icon?: string | [string, string];
   disabled?: boolean;
   onClick: () => void;
 }

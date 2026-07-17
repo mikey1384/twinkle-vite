@@ -384,9 +384,11 @@ export function useChessMove({
         } catch {}
       }
       onSetPhase('FAIL');
-      onPuzzleComplete({
-        solved: false
-      });
+      if (!inTimeAttack) {
+        onPuzzleComplete({
+          solved: false
+        });
+      }
 
       const epochAtFail = boardEpochRef.current;
       if (inTimeAttack) {

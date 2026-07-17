@@ -7,7 +7,7 @@ import type {
   TimeAttackTimerResponse
 } from '~/types/chess';
 
-const PROMOTION_TIME_ATTACK_PROTOCOL_VERSION = 3;
+const PROMOTION_TIME_ATTACK_PROTOCOL_VERSION = 4;
 
 function getMonotonicTime() {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -210,7 +210,7 @@ export default function chessRequestHelpers({
       solved
     }: {
       runId: number;
-      puzzleId: number;
+      puzzleId: string;
       solved: boolean;
     }) {
       try {
@@ -250,7 +250,7 @@ export default function chessRequestHelpers({
       outcome
     }: {
       runId: number;
-      puzzleId: number;
+      puzzleId: string;
       moveIndex: number;
       commandId: string;
       expectedDeadlineAt: number;

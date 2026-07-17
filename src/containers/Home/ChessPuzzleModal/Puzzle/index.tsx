@@ -54,7 +54,7 @@ const PROMOTION_TIMER_RETRY_MAX_DELAY_MS = 10_000;
 
 interface PendingPromotionTimerCommand {
   runId: number;
-  puzzleId: number;
+  puzzleId: string;
   moveIndex: number;
   commandId: string;
   expectedDeadlineAt: number;
@@ -993,8 +993,8 @@ export default function Puzzle({
     solved: boolean;
   }) {
     if (runId == null) return {} as any;
-    const puzzleId = Number(puzzle?.id || 0);
-    if (!Number.isSafeInteger(puzzleId) || puzzleId <= 0) {
+    const puzzleId = puzzle?.id;
+    if (!puzzleId) {
       throw new Error('The active promotion puzzle is unavailable');
     }
     const resp = await submitTimeAttackAttemptApi({
@@ -1191,12 +1191,11 @@ export default function Puzzle({
     outcome: 'correct' | 'wrong';
   }) {
     const runId = runIdRef.current;
-    const puzzleId = Number(puzzle?.id || 0);
+    const puzzleId = puzzle?.id;
     const expectedDeadlineAt = timeAttackDeadlineRef.current;
     if (
       runId == null ||
-      !Number.isSafeInteger(puzzleId) ||
-      puzzleId <= 0 ||
+      !puzzleId ||
       !Number.isSafeInteger(moveIndex) ||
       expectedDeadlineAt == null
     ) {
