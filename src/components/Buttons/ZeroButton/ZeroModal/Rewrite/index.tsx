@@ -10,7 +10,11 @@ import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { ResponseObj } from '../types';
 import { isTablet, isMobile } from '~/helpers';
-import { audioRef } from '~/constants/state';
+import {
+  audioRef,
+  claimAudioIntent,
+  isCurrentAudioIntent
+} from '~/constants/state';
 import Button from '~/components/Button';
 
 const deviceIsMobile = isMobile(navigator) && !isTablet(navigator);
@@ -78,6 +82,7 @@ export default function Rewrite({
   const [loadingType, setLoadingType] = useState('');
   const [isDownloadButtonShown, setIsDownloadButtonShown] = useState(false);
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
+  const pendingAudioIntentRef = useRef<number | null>(null);
 
   useEffect(() => {
     audioRef.key = audioKey;
@@ -210,6 +215,8 @@ export default function Rewrite({
     }
 
     async function init() {
+      const audioIntentId = claimAudioIntent();
+      pendingAudioIntentRef.current = audioIntentId;
       setPreparing(true);
       if (audioRef.player) {
         setIsPlaying(false);
@@ -218,27 +225,32 @@ export default function Rewrite({
       }
       try {
         const data = await textToSpeech(contentToRead);
-        if (mounted.current) {
+        if (mounted.current && isCurrentAudioIntent(audioIntentId)) {
           const url = URL.createObjectURL(
             new Blob([data], { type: 'audio/mp3' })
           );
           setAudioUrl(url);
-          audioRef.player = new Audio(url);
+          const player = new Audio(url);
+          audioRef.player = player;
           setIsDownloadButtonShown(true);
-          audioRef.player.onended = () => {
+          player.onended = () => {
             setIsPlaying(false);
           };
           onSetAudioKey(contentKey);
           if (!deviceIsMobile) {
-            setIsPlaying(true);
-            audioRef.player.play();
+            await playPreparedAudio(player);
           }
         }
       } catch (error) {
-        console.error('Error generating TTS:', error);
-        audioRef.player = null;
+        if (isCurrentAudioIntent(audioIntentId)) {
+          console.error('Error generating TTS:', error);
+          audioRef.player = null;
+        }
       } finally {
-        setPreparing(false);
+        if (pendingAudioIntentRef.current === audioIntentId) {
+          pendingAudioIntentRef.current = null;
+          setPreparing(false);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -391,6 +403,7 @@ export default function Rewrite({
 
   async function handleAudioClick() {
     if (isPlaying) {
+      claimAudioIntent();
       if (audioRef.player) {
         audioRef.player.pause();
       }
@@ -398,11 +411,12 @@ export default function Rewrite({
     } else {
       onSetAudioKey(contentKey);
       if (audioRef.player && audioKey === contentKey) {
-        audioRef.player.play();
-        setIsPlaying(true);
-        audioRef.player.onended = () => {
+        claimAudioIntent();
+        const player = audioRef.player;
+        player.onended = () => {
           setIsPlaying(false);
         };
+        await playPreparedAudio(player);
       } else {
         const contentToRead = content || contentFetchedFromContext;
         await handlePrepareAudio(contentToRead);
@@ -411,6 +425,8 @@ export default function Rewrite({
   }
 
   async function handlePrepareAudio(contentToRead: string) {
+    const audioIntentId = claimAudioIntent();
+    pendingAudioIntentRef.current = audioIntentId;
     setPreparing(true);
     if (audioRef.player) {
       setIsPlaying(false);
@@ -419,27 +435,46 @@ export default function Rewrite({
     }
     try {
       const data = await textToSpeech(contentToRead);
-      if (mounted.current) {
+      if (mounted.current && isCurrentAudioIntent(audioIntentId)) {
         const url = URL.createObjectURL(
           new Blob([data], { type: 'audio/mp3' })
         );
         setAudioUrl(url);
-        audioRef.player = new Audio(url);
+        const player = new Audio(url);
+        audioRef.player = player;
         setIsDownloadButtonShown(true);
-        audioRef.player.onended = () => {
+        player.onended = () => {
           setIsPlaying(false);
         };
         if (!deviceIsMobile) {
           onSetAudioKey(contentKey);
-          setIsPlaying(true);
-          audioRef.player.play();
+          await playPreparedAudio(player);
         }
       }
     } catch (error) {
-      console.error('Error generating TTS:', error);
-      audioRef.player = null;
+      if (isCurrentAudioIntent(audioIntentId)) {
+        console.error('Error generating TTS:', error);
+        audioRef.player = null;
+      }
     } finally {
-      setPreparing(false);
+      if (pendingAudioIntentRef.current === audioIntentId) {
+        pendingAudioIntentRef.current = null;
+        setPreparing(false);
+      }
+    }
+  }
+
+  async function playPreparedAudio(player: HTMLAudioElement) {
+    try {
+      await player.play();
+      if (audioRef.player === player) {
+        setIsPlaying(!player.paused && !player.ended);
+      }
+    } catch (error) {
+      if (audioRef.player === player) {
+        setIsPlaying(false);
+        console.error('Error playing TTS audio:', error);
+      }
     }
   }
 

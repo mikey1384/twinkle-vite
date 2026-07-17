@@ -5,7 +5,7 @@ import Image from '~/components/Image';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
-import { audioRef } from '~/constants/state';
+import { audioRef, claimAudioIntent } from '~/constants/state';
 import { useViewContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -143,11 +143,11 @@ export default function AIStoryView({
   }, [difficulty]);
 
   useEffect(() => {
-    const isPlaying =
-      audioKey === contentKey && audioRef.player && !audioRef.player.paused;
-    setIsPlaying(isPlaying);
-    if (isPlaying) {
-      audioRef.player.onended = () => {
+    const player = audioKey === contentKey ? audioRef.player : null;
+    const playerIsPlaying = Boolean(player && !player.paused);
+    setIsPlaying(playerIsPlaying);
+    if (playerIsPlaying && player) {
+      player.onended = () => {
         setIsPlaying(false);
       };
     }
@@ -373,24 +373,38 @@ export default function AIStoryView({
     </div>
   );
 
-  function handlePlayPause() {
-    if (audioRef.player) {
+  async function handlePlayPause() {
+    claimAudioIntent();
+    const currentPlayer =
+      audioKey === contentKey ? audioRef.player : null;
+
+    if (currentPlayer && !currentPlayer.paused && !currentPlayer.ended) {
+      currentPlayer.pause();
+      setIsPlaying(false);
+      return;
+    }
+    if (audioRef.player && audioRef.player !== currentPlayer) {
       audioRef.player.pause();
-      if (contentKey !== audioRef.key) {
-        audioRef.player = null;
-      }
+      audioRef.player = null;
     }
     onSetAudioKey(contentKey);
-    if (isPlaying) {
-      return setIsPlaying(false);
-    }
-    if (!audioRef.player) {
-      audioRef.player = new Audio(appliedAudioUrl);
-    }
-    audioRef.player.play();
-    audioRef.player.onended = () => {
-      setIsPlaying(false);
+    const player = currentPlayer || new Audio(appliedAudioUrl);
+    audioRef.player = player;
+    player.onended = () => {
+      if (audioRef.player === player) {
+        setIsPlaying(false);
+      }
     };
-    setIsPlaying(true);
+    try {
+      await player.play();
+      if (audioRef.player === player) {
+        setIsPlaying(!player.paused && !player.ended);
+      }
+    } catch (error) {
+      if (audioRef.player === player) {
+        setIsPlaying(false);
+        console.error('Error playing AI story audio:', error);
+      }
+    }
   }
 }

@@ -24,10 +24,25 @@ export const aiCardScrollHeight: Record<string, number> = { current: 0 };
 export const aiCardFeedHeight: Record<string, number> = { current: 0 };
 export const vocabFeedHeight: Record<string, number> = { current: 0 };
 export const vocabContainerRef: Record<string, any> = { current: null };
-export const audioRef: Record<string, any> = {
+export const audioRef: {
+  player: HTMLAudioElement | null;
+  key: string;
+  // Async audio producers may install a player only while this intent is current.
+  intentId: number;
+} = {
   player: null,
-  key: ''
+  key: '',
+  intentId: 0
 };
+
+export function claimAudioIntent() {
+  audioRef.intentId += 1;
+  return audioRef.intentId;
+}
+
+export function isCurrentAudioIntent(intentId: number) {
+  return audioRef.intentId === intentId;
+}
 
 export const mergeStates: Record<
   string,

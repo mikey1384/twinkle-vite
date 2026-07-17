@@ -1,12 +1,13 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useViewContext } from '~/contexts';
-import { audioRef } from '~/constants/state';
+import {
+  audioRef,
+  claimAudioIntent,
+  isCurrentAudioIntent
+} from '~/constants/state';
 import { Color } from '~/constants/css';
-import { isMobile } from '~/helpers';
-
-const deviceIsMobile = isMobile(navigator);
 
 function AIAudioButton({
   text,
@@ -21,31 +22,45 @@ function AIAudioButton({
   const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
   const audioKey = useViewContext((v) => v.state.audioKey);
   const [isPlaying, setIsPlaying] = useState(
-    audioKey === contentKey && audioRef.player && !audioRef.player.paused
-  );
-  const [isDownloadButtonShown, setIsDownloadButtonShown] = useState(
-    audioKey === contentKey && audioRef.player
+    Boolean(
+      audioKey === contentKey &&
+        audioRef.player &&
+        !audioRef.player.paused
+    )
   );
   const [preparing, setPreparing] = useState(false);
   const [isPrepared, setIsPrepared] = useState(
     audioKey === contentKey && Boolean(audioRef.player)
   );
+  const pendingAudioIntentRef = useRef<number | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioError, setAudioError] = useState('');
 
   useEffect(() => {
-    const isPlaying =
-      audioKey === contentKey && audioRef.player && !audioRef.player.paused;
-    const hasPreparedAudio = audioKey === contentKey && Boolean(audioRef.player);
-    setIsPlaying(isPlaying);
+    const player =
+      audioKey === contentKey
+        ? (audioRef.player as HTMLAudioElement | null)
+        : null;
+    const hasPreparedAudio = Boolean(player);
+    setIsPlaying(Boolean(player && !player.paused && !player.ended));
     setIsPrepared(hasPreparedAudio);
-    if (isPlaying) {
-      audioRef.player.onended = () => {
-        setIsPlaying(false);
-      };
+    if (player) {
+      bindPlayerEvents({ player, setAudioError, setIsPlaying });
     }
     audioRef.key = audioKey;
   }, [audioKey, contentKey]);
+
+  useEffect(() => {
+    return () => {
+      const pendingAudioIntentId = pendingAudioIntentRef.current;
+      if (
+        pendingAudioIntentId !== null &&
+        isCurrentAudioIntent(pendingAudioIntentId)
+      ) {
+        claimAudioIntent();
+      }
+    };
+  }, []);
 
   return (
     <span
@@ -71,7 +86,7 @@ function AIAudioButton({
       >
         <Icon icon={isPlaying ? 'stop' : 'volume'} />
       </Button>
-      {isDownloadButtonShown && (
+      {audioUrl && (
         <Button
           style={{
             marginLeft: '0.5rem',
@@ -104,63 +119,83 @@ function AIAudioButton({
 
   async function handleAudioClick() {
     setAudioError('');
-    const hasCurrentAudio =
-      audioRef.key === contentKey && Boolean(audioRef.player);
-    if (audioRef.player) {
-      audioRef.player.pause();
-      if (!hasCurrentAudio) {
-        audioRef.player = null;
-      }
-    }
-    onSetAudioKey(contentKey);
+    const audioIntentId = claimAudioIntent();
+    const currentPlayer =
+      audioKey === contentKey
+        ? (audioRef.player as HTMLAudioElement | null)
+        : null;
 
-    if (isPlaying) {
-      setIsPlaying(false);
+    if (currentPlayer) {
+      bindPlayerEvents({
+        player: currentPlayer,
+        setAudioError,
+        setIsPlaying
+      });
+      if (!currentPlayer.paused && !currentPlayer.ended) {
+        currentPlayer.pause();
+        return;
+      }
+      await playAudio(currentPlayer);
       return;
     }
 
+    if (audioRef.player) {
+      audioRef.player.pause();
+      audioRef.player = null;
+    }
+    onSetAudioKey(contentKey);
+    pendingAudioIntentRef.current = audioIntentId;
     setPreparing(true);
     try {
-      let preparedAudioOnThisClick = false;
-      if (!audioRef.player) {
-        const data = await textToSpeech(text, voice);
-        const audioBlob = new Blob([data], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audioRef.player = audio;
-        setAudioUrl(audioUrl);
-        setIsPrepared(true);
-        preparedAudioOnThisClick = true;
-      }
-      if (deviceIsMobile && preparedAudioOnThisClick) {
+      const data = await textToSpeech(text, voice);
+      if (!isCurrentAudioIntent(audioIntentId)) {
         return;
       }
-      const player = audioRef.player as HTMLAudioElement;
-      setIsPlaying(true);
-      player.onended = () => {
-        setIsPlaying(false);
-      };
-      try {
-        await player.play();
-      } catch (error) {
-        if (
-          isInterruptedPlaybackError(error) ||
-          audioRef.player !== player ||
-          audioRef.key !== contentKey
-        ) {
-          setIsPlaying(false);
-          return;
-        }
-        throw error;
-      }
-      setIsDownloadButtonShown(true);
+      const audioBlob =
+        data instanceof Blob
+          ? data
+          : new Blob([data], { type: 'audio/mpeg' });
+      const nextAudioUrl = URL.createObjectURL(audioBlob);
+      const player = new Audio(nextAudioUrl);
+      audioRef.player = player;
+      setAudioUrl(nextAudioUrl);
+      setIsPrepared(true);
+      bindPlayerEvents({ player, setAudioError, setIsPlaying });
+      await playAudio(player);
     } catch (error) {
+      if (!isCurrentAudioIntent(audioIntentId)) {
+        return;
+      }
       console.error(error);
       setIsPlaying(false);
       setIsPrepared(false);
       setAudioError('Could not prepare voice audio.');
     } finally {
-      setPreparing(false);
+      if (pendingAudioIntentRef.current === audioIntentId) {
+        pendingAudioIntentRef.current = null;
+        setPreparing(false);
+      }
+    }
+  }
+
+  async function playAudio(player: HTMLAudioElement) {
+    try {
+      await player.play();
+      if (audioRef.player === player) {
+        setIsPlaying(!player.paused && !player.ended);
+      }
+    } catch (error) {
+      if (isInterruptedPlaybackError(error) || audioRef.player !== player) {
+        setIsPlaying(false);
+        return;
+      }
+      console.error(error);
+      setIsPlaying(false);
+      setAudioError(
+        isPlaybackPermissionError(error)
+          ? 'Voice audio is ready. Tap the speaker again to play.'
+          : 'Could not play voice audio.'
+      );
     }
   }
 
@@ -181,6 +216,39 @@ function AIAudioButton({
   }
 }
 
+function bindPlayerEvents({
+  player,
+  setAudioError,
+  setIsPlaying
+}: {
+  player: HTMLAudioElement;
+  setAudioError: React.Dispatch<React.SetStateAction<string>>;
+  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  player.onplay = () => {
+    if (audioRef.player === player) {
+      setAudioError('');
+      setIsPlaying(true);
+    }
+  };
+  player.onpause = () => {
+    if (audioRef.player === player) {
+      setIsPlaying(false);
+    }
+  };
+  player.onended = () => {
+    if (audioRef.player === player) {
+      setIsPlaying(false);
+    }
+  };
+  player.onerror = () => {
+    if (audioRef.player === player) {
+      setIsPlaying(false);
+      setAudioError('Could not play voice audio.');
+    }
+  };
+}
+
 function isInterruptedPlaybackError(error: unknown) {
   if (error instanceof DOMException && error.name === 'AbortError') {
     return true;
@@ -191,6 +259,10 @@ function isInterruptedPlaybackError(error: unknown) {
   }
 
   return /interrupted|abort|pause/i.test(error.message);
+}
+
+function isPlaybackPermissionError(error: unknown) {
+  return error instanceof Error && error.name === 'NotAllowedError';
 }
 
 export default memo(AIAudioButton);
