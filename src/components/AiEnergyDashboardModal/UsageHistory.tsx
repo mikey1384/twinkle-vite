@@ -21,8 +21,6 @@ import {
 } from './helpers';
 import type { AiUsageHistoryEvent } from './types';
 
-const FALLBACK_FULL_BATTERY_UNITS = 1_000_000;
-
 export default function UsageHistory({
   accentColor,
   accentSoft,
@@ -39,15 +37,13 @@ export default function UsageHistory({
   );
   const [events, setEvents] = useState<AiUsageHistoryEvent[]>([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const [fullBatteryUnits, setFullBatteryUnits] = useState(
-    FALLBACK_FULL_BATTERY_UNITS
-  );
+  const [fullBatteryUnits, setFullBatteryUnits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
 
   const usedTodayLabel =
-    typeof energyUsedToday === 'number'
+    typeof energyUsedToday === 'number' && fullBatteryUnits !== null
       ? formatBatteryUnits(energyUsedToday, fullBatteryUnits)
       : '—';
   const batteryLeftLabel =
@@ -63,8 +59,12 @@ export default function UsageHistory({
         const result = await loadAiUsageHistory();
         setEvents(result?.events || []);
         setLoadMoreShown(!!result?.loadMoreShown);
-        if (result?.fullBatteryUnits) {
-          setFullBatteryUnits(Number(result.fullBatteryUnits));
+        const confirmedFullBatteryUnits = Number(result?.fullBatteryUnits);
+        if (
+          Number.isFinite(confirmedFullBatteryUnits) &&
+          confirmedFullBatteryUnits > 0
+        ) {
+          setFullBatteryUnits(confirmedFullBatteryUnits);
         }
       } catch (error) {
         console.error(error);
@@ -132,7 +132,9 @@ export default function UsageHistory({
                   >
                     <Icon icon="bolt" />
                     <span>
-                      {formatBatteryUnits(event.energyUnits, fullBatteryUnits)}
+                      {fullBatteryUnits !== null
+                        ? formatBatteryUnits(event.energyUnits, fullBatteryUnits)
+                        : '—'}
                     </span>
                   </div>
                 </div>

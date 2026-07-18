@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect, useLayoutEffect, useState } from 'react';
+import React, { RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -7,11 +7,11 @@ import { createPortal } from 'react-dom';
 const DROPDOWN_GAP = 4;
 const VIEWPORT_GUTTER = 8;
 const MAX_DROPDOWN_HEIGHT = 320;
+const DROPDOWN_BORDER_WIDTH = 1;
 
 interface DropdownPosition {
   left: number;
-  top?: number;
-  bottom?: number;
+  top: number;
   width: number;
   maxHeight: number;
   placement: 'top' | 'bottom';
@@ -57,6 +57,8 @@ export default function SearchDropdown({
     fontWeight: string;
     lineHeight: string;
   } | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     onUpdate();
@@ -70,46 +72,60 @@ export default function SearchDropdown({
 
     let frameId = 0;
     function updatePosition() {
+      // All values below are client (layout viewport) coordinates — the same
+      // space position: fixed resolves against. The visual viewport (which
+      // shrinks/pans for the mobile keyboard and pinch zoom) is only used to
+      // compute the visible region; its dimensions must never be used directly
+      // as fixed-position offsets.
       const rect = anchorElement.getBoundingClientRect();
       const anchorStyle = window.getComputedStyle(anchorElement);
-      const viewportHeight =
-        window.visualViewport?.height ||
+      const visualViewport = window.visualViewport;
+      const visibleTop = visualViewport?.offsetTop || 0;
+      const visibleLeft = visualViewport?.offsetLeft || 0;
+      const visibleHeight =
+        visualViewport?.height ||
         window.innerHeight ||
         document.documentElement.clientHeight;
-      const viewportWidth =
-        window.visualViewport?.width ||
+      const visibleWidth =
+        visualViewport?.width ||
         window.innerWidth ||
         document.documentElement.clientWidth;
+      const visibleBottom = visibleTop + visibleHeight;
       const availableBelow = Math.max(
         0,
-        viewportHeight - rect.bottom - VIEWPORT_GUTTER - DROPDOWN_GAP
+        visibleBottom - rect.bottom - VIEWPORT_GUTTER - DROPDOWN_GAP
       );
       const availableAbove = Math.max(
         0,
-        rect.top - VIEWPORT_GUTTER - DROPDOWN_GAP
+        rect.top - visibleTop - VIEWPORT_GUTTER - DROPDOWN_GAP
       );
-      const shouldOpenUp =
-        availableBelow < MAX_DROPDOWN_HEIGHT &&
-        availableAbove > availableBelow;
-      const availableHeight = shouldOpenUp ? availableAbove : availableBelow;
-      const width = Math.min(rect.width, viewportWidth - VIEWPORT_GUTTER * 2);
+      const width = Math.min(rect.width, visibleWidth - VIEWPORT_GUTTER * 2);
       const left = Math.min(
-        Math.max(VIEWPORT_GUTTER, rect.left),
-        Math.max(VIEWPORT_GUTTER, viewportWidth - width - VIEWPORT_GUTTER)
+        Math.max(visibleLeft + VIEWPORT_GUTTER, rect.left),
+        Math.max(
+          visibleLeft + VIEWPORT_GUTTER,
+          visibleLeft + visibleWidth - width - VIEWPORT_GUTTER
+        )
       );
+
+      let contentHeight = MAX_DROPDOWN_HEIGHT;
+      if (containerRef.current && contentRef.current) {
+        // Apply the final width before measuring so wrapping is accounted for.
+        containerRef.current.style.width = `${width}px`;
+        contentHeight =
+          contentRef.current.scrollHeight + DROPDOWN_BORDER_WIDTH * 2;
+      }
+      const neededHeight = Math.min(contentHeight, MAX_DROPDOWN_HEIGHT);
+      const shouldOpenUp =
+        availableBelow < neededHeight && availableAbove > availableBelow;
+      const availableHeight = shouldOpenUp ? availableAbove : availableBelow;
 
       setDropdownPosition({
         left,
         width,
         maxHeight: Math.min(MAX_DROPDOWN_HEIGHT, availableHeight),
         placement: shouldOpenUp ? 'top' : 'bottom',
-        ...(shouldOpenUp
-          ? {
-              bottom: viewportHeight - rect.top + DROPDOWN_GAP
-            }
-          : {
-              top: rect.bottom + DROPDOWN_GAP
-            })
+        top: shouldOpenUp ? rect.top - DROPDOWN_GAP : rect.bottom + DROPDOWN_GAP
       });
       setAnchorTypography((prev) => {
         const next = {
@@ -138,26 +154,36 @@ export default function SearchDropdown({
     queuePositionUpdate();
     window.addEventListener('resize', queuePositionUpdate);
     window.addEventListener('scroll', queuePositionUpdate, true);
+    // Keyboard show/hide and visual-viewport pans fire these, not window
+    // resize/scroll, on iOS/Android.
+    window.visualViewport?.addEventListener('resize', queuePositionUpdate);
+    window.visualViewport?.addEventListener('scroll', queuePositionUpdate);
 
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(queuePositionUpdate);
       resizeObserver.observe(anchorElement);
+      if (contentRef.current) {
+        resizeObserver.observe(contentRef.current);
+      }
     }
 
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', queuePositionUpdate);
       window.removeEventListener('scroll', queuePositionUpdate, true);
+      window.visualViewport?.removeEventListener('resize', queuePositionUpdate);
+      window.visualViewport?.removeEventListener('scroll', queuePositionUpdate);
       resizeObserver?.disconnect();
     };
   }, [anchorRef, searchResults.length]);
 
   const portalTarget = anchorRef ? getDropdownPortalTarget() : null;
-  const shouldUsePortal = !!portalTarget && !!anchorRef && !!dropdownPosition;
+  const shouldUsePortal = !!portalTarget && !!anchorRef;
 
   const dropdown = (
     <ErrorBoundary
+      innerRef={containerRef}
       className={css`
         ${shouldUsePortal
           ? ''
@@ -168,7 +194,7 @@ export default function SearchDropdown({
           right: 0;
         `}
         background: #fff;
-        border: 1px solid var(--ui-border);
+        border: ${DROPDOWN_BORDER_WIDTH}px solid var(--ui-border);
         border-radius: 12px;
         box-shadow: none;
         overflow: hidden;
@@ -178,12 +204,27 @@ export default function SearchDropdown({
         shouldUsePortal
           ? {
               position: 'fixed',
-              left: `${dropdownPosition.left}px`,
-              ...(dropdownPosition.placement === 'top'
-                ? { bottom: `${dropdownPosition.bottom}px` }
-                : { top: `${dropdownPosition.top}px` }),
-              width: `${dropdownPosition.width}px`,
-              maxHeight: `${dropdownPosition.maxHeight}px`,
+              ...(dropdownPosition
+                ? {
+                    left: `${dropdownPosition.left}px`,
+                    top: `${dropdownPosition.top}px`,
+                    // translateY pins the dropdown's bottom edge to `top` when
+                    // opening upward, so no CSS `bottom` (which resolves
+                    // against the layout viewport and misplaces the dropdown
+                    // when the mobile keyboard shrinks the visual viewport)
+                    // is ever needed.
+                    ...(dropdownPosition.placement === 'top'
+                      ? { transform: 'translateY(-100%)' }
+                      : {}),
+                    width: `${dropdownPosition.width}px`,
+                    maxHeight: `${dropdownPosition.maxHeight}px`
+                  }
+                : {
+                    left: 0,
+                    top: 0,
+                    maxHeight: `${MAX_DROPDOWN_HEIGHT}px`,
+                    visibility: 'hidden'
+                  }),
               zIndex: 100_000_000,
               fontSize: anchorTypography?.fontSize,
               fontFamily: anchorTypography?.fontFamily,
@@ -195,7 +236,14 @@ export default function SearchDropdown({
       }
     >
       <div
-        ref={innerRef}
+        ref={(node: HTMLDivElement | null) => {
+          contentRef.current = node;
+          if (typeof innerRef === 'function') {
+            innerRef(node);
+          } else if (innerRef) {
+            innerRef.current = node;
+          }
+        }}
         className={css`
           width: 100%;
           display: block;
