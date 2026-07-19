@@ -17,6 +17,7 @@ const {
   AI_CARD_DIRECT_TRANSFER_PAYLOAD_VERSION,
   getConfirmedAICardDirectTransferState,
   getConfirmedAICardImageState,
+  getConfirmedAICardImageTerminalState,
   getConfirmedAICardListingState,
   getConfirmedAICardTransferState,
   normalizeAICardId
@@ -119,6 +120,49 @@ test('normalizes legacy string card IDs', () => {
   assert.equal(normalizeAICardId('41'), 41);
   assert.equal(normalizeAICardId(41), 41);
   assert.equal(normalizeAICardId('not-a-card'), null);
+});
+
+test('canonical image terminal states reconcile shared progress from the server card', () => {
+  assert.deepEqual(
+    getConfirmedAICardImageTerminalState({
+      card: {
+        imagePath: '',
+        isImageGenerating: false,
+        isListed: true
+      },
+      stage: 'error'
+    }),
+    {
+      imagePath: '',
+      isImageGenerating: false,
+      imageGenerationStage: 'error',
+      imageGenerationInProgress: false,
+      imageGenerationPreviewUrl: ''
+    }
+  );
+  assert.deepEqual(
+    getConfirmedAICardImageTerminalState({
+      card: {
+        imagePath: '',
+        isImageGenerating: true
+      },
+      stage: 'completed'
+    }),
+    {
+      imagePath: '',
+      isImageGenerating: true,
+      imageGenerationStage: 'completed',
+      imageGenerationInProgress: true,
+      imageGenerationPreviewUrl: ''
+    }
+  );
+  assert.equal(
+    getConfirmedAICardImageTerminalState({
+      card: { imagePath: '' },
+      stage: 'error'
+    }),
+    null
+  );
 });
 
 test('direct transfers distinguish canonical cards from legacy payloads', () => {

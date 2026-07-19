@@ -29,7 +29,9 @@ export default function chatRequestHelpers({
       status &&
       data &&
       typeof data === 'object' &&
-      (data.aiUsagePolicy || errorCode.startsWith('zero_ciel_ai_'))
+      (data.aiUsagePolicy ||
+        (data.card && typeof data.card === 'object') ||
+        errorCode.startsWith('zero_ciel_ai_'))
     ) {
       return Promise.reject({
         status,

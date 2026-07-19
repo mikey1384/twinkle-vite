@@ -652,6 +652,19 @@ function terminalSnapshotCoveredByCurrentRun(
       return false;
     }
 
+    if (
+      Object.prototype.hasOwnProperty.call(
+        terminalPayload,
+        'projectFilesHash'
+      ) &&
+      (currentRun.projectFilesHash ?? null) !==
+        (typeof terminalPayload.projectFilesHash === 'string'
+          ? terminalPayload.projectFilesHash
+          : null)
+    ) {
+      return false;
+    }
+
     return true;
   }
 
@@ -860,6 +873,14 @@ export function hydrateBuildRunFromPersistedSnapshot({
           terminalPayload.projectFiles.length > 0
             ? terminalPayload.projectFiles
             : null,
+        ...(Array.isArray(terminalPayload.projectFiles) &&
+        terminalPayload.projectFiles.length > 0 &&
+        typeof terminalPayload.projectFilesHash === 'string' &&
+        terminalPayload.projectFilesHash.trim()
+          ? {
+              projectFilesHash: terminalPayload.projectFilesHash.trim()
+            }
+          : {}),
         interruptionReason: terminalPayload.interruptionReason ?? null,
         ...(Object.prototype.hasOwnProperty.call(
           terminalPayload || {},

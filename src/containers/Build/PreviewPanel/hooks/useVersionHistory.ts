@@ -125,7 +125,8 @@ export default function useVersionHistory({
         onApplyRestoredProjectFiles(restoredProjectFiles, restoredCode, {
           artifactVersionId: result?.versionId ?? versionId,
           primaryArtifactId: artifactId,
-          contributionStatus: result?.contributionStatus
+          contributionStatus: result?.contributionStatus,
+          filesHash: typeof result?.filesHash === 'string' ? result.filesHash : null
         });
         const restoredEditableFiles = buildEditableProjectFiles({
           code: restoredCode,

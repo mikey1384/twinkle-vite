@@ -5,7 +5,6 @@ import {
   markBuildReleaseStatusUnpublished
 } from '../helpers/branches';
 import {
-  normalizeProjectFilePath,
   normalizeProjectFilesForBuild,
   resolveIndexEntryPathFromProjectFiles,
   resolveIndexHtmlFromProjectFiles,
@@ -42,6 +41,7 @@ interface ApplyGenerateCompleteOptions {
   };
   code?: string | null;
   projectFiles?: Array<{ path: string; content?: string }> | null;
+  projectFilesHash?: string | null;
   interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
   executionPlan?: BuildExecutionPlan | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
@@ -232,6 +232,7 @@ export default function useRunTerminalActions({
       artifact,
       code,
       projectFiles,
+      projectFilesHash,
       interruptionReason,
       executionPlan,
       followUpPrompt,
@@ -272,6 +273,13 @@ export default function useRunTerminalActions({
           artifactCode ?? getLatestBuild()?.code ?? ''
         )
       : null;
+    const payloadProjectFilesHash =
+      typeof projectFilesHash === 'string' && projectFilesHash.trim()
+        ? projectFilesHash.trim()
+        : null;
+    const hasCanonicalProjectFilesHash = Boolean(
+      payloadProjectFiles && payloadProjectFilesHash
+    );
     const artifactVersionId =
       message?.artifactVersionId ?? artifact?.versionId ?? null;
     const createdAt = message?.createdAt ?? Math.floor(Date.now() / 1000);
@@ -294,6 +302,9 @@ export default function useRunTerminalActions({
       assistantText,
       artifactCode,
       projectFiles: payloadProjectFiles,
+      ...(hasCanonicalProjectFilesHash
+        ? { projectFilesHash: payloadProjectFilesHash }
+        : {}),
       executionPlan,
       followUpPrompt: hasFollowUpPromptField
         ? (followUpPrompt ?? null)
@@ -352,46 +363,14 @@ export default function useRunTerminalActions({
 
     replaceChatMessages(nextMessages);
 
-    if (artifactCode !== null || payloadProjectFiles) {
+    const completionRequiresCanonicalProjectFilesResync = Boolean(
+      (artifactCode !== null || payloadProjectFiles) &&
+        !hasCanonicalProjectFilesHash
+    );
+    if (hasCanonicalProjectFilesHash && payloadProjectFiles) {
       const activeBuild = getLatestBuild();
       if (activeBuild) {
-        let completionUsedFallbackProjectFiles = false;
-        let nextProjectFiles = payloadProjectFiles
-          ? payloadProjectFiles
-          : normalizeProjectFilesForBuild(
-              activeBuild.projectFiles || [],
-              activeBuild.code || ''
-            );
-        if (!payloadProjectFiles && artifactCode !== null) {
-          completionUsedFallbackProjectFiles = true;
-          const entryPath = resolveIndexEntryPathFromProjectFiles(
-            nextProjectFiles,
-            activeBuild.projectManifest?.entryPath || '/index.html'
-          );
-          const entryLookupPath =
-            normalizeProjectFilePath(entryPath).toLowerCase();
-          let updatedEntry = false;
-          nextProjectFiles = nextProjectFiles.map((file) => {
-            if (
-              normalizeProjectFilePath(file.path).toLowerCase() !==
-              entryLookupPath
-            ) {
-              return file;
-            }
-            updatedEntry = true;
-            return {
-              ...file,
-              content: artifactCode,
-              sizeBytes: artifactCode.length
-            };
-          });
-          if (!updatedEntry) {
-            nextProjectFiles = normalizeProjectFilesForBuild(
-              [...nextProjectFiles, { path: entryPath, content: artifactCode }],
-              artifactCode
-            );
-          }
-        }
+        const nextProjectFiles = payloadProjectFiles;
         const resolvedCode =
           artifactCode !== null
             ? artifactCode
@@ -423,7 +402,8 @@ export default function useRunTerminalActions({
             storageMode: 'project-files',
             fileCount: nextProjectFiles.length
           },
-          projectFiles: nextProjectFiles
+          projectFiles: nextProjectFiles,
+          projectFilesHash: payloadProjectFilesHash
         };
         const appliedBuild = markBuildReleaseStatusUnpublished(
           markBuildContributionWorkspaceEdited(nextBuild)
@@ -431,12 +411,13 @@ export default function useRunTerminalActions({
         applyBuildUpdate(appliedBuild);
         syncAvailableBranchSummary(appliedBuild);
         maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
-        if (payloadProjectFiles) {
-          runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
-        } else if (completionUsedFallbackProjectFiles) {
-          runOrchestration.setRequiresProjectFilesResyncBeforeSave(true);
-        }
+        runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
       }
+    } else if (completionRequiresCanonicalProjectFilesResync) {
+      // A code-only or hashless completion does not prove the complete
+      // persisted workspace snapshot. Keep the last verified build intact
+      // until the writer reload below supplies files and their matching hash.
+      runOrchestration.setRequiresProjectFilesResyncBeforeSave(true);
     } else if (
       getLatestBuild() &&
       ((executionPlan !== undefined &&
@@ -495,6 +476,13 @@ export default function useRunTerminalActions({
     try {
       await syncChatMessagesFromServer(undefined, true);
       runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
+      if (completionRequiresCanonicalProjectFilesResync) {
+        const syncedBuild = getLatestBuild();
+        if (syncedBuild) {
+          syncAvailableBranchSummary(syncedBuild);
+          maybeAutoCaptureBranchThumbnailAfterProgressSave(syncedBuild);
+        }
+      }
     } catch (error) {
       console.error('Failed to sync chat messages after completion:', error);
       if (runOrchestration.requiresProjectFilesResyncBeforeSave()) {

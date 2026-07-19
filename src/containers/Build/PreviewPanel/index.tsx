@@ -36,12 +36,8 @@ import {
   useRuntimePreviewSrc,
   useWorkspacePreviewSrc
 } from './hooks/useSource';
-import {
-  getBuildPreviewMessageTargetOrigin
-} from '~/helpers/buildPreviewOriginHelpers';
-import {
-  type BuildAgentAssetCreateOptions
-} from '~/containers/Build/helpers/agentWorkspaceAssets';
+import { getBuildPreviewMessageTargetOrigin } from '~/helpers/buildPreviewOriginHelpers';
+import { type BuildAgentAssetCreateOptions } from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type {
   EditableProjectFile,
   PreviewPanelHandle,
@@ -200,6 +196,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const projectAssetInputRef = useRef<HTMLInputElement | null>(null);
     const editableProjectFilesRef = useRef<EditableProjectFile[]>(
       buildEditableProjectFiles({ code, projectFiles })
+    );
+    // Save base bound to the current draft buffer: the server-issued files
+    // hash captured whenever the buffer is (re)seeded from persisted files.
+    // While the user diverges from that snapshot this stays put, so saves keep
+    // proving the base their edits actually derive from.
+    const draftBaseFilesHashRef = useRef<string | null>(
+      typeof build?.projectFilesHash === 'string'
+        ? build.projectFilesHash
+        : null
     );
     const savingProjectFilesRef = useRef(false);
     const downloadingProjectArchiveRef = useRef(false);
@@ -376,7 +381,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     async function resolveFreshCapturePreviewPath() {
-      const preferredOverride = String(normalizedPreviewSrcOverride || '').trim();
+      const preferredOverride = String(
+        normalizedPreviewSrcOverride || ''
+      ).trim();
       if (preferredOverride) {
         return await withFreshPreviewAccessToken(preferredOverride);
       }
@@ -416,6 +423,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       editableProjectFilesRef.current = nextFiles;
       setEditableProjectFiles(nextFiles);
       setHasLocalEditableProjectFileChanges(false);
+      draftBaseFilesHashRef.current =
+        typeof buildRef.current?.projectFilesHash === 'string'
+          ? buildRef.current.projectFilesHash
+          : null;
       setProjectFileError('');
       setProjectFileSaveError('');
       setActiveFilePath((prev) => {
@@ -430,26 +441,43 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       return nextFiles;
     }
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        openProjectFileUploadPicker,
-        openProjectFolderImportPicker,
-        openProjectAssetUploadPicker,
-        discardProjectFileDraft,
-        captureThumbnail,
-        async importProjectFilesFromChatUpload(files: File[]) {
-          const normalizedFiles = normalizeUploadInputFiles(files);
-          const filesWithPreservedPaths = normalizedFiles.filter(
-            hasPreservedUploadedProjectRelativePath
-          );
-          const requiresPreservedPaths = filesWithPreservedPaths.length > 0;
-          if (
-            requiresPreservedPaths &&
-            filesWithPreservedPaths.length !== normalizedFiles.length
-          ) {
-            const message =
-              'This upload mixes files with and without folder paths. Use the manual workspace import controls for project files instead.';
+    function rebaseDraftBaseFilesHash(filesHash: string) {
+      draftBaseFilesHashRef.current = filesHash;
+    }
+
+    useImperativeHandle(ref, () => ({
+      openProjectFileUploadPicker,
+      openProjectFolderImportPicker,
+      openProjectAssetUploadPicker,
+      discardProjectFileDraft,
+      rebaseProjectFileDraftBase: rebaseDraftBaseFilesHash,
+      captureThumbnail,
+      async importProjectFilesFromChatUpload(files: File[]) {
+        const normalizedFiles = normalizeUploadInputFiles(files);
+        const filesWithPreservedPaths = normalizedFiles.filter(
+          hasPreservedUploadedProjectRelativePath
+        );
+        const requiresPreservedPaths = filesWithPreservedPaths.length > 0;
+        if (
+          requiresPreservedPaths &&
+          filesWithPreservedPaths.length !== normalizedFiles.length
+        ) {
+          const message =
+            'This upload mixes files with and without folder paths. Use the manual workspace import controls for project files instead.';
+          setProjectFileError(message);
+          return {
+            success: false,
+            importedCount: 0,
+            error: message
+          };
+        }
+        if (!requiresPreservedPaths && normalizedFiles.length > 1) {
+          const nameCollisions =
+            listCaseInsensitiveFileNameCollisions(normalizedFiles);
+          if (nameCollisions.length > 0) {
+            const message = `These files would collide at the project root: ${summarizeUploadedFileNames(
+              nameCollisions
+            )}. Use the manual workspace import controls instead.`;
             setProjectFileError(message);
             return {
               success: false,
@@ -457,52 +485,37 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               error: message
             };
           }
-          if (!requiresPreservedPaths && normalizedFiles.length > 1) {
-            const nameCollisions =
-              listCaseInsensitiveFileNameCollisions(normalizedFiles);
-            if (nameCollisions.length > 0) {
-              const message = `These files would collide at the project root: ${summarizeUploadedFileNames(
-                nameCollisions
-              )}. Use the manual workspace import controls instead.`;
-              setProjectFileError(message);
-              return {
-                success: false,
-                importedCount: 0,
-                error: message
-              };
-            }
-          }
-          const result = await handleUploadProjectFiles(normalizedFiles, {
-            requireRelativePaths: requiresPreservedPaths,
-            targetFolderPath: null
-          });
-          if (
-            result?.success &&
-            !requiresPreservedPaths &&
-            normalizedFiles.length > 1
-          ) {
-            const rootImportWarning =
-              'Imported these files at the project root because folder paths were not included.';
-            const nextWarningText = String(result.warningText || '').trim();
-            const combinedWarningText = nextWarningText
-              ? `${nextWarningText} ${rootImportWarning}`
-              : rootImportWarning;
-            setProjectFileError(combinedWarningText);
-            return {
-              ...result,
-              warningText: combinedWarningText
-            };
-          }
-          return result;
-        },
-        async uploadProjectAssetsFromChatUpload(files: File[]) {
-          return await handleUploadProjectAssets(files);
-        },
-        async uploadGeneratedProjectAsset(options: BuildAgentAssetCreateOptions) {
-          return await createAgentProjectAsset(options);
         }
-      })
-    );
+        const result = await handleUploadProjectFiles(normalizedFiles, {
+          requireRelativePaths: requiresPreservedPaths,
+          targetFolderPath: null
+        });
+        if (
+          result?.success &&
+          !requiresPreservedPaths &&
+          normalizedFiles.length > 1
+        ) {
+          const rootImportWarning =
+            'Imported these files at the project root because folder paths were not included.';
+          const nextWarningText = String(result.warningText || '').trim();
+          const combinedWarningText = nextWarningText
+            ? `${nextWarningText} ${rootImportWarning}`
+            : rootImportWarning;
+          setProjectFileError(combinedWarningText);
+          return {
+            ...result,
+            warningText: combinedWarningText
+          };
+        }
+        return result;
+      },
+      async uploadProjectAssetsFromChatUpload(files: File[]) {
+        return await handleUploadProjectAssets(files);
+      },
+      async uploadGeneratedProjectAsset(options: BuildAgentAssetCreateOptions) {
+        return await createAgentProjectAsset(options);
+      }
+    }));
 
     useEffect(() => {
       const folderInput = projectFolderInputRef.current;
@@ -531,7 +544,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const keyProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
     const resolvedUserId =
       typeof viewerOverride?.id === 'number' ? viewerOverride.id : keyUserId;
-    const previewViewerKey = resolvedUserId ? `user:${resolvedUserId}` : 'guest';
+    const previewViewerKey = resolvedUserId
+      ? `user:${resolvedUserId}`
+      : 'guest';
     const resolvedUsername =
       typeof viewerOverride?.username === 'string'
         ? viewerOverride.username
@@ -565,8 +580,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       scopes: string[];
       expiresAt: number;
     } | null>(null);
-    const onPreviewFrameRetiredRef =
-      useRef<PreviewFrameRetiredHandler | null>(null);
+    const onPreviewFrameRetiredRef = useRef<PreviewFrameRetiredHandler | null>(
+      null
+    );
     const hydratedBuildIdRef = useRef<number | null>(null);
     const capabilitySnapshotRef = useRef<BuildCapabilitySnapshot | null>(
       capabilitySnapshot
@@ -617,6 +633,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       build,
       buildApiTokenRef,
       buildRef,
+      getDraftBaseFilesHash: () => draftBaseFilesHashRef.current,
       downloadingProjectArchive,
       downloadingProjectArchiveRef,
       downloadBuildProjectArchive,
@@ -629,6 +646,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       isShowingStreamingCode,
       newFilePath,
       onSaveProjectFiles,
+      rebaseDraftBaseFilesHash,
       renamePathInput,
       requestConfirm: requestProjectFileConfirm,
       savingProjectFiles,
@@ -670,32 +688,30 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       setProjectFileError,
       uploadBuildRuntimeFilesRef
     });
-    const {
-      handleImportProjectFolder,
-      handleUploadProjectFiles
-    } = useProjectFileUploads({
-      areProjectFileMutationsLocked,
-      buildId: build.id,
-      buildRef,
-      cleanupRestoredRuntimeAssets,
-      code,
-      editableProjectFilesRef,
-      ensureBuildApiTokenForBuild,
-      getProjectFileCaseCollisionError,
-      isActiveBuildId,
-      isOwner,
-      persistedProjectFiles,
-      requestConfirm: requestProjectFileConfirm,
-      saveEditableProjectFilesWithTracking,
-      selectedFolderPath,
-      setActiveFilePath,
-      setEditableFiles,
-      setNewFilePath,
-      setProjectFileError,
-      setSelectedFolderPath,
-      syncCurrentBuildRuntimeUploads,
-      uploadBuildRuntimeFilesRef
-    });
+    const { handleImportProjectFolder, handleUploadProjectFiles } =
+      useProjectFileUploads({
+        areProjectFileMutationsLocked,
+        buildId: build.id,
+        cleanupRestoredRuntimeAssets,
+        code,
+        editableProjectFilesRef,
+        ensureBuildApiTokenForBuild,
+        getDraftBaseFilesHash: () => draftBaseFilesHashRef.current,
+        getProjectFileCaseCollisionError,
+        isActiveBuildId,
+        isOwner,
+        persistedProjectFiles,
+        requestConfirm: requestProjectFileConfirm,
+        saveEditableProjectFilesWithTracking,
+        selectedFolderPath,
+        setActiveFilePath,
+        setEditableFiles,
+        setNewFilePath,
+        setProjectFileError,
+        setSelectedFolderPath,
+        syncCurrentBuildRuntimeUploads,
+        uploadBuildRuntimeFilesRef
+      });
     const {
       historyOpen,
       loadingVersions,
@@ -812,10 +828,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewCodeSignature,
       runtimePreviewSrc: previewFrameSuspended ? null : runtimePreviewSrc,
       viewerKey: previewViewerKey,
-      workspacePreviewSrc:
-        previewFrameSuspended
-          ? null
-          : normalizedPreviewSrcOverride || workspacePreviewSrc,
+      workspacePreviewSrc: previewFrameSuspended
+        ? null
+        : normalizedPreviewSrcOverride || workspacePreviewSrc,
       onPreviewFrameRetiredRef
     });
     const runtimePreviewFrameSrc = runtimeOnly
@@ -832,9 +847,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
     const shouldShowWorkspacePreviewStage = Boolean(
       previewHostVisible ||
-        previewFrameSources.primary ||
-        previewFrameSources.secondary ||
-        previewSrc
+      previewFrameSources.primary ||
+      previewFrameSources.secondary ||
+      previewSrc
     );
 
     useEffect(() => {
@@ -920,9 +935,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             : previewFrameMetaRef.current.secondary.bridgeConfirmed
               ? previewFrameMetaRef.current.secondary.messageNonce
               : null;
-        const targetOrigin = getBuildPreviewMessageTargetOrigin(
-          frameSource
-        );
+        const targetOrigin = getBuildPreviewMessageTargetOrigin(frameSource);
         targetWindow.postMessage(
           {
             ...message,
@@ -1012,7 +1025,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       buildRef.current = build;
     }, [build]);
 
-
     useEffect(() => {
       isOwnerRef.current = isOwner;
     }, [isOwner]);
@@ -1059,6 +1071,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       hydratedBuildIdRef.current = build.id;
       setEditableProjectFiles(persistedProjectFiles);
       setHasLocalEditableProjectFileChanges(false);
+      draftBaseFilesHashRef.current =
+        typeof buildRef.current?.projectFilesHash === 'string'
+          ? buildRef.current.projectFilesHash
+          : null;
       setActiveFilePath(
         getPreferredIndexPath(persistedProjectFiles) ||
           persistedProjectFiles[0]?.path ||
@@ -1081,6 +1097,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       if (hasUnsavedProjectFileChanges) return;
       setEditableProjectFiles(persistedProjectFiles);
       setHasLocalEditableProjectFileChanges(false);
+      draftBaseFilesHashRef.current =
+        typeof buildRef.current?.projectFilesHash === 'string'
+          ? buildRef.current.projectFilesHash
+          : null;
       setActiveFilePath((prev) => {
         const hasPrev = persistedProjectFiles.some(
           (file) => file.path === prev
@@ -1095,7 +1115,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [
       persistedProjectFiles,
       persistedProjectFilesSignature,
-      hasUnsavedProjectFileChanges
+      hasUnsavedProjectFileChanges,
+      build.projectFilesHash
     ]);
 
     useEffect(() => {
@@ -1132,11 +1153,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       if (viewMode !== 'preview') {
         setViewMode('preview');
       }
-    }, [
-      isShowingStreamingCode,
-      runtimeOnly,
-      viewMode
-    ]);
+    }, [isShowingStreamingCode, runtimeOnly, viewMode]);
 
     useEffect(() => {
       if (!isShowingStreamingCode || !streamingFocusFilePath) return;
@@ -1157,12 +1174,14 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onEditableProjectFilesStateChangeRef.current?.({
         files: projectFilesForParent,
         hasUnsavedChanges: hasUnsavedProjectFileChanges,
-        saving: savingProjectFiles
+        saving: savingProjectFiles,
+        draftBaseFilesHash: draftBaseFilesHashRef.current
       });
     }, [
       projectFilesForParent,
       hasUnsavedProjectFileChanges,
-      savingProjectFiles
+      savingProjectFiles,
+      build.projectFilesHash
     ]);
 
     useEffect(() => {
@@ -1277,9 +1296,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />
           ) : viewMode === 'manual' ? (
-            <AgentManualPane
-              capabilitySnapshot={resolvedCapabilitySnapshot}
-            />
+            <AgentManualPane capabilitySnapshot={resolvedCapabilitySnapshot} />
           ) : (
             <CodeWorkspacePane
               displayedProjectFiles={displayedProjectFiles}

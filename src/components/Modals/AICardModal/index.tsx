@@ -20,7 +20,11 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { returnCardBurnXP } from '~/constants/defaultValues';
 import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
-import { getConfirmedAICardImageState } from '~/helpers/aiCardCanonicalUpdates';
+import {
+  getConfirmedAICardImageTerminalState,
+  getConfirmedAICardImageState,
+  normalizeAICardId
+} from '~/helpers/aiCardCanonicalUpdates';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '~/components/Icon';
@@ -153,6 +157,9 @@ export default function AICardModal({
   const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [imageGenerationError, setImageGenerationError] = useState('');
+  const [pendingImageRequestCardIds, setPendingImageRequestCardIds] = useState<
+    Set<number>
+  >(() => new Set());
 
   const [callingOpenAITime, setCallingOpenAITime] = useState(0);
   const [prevCardId, setPrevCardId] = useState(null);
@@ -164,10 +171,19 @@ export default function AICardModal({
   const userSwitchedTab = useRef(false);
   const isMountedRef = useRef(true);
   const cardIdRef = useRef(cardId);
+  const userIdRef = useRef(userId);
   const offerReloadRequestIdRef = useRef(0);
+  const pendingImageRequestCardIdsRef = useRef(new Set<number>());
+  const pendingCanonicalImageReconciliationCardIdsRef = useRef(
+    new Set<number>()
+  );
+  const canonicalImageReconciliationInFlightCardIdsRef = useRef(
+    new Set<number>()
+  );
   const cardOwnerId = Number(card?.ownerId || card?.owner?.id || 0) || null;
   const userIsOwner = !!userId && cardOwnerId === userId;
   cardIdRef.current = cardId;
+  userIdRef.current = userId;
   const visibleOfferGroups = useMemo(
     () => getVisibleOfferGroups(offers, userIsOwner ? hiddenOfferIds : []),
     [hiddenOfferIds, offers, userIsOwner]
@@ -193,8 +209,17 @@ export default function AICardModal({
     return !!card?.id && !card?.isBurned && cardIsLive;
   }, [card?.id, card?.isBurned, cardIsLive]);
   const generatingImage = useMemo(() => {
-    return !!card?.imageGenerationInProgress || !!card?.isImageGenerating;
-  }, [card?.imageGenerationInProgress, card?.isImageGenerating]);
+    return (
+      pendingImageRequestCardIds.has(cardId) ||
+      !!card?.imageGenerationInProgress ||
+      !!card?.isImageGenerating
+    );
+  }, [
+    cardId,
+    card?.imageGenerationInProgress,
+    card?.isImageGenerating,
+    pendingImageRequestCardIds
+  ]);
   const progressStage: CardImageGenStatus['stage'] = useMemo(() => {
     if (card?.isImageGenerating) {
       return 'generating';
@@ -214,20 +239,32 @@ export default function AICardModal({
     if (userId) {
       void enterNotificationChannel(userId);
     }
+    socket.on('connect', handleTransportAvailable);
+    window.addEventListener('online', handleTransportAvailable);
     return () => {
       cancelled = true;
       isMountedRef.current = false;
+      socket.off('connect', handleTransportAvailable);
+      window.removeEventListener('online', handleTransportAvailable);
     };
+
+    function handleTransportAvailable() {
+      if (userId) {
+        void enterNotificationChannel(userId);
+      }
+    }
 
     async function enterNotificationChannel(nextUserId: number) {
       try {
         await waitForSocketAuthReady(nextUserId);
         if (cancelled) return;
         socket.emit('enter_my_notification_channel', nextUserId);
+        void reconcileQueuedCanonicalImageStates();
       } catch {
-        // no-op
+        // A later online/socket-connect event retries queued reconciliation.
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const burnXP = useMemo<number | string>(() => {
@@ -785,20 +822,24 @@ export default function AICardModal({
   }
 
   async function handleGenerateImage() {
-    if (!card || generatingImage) return;
+    const requestedCardId = Number(card?.id || 0);
+    if (
+      !card ||
+      !requestedCardId ||
+      pendingImageRequestCardIdsRef.current.has(requestedCardId) ||
+      card.imageGenerationInProgress ||
+      card.isImageGenerating
+    ) {
+      return;
+    }
+    pendingImageRequestCardIdsRef.current.add(requestedCardId);
+    setPendingImageRequestCardIds(
+      new Set(pendingImageRequestCardIdsRef.current)
+    );
     setImageGenerationError('');
-    // Mark generation as started globally for this card so UI persists across modal open/close
-    onUpdateAICard({
-      cardId: card.id,
-      newState: {
-        imageGenerationInProgress: true,
-        imageGenerationStage: 'calling_openai',
-        imageGenerationPreviewUrl: ''
-      }
-    });
     try {
       const { card: newState, aiUsagePolicy } = await generateAICardImage({
-        cardId: card.id
+        cardId: requestedCardId
       });
       if (aiUsagePolicy) {
         onUpdateTodayStats({
@@ -808,13 +849,36 @@ export default function AICardModal({
         });
       }
       if (newState) {
+        const canonicalCompletionState =
+          getConfirmedAICardImageTerminalState({
+            card: newState,
+            stage: 'completed'
+          });
         onUpdateAICard({
-          cardId: card.id,
-          newState: getConfirmedAICardImageState(newState)
+          cardId: requestedCardId,
+          newState:
+            canonicalCompletionState || getConfirmedAICardImageState(newState)
         });
       }
     } catch (error: any) {
       console.error(error);
+      let canonicalFailureApplied = false;
+      if (normalizeAICardId(error?.card?.id) === requestedCardId) {
+        const canonicalFailureState = getConfirmedAICardImageTerminalState({
+          card: error.card,
+          stage: 'error'
+        });
+        if (canonicalFailureState) {
+          onUpdateAICard({
+            cardId: requestedCardId,
+            newState: canonicalFailureState
+          });
+          canonicalFailureApplied = true;
+        }
+      }
+      if (!canonicalFailureApplied) {
+        queueCanonicalImageStateReconciliation(requestedCardId);
+      }
       if (error?.aiUsagePolicy) {
         onUpdateTodayStats({
           newStats: {
@@ -827,15 +891,91 @@ export default function AICardModal({
           error?.message || 'Image generation failed. Please try again.'
         );
       }
-      onUpdateAICard({
-        cardId: card.id,
-        newState: {
-          imageGenerationInProgress: false,
-          imageGenerationStage: 'error'
-        }
-      });
     } finally {
-      // Do not flip off global in-progress here; wait for socket event or error
+      pendingImageRequestCardIdsRef.current.delete(requestedCardId);
+      if (isMountedRef.current) {
+        setPendingImageRequestCardIds(
+          new Set(pendingImageRequestCardIdsRef.current)
+        );
+      }
+    }
+  }
+
+  function queueCanonicalImageStateReconciliation(requestedCardId: number) {
+    pendingCanonicalImageReconciliationCardIdsRef.current.add(requestedCardId);
+    void reconcileCanonicalImageState(requestedCardId);
+  }
+
+  async function reconcileQueuedCanonicalImageStates() {
+    const cardIds = Array.from(
+      pendingCanonicalImageReconciliationCardIdsRef.current
+    );
+    await Promise.all(cardIds.map(reconcileCanonicalImageState));
+  }
+
+  async function reconcileCanonicalImageState(requestedCardId: number) {
+    if (
+      canonicalImageReconciliationInFlightCardIdsRef.current.has(
+        requestedCardId
+      )
+    ) {
+      return;
+    }
+    const requestedUserId = Number(userIdRef.current || 0);
+    canonicalImageReconciliationInFlightCardIdsRef.current.add(
+      requestedCardId
+    );
+    try {
+      const result = await loadAICard(requestedCardId);
+      const canonicalCard = result?.card;
+      if (
+        normalizeAICardId(canonicalCard?.id) !== requestedCardId ||
+        !isMountedRef.current ||
+        Number(userIdRef.current || 0) !== requestedUserId
+      ) {
+        return;
+      }
+      const canonicalImageState = getConfirmedAICardImageState(canonicalCard);
+      if (typeof canonicalImageState.isImageGenerating !== 'boolean') {
+        return;
+      }
+
+      const canonicalGenerationStillRunning =
+        canonicalImageState.isImageGenerating;
+      const canonicalReconciliationState = canonicalGenerationStillRunning
+        ? {
+            ...canonicalImageState,
+            imageGenerationInProgress: true,
+            isImageGenerating: true
+          }
+        : getConfirmedAICardImageTerminalState({
+            card: canonicalCard,
+            stage:
+              typeof canonicalImageState.imagePath === 'string' &&
+              canonicalImageState.imagePath.trim()
+                ? 'completed'
+                : 'error'
+          });
+      if (!canonicalReconciliationState) return;
+
+      onUpdateAICard({
+        cardId: requestedCardId,
+        newState: canonicalReconciliationState
+      });
+      if (!canonicalGenerationStillRunning || socket.connected) {
+        pendingCanonicalImageReconciliationCardIdsRef.current.delete(
+          requestedCardId
+        );
+      }
+    } catch (reconciliationError) {
+      console.error(
+        'Failed to reload AI Card after an unknown image-generation outcome:',
+        reconciliationError
+      );
+    } finally {
+      canonicalImageReconciliationInFlightCardIdsRef.current.delete(
+        requestedCardId
+      );
     }
   }
 }

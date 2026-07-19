@@ -135,10 +135,12 @@ export interface CollaborationPanelProps {
   onCanonicalMerge: (payload: {
     build?: Record<string, any> | null;
     projectFiles?: BuildProjectFile[] | null;
+    filesHash?: string | null;
   }) => void;
   onVersionProjectFilesUpdate?: (payload: {
     build?: Record<string, any> | null;
     projectFiles?: BuildProjectFile[] | null;
+    filesHash?: string | null;
   }) => void;
   onAcceptedContributorCountChange?: (count: number) => void;
   onBeforeContributionAction?: (

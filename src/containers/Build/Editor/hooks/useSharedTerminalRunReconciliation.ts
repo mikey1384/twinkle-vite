@@ -81,9 +81,21 @@ interface UseSharedTerminalRunReconciliationOptions {
   maybeAutoCaptureBranchThumbnailAfterProgressSave: (
     savedBuild: Build | null | undefined
   ) => void;
+  bumpRuntimeFollowUpRevision: () => void;
   maybeStartNextQueuedRequest: () => void | Promise<void>;
   releaseQueuedRequestsWaitingForStop: (requestId: string) => boolean;
+  setPostCompleteSyncInFlight: (inFlight: boolean) => void;
+  setRequiresProjectFilesResyncBeforeSave: (nextValue: boolean) => void;
   sharedBuildRun: BuildLiveRunState | null;
+  syncChatMessagesFromServer: (
+    serverMessages?: any[],
+    fromWriter?: boolean,
+    options?: {
+      expectedBuildId?: number;
+      preserveLocalMessages?: boolean;
+      preserveActiveAssistantState?: boolean;
+    }
+  ) => Promise<void>;
   syncAvailableBranchSummary: (build: Build) => void;
 }
 
@@ -97,9 +109,13 @@ export default function useSharedTerminalRunReconciliation({
   getLatestBuild,
   handledSharedTerminalStateKeyRef,
   maybeAutoCaptureBranchThumbnailAfterProgressSave,
+  bumpRuntimeFollowUpRevision,
   maybeStartNextQueuedRequest,
   releaseQueuedRequestsWaitingForStop,
+  setPostCompleteSyncInFlight,
+  setRequiresProjectFilesResyncBeforeSave,
   sharedBuildRun,
+  syncChatMessagesFromServer,
   syncAvailableBranchSummary
 }: UseSharedTerminalRunReconciliationOptions) {
   useEffect(() => {
@@ -156,9 +172,14 @@ export default function useSharedTerminalRunReconciliation({
         requestId: sharedRequestId,
         assistantText: sharedAssistantText || undefined,
         code: sharedAssistantMessage?.codeGenerated ?? null,
-        projectFiles: shouldApplySharedProjectFiles
+        projectFiles:
+          shouldApplySharedProjectFiles || sharedBuildRun.projectFilesHash
           ? normalizedBaseProjectFiles
           : null,
+        ...(typeof sharedBuildRun.projectFilesHash === 'string' &&
+        sharedBuildRun.projectFilesHash.trim()
+          ? { projectFilesHash: sharedBuildRun.projectFilesHash.trim() }
+          : {}),
         interruptionReason: sharedBuildRun.interruptionReason ?? null,
         executionPlan: sharedBuildRun.executionPlan ?? null,
         followUpPrompt: sharedBuildRun.followUpPrompt ?? null,
@@ -229,6 +250,12 @@ export default function useSharedTerminalRunReconciliation({
 
     const normalizedBaseProjectFiles =
       normalizeSharedBuildRunBaseProjectFiles(sharedBuildRun);
+    const sharedProjectFilesHash =
+      typeof sharedBuildRun.projectFilesHash === 'string' &&
+      sharedBuildRun.projectFilesHash.trim()
+        ? sharedBuildRun.projectFilesHash.trim()
+        : null;
+    const sharedHasProjectFilesHash = Boolean(sharedProjectFilesHash);
     const sharedArtifactCode =
       typeof sharedBuildRun.assistantMessage?.codeGenerated === 'string'
         ? sharedBuildRun.assistantMessage.codeGenerated
@@ -265,6 +292,39 @@ export default function useSharedTerminalRunReconciliation({
       normalizedBaseProjectFiles.length > 0 ||
       sharedArtifactCode !== null ||
       sharedArtifactVersionId !== null;
+    const sharedHasCanonicalProjectFilesSnapshot = Boolean(
+      normalizedBaseProjectFiles.length > 0 && sharedProjectFilesHash
+    );
+
+    if (
+      hasSharedTerminalWorkspaceSnapshot &&
+      !sharedHasCanonicalProjectFilesSnapshot
+    ) {
+      // Legacy/fallback terminal payloads can contain generated code without
+      // the complete persisted files and their matching hash. Do not install a
+      // locally reconstructed workspace as shared state: it gives the editor
+      // an unverifiable draft base. Resolve the complete canonical snapshot
+      // from the writer before the workspace becomes editable instead.
+      setRequiresProjectFilesResyncBeforeSave(true);
+      setPostCompleteSyncInFlight(true);
+      bumpRuntimeFollowUpRevision();
+      void syncChatMessagesFromServer(undefined, true, {
+        expectedBuildId: Number(currentBuild.id),
+        preserveLocalMessages: true,
+        preserveActiveAssistantState: true
+      })
+        .catch((error) => {
+          console.error(
+            'Failed to resync canonical project files after shared completion:',
+            error
+          );
+        })
+        .finally(() => {
+          setPostCompleteSyncInFlight(false);
+          bumpRuntimeFollowUpRevision();
+        });
+      return;
+    }
     let nextProjectFiles =
       hasSharedTerminalWorkspaceSnapshot &&
       normalizedBaseProjectFiles.length > 0
@@ -292,6 +352,14 @@ export default function useSharedTerminalRunReconciliation({
       }
     }
 
+    const nextProjectFilesHash = sharedHasProjectFilesHash
+      ? sharedProjectFilesHash
+      : shouldUpdateProjectFiles
+        ? null
+        : (currentBuild.projectFilesHash ?? null);
+    const shouldUpdateProjectFilesHash =
+      (currentBuild.projectFilesHash ?? null) !== nextProjectFilesHash;
+
     const nextCode =
       hasSharedTerminalWorkspaceSnapshot && sharedArtifactCode !== null
         ? sharedArtifactCode
@@ -310,6 +378,7 @@ export default function useSharedTerminalRunReconciliation({
 
     if (
       !shouldUpdateProjectFiles &&
+      !shouldUpdateProjectFilesHash &&
       !shouldUpdateRuntimeExplorationPlan &&
       !shouldUpdateFollowUpPrompt &&
       String(currentBuild.code || '') === String(nextCode || '') &&
@@ -337,7 +406,8 @@ export default function useSharedTerminalRunReconciliation({
         : currentBuild.projectManifest || null,
       projectFiles: shouldUpdateProjectFiles
         ? nextProjectFiles
-        : currentBuild.projectFiles
+        : currentBuild.projectFiles,
+      projectFilesHash: nextProjectFilesHash
     };
     const workspaceUpdatedBuild = hasSharedTerminalWorkspaceSnapshot
       ? markBuildContributionWorkspaceEdited(nextBuild)
@@ -349,6 +419,9 @@ export default function useSharedTerminalRunReconciliation({
     syncAvailableBranchSummary(appliedBuild);
     if (hasSharedTerminalWorkspaceSnapshot) {
       maybeAutoCaptureBranchThumbnailAfterProgressSave(appliedBuild);
+    }
+    if (normalizedBaseProjectFiles.length > 0) {
+      setRequiresProjectFilesResyncBeforeSave(!sharedProjectFilesHash);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharedBuildRun]);

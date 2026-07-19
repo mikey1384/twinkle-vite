@@ -726,7 +726,9 @@ export default function useBranches({
           build: result.contribution || null,
           projectFiles: Array.isArray(result.projectFiles)
             ? result.projectFiles
-            : null
+            : null,
+          filesHash:
+            typeof result.filesHash === 'string' ? result.filesHash : null
         });
       } else {
         setContributionActionError(
@@ -871,10 +873,12 @@ export default function useBranches({
 
   function handleBuildContributionMerge({
     build: mergedBuild,
-    projectFiles
+    projectFiles,
+    filesHash
   }: {
     build?: Record<string, any> | null;
     projectFiles?: Array<{ path: string; content?: string }> | null;
+    filesHash?: string | null;
   }) {
     const latestBuild = getLatestBuild();
     const nextProjectFiles = Array.isArray(projectFiles)
@@ -884,6 +888,13 @@ export default function useBranches({
       ...latestBuild,
       ...(mergedBuild || {}),
       projectFiles: nextProjectFiles,
+      // New canonical files came from the server; adopt its hash as the save
+      // base, or null it (unguarded) rather than keep a stale one.
+      ...(Array.isArray(projectFiles)
+        ? {
+            projectFilesHash: typeof filesHash === 'string' ? filesHash : null
+          }
+        : {}),
       projectManifest: Array.isArray(projectFiles)
         ? {
             entryPath: resolveIndexEntryPathFromProjectFiles(

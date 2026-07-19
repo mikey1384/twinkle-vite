@@ -309,6 +309,14 @@ export default function useBuildSocket() {
               terminalPayload.projectFiles.length > 0
                 ? terminalPayload.projectFiles
                 : null,
+            ...(Array.isArray(terminalPayload.projectFiles) &&
+            terminalPayload.projectFiles.length > 0 &&
+            typeof terminalPayload.projectFilesHash === 'string' &&
+            terminalPayload.projectFilesHash.trim()
+              ? {
+                  projectFilesHash: terminalPayload.projectFilesHash.trim()
+                }
+              : {}),
             ...(Object.prototype.hasOwnProperty.call(
               terminalPayload || {},
               'interruptionReason'
@@ -618,6 +626,7 @@ export default function useBuildSocket() {
       artifact,
       code,
       projectFiles,
+      projectFilesHash,
       interruptionReason,
       executionPlan,
       followUpPrompt,
@@ -643,6 +652,7 @@ export default function useBuildSocket() {
       };
       code?: string | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
+      projectFilesHash?: string | null;
       interruptionReason?:
         | 'tool_limit'
         | 'energy_depleted'
@@ -705,6 +715,14 @@ export default function useBuildSocket() {
           Array.isArray(projectFiles) && projectFiles.length > 0
             ? projectFiles
             : null,
+        ...(Array.isArray(projectFiles) &&
+        projectFiles.length > 0 &&
+        typeof projectFilesHash === 'string' &&
+        projectFilesHash.trim()
+          ? {
+              projectFilesHash: projectFilesHash.trim()
+            }
+          : {}),
         interruptionReason,
         executionPlan,
         followUpPrompt: Object.prototype.hasOwnProperty.call(

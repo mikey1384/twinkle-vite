@@ -1279,8 +1279,12 @@ export default function contentRequestHelpers({
     },
     async loadNewFeeds({ lastInteraction }: { lastInteraction: number }) {
       try {
+        // The route's enrichment uses the requester's identity for
+        // subject-secret/attachment visibility; without auth() signed-in
+        // users would get anonymous-stripped rows.
         const { data } = await request.get(
-          `${URL}/content/newFeeds?lastInteraction=${lastInteraction}`
+          `${URL}/content/newFeeds?lastInteraction=${lastInteraction}`,
+          auth()
         );
         return data;
       } catch (error: any) {

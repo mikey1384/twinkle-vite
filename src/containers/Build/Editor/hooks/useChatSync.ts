@@ -2,14 +2,11 @@ import {
   findMatchingBuildChatMessageId,
   mergePersistedChatMessagesIntoLocalMessages
 } from '../helpers/chatMessages';
-import type {
-  Build,
-  BuildCopilotPolicy,
-  ChatMessage
-} from '../types';
+import type { Build, BuildCopilotPolicy, ChatMessage } from '../types';
 import type { SharedBuildRunIdentityState } from './useRunIdentity';
 
 export interface SyncChatMessagesFromServerOptions {
+  expectedBuildId?: number;
   preserveLocalMessages?: boolean;
   preserveActiveAssistantState?: boolean;
 }
@@ -17,9 +14,7 @@ export interface SyncChatMessagesFromServerOptions {
 interface UseBuildEditorChatSyncOptions {
   applyBuildUpdate: (build: Build) => void;
   buildId: number;
-  getBuildRunIdentity: (
-    buildId: number
-  ) => SharedBuildRunIdentityState | null;
+  getBuildRunIdentity: (buildId: number) => SharedBuildRunIdentityState | null;
   getCurrentActiveAssistantMessageId: (
     requestId?: string | null,
     sharedRunState?: SharedBuildRunIdentityState | null
@@ -75,12 +70,30 @@ export default function useChatSync({
     fromWriter = false,
     options?: SyncChatMessagesFromServerOptions
   ) {
+    const expectedBuildId = Number(options?.expectedBuildId || 0);
+    if (
+      expectedBuildId > 0 &&
+      (Number(buildId || 0) !== expectedBuildId ||
+        Number(getLatestBuild()?.id || 0) !== expectedBuildId)
+    ) {
+      return;
+    }
     let messages = Array.isArray(serverMessages) ? serverMessages : null;
     if (!messages) {
       const buildPayload = await loadBuild(
         buildId,
         fromWriter ? { fromWriter: true } : undefined
       );
+      // A writer reload may finish after navigation. Never let canonical data
+      // for its former target replace the newly active build or chat state.
+      if (
+        expectedBuildId > 0 &&
+        (Number(getLatestBuild()?.id || 0) !== expectedBuildId ||
+          (buildPayload?.build &&
+            Number(buildPayload.build.id || 0) !== expectedBuildId))
+      ) {
+        return;
+      }
       const latestSharedRunIdentityState = getBuildRunIdentity(
         Number(getLatestBuild()?.id || buildId)
       );
@@ -95,7 +108,11 @@ export default function useChatSync({
           projectManifest: buildPayload.projectManifest || null,
           projectFiles: Array.isArray(buildPayload.projectFiles)
             ? buildPayload.projectFiles
-            : []
+            : [],
+          projectFilesHash:
+            typeof buildPayload.projectFilesHash === 'string'
+              ? buildPayload.projectFilesHash
+              : null
         };
         applyBuildUpdate(nextBuild);
         if (fromWriter) {
@@ -111,7 +128,9 @@ export default function useChatSync({
           ) &&
         Number(buildPayload.activeRun.lastActivityAt || 0) > 0
       ) {
-        markActiveBuildRunActivity(Number(buildPayload.activeRun.lastActivityAt));
+        markActiveBuildRunActivity(
+          Number(buildPayload.activeRun.lastActivityAt)
+        );
       }
       messages = buildPayload?.chatMessages;
       if (
@@ -134,11 +153,10 @@ export default function useChatSync({
       activeRequestId,
       latestSharedRunIdentityState
     );
-    const activeAssistantMessageId =
-      getCurrentActiveAssistantMessageId(
-        activeRequestId,
-        latestSharedRunIdentityState
-      );
+    const activeAssistantMessageId = getCurrentActiveAssistantMessageId(
+      activeRequestId,
+      latestSharedRunIdentityState
+    );
     const activeUserMessage =
       typeof activeUserMessageId === 'number' && activeUserMessageId > 0
         ? currentMessages.find(

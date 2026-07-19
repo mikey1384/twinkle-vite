@@ -96,6 +96,7 @@ export interface BuildLiveRunState {
   userMessage: BuildLiveRunMessage | null;
   assistantMessage: BuildLiveRunMessage | null;
   baseProjectFiles: Array<{ path: string; content?: string }>;
+  projectFilesHash?: string | null;
   streamingProjectFiles: Array<{ path: string; content?: string }> | null;
   streamingFocusFilePath: string | null;
   executionPlan?: any | null;
@@ -281,6 +282,7 @@ export interface BuildLiveRunActionPayload
   assistantText?: string;
   stopReason?: 'user' | 'replacement' | null;
   artifactCode?: string | null;
+  projectFilesHash?: string | null;
   artifactVersionId?: number | null;
   persistedAssistantId?: number | null;
   persistedUserId?: number | null;
@@ -1746,6 +1748,10 @@ export default function BuildReducer(
         baseProjectFiles: normalizeBuildRunProjectFiles(
           action.buildRun?.baseProjectFiles
         ),
+        ...(typeof action.buildRun?.projectFilesHash === 'string' &&
+        action.buildRun.projectFilesHash.trim()
+          ? { projectFilesHash: action.buildRun.projectFilesHash.trim() }
+          : {}),
         streamingProjectFiles: null,
         streamingFocusFilePath: null,
         executionPlan: null,
@@ -2040,6 +2046,17 @@ export default function BuildReducer(
               : currentRun.streamingProjectFiles !== null
                 ? currentRun.streamingProjectFiles
                 : currentRun.baseProjectFiles,
+        projectFilesHash:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(
+            action.buildRun,
+            'projectFilesHash'
+          )
+            ? typeof action.buildRun.projectFilesHash === 'string' &&
+              action.buildRun.projectFilesHash.trim()
+              ? action.buildRun.projectFilesHash.trim()
+              : null
+            : (currentRun.projectFilesHash ?? null),
         streamingProjectFiles: null,
         streamingFocusFilePath: null,
         executionPlan:

@@ -20,11 +20,15 @@ export interface BuildProjectFilesDraftState {
   files: Array<{ path: string; content?: string }>;
   hasUnsavedChanges: boolean;
   saving: boolean;
+  // See ProjectFileSaveOptions.draftBaseFilesHash: the save base bound to
+  // this draft, captured when the buffer last matched persisted files.
+  draftBaseFilesHash?: string | null;
 }
 
 interface BuildProjectFileSaveResult {
   success: boolean;
   error?: string;
+  filesHash?: string | null;
 }
 
 interface BuildProjectFileContributionActionResult {
@@ -71,9 +75,11 @@ interface UseBuildProjectFileDraftsOptions {
   isOwner: boolean;
   normalizeProjectFilePath: (rawPath: string) => string;
   persistProjectFilesDraft: (
-    files: Array<{ path: string; content?: string }>
+    files: Array<{ path: string; content?: string }>,
+    draftBaseFilesHash?: string | null
   ) => Promise<BuildProjectFileSaveResult>;
   discardProjectFilesDraft: () => Array<{ path: string; content?: string }>;
+  onAdvanceProjectFilesDraftBase: (filesHash: string) => void;
   onAppendFeedbackEvent: (event: BuildProjectFileDraftFeedbackEvent) => void;
 }
 
@@ -82,6 +88,7 @@ export default function useProjectFileDrafts({
   normalizeProjectFilePath,
   persistProjectFilesDraft,
   discardProjectFilesDraft,
+  onAdvanceProjectFilesDraftBase,
   onAppendFeedbackEvent
 }: UseBuildProjectFileDraftsOptions): BuildProjectFileDraftsApi {
   const [draftActionPrompt, setDraftActionPrompt] =
@@ -89,12 +96,16 @@ export default function useProjectFileDrafts({
   const projectFilesDraftRef = useRef<Array<{ path: string; content?: string }>>(
     []
   );
+  const draftBaseFilesHashRef = useRef<string | null>(null);
   const hasUnsavedProjectFilesRef = useRef(false);
   const savingProjectFilesRef = useRef(false);
   const isOwnerRef = useRef(isOwner);
   const normalizeProjectFilePathRef = useRef(normalizeProjectFilePath);
   const persistProjectFilesDraftRef = useRef(persistProjectFilesDraft);
   const discardProjectFilesDraftRef = useRef(discardProjectFilesDraft);
+  const onAdvanceProjectFilesDraftBaseRef = useRef(
+    onAdvanceProjectFilesDraftBase
+  );
   const onAppendFeedbackEventRef = useRef(onAppendFeedbackEvent);
   const pendingPromptResolveRef =
     useRef<((choice: BuildProjectFileDraftActionChoice) => void) | null>(null);
@@ -104,6 +115,7 @@ export default function useProjectFileDrafts({
   normalizeProjectFilePathRef.current = normalizeProjectFilePath;
   persistProjectFilesDraftRef.current = persistProjectFilesDraft;
   discardProjectFilesDraftRef.current = discardProjectFilesDraft;
+  onAdvanceProjectFilesDraftBaseRef.current = onAdvanceProjectFilesDraftBase;
   onAppendFeedbackEventRef.current = onAppendFeedbackEvent;
 
   useEffect(() => {
@@ -233,8 +245,10 @@ export default function useProjectFileDrafts({
           pageFeedbackOnMissingRequestId:
             options.pageFeedbackOnMissingRequestId
         });
-        const saveResult =
-          await persistProjectFilesDraftRef.current(pendingFiles);
+        const saveResult = await persistProjectFilesDraftRef.current(
+          pendingFiles,
+          draftBaseFilesHashRef.current
+        );
         if (!saveResult.success) {
           appendFeedbackEvent({
             kind: 'lifecycle',
@@ -244,6 +258,20 @@ export default function useProjectFileDrafts({
               options.pageFeedbackOnMissingRequestId
           });
           return false;
+        }
+
+        const acceptedFilesHash =
+          typeof saveResult.filesHash === 'string' &&
+          saveResult.filesHash.trim()
+            ? saveResult.filesHash.trim()
+            : null;
+        if (acceptedFilesHash) {
+          // The server accepted pendingFiles as its new canonical snapshot.
+          // Any edits retained while that request was in flight now derive
+          // from this confirmed hash, so advance both draft-base owners before
+          // the loop considers retrying them.
+          draftBaseFilesHashRef.current = acceptedFilesHash;
+          onAdvanceProjectFilesDraftBaseRef.current(acceptedFilesHash);
         }
 
         await wait(40);
@@ -378,12 +406,17 @@ export default function useProjectFileDrafts({
 
       resetDraftState(files) {
         projectFilesDraftRef.current = normalizeDraftFiles(files);
+        draftBaseFilesHashRef.current = null;
         hasUnsavedProjectFilesRef.current = false;
         savingProjectFilesRef.current = false;
       },
 
       handleProjectFilesDraftStateChange(state) {
         projectFilesDraftRef.current = normalizeDraftFiles(state.files);
+        draftBaseFilesHashRef.current =
+          typeof state.draftBaseFilesHash === 'string'
+            ? state.draftBaseFilesHash
+            : null;
         hasUnsavedProjectFilesRef.current = Boolean(state.hasUnsavedChanges);
         savingProjectFilesRef.current = Boolean(state.saving);
       },

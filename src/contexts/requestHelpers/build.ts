@@ -1023,21 +1023,45 @@ export default function buildRequestHelpers({
       buildId,
       files,
       createVersion,
-      summary
+      summary,
+      baseFilesHash
     }: {
       buildId: number;
       files: Array<{ path: string; content: string }>;
       createVersion?: boolean;
       summary?: string;
+      baseFilesHash?: string | null;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/build/${buildId}/project-files`,
-          { files, createVersion, summary },
+          {
+            files,
+            createVersion,
+            summary,
+            ...(baseFilesHash ? { baseFilesHash } : {})
+          },
           auth()
         );
         return data;
-      } catch (error) {
+      } catch (error: any) {
+        // handleError collapses rejections to { status, message }, which would
+        // discard the stale-save payload callers need to resync. Preserve it
+        // as a typed rejection instead (same pattern as the AI chat helper).
+        if (error?.response?.data?.code === 'build_project_files_stale') {
+          const staleData = error.response.data;
+          return Promise.reject({
+            status: error.response.status,
+            code: staleData.code,
+            message:
+              staleData.error ||
+              'This project changed since these files were loaded. Review the latest files before saving again.',
+            currentFilesHash: staleData.currentFilesHash || null,
+            currentProjectFiles: Array.isArray(staleData.currentProjectFiles)
+              ? staleData.currentProjectFiles
+              : null
+          });
+        }
         return handleError(error);
       }
     },
@@ -2050,18 +2074,20 @@ export default function buildRequestHelpers({
       buildId,
       contributionBuildId,
       assetTransferOperationId,
-      projectFiles
+      projectFiles,
+      baseFilesHash
     }: {
       buildId: number;
       contributionBuildId: number;
       assetTransferOperationId?: string;
       projectFiles?: Array<{ path: string; content?: string }>;
+      baseFilesHash?: string | null;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/update-from-main`,
           {
-            ...(projectFiles ? { projectFiles } : {}),
+            ...(projectFiles ? { projectFiles, baseFilesHash } : {}),
             ...(assetTransferOperationId ? { assetTransferOperationId } : {})
           },
           auth()

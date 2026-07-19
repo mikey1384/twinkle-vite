@@ -5,6 +5,7 @@ import { queueCanonicalAICardBurnTransition } from '~/helpers/aiCardBurnTransiti
 import {
   getConfirmedAICardDirectTransferState,
   getConfirmedAICardImageState,
+  getConfirmedAICardImageTerminalState,
   getConfirmedAICardTransferState,
   normalizeAICardId
 } from '~/helpers/aiCardCanonicalUpdates';
@@ -126,10 +127,21 @@ export default function useAICardSocket() {
         | 'completed'
         | 'error';
       const canonicalCard: Record<string, unknown> | undefined =
-        stage === 'completed' &&
+        (stage === 'completed' || stage === 'error') &&
         normalizeAICardId(status?.card?.id) === cardId
           ? status.card
           : undefined;
+      const canonicalTerminalState =
+        (stage === 'completed' || stage === 'error') && canonicalCard
+          ? getConfirmedAICardImageTerminalState({
+              card: canonicalCard,
+              stage
+            })
+          : null;
+      if (canonicalTerminalState) {
+        onUpdateAICard({ cardId, newState: canonicalTerminalState });
+        return;
+      }
       const canonicalImageState = canonicalCard
         ? getConfirmedAICardImageState(canonicalCard)
         : undefined;
@@ -173,10 +185,13 @@ export default function useAICardSocket() {
         !isGeneratingImagePath(rawImageUrl);
 
       const hasActualImagePath = hasValidImagePath || hasValidImageUrl;
+      const canonicalGenerationStillRunning =
+        canonicalImageState?.isImageGenerating === true;
 
       const inProgress =
         activeStages.has(stage) ||
-        (stage === 'completed' && !hasActualImagePath);
+        (stage === 'completed' && !hasActualImagePath) ||
+        (stage === 'error' && canonicalGenerationStillRunning);
 
       const previewUrl = hasPartial
         ? `data:image/png;base64,${status.partialImageB64}`

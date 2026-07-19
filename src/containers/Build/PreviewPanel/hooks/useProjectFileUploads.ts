@@ -4,10 +4,7 @@ import {
   isSupportedBuildAssetUploadFile
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type { ConfirmModalOptions } from '~/components/Modals/hooks/useConfirmModal';
-import type {
-  EditableProjectFile,
-  PreviewRuntimeUploadAsset
-} from '../types';
+import type { EditableProjectFile, PreviewRuntimeUploadAsset } from '../types';
 import {
   getPreferredIndexPath,
   isIndexHtmlPath,
@@ -33,11 +30,11 @@ import {
 export default function useProjectFileUploads({
   areProjectFileMutationsLocked,
   buildId,
-  buildRef,
   cleanupRestoredRuntimeAssets,
   code,
   editableProjectFilesRef,
   ensureBuildApiTokenForBuild,
+  getDraftBaseFilesHash,
   getProjectFileCaseCollisionError,
   isActiveBuildId,
   isOwner,
@@ -55,7 +52,6 @@ export default function useProjectFileUploads({
 }: {
   areProjectFileMutationsLocked: () => boolean;
   buildId: number;
-  buildRef: RefObject<{ id: number } | null>;
   cleanupRestoredRuntimeAssets: (
     assets: PreviewRuntimeUploadAsset[],
     token: string | null,
@@ -67,6 +63,7 @@ export default function useProjectFileUploads({
     requiredScopes: string[],
     targetBuildId: number
   ) => Promise<string>;
+  getDraftBaseFilesHash: () => string | null;
   getProjectFileCaseCollisionError: (
     files: EditableProjectFile[]
   ) => string | null;
@@ -79,10 +76,12 @@ export default function useProjectFileUploads({
     fallbackError: string;
     targetBuildId?: number | null;
     targetBuildCode?: string | null;
+    draftBaseFilesHash?: string | null;
   }) => Promise<{
     success: boolean;
     error?: string;
     savedSignature?: string;
+    filesHash?: string | null;
   }>;
   selectedFolderPath: string | null;
   setActiveFilePath: (path: string) => void;
@@ -116,6 +115,18 @@ export default function useProjectFileUploads({
         error: 'Project files are temporarily locked.'
       };
     }
+    // Capture one coherent target before file reads, confirmation prompts, or
+    // asset uploads yield control. Navigation can replace the mutable refs
+    // while this import is still running, but every eventual write must stay
+    // bound to the build snapshot from which its files were derived.
+    const uploadTargetBuildId = Number(buildId || 0);
+    const uploadTargetBuildCode = code ?? null;
+    const uploadTargetDraftBaseFilesHash = getDraftBaseFilesHash();
+
+    function didUploadTargetBuildChange() {
+      return !isActiveBuildId(uploadTargetBuildId);
+    }
+
     const uploadedFiles = normalizeUploadInputFiles(uploadInput);
     if (uploadedFiles.length === 0) {
       return {
@@ -125,13 +136,16 @@ export default function useProjectFileUploads({
       };
     }
     const selectedFolderPathAtStart =
-      options && Object.prototype.hasOwnProperty.call(options, 'targetFolderPath')
-        ? options.targetFolderPath ?? null
+      options &&
+      Object.prototype.hasOwnProperty.call(options, 'targetFolderPath')
+        ? (options.targetFolderPath ?? null)
         : selectedFolderPath;
 
     if (
       options?.requireRelativePaths &&
-      uploadedFiles.some((file) => !String(file.webkitRelativePath || '').trim())
+      uploadedFiles.some(
+        (file) => !String(file.webkitRelativePath || '').trim()
+      )
     ) {
       const message =
         'This browser did not preserve folder paths for the selected project. Try importing the folder again.';
@@ -170,7 +184,10 @@ export default function useProjectFileUploads({
       (entry) =>
         entry.isProjectTextFile &&
         entry.isValidPath &&
-        !(options?.restoreExportedRuntimeAssets && entry.isImportedRuntimeAttachment)
+        !(
+          options?.restoreExportedRuntimeAssets &&
+          entry.isImportedRuntimeAttachment
+        )
     );
     const importableRuntimeAttachmentEntries =
       options?.restoreExportedRuntimeAssets
@@ -218,7 +235,10 @@ export default function useProjectFileUploads({
         (entry) =>
           entry.isProjectTextFile &&
           !entry.isValidPath &&
-          !(options?.restoreExportedRuntimeAssets && entry.isImportedRuntimeAttachment)
+          !(
+            options?.restoreExportedRuntimeAssets &&
+            entry.isImportedRuntimeAttachment
+          )
       )
       .map((entry) => entry.file.name);
 
@@ -326,13 +346,6 @@ export default function useProjectFileUploads({
     const uploadWarnings: string[] = [];
     let runtimeAssetToken: string | null = null;
     const restoredRuntimeAssets: PreviewRuntimeUploadAsset[] = [];
-    const uploadTargetBuildId = Number(
-      buildRef.current?.id || buildId || 0
-    );
-
-    function didUploadTargetBuildChange() {
-      return !isActiveBuildId(uploadTargetBuildId);
-    }
     if (
       importableRuntimeAttachmentEntries.length > 0 ||
       importableLocalAssetEntries.length > 0
@@ -421,11 +434,9 @@ export default function useProjectFileUploads({
             (typeof referencedRuntimeAttachmentEntries)[number]
           >();
           for (const entry of referencedRuntimeAttachmentEntries) {
-            const originalAssetId =
-              getImportedRuntimeOriginalAttachmentAssetId(
-                entry.importedRuntimeAttachmentSourcePath ||
-                  entry.normalizedPath
-              );
+            const originalAssetId = getImportedRuntimeOriginalAttachmentAssetId(
+              entry.importedRuntimeAttachmentSourcePath || entry.normalizedPath
+            );
             if (originalAssetId) {
               referencedOriginalEntriesByAssetId.set(originalAssetId, entry);
             }
@@ -441,8 +452,7 @@ export default function useProjectFileUploads({
 
           for (const entry of referencedRuntimeAttachmentEntries) {
             const thumbAssetId = getImportedRuntimeThumbAttachmentAssetId(
-              entry.importedRuntimeAttachmentSourcePath ||
-                entry.normalizedPath
+              entry.importedRuntimeAttachmentSourcePath || entry.normalizedPath
             );
             if (
               thumbAssetId &&
@@ -476,8 +486,7 @@ export default function useProjectFileUploads({
               ? payload.assets[0]
               : null;
             const runtimeAttachmentSourcePath =
-              entry.importedRuntimeAttachmentSourcePath ||
-              entry.normalizedPath;
+              entry.importedRuntimeAttachmentSourcePath || entry.normalizedPath;
             const replacementUrl = runtimeAttachmentSourcePath.startsWith(
               IMPORTED_RUNTIME_THUMB_ATTACHMENT_PATH_PREFIX
             )
@@ -503,8 +512,7 @@ export default function useProjectFileUploads({
           for (const entry of runtimeAttachmentEntriesToUpload) {
             const asset = await uploadRuntimeAttachmentEntry(entry);
             const originalAssetId = getImportedRuntimeOriginalAttachmentAssetId(
-              entry.importedRuntimeAttachmentSourcePath ||
-                entry.normalizedPath
+              entry.importedRuntimeAttachmentSourcePath || entry.normalizedPath
             );
             if (!originalAssetId) {
               continue;
@@ -593,9 +601,7 @@ export default function useProjectFileUploads({
       persistedProjectFiles,
       dedupedUploads
     );
-    function buildProjectImportWarningText(
-      additionalWarnings: string[] = []
-    ) {
+    function buildProjectImportWarningText(additionalWarnings: string[] = []) {
       const nextWarnings = [...uploadWarnings];
       if (unsupportedFileNames.length > 0) {
         nextWarnings.push(
@@ -642,7 +648,8 @@ export default function useProjectFileUploads({
         files: nextPersistedFiles,
         fallbackError: 'Failed to save imported project files',
         targetBuildId: uploadTargetBuildId,
-        targetBuildCode: code
+        targetBuildCode: uploadTargetBuildCode,
+        draftBaseFilesHash: uploadTargetDraftBaseFilesHash
       });
       if (!saveResult.success) {
         await cleanupRestoredRuntimeAssets(
@@ -653,8 +660,7 @@ export default function useProjectFileUploads({
         return {
           success: false,
           importedCount: 0,
-          error:
-            saveResult.error || 'Failed to save imported project files.'
+          error: saveResult.error || 'Failed to save imported project files.'
         };
       }
       if (didUploadTargetBuildChange()) {
@@ -687,7 +693,10 @@ export default function useProjectFileUploads({
     setNewFilePath('');
 
     if (runtimeAssetToken) {
-      await syncCurrentBuildRuntimeUploads(runtimeAssetToken, uploadTargetBuildId);
+      await syncCurrentBuildRuntimeUploads(
+        runtimeAssetToken,
+        uploadTargetBuildId
+      );
     }
     const warningText = buildProjectImportWarningText();
     setProjectFileError(warningText);

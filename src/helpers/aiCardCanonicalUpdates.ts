@@ -36,6 +36,28 @@ export function getConfirmedAICardImageState(card: unknown) {
   ]);
 }
 
+export function getConfirmedAICardImageTerminalState({
+  card,
+  stage
+}: {
+  card: unknown;
+  stage: 'completed' | 'error';
+}) {
+  const imageState = getConfirmedAICardImageState(card);
+  if (typeof imageState.isImageGenerating !== 'boolean') return null;
+
+  // The request/event confirms the terminal stage, while the canonical card
+  // decides whether a newer generation is actually still running.
+  const imageGenerationInProgress = imageState.isImageGenerating;
+  return {
+    ...imageState,
+    imageGenerationStage: stage,
+    imageGenerationInProgress,
+    isImageGenerating: imageGenerationInProgress,
+    imageGenerationPreviewUrl: ''
+  };
+}
+
 export function getConfirmedAICardListingState(card: unknown) {
   return pickAICardFields(card, ['isListed', 'askPrice']);
 }

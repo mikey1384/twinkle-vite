@@ -142,6 +142,11 @@ export interface Build {
     createdAt?: number;
     updatedAt?: number;
   }>;
+  // Server-issued hash of the canonical project files this client last synced.
+  // Sent back as `baseFilesHash` on saves so the server can reject saves based
+  // on a stale snapshot (e.g. a tab opened before a branch merge landed).
+  // Null/undefined means "unknown base" and the save is unguarded.
+  projectFilesHash?: string | null;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   executionPlan?: BuildExecutionPlan | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
@@ -417,12 +422,21 @@ export interface BuildEditorProps {
 export interface ProjectFileSaveResult {
   success: boolean;
   error?: string;
+  // Canonical server-issued base for the files accepted by this save. Partial
+  // save callers use it to rebase any intentionally retained local edits.
+  filesHash?: string | null;
 }
 
 export interface ProjectFileSaveOptions {
   resumePausedQueue?: boolean;
   targetBuildId?: number | null;
   targetBuildCode?: string | null;
+  // Server-issued hash of the snapshot the saved files were derived from
+  // (captured when the draft buffer last matched persisted files). Preferred
+  // over the build's current hash so a draft based on an older snapshot keeps
+  // failing the stale guard until the user re-bases, instead of passing it
+  // because the client heard about newer files in the meantime.
+  draftBaseFilesHash?: string | null;
 }
 
 export interface CurrentBuildRunView {

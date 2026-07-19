@@ -594,7 +594,11 @@ export default function BuildEditor({
       projectManifest: buildPayload.projectManifest || null,
       projectFiles: Array.isArray(buildPayload.projectFiles)
         ? buildPayload.projectFiles
-        : []
+        : [],
+      projectFilesHash:
+        typeof buildPayload.projectFilesHash === 'string'
+          ? buildPayload.projectFilesHash
+          : null
     });
   }
   const {
@@ -768,6 +772,7 @@ export default function BuildEditor({
     onRefreshCurrentBranchMergeabilityForBuild:
       refreshCurrentBranchMergeabilityForBuild,
     onSyncAvailableBranchSummary: syncAvailableBranchSummary,
+    onAdvanceProjectFilesDraftBase: rebaseCurrentProjectFileDraftBase,
     replaceCopilotPolicy,
     requiresProjectFilesResyncBeforeSave:
       runOrchestration.requiresProjectFilesResyncBeforeSave,
@@ -1127,9 +1132,15 @@ export default function BuildEditor({
     getLatestBuild,
     handledSharedTerminalStateKeyRef,
     maybeAutoCaptureBranchThumbnailAfterProgressSave,
+    bumpRuntimeFollowUpRevision: runtimeFollowUp.bumpRuntimeFollowUpRevision,
     maybeStartNextQueuedRequest,
     releaseQueuedRequestsWaitingForStop,
+    setPostCompleteSyncInFlight:
+      runOrchestration.setPostCompleteSyncInFlight,
+    setRequiresProjectFilesResyncBeforeSave:
+      runOrchestration.setRequiresProjectFilesResyncBeforeSave,
     sharedBuildRun,
+    syncChatMessagesFromServer,
     syncAvailableBranchSummary
   });
 
@@ -1229,6 +1240,10 @@ export default function BuildEditor({
       path: file.path,
       content: file.content
     }));
+  }
+
+  function rebaseCurrentProjectFileDraftBase(filesHash: string) {
+    previewPanelRef.current?.rebaseProjectFileDraftBase(filesHash);
   }
 
   useEffect(() => {
@@ -1397,7 +1412,9 @@ export default function BuildEditor({
         build: result.contribution || null,
         projectFiles: Array.isArray(result.projectFiles)
           ? result.projectFiles
-          : null
+          : null,
+        filesHash:
+          typeof result.filesHash === 'string' ? result.filesHash : null
       });
       const conflictPaths = Array.isArray(result.conflicts)
         ? result.conflicts

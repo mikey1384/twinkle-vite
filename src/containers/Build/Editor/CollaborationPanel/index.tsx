@@ -1413,7 +1413,9 @@ export default function CollaborationPanel({
           build: result.build || null,
           projectFiles: Array.isArray(result.projectFiles)
             ? result.projectFiles
-            : null
+            : null,
+          filesHash:
+            typeof result.filesHash === 'string' ? result.filesHash : null
         });
         if (result.contribution) {
           setSelectedContribution(result.contribution);
@@ -1461,7 +1463,9 @@ export default function CollaborationPanel({
           build: result.build || null,
           projectFiles: Array.isArray(result.projectFiles)
             ? result.projectFiles
-            : null
+            : null,
+          filesHash:
+            typeof result.filesHash === 'string' ? result.filesHash : null
         });
         if (result.contribution) {
           setSelectedContribution(result.contribution);
@@ -1529,7 +1533,9 @@ export default function CollaborationPanel({
           build: result.contribution || null,
           projectFiles: Array.isArray(result.projectFiles)
             ? result.projectFiles
-            : null
+            : null,
+          filesHash:
+            typeof result.filesHash === 'string' ? result.filesHash : null
         });
         setChangedFiles([]);
         setSelectedPaths([]);
@@ -1588,7 +1594,9 @@ export default function CollaborationPanel({
           build: result.build || null,
           projectFiles: Array.isArray(result.projectFiles)
             ? result.projectFiles
-            : null
+            : null,
+          filesHash:
+            typeof result.filesHash === 'string' ? result.filesHash : null
         });
         if (result.contribution) {
           setSelectedContribution(result.contribution);

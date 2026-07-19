@@ -297,7 +297,11 @@ export default function BuildEditorRoute() {
             runtimeExplorationPlan: data.runtimeExplorationPlan || null,
             projectManifest: data.projectManifest || null,
             capabilitySnapshot: data.capabilitySnapshot || null,
-            projectFiles: nextProjectFiles
+            projectFiles: nextProjectFiles,
+            projectFilesHash:
+              typeof data.projectFilesHash === 'string'
+                ? data.projectFilesHash
+                : null
           };
           const nextChatMessages = data.chatMessages || [];
           const nextCopilotPolicy = data.copilotPolicy || null;

@@ -1,8 +1,4 @@
-import type {
-  Dispatch,
-  RefObject,
-  SetStateAction
-} from 'react';
+import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { ConfirmModalOptions } from '~/components/Modals/hooks/useConfirmModal';
 import {
   getPreferredIndexPath,
@@ -13,10 +9,7 @@ import {
   remapPathPrefix,
   serializeEditableProjectFiles
 } from '../helpers/projectFiles';
-import type {
-  Build,
-  EditableProjectFile
-} from '../types';
+import type { Build, EditableProjectFile } from '../types';
 import {
   buildProjectExportBaseName,
   readLatestEditableProjectFiles,
@@ -29,6 +22,7 @@ export default function useProjectFileActions({
   build,
   buildApiTokenRef,
   buildRef,
+  getDraftBaseFilesHash,
   downloadingProjectArchive,
   downloadingProjectArchiveRef,
   downloadBuildProjectArchive,
@@ -41,6 +35,7 @@ export default function useProjectFileActions({
   isShowingStreamingCode,
   newFilePath,
   onSaveProjectFiles,
+  rebaseDraftBaseFilesHash,
   renamePathInput,
   requestConfirm,
   savingProjectFiles,
@@ -70,6 +65,7 @@ export default function useProjectFileActions({
     expiresAt: number;
   } | null>;
   buildRef: RefObject<Build>;
+  getDraftBaseFilesHash: () => string | null;
   downloadingProjectArchive: boolean;
   downloadingProjectArchiveRef: RefObject<boolean>;
   downloadBuildProjectArchive: (buildId: number) => Promise<any>;
@@ -86,11 +82,14 @@ export default function useProjectFileActions({
     options: {
       targetBuildId?: number | null;
       targetBuildCode?: string | null;
+      draftBaseFilesHash?: string | null;
     }
   ) => Promise<{
     success: boolean;
     error?: string;
+    filesHash?: string | null;
   }>;
+  rebaseDraftBaseFilesHash: (filesHash: string) => void;
   renamePathInput: string;
   requestConfirm: (options: ConfirmModalOptions) => Promise<boolean>;
   savingProjectFiles: boolean;
@@ -114,9 +113,7 @@ export default function useProjectFileActions({
     nextFiles: EditableProjectFile[],
     options?: { markDirty?: boolean }
   ) {
-    const sorted = [...nextFiles].sort((a, b) =>
-      a.path.localeCompare(b.path)
-    );
+    const sorted = [...nextFiles].sort((a, b) => a.path.localeCompare(b.path));
     editableProjectFilesRef.current = sorted;
     setEditableProjectFiles(sorted);
     setHasLocalEditableProjectFileChanges(Boolean(options?.markDirty));
@@ -125,9 +122,7 @@ export default function useProjectFileActions({
     }
     setActiveFilePath((prev) => {
       if (sorted.some((file) => file.path === prev)) return prev;
-      return (
-        getPreferredIndexPath(sorted) || sorted[0]?.path || '/index.html'
-      );
+      return getPreferredIndexPath(sorted) || sorted[0]?.path || '/index.html';
     });
   }
 
@@ -155,10 +150,7 @@ export default function useProjectFileActions({
     requiredScopes: string[],
     targetBuildId: number
   ) {
-    if (
-      !Number.isFinite(Number(targetBuildId)) ||
-      Number(targetBuildId) <= 0
-    ) {
+    if (!Number.isFinite(Number(targetBuildId)) || Number(targetBuildId) <= 0) {
       throw new Error('Build not found');
     }
     const now = Math.floor(Date.now() / 1000);
@@ -214,8 +206,7 @@ export default function useProjectFileActions({
   }
 
   function getProjectFileCaseCollisionError(files: EditableProjectFile[]) {
-    const collisionPaths =
-      listCaseInsensitiveProjectFileCollisionPaths(files);
+    const collisionPaths = listCaseInsensitiveProjectFileCollisionPaths(files);
     if (collisionPaths.length === 0) {
       return null;
     }
@@ -279,10 +270,10 @@ export default function useProjectFileActions({
       setProjectFileError('Cannot delete /index.html');
       return;
     }
-    const currentFiles = readLatestEditableProjectFiles(editableProjectFilesRef);
-    const nextFiles = currentFiles.filter(
-      (file) => file.path !== filePath
+    const currentFiles = readLatestEditableProjectFiles(
+      editableProjectFilesRef
     );
+    const nextFiles = currentFiles.filter((file) => file.path !== filePath);
     if (nextFiles.length === currentFiles.length) return;
     const confirmed = await requestConfirm({
       title: 'Delete project file',
@@ -292,11 +283,17 @@ export default function useProjectFileActions({
       confirmButtonLabel: 'Delete'
     });
     if (!confirmed) return;
-    if (!isOwner || areProjectFileMutationsLocked() || isIndexHtmlPath(filePath)) {
+    if (
+      !isOwner ||
+      areProjectFileMutationsLocked() ||
+      isIndexHtmlPath(filePath)
+    ) {
       return;
     }
     const latestFiles = readLatestEditableProjectFiles(editableProjectFilesRef);
-    const latestNextFiles = latestFiles.filter((file) => file.path !== filePath);
+    const latestNextFiles = latestFiles.filter(
+      (file) => file.path !== filePath
+    );
     if (latestNextFiles.length === latestFiles.length) return;
     setEditableFiles(latestNextFiles, { markDirty: true });
     setProjectFileError('');
@@ -324,13 +321,10 @@ export default function useProjectFileActions({
     }
     const nextFiles = editableProjectFiles
       .filter(
-        (file) =>
-          file.path !== normalizedPath || file.path === activeFile.path
+        (file) => file.path !== normalizedPath || file.path === activeFile.path
       )
       .map((file) =>
-        file.path === activeFile.path
-          ? { ...file, path: normalizedPath }
-          : file
+        file.path === activeFile.path ? { ...file, path: normalizedPath } : file
       );
     setEditableFiles(nextFiles, { markDirty: true });
     setActiveFilePath(normalizedPath);
@@ -378,14 +372,11 @@ export default function useProjectFileActions({
       }),
       content: file.content
     }));
-    const remappedTargetPaths = new Set(
-      remappedFiles.map((file) => file.path)
-    );
+    const remappedTargetPaths = new Set(remappedFiles.map((file) => file.path));
     const conflictPaths = editableProjectFiles
       .filter(
         (file) =>
-          !movedSourcePaths.has(file.path) &&
-          remappedTargetPaths.has(file.path)
+          !movedSourcePaths.has(file.path) && remappedTargetPaths.has(file.path)
       )
       .map((file) => file.path)
       .sort((a, b) => a.localeCompare(b));
@@ -401,12 +392,10 @@ export default function useProjectFileActions({
     for (const file of merged) {
       deduped.set(file.path, file.content);
     }
-    const nextFiles = Array.from(deduped.entries()).map(
-      ([path, content]) => ({
-        path,
-        content
-      })
-    );
+    const nextFiles = Array.from(deduped.entries()).map(([path, content]) => ({
+      path,
+      content
+    }));
 
     setEditableFiles(nextFiles, { markDirty: true });
     setActiveFilePath((prev) =>
@@ -458,12 +447,14 @@ export default function useProjectFileActions({
     files,
     fallbackError,
     targetBuildId,
-    targetBuildCode
+    targetBuildCode,
+    draftBaseFilesHash
   }: {
     files: EditableProjectFile[];
     fallbackError: string;
     targetBuildId?: number | null;
     targetBuildCode?: string | null;
+    draftBaseFilesHash?: string | null;
   }) {
     const collisionError = getProjectFileCaseCollisionError(files);
     if (collisionError) {
@@ -476,13 +467,24 @@ export default function useProjectFileActions({
     }
 
     const savedSignature = serializeEditableProjectFiles(files);
+    const requestBuildId = Number(
+      targetBuildId || buildRef.current?.id || 0
+    );
     setSavingProjectFilesState(true);
     setProjectFileError('');
     setProjectFileSaveError('');
     try {
       const result = await onSaveProjectFiles(files, {
         targetBuildId,
-        targetBuildCode
+        targetBuildCode,
+        // Bind the save to the snapshot this draft buffer derives from so the
+        // server's stale guard judges the draft's real base, not whatever the
+        // client synced most recently. Long-running imports supply the base
+        // captured with their target before any asynchronous work begins.
+        draftBaseFilesHash:
+          draftBaseFilesHash !== undefined
+            ? draftBaseFilesHash
+            : getDraftBaseFilesHash()
       });
       if (!result?.success) {
         const message = result?.error || fallbackError;
@@ -493,11 +495,26 @@ export default function useProjectFileActions({
           error: message
         };
       }
+      const acceptedFilesHash =
+        typeof result.filesHash === 'string' && result.filesHash.trim()
+          ? result.filesHash.trim()
+          : null;
+      if (
+        acceptedFilesHash &&
+        requestBuildId > 0 &&
+        isActiveBuildId(requestBuildId)
+      ) {
+        // This writer response is the new server base for any edits retained
+        // while the captured snapshot was saving. Advance it before unlocking
+        // mutations or starting another export save attempt.
+        rebaseDraftBaseFilesHash(acceptedFilesHash);
+      }
       setProjectFileError('');
       setProjectFileSaveError('');
       return {
         success: true,
-        savedSignature
+        savedSignature,
+        filesHash: acceptedFilesHash
       };
     } finally {
       setSavingProjectFilesState(false);
@@ -536,11 +553,7 @@ export default function useProjectFileActions({
   }
 
   async function handleDownloadProjectArchive() {
-    if (
-      !isOwner ||
-      isShowingStreamingCode ||
-      areProjectFileMutationsLocked()
-    ) {
+    if (!isOwner || isShowingStreamingCode || areProjectFileMutationsLocked()) {
       return;
     }
 

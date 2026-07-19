@@ -418,58 +418,23 @@ export default function useInitSocket({
   }, [userId]);
 
   useEffect(() => {
-    let socketHealthCheckTimer: number | null = null;
-    let currentPongHandler: (() => void) | null = null;
-    let pongReceived = false;
-
-    function checkSocketHealth() {
-      if (!socket.connected) {
-        emitAdminTelemetry({
-          message:
-            'Socket disconnected during health check - attempting reconnect'
-        });
-        try {
-          socket.connect();
-        } catch {}
-        return;
-      }
-
-      if (socketHealthCheckTimer) {
-        clearTimeout(socketHealthCheckTimer);
-        socketHealthCheckTimer = null;
-      }
-      if (currentPongHandler) {
-        socket.off('pong_received', currentPongHandler);
-        currentPongHandler = null;
-      }
-
-      pongReceived = false;
-
-      const handlePong = () => {
-        pongReceived = true;
-      };
-      currentPongHandler = handlePong;
-      socket.once('pong_received', handlePong);
-
-      socket.emit('socket_health_ping');
-
-      socketHealthCheckTimer = window.setTimeout(() => {
-        socket.off('pong_received', handlePong);
-        currentPongHandler = null;
-        if (!pongReceived && socket.connected) {
-          emitAdminTelemetry({
-            message: 'Socket health check failed - forcing reconnect'
-          });
-          socket.disconnect();
-          socket.connect();
-        }
-      }, 3000);
+    function ensureSocketConnected() {
+      // Socket.IO's transport ping/pong owns connection health. An
+      // application-level acknowledgement can be delayed by tab throttling and
+      // must not turn a confirmed connection into a synthetic disconnect.
+      if (socket.connected) return;
+      emitAdminTelemetry({
+        message: 'Socket disconnected on resume - attempting reconnect'
+      });
+      try {
+        socket.connect();
+      } catch {}
     }
 
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
         checkFeedsOutdated();
-        checkSocketHealth();
+        ensureSocketConnected();
       }
     }
 
@@ -478,7 +443,7 @@ export default function useInitSocket({
         socket.emit('presence_ping');
       } catch {}
       void checkFeedsOutdated();
-      checkSocketHealth();
+      ensureSocketConnected();
       try {
         const data = await checkVersion();
         onCheckVersion(data);
@@ -487,11 +452,11 @@ export default function useInitSocket({
 
     const onFocus = () => {
       void checkFeedsOutdated();
-      checkSocketHealth();
+      ensureSocketConnected();
     };
     const onOnline = () => {
       void checkFeedsOutdated();
-      checkSocketHealth();
+      ensureSocketConnected();
     };
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onOnline);
@@ -502,9 +467,6 @@ export default function useInitSocket({
       window.removeEventListener('online', onOnline);
       window.removeEventListener('pageshow', onPageShow);
       document.removeEventListener('visibilitychange', onVisibilityChange);
-      if (socketHealthCheckTimer) {
-        clearTimeout(socketHealthCheckTimer);
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkFeedsOutdated]);

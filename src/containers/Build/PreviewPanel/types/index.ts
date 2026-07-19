@@ -25,6 +25,9 @@ export interface Build {
   currentArtifactVersionId?: number | null;
   isPublic?: boolean | number | null;
   updatedAt?: number | null;
+  // Server-issued hash of the canonical project files this client last
+  // synced; the draft buffer captures it as its save base when reseeded.
+  projectFilesHash?: string | null;
 }
 
 export interface PreviewMountContext {
@@ -64,6 +67,7 @@ export interface PreviewPanelProps {
       artifactVersionId?: number | null;
       primaryArtifactId?: number | null;
       contributionStatus?: 'none' | 'draft' | 'merging' | 'merged';
+      filesHash?: string | null;
     }
   ) => void;
   onSaveProjectFiles: (
@@ -71,8 +75,13 @@ export interface PreviewPanelProps {
     options?: {
       targetBuildId?: number | null;
       targetBuildCode?: string | null;
+      draftBaseFilesHash?: string | null;
     }
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    filesHash?: string | null;
+  }>;
   runtimeOnly?: boolean;
   requireSignedPreviewAccess?: boolean;
   runtimeHostVisible?: boolean;
@@ -89,11 +98,12 @@ export interface PreviewPanelProps {
     files: Array<{ path: string; content?: string }>;
     hasUnsavedChanges: boolean;
     saving: boolean;
+    // Save base bound to the current draft buffer: the server-issued files
+    // hash captured the last time the buffer matched persisted files.
+    draftBaseFilesHash?: string | null;
   }) => void;
   runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
-  onRuntimeObservationChange?: (
-    state: BuildRuntimeObservationState
-  ) => void;
+  onRuntimeObservationChange?: (state: BuildRuntimeObservationState) => void;
   onRuntimeUploadsSync?: (
     payload: PreviewRuntimeUploadsSyncPayload | null
   ) => void;
@@ -122,6 +132,7 @@ export interface PreviewPanelHandle {
     path: string;
     content?: string;
   }>;
+  rebaseProjectFileDraftBase: (filesHash: string) => void;
   captureThumbnail: () => Promise<string>;
   importProjectFilesFromChatUpload: (files: File[]) => Promise<{
     success: boolean;
@@ -200,5 +211,4 @@ export interface ProjectExplorerEntryFile {
 }
 
 export type ProjectExplorerEntry =
-  | ProjectExplorerEntryFolder
-  | ProjectExplorerEntryFile;
+  ProjectExplorerEntryFolder | ProjectExplorerEntryFile;
