@@ -12,7 +12,8 @@ export default function MultipleChoiceQuestion({
   onSelectChoice,
   style,
   conditionPassStatus: conditionPassStatusProp,
-  allowReselect = false
+  allowReselect = false,
+  disabled = false
 }: {
   question: React.ReactNode;
   choices?: string[];
@@ -24,6 +25,7 @@ export default function MultipleChoiceQuestion({
   style?: React.CSSProperties;
   conditionPassStatus?: string;
   allowReselect?: boolean;
+  disabled?: boolean;
 }) {
   const listItems = useMemo(() => {
     if (listItemsProp && Array.isArray(listItemsProp)) return listItemsProp;
@@ -61,6 +63,7 @@ export default function MultipleChoiceQuestion({
           listItems={listItems}
           onSelect={onSelectChoice}
           allowReselect={allowReselect}
+          disabled={disabled}
           style={{ marginTop: '1.5rem', paddingRight: '1rem' }}
         />
       </div>

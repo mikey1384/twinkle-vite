@@ -137,6 +137,7 @@ export default function Questions({
                 choices={question.choices}
                 selectedChoiceIndex={userChoiceObj[question.id]}
                 answerIndex={question.answerIndex}
+                disabled={isGrading}
                 onSelectChoice={(choiceIndex) =>
                   onSetUserChoiceObj((obj: any) => ({
                     ...obj,

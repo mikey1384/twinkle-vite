@@ -94,6 +94,7 @@ export default function Game({
   const [questionsButtonEnabled, setQuestionsButtonEnabled] = useState(false);
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
   const [isGrading, setIsGrading] = useState(false);
+  const isGradingRef = useRef(false);
   const [userChoiceObj, setUserChoiceObj] = useState<Record<number, number>>(
     {}
   );
@@ -206,20 +207,24 @@ export default function Game({
   }
 
   async function handleGrade() {
-    const choiceObj = userChoiceObjRef.current;
-    // The answer key is withheld until submission, so grading is done by the
-    // server. We only send the selected positions; the server returns the
-    // score and the reveal.
-    const answers = questions.map((question) => {
-      const selectedChoiceIndex = choiceObj[question.id];
-      return {
-        questionId: question.id,
-        selectedChoiceIndex:
-          typeof selectedChoiceIndex === 'number' ? selectedChoiceIndex : null
-      };
-    });
+    if (isGradingRef.current) return;
+    isGradingRef.current = true;
+    setIsGrading(true);
     try {
-      setIsGrading(true);
+      const choiceObj = userChoiceObjRef.current;
+      // The answer key is withheld until submission, so grading is done by the
+      // server. We only send the selected positions; the server returns the
+      // score, submitted selections, and reveal.
+      const answers = questions.map((question) => {
+        const selectedChoiceIndex = choiceObj[question.id];
+        return {
+          questionId: question.id,
+          selectedChoiceIndex:
+            typeof selectedChoiceIndex === 'number'
+              ? selectedChoiceIndex
+              : null
+        };
+      });
       const {
         dailyTaskStatus,
         newXp,
@@ -245,19 +250,28 @@ export default function Game({
         });
       }
       // Merge the server's reveal (answerIndex per question) back into the
-      // questions so the graded view can highlight correct/incorrect choices.
+      // questions and restore the exact submitted selections echoed by the
+      // server so the canonical response owns the entire graded display.
       if (Array.isArray(gradedAnswers)) {
         const answerByQuestionId = new Map<number, any>(
-          gradedAnswers.map((answer: any) => [answer.questionId, answer])
+          gradedAnswers.map((answer: any) => [
+            Number(answer.questionId),
+            answer
+          ])
         );
+        const canonicalChoiceObj: Record<number, number> = {};
         onSetQuestions(
           questions.map((question) => {
-            const graded = answerByQuestionId.get(question.id);
+            const graded = answerByQuestionId.get(Number(question.id));
+            if (Number.isInteger(graded?.selectedChoiceIndex)) {
+              canonicalChoiceObj[question.id] = graded.selectedChoiceIndex;
+            }
             return graded
               ? { ...question, answerIndex: graded.answerIndex }
               : question;
           })
         );
+        handleSetUserChoiceObj(canonicalChoiceObj);
       }
       trackEvent('ai_story_complete', {
         is_passed: !!isPassed,
@@ -271,9 +285,11 @@ export default function Game({
       if (isPassed) {
         onOpenSuccessModal(storyId);
       }
-      setIsGrading(false);
     } catch (error) {
       console.error(error);
+    } finally {
+      isGradingRef.current = false;
+      setIsGrading(false);
     }
   }
 

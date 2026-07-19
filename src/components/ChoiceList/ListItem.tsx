@@ -9,7 +9,8 @@ export default function ListItem({
   listItem,
   onSelect,
   index,
-  allowReselect = false
+  allowReselect = false,
+  disabled = false
 }: {
   answerIndex: number;
   conditionPassStatus: string;
@@ -17,12 +18,14 @@ export default function ListItem({
   index: number;
   onSelect: (index: number) => any;
   allowReselect?: boolean;
+  disabled?: boolean;
 }) {
   const isSelected = !!listItem.checked;
   const isEvaluated = !!conditionPassStatus;
   const isCorrect = index === Number(answerIndex);
   const isWrongSelection =
     conditionPassStatus === 'fail' && isSelected && !isCorrect;
+  const isInteractive = (!isEvaluated || allowReselect) && !disabled;
 
   const { borderColor, backgroundColor, indicatorColor, indicatorIcon } =
     useMemo(() => {
@@ -90,7 +93,7 @@ export default function ListItem({
         display: flex;
         align-items: center;
         gap: 1.6rem;
-        cursor: ${!isEvaluated || allowReselect ? 'pointer' : 'default'};
+        cursor: ${isInteractive ? 'pointer' : 'default'};
         transition: transform 0.12s ease, box-shadow 0.18s ease,
           border-color 0.18s ease, background 0.18s ease;
         box-shadow: none;
@@ -102,7 +105,7 @@ export default function ListItem({
                    background: ${Color.rose(0.12)}; 
                  }
                }`
-          : !isEvaluated || allowReselect
+          : isInteractive
           ? `@media (hover: hover) and (pointer: fine) { 
                  &:hover { 
                    border-color: ${Color.logoBlue(0.4)}; 
@@ -119,6 +122,7 @@ export default function ListItem({
       `}
       onClick={handleSelect}
       aria-pressed={isSelected}
+      disabled={disabled}
       type="button"
     >
       <div
@@ -177,6 +181,7 @@ export default function ListItem({
   );
 
   function handleSelect() {
+    if (disabled) return;
     if (!allowReselect && conditionPassStatus && conditionPassStatus !== '') {
       return;
     }
