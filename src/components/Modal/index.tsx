@@ -121,6 +121,51 @@ function stopModalEventPropagation(event: React.SyntheticEvent) {
   event.stopPropagation();
 }
 
+function trapModalFocus(event: KeyboardEvent, modal: HTMLDivElement) {
+  if (event.defaultPrevented) return;
+
+  const focusableElements = Array.from(
+    modal.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+  ).filter(
+    (element) =>
+      element.getAttribute('aria-hidden') !== 'true' &&
+      (element.offsetWidth > 0 || element.offsetHeight > 0)
+  );
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  const activeElement = modal.ownerDocument.activeElement;
+
+  if (!firstElement || !lastElement) {
+    event.preventDefault();
+    modal.focus();
+    return;
+  }
+
+  if (event.shiftKey) {
+    if (
+      activeElement === modal ||
+      activeElement === firstElement ||
+      !modal.contains(activeElement)
+    ) {
+      event.preventDefault();
+      lastElement.focus();
+    }
+    return;
+  }
+
+  if (
+    activeElement === modal ||
+    activeElement === lastElement ||
+    !modal.contains(activeElement)
+  ) {
+    event.preventDefault();
+    firstElement.focus();
+  }
+}
+
 let modalCounter = 0;
 const openModals = new Set<number>();
 
@@ -272,35 +317,50 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     }, [isOpen, preventBodyScroll, currentLevel, portalTarget]);
 
     useEffect(() => {
-      if (!closeOnEscape || !isOpen) return;
+      if (!isOpen) return;
 
-      function handleEscape(event: KeyboardEvent) {
-        if (event.key === 'Escape') {
-          const topModalId = Math.max(...Array.from(openModals));
-          if (modalId === topModalId) {
-            onClose();
-          }
+      const targetDocument = portalTarget?.ownerDocument ?? document;
+      function handleDocumentKeyDown(event: KeyboardEvent) {
+        const topModalId = Math.max(...Array.from(openModals));
+        if (modalId !== topModalId) return;
+        if (event.key === 'Escape' && closeOnEscape) {
+          onClose();
+          return;
+        }
+        if (event.key === 'Tab' && modalRef.current) {
+          trapModalFocus(event, modalRef.current);
         }
       }
 
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }, [closeOnEscape, isOpen, onClose, modalId]);
+      targetDocument.addEventListener('keydown', handleDocumentKeyDown, true);
+      return () =>
+        targetDocument.removeEventListener(
+          'keydown',
+          handleDocumentKeyDown,
+          true
+        );
+    }, [closeOnEscape, isOpen, onClose, modalId, portalTarget]);
 
     useEffect(() => {
-      if (isOpen) {
-        previousActiveElement.current = document.activeElement as HTMLElement;
+      if (!isOpen) return;
 
-        setTimeout(() => {
-          modalRef.current?.focus();
-          if (allowOverflow && backdropRef.current) {
-            backdropRef.current.scrollTop = 0;
-          }
-        }, 50);
-      } else if (previousActiveElement.current) {
-        previousActiveElement.current.focus();
+      const previouslyFocusedElement = document.activeElement as HTMLElement;
+      previousActiveElement.current = previouslyFocusedElement;
+      const focusTimer = window.setTimeout(() => {
+        modalRef.current?.focus();
+        if (allowOverflow && backdropRef.current) {
+          backdropRef.current.scrollTop = 0;
+        }
+      }, 50);
+
+      return () => {
+        window.clearTimeout(focusTimer);
+        if (previousActiveElement.current !== previouslyFocusedElement) return;
+        if (previouslyFocusedElement.isConnected) {
+          previouslyFocusedElement.focus();
+        }
         previousActiveElement.current = null;
-      }
+      };
     }, [isOpen, allowOverflow]);
 
     useEffect(() => {
@@ -318,34 +378,6 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
         return () => clearTimeout(endTimer);
       }
     }, [isOpen, shouldRender, animationDuration]);
-
-    const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-      if (event.key !== 'Tab') return;
-
-      const modal = modalRef.current;
-      if (!modal) return;
-
-      const focusableElements = modal.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[
-        focusableElements.length - 1
-      ] as HTMLElement;
-
-      if (event.shiftKey) {
-        if (document.activeElement === firstElement) {
-          lastElement?.focus();
-          event.preventDefault();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          firstElement?.focus();
-          event.preventDefault();
-        }
-      }
-    }, []);
 
     const handleBackdropClick = useCallback(
       (event: React.MouseEvent) => {
@@ -375,8 +407,12 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
             background-color: rgba(0, 0, 0, 0.5);
             animation: ${!isAnimating ? fadeIn : fadeOut} ${animationDuration}ms
               ease-out;
-            padding: ${deviceIsMobile ? '0' : deviceIsTablet ? '1rem' : '2rem'};
-            ${allowOverflow
+            padding: ${size === 'fullscreen' || deviceIsMobile
+              ? '0'
+              : deviceIsTablet
+                ? '1rem'
+                : '2rem'};
+            ${allowOverflow && size !== 'fullscreen'
               ? `padding-top: ${
                   deviceIsMobile
                     ? '0.75rem'
@@ -397,7 +433,6 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
           onPointerUp={stopModalEventPropagation}
           onTouchEnd={stopModalEventPropagation}
           onTouchStart={stopModalEventPropagation}
-          aria-hidden="true"
         >
           <div
             ref={ref || modalRef}
@@ -431,7 +466,6 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
             `}
             style={style}
             onClick={(e) => e.stopPropagation()}
-            onKeyDown={handleKeyDown}
             tabIndex={-1}
             role="dialog"
             aria-modal="true"

@@ -6,7 +6,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
-import { getSectionFromPathname } from '~/helpers';
+import { getSectionFromPathname, parseChannelPath } from '~/helpers';
 import { setStoredItem } from '~/helpers/userDataHelpers';
 
 import useAICardSocket from './useAICardSocket';
@@ -60,11 +60,23 @@ export default function useAPISocket({
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
   );
+  const routedChannelId =
+    usingChat && currentPathId && !Number.isNaN(Number(currentPathId))
+      ? parseChannelPath(currentPathId)
+      : null;
+  const activeChatChannelId =
+    routedChannelId === Number(selectedChannelId || 0) ? routedChannelId : null;
 
   const usingChatRef = useRef(usingChat);
+  const activeChatChannelIdRef = useRef<number | null>(activeChatChannelId);
+  const chatBusyRef = useRef(!usingChat || isAIChat);
   const prevProfilePicUrl = useRef(profilePicUrl);
   const prevUserIdRef = useRef(userId);
-  const currentPathIdRef = useRef(Number(currentPathId));
+  // Zero/Ciel chats are still active chat views for unread reconciliation,
+  // even though presence intentionally reports them as busy.
+  usingChatRef.current = usingChat;
+  activeChatChannelIdRef.current = activeChatChannelId;
+  chatBusyRef.current = !usingChat || isAIChat;
 
   useEffect(() => {
     onSetSelectedSubchannelId(subchannelId);
@@ -90,14 +102,6 @@ export default function useAPISocket({
   }, [userId]);
 
   useEffect(() => {
-    currentPathIdRef.current = Number(currentPathId);
-  }, [currentPathId]);
-
-  useEffect(() => {
-    usingChatRef.current = usingChat && !isAIChat;
-  }, [isAIChat, usingChat]);
-
-  useEffect(() => {
     if (userId && profilePicUrl !== prevProfilePicUrl.current) {
       setStoredItem('profilePicUrl', profilePicUrl);
       socket.emit('change_profile_pic', profilePicUrl);
@@ -106,6 +110,7 @@ export default function useAPISocket({
   }, [profilePicUrl, userId, username]);
 
   useInitSocket({
+    chatBusyRef,
     chatType,
     currentPathId,
     onInit,
@@ -114,13 +119,14 @@ export default function useAPISocket({
     usingChatRef
   });
   useAICardSocket();
-  useAISocket({ selectedChannelId, aiCallChannelId, usingChatRef });
+  useAISocket({ activeChatChannelIdRef, aiCallChannelId, usingChatRef });
   useBuildSocket();
   useCallSocket({
     channelsObj,
     selectedChannelId
   });
   useChatSocket({
+    activeChatChannelIdRef,
     channelsObj,
     onUpdateMyXp: handleUpdateMyXp,
     selectedChannelId,

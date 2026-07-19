@@ -38,8 +38,8 @@ test('primary nav reordering and label controls are disabled', () => {
   const tabStripSource = readSource(
     'src/containers/App/Header/MainNavs/TabStrip.tsx'
   );
-  const mobileSwitcherSource = readSource(
-    'src/containers/App/Header/MainNavs/MobileTabSwitcher.tsx'
+  const switcherSource = readSource(
+    'src/containers/App/Header/MainNavs/TabSwitcher.tsx'
   );
 
   assert.match(mainNavSource, /if \(kind !== 'pinned'\) return;/);
@@ -56,13 +56,44 @@ test('primary nav reordering and label controls are disabled', () => {
     /onContextMenu=\{\s*zone === 'default'\s*\? undefined/m
   );
   assert.match(
-    mobileSwitcherSource,
+    switcherSource,
     /section\.kind === 'pinned' && section\.items\.length > 1/
   );
   assert.doesNotMatch(mainNavSource, /kind: 'default'/);
   assert.doesNotMatch(
-    mobileSwitcherSource,
+    switcherSource,
     /SwitcherKind = [^;]*'default'/
+  );
+});
+
+test('the tab switcher uses shared modal keyboard isolation', () => {
+  const switcherSource = readSource(
+    'src/containers/App/Header/MainNavs/TabSwitcher.tsx'
+  );
+  const modalSource = readSource('src/components/Modal/index.tsx');
+
+  assert.match(switcherSource, /import Modal from '~\/components\/Modal';/);
+  assert.match(
+    switcherSource,
+    /<Modal[\s\S]*?isOpen[\s\S]*?onClose=\{onClose\}[\s\S]*?aria-label="Your tabs"/
+  );
+  assert.doesNotMatch(switcherSource, /role="dialog"/);
+  assert.match(
+    modalSource,
+    /return \(\) => \{[\s\S]*?clearTimeout\(focusTimer\)[\s\S]*?previouslyFocusedElement\.focus\(\)/
+  );
+  assert.match(
+    modalSource,
+    /activeElement === modal[\s\S]*?lastElement\.focus\(\)[\s\S]*?activeElement === modal[\s\S]*?firstElement\.focus\(\)/
+  );
+  assert.match(
+    modalSource,
+    /function handleDocumentKeyDown[\s\S]*?modalId !== topModalId[\s\S]*?event\.key === 'Tab'[\s\S]*?trapModalFocus\(event, modalRef\.current\)[\s\S]*?addEventListener\('keydown', handleDocumentKeyDown, true\)/
+  );
+  assert.doesNotMatch(modalSource, /onKeyDown=\{handleKeyDown\}/);
+  assert.match(
+    modalSource,
+    /padding: \$\{size === 'fullscreen' \|\| deviceIsMobile[\s\S]*?allowOverflow && size !== 'fullscreen'/
   );
 });
 

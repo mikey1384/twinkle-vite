@@ -7,11 +7,11 @@ import AlertModal from '~/components/Modals/AlertModal';
 import useTabletOrientation from '~/helpers/hooks/useTabletOrientation';
 import { matchPath } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
-import MobileTabSwitcher, {
+import TabSwitcher, {
   SwitcherSection,
   SwitcherItem,
   SwitcherKind
-} from './MobileTabSwitcher';
+} from './TabSwitcher';
 import MobileLongPressNav from './MobileLongPressNav';
 import { css } from '@emotion/css';
 import {
@@ -296,7 +296,15 @@ export default function MainNavs({
     loadMinimizedNavTabKeys(loadCustomNavTabs(userId), userId)
   );
   const [pinLimitAlertShown, setPinLimitAlertShown] = useState(false);
-  const [tabSwitcherShown, setTabSwitcherShown] = useState(false);
+  // which surface opened the tab switcher. The two surfaces' dynamic content
+  // slots have different sources (desktop strip: desktopContentTab, which can
+  // retain an older uncovered page; mobile bar: the shared contentNav/
+  // contentPath), and the switcher must mirror the strip/bar it was opened
+  // from — otherwise a dynamic tab visible in the desktop strip could be
+  // missing from the manager.
+  const [tabSwitcherShownFrom, setTabSwitcherShownFrom] = useState<
+    'mobile' | 'desktop' | null
+  >(null);
   // long-press popup on a bottom-nav icon. Dynamic tabs (content/profile) offer
   // pin/add; an already-added tab offers pin + remove (mobile parity with the
   // desktop tab strip's right-click menu).
@@ -1590,10 +1598,11 @@ export default function MainNavs({
     if (!mobileExtraTabKeys.includes(key)) mobileExtraTabKeys.push(key);
   }
   // The tab switcher only lists user-managed tabs. Primary tabs stay visible in
-  // the bottom nav but are omitted here because they cannot be modified. The
+  // the nav but are omitted here because they cannot be modified. The
   // dynamic (last-viewed) profile/content tabs get their own section with
   // explicit Pin/Add/Close actions — a plainly visible version of the
-  // long-press popup's capabilities, which most users never discover.
+  // long-press popup's (mobile) and right-click menu's (desktop) capabilities,
+  // which most users never discover.
   const switcherSections: SwitcherSection[] = useMemo(() => {
     const pinnedItems = visibleCustomTabs
       .filter((tab) => tab.pinned)
@@ -1633,7 +1642,35 @@ export default function MainNavs({
         pinned: false
       });
     }
-    if (mobileContentTabShown && contentPath) {
+    // The content slot mirrors the surface the switcher was opened from. The
+    // desktop strip's slot (desktopContentTab) can retain an older uncovered
+    // page while the current page is captured; the mobile bar always tracks
+    // the current content page. Building from the wrong source would leave a
+    // dynamic tab visible in the desktop strip unmanageable here. The pin/
+    // add/close handlers already operate on desktopContentTab, matching this
+    // desktop item.
+    if (tabSwitcherShownFrom === 'desktop') {
+      if (
+        desktopContentTab &&
+        (desktopContentTab.nav !== 'management' || managementLevel > 0)
+      ) {
+        const to = `/${desktopContentTab.path}`;
+        // pageTitle belongs to the page being viewed; only use it when the
+        // dynamic tab actually points at the current page
+        const isCurrentPage = to === `${pathname}${search || ''}`;
+        dynamicItems.push({
+          key: 'content',
+          to,
+          icon: iconForContentNav(desktopContentTab.nav),
+          label: (
+            (isCurrentPage && pageTitle) ||
+            contentLabels[desktopContentTab.nav] ||
+            'Page'
+          ).trim(),
+          pinned: false
+        });
+      }
+    } else if (mobileContentTabShown && contentPath) {
       const to = `/${contentPath}`;
       // pageTitle belongs to the page being viewed; only use it when the
       // dynamic tab actually points at the current page
@@ -1673,9 +1710,12 @@ export default function MainNavs({
     contentPath,
     contentNav,
     contentIconType,
+    desktopContentTab,
+    managementLevel,
     pageTitle,
     pathname,
-    search
+    search,
+    tabSwitcherShownFrom
   ]);
 
   return (
@@ -1757,7 +1797,7 @@ export default function MainNavs({
         <button
           type="button"
           aria-label="Your tabs"
-          onClick={() => setTabSwitcherShown(true)}
+          onClick={() => setTabSwitcherShownFrom('mobile')}
           className={`mobile ${css`
             align-items: center;
             justify-content: center;
@@ -1802,6 +1842,7 @@ export default function MainNavs({
         onMenuOpen={handleMarkTabMenuDiscovered}
         onCloseTab={handleCloseUnpinnedTab}
         onToggleAudioMuted={handleToggleBuildAppMuted}
+        onOpenTabManager={() => setTabSwitcherShownFrom('desktop')}
         isTabletPortrait={isTabletPortrait}
       />
       {userId && (
@@ -1834,8 +1875,9 @@ export default function MainNavs({
           onHide={() => setPinLimitAlertShown(false)}
         />
       )}
-      {tabSwitcherShown && (
-        <MobileTabSwitcher
+      {tabSwitcherShownFrom && (
+        <TabSwitcher
+          openedFrom={tabSwitcherShownFrom}
           sections={switcherSections}
           onReorder={handleReorderSection}
           onTogglePin={handleToggleTabPinned}
@@ -1843,8 +1885,8 @@ export default function MainNavs({
           onPinDynamic={handlePinDynamicSwitcherTab}
           onAddDynamic={handleAddDynamicSwitcherTab}
           onDismissDynamic={handleDismissDynamicSwitcherTab}
-          onNavigate={() => setTabSwitcherShown(false)}
-          onClose={() => setTabSwitcherShown(false)}
+          onNavigate={() => setTabSwitcherShownFrom(null)}
+          onClose={() => setTabSwitcherShownFrom(null)}
         />
       )}
       {longPressMenu && (

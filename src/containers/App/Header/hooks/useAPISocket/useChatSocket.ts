@@ -42,12 +42,14 @@ interface LegacyChatReactionEvent {
 }
 
 export default function useChatSocket({
+  activeChatChannelIdRef,
   channelsObj,
   onUpdateMyXp,
   selectedChannelId,
   subchannelId,
   usingChatRef
 }: {
+  activeChatChannelIdRef: React.RefObject<number | null>;
   channelsObj: Record<number, any>;
   onUpdateMyXp: () => void;
   selectedChannelId: number;
@@ -436,8 +438,7 @@ export default function useChatSocket({
 
       const mainScopeIsVisible =
         pageVisibleRef.current &&
-        usingChatRef.current &&
-        selectedChannelIdRef.current === normalizedChannelId &&
+        activeChatChannelIdRef.current === normalizedChannelId &&
         Number(subchannelIdRef.current || 0) === 0;
       if (mainScopeIsVisible) {
         // Chat/Main owns the canonical last-read write for visible Main.
@@ -556,10 +557,10 @@ export default function useChatSocket({
       }
 
       const currentPageVisible = pageVisibleRef.current;
-      const currentSelectedChannelId = selectedChannelIdRef.current;
+      const currentActiveChatChannelId = activeChatChannelIdRef.current;
       const currentSubchannelId = subchannelIdRef.current;
       const reactionIsForCurrentChannel =
-        channelId === currentSelectedChannelId;
+        channelId === currentActiveChatChannelId;
       const reactionIsForCurrentSubchannel =
         Number(subchannelId || 0) === Number(currentSubchannelId || 0);
 
@@ -856,7 +857,7 @@ export default function useChatSocket({
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = Number(subchannelIdRef.current || 0);
       const isForCurrentChannel =
-        Number(channelId) === Number(selectedChannelIdRef.current);
+        Number(channelId) === activeChatChannelIdRef.current;
       if (isForCurrentChannel) {
         if (
           currentPageVisible &&
@@ -922,7 +923,7 @@ export default function useChatSocket({
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = subchannelIdRef.current;
       const messageIsForCurrentChannel =
-        Number(message.channelId) === Number(selectedChannelIdRef.current);
+        Number(message.channelId) === activeChatChannelIdRef.current;
       // Transfer notices are canonical unread activity for both parties, even
       // though the initiating user's ID is stored as the message author.
       const isMyMessage =
@@ -936,7 +937,10 @@ export default function useChatSocket({
         void refreshUnansweredChessShortcut();
       }
       if (!isMyMessage && document.hidden) {
-        notifyMessageReceivedWhileAway({ message, channel });
+        notifyMessageReceivedWhileAway({
+          message,
+          channel: activityChannel
+        });
       }
       if (messageIsForCurrentChannel) {
         if (currentPageVisible && usingChatRef.current) {
@@ -959,10 +963,10 @@ export default function useChatSocket({
           currentSubchannelId
         });
       }
-      if (!messageIsForCurrentChannel && channel) {
+      if (!messageIsForCurrentChannel && activityChannel) {
         onReceiveMessageOnDifferentChannel({
           message,
-          channel,
+          channel: activityChannel,
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
           isMyMessage,
@@ -1096,7 +1100,7 @@ export default function useChatSocket({
       markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const messageIsForCurrentChannel =
-        message.channelId === selectedChannelIdRef.current;
+        message.channelId === activeChatChannelIdRef.current;
       const senderIsUser = message.userId === userId;
 
       if (senderIsUser) return;
@@ -1201,7 +1205,8 @@ export default function useChatSocket({
         if (!currentlySelectedChannel && !currentChannel.id) return;
         const activeSubchannelId = Number(subchannelIdRef.current || 0);
         const activeVisibleChat =
-          usingChatRef.current && pageVisibleRef.current;
+          normalizedChannelId === activeChatChannelIdRef.current &&
+          pageVisibleRef.current;
         // Channel-level topic refreshes must not enter the root channel while the
         // user is away or in a subchannel; ENTER_CHANNEL would reset unrelated local state.
         const shouldEnterSelectedChannel =

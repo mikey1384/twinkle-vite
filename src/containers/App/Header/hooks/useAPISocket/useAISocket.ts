@@ -20,11 +20,11 @@ import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
 
 export default function useAISocket({
-  selectedChannelId,
+  activeChatChannelIdRef,
   usingChatRef,
   aiCallChannelId
 }: {
-  selectedChannelId: number;
+  activeChatChannelIdRef: React.RefObject<number | null>;
   usingChatRef: React.RefObject<boolean>;
   aiCallChannelId: number;
 }) {
@@ -46,7 +46,6 @@ export default function useAISocket({
     (v) => v.actions.onUpdateAIGeneratedFile
   );
 
-  const selectedChannelIdRef = useRef(selectedChannelId);
   const channelsObjRef = useRef(channelsObj);
   const pendingAIReplyRef = useRef<
     Record<
@@ -59,7 +58,6 @@ export default function useAISocket({
   >({});
   const pageVisibleRef = useRef(pageVisible);
   const aiCallChannelIdRef = useRef(aiCallChannelId);
-  selectedChannelIdRef.current = selectedChannelId;
   channelsObjRef.current = channelsObj;
   pageVisibleRef.current = pageVisible;
   aiCallChannelIdRef.current = aiCallChannelId;
@@ -475,21 +473,22 @@ export default function useAISocket({
         pathId: computedPathId,
         topicId: Number(message.subjectId || message.targetSubject?.id) || 0
       };
-      const messageIsForCurrentChannel = channelId === selectedChannelIdRef.current;
+      const messageIsForActiveChannel =
+        channelId === activeChatChannelIdRef.current;
       const appliedMessage = {
         ...message,
         channelId,
         profilePicUrl:
           message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
       };
-      if (messageIsForCurrentChannel) {
-        if (usingChatRef.current) {
+      if (messageIsForActiveChannel) {
+        if (currentPageVisible) {
           void reconcileChannelLastRead(channelId);
         }
         onReceiveMessage({
           message: appliedMessage,
           pageVisible: currentPageVisible,
-          usingChat: usingChatRef.current
+          usingChat: true
         });
       } else {
         const prevChannelObj = currentChannelsObj[channelId];

@@ -78,6 +78,7 @@ function emitSocketBind({
 }
 
 export default function useInitSocket({
+  chatBusyRef,
   chatType,
   currentPathId,
   onInit,
@@ -85,6 +86,7 @@ export default function useInitSocket({
   subchannelPath,
   usingChatRef
 }: {
+  chatBusyRef: React.RefObject<boolean>;
   chatType: string;
   currentPathId: string | number;
   onInit: () => void;
@@ -1275,7 +1277,7 @@ export default function useInitSocket({
         clearSocketBindRetryTimer();
         dispatchSocketAuthReady(bindingUserId);
         socket.emit('enter_my_notification_channel', bindingUserId);
-        socket.emit('change_busy_status', !usingChatRef.current);
+        socket.emit('change_busy_status', chatBusyRef.current);
         userActionAckedRef.current = false;
         userActionAttemptsRef.current = 0;
         handleStartUserActionCapture();

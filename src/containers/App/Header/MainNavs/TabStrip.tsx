@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
-import Nav from './Nav';
+import Nav, { navTargetIsActive } from './Nav';
 import Icon from '~/components/Icon';
 import DropdownList from '~/components/DropdownList';
 import { css } from '@emotion/css';
@@ -141,6 +141,51 @@ const scrollButtonClass = css`
       cursor: default;
       background: transparent;
       color: ${Color.gray()};
+    }
+  }
+`;
+
+// The strip-end Tabs button dresses like the default (minimized builtin)
+// tabs: transparent tab shape on the tab baseline, icon-only, wellGray hover.
+// It joins the row's separator grammar too — a hairline on its left when a
+// tab precedes it, hidden when that neighbor is the ACTIVE tab or the button
+// itself is hovered (the same rules tabItemClass applies between tabs; the
+// button lives outside the tab containers, so TabStrip computes the neighbor
+// and passes data-divider instead of relying on the `& + &` sibling rule).
+const tabManagerButtonClass = css`
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  &[data-divider='true']::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0.8rem;
+    width: 1px;
+    height: 1.8rem;
+    background: ${Color.borderGray()};
+  }
+  &:hover::before {
+    display: none;
+  }
+  button {
+    height: 3.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 10px 10px 0 0;
+    background: transparent;
+    color: ${Color.gray()};
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    &:hover {
+      background: ${Color.wellGray()};
+      color: ${Color.darkerGray()};
     }
   }
 `;
@@ -498,6 +543,7 @@ export default function TabStrip({
   onMenuOpen,
   onCloseTab,
   onToggleAudioMuted,
+  onOpenTabManager,
   isTabletPortrait
 }: {
   pinnedTabs: NavTabDescriptor[];
@@ -509,8 +555,10 @@ export default function TabStrip({
   onMenuOpen?: () => void;
   onCloseTab?: (key: string) => void;
   onToggleAudioMuted?: (buildAppId: string) => void;
+  onOpenTabManager?: () => void;
   isTabletPortrait?: boolean;
 }) {
+  const { pathname, search } = useLocation();
   const pinnedZoneRef = useRef<HTMLDivElement | null>(null);
   const defaultZoneRef = useRef<HTMLDivElement | null>(null);
   const dragZoneRef = useRef<HTMLDivElement | null>(null);
@@ -602,6 +650,25 @@ export default function TabStrip({
     .map((tab) => tab.key)
     .join(',')}|${tabs.map((tab) => tab.key).join(',')}`;
 
+  // the Tabs button's left-hand neighbor in visual order: the trailing dock's
+  // last chip when the dock is shown, else the last extra, else the last
+  // default. Its divider follows the row's separator rules — shown when a tab
+  // precedes it, hidden when that neighbor is the active tab.
+  const managerNeighborTab =
+    collapsedTrailingCount > 0 || tabs.length === 0
+      ? defaultTabs[defaultTabs.length - 1]
+      : tabs[tabs.length - 1];
+  const managerDividerShown = Boolean(
+    managerNeighborTab &&
+      !navTargetIsActive({
+        exactActive: managerNeighborTab.exactActive,
+        pathname,
+        profileUsername: managerNeighborTab.profileUsername,
+        search,
+        to: managerNeighborTab.to
+      })
+  );
+
   return (
     <div data-nav-tab-strip="true" className={`desktop ${stripClass}`}>
       {/* pinned area: its OWN scroll, always visible, up to 5 icon tabs */}
@@ -670,6 +737,26 @@ export default function TabStrip({
           {defaultTabs
             .slice(Math.max(0, defaultTabs.length - collapsedTrailingCount))
             .map((tab) => renderDockChip(tab))}
+        </div>
+      )}
+      {/* the strip-end door into tab management: the same switcher the mobile
+          Tabs button opens. Right-click/long-press stay the shortcuts; this
+          visible button exists for everyone who never discovers them. Chrome
+          parks its tab-search affordance in this spot for the same reason. */}
+      {onOpenTabManager && (
+        <div
+          className={tabManagerButtonClass}
+          data-tab-manager-button="true"
+          data-divider={managerDividerShown ? 'true' : 'false'}
+        >
+          <button
+            type="button"
+            aria-label="Your tabs"
+            title="Your tabs"
+            onClick={onOpenTabManager}
+          >
+            <Icon icon="clone" />
+          </button>
         </div>
       )}
       {hintAnchor &&

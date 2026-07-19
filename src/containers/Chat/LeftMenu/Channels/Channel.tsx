@@ -383,8 +383,8 @@ export default function Channel({
   ]);
 
   const badgeShown = useMemo(() => {
-    return channelId !== selectedChannelId && totalNumUnreads > 0;
-  }, [channelId, totalNumUnreads, selectedChannelId]);
+    return !selected && totalNumUnreads > 0;
+  }, [selected, totalNumUnreads]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">

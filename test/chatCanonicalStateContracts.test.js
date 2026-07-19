@@ -246,14 +246,49 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   );
   assert.match(
     aiSocketSource,
-    /cancelledMessageIds[\s\S]*?markChatUnreadActivity\(\);[\s\S]*?if \(messageIsForCurrentChannel\)/m
+    /cancelledMessageIds[\s\S]*?markChatUnreadActivity\(\);[\s\S]*?if \(messageIsForActiveChannel\)/m
   );
+});
+
+test('AI chat visibility is independent from presence busy state', () => {
+  const socketManagerSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/index.ts'
+  );
+  const initSocketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useInitSocket.ts'
+  );
+  const aiSocketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useAISocket.ts'
+  );
+
+  assert.match(socketManagerSource, /usingChatRef\.current = usingChat;/);
+  assert.match(
+    socketManagerSource,
+    /chatBusyRef\.current = !usingChat \|\| isAIChat;/
+  );
+  assert.doesNotMatch(socketManagerSource, /usingChat && !isAIChat/);
+  assert.match(
+    initSocketSource,
+    /socket\.emit\('change_busy_status', chatBusyRef\.current\)/
+  );
+  assert.match(
+    socketManagerSource,
+    /const routedChannelId =[\s\S]*?parseChannelPath\(currentPathId\)[\s\S]*?routedChannelId === Number\(selectedChannelId \|\| 0\)/
+  );
+  assert.match(
+    aiSocketSource,
+    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?if \(messageIsForActiveChannel\) \{\s*if \(currentPageVisible\) \{\s*void reconcileChannelLastRead\(channelId\)/
+  );
+  assert.doesNotMatch(aiSocketSource, /selectedChannelIdRef/);
 });
 
 test('navigation and live activity reconcile only the visible chat scope', () => {
   const mainSource = readSource('src/containers/Chat/Main.tsx');
   const socketSource = readSource(
     'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+  const channelSource = readSource(
+    'src/containers/Chat/LeftMenu/Channels/Channel.tsx'
   );
   const reducerSource = readSource('src/contexts/Chat/reducer.ts');
 
@@ -262,6 +297,22 @@ test('navigation and live activity reconcile only the visible chat scope', () =>
     /if \(subchannelPath\) \{[\s\S]*?reconcileSubchannelLastRead[\s\S]*?return;[\s\S]*?if \(selectedSubchannelId\) return;[\s\S]*?reconcileChannelLastRead\(selectedChannelId\)/
   );
   assert.match(mainSource, /routedChannelId !== selectedChannelId\) return/);
+  assert.match(
+    socketSource,
+    /messageIsForCurrentChannel =[\s\S]*?Number\(message\.channelId\) === activeChatChannelIdRef\.current/
+  );
+  assert.match(
+    socketSource,
+    /const activityChannel =[\s\S]*?channelsObjRef\.current\?\.\[message\.channelId\] \|\| channel;[\s\S]*?if \(!messageIsForCurrentChannel && activityChannel\) \{[\s\S]*?channel: activityChannel/
+  );
+  assert.match(
+    socketSource,
+    /reactionIsForCurrentChannel =[\s\S]*?channelId === currentActiveChatChannelId/
+  );
+  assert.match(
+    channelSource,
+    /const badgeShown = useMemo\(\(\) => \{\s*return !selected && totalNumUnreads > 0;/
+  );
   assert.match(
     socketSource,
     /normalizedSubchannelId === 0[\s\S]*?shouldUpdateSubchannel[\s\S]*?normalizedSubchannelId > 0/
@@ -304,10 +355,6 @@ test('sidebar and member-leave paths consume canonical scoped unread state', () 
     'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
   );
 
-  assert.match(
-    channelSource,
-    /channelId !== selectedChannelId && totalNumUnreads > 0/
-  );
   assert.doesNotMatch(channelSource, /lastUnreadSenderId|lastSenderId/);
   assert.match(
     subchannelSource,

@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import Modal from '~/components/Modal';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, desktopMinWidth } from '~/constants/css';
 
 export interface SwitcherItem {
   key: string;
@@ -27,17 +28,19 @@ const SHIFT_MS = 200;
 const SETTLE_MS = 190;
 const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 
-// header/footer chrome mirrors `components/Modal`: no dividers, white header,
-// wellGray footer bar. This sheet is fullscreen rather than a modal, so the
-// footer also absorbs the bottom safe-area inset.
-const overlayClass = css`
-  position: fixed;
-  inset: 0;
-  z-index: 100000;
-  background: #fff;
+const panelClass = css`
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  background: #fff;
   padding-top: env(safe-area-inset-top, 0px);
+  @media (min-width: ${desktopMinWidth}) {
+    max-height: min(72rem, calc(100vh - 4rem));
+    padding-top: 0;
+    overflow: hidden;
+  }
 `;
 
 const headerClass = css`
@@ -122,7 +125,9 @@ const rowClass = css`
     z-index: 2;
     border-color: ${Color.gray()};
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-    transition: box-shadow 140ms ease, border-color 140ms ease;
+    transition:
+      box-shadow 140ms ease,
+      border-color 140ms ease;
   }
   .handle {
     flex-shrink: 0;
@@ -169,7 +174,8 @@ const rowClass = css`
     font-style: italic;
   }
   /* every row uses the same labeled stacked actions — they exist to surface
-     the long-press menu's capabilities to users who never discover it */
+     the long-press/right-click menus' capabilities to users who never
+     discover them */
   .action {
     flex-shrink: 0;
     width: 5.6rem;
@@ -197,7 +203,8 @@ const rowClass = css`
   }
 `;
 
-export default function MobileTabSwitcher({
+export default function TabSwitcher({
+  openedFrom,
   sections,
   onReorder,
   onTogglePin,
@@ -208,6 +215,7 @@ export default function MobileTabSwitcher({
   onNavigate,
   onClose
 }: {
+  openedFrom: 'mobile' | 'desktop';
   sections: SwitcherSection[];
   onReorder: (kind: SwitcherKind, fromIndex: number, toIndex: number) => void;
   onTogglePin: (key: string) => void;
@@ -240,125 +248,147 @@ export default function MobileTabSwitcher({
   }, []);
 
   return (
-    <div className={overlayClass} role="dialog" aria-label="Your tabs">
-      <div className={headerClass}>
-        <span className="title">Tabs</span>
-        <button
-          type="button"
-          className="close"
-          onClick={onClose}
-          aria-label="Close tabs"
-        >
-          <Icon icon="times" />
-        </button>
-      </div>
-      <div className={bodyClass}>
-        {sections.map((section) => (
-          <div key={section.kind}>
-            <div className={sectionTitleClass}>{section.title}</div>
-            {section.items.length === 0 ? (
-              <div className={emptySectionClass}>None yet</div>
-            ) : (
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {section.items.map((item, index) => (
-                  <li
-                    key={item.key}
-                    className={`${rowClass}${
-                      draggingKey === item.key ? ' dragging' : ''
-                    }`}
-                  >
-                    {section.kind === 'pinned' && section.items.length > 1 ? (
-                      <div
-                        className="handle"
-                        aria-label="Drag to reorder"
-                        onPointerDown={(e) =>
-                          handleDragStart(e, section, index)
-                        }
-                      >
-                        <Icon icon="grip-lines" />
-                      </div>
-                    ) : null}
-                    <Link className="main" to={item.to} onClick={onNavigate}>
-                      <Icon className="tab-icon" icon={item.icon || 'clone'} />
-                      <span
-                        className={`label${
-                          section.kind === 'dynamic' ? ' dynamic' : ''
-                        }`}
-                      >
-                        {item.label}
-                      </span>
-                    </Link>
-                    {section.kind === 'dynamic' ? (
-                      <>
-                        <button
-                          type="button"
-                          className="action pin"
-                          onClick={() => onPinDynamic(item.key)}
-                          aria-label="Pin this page"
+    <Modal
+      modalKey="TabSwitcher"
+      isOpen
+      onClose={onClose}
+      size={openedFrom === 'mobile' ? 'fullscreen' : 'lg'}
+      hasHeader={false}
+      showCloseButton={false}
+      bodyPadding={0}
+      aria-label="Your tabs"
+      style={
+        openedFrom === 'desktop'
+          ? {
+              width: 'min(52rem, calc(100vw - 4rem))',
+              maxWidth: '52rem'
+            }
+          : undefined
+      }
+    >
+      <div className={panelClass}>
+        <div className={headerClass}>
+          <span className="title">Tabs</span>
+          <button
+            type="button"
+            className="close"
+            onClick={onClose}
+            aria-label="Close tabs"
+          >
+            <Icon icon="times" />
+          </button>
+        </div>
+        <div className={bodyClass}>
+          {sections.map((section) => (
+            <div key={section.kind}>
+              <div className={sectionTitleClass}>{section.title}</div>
+              {section.items.length === 0 ? (
+                <div className={emptySectionClass}>None yet</div>
+              ) : (
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                  {section.items.map((item, index) => (
+                    <li
+                      key={item.key}
+                      className={`${rowClass}${
+                        draggingKey === item.key ? ' dragging' : ''
+                      }`}
+                    >
+                      {section.kind === 'pinned' && section.items.length > 1 ? (
+                        <div
+                          className="handle"
+                          aria-label="Drag to reorder"
+                          onPointerDown={(e) =>
+                            handleDragStart(e, section, index)
+                          }
                         >
-                          {/* outline = pin action; the filled thumbtack is
+                          <Icon icon="grip-lines" />
+                        </div>
+                      ) : null}
+                      <Link className="main" to={item.to} onClick={onNavigate}>
+                        <Icon
+                          className="tab-icon"
+                          icon={item.icon || 'clone'}
+                        />
+                        <span
+                          className={`label${
+                            section.kind === 'dynamic' ? ' dynamic' : ''
+                          }`}
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+                      {section.kind === 'dynamic' ? (
+                        <>
+                          <button
+                            type="button"
+                            className="action pin"
+                            onClick={() => onPinDynamic(item.key)}
+                            aria-label="Pin this page"
+                          >
+                            {/* outline = pin action; the filled thumbtack is
                               reserved for the already-pinned state */}
-                          <Icon icon={['far', 'thumbtack']} />
-                          <span>Pin</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="action"
-                          onClick={() => onAddDynamic(item.key)}
-                          aria-label="Add as tab"
-                        >
-                          <Icon icon="plus" />
-                          <span>Add</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="action danger"
-                          onClick={() => onDismissDynamic(item.key)}
-                          aria-label="Close tab"
-                        >
-                          <Icon icon="trash-alt" />
-                          <span>Close</span>
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="action pin"
-                          onClick={() => onTogglePin(item.key)}
-                          aria-label={item.pinned ? 'Unpin tab' : 'Pin tab'}
-                        >
-                          <Icon
-                            icon={
-                              item.pinned ? 'thumbtack' : ['far', 'thumbtack']
-                            }
-                          />
-                          <span>{item.pinned ? 'Unpin' : 'Pin'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="action danger"
-                          onClick={() => onRemove(item.key)}
-                          aria-label="Close tab"
-                        >
-                          <Icon icon="trash-alt" />
-                          <span>Close</span>
-                        </button>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
+                            <Icon icon={['far', 'thumbtack']} />
+                            <span>Pin</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="action"
+                            onClick={() => onAddDynamic(item.key)}
+                            aria-label="Add as tab"
+                          >
+                            <Icon icon="plus" />
+                            <span>Add</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="action danger"
+                            onClick={() => onDismissDynamic(item.key)}
+                            aria-label="Close tab"
+                          >
+                            <Icon icon="trash-alt" />
+                            <span>Close</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="action pin"
+                            onClick={() => onTogglePin(item.key)}
+                            aria-label={item.pinned ? 'Unpin tab' : 'Pin tab'}
+                          >
+                            <Icon
+                              icon={
+                                item.pinned ? 'thumbtack' : ['far', 'thumbtack']
+                              }
+                            />
+                            <span>{item.pinned ? 'Unpin' : 'Pin'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="action danger"
+                            onClick={() => onRemove(item.key)}
+                            aria-label="Close tab"
+                          >
+                            <Icon icon="trash-alt" />
+                            <span>Close</span>
+                          </button>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className={footerClass}>
+          <Button variant="ghost" onClick={onClose} size="lg">
+            Close
+          </Button>
+        </div>
       </div>
-      <div className={footerClass}>
-        <Button variant="ghost" onClick={onClose} size="lg">
-          Close
-        </Button>
-      </div>
-    </div>
+    </Modal>
   );
 
   function handleDragStart(
@@ -400,13 +430,17 @@ export default function MobileTabSwitcher({
     };
     setDraggingKey(section.items[index].key);
 
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
+    // capture phase, not bubble: the Modal backdrop stopPropagation()s
+    // pointermove/pointerup, so bubble-phase window listeners would never
+    // fire and the drag could neither move nor release. Capture runs
+    // window-first, before the backdrop can swallow the event.
+    window.addEventListener('pointermove', onMove, { capture: true });
+    window.addEventListener('pointerup', onUp, { capture: true });
+    window.addEventListener('pointercancel', onUp, { capture: true });
     cleanupRef.current = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('pointermove', onMove, { capture: true });
+      window.removeEventListener('pointerup', onUp, { capture: true });
+      window.removeEventListener('pointercancel', onUp, { capture: true });
       cleanupRef.current = null;
     };
 
@@ -425,8 +459,8 @@ export default function MobileTabSwitcher({
           i < drag.index && i >= drag.target
             ? drag.step
             : i > drag.index && i <= drag.target
-            ? -drag.step
-            : 0;
+              ? -drag.step
+              : 0;
         drag.rows[i].style.transform = `translateY(${shifted}px)`;
       }
     }
