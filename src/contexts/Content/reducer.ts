@@ -2,6 +2,53 @@ import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 import { Comment, Reward, Subject } from '~/types';
 
+// Realtime comment/reply uploads can be delivered more than once (socket
+// fan-out, multi-key reducer writes, etc.). List state must stay idempotent by
+// comment id so the same server row never appears twice live; reload already
+// looks correct because it reloads from the DB.
+function appendUniqueById<T extends { id?: number | string }>(
+  existing: T[] | undefined | null,
+  items: T[] | undefined | null
+): T[] {
+  const current = existing || [];
+  if (!items?.length) return current;
+  const seen = new Set<number>();
+  for (const item of current) {
+    const id = Number(item?.id);
+    if (id > 0) seen.add(id);
+  }
+  const next = current.slice();
+  for (const item of items) {
+    const id = Number(item?.id);
+    if (id > 0 && seen.has(id)) continue;
+    if (id > 0) seen.add(id);
+    next.push(item);
+  }
+  return next;
+}
+
+function prependUniqueById<T extends { id?: number | string }>(
+  items: T[] | undefined | null,
+  existing: T[] | undefined | null
+): T[] {
+  const current = existing || [];
+  if (!items?.length) return current;
+  const existingIds = new Set<number>();
+  for (const item of current) {
+    const id = Number(item?.id);
+    if (id > 0) existingIds.add(id);
+  }
+  const uniqueNew: T[] = [];
+  const seenNew = new Set<number>();
+  for (const item of items) {
+    const id = Number(item?.id);
+    if (id > 0 && (existingIds.has(id) || seenNew.has(id))) continue;
+    if (id > 0) seenNew.add(id);
+    uniqueNew.push(item);
+  }
+  return uniqueNew.length ? uniqueNew.concat(current) : current;
+}
+
 function buildObjectMatches(build: any, buildId: number) {
   if (!build || (build.contentType && build.contentType !== 'build')) {
     return false;
@@ -1753,7 +1800,7 @@ export default function ContentReducer(
                 ) {
                   return {
                     ...comment,
-                    replies: (comment.replies || []).concat(action.data)
+                    replies: appendUniqueById(comment.replies, [action.data])
                   };
                 }
                 return comment;
@@ -1769,7 +1816,8 @@ export default function ContentReducer(
           ? {
               ['subject' + action.data.subjectId]: {
                 ...state['subject' + action.data.subjectId],
-                comments: [action.data].concat(
+                comments: prependUniqueById(
+                  [action.data],
                   state['subject' + action.data.subjectId].comments
                 )
               }
@@ -1782,13 +1830,13 @@ export default function ContentReducer(
           ...prevContentState,
           comments:
             prevContentState.contentType === 'comment'
-              ? (prevContentState.comments || []).concat([action.data])
-              : [action.data].concat(prevContentState.comments),
+              ? appendUniqueById(prevContentState.comments, [action.data])
+              : prependUniqueById([action.data], prevContentState.comments),
           subjects: prevContentState.subjects?.map((subject: Subject) =>
             subject.id === action.data.subjectId
               ? {
                   ...subject,
-                  comments: [action.data].concat(subject.comments)
+                  comments: prependUniqueById([action.data], subject.comments)
                 }
               : subject
           )
@@ -1813,7 +1861,7 @@ export default function ContentReducer(
                 ) {
                   return {
                     ...comment,
-                    replies: (comment.replies || []).concat(uploadItems)
+                    replies: appendUniqueById(comment.replies, uploadItems)
                   };
                 }
                 return comment;
@@ -1833,7 +1881,7 @@ export default function ContentReducer(
                 comment.id === action.data.replyId
                   ? {
                       ...comment,
-                      replies: (comment.replies || []).concat(uploadItems)
+                      replies: appendUniqueById(comment.replies, uploadItems)
                     }
                   : comment
             )
@@ -1841,12 +1889,12 @@ export default function ContentReducer(
         };
       }
       const commentId = action.data.replyId || action.data.commentId;
-      const newComments = [...prevContentState.comments];
+      let newComments = [...(prevContentState.comments || [])];
       if (
         prevContentState.contentType === 'comment' &&
         prevContentState.contentId === commentId
       ) {
-        newComments.push(...uploadItems);
+        newComments = appendUniqueById(newComments, uploadItems);
       }
       return {
         ...newState,
@@ -1857,7 +1905,8 @@ export default function ContentReducer(
           ? {
               ['comment' + commentId]: {
                 ...state['comment' + commentId],
-                comments: (state['comment' + commentId].comments || []).concat(
+                comments: appendUniqueById(
+                  state['comment' + commentId].comments,
                   uploadItems
                 )
               }
@@ -1880,7 +1929,7 @@ export default function ContentReducer(
             return {
               ...comment,
               replies: match
-                ? (comment.replies || []).concat(uploadItems)
+                ? appendUniqueById(comment.replies, uploadItems)
                 : comment.replies
             };
           }),
@@ -1892,7 +1941,7 @@ export default function ContentReducer(
                 comment.id === action.data.replyId
                   ? {
                       ...comment,
-                      replies: (comment.replies || []).concat(uploadItems)
+                      replies: appendUniqueById(comment.replies, uploadItems)
                     }
                   : comment
               )
@@ -1926,8 +1975,9 @@ export default function ContentReducer(
             ...prevContentState.targetObj,
             comment: {
               ...prevContentState.targetObj.comment,
-              comments: uploadItems.concat(
-                prevContentState.targetObj?.comment?.comments || []
+              comments: prependUniqueById(
+                uploadItems,
+                prevContentState.targetObj?.comment?.comments
               )
             }
           }

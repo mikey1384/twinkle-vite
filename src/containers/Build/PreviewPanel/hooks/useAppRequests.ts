@@ -104,6 +104,21 @@ export default function useAppRequests() {
   const listBuildSubjectComments = useAppContext(
     (v) => v.requestHelpers.listBuildSubjectComments
   );
+  const getBuildContentWriteStatus = useAppContext(
+    (v) => v.requestHelpers.getBuildContentWriteStatus
+  );
+  const createBuildContentSubject = useAppContext(
+    (v) => v.requestHelpers.createBuildContentSubject
+  );
+  const editBuildContentSubject = useAppContext(
+    (v) => v.requestHelpers.editBuildContentSubject
+  );
+  const createBuildContentComment = useAppContext(
+    (v) => v.requestHelpers.createBuildContentComment
+  );
+  const editBuildContentComment = useAppContext(
+    (v) => v.requestHelpers.editBuildContentComment
+  );
   const getBuildProfileComments = useAppContext(
     (v) => v.requestHelpers.getBuildProfileComments
   );
@@ -267,6 +282,11 @@ export default function useAppRequests() {
   const getBuildSubjectRef = useRef(getBuildSubject);
   const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
   const listBuildSubjectCommentsRef = useRef(listBuildSubjectComments);
+  const getBuildContentWriteStatusRef = useRef(getBuildContentWriteStatus);
+  const createBuildContentSubjectRef = useRef(createBuildContentSubject);
+  const editBuildContentSubjectRef = useRef(editBuildContentSubject);
+  const createBuildContentCommentRef = useRef(createBuildContentComment);
+  const editBuildContentCommentRef = useRef(editBuildContentComment);
   const getBuildProfileCommentsRef = useRef(getBuildProfileComments);
   const getBuildProfileCommentIdsRef = useRef(getBuildProfileCommentIds);
   const getBuildProfileCommentsByIdsRef = useRef(getBuildProfileCommentsByIds);
@@ -356,6 +376,11 @@ export default function useAppRequests() {
     getBuildSubjectRef,
     getBuildSubjectCommentsRef,
     listBuildSubjectCommentsRef,
+    getBuildContentWriteStatusRef,
+    createBuildContentSubjectRef,
+    editBuildContentSubjectRef,
+    createBuildContentCommentRef,
+    editBuildContentCommentRef,
     getBuildProfileCommentsRef,
     getBuildProfileCommentIdsRef,
     getBuildProfileCommentsByIdsRef,

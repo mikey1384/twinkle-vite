@@ -60,12 +60,30 @@ export default function useAPISocket({
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
   );
+  // Unread "current channel" must match the channel body the user is looking
+  // at. Chat Main renders from selectedChannelId, so that id is the source of
+  // truth while /chat is open.
+  //
+  // ba1494adb required selectedChannelId === routed path id. Any path/selection
+  // disagreement made activeChatChannelId null, so live messages — including
+  // chess/omok moves the user was watching — took RECEIVE_MSG_ON_DIFF_CHANNEL
+  // (always +1 scoped unreads). Visible RECEIVE_MESSAGE preserves that sticky
+  // count; last-read is the only clearer. Leaving the channel then shows the
+  // left-menu badge.
+  //
+  // Prefer selectedChannelId. Fall back to the routed id only when selection is
+  // still unset (path-first navigation before Main's sync effect). Build routes
+  // stay out because usingChat is only true for the real /chat section.
   const routedChannelId =
     usingChat && currentPathId && !Number.isNaN(Number(currentPathId))
       ? parseChannelPath(currentPathId)
       : null;
-  const activeChatChannelId =
-    routedChannelId === Number(selectedChannelId || 0) ? routedChannelId : null;
+  const selectedChatChannelId = Number(selectedChannelId || 0);
+  const activeChatChannelId = !usingChat
+    ? null
+    : selectedChatChannelId > 0
+      ? selectedChatChannelId
+      : routedChannelId;
 
   const usingChatRef = useRef(usingChat);
   const activeChatChannelIdRef = useRef<number | null>(activeChatChannelId);

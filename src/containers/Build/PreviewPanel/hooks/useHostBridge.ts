@@ -1595,6 +1595,78 @@ export function useHostBridge({
             break;
           }
 
+          case 'content:write-status': {
+            const contentWriteStatusToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response =
+              await requestRefs.getBuildContentWriteStatusRef.current({
+                buildId: activeBuild.id,
+                subjectId: payload?.subjectId,
+                commentId: payload?.commentId,
+                token: contentWriteStatusToken
+              });
+            break;
+          }
+
+          case 'content:subject:create': {
+            const contentWriteToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            response = await requestRefs.createBuildContentSubjectRef.current({
+              buildId: activeBuild.id,
+              title: payload?.title,
+              description: payload?.description,
+              token: contentWriteToken
+            });
+            break;
+          }
+
+          case 'content:subject:edit': {
+            const contentWriteToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            response = await requestRefs.editBuildContentSubjectRef.current({
+              buildId: activeBuild.id,
+              subjectId: payload?.subjectId,
+              title: payload?.title,
+              description: payload?.description,
+              token: contentWriteToken
+            });
+            break;
+          }
+
+          case 'content:comment:create': {
+            const contentWriteToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            response = await requestRefs.createBuildContentCommentRef.current({
+              buildId: activeBuild.id,
+              subjectId: payload?.subjectId,
+              content: payload?.content,
+              token: contentWriteToken
+            });
+            break;
+          }
+
+          case 'content:comment:edit': {
+            const contentWriteToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            response = await requestRefs.editBuildContentCommentRef.current({
+              buildId: activeBuild.id,
+              commentId: payload?.commentId,
+              content: payload?.content,
+              token: contentWriteToken
+            });
+            break;
+          }
+
           case 'content:subject-comments': {
             const contentCommentsToken = await ensureBuildApiToken(
               ['content:read'],
@@ -2379,13 +2451,37 @@ export function useHostBridge({
             message: error?.message
           });
         }
+        const errorDetails =
+          error && typeof error === 'object'
+            ? {
+                ...(typeof error.status === 'number'
+                  ? { status: error.status }
+                  : {}),
+                ...(typeof error.code === 'string' ? { code: error.code } : {}),
+                ...(error.retryAfterSeconds != null
+                  ? { retryAfterSeconds: error.retryAfterSeconds }
+                  : {}),
+                ...(error.writeStatus
+                  ? { writeStatus: error.writeStatus }
+                  : {}),
+                ...(error.aiUsagePolicy
+                  ? { aiUsagePolicy: error.aiUsagePolicy }
+                  : {}),
+                ...(error.details && typeof error.details === 'object'
+                  ? error.details
+                  : {})
+              }
+            : null;
         sourceWindow.postMessage(
           {
             source: 'twinkle-parent',
             id,
             previewNonce: previewMessageNonce,
             error: error.message || 'Unknown error',
-            errorCode: getPreviewBridgeErrorCode(error)
+            errorCode: getPreviewBridgeErrorCode(error),
+            ...(errorDetails && Object.keys(errorDetails).length > 0
+              ? { errorDetails }
+              : {})
           },
           previewMessageTargetOrigin
         );

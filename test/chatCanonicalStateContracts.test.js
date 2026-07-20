@@ -271,9 +271,17 @@ test('AI chat visibility is independent from presence busy state', () => {
     initSocketSource,
     /socket\.emit\('change_busy_status', chatBusyRef\.current\)/
   );
+  // Active chat channel follows the body (selectedChannelId) while /chat is
+  // open. Requiring selected === routed made activeChatChannelId null on any
+  // path/selection disagreement, so live chess/omok moves took the different-
+  // channel path and sticky left-menu unreads after watching.
   assert.match(
     socketManagerSource,
-    /const routedChannelId =[\s\S]*?parseChannelPath\(currentPathId\)[\s\S]*?routedChannelId === Number\(selectedChannelId \|\| 0\)/
+    /selectedChatChannelId > 0[\s\S]*\? selectedChatChannelId[\s\S]*: routedChannelId/
+  );
+  assert.doesNotMatch(
+    socketManagerSource,
+    /routedChannelId === Number\(selectedChannelId \|\| 0\)/
   );
   assert.match(
     aiSocketSource,

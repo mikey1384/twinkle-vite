@@ -34,6 +34,29 @@ export default function buildRequestHelpers({
     };
   }
 
+  // Content-write 429/403 payloads carry writeStatus/code for cooldown bars.
+  // Generic handleError collapses those fields — preserve them like stale-save.
+  function handleContentWriteError(error: any) {
+    const data = error?.response?.data;
+    if (error?.response && data && typeof data === 'object') {
+      const status = error.response.status;
+      const message =
+        (typeof data.error === 'string' && data.error) ||
+        (typeof data.message === 'string' && data.message) ||
+        'Content write failed';
+      return Promise.reject({
+        status,
+        message,
+        ...(typeof data.code === 'string' ? { code: data.code } : {}),
+        ...(data.retryAfterSeconds != null
+          ? { retryAfterSeconds: data.retryAfterSeconds }
+          : {}),
+        ...(data.writeStatus ? { writeStatus: data.writeStatus } : {})
+      });
+    }
+    return handleError(error);
+  }
+
   function getFetchAuthHeaders(extraHeaders?: Record<string, string>) {
     const headers = new Headers();
     const authHeaders = auth()?.headers || {};
@@ -3226,6 +3249,123 @@ export default function buildRequestHelpers({
         return data;
       } catch (error) {
         return handleError(error);
+      }
+    },
+
+    async getBuildContentWriteStatus({
+      buildId,
+      subjectId,
+      commentId,
+      token
+    }: {
+      buildId: number;
+      subjectId?: number;
+      commentId?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/write-status`,
+          { subjectId, commentId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
+    async createBuildContentSubject({
+      buildId,
+      title,
+      description,
+      token
+    }: {
+      buildId: number;
+      title: string;
+      description?: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/subject/create`,
+          { title, description },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
+    async editBuildContentSubject({
+      buildId,
+      subjectId,
+      title,
+      description,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      title: string;
+      description?: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/subject/edit`,
+          { subjectId, title, description },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
+    async createBuildContentComment({
+      buildId,
+      subjectId,
+      content,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      content: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/comment/create`,
+          { subjectId, content },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
+    async editBuildContentComment({
+      buildId,
+      commentId,
+      content,
+      token
+    }: {
+      buildId: number;
+      commentId: number;
+      content: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/comment/edit`,
+          { commentId, content },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
       }
     },
 

@@ -30,6 +30,11 @@ export interface PreviewHostBridgeRequestRefs {
   getBuildSubjectRef: AsyncRequestRef;
   getBuildSubjectCommentsRef: AsyncRequestRef;
   listBuildSubjectCommentsRef: AsyncRequestRef;
+  getBuildContentWriteStatusRef: AsyncRequestRef;
+  createBuildContentSubjectRef: AsyncRequestRef;
+  editBuildContentSubjectRef: AsyncRequestRef;
+  createBuildContentCommentRef: AsyncRequestRef;
+  editBuildContentCommentRef: AsyncRequestRef;
   getBuildProfileCommentsRef: AsyncRequestRef;
   getBuildProfileCommentIdsRef: AsyncRequestRef;
   getBuildProfileCommentsByIdsRef: AsyncRequestRef;
