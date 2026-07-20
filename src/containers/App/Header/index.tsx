@@ -92,10 +92,11 @@ export default function Header({
 
   useEffect(() => {
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    initAiFeatureFlags();
+    initAiFeatureFlags(0);
 
-    async function initAiFeatureFlags() {
+    async function initAiFeatureFlags(attempt: number) {
       try {
         const { default: loadAiFeatureFlags } = await import(
           './requestHelpers/loadAiFeatureFlags'
@@ -107,14 +108,25 @@ export default function Header({
       } catch (error) {
         if (await recoverFromLazyImportLoadError(error)) return;
         console.error('Failed to load AI feature flags:', error);
-        if (!cancelled) {
+        if (cancelled) return;
+        // A failed request is not a canonical answer: keep retrying until the
+        // server actually responds, so a deploy blip cannot latch "AI
+        // disabled" for the rest of the session. After a few failures, fail
+        // closed once so AI surfaces show unavailable instead of loading
+        // forever; a later successful retry restores the canonical value.
+        if (attempt === 3) {
           onSetAiFeaturesDisabled(true);
         }
+        const delayMs = Math.min(30000, 2000 * 2 ** attempt);
+        retryTimer = setTimeout(() => initAiFeatureFlags(attempt + 1), delayMs);
       }
     }
 
     return () => {
       cancelled = true;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
