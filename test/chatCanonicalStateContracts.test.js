@@ -250,7 +250,7 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   );
 });
 
-test('AI chat visibility is independent from presence busy state', () => {
+test('chat visibility follows the rendered body independently from presence', () => {
   const socketManagerSource = readSource(
     'src/containers/App/Header/hooks/useAPISocket/index.ts'
   );
@@ -271,13 +271,18 @@ test('AI chat visibility is independent from presence busy state', () => {
     initSocketSource,
     /socket\.emit\('change_busy_status', chatBusyRef\.current\)/
   );
-  // Active chat channel follows the body (selectedChannelId) while /chat is
-  // open. Requiring selected === routed made activeChatChannelId null on any
-  // path/selection disagreement, so live chess/omok moves took the different-
-  // channel path and sticky left-menu unreads after watching.
+  // A normal active channel follows the rendered body (selectedChannelId).
+  // Requiring selected === routed made activeChatChannelId null on any path/
+  // selection disagreement, so live chess/omok moves took the different-
+  // channel path and sticky left-menu unreads after watching. Collect routes
+  // render a different body and must not inherit the stale selection.
   assert.match(
     socketManagerSource,
     /selectedChatChannelId > 0[\s\S]*\? selectedChatChannelId[\s\S]*: routedChannelId/
+  );
+  assert.match(
+    socketManagerSource,
+    /const showingChannelBody =[\s\S]*chatType !== VOCAB_CHAT_TYPE[\s\S]*chatType !== AI_CARD_CHAT_TYPE;[\s\S]*const activeChatChannelId = !showingChannelBody[\s\S]*\? null/
   );
   assert.doesNotMatch(
     socketManagerSource,

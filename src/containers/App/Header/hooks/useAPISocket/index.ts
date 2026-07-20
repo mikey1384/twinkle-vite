@@ -8,6 +8,10 @@ import {
 } from '~/contexts';
 import { getSectionFromPathname, parseChannelPath } from '~/helpers';
 import { setStoredItem } from '~/helpers/userDataHelpers';
+import {
+  AI_CARD_CHAT_TYPE,
+  VOCAB_CHAT_TYPE
+} from '~/constants/defaultValues';
 
 import useAICardSocket from './useAICardSocket';
 import useAISocket from './useAISocket';
@@ -60,9 +64,10 @@ export default function useAPISocket({
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
   );
-  // Unread "current channel" must match the channel body the user is looking
-  // at. Chat Main renders from selectedChannelId, so that id is the source of
-  // truth while /chat is open.
+  // Unread "current channel" must match the body the user is looking at. The
+  // normal Chat body renders from selectedChannelId, so that id is the source
+  // of truth while a channel body is shown. Vocabulary and AI Cards render the
+  // Collect body instead and must not inherit a stale selected channel.
   //
   // ba1494adb required selectedChannelId === routed path id. Any path/selection
   // disagreement made activeChatChannelId null, so live messages — including
@@ -79,7 +84,11 @@ export default function useAPISocket({
       ? parseChannelPath(currentPathId)
       : null;
   const selectedChatChannelId = Number(selectedChannelId || 0);
-  const activeChatChannelId = !usingChat
+  const showingChannelBody =
+    usingChat &&
+    chatType !== VOCAB_CHAT_TYPE &&
+    chatType !== AI_CARD_CHAT_TYPE;
+  const activeChatChannelId = !showingChannelBody
     ? null
     : selectedChatChannelId > 0
       ? selectedChatChannelId
