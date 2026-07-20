@@ -568,7 +568,6 @@ export default function useChatSocket({
         reactorId !== userId &&
         reactionIsForCurrentChannel &&
         usingChatRef.current &&
-        currentPageVisible &&
         reactionIsForCurrentSubchannel;
       const reactionIsVisibleToViewer =
         mutation === 'add' && reactionScopeIsVisibleToViewer;
@@ -588,7 +587,6 @@ export default function useChatSocket({
         !(
           reactionIsForCurrentChannel &&
           usingChatRef.current &&
-          currentPageVisible &&
           reactionIsForCurrentSubchannel
         );
 
@@ -859,11 +857,7 @@ export default function useChatSocket({
       const isForCurrentChannel =
         Number(channelId) === activeChatChannelIdRef.current;
       if (isForCurrentChannel) {
-        if (
-          currentPageVisible &&
-          usingChatRef.current &&
-          currentSubchannelId === 0
-        ) {
+        if (usingChatRef.current && currentSubchannelId === 0) {
           void maybeUpdateLastRead({ channelId });
         }
         onReceiveMessage({
@@ -943,7 +937,7 @@ export default function useChatSocket({
         });
       }
       if (messageIsForCurrentChannel) {
-        if (currentPageVisible && usingChatRef.current) {
+        if (usingChatRef.current) {
           if (
             Number(message.subchannelId || 0) ===
             Number(currentSubchannelId || 0)
@@ -1118,7 +1112,7 @@ export default function useChatSocket({
       });
 
       if (messageIsForCurrentChannel) {
-        if (currentPageVisible && usingChatRef.current) {
+        if (usingChatRef.current) {
           if (
             Number(message.subchannelId || 0) ===
             Number(subchannelIdRef.current || 0)

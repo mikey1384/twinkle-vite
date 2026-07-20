@@ -290,7 +290,7 @@ test('chat visibility follows the rendered body independently from presence', ()
   );
   assert.match(
     aiSocketSource,
-    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?if \(messageIsForActiveChannel\) \{\s*if \(currentPageVisible\) \{\s*void reconcileChannelLastRead\(channelId\)/
+    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?if \(messageIsForActiveChannel\) \{\s*void reconcileChannelLastRead\(channelId\)/
   );
   assert.doesNotMatch(aiSocketSource, /selectedChannelIdRef/);
 });
@@ -321,6 +321,14 @@ test('navigation and live activity reconcile only the visible chat scope', () =>
   assert.match(
     socketSource,
     /reactionIsForCurrentChannel =[\s\S]*?channelId === currentActiveChatChannelId/
+  );
+  assert.match(
+    socketSource,
+    /if \(messageIsForCurrentChannel\) \{\s*if \(usingChatRef\.current\)/
+  );
+  assert.match(
+    reducerSource,
+    /const scopeIsOpen = Boolean\(action\.usingChat\);[\s\S]*?subchannelId === currentSubchannelId && scopeIsOpen[\s\S]*?scopeIsOpen && currentSubchannelId === 0/
   );
   assert.match(
     channelSource,
@@ -687,21 +695,23 @@ test('bootstrap invalidates noncanonical topic message caches and navigation', (
   assert.doesNotMatch(reducerSource, /messageIds:\s*existingTopic\.messageIds/);
 });
 
-test('global Chat badge acknowledges known activity until new activity arrives', () => {
+test('background Chat activity remains in the title until Chat becomes visible', () => {
   const headerSource = readSource('src/containers/App/Header/index.tsx');
+  const mainSource = readSource('src/containers/Chat/Main.tsx');
   const chatSocketSource = readSource(
     'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
   );
   const reducerSource = readSource('src/contexts/Chat/reducer.ts');
 
+  assert.doesNotMatch(headerSource, /onGetNumberOfUnreadMessages\(0\)/);
   assert.match(
-    headerSource,
-    /if \(section === 'chat'\)[\s\S]*?onGetNumberOfUnreadMessages\(0\)/
+    mainSource,
+    /if \(pageVisible\) \{\s*onClearNumUnreads\(\);/
   );
   assert.doesNotMatch(chatSocketSource, /wasUsingChat|route-exit restoration/);
   assert.match(
     reducerSource,
-    /global navigation badge is an acknowledgement signal[\s\S]*?must not relight global navigation after the user leaves[\s\S]*?New activity received while outside Chat increments it/
+    /global navigation badge is an acknowledgement signal[\s\S]*?background activity increments it[\s\S]*?document title/
   );
   assert.match(
     reducerSource,

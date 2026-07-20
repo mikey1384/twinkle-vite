@@ -5111,12 +5111,11 @@ export default function ChatReducer(
       const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const subchannelId = Number(action.message.subchannelId || 0);
       const currentSubchannelId = Number(action.currentSubchannelId || 0);
-      const scopeIsVisible = Boolean(action.pageVisible && action.usingChat);
+      const scopeIsOpen = Boolean(action.usingChat);
       // The global navigation badge is an acknowledgement signal, not a mirror
-      // of every scoped unread. Header clears it when Chat is entered; activity
-      // in any scope while Chat is open stays represented by the exact sidebar
-      // badge and must not relight global navigation after the user leaves.
-      // New activity received while outside Chat increments it below.
+      // of every scoped unread. Chat Main clears it when the page is visible;
+      // background activity increments it so the document title can notify the
+      // user without relighting the open channel's sidebar badge.
       const numUnreads =
         action.isMyMessage || (action.pageVisible && action.usingChat)
           ? state.numUnreads
@@ -5125,8 +5124,8 @@ export default function ChatReducer(
       const didIncrementScopedUnreads =
         !action.isMyMessage &&
         (subchannelId
-          ? !(subchannelId === currentSubchannelId && scopeIsVisible)
-          : !(scopeIsVisible && currentSubchannelId === 0));
+          ? !(subchannelId === currentSubchannelId && scopeIsOpen)
+          : !(scopeIsOpen && currentSubchannelId === 0));
       const isChessMoveMessage =
         action.message.isChessMsg &&
         !!action.message.chessState &&

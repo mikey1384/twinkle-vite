@@ -482,9 +482,7 @@ export default function useAISocket({
           message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
       };
       if (messageIsForActiveChannel) {
-        if (currentPageVisible) {
-          void reconcileChannelLastRead(channelId);
-        }
+        void reconcileChannelLastRead(channelId);
         onReceiveMessage({
           message: appliedMessage,
           pageVisible: currentPageVisible,

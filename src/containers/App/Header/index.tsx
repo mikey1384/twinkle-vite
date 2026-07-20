@@ -70,9 +70,6 @@ export default function Header({
   const headerColor = headerRole.getColor() || Color.white();
   const chatType = useChatContext((v) => v.state.chatType);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
-  const onGetNumberOfUnreadMessages = useChatContext(
-    (v) => v.actions.onGetNumberOfUnreadMessages
-  );
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
   const myRewardStats = useNotiContext((v) =>
@@ -146,10 +143,6 @@ export default function Header({
       } else {
         document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
       }
-      // Entering any Chat route acknowledges the global navigation signal.
-      // Exact unread scopes remain visible in Chat's sidebar; they do not
-      // relight global navigation merely because the user later leaves Chat.
-      onGetNumberOfUnreadMessages(0);
     } else if (
       !['chat', 'comments', 'subjects', 'ai-cards'].includes(section) &&
       isSubsection &&
@@ -161,7 +154,6 @@ export default function Header({
         newNotiNum > 0 ? ' *' : ''
       }`;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle, chatType]);
 
   useEffect(() => {
