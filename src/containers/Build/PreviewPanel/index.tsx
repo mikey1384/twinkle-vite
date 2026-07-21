@@ -44,6 +44,7 @@ import type {
   PreviewFrameRetiredHandler,
   PreviewPanelProps
 } from './types';
+import type { PreviewOpenContentConfirmationRequest } from './types/previewHostBridgeTypes';
 import VersionHistoryModal from './VersionHistoryModal';
 import {
   EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
@@ -90,6 +91,14 @@ const runtimePanelClass = css`
   grid-template-rows: 1fr;
   background: #fff;
   overflow: hidden;
+`;
+
+const openContentDestinationClass = css`
+  max-width: 100%;
+  max-height: 12rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  text-align: center;
 `;
 
 const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
@@ -612,6 +621,39 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestConfirm: requestProjectFileConfirm
     } = useConfirmModal();
     const {
+      confirmModal: openContentConfirmModal,
+      requestConfirm: requestOpenContentConfirm
+    } = useConfirmModal();
+    const requestOpenContentConfirmationRef = useRef<
+      | ((request: PreviewOpenContentConfirmationRequest) => Promise<boolean>)
+      | null
+    >(null);
+    useEffect(() => {
+      requestOpenContentConfirmationRef.current = ({ url }) => {
+        const destination = new URL(url);
+        return requestOpenContentConfirm({
+          title: 'Open Twinkle content?',
+          description: (
+            <span className={openContentDestinationClass}>
+              Open{' '}
+              <strong>
+                {destination.pathname}
+                {destination.search}
+                {destination.hash}
+              </strong>
+              ?
+            </span>
+          ),
+          descriptionFontSize: '1.2rem',
+          confirmButtonLabel: 'Open content',
+          modalOverModal: true
+        });
+      };
+      return () => {
+        requestOpenContentConfirmationRef.current = null;
+      };
+    }, [requestOpenContentConfirm]);
+    const {
       areProjectFileMutationsLocked,
       ensureBuildApiTokenForBuild,
       getProjectFileCaseCollisionError,
@@ -986,7 +1028,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewAuth,
       requestRefs: previewRequestRefs,
       runtimeUploadsSyncRef: onRuntimeUploadsSyncRef,
-      onAiUsagePolicyUpdateRef
+      onAiUsagePolicyUpdateRef,
+      requestOpenContentConfirmationRef
     });
 
     useEffect(() => {
@@ -1371,6 +1414,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           />
         )}
         {projectFileConfirmModal}
+        {openContentConfirmModal}
       </div>
     );
   }

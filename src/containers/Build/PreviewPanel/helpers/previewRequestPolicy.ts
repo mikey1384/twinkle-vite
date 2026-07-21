@@ -3,6 +3,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:generate-object',
   'ai:generate-image',
   'app:navigate',
+  'app:open-content',
   'characters:chat',
   'chat:create-room',
   'chat:delete-message',

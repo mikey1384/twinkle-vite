@@ -21,6 +21,10 @@ import {
 } from '../helpers/runtimeObservationMessages';
 import type { UsePreviewHostBridgeArgs } from '../types/previewHostBridgeTypes';
 import { isMutatingPreviewRequestType } from '../helpers/previewRequestPolicy';
+import {
+  authorizeTwinkleContentNavigation,
+  createTwinkleContentNavigationConfirmationController
+} from '../helpers/twinkleContentNavigation';
 
 export {
   buildEmptyRuntimeObservationState,
@@ -170,7 +174,8 @@ export function useHostBridge({
   previewAuth,
   requestRefs,
   runtimeUploadsSyncRef,
-  onAiUsagePolicyUpdateRef
+  onAiUsagePolicyUpdateRef,
+  requestOpenContentConfirmationRef
 }: UsePreviewHostBridgeArgs) {
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
@@ -178,6 +183,14 @@ export function useHostBridge({
   const launchTargetBroadcastReadyRef = useRef(false);
   const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(null);
   const worldViewerIdentityKeyRef = useRef<string | null>(null);
+  const contentNavigationConfirmationControllerRef = useRef<ReturnType<
+    typeof createTwinkleContentNavigationConfirmationController
+  > | null>(null);
+  const contentNavigationConfirmationController =
+    contentNavigationConfirmationControllerRef.current ||
+    createTwinkleContentNavigationConfirmationController();
+  contentNavigationConfirmationControllerRef.current =
+    contentNavigationConfirmationController;
   mountContextRef.current = mountContext;
   launchTargetRef.current = launchTarget;
   audioMutedRef.current = audioMuted;
@@ -994,6 +1007,7 @@ export function useHostBridge({
 
       try {
         let response: any = {};
+        let pendingHostNavigationUrl = '';
 
         switch (type) {
           case 'init':
@@ -1036,6 +1050,34 @@ export function useHostBridge({
               );
             }
             response = { success: true, src: navigatedPreviewSrc };
+            break;
+          }
+
+          case 'app:open-content': {
+            const navigationDecision = authorizeTwinkleContentNavigation({
+              currentOrigin: window.location.origin,
+              target: payload?.url,
+              userActivation: navigator.userActivation
+            });
+            if (!navigationDecision.allowed) {
+              throw createPreviewBridgeError(
+                navigationDecision.message,
+                navigationDecision.code
+              );
+            }
+            const confirmationDecision =
+              await contentNavigationConfirmationController.request({
+                requestConfirmation: requestOpenContentConfirmationRef.current,
+                url: navigationDecision.url
+              });
+            if (!confirmationDecision.confirmed) {
+              throw createPreviewBridgeError(
+                confirmationDecision.message,
+                confirmationDecision.code
+              );
+            }
+            pendingHostNavigationUrl = confirmationDecision.url;
+            response = { success: true, url: confirmationDecision.url };
             break;
           }
 
@@ -2430,6 +2472,11 @@ export function useHostBridge({
           },
           previewMessageTargetOrigin
         );
+        if (pendingHostNavigationUrl) {
+          window.setTimeout(() => {
+            window.location.assign(pendingHostNavigationUrl);
+          }, 0);
+        }
       } catch (error: any) {
         if (error?.aiUsagePolicy && typeof error.aiUsagePolicy === 'object') {
           onAiUsagePolicyUpdateRef.current?.(error.aiUsagePolicy);
@@ -2534,6 +2581,7 @@ export function useHostBridge({
   }, [
     buildId,
     capabilitySnapshotRef,
+    contentNavigationConfirmationController,
     messageTargetFrameRef,
     navigatePreviewFrameRef,
     previewAuth,
@@ -2546,6 +2594,7 @@ export function useHostBridge({
     requestRefs,
     runtimeUploadsSyncRef,
     onAiUsagePolicyUpdateRef,
+    requestOpenContentConfirmationRef,
     runtimeExplorationPlanRef,
     runtimeOnly,
     secondaryIframeRef,

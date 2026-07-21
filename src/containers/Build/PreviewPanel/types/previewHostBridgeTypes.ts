@@ -1,8 +1,4 @@
-import type {
-  Dispatch,
-  RefObject,
-  SetStateAction
-} from 'react';
+import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { BuildCapabilitySnapshot } from '../../types/capabilityTypes';
 import type {
   BuildRuntimeExplorationPlan,
@@ -16,9 +12,11 @@ import type {
   PreviewRuntimeUploadsSyncPayload
 } from './index';
 import type { PreviewHostBridgeAuth } from '../helpers/previewBridgeAuth';
-import type {
-  PreviewHostBridgeRequestRefs
-} from '../helpers/previewBridgeRequestRefs';
+import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
+
+export interface PreviewOpenContentConfirmationRequest {
+  url: string;
+}
 
 export interface UsePreviewHostBridgeArgs {
   runtimeOnly: boolean;
@@ -68,5 +66,9 @@ export interface UsePreviewHostBridgeArgs {
   >;
   onAiUsagePolicyUpdateRef: RefObject<
     ((aiUsagePolicy: Record<string, any>) => void) | null
+  >;
+  requestOpenContentConfirmationRef: RefObject<
+    | ((request: PreviewOpenContentConfirmationRequest) => Promise<boolean>)
+    | null
   >;
 }
