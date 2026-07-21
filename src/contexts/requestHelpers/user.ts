@@ -1242,7 +1242,7 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async deletePushSubscription(endpoint: string) {
+    async deletePushSubscription(endpoint: string, authorization = auth()) {
       try {
         const {
           data: { success }
@@ -1250,7 +1250,7 @@ export default function userRequestHelpers({
           `${URL}/user/pushSubscriptions?endpoint=${encodeURIComponent(
             endpoint
           )}`,
-          auth()
+          authorization
         );
         return success;
       } catch (error) {

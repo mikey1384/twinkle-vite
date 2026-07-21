@@ -189,8 +189,11 @@ export default function AccountMenu({
 
   function handleLogout() {
     trackEvent('logout');
-    const logoutRecord = recordLogout(auth());
-    void teardownChatPushOnLogout(deletePushSubscription);
+    const logoutAuthorization = auth();
+    const logoutRecord = recordLogout(logoutAuthorization);
+    void teardownChatPushOnLogout((endpoint) =>
+      deletePushSubscription(endpoint, logoutAuthorization)
+    );
     socket.emit('leave_my_notification_channel', userId);
     socket.disconnect();
     onLogout();

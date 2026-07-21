@@ -116,8 +116,11 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
 
   function handleLogout() {
     trackEvent('logout');
-    const logoutRecord = recordLogout(auth());
-    void teardownChatPushOnLogout(deletePushSubscription);
+    const logoutAuthorization = auth();
+    const logoutRecord = recordLogout(logoutAuthorization);
+    void teardownChatPushOnLogout((endpoint) =>
+      deletePushSubscription(endpoint, logoutAuthorization)
+    );
     onLogout();
     onResetChat(userId);
     void logoutRecord;

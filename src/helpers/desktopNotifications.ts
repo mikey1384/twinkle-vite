@@ -107,7 +107,8 @@ export function registerChatPushServiceWorkerIfEnabled() {
 // Called from explicit logout. The local unsubscribe alone is enough for
 // privacy: it invalidates the endpoint at the push service, so the server's
 // next send gets a 410 and prunes the row. The server-side delete is
-// best-effort tidiness and may 401 if the token is cleared before it fires.
+// best-effort tidiness. The caller binds the departing account's authorization
+// before clearing local session state so this delayed delete keeps its owner.
 export async function teardownChatPushOnLogout(
   deletePushSubscription: (endpoint: string) => Promise<unknown>
 ) {
