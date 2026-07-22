@@ -13,7 +13,7 @@ import { useSearch } from '~/helpers/hooks';
 import { objectify } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 
-const MAX_SUBJECTS = 20;
+const MAX_SUBJECTS = 100;
 
 export default function SelectFeaturedSubjectsModal({
   subjects,
