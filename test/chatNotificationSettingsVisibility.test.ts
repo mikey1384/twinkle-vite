@@ -6,24 +6,30 @@ function readSource(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 }
 
-test('conversation mute is shown only after canonical settings load', () => {
-  const source = readSource(
+test('the per-chat menu owns push notification muting', () => {
+  const headerSource = readSource(
+    'src/containers/Chat/Body/MessagesContainer/ChannelHeader/index.tsx'
+  );
+  const chatInfoSource = readSource(
     'src/containers/Chat/RightMenu/ChatInfo/index.tsx'
   );
-  const muteLabelIndex = source.indexOf('Mute push notifications');
-  const settingsGateIndex = source.lastIndexOf(
-    '{notificationSettings && (',
-    muteLabelIndex
-  );
-  const membersIndex = source.indexOf('{!isAIChat && (', muteLabelIndex);
 
-  assert(settingsGateIndex >= 0);
-  assert(muteLabelIndex > settingsGateIndex);
-  assert(membersIndex > muteLabelIndex);
-  assert.doesNotMatch(
-    source.slice(settingsGateIndex, membersIndex),
-    /Overrides your notification settings/
+  assert.match(
+    headerSource,
+    /const notificationMenuItem = notificationSettings/
   );
+  assert.match(headerSource, /Mute push notifications/);
+  assert.match(headerSource, /Unmute push notifications/);
+  assert.match(
+    headerSource,
+    /await updateChatNotificationMute\([\s\S]*?onSetChatNotificationSettings\(settings\)/
+  );
+  assert.match(
+    headerSource,
+    /if \(!userId \|\| notificationSettings\) return;[\s\S]*?await loadChatNotificationSettings\(\)[\s\S]*?onSetChatNotificationSettings\(settings\)/
+  );
+  assert.doesNotMatch(chatInfoSource, /Mute push notifications/);
+  assert.doesNotMatch(chatInfoSource, /updateChatNotificationMute/);
 });
 
 test('advanced notification settings are collapsed by default', () => {

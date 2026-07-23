@@ -9,7 +9,8 @@ import { isMobile } from '~/helpers';
 import { GENERAL_CHAT_ID, MOD_LEVEL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useToast } from '~/contexts/Toast';
 import LocalContext from '../../../Context';
 const deviceIsMobile = isMobile(navigator);
 const addToFavoritesLabel = 'Add to favorites';
@@ -18,6 +19,8 @@ const invitePeopleLabel = 'Invite People';
 const leaveLabel = 'Leave';
 const menuLabel = deviceIsMobile ? '' : 'Menu';
 const settingsLabel = 'Settings';
+const mutePushNotificationsLabel = 'Mute push notifications';
+const unmutePushNotificationsLabel = 'Unmute push notifications';
 
 export default function ChannelHeader({
   currentChannel,
@@ -67,9 +70,23 @@ export default function ChannelHeader({
   const level = useKeyContext((v) => v.myState.level);
   const username = useKeyContext((v) => v.myState.username);
   const userId = useKeyContext((v) => v.myState.userId);
+  const notificationSettings = useChatContext(
+    (v) => v.state.chatNotificationSettings
+  );
+  const onSetChatNotificationSettings = useChatContext(
+    (v) => v.actions.onSetChatNotificationSettings
+  );
+  const loadChatNotificationSettings = useAppContext(
+    (v) => v.requestHelpers.loadChatNotificationSettings
+  );
+  const updateChatNotificationMute = useAppContext(
+    (v) => v.requestHelpers.updateChatNotificationMute
+  );
+  const showToast = useToast();
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [subchannelLoading, setSubchannelLoading] = useState(false);
+  const [notificationMuteSaving, setNotificationMuteSaving] = useState(false);
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
@@ -153,9 +170,57 @@ export default function ChannelHeader({
     return {};
   }, [currentChannel, subchannel]);
 
+  const notificationsMuted =
+    notificationSettings?.mutedChannelIds.includes(selectedChannelId) || false;
+
+  useEffect(() => {
+    if (!userId || notificationSettings) return;
+    let cancelled = false;
+    loadSettings();
+
+    async function loadSettings() {
+      try {
+        const settings = await loadChatNotificationSettings();
+        if (!cancelled && Number(settings?.userId) === Number(userId)) {
+          onSetChatNotificationSettings(settings);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            'Failed to load chat notification settings in ChannelHeader:',
+            error
+          );
+        }
+      }
+    }
+
+    return () => {
+      cancelled = true;
+    };
+    // Stable context actions and request helpers are intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notificationSettings, selectedChannelId, userId]);
+
   const menuProps = useMemo(() => {
+    const notificationMenuItem = notificationSettings
+      ? {
+          label: (
+            <>
+              <Icon icon={notificationsMuted ? 'bell' : 'bell-slash'} />
+              <span style={{ marginLeft: '1rem' }}>
+                {notificationsMuted
+                  ? unmutePushNotificationsLabel
+                  : mutePushNotificationsLabel}
+              </span>
+            </>
+          ),
+          disabled: notificationMuteSaving,
+          onClick: handleNotificationMuteChange
+        }
+      : null;
+
     if (currentChannel.twoPeople) {
-      return [
+      const result: any[] = [
         {
           label: (
             <>
@@ -166,8 +231,12 @@ export default function ChannelHeader({
           onClick: () => onSetHideModalShown(true)
         }
       ];
+      if (notificationMenuItem) {
+        result.push({ separator: true }, notificationMenuItem);
+      }
+      return result;
     }
-    const result = [];
+    const result: any[] = [];
     if (selectedChannelId === GENERAL_CHAT_ID && level >= MOD_LEVEL) {
       result.push({
         label: (
@@ -204,6 +273,11 @@ export default function ChannelHeader({
         ),
         onClick: () => onSetSettingsModalShown(true)
       });
+    }
+    if (notificationMenuItem) {
+      result.push(notificationMenuItem);
+    }
+    if (selectedChannelId !== GENERAL_CHAT_ID) {
       result.push({
         separator: true
       });
@@ -220,9 +294,15 @@ export default function ChannelHeader({
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    currentChannel.twoPeople,
-    currentChannel.isClosed,
     currentChannel.creatorId,
+    currentChannel.isClosed,
+    currentChannel.isPublic,
+    currentChannel.twoPeople,
+    level,
+    notificationMuteSaving,
+    notificationSettings,
+    notificationsMuted,
+    selectedChannelId,
     userId
   ]);
 
@@ -230,14 +310,12 @@ export default function ChannelHeader({
     return (
       !!selectedChannelId &&
       !!currentChannel.id &&
-      (selectedChannelId !== GENERAL_CHAT_ID || level >= MOD_LEVEL) &&
       menuProps.length > 0 &&
       !banned?.chat
     );
   }, [
     selectedChannelId,
     currentChannel.id,
-    level,
     menuProps.length,
     banned?.chat
   ]);
@@ -363,7 +441,7 @@ export default function ChannelHeader({
                 tone="raised"
                 color="darkerGray"
                 listStyle={{
-                  width: '15rem'
+                  width: '22rem'
                 }}
                 icon="bars"
                 text={menuLabel}
@@ -410,4 +488,29 @@ export default function ChannelHeader({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleNotificationMuteChange() {
+    if (!notificationSettings || notificationMuteSaving) return;
+    const muted = !notificationsMuted;
+    setNotificationMuteSaving(true);
+    try {
+      const settings = await updateChatNotificationMute({
+        channelId: selectedChannelId,
+        muted
+      });
+      onSetChatNotificationSettings(settings);
+      showToast({
+        message: muted
+          ? 'Push notifications muted for this chat.'
+          : 'Push notifications unmuted for this chat.'
+      });
+    } catch (error) {
+      console.error('Failed to update chat push notification mute:', error);
+      showToast({
+        message: 'Could not update push notifications for this chat.'
+      });
+    } finally {
+      setNotificationMuteSaving(false);
+    }
+  }
 }
