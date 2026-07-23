@@ -5,6 +5,7 @@ import DesktopNotificationsHelpModal from './DesktopNotificationsHelpModal';
 import AddToHomeScreenModal from './AddToHomeScreenModal';
 import Button from '~/components/Button';
 import SwitchButton from '~/components/Buttons/SwitchButton';
+import Icon from '~/components/Icon';
 import { useAppContext, useChatContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
@@ -105,6 +106,31 @@ const errorClass = css`
   font-weight: 700;
 `;
 
+const disclosureButtonClass = css`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  padding: 0.75rem;
+  border: 0;
+  background: transparent;
+  color: ${Color.darkerGray()};
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 700;
+
+  &:hover {
+    color: ${Color.logoBlue()};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${Color.logoBlue()};
+    outline-offset: 2px;
+  }
+`;
+
 export default function ChatNotificationsItem({
   loading
 }: {
@@ -141,12 +167,12 @@ export default function ChatNotificationsItem({
   const [helpModalShown, setHelpModalShown] = useState(false);
   const [installGuideShown, setInstallGuideShown] = useState(false);
   const [deviceUpdating, setDeviceUpdating] = useState(false);
-  const [preferencesLoading, setPreferencesLoading] = useState(
-    !notificationSettings
-  );
+  const [preferencesLoading, setPreferencesLoading] =
+    useState(!notificationSettings);
   const [savingPreference, setSavingPreference] = useState('');
   const [mutedChannelSaving, setMutedChannelSaving] = useState(0);
   const [mutedConversationsShown, setMutedConversationsShown] = useState(false);
+  const [advancedSettingsShown, setAdvancedSettingsShown] = useState(false);
   const [error, setError] = useState('');
 
   const notificationApiAvailable = desktopNotificationsSupported();
@@ -212,167 +238,188 @@ export default function ChatNotificationsItem({
           />
         </section>
 
-        <section className={sectionClass}>
-          <h3 className={sectionTitleClass}>
-            While Twinkle is in the background
-          </h3>
-          <p className={sectionDescriptionClass}>
-            Another tab is open, or the app is minimized.
-          </p>
-          <PreferenceToggleRow
-            checked={Boolean(preferences?.backgroundDirectMessages)}
-            description="Messages sent directly to you, including attachments."
-            disabled={
-              preferencesLoading ||
-              Boolean(savingPreference) ||
-              !preferences
-            }
-            label="Direct messages"
-            onChange={() =>
-              handlePreferenceUpdate('backgroundDirectMessages', {
-                backgroundDirectMessages:
-                  !preferences?.backgroundDirectMessages
-              })
-            }
-          />
-          <div className={settingRowClass}>
-            <div className={settingCopyClass}>
-              <div className={settingLabelClass}>Group chats</div>
-              <div className={settingDescriptionClass}>
-                Choose whether all messages, only mentions, or no group
-                messages notify you.
-              </div>
-            </div>
-            <select
-              aria-label="Group chat notifications while Twinkle is in the background"
-              className={selectClass}
-              disabled={
-                preferencesLoading ||
-                Boolean(savingPreference) ||
-                !preferences
-              }
-              value={preferences?.backgroundGroupMode || 'all'}
-              onChange={(event) =>
-                handlePreferenceUpdate('backgroundGroupMode', {
-                  backgroundGroupMode: event.target
-                    .value as BackgroundGroupNotificationMode
-                })
-              }
-            >
-              <option value="all">All messages</option>
-              <option value="mentions">Mentions only</option>
-              <option value="off">Off</option>
-            </select>
-          </div>
-          <PreferenceToggleRow
-            checked={Boolean(preferences?.backgroundAiReplies)}
-            description="When Zero or Ciel finishes replying while Twinkle remains connected."
-            disabled={
-              preferencesLoading ||
-              Boolean(savingPreference) ||
-              !preferences
-            }
-            label="AI replies"
-            onChange={() =>
-              handlePreferenceUpdate('backgroundAiReplies', {
-                backgroundAiReplies: !preferences?.backgroundAiReplies
-              })
-            }
-          />
-        </section>
+        <button
+          aria-controls="advanced-chat-notification-settings"
+          aria-expanded={advancedSettingsShown}
+          className={disclosureButtonClass}
+          type="button"
+          onClick={() => setAdvancedSettingsShown(!advancedSettingsShown)}
+        >
+          <span>
+            {advancedSettingsShown ? 'Fewer settings' : 'More settings'}
+          </span>
+          <Icon icon={advancedSettingsShown ? 'chevron-up' : 'chevron-down'} />
+        </button>
 
-        <section className={sectionClass}>
-          <h3 className={sectionTitleClass}>When Twinkle is closed</h3>
-          <p className={sectionDescriptionClass}>
-            These notifications are delivered through background push.
-          </p>
-          <PreferenceToggleRow
-            checked={Boolean(preferences?.closedDirectMessages)}
-            description="Direct messages, including first messages and attachments."
-            disabled={
-              preferencesLoading ||
-              Boolean(savingPreference) ||
-              !preferences
-            }
-            label="Direct messages"
-            onChange={() =>
-              handlePreferenceUpdate('closedDirectMessages', {
-                closedDirectMessages: !preferences?.closedDirectMessages
-              })
-            }
-          />
-          <PreferenceToggleRow
-            checked={Boolean(preferences?.closedGroupMentions)}
-            description="Only group messages that mention you."
-            disabled={
-              preferencesLoading ||
-              Boolean(savingPreference) ||
-              !preferences
-            }
-            label="Group mentions"
-            onChange={() =>
-              handlePreferenceUpdate('closedGroupMentions', {
-                closedGroupMentions: !preferences?.closedGroupMentions
-              })
-            }
-          />
-        </section>
-
-        <section className={sectionClass}>
-          <h3 className={sectionTitleClass}>Muted conversations</h3>
-          <p className={sectionDescriptionClass}>
-            Muting a conversation overrides both sections above without
-            changing its unread messages.
-          </p>
-          <div className={settingRowClass}>
-            <div className={settingCopyClass}>
-              <div className={settingLabelClass}>
-                {mutedConversations.length
-                  ? `${mutedConversations.length} muted conversation${
-                      mutedConversations.length === 1 ? '' : 's'
-                    }`
-                  : 'No conversations muted'}
-              </div>
-            </div>
-            <Button
-              color="darkerGray"
-              disabled={preferencesLoading}
-              size="sm"
-              uppercase={false}
-              variant="soft"
-              onClick={() =>
-                setMutedConversationsShown(!mutedConversationsShown)
-              }
-            >
-              {mutedConversationsShown ? 'Hide' : 'Manage'}
-            </Button>
-          </div>
-          {mutedConversationsShown &&
-            mutedConversations.map((conversation) => (
-              <div className={settingRowClass} key={conversation.channelId}>
+        {advancedSettingsShown && (
+          <div id="advanced-chat-notification-settings">
+            <section className={sectionClass}>
+              <h3 className={sectionTitleClass}>
+                While Twinkle is in the background
+              </h3>
+              <p className={sectionDescriptionClass}>
+                Another tab is open, or the app is minimized.
+              </p>
+              <PreferenceToggleRow
+                checked={Boolean(preferences?.backgroundDirectMessages)}
+                description="Messages sent directly to you, including attachments."
+                disabled={
+                  preferencesLoading ||
+                  Boolean(savingPreference) ||
+                  !preferences
+                }
+                label="Direct messages"
+                onChange={() =>
+                  handlePreferenceUpdate('backgroundDirectMessages', {
+                    backgroundDirectMessages:
+                      !preferences?.backgroundDirectMessages
+                  })
+                }
+              />
+              <div className={settingRowClass}>
                 <div className={settingCopyClass}>
-                  <div className={settingLabelClass}>{conversation.title}</div>
+                  <div className={settingLabelClass}>Group chats</div>
                   <div className={settingDescriptionClass}>
-                    {conversation.twoPeople ? 'Direct message' : 'Group chat'}
+                    Choose whether all messages, only mentions, or no group
+                    messages notify you.
+                  </div>
+                </div>
+                <select
+                  aria-label="Group chat notifications while Twinkle is in the background"
+                  className={selectClass}
+                  disabled={
+                    preferencesLoading ||
+                    Boolean(savingPreference) ||
+                    !preferences
+                  }
+                  value={preferences?.backgroundGroupMode || 'all'}
+                  onChange={(event) =>
+                    handlePreferenceUpdate('backgroundGroupMode', {
+                      backgroundGroupMode: event.target
+                        .value as BackgroundGroupNotificationMode
+                    })
+                  }
+                >
+                  <option value="all">All messages</option>
+                  <option value="mentions">Mentions only</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
+              <PreferenceToggleRow
+                checked={Boolean(preferences?.backgroundAiReplies)}
+                description="When Zero or Ciel finishes replying while Twinkle remains connected."
+                disabled={
+                  preferencesLoading ||
+                  Boolean(savingPreference) ||
+                  !preferences
+                }
+                label="AI replies"
+                onChange={() =>
+                  handlePreferenceUpdate('backgroundAiReplies', {
+                    backgroundAiReplies: !preferences?.backgroundAiReplies
+                  })
+                }
+              />
+            </section>
+
+            <section className={sectionClass}>
+              <h3 className={sectionTitleClass}>When Twinkle is closed</h3>
+              <p className={sectionDescriptionClass}>
+                These notifications are delivered through background push.
+              </p>
+              <PreferenceToggleRow
+                checked={Boolean(preferences?.closedDirectMessages)}
+                description="Direct messages, including first messages and attachments."
+                disabled={
+                  preferencesLoading ||
+                  Boolean(savingPreference) ||
+                  !preferences
+                }
+                label="Direct messages"
+                onChange={() =>
+                  handlePreferenceUpdate('closedDirectMessages', {
+                    closedDirectMessages: !preferences?.closedDirectMessages
+                  })
+                }
+              />
+              <PreferenceToggleRow
+                checked={Boolean(preferences?.closedGroupMentions)}
+                description="Only group messages that mention you."
+                disabled={
+                  preferencesLoading ||
+                  Boolean(savingPreference) ||
+                  !preferences
+                }
+                label="Group mentions"
+                onChange={() =>
+                  handlePreferenceUpdate('closedGroupMentions', {
+                    closedGroupMentions: !preferences?.closedGroupMentions
+                  })
+                }
+              />
+            </section>
+
+            <section className={sectionClass}>
+              <h3 className={sectionTitleClass}>Muted conversations</h3>
+              <p className={sectionDescriptionClass}>
+                Muting a conversation overrides both sections above without
+                changing its unread messages.
+              </p>
+              <div className={settingRowClass}>
+                <div className={settingCopyClass}>
+                  <div className={settingLabelClass}>
+                    {mutedConversations.length
+                      ? `${mutedConversations.length} muted conversation${
+                          mutedConversations.length === 1 ? '' : 's'
+                        }`
+                      : 'No conversations muted'}
                   </div>
                 </div>
                 <Button
-                  color="rose"
-                  loading={mutedChannelSaving === conversation.channelId}
+                  color="darkerGray"
+                  disabled={preferencesLoading}
                   size="sm"
                   uppercase={false}
                   variant="soft"
-                  onClick={() => handleUnmute(conversation.channelId)}
+                  onClick={() =>
+                    setMutedConversationsShown(!mutedConversationsShown)
+                  }
                 >
-                  Unmute
+                  {mutedConversationsShown ? 'Hide' : 'Manage'}
                 </Button>
               </div>
-            ))}
-        </section>
+              {mutedConversationsShown &&
+                mutedConversations.map((conversation) => (
+                  <div className={settingRowClass} key={conversation.channelId}>
+                    <div className={settingCopyClass}>
+                      <div className={settingLabelClass}>
+                        {conversation.title}
+                      </div>
+                      <div className={settingDescriptionClass}>
+                        {conversation.twoPeople
+                          ? 'Direct message'
+                          : 'Group chat'}
+                      </div>
+                    </div>
+                    <Button
+                      color="rose"
+                      loading={mutedChannelSaving === conversation.channelId}
+                      size="sm"
+                      uppercase={false}
+                      variant="soft"
+                      onClick={() => handleUnmute(conversation.channelId)}
+                    >
+                      Unmute
+                    </Button>
+                  </div>
+                ))}
+            </section>
 
-        {preferencesLoading && (
-          <div className={sectionDescriptionClass}>
-            Loading notification preferences…
+            {preferencesLoading && (
+              <div className={sectionDescriptionClass}>
+                Loading notification preferences…
+              </div>
+            )}
           </div>
         )}
         {error && <div className={errorClass}>{error}</div>}
