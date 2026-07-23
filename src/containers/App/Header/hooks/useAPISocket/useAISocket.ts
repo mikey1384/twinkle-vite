@@ -2,12 +2,14 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
+import { shouldShowBackgroundAiReplyNotification } from '~/helpers/chatNotificationPolicy';
 import {
   useChatContext,
   useNotiContext,
   useViewContext,
   useManagementContext,
-  useHomeContext
+  useHomeContext,
+  useKeyContext
 } from '~/contexts';
 import {
   ZERO_PFP_URL,
@@ -29,6 +31,7 @@ export default function useAISocket({
   aiCallChannelId: number;
 }) {
   const navigate = useNavigate();
+  const userId = useKeyContext((v) => v.myState.userId);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
@@ -38,6 +41,9 @@ export default function useAISocket({
   const { reconcileChannelLastRead } = useChatLastReadReconciler();
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
+  const chatNotificationSettings = useChatContext(
+    (v) => v.state.chatNotificationSettings
+  );
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const onSetAICallEnding = useChatContext(
     (v) => v.actions.onSetAICallEnding
@@ -58,9 +64,13 @@ export default function useAISocket({
   >({});
   const pageVisibleRef = useRef(pageVisible);
   const aiCallChannelIdRef = useRef(aiCallChannelId);
+  const chatNotificationSettingsRef = useRef(chatNotificationSettings);
+  const userIdRef = useRef(userId);
   channelsObjRef.current = channelsObj;
   pageVisibleRef.current = pageVisible;
   aiCallChannelIdRef.current = aiCallChannelId;
+  chatNotificationSettingsRef.current = chatNotificationSettings;
+  userIdRef.current = userId;
   const onUpdateLastUsedFiles = useChatContext(
     (v) => v.actions.onUpdateLastUsedFiles
   );
@@ -393,7 +403,12 @@ export default function useAISocket({
             !document.hidden ||
             channelsObjRef.current[channelId]?.cancelledMessageIds?.has(
               pendingReply.messageId
-            )
+            ) ||
+            !shouldShowBackgroundAiReplyNotification({
+              channelId,
+              settings: chatNotificationSettingsRef.current,
+              userId: userIdRef.current
+            })
           ) {
             return;
           }

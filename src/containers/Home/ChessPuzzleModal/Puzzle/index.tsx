@@ -47,6 +47,7 @@ import {
 } from './styles';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
+import type { NormalAttemptSubmissionState } from '../normalAttemptSubmission';
 
 const breakDuration = 1000;
 const PROMOTION_TIMER_RETRY_BASE_DELAY_MS = 750;
@@ -84,14 +85,15 @@ export default function Puzzle({
   onSetTimeLeft,
   runResult,
   onSetRunResult,
-  runIdRef
+  runIdRef,
+  attemptSubmission,
+  onRetryAttemptSubmission
 }: {
   phase: PuzzlePhase;
   onSetPhase: (phase: PuzzlePhase) => void;
   attemptId: number | null;
   puzzle?: LichessPuzzle;
   onPuzzleComplete: (result: PuzzleResult) => void;
-  onGiveUp?: () => void;
   onMoveToNextPuzzle: () => void;
   selectedLevel?: number;
   onLevelChange: (level: number) => void;
@@ -112,6 +114,8 @@ export default function Puzzle({
     React.SetStateAction<'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'>
   >;
   runIdRef: React.RefObject<number | null>;
+  attemptSubmission: NormalAttemptSubmissionState;
+  onRetryAttemptSubmission: () => void | Promise<void>;
 }) {
   const inTimeAttackStill = useRef(inTimeAttack);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -634,6 +638,7 @@ export default function Puzzle({
             inTimeAttack={inTimeAttack}
             runResult={runResult}
             promoSolved={promoSolved}
+            normalAttemptControlsLocked={attemptSubmission.status !== 'idle'}
           />
         </div>
       </div>
@@ -662,6 +667,8 @@ export default function Puzzle({
             handleEnterInteractiveAnalysis({ from: 'final' })
           }
           onStartLevel={onStartLevel}
+          attemptSubmission={attemptSubmission}
+          onRetryAttemptSubmission={onRetryAttemptSubmission}
         />
       </div>
 
@@ -783,7 +790,13 @@ export default function Puzzle({
   async function handlePromotionClick() {
     let promotionStarted = false;
     try {
-      if (startingPromotionRef.current || startingPromotion) return;
+      if (
+        attemptSubmission.status !== 'idle' ||
+        startingPromotionRef.current ||
+        startingPromotion
+      ) {
+        return;
+      }
       startingPromotionRef.current = true;
       setStartingPromotion(true);
       setPromotionStartError('');
@@ -928,7 +941,7 @@ export default function Puzzle({
   }
 
   function handleGiveUpWithSolution() {
-    if (!puzzle) return;
+    if (!puzzle || attemptSubmission.status !== 'idle') return;
     onSetRunResult('FAIL');
     handleShowSolution();
     try {

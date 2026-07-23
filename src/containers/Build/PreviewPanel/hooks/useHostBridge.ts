@@ -25,6 +25,7 @@ import {
   authorizeTwinkleContentNavigation,
   createTwinkleContentNavigationConfirmationController
 } from '../helpers/twinkleContentNavigation';
+import { createBuildRuntimeImageGenerationController } from '../helpers/buildRuntimeImageGeneration';
 
 export {
   buildEmptyRuntimeObservationState,
@@ -175,7 +176,8 @@ export function useHostBridge({
   requestRefs,
   runtimeUploadsSyncRef,
   onAiUsagePolicyUpdateRef,
-  requestOpenContentConfirmationRef
+  requestOpenContentConfirmationRef,
+  requestBuildImageGenerationConfirmationRef
 }: UsePreviewHostBridgeArgs) {
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
@@ -191,6 +193,13 @@ export function useHostBridge({
     createTwinkleContentNavigationConfirmationController();
   contentNavigationConfirmationControllerRef.current =
     contentNavigationConfirmationController;
+  const imageGenerationControllerRef = useRef<ReturnType<
+    typeof createBuildRuntimeImageGenerationController
+  > | null>(null);
+  const imageGenerationController =
+    imageGenerationControllerRef.current ||
+    createBuildRuntimeImageGenerationController();
+  imageGenerationControllerRef.current = imageGenerationController;
   mountContextRef.current = mountContext;
   launchTargetRef.current = launchTarget;
   audioMutedRef.current = audioMuted;
@@ -1207,10 +1216,41 @@ export function useHostBridge({
             }
             break;
 
-          case 'ai:generate-image':
+          case 'ai:generate-image': {
             if (!previewAuth.userIdRef.current) {
               triggerGuestRestriction(previewAuth);
+              throw createPreviewBridgeError(
+                'Sign in to generate AI images.',
+                'AUTH_REQUIRED'
+              );
             }
+
+            const selectedImageEngine =
+              payload?.engine === 'gemini' ? 'gemini' : 'openai';
+            const selectedImageQuality =
+              payload?.quality === 'low' ||
+              payload?.quality === 'medium' ||
+              payload?.quality === 'high'
+                ? payload.quality
+                : 'high';
+            const imageAuthorization =
+              await imageGenerationController.authorize({
+                userActivation: navigator.userActivation,
+                request: {
+                  prompt: String(payload?.prompt || '').trim(),
+                  engine: selectedImageEngine,
+                  quality: selectedImageQuality
+                },
+                requestConfirmation:
+                  requestBuildImageGenerationConfirmationRef.current
+              });
+            if (!imageAuthorization.authorized) {
+              throw createPreviewBridgeError(
+                imageAuthorization.message,
+                imageAuthorization.code
+              );
+            }
+
             activeAiImageStatusTargets.set(id, {
               requestId: String(payload?.requestId || id),
               sourceWindow,
@@ -1220,13 +1260,14 @@ export function useHostBridge({
             const aiImageStatusTarget = activeAiImageStatusTargets.get(id);
             try {
               await ensureAiImageNotificationChannel();
-              response = await requestRefs.generateAiImageRef.current({
+              response = await requestRefs.callBuildRuntimeAiImageRef.current({
+                buildId: activeBuild.id,
                 prompt: payload?.prompt,
                 previousImageId: payload?.previousImageId,
                 previousResponseId: payload?.previousResponseId,
                 referenceImageB64: payload?.referenceImageB64,
-                engine: payload?.engine || 'openai',
-                quality: payload?.quality || 'high',
+                engine: selectedImageEngine,
+                quality: selectedImageQuality,
                 requestId: payload?.requestId || id
               });
               if (
@@ -1251,8 +1292,10 @@ export function useHostBridge({
               throw error;
             } finally {
               activeAiImageStatusTargets.delete(id);
+              imageAuthorization.release();
             }
             break;
+          }
 
           case 'viewer:get':
             response = { viewer: getViewerInfo(previewAuth) };
@@ -2582,6 +2625,7 @@ export function useHostBridge({
     buildId,
     capabilitySnapshotRef,
     contentNavigationConfirmationController,
+    imageGenerationController,
     messageTargetFrameRef,
     navigatePreviewFrameRef,
     previewAuth,
@@ -2594,6 +2638,7 @@ export function useHostBridge({
     requestRefs,
     runtimeUploadsSyncRef,
     onAiUsagePolicyUpdateRef,
+    requestBuildImageGenerationConfirmationRef,
     requestOpenContentConfirmationRef,
     runtimeExplorationPlanRef,
     runtimeOnly,

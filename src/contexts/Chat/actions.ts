@@ -5,6 +5,7 @@ import type {
   CanonicalChatFavoriteState,
   CanonicalChatReactionUpdate,
   CanonicalChatSidebarState,
+  ChatNotificationSettings,
   ChatQuickAccessState
 } from '~/types/chat';
 
@@ -1743,6 +1744,14 @@ export default function ChatActions(dispatch: Dispatch) {
         messageId,
         channelId,
         channel
+      });
+    },
+    onSetChatNotificationSettings(
+      settings: ChatNotificationSettings | null
+    ) {
+      return dispatch({
+        type: 'SET_CHAT_NOTIFICATION_SETTINGS',
+        settings
       });
     },
     onSetChessModalShown(shown: boolean) {

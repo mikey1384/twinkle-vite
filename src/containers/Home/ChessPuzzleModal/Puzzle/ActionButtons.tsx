@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { PuzzlePhase } from '~/types/chess';
+import type { NormalAttemptSubmissionState } from '../normalAttemptSubmission';
 
 export default function ActionButtons({
   inTimeAttack,
@@ -16,7 +17,9 @@ export default function ActionButtons({
   levelsLoading,
   onEnterInteractiveAnalysis,
   onStartLevel,
-  onShowSolution
+  onShowSolution,
+  attemptSubmission,
+  onRetryAttemptSubmission
 }: {
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
@@ -30,6 +33,8 @@ export default function ActionButtons({
   onEnterInteractiveAnalysis?: () => void;
   onStartLevel: (level: number) => void;
   onShowSolution?: () => void;
+  attemptSubmission: NormalAttemptSubmissionState;
+  onRetryAttemptSubmission: () => void | Promise<void>;
 }) {
   const startUnlockedLevel = () => {
     onStartLevel(maxLevelUnlocked);
@@ -70,6 +75,28 @@ export default function ActionButtons({
         💡 Show Solution
       </button>
     ) : null;
+
+  if (!inTimeAttack && attemptSubmission.status !== 'idle') {
+    return (
+      <div className={bottomBarCss} aria-live="polite">
+        {attemptSubmission.status === 'submitting' ? (
+          <div className={submissionStatusCss}>Saving your result…</div>
+        ) : (
+          <>
+            <div role="alert" className={submissionErrorCss}>
+              {attemptSubmission.message}
+            </div>
+            <button
+              onClick={onRetryAttemptSubmission}
+              className={successBtnCss}
+            >
+              Retry saving result
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
 
   if (timeTrialCompleted && phase !== 'ANALYSIS') {
     return (
@@ -176,6 +203,19 @@ const successBtnCss = css`
     font-size: 1.1rem;
     padding: 0.625rem 1rem;
   }
+`;
+
+const submissionStatusCss = css`
+  color: #334155;
+  font-size: 1.1rem;
+  font-weight: 700;
+`;
+
+const submissionErrorCss = css`
+  color: #b91c1c;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.4;
 `;
 
 const neutralBtnCss = css`

@@ -12,7 +12,6 @@ import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 export interface AttemptPayload {
   attemptId: number | null;
   solved: boolean;
-  selectedLevel: number;
 }
 
 export interface AttemptResponse {
@@ -118,7 +117,7 @@ export function useChessPuzzle() {
   }, []);
 
   const fetchPuzzle = useCallback(
-    async (level: number = 1) => {
+    async (level: number = 1): Promise<boolean> => {
       const requestEpoch = ++puzzleRequestEpochRef.current;
       setLoading(true);
       setPuzzle(null);
@@ -126,16 +125,29 @@ export function useChessPuzzle() {
       setError(null);
 
       try {
-        const { puzzle, attemptId } = await loadChessPuzzle({
+        const {
+          puzzle,
+          attemptId,
+          level: canonicalLevel
+        } = await loadChessPuzzle({
           level
         });
 
-        if (requestEpoch !== puzzleRequestEpochRef.current) return;
+        if (requestEpoch !== puzzleRequestEpochRef.current) return false;
         setPuzzle(puzzle);
         setAttemptId(attemptId);
+        if (
+          typeof canonicalLevel === 'number' &&
+          Number.isInteger(canonicalLevel) &&
+          canonicalLevel > 0
+        ) {
+          setCurrentLevel(canonicalLevel);
+        }
+        return true;
       } catch (e: any) {
-        if (requestEpoch !== puzzleRequestEpochRef.current) return;
+        if (requestEpoch !== puzzleRequestEpochRef.current) return false;
         setError(String(e));
+        return false;
       } finally {
         if (requestEpoch === puzzleRequestEpochRef.current) {
           setLoading(false);
@@ -155,8 +167,7 @@ export function useChessPuzzle() {
 
   async function submitAttempt({
     attemptId,
-    solved,
-    selectedLevel
+    solved
   }: AttemptPayload): Promise<AttemptResponse> {
     if (cancellingRef.current) {
       throw new Error('Operation cancelled');
@@ -165,8 +176,7 @@ export function useChessPuzzle() {
     try {
       const result = await recordChessAttemptResult({
         attemptId,
-        solved,
-        selectedLevel
+        solved
       });
       return result;
     } catch (error) {

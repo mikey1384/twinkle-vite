@@ -5,6 +5,7 @@ import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import {
+  useAppContext,
   useChatContext,
   useNotiContext,
   useKeyContext,
@@ -20,6 +21,7 @@ import LocalContext from '../../Context';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 
 const madeCallLabel = 'made a call';
 const onlineLabel = 'Online';
@@ -66,6 +68,17 @@ function ChatInfo({
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const aiUsagePolicy = todayStats?.aiUsagePolicy;
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
+  const notificationSettings = useChatContext(
+    (v) => v.state.chatNotificationSettings
+  );
+  const onSetChatNotificationSettings = useChatContext(
+    (v) => v.actions.onSetChatNotificationSettings
+  );
+  const updateChatNotificationMute = useAppContext(
+    (v) => v.requestHelpers.updateChatNotificationMute
+  );
+  const [notificationMuteSaving, setNotificationMuteSaving] = useState(false);
+  const [notificationMuteError, setNotificationMuteError] = useState('');
 
   const {
     state: { aiCallChannelId }
@@ -371,6 +384,8 @@ function ChatInfo({
     () => isZeroChat || isCielChat,
     [isZeroChat, isCielChat]
   );
+  const notificationsMuted =
+    notificationSettings?.mutedChannelIds.includes(selectedChannelId) || false;
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo">
@@ -483,6 +498,62 @@ function ChatInfo({
         </div>
       </div>
 
+      <div
+        className={css`
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1.2rem;
+          margin: 0 1rem 1.2rem;
+          padding: 1rem 1.2rem;
+          border: 1px solid var(--ui-border);
+          border-radius: ${borderRadius};
+          background: ${Color.wellGray(0.18)};
+          text-align: left;
+        `}
+      >
+        <div>
+          <div
+            className={css`
+              color: ${Color.darkerGray()};
+              font-size: 1.2rem;
+              font-weight: 700;
+            `}
+          >
+            Mute notifications
+          </div>
+          <div
+            className={css`
+              margin-top: 0.25rem;
+              color: ${Color.darkGray()};
+              font-size: 1.1rem;
+              line-height: 1.4;
+            `}
+          >
+            Overrides your notification settings for this conversation.
+          </div>
+          {notificationMuteError && (
+            <div
+              className={css`
+                margin-top: 0.4rem;
+                color: ${Color.rose()};
+                font-size: 1.1rem;
+                font-weight: 700;
+              `}
+            >
+              {notificationMuteError}
+            </div>
+          )}
+        </div>
+        <SwitchButton
+          ariaLabel="Mute notifications for this conversation"
+          checked={notificationsMuted}
+          disabled={!notificationSettings || notificationMuteSaving}
+          onChange={handleNotificationMuteChange}
+          small
+        />
+      </div>
+
       {!isAIChat && (
         <Members
           channelId={selectedChannelId}
@@ -520,6 +591,25 @@ function ChatInfo({
       />
     </ErrorBoundary>
   );
+
+  async function handleNotificationMuteChange() {
+    if (!notificationSettings || notificationMuteSaving) return;
+    setNotificationMuteSaving(true);
+    setNotificationMuteError('');
+    try {
+      const settings = await updateChatNotificationMute({
+        channelId: selectedChannelId,
+        muted: !notificationsMuted
+      });
+      onSetChatNotificationSettings(settings);
+    } catch (error: any) {
+      setNotificationMuteError(
+        error?.message || 'Could not update this conversation.'
+      );
+    } finally {
+      setNotificationMuteSaving(false);
+    }
+  }
 }
 
 export default memo(ChatInfo);

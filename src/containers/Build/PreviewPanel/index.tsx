@@ -45,6 +45,7 @@ import type {
   PreviewPanelProps
 } from './types';
 import type { PreviewOpenContentConfirmationRequest } from './types/previewHostBridgeTypes';
+import type { BuildRuntimeImageGenerationConfirmationRequest } from './helpers/buildRuntimeImageGeneration';
 import VersionHistoryModal from './VersionHistoryModal';
 import {
   EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
@@ -99,6 +100,26 @@ const openContentDestinationClass = css`
   overflow: auto;
   overflow-wrap: anywhere;
   text-align: center;
+`;
+
+const imageGenerationConfirmationClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 100%;
+  text-align: left;
+`;
+
+const imageGenerationPromptClass = css`
+  max-width: 100%;
+  max-height: 12rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  font-size: 1.1rem;
 `;
 
 const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
@@ -624,6 +645,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       confirmModal: openContentConfirmModal,
       requestConfirm: requestOpenContentConfirm
     } = useConfirmModal();
+    const {
+      confirmModal: imageGenerationConfirmModal,
+      requestConfirm: requestImageGenerationConfirm
+    } = useConfirmModal();
     const requestOpenContentConfirmationRef = useRef<
       | ((request: PreviewOpenContentConfirmationRequest) => Promise<boolean>)
       | null
@@ -653,6 +678,44 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         requestOpenContentConfirmationRef.current = null;
       };
     }, [requestOpenContentConfirm]);
+    const requestBuildImageGenerationConfirmationRef = useRef<
+      | ((
+          request: BuildRuntimeImageGenerationConfirmationRequest
+        ) => Promise<boolean>)
+      | null
+    >(null);
+    useEffect(() => {
+      requestBuildImageGenerationConfirmationRef.current = ({
+        prompt,
+        engine,
+        quality
+      }) => {
+        return requestImageGenerationConfirm({
+          title: 'Generate an image with AI Energy?',
+          description: (
+            <span className={imageGenerationConfirmationClass}>
+              <span>
+                <strong>{build.title || 'This Build app'}</strong> wants to
+                generate an image using your AI Energy.
+              </span>
+              <span className={imageGenerationPromptClass}>
+                <strong>Prompt:</strong> {prompt || '(empty prompt)'}
+              </span>
+              <span>
+                Provider: {engine === 'gemini' ? 'Gemini' : 'OpenAI'},{' '}
+                {quality} quality. Each approval authorizes one generation.
+              </span>
+            </span>
+          ),
+          descriptionFontSize: '1.1rem',
+          confirmButtonLabel: 'Generate image',
+          modalOverModal: true
+        });
+      };
+      return () => {
+        requestBuildImageGenerationConfirmationRef.current = null;
+      };
+    }, [build.title, requestImageGenerationConfirm]);
     const {
       areProjectFileMutationsLocked,
       ensureBuildApiTokenForBuild,
@@ -1029,6 +1092,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestRefs: previewRequestRefs,
       runtimeUploadsSyncRef: onRuntimeUploadsSyncRef,
       onAiUsagePolicyUpdateRef,
+      requestBuildImageGenerationConfirmationRef,
       requestOpenContentConfirmationRef
     });
 
@@ -1415,6 +1479,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         )}
         {projectFileConfirmModal}
         {openContentConfirmModal}
+        {imageGenerationConfirmModal}
       </div>
     );
   }

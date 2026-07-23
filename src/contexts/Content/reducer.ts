@@ -1,53 +1,7 @@
 import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 import { Comment, Reward, Subject } from '~/types';
-
-// Realtime comment/reply uploads can be delivered more than once (socket
-// fan-out, multi-key reducer writes, etc.). List state must stay idempotent by
-// comment id so the same server row never appears twice live; reload already
-// looks correct because it reloads from the DB.
-function appendUniqueById<T extends { id?: number | string }>(
-  existing: T[] | undefined | null,
-  items: T[] | undefined | null
-): T[] {
-  const current = existing || [];
-  if (!items?.length) return current;
-  const seen = new Set<number>();
-  for (const item of current) {
-    const id = Number(item?.id);
-    if (id > 0) seen.add(id);
-  }
-  const next = current.slice();
-  for (const item of items) {
-    const id = Number(item?.id);
-    if (id > 0 && seen.has(id)) continue;
-    if (id > 0) seen.add(id);
-    next.push(item);
-  }
-  return next;
-}
-
-function prependUniqueById<T extends { id?: number | string }>(
-  items: T[] | undefined | null,
-  existing: T[] | undefined | null
-): T[] {
-  const current = existing || [];
-  if (!items?.length) return current;
-  const existingIds = new Set<number>();
-  for (const item of current) {
-    const id = Number(item?.id);
-    if (id > 0) existingIds.add(id);
-  }
-  const uniqueNew: T[] = [];
-  const seenNew = new Set<number>();
-  for (const item of items) {
-    const id = Number(item?.id);
-    if (id > 0 && (existingIds.has(id) || seenNew.has(id))) continue;
-    if (id > 0) seenNew.add(id);
-    uniqueNew.push(item);
-  }
-  return uniqueNew.length ? uniqueNew.concat(current) : current;
-}
+import { appendUniqueById, prependUniqueById } from './idListHelpers';
 
 function buildObjectMatches(build: any, buildId: number) {
   if (!build || (build.contentType && build.contentType !== 'build')) {
@@ -179,7 +133,7 @@ export default function ContentReducer(
         newState[contentKey] = {
           ...prevContentState,
           rewards: contentMatches
-            ? (prevContentState.rewards || []).concat(action.reward)
+            ? appendUniqueById(prevContentState.rewards, [action.reward])
             : prevContentState.rewards,
           comments:
             action.contentType === 'comment'
@@ -188,14 +142,14 @@ export default function ContentReducer(
                   return {
                     ...comment,
                     rewards: commentMatches
-                      ? (comment.rewards || []).concat(action.reward)
+                      ? appendUniqueById(comment.rewards, [action.reward])
                       : comment.rewards,
                     replies: (comment.replies || []).map((reply) => {
                       const replyMatches = reply.id === action.contentId;
                       return {
                         ...reply,
                         rewards: replyMatches
-                          ? (reply.rewards || []).concat(action.reward)
+                          ? appendUniqueById(reply.rewards, [action.reward])
                           : reply.rewards
                       };
                     })
@@ -209,7 +163,7 @@ export default function ContentReducer(
             return {
               ...subject,
               rewards: subjectMatches
-                ? (subject.rewards || []).concat(action.reward)
+                ? appendUniqueById(subject.rewards, [action.reward])
                 : subject.rewards,
               comments:
                 action.contentType === 'comment'
@@ -218,14 +172,14 @@ export default function ContentReducer(
                       return {
                         ...comment,
                         rewards: commentMatches
-                          ? (comment.rewards || []).concat(action.reward)
+                          ? appendUniqueById(comment.rewards, [action.reward])
                           : comment.rewards,
                         replies: (comment.replies || []).map((reply) => {
                           const replyMatches = reply.id === action.contentId;
                           return {
                             ...reply,
                             rewards: replyMatches
-                              ? (reply.rewards || []).concat(action.reward)
+                              ? appendUniqueById(reply.rewards, [action.reward])
                               : reply.rewards
                           };
                         })
@@ -243,9 +197,10 @@ export default function ContentReducer(
                       rewards:
                         prevContentState.targetObj.comment.id ===
                           action.contentId && action.contentType === 'comment'
-                          ? (
-                              prevContentState.targetObj.comment.rewards || []
-                            ).concat(action.reward)
+                          ? appendUniqueById(
+                              prevContentState.targetObj.comment.rewards,
+                              [action.reward]
+                            )
                           : prevContentState.targetObj.comment.rewards
                     }
                   : undefined,
@@ -255,9 +210,10 @@ export default function ContentReducer(
                       rewards:
                         prevContentState.targetObj.subject.id ===
                           action.contentId && action.contentType === 'subject'
-                          ? (
-                              prevContentState.targetObj.subject.rewards || []
-                            ).concat(action.reward)
+                          ? appendUniqueById(
+                              prevContentState.targetObj.subject.rewards,
+                              [action.reward]
+                            )
                           : prevContentState.targetObj.subject.rewards
                     }
                   : undefined

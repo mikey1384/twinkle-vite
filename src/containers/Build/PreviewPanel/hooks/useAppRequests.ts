@@ -15,6 +15,9 @@ export default function useAppRequests() {
   const callBuildRuntimeAiChat = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiChat
   );
+  const callBuildRuntimeAiImage = useAppContext(
+    (v) => v.requestHelpers.callBuildRuntimeAiImage
+  );
   const callBuildRuntimeAiChatStream = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiChatStream
   );
@@ -26,9 +29,6 @@ export default function useAppRequests() {
   );
   const callBuildRuntimeCharacterChatStream = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeCharacterChatStream
-  );
-  const generateAIImage = useAppContext(
-    (v) => v.requestHelpers.generateAIImage
   );
   const listBuildArtifacts = useAppContext(
     (v) => v.requestHelpers.listBuildArtifacts
@@ -245,6 +245,7 @@ export default function useAppRequests() {
 
   const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
   const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
+  const callBuildRuntimeAiImageRef = useRef(callBuildRuntimeAiImage);
   const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
   const callBuildRuntimeCharacterChatRef = useRef(
@@ -253,7 +254,6 @@ export default function useAppRequests() {
   const callBuildRuntimeCharacterChatStreamRef = useRef(
     callBuildRuntimeCharacterChatStream
   );
-  const generateAiImageRef = useRef(generateAIImage);
   const listBuildArtifactsRef = useRef(listBuildArtifacts);
   const listBuildArtifactVersionsRef = useRef(listBuildArtifactVersions);
   const restoreBuildArtifactVersionRef = useRef(restoreBuildArtifactVersion);
@@ -349,11 +349,11 @@ export default function useAppRequests() {
   const previewRequestRefs = useRef<PreviewHostBridgeRequestRefs>({
     loadBuildAiPromptsRef,
     callBuildRuntimeAiChatRef,
+    callBuildRuntimeAiImageRef,
     callBuildRuntimeAiChatStreamRef,
     callBuildRuntimeAiObjectRef,
     callBuildRuntimeCharacterChatRef,
     callBuildRuntimeCharacterChatStreamRef,
-    generateAiImageRef,
     queryViewerDbRef,
     execViewerDbRef,
     getBuildApiUserRef,

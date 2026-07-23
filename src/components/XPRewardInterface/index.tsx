@@ -291,9 +291,10 @@ export default function XPRewardInterface({
   ) : null;
 
   async function handleRewardSubmit() {
+    if (rewardingRef.current) return;
+    rewardingRef.current = true;
+    setRewarding(true);
     try {
-      rewardingRef.current = true;
-      setRewarding(true);
       const { alreadyRewarded, reward, netCoins } = await rewardUser({
         maxRewardAmountForOnePerson,
         explanation: banned?.posting
@@ -329,7 +330,6 @@ export default function XPRewardInterface({
       }
       handleSetComment('');
       handleSetSelectedAmount(0);
-      rewardingRef.current = false;
       onSetXpRewardInterfaceShown({
         contentId,
         contentType,
@@ -338,6 +338,7 @@ export default function XPRewardInterface({
     } catch (error) {
       console.error(error);
     } finally {
+      rewardingRef.current = false;
       setRewarding(false);
     }
   }

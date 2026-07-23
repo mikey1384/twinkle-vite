@@ -8,6 +8,31 @@ export interface ChatQuickAccessPartner {
   isAi: boolean;
 }
 
+export type BackgroundGroupNotificationMode = 'all' | 'mentions' | 'off';
+
+export interface ChatNotificationPreferences {
+  backgroundDirectMessages: boolean;
+  backgroundGroupMode: BackgroundGroupNotificationMode;
+  backgroundAiReplies: boolean;
+  closedDirectMessages: boolean;
+  closedGroupMentions: boolean;
+}
+
+export interface MutedChatConversation {
+  channelId: number;
+  title: string;
+  twoPeople: boolean;
+  updatedAt: number;
+}
+
+export interface ChatNotificationSettings {
+  userId: number;
+  revision: number;
+  preferences: ChatNotificationPreferences;
+  mutedChannelIds: number[];
+  mutedConversations: MutedChatConversation[];
+}
+
 export type ChatQuickAccessMode = 'automatic' | 'custom';
 
 export interface ChatQuickAccessState {

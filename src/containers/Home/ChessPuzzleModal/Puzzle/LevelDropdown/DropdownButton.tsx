@@ -40,7 +40,12 @@ export default React.forwardRef<
     }
   `;
   return (
-    <button ref={ref} className={buttonCls} onClick={onToggle}>
+    <button
+      ref={ref}
+      className={buttonCls}
+      onClick={onToggle}
+      disabled={disabled}
+    >
       <span>{label}</span>
       <span
         className={css`

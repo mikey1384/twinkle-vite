@@ -3,11 +3,11 @@ import type { AsyncRequestRef } from './previewBridgeAuth';
 export interface PreviewHostBridgeRequestRefs {
   loadBuildAiPromptsRef: AsyncRequestRef;
   callBuildRuntimeAiChatRef: AsyncRequestRef;
+  callBuildRuntimeAiImageRef: AsyncRequestRef;
   callBuildRuntimeAiChatStreamRef: AsyncRequestRef;
   callBuildRuntimeAiObjectRef: AsyncRequestRef;
   callBuildRuntimeCharacterChatRef: AsyncRequestRef;
   callBuildRuntimeCharacterChatStreamRef: AsyncRequestRef;
-  generateAiImageRef: AsyncRequestRef;
   queryViewerDbRef: AsyncRequestRef;
   execViewerDbRef: AsyncRequestRef;
   getBuildApiUserRef: AsyncRequestRef;

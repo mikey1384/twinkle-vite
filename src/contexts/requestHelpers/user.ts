@@ -5,6 +5,10 @@ import { clientVersion } from '~/constants/defaultValues';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 import { getTwinkleDeviceId, setStoredItem } from '~/helpers/userDataHelpers';
+import type {
+  ChatNotificationPreferences,
+  ChatNotificationSettings
+} from '~/types/chat';
 
 export default function userRequestHelpers({
   auth,
@@ -1213,6 +1217,52 @@ export default function userRequestHelpers({
         return { coins, donatedCoins, achievementUnlocked };
       } catch (error) {
         return handleError(error);
+      }
+    },
+    async loadChatNotificationSettings(): Promise<ChatNotificationSettings> {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/chatNotificationSettings`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        await handleError(error);
+        throw error;
+      }
+    },
+    async updateChatNotificationPreferences(
+      preferences: Partial<ChatNotificationPreferences>
+    ): Promise<ChatNotificationSettings> {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/chatNotificationSettings/preferences`,
+          { preferences },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        await handleError(error);
+        throw error;
+      }
+    },
+    async updateChatNotificationMute({
+      channelId,
+      muted
+    }: {
+      channelId: number;
+      muted: boolean;
+    }): Promise<ChatNotificationSettings> {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/chatNotificationSettings/mutes/${channelId}`,
+          { muted },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        await handleError(error);
+        throw error;
       }
     },
     async loadPushVapidKey() {

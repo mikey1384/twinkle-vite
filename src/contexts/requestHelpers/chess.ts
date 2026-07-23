@@ -136,17 +136,15 @@ export default function chessRequestHelpers({
     // New helper: record result only without fetching next puzzle
     async recordChessAttemptResult({
       attemptId,
-      solved,
-      selectedLevel
+      solved
     }: {
       attemptId: number | null;
       solved: boolean;
-      selectedLevel?: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/chess/attempt/result`,
-          { attemptId, solved, selectedLevel },
+          { attemptId, solved },
           auth()
         );
         return data;

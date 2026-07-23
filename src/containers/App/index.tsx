@@ -52,7 +52,7 @@ import {
 } from '~/helpers';
 import {
   chatPushAutoEnrollEligible,
-  subscribeToChatPush
+  setupChatPushBestEffort
 } from '~/helpers/desktopNotifications';
 import { v1 as uuidv1 } from 'uuid';
 import {
@@ -257,6 +257,9 @@ export default function App() {
   const recordUserTraffic = useAppContext(
     (v) => v.requestHelpers.recordUserTraffic
   );
+  const loadChatNotificationSettings = useAppContext(
+    (v) => v.requestHelpers.loadChatNotificationSettings
+  );
   const loadPushVapidKey = useAppContext(
     (v) => v.requestHelpers.loadPushVapidKey
   );
@@ -295,6 +298,9 @@ export default function App() {
 
   const prevUserId = useRef(userId);
   const chatPushEnsuredUserIdRef = useRef<number | null>(null);
+  const onSetChatNotificationSettings = useChatContext(
+    (v) => v.actions.onSetChatNotificationSettings
+  );
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
@@ -566,6 +572,32 @@ export default function App() {
   }, [userId]);
 
   useEffect(() => {
+    let cancelled = false;
+    onSetChatNotificationSettings(null);
+    if (!userId) return;
+    loadSettings();
+
+    async function loadSettings() {
+      try {
+        const settings = await loadChatNotificationSettings();
+        if (!cancelled && Number(settings?.userId) === Number(userId)) {
+          onSetChatNotificationSettings(settings);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to load chat notification settings:', error);
+        }
+      }
+    }
+
+    return () => {
+      cancelled = true;
+    };
+    // Stable context actions and request helpers are intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  useEffect(() => {
     // Ensure a server-side push subscription exists for devices that enabled
     // chat notifications before the push rollout (or whose browser rotated
     // the endpoint, or that re-log-in after logout tore the subscription
@@ -582,16 +614,10 @@ export default function App() {
     ensureChatPushSubscription();
 
     async function ensureChatPushSubscription() {
-      try {
-        const publicKey = await loadPushVapidKey();
-        if (!publicKey) return;
-        const subscription = await subscribeToChatPush(publicKey);
-        if (subscription) {
-          await savePushSubscription(subscription);
-        }
-      } catch {
-        // push is best-effort; the settings toggle can always re-enroll
-      }
+      await setupChatPushBestEffort({
+        loadVapidKey: loadPushVapidKey,
+        saveSubscription: savePushSubscription
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);

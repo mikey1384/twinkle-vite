@@ -12,6 +12,7 @@ import { objectify } from '~/helpers';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { v1 as uuidv1 } from 'uuid';
 import type { CanonicalChatChannelVisibility } from '~/types/chat';
+import { shouldApplyChatNotificationSettings } from './notificationSettingsRevision';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -6234,6 +6235,19 @@ export default function ChatReducer(
             loaded: state.channelsObj[action.channel.id]?.loaded || false
           }
         }
+      };
+    case 'SET_CHAT_NOTIFICATION_SETTINGS':
+      if (
+        !shouldApplyChatNotificationSettings({
+          currentSettings: state.chatNotificationSettings,
+          incomingSettings: action.settings
+        })
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        chatNotificationSettings: action.settings
       };
     case 'SET_CHESS_MODAL_SHOWN':
       return {

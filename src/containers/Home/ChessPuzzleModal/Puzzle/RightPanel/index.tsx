@@ -27,7 +27,8 @@ export default function RightPanel({
   currentStreak,
   inTimeAttack,
   runResult,
-  promoSolved
+  promoSolved,
+  normalAttemptControlsLocked
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
@@ -49,6 +50,7 @@ export default function RightPanel({
   inTimeAttack: boolean;
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   promoSolved: number;
+  normalAttemptControlsLocked: boolean;
 }) {
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
 
@@ -58,7 +60,7 @@ export default function RightPanel({
     flex-direction: column;
     gap: 0.75rem;
     background: #ffffff;
-  border: 1px solid var(--ui-border);
+    border: 1px solid var(--ui-border);
     border-radius: 8px;
     padding: 1.25rem;
     align-self: start;
@@ -131,6 +133,7 @@ export default function RightPanel({
               levelsLoading={levelsLoading}
               currentLevel={currentLevel}
               onLevelChange={onLevelChange}
+              disabled={normalAttemptControlsLocked}
             />
           )}
 
@@ -156,6 +159,7 @@ export default function RightPanel({
               <button
                 className={primaryBtnCss}
                 onClick={() => onLevelChange?.(maxLevelUnlocked)}
+                disabled={normalAttemptControlsLocked}
                 aria-label="Go to XP Levels"
               >
                 <Icon icon="bolt" style={{ fontSize: 16 }} />
@@ -212,6 +216,7 @@ export default function RightPanel({
                 startingPromotion={startingPromotion}
                 onPromotionClick={onPromotionClick}
                 onUnlockPromotion={onUnlockPromotion}
+                disabled={normalAttemptControlsLocked}
               />
               {needsPromotion && promotionStartError && (
                 <div

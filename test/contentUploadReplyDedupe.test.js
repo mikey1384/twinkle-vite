@@ -11,16 +11,24 @@ function readSource(path) {
 readSource.cache = Object.create(null);
 
 const reducerSource = readSource('src/contexts/Content/reducer.ts');
+const idListHelpersSource = readSource(
+  'src/contexts/Content/idListHelpers.ts'
+);
 
 assert.match(
-  reducerSource,
+  idListHelpersSource,
   /function appendUniqueById/,
   'Expected appendUniqueById helper for idempotent comment list updates'
 );
 assert.match(
-  reducerSource,
+  idListHelpersSource,
   /function prependUniqueById/,
   'Expected prependUniqueById helper for idempotent comment list updates'
+);
+assert.match(
+  reducerSource,
+  /import \{ appendUniqueById, prependUniqueById \} from '\.\/idListHelpers';/,
+  'Expected Content reducer to use the shared id-list helpers'
 );
 
 const uploadReplyCase = reducerSource.match(

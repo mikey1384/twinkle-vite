@@ -150,6 +150,32 @@ export async function subscribeToChatPush(vapidPublicKey: string): Promise<{
   }
 }
 
+export async function setupChatPushBestEffort({
+  loadVapidKey,
+  saveSubscription,
+  subscribe = subscribeToChatPush
+}: {
+  loadVapidKey: () => Promise<string>;
+  saveSubscription: (subscription: {
+    endpoint: string;
+    keys: { p256dh: string; auth: string };
+  }) => Promise<unknown>;
+  subscribe?: typeof subscribeToChatPush;
+}): Promise<'enabled' | 'failed'> {
+  try {
+    const publicKey = await loadVapidKey();
+    if (!publicKey) return 'failed';
+    const subscription = await subscribe(publicKey);
+    if (!subscription) return 'failed';
+    await saveSubscription(subscription);
+    return 'enabled';
+  } catch {
+    // Web Push is secondary to browser notifications. Its setup outcome must
+    // never change the confirmed local Notification permission/preference.
+    return 'failed';
+  }
+}
+
 export async function unsubscribeFromChatPush(): Promise<string | null> {
   if (
     typeof navigator === 'undefined' ||
@@ -157,16 +183,20 @@ export async function unsubscribeFromChatPush(): Promise<string | null> {
   ) {
     return null;
   }
+  let endpoint: string | null = null;
   try {
-    const registration =
-      await navigator.serviceWorker.getRegistration(CHAT_PUSH_SW_URL);
+    const registration = await navigator.serviceWorker.getRegistration(
+      CHAT_PUSH_SW_URL
+    );
     const subscription = await registration?.pushManager.getSubscription();
-    if (!subscription) return null;
-    const endpoint = subscription.endpoint;
+    if (!subscription) return endpoint;
+    endpoint = subscription.endpoint;
     await subscription.unsubscribe();
     return endpoint;
   } catch {
-    return null;
+    // Return a discovered endpoint even if local unsubscription failed so the
+    // caller can still remove the canonical server subscription.
+    return endpoint;
   }
 }
 

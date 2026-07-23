@@ -14,6 +14,7 @@ import {
   useHomeContext
 } from '~/contexts';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
+import { shouldShowBackgroundChatMessageNotification } from '~/helpers/chatNotificationPolicy';
 import {
   getChatUnreadActivityRevision,
   markChatUnreadActivity
@@ -67,6 +68,9 @@ export default function useChatSocket({
     (v) => v.state.quickAccess?.partners
   );
   const numUnreads = useChatContext((v) => v.state.numUnreads || 0);
+  const chatNotificationSettings = useChatContext(
+    (v) => v.state.chatNotificationSettings
+  );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
   const channelsObjRef = useRef(channelsObj);
@@ -78,6 +82,7 @@ export default function useChatSocket({
   const quickAccessModeRef = useRef(quickAccessMode);
   const quickAccessPartnersRef = useRef(quickAccessPartners);
   const numUnreadsRef = useRef(numUnreads);
+  const chatNotificationSettingsRef = useRef(chatNotificationSettings);
   const quickAccessRefreshTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
@@ -109,6 +114,7 @@ export default function useChatSocket({
   quickAccessModeRef.current = quickAccessMode;
   quickAccessPartnersRef.current = quickAccessPartners;
   numUnreadsRef.current = numUnreads;
+  chatNotificationSettingsRef.current = chatNotificationSettings;
 
   const onApplyCanonicalChatReaction = useChatContext(
     (v) => v.actions.onApplyCanonicalChatReaction
@@ -177,6 +183,9 @@ export default function useChatSocket({
     (v) => v.actions.onEnterChannelWithId
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onSetChatNotificationSettings = useChatContext(
+    (v) => v.actions.onSetChatNotificationSettings
+  );
   const onApplyCanonicalChatSidebarState = useChatContext(
     (v) => v.actions.onApplyCanonicalChatSidebarState
   );
@@ -335,6 +344,10 @@ export default function useChatSocket({
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('chat_invitation_received', handleChatInvitation);
+    socket.on(
+      'chat_notification_settings_updated',
+      handleChatNotificationSettingsUpdated
+    );
     socket.on('chat_message_deleted', handleChatMessageDeleted);
     socket.on('chat_message_edited', onEditMessage);
     socket.on('chat_reaction_added', handleLegacyChatReactionAdded);
@@ -378,6 +391,10 @@ export default function useChatSocket({
       socket.off('busy_status_changed', handleBusyStatusChange);
       socket.off('channel_settings_changed', onChangeChannelSettings);
       socket.off('chat_invitation_received', handleChatInvitation);
+      socket.off(
+        'chat_notification_settings_updated',
+        handleChatNotificationSettingsUpdated
+      );
       socket.off('chat_message_deleted', handleChatMessageDeleted);
       socket.off('chat_message_edited', onEditMessage);
       socket.off('chat_reaction_added', handleLegacyChatReactionAdded);
@@ -413,6 +430,11 @@ export default function useChatSocket({
       ) {
         onChangeAwayStatus({ userId, isAway });
       }
+    }
+
+    function handleChatNotificationSettingsUpdated(settings: any) {
+      if (Number(settings?.userId) !== Number(userId)) return;
+      onSetChatNotificationSettings(settings);
     }
 
     function handleChatMessageDeleted(payload: any) {
@@ -804,7 +826,10 @@ export default function useChatSocket({
       }
       socket.emit('join_chat_group', message.channelId);
       if (message.userId !== userId && document.hidden) {
-        notifyMessageReceivedWhileAway({ message, channel: { pathId } });
+        notifyMessageReceivedWhileAway({
+          message,
+          channel: { pathId, twoPeople: isTwoPeople }
+        });
       }
       onReceiveFirstMsg({
         message,
@@ -987,6 +1012,16 @@ export default function useChatSocket({
     }) {
       const channelObj =
         channelsObjRef.current?.[message.channelId] || channel || {};
+      if (
+        !shouldShowBackgroundChatMessageNotification({
+          channel: channelObj,
+          message,
+          settings: chatNotificationSettingsRef.current,
+          userId
+        })
+      ) {
+        return;
+      }
       const senderName = message.username || 'Someone';
       const title =
         channelObj.channelName && !channelObj.twoPeople

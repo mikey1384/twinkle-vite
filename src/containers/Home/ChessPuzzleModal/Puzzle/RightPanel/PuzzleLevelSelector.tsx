@@ -7,13 +7,15 @@ function PuzzleLevelSelector({
   maxLevelUnlocked,
   levelsLoading,
   currentLevel,
-  onLevelChange
+  onLevelChange,
+  disabled
 }: {
   levels: number[] | null;
   maxLevelUnlocked: number;
   levelsLoading: boolean;
   currentLevel: number;
   onLevelChange?: (level: number) => void;
+  disabled: boolean;
 }) {
   if (!levels || levels.length <= 1) return null;
 
@@ -58,7 +60,7 @@ function PuzzleLevelSelector({
         items={items}
         selectedLabel={currentLabel}
         onSelect={(value) => onLevelChange?.(value)}
-        disabled={levelsLoading}
+        disabled={levelsLoading || disabled}
       />
     </div>
   );

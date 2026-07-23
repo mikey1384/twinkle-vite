@@ -12,7 +12,8 @@ export default function PromotionCTA({
   nextDayTimestamp,
   startingPromotion,
   onPromotionClick,
-  onUnlockPromotion
+  onUnlockPromotion,
+  disabled
 }: {
   needsPromotion: boolean;
   inTimeAttack: boolean;
@@ -21,6 +22,7 @@ export default function PromotionCTA({
   startingPromotion: boolean;
   onPromotionClick: () => void | Promise<void>;
   onUnlockPromotion: () => void | Promise<void>;
+  disabled: boolean;
 }) {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [unlocking, setUnlocking] = useState(false);
@@ -67,7 +69,7 @@ export default function PromotionCTA({
     return (
       <button
         onClick={onPromotionClick}
-        disabled={startingPromotion}
+        disabled={startingPromotion || disabled}
         className={css`
           font-family: 'Courier New', monospace;
           cursor: pointer;
@@ -88,7 +90,8 @@ export default function PromotionCTA({
           border-radius: 8px;
           padding: 0.75rem 1.25rem;
           margin-bottom: 0.75rem;
-          box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+          box-shadow:
+            inset 2px 2px 4px rgba(255, 255, 255, 0.8),
             inset -2px -2px 4px rgba(220, 38, 38, 0.1),
             0 4px 12px rgba(220, 38, 38, 0.3);
           text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
@@ -99,20 +102,23 @@ export default function PromotionCTA({
           @keyframes promotion-pulse {
             0% {
               transform: scale(1);
-              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+              box-shadow:
+                inset 2px 2px 4px rgba(255, 255, 255, 0.8),
                 inset -2px -2px 4px rgba(220, 38, 38, 0.1),
                 0 4px 12px rgba(220, 38, 38, 0.3);
             }
             50% {
               transform: scale(1.04);
 
-              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+              box-shadow:
+                inset 2px 2px 4px rgba(255, 255, 255, 0.8),
                 inset -2px -2px 4px rgba(220, 38, 38, 0.1),
                 0 6px 14px rgba(220, 38, 38, 0.35);
             }
             100% {
               transform: scale(1);
-              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+              box-shadow:
+                inset 2px 2px 4px rgba(255, 255, 255, 0.8),
                 inset -2px -2px 4px rgba(220, 38, 38, 0.1),
                 0 4px 12px rgba(220, 38, 38, 0.3);
             }
@@ -141,7 +147,8 @@ export default function PromotionCTA({
               border-top-color: #f87171;
               border-left-color: #f87171;
               animation: none;
-              box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+              box-shadow:
+                inset 2px 2px 4px rgba(255, 255, 255, 0.9),
                 inset -2px -2px 4px rgba(220, 38, 38, 0.15),
                 0 6px 16px rgba(220, 38, 38, 0.4);
               transform: translateY(-1px);
@@ -159,7 +166,8 @@ export default function PromotionCTA({
             border-bottom-color: #fca5a5;
             border-right-color: #fca5a5;
             animation: none;
-            box-shadow: inset -1px -1px 2px rgba(255, 255, 255, 0.9),
+            box-shadow:
+              inset -1px -1px 2px rgba(255, 255, 255, 0.9),
               inset 1px 1px 2px rgba(220, 38, 38, 0.2),
               0 2px 8px rgba(220, 38, 38, 0.2);
             transform: translateY(1px);
@@ -183,7 +191,7 @@ export default function PromotionCTA({
   }
 
   if (cooldownUntilTomorrow) {
-    const canAffordUnlock = twinkleCoins >= 100000;
+    const canAffordUnlock = !disabled && twinkleCoins >= 100000;
 
     return (
       <div style={{ marginBottom: '0.75rem' }}>
@@ -221,21 +229,23 @@ export default function PromotionCTA({
           disabled={!canAffordUnlock || unlocking}
           className={css`
             font-family: 'Courier New', monospace;
-            cursor: ${canAffordUnlock && !unlocking
-              ? 'pointer'
-              : 'not-allowed'};
+            cursor: ${
+              canAffordUnlock && !unlocking ? 'pointer' : 'not-allowed'
+            };
             display: flex;
-            background: ${canAffordUnlock && !unlocking
-              ? 'linear-gradient(145deg, #fef3c7, #fbbf24)'
-              : 'linear-gradient(145deg, #f9fafb, #e5e7eb)'};
+            background: ${
+              canAffordUnlock && !unlocking
+                ? 'linear-gradient(145deg, #fef3c7, #fbbf24)'
+                : 'linear-gradient(145deg, #f9fafb, #e5e7eb)'
+            };
             border: 3px solid
               ${canAffordUnlock && !unlocking ? '#f59e0b' : '#d1d5db'};
-            border-top-color: ${canAffordUnlock && !unlocking
-              ? '#fbbf24'
-              : '#e5e7eb'};
-            border-left-color: ${canAffordUnlock && !unlocking
-              ? '#fbbf24'
-              : '#e5e7eb'};
+            border-top-color: ${
+              canAffordUnlock && !unlocking ? '#fbbf24' : '#e5e7eb'
+            };
+            border-left-color: ${
+              canAffordUnlock && !unlocking ? '#fbbf24' : '#e5e7eb'
+            };
             color: ${canAffordUnlock && !unlocking ? '#92400e' : '#6b7280'};
             justify-content: center;
             align-items: center;
@@ -249,9 +259,11 @@ export default function PromotionCTA({
             gap: 0.25rem;
             opacity: ${canAffordUnlock && !unlocking ? 1 : 0.5};
             transition: all 0.15s ease;
-            box-shadow: ${canAffordUnlock && !unlocking
-              ? 'inset 2px 2px 4px rgba(255, 255, 255, 0.8), inset -2px -2px 4px rgba(245, 158, 11, 0.1), 0 4px 8px rgba(245, 158, 11, 0.2)'
-              : 'inset 2px 2px 4px rgba(255, 255, 255, 0.8), inset -2px -2px 4px rgba(107, 114, 128, 0.1), 0 4px 8px rgba(107, 114, 128, 0.1)'};
+            box-shadow: ${
+              canAffordUnlock && !unlocking
+                ? 'inset 2px 2px 4px rgba(255, 255, 255, 0.8), inset -2px -2px 4px rgba(245, 158, 11, 0.1), 0 4px 8px rgba(245, 158, 11, 0.2)'
+                : 'inset 2px 2px 4px rgba(255, 255, 255, 0.8), inset -2px -2px 4px rgba(107, 114, 128, 0.1), 0 4px 8px rgba(107, 114, 128, 0.1)'
+            };
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 
             @media (hover: hover) and (pointer: fine) {
@@ -260,7 +272,8 @@ export default function PromotionCTA({
                 border-color: #d97706;
                 border-top-color: #f59e0b;
                 border-left-color: #f59e0b;
-                box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+                box-shadow:
+                  inset 2px 2px 4px rgba(255, 255, 255, 0.9),
                   inset -2px -2px 4px rgba(245, 158, 11, 0.15),
                   0 6px 12px rgba(245, 158, 11, 0.3);
                 transform: translateY(-1px);
@@ -273,7 +286,8 @@ export default function PromotionCTA({
               border-left-color: #d97706;
               border-bottom-color: #fbbf24;
               border-right-color: #fbbf24;
-              box-shadow: inset -1px -1px 2px rgba(255, 255, 255, 0.9),
+              box-shadow:
+                inset -1px -1px 2px rgba(255, 255, 255, 0.9),
                 inset 1px 1px 2px rgba(245, 158, 11, 0.2),
                 0 2px 6px rgba(245, 158, 11, 0.2);
               transform: translateY(1px);
@@ -331,7 +345,7 @@ export default function PromotionCTA({
   return null;
 
   async function handleUnlockWithCoins() {
-    if (!twinkleCoins || twinkleCoins < 100000) return;
+    if (disabled || !twinkleCoins || twinkleCoins < 100000) return;
 
     setUnlocking(true);
     try {

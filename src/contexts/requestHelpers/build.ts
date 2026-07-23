@@ -1227,6 +1227,68 @@ export default function buildRequestHelpers({
       }
     },
 
+    async callBuildRuntimeAiImage({
+      buildId,
+      prompt,
+      previousImageId,
+      previousResponseId,
+      referenceImageB64,
+      engine = 'openai',
+      quality = 'high',
+      requestId
+    }: {
+      buildId: number;
+      prompt: string;
+      previousResponseId?: string;
+      previousImageId?: string;
+      referenceImageB64?: string;
+      engine?: 'gemini' | 'openai';
+      quality?: 'low' | 'medium' | 'high';
+      requestId?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/runtime-ai-image`,
+          {
+            prompt,
+            previousImageId,
+            previousResponseId,
+            referenceImageB64,
+            engine,
+            quality,
+            requestId
+          },
+          {
+            ...auth(),
+            timeout: 360000,
+            meta: { allowExtendedTimeout: true, enforceTimeout: false }
+          }
+        );
+        return {
+          success: true,
+          requestId: data.requestId,
+          imageUrl: data.imageUrl,
+          responseId: data.responseId,
+          imageId: data.imageId,
+          engine: data.engine,
+          quality: data.quality,
+          aiUsagePolicy: data.aiUsagePolicy
+        };
+      } catch (error: any) {
+        const errorData = error?.response?.data;
+        return {
+          success: false,
+          error:
+            (typeof errorData?.error === 'string' && errorData.error) ||
+            error?.message ||
+            'Failed to generate image',
+          reason: errorData?.reason,
+          code: errorData?.code,
+          aiUsagePolicy: errorData?.aiUsagePolicy
+        };
+      }
+    },
+
     async callBuildRuntimeAiChatStream({
       buildId,
       promptId,

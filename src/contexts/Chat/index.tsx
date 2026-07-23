@@ -63,6 +63,9 @@ function getInitialChatState() {
     });
     return {
       ...persistedState,
+      // Account notification preferences can change from another device.
+      // Always hydrate their canonical server state for the active session.
+      chatNotificationSettings: null,
       // A request owned by an unmounted provider cannot safely reconcile into
       // the replacement provider. The socket bootstrap hook starts a fresh,
       // explicitly owned attempt after remount.
@@ -100,6 +103,7 @@ function getInitialChatState() {
     cardObj: {},
     channelLoading: false,
     channelOnCall: {},
+    chatNotificationSettings: null,
     buildContributionMembershipByKey: {},
     buildContributionInviteMembershipByKey: {},
     buildContributionInvitesById: {},
@@ -207,6 +211,7 @@ export const initialChatState = {
   cardObj: {},
   channelLoading: false,
   channelOnCall: {},
+  chatNotificationSettings: null,
   buildContributionMembershipByKey: {},
   buildContributionInviteMembershipByKey: {},
   buildContributionInvitesById: {},

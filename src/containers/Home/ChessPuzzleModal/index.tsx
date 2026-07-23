@@ -10,6 +10,12 @@ import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 import { PuzzlePhase, PuzzleResult } from '~/types/chess';
 import FilterBar from '~/components/FilterBar';
 import Rankings from './Rankings';
+import {
+  areNormalAttemptTransitionsLocked,
+  getChessAttemptRequestMessage,
+  getChessAttemptRequestStatus,
+  type NormalAttemptSubmissionState
+} from './normalAttemptSubmission';
 
 export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -21,6 +27,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   const [activeTab, setActiveTab] = useState<'game' | 'rankings'>('game');
   const [phase, setPhase] = useState<PuzzlePhase>('WAIT_USER');
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [attemptSubmission, setAttemptSubmission] =
+    useState<NormalAttemptSubmissionState>({ status: 'idle' });
 
   const {
     attemptId,
@@ -47,9 +55,13 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   } = useChessPuzzle();
 
   const submittingRef = useRef(false);
+  const pendingAttemptResultRef = useRef<PuzzleResult | null>(null);
   const initialPuzzleRequestedRef = useRef(false);
   const levelTransitionPendingRef = useRef(false);
   const effectiveLevel = selectedLevel ?? Math.max(1, maxLevelUnlocked || 1);
+  const attemptTransitionsLocked =
+    areNormalAttemptTransitionsLocked(attemptSubmission);
+  const attemptSubmissionInFlight = attemptSubmission.status === 'submitting';
 
   useEffect(() => {
     refreshStats();
@@ -96,12 +108,18 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     <Modal
       modalKey="ChessPuzzleModal"
       isOpen={true}
-      onClose={onHide}
+      onClose={handleClose}
+      closeOnBackdropClick={!attemptSubmissionInFlight}
+      closeOnEscape={!attemptSubmissionInFlight}
       hasHeader={false}
       size="lg"
       modalLevel={0}
       footer={
-        <Button variant="ghost" onClick={onHide}>
+        <Button
+          variant="ghost"
+          onClick={handleClose}
+          disabled={attemptSubmissionInFlight}
+        >
           Close
         </Button>
       }
@@ -128,7 +146,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
         {/* Keep Puzzle mounted to preserve state; toggle visibility */}
         <div style={{ display: activeTab === 'game' ? 'block' : 'none' }}>
-          <ChessErrorBoundary onRetry={fetchPuzzle}>
+          <ChessErrorBoundary onRetry={handlePuzzleLoadRetry}>
             <div
               className={css`
                 width: 100%;
@@ -152,7 +170,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                   `}
                 >
                   <div>Failed to load puzzle: {error}</div>
-                  <Button onClick={fetchPuzzle} color="logoBlue">
+                  <Button onClick={handlePuzzleLoadRetry} color="logoBlue">
                     Try Again
                   </Button>
                 </div>
@@ -163,7 +181,6 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                   attemptId={attemptId}
                   puzzle={puzzle || undefined}
                   onPuzzleComplete={handlePuzzleComplete}
-                  onGiveUp={() => fetchPuzzle(effectiveLevel)}
                   onMoveToNextPuzzle={handleMoveToNextPuzzle}
                   selectedLevel={effectiveLevel}
                   onLevelChange={handleLevelChange}
@@ -181,6 +198,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
                   runResult={runResult}
                   onSetRunResult={setRunResult}
                   runIdRef={runIdRef}
+                  attemptSubmission={attemptSubmission}
+                  onRetryAttemptSubmission={handleRetryAttemptSubmission}
                 />
               )}
             </div>
@@ -200,6 +219,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   );
 
   function handleMoveToNextPuzzle() {
+    if (submittingRef.current || attemptTransitionsLocked) return;
     const levelForNext = effectiveLevel;
     setPhase('START_LEVEL');
     setRunResult('PLAYING');
@@ -208,10 +228,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   }
 
   function handleLevelChange(level: number) {
+    if (submittingRef.current || attemptTransitionsLocked) return;
     void persistAndLoadLevel(level);
   }
 
   function handleStartLevel(level: number) {
+    if (submittingRef.current || attemptTransitionsLocked) return;
     void persistAndLoadLevel(level, { exitTimeAttack: true });
   }
 
@@ -219,7 +241,13 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     level: number,
     { exitTimeAttack = false }: { exitTimeAttack?: boolean } = {}
   ) {
-    if (levelTransitionPendingRef.current) return;
+    if (
+      levelTransitionPendingRef.current ||
+      submittingRef.current ||
+      attemptTransitionsLocked
+    ) {
+      return;
+    }
     levelTransitionPendingRef.current = true;
     const availableMax = Math.max(1, maxLevelUnlocked || 1);
     const requestedLevel = Math.min(
@@ -243,23 +271,36 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   }
 
   async function handlePuzzleComplete(result: PuzzleResult) {
-    if (!puzzle || submittingRef.current) return;
+    if (
+      !puzzle ||
+      !attemptId ||
+      submittingRef.current ||
+      attemptTransitionsLocked
+    ) {
+      return;
+    }
+    pendingAttemptResultRef.current = result;
+    await submitCanonicalAttempt(result);
+  }
 
+  async function submitCanonicalAttempt(result: PuzzleResult) {
     submittingRef.current = true;
+    setAttemptSubmission({ status: 'submitting', result });
 
     try {
       const response = await submitAttempt({
         attemptId,
-        solved: result.solved,
-        selectedLevel: effectiveLevel
+        solved: result.solved
       });
 
-      if (response.newXp) {
+      if (typeof response.newXp === 'number') {
         onSetUserState({
           userId,
           newState: {
             twinkleXP: response.newXp,
-            ...(response.rank && { rank: response.rank })
+            ...(typeof response.rank === 'number'
+              ? { rank: response.rank }
+              : {})
           }
         });
       }
@@ -280,10 +321,59 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
         await refreshStats();
       }
 
-      submittingRef.current = false;
+      pendingAttemptResultRef.current = null;
+      setAttemptSubmission({ status: 'idle' });
     } catch (error) {
-      submittingRef.current = false;
       console.error('Failed to submit puzzle attempt:', error);
+      if (getChessAttemptRequestStatus(error) === 409) {
+        const reconciled = await reconcileAfterAttemptConflict();
+        if (reconciled) {
+          pendingAttemptResultRef.current = null;
+          setAttemptSubmission({ status: 'idle' });
+          return;
+        }
+      }
+      setAttemptSubmission({
+        status: 'failed',
+        result,
+        message: getChessAttemptRequestMessage(error)
+      });
+    } finally {
+      submittingRef.current = false;
     }
+  }
+
+  async function reconcileAfterAttemptConflict() {
+    setPhase('START_LEVEL');
+    setRunResult('PLAYING');
+    const puzzleLoaded = await fetchPuzzle(effectiveLevel);
+    if (puzzleLoaded) {
+      await refreshLevels();
+      await refreshStats();
+    }
+    return puzzleLoaded;
+  }
+
+  async function handleRetryAttemptSubmission() {
+    if (submittingRef.current) return;
+    const pendingResult = pendingAttemptResultRef.current;
+    if (!pendingResult) return;
+    await submitCanonicalAttempt(pendingResult);
+  }
+
+  async function handlePuzzleLoadRetry() {
+    if (submittingRef.current) return;
+    const puzzleLoaded = await fetchPuzzle(effectiveLevel);
+    if (puzzleLoaded && attemptSubmission.status === 'failed') {
+      pendingAttemptResultRef.current = null;
+      setAttemptSubmission({ status: 'idle' });
+      setRunResult('PLAYING');
+      setPhase('START_LEVEL');
+    }
+  }
+
+  function handleClose() {
+    if (submittingRef.current) return;
+    onHide();
   }
 }
