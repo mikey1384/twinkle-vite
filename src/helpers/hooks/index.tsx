@@ -37,6 +37,10 @@ import {
   eventTargetsPopupDismissNavigationFeedCard,
   markPopupDismissNavigationSuppressed
 } from '~/helpers/popupDismissNavigation';
+import {
+  popupTargetIsOutside,
+  type PopupBoundaryRef
+} from '~/helpers/popupBoundary';
 
 const allContentState: Record<string, any> = {};
 const EMPTY_PROFILE_FEEDS: any[] = [];
@@ -77,59 +81,35 @@ const DEFAULT_PROFILE_POSTS = {
   links: EMPTY_PROFILE_FEEDS
 };
 
-type OutsideRef =
-  | React.RefObject<HTMLElement | null>
-  | HTMLElement
-  | null
-  | undefined;
-
 interface OutsideClickListener {
-  refs: OutsideRef[];
+  refs: PopupBoundaryRef[];
   handler: () => void;
   suppressFeedCardNavigation: boolean;
 }
 
-const outsideClickListeners = new Set<OutsideClickListener>();
+type OutsideClickPhase = 'bubble' | 'capture';
+
+const outsideClickListeners: Record<
+  OutsideClickPhase,
+  Set<OutsideClickListener>
+> = {
+  bubble: new Set(),
+  capture: new Set()
+};
 const globalOutsideHandlers: Array<{
   eventName: string;
   handler: (event: Event) => void;
+  phase: OutsideClickPhase;
 }> = [];
 
 const pointerEventsSupported =
   typeof window !== 'undefined' && 'PointerEvent' in window;
 
-function collectNodes(refs: OutsideRef[]): Node[] {
-  const nodes: Node[] = [];
-  for (const ref of refs) {
-    if (!ref) continue;
-    const candidate =
-      typeof (ref as any)?.current !== 'undefined' ? (ref as any).current : ref;
-    if (
-      candidate &&
-      typeof candidate.contains === 'function' &&
-      (typeof Node === 'undefined' || candidate instanceof Node)
-    ) {
-      nodes.push(candidate);
-    }
-  }
-  return nodes;
-}
-
-function shouldTriggerOutside(
-  refs: OutsideRef[],
-  target: Node | null
-): boolean {
-  const nodes = collectNodes(refs);
-  if (!nodes.length) return false;
-  if (!target) return true;
-  return !nodes.some((node) => node.contains(target));
-}
-
-function handleGlobalPointerDown(event: Event) {
-  const listeners = Array.from(outsideClickListeners);
+function handleGlobalPointerDown(event: Event, phase: OutsideClickPhase) {
+  const listeners = Array.from(outsideClickListeners[phase]);
   const target = event.target as Node | null;
   const triggeredListeners = listeners.filter((listener) =>
-    shouldTriggerOutside(listener.refs, target)
+    popupTargetIsOutside(listener.refs, target)
   );
   if (
     triggeredListeners.some((listener) => listener.suppressFeedCardNavigation) &&
@@ -146,38 +126,46 @@ function handleGlobalPointerDown(event: Event) {
   });
 }
 
-function ensureGlobalOutsideHandlers() {
+function ensureGlobalOutsideHandlers(phase: OutsideClickPhase) {
   if (typeof document === 'undefined') return;
-  if (globalOutsideHandlers.length > 0) return;
+  if (globalOutsideHandlers.some((entry) => entry.phase === phase)) return;
   const downEvents = pointerEventsSupported
     ? ['pointerdown']
     : ['mousedown', 'touchstart'];
   downEvents.forEach((eventName) => {
-    const handler = (event: Event) => handleGlobalPointerDown(event);
-    // Use bubble phase instead of capture to avoid interfering with iOS tap events
-    addEvent(document, eventName, handler, { capture: false });
-    globalOutsideHandlers.push({ eventName, handler });
+    const handler = (event: Event) => handleGlobalPointerDown(event, phase);
+    addEvent(document, eventName, handler, { capture: phase === 'capture' });
+    globalOutsideHandlers.push({ eventName, handler, phase });
   });
 }
 
-function tearDownGlobalOutsideHandlers() {
+function tearDownGlobalOutsideHandlers(phase: OutsideClickPhase) {
   if (typeof document === 'undefined') return;
-  if (!globalOutsideHandlers.length) return;
-  globalOutsideHandlers.forEach(({ eventName, handler }) => {
-    removeEvent(document, eventName, handler, { capture: false });
-  });
-  globalOutsideHandlers.length = 0;
+  for (let index = globalOutsideHandlers.length - 1; index >= 0; index -= 1) {
+    const entry = globalOutsideHandlers[index];
+    if (entry.phase !== phase) continue;
+    removeEvent(document, entry.eventName, entry.handler, {
+      capture: phase === 'capture'
+    });
+    globalOutsideHandlers.splice(index, 1);
+  }
 }
 
-function registerOutsideClickListener(listener: OutsideClickListener) {
-  outsideClickListeners.add(listener);
-  ensureGlobalOutsideHandlers();
+function registerOutsideClickListener(
+  listener: OutsideClickListener,
+  phase: OutsideClickPhase
+) {
+  outsideClickListeners[phase].add(listener);
+  ensureGlobalOutsideHandlers(phase);
 }
 
-function unregisterOutsideClickListener(listener: OutsideClickListener) {
-  outsideClickListeners.delete(listener);
-  if (!outsideClickListeners.size) {
-    tearDownGlobalOutsideHandlers();
+function unregisterOutsideClickListener(
+  listener: OutsideClickListener,
+  phase: OutsideClickPhase
+) {
+  outsideClickListeners[phase].delete(listener);
+  if (!outsideClickListeners[phase].size) {
+    tearDownGlobalOutsideHandlers(phase);
   }
 }
 
@@ -412,12 +400,14 @@ export function useOutsideClick(
   ref: any,
   callback?: () => any,
   options?: {
+    capture?: boolean;
     enabled?: boolean;
     closeOnScroll?: boolean;
     suppressFeedCardNavigation?: boolean;
   }
 ) {
   const {
+    capture = false,
     enabled = true,
     closeOnScroll = false,
     suppressFeedCardNavigation = false
@@ -435,12 +425,13 @@ export function useOutsideClick(
       handler: () => callbackRef.current?.(),
       suppressFeedCardNavigation
     };
-    registerOutsideClickListener(listener);
+    const phase = capture ? 'capture' : 'bubble';
+    registerOutsideClickListener(listener, phase);
     return function cleanup() {
-      unregisterOutsideClickListener(listener);
+      unregisterOutsideClickListener(listener, phase);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref, enabled, suppressFeedCardNavigation]);
+  }, [ref, capture, enabled, suppressFeedCardNavigation]);
 
   useEffect(() => {
     if (
@@ -454,7 +445,7 @@ export function useOutsideClick(
 
     function handleScroll(event: Event) {
       const target = event.target as Node | null;
-      if (!shouldTriggerOutside(refs, target)) return;
+      if (!popupTargetIsOutside(refs, target)) return;
       callbackRef.current?.();
     }
 

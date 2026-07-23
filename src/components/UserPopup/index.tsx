@@ -262,6 +262,7 @@ export default function UserPopup({
   return (
     <Popup
       popupContext={popupContext}
+      triggerRef={triggerRef}
       onHideMenu={handleHide}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

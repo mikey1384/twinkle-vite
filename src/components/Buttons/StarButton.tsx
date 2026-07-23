@@ -49,7 +49,6 @@ export default function StarButton({
   const [moderatorName, setModeratorName] = useState('');
   const [rewardLevelModalShown, setRewardLevelModalShown] = useState(false);
   const [dropdownContext, setDropdownContext] = useState(null);
-  const coolDownRef: React.RefObject<any> = useRef(null);
 
   const writtenByButtonShown = useMemo(
     () =>
@@ -126,7 +125,8 @@ export default function StarButton({
         {!!dropdownContext && (
           <DropdownList
             dropdownContext={dropdownContext}
-            onHideMenu={handleHideMenuWithCoolDown}
+            triggerRef={StarButtonRef}
+            onHideMenu={handleHideMenu}
             style={{ minWidth: '20rem' }}
           >
             {(contentType === 'video' || contentType === 'subject') &&
@@ -163,7 +163,6 @@ export default function StarButton({
 
   function onClick() {
     if (showsDropdownWhenClicked) {
-      if (coolDownRef.current) return;
       const menuDisplayed = !!dropdownContext;
       const parentElementDimensions =
         StarButtonRef.current?.getBoundingClientRect?.() || {
@@ -177,12 +176,8 @@ export default function StarButton({
     return setRewardLevelModalShown(true);
   }
 
-  function handleHideMenuWithCoolDown() {
+  function handleHideMenu() {
     setDropdownContext(null);
-    coolDownRef.current = true;
-    setTimeout(() => {
-      coolDownRef.current = false;
-    }, 10);
   }
 
   function handleShowRewardLevelModal() {

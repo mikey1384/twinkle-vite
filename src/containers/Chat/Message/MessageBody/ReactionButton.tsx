@@ -31,24 +31,18 @@ export default function ReactionButton({
   onSetReactionsMenuShown: (v: any) => void;
   reactionsMenuShown: boolean;
 }) {
-  const BarRef = useRef(null);
-  const coolDownRef: React.RefObject<any> = useRef(null);
+  const ContainerRef = useRef<HTMLDivElement | null>(null);
 
   useOutsideClick(
-    BarRef,
-    () => {
-      coolDownRef.current = true;
-      onSetReactionsMenuShown(false);
-      setTimeout(() => {
-        coolDownRef.current = false;
-      }, 100);
-    },
+    ContainerRef,
+    () => onSetReactionsMenuShown(false),
     { enabled: deviceIsMobile && reactionsMenuShown, closeOnScroll: true }
   );
 
   return (
     <ErrorBoundary componentPath="Message/ReactionButton">
       <div
+        ref={ContainerRef}
         style={{ display: 'flex', ...style }}
         onMouseEnter={() =>
           deviceIsMobile ? {} : onSetReactionsMenuShown(true)
@@ -58,7 +52,6 @@ export default function ReactionButton({
         }
       >
         <div
-          ref={BarRef}
           style={{
             zIndex: reactionsMenuShown ? 5000 : 0,
             display: reactionsMenuShown ? 'flex' : 'none',
@@ -120,12 +113,7 @@ export default function ReactionButton({
   );
 
   function handleReactionBarShown() {
-    if (coolDownRef.current) return;
-    coolDownRef.current = true;
     onSetReactionsMenuShown((shown: boolean) => !shown);
-    setTimeout(() => {
-      coolDownRef.current = false;
-    }, 100);
   }
 
   function handleReactionClick(reaction: any) {

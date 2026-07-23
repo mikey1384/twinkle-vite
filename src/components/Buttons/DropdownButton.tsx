@@ -46,7 +46,6 @@ export default function DropdownButton({
   uppercase?: boolean;
 }) {
   const [dropdownContext, setDropdownContext] = useState(null);
-  const coolDownRef: React.RefObject<any> = useRef(null);
   const ButtonRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
@@ -103,7 +102,8 @@ export default function DropdownButton({
             }}
             xAdjustment={xAdjustment}
             dropdownContext={dropdownContext}
-            onHideMenu={handleHideMenuWithCoolDown}
+            triggerRef={ButtonRef}
+            onHideMenu={handleHideMenu}
           >
             {renderMenu()}
           </DropdownList>
@@ -113,7 +113,6 @@ export default function DropdownButton({
   );
 
   function handleClick() {
-    if (coolDownRef.current) return;
     const menuDisplayed = !!dropdownContext;
     if (typeof onButtonClick === 'function') {
       onButtonClick(!menuDisplayed);
@@ -128,12 +127,8 @@ export default function DropdownButton({
     setDropdownContext(menuDisplayed ? null : parentElementDimensions);
   }
 
-  function handleHideMenuWithCoolDown() {
-    coolDownRef.current = true;
+  function handleHideMenu() {
     setDropdownContext(null);
-    setTimeout(() => {
-      coolDownRef.current = false;
-    }, 100);
   }
 
   function renderMenu() {

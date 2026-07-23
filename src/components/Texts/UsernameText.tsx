@@ -61,7 +61,6 @@ export default function UsernameText({
   const cachedChessMaxLevelUnlocked = useAppContext(
     (v) => v.user.state.userObj[user.id]?.chessMaxLevelUnlocked
   );
-  const coolDownRef = useRef(false);
   const showTimerRef: React.RefObject<any> = useRef(0);
   const hideTimerRef: React.RefObject<any> = useRef(0);
   const hideTimerRef2: React.RefObject<any> = useRef(0);
@@ -166,7 +165,7 @@ export default function UsernameText({
           }}
           myId={userId}
           user={user}
-          onHide={handleHideMenuWithCoolDown}
+          onHide={() => setDropdownContext(null)}
           onSetPopupContext={setDropdownContext}
           wordMasterContext={wordMasterContext}
           wordMasterPoints={wordMasterPoints}
@@ -177,14 +176,6 @@ export default function UsernameText({
       )}
     </div>
   );
-
-  function handleHideMenuWithCoolDown() {
-    coolDownRef.current = true;
-    setDropdownContext(null);
-    setTimeout(() => {
-      coolDownRef.current = false;
-    }, 10);
-  }
 
   async function onMouseEnter() {
     mouseEntered.current = true;

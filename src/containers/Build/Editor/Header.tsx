@@ -376,11 +376,9 @@ function HeaderActionItem({
 }
 
 // A settings dropdown whose trigger is a GameCTAButton so it visually matches
-// the other header CTAs. Mirrors DropdownButton's open/cooldown handling so a
-// click on the trigger while open doesn't immediately re-open it.
+// the other header CTAs.
 function SettingsMenuButton({ menuProps }: { menuProps: any[] }) {
   const triggerRef = useRef<HTMLDivElement>(null);
-  const coolDownRef = useRef(false);
   const [dropdownContext, setDropdownContext] = useState<DOMRect | null>(null);
 
   return (
@@ -397,6 +395,7 @@ function SettingsMenuButton({ menuProps }: { menuProps: any[] }) {
       {dropdownContext ? (
         <DropdownList
           dropdownContext={dropdownContext}
+          triggerRef={triggerRef}
           onHideMenu={handleHide}
           style={{ minWidth: '15rem' }}
         >
@@ -435,7 +434,6 @@ function SettingsMenuButton({ menuProps }: { menuProps: any[] }) {
   );
 
   function handleToggle() {
-    if (coolDownRef.current) return;
     setDropdownContext(
       dropdownContext
         ? null
@@ -444,11 +442,7 @@ function SettingsMenuButton({ menuProps }: { menuProps: any[] }) {
   }
 
   function handleHide() {
-    coolDownRef.current = true;
     setDropdownContext(null);
-    window.setTimeout(() => {
-      coolDownRef.current = false;
-    }, 100);
   }
 }
 

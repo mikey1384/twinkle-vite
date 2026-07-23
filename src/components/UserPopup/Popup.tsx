@@ -21,6 +21,7 @@ export default function Popup({
   children,
   popupContext,
   style = {},
+  triggerRef,
   onHideMenu = () => null,
   onMouseEnter = () => null,
   onMouseLeave = () => null
@@ -33,13 +34,18 @@ export default function Popup({
     height: number;
   };
   style?: React.CSSProperties;
+  triggerRef?: React.RefObject<HTMLElement | null>;
   onHideMenu?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }) {
   const MenuRef = useRef(null);
   const { x, y, width, height } = popupContext;
-  useOutsideClick(MenuRef, onHideMenu, {
+  const outsideClickRefs = useMemo(
+    () => [MenuRef, triggerRef],
+    [triggerRef]
+  );
+  useOutsideClick(outsideClickRefs, onHideMenu, {
     closeOnScroll: deviceIsMobile,
     suppressFeedCardNavigation: true
   });

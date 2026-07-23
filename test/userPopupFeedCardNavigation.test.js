@@ -97,7 +97,7 @@ test('User popup portal stops events before feed-card navigation can intercept a
   );
   assert.match(
     popupDismissNavigationSource,
-    /window\.setTimeout\([\s\S]*clearPopupDismissNavigationSuppression\(\);[\s\S]*\}, 0\);/
+    /window\.setTimeout\([\s\S]*clearPopupDismissNavigationSuppression\(\);[\s\S]*\}, delay\);/
   );
   assert.match(
     popupDismissNavigationSource,
