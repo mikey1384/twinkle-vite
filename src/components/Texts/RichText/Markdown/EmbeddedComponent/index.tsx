@@ -56,6 +56,10 @@ function EmbeddedComponent({
   const cleanReplacedLink = useMemo(() => {
     return replacedLink?.replace(/<u>|<\/u>/g, '__') || replacedLink;
   }, [replacedLink]);
+  const isFullWidthSubjectPreview =
+    isInternalLink &&
+    subjectPreviewVariant === 'fullWidth' &&
+    cleanReplacedLink.split('/')?.[1] === 'subjects';
 
   const { fileType } = useMemo(() => {
     const url = (src || '').split('?')[0].split('#')[0];
@@ -122,8 +126,10 @@ function EmbeddedComponent({
         align-items: center;
         flex-direction: column;
         padding: ${
-            cleanReplacedLink.split('/')?.[1] === 'users' && isProfileComponent
-              ? 'none'
+            isFullWidthSubjectPreview ||
+            (cleanReplacedLink.split('/')?.[1] === 'users' &&
+              isProfileComponent)
+              ? '0'
               : '1rem'
           };
         width: 100%;

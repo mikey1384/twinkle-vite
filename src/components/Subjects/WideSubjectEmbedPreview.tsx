@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import CompactEffortStrip from './CompactEffortStrip';
 import HomeFeedSubjectTargetPreview from './HomeFeedSubjectTargetPreview';
@@ -84,10 +84,24 @@ const wideSubjectEmbedPreviewClass = css`
   gap: 0.8rem;
   width: 100%;
   height: auto;
-  min-height: 0;
+  min-height: max(13rem, 130px);
   overflow: hidden;
   padding: 0.65rem;
+  border: 1px solid ${Color.borderGray()};
+  border-radius: ${borderRadius};
   background: #fff;
+  container-type: inline-size;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      border-color: ${Color.logoBlue(0.34)};
+    }
+  }
+
+  .full-width-subject-embed-preview:focus-visible & {
+    outline: 2px solid ${Color.logoBlue(0.42)};
+    outline-offset: 2px;
+  }
 
   &.has-media {
     grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 32%);
@@ -339,6 +353,11 @@ const wideSubjectEmbedPreviewClass = css`
   }
 
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: max(12rem, 120px);
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+
     .home-feed-card__target-copy > h4 {
       min-height: max(2.36rem, 23.6px);
       font-size: 1.9rem;

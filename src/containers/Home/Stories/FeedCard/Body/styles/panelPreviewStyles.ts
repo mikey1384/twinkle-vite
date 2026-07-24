@@ -24,10 +24,20 @@ export const panelPreviewStyles = `
     border: 1px solid ${Color.borderGray()};
     container-type: inline-size;
   }
+  /* Wide subject previews own their shared frame so the home-feed target and
+     full-width rich-text embed cannot drift into different card treatments. */
+  .home-feed-card__target-preview--type-subject {
+    border: 0;
+    background: transparent;
+  }
   .home-feed-card__target-preview[data-feed-card-interactive='true'] {
     cursor: pointer;
   }
   .home-feed-card__target-preview[data-feed-card-interactive='true']:hover {
+    border-color: ${Color.logoBlue(0.34)};
+  }
+  .home-feed-card__target-preview--type-subject[data-feed-card-interactive='true']:hover
+    > .home-feed-card__target-subject {
     border-color: ${Color.logoBlue(0.34)};
   }
   .home-feed-card__target-preview[data-feed-card-interactive='true']:focus-visible {

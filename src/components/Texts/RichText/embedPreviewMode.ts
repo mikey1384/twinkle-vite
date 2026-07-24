@@ -2,7 +2,10 @@ export type RichTextEmbedPreviewMode =
   'compactComment' | 'fullWidth' | 'thumbnail';
 export type RichTextSubjectPreviewVariant = 'fullWidth' | 'thumbnail';
 
-const wideSubjectEmbedReservedHeight = '10rem';
+// Matches the shared desktop frame owned by WideSubjectEmbedPreview. Keeping
+// the reservation here prevents full-width subject cards from being clipped by
+// the enclosing collapsed RichText preview.
+const wideSubjectEmbedReservedHeight = '13rem';
 
 export function getRichTextEmbedPreviewMode({
   compactEmbedPreview,
