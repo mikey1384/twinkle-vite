@@ -10,6 +10,7 @@ import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbe
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
+import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
 import VideoThumbnail from '~/components/ContentListItem/VideoThumbnail';
 import VideoThumb from '~/components/VideoThumb';
 import { Color, borderRadius } from '~/constants/css';
@@ -381,17 +382,23 @@ function CompactMainContentEmbedPreview({
     return (
       <div
         className="full-width-subject-embed-preview"
+        data-feed-card-interactive="true"
+        role="link"
+        style={{ width: '100%', cursor: 'pointer' }}
+        tabIndex={0}
         onClick={handleFullWidthSubjectClick}
+        onKeyDown={handleFullWidthSubjectKeyDown}
       >
-        <ContentListItem
-          contentObj={{
+        <WideSubjectEmbedPreview
+          contentId={contentId}
+          descriptionText={body}
+          subject={{
             ...content,
             id: contentId,
             contentId,
             contentType: 'subject'
           }}
-          onClick={() => navigate(path)}
-          style={{ width: '100%' }}
+          theme={theme}
         />
       </div>
     );
@@ -507,6 +514,16 @@ function CompactMainContentEmbedPreview({
     event: React.MouseEvent<HTMLDivElement>
   ) {
     event.stopPropagation();
+    navigate(path);
+  }
+
+  function handleFullWidthSubjectKeyDown(
+    event: React.KeyboardEvent<HTMLDivElement>
+  ) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    event.stopPropagation();
+    navigate(path);
   }
 
   function handleVideoClick(event: React.MouseEvent<HTMLDivElement>) {

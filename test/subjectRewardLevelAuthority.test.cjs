@@ -107,7 +107,7 @@ test('subject reward surfaces are wired to the shared resolver', () => {
 test('home feed subject effort display still uses stored subject reward level', () => {
   assertSourceIncludes(
     '../src/containers/Home/Stories/FeedCard/Body/index.tsx',
-    /<CompactEffortStrip rewardLevel=\{Number\(content\.rewardLevel\)\} \/>/
+    /<CompactEffortStrip\s+rewardLevel=\{Number\(content\.rewardLevel\)\}\s+\/>/
   );
 });
 

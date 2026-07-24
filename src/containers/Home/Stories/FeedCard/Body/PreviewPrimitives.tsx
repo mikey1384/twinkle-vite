@@ -1,21 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ContentFileViewer from '~/components/ContentFileViewer';
 import Icon from '~/components/Icon';
-import HomeFeedSubjectTargetPreview from '~/components/Subjects/HomeFeedSubjectTargetPreview';
+import { AttachmentCard } from '~/components/Subjects/SubjectMediaPreview';
+import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
 import InternalComponent from '~/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent';
 import YouTubeVideo from '~/components/Texts/RichText/Markdown/EmbeddedComponent/YouTubeVideo';
 import { Color } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { getInternalEmbedPreviewInfo } from '~/helpers/aiCardEmbedHelpers';
-import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
 import { useContentState } from '~/helpers/hooks';
-import {
-  addCommasToNumber,
-  getFileInfoFromFileName,
-  processInternalLink
-} from '~/helpers/stringHelpers';
+import { processInternalLink } from '~/helpers/stringHelpers';
 import {
   getMarkdownEmbedFileInfo,
   getMarkdownImageEmbedPreview,
@@ -27,86 +22,6 @@ export type HomeFeedNestedNavigate = (
   path: string,
   sourceElement: HTMLElement | null
 ) => void;
-
-export function AttachmentSurface({
-  className,
-  source,
-  sourceContentId,
-  sourceContentType,
-  userId
-}: {
-  className: string;
-  source: any;
-  sourceContentId: number;
-  sourceContentType: string;
-  userId: number;
-}) {
-  const filePath = source?.filePath || source?.actualFilePath || '';
-  const fileName = getAttachmentSurfaceFileName(source, filePath);
-  const { extension, fileType } = getFileInfoFromFileName(fileName);
-  if (fileType === 'video') {
-    return (
-      <div className={className} data-attachment-preview-kind={fileType}>
-        <HomeVideoAttachmentPreview
-          fileName={fileName}
-          src={buildAttachmentUrl({
-            filePath,
-            fileName,
-            contentType: sourceContentType
-          })}
-          thumbUrl={source?.thumbUrl}
-        />
-      </div>
-    );
-  }
-
-  const canPreviewInline = fileType === 'image' || Boolean(source?.thumbUrl);
-
-  return (
-    <div className={className} data-attachment-preview-kind={fileType}>
-      {canPreviewInline ? (
-        <ContentFileViewer
-          compactMode
-          isThumb={fileType !== 'image'}
-          contentId={sourceContentId}
-          contentType={sourceContentType}
-          fileName={fileName}
-          filePath={filePath}
-          fileSize={source?.fileSize}
-          fillPreview={fileType === 'image'}
-          fillUnavailablePreview
-          previewObjectFit={fileType === 'image' ? 'contain' : undefined}
-          thumbUrl={source?.thumbUrl}
-          userIsUploader={Number(source?.uploader?.id || 0) === userId}
-          videoHeight="100%"
-          thumbHeight="100%"
-        />
-      ) : (
-        <AttachmentCard
-          extension={extension}
-          fileName={fileName}
-          fileSize={source?.fileSize}
-          fileType={fileType}
-        />
-      )}
-    </div>
-  );
-}
-
-function getAttachmentSurfaceFileName(source: any, filePath: string) {
-  const fileName = source?.fileName || source?.actualFileName;
-  if (fileName) return String(fileName);
-
-  const pathName = String(filePath || '')
-    .split('?')[0]
-    .split('#')[0];
-  const pathFileName = pathName.split('/').filter(Boolean).pop() || '';
-  try {
-    return decodeURIComponent(pathFileName);
-  } catch {
-    return pathFileName;
-  }
-}
 
 export function MarkdownEmbedPreview({
   className,
@@ -312,7 +227,18 @@ function HomeFeedWideSubjectEmbedPreview({
       onNavigate={onNavigate}
     />
   ) : null;
-  const mediaPreview = renderMediaPreview();
+  const descriptionBuildEmbedPreview =
+    shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed ? (
+      <MarkdownEmbedPreview
+        className="home-feed-card__target-subject-build-embed-preview"
+        contentId={subjectId}
+        contentType="subject"
+        embed={descriptionBuildEmbed}
+        internalPreviewVariant="compact"
+        onNavigate={onNavigate}
+        theme={theme}
+      />
+    ) : undefined;
 
   useEffect(() => {
     const requestKey = `${userId || 0}:${subjectId}:subject`;
@@ -350,101 +276,17 @@ function HomeFeedWideSubjectEmbedPreview({
   }, [contentState.loaded, subjectId, userId]);
 
   return (
-    <HomeFeedSubjectTargetPreview
+    <WideSubjectEmbedPreview
       contentId={subjectId}
       descriptionEmbedPreview={descriptionContentEmbedPreview}
       descriptionText={descriptionText}
       hasBuildEmbedMedia={Boolean(
         shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed
       )}
-      mediaPreview={mediaPreview}
-      rewardPreview={
-        Number(subject?.rewardLevel || 0) > 0 ? (
-          <CompactEffortStrip
-            rewardLevel={Number(subject.rewardLevel)}
-            className="home-feed-card__target-reward-bar"
-          />
-        ) : null
-      }
+      mediaPreview={descriptionBuildEmbedPreview}
       subject={subject}
       theme={theme}
     />
-  );
-
-  function renderMediaPreview() {
-    const filePath = getContentAttachmentFilePath(subject);
-    if (filePath) {
-      return (
-        <AttachmentSurface
-          className="home-feed-card__target-media-wrap"
-          source={{ ...subject, filePath }}
-          sourceContentId={subjectId}
-          sourceContentType="subject"
-          userId={Number(userId || 0)}
-        />
-      );
-    }
-
-    if (!shouldPromoteDescriptionBuildEmbed || !descriptionBuildEmbed) {
-      return null;
-    }
-
-    return (
-      <MarkdownEmbedPreview
-        className="home-feed-card__target-subject-build-embed-preview"
-        contentId={subjectId}
-        contentType="subject"
-        embed={descriptionBuildEmbed}
-        internalPreviewVariant="compact"
-        onNavigate={onNavigate}
-        theme={theme}
-      />
-    );
-  }
-}
-
-export function CompactEffortStrip({
-  className,
-  rewardLevel
-}: {
-  className?: string;
-  rewardLevel: number;
-}) {
-  const level = Math.max(1, Math.floor(Number(rewardLevel || 1)));
-  const starCount = Math.min(level, 5);
-  const colorKey = cardLevelHash[level]?.color || 'logoBlue';
-  const colorGetter = (Color as any)[colorKey];
-  const color =
-    typeof colorGetter === 'function' ? colorGetter() : Color.logoBlue();
-  const starColor = level >= 5 ? '#fff' : '#ffd700';
-
-  return (
-    <div
-      className={`home-feed-card__compact-effort ${className || ''}`}
-      style={
-        {
-          '--effort-color': color,
-          '--effort-star-color': starColor
-        } as React.CSSProperties & {
-          '--effort-color': string;
-          '--effort-star-color': string;
-        }
-      }
-    >
-      <span className="home-feed-card__compact-effort-left">
-        <span className="home-feed-card__compact-effort-label">
-          Effort Level:
-        </span>
-        <span className="home-feed-card__compact-effort-stars">
-          {Array.from({ length: starCount }, (_, index) => (
-            <Icon key={index} icon="star" />
-          ))}
-        </span>
-      </span>
-      <span className="home-feed-card__compact-effort-xp">
-        Earn up to {addCommasToNumber(level * 2000)} XP
-      </span>
-    </div>
   );
 }
 
@@ -620,100 +462,4 @@ function MarkdownImagePreview({
     }
     setFailed(true);
   }
-}
-
-function AttachmentCard({
-  extension,
-  fileName,
-  fileSize,
-  fileType
-}: {
-  extension: string;
-  fileName: string;
-  fileSize?: number | string;
-  fileType: string;
-}) {
-  const kindLabel = getAttachmentKindLabel({ extension, fileType });
-  const sizeLabel = formatAttachmentFileSize(fileSize);
-
-  return (
-    <div className="home-feed-card__attachment-card">
-      <div className="home-feed-card__attachment-card-icon">
-        <Icon icon={getAttachmentIcon(fileType)} />
-      </div>
-      <div className="home-feed-card__attachment-card-copy">
-        <span>{kindLabel}</span>
-        <strong>{fileName || 'Attached file'}</strong>
-        {sizeLabel ? <small>{sizeLabel}</small> : null}
-      </div>
-      <span className="home-feed-card__attachment-card-extension">
-        {extension ? extension.toUpperCase() : 'FILE'}
-      </span>
-    </div>
-  );
-}
-
-function HomeVideoAttachmentPreview({
-  fileName,
-  src,
-  thumbUrl
-}: {
-  fileName: string;
-  src: string;
-  thumbUrl?: string;
-}) {
-  return (
-    <div className="home-feed-card__video-attachment">
-      {thumbUrl ? (
-        <img
-          alt={fileName ? `${fileName} video preview` : 'Video preview'}
-          loading="lazy"
-          src={thumbUrl}
-        />
-      ) : (
-        <video src={src} muted playsInline preload="metadata" />
-      )}
-      <div className="home-feed-card__video-attachment-play">
-        <Icon icon="play" />
-      </div>
-      {fileName ? (
-        <div className="home-feed-card__video-attachment-title">{fileName}</div>
-      ) : null}
-    </div>
-  );
-}
-
-function getAttachmentIcon(fileType: string) {
-  if (fileType === 'image') return 'file-image';
-  if (fileType === 'video') return 'file-video';
-  if (fileType === 'audio') return 'file-audio';
-  if (fileType === 'pdf') return 'file-pdf';
-  if (fileType === 'archive') return 'file-archive';
-  if (fileType === 'word') return 'file-word';
-  return 'file';
-}
-
-function getAttachmentKindLabel({
-  extension,
-  fileType
-}: {
-  extension: string;
-  fileType: string;
-}) {
-  if (['heic', 'heif'].includes(extension)) return 'Image file';
-  if (fileType === 'image') return 'Image';
-  if (fileType === 'video') return 'Video';
-  if (fileType === 'audio') return 'Audio';
-  if (fileType === 'pdf') return 'PDF';
-  if (fileType === 'archive') return 'Archive';
-  if (fileType === 'word') return 'Document';
-  return 'File';
-}
-
-function formatAttachmentFileSize(fileSize?: number | string) {
-  const bytes = Number(fileSize || 0);
-  if (!Number.isFinite(bytes) || bytes <= 0) return '';
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${bytes} B`;
 }

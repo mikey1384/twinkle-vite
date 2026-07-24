@@ -5,15 +5,13 @@ import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbe
 import Icon from '~/components/Icon';
 import LinkPreviewImage from '~/components/LinkPreviewImage';
 import Loading from '~/components/Loading';
-import HomeFeedSubjectTargetPreview from '~/components/Subjects/HomeFeedSubjectTargetPreview';
+import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
-  AttachmentSurface,
   AudioWavePreview,
-  CompactEffortStrip,
   MarkdownEmbedPreview,
   type HomeFeedNestedNavigate,
   getAIStoryDifficultyStyle,
@@ -543,7 +541,6 @@ export default function TargetPreview({
   }
 
   function renderTargetSubjectPreview(target: any) {
-    const attachmentPreview = renderTargetAttachmentPreview(target);
     // A content embed left inside the description renders as a block that the
     // line-clamped description RichText clips to its header. We strip every
     // embed from the text and promote it to its own slot so it renders in full
@@ -579,22 +576,13 @@ export default function TargetPreview({
         onNavigate={onNavigate}
       />
     ) : null;
-    const mediaPreview = attachmentPreview || descriptionBuildEmbedPreview;
     return (
-      <HomeFeedSubjectTargetPreview
+      <WideSubjectEmbedPreview
         contentId={Number(target.id || 0)}
         descriptionEmbedPreview={descriptionContentEmbedPreview}
         descriptionText={descriptionText}
         hasBuildEmbedMedia={Boolean(descriptionBuildEmbedPreview)}
-        mediaPreview={mediaPreview}
-        rewardPreview={
-          Number(target?.rewardLevel || 0) > 0 ? (
-            <CompactEffortStrip
-              rewardLevel={Number(target.rewardLevel)}
-              className="home-feed-card__target-reward-bar"
-            />
-          ) : null
-        }
+        mediaPreview={descriptionBuildEmbedPreview || undefined}
         subject={target}
         theme={theme}
       />
@@ -718,19 +706,6 @@ export default function TargetPreview({
           ) : null}
         </div>
       </div>
-    );
-  }
-
-  function renderTargetAttachmentPreview(target: any) {
-    if (!target?.filePath) return null;
-    return (
-      <AttachmentSurface
-        className="home-feed-card__target-media-wrap"
-        source={target}
-        sourceContentId={Number(target.id || 0)}
-        sourceContentType={target.contentType || 'subject'}
-        userId={userId}
-      />
     );
   }
 }

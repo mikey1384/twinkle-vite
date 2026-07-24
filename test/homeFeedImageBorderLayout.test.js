@@ -11,8 +11,8 @@ const bodySource = readSource(
 const mainStylesSource = readSource(
   '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
 );
-const previewPrimitivesSource = readSource(
-  '../src/containers/Home/Stories/FeedCard/Body/PreviewPrimitives.tsx'
+const subjectMediaPreviewSource = readSource(
+  '../src/components/Subjects/SubjectMediaPreview.tsx'
 );
 const targetStylesSource = readSource(
   '../src/containers/Home/Stories/FeedCard/Body/styles/targetPreviewStyles.ts'
@@ -27,12 +27,20 @@ assert.match(
   /\.home-feed-card__rich-embed-preview--with-text\.home-feed-card__rich-embed-preview--image[\s\S]*?> \.home-feed-card__rich-embed-image \{[\s\S]*?border: 0;[\s\S]*?background: transparent;/
 );
 assert.match(
-  previewPrimitivesSource,
+  subjectMediaPreviewSource,
   /data-attachment-preview-kind=\{fileType\}/
 );
 assert.match(
+  subjectMediaPreviewSource,
+  /fillPreview=\{fileType === 'image'\}[\s\S]*?previewObjectFit=\{fileType === 'image' \? 'contain' : undefined\}/
+);
+assert.match(
+  mainStylesSource,
+  /\.home-feed-card__attachment-preview--subject-image \{[\s\S]*?border: 0;[\s\S]*?background: \$\{Color\.whiteGray\(\)\};/
+);
+assert.match(
   targetStylesSource,
-  /\.home-feed-card__target-media-wrap\[data-attachment-preview-kind='image'\] \{[\s\S]*?border: 0;[\s\S]*?background: transparent;/
+  /\.home-feed-card__target-media-wrap\[data-attachment-preview-kind='image'\] \{[\s\S]*?border: 0;[\s\S]*?background: \$\{Color\.whiteGray\(\)\};/
 );
 
 console.log('Home feed image border layout guard passed.');

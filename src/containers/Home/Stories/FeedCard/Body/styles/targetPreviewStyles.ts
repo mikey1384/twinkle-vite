@@ -552,7 +552,7 @@ export const targetPreviewStyles = `
     }
     .home-feed-card__target-media-wrap[data-attachment-preview-kind='image'] {
       border: 0;
-      background: transparent;
+      background: ${Color.whiteGray()};
     }
     .home-feed-card__target-media img,
     .home-feed-card__target-media-wrap img {

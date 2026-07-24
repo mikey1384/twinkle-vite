@@ -12,6 +12,8 @@ import AiEnergySponsorButton, {
   shouldRenderAiEnergySponsorNotice
 } from '~/components/Comments/AiEnergySponsorButton';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
+import CompactEffortStrip from '~/components/Subjects/CompactEffortStrip';
+import { AttachmentSurface } from '~/components/Subjects/SubjectMediaPreview';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
@@ -33,9 +35,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { bodyClass, homeFeedSecretGuardBannerStyle } from './styles';
 import {
-  AttachmentSurface,
   AudioWavePreview,
-  CompactEffortStrip,
   MarkdownEmbedPreview,
   type HomeFeedNestedNavigate,
   getAIStoryDifficultyStyle,

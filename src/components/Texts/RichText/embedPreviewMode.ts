@@ -2,7 +2,7 @@ export type RichTextEmbedPreviewMode =
   'compactComment' | 'fullWidth' | 'thumbnail';
 export type RichTextSubjectPreviewVariant = 'fullWidth' | 'thumbnail';
 
-const fullWidthSubjectEmbedReservedHeight = '19rem';
+const wideSubjectEmbedReservedHeight = '10rem';
 
 export function getRichTextEmbedPreviewMode({
   compactEmbedPreview,
@@ -38,7 +38,7 @@ export function getRichTextPreviewMaxHeight({
 }) {
   const reservedHeight =
     hasMarkdownEmbed && subjectPreviewVariant === 'fullWidth'
-      ? ` + ${fullWidthSubjectEmbedReservedHeight}`
+      ? ` + ${wideSubjectEmbedReservedHeight}`
       : '';
   return `calc(${lineHeight}em * ${maxLines}${reservedHeight})`;
 }

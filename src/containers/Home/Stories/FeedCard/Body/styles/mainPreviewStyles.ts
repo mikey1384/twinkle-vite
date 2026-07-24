@@ -795,53 +795,6 @@ export const mainPreviewStyles = `
     font-size: 1.15rem;
     flex-shrink: 0;
   }
-  .home-feed-card__compact-effort {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    align-self: stretch;
-    gap: 0.75rem;
-    max-width: 100%;
-    min-height: 2.9rem;
-    padding: 0.48rem 0.82rem;
-    border: 0;
-    border-radius: 0.78rem;
-    background: var(--effort-color);
-    color: #fff;
-    line-height: 1;
-    box-shadow: 0 0.08rem 0 rgba(17, 24, 39, 0.08);
-  }
-  .home-feed-card__compact-effort-left {
-    display: inline-flex;
-    min-width: 0;
-    align-items: center;
-    gap: 0.42rem;
-  }
-  .home-feed-card__compact-effort-label,
-  .home-feed-card__compact-effort-xp {
-    font-size: 1.08rem;
-    font-weight: 850;
-    white-space: nowrap;
-  }
-  .home-feed-card__compact-effort-label {
-    color: #fff;
-  }
-  .home-feed-card__compact-effort-stars {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: 0.18rem;
-    overflow: hidden;
-    color: var(--effort-star-color, #ffd700);
-    font-size: 1.2rem;
-  }
-  .home-feed-card__compact-effort-xp {
-    min-width: 0;
-    overflow: hidden;
-    color: #fff;
-    text-align: right;
-    text-overflow: ellipsis;
-  }
   .home-feed-card__attachment-only-preview {
     display: flex;
     height: 100%;
@@ -869,7 +822,7 @@ export const mainPreviewStyles = `
   }
   .home-feed-card__attachment-preview--subject-image {
     border: 0;
-    background: transparent;
+    background: ${Color.whiteGray()};
     box-shadow: none;
   }
   /* Subject file attachments render as a centered SQUARE tile (mirrors the

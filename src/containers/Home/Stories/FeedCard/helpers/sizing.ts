@@ -1390,7 +1390,8 @@ export function getSubjectTargetDescriptionEmbeds(target: any): {
   const isBuildEmbed =
     embed.type === 'internal' &&
     getInternalEmbedPreviewInfo(embed.src)?.kind === 'build';
-  const promotedBuildEmbed = isBuildEmbed && !target?.filePath ? embed : null;
+  const promotedBuildEmbed =
+    isBuildEmbed && !hasAttachment(target) ? embed : null;
   return {
     contentEmbed: promotedBuildEmbed ? null : embed,
     promotedBuildEmbed

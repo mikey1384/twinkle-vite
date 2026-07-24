@@ -89,7 +89,7 @@ test('lets full-width surfaces opt into subject cards without weakening compact 
       maxLines: 10,
       subjectPreviewVariant: 'fullWidth'
     }),
-    'calc(1.7em * 10 + 19rem)'
+    'calc(1.7em * 10 + 10rem)'
   );
   assert.equal(
     getRichTextPreviewMaxHeight({
@@ -211,10 +211,19 @@ test('routes each RichText embed mode through the complete render pipeline', () 
   const mainContentSource = readSource(
     'src/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent/MainContentComponent.tsx'
   );
-  const contentPreviewSource = readSource('src/components/ContentPreview.tsx');
+  const wideSubjectEmbedSource = readSource(
+    'src/components/Subjects/WideSubjectEmbedPreview.tsx'
+  );
+  const subjectMediaPreviewSource = readSource(
+    'src/components/Subjects/SubjectMediaPreview.tsx'
+  );
   const previewPrimitivesSource = readSource(
     'src/containers/Home/Stories/FeedCard/Body/PreviewPrimitives.tsx'
   );
+  const targetPreviewSource = readSource(
+    'src/containers/Home/Stories/FeedCard/Body/TargetPreview.tsx'
+  );
+  const contentPreviewSource = readSource('src/components/ContentPreview.tsx');
   const commentSource = readSource(
     'src/components/Comments/Container/Comment.tsx'
   );
@@ -281,7 +290,35 @@ test('routes each RichText embed mode through the complete render pipeline', () 
   );
   assert.match(
     mainContentSource,
-    /isSubject &&[\s\S]*?subjectPreviewVariant === 'fullWidth'[\s\S]*?embedPreviewMode === 'fullWidth'[\s\S]*?<ContentListItem[\s\S]*?contentType: 'subject'/
+    /isSubject &&[\s\S]*?subjectPreviewVariant === 'fullWidth'[\s\S]*?embedPreviewMode === 'fullWidth'[\s\S]*?<WideSubjectEmbedPreview[\s\S]*?contentType: 'subject'/
+  );
+  assert.match(
+    mainContentSource,
+    /function handleFullWidthSubjectClick[\s\S]*?event\.stopPropagation\(\);[\s\S]*?navigate\(path\);/
+  );
+  assert.match(
+    wideSubjectEmbedSource,
+    /<HomeFeedSubjectTargetPreview[\s\S]*?<CompactEffortStrip[\s\S]*?className="home-feed-card__target-reward-bar"/
+  );
+  assert.match(
+    wideSubjectEmbedSource,
+    /resolveWideSubjectMedia\(subject\)[\s\S]*?<SubjectMediaPreview[\s\S]*?descriptor=\{derivedMedia\}/
+  );
+  assert.match(
+    subjectMediaPreviewSource,
+    /descriptor\.kind === 'attachment'[\s\S]*?<AttachmentSurface[\s\S]*?descriptor\.kind === 'videoRoot'[\s\S]*?<VideoThumbImage[\s\S]*?<Embedly/
+  );
+  assert.match(
+    wideSubjectEmbedSource,
+    /\.home-feed-card__target-reward-bar \.home-feed-card__compact-effort-xp \{[\s\S]*?display: none;/
+  );
+  assert.match(
+    previewPrimitivesSource,
+    /function HomeFeedWideSubjectEmbedPreview[\s\S]*?<WideSubjectEmbedPreview/
+  );
+  assert.match(
+    targetPreviewSource,
+    /function renderTargetSubjectPreview[\s\S]*?<WideSubjectEmbedPreview/
   );
   assert.match(
     mainContentSource,
