@@ -19,7 +19,12 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { hasStructuredPreviewMarkdown } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
-import { getRichTextEmbedPreviewMode } from './embedPreviewMode';
+import {
+  getRichTextEmbedPreviewMode,
+  getRichTextPreviewMaxHeight,
+  getRichTextSubjectPreviewVariant,
+  type RichTextSubjectPreviewVariant
+} from './embedPreviewMode';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
@@ -291,6 +296,7 @@ function RichText({
   isAudioButtonShown = true,
   aiActionPlacement = 'floating',
   compactEmbedPreview,
+  subjectPreviewVariant,
   isShowMoreButtonCentered,
   voice,
   maxLines = 10,
@@ -311,6 +317,7 @@ function RichText({
   isAudioButtonShown?: boolean;
   aiActionPlacement?: 'floating' | 'inline';
   compactEmbedPreview?: boolean;
+  subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   isUseNewFormat?: boolean;
   isPreview?: boolean;
   isStatusMsg?: boolean;
@@ -332,6 +339,10 @@ function RichText({
   const embedPreviewMode = getRichTextEmbedPreviewMode({
     compactEmbedPreview,
     isPreview
+  });
+  const appliedSubjectPreviewVariant = getRichTextSubjectPreviewVariant({
+    compactEmbedPreview,
+    subjectPreviewVariant
   });
   const embedPreview = Boolean(embedPreviewMode);
   const {
@@ -431,8 +442,18 @@ function RichText({
   );
   const previewMobileMaxLines = mobileMaxLines || maxLines;
   const effectiveCollapsedLineHeight = lineHeight ?? collapsedLineHeight;
-  const previewCollapsedMaxHeight = `calc(${effectiveCollapsedLineHeight}em * ${maxLines})`;
-  const previewMobileCollapsedMaxHeight = `calc(${effectiveCollapsedLineHeight}em * ${previewMobileMaxLines})`;
+  const previewCollapsedMaxHeight = getRichTextPreviewMaxHeight({
+    hasMarkdownEmbed,
+    lineHeight: effectiveCollapsedLineHeight,
+    maxLines,
+    subjectPreviewVariant: appliedSubjectPreviewVariant
+  });
+  const previewMobileCollapsedMaxHeight = getRichTextPreviewMaxHeight({
+    hasMarkdownEmbed,
+    lineHeight: effectiveCollapsedLineHeight,
+    maxLines: previewMobileMaxLines,
+    subjectPreviewVariant: appliedSubjectPreviewVariant
+  });
   const shouldUseBlockPreviewMaxHeight =
     isBlockPreservingPreview && !fullTextShown;
 
@@ -615,6 +636,7 @@ function RichText({
           disableImageModal={disableImageModal}
           linkColor={appliedLinkColor}
           markerColor={markerColor}
+          subjectPreviewVariant={appliedSubjectPreviewVariant}
           theme={theme}
           onSetIsParsed={setIsParsed}
           embeddedContentRef={embeddedContentRef}
@@ -635,6 +657,7 @@ function RichText({
     isAIMessage,
     isProfileComponent,
     markerColor,
+    appliedSubjectPreviewVariant,
     theme,
     text,
     tooLongNonUrlToken
@@ -674,8 +697,9 @@ function RichText({
         } ${
           isBlockPreservingPreview ? 'rich-text--block-preview' : ''
         } ${RichTextCss} ${css`
-          ${shouldUseBlockPreviewMaxHeight
-            ? `
+          ${
+            shouldUseBlockPreviewMaxHeight
+              ? `
               max-height: ${previewCollapsedMaxHeight};
 
               ${
@@ -688,10 +712,12 @@ function RichText({
                   : ''
               }
             `
-            : ''}
+              : ''
+          }
 
-          ${isBlockPreservingPreview
-            ? `
+          ${
+            isBlockPreservingPreview
+              ? `
               > h1:first-child,
               > h2:first-child,
               > h3:first-child,
@@ -715,9 +741,11 @@ function RichText({
                 line-height: 1.18;
               }
             `
-            : ''}
-          ${isLineClampedPreview
-            ? `
+              : ''
+          }
+          ${
+            isLineClampedPreview
+              ? `
               display: -webkit-box;
               -webkit-box-orient: vertical;
               -webkit-line-clamp: ${maxLines};
@@ -767,7 +795,8 @@ function RichText({
                 content: ' ';
               }
             `
-            : ''}
+              : ''
+          }
           a {
             color: ${appliedLinkColor};
           }
@@ -803,6 +832,7 @@ function RichText({
               linkColor={appliedLinkColor}
               markerColor={markerColor}
               isPreview={embedPreview}
+              subjectPreviewVariant={appliedSubjectPreviewVariant}
               theme={theme}
               text={text}
               maxLines={maxLines}
@@ -811,9 +841,7 @@ function RichText({
             />
           </ErrorBoundary>
         )}
-        <ErrorBoundary
-          componentPath="components/Texts/RichText/Markdown"
-        >
+        <ErrorBoundary componentPath="components/Texts/RichText/Markdown">
           {markdownContent}
         </ErrorBoundary>
       </div>
@@ -822,9 +850,9 @@ function RichText({
           height: auto;
           display: flex;
           align-items: center;
-          justify-content: ${isShowMoreButtonCentered
-            ? 'center'
-            : 'flex-start'};
+          justify-content: ${
+            isShowMoreButtonCentered ? 'center' : 'flex-start'
+          };
         `}
       >
         {isOverflown && !isPreview && (

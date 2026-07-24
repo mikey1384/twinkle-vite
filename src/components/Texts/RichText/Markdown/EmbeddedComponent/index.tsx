@@ -8,7 +8,10 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import type { RichTextEmbedPreviewMode } from '../../embedPreviewMode';
+import type {
+  RichTextEmbedPreviewMode,
+  RichTextSubjectPreviewVariant
+} from '../../embedPreviewMode';
 
 function EmbeddedComponent({
   contentType,
@@ -18,6 +21,7 @@ function EmbeddedComponent({
   alt,
   isPreview,
   isProfileComponent,
+  subjectPreviewVariant,
   disableImageModal,
   theme,
   embeddedContentRef,
@@ -30,6 +34,7 @@ function EmbeddedComponent({
   alt?: string;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   disableImageModal?: boolean;
   theme?: string;
   embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
@@ -112,16 +117,17 @@ function EmbeddedComponent({
       className={`rich-text-embedded-component${
         isPreview ? ' rich-text-embedded-component--preview' : ''
       } ${css`
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          flex-direction: column;
-          padding: ${cleanReplacedLink.split('/')?.[1] === 'users' &&
-          isProfileComponent
-            ? 'none'
-            : '1rem'};
-          width: 100%;
-        `}`}
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: ${
+            cleanReplacedLink.split('/')?.[1] === 'users' && isProfileComponent
+              ? 'none'
+              : '1rem'
+          };
+        width: 100%;
+      `}`}
     >
       {isInternalLink ? (
         <InternalComponent
@@ -130,6 +136,7 @@ function EmbeddedComponent({
           isProfileComponent={isProfileComponent}
           src={cleanReplacedLink}
           embedPreviewMode={embedPreviewMode}
+          subjectPreviewVariant={subjectPreviewVariant}
           isPreview={isPreview}
           theme={theme}
         />

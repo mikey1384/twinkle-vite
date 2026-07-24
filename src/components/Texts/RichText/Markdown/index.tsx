@@ -37,7 +37,10 @@ import {
   unescapeEqualSignAndDash,
   unescapeHtml
 } from './helpers';
-import type { RichTextEmbedPreviewMode } from '../embedPreviewMode';
+import type {
+  RichTextEmbedPreviewMode,
+  RichTextSubjectPreviewVariant
+} from '../embedPreviewMode';
 
 const SECTION_LABEL_CLASS = 'rich-text-section-label';
 
@@ -53,6 +56,7 @@ function Markdown({
   disableImageModal,
   linkColor,
   markerColor,
+  subjectPreviewVariant,
   theme,
   onSetIsParsed,
   embeddedContentRef,
@@ -69,6 +73,7 @@ function Markdown({
   children: string;
   linkColor: string;
   markerColor: string;
+  subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
   onSetIsParsed: (parsed: boolean) => void;
   embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
@@ -124,8 +129,7 @@ function Markdown({
 
       let textForMarkdown = preprocessedText;
       if (isAIMessage) {
-        textForMarkdown =
-          protectCurrencyLiteralsOutsideMath(preprocessedText);
+        textForMarkdown = protectCurrencyLiteralsOutsideMath(preprocessedText);
       }
 
       const markupString = isAIMessage
@@ -186,6 +190,7 @@ function Markdown({
     key,
     linkColor,
     markerColor,
+    subjectPreviewVariant,
     theme
   ]);
 
@@ -310,6 +315,7 @@ function Markdown({
                       contentId={contentId}
                       contentType={contentType}
                       embedPreviewMode={embedPreviewMode}
+                      subjectPreviewVariant={subjectPreviewVariant}
                       isPreview={isPreview}
                       isProfileComponent={isProfileComponent}
                       disableImageModal={disableImageModal}
@@ -771,6 +777,7 @@ function Markdown({
                   contentId={contentId}
                   contentType={contentType}
                   embedPreviewMode={embedPreviewMode}
+                  subjectPreviewVariant={subjectPreviewVariant}
                   embeddedContentRef={embeddedContentRef}
                   src={unescapeEqualSignAndDash(commonProps?.src || '')}
                   alt={unescapeEqualSignAndDash(commonProps?.alt || '')}
@@ -1075,7 +1082,6 @@ function Markdown({
       }
     });
   }
-
 }
 
 export default React.memo(Markdown);

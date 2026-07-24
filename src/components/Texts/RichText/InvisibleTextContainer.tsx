@@ -7,7 +7,10 @@ import React, {
 } from 'react';
 import { css } from '@emotion/css';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
-import type { RichTextEmbedPreviewMode } from './embedPreviewMode';
+import type {
+  RichTextEmbedPreviewMode,
+  RichTextSubjectPreviewVariant
+} from './embedPreviewMode';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 const collapsedLineHeight = 1.7;
@@ -26,6 +29,7 @@ export default function InvisibleTextContainer({
   isProfileComponent,
   linkColor,
   markerColor,
+  subjectPreviewVariant,
   theme,
   text,
   maxLines,
@@ -40,6 +44,7 @@ export default function InvisibleTextContainer({
   isProfileComponent?: boolean;
   linkColor: string;
   markerColor: string;
+  subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
   text: string;
   maxLines: number;
@@ -120,6 +125,7 @@ export default function InvisibleTextContainer({
           isAIMessage={isAIMessage}
           linkColor={linkColor}
           markerColor={markerColor}
+          subjectPreviewVariant={subjectPreviewVariant}
           theme={theme}
           onSetIsParsed={handleSetIsParsed}
         >

@@ -15,7 +15,11 @@ const previewModeModule = loadTypeScriptModule(
     '../src/components/Texts/RichText/embedPreviewMode.ts'
   )
 );
-const { getRichTextEmbedPreviewMode } = previewModeModule.exports;
+const {
+  getRichTextEmbedPreviewMode,
+  getRichTextPreviewMaxHeight,
+  getRichTextSubjectPreviewVariant
+} = previewModeModule.exports;
 const embeddedVideoNavigationModule = loadTypeScriptModule(
   path.resolve(
     __dirname,
@@ -60,6 +64,41 @@ test('keeps collapsed RichText embeds compact and expanded RichText unchanged', 
       isPreview: false
     }),
     undefined
+  );
+});
+
+test('lets full-width surfaces opt into subject cards without weakening compact comments', () => {
+  assert.equal(
+    getRichTextSubjectPreviewVariant({
+      compactEmbedPreview: false,
+      subjectPreviewVariant: 'fullWidth'
+    }),
+    'fullWidth'
+  );
+  assert.equal(
+    getRichTextSubjectPreviewVariant({
+      compactEmbedPreview: true,
+      subjectPreviewVariant: 'fullWidth'
+    }),
+    undefined
+  );
+  assert.equal(
+    getRichTextPreviewMaxHeight({
+      hasMarkdownEmbed: true,
+      lineHeight: 1.7,
+      maxLines: 10,
+      subjectPreviewVariant: 'fullWidth'
+    }),
+    'calc(1.7em * 10 + 19rem)'
+  );
+  assert.equal(
+    getRichTextPreviewMaxHeight({
+      hasMarkdownEmbed: false,
+      lineHeight: 1.7,
+      maxLines: 10,
+      subjectPreviewVariant: 'fullWidth'
+    }),
+    'calc(1.7em * 10)'
   );
 });
 
@@ -172,6 +211,7 @@ test('routes each RichText embed mode through the complete render pipeline', () 
   const mainContentSource = readSource(
     'src/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent/MainContentComponent.tsx'
   );
+  const contentPreviewSource = readSource('src/components/ContentPreview.tsx');
   const previewPrimitivesSource = readSource(
     'src/containers/Home/Stories/FeedCard/Body/PreviewPrimitives.tsx'
   );
@@ -196,19 +236,39 @@ test('routes each RichText embed mode through the complete render pipeline', () 
     richTextSource,
     /const embedPreviewMode = getRichTextEmbedPreviewMode\(\{[\s\S]*?compactEmbedPreview,[\s\S]*?isPreview/
   );
+  assert.match(
+    richTextSource,
+    /const appliedSubjectPreviewVariant = getRichTextSubjectPreviewVariant\(\{[\s\S]*?compactEmbedPreview,[\s\S]*?subjectPreviewVariant/
+  );
   assert.ok(
     (richTextSource.match(/embedPreviewMode=\{embedPreviewMode\}/g) || [])
       .length >= 2,
     'Visible and measurement Markdown must receive the same embed preview mode'
   );
   assert.ok(
+    (
+      richTextSource.match(
+        /subjectPreviewVariant=\{appliedSubjectPreviewVariant\}/g
+      ) || []
+    ).length >= 2,
+    'Visible and measurement Markdown must receive the same subject preview variant'
+  );
+  assert.ok(
     (markdownSource.match(/embedPreviewMode=\{embedPreviewMode\}/g) || [])
       .length >= 2,
     'Both Markdown image conversion paths must preserve embed preview mode'
   );
+  assert.ok(
+    (
+      markdownSource.match(
+        /subjectPreviewVariant=\{subjectPreviewVariant\}/g
+      ) || []
+    ).length >= 2,
+    'Both Markdown image conversion paths must preserve the subject preview variant'
+  );
   assert.match(
     embeddedComponentSource,
-    /<InternalComponent[\s\S]*?embedPreviewMode=\{embedPreviewMode\}/
+    /<InternalComponent[\s\S]*?embedPreviewMode=\{embedPreviewMode\}[\s\S]*?subjectPreviewVariant=\{subjectPreviewVariant\}/
   );
 
   const mainContentDispatch = internalComponentSource.match(
@@ -217,11 +277,11 @@ test('routes each RichText embed mode through the complete render pipeline', () 
   assert.ok(mainContentDispatch, 'Missing main-content internal-link dispatch');
   assert.match(
     mainContentDispatch[1],
-    /<MainContentComponent[\s\S]*?embedPreviewMode=\{embedPreviewMode\}/
+    /<MainContentComponent[\s\S]*?embedPreviewMode=\{embedPreviewMode\}[\s\S]*?subjectPreviewVariant=\{subjectPreviewVariant\}/
   );
   assert.match(
     mainContentSource,
-    /isSubject && embedPreviewMode === 'fullWidth'[\s\S]*?<ContentListItem[\s\S]*?contentType: 'subject'/
+    /isSubject &&[\s\S]*?subjectPreviewVariant === 'fullWidth'[\s\S]*?embedPreviewMode === 'fullWidth'[\s\S]*?<ContentListItem[\s\S]*?contentType: 'subject'/
   );
   assert.match(
     mainContentSource,
@@ -250,6 +310,12 @@ test('routes each RichText embed mode through the complete render pipeline', () 
   assert.match(
     previewPrimitivesSource,
     /embedPreviewMode=\{[\s\S]*?internalPreviewVariant === 'compact' \? 'thumbnail' : 'fullWidth'/
+  );
+  assert.equal(
+    (contentPreviewSource.match(/subjectPreviewVariant="fullWidth"/g) || [])
+      .length,
+    3,
+    'Each ContentPreview RichText path must explicitly own full-width subject embeds'
   );
 
   for (const compactCommentSource of [

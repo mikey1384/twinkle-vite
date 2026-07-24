@@ -8,7 +8,10 @@ import AICardComponent from './AICardComponent';
 import SharedPromptComponent from './SharedPromptComponent';
 import AchievementUnlockComponent from './AchievementUnlockComponent';
 import AchievementComponent from './AchievementComponent';
-import type { RichTextEmbedPreviewMode } from '../../../embedPreviewMode';
+import type {
+  RichTextEmbedPreviewMode,
+  RichTextSubjectPreviewVariant
+} from '../../../embedPreviewMode';
 
 export default function InternalComponent({
   rootId,
@@ -21,6 +24,7 @@ export default function InternalComponent({
   isPreview,
   isProfileComponent,
   showCompactCommentTypeLabel = true,
+  subjectPreviewVariant,
   theme
 }: {
   buildPreviewVariant?: 'compact' | 'wide';
@@ -33,6 +37,7 @@ export default function InternalComponent({
   isPreview?: boolean;
   isProfileComponent?: boolean;
   showCompactCommentTypeLabel?: boolean;
+  subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
 }) {
   const InnerComponent = useMemo(() => {
@@ -76,6 +81,7 @@ export default function InternalComponent({
           embedPreviewMode={embedPreviewMode}
           isPreview={isPreview}
           showCompactCommentTypeLabel={showCompactCommentTypeLabel}
+          subjectPreviewVariant={subjectPreviewVariant}
           theme={theme}
         />
       );
@@ -123,6 +129,7 @@ export default function InternalComponent({
     rootId,
     rootType,
     showCompactCommentTypeLabel,
+    subjectPreviewVariant,
     theme
   ]);
 

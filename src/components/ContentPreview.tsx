@@ -274,6 +274,7 @@ export default function ContentPreview({
           contentId={contentId}
           contentType={contentType}
           section="preview"
+          subjectPreviewVariant="fullWidth"
           style={{ color: Color.black() }}
         >
           {story || ''}
@@ -350,6 +351,7 @@ export default function ContentPreview({
             contentId={contentId}
             contentType={contentType}
             section="preview"
+            subjectPreviewVariant="fullWidth"
             style={{ color: Color.black() }}
           >
             {description || content || ''}
@@ -381,6 +383,7 @@ export default function ContentPreview({
         contentId={contentId}
         contentType={contentType}
         section="preview"
+        subjectPreviewVariant="fullWidth"
         isAIMessage={isAIMessage}
         voice={aiVoice}
         style={{ color: Color.black() }}
@@ -431,9 +434,7 @@ export default function ContentPreview({
         <div
           className={attachmentWrapperClass}
           onClick={
-            disableImageModal
-              ? undefined
-              : (event) => event.stopPropagation()
+            disableImageModal ? undefined : (event) => event.stopPropagation()
           }
         >
           {userId ? (

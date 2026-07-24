@@ -18,7 +18,10 @@ import { isMobile } from '~/helpers';
 import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { getPlainPreviewText } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
-import type { RichTextEmbedPreviewMode } from '../../../embedPreviewMode';
+import type {
+  RichTextEmbedPreviewMode,
+  RichTextSubjectPreviewVariant
+} from '../../../embedPreviewMode';
 import InvalidContent from '../InvalidContent';
 import UnpublishedBuildContent from '../UnpublishedBuildContent';
 import { shouldNavigateEmbeddedVideoContainerClick } from './embeddedVideoNavigation';
@@ -27,7 +30,8 @@ import { css } from '@emotion/css';
 const displayIsMobile = isMobile(navigator);
 
 function getBuildOwnerProfileTheme(build?: any) {
-  const owner = build?.owner && typeof build.owner === 'object' ? build.owner : {};
+  const owner =
+    build?.owner && typeof build.owner === 'object' ? build.owner : {};
   const uploader =
     build?.uploader && typeof build.uploader === 'object' ? build.uploader : {};
   return String(
@@ -48,6 +52,7 @@ export default function MainContentComponent({
   embedPreviewMode = 'thumbnail',
   isPreview,
   showCompactCommentTypeLabel = true,
+  subjectPreviewVariant,
   theme
 }: {
   contentId: string;
@@ -58,6 +63,7 @@ export default function MainContentComponent({
   embedPreviewMode?: RichTextEmbedPreviewMode;
   isPreview?: boolean;
   showCompactCommentTypeLabel?: boolean;
+  subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
 }) {
   const navigate = useNavigate();
@@ -175,6 +181,7 @@ export default function MainContentComponent({
         embedPreviewMode={embedPreviewMode}
         navigate={navigate}
         showCompactCommentTypeLabel={showCompactCommentTypeLabel}
+        subjectPreviewVariant={subjectPreviewVariant}
         theme={theme}
         userId={userId}
       />
@@ -278,6 +285,7 @@ function CompactMainContentEmbedPreview({
   embedPreviewMode,
   navigate,
   showCompactCommentTypeLabel,
+  subjectPreviewVariant,
   theme,
   userId
 }: {
@@ -290,6 +298,7 @@ function CompactMainContentEmbedPreview({
   embedPreviewMode: RichTextEmbedPreviewMode;
   navigate: (path: string) => void;
   showCompactCommentTypeLabel: boolean;
+  subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
   userId?: number;
 }) {
@@ -365,7 +374,10 @@ function CompactMainContentEmbedPreview({
     );
   }
 
-  if (isSubject && embedPreviewMode === 'fullWidth') {
+  if (
+    isSubject &&
+    (subjectPreviewVariant === 'fullWidth' || embedPreviewMode === 'fullWidth')
+  ) {
     return (
       <div
         className="full-width-subject-embed-preview"
@@ -491,7 +503,9 @@ function CompactMainContentEmbedPreview({
     navigate(path);
   }
 
-  function handleFullWidthSubjectClick(event: React.MouseEvent<HTMLDivElement>) {
+  function handleFullWidthSubjectClick(
+    event: React.MouseEvent<HTMLDivElement>
+  ) {
     event.stopPropagation();
   }
 
