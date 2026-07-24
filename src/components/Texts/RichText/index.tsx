@@ -19,6 +19,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { hasStructuredPreviewMarkdown } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
+import { getRichTextEmbedPreviewMode } from './embedPreviewMode';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
@@ -328,7 +329,11 @@ function RichText({
   voice?: string;
 }) {
   text = text || '';
-  const embedPreview = Boolean(isPreview || compactEmbedPreview);
+  const embedPreviewMode = getRichTextEmbedPreviewMode({
+    compactEmbedPreview,
+    isPreview
+  });
+  const embedPreview = Boolean(embedPreviewMode);
   const {
     color: linkColor,
     colorKey: linkColorKey,
@@ -603,6 +608,7 @@ function RichText({
         <Markdown
           contentId={contentId}
           contentType={contentType}
+          embedPreviewMode={embedPreviewMode}
           isPreview={embedPreview}
           isProfileComponent={isProfileComponent}
           isAIMessage={isAIMessage}
@@ -624,6 +630,7 @@ function RichText({
     contentId,
     contentType,
     disableImageModal,
+    embedPreviewMode,
     embedPreview,
     isAIMessage,
     isProfileComponent,
@@ -790,6 +797,7 @@ function RichText({
             <InvisibleTextContainer
               contentId={contentId}
               contentType={contentType}
+              embedPreviewMode={embedPreviewMode}
               isAIMessage={isAIMessage}
               isProfileComponent={isProfileComponent}
               linkColor={appliedLinkColor}

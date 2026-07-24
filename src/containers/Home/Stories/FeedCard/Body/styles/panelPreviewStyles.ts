@@ -133,6 +133,9 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-reflection-tight {
     height: max(22rem, 220px);
   }
+  .home-feed-card__panel-preview--size-rich-image-compact {
+    height: max(20rem, 200px);
+  }
   .home-feed-card__panel-preview--size-rich-embed {
     height: max(27rem, 270px);
   }
@@ -192,6 +195,9 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview--size-standard {
     height: max(13rem, 130px);
   }
+  .home-feed-card__target-preview--size-build-comment {
+    height: max(15.5rem, 155px);
+  }
   .home-feed-card__target-preview--size-media-comment {
     height: max(20rem, 200px);
   }
@@ -224,6 +230,10 @@ export const panelPreviewStyles = `
       .home-feed-card__target-preview--size-fallback,
     &.home-feed-card__body--tablet-media-attachment
       .home-feed-card__target-preview--size-standard {
+      height: max(12rem, 120px);
+    }
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-build-comment {
       height: max(12rem, 120px);
     }
     &.home-feed-card__body--tablet-media-attachment

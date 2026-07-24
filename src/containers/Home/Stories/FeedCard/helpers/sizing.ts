@@ -4,11 +4,11 @@ import {
   getInternalEmbedPreviewInfo,
   isAICardEmbedSrc
 } from '~/helpers/aiCardEmbedHelpers';
-import { hasStructuredPreviewMarkdown } from '~/helpers/stringHelpers';
 import {
-  CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID
-} from '~/constants/defaultValues';
+  getFileInfoFromFileName,
+  hasStructuredPreviewMarkdown
+} from '~/helpers/stringHelpers';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 export type FeedCardPreviewKind =
   | 'ai-story'
@@ -39,6 +39,7 @@ export type FeedCardSize =
   | 'reflection'
   | 'reflection-tall'
   | 'reflection-tight'
+  | 'rich-image-compact'
   | 'rich-embed'
   | 'rich-embed-compact'
   | 'secret'
@@ -58,6 +59,7 @@ export type FeedCardSize =
   | 'url';
 
 export type FeedCardTargetSize =
+  | 'build-comment'
   | 'compact'
   | 'fallback'
   | 'media-comment'
@@ -80,6 +82,12 @@ export interface MarkdownImageEmbed {
   alt: string;
   src: string;
   type: 'image' | 'internal' | 'unknown' | 'youtube';
+}
+
+export interface MarkdownEmbedFileInfo {
+  extension: string;
+  fileName: string;
+  fileType: string;
 }
 
 export interface FeedCardPanelSizing {
@@ -176,6 +184,7 @@ const PANEL_HEIGHT_REM: Record<
   reflection: { desktop: 27, mobile: 27 },
   'reflection-tall': { desktop: 34, mobile: 32 },
   'reflection-tight': { desktop: 22, mobile: 21 },
+  'rich-image-compact': { desktop: 20, mobile: 15.5 },
   'rich-embed': { desktop: 27, mobile: 25 },
   'rich-embed-compact': { desktop: 21, mobile: 20 },
   secret: { desktop: 12, mobile: 11 },
@@ -201,6 +210,7 @@ const TARGET_HEIGHT_REM: Record<
   FeedCardTargetSize,
   { desktop: number; mobile: number }
 > = {
+  'build-comment': { desktop: 15.5, mobile: 12 },
   compact: { desktop: 8.5, mobile: 8.5 },
   fallback: { desktop: 13, mobile: 12 },
   'media-comment': { desktop: 20, mobile: 18 },
@@ -493,6 +503,30 @@ export function getMarkdownImageEmbedPreview(
   return embeds[0] || null;
 }
 
+export function getMarkdownEmbedFileInfo(src: string): MarkdownEmbedFileInfo {
+  const path = String(src || '')
+    .split('?')[0]
+    .split('#')[0];
+  const encodedFileName = path.split('/').pop() || 'Image unavailable';
+  let fileName = encodedFileName;
+  try {
+    fileName = decodeURIComponent(encodedFileName);
+  } catch {
+    // Keep the source filename when it contains malformed URI escapes.
+  }
+  return {
+    fileName,
+    ...getFileInfoFromFileName(fileName)
+  };
+}
+
+export function isMarkdownImageFileEmbed(embed?: MarkdownImageEmbed | null) {
+  return Boolean(
+    embed?.type === 'image' &&
+    getMarkdownEmbedFileInfo(embed.src).fileType === 'image'
+  );
+}
+
 function getSecretHidden({
   content,
   rootObj,
@@ -601,8 +635,9 @@ function getMainPanelSize({
     return 'subject-rich-embed';
   }
 
-  if (isCompactRichTextEmbedContent(content)) {
-    return 'rich-embed-compact';
+  const compactRichTextEmbedSize = getCompactRichTextEmbedSize(content);
+  if (compactRichTextEmbedSize) {
+    return compactRichTextEmbedSize;
   }
 
   if (
@@ -725,6 +760,10 @@ function getTargetPanelSizing({
 
   if (isRenderableHomeFeedTargetComment(targetComment)) {
     if (flags.secretHidden) return null;
+
+    if (hasTargetCommentBuildEmbed(targetComment)) {
+      return buildTargetSizing('build-comment');
+    }
 
     if (hasTargetCommentMedia(targetComment)) {
       return buildTargetSizing('media-comment');
@@ -1092,7 +1131,11 @@ function getFeedCardFrameSize({
     return 'profile-card';
   }
 
-  if (mainSize === 'rich-embed' || mainSize === 'rich-embed-compact') {
+  if (
+    mainSize === 'rich-image-compact' ||
+    mainSize === 'rich-embed' ||
+    mainSize === 'rich-embed-compact'
+  ) {
     return 'rich-embed-card';
   }
 
@@ -1347,8 +1390,7 @@ export function getSubjectTargetDescriptionEmbeds(target: any): {
   const isBuildEmbed =
     embed.type === 'internal' &&
     getInternalEmbedPreviewInfo(embed.src)?.kind === 'build';
-  const promotedBuildEmbed =
-    isBuildEmbed && !target?.filePath ? embed : null;
+  const promotedBuildEmbed = isBuildEmbed && !target?.filePath ? embed : null;
   return {
     contentEmbed: promotedBuildEmbed ? null : embed,
     promotedBuildEmbed
@@ -1369,7 +1411,7 @@ function hasPromotableSubjectAttachmentEmbed(
       String(content?.description || content?.content || '')
     );
 
-  return embedPreview?.type === 'image';
+  return isMarkdownImageFileEmbed(embedPreview);
 }
 
 function isSparseSubjectContent(content: any) {
@@ -1437,8 +1479,7 @@ function getSubjectWithRootPanelSize(content: any): FeedCardSize {
 function getPlainSubjectPanelSize(content: any): FeedCardSize {
   const descriptionLength = getSubjectDescriptionTextLength(content);
   const hasSubjectMediaPreview =
-    Boolean(content?.filePath) ||
-    hasPromotableSubjectAttachmentEmbed(content);
+    Boolean(content?.filePath) || hasPromotableSubjectAttachmentEmbed(content);
   const fitsCompactDescription =
     getSubjectDescriptionPreviewLineCount({
       axis: 'desktop',
@@ -1674,13 +1715,12 @@ function getShortPublicSubjectSecretPanelSize(content: any): FeedCardSize {
 function getLockedSubjectPanelSize(content: any): FeedCardSize {
   const descriptionLength = getSubjectDescriptionTextLength(content);
   const hasSubjectMediaPreview =
-    Boolean(content?.filePath) ||
-    hasPromotableSubjectAttachmentEmbed(content);
+    Boolean(content?.filePath) || hasPromotableSubjectAttachmentEmbed(content);
   const hasLockedSecret = Boolean(
     content?.hasSecretAnswer ||
-      content?.hasSecretAttachment ||
-      content?.secretAnswer ||
-      content?.secretAttachment
+    content?.hasSecretAttachment ||
+    content?.secretAnswer ||
+    content?.secretAttachment
   );
 
   if (hasSubjectMediaPreview && isSparseSubjectContent(content)) {
@@ -1722,13 +1762,15 @@ function hasAttachedRootContent(content: any) {
   );
 }
 
-function isCompactRichTextEmbedContent(content: any) {
+function getCompactRichTextEmbedSize(
+  content: any
+): 'rich-image-compact' | 'rich-embed-compact' | null {
   const embedPreview = getMarkdownImageEmbedPreview(
     String(content?.content || content?.description || '')
   );
 
   if (!embedPreview) {
-    return false;
+    return null;
   }
 
   const plainTextLength = getPlainTextLength(content);
@@ -1737,13 +1779,15 @@ function isCompactRichTextEmbedContent(content: any) {
     embedPreview.type === 'internal' &&
     isAICardEmbedSrc(embedPreview.src)
   ) {
-    return false;
+    return null;
   }
-  if (embedPreview.type === 'image') {
-    return plainTextLength > 0 && plainTextLength <= 120;
+  if (isMarkdownImageFileEmbed(embedPreview)) {
+    return plainTextLength > 0 && plainTextLength <= 120
+      ? 'rich-image-compact'
+      : null;
   }
 
-  return plainTextLength <= 120;
+  return plainTextLength <= 120 ? 'rich-embed-compact' : null;
 }
 
 function getPlainTextPanelSize(content: any): FeedCardSize {
@@ -1821,7 +1865,7 @@ function getTextMaxLines(
     return 6;
   }
 
-  if (size === 'rich-embed-compact') {
+  if (size === 'rich-image-compact' || size === 'rich-embed-compact') {
     return 4;
   }
 
@@ -2088,7 +2132,7 @@ function getSubjectDescriptionMaxLines(size: FeedCardSize) {
     return 5;
   }
 
-  if (size === 'rich-embed-compact') {
+  if (size === 'rich-image-compact' || size === 'rich-embed-compact') {
     return 3;
   }
 
@@ -2234,7 +2278,7 @@ function getSubjectNonTallDescriptionMaxLines(size: FeedCardSize) {
     return 5;
   }
 
-  if (size === 'rich-embed-compact') {
+  if (size === 'rich-image-compact' || size === 'rich-embed-compact') {
     return 3;
   }
 
@@ -2441,9 +2485,26 @@ function hasTargetCommentMedia(targetComment: any) {
   const content = String(targetComment?.content || '');
   return Boolean(
     targetComment?.filePath ||
-      targetComment?.actualFilePath ||
-      targetComment?.thumbUrl ||
-      getMarkdownImageEmbedPreview(content)
+    targetComment?.actualFilePath ||
+    targetComment?.thumbUrl ||
+    getMarkdownImageEmbedPreview(content)
+  );
+}
+
+function hasTargetCommentBuildEmbed(targetComment: any) {
+  if (
+    targetComment?.filePath ||
+    targetComment?.actualFilePath ||
+    targetComment?.thumbUrl
+  ) {
+    return false;
+  }
+  const embedPreview = getMarkdownImageEmbedPreview(
+    String(targetComment?.content || '')
+  );
+  return (
+    embedPreview?.type === 'internal' &&
+    getInternalEmbedPreviewInfo(embedPreview.src)?.kind === 'build'
   );
 }
 

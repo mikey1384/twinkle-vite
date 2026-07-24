@@ -170,11 +170,23 @@ export const mainPreviewStyles = `
     .home-feed-card__rich-embed-preview--image-only {
       padding: 0.25rem;
     }
+    .home-feed-card__rich-embed-preview--video-only
+      > .home-feed-card__rich-embed-internal--video {
+      width: min(100%, 30rem);
+      height: auto;
+      max-height: 100%;
+      align-items: center;
+      justify-content: center;
+    }
     .home-feed-card__rich-embed-preview--with-text {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(16rem, 40%);
       gap: 0.85rem;
       justify-content: stretch;
+    }
+    .home-feed-card__rich-embed-preview--with-text.home-feed-card__rich-embed-preview--compact-image {
+      grid-template-columns: minmax(0, 1fr) minmax(13rem, 14.5rem);
+      align-items: center;
     }
     .home-feed-card__rich-embed-copy {
       display: flex;
@@ -207,6 +219,10 @@ export const mainPreviewStyles = `
     }
     .home-feed-card__rich-embed-internal > * {
       width: 100%;
+    }
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-internal--video {
+      align-items: center;
     }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build {
       align-items: center;
@@ -365,12 +381,26 @@ export const mainPreviewStyles = `
       border: 1px solid ${Color.borderGray()};
       background: ${Color.whiteGray()};
     }
+    .home-feed-card__rich-embed-preview--with-text.home-feed-card__rich-embed-preview--image
+      > .home-feed-card__rich-embed-image {
+      border: 0;
+      background: transparent;
+    }
+    .home-feed-card__rich-embed-preview--with-text.home-feed-card__rich-embed-preview--compact-image
+      > .home-feed-card__rich-embed-image {
+      align-self: center;
+      height: auto;
+      max-height: 100%;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+    }
+    /* Internal preview components own their card border. The wrapper supplies
+       one only for comment embeds, whose compact surface is intentionally
+       borderless in this slot. */
     .home-feed-card__rich-embed-preview--with-text
-      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject,
-    .home-feed-card__rich-embed-preview--with-text
-      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card,
-    .home-feed-card__rich-embed-preview--with-text
-      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--user {
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal:not(
+        .home-feed-card__rich-embed-internal--comment
+      ) {
       border: 0;
       background: transparent;
     }

@@ -19,10 +19,79 @@ export const banStatusClass = css`
     color: ${Color.rose()};
   }
 
+  &.signup-only {
+    border-color: ${Color.orange(0.45)};
+    background: ${Color.orange(0.1)};
+    color: ${Color.orange()};
+  }
+
   &.ok {
     border-color: ${Color.green(0.45)};
     background: ${Color.green(0.1)};
     color: ${Color.green()};
+  }
+`;
+
+export const bucketSettingsClass = css`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+
+  .bucket-setting {
+    min-width: 0;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: ${mediumBorderRadius};
+    background: ${Color.whiteGray()};
+    padding: 1rem;
+  }
+
+  .bucket-setting > label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .bucket-setting-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .bucket-setting input,
+  .bucket-setting select {
+    min-width: 0;
+    width: 100%;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: ${mediumBorderRadius};
+    background: ${Color.white()};
+    padding: 0.8rem 1rem;
+    font-family: inherit;
+    font-size: 1.25rem;
+  }
+
+  .bucket-setting-row input {
+    flex: 1;
+  }
+
+  .bucket-setting > span {
+    display: block;
+    margin-top: 0.55rem;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+
+    .bucket-setting-row {
+      align-items: stretch;
+      flex-direction: column;
+    }
   }
 `;
 

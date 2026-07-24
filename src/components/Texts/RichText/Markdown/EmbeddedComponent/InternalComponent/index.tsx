@@ -8,6 +8,7 @@ import AICardComponent from './AICardComponent';
 import SharedPromptComponent from './SharedPromptComponent';
 import AchievementUnlockComponent from './AchievementUnlockComponent';
 import AchievementComponent from './AchievementComponent';
+import type { RichTextEmbedPreviewMode } from '../../../embedPreviewMode';
 
 export default function InternalComponent({
   rootId,
@@ -16,6 +17,7 @@ export default function InternalComponent({
   buildPreviewVariant,
   commentPreviewMaxTextLines,
   commentPreviewVariant,
+  embedPreviewMode,
   isPreview,
   isProfileComponent,
   showCompactCommentTypeLabel = true,
@@ -24,6 +26,7 @@ export default function InternalComponent({
   buildPreviewVariant?: 'compact' | 'wide';
   commentPreviewMaxTextLines?: number;
   commentPreviewVariant?: 'column' | 'compact';
+  embedPreviewMode?: RichTextEmbedPreviewMode;
   rootId?: number | string;
   rootType?: string;
   src: string;
@@ -70,6 +73,7 @@ export default function InternalComponent({
           contentId={contentId}
           commentPreviewMaxTextLines={commentPreviewMaxTextLines}
           commentPreviewVariant={commentPreviewVariant}
+          embedPreviewMode={embedPreviewMode}
           isPreview={isPreview}
           showCompactCommentTypeLabel={showCompactCommentTypeLabel}
           theme={theme}
@@ -113,6 +117,7 @@ export default function InternalComponent({
     buildPreviewVariant,
     commentPreviewMaxTextLines,
     commentPreviewVariant,
+    embedPreviewMode,
     isProfileComponent,
     isPreview,
     rootId,

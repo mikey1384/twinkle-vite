@@ -37,6 +37,7 @@ import {
   unescapeEqualSignAndDash,
   unescapeHtml
 } from './helpers';
+import type { RichTextEmbedPreviewMode } from '../embedPreviewMode';
 
 const SECTION_LABEL_CLASS = 'rich-text-section-label';
 
@@ -44,6 +45,7 @@ function Markdown({
   contentId,
   contentType,
   children,
+  embedPreviewMode,
   isInvisible,
   isPreview,
   isProfileComponent,
@@ -58,6 +60,7 @@ function Markdown({
 }: {
   contentId?: number | string;
   contentType?: string;
+  embedPreviewMode?: RichTextEmbedPreviewMode;
   isInvisible?: boolean;
   isPreview?: boolean;
   isProfileComponent?: boolean;
@@ -176,6 +179,7 @@ function Markdown({
     children,
     componentPath,
     disableImageModal,
+    embedPreviewMode,
     isAIMessage,
     isPreview,
     isProfileComponent,
@@ -305,6 +309,7 @@ function Markdown({
                     <EmbeddedComponent
                       contentId={contentId}
                       contentType={contentType}
+                      embedPreviewMode={embedPreviewMode}
                       isPreview={isPreview}
                       isProfileComponent={isProfileComponent}
                       disableImageModal={disableImageModal}
@@ -765,6 +770,7 @@ function Markdown({
                   disableImageModal={disableImageModal}
                   contentId={contentId}
                   contentType={contentType}
+                  embedPreviewMode={embedPreviewMode}
                   embeddedContentRef={embeddedContentRef}
                   src={unescapeEqualSignAndDash(commonProps?.src || '')}
                   alt={unescapeEqualSignAndDash(commonProps?.alt || '')}

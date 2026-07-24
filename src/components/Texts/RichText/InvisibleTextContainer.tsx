@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { css } from '@emotion/css';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import type { RichTextEmbedPreviewMode } from './embedPreviewMode';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 const collapsedLineHeight = 1.7;
@@ -19,6 +20,7 @@ export function stripMarkdownLinkUrls(text: string) {
 export default function InvisibleTextContainer({
   contentId,
   contentType,
+  embedPreviewMode,
   isAIMessage,
   isPreview,
   isProfileComponent,
@@ -32,6 +34,7 @@ export default function InvisibleTextContainer({
 }: {
   contentId?: string | number;
   contentType?: string;
+  embedPreviewMode?: RichTextEmbedPreviewMode;
   isAIMessage?: boolean;
   isPreview?: boolean;
   isProfileComponent?: boolean;
@@ -111,6 +114,7 @@ export default function InvisibleTextContainer({
           isInvisible
           contentId={contentId}
           contentType={contentType}
+          embedPreviewMode={embedPreviewMode}
           isPreview={isPreview}
           isProfileComponent={isProfileComponent}
           isAIMessage={isAIMessage}

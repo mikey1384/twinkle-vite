@@ -102,6 +102,12 @@ export default function CompactCommentEmbedPreview({
   );
   const hasText = Boolean(textContent.trim());
   const hasMedia = shownMediaItems.length > 0;
+  const hasBuildMedia = shownMediaItems.some(
+    (item) =>
+      item?.kind === 'markdown' &&
+      item.embed.type === 'internal' &&
+      item.embed.internalInfo?.kind === 'build'
+  );
   const interactive = Boolean(onOpen);
 
   return (
@@ -110,6 +116,7 @@ export default function CompactCommentEmbedPreview({
         compactCommentEmbedPreviewClass,
         className,
         hasMedia ? 'compact-comment-embed--has-media' : '',
+        hasBuildMedia ? 'compact-comment-embed--build-media' : '',
         !hasText ? 'compact-comment-embed--media-only' : '',
         isNested ? 'compact-comment-embed--nested' : '',
         isTargetRoot ? 'compact-comment-embed--target-root' : '',
@@ -973,6 +980,18 @@ const compactCommentEmbedPreviewClass = css`
     max-height: 100%;
     aspect-ratio: 1 / 1;
     min-height: 0;
+  }
+  &.compact-comment-embed--target-root.compact-comment-embed--build-media
+    > .compact-comment-embed__media {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+  }
+  &.compact-comment-embed--target-root.compact-comment-embed--build-media
+    > .compact-comment-embed__media
+    > .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal--build
+    > * {
+    height: 100%;
   }
   &.compact-comment-embed--target-root
     > .compact-comment-embed__media

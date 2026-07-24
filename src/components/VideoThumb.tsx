@@ -16,12 +16,16 @@ const addedByLabel = 'Added by';
 
 export default function VideoThumb({
   className,
+  onClick,
+  showMetadata = true,
   style,
   to,
   user,
   video
 }: {
   className?: string;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  showMetadata?: boolean;
   style?: React.CSSProperties;
   to: string;
   user: any;
@@ -73,7 +77,7 @@ export default function VideoThumb({
     <ErrorBoundary componentPath="VideoThumb" style={style}>
       {!isDeleted ? (
         <div
-          className={`${className} ${css`
+          className={`${className || ''} ${css`
             display: flex;
             width: 100%;
             flex-direction: column;
@@ -87,6 +91,8 @@ export default function VideoThumb({
               font-weight: 700;
             }
           `}`}
+          data-feed-card-interactive={onClick ? 'true' : undefined}
+          onClick={onClick}
         >
           <ErrorBoundary componentPath="VideoThumb/ImageContainer">
             <div
@@ -149,27 +155,29 @@ export default function VideoThumb({
                   )}
                 </div>
               </ErrorBoundary>
-              <ErrorBoundary componentPath="VideoThumb/MetadataContainer">
-                <div
-                  style={{
-                    width: '100%',
-                    fontSize: '1.2rem',
-                    overflowX: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
-                >
-                  <div style={{ display: 'inline' }}>
-                    {addedByLabel} <UsernameText user={user} />
-                  </div>
-                  {video.likes?.length > 0 && (
-                    <div style={{ marginTop: '0.4rem' }}>
-                      <Icon icon="thumbs-up" />
-                      &nbsp;&times;&nbsp;
-                      {video.likes.length}
+              {showMetadata ? (
+                <ErrorBoundary componentPath="VideoThumb/MetadataContainer">
+                  <div
+                    style={{
+                      width: '100%',
+                      fontSize: '1.2rem',
+                      overflowX: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    <div style={{ display: 'inline' }}>
+                      {addedByLabel} <UsernameText user={user} />
                     </div>
-                  )}
-                </div>
-              </ErrorBoundary>
+                    {video.likes?.length > 0 && (
+                      <div style={{ marginTop: '0.4rem' }}>
+                        <Icon icon="thumbs-up" />
+                        &nbsp;&times;&nbsp;
+                        {video.likes.length}
+                      </div>
+                    )}
+                  </div>
+                </ErrorBoundary>
+              ) : null}
             </div>
           </ErrorBoundary>
         </div>

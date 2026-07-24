@@ -76,6 +76,10 @@ export default function Bar({
       background: ${Color[safeLevelColor]()};
       border-radius: 9999px;
       transition: width 0.4s ease;
+      @media (max-width: ${mobileMaxWidth}) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
     `,
     [progressPct, safeLevelColor]
   );

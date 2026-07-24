@@ -424,16 +424,18 @@ export default function managementRequestHelpers({
     async setAiEnergyManualIdentityBucketBan({
       bucketId,
       isBanned,
+      banScope,
       banMessage
     }: {
       bucketId: number;
       isBanned: boolean;
+      banScope?: 'full' | 'signup';
       banMessage?: string;
     }) {
       try {
         const { data } = await request.patch(
           `${URL}/management/ai-costs/manual-identity-buckets/${bucketId}/ban`,
-          { isBanned, banMessage },
+          { isBanned, banScope, banMessage },
           auth()
         );
         return data;

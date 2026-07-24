@@ -23,6 +23,7 @@ import {
   banMessageClass,
   banMessageHintClass,
   banStatusClass,
+  bucketSettingsClass,
   emptyMembersClass,
   memberListClass,
   memberRowClass,
@@ -37,6 +38,9 @@ export default function UserBuckets() {
   );
   const createBucketHelper = useAppContext(
     (v) => v.requestHelpers.createAiEnergyManualIdentityBucket
+  );
+  const updateBucketHelper = useAppContext(
+    (v) => v.requestHelpers.updateAiEnergyManualIdentityBucket
   );
   const setBanHelper = useAppContext(
     (v) => v.requestHelpers.setAiEnergyManualIdentityBucketBan
@@ -67,6 +71,8 @@ export default function UserBuckets() {
   const [error, setError] = useState('');
   const [migrateMsg, setMigrateMsg] = useState('');
   const [newBucketLabel, setNewBucketLabel] = useState('');
+  const [bucketNameDraft, setBucketNameDraft] = useState('');
+  const [banScopeDraft, setBanScopeDraft] = useState<'full' | 'signup'>('full');
   const [banMessageDraft, setBanMessageDraft] = useState('');
   const [emailDraft, setEmailDraft] = useState('');
   const [ipDraft, setIpDraft] = useState('');
@@ -88,11 +94,18 @@ export default function UserBuckets() {
   }, []);
 
   useEffect(() => {
+    setBucketNameDraft(selectedBucket?.label || '');
+    setBanScopeDraft(selectedBucket?.banScope || 'full');
     setBanMessageDraft(selectedBucket?.banMessage || '');
     setMergeMode(false);
     setMergeTargetId(0);
     setMergeName('');
-  }, [selectedBucket?.id, selectedBucket?.banMessage]);
+  }, [
+    selectedBucket?.id,
+    selectedBucket?.label,
+    selectedBucket?.banScope,
+    selectedBucket?.banMessage
+  ]);
 
   const memberUserIds = useMemo(
     () =>
@@ -123,10 +136,10 @@ export default function UserBuckets() {
           <div>
             <h1>User Buckets</h1>
             <p>
-              Buckets group a single actor across accounts, emails, and IPs.
-              Banning a bucket blocks every member from signing in or creating
-              accounts and suppresses account-recovery emails. These are the
-              same buckets used for AI cost attribution.
+              Buckets group a single actor across accounts, emails, and IPs. A
+              full ban blocks sign-in, signup, and recovery; a signup-only ban
+              leaves existing accounts alone while preventing new accounts.
+              These are the same buckets used for AI cost attribution.
             </p>
           </div>
           <div className={actionsClass}>
@@ -185,8 +198,18 @@ export default function UserBuckets() {
                   >
                     <strong>{bucket.label}</strong>
                     {bucket.isBanned ? (
-                      <small style={{ color: Color.rose() }}>
-                        <Icon icon="ban" /> Banned
+                      <small
+                        style={{
+                          color:
+                            bucket.banScope === 'signup'
+                              ? Color.orange()
+                              : Color.rose()
+                        }}
+                      >
+                        <Icon icon="ban" />{' '}
+                        {bucket.banScope === 'signup'
+                          ? 'Signup blocked'
+                          : 'Fully banned'}
                       </small>
                     ) : (
                       <small>
@@ -264,14 +287,16 @@ export default function UserBuckets() {
                   </Button>
                 ) : (
                   <Button
-                    color="rose"
+                    color={banScopeDraft === 'signup' ? 'orange' : 'rose'}
                     variant="solid"
                     loading={busy}
                     disabled={busy || memberCount === 0}
                     onClick={() => handleSetBan(true)}
                   >
                     <Icon icon="ban" />
-                    Ban bucket
+                    {banScopeDraft === 'signup'
+                      ? 'Block signups'
+                      : 'Fully ban bucket'}
                   </Button>
                 )}
               </div>
@@ -295,8 +320,12 @@ export default function UserBuckets() {
                           return (
                             <option key={bucket.id} value={bucket.id}>
                               {bucket.label}
-                              {bucket.isBanned ? ' (banned)' : ''} · {count}{' '}
-                              member{count === 1 ? '' : 's'}
+                              {bucket.isBanned
+                                ? bucket.banScope === 'signup'
+                                  ? ' (signup blocked)'
+                                  : ' (fully banned)'
+                                : ''}{' '}
+                              · {count} member{count === 1 ? '' : 's'}
                             </option>
                           );
                         })}
@@ -339,15 +368,77 @@ export default function UserBuckets() {
                   </Button>
                 </div>
               ) : null}
+              <div className={bucketSettingsClass}>
+                <div className="bucket-setting">
+                  <label htmlFor="selected-user-bucket-name">Bucket name</label>
+                  <div className="bucket-setting-row">
+                    <input
+                      id="selected-user-bucket-name"
+                      value={bucketNameDraft}
+                      maxLength={120}
+                      onChange={(event) =>
+                        setBucketNameDraft(event.currentTarget.value)
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') handleRenameBucket();
+                      }}
+                    />
+                    <Button
+                      color="logoBlue"
+                      variant="soft"
+                      loading={busy}
+                      disabled={
+                        busy ||
+                        !bucketNameDraft.trim() ||
+                        bucketNameDraft.trim() === selectedBucket.label
+                      }
+                      onClick={handleRenameBucket}
+                    >
+                      Save name
+                    </Button>
+                  </div>
+                </div>
+                <div className="bucket-setting">
+                  <label htmlFor="selected-user-bucket-ban-scope">
+                    Restriction
+                  </label>
+                  <select
+                    id="selected-user-bucket-ban-scope"
+                    value={banScopeDraft}
+                    disabled={busy}
+                    onChange={(event) =>
+                      setBanScopeDraft(
+                        event.currentTarget.value === 'signup'
+                          ? 'signup'
+                          : 'full'
+                      )
+                    }
+                  >
+                    <option value="full">Full ban</option>
+                    <option value="signup">Signups only</option>
+                  </select>
+                  <span>
+                    {banScopeDraft === 'signup'
+                      ? 'Blocks signup and signup verification emails. Existing accounts can sign in and recover access.'
+                      : 'Blocks signup, sign-in, recovery, authenticated requests, and live sessions.'}
+                  </span>
+                </div>
+              </div>
               <div
                 className={`${banStatusClass} ${
-                  selectedBucket.isBanned ? 'banned' : 'ok'
+                  selectedBucket.isBanned
+                    ? selectedBucket.banScope === 'signup'
+                      ? 'signup-only'
+                      : 'banned'
+                    : 'ok'
                 }`}
               >
                 <Icon icon={selectedBucket.isBanned ? 'ban' : 'check'} />
                 <span>
                   {selectedBucket.isBanned
-                    ? 'This bucket is banned — members cannot sign in, create accounts, or receive recovery emails.'
+                    ? selectedBucket.banScope === 'signup'
+                      ? 'Signup-only restriction is active — new accounts matching this bucket are blocked, while existing members remain active.'
+                      : 'Full ban is active — members cannot sign in, create accounts, recover access, or remain connected.'
                     : 'This bucket is active. Members are not restricted.'}
                 </span>
               </div>
@@ -390,14 +481,21 @@ export default function UserBuckets() {
                     color="logoBlue"
                     variant="soft"
                     loading={busy}
+                    disabled={
+                      busy ||
+                      (banMessageDraft.trim() ===
+                        (selectedBucket.banMessage || '') &&
+                        banScopeDraft === (selectedBucket.banScope || 'full'))
+                    }
                     onClick={() => handleSetBan(true)}
                   >
-                    Save message
+                    Save ban settings
                   </Button>
                 </div>
               ) : (
                 <div className={banMessageHintClass}>
-                  This message is shown to members once you ban the bucket.
+                  This message is shown when the selected restriction blocks a
+                  request.
                 </div>
               )}
 
@@ -577,7 +675,8 @@ export default function UserBuckets() {
     note?: string;
     scope?: string;
   }): { icon: string; label: string; value: string } {
-    const signupOnly = rule.scope === 'signup';
+    const signupOnly =
+      selectedBucket?.banScope === 'signup' || rule.scope === 'signup';
     if (rule.matchType === 'user') {
       return {
         icon: 'user',
@@ -590,7 +689,7 @@ export default function UserBuckets() {
     if (rule.matchType === 'email') {
       return {
         icon: 'paper-plane',
-        label: 'Email',
+        label: signupOnly ? 'Email · signup-only' : 'Email',
         value: String(rule.matchValue || '')
       };
     }
@@ -604,7 +703,7 @@ export default function UserBuckets() {
     if (rule.riskKeyType === 'device_id') {
       return {
         icon: 'mobile-alt',
-        label: 'Device',
+        label: signupOnly ? 'Device · signup-only' : 'Device',
         value:
           (rule.note || '').replace(/^Device\s+/i, '') ||
           (rule.riskKeyHash || '').slice(0, 12)
@@ -668,6 +767,26 @@ export default function UserBuckets() {
       await loadBuckets(data?.bucket?.id);
     } catch {
       setError('Failed to create bucket.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRenameBucket() {
+    const label = bucketNameDraft.trim();
+    if (!selectedBucket || !label || label === selectedBucket.label || busy) {
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      await updateBucketHelper({
+        bucketId: selectedBucket.id,
+        label
+      });
+      await loadBuckets(selectedBucket.id);
+    } catch (renameError: any) {
+      setError(renameError?.message || 'Failed to rename bucket.');
     } finally {
       setBusy(false);
     }
@@ -748,11 +867,12 @@ export default function UserBuckets() {
       await setBanHelper({
         bucketId: selectedBucket.id,
         isBanned,
+        banScope: banScopeDraft,
         banMessage: banMessageDraft.trim()
       });
       await loadBuckets(selectedBucket.id);
-    } catch {
-      setError('Failed to update ban status.');
+    } catch (banError: any) {
+      setError(banError?.message || 'Failed to update ban status.');
     } finally {
       setBusy(false);
     }

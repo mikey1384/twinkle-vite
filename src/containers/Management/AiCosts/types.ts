@@ -111,6 +111,7 @@ export interface AiEnergyManualIdentityBucket {
   manualIdentityKey: string;
   note?: string;
   isBanned?: boolean;
+  banScope?: 'full' | 'signup';
   banMessage?: string;
   bannedBy?: number;
   bannedAt?: number;

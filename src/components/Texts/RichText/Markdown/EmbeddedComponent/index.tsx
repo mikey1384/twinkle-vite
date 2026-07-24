@@ -8,10 +8,12 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
+import type { RichTextEmbedPreviewMode } from '../../embedPreviewMode';
 
 function EmbeddedComponent({
   contentType,
   contentId,
+  embedPreviewMode,
   src,
   alt,
   isPreview,
@@ -23,6 +25,7 @@ function EmbeddedComponent({
 }: {
   contentType?: string;
   contentId?: number | string;
+  embedPreviewMode?: RichTextEmbedPreviewMode;
   src?: string;
   alt?: string;
   isPreview?: boolean;
@@ -126,6 +129,7 @@ function EmbeddedComponent({
           rootType={contentType}
           isProfileComponent={isProfileComponent}
           src={cleanReplacedLink}
+          embedPreviewMode={embedPreviewMode}
           isPreview={isPreview}
           theme={theme}
         />

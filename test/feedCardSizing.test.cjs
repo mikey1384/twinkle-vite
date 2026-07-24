@@ -22,7 +22,9 @@ const sizingModule = loadTypeScriptModule(
 const {
   getDailyReflectionAnswerPreviewMaxLines,
   getFeedCardSizing,
+  getMarkdownEmbedFileInfo,
   getMarkdownImageEmbedPreview,
+  isMarkdownImageFileEmbed,
   removeMarkdownImageEmbeds,
   getSubjectPreviewLineLimits
 } = sizingModule.exports;
@@ -1089,6 +1091,129 @@ test('uses compact rich embed bucket for sparse internal RichText embeds', () =>
   assert.equal(sizing.flags.hasRichTextEmbed, true);
 });
 
+test('scopes the fitted portrait thumbnail to sparse markdown image embeds', () => {
+  const imageEmbed = getMarkdownImageEmbedPreview(
+    '![Vietnam pool](https://cdn.example.com/vietnam.jpg)'
+  );
+  const pdfEmbed = getMarkdownImageEmbedPreview(
+    '![Trip notes](https://cdn.example.com/trip-notes.pdf?download=1)'
+  );
+  const unknownFileEmbed = getMarkdownImageEmbedPreview(
+    '![Trip notes](https://cdn.example.com/download/asset)'
+  );
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content:
+        'TRIIP TO VIETNAM\n\n![Vietnam pool](https://cdn.example.com/vietnam.jpg)'
+    },
+    userId: 1
+  });
+  const longTextSizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: `${'Long-form image context must retain its uncropped contained preview. '.repeat(
+        3
+      )}\n\n![Diagram](https://cdn.example.com/diagram.png)`
+    },
+    userId: 1
+  });
+  const imageOnlySizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: '![Diagram](https://cdn.example.com/diagram.png)'
+    },
+    userId: 1
+  });
+  const pdfSizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content:
+        'TRIIP TO VIETNAM\n\n![Trip notes](https://cdn.example.com/trip-notes.pdf?download=1)'
+    },
+    userId: 1
+  });
+  const unknownFileSizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content:
+        'TRIIP TO VIETNAM\n\n![Trip notes](https://cdn.example.com/download/asset)'
+    },
+    userId: 1
+  });
+  const bodySource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/index.tsx'
+    ),
+    'utf8'
+  );
+  const mainStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
+
+  assert.equal(sizing.main.size, 'rich-image-compact');
+  assert.equal(longTextSizing.main.size, 'rich-embed');
+  assert.equal(imageOnlySizing.main.size, 'rich-embed');
+  assert.equal(pdfSizing.main.size, 'rich-embed-compact');
+  assert.equal(unknownFileSizing.main.size, 'rich-embed-compact');
+  assert.equal(sizing.card.size, 'rich-embed-card');
+  assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(15.5rem, 155px)');
+  assert.equal(isMarkdownImageFileEmbed(imageEmbed), true);
+  assert.equal(isMarkdownImageFileEmbed(pdfEmbed), false);
+  assert.equal(isMarkdownImageFileEmbed(unknownFileEmbed), false);
+  assert.deepEqual(
+    getMarkdownEmbedFileInfo(
+      'https://cdn.example.com/trip%20notes.pdf?download=1#page=2'
+    ),
+    {
+      extension: 'pdf',
+      fileName: 'trip notes.pdf',
+      fileType: 'pdf'
+    }
+  );
+  assert.match(
+    bodySource,
+    /const isImageEmbed = isMarkdownImageFileEmbed\(imageEmbed\);[\s\S]*?const isCompactImageEmbed =[\s\S]*?isImageEmbed &&[\s\S]*?resolvedSizing\.main\.size === 'rich-image-compact';/
+  );
+  assert.match(
+    bodySource,
+    /isImageEmbed \? ' home-feed-card__rich-embed-preview--image'/
+  );
+  assert.match(
+    bodySource,
+    /isCompactImageEmbed[\s\S]*?home-feed-card__rich-embed-preview--compact-image/
+  );
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__rich-embed-preview--with-text\.home-feed-card__rich-embed-preview--compact-image \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(13rem, 14\.5rem\);[\s\S]*?align-items: center;/
+  );
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__rich-embed-preview--with-text\.home-feed-card__rich-embed-preview--compact-image[\s\S]*?> \.home-feed-card__rich-embed-image \{[\s\S]*?height: auto;[\s\S]*?aspect-ratio: 4 \/ 5;[\s\S]*?object-fit: cover;/
+  );
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__rich-embed-preview--with-text\.home-feed-card__rich-embed-preview--image[\s\S]*?> \.home-feed-card__rich-embed-image \{[\s\S]*?border: 0;[\s\S]*?background: transparent;/
+  );
+  assert.match(
+    mobileStylesSource,
+    /\.home-feed-card__rich-embed-preview--with-text\.home-feed-card__rich-embed-preview--compact-image \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(8\.5rem, 10\.5rem\);/
+  );
+});
+
 test('matches AI card modal coin styling in rich text compact previews', () => {
   const compactPreviewSource = readFileSync(
     path.resolve(
@@ -1189,7 +1314,7 @@ test('keeps subject AI-card markdown embeds visible in the rich embed layout', (
   );
   assert.match(
     stylesSource,
-    /\.home-feed-card__rich-embed-preview--with-text[\s\S]*\.home-feed-card__rich-embed-image\.home-feed-card__rich-embed-internal--subject[\s\S]*border: 0;[\s\S]*background: transparent;/
+    /\.home-feed-card__rich-embed-preview--with-text[\s\S]*\.home-feed-card__rich-embed-image\.home-feed-card__rich-embed-internal:not\([\s\S]*home-feed-card__rich-embed-internal--comment[\s\S]*border: 0;[\s\S]*background: transparent;/
   );
   assert.match(
     stylesSource,
@@ -1202,6 +1327,123 @@ test('keeps subject AI-card markdown embeds visible in the rich embed layout', (
   assert.ok(embedCopyBlock);
   assert.match(embedCopyBlock, /flex: 0 0 auto;/);
   assert.match(embedCopyBlock, /height: auto;/);
+});
+
+test('reuses the Continue Watching video tile for compact XP video embeds', () => {
+  const content = 'here you go\n\n![Video](/videos/24312)';
+  const videoOnlyContent = '![Video](/videos/24312)';
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content
+    },
+    userId: 1
+  });
+  const videoOnlySizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: videoOnlyContent
+    },
+    userId: 1
+  });
+  const bodySource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/index.tsx'
+    ),
+    'utf8'
+  );
+  const mainStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const primitivesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/PreviewPrimitives.tsx'
+    ),
+    'utf8'
+  );
+  const mainContentSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent/MainContentComponent.tsx'
+    ),
+    'utf8'
+  );
+  const videoThumbSource = readFileSync(
+    path.resolve(__dirname, '../src/components/VideoThumb.tsx'),
+    'utf8'
+  );
+  const continueWatchingSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Explore/Videos/ContinueWatchingPanel.tsx'
+    ),
+    'utf8'
+  );
+
+  assert.deepEqual(getMarkdownImageEmbedPreview(content), {
+    alt: 'Video',
+    src: '/videos/24312',
+    type: 'internal'
+  });
+  assert.equal(sizing.main.size, 'rich-embed-compact');
+  assert.equal(videoOnlySizing.main.size, 'rich-embed-compact');
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__rich-embed-preview--with-text \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(16rem, 40%\);[\s\S]*?\}/
+  );
+  assert.match(
+    mobileStylesSource,
+    /\.home-feed-card__rich-embed-preview--with-text,[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(8\.5rem, 34%\);/
+  );
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__rich-embed-image\.home-feed-card__rich-embed-internal:not\([\s\S]*?home-feed-card__rich-embed-internal--comment[\s\S]*?\) \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?\}/
+  );
+  assert.match(
+    primitivesSource,
+    /internalLinkType === 'videos'[\s\S]*home-feed-card__rich-embed-internal--video/
+  );
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__rich-embed-preview--with-text[\s\S]*?\.home-feed-card__rich-embed-internal--video \{[\s\S]*?align-items: center;[\s\S]*?\}/
+  );
+  assert.match(
+    bodySource,
+    /const isVideoOnlyEmbed =[\s\S]*?!hasText && internalEmbedInfo\?\.kind === 'video';[\s\S]*?isVideoOnlyEmbed[\s\S]*?home-feed-card__rich-embed-preview--video-only/
+  );
+  assert.match(
+    mainStylesSource,
+    /\.home-feed-card__rich-embed-preview--video-only[\s\S]*?> \.home-feed-card__rich-embed-internal--video \{[\s\S]*?width: min\(100%, 30rem\);[\s\S]*?height: auto;[\s\S]*?max-height: 100%;[\s\S]*?align-items: center;[\s\S]*?justify-content: center;/
+  );
+  assert.match(
+    mobileStylesSource,
+    /\.home-feed-card__rich-embed-preview--video-only[\s\S]*?> \.home-feed-card__rich-embed-internal--video \{[\s\S]*?width: min\(100%, 27rem\);/
+  );
+  assert.match(
+    mainContentSource,
+    /contentType === 'video' && embedPreviewMode !== 'compactComment'[\s\S]*?<VideoThumb[\s\S]*?showMetadata=\{false\}[\s\S]*?video=\{\{ \.\.\.content, id: contentId \}\}/
+  );
+  assert.match(
+    videoThumbSource,
+    /showMetadata = true[\s\S]*?<VideoThumbImage[\s\S]*?\{showMetadata \? \(/
+  );
+  assert.match(
+    continueWatchingSource,
+    /<VideoThumb[\s\S]*?video=\{video\}[\s\S]*?user=\{video\.uploader\}/
+  );
 });
 
 test('expands attachment-only image comments into full-width media frames', () => {
@@ -2003,10 +2245,7 @@ test('uses subject secret-message wording for locked subject previews', () => {
   assert.equal(sizing.main.size, 'subject-secret-fit');
   assert.equal(sizing.card.bodyHeight, 'max(15.71rem, 157.1px)');
   assert.equal(sizing.card.mobileBodyHeight, 'max(15.71rem, 157.1px)');
-  assert.equal(
-    sizing.card.subjectSecretPanelHeight,
-    sizing.card.bodyHeight
-  );
+  assert.equal(sizing.card.subjectSecretPanelHeight, sizing.card.bodyHeight);
   assert.equal(
     sizing.card.mobileSubjectSecretPanelHeight,
     sizing.card.mobileBodyHeight
@@ -2260,6 +2499,84 @@ test('uses compact target bucket for media-only target comments', () => {
   assert.match(
     sizing.target?.className || '',
     /home-feed-card__target-preview--attachment/
+  );
+});
+
+test('keeps target-comment Lumine embeds proportional in a fitted panel', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: 'reply'
+    },
+    targetObj: {
+      comment: {
+        id: 10,
+        content: 'shared an app\n\n![Lumine App](/builds/198)'
+      }
+    },
+    userId: 1
+  });
+  const attachmentFirstSizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: 'reply'
+    },
+    targetObj: {
+      comment: {
+        id: 11,
+        content: 'shared both\n\n![Lumine App](/builds/198)',
+        filePath: '/attachments/image.png'
+      }
+    },
+    userId: 1
+  });
+  const compactCommentSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/components/Comments/CompactCommentEmbedPreview.tsx'
+    ),
+    'utf8'
+  );
+  const panelStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/panelPreviewStyles.ts'
+    ),
+    'utf8'
+  );
+  const mobileStylesSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles.ts'
+    ),
+    'utf8'
+  );
+
+  assert.equal(sizing.target?.size, 'build-comment');
+  assert.equal(attachmentFirstSizing.target?.size, 'media-comment');
+  assert.match(
+    sizing.target?.className || '',
+    /home-feed-card__target-preview--size-build-comment/
+  );
+  assert.match(
+    compactCommentSource,
+    /hasBuildMedia \? 'compact-comment-embed--build-media'/
+  );
+  assert.match(
+    compactCommentSource,
+    /\.compact-comment-embed--target-root\.compact-comment-embed--build-media[\s\S]*?> \.compact-comment-embed__media \{[\s\S]*?width: 100%;[\s\S]*?height: auto;[\s\S]*?aspect-ratio: 16 \/ 10;/
+  );
+  assert.match(
+    compactCommentSource,
+    /\.compact-comment-embed__media-tile\.home-feed-card__rich-embed-internal--build[\s\S]*?> \* \{[\s\S]*?height: 100%;/
+  );
+  assert.match(
+    panelStylesSource,
+    /\.home-feed-card__target-preview--size-build-comment \{[\s\S]*?height: max\(15\.5rem, 155px\);/
+  );
+  assert.match(
+    mobileStylesSource,
+    /\.home-feed-card__target-preview--size-build-comment \{[\s\S]*?height: max\(12rem, 120px\);/
   );
 });
 

@@ -17,6 +17,7 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import {
+  getMarkdownEmbedFileInfo,
   getMarkdownImageEmbedPreview,
   removeMarkdownImageEmbeds,
   type MarkdownImageEmbed
@@ -45,7 +46,7 @@ export function AttachmentSurface({
   const { extension, fileType } = getFileInfoFromFileName(fileName);
   if (fileType === 'video') {
     return (
-      <div className={className}>
+      <div className={className} data-attachment-preview-kind={fileType}>
         <HomeVideoAttachmentPreview
           fileName={fileName}
           src={buildAttachmentUrl({
@@ -62,7 +63,7 @@ export function AttachmentSurface({
   const canPreviewInline = fileType === 'image' || Boolean(source?.thumbUrl);
 
   return (
-    <div className={className}>
+    <div className={className} data-attachment-preview-kind={fileType}>
       {canPreviewInline ? (
         <ContentFileViewer
           compactMode
@@ -152,6 +153,9 @@ export function MarkdownEmbedPreview({
         : '',
       internalLinkType === 'comments'
         ? 'home-feed-card__rich-embed-internal--comment'
+        : '',
+      internalLinkType === 'videos'
+        ? 'home-feed-card__rich-embed-internal--video'
         : ''
     ]
       .filter(Boolean)
@@ -190,6 +194,9 @@ export function MarkdownEmbedPreview({
           buildPreviewVariant={internalPreviewVariant}
           commentPreviewMaxTextLines={commentPreviewMaxTextLines}
           commentPreviewVariant={commentPreviewVariant}
+          embedPreviewMode={
+            internalPreviewVariant === 'compact' ? 'thumbnail' : 'fullWidth'
+          }
           isPreview
           showCompactCommentTypeLabel={false}
           src={internalSrc}
@@ -218,9 +225,11 @@ export function MarkdownEmbedPreview({
   return <MarkdownImagePreview className={className} imageEmbed={embed} />;
 
   function handleInternalPreviewClick(event: React.MouseEvent<HTMLElement>) {
-    if (event.currentTarget.classList.contains(
-      'home-feed-card__rich-embed-internal--build'
-    )) {
+    if (
+      event.currentTarget.classList.contains(
+        'home-feed-card__rich-embed-internal--build'
+      )
+    ) {
       const targetElement =
         event.target instanceof Element
           ? event.target
@@ -563,8 +572,9 @@ function MarkdownImagePreview({
 }) {
   const [src, setSrc] = useState(imageEmbed.src);
   const [failed, setFailed] = useState(false);
-  const fileName = getFileNameFromEmbedSrc(imageEmbed.src);
-  const { extension, fileType } = getFileInfoFromFileName(fileName);
+  const { extension, fileName, fileType } = getMarkdownEmbedFileInfo(
+    imageEmbed.src
+  );
 
   useEffect(() => {
     setSrc(imageEmbed.src);
@@ -671,18 +681,6 @@ function HomeVideoAttachmentPreview({
       ) : null}
     </div>
   );
-}
-
-function getFileNameFromEmbedSrc(src: string) {
-  const path = String(src || '')
-    .split('?')[0]
-    .split('#')[0];
-  const fileName = path.split('/').pop() || 'Image unavailable';
-  try {
-    return decodeURIComponent(fileName);
-  } catch {
-    return fileName;
-  }
 }
 
 function getAttachmentIcon(fileType: string) {

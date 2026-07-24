@@ -11,14 +11,17 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import VideoThumbnail from '~/components/ContentListItem/VideoThumbnail';
+import VideoThumb from '~/components/VideoThumb';
 import { Color, borderRadius } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import { getBuildDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { getPlainPreviewText } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
+import type { RichTextEmbedPreviewMode } from '../../../embedPreviewMode';
 import InvalidContent from '../InvalidContent';
 import UnpublishedBuildContent from '../UnpublishedBuildContent';
+import { shouldNavigateEmbeddedVideoContainerClick } from './embeddedVideoNavigation';
 import { css } from '@emotion/css';
 
 const displayIsMobile = isMobile(navigator);
@@ -42,6 +45,7 @@ export default function MainContentComponent({
   buildPreviewVariant = 'compact',
   commentPreviewMaxTextLines,
   commentPreviewVariant = 'compact',
+  embedPreviewMode = 'thumbnail',
   isPreview,
   showCompactCommentTypeLabel = true,
   theme
@@ -51,6 +55,7 @@ export default function MainContentComponent({
   buildPreviewVariant?: 'compact' | 'wide';
   commentPreviewMaxTextLines?: number;
   commentPreviewVariant?: 'column' | 'compact';
+  embedPreviewMode?: RichTextEmbedPreviewMode;
   isPreview?: boolean;
   showCompactCommentTypeLabel?: boolean;
   theme?: string;
@@ -167,6 +172,7 @@ export default function MainContentComponent({
         contentId={Number(contentId)}
         contentType={appliedContentType}
         content={contentState}
+        embedPreviewMode={embedPreviewMode}
         navigate={navigate}
         showCompactCommentTypeLabel={showCompactCommentTypeLabel}
         theme={theme}
@@ -269,6 +275,7 @@ function CompactMainContentEmbedPreview({
   buildPreviewVariant,
   commentPreviewMaxTextLines,
   commentPreviewVariant,
+  embedPreviewMode,
   navigate,
   showCompactCommentTypeLabel,
   theme,
@@ -280,6 +287,7 @@ function CompactMainContentEmbedPreview({
   buildPreviewVariant: 'compact' | 'wide';
   commentPreviewMaxTextLines?: number;
   commentPreviewVariant: 'column' | 'compact';
+  embedPreviewMode: RichTextEmbedPreviewMode;
   navigate: (path: string) => void;
   showCompactCommentTypeLabel: boolean;
   theme?: string;
@@ -357,6 +365,26 @@ function CompactMainContentEmbedPreview({
     );
   }
 
+  if (isSubject && embedPreviewMode === 'fullWidth') {
+    return (
+      <div
+        className="full-width-subject-embed-preview"
+        onClick={handleFullWidthSubjectClick}
+      >
+        <ContentListItem
+          contentObj={{
+            ...content,
+            id: contentId,
+            contentId,
+            contentType: 'subject'
+          }}
+          onClick={() => navigate(path)}
+          style={{ width: '100%' }}
+        />
+      </div>
+    );
+  }
+
   if (isSubject) {
     return (
       <CompactSubjectEmbedPreview
@@ -365,6 +393,19 @@ function CompactMainContentEmbedPreview({
         onClick={handleSubjectClick}
         showThumbnail={Boolean(thumbUrl)}
         thumbnailUrl={thumbUrl}
+      />
+    );
+  }
+
+  if (contentType === 'video' && embedPreviewMode !== 'compactComment') {
+    return (
+      <VideoThumb
+        className="compact-main-content-embed--video"
+        onClick={handleVideoClick}
+        showMetadata={false}
+        to={`videos/${contentId}`}
+        user={content?.uploader || {}}
+        video={{ ...content, id: contentId }}
       />
     );
   }
@@ -447,6 +488,30 @@ function CompactMainContentEmbedPreview({
 
   function handleSubjectClick(event: React.MouseEvent<HTMLElement>) {
     event.stopPropagation();
+    navigate(path);
+  }
+
+  function handleFullWidthSubjectClick(event: React.MouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
+  }
+
+  function handleVideoClick(event: React.MouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    const targetElement =
+      event.target instanceof Element
+        ? event.target
+        : event.target instanceof Node
+          ? event.target.parentElement
+          : null;
+    if (
+      !shouldNavigateEmbeddedVideoContainerClick({
+        defaultPrevented: event.defaultPrevented,
+        isNestedLink: Boolean(targetElement?.closest('a'))
+      })
+    ) {
+      return;
+    }
+    event.preventDefault();
     navigate(path);
   }
 }

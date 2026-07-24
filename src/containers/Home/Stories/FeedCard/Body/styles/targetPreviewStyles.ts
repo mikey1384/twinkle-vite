@@ -550,6 +550,10 @@ export const targetPreviewStyles = `
       border-radius: 0;
       background: transparent;
     }
+    .home-feed-card__target-media-wrap[data-attachment-preview-kind='image'] {
+      border: 0;
+      background: transparent;
+    }
     .home-feed-card__target-media img,
     .home-feed-card__target-media-wrap img {
       width: 100%;

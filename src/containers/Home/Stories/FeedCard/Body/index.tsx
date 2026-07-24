@@ -51,10 +51,12 @@ import {
   type FeedCardSizing,
   getDailyReflectionAnswerPreviewMaxLines,
   getFeedCardSizing,
+  getMarkdownEmbedFileInfo,
   getSharedTopicPreviewMaxLines,
   getSubjectPreviewLineLimits,
   hasDailyReflectionMetaBadges,
   getMarkdownImageEmbedPreview,
+  isMarkdownImageFileEmbed,
   isAIContentAuthor,
   removeMarkdownImageEmbeds,
   type MarkdownImageEmbed
@@ -278,7 +280,7 @@ export default function Body({
     const description = String(content?.description || content?.content || '');
     const descriptionEmbed = getMarkdownImageEmbedPreview(description);
     const promotedDescriptionAttachmentEmbed =
-      !attachmentPreview && descriptionEmbed?.type === 'image'
+      !attachmentPreview && isMarkdownImageFileEmbed(descriptionEmbed)
         ? descriptionEmbed
         : null;
     const richDescriptionEmbed = promotedDescriptionAttachmentEmbed
@@ -400,7 +402,9 @@ export default function Body({
             {hasSubjectTextStack ? (
               <div className="home-feed-card__subject-text-stack">
                 {hasEffort ? (
-                  <CompactEffortStrip rewardLevel={Number(content.rewardLevel)} />
+                  <CompactEffortStrip
+                    rewardLevel={Number(content.rewardLevel)}
+                  />
                 ) : null}
                 {hasTitle ? (
                   <h3
@@ -419,7 +423,9 @@ export default function Body({
                     isPreview
                     lineHeight={homeFeedPreviewLineHeight}
                     maxLines={subjectLineLimits.desktop.descriptionMaxLines}
-                    mobileMaxLines={subjectLineLimits.mobile.descriptionMaxLines}
+                    mobileMaxLines={
+                      subjectLineLimits.mobile.descriptionMaxLines
+                    }
                     section="description"
                     style={homeFeedPreviewRichTextStyle}
                     theme={theme}
@@ -1023,24 +1029,40 @@ export default function Body({
     title?: string;
   }) {
     const hasText = Boolean(title || text.trim());
-    const textMaxLines =
-      resolvedSizing.main.size === 'rich-embed-compact'
-        ? 3
-        : Math.min(resolvedSizing.main.textMaxLines, 6);
+    const isCompactRichTextEmbed =
+      resolvedSizing.main.size === 'rich-image-compact' ||
+      resolvedSizing.main.size === 'rich-embed-compact';
+    const isImageEmbed = isMarkdownImageFileEmbed(imageEmbed);
+    const isCompactImageEmbed =
+      isImageEmbed && resolvedSizing.main.size === 'rich-image-compact';
+    const textMaxLines = isCompactRichTextEmbed
+      ? 3
+      : Math.min(resolvedSizing.main.textMaxLines, 6);
     const previewTextMaxLines = getTextMaxLinesForLayout({
       hasTitle: Boolean(title),
       maxLines: textMaxLines
     });
     const embedTheme = getMatchedRootBuildEmbedTheme(imageEmbed);
-    const isAICardEmbed =
-      imageEmbed.type === 'internal' &&
-      getInternalEmbedPreviewInfo(imageEmbed.src)?.kind === 'aiCard';
+    const internalEmbedInfo =
+      imageEmbed.type === 'internal'
+        ? getInternalEmbedPreviewInfo(imageEmbed.src)
+        : null;
+    const isAICardEmbed = internalEmbedInfo?.kind === 'aiCard';
+    const isVideoOnlyEmbed = !hasText && internalEmbedInfo?.kind === 'video';
     return (
       <div
         className={`home-feed-card__rich-embed-preview${
           hasText ? ' home-feed-card__rich-embed-preview--with-text' : ''
         }${!hasText ? ' home-feed-card__rich-embed-preview--image-only' : ''}${
           isAICardEmbed ? ' home-feed-card__rich-embed-preview--ai-card' : ''
+        }${
+          isVideoOnlyEmbed
+            ? ' home-feed-card__rich-embed-preview--video-only'
+            : ''
+        }${isImageEmbed ? ' home-feed-card__rich-embed-preview--image' : ''}${
+          isCompactImageEmbed
+            ? ' home-feed-card__rich-embed-preview--compact-image'
+            : ''
         }`}
       >
         {hasText ? (
@@ -1070,11 +1092,7 @@ export default function Body({
         <MarkdownEmbedPreview
           className="home-feed-card__rich-embed-image"
           commentPreviewMaxTextLines={
-            hasText
-              ? resolvedSizing.main.size === 'rich-embed-compact'
-                ? 3
-                : 6
-              : undefined
+            hasText ? (isCompactRichTextEmbed ? 3 : 6) : undefined
           }
           commentPreviewVariant={hasText ? 'column' : 'compact'}
           contentId={contentId}
@@ -1110,25 +1128,13 @@ export default function Body({
 }
 
 function getSubjectMarkdownAttachmentClassName(embed: MarkdownImageEmbed) {
-  const { fileType } = getFileInfoFromFileName(getEmbedFileName(embed.src));
+  const { fileType } = getMarkdownEmbedFileInfo(embed.src);
   const mediaClass =
     fileType && fileType !== 'image'
       ? 'home-feed-card__attachment-preview--subject-file home-feed-card__attachment-preview--subject-embed-file'
       : 'home-feed-card__attachment-preview--subject-image home-feed-card__attachment-preview--subject-embed-image';
 
   return `home-feed-card__attachment-preview ${mediaClass}`;
-}
-
-function getEmbedFileName(src: string) {
-  const path = String(src || '')
-    .split('?')[0]
-    .split('#')[0];
-  const fileName = path.split('/').pop() || '';
-  try {
-    return decodeURIComponent(fileName);
-  } catch {
-    return fileName;
-  }
 }
 
 function getInternalBuildEmbedId(src: string) {
@@ -1171,7 +1177,9 @@ export function HomeFeedCommentPreview({
 
   const uploader = getPreviewCommentUploader(comment);
   const aiEnergyPlaceholderName = getAiEnergyPlaceholderName(comment);
-  const commentText = aiEnergyPlaceholderName ? '' : getPreviewCommentText(comment);
+  const commentText = aiEnergyPlaceholderName
+    ? ''
+    : getPreviewCommentText(comment);
   const commentTextIsMessage =
     !aiEnergyPlaceholderName && hasPreviewCommentMessageText(comment);
   const previewLabel = getPreviewCommentLabel(comment, contentType);
@@ -1375,15 +1383,14 @@ function PreviewCommentBuildMedia({
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const hasLoadedBuild = Boolean(contentState.loaded && !contentState.notFound);
-  const previewContent =
-    hasLoadedBuild
-      ? contentState
-      : {
-          contentId,
-          contentType: 'build',
-          id: contentId,
-          title: label
-        };
+  const previewContent = hasLoadedBuild
+    ? contentState
+    : {
+        contentId,
+        contentType: 'build',
+        id: contentId,
+        title: label
+      };
 
   useEffect(() => {
     const requestKey = `${userId || 0}:${contentId}:build`;
@@ -1596,11 +1603,22 @@ function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
   if (!markdownEmbed) return null;
 
   if (markdownEmbed.type === 'image') {
+    const { extension, fileName, fileType } = getMarkdownEmbedFileInfo(
+      markdownEmbed.src
+    );
+    if (fileType === 'image') {
+      return {
+        isVideo: false,
+        kind: 'image',
+        label: markdownEmbed.alt || fileName,
+        src: markdownEmbed.src
+      };
+    }
     return {
-      isVideo: false,
-      kind: 'image',
-      label: markdownEmbed.alt || 'Image',
-      src: markdownEmbed.src
+      extension,
+      icon: getPreviewCommentFileIcon(fileType),
+      kind: 'file',
+      label: markdownEmbed.alt || fileName
     };
   }
 
@@ -1676,7 +1694,15 @@ function getPreviewCommentEmbedText(embed: MarkdownImageEmbed) {
     if (aiCardCollectionTitle) return aiCardCollectionTitle;
     return getInternalEmbedCommentLabel(getInternalEmbedPreviewInfo(embed.src));
   }
-  return 'shared an image';
+  if (embed.type === 'image') {
+    const { fileType } = getMarkdownEmbedFileInfo(embed.src);
+    if (fileType === 'image') return 'shared an image';
+    if (fileType === 'video') return 'shared a video';
+    if (fileType === 'audio') return 'shared audio';
+    if (fileType === 'pdf') return 'shared a PDF';
+    if (fileType === 'word') return 'shared a document';
+  }
+  return 'shared a file';
 }
 
 function getPreviewCommentFileName(comment: Comment, filePath: string) {
