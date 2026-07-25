@@ -6,8 +6,7 @@ import FilterBar from '~/components/FilterBar';
 import Main from './Main';
 import Filtered from './Filtered';
 import Selected from './Selected';
-import { calculateTotalBurnValue } from '~/helpers';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { returnTotalBurnValueLabel } from '~/helpers/aiCardBurnValue';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function SelectAICardModal({
@@ -120,10 +119,10 @@ export default function SelectAICardModal({
     );
 
   const totalBvOfSelectedCards = useMemo(() => {
-    const totalBv = calculateTotalBurnValue(
+    const totalBvLabel = returnTotalBurnValueLabel(
       selectedCardIds.map((cardId) => cardObj[cardId])
     );
-    return totalBv ? `${addCommasToNumber(totalBv)} XP` : '';
+    return totalBvLabel ? `${totalBvLabel} XP` : '';
   }, [cardObj, selectedCardIds]);
   const maxCards = Number.isFinite(maxSelectedCards)
     ? maxSelectedCards

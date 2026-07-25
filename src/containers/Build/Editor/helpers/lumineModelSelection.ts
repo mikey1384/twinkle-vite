@@ -13,16 +13,10 @@ export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'high';
 export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
   light: 'Light',
   normal: 'Normal',
-  heavy: 'Heavy',
-  superheavy: 'Super Heavy'
+  heavy: 'Heavy'
 };
 
-export const LUMINE_MODES: BuildLumineMode[] = [
-  'light',
-  'normal',
-  'heavy',
-  'superheavy'
-];
+export const LUMINE_MODES: BuildLumineMode[] = ['light', 'normal', 'heavy'];
 
 const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
   BuildLumineMode,
@@ -30,8 +24,7 @@ const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
 > = {
   light: 'grok-4.5',
   normal: 'gpt-5.6-terra',
-  heavy: 'gpt-5.6-sol',
-  superheavy: 'gpt-5.6-sol'
+  heavy: 'claude-opus-5'
 };
 
 const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
@@ -68,34 +61,18 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ['medium']
   },
   {
-    model: 'gpt-5.6-sol',
+    model: 'claude-opus-5',
     mode: 'heavy',
-    label: 'GPT-5.6 Sol',
-    description: 'Heavy mode: deep reasoning for demanding builds.',
-    defaultReasoningEffort: 'xhigh',
-    supportedReasoningEfforts: ['xhigh']
-  },
-  {
-    model: 'claude-opus-4-8',
-    mode: 'heavy',
-    label: 'Claude Opus 4.8',
+    label: 'Claude Opus 5',
     description: 'Heavy mode: powerful reasoning for ambitious builds.',
     defaultReasoningEffort: 'xhigh',
     supportedReasoningEfforts: ['xhigh']
   },
   {
     model: 'gpt-5.6-sol',
-    mode: 'superheavy',
+    mode: 'heavy',
     label: 'GPT-5.6 Sol',
-    description: 'Super Heavy mode: maximum reasoning for the hardest builds.',
-    defaultReasoningEffort: 'max',
-    supportedReasoningEfforts: ['max']
-  },
-  {
-    model: 'claude-fable-5',
-    mode: 'superheavy',
-    label: 'Claude Fable 5',
-    description: 'Super Heavy mode: deepest thinking for the hardest builds.',
+    description: 'Heavy mode: deep reasoning for demanding builds.',
     defaultReasoningEffort: 'xhigh',
     supportedReasoningEfforts: ['xhigh']
   }
@@ -112,18 +89,16 @@ function isLumineModel(value: unknown): value is BuildLumineModel {
     value === 'gpt-5.6-terra' ||
     value === 'claude-sonnet-5' ||
     value === 'gpt-5.6-sol' ||
+    value === 'claude-opus-5' ||
+    // Retired models kept recognizable so a stored preference resolves to a
+    // real option instead of silently resetting; the server migrates them.
     value === 'claude-opus-4-8' ||
     value === 'claude-fable-5'
   );
 }
 
 function isLumineMode(value: unknown): value is BuildLumineMode {
-  return (
-    value === 'light' ||
-    value === 'normal' ||
-    value === 'heavy' ||
-    value === 'superheavy'
-  );
+  return value === 'light' || value === 'normal' || value === 'heavy';
 }
 
 function resolveLegacyLumineOptionMode(
@@ -270,13 +245,12 @@ export function resolveLumineMode({
   if (model === 'gpt-5.6-terra' || model === 'claude-sonnet-5') {
     return 'normal';
   }
-  if (model === 'gpt-5.6-sol' && reasoningEffort === 'max') {
-    return 'superheavy';
+  // Sol at a normal-tier effort predates the mode split. Everything else in
+  // this range — including the retired Super Heavy models — is Heavy now.
+  if (model === 'gpt-5.6-sol' && reasoningEffort === 'medium') {
+    return 'normal';
   }
-  if (model === 'gpt-5.6-sol' || model === 'claude-opus-4-8') {
-    return 'heavy';
-  }
-  return 'superheavy';
+  return 'heavy';
 }
 
 export function getLumineSelectionForMode({

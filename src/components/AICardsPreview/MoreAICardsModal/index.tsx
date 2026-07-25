@@ -5,8 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import CardItem from './CardItem';
 import { useNavigate } from 'react-router-dom';
-import { calculateTotalBurnValue } from '~/helpers';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { returnTotalBurnValueLabel } from '~/helpers/aiCardBurnValue';
 import { Card } from '~/types';
 
 export default function MoreAICardsModal({
@@ -27,7 +26,10 @@ export default function MoreAICardsModal({
   themeColor?: string;
 }) {
   const navigate = useNavigate();
-  const totalBv = useMemo(() => calculateTotalBurnValue(cards), [cards]);
+  const totalBvLabel = useMemo(
+    () => returnTotalBurnValueLabel(cards) || '0',
+    [cards]
+  );
 
   return (
     <Modal
@@ -39,9 +41,7 @@ export default function MoreAICardsModal({
       bodyPadding={0}
     >
       <LegacyModalLayout>
-        <header>{`${moreAICardsModalTitle} (total burn value: ${addCommasToNumber(
-          totalBv
-        )} XP)`}</header>
+        <header>{`${moreAICardsModalTitle} (total burn value: ${totalBvLabel} XP)`}</header>
         <main>
           <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
             {cards.map((card) => (

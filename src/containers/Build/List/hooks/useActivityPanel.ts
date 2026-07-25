@@ -369,22 +369,28 @@ export default function useActivityPanel({
     return activityPanelOpenRef.current;
   }
 
+  // Re-selecting the tab/subtab you are already on refetches that feed rather than doing
+  // nothing, matching the build list tabs above it.
   function handleTabChange(tab: BuildActivityTab) {
     if (tab === 'all') {
       void markViewed();
     }
-    if (tab !== activeTab) {
-      onSetBuildStudioActivityFilter({
-        activityTab: tab,
-        activitySubtab: getBuildActivityFeedSubtab(tab, activeSubtab)
-      });
+    if (tab === activeTab) {
+      handleRefresh();
+      return;
     }
+    onSetBuildStudioActivityFilter({
+      activityTab: tab,
+      activitySubtab: getBuildActivityFeedSubtab(tab, activeSubtab)
+    });
   }
 
   function handleSubtabChange(subtab: Exclude<BuildActivitySubtab, 'all'>) {
-    if (subtab !== activeSubtab) {
-      onSetBuildStudioActivityFilter({ activitySubtab: subtab });
+    if (subtab === activeSubtab) {
+      handleRefresh();
+      return;
     }
+    onSetBuildStudioActivityFilter({ activitySubtab: subtab });
   }
 
   async function handleLoadMore() {

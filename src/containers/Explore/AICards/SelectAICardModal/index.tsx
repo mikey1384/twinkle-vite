@@ -8,8 +8,7 @@ import Main from './Main';
 import Selected from './Selected';
 import AICardModal from '~/components/Modals/AICardModal';
 import ConfirmSelectionModal from './ConfirmSelectionModal';
-import { calculateTotalBurnValue } from '~/helpers';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { returnTotalBurnValueLabel } from '~/helpers/aiCardBurnValue';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
@@ -96,10 +95,10 @@ export default function SelectAICardModal({
   }, [cardIds, cardObj, isBuy, userId]);
 
   const totalBvOfSelectedCards = useMemo(() => {
-    const totalBv = calculateTotalBurnValue(
+    const totalBvLabel = returnTotalBurnValueLabel(
       selectedCardIds.map((cardId) => cardObj[cardId])
     );
-    return totalBv ? `${addCommasToNumber(totalBv)} XP` : '';
+    return totalBvLabel ? `${totalBvLabel} XP` : '';
   }, [cardObj, selectedCardIds]);
 
   return (

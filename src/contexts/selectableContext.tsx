@@ -14,28 +14,21 @@ interface SelectableSnapshot<T> {
 
 interface SelectableStore<T> {
   listeners: Set<() => void>;
-  notifyQueued: boolean;
   notifiedVersion: number;
   snapshot: SelectableSnapshot<T>;
   subscribe: (listener: () => void) => () => void;
 }
 
-function queueSelectableStoreNotification<T>(store: SelectableStore<T>) {
-  if (store.notifyQueued) {
-    return;
+// Listeners must be notified synchronously from the provider's layout effect,
+// never deferred to a microtask/timeout. Deferring lets React finish a discrete
+// event before subscribed consumers re-render, so React's controlled-input
+// restore pass sees the pre-dispatch value prop and rewrites node.value —
+// which slams the caret to the end of every context-backed input on each
+// keystroke (profile status message, home input modal title/description).
+function notifySelectableStore<T>(store: SelectableStore<T>) {
+  for (const listener of Array.from(store.listeners)) {
+    listener();
   }
-  store.notifyQueued = true;
-  const notify = () => {
-    store.notifyQueued = false;
-    for (const listener of Array.from(store.listeners)) {
-      listener();
-    }
-  };
-  if (typeof queueMicrotask === 'function') {
-    queueMicrotask(notify);
-    return;
-  }
-  void Promise.resolve().then(notify);
 }
 
 export interface SelectableContext<T> {
@@ -47,7 +40,6 @@ export interface SelectableContext<T> {
 function createSelectableStore<T>(value: T): SelectableStore<T> {
   const store: SelectableStore<T> = {
     listeners: new Set(),
-    notifyQueued: false,
     notifiedVersion: 0,
     snapshot: {
       value,
@@ -94,7 +86,7 @@ export function createContext<T>(defaultValue: T): SelectableContext<T> {
         return;
       }
       store.notifiedVersion = nextVersion;
-      queueSelectableStoreNotification(store);
+      notifySelectableStore(store);
     }, [store, value]);
 
     return (

@@ -153,6 +153,8 @@ export default function LoggedOutCommunity({
   // Bumped on every browseMode (re)load so an in-flight load-more from a
   // previous sort can detect it is stale and skip appending.
   const requestIdRef = useRef(0);
+  // Bumped when the visitor re-selects the sort they are already on, to re-run the load effect.
+  const [browseReloadKey, setBrowseReloadKey] = useState(0);
 
   const runtimeBackTo = `${location.pathname}${location.search}${location.hash}`;
 
@@ -191,7 +193,7 @@ export default function LoggedOutCommunity({
     };
     // loadPublicBuilds is a stable request helper.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [browseMode]);
+  }, [browseMode, browseReloadKey]);
 
   return (
     <div className={pageClass}>
@@ -274,7 +276,12 @@ export default function LoggedOutCommunity({
   );
 
   function handleBrowseModeChange(nextBrowseMode: BuildStudioBrowseMode) {
-    if (nextBrowseMode === browseMode) return;
+    // Re-selecting the current sort refreshes it. The load effect keys off browseMode, so a
+    // separate reload key is what re-runs it without changing the route.
+    if (nextBrowseMode === browseMode) {
+      setBrowseReloadKey((key) => key + 1);
+      return;
+    }
     navigate(getBuildListTabPath('community', nextBrowseMode));
   }
 

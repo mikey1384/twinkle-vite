@@ -10,6 +10,7 @@ import Icon from '~/components/Icon';
 import SelectAICardModal from './SelectAICardModal';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { returnBurnValueLabel } from '~/helpers/aiCardBurnValue';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import {
@@ -50,6 +51,9 @@ export default function AICards() {
   );
   const filteredCardsTotalBv = useExploreContext(
     (v) => v.state.aiCards.filteredCardsTotalBv
+  );
+  const filteredCardsNumHiddenBv = useExploreContext(
+    (v) => v.state.aiCards.filteredCardsNumHiddenBv
   );
   const onLoadAICards = useExploreContext((v) => v.actions.onLoadAICards);
   const onSetNumFilteredCards = useExploreContext(
@@ -139,6 +143,14 @@ export default function AICards() {
     () => isFilterSet && aiCardSearchFiltersDiffer(prevAICardFilters, filters),
     [isFilterSet, prevAICardFilters, filters]
   );
+  const totalBvLabel = useMemo(
+    () =>
+      returnBurnValueLabel({
+        totalBv: filteredCardsTotalBv,
+        numHiddenCards: filteredCardsNumHiddenBv
+      }),
+    [filteredCardsTotalBv, filteredCardsNumHiddenBv]
+  );
 
   const isSell = useMemo(() => {
     if (filters.owner === username) {
@@ -202,7 +214,7 @@ export default function AICards() {
               )}
               {displayedNumCards > 0 &&
                 !searchResultsStale &&
-                filteredCardsTotalBv > 0 &&
+                !!totalBvLabel &&
                 isFilterSet && (
                   <div>
                     <span
@@ -217,7 +229,7 @@ export default function AICards() {
                         color: ${Color.orange()};
                       `}
                     >
-                      {addCommasToNumber(filteredCardsTotalBv)} XP
+                      {totalBvLabel} XP
                     </span>
                   </div>
                 )}

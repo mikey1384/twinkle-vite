@@ -529,13 +529,19 @@ export default function contentRequestHelpers({
         }
 
         const {
-          data: { cards, loadMoreShown, numCards, totalBv }
+          data: { cards, loadMoreShown, numCards, totalBv, numHiddenBvCards }
         } = await request.get(
           `${urlString}${limit ? `&limit=${limit}` : ''}`,
           auth()
         );
 
-        return { cards, loadMoreShown, numCards, totalBv };
+        return {
+          cards,
+          loadMoreShown,
+          numCards,
+          totalBv,
+          numHiddenBvCards: numHiddenBvCards || 0
+        };
       } catch (error) {
         return handleError(error);
       }

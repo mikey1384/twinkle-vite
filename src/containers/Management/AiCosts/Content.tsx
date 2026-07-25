@@ -10,14 +10,14 @@ import UserSearchInput, {
   type UserSearchResult
 } from '~/components/UserSearchInput';
 import { DataTable, EmptyMessage, PaginationFooter } from './DataTable';
+import { Panel } from './Panel';
+import { BreakdownPanel } from './BreakdownPanel';
 import {
   formatAccountName,
   formatBillingPolicy,
   formatCacheHitRate,
   formatCompact,
   formatNumber,
-  formatProviderModel,
-  formatProviderName,
   formatTime,
   formatTokenLabel,
   formatUsd,
@@ -44,7 +44,6 @@ import {
   inlineActionClass,
   metricCardClass,
   pageClass,
-  panelClass,
   rangeClass,
   subsectionHeaderClass,
   summaryGridClass,
@@ -67,6 +66,14 @@ const RANGE_OPTIONS: { label: string; value: RangeOption }[] = [
   { label: '7 days', value: 7 },
   { label: '30 days', value: 30 },
   { label: '90 days', value: 90 }
+];
+
+type AiCostTab = 'overview' | 'breakdown' | 'investigation';
+
+const TABS: { value: AiCostTab; label: string }[] = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'breakdown', label: 'Breakdown' },
+  { value: 'investigation', label: 'Investigation' }
 ];
 
 export default function Content({
@@ -167,6 +174,7 @@ export default function Content({
   }, [report]);
   const selectedBucket =
     identityBuckets.find((bucket) => bucket.id === selectedBucketId) || null;
+  const [tab, setTab] = useState<AiCostTab>('overview');
   const [bucketTitleDraft, setBucketTitleDraft] = useState('');
   const [ipDraft, setIpDraft] = useState('');
   useEffect(() => {
@@ -214,6 +222,17 @@ export default function Content({
           </p>
         </div>
         <div className={actionsClass}>
+          <div className={rangeClass}>
+            {TABS.map((option) => (
+              <button
+                key={option.value}
+                className={tab === option.value ? 'active' : ''}
+                onClick={() => setTab(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           <div className={rangeClass}>
             {RANGE_OPTIONS.map((option) => (
               <button
@@ -294,176 +313,382 @@ export default function Content({
 
       {!loading && !error && report ? (
         <>
-          <section className={summaryGridClass}>
-            <MetricCard
-              label="Estimated Spend"
-              value={formatUsd(report.summary.estimatedCostUsd)}
-              detail={`${formatNumber(report.summary.eventCount)} events`}
-              color="logoBlue"
-            />
-            <MetricCard
-              label="Requests"
-              value={formatNumber(report.summary.requestCount)}
-              detail={`${formatCompact(report.summary.totalTokens)} tokens`}
-              color="green"
-            />
-            <MetricCard
-              label="Energy Charged"
-              value={formatCompact(report.summary.energyChargedUnits)}
-              detail={`${formatCompact(
-                report.summary.energyOverflowUnits
-              )} overflow`}
-              color="orange"
-            />
-            <MetricCard
-              label="Images"
-              value={formatNumber(report.summary.imageCount)}
-              detail="image events"
-              color="rose"
-            />
-            <MetricCard
-              label="Cache Hit Rate"
-              value={formatCacheHitRate(report.summary)}
-              detail={`${formatCompact(
-                report.summary.cachedInputTokens
-              )} cached tokens`}
-              color="purple"
-            />
-          </section>
-
-          <Panel
-            title="Editing Bucket"
-            note={selectedBucket ? selectedBucket.label : 'Create a bucket'}
-          >
-            {selectedBucket ? (
-              <>
-                <div className="bucket-title-row">
-                  <label htmlFor="manual-ai-selected-bucket-title">
-                    Bucket Title
-                  </label>
-                  <input
-                    id="manual-ai-selected-bucket-title"
-                    value={bucketTitleDraft}
-                    onChange={(event) =>
-                      setBucketTitleDraft(event.currentTarget.value)
-                    }
-                  />
-                  <Button
-                    color="logoBlue"
-                    variant="solid"
-                    loading={
-                      manualIdentitySavingKey ===
-                      `bucket:update:${selectedBucket.id}`
-                    }
-                    disabled={
-                      !bucketTitleDraft.trim() ||
-                      bucketTitleDraft.trim() === selectedBucket.label
-                    }
-                    onClick={() =>
-                      onBucketTitleSave({
-                        bucketId: selectedBucket.id,
-                        label: bucketTitleDraft
-                      })
-                    }
-                  >
-                    Save Title
-                  </Button>
-                </div>
-                <SubsectionHeader
-                  title="Add to Bucket"
-                  note="Search an account or add an IP"
+          {tab === 'overview' ? (
+            <>
+              <section className={summaryGridClass}>
+                <MetricCard
+                  label="Estimated Spend"
+                  value={formatUsd(report.summary.estimatedCostUsd)}
+                  detail={`${formatNumber(report.summary.eventCount)} events`}
+                  color="logoBlue"
                 />
-                <div className="bucket-manual-add">
-                  <div className="manual-add-field">
-                    <label>Account</label>
-                    <UserSearchInput
-                      placeholder="Search username, name, or email..."
-                      onSelect={onAddAccountToBucket}
-                    />
+                <MetricCard
+                  label="Requests"
+                  value={formatNumber(report.summary.requestCount)}
+                  detail={`${formatCompact(report.summary.totalTokens)} tokens`}
+                  color="green"
+                />
+                <MetricCard
+                  label="Energy Charged"
+                  value={formatCompact(report.summary.energyChargedUnits)}
+                  detail={`${formatCompact(
+                    report.summary.energyOverflowUnits
+                  )} overflow`}
+                  color="orange"
+                />
+                <MetricCard
+                  label="Images"
+                  value={formatNumber(report.summary.imageCount)}
+                  detail="image events"
+                  color="rose"
+                />
+                <MetricCard
+                  label="Cache Hit Rate"
+                  value={formatCacheHitRate(report.summary)}
+                  detail={`${formatCompact(
+                    report.summary.cachedInputTokens
+                  )} cached tokens`}
+                  color="purple"
+                />
+              </section>
+              <Panel title="Daily Spend (UTC)">
+                {report.byDay.length === 0 ? (
+                  <EmptyMessage />
+                ) : (
+                  <div className={barsClass}>
+                    {report.byDay.map((row) => (
+                      <BarRow
+                        key={row.dayIndex || row.dayKey}
+                        label={row.dayKey || String(row.dayIndex || '')}
+                        value={formatUsd(row.estimatedCostUsd)}
+                        widthPercent={getWidthPercent(
+                          row.estimatedCostUsd,
+                          dayMaxCost
+                        )}
+                        detail={`${formatNumber(row.requestCount)} requests`}
+                      />
+                    ))}
                   </div>
-                  <div className="manual-add-field">
-                    <label htmlFor="manual-ai-add-ip">IP Address</label>
-                    <div className="manual-add-ip">
+                )}
+              </Panel>
+            </>
+          ) : null}
+
+          {tab === 'breakdown' ? <BreakdownPanel report={report} /> : null}
+
+          {tab === 'investigation' ? (
+            <>
+              <Panel
+                title="Editing Bucket"
+                note={selectedBucket ? selectedBucket.label : 'Create a bucket'}
+              >
+                {selectedBucket ? (
+                  <>
+                    <div className="bucket-title-row">
+                      <label htmlFor="manual-ai-selected-bucket-title">
+                        Bucket Title
+                      </label>
                       <input
-                        id="manual-ai-add-ip"
-                        value={ipDraft}
-                        placeholder="Public IPv4 or IPv6 address"
+                        id="manual-ai-selected-bucket-title"
+                        value={bucketTitleDraft}
                         onChange={(event) =>
-                          setIpDraft(event.currentTarget.value)
+                          setBucketTitleDraft(event.currentTarget.value)
                         }
-                        onKeyDown={handleIpKeyDown}
                       />
                       <Button
                         color="logoBlue"
                         variant="solid"
                         loading={
                           manualIdentitySavingKey ===
-                          `manual-ip:${ipDraft.trim()}`
+                          `bucket:update:${selectedBucket.id}`
                         }
-                        disabled={!ipDraft.trim() || manualAddSaving}
-                        onClick={handleAddIp}
+                        disabled={
+                          !bucketTitleDraft.trim() ||
+                          bucketTitleDraft.trim() === selectedBucket.label
+                        }
+                        onClick={() =>
+                          onBucketTitleSave({
+                            bucketId: selectedBucket.id,
+                            label: bucketTitleDraft
+                          })
+                        }
                       >
-                        Add IP Signal
+                        Save Title
                       </Button>
                     </div>
-                  </div>
-                  {manualAddSaving ? (
-                    <div className="manual-add-status">Adding…</div>
-                  ) : null}
-                </div>
-                <SubsectionHeader
-                  title="Linked Items"
-                  note={`${formatNumber(linkedRuleRows.length)} items`}
-                />
-                <DataTable
-                  columns={[
-                    {
-                      key: 'matchType',
-                      label: 'Type',
-                      render: (value) => formatBucketItemType(value)
-                    },
-                    {
-                      key: 'matchValue',
-                      label: 'Value',
-                      render: (_value, row) => getRuleMatchLabel(row)
-                    },
-                    { key: 'note', label: 'Note' },
-                    {
-                      key: 'createdAt',
-                      label: 'Created',
-                      render: (value) => formatTime(numberValue(value))
-                    },
-                    {
-                      key: 'disabledAt',
-                      label: 'Action',
-                      render: (_value, row) => (
-                        <button
-                          type="button"
-                          className={inlineActionClass}
-                          disabled={
-                            manualIdentitySavingKey ===
-                            `disable:${Number(row.id || 0)}`
-                          }
-                          onClick={() =>
-                            onDisableManualIdentityRule(
-                              row as AiEnergyManualIdentityRule
-                            )
-                          }
-                        >
-                          Remove
-                        </button>
-                      )
-                    }
-                  ]}
-                  rows={linkedRuleRows}
-                />
+                    <SubsectionHeader
+                      title="Add to Bucket"
+                      note="Search an account or add an IP"
+                    />
+                    <div className="bucket-manual-add">
+                      <div className="manual-add-field">
+                        <label>Account</label>
+                        <UserSearchInput
+                          placeholder="Search username, name, or email..."
+                          onSelect={onAddAccountToBucket}
+                        />
+                      </div>
+                      <div className="manual-add-field">
+                        <label htmlFor="manual-ai-add-ip">IP Address</label>
+                        <div className="manual-add-ip">
+                          <input
+                            id="manual-ai-add-ip"
+                            value={ipDraft}
+                            placeholder="Public IPv4 or IPv6 address"
+                            onChange={(event) =>
+                              setIpDraft(event.currentTarget.value)
+                            }
+                            onKeyDown={handleIpKeyDown}
+                          />
+                          <Button
+                            color="logoBlue"
+                            variant="solid"
+                            loading={
+                              manualIdentitySavingKey ===
+                              `manual-ip:${ipDraft.trim()}`
+                            }
+                            disabled={!ipDraft.trim() || manualAddSaving}
+                            onClick={handleAddIp}
+                          >
+                            Add IP Signal
+                          </Button>
+                        </div>
+                      </div>
+                      {manualAddSaving ? (
+                        <div className="manual-add-status">Adding…</div>
+                      ) : null}
+                    </div>
+                    <SubsectionHeader
+                      title="Linked Items"
+                      note={`${formatNumber(linkedRuleRows.length)} items`}
+                    />
+                    <DataTable
+                      columns={[
+                        {
+                          key: 'matchType',
+                          label: 'Type',
+                          render: (value) => formatBucketItemType(value)
+                        },
+                        {
+                          key: 'matchValue',
+                          label: 'Value',
+                          render: (_value, row) => getRuleMatchLabel(row)
+                        },
+                        { key: 'note', label: 'Note' },
+                        {
+                          key: 'createdAt',
+                          label: 'Created',
+                          render: (value) => formatTime(numberValue(value))
+                        },
+                        {
+                          key: 'disabledAt',
+                          label: 'Action',
+                          render: (_value, row) => (
+                            <button
+                              type="button"
+                              className={inlineActionClass}
+                              disabled={
+                                manualIdentitySavingKey ===
+                                `disable:${Number(row.id || 0)}`
+                              }
+                              onClick={() =>
+                                onDisableManualIdentityRule(
+                                  row as AiEnergyManualIdentityRule
+                                )
+                              }
+                            >
+                              Remove
+                            </button>
+                          )
+                        }
+                      ]}
+                      rows={linkedRuleRows}
+                    />
 
-                <SubsectionHeader
-                  title="Suggested Accounts"
-                  note={`${formatNumber(
-                    recommendationAccountRows.length
-                  )} matches`}
-                />
+                    <SubsectionHeader
+                      title="Suggested Accounts"
+                      note={`${formatNumber(
+                        recommendationAccountRows.length
+                      )} matches`}
+                    />
+                    <DataTable
+                      columns={[
+                        {
+                          key: 'username',
+                          label: 'Account',
+                          render: (value, row) =>
+                            formatAccountName({ value, row })
+                        },
+                        { key: 'accountVerifiedEmail', label: 'Email' },
+                        { key: 'reason', label: 'Reason' },
+                        {
+                          key: 'confidenceScore',
+                          label: 'Confidence',
+                          align: 'right',
+                          render: formatNumber
+                        },
+                        {
+                          key: 'evidenceCount',
+                          label: 'Clues',
+                          align: 'right',
+                          render: formatNumber
+                        },
+                        {
+                          key: 'manualIdentityKey',
+                          label: 'Action',
+                          render: (_value, row) => (
+                            <div className={inlineActionGroupClass}>
+                              <button
+                                type="button"
+                                className={inlineActionClass}
+                                disabled={
+                                  !row.userId ||
+                                  manualIdentitySavingKey ===
+                                    getAddUserSavingKey(row)
+                                }
+                                onClick={() =>
+                                  onOpenBucketActionModal({
+                                    actionType: 'user',
+                                    row
+                                  })
+                                }
+                              >
+                                Add User
+                              </button>
+                              <button
+                                type="button"
+                                className={inlineActionClass}
+                                disabled={
+                                  !getRowEmail(row) ||
+                                  manualIdentitySavingKey ===
+                                    getAddEmailSavingKey(row)
+                                }
+                                onClick={() =>
+                                  onOpenBucketActionModal({
+                                    actionType: 'email',
+                                    row
+                                  })
+                                }
+                              >
+                                Add Email
+                              </button>
+                            </div>
+                          )
+                        }
+                      ]}
+                      rows={recommendationAccountRows}
+                    />
+
+                    <SubsectionHeader
+                      title="Suggested Emails"
+                      note={`${formatNumber(
+                        recommendationEmailRows.length
+                      )} matches`}
+                    />
+                    <DataTable
+                      columns={[
+                        { key: 'label', label: 'Email' },
+                        { key: 'reason', label: 'Reason' },
+                        {
+                          key: 'confidenceScore',
+                          label: 'Confidence',
+                          align: 'right',
+                          render: formatNumber
+                        },
+                        {
+                          key: 'evidenceCount',
+                          label: 'Clues',
+                          align: 'right',
+                          render: formatNumber
+                        },
+                        {
+                          key: 'manualIdentityKey',
+                          label: 'Action',
+                          render: (_value, row) => (
+                            <button
+                              type="button"
+                              className={inlineActionClass}
+                              disabled={
+                                !getRowEmail(row) ||
+                                manualIdentitySavingKey ===
+                                  getAddEmailSavingKey(row)
+                              }
+                              onClick={() =>
+                                onOpenBucketActionModal({
+                                  actionType: 'email',
+                                  row
+                                })
+                              }
+                            >
+                              Add Email
+                            </button>
+                          )
+                        }
+                      ]}
+                      rows={recommendationEmailRows}
+                    />
+
+                    <SubsectionHeader
+                      title="Suggested Signals"
+                      note={`${formatNumber(
+                        recommendationRiskRows.length
+                      )} matches`}
+                    />
+                    <DataTable
+                      columns={[
+                        { key: 'riskKeyType', label: 'Type' },
+                        {
+                          key: 'riskKeyHash',
+                          label: 'Hash',
+                          render: (value) => shortenHash(String(value || ''))
+                        },
+                        { key: 'reason', label: 'Reason' },
+                        {
+                          key: 'confidenceScore',
+                          label: 'Confidence',
+                          align: 'right',
+                          render: formatNumber
+                        },
+                        {
+                          key: 'evidenceCount',
+                          label: 'Clues',
+                          align: 'right',
+                          render: formatNumber
+                        },
+                        {
+                          key: 'manualIdentityKey',
+                          label: 'Action',
+                          render: (_value, row) => (
+                            <button
+                              type="button"
+                              className={inlineActionClass}
+                              disabled={
+                                !row.riskKeyType ||
+                                !row.riskKeyHash ||
+                                manualIdentitySavingKey ===
+                                  getAddRiskSavingKey(row)
+                              }
+                              onClick={() =>
+                                onOpenBucketActionModal({
+                                  actionType: 'risk_key',
+                                  row
+                                })
+                              }
+                            >
+                              Add Signal
+                            </button>
+                          )
+                        }
+                      ]}
+                      rows={recommendationRiskRows}
+                    />
+                  </>
+                ) : (
+                  <EmptyMessage />
+                )}
+              </Panel>
+
+              <Panel title="Top Accounts" note="Top 50 by estimated spend.">
                 <DataTable
                   columns={[
                     {
@@ -472,16 +697,15 @@ export default function Content({
                       render: (value, row) => formatAccountName({ value, row })
                     },
                     { key: 'accountVerifiedEmail', label: 'Email' },
-                    { key: 'reason', label: 'Reason' },
                     {
-                      key: 'confidenceScore',
-                      label: 'Confidence',
+                      key: 'estimatedCostUsd',
+                      label: 'Cost',
                       align: 'right',
-                      render: formatNumber
+                      render: formatUsd
                     },
                     {
-                      key: 'evidenceCount',
-                      label: 'Clues',
+                      key: 'requestCount',
+                      label: 'Req',
                       align: 'right',
                       render: formatNumber
                     },
@@ -528,526 +752,233 @@ export default function Content({
                       )
                     }
                   ]}
-                  rows={recommendationAccountRows}
+                  rows={report.topAccounts}
                 />
+              </Panel>
 
-                <SubsectionHeader
-                  title="Suggested Emails"
-                  note={`${formatNumber(
-                    recommendationEmailRows.length
-                  )} matches`}
-                />
-                <DataTable
-                  columns={[
-                    { key: 'label', label: 'Email' },
-                    { key: 'reason', label: 'Reason' },
-                    {
-                      key: 'confidenceScore',
-                      label: 'Confidence',
-                      align: 'right',
-                      render: formatNumber
-                    },
-                    {
-                      key: 'evidenceCount',
-                      label: 'Clues',
-                      align: 'right',
-                      render: formatNumber
-                    },
-                    {
-                      key: 'manualIdentityKey',
-                      label: 'Action',
-                      render: (_value, row) => (
-                        <button
-                          type="button"
-                          className={inlineActionClass}
-                          disabled={
-                            !getRowEmail(row) ||
-                            manualIdentitySavingKey ===
-                              getAddEmailSavingKey(row)
-                          }
-                          onClick={() =>
-                            onOpenBucketActionModal({
-                              actionType: 'email',
-                              row
-                            })
-                          }
-                        >
-                          Add Email
-                        </button>
-                      )
-                    }
-                  ]}
-                  rows={recommendationEmailRows}
-                />
-
-                <SubsectionHeader
-                  title="Suggested Signals"
-                  note={`${formatNumber(
-                    recommendationRiskRows.length
-                  )} matches`}
-                />
-                <DataTable
-                  columns={[
-                    { key: 'riskKeyType', label: 'Type' },
-                    {
-                      key: 'riskKeyHash',
-                      label: 'Hash',
-                      render: (value) => shortenHash(String(value || ''))
-                    },
-                    { key: 'reason', label: 'Reason' },
-                    {
-                      key: 'confidenceScore',
-                      label: 'Confidence',
-                      align: 'right',
-                      render: formatNumber
-                    },
-                    {
-                      key: 'evidenceCount',
-                      label: 'Clues',
-                      align: 'right',
-                      render: formatNumber
-                    },
-                    {
-                      key: 'manualIdentityKey',
-                      label: 'Action',
-                      render: (_value, row) => (
-                        <button
-                          type="button"
-                          className={inlineActionClass}
-                          disabled={
-                            !row.riskKeyType ||
-                            !row.riskKeyHash ||
-                            manualIdentitySavingKey === getAddRiskSavingKey(row)
-                          }
-                          onClick={() =>
-                            onOpenBucketActionModal({
-                              actionType: 'risk_key',
-                              row
-                            })
-                          }
-                        >
-                          Add Signal
-                        </button>
-                      )
-                    }
-                  ]}
-                  rows={recommendationRiskRows}
-                />
-              </>
-            ) : (
-              <EmptyMessage />
-            )}
-          </Panel>
-
-          <Panel title="Daily Spend (UTC)">
-            {report.byDay.length === 0 ? (
-              <EmptyMessage />
-            ) : (
-              <div className={barsClass}>
-                {report.byDay.map((row) => (
-                  <BarRow
-                    key={row.dayIndex || row.dayKey}
-                    label={row.dayKey || String(row.dayIndex || '')}
-                    value={formatUsd(row.estimatedCostUsd)}
-                    widthPercent={getWidthPercent(
-                      row.estimatedCostUsd,
-                      dayMaxCost
-                    )}
-                    detail={`${formatNumber(row.requestCount)} requests`}
-                  />
-                ))}
-              </div>
-            )}
-          </Panel>
-
-          <div className={twoColumnClass}>
-            <Panel title="Top Surfaces" note="Top 100 by estimated spend.">
-              <DataTable
-                columns={[
-                  { key: 'surface', label: 'Surface' },
-                  {
-                    key: 'billingPolicy',
-                    label: 'Policy',
-                    render: formatBillingPolicy
-                  },
-                  {
-                    key: 'estimatedCostUsd',
-                    label: 'Cost',
-                    align: 'right',
-                    render: formatUsd
-                  },
-                  {
-                    key: 'requestCount',
-                    label: 'Req',
-                    align: 'right',
-                    render: formatNumber
-                  },
-                  {
-                    key: 'cachedInputTokens',
-                    label: 'Cache',
-                    align: 'right',
-                    render: (_value, row) => formatCacheHitRate(row)
-                  }
-                ]}
-                rows={report.bySurface}
-              />
-            </Panel>
-
-            <Panel
-              title="Top Providers"
-              note="Top 100 provider/model/policy groups."
-            >
-              <DataTable
-                columns={[
-                  {
-                    key: 'provider',
-                    label: 'Provider',
-                    render: (value, row) => formatProviderName(value, row)
-                  },
-                  {
-                    key: 'model',
-                    label: 'Model',
-                    render: (value, row) => formatProviderModel(value, row)
-                  },
-                  {
-                    key: 'billingPolicy',
-                    label: 'Policy',
-                    render: formatBillingPolicy
-                  },
-                  {
-                    key: 'estimatedCostUsd',
-                    label: 'Cost',
-                    align: 'right',
-                    render: formatUsd
-                  },
-                  {
-                    key: 'cachedInputTokens',
-                    label: 'Cache',
-                    align: 'right',
-                    render: (_value, row) => formatCacheHitRate(row)
-                  }
-                ]}
-                rows={report.byProviderModel}
-              />
-            </Panel>
-          </div>
-
-          <div className={twoColumnClass}>
-            <Panel title="Billing Policy">
-              <DataTable
-                columns={[
-                  {
-                    key: 'billingPolicy',
-                    label: 'Policy',
-                    render: formatBillingPolicy
-                  },
-                  {
-                    key: 'estimatedCostUsd',
-                    label: 'Cost',
-                    align: 'right',
-                    render: formatUsd
-                  },
-                  {
-                    key: 'energyChargedUnits',
-                    label: 'Energy',
-                    align: 'right',
-                    render: formatCompact
-                  },
-                  {
-                    key: 'coinCharged',
-                    label: 'Coins',
-                    align: 'right',
-                    render: formatNumber
-                  }
-                ]}
-                rows={report.byBillingPolicy}
-              />
-            </Panel>
-
-            <Panel title="Top Accounts" note="Top 50 by estimated spend.">
-              <DataTable
-                columns={[
-                  {
-                    key: 'username',
-                    label: 'Account',
-                    render: (value, row) => formatAccountName({ value, row })
-                  },
-                  { key: 'accountVerifiedEmail', label: 'Email' },
-                  {
-                    key: 'estimatedCostUsd',
-                    label: 'Cost',
-                    align: 'right',
-                    render: formatUsd
-                  },
-                  {
-                    key: 'requestCount',
-                    label: 'Req',
-                    align: 'right',
-                    render: formatNumber
-                  },
-                  {
-                    key: 'manualIdentityKey',
-                    label: 'Action',
-                    render: (_value, row) => (
-                      <div className={inlineActionGroupClass}>
-                        <button
-                          type="button"
-                          className={inlineActionClass}
-                          disabled={
-                            !row.userId ||
-                            manualIdentitySavingKey === getAddUserSavingKey(row)
-                          }
-                          onClick={() =>
-                            onOpenBucketActionModal({
-                              actionType: 'user',
-                              row
-                            })
-                          }
-                        >
-                          Add User
-                        </button>
-                        <button
-                          type="button"
-                          className={inlineActionClass}
-                          disabled={
-                            !getRowEmail(row) ||
-                            manualIdentitySavingKey ===
-                              getAddEmailSavingKey(row)
-                          }
-                          onClick={() =>
-                            onOpenBucketActionModal({
-                              actionType: 'email',
-                              row
-                            })
-                          }
-                        >
-                          Add Email
-                        </button>
-                      </div>
-                    )
-                  }
-                ]}
-                rows={report.topAccounts}
-              />
-            </Panel>
-          </div>
-
-          <div className={twoColumnClass}>
-            <Panel
-              title="Top Energy Identities"
-              note="Top 50 shared Energy identities by spend."
-            >
-              <DataTable
-                columns={[
-                  { key: 'identityKey', label: 'Identity' },
-                  {
-                    key: 'accountCount',
-                    label: 'Accounts',
-                    align: 'right',
-                    render: formatNumber
-                  },
-                  { key: 'userIds', label: 'User IDs' },
-                  {
-                    key: 'estimatedCostUsd',
-                    label: 'Cost',
-                    align: 'right',
-                    render: formatUsd
-                  }
-                ]}
-                rows={report.topIdentities}
-              />
-            </Panel>
-
-            <Panel
-              title="Top Risk Groups"
-              note="Top 50 shared device/IP/user-agent groups by spend. Click a group to inspect accounts and events."
-            >
-              <DataTable
-                columns={[
-                  { key: 'riskKeyType', label: 'Type' },
-                  {
-                    key: 'riskKeyHash',
-                    label: 'Hash',
-                    render: (value) => shortenHash(String(value || ''))
-                  },
-                  {
-                    key: 'accountCount',
-                    label: 'Accounts',
-                    align: 'right',
-                    render: formatNumber
-                  },
-                  {
-                    key: 'estimatedCostUsd',
-                    label: 'Cost',
-                    align: 'right',
-                    render: formatUsd
-                  },
-                  {
-                    key: 'manualIdentityKey',
-                    label: 'Action',
-                    render: (_value, row) => (
-                      <button
-                        type="button"
-                        className={inlineActionClass}
-                        disabled={
-                          !row.riskKeyType ||
-                          !row.riskKeyHash ||
-                          manualIdentitySavingKey === getAddRiskSavingKey(row)
-                        }
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenBucketActionModal({
-                            actionType: 'risk_key',
-                            row
-                          });
-                        }}
-                      >
-                        Add Signal
-                      </button>
-                    )
-                  }
-                ]}
-                rows={report.topRiskGroups}
-                rowKey={getRiskGroupRowKey}
-                activeRowKey={
-                  selectedRiskGroup
-                    ? getRiskGroupSelectionKey(selectedRiskGroup)
-                    : ''
-                }
-                onRowClick={onRiskGroupSelect}
-              />
-            </Panel>
-          </div>
-
-          {selectedRiskGroup ? (
-            <Panel
-              title="Risk Group Detail"
-              note={`Top 100 accounts, paginated events. ${
-                selectedRiskGroup.riskKeyType
-              } ${shortenHash(selectedRiskGroup.riskKeyHash)}`}
-              action={
-                <Button
-                  color="darkerGray"
-                  variant="outline"
-                  onClick={onCloseRiskGroup}
+              <div className={twoColumnClass}>
+                <Panel
+                  title="Top Energy Identities"
+                  note="Top 50 shared Energy identities by spend."
                 >
-                  Close
-                </Button>
-              }
-            >
-              <RiskGroupDetail
-                detail={riskGroupDetail}
-                error={riskGroupError}
-                loading={riskGroupLoading}
-                loadingMore={riskGroupEventsLoadingMore}
-                onLoadMore={onLoadMoreRiskGroupEvents}
-                onOpenBucketActionModal={onOpenBucketActionModal}
-                eventsError={riskGroupEventsError}
-                manualIdentitySavingKey={manualIdentitySavingKey}
-              />
-            </Panel>
+                  <DataTable
+                    columns={[
+                      { key: 'identityKey', label: 'Identity' },
+                      {
+                        key: 'accountCount',
+                        label: 'Accounts',
+                        align: 'right',
+                        render: formatNumber
+                      },
+                      { key: 'userIds', label: 'User IDs' },
+                      {
+                        key: 'estimatedCostUsd',
+                        label: 'Cost',
+                        align: 'right',
+                        render: formatUsd
+                      }
+                    ]}
+                    rows={report.topIdentities}
+                  />
+                </Panel>
+
+                <Panel
+                  title="Top Risk Groups"
+                  note="Top 50 shared device/IP/user-agent groups by spend. Click a group to inspect accounts and events."
+                >
+                  <DataTable
+                    columns={[
+                      { key: 'riskKeyType', label: 'Type' },
+                      {
+                        key: 'riskKeyHash',
+                        label: 'Hash',
+                        render: (value) => shortenHash(String(value || ''))
+                      },
+                      {
+                        key: 'accountCount',
+                        label: 'Accounts',
+                        align: 'right',
+                        render: formatNumber
+                      },
+                      {
+                        key: 'estimatedCostUsd',
+                        label: 'Cost',
+                        align: 'right',
+                        render: formatUsd
+                      },
+                      {
+                        key: 'manualIdentityKey',
+                        label: 'Action',
+                        render: (_value, row) => (
+                          <button
+                            type="button"
+                            className={inlineActionClass}
+                            disabled={
+                              !row.riskKeyType ||
+                              !row.riskKeyHash ||
+                              manualIdentitySavingKey ===
+                                getAddRiskSavingKey(row)
+                            }
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onOpenBucketActionModal({
+                                actionType: 'risk_key',
+                                row
+                              });
+                            }}
+                          >
+                            Add Signal
+                          </button>
+                        )
+                      }
+                    ]}
+                    rows={report.topRiskGroups}
+                    rowKey={getRiskGroupRowKey}
+                    activeRowKey={
+                      selectedRiskGroup
+                        ? getRiskGroupSelectionKey(selectedRiskGroup)
+                        : ''
+                    }
+                    onRowClick={onRiskGroupSelect}
+                  />
+                </Panel>
+              </div>
+
+              {selectedRiskGroup ? (
+                <Panel
+                  title="Risk Group Detail"
+                  note={`Top 100 accounts, paginated events. ${
+                    selectedRiskGroup.riskKeyType
+                  } ${shortenHash(selectedRiskGroup.riskKeyHash)}`}
+                  action={
+                    <Button
+                      color="darkerGray"
+                      variant="outline"
+                      onClick={onCloseRiskGroup}
+                    >
+                      Close
+                    </Button>
+                  }
+                >
+                  <RiskGroupDetail
+                    detail={riskGroupDetail}
+                    error={riskGroupError}
+                    loading={riskGroupLoading}
+                    loadingMore={riskGroupEventsLoadingMore}
+                    onLoadMore={onLoadMoreRiskGroupEvents}
+                    onOpenBucketActionModal={onOpenBucketActionModal}
+                    eventsError={riskGroupEventsError}
+                    manualIdentitySavingKey={manualIdentitySavingKey}
+                  />
+                </Panel>
+              ) : null}
+
+              <Panel
+                title="Spend Events"
+                note={`Showing ${formatNumber(
+                  report.recentEvents.length
+                )} loaded out of ${formatNumber(
+                  report.summary.eventCount
+                )} events in this range. Use Load More to keep paging through the selected range.`}
+              >
+                <DataTable
+                  columns={[
+                    {
+                      key: 'createdAt',
+                      label: 'Time',
+                      render: (value) => formatTime(numberValue(value))
+                    },
+                    {
+                      key: 'source',
+                      label: 'Source',
+                      render: formatTokenLabel
+                    },
+                    { key: 'surface', label: 'Surface' },
+                    { key: 'operation', label: 'Operation' },
+                    {
+                      key: 'billingPolicy',
+                      label: 'Policy',
+                      render: formatBillingPolicy
+                    },
+                    {
+                      key: 'username',
+                      label: 'Account',
+                      render: (value, row) => formatAccountName({ value, row })
+                    },
+                    {
+                      key: 'sharedRiskKeyTypes',
+                      label: 'Signals',
+                      render: (_value, row) => getEventSignalLabel(row)
+                    },
+                    {
+                      key: 'estimatedCostUsd',
+                      label: 'Cost',
+                      align: 'right',
+                      render: formatUsd
+                    },
+                    {
+                      key: 'manualIdentityKey',
+                      label: 'Action',
+                      render: (_value, row) => (
+                        <EventBucketActions
+                          row={row}
+                          manualIdentitySavingKey={manualIdentitySavingKey}
+                          onOpenBucketActionModal={onOpenBucketActionModal}
+                        />
+                      )
+                    }
+                  ]}
+                  rows={report.recentEvents}
+                />
+                <PaginationFooter
+                  hasMore={report.recentEventsHasMore}
+                  loading={eventsLoadingMore}
+                  error={eventsError}
+                  onLoadMore={onLoadMoreEvents}
+                />
+              </Panel>
+
+              <Panel
+                title="Recent Session Evidence"
+                note="Login, signup, logout, email verification, and socket bind evidence."
+              >
+                <DataTable
+                  columns={[
+                    {
+                      key: 'createdAt',
+                      label: 'Time',
+                      render: (value) => formatTime(numberValue(value))
+                    },
+                    { key: 'eventType', label: 'Event' },
+                    {
+                      key: 'username',
+                      label: 'Account',
+                      render: (value, row) => formatAccountName({ value, row })
+                    },
+                    { key: 'verifiedEmail', label: 'Email' },
+                    {
+                      key: 'reqIpPrefix',
+                      label: 'IP',
+                      render: (_value, row) => getEvidenceIp(row)
+                    },
+                    { key: 'deviceId', label: 'Device' },
+                    {
+                      key: 'manualIdentityKey',
+                      label: 'Action',
+                      render: (_value, row) => (
+                        <EvidenceSignalActions
+                          row={row}
+                          manualIdentitySavingKey={manualIdentitySavingKey}
+                          onOpenBucketActionModal={onOpenBucketActionModal}
+                        />
+                      )
+                    }
+                  ]}
+                  rows={report.recentSessionEvidence || []}
+                />
+              </Panel>
+            </>
           ) : null}
-
-          <Panel
-            title="Spend Events"
-            note={`Showing ${formatNumber(
-              report.recentEvents.length
-            )} loaded out of ${formatNumber(
-              report.summary.eventCount
-            )} events in this range. Use Load More to keep paging through the selected range.`}
-          >
-            <DataTable
-              columns={[
-                {
-                  key: 'createdAt',
-                  label: 'Time',
-                  render: (value) => formatTime(numberValue(value))
-                },
-                { key: 'source', label: 'Source', render: formatTokenLabel },
-                { key: 'surface', label: 'Surface' },
-                { key: 'operation', label: 'Operation' },
-                {
-                  key: 'billingPolicy',
-                  label: 'Policy',
-                  render: formatBillingPolicy
-                },
-                {
-                  key: 'username',
-                  label: 'Account',
-                  render: (value, row) => formatAccountName({ value, row })
-                },
-                {
-                  key: 'sharedRiskKeyTypes',
-                  label: 'Signals',
-                  render: (_value, row) => getEventSignalLabel(row)
-                },
-                {
-                  key: 'estimatedCostUsd',
-                  label: 'Cost',
-                  align: 'right',
-                  render: formatUsd
-                },
-                {
-                  key: 'manualIdentityKey',
-                  label: 'Action',
-                  render: (_value, row) => (
-                    <EventBucketActions
-                      row={row}
-                      manualIdentitySavingKey={manualIdentitySavingKey}
-                      onOpenBucketActionModal={onOpenBucketActionModal}
-                    />
-                  )
-                }
-              ]}
-              rows={report.recentEvents}
-            />
-            <PaginationFooter
-              hasMore={report.recentEventsHasMore}
-              loading={eventsLoadingMore}
-              error={eventsError}
-              onLoadMore={onLoadMoreEvents}
-            />
-          </Panel>
-
-          <Panel
-            title="Recent Session Evidence"
-            note="Login, signup, logout, email verification, and socket bind evidence."
-          >
-            <DataTable
-              columns={[
-                {
-                  key: 'createdAt',
-                  label: 'Time',
-                  render: (value) => formatTime(numberValue(value))
-                },
-                { key: 'eventType', label: 'Event' },
-                {
-                  key: 'username',
-                  label: 'Account',
-                  render: (value, row) => formatAccountName({ value, row })
-                },
-                { key: 'verifiedEmail', label: 'Email' },
-                {
-                  key: 'reqIpPrefix',
-                  label: 'IP',
-                  render: (_value, row) => getEvidenceIp(row)
-                },
-                { key: 'deviceId', label: 'Device' },
-                {
-                  key: 'manualIdentityKey',
-                  label: 'Action',
-                  render: (_value, row) => (
-                    <EvidenceSignalActions
-                      row={row}
-                      manualIdentitySavingKey={manualIdentitySavingKey}
-                      onOpenBucketActionModal={onOpenBucketActionModal}
-                    />
-                  )
-                }
-              ]}
-              rows={report.recentSessionEvidence || []}
-            />
-          </Panel>
         </>
       ) : null}
       {pendingBucketAction ? (
@@ -1078,31 +1009,6 @@ export default function Content({
       handleAddIp();
     }
   }
-}
-
-function Panel({
-  title,
-  note,
-  action,
-  children
-}: {
-  title: string;
-  note?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={panelClass}>
-      <header>
-        <div>
-          <h2>{title}</h2>
-          {note ? <span>{note}</span> : null}
-        </div>
-        {action}
-      </header>
-      <div>{children}</div>
-    </section>
-  );
 }
 
 function MetricCard({

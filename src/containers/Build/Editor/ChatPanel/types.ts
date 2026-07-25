@@ -11,9 +11,11 @@ export type BuildLumineModel =
   | 'gpt-5.6-terra'
   | 'claude-sonnet-5'
   | 'gpt-5.6-sol'
+  | 'claude-opus-5'
+  // Legacy stored preference; the server migrates it to claude-opus-5.
   | 'claude-opus-4-8'
   | 'claude-fable-5';
-export type BuildLumineMode = 'light' | 'normal' | 'heavy' | 'superheavy';
+export type BuildLumineMode = 'light' | 'normal' | 'heavy';
 export type BuildLumineThinkLevel =
   'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 

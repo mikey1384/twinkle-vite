@@ -30,6 +30,9 @@ export interface AiCostSummary {
 }
 
 export interface AiCostRow extends Partial<AiCostSummary> {
+  avgCostUsd?: number;
+  avgInputTokens?: number;
+  avgOutputTokens?: number;
   id?: number;
   eventId?: number;
   source?: string;
@@ -192,6 +195,10 @@ export interface AiCostReport {
   bySurface: AiCostRow[];
   byProviderModel: AiCostRow[];
   byBillingPolicy: AiCostRow[];
+  byOperation?: AiCostRow[];
+  // The grouping keys the backend actually grouped each breakdown on. The
+  // client renders one identity column per key so the two cannot drift.
+  breakdownKeys?: Record<string, string[]>;
   topAccounts: AiCostRow[];
   topIdentities: AiCostRow[];
   topRiskGroups: AiCostRow[];

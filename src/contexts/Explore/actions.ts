@@ -452,10 +452,17 @@ export default function ExploreActions(dispatch: Dispatch) {
         numCards
       });
     },
-    onSetFilteredCardsTotalBv(totalBv: number) {
+    onSetFilteredCardsTotalBv({
+      totalBv,
+      numHiddenBvCards
+    }: {
+      totalBv: number;
+      numHiddenBvCards: number;
+    }) {
       return dispatch({
         type: 'SET_FILTERED_CARDS_TOTAL_BV',
-        totalBv
+        totalBv,
+        numHiddenBvCards
       });
     },
     onSetSearchedPlaylists({

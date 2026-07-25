@@ -40,9 +40,7 @@ export default function RiskGroupDetail({
   loading: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
-  onOpenBucketActionModal: (
-    action: AiEnergyManualIdentityBucketAction
-  ) => void;
+  onOpenBucketActionModal: (action: AiEnergyManualIdentityBucketAction) => void;
   manualIdentitySavingKey: string;
   eventsError: string;
 }) {
@@ -129,8 +127,7 @@ export default function RiskGroupDetail({
                     type="button"
                     className={inlineActionClass}
                     disabled={
-                      !email ||
-                      manualIdentitySavingKey === `email:${email}`
+                      !email || manualIdentitySavingKey === `email:${email}`
                     }
                     onClick={() =>
                       onOpenBucketActionModal({
@@ -255,9 +252,7 @@ function EvidenceSignalActions({
 }: {
   row: AiCostRow;
   manualIdentitySavingKey: string;
-  onOpenBucketActionModal: (
-    action: AiEnergyManualIdentityBucketAction
-  ) => void;
+  onOpenBucketActionModal: (action: AiEnergyManualIdentityBucketAction) => void;
 }) {
   const signals = getEvidenceRawSignals(row);
   if (signals.length === 0) return null;
@@ -270,7 +265,7 @@ function EvidenceSignalActions({
           className={inlineActionClass}
           disabled={
             manualIdentitySavingKey ===
-              `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`
+            `raw-risk:${signal.riskKeyType}:${signal.riskKeyValue}`
           }
           onClick={() =>
             onOpenBucketActionModal({

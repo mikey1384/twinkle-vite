@@ -1,11 +1,8 @@
-import { Card } from '~/types';
-import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
 import { userIdRef } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
 import { Theme } from '~/constants/css';
 
 import {
-  returnCardBurnXP,
   CHAT_ID_BASE_NUMBER,
   returnMaxRewards,
   MOD_LEVEL,
@@ -220,23 +217,6 @@ function buildDailyTaskStatusForNextDay({
       excellenceQualified: false
     }
   };
-}
-
-export function calculateTotalBurnValue(cards: Card[]) {
-  let totalBv = 0;
-  for (const card of cards) {
-    if (card?.level && card?.quality) {
-      totalBv += returnCardBurnXP({
-        cardLevel: card.level,
-        // Unrevealed total mystery cards keep their quality hidden; floor them
-        // to the lowest quality (matching the API's totalBv convention).
-        cardQuality: isTotalMysteryQuality(card.quality)
-          ? 'common'
-          : card.quality
-      });
-    }
-  }
-  return totalBv;
 }
 
 export async function checkMicrophoneAccess() {

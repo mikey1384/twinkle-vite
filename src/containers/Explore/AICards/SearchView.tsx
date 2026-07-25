@@ -23,7 +23,10 @@ export default function SearchView({
   filters: any;
   navigate: (url: string) => any;
   onSetNumCards: (numCards: number) => any;
-  onSetTotalBv: (totalBv: number) => any;
+  onSetTotalBv: (arg: {
+    totalBv: number;
+    numHiddenBvCards: number;
+  }) => any;
   search: string;
 }) {
   const [loading, setLoading] = useState(false);
@@ -68,15 +71,15 @@ export default function SearchView({
 
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
-        onSetTotalBv(0);
+        onSetTotalBv({ totalBv: 0, numHiddenBvCards: 0 });
         setLoading(true);
-        const { cards, loadMoreShown, numCards, totalBv } =
+        const { cards, loadMoreShown, numCards, totalBv, numHiddenBvCards } =
           await loadFilteredAICards({
             filters
           });
         handleReportFilterMismatches({ cards, filters });
         if (cancelled) return;
-        onSetTotalBv(totalBv);
+        onSetTotalBv({ totalBv, numHiddenBvCards });
         onSetNumCards(numCards);
         if (!filteredLoaded || filterChanged) {
           onLoadFilteredAICards({ cards, loadMoreShown });

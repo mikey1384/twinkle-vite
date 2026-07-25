@@ -155,6 +155,9 @@ export default function BuildList({
   const onSetBuildStudioActiveTab = useBuildContext(
     (v) => v.actions.onSetBuildStudioActiveTab
   );
+  const onInvalidateBuildStudioBrowseTab = useBuildContext(
+    (v) => v.actions.onInvalidateBuildStudioBrowseTab
+  );
   const onSetBuildStudioMyBuilds = useBuildContext(
     (v) => v.actions.onSetBuildStudioMyBuilds
   );
@@ -229,6 +232,13 @@ export default function BuildList({
     getCollaboratingBuildsCacheRefreshKey(numNewNotis);
   const collaboratingCacheGeneration = getBuildStudioBrowseCacheGeneration(
     collaboratingBrowseState.cacheGeneration
+  );
+  // Every browse tab carries a cache generation, and the reducer drops any write whose
+  // generation no longer matches. Sending it back for public tabs too — not just
+  // collaborating — is what lets those tabs be invalidated and reloaded at all: without it
+  // the refetch's result is rejected and the tab stays permanently unloaded.
+  const activeBrowseCacheGeneration = getBuildStudioBrowseCacheGeneration(
+    activeBrowseState.cacheGeneration
   );
   const activeBrowseLoadedForCurrentUser = Boolean(
     normalizedUserId &&
@@ -314,6 +324,9 @@ export default function BuildList({
   const initialScrollAnchorKeyRef = useRef('');
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
   const [myBuildsLoading, setMyBuildsLoading] = useState(true);
+  // Bumped when the user re-selects the My Builds tab they are already on, so the loader below
+  // refetches. My Builds has no cached `loaded` flag to invalidate the way browse tabs do.
+  const [myBuildsReloadKey, setMyBuildsReloadKey] = useState(0);
   const [confirmedMyBuildOwnership, setConfirmedMyBuildOwnership] = useState<{
     userId: number;
     buildCount: number;
@@ -620,7 +633,7 @@ export default function BuildList({
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, numNewNotis]);
+  }, [userId, numNewNotis, myBuildsReloadKey]);
 
   useEffect(() => {
     if (!normalizedUserId) return;
@@ -725,10 +738,7 @@ export default function BuildList({
               activeTab === 'collaborating'
                 ? collaboratingCacheRefreshKey
                 : undefined,
-            cacheGeneration:
-              activeTab === 'collaborating'
-                ? collaboratingCacheGeneration
-                : undefined,
+            cacheGeneration: activeBrowseCacheGeneration,
             userId: normalizedUserId
           });
         }
@@ -745,10 +755,7 @@ export default function BuildList({
               activeTab === 'collaborating'
                 ? collaboratingCacheRefreshKey
                 : undefined,
-            cacheGeneration:
-              activeTab === 'collaborating'
-                ? collaboratingCacheGeneration
-                : undefined,
+            cacheGeneration: activeBrowseCacheGeneration,
             userId: normalizedUserId
           });
         }
@@ -767,6 +774,7 @@ export default function BuildList({
     activeTab,
     activeBrowseMode,
     activeBrowseLoaded,
+    activeBrowseCacheGeneration,
     isBuildSearchActive
   ]);
 
@@ -1038,23 +1046,44 @@ export default function BuildList({
     setBuildSearchQuery(normalizeBuildListSearchQuery(tag.label));
   }
 
-  function handleTabChange(tab: BuildListTab) {
-    if (tab !== activeTab) {
-      const nextBrowseMode = isPublicBrowseTab(tab)
-        ? getBuildListBrowseMode({ activeTab: tab, buildStudio })
-        : undefined;
-      initialScrollAnchorKeyRef.current = getBuildListScrollPositionPathname(
-        tab,
-        nextBrowseMode
-      );
-      onSetBuildStudioActiveTab(tab);
-      navigate(getBuildListTabPath(tab, nextBrowseMode));
-      void persistBuildStudioState({ activeTab: tab });
+  // Re-selecting the tab you are already on is a refresh request. Each feed is refreshed through
+  // its own canonical loader — browse tabs by dropping the cached `loaded` flag so the load
+  // effect refetches, My Builds by bumping its reload key — so the list that comes back is
+  // always server truth rather than anything synthesized here.
+  function handleRefreshActiveTab() {
+    if (activeTab === 'mine') {
+      setMyBuildsReloadKey((key) => key + 1);
+      return;
     }
+    onInvalidateBuildStudioBrowseTab({
+      tab: activeTab,
+      userId: normalizedUserId
+    });
+  }
+
+  function handleTabChange(tab: BuildListTab) {
+    if (tab === activeTab) {
+      handleRefreshActiveTab();
+      return;
+    }
+    const nextBrowseMode = isPublicBrowseTab(tab)
+      ? getBuildListBrowseMode({ activeTab: tab, buildStudio })
+      : undefined;
+    initialScrollAnchorKeyRef.current = getBuildListScrollPositionPathname(
+      tab,
+      nextBrowseMode
+    );
+    onSetBuildStudioActiveTab(tab);
+    navigate(getBuildListTabPath(tab, nextBrowseMode));
+    void persistBuildStudioState({ activeTab: tab });
   }
 
   function handleBrowseModeChange(browseMode: BuildStudioBrowseMode) {
-    if (!isPublicBrowseTab(activeTab) || browseMode === activeBrowseMode) {
+    if (!isPublicBrowseTab(activeTab)) {
+      return;
+    }
+    if (browseMode === activeBrowseMode) {
+      handleRefreshActiveTab();
       return;
     }
     initialScrollAnchorKeyRef.current = getBuildListScrollPositionPathname(
@@ -1093,10 +1122,7 @@ export default function BuildList({
         loadMoreToken: getLoadMoreToken(data),
         browseMode: activeBrowseMode,
         searchQuery: '',
-        cacheGeneration:
-          activeTab === 'collaborating'
-            ? collaboratingCacheGeneration
-            : undefined,
+        cacheGeneration: activeBrowseCacheGeneration,
         userId: normalizedUserId
       });
     } catch (error) {

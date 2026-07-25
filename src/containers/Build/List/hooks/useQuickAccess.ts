@@ -470,7 +470,13 @@ export default function useQuickAccess({
   }
 
   async function handleModeChange(mode: BuildQuickAccessMode) {
-    if (mode === quickAccessMode || savingMode) {
+    if (savingMode) {
+      return;
+    }
+    // Re-selecting the mode you are already on refreshes the list. The saved preference is
+    // already correct, so there is nothing to write back — only the feed needs refetching.
+    if (mode === quickAccessMode) {
+      void loadQuickAccess({ showLoading: true });
       return;
     }
     setSavingMode(true);
