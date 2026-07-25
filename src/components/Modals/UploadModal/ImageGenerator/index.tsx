@@ -278,9 +278,10 @@ export default function ImageGenerator({
           if (status.responseId) {
             setGeneratedResponseId(status.responseId);
           }
-          if (status.imageId) {
-            setGeneratedImageId(status.imageId);
-          }
+          // Track the id of the image now on screen, including its absence.
+          // Keeping the previous id would point follow-up edits at the image
+          // this one replaced.
+          setGeneratedImageId(status.imageId ?? null);
 
           if (status.aiUsagePolicy) {
             applyConfirmedAiUsagePolicy(status.aiUsagePolicy);
@@ -840,9 +841,7 @@ export default function ImageGenerator({
         if (result.responseId) {
           setGeneratedResponseId(result.responseId);
         }
-        if (result.imageId) {
-          setGeneratedImageId(result.imageId);
-        }
+        setGeneratedImageId(result.imageId ?? null);
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('completed');
@@ -885,10 +884,13 @@ export default function ImageGenerator({
   }
 
   async function handleFollowUpGenerate() {
+    // The edit needs the prior turn and the image itself. A provider-side file
+    // handle is an optimization, not a requirement — Gemini follow-ups never
+    // have one, and an OpenAI one can be missing when registration failed.
     if (
       !followUpPrompt.trim() ||
       !generatedResponseId ||
-      !generatedImageId ||
+      !generatedImageUrl ||
       isGenerating
     ) {
       return;
@@ -921,9 +923,9 @@ export default function ImageGenerator({
 
       const result = await generateAIImage({
         prompt: buildGenerationPrompt(followUpPrompt.trim()),
-        previousResponseId: generatedResponseId, // Keep for backend pricing logic
-        previousImageId: generatedImageId, // Keep for backend pricing logic
-        referenceImageB64: referenceB64, // Send previous image as reference for Gemini
+        previousResponseId: generatedResponseId, // Marks this as an edit of the prior turn
+        previousImageId: generatedImageId ?? undefined, // Provider file handle, when we have one
+        referenceImageB64: referenceB64, // The image itself; the only reference Gemini ever uses
         engine: followUpEngine,
         quality: followUpEngine === 'openai' ? followUpQuality : undefined,
         requestId
@@ -939,9 +941,7 @@ export default function ImageGenerator({
         if (result.responseId) {
           setGeneratedResponseId(result.responseId);
         }
-        if (result.imageId) {
-          setGeneratedImageId(result.imageId);
-        }
+        setGeneratedImageId(result.imageId ?? null);
         setFollowUpPrompt('');
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
