@@ -9,6 +9,7 @@ import {
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { objectify } from '~/helpers';
+import { prependUniqueIds } from '~/contexts/Content/idListHelpers';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { v1 as uuidv1 } from 'uuid';
 import type { CanonicalChatChannelVisibility } from '~/types/chat';
@@ -944,9 +945,7 @@ function mergeCanonicalFavoriteSubchannelState({
           })
         : canonicalSubchannel?.messageIds || [],
       messagesObj,
-      loaded: Boolean(
-        currentSubchannel?.loaded || canonicalSubchannel?.loaded
-      )
+      loaded: Boolean(currentSubchannel?.loaded || canonicalSubchannel?.loaded)
     };
   }
 
@@ -1586,7 +1585,8 @@ function updateBuildCollaborationState(
     inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
     request?: Record<string, any> | null;
     requestId?: number;
-    requestStatus?: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
+    requestStatus?:
+      'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
     eventTimeMs?: number;
     timeStamp?: number;
   }
@@ -5698,11 +5698,18 @@ export default function ChatReducer(
         }
       };
     case 'POST_VOCAB_FEED': {
+      // The relay fans this out to everyone in the room, so the same feed can
+      // arrive more than once (reconnect, duplicate emit, response/event race).
+      // Rendering it twice is what the duplicate cards look like.
+      const isDuplicateFeed = state.vocabFeedIds.includes(action.feed.id);
       const isBreakFeed =
         action.feed.action === 'break_start' ||
         action.feed.action === 'break_clear';
       const newWordLog =
-        action.feed.action !== 'reward' && !isBreakFeed && action.isMyFeed
+        !isDuplicateFeed &&
+        action.feed.action !== 'reward' &&
+        !isBreakFeed &&
+        action.isMyFeed
           ? {
               id: uuidv1(),
               word: action.feed.content,
@@ -5727,7 +5734,7 @@ export default function ChatReducer(
         ...state,
         currentYear: action.currentYear,
         currentMonth: action.currentMonth,
-        vocabFeedIds: [action.feed.id, ...filteredVocabFeedIds],
+        vocabFeedIds: prependUniqueIds([action.feed.id], filteredVocabFeedIds),
         vocabFeedObj: {
           ...state.vocabFeedObj,
           [action.feed.id]: {
@@ -7165,9 +7172,12 @@ function resolveLatestBoardMessageState({
   nextBoardMessageId?: number | null;
   nextTerminalMessageId?: number | string | null;
   boardMessageKey: 'lastChessMessageId' | 'lastOmokMessageId';
-  latestBoardMessageKey: 'latestChessBoardMessageId' | 'latestOmokBoardMessageId';
-  terminalMessageKey: 'lastChessTerminalMessageId' | 'lastOmokTerminalMessageId';
-  pendingTerminalTokenKey: 'lastChessPendingTerminalToken' | 'lastOmokPendingTerminalToken';
+  latestBoardMessageKey:
+    'latestChessBoardMessageId' | 'latestOmokBoardMessageId';
+  terminalMessageKey:
+    'lastChessTerminalMessageId' | 'lastOmokTerminalMessageId';
+  pendingTerminalTokenKey:
+    'lastChessPendingTerminalToken' | 'lastOmokPendingTerminalToken';
 }) {
   const currentActiveBoardId =
     typeof currentActiveBoardMessageId === 'number'

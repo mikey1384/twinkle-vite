@@ -43,3 +43,20 @@ export function prependUniqueById<T extends { id?: number | string }>(
   }
   return uniqueNew.length ? uniqueNew.concat(current) : current;
 }
+
+// Same guarantee for lists that hold bare ids rather than rows.
+export function prependUniqueIds(
+  ids: (number | string)[] | undefined | null,
+  existing: (number | string)[] | undefined | null
+): number[] {
+  const current = (existing || []).map(Number).filter((id) => id > 0);
+  const seen = new Set<number>(current);
+  const uniqueNew: number[] = [];
+  for (const rawId of ids || []) {
+    const id = Number(rawId);
+    if (!(id > 0) || seen.has(id)) continue;
+    seen.add(id);
+    uniqueNew.push(id);
+  }
+  return uniqueNew.length ? uniqueNew.concat(current) : current;
+}
