@@ -54,7 +54,8 @@ assert.match(compactCommentEmbedSource, /getInternalEmbedPreviewInfo/);
 assert.match(compactCommentEmbedSource, /getInternalEmbedCommentLabel/);
 assert.match(compactCommentEmbedSource, /targetRootUsernameTextStyle/);
 assert.match(compactCommentEmbedSource, /showTypeLabel = true/);
-assert.match(compactCommentEmbedSource, /variant\?: 'compact' \| 'targetRoot'/);
+assert.match(compactCommentEmbedSource, // A 'column' variant was added later; compact and targetRoot both survive.
+  /variant\?: 'column' \| 'compact' \| 'targetRoot'/);
 assert.match(compactCommentEmbedSource, /variant = 'compact'/);
 assert.match(
   compactCommentEmbedSource,
@@ -111,16 +112,20 @@ assert.match(
 );
 assert.match(
   compactCommentEmbedSource,
-  /shownMediaItems = mediaItems\.slice\(0, isTargetRoot \? 1 : 2\)/
+  // The column variant shows a single tile too.
+  /shownMediaItems = mediaItems\.slice\(0, isTargetRoot \|\| isColumn \? 1 : 2\)/
 );
 assert.match(compactCommentEmbedSource, /extraMediaCount/);
 assert.match(compactCommentEmbedSource, /getEmbedSvgRepairImageUrl/);
 assert.match(compactCommentEmbedSource, /fetchedVideoCodeFromURL/);
 assert.match(compactCommentEmbedSource, /compact-comment-embed--target-root/);
 assert.match(compactCommentEmbedSource, /MarkdownLinkPreview/);
-assert.match(compactCommentEmbedSource, /width: isTargetRoot \? '5\.45rem'/);
+assert.match(compactCommentEmbedSource, /width: isTargetRoot\s*\? '5\.45rem'/);
 assert.match(compactCommentEmbedSource, /var\(--home-feed-target-accent/);
-assert.match(compactCommentEmbedSource, /box-shadow: 0 0\.12rem/);
+// The raised card treatment was flattened in df993b8ec ("more home feed card
+// layout fixes"); the embed is deliberately shadowless now.
+assert.match(compactCommentEmbedSource, /box-shadow: none;/);
+assert.doesNotMatch(compactCommentEmbedSource, /box-shadow: 0 0\.12rem/);
 assert.match(
   compactCommentEmbedSource,
   /&\.compact-comment-embed--target-root \{[\s\S]*grid-template-columns: 6rem minmax\(0, 1fr\);/
@@ -198,7 +203,8 @@ assert.match(feedCardBodySource, /PreviewCommentBuildMedia/);
 assert.match(feedCardBodySource, /PreviewCommentAICardMedia/);
 assert.match(
   feedCardBodySource,
-  /const commentTextIsMessage = hasPreviewCommentMessageText\(comment\)/
+  // An AI-energy placeholder now suppresses the message treatment.
+  /const commentTextIsMessage =\s*!aiEnergyPlaceholderName && hasPreviewCommentMessageText\(comment\)/
 );
 assert.match(
   feedCardBodySource,

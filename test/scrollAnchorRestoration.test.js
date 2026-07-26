@@ -179,7 +179,9 @@ assert.match(
 );
 assert.match(
   handleNavClickSource,
-  /if \(navClickTargetsCurrentLocation\(to, pathname, search\)\) \{[\s\S]*resetAppShellScroll\(\);[\s\S]*\}/
+  // The predicate was later hoisted into a `targetsCurrentLocation` variable;
+  // the same-location -> resetAppShellScroll() behaviour is unchanged.
+  /navClickTargetsCurrentLocation\(\s*to,\s*pathname,\s*search\s*\);[\s\S]{0,80}resetAppShellScroll\(\);/
 );
 assert.match(
   handleNavClickSource,

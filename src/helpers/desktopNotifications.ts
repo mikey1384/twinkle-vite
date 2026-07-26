@@ -1,5 +1,12 @@
+import type { ChatNotificationSettings } from '~/types/chat';
+
 const STORAGE_KEY = 'twinkle-desktop-notifications';
 const CHAT_PUSH_SW_URL = '/chat-push-sw.js';
+
+export interface PushSubscriptionSaveResult {
+  success?: boolean;
+  chatNotificationSettings?: ChatNotificationSettings | null;
+}
 
 export type DesktopNotificationStatus =
   | 'unsupported'
@@ -150,6 +157,14 @@ export async function subscribeToChatPush(vapidPublicKey: string): Promise<{
   }
 }
 
+export interface ChatPushSetupResult {
+  status: 'enabled' | 'failed';
+  // Canonical settings the save route returned, or null when the save never
+  // happened. Subscribing flips `hasPushSubscription`, so callers hand this
+  // straight to chat state rather than inferring the new value locally.
+  chatNotificationSettings: ChatNotificationSettings | null;
+}
+
 export async function setupChatPushBestEffort({
   loadVapidKey,
   saveSubscription,
@@ -159,20 +174,25 @@ export async function setupChatPushBestEffort({
   saveSubscription: (subscription: {
     endpoint: string;
     keys: { p256dh: string; auth: string };
-  }) => Promise<unknown>;
+  }) => Promise<PushSubscriptionSaveResult>;
   subscribe?: typeof subscribeToChatPush;
-}): Promise<'enabled' | 'failed'> {
+}): Promise<ChatPushSetupResult> {
   try {
     const publicKey = await loadVapidKey();
-    if (!publicKey) return 'failed';
+    if (!publicKey) return { status: 'failed', chatNotificationSettings: null };
     const subscription = await subscribe(publicKey);
-    if (!subscription) return 'failed';
-    await saveSubscription(subscription);
-    return 'enabled';
+    if (!subscription) {
+      return { status: 'failed', chatNotificationSettings: null };
+    }
+    const result = await saveSubscription(subscription);
+    return {
+      status: 'enabled',
+      chatNotificationSettings: result?.chatNotificationSettings || null
+    };
   } catch {
     // Web Push is secondary to browser notifications. Its setup outcome must
     // never change the confirmed local Notification permission/preference.
-    return 'failed';
+    return { status: 'failed', chatNotificationSettings: null };
   }
 }
 

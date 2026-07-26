@@ -12,18 +12,18 @@ export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'high';
 
 export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
   light: 'Light',
-  normal: 'Normal',
+  medium: 'Medium',
   heavy: 'Heavy'
 };
 
-export const LUMINE_MODES: BuildLumineMode[] = ['light', 'normal', 'heavy'];
+export const LUMINE_MODES: BuildLumineMode[] = ['light', 'medium', 'heavy'];
 
 const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
   BuildLumineMode,
   BuildLumineModel
 > = {
   light: 'grok-4.5',
-  normal: 'gpt-5.6-terra',
+  medium: 'gpt-5.6-terra',
   heavy: 'claude-opus-5'
 };
 
@@ -46,17 +46,17 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
   },
   {
     model: 'gpt-5.6-terra',
-    mode: 'normal',
+    mode: 'medium',
     label: 'GPT-5.6 Terra',
-    description: 'Normal mode: balanced capability and cost.',
+    description: 'Medium mode: balanced capability and cost.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
   },
   {
     model: 'claude-sonnet-5',
-    mode: 'normal',
+    mode: 'medium',
     label: 'Claude Sonnet 5',
-    description: 'Normal mode: efficient agentic coding and tool use.',
+    description: 'Medium mode: efficient agentic coding and tool use.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
   },
@@ -98,7 +98,7 @@ function isLumineModel(value: unknown): value is BuildLumineModel {
 }
 
 function isLumineMode(value: unknown): value is BuildLumineMode {
-  return value === 'light' || value === 'normal' || value === 'heavy';
+  return value === 'light' || value === 'medium' || value === 'heavy';
 }
 
 function resolveLegacyLumineOptionMode(
@@ -111,7 +111,7 @@ function resolveLegacyLumineOptionMode(
     option.model === 'gpt-5.6-sol' &&
     option.defaultReasoningEffort === 'medium'
   ) {
-    return 'normal';
+    return 'medium';
   }
   return resolveLumineMode({
     model: option.model,
@@ -243,12 +243,12 @@ export function resolveLumineMode({
   Partial<Pick<BuildLumineModelPreference, 'reasoningEffort'>>): BuildLumineMode {
   if (model === 'grok-4.5') return 'light';
   if (model === 'gpt-5.6-terra' || model === 'claude-sonnet-5') {
-    return 'normal';
+    return 'medium';
   }
-  // Sol at a normal-tier effort predates the mode split. Everything else in
+  // Sol at a medium-tier effort predates the mode split. Everything else in
   // this range — including the retired Super Heavy models — is Heavy now.
   if (model === 'gpt-5.6-sol' && reasoningEffort === 'medium') {
-    return 'normal';
+    return 'medium';
   }
   return 'heavy';
 }

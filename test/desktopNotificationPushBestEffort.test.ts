@@ -36,7 +36,8 @@ test('Web Push failures do not disable confirmed browser notifications', async (
     },
     saveSubscription: async () => undefined
   });
-  assert.equal(vapidFailure, 'failed');
+  assert.equal(vapidFailure.status, 'failed');
+  assert.equal(vapidFailure.chatNotificationSettings, null);
   assert.equal(getDesktopNotificationStatus(), 'enabled');
 
   const subscriptionFailure = await setupChatPushBestEffort({
@@ -44,7 +45,8 @@ test('Web Push failures do not disable confirmed browser notifications', async (
     subscribe: async () => null,
     saveSubscription: async () => undefined
   });
-  assert.equal(subscriptionFailure, 'failed');
+  assert.equal(subscriptionFailure.status, 'failed');
+  assert.equal(subscriptionFailure.chatNotificationSettings, null);
   assert.equal(getDesktopNotificationStatus(), 'enabled');
 
   const persistenceFailure = await setupChatPushBestEffort({
@@ -57,7 +59,8 @@ test('Web Push failures do not disable confirmed browser notifications', async (
       throw new Error('API unavailable');
     }
   });
-  assert.equal(persistenceFailure, 'failed');
+  assert.equal(persistenceFailure.status, 'failed');
+  assert.equal(persistenceFailure.chatNotificationSettings, null);
   assert.equal(getDesktopNotificationStatus(), 'enabled');
 });
 
@@ -71,11 +74,46 @@ test('successful Web Push setup still reports enabled', async () => {
     }),
     saveSubscription: async (subscription) => {
       savedEndpoint = subscription.endpoint;
+      return undefined;
     }
   });
 
-  assert.equal(result, 'enabled');
+  assert.equal(result.status, 'enabled');
+  assert.equal(result.chatNotificationSettings, null);
   assert.equal(savedEndpoint, 'https://push.example/device');
+});
+
+test('a successful save hands its canonical settings snapshot back', async () => {
+  // hasPushSubscription is decided by the server, so the caller must receive
+  // the snapshot rather than infer the new value from the save succeeding.
+  const snapshot = {
+    userId: 7,
+    revision: 12,
+    preferences: {
+      backgroundDirectMessages: true,
+      backgroundGroupMode: 'all' as const,
+      backgroundAiReplies: true,
+      closedDirectMessages: true,
+      closedGroupMentions: true
+    },
+    mutedChannelIds: [],
+    mutedConversations: [],
+    hasPushSubscription: true
+  };
+  const result = await setupChatPushBestEffort({
+    loadVapidKey: async () => 'public-key',
+    subscribe: async () => ({
+      endpoint: 'https://push.example/device',
+      keys: { p256dh: 'key', auth: 'auth' }
+    }),
+    saveSubscription: async () => ({
+      success: true,
+      chatNotificationSettings: snapshot
+    })
+  });
+
+  assert.equal(result.status, 'enabled');
+  assert.deepEqual(result.chatNotificationSettings, snapshot);
 });
 
 test('the device enable path never writes the local preference back to off', () => {

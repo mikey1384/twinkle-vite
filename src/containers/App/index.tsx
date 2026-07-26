@@ -611,14 +611,34 @@ export default function App() {
     if (chatPushEnsuredUserIdRef.current === userId) return;
     if (!chatPushAutoEnrollEligible()) return;
     chatPushEnsuredUserIdRef.current = userId;
+    let cancelled = false;
     ensureChatPushSubscription();
 
     async function ensureChatPushSubscription() {
-      await setupChatPushBestEffort({
+      const { chatNotificationSettings } = await setupChatPushBestEffort({
         loadVapidKey: loadPushVapidKey,
         saveSubscription: savePushSubscription
       });
+      // Re-enrolling can create this account's first subscription row (an
+      // earlier one having been pruned or expired), which flips the mute
+      // control's gate. Adopt the canonical settings the save returned — but
+      // only for the account that is still signed in. A logout or account
+      // switch mid-flight would otherwise install the departing user's
+      // snapshot over the cleared state, and the reducer would then reject the
+      // arriving account's snapshot for having a different userId.
+      if (
+        cancelled ||
+        !chatNotificationSettings ||
+        Number(chatNotificationSettings.userId) !== Number(userId)
+      ) {
+        return;
+      }
+      onSetChatNotificationSettings(chatNotificationSettings);
     }
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 

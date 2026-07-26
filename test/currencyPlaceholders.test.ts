@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   protectCurrencyLiteralsOutsideMath,
   restoreCurrencyPlaceholders
-} from '../src/components/Texts/RichText/Markdown/currencyPlaceholders';
+} from '../src/components/Texts/RichText/Markdown/helpers/currencyPlaceholders';
 
 test('protects currency before later inline math on the same line', () => {
   const input = 'It costs $100 (approx) and formula is $x$';

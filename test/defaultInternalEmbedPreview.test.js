@@ -78,14 +78,20 @@ assert.match(
 );
 assert.match(previewPrimitivesSource, /home-feed-card__rich-embed-internal/);
 assert.match(previewPrimitivesSource, /<InternalComponent[\s\S]*isPreview/);
-assert.match(previewPrimitivesSource, /useNavigate/);
+// Navigation moved from a local useNavigate() to an injected onNavigate
+// callback (HomeFeedNestedNavigate); clicking an internal embed still routes
+// to its internalSrc, which is what this guards.
+assert.match(previewPrimitivesSource, /onNavigate: HomeFeedNestedNavigate/);
 assert.match(homeFeedInternalEmbedBranch, /data-internal-src={internalSrc}/);
 assert.match(
   homeFeedInternalEmbedBranch,
   /onClick={handleInternalPreviewClick}/
 );
 assert.match(previewPrimitivesSource, /function handleInternalPreviewClick/);
-assert.match(previewPrimitivesSource, /navigate\(internalSrc\)/);
+assert.match(
+  previewPrimitivesSource,
+  /if \(internalSrc\) onNavigate\(internalSrc,/
+);
 assert.doesNotMatch(homeFeedInternalEmbedBranch, /stopFeedCardNestedClick/);
 
 console.log('Default internal embed preview guard passed.');

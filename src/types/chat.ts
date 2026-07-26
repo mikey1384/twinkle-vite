@@ -31,6 +31,12 @@ export interface ChatNotificationSettings {
   preferences: ChatNotificationPreferences;
   mutedChannelIds: number[];
   mutedConversations: MutedChatConversation[];
+  // True when any device on this account is subscribed to push. Mutes are
+  // account-level, so this — not the local browser's permission — decides
+  // whether muting a conversation can do anything. Optional because a payload
+  // from an API that predates the field omits it; consumers must fail open and
+  // show the mute control rather than hide a working account-level setting.
+  hasPushSubscription?: boolean;
 }
 
 export type ChatQuickAccessMode = 'automatic' | 'custom';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import ItemPanel from './ItemPanel';
 import DesktopNotificationsHelpModal from './DesktopNotificationsHelpModal';
@@ -6,12 +6,13 @@ import AddToHomeScreenModal from './AddToHomeScreenModal';
 import Button from '~/components/Button';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Icon from '~/components/Icon';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
 import type {
   BackgroundGroupNotificationMode,
   ChatNotificationPreferences,
+  ChatNotificationSettings,
   MutedChatConversation
 } from '~/types/chat';
 import {
@@ -136,6 +137,11 @@ export default function ChatNotificationsItem({
 }: {
   loading?: boolean;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
+  // Push toggles resolve after an await, so ownership has to be checked against
+  // the signed-in user at that moment, not the one captured when it started.
+  const latestUserIdRef = useRef(userId);
+  latestUserIdRef.current = userId;
   const loadChatNotificationSettings = useAppContext(
     (v) => v.requestHelpers.loadChatNotificationSettings
   );
@@ -451,6 +457,26 @@ export default function ChatNotificationsItem({
     return 'Turning this off affects only this browser or installed app.';
   }
 
+  // Toggling push returns a canonical snapshot, but the request outlives a
+  // logout or account switch. Installing a departing account's snapshot over
+  // cleared state would also make the reducer reject the arriving account's
+  // own snapshot for having a different userId, so ownership is checked here.
+  //
+  // Checked against the ref, not the captured `userId`: this runs after an
+  // await, and the value closed over is whoever was signed in when the toggle
+  // started. Only the ref reflects who is signed in when the result lands.
+  function applyPushSnapshot(settings?: ChatNotificationSettings | null) {
+    const currentUserId = latestUserIdRef.current;
+    if (
+      !settings ||
+      !currentUserId ||
+      Number(settings.userId) !== Number(currentUserId)
+    ) {
+      return;
+    }
+    onSetChatNotificationSettings(settings);
+  }
+
   async function handleDeviceToggle() {
     if (!notificationApiAvailable) {
       setInstallGuideShown(true);
@@ -473,7 +499,8 @@ export default function ChatNotificationsItem({
       try {
         const endpoint = await unsubscribeFromChatPush();
         if (endpoint) {
-          await deletePushSubscription(endpoint);
+          const result = await deletePushSubscription(endpoint);
+          applyPushSnapshot(result?.chatNotificationSettings);
         }
       } catch {
         setError(
@@ -494,10 +521,12 @@ export default function ChatNotificationsItem({
       if (newStatus !== 'enabled') return;
 
       if (chatPushSupported()) {
-        const pushStatus = await setupChatPushBestEffort({
-          loadVapidKey: loadPushVapidKey,
-          saveSubscription: savePushSubscription
-        });
+        const { status: pushStatus, chatNotificationSettings } =
+          await setupChatPushBestEffort({
+            loadVapidKey: loadPushVapidKey,
+            saveSubscription: savePushSubscription
+          });
+        applyPushSnapshot(chatNotificationSettings);
         if (pushStatus === 'failed') {
           setError(
             'Notifications are enabled while Twinkle is open, but closed-app push could not be enabled on this device.'

@@ -36,7 +36,9 @@ assert.match(
 );
 assert.match(
   appSource,
-  /height: \$\{usingBuildRuntime[\s\S]*width: 100%;[\s\S]*display: flow-root;/
+  // The height condition moved from usingBuildRuntime to the suppressHeader
+  // flag derived from it; the shell's block formatting context is the guard.
+  /height: \$\{[\s\S]*suppressHeader[\s\S]*width: 100%;[\s\S]*display: flow-root;/
 );
 
 console.log('App shell scroll lock verifier passed.');

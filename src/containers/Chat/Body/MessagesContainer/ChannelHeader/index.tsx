@@ -6,6 +6,7 @@ import LegacyTopic from './LegacyTopic';
 import ChatFilter from './ChatFilter';
 import Icon from '~/components/Icon';
 import { isMobile } from '~/helpers';
+import { getDesktopNotificationStatus } from '~/helpers/desktopNotifications';
 import { GENERAL_CHAT_ID, MOD_LEVEL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -87,6 +88,13 @@ export default function ChannelHeader({
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [subchannelLoading, setSubchannelLoading] = useState(false);
   const [notificationMuteSaving, setNotificationMuteSaving] = useState(false);
+  // A mute also silences the in-page desktop notifications this browser raises
+  // from the chat socket, which need no push subscription. That status lives
+  // outside React (browser permission + localStorage), so it is re-read when
+  // the menu opens rather than trusted from mount.
+  const [deviceNotificationsEnabled, setDeviceNotificationsEnabled] = useState(
+    () => getDesktopNotificationStatus() === 'enabled'
+  );
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
@@ -202,95 +210,107 @@ export default function ChannelHeader({
   }, [notificationSettings, selectedChannelId, userId]);
 
   const menuProps = useMemo(() => {
-    const notificationMenuItem = notificationSettings
-      ? {
-          label: (
-            <>
-              <Icon icon={notificationsMuted ? 'bell' : 'bell-slash'} />
-              <span style={{ marginLeft: '1rem' }}>
-                {notificationsMuted
-                  ? unmutePushNotificationsLabel
-                  : mutePushNotificationsLabel}
-              </span>
-            </>
-          ),
-          disabled: notificationMuteSaving,
-          onClick: handleNotificationMuteChange
-        }
-      : null;
+    const result: any[] = [];
+
+    function pushSection(...items: any[]) {
+      if (items.length === 0) return;
+      if (result.length > 0) {
+        result.push({ separator: true });
+      }
+      result.push(...items);
+    }
+
+    // A mute silences two things: closed-app push to every device on the
+    // account, and the in-page desktop notifications this browser raises while
+    // Twinkle is open. So the control is inert only when neither can fire —
+    // no device subscribed to push AND notifications off here. Hiding it on
+    // local status alone would strand an account-level setting that another
+    // device is still acting on. `!== false` because an API predating the
+    // field omits it, and hiding a working control beats showing an inert one.
+    // An existing mute always shows, so a mute is never unreachable.
+    const muteCanAffectSomething =
+      notificationSettings?.hasPushSubscription !== false ||
+      deviceNotificationsEnabled;
+    const notificationMenuShown =
+      !!notificationSettings && (muteCanAffectSomething || notificationsMuted);
+    if (notificationMenuShown) {
+      pushSection({
+        label: (
+          <>
+            <Icon icon={notificationsMuted ? 'bell' : 'bell-slash'} />
+            <span style={{ marginLeft: '1rem' }}>
+              {notificationsMuted
+                ? unmutePushNotificationsLabel
+                : mutePushNotificationsLabel}
+            </span>
+          </>
+        ),
+        disabled: notificationMuteSaving,
+        onClick: handleNotificationMuteChange
+      });
+    }
 
     if (currentChannel.twoPeople) {
-      const result: any[] = [
-        {
+      pushSection({
+        label: (
+          <>
+            <Icon icon="minus" />
+            <span style={{ marginLeft: '1rem' }}>Hide</span>
+          </>
+        ),
+        onClick: () => onSetHideModalShown(true)
+      });
+      return result;
+    }
+    if (selectedChannelId === GENERAL_CHAT_ID) {
+      if (level >= MOD_LEVEL) {
+        pushSection({
           label: (
             <>
-              <Icon icon="minus" />
-              <span style={{ marginLeft: '1rem' }}>Hide</span>
+              <Icon icon="exchange-alt" />
+              <span style={{ marginLeft: '1rem' }}>{changeTopicLabel}</span>
             </>
           ),
-          onClick: () => onSetHideModalShown(true)
-        }
-      ];
-      if (notificationMenuItem) {
-        result.push({ separator: true }, notificationMenuItem);
+          onClick: () => setIsEditingTopic(true)
+        });
       }
       return result;
     }
-    const result: any[] = [];
-    if (selectedChannelId === GENERAL_CHAT_ID && level >= MOD_LEVEL) {
-      result.push({
+    const channelItems: any[] = [];
+    if (
+      !currentChannel.isClosed ||
+      Number(currentChannel.creatorId) === Number(userId) ||
+      currentChannel.isPublic
+    ) {
+      channelItems.push({
         label: (
           <>
-            <Icon icon="exchange-alt" />
-            <span style={{ marginLeft: '1rem' }}>{changeTopicLabel}</span>
+            <Icon icon="users" />
+            <span style={{ marginLeft: '1rem' }}>{invitePeopleLabel}</span>
           </>
         ),
-        onClick: () => setIsEditingTopic(true)
+        onClick: () => onSetInviteUsersModalShown(true)
       });
     }
-    if (selectedChannelId !== GENERAL_CHAT_ID) {
-      if (
-        !currentChannel.isClosed ||
-        Number(currentChannel.creatorId) === Number(userId) ||
-        currentChannel.isPublic
-      ) {
-        result.push({
-          label: (
-            <>
-              <Icon icon="users" />
-              <span style={{ marginLeft: '1rem' }}>{invitePeopleLabel}</span>
-            </>
-          ),
-          onClick: () => onSetInviteUsersModalShown(true)
-        });
-      }
-      result.push({
-        label: (
-          <>
-            <Icon icon="sliders-h" />
-            <span style={{ marginLeft: '1rem' }}>{settingsLabel}</span>
-          </>
-        ),
-        onClick: () => onSetSettingsModalShown(true)
-      });
-    }
-    if (notificationMenuItem) {
-      result.push(notificationMenuItem);
-    }
-    if (selectedChannelId !== GENERAL_CHAT_ID) {
-      result.push({
-        separator: true
-      });
-      result.push({
-        label: (
-          <>
-            <Icon icon="sign-out-alt" />
-            <span style={{ marginLeft: '1rem' }}>{leaveLabel}</span>
-          </>
-        ),
-        onClick: () => onSetLeaveConfirmModalShown(true)
-      });
-    }
+    channelItems.push({
+      label: (
+        <>
+          <Icon icon="sliders-h" />
+          <span style={{ marginLeft: '1rem' }}>{settingsLabel}</span>
+        </>
+      ),
+      onClick: () => onSetSettingsModalShown(true)
+    });
+    pushSection(...channelItems);
+    pushSection({
+      label: (
+        <>
+          <Icon icon="sign-out-alt" />
+          <span style={{ marginLeft: '1rem' }}>{leaveLabel}</span>
+        </>
+      ),
+      onClick: () => onSetLeaveConfirmModalShown(true)
+    });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -298,6 +318,7 @@ export default function ChannelHeader({
     currentChannel.isClosed,
     currentChannel.isPublic,
     currentChannel.twoPeople,
+    deviceNotificationsEnabled,
     level,
     notificationMuteSaving,
     notificationSettings,
@@ -446,6 +467,7 @@ export default function ChannelHeader({
                 icon="bars"
                 text={menuLabel}
                 menuProps={menuProps}
+                onButtonClick={handleMenuButtonClick}
               />
             )}
             {!!selectedChannelId && !!currentChannel.id && (
@@ -488,6 +510,11 @@ export default function ChannelHeader({
       </div>
     </ErrorBoundary>
   );
+
+  function handleMenuButtonClick(willBeShown: boolean) {
+    if (!willBeShown) return;
+    setDeviceNotificationsEnabled(getDesktopNotificationStatus() === 'enabled');
+  }
 
   async function handleNotificationMuteChange() {
     if (!notificationSettings || notificationMuteSaving) return;

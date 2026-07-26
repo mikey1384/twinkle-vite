@@ -19,7 +19,10 @@ assert.match(
 );
 assert.match(source, /animation: rewardAmountMarkGlow 1\.6s ease-out 1;/);
 assert.match(source, /@keyframes rewardAmountMarkGlow/);
-assert.match(source, /color: \$\{Color\.darkGold\(\)\};/);
+// Accent recolored darkGold -> strongPink in e5810ff73. What this file guards
+// is that the mark uses a flat theme color (no gradient/filter/background),
+// asserted below; the specific token just tracks the current design.
+assert.match(source, /color: \$\{Color\.strongPink\(\)\};/);
 assert.match(source, /color: \$\{Color\.black\(\)\};/);
 assert.doesNotMatch(source, /filter:/);
 assert.doesNotMatch(source, /gradient/i);

@@ -380,7 +380,12 @@ export default function AICards({
       if (nextAiUsagePolicy) {
         applyAiUsagePolicy(nextAiUsagePolicy);
       }
-      onUpdateNumSummoned(numCardSummoned);
+      // The server omits this when it could not read the canonical count after
+      // the card went live (a bookkeeping failure never fails a real summon).
+      // Keep the current count rather than writing undefined into chat state.
+      if (typeof numCardSummoned === 'number') {
+        onUpdateNumSummoned(numCardSummoned);
+      }
       if (isMaxReached) {
         onSetIsGeneratingAICard(false);
         return onSetAICardStatusMessage(

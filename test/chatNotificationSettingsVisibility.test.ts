@@ -14,9 +14,17 @@ test('the per-chat menu owns push notification muting', () => {
     'src/containers/Chat/RightMenu/ChatInfo/index.tsx'
   );
 
+  // The mute item is shown whenever the mute could affect anything: any device
+  // on the account subscribed to push, or this browser raising in-page
+  // notifications. `!== false` keeps it visible against an API that predates
+  // hasPushSubscription rather than hiding a working account-level control.
   assert.match(
     headerSource,
-    /const notificationMenuItem = notificationSettings/
+    /notificationSettings\?\.hasPushSubscription !== false \|\|\s*deviceNotificationsEnabled/
+  );
+  assert.match(
+    headerSource,
+    /!!notificationSettings && \(muteCanAffectSomething \|\| notificationsMuted\)/
   );
   assert.match(headerSource, /Mute push notifications/);
   assert.match(headerSource, /Unmute push notifications/);

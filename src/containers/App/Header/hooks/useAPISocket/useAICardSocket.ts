@@ -40,6 +40,9 @@ export default function useAICardSocket() {
   );
   const onNewAICardSummon = useChatContext((v) => v.actions.onNewAICardSummon);
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
+  const onUpdateNumSummoned = useChatContext(
+    (v) => v.actions.onUpdateNumSummoned
+  );
   const onRemoveMyAICard = useChatContext((v) => v.actions.onRemoveMyAICard);
   const onRemoveListedAICard = useChatContext(
     (v) => v.actions.onRemoveListedAICard
@@ -487,14 +490,32 @@ export default function useAICardSocket() {
     function handleNewAICardSummon({
       feed,
       card,
+      summonerId,
+      numCardSummoned,
       isBlack
     }: {
       feed: any;
       card: any;
+      summonerId?: number;
+      numCardSummoned?: number;
       isBlack: boolean;
     }) {
-      const senderIsNotTheUser = card.creator.id !== userIdRef.current;
-      if (senderIsNotTheUser) {
+      // The summoner used to be skipped here because the summon response adds
+      // the card itself. That made the response the only way they could ever
+      // see their own card: when it failed, everyone else in the room watched
+      // the card appear and the person who summoned it did not. Both paths run
+      // now — POST_AI_CARD_FEED filters the feed and card ids before prepending,
+      // so whichever arrives second is a no-op.
+      const summonedByThisUser =
+        (summonerId ?? card.creator?.id) === userIdRef.current;
+      if (summonedByThisUser) {
+        // The response path also maintains myCardIds, which RECEIVE_AI_CARD_SUMMON
+        // does not — the summoner has to go through the same action it does.
+        onPostAICardFeed({ feed, card, isSummon: true });
+        if (typeof numCardSummoned === 'number') {
+          onUpdateNumSummoned(numCardSummoned);
+        }
+      } else {
         onNewAICardSummon({ card, feed });
       }
       if (isBlack) {

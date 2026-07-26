@@ -24,7 +24,9 @@ assert.doesNotMatch(bodySource, /this comment was deleted/);
 assert.match(feedCardSource, /getRenderableHomeFeedPreviewComments/);
 assert.match(
   feedCardSource,
-  /const hasPreviewCommentSlot =\s*!secretHiddenForPreview && renderablePreviewComments\.length > 0;/
+  // A !showcase term was added later; the secret-hidden and renderable-count
+  // conditions this guards are unchanged.
+  /const hasPreviewCommentSlot =[\s\S]{0,40}!secretHiddenForPreview &&\s*renderablePreviewComments\.length > 0;/
 );
 assert.match(
   feedCardSource,

@@ -18,13 +18,20 @@ const mainPreviewStylesSource = readSource(
   '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
 );
 
+// The "Lumine App" chip and its build-badge were replaced by the shared
+// BuildMiniCard in 9190fb1a2 ("refactor build list item"), so a build target
+// now renders as a real build card instead of a labelled chip.
 assert.match(
   targetPreviewSource,
-  /<span className="home-feed-card__target-chip build">[\s\S]*Lumine App[\s\S]*<\/span>/
+  /function renderTargetBuildPreview\(target: any\) \{[\s\S]{0,400}<BuildMiniCard/
+);
+assert.match(
+  targetPreviewSource,
+  /className="home-feed-card__target-build-card"/
 );
 assert.match(
   targetPreviewStylesSource,
-  /\.home-feed-card__target-chip\.build \{[\s\S]*border-color: \$\{Color\.logoBlue\(0\.25\)\};[\s\S]*background: \$\{Color\.logoBlue\(0\.1\)\};[\s\S]*color: \$\{Color\.logoBlue\(\)\};/
+  /\.home-feed-card__target-build-card \{/
 );
 assert.match(
   mainContentEmbedSource,
@@ -34,9 +41,15 @@ assert.doesNotMatch(
   mainContentEmbedSource,
   /&\.compact-main-content-embed--build \.compact-main-content-embed__label \{[^}]*color: var\(--embed-accent\);/
 );
-assert.match(
-  mainPreviewStylesSource,
-  /\.home-feed-card__build-badge \{[\s\S]*background: \$\{Color\.logoBlue\(0\.12\)\};[\s\S]*color: \$\{Color\.logoBlue\(\)\};/
+// The badge moved into BuildMiniCard with the same blue treatment, now as
+// literal values rather than Color.logoBlue() tokens.
+const buildMiniCardSource = readSource(
+  '../src/components/Build/Cards/BuildMiniCard.tsx'
 );
+assert.match(
+  buildMiniCardSource,
+  /const badgeClass = css`[\s\S]{0,400}background: rgba\(65, 140, 235, 0\.12\);[\s\S]{0,80}color: #1d4ed8;/
+);
+assert.match(buildMiniCardSource, /'build-mini-card__badge'/);
 
 console.log('Home feed Lumine badge color verifier passed.');

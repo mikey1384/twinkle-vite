@@ -113,11 +113,12 @@ assert.match(feedCardSource, /isContentPanelRewardActionSupported/);
 assert.match(feedCardSource, /isHomeFeedRecommendActionSupported/);
 assert.match(
   feedCardSource,
-  /const rewardShown = isContentPanelRewardActionSupported\(contentType\);/
+  // Both gained a !secretHidden term; the support predicate is the guard.
+  /const rewardShown =\s*isContentPanelRewardActionSupported\(contentType\) && !secretHidden;/
 );
 assert.match(
   feedCardSource,
-  /const recommendShown = isHomeFeedRecommendActionSupported\(contentType\);/
+  /const recommendShown =\s*isHomeFeedRecommendActionSupported\(contentType\) && !secretHidden;/
 );
 assert.match(feedCardSource, /rewardShown={rewardShown}/);
 assert.match(feedCardSource, /rewardDisableReason={rewardDisableReason}/);
@@ -178,7 +179,8 @@ assert.match(feedCardActionsSource, /home-feed-card__action-button reward/);
 assert.match(feedCardActionsSource, /rewardIsBlocked \? 'blocked' : ''/);
 assert.match(
   feedCardActionsSource,
-  /&:not\(:disabled\):not\(\.blocked\):hover/
+  // A :not(.view-count) was added when view counts joined the action row.
+  /&:not\(:disabled\):not\(\.blocked\)[^{]*:hover/
 );
 
 assert.doesNotMatch(feedActionStateSource, /homeFeedNo/);
@@ -264,12 +266,13 @@ assert.match(
   /delete nextState\[homeFeedNavigationStateKey\]/
 );
 assert.match(scrollAnchorRestorationSource, /ignoreSavedAnchor = false/);
-assert.match(scrollAnchorRestorationSource, /ignoredSavedAnchorKeyRef/);
+assert.match(scrollAnchorRestorationSource, /activeIgnoredSavedAnchorKeyRef/);
 assert.match(scrollAnchorRestorationSource, /scrollAnchorSavesAreSuppressed/);
 assert.match(scrollAnchorRestorationSource, /scrollAnchorRestoresAreSuppressed/);
 assert.match(
   scrollAnchorRestorationSource,
-  /if \(scrollAnchorSavesAreSuppressed\(\)\) return;/
+  // The suppressed branch now taints the applied position before bailing.
+  /if \(scrollAnchorSavesAreSuppressed\(\)\) \{[\s\S]{0,120}return;/
 );
 assert.match(
   scrollAnchorCoordinatorSource,
@@ -283,12 +286,20 @@ assert.match(
   scrollAnchorRestorationSource,
   /addScrollAnchorRestoreCancelListener/
 );
-assert.match(mainNavSource, /cancelScrollAnchorRestores\(\)/);
-assert.match(
-  mainNavSource,
-  /suppressScrollAnchorSaves\(sameRouteNavScrollSaveSuppressionMs\)/
-);
+// Nav used to cancel restores and suppress saves itself on a same-location
+// click. Both were consolidated into resetAppShellScroll(), which cancels
+// pending restores and suppresses saves by default, so the nav just calls it.
+assert.match(mainNavSource, /resetAppShellScroll\(\);/);
 assert.doesNotMatch(mainNavSource, /suppressScrollAnchorRestores\(\)/);
+const appShellScrollSource = readSource('src/helpers/appShellScroll.ts');
+assert.match(
+  appShellScrollSource,
+  /export function resetAppShellScroll\(\{[\s\S]*?cancelPendingAnchorRestores\) \{\s*cancelScrollAnchorRestores\(\);/
+);
+assert.match(
+  appShellScrollSource,
+  /suppressAnchorSavesMs > 0\) \{\s*suppressScrollAnchorSaves\(suppressAnchorSavesMs\);/
+);
 assert.match(contentPageSource, /getMatchingHomeFeedNavigationState/);
 assert.match(
   contentPageSource,

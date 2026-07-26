@@ -1281,13 +1281,13 @@ export default function userRequestHelpers({
     }) {
       try {
         const {
-          data: { success }
+          data: { success, chatNotificationSettings }
         } = await request.post(
           `${URL}/user/pushSubscriptions`,
           subscription,
           auth()
         );
-        return success;
+        return { success, chatNotificationSettings };
       } catch (error) {
         return handleError(error);
       }
@@ -1295,14 +1295,14 @@ export default function userRequestHelpers({
     async deletePushSubscription(endpoint: string, authorization = auth()) {
       try {
         const {
-          data: { success }
+          data: { success, chatNotificationSettings }
         } = await request.delete(
           `${URL}/user/pushSubscriptions?endpoint=${encodeURIComponent(
             endpoint
           )}`,
           authorization
         );
-        return success;
+        return { success, chatNotificationSettings };
       } catch (error) {
         return handleError(error);
       }

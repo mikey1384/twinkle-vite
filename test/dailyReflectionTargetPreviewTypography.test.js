@@ -22,20 +22,22 @@ function extractCssBlock(selector) {
 const answerBlock = extractCssBlock(
   '.home-feed-card__target-daily-reflection-answer'
 );
+// The paragraph rules moved to a dedicated `-text` selector, and the answer
+// type was retuned to an explicit max(1.62rem, 16.2px) at line-height 1.22
+// (previously a shared var at 1.34). What this guards is that a reflection
+// answer renders as normal-weight body text, never bold and never the smaller
+// 1.48rem size.
 const answerParagraphBlock = extractCssBlock(
-  '.home-feed-card__target-daily-reflection-answer p'
+  '.home-feed-card__target-daily-reflection-answer-text p'
 );
 
 assert.match(answerBlock, /font-weight: 400;/);
-assert.match(answerBlock, /line-height: 1\.34;/);
+assert.match(answerBlock, /line-height: 1\.22;/);
 assert.doesNotMatch(answerBlock, /font-weight: 700;/);
 
-assert.match(
-  answerParagraphBlock,
-  /font-size: var\(--home-feed-secondary-content-font-size\);/
-);
+assert.match(answerParagraphBlock, /font-size: max\(1\.62rem, 16\.2px\);/);
 assert.match(answerParagraphBlock, /font-weight: 400;/);
-assert.match(answerParagraphBlock, /line-height: 1\.34;/);
+assert.match(answerParagraphBlock, /line-height: 1\.22;/);
 assert.doesNotMatch(
   answerParagraphBlock,
   /font-size: max\(1\.48rem, 14\.8px\);/

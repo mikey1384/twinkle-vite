@@ -40,10 +40,25 @@ assert.match(
   targetPreviewSource,
   /contentType === 'comment' && normalizedRootType === 'user'[\s\S]*<ProfilePanelPreview/
 );
-assert.match(targetPreviewSource, /targetComment && !targetComment\.notFound/);
+// The inline `targetComment && !targetComment.notFound` predicate was
+// extracted into isRenderableHomeFeedTargetComment, which still requires a
+// present, not-notFound comment (and additionally excludes deleted ones).
+const targetCommentHelperSource = readSource(
+  '../src/containers/Home/Stories/FeedCard/helpers/targetComment.ts'
+);
+assert.match(
+  targetCommentHelperSource,
+  /export function isRenderableHomeFeedTargetComment[\s\S]{0,160}targetComment &&\s*!targetComment\.notFound/
+);
+assert.match(
+  targetPreviewSource,
+  /isRenderableHomeFeedTargetComment\(targetComment\)/
+);
 assert.ok(
   targetPreviewSource.indexOf("normalizedRootType === 'user'") <
-    targetPreviewSource.indexOf('targetComment && !targetComment.notFound'),
+    targetPreviewSource.lastIndexOf(
+      'isRenderableHomeFeedTargetComment(targetComment)'
+    ),
   'profile target branch must run before target comment branch'
 );
 assert.match(targetPreviewSource, /targetContentType === 'user'/);

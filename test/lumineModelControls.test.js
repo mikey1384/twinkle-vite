@@ -55,7 +55,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   assert.doesNotMatch(headerSource, /\{LUMINE_MODES\.map\(\(mode\) => \(/);
   assert.match(
     selectionHelperSource,
-    /export const LUMINE_MODES[\s\S]*?'light'[\s\S]*?'normal'[\s\S]*?'heavy'/
+    /export const LUMINE_MODES[\s\S]*?'light'[\s\S]*?'medium'[\s\S]*?'heavy'/
   );
   // The Super Heavy tier is retired; Claude Opus 5 at Heavy replaces it.
   assert.doesNotMatch(selectionHelperSource, /superheavy/);
@@ -69,7 +69,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.5'[\s\S]*?normal: 'gpt-5\.6-terra'[\s\S]*?heavy: 'claude-opus-5'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.5'[\s\S]*?medium: 'gpt-5\.6-terra'[\s\S]*?heavy: 'claude-opus-5'/m
   );
   assert.match(
     selectionHelperSource,
@@ -81,7 +81,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /model: 'claude-sonnet-5'[\s\S]*?mode: 'normal'/
+    /model: 'claude-sonnet-5'[\s\S]*?mode: 'medium'/
   );
   assert.match(
     selectionHelperSource,

@@ -19,7 +19,9 @@ assert.doesNotMatch(shouldHydrateBlock, /contentShown|inView|isVisible/);
 
 assert.match(
   source,
-  /const contentShown = useMemo\(\(\) => inView \|\| isVisible, \[inView, isVisible\]\);/
+  // Showcase cards were later added as a third way to show content; the
+  // in-view/visible guarantee this asserts is unchanged.
+  /const contentShown = useMemo\(\s*\(\) =>[^,]*inView \|\| isVisible,/
 );
 assert.match(
   source,

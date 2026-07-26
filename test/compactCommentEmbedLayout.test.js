@@ -43,7 +43,9 @@ for (const source of [commentSource, replySource, pinnedCommentSource]) {
 assert.match(richTextSource, /compactEmbedPreview\?: boolean;/);
 assert.match(
   richTextSource,
-  /const embedPreview = Boolean\(isPreview \|\| compactEmbedPreview\);/
+  // The boolean became a named mode, computed from the same two inputs, so
+  // that subject previews can pick a distinct variant.
+  /const embedPreviewMode = getRichTextEmbedPreviewMode\(\{\s*compactEmbedPreview,\s*isPreview/
 );
 assert.match(richTextSource, /isPreview=\{embedPreview\}/);
 assert.match(richTextSource, /rich-text--compact-comment-embeds/);
@@ -54,9 +56,19 @@ assert.match(
   /\.compact-main-content-embed--build\.compact-main-content-embed--has-media \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) !important;/
 );
 assert.match(richTextSource, /\.compact-main-content-embed__media \{[\s\S]*aspect-ratio: 16 \/ 9;/);
-assert.match(richTextSource, /\.compact-ai-card-preview \{[\s\S]*grid-template-columns: 5\.6rem minmax\(0, 1fr\);/);
+// The card preview went from a fixed 2-column (thumb + text) grid to a
+// 3-column fractional one; the 5.6rem thumb floor is what survives.
+assert.match(
+  richTextSource,
+  /\.compact-ai-card-preview \{[\s\S]*grid-template-columns: minmax\(5\.6rem, 0\.82fr\)/
+);
 assert.match(richTextSource, /\.compact-ai-card-preview__market \{[\s\S]*display: none;/);
-assert.match(richTextSource, /\.compact-ai-card-multi \{[\s\S]*grid-template-columns: minmax\(0, 1fr\);/);
+// The multi-card block no longer pins a column template; it just sets its own
+// gap/min-height/padding and lets the inner grid size itself.
+assert.match(
+  richTextSource,
+  /\.compact-ai-card-multi \{[\s\S]{0,120}min-height: 12rem;/
+);
 assert.match(richTextSource, /\.compact-comment-embed--has-media,[\s\S]*grid-template-columns: 3\.8rem minmax\(0, 1fr\) !important;/);
 assert.match(richTextSource, /\.compact-comment-embed__media \{[\s\S]*aspect-ratio: 16 \/ 9;/);
 assert.match(
@@ -72,7 +84,12 @@ assert.match(invisibleTextSource, /theme=\{theme\}/);
 assert.match(embeddedComponentSource, /rich-text-embedded-component/);
 assert.match(embeddedComponentSource, /rich-text-embedded-component--preview/);
 assert.match(compactAiCardSource, /compact-ai-card-thumb compact-ai-card-thumb--static/);
-assert.match(compactAiCardSource, /compact-ai-card-thumb`?\}/);
+// The class list gained a burned modifier, so the template literal no longer
+// terminates right after the base class.
+assert.match(
+  compactAiCardSource,
+  /card\.isBurned \? ' compact-ai-card-thumb--burned' : ''/
+);
 assert.match(compactAiCardSource, /compact-ai-card-preview/);
 assert.match(compactMultiCardSource, /compact-ai-card-multi/);
 assert.match(mainContentEmbedSource, /theme=\{theme\}/);

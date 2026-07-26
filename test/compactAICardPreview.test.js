@@ -43,7 +43,9 @@ assert.match(
 assert.match(source, /border: 2px solid var\(--compact-ai-card-quality\);/);
 assert.match(
   source,
-  /<b style=\{qualityColor \? \{ color: qualityColor \} : undefined\}>/
+  // The <b> later gained a total-mystery className; the quality-color style
+  // binding this guards is unchanged.
+  /<b[\s\S]{0,200}style=\{qualityColor \? \{ color: qualityColor \} : undefined\}/
 );
 assert.match(
   source,

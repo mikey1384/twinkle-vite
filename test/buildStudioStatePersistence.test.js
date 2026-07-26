@@ -154,10 +154,19 @@ assert.match(
   /buildStudioPreferenceSaveIdRef[\s\S]*buildStudioPreferenceSaveQueueRef[\s\S]*saveId !== buildStudioPreferenceSaveIdRef\.current/,
   'Expected Build Studio preference saves to serialize and ignore stale responses.'
 );
+// KeepAliveHost used to restore a session by re-navigating to its path with
+// getLocationStateObject(session.location) merged in. The tab system replaced
+// that mechanism wholesale (f07d1dda5), so sessions are held alive rather than
+// re-navigated. What survives is the back-target: entry points stamp
+// runtimeBackTo into route state and the runtime reads it back.
+const buildRuntimeSource = readFileSync(
+  new URL('../src/containers/Build/Runtime/index.tsx', import.meta.url),
+  'utf8'
+);
 assert.match(
-  keepAliveHostSource,
-  /state: \{[\s\S]*\.\.\.getLocationStateObject\(session\.location\),[\s\S]*runtimeBackTo:/,
-  'Expected runtime restore to preserve existing session route state.'
+  buildRuntimeSource,
+  /const explicitBackTo =\s*typeof location\.state\?\.runtimeBackTo === 'string'/,
+  'Expected the runtime to restore its back target from route state.'
 );
 assert.match(
   buildSocketSource,
