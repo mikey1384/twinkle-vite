@@ -196,6 +196,23 @@ export async function setupChatPushBestEffort({
   }
 }
 
+// Read-only counterpart to unsubscribeFromChatPush: whether THIS browsing
+// context holds a push subscription. The account-level `hasPushSubscription`
+// says only that some device is subscribed, and on iOS the installed Home
+// Screen app and the Safari tab are separate storage partitions, so this is the
+// only way the surface you are looking at can tell whether it is that device.
+export async function hasLocalChatPushSubscription(): Promise<boolean> {
+  if (!chatPushSupported()) return false;
+  try {
+    const registration =
+      await navigator.serviceWorker.getRegistration(CHAT_PUSH_SW_URL);
+    const subscription = await registration?.pushManager.getSubscription();
+    return Boolean(subscription);
+  } catch {
+    return false;
+  }
+}
+
 export async function unsubscribeFromChatPush(): Promise<string | null> {
   if (
     typeof navigator === 'undefined' ||

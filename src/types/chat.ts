@@ -1,3 +1,5 @@
+import type { PushDevicePlatform } from '~/helpers/pushDevicePlatform';
+
 export interface ChatQuickAccessPartner {
   id: number;
   username: string;
@@ -37,6 +39,11 @@ export interface ChatNotificationSettings {
   // from an API that predates the field omits it; consumers must fail open and
   // show the mute control rather than hide a working account-level setting.
   hasPushSubscription?: boolean;
+  // Device families holding those subscriptions, so a context with none of its
+  // own can tell whether the device it runs on is covered by a sibling context
+  // (an iPhone's Home Screen app, read from the Safari tab). Optional for the
+  // same reason as above; an absent list means "unknown", not "none".
+  pushDevicePlatforms?: PushDevicePlatform[];
 }
 
 export type ChatQuickAccessMode = 'automatic' | 'custom';

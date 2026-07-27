@@ -11,7 +11,7 @@ export default function XPRankings({
   allRanks
 }: {
   userId: number;
-  rank: number;
+  rank: number | null;
   twinkleXP: number;
   allRanks: any[];
 }) {

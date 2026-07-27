@@ -433,7 +433,6 @@ export default function App() {
   const keyContextMyState = useMemo(
     () => ({
       ...myState,
-      loadingRankings: false,
       profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
     }),
     [myState]

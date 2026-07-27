@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import Icon from '~/components/Icon';
 import RankBadge from '~/components/RankBadge';
@@ -20,7 +19,7 @@ export default function MyRank({
 }: {
   myId: number;
   noBorderRadius?: boolean;
-  rank: number;
+  rank: number | null;
   style?: React.CSSProperties;
   twinkleXP: number;
   isNotification?: boolean;
@@ -28,21 +27,26 @@ export default function MyRank({
   const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
     fallback: 'logoGreen'
   });
-  const loadingRankings = useKeyContext((v) => v.myState.loadingRankings);
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  // `rank` stays null until the leaderboard response lands. Not knowing the
+  // rank is not the same as being unranked, so keep the loading placeholder
+  // until the server-loaded rank arrives instead of claiming "Unranked".
+  const rankKnown = typeof rank === 'number' && Number.isFinite(rank);
+  const knownRank = rankKnown ? (rank as number) : 0;
   const rankedColor = useMemo(
     () =>
-      rank === 1
+      knownRank === 1
         ? Color.gold()
-        : rank === 2
+        : knownRank === 2
         ? '#fff'
-        : rank === 3
+        : knownRank === 3
         ? Color.bronze()
         : null,
-    [rank]
+    [knownRank]
   );
   const rankLabel = 'Rank';
-  const rankDigitCount = useMemo(() => getRankDigitCount(rank), [rank]);
+  const rankDigitCount = useMemo(() => getRankDigitCount(knownRank), [
+    knownRank
+  ]);
   const rankFontScale = useMemo(
     () => getRankFontScale(rankDigitCount),
     [rankDigitCount]
@@ -54,10 +58,8 @@ export default function MyRank({
         marginTop: '1rem',
         marginBottom: myId ? '1rem' : 0,
         background: myId
-          ? rank > 0
-            ? rank < 4
-              ? Color.black()
-              : '#fff'
+          ? knownRank > 0 && knownRank < 4
+            ? Color.black()
             : '#fff'
           : '',
         ...style
@@ -110,15 +112,11 @@ export default function MyRank({
         }
       `}
     >
-      <div>
+      <div style={{ opacity: rankKnown ? 1 : 0.5 }}>
         <div
           style={{
             position: 'relative',
-            display: 'inline-block',
-            opacity:
-              rank > 3 && (loadingRankings || typeof twinkleCoins !== 'number')
-                ? 0.5
-                : 1
+            display: 'inline-block'
           }}
         >
           <span
@@ -149,12 +147,10 @@ export default function MyRank({
           >
             XP
           </span>
-          {loadingRankings || typeof twinkleCoins !== 'number' ? (
+          {rankKnown ? null : (
             <div
               style={{
-                color:
-                  rankedColor ||
-                  (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray()),
+                color: Color.darkGray(),
                 position: 'absolute',
                 top: '50%',
                 right: '-3rem',
@@ -163,38 +159,38 @@ export default function MyRank({
             >
               <Icon icon="spinner" pulse />
             </div>
-          ) : null}
+          )}
         </div>
-        {typeof twinkleCoins === 'number' && (
-          <div
-            className={css`
-              font-size: 2.5rem;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 0.5rem;
-              font-weight: bold;
-            `}
-            style={{
-              color:
-                rankedColor ||
-                (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray())
-            }}
-          >
-            {rank && twinkleXP ? (
-              <>
-                <div className="rank-prefix">
-                  <span style={{ fontSize: `${rankFontScale}em` }}>
-                    {rankLabel}
-                  </span>
-                </div>
-                <RankBadge rank={rank} />
-              </>
-            ) : (
-              unrankedLabel
-            )}
-          </div>
-        )}
+        <div
+          className={css`
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: bold;
+          `}
+          style={{
+            color:
+              rankedColor ||
+              (knownRank > 0 && knownRank <= 10
+                ? Color.pink()
+                : Color.darkGray())
+          }}
+        >
+          {!rankKnown || (knownRank && twinkleXP) ? (
+            <>
+              <div className="rank-prefix">
+                <span style={{ fontSize: `${rankFontScale}em` }}>
+                  {rankLabel}
+                </span>
+              </div>
+              <RankBadge rank={knownRank} />
+            </>
+          ) : (
+            unrankedLabel
+          )}
+        </div>
       </div>
     </div>
   );

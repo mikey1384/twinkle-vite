@@ -9,6 +9,7 @@ import Icon from '~/components/Icon';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
+import { getThisDevicePushPlatform } from '~/helpers/pushDevicePlatform';
 import type {
   BackgroundGroupNotificationMode,
   ChatNotificationPreferences,
@@ -21,12 +22,14 @@ import {
   disableDesktopNotifications,
   enableDesktopNotifications,
   getDesktopNotificationStatus,
+  hasLocalChatPushSubscription,
   setupChatPushBestEffort,
   showDesktopNotification,
   unsubscribeFromChatPush
 } from '~/helpers/desktopNotifications';
 
 const deviceIsMobile = isMobile(navigator) || isTablet(navigator);
+const thisDevicePlatform = getThisDevicePushPlatform();
 // iOS Safari exposes the Notification API only after the site is installed to
 // the Home Screen; detect iOS (incl. iPadOS reporting as Macintosh) so we can
 // show install guidance instead of a dead toggle.
@@ -107,6 +110,51 @@ const errorClass = css`
   font-weight: 700;
 `;
 
+const noticeClass = css`
+  margin: 0.6rem 0 0;
+  color: ${Color.brown()};
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.45;
+`;
+
+const switchWithActionClass = css`
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const statusRowClass = css`
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 1.3rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  background: ${Color.wellGray(0.18)};
+`;
+
+const statusIconClass = css`
+  flex: none;
+  margin-top: 0.15rem;
+  font-size: 1.5rem;
+`;
+
+const statusTitleClass = css`
+  color: ${Color.darkerGray()};
+  font-size: 1.3rem;
+  font-weight: 800;
+`;
+
+const statusDescriptionClass = css`
+  margin-top: 0.25rem;
+  color: ${Color.darkGray()};
+  font-size: 1.1rem;
+  line-height: 1.45;
+`;
+
 const disclosureButtonClass = css`
   width: 100%;
   display: flex;
@@ -170,6 +218,11 @@ export default function ChatNotificationsItem({
   const [deviceStatus, setDeviceStatus] = useState(
     getDesktopNotificationStatus()
   );
+  // null until the probe resolves, so the status line never asserts anything
+  // about this device before it knows.
+  const [localPushSubscribed, setLocalPushSubscribed] = useState<boolean | null>(
+    null
+  );
   const [helpModalShown, setHelpModalShown] = useState(false);
   const [installGuideShown, setInstallGuideShown] = useState(false);
   const [deviceUpdating, setDeviceUpdating] = useState(false);
@@ -185,6 +238,53 @@ export default function ChatNotificationsItem({
   const preferences = notificationSettings?.preferences;
   const mutedConversations: MutedChatConversation[] =
     notificationSettings?.mutedConversations || [];
+  // Whether closed-app push is deliverable at all is owned by the server: it is
+  // the account's subscription rows, not this browser's permission. An API
+  // predating the field omits it, and an unknown value must stay unknown rather
+  // than render as "off".
+  const accountPushSubscribed =
+    typeof notificationSettings?.hasPushSubscription === 'boolean'
+      ? notificationSettings.hasPushSubscription
+      : null;
+  const deviceNotificationsEnabled = deviceStatus === 'enabled';
+  // Does the physical device you are holding receive push — through this
+  // context or a sibling one? An iOS Safari tab holds no subscription and never
+  // will, but the Home Screen app on the same phone may, and answering "no"
+  // there is the lie this panel used to tell. An absent platform list (older
+  // API) leaves this at whatever the local probe found.
+  const thisDevicePushSubscribed =
+    localPushSubscribed === true ||
+    Boolean(
+      notificationSettings?.pushDevicePlatforms?.includes(thisDevicePlatform)
+    );
+  // Whether this context can act on the switch at all. On iOS Safari it cannot:
+  // the Notification API is absent, and the subscription belongs to the Home
+  // Screen app, which is the only place that can add or remove it.
+  const deviceSwitchActionable = notificationApiAvailable;
+  // The preferences below choose what gets through on this device. They are
+  // account-wide, but this panel is not a remote control for other devices:
+  // when this device gets nothing, they answer a question you did not ask and
+  // read as proof that something is set up when nothing is. Muted conversations
+  // stay reachable either way — the mute control lives in each conversation's
+  // own menu, which shows an existing mute unconditionally.
+  const advancedSettingsAvailable =
+    deviceNotificationsEnabled || thisDevicePushSubscribed;
+
+  useEffect(() => {
+    let cancelled = false;
+    checkLocalSubscription();
+
+    async function checkLocalSubscription() {
+      const subscribed = await hasLocalChatPushSubscription();
+      if (!cancelled) {
+        setLocalPushSubscribed(subscribed);
+      }
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceStatus]);
 
   useEffect(() => {
     if (notificationSettings) {
@@ -230,34 +330,73 @@ export default function ChatNotificationsItem({
         itemDescription="Choose what Twinkle should notify you about on each device."
         loading={loading}
       >
+        {renderPushStatus()}
+
         <section className={sectionClass}>
           <h3 className={sectionTitleClass}>This device</h3>
-          <PreferenceToggleRow
-            checked={deviceStatus === 'enabled'}
-            description={getDeviceDescription()}
-            disabled={
-              deviceUpdating ||
-              (!notificationApiAvailable && !(deviceIsMobile && deviceIsIos))
-            }
-            label="Allow notifications on this device"
-            onChange={handleDeviceToggle}
-          />
+          {deviceSwitchActionable ? (
+            <PreferenceToggleRow
+              checked={deviceNotificationsEnabled}
+              description={getDeviceDescription()}
+              disabled={deviceUpdating}
+              label="Allow notifications on this device"
+              onChange={handleDeviceToggle}
+            />
+          ) : (
+            // The switch still reports this device's real state — on when the
+            // Home Screen app on this same phone is subscribed — but it is
+            // disabled, because only that app can add or remove the
+            // subscription. Turning it off from here could never stick: the app
+            // re-enrolls itself on its next launch.
+            <div className={settingRowClass}>
+              <div className={settingCopyClass}>
+                <div className={settingLabelClass}>
+                  Notifications on this device
+                </div>
+                <div className={settingDescriptionClass}>
+                  {getDeviceDescription()}
+                </div>
+              </div>
+              <div className={switchWithActionClass}>
+                <SwitchButton
+                  ariaLabel="Notifications on this device"
+                  checked={thisDevicePushSubscribed}
+                  disabled
+                  onChange={() => null}
+                  small
+                />
+                {deviceIsMobile && deviceIsIos && !thisDevicePushSubscribed && (
+                  <Button
+                    color="logoBlue"
+                    size="sm"
+                    uppercase={false}
+                    variant="soft"
+                    onClick={() => setInstallGuideShown(true)}
+                  >
+                    Show me how
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
-        <button
-          aria-controls="advanced-chat-notification-settings"
-          aria-expanded={advancedSettingsShown}
-          className={disclosureButtonClass}
-          type="button"
-          onClick={() => setAdvancedSettingsShown(!advancedSettingsShown)}
-        >
-          <span>
-            {advancedSettingsShown ? 'Fewer settings' : 'More settings'}
-          </span>
-          <Icon icon={advancedSettingsShown ? 'chevron-up' : 'chevron-down'} />
-        </button>
+        {advancedSettingsAvailable && (
+          <button
+            aria-controls="advanced-chat-notification-settings"
+            aria-expanded={advancedSettingsShown}
+            className={disclosureButtonClass}
+            type="button"
+            onClick={() => setAdvancedSettingsShown(!advancedSettingsShown)}
+          >
+            <span>
+              {advancedSettingsShown ? 'Fewer settings' : 'More settings'}
+            </span>
+            <Icon icon={advancedSettingsShown ? 'chevron-up' : 'chevron-down'} />
+          </button>
+        )}
 
-        {advancedSettingsShown && (
+        {advancedSettingsAvailable && advancedSettingsShown && (
           <div id="advanced-chat-notification-settings">
             <section className={sectionClass}>
               <h3 className={sectionTitleClass}>
@@ -333,6 +472,12 @@ export default function ChatNotificationsItem({
               <p className={sectionDescriptionClass}>
                 These notifications are delivered through background push.
               </p>
+              {accountPushSubscribed === false && (
+                <p className={noticeClass}>
+                  None of your devices are set up for push yet, so nothing is
+                  delivered while Twinkle is closed no matter how these are set.
+                </p>
+              )}
               <PreferenceToggleRow
                 checked={Boolean(preferences?.closedDirectMessages)}
                 description="Direct messages, including first messages and attachments."
@@ -442,11 +587,68 @@ export default function ChatNotificationsItem({
     </div>
   );
 
+  // The panel's headline answer to "will Twinkle actually reach me when it is
+  // closed?" That is an account fact (does any device hold a push
+  // subscription), not a fact about the browser this is being read in — and on
+  // iOS the Home Screen app and the Safari tab are separate contexts, so a
+  // device-local reading of it is wrong in both directions.
+  function renderPushStatus() {
+    if (accountPushSubscribed === null || localPushSubscribed === null) {
+      return null;
+    }
+    const { title, description, isOn } = getPushStatusCopy();
+    return (
+      <div className={statusRowClass}>
+        <Icon
+          className={statusIconClass}
+          icon={isOn ? 'bell' : 'bell-slash'}
+          style={{ color: isOn ? Color.green() : Color.gray() }}
+        />
+        <div className={settingCopyClass}>
+          <div className={statusTitleClass}>{title}</div>
+          <div className={statusDescriptionClass}>{description}</div>
+        </div>
+      </div>
+    );
+  }
+
+  function getPushStatusCopy() {
+    if (!accountPushSubscribed) {
+      return {
+        isOn: false,
+        title: 'Push notifications are off',
+        description:
+          'No device is set up yet, so Twinkle cannot reach you while it is closed.'
+      };
+    }
+    if (thisDevicePushSubscribed) {
+      return {
+        isOn: true,
+        title: 'Push notifications are on for this device',
+        description:
+          localPushSubscribed || deviceSwitchActionable
+            ? 'Twinkle can reach you here even when it is closed. What gets through is set below.'
+            : 'Twinkle reaches this device through the app on your Home Screen, even when it is closed.'
+      };
+    }
+    return {
+      isOn: true,
+      title: 'Push notifications are on for another device',
+      description:
+        deviceIsMobile && deviceIsIos && !deviceSwitchActionable
+          ? 'Twinkle already sends them to a device you set up, but not to this phone. Add Twinkle to your Home Screen to get them here.'
+          : 'Twinkle already sends them to a device you set up, but not to this one yet.'
+    };
+  }
+
   function getDeviceDescription() {
-    if (!notificationApiAvailable) {
-      return deviceIsMobile && deviceIsIos
-        ? 'Add Twinkle to your Home Screen to enable notifications.'
-        : 'Notifications are not supported by this browser.';
+    if (!deviceSwitchActionable) {
+      if (!(deviceIsMobile && deviceIsIos)) {
+        return 'Notifications are not supported by this browser.';
+      }
+      return thisDevicePushSubscribed
+        ? 'On through the Twinkle app on your Home Screen. Safari cannot change this — open Twinkle from your Home Screen to turn it off.'
+        : 'Safari cannot show Twinkle notifications on iPhone or iPad. Add Twinkle to your Home Screen, open it from there, and turn notifications on.';
     }
     if (deviceStatus === 'blocked') {
       return 'Notifications are blocked by your browser or device settings.';
@@ -478,10 +680,6 @@ export default function ChatNotificationsItem({
   }
 
   async function handleDeviceToggle() {
-    if (!notificationApiAvailable) {
-      setInstallGuideShown(true);
-      return;
-    }
     if (deviceUpdating) return;
     setDeviceUpdating(true);
     setError('');

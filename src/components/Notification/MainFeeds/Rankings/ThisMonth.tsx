@@ -26,7 +26,7 @@ export default function ThisMonth({
   loading: boolean;
   top30sMonthly: any[];
   myId: number;
-  myMonthlyRank: number;
+  myMonthlyRank: number | null;
   myMonthlyXP: number;
 }) {
   const [allSelected, setAllSelected] = useState(!!myId);

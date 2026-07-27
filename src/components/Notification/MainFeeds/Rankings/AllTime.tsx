@@ -23,7 +23,7 @@ export default function AllTime({
   allRanks: any[];
   loading: boolean;
   myId: number;
-  myAllTimeRank: number;
+  myAllTimeRank: number | null;
   myAllTimeXP: number;
   top30s: any[];
 }) {

@@ -10,7 +10,7 @@ export default function BottomMenu({
   twinkleXP,
   userId
 }: {
-  rank: number;
+  rank: number | null;
   allRanks: any[];
   twinkleXP: number;
   userId: number;
