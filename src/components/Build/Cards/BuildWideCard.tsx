@@ -6,6 +6,7 @@ import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/Fav
 import ShareButton from '~/components/Buttons/ShareButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
+import RankBadge from '~/components/RankBadge';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
@@ -215,6 +216,20 @@ const titleRowClass = css`
   align-items: center;
   flex-wrap: wrap;
   gap: 0.55rem;
+`;
+
+// RankBadge sizes itself in em off the inherited font-size, so the wrapper is
+// what scales the badge across breakpoints.
+const rankBadgeWrapClass = css`
+  display: inline-flex;
+  flex-shrink: 0;
+  /* 1.5x the row's 0.55rem gap between the badge and the title */
+  margin-right: 0.275rem;
+  font-size: 1.7rem;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.35rem;
+  }
 `;
 
 const bylineClass = css`
@@ -500,6 +515,7 @@ export default function BuildWideCard({
   primaryActionLabel,
   primaryActionTo,
   primaryActionNavigationState,
+  rank,
   showCollaborationRequestAction = true,
   showFavoriteAction = false,
   showForkBadge = true,
@@ -527,6 +543,9 @@ export default function BuildWideCard({
   primaryActionLabel?: string;
   primaryActionTo?: string;
   primaryActionNavigationState?: Record<string, any>;
+  // Leaderboard position of this card within its list. Omitted on surfaces
+  // that are not ranked.
+  rank?: number;
   showCollaborationRequestAction?: boolean;
   showFavoriteAction?: boolean;
   showForkBadge?: boolean;
@@ -615,6 +634,8 @@ export default function BuildWideCard({
   const normalizedBuild = build as BuildProjectListItemData | null;
   const buildId = Number(build?.id || 0);
   const displayTitle = build ? getBuildDisplayTitle(build) : '';
+  const displayRank = Math.floor(Number(rank) || 0);
+  const rankShown = displayRank > 0;
   const displayUpdatedAt = getDisplayUpdatedAt(build, updatedAtSource);
   const targetPath = to || (buildId ? `/build/${buildId}` : '');
   const description = String(build?.description || '').trim();
@@ -778,6 +799,11 @@ export default function BuildWideCard({
               <span>Lumine App</span>
             </div>
             <div className={titleRowClass}>
+              {rankShown ? (
+                <span className={rankBadgeWrapClass}>
+                  <RankBadge rank={displayRank} />
+                </span>
+              ) : null}
               <h3 className={cx(titleClass, 'build-wide-card__title')}>
                 {displayTitle || 'Lumine App'}
               </h3>

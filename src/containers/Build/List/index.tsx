@@ -930,6 +930,10 @@ export default function BuildList({
                 }
                 promptInput={promptInput}
                 searchQuery={buildSearchQuery}
+                showBrowseRanks={
+                  isPublicBrowseTab(activeTab) &&
+                  activeBrowseMode === 'leaderboard'
+                }
                 creatingFromPrompt={creatingFromPrompt}
                 runtimeBackTo={`${location.pathname}${location.search}${location.hash}`}
                 onAddDescription={setEditingBuild}

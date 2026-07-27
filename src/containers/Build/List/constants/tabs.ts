@@ -18,6 +18,10 @@ export const buildBrowseTabs: BuildBrowseTab[] = [
   'open_source'
 ];
 
+// Leaderboard cards show a rank number down to this position; below it the
+// ordering stops reading as a ranking worth numbering.
+export const buildLeaderboardRankLimit = 30;
+
 export const buildBrowseModeTabs: Array<{
   value: BuildStudioBrowseMode;
   label: string;

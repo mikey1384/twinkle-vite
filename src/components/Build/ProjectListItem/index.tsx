@@ -15,6 +15,7 @@ export default function ProjectListItem({
   primaryActionIcon,
   primaryActionTo,
   primaryActionNavigationState,
+  rank,
   showCollaborationRequestAction = true,
   showFavoriteAction = false,
   showForkBadge = true,
@@ -38,6 +39,7 @@ export default function ProjectListItem({
   primaryActionIcon?: string;
   primaryActionTo?: string;
   primaryActionNavigationState?: Record<string, any>;
+  rank?: number;
   showCollaborationRequestAction?: boolean;
   showFavoriteAction?: boolean;
   showForkBadge?: boolean;
@@ -71,6 +73,7 @@ export default function ProjectListItem({
       primaryActionLabel={primaryActionLabel}
       primaryActionTo={primaryActionTo}
       primaryActionNavigationState={primaryActionNavigationState}
+      rank={rank}
       showCollaborationRequestAction={showCollaborationRequestAction}
       showFavoriteAction={showFavoriteAction}
       showForkBadge={showForkBadge}

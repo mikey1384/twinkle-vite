@@ -9,6 +9,7 @@ import ProjectListItem, {
   type BuildTag
 } from '~/components/Build/ProjectListItem';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { buildLeaderboardRankLimit } from './constants/tabs';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
   canOpenBuildListItemRuntime,
@@ -109,6 +110,7 @@ export default function Results({
   myBuildsLoading,
   promptInput,
   searchQuery,
+  showBrowseRanks,
   creatingFromPrompt,
   runtimeBackTo,
   onAddDescription,
@@ -138,6 +140,7 @@ export default function Results({
   myBuildsLoading: boolean;
   promptInput: string;
   searchQuery: string;
+  showBrowseRanks: boolean;
   creatingFromPrompt: boolean;
   runtimeBackTo: string;
   onAddDescription: (build: BuildProjectListItemData) => void;
@@ -270,8 +273,18 @@ export default function Results({
   return (
     <>
       <div ref={buildGridRef} className={buildGridClass}>
-        {browseBuilds.map((build) => {
+        {browseBuilds.map((build, index) => {
           const isCollaboratingBuild = activeTab === 'collaborating';
+          // Position in the leaderboard as of the pages loaded so far — not a
+          // canonical rank. The server recomputes each page from live counts and
+          // only excludes already-emitted ids, so a build can climb between
+          // pages. Numbering by position is deliberate: it keeps the badges
+          // dense, unique, and always in the order shown, which a server-side
+          // rank could not do (it would print #5 below #20 in the same list).
+          const rank =
+            showBrowseRanks && index < buildLeaderboardRankLimit
+              ? index + 1
+              : undefined;
           const canOpenRuntime = canOpenBuildListItemRuntime(build);
           const targetPath = isCollaboratingBuild
             ? getCollaboratingBuildListItemTargetPath(build)
@@ -313,6 +326,7 @@ export default function Results({
                 primaryActionNavigationState={
                   isCollaboratingBuild ? { openPeoplePanel: true } : undefined
                 }
+                rank={rank}
                 showCollaborationRequestAction={!isCollaboratingBuild}
                 showFavoriteAction
                 showOpenAppAction={isCollaboratingBuild ? canOpenRuntime : undefined}

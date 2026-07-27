@@ -12,7 +12,10 @@ import { useAppContext } from '~/contexts';
 import type { BuildStudioBrowseMode } from '~/contexts/Build/reducer';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
 import TabFilter from '../TabFilter';
-import { buildBrowseModeTabs } from './constants/tabs';
+import {
+  buildBrowseModeTabs,
+  buildLeaderboardRankLimit
+} from './constants/tabs';
 import {
   getBuildScrollAnchorId,
   getPublicBuildSort,
@@ -240,7 +243,7 @@ export default function LoggedOutCommunity({
       ) : (
         <>
           <div ref={buildListRef} className={buildGridClass}>
-            {builds.map((build) => (
+            {builds.map((build, index) => (
               <div
                 key={build.id}
                 data-scroll-anchor-id={getBuildScrollAnchorId(build)}
@@ -254,6 +257,14 @@ export default function LoggedOutCommunity({
                     runtimeBackTo,
                     runtimeBackLabel: 'Back to Community Builds'
                   }}
+                  // Position-based, same as the signed-in leaderboard — see the
+                  // rank comment in Results.tsx.
+                  rank={
+                    browseMode === 'leaderboard' &&
+                    index < buildLeaderboardRankLimit
+                      ? index + 1
+                      : undefined
+                  }
                   updatedAtSource="publicVersion"
                   showCollaborationRequestAction={false}
                   showFavoriteAction={false}
