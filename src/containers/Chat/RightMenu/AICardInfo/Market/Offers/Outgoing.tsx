@@ -11,11 +11,15 @@ import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 export default function Outgoing() {
   const CardItemsRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.RefObject<any> = useRef(null);
-  const [loaded, setLoaded] = useState(false);
+  const isMountedRef = useRef(true);
+  const loadRequestIdRef = useRef(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const outgoingOffers = useChatContext((v) => v.state.outgoingOffers);
+  // Same rule as the incoming list: the spinner only stands in for "nothing has
+  // been loaded yet", so a reconnect refreshes the rows in place.
+  const [loaded, setLoaded] = useState(() => outgoingOffers.length > 0);
   const onLoadOutgoingOffers = useChatContext(
     (v) => v.actions.onLoadOutgoingOffers
   );
@@ -44,35 +48,14 @@ export default function Outgoing() {
   }, [outgoingOffers]);
 
   useEffect(() => {
-    let isMounted = true;
-    let success = false;
-
-    init();
-
-    async function init(retryCount = 0) {
-      try {
-        setLoaded(false);
-        const { offers, loadMoreShown } = await getMyAICardOffers();
-        if (isMounted) {
-          onLoadOutgoingOffers({ offers, loadMoreShown });
-          success = true;
-        }
-      } catch (error) {
-        console.error('Error fetching my AI card offers:', error);
-        if (retryCount < 3) {
-          setTimeout(() => {
-            if (isMounted) init(retryCount + 1);
-          }, 1000);
-        }
-      } finally {
-        if (isMounted && (retryCount >= 3 || success)) {
-          setLoaded(true);
-        }
-      }
-    }
+    isMountedRef.current = true;
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
+  }, []);
+
+  useEffect(() => {
+    loadOffers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
 
@@ -155,6 +138,34 @@ export default function Outgoing() {
       </div>
     </ErrorBoundary>
   );
+
+  // Only the newest request is allowed to write to shared state, so a reconnect
+  // that overlaps an in-flight read can never resurrect the older response.
+  async function loadOffers(retryCount = 0) {
+    const requestId = ++loadRequestIdRef.current;
+    try {
+      const { offers, loadMoreShown } = await getMyAICardOffers();
+      if (!isMountedRef.current || requestId !== loadRequestIdRef.current) {
+        return;
+      }
+      onLoadOutgoingOffers({ offers, loadMoreShown });
+      setLoaded(true);
+    } catch (error) {
+      console.error('Error fetching my AI card offers:', error);
+      const isStale =
+        !isMountedRef.current || requestId !== loadRequestIdRef.current;
+      if (isStale) return;
+      if (retryCount < 3) {
+        setTimeout(() => {
+          if (isMountedRef.current && requestId === loadRequestIdRef.current) {
+            loadOffers(retryCount + 1);
+          }
+        }, 1000);
+        return;
+      }
+      setLoaded(true);
+    }
+  }
 
   async function handleLoadMore() {
     setLoadingMore(true);

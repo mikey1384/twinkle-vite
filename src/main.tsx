@@ -28,6 +28,7 @@ import { faBullhorn } from '@fortawesome/pro-solid-svg-icons/faBullhorn';
 import { faBroom } from '@fortawesome/pro-solid-svg-icons/faBroom';
 import { faAndroid } from '@fortawesome/free-brands-svg-icons/faAndroid';
 import { faApple } from '@fortawesome/free-brands-svg-icons/faApple';
+import { faAnglesDown } from '@fortawesome/pro-solid-svg-icons/faAnglesDown';
 import { faAnglesUp } from '@fortawesome/pro-solid-svg-icons/faAnglesUp';
 import { faArchive } from '@fortawesome/pro-solid-svg-icons/faArchive';
 import { faArrowLeft } from '@fortawesome/pro-solid-svg-icons/faArrowLeft';
@@ -248,6 +249,7 @@ declare global {
 library.add(
   faAlignJustify,
   faAndroid,
+  faAnglesDown,
   faAnglesUp,
   faApple,
   faArchive,

@@ -86,6 +86,15 @@ const stripClass = css`
      jamming edge-to-edge against the coins */
   max-width: 76rem;
   overflow: hidden;
+  /* The Tabs button's hairline answers to its left neighbor the same way a
+     tab's does (tabItemClass hides a separator against a hovered tab), but the
+     button sits outside the tab containers, so that sibling rule can't reach
+     it. The neighbor's ACTIVE state is resolved in JS (data-divider); hover is
+     matched here so hovering a tab never re-renders the strip. */
+  &:has([data-tab-manager-neighbor='true']:hover)
+    [data-tab-manager-button='true']::before {
+    display: none;
+  }
 `;
 
 // the pinned scroll area holds its width (never yields to the main tabs) so
@@ -148,10 +157,12 @@ const scrollButtonClass = css`
 // The strip-end Tabs button dresses like the default (minimized builtin)
 // tabs: transparent tab shape on the tab baseline, icon-only, wellGray hover.
 // It joins the row's separator grammar too — a hairline on its left when a
-// tab precedes it, hidden when that neighbor is the ACTIVE tab or the button
-// itself is hovered (the same rules tabItemClass applies between tabs; the
-// button lives outside the tab containers, so TabStrip computes the neighbor
-// and passes data-divider instead of relying on the `& + &` sibling rule).
+// tab precedes it, hidden whenever that hairline would touch a highlighted
+// tab: the neighbor is ACTIVE, hovered, or being dragged, or the button itself
+// is hovered (the same rules tabItemClass applies between tabs; the button
+// lives outside the tab containers, so TabStrip computes the neighbor and
+// passes data-divider instead of relying on the `& + &` sibling rule, and
+// stripClass matches the neighbor's hover).
 const tabManagerButtonClass = css`
   position: relative;
   height: 100%;
@@ -653,20 +664,32 @@ export default function TabStrip({
   // the Tabs button's left-hand neighbor in visual order: the trailing dock's
   // last chip when the dock is shown, else the last extra, else the last
   // default. Its divider follows the row's separator rules — shown when a tab
-  // precedes it, hidden when that neighbor is the active tab.
+  // precedes it, hidden when that neighbor is the active tab, is being dragged,
+  // or is hovered. The zone matters: a docked default is ALSO still rendered in
+  // the main scroll (the dock is additive), so only the copy that actually
+  // touches the button carries the neighbor marker the hover rule looks for.
   const managerNeighborTab =
     collapsedTrailingCount > 0 || tabs.length === 0
       ? defaultTabs[defaultTabs.length - 1]
       : tabs[tabs.length - 1];
+  const managerNeighborZone: DragZone | 'trailingDock' | null =
+    !managerNeighborTab
+      ? null
+      : collapsedTrailingCount > 0
+        ? 'trailingDock'
+        : tabs.length === 0
+          ? 'default'
+          : 'extra';
   const managerDividerShown = Boolean(
     managerNeighborTab &&
-      !navTargetIsActive({
-        exactActive: managerNeighborTab.exactActive,
-        pathname,
-        profileUsername: managerNeighborTab.profileUsername,
-        search,
-        to: managerNeighborTab.to
-      })
+    dragState?.key !== managerNeighborTab.key &&
+    !navTargetIsActive({
+      exactActive: managerNeighborTab.exactActive,
+      pathname,
+      profileUsername: managerNeighborTab.profileUsername,
+      search,
+      to: managerNeighborTab.to
+    })
   );
 
   return (
@@ -687,9 +710,7 @@ export default function TabStrip({
             data-tab-drag-zone="pinned"
             className={dragZoneClass}
           >
-            {pinnedTabs.map((tab, index) =>
-              renderTab(tab, index, 'pinned')
-            )}
+            {pinnedTabs.map((tab, index) => renderTab(tab, index, 'pinned'))}
           </div>
         </ScrollableRow>
       )}
@@ -699,7 +720,7 @@ export default function TabStrip({
         <div data-collapsed-dock="leading" className={collapsedDockClass}>
           {defaultTabs
             .slice(0, Math.min(collapsedLeadingCount, defaultTabs.length))
-            .map((tab) => renderDockChip(tab))}
+            .map((tab) => renderDockChip(tab, 'leading'))}
         </div>
       )}
       {/* main area: defaults + extras, its own independent scroll */}
@@ -715,9 +736,7 @@ export default function TabStrip({
           data-tab-drag-zone="default"
           className={dragZoneClass}
         >
-          {defaultTabs.map((tab, index) =>
-            renderTab(tab, index, 'default')
-          )}
+          {defaultTabs.map((tab, index) => renderTab(tab, index, 'default'))}
         </div>
         {/* Extras (profile/dynamic/Lumine/added) follow automatic MRU order
             and always sit to the right of the defaults. */}
@@ -736,7 +755,7 @@ export default function TabStrip({
         <div data-collapsed-dock="trailing" className={collapsedDockClass}>
           {defaultTabs
             .slice(Math.max(0, defaultTabs.length - collapsedTrailingCount))
-            .map((tab) => renderDockChip(tab))}
+            .map((tab) => renderDockChip(tab, 'trailing'))}
         </div>
       )}
       {/* the strip-end door into tab management: the same switcher the mobile
@@ -806,11 +825,7 @@ export default function TabStrip({
     </div>
   );
 
-  function renderTab(
-    tab: NavTabDescriptor,
-    index: number,
-    zone: DragZone
-  ) {
+  function renderTab(tab: NavTabDescriptor, index: number, zone: DragZone) {
     const isClosable = Boolean(zone === 'extra' && tab.closable && onCloseTab);
     const hasTabAction = Boolean(tab.buildAppId || isClosable);
     return (
@@ -822,6 +837,11 @@ export default function TabStrip({
           tab.buildAppId && isClosable ? ` ${audioAndCloseTabItemClass}` : ''
         }${dragState?.key === tab.key ? ` ${draggingTabClass}` : ''}`}
         style={getTabStyle(index, tab.key, zone)}
+        data-tab-manager-neighbor={
+          managerNeighborZone === zone && managerNeighborTab?.key === tab.key
+            ? 'true'
+            : undefined
+        }
         title={typeof tab.label === 'string' ? tab.label : undefined}
         onPointerDown={(event) =>
           handlePointerDown(event, tab.key, index, zone)
@@ -861,11 +881,21 @@ export default function TabStrip({
 
   // an icon-only chip in the dock for a default that has scrolled out of the
   // main view. Click-only (navigates); no drag, no context menu.
-  function renderDockChip(tab: NavTabDescriptor) {
+  function renderDockChip(
+    tab: NavTabDescriptor,
+    dockSide: 'leading' | 'trailing'
+  ) {
     return (
       <div
         key={tab.key}
         className={tabItemClass}
+        data-tab-manager-neighbor={
+          dockSide === 'trailing' &&
+          managerNeighborZone === 'trailingDock' &&
+          managerNeighborTab?.key === tab.key
+            ? 'true'
+            : undefined
+        }
         title={typeof tab.label === 'string' ? tab.label : undefined}
       >
         <Nav
@@ -1211,11 +1241,7 @@ export default function TabStrip({
     if (event.pointerType === 'touch') {
       // All configurable tabs retain their long-press menu, but only pinned
       // tabs arm a drag after the hold.
-      startTouchGesture(
-        event,
-        key,
-        zone === 'pinned' ? { index, zone } : null
-      );
+      startTouchGesture(event, key, zone === 'pinned' ? { index, zone } : null);
       return;
     }
     if (zone !== 'pinned') return;

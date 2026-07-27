@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import LikeButton from '~/components/Buttons/LikeButton';
 import StarButton from '~/components/Buttons/StarButton';
-import CloneButtons from '~/components/Buttons/CloneButtons';
 import Button from '~/components/Button';
 import Likers from '~/components/Likers';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -29,7 +28,6 @@ import {
   isContentPanelRewardActionEnabled,
   isContentPanelRewardActionSupported
 } from '~/helpers/contentActionAvailability';
-import { useContentContext, useMissionContext } from '~/contexts';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import { normalizeViewCount } from '~/helpers/viewCount';
 const editLabel = 'Edit';
@@ -69,6 +67,8 @@ const bottomInterfaceCSS = css`
       }
     }
   }
+  /* Shared prompts keep their liker line stacked under the Like button that
+     produces it, so the row aligns to the top instead of centering. */
   &.bottom-interface--shared-topic {
     align-items: flex-start;
 
@@ -88,11 +88,6 @@ const bottomInterfaceCSS = css`
     .content-panel__shared-topic-like-action .content-panel__likes {
       margin-left: 0.1rem;
       line-height: 1.2;
-    }
-
-    .content-panel__shared-topic-clone-actions {
-      display: flex;
-      align-items: flex-start;
     }
   }
   /* Hide Like/Comment labels on tablet and smaller */
@@ -168,17 +163,12 @@ export default function BottomInterface({
   userId: number;
   xpRewardInterfaceShown: boolean;
 }) {
-  const onEditContent = useContentContext((v) => v.actions.onEditContent);
-  const onUpdateSharedPromptClone = useMissionContext(
-    (v) => v.actions.onUpdateSharedPromptClone
-  );
   const {
     contentId,
     contentType,
     filePath,
     isNotification,
     likes,
-    myClones,
     numComments,
     numReplies,
     rewards,
@@ -376,6 +366,8 @@ export default function BottomInterface({
   const deviceIsTablet = isTablet(navigator);
   const isSharedTopic = contentType === 'sharedTopic';
   const sharedTopicLikeStatusShown = isSharedTopic && likes.length > 0;
+  // A shared prompt shows its likers next to the Like button, so the generic
+  // stats row would otherwise be an empty strip of margin.
   const bottomStatsRowShown = !isSharedTopic || viewCountShown;
   const commentActionLabel = getContentPanelCommentActionLabel(contentType);
   const rewardActionSupported =
@@ -465,18 +457,6 @@ export default function BottomInterface({
                 </span>
               ) : null}
             </Button>
-          )}
-          {isSharedTopic && (
-            <div className="content-panel__shared-topic-clone-actions">
-              <CloneButtons
-                layout="paired"
-                sharedTopicId={contentId}
-                sharedTopicTitle={contentObj.content}
-                uploaderId={uploader.id}
-                myClones={myClones}
-                onCloneSuccess={handleCloneSuccess}
-              />
-            </div>
           )}
           {rewardActionSupported && !secretHidden && (
             <RewardButton
@@ -584,37 +564,6 @@ export default function BottomInterface({
       )}
     </div>
   );
-
-  function handleCloneSuccess({
-    target,
-    topicId,
-    channelId
-  }: {
-    sharedTopicId: number;
-    target: 'zero' | 'ciel';
-    topicId: number;
-    channelId: number;
-    title: string;
-  }) {
-    const existingClones = Array.isArray(myClones) ? myClones : [];
-    const updatedClones = [
-      ...existingClones.filter((clone: any) => clone.target !== target),
-      { target, topicId, channelId }
-    ];
-
-    onEditContent({
-      contentType: 'sharedTopic',
-      contentId,
-      data: { myClones: updatedClones }
-    });
-
-    onUpdateSharedPromptClone({
-      promptId: contentId,
-      target,
-      channelId,
-      topicId
-    });
-  }
 
   async function handleCommentButtonClick() {
     if (!commentsShown && !(autoExpand && !secretHidden)) {

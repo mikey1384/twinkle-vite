@@ -1,5 +1,6 @@
 import React from 'react';
 import { ViewAction, ViewState } from './reducer';
+import { RememberedCinemaLevel } from '~/constants/cinema';
 
 export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
   return {
@@ -73,6 +74,12 @@ export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
       return dispatch({
         type: 'SET_BUILD_NAV_HIDDEN',
         hidden
+      });
+    },
+    onSetVideoCinemaLevel(cinemaLevel: RememberedCinemaLevel) {
+      return dispatch({
+        type: 'SET_VIDEO_CINEMA_LEVEL',
+        cinemaLevel
       });
     },
     onSetBuildAppMuted(buildAppId: string, muted: boolean) {

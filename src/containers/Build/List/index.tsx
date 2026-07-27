@@ -32,8 +32,7 @@ import {
   normalizeBuildListBrowseMode,
   normalizeBuildListSearchQuery,
   normalizeBuildListTab,
-  parseBuildListTab,
-  shouldExcludeMineFromPublicBrowse
+  parseBuildListTab
 } from './helpers';
 import { BuildQuickAccessStrip } from './QuickAccess';
 import ActivityPanels from './ActivityPanels';
@@ -721,11 +720,7 @@ export default function BuildList({
             ? await loadCollaboratingBuilds()
             : await loadPublicBuilds({
                 sort: getPublicBuildSort(activeTab, activeBrowseMode),
-                scope: getPublicBuildScope(activeTab),
-                excludeMine: shouldExcludeMineFromPublicBrowse(
-                  activeTab,
-                  activeBrowseMode
-                )
+                scope: getPublicBuildScope(activeTab)
               });
         if (!canceled) {
           onSetBuildStudioBrowseBuilds({
@@ -1139,20 +1134,17 @@ export default function BuildList({
   ): {
     sort: PublicBuildSort;
     scope: PublicBuildScope;
-    excludeMine: boolean;
     cursor?: string;
     lastId?: number;
   } {
     const loadMoreParams: {
       sort: PublicBuildSort;
       scope: PublicBuildScope;
-      excludeMine: boolean;
       cursor?: string;
       lastId?: number;
     } = {
       sort: getPublicBuildSort(tab, browseMode),
-      scope: getPublicBuildScope(tab),
-      excludeMine: shouldExcludeMineFromPublicBrowse(tab, browseMode)
+      scope: getPublicBuildScope(tab)
     };
     if (/^\d+$/.test(loadMoreToken)) {
       loadMoreParams.lastId = Number(loadMoreToken);

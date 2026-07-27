@@ -18,11 +18,17 @@ import { placeholderHeights } from '~/constants/state';
 import { useInView } from 'react-intersection-observer';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
+import {
+  useContentState,
+  useLazyLoad,
+  useLiveComment,
+  useMyLevel
+} from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
 } from '~/helpers';
+import { getFeedRowObservedAt } from '~/helpers/liveComments';
 import {
   getContentPanelCommentActionLabel,
   getContentPanelRewardActionBlockedReason,
@@ -45,6 +51,7 @@ import {
   shouldSuppressPopupDismissNavigation
 } from '~/helpers/popupDismissNavigation';
 import { getFeedCardSizing, type FeedCardSizing } from './helpers/sizing';
+import { chooseHomeFeedPreviewComment } from './helpers/previewComments';
 import {
   getHomeFeedFinalRewardLevel,
   type HomeFeedActionType
@@ -102,6 +109,9 @@ export default function HomeFeedCard({
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
   const onLoadComments = useContentContext((v) => v.actions.onLoadComments);
+  const onSyncServerComments = useContentContext(
+    (v) => v.actions.onSyncServerComments
+  );
   const contentState = useContentState({ contentId, contentType });
   const [likeLoading, setLikeLoading] = useState(false);
   const [primaryTextTruncated, setPrimaryTextTruncated] = useState(false);
@@ -120,13 +130,42 @@ export default function HomeFeedCard({
   const feedPreviewComments = Array.isArray(feed?.comments)
     ? feed.comments
     : [];
+  const feedRowObservedAt = getFeedRowObservedAt(feed);
+  // A feed response is canonical server state, so its comments update the
+  // content entry every surface reads instead of staying a second copy that
+  // render-time logic has to arbitrate. The row carries when its request was
+  // issued, so a broadcast this client received later still wins.
+  useEffect(() => {
+    if (!feedRowObservedAt) return;
+    onSyncServerComments({
+      comments: [
+        ...(Array.isArray(feed?.comments) ? feed.comments : []),
+        // a comment card's own payload is a copy of that comment too
+        ...(contentType === 'comment' && contentId
+          ? [{ ...(feed?.previewContent || {}), ...feed, id: contentId }]
+          : [])
+      ],
+      observedAt: feedRowObservedAt
+    });
+    // onSyncServerComments is a stable context helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedRowObservedAt, feed, contentId, contentType]);
   const contentComments = Array.isArray(contentState.comments)
     ? contentState.comments
     : [];
-  const previewComments = getHomeFeedCardPreviewComments({
+  const selectedPreviewComments = getHomeFeedCardPreviewComments({
     contentComments,
     feedPreviewComments
   });
+  // The shown preview comment can still be a feed payload snapshot, which is
+  // never refetched. Overlay the canonical copy so an AI Energy reply that has
+  // since been sponsored and generated shows its answer here instead of the
+  // "needs AI Energy" placeholder, and so this card sizes on what it renders.
+  const livePreviewComment = useLiveComment(selectedPreviewComments[0]);
+  const previewComments =
+    livePreviewComment === selectedPreviewComments[0]
+      ? selectedPreviewComments
+      : [livePreviewComment, ...selectedPreviewComments.slice(1)];
   const renderablePreviewComments =
     getRenderableHomeFeedPreviewComments(previewComments);
   const feedIdentity =
@@ -1033,16 +1072,6 @@ function getHomeFeedPreviewCommentsById(comments: any[]) {
 
 function isRenderableHomeFeedPreviewComment(comment: any) {
   return getRenderableHomeFeedPreviewComments([comment]).length > 0;
-}
-
-function chooseHomeFeedPreviewComment(
-  contentComment: any | undefined,
-  feedComment: any
-) {
-  if (!contentComment) return feedComment;
-  const contentTimeStamp = Number(contentComment?.timeStamp || 0);
-  const feedTimeStamp = Number(feedComment?.timeStamp || 0);
-  return contentTimeStamp > feedTimeStamp ? contentComment : feedComment;
 }
 
 function flattenHomeFeedPreviewComments(comments: any[] | undefined): any[] {

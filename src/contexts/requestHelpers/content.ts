@@ -5,6 +5,10 @@ import { RequestHelpers } from '~/types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
 import { attemptUpload } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
+import {
+  getLiveObservedAt,
+  withFeedRowsObservedAt
+} from '~/helpers/liveComments';
 
 const HOME_FEED_LOAD_MORE_TOTAL_TIMEOUT_MS = 60000;
 
@@ -734,6 +738,10 @@ export default function contentRequestHelpers({
           params.set('feedPerf', '1');
         }
         const isLoadMoreRequest = Boolean(lastFeedId);
+        // Stamped before the request goes out: the rows reflect server state as
+        // of this moment, so an edit broadcast that lands while the response is
+        // in flight is newer than they are.
+        const observedAt = getLiveObservedAt();
         const { data } = await request.get(
           `${URL}/content/feeds?${params.toString()}`,
           {
@@ -754,7 +762,7 @@ export default function contentRequestHelpers({
               : {})
           }
         );
-        return { data, filter };
+        return { data: withFeedRowsObservedAt(data, observedAt), filter };
       } catch (error) {
         return handleError(error);
       }
@@ -1151,6 +1159,7 @@ export default function contentRequestHelpers({
       username?: string;
     } = {}) {
       try {
+        const observedAt = getLiveObservedAt();
         const { data } = await request.get(
           `${URL}/content/feeds/liked?filter=${filter}&username=${username}${
             lastFeedId
@@ -1159,7 +1168,7 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return { data, filter };
+        return { data: withFeedRowsObservedAt(data, observedAt), filter };
       } catch (error) {
         return handleError(error);
       }
@@ -1176,6 +1185,7 @@ export default function contentRequestHelpers({
       username?: string;
     } = {}) {
       try {
+        const observedAt = getLiveObservedAt();
         const { data } = await request.get(
           `${URL}/content/feeds/byUser?section=${section}&username=${username}${
             lastFeedId
@@ -1184,7 +1194,7 @@ export default function contentRequestHelpers({
           }`,
           auth()
         );
-        return { data, section };
+        return { data: withFeedRowsObservedAt(data, observedAt), section };
       } catch (error) {
         return handleError(error);
       }
@@ -1288,11 +1298,12 @@ export default function contentRequestHelpers({
         // The route's enrichment uses the requester's identity for
         // subject-secret/attachment visibility; without auth() signed-in
         // users would get anonymous-stripped rows.
+        const observedAt = getLiveObservedAt();
         const { data } = await request.get(
           `${URL}/content/newFeeds?lastInteraction=${lastInteraction}`,
           auth()
         );
-        return data;
+        return withFeedRowsObservedAt(data, observedAt);
       } catch (error: any) {
         console.error('[loadNewFeeds] Raw error:', {
           message: error?.message,

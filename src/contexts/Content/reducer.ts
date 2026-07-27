@@ -2,6 +2,29 @@ import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 import { Comment, Reward, Subject } from '~/types';
 import { appendUniqueById, prependUniqueById } from './idListHelpers';
+import {
+  buildLiveCommentEntries,
+  upsertLiveComments
+} from '~/helpers/liveComments';
+
+// A comment entry this store creates itself still has to be a full content
+// entry: EDIT_COMMENT and friends walk `comments` on every key unguarded.
+function createLiveCommentEntry(contentId: number) {
+  return {
+    ...defaultContentState,
+    contentId,
+    contentType: 'comment'
+  };
+}
+
+function syncLiveComments(state: any, comments: any, observedAt: number) {
+  return upsertLiveComments({
+    state,
+    entries: buildLiveCommentEntries(comments),
+    observedAt,
+    createEntry: createLiveCommentEntry
+  });
+}
 
 function buildObjectMatches(build: any, buildId: number) {
   if (!build || (build.contentType && build.contentType !== 'build')) {
@@ -421,12 +444,17 @@ export default function ContentReducer(
       const contentKeys = Object.keys(newState);
       for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
+        const editedThisEntry = prevContentState.contentId === action.commentId;
         newState[contentKey] = {
           ...prevContentState,
-          content:
-            prevContentState.contentId === action.commentId
-              ? action.editedComment
-              : prevContentState.content,
+          // This client just wrote the edit, so its entry is the newest copy —
+          // stamp it or a feed page fetched before the edit could undo it.
+          ...(editedThisEntry && action.observedAt
+            ? { liveObservedAt: action.observedAt }
+            : {}),
+          content: editedThisEntry
+            ? action.editedComment
+            : prevContentState.content,
           comments: prevContentState.comments.map((comment: Comment) => ({
             ...comment,
             content:
@@ -487,6 +515,16 @@ export default function ContentReducer(
     case 'EDIT_CONTENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
+      // Surfaces that render a content snapshot they received from a feed
+      // payload (home feed previews, embedded comment previews) read the
+      // canonical copy from this store, so an edit must land under the edited
+      // content's own key even when nothing has loaded it yet.
+      if (action.contentType && action.contentId && !newState[contentKey]) {
+        newState[contentKey] = {
+          ...defaultState,
+          ...action.data
+        };
+      }
       for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentMatches =
@@ -555,7 +593,12 @@ export default function ContentReducer(
                                 ...comment,
                                 ...(comment.id === action.contentId
                                   ? action.data
-                                  : {})
+                                  : {}),
+                                replies: (comment.replies || []).map((reply) =>
+                                  reply.id === action.contentId
+                                    ? { ...reply, ...action.data }
+                                    : reply
+                                )
                               })
                             )
                           : prevContentState.targetObj.comment.comments
@@ -856,9 +899,18 @@ export default function ContentReducer(
       }
       return newState;
     }
-    case 'LOAD_COMMENTS':
+    case 'LOAD_COMMENTS': {
+      // The loaded thread is a server response like any other, so its copies
+      // update `comment<id>` too. Without this a feed page could overwrite the
+      // canonical entry with an older snapshot of a comment this client had
+      // just re-read.
+      const stateWithLiveComments = syncLiveComments(
+        state,
+        action.comments,
+        action.observedAt
+      );
       return {
-        ...state,
+        ...stateWithLiveComments,
         [contentKey]: {
           ...prevContentState,
           commentsLoaded: !action.isPreview,
@@ -867,6 +919,14 @@ export default function ContentReducer(
           commentsLoadMoreButton: action.loadMoreButton
         }
       };
+    }
+    case 'SYNC_SERVER_COMMENTS':
+      return upsertLiveComments({
+        state,
+        entries: action.entries,
+        observedAt: action.observedAt,
+        createEntry: createLiveCommentEntry
+      });
     case 'LOAD_MORE_COMMENTS': {
       return {
         ...state,

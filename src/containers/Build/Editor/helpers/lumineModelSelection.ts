@@ -65,8 +65,8 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     mode: 'heavy',
     label: 'Claude Opus 5',
     description: 'Heavy mode: powerful reasoning for ambitious builds.',
-    defaultReasoningEffort: 'xhigh',
-    supportedReasoningEfforts: ['xhigh']
+    defaultReasoningEffort: 'high',
+    supportedReasoningEfforts: ['high']
   },
   {
     model: 'gpt-5.6-sol',

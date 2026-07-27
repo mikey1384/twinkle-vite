@@ -213,13 +213,6 @@ export function isPublicBrowseTab(tab: BuildListTab) {
   return tab === 'community' || tab === 'open_source';
 }
 
-export function shouldExcludeMineFromPublicBrowse(
-  tab: BuildListTab,
-  browseMode: BuildStudioBrowseMode
-) {
-  return tab === 'community' && browseMode !== 'leaderboard';
-}
-
 export function getBuildListBrowseTab(tab: BuildListTab) {
   if (tab === 'collaborating') return 'collaborating';
   if (tab === 'open_source') return 'open_source';

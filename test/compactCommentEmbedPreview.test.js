@@ -62,7 +62,9 @@ assert.match(
   /{showTypeLabel \? <span>Comment<\/span> : null}/
 );
 
-assert.match(compactCommentEmbedSource, /getAttachmentInfo\(comment\)/);
+// The snapshot the preview is handed is overlaid with the canonical comment
+// state before anything is read off it.
+assert.match(compactCommentEmbedSource, /getAttachmentInfo\(liveComment\)/);
 assert.match(
   compactCommentEmbedSource,
   /actualFilePath \|\| comment\?\.filePath/

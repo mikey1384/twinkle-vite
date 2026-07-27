@@ -26,6 +26,7 @@ import {
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import { mergeLiveCommentState } from '~/helpers/aiEnergySponsorship';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
   addCommasToNumber,
@@ -250,10 +251,14 @@ export default function Body({
   }
 
   function renderCommentPreview() {
+    // The feed payload copy can predate the placeholder being swapped for the
+    // generated reply, so read the canonical comment state before deciding
+    // whether this card still needs a sponsor notice.
+    const liveContent = mergeLiveCommentState(content, liveContentState);
     const commentForAiEnergySponsor = {
-      ...content,
+      ...liveContent,
       id: contentId,
-      content: content?.content || '',
+      content: liveContent?.content || '',
       uploader: content?.uploader
     } as Comment;
     if (shouldRenderAiEnergySponsorNotice(commentForAiEnergySponsor)) {
@@ -269,9 +274,12 @@ export default function Body({
     }
 
     return renderTextPreview({
-      text: content?.content || '',
+      text: liveContent?.content || '',
       section: 'content',
-      showAttachment: true
+      showAttachment: true,
+      // Text and attachment must come from one copy: a sponsored reply can
+      // resolve with a generated file, and an edit can replace an existing one.
+      source: liveContent
     });
   }
 
@@ -505,16 +513,23 @@ export default function Body({
   function renderTextPreview({
     section = 'description',
     showAttachment = false,
+    source = content,
     text,
     title
   }: {
     section?: string;
     showAttachment?: boolean;
+    // The copy the attachment is read from, which must be the same copy `text`
+    // came from — otherwise a comment whose canonical state has moved on (an
+    // edit, or a sponsored AI Energy reply that generated a file) renders new
+    // text beside the feed payload's old attachment, or drops the new one.
+    // Defaults to the feed payload for every branch that has no live copy.
+    source?: any;
     text: string;
     title?: string;
   }) {
     const attachmentFileType = showAttachment
-      ? getContentAttachmentFileType(content)
+      ? getContentAttachmentFileType(source)
       : '';
     const attachmentIsPreviewMedia =
       attachmentFileType === 'image' || attachmentFileType === 'video';
@@ -525,7 +540,8 @@ export default function Body({
       ? renderAttachmentPreview(
           attachmentFileType === 'image' || attachmentFileType === 'video'
             ? `comment-${attachmentFileType}`
-            : 'comment'
+            : 'comment',
+          source
         )
       : null;
     const embedPreview = getMarkdownImageEmbedPreview(text);
@@ -604,10 +620,13 @@ export default function Body({
     );
   }
 
-  function renderAttachmentPreview(classNameSuffix: string) {
-    const filePath = getContentAttachmentFilePath(content);
+  function renderAttachmentPreview(
+    classNameSuffix: string,
+    source: any = content
+  ) {
+    const filePath = getContentAttachmentFilePath(source);
     if (!filePath) return null;
-    const fileType = getContentAttachmentFileType({ ...content, filePath });
+    const fileType = getContentAttachmentFileType({ ...source, filePath });
     let subjectAttachmentClass = '';
     if (classNameSuffix === 'subject' && fileType === 'image') {
       subjectAttachmentClass =
@@ -628,7 +647,7 @@ export default function Body({
     return (
       <AttachmentSurface
         className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}${subjectAttachmentClass}`}
-        source={{ ...content, filePath }}
+        source={{ ...source, filePath }}
         sourceContentId={contentId}
         sourceContentType={contentType}
         userId={userId}

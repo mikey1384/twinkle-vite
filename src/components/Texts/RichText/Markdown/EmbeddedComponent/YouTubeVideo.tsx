@@ -39,8 +39,10 @@ export default function YouTubeVideo({
   });
   const [isStarted, setIsStarted] = useState(started);
   const [playing, setPlaying] = useState(false);
-  const { isCinema, toggleCinema } = useCinemaMode();
   const canCinema = isStarted && !isPreview && !deviceIsMobile;
+  const { cinemaLevel, isCinema, setCinemaLevel } = useCinemaMode({
+    enabled: canCinema
+  });
 
   const thumbnailUrl = `https://img.youtube.com/vi/${videoCode}/0.jpg`;
 
@@ -102,8 +104,8 @@ export default function YouTubeVideo({
             initialTime={currentTime}
             customControls={!deviceIsMobile && !isPreview}
             showCinema={canCinema}
-            isCinema={isCinema}
-            onToggleCinema={toggleCinema}
+            cinemaLevel={cinemaLevel}
+            onSetCinemaLevel={setCinemaLevel}
             style={{
               position: 'absolute',
               top: 0,

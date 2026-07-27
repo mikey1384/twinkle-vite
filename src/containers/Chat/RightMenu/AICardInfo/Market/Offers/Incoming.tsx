@@ -19,8 +19,9 @@ export default function Incoming() {
   const notifications = useKeyContext((v) => v.myState.notifications);
   const CardItemsRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.RefObject<any> = useRef(null);
+  const isMountedRef = useRef(true);
+  const loadRequestIdRef = useRef(0);
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
-  const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
   const [prevOfferCheckTimeStamp] = useState(
@@ -28,6 +29,11 @@ export default function Incoming() {
   );
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const incomingOffers = useChatContext((v) => v.state.incomingOffers);
+  // The offers themselves live in shared chat state, so a remount already has
+  // server-confirmed rows to show. The spinner only ever stands in for "nothing
+  // has been loaded yet" - a reconnect or a post-sale refresh swaps the rows
+  // underneath instead of blanking the panel.
+  const [loaded, setLoaded] = useState(() => incomingOffers.length > 0);
   const onLoadIncomingOffers = useChatContext(
     (v) => v.actions.onLoadIncomingOffers
   );
@@ -60,43 +66,14 @@ export default function Incoming() {
   }, [displayedIncomingOffers]);
 
   useEffect(() => {
-    let isMounted = true;
-    let success = false;
-    init();
-    async function init(retryCount = 0) {
-      try {
-        setLoaded(false);
-        const {
-          offers,
-          loadMoreShown,
-          mostRecentOfferTimeStamp,
-          recentAICardOfferCheckTimeStamp
-        } = await getIncomingCardOffers();
-        if (isMounted) {
-          onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
-          onUpdateMostRecentAICardOfferTimeStamp(
-            mostRecentOfferTimeStamp || 0
-          );
-          onLoadIncomingOffers({ offers, loadMoreShown });
-          success = true;
-        }
-      } catch (error) {
-        console.error('Error fetching offers:', error);
-        if (retryCount < 3) {
-          setTimeout(() => {
-            if (isMounted) init(retryCount + 1);
-          }, 1000);
-        }
-      } finally {
-        if (isMounted && (retryCount >= 3 || success)) {
-          setLoaded(true);
-        }
-      }
-    }
-
+    isMountedRef.current = true;
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
+  }, []);
+
+  useEffect(() => {
+    loadOffers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
 
@@ -108,17 +85,17 @@ export default function Incoming() {
 
     function handleAICardOfferPosted({ card }: { card: any }) {
       if (card.ownerId === userId) {
-        refreshOffers();
+        loadOffers();
       }
     }
     function handleAICardOfferHidden({ ownerId }: { ownerId: number }) {
       if (ownerId === userId) {
-        refreshOffers();
+        loadOffers();
       }
     }
     function handleAICardOfferCancel({ ownerId }: { ownerId: number }) {
       if (ownerId === userId) {
-        refreshOffers();
+        loadOffers();
       }
     }
     function handleAICardSold({
@@ -129,22 +106,8 @@ export default function Incoming() {
       sellerId: number;
     }) {
       if (card.ownerId === userId || sellerId === userId) {
-        refreshOffers();
+        loadOffers();
       }
-    }
-
-    async function refreshOffers() {
-      setLoaded(false);
-      const {
-        offers,
-        loadMoreShown,
-        mostRecentOfferTimeStamp,
-        recentAICardOfferCheckTimeStamp
-      } = await getIncomingCardOffers();
-      onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
-      onUpdateMostRecentAICardOfferTimeStamp(mostRecentOfferTimeStamp || 0);
-      onLoadIncomingOffers({ offers, loadMoreShown });
-      setLoaded(true);
     }
 
     return function cleanUp() {
@@ -153,7 +116,8 @@ export default function Incoming() {
       socket.off('ai_card_sold', handleAICardSold);
       socket.off('ai_card_offer_hidden', handleAICardOfferHidden);
     };
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     const CardItems = CardItemsRef.current;
@@ -245,6 +209,42 @@ export default function Incoming() {
       </div>
     </ErrorBoundary>
   );
+
+  // Every trigger - first mount, socket reconnect, and each offer/sale event -
+  // goes through here so their responses can never land out of order: only the
+  // newest request is allowed to write to shared state.
+  async function loadOffers(retryCount = 0) {
+    const requestId = ++loadRequestIdRef.current;
+    try {
+      const {
+        offers,
+        loadMoreShown,
+        mostRecentOfferTimeStamp,
+        recentAICardOfferCheckTimeStamp
+      } = await getIncomingCardOffers();
+      if (!isMountedRef.current || requestId !== loadRequestIdRef.current) {
+        return;
+      }
+      onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
+      onUpdateMostRecentAICardOfferTimeStamp(mostRecentOfferTimeStamp || 0);
+      onLoadIncomingOffers({ offers, loadMoreShown });
+      setLoaded(true);
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      const isStale =
+        !isMountedRef.current || requestId !== loadRequestIdRef.current;
+      if (isStale) return;
+      if (retryCount < 3) {
+        setTimeout(() => {
+          if (isMountedRef.current && requestId === loadRequestIdRef.current) {
+            loadOffers(retryCount + 1);
+          }
+        }, 1000);
+        return;
+      }
+      setLoaded(true);
+    }
+  }
 
   async function handleLoadMore() {
     setLoadingMore(true);

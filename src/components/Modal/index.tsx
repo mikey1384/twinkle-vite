@@ -220,6 +220,22 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     });
     const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
 
+    const resolvedBodyPadding =
+      bodyPadding !== undefined
+        ? typeof bodyPadding === 'number'
+          ? `${bodyPadding}px`
+          : bodyPadding
+        : deviceIsMobile
+          ? '0.75rem'
+          : '1.25rem';
+    // A flex container that scrolls drops its bottom padding from the
+    // scrollable overflow region, so the last row of a scrolled body ends up
+    // flush against the modal edge. Rendering that space as a transparent
+    // bottom border keeps it outside the scrollport, where it always shows.
+    // Only a single length can become a border width; a shorthand keeps the
+    // plain padding it asked for.
+    const bodyBottomSpacingIsBorder = !resolvedBodyPadding.trim().includes(' ');
+
     useLayoutEffect(() => {
       const target = portalTarget || document.getElementById('modal');
       if (target && container) {
@@ -587,13 +603,10 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
                 width: 100%;
                 display: flex;
                 justify-content: center;
-                padding: ${bodyPadding !== undefined
-                  ? typeof bodyPadding === 'number'
-                    ? `${bodyPadding}px`
-                    : bodyPadding
-                  : deviceIsMobile
-                    ? '0.75rem'
-                    : '1.25rem'};
+                padding: ${resolvedBodyPadding};
+                ${bodyBottomSpacingIsBorder
+                  ? `padding-bottom: 0; border-bottom: ${resolvedBodyPadding} solid transparent;`
+                  : ''}
                 position: relative;
                 font-size: 1.5rem;
               `}

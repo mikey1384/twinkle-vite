@@ -10,6 +10,7 @@ import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import PlayButton, { PLAYER_PLAY_BUTTON_SIZE } from '~/components/PlayButton';
 import VideoControls, { PlayerController } from './VideoControls';
+import { CinemaLevel, getCinemaToggles } from '~/components/CinemaMode';
 
 declare global {
   interface Window {
@@ -122,8 +123,8 @@ const VideoPlayer = memo(
       // Twinkle custom control surface (replaces native player controls).
       customControls?: boolean;
       showCinema?: boolean;
-      isCinema?: boolean;
-      onToggleCinema?: () => void;
+      cinemaLevel?: CinemaLevel;
+      onSetCinemaLevel?: (level: CinemaLevel) => void;
     }
   >((props, ref) => {
     const internalRef = useRef<
@@ -152,6 +153,8 @@ const VideoPlayer = memo(
     const useCustom = !!props?.customControls && props?.fileType === 'video';
     const useYouTubeTheaterChrome =
       props?.fileType === 'youtube' && !!props?.showCinema;
+    const cinemaLevel = props?.cinemaLevel ?? 0;
+    const isCinema = cinemaLevel > 0;
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -174,9 +177,8 @@ const VideoPlayer = memo(
     // only auto-hide YouTube controls when there IS surrounding area to reveal
     // from (cinema/fullscreen letterbox); inline YouTube keeps the bar visible.
     const allowAutoHide =
-      props?.fileType !== 'youtube' || !!props?.isCinema || isFullscreen;
-    const useIdleChrome =
-      useCustom || (useYouTubeTheaterChrome && !!props?.isCinema);
+      props?.fileType !== 'youtube' || isCinema || isFullscreen;
+    const useIdleChrome = useCustom || (useYouTubeTheaterChrome && isCinema);
 
     const isPlayingRef = useRef(false);
     useEffect(() => {
@@ -329,7 +331,7 @@ const VideoPlayer = memo(
         const root = rootRef.current;
         if (!root) return;
         const activeEl = document.activeElement as HTMLElement | null;
-        const ownsScreen = !!props?.isCinema || getFullscreenElement() === root;
+        const ownsScreen = isCinema || getFullscreenElement() === root;
         if (!ownsScreen && !root.contains(activeEl)) return;
         if (
           activeEl &&
@@ -381,7 +383,9 @@ const VideoPlayer = memo(
           case 'C':
           case 't':
           case 'T':
-            if (props?.showCinema) props?.onToggleCinema?.();
+            // The shortcut is a plain enter/exit toggle; the extra "hide the
+            // top bar too" tier is a deliberate click on the button ladder.
+            if (props?.showCinema) props?.onSetCinemaLevel?.(isCinema ? 0 : 1);
             else handled = false;
             break;
           default:
@@ -395,7 +399,7 @@ const VideoPlayer = memo(
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [useCustom, props?.isCinema, props?.showCinema]);
+    }, [useCustom, isCinema, props?.showCinema]);
 
     const controller = useMemo<PlayerController>(
       () => ({
@@ -538,7 +542,7 @@ const VideoPlayer = memo(
               pointerEvents: playerError
                 ? 'none'
                 : props?.fileType === 'youtube'
-                  ? props?.isCinema || isFullscreen
+                  ? isCinema || isFullscreen
                     ? 'auto'
                     : controlsVisible
                       ? 'none'
@@ -581,8 +585,8 @@ const VideoPlayer = memo(
               visible={controlsVisible}
               isFullscreen={isFullscreen}
               showCinema={props?.showCinema}
-              isCinema={props?.isCinema}
-              onToggleCinema={props?.onToggleCinema}
+              cinemaLevel={cinemaLevel}
+              onSetCinemaLevel={props?.onSetCinemaLevel}
               showFullscreen
               onToggleFullscreen={toggleFullscreen}
             />
@@ -593,18 +597,18 @@ const VideoPlayer = memo(
 
     if (props?.fileType === 'youtube') {
       // Native YouTube controls. If the surface supports theater mode, add a
-      // small centered toggle button above YouTube's bottom chrome. In theater
+      // small centered toggle cluster above YouTube's bottom chrome. In theater
       // mode, a Twinkle-owned wake layer appears only while idle-hidden so mouse
-      // movement can recover the button and hide the dormant cursor.
+      // movement can recover the buttons and hide the dormant cursor.
       const theaterChromeHidden =
-        !!props?.showCinema && !!props?.isCinema && !controlsVisible;
+        !!props?.showCinema && isCinema && !controlsVisible;
       return (
         <div
           ref={rootRef}
           className={cx(
             rootClass,
             props?.showCinema && ytHoverWrapperClass,
-            props?.showCinema && props?.isCinema && ytTheaterActiveClass,
+            props?.showCinema && isCinema && ytTheaterActiveClass,
             hideCursor && hideCursorClass
           )}
           style={{
@@ -613,14 +617,14 @@ const VideoPlayer = memo(
             height: props?.height
           }}
           onMouseMove={
-            props?.showCinema && props?.isCinema ? revealControls : undefined
+            props?.showCinema && isCinema ? revealControls : undefined
           }
           onMouseLeave={
-            props?.showCinema && props?.isCinema ? handleRootLeave : undefined
+            props?.showCinema && isCinema ? handleRootLeave : undefined
           }
         >
           <div id={playerElementId.current} className={mediaFillClass} />
-          {props?.showCinema && props?.isCinema && (
+          {props?.showCinema && isCinema && (
             <div
               className={ytTheaterWakeLayerClass}
               style={{
@@ -638,30 +642,33 @@ const VideoPlayer = memo(
             />
           )}
           {props?.showCinema && (
-            <button
-              type="button"
-              aria-label={
-                props?.isCinema ? 'Exit theater mode' : 'Theater mode'
-              }
-              title={
-                props?.isCinema ? 'Exit theater mode (Esc)' : 'Theater mode'
-              }
-              className={cx(theaterButtonClass, 'theater-btn')}
+            <div
+              className={cx(theaterButtonBarClass, 'theater-btn')}
               style={
-                props?.isCinema
+                isCinema
                   ? {
                       opacity: controlsVisible ? 1 : 0,
                       pointerEvents: controlsVisible ? 'auto' : 'none'
                     }
                   : undefined
               }
-              onClick={(event) => {
-                event.stopPropagation();
-                props?.onToggleCinema?.();
-              }}
             >
-              <Icon icon={props?.isCinema ? 'compress' : 'film'} />
-            </button>
+              {getCinemaToggles(cinemaLevel).map((toggle) => (
+                <button
+                  key={toggle.key}
+                  type="button"
+                  aria-label={toggle.label}
+                  title={toggle.title}
+                  className={theaterButtonClass}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    props?.onSetCinemaLevel?.(toggle.nextLevel);
+                  }}
+                >
+                  <Icon icon={toggle.icon} />
+                </button>
+              ))}
+            </div>
           )}
         </div>
       );
@@ -1007,13 +1014,21 @@ const mediaFillClass = css`
   object-fit: contain;
 `;
 
-// Theater toggle styled like one of YouTube's own control icons, centered near
-// the bottom so it stays reachable in inline and theater layouts.
-const theaterButtonClass = css`
+// Theater toggles styled like YouTube's own control icons, centered near the
+// bottom so they stay reachable in inline and theater layouts.
+const theaterButtonBarClass = css`
   position: absolute;
   bottom: 1rem;
   left: 50%;
   z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  transform: translateX(-50%);
+  transition: opacity 0.2s ease;
+`;
+
+const theaterButtonClass = css`
   width: 4.8rem;
   height: 4.8rem;
   display: flex;
@@ -1027,14 +1042,12 @@ const theaterButtonClass = css`
   font-size: 2rem;
   line-height: 1;
   cursor: pointer;
-  transform: translateX(-50%);
   transition:
-    opacity 0.2s ease,
     background 0.15s ease,
     transform 0.15s ease;
   &:hover {
     background: rgba(0, 0, 0, 0.65);
-    transform: translateX(-50%) scale(1.08);
+    transform: scale(1.08);
   }
 `;
 

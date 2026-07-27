@@ -2,6 +2,7 @@ import React, { memo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
+import { CinemaLevel, getCinemaToggles } from '~/components/CinemaMode';
 
 export interface PlayerController {
   play: () => void;
@@ -62,8 +63,8 @@ function VideoControls({
   visible,
   isFullscreen,
   showCinema,
-  isCinema,
-  onToggleCinema,
+  cinemaLevel = 0,
+  onSetCinemaLevel,
   showFullscreen,
   onToggleFullscreen,
   accentColor = Color.logoBlue()
@@ -79,8 +80,8 @@ function VideoControls({
   visible: boolean;
   isFullscreen: boolean;
   showCinema?: boolean;
-  isCinema?: boolean;
-  onToggleCinema?: () => void;
+  cinemaLevel?: CinemaLevel;
+  onSetCinemaLevel?: (level: CinemaLevel) => void;
   showFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   accentColor?: string;
@@ -371,22 +372,24 @@ function VideoControls({
           )}
         </div>
 
-        {showCinema && (
-          <button
-            type="button"
-            aria-label={isCinema ? 'Exit theater mode' : 'Theater mode'}
-            title={isCinema ? 'Exit theater mode (Esc)' : 'Theater mode'}
-            className={cx(
-              controlButtonClass,
-              css`
-                color: ${isCinema ? accentColor : '#fff'};
-              `
-            )}
-            onClick={() => onToggleCinema?.()}
-          >
-            <Icon icon="film" />
-          </button>
-        )}
+        {showCinema &&
+          getCinemaToggles(cinemaLevel).map((toggle) => (
+            <button
+              key={toggle.key}
+              type="button"
+              aria-label={toggle.label}
+              title={toggle.title}
+              className={cx(
+                controlButtonClass,
+                css`
+                  color: ${cinemaLevel ? accentColor : '#fff'};
+                `
+              )}
+              onClick={() => onSetCinemaLevel?.(toggle.nextLevel)}
+            >
+              <Icon icon={toggle.icon} />
+            </button>
+          ))}
 
         {showFullscreen && (
           <button

@@ -18,6 +18,8 @@ import {
 } from '~/contexts';
 export { default as useScrollToBottom } from './useScrollToBottom';
 export { default as useInfiniteScroll } from './useInfiniteScroll';
+export { default as useAiEnergySponsorship } from './useAiEnergySponsorship';
+export { default as useLiveComment } from './useLiveComment';
 export { default as useDraft } from './useDraft';
 export { default as useDragSort } from './useDragSort';
 import {

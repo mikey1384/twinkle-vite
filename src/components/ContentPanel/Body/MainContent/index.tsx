@@ -10,6 +10,7 @@ import RewardLevelDisplay from './RewardLevelDisplay';
 import ContentDisplay from './ContentDisplay';
 import BottomRewardLevelDisplay from './BottomRewardLevelDisplay';
 import AnswerDailyQuestionButton from '~/components/Buttons/AnswerDailyQuestionButton';
+import SharedPromptCloneBand from './SharedPromptCloneBand';
 import { scrollElementToCenter } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
@@ -222,6 +223,14 @@ export default function MainContent({
           />
         )}
         {contentType === 'dailyReflection' && <AnswerDailyQuestionButton />}
+        {contentType === 'sharedTopic' && (
+          <SharedPromptCloneBand
+            contentId={contentId}
+            content={content}
+            myClones={contentState.myClones}
+            uploaderId={uploader?.id}
+          />
+        )}
         <ErrorBoundary componentPath="ContentPanel/Body/MainContent/BottomRewardLevelDisplay">
           <BottomRewardLevelDisplay
             contentType={contentType}

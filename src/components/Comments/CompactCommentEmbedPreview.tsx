@@ -17,7 +17,7 @@ import {
   type InternalEmbedPreviewInfo
 } from '~/helpers/aiCardEmbedHelpers';
 import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useLiveComment } from '~/helpers/hooks';
 import {
   fetchedVideoCodeFromURL,
   getFileInfoFromFileName
@@ -70,12 +70,23 @@ export default function CompactCommentEmbedPreview({
   variant = 'compact'
 }: CompactCommentEmbedPreviewProps) {
   const commentId = Number(comment?.id || comment?.commentId || contentId || 0);
+  // Embedded previews are handed a snapshot of the comment (feed payload,
+  // target object, markdown embed). The content context holds the copy that
+  // stays current, so edits and sponsored AI Energy replies show up here too.
+  // `contentId` is only a safe stand-in for this comment's own id when the
+  // snapshot carries no ids at all (an embed whose comment has not loaded yet).
+  // Where the snapshot has a `commentId`, that is its parent, so never overlay
+  // from it.
+  const liveComment = useLiveComment(
+    comment,
+    Number(comment?.id || (comment?.commentId ? 0 : contentId) || 0)
+  );
   const isTargetRoot = variant === 'targetRoot';
   const isColumn = variant === 'column';
-  const uploader = getCommentUploader(comment);
+  const uploader = getCommentUploader(liveComment);
   const isAIMessage = isAICommentAuthor(uploader.id);
-  const rawContent = String(comment?.content || '');
-  const aiEnergyPlaceholderName = getAiEnergyPlaceholderName(comment);
+  const rawContent = String(liveComment?.content || '');
+  const aiEnergyPlaceholderName = getAiEnergyPlaceholderName(liveComment);
   const markdownMedia = useMemo(
     () => getMarkdownMediaEmbeds(rawContent).slice(0, 3),
     [rawContent]
@@ -87,7 +98,7 @@ export default function CompactCommentEmbedPreview({
         : removeMarkdownMediaEmbeds(rawContent),
     [aiEnergyPlaceholderName, rawContent]
   );
-  const attachment = getAttachmentInfo(comment);
+  const attachment = getAttachmentInfo(liveComment);
   const mediaItems = [
     ...(attachment ? [attachment] : []),
     ...markdownMedia.map((embed) => ({
@@ -157,9 +168,9 @@ export default function CompactCommentEmbedPreview({
           ) : (
             <strong>Unknown user</strong>
           )}
-          {comment?.timeStamp ? (
+          {liveComment?.timeStamp ? (
             <span className="compact-comment-embed__timestamp">
-              {timeSince(comment.timeStamp)}
+              {timeSince(liveComment.timeStamp)}
             </span>
           ) : null}
         </div>

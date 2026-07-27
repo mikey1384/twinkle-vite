@@ -1,3 +1,8 @@
+import {
+  RememberedCinemaLevel,
+  normalizeCinemaLevel
+} from '~/constants/cinema';
+
 export interface ViewState {
   pageVisible: boolean;
   exploreCategory: 'subjects' | 'videos' | 'links' | 'ai-cards';
@@ -14,6 +19,10 @@ export interface ViewState {
   aiDisabledNotice: string;
   // desktop build runtime: 2nd-level collapse that also hides the global nav
   buildNavHidden: boolean;
+  // remembered video theater tier for watch surfaces, so the layout survives
+  // navigating away from (and back to) a video page. Tier 2 (nav hidden) is
+  // deliberately not remembered, hence the narrower type.
+  videoCinemaLevel: RememberedCinemaLevel;
   // session-only audio mute state for running build apps, keyed by build id
   mutedBuildAppIds: string[];
   // Build app ids that currently have a reachable nav tab. null means the
@@ -62,6 +71,7 @@ export interface ViewAction {
     | 'SET_PAGE_TITLE'
     | 'SET_PROFILE_NAV'
     | 'SET_BUILD_NAV_HIDDEN'
+    | 'SET_VIDEO_CINEMA_LEVEL'
     | 'SET_BUILD_APP_MUTED'
     | 'SET_BUILD_APP_NAV_TAB_IDS'
     | 'SET_OPEN_BUILD_TAB'
@@ -75,6 +85,7 @@ export interface ViewAction {
   nav?: string;
   title?: string;
   hidden?: boolean;
+  cinemaLevel?: RememberedCinemaLevel;
   buildAppId?: string;
   buildAppIds?: string[] | null;
   ownerUserId?: number | string | null;
@@ -172,6 +183,11 @@ export default function ViewReducer(
       return {
         ...state,
         buildNavHidden: !!action.hidden
+      };
+    case 'SET_VIDEO_CINEMA_LEVEL':
+      return {
+        ...state,
+        videoCinemaLevel: normalizeCinemaLevel(action.cinemaLevel)
       };
     case 'SET_BUILD_APP_MUTED': {
       const buildAppId = String(action.buildAppId || '').trim();

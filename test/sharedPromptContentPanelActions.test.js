@@ -24,13 +24,16 @@ test('shared prompt ContentPanel keeps like status inside the like action wrappe
   assert.match(source, /{!isSharedTopic && \(\s*<Likers/);
 });
 
-test('shared prompt ContentPanel uses paired clone button layout only for its action row', () => {
-  const source = readSource(
+test('shared prompt clone buttons live in their own band below the content, not in the action row', () => {
+  const bandSource = readSource(
+    'src/components/ContentPanel/Body/MainContent/SharedPromptCloneBand.tsx'
+  );
+  const bottomInterfaceSource = readSource(
     'src/components/ContentPanel/Body/BottomInterface.tsx'
   );
 
-  assert.match(source, /content-panel__shared-topic-clone-actions/);
-  assert.match(source, /<CloneButtons[\s\S]*layout="paired"/);
+  assert.match(bandSource, /<CloneButtons[\s\S]*layout="paired"/);
+  assert.doesNotMatch(bottomInterfaceSource, /CloneButtons/);
 });
 
 test('paired CloneButtons layout structurally groups each chat button with its clone button', () => {

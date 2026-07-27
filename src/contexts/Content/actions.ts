@@ -1,4 +1,23 @@
 import { Dispatch } from '~/types';
+import {
+  buildLiveCommentEntries,
+  getLiveObservedAt
+} from '~/helpers/liveComments';
+
+// Records when this client observed a comment copy, so the content entry can
+// tell a fresh response from a stale one. Only comments need it: they are the
+// content type rendered from snapshots (feed rows, embeds) alongside a live
+// entry, so they are the only one where two copies compete.
+function stampLiveComment({
+  contentType,
+  data
+}: {
+  contentType: string;
+  data: object;
+}) {
+  if (contentType !== 'comment') return data;
+  return { ...data, liveObservedAt: getLiveObservedAt() };
+}
 
 export default function ContentActions(dispatch: Dispatch) {
   return {
@@ -149,7 +168,8 @@ export default function ContentActions(dispatch: Dispatch) {
       return dispatch({
         type: 'EDIT_COMMENT',
         commentId,
-        editedComment
+        editedComment,
+        observedAt: getLiveObservedAt()
       });
     },
     onEditContent({
@@ -165,7 +185,10 @@ export default function ContentActions(dispatch: Dispatch) {
         type: 'EDIT_CONTENT',
         contentType,
         contentId,
-        data
+        // An edit is the newest copy of this comment this client has seen, so
+        // the entry records when it arrived; a feed page built before it can
+        // then be recognised as older instead of overwriting it.
+        data: stampLiveComment({ contentType, data })
       });
     },
     onEditRewardComment({ id, text }: { id: number; text: string }) {
@@ -231,7 +254,26 @@ export default function ContentActions(dispatch: Dispatch) {
         contentId: Number(contentId),
         contentType,
         requestStartedAt,
-        data
+        data: stampLiveComment({ contentType, data })
+      });
+    },
+    // Every comment a server response carries — feed rows included — updates
+    // the canonical entry, so no surface has to referee its snapshot against
+    // the content context at render time. `observedAt` is when this client
+    // learned of the copies (for a feed page, when its request was issued).
+    onSyncServerComments({
+      comments,
+      observedAt
+    }: {
+      comments: any[];
+      observedAt: number;
+    }) {
+      const entries = buildLiveCommentEntries(comments);
+      if (!entries.length || !observedAt) return;
+      return dispatch({
+        type: 'SYNC_SERVER_COMMENTS',
+        entries,
+        observedAt
       });
     },
     onSetContentState({
@@ -315,7 +357,8 @@ export default function ContentActions(dispatch: Dispatch) {
         contentId,
         contentType,
         isPreview,
-        loadMoreButton
+        loadMoreButton,
+        observedAt: getLiveObservedAt()
       });
     },
     onLoadMoreComments({

@@ -63,6 +63,7 @@ function XPVideoPlayer({
   rewardLevel = 0,
   minimized,
   onPlay,
+  rememberTheaterMode,
   onVideoEnd,
   style = {},
   uploader,
@@ -75,6 +76,9 @@ function XPVideoPlayer({
   rewardLevel?: number;
   minimized?: boolean;
   onPlay?: () => void;
+  // watch pages remember the theater tier across navigation; casual embeds
+  // (chat, comments, feed) keep it to their own mount
+  rememberTheaterMode?: boolean;
   onVideoEnd?: () => void;
   style?: React.CSSProperties;
   uploader?: any;
@@ -195,15 +199,15 @@ function XPVideoPlayer({
     null
   );
 
-  const { isCinema, toggleCinema, exitCinema } = useCinemaMode();
   // Cinema is desktop-only and incompatible with the floating mini-player.
+  // While it can't be hosted the player renders inline, but the remembered
+  // tier stays put so returning to the watch tab restores the same layout.
   const canCinema =
     !minimized && !deviceIsMobile && !isLink && playerActivated && !!videoCode;
-  useEffect(() => {
-    if (minimized && isCinema) {
-      exitCinema();
-    }
-  }, [minimized, isCinema, exitCinema]);
+  const { cinemaLevel, isCinema, setCinemaLevel } = useCinemaMode({
+    remember: !!rememberTheaterMode,
+    enabled: canCinema
+  });
 
   const requiredDurationForCoin = 60;
   const timerRef = useRef<any>(null);
@@ -487,8 +491,8 @@ function XPVideoPlayer({
                   initialTime={currentInitialTime}
                   customControls={!deviceIsMobile}
                   showCinema={canCinema}
-                  isCinema={isCinema}
-                  onToggleCinema={toggleCinema}
+                  cinemaLevel={cinemaLevel}
+                  onSetCinemaLevel={setCinemaLevel}
                   onPlay={() => {
                     onPlay?.();
                     handleVideoPlay({ userId: userIdRef.current });

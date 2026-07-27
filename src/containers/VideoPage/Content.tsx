@@ -93,6 +93,7 @@ export default function Content({
               videoCode={content}
               uploader={uploader}
               minimized={!watchTabActive}
+              rememberTheaterMode
               onVideoEnd={onVideoEnd}
             />
           )}

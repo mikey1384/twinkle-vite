@@ -77,10 +77,12 @@ function MediaPlayer({
     return thumbUrl;
   }, [isNotLight, thumbUrl]);
 
-  const { isCinema, toggleCinema } = useCinemaMode();
   const showPlayer = !(displayedThumb && !hasStartedPlaying);
   const canCinema =
     fileType === 'video' && !isThumb && !deviceIsMobile && showPlayer;
+  const { cinemaLevel, isCinema, setCinemaLevel } = useCinemaMode({
+    enabled: canCinema
+  });
 
   return (
     <div
@@ -161,8 +163,8 @@ function MediaPlayer({
                 playing={playing}
                 customControls={!deviceIsMobile}
                 showCinema={canCinema}
-                isCinema={isCinema}
-                onToggleCinema={toggleCinema}
+                cinemaLevel={cinemaLevel}
+                onSetCinemaLevel={setCinemaLevel}
                 style={{
                   position: 'absolute',
                   top: 0,

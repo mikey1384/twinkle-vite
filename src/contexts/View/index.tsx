@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { createContext, useContext } from '../selectableContext';
 import ViewActions from './actions';
+import { readStoredCinemaLevel } from '~/constants/cinema';
 import ViewReducer, {
   AI_DISABLED_NOTICE,
   ViewState,
@@ -45,6 +46,7 @@ const initialViewState: ViewState = {
   aiFeaturesLoaded: false,
   aiDisabledNotice: AI_DISABLED_NOTICE,
   buildNavHidden: false,
+  videoCinemaLevel: 0,
   mutedBuildAppIds: [],
   buildAppNavTabIds: null,
   openBuildTab: null,
@@ -58,7 +60,10 @@ function initializeViewState(state: ViewState): ViewState {
     pageVisible:
       typeof document === 'undefined' || typeof document.hidden === 'undefined'
         ? true
-        : !document.hidden
+        : !document.hidden,
+    // the viewer's last chosen video theater tier, so a reload lands back in
+    // the same layout
+    videoCinemaLevel: readStoredCinemaLevel()
   };
 }
 

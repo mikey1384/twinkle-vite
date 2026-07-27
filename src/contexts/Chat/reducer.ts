@@ -2384,7 +2384,12 @@ export default function ChatReducer(
         return state;
       }
       const { channelId } = action.data.message;
-      const startMessageId = uuidv1();
+      // Key the creation notice by the id the server gave it. A synthesized key
+      // makes this message invisible to every id-keyed reconciliation — the
+      // canonical favorite-state snapshot, a channel load, a load-more, a
+      // realtime delivery — so the same message lands again under its real id
+      // as a second "created the ... group" row.
+      const startMessageId = action.data.message.id || uuidv1();
       const nextState = {
         ...state,
         chatType: null,

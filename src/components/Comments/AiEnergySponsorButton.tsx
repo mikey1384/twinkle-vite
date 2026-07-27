@@ -1,39 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
-import {
-  useAppContext,
-  useContentContext,
-  useKeyContext,
-  useNotiContext
-} from '~/contexts';
+import { resolveAiEnergyPlaceholderName } from '~/helpers/aiEnergySponsorship';
+import { useAiEnergySponsorship } from '~/helpers/hooks';
 import { Comment } from '~/types';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
-
-const PLACEHOLDER_SUFFIX =
-  'needs AI Energy to reply. Someone can sponsor this reply.';
-const PLACEHOLDER_KIND = 'zero_ciel_public_reply';
-const REPLYING_REVALIDATE_DELAY_MS = 45 * 1000;
-type SponsorState =
-  | 'idle'
-  | 'sponsoring'
-  | 'replying'
-  | 'checkingExisting'
-  | 'finished';
-
-function parseCommentSettings(settings: any) {
-  if (!settings) return {};
-  if (typeof settings === 'object') return settings;
-  if (typeof settings !== 'string') return {};
-  try {
-    return JSON.parse(settings);
-  } catch {
-    return {};
-  }
-}
 
 export function getAiEnergyPlaceholderName(comment?: Comment | null) {
   const uploaderId = Number(comment?.uploader?.id || 0);
@@ -43,35 +17,11 @@ export function getAiEnergyPlaceholderName(comment?: Comment | null) {
       : uploaderId === Number(CIEL_TWINKLE_ID)
         ? 'Ciel'
         : '';
-  if (!aiName) return '';
-  if ((comment?.content || '').trim() !== `${aiName} ${PLACEHOLDER_SUFFIX}`) {
-    return '';
-  }
-  const targetCommentId = Number(comment?.replyId || comment?.commentId || 0);
-  if (!targetCommentId) return '';
-  const marker = parseCommentSettings(
-    comment?.settings
-  ).aiEnergySponsorPlaceholder;
-  if (
-    marker?.kind !== PLACEHOLDER_KIND ||
-    marker?.aiUsername !== aiName ||
-    marker?.resolvedAt ||
-    Number(marker?.targetCommentId || 0) !== targetCommentId
-  ) {
-    return '';
-  }
-  return aiName;
+  return resolveAiEnergyPlaceholderName({ aiName, comment });
 }
 
 export function shouldRenderAiEnergySponsorNotice(comment?: Comment | null) {
   return !!getAiEnergyPlaceholderName(comment);
-}
-
-function getAiEnergyPlaceholderStatusToken(comment?: Comment | null) {
-  const marker = parseCommentSettings(
-    comment?.settings
-  ).aiEnergySponsorPlaceholder;
-  return typeof marker?.statusToken === 'string' ? marker.statusToken : '';
 }
 
 export default function AiEnergySponsorButton({
@@ -84,159 +34,24 @@ export default function AiEnergySponsorButton({
   theme?: string;
 }) {
   const { themeName } = useThemeTokens({ themeName: theme });
-  const sponsorAiEnergyCommentReply = useAppContext(
-    (v) => v.requestHelpers.sponsorAiEnergyCommentReply
-  );
-  const loadAiEnergyCommentReplySponsorStatus = useAppContext(
-    (v) => v.requestHelpers.loadAiEnergyCommentReplySponsorStatus
-  );
-  const onEditContent = useContentContext((v) => v.actions.onEditContent);
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
-  );
-  const userId = useKeyContext((v) => v.myState.userId);
-  const [message, setMessage] = useState('');
-  const [sponsorState, setSponsorState] = useState<SponsorState>('idle');
-  const [sponsorStatusToken, setSponsorStatusToken] = useState('');
+  const { message, phase, sponsor } = useAiEnergySponsorship({ comment });
   const aiName = getAiEnergyPlaceholderName(comment);
-  const statusToken =
-    sponsorStatusToken || getAiEnergyPlaceholderStatusToken(comment);
-  const disabled = sponsorState !== 'idle';
+  const disabled = phase !== 'idle';
+  const isWaiting =
+    phase === 'sponsoring' ||
+    phase === 'replying' ||
+    phase === 'checkingExisting';
   const buttonLabel =
-    sponsorState === 'replying'
+    phase === 'replying'
       ? `${aiName} is replying`
-      : sponsorState === 'finished' || sponsorState === 'checkingExisting'
+      : phase === 'finished' || phase === 'checkingExisting'
         ? 'Already sponsored'
-        : sponsorState === 'sponsoring'
+        : phase === 'sponsoring'
           ? 'Sponsoring'
           : 'Sponsor';
-  const buttonIcon =
-    sponsorState === 'sponsoring' ||
-    sponsorState === 'replying' ||
-    sponsorState === 'checkingExisting'
-      ? 'spinner'
-      : 'bolt';
-
-  useEffect(() => {
-    setMessage('');
-    setSponsorStatusToken('');
-    setSponsorState('idle');
-  }, [comment.id]);
-
-  useEffect(() => {
-    if (sponsorState !== 'replying' && sponsorState !== 'checkingExisting')
-      return;
-    let canceled = false;
-    let revalidateTimer: number | undefined;
-    void revalidateSponsorStatus();
-
-    return () => {
-      canceled = true;
-      if (revalidateTimer) {
-        window.clearTimeout(revalidateTimer);
-      }
-    };
-
-    function scheduleRevalidation() {
-      revalidateTimer = window.setTimeout(() => {
-        void revalidateSponsorStatus();
-      }, REPLYING_REVALIDATE_DELAY_MS);
-    }
-
-    async function revalidateSponsorStatus() {
-      try {
-        const result = await loadAiEnergyCommentReplySponsorStatus({
-          placeholderCommentId: comment.id,
-          statusToken
-        });
-        if (canceled) return;
-        if (result?.status === 'retryable') {
-          setSponsorState(
-            sponsorState === 'checkingExisting' ? 'finished' : 'idle'
-          );
-          return;
-        }
-        if (result?.status === 'replaced') {
-          if (result.comment) {
-            onEditContent({
-              contentType: 'comment',
-              contentId: comment.id,
-              data: result.comment
-            });
-          }
-          setSponsorState('finished');
-          return;
-        }
-        if (sponsorState === 'checkingExisting') {
-          setSponsorState('finished');
-          return;
-        }
-        scheduleRevalidation();
-      } catch (error: any) {
-        if (canceled) return;
-        if (error?.status === 404) {
-          setSponsorState('finished');
-          return;
-        }
-        if (sponsorState === 'checkingExisting') {
-          setSponsorState('finished');
-          return;
-        }
-        scheduleRevalidation();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [comment.id, sponsorState, statusToken]);
+  const buttonIcon = isWaiting ? 'spinner' : 'bolt';
 
   if (!aiName) return null;
-
-  async function handleSponsorReply() {
-    if (disabled) return;
-    if (!userId) {
-      setMessage('Sign in to sponsor this reply.');
-      return;
-    }
-    setMessage('');
-    setSponsorState('sponsoring');
-    try {
-      const result = await sponsorAiEnergyCommentReply({
-        placeholderCommentId: comment.id
-      });
-      if (result?.aiUsagePolicy) {
-        onUpdateTodayStats({
-          newStats: {
-            aiUsagePolicy: result.aiUsagePolicy
-          }
-        });
-      }
-      if (result?.statusToken) {
-        setSponsorStatusToken(result.statusToken);
-      }
-      if (
-        result?.status === 'accepted' ||
-        result?.status === 'processing' ||
-        result?.status === 'completed'
-      ) {
-        setSponsorState('replying');
-        return;
-      }
-      if (result?.status === 'already_generated') {
-        setSponsorState('checkingExisting');
-        return;
-      }
-      setSponsorState('finished');
-    } catch (error: any) {
-      setSponsorState('idle');
-      setMessage(error?.message || 'Unable to sponsor this reply.');
-      if (error?.aiUsagePolicy) {
-        onUpdateTodayStats({
-          newStats: {
-            aiUsagePolicy: error.aiUsagePolicy
-          }
-        });
-      }
-    }
-  }
 
   return (
     <div
@@ -265,17 +80,10 @@ export default function AiEnergySponsorButton({
           size="sm"
           disabled={disabled}
           disabledOpacity={disabled ? 0.72 : undefined}
-          onClick={handleSponsorReply}
+          onClick={sponsor}
           color={themeName}
         >
-          <Icon
-            icon={buttonIcon}
-            pulse={
-              sponsorState === 'sponsoring' ||
-              sponsorState === 'replying' ||
-              sponsorState === 'checkingExisting'
-            }
-          />
+          <Icon icon={buttonIcon} pulse={isWaiting} />
           <span style={{ marginLeft: '0.6rem' }}>{buttonLabel}</span>
         </Button>
       </div>
