@@ -12,6 +12,7 @@ import {
 } from '~/helpers/stringHelpers';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import RichText from '~/components/Texts/RichText';
+import SharedPromptBlock from '~/components/SharedPromptBlock';
 import AiEnergySponsorButton, {
   shouldRenderAiEnergySponsorNotice
 } from '~/components/Comments/AiEnergySponsorButton';
@@ -504,25 +505,13 @@ export default function Content({
       case 'sharedTopic':
         return (
           <div style={{ width: '100%' }}>
-            {contentObj?.customInstructions && (
-              <div
-                style={{
-                  marginTop: '0.5rem',
-                  padding: '1rem',
-                  borderRadius,
-                  border: `1px solid ${Color.borderGray()}`,
-                  background: Color.wellGray()
-                }}
+            {contentObj?.customInstructions ? (
+              // The panel heading already carries the title, so the block runs
+              // label + instructions only.
+              <SharedPromptBlock
+                style={{ marginTop: '0.5rem' }}
+                themeName={contentObj?.uploader?.profileTheme}
               >
-                <div
-                  style={{
-                    fontWeight: 'bold',
-                    marginBottom: '0.5rem',
-                    color: Color.darkerGray()
-                  }}
-                >
-                  System Prompt:
-                </div>
                 <RichText
                   contentId={contentId}
                   contentType={contentType}
@@ -531,8 +520,8 @@ export default function Content({
                 >
                   {contentObj.customInstructions}
                 </RichText>
-              </div>
-            )}
+              </SharedPromptBlock>
+            ) : null}
           </div>
         );
       case 'dailyReflection':

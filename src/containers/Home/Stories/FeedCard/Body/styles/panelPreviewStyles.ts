@@ -208,6 +208,12 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview--size-build-comment {
     height: max(15.5rem, 155px);
   }
+  /* Prompt target: chip + title + instructions well. Must match
+     TARGET_HEIGHT_REM['shared-prompt'] in helpers/sizing.ts — the card frame
+     budgets this exact height. */
+  .home-feed-card__target-preview--size-shared-prompt {
+    height: max(16rem, 160px);
+  }
   .home-feed-card__target-preview--size-media-comment {
     height: max(20rem, 200px);
   }
@@ -245,6 +251,10 @@ export const panelPreviewStyles = `
     &.home-feed-card__body--tablet-media-attachment
       .home-feed-card__target-preview--size-build-comment {
       height: max(12rem, 120px);
+    }
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-shared-prompt {
+      height: max(15rem, 150px);
     }
     &.home-feed-card__body--tablet-media-attachment
       .home-feed-card__target-preview--size-media-comment {

@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import { LINK_PREVIEW_FALLBACK_IMAGE } from '~/components/LinkPreviewImage';
 import ProfilePic from '~/components/ProfilePic';
 import SecretComment from '~/components/SecretComment';
+import SharedPromptBlock from '~/components/SharedPromptBlock';
 import AiEnergySponsorButton, {
   getAiEnergyPlaceholderName,
   shouldRenderAiEnergySponsorNotice
@@ -795,31 +796,31 @@ export default function Body({
 
   function renderSharedTopicPreview() {
     return (
-      <div className="home-feed-card__shared-topic-preview">
-        <h3 className={primaryPreviewTextClass}>
-          {content?.title || content?.content || content?.topic}
-        </h3>
+      <SharedPromptBlock
+        className="home-feed-card__shared-topic-preview"
+        instructionsClassName="home-feed-card__system-prompt-box"
+        themeName={content?.uploader?.profileTheme || content?.profileTheme}
+        title={content?.title || content?.content || content?.topic}
+        variant="panel"
+      >
         {content?.customInstructions ? (
-          <div className="home-feed-card__system-prompt-box">
-            <b>System Prompt:</b>
-            <RichText
-              className={primaryPreviewTextClass}
-              contentId={contentId}
-              contentType={contentType}
-              hideDictation={isContentAIMessage}
-              isAIMessage={isContentAIMessage}
-              isPreview
-              lineHeight={homeFeedPreviewLineHeight}
-              maxLines={getSharedTopicPreviewMaxLines(resolvedSizing.main)}
-              section="content"
-              style={homeFeedPreviewRichTextStyle}
-              theme={theme}
-            >
-              {content.customInstructions}
-            </RichText>
-          </div>
+          <RichText
+            className={primaryPreviewTextClass}
+            contentId={contentId}
+            contentType={contentType}
+            hideDictation={isContentAIMessage}
+            isAIMessage={isContentAIMessage}
+            isPreview
+            lineHeight={homeFeedPreviewLineHeight}
+            maxLines={getSharedTopicPreviewMaxLines(resolvedSizing.main)}
+            section="content"
+            style={homeFeedPreviewRichTextStyle}
+            theme={theme}
+          >
+            {content.customInstructions}
+          </RichText>
         ) : null}
-      </div>
+      </SharedPromptBlock>
     );
   }
 

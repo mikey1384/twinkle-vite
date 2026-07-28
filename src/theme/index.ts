@@ -595,6 +595,20 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     rewardableRecommendation: { color, opacity: 0.1 },
     search: { color, shadow: pickColor({ gold: 'darkBrownOrange' }, '') },
     sectionPanel: { color },
+    // Accent for shared AI prompt surfaces (feed prompt cards, prompt embeds).
+    // The neutral themes get a colored stand-in instead of their own color:
+    // grey/black would put the surface back to the flat look this role exists
+    // to replace, and gold on white is unreadable.
+    sharedPrompt: {
+      color: pickColor(
+        {
+          black: 'darkOceanBlue',
+          vantaBlack: 'darkBlue',
+          gold: 'brownOrange'
+        },
+        color
+      )
+    },
     sectionPanelText: {
       color: pickColor({ gold: 'darkGold' }, color),
       shadow: pickColor({ gold: 'darkBrownOrange' }, '')

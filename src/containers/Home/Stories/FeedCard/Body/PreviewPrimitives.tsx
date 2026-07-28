@@ -71,6 +71,9 @@ export function MarkdownEmbedPreview({
         : '',
       internalLinkType === 'videos'
         ? 'home-feed-card__rich-embed-internal--video'
+        : '',
+      internalLinkType === 'shared-prompts'
+        ? 'home-feed-card__rich-embed-internal--shared-prompt'
         : ''
     ]
       .filter(Boolean)

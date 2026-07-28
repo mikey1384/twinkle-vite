@@ -5,6 +5,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
+import SharedPromptBlock from '~/components/SharedPromptBlock';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Content, User } from '~/types';
@@ -96,37 +97,19 @@ export default function TargetSharedTopicContent({
       </header>
       <div
         className={css`
-          padding: 0.5rem 1rem;
+          padding: 0.5rem 1rem 1rem;
         `}
       >
-        <h3
-          className={css`
-            margin: 0 0 0.5rem 0;
-            font-size: 1.7rem;
-            color: ${Color.darkerGray()};
-          `}
+        <SharedPromptBlock
+          themeName={uploader?.profileTheme}
+          title={sharedTopicContent.title || sharedTopicContent.content}
         >
-          {sharedTopicContent.title || sharedTopicContent.content}
-        </h3>
-        {sharedTopicContent.customInstructions && (
-          <div
-            className={css`
-              padding: 0.8rem;
-              border-radius: ${borderRadius};
-              border: 1px solid ${Color.borderGray()};
-              background: ${Color.wellGray()};
-              font-size: 1.4rem;
-            `}
-          >
-            <RichText
-              contentType="sharedTopic"
-              contentId={topicId}
-              maxLines={5}
-            >
+          {sharedTopicContent.customInstructions ? (
+            <RichText contentType="sharedTopic" contentId={topicId} maxLines={5}>
               {sharedTopicContent.customInstructions}
             </RichText>
-          </div>
-        )}
+          ) : null}
+        </SharedPromptBlock>
       </div>
     </div>
   );

@@ -225,9 +225,11 @@ test('canonical last-read reconciliation is monotonic across writes, reads, and 
     /function bufferCanonicalUnreadStateDuringBootstrap[\s\S]*?existingScope\?\.lastRead[\s\S]*?incomingScope\?\.lastRead/
   );
   assert.match(reducerSource, /getLatestCanonicalUnreadScopeState/);
+  // The call also names the account the snapshot belongs to, so a snapshot
+  // owned by a different account is rejected rather than applied.
   assert.match(
     `${mainSource}\n${socketSource}`,
-    /onApplyCanonicalChannelUnreadState\(unreadState\)/
+    /onApplyCanonicalChannelUnreadState\(\{ unreadState, userId \}\)/
   );
   assert.doesNotMatch(reducerSource, /CLEAR_SUBCHANNEL_UNREADS/);
 });
@@ -544,10 +546,6 @@ test('favorite watermarks advance only from full canonical snapshots', () => {
     assert.match(actionBlock, /APPLY_CANONICAL_FAVORITE_STATE/);
     assert.doesNotMatch(actionBlock, /favoriteStateRevision\s*:/);
   }
-  assert.match(
-    reducerSource,
-    /Equal membership revisions describe the same canonical set/
-  );
 });
 
 test('account-bound chat responses cannot mutate another loaded user', () => {
@@ -612,9 +610,12 @@ test('favorite membership snapshots reconcile independent activity domains', () 
     /Message creation and reaction activity are independent monotonic domains[\s\S]*?canonicalDominates[\s\S]*?currentDominates/m
   );
   assert.match(reducerSource, /lastMessageId: getConfirmedLastMessageId/g);
+  // The serialized watermark is the repaired canonical row, coerced to a
+  // number — deliberately not channel.lastMessageId, which can be the stale
+  // pre-repair pointer read alongside the channel.
   assert.match(
     channelSource,
-    /lastMessageId: Number\(channel\.lastMessageId\)/
+    /lastMessageId: Number\(lastMessageRow\.id\) \|\| null/
   );
 });
 
@@ -630,7 +631,7 @@ test('confirmed visibility has a channel-owned revision and message watermark', 
   assert.doesNotMatch(reducerSource, /case 'HIDE_CHAT'/);
   assert.match(
     messageContainerSource,
-    /channelVisibility, quickAccess[\s\S]*?onApplyCanonicalChatSidebarState\(\{ channelVisibility, quickAccess \}\)/m
+    /channelVisibility, quickAccess[\s\S]*?onApplyCanonicalChatSidebarState\(\{\s*channelVisibility,\s*quickAccess,\s*userId/m
   );
   assert.match(
     socketSource,

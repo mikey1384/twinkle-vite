@@ -171,6 +171,11 @@ export const mobilePreviewStyles = `
     .home-feed-card__target-preview--size-build-comment {
       height: max(12rem, 120px);
     }
+    /* Mobile counterpart of the prompt target height; must match
+       TARGET_HEIGHT_REM['shared-prompt']. */
+    .home-feed-card__target-preview--size-shared-prompt {
+      height: max(15rem, 150px);
+    }
     .home-feed-card__target-preview--size-media-comment {
       height: max(18rem, 180px);
     }

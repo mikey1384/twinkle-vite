@@ -5,6 +5,7 @@ import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbe
 import Icon from '~/components/Icon';
 import LinkPreviewImage from '~/components/LinkPreviewImage';
 import Loading from '~/components/Loading';
+import SharedPromptBlock from '~/components/SharedPromptBlock';
 import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
@@ -450,14 +451,13 @@ export default function TargetPreview({
   function renderTargetSharedTopicPreview(sharedTopic: any) {
     return (
       <div className="home-feed-card__target-content home-feed-card__target-shared-topic">
-        <div className="home-feed-card__target-copy">
-          <span className="home-feed-card__target-chip shared-topic">
-            <Icon icon="comment-alt" />
-            System Prompt
-          </span>
-          <h4>
-            {sharedTopic?.title || sharedTopic?.content || 'Shared Prompt'}
-          </h4>
+        <SharedPromptBlock
+          themeName={
+            sharedTopic?.uploader?.profileTheme || sharedTopic?.profileTheme
+          }
+          title={sharedTopic?.title || sharedTopic?.content || 'Shared Prompt'}
+          variant="panel"
+        >
           {sharedTopic?.customInstructions ? (
             <RichText
               contentId={Number(sharedTopic.id || 0)}
@@ -470,7 +470,7 @@ export default function TargetPreview({
               {sharedTopic.customInstructions}
             </RichText>
           ) : null}
-        </div>
+        </SharedPromptBlock>
       </div>
     );
   }

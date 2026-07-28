@@ -8,6 +8,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
+import BranchOwnerAttentionNotice from '../BranchOwnerAttentionNotice';
 import ContributionDetail from './ContributionDetail';
 import Forum from './Forum';
 import OwnerContributionsPanel from './OwnerContributionsPanel';
@@ -1007,8 +1008,28 @@ export default function CollaborationPanel({
     return (
       <div className={embeddedBodyStackClass}>
         {renderContributionDetail(canCompleteConflictMerge)}
+        {renderOwnerAttentionNotice()}
         {renderForum()}
       </div>
+    );
+  }
+
+  // A sibling of the detail panel, not a child: that panel only renders when
+  // the branch needs attention (drift, conflicts, errors), and this is exactly
+  // what a contributor wants to see on a perfectly healthy branch.
+  function renderOwnerAttentionNotice() {
+    if (!isContributionFork) return null;
+    const isBranchContributor =
+      Number(build.contributionContributorId || 0) === Number(userId || 0);
+    const isRootOwner =
+      Number(build.rootBuildUserId || 0) === Number(userId || 0);
+    if (!isBranchContributor || isRootOwner) return null;
+    return (
+      <BranchOwnerAttentionNotice
+        ownerLastOpenedAt={Number(build.ownerLastOpenedBranchAt || 0)}
+        branchUpdatedAt={Number(build.updatedAt || 0)}
+        ownerUsername={build.rootBuildUsername}
+      />
     );
   }
 

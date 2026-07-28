@@ -230,6 +230,13 @@ export const mainPreviewStyles = `
       border: 0;
       background: transparent;
     }
+    /* The prompt tile hugs its content, so the slot hugs with it and centers in
+       the leftover space instead of leaving a gap underneath. The slot keeps
+       its own frame — see the subject-embed rule below. */
+    .home-feed-card__rich-embed-internal--shared-prompt {
+      align-items: center;
+      justify-content: center;
+    }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build
       > * {
       height: auto;
@@ -650,6 +657,14 @@ export const mainPreviewStyles = `
     border: 0;
     background: transparent;
   }
+  /* Prompt embeds keep the slot's frame — the same one an image, comment or
+     video embed gets here — and the block inside drops its own so there is a
+     single border. The slot hugs the tile and the leftover height splits above
+     and below it. */
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--shared-prompt {
+    flex: 0 0 auto;
+    margin-block: auto;
+  }
   .home-feed-card__subject-embed-preview > * {
     box-sizing: border-box;
     width: 100%;
@@ -756,6 +771,12 @@ export const mainPreviewStyles = `
   }
   .home-feed-card__subject-embed-preview p {
     font-size: max(1.12rem, 11.2px);
+  }
+  /* ...but the prompt tile carries its own type scale, so the slot must not
+     shrink its instructions below the size the block set. */
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--shared-prompt
+    p {
+    font-size: inherit;
   }
   .home-feed-card__subject-embed-preview .compact-main-content-embed__media {
     height: 100%;
@@ -1008,13 +1029,19 @@ export const mainPreviewStyles = `
     display: flex;
     flex-direction: column;
   }
-  .home-feed-card__question-box,
-  .home-feed-card__system-prompt-box {
+  /* Wins over the card's blanket mobile h3 rule so the prompt title keeps its
+     place above the instructions text at every breakpoint. */
+  .home-feed-card__shared-topic-preview h3 {
+    font-size: var(--home-feed-content-font-size);
+    line-height: 1.15;
+  }
+  .home-feed-card__question-box {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
     min-height: 0;
+    flex-shrink: 0;
     padding: 0.85rem;
     border: 1px solid ${Color.borderGray()};
     border-radius: 0.8rem;
@@ -1024,14 +1051,14 @@ export const mainPreviewStyles = `
     line-height: 1.32;
     overflow: hidden;
   }
-  .home-feed-card__question-box {
-    flex-shrink: 0;
-  }
+  /* The prompt well's own look (frame, tint, ellipsis fade) belongs to
+     SharedPromptBlock so every prompt surface stays identical; the feed only
+     contributes the panel-fitting height. */
   .home-feed-card__system-prompt-box {
     flex: 1 1 auto;
+    font-size: var(--home-feed-question-font-size);
   }
-  .home-feed-card__question-box > div,
-  .home-feed-card__system-prompt-box > div {
+  .home-feed-card__question-box > div {
     --rich-text-preview-ellipsis-bg: ${Color.wellGray()};
     min-height: 0;
   }

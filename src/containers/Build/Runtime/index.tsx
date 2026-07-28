@@ -19,6 +19,7 @@ import ShareButton from '~/components/Buttons/ShareButton';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
 import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
+import { getBuildFavoriteTargetId } from '~/helpers/buildProjectHelpers';
 import {
   BUILD_RUNTIME_SOURCE_QUERY_PARAM,
   getBuildRuntimeSourceFromSearch,
@@ -1008,9 +1009,12 @@ export default function BuildRuntime({
     isBuildOwner &&
     build.releaseStatus?.hasUnpublishedChanges
   );
+  // Favorites belong to the project, not the branch: on a branch preview this
+  // is the parent project's id, so the button reflects and toggles the project.
+  const runtimeFavoriteBuildId = build ? getBuildFavoriteTargetId(build) : 0;
   const showRuntimeFavoriteButton = Boolean(
-    build?.id &&
-      (build.isPublic || isBuildOwner || collaborationStatus === 'accepted')
+    runtimeFavoriteBuildId &&
+      (build?.isPublic || isBuildOwner || collaborationStatus === 'accepted')
   );
   const showRuntimeActions =
     showWorkspaceButton ||
@@ -2007,7 +2011,7 @@ export default function BuildRuntime({
                   ) : null}
                   {showRuntimeFavoriteButton ? (
                     <FavoriteButton
-                      buildId={Number(build.id)}
+                      buildId={runtimeFavoriteBuildId}
                       favorited={Boolean(build.isFavorited)}
                       label={
                         compactActions
@@ -2018,8 +2022,11 @@ export default function BuildRuntime({
                       }
                       size={compactActions ? 'md' : 'pill'}
                       onChange={({ buildId, favoritedAt, isFavorited }) => {
+                        // On a branch this is the parent project's id, so match
+                        // on the favorite target rather than the loaded build.
                         setBuild((current) =>
-                          current && Number(current.id) === buildId
+                          current &&
+                          getBuildFavoriteTargetId(current) === buildId
                             ? {
                                 ...current,
                                 favoritedAt,

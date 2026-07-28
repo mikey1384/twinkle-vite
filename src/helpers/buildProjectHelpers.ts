@@ -32,6 +32,22 @@ export function normalizeBuildCollaborationMode(
   return value === 'open_source' ? value : 'private';
 }
 
+// Favorites target the canonical project. A branch is a working copy and is
+// not favoritable on its own, so its favorite state and toggles belong to the
+// parent. The server sends favoriteBuildId; contributionRootBuildId is the
+// fallback for payloads serialized without it.
+export function getBuildFavoriteTargetId(build: {
+  id?: number | string;
+  favoriteBuildId?: number | null;
+  contributionRootBuildId?: number | null;
+}) {
+  const favoriteBuildId = Math.floor(Number(build?.favoriteBuildId) || 0);
+  if (favoriteBuildId > 0) return favoriteBuildId;
+  const rootBuildId = Math.floor(Number(build?.contributionRootBuildId) || 0);
+  if (rootBuildId > 0) return rootBuildId;
+  return Math.floor(Number(build?.id) || 0);
+}
+
 export function formatBuildCollaboratorCount(count: number) {
   return count === 1
     ? '1 team member'

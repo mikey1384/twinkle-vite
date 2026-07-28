@@ -400,7 +400,7 @@ export const cardLevelHash: {
   },
   6: {
     color: 'midnightBlack',
-    label: 'midnightBlack'
+    label: 'black'
   }
 };
 export const cardProps: {

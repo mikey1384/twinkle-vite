@@ -63,6 +63,7 @@ export type FeedCardTargetSize =
   | 'compact'
   | 'fallback'
   | 'media-comment'
+  | 'shared-prompt'
   | 'standard'
   | 'subject-embed';
 export type FeedCardLayoutAxis = 'desktop' | 'mobile';
@@ -214,6 +215,9 @@ const TARGET_HEIGHT_REM: Record<
   compact: { desktop: 8.5, mobile: 8.5 },
   fallback: { desktop: 13, mobile: 12 },
   'media-comment': { desktop: 20, mobile: 18 },
+  // The prompt target stacks a chip, a title and the instructions well, so it
+  // needs more room than a plain standard target to show two lines of prompt.
+  'shared-prompt': { desktop: 16, mobile: 15 },
   standard: { desktop: 13, mobile: 12 },
   // Subject target whose description embed got promoted into the embed slot
   // (profile card, image, YouTube). Like the comment embed allowance, the
@@ -816,7 +820,9 @@ function getTargetPanelSizing({
     return buildTargetSizing(
       normalizedRootType === 'subject'
         ? getSubjectTargetSize(rootObj)
-        : 'standard'
+        : normalizedRootType === 'sharedTopic'
+          ? 'shared-prompt'
+          : 'standard'
     );
   }
 

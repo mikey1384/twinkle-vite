@@ -31,6 +31,11 @@ export interface BuildLike {
   username?: string;
   profilePicUrl?: string | null;
   rootBuildUserId?: number | null;
+  rootBuildUsername?: string | null;
+  // When the project owner last opened this branch, and when it last changed —
+  // together they say whether the owner has seen the contributor's latest work.
+  ownerLastOpenedBranchAt?: number | null;
+  updatedAt?: number | null;
   code?: string | null;
   projectFiles?: BuildProjectFile[] | null;
   pendingCollaborationRequestCount?: number | null;

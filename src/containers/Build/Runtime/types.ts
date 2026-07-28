@@ -22,6 +22,8 @@ export interface RuntimeBuild {
   contributionAccess?: 'anyone' | 'invite_only';
   hasActiveContributionInvite?: boolean;
   isFavorited?: boolean;
+  // The build a favorite acts on: itself for a project, the parent for a branch.
+  favoriteBuildId?: number | null;
   favoritedAt?: number | null;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   projectFiles?: Array<{

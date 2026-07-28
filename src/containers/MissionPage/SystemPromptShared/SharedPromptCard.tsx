@@ -4,10 +4,11 @@ import CloneButtons from '~/components/Buttons/CloneButtons';
 import Icon from '~/components/Icon';
 import ShareButton from '~/components/Buttons/ShareButton';
 import Input from '~/components/Texts/Input';
+import SharedPromptBlock from '~/components/SharedPromptBlock';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import { useNavigate } from 'react-router-dom';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useLazyLoad } from '~/helpers/hooks';
@@ -30,6 +31,7 @@ interface SharedTopic {
   username: string;
   timeStamp?: number;
   sharedAt?: number;
+  profileTheme?: string;
   customInstructions?: string;
   settings?: any;
   cloneCount?: number;
@@ -106,188 +108,142 @@ function SharedPromptCard({
         <div style={{ width: '100%', height: componentHeight }} />
       ) : (
         <div ref={PanelRef}>
-          <div>
-            <h3
-              className={titleClass}
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/shared-prompts/${topic.id}`);
-              }}
-            >
-              {topic.content}
-            </h3>
-            <div className={metaRowClass}>
-              <UsernameText
-                user={{ id: topic.userId, username: topic.username }}
+          <SharedPromptBlock
+            footer={renderActions()}
+            headerRight={
+              <ShareButton
+                variant="compact"
+                linkPath={`/shared-prompts/${topic.id}`}
               />
-              {topic.timeStamp && (
-                <small>{moment.unix(topic.timeStamp).fromNow()}</small>
-              )}
-              {isOwnTopic && (
-                <span className={ownBadgeClass}>Your prompt</span>
-              )}
-              <div className={statsRowClass}>
-                <div className={statPillClass}>
-                  <span className={boldClass}>{topic.cloneCount || 0}</span>
-                  {Number(topic.cloneCount) === 1 ? 'clone' : 'clones'}
-                </div>
-                <div className={statPillClass}>
-                  <span className={boldClass}>{topic.messageCount || 0}</span>
-                  {Number(topic.messageCount) === 1 ? 'message' : 'messages'}
-                </div>
-                <div
-                  className={statPillClass}
-                  style={{ cursor: 'pointer' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/shared-prompts/${topic.id}`);
-                  }}
-                >
-                  <Icon icon="comment" />
-                  <span className={boldClass}>{topic.numComments || 0}</span>
-                  {Number(topic.numComments) === 1 ? 'comment' : 'comments'}
-                </div>
-                <ShareButton
-                  variant="compact"
-                  linkPath={`/shared-prompts/${topic.id}`}
+            }
+            meta={
+              <>
+                <UsernameText
+                  user={{ id: topic.userId, username: topic.username }}
                 />
-              </div>
-            </div>
-          </div>
-          {instructions && (
-            <div className={instructionsClass}>
+                {topic.timeStamp ? (
+                  <small>{moment.unix(topic.timeStamp).fromNow()}</small>
+                ) : null}
+                {isOwnTopic ? (
+                  <span className={ownBadgeClass}>Your prompt</span>
+                ) : null}
+              </>
+            }
+            stats={[
+              {
+                label: Number(topic.cloneCount) === 1 ? 'clone' : 'clones',
+                value: topic.cloneCount || 0
+              },
+              {
+                label: Number(topic.messageCount) === 1 ? 'message' : 'messages',
+                value: topic.messageCount || 0
+              },
+              {
+                icon: 'comment',
+                label: Number(topic.numComments) === 1 ? 'comment' : 'comments',
+                onClick: () => navigate(`/shared-prompts/${topic.id}`),
+                value: topic.numComments || 0
+              }
+            ]}
+            themeName={topic.profileTheme}
+            title={topic.content}
+            onTitleClick={() => navigate(`/shared-prompts/${topic.id}`)}
+          >
+            {instructions ? (
               <RichText
                 contentType="sharedTopic"
                 contentId={topic.id}
                 maxLines={8}
                 isShowMoreButtonCentered
+                theme={topic.profileTheme}
               >
                 {instructions}
               </RichText>
-            </div>
-          )}
-          <CloneButtons
-            sharedTopicId={topic.subjectId || topic.id}
-            sharedTopicTitle={topic.content}
-            uploaderId={topic.userId}
-            myClones={topic.myClones}
-            onCloneSuccess={onCloneSuccess}
-          />
-          {userId && (
-            <div
-              className={css`
-                display: flex;
-                gap: 0.5rem;
-                margin-top: 0.5rem;
-              `}
-            >
-              <Input
-                placeholder="Write a comment..."
-                value={commentText}
-                onChange={onCommentTextChange}
-                onKeyUp={(event: React.KeyboardEvent) => {
-                  if (event.key === ' ') {
-                    const converted = addEmoji(commentText);
-                    if (converted !== commentText) {
-                      onCommentTextChange(converted);
-                    }
-                  }
-                }}
-                onKeyDown={(event: React.KeyboardEvent) => {
-                  if (event.key === 'Enter') {
-                    onCommentSubmit();
-                  }
-                }}
-                style={{ flex: 1 }}
-              />
-              <Button
-                color="logoBlue"
-                variant="soft"
-                tone="raised"
-                disabled={stringIsEmpty(commentText) || commentSubmitting}
-                onClick={onCommentSubmit}
-              >
-                {commentSubmitting ? (
-                  <Icon icon="spinner" pulse />
-                ) : (
-                  <Icon icon="paper-plane" />
-                )}
-              </Button>
-            </div>
-          )}
+            ) : null}
+          </SharedPromptBlock>
         </div>
       )}
     </article>
   );
+
+  function renderActions() {
+    return (
+      <>
+        <CloneButtons
+          sharedTopicId={topic.subjectId || topic.id}
+          sharedTopicTitle={topic.content}
+          uploaderId={topic.userId}
+          myClones={topic.myClones}
+          onCloneSuccess={onCloneSuccess}
+        />
+        {userId ? (
+          <div className={commentRowClass}>
+            <Input
+              placeholder="Write a comment..."
+              value={commentText}
+              onChange={onCommentTextChange}
+              onKeyUp={(event: React.KeyboardEvent) => {
+                if (event.key === ' ') {
+                  const converted = addEmoji(commentText);
+                  if (converted !== commentText) {
+                    onCommentTextChange(converted);
+                  }
+                }
+              }}
+              onKeyDown={(event: React.KeyboardEvent) => {
+                if (event.key === 'Enter') {
+                  onCommentSubmit();
+                }
+              }}
+              style={{ flex: 1 }}
+            />
+            <Button
+              color="logoBlue"
+              variant="soft"
+              tone="raised"
+              disabled={stringIsEmpty(commentText) || commentSubmitting}
+              onClick={onCommentSubmit}
+            >
+              {commentSubmitting ? (
+                <Icon icon="spinner" pulse />
+              ) : (
+                <Icon icon="paper-plane" />
+              )}
+            </Button>
+          </div>
+        ) : null}
+      </>
+    );
+  }
 }
 
 export default memo(SharedPromptCard);
 
+// Placement only — the frame and typography belong to SharedPromptBlock.
 const cardClass = css`
   width: 100%;
-  background: #fff;
-  border-radius: ${borderRadius};
-  padding: 1rem 1rem 1.3rem;
-  border: 1px solid var(--ui-border);
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  transition: border-color 0.18s ease;
-  &:hover {
-    border-color: var(--ui-border-strong);
-  }
+
   @media (max-width: ${mobileMaxWidth}) {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-    border-top: 0;
-    &:last-child {
-      border-bottom: 0;
+    .shared-prompt-block {
+      border-radius: 0;
+      border-left: 0;
+      border-right: 0;
     }
   }
 `;
 
-const statsRowClass = css`
+const commentRowClass = css`
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  width: 100%;
   gap: 0.5rem;
-  font-size: 1.1rem;
-  color: ${Color.darkerGray()};
+  margin-top: 0.5rem;
 `;
 
-const statPillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  background: ${Color.highlightGray(0.2)};
-  border: 1px solid var(--ui-border);
-  font-size: 1.1rem;
-  font-weight: 500;
-`;
 
-const titleClass = css`
-  margin: 0;
-  font-size: 1.8rem;
-  color: ${Color.logoBlue()};
-  font-weight: 700;
-  cursor: pointer;
-  &:hover {
-    text-decoration: underline;
-  }
-`;
 
-const metaRowClass = css`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  color: ${Color.darkerGray()};
-  font-size: 1.3rem;
-  margin-top: 0.3rem;
-`;
+
 
 const ownBadgeClass = css`
   padding: 0.2rem 0.5rem;
@@ -299,16 +255,4 @@ const ownBadgeClass = css`
   font-weight: 700;
 `;
 
-const instructionsClass = css`
-  margin: 0.8rem 0;
-  padding: 1rem;
-  border-radius: ${borderRadius};
-  border: 1px solid var(--ui-border);
-  background: #fff;
-  font-size: 1.3rem;
-  line-height: 1.6;
-`;
 
-const boldClass = css`
-  font-weight: 700;
-`;

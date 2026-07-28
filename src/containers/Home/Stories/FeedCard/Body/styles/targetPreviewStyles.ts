@@ -155,8 +155,13 @@ export const targetPreviewStyles = `
       line-height: 1.22;
     }
     .home-feed-card__target-shared-topic {
-      border-left: 0.35rem solid var(--home-feed-target-accent, ${Color.logoBlue()});
+      /* No accent spine here: SharedPromptBlock already carries the accent in
+         its chip and instructions well, and the spine read as a stray bar. */
+      border-left: 0;
       background: #fff;
+      /* SharedPromptBlock fills this panel and brings its own padding. */
+      align-items: stretch;
+      padding: 0;
     }
     .home-feed-card__target-daily-goals {
       border-left: 0;
