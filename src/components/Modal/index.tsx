@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
 import { keyframes } from '@emotion/react';
 import { Color } from '~/constants/css';
+import { APP_SHELL_KEYBOARD_INSET_STYLE } from '~/constants/appShell';
 import { isMobile, isTablet } from '~/helpers';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -414,7 +415,13 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
           translate="no"
           className={`${css`
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            /* Fixed positioning is relative to the LAYOUT viewport, which the
+               on-screen keyboard does not shrink; without this the backdrop —
+               and the inputs it centers — extend behind the keyboard. */
+            bottom: ${APP_SHELL_KEYBOARD_INSET_STYLE};
             z-index: ${zIndex};
             display: flex;
             width: 100%;

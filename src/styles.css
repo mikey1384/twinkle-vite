@@ -34,11 +34,23 @@ body {
   --reward-status-bg: rgba(5, 75, 160, 0.5);
   --reward-status-gradient: rgba(205, 210, 255, 0.1);
   --perfect-star-color: rgba(255, 215, 0, 1);
+  /* Height the on-screen keyboard steals from the bottom of the viewport.
+     Maintained by useMobileKeyboardInset (App); 0 when no keyboard is up. */
+  --app-keyboard-inset: 0px;
   /* Mobile navigation bar height variable */
   --mobile-nav-height: 7rem;
-  /* Total mobile nav footprint including safe area */
-  --mobile-nav-total-height: calc(
+  /* Raw footprint of the fixed bottom nav, including the safe area. Layers that
+     are themselves position: fixed measure against this, not against the
+     keyboard-netted reserve below. */
+  --mobile-nav-footprint: calc(
     var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px)
+  );
+  /* Space a surface INSIDE the app shell must reserve for the bottom nav. The
+     shell has already given up the keyboard inset and the keyboard covers the
+     nav, so net it out here or the two reserves stack. */
+  --mobile-nav-total-height: max(
+    0px,
+    var(--mobile-nav-footprint) - var(--app-keyboard-inset, 0px)
   );
 
   --chat-bg: rgba(229, 239, 255, 0.1);

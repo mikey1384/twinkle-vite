@@ -93,6 +93,18 @@ export function lockAppShellScrollSurface() {
   }
 
   function runScrollReset() {
+    // The window listener is capture-phase, so it also sees scroll events from
+    // inner scroll containers (a chat transcript, a forum body) that the lock
+    // has no business touching. Those events leave the locked surfaces at
+    // origin, so the whole reset — including the synthetic scroll dispatches
+    // and the anchor-restore reset — is dead work on every swipe frame. Only
+    // act when a locked surface actually drifted.
+    if (
+      isAtScrollOrigin(appElement) &&
+      isAtScrollOrigin(document.scrollingElement || document.documentElement)
+    ) {
+      return;
+    }
     resettingScroll = true;
     try {
       resetAppShellScroll();
@@ -100,6 +112,11 @@ export function lockAppShellScrollSurface() {
       resettingScroll = false;
     }
   }
+}
+
+function isAtScrollOrigin(element: Element | null) {
+  if (!element) return true;
+  return !element.scrollTop && !element.scrollLeft;
 }
 
 function snapshotScrollLockStyle(

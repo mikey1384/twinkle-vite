@@ -23,7 +23,10 @@ import {
   Route
 } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
+import {
+  APP_SHELL_HEADER_OFFSET_STYLE,
+  APP_SHELL_KEYBOARD_INSET_STYLE
+} from '~/constants/appShell';
 import {
   localStorageKeys,
   ZERO_TWINKLE_ID,
@@ -74,6 +77,7 @@ import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import useOrientationReflow from './hooks/useOrientationReflow';
 import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
+import useMobileKeyboardInset from './hooks/useMobileKeyboardInset';
 import { NavigationRouteReadyObserver } from './navigationFeedback';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -539,6 +543,7 @@ export default function App() {
     headerVisible: !suppressHeader,
     routeKey: location.pathname
   });
+  useMobileKeyboardInset();
 
   useEffect(() => {
     if (usingBuildAppRuntime) {
@@ -758,15 +763,18 @@ export default function App() {
       componentPath="App/index"
       className={css`
         ${usingChat ? 'border-top: 1px solid transparent;' : ''}
+        /* The keyboard inset keeps the shell inside the VISUAL viewport, so
+           bottom-anchored composers stay above the on-screen keyboard instead
+           of laying out behind it (see useMobileKeyboardInset). */
         height: ${
           suppressHeader
-            ? '100%'
-            : `calc(100% - ${APP_SHELL_HEADER_OFFSET_STYLE})`
+            ? `calc(100% - ${APP_SHELL_KEYBOARD_INSET_STYLE})`
+            : `calc(100% - ${APP_SHELL_HEADER_OFFSET_STYLE} - ${APP_SHELL_KEYBOARD_INSET_STYLE})`
         };
         width: 100%;
         display: flow-root;
         @media (max-width: ${mobileMaxWidth}) {
-          height: 100%;
+          height: calc(100% - ${APP_SHELL_KEYBOARD_INSET_STYLE});
         }
       `}
     >

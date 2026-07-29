@@ -1,15 +1,13 @@
 import { useLayoutEffect } from 'react';
 import {
   APP_SHELL_BOTTOM_OFFSET_VAR,
+  APP_SHELL_FIXED_BOTTOM_OFFSET_STYLE,
   APP_SHELL_HEADER_OFFSET_FALLBACK,
   APP_SHELL_HEADER_SELECTOR,
+  APP_SHELL_KEYBOARD_INSET_STYLE,
   APP_SHELL_TOP_OFFSET_VAR
 } from '~/constants/appShell';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
-
-// Height of the fixed mobile bottom nav (matches the Header's mobile height).
-const MOBILE_NAV_RESERVE =
-  'calc(var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px))';
 
 export default function useAppShellHeaderOffset({
   headerVisible,
@@ -69,7 +67,13 @@ export default function useAppShellHeaderOffset({
     }
 
     function setBottomOffset() {
-      const offset = shouldReserveMobileNav() ? MOBILE_NAV_RESERVE : '0px';
+      // The runtime overlay is position: fixed, so it measures against the
+      // LAYOUT viewport and the app shell's keyboard shrink does not constrain
+      // it — it has to clear the keyboard itself. Even with the nav hidden it
+      // still must, hence the keyboard inset rather than a flat 0.
+      const offset = shouldReserveMobileNav()
+        ? APP_SHELL_FIXED_BOTTOM_OFFSET_STYLE
+        : APP_SHELL_KEYBOARD_INSET_STYLE;
       if (
         root.style.getPropertyValue(APP_SHELL_BOTTOM_OFFSET_VAR).trim() ===
         offset

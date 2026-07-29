@@ -18,7 +18,6 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ShareButton from '~/components/Buttons/ShareButton';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
-import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
 import { getBuildFavoriteTargetId } from '~/helpers/buildProjectHelpers';
 import {
   BUILD_RUNTIME_SOURCE_QUERY_PARAM,
@@ -799,10 +798,6 @@ export default function BuildRuntime({
     (v) => v.user.state.myState.buildHeaderCollapsed
   );
   const [headerCollapsePending, setHeaderCollapsePending] = useState(false);
-  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
-  const communityFundsLoaded = useKeyContext(
-    (v) => v.myState.communityFundsLoaded
-  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
@@ -1040,22 +1035,6 @@ export default function BuildRuntime({
     1,
     Number(aiUsagePolicy?.energySegments || 5)
   );
-  const energyIsEmpty =
-    !!aiUsagePolicy && Number(aiUsagePolicy.energyRemaining || 0) <= 0;
-  const communityChargeAvailable = isCommunityFundRechargeAvailable({
-    aiUsagePolicy,
-    communityFunds,
-    communityFundsKnown: communityFundsLoaded
-  });
-  const energyChargeAttentionKey = aiUsagePolicy
-    ? [
-        'runtime-app',
-        aiUsagePolicy.dayIndex || 'unknown',
-        energyIsEmpty ? 'empty' : 'available',
-        communityChargeAvailable ? 'free' : 'paid',
-        aiUsagePolicy.resetCost || 0
-      ].join(':')
-    : '';
   const buildAcceptsStandaloneForks =
     build?.collaborationMode === 'open_source';
   const isBuildOwner =
@@ -2052,6 +2031,9 @@ export default function BuildRuntime({
                   <Icon icon="angles-up" />
                 </button>
               </div>
+              {/* Status readout only: an app being played may never touch AI,
+                  so the toolbar never pushes a Charge CTA here. Tapping the
+                  meter still opens the dashboard, where charging lives. */}
               {showAiEnergy && (
                 <div className={headerEnergySlotClass}>
                   <AiEnergyCard
@@ -2061,15 +2043,6 @@ export default function BuildRuntime({
                     energySegments={energySegments}
                     portaledUiActive={runtimeIsActive}
                     overflowed={aiUsagePolicy.lastUsageOverflowed}
-                    resetNeeded={energyIsEmpty}
-                    resetCost={aiUsagePolicy.resetCost || 0}
-                    resetPurchaseNumber={
-                      typeof aiUsagePolicy.resetPurchasesToday === 'number'
-                        ? aiUsagePolicy.resetPurchasesToday + 1
-                        : undefined
-                    }
-                    communityFundsEligible={communityChargeAvailable}
-                    chargeCtaAttentionKey={energyChargeAttentionKey}
                   />
                 </div>
               )}

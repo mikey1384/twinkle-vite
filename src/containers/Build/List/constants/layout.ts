@@ -13,4 +13,4 @@ export const buildActivityRailWidth = '30rem';
 export const buildActivityCacheFreshMs = 60 * 1000;
 export const buildPageTopGap = '2rem';
 export const mobileBottomNavClearance =
-  'calc(var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px) + 2rem)';
+  'calc(var(--mobile-nav-total-height) + 2rem)';

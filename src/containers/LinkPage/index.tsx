@@ -753,9 +753,7 @@ export default function LinkPage() {
           display: none;
           @media (max-width: ${mobileMaxWidth}) {
             display: block;
-            height: calc(
-              var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px)
-            );
+            height: var(--mobile-nav-total-height);
           }
         `}
       />
