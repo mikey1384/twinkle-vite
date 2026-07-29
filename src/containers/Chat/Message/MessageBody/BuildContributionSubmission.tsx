@@ -8,12 +8,9 @@ import { Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useChatContext } from '~/contexts';
 import { isCachedCardStateFresher } from '~/helpers/buildCardState';
+import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 
-type BuildContributionSubmissionStatus =
-  | 'open'
-  | 'merging'
-  | 'merged'
-  | 'gone';
+type BuildContributionSubmissionStatus = 'open' | 'merging' | 'merged' | 'gone';
 
 type ChangedFileStatus = 'added' | 'updated' | 'deleted';
 
@@ -120,7 +117,10 @@ export default function BuildContributionSubmission({
       title={title}
       chips={
         <>
-          <BuildMessageCardChip icon="code-branch" themeName={sender.profileTheme}>
+          <BuildMessageCardChip
+            icon="code-branch"
+            themeName={sender.profileTheme}
+          >
             {branchLabel}
           </BuildMessageCardChip>
           {changedFiles.length > 0 ? (
@@ -303,13 +303,18 @@ export default function BuildContributionSubmission({
   );
 
   function handleOpenBranch() {
-    // The branch-number URL is what the editor routes on, but a payload written
-    // before the branch had a number would build `/branches/` and land nowhere.
-    const branchNumber = Math.floor(Number(payload?.branchNumber) || 0);
+    // Built by the shared helper, never by hand: the client route is
+    // `/build/:buildId/:branchNumber`, while the API's branch route is
+    // `/:buildId/branches/:branchNumber`, and hand-writing the link here once
+    // borrowed the API shape and sent the owner to a path that matches no route.
+    // The helper also already falls back to the branch build's own page when the
+    // payload predates branch numbering.
     navigate(
-      branchNumber > 0
-        ? `/build/${rootBuildId}/branches/${branchNumber}`
-        : `/build/${branchBuildId}`
+      getBuildWorkspacePath({
+        id: branchBuildId,
+        contributionRootBuildId: rootBuildId,
+        contributionBranchNumber: payload?.branchNumber
+      })
     );
   }
 
@@ -402,9 +407,7 @@ export default function BuildContributionSubmission({
       handleOpenMergePanel();
       return;
     }
-    setActionError(
-      responseData?.error || error?.message || fallbackMessage
-    );
+    setActionError(responseData?.error || error?.message || fallbackMessage);
   }
 }
 
@@ -412,9 +415,7 @@ export default function BuildContributionSubmission({
 // opposed to the message being delivered. Hash-based, so updating from Main
 // does not read as "they looked again".
 function renderOwnerLookSignal(payload: BuildContributionSubmissionPayload) {
-  const ownerLastOpenedBranchAt = Number(
-    payload?.ownerLastOpenedBranchAt || 0
-  );
+  const ownerLastOpenedBranchAt = Number(payload?.ownerLastOpenedBranchAt || 0);
   if (!ownerLastOpenedBranchAt) {
     return (
       <>
@@ -486,9 +487,6 @@ function getFileStatusColor(status?: ChangedFileStatus) {
   if (status === 'deleted') return Color.rose();
   return Color.darkGray();
 }
-
-
-
 
 const noteClass = css`
   border-left: 4px solid ${Color.logoBlue(0.55)};
@@ -581,7 +579,6 @@ const errorClass = css`
   font-weight: 700;
   line-height: 1.4;
 `;
-
 
 const confirmCopyClass = css`
   color: ${Color.black()};

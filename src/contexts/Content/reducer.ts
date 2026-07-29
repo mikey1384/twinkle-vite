@@ -7,6 +7,228 @@ import {
   upsertLiveComments
 } from '~/helpers/liveComments';
 
+type RewardListUpdater = (rewards: Reward[] | undefined) => Reward[];
+
+function rewardTargetMatches({
+  candidateId,
+  candidateType,
+  contentId,
+  contentType
+}: {
+  candidateId: unknown;
+  candidateType: unknown;
+  contentId: number;
+  contentType: string;
+}) {
+  return (
+    Number(candidateId) === Number(contentId) && candidateType === contentType
+  );
+}
+
+function reconcileCommentRewards({
+  comment,
+  contentId,
+  contentType,
+  updateRewards
+}: {
+  comment: any;
+  contentId: number;
+  contentType: string;
+  updateRewards: RewardListUpdater;
+}): any {
+  if (!comment) return comment;
+  const rewards = rewardTargetMatches({
+    candidateId: comment.id,
+    candidateType: 'comment',
+    contentId,
+    contentType
+  })
+    ? updateRewards(comment.rewards)
+    : comment.rewards;
+  const replies = reconcileCommentListRewards({
+    comments: comment.replies,
+    contentId,
+    contentType,
+    updateRewards
+  });
+  if (rewards === comment.rewards && replies === comment.replies)
+    return comment;
+  return { ...comment, rewards, replies };
+}
+
+function reconcileCommentListRewards({
+  comments,
+  contentId,
+  contentType,
+  updateRewards
+}: {
+  comments: any;
+  contentId: number;
+  contentType: string;
+  updateRewards: RewardListUpdater;
+}): any {
+  if (!Array.isArray(comments)) return comments;
+  let changed = false;
+  const nextComments = comments.map((comment) => {
+    const nextComment = reconcileCommentRewards({
+      comment,
+      contentId,
+      contentType,
+      updateRewards
+    });
+    changed ||= nextComment !== comment;
+    return nextComment;
+  });
+  return changed ? nextComments : comments;
+}
+
+function reconcileSubjectRewards({
+  subject,
+  contentId,
+  contentType,
+  updateRewards
+}: {
+  subject: any;
+  contentId: number;
+  contentType: string;
+  updateRewards: RewardListUpdater;
+}) {
+  if (!subject) return subject;
+  const rewards = rewardTargetMatches({
+    candidateId: subject.id,
+    candidateType: 'subject',
+    contentId,
+    contentType
+  })
+    ? updateRewards(subject.rewards)
+    : subject.rewards;
+  const comments = reconcileCommentListRewards({
+    comments: subject.comments,
+    contentId,
+    contentType,
+    updateRewards
+  });
+  if (rewards === subject.rewards && comments === subject.comments) {
+    return subject;
+  }
+  return { ...subject, rewards, comments };
+}
+
+function reconcileSubjectListRewards({
+  subjects,
+  contentId,
+  contentType,
+  updateRewards
+}: {
+  subjects: any;
+  contentId: number;
+  contentType: string;
+  updateRewards: RewardListUpdater;
+}) {
+  if (!Array.isArray(subjects)) return subjects;
+  let changed = false;
+  const nextSubjects = subjects.map((subject) => {
+    const nextSubject = reconcileSubjectRewards({
+      subject,
+      contentId,
+      contentType,
+      updateRewards
+    });
+    changed ||= nextSubject !== subject;
+    return nextSubject;
+  });
+  return changed ? nextSubjects : subjects;
+}
+
+function reconcileTargetRewards({
+  targetObj,
+  contentId,
+  contentType,
+  updateRewards
+}: {
+  targetObj: any;
+  contentId: number;
+  contentType: string;
+  updateRewards: RewardListUpdater;
+}) {
+  if (!targetObj) return targetObj;
+  const comment = reconcileCommentRewards({
+    comment: targetObj.comment,
+    contentId,
+    contentType,
+    updateRewards
+  });
+  const subject = reconcileSubjectRewards({
+    subject: targetObj.subject,
+    contentId,
+    contentType,
+    updateRewards
+  });
+  if (comment === targetObj.comment && subject === targetObj.subject) {
+    return targetObj;
+  }
+  return { ...targetObj, comment, subject };
+}
+
+function reconcileContentRewards({
+  state,
+  contentId,
+  contentType,
+  updateRewards
+}: {
+  state: any;
+  contentId: number;
+  contentType: string;
+  updateRewards: RewardListUpdater;
+}) {
+  let nextState = state;
+  for (const [contentKey, contentState] of Object.entries<any>(state)) {
+    const rewards = rewardTargetMatches({
+      candidateId: contentState.contentId,
+      candidateType: contentState.contentType,
+      contentId,
+      contentType
+    })
+      ? updateRewards(contentState.rewards)
+      : contentState.rewards;
+    const comments = reconcileCommentListRewards({
+      comments: contentState.comments,
+      contentId,
+      contentType,
+      updateRewards
+    });
+    const subjects = reconcileSubjectListRewards({
+      subjects: contentState.subjects,
+      contentId,
+      contentType,
+      updateRewards
+    });
+    const targetObj = reconcileTargetRewards({
+      targetObj: contentState.targetObj,
+      contentId,
+      contentType,
+      updateRewards
+    });
+    if (
+      rewards === contentState.rewards &&
+      comments === contentState.comments &&
+      subjects === contentState.subjects &&
+      targetObj === contentState.targetObj
+    ) {
+      continue;
+    }
+    if (nextState === state) nextState = { ...state };
+    nextState[contentKey] = {
+      ...contentState,
+      rewards,
+      comments,
+      subjects,
+      targetObj
+    };
+  }
+  return nextState;
+}
+
 // A comment entry this store creates itself still has to be a full content
 // entry: EDIT_COMMENT and friends walk `comments` on every key unguarded.
 function createLiveCommentEntry(contentId: number) {
@@ -146,106 +368,20 @@ export default function ContentReducer(
       return newState;
     }
     case 'ATTACH_REWARD': {
-      const newState = { ...state };
-      const contentKeys = Object.keys(newState);
-      for (const contentKey of contentKeys) {
-        const prevContentState = newState[contentKey];
-        const contentMatches =
-          prevContentState.contentId === action.contentId &&
-          prevContentState.contentType === action.contentType;
-        newState[contentKey] = {
-          ...prevContentState,
-          rewards: contentMatches
-            ? appendUniqueById(prevContentState.rewards, [action.reward])
-            : prevContentState.rewards,
-          comments:
-            action.contentType === 'comment'
-              ? prevContentState.comments?.map((comment: Comment) => {
-                  const commentMatches = comment.id === action.contentId;
-                  return {
-                    ...comment,
-                    rewards: commentMatches
-                      ? appendUniqueById(comment.rewards, [action.reward])
-                      : comment.rewards,
-                    replies: (comment.replies || []).map((reply) => {
-                      const replyMatches = reply.id === action.contentId;
-                      return {
-                        ...reply,
-                        rewards: replyMatches
-                          ? appendUniqueById(reply.rewards, [action.reward])
-                          : reply.rewards
-                      };
-                    })
-                  };
-                })
-              : prevContentState.comments,
-          subjects: prevContentState.subjects?.map((subject: Subject) => {
-            const subjectMatches =
-              subject.id === action.contentId &&
-              action.contentType === 'subject';
-            return {
-              ...subject,
-              rewards: subjectMatches
-                ? appendUniqueById(subject.rewards, [action.reward])
-                : subject.rewards,
-              comments:
-                action.contentType === 'comment'
-                  ? subject.comments.map((comment) => {
-                      const commentMatches = comment.id === action.contentId;
-                      return {
-                        ...comment,
-                        rewards: commentMatches
-                          ? appendUniqueById(comment.rewards, [action.reward])
-                          : comment.rewards,
-                        replies: (comment.replies || []).map((reply) => {
-                          const replyMatches = reply.id === action.contentId;
-                          return {
-                            ...reply,
-                            rewards: replyMatches
-                              ? appendUniqueById(reply.rewards, [action.reward])
-                              : reply.rewards
-                          };
-                        })
-                      };
-                    })
-                  : subject.comments
-            };
-          }),
-          targetObj: prevContentState.targetObj
-            ? {
-                ...prevContentState.targetObj,
-                comment: prevContentState.targetObj.comment
-                  ? {
-                      ...prevContentState.targetObj.comment,
-                      rewards:
-                        prevContentState.targetObj.comment.id ===
-                          action.contentId && action.contentType === 'comment'
-                          ? appendUniqueById(
-                              prevContentState.targetObj.comment.rewards,
-                              [action.reward]
-                            )
-                          : prevContentState.targetObj.comment.rewards
-                    }
-                  : undefined,
-                subject: prevContentState.targetObj.subject
-                  ? {
-                      ...prevContentState.targetObj.subject,
-                      rewards:
-                        prevContentState.targetObj.subject.id ===
-                          action.contentId && action.contentType === 'subject'
-                          ? appendUniqueById(
-                              prevContentState.targetObj.subject.rewards,
-                              [action.reward]
-                            )
-                          : prevContentState.targetObj.subject.rewards
-                    }
-                  : undefined
-              }
-            : undefined
-        };
-      }
-      return newState;
+      return reconcileContentRewards({
+        state,
+        contentId: action.contentId,
+        contentType: action.contentType,
+        updateRewards: (rewards) => appendUniqueById(rewards, [action.reward])
+      });
     }
+    case 'SYNC_CONTENT_REWARDS':
+      return reconcileContentRewards({
+        state,
+        contentId: action.contentId,
+        contentType: action.contentType,
+        updateRewards: () => action.rewards
+      });
     case 'CLEAR_COMMENT_FILE_UPLOAD_PROGRESS':
       return {
         ...state,
@@ -1392,119 +1528,15 @@ export default function ContentReducer(
         }
       };
     case 'REVOKE_REWARD': {
-      const newState = { ...state };
-      const contentKeys = Object.keys(newState);
-      for (const contentKey of contentKeys) {
-        const prevContentState = newState[contentKey];
-        const contentMatches =
-          prevContentState.contentId === action.contentId &&
-          prevContentState.contentType === action.contentType;
-        newState[contentKey] = {
-          ...prevContentState,
-          rewards: contentMatches
-            ? (prevContentState.rewards || []).filter(
-                (reward: Reward) => reward.id !== action.rewardId
-              )
-            : prevContentState.rewards,
-          comments:
-            action.contentType === 'comment'
-              ? prevContentState.comments?.map((comment: Comment) => {
-                  const commentMatches = comment.id === action.contentId;
-                  return {
-                    ...comment,
-                    rewards: commentMatches
-                      ? (comment.rewards || []).filter(
-                          (reward) => reward.id !== action.rewardId
-                        )
-                      : comment.rewards,
-                    replies: (comment.replies || []).map((reply) => {
-                      const replyMatches = reply.id === action.contentId;
-                      return {
-                        ...reply,
-                        rewards: replyMatches
-                          ? (reply.rewards || []).filter(
-                              (reward) => reward.id !== action.rewardId
-                            )
-                          : reply.rewards
-                      };
-                    })
-                  };
-                })
-              : prevContentState.comments,
-          subjects: prevContentState.subjects?.map((subject: Subject) => {
-            const subjectMatches =
-              subject.id === action.contentId &&
-              action.contentType === 'subject';
-            return {
-              ...subject,
-              rewards: subjectMatches
-                ? (subject.rewards || []).filter(
-                    (reward) => reward.id !== action.rewardId
-                  )
-                : subject.rewards,
-              comments:
-                action.contentType === 'comment'
-                  ? subject.comments.map((comment) => {
-                      const commentMatches = comment.id === action.contentId;
-                      return {
-                        ...comment,
-                        rewards: commentMatches
-                          ? (comment.rewards || []).filter(
-                              (reward) => reward.id !== action.rewardId
-                            )
-                          : comment.rewards,
-                        replies: (comment.replies || []).map((reply) => {
-                          const replyMatches = reply.id === action.contentId;
-                          return {
-                            ...reply,
-                            rewards: replyMatches
-                              ? (reply.rewards || []).filter(
-                                  (reward) => reward.id !== action.rewardId
-                                )
-                              : reply.rewards
-                          };
-                        })
-                      };
-                    })
-                  : subject.comments
-            };
-          }),
-          targetObj: prevContentState.targetObj
-            ? {
-                ...prevContentState.targetObj,
-                comment: prevContentState.targetObj.comment
-                  ? {
-                      ...prevContentState.targetObj.comment,
-                      rewards:
-                        prevContentState.targetObj.comment.id ===
-                          action.contentId && action.contentType === 'comment'
-                          ? (
-                              prevContentState.targetObj.comment.rewards || []
-                            ).filter(
-                              (reward: Reward) => reward.id !== action.rewardId
-                            )
-                          : prevContentState.targetObj.comment.rewards
-                    }
-                  : undefined,
-                subject: prevContentState.targetObj.subject
-                  ? {
-                      ...prevContentState.targetObj.subject,
-                      rewards:
-                        prevContentState.targetObj.subject.id ===
-                          action.contentId && action.contentType === 'subject'
-                          ? (
-                              prevContentState.targetObj.subject.rewards || []
-                            ).filter(
-                              (reward: Reward) => reward.id !== action.rewardId
-                            )
-                          : prevContentState.targetObj.subject.rewards
-                    }
-                  : undefined
-              }
-            : undefined
-        };
-      }
-      return newState;
+      return reconcileContentRewards({
+        state,
+        contentId: action.contentId,
+        contentType: action.contentType,
+        updateRewards: (rewards) =>
+          (rewards || []).filter(
+            (reward: Reward) => reward.id !== action.rewardId
+          )
+      });
     }
     case 'SET_ACTUAL_URL_DESCRIPTION':
       return {

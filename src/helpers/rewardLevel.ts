@@ -52,9 +52,12 @@ export function resolveSubjectRewardLevel({
   if (subjectRewardLevel > 0) {
     return subjectRewardLevel;
   }
-  if (Number(subject?.byUser || 0) > 0) {
-    return 5;
-  }
+  // No `byUser` shortcut here. A by-user subject is worth 5 as a piece of
+  // content (resolveDirectSubjectRewardLevel), but responses to it are capped
+  // by the subject's stored rewardLevel — which is what the server enforces
+  // (resolveSubjectResponseRewardLevelFromRow in twinkle-api). Applying the
+  // direct-subject rule here made the UI offer stars the server always
+  // refused, and every such attempt came back as `alreadyRewarded`.
   return resolveRootRewardFallbackLevel({
     rootId,
     rootRewardLevel,

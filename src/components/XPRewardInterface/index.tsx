@@ -12,7 +12,7 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import Button from '~/components/Button';
-import { returnMaxRewards, priceTable } from '~/constants/defaultValues';
+import { priceTable } from '~/constants/defaultValues';
 import { isSupermod } from '~/helpers';
 import {
   useAppContext,
@@ -21,6 +21,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { getRewardCapacity } from './rewardCapacity';
 
 const clearLabel = 'Clear';
 const rewardLabel = 'Reward';
@@ -63,6 +64,9 @@ export default function XPRewardInterface({
     useInputContext((v) => v.state['reward' + contentType + contentId]) || {};
   const onSetRewardForm = useInputContext((v) => v.actions.onSetRewardForm);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
+  const onSyncContentRewards = useContentContext(
+    (v) => v.actions.onSyncContentRewards
+  );
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
@@ -70,35 +74,10 @@ export default function XPRewardInterface({
   const { comment: prevComment = '', selectedAmount: prevSelectedAmount = 0 } =
     rewardFormState;
 
-  const maxRewardAmountForOnePerson = useMemo(
-    () => Math.min(Math.ceil(returnMaxRewards({ rewardLevel }) / 2), 3),
-    [rewardLevel]
-  );
-
-  const myRewardables = useMemo(() => {
-    const prevRewards = rewards.reduce((prev, reward) => {
-      if (reward.rewarderId === userId) {
-        return prev + (reward?.rewardAmount || 0);
-      }
-      return prev;
-    }, 0);
-    return Math.max(maxRewardAmountForOnePerson - prevRewards, 0);
-  }, [maxRewardAmountForOnePerson, rewards, userId]);
-
-  const remainingRewards = useMemo(() => {
-    const currentRewards =
-      rewards.length > 0
-        ? rewards.reduce(
-            (prev, reward) => prev + (reward?.rewardAmount || 0),
-            0
-          )
-        : 0;
-    return Math.max(returnMaxRewards({ rewardLevel }) - currentRewards, 0);
-  }, [rewardLevel, rewards]);
-
-  const rewardables = useMemo(() => {
-    return Math.min(remainingRewards, myRewardables);
-  }, [myRewardables, remainingRewards]);
+  const { maxRewardAmountForOnePerson, myRewardables, rewardables } =
+    useMemo(() => {
+      return getRewardCapacity({ rewards, rewardLevel, userId });
+    }, [rewardLevel, rewards, userId]);
 
   const commentRef = useRef(prevComment);
   const rewardingRef = useRef(false);
@@ -110,6 +89,10 @@ export default function XPRewardInterface({
     selectedAmountRef.current = prevSelectedAmount;
   }, [prevSelectedAmount]);
   const [selectedAmount, setSelectedAmount] = useState(prevSelectedAmount);
+  const [capReached, setCapReached] = useState(false);
+  // Read by the auto-hide effect, which must not close the panel out from under
+  // the "reward limit reached" notice.
+  const capReachedRef = useRef(false);
   const requiresPayment = useMemo(() => {
     return !level || !isSupermod(level) || uploaderLevel >= level;
   }, [level, uploaderLevel]);
@@ -118,7 +101,10 @@ export default function XPRewardInterface({
     setSelectedAmount((selectedAmount: number) =>
       Math.min(selectedAmount, rewardables)
     );
-    if (rewardables === 0 && !rewardingRef.current) {
+    if (rewardables > 0 && capReachedRef.current) {
+      handleSetCapReached(false);
+    }
+    if (rewardables === 0 && !rewardingRef.current && !capReachedRef.current) {
       onSetXpRewardInterfaceShown({
         contentId,
         contentType,
@@ -222,6 +208,20 @@ export default function XPRewardInterface({
         icon="times"
       />
       <section style={{ fontWeight: 'bold' }}>{rewardStatusText}</section>
+      {capReached ? (
+        <section
+          style={{
+            marginTop: '0.5rem',
+            color: Color.darkGray(),
+            fontSize: '1.3rem',
+            textAlign: 'center'
+          }}
+        >
+          {`This ${
+            contentType === 'url' ? 'link' : contentType
+          } has reached its reward limit`}
+        </section>
+      ) : null}
       <section
         style={{
           display: 'flex',
@@ -295,7 +295,12 @@ export default function XPRewardInterface({
     rewardingRef.current = true;
     setRewarding(true);
     try {
-      const { alreadyRewarded, reward, netCoins } = await rewardUser({
+      const {
+        alreadyRewarded,
+        reward,
+        netCoins,
+        rewards: canonicalRewards
+      } = await rewardUser({
         maxRewardAmountForOnePerson,
         explanation: banned?.posting
           ? ''
@@ -308,7 +313,26 @@ export default function XPRewardInterface({
         uploaderId
       });
       if (alreadyRewarded) {
-        return window.location.reload();
+        if (!Array.isArray(canonicalRewards)) {
+          throw new Error(
+            'Reward cap rejection did not include canonical rewards'
+          );
+        }
+        // The rejection response carries the writer-confirmed ledger snapshot.
+        // Replace every rendered copy before allowing another selection.
+        const { rewardables: canonicalRewardables } = getRewardCapacity({
+          rewards: canonicalRewards,
+          rewardLevel,
+          userId
+        });
+        handleSetCapReached(canonicalRewardables === 0);
+        handleSetSelectedAmount(0);
+        onSyncContentRewards({
+          contentId,
+          contentType,
+          rewards: canonicalRewards
+        });
+        return;
       }
       onSetRewardForm({
         contentType,
@@ -351,5 +375,10 @@ export default function XPRewardInterface({
   function handleSetSelectedAmount(amount: number) {
     setSelectedAmount(amount);
     selectedAmountRef.current = amount;
+  }
+
+  function handleSetCapReached(reached: boolean) {
+    setCapReached(reached);
+    capReachedRef.current = reached;
   }
 }

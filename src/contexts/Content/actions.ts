@@ -72,6 +72,22 @@ export default function ContentActions(dispatch: Dispatch) {
         contentType
       });
     },
+    onSyncContentRewards({
+      rewards,
+      contentId,
+      contentType
+    }: {
+      rewards: object[];
+      contentId: number;
+      contentType: string;
+    }) {
+      return dispatch({
+        type: 'SYNC_CONTENT_REWARDS',
+        rewards,
+        contentId,
+        contentType
+      });
+    },
     onClearCommentFileUploadProgress({
       contentId,
       contentType,

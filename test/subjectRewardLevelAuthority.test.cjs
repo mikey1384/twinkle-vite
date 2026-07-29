@@ -51,6 +51,46 @@ test('subject response reward level still uses the stored subject level', () => 
   );
 });
 
+test('a by-user subject is worth 5 as content but does not raise its responses', () => {
+  // The server caps responses at the subject's stored rewardLevel
+  // (resolveSubjectResponseRewardLevelFromRow). When the client applied the
+  // direct-subject by-user rule here, it offered 3 stars on a level-0 by-user
+  // subject whose comment already had 3 of its 5 allowed, and every attempt
+  // came back `alreadyRewarded` — comment 341430 on subject 36324.
+  assert.equal(
+    resolveDirectSubjectRewardLevel({
+      rootRewardLevel: 0,
+      subject: { byUser: 1, id: 36324, rewardLevel: 0 }
+    }),
+    5
+  );
+  assert.equal(
+    resolveSubjectRewardLevel({
+      rootId: 36324,
+      rootRewardLevel: 0,
+      rootType: 'subject',
+      subject: { byUser: 1, id: 36324, rewardLevel: 0 }
+    }),
+    0
+  );
+  assert.equal(
+    rewardLevelToTwinkleCap(
+      resolveCommentRewardLevel({
+        parent: {
+          byUser: 1,
+          contentType: 'subject',
+          id: 36324,
+          rewardLevel: 0,
+          rootId: 36324,
+          rootType: 'subject'
+        },
+        rootContent: { contentType: 'subject', id: 36324, rewardLevel: 0 }
+      })
+    ),
+    5
+  );
+});
+
 test('direct subject content surfaces ignore stored subject level for caps', () => {
   assert.equal(
     resolveContentRewardLevel({

@@ -12,14 +12,14 @@ export function appendUniqueById<T extends { id?: number | string }>(
     const id = Number(item?.id);
     if (id > 0) seen.add(id);
   }
-  const next = current.slice();
+  const uniqueNew: T[] = [];
   for (const item of items) {
     const id = Number(item?.id);
     if (id > 0 && seen.has(id)) continue;
     if (id > 0) seen.add(id);
-    next.push(item);
+    uniqueNew.push(item);
   }
-  return next;
+  return uniqueNew.length ? current.concat(uniqueNew) : current;
 }
 
 export function prependUniqueById<T extends { id?: number | string }>(
