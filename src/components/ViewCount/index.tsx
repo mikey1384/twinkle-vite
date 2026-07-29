@@ -3,6 +3,7 @@ import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import {
   getViewCountLabel,
+  getViewCountParts,
   normalizeViewCount,
   type ViewCountFallbackMode,
   type ViewCountUnit
@@ -20,6 +21,7 @@ export default function ViewCount({
   minimumCount = -1,
   showIcon = true,
   unit = 'views',
+  unitClassName,
   valueClassName,
   variant = 'inline'
 }: {
@@ -32,6 +34,9 @@ export default function ViewCount({
   minimumCount?: number;
   showIcon?: boolean;
   unit?: ViewCountUnit;
+  // Styles the unit word on its own so a cramped caller can drop it and keep
+  // the number whole instead of clipping the label mid-letter.
+  unitClassName?: string;
   valueClassName?: string;
   variant?: ViewCountVariant;
 }) {
@@ -50,6 +55,20 @@ export default function ViewCount({
         <em className={valueClassName}>
           {addCommasToNumber(normalizedCount)}
         </em>
+      </span>
+    );
+  }
+
+  if (unitClassName) {
+    const { value, unitLabel } = getViewCountParts(normalizedCount, unit);
+    return (
+      <span
+        className={className}
+        aria-label={getViewCountLabel(normalizedCount, unit)}
+      >
+        {showIcon && <Icon icon="eye" />}
+        <span className={valueClassName}>{value}</span>
+        {unitLabel ? <span className={unitClassName}>{unitLabel}</span> : null}
       </span>
     );
   }

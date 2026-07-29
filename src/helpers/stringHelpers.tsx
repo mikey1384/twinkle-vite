@@ -546,13 +546,6 @@ export function finalizeEmoji(string: string): string {
   return finalizedString || '';
 }
 
-export function formatVisitLabel(viewCount?: number | null) {
-  const visits = Number.isFinite(Number(viewCount)) ? Number(viewCount) : 0;
-  if (visits <= 0) return 'No visits yet';
-  if (visits === 1) return '1 visit';
-  return `${visits} visits`;
-}
-
 export function getFileInfoFromFileName(fileName: string): {
   extension: string;
   fileType: string;

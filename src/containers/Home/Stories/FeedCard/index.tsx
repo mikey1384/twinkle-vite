@@ -1677,6 +1677,17 @@ const cardClass = css`
       border: 1px solid var(--ui-border);
       border-radius: ${borderRadius};
     }
+    /* Subject targets delegate their frame to the wide subject preview (the
+       target panel itself is borderless), and on mobile that frame drops its
+       side borders + radius to read as a full-bleed band. As the card's last
+       element its bottom border then stacks with the card's own bottom border,
+       so the rule above can't reach it. Drop it here; the band's top border
+       still separates it from the content preview above. */
+    &.${SHOWCASE_CARD_CLASS}
+      .home-feed-card__target-preview--type-subject
+      > .home-feed-card__target-subject {
+      border-bottom: 0;
+    }
   }
   @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
     &.home-feed-card--tablet-media-attachment {

@@ -186,22 +186,32 @@ const headerHiddenClass = css`
   pointer-events: none;
 `;
 
+// The toolbar's middle: collapse toggles plus the energy card. It used to be
+// absolutely centred on the toolbar's midline, which reserved no space, so
+// whatever grew — a long title, the visit count, the energy card — slid
+// underneath it. Every width-based reservation just relocated the collision,
+// because the overlapping party changes with the width and with whether the
+// energy card is rendered at all. In flow it cannot be overlapped by anything:
+// an auto left margin parks it midway between the title and the action row,
+// and the title yields first because it is the only shrinkable item.
+const headerCenterZoneClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  /* Phones put it at the head of the toolbar, where the title's slack absorbs
+     it — the action buttons leave no usable middle at that width. */
+  @media (max-width: ${mobileMaxWidth}) {
+    order: -1;
+    margin-left: 0;
+  }
+`;
+
 const headerToggleClusterClass = css`
-  position: absolute;
-  top: 0.35rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 4;
   display: flex;
   gap: 0.4rem;
-  /* On phones the absolute centering collides with the right-aligned action
-     buttons (Favorite lands on top of these). Drop it into normal flow at the
-     start of the toolbar instead, where the title's slack absorbs it. */
-  @media (max-width: ${mobileMaxWidth}) {
-    position: static;
-    transform: none;
-    flex-shrink: 0;
-  }
+  flex-shrink: 0;
 `;
 
 const headerToggleClass = css`
@@ -315,8 +325,27 @@ const headerTitleLineClass = css`
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  flex: 1 1 auto;
+  /* Shrink-only: the centre zone's auto margin owns the free space, and this
+     column is what gives way when the toolbar runs out of room. */
+  flex: 0 1 auto;
   color: var(--chat-text);
+`;
+
+// Title and its meta share one line while there is room. On a phone they stack
+// instead: the toolbar's height is set by the 2.65rem action buttons, so a
+// second 1.1rem line is free vertically, and the visit count stops competing
+// with the title for the same sliver of horizontal space.
+const headerTitleStackClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  @media (max-width: ${mobileMaxWidth}) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
 `;
 
 const headerMetaInlineClass = css`
@@ -328,6 +357,51 @@ const headerMetaInlineClass = css`
   white-space: nowrap;
   flex-shrink: 0;
   @media (max-width: 1200px) {
+    display: none;
+  }
+`;
+
+// Visits stay at every width — unlike the byline, which gives up its space to
+// the action row once the toolbar gets tight.
+const headerVisitsClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.1rem;
+  line-height: 1.15;
+  opacity: 0.72;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 100%;
+  overflow: hidden;
+  /* Subordinate to the title once it becomes the second line of the stack.
+     Deliberately under the 1rem floor — Mikey waived it for this chip. */
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 0.95rem;
+  }
+`;
+
+// On the narrowest phones the title column is too tight for a seven-digit
+// count plus the word, and clipping the word mid-letter reads as a bug. Drop
+// the word there; the eye icon and the aria-label still carry the meaning.
+const headerVisitsUnitClass = css`
+  @media (max-width: 380px) {
+    display: none;
+  }
+`;
+
+// Dropping the unit word can't rescue the zero state, whose whole label is one
+// phrase ("No visits yet"), nor a count so long it outgrows the column on its
+// own. Ellipsise rather than shearing a glyph in half.
+const headerVisitsValueClass = css`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+// The app glyph is decorative and the title column needs the width more.
+const headerAppIconClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
     display: none;
   }
 `;
@@ -369,7 +443,8 @@ const titleClass = css`
   text-overflow: ellipsis;
   white-space: nowrap;
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
+    line-height: 1.15;
   }
 `;
 
@@ -1924,71 +1999,81 @@ export default function BuildRuntime({
                 : ''
             }`}
           >
-            <div className={headerToggleClusterClass}>
-              <button
-                type="button"
-                className={headerToggleClass}
-                onClick={() => void handleSetHeaderCollapsed(true)}
-                disabled={headerCollapsePending}
-                title="Hide this menu"
-                aria-label="Hide this menu"
-              >
-                <Icon
-                  icon={headerCollapsePending ? 'spinner' : 'chevron-up'}
-                  pulse={headerCollapsePending}
-                />
-              </button>
-              <button
-                type="button"
-                className={headerToggleClass}
-                onClick={() => void handleHideEverything()}
-                disabled={headerCollapsePending}
-                title="Hide this menu and the top nav (full screen)"
-                aria-label="Hide everything (full screen)"
-              >
-                <Icon icon="angles-up" />
-              </button>
-            </div>
             {/* left: app icon + title + compact inline meta */}
             <div className={headerTitleLineClass}>
-              <Icon icon="laptop-code" />
-              <h1 className={titleClass}>{build.title}</h1>
-              <span className={headerMetaInlineClass}>
-                <span>by</span>
-                <UsernameText
-                  color="inherit"
-                  textStyle={runtimeCreatorUsernameTextStyle}
-                  user={{
-                    id: build.userId,
-                    username: build.username || '',
-                    profilePicUrl: build.profilePicUrl || ''
-                  }}
-                />
-                <ViewCount count={build.viewCount} unit="visits" />
-              </span>
-            </div>
-            {/* center: battery */}
-            {showAiEnergy && (
-              <div className={headerEnergySlotClass}>
-                <AiEnergyCard
-                  variant="inline"
-                  className={runtimeEnergyCardClass}
-                  energyPercent={energyPercent}
-                  energySegments={energySegments}
-                  portaledUiActive={runtimeIsActive}
-                  overflowed={aiUsagePolicy.lastUsageOverflowed}
-                  resetNeeded={energyIsEmpty}
-                  resetCost={aiUsagePolicy.resetCost || 0}
-                  resetPurchaseNumber={
-                    typeof aiUsagePolicy.resetPurchasesToday === 'number'
-                      ? aiUsagePolicy.resetPurchasesToday + 1
-                      : undefined
-                  }
-                  communityFundsEligible={communityChargeAvailable}
-                  chargeCtaAttentionKey={energyChargeAttentionKey}
+              <Icon className={headerAppIconClass} icon="laptop-code" />
+              <div className={headerTitleStackClass}>
+                <h1 className={titleClass}>{build.title}</h1>
+                <span className={headerMetaInlineClass}>
+                  <span>by</span>
+                  <UsernameText
+                    color="inherit"
+                    textStyle={runtimeCreatorUsernameTextStyle}
+                    user={{
+                      id: build.userId,
+                      username: build.username || '',
+                      profilePicUrl: build.profilePicUrl || ''
+                    }}
+                  />
+                </span>
+                <ViewCount
+                  className={headerVisitsClass}
+                  unitClassName={headerVisitsUnitClass}
+                  valueClassName={headerVisitsValueClass}
+                  count={build.viewCount}
+                  unit="visits"
                 />
               </div>
-            )}
+            </div>
+            {/* centre: collapse toggles + battery, parked in the free space */}
+            <div className={headerCenterZoneClass}>
+              <div className={headerToggleClusterClass}>
+                <button
+                  type="button"
+                  className={headerToggleClass}
+                  onClick={() => void handleSetHeaderCollapsed(true)}
+                  disabled={headerCollapsePending}
+                  title="Hide this menu"
+                  aria-label="Hide this menu"
+                >
+                  <Icon
+                    icon={headerCollapsePending ? 'spinner' : 'chevron-up'}
+                    pulse={headerCollapsePending}
+                  />
+                </button>
+                <button
+                  type="button"
+                  className={headerToggleClass}
+                  onClick={() => void handleHideEverything()}
+                  disabled={headerCollapsePending}
+                  title="Hide this menu and the top nav (full screen)"
+                  aria-label="Hide everything (full screen)"
+                >
+                  <Icon icon="angles-up" />
+                </button>
+              </div>
+              {showAiEnergy && (
+                <div className={headerEnergySlotClass}>
+                  <AiEnergyCard
+                    variant="inline"
+                    className={runtimeEnergyCardClass}
+                    energyPercent={energyPercent}
+                    energySegments={energySegments}
+                    portaledUiActive={runtimeIsActive}
+                    overflowed={aiUsagePolicy.lastUsageOverflowed}
+                    resetNeeded={energyIsEmpty}
+                    resetCost={aiUsagePolicy.resetCost || 0}
+                    resetPurchaseNumber={
+                      typeof aiUsagePolicy.resetPurchasesToday === 'number'
+                        ? aiUsagePolicy.resetPurchasesToday + 1
+                        : undefined
+                    }
+                    communityFundsEligible={communityChargeAvailable}
+                    chargeCtaAttentionKey={energyChargeAttentionKey}
+                  />
+                </div>
+              )}
+            </div>
             {/* right: all actions on one line */}
             <div className={headerActionsRowClass}>
               {showRuntimeActions ? (
