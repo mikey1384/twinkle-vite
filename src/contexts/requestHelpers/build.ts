@@ -2272,6 +2272,67 @@ export default function buildRequestHelpers({
       }
     },
 
+    async notifyBuildOwnerOfContribution({
+      buildId,
+      contributionBuildId,
+      note
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      note: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/notify-owner`,
+          { note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async suggestBuildThumbnailToOwner({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/suggest-thumbnail`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async adoptBuildThumbnailSuggestion({
+      buildId,
+      contributionBuildId,
+      thumbnailUrl
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      thumbnailUrl?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/adopt-thumbnail`,
+          { thumbnailUrl },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async replaceMainWithBuildContribution({
       buildId,
       contributionBuildId,

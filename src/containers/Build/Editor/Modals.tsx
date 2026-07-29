@@ -27,6 +27,10 @@ interface ModalsProps {
   isOwner: boolean;
   savingDescription: boolean;
   savingThumbnail: boolean;
+  sendingThumbnailToOwner: boolean;
+  canSendThumbnailToOwner: boolean;
+  thumbnailOwnerUsername?: string | null;
+  thumbnailSentToOwnerAt: number;
   thumbnailInitialImageUrl: string | null;
   thumbnailModalShown: boolean;
   thumbnailOptions: ThumbnailOption[];
@@ -45,6 +49,9 @@ interface ModalsProps {
   onHideThumbnailModal: () => void;
   onBuildCollaborationPatch: (patch: Record<string, any>) => void;
   onSaveThumbnail: (croppedImageUrl: string | null) => Promise<void> | void;
+  onSaveThumbnailAndSendToOwner: (
+    croppedImageUrl: string | null
+  ) => Promise<void> | void;
   onSelectBuildChatUploadFile: (file: File) => void;
   onSelectBuildChatUploadFiles: (files: File[]) => void;
   onSubmitBuildMetadata: (args: {
@@ -68,6 +75,10 @@ export default function Modals({
   isOwner,
   savingDescription,
   savingThumbnail,
+  sendingThumbnailToOwner,
+  canSendThumbnailToOwner,
+  thumbnailOwnerUsername,
+  thumbnailSentToOwnerAt,
   thumbnailInitialImageUrl,
   thumbnailModalShown,
   thumbnailOptions,
@@ -83,6 +94,7 @@ export default function Modals({
   onHideThumbnailModal,
   onBuildCollaborationPatch,
   onSaveThumbnail,
+  onSaveThumbnailAndSendToOwner,
   onSelectBuildChatUploadFile,
   onSelectBuildChatUploadFiles,
   onSubmitBuildMetadata
@@ -136,8 +148,13 @@ export default function Modals({
           thumbnailOptionsLoading={thumbnailOptionsLoading}
           loading={savingThumbnail}
           saveError={thumbnailSaveError}
+          canSendToOwner={canSendThumbnailToOwner}
+          sendingToOwner={sendingThumbnailToOwner}
+          sentToOwnerAt={thumbnailSentToOwnerAt}
+          ownerUsername={thumbnailOwnerUsername}
           onHide={onHideThumbnailModal}
           onSave={onSaveThumbnail}
+          onSaveAndSendToOwner={onSaveThumbnailAndSendToOwner}
           onCaptureFromPreview={onCaptureThumbnailFromPreview}
         />
       ) : null}

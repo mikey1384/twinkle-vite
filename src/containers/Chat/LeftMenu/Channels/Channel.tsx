@@ -325,6 +325,15 @@ export default function Channel({
             : content.slice(0, 100);
         return <span>{`${messageSender}: ${truncatedContent}`}</span>;
       }
+      // The note on a submission is optional, and the card carries the message
+      // either way. Without this the owner's channel list shows a blank line
+      // for a submission whose sender chose not to write anything.
+      if (rootType === 'buildContributionSubmission') {
+        return <span>{messageSender}: sent changes</span>;
+      }
+      if (rootType === 'buildThumbnailSuggestion') {
+        return <span>{messageSender}: suggested a thumbnail</span>;
+      }
       return <span>{'\u00a0'}</span>;
     }
   }, [

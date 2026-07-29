@@ -8,6 +8,7 @@ import {
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
+import { applyPresenceSnapshot, stampPresenceEntry } from './presenceSnapshot';
 import { objectify } from '~/helpers';
 import { prependUniqueIds } from '~/contexts/Content/idListHelpers';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
@@ -1454,6 +1455,94 @@ function upsertBuildContributionMembershipState({
   };
 }
 
+// The branch row the merge/replace endpoints returned is canonical: the card's
+// status is read off it rather than assumed from the action that was pressed,
+// so a merge that lands as 'merging' (conflicts written) never renders as done.
+function upsertBuildContributionSubmissionState({
+  state,
+  branchBuildId,
+  contribution,
+  eventTimeMs
+}: {
+  state: any;
+  branchBuildId: number;
+  contribution?: Record<string, any> | null;
+  eventTimeMs?: number;
+}) {
+  const resolvedBranchBuildId = Number(branchBuildId || contribution?.id || 0);
+  if (!resolvedBranchBuildId || !contribution) return state;
+  const contributionStatus = String(contribution?.contributionStatus || '');
+  const status =
+    contributionStatus === 'merged'
+      ? 'merged'
+      : contributionStatus === 'merging'
+        ? 'merging'
+        : 'open';
+  const nextEventTime = normalizeEventTimeMs(eventTimeMs) || Date.now();
+  const current =
+    state.buildContributionSubmissionByBranchId?.[resolvedBranchBuildId] || null;
+  if (current && Number(current.__eventTime || 0) > nextEventTime) {
+    return state;
+  }
+  return {
+    ...state,
+    buildContributionSubmissionByBranchId: {
+      ...(state.buildContributionSubmissionByBranchId || {}),
+      [resolvedBranchBuildId]: {
+        ...(current || {}),
+        status,
+        __eventTime: nextEventTime
+      }
+    }
+  };
+}
+
+// What the project's thumbnail is after the owner adopted one, read off the
+// build row the endpoint returned rather than assumed from the button pressed.
+//
+// Keyed by project, not by branch, because that is what this state describes: a
+// project has one thumbnail, and one suggestion is the one it came from. A
+// branch can have sent several cards, and keying by branch made adopting the
+// newest of them render every older card as "applied" too — each card merged
+// the same entry over its own payload and claimed the project was using an
+// image it was not. Which card won is answered by comparing the adopted URL to
+// that card's own frozen suggestion, so a sibling card still updates its "Now"
+// pane without inheriting a status that belongs to another suggestion.
+function upsertBuildThumbnailSuggestionState({
+  state,
+  rootBuildId,
+  build,
+  adoptedFromThumbnailUrl,
+  eventTimeMs
+}: {
+  state: any;
+  rootBuildId: number;
+  build?: Record<string, any> | null;
+  adoptedFromThumbnailUrl?: string;
+  eventTimeMs?: number;
+}) {
+  const resolvedRootBuildId = Number(rootBuildId || build?.id || 0);
+  if (!resolvedRootBuildId || !build) return state;
+  const nextEventTime = normalizeEventTimeMs(eventTimeMs) || Date.now();
+  const current =
+    state.buildThumbnailByRootBuildId?.[resolvedRootBuildId] || null;
+  if (current && Number(current.__eventTime || 0) > nextEventTime) {
+    return state;
+  }
+  return {
+    ...state,
+    buildThumbnailByRootBuildId: {
+      ...(state.buildThumbnailByRootBuildId || {}),
+      [resolvedRootBuildId]: {
+        ...(current || {}),
+        currentThumbnailUrl: String(build?.thumbnailUrl || ''),
+        adoptedFromThumbnailUrl: String(adoptedFromThumbnailUrl || ''),
+        __eventTime: nextEventTime
+      }
+    }
+  };
+}
+
 function upsertBuildContributionInviteState({
   state,
   invite,
@@ -1687,6 +1776,21 @@ export default function ChatReducer(
         requestStatus: action.requestStatus,
         eventTimeMs: action.eventTimeMs,
         timeStamp: action.timeStamp
+      });
+    case 'UPDATE_BUILD_CONTRIBUTION_SUBMISSION_STATE':
+      return upsertBuildContributionSubmissionState({
+        state,
+        branchBuildId: action.branchBuildId,
+        contribution: action.contribution,
+        eventTimeMs: action.eventTimeMs
+      });
+    case 'UPDATE_BUILD_THUMBNAIL_SUGGESTION_STATE':
+      return upsertBuildThumbnailSuggestionState({
+        state,
+        rootBuildId: action.rootBuildId,
+        build: action.build,
+        adoptedFromThumbnailUrl: action.adoptedFromThumbnailUrl,
+        eventTimeMs: action.eventTimeMs
       });
     case 'UPDATE_BUILD_CONTRIBUTION_MEMBERSHIP':
       return upsertBuildContributionMembershipState({
@@ -2148,9 +2252,11 @@ export default function ChatReducer(
           Math.floor(Date.now() / 1000)
         : prev.lastActive;
 
+      // Stamped so an in-flight presence snapshot, which was taken before this
+      // event, cannot undo it when its ack finally lands.
       const updatedChatStatus = {
         ...state.chatStatus,
-        [action.userId]:
+        [action.userId]: stampPresenceEntry(
           prev && Object.keys(prev).length
             ? {
                 ...prev,
@@ -2166,6 +2272,7 @@ export default function ChatReducer(
                 isOnline,
                 ...(derivedLastActive ? { lastActive: derivedLastActive } : {})
               }
+        )
       };
 
       let recentOfflineUsers = state.recentOfflineUsers || [];
@@ -2195,10 +2302,10 @@ export default function ChatReducer(
         chatStatus: {
           ...state.chatStatus,
           [action.userId]: state.chatStatus[action.userId]
-            ? {
+            ? stampPresenceEntry({
                 ...state.chatStatus[action.userId],
                 isAway: action.isAway
-              }
+              })
             : undefined
         }
       };
@@ -2209,10 +2316,10 @@ export default function ChatReducer(
         chatStatus: {
           ...state.chatStatus,
           [action.userId]: state.chatStatus[action.userId]
-            ? {
+            ? stampPresenceEntry({
                 ...state.chatStatus[action.userId],
                 isBusy: action.isBusy
-              }
+              })
             : undefined
         }
       };
@@ -6519,35 +6626,29 @@ export default function ChatReducer(
               : {}
         }
       };
+    case 'SET_ONLINE_PRESENCE_SNAPSHOT': {
+      // App-wide snapshot from check_online_presence: authoritative about who
+      // is offline too, but only when the server could read the whole room.
+      // See presenceSnapshot.ts.
+      return {
+        ...state,
+        chatStatus: applyPresenceSnapshot({
+          chatStatus: state.chatStatus || {},
+          onlineUsers: action.onlineUsers || {},
+          requestedAt: Number(action.requestedAt) || 0,
+          reconcileOffline: action.isComplete === true
+        })
+      };
+    }
     case 'SET_ONLINE_USERS': {
-      // Single source of truth: online_status_changed controls lastActive.
-      // This snapshot should only mark who is online; never overwrite offline timestamps
-      // or clear away/busy flags provided by the server.
-      const prevStatus = state.chatStatus || {};
-      const onlineUsers = action.onlineUsers || {};
-      const mergedStatus: any = { ...prevStatus };
-
-      for (const uid of Object.keys(onlineUsers)) {
-        const userId = Number(uid);
-        const member = onlineUsers[uid] || {};
-        const prev = mergedStatus[userId] || {};
-        mergedStatus[userId] = {
-          ...prev,
-          ...member,
-          id: userId,
-          isOnline: true,
-          ...(typeof member.isAway === 'boolean'
-            ? { isAway: member.isAway }
-            : typeof prev.isAway === 'boolean'
-              ? { isAway: prev.isAway }
-              : {}),
-          ...(typeof member.isBusy === 'boolean'
-            ? { isBusy: member.isBusy }
-            : typeof prev.isBusy === 'boolean'
-              ? { isBusy: prev.isBusy }
-              : {})
-        };
-      }
+      // Channel-scoped snapshot: it only covers the members of one channel, so
+      // absence from it says nothing about the rest of the app.
+      const mergedStatus = applyPresenceSnapshot({
+        chatStatus: state.chatStatus || {},
+        onlineUsers: action.onlineUsers || {},
+        requestedAt: Number(action.requestedAt) || 0,
+        reconcileOffline: false
+      });
 
       const hasOfflineUsers = action.recentOfflineUsers !== undefined;
       let newRecentOfflineUsers = state.recentOfflineUsers;

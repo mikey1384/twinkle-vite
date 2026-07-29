@@ -10,7 +10,8 @@ import {
 import { emitAdminTelemetry, parseChannelPath } from '~/helpers';
 import {
   clearSocketAuthReady,
-  markSocketAuthReady
+  markSocketAuthReady,
+  SOCKET_BIND_ACK_TIMEOUT_MS
 } from '~/helpers/socketAuthReady';
 import {
   nextChatBootstrapId,
@@ -30,10 +31,6 @@ function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
 }
 
-// The server can spend up to 16 seconds on its supported cluster presence
-// lookup and then continue the remaining writer hydration and room joins.
-// Keep the client acknowledgement deadline comfortably beyond that path.
-const SOCKET_BIND_ACK_TIMEOUT_MS = 30000;
 const SOCKET_BIND_RETRY_DELAY_MS = 1000;
 
 interface SocketBindPayload {
@@ -137,7 +134,9 @@ export default function useInitSocket({
   const onSetFeedsOutdated = useHomeContext(
     (v) => v.actions.onSetFeedsOutdated
   );
-  const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
+  const onSetOnlinePresenceSnapshot = useChatContext(
+    (v) => v.actions.onSetOnlinePresenceSnapshot
+  );
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -865,25 +864,6 @@ export default function useInitSocket({
         if (latestChatTypeRef.current) {
           onUpdateChatType(latestChatTypeRef.current);
         }
-
-        socket.emit(
-          'check_online_users',
-          selectedChannelId,
-          ({
-            onlineUsers,
-            recentOfflineUsers
-          }: {
-            onlineUsers: { userId: number; username: string }[];
-            recentOfflineUsers?: any[];
-          }) => {
-            if (userIdRef.current !== bootstrapUserId) return;
-            onSetOnlineUsers({
-              channelId: selectedChannelId,
-              onlineUsers,
-              recentOfflineUsers: recentOfflineUsers || []
-            });
-          }
-        );
       } catch (error) {
         const normalizedError = error as {
           status?: number;
@@ -1281,6 +1261,7 @@ export default function useInitSocket({
         userActionAckedRef.current = false;
         userActionAttemptsRef.current = 0;
         handleStartUserActionCapture();
+        hydrateOnlinePresence(bindingUserId);
         onBound?.();
         if (
           wasAwaitingBootstrapBind &&
@@ -1299,6 +1280,35 @@ export default function useInitSocket({
         handleSocketBindFailure({ bindingUserId, error });
       }
     });
+  }
+
+  // Online indicators are read all over the app (profile pages, user popups,
+  // content panels), not just inside chat, so the presence snapshot is tied to
+  // the socket binding rather than to the chat bootstrap. Hydrating it here
+  // covers a cold load outside chat - where no chat channel is selected yet -
+  // and a reconnect that skips the chat reload. The reconnect case is also why
+  // this must reconcile rather than merge: online_status_changed events sent
+  // while the socket was down are gone, so anyone the server no longer lists
+  // has to be flipped back to offline from this snapshot.
+  function hydrateOnlinePresence(bindingUserId: number) {
+    const requestedAt = Date.now();
+    socket.emit(
+      'check_online_presence',
+      ({
+        onlineUsers,
+        isComplete
+      }: {
+        onlineUsers: Record<number, any>;
+        isComplete?: boolean;
+      }) => {
+        if (userIdRef.current !== bindingUserId) return;
+        onSetOnlinePresenceSnapshot({
+          onlineUsers,
+          isComplete: isComplete === true,
+          requestedAt
+        });
+      }
+    );
   }
 
   function handleSocketBindFailure({

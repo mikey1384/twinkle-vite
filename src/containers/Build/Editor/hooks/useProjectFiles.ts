@@ -322,6 +322,14 @@ export default function useProjectFiles({
           latestBuild.currentArtifactVersionId ??
           null,
         updatedAt: Number(result?.updatedAt || 0) || latestBuild.updatedAt,
+        // Taken from the save response rather than left stale: a fresh branch
+        // starts with no delta, and the contributor's send-to-owner panel keys
+        // off this, so preserving the old empty value hid the panel until a
+        // full reload.
+        contributionRevisionHash:
+          typeof result?.contributionRevisionHash === 'string'
+            ? result.contributionRevisionHash
+            : latestBuild.contributionRevisionHash,
         contributionStatus:
           result?.contributionStatus ?? latestBuild.contributionStatus,
         contributionClosedAt:

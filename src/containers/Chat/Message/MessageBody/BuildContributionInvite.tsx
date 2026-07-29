@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import { Color, borderRadius } from '~/constants/css';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
+import { Color } from '~/constants/css';
 import { useAppContext, useBuildContext, useChatContext } from '~/contexts';
 
 interface BuildContributionInvitePayload {
@@ -11,6 +11,7 @@ interface BuildContributionInvitePayload {
   buildId?: number;
   inviteId?: number;
   userId?: number;
+  username?: string;
   invitedByUserId?: number;
   title?: string;
   isPublic?: boolean | number;
@@ -36,17 +37,20 @@ type BuildContributionInviteStatus =
   | 'left';
 
 export default function BuildContributionInvite({
+  channelId,
   content,
   invite,
   myId,
   sender
 }: {
+  channelId: number;
   content: string;
   invite?: BuildContributionInvitePayload | null;
   myId: number;
   sender: {
     id: number;
     username: string;
+    profileTheme?: string | null;
   };
 }) {
   const navigate = useNavigate();
@@ -76,6 +80,20 @@ export default function BuildContributionInvite({
   const inviteId = Number(payload?.inviteId || 0);
   const title = String(payload?.title || 'Build');
   const sentByMe = Number(sender.id) === Number(myId);
+  // Who the invite is about, named. The invite row is the authority, but these
+  // cards only ever live in the direct message between the two people, so when
+  // the row has not been read the person on the other side of this very channel
+  // IS the invitee — no lookup, no "this person" in a conversation whose title
+  // is their name. The two forms below differ only in where the last-resort
+  // fallback lands: start of a sentence, or the middle of one.
+  const partnerUsername = useChatContext((v) =>
+    channelId > 0 ? v.state.channelsObj?.[channelId]?.partnerUsername : ''
+  );
+  const invitedName =
+    String(payload?.username || '').trim() ||
+    (sentByMe ? String(partnerUsername || '').trim() : '');
+  const invitedLabel = invitedName || 'This person';
+  const invitedObjectLabel = invitedName || 'this person';
   const membershipUserId = Number(
     payload?.userId || (!sentByMe ? myId : 0) || 0
   );
@@ -132,17 +150,6 @@ export default function BuildContributionInvite({
           : 'pending';
   const canOpenApp = canOpenPublishedBuildApp(payload);
   const canOpenWorkspaceFromTitle = sentByMe || status === 'accepted';
-  const titleNode = canOpenWorkspaceFromTitle ? (
-    <button
-      type="button"
-      className={workspaceTitleButtonClass}
-      onClick={handleOpenWorkspace}
-    >
-      {title}
-    </button>
-  ) : (
-    <strong>{title}</strong>
-  );
 
   useEffect(() => {
     if (!buildId || !membershipUserId || membershipState) return;
@@ -205,91 +212,93 @@ export default function BuildContributionInvite({
   }
 
   return (
-    <div className={inviteCardClass}>
-      <div className={inviteHeaderClass}>
-        <Icon icon="code-branch" />
-        <strong>Build team invite</strong>
-      </div>
+    <BuildMessageCard
+      themeName={sender.profileTheme}
+      bannerIcon="user-plus"
+      bannerText={
+        sentByMe ? (
+          <>You invited {invitedObjectLabel} to your team</>
+        ) : (
+          'Team invitation'
+        )
+      }
+      title={title}
+      chips={
+        <BuildMessageCardChip
+          muted={status !== 'pending' && status !== 'accepted'}
+          themeName={sender.profileTheme}
+          icon={status === 'accepted' ? 'check' : 'code-branch'}
+        >
+          {getInviteChipLabel(status)}
+        </BuildMessageCardChip>
+      }
+      actions={
+        <>
+          {canOpenApp ? (
+            <GameCTAButton
+              variant="neutral"
+              size="md"
+              icon="external-link-alt"
+              onClick={handleOpenApp}
+            >
+              Open App
+            </GameCTAButton>
+          ) : null}
+          {!sentByMe && membershipLoaded && status === 'pending' ? (
+            <>
+              <GameCTAButton
+                variant="success"
+                size="md"
+                icon="check"
+                shiny
+                onClick={handleAccept}
+              >
+                Accept
+              </GameCTAButton>
+              <GameCTAButton variant="neutral" size="md" onClick={handleDecline}>
+                Decline
+              </GameCTAButton>
+            </>
+          ) : null}
+          {canOpenWorkspaceFromTitle ? (
+            <GameCTAButton
+              variant="logoBlue"
+              size="md"
+              icon="code-branch"
+              onClick={handleOpenWorkspace}
+            >
+              Open Workspace
+            </GameCTAButton>
+          ) : null}
+        </>
+      }
+    >
       <div className={inviteBodyClass}>
         {sentByMe ? (
-          <span>
-            {status === 'accepted'
-              ? 'This invite was accepted for '
-              : status === 'declined'
-                ? 'This invite was declined for '
-                : status === 'revoked'
-                  ? 'This invite was revoked for '
-                  : status === 'left'
-                    ? 'This member left the team for '
-                    : 'You invited this user to join the team for '}
-            {titleNode}.
-          </span>
+          status === 'accepted' ? (
+            <>{invitedLabel} accepted and is on the team.</>
+          ) : status === 'declined' ? (
+            <>{invitedLabel} declined this invite.</>
+          ) : status === 'revoked' ? (
+            <>{invitedLabel}&apos;s invite was revoked.</>
+          ) : status === 'left' ? (
+            <>{invitedLabel} left the team.</>
+          ) : (
+            <>You invited {invitedObjectLabel} to join the team.</>
+          )
         ) : status === 'accepted' ? (
-          <span>
-            You are on the team for{' '}
-            {titleNode}.
-          </span>
+          "You're on the team."
         ) : status === 'declined' ? (
-          <span>
-            You declined {sender.username}&apos;s invite for{' '}
-            {titleNode}.
-          </span>
+          <>You declined {sender.username}&apos;s invite.</>
         ) : status === 'revoked' ? (
-          <span>
-            {sender.username}&apos;s invite for {titleNode} was revoked.
-          </span>
+          <>{sender.username}&apos;s invite was revoked.</>
         ) : status === 'left' ? (
-          <span>You left the team for {titleNode}.</span>
+          'You left the team.'
         ) : (
-          <span>
-            {sender.username} invited you to join the team for{' '}
-            {titleNode}.
-          </span>
+          <>{sender.username} invited you to help build this project.</>
         )}
       </div>
-      <div className={actionsClass}>
-        {canOpenApp ? (
-          <Button
-            color="darkerGray"
-            variant="outline"
-            size="sm"
-            onClick={handleOpenApp}
-          >
-            Open App
-          </Button>
-        ) : null}
-        {!sentByMe && membershipLoaded && status === 'pending' ? (
-          <>
-            <Button
-              color="logoBlue"
-              variant="soft"
-              size="sm"
-              onClick={handleAccept}
-            >
-              Accept
-            </Button>
-            <Button
-              color="darkerGray"
-              variant="outline"
-              size="sm"
-              onClick={handleDecline}
-            >
-              Decline
-            </Button>
-          </>
-        ) : null}
-        {!sentByMe && status === 'accepted' ? (
-          <Button
-            color="green"
-            variant="soft"
-            size="sm"
-            onClick={handleOpenWorkspace}
-          >
-            Open Workspace
-          </Button>
-        ) : null}
-      </div>
-    </div>
+    </BuildMessageCard>
   );
 
   async function handleAccept() {
@@ -509,54 +518,21 @@ function getBuildRequestStatusFromActionState(
   return 'pending';
 }
 
-const inviteCardClass = css`
-  border: 1px solid ${Color.pink(0.55)};
-  border-radius: ${borderRadius};
-  padding: 0.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  background: ${Color.pink(0.06)};
-  max-width: 30rem;
-`;
 
-const inviteHeaderClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: ${Color.black()};
-`;
 
 const inviteBodyClass = css`
-  color: ${Color.darkGray()};
-  line-height: 1.4;
-`;
-
-const workspaceTitleButtonClass = css`
-  appearance: none;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  color: inherit;
-  cursor: pointer;
-  display: inline;
-  font: inherit;
+  color: ${Color.darkerGray()};
+  line-height: 1.45;
+  font-size: 1.3rem;
   font-weight: 700;
-  text-align: inherit;
-  vertical-align: baseline;
-  text-decoration: none;
-
-  &:hover,
-  &:focus-visible {
-    text-decoration: underline;
-    text-underline-offset: 0.12em;
-  }
 `;
 
-const actionsClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-`;
+function getInviteChipLabel(status: BuildContributionInviteStatus) {
+  if (status === 'accepted') return 'On the team';
+  if (status === 'declined') return 'Declined';
+  if (status === 'revoked') return 'Revoked';
+  if (status === 'left') return 'Left the team';
+  return 'Invitation pending';
+}
+
+

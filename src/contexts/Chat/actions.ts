@@ -172,6 +172,41 @@ export default function ChatActions(dispatch: Dispatch) {
         userId
       });
     },
+    onUpdateBuildThumbnailSuggestionState({
+      rootBuildId,
+      build,
+      adoptedFromThumbnailUrl,
+      eventTimeMs
+    }: {
+      rootBuildId: number;
+      build: Record<string, any>;
+      adoptedFromThumbnailUrl?: string;
+      eventTimeMs?: number;
+    }) {
+      return dispatch({
+        type: 'UPDATE_BUILD_THUMBNAIL_SUGGESTION_STATE',
+        rootBuildId,
+        build,
+        adoptedFromThumbnailUrl,
+        eventTimeMs
+      });
+    },
+    onUpdateBuildContributionSubmissionState({
+      branchBuildId,
+      contribution,
+      eventTimeMs
+    }: {
+      branchBuildId: number;
+      contribution: Record<string, any>;
+      eventTimeMs?: number;
+    }) {
+      return dispatch({
+        type: 'UPDATE_BUILD_CONTRIBUTION_SUBMISSION_STATE',
+        branchBuildId,
+        contribution,
+        eventTimeMs
+      });
+    },
     onDeleteAIChatFile({
       channelId,
       topicId,
@@ -1904,20 +1939,42 @@ export default function ChatActions(dispatch: Dispatch) {
         target
       });
     },
-    onSetOnlineUsers({
-      channelId,
+    // App-wide snapshot: authoritative about who is offline too, so the
+    // reducer reconciles anyone it no longer lists (only when isComplete).
+    // requestedAt is the client time the request was emitted; presence events
+    // that landed after it outrank this snapshot.
+    onSetOnlinePresenceSnapshot({
       onlineUsers,
-      recentOfflineUsers
+      isComplete,
+      requestedAt
     }: {
-      channelId: number;
+      onlineUsers: Record<number, any>;
+      isComplete: boolean;
+      requestedAt: number;
+    }) {
+      return dispatch({
+        type: 'SET_ONLINE_PRESENCE_SNAPSHOT',
+        onlineUsers,
+        isComplete,
+        requestedAt
+      });
+    },
+    // Channel-scoped snapshot: merges into the same app-wide map, but absence
+    // from it never means offline.
+    onSetOnlineUsers({
+      onlineUsers,
+      recentOfflineUsers,
+      requestedAt
+    }: {
       onlineUsers: Record<number, any>;
       recentOfflineUsers?: any[];
+      requestedAt: number;
     }) {
       return dispatch({
         type: 'SET_ONLINE_USERS',
-        channelId,
         onlineUsers,
-        recentOfflineUsers
+        recentOfflineUsers,
+        requestedAt
       });
     },
     onSetSubchannel({

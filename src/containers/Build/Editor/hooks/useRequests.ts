@@ -14,6 +14,9 @@ export default function useRequests() {
   const uploadBuildThumbnail = useAppContext(
     (v) => v.requestHelpers.uploadBuildThumbnail
   );
+  const suggestBuildThumbnailToOwner = useAppContext(
+    (v) => v.requestHelpers.suggestBuildThumbnailToOwner
+  );
   const generateBuildThumbnail = useAppContext(
     (v) => v.requestHelpers.generateBuildThumbnail
   );
@@ -137,6 +140,7 @@ export default function useRequests() {
     updateBuildProjectFiles,
     uploadBuildRuntimeFiles,
     generateBuildThumbnail,
+    suggestBuildThumbnailToOwner,
     uploadBuildThumbnail,
     uploadFile
   };

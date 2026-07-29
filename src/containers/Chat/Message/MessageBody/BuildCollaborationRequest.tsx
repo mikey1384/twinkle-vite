@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import { Color, borderRadius } from '~/constants/css';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
+import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 
 interface BuildCollaborationRequestPayload {
@@ -47,6 +47,7 @@ export default function BuildCollaborationRequest({
   sender: {
     id: number;
     username: string;
+    profileTheme?: string | null;
   };
 }) {
   const navigate = useNavigate();
@@ -175,102 +176,97 @@ export default function BuildCollaborationRequest({
   }
 
   return (
-    <div className={requestCardClass}>
-      <div className={requestHeaderClass}>
-        <Icon icon="users" />
-        <strong>Build join request</strong>
-      </div>
+    <BuildMessageCard
+      themeName={sender.profileTheme}
+      bannerIcon="users"
+      bannerText={
+        sentByMe ? 'You asked to join a project' : 'Someone wants to help build'
+      }
+      title={title}
+      chips={
+        <BuildMessageCardChip
+          themeName={sender.profileTheme}
+          muted={status !== 'pending' && status !== 'accepted'}
+          icon={status === 'accepted' ? 'check' : 'users'}
+        >
+          {getRequestChipLabel(status, memberLeft)}
+        </BuildMessageCardChip>
+      }
+      actions={
+        <>
+          {canOpenApp ? (
+            <GameCTAButton
+              variant="neutral"
+              size="md"
+              icon="external-link-alt"
+              onClick={handleOpenApp}
+            >
+              Open App
+            </GameCTAButton>
+          ) : null}
+          {!sentByMe &&
+          membershipLoaded &&
+          status === 'pending' &&
+          !memberLeft ? (
+            <>
+              <GameCTAButton
+                variant="success"
+                size="md"
+                icon="check"
+                shiny
+                onClick={handleAccept}
+              >
+                Accept
+              </GameCTAButton>
+              <GameCTAButton variant="neutral" size="md" onClick={handleReject}>
+                Decline
+              </GameCTAButton>
+            </>
+          ) : null}
+          {status === 'accepted' ? (
+            <GameCTAButton
+              variant="logoBlue"
+              size="md"
+              icon="code-branch"
+              onClick={handleOpenWorkspace}
+            >
+              Open Workspace
+            </GameCTAButton>
+          ) : null}
+        </>
+      }
+    >
       <div className={requestBodyClass}>
         {memberLeft ? (
-          <span>
-            {sentByMe ? (
-              <>
-                You left the team for <strong>{title}</strong>.
-              </>
-            ) : (
-              <>
-                {sender.username} left the team for <strong>{title}</strong>.
-              </>
-            )}
-          </span>
+          sentByMe ? (
+            'You left the team for this project.'
+          ) : (
+            <>{sender.username} left the team for this project.</>
+          )
         ) : sentByMe ? (
-          <span>
-            {status === 'accepted'
-              ? 'Your request was accepted for '
-              : status === 'rejected'
-                ? 'Your request was declined for '
-                : status === 'canceled'
-                  ? 'You canceled your request for '
-                  : 'You asked to join '}
-            <strong>{title}</strong>.
-          </span>
+          status === 'accepted' ? (
+            'Your request was accepted.'
+          ) : status === 'rejected' ? (
+            'Your request was declined.'
+          ) : status === 'canceled' ? (
+            'You canceled your request.'
+          ) : (
+            'You asked to join this project.'
+          )
         ) : status === 'accepted' ? (
-          <span>
-            You accepted {sender.username}&apos;s request for{' '}
-            <strong>{title}</strong>.
-          </span>
+          <>You accepted {sender.username}&apos;s request.</>
         ) : status === 'rejected' ? (
-          <span>
-            You declined {sender.username}&apos;s request for{' '}
-            <strong>{title}</strong>.
-          </span>
+          <>You declined {sender.username}&apos;s request.</>
         ) : status === 'canceled' ? (
-          <span>
-            {sender.username} canceled the request for <strong>{title}</strong>.
-          </span>
+          <>{sender.username} canceled the request.</>
         ) : (
-          <span>
-            {sender.username} asked to join{' '}
-            <strong>{title}</strong>.
-          </span>
+          <>{sender.username} asked to join this project.</>
         )}
       </div>
       {requestMessage ? (
         <div className={requestMessageClass}>{requestMessage}</div>
       ) : null}
-      <div className={actionsClass}>
-        {canOpenApp ? (
-          <Button
-            color="darkerGray"
-            variant="outline"
-            size="sm"
-            onClick={handleOpenApp}
-          >
-            Open App
-          </Button>
-        ) : null}
-        {!sentByMe && membershipLoaded && status === 'pending' && !memberLeft ? (
-          <>
-            <Button
-              color="logoBlue"
-              variant="soft"
-              size="sm"
-              onClick={handleAccept}
-            >
-              Accept
-            </Button>
-            <Button
-              color="darkerGray"
-              variant="outline"
-              size="sm"
-              onClick={handleReject}
-            >
-              Decline
-            </Button>
-          </>
-        ) : null}
-        {status === 'accepted' ? (
-          <Button
-            color="green"
-            variant="soft"
-            size="sm"
-            onClick={handleOpenWorkspace}
-          >
-            Open Workspace
-          </Button>
-        ) : null}
-      </div>
-    </div>
+    </BuildMessageCard>
   );
 
   async function handleAccept() {
@@ -470,40 +466,33 @@ function getBuildInviteStatusFromActionState(
   return 'pending';
 }
 
-const requestCardClass = css`
-  border: 1px solid ${Color.logoBlue(0.45)};
-  border-radius: ${borderRadius};
-  padding: 0.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  background: ${Color.logoBlue(0.06)};
-  max-width: 30rem;
-`;
 
-const requestHeaderClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: ${Color.black()};
-`;
 
 const requestBodyClass = css`
-  color: ${Color.darkGray()};
-  line-height: 1.4;
+  color: ${Color.darkerGray()};
+  line-height: 1.45;
+  font-size: 1.3rem;
+  font-weight: 700;
 `;
+
+function getRequestChipLabel(
+  status: BuildCollaborationRequestStatus,
+  memberLeft: boolean
+) {
+  if (memberLeft) return 'Left the team';
+  if (status === 'accepted') return 'On the team';
+  if (status === 'rejected') return 'Declined';
+  if (status === 'canceled') return 'Canceled';
+  if (status === 'invited') return 'Invited';
+  return 'Waiting on you';
+}
 
 const requestMessageClass = css`
-  border-left: 3px solid ${Color.logoBlue(0.5)};
-  padding-left: 0.65rem;
+  border-left: 4px solid var(--themed-card-accent, ${Color.logoBlue(0.55)});
+  padding: 0.1rem 0 0.1rem 0.75rem;
   color: ${Color.black()};
-  line-height: 1.4;
+  line-height: 1.45;
   white-space: pre-wrap;
+  font-size: 1.3rem;
 `;
 
-const actionsClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-`;

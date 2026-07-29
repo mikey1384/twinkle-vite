@@ -32,9 +32,10 @@ export interface BuildLike {
   profilePicUrl?: string | null;
   rootBuildUserId?: number | null;
   rootBuildUsername?: string | null;
-  // When the project owner last opened this branch, and when it last changed —
-  // together they say whether the owner has seen the contributor's latest work.
-  ownerLastOpenedBranchAt?: number | null;
+  // The identity of the contributor's work: the delta between the branch and
+  // the base it was branched from. Empty means a freshly branched or fully
+  // merged branch — nothing to hand to the owner.
+  contributionRevisionHash?: string | null;
   updatedAt?: number | null;
   code?: string | null;
   projectFiles?: BuildProjectFile[] | null;

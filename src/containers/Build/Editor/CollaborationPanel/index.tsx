@@ -8,7 +8,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
-import BranchOwnerAttentionNotice from '../BranchOwnerAttentionNotice';
+import BranchSubmitToOwnerPanel from '../BranchSubmitToOwnerPanel';
 import ContributionDetail from './ContributionDetail';
 import Forum from './Forum';
 import OwnerContributionsPanel from './OwnerContributionsPanel';
@@ -1008,26 +1008,39 @@ export default function CollaborationPanel({
     return (
       <div className={embeddedBodyStackClass}>
         {renderContributionDetail(canCompleteConflictMerge)}
-        {renderOwnerAttentionNotice()}
+        {renderSubmitToOwnerPanel()}
         {renderForum()}
       </div>
     );
   }
 
   // A sibling of the detail panel, not a child: that panel only renders when
-  // the branch needs attention (drift, conflicts, errors), and this is exactly
-  // what a contributor wants to see on a perfectly healthy branch.
-  function renderOwnerAttentionNotice() {
+  // the branch needs attention (drift, conflicts, errors), and handing work to
+  // the owner is exactly what a contributor does on a perfectly healthy branch.
+  function renderSubmitToOwnerPanel() {
     if (!isContributionFork) return null;
     const isBranchContributor =
       Number(build.contributionContributorId || 0) === Number(userId || 0);
     const isRootOwner =
       Number(build.rootBuildUserId || 0) === Number(userId || 0);
     if (!isBranchContributor || isRootOwner) return null;
+    // Both halves, the same pair the notify-owner route enforces. The delta
+    // alone is not enough: merging rewrites the branch's base files to the
+    // merged Main file set without touching the branch's own files, so a merged
+    // branch grows a delta again as soon as Main moves on by itself, made up of
+    // Main-only files the branch never deleted. Offering to send that hands the
+    // owner work that is already in, described as deletions.
+    const branchStatus = normalizeContributionStatus(build.contributionStatus);
+    const isBranchOpen =
+      branchStatus !== 'merged' && branchStatus !== 'merging';
     return (
-      <BranchOwnerAttentionNotice
-        ownerLastOpenedAt={Number(build.ownerLastOpenedBranchAt || 0)}
-        branchUpdatedAt={Number(build.updatedAt || 0)}
+      <BranchSubmitToOwnerPanel
+        rootBuildId={rootBuildId}
+        branchBuildId={Number(build.id || 0)}
+        hasWorkToSend={
+          isBranchOpen && Boolean(String(build.contributionRevisionHash || ''))
+        }
+        revisionHash={build.contributionRevisionHash}
         ownerUsername={build.rootBuildUsername}
       />
     );

@@ -147,6 +147,9 @@ registerMethods('build', [
   'mergeBuildContributionIntoMyBranch',
   'mergeBuildContribution',
   'replaceMainWithBuildContribution',
+  'notifyBuildOwnerOfContribution',
+  'suggestBuildThumbnailToOwner',
+  'adoptBuildThumbnailSuggestion',
   'replaceBuildContributionIntoMyBranch',
   'completeBuildContributionMerge',
   'loadBuildContributionForumThreads',
@@ -359,7 +362,6 @@ registerMethods('chess', [
   'startTimeAttackPromotion',
   'submitTimeAttackAttempt',
   'adjustTimeAttackTimer',
-  'completePromotion',
   'unlockPromotion',
   'loadChessRankings'
 ]);

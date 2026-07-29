@@ -295,6 +295,7 @@ export default function BuildEditor({
     updateBuildMetadata,
     updateBuildProjectFiles,
     generateBuildThumbnail,
+    suggestBuildThumbnailToOwner,
     uploadBuildRuntimeFiles,
     uploadBuildThumbnail,
     uploadFile,
@@ -686,7 +687,11 @@ export default function BuildEditor({
     handlePreviewCaptureReadyChange,
     handleSaveMetadata,
     handleSaveThumbnail,
+    handleSaveThumbnailAndSendToOwner,
     handleThumbnailNudgeSelect,
+    canSendThumbnailToOwner,
+    sendingThumbnailToOwner,
+    thumbnailSentToOwnerAt,
     maybeAutoCaptureBranchThumbnailAfterProgressSave,
     savingDescription,
     savingThumbnail,
@@ -705,6 +710,7 @@ export default function BuildEditor({
     isOwner,
     loadBuildThumbnailOptions,
     previewPanelRef,
+    suggestBuildThumbnailToOwner,
     syncAvailableBranchSummary,
     updateBuildMetadata,
     uploadBuildThumbnail
@@ -1877,6 +1883,11 @@ export default function BuildEditor({
         onHideThumbnailModal={handleCloseThumbnailModal}
         onBuildCollaborationPatch={handleBuildCollaborationPatch}
         onSaveThumbnail={handleSaveThumbnail}
+        onSaveThumbnailAndSendToOwner={handleSaveThumbnailAndSendToOwner}
+        canSendThumbnailToOwner={canSendThumbnailToOwner}
+        sendingThumbnailToOwner={sendingThumbnailToOwner}
+        thumbnailSentToOwnerAt={thumbnailSentToOwnerAt}
+        thumbnailOwnerUsername={build.rootBuildUsername}
         onSelectBuildChatUploadFile={(file) => {
           setBuildChatUploadModalShown(false);
           setBuildChatUploadFileObj(file);

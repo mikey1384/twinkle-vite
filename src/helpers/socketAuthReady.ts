@@ -9,6 +9,12 @@ interface SocketAuthReadyState {
 
 const SOCKET_AUTH_READY_TIMEOUT_MS = 5000;
 
+// The server can spend up to 16 seconds on its supported cluster presence
+// lookup and then continue the remaining writer hydration and room joins. Keep
+// the bind acknowledgement deadline comfortably beyond that path; anything
+// waiting on the bind should use the same budget.
+export const SOCKET_BIND_ACK_TIMEOUT_MS = 30000;
+
 let socketAuthReadyState: SocketAuthReadyState = {
   socketId: null,
   userId: null,

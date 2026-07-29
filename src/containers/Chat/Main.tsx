@@ -16,6 +16,10 @@ import LoadingBackground from './LoadingBackground';
 import AICardModal from '~/components/Modals/AICardModal';
 import queryString from 'query-string';
 import { isMobile, isTablet, parseChannelPath } from '~/helpers';
+import {
+  SOCKET_BIND_ACK_TIMEOUT_MS,
+  waitForSocketAuthReady
+} from '~/helpers/socketAuthReady';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
@@ -868,22 +872,44 @@ export default function Main({
     return result;
   }, [chatStatus]);
 
+  // Also re-runs on reconnect, not just on channel change: the channel's call
+  // data and - for General - the recent-offline list are only refreshed here,
+  // and both go stale while the socket is down. The app-wide presence snapshot
+  // taken at bind time reconciles who is online but carries no lastActive, so
+  // without this the members who went offline during the disconnect would be
+  // dropped from the online list without ever showing up as recently offline.
   useEffect(() => {
-    if (!selectedChannelId) return;
-    socket.emit('join_chat_group', selectedChannelId);
-    socket.emit(
-      'check_online_users',
-      selectedChannelId,
-      ({ onlineUsers, recentOfflineUsers }: any) => {
-        onSetOnlineUsers({
-          channelId: selectedChannelId,
-          onlineUsers,
-          recentOfflineUsers: recentOfflineUsers || []
-        });
-      }
-    );
+    if (!selectedChannelId || !socketConnected) return;
+    let canceled = false;
+    // The server answers check_online_users as the bound user, so this has to
+    // wait for the bind that follows a reconnect; an unbound request fails the
+    // channel access check and comes back empty. The wait matches the bind
+    // acknowledgement deadline - a bind that never lands disconnects the
+    // socket, which re-runs this effect on the next connect.
+    waitForSocketAuthReady(userIdRef.current, SOCKET_BIND_ACK_TIMEOUT_MS)
+      .then(() => {
+        if (canceled) return;
+        socket.emit('join_chat_group', selectedChannelId);
+        const requestedAt = Date.now();
+        socket.emit(
+          'check_online_users',
+          selectedChannelId,
+          ({ onlineUsers, recentOfflineUsers }: any) => {
+            if (canceled) return;
+            onSetOnlineUsers({
+              onlineUsers,
+              recentOfflineUsers: recentOfflineUsers || [],
+              requestedAt
+            });
+          }
+        );
+      })
+      .catch(() => {});
+    return () => {
+      canceled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
+  }, [selectedChannelId, socketConnected]);
 
   const handleCreateNewChannel = useCallback(
     async ({

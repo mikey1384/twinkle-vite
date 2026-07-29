@@ -125,6 +125,9 @@ export interface Build {
   contributionStatus?: 'none' | 'draft' | 'merging' | 'merged';
   contributionBaseBuildUpdatedAt?: number | null;
   contributionBaseFilesHash?: string | null;
+  // The delta between this branch and the base it was branched from, hashed.
+  // Empty means a freshly branched or fully merged branch: no work to hand over.
+  contributionRevisionHash?: string | null;
   contributionMergedAt?: number | null;
   contributionClosedAt?: number | null;
   contributionMergedByUserId?: number | null;

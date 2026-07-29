@@ -9,6 +9,8 @@ import Omok from '../../Omok';
 import { MessageStyle } from '../../Styles';
 import ApprovalRequest from './ApprovalRequest';
 import BuildCollaborationRequest from './BuildCollaborationRequest';
+import BuildContributionSubmission from './BuildContributionSubmission';
+import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
 import BuildContributionInvite from './BuildContributionInvite';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
@@ -167,6 +169,7 @@ export default function Content({
     isSubject,
     moveViewTimeStamp,
     numMsgs,
+    profileTheme,
     rewardAmount,
     rewardReason,
     rootType,
@@ -196,17 +199,48 @@ export default function Content({
         />
       ) : rootType === 'buildContributionInvite' && rootId ? (
         <BuildContributionInvite
+          channelId={channelId}
           content={content}
           invite={parsedSettings?.buildContributionInvite}
           myId={myId}
-          sender={{ id: userId, username: appliedUsername }}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
         />
       ) : rootType === 'buildCollaborationRequest' && rootId ? (
         <BuildCollaborationRequest
           content={content}
           request={parsedSettings?.buildCollaborationRequest}
           myId={myId}
-          sender={{ id: userId, username: appliedUsername }}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
+        />
+      ) : rootType === 'buildThumbnailSuggestion' && rootId ? (
+        <BuildThumbnailSuggestion
+          content={content}
+          suggestion={parsedSettings?.buildThumbnailSuggestion}
+          myId={myId}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
+        />
+      ) : rootType === 'buildContributionSubmission' && rootId ? (
+        <BuildContributionSubmission
+          content={content}
+          submission={parsedSettings?.buildContributionSubmission}
+          myId={myId}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
         />
       ) : invitePath ? (
         <Invitation

@@ -56,6 +56,7 @@ export default function useMetadata({
   isOwner,
   loadBuildThumbnailOptions,
   previewPanelRef,
+  suggestBuildThumbnailToOwner,
   syncAvailableBranchSummary,
   updateBuildMetadata,
   uploadBuildThumbnail
@@ -75,6 +76,10 @@ export default function useMetadata({
   isOwner: boolean;
   loadBuildThumbnailOptions: (buildId: number) => Promise<any>;
   previewPanelRef: RefObject<PreviewPanelHandle | null>;
+  suggestBuildThumbnailToOwner: (options: {
+    buildId: number;
+    contributionBuildId: number;
+  }) => Promise<any>;
   syncAvailableBranchSummary: (nextBuild: Build) => void;
   updateBuildMetadata: (options: Record<string, any>) => Promise<any>;
   uploadBuildThumbnail: (options: {
@@ -92,6 +97,17 @@ export default function useMetadata({
   >([]);
   const [thumbnailOptionsLoading, setThumbnailOptionsLoading] = useState(false);
   const [thumbnailSaveError, setThumbnailSaveError] = useState('');
+  const [sendingThumbnailToOwner, setSendingThumbnailToOwner] = useState(false);
+  const [thumbnailSentToOwnerAt, setThumbnailSentToOwnerAt] = useState(0);
+  // Offering a thumbnail is the branch contributor's move, so the button only
+  // exists on a branch, for the person editing it, when somebody else owns the
+  // project. Editing rights on this build already mean it is theirs.
+  const canSendThumbnailToOwner =
+    canEditCurrentBuildThumbnail &&
+    Number(build.contributionRootBuildId || 0) > 0 &&
+    Number(build.rootBuildUserId || 0) > 0 &&
+    Number(build.rootBuildUserId || 0) !==
+      Number(build.contributionContributorId || 0);
   const autoBranchThumbnailTimeoutRef = useRef<number | null>(null);
   const autoBranchThumbnailInFlightRef = useRef(false);
   const pendingBranchThumbnailCaptureRef =
@@ -223,6 +239,10 @@ export default function useMetadata({
   function handleOpenThumbnailModal() {
     if (!canEditCurrentBuildThumbnail) return;
     setThumbnailSaveError('');
+    // "Sent to owner" belongs to the image it was sent for. A fresh visit to
+    // this modal is a fresh decision, so it does not inherit the last one's
+    // confirmation.
+    setThumbnailSentToOwnerAt(0);
     setThumbnailModalShown(true);
   }
 
@@ -481,6 +501,46 @@ export default function useMetadata({
     }
   }
 
+  // Save, then offer. In that order and never the other way round: the route
+  // reads the branch row rather than anything the client sends, so what the
+  // owner is offered is whatever the branch actually ended up holding.
+  async function handleSaveThumbnailAndSendToOwner(
+    croppedImageUrl: string | null
+  ) {
+    if (
+      !canSendThumbnailToOwner ||
+      savingThumbnail ||
+      sendingThumbnailToOwner ||
+      !croppedImageUrl
+    ) {
+      return;
+    }
+    setSendingThumbnailToOwner(true);
+    setThumbnailSaveError('');
+    try {
+      const savedBuild = await persistBuildThumbnailFromDataUrl(
+        croppedImageUrl
+      );
+      const result = await suggestBuildThumbnailToOwner({
+        buildId: Number(savedBuild.contributionRootBuildId || 0),
+        contributionBuildId: Number(savedBuild.id || 0)
+      });
+      if (!result?.message) {
+        throw new Error('Failed to send the thumbnail to the owner');
+      }
+      setThumbnailSentToOwnerAt(Date.now());
+    } catch (error: any) {
+      console.error('Failed to send build thumbnail to owner:', error);
+      setThumbnailSaveError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to send the thumbnail to the owner'
+      );
+    } finally {
+      setSendingThumbnailToOwner(false);
+    }
+  }
+
   function buildThumbnailNudgePromptForDisplay() {
     if (thumbnailNudgeStage === 'model') {
       return {
@@ -615,6 +675,7 @@ export default function useMetadata({
 
   return {
     buildThumbnailNudgePromptForDisplay,
+    canSendThumbnailToOwner,
     captureThumbnailFromPreview,
     descriptionModalShown,
     ensureBuildThumbnailBeforePublish,
@@ -625,7 +686,10 @@ export default function useMetadata({
     handlePreviewCaptureReadyChange,
     handleSaveMetadata,
     handleSaveThumbnail,
+    handleSaveThumbnailAndSendToOwner,
     handleThumbnailNudgeSelect,
+    sendingThumbnailToOwner,
+    thumbnailSentToOwnerAt,
     maybeAutoCaptureBranchThumbnailAfterProgressSave,
     savingDescription,
     savingThumbnail,

@@ -111,8 +111,13 @@ export default function ThumbnailModal({
   thumbnailOptionsLoading = false,
   loading = false,
   saveError = '',
+  canSendToOwner = false,
+  sendingToOwner = false,
+  sentToOwnerAt = 0,
+  ownerUsername,
   onHide,
   onSave,
+  onSaveAndSendToOwner,
   onCaptureFromPreview
 }: {
   initialImageUrl?: string | null;
@@ -120,8 +125,15 @@ export default function ThumbnailModal({
   thumbnailOptionsLoading?: boolean;
   loading?: boolean;
   saveError?: string;
+  canSendToOwner?: boolean;
+  sendingToOwner?: boolean;
+  sentToOwnerAt?: number;
+  ownerUsername?: string | null;
   onHide: () => void;
   onSave: (croppedImageUrl: string | null) => void | Promise<void>;
+  onSaveAndSendToOwner?: (
+    croppedImageUrl: string | null
+  ) => void | Promise<void>;
   onCaptureFromPreview?: () => Promise<string>;
 }) {
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -133,6 +145,11 @@ export default function ThumbnailModal({
   const [uploadModalShown, setUploadModalShown] = useState(false);
   const [error, setError] = useState('');
   const [selectedThumbnailUrl, setSelectedThumbnailUrl] = useState('');
+  // The image the confirmation belongs to. Selecting, capturing or cropping a
+  // different one makes "Sent to owner" a statement about a picture that is no
+  // longer on screen, so the banner and the "Send again" label are tied to the
+  // exact crop that was handed over.
+  const [sentCroppedImageUrl, setSentCroppedImageUrl] = useState('');
   const canEditSourceImage = canEditImageUrlInCanvas(sourceImageUrl);
 
   useEffect(() => {
@@ -141,9 +158,14 @@ export default function ThumbnailModal({
     setCroppedImageUrl('');
     setError('');
     setSelectedThumbnailUrl(nextInitialImageUrl);
+    setSentCroppedImageUrl('');
     setSourceImageUrl(getEditableCanvasImageUrl(nextInitialImageUrl));
   }, [initialImageUrl]);
 
+  const ownerLabel = String(ownerUsername || '').trim() || 'the owner';
+  const sentThisImage = Boolean(
+    sentToOwnerAt && croppedImageUrl && croppedImageUrl === sentCroppedImageUrl
+  );
   const canCaptureFromPreview = Boolean(onCaptureFromPreview);
   const shouldAllowRemove = Boolean(sourceImageUrl || initialImageUrl);
   const willRemoveThumbnail = !sourceImageUrl && Boolean(initialImageUrl);
@@ -162,16 +184,58 @@ export default function ThumbnailModal({
       title="Thumbnail"
       size="lg"
       footer={
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {sentThisImage ? (
+            <span
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                margin-right: auto;
+                color: ${Color.green()};
+                font-size: 1.1rem;
+                font-weight: 700;
+              `}
+            >
+              <Icon icon="check" />
+              <span>Sent to {ownerLabel}.</span>
+            </span>
+          ) : null}
           <Button
             variant="ghost"
-            disabled={loading}
+            disabled={loading || sendingToOwner}
             onClick={onHide}
             style={{ marginRight: '0.7rem' }}
           >
             Cancel
           </Button>
-          <Button color="logoBlue" disabled={saveDisabled} onClick={handleSave}>
+          {/* A branch contributor's thumbnail is only ever a suggestion — the
+              project's thumbnail is the owner's call — so the offer is the one
+              action that saves and asks in a single press. */}
+          {canSendToOwner && onSaveAndSendToOwner ? (
+            <Button
+              color="logoBlue"
+              variant="soft"
+              disabled={saveDisabled || sendingToOwner || !croppedImageUrl}
+              onClick={handleSaveAndSendToOwner}
+              style={{ marginRight: '0.7rem' }}
+            >
+              {/* No name here: the label is uppercased and sits between Cancel
+                  and Save, so a long username crowds the footer for no gain.
+                  The confirmation below names who actually received it, which
+                  is where that detail is worth the room. */}
+              {sendingToOwner
+                ? 'Sending...'
+                : sentThisImage
+                  ? 'Send again'
+                  : 'Save & send to owner'}
+            </Button>
+          ) : null}
+          <Button
+            color="logoBlue"
+            disabled={saveDisabled || sendingToOwner}
+            onClick={handleSave}
+          >
             {loading ? 'Saving...' : 'Save'}
           </Button>
         </div>
@@ -632,5 +696,11 @@ export default function ThumbnailModal({
   function handleSave() {
     if (saveDisabled) return;
     onSave(croppedImageUrl || null);
+  }
+
+  function handleSaveAndSendToOwner() {
+    if (saveDisabled || sendingToOwner || !croppedImageUrl) return;
+    setSentCroppedImageUrl(croppedImageUrl);
+    onSaveAndSendToOwner?.(croppedImageUrl);
   }
 }
