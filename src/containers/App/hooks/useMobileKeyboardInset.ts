@@ -17,6 +17,10 @@ const NON_TEXT_INPUT_TYPES = new Set([
 
 // A misread must never be able to collapse the app to nothing.
 const MAX_INSET_RATIO = 0.7;
+// Mobile browsers can deliver the viewport resize before the caret-reveal pan.
+// Requiring consecutive matching frames keeps that intermediate geometry out of
+// shared layout without adding a fixed device-specific keyboard-animation delay.
+const REQUIRED_STABLE_VIEWPORT_FRAMES = 3;
 
 /**
  * Publishes how much of the viewport the on-screen keyboard is covering.
@@ -35,9 +39,14 @@ export default function useMobileKeyboardInset() {
     const visualViewport = window.visualViewport;
     if (!visualViewport) return;
     const root = document.documentElement;
-    let frame: number | null = null;
+    const insetPublisher = createSettledInsetPublisher({
+      readInset,
+      publishInset: applyInset,
+      requestFrame: (callback) => window.requestAnimationFrame(callback),
+      cancelFrame: (frameId) => window.cancelAnimationFrame(frameId)
+    });
 
-    applyInset();
+    insetPublisher.schedule();
     // The inset is a difference between TWO measurements, so BOTH have to be
     // watched. Subscribing only to visualViewport was a real bug: an in-app
     // WKWebView (a link opened inside Instagram, Facebook, etc.), Android Chrome
@@ -47,45 +56,37 @@ export default function useMobileKeyboardInset() {
     // clientHeight had already dropped to match — and the shell got shrunk twice,
     // collapsing chat to a sliver. Observing documentElement directly is what
     // makes this self-correcting rather than a list of events to keep guessing at.
-    visualViewport.addEventListener('resize', scheduleApply);
-    visualViewport.addEventListener('scroll', scheduleApply);
-    window.addEventListener('resize', scheduleApply);
-    window.addEventListener('orientationchange', scheduleApply);
+    visualViewport.addEventListener('resize', insetPublisher.schedule);
+    visualViewport.addEventListener('scroll', insetPublisher.schedule);
+    window.addEventListener('resize', insetPublisher.schedule);
+    window.addEventListener('orientationchange', insetPublisher.schedule);
     // focusin/focusout are what tell us a keyboard is plausible at all; without
     // them a viewport that shrinks for browser chrome reads as a keyboard.
-    document.addEventListener('focusin', scheduleApply);
-    document.addEventListener('focusout', scheduleApply);
+    document.addEventListener('focusin', insetPublisher.schedule);
+    document.addEventListener('focusout', insetPublisher.schedule);
     // No feedback loop: the inset is applied to the shell inside <body>, while
     // the root box stays 100% of the layout viewport, so publishing it cannot
     // resize what is being observed.
     let rootResizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
-      rootResizeObserver = new ResizeObserver(scheduleApply);
+      rootResizeObserver = new ResizeObserver(insetPublisher.schedule);
       rootResizeObserver.observe(root);
     }
 
     return () => {
-      if (frame !== null) window.cancelAnimationFrame(frame);
-      visualViewport.removeEventListener('resize', scheduleApply);
-      visualViewport.removeEventListener('scroll', scheduleApply);
-      window.removeEventListener('resize', scheduleApply);
-      window.removeEventListener('orientationchange', scheduleApply);
-      document.removeEventListener('focusin', scheduleApply);
-      document.removeEventListener('focusout', scheduleApply);
+      insetPublisher.dispose();
+      visualViewport.removeEventListener('resize', insetPublisher.schedule);
+      visualViewport.removeEventListener('scroll', insetPublisher.schedule);
+      window.removeEventListener('resize', insetPublisher.schedule);
+      window.removeEventListener('orientationchange', insetPublisher.schedule);
+      document.removeEventListener('focusin', insetPublisher.schedule);
+      document.removeEventListener('focusout', insetPublisher.schedule);
       rootResizeObserver?.disconnect();
       root.style.removeProperty(APP_SHELL_KEYBOARD_INSET_VAR);
     };
 
-    function scheduleApply() {
-      if (frame !== null) return;
-      frame = window.requestAnimationFrame(() => {
-        frame = null;
-        applyInset();
-      });
-    }
-
-    function applyInset() {
-      const inset = `${readInset()}px`;
+    function applyInset(nextInset: number) {
+      const inset = `${nextInset}px`;
       if (
         root.style.getPropertyValue(APP_SHELL_KEYBOARD_INSET_VAR).trim() ===
         inset
@@ -116,6 +117,67 @@ export default function useMobileKeyboardInset() {
       });
     }
   }, []);
+}
+
+export function createSettledInsetPublisher({
+  readInset,
+  publishInset,
+  requestFrame,
+  cancelFrame
+}: {
+  readInset: () => number;
+  publishInset: (inset: number) => void;
+  requestFrame: (callback: () => void) => number;
+  cancelFrame: (frameId: number) => void;
+}) {
+  let frame: number | null = null;
+  let lastInset: number | null = null;
+  let stableFrameCount = 0;
+  let disposed = false;
+
+  return {
+    schedule,
+    dispose
+  };
+
+  function schedule() {
+    if (disposed) return;
+    // A new viewport/focus event invalidates every observation made before it.
+    // The next publication must be confirmed again from the new geometry.
+    lastInset = null;
+    stableFrameCount = 0;
+    requestNextFrame();
+  }
+
+  function dispose() {
+    disposed = true;
+    if (frame !== null) {
+      cancelFrame(frame);
+      frame = null;
+    }
+  }
+
+  function requestNextFrame() {
+    if (disposed || frame !== null) return;
+    frame = requestFrame(measure);
+  }
+
+  function measure() {
+    frame = null;
+    if (disposed) return;
+    const inset = readInset();
+    if (inset === lastInset) {
+      stableFrameCount += 1;
+    } else {
+      lastInset = inset;
+      stableFrameCount = 1;
+    }
+    if (stableFrameCount >= REQUIRED_STABLE_VIEWPORT_FRAMES) {
+      publishInset(inset);
+      return;
+    }
+    requestNextFrame();
+  }
 }
 
 export function calculateMobileKeyboardInset({
