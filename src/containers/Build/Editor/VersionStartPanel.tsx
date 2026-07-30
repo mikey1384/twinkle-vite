@@ -11,6 +11,10 @@ import { textIsOverflown } from '~/helpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { getBuildBranchDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import {
+  BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
+  BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
+} from './constants';
+import {
   canDeleteBuildBranchStatus,
   canReviewBuildBranchStatus,
   formatBranchFullDisplayTitle,
@@ -35,6 +39,14 @@ const versionStartPanelClass = css`
   gap: 0.85rem;
   padding: 1.4rem;
   background: #fff;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    padding: 1rem;
+    gap: 0.65rem;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    padding: 0.65rem 0.85rem;
+    gap: 0.45rem;
+  }
 `;
 
 const branchPanelActionsClass = css`
@@ -43,6 +55,9 @@ const branchPanelActionsClass = css`
   justify-content: flex-end;
   gap: 0.65rem;
   min-height: 2.8rem;
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    min-height: 2.25rem;
+  }
 `;
 
 const versionStartCardClass = css`
@@ -54,6 +69,14 @@ const versionStartCardClass = css`
   gap: 0.95rem;
   align-items: flex-start;
   background: #fff;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    padding: 0.85rem;
+    gap: 0.55rem;
+  }
 `;
 
 const branchStartRowClass = css`
@@ -120,6 +143,9 @@ const branchListsClass = css`
   display: flex;
   flex-direction: column;
   gap: 1.15rem;
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    gap: 0.75rem;
+  }
 `;
 
 const branchSectionClass = css`
@@ -137,6 +163,10 @@ const branchCardsGridClass = css`
   gap: 0.85rem;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    grid-template-columns: repeat(auto-fill, minmax(min(23rem, 100%), 1fr));
+    gap: 0.6rem;
   }
 `;
 
@@ -178,6 +208,11 @@ const branchCardClass = css`
     grid-template-columns: minmax(0, 1fr) clamp(7.25rem, 34vw, 10rem);
     min-height: 7.4rem;
   }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(7rem, 24%, 9rem);
+    min-height: 6.8rem;
+  }
 `;
 
 const branchPreviewClass = css`
@@ -192,6 +227,14 @@ const branchPreviewClass = css`
     order: 2;
     height: 100%;
     min-height: 7.4rem;
+    aspect-ratio: auto;
+    border-bottom: 0;
+    border-left: 1px solid var(--ui-border);
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    order: 2;
+    height: 100%;
+    min-height: 6.8rem;
     aspect-ratio: auto;
     border-bottom: 0;
     border-left: 1px solid var(--ui-border);
@@ -223,6 +266,12 @@ const branchCardBodyClass = css`
     order: 1;
     justify-content: space-between;
     padding: 0.72rem;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    order: 1;
+    justify-content: space-between;
+    gap: 0.45rem;
+    padding: 0.62rem;
   }
 `;
 
@@ -330,6 +379,10 @@ const branchTopDeleteButtonClass = css`
   &:disabled {
     cursor: default;
     opacity: 0.55;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    padding: 0.42rem 0.65rem;
+    font-size: 1.1rem;
   }
 `;
 

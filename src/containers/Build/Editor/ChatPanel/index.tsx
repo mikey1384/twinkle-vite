@@ -11,6 +11,10 @@ import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
 import {
+  BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
+  BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
+} from '../constants';
+import {
   type ChatPanelCommunicationMode,
   type ChatPanelProps
 } from './types';
@@ -82,9 +86,11 @@ const panelClass = css`
     1.3rem * var(--build-workshop-font-scale)
   );
   font-size: var(--build-workshop-body-font-size);
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     border-right: none;
     border-bottom: 1px solid var(--ui-border);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
     /* The site root font drops from 10px to 8px at this breakpoint
        (styles.css), which would shrink all the sizes above by 20% on
        phones; these overrides restore roughly the same physical px sizes
@@ -131,6 +137,9 @@ const communicationTabsClass = css`
   padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    display: none;
+  }
 `;
 
 const communicationHeaderClass = css`
@@ -141,12 +150,9 @@ const communicationHeaderClass = css`
   padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
-  /* The Main button is hidden on mobile (it moves to the Workspace top bar),
-     so center the mode toggle like the plain tabs row instead of letting it
-     slide into the button's grid column. */
-  @media (max-width: ${mobileMaxWidth}) {
-    display: flex;
-    justify-content: center;
+  /* Compact layouts move Main and communication modes to the Workspace top bar. */
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    display: none;
   }
 `;
 
@@ -161,11 +167,9 @@ const communicationHeaderSpacerClass = css`
   min-width: 0;
 `;
 
-/* On mobile the Main button renders in the Workspace top bar (next to the
-   Chat/Workspace toggle) so it stays reachable from both tabs; here it is
-   desktop-only to avoid showing it twice on the chat tab. */
+/* In compact layouts the whole communication header is hidden. */
 const desktopOnlyMainButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: none;
   }
 `;
@@ -188,8 +192,11 @@ const peoplePaneClass = css`
 
 const mainUpdateNoticePlacementClass = css`
   margin: 0.85rem 1.2rem 0;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     margin: 0.75rem 1rem 0;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    margin: 0.45rem 0.7rem 0;
   }
 `;
 

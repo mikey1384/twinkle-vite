@@ -18,7 +18,8 @@ import type {
   BuildPlanAction,
   BuildPromptBinding,
   ChatMessage,
-  CurrentBuildRunView
+  CurrentBuildRunView,
+  MobilePanelTab
 } from '../types';
 import type { SharedBuildRunIdentityState } from './useRunIdentity';
 
@@ -54,9 +55,6 @@ interface UseChatCommandActionsOptions {
     sharedRunState?: SharedBuildRunIdentityState | null
   ) => string;
   getLatestBuild: () => Build;
-  handleBuildWorkspaceCommunicationModeChange: (
-    communicationMode: 'lumine' | 'people' | 'versions'
-  ) => void;
   handlePendingBuildChatUploadMessage: (
     trimmedMessage: string
   ) => Promise<boolean | null>;
@@ -81,7 +79,7 @@ interface UseChatCommandActionsOptions {
   scheduleDedupedProcessingReconcile: (requestId: string) => void;
   scrollChatToBottom: (behavior?: ScrollBehavior) => void;
   setDismissedFollowUpPromptKey: (key: string) => void;
-  setMobilePanelTab: (tab: 'chat' | 'preview') => void;
+  setMobilePanelTab: (tab: MobilePanelTab) => void;
   startGeneration: (
     messageText: string,
     options?: {
@@ -112,7 +110,6 @@ export default function useChatCommandActions({
   getBuildRunIdentity,
   getCurrentPageRunActivityRequestId,
   getLatestBuild,
-  handleBuildWorkspaceCommunicationModeChange,
   handlePendingBuildChatUploadMessage,
   isOwner,
   isRunActivityInFlight,
@@ -132,8 +129,7 @@ export default function useChatCommandActions({
   userId
 }: UseChatCommandActionsOptions) {
   function openLumineChatShortcutTarget() {
-    handleBuildWorkspaceCommunicationModeChange('lumine');
-    setMobilePanelTab('chat');
+    setMobilePanelTab('lumine');
     window.requestAnimationFrame(() => {
       scrollChatToBottom('smooth');
     });
@@ -388,7 +384,7 @@ export default function useChatCommandActions({
             ? 'Switching to your latest request...'
             : 'Stopping...'
       });
-      setMobilePanelTab('chat');
+      setMobilePanelTab('lumine');
       scrollChatToBottom();
       requestStopForRecoveredBuildRun(requestId, stopReason);
       scheduleDedupedProcessingReconcile(requestId);

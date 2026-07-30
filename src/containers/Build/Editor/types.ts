@@ -7,7 +7,7 @@ import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
 import type { BuildRuntimeExplorationPlan } from '../types/runtimeObservationTypes';
 
-export type MobilePanelTab = 'chat' | 'preview';
+export type MobilePanelTab = 'lumine' | 'preview' | 'versions' | 'people';
 
 export interface MobilePanelTabIntent {
   tab: MobilePanelTab;

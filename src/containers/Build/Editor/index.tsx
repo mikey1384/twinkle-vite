@@ -92,6 +92,7 @@ import {
   mergeChatMessagesWithBuildRun,
   mergeDisplayedChatMessages
 } from './helpers/chatMessages';
+import { BUILD_WORKSPACE_COMPACT_MEDIA_QUERY } from './constants';
 import {
   lockAppShellScrollSurface,
   resetAppShellScroll
@@ -304,13 +305,13 @@ export default function BuildEditor({
   const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
   onUpdateTodayStatsRef.current = onUpdateTodayStats;
 
-  const routeOpensCommunicationPanel =
-    routeOpenPeoplePanel || routeOpenVersionsPanel;
   const [mobilePanelTabIntent, setMobilePanelTabIntent] =
     useState<MobilePanelTabIntent>(() => ({
-      tab: routeOpensCommunicationPanel
-        ? 'chat'
-        : getDefaultMobilePanelTab(build),
+      tab: getRouteMobilePanelTab({
+        routeOpenPeoplePanel,
+        routeOpenVersionsPanel,
+        build
+      }),
       version: 0
     }));
   const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
@@ -997,7 +998,6 @@ export default function BuildEditor({
     getBuildRunIdentity,
     getCurrentPageRunActivityRequestId,
     getLatestBuild,
-    handleBuildWorkspaceCommunicationModeChange,
     handlePendingBuildChatUploadMessage,
     isOwner,
     isRunActivityInFlight,
@@ -1084,14 +1084,16 @@ export default function BuildEditor({
 
   useEffect(() => {
     setMobilePanelTabIntent((currentIntent) => ({
-      tab: routeOpensCommunicationPanel
-        ? 'chat'
-        : getDefaultMobilePanelTab(getLatestBuild()),
+      tab: getRouteMobilePanelTab({
+        routeOpenPeoplePanel,
+        routeOpenVersionsPanel,
+        build: getLatestBuild()
+      }),
       version: currentIntent.version + 1
     }));
-    // Intentionally keyed on build.id only: routeOpensCommunicationPanel is
+    // Intentionally keyed on build.id only: route-open communication state is
     // cleared in place (replace-navigation) once the user changes panels, and
-    // re-running then would yank them out of the chat tab they are using.
+    // re-running then would yank them out of the panel they are using.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
 
@@ -1102,11 +1104,11 @@ export default function BuildEditor({
     ) {
       return;
     }
-    const isMobileWorkspace =
+    const isCompactWorkspace =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
-      window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches;
-    if (!isMobileWorkspace) {
+      window.matchMedia(BUILD_WORKSPACE_COMPACT_MEDIA_QUERY).matches;
+    if (!isCompactWorkspace) {
       setMobilePanelTabIntent((currentIntent) => ({
         tab: 'preview',
         version: currentIntent.version + 1
@@ -1271,8 +1273,7 @@ export default function BuildEditor({
     if (!prompt) return;
     if (!forceInitialPrompt && getLatestChatMessages().length > 0) return;
     didAutoPromptRef.current = true;
-    handleBuildWorkspaceCommunicationModeChange('lumine');
-    setMobilePanelTab('chat');
+    setMobilePanelTab('lumine');
     void startGeneration(prompt, {
       messageContext: initialPromptContext.trim() || null
     });
@@ -1300,7 +1301,7 @@ export default function BuildEditor({
   useEffect(() => {
     if (didInitialChatScrollRef.current) return;
     if (mergedChatMessages.length === 0) return;
-    if (!isDesktopWorkspaceLayout && mobilePanelTabIntent.tab !== 'chat') {
+    if (!isDesktopWorkspaceLayout && mobilePanelTabIntent.tab !== 'lumine') {
       return;
     }
     if (!chatScrollRef.current && !chatEndRef.current) return;
@@ -1550,9 +1551,7 @@ export default function BuildEditor({
           mainProjectConflictMarkerPaths
         );
       }}
-      onOpenTeamPanel={() =>
-        handleBuildWorkspaceCommunicationModeChange('people')
-      }
+      onOpenTeamPanel={() => handleCommunicationPanelChange('people')}
       onUpdatePublishedApp={handlePublish}
       initialScrollTop={buildWorkspaceScrollTops.versions || 0}
       onScrollTopChange={(scrollTop) =>
@@ -1579,7 +1578,7 @@ export default function BuildEditor({
         : buildWorkspaceCommunicationMode;
   const chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'> = {
     preferredCommunicationMode,
-    onCommunicationModeChange: handleBuildWorkspaceCommunicationModeChange,
+    onCommunicationModeChange: handleCommunicationPanelChange,
     communicationScrollTops: buildWorkspaceScrollTops,
     onCommunicationScrollChange: handleBuildWorkspaceCommunicationScrollChange,
     showMainProjectNavigation: currentBuildIsContributionFork,
@@ -1922,11 +1921,15 @@ export default function BuildEditor({
   );
 
   function setMobilePanelTab(tab: MobilePanelTab) {
-    setMobilePanelTabIntent((currentIntent) => ({
-      tab,
-      version: currentIntent.version + 1
-    }));
-    if (tab === 'chat' && !isDesktopWorkspaceLayout) {
+    if (mobilePanelTabIsCommunication(tab)) {
+      handleCommunicationPanelChange(tab);
+    } else {
+      setMobilePanelTabIntent((currentIntent) => ({
+        tab,
+        version: currentIntent.version + 1
+      }));
+    }
+    if (tab === 'lumine' && !isDesktopWorkspaceLayout) {
       shouldAutoScrollRef.current = true;
       scrollChatToBottom('auto', { force: true });
       window.requestAnimationFrame(() => {
@@ -1934,6 +1937,14 @@ export default function BuildEditor({
         scrollChatToBottom('auto', { force: true });
       });
     }
+  }
+
+  function handleCommunicationPanelChange(mode: ChatPanelCommunicationMode) {
+    handleBuildWorkspaceCommunicationModeChange(mode);
+    setMobilePanelTabIntent((currentIntent) => ({
+      tab: mode,
+      version: currentIntent.version + 1
+    }));
   }
 }
 
@@ -1947,7 +1958,30 @@ function getDefaultMobilePanelTab(build: {
       build?.code || ''
     ).trim()
   );
-  return hasPreviewContent ? 'preview' : 'chat';
+  return hasPreviewContent ? 'preview' : 'lumine';
+}
+
+function getRouteMobilePanelTab({
+  routeOpenPeoplePanel,
+  routeOpenVersionsPanel,
+  build
+}: {
+  routeOpenPeoplePanel: boolean;
+  routeOpenVersionsPanel: boolean;
+  build: {
+    projectFiles?: Array<{ path: string; content?: string }> | null;
+    code?: string | null;
+  };
+}): MobilePanelTab {
+  if (routeOpenPeoplePanel) return 'people';
+  if (routeOpenVersionsPanel) return 'versions';
+  return getDefaultMobilePanelTab(build);
+}
+
+function mobilePanelTabIsCommunication(
+  tab: MobilePanelTab
+): tab is ChatPanelCommunicationMode {
+  return tab === 'lumine' || tab === 'versions' || tab === 'people';
 }
 
 function getBranchMainUpdateTarget({

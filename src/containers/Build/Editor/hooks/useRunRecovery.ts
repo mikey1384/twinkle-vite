@@ -159,7 +159,7 @@ export default function useRunRecovery({
     if (runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)) {
       return;
     }
-    setMobilePanelTab('chat');
+    setMobilePanelTab('lumine');
     scrollChatToBottom();
     beginDedupedProcessingRecovery(normalizedRequestId);
   }
@@ -228,7 +228,7 @@ export default function useRunRecovery({
         normalizedRequestId
       );
       if (didShowRecoveryStatus) {
-        setMobilePanelTab('chat');
+        setMobilePanelTab('lumine');
         scrollChatToBottom();
       }
       maybeResumeActiveBuildRun();

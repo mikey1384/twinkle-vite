@@ -6,9 +6,9 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent
 } from 'react';
-import { mobileMaxWidth } from '~/constants/css';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import {
+  BUILD_WORKSPACE_COMPACT_MEDIA_QUERY,
   BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH,
   DEFAULT_BUILD_CHAT_PANEL_WIDTH,
   MAX_BUILD_CHAT_PANEL_WIDTH,
@@ -79,7 +79,7 @@ function getIsDesktopBuildWorkspaceLayout() {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return true;
   }
-  return !window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches;
+  return !window.matchMedia(BUILD_WORKSPACE_COMPACT_MEDIA_QUERY).matches;
 }
 
 export default function useWorkspaceLayout({

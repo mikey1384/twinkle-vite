@@ -1,7 +1,7 @@
 import React, { RefObject, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
-import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 import MainProjectButton from './MainProjectButton';
 import PreviewPanel from '../PreviewPanel';
 import type {
@@ -9,13 +9,19 @@ import type {
   PreviewPanelProps
 } from '../PreviewPanel/types';
 import ChatPanel from './ChatPanel';
-import type { ChatPanelProps } from './ChatPanel/types';
+import type {
+  ChatPanelCommunicationMode,
+  ChatPanelProps
+} from './ChatPanel/types';
 import {
+  BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
+  BUILD_WORKSPACE_COMPACT_MEDIA_QUERY,
   BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH,
   DEFAULT_BUILD_CHAT_PANEL_WIDTH,
   MAX_BUILD_CHAT_PANEL_WIDTH,
   MIN_BUILD_CHAT_PANEL_WIDTH
 } from './constants';
+import type { MobilePanelTab, MobilePanelTabIntent } from './types';
 
 const panelShellClass = css`
   display: grid;
@@ -24,10 +30,14 @@ const panelShellClass = css`
   padding: 0.85rem 1.6rem 1.6rem;
   overflow: hidden;
   min-height: 0;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     padding: 0.75rem 1rem 1rem;
     grid-template-rows: auto 1fr;
     gap: 0.5rem;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    gap: 0.25rem;
+    padding: 0.35rem 0.6rem 0.45rem;
   }
 `;
 
@@ -39,6 +49,9 @@ const workspaceShellBase = css`
   border-radius: ${borderRadius};
   border: 1px solid var(--ui-border);
   background: #fff;
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    --build-workspace-header-height: 3.6rem;
+  }
 `;
 
 const workspaceWithChatClass = css`
@@ -46,7 +59,7 @@ const workspaceWithChatClass = css`
   grid-template-columns:
     var(--build-chat-panel-width, ${DEFAULT_BUILD_CHAT_PANEL_WIDTH}px)
     ${BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH}px minmax(0, 1fr);
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
   }
@@ -89,32 +102,37 @@ const workspaceResizeHandleClass = css`
   &:focus-visible::before {
     background: var(--theme-border);
   }
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: none;
   }
 `;
 
 const mobileTabBarClass = css`
   display: none;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0.5rem 1rem 0;
+    overflow-x: auto;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    padding: 0.25rem 0.6rem 0;
   }
 `;
 
 const tabBarWithMainClass = css`
   display: none;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: grid;
-    grid-template-columns:
-      minmax(max-content, 1fr)
-      minmax(0, auto)
-      minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 1rem 0;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    gap: 0.45rem;
+    padding: 0.25rem 0.6rem 0;
   }
 `;
 
@@ -125,21 +143,10 @@ const tabsSlotClass = css`
   overflow-x: auto;
 `;
 
-const tabBarSpacerClass = css`
-  min-width: 0;
-`;
-
 const workspaceNoChatClass = css`
   ${workspaceShellBase};
   grid-template-columns: 1fr;
 `;
-
-type MobilePanelTab = 'chat' | 'preview';
-
-interface MobilePanelTabIntent {
-  tab: MobilePanelTab;
-  version: number;
-}
 
 interface WorkspaceProps {
   buildChatPanelWidth: number;
@@ -185,13 +192,23 @@ export default function Workspace({
   );
   const mainProjectNavigationShown =
     Boolean(showMainProjectNavigation) && Boolean(onOpenMainProject);
+  const mobilePanelOptions = getMobilePanelOptions({
+    communicationPanelShown,
+    chatPanelProps
+  });
+  const activeMobilePanelTab = mobilePanelOptions.some(
+    (option) => option.value === mobilePanelTab
+  )
+    ? mobilePanelTab
+    : mobilePanelOptions[0]?.value || 'preview';
   const showChatPanel =
     communicationPanelShown &&
-    (isDesktopWorkspaceLayout || mobilePanelTab === 'chat');
+    (isDesktopWorkspaceLayout ||
+      mobilePanelTabIsCommunication(activeMobilePanelTab));
   const showPreviewPanel =
     !communicationPanelShown ||
     isDesktopWorkspaceLayout ||
-    mobilePanelTab === 'preview';
+    activeMobilePanelTab === 'preview';
 
   useEffect(() => {
     setMobilePanelTab(mobilePanelTabIntent.tab);
@@ -204,13 +221,10 @@ export default function Workspace({
 
   const panelToggle = communicationPanelShown ? (
     <SegmentedToggle
-      value={mobilePanelTab}
-      options={[
-        { value: 'chat' as const, label: 'Chat', icon: 'comments' },
-        { value: 'preview' as const, label: 'Workspace', icon: 'eye' }
-      ]}
+      value={activeMobilePanelTab}
+      options={mobilePanelOptions}
       onChange={handleMobilePanelTabChange}
-      ariaLabel="Switch between chat and workspace"
+      ariaLabel="Switch build workspace panel"
       size="sm"
     />
   ) : null;
@@ -223,7 +237,6 @@ export default function Workspace({
           {panelToggle ? (
             <div className={tabsSlotClass}>{panelToggle}</div>
           ) : null}
-          <span className={tabBarSpacerClass} aria-hidden="true" />
         </div>
       ) : panelToggle ? (
         <div className={mobileTabBarClass}>{panelToggle}</div>
@@ -266,4 +279,52 @@ export default function Workspace({
       </div>
     </div>
   );
+}
+
+function getMobilePanelOptions({
+  communicationPanelShown,
+  chatPanelProps
+}: {
+  communicationPanelShown: boolean;
+  chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'>;
+}): Array<{
+  value: MobilePanelTab;
+  label: string;
+  icon: string;
+}> {
+  if (!communicationPanelShown) {
+    return [];
+  }
+  const options: Array<{
+    value: MobilePanelTab;
+    label: string;
+    icon: string;
+  }> = [];
+  if (chatPanelProps.luminePanelOverride) {
+    options.push({
+      value: 'versions',
+      label: chatPanelProps.lumineTabLabel || 'Branches',
+      icon: chatPanelProps.lumineTabIcon || 'code-branch'
+    });
+  } else {
+    options.push({
+      value: 'lumine',
+      label: chatPanelProps.lumineTabLabel || 'Lumine',
+      icon: chatPanelProps.lumineTabIcon || 'sparkles'
+    });
+  }
+  options.push({ value: 'preview', label: 'Workspace', icon: 'eye' });
+  if (!chatPanelProps.luminePanelOverride && chatPanelProps.versionsPanel) {
+    options.push({ value: 'versions', label: 'Branches', icon: 'code-branch' });
+  }
+  if (chatPanelProps.peoplePanel) {
+    options.push({ value: 'people', label: 'Team', icon: 'comments' });
+  }
+  return options;
+}
+
+function mobilePanelTabIsCommunication(
+  tab: MobilePanelTab
+): tab is ChatPanelCommunicationMode {
+  return tab === 'lumine' || tab === 'versions' || tab === 'people';
 }

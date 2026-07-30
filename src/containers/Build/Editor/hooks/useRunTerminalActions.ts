@@ -454,7 +454,7 @@ export default function useRunTerminalActions({
     if (generatedCodeSuccessfully || planWasRefined) {
       setMobilePanelTab('preview');
     } else {
-      setMobilePanelTab('chat');
+      setMobilePanelTab('lumine');
     }
     const shouldDelayQueuedRequestsForRuntimeFollowUp =
       runtimeFollowUp.handleCompletedRunFollowUp({
@@ -584,7 +584,7 @@ export default function useRunTerminalActions({
       preserveTransientUserMessage: true,
       preserveTransientAssistantMessage: true
     });
-    setMobilePanelTab('chat');
+    setMobilePanelTab('lumine');
     clearCurrentPageRunActivity();
     runOrchestration.setPostCompleteSyncInFlight(true);
     runtimeFollowUp.bumpRuntimeFollowUpRevision();
@@ -692,7 +692,7 @@ export default function useRunTerminalActions({
               ? 'Stopping...'
               : dedupedProcessingRecoveryStatus
         });
-        setMobilePanelTab('chat');
+        setMobilePanelTab('lumine');
         scrollChatToBottom();
         beginDedupedProcessingRecovery(normalizedRequestId);
         return;
@@ -716,7 +716,7 @@ export default function useRunTerminalActions({
         preserveTransientUserMessage: true,
         preserveTransientAssistantMessage: !isReplacementStop
       });
-      setMobilePanelTab('chat');
+      setMobilePanelTab('lumine');
       runIdentity.resetRunMode();
       scrollChatToBottom();
       if (shouldStartQueuedRequest) {
@@ -766,7 +766,7 @@ export default function useRunTerminalActions({
         ],
         clientMessageIds: [replacementAssistantClientMessageId]
       });
-      setMobilePanelTab('chat');
+      setMobilePanelTab('lumine');
       clearCurrentPageRunActivity();
       runIdentity.resetRunMode();
       runOrchestration.setPostCompleteSyncInFlight(true);
@@ -812,7 +812,7 @@ export default function useRunTerminalActions({
       preserveTransientUserMessage: true,
       preserveTransientAssistantMessage: true
     });
-    setMobilePanelTab('chat');
+    setMobilePanelTab('lumine');
     clearCurrentPageRunActivity();
     runIdentity.resetRunMode();
     runOrchestration.setPostCompleteSyncInFlight(true);

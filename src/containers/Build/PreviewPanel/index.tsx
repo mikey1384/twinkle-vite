@@ -8,7 +8,6 @@ import React, {
 } from 'react';
 import { useKeyContext, useViewContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type {
@@ -72,6 +71,7 @@ import useProjectFileActions from './hooks/useProjectFileActions';
 import useProjectFileUploads from './hooks/useProjectFileUploads';
 import useProjectAssets from './hooks/useProjectAssets';
 import useVersionHistory from './hooks/useVersionHistory';
+import { BUILD_WORKSPACE_COMPACT_MEDIA_QUERY } from '../Editor/constants';
 const GUEST_RESTRICTION_BANNER_TEXT =
   'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
 
@@ -1234,15 +1234,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       wasShowingStreamingCodeRef.current = isShowingStreamingCode;
 
       if (justStartedStreaming) {
-        const isMobileWorkspace =
+        const isCompactWorkspace =
           typeof window !== 'undefined' &&
           typeof window.matchMedia === 'function' &&
-          window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches;
+          window.matchMedia(BUILD_WORKSPACE_COMPACT_MEDIA_QUERY).matches;
 
         streamingAutoFollowEnabledRef.current = true;
         autoReturnToPreviewPendingRef.current = false;
-        // Keep the live simulator visible on mobile while Lumine streams code.
-        if (!isMobileWorkspace && viewMode !== 'code') {
+        // Keep the live simulator visible in compact workspace while Lumine streams code.
+        if (!isCompactWorkspace && viewMode !== 'code') {
           setViewMode('code');
         }
       } else if (justStoppedStreaming) {

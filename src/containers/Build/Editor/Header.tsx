@@ -8,7 +8,7 @@ import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import type { User } from '~/types';
 import {
   getBuildDisplayTitle,
@@ -25,6 +25,10 @@ import {
 import RuntimeAssetTransferProgressBar from './RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from './helpers/runtimeAssetTransferProgress';
 import ViewAppVersionModal from './ViewAppVersionModal';
+import {
+  BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
+  BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
+} from './constants';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -43,12 +47,17 @@ const headerClass = css`
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
-  @media (max-width: ${mobileMaxWidth}) {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.9rem;
-    padding: 1rem;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.45rem;
+    padding: 0.55rem 0.75rem 0.6rem;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    gap: 0.3rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    padding: 0.35rem 0.75rem 0.45rem;
   }
 `;
 
@@ -59,6 +68,18 @@ const headerTitleClass = css`
   font-family: ${displayFontFamily};
   font-weight: 900;
   line-height: 1.15;
+  min-width: 0;
+  max-width: 100%;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.45rem;
+    line-height: 1.1;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    font-size: 1.35rem;
+  }
 `;
 
 const headerTitleRowClass = css`
@@ -66,11 +87,11 @@ const headerTitleRowClass = css`
   align-items: center;
   gap: 0.55rem;
   flex-wrap: wrap;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.45rem;
     width: 100%;
   }
 `;
@@ -81,12 +102,27 @@ const headerTitleMainClass = css`
   gap: 0.55rem;
   flex-wrap: wrap;
   min-width: 0;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    overflow: hidden;
+  }
 `;
 
 const headerSubtitleClass = css`
   font-size: 1.1rem;
   color: var(--chat-text);
   opacity: 0.75;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+    max-width: 100%;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    display: none;
+  }
 `;
 
 const headerInfoClass = css`
@@ -94,8 +130,13 @@ const headerInfoClass = css`
   flex-direction: column;
   gap: 0.6rem;
   min-width: 0;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    gap: 0.25rem;
     width: 100%;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    grid-column: 1;
+    grid-row: 1;
   }
 `;
 
@@ -104,14 +145,14 @@ const headerActionsClass = css`
   gap: 0.55rem;
   align-items: center;
   flex-wrap: wrap;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: none;
   }
 `;
 
 const headerActionItemClass = css`
   display: contents;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: inline-flex;
     order: var(--mobile-action-order, 10);
   }
@@ -148,34 +189,75 @@ const badgePillClass = css`
     outline-offset: 2px;
     text-decoration: none;
   }
-  @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.35rem;
-    padding: 0.48rem 0.72rem;
-    font-size: 1.1rem;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    flex: 0 0 auto;
+    gap: 0.3rem;
+    padding: 0.3rem 0.55rem;
+    border-width: 1px;
+    box-shadow: none;
+    font-size: 1rem;
   }
 `;
 
 const mobileTitleBadgeGroupClass = css`
   display: none;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.35rem;
-    flex-wrap: wrap;
-    min-width: max-content;
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+    min-width: 0;
+    max-width: min(42vw, 17rem);
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    > * {
+      flex: 0 0 auto;
+    }
+    button {
+      padding: 0.42rem 0.65rem;
+      white-space: nowrap;
+    }
   }
 `;
 
 const mobileButtonRowsClass = css`
   display: none;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
+    justify-content: flex-start;
+    gap: 0.45rem;
     width: 100%;
+    overflow-x: auto;
+    padding: 0.1rem 0.05rem 0.5rem;
+    -webkit-overflow-scrolling: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    > * {
+      flex: 0 0 auto;
+    }
+    button {
+      padding: 0.45rem 0.75rem;
+      white-space: nowrap;
+    }
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    align-self: center;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    max-width: min(42vw, 30rem);
+    width: auto;
+    padding-bottom: 0.4rem;
   }
 `;
 
@@ -186,6 +268,12 @@ const mobileButtonRowClass = css`
   gap: 0.55rem;
   flex-wrap: wrap;
   width: 100%;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    width: auto;
+  }
 `;
 
 const mergeBranchActionClass = css`
@@ -194,10 +282,11 @@ const mergeBranchActionClass = css`
   gap: 0.45rem;
   min-width: 0;
   max-width: 100%;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     justify-content: center;
-    flex-wrap: wrap;
-    width: 100%;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    width: auto;
   }
 `;
 
@@ -214,14 +303,14 @@ const mergeBranchTargetControlClass = css`
   background: #f0fdf4;
   color: #166534;
   box-shadow: 0 2px 0 rgba(21, 128, 61, 0.12);
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     max-width: 100%;
   }
 `;
 
 const mergeBranchTargetPrefixClass = css`
   flex: 0 0 auto;
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-weight: 900;
   text-transform: uppercase;
   color: #15803d;
@@ -233,9 +322,9 @@ const mergeBranchTargetTextClass = css`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 900;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     max-width: min(15rem, calc(100vw - 9rem));
   }
 `;
@@ -248,13 +337,13 @@ const mergeBranchTargetSelectClass = css`
   background: transparent;
   color: #14532d;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 900;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     max-width: min(15rem, calc(100vw - 9rem));
   }
 `;
@@ -272,6 +361,12 @@ const titleRelationshipBadgeClass = css`
   letter-spacing: 0.04em;
   line-height: 1;
   border: 2px solid transparent;
+  flex: 0 0 auto;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    padding: 0.28rem 0.5rem;
+    border-width: 1px;
+    font-size: 1rem;
+  }
 `;
 
 interface MergeBranchTargetOption {
@@ -854,6 +949,16 @@ export default function Header({
   }
 
   const settingsMenu = renderSettingsMenu();
+  const mobileHeaderActionsShown = Boolean(
+    shouldShowMergeBranch ||
+      showContributionButton ||
+      showForkButton ||
+      showThumbnailNudge ||
+      settingsMenu ||
+      runtimeAssetTransferProgress ||
+      (isOwner && !isContributionFork) ||
+      contributionActionError
+  );
 
   return (
     <header className={headerClass}>
@@ -1055,85 +1160,87 @@ export default function Header({
           <HeaderActionItem mobileOrder={10}>{settingsMenu}</HeaderActionItem>
         ) : null}
       </div>
-      <div className={mobileButtonRowsClass}>
-        <div className={mobileButtonRowClass}>
-          {shouldShowMergeBranch ? renderMergeBranchAction() : null}
-          {showContributionButton ? (
-            <GameCTAButton
-              onClick={onContribute}
-              disabled={forking || banned?.build}
-              loading={forking}
-              variant="primary"
-              size="md"
-              icon="users"
-            >
-              {forking ? 'Working...' : 'Start Branch'}
-            </GameCTAButton>
-          ) : null}
-          {showForkButton ? (
-            <GameCTAButton
-              onClick={onFork}
-              disabled={forking || banned?.build}
-              loading={forking}
-              variant={showContributionButton ? 'neutral' : 'primary'}
-              size="md"
-              icon="code-branch"
-            >
-              {forking ? 'Working...' : 'Fork'}
-            </GameCTAButton>
-          ) : null}
-          {showThumbnailNudge ? (
-            <GameCTAButton
-              onClick={onOpenThumbnailModal}
-              disabled={savingThumbnail || publishing}
-              loading={savingThumbnail}
-              variant="pink"
-              size="md"
-              icon="image"
-              shiny
-            >
-              Thumbnail
-            </GameCTAButton>
-          ) : null}
-          {settingsMenu}
-        </div>
-        {runtimeAssetTransferProgress ? (
-          <RuntimeAssetTransferProgressBar
-            progress={runtimeAssetTransferProgress}
-          />
-        ) : null}
-        {isOwner && !isContributionFork ? (
+      {mobileHeaderActionsShown ? (
+        <div className={mobileButtonRowsClass}>
           <div className={mobileButtonRowClass}>
-            <GameCTAButton
-              onClick={onTogglePublish}
-              disabled={publishButtonDisabled || banned?.build}
-              loading={publishing}
-              variant="magenta"
-              size="md"
-              icon="globe"
-              shiny={publicAppNeedsUpdate}
-            >
-              {publishing
-                ? 'Processing...'
-                : build.isPublic
-                  ? publicAppIsUpToDate
-                    ? 'Up to Date'
-                    : 'Update App'
-                  : 'Publish'}
-            </GameCTAButton>
+            {shouldShowMergeBranch ? renderMergeBranchAction() : null}
+            {showContributionButton ? (
+              <GameCTAButton
+                onClick={onContribute}
+                disabled={forking || banned?.build}
+                loading={forking}
+                variant="primary"
+                size="md"
+                icon="users"
+              >
+                {forking ? 'Working...' : 'Start Branch'}
+              </GameCTAButton>
+            ) : null}
+            {showForkButton ? (
+              <GameCTAButton
+                onClick={onFork}
+                disabled={forking || banned?.build}
+                loading={forking}
+                variant={showContributionButton ? 'neutral' : 'primary'}
+                size="md"
+                icon="code-branch"
+              >
+                {forking ? 'Working...' : 'Fork'}
+              </GameCTAButton>
+            ) : null}
+            {showThumbnailNudge ? (
+              <GameCTAButton
+                onClick={onOpenThumbnailModal}
+                disabled={savingThumbnail || publishing}
+                loading={savingThumbnail}
+                variant="pink"
+                size="md"
+                icon="image"
+                shiny
+              >
+                Thumbnail
+              </GameCTAButton>
+            ) : null}
+            {settingsMenu}
           </div>
-        ) : null}
-        {contributionActionError ? (
-          <span
-            className={css`
-              color: #be123c;
-              font-weight: 900;
-            `}
-          >
-            {contributionActionError}
-          </span>
-        ) : null}
-      </div>
+          {runtimeAssetTransferProgress ? (
+            <RuntimeAssetTransferProgressBar
+              progress={runtimeAssetTransferProgress}
+            />
+          ) : null}
+          {isOwner && !isContributionFork ? (
+            <div className={mobileButtonRowClass}>
+              <GameCTAButton
+                onClick={onTogglePublish}
+                disabled={publishButtonDisabled || banned?.build}
+                loading={publishing}
+                variant="magenta"
+                size="md"
+                icon="globe"
+                shiny={publicAppNeedsUpdate}
+              >
+                {publishing
+                  ? 'Processing...'
+                  : build.isPublic
+                    ? publicAppIsUpToDate
+                      ? 'Up to Date'
+                      : 'Update App'
+                    : 'Publish'}
+              </GameCTAButton>
+            </div>
+          ) : null}
+          {contributionActionError ? (
+            <span
+              className={css`
+                color: #be123c;
+                font-weight: 900;
+              `}
+            >
+              {contributionActionError}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }
