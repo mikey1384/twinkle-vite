@@ -1,6 +1,6 @@
 import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
-import { Comment, Reward, Subject } from '~/types';
+import { Comment, Reward, RewardCaps, Subject } from '~/types';
 import { appendUniqueById, prependUniqueById } from './idListHelpers';
 import {
   buildLiveCommentEntries,
@@ -8,6 +8,9 @@ import {
 } from '~/helpers/liveComments';
 
 type RewardListUpdater = (rewards: Reward[] | undefined) => Reward[];
+type RewardCapsUpdater = (
+  rewardCaps: RewardCaps | undefined
+) => RewardCaps | undefined;
 
 function rewardTargetMatches({
   candidateId,
@@ -29,43 +32,59 @@ function reconcileCommentRewards({
   comment,
   contentId,
   contentType,
+  updateRewardCaps,
   updateRewards
 }: {
   comment: any;
   contentId: number;
   contentType: string;
-  updateRewards: RewardListUpdater;
+  updateRewardCaps?: RewardCapsUpdater;
+  updateRewards?: RewardListUpdater;
 }): any {
   if (!comment) return comment;
-  const rewards = rewardTargetMatches({
+  const targetMatches = rewardTargetMatches({
     candidateId: comment.id,
     candidateType: 'comment',
     contentId,
     contentType
-  })
-    ? updateRewards(comment.rewards)
-    : comment.rewards;
+  });
+  const rewards =
+    targetMatches && updateRewards
+      ? updateRewards(comment.rewards)
+      : comment.rewards;
+  const rewardCaps =
+    targetMatches && updateRewardCaps
+      ? updateRewardCaps(comment.rewardCaps)
+      : comment.rewardCaps;
   const replies = reconcileCommentListRewards({
     comments: comment.replies,
     contentId,
     contentType,
+    updateRewardCaps,
     updateRewards
   });
-  if (rewards === comment.rewards && replies === comment.replies)
+  if (
+    rewards === comment.rewards &&
+    rewardCaps === comment.rewardCaps &&
+    replies === comment.replies
+  ) {
     return comment;
-  return { ...comment, rewards, replies };
+  }
+  return { ...comment, rewards, rewardCaps, replies };
 }
 
 function reconcileCommentListRewards({
   comments,
   contentId,
   contentType,
+  updateRewardCaps,
   updateRewards
 }: {
   comments: any;
   contentId: number;
   contentType: string;
-  updateRewards: RewardListUpdater;
+  updateRewardCaps?: RewardCapsUpdater;
+  updateRewards?: RewardListUpdater;
 }): any {
   if (!Array.isArray(comments)) return comments;
   let changed = false;
@@ -74,6 +93,7 @@ function reconcileCommentListRewards({
       comment,
       contentId,
       contentType,
+      updateRewardCaps,
       updateRewards
     });
     changed ||= nextComment !== comment;
@@ -86,44 +106,59 @@ function reconcileSubjectRewards({
   subject,
   contentId,
   contentType,
+  updateRewardCaps,
   updateRewards
 }: {
   subject: any;
   contentId: number;
   contentType: string;
-  updateRewards: RewardListUpdater;
+  updateRewardCaps?: RewardCapsUpdater;
+  updateRewards?: RewardListUpdater;
 }) {
   if (!subject) return subject;
-  const rewards = rewardTargetMatches({
+  const targetMatches = rewardTargetMatches({
     candidateId: subject.id,
     candidateType: 'subject',
     contentId,
     contentType
-  })
-    ? updateRewards(subject.rewards)
-    : subject.rewards;
+  });
+  const rewards =
+    targetMatches && updateRewards
+      ? updateRewards(subject.rewards)
+      : subject.rewards;
+  const rewardCaps =
+    targetMatches && updateRewardCaps
+      ? updateRewardCaps(subject.rewardCaps)
+      : subject.rewardCaps;
   const comments = reconcileCommentListRewards({
     comments: subject.comments,
     contentId,
     contentType,
+    updateRewardCaps,
     updateRewards
   });
-  if (rewards === subject.rewards && comments === subject.comments) {
+  if (
+    rewards === subject.rewards &&
+    rewardCaps === subject.rewardCaps &&
+    comments === subject.comments
+  ) {
     return subject;
   }
-  return { ...subject, rewards, comments };
+  return { ...subject, rewards, rewardCaps, comments };
 }
 
 function reconcileSubjectListRewards({
   subjects,
   contentId,
   contentType,
+  updateRewardCaps,
   updateRewards
 }: {
   subjects: any;
   contentId: number;
   contentType: string;
-  updateRewards: RewardListUpdater;
+  updateRewardCaps?: RewardCapsUpdater;
+  updateRewards?: RewardListUpdater;
 }) {
   if (!Array.isArray(subjects)) return subjects;
   let changed = false;
@@ -132,6 +167,7 @@ function reconcileSubjectListRewards({
       subject,
       contentId,
       contentType,
+      updateRewardCaps,
       updateRewards
     });
     changed ||= nextSubject !== subject;
@@ -144,24 +180,28 @@ function reconcileTargetRewards({
   targetObj,
   contentId,
   contentType,
+  updateRewardCaps,
   updateRewards
 }: {
   targetObj: any;
   contentId: number;
   contentType: string;
-  updateRewards: RewardListUpdater;
+  updateRewardCaps?: RewardCapsUpdater;
+  updateRewards?: RewardListUpdater;
 }) {
   if (!targetObj) return targetObj;
   const comment = reconcileCommentRewards({
     comment: targetObj.comment,
     contentId,
     contentType,
+    updateRewardCaps,
     updateRewards
   });
   const subject = reconcileSubjectRewards({
     subject: targetObj.subject,
     contentId,
     contentType,
+    updateRewardCaps,
     updateRewards
   });
   if (comment === targetObj.comment && subject === targetObj.subject) {
@@ -174,43 +214,55 @@ function reconcileContentRewards({
   state,
   contentId,
   contentType,
+  updateRewardCaps,
   updateRewards
 }: {
   state: any;
   contentId: number;
   contentType: string;
-  updateRewards: RewardListUpdater;
+  updateRewardCaps?: RewardCapsUpdater;
+  updateRewards?: RewardListUpdater;
 }) {
   let nextState = state;
   for (const [contentKey, contentState] of Object.entries<any>(state)) {
-    const rewards = rewardTargetMatches({
+    const targetMatches = rewardTargetMatches({
       candidateId: contentState.contentId,
       candidateType: contentState.contentType,
       contentId,
       contentType
-    })
-      ? updateRewards(contentState.rewards)
-      : contentState.rewards;
+    });
+    const rewards =
+      targetMatches && updateRewards
+        ? updateRewards(contentState.rewards)
+        : contentState.rewards;
+    const rewardCaps =
+      targetMatches && updateRewardCaps
+        ? updateRewardCaps(contentState.rewardCaps)
+        : contentState.rewardCaps;
     const comments = reconcileCommentListRewards({
       comments: contentState.comments,
       contentId,
       contentType,
+      updateRewardCaps,
       updateRewards
     });
     const subjects = reconcileSubjectListRewards({
       subjects: contentState.subjects,
       contentId,
       contentType,
+      updateRewardCaps,
       updateRewards
     });
     const targetObj = reconcileTargetRewards({
       targetObj: contentState.targetObj,
       contentId,
       contentType,
+      updateRewardCaps,
       updateRewards
     });
     if (
       rewards === contentState.rewards &&
+      rewardCaps === contentState.rewardCaps &&
       comments === contentState.comments &&
       subjects === contentState.subjects &&
       targetObj === contentState.targetObj
@@ -221,6 +273,7 @@ function reconcileContentRewards({
     nextState[contentKey] = {
       ...contentState,
       rewards,
+      rewardCaps,
       comments,
       subjects,
       targetObj
@@ -375,11 +428,19 @@ export default function ContentReducer(
         updateRewards: (rewards) => appendUniqueById(rewards, [action.reward])
       });
     }
+    case 'CLEAR_CONTENT_REWARD_CAPS':
+      return reconcileContentRewards({
+        state,
+        contentId: action.contentId,
+        contentType: action.contentType,
+        updateRewardCaps: () => undefined
+      });
     case 'SYNC_CONTENT_REWARDS':
       return reconcileContentRewards({
         state,
         contentId: action.contentId,
         contentType: action.contentType,
+        updateRewardCaps: () => action.rewardCaps,
         updateRewards: () => action.rewards
       });
     case 'CLEAR_COMMENT_FILE_UPLOAD_PROGRESS':

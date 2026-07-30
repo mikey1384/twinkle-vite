@@ -747,7 +747,7 @@ export default function userRequestHelpers({
     }) {
       try {
         const {
-          data: { alreadyRewarded, reward, netCoins, rewards }
+          data: { alreadyRewarded, reward, netCoins, rewardCaps, rewards }
         } = await request.post(
           `${URL}/user/reward`,
           {
@@ -768,7 +768,7 @@ export default function userRequestHelpers({
             timeout: 30_000
           }
         );
-        return { alreadyRewarded, reward, netCoins, rewards };
+        return { alreadyRewarded, reward, netCoins, rewardCaps, rewards };
       } catch (error) {
         return handleError(error);
       }

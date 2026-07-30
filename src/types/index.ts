@@ -150,6 +150,12 @@ export interface Reward {
   rewardComment: string;
 }
 
+export interface RewardCaps {
+  clientRewardLevel?: number;
+  maxRewardAmount: number;
+  maxRewardAmountForOnePerson: number;
+}
+
 export interface Subject {
   comments: Comment[];
   hasSecretAnswer?: boolean;

@@ -16,7 +16,8 @@ const rewardCapacityPath = fileURLToPath(
     import.meta.url
   )
 );
-const { getRewardCapacity } = loadTypeScriptModule(rewardCapacityPath);
+const { getApplicableRewardCaps, getRewardCapacity } =
+  loadTypeScriptModule(rewardCapacityPath);
 
 const firstReward = {
   id: 501,
@@ -51,6 +52,11 @@ test('canonical comment rewards replace every rendered ownership shape', () => {
     firstReward,
     { ...firstReward, id: 502, rewarderId: 13, rewardAmount: 2 }
   ];
+  const rewardCaps = {
+    clientRewardLevel: 2,
+    maxRewardAmount: 10,
+    maxRewardAmountForOnePerson: 3
+  };
   const unrelatedRewards = [{ ...firstReward, id: 700 }];
   const state = {
     comment42: {
@@ -109,11 +115,14 @@ test('canonical comment rewards replace every rendered ownership shape', () => {
     type: 'SYNC_CONTENT_REWARDS',
     contentId: 42,
     contentType: 'comment',
+    rewardCaps,
     rewards: canonicalRewards
   });
 
   assert.strictEqual(nextState.comment42.rewards, canonicalRewards);
+  assert.strictEqual(nextState.comment42.rewardCaps, rewardCaps);
   assert.strictEqual(nextState.video7.comments[0].rewards, canonicalRewards);
+  assert.strictEqual(nextState.video7.comments[0].rewardCaps, rewardCaps);
   assert.strictEqual(
     nextState.video7.comments[1].replies[0].replies[0].rewards,
     canonicalRewards
@@ -127,11 +136,57 @@ test('canonical comment rewards replace every rendered ownership shape', () => {
     canonicalRewards
   );
   assert.strictEqual(
+    nextState.video7.targetObj.comment.rewardCaps,
+    rewardCaps
+  );
+  assert.strictEqual(
     nextState.video7.targetObj.subject.comments[0].rewards,
     canonicalRewards
   );
   assert.strictEqual(nextState.video7.rewards, unrelatedRewards);
   assert.strictEqual(nextState.comment99, state.comment99);
+});
+
+test('canonical reward caps survive target remounts and clear everywhere', () => {
+  const rewardCaps = {
+    clientRewardLevel: 2,
+    maxRewardAmount: 10,
+    maxRewardAmountForOnePerson: 3
+  };
+  const state = {
+    comment42: {
+      contentId: 42,
+      contentType: 'comment',
+      rewards: [firstReward]
+    },
+    video7: {
+      contentId: 7,
+      contentType: 'video',
+      comments: [{ id: 42, rewards: [firstReward], replies: [] }]
+    }
+  };
+  const syncedState = ContentReducer(state, {
+    type: 'SYNC_CONTENT_REWARDS',
+    contentId: 42,
+    contentType: 'comment',
+    rewardCaps,
+    rewards: [firstReward]
+  });
+
+  assert.strictEqual(syncedState.comment42.rewardCaps, rewardCaps);
+  assert.strictEqual(
+    syncedState.video7.comments[0].rewardCaps,
+    rewardCaps
+  );
+
+  const clearedState = ContentReducer(syncedState, {
+    type: 'CLEAR_CONTENT_REWARD_CAPS',
+    contentId: 42,
+    contentType: 'comment'
+  });
+
+  assert.equal(clearedState.comment42.rewardCaps, undefined);
+  assert.equal(clearedState.video7.comments[0].rewardCaps, undefined);
 });
 
 test('canonical subject rewards replace direct, list, and target copies', () => {
@@ -260,12 +315,29 @@ test('cap rejection applies the canonical response without reloading content', (
 
   assert.ok(rejectionBranch);
   assert.match(rejectionBranch[0], /onSyncContentRewards\(/);
+  assert.match(rejectionBranch[0], /rewardCaps: canonicalRewardCaps/);
   assert.match(
     rejectionBranch[0],
     /handleSetCapReached\(canonicalRewardables === 0\)/
   );
   assert.doesNotMatch(rejectionBranch[0], /handleSetCapReached\(true\)/);
   assert.doesNotMatch(rejectionBranch[0], /loadContent|location\.reload/);
+});
+
+test('reward request propagation retains the canonical cap response', () => {
+  const source = readFileSync(
+    new URL('../src/contexts/requestHelpers/user.ts', import.meta.url),
+    'utf8'
+  );
+  const rewardRequest = source.match(
+    /async rewardUser\(\{[\s\S]*?return \{ alreadyRewarded, reward, netCoins, rewardCaps, rewards \};/
+  );
+
+  assert.ok(rewardRequest);
+  assert.match(
+    rewardRequest[0],
+    /data: \{ alreadyRewarded, reward, netCoins, rewardCaps, rewards \}/
+  );
 });
 
 test('canonical capacity preserves a smaller total-cap retry', () => {
@@ -279,6 +351,43 @@ test('canonical capacity preserves a smaller total-cap retry', () => {
   });
 
   assert.equal(capacity.rewardables, 1);
+});
+
+test('server caps override a stale client reward level after rejection', () => {
+  const staleClientCapacity = getRewardCapacity({
+    rewards: [{ rewarderId: 13, rewardAmount: 9 }],
+    rewardLevel: 2,
+    userId: 12
+  });
+  const canonicalCapacity = getRewardCapacity({
+    rewards: [{ rewarderId: 13, rewardAmount: 9 }],
+    rewardCaps: {
+      maxRewardAmount: 10,
+      maxRewardAmountForOnePerson: 3
+    },
+    rewardLevel: 2,
+    userId: 12
+  });
+
+  assert.equal(staleClientCapacity.rewardables, 3);
+  assert.equal(canonicalCapacity.rewardables, 1);
+});
+
+test('a newly confirmed reward level supersedes stored rejection caps', () => {
+  const rewardCaps = {
+    clientRewardLevel: 2,
+    maxRewardAmount: 10,
+    maxRewardAmountForOnePerson: 3
+  };
+
+  assert.strictEqual(
+    getApplicableRewardCaps({ rewardCaps, rewardLevel: 2 }),
+    rewardCaps
+  );
+  assert.equal(
+    getApplicableRewardCaps({ rewardCaps, rewardLevel: 1 }),
+    undefined
+  );
 });
 
 test('canonical capacity preserves a smaller per-user retry', () => {

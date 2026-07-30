@@ -81,6 +81,15 @@ export default function ActionBlock({
         return 'made an offer (accepted)';
       }
     }
+    if (action === 'duplicateChargeRefund') {
+      return 'refunded a duplicate AI card charge';
+    }
+    if (action === 'duplicateSaleReversal') {
+      return 'reversed a duplicate AI card sale';
+    }
+    if (action === 'duplicateBurnRefund') {
+      return 'refunded a duplicate AI card burn charge';
+    }
     if (action === 'purchase') {
       if (target === 'aiStoryImage') {
         return 'generated an AI Story image';

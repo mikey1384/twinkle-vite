@@ -1,4 +1,4 @@
-import { Dispatch } from '~/types';
+import { Dispatch, RewardCaps } from '~/types';
 import {
   buildLiveCommentEntries,
   getLiveObservedAt
@@ -72,18 +72,34 @@ export default function ContentActions(dispatch: Dispatch) {
         contentType
       });
     },
+    onClearContentRewardCaps({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
+      return dispatch({
+        type: 'CLEAR_CONTENT_REWARD_CAPS',
+        contentId,
+        contentType
+      });
+    },
     onSyncContentRewards({
       rewards,
+      rewardCaps,
       contentId,
       contentType
     }: {
       rewards: object[];
+      rewardCaps: RewardCaps;
       contentId: number;
       contentType: string;
     }) {
       return dispatch({
         type: 'SYNC_CONTENT_REWARDS',
         rewards,
+        rewardCaps,
         contentId,
         contentType
       });

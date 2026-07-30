@@ -21,7 +21,11 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import { getRewardCapacity } from './rewardCapacity';
+import {
+  getApplicableRewardCaps,
+  getRewardCapacity,
+  isRewardCaps
+} from './rewardCapacity';
 
 const clearLabel = 'Clear';
 const rewardLabel = 'Reward';
@@ -64,20 +68,35 @@ export default function XPRewardInterface({
     useInputContext((v) => v.state['reward' + contentType + contentId]) || {};
   const onSetRewardForm = useInputContext((v) => v.actions.onSetRewardForm);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
+  const onClearContentRewardCaps = useContentContext(
+    (v) => v.actions.onClearContentRewardCaps
+  );
   const onSyncContentRewards = useContentContext(
     (v) => v.actions.onSyncContentRewards
   );
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
+  const storedRewardCaps = useContentContext(
+    (v) => v.state[contentType + contentId]?.rewardCaps
+  );
 
   const { comment: prevComment = '', selectedAmount: prevSelectedAmount = 0 } =
     rewardFormState;
 
+  const applicableRewardCaps = getApplicableRewardCaps({
+    rewardCaps: storedRewardCaps,
+    rewardLevel
+  });
   const { maxRewardAmountForOnePerson, myRewardables, rewardables } =
     useMemo(() => {
-      return getRewardCapacity({ rewards, rewardLevel, userId });
-    }, [rewardLevel, rewards, userId]);
+      return getRewardCapacity({
+        rewards,
+        rewardCaps: applicableRewardCaps,
+        rewardLevel,
+        userId
+      });
+    }, [applicableRewardCaps, rewardLevel, rewards, userId]);
 
   const commentRef = useRef(prevComment);
   const rewardingRef = useRef(false);
@@ -96,6 +115,17 @@ export default function XPRewardInterface({
   const requiresPayment = useMemo(() => {
     return !level || !isSupermod(level) || uploaderLevel >= level;
   }, [level, uploaderLevel]);
+
+  useEffect(() => {
+    if (
+      storedRewardCaps &&
+      (!isRewardCaps(storedRewardCaps) ||
+        storedRewardCaps.clientRewardLevel !== rewardLevel)
+    ) {
+      onClearContentRewardCaps({ contentId, contentType });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, contentType, rewardLevel, storedRewardCaps]);
 
   useEffect(() => {
     setSelectedAmount((selectedAmount: number) =>
@@ -299,6 +329,7 @@ export default function XPRewardInterface({
         alreadyRewarded,
         reward,
         netCoins,
+        rewardCaps: canonicalRewardCaps,
         rewards: canonicalRewards
       } = await rewardUser({
         maxRewardAmountForOnePerson,
@@ -318,10 +349,15 @@ export default function XPRewardInterface({
             'Reward cap rejection did not include canonical rewards'
           );
         }
+        if (!isRewardCaps(canonicalRewardCaps)) {
+          throw new Error('Reward cap rejection did not include canonical caps');
+        }
         // The rejection response carries the writer-confirmed ledger snapshot.
-        // Replace every rendered copy before allowing another selection.
+        // Replace every rendered copy and retain the exact transaction caps
+        // before allowing another selection.
         const { rewardables: canonicalRewardables } = getRewardCapacity({
           rewards: canonicalRewards,
+          rewardCaps: canonicalRewardCaps,
           rewardLevel,
           userId
         });
@@ -330,6 +366,10 @@ export default function XPRewardInterface({
         onSyncContentRewards({
           contentId,
           contentType,
+          rewardCaps: {
+            ...canonicalRewardCaps,
+            clientRewardLevel: rewardLevel
+          },
           rewards: canonicalRewards
         });
         return;

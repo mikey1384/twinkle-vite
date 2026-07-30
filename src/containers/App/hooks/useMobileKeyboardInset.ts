@@ -41,21 +41,41 @@ export default function useMobileKeyboardInset() {
     let frame: number | null = null;
 
     applyInset();
+    // The inset is a difference between TWO measurements, so BOTH have to be
+    // watched. Subscribing only to visualViewport was a real bug: an in-app
+    // WKWebView (a link opened inside Instagram, Facebook, etc.), Android Chrome
+    // with interactive-widget=resizes-content, and iPadOS split view all shrink
+    // the LAYOUT viewport for the keyboard as well. That fires window resize, not
+    // a visualViewport event, so a keyboard-sized inset stayed published after
+    // clientHeight had already dropped to match — and the shell got shrunk twice,
+    // collapsing chat to a sliver. Observing documentElement directly is what
+    // makes this self-correcting rather than a list of events to keep guessing at.
     visualViewport.addEventListener('resize', scheduleApply);
     visualViewport.addEventListener('scroll', scheduleApply);
+    window.addEventListener('resize', scheduleApply);
     window.addEventListener('orientationchange', scheduleApply);
     // focusin/focusout are what tell us a keyboard is plausible at all; without
     // them a viewport that shrinks for browser chrome reads as a keyboard.
     document.addEventListener('focusin', scheduleApply);
     document.addEventListener('focusout', scheduleApply);
+    // No feedback loop: the inset is applied to the shell inside <body>, while
+    // the root box stays 100% of the layout viewport, so publishing it cannot
+    // resize what is being observed.
+    let rootResizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      rootResizeObserver = new ResizeObserver(scheduleApply);
+      rootResizeObserver.observe(root);
+    }
 
     return () => {
       if (frame !== null) window.cancelAnimationFrame(frame);
       visualViewport.removeEventListener('resize', scheduleApply);
       visualViewport.removeEventListener('scroll', scheduleApply);
+      window.removeEventListener('resize', scheduleApply);
       window.removeEventListener('orientationchange', scheduleApply);
       document.removeEventListener('focusin', scheduleApply);
       document.removeEventListener('focusout', scheduleApply);
+      rootResizeObserver?.disconnect();
       root.style.removeProperty(APP_SHELL_KEYBOARD_INSET_VAR);
     };
 
