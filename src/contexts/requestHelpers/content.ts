@@ -718,10 +718,12 @@ export default function contentRequestHelpers({
       try {
         const params = new URLSearchParams({
           filter,
-          username: String(username),
           order,
           orderByLabel: orderBy
         });
+        if (username) {
+          params.set('username', username);
+        }
         if (isRecommended) {
           params.set('isRecommended', '1');
         }
