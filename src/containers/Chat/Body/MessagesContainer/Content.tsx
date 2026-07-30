@@ -5,20 +5,29 @@ import DisplayedMessages from './DisplayedMessages';
 import MessageInput from './MessageInput';
 
 export default function Content({
-  containerHeight,
   subchannel,
   channelHeaderProps,
   displayedMessagesProps,
   messageInputKey,
   messageInputProps
 }: {
-  containerHeight: string;
   subchannel: any;
   channelHeaderProps: ComponentProps<typeof ChannelHeader>;
   displayedMessagesProps: ComponentProps<typeof DisplayedMessages>;
   messageInputKey: number;
   messageInputProps: ComponentProps<typeof MessageInput>;
 }) {
+  // The message area takes whatever the composer does not, measured by the
+  // layout engine rather than by us. This used to be an explicit
+  // `height: CALC(100% - <measured textarea px> - <magic rems>)`, which is a
+  // hand-rolled `flex: 1` that has to re-guess the composer's rendered height
+  // for every variant it can take — reply target, chess target, call screen, AI
+  // usage banner, a grown textarea. It was permanently 5px short even in the
+  // plain case (54px reserved for a 59px composer), and the surplus turned into
+  // real scroll room on `#App` (which is `overflow-y: scroll`), so the browser
+  // could scroll the composer up under the keyboard and strand the messages
+  // above it. min-height: 0 is what lets the message list actually shrink
+  // instead of forcing the column past its parent.
   return (
     <>
       <div
@@ -26,20 +35,21 @@ export default function Content({
           display: flex;
           flex-direction: column;
           width: 100%;
-          height: 100%;
+          flex: 1 1 auto;
+          min-height: 0;
           position: relative;
         `}
-        style={{ height: containerHeight }}
       >
         {!subchannel?.isRestricted && <ChannelHeader {...channelHeaderProps} />}
         <DisplayedMessages {...displayedMessagesProps} />
       </div>
       <div
-        style={{
-          background: 'var(--chat-bg)',
-          padding: '1rem',
-          borderTop: '1px solid var(--ui-border)'
-        }}
+        className={css`
+          flex: 0 0 auto;
+          background: var(--chat-bg);
+          padding: 1rem;
+          border-top: 1px solid var(--ui-border);
+        `}
       >
         <MessageInput key={messageInputKey} {...messageInputProps} />
       </div>

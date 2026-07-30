@@ -109,12 +109,12 @@ export default function MessageInput({
   onChessButtonClick,
   onOmokButtonClick,
   onWordleButtonClick,
-  onHeightChange,
+  onHeightChange = () => null,
   onMessageSubmit,
   onScrollToBottom,
   onSelectVideoButtonClick,
   onSetTransactionModalShown,
-  onSetTextAreaHeight,
+  onSetTextAreaHeight = () => null,
   partner,
   chessTarget,
   replyTarget,
@@ -147,11 +147,14 @@ export default function MessageInput({
   onChessButtonClick: () => any;
   onOmokButtonClick: () => any;
   onWordleButtonClick: () => any;
-  onHeightChange: (v: number) => any;
+  // Reported for anything that wants to observe the composer's size. Layout no
+  // longer depends on it: the message area is a flex sibling now, so nothing has
+  // to subtract this from a percentage height.
+  onHeightChange?: (v: number) => any;
   onMessageSubmit: (v: any) => any;
   onScrollToBottom: () => any;
   onSelectVideoButtonClick: () => any;
-  onSetTextAreaHeight: (v: number) => any;
+  onSetTextAreaHeight?: (v: number) => any;
   onSetTransactionModalShown: (v: boolean) => any;
   partner?: {
     id: number;
