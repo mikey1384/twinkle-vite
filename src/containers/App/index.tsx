@@ -543,7 +543,7 @@ export default function App() {
     headerVisible: !suppressHeader,
     routeKey: location.pathname
   });
-  useMobileKeyboardInset();
+  useMobileKeyboardInset({ enabled: !usingChat });
 
   useEffect(() => {
     if (usingBuildAppRuntime) {
@@ -763,9 +763,9 @@ export default function App() {
       componentPath="App/index"
       className={css`
         ${usingChat ? 'border-top: 1px solid transparent;' : ''}
-        /* The keyboard inset keeps the shell inside the VISUAL viewport, so
-           bottom-anchored composers stay above the on-screen keyboard instead
-           of laying out behind it (see useMobileKeyboardInset). */
+        /* Outside chat, the keyboard inset keeps the shell inside the VISUAL
+           viewport so bottom-anchored controls stay above the on-screen
+           keyboard. Chat retains native viewport ownership instead. */
         height: ${
           suppressHeader
             ? `calc(100% - ${APP_SHELL_KEYBOARD_INSET_STYLE})`
