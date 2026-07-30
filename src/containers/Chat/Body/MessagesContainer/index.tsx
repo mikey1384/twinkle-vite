@@ -7,7 +7,6 @@ import React, {
   useState
 } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { css } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
 import {
   GENERAL_CHAT_PATH_ID,
@@ -30,6 +29,7 @@ import {
 } from '~/contexts';
 import { User } from '~/types';
 import CallScreens from './CallScreens';
+import { CALL_SCREEN_HEIGHT } from './constants';
 import Content from './Content';
 import Modals from './Modals';
 import type {
@@ -166,6 +166,8 @@ export default function MessagesContainer({
   const textForThisChannel = useInputContext(
     (v) => v.state['chat' + selectedChannelId]?.text || ''
   );
+  const [textAreaHeight, setTextAreaHeight] = useState(0);
+  const [aiUsagePolicyHeight, setAiUsagePolicyHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
   const [selectVideoModalShown, setSelectVideoModalShown] = useState(false);
   const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
@@ -298,6 +300,23 @@ export default function MessagesContainer({
       parseChannelPath(pathId) !== selectedChannelId
     );
   }, [currentPathId, selectedChannelId]);
+
+  const containerHeight = `CALC(100% - 1rem - 2px - ${
+    socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
+  }${aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''}${
+    socketConnected && appliedIsRespondingToSubject
+      ? ' - 8rem - 2px'
+      : replyTarget
+        ? ' - 12rem - 2px'
+        : chessTarget
+          ? ' - 24rem - 2px'
+          : ''
+  }
+    ${
+      selectedChannelIsOnCall || selectedChannelIsOnAICall
+        ? ` - ${CALL_SCREEN_HEIGHT}`
+        : ''
+    })`;
 
   const topicObj = useMemo(() => {
     if (currentChannel.topicObj) {
@@ -968,6 +987,7 @@ export default function MessagesContainer({
       selectedTab: string;
       subchannelId?: number;
     }) => {
+      setTextAreaHeight(0);
       if (chessTarget) {
         return handleSubmitChessTargetMessage(content);
       }
@@ -1302,7 +1322,18 @@ export default function MessagesContainer({
         target: replyTargetRef.current || replyTarget
       });
     },
+    onHeightChange: (height: number) => {
+      if (height !== textAreaHeight) {
+        setTextAreaHeight(height > 46 ? height : 0);
+      }
+    },
+    onAiUsagePolicyHeightChange: (height: number) => {
+      setAiUsagePolicyHeight((currentHeight) =>
+        currentHeight === height ? currentHeight : height
+      );
+    },
     onSelectVideoButtonClick: () => setSelectVideoModalShown(true),
+    onSetTextAreaHeight: setTextAreaHeight,
     onSetTransactionModalShown: setTransactionModalShown,
     onRegisterSetText: handleRegisterMessageInputSetText,
     onRegisterAiUsagePolicyUpdate: handleRegisterAiUsagePolicyUpdate,
@@ -1319,32 +1350,19 @@ export default function MessagesContainer({
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
-      {/* The call screen, the message area and the composer share one column,
-          so the layout engine divides the space between them. Previously they
-          were block siblings and the message area subtracted each of the others'
-          heights from 100% by hand, which only balanced when every one of those
-          hardcoded heights happened to match what actually rendered. */}
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          min-height: 0;
-        `}
-      >
-        <CallScreens
-          partner={partner}
-          selectedChannelIsOnAICall={selectedChannelIsOnAICall}
-          selectedChannelIsOnCall={selectedChannelIsOnCall}
-        />
-        <Content
-          subchannel={subchannel}
-          channelHeaderProps={channelHeaderProps}
-          displayedMessagesProps={displayedMessagesProps}
-          messageInputKey={selectedChannelId}
-          messageInputProps={messageInputProps}
-        />
-      </div>
+      <CallScreens
+        partner={partner}
+        selectedChannelIsOnAICall={selectedChannelIsOnAICall}
+        selectedChannelIsOnCall={selectedChannelIsOnCall}
+      />
+      <Content
+        containerHeight={containerHeight}
+        subchannel={subchannel}
+        channelHeaderProps={channelHeaderProps}
+        displayedMessagesProps={displayedMessagesProps}
+        messageInputKey={selectedChannelId}
+        messageInputProps={messageInputProps}
+      />
       <Modals
         boardCountdownObj={boardCountdownObj}
         buyTopicModalShown={buyTopicModalShown}

@@ -21,17 +21,14 @@ const MAX_INSET_RATIO = 0.7;
 /**
  * Publishes how much of the viewport the on-screen keyboard is covering.
  *
- * Mobile browsers shrink only the VISUAL viewport when the keyboard opens — the
- * LAYOUT viewport that `height: 100%` resolves against keeps its full height. On
- * surfaces that fill the viewport and clip their overflow (the build workspace,
- * chat), that leaves the document with zero scroll room, so a bottom-anchored
- * composer lays out *behind* the keyboard with no way to bring it up, and
- * WebKit's caret-reveal keeps yanking the surface back to the offset it chose
- * when the keyboard rose — which is what a swipe "snapping back" actually is.
+ * Mobile browsers can shrink and pan the VISUAL viewport when the keyboard
+ * opens, while the LAYOUT viewport that `height: 100%` resolves against may keep
+ * its full height. On surfaces that fill the layout viewport and clip overflow,
+ * that can leave bottom-anchored controls behind the keyboard.
  *
- * Subtracting this inset from the shell height keeps layout inside the visual
- * viewport, which removes both symptoms at their shared cause: the composer is
- * on screen, and the browser has nothing left to pan.
+ * Publishing the space below the visual viewport's actual bottom edge keeps the
+ * shell inside the visible boundary without counting the browser's caret-reveal
+ * pan as keyboard coverage a second time.
  */
 export default function useMobileKeyboardInset() {
   useEffect(() => {
@@ -110,16 +107,38 @@ export default function useMobileKeyboardInset() {
       // documentElement.clientHeight is the LAYOUT viewport height (per CSSOM,
       // for the root element in standards mode) — the same height `100%`
       // resolves against, and it does not change when the shell shrinks, so this
-      // cannot feed back on itself. visualViewport.offsetTop is deliberately
-      // excluded: it is how far the browser panned to reveal the caret, and the
-      // shrink is what unwinds that pan.
+      // cannot feed back on itself.
       const layoutHeight = root.clientHeight;
-      if (!layoutHeight) return 0;
-      const occluded = layoutHeight - visualViewport.height;
-      if (occluded <= 1) return 0;
-      return Math.round(Math.min(occluded, layoutHeight * MAX_INSET_RATIO));
+      return calculateMobileKeyboardInset({
+        layoutHeight,
+        visualViewportHeight: visualViewport.height,
+        visualViewportOffsetTop: visualViewport.offsetTop
+      });
     }
   }, []);
+}
+
+export function calculateMobileKeyboardInset({
+  layoutHeight,
+  visualViewportHeight,
+  visualViewportOffsetTop
+}: {
+  layoutHeight: number;
+  visualViewportHeight: number;
+  visualViewportOffsetTop: number;
+}) {
+  if (!layoutHeight) return 0;
+
+  // The visual viewport's bottom edge, not its height alone, is the canonical
+  // visible boundary. Mobile browsers can pan that viewport downward to reveal
+  // the focused caret. Ignoring offsetTop counts the browser's pan as additional
+  // keyboard coverage, so the shell moves a bottom composer upward a second
+  // time. Negative offsets are rubber-band overscroll, not keyboard occlusion.
+  const visibleBottom =
+    Math.max(0, visualViewportOffsetTop) + visualViewportHeight;
+  const occluded = layoutHeight - visibleBottom;
+  if (occluded <= 1) return 0;
+  return Math.round(Math.min(occluded, layoutHeight * MAX_INSET_RATIO));
 }
 
 // Deliberately does NOT treat a focused IFRAME as editable. Tapping anywhere in
