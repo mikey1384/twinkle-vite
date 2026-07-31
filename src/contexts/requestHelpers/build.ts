@@ -19,6 +19,7 @@ export default function buildRequestHelpers({
     delta?: string;
     done?: boolean;
     model?: string;
+    webSearch?: boolean;
     aiUsagePolicy?: Record<string, any>;
     error?: string;
     code?: string;
@@ -101,7 +102,12 @@ export default function buildRequestHelpers({
       const event = JSON.parse(line) as BuildRuntimeAiChatStreamEvent;
       onEvent?.(event);
       if (event.type === 'error') {
-        throw new Error(event.error || 'AI chat stream failed');
+        const error: any = new Error(event.error || 'AI chat stream failed');
+        if (event.code) error.code = event.code;
+        if (event.aiUsagePolicy) {
+          error.aiUsagePolicy = event.aiUsagePolicy;
+        }
+        throw error;
       }
       if (event.type === 'done') {
         finalEvent = event;
@@ -1197,18 +1203,20 @@ export default function buildRequestHelpers({
       promptId,
       message,
       history,
-      systemPrompt
+      systemPrompt,
+      webSearch
     }: {
       buildId: number;
       promptId?: number;
       message: string;
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
       systemPrompt?: string;
+      webSearch?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/runtime-ai-chat`,
-          { promptId, message, history, systemPrompt },
+          { promptId, message, history, systemPrompt, webSearch },
           auth()
         );
         return data;
@@ -1295,6 +1303,7 @@ export default function buildRequestHelpers({
       message,
       history,
       systemPrompt,
+      webSearch,
       onEvent
     }: {
       buildId: number;
@@ -1302,6 +1311,7 @@ export default function buildRequestHelpers({
       message: string;
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
       systemPrompt?: string;
+      webSearch?: boolean;
       onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
     }) {
       try {
@@ -1313,7 +1323,13 @@ export default function buildRequestHelpers({
               Accept: 'application/x-ndjson',
               'Content-Type': 'application/json'
             }),
-            body: JSON.stringify({ promptId, message, history, systemPrompt })
+            body: JSON.stringify({
+              promptId,
+              message,
+              history,
+              systemPrompt,
+              webSearch
+            })
           }
         );
         if (!response.ok) {
@@ -1343,7 +1359,8 @@ export default function buildRequestHelpers({
       thinkingMode,
       mode,
       instructions,
-      systemPrompt
+      systemPrompt,
+      webSearch
     }: {
       buildId: number;
       prompt: string;
@@ -1352,6 +1369,7 @@ export default function buildRequestHelpers({
       mode?: 'low' | 'medium' | 'mid' | 'high';
       instructions?: string;
       systemPrompt?: string;
+      webSearch?: boolean;
     }) {
       try {
         const { data } = await request.post(
@@ -1362,7 +1380,8 @@ export default function buildRequestHelpers({
             thinkingMode,
             mode,
             instructions,
-            systemPrompt
+            systemPrompt,
+            webSearch
           },
           auth()
         );
@@ -1394,7 +1413,8 @@ export default function buildRequestHelpers({
       scene,
       systemPrompt,
       instructions,
-      includeWebsiteContext
+      includeWebsiteContext,
+      webSearch
     }: {
       buildId: number;
       character: 'zero' | 'ciel';
@@ -1410,6 +1430,7 @@ export default function buildRequestHelpers({
       systemPrompt?: string;
       instructions?: string;
       includeWebsiteContext?: boolean;
+      webSearch?: boolean;
     }) {
       try {
         const { data } = await request.post(
@@ -1423,7 +1444,8 @@ export default function buildRequestHelpers({
             scene,
             systemPrompt,
             instructions,
-            includeWebsiteContext
+            includeWebsiteContext,
+            webSearch
           },
           auth()
         );
@@ -1456,6 +1478,7 @@ export default function buildRequestHelpers({
       systemPrompt,
       instructions,
       includeWebsiteContext,
+      webSearch,
       onEvent
     }: {
       buildId: number;
@@ -1472,6 +1495,7 @@ export default function buildRequestHelpers({
       systemPrompt?: string;
       instructions?: string;
       includeWebsiteContext?: boolean;
+      webSearch?: boolean;
       onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
     }) {
       try {
@@ -1492,7 +1516,8 @@ export default function buildRequestHelpers({
               scene,
               systemPrompt,
               instructions,
-              includeWebsiteContext
+              includeWebsiteContext,
+              webSearch
             })
           }
         );

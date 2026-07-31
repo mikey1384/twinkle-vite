@@ -14,10 +14,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
-import {
-  type BuildStudioBrowseMode
-} from '~/contexts/Build/reducer';
+import { type BuildStudioBrowseMode } from '~/contexts/Build/reducer';
 
 import {
   buildMatchesSearchQuery,
@@ -46,54 +43,20 @@ import SearchResults from './SearchResults';
 import useActivityPanel from './hooks/useActivityPanel';
 import useGlobalBuildSearch from './hooks/useGlobalBuildSearch';
 import useQuickAccess from './hooks/useQuickAccess';
-import type {
-  BuildListTab,
-  PublicBuildScope,
-  PublicBuildSort
-} from './types';
-import {
-  buildBrowseModeTabs,
-  buildListTabs
-} from './constants/tabs';
+import type { BuildListTab, PublicBuildScope, PublicBuildSort } from './types';
+import { buildBrowseModeTabs, buildListTabs } from './constants/tabs';
 import { getBuildListTabPath } from './helpers/url';
 import {
-  buildActivityRailBreakpoint,
-  buildActivityRailWidth,
-  buildPageTopGap,
-  mobileBottomNavClearance
-} from './constants/layout';
-
-const pageClass = css`
-  width: 100%;
-  max-width: calc(980px + 1.5rem + ${buildActivityRailWidth} + 4rem);
-  box-sizing: border-box;
-  margin: ${buildPageTopGap} auto 0;
-  padding: 0 2rem 3rem;
-  @media (max-width: ${buildActivityRailBreakpoint}) {
-    max-width: 980px;
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0 1rem ${mobileBottomNavClearance};
-  }
-`;
-
-const buildStudioLayoutClass = css`
-  position: relative;
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 980px) ${buildActivityRailWidth};
-  justify-content: center;
-  align-items: start;
-  gap: 1.5rem;
-
-  @media (max-width: ${buildActivityRailBreakpoint}) {
-    display: block;
-  }
-`;
-
-const buildStudioMainClass = css`
-  min-width: 0;
-`;
+  getIsBuildActivityRailVisible,
+  studioLayoutClass,
+  studioMainClass,
+  studioPageClass
+} from './StudioLayout';
+import SectionSwitcher from '../SectionSwitcher';
+import {
+  enqueueBuildStudioPreferenceSave,
+  getBuildStudioPreferencesKey
+} from '../studioPreferences';
 
 const browseModeFilterWrapClass = css`
   margin-bottom: 1rem;
@@ -110,7 +73,7 @@ export default function BuildList({
   const location = useLocation();
   const [toastMessage, setToastMessage] = useState('');
   const [activityRailVisible, setActivityRailVisible] = useState(
-    getIsActivityRailVisible
+    getIsBuildActivityRailVisible
   );
 
   useEffect(() => {
@@ -127,6 +90,9 @@ export default function BuildList({
   }, [location.key]);
   const userId = useKeyContext((v) => v.myState.userId);
   const sessionLoaded = useAppContext((v) => v.user.state.loaded);
+  const sessionStateArrived = useAppContext(
+    (v) => v.user.state.myState.state !== undefined
+  );
   const buildQuickAccessMode = useKeyContext(
     (v) => v.myState.buildQuickAccessMode
   );
@@ -153,6 +119,9 @@ export default function BuildList({
   const buildStudio = useBuildContext((v) => v.state.buildStudio);
   const onSetBuildStudioActiveTab = useBuildContext(
     (v) => v.actions.onSetBuildStudioActiveTab
+  );
+  const onSetBuildStudioSection = useBuildContext(
+    (v) => v.actions.onSetBuildStudioSection
   );
   const onInvalidateBuildStudioBrowseTab = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioBrowseTab
@@ -192,7 +161,7 @@ export default function BuildList({
   const hasCanonicalListUrl = Boolean(
     urlTab && (!isPublicBrowseTab(urlTab) || urlBrowseMode)
   );
-  const persistedBuildStudioStateKey = getPersistedBuildStudioStateKey(
+  const persistedBuildStudioStateKey = getBuildStudioPreferencesKey(
     persistedBuildStudioState
   );
   const persistedActiveTab = parseBuildListTab(
@@ -254,7 +223,7 @@ export default function BuildList({
   );
   const collaboratingCacheFreshForCurrentUser = Boolean(
     collaboratingLoadedForCurrentUser &&
-      collaboratingBrowseState.cacheRefreshKey === collaboratingCacheRefreshKey
+    collaboratingBrowseState.cacheRefreshKey === collaboratingCacheRefreshKey
   );
   const collaboratingBuildCount = collaboratingLoadedForCurrentUser
     ? collaboratingBrowseState.builds.length
@@ -316,10 +285,6 @@ export default function BuildList({
     activeTab === 'mine' ? true : activeBrowseLoadedForCurrentUser;
   const activeTabRef = useRef<BuildListTab>(activeTab);
   const buildStudioHydrationKeyRef = useRef('');
-  const buildStudioPreferenceSaveIdRef = useRef(0);
-  const buildStudioPreferenceSaveQueueRef = useRef<Promise<void>>(
-    Promise.resolve()
-  );
   const initialScrollAnchorKeyRef = useRef('');
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
   const [myBuildsLoading, setMyBuildsLoading] = useState(true);
@@ -407,7 +372,7 @@ export default function BuildList({
 
   useEffect(() => {
     function handleResize() {
-      setActivityRailVisible(getIsActivityRailVisible());
+      setActivityRailVisible(getIsBuildActivityRailVisible());
     }
 
     handleResize();
@@ -428,6 +393,8 @@ export default function BuildList({
     const nextActiveTab = normalizeBuildListTab(
       persistedBuildStudioState?.activeTab
     );
+    const nextSection =
+      persistedBuildStudioState?.section === 'prompts' ? 'prompts' : 'apps';
     const nextCommunityBrowseMode = normalizeBuildListBrowseMode(
       persistedBuildStudioState?.browseModes?.community
     );
@@ -437,6 +404,9 @@ export default function BuildList({
 
     if (activeTabRef.current !== nextActiveTab) {
       onSetBuildStudioActiveTab(nextActiveTab);
+    }
+    if (buildStudio.section !== nextSection) {
+      onSetBuildStudioSection(nextSection);
     }
     if (
       getBuildListBrowseMode({ activeTab: 'community', buildStudio }) !==
@@ -459,6 +429,19 @@ export default function BuildList({
     // Context actions and request helpers are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedUserId, persistedBuildStudioStateKey]);
+
+  useEffect(() => {
+    if (
+      !normalizedUserId ||
+      !sessionLoaded ||
+      persistedBuildStudioState?.section !== 'prompts'
+    ) {
+      return;
+    }
+    void persistBuildStudioState({ section: 'apps' });
+    // Request helpers and context actions are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedUserId, sessionLoaded, persistedBuildStudioStateKey]);
 
   useEffect(() => {
     if (hasCanonicalListUrl || !normalizedUserId || !sessionLoaded) return;
@@ -800,10 +783,20 @@ export default function BuildList({
   }
 
   return (
-    <div className={pageClass}>
+    <div className={studioPageClass}>
       <Toast message={toastMessage} onClose={() => setToastMessage('')} />
-      <div className={buildStudioLayoutClass}>
-        <main className={buildStudioMainClass}>
+      <div className={studioLayoutClass}>
+        <main className={studioMainClass}>
+          <SectionSwitcher
+            activeSection="apps"
+            color={profileTheme}
+            onChange={(section) => {
+              if (section === 'prompts') {
+                navigate('/prompts');
+              }
+            }}
+          />
+
           <BuildQuickAccessStrip
             activeMode={quickAccessMode}
             builds={activeQuickAccessBuilds}
@@ -1021,7 +1014,6 @@ export default function BuildList({
     }
   }
 
-
   // Clears the text query only; the owner chip has its own dedicated clear.
   // With an owner active, clearing the text should land on all of that
   // user's builds, not exit the owner's list.
@@ -1072,7 +1064,6 @@ export default function BuildList({
       tab,
       nextBrowseMode
     );
-    onSetBuildStudioActiveTab(tab);
     navigate(getBuildListTabPath(tab, nextBrowseMode));
     void persistBuildStudioState({ activeTab: tab });
   }
@@ -1089,9 +1080,9 @@ export default function BuildList({
       activeTab,
       browseMode
     );
-    onSetBuildStudioBrowseMode({ tab: activeTab, browseMode });
     navigate(getBuildListTabPath(activeTab, browseMode));
     void persistBuildStudioState({
+      activeTab,
       browseMode,
       browseModeTab: activeTab
     });
@@ -1167,58 +1158,51 @@ export default function BuildList({
   }
 
   async function persistBuildStudioState({
-    activeTab: nextActiveTab = activeTab,
+    activeTab: nextActiveTab,
     browseMode,
-    browseModeTab
+    browseModeTab,
+    section
   }: {
     activeTab?: BuildListTab;
     browseMode?: BuildStudioBrowseMode;
     browseModeTab?: BuildListTab;
+    section?: 'apps' | 'prompts';
   }) {
-    if (!normalizedUserId) return;
-    const nextBuildStudioState = getSerializableBuildStudioState({
-      activeTab: nextActiveTab,
-      browseMode,
-      browseModeTab,
-      buildStudio
-    });
-    const saveId = buildStudioPreferenceSaveIdRef.current + 1;
-    buildStudioPreferenceSaveIdRef.current = saveId;
-    const savePreference = async () => {
-      try {
-        const data = await updateBuildStudioState(nextBuildStudioState);
-        if (saveId !== buildStudioPreferenceSaveIdRef.current) return;
+    if (!normalizedUserId || !sessionStateArrived) return;
+    const browseModes =
+      browseMode && browseModeTab === 'community'
+        ? { community: browseMode }
+        : browseMode && browseModeTab === 'open_source'
+          ? { open_source: browseMode }
+          : undefined;
+    await enqueueBuildStudioPreferenceSave({
+      current: persistedBuildStudioState || buildStudio,
+      patch: {
+        activeTab: nextActiveTab,
+        browseModes,
+        section
+      },
+      save: updateBuildStudioState,
+      scope: normalizedUserId,
+      onConfirmed: (data) => {
         if (data?.state) {
           onSetUserState({
             userId: normalizedUserId,
             newState: { state: data.state }
           });
         }
-      } catch (error) {
+      },
+      onError: (error) => {
         console.error('Failed to save Build Studio view preference:', error);
       }
-    };
-    const savePromise = buildStudioPreferenceSaveQueueRef.current.then(
-      savePreference,
-      savePreference
-    );
-    buildStudioPreferenceSaveQueueRef.current = savePromise;
-    await savePromise;
+    });
   }
-
 }
 
 function normalizeBuildSearchOwner(value: string | null) {
   return String(value || '')
     .trim()
     .slice(0, 64);
-}
-
-function getIsActivityRailVisible() {
-  if (typeof window === 'undefined') return false;
-  const breakpoint = Number.parseInt(buildActivityRailBreakpoint, 10);
-  if (!Number.isFinite(breakpoint)) return true;
-  return window.innerWidth > breakpoint;
 }
 
 function getBuildListScrollPositionPathname(
@@ -1241,43 +1225,4 @@ function getBuildStudioBrowseCacheGeneration(value: unknown) {
   const generation = Math.floor(Number(value) || 0);
   if (!Number.isFinite(generation)) return 0;
   return Math.max(0, generation);
-}
-
-function getPersistedBuildStudioStateKey(value: any) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
-  return JSON.stringify({
-    activeTab: normalizeBuildListTab(value.activeTab),
-    browseModes: {
-      community: normalizeBuildListBrowseMode(value.browseModes?.community),
-      open_source: normalizeBuildListBrowseMode(value.browseModes?.open_source)
-    }
-  });
-}
-
-function getSerializableBuildStudioState({
-  activeTab,
-  browseMode,
-  browseModeTab,
-  buildStudio
-}: {
-  activeTab: BuildListTab;
-  browseMode?: BuildStudioBrowseMode;
-  browseModeTab?: BuildListTab;
-  buildStudio: any;
-}) {
-  const communityBrowseMode =
-    browseModeTab === 'community' && browseMode
-      ? browseMode
-      : getBuildListBrowseMode({ activeTab: 'community', buildStudio });
-  const openSourceBrowseMode =
-    browseModeTab === 'open_source' && browseMode
-      ? browseMode
-      : getBuildListBrowseMode({ activeTab: 'open_source', buildStudio });
-  return {
-    activeTab: normalizeBuildListTab(activeTab),
-    browseModes: {
-      community: communityBrowseMode,
-      open_source: openSourceBrowseMode
-    }
-  };
 }

@@ -4,7 +4,7 @@ import Icon from '~/components/Icon';
 import MyOffer from '../MyOffer';
 import MakeOffer from '../MakeOffer';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -30,6 +30,7 @@ export default function NonOwnerMenu({
 }) {
   const buyAICard = useAppContext((v) => v.requestHelpers.buyAICard);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const banned = useKeyContext((v) => v.myState.banned);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
@@ -138,8 +139,12 @@ export default function NonOwnerMenu({
   );
 
   async function handleConfirmBuy() {
-    const coins = await buyAICard(cardId);
-    onSetUserState({ userId: myId, newState: { twinkleCoins: coins } });
+    const result = await buyAICard(cardId);
+    onSetUserState({
+      userId: myId,
+      newState: { twinkleCoins: result.coins }
+    });
+    onUpdateAICard({ cardId, newState: result.card });
     setConfirmModalShown(false);
   }
 }

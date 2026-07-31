@@ -85,6 +85,7 @@ const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 const BUILD_NAV_HIDDEN_KEY = 'twinkle-build-nav-hidden';
 
 const Build = lazyWithRetry(() => import('~/containers/Build'));
+const Prompts = lazyWithRetry(() => import('~/containers/Prompts'));
 const BuildRuntimeKeepAliveHost = lazyWithRetry(
   () => import('~/containers/Build/Runtime/KeepAliveHost')
 );
@@ -857,6 +858,7 @@ export default function App() {
                 element={<BuildPreviewPassthrough />}
               />
               <Route path="/build/*" element={<Build />} />
+              <Route path="/prompts/*" element={<Prompts />} />
               <Route
                 path="/app-capture/:buildId"
                 element={<BuildThumbnailCaptureHost />}

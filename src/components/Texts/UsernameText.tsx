@@ -116,12 +116,7 @@ export default function UsernameText({
         ...style
       }}
       className={className}
-      onMouseLeave={() => {
-        clearTimeout(showTimerRef.current);
-        hideTimerRef.current = setTimeout(() => {
-          setDropdownContext(null);
-        }, 500);
-      }}
+      onMouseLeave={deviceIsMobile ? undefined : handleMouseLeave}
     >
       <div
         style={{
@@ -234,5 +229,12 @@ export default function UsernameText({
         setDropdownContext(menuShownRef.current ? null : elementContext);
       }
     }
+  }
+
+  function handleMouseLeave() {
+    clearTimeout(showTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      setDropdownContext(null);
+    }, 500);
   }
 }

@@ -104,8 +104,8 @@ export default function Popup({
       >
         <div
           style={style}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
+          onMouseEnter={deviceIsMobile ? undefined : onMouseEnter}
+          onMouseLeave={deviceIsMobile ? undefined : onMouseLeave}
           className={css`
             position: absolute;
             left: ${`${

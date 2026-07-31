@@ -37,6 +37,25 @@ test('User popup portal stops events before feed-card navigation can intercept a
   );
   assert.match(
     popupSource,
+    /onMouseEnter=\{deviceIsMobile \? undefined : onMouseEnter\}/,
+    'Touch devices must not use hover timers to dismiss an actionable popup'
+  );
+  assert.match(
+    popupSource,
+    /onMouseLeave=\{deviceIsMobile \? undefined : onMouseLeave\}/,
+    'Touch devices must not use hover timers to dismiss an actionable popup'
+  );
+  const usernameTextSource = readFileSync(
+    new URL('../src/components/Texts/UsernameText.tsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(
+    usernameTextSource,
+    /onMouseLeave=\{deviceIsMobile \? undefined : handleMouseLeave\}/,
+    'Username triggers must not schedule mouse-leave dismissal on touch devices'
+  );
+  assert.match(
+    popupSource,
     /function stopPopupKeyboardEventPropagation\(event: React\.KeyboardEvent\) \{\s*if \(event\.key === 'Escape'\) return;\s*event\.stopPropagation\(\);\s*\}/
   );
 

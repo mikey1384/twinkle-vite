@@ -3,6 +3,10 @@ import { RequestHelpers } from '~/types';
 import request from './axiosInstance';
 import axios from 'axios';
 import { attemptUpload, emitAdminTelemetry } from '~/helpers';
+import {
+  emitPromptStudioCloneConfirmed,
+  emitPromptStudioShareStateUpdated
+} from '~/constants/systemPrompt';
 
 export default function chatRequestHelpers({
   auth,
@@ -114,14 +118,12 @@ export default function chatRequestHelpers({
       transactionId: number;
     }) {
       try {
-        const {
-          data: { isDisabled, disableReason, responsibleParty }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/chat/trade/accept`,
           { channelId, transactionId },
           auth()
         );
-        return { isDisabled, disableReason, responsibleParty };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -141,10 +143,12 @@ export default function chatRequestHelpers({
     },
     async buyAICard(cardId: number) {
       try {
-        const {
-          data: { coins }
-        } = await request.put(`${URL}/ai-card/buy`, { cardId }, auth());
-        return coins;
+        const { data } = await request.put(
+          `${URL}/ai-card/buy`,
+          { cardId },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -597,6 +601,9 @@ export default function chatRequestHelpers({
           { channelId, topicId, shareWithOtherUsers },
           auth()
         );
+        if (success) {
+          emitPromptStudioShareStateUpdated({ channelId, topicId });
+        }
         return success;
       } catch (error) {
         return handleError(error);
@@ -615,6 +622,16 @@ export default function chatRequestHelpers({
           { channelId, sharedTopicId },
           auth()
         );
+        if (
+          typeof data?.subjectId === 'number' &&
+          typeof data?.channelId === 'number'
+        ) {
+          emitPromptStudioCloneConfirmed({
+            sharedTopicId,
+            topicId: data.subjectId,
+            channelId: data.channelId
+          });
+        }
         return data;
       } catch (error) {
         return handleError(error);
@@ -1064,14 +1081,12 @@ export default function chatRequestHelpers({
       price: number;
     }) {
       try {
-        const {
-          data: { coins }
-        } = await request.post(
+        const { data } = await request.post(
           `${URL}/chat/aiCard/offer`,
           { cardId, price },
           auth()
         );
-        return coins;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1084,13 +1099,11 @@ export default function chatRequestHelpers({
       offerId: number;
     }) {
       try {
-        const {
-          data: { coins }
-        } = await request.delete(
+        const { data } = await request.delete(
           `${URL}/chat/aiCard/offer?offerId=${offerId}&cardId=${cardId}`,
           auth()
         );
-        return coins;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -2150,7 +2163,8 @@ export default function chatRequestHelpers({
       type,
       wanted,
       offered,
-      targetId
+      targetId,
+      clientRequestId
     }: {
       type: string;
       wanted: {
@@ -2164,20 +2178,15 @@ export default function chatRequestHelpers({
         groupIds: number[];
       };
       targetId: number;
+      clientRequestId: string;
     }) {
       try {
-        const {
-          data: { isNewChannel, newChannelId, pathId }
-        } = await request.post(
+        const { data } = await request.post(
           `${URL}/chat/trade`,
-          { type, wanted, offered, targetId },
+          { type, wanted, offered, targetId, clientRequestId },
           auth()
         );
-        return {
-          isNewChannel,
-          newChannelId,
-          pathId
-        };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -2510,26 +2519,14 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async sellAICard({
-      offerId,
-      cardId,
-      price,
-      offererId
-    }: {
-      offerId: number;
-      cardId: number;
-      price: number;
-      offererId: number;
-    }) {
+    async sellAICard({ offerId }: { offerId: number }) {
       try {
-        const {
-          data: { coins }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/ai-card/sell`,
-          { offerId, cardId, price, offererId },
+          { offerId },
           auth()
         );
-        return coins;
+        return data;
       } catch (error) {
         return handleError(error);
       }

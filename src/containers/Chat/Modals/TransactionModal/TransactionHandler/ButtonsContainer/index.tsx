@@ -3,7 +3,6 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import TradeButtons from './TradeButtons';
 import { useAppContext } from '~/contexts';
-import { socket } from '~/constants/sockets/api';
 import ProposeTradeButtons from './ProposeTradeButtons';
 
 export default function ButtonsContainer({
@@ -122,23 +121,14 @@ export default function ButtonsContainer({
   }) {
     try {
       setWithdrawing(true);
-      await closeTransaction({
+      const result = await closeTransaction({
         channelId,
         transactionId,
         cancelReason
       });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      if (cancelReason) {
-        socket.emit('cancel_transaction', {
-          channelId,
-          transactionId,
-          cancelReason
-        });
-      }
+      const confirmedCancelReason = result.cancelReason;
       if (type === 'trade' && !isExpressionOfInterest) {
-        onSetCancelReason(cancelReason);
+        onSetCancelReason(confirmedCancelReason);
       } else {
         onSetPendingTransaction(null);
         onUpdateCurrentTransactionId({
@@ -146,12 +136,10 @@ export default function ButtonsContainer({
           transactionId: null
         });
       }
+    } catch (error) {
+      console.error(error);
+    } finally {
       setWithdrawing(false);
-      socket.emit('update_current_transaction_id', {
-        senderId: myId,
-        channelId,
-        transactionId: null
-      });
     }
   }
 }

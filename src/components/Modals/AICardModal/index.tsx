@@ -112,7 +112,6 @@ export default function AICardModal({
       ? userLinkColorKey
       : linkColor;
   const userId = useKeyContext((v) => v.myState.userId);
-  const username = useKeyContext((v) => v.myState.username);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const signinModalShown = useKeyContext((v) => v.myState.signinModalShown);
   const deleteAICardOffer = useAppContext(
@@ -691,7 +690,6 @@ export default function AICardModal({
           cardId={card.id}
           askPrice={card.askPrice}
           myId={userId}
-          myUsername={username}
           twinkleCoins={twinkleCoins}
           onSetOffers={setOffers}
           onHide={() => setOfferModalShown(false)}
@@ -794,14 +792,14 @@ export default function AICardModal({
   }
 
   async function handleWithdrawOffer() {
-    const coins = await deleteAICardOffer({
+    const result = await deleteAICardOffer({
       offerId: card.myOffer.id,
       cardId: card.id
     });
-    onWithdrawOutgoingOffer(card.myOffer.id);
+    onWithdrawOutgoingOffer(result.offer.id);
     setOffers((prevOffers) => {
       return prevOffers.reduce((acc, offer) => {
-        if (offer.price === card.myOffer.price) {
+        if (offer.price === result.offer.price) {
           const newUsers = offer.users.filter(
             (user: { id: number }) => user.id !== userId
           );
@@ -815,8 +813,11 @@ export default function AICardModal({
         }
       }, []);
     });
-    onSetUserState({ userId, newState: { twinkleCoins: coins } });
-    onUpdateAICard({ cardId, newState: { myOffer: null } });
+    onSetUserState({
+      userId,
+      newState: { twinkleCoins: result.coins }
+    });
+    onUpdateAICard({ cardId, newState: result.card });
 
     setWithdrawOfferModalShown(false);
   }

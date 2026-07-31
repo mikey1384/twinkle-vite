@@ -13,12 +13,9 @@ import type { Card } from '~/types';
 
 export default function useAICardSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   const userIdRef = useRef(userId);
-  const twinkleCoinsRef = useRef(twinkleCoins);
   userIdRef.current = userId;
-  twinkleCoinsRef.current = twinkleCoins;
   const onAcceptTransaction = useChatContext(
     (v) => v.actions.onAcceptTransaction
   );
@@ -199,8 +196,8 @@ export default function useAICardSocket() {
       const previewUrl = hasPartial
         ? `data:image/png;base64,${status.partialImageB64}`
         : !inProgress && stage === 'completed'
-        ? ''
-        : rawImageUrl || '';
+          ? ''
+          : rawImageUrl || '';
 
       const newState: Record<string, any> = {
         ...(canonicalImageState || {}),
@@ -240,10 +237,7 @@ export default function useAICardSocket() {
 
     function normalizeToPath(url: string): string {
       if (!url) return '';
-      if (
-        typeof url === 'string' &&
-        /^generating\.{0,3}$/i.test(url.trim())
-      ) {
+      if (typeof url === 'string' && /^generating\.{0,3}$/i.test(url.trim())) {
         return '';
       }
 
@@ -292,7 +286,10 @@ export default function useAICardSocket() {
       if (sellerId === currentUserId) {
         onDelistAICard(card.id);
         onRemoveMyAICard(card.id);
-        onSetUserState({ userId: currentUserId, newState: { twinkleCoins: sellerCoins } });
+        onSetUserState({
+          userId: currentUserId,
+          newState: { twinkleCoins: sellerCoins }
+        });
       }
     }
 
@@ -303,9 +300,7 @@ export default function useAICardSocket() {
       const cardId = normalizeAICardId(rawCardId);
       if (!cardId) return;
       const confirmedBurnedCard =
-        normalizeAICardId(burnedCard?.id) === cardId
-          ? burnedCard
-          : undefined;
+        normalizeAICardId(burnedCard?.id) === cardId ? burnedCard : undefined;
       const canonicalCard = confirmedBurnedCard
         ? confirmedBurnedCard
         : await loadAICard(cardId)
@@ -366,7 +361,10 @@ export default function useAICardSocket() {
       onAICardOfferWithdrawal(feedId);
       if (offererId === currentUserId) {
         onWithdrawOutgoingOffer(offerId);
-        onSetUserState({ userId: currentUserId, newState: { twinkleCoins: coins } });
+        onSetUserState({
+          userId: currentUserId,
+          newState: { twinkleCoins: coins }
+        });
         onUpdateAICard({ cardId, newState: { myOffer: null } });
       }
     }
@@ -427,39 +425,39 @@ export default function useAICardSocket() {
     function handleAssetsSent({
       aiCardPayloadVersion,
       cards,
-      coins,
       from,
-      to
+      to,
+      fromCoins,
+      toCoins
     }: {
       aiCardPayloadVersion?: number;
       cards: any;
-      coins: number;
       from: number;
       to: number;
+      fromCoins?: number;
+      toCoins?: number;
     }) {
       const currentUserId = userIdRef.current;
-      const currentTwinkleCoins = twinkleCoinsRef.current;
-      if (from === currentUserId && !!coins) {
+      if (from === currentUserId && Number.isFinite(fromCoins)) {
         onSetUserState({
           userId: currentUserId,
-          newState: { twinkleCoins: currentTwinkleCoins - coins }
+          newState: { twinkleCoins: Number(fromCoins) }
         });
       }
-      if (to === currentUserId && !!coins) {
+      if (to === currentUserId && Number.isFinite(toCoins)) {
         onSetUserState({
           userId: currentUserId,
-          newState: { twinkleCoins: currentTwinkleCoins + coins }
+          newState: { twinkleCoins: Number(toCoins) }
         });
       }
       for (const card of cards) {
         const cardId = normalizeAICardId(card?.id);
         if (!cardId) continue;
-        const confirmedTransferState =
-          getConfirmedAICardDirectTransferState({
-            aiCardPayloadVersion,
-            card,
-            ownerId: to
-          });
+        const confirmedTransferState = getConfirmedAICardDirectTransferState({
+          aiCardPayloadVersion,
+          card,
+          ownerId: to
+        });
         const confirmedCard = {
           ...card,
           ...confirmedTransferState,

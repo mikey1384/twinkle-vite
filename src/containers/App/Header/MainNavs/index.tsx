@@ -55,7 +55,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
-import { isBuildListPath } from '~/containers/Build/List/helpers/url';
+import { getBuildStudioNavTarget } from '~/containers/Build/studioNavigation';
 
 // max tabs a user may pin (server enforces the same cap in settings.ts)
 const MAX_PINNED_TABS = 10;
@@ -244,6 +244,9 @@ export default function MainNavs({
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const lastChatPath = useKeyContext((v) => v.myState.lastChatPath);
+  const persistedBuildStudioSection = useKeyContext(
+    (v) => v.myState.state?.buildStudio?.section
+  );
   const userLoaded = useAppContext((v) => v.user.state.loaded);
   const exploreCategory = useViewContext((v) => v.state.exploreCategory);
   const contentPath = useViewContext((v) => v.state.contentPath);
@@ -810,17 +813,17 @@ export default function MainNavs({
     () => pathname.startsWith('/missions'),
     [pathname]
   );
-  const isBuildListSection = useMemo(
-    () => isBuildListPath(pathname, { loggedIn: !!userId }),
-    [pathname, userId]
-  );
   const missionLinkTarget = useMemo(
     () => (isMissionSection ? '/missions' : missionNav || '/missions'),
     [isMissionSection, missionNav]
   );
-  const buildLinkTarget = isBuildListSection
-    ? `${pathname}${search || ''}`
-    : '/build';
+  const buildLinkTarget = getBuildStudioNavTarget({
+    loggedIn: !!userId,
+    pathname,
+    search,
+    section: persistedBuildStudioSection,
+    stateArrived: sessionStateArrived
+  });
 
   const displayedTwinkleCoins = useMemo(
     () => abbreviateNumber(twinkleCoins),

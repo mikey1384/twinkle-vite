@@ -6,6 +6,7 @@ import ShareButton from '~/components/Buttons/ShareButton';
 import Input from '~/components/Texts/Input';
 import SharedPromptBlock from '~/components/SharedPromptBlock';
 import RichText from '~/components/Texts/RichText';
+import RankBadge from '~/components/RankBadge';
 import UsernameText from '~/components/Texts/UsernameText';
 import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -17,13 +18,13 @@ import moment from 'moment';
 
 const cardHeights: Record<number, number> = {};
 
-interface CloneEntry {
+export interface CloneEntry {
   target: 'zero' | 'ciel';
   channelId: number;
   topicId: number;
 }
 
-interface SharedTopic {
+export interface SharedTopic {
   id: number;
   subjectId?: number;
   content: string;
@@ -44,6 +45,8 @@ function SharedPromptCard({
   topic,
   isOwnTopic,
   userId,
+  rank,
+  showCommentComposer = true,
   commentText,
   commentSubmitting,
   onCommentTextChange,
@@ -53,10 +56,12 @@ function SharedPromptCard({
   topic: SharedTopic;
   isOwnTopic: boolean;
   userId: number;
-  commentText: string;
-  commentSubmitting: boolean;
-  onCommentTextChange: (text: string) => void;
-  onCommentSubmit: () => void;
+  rank?: number;
+  showCommentComposer?: boolean;
+  commentText?: string;
+  commentSubmitting?: boolean;
+  onCommentTextChange?: (text: string) => void;
+  onCommentSubmit?: () => void;
   onCloneSuccess: (data: {
     sharedTopicId: number;
     target: 'zero' | 'ciel';
@@ -109,12 +114,23 @@ function SharedPromptCard({
       ) : (
         <div ref={PanelRef}>
           <SharedPromptBlock
-            footer={renderActions()}
+            footer={
+              showCommentComposer || !isOwnTopic
+                ? renderActions()
+                : undefined
+            }
             headerRight={
-              <ShareButton
-                variant="compact"
-                linkPath={`/shared-prompts/${topic.id}`}
-              />
+              <div className={headerActionsClass}>
+                {rank ? (
+                  <span className={rankBadgeWrapClass}>
+                    <RankBadge rank={rank} />
+                  </span>
+                ) : null}
+                <ShareButton
+                  variant="compact"
+                  linkPath={`/shared-prompts/${topic.id}`}
+                />
+              </div>
             }
             meta={
               <>
@@ -176,23 +192,23 @@ function SharedPromptCard({
           myClones={topic.myClones}
           onCloneSuccess={onCloneSuccess}
         />
-        {userId ? (
+        {showCommentComposer && userId ? (
           <div className={commentRowClass}>
             <Input
               placeholder="Write a comment..."
-              value={commentText}
-              onChange={onCommentTextChange}
+              value={commentText || ''}
+              onChange={onCommentTextChange || (() => {})}
               onKeyUp={(event: React.KeyboardEvent) => {
                 if (event.key === ' ') {
-                  const converted = addEmoji(commentText);
+                  const converted = addEmoji(commentText || '');
                   if (converted !== commentText) {
-                    onCommentTextChange(converted);
+                    onCommentTextChange?.(converted);
                   }
                 }
               }}
               onKeyDown={(event: React.KeyboardEvent) => {
                 if (event.key === 'Enter') {
-                  onCommentSubmit();
+                  onCommentSubmit?.();
                 }
               }}
               style={{ flex: 1 }}
@@ -201,8 +217,8 @@ function SharedPromptCard({
               color="logoBlue"
               variant="soft"
               tone="raised"
-              disabled={stringIsEmpty(commentText) || commentSubmitting}
-              onClick={onCommentSubmit}
+              disabled={stringIsEmpty(commentText || '') || commentSubmitting}
+              onClick={() => onCommentSubmit?.()}
             >
               {commentSubmitting ? (
                 <Icon icon="spinner" pulse />
@@ -241,9 +257,18 @@ const commentRowClass = css`
   margin-top: 0.5rem;
 `;
 
+const headerActionsClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+`;
 
 
 
+const rankBadgeWrapClass = css`
+  display: inline-flex;
+  font-size: 1.1rem;
+`;
 
 const ownBadgeClass = css`
   padding: 0.2rem 0.5rem;
@@ -254,5 +279,3 @@ const ownBadgeClass = css`
   font-size: 1.1rem;
   font-weight: 700;
 `;
-
-

@@ -155,9 +155,9 @@ const sdkSections: GuideSection[] = [
     items: [
       'Do not build prompt-preset selection UIs from Twinkle.ai.listPrompts(); runtime chat uses message, history, and systemPrompt.',
       'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", quality: "high", requestId, onStatus }) generates or edits an image.',
-      'await Twinkle.ai.chat({ message, history, systemPrompt, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided.',
+      'await Twinkle.ai.chat({ message, history, systemPrompt, webSearch, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided. Live web search is enabled by default; pass webSearch: false to disable it for the app.',
       'Twinkle.ai.chat history entries must be shaped as { role: "user" | "assistant", content: string }. Do not pass saved message objects shaped as { text } unless you map text to content first.',
-      'await Twinkle.ai.generateObject({ prompt, expectedStructure, thinkingMode: "low" | "medium" | "high" }) returns a validated structured JSON object for app decisions.',
+      'await Twinkle.ai.generateObject({ prompt, expectedStructure, thinkingMode: "low" | "medium" | "high", webSearch }) returns a validated structured JSON object for app decisions. Live web search is enabled by default in Medium and High modes; pass webSearch: false to disable it. Lite Mode remains tool-free.',
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
       'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
       'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
@@ -176,7 +176,7 @@ const sdkSections: GuideSection[] = [
   {
     title: 'Twinkle.characters',
     items: [
-      'await Twinkle.characters.chat({ character: "zero" | "ciel", thinkingMode: "low" | "medium" | "high", message, history, roomContext, scene, instructions, includeWebsiteContext, onText, onStatus }) talks to the real Zero or Ciel runtime bridge.',
+      'await Twinkle.characters.chat({ character: "zero" | "ciel", thinkingMode: "low" | "medium" | "high", message, history, roomContext, scene, instructions, includeWebsiteContext, webSearch, onText, onStatus }) talks to the real Zero or Ciel runtime bridge. Live web search is enabled by default in Medium and High modes; pass webSearch: false to disable it. Lite Mode remains tool-free.',
       'Use character history entries shaped as { role: "user" | "assistant", content: string, speaker?: string }. content is the canonical text field; roomContext is for the shared scene transcript both characters should know.',
       'Pass onText/onStatus for streaming dialogue; omit callbacks when the app only needs the final response.',
       'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',

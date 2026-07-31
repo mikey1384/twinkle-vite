@@ -119,16 +119,16 @@ export interface BuildWorkspaceSnapshot {
 }
 
 export type BuildStudioTab =
-  | 'mine'
-  | 'collaborating'
-  | 'community'
-  | 'open_source';
+  'mine' | 'collaborating' | 'community' | 'open_source';
 type BuildStudioBrowseTab = Exclude<BuildStudioTab, 'mine'>;
 type BuildStudioPublicBrowseTab = Exclude<
   BuildStudioBrowseTab,
   'collaborating'
 >;
 export type BuildStudioBrowseMode = 'recent' | 'leaderboard';
+export type BuildStudioSection = 'apps' | 'prompts';
+export type PromptStudioTab = 'my' | 'community';
+export type PromptStudioBrowseMode = 'recent' | 'leaderboard';
 export type BuildActivityTab = 'all' | 'mine' | 'collaborating' | 'favorites';
 export type BuildActivitySubtab = 'all' | 'notifications' | 'branch_updates';
 export type BuildWorkspaceCommunicationMode = 'lumine' | 'versions' | 'people';
@@ -165,6 +165,16 @@ export interface BuildStudioBrowseTabState {
   searchQuery: string;
   userId: number | null;
   cacheRefreshKey: number;
+  cacheGeneration: number;
+}
+
+export interface PromptStudioListState {
+  prompts: any[];
+  loadMoreToken: string | null;
+  loaded: boolean;
+  browseMode: PromptStudioBrowseMode;
+  searchQuery: string;
+  userId: number | null;
   cacheGeneration: number;
 }
 
@@ -206,6 +216,7 @@ export interface BuildStudioQuickAccessState {
 }
 
 export interface BuildStudioState {
+  section: BuildStudioSection;
   activeTab: BuildStudioTab;
   myBuilds: any[];
   myBuildsLoaded: boolean;
@@ -213,6 +224,11 @@ export interface BuildStudioState {
   quickAccess: BuildStudioQuickAccessState;
   browse: Record<BuildStudioBrowseTab, BuildStudioBrowseTabState>;
   browseModes: Record<BuildStudioPublicBrowseTab, BuildStudioBrowseMode>;
+  promptTab: PromptStudioTab;
+  promptBrowseModes: {
+    community: PromptStudioBrowseMode;
+  };
+  promptStudio: Record<PromptStudioTab, PromptStudioListState>;
   activityPanel: BuildStudioActivityPanelState;
   activityFeeds: Record<
     BuildActivityTab,
@@ -257,8 +273,7 @@ export interface BuildLiveRunRunningSnapshotPayload {
   updatedAt?: number | null;
 }
 
-export interface BuildLiveRunActionPayload
-  extends BuildLiveRunStreamUpdatePayload {
+export interface BuildLiveRunActionPayload extends BuildLiveRunStreamUpdatePayload {
   buildId?: number;
   build?: any;
   chatMessages?: any[];
@@ -318,8 +333,13 @@ export interface BuildRuntimeVerifyResult {
 }
 
 export interface BuildStudioActionPayload {
+  section?: BuildStudioSection | string | null;
   activeTab?: BuildStudioTab;
   tab?: BuildStudioTab;
+  promptTab?: PromptStudioTab | string | null;
+  promptBrowseMode?: PromptStudioBrowseMode | string | null;
+  prompts?: any[];
+  prompt?: any;
   builds?: any[];
   build?: any;
   buildId?: number;
@@ -399,6 +419,7 @@ export interface BuildAction {
     | 'CLEAR_BUILD_WORKSPACE_FORUM_CACHE'
     | 'INVALIDATE_BUILD_FORUM'
     | 'SET_BUILD_STUDIO_ACTIVE_TAB'
+    | 'SET_BUILD_STUDIO_SECTION'
     | 'SET_BUILD_STUDIO_MY_BUILDS'
     | 'PATCH_BUILD_STUDIO_MY_BUILD'
     | 'REMOVE_BUILD_STUDIO_MY_BUILD'
@@ -416,6 +437,12 @@ export interface BuildAction {
     | 'SET_BUILD_STUDIO_ACTIVITY_VIEWED'
     | 'SET_BUILD_STUDIO_BROWSE_BUILDS'
     | 'APPEND_BUILD_STUDIO_BROWSE_BUILDS'
+    | 'SET_PROMPT_STUDIO_TAB'
+    | 'SET_PROMPT_STUDIO_BROWSE_MODE'
+    | 'INVALIDATE_PROMPT_STUDIO_TAB'
+    | 'SET_PROMPT_STUDIO_ITEMS'
+    | 'APPEND_PROMPT_STUDIO_ITEMS'
+    | 'PATCH_PROMPT_STUDIO_CLONE'
     | 'UPSERT_BUILD_SUMMARIES'
     | 'PATCH_BUILD_SUMMARY'
     | 'REMOVE_BUILD_SUMMARY'
@@ -440,6 +467,7 @@ export interface BuildAction {
 
 export function createInitialBuildStudioState(): BuildStudioState {
   return {
+    section: 'apps',
     activeTab: 'mine',
     myBuilds: [],
     myBuildsLoaded: false,
@@ -451,6 +479,14 @@ export function createInitialBuildStudioState(): BuildStudioState {
       open_source: createInitialBuildStudioBrowseState()
     },
     browseModes: createInitialBuildStudioBrowseModes(),
+    promptTab: 'community',
+    promptBrowseModes: {
+      community: 'recent'
+    },
+    promptStudio: {
+      my: createInitialPromptStudioListState(),
+      community: createInitialPromptStudioListState()
+    },
     activityPanel: createInitialBuildStudioActivityPanelState(),
     activityFeeds: createInitialBuildStudioActivityFeeds()
   };
@@ -523,6 +559,18 @@ function createInitialBuildStudioBrowseState(): BuildStudioBrowseTabState {
     searchQuery: '',
     userId: null,
     cacheRefreshKey: 0,
+    cacheGeneration: 0
+  };
+}
+
+export function createInitialPromptStudioListState(): PromptStudioListState {
+  return {
+    prompts: [],
+    loadMoreToken: null,
+    loaded: false,
+    browseMode: 'recent',
+    searchQuery: '',
+    userId: null,
     cacheGeneration: 0
   };
 }
@@ -638,6 +686,22 @@ function normalizeBuildStudioTab(value?: string | null): BuildStudioTab {
     value === 'open_source'
     ? value
     : 'mine';
+}
+
+function normalizeBuildStudioSection(
+  value?: string | null
+): BuildStudioSection {
+  return value === 'prompts' ? 'prompts' : 'apps';
+}
+
+function normalizePromptStudioTab(value?: string | null): PromptStudioTab {
+  return value === 'my' ? 'my' : 'community';
+}
+
+function normalizePromptStudioBrowseMode(
+  value?: string | null
+): PromptStudioBrowseMode {
+  return value === 'leaderboard' ? 'leaderboard' : 'recent';
 }
 
 function normalizeBuildStudioBrowseTab(
@@ -950,6 +1014,20 @@ function mergeBuildStudioActivityItems(currentItems: any[], nextItems: any[]) {
   return mergedItems;
 }
 
+function mergePromptStudioItems(currentItems: any[], nextItems: any[]) {
+  const seenIds = new Set(
+    currentItems.map((item) => Number(item?.id || item?.subjectId || 0))
+  );
+  const mergedItems = [...currentItems];
+  for (const item of nextItems || []) {
+    const id = Number(item?.id || item?.subjectId || 0);
+    if (!id || seenIds.has(id)) continue;
+    seenIds.add(id);
+    mergedItems.push(item);
+  }
+  return mergedItems;
+}
+
 function normalizeBuildWorkspaceScrollTop(value: unknown) {
   const normalized = Number(value || 0);
   if (!Number.isFinite(normalized)) return 0;
@@ -1203,9 +1281,9 @@ function hasBuildRunEventRecordValue(
 ) {
   return Boolean(
     value &&
-      typeof value === 'object' &&
-      !Array.isArray(value) &&
-      Object.keys(value).length > 0
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).length > 0
   );
 }
 
@@ -2593,6 +2671,18 @@ export default function BuildReducer(
         }
       };
     }
+    case 'SET_BUILD_STUDIO_SECTION': {
+      const buildStudio = getBuildStudioState(state);
+      const section = normalizeBuildStudioSection(action.buildStudio?.section);
+      if (buildStudio.section === section) return state;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          section
+        }
+      };
+    }
     case 'SET_BUILD_STUDIO_ACTIVE_TAB': {
       const buildStudio = getBuildStudioState(state);
       const activeTab = normalizeBuildStudioTab(action.buildStudio?.activeTab);
@@ -3278,6 +3368,230 @@ export default function BuildReducer(
               userId
             }
           }
+        }
+      };
+    }
+    case 'SET_PROMPT_STUDIO_TAB': {
+      const buildStudio = getBuildStudioState(state);
+      const promptTab = normalizePromptStudioTab(action.buildStudio?.promptTab);
+      if (buildStudio.promptTab === promptTab) return state;
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          promptTab
+        }
+      };
+    }
+    case 'SET_PROMPT_STUDIO_BROWSE_MODE': {
+      const buildStudio = getBuildStudioState(state);
+      const promptBrowseMode = normalizePromptStudioBrowseMode(
+        action.buildStudio?.promptBrowseMode
+      );
+      if (buildStudio.promptBrowseModes?.community === promptBrowseMode) {
+        return state;
+      }
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          promptBrowseModes: {
+            community: promptBrowseMode
+          }
+        }
+      };
+    }
+    case 'INVALIDATE_PROMPT_STUDIO_TAB': {
+      const buildStudio = getBuildStudioState(state);
+      const promptTab = normalizePromptStudioTab(action.buildStudio?.promptTab);
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const currentTabState =
+        buildStudio.promptStudio?.[promptTab] ||
+        createInitialPromptStudioListState();
+      if (
+        userId &&
+        currentTabState.userId &&
+        currentTabState.userId !== userId
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          promptStudio: {
+            ...buildStudio.promptStudio,
+            [promptTab]: {
+              ...currentTabState,
+              loaded: false,
+              cacheGeneration:
+                normalizeBuildStudioCacheGeneration(
+                  currentTabState.cacheGeneration
+                ) + 1
+            }
+          }
+        }
+      };
+    }
+    case 'SET_PROMPT_STUDIO_ITEMS': {
+      const buildStudio = getBuildStudioState(state);
+      const promptTab = normalizePromptStudioTab(action.buildStudio?.promptTab);
+      const currentTabState =
+        buildStudio.promptStudio?.[promptTab] ||
+        createInitialPromptStudioListState();
+      const currentCacheGeneration = normalizeBuildStudioCacheGeneration(
+        currentTabState.cacheGeneration
+      );
+      const hasActionCacheGeneration =
+        action.buildStudio &&
+        Object.prototype.hasOwnProperty.call(
+          action.buildStudio,
+          'cacheGeneration'
+        );
+      const actionCacheGeneration = normalizeBuildStudioCacheGeneration(
+        action.buildStudio?.cacheGeneration
+      );
+      if (
+        hasActionCacheGeneration &&
+        actionCacheGeneration !== currentCacheGeneration
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          promptStudio: {
+            ...buildStudio.promptStudio,
+            [promptTab]: {
+              ...currentTabState,
+              prompts: Array.isArray(action.buildStudio?.prompts)
+                ? action.buildStudio.prompts
+                : [],
+              loadMoreToken:
+                typeof action.buildStudio?.loadMoreToken === 'string'
+                  ? action.buildStudio.loadMoreToken
+                  : null,
+              loaded: true,
+              browseMode:
+                promptTab === 'community'
+                  ? normalizePromptStudioBrowseMode(
+                      action.buildStudio?.promptBrowseMode
+                    )
+                  : 'recent',
+              searchQuery: normalizeBuildStudioSearchQuery(
+                action.buildStudio?.searchQuery
+              ),
+              userId: normalizeBuildStudioUserId(action.buildStudio?.userId),
+              cacheGeneration: currentCacheGeneration
+            }
+          }
+        }
+      };
+    }
+    case 'APPEND_PROMPT_STUDIO_ITEMS': {
+      const buildStudio = getBuildStudioState(state);
+      const promptTab = normalizePromptStudioTab(action.buildStudio?.promptTab);
+      const userId = normalizeBuildStudioUserId(action.buildStudio?.userId);
+      const promptBrowseMode =
+        promptTab === 'community'
+          ? normalizePromptStudioBrowseMode(
+              action.buildStudio?.promptBrowseMode
+            )
+          : 'recent';
+      const searchQuery = normalizeBuildStudioSearchQuery(
+        action.buildStudio?.searchQuery
+      );
+      const currentTabState =
+        buildStudio.promptStudio?.[promptTab] ||
+        createInitialPromptStudioListState();
+      const currentCacheGeneration = normalizeBuildStudioCacheGeneration(
+        currentTabState.cacheGeneration
+      );
+      const actionCacheGeneration = normalizeBuildStudioCacheGeneration(
+        action.buildStudio?.cacheGeneration
+      );
+      if (
+        actionCacheGeneration !== currentCacheGeneration ||
+        currentTabState.userId !== userId ||
+        currentTabState.browseMode !== promptBrowseMode ||
+        currentTabState.searchQuery !== searchQuery
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          promptStudio: {
+            ...buildStudio.promptStudio,
+            [promptTab]: {
+              ...currentTabState,
+              prompts: mergePromptStudioItems(
+                currentTabState.prompts,
+                Array.isArray(action.buildStudio?.prompts)
+                  ? action.buildStudio.prompts
+                  : []
+              ),
+              loadMoreToken:
+                typeof action.buildStudio?.loadMoreToken === 'string'
+                  ? action.buildStudio.loadMoreToken
+                  : null,
+              loaded: true
+            }
+          }
+        }
+      };
+    }
+    case 'PATCH_PROMPT_STUDIO_CLONE': {
+      const buildStudio = getBuildStudioState(state);
+      const promptId = Number(action.buildStudio?.prompt?.sharedTopicId || 0);
+      const target = action.buildStudio?.prompt?.target;
+      const channelId = Number(action.buildStudio?.prompt?.channelId || 0);
+      const topicId = Number(action.buildStudio?.prompt?.topicId || 0);
+      if (
+        !promptId ||
+        (target !== 'zero' && target !== 'ciel') ||
+        !channelId ||
+        !topicId
+      ) {
+        return state;
+      }
+      const nextPromptStudio = (
+        ['my', 'community'] as PromptStudioTab[]
+      ).reduce(
+        (result, promptTab) => {
+          const tabState =
+            buildStudio.promptStudio?.[promptTab] ||
+            createInitialPromptStudioListState();
+          result[promptTab] = {
+            ...tabState,
+            prompts: tabState.prompts.map((prompt) => {
+              const itemId = Number(prompt?.id || prompt?.subjectId || 0);
+              if (itemId !== promptId) return prompt;
+              const currentClones = Array.isArray(prompt?.myClones)
+                ? prompt.myClones
+                : [];
+              return {
+                ...prompt,
+                myClones: [
+                  ...currentClones.filter(
+                    (clone: any) => clone?.target !== target
+                  ),
+                  { target, channelId, topicId }
+                ]
+              };
+            })
+          };
+          return result;
+        },
+        {} as Record<PromptStudioTab, PromptStudioListState>
+      );
+      return {
+        ...state,
+        buildStudio: {
+          ...buildStudio,
+          promptStudio: nextPromptStudio
         }
       };
     }

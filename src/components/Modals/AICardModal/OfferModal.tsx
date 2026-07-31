@@ -4,7 +4,7 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 export default function OfferModal({
@@ -12,7 +12,6 @@ export default function OfferModal({
   cardId,
   onHide,
   myId,
-  myUsername,
   onSetOffers,
   twinkleCoins
 }: {
@@ -20,7 +19,6 @@ export default function OfferModal({
   cardId: number;
   onHide: () => void;
   myId: number;
-  myUsername: string;
   onSetOffers: (arg: any) => void;
   twinkleCoins: number;
 }) {
@@ -30,6 +28,7 @@ export default function OfferModal({
     (v) => v.requestHelpers.postAICardOffer
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const banned = useKeyContext((v) => v.myState.banned);
   const askPriceIsLargerThanOne = askPrice > 1;
 
@@ -88,7 +87,7 @@ export default function OfferModal({
               color="oceanBlue"
               loading={posting}
               onClick={handlePostOffer}
-              disabled={!(amount || myId) || !!banned?.aiCards}
+              disabled={!amount || !myId || !!banned?.aiCards}
               style={{
                 fontSize: '1.4rem',
                 marginTop: '2rem'
@@ -118,27 +117,41 @@ export default function OfferModal({
 
   async function handlePostOffer() {
     setPosting(true);
-    const coins = await postAICardOffer({ cardId, price: amount });
+    const result = await postAICardOffer({ cardId, price: amount });
+    const confirmedOffer = result.offer;
+    const confirmedOfferer = {
+      ...confirmedOffer.user,
+      offerId: confirmedOffer.id
+    };
     onSetOffers((prevOffers: any[]) => {
-      const result = [];
+      const nextOffers = [];
       let found = false;
       for (const offer of prevOffers) {
         const newOffer = { ...offer };
-        if (offer.price === amount) {
+        if (offer.price === confirmedOffer.price) {
           found = true;
-          newOffer.users = [...offer.users, { id: myId, username: myUsername }];
+          newOffer.users = offer.users.some(
+            (offerer: { offerId?: number }) =>
+              offerer.offerId === confirmedOffer.id
+          )
+            ? offer.users
+            : [...offer.users, confirmedOfferer];
         }
-        result.push(newOffer);
+        nextOffers.push(newOffer);
       }
       if (!found) {
-        result.unshift({
-          price: amount,
-          users: [{ id: myId, username: myUsername }]
+        nextOffers.unshift({
+          price: confirmedOffer.price,
+          users: [confirmedOfferer]
         });
       }
-      return result;
+      return nextOffers;
     });
-    onSetUserState({ userId: myId, newState: { twinkleCoins: coins } });
+    onSetUserState({
+      userId: myId,
+      newState: { twinkleCoins: result.coins }
+    });
+    onUpdateAICard({ cardId, newState: result.card });
     onHide();
   }
 }

@@ -22,6 +22,7 @@ import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
+import { emitSystemPromptTopicUpdated } from '~/constants/systemPrompt';
 
 interface ChatMessage {
   id: number;
@@ -1021,11 +1022,7 @@ export default function PromptWorkshop({
         setStatusMessage(`Saved to ${capitalizeTarget(target)}.`);
       }
 
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('twinkle:system-prompt-topic-updated')
-        );
-      }
+      emitSystemPromptTopicUpdated();
     } catch (err) {
       console.error('Failed to save prompt:', err);
       setError(`Failed to save to ${capitalizeTarget(target)}`);
@@ -1091,11 +1088,7 @@ export default function PromptWorkshop({
 
       savedTopicIdsRef.current[target] = { topicId: Number(data.topicId) };
       setSaveTarget(target);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('twinkle:system-prompt-topic-updated')
-        );
-      }
+      emitSystemPromptTopicUpdated();
 
       const recipientId = target === 'zero' ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
       onOpenNewChatTab({

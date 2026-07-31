@@ -11,7 +11,10 @@ import {
   BuildWorkspaceUiActionPayload,
   BuildStudioActionPayload,
   BuildStudioBrowseMode,
-  BuildStudioTab
+  BuildStudioSection,
+  BuildStudioTab,
+  PromptStudioBrowseMode,
+  PromptStudioTab
 } from './reducer';
 
 export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
@@ -188,6 +191,12 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildStudio: { activeTab }
       });
     },
+    onSetBuildStudioSection(section: BuildStudioSection) {
+      return dispatch({
+        type: 'SET_BUILD_STUDIO_SECTION',
+        buildStudio: { section }
+      });
+    },
     onSetBuildStudioMyBuilds({
       builds,
       userId
@@ -334,6 +343,53 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'APPEND_BUILD_STUDIO_BROWSE_BUILDS',
         buildStudio
+      });
+    },
+    onSetPromptStudioTab(promptTab: PromptStudioTab) {
+      return dispatch({
+        type: 'SET_PROMPT_STUDIO_TAB',
+        buildStudio: { promptTab }
+      });
+    },
+    onSetPromptStudioBrowseMode(promptBrowseMode: PromptStudioBrowseMode) {
+      return dispatch({
+        type: 'SET_PROMPT_STUDIO_BROWSE_MODE',
+        buildStudio: { promptBrowseMode }
+      });
+    },
+    onInvalidatePromptStudioTab({
+      promptTab,
+      userId
+    }: {
+      promptTab: PromptStudioTab;
+      userId?: number | null;
+    }) {
+      return dispatch({
+        type: 'INVALIDATE_PROMPT_STUDIO_TAB',
+        buildStudio: { promptTab, userId }
+      });
+    },
+    onSetPromptStudioItems(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'SET_PROMPT_STUDIO_ITEMS',
+        buildStudio
+      });
+    },
+    onAppendPromptStudioItems(buildStudio: BuildStudioActionPayload) {
+      return dispatch({
+        type: 'APPEND_PROMPT_STUDIO_ITEMS',
+        buildStudio
+      });
+    },
+    onPatchPromptStudioClone(prompt: {
+      sharedTopicId: number;
+      target: 'zero' | 'ciel';
+      topicId: number;
+      channelId: number;
+    }) {
+      return dispatch({
+        type: 'PATCH_PROMPT_STUDIO_CLONE',
+        buildStudio: { prompt }
       });
     },
     onPublishBuildRuntimeVerifyResult(

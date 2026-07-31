@@ -8,7 +8,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 export default function OfferDetailModal({
@@ -38,6 +38,7 @@ export default function OfferDetailModal({
 }) {
   const isAcceptingRef = useRef(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [offerAcceptModalObj, setOfferAcceptModalObj] = useState<{
     [key: string]: any;
   } | null>(null);
@@ -164,17 +165,21 @@ export default function OfferDetailModal({
   async function handleConfirmAcceptOffer() {
     if (!isAcceptingRef.current) {
       isAcceptingRef.current = true;
-      const coins = await sellAICard({
-        offerId: offerAcceptModalObj?.id,
-        cardId,
-        price: offerAcceptModalObj?.price,
-        offererId: offerAcceptModalObj?.userId
-      });
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      setOfferAcceptModalObj(null);
-      onSetActiveTab('myMenu');
-      onHide();
-      isAcceptingRef.current = false;
+      try {
+        const result = await sellAICard({
+          offerId: offerAcceptModalObj?.id
+        });
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: result.coins }
+        });
+        onUpdateAICard({ cardId, newState: result.card });
+        setOfferAcceptModalObj(null);
+        onSetActiveTab('myMenu');
+        onHide();
+      } finally {
+        isAcceptingRef.current = false;
+      }
     }
   }
 

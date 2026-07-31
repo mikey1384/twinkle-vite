@@ -2,6 +2,10 @@ import request from './axiosInstance';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import { trackEvent } from '~/helpers/analytics';
+import {
+  emitPromptStudioCloneConfirmed,
+  emitSystemPromptTopicUpdated
+} from '~/constants/systemPrompt';
 
 export default function missionRequestHelpers({
   auth,
@@ -637,15 +641,11 @@ export default function missionRequestHelpers({
           },
           auth()
         );
-        if (emitRefreshEvent && typeof window !== 'undefined') {
-          window.dispatchEvent(
-            new CustomEvent('twinkle:system-prompt-topic-updated', {
-              detail: {
-                topicId: data?.topicId,
-                channelId: data?.channelId
-              }
-            })
-          );
+        if (emitRefreshEvent) {
+          emitSystemPromptTopicUpdated({
+            topicId: data?.topicId,
+            channelId: data?.channelId
+          });
         }
         return Promise.resolve(data);
       } catch (error) {
@@ -668,6 +668,16 @@ export default function missionRequestHelpers({
           },
           auth()
         );
+        if (
+          typeof data?.subjectId === 'number' &&
+          typeof data?.channelId === 'number'
+        ) {
+          emitPromptStudioCloneConfirmed({
+            sharedTopicId,
+            topicId: data.subjectId,
+            channelId: data.channelId
+          });
+        }
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);

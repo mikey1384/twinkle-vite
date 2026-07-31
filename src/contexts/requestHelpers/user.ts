@@ -908,6 +908,11 @@ export default function userRequestHelpers({
         community?: string;
         open_source?: string;
       };
+      section?: 'apps' | 'prompts';
+      promptTab?: 'my' | 'community';
+      promptBrowseModes?: {
+        community?: 'recent' | 'leaderboard';
+      };
     }) {
       try {
         const { data } = await request.put(

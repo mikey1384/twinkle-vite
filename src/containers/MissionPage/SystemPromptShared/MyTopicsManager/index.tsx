@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import ManagePromptRow from './ManagePromptRow';
 import SharedPromptRow from './SharedPromptRow';
 import type { MyTopic } from './types';
+import { SYSTEM_PROMPT_TOPIC_UPDATED_EVENT } from '~/constants/systemPrompt';
 
 const INITIAL_DISPLAY_COUNT = 1;
 const LOAD_LIMIT = 10;
@@ -19,8 +20,6 @@ const INITIAL_SHARED_PROMPTS_DISPLAY_COUNT = 2;
 const SHARED_PROMPT_SEARCH_THRESHOLD = 6;
 const SHARED_PROMPTS_SEARCH_LIMIT = 50;
 const SHARED_PROMPT_SEARCH_DEBOUNCE_MS = 250;
-const SYSTEM_PROMPT_TOPIC_UPDATED_EVENT = 'twinkle:system-prompt-topic-updated';
-
 export default function MyTopicsManager() {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);

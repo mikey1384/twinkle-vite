@@ -1,4 +1,10 @@
-import React, { ReactNode, useMemo, useReducer, useRef } from 'react';
+import React, {
+  ReactNode,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef
+} from 'react';
 import { createContext, useContext } from '../selectableContext';
 import BuildActions from './actions';
 import BuildReducer, {
@@ -7,6 +13,11 @@ import BuildReducer, {
   BuildState,
   createInitialBuildStudioState
 } from './reducer';
+import {
+  PROMPT_STUDIO_CLONE_CONFIRMED_EVENT,
+  PROMPT_STUDIO_SHARE_STATE_UPDATED_EVENT,
+  SYSTEM_PROMPT_TOPIC_UPDATED_EVENT
+} from '~/constants/systemPrompt';
 
 interface BuildRunIdentityState {
   requestId: string;
@@ -106,6 +117,53 @@ export function BuildContextProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [buildState]
   );
+
+  useEffect(() => {
+    function invalidatePromptStudio() {
+      buildDispatch({
+        type: 'INVALIDATE_PROMPT_STUDIO_TAB',
+        buildStudio: { promptTab: 'my' }
+      });
+      buildDispatch({
+        type: 'INVALIDATE_PROMPT_STUDIO_TAB',
+        buildStudio: { promptTab: 'community' }
+      });
+    }
+
+    function invalidatePromptStudioCommunity() {
+      buildDispatch({
+        type: 'INVALIDATE_PROMPT_STUDIO_TAB',
+        buildStudio: { promptTab: 'community' }
+      });
+    }
+
+    window.addEventListener(
+      SYSTEM_PROMPT_TOPIC_UPDATED_EVENT,
+      invalidatePromptStudio
+    );
+    window.addEventListener(
+      PROMPT_STUDIO_SHARE_STATE_UPDATED_EVENT,
+      invalidatePromptStudio
+    );
+    window.addEventListener(
+      PROMPT_STUDIO_CLONE_CONFIRMED_EVENT,
+      invalidatePromptStudioCommunity
+    );
+    return () => {
+      window.removeEventListener(
+        SYSTEM_PROMPT_TOPIC_UPDATED_EVENT,
+        invalidatePromptStudio
+      );
+      window.removeEventListener(
+        PROMPT_STUDIO_SHARE_STATE_UPDATED_EVENT,
+        invalidatePromptStudio
+      );
+      window.removeEventListener(
+        PROMPT_STUDIO_CLONE_CONFIRMED_EVENT,
+        invalidatePromptStudioCommunity
+      );
+    };
+  }, []);
 
   return (
     <BuildContext.Provider value={value}>{children}</BuildContext.Provider>

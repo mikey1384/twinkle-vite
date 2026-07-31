@@ -22,6 +22,7 @@ export default function TradeButtons({
   transactionId: number;
 }) {
   const acceptTrade = useAppContext((v) => v.requestHelpers.acceptTrade);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -141,20 +142,28 @@ export default function TradeButtons({
   async function handleAcceptClick() {
     setAccepting(true);
     try {
-      const { isDisabled, disableReason, responsibleParty } = await acceptTrade(
-        { channelId, transactionId }
-      );
+      const { coins, isDisabled, disableReason, responsibleParty } =
+        await acceptTrade({ channelId, transactionId });
+      if (Number.isFinite(coins)) {
+        onSetUserState({
+          userId: myId,
+          newState: { twinkleCoins: Number(coins) }
+        });
+      }
       if (isDisabled) {
         setDisableReasonObj({
           reason: disableReason,
           responsibleParty
         });
         setIsDisabled(true);
+        return;
       }
+      onAcceptTrade();
     } catch (error) {
       console.error(error);
     } finally {
-      onAcceptTrade();
+      setAccepting(false);
+      setConfirmModalShown(false);
     }
   }
 }

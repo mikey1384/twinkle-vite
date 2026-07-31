@@ -1119,6 +1119,7 @@ export function useHostBridge({
                   message: payload.message,
                   history: payload.history,
                   systemPrompt: payload.systemPrompt,
+                  webSearch: payload.webSearch,
                   onEvent: (streamEvent: any) => {
                     forwardAiChatStreamEventToFrame({
                       sourceWindow,
@@ -1133,7 +1134,8 @@ export function useHostBridge({
                 promptId: payload.promptId,
                 message: payload.message,
                 history: payload.history,
-                systemPrompt: payload.systemPrompt
+                systemPrompt: payload.systemPrompt,
+                webSearch: payload.webSearch
               });
             }
             if (
@@ -1155,7 +1157,8 @@ export function useHostBridge({
               thinkingMode: payload.thinkingMode,
               mode: payload.mode,
               instructions: payload.instructions,
-              systemPrompt: payload.systemPrompt
+              systemPrompt: payload.systemPrompt,
+              webSearch: payload.webSearch
             });
             if (
               response?.aiUsagePolicy &&
@@ -1184,6 +1187,7 @@ export function useHostBridge({
                     systemPrompt: payload.systemPrompt,
                     instructions: payload.instructions,
                     includeWebsiteContext: payload.includeWebsiteContext,
+                    webSearch: payload.webSearch,
                     onEvent: (streamEvent: any) => {
                       forwardAiChatStreamEventToFrame({
                         sourceWindow,
@@ -1205,7 +1209,8 @@ export function useHostBridge({
                   scene: payload.scene,
                   systemPrompt: payload.systemPrompt,
                   instructions: payload.instructions,
-                  includeWebsiteContext: payload.includeWebsiteContext
+                  includeWebsiteContext: payload.includeWebsiteContext,
+                  webSearch: payload.webSearch
                 });
             }
             if (

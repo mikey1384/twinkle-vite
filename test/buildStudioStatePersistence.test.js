@@ -5,6 +5,10 @@ const buildListSource = readFileSync(
   new URL('../src/containers/Build/List/index.tsx', import.meta.url),
   'utf8'
 );
+const buildStudioPreferencesSource = readFileSync(
+  new URL('../src/containers/Build/studioPreferences.ts', import.meta.url),
+  'utf8'
+);
 const userRequestHelpersSource = readFileSync(
   new URL('../src/contexts/requestHelpers/user.ts', import.meta.url),
   'utf8'
@@ -39,10 +43,7 @@ const chatBuildContributionInviteSource = readFileSync(
   'utf8'
 );
 const keepAliveHostSource = readFileSync(
-  new URL(
-    '../src/containers/Build/Runtime/KeepAliveHost.tsx',
-    import.meta.url
-  ),
+  new URL('../src/containers/Build/Runtime/KeepAliveHost.tsx', import.meta.url),
   'utf8'
 );
 const requestHelperIndexSource = readFileSync(
@@ -54,6 +55,17 @@ const settingsRouteSource = readFileSync(
     '../../twinkle-api/controllers/user/routes/settings.ts',
     import.meta.url
   ),
+  'utf8'
+);
+const buildStudioStateServiceSource = readFileSync(
+  new URL(
+    '../../twinkle-api/controllers/user/services/buildStudioState.ts',
+    import.meta.url
+  ),
+  'utf8'
+);
+const promptListSource = readFileSync(
+  new URL('../src/containers/Prompts/PromptList/index.tsx', import.meta.url),
   'utf8'
 );
 const collaboratingPreloadEffectSource = buildListSource.slice(
@@ -80,8 +92,8 @@ assert.match(
   'Expected Build Studio preference saves to use the request helper.'
 );
 assert.match(
-  buildListSource,
-  /function getPersistedBuildStudioStateKey/,
+  buildStudioPreferencesSource,
+  /function getBuildStudioPreferencesKey/,
   'Expected persisted Build Studio state to be normalized before hydration.'
 );
 assert.match(
@@ -150,9 +162,19 @@ assert.match(
   'Expected Team Builds loads and appends to carry the cache generation they started with.'
 );
 assert.match(
+  buildStudioPreferencesSource,
+  /preferenceSaveQueues[\s\S]*queuedPreferences[\s\S]*queue\.tail\.then/,
+  'Expected Build Studio preference saves to serialize explicit patches against queued state.'
+);
+assert.doesNotMatch(
   buildListSource,
-  /buildStudioPreferenceSaveIdRef[\s\S]*buildStudioPreferenceSaveQueueRef[\s\S]*saveId !== buildStudioPreferenceSaveIdRef\.current/,
-  'Expected Build Studio preference saves to serialize and ignore stale responses.'
+  /activeTab: nextActiveTab = activeTab/,
+  'Expected section-only Build Studio saves not to synthesize an active tab from transient render state.'
+);
+assert.match(
+  handleBrowseModeChangeSource,
+  /persistBuildStudioState\(\{\s*activeTab,\s*browseMode,\s*browseModeTab: activeTab\s*\}\)/,
+  'Expected public browse-mode changes to persist the URL-derived active tab explicitly.'
 );
 // KeepAliveHost used to restore a session by re-navigating to its path with
 // getLocationStateObject(session.location) merged in. The tab system replaced
@@ -185,13 +207,23 @@ assert.match(
 );
 assert.match(
   handleTabChangeSource,
-  /onSetBuildStudioActiveTab\(tab\);[\s\S]*persistBuildStudioState\(\{ activeTab: tab \}\)/,
+  /navigate\(getBuildListTabPath\(tab, nextBrowseMode\)\);[\s\S]*persistBuildStudioState\(\{ activeTab: tab \}\)/,
   'Expected Build Studio tab changes to persist.'
+);
+assert.doesNotMatch(
+  handleTabChangeSource,
+  /onSetBuildStudioActiveTab\(tab\)/,
+  'Expected the URL and canonical save response—not an optimistic context write—to own Build Studio tab changes.'
 );
 assert.match(
   handleBrowseModeChangeSource,
-  /onSetBuildStudioBrowseMode\(\{ tab: activeTab, browseMode \}\);[\s\S]*persistBuildStudioState\(\{[\s\S]*browseMode,[\s\S]*browseModeTab: activeTab/,
+  /navigate\(getBuildListTabPath\(activeTab, browseMode\)\);[\s\S]*persistBuildStudioState\(\{[\s\S]*browseMode,[\s\S]*browseModeTab: activeTab/,
   'Expected Build Studio browse-mode changes to persist.'
+);
+assert.doesNotMatch(
+  handleBrowseModeChangeSource,
+  /onSetBuildStudioBrowseMode\(\{ tab: activeTab, browseMode \}\)/,
+  'Expected the URL and canonical save response—not an optimistic context write—to own Build Studio browse-mode changes.'
 );
 assert.match(
   userRequestHelpersSource,
@@ -210,8 +242,25 @@ assert.match(
 );
 assert.match(
   settingsRouteSource,
-  /JSON_SET\([\s\S]*'\$\.buildStudio'[\s\S]*CAST\(\? AS JSON\)/,
-  'Expected API route to update only users.state.buildStudio.'
+  /JSON_SET\([\s\S]*'\$\.buildStudio'[\s\S]*JSON_MERGE_PATCH/,
+  'Expected API route to atomically merge and replace only users.state.buildStudio.'
+);
+for (const key of ['section', 'promptTab', 'promptBrowseModes']) {
+  assert.match(
+    buildStudioStateServiceSource,
+    new RegExp(key),
+    `Expected the API normalizer to preserve ${key}.`
+  );
+}
+assert.match(
+  promptListSource,
+  /const preferenceSource = persistedPreferences;/,
+  'Expected an account without persisted Build Studio state to save from normalized defaults.'
+);
+assert.doesNotMatch(
+  promptListSource,
+  /const preferenceSource = persistedBuildStudioState \|\| \{/,
+  'Expected Prompt Studio not to seed a new account from long-lived BuildContext preferences.'
 );
 
 console.log('Build Studio state persistence verifier passed.');

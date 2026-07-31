@@ -12,6 +12,8 @@ import TransactionHandler from './TransactionHandler';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
 
+const pendingAssetSendStoragePrefix = 'twinkle:pending-asset-send';
+
 export default function TransactionModal({
   currentTransactionId,
   channelId,
@@ -47,6 +49,7 @@ export default function TransactionModal({
   const postTradeRequest = useAppContext(
     (v) => v.requestHelpers.postTradeRequest
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const cardObj = useChatContext((v) => v.state.cardObj);
 
   useEffect(() => {
@@ -331,7 +334,7 @@ export default function TransactionModal({
     offeredGroupIds: number[];
     wantedGroupIds: number[];
   }) {
-    const { isNewChannel, newChannelId, pathId } = await postTradeRequest({
+    const requestPayload = {
       type: selectedOption,
       wanted: {
         coins: coinsWanted,
@@ -344,7 +347,29 @@ export default function TransactionModal({
         groupIds: offeredGroupIds
       },
       targetId: partner.id
+    };
+    const clientRequestId = getTransactionClientRequestId({
+      type: selectedOption,
+      userId: myId,
+      requestPayload
     });
+    const result = await postTradeRequest({
+      ...requestPayload,
+      clientRequestId
+    });
+    if (selectedOption === 'send') {
+      clearPendingAssetSendRequest({
+        userId: myId,
+        clientRequestId
+      });
+    }
+    if (Number.isFinite(result.coins)) {
+      onSetUserState({
+        userId: myId,
+        newState: { twinkleCoins: Number(result.coins) }
+      });
+    }
+    const { isNewChannel, newChannelId, pathId } = result;
     if (isNewChannel) {
       socket.emit('join_chat_group', newChannelId);
       navigate(`/chat/${pathId}`);
@@ -368,5 +393,64 @@ export default function TransactionModal({
       [groupModalType as string]: selectedGroupIds
     }));
     setGroupModalType(null);
+  }
+}
+
+function createTransactionClientRequestId() {
+  return typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getTransactionClientRequestId({
+  type,
+  userId,
+  requestPayload
+}: {
+  type: string;
+  userId: number;
+  requestPayload: Record<string, unknown>;
+}) {
+  if (type !== 'send') {
+    return createTransactionClientRequestId();
+  }
+  const storageKey = `${pendingAssetSendStoragePrefix}:${userId}`;
+  const fingerprint = JSON.stringify(requestPayload);
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+    if (
+      stored?.fingerprint === fingerprint &&
+      typeof stored?.clientRequestId === 'string' &&
+      stored.clientRequestId
+    ) {
+      return stored.clientRequestId;
+    }
+    const clientRequestId = createTransactionClientRequestId();
+    sessionStorage.setItem(
+      storageKey,
+      JSON.stringify({ fingerprint, clientRequestId })
+    );
+    return clientRequestId;
+  } catch {
+    return createTransactionClientRequestId();
+  }
+}
+
+function clearPendingAssetSendRequest({
+  userId,
+  clientRequestId
+}: {
+  userId: number;
+  clientRequestId: string;
+}) {
+  const storageKey = `${pendingAssetSendStoragePrefix}:${userId}`;
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+    if (stored?.clientRequestId === clientRequestId) {
+      sessionStorage.removeItem(storageKey);
+    }
+  } catch {
+    sessionStorage.removeItem(storageKey);
   }
 }
