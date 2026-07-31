@@ -116,9 +116,6 @@ function BonusRoulette({
         );
       }}
       onSpinComplete={(outcome) => {
-        if (outcome.outcomeKey === 'ai_card') {
-          onInsertBlackAICardUpdateLog('Summoning AI Card...');
-        }
         const coins = (outcome.data as any)?.coins;
         if (typeof coins === 'number') {
           onSetUserState({

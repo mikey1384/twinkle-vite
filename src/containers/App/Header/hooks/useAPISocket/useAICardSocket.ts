@@ -507,14 +507,12 @@ export default function useAICardSocket() {
       feed,
       card,
       summonerId,
-      numCardSummoned,
-      isBlack
+      numCardSummoned
     }: {
       feed: any;
       card: any;
       summonerId?: number;
       numCardSummoned?: number;
-      isBlack: boolean;
     }) {
       // The summoner used to be skipped here because the summon response adds
       // the card itself. That made the response the only way they could ever
@@ -533,9 +531,6 @@ export default function useAICardSocket() {
         }
       } else {
         onNewAICardSummon({ card, feed });
-      }
-      if (isBlack) {
-        onInsertBlackAICardUpdateLog('Black AI Card Summoned');
       }
     }
 
