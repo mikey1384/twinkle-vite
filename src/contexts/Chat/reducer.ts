@@ -3772,6 +3772,10 @@ export default function ChatReducer(
         currentMonth: action.data.currentMonth,
         currentYear: action.data.currentYear,
         chatStatus: state.chatStatus,
+        // Like chatStatus, this is confirmed socket state that may arrive
+        // while a same-user bootstrap is in flight. START_CHAT_BOOTSTRAP
+        // already clears it before switching account projections.
+        recentOfflineUsers: state.recentOfflineUsers,
         aiCardFeedIds: aiCardsLoaded
           ? action.data.cardFeeds.map((feed: { id: number }) => feed.id)
           : state.aiCardFeedIds,
@@ -6672,6 +6676,9 @@ export default function ChatReducer(
       };
     }
     case 'SET_ONLINE_USERS': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
       // Channel-scoped snapshot: it only covers the members of one channel, so
       // absence from it says nothing about the rest of the app.
       const mergedStatus = applyPresenceSnapshot({

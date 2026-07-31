@@ -1962,16 +1962,19 @@ export default function ChatActions(dispatch: Dispatch) {
     // Channel-scoped snapshot: merges into the same app-wide map, but absence
     // from it never means offline.
     onSetOnlineUsers({
+      userId,
       onlineUsers,
       recentOfflineUsers,
       requestedAt
     }: {
+      userId: number;
       onlineUsers: Record<number, any>;
       recentOfflineUsers?: any[];
       requestedAt: number;
     }) {
       return dispatch({
         type: 'SET_ONLINE_USERS',
+        userId,
         onlineUsers,
         recentOfflineUsers,
         requestedAt

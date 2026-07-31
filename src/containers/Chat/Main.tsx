@@ -879,26 +879,46 @@ export default function Main({
   // without this the members who went offline during the disconnect would be
   // dropped from the online list without ever showing up as recently offline.
   useEffect(() => {
-    if (!selectedChannelId || !socketConnected) return;
+    if (!chatReadyForCurrentUser || !selectedChannelId || !socketConnected) {
+      return;
+    }
+    const requestUserId = Number(userId || 0);
+    const requestChannelId = Number(selectedChannelId);
+    if (!requestUserId || !requestChannelId) return;
     let canceled = false;
     // The server answers check_online_users as the bound user, so this has to
     // wait for the bind that follows a reconnect; an unbound request fails the
     // channel access check and comes back empty. The wait matches the bind
     // acknowledgement deadline - a bind that never lands disconnects the
     // socket, which re-runs this effect on the next connect.
-    waitForSocketAuthReady(userIdRef.current, SOCKET_BIND_ACK_TIMEOUT_MS)
+    waitForSocketAuthReady(requestUserId, SOCKET_BIND_ACK_TIMEOUT_MS)
       .then(() => {
-        if (canceled) return;
-        socket.emit('join_chat_group', selectedChannelId);
+        if (
+          canceled ||
+          Number(userIdRef.current || 0) !== requestUserId ||
+          Number(currentSelectedChannelIdRef.current || 0) !== requestChannelId
+        ) {
+          return;
+        }
+        socket.emit('join_chat_group', requestChannelId);
         const requestedAt = Date.now();
         socket.emit(
           'check_online_users',
-          selectedChannelId,
-          ({ onlineUsers, recentOfflineUsers }: any) => {
-            if (canceled) return;
+          requestChannelId,
+          ({ channelId, onlineUsers, recentOfflineUsers }: any) => {
+            if (
+              canceled ||
+              Number(userIdRef.current || 0) !== requestUserId ||
+              Number(currentSelectedChannelIdRef.current || 0) !==
+                requestChannelId ||
+              Number(channelId) !== requestChannelId
+            ) {
+              return;
+            }
             onSetOnlineUsers({
+              userId: requestUserId,
               onlineUsers,
-              recentOfflineUsers: recentOfflineUsers || [],
+              recentOfflineUsers,
               requestedAt
             });
           }
@@ -909,7 +929,7 @@ export default function Main({
       canceled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, socketConnected]);
+  }, [chatReadyForCurrentUser, selectedChannelId, socketConnected, userId]);
 
   const handleCreateNewChannel = useCallback(
     async ({
