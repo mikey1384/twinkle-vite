@@ -4,18 +4,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import TabFilter from '~/containers/Build/TabFilter';
 import SectionSwitcher from '~/containers/Build/SectionSwitcher';
-import ActivityPanels from '~/containers/Build/List/ActivityPanels';
 import {
   BuildQuickAccessModal,
   BuildQuickAccessStrip
 } from '~/containers/Build/List/QuickAccess';
 import {
-  getIsBuildActivityRailVisible,
   studioLayoutClass,
   studioMainClass,
   studioPageClass
 } from '~/containers/Build/List/StudioLayout';
-import useActivityPanel from '~/containers/Build/List/hooks/useActivityPanel';
 import useQuickAccess from '~/containers/Build/List/hooks/useQuickAccess';
 import {
   enqueueBuildStudioPreferenceSave,
@@ -30,6 +27,8 @@ import { getPromptListTabPath } from '../helpers/url';
 import PromptHero from './PromptHero';
 import PromptResults from './PromptResults';
 import { mobileMaxWidth } from '~/constants/css';
+import PromptActivityPanel from '../PromptActivityPanel';
+import usePromptActivityPanel from '../hooks/usePromptActivityPanel';
 
 const promptScopeTabs: Array<{
   value: PromptListTab;
@@ -84,8 +83,23 @@ export default function PromptList({
   const buildQuickAccessMode = useKeyContext(
     (v) => v.myState.buildQuickAccessMode
   );
-  const persistedBuildStudioState = useKeyContext(
-    (v) => v.myState.state?.buildStudio
+  const persistedBuildStudioActiveTab = useKeyContext(
+    (v) => v.myState.state?.buildStudio?.activeTab
+  );
+  const persistedBuildStudioCommunityBrowseMode = useKeyContext(
+    (v) => v.myState.state?.buildStudio?.browseModes?.community
+  );
+  const persistedBuildStudioOpenSourceBrowseMode = useKeyContext(
+    (v) => v.myState.state?.buildStudio?.browseModes?.open_source
+  );
+  const persistedBuildStudioSection = useKeyContext(
+    (v) => v.myState.state?.buildStudio?.section
+  );
+  const persistedPromptTab = useKeyContext(
+    (v) => v.myState.state?.buildStudio?.promptTab
+  );
+  const persistedPromptCommunityBrowseMode = useKeyContext(
+    (v) => v.myState.state?.buildStudio?.promptBrowseModes?.community
   );
   const sessionLoaded = useAppContext((v) => v.user.state.loaded);
   const sessionStateArrived = useAppContext(
@@ -120,12 +134,14 @@ export default function PromptList({
   const promptCommunityState = useBuildContext(
     (v) => v.state.buildStudio.promptStudio.community
   );
-  const buildBrowseState = useBuildContext((v) => v.state.buildStudio.browse);
-  const activityPanelState = useBuildContext(
-    (v) => v.state.buildStudio.activityPanel
+  const collaboratingBrowseState = useBuildContext(
+    (v) => v.state.buildStudio.browse.collaborating
   );
-  const activityFeedsState = useBuildContext(
-    (v) => v.state.buildStudio.activityFeeds
+  const communityBrowseState = useBuildContext(
+    (v) => v.state.buildStudio.browse.community
+  );
+  const openSourceBrowseState = useBuildContext(
+    (v) => v.state.buildStudio.browse.open_source
   );
   const onSetBuildStudioSection = useBuildContext(
     (v) => v.actions.onSetBuildStudioSection
@@ -156,6 +172,28 @@ export default function PromptList({
   );
 
   const normalizedUserId = Number(userId || 0) || null;
+  const persistedBuildStudioState = useMemo(
+    () => ({
+      activeTab: persistedBuildStudioActiveTab,
+      browseModes: {
+        community: persistedBuildStudioCommunityBrowseMode,
+        open_source: persistedBuildStudioOpenSourceBrowseMode
+      },
+      section: persistedBuildStudioSection,
+      promptTab: persistedPromptTab,
+      promptBrowseModes: {
+        community: persistedPromptCommunityBrowseMode
+      }
+    }),
+    [
+      persistedBuildStudioActiveTab,
+      persistedBuildStudioCommunityBrowseMode,
+      persistedBuildStudioOpenSourceBrowseMode,
+      persistedBuildStudioSection,
+      persistedPromptCommunityBrowseMode,
+      persistedPromptTab
+    ]
+  );
   const persistedPreferences = normalizeBuildStudioPreferences(
     persistedBuildStudioState
   );
@@ -192,20 +230,19 @@ export default function PromptList({
     persistedBuildStudioState
   );
   const preferenceSource = persistedPreferences;
-  const chromeBuildStudio = useMemo(
+  const quickAccessBuildStudio = useMemo(
     () => ({
-      activityFeeds: activityFeedsState,
-      activityPanel: activityPanelState,
-      browse: buildBrowseState
+      browse: {
+        collaborating: collaboratingBrowseState,
+        community: communityBrowseState,
+        open_source: openSourceBrowseState
+      }
     }),
-    [activityFeedsState, activityPanelState, buildBrowseState]
+    [collaboratingBrowseState, communityBrowseState, openSourceBrowseState]
   );
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
-  const [activityRailVisible, setActivityRailVisible] = useState(
-    getIsBuildActivityRailVisible
-  );
   const initialAnchorKeyRef = useRef(activeAnchorKey);
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -231,7 +268,7 @@ export default function PromptList({
     quickAccessMode
   } = useQuickAccess({
     buildQuickAccessMode,
-    buildStudio: chromeBuildStudio,
+    buildStudio: quickAccessBuildStudio,
     normalizedUserId,
     onPatchBuildStudioMyBuild,
     onSetBuildStudioBrowseBuilds,
@@ -239,26 +276,12 @@ export default function PromptList({
   });
 
   const {
-    hasNewActivity: hasNewBuildActivity,
-    onMobileClose: handleBuildActivityMobileClose,
-    onMobileOpen: handleBuildActivityMobileOpen,
-    panelProps: buildActivityPanelProps
-  } = useActivityPanel({
-    autoMarkActivityViewed: activityRailVisible,
-    buildStudio: chromeBuildStudio,
+    panelProps: promptActivityPanelProps,
+    refresh: refreshPromptActivity
+  } = usePromptActivityPanel({
     color: profileTheme,
-    normalizedUserId
+    userId: normalizedUserId
   });
-
-  useEffect(() => {
-    function handleResize() {
-      setActivityRailVisible(getIsBuildActivityRailVisible());
-    }
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     setError('');
@@ -475,11 +498,8 @@ export default function PromptList({
               </div>
             ) : null}
 
-            <ActivityPanels
-              {...buildActivityPanelProps}
-              hasNewActivity={hasNewBuildActivity}
-              onMobileClose={handleBuildActivityMobileClose}
-              onMobileOpen={handleBuildActivityMobileOpen}
+            <PromptActivityPanel
+              {...promptActivityPanelProps}
               variant="mobile"
             />
 
@@ -505,7 +525,7 @@ export default function PromptList({
           </div>
         </main>
 
-        <ActivityPanels {...buildActivityPanelProps} variant="rail" />
+        <PromptActivityPanel {...promptActivityPanelProps} variant="rail" />
       </div>
 
       {quickAccessModalMode ? (
@@ -566,6 +586,7 @@ export default function PromptList({
     channelId: number;
   }) {
     onPatchPromptStudioClone(data);
+    refreshPromptActivity();
   }
 
   function handleTabChange(tab: PromptListTab) {

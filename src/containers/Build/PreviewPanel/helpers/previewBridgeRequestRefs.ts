@@ -6,6 +6,8 @@ export interface PreviewHostBridgeRequestRefs {
   callBuildRuntimeAiImageRef: AsyncRequestRef;
   callBuildRuntimeAiChatStreamRef: AsyncRequestRef;
   callBuildRuntimeAiObjectRef: AsyncRequestRef;
+  getBuildTwinkleNewsRef: AsyncRequestRef;
+  generateBuildTwinkleNewsRef: AsyncRequestRef;
   callBuildRuntimeCharacterChatRef: AsyncRequestRef;
   callBuildRuntimeCharacterChatStreamRef: AsyncRequestRef;
   queryViewerDbRef: AsyncRequestRef;

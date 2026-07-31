@@ -11,8 +11,10 @@ import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
-
-const pendingAssetSendStoragePrefix = 'twinkle:pending-asset-send';
+import {
+  clearPendingTransactionRequest,
+  getTransactionClientRequestId
+} from './pendingTransactionRequest';
 
 export default function TransactionModal({
   currentTransactionId,
@@ -348,8 +350,7 @@ export default function TransactionModal({
       },
       targetId: partner.id
     };
-    const clientRequestId = getTransactionClientRequestId({
-      type: selectedOption,
+    const clientRequestId = await getTransactionClientRequestId({
       userId: myId,
       requestPayload
     });
@@ -357,12 +358,11 @@ export default function TransactionModal({
       ...requestPayload,
       clientRequestId
     });
-    if (selectedOption === 'send') {
-      clearPendingAssetSendRequest({
-        userId: myId,
-        clientRequestId
-      });
-    }
+    await clearPendingTransactionRequest({
+      userId: myId,
+      requestPayload,
+      clientRequestId
+    });
     if (Number.isFinite(result.coins)) {
       onSetUserState({
         userId: myId,
@@ -393,64 +393,5 @@ export default function TransactionModal({
       [groupModalType as string]: selectedGroupIds
     }));
     setGroupModalType(null);
-  }
-}
-
-function createTransactionClientRequestId() {
-  return typeof crypto !== 'undefined' &&
-    typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function getTransactionClientRequestId({
-  type,
-  userId,
-  requestPayload
-}: {
-  type: string;
-  userId: number;
-  requestPayload: Record<string, unknown>;
-}) {
-  if (type !== 'send') {
-    return createTransactionClientRequestId();
-  }
-  const storageKey = `${pendingAssetSendStoragePrefix}:${userId}`;
-  const fingerprint = JSON.stringify(requestPayload);
-  try {
-    const stored = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
-    if (
-      stored?.fingerprint === fingerprint &&
-      typeof stored?.clientRequestId === 'string' &&
-      stored.clientRequestId
-    ) {
-      return stored.clientRequestId;
-    }
-    const clientRequestId = createTransactionClientRequestId();
-    sessionStorage.setItem(
-      storageKey,
-      JSON.stringify({ fingerprint, clientRequestId })
-    );
-    return clientRequestId;
-  } catch {
-    return createTransactionClientRequestId();
-  }
-}
-
-function clearPendingAssetSendRequest({
-  userId,
-  clientRequestId
-}: {
-  userId: number;
-  clientRequestId: string;
-}) {
-  const storageKey = `${pendingAssetSendStoragePrefix}:${userId}`;
-  try {
-    const stored = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
-    if (stored?.clientRequestId === clientRequestId) {
-      sessionStorage.removeItem(storageKey);
-    }
-  } catch {
-    sessionStorage.removeItem(storageKey);
   }
 }

@@ -12,6 +12,10 @@ import {
   useContentContext,
   useManagementContext
 } from '~/contexts';
+import {
+  clearAchievementProgressEventMemory,
+  consumeAchievementProgressEvent
+} from './achievementProgressEventDedupe';
 
 interface AdminTelemetryEvent {
   message?: string;
@@ -89,6 +93,7 @@ export default function useNotiSocket({
   // suppress a toast or animate from A's old value).
   useEffect(() => {
     progressByTypeRef.current = {};
+    clearAchievementProgressEventMemory();
   }, [userId]);
 
   useEffect(() => {
@@ -256,11 +261,13 @@ export default function useNotiSocket({
     function handleAchievementProgress({
       type,
       currentValue,
-      targetValue
+      targetValue,
+      eventId
     }: {
       type: string;
       currentValue: number;
       targetValue: number;
+      eventId?: string;
     }) {
       if (!type || !targetValue) return;
       // Never show progress for an achievement the user already owns (e.g. Gold
@@ -275,6 +282,14 @@ export default function useNotiSocket({
       }
       const prev = progressByTypeRef.current[type];
       if (prev === currentValue) return;
+      if (
+        !consumeAchievementProgressEvent({
+          userId,
+          eventId
+        })
+      ) {
+        return;
+      }
       const delta =
         typeof prev === 'number' && currentValue > prev
           ? currentValue - prev

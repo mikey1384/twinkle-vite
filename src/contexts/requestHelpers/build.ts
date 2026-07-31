@@ -1403,6 +1403,31 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getBuildTwinkleNews({ buildId }: { buildId: number }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/news/current`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async generateBuildTwinkleNews({ buildId }: { buildId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/news/generate`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async callBuildRuntimeCharacterChat({
       buildId,
       character,

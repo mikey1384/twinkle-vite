@@ -16,6 +16,10 @@ import {
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
 import { shouldShowBackgroundChatMessageNotification } from '~/helpers/chatNotificationPolicy';
 import {
+  getRealtimeChatMessageKey,
+  hasCanonicalChatMessage
+} from '~/helpers/chatRealtimeMessageIdentity';
+import {
   getChatUnreadActivityRevision,
   markChatUnreadActivity
 } from '~/helpers/chatUnreadActivity';
@@ -104,6 +108,7 @@ export default function useChatSocket({
   const channelUnreadResyncTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
+  const recentlyHandledMessageKeysRef = useRef(new Set<string>());
 
   channelsObjRef.current = channelsObj;
   onUpdateMyXpRef.current = onUpdateMyXp;
@@ -805,6 +810,7 @@ export default function useChatSocket({
       pathId: number;
       quickAccess?: ChatQuickAccessState;
     }) {
+      if (shouldSkipRealtimeMessage(message)) return;
       markUnreadActivity();
       let isDuplicate = false;
       // New servers include the writer-backed envelope. The fallback keeps a
@@ -842,6 +848,7 @@ export default function useChatSocket({
         quickAccess,
         userId
       });
+      rememberHandledRealtimeMessage(message);
     }
 
     function handleLeftChatFromAnotherTab(
@@ -938,6 +945,7 @@ export default function useChatSocket({
       channel: any;
       newMembers: any[];
     }) {
+      if (shouldSkipRealtimeMessage(message)) return;
       markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = subchannelIdRef.current;
@@ -1000,6 +1008,31 @@ export default function useChatSocket({
       }
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
         onUpdateMyXpRef.current();
+      }
+      rememberHandledRealtimeMessage(message);
+    }
+
+    function shouldSkipRealtimeMessage(message: any) {
+      const messageKey = getRealtimeChatMessageKey(message);
+      return Boolean(
+        messageKey &&
+          (recentlyHandledMessageKeysRef.current.has(messageKey) ||
+            hasCanonicalChatMessage({
+              channelsObj: channelsObjRef.current,
+              message
+            }))
+      );
+    }
+
+    function rememberHandledRealtimeMessage(message: any) {
+      const messageKey = getRealtimeChatMessageKey(message);
+      if (!messageKey) return;
+      const recentlyHandledMessageKeys = recentlyHandledMessageKeysRef.current;
+      recentlyHandledMessageKeys.add(messageKey);
+      if (recentlyHandledMessageKeys.size <= 1000) return;
+      const oldestMessageKey = recentlyHandledMessageKeys.values().next().value;
+      if (oldestMessageKey) {
+        recentlyHandledMessageKeys.delete(oldestMessageKey);
       }
     }
 

@@ -584,6 +584,29 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadSharedPromptActivity({
+      cursor,
+      limit = 12,
+      scope = 'all'
+    }: {
+      cursor?: string;
+      limit?: number;
+      scope?: 'all' | 'mine' | 'community';
+    } = {}) {
+      try {
+        const params: Record<string, string | number> = { limit, scope };
+        if (cursor) {
+          params.cursor = cursor;
+        }
+        const { data } = await request.get(`${URL}/chat/topic/activity`, {
+          ...auth(),
+          params
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateTopicShareState({
       channelId,
       topicId,

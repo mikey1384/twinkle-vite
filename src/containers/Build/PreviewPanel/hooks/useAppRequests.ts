@@ -24,6 +24,12 @@ export default function useAppRequests() {
   const callBuildRuntimeAiObject = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiObject
   );
+  const getBuildTwinkleNews = useAppContext(
+    (v) => v.requestHelpers.getBuildTwinkleNews
+  );
+  const generateBuildTwinkleNews = useAppContext(
+    (v) => v.requestHelpers.generateBuildTwinkleNews
+  );
   const callBuildRuntimeCharacterChat = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeCharacterChat
   );
@@ -248,6 +254,8 @@ export default function useAppRequests() {
   const callBuildRuntimeAiImageRef = useRef(callBuildRuntimeAiImage);
   const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
+  const getBuildTwinkleNewsRef = useRef(getBuildTwinkleNews);
+  const generateBuildTwinkleNewsRef = useRef(generateBuildTwinkleNews);
   const callBuildRuntimeCharacterChatRef = useRef(
     callBuildRuntimeCharacterChat
   );
@@ -352,6 +360,8 @@ export default function useAppRequests() {
     callBuildRuntimeAiImageRef,
     callBuildRuntimeAiChatStreamRef,
     callBuildRuntimeAiObjectRef,
+    getBuildTwinkleNewsRef,
+    generateBuildTwinkleNewsRef,
     callBuildRuntimeCharacterChatRef,
     callBuildRuntimeCharacterChatStreamRef,
     queryViewerDbRef,

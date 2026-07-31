@@ -17,7 +17,7 @@ const buildActivityPanelInitialViewportTop = `calc(
   ${APP_SHELL_HEADER_OFFSET_STYLE} + ${buildPageTopGap}
 )`;
 
-const buildActivityRailClass = css`
+export const activityPanelRailClass = css`
   --build-activity-rail-top: ${buildPageTopGap};
   --build-activity-panel-top-offset: ${buildActivityPanelInitialViewportTop};
   --build-activity-rail-bottom-gap: ${buildPageTopGap};
@@ -93,7 +93,7 @@ export default function ActivityPanels({
     />
   );
   if (variant === 'rail') {
-    return <aside className={buildActivityRailClass}>{panel}</aside>;
+    return <aside className={activityPanelRailClass}>{panel}</aside>;
   }
   return panel;
 }

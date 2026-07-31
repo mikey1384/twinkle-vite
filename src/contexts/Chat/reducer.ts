@@ -12,6 +12,7 @@ import { applyPresenceSnapshot, stampPresenceEntry } from './presenceSnapshot';
 import { objectify } from '~/helpers';
 import { prependUniqueIds } from '~/contexts/Content/idListHelpers';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
+import { hasCanonicalChatMessage } from '~/helpers/chatRealtimeMessageIdentity';
 import { v1 as uuidv1 } from 'uuid';
 import type { CanonicalChatChannelVisibility } from '~/types/chat';
 import { shouldApplyChatNotificationSettings } from './notificationSettingsRevision';
@@ -5220,6 +5221,14 @@ export default function ChatReducer(
       };
     }
     case 'RECEIVE_MESSAGE': {
+      if (
+        hasCanonicalChatMessage({
+          channelsObj: state.channelsObj,
+          message: action.message
+        })
+      ) {
+        return state;
+      }
       const messageId = action.message.id || uuidv1();
       const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const subchannelId = Number(action.message.subchannelId || 0);
@@ -5423,6 +5432,20 @@ export default function ChatReducer(
       if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
         return state;
       }
+      if (
+        hasCanonicalChatMessage({
+          channelsObj: state.channelsObj,
+          message: action.message
+        })
+      ) {
+        return action.quickAccess
+          ? ChatReducer(state, {
+              type: 'APPLY_CANONICAL_QUICK_ACCESS',
+              quickAccess: action.quickAccess,
+              userId: action.userId
+            })
+          : state;
+      }
       const messageId = action.message.id ? action.message.id : uuidv1();
       const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const invitationMembers = action.members || action.message.members || [];
@@ -5491,6 +5514,14 @@ export default function ChatReducer(
         : nextState;
     }
     case 'RECEIVE_MSG_ON_DIFF_CHANNEL': {
+      if (
+        hasCanonicalChatMessage({
+          channelsObj: state.channelsObj,
+          message: action.message
+        })
+      ) {
+        return state;
+      }
       const messageId = action.message.id || uuidv1();
       const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const prevChannelObj = state.channelsObj[action.channel.id];

@@ -1168,6 +1168,21 @@ export function useHostBridge({
             }
             break;
 
+          case 'news:get-current':
+            response = await requestRefs.getBuildTwinkleNewsRef.current({
+              buildId: activeBuild.id
+            });
+            break;
+
+          case 'news:generate':
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+            }
+            response = await requestRefs.generateBuildTwinkleNewsRef.current({
+              buildId: activeBuild.id
+            });
+            break;
+
           case 'characters:chat':
             if (!previewAuth.userIdRef.current) {
               triggerGuestRestriction(previewAuth);

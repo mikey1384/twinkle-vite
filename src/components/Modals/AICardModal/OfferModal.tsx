@@ -117,41 +117,45 @@ export default function OfferModal({
 
   async function handlePostOffer() {
     setPosting(true);
-    const result = await postAICardOffer({ cardId, price: amount });
-    const confirmedOffer = result.offer;
-    const confirmedOfferer = {
-      ...confirmedOffer.user,
-      offerId: confirmedOffer.id
-    };
-    onSetOffers((prevOffers: any[]) => {
-      const nextOffers = [];
-      let found = false;
-      for (const offer of prevOffers) {
-        const newOffer = { ...offer };
-        if (offer.price === confirmedOffer.price) {
-          found = true;
-          newOffer.users = offer.users.some(
-            (offerer: { offerId?: number }) =>
-              offerer.offerId === confirmedOffer.id
-          )
-            ? offer.users
-            : [...offer.users, confirmedOfferer];
+    try {
+      const result = await postAICardOffer({ cardId, price: amount });
+      const confirmedOffer = result.offer;
+      const confirmedOfferer = {
+        ...confirmedOffer.user,
+        offerId: confirmedOffer.id
+      };
+      onSetOffers((prevOffers: any[]) => {
+        const nextOffers = [];
+        let found = false;
+        for (const offer of prevOffers) {
+          const newOffer = { ...offer };
+          if (offer.price === confirmedOffer.price) {
+            found = true;
+            newOffer.users = offer.users.some(
+              (offerer: { offerId?: number }) =>
+                offerer.offerId === confirmedOffer.id
+            )
+              ? offer.users
+              : [...offer.users, confirmedOfferer];
+          }
+          nextOffers.push(newOffer);
         }
-        nextOffers.push(newOffer);
-      }
-      if (!found) {
-        nextOffers.unshift({
-          price: confirmedOffer.price,
-          users: [confirmedOfferer]
-        });
-      }
-      return nextOffers;
-    });
-    onSetUserState({
-      userId: myId,
-      newState: { twinkleCoins: result.coins }
-    });
-    onUpdateAICard({ cardId, newState: result.card });
-    onHide();
+        if (!found) {
+          nextOffers.unshift({
+            price: confirmedOffer.price,
+            users: [confirmedOfferer]
+          });
+        }
+        return nextOffers;
+      });
+      onSetUserState({
+        userId: myId,
+        newState: { twinkleCoins: result.coins }
+      });
+      onUpdateAICard({ cardId, newState: result.card });
+      onHide();
+    } finally {
+      setPosting(false);
+    }
   }
 }

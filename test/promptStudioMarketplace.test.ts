@@ -809,3 +809,20 @@ test('switching from Prompt Studio queues Apps before navigation', () => {
     /persistPromptStudioState\(\{ section: 'apps' \}\);[\s\S]*navigate\('\/build'\);/
   );
 });
+
+test('a cached prompt activity scope clears stale request indicators', () => {
+  const activityHookSource = readFileSync(
+    new URL(
+      '../src/containers/Prompts/hooks/usePromptActivityPanel.ts',
+      import.meta.url
+    ),
+    'utf8'
+  );
+  const cachedScopeBranch = activityHookSource.slice(
+    activityHookSource.indexOf('if (cacheFresh)'),
+    activityHookSource.indexOf('void loadActivity')
+  );
+
+  assert.match(cachedScopeBranch, /setLoading\(false\)/);
+  assert.match(cachedScopeBranch, /setLoadingMore\(false\)/);
+});

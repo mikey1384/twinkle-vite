@@ -161,7 +161,7 @@ const sdkSections: GuideSection[] = [
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
       'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
       'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
-      'generateObject low uses GPT-5.6 Luna and free Lite Mode; medium uses GPT-5.6 Luna and normal AI Energy; high uses Grok 4.5 with high reasoning and high AI Energy.',
+      'generateObject low uses GPT-5.6 Luna and free Lite Mode; medium uses Grok 4.5 with normal AI Energy; high uses GPT-5.6 Sol with high AI Energy.',
       'Use systemPrompt to define the app AI personality, tone, role, or response rules.',
       'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
@@ -171,6 +171,14 @@ const sdkSections: GuideSection[] = [
       'Pass a unique requestId to correlate iframe logs, parent bridge logs, and backend stream logs for one generation.',
       'Signed-in viewers only. Each successful image, text, or object generation consumes AI Energy from the signed-in viewer; generateObject low uses free Lite Mode.',
       'The prompt, message, optional history, and optional reference image are sent to the configured AI provider.'
+    ]
+  },
+  {
+    title: 'Twinkle.news',
+    items: [
+      'await Twinkle.news.getCurrentEdition() reads the globally shared Twinkle Daily edition.',
+      "await Twinkle.news.generateCurrentEdition() lets a signed-in viewer queue today's edition. The server creates at most one ready edition per Twinkle day, and the request does not spend the viewer's AI Energy.",
+      'When generationStatus is pending or generating, keep showing response.edition (the latest ready edition) and poll gently for the new one.'
     ]
   },
   {

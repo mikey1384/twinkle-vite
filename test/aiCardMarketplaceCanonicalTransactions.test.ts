@@ -16,15 +16,32 @@ test('asset transfer sockets apply canonical balances instead of coin deltas', (
   assert.doesNotMatch(source, /currentTwinkleCoins\s*[+-]\s*coins/);
 });
 
-test('direct sends retain a client request id until the server confirms them', () => {
+test('offer cancellation applies the canonical requester card from the relay', () => {
+  const source = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useAICardSocket.ts'
+  );
+
+  assert.match(source, /onUpdateAICard\(\{ cardId, newState: card \}\)/);
+  assert.doesNotMatch(
+    source,
+    /onUpdateAICard\(\{\s*cardId,\s*newState: \{ myOffer: null \}/
+  );
+});
+
+test('transactions retain a client request id until the server confirms them', () => {
   const modal = readSource(
     'src/containers/Chat/Modals/TransactionModal/index.tsx'
+  );
+  const requestIdentity = readSource(
+    'src/containers/Chat/Modals/TransactionModal/pendingTransactionRequest.ts'
   );
   const requestHelper = readSource('src/contexts/requestHelpers/chat.ts');
 
   assert.match(modal, /getTransactionClientRequestId\(/);
-  assert.match(modal, /sessionStorage\.setItem/);
-  assert.match(modal, /clearPendingAssetSendRequest\(/);
+  assert.match(modal, /clearPendingTransactionRequest\(/);
+  assert.match(requestIdentity, /getPendingRequestStorageKey/);
+  assert.match(requestIdentity, /window\.localStorage/);
+  assert.doesNotMatch(requestIdentity, /sessionStorage/);
   assert.match(
     requestHelper,
     /\{ type, wanted, offered, targetId, clientRequestId \}/

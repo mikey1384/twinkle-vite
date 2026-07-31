@@ -349,13 +349,15 @@ export default function useAICardSocket() {
       coins,
       feedId,
       offerId,
-      offererId
+      offererId,
+      card
     }: {
       cardId: number;
       coins: number;
       feedId: number;
       offerId: number;
       offererId: number;
+      card?: Card;
     }) {
       const currentUserId = userIdRef.current;
       onAICardOfferWithdrawal(feedId);
@@ -365,7 +367,9 @@ export default function useAICardSocket() {
           userId: currentUserId,
           newState: { twinkleCoins: coins }
         });
-        onUpdateAICard({ cardId, newState: { myOffer: null } });
+        if (Number(card?.id) === Number(cardId)) {
+          onUpdateAICard({ cardId, newState: card });
+        }
       }
     }
 
