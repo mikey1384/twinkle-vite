@@ -29,11 +29,13 @@ interface BuildThumbnailSuggestionPayload {
 
 export default function BuildThumbnailSuggestion({
   content,
+  messageId,
   suggestion,
   myId,
   sender
 }: {
   content: string;
+  messageId: number;
   suggestion?: BuildThumbnailSuggestionPayload | null;
   myId: number;
   sender: {
@@ -238,6 +240,7 @@ export default function BuildThumbnailSuggestion({
       const result = await adoptBuildThumbnailSuggestion({
         buildId: rootBuildId,
         contributionBuildId: branchBuildId,
+        suggestionMessageId: messageId,
         // The image on this card, not whatever the branch holds now.
         thumbnailUrl: suggestedThumbnailUrl
       });

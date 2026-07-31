@@ -2365,16 +2365,18 @@ export default function buildRequestHelpers({
     async adoptBuildThumbnailSuggestion({
       buildId,
       contributionBuildId,
+      suggestionMessageId,
       thumbnailUrl
     }: {
       buildId: number;
       contributionBuildId: number;
+      suggestionMessageId: number;
       thumbnailUrl?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/adopt-thumbnail`,
-          { thumbnailUrl },
+          { suggestionMessageId, thumbnailUrl },
           auth()
         );
         return data;

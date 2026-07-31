@@ -63,6 +63,9 @@ export interface BuildVersionSummary {
   contributionContributorId?: number | null;
   contributionBranchNumber?: number | null;
   contributionStatus?: string | null;
+  contributionRevisionHash?: string | null;
+  ownerLastOpenedBranchAt?: number | null;
+  ownerLastOpenedRevisionHash?: string | null;
   updatedAt?: number | null;
   thumbnailUrl?: string | null;
 }

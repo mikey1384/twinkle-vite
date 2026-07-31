@@ -20,6 +20,7 @@ import {
   formatBranchFullDisplayTitle,
   formatOwnerAttentionCount,
   getReleaseDiffTotal,
+  hasUnseenBuildBranchChanges,
   normalizeWorkspacePanelScrollTop,
   stripBranchTitleSuffixes
 } from './helpers/branches';
@@ -708,6 +709,9 @@ export default function VersionStartPanel({
   const reviewableTeamBranches = teamBranches.filter((version) =>
     canReviewBuildBranchStatus(version.contributionStatus)
   );
+  const unseenReviewableTeamBranches = reviewableTeamBranches.filter(
+    hasUnseenBuildBranchChanges
+  );
   const mergingBranches = versions.filter(
     (version) => String(version.contributionStatus || '').trim() === 'merging'
   );
@@ -1000,17 +1004,20 @@ export default function VersionStartPanel({
       });
     }
 
-    if (reviewableTeamBranches.length > 0) {
+    if (unseenReviewableTeamBranches.length > 0) {
       items.push({
         key: 'branches',
         tone: 'branch',
         icon: 'code-branch',
         label: `${formatOwnerAttentionCount(
-          reviewableTeamBranches.length,
-          'team branch',
-          'team branches'
+          unseenReviewableTeamBranches.length,
+          'updated team branch',
+          'updated team branches'
         )}`,
-        detail: 'Preview teammate ideas and merge the ones you want.'
+        detail: 'Review the latest teammate changes.',
+        actionLabel: 'Review',
+        actionIcon: 'eye',
+        onClick: () => onLoadVersion(unseenReviewableTeamBranches[0])
       });
     }
 

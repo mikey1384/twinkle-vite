@@ -223,6 +223,7 @@ export default function Content({
       ) : rootType === 'buildThumbnailSuggestion' && rootId ? (
         <BuildThumbnailSuggestion
           content={content}
+          messageId={messageId}
           suggestion={parsedSettings?.buildThumbnailSuggestion}
           myId={myId}
           sender={{

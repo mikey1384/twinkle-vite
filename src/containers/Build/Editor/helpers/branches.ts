@@ -52,6 +52,12 @@ export function normalizeBuildVersionSummary(
     contributionBranchNumber:
       Number(value?.contributionBranchNumber || 0) || null,
     contributionStatus: value?.contributionStatus || null,
+    contributionRevisionHash:
+      String(value?.contributionRevisionHash || '').trim() || null,
+    ownerLastOpenedBranchAt:
+      Number(value?.ownerLastOpenedBranchAt || 0) || null,
+    ownerLastOpenedRevisionHash:
+      String(value?.ownerLastOpenedRevisionHash || '').trim() || null,
     updatedAt: Number(value?.updatedAt || 0) || null,
     thumbnailUrl: value?.thumbnailUrl || null
   };
@@ -231,6 +237,18 @@ export function canDeleteBuildBranchStatus(status?: string | null) {
 export function canReviewBuildBranchStatus(status?: string | null) {
   const normalizedStatus = String(status || 'draft').trim() || 'draft';
   return normalizedStatus !== 'merged';
+}
+
+export function hasUnseenBuildBranchChanges(version: BuildVersionSummary) {
+  const currentRevisionHash = String(
+    version?.contributionRevisionHash || ''
+  ).trim();
+  const lastOpenedRevisionHash = String(
+    version?.ownerLastOpenedRevisionHash || ''
+  ).trim();
+  return Boolean(
+    currentRevisionHash && currentRevisionHash !== lastOpenedRevisionHash
+  );
 }
 
 export function formatOwnerAttentionCount(

@@ -357,9 +357,26 @@ function ScrollableRow({
     atStart: true,
     atEnd: true
   });
+  const scrollStateRef = useRef(scrollState);
+  scrollStateRef.current = scrollState;
   const [capWidth, setCapWidth] = useState<number | undefined>(undefined);
   const didInitialEndScrollRef = useRef(false);
+  const cancelActiveScrollRef = useRef<() => void>(() => {});
+  const pendingControlLayoutCompensationRef = useRef<number | null>(null);
   const { pathname, search } = useLocation();
+
+  // The overflow carets are flex siblings of the scroller. When they mount or
+  // unmount, preserve the scroller's confirmed screen position before paint so
+  // that changing controls never moves the tabs beneath an active gesture.
+  useLayoutEffect(() => {
+    const previousLeft = pendingControlLayoutCompensationRef.current;
+    pendingControlLayoutCompensationRef.current = null;
+    const el = scrollRef.current;
+    if (previousLeft === null || !el) return;
+    const leftDelta = el.getBoundingClientRect().left - previousLeft;
+    if (Math.abs(leftDelta) < 0.5) return;
+    el.scrollLeft += leftDelta;
+  }, [scrollState.overflowing]);
 
   // First load only: once the row's tabs are present, if it overflows, jump to
   // the END so the most recently added tab is shown (unless a tab in this row
@@ -422,6 +439,10 @@ function ScrollableRow({
     if (!el) return;
     function handleWheelNative(event: WheelEvent) {
       if (!el || el.scrollWidth <= el.clientWidth) return;
+      // A real wheel gesture owns the strip from this point onward. Without
+      // cancelling the delayed active-tab alignment below, those callbacks can
+      // pull against the user's movement for the first few hundred ms.
+      cancelActiveScrollRef.current();
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
       el.scrollLeft += event.deltaY;
       event.preventDefault();
@@ -438,22 +459,38 @@ function ScrollableRow({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const raf = requestAnimationFrame(scrollActiveIntoView);
+    let cancelled = false;
+    const runActiveScroll = () => {
+      if (!cancelled) scrollActiveIntoView();
+    };
+    const raf = requestAnimationFrame(runActiveScroll);
     // A freshly spawned tab settles over several frames (spawn → state →
     // reconcile → layout), so re-run a couple times to land it in view even
     // when it isn't at its final position on the first frame.
     const timers = [
-      window.setTimeout(scrollActiveIntoView, 120),
-      window.setTimeout(scrollActiveIntoView, 340)
+      window.setTimeout(runActiveScroll, 120),
+      window.setTimeout(runActiveScroll, 340)
     ];
-    return () => {
+    function cancelActiveScroll() {
+      if (cancelled) return;
+      cancelled = true;
       cancelAnimationFrame(raf);
       timers.forEach(clearTimeout);
+    }
+    cancelActiveScrollRef.current = cancelActiveScroll;
+    return () => {
+      cancelActiveScroll();
+      if (cancelActiveScrollRef.current === cancelActiveScroll) {
+        cancelActiveScrollRef.current = () => {};
+      }
     };
   }, [pathname, search, signature]);
 
   return (
-    <div className={`${scrollRowClass} ${wrapperClassName || ''}`}>
+    <div
+      className={`${scrollRowClass} ${wrapperClassName || ''}`}
+      onPointerDownCapture={cancelPendingActiveScroll}
+    >
       {scrollState.overflowing && (
         <div className={scrollButtonClass}>
           <button
@@ -495,6 +532,10 @@ function ScrollableRow({
     const overflowing = el.scrollWidth > el.clientWidth + 1;
     const atStart = el.scrollLeft <= 1;
     const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+    if (scrollStateRef.current.overflowing !== overflowing) {
+      pendingControlLayoutCompensationRef.current =
+        el.getBoundingClientRect().left;
+    }
     setScrollState((prev) =>
       prev.overflowing === overflowing &&
       prev.atStart === atStart &&
@@ -532,11 +573,16 @@ function ScrollableRow({
     }
   }
 
+  function cancelPendingActiveScroll() {
+    cancelActiveScrollRef.current();
+  }
+
   // page by (almost) the visible width so each chevron click advances a full
   // "scroll state" (~5 pinned tabs)
   function scrollByPage(direction: 1 | -1) {
     const el = scrollRef.current;
     if (!el) return;
+    cancelPendingActiveScroll();
     el.scrollBy({
       left: direction * Math.max(120, el.clientWidth * 0.9),
       behavior: 'smooth'
@@ -639,6 +685,28 @@ export default function TabStrip({
   // defaults off the RIGHT — those need a dock too, or they vanish entirely.
   const [collapsedLeadingCount, setCollapsedLeadingCount] = useState(0);
   const [collapsedTrailingCount, setCollapsedTrailingCount] = useState(0);
+  const collapsedLeadingCountRef = useRef(collapsedLeadingCount);
+  collapsedLeadingCountRef.current = collapsedLeadingCount;
+  const collapsedTrailingCountRef = useRef(collapsedTrailingCount);
+  collapsedTrailingCountRef.current = collapsedTrailingCount;
+  const pendingDockLayoutCompensationRef = useRef<{
+    scroller: HTMLElement;
+    left: number;
+  } | null>(null);
+
+  // Docking a default adds or removes fixed-width icon tabs beside the main
+  // scroller. Preserve the tabs' confirmed screen position across that layout
+  // change so a live wheel gesture never sees the content jump backward.
+  useLayoutEffect(() => {
+    const pending = pendingDockLayoutCompensationRef.current;
+    pendingDockLayoutCompensationRef.current = null;
+    if (!pending) return;
+    const scroller = defaultZoneRef.current?.parentElement;
+    if (!scroller || scroller !== pending.scroller) return;
+    const leftDelta = scroller.getBoundingClientRect().left - pending.left;
+    if (Math.abs(leftDelta) < 0.5) return;
+    scroller.scrollLeft += leftDelta;
+  }, [collapsedLeadingCount, collapsedTrailingCount]);
 
   useEffect(() => {
     return () => {
@@ -697,6 +765,7 @@ export default function TabStrip({
       {/* pinned area: its OWN scroll, always visible, up to 5 icon tabs */}
       {pinnedTabs.length > 0 && (
         <ScrollableRow
+          key="pinned-tabs"
           signature={pinnedSignature}
           itemContainerRef={pinnedZoneRef}
           maxVisible={
@@ -725,6 +794,7 @@ export default function TabStrip({
       )}
       {/* main area: defaults + extras, its own independent scroll */}
       <ScrollableRow
+        key="main-tabs"
         signature={mainSignature}
         wrapperClassName={mainAreaClass}
         onScrollChange={recomputeCollapsedDefaults}
@@ -953,6 +1023,15 @@ export default function TabStrip({
       }
     }
     trailing = Math.min(trailing, children.length - leading);
+    if (
+      leading !== collapsedLeadingCountRef.current ||
+      trailing !== collapsedTrailingCountRef.current
+    ) {
+      pendingDockLayoutCompensationRef.current = {
+        scroller,
+        left: mainLeft
+      };
+    }
     setCollapsedLeadingCount((prev) => (prev === leading ? prev : leading));
     setCollapsedTrailingCount((prev) => (prev === trailing ? prev : trailing));
   }
