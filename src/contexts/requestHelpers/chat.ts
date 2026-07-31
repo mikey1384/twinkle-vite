@@ -586,15 +586,13 @@ export default function chatRequestHelpers({
     },
     async loadSharedPromptActivity({
       cursor,
-      limit = 12,
-      scope = 'all'
+      limit = 12
     }: {
       cursor?: string;
       limit?: number;
-      scope?: 'all' | 'mine' | 'community';
     } = {}) {
       try {
-        const params: Record<string, string | number> = { limit, scope };
+        const params: Record<string, string | number> = { limit };
         if (cursor) {
           params.cursor = cursor;
         }

@@ -154,7 +154,7 @@ export default function ActivityPanelShell({
   onRefresh: () => void;
   refreshAriaLabel: string;
   renderContent: (controls: { closeMobile: () => void }) => React.ReactNode;
-  renderTabs: () => React.ReactNode;
+  renderTabs?: () => React.ReactNode;
   title: string;
   variant: 'rail' | 'mobile';
 }) {
@@ -185,7 +185,7 @@ export default function ActivityPanelShell({
             style={mobileModalStyle}
           >
             <div className={mobilePanelClass}>
-              {renderTabs()}
+              {renderTabs?.()}
               <div className={mobileListClass}>
                 {renderContent({ closeMobile: handleMobileClose })}
               </div>
@@ -214,7 +214,7 @@ export default function ActivityPanelShell({
           <Icon icon={loading ? 'spinner' : 'sync'} pulse={loading} />
         </button>
       </div>
-      {renderTabs()}
+      {renderTabs?.()}
       <div className={listClass}>
         {renderContent({ closeMobile: () => undefined })}
       </div>

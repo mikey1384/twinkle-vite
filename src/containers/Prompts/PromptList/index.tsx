@@ -279,7 +279,6 @@ export default function PromptList({
     panelProps: promptActivityPanelProps,
     refresh: refreshPromptActivity
   } = usePromptActivityPanel({
-    color: profileTheme,
     userId: normalizedUserId
   });
 

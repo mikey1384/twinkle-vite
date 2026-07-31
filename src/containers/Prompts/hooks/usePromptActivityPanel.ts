@@ -1,66 +1,56 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
-import type {
-  PromptActivityItem,
-  PromptActivityScope
-} from '../PromptActivityPanel';
+import type { PromptActivityItem } from '../PromptActivityPanel';
 
 interface PromptActivityFeedState {
   activities: PromptActivityItem[];
   error: string;
   loadMoreToken: string | null;
   loadedAt: number;
+  userId: number | null;
 }
 
 const promptActivityCacheFreshMs = 45_000;
 
-function createEmptyPromptActivityFeed(): PromptActivityFeedState {
+function createEmptyPromptActivityFeed(
+  userId: number | null = null
+): PromptActivityFeedState {
   return {
     activities: [],
     error: '',
     loadMoreToken: null,
-    loadedAt: 0
-  };
-}
-
-function createEmptyPromptActivityFeeds(): Record<
-  PromptActivityScope,
-  PromptActivityFeedState
-> {
-  return {
-    all: createEmptyPromptActivityFeed(),
-    mine: createEmptyPromptActivityFeed(),
-    community: createEmptyPromptActivityFeed()
+    loadedAt: 0,
+    userId
   };
 }
 
 export default function usePromptActivityPanel({
-  color,
   userId
 }: {
-  color?: string;
   userId: number | null;
 }) {
   const loadSharedPromptActivity = useAppContext(
     (v) => v.requestHelpers.loadSharedPromptActivity
   );
-  const [activeScope, setActiveScope] =
-    useState<PromptActivityScope>('all');
-  const [feeds, setFeeds] = useState(createEmptyPromptActivityFeeds);
+  const [feed, setFeed] = useState(createEmptyPromptActivityFeed);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadRef = useRef(0);
-  const activeFeed = feeds[activeScope];
+  const feedMatchesUser = feed.userId === userId;
+  const visibleFeed = feedMatchesUser
+    ? feed
+    : createEmptyPromptActivityFeed(userId);
   const cacheFresh =
-    activeFeed.loadedAt > 0 &&
-    Date.now() - activeFeed.loadedAt < promptActivityCacheFreshMs;
+    feedMatchesUser &&
+    feed.loadedAt > 0 &&
+    Date.now() - feed.loadedAt < promptActivityCacheFreshMs;
 
   useEffect(() => {
     if (!userId) {
-      setFeeds(createEmptyPromptActivityFeeds());
+      loadRef.current += 1;
+      setFeed(createEmptyPromptActivityFeed());
       setLoading(false);
       setLoadingMore(false);
-      setActiveScope('all');
       return;
     }
     if (cacheFresh) {
@@ -68,65 +58,56 @@ export default function usePromptActivityPanel({
       setLoadingMore(false);
       return;
     }
-    void loadActivity({ scope: activeScope });
+    void loadActivity({ requestUserId: userId });
     return () => {
       loadRef.current += 1;
     };
     // loadSharedPromptActivity is a stable request helper.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeScope, cacheFresh, userId]);
+  }, [cacheFresh, userId]);
 
   return {
     panelProps: {
-      activeScope,
-      activities: activeFeed.activities,
-      color,
+      activities: visibleFeed.activities,
       currentUserId: userId || 0,
-      error: activeFeed.error,
-      hasMore: Boolean(activeFeed.loadMoreToken),
+      error: visibleFeed.error,
+      hasMore: Boolean(visibleFeed.loadMoreToken),
       loading,
       loadingMore,
       onLoadMore: handleLoadMore,
-      onRefresh: handleRefresh,
-      onScopeChange: handleScopeChange
+      onRefresh: handleRefresh
     },
     refresh: handleRefresh
   };
 
-  function handleScopeChange(scope: PromptActivityScope) {
-    if (scope === activeScope) {
-      void loadActivity({ scope, showLoading: true });
-      return;
-    }
-    setLoadingMore(false);
-    setActiveScope(scope);
-  }
-
   function handleRefresh() {
-    void loadActivity({ scope: activeScope, showLoading: true });
+    if (!userId) return;
+    void loadActivity({ requestUserId: userId, showLoading: true });
   }
 
   async function handleLoadMore() {
-    const cursor = feeds[activeScope].loadMoreToken;
+    const cursor = feedMatchesUser ? feed.loadMoreToken : null;
     if (!userId || !cursor || loading || loadingMore) return;
+    const requestUserId = userId;
     const loadId = loadRef.current + 1;
     loadRef.current = loadId;
     setLoadingMore(true);
     try {
       const data = await loadSharedPromptActivity({
         cursor,
-        limit: 12,
-        scope: activeScope
+        limit: 12
       });
       if (loadRef.current !== loadId) return;
       const nextActivities = Array.isArray(data?.activities)
         ? (data.activities as PromptActivityItem[])
         : [];
-      setFeeds((currentFeeds) => ({
-        ...currentFeeds,
-        [activeScope]: {
+      setFeed((currentFeed) => {
+        if (currentFeed.userId !== requestUserId) {
+          return currentFeed;
+        }
+        return {
           activities: mergePromptActivities(
-            currentFeeds[activeScope].activities,
+            currentFeed.activities,
             nextActivities
           ),
           error: '',
@@ -134,9 +115,10 @@ export default function usePromptActivityPanel({
             typeof data?.loadMoreToken === 'string'
               ? data.loadMoreToken
               : null,
-          loadedAt: Date.now()
-        }
-      }));
+          loadedAt: Date.now(),
+          userId: requestUserId
+        };
+      });
     } catch (error) {
       console.error('Failed to load more AI prompt activity:', error);
     } finally {
@@ -147,49 +129,41 @@ export default function usePromptActivityPanel({
   }
 
   async function loadActivity({
-    scope,
-    showLoading = feeds[scope].loadedAt === 0
+    requestUserId,
+    showLoading = !feedMatchesUser || feed.loadedAt === 0
   }: {
-    scope: PromptActivityScope;
+    requestUserId: number;
     showLoading?: boolean;
   }) {
-    if (!userId) return;
     const loadId = loadRef.current + 1;
     loadRef.current = loadId;
     setLoading(showLoading);
     setLoadingMore(false);
     try {
-      const data = await loadSharedPromptActivity({
-        limit: 12,
-        scope
-      });
+      const data = await loadSharedPromptActivity({ limit: 12 });
       if (loadRef.current !== loadId) return;
-      setFeeds((currentFeeds) => ({
-        ...currentFeeds,
-        [scope]: {
-          activities: Array.isArray(data?.activities)
-            ? data.activities
-            : [],
-          error: '',
-          loadMoreToken:
-            typeof data?.loadMoreToken === 'string'
-              ? data.loadMoreToken
-              : null,
-          loadedAt: Date.now()
-        }
-      }));
+      setFeed({
+        activities: Array.isArray(data?.activities) ? data.activities : [],
+        error: '',
+        loadMoreToken:
+          typeof data?.loadMoreToken === 'string'
+            ? data.loadMoreToken
+            : null,
+        loadedAt: Date.now(),
+        userId: requestUserId
+      });
     } catch (error: any) {
       if (loadRef.current !== loadId) return;
-      setFeeds((currentFeeds) => ({
-        ...currentFeeds,
-        [scope]: {
-          ...currentFeeds[scope],
-          error:
-            error?.response?.data?.error ||
-            error?.message ||
-            'AI prompt activity could not load.',
-          loadedAt: Date.now()
-        }
+      setFeed((currentFeed) => ({
+        ...(currentFeed.userId === requestUserId
+          ? currentFeed
+          : createEmptyPromptActivityFeed(requestUserId)),
+        error:
+          error?.response?.data?.error ||
+          error?.message ||
+          'AI prompt activity could not load.',
+        loadedAt: Date.now(),
+        userId: requestUserId
       }));
     } finally {
       if (loadRef.current === loadId) {

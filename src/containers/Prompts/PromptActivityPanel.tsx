@@ -7,15 +7,11 @@ import ActivityPanelShell, {
   activityPanelStateClass
 } from '~/containers/Build/ActivityPanelShell';
 import { activityPanelRailClass } from '~/containers/Build/List/ActivityPanels';
-import TabFilter from '~/containers/Build/TabFilter';
 import { useNavigate } from 'react-router-dom';
-
-export type PromptActivityScope = 'all' | 'mine' | 'community';
 
 export interface PromptActivityItem {
   id: string;
   activityType:
-    | 'promptShared'
     | 'promptCommented'
     | 'promptLiked'
     | 'promptCloned'
@@ -36,20 +32,8 @@ export interface PromptActivityItem {
   detail: string;
 }
 
-const promptActivityTabs: Array<{
-  value: PromptActivityScope;
-  label: string;
-  icon: string;
-}> = [
-  { value: 'all', label: 'All', icon: 'bell' },
-  { value: 'mine', label: 'My Prompts', icon: 'robot' },
-  { value: 'community', label: 'Community', icon: 'users' }
-];
-
 export default function PromptActivityPanel({
-  activeScope,
   activities,
-  color,
   currentUserId,
   error,
   hasMore,
@@ -57,12 +41,9 @@ export default function PromptActivityPanel({
   loadingMore,
   onLoadMore,
   onRefresh,
-  onScopeChange,
   variant
 }: {
-  activeScope: PromptActivityScope;
   activities: PromptActivityItem[];
-  color?: string;
   currentUserId: number;
   error: string;
   hasMore: boolean;
@@ -70,7 +51,6 @@ export default function PromptActivityPanel({
   loadingMore: boolean;
   onLoadMore: () => void;
   onRefresh: () => void;
-  onScopeChange: (scope: PromptActivityScope) => void;
   variant: 'mobile' | 'rail';
 }) {
   const navigate = useNavigate();
@@ -83,7 +63,6 @@ export default function PromptActivityPanel({
       onRefresh={onRefresh}
       refreshAriaLabel="Refresh AI prompt activity"
       renderContent={renderActivityContent}
-      renderTabs={renderTabs}
       title="AI Prompt Activity"
       variant={variant}
     />
@@ -94,19 +73,6 @@ export default function PromptActivityPanel({
   ) : (
     panel
   );
-
-  function renderTabs() {
-    return (
-      <TabFilter
-        activeTab={activeScope}
-        color={color}
-        density="compact"
-        onChange={onScopeChange}
-        tabs={promptActivityTabs}
-        wrap
-      />
-    );
-  }
 
   function renderActivityContent({
     closeMobile
@@ -126,7 +92,7 @@ export default function PromptActivityPanel({
     if (activities.length === 0) {
       return (
         <div className={activityPanelStateClass}>
-          {getPromptActivityEmptyMessage(activeScope)}
+          No activity on your shared prompts yet.
         </div>
       );
     }
@@ -164,8 +130,6 @@ function getPromptActivityMessage(
   activityType: PromptActivityItem['activityType']
 ) {
   switch (activityType) {
-    case 'promptShared':
-      return 'shared an AI prompt';
     case 'promptCommented':
       return 'commented on';
     case 'promptLiked':
@@ -189,17 +153,5 @@ function getPromptActivityIcon(
       return 'clone';
     case 'promptUsed':
       return 'comments';
-    default:
-      return 'robot';
   }
-}
-
-function getPromptActivityEmptyMessage(scope: PromptActivityScope) {
-  if (scope === 'mine') {
-    return 'No activity on your shared prompts yet.';
-  }
-  if (scope === 'community') {
-    return 'No community prompt activity yet.';
-  }
-  return 'No AI prompt activity yet.';
 }
