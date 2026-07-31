@@ -57,6 +57,7 @@ import type {
   BuildCollaborationRequest,
   RuntimeBuild
 } from './types';
+import { buildRuntimeCommentsAreAvailable } from './helpers/runtimeComments';
 
 function parseRuntimeMountContext(search: string): PreviewMountContext | null {
   const params = new URLSearchParams(search);
@@ -1087,6 +1088,7 @@ export default function BuildRuntime({
   const runtimeCommentsButtonLabel = `${
     runtimeCommentsCount === 1 ? 'Comment' : 'Comments'
   } (${runtimeCommentsCountLabel})`;
+  const runtimeCommentsAvailable = buildRuntimeCommentsAreAvailable(build);
   const runtimeBuildId = Math.floor(Number(build?.id || 0));
   const runtimeAudioMuted =
     runtimeBuildId > 0 && mutedBuildAppIds.includes(String(runtimeBuildId));
@@ -1100,9 +1102,13 @@ export default function BuildRuntime({
   // game/app should hold (loop + media frozen, state kept) and stay silent until
   // comments close — same host-hidden path used when the tab is backgrounded.
   const runtimeEffectiveHostVisible =
-    runtimeHostVisible && runtimeIsActive && !commentsDrawerShown;
+    runtimeHostVisible &&
+    runtimeIsActive &&
+    !(runtimeCommentsAvailable && commentsDrawerShown);
   const runtimeEffectiveAudioMuted =
-    runtimeAudioMuted || !runtimeIsActive || commentsDrawerShown;
+    runtimeAudioMuted ||
+    !runtimeIsActive ||
+    (runtimeCommentsAvailable && commentsDrawerShown);
   const runtimeNotificationEventKey = String(
     buildLaunchTarget?.eventKey || ''
   ).trim();
@@ -1178,6 +1184,7 @@ export default function BuildRuntime({
   }
 
   function handleToggleCommentsDrawer() {
+    if (!runtimeCommentsAvailable) return;
     const shouldOpen = !commentsDrawerShown;
     setCommentsDrawerShown(shouldOpen);
     if (shouldOpen && !runtimeCommentsLoaded) {
@@ -1297,6 +1304,7 @@ export default function BuildRuntime({
 
   async function loadRuntimeComments(force = false) {
     if (
+      !runtimeCommentsAvailable ||
       !build?.id ||
       runtimeCommentsLoading ||
       (!force && runtimeCommentsLoaded)
@@ -2234,17 +2242,19 @@ export default function BuildRuntime({
                   }
                 />
               </button>
-              <GameCTAButton
-                onClick={handleToggleCommentsDrawer}
-                variant="neutral"
-                size="sm"
-                icon="comments"
-                toggled={commentsDrawerShown}
-              >
-                {isMobilePortrait
-                  ? runtimeCommentsCountLabel
-                  : runtimeCommentsButtonLabel}
-              </GameCTAButton>
+              {runtimeCommentsAvailable ? (
+                <GameCTAButton
+                  onClick={handleToggleCommentsDrawer}
+                  variant="neutral"
+                  size="sm"
+                  icon="comments"
+                  toggled={commentsDrawerShown}
+                >
+                  {isMobilePortrait
+                    ? runtimeCommentsCountLabel
+                    : runtimeCommentsButtonLabel}
+                </GameCTAButton>
+              ) : null}
               <button
                 type="button"
                 className={closeAppButtonClass}
@@ -2297,7 +2307,9 @@ export default function BuildRuntime({
         )}
         <div
           className={runtimeBodyClass}
-          data-comments-open={commentsDrawerShown ? 'true' : 'false'}
+          data-comments-open={
+            runtimeCommentsAvailable && commentsDrawerShown ? 'true' : 'false'
+          }
         >
           <div className={panelWrapClass}>
             <div className={previewShellClass}>
@@ -2333,37 +2345,47 @@ export default function BuildRuntime({
               <button
                 type="button"
                 className={previewCommentsScrimClass}
-                data-visible={commentsDrawerShown ? 'true' : 'false'}
-                aria-hidden={!commentsDrawerShown}
-                tabIndex={commentsDrawerShown ? 0 : -1}
+                data-visible={
+                  runtimeCommentsAvailable && commentsDrawerShown
+                    ? 'true'
+                    : 'false'
+                }
+                aria-hidden={
+                  !(runtimeCommentsAvailable && commentsDrawerShown)
+                }
+                tabIndex={
+                  runtimeCommentsAvailable && commentsDrawerShown ? 0 : -1
+                }
                 title="Close comments"
                 aria-label="Close comments"
                 onClick={() => setCommentsDrawerShown(false)}
               />
             </div>
           </div>
-          <CommentsDrawer
-            active={runtimeIsActive}
-            comments={runtimeComments}
-            error={runtimeCommentsError}
-            loaded={runtimeCommentsLoaded}
-            loading={runtimeCommentsLoading}
-            loadMoreButton={runtimeCommentsLoadMoreButton}
-            parent={runtimeCommentsParent}
-            inputAreaInnerRef={RuntimeCommentInputAreaRef}
-            userId={userId}
-            visible={commentsDrawerShown}
-            onCommentSubmit={handleRuntimeCommentSubmit}
-            onDelete={handleRuntimeCommentDelete}
-            onEditDone={onEditComment}
-            onLikeClick={onLikeComment}
-            onLoadMoreComments={onLoadMoreComments}
-            onLoadMoreReplies={onLoadMoreReplies}
-            onLoadRepliesOfReply={onLoadRepliesOfReply}
-            onReplySubmit={handleRuntimeReplySubmit}
-            onRetry={handleRetryLoadComments}
-            onRewardCommentEdit={onEditRewardComment}
-          />
+          {runtimeCommentsAvailable ? (
+            <CommentsDrawer
+              active={runtimeIsActive}
+              comments={runtimeComments}
+              error={runtimeCommentsError}
+              loaded={runtimeCommentsLoaded}
+              loading={runtimeCommentsLoading}
+              loadMoreButton={runtimeCommentsLoadMoreButton}
+              parent={runtimeCommentsParent}
+              inputAreaInnerRef={RuntimeCommentInputAreaRef}
+              userId={userId}
+              visible={commentsDrawerShown}
+              onCommentSubmit={handleRuntimeCommentSubmit}
+              onDelete={handleRuntimeCommentDelete}
+              onEditDone={onEditComment}
+              onLikeClick={onLikeComment}
+              onLoadMoreComments={onLoadMoreComments}
+              onLoadMoreReplies={onLoadMoreReplies}
+              onLoadRepliesOfReply={onLoadRepliesOfReply}
+              onReplySubmit={handleRuntimeReplySubmit}
+              onRetry={handleRetryLoadComments}
+              onRewardCommentEdit={onEditRewardComment}
+            />
+          ) : null}
         </div>
       </div>
     </ErrorBoundary>

@@ -16,9 +16,9 @@ interface VersionHistoryModalProps {
 }
 
 const versionRowClass = css`
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 0.9rem;
   border-radius: 12px;

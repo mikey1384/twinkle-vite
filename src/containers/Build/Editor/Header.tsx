@@ -20,6 +20,7 @@ import {
 } from '~/helpers/buildProjectHelpers';
 import {
   getBuildRuntimePath,
+  resolveBuildWorkspaceViewAppTarget,
   type BuildRuntimeSource
 } from '~/helpers/buildRuntimeSource';
 import RuntimeAssetTransferProgressBar from './RuntimeAssetTransferProgressBar';
@@ -562,11 +563,13 @@ function BuildVisibilityBadge({ isPublic }: { isPublic: boolean }) {
 
 function BuildViewAppButton({
   buildId,
+  defaultRuntimeSource,
   promptForVersion,
   runtimeBackState,
   size = 'md'
 }: {
   buildId: number;
+  defaultRuntimeSource: BuildRuntimeSource;
   promptForVersion: boolean;
   runtimeBackState: RuntimeBackState;
   size?: 'sm' | 'md';
@@ -599,7 +602,7 @@ function BuildViewAppButton({
       setVersionModalShown(true);
       return;
     }
-    openRuntimeSource('published');
+    openRuntimeSource(defaultRuntimeSource);
   }
 
   function openRuntimeSource(source: BuildRuntimeSource) {
@@ -774,7 +777,11 @@ export default function Header({
   // out front (shiny pink); once set, it lives in the Settings menu.
   const showThumbnailNudge = canEditThumbnail && !hasThumbnail;
   const showVisibilityBadge = !isContributionFork;
-  const canOpenRuntimeApp = Boolean(build.isPublic || isOwner);
+  const viewAppTarget = resolveBuildWorkspaceViewAppTarget({
+    isBuildOwner: isOwner,
+    isContributionBranch: Boolean(isContributionFork),
+    isPublic: Boolean(build.isPublic)
+  });
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
@@ -996,9 +1003,10 @@ export default function Header({
             {showVisibilityBadge ? (
               <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
             ) : null}
-            {canOpenRuntimeApp ? (
+            {viewAppTarget.visible ? (
               <BuildViewAppButton
                 buildId={Number(build.id)}
+                defaultRuntimeSource={viewAppTarget.source}
                 promptForVersion={shouldPromptForRuntimeVersion}
                 runtimeBackState={runtimeBackState}
                 size="sm"
@@ -1034,10 +1042,11 @@ export default function Header({
             <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
           </HeaderActionItem>
         ) : null}
-        {canOpenRuntimeApp ? (
+        {viewAppTarget.visible ? (
           <HeaderActionItem mobileOrder={2}>
             <BuildViewAppButton
               buildId={Number(build.id)}
+              defaultRuntimeSource={viewAppTarget.source}
               promptForVersion={shouldPromptForRuntimeVersion}
               runtimeBackState={runtimeBackState}
             />

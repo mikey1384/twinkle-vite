@@ -20,6 +20,8 @@ export interface RuntimeBuild {
   releaseStatus?: RuntimeBuildReleaseStatus | null;
   collaborationMode?: 'private' | 'contribution' | 'open_source';
   contributionAccess?: 'anyone' | 'invite_only';
+  contributionRootBuildId?: number | null;
+  contributionStatus?: 'none' | 'draft' | 'merging' | 'merged' | null;
   hasActiveContributionInvite?: boolean;
   isFavorited?: boolean;
   // The build a favorite acts on: itself for a project, the parent for a branch.
