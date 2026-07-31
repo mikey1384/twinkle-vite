@@ -8,6 +8,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
 export default function NonOwnerMenu({
   cardId,
@@ -29,6 +30,7 @@ export default function NonOwnerMenu({
   style?: React.CSSProperties;
 }) {
   const buyAICard = useAppContext((v) => v.requestHelpers.buyAICard);
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
@@ -90,8 +92,8 @@ export default function NonOwnerMenu({
               {notEnoughTwinkleCoins
                 ? 'Not enough coins'
                 : myOffer
-                ? 'Withdraw offer first'
-                : 'Buy'}
+                  ? 'Withdraw offer first'
+                  : 'Buy'}
             </span>
           </span>
         </Button>
@@ -140,9 +142,11 @@ export default function NonOwnerMenu({
 
   async function handleConfirmBuy() {
     const result = await buyAICard(cardId);
-    onSetUserState({
-      userId: myId,
-      newState: { twinkleCoins: result.coins }
+    void applyCanonicalCoinsAndReconcile({
+      coins: result.coins,
+      loadCoins,
+      onSetUserState,
+      userId: myId
     });
     onUpdateAICard({ cardId, newState: result.card });
     setConfirmModalShown(false);

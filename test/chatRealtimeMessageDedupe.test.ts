@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  createRealtimeChatMessageReplayWindow,
   getRealtimeChatMessageKey,
   hasCanonicalChatMessage
 } from '../src/helpers/chatRealtimeMessageIdentity';
@@ -22,10 +23,7 @@ test('canonical chat message identity covers root and subchannel messages', () =
     }
   };
 
-  assert.equal(
-    getRealtimeChatMessageKey({ id: 10, channelId: 4 }),
-    '4:0:10'
-  );
+  assert.equal(getRealtimeChatMessageKey({ id: 10, channelId: 4 }), '4:0:10');
   assert.equal(
     getRealtimeChatMessageKey({ id: 11, channelId: 4, subchannelId: 7 }),
     '4:7:11'
@@ -53,6 +51,21 @@ test('canonical chat message identity covers root and subchannel messages', () =
   );
 });
 
+test('socket replay suppression resets at an authenticated-account boundary', () => {
+  const replayWindow = createRealtimeChatMessageReplayWindow();
+  const message = { id: 10, channelId: 4, subchannelId: 7 };
+
+  replayWindow.remember(message);
+  assert.equal(replayWindow.has(message), true);
+
+  replayWindow.reset();
+  assert.equal(
+    replayWindow.has(message),
+    false,
+    'a message seen by the departing account must not suppress delivery for the next account'
+  );
+});
+
 test('replayed chat socket messages are rejected before visible side effects', () => {
   const reducerSource = readFileSync(
     new URL('../src/contexts/Chat/reducer.ts', import.meta.url),
@@ -65,14 +78,15 @@ test('replayed chat socket messages are rejected before visible side effects', (
     ),
     'utf8'
   );
+  assert.match(
+    socketSource,
+    /realtimeMessageReplayWindowRef\.current\.reset\(\);/
+  );
 
   for (const [caseName, nextCaseName] of [
     ['RECEIVE_MESSAGE', 'RECEIVE_FIRST_MSG'],
     ['RECEIVE_FIRST_MSG', 'RECEIVE_MSG_ON_DIFF_CHANNEL'],
-    [
-      'RECEIVE_MSG_ON_DIFF_CHANNEL',
-      'APPLY_CANONICAL_REACTION_ADD_ACTIVITY'
-    ]
+    ['RECEIVE_MSG_ON_DIFF_CHANNEL', 'APPLY_CANONICAL_REACTION_ADD_ACTIVITY']
   ]) {
     const reducerCase =
       reducerSource.match(
@@ -88,17 +102,17 @@ test('replayed chat socket messages are rejected before visible side effects', (
     );
   }
 
-  for (const handlerName of [
-    'handleChatInvitation',
-    'handleReceiveMessage'
-  ]) {
+  for (const handlerName of ['handleChatInvitation', 'handleReceiveMessage']) {
     const handler =
       socketSource.match(
         new RegExp(
           `function ${handlerName}\\([\\s\\S]*?(?=\\n    (?:async )?function )`
         )
       )?.[0] || '';
-    assert.match(handler, /if \(shouldSkipRealtimeMessage\(message\)\) return;/);
+    assert.match(
+      handler,
+      /if \(shouldSkipRealtimeMessage\(message\)\) return;/
+    );
     assert.ok(
       handler.indexOf('shouldSkipRealtimeMessage(message)') <
         handler.indexOf('markUnreadActivity()'),

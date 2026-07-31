@@ -10,6 +10,7 @@ import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
 export default function OfferDetailModal({
   onHide,
@@ -37,6 +38,7 @@ export default function OfferDetailModal({
   userId: number;
 }) {
   const isAcceptingRef = useRef(false);
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [offerAcceptModalObj, setOfferAcceptModalObj] = useState<{
@@ -50,10 +52,7 @@ export default function OfferDetailModal({
     (v) => v.requestHelpers.getOffersForCardByPrice
   );
   const sellAICard = useAppContext((v) => v.requestHelpers.sellAICard);
-  const hiddenSet = useMemo(
-    () => new Set(hiddenOfferIds),
-    [hiddenOfferIds]
-  );
+  const hiddenSet = useMemo(() => new Set(hiddenOfferIds), [hiddenOfferIds]);
   const visibleOffers = useMemo(
     () => offers.filter((offer) => !hiddenSet.has(offer.id)),
     [offers, hiddenSet]
@@ -83,10 +82,7 @@ export default function OfferDetailModal({
       closeOnBackdropClick={!usermenuShown}
       header={
         <div>
-          <Icon
-            style={{ color: Color.brownOrange() }}
-            icon="coins"
-          />{' '}
+          <Icon style={{ color: Color.brownOrange() }} icon="coins" />{' '}
           {addCommasToNumber(price)} Offers
         </div>
       }
@@ -144,10 +140,7 @@ export default function OfferDetailModal({
           description={
             <div>
               Accept{' '}
-              <Icon
-                style={{ color: Color.brownOrange() }}
-                icon="coins"
-              />
+              <Icon style={{ color: Color.brownOrange() }} icon="coins" />
               <b style={{ color: Color.darkerGray(), marginLeft: '2px' }}>
                 {addCommasToNumber(price)}
               </b>{' '}
@@ -169,9 +162,11 @@ export default function OfferDetailModal({
         const result = await sellAICard({
           offerId: offerAcceptModalObj?.id
         });
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: result.coins }
+        void applyCanonicalCoinsAndReconcile({
+          coins: result.coins,
+          loadCoins,
+          onSetUserState,
+          userId
         });
         onUpdateAICard({ cardId, newState: result.card });
         setOfferAcceptModalObj(null);

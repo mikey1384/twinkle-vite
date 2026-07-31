@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
 export default function TradeButtons({
   channelId,
@@ -22,6 +23,7 @@ export default function TradeButtons({
   transactionId: number;
 }) {
   const acceptTrade = useAppContext((v) => v.requestHelpers.acceptTrade);
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [accepting, setAccepting] = useState(false);
@@ -144,10 +146,12 @@ export default function TradeButtons({
     try {
       const { coins, isDisabled, disableReason, responsibleParty } =
         await acceptTrade({ channelId, transactionId });
-      if (Number.isFinite(coins)) {
-        onSetUserState({
-          userId: myId,
-          newState: { twinkleCoins: Number(coins) }
+      if (!isDisabled) {
+        void applyCanonicalCoinsAndReconcile({
+          coins,
+          loadCoins,
+          onSetUserState,
+          userId: myId
         });
       }
       if (isDisabled) {

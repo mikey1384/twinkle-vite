@@ -16,6 +16,7 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { returnCardBurnXP } from '~/constants/defaultValues';
@@ -130,6 +131,7 @@ export default function AICardModal({
     (v) => v.requestHelpers.getIncomingCardOffers
   );
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onLoadIncomingOffers = useChatContext(
     (v) => v.actions.onLoadIncomingOffers
@@ -753,10 +755,7 @@ export default function AICardModal({
       const loadedHidden = result.hiddenOfferIds || [];
       const activeHidden = userIsOwner ? loadedHidden : [];
       if (updateActiveTab && !userSwitchedTab.current) {
-        const visibleOffers = getVisibleOfferGroups(
-          loadedOffers,
-          activeHidden
-        );
+        const visibleOffers = getVisibleOfferGroups(loadedOffers, activeHidden);
         // Only auto-open the Offers tab for the owner when there are offers they
         // haven't hidden - an all-hidden card stays on the Menu tab.
         setActiveTab(userIsOwner && visibleOffers.length ? 'offers' : 'myMenu');
@@ -813,9 +812,11 @@ export default function AICardModal({
         }
       }, []);
     });
-    onSetUserState({
-      userId,
-      newState: { twinkleCoins: result.coins }
+    void applyCanonicalCoinsAndReconcile({
+      coins: result.coins,
+      loadCoins,
+      onSetUserState,
+      userId
     });
     onUpdateAICard({ cardId, newState: result.card });
 
@@ -850,11 +851,10 @@ export default function AICardModal({
         });
       }
       if (newState) {
-        const canonicalCompletionState =
-          getConfirmedAICardImageTerminalState({
-            card: newState,
-            stage: 'completed'
-          });
+        const canonicalCompletionState = getConfirmedAICardImageTerminalState({
+          card: newState,
+          stage: 'completed'
+        });
         onUpdateAICard({
           cardId: requestedCardId,
           newState:
@@ -923,9 +923,7 @@ export default function AICardModal({
       return;
     }
     const requestedUserId = Number(userIdRef.current || 0);
-    canonicalImageReconciliationInFlightCardIdsRef.current.add(
-      requestedCardId
-    );
+    canonicalImageReconciliationInFlightCardIdsRef.current.add(requestedCardId);
     try {
       const result = await loadAICard(requestedCardId);
       const canonicalCard = result?.card;

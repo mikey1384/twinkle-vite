@@ -16,6 +16,7 @@ import {
   clearAchievementProgressEventMemory,
   consumeAchievementProgressEvent
 } from './achievementProgressEventDedupe';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
 interface AdminTelemetryEvent {
   message?: string;
@@ -501,9 +502,12 @@ export default function useNotiSocket({
       }
     }
 
-    async function handleUpdateMyCoins() {
-      const coins = await loadCoins();
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
+    function handleUpdateMyCoins() {
+      void applyCanonicalCoinsAndReconcile({
+        loadCoins,
+        onSetUserState,
+        userId
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);

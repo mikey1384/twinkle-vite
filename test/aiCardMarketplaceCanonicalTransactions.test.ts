@@ -11,8 +11,8 @@ test('asset transfer sockets apply canonical balances instead of coin deltas', (
     'src/containers/App/Header/hooks/useAPISocket/useAICardSocket.ts'
   );
 
-  assert.match(source, /twinkleCoins: Number\(fromCoins\)/);
-  assert.match(source, /twinkleCoins: Number\(toCoins\)/);
+  assert.match(source, /reconcileCurrentUserCoins\(fromCoins\)/);
+  assert.match(source, /reconcileCurrentUserCoins\(toCoins\)/);
   assert.doesNotMatch(source, /currentTwinkleCoins\s*[+-]\s*coins/);
 });
 
@@ -26,6 +26,17 @@ test('offer cancellation applies the canonical requester card from the relay', (
     source,
     /onUpdateAICard\(\{\s*cardId,\s*newState: \{ myOffer: null \}/
   );
+});
+
+test('marketplace relays apply canonical balances in every affected tab', () => {
+  const source = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useAICardSocket.ts'
+  );
+
+  assert.match(source, /'canonical_coin_balance_updated'/);
+  assert.match(source, /handleCanonicalCoinBalanceUpdate/);
+  assert.match(source, /reconcileCurrentUserCoins\(coins\)/);
+  assert.match(source, /applyCanonicalCoinsAndReconcile\(\{/);
 });
 
 test('transactions retain a client request id until the server confirms them', () => {

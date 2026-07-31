@@ -16,6 +16,7 @@ import {
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
 import { shouldShowBackgroundChatMessageNotification } from '~/helpers/chatNotificationPolicy';
 import {
+  createRealtimeChatMessageReplayWindow,
   getRealtimeChatMessageKey,
   hasCanonicalChatMessage
 } from '~/helpers/chatRealtimeMessageIdentity';
@@ -108,7 +109,9 @@ export default function useChatSocket({
   const channelUnreadResyncTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
-  const recentlyHandledMessageKeysRef = useRef(new Set<string>());
+  const realtimeMessageReplayWindowRef = useRef(
+    createRealtimeChatMessageReplayWindow()
+  );
 
   channelsObjRef.current = channelsObj;
   onUpdateMyXpRef.current = onUpdateMyXp;
@@ -242,6 +245,10 @@ export default function useChatSocket({
   useEffect(() => {
     const unreadResyncGeneration = ++unreadResyncGenerationRef.current;
     const channelUnreadResyncQueue = channelUnreadResyncQueueRef.current;
+    // SocketManager survives logout and account switching. Replay suppression
+    // belongs to one authenticated delivery stream, so never carry it into the
+    // next account before that account's canonical chat bootstrap completes.
+    realtimeMessageReplayWindowRef.current.reset();
     // Reset throttle state when user changes. The unread-activity revision is
     // a monotonic module counter shared with the other last-read reconcilers
     // and is never reset; equality snapshots stay valid across user changes.
@@ -275,8 +282,8 @@ export default function useChatSocket({
         lastReadWriteSecRef.current.channel[channelId] !== nowSec;
       const shouldUpdateSubchannel = Boolean(
         normalizedSubchannelId > 0 &&
-          lastReadWriteSecRef.current.subchannel[normalizedSubchannelId] !==
-            nowSec
+        lastReadWriteSecRef.current.subchannel[normalizedSubchannelId] !==
+          nowSec
       );
       if (!shouldUpdateMain && !shouldUpdateSubchannel) return;
 
@@ -455,11 +462,7 @@ export default function useChatSocket({
       }
     }
 
-    function handleMemberLeftUnreadState({
-      channelId
-    }: {
-      channelId: number;
-    }) {
+    function handleMemberLeftUnreadState({ channelId }: { channelId: number }) {
       const normalizedChannelId = Number(channelId || 0);
       if (normalizedChannelId <= 0) return;
 
@@ -1016,24 +1019,16 @@ export default function useChatSocket({
       const messageKey = getRealtimeChatMessageKey(message);
       return Boolean(
         messageKey &&
-          (recentlyHandledMessageKeysRef.current.has(messageKey) ||
-            hasCanonicalChatMessage({
-              channelsObj: channelsObjRef.current,
-              message
-            }))
+        (realtimeMessageReplayWindowRef.current.has(message) ||
+          hasCanonicalChatMessage({
+            channelsObj: channelsObjRef.current,
+            message
+          }))
       );
     }
 
     function rememberHandledRealtimeMessage(message: any) {
-      const messageKey = getRealtimeChatMessageKey(message);
-      if (!messageKey) return;
-      const recentlyHandledMessageKeys = recentlyHandledMessageKeysRef.current;
-      recentlyHandledMessageKeys.add(messageKey);
-      if (recentlyHandledMessageKeys.size <= 1000) return;
-      const oldestMessageKey = recentlyHandledMessageKeys.values().next().value;
-      if (oldestMessageKey) {
-        recentlyHandledMessageKeys.delete(oldestMessageKey);
-      }
+      realtimeMessageReplayWindowRef.current.remember(message);
     }
 
     function notifyMessageReceivedWhileAway({

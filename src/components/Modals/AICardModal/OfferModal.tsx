@@ -6,6 +6,7 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
 export default function OfferModal({
   askPrice,
@@ -27,6 +28,7 @@ export default function OfferModal({
   const postAICardOffer = useAppContext(
     (v) => v.requestHelpers.postAICardOffer
   );
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const banned = useKeyContext((v) => v.myState.banned);
@@ -64,11 +66,7 @@ export default function OfferModal({
               }}
             >
               Set price (
-              <Icon
-                style={{ color: Color.brownOrange() }}
-                icon="coins"
-              />
-              )
+              <Icon style={{ color: Color.brownOrange() }} icon="coins" />)
             </div>
             <Input
               onChange={handleAmountChange}
@@ -148,9 +146,11 @@ export default function OfferModal({
         }
         return nextOffers;
       });
-      onSetUserState({
-        userId: myId,
-        newState: { twinkleCoins: result.coins }
+      void applyCanonicalCoinsAndReconcile({
+        coins: result.coins,
+        loadCoins,
+        onSetUserState,
+        userId: myId
       });
       onUpdateAICard({ cardId, newState: result.card });
       onHide();

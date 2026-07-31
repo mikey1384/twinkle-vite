@@ -10,6 +10,7 @@ import {
   normalizeAICardId
 } from '~/helpers/aiCardCanonicalUpdates';
 import type { Card } from '~/types';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
 export default function useAICardSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -45,6 +46,7 @@ export default function useAICardSocket() {
     (v) => v.actions.onRemoveListedAICard
   );
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onUpdateCurrentTransactionId = useChatContext(
@@ -72,6 +74,10 @@ export default function useAICardSocket() {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
     socket.on('assets_sent', handleAssetsSent);
+    socket.on(
+      'canonical_coin_balance_updated',
+      handleCanonicalCoinBalanceUpdate
+    );
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('transaction_accepted', handleTransactionAccept);
@@ -95,6 +101,10 @@ export default function useAICardSocket() {
       socket.off('ai_card_offer_posted', handleAICardOfferPosted);
       socket.off('ai_card_offer_cancelled', handleAICardOfferCancel);
       socket.off('assets_sent', handleAssetsSent);
+      socket.off(
+        'canonical_coin_balance_updated',
+        handleCanonicalCoinBalanceUpdate
+      );
       socket.off('current_transaction_id_updated', handleTransactionIdUpdate);
       socket.off('new_ai_card_summoned', handleNewAICardSummon);
       socket.off('transaction_accepted', handleTransactionAccept);
@@ -256,13 +266,11 @@ export default function useAICardSocket() {
     async function handleAICardBought({
       feed,
       card,
-      sellerCoins,
       buyerId,
       sellerId
     }: {
       feed: any;
       card: any;
-      sellerCoins: number;
       buyerId: number;
       sellerId: number;
     }) {
@@ -286,10 +294,6 @@ export default function useAICardSocket() {
       if (sellerId === currentUserId) {
         onDelistAICard(card.id);
         onRemoveMyAICard(card.id);
-        onSetUserState({
-          userId: currentUserId,
-          newState: { twinkleCoins: sellerCoins }
-        });
       }
     }
 
@@ -346,14 +350,12 @@ export default function useAICardSocket() {
 
     function handleAICardOfferCancel({
       cardId,
-      coins,
       feedId,
       offerId,
       offererId,
       card
     }: {
       cardId: number;
-      coins: number;
       feedId: number;
       offerId: number;
       offererId: number;
@@ -363,10 +365,6 @@ export default function useAICardSocket() {
       onAICardOfferWithdrawal(feedId);
       if (offererId === currentUserId) {
         onWithdrawOutgoingOffer(offerId);
-        onSetUserState({
-          userId: currentUserId,
-          newState: { twinkleCoins: coins }
-        });
         if (Number(card?.id) === Number(cardId)) {
           onUpdateAICard({ cardId, newState: card });
         }
@@ -442,17 +440,11 @@ export default function useAICardSocket() {
       toCoins?: number;
     }) {
       const currentUserId = userIdRef.current;
-      if (from === currentUserId && Number.isFinite(fromCoins)) {
-        onSetUserState({
-          userId: currentUserId,
-          newState: { twinkleCoins: Number(fromCoins) }
-        });
+      if (from === currentUserId) {
+        reconcileCurrentUserCoins(fromCoins);
       }
-      if (to === currentUserId && Number.isFinite(toCoins)) {
-        onSetUserState({
-          userId: currentUserId,
-          newState: { twinkleCoins: Number(toCoins) }
-        });
+      if (to === currentUserId) {
+        reconcileCurrentUserCoins(toCoins);
       }
       for (const card of cards) {
         const cardId = normalizeAICardId(card?.id);
@@ -473,6 +465,28 @@ export default function useAICardSocket() {
           userId: currentUserId
         });
       }
+    }
+
+    function handleCanonicalCoinBalanceUpdate({
+      coins,
+      userId: balanceUserId
+    }: {
+      coins?: number;
+      userId?: number;
+    }) {
+      if (Number(balanceUserId) !== Number(userIdRef.current)) return;
+      reconcileCurrentUserCoins(coins);
+    }
+
+    function reconcileCurrentUserCoins(coins?: number) {
+      const currentUserId = userIdRef.current;
+      if (!currentUserId) return;
+      void applyCanonicalCoinsAndReconcile({
+        coins,
+        loadCoins,
+        onSetUserState,
+        userId: currentUserId
+      });
     }
 
     function handleTransactionIdUpdate({

@@ -15,6 +15,7 @@ import {
   clearPendingTransactionRequest,
   getTransactionClientRequestId
 } from './pendingTransactionRequest';
+import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
 export default function TransactionModal({
   currentTransactionId,
@@ -51,6 +52,7 @@ export default function TransactionModal({
   const postTradeRequest = useAppContext(
     (v) => v.requestHelpers.postTradeRequest
   );
+  const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const cardObj = useChatContext((v) => v.state.cardObj);
 
@@ -363,12 +365,12 @@ export default function TransactionModal({
       requestPayload,
       clientRequestId
     });
-    if (Number.isFinite(result.coins)) {
-      onSetUserState({
-        userId: myId,
-        newState: { twinkleCoins: Number(result.coins) }
-      });
-    }
+    void applyCanonicalCoinsAndReconcile({
+      coins: result.coins,
+      loadCoins,
+      onSetUserState,
+      userId: myId
+    });
     const { isNewChannel, newChannelId, pathId } = result;
     if (isNewChannel) {
       socket.emit('join_chat_group', newChannelId);
