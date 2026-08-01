@@ -1,3 +1,5 @@
+import { mergeCanonicalGroupMemberIds } from '~/helpers/chatGroupMembership';
+
 export default function HomeReducer(
   state: any,
   action: {
@@ -232,6 +234,7 @@ export default function HomeReducer(
         }
       };
     case 'SET_GROUP_MEMBER_STATE':
+      if (!state.groupsObj[action.groupId]) return state;
       return {
         ...state,
         groupsObj: {
@@ -240,12 +243,13 @@ export default function HomeReducer(
             ...state.groupsObj[action.groupId],
             allMemberIds:
               action.action === 'add'
-                ? [
-                    ...(state.groupsObj[action.groupId]?.allMemberIds || []),
-                    action.memberId
-                  ]
+                ? mergeCanonicalGroupMemberIds({
+                    allMemberIds:
+                      state.groupsObj[action.groupId]?.allMemberIds || [],
+                    members: [{ id: action.memberId }]
+                  })
                 : (state.groupsObj[action.groupId]?.allMemberIds || []).filter(
-                    (id: number) => id !== action.memberId
+                    (id: number) => Number(id) !== Number(action.memberId)
                   )
           }
         }

@@ -378,21 +378,26 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onChangeChannelOwner({
       channelId,
+      creatorId,
       message,
       newOwner
     }: {
       channelId: number;
-      message: any;
+      creatorId: number;
+      message?: any;
       newOwner: any;
     }) {
       return dispatch({
         type: 'CHANGE_CHANNEL_OWNER',
         channelId,
-        message: {
-          ...message,
-          notificationType: 'owner_change',
-          newOwner
-        },
+        creatorId,
+        message: message
+          ? {
+              ...message,
+              notificationType: 'owner_change',
+              newOwner
+            }
+          : null,
         newOwner
       });
     },
@@ -1308,6 +1313,19 @@ export default function ChatActions(dispatch: Dispatch) {
         userId,
         username,
         profilePicUrl
+      });
+    },
+    onApplyCanonicalGroupMemberJoin({
+      channelId,
+      member
+    }: {
+      channelId: number;
+      member: any;
+    }) {
+      return dispatch({
+        type: 'APPLY_CANONICAL_GROUP_MEMBER_JOIN',
+        channelId,
+        member
       });
     },
     onOpenNewChatTab({ user, recipient }: { user: object; recipient: object }) {

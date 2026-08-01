@@ -22,6 +22,7 @@ import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
@@ -293,19 +294,13 @@ export default function DisplayedMessages({
           pathId: invitationChannelPath
         });
       }
-      const { channel, joinMessage } = await acceptInvitation(
-        invitationChannelId
-      );
-      if (channel.id === invitationChannelId) {
-        socket.emit('join_chat_group', channel.id);
-        socket.emit('new_chat_message', {
-          message: joinMessage,
-          channel: {
-            id: channel.id,
-            channelName: channel.channelName,
-            pathId: channel.pathId
-          },
-          newMembers: [{ id: userId, username, profilePicUrl }]
+      const response = await acceptInvitation(invitationChannelId);
+      if (response.channel.id === invitationChannelId) {
+        emitAcceptedChatGroupMembership({
+          response,
+          memberId: userId,
+          fallbackMember: { id: userId, username, profilePicUrl },
+          socket
         });
         navigate(`/chat/${invitationChannelPath}`);
       }

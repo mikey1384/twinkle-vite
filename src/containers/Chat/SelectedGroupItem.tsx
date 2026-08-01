@@ -7,6 +7,7 @@ import { getColorFromName } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
+import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 
 export default function SelectedGroupItem({
   group,
@@ -29,8 +30,6 @@ export default function SelectedGroupItem({
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
-  const username = useKeyContext((v) => v.myState.username);
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const acceptInvitation = useAppContext(
     (v) => v.requestHelpers.acceptInvitation
   );
@@ -230,17 +229,12 @@ export default function SelectedGroupItem({
               pathId: group.pathId
             });
           }
-          const { channel, joinMessage } = await acceptInvitation(group.id);
-          if (channel.id === group.id) {
-            socket.emit('join_chat_group', channel.id);
-            socket.emit('new_chat_message', {
-              message: joinMessage,
-              channel: {
-                id: channel.id,
-                channelName: channel.channelName,
-                pathId: channel.pathId
-              },
-              newMembers: [{ id: userId, username, profilePicUrl }]
+          const response = await acceptInvitation(group.id);
+          if (response.channel.id === group.id) {
+            emitAcceptedChatGroupMembership({
+              response,
+              memberId: userId,
+              socket
             });
             navigate(`/chat/${group.pathId}`);
           }

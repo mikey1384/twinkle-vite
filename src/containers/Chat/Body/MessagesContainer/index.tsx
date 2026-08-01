@@ -93,6 +93,9 @@ export default function MessagesContainer({
   const onApplyCanonicalChatSidebarState = useChatContext(
     (v) => v.actions.onApplyCanonicalChatSidebarState
   );
+  const onChangeChannelOwner = useChatContext(
+    (v) => v.actions.onChangeChannelOwner
+  );
   const navigate = useNavigate();
   const {
     actions: {
@@ -756,24 +759,22 @@ export default function MessagesContainer({
     async ({
       users,
       message,
-      isClass
+      isClass,
+      relayLegacyMembership
     }: {
       users: any[];
-      message: any;
+      message?: any;
       isClass: boolean;
+      relayLegacyMembership?: boolean;
     }) => {
-      if (isClass) {
-        const channelData = {
-          id: selectedChannelId,
-          channelName,
-          pathId: currentChannel.pathId
-        };
+      if (isClass && relayLegacyMembership && message) {
         socket.emit('new_chat_message', {
-          message: {
-            ...message,
-            channelId: message.channelId
+          message,
+          channel: {
+            id: selectedChannelId,
+            channelName,
+            pathId: currentChannel.pathId
           },
-          channel: channelData,
           newMembers: users
         });
         socket.emit(
@@ -785,7 +786,7 @@ export default function MessagesContainer({
             pathId: currentChannel.pathId
           }
         );
-      } else {
+      } else if (!isClass) {
         const recipientIds = [];
         for (const user of users) {
           if (!user.id) {
@@ -812,38 +813,9 @@ export default function MessagesContainer({
         }
       }
       setInviteUsersModalShown(false);
-      if (!isClass) {
-        const messageId = uuidv1();
-        onSubmitMessage({
-          messageId,
-          message: {
-            channelId: selectedChannelId,
-            userId,
-            username,
-            id: uuidv1(),
-            profilePicUrl,
-            content: `sent ${
-              users.length === 1 ? 'an ' : ''
-            }invitation message${users.length > 1 ? 's' : ''} to ${
-              users.length > 1
-                ? `${users.length} users`
-                : users[0]?.username || 'User'
-            }`,
-            isNotification: true
-          }
-        });
-        onScrollToBottom();
-      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      channelName,
-      currentChannel,
-      profilePicUrl,
-      selectedChannelId,
-      userId,
-      username
-    ]
+    [selectedChannelId]
   );
 
   const handleLeaveChannel = useCallback(async () => {
@@ -851,18 +823,27 @@ export default function MessagesContainer({
       try {
         setIsLeaving(true);
         leavingRef.current = true;
-        const { favoriteState } = await leaveChannel(selectedChannelId);
+        const leaveState = await leaveChannel(selectedChannelId);
         onLeaveChannel({
           channelId: selectedChannelId,
           userId,
-          favoriteState
+          favoriteState: leaveState.favoriteState
         });
-        socket.emit('leave_chat_channel', {
-          channelId: selectedChannelId,
-          userId,
-          username,
-          profilePicUrl
-        });
+        // Rolling-deploy bridge for an older API. Current servers broadcast
+        // the canonical membership transition after committing it.
+        if (
+          !Object.prototype.hasOwnProperty.call(
+            leaveState,
+            'membershipChanged'
+          )
+        ) {
+          socket.emit('leave_chat_channel', {
+            channelId: selectedChannelId,
+            userId,
+            username,
+            profilePicUrl
+          });
+        }
         onSetGroupMemberState({
           groupId: selectedChannelId,
           action: 'remove',
@@ -1111,41 +1092,39 @@ export default function MessagesContainer({
       setSelectingNewOwner(true);
       selectingNewOwnerRef.current = true;
       try {
-        const { notificationMsg, messageId } = await changeChannelOwner({
+        const ownerState = await changeChannelOwner({
           channelId: selectedChannelId,
           newOwner
         });
-
-        const timeStamp = Math.floor(Date.now() / 1000);
-        const messagePayload = {
-          id: messageId,
+        const canonicalNewOwner = ownerState.newOwner || newOwner;
+        onChangeChannelOwner({
           channelId: selectedChannelId,
-          userId,
-          username,
-          profilePicUrl,
-          content: notificationMsg,
-          isNotification: true,
-          notificationType: 'owner_change',
-          newOwner,
-          timeStamp
-        };
-
-        onSubmitMessage({
-          messageId,
-          message: messagePayload
+          creatorId: Number(ownerState.creatorId || canonicalNewOwner.id),
+          message: ownerState.message,
+          newOwner: canonicalNewOwner
         });
-
-        // Broadcast the message - the reducer will update creatorId from newOwner
-        socket.emit('new_chat_message', {
-          message: messagePayload,
-          channel: {
-            id: selectedChannelId,
-            ...(currentChannel.twoPeople
-              ? { twoPeople: true, members: currentChannel.members }
-              : { channelName }),
-            pathId: currentChannel.pathId
-          }
-        });
+        // Rolling-deploy bridge for an older API response. Current servers
+        // broadcast the persisted canonical message themselves.
+        if (!Object.prototype.hasOwnProperty.call(ownerState, 'changed')) {
+          socket.emit('new_chat_message', {
+            message: {
+              id: ownerState.messageId,
+              channelId: selectedChannelId,
+              userId,
+              username,
+              profilePicUrl,
+              content: ownerState.notificationMsg,
+              isNotification: true,
+              notificationType: 'owner_change',
+              newOwner: canonicalNewOwner
+            },
+            channel: {
+              id: selectedChannelId,
+              channelName,
+              pathId: currentChannel.pathId
+            }
+          });
+        }
 
         if (andLeave) {
           await handleLeaveChannel();
@@ -1160,9 +1139,7 @@ export default function MessagesContainer({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      currentChannel?.members,
       currentChannel?.pathId,
-      currentChannel?.twoPeople,
       channelName,
       handleLeaveChannel,
       profilePicUrl,

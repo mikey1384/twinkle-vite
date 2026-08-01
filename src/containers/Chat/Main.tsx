@@ -47,6 +47,7 @@ import {
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
+import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 
 const loadingPromises: { [channelId: string]: any } = {};
 const deviceIsMobile = isMobile(navigator);
@@ -1276,25 +1277,19 @@ export default function Main({
             if (!channelPathIdHash[pathId]) {
               onUpdateChannelPathIdHash({ channelId, pathId });
             }
-            const { channel, joinMessage } = await acceptInvitation(channelId);
+            const response = await acceptInvitation(channelId);
             if (isStale()) return;
 
-            if (channel.id === channelId) {
-              socket.emit('join_chat_group', channel.id);
-              socket.emit('new_chat_message', {
-                message: joinMessage,
-                channel: {
-                  id: channel.id,
-                  channelName: channel.channelName,
-                  pathId: channel.pathId
+            if (response.channel.id === channelId) {
+              emitAcceptedChatGroupMembership({
+                response,
+                memberId: requestUserId,
+                fallbackMember: {
+                  id: requestUserId,
+                  username: usernameRef.current,
+                  profilePicUrl: profilePicUrlRef.current
                 },
-                newMembers: [
-                  {
-                    id: requestUserId,
-                    username: usernameRef.current,
-                    profilePicUrl: profilePicUrlRef.current
-                  }
-                ]
+                socket
               });
             }
           } else {

@@ -159,6 +159,9 @@ export default function useChatSocket({
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
+  const onApplyCanonicalGroupMemberJoin = useChatContext(
+    (v) => v.actions.onApplyCanonicalGroupMemberJoin
+  );
   const onSetGroupMemberState = useHomeContext(
     (v) => v.actions.onSetGroupMemberState
   );
@@ -368,6 +371,7 @@ export default function useChatSocket({
     socket.on('chat_sidebar_state_updated', handleChatSidebarStateUpdate);
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
+    socket.on('member_joined', handleMemberJoined);
     socket.on('member_left', handleMemberLeftUnreadState);
     socket.on('message_attachment_hid', onHideAttachment);
     socket.on('human_topic_state_changed', handleHumanTopicStateChanged);
@@ -415,6 +419,7 @@ export default function useChatSocket({
       socket.off('chat_sidebar_state_updated', handleChatSidebarStateUpdate);
       socket.off('chat_subject_purchased', onEnableChatSubject);
       socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
+      socket.off('member_joined', handleMemberJoined);
       socket.off('member_left', handleMemberLeftUnreadState);
       socket.off('message_attachment_hid', onHideAttachment);
       socket.off('human_topic_state_changed', handleHumanTopicStateChanged);
@@ -1104,6 +1109,28 @@ export default function useChatSocket({
         socket.emit('confirm_leave_channel', channelId);
       }
     }
+
+    function handleMemberJoined({
+      channelId,
+      member
+    }: {
+      channelId: number;
+      member: { id: number };
+    }) {
+      const normalizedChannelId = Number(channelId || 0);
+      const memberId = Number(member?.id || 0);
+      if (!normalizedChannelId || !memberId) return;
+      onApplyCanonicalGroupMemberJoin({
+        channelId: normalizedChannelId,
+        member
+      });
+      onSetGroupMemberState({
+        groupId: normalizedChannelId,
+        action: 'add',
+        memberId
+      });
+    }
+
     async function handleReceiveVocabFeed({
       feed,
       currentYear,

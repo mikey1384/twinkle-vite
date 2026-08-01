@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
 import UserSearchResultRow from '~/components/UserSearchResultRow';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { normalizeClassInviteResponse } from '~/helpers/chatGroupMembership';
 
 export default function InviteUsersModal({
   isOwner,
@@ -116,15 +117,25 @@ export default function InviteUsersModal({
     if (!inviting) {
       setInviting(true);
       if (currentChannel.isClass && isOwner) {
-        const data = await inviteUsersToChannel({
+        const response = await inviteUsersToChannel({
           selectedUsers,
           channelId: selectedChannelId
         });
-        onInviteUsersToChannel(data);
+        const transition = normalizeClassInviteResponse({
+          response,
+          requestedMembers: selectedUsers
+        });
+        if (transition.changed && transition.message) {
+          onInviteUsersToChannel({
+            selectedUsers: transition.newMembers,
+            message: transition.message
+          });
+        }
         onDone({
-          users: selectedUsers,
-          message: data.message,
-          isClass: true
+          users: transition.newMembers,
+          message: transition.message,
+          isClass: true,
+          relayLegacyMembership: transition.relayLegacyMembership
         });
       } else {
         onDone({

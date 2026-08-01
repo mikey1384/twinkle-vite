@@ -161,7 +161,7 @@ const sdkSections: GuideSection[] = [
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
       'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
       'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
-      'generateObject low uses GPT-5.6 Luna and free Lite Mode; medium uses Grok 4.5 with normal AI Energy; high uses GPT-5.6 Sol with high AI Energy.',
+      'generateObject low uses GPT-5.6 Luna and billable Lite Mode; medium uses Grok 4.5 with normal AI Energy; high uses GPT-5.6 Sol with high AI Energy.',
       'Use systemPrompt to define the app AI personality, tone, role, or response rules.',
       'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
@@ -169,7 +169,7 @@ const sdkSections: GuideSection[] = [
       'Twinkle.ai.onChatStatus(listener) returns an unsubscribe function for shared text-generation status UI.',
       'Twinkle.ai.onImageGenerationStatus(listener) returns an unsubscribe function for shared streaming UI.',
       'Pass a unique requestId to correlate iframe logs, parent bridge logs, and backend stream logs for one generation.',
-      'Signed-in viewers only. Each successful image, text, or object generation consumes AI Energy from the signed-in viewer; generateObject low uses free Lite Mode.',
+      'Signed-in viewers only. Each successful image, text, or object generation consumes AI Energy from the signed-in viewer, including generateObject Low/Lite Mode. When Energy is empty, all modes reject before provider work.',
       'The prompt, message, optional history, and optional reference image are sent to the configured AI provider.'
     ]
   },
@@ -177,7 +177,7 @@ const sdkSections: GuideSection[] = [
     title: 'Twinkle.news',
     items: [
       'await Twinkle.news.getCurrentEdition() reads the globally shared Twinkle Daily edition.',
-      "await Twinkle.news.generateCurrentEdition() lets a signed-in viewer queue today's edition. The server creates at most one ready edition per Twinkle day, and the request does not spend the viewer's AI Energy.",
+      "await Twinkle.news.generateCurrentEdition() lets a signed-in viewer queue today's edition. The server creates at most one ready edition per Twinkle day. A model-backed job consumes AI Energy from the viewer whose request creates or retries it; deduplicated callers and quiet editions with no model call are not charged.",
       'When generationStatus is pending or generating, keep showing response.edition (the latest ready edition) and poll gently for the new one.'
     ]
   },
@@ -189,9 +189,9 @@ const sdkSections: GuideSection[] = [
       'Pass onText/onStatus for streaming dialogue; omit callbacks when the app only needs the final response.',
       'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
       'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
-      'thinkingMode low is Lite Mode and free AI Energy; medium is normal battery use; high is high battery use.',
+      'thinkingMode low is billable Lite Mode and usually costs less because it uses a smaller model or lower reasoning; medium is normal battery use; high is high battery use.',
       'Zero uses Grok 4.5 with low/medium/high reasoning. Ciel uses Claude Haiku 4.5 for low, Claude Sonnet 5 for medium, and Claude Opus 5 with extended thinking for high.',
-      'If medium or high is requested after AI Energy is empty, the server falls back to low and returns thinkingMode: "low".',
+      'When AI Energy is empty, Low, Medium, and High all reject before new provider work; there is no free fallback mode.',
       'Use Twinkle.characters.chat for Zero/Ciel NPCs instead of pretending with Twinkle.ai.chat systemPrompt.'
     ]
   },

@@ -245,14 +245,12 @@ export default function chatRequestHelpers({
       newOwner: object;
     }) {
       try {
-        const {
-          data: { notificationMsg, messageId }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/chat/owner`,
           { channelId, newOwner },
           auth()
         );
-        return { notificationMsg, messageId };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1210,10 +1208,12 @@ export default function chatRequestHelpers({
     },
     async inviteUsersToChannel(params: object) {
       try {
-        const {
-          data: { message }
-        } = await request.post(`${URL}/chat/invite`, params, auth());
-        return { ...params, message };
+        const { data } = await request.post(
+          `${URL}/chat/invite`,
+          params,
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }

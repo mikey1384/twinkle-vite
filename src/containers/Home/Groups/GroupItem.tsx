@@ -16,6 +16,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { getColorFromName } from '~/helpers/stringHelpers';
 import Button from '~/components/Button';
 import { themedCardBase } from '~/theme/card';
+import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 
 export default function GroupItem({
   groupId,
@@ -42,8 +43,6 @@ export default function GroupItem({
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
-  const username = useKeyContext((v) => v.myState.username);
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
@@ -277,17 +276,12 @@ export default function GroupItem({
           pathId
         });
       }
-      const { channel, joinMessage } = await acceptInvitation(groupId);
-      if (channel.id === groupId) {
-        socket.emit('join_chat_group', channel.id);
-        socket.emit('new_chat_message', {
-          message: joinMessage,
-          channel: {
-            id: channel.id,
-            channelName: channel.channelName,
-            pathId: channel.pathId
-          },
-          newMembers: [{ id: userId, username, profilePicUrl }]
+      const response = await acceptInvitation(groupId);
+      if (response.channel.id === groupId) {
+        emitAcceptedChatGroupMembership({
+          response,
+          memberId: userId,
+          socket
         });
         onSetGroupMemberState({
           groupId,

@@ -26,6 +26,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -783,33 +784,24 @@ export default function useInitSocket({
               if (!channelPathIdHashRef.current[latestPathId]) {
                 onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
               }
-              const { channel, joinMessage } =
-                await acceptInvitation(channelId);
+              const response = await acceptInvitation(channelId);
               if (
                 activeBootstrapIdRef.current !== bootstrapId ||
                 userIdRef.current !== bootstrapUserId
               ) {
                 return;
               }
-              if (channel.id === channelId) {
-                socket.emit('join_chat_group', channel.id);
-                socket.emit('new_chat_message', {
-                  message: {
-                    ...joinMessage,
-                    isLoaded: true
+              if (response.channel.id === channelId) {
+                emitAcceptedChatGroupMembership({
+                  response,
+                  memberId: bootstrapUserId,
+                  fallbackMember: {
+                    id: bootstrapUserId,
+                    username: usernameRef.current,
+                    profilePicUrl: profilePicUrlRef.current
                   },
-                  channel: {
-                    id: channel.id,
-                    channelName: channel.channelName,
-                    pathId: channel.pathId
-                  },
-                  newMembers: [
-                    {
-                      id: bootstrapUserId,
-                      username: usernameRef.current,
-                      profilePicUrl: profilePicUrlRef.current
-                    }
-                  ]
+                  socket,
+                  markLegacyMessageLoaded: true
                 });
               }
             } else {

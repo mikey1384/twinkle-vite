@@ -16,6 +16,16 @@ import { hasCanonicalChatMessage } from '~/helpers/chatRealtimeMessageIdentity';
 import { v1 as uuidv1 } from 'uuid';
 import type { CanonicalChatChannelVisibility } from '~/types/chat';
 import { shouldApplyChatNotificationSettings } from './notificationSettingsRevision';
+import {
+  applyCanonicalChannelOwnerTransition,
+  applyCanonicalGroupInvitation,
+  applyCanonicalGroupMemberJoin,
+  applyCanonicalGroupMemberDeparture
+} from './groupTransitionState';
+import {
+  mergeCanonicalGroupMemberIds,
+  mergeCanonicalGroupMembers
+} from '~/helpers/chatGroupMembership';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -2326,43 +2336,18 @@ export default function ChatReducer(
       };
     }
     case 'CHANGE_CHANNEL_OWNER': {
-      const notificationId = uuidv1();
       if (!state.channelsObj[action.channelId]) return state;
-
-      const channel = state.channelsObj[action.channelId];
-
-      let members = [...(channel.members || [])];
-      const memberIds = new Set(members.map((member) => member.id));
-      const allMemberIds = [...(channel.allMemberIds || [])];
-
-      if (!memberIds.has(action.newOwner.id) && action.newOwner.username) {
-        members = [action.newOwner, ...members];
-      }
-
-      const filteredMemberIds = allMemberIds.filter(
-        (id) => id !== action.newOwner.id
-      );
-
-      const updatedAllMemberIds = [action.newOwner.id, ...filteredMemberIds];
 
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            messageIds: [notificationId].concat(
-              state.channelsObj[action.channelId].messageIds
-            ),
-            messagesObj: {
-              ...state.channelsObj[action.channelId].messagesObj,
-              [notificationId]: action.message
-            },
-            creatorId: action.newOwner.id,
-            members,
-            allMemberIds: updatedAllMemberIds,
-            numUnreads: state.selectedChannelId === action.channelId ? 0 : 1
-          }
+          [action.channelId]: applyCanonicalChannelOwnerTransition({
+            channel: state.channelsObj[action.channelId],
+            creatorId: action.creatorId,
+            message: action.message,
+            newOwner: action.newOwner
+          })
         }
       };
     }
@@ -4019,44 +4004,21 @@ export default function ChatReducer(
       return reconciledNextState;
     }
 
-    case 'INVITE_USERS_TO_CHANNEL':
+    case 'INVITE_USERS_TO_CHANNEL': {
+      const currentChannel = state.channelsObj[state.selectedChannelId];
+      if (!currentChannel) return state;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [state.selectedChannelId]: {
-            ...state.channelsObj[state.selectedChannelId],
-            allMemberIds: (
-              state.channelsObj[state.selectedChannelId]?.allMemberIds || []
-            ).concat(
-              action.data.selectedUsers.map((user: { id: number }) => user.id)
-            ),
-            messageIds: [action.data.message.id].concat(
-              state.channelsObj[state.selectedChannelId].messageIds
-            ),
-            messagesObj: {
-              ...state.channelsObj[state.selectedChannelId].messagesObj,
-              [action.data.message.id]: action.data.message
-            },
-            members:
-              action.data.selectedUsers.length > 0
-                ? action.data.selectedUsers
-                    .map(
-                      (user: {
-                        id: number;
-                        username: string;
-                        profilePicUrl: string;
-                      }) => ({
-                        id: user.id,
-                        username: user.username,
-                        profilePicUrl: user.profilePicUrl
-                      })
-                    )
-                    .concat(state.channelsObj[state.selectedChannelId].members)
-                : state.channelsObj[state.selectedChannelId].members
-          }
+          [state.selectedChannelId]: applyCanonicalGroupInvitation({
+            channel: currentChannel,
+            message: action.data.message,
+            newMembers: action.data.selectedUsers
+          })
         }
       };
+    }
     case 'LEAVE_CHANNEL': {
       if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
         return state;
@@ -5000,45 +4962,33 @@ export default function ChatReducer(
       };
     }
     case 'NOTIFY_MEMBER_LEFT': {
-      const messageId = uuidv1();
-      const leaveMessage = 'left the chat group';
-      const timeStamp = Math.floor(Date.now() / 1000);
       return state.channelsObj[action.channelId]
         ? {
             ...state,
             channelsObj: {
               ...state.channelsObj,
-              [action.channelId]: {
-                ...state.channelsObj[action.channelId],
-                allMemberIds: (
-                  state.channelsObj[action.channelId]?.allMemberIds || []
-                ).filter((memberId: number) => memberId !== action.userId),
-                messageIds: [messageId].concat(
-                  state.channelsObj[action.channelId].messageIds
-                ),
-                messagesObj: {
-                  ...state.channelsObj[action.channelId].messagesObj,
-                  [messageId]: {
-                    id: messageId,
-                    channelId: action.channelId,
-                    content: leaveMessage,
-                    timeStamp: timeStamp,
-                    isNotification: true,
-                    username: action.username,
-                    userId: action.userId,
-                    profilePicUrl: action.profilePicUrl
-                  }
-                },
-                members: (
-                  state.channelsObj[action.channelId]?.members || []
-                )?.filter(
-                  (member: { id: number }) => member.id !== action.userId
-                )
-              }
+              [action.channelId]: applyCanonicalGroupMemberDeparture({
+                channel: state.channelsObj[action.channelId],
+                userId: action.userId
+              })
             }
           }
         : state;
       // this will mean that if the channel where the user has left is not loaded in the left channel list initially, it will not appear in the list when user scrolls down and triggers "load more" event (because load more event only loads channels with older update time than the bottom item) and because this is new update. but is that really that bad? this channel will surface when user reloads the website anyway and user wasn't really interested in this channel to keep it bumped up in the first place.
+    }
+    case 'APPLY_CANONICAL_GROUP_MEMBER_JOIN': {
+      return state.channelsObj[action.channelId]
+        ? {
+            ...state,
+            channelsObj: {
+              ...state.channelsObj,
+              [action.channelId]: applyCanonicalGroupMemberJoin({
+                channel: state.channelsObj[action.channelId],
+                member: action.member
+              })
+            }
+          }
+        : state;
     }
     case 'OPEN_NEW_TAB':
       return {
@@ -5285,15 +5235,10 @@ export default function ChatReducer(
             })
           };
       const members = action.newMembers
-        ? [
-            ...(prevChannelObj?.members || []),
-            ...action.newMembers.filter(
-              (newMember: { id: number }) =>
-                !(prevChannelObj?.members || [])
-                  .map((member: { id: number }) => member.id)
-                  .includes(newMember.id)
-            )
-          ]
+        ? mergeCanonicalGroupMembers({
+            members: prevChannelObj?.members || [],
+            newMembers: action.newMembers
+          })
         : prevChannelObj.members;
       const gameState = {
         ...prevChannelObj.gameState,
@@ -5392,10 +5337,10 @@ export default function ChatReducer(
               }
             },
             allMemberIds: action.newMembers
-              ? [
-                  ...(prevChannelObj?.allMemberIds || []),
-                  ...action.newMembers.map((m: { id: number }) => m.id)
-                ]
+              ? mergeCanonicalGroupMemberIds({
+                  allMemberIds: prevChannelObj?.allMemberIds || [],
+                  members: action.newMembers
+                })
               : prevChannelObj?.allMemberIds,
             messageIds,
             messagesObj,
@@ -5620,15 +5565,10 @@ export default function ChatReducer(
                               )
                           )
                       ),
-                      members: [
-                        ...(prevChannelObj?.members || []),
-                        ...action.newMembers.filter(
-                          (newMember: { id: number }) =>
-                            !(prevChannelObj?.members || [])
-                              .map((member: { id: number }) => member.id)
-                              .includes(newMember.id)
-                        )
-                      ]
+                      members: mergeCanonicalGroupMembers({
+                        members: prevChannelObj?.members || [],
+                        newMembers: action.newMembers
+                      })
                     }
                   : {}),
                 topicObj: action.message.subjectId
