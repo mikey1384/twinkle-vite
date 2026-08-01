@@ -80,6 +80,8 @@ function getInitialChatState() {
         persistedState.quickAccessOwnerId ??
         persistedState.loadedForUserId ??
         null,
+      buildContributionReleaseByRootBuildId:
+        persistedState.buildContributionReleaseByRootBuildId || {},
       channelVisibilityById: persistedState.channelVisibilityById || {},
       canonicalReactionUpdatesDuringBootstrap: {},
       canonicalUnreadStatesDuringBootstrap: {},
@@ -105,6 +107,7 @@ function getInitialChatState() {
     channelOnCall: {},
     chatNotificationSettings: null,
     buildContributionMembershipByKey: {},
+    buildContributionReleaseByRootBuildId: {},
     buildContributionSubmissionByBranchId: {},
     buildThumbnailByRootBuildId: {},
     buildContributionInviteMembershipByKey: {},
@@ -215,6 +218,7 @@ export const initialChatState = {
   channelOnCall: {},
   chatNotificationSettings: null,
   buildContributionMembershipByKey: {},
+  buildContributionReleaseByRootBuildId: {},
   buildContributionSubmissionByBranchId: {},
   buildThumbnailByRootBuildId: {},
   buildContributionInviteMembershipByKey: {},

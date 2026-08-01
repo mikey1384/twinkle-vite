@@ -193,16 +193,22 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onUpdateBuildContributionSubmissionState({
       branchBuildId,
+      rootBuildId,
+      build,
       contribution,
       eventTimeMs
     }: {
       branchBuildId: number;
-      contribution: Record<string, any>;
-      eventTimeMs?: number;
+      rootBuildId: number;
+      build?: Record<string, any> | null;
+      contribution?: Record<string, any> | null;
+      eventTimeMs: number;
     }) {
       return dispatch({
         type: 'UPDATE_BUILD_CONTRIBUTION_SUBMISSION_STATE',
         branchBuildId,
+        rootBuildId,
+        build,
         contribution,
         eventTimeMs
       });

@@ -9,6 +9,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useChatContext } from '~/contexts';
 import { isCachedCardStateFresher } from '~/helpers/buildCardState';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
+import { canUpdateAppFromBuildContributionSubmission } from '~/helpers/buildContributionSubmissionHelpers';
 
 type BuildContributionSubmissionStatus = 'open' | 'merging' | 'merged' | 'gone';
 
@@ -39,6 +40,10 @@ interface BuildContributionSubmissionPayload {
   // Stamped by the hydrator when this payload was read, so the card can tell
   // it apart from anything this tab cached afterwards.
   eventTimeMs?: number;
+  isPublic?: boolean;
+  releaseStatus?: {
+    hasUnpublishedChanges?: boolean;
+  } | null;
 }
 
 export default function BuildContributionSubmission({
@@ -63,6 +68,7 @@ export default function BuildContributionSubmission({
   const replaceMainWithBuildContribution = useAppContext(
     (v) => v.requestHelpers.replaceMainWithBuildContribution
   );
+  const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const onUpdateBuildContributionSubmissionState = useChatContext(
     (v) => v.actions.onUpdateBuildContributionSubmissionState
   );
@@ -73,9 +79,14 @@ export default function BuildContributionSubmission({
 
   const rootBuildId = Number(submission?.rootBuildId || 0);
   const branchBuildId = Number(submission?.branchBuildId || 0);
-  const cachedState = useChatContext((v) =>
+  const cachedSubmissionState = useChatContext((v) =>
     branchBuildId > 0
       ? v.state.buildContributionSubmissionByBranchId?.[branchBuildId]
+      : null
+  );
+  const cachedReleaseState = useChatContext((v) =>
+    rootBuildId > 0
+      ? v.state.buildContributionReleaseByRootBuildId?.[rootBuildId]
       : null
   );
   // Only when it is actually newer than what the server hydrated. The cache is
@@ -83,13 +94,17 @@ export default function BuildContributionSubmission({
   // card, then the contributor saves again and sends a new one, and without this
   // the fresh 'open' card inherits the old 'merged' entry and hides the very
   // actions the owner was messaged about.
-  const payload = useMemo(
-    () =>
-      isCachedCardStateFresher(cachedState, submission)
-        ? { ...(submission || {}), ...(cachedState || {}) }
-        : { ...(submission || {}) },
-    [submission, cachedState]
-  );
+  const payload = useMemo(() => {
+    const branchPayload = isCachedCardStateFresher(
+      cachedSubmissionState,
+      submission
+    )
+      ? { ...(submission || {}), ...(cachedSubmissionState || {}) }
+      : { ...(submission || {}) };
+    return isCachedCardStateFresher(cachedReleaseState, submission)
+      ? { ...branchPayload, ...(cachedReleaseState || {}) }
+      : branchPayload;
+  }, [submission, cachedSubmissionState, cachedReleaseState]);
   const title = String(payload?.title || 'their project');
   const branchLabel = String(payload?.branchLabel || 'their branch');
   const changedFiles: Array<{ path?: string; status?: ChangedFileStatus }> =
@@ -100,6 +115,12 @@ export default function BuildContributionSubmission({
   const sentByMe = Number(sender.id) === Number(myId);
   const isOwner = Number(payload?.ownerUserId || 0) === Number(myId);
   const note = String(content || '').trim();
+  const canUpdateApp = canUpdateAppFromBuildContributionSubmission({
+    isOwner,
+    isPublic: payload?.isPublic,
+    releaseStatus: payload?.releaseStatus,
+    status
+  });
 
   if (!rootBuildId || !branchBuildId) {
     return <span>{content}</span>;
@@ -202,6 +223,18 @@ export default function BuildContributionSubmission({
                 </GameCTAButton>
               </>
             )
+          ) : null}
+          {canUpdateApp ? (
+            <GameCTAButton
+              variant="magenta"
+              size="md"
+              icon="globe"
+              shiny
+              loading={actionLoading === 'update-app'}
+              onClick={handleUpdateApp}
+            >
+              Update App
+            </GameCTAButton>
           ) : null}
         </>
       }
@@ -384,16 +417,53 @@ export default function BuildContributionSubmission({
     }
   }
 
-  // The server's returned branch row is the only thing allowed to move the card
-  // out of 'open'; nothing here guesses a status from the fact that a request
-  // came back without throwing.
+  async function handleUpdateApp() {
+    if (actionLoading) return;
+    setActionLoading('update-app');
+    setActionError('');
+    try {
+      const result = await publishBuild({ buildId: rootBuildId });
+      if (!result?.success || !result?.build) {
+        setActionError(result?.error || 'Failed to update app');
+        return;
+      }
+      applyCanonicalSubmissionState(result);
+    } catch (error: any) {
+      const responseData = error?.response?.data || {};
+      if (
+        responseData.code === 'build_release_up_to_date' &&
+        responseData.releaseStatus &&
+        Number(responseData.eventTimeMs || 0) > 0
+      ) {
+        applyCanonicalSubmissionState({
+          build: {
+            id: rootBuildId,
+            isPublic: responseData.releaseStatus.isPublic,
+            releaseStatus: responseData.releaseStatus
+          },
+          eventTimeMs: responseData.eventTimeMs
+        });
+        return;
+      }
+      handleActionError(error, 'Failed to update app');
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  // Only the server's returned branch and root rows can move card or release
+  // state. A request completing by itself proves neither merge nor publish.
   function applyCanonicalSubmissionState(result: any) {
     const contribution = result?.contribution || null;
-    if (!contribution) return;
+    const build = result?.build || null;
+    const eventTimeMs = Number(result?.eventTimeMs || 0);
+    if ((!contribution && !build) || !eventTimeMs) return;
     onUpdateBuildContributionSubmissionState({
       branchBuildId,
+      rootBuildId: Number(build?.id || rootBuildId),
+      build,
       contribution,
-      eventTimeMs: Number(result?.eventTimeMs || Date.now())
+      eventTimeMs
     });
   }
 

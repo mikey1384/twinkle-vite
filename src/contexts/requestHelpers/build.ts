@@ -1415,11 +1415,17 @@ export default function buildRequestHelpers({
       }
     },
 
-    async generateBuildTwinkleNews({ buildId }: { buildId: number }) {
+    async generateBuildTwinkleNews({
+      buildId,
+      refresh = false
+    }: {
+      buildId: number;
+      refresh?: boolean;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/news/generate`,
-          {},
+          { refresh },
           auth()
         );
         return data;

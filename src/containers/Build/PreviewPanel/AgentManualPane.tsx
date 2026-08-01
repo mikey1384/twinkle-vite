@@ -177,7 +177,7 @@ const sdkSections: GuideSection[] = [
     title: 'Twinkle.news',
     items: [
       'await Twinkle.news.getCurrentEdition() reads the globally shared Twinkle Daily edition.',
-      "await Twinkle.news.generateCurrentEdition() lets a signed-in viewer queue today's edition. The server creates at most one ready edition per Twinkle day. A model-backed job consumes AI Energy from the viewer whose request creates or retries it; deduplicated callers and quiet editions with no model call are not charged.",
+      "await Twinkle.news.generateCurrentEdition() lets a signed-in viewer queue today's edition. The server creates at most one ready edition per Twinkle day. In the canonical Twinkle Newspaper app, its current owner may call generateCurrentEdition({ refresh: true }) to revise today's ready edition with newer events. A model-backed job consumes AI Energy from the viewer whose request creates, retries, or refreshes it; deduplicated callers and quiet editions with no model call are not charged.",
       'When generationStatus is pending or generating, keep showing response.edition (the latest ready edition) and poll gently for the new one.'
     ]
   },

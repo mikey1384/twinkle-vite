@@ -1179,7 +1179,8 @@ export function useHostBridge({
               triggerGuestRestriction(previewAuth);
             }
             response = await requestRefs.generateBuildTwinkleNewsRef.current({
-              buildId: activeBuild.id
+              buildId: activeBuild.id,
+              refresh: payload?.refresh === true
             });
             break;
 

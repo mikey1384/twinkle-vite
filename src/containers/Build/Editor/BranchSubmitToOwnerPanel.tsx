@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
+import ProfilePic from '~/components/ProfilePic';
 import Textarea from '~/components/Texts/Textarea';
 import { mobileMaxWidth } from '~/constants/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
+import {
+  getBranchSubmitOwnerCopy,
+  getBranchSubmitOwnerPresence
+} from '~/helpers/branchSubmitToOwnerHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
 // The contributor's side of handing work over: one button that puts the change
@@ -15,14 +20,22 @@ export default function BranchSubmitToOwnerPanel({
   branchBuildId,
   hasWorkToSend,
   revisionHash,
+  ownerUserId,
+  ownerProfilePicUrl,
   ownerUsername
 }: {
   rootBuildId: number;
   branchBuildId: number;
   hasWorkToSend: boolean;
   revisionHash?: string | null;
+  ownerUserId?: number | null;
+  ownerProfilePicUrl?: string | null;
   ownerUsername?: string | null;
 }) {
+  const normalizedOwnerUserId = Number(ownerUserId || 0);
+  const ownerChatStatus = useChatContext(
+    (v) => v.state.chatStatus[normalizedOwnerUserId]
+  );
   const notifyBuildOwnerOfContribution = useAppContext(
     (v) => v.requestHelpers.notifyBuildOwnerOfContribution
   );
@@ -43,7 +56,11 @@ export default function BranchSubmitToOwnerPanel({
 
   if (!rootBuildId || !branchBuildId || !hasWorkToSend) return null;
 
-  const owner = String(ownerUsername || '').trim() || 'the project owner';
+  const ownerCopy = getBranchSubmitOwnerCopy({
+    ownerUsername,
+    sent: Boolean(sentAt)
+  });
+  const ownerPresence = getBranchSubmitOwnerPresence(ownerChatStatus);
 
   return (
     <div className={panelClass} aria-live="polite">
@@ -54,8 +71,8 @@ export default function BranchSubmitToOwnerPanel({
         <div className={copyClass}>
           <strong>Ready to send this update?</strong>
           <span>
-            Send {owner} a message with what changed. They can review it, merge
-            it, or replace Main from chat.
+            Send {ownerCopy.ownerName} a message with what changed. They can
+            review it, merge it, or replace Main from chat.
           </span>
         </div>
       </div>
@@ -75,23 +92,45 @@ export default function BranchSubmitToOwnerPanel({
         <div className={sentClass} role="status">
           <Icon icon="check" />
           <span>
-            Sent to {owner} {timeSince(sentAt)}. It is ready for review in your
-            chat.
+            {ownerCopy.sentLabel} {timeSince(sentAt)}. It is ready for review
+            in your chat.
           </span>
         </div>
       ) : null}
       <div className={actionClass}>
-        <GameCTAButton
-          variant={sentAt ? 'neutral' : 'logoBlue'}
-          size="md"
-          icon={sentAt ? 'redo' : 'paper-plane'}
-          shiny={!sentAt}
-          loading={sending}
-          disabled={sending}
-          onClick={handleSend}
+        <div
+          className={cx(
+            personalizedButtonClass,
+            normalizedOwnerUserId ? buttonWithAvatarClass : undefined
+          )}
         >
-          {sentAt ? 'Send again' : `Send update to ${owner}`}
-        </GameCTAButton>
+          {normalizedOwnerUserId ? (
+            <div className={buttonAvatarClass} aria-hidden="true">
+              <ProfilePic
+                userId={normalizedOwnerUserId}
+                profilePicUrl={ownerProfilePicUrl || undefined}
+                preferProvidedProfilePicUrl
+                online={ownerPresence.isOnline}
+                isAway={ownerPresence.isAway}
+                isBusy={ownerPresence.isBusy}
+                statusShown
+                statusSize="dot"
+                size="2.5rem"
+                style={{ cursor: 'inherit' }}
+              />
+            </div>
+          ) : null}
+          <GameCTAButton
+            variant={sentAt ? 'neutral' : 'logoBlue'}
+            size="md"
+            shiny={!sentAt}
+            loading={sending}
+            disabled={sending}
+            onClick={handleSend}
+          >
+            {ownerCopy.actionLabel}
+          </GameCTAButton>
+        </div>
       </div>
     </div>
   );
@@ -222,8 +261,36 @@ const actionClass = css`
   display: flex;
   justify-content: flex-end;
   @media (max-width: ${mobileMaxWidth}) {
+    > div {
+      width: 100%;
+    }
+  }
+`;
+
+const personalizedButtonClass = css`
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  @media (max-width: ${mobileMaxWidth}) {
     > button {
       width: 100%;
     }
   }
+`;
+
+const buttonWithAvatarClass = css`
+  > button {
+    padding-left: 4.35rem;
+  }
+`;
+
+const buttonAvatarClass = css`
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 0.85rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  transform: translateY(-50%);
+  pointer-events: none;
 `;

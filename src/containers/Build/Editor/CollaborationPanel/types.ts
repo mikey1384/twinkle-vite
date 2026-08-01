@@ -32,6 +32,7 @@ export interface BuildLike {
   profilePicUrl?: string | null;
   rootBuildUserId?: number | null;
   rootBuildUsername?: string | null;
+  rootBuildProfilePicUrl?: string | null;
   // The identity of the contributor's work: the delta between the branch and
   // the base it was branched from. Empty means a freshly branched or fully
   // merged branch — nothing to hand to the owner.

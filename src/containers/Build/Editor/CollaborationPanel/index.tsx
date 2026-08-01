@@ -1041,6 +1041,8 @@ export default function CollaborationPanel({
           isBranchOpen && Boolean(String(build.contributionRevisionHash || ''))
         }
         revisionHash={build.contributionRevisionHash}
+        ownerUserId={build.rootBuildUserId}
+        ownerProfilePicUrl={build.rootBuildProfilePicUrl}
         ownerUsername={build.rootBuildUsername}
       />
     );
