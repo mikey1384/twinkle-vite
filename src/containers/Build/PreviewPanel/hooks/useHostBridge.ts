@@ -1174,6 +1174,23 @@ export function useHostBridge({
             });
             break;
 
+          case 'news:list-editions':
+            response =
+              await requestRefs.listBuildTwinkleNewsEditionsRef.current({
+                buildId: activeBuild.id,
+                limit: payload?.limit,
+                cursor: payload?.cursor
+              });
+            break;
+
+          case 'news:get-edition':
+            response = await requestRefs.getBuildTwinkleNewsEditionRef.current({
+              buildId: activeBuild.id,
+              dayIndex: payload?.dayIndex,
+              revisionNumber: payload?.revisionNumber
+            });
+            break;
+
           case 'news:generate':
             if (!previewAuth.userIdRef.current) {
               triggerGuestRestriction(previewAuth);

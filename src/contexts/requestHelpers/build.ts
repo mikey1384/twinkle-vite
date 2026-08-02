@@ -1415,6 +1415,59 @@ export default function buildRequestHelpers({
       }
     },
 
+    async listBuildTwinkleNewsEditions({
+      buildId,
+      limit,
+      cursor
+    }: {
+      buildId: number;
+      limit?: number;
+      cursor?: number | string | null;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/news/editions`,
+          {
+            ...auth(),
+            params: {
+              ...(limit != null ? { limit } : {}),
+              ...(cursor != null ? { cursor } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildTwinkleNewsEdition({
+      buildId,
+      dayIndex,
+      revisionNumber
+    }: {
+      buildId: number;
+      dayIndex: number;
+      revisionNumber?: number | null;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/news/editions/${dayIndex}`,
+          {
+            ...auth(),
+            params: {
+              ...(revisionNumber != null
+                ? { revision: revisionNumber }
+                : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async generateBuildTwinkleNews({
       buildId,
       refresh = false

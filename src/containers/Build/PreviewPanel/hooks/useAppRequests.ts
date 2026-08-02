@@ -27,6 +27,12 @@ export default function useAppRequests() {
   const getBuildTwinkleNews = useAppContext(
     (v) => v.requestHelpers.getBuildTwinkleNews
   );
+  const listBuildTwinkleNewsEditions = useAppContext(
+    (v) => v.requestHelpers.listBuildTwinkleNewsEditions
+  );
+  const getBuildTwinkleNewsEdition = useAppContext(
+    (v) => v.requestHelpers.getBuildTwinkleNewsEdition
+  );
   const generateBuildTwinkleNews = useAppContext(
     (v) => v.requestHelpers.generateBuildTwinkleNews
   );
@@ -255,6 +261,10 @@ export default function useAppRequests() {
   const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
   const getBuildTwinkleNewsRef = useRef(getBuildTwinkleNews);
+  const listBuildTwinkleNewsEditionsRef = useRef(
+    listBuildTwinkleNewsEditions
+  );
+  const getBuildTwinkleNewsEditionRef = useRef(getBuildTwinkleNewsEdition);
   const generateBuildTwinkleNewsRef = useRef(generateBuildTwinkleNews);
   const callBuildRuntimeCharacterChatRef = useRef(
     callBuildRuntimeCharacterChat
@@ -361,6 +371,8 @@ export default function useAppRequests() {
     callBuildRuntimeAiChatStreamRef,
     callBuildRuntimeAiObjectRef,
     getBuildTwinkleNewsRef,
+    listBuildTwinkleNewsEditionsRef,
+    getBuildTwinkleNewsEditionRef,
     generateBuildTwinkleNewsRef,
     callBuildRuntimeCharacterChatRef,
     callBuildRuntimeCharacterChatStreamRef,

@@ -109,6 +109,8 @@ registerMethods('build', [
   'callBuildRuntimeAiChatStream',
   'callBuildRuntimeAiObject',
   'getBuildTwinkleNews',
+  'listBuildTwinkleNewsEditions',
+  'getBuildTwinkleNewsEdition',
   'generateBuildTwinkleNews',
   'callBuildRuntimeCharacterChat',
   'callBuildRuntimeCharacterChatStream',
