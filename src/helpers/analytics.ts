@@ -1,5 +1,9 @@
 import { getSectionFromPathname } from '~/helpers';
 import { capitalize } from '~/helpers/stringHelpers';
+import {
+  createAnalyticsCommandGate,
+  type AnalyticsCommand
+} from '~/helpers/analyticsCommandGate';
 
 // GA4 event names sent by the app. Standard GA4 names (sign_up, login,
 // search) are used where they exist so GA's built-in reports pick them up.
@@ -70,23 +74,67 @@ function gtagAvailable() {
   return typeof window !== 'undefined' && typeof window.gtag === 'function';
 }
 
-function send(command: string, ...args: any[]) {
+let analyticsCommandGate: ReturnType<
+  typeof createAnalyticsCommandGate
+> | null = null;
+
+function analyticsAvailable() {
   if (!import.meta.env.PROD) {
     // Dev traffic must not pollute production analytics.
-    return;
+    return false;
   }
-  if (!gtagAvailable()) return;
+  return window.twinkleAnalyticsEnabled === true && gtagAvailable();
+}
+
+function getAnalyticsCommandGate() {
+  if (!analyticsCommandGate) {
+    analyticsCommandGate = createAnalyticsCommandGate(
+      window.twinkleAnalyticsIdentityReady === true
+    );
+  }
+  return analyticsCommandGate;
+}
+
+function dispatchCommand([command, ...args]: AnalyticsCommand) {
+  if (!analyticsAvailable()) return;
   window.gtag(command, ...args);
 }
 
-export function trackPageView({ path }: { path: string }) {
+function send(command: string, ...args: any[]) {
+  if (!analyticsAvailable()) return;
+  getAnalyticsCommandGate().enqueue([command, ...args], dispatchCommand);
+}
+
+function sendImmediately(command: string, ...args: any[]) {
+  dispatchCommand([command, ...args]);
+}
+
+function resolveAnalyticsIdentity() {
+  if (!analyticsAvailable()) return;
+  const commandGate = getAnalyticsCommandGate();
+  window.twinkleAnalyticsIdentityReady = true;
+  window.twinkleConfigureAnalytics();
+  commandGate.resolve(dispatchCommand);
+}
+
+export function trackPageView({
+  path,
+  referrerPath
+}: {
+  path: string;
+  referrerPath?: string | null;
+}) {
   const pathname = path.split('?')[0].split('#')[0];
   // /app-capture is only ever visited by the server's headless thumbnail
   // capture browser — never count it as traffic.
   if (pathname.startsWith('/app-capture')) return;
+  const pageReferrer = referrerPath
+    ? `${window.location.origin}${referrerPath}`
+    : document.referrer;
   send('event', 'page_view', {
     page_location: `${window.location.origin}${path}`,
     page_path: pathname,
+    ...(pageReferrer ? { page_referrer: pageReferrer } : {}),
     page_title: getBasePageTitle(pathname)
   });
 }
@@ -109,9 +157,9 @@ export function setAnalyticsUser(user: {
   joinDate?: number | string;
 }) {
   if (!user?.id) return;
-  send('set', { user_id: String(user.id) });
-  send('set', 'user_properties', {
-    user_type: user.userType || 'student',
+  sendImmediately('set', { user_id: String(user.id) });
+  sendImmediately('set', 'user_properties', {
+    user_type: user.userType || undefined,
     user_level: typeof user.level === 'number' ? String(user.level) : undefined,
     achievement_points:
       typeof user.achievementPoints === 'number'
@@ -121,14 +169,16 @@ export function setAnalyticsUser(user: {
       ? String(new Date(Number(user.joinDate) * 1000).getFullYear())
       : undefined
   });
+  resolveAnalyticsIdentity();
 }
 
 export function clearAnalyticsUser() {
-  send('set', { user_id: null });
-  send('set', 'user_properties', {
+  sendImmediately('set', { user_id: null });
+  sendImmediately('set', 'user_properties', {
     user_type: null,
     user_level: null,
     achievement_points: null,
     join_year: null
   });
+  resolveAnalyticsIdentity();
 }

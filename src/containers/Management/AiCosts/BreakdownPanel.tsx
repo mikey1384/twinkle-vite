@@ -13,6 +13,15 @@ import { Panel } from './Panel';
 import { rangeClass } from './styles';
 import { AiCostReport, AiCostRow, DataTableColumn } from './types';
 
+type BreakdownReport = Pick<
+  AiCostReport,
+  | 'byProviderModel'
+  | 'bySurface'
+  | 'byOperation'
+  | 'byBillingPolicy'
+  | 'breakdownKeys'
+>;
+
 type BreakdownDimension = 'model' | 'surface' | 'operation' | 'policy';
 
 const DIMENSIONS: { value: BreakdownDimension; label: string }[] = [
@@ -119,7 +128,7 @@ const DIMENSION_NOTES: Record<BreakdownDimension, string> = {
   policy: 'Who absorbs the cost.'
 };
 
-export function BreakdownPanel({ report }: { report: AiCostReport }) {
+export function BreakdownPanel({ report }: { report: BreakdownReport }) {
   const [dimension, setDimension] = useState<BreakdownDimension>('model');
 
   const identityColumns = useMemo(() => {

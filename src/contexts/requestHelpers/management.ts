@@ -122,6 +122,51 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAiCostAccount({
+      days,
+      userId
+    }: {
+      days: number;
+      userId: number;
+    }) {
+      try {
+        const params = new URLSearchParams({
+          days: String(days),
+          userId: String(userId)
+        });
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/account?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAiCostAccountEvents({
+      days,
+      userId,
+      cursor
+    }: {
+      days: number;
+      userId: number;
+      cursor?: AiCostEventCursor | null;
+    }) {
+      try {
+        const params = new URLSearchParams({
+          days: String(days),
+          userId: String(userId)
+        });
+        appendAiCostEventCursor(params, cursor);
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/account/events?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAiCostReportCSV(days: number) {
       try {
         const { data } = await request.get(

@@ -30,6 +30,12 @@ import {
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
+import { createIframeFocusController } from '~/helpers/iframeFocus';
+import {
+  createBuildViewOnceController,
+  getBuildViewAnalyticsParams
+} from '~/helpers/buildViewAnalytics';
+import { trackEvent } from '~/helpers/analytics';
 
 type BuildCollaborationMode = 'private' | 'open_source';
 type BuildContributionAccess = 'anyone' | 'invite_only';
@@ -43,6 +49,7 @@ export default function BuildContent({
   build: {
     id?: number;
     userId?: number;
+    username?: string;
     title?: unknown;
     description?: unknown;
     isPublic?: number | boolean | null;
@@ -96,6 +103,16 @@ export default function BuildContent({
     (v) => v.actions.onSetMediaStarted
   );
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const buildViewControllerRef = useRef<ReturnType<
+    typeof createBuildViewOnceController
+  > | null>(null);
+  if (!buildViewControllerRef.current) {
+    buildViewControllerRef.current = createBuildViewOnceController(
+      (buildView) =>
+        trackEvent('build_view', getBuildViewAnalyticsParams(buildView))
+    );
+  }
+  const buildViewController = buildViewControllerRef.current;
   const [VisibilityRef, previewInView] = useInView({
     initialInView: true,
     threshold: 0.05
@@ -198,6 +215,25 @@ export default function BuildContent({
     if (!iframeActivated || !iframeReady) return;
     postRuntimeVisibility(previewInView);
   }, [iframeActivated, iframeReady, previewInView]);
+
+  useEffect(() => {
+    const focusController = createIframeFocusController({
+      cancelScheduledCheck: (checkId) => window.clearTimeout(checkId),
+      documentHasFocus: () => document.hasFocus(),
+      getActiveElement: () => document.activeElement,
+      getOwnedFrames: () => [iframeRef.current],
+      restoreWindowFocus: () => {
+        window.dispatchEvent(new Event('focus'));
+      },
+      scheduleCheck: (callback) => window.setTimeout(callback, 0)
+    });
+
+    window.addEventListener('blur', focusController.handleWindowBlur);
+    return () => {
+      window.removeEventListener('blur', focusController.handleWindowBlur);
+      focusController.dispose();
+    };
+  }, []);
 
   useEffect(() => {
     setCollaborationRequestMessage(String(collaborationRequest?.message || ''));
@@ -580,10 +616,7 @@ export default function BuildContent({
             allow={BUILD_APP_IFRAME_ALLOW}
             allowFullScreen
             loading="lazy"
-            onLoad={() => {
-              setIframeReady(true);
-              postRuntimeVisibility(previewInView);
-            }}
+            onLoad={handleEmbeddedAppLoaded}
             className={css`
               position: absolute;
               inset: 0;
@@ -608,6 +641,16 @@ export default function BuildContent({
     });
     setIframeActivated(true);
     setIframeReady(false);
+  }
+
+  function handleEmbeddedAppLoaded() {
+    setIframeReady(true);
+    postRuntimeVisibility(previewInView);
+    buildViewController.track(embeddedAppPath, {
+      buildId,
+      buildTitle: displayTitle,
+      ownerUsername: String(buildSource?.username || '')
+    });
   }
 
   function handleOpenApp() {

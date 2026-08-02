@@ -26,9 +26,7 @@ import {
   mergeCanonicalGroupMemberIds,
   mergeCanonicalGroupMembers
 } from '~/helpers/chatGroupMembership';
-import {
-  applyCanonicalBuildContributionSubmissionUpdate
-} from '~/helpers/buildContributionSubmissionHelpers';
+import { upsertBuildContributionSubmissionState } from '~/helpers/buildContributionSubmissionHelpers';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -1469,44 +1467,6 @@ function upsertBuildContributionMembershipState({
   };
 }
 
-// The branch and root rows returned by merge, replace, and publish are
-// canonical. The card reads its lifecycle and release status from those rows;
-// it never assumes either merely because a request completed.
-function upsertBuildContributionSubmissionState({
-  state,
-  branchBuildId,
-  rootBuildId,
-  build,
-  contribution,
-  eventTimeMs
-}: {
-  state: any;
-  branchBuildId: number;
-  rootBuildId?: number;
-  build?: Record<string, any> | null;
-  contribution?: Record<string, any> | null;
-  eventTimeMs?: number;
-}) {
-  const resolvedBranchBuildId = Number(branchBuildId || contribution?.id || 0);
-  const resolvedRootBuildId = Number(rootBuildId || build?.id || 0);
-  if (
-    (!resolvedBranchBuildId || !contribution) &&
-    (!resolvedRootBuildId || !build)
-  ) {
-    return state;
-  }
-  const nextEventTime = normalizeEventTimeMs(eventTimeMs);
-  if (!nextEventTime) return state;
-  return applyCanonicalBuildContributionSubmissionUpdate({
-    state,
-    branchBuildId: resolvedBranchBuildId,
-    rootBuildId: resolvedRootBuildId,
-    build,
-    contribution,
-    eventTimeMs: nextEventTime
-  });
-}
-
 // What the project's thumbnail is after the owner adopted one, read off the
 // build row the endpoint returned rather than assumed from the button pressed.
 //
@@ -1794,6 +1754,7 @@ export default function ChatReducer(
         rootBuildId: action.rootBuildId,
         build: action.build,
         contribution: action.contribution,
+        lumineFix: action.lumineFix,
         eventTimeMs: action.eventTimeMs
       });
     case 'UPDATE_BUILD_THUMBNAIL_SUGGESTION_STATE':

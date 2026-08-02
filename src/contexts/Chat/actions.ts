@@ -196,12 +196,14 @@ export default function ChatActions(dispatch: Dispatch) {
       rootBuildId,
       build,
       contribution,
+      lumineFix,
       eventTimeMs
     }: {
       branchBuildId: number;
       rootBuildId: number;
       build?: Record<string, any> | null;
       contribution?: Record<string, any> | null;
+      lumineFix?: Record<string, any> | null;
       eventTimeMs: number;
     }) {
       return dispatch({
@@ -210,6 +212,7 @@ export default function ChatActions(dispatch: Dispatch) {
         rootBuildId,
         build,
         contribution,
+        lumineFix,
         eventTimeMs
       });
     },

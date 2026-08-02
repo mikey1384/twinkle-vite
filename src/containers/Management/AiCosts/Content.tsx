@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
@@ -6,6 +6,7 @@ import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import { Color } from '~/constants/css';
 import RiskGroupDetail from './RiskGroupDetail';
+import AccountDetail from './AccountDetail';
 import UserSearchInput, {
   type UserSearchResult
 } from '~/components/UserSearchInput';
@@ -33,6 +34,7 @@ import {
   shortenHash
 } from './helpers/formatters';
 import {
+  accountDrilldownClass,
   actionsClass,
   barRowClass,
   bucketActionModalClass,
@@ -55,6 +57,7 @@ import {
   AiEnergyManualIdentityRecommendations,
   AiEnergyManualIdentityRawSignal,
   AiEnergyManualIdentityRule,
+  AiCostAccountDetail,
   AiCostReport,
   AiCostRiskGroupDetail,
   AiCostRow,
@@ -77,6 +80,11 @@ const TABS: { value: AiCostTab; label: string }[] = [
 ];
 
 export default function Content({
+  accountDetail,
+  accountError,
+  accountEventsError,
+  accountEventsLoadingMore,
+  accountLoading,
   days,
   downloading,
   error,
@@ -84,10 +92,13 @@ export default function Content({
   eventsLoadingMore,
   loading,
   onDownloadCSV,
+  onLoadMoreAccountEvents,
   onLoadMoreEvents,
   onLoadMoreRiskGroupEvents,
   onBucketDraftLabelChange,
   onAddPendingBucketActionToBucket,
+  onAccountSelect,
+  onCloseAccount,
   onCloseBucketActionModal,
   onCreateBucket,
   onCreateBucketForPendingAction,
@@ -109,6 +120,7 @@ export default function Content({
   manualIdentityLoading,
   manualIdentitySavingKey,
   onBucketTitleSave,
+  selectedAccount,
   selectedBucketId,
   riskGroupDetail,
   riskGroupError,
@@ -117,6 +129,11 @@ export default function Content({
   riskGroupLoading,
   selectedRiskGroup
 }: {
+  accountDetail: AiCostAccountDetail | null;
+  accountError: string;
+  accountEventsError: string;
+  accountEventsLoadingMore: boolean;
+  accountLoading: boolean;
   days: RangeOption;
   downloading: boolean;
   error: string;
@@ -124,10 +141,13 @@ export default function Content({
   eventsLoadingMore: boolean;
   loading: boolean;
   onDownloadCSV: () => void;
+  onLoadMoreAccountEvents: () => void;
   onLoadMoreEvents: () => void;
   onLoadMoreRiskGroupEvents: () => void;
   onBucketDraftLabelChange: (value: string) => void;
   onAddPendingBucketActionToBucket: (bucketId: number) => void;
+  onAccountSelect: (row: AiCostRow) => void;
+  onCloseAccount: () => void;
   onCloseBucketActionModal: () => void;
   onCreateBucket: () => void;
   onCreateBucketForPendingAction: (label: string) => void;
@@ -155,6 +175,7 @@ export default function Content({
     bucketId: number;
     label: string;
   }) => void;
+  selectedAccount: AiCostRow | null;
   selectedBucketId: number;
   riskGroupDetail: AiCostRiskGroupDetail | null;
   riskGroupError: string;
@@ -177,9 +198,15 @@ export default function Content({
   const [tab, setTab] = useState<AiCostTab>('overview');
   const [bucketTitleDraft, setBucketTitleDraft] = useState('');
   const [ipDraft, setIpDraft] = useState('');
+  const topAccountsRef = useRef<HTMLDivElement>(null);
+  const accountDetailRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     setBucketTitleDraft(selectedBucket?.label || '');
   }, [selectedBucket?.id, selectedBucket?.label]);
+  useEffect(() => {
+    if (!selectedAccount?.userId) return;
+    accountDetailRef.current?.scrollIntoView({ block: 'start' });
+  }, [selectedAccount?.userId]);
   const manualAddSaving =
     manualIdentitySavingKey.startsWith('manual-account:') ||
     manualIdentitySavingKey.startsWith('manual-ip:');
@@ -688,73 +715,129 @@ export default function Content({
                 )}
               </Panel>
 
-              <Panel title="Top Accounts" note="Top 50 by estimated spend.">
-                <DataTable
-                  columns={[
-                    {
-                      key: 'username',
-                      label: 'Account',
-                      render: (value, row) => formatAccountName({ value, row })
-                    },
-                    { key: 'accountVerifiedEmail', label: 'Email' },
-                    {
-                      key: 'estimatedCostUsd',
-                      label: 'Cost',
-                      align: 'right',
-                      render: formatUsd
-                    },
-                    {
-                      key: 'requestCount',
-                      label: 'Req',
-                      align: 'right',
-                      render: formatNumber
-                    },
-                    {
-                      key: 'manualIdentityKey',
-                      label: 'Action',
-                      render: (_value, row) => (
-                        <div className={inlineActionGroupClass}>
-                          <button
-                            type="button"
-                            className={inlineActionClass}
-                            disabled={
-                              !row.userId ||
-                              manualIdentitySavingKey ===
-                                getAddUserSavingKey(row)
-                            }
-                            onClick={() =>
-                              onOpenBucketActionModal({
-                                actionType: 'user',
-                                row
-                              })
-                            }
-                          >
-                            Add User
-                          </button>
-                          <button
-                            type="button"
-                            className={inlineActionClass}
-                            disabled={
-                              !getRowEmail(row) ||
-                              manualIdentitySavingKey ===
-                                getAddEmailSavingKey(row)
-                            }
-                            onClick={() =>
-                              onOpenBucketActionModal({
-                                actionType: 'email',
-                                row
-                              })
-                            }
-                          >
-                            Add Email
-                          </button>
-                        </div>
-                      )
+              <div ref={topAccountsRef}>
+                <Panel
+                  title="Top Accounts"
+                  note="Top 50 by estimated spend. Select an account to inspect its usage and recharge activity."
+                >
+                  <DataTable
+                    columns={[
+                      {
+                        key: 'username',
+                        label: 'Account',
+                        render: (value, row) => (
+                          <span className={accountDrilldownClass}>
+                            {formatAccountName({ value, row })}
+                            {row.userId ? (
+                              <span className="drilldown-chevron" aria-hidden>
+                                ›
+                              </span>
+                            ) : null}
+                          </span>
+                        )
+                      },
+                      { key: 'accountVerifiedEmail', label: 'Email' },
+                      {
+                        key: 'estimatedCostUsd',
+                        label: 'Cost',
+                        align: 'right',
+                        render: formatUsd
+                      },
+                      {
+                        key: 'requestCount',
+                        label: 'Req',
+                        align: 'right',
+                        render: formatNumber
+                      },
+                      {
+                        key: 'manualIdentityKey',
+                        label: 'Action',
+                        render: (_value, row) => (
+                          <div className={inlineActionGroupClass}>
+                            <button
+                              type="button"
+                              className={inlineActionClass}
+                              disabled={
+                                !row.userId ||
+                                manualIdentitySavingKey ===
+                                  getAddUserSavingKey(row)
+                              }
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onOpenBucketActionModal({
+                                  actionType: 'user',
+                                  row
+                                });
+                              }}
+                            >
+                              Add User
+                            </button>
+                            <button
+                              type="button"
+                              className={inlineActionClass}
+                              disabled={
+                                !getRowEmail(row) ||
+                                manualIdentitySavingKey ===
+                                  getAddEmailSavingKey(row)
+                              }
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onOpenBucketActionModal({
+                                  actionType: 'email',
+                                  row
+                                });
+                              }}
+                            >
+                              Add Email
+                            </button>
+                          </div>
+                        )
+                      }
+                    ]}
+                    rows={report.topAccounts}
+                    rowKey={(row) => String(Number(row.userId || 0))}
+                    activeRowKey={
+                      selectedAccount
+                        ? String(Number(selectedAccount.userId || 0))
+                        : ''
                     }
-                  ]}
-                  rows={report.topAccounts}
-                />
-              </Panel>
+                    isRowClickable={(row) => Number(row.userId || 0) > 0}
+                    onRowClick={handleAccountRowSelect}
+                  />
+                </Panel>
+              </div>
+
+              {selectedAccount ? (
+                <div ref={accountDetailRef}>
+                  <Panel
+                    title="Account Breakdown"
+                    note={`${formatAccountName({
+                      value: selectedAccount.username,
+                      row: selectedAccount
+                    })} · ${
+                      selectedAccount.accountVerifiedEmail || 'No email'
+                    } · ${days === 1 ? 'Today' : `${days} days`} (UTC)`}
+                    action={
+                      <Button
+                        color="darkerGray"
+                        variant="outline"
+                        onClick={handleCloseAccountDetails}
+                      >
+                        Back to Top Accounts
+                      </Button>
+                    }
+                  >
+                    <AccountDetail
+                      detail={accountDetail}
+                      error={accountError}
+                      eventsError={accountEventsError}
+                      loading={accountLoading}
+                      loadingMore={accountEventsLoadingMore}
+                      onLoadMore={onLoadMoreAccountEvents}
+                    />
+                  </Panel>
+                </div>
+              ) : null}
 
               <div className={twoColumnClass}>
                 <Panel
@@ -1008,6 +1091,20 @@ export default function Content({
       event.preventDefault();
       handleAddIp();
     }
+  }
+
+  function handleCloseAccountDetails() {
+    onCloseAccount();
+    window.requestAnimationFrame(() => {
+      topAccountsRef.current?.scrollIntoView({ block: 'start' });
+    });
+  }
+
+  function handleAccountRowSelect(row: AiCostRow) {
+    onAccountSelect(row);
+    window.requestAnimationFrame(() => {
+      accountDetailRef.current?.scrollIntoView({ block: 'start' });
+    });
   }
 }
 

@@ -26,6 +26,7 @@ import {
   getErrorMessage,
   getErrorMessageFromResponseData
 } from '~/helpers/errorMessageHelpers';
+import { clearAnalyticsUser } from '~/helpers/analytics';
 
 export const initialMyState = {
   achievementPoints: 0,
@@ -128,6 +129,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
         if (status === 401) {
           removeStoredItem('token');
           Object.keys(localStorageKeys).forEach((key) => removeStoredItem(key));
+          clearAnalyticsUser();
           userDispatch({
             type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
           });

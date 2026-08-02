@@ -10,6 +10,7 @@ export default function buildRequestHelpers({
   handleError
 }: RequestHelpers) {
   const BUILD_RUNTIME_UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024;
+  const PUBLIC_BUILD_LEADERBOARD_ORDER_VERSION = 2;
 
   interface BuildRuntimeAiChatStreamEvent {
     type?: string;
@@ -71,7 +72,7 @@ export default function buildRequestHelpers({
     return headers;
   }
 
-  function handleBuildCollaborationActionError(error: any) {
+  function handleBuildCanonicalActionError(error: any) {
     const responseData = error?.response?.data || {};
     return Promise.resolve((handleError as any)(error)).catch((handledError) =>
       Promise.reject({
@@ -1803,6 +1804,10 @@ export default function buildRequestHelpers({
     } = {}) {
       try {
         const params: Record<string, any> = { sort, scope, limit };
+        if (sort === 'popular' || sort === 'forks') {
+          params.leaderboardOrderVersion =
+            PUBLIC_BUILD_LEADERBOARD_ORDER_VERSION;
+        }
         if (excludeMine) {
           params.excludeMine = 1;
         }
@@ -2016,7 +2021,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleBuildCollaborationActionError(error);
+        return handleBuildCanonicalActionError(error);
       }
     },
 
@@ -2035,7 +2040,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleBuildCollaborationActionError(error);
+        return handleBuildCanonicalActionError(error);
       }
     },
 
@@ -2048,7 +2053,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleBuildCollaborationActionError(error);
+        return handleBuildCanonicalActionError(error);
       }
     },
 
@@ -2119,7 +2124,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleBuildCollaborationActionError(error);
+        return handleBuildCanonicalActionError(error);
       }
     },
 
@@ -2138,7 +2143,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleBuildCollaborationActionError(error);
+        return handleBuildCanonicalActionError(error);
       }
     },
 
@@ -2470,6 +2475,71 @@ export default function buildRequestHelpers({
         return data;
       } catch (error) {
         return handleError(error);
+      }
+    },
+
+    async loadBuildContributionLumineFix({
+      buildId,
+      contributionBuildId,
+      stateOnly = false
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      stateOnly?: boolean;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/lumine-fix`,
+          {
+            ...auth(),
+            ...(stateOnly ? { params: { stateOnly: 1 } } : {})
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async sponsorBuildContributionLumineFix({
+      buildId,
+      contributionBuildId,
+      model,
+      reasoningEffort
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      model?: string;
+      reasoningEffort?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/lumine-fix`,
+          { model, reasoningEffort },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleBuildCanonicalActionError(error);
+      }
+    },
+
+    async applyBuildContributionLumineFix({
+      buildId,
+      contributionBuildId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/lumine-fix/apply`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleBuildCanonicalActionError(error);
       }
     },
 

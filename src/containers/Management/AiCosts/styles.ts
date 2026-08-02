@@ -319,6 +319,19 @@ export const inlineActionGroupClass = css`
   gap: 0.45rem;
 `;
 
+export const accountDrilldownClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 700;
+
+  .drilldown-chevron {
+    color: ${Color.logoBlue()};
+    font-size: 1.7rem;
+    line-height: 1;
+  }
+`;
+
 export const inlineActionClass = css`
   border: 1px solid ${Color.logoBlue(0.35)};
   border-radius: ${mediumBorderRadius};
@@ -633,7 +646,8 @@ export const detailSummaryClass = css`
   }
 
   span,
-  strong {
+  strong,
+  small {
     display: block;
   }
 
@@ -647,6 +661,12 @@ export const detailSummaryClass = css`
     margin-top: 0.4rem;
     font-size: 1.8rem;
     overflow-wrap: anywhere;
+  }
+
+  small {
+    margin-top: 0.35rem;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
   }
 
   @media (max-width: ${mobileMaxWidth}) {

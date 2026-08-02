@@ -243,6 +243,9 @@ declare global {
       options?: any
     ) => void;
     gtag: (command: string, ...args: any[]) => void;
+    twinkleAnalyticsEnabled: boolean;
+    twinkleAnalyticsIdentityReady: boolean;
+    twinkleConfigureAnalytics: () => void;
   }
 }
 

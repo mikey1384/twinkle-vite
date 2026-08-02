@@ -58,6 +58,7 @@ import {
   summarizeUploadedFileNames,
   type PreviewLifecycleState
 } from './helpers/previewHelpers';
+import { createIframeFocusController } from '~/helpers/iframeFocus';
 import AgentManualPane from './AgentManualPane';
 import PreviewStage from './PreviewStage';
 import ProjectFileInputs from './ProjectFileInputs';
@@ -938,6 +939,29 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         : normalizedPreviewSrcOverride || workspacePreviewSrc,
       onPreviewFrameRetiredRef
     });
+
+    useEffect(() => {
+      const focusController = createIframeFocusController({
+        cancelScheduledCheck: (checkId) => window.clearTimeout(checkId),
+        documentHasFocus: () => document.hasFocus(),
+        getActiveElement: () => document.activeElement,
+        getOwnedFrames: () => [
+          primaryIframeRef.current,
+          secondaryIframeRef.current
+        ],
+        restoreWindowFocus: () => {
+          window.dispatchEvent(new Event('focus'));
+        },
+        scheduleCheck: (callback) => window.setTimeout(callback, 0)
+      });
+
+      window.addEventListener('blur', focusController.handleWindowBlur);
+      return () => {
+        window.removeEventListener('blur', focusController.handleWindowBlur);
+        focusController.dispose();
+      };
+    }, [primaryIframeRef, secondaryIframeRef]);
+
     const runtimePreviewFrameSrc = runtimeOnly
       ? previewFrameSources.primary
       : null;

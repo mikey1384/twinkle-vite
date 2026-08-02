@@ -35,34 +35,63 @@
         dataLayer.push(arguments);
       }
       (function () {
-        // Keep dev machines, LAN devices, and headless probe/capture
-        // browsers out of analytics: skip loading gtag.js entirely for
-        // local hostnames and for /app-capture (the server's thumbnail
-        // capture browser). window.gtag stays defined either way; calls
-        // just accumulate in dataLayer with nothing listening.
+        // Load production analytics only on Twinkle's public website hosts.
+        // Vite preview builds also have import.meta.env.PROD=true, so a local-
+        // hostname denylist would still let Vercel preview/staging traffic
+        // pollute the production property. /app-capture remains excluded
+        // because it is the server's thumbnail capture browser. A Twinkle
+        // content page owns analytics for its same-origin embedded app frame,
+        // avoiding two GA documents measuring the same foreground time.
         var host = window.location.hostname;
-        var isLocalHost =
-          host === 'localhost' ||
-          host === '127.0.0.1' ||
-          host === '::1' ||
-          host === '[::1]' ||
-          /\.local$/.test(host) ||
-          /^10\./.test(host) ||
-          /^192\.168\./.test(host) ||
-          /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
+        var isProductionWebsiteHost =
+          host === 'www.twin-kle.com' ||
+          host === 'www.twinkle.network' ||
+          host === 'www.lumine.network';
         var isCaptureBrowser =
           window.location.pathname.indexOf('/app-capture') === 0;
-        if (isLocalHost || isCaptureBrowser) return;
+        var isSameOriginEmbeddedBuildApp = false;
+        try {
+          isSameOriginEmbeddedBuildApp =
+            window.self !== window.top &&
+            window.location.pathname.indexOf('/app/') === 0 &&
+            new URLSearchParams(window.location.search).get('embedded') ===
+              '1' &&
+            window.parent.location.origin === window.location.origin;
+        } catch (_error) {
+          // Cross-origin embeds have no Twinkle parent analytics owner.
+        }
+        window.twinkleAnalyticsEnabled =
+          isProductionWebsiteHost &&
+          !isCaptureBrowser &&
+          !isSameOriginEmbeddedBuildApp;
+        window.twinkleAnalyticsIdentityReady = true;
+        window.twinkleConfigureAnalytics = function () {};
+        if (!window.twinkleAnalyticsEnabled) return;
+        var cachedUserId = 0;
+        try {
+          cachedUserId = Number(window.localStorage.getItem('userId')) || 0;
+        } catch (_error) {
+          // If storage is unavailable, the app cannot hydrate a cached user.
+        }
+        window.twinkleAnalyticsIdentityReady = !cachedUserId;
+        var analyticsConfigured = false;
+        window.twinkleConfigureAnalytics = function () {
+          if (analyticsConfigured) return;
+          analyticsConfigured = true;
+          gtag('config', 'G-S5ZDMC9JF8', {
+            send_page_view: false,
+            allow_google_signals: false,
+            allow_ad_personalization_signals: false
+          });
+        };
         var script = document.createElement('script');
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtag/js?id=G-S5ZDMC9JF8';
         document.head.appendChild(script);
         gtag('js', new Date());
-        gtag('config', 'G-S5ZDMC9JF8', {
-          send_page_view: false,
-          allow_google_signals: false,
-          allow_ad_personalization_signals: false
-        });
+        if (window.twinkleAnalyticsIdentityReady) {
+          window.twinkleConfigureAnalytics();
+        }
       })();
     </script>
     <style id="animation"></style>

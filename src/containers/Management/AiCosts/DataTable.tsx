@@ -13,13 +13,15 @@ export function DataTable({
   rows,
   rowKey,
   activeRowKey,
-  onRowClick
+  onRowClick,
+  isRowClickable
 }: {
   columns: DataTableColumn[];
   rows: AiCostRow[];
   rowKey?: (row: AiCostRow, rowIndex: number) => string;
   activeRowKey?: string;
   onRowClick?: (row: AiCostRow) => void;
+  isRowClickable?: (row: AiCostRow) => boolean;
 }) {
   if (rows.length === 0) {
     return <EmptyMessage />;
@@ -42,7 +44,9 @@ export function DataTable({
             const key = rowKey
               ? rowKey(row, rowIndex)
               : getRowKey(row, rowIndex);
-            const isClickable = Boolean(onRowClick);
+            const isClickable = Boolean(
+              onRowClick && (!isRowClickable || isRowClickable(row))
+            );
             return (
               <tr
                 key={key}
@@ -56,6 +60,7 @@ export function DataTable({
                 onKeyDown={
                   isClickable
                     ? (event) => {
+                        if (event.target !== event.currentTarget) return;
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
                           onRowClick?.(row);

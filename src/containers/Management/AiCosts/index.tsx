@@ -15,6 +15,7 @@ import {
   AiEnergyManualIdentityRecommendations,
   AiEnergyManualIdentityRawSignal,
   AiEnergyManualIdentityRule,
+  AiCostAccountDetail,
   AiCostEventPage,
   AiCostReport,
   AiCostRiskGroupDetail,
@@ -64,12 +65,28 @@ export default function AiCosts() {
     useState(false);
   const [riskGroupError, setRiskGroupError] = useState('');
   const [riskGroupEventsError, setRiskGroupEventsError] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState<AiCostRow | null>(
+    null
+  );
+  const [accountDetail, setAccountDetail] =
+    useState<AiCostAccountDetail | null>(null);
+  const [accountLoading, setAccountLoading] = useState(false);
+  const [accountEventsLoadingMore, setAccountEventsLoadingMore] =
+    useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [accountEventsError, setAccountEventsError] = useState('');
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const loadAiCostReport = useAppContext(
     (v) => v.requestHelpers.loadAiCostReport
   );
   const loadAiCostEvents = useAppContext(
     (v) => v.requestHelpers.loadAiCostEvents
+  );
+  const loadAiCostAccount = useAppContext(
+    (v) => v.requestHelpers.loadAiCostAccount
+  );
+  const loadAiCostAccountEvents = useAppContext(
+    (v) => v.requestHelpers.loadAiCostAccountEvents
   );
   const loadAiCostReportCSV = useAppContext(
     (v) => v.requestHelpers.loadAiCostReportCSV
@@ -215,6 +232,46 @@ export default function AiCosts() {
     selectedRiskGroup?.riskKeyHash
   ]);
 
+  useEffect(() => {
+    const userId = Number(selectedAccount?.userId || 0);
+    if (!canView || !userId) {
+      setAccountDetail(null);
+      setAccountError('');
+      setAccountEventsError('');
+      setAccountLoading(false);
+      setAccountEventsLoadingMore(false);
+      return;
+    }
+    let canceled = false;
+    void init();
+
+    async function init() {
+      setAccountLoading(true);
+      setAccountError('');
+      setAccountEventsError('');
+      setAccountEventsLoadingMore(false);
+      try {
+        const data = await loadAiCostAccount({ days, userId });
+        if (canceled) return;
+        setAccountDetail(data);
+      } catch (loadError: any) {
+        if (canceled) return;
+        setAccountError(
+          loadError?.message || 'Failed to load account breakdown'
+        );
+      } finally {
+        if (!canceled) {
+          setAccountLoading(false);
+        }
+      }
+    }
+
+    return () => {
+      canceled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView, days, reloadKey, selectedAccount?.userId]);
+
   if (!canView) {
     return (
       <InvalidPage
@@ -232,11 +289,18 @@ export default function AiCosts() {
       eventsError={eventsError}
       eventsLoadingMore={eventsLoadingMore}
       loading={loading}
+      accountDetail={accountDetail}
+      accountError={accountError}
+      accountEventsError={accountEventsError}
+      accountEventsLoadingMore={accountEventsLoadingMore}
+      accountLoading={accountLoading}
       bucketDraftLabel={bucketDraftLabel}
       pendingBucketAction={pendingBucketAction}
       bucketRecommendations={bucketRecommendations}
       identityBuckets={identityBuckets}
       onAddPendingBucketActionToBucket={handleAddPendingBucketActionToBucket}
+      onAccountSelect={handleAccountSelect}
+      onCloseAccount={() => setSelectedAccount(null)}
       onCloseRiskGroup={() => setSelectedRiskGroup(null)}
       onCloseBucketActionModal={handleCloseBucketActionModal}
       onBucketDraftLabelChange={handleBucketDraftLabelChange}
@@ -244,6 +308,7 @@ export default function AiCosts() {
       onCreateBucketForPendingAction={handleCreateBucketForPendingAction}
       onDownloadCSV={handleDownloadCSV}
       onLoadMoreEvents={handleLoadMoreEvents}
+      onLoadMoreAccountEvents={handleLoadMoreAccountEvents}
       onLoadMoreRiskGroupEvents={handleLoadMoreRiskGroupEvents}
       onRefresh={handleRefresh}
       onDisableManualIdentityRule={handleDisableManualIdentityRule}
@@ -259,6 +324,7 @@ export default function AiCosts() {
       manualIdentitySavingKey={manualIdentitySavingKey}
       onBucketTitleSave={handleBucketTitleSave}
       selectedBucketId={selectedBucketId}
+      selectedAccount={selectedAccount}
       riskGroupDetail={riskGroupDetail}
       riskGroupError={riskGroupError}
       riskGroupEventsError={riskGroupEventsError}
@@ -601,6 +667,56 @@ export default function AiCosts() {
     } finally {
       setRiskGroupEventsLoadingMore(false);
     }
+  }
+
+  async function handleLoadMoreAccountEvents() {
+    const userId = Number(selectedAccount?.userId || 0);
+    if (
+      !userId ||
+      !accountDetail?.eventsHasMore ||
+      !accountDetail.eventsCursor
+    ) {
+      return;
+    }
+    const requestDays = days;
+    const cursor = accountDetail.eventsCursor;
+    setAccountEventsLoadingMore(true);
+    setAccountEventsError('');
+    try {
+      const page = (await loadAiCostAccountEvents({
+        days: requestDays,
+        userId,
+        cursor
+      })) as AiCostEventPage;
+      setAccountDetail((currentDetail) => {
+        if (
+          !currentDetail ||
+          currentDetail.days !== requestDays ||
+          currentDetail.account.userId !== userId
+        ) {
+          return currentDetail;
+        }
+        return {
+          ...currentDetail,
+          events: [...currentDetail.events, ...page.events],
+          eventsCursor: page.nextCursor,
+          eventsHasMore: page.hasMore,
+          eventsPageSize: page.pageSize
+        };
+      });
+    } catch (loadError: any) {
+      setAccountEventsError(
+        loadError?.message || 'Failed to load more account events'
+      );
+    } finally {
+      setAccountEventsLoadingMore(false);
+    }
+  }
+
+  function handleAccountSelect(row: AiCostRow) {
+    const userId = Number(row.userId || 0);
+    if (!userId) return;
+    setSelectedAccount(row);
   }
 
   function handleRiskGroupSelect(row: AiCostRow) {

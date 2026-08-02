@@ -339,6 +339,7 @@ export default function Content({
             build={{
               id: contentObj.id || contentId,
               userId: contentObj.userId,
+              username: uploader?.username,
               title,
               description,
               isPublic: contentObj.isPublic,

@@ -20,6 +20,7 @@ import {
   replayBuildResumeRunState
 } from '~/contexts/Build/resumeRunState';
 import { createFallbackBuildRunMessageId } from '~/contexts/Build/messageIdentity';
+import { resolveBuildContributionLumineFixSocketUpdate } from '~/helpers/buildContributionSubmissionHelpers';
 
 function getBuildRequestLimitsFromPayload(payload: any) {
   return payload?.requestLimits || payload?.billing?.snapshot || null;
@@ -69,6 +70,9 @@ export default function useBuildSocket() {
   );
   const onUpdateBuildCollaborationState = useChatContext(
     (v) => v.actions.onUpdateBuildCollaborationState
+  );
+  const onUpdateBuildContributionSubmissionState = useChatContext(
+    (v) => v.actions.onUpdateBuildContributionSubmissionState
   );
   const onUpdateBuildContributionInviteNotification = useNotiContext(
     (v) => v.actions.onUpdateBuildContributionInviteNotification
@@ -654,10 +658,7 @@ export default function useBuildSocket() {
       projectFiles?: Array<{ path: string; content?: string }> | null;
       projectFilesHash?: string | null;
       interruptionReason?:
-        | 'tool_limit'
-        | 'energy_depleted'
-        | 'awaiting_approval'
-        | null;
+        'tool_limit' | 'energy_depleted' | 'awaiting_approval' | null;
       executionPlan?: any | null;
       followUpPrompt?: {
         question?: string | null;
@@ -1032,11 +1033,7 @@ export default function useBuildSocket() {
       request?: Record<string, any> | null;
       requestId?: number;
       requestStatus?:
-        | 'pending'
-        | 'invited'
-        | 'accepted'
-        | 'rejected'
-        | 'canceled';
+        'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
       eventTimeMs?: number;
       timeStamp?: number;
     }) {
@@ -1064,6 +1061,12 @@ export default function useBuildSocket() {
       }
     }
 
+    function handleBuildContributionLumineFixUpdated(payload: unknown) {
+      const update = resolveBuildContributionLumineFixSocketUpdate(payload);
+      if (!update) return;
+      onUpdateBuildContributionSubmissionState(update);
+    }
+
     socket.on('build_generate_update', handleGenerateUpdate);
     socket.on('build_generate_complete', handleGenerateComplete);
     socket.on('build_generate_error', handleGenerateError);
@@ -1074,6 +1077,10 @@ export default function useBuildSocket() {
     socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
     socket.on('build_activity_updated', handleBuildActivityUpdated);
     socket.on('build_collaboration_updated', handleBuildCollaborationUpdated);
+    socket.on(
+      'build_contribution_lumine_fix_updated',
+      handleBuildContributionLumineFixUpdated
+    );
     socket.on('connect', resumeTrackedBuildRuns);
     window.addEventListener('pageshow', resumeTrackedBuildRuns);
     window.addEventListener('online', resumeTrackedBuildRuns);
@@ -1092,6 +1099,10 @@ export default function useBuildSocket() {
       socket.off(
         'build_collaboration_updated',
         handleBuildCollaborationUpdated
+      );
+      socket.off(
+        'build_contribution_lumine_fix_updated',
+        handleBuildContributionLumineFixUpdated
       );
       socket.off('connect', resumeTrackedBuildRuns);
       window.removeEventListener('pageshow', resumeTrackedBuildRuns);

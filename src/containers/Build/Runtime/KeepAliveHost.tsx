@@ -20,9 +20,16 @@ import {
 } from '~/helpers/buildRuntimeSource';
 import BuildRuntime from '.';
 import type { RuntimeBuild } from './types';
+import { getActiveBuildViewEvent } from './helpers/buildViewTracking';
+import {
+  getBuildViewAnalyticsParams,
+  type BuildViewAnalyticsPayload
+} from '~/helpers/buildViewAnalytics';
 
 interface RuntimeSession {
   buildId: number;
+  buildView: BuildViewAnalyticsPayload | null;
+  buildViewTracked: boolean;
   key: string;
   location: Location;
   loaded: boolean;
@@ -81,6 +88,8 @@ function createRuntimeSession({
 }): RuntimeSession {
   return {
     buildId,
+    buildView: null,
+    buildViewTracked: false,
     key: createRuntimeSessionKey(buildId, runtimeSource),
     location,
     loaded: false,
@@ -298,28 +307,51 @@ export default function BuildRuntimeKeepAliveHost() {
       : 'Build App | Twinkle';
   }, [isRuntimeRoute, activeSessionLoaded, activeSessionTitle]);
 
+  useEffect(() => {
+    const buildView = getActiveBuildViewEvent({
+      activeBuildId,
+      isRuntimeRoute,
+      session: activeSession
+    });
+    if (!buildView || !activeSession) return;
+
+    trackEvent('build_view', getBuildViewAnalyticsParams(buildView));
+    const trackedSessionKey = activeSession.key;
+    setSessions((current) =>
+      current.map((session) =>
+        session.key === trackedSessionKey
+          ? { ...session, buildViewTracked: true }
+          : session
+      )
+    );
+  }, [activeBuildId, activeSession, isRuntimeRoute]);
+
   function handleRuntimeBuildLoaded(
     sessionKey: string,
     build: RuntimeBuild,
     runtimeSource: BuildRuntimeSource
   ) {
-    // Only count the first load of a session that is actually for this build.
     // Must read through sessionsRef (not the closure's `sessions`): stale
-    // resolves from abandoned builds arrive via old closures.
+    // resolves from abandoned builds arrive via old closures. Store canonical
+    // analytics identity with the loaded session; the active-session effect
+    // above emits the view only once the user can actually see this app.
     const target = sessionsRef.current.find((s) => s.key === sessionKey);
     if (!target || target.runtimeSource !== runtimeSource) return;
-    if (!target.loaded && runtimeSource === 'published') {
-      trackEvent('build_view', {
-        build_id: Number(build.id),
-        build_title: String(build.title || ''),
-        owner_username: String(build.username || '')
-      });
-    }
+    const loadedBuildId = Number(build.id);
+    if (loadedBuildId !== target.buildId) return;
     setSessions((current) =>
       current.map((s) =>
         s.key === sessionKey && !s.loaded
           ? {
               ...s,
+              buildView:
+                runtimeSource === 'published'
+                  ? {
+                      buildId: loadedBuildId,
+                      buildTitle: String(build.title || ''),
+                      ownerUsername: String(build.username || '')
+                    }
+                  : null,
               loaded: true,
               title: String(build.title || 'Build App')
             }

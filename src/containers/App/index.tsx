@@ -37,10 +37,16 @@ import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import {
+  clearAnalyticsUser,
   setAnalyticsUser,
   trackEvent,
   trackPageView
 } from '~/helpers/analytics';
+import {
+  createAnalyticsPageViewController,
+  getAnalyticsPath
+} from '~/helpers/analyticsPageViews';
+import { getConfirmedAnalyticsUserId } from '~/helpers/analyticsIdentity';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import { setStoredItem } from '~/helpers/userDataHelpers';
@@ -291,6 +297,8 @@ export default function App() {
     : backgroundColorName;
 
   const {
+    achievementPoints,
+    joinDate,
     level,
     profilePicUrl,
     signinModalShown,
@@ -298,10 +306,22 @@ export default function App() {
     twinkleXP,
     isAdmin,
     userId,
+    userType,
     username
   } = myState;
 
   const prevUserId = useRef(userId);
+  const [confirmedAnalyticsUserId, setConfirmedAnalyticsUserId] = useState<
+    number | null
+  >(null);
+  const analyticsPageViewControllerRef = useRef<ReturnType<
+    typeof createAnalyticsPageViewController
+  > | null>(null);
+  if (!analyticsPageViewControllerRef.current) {
+    analyticsPageViewControllerRef.current =
+      createAnalyticsPageViewController(trackPageView);
+  }
+  const analyticsPageViewController = analyticsPageViewControllerRef.current;
   const chatPushEnsuredUserIdRef = useRef<number | null>(null);
   const onSetChatNotificationSettings = useChatContext(
     (v) => v.actions.onSetChatNotificationSettings
@@ -498,6 +518,12 @@ export default function App() {
     (usingBuildRuntime && !showBuildHeader) ||
     (showBuildHeader && buildHeaderCollapsed && buildNavHidden);
   const buildNavHiddenStorageReady = !userId || userSessionLoaded;
+  const analyticsPath = getAnalyticsPath(location);
+  const analyticsUserIdForSync = getConfirmedAnalyticsUserId({
+    confirmedUserId: confirmedAnalyticsUserId,
+    currentUserId: userId,
+    sessionLoaded: userSessionLoaded
+  });
   // On (re)entering a full build app page, restore/persist the "super full
   // screen" preference only when the build toolbar is also collapsed. Embedded
   // app previews are iframe chrome and must not read or overwrite this state.
@@ -553,10 +579,39 @@ export default function App() {
   }, [usingBuildAppRuntime]);
 
   useEffect(() => {
-    trackPageView({
-      path: location.pathname + location.search + location.hash
+    if (!analyticsUserIdForSync) return;
+    // The session response establishes the initial GA identity synchronously
+    // in handleInit. Keep its properties current afterwards from the same
+    // server/socket-owned user state, never from localStorage's cached user.
+    setAnalyticsUser({
+      id: analyticsUserIdForSync,
+      achievementPoints,
+      joinDate,
+      level,
+      userType
     });
-  }, [location]);
+  }, [
+    achievementPoints,
+    analyticsUserIdForSync,
+    joinDate,
+    level,
+    userType
+  ]);
+
+  useEffect(() => {
+    analyticsPageViewController.observe({
+      path: analyticsPath
+    });
+  }, [analyticsPageViewController, analyticsPath]);
+
+  useEffect(() => {
+    if (
+      confirmedAnalyticsUserId !== null &&
+      confirmedAnalyticsUserId !== Number(userId || 0)
+    ) {
+      setConfirmedAnalyticsUserId(null);
+    }
+  }, [confirmedAnalyticsUserId, userId]);
 
   useEffect(() => {
     checkZeroCallAvailability();
@@ -1482,52 +1537,60 @@ export default function App() {
     }
   }
 
-  async function handleInit(attempts = 0) {
+  async function handleInit(
+    attempts = 0,
+    canonicalAnalyticsUserConfirmed = false
+  ) {
     if (!userId) {
       return;
     }
     const maxRetries = 3;
     const retryDelay = 1000;
+    let analyticsUserConfirmed = canonicalAnalyticsUserConfirmed;
 
     try {
       const data = await loadMyData(location.pathname);
       if (checkUserChange(userId)) return;
-      if (data?.id) {
-        Object.keys(localStorageKeys).forEach((key) => {
-          const value = data[key] || localStorageKeys[key];
-          setStoredItem(key, value);
-        });
-        onSetUserState({
-          userId: data?.id,
-          newState: data
-        });
-        onInitMyState(data);
-        setAnalyticsUser(data);
-        try {
-          const { totalFunds } = await loadCommunityFunds();
-          if (checkUserChange(userId)) return;
-          onSetCommunityFunds(totalFunds || 0);
-        } catch (error) {
-          console.error('Failed to load community funds:', error);
-        }
+      if (!data?.id) {
+        throw new Error('Session response did not include a canonical user');
+      }
+      Object.keys(localStorageKeys).forEach((key) => {
+        const value = data[key] || localStorageKeys[key];
+        setStoredItem(key, value);
+      });
+      onSetUserState({
+        userId: data.id,
+        newState: data
+      });
+      onInitMyState(data);
+      setConfirmedAnalyticsUserId(Number(data.id));
+      setAnalyticsUser(data);
+      analyticsUserConfirmed = true;
+      try {
+        const { totalFunds } = await loadCommunityFunds();
+        if (checkUserChange(userId)) return;
+        onSetCommunityFunds(totalFunds || 0);
+      } catch (error) {
+        console.error('Failed to load community funds:', error);
+      }
 
-        try {
-          const chessStats = await loadChessStats();
-          if (checkUserChange(userId)) return;
-          if (chessStats) {
-            onSetChessStats(chessStats);
-          }
-        } catch (error) {
-          console.error('Failed to load chess stats:', error);
+      try {
+        const chessStats = await loadChessStats();
+        if (checkUserChange(userId)) return;
+        if (chessStats) {
+          onSetChessStats(chessStats);
         }
+      } catch (error) {
+        console.error('Failed to load chess stats:', error);
       }
       await recordUserTraffic(location.pathname);
     } catch (error: any) {
       if (checkUserChange(userId)) return;
       if (attempts < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        return handleInit(attempts + 1);
+        return handleInit(attempts + 1, analyticsUserConfirmed);
       }
+      if (!analyticsUserConfirmed) clearAnalyticsUser();
       console.error('Failed to initialize after multiple attempts:', error);
     } finally {
       if (checkUserChange(userId)) return;

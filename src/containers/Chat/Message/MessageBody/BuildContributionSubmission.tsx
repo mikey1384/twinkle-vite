@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -10,10 +10,118 @@ import { useAppContext, useChatContext } from '~/contexts';
 import { isCachedCardStateFresher } from '~/helpers/buildCardState';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { canUpdateAppFromBuildContributionSubmission } from '~/helpers/buildContributionSubmissionHelpers';
+import { startBuildContributionLumineFixRecovery } from '~/helpers/buildContributionLumineFixRecovery';
+import { socket } from '~/constants/sockets/api';
 
 type BuildContributionSubmissionStatus = 'open' | 'merging' | 'merged' | 'gone';
+type BuildContributionLumineFixStatus =
+  'needs_resolution' | 'running' | 'ready' | 'failed' | 'stale';
 
 type ChangedFileStatus = 'added' | 'updated' | 'deleted';
+
+interface BuildContributionLumineFix {
+  id?: number | null;
+  status?: BuildContributionLumineFixStatus;
+  conflictPaths?: string[];
+  changedPaths?: string[];
+  sponsorUserId?: number | null;
+  model?: string | null;
+  reasoningEffort?: string | null;
+  summary?: string | null;
+  errorMessage?: string | null;
+}
+
+interface LumineModelOption {
+  model: string;
+  label: string;
+  description: string;
+  defaultReasoningEffort: string;
+  supportedReasoningEfforts: string[];
+}
+
+interface LumineFixDetails {
+  canSponsor?: boolean;
+  canApply?: boolean;
+  modelOptions?: LumineModelOption[];
+  modelSelection?: {
+    model?: string;
+    reasoningEffort?: string;
+  };
+  review?: {
+    changedFiles?: Array<{
+      path?: string;
+      beforeContent?: string;
+      afterContent?: string;
+    }>;
+  } | null;
+}
+
+const activeLumineFixStateRequests = new Map<string, Promise<any>>();
+const lumineFixReconnectRefreshers = new Set<() => void>();
+
+function refreshLumineFixCardsAfterReconnect() {
+  for (const refresh of lumineFixReconnectRefreshers) refresh();
+}
+
+function subscribeToLumineFixReconnectRefresh(refresh: () => void) {
+  const shouldAttachListeners = lumineFixReconnectRefreshers.size === 0;
+  lumineFixReconnectRefreshers.add(refresh);
+  if (shouldAttachListeners) {
+    socket.on('connect', refreshLumineFixCardsAfterReconnect);
+    window.addEventListener('online', refreshLumineFixCardsAfterReconnect);
+    window.addEventListener('pageshow', refreshLumineFixCardsAfterReconnect);
+  }
+  return () => {
+    lumineFixReconnectRefreshers.delete(refresh);
+    if (lumineFixReconnectRefreshers.size > 0) return;
+    socket.off('connect', refreshLumineFixCardsAfterReconnect);
+    window.removeEventListener('online', refreshLumineFixCardsAfterReconnect);
+    window.removeEventListener('pageshow', refreshLumineFixCardsAfterReconnect);
+  };
+}
+
+function subscribeToLumineFixVisibleRefresh(refresh: () => void) {
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible') refresh();
+  }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}
+
+function scheduleLumineFixRefresh(refresh: () => void, delayMs: number) {
+  const timer = window.setTimeout(refresh, delayMs);
+  return () => window.clearTimeout(timer);
+}
+
+function loadCanonicalLumineFixStateOnce({
+  buildId,
+  contributionBuildId,
+  loadState
+}: {
+  buildId: number;
+  contributionBuildId: number;
+  loadState: (input: {
+    buildId: number;
+    contributionBuildId: number;
+    stateOnly?: boolean;
+  }) => Promise<any>;
+}) {
+  const key = `${buildId}:${contributionBuildId}`;
+  const activeRequest = activeLumineFixStateRequests.get(key);
+  if (activeRequest) return activeRequest;
+  const request = Promise.resolve()
+    .then(() => loadState({ buildId, contributionBuildId, stateOnly: true }))
+    .finally(() => {
+      if (activeLumineFixStateRequests.get(key) === request) {
+        activeLumineFixStateRequests.delete(key);
+      }
+    });
+  activeLumineFixStateRequests.set(key, request);
+  return request;
+}
 
 interface BuildContributionSubmissionPayload {
   rootBuildId?: number;
@@ -44,6 +152,7 @@ interface BuildContributionSubmissionPayload {
   releaseStatus?: {
     hasUnpublishedChanges?: boolean;
   } | null;
+  lumineFix?: BuildContributionLumineFix | null;
 }
 
 export default function BuildContributionSubmission({
@@ -68,6 +177,15 @@ export default function BuildContributionSubmission({
   const replaceMainWithBuildContribution = useAppContext(
     (v) => v.requestHelpers.replaceMainWithBuildContribution
   );
+  const loadBuildContributionLumineFix = useAppContext(
+    (v) => v.requestHelpers.loadBuildContributionLumineFix
+  );
+  const sponsorBuildContributionLumineFix = useAppContext(
+    (v) => v.requestHelpers.sponsorBuildContributionLumineFix
+  );
+  const applyBuildContributionLumineFix = useAppContext(
+    (v) => v.requestHelpers.applyBuildContributionLumineFix
+  );
   const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const onUpdateBuildContributionSubmissionState = useChatContext(
     (v) => v.actions.onUpdateBuildContributionSubmissionState
@@ -76,6 +194,9 @@ export default function BuildContributionSubmission({
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
   const [confirmingReplace, setConfirmingReplace] = useState(false);
+  const [lumineFixDetails, setLumineFixDetails] =
+    useState<LumineFixDetails | null>(null);
+  const [selectedLumineModel, setSelectedLumineModel] = useState('');
 
   const rootBuildId = Number(submission?.rootBuildId || 0);
   const branchBuildId = Number(submission?.branchBuildId || 0);
@@ -114,6 +235,11 @@ export default function BuildContributionSubmission({
     (payload?.status as BuildContributionSubmissionStatus) || 'open';
   const sentByMe = Number(sender.id) === Number(myId);
   const isOwner = Number(payload?.ownerUserId || 0) === Number(myId);
+  const isContributor =
+    Number(payload?.contributorUserId || 0) === Number(myId);
+  const lumineFix = payload?.lumineFix || null;
+  const lumineFixStatus = lumineFix?.status || null;
+  const hasUnresolvedLumineFix = status === 'merged' && Boolean(lumineFix);
   const note = String(content || '').trim();
   const canUpdateApp = canUpdateAppFromBuildContributionSubmission({
     isOwner,
@@ -121,6 +247,68 @@ export default function BuildContributionSubmission({
     releaseStatus: payload?.releaseStatus,
     status
   });
+
+  useEffect(() => {
+    const shouldRecoverMissedOutcome =
+      status === 'open' || hasUnresolvedLumineFix;
+    if (!shouldRecoverMissedOutcome || !rootBuildId || !branchBuildId) {
+      return;
+    }
+    const shouldPoll = lumineFixStatus === 'running';
+    let canceled = false;
+    const stopRecovery = startBuildContributionLumineFixRecovery({
+      shouldPoll,
+      refreshCanonicalState: refreshCanonicalLumineFixState,
+      subscribeToReconnect: subscribeToLumineFixReconnectRefresh,
+      subscribeToVisible: subscribeToLumineFixVisibleRefresh,
+      scheduleRefresh: scheduleLumineFixRefresh
+    });
+    return () => {
+      canceled = true;
+      stopRecovery();
+    };
+
+    async function refreshCanonicalLumineFixState() {
+      if (canceled) return;
+      try {
+        const result = await loadCanonicalLumineFixStateOnce({
+          buildId: rootBuildId,
+          contributionBuildId: branchBuildId,
+          loadState: loadBuildContributionLumineFix
+        });
+        if (canceled || !result?.success) return;
+        const hasLumineFix = Object.prototype.hasOwnProperty.call(
+          result,
+          'lumineFix'
+        );
+        const contribution =
+          result.contribution && typeof result.contribution === 'object'
+            ? result.contribution
+            : null;
+        const eventTimeMs = Number(result.eventTimeMs || 0);
+        if ((hasLumineFix || contribution) && eventTimeMs > 0) {
+          onUpdateBuildContributionSubmissionState({
+            branchBuildId,
+            rootBuildId,
+            contribution,
+            lumineFix: result.lumineFix,
+            eventTimeMs
+          });
+        }
+      } catch {
+        // The socket event is primary. A later poll, entry, visibility,
+        // reconnect, or canonical message hydration can retry this read.
+      }
+    }
+    // Context actions and request helpers are stable and intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    branchBuildId,
+    hasUnresolvedLumineFix,
+    lumineFixStatus,
+    rootBuildId,
+    status
+  ]);
 
   if (!rootBuildId || !branchBuildId) {
     return <span>{content}</span>;
@@ -130,10 +318,7 @@ export default function BuildContributionSubmission({
     <BuildMessageCard
       themeName={sender.profileTheme}
       bannerText={
-        <>
-          Made updates to{' '}
-          {isOwner ? 'your project' : 'this project'}
-        </>
+        <>Made updates to {isOwner ? 'your project' : 'this project'}</>
       }
       title={title}
       chips={
@@ -166,11 +351,34 @@ export default function BuildContributionSubmission({
               Open branch
             </GameCTAButton>
           ) : null}
-          {/* Only 'open' offers Merge and Replace Main. A branch mid-merge is
-              rejected by both endpoints — merge wants a draft, replace wants a
-              draft or a merged branch — so rendering them there is offering the
-              owner two buttons that can only fail. Conflict resolution lives in
-              the workspace, so that is where the card points instead. */}
+          {hasUnresolvedLumineFix &&
+          isContributor &&
+          (lumineFixStatus === 'needs_resolution' ||
+            lumineFixStatus === 'failed') ? (
+            <GameCTAButton
+              variant="purple"
+              size="md"
+              icon="wand-magic-sparkles"
+              loading={actionLoading === 'load-lumine-fix'}
+              onClick={handleOpenLumineFix}
+            >
+              Sponsor Lumine Fix
+            </GameCTAButton>
+          ) : null}
+          {hasUnresolvedLumineFix && isOwner && lumineFixStatus === 'ready' ? (
+            <GameCTAButton
+              variant="purple"
+              size="md"
+              icon="wand-magic-sparkles"
+              loading={actionLoading === 'load-lumine-fix'}
+              onClick={handleOpenLumineFix}
+            >
+              Review Lumine Fix
+            </GameCTAButton>
+          ) : null}
+          {/* Only an open branch can merge. Replace Main also supports a merged
+              branch with an unresolved conflict as the owner's explicit
+              fallback; a contributor never sees that destructive option. */}
           {isOwner && status === 'merging' ? (
             <GameCTAButton
               variant="orange"
@@ -181,7 +389,7 @@ export default function BuildContributionSubmission({
               Finish merge
             </GameCTAButton>
           ) : null}
-          {isOwner && status === 'open' ? (
+          {isOwner && (status === 'open' || hasUnresolvedLumineFix) ? (
             confirmingReplace ? (
               <>
                 <GameCTAButton
@@ -203,16 +411,18 @@ export default function BuildContributionSubmission({
               </>
             ) : (
               <>
-                <GameCTAButton
-                  variant="success"
-                  size="md"
-                  icon="code-branch"
-                  shiny
-                  loading={actionLoading === 'merge'}
-                  onClick={handleMerge}
-                >
-                  Merge
-                </GameCTAButton>
+                {status === 'open' ? (
+                  <GameCTAButton
+                    variant="success"
+                    size="md"
+                    icon="code-branch"
+                    shiny
+                    loading={actionLoading === 'merge'}
+                    onClick={handleMerge}
+                  >
+                    Merge
+                  </GameCTAButton>
+                ) : null}
                 <GameCTAButton
                   variant="orange"
                   size="md"
@@ -240,6 +450,20 @@ export default function BuildContributionSubmission({
       }
     >
       {note ? <div className={noteClass}>{note}</div> : null}
+
+      {hasUnresolvedLumineFix ? (
+        <LumineFixStatusPanel
+          fix={lumineFix}
+          isContributor={isContributor}
+          isOwner={isOwner}
+          details={lumineFixDetails}
+          selectedModel={selectedLumineModel}
+          loading={actionLoading}
+          onSelectModel={setSelectedLumineModel}
+          onSponsor={handleSponsorLumineFix}
+          onApply={handleApplyLumineFix}
+        />
+      ) : null}
 
       {changedFiles.length > 0 ? (
         <div>
@@ -271,7 +495,7 @@ export default function BuildContributionSubmission({
         </div>
       ) : null}
 
-      {status === 'merged' ? (
+      {status === 'merged' && !hasUnresolvedLumineFix ? (
         <div className={settledClass}>
           <Icon icon="check" />
           <span>
@@ -377,16 +601,6 @@ export default function BuildContributionSubmission({
         setActionError(result?.error || 'Failed to merge branch');
         return;
       }
-      const conflictCount = Array.isArray(result.conflicts)
-        ? result.conflicts.length
-        : 0;
-      if (result.mergeConflictsWritten || conflictCount > 0) {
-        // Conflict resolution lives in the workspace and only there. Saying so
-        // beats a chat card pretending it can finish the job.
-        setActionError(
-          'Merged with conflicts that need to be resolved in the project.'
-        );
-      }
       applyCanonicalSubmissionState(result);
     } catch (error: any) {
       handleActionError(error, 'Failed to merge branch');
@@ -451,24 +665,116 @@ export default function BuildContributionSubmission({
     }
   }
 
+  async function handleOpenLumineFix() {
+    if (actionLoading) return;
+    setActionLoading('load-lumine-fix');
+    setActionError('');
+    try {
+      const result = await loadBuildContributionLumineFix({
+        buildId: rootBuildId,
+        contributionBuildId: branchBuildId
+      });
+      if (!result?.success) {
+        setActionError(result?.error || 'Failed to load the Lumine fix.');
+        return;
+      }
+      applyCanonicalSubmissionState(result);
+      const details = result as LumineFixDetails & { lumineFix?: unknown };
+      setLumineFixDetails(details);
+      const modelOptions = Array.isArray(details.modelOptions)
+        ? details.modelOptions
+        : [];
+      const preferredModel = String(details.modelSelection?.model || '');
+      setSelectedLumineModel(
+        modelOptions.some((option) => option.model === preferredModel)
+          ? preferredModel
+          : modelOptions[0]?.model || ''
+      );
+    } catch (error: any) {
+      handleActionError(error, 'Failed to load the Lumine fix.');
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleSponsorLumineFix() {
+    if (actionLoading || !selectedLumineModel) return;
+    const modelOptions = lumineFixDetails?.modelOptions || [];
+    const selectedOption = modelOptions.find(
+      (option) => option.model === selectedLumineModel
+    );
+    if (!selectedOption) {
+      setActionError('Choose a Lumine model before sponsoring this fix.');
+      return;
+    }
+    setActionLoading('sponsor-lumine-fix');
+    setActionError('');
+    try {
+      const result = await sponsorBuildContributionLumineFix({
+        buildId: rootBuildId,
+        contributionBuildId: branchBuildId,
+        model: selectedOption.model,
+        reasoningEffort: selectedOption.defaultReasoningEffort
+      });
+      if (!result?.success) {
+        setActionError(result?.error || 'Failed to sponsor the Lumine fix.');
+        return;
+      }
+      applyCanonicalSubmissionState(result);
+      setLumineFixDetails(null);
+    } catch (error: any) {
+      handleActionError(error, 'Failed to sponsor the Lumine fix.');
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleApplyLumineFix() {
+    if (actionLoading) return;
+    setActionLoading('apply-lumine-fix');
+    setActionError('');
+    try {
+      const result = await applyBuildContributionLumineFix({
+        buildId: rootBuildId,
+        contributionBuildId: branchBuildId
+      });
+      if (!result?.success) {
+        setActionError(result?.error || 'Failed to apply the Lumine fix.');
+        return;
+      }
+      applyCanonicalSubmissionState(result);
+      setLumineFixDetails(null);
+    } catch (error: any) {
+      handleActionError(error, 'Failed to apply the Lumine fix.');
+    } finally {
+      setActionLoading('');
+    }
+  }
+
   // Only the server's returned branch and root rows can move card or release
   // state. A request completing by itself proves neither merge nor publish.
   function applyCanonicalSubmissionState(result: any) {
     const contribution = result?.contribution || null;
     const build = result?.build || null;
+    const hasLumineFix = Object.prototype.hasOwnProperty.call(
+      result || {},
+      'lumineFix'
+    );
     const eventTimeMs = Number(result?.eventTimeMs || 0);
-    if ((!contribution && !build) || !eventTimeMs) return;
+    if ((!contribution && !build && !hasLumineFix) || !eventTimeMs) return;
     onUpdateBuildContributionSubmissionState({
       branchBuildId,
       rootBuildId: Number(build?.id || rootBuildId),
       build,
       contribution,
+      ...(hasLumineFix ? { lumineFix: result.lumineFix } : {}),
       eventTimeMs
     });
   }
 
   function handleActionError(error: any, fallbackMessage: string) {
-    const responseData = error?.response?.data || {};
+    const responseData = error?.responseData || error?.response?.data || {};
+    applyCanonicalSubmissionState(responseData);
     const code = String(responseData?.code || '');
     if (code === 'build_contribution_root_drifted') {
       setActionError(
@@ -524,6 +830,170 @@ function renderOwnerLookSignal(payload: BuildContributionSubmissionPayload) {
       </span>
     </>
   );
+}
+
+function LumineFixStatusPanel({
+  fix,
+  isContributor,
+  isOwner,
+  details,
+  selectedModel,
+  loading,
+  onSelectModel,
+  onSponsor,
+  onApply
+}: {
+  fix: BuildContributionLumineFix;
+  isContributor: boolean;
+  isOwner: boolean;
+  details: LumineFixDetails | null;
+  selectedModel: string;
+  loading: string;
+  onSelectModel: (model: string) => void;
+  onSponsor: () => void;
+  onApply: () => void;
+}) {
+  const status = fix.status || 'needs_resolution';
+  const modelOptions = Array.isArray(details?.modelOptions)
+    ? details.modelOptions
+    : [];
+  const selectedOption = modelOptions.find(
+    (option) => option.model === selectedModel
+  );
+  const reviewFiles: Array<{
+    path?: string;
+    beforeContent?: string;
+    afterContent?: string;
+  }> = details?.review?.changedFiles || [];
+  const sponsorable =
+    isContributor && (status === 'needs_resolution' || status === 'failed');
+
+  return (
+    <div className={lumineFixPanelClass}>
+      <div className={lumineFixHeadingClass}>
+        <Icon icon="wand-magic-sparkles" />
+        <strong>{getLumineFixHeading(status)}</strong>
+      </div>
+      <span className={lumineFixCopyClass}>
+        {getLumineFixCopy({ status, isContributor, isOwner })}
+      </span>
+      {fix.errorMessage ? (
+        <span className={lumineFixErrorClass}>{fix.errorMessage}</span>
+      ) : null}
+      {status === 'ready' && fix.summary ? (
+        <span className={lumineFixCopyClass}>{fix.summary}</span>
+      ) : null}
+      {status === 'ready' && fix.changedPaths?.length ? (
+        <span className={lumineFixPathsClass}>
+          {fix.changedPaths.join(', ')}
+        </span>
+      ) : null}
+      {sponsorable && details?.canSponsor ? (
+        <div className={lumineFixControlsClass}>
+          <label className={lumineModelLabelClass}>
+            <span>Model</span>
+            <select
+              value={selectedModel}
+              disabled={Boolean(loading)}
+              onChange={(event) => onSelectModel(event.target.value)}
+            >
+              {modelOptions.map((option) => (
+                <option key={option.model} value={option.model}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {selectedOption ? (
+            <span className={lumineFixCopyClass}>
+              {selectedOption.description}
+            </span>
+          ) : null}
+          <GameCTAButton
+            variant="purple"
+            size="md"
+            icon="wand-magic-sparkles"
+            loading={loading === 'sponsor-lumine-fix'}
+            disabled={!selectedOption || Boolean(loading)}
+            onClick={onSponsor}
+          >
+            Sponsor {selectedOption?.label || 'Lumine'} Fix
+          </GameCTAButton>
+        </div>
+      ) : null}
+      {isOwner && status === 'ready' && details?.canApply ? (
+        <div className={lumineFixControlsClass}>
+          <strong className={lumineReviewTitleClass}>Review proposal</strong>
+          {reviewFiles.map((file) => (
+            <details
+              key={String(file.path || '')}
+              className={lumineReviewFileClass}
+            >
+              <summary>{String(file.path || 'Changed file')}</summary>
+              <span>Conflict-marked Main</span>
+              <pre>{String(file.beforeContent || '')}</pre>
+              <span>Lumine proposal</span>
+              <pre>{String(file.afterContent || '')}</pre>
+            </details>
+          ))}
+          {reviewFiles.length === 0 ? (
+            <span className={lumineFixErrorClass}>
+              This proposal could not be verified again, so it cannot be
+              applied.
+            </span>
+          ) : null}
+          <GameCTAButton
+            variant="success"
+            size="md"
+            icon="check"
+            loading={loading === 'apply-lumine-fix'}
+            disabled={reviewFiles.length === 0 || Boolean(loading)}
+            onClick={onApply}
+          >
+            Apply Lumine Fix
+          </GameCTAButton>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function getLumineFixHeading(status: BuildContributionLumineFixStatus) {
+  if (status === 'running') return 'Lumine is preparing a fix';
+  if (status === 'ready') return 'Lumine fix is ready to review';
+  if (status === 'failed') return 'Lumine fix did not finish';
+  if (status === 'stale') return 'Lumine fix is out of date';
+  return 'This merge needs conflict resolution';
+}
+
+function getLumineFixCopy({
+  status,
+  isContributor,
+  isOwner
+}: {
+  status: BuildContributionLumineFixStatus;
+  isContributor: boolean;
+  isOwner: boolean;
+}) {
+  if (status === 'running') {
+    return 'The protected proposal is running. Main will not change unless the owner reviews and applies it.';
+  }
+  if (status === 'ready') {
+    return isOwner
+      ? 'Review the exact proposal below before applying it to Main.'
+      : 'The project owner can review this protected proposal before applying it to Main.';
+  }
+  if (status === 'failed' || status === 'stale') {
+    if (status === 'stale') {
+      return 'Main changed after this conflict merge, so this proposal cannot safely be rerun. Resolve the current Main conflict manually.';
+    }
+    return isContributor
+      ? 'Choose a model to sponsor a new protected proposal, or resolve the conflict manually in Main.'
+      : 'The contributor can sponsor another protected proposal, or the owner can resolve the conflict in Main.';
+  }
+  return isContributor
+    ? 'Sponsor Lumine to prepare a protected proposal. It will not write to Main.'
+    : 'The contributor can sponsor Lumine, or the owner can resolve the conflict in Main.';
 }
 
 function formatDiffSummary(
@@ -654,4 +1124,111 @@ const confirmCopyClass = css`
   color: ${Color.black()};
   font-size: 1.2rem;
   font-weight: 700;
+`;
+
+const lumineFixPanelClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border: 1px solid rgba(126, 87, 194, 0.35);
+  border-radius: 8px;
+  padding: 0.8rem;
+  background: #faf7ff;
+`;
+
+const lumineFixHeadingClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6038a5;
+  font-size: 1.2rem;
+`;
+
+const lumineFixCopyClass = css`
+  color: ${Color.darkerGray()};
+  font-size: 1.1rem;
+  font-weight: 650;
+  line-height: 1.4;
+`;
+
+const lumineFixErrorClass = css`
+  color: ${Color.rose()};
+  font-size: 1.1rem;
+  font-weight: 750;
+  line-height: 1.4;
+`;
+
+const lumineFixPathsClass = css`
+  overflow-wrap: anywhere;
+  color: ${Color.black()};
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1.1rem;
+  line-height: 1.4;
+`;
+
+const lumineFixControlsClass = css`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.1rem;
+`;
+
+const lumineModelLabelClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: ${Color.black()};
+  font-size: 1.1rem;
+  font-weight: 800;
+  select {
+    min-height: 2.4rem;
+    min-width: min(100%, 18rem);
+    border: 1px solid var(--ui-border);
+    border-radius: 7px;
+    background: #fff;
+    padding: 0.3rem 0.55rem;
+    color: ${Color.black()};
+    font-size: 1.1rem;
+  }
+`;
+
+const lumineReviewTitleClass = css`
+  color: ${Color.black()};
+  font-size: 1.2rem;
+`;
+
+const lumineReviewFileClass = css`
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 7px;
+  background: #fff;
+  padding: 0.55rem;
+  summary {
+    cursor: pointer;
+    color: ${Color.logoBlue()};
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+  span {
+    display: block;
+    margin-top: 0.65rem;
+    color: ${Color.darkerGray()};
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+  pre {
+    max-height: 18rem;
+    overflow: auto;
+    margin: 0.35rem 0 0;
+    border-radius: 6px;
+    background: #0f172a;
+    padding: 0.65rem;
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
 `;

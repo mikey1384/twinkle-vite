@@ -29,6 +29,15 @@ export interface AiCostSummary {
   coinCharged: number;
 }
 
+export interface AiCostRechargeSummary {
+  rechargeCount: number;
+  rechargeCoins: number;
+  accountRechargeCount: number;
+  accountRechargeCoins: number;
+  sponsoredRechargeCount: number;
+  sponsoredRechargeCoins: number;
+}
+
 export interface AiCostRow extends Partial<AiCostSummary> {
   avgCostUsd?: number;
   avgInputTokens?: number;
@@ -85,6 +94,11 @@ export interface AiCostRow extends Partial<AiCostSummary> {
   note?: string;
   disabledAt?: number;
   createdAt?: number;
+  rechargeType?: 'account' | 'community';
+  rechargeCount?: number;
+  rechargeCoins?: number;
+  accountRechargeCount?: number;
+  sponsoredRechargeCount?: number;
 }
 
 export interface AiEnergyManualIdentityRule {
@@ -222,6 +236,31 @@ export interface AiCostRiskGroupDetail {
   };
   accounts: AiCostRow[];
   sessionEvidence: AiCostRow[];
+  events: AiCostRow[];
+  eventsCursor: AiCostEventCursor | null;
+  eventsHasMore: boolean;
+  eventsPageSize: number;
+}
+
+export interface AiCostAccountDetail {
+  days: number;
+  startDayIndex: number;
+  endDayIndex: number;
+  generatedAt: number;
+  account: {
+    userId: number;
+    username: string;
+    accountVerifiedEmail: string;
+  };
+  summary: AiCostSummary;
+  rechargeSummary: AiCostRechargeSummary;
+  byDay: AiCostRow[];
+  bySurface: AiCostRow[];
+  byProviderModel: AiCostRow[];
+  byBillingPolicy: AiCostRow[];
+  byOperation: AiCostRow[];
+  breakdownKeys: Record<string, string[]>;
+  recharges: AiCostRow[];
   events: AiCostRow[];
   eventsCursor: AiCostEventCursor | null;
   eventsHasMore: boolean;
