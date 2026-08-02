@@ -5,6 +5,10 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
+import {
+  getBuildCollaborationRequestChipLabel,
+  type BuildCollaborationRequestStatus
+} from '~/helpers/buildCollaborationRequestCardHelpers';
 
 interface BuildCollaborationRequestPayload {
   type?: string;
@@ -27,13 +31,6 @@ interface BuildPublishedAppReleaseStatus {
   state?: string;
   hasPublishedVersion?: boolean;
 }
-
-type BuildCollaborationRequestStatus =
-  | 'pending'
-  | 'invited'
-  | 'accepted'
-  | 'rejected'
-  | 'canceled';
 
 export default function BuildCollaborationRequest({
   content,
@@ -180,7 +177,7 @@ export default function BuildCollaborationRequest({
       themeName={sender.profileTheme}
       bannerIcon="users"
       bannerText={
-        sentByMe ? 'You asked to join a project' : 'Someone wants to help build'
+        sentByMe ? 'Asked to join a project' : 'Wants to help build'
       }
       title={title}
       chips={
@@ -189,7 +186,11 @@ export default function BuildCollaborationRequest({
           muted={status !== 'pending' && status !== 'accepted'}
           icon={status === 'accepted' ? 'check' : 'users'}
         >
-          {getRequestChipLabel(status, memberLeft)}
+          {getBuildCollaborationRequestChipLabel({
+            memberLeft,
+            sentByMe,
+            status
+          })}
         </BuildMessageCardChip>
       }
       actions={
@@ -475,18 +476,6 @@ const requestBodyClass = css`
   font-weight: 700;
 `;
 
-function getRequestChipLabel(
-  status: BuildCollaborationRequestStatus,
-  memberLeft: boolean
-) {
-  if (memberLeft) return 'Left the team';
-  if (status === 'accepted') return 'On the team';
-  if (status === 'rejected') return 'Declined';
-  if (status === 'canceled') return 'Canceled';
-  if (status === 'invited') return 'Invited';
-  return 'Waiting on you';
-}
-
 const requestMessageClass = css`
   border-left: 4px solid var(--themed-card-accent, ${Color.logoBlue(0.55)});
   padding: 0.1rem 0 0.1rem 0.75rem;
@@ -495,4 +484,3 @@ const requestMessageClass = css`
   white-space: pre-wrap;
   font-size: 1.3rem;
 `;
-

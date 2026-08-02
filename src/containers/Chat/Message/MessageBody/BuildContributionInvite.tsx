@@ -216,11 +216,11 @@ export default function BuildContributionInvite({
       themeName={sender.profileTheme}
       bannerIcon="user-plus"
       bannerText={
-        sentByMe ? (
-          <>You invited {invitedObjectLabel} to your team</>
-        ) : (
-          'Team invitation'
-        )
+        sentByMe
+          ? invitedName
+            ? <>Invited {invitedName} to your team</>
+            : 'Team invitation sent'
+          : 'Team invitation'
       }
       title={title}
       chips={
@@ -534,5 +534,4 @@ function getInviteChipLabel(status: BuildContributionInviteStatus) {
   if (status === 'left') return 'Left the team';
   return 'Invitation pending';
 }
-
 

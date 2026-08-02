@@ -131,7 +131,7 @@ export default function BuildContributionSubmission({
       themeName={sender.profileTheme}
       bannerText={
         <>
-          {sentByMe ? 'You' : sender.username} made updates to{' '}
+          Made updates to{' '}
           {isOwner ? 'your project' : 'this project'}
         </>
       }

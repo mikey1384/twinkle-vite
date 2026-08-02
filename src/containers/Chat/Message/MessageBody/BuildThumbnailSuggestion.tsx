@@ -116,7 +116,7 @@ export default function BuildThumbnailSuggestion({
       themeName={sender.profileTheme}
       bannerText={
         <>
-          {sentByMe ? 'You' : sender.username} suggested a thumbnail for{' '}
+          Suggested a thumbnail for{' '}
           {isOwner ? 'your project' : 'this project'}
         </>
       }
