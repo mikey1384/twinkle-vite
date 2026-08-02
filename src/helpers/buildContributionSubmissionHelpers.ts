@@ -10,6 +10,7 @@ interface BuildContributionSubmissionUpdateActionInput {
 export interface BuildContributionLumineFixSocketUpdate {
   branchBuildId: number;
   rootBuildId: number;
+  build?: Record<string, any> | null;
   contribution?: Record<string, any> | null;
   lumineFix: Record<string, any> | null;
   eventTimeMs: number;
@@ -29,11 +30,13 @@ export function resolveBuildContributionLumineFixSocketUpdate(
     update,
     'lumineFix'
   );
+  const hasBuild = Object.prototype.hasOwnProperty.call(update, 'build');
   const hasContribution = Object.prototype.hasOwnProperty.call(
     update,
     'contribution'
   );
   const lumineFix = update.lumineFix;
+  const build = update.build;
   const contribution = update.contribution;
   if (
     !Number.isFinite(branchBuildId) ||
@@ -45,6 +48,9 @@ export function resolveBuildContributionLumineFixSocketUpdate(
     !hasLumineFix ||
     (lumineFix !== null &&
       (typeof lumineFix !== 'object' || Array.isArray(lumineFix))) ||
+    (hasBuild &&
+      build !== null &&
+      (typeof build !== 'object' || Array.isArray(build))) ||
     (hasContribution &&
       contribution !== null &&
       (typeof contribution !== 'object' || Array.isArray(contribution)))
@@ -54,6 +60,7 @@ export function resolveBuildContributionLumineFixSocketUpdate(
   return {
     branchBuildId: Math.floor(branchBuildId),
     rootBuildId: Math.floor(rootBuildId),
+    ...(hasBuild ? { build } : {}),
     ...(hasContribution ? { contribution } : {}),
     lumineFix,
     eventTimeMs: Math.floor(eventTimeMs)

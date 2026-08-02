@@ -114,6 +114,7 @@ export interface Build {
   canOpenContributionWorkspace?: boolean;
   hasActiveContributionInvite?: boolean;
   lumineChatVisibility?: BuildLumineChatVisibility | 'public';
+  lumineFixReviewRequired?: boolean | number;
   rootBuildUserId?: number | null;
   rootBuildUsername?: string | null;
   rootBuildProfilePicUrl?: string | null;

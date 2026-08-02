@@ -1869,16 +1869,24 @@ export default function buildRequestHelpers({
     async updateBuildCollaboration({
       buildId,
       collaborationMode,
-      contributionAccess
+      contributionAccess,
+      lumineFixReviewRequired
     }: {
       buildId: number;
       collaborationMode: 'private' | 'contribution' | 'open_source';
       contributionAccess: 'anyone' | 'invite_only';
+      lumineFixReviewRequired?: boolean;
     }) {
       try {
         const { data } = await request.patch(
           `${URL}/build/${buildId}/collaboration`,
-          { collaborationMode, contributionAccess },
+          {
+            collaborationMode,
+            contributionAccess,
+            ...(lumineFixReviewRequired === undefined
+              ? {}
+              : { lumineFixReviewRequired })
+          },
           auth()
         );
         return data;

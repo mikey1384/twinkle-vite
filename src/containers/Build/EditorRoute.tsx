@@ -9,6 +9,10 @@ import { normalizeBuildResumeRunState } from '~/contexts/Build/resumeRunState';
 import { hydrateBuildRunFromPersistedSnapshot } from './helpers/persistedRunSnapshot';
 import type { BuildCopilotPolicy } from './Editor/types';
 import { socket } from '~/constants/sockets/api';
+import {
+  applyBuildProjectFilesSocketUpdate,
+  resolveBuildProjectFilesSocketUpdate
+} from '~/helpers/buildProjectFilesSocketUpdate';
 
 interface BuildWorkspaceAccessResult {
   kind: 'redirect-runtime' | 'unpublished' | 'branch-private';
@@ -96,11 +100,6 @@ export default function BuildEditorRoute() {
       ? v.state.buildWorkspaces[String(numericBuildId)] || null
       : null
   );
-  const activeBuildRun = useBuildContext((v) =>
-    numericBuildId && !numericBranchNumber
-      ? v.state.buildRuns[String(numericBuildId)] || null
-      : null
-  );
   const onSetBuildWorkspace = useBuildContext(
     (v) => v.actions.onSetBuildWorkspace
   );
@@ -143,6 +142,7 @@ export default function BuildEditorRoute() {
     );
   const [error, setError] = useState('');
   const replayedPersistedRunStateKeysRef = useRef<Record<string, string>>({});
+  const lastCanonicalProjectFilesEventTimeMsRef = useRef(0);
 
   const locationState = (location.state as any) || null;
   const seedGreeting = Boolean(locationState?.seedGreeting);
@@ -191,25 +191,19 @@ export default function BuildEditorRoute() {
     };
 
     async function handleLoad() {
+      const canonicalReadStartedAtMs = Date.now();
       if (!usableCachedWorkspace?.build) {
         setLoading(true);
       }
       try {
-        const shouldReadFromWriter = Boolean(
-          numericBranchNumber ||
-            initialPrompt ||
-            seedGreeting ||
-            activeBuildRun?.generating ||
-            activeBuildRun?.terminalState
-        );
         const data = numericBranchNumber
           ? await loadBuildBranch({
               buildId: numericBuildId,
               branchNumber: numericBranchNumber,
-              options: { fromWriter: shouldReadFromWriter }
+              options: { fromWriter: true }
             })
           : await loadBuild(numericBuildId, {
-              fromWriter: shouldReadFromWriter
+              fromWriter: true
             });
         if (cancelled) return;
         const access = data?.access as BuildWorkspaceAccessResult | undefined;
@@ -309,7 +303,37 @@ export default function BuildEditorRoute() {
           const latestActiveBuildRun = getLatestBuildRun(
             Number(nextBuild.id || numericBuildId)
           );
-          setBuild(nextBuild);
+          const canonicalProjectFilesUpdate =
+            resolveBuildProjectFilesSocketUpdate({
+              buildId: Number(nextBuild.id || 0),
+              build: nextBuild,
+              projectFiles: nextProjectFiles,
+              filesHash: nextBuild.projectFilesHash,
+              source: 'canonical_refresh',
+              eventTimeMs: canonicalReadStartedAtMs
+            });
+          setBuild((currentBuild: any) => {
+            if (
+              !currentBuild ||
+              Number(currentBuild.id || 0) !== Number(nextBuild.id || 0) ||
+              !canonicalProjectFilesUpdate
+            ) {
+              lastCanonicalProjectFilesEventTimeMsRef.current = Math.max(
+                lastCanonicalProjectFilesEventTimeMsRef.current,
+                canonicalReadStartedAtMs
+              );
+              return nextBuild;
+            }
+            const applied = applyBuildProjectFilesSocketUpdate({
+              currentBuild,
+              currentEventTimeMs:
+                lastCanonicalProjectFilesEventTimeMsRef.current,
+              update: canonicalProjectFilesUpdate
+            });
+            lastCanonicalProjectFilesEventTimeMsRef.current =
+              applied.eventTimeMs;
+            return applied.build;
+          });
           setChatMessages(nextChatMessages);
           setCopilotPolicy(nextCopilotPolicy);
           setError('');
@@ -389,6 +413,95 @@ export default function BuildEditorRoute() {
     skipDefaultContributionBranchRedirect,
     userId
   ]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const currentBuildId = Number(numericBuildId || 0);
+    if (!currentBuildId || numericBranchNumber || Number(userId || 0) <= 0) {
+      return;
+    }
+
+    function applyCanonicalProjectFiles(payload: unknown) {
+      const update = resolveBuildProjectFilesSocketUpdate(payload);
+      if (!update || update.buildId !== currentBuildId || cancelled) return;
+      setBuild((currentBuild: any) => {
+        if (
+          !currentBuild ||
+          Number(currentBuild.userId || 0) !== Number(userId || 0) ||
+          Number(currentBuild.contributionRootBuildId || 0) > 0
+        ) {
+          return currentBuild;
+        }
+        const applied = applyBuildProjectFilesSocketUpdate({
+          currentBuild,
+          currentEventTimeMs:
+            lastCanonicalProjectFilesEventTimeMsRef.current,
+          update
+        });
+        lastCanonicalProjectFilesEventTimeMsRef.current = applied.eventTimeMs;
+        return applied.build;
+      });
+    }
+
+    async function refreshCanonicalProjectFiles() {
+      const canonicalReadStartedAtMs = Date.now();
+      try {
+        const data = await loadBuild(currentBuildId, { fromWriter: true });
+        if (
+          cancelled ||
+          !data?.build ||
+          Number(data.build.userId || 0) !== Number(userId || 0) ||
+          Number(data.build.contributionRootBuildId || 0) > 0
+        ) {
+          return;
+        }
+        applyCanonicalProjectFiles({
+          buildId: currentBuildId,
+          build: data.build,
+          projectFiles: Array.isArray(data.projectFiles)
+            ? data.projectFiles
+            : [],
+          filesHash: data.projectFilesHash,
+          source: 'canonical_refresh',
+          eventTimeMs: canonicalReadStartedAtMs
+        });
+      } catch (error) {
+        console.error('Failed to refresh canonical project files:', error);
+      }
+    }
+
+    function recoverCanonicalProjectFiles() {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'hidden'
+      ) {
+        return;
+      }
+      void refreshCanonicalProjectFiles();
+    }
+
+    socket.on('build_project_files_updated', applyCanonicalProjectFiles);
+    socket.on('connect', recoverCanonicalProjectFiles);
+    window.addEventListener('pageshow', recoverCanonicalProjectFiles);
+    window.addEventListener('online', recoverCanonicalProjectFiles);
+    document.addEventListener(
+      'visibilitychange',
+      recoverCanonicalProjectFiles
+    );
+    return () => {
+      cancelled = true;
+      socket.off('build_project_files_updated', applyCanonicalProjectFiles);
+      socket.off('connect', recoverCanonicalProjectFiles);
+      window.removeEventListener('pageshow', recoverCanonicalProjectFiles);
+      window.removeEventListener('online', recoverCanonicalProjectFiles);
+      document.removeEventListener(
+        'visibilitychange',
+        recoverCanonicalProjectFiles
+      );
+    };
+    // loadBuild is a stable context request helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [numericBranchNumber, numericBuildId, userId]);
 
   useEffect(() => {
     const workspaceBuildId = Number(build?.id || numericBuildId || 0);

@@ -19,6 +19,7 @@ interface BuildLike {
   collaborationMode?: BuildCollaborationMode | 'contribution';
   contributionAccess?: BuildContributionAccess;
   lumineChatVisibility?: BuildLumineChatVisibility | 'public';
+  lumineFixReviewRequired?: boolean | number;
 }
 
 interface BuildContributorInvite {
@@ -231,6 +232,9 @@ export default function CollaborationSettingsModal({
     useState<BuildLumineChatVisibility>(
       normalizeLumineChatVisibility(build.lumineChatVisibility)
     );
+  const [lumineFixReviewRequired, setLumineFixReviewRequired] = useState(
+    Number(build.lumineFixReviewRequired || 0) === 1
+  );
   const [contributors, setContributors] = useState<BuildContributorInvite[]>(
     []
   );
@@ -250,9 +254,12 @@ export default function CollaborationSettingsModal({
   const lumineChatVisibilityChanged =
     canShowLumineChatVisibilitySetting &&
     lumineChatVisibility !== persistedLumineChatVisibility;
+  const persistedLumineFixReviewRequired =
+    Number(build.lumineFixReviewRequired || 0) === 1;
   const settingsChanged =
     collaborationMode !== persistedCollaborationMode ||
-    lumineChatVisibilityChanged;
+    lumineChatVisibilityChanged ||
+    lumineFixReviewRequired !== persistedLumineFixReviewRequired;
   const collaborationThemeStyle = {
     '--collaboration-accent': accentRole.getColor(1),
     '--collaboration-accent-border': accentRole.getColor(0.5),
@@ -267,7 +274,14 @@ export default function CollaborationSettingsModal({
     setLumineChatVisibility(
       normalizeLumineChatVisibility(build.lumineChatVisibility)
     );
-  }, [build.collaborationMode, build.lumineChatVisibility]);
+    setLumineFixReviewRequired(
+      Number(build.lumineFixReviewRequired || 0) === 1
+    );
+  }, [
+    build.collaborationMode,
+    build.lumineChatVisibility,
+    build.lumineFixReviewRequired
+  ]);
 
   useEffect(() => {
     void reloadContributors();
@@ -366,6 +380,33 @@ export default function CollaborationSettingsModal({
             </div>
           </div>
         ) : null}
+        <div className={sectionClass}>
+          <div className={sectionTitleClass}>Lumine conflict fixes</div>
+          <button
+            type="button"
+            className={`${optionButtonClass}${
+              lumineFixReviewRequired ? ' selected' : ''
+            }`}
+            aria-pressed={lumineFixReviewRequired}
+            onClick={() =>
+              setLumineFixReviewRequired((reviewRequired) => !reviewRequired)
+            }
+          >
+            <span className={optionIconClass}>
+              <Icon icon={lumineFixReviewRequired ? 'check' : 'bolt'} />
+            </span>
+            <span className={optionContentClass}>
+              <span className={optionTitleClass}>
+                Review fixes before applying
+              </span>
+              <span className={optionDescriptionClass}>
+                {lumineFixReviewRequired
+                  ? 'Lumine will wait for you before changing Main.'
+                  : 'Off — sponsored fixes apply to Main automatically after safety checks pass.'}
+              </span>
+            </span>
+          </button>
+        </div>
         {contributorsCardShown ? (
           <div className={inviteCardClass}>
             <div className={rowClass}>
@@ -403,7 +444,8 @@ export default function CollaborationSettingsModal({
         collaborationMode,
         contributionAccess: getContributionAccessForCollaborationMode(
           collaborationMode
-        )
+        ),
+        lumineFixReviewRequired
       });
       if (result?.build) {
         onBuildPatch(result.build);

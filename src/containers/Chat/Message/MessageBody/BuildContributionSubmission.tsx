@@ -22,6 +22,7 @@ type ChangedFileStatus = 'added' | 'updated' | 'deleted';
 interface BuildContributionLumineFix {
   id?: number | null;
   status?: BuildContributionLumineFixStatus;
+  reviewRequired?: boolean;
   conflictPaths?: string[];
   changedPaths?: string[];
   sponsorUserId?: number | null;
@@ -373,7 +374,9 @@ export default function BuildContributionSubmission({
               loading={actionLoading === 'load-lumine-fix'}
               onClick={handleOpenLumineFix}
             >
-              Review Lumine Fix
+              {lumineFix?.reviewRequired
+                ? 'Review Lumine Fix'
+                : 'Finish Lumine Fix'}
             </GameCTAButton>
           ) : null}
           {/* Only an open branch can merge. Replace Main also supports a merged
@@ -872,15 +875,22 @@ function LumineFixStatusPanel({
     <div className={lumineFixPanelClass}>
       <div className={lumineFixHeadingClass}>
         <Icon icon="wand-magic-sparkles" />
-        <strong>{getLumineFixHeading(status)}</strong>
+        <strong>
+          {getLumineFixHeading(status, Boolean(fix.reviewRequired))}
+        </strong>
       </div>
       <span className={lumineFixCopyClass}>
-        {getLumineFixCopy({ status, isContributor, isOwner })}
+        {getLumineFixCopy({
+          status,
+          isContributor,
+          isOwner,
+          reviewRequired: Boolean(fix.reviewRequired)
+        })}
       </span>
       {fix.errorMessage ? (
         <span className={lumineFixErrorClass}>{fix.errorMessage}</span>
       ) : null}
-      {status === 'ready' && fix.summary ? (
+      {status === 'ready' && fix.reviewRequired && fix.summary ? (
         <span className={lumineFixCopyClass}>{fix.summary}</span>
       ) : null}
       {status === 'ready' && fix.changedPaths?.length ? (
@@ -923,7 +933,9 @@ function LumineFixStatusPanel({
       ) : null}
       {isOwner && status === 'ready' && details?.canApply ? (
         <div className={lumineFixControlsClass}>
-          <strong className={lumineReviewTitleClass}>Review proposal</strong>
+          <strong className={lumineReviewTitleClass}>
+            {fix.reviewRequired ? 'Review fix' : 'Apply resolved fix'}
+          </strong>
           {reviewFiles.map((file) => (
             <details
               key={String(file.path || '')}
@@ -958,9 +970,16 @@ function LumineFixStatusPanel({
   );
 }
 
-function getLumineFixHeading(status: BuildContributionLumineFixStatus) {
+function getLumineFixHeading(
+  status: BuildContributionLumineFixStatus,
+  reviewRequired: boolean
+) {
   if (status === 'running') return 'Lumine is preparing a fix';
-  if (status === 'ready') return 'Lumine fix is ready to review';
+  if (status === 'ready') {
+    return reviewRequired
+      ? 'Lumine fix is ready to review'
+      : 'Lumine resolved the conflict';
+  }
   if (status === 'failed') return 'Lumine fix did not finish';
   if (status === 'stale') return 'Lumine fix is out of date';
   return 'This merge needs conflict resolution';
@@ -969,31 +988,43 @@ function getLumineFixHeading(status: BuildContributionLumineFixStatus) {
 function getLumineFixCopy({
   status,
   isContributor,
-  isOwner
+  isOwner,
+  reviewRequired
 }: {
   status: BuildContributionLumineFixStatus;
   isContributor: boolean;
   isOwner: boolean;
+  reviewRequired: boolean;
 }) {
   if (status === 'running') {
-    return 'The protected proposal is running. Main will not change unless the owner reviews and applies it.';
+    return reviewRequired
+      ? 'Lumine is resolving the conflict. This project is set to wait for owner review before changing Main.'
+      : 'Lumine is resolving the conflict and will apply the fix to Main automatically after safety checks pass.';
   }
   if (status === 'ready') {
+    if (!reviewRequired) {
+      return isOwner
+        ? 'Automatic apply did not complete. Apply the validated fix below.'
+        : 'Automatic apply did not complete. The project owner can finish applying the validated fix.';
+    }
     return isOwner
-      ? 'Review the exact proposal below before applying it to Main.'
-      : 'The project owner can review this protected proposal before applying it to Main.';
+      ? 'Review the exact fix below before applying it to Main.'
+      : 'This project requires the owner to review the fix before it changes Main.';
   }
   if (status === 'failed' || status === 'stale') {
     if (status === 'stale') {
       return 'Main changed after this conflict merge, so this proposal cannot safely be rerun. Resolve the current Main conflict manually.';
     }
     return isContributor
-      ? 'Choose a model to sponsor a new protected proposal, or resolve the conflict manually in Main.'
-      : 'The contributor can sponsor another protected proposal, or the owner can resolve the conflict in Main.';
+      ? 'Choose a model to try the fix again, or resolve the conflict manually in Main.'
+      : 'The contributor can sponsor another fix, or the owner can resolve the conflict in Main.';
   }
-  return isContributor
-    ? 'Sponsor Lumine to prepare a protected proposal. It will not write to Main.'
-    : 'The contributor can sponsor Lumine, or the owner can resolve the conflict in Main.';
+  if (!isContributor) {
+    return 'The contributor can sponsor Lumine, or the owner can resolve the conflict in Main.';
+  }
+  return reviewRequired
+    ? 'Sponsor Lumine to resolve the conflict. This project is set to wait for owner review.'
+    : 'Sponsor Lumine to resolve the conflict and apply the validated fix to Main automatically.';
 }
 
 function formatDiffSummary(

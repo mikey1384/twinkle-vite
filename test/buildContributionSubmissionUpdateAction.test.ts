@@ -188,18 +188,45 @@ test('canonical Lumine socket updates preserve terminal and applied payloads', (
     'ready'
   );
 
+  const appliedUpdate = resolveBuildContributionLumineFixSocketUpdate({
+    rootBuildId: 884,
+    branchBuildId: 901,
+    build: {
+      id: 884,
+      isPublic: 1,
+      releaseStatus: { hasUnpublishedChanges: true }
+    },
+    contribution: { id: 901, contributionStatus: 'merged' },
+    lumineFix: null,
+    eventTimeMs: 1_700_000_005_000
+  });
+  assert.deepEqual(appliedUpdate, {
+    rootBuildId: 884,
+    branchBuildId: 901,
+    build: {
+      id: 884,
+      isPublic: 1,
+      releaseStatus: { hasUnpublishedChanges: true }
+    },
+    contribution: { id: 901, contributionStatus: 'merged' },
+    lumineFix: null,
+    eventTimeMs: 1_700_000_005_000
+  });
+
+  const appliedState = upsertBuildContributionSubmissionState({
+    state: readyState,
+    ...appliedUpdate!
+  });
+  assert.equal(
+    appliedState.buildContributionSubmissionByBranchId[901].lumineFix,
+    null
+  );
   assert.deepEqual(
-    resolveBuildContributionLumineFixSocketUpdate({
-      rootBuildId: 884,
-      branchBuildId: 901,
-      lumineFix: null,
-      eventTimeMs: 1_700_000_005_000
-    }),
+    appliedState.buildContributionReleaseByRootBuildId[884],
     {
-      rootBuildId: 884,
-      branchBuildId: 901,
-      lumineFix: null,
-      eventTimeMs: 1_700_000_005_000
+      isPublic: true,
+      releaseStatus: { hasUnpublishedChanges: true },
+      __eventTime: 1_700_000_005_000
     }
   );
 });
