@@ -1695,6 +1695,19 @@ export default function ContentReducer(
       };
     case 'SET_REWARD_LEVEL': {
       const newState = { ...state };
+      if (
+        action.contentType === 'subject' &&
+        action.contentId &&
+        !newState[contentKey]
+      ) {
+        newState[contentKey] = {
+          ...defaultState,
+          contentId: action.contentId,
+          contentType: action.contentType,
+          rewardLevel: action.rewardLevel,
+          rewardLevelRevision: action.rewardLevelRevision
+        };
+      }
       const contentKeys = Object.keys(newState);
       for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
@@ -1709,6 +1722,9 @@ export default function ContentReducer(
           rewardLevel: contentMatches
             ? action.rewardLevel
             : prevContentState.rewardLevel,
+          rewardLevelRevision: contentMatches
+            ? action.rewardLevelRevision
+            : prevContentState.rewardLevelRevision,
           subjects: prevContentState.subjects?.map((subject: Subject) => {
             const subjectMatches =
               subject.id === action.contentId &&
@@ -1717,7 +1733,10 @@ export default function ContentReducer(
               ...subject,
               rewardLevel: subjectMatches
                 ? action.rewardLevel
-                : subject.rewardLevel
+                : subject.rewardLevel,
+              rewardLevelRevision: subjectMatches
+                ? action.rewardLevelRevision
+                : subject.rewardLevelRevision
             };
           }),
           rootObj: prevContentState.rootObj
@@ -1725,7 +1744,10 @@ export default function ContentReducer(
                 ...prevContentState.rootObj,
                 rewardLevel: rootMatches
                   ? action.rewardLevel
-                  : prevContentState.rootObj.rewardLevel
+                  : prevContentState.rootObj.rewardLevel,
+                rewardLevelRevision: rootMatches
+                  ? action.rewardLevelRevision
+                  : prevContentState.rootObj.rewardLevelRevision
               }
             : undefined,
           targetObj: prevContentState.targetObj
@@ -1738,7 +1760,13 @@ export default function ContentReducer(
                         prevContentState.targetObj.subject.id ===
                           action.contentId && action.contentType === 'subject'
                           ? action.rewardLevel
-                          : prevContentState.targetObj.subject.rewardLevel
+                          : prevContentState.targetObj.subject.rewardLevel,
+                      rewardLevelRevision:
+                        prevContentState.targetObj.subject.id ===
+                          action.contentId && action.contentType === 'subject'
+                          ? action.rewardLevelRevision
+                          : prevContentState.targetObj.subject
+                              .rewardLevelRevision
                     }
                   : undefined
               }
@@ -1772,7 +1800,8 @@ export default function ContentReducer(
             return subject.id === action.contentId
               ? {
                   ...subject,
-                  rewardLevel: action.rewardLevel
+                  rewardLevel: action.rewardLevel,
+                  rewardLevelRevision: action.rewardLevelRevision
                 }
               : subject;
           })

@@ -17,6 +17,11 @@ import {
   consumeAchievementProgressEvent
 } from './achievementProgressEventDedupe';
 import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
+import {
+  collectObservedSubjectIds,
+  getMountedSubjectIds,
+  refreshSubjectRewardLevelBatches
+} from '~/helpers/subjectRewardLevelSync';
 
 interface AdminTelemetryEvent {
   message?: string;
@@ -54,6 +59,7 @@ export default function useNotiSocket({
   const onRecommendContent = useContentContext(
     (v) => v.actions.onRecommendContent
   );
+  const onSetRewardLevel = useContentContext((v) => v.actions.onSetRewardLevel);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAchievementUnlockStatus = useAppContext(
     (v) => v.user.actions.onUpdateAchievementUnlockStatus
@@ -75,6 +81,76 @@ export default function useNotiSocket({
   );
   const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
+  const loadSubjectRewardLevels = useAppContext(
+    (v) => v.requestHelpers.loadSubjectRewardLevels
+  );
+
+  const subjectRewardLevelRefreshInFlightRef = useRef(false);
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
+
+  useEffect(() => {
+    async function refreshObservedSubjectRewardLevels() {
+      if (
+        document.visibilityState !== 'visible' ||
+        subjectRewardLevelRefreshInFlightRef.current
+      ) {
+        return;
+      }
+      const subjectIds = collectObservedSubjectIds(
+        getContentStateSnapshot(),
+        getMountedSubjectIds()
+      );
+      if (subjectIds.length === 0) return;
+
+      subjectRewardLevelRefreshInFlightRef.current = true;
+      const requestUserId = userId;
+      try {
+        await refreshSubjectRewardLevelBatches({
+          subjectIds,
+          loadSubjectRewardLevels,
+          shouldContinue: () => requestUserId === userIdRef.current,
+          onSubject: ({ contentId, rewardLevel, rewardLevelRevision }) => {
+            onSetRewardLevel({
+              contentId,
+              contentType: 'subject',
+              rewardLevel,
+              rewardLevelRevision
+            });
+          },
+          onBatchError: (error) => {
+            console.error(
+              'Failed to refresh a subject effort-level batch after resume:',
+              error
+            );
+          }
+        });
+      } finally {
+        subjectRewardLevelRefreshInFlightRef.current = false;
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        void refreshObservedSubjectRewardLevels();
+      }
+    }
+
+    socket.on('connect', refreshObservedSubjectRewardLevels);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', refreshObservedSubjectRewardLevels);
+    return () => {
+      socket.off('connect', refreshObservedSubjectRewardLevels);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener(
+        'pageshow',
+        refreshObservedSubjectRewardLevels
+      );
+    };
+    // getContentStateSnapshot, loadSubjectRewardLevels, and onSetRewardLevel
+    // are stable context helpers; userId is the only changing input.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const showToast = useToast();
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);

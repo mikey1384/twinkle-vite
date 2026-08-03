@@ -3,6 +3,10 @@ import {
   buildLiveCommentEntries,
   getLiveObservedAt
 } from '~/helpers/liveComments';
+import {
+  reconcileHydratedRewardLevels,
+  reconcileSubjectRewardLevelSnapshots
+} from '~/helpers/rewardLevelRevision';
 
 // Records when this client observed a comment copy, so the content entry can
 // tell a fresh response from a stale one. Only comments need it: they are the
@@ -19,7 +23,37 @@ function stampLiveComment({
   return { ...data, liveObservedAt: getLiveObservedAt() };
 }
 
-export default function ContentActions(dispatch: Dispatch) {
+function getRewardLevelRevision(data: object) {
+  const revision = Number(
+    (data as { rewardLevelRevision?: unknown })?.rewardLevelRevision
+  );
+  return Number.isSafeInteger(revision) && revision >= 0 ? revision : undefined;
+}
+
+function getRewardLevel(data: object) {
+  const rewardLevel = Number((data as { rewardLevel?: unknown }).rewardLevel);
+  return Number.isFinite(rewardLevel) ? rewardLevel : undefined;
+}
+
+function hasRewardLevelSnapshot(data: object) {
+  return 'rewardLevel' in data || 'rewardLevelRevision' in data;
+}
+
+type ShouldApplyRewardLevelUpdate = (params: {
+  contentId: number;
+  contentType: string;
+  rewardLevel?: number;
+  rewardLevelRevision?: number;
+}) => boolean;
+
+export default function ContentActions(
+  dispatch: Dispatch,
+  shouldApplyRewardLevelUpdate: ShouldApplyRewardLevelUpdate = () => true,
+  getCanonicalRewardLevel: (
+    contentId: number,
+    contentType: string
+  ) => any = () => undefined
+) {
   return {
     onAddTags({
       tags,
@@ -213,7 +247,19 @@ export default function ContentActions(dispatch: Dispatch) {
       contentType: string;
       contentId: number;
     }) {
-      return dispatch({
+      const rewardLevelRevision = getRewardLevelRevision(data);
+      if (
+        hasRewardLevelSnapshot(data) &&
+        !shouldApplyRewardLevelUpdate({
+          contentId,
+          contentType,
+          rewardLevel: getRewardLevel(data),
+          rewardLevelRevision
+        })
+      ) {
+        return false;
+      }
+      dispatch({
         type: 'EDIT_CONTENT',
         contentType,
         contentId,
@@ -222,6 +268,7 @@ export default function ContentActions(dispatch: Dispatch) {
         // then be recognised as older instead of overwriting it.
         data: stampLiveComment({ contentType, data })
       });
+      return true;
     },
     onEditRewardComment({ id, text }: { id: number; text: string }) {
       return dispatch({
@@ -281,12 +328,22 @@ export default function ContentActions(dispatch: Dispatch) {
       contentType: string;
       requestStartedAt?: number;
     }) {
+      const numericContentId = Number(contentId);
       return dispatch({
         type: 'INIT_CONTENT',
-        contentId: Number(contentId),
+        contentId: numericContentId,
         contentType,
         requestStartedAt,
-        data: stampLiveComment({ contentType, data })
+        data: stampLiveComment({
+          contentType,
+          data: reconcileHydratedRewardLevels({
+            contentId: numericContentId,
+            contentType,
+            data,
+            shouldApplyRewardLevelUpdate,
+            getCanonicalRewardLevel
+          })
+        })
       });
     },
     // Every comment a server response carries — feed rows included — updates
@@ -495,9 +552,14 @@ export default function ContentActions(dispatch: Dispatch) {
       contentId: number;
       contentType: string;
     }) {
+      const reconciledResults = reconcileSubjectRewardLevelSnapshots({
+        subjects: results,
+        shouldApplyRewardLevelUpdate,
+        getCanonicalRewardLevel
+      });
       return dispatch({
         type: 'LOAD_MORE_SUBJECTS',
-        results,
+        results: reconciledResults,
         loadMoreButton,
         contentId,
         contentType
@@ -624,11 +686,16 @@ export default function ContentActions(dispatch: Dispatch) {
       subjects: object[];
       loadMoreButton: boolean;
     }) {
+      const reconciledSubjects = reconcileSubjectRewardLevelSnapshots({
+        subjects,
+        shouldApplyRewardLevelUpdate,
+        getCanonicalRewardLevel
+      });
       return dispatch({
         type: 'LOAD_SUBJECTS',
         contentId,
         contentType,
-        subjects,
+        subjects: reconciledSubjects,
         loadMoreButton
       });
     },
@@ -891,18 +958,32 @@ export default function ContentActions(dispatch: Dispatch) {
     onSetRewardLevel({
       rewardLevel,
       contentType,
-      contentId
+      contentId,
+      rewardLevelRevision
     }: {
       rewardLevel: number;
       contentType: string;
       contentId: number;
+      rewardLevelRevision?: number;
     }) {
-      return dispatch({
+      if (
+        !shouldApplyRewardLevelUpdate({
+          contentId,
+          contentType,
+          rewardLevel,
+          rewardLevelRevision
+        })
+      ) {
+        return false;
+      }
+      dispatch({
         type: 'SET_REWARD_LEVEL',
         rewardLevel,
         contentType,
-        contentId
+        contentId,
+        rewardLevelRevision
       });
+      return true;
     },
     onSetSiteUrl({
       contentId,
@@ -939,18 +1020,32 @@ export default function ContentActions(dispatch: Dispatch) {
     onSetSubjectRewardLevel({
       contentId,
       contentType,
-      rewardLevel
+      rewardLevel,
+      rewardLevelRevision
     }: {
       contentId: number;
       contentType: string;
       rewardLevel: number;
+      rewardLevelRevision?: number;
     }) {
-      return dispatch({
+      if (
+        !shouldApplyRewardLevelUpdate({
+          contentId,
+          contentType,
+          rewardLevel,
+          rewardLevelRevision
+        })
+      ) {
+        return false;
+      }
+      dispatch({
         type: 'SET_SUBJECT_REWARD_LEVEL',
         rewardLevel,
         contentId: Number(contentId),
-        contentType
+        contentType,
+        rewardLevelRevision
       });
+      return true;
     },
     onSetThumbUrl({
       contentId,

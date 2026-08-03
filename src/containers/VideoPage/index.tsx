@@ -746,14 +746,23 @@ export default function VideoPage() {
   function handleSetRewardLevel({
     contentId,
     contentType,
-    rewardLevel
+    rewardLevel,
+    rewardLevelRevision
   }: {
     contentId: number;
     contentType: string;
     rewardLevel: number;
+    rewardLevelRevision?: number;
   }) {
-    onSetRewardLevel({ contentType, contentId, rewardLevel });
-    onSetThumbRewardLevel({ videoId, rewardLevel });
+    const rewardLevelApplied = onSetRewardLevel({
+      contentType,
+      contentId,
+      rewardLevel,
+      rewardLevelRevision
+    });
+    if (rewardLevelApplied !== false) {
+      onSetThumbRewardLevel({ videoId, rewardLevel });
+    }
   }
 
   function handleConsumeHomeFeedActionIntent() {

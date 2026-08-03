@@ -314,6 +314,8 @@ registerMethods('content', [
   'loadReplies',
   'loadRightMenuVideos',
   'loadSubjects',
+  'loadSubjectRewardLevels',
+  'loadContentRewardLevel',
   'loadByUserUploads',
   'loadRecommendedUploads',
   'loadUploads',

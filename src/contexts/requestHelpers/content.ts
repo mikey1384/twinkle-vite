@@ -1472,6 +1472,37 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadSubjectRewardLevels(subjectIds: number[]) {
+      try {
+        if (subjectIds.length === 0) return [];
+        const {
+          data: { subjects }
+        } = await request.get(
+          `${URL}/content/subjects/reward-levels?ids=${subjectIds.join(',')}`,
+          auth()
+        );
+        return Array.isArray(subjects) ? subjects : [];
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadContentRewardLevel({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: 'subject' | 'video';
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/reward-level?contentId=${contentId}&contentType=${contentType}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadByUserUploads({
       contentType,
       lastId,
@@ -1784,13 +1815,25 @@ export default function contentRequestHelpers({
     }) {
       try {
         const {
-          data: { cannotChange, success, moderatorName }
+          data: {
+            cannotChange,
+            success,
+            moderatorName,
+            rewardLevel: canonicalRewardLevel,
+            rewardLevelRevision: canonicalRewardLevelRevision
+          }
         } = await request.put(
           `${URL}/content/rewardLevel`,
           { rewardLevel, contentId, contentType },
           auth()
         );
-        return { cannotChange, success, moderatorName };
+        return {
+          cannotChange,
+          success,
+          moderatorName,
+          rewardLevel: canonicalRewardLevel,
+          rewardLevelRevision: canonicalRewardLevelRevision
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1888,7 +1931,8 @@ export default function contentRequestHelpers({
         );
         if (!isNotification) {
           trackEvent('content_post', {
-            content_type: targetCommentId || rootCommentId ? 'reply' : 'comment',
+            content_type:
+              targetCommentId || rootCommentId ? 'reply' : 'comment',
             parent_content_type: (parent as any)?.contentType,
             has_attachment: !!(fileName || attachment)
           });

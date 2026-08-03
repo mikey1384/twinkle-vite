@@ -9,6 +9,10 @@ import AlertModal from '~/components/Modals/AlertModal';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import {
+  getCanonicalRewardLevelSnapshot,
+  resolveCanonicalRewardLevelSnapshot
+} from '~/helpers/rewardLevelRevision';
 
 const cancelLabel = 'Cancel';
 const setLabel = 'Set';
@@ -34,6 +38,9 @@ export default function RewardLevelModal({
   const updateRewardLevel = useAppContext(
     (v) => v.requestHelpers.updateRewardLevel
   );
+  const loadContentRewardLevel = useAppContext(
+    (v) => v.requestHelpers.loadContentRewardLevel
+  );
   const [moderatorName, setModeratorName] = useState('');
   const [cannotChangeModalShown, setCannotChangeModalShown] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -49,7 +56,13 @@ export default function RewardLevelModal({
   }, [moderatorName]);
 
   return (
-    <Modal modalKey="RewardLevelModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal
+      modalKey="RewardLevelModal"
+      isOpen
+      onClose={onHide}
+      hasHeader={false}
+      bodyPadding={0}
+    >
       <LegacyModalLayout>
         <ErrorBoundary componentPath="RewardLevelModal">
           <header>{setRewardLevelLabel}</header>
@@ -98,17 +111,46 @@ export default function RewardLevelModal({
   async function submit() {
     setPosting(true);
     try {
-      const { cannotChange, success, moderatorName } = await updateRewardLevel({
-        contentId,
-        contentType,
-        rewardLevel
-      });
+      const {
+        cannotChange,
+        success,
+        moderatorName,
+        rewardLevel: canonicalRewardLevel,
+        rewardLevelRevision: canonicalRewardLevelRevision
+      } = await updateRewardLevel({ contentId, contentType, rewardLevel });
       if (cannotChange) {
         setModeratorName(moderatorName);
         return setCannotChangeModalShown(true);
       }
       if (success) {
-        onSubmit({ contentId, rewardLevel, contentType });
+        const response = {
+          rewardLevel: canonicalRewardLevel,
+          rewardLevelRevision: canonicalRewardLevelRevision
+        };
+        let canonicalSnapshot = getCanonicalRewardLevelSnapshot(response);
+        if (!canonicalSnapshot) {
+          if (contentType !== 'subject' && contentType !== 'video') {
+            console.error(
+              'Reward-level update succeeded for an unsupported content type.'
+            );
+            return;
+          }
+          canonicalSnapshot = await resolveCanonicalRewardLevelSnapshot({
+            response,
+            loadCanonicalSnapshot: () =>
+              loadContentRewardLevel({
+                contentId,
+                contentType
+              })
+          });
+        }
+        if (!canonicalSnapshot) {
+          console.error(
+            'Reward-level update succeeded but canonical state could not be confirmed.'
+          );
+          return;
+        }
+        onSubmit({ contentId, contentType, ...canonicalSnapshot });
       }
     } catch (error) {
       console.error(error);

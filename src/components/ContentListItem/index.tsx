@@ -8,6 +8,8 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 import { placeholderHeights } from '~/constants/state';
 import { returnMissionThumb } from '~/constants/defaultValues';
+import { observeMountedSubject } from '~/helpers/subjectRewardLevelSync';
+import { getDisplayedSubjectRewardLevel } from '~/helpers/rewardLevelRevision';
 
 function ContentListItem({
   onClick,
@@ -56,6 +58,11 @@ function ContentListItem({
     contentId: currentContent?.rootObj?.id,
     contentType: currentContent?.rootObj?.contentType
   });
+
+  useEffect(() => {
+    if (contentType !== 'subject') return;
+    return observeMountedSubject(contentId);
+  }, [contentId, contentType]);
 
   useEffect(() => {
     if (currentContent.isDeleted) {
@@ -138,6 +145,12 @@ function ContentListItem({
     userId: buildUserId,
     uploader = {}
   } = currentContent;
+  const displayedRewardLevel =
+    getDisplayedSubjectRewardLevel({
+      contentType,
+      snapshotRewardLevel: rewardLevel,
+      canonicalRewardLevel: contentState.rewardLevel
+    }) ?? rewardLevel;
   const displayThumbUrl =
     thumbUrl ||
     thumbnailUrl ||
@@ -253,7 +266,7 @@ function ContentListItem({
               isListening={isListening}
               modalOverModal={modalOverModal}
               navigate={navigate}
-              rewardLevel={rewardLevel}
+              rewardLevel={displayedRewardLevel}
               rootId={rootContent.id}
               rootContent={rootContent}
               rootRewardLevel={rootContent.rewardLevel}

@@ -168,6 +168,7 @@ export interface Subject {
   secretShown?: boolean;
   title: string;
   rewardLevel: number;
+  rewardLevelRevision?: number;
   userId?: number;
   uploader: User;
 }
