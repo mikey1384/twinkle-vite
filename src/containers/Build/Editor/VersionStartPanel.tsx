@@ -1032,7 +1032,8 @@ export default function VersionStartPanel({
         typeof onFixMergeConflicts === 'function';
       const ownerLumineReviewAction = createOwnerLumineReviewAction({
         mergingBranches,
-        onLoadVersion
+        onLoadVersion,
+        onOpenTeamPanel
       });
       items.push({
         key: 'main-conflicts',

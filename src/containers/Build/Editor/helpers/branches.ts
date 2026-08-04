@@ -36,10 +36,12 @@ export function sortBuildVersionSummaries(versions: BuildVersionSummary[]) {
 
 export function createOwnerLumineReviewAction({
   mergingBranches,
-  onLoadVersion
+  onLoadVersion,
+  onOpenTeamPanel
 }: {
   mergingBranches: BuildVersionSummary[];
   onLoadVersion: (version: BuildVersionSummary) => void;
+  onOpenTeamPanel: () => void;
 }) {
   const branch = mergingBranches[0];
   if (!branch) return null;
@@ -47,7 +49,10 @@ export function createOwnerLumineReviewAction({
     actionLabel: 'Review',
     actionIcon: 'eye',
     detail: 'Review the branch and sponsor Lumine to finish safely.',
-    onClick: () => onLoadVersion(branch)
+    onClick: () => {
+      onOpenTeamPanel();
+      onLoadVersion(branch);
+    }
   };
 }
 

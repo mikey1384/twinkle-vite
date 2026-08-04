@@ -49,10 +49,15 @@ test('a waiting Lumine repair takes the owner straight to that branch', () => {
     contributionStatus: 'merging' as const
   };
   let openedBranchId = 0;
+  let openedTeam = false;
   const action = createOwnerLumineReviewAction({
     mergingBranches: [mergingBranch],
     onLoadVersion: (version) => {
       openedBranchId = version.id;
+      assert.equal(openedTeam, true);
+    },
+    onOpenTeamPanel: () => {
+      openedTeam = true;
     }
   });
 
@@ -62,5 +67,6 @@ test('a waiting Lumine repair takes the owner straight to that branch', () => {
     'Review the branch and sponsor Lumine to finish safely.'
   );
   action?.onClick();
+  assert.equal(openedTeam, true);
   assert.equal(openedBranchId, 42);
 });
