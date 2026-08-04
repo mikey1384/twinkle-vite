@@ -9,6 +9,7 @@ import {
 } from '~/contexts';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../../constants/runtimeViewSources';
 import {
+  getCollaboratingBuildListItemTargetPath,
   normalizeBuildQuickAccessMode,
   normalizeQuickAccessBuilds,
   normalizeQuickAccessCursor,
@@ -291,7 +292,7 @@ export default function useQuickAccess({
   function handleOpenBuild(build: QuickAccessBuild) {
     const buildId = Number(build.id || 0);
     if (!buildId) return;
-    navigate(`/app/${buildId}`, {
+    navigate(getCollaboratingBuildListItemTargetPath(build), {
       state: {
         runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
         runtimeBackLabel: 'Back to Build Studio'
