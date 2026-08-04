@@ -95,6 +95,28 @@ export function shouldShowStandaloneBuildProjectLumineFix({
   return hasLumineFix && !isCurrentBuildOwner && !isProjectOwner;
 }
 
+export function shouldShowStandaloneBranchLumineFixAction({
+  ownerReview,
+  contributionStatus,
+  canAskLumineToResolveConflicts,
+  hasNoticeLumineFixAction,
+  activeConflictMarkerCount
+}: {
+  ownerReview: boolean;
+  contributionStatus: string;
+  canAskLumineToResolveConflicts: boolean;
+  hasNoticeLumineFixAction: boolean;
+  activeConflictMarkerCount: number;
+}) {
+  return Boolean(
+    !ownerReview &&
+    contributionStatus === 'draft' &&
+    canAskLumineToResolveConflicts &&
+    !hasNoticeLumineFixAction &&
+    activeConflictMarkerCount > 0
+  );
+}
+
 export function resolveBranchMainUpdateNoticeState({
   rootDrifted,
   fixChecking,

@@ -8,6 +8,7 @@ import ContributionLumineFixPanel, {
 import BranchMainUpdateNotice, {
   type BranchMainUpdateNoticeControl
 } from '../BranchMainUpdateNotice';
+import { shouldShowStandaloneBranchLumineFixAction } from '~/helpers/branchMainUpdateNotice';
 import RuntimeAssetTransferProgressBar from '../RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from '../helpers/runtimeAssetTransferProgress';
 import type {
@@ -251,10 +252,15 @@ export default function ContributionDetail({
           onToggleSelectedPath={onToggleSelectedPath}
         />
       ) : null}
-      {!ownerReview &&
-      contributionStatus === 'draft' &&
-      canAskLumineToResolveConflicts &&
-      activeConflictMarkerPaths.length > 0 ? (
+      {shouldShowStandaloneBranchLumineFixAction({
+        ownerReview,
+        contributionStatus,
+        canAskLumineToResolveConflicts,
+        hasNoticeLumineFixAction: Boolean(
+          mainUpdateNoticeControl?.branchLumineFixControl
+        ),
+        activeConflictMarkerCount: activeConflictMarkerPaths.length
+      }) ? (
         <div className={rowClass}>
           <FixBuildContributionWithLumineButton
             size="sm"

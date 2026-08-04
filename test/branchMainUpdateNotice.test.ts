@@ -9,6 +9,7 @@ import {
   resolveBuildProjectLumineFixScope,
   selectCurrentBranchCanonicalContribution,
   shouldLoadCurrentBranchLumineFixState,
+  shouldShowStandaloneBranchLumineFixAction,
   shouldShowStandaloneBuildProjectLumineFix
 } from '../src/helpers/branchMainUpdateNotice';
 
@@ -403,6 +404,30 @@ test('branch-local overlap remains blocked after Main is fixed', () => {
   );
   assert.match(markup, /Fix with Lumine/);
   assert.doesNotMatch(markup, /conflict markers|\/app\.js/i);
+});
+
+test('a branch-local overlap uses the shared notice action only once', () => {
+  const input = {
+    ownerReview: false,
+    contributionStatus: 'draft',
+    canAskLumineToResolveConflicts: true,
+    activeConflictMarkerCount: 1
+  };
+
+  assert.equal(
+    shouldShowStandaloneBranchLumineFixAction({
+      ...input,
+      hasNoticeLumineFixAction: true
+    }),
+    false
+  );
+  assert.equal(
+    shouldShowStandaloneBranchLumineFixAction({
+      ...input,
+      hasNoticeLumineFixAction: false
+    }),
+    true
+  );
 });
 
 test('a stale Lumine record cannot block syncing a canonically resolved Main', () => {
