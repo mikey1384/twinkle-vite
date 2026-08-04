@@ -48,6 +48,7 @@ import {
 import ErrorBoundary from '~/components/ErrorBoundary';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
+import { enterRoutedTopic } from './topicRoute';
 
 const loadingPromises: { [channelId: string]: any } = {};
 const deviceIsMobile = isMobile(navigator);
@@ -1351,28 +1352,13 @@ export default function Main({
 
           if (topicId) {
             const subjectId = Number(topicId);
-            if (subjectId) {
-              onSetChannelState({
-                channelId,
-                newState: { selectedTab: 'topic' }
-              });
-              onEnterTopic({ channelId, topicId: subjectId });
-              updateLastTopicId({
-                channelId,
-                topicId: subjectId
-              });
-              try {
-                const subjectData = await loadChatSubject(subjectId);
-                if (isStale()) return;
-
-                onLoadChatSubject(subjectData);
-              } catch (error) {
-                console.error('Failed to load topic:', error);
-                if (!isStale()) {
-                  navigate(`/chat/${pathId}`, { replace: true });
-                }
-              }
-            }
+            enterRoutedTopic({
+              channelId,
+              topicId: subjectId,
+              onEnterTopic,
+              onSetChannelState,
+              updateLastTopicId
+            });
           } else {
             if (
               isChannelChange &&
@@ -1426,28 +1412,13 @@ export default function Main({
 
         if (topicId) {
           const subjectId = Number(topicId);
-          if (subjectId) {
-            onSetChannelState({
-              channelId,
-              newState: { selectedTab: 'topic' }
-            });
-            onEnterTopic({ channelId, topicId: subjectId });
-            updateLastTopicId({
-              channelId,
-              topicId: subjectId
-            });
-            try {
-              const subjectData = await loadChatSubject(subjectId);
-              if (isStale()) return;
-
-              onLoadChatSubject(subjectData);
-            } catch (error) {
-              console.error('Failed to load topic:', error);
-              if (!isStale()) {
-                navigate(`/chat/${data.channel.pathId}`, { replace: true });
-              }
-            }
-          }
+          enterRoutedTopic({
+            channelId,
+            topicId: subjectId,
+            onEnterTopic,
+            onSetChannelState,
+            updateLastTopicId
+          });
         } else {
           onSetChannelState({
             channelId,
