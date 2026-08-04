@@ -34,6 +34,23 @@ export function sortBuildVersionSummaries(versions: BuildVersionSummary[]) {
   );
 }
 
+export function createOwnerLumineReviewAction({
+  mergingBranches,
+  onLoadVersion
+}: {
+  mergingBranches: BuildVersionSummary[];
+  onLoadVersion: (version: BuildVersionSummary) => void;
+}) {
+  const branch = mergingBranches[0];
+  if (!branch) return null;
+  return {
+    actionLabel: 'Review',
+    actionIcon: 'eye',
+    detail: 'Review the branch and sponsor Lumine to finish safely.',
+    onClick: () => onLoadVersion(branch)
+  };
+}
+
 export function normalizeBuildVersionSummary(
   value: Record<string, any> | null | undefined
 ): BuildVersionSummary | null {

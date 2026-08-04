@@ -17,6 +17,7 @@ import {
 import {
   canDeleteBuildBranchStatus,
   canReviewBuildBranchStatus,
+  createOwnerLumineReviewAction,
   formatBranchFullDisplayTitle,
   formatOwnerAttentionCount,
   getReleaseDiffTotal,
@@ -1029,6 +1030,10 @@ export default function VersionStartPanel({
       const canFixWithLumine =
         mainProjectConflictMarkerCount > 0 &&
         typeof onFixMergeConflicts === 'function';
+      const ownerLumineReviewAction = createOwnerLumineReviewAction({
+        mergingBranches,
+        onLoadVersion
+      });
       items.push({
         key: 'main-conflicts',
         tone: 'merge',
@@ -1043,7 +1048,8 @@ export default function VersionStartPanel({
         detail:
           mainProjectConflictMarkerCount > 0
             ? 'Let Lumine safely repair Main.'
-            : 'Open Team to sponsor or review the Lumine fix.',
+            : ownerLumineReviewAction?.detail ||
+              'Review the branch and sponsor Lumine to finish safely.',
         ...(canFixWithLumine
           ? {
               actionLabel: 'Fix with Lumine',
@@ -1052,11 +1058,7 @@ export default function VersionStartPanel({
                 void onFixMergeConflicts?.();
               }
             }
-          : {
-              actionLabel: 'Open Team',
-              actionIcon: 'users',
-              onClick: onOpenTeamPanel
-            })
+          : ownerLumineReviewAction || {})
       });
     }
 

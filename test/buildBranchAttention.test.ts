@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { hasUnseenBuildBranchChanges } from '../src/containers/Build/Editor/helpers/branches';
+import {
+  createOwnerLumineReviewAction,
+  hasUnseenBuildBranchChanges
+} from '../src/containers/Build/Editor/helpers/branches';
 
 test('branch attention is driven by the exact revision the owner opened', () => {
   assert.equal(
@@ -38,4 +41,26 @@ test('empty branches never demand owner attention', () => {
     }),
     false
   );
+});
+
+test('a waiting Lumine repair takes the owner straight to that branch', () => {
+  const mergingBranch = {
+    id: 42,
+    contributionStatus: 'merging' as const
+  };
+  let openedBranchId = 0;
+  const action = createOwnerLumineReviewAction({
+    mergingBranches: [mergingBranch],
+    onLoadVersion: (version) => {
+      openedBranchId = version.id;
+    }
+  });
+
+  assert.equal(action?.actionLabel, 'Review');
+  assert.equal(
+    action?.detail,
+    'Review the branch and sponsor Lumine to finish safely.'
+  );
+  action?.onClick();
+  assert.equal(openedBranchId, 42);
 });
