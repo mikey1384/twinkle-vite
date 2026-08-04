@@ -4,6 +4,7 @@ import {
   getChatUnreadActivityRevision,
   markChatUnreadActivity
 } from '~/helpers/chatUnreadActivity';
+import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
 import type { CanonicalChatChannelUnreadState } from '~/types/chat';
 
 const MAX_FRESH_READ_ATTEMPTS = 3;
@@ -19,11 +20,17 @@ export default function useChatLastReadReconciler() {
   const loadChatChannelUnreadState = useAppContext(
     (v) => v.requestHelpers.loadChatChannelUnreadState
   );
+  const getNumberOfUnreadMessages = useAppContext(
+    (v) => v.requestHelpers.getNumberOfUnreadMessages
+  );
   const onApplyCanonicalChannelUnreadState = useChatContext(
     (v) => v.actions.onApplyCanonicalChannelUnreadState
   );
   const onApplyCanonicalChatSidebarState = useChatContext(
     (v) => v.actions.onApplyCanonicalChatSidebarState
+  );
+  const onGetNumberOfUnreadMessages = useChatContext(
+    (v) => v.actions.onGetNumberOfUnreadMessages
   );
   const userIdRef = useRef(userId);
   userIdRef.current = userId;
@@ -68,8 +75,13 @@ export default function useChatLastReadReconciler() {
     const expectedActivityRevision = getChatUnreadActivityRevision();
     try {
       const unreadState = await request();
+      const activityRaced =
+        getChatUnreadActivityRevision() !== expectedActivityRevision;
+      // Invalidate global unread reads that began after this mutation started
+      // but before its canonical response proved the write had finished.
+      markChatUnreadActivity();
       applySidebarState({ requestUserId, unreadState });
-      if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
+      if (activityRaced) {
         // Confirmed activity (a new message, deletion, or reaction) landed
         // after the server captured this write's unread snapshot. Applying the
         // older snapshot would silently erase that activity's unread state, so
@@ -79,6 +91,10 @@ export default function useChatLastReadReconciler() {
       }
       applyUnreadState({ requestUserId, channelId, unreadState });
     } catch (error) {
+      // The transport outcome is unknown, so invalidate global reads that may
+      // have started while the write was in flight before re-reading either
+      // projection from the writer.
+      markChatUnreadActivity();
       console.error('Failed to reconcile chat read state:', error);
       // The write may have committed before transport failed. Re-read the
       // writer instead of guessing whether the scope is now read.
@@ -89,6 +105,24 @@ export default function useChatLastReadReconciler() {
         // source of truth.
         console.error('Failed to re-read chat unread state:', readError);
       }
+    } finally {
+      await applyFreshGlobalUnreadCount(requestUserId);
+    }
+  }
+
+  async function applyFreshGlobalUnreadCount(requestUserId: number) {
+    try {
+      const numUnreads = await loadFreshCanonicalChatGlobalUnreadCount({
+        load: () => getNumberOfUnreadMessages({ fromWriter: true }),
+        isCurrentOwner: () => Number(userIdRef.current || 0) === requestUserId
+      });
+      if (numUnreads !== null) {
+        onGetNumberOfUnreadMessages(numUnreads);
+      }
+    } catch (error) {
+      // Preserve the last confirmed global state. Socket reconnect/bootstrap
+      // remains the fallback source of truth.
+      console.error('Failed to re-read global chat unread state:', error);
     }
   }
 

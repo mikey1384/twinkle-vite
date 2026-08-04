@@ -339,7 +339,13 @@ export default function useChatSocket({
       const expectedActivityRevision = getChatUnreadActivityRevision();
       try {
         const unreadState = await request;
-        if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
+        const activityRaced =
+          getChatUnreadActivityRevision() !== expectedActivityRevision;
+        // Any global unread request started while this write was in flight
+        // was based on the pre-write watermark, even if it began after the
+        // mutation-start revision. Invalidate it once completion is known.
+        markUnreadActivity();
+        if (activityRaced) {
           // A confirmed socket event landed after the writer snapshotted this
           // write. Applying the older snapshot would erase that event's
           // unread state (a plain message does not advance the reaction
@@ -352,6 +358,7 @@ export default function useChatSocket({
           onApplyCanonicalChannelUnreadState({ unreadState, userId });
         }
       } catch (error) {
+        markUnreadActivity();
         // The write may have committed before transport failed. Re-read the
         // writer instead of guessing whether the scope is now read.
         queueChannelUnreadStateResync({ channelId, subchannelId });

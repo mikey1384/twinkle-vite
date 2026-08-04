@@ -28,6 +28,7 @@ import {
 } from '~/contexts';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
+import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -540,15 +541,22 @@ export default function useInitSocket({
     }
 
     async function handleGetNumberOfUnreadMessages({
-      fromWriter = false,
       expectedUserId
     }: {
-      fromWriter?: boolean;
       expectedUserId?: number;
     } = {}) {
-      const numUnreads = await getNumberOfUnreadMessages({ fromWriter });
-      if (expectedUserId && userIdRef.current !== expectedUserId) return;
-      onGetNumberOfUnreadMessages(numUnreads);
+      const requestUserId = Number(expectedUserId || userIdRef.current || 0);
+      const numUnreads = await loadFreshCanonicalChatGlobalUnreadCount({
+        // Chat bootstrap may itself have advanced a read watermark. Always
+        // read this derived badge from the writer so replica lag cannot revive
+        // the pre-open unread state after the channel response arrives.
+        load: () => getNumberOfUnreadMessages({ fromWriter: true }),
+        isCurrentOwner: () =>
+          requestUserId > 0 && Number(userIdRef.current || 0) === requestUserId
+      });
+      if (numUnreads !== null) {
+        onGetNumberOfUnreadMessages(numUnreads);
+      }
     }
 
     function handleConnect() {
@@ -768,7 +776,6 @@ export default function useInitSocket({
         loadedForUserIdRef.current = bootstrapUserId;
         didInitChat = true;
         void handleGetNumberOfUnreadMessages({
-          fromWriter,
           expectedUserId: bootstrapUserId
         });
         lastFailedBootstrapIdRef.current = null;

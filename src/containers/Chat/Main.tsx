@@ -220,7 +220,6 @@ export default function Main({
   const onAddBookmarkedMessage = useChatContext(
     (v) => v.actions.onAddBookmarkedMessage
   );
-  const onClearNumUnreads = useChatContext((v) => v.actions.onClearNumUnreads);
   const onClearSubjectSearchResults = useChatContext(
     (v) => v.actions.onClearSubjectSearchResults
   );
@@ -787,13 +786,6 @@ export default function Main({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
-
-  useEffect(() => {
-    if (pageVisible) {
-      onClearNumUnreads();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageVisible, socketConnected]);
 
   const partner = useMemo(() => {
     return currentChannel?.twoPeople

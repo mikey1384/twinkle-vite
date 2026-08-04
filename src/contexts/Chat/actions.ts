@@ -492,11 +492,6 @@ export default function ChatActions(dispatch: Dispatch) {
         isFeatured
       });
     },
-    onClearNumUnreads() {
-      return dispatch({
-        type: 'CLEAR_NUM_UNREADS'
-      });
-    },
     onClearRecentChessMessage(channelId: number) {
       return dispatch({
         type: 'CLEAR_RECENT_CHESS_MESSAGE',

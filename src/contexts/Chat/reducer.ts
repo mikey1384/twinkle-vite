@@ -2393,12 +2393,6 @@ export default function ChatReducer(
         ...state,
         chatSearchResults: []
       };
-    case 'CLEAR_NUM_UNREADS': {
-      return {
-        ...state,
-        numUnreads: 0
-      };
-    }
     case 'CLEAR_RECENT_CHESS_MESSAGE': {
       return {
         ...state,

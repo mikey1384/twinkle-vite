@@ -696,18 +696,38 @@ test('bootstrap invalidates noncanonical topic message caches and navigation', (
   assert.doesNotMatch(reducerSource, /messageIds:\s*existingTopic\.messageIds/);
 });
 
-test('background Chat activity remains in the title until Chat becomes visible', () => {
+test('global Chat unread state is reconciled canonically when Chat becomes visible', () => {
   const headerSource = readSource('src/containers/App/Header/index.tsx');
   const mainSource = readSource('src/containers/Chat/Main.tsx');
+  const reconcilerSource = readSource(
+    'src/helpers/hooks/useChatLastReadReconciler.ts'
+  );
+  const initSocketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useInitSocket.ts'
+  );
   const chatSocketSource = readSource(
     'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
   );
   const reducerSource = readSource('src/contexts/Chat/reducer.ts');
 
   assert.doesNotMatch(headerSource, /onGetNumberOfUnreadMessages\(0\)/);
+  assert.doesNotMatch(mainSource, /onClearNumUnreads|CLEAR_NUM_UNREADS/);
+  assert.doesNotMatch(reducerSource, /case 'CLEAR_NUM_UNREADS'/);
   assert.match(
-    mainSource,
-    /if \(pageVisible\) \{\s*onClearNumUnreads\(\);/
+    reconcilerSource,
+    /finally \{\s*await applyFreshGlobalUnreadCount\(requestUserId\);/
+  );
+  assert.match(
+    reconcilerSource,
+    /getNumberOfUnreadMessages\(\{ fromWriter: true \}\)/
+  );
+  assert.match(
+    initSocketSource,
+    /loadFreshCanonicalChatGlobalUnreadCount\(\{[\s\S]*?getNumberOfUnreadMessages\(\{ fromWriter: true \}\)/
+  );
+  assert.match(
+    chatSocketSource,
+    /const activityRaced =[\s\S]*?markUnreadActivity\(\);[\s\S]*?if \(activityRaced\)/
   );
   assert.doesNotMatch(chatSocketSource, /wasUsingChat|route-exit restoration/);
   assert.match(
