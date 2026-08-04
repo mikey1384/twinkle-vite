@@ -6,6 +6,7 @@ import React, {
   useState,
   Suspense
 } from 'react';
+import { shouldRenderRichTextLiterally } from './helpers/renderMode';
 import AIAudioButton from './AIAudioButton';
 import InvisibleTextContainer, {
   stripMarkdownLinkUrls
@@ -284,6 +285,7 @@ function RichText({
   style,
   className,
   cleanString,
+  isStreaming,
   children: text = '',
   contentId,
   contentType,
@@ -310,6 +312,7 @@ function RichText({
   style?: React.CSSProperties;
   className?: string;
   cleanString?: boolean;
+  isStreaming?: boolean;
   children?: any;
   contentId?: number | string;
   contentType?: string;
@@ -417,6 +420,11 @@ function RichText({
       /(^|\s)(?!https?:\/\/)(?!www\.)\S{400,}(?=\s|$)/i.test(text);
     return tooLongNonUrlToken;
   }, [text]);
+  const renderAsLiteralText = shouldRenderRichTextLiterally({
+    cleanString,
+    isStreaming,
+    tooLongNonUrlToken
+  });
 
   const hasMarkdownEmbed = useMemo(
     () => /!\[[^\]]*\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/.test(String(text)),
@@ -498,7 +506,7 @@ function RichText({
   // measuring container, so containerNode never arrives; measure the visible
   // node directly or the max-height clamp hides content with no Show More.
   useEffect(() => {
-    if (isPreview || !tooLongNonUrlToken || fullTextShown) {
+    if (isPreview || !renderAsLiteralText || fullTextShown) {
       return;
     }
     const node = TextRef.current;
@@ -512,7 +520,7 @@ function RichText({
       setFullTextShown(true);
       fullTextShownRef.current = true;
     }
-  }, [isPreview, tooLongNonUrlToken, fullTextShown, text]);
+  }, [isPreview, renderAsLiteralText, fullTextShown, text]);
 
   useEffect(() => {
     if (!TextRef.current) {
@@ -567,7 +575,7 @@ function RichText({
     // and with isParsed never set the observed min-height would stick forever.
     if (
       !isPreview &&
-      !tooLongNonUrlToken &&
+      !renderAsLiteralText &&
       typeof ResizeObserver === 'function' &&
       TextRef.current &&
       !defaultMinHeightRef.current
@@ -582,7 +590,7 @@ function RichText({
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [isPreview, tooLongNonUrlToken]);
+  }, [isPreview, renderAsLiteralText]);
 
   useEffect(() => {
     minHeightRef.current = minHeight;
@@ -616,7 +624,7 @@ function RichText({
   }, []);
 
   const markdownContent = useMemo(() => {
-    if (cleanString || tooLongNonUrlToken) {
+    if (renderAsLiteralText) {
       return text;
     }
     // The root div is opacity: 0 until parsing completes, so this fallback is
@@ -648,7 +656,6 @@ function RichText({
     );
   }, [
     appliedLinkColor,
-    cleanString,
     contentId,
     contentType,
     disableImageModal,
@@ -660,7 +667,7 @@ function RichText({
     appliedSubjectPreviewVariant,
     theme,
     text,
-    tooLongNonUrlToken
+    renderAsLiteralText
   ]);
 
   return (
@@ -672,9 +679,9 @@ function RichText({
         ref={TextRef}
         style={
           {
-            opacity: isParsed || tooLongNonUrlToken ? 1 : 0,
+            opacity: isParsed || renderAsLiteralText ? 1 : 0,
             minHeight:
-              !isParsed && !tooLongNonUrlToken && minHeight
+              !isParsed && !renderAsLiteralText && minHeight
                 ? `${minHeight}px`
                 : undefined,
             maxHeight:
@@ -821,7 +828,7 @@ function RichText({
           }
         `}`}
       >
-        {!isPreview && !cleanString && !tooLongNonUrlToken && (
+        {!isPreview && !renderAsLiteralText && (
           <ErrorBoundary componentPath="components/Texts/RichText/InvisibleTextContainer">
             <InvisibleTextContainer
               contentId={contentId}
@@ -879,7 +886,7 @@ function RichText({
           </Button>
         )}
       </div>
-      {isAIMessage && !hideDictation && (
+      {isAIMessage && !hideDictation && !isStreaming && (
         <>
           {aiActionPlacement === 'inline' ? (
             <div

@@ -59,6 +59,7 @@ interface ChatMessage {
   id: number;
   role: 'user' | 'assistant';
   content: string;
+  streamComplete?: boolean;
 }
 
 interface PreviewProps {
@@ -200,6 +201,10 @@ export default function SystemPromptPreview({
                 </div>
                 <RichText
                   isAIMessage={message.role === 'assistant'}
+                  isStreaming={
+                    message.role === 'assistant' &&
+                    message.streamComplete === false
+                  }
                   isAudioButtonShown={false}
                   contentId={message.id}
                   contentType="systemPromptPreview"

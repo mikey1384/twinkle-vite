@@ -55,6 +55,7 @@ interface ChatMessage {
   id: number;
   role: 'user' | 'assistant';
   content: string;
+  streamComplete?: boolean;
 }
 
 interface SystemPromptState {
@@ -263,7 +264,10 @@ export default function SystemPromptMission({
   ];
 
   useEffect(() => {
-    function updateStreamingContent(content: string) {
+    function updateStreamingContent(
+      content: string,
+      streamComplete = false
+    ) {
       const streamingMessageId = streamingMessageIdRef.current;
       if (!streamingMessageId) return;
       const currentState = latestSystemPromptStateRef.current;
@@ -278,7 +282,8 @@ export default function SystemPromptMission({
       const updatedMessages = [...messages];
       updatedMessages[targetIndex] = {
         ...updatedMessages[targetIndex],
-        content
+        content,
+        streamComplete
       };
 
       handleSetSystemPromptState({
@@ -289,10 +294,10 @@ export default function SystemPromptMission({
     }
 
     function finalizeStreaming(finalReply?: string) {
-      if (typeof finalReply === 'string' && finalReply.length > 0) {
+      if (typeof finalReply === 'string') {
         previewReplyRef.current = finalReply;
-        updateStreamingContent(finalReply);
       }
+      updateStreamingContent(previewReplyRef.current, true);
       streamingMessageIdRef.current = null;
       previewRequestIdRef.current = null;
       setSending(false);
@@ -879,7 +884,12 @@ export default function SystemPromptMission({
       ...currentSystemPromptState,
       chatMessages: [
         ...baseMessages,
-        { id: assistantMessageId, role: 'assistant', content: '' }
+        {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          streamComplete: false
+        }
       ],
       userMessage: ''
     };

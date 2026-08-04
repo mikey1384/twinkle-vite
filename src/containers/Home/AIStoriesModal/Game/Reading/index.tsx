@@ -115,6 +115,12 @@ export default function Reading({
   const userId = useKeyContext((v) => v.myState.userId);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyLoadError, setStoryLoadError] = useState(false);
+  const [storyStreamComplete, setStoryStreamComplete] = useState(
+    Boolean(solveObj.isGraded)
+  );
+  const [explanationStreamComplete, setExplanationStreamComplete] = useState(
+    Boolean(solveObj.isGraded)
+  );
   const streamContextRef = useRef({
     difficulty,
     onLoadQuestions,
@@ -150,6 +156,8 @@ export default function Reading({
 
     async function handleGenerateStory() {
       setStoryLoadError(false);
+      setStoryStreamComplete(false);
+      setExplanationStreamComplete(false);
       try {
         await waitForSocketAuthReady(
           userId,
@@ -166,6 +174,8 @@ export default function Reading({
         finishedStoryIdRef.current = 0;
         streamedStoryRef.current = storyObj.story;
         streamedExplanationRef.current = storyObj.explanation;
+        setStoryStreamComplete(false);
+        setExplanationStreamComplete(false);
         onSetStoryId(storyObj.id);
         trackEvent('ai_story_start', {
           difficulty,
@@ -213,6 +223,7 @@ export default function Reading({
       if (streamedStoryId === activeStoryIdRef.current) {
         streamedStoryRef.current = story;
         streamContextRef.current.onSetStory(story);
+        setStoryStreamComplete(true);
       }
     }
 
@@ -267,6 +278,7 @@ export default function Reading({
       if (streamedStoryId === activeStoryIdRef.current) {
         streamedExplanationRef.current = explanation;
         streamContextRef.current.onSetExplanation(explanation);
+        setExplanationStreamComplete(true);
       }
     }
 
@@ -374,6 +386,7 @@ export default function Reading({
         <ContentContainer
           displayedSection={displayedSection}
           explanation={explanation}
+          explanationStreamComplete={explanationStreamComplete}
           isGrading={isGrading}
           loading={story?.length < 10}
           loadComplete={loadStoryComplete}
@@ -391,6 +404,7 @@ export default function Reading({
           questionsLoaded={questionsLoaded}
           solveObj={solveObj}
           story={story}
+          storyStreamComplete={storyStreamComplete}
           storyId={storyId}
           userChoiceObj={userChoiceObj}
         />

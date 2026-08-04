@@ -19,6 +19,34 @@ import Button from '~/components/Button';
 
 const deviceIsMobile = isMobile(navigator) && !isTablet(navigator);
 
+function applyZeroReviewResponse({
+  current,
+  response,
+  style,
+  type,
+  wordLevel
+}: {
+  current: ResponseObj;
+  response: string;
+  style: string;
+  type: string;
+  wordLevel: string;
+}): ResponseObj {
+  return {
+    ...current,
+    [type]:
+      type === 'rewrite'
+        ? {
+            ...(current.rewrite || {}),
+            [style]: {
+              ...(current.rewrite[style] || {}),
+              [wordLevel]: response
+            }
+          }
+        : response
+  };
+}
+
 export default function Rewrite({
   contentId,
   contentType,
@@ -80,6 +108,7 @@ export default function Rewrite({
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
   const [loadingType, setLoadingType] = useState('');
+  const [responseStreaming, setResponseStreaming] = useState(false);
   const [isDownloadButtonShown, setIsDownloadButtonShown] = useState(false);
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
   const pendingAudioIntentRef = useRef<number | null>(null);
@@ -108,20 +137,18 @@ export default function Rewrite({
       wordLevel: string;
       style: string;
     }) {
-      if (identifier === responseIdentifier.current)
-        setResponseObj((responseObj: ResponseObj) => ({
-          ...responseObj,
-          [type]:
-            type === 'rewrite'
-              ? {
-                  ...(responseObj.rewrite || {}),
-                  [style]: {
-                    ...(responseObj.rewrite[style] || {}),
-                    [wordLevel]: response
-                  }
-                }
-              : response
-        }));
+      if (identifier === responseIdentifier.current) {
+        setResponseStreaming(false);
+        setResponseObj((current) =>
+          applyZeroReviewResponse({
+            current,
+            response,
+            style,
+            type,
+            wordLevel
+          })
+        );
+      }
     }
 
     function handleZeroReviewDelta({
@@ -155,15 +182,28 @@ export default function Rewrite({
 
     async function handleZeroReviewFinished({
       identifier,
-      response
+      response,
+      style,
+      type,
+      wordLevel
     }: {
       identifier: number;
       type: string;
       style: string;
-      wordLevel: number;
+      wordLevel: string;
       response: string;
     }) {
       if (identifier !== responseIdentifier.current) return;
+      setResponseObj((current) =>
+        applyZeroReviewResponse({
+          current,
+          response,
+          style,
+          type,
+          wordLevel
+        })
+      );
+      setResponseStreaming(false);
       await handlePrepareAudio(response);
     }
 
@@ -177,6 +217,7 @@ export default function Rewrite({
       if (identifier !== responseIdentifier.current) return;
       console.error('Zero review generation failed:', error);
       setPreparing(false);
+      setResponseStreaming(false);
       setLoadingType('');
     }
 
@@ -192,6 +233,7 @@ export default function Rewrite({
   useEffect(() => {
     mounted.current = true;
     setLoadingType('');
+    setResponseStreaming(false);
     return function cleanUp() {
       mounted.current = false;
     };
@@ -349,6 +391,7 @@ export default function Rewrite({
             content={content || contentFetchedFromContext}
             loadingType={loadingType}
             onSetLoadingType={setLoadingType}
+            onSetResponseStreaming={setResponseStreaming}
             onSetSelectedStyle={setSelectedStyle}
             selectedStyle={selectedStyle}
             onUpdateIdentifier={(newIdentifier: number) => {
@@ -399,7 +442,7 @@ export default function Rewrite({
           </div>
           {response ? (
             <RichText
-              key={response}
+              isStreaming={responseStreaming}
               maxLines={100}
               isAIMessage
               hideDictation

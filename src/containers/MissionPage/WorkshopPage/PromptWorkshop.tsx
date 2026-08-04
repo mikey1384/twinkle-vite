@@ -28,6 +28,7 @@ interface ChatMessage {
   id: number;
   role: 'user' | 'assistant';
   content: string;
+  streamComplete?: boolean;
 }
 
 export default function PromptWorkshop({
@@ -340,11 +341,19 @@ export default function PromptWorkshop({
         setChatMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
-            return [...prev.slice(0, -1), { ...last, content: reply }];
+            return [
+              ...prev.slice(0, -1),
+              { ...last, content: reply, streamComplete: false }
+            ];
           }
           return [
             ...prev,
-            { id: Date.now(), role: 'assistant', content: reply }
+            {
+              id: Date.now(),
+              role: 'assistant',
+              content: reply,
+              streamComplete: false
+            }
           ];
         });
       }
@@ -363,10 +372,22 @@ export default function PromptWorkshop({
         if (last?.role === 'assistant') {
           return [
             ...prev.slice(0, -1),
-            { ...last, content: `${last.content}${delta}` }
+            {
+              ...last,
+              content: `${last.content}${delta}`,
+              streamComplete: false
+            }
           ];
         }
-        return [...prev, { id: Date.now(), role: 'assistant', content: delta }];
+        return [
+          ...prev,
+          {
+            id: Date.now(),
+            role: 'assistant',
+            content: delta,
+            streamComplete: false
+          }
+        ];
       });
     }
 
@@ -385,11 +406,19 @@ export default function PromptWorkshop({
         setChatMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
-            return [...prev.slice(0, -1), { ...last, content: reply }];
+            return [
+              ...prev.slice(0, -1),
+              { ...last, content: reply, streamComplete: true }
+            ];
           }
           return [
             ...prev,
-            { id: Date.now(), role: 'assistant', content: reply }
+            {
+              id: Date.now(),
+              role: 'assistant',
+              content: reply,
+              streamComplete: true
+            }
           ];
         });
         setSending(false);
@@ -742,6 +771,10 @@ export default function PromptWorkshop({
                   </div>
                   <RichText
                     isAIMessage={msg.role === 'assistant'}
+                    isStreaming={
+                      msg.role === 'assistant' &&
+                      msg.streamComplete === false
+                    }
                     contentId={msg.id}
                     contentType="systemPromptPreview"
                     section="workshop"

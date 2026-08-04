@@ -8,15 +8,19 @@ import { css } from '@emotion/css';
 export default function Story({
   storyId,
   story,
+  storyStreamComplete,
   isGraded,
   explanation,
+  explanationStreamComplete,
   onFinishRead,
   questionsButtonEnabled
 }: {
   storyId: number;
   story: string;
+  storyStreamComplete: boolean;
   isGraded: boolean;
   explanation: string;
+  explanationStreamComplete: boolean;
   onFinishRead: () => void;
   questionsButtonEnabled: boolean;
 }) {
@@ -48,6 +52,7 @@ export default function Story({
           contentId={storyId}
           contentType="ai_story"
           isAIMessage
+          isStreaming={!storyStreamComplete}
           style={{ lineHeight: 2 }}
           maxLines={1000}
         >
@@ -84,6 +89,7 @@ export default function Story({
           </p>
           <RichText
             isAIMessage
+            isStreaming={!explanationStreamComplete}
             className={css`
               font-size: 1.7rem;
               @media (max-width: ${mobileMaxWidth}) {

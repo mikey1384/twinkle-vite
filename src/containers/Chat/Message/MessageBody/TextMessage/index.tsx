@@ -189,6 +189,7 @@ function TextMessage({
                 <>
                   <RichText
                     isAIMessage={isAIMessage}
+                    isStreaming={isAIMessage && isCurrentlyStreaming}
                     voice={isCielMessage ? 'nova' : ''}
                     readMoreHeightFixed
                     contentId={richTextId}

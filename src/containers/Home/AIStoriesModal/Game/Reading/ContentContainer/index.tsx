@@ -10,6 +10,7 @@ import { css } from '@emotion/css';
 export default function ContentContainer({
   displayedSection,
   explanation,
+  explanationStreamComplete,
   isGrading,
   loading,
   loadComplete,
@@ -25,12 +26,14 @@ export default function ContentContainer({
   questionsLoadError,
   questionsLoaded,
   story,
+  storyStreamComplete,
   storyId,
   solveObj,
   userChoiceObj
 }: {
   displayedSection: string;
   explanation: string;
+  explanationStreamComplete: boolean;
   isGrading: boolean;
   loading: boolean;
   loadComplete: boolean;
@@ -48,6 +51,7 @@ export default function ContentContainer({
   questionsLoaded: boolean;
   solveObj: any;
   story: string;
+  storyStreamComplete: boolean;
   storyId: number;
   userChoiceObj: any;
 }) {
@@ -102,7 +106,9 @@ export default function ContentContainer({
               storyId={storyId}
               isGraded={solveObj.isGraded}
               story={story}
+              storyStreamComplete={storyStreamComplete}
               explanation={explanation}
+              explanationStreamComplete={explanationStreamComplete}
               questionsButtonEnabled={questionsButtonEnabled}
               onFinishRead={handleFinishRead}
             />

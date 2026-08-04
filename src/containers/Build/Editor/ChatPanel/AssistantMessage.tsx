@@ -358,7 +358,12 @@ export default function AssistantMessage({
         </div>
       ) : null}
       {visibleMessageContent ? (
-        <RichText isAIMessage aiActionPlacement="inline" maxLines={15}>
+        <RichText
+          isAIMessage
+          isStreaming={isStreamingTarget}
+          aiActionPlacement="inline"
+          maxLines={15}
+        >
           {visibleMessageContent}
         </RichText>
       ) : null}

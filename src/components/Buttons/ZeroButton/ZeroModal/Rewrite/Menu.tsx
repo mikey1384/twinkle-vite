@@ -21,6 +21,7 @@ export default function Menu({
   style,
   loadingType,
   onSetLoadingType,
+  onSetResponseStreaming,
   onSetSelectedStyle,
   onSetWordLevel,
   responseObj,
@@ -33,6 +34,7 @@ export default function Menu({
   style?: React.CSSProperties;
   loadingType: string;
   onSetLoadingType: (loadingType: string) => void;
+  onSetResponseStreaming: (isStreaming: boolean) => void;
   onSetSelectedStyle: (style: string) => void;
   onSetWordLevel: (wordLevel: string) => void;
   responseObj: ResponseObj;
@@ -210,13 +212,14 @@ export default function Menu({
     const responseText = getResponseText();
 
     if (!responseText) {
+      onSetResponseStreaming(true);
+      const newIdentifier = Math.floor(Math.random() * 1000000000);
+      onUpdateIdentifier(newIdentifier);
       try {
         if (!userId) {
           throw new Error('Socket authentication was not ready');
         }
         await waitForSocketAuthReady(userId, ZERO_REVIEW_ACCEPT_TIMEOUT_MS);
-        const newIdentifier = Math.floor(Math.random() * 1000000000);
-        onUpdateIdentifier(newIdentifier);
         await requestZeroReview({
           type,
           content,
@@ -227,9 +230,11 @@ export default function Menu({
         });
       } catch (error) {
         console.error('Failed to start Zero review:', error);
+        onSetResponseStreaming(false);
         onSetLoadingType('');
       }
     } else {
+      onSetResponseStreaming(false);
       await onPrepareAudio(responseText);
     }
 
