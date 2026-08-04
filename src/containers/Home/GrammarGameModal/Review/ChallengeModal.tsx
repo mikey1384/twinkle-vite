@@ -44,6 +44,10 @@ export default function ChallengeModal({
   const [challengeError, setChallengeError] = useState('');
   const [streamingThought, setStreamingThought] = useState('');
   const thoughtRef = useRef('');
+  const questionIdRef = useRef(questionId);
+  questionIdRef.current = questionId;
+  const aiFeaturesDisabledRef = useRef(AI_FEATURES_DISABLED);
+  aiFeaturesDisabledRef.current = AI_FEATURES_DISABLED;
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isSubmittingRef = useRef(false);
 
@@ -56,7 +60,6 @@ export default function ChallengeModal({
   }, [isOpen, questionId]);
 
   useEffect(() => {
-    if (AI_FEATURES_DISABLED) return;
     function handleThoughtStream({
       questionId: qid,
       thoughtContent,
@@ -66,7 +69,7 @@ export default function ChallengeModal({
       thoughtContent: string;
       isDelta?: boolean;
     }) {
-      if (qid === questionId) {
+      if (!aiFeaturesDisabledRef.current && qid === questionIdRef.current) {
         const nextThought = isDelta
           ? `${thoughtRef.current}${thoughtContent}`
           : thoughtContent;
@@ -78,7 +81,7 @@ export default function ChallengeModal({
     return () => {
       socket.off('grammar_challenge_thought_streamed', handleThoughtStream);
     };
-  });
+  }, []);
 
   return (
     <Modal

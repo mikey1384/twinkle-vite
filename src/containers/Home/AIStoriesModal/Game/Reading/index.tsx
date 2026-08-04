@@ -109,11 +109,31 @@ export default function Reading({
   userChoiceObj: any;
 }) {
   const finishedStoryIdRef = useRef(0);
+  const activeStoryIdRef = useRef(storyId);
   const streamedStoryRef = useRef(story);
   const streamedExplanationRef = useRef(explanation);
   const userId = useKeyContext((v) => v.myState.userId);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyLoadError, setStoryLoadError] = useState(false);
+  const streamContextRef = useRef({
+    difficulty,
+    onLoadQuestions,
+    onSetExplanation,
+    onSetIsCloseLocked,
+    onSetQuestionsButtonEnabled,
+    onSetStory,
+    userId
+  });
+  activeStoryIdRef.current = storyId || activeStoryIdRef.current;
+  streamContextRef.current = {
+    difficulty,
+    onLoadQuestions,
+    onSetExplanation,
+    onSetIsCloseLocked,
+    onSetQuestionsButtonEnabled,
+    onSetStory,
+    userId
+  };
 
   useEffect(() => {
     streamedStoryRef.current = story;
@@ -142,6 +162,10 @@ export default function Reading({
           type: storyType
         });
         onSetAttemptId(newAttemptId);
+        activeStoryIdRef.current = storyObj.id;
+        finishedStoryIdRef.current = 0;
+        streamedStoryRef.current = storyObj.story;
+        streamedExplanationRef.current = storyObj.explanation;
         onSetStoryId(storyObj.id);
         trackEvent('ai_story_start', {
           difficulty,
@@ -171,10 +195,7 @@ export default function Reading({
     socket.on('ai_story_delta', handleAIStoryDelta);
     socket.on('ai_story_finished', handleAIStoryFinished);
     socket.on('ai_story_explanation_updated', handleAIStoryExplanationUpdated);
-    socket.on(
-      'ai_story_explanation_delta',
-      handleAIStoryExplanationDelta
-    );
+    socket.on('ai_story_explanation_delta', handleAIStoryExplanationDelta);
     socket.on(
       'ai_story_explanation_finished',
       handleAIStoryExplanationFinished
@@ -189,9 +210,9 @@ export default function Reading({
       storyId: number;
       story: string;
     }) {
-      if (streamedStoryId === storyId) {
+      if (streamedStoryId === activeStoryIdRef.current) {
         streamedStoryRef.current = story;
-        onSetStory(story);
+        streamContextRef.current.onSetStory(story);
       }
     }
 
@@ -202,30 +223,36 @@ export default function Reading({
       storyId: number;
       delta: string;
     }) {
-      if (streamedStoryId !== storyId) return;
+      if (streamedStoryId !== activeStoryIdRef.current) return;
       streamedStoryRef.current += delta;
-      onSetStory(streamedStoryRef.current);
+      streamContextRef.current.onSetStory(streamedStoryRef.current);
     }
 
     async function handleAIStoryFinished(streamedStoryId: number) {
       if (
-        streamedStoryId === storyId &&
+        streamedStoryId === activeStoryIdRef.current &&
         finishedStoryIdRef.current !== streamedStoryId
       ) {
         finishedStoryIdRef.current = streamedStoryId;
-        onLoadQuestions(streamedStoryId);
+        const {
+          difficulty: activeDifficulty,
+          onLoadQuestions: loadQuestions,
+          onSetQuestionsButtonEnabled: setQuestionsButtonEnabled,
+          userId: activeUserId
+        } = streamContextRef.current;
+        loadQuestions(streamedStoryId);
         try {
           await waitForSocketAuthReady(
-            userId,
+            activeUserId,
             STORY_GENERATION_ACCEPT_TIMEOUT_MS
           );
           await emitAIStoryRequestWithAck('generate_ai_story_explanations', {
             storyId: Number(streamedStoryId),
-            difficulty
+            difficulty: activeDifficulty
           });
         } catch (error) {
           console.error('Failed to start AI Story explanations:', error);
-          onSetQuestionsButtonEnabled(true);
+          setQuestionsButtonEnabled(true);
         }
       }
     }
@@ -237,9 +264,9 @@ export default function Reading({
       storyId: number;
       explanation: string;
     }) {
-      if (streamedStoryId === storyId) {
+      if (streamedStoryId === activeStoryIdRef.current) {
         streamedExplanationRef.current = explanation;
-        onSetExplanation(explanation);
+        streamContextRef.current.onSetExplanation(explanation);
       }
     }
 
@@ -250,27 +277,38 @@ export default function Reading({
       storyId: number;
       delta: string;
     }) {
-      if (streamedStoryId !== storyId) return;
+      if (streamedStoryId !== activeStoryIdRef.current) return;
       streamedExplanationRef.current += delta;
-      onSetExplanation(streamedExplanationRef.current);
+      streamContextRef.current.onSetExplanation(streamedExplanationRef.current);
     }
 
-    function handleAIStoryExplanationFinished() {
-      onSetQuestionsButtonEnabled(true);
+    function handleAIStoryExplanationFinished({
+      storyId: streamedStoryId
+    }: {
+      storyId: number;
+    }) {
+      if (streamedStoryId !== activeStoryIdRef.current) return;
+      streamContextRef.current.onSetQuestionsButtonEnabled(true);
     }
 
     function handleAIStoryError(error: any) {
       const failedStoryId = Number(
         error && typeof error === 'object' ? error.storyId : error
       );
-      if (failedStoryId && failedStoryId !== storyId) return;
+      if (failedStoryId && failedStoryId !== activeStoryIdRef.current) return;
       console.error('Error while streaming AI Story:', error);
-      onSetIsCloseLocked(false);
+      streamContextRef.current.onSetIsCloseLocked(false);
       setStoryLoadError(true);
     }
 
-    function handleAIStoryExplanationError() {
-      onSetQuestionsButtonEnabled(true);
+    function handleAIStoryExplanationError(error: unknown) {
+      const failedStoryId = Number(
+        error && typeof error === 'object' && 'storyId' in error
+          ? error.storyId
+          : error
+      );
+      if (failedStoryId && failedStoryId !== activeStoryIdRef.current) return;
+      streamContextRef.current.onSetQuestionsButtonEnabled(true);
     }
 
     return function cleanUp() {
@@ -281,10 +319,7 @@ export default function Reading({
         'ai_story_explanation_updated',
         handleAIStoryExplanationUpdated
       );
-      socket.off(
-        'ai_story_explanation_delta',
-        handleAIStoryExplanationDelta
-      );
+      socket.off('ai_story_explanation_delta', handleAIStoryExplanationDelta);
       socket.off(
         'ai_story_explanation_finished',
         handleAIStoryExplanationFinished
@@ -292,7 +327,7 @@ export default function Reading({
       socket.off('ai_story_story_error', handleAIStoryError);
       socket.off('ai_story_explanation_error', handleAIStoryExplanationError);
     };
-  });
+  }, []);
 
   return (
     <div

@@ -53,6 +53,8 @@ export default function AIChatTopicMenu({
   > | null>(null);
   const originalInstructionsRef = useRef('');
   const topicTextRef = useRef(topicText);
+  const onSetCustomInstructionsRef = useRef(onSetCustomInstructions);
+  onSetCustomInstructionsRef.current = onSetCustomInstructions;
 
   const { savingState, saveDraft, deleteDraft, loadDraft } = useDraft({
     contentType: 'customInstructions',
@@ -136,7 +138,7 @@ export default function AIChatTopicMenu({
         generateDedupWaitTimeoutRef.current = null;
       }
       generatedDraftRef.current = content || '';
-      onSetCustomInstructions(generatedDraftRef.current);
+      onSetCustomInstructionsRef.current(generatedDraftRef.current);
     }
 
     function handleGenerateDelta({
@@ -150,7 +152,7 @@ export default function AIChatTopicMenu({
         return;
       }
       generatedDraftRef.current += delta;
-      onSetCustomInstructions(generatedDraftRef.current);
+      onSetCustomInstructionsRef.current(generatedDraftRef.current);
     }
 
     function handleGenerateComplete({
@@ -166,7 +168,7 @@ export default function AIChatTopicMenu({
         generateDedupWaitTimeoutRef.current = null;
       }
       generatedDraftRef.current = content || '';
-      onSetCustomInstructions(generatedDraftRef.current);
+      onSetCustomInstructionsRef.current(generatedDraftRef.current);
       generateRequestIdRef.current = null;
       setGenerating(false);
     }
@@ -226,7 +228,7 @@ export default function AIChatTopicMenu({
       );
       socket.off('generate_custom_instructions_error', handleGenerateError);
     };
-  }, [onSetCustomInstructions]);
+  }, []);
 
   // Socket listeners for improving custom instructions
   useEffect(() => {
@@ -246,7 +248,7 @@ export default function AIChatTopicMenu({
         fallbackText: content || ''
       });
       improvedDraftRef.current = formatted;
-      onSetCustomInstructions(formatted);
+      onSetCustomInstructionsRef.current(formatted);
     }
 
     function handleImproveDelta({
@@ -260,7 +262,7 @@ export default function AIChatTopicMenu({
         return;
       }
       improvedDraftRef.current += delta;
-      onSetCustomInstructions(improvedDraftRef.current);
+      onSetCustomInstructionsRef.current(improvedDraftRef.current);
     }
 
     function handleImproveComplete({
@@ -279,7 +281,7 @@ export default function AIChatTopicMenu({
         fallbackText: content || originalInstructionsRef.current
       });
       improvedDraftRef.current = formatted;
-      onSetCustomInstructions(formatted);
+      onSetCustomInstructionsRef.current(formatted);
       improveRequestIdRef.current = null;
       setImproving(false);
     }
@@ -292,7 +294,7 @@ export default function AIChatTopicMenu({
       error?: string;
     }) {
       if (!requestId || requestId !== improveRequestIdRef.current) return;
-      onSetCustomInstructions(originalInstructionsRef.current);
+      onSetCustomInstructionsRef.current(originalInstructionsRef.current);
       improveRequestIdRef.current = null;
       setImproving(false);
       setError(
@@ -312,7 +314,7 @@ export default function AIChatTopicMenu({
       socket.off('improve_custom_instructions_complete', handleImproveComplete);
       socket.off('improve_custom_instructions_error', handleImproveError);
     };
-  }, [onSetCustomInstructions, setError]);
+  }, []);
 
   if (AI_FEATURES_DISABLED) {
     return (

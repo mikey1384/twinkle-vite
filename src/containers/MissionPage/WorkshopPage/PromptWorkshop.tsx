@@ -102,6 +102,12 @@ export default function PromptWorkshop({
   const messageListRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const requestIdRef = useRef<string>('');
+  const systemPromptStateRef = useRef(systemPromptState);
+  systemPromptStateRef.current = systemPromptState;
+  const missionIdRef = useRef(mission.id);
+  missionIdRef.current = mission.id;
+  const onSetMissionStateRef = useRef(onSetMissionState);
+  onSetMissionStateRef.current = onSetMissionState;
   const generatedDraftRef = useRef('');
   const improvedDraftRef = useRef('');
   const generateDedupWaitTimeoutRef = useRef<ReturnType<
@@ -125,10 +131,15 @@ export default function PromptWorkshop({
     prompt?: string;
     promptEverGenerated?: boolean;
   }) {
-    onSetMissionState({
-      missionId: mission.id,
+    const nextSystemPromptState = {
+      ...systemPromptStateRef.current,
+      ...nextState
+    };
+    systemPromptStateRef.current = nextSystemPromptState;
+    onSetMissionStateRef.current({
+      missionId: missionIdRef.current,
       newState: {
-        systemPromptState: { ...systemPromptState, ...nextState }
+        systemPromptState: nextSystemPromptState
       }
     });
   }
@@ -244,8 +255,7 @@ export default function PromptWorkshop({
       );
       socket.off('generate_custom_instructions_error', handleGenerateError);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission.id, systemPromptState]);
+  }, []);
 
   useEffect(() => {
     function handleImproveUpdate({
@@ -311,8 +321,7 @@ export default function PromptWorkshop({
       socket.off('improve_custom_instructions_complete', handleImproveComplete);
       socket.off('improve_custom_instructions_error', handleImproveError);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission.id, systemPromptState]);
+  }, []);
 
   // Socket listeners for system_prompt_preview (test chat)
   useEffect(() => {
