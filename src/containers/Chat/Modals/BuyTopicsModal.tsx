@@ -13,7 +13,6 @@ import { css } from '@emotion/css';
 export default function BuyTopicsModal({
   channelId,
   canChangeSubject,
-  onPurchaseSubject,
   onDone,
   onScrollToBottom,
   userIsChannelOwner
@@ -22,7 +21,6 @@ export default function BuyTopicsModal({
   channelName?: string;
   canChangeSubject: string;
   onDone: (v: any) => void;
-  onPurchaseSubject: (v: any) => void;
   onScrollToBottom: () => void;
   userIsChannelOwner: boolean;
 }) {
@@ -172,7 +170,6 @@ export default function BuyTopicsModal({
         topic
       });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      onPurchaseSubject(topic);
       setEditedCanChangeSubject('owner');
       onScrollToBottom();
       setConfirmModalShown(false);

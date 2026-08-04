@@ -21,8 +21,6 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { User } from '~/types';
 import { css } from '@emotion/css';
-import TwinkleURL from '~/constants/URL';
-import request from 'axios';
 const changeThemeLabel = 'Change theme';
 
 export default function SettingsModal({
@@ -38,7 +36,6 @@ export default function SettingsModal({
   onDone,
   onHide,
   onlyOwnerCanPost,
-  onPurchaseSubject,
   onSelectNewOwner,
   onScrollToBottom,
   selectingNewOwner,
@@ -58,7 +55,6 @@ export default function SettingsModal({
   onDone: (v: any) => void;
   onHide: () => void;
   onlyOwnerCanPost: boolean;
-  onPurchaseSubject: (v: any) => void;
   onSelectNewOwner: (v: { newOwner: User; andLeave?: boolean }) => void;
   onScrollToBottom: () => void;
   selectingNewOwner: boolean;
@@ -69,11 +65,13 @@ export default function SettingsModal({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const buyChatSubject = useAppContext((v) => v.requestHelpers.buyChatSubject);
   const buyChatTheme = useAppContext((v) => v.requestHelpers.buyChatTheme);
+  const createThumbnailUpload = useAppContext(
+    (v) => v.requestHelpers.createThumbnailUpload
+  );
   const customChannelNames = useChatContext((v) => v.state.customChannelNames);
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
-  const onEnableTheme = useChatContext((v) => v.actions.onEnableTheme);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const currentMessagesObj = useChatContext(
     (v) => v.state.channelsObj[channelId]?.messagesObj
@@ -848,7 +846,6 @@ export default function SettingsModal({
       const { coins, topic } = await buyChatSubject(channelId);
       onEnableChatSubject({ channelId, topic });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      onPurchaseSubject(topic);
       setEditedCanChangeSubject('owner');
       onScrollToBottom();
       setConfirmModalShown(false);
@@ -860,11 +857,15 @@ export default function SettingsModal({
 
   async function handlePurchaseTheme() {
     try {
-      const { coins } = await buyChatTheme({
+      const { coins, unlockedThemes: canonicalUnlockedThemes } =
+        await buyChatTheme({
         channelId,
         theme: themeToPurchase
       });
-      onEnableTheme({ channelId, theme: themeToPurchase });
+      onSetChannelState({
+        channelId,
+        newState: { unlockedThemes: canonicalUnlockedThemes }
+      });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       setThemeToPurchase('');
     } catch (error) {
@@ -882,11 +883,18 @@ export default function SettingsModal({
         imageUrl: newThumbUri,
         fileName: path
       });
-      const { data: url } = await request.post(`${TwinkleURL}/content/thumb`, {
+      const url = await createThumbnailUpload({
         fileSize: file.size,
         path
       });
-      await request.put(url.signedRequest, file);
+      const uploadResponse = await fetch(url.signedRequest, {
+        method: 'PUT',
+        body: file
+      });
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload channel thumbnail');
+      }
+      path = url.path;
     }
     onDone({
       editedChannelName:

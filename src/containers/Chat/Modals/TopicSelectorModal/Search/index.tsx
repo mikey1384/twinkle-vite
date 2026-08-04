@@ -8,7 +8,6 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 export default function Search({
   canAddTopic,
   channelId,
-  channelName,
   currentTopicId,
   displayedThemeColor,
   featuredTopicId,
@@ -25,7 +24,6 @@ export default function Search({
 }: {
   canAddTopic: boolean;
   channelId: number;
-  channelName: string;
   currentTopicId: number;
   displayedThemeColor: string;
   featuredTopicId: number;
@@ -86,7 +84,6 @@ export default function Search({
                 <div>
                   <StartTopicButton
                     channelId={channelId}
-                    channelName={channelName}
                     onStartTopic={onHide}
                     topicTitle={searchText}
                     themeColor={displayedThemeColor}

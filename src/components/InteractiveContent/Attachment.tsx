@@ -4,7 +4,6 @@ import SlideEmbedly from './SlideEmbedly';
 import { mobileMaxWidth } from '~/constants/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useAppContext, useInteractiveContext } from '~/contexts';
-import { v1 as uuidv1 } from 'uuid';
 import { css } from '@emotion/css';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import VideoPlayer from '~/components/VideoPlayer';
@@ -142,8 +141,7 @@ export default function Attachment({
     async function handleUploadThumb() {
       const { thumbUrl, numUpdates } = await uploadThumbForInteractiveSlide({
         slideId,
-        file,
-        path: uuidv1()
+        file
       });
       onChangeNumUpdates({ interactiveId, numUpdates });
       onThumbnailUpload(thumbUrl);

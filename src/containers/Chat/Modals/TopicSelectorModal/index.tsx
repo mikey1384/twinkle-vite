@@ -232,7 +232,6 @@ export default function TopicSelectorModal({
         {noTopicPostedYet ? (
           <NoTopicPosted
             channelId={channelId}
-            channelName={channelName}
             displayedThemeColor={displayedThemeColor}
             onHide={onHide}
             pathId={pathId}
@@ -265,7 +264,6 @@ export default function TopicSelectorModal({
           <Search
             canAddTopic={canAddTopic}
             channelId={channelId}
-            channelName={channelName}
             currentTopicId={currentTopic.id}
             displayedThemeColor={displayedThemeColor}
             featuredTopicId={featuredTopic?.id}

@@ -116,6 +116,11 @@ export interface FileData {
   filePath: string;
 }
 
+export interface UploadCompletionMeta {
+  uploadId: string;
+  uploadToken: string;
+}
+
 export interface Link {
   id: number;
   numComments: number;

@@ -259,27 +259,35 @@ export default function interactiveRequestHelpers({
     },
     async uploadThumbForInteractiveSlide({
       slideId,
-      file,
-      path
+      file
     }: {
       slideId: number;
       file: File;
-      path: string;
     }) {
-      const { data: url } = await request.post(
+      const {
+        data: { signedRequest, path: ownedPath }
+      } = await request.post(
         `${URL}/interactive/slide/thumb`,
         {
           fileSize: file.size,
-          path
-        }
+          contentType: file.type,
+          slideId
+        },
+        auth()
       );
-      await request.put(url.signedRequest, file);
+      await request.put(signedRequest, file, {
+        headers: { 'Content-Type': file.type }
+      });
       const {
         data: { thumbUrl, numUpdates }
-      } = await request.put(`${URL}/interactive/slide/thumb`, {
-        path,
-        slideId
-      });
+      } = await request.put(
+        `${URL}/interactive/slide/thumb`,
+        {
+          path: ownedPath,
+          slideId
+        },
+        auth()
+      );
       return Promise.resolve({ thumbUrl, numUpdates });
     }
   };

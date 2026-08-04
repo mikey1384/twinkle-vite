@@ -76,7 +76,6 @@ export default function Modals({
   onInviteUsersDone,
   onMessageTextSelected,
   onOmokSpoilerClick,
-  onPurchaseSubject,
   onScrollToBottom,
   onSelectNewOwner,
   onSetAICardModalCardId,
@@ -142,7 +141,6 @@ export default function Modals({
   onInviteUsersDone: (...args: any[]) => void;
   onMessageTextSelected: (text: string) => void;
   onOmokSpoilerClick: (senderId: number) => void;
-  onPurchaseSubject: (topic: string) => void;
   onScrollToBottom: () => void;
   onSelectNewOwner: (...args: any[]) => void;
   onSetAICardModalCardId: (cardId: number) => void;
@@ -225,7 +223,6 @@ export default function Modals({
             onBuyTopicDone();
           }}
           channelId={selectedChannelId}
-          onPurchaseSubject={onPurchaseSubject}
           onScrollToBottom={onScrollToBottom}
           userIsChannelOwner={
             Number(currentChannel.creatorId) === Number(userId)
@@ -245,7 +242,6 @@ export default function Modals({
           onHide={onHideSettingsModal}
           onDone={onSettingsDone}
           channelId={selectedChannelId}
-          onPurchaseSubject={onPurchaseSubject}
           onSelectNewOwner={onSelectNewOwner}
           onScrollToBottom={onScrollToBottom}
           selectingNewOwner={selectingNewOwner}

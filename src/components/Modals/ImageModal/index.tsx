@@ -12,6 +12,7 @@ import {
   generateFileName
 } from '~/helpers/stringHelpers';
 import { v1 as uuidv1 } from 'uuid';
+import type { UploadCompletionMeta } from '~/types';
 
 export default function ImageModal({
   caption = '',
@@ -251,10 +252,17 @@ export default function ImageModal({
       setReplacing(true);
       const appliedFileName = generateFileName(selected.name);
       const filePath = uuidv1();
+      let uploadId = '';
+      let uploadToken = '';
       await uploadFile({
+        context: contentType === 'chat' ? 'chat' : 'feed',
         fileName: appliedFileName,
         filePath,
         file: selected,
+        onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+          uploadId = meta.uploadId;
+          uploadToken = meta.uploadToken;
+        },
         onUploadProgress: () => {}
       });
       await saveFileData({
@@ -265,8 +273,10 @@ export default function ImageModal({
           contentType === 'subject'
             ? 'subject'
             : contentType === 'comment'
-            ? 'comment'
-            : 'chat'
+              ? 'comment'
+              : 'chat',
+        uploadId,
+        uploadToken
       });
       if (contentType === 'subject') {
         const {

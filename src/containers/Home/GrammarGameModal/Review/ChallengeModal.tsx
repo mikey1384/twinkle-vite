@@ -59,14 +59,19 @@ export default function ChallengeModal({
     if (AI_FEATURES_DISABLED) return;
     function handleThoughtStream({
       questionId: qid,
-      thoughtContent
+      thoughtContent,
+      isDelta
     }: {
       questionId: number;
       thoughtContent: string;
+      isDelta?: boolean;
     }) {
       if (qid === questionId) {
-        thoughtRef.current = thoughtContent;
-        setStreamingThought(thoughtContent);
+        const nextThought = isDelta
+          ? `${thoughtRef.current}${thoughtContent}`
+          : thoughtContent;
+        thoughtRef.current = nextThought;
+        setStreamingThought(nextThought);
       }
     }
     socket.on('grammar_challenge_thought_streamed', handleThoughtStream);

@@ -7,7 +7,6 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
 import AIChatTopicMenu from './AIChatTopicMenu';
 import { buildCanonicalChannelMessagesState } from '../helpers';
-import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -415,7 +414,7 @@ export default function TopicSettingsModal({
         });
         navigate(`/chat/${pathId}/topic/${topicId}`);
       }
-      await editTopic({
+      const { topicSettings } = await editTopic({
         channelId,
         topicId,
         topicText: editedTopicText,
@@ -437,19 +436,13 @@ export default function TopicSettingsModal({
         }
       }
       onEditTopic({
-        topicText: editedTopicText,
-        isOwnerPostingOnly: ownerOnlyPosting,
+        topicText: topicSettings.topicTitle,
+        isOwnerPostingOnly: topicSettings.isOwnerPostingOnly,
         ...(isAIChannel &&
           isCustomInstructionsOn && {
-            customInstructions: newCustomInstructions
+            customInstructions: topicSettings.customInstructions
           }),
         isSharedWithOtherUsers: effectiveShareState
-      });
-      socket.emit('new_topic_settings', {
-        channelId,
-        topicId,
-        topicTitle: editedTopicText,
-        isOwnerPostingOnly: ownerOnlyPosting
       });
       if (isAIChannel && deleteDraftRef.current) {
         deleteDraftRef.current();

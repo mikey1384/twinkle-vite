@@ -2,17 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
-import request from 'axios';
 import Message from './Message';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Color } from '~/constants/css';
-import { queryStringForArray } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
-import URL from '~/constants/URL';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-
-const API_URL = `${URL}/chat`;
 
 export default function SubjectMsgsModal({
   displayedThemeColor = '',
@@ -26,6 +21,9 @@ export default function SubjectMsgsModal({
   subjectTitle: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const loadChatSubjectMessages = useAppContext(
+    (v) => v.requestHelpers.loadChatSubjectMessages
+  );
   const { colorKey: loadMoreButtonColor } = useRoleColor('loadMoreButton', {
     themeName: displayedThemeColor || profileTheme,
     fallback: 'lightBlue'
@@ -43,11 +41,8 @@ export default function SubjectMsgsModal({
     handleLoadMessages();
     async function handleLoadMessages() {
       try {
-        const {
-          data: { messages, loadMoreButtonShown }
-        } = await request.get(
-          `${API_URL}/chatSubject/messages?subjectId=${subjectId}`
-        );
+        const { messages, loadMoreButtonShown } =
+          await loadChatSubjectMessages({ subjectId });
         setMessages(messages);
         setLoadMoreButtonShown(loadMoreButtonShown);
       } catch (error: any) {
@@ -101,17 +96,12 @@ export default function SubjectMsgsModal({
 
   async function onLoadMoreButtonClick() {
     setLoading(true);
-    const queryString = queryStringForArray({
-      array: messages,
-      originVar: 'id',
-      destinationVar: 'messageIds'
-    });
     try {
-      const {
-        data: { messages: loadedMsgs, loadMoreButtonShown }
-      } = await request.get(
-        `${API_URL}/chatSubject/messages/more?subjectId=${subjectId}&${queryString}`
-      );
+      const { messages: loadedMsgs, loadMoreButtonShown } =
+        await loadChatSubjectMessages({
+          subjectId,
+          messageIds: messages.map((message) => Number(message.id))
+        });
       setLoading(false);
       setMessages(loadedMsgs.concat(messages));
       setLoadMoreButtonShown(loadMoreButtonShown);

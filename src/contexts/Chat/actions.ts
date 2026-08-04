@@ -77,13 +77,15 @@ export default function ChatActions(dispatch: Dispatch) {
       messageId,
       thoughtContent,
       isComplete,
-      isThinkingHard
+      isThinkingHard,
+      isDelta
     }: {
       channelId: number;
       messageId: number;
       thoughtContent: string;
       isComplete: boolean;
       isThinkingHard?: boolean;
+      isDelta?: boolean;
     }) {
       return dispatch({
         type: 'UPDATE_AI_THOUGHT_STREAM',
@@ -91,7 +93,8 @@ export default function ChatActions(dispatch: Dispatch) {
         messageId,
         thoughtContent,
         isComplete,
-        isThinkingHard
+        isThinkingHard,
+        isDelta
       });
     },
     onUpdateAIGeneratedFile({
@@ -131,7 +134,8 @@ export default function ChatActions(dispatch: Dispatch) {
       inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
       request?: Record<string, any> | null;
       requestId?: number;
-      requestStatus?: 'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
+      requestStatus?:
+        'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
       eventTimeMs?: number;
       timeStamp?: number;
     }) {
@@ -414,19 +418,22 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       topicId,
       topicTitle,
-      isOwnerPostingOnly
+      isOwnerPostingOnly,
+      customInstructions
     }: {
       channelId: number;
       topicId: number;
       topicTitle: string;
       isOwnerPostingOnly: boolean;
+      customInstructions?: string;
     }) {
       return dispatch({
         type: 'CHANGE_TOPIC_SETTINGS',
         channelId,
         topicId,
         topicTitle,
-        isOwnerPostingOnly
+        isOwnerPostingOnly,
+        customInstructions
       });
     },
     onChangeChannelSettings({
@@ -437,6 +444,7 @@ export default function ChatActions(dispatch: Dispatch) {
       isClosed,
       isOwnerPostingOnly,
       isPublic,
+      theme,
       thumbPath
     }: {
       canChangeSubject: boolean;
@@ -446,6 +454,7 @@ export default function ChatActions(dispatch: Dispatch) {
       isClosed: boolean;
       isPublic: boolean;
       isOwnerPostingOnly: boolean;
+      theme?: string | null;
       thumbPath: string;
     }) {
       return dispatch({
@@ -457,6 +466,7 @@ export default function ChatActions(dispatch: Dispatch) {
         isClosed,
         isPublic,
         isOwnerPostingOnly,
+        theme,
         thumbPath
       });
     },
@@ -583,6 +593,25 @@ export default function ChatActions(dispatch: Dispatch) {
         }
       });
     },
+    onSetChatAttachmentThumbUrl({
+      channelId,
+      subchannelId,
+      messageId,
+      thumbUrl
+    }: {
+      channelId: number;
+      subchannelId: number;
+      messageId: number;
+      thumbUrl: string;
+    }) {
+      return dispatch({
+        type: 'SET_CHAT_ATTACHMENT_THUMB_URL',
+        channelId,
+        subchannelId,
+        messageId,
+        thumbUrl
+      });
+    },
     onEditChannelSettings({
       channelName,
       description,
@@ -645,6 +674,22 @@ export default function ChatActions(dispatch: Dispatch) {
         subjectChanged
       });
     },
+    onAppendAIMessageDelta({
+      channelId,
+      messageId,
+      delta
+    }: {
+      channelId: number;
+      messageId: number;
+      delta: string;
+    }) {
+      return dispatch({
+        type: 'APPEND_AI_MESSAGE_DELTA',
+        channelId,
+        messageId,
+        delta
+      });
+    },
     onEditWord({
       deletedDefIds,
       partOfSpeeches,
@@ -675,13 +720,6 @@ export default function ChatActions(dispatch: Dispatch) {
         type: 'ENABLE_CHAT_SUBJECT',
         channelId,
         topic
-      });
-    },
-    onEnableTheme({ channelId, theme }: { channelId: number; theme: string }) {
-      return dispatch({
-        type: 'ENABLE_THEME',
-        channelId,
-        theme
       });
     },
     onEnterChannelWithId({ data, userId }: { data: object; userId: number }) {
@@ -1808,9 +1846,7 @@ export default function ChatActions(dispatch: Dispatch) {
         channel
       });
     },
-    onSetChatNotificationSettings(
-      settings: ChatNotificationSettings | null
-    ) {
+    onSetChatNotificationSettings(settings: ChatNotificationSettings | null) {
       return dispatch({
         type: 'SET_CHAT_NOTIFICATION_SETTINGS',
         settings

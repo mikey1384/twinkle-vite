@@ -289,10 +289,9 @@ function TopicItem({
     if (isFeatured) {
       return;
     }
-    const isSuccess = await updateFeaturedTopic({ topicId: id, channelId });
-    if (isSuccess) {
-      const topic = { id, content, timeStamp, userId, username };
-      socket.emit('feature_topic', { channelId, topic });
+    const result = await updateFeaturedTopic({ topicId: id, channelId });
+    if (result.isSuccess) {
+      const topic = result.topic;
       onFeatureTopic({
         channelId,
         topic

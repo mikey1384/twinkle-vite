@@ -234,9 +234,7 @@ export default function DeletedMessage({
 
   async function handleDeletePermanently() {
     const success = await deleteMessagePermanently({
-      messageId,
-      fileName,
-      filePath
+      messageId
     });
     if (success) {
       onDeletePermanently?.(messageId);

@@ -11,7 +11,6 @@ import moment from 'moment';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { socket } from '~/constants/sockets/api';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useToast } from '~/contexts/Toast';
@@ -540,13 +539,8 @@ function MessageBody({
   }, [channelId, message, userId]);
 
   const handleHideAttachment = useCallback(async () => {
-    await hideChatAttachment(messageId);
-    onHideAttachment({ messageId, channelId, subchannelId });
-    socket.emit('hide_message_attachment', {
-      channelId,
-      messageId,
-      subchannelId
-    });
+    const canonicalState = await hideChatAttachment(messageId);
+    onHideAttachment(canonicalState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId, messageId, subchannelId]);
 
@@ -563,29 +557,13 @@ function MessageBody({
     async (editedMessage: any) => {
       const messageIsSubject = !!isSubject || !!isReloadedSubject;
       try {
-        const subjectChanged = await editChatMessage({
+        const { messageUpdate, subjectChanged } = await editChatMessage({
           editedMessage,
           messageId,
           isSubject: messageIsSubject,
           subjectId
         });
-        onEditMessage({
-          editedMessage,
-          channelId,
-          messageId,
-          isSubject: messageIsSubject,
-          isAIEdited: isAIMessage,
-          subchannelId,
-          subjectChanged
-        });
-        socket.emit('edit_chat_message', {
-          channelId,
-          editedMessage,
-          subchannelId,
-          messageId,
-          isSubject: messageIsSubject,
-          isAIEdited: isAIMessage
-        });
+        onEditMessage({ ...messageUpdate, subjectChanged });
         Promise.resolve();
       } catch (error) {
         console.error(error);

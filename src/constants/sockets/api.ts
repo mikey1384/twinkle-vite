@@ -1,9 +1,7 @@
 import io from 'socket.io-client';
 import URL from '~/constants/URL';
-import {
-  getStoredItem,
-  getTwinkleDeviceId
-} from '~/helpers/userDataHelpers';
+import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
+import { clientVersion } from '~/constants/defaultValues';
 
 function buildSocketAuthPayload() {
   const token = getStoredItem('token');
@@ -14,7 +12,8 @@ function buildSocketAuthPayload() {
     token,
     username: getStoredItem('username'),
     profilePicUrl: getStoredItem('profilePicUrl'),
-    deviceId: getTwinkleDeviceId()
+    deviceId: getTwinkleDeviceId(),
+    clientVersion
   };
 }
 

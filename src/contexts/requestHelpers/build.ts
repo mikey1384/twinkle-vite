@@ -1457,9 +1457,7 @@ export default function buildRequestHelpers({
           {
             ...auth(),
             params: {
-              ...(revisionNumber != null
-                ? { revision: revisionNumber }
-                : {})
+              ...(revisionNumber != null ? { revision: revisionNumber } : {})
             }
           }
         );
@@ -2506,6 +2504,48 @@ export default function buildRequestHelpers({
         return data;
       } catch (error) {
         return handleError(error);
+      }
+    },
+
+    async loadBuildProjectLumineFix({
+      buildId,
+      stateOnly = false
+    }: {
+      buildId: number;
+      stateOnly?: boolean;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/lumine-fix`,
+          {
+            ...auth(),
+            ...(stateOnly ? { params: { stateOnly: 1 } } : {})
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async sponsorBuildProjectLumineFix({
+      buildId,
+      model,
+      reasoningEffort
+    }: {
+      buildId: number;
+      model?: string;
+      reasoningEffort?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/lumine-fix`,
+          { model, reasoningEffort },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleBuildCanonicalActionError(error);
       }
     },
 

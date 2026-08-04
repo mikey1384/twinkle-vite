@@ -201,8 +201,9 @@ export default function useChatCommandActions({
       (normalizedPaths.length > 0 ||
         String(build.contributionStatus || '').trim() === 'merging');
     if (!isOwner && !canResolveFromMainProject) return false;
-    const prompt =
-      'Resolve the conflict markers in the main project files and save the project.';
+    const prompt = canResolveFromMainProject
+      ? 'Fix the overlapping changes in Main and save the app.'
+      : 'Fix the overlapping changes in this app and save it.';
     const knownPathsContext =
       normalizedPaths.length > 0
         ? `Known marker paths: ${normalizedPaths.join(', ')}.`
@@ -211,7 +212,9 @@ export default function useChatCommandActions({
       'MERGE_CONFLICT_CONTEXT:',
       knownPathsContext,
       'Marker labels: <<<<<<< Current Build / ======= / >>>>>>> Contribution.',
-      'These markers are in main project files after a branch merge.',
+      canResolveFromMainProject
+        ? 'These markers are in Main after a branch merge.'
+        : 'These markers are in the current branch workspace.',
       'This is a normal workspace repair request. Use workspace tools as needed; there may be additional marker paths beyond the known list.',
       'Do not rely on chat excerpts.',
       'Resolve all markers that have a coherent safe resolution, preserve intended behavior from both sides where the code context supports it, and keep the app runnable.',
@@ -243,7 +246,8 @@ export default function useChatCommandActions({
           .filter(Boolean)
       )
     );
-    const prompt = 'Upgrade this project to the current Three.js vendor version.';
+    const prompt =
+      'Upgrade this project to the current Three.js vendor version.';
     const upgradeContext = [
       'THREE_VENDOR_UPGRADE_CONTEXT:',
       `Replace every reference to ${LEGACY_THREE_VENDOR_PREFIX} with ${CURRENT_THREE_VENDOR_PREFIX} across all project files.`,

@@ -45,7 +45,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
-import { Comment as CommentType, Subject } from '~/types';
+import {
+  Comment as CommentType,
+  Subject,
+  type UploadCompletionMeta
+} from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
@@ -494,9 +498,9 @@ export default function TargetContent({
                         className={`left ${css`
                           display: flex;
                           flex-direction: column;
-                          padding-bottom: ${comment.likes.length === 0
-                            ? '1rem'
-                            : ''};
+                          padding-bottom: ${
+                            comment.likes.length === 0 ? '1rem' : ''
+                          };
                         `}`}
                       >
                         <div
@@ -725,17 +729,25 @@ export default function TargetContent({
         });
         const filePath = uuidv1();
         const appliedFileName = generateFileName(attachment.file.name);
+        let uploadId = '';
+        let uploadToken = '';
         await uploadFile({
           filePath,
           file: attachment.file,
           fileName: appliedFileName,
+          onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+            uploadId = meta.uploadId;
+            uploadToken = meta.uploadToken;
+          },
           onUploadProgress: handleUploadProgress
         });
         await saveFileData({
           fileName: appliedFileName,
           filePath,
           actualFileName: attachment.file.name,
-          rootType: 'comment'
+          rootType: 'comment',
+          uploadId,
+          uploadToken
         });
         const userChanged = checkUserChange(userId);
         if (userChanged) {

@@ -1,10 +1,4 @@
-import React, {
-  memo,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -35,10 +29,11 @@ import {
   returnMaxUploadSize
 } from '~/constants/defaultValues';
 import Textarea from '~/components/Texts/Textarea';
-import ImageAttachmentsBar, { ImageAttachment } from '~/components/ImageAttachmentsBar';
-import {
-  appendImageMarkdownToText
-} from '~/helpers/imageAttachmentEmbedHelpers';
+import ImageAttachmentsBar, {
+  ImageAttachment
+} from '~/components/ImageAttachmentsBar';
+import { appendImageMarkdownToText } from '~/helpers/imageAttachmentEmbedHelpers';
+import type { UploadCompletionMeta } from '~/types';
 
 const buttonFileInputOverlayStyle: React.CSSProperties = {
   position: 'absolute',
@@ -62,7 +57,6 @@ function UploadFileModal({
   onAiUsagePolicyUpdate,
   onFileUpload,
   onTextMessageSubmit,
-  onSubmitMessage,
   onCustomUploadSubmit,
   onUpload,
   replyTarget,
@@ -84,7 +78,6 @@ function UploadFileModal({
   onAiUsagePolicyUpdate?: (policy?: any) => void;
   onFileUpload?: (arg0: any) => any;
   onTextMessageSubmit?: (arg0: any) => any;
-  onSubmitMessage?: (arg0: any) => any;
   onCustomUploadSubmit?: (params: {
     files: File[];
     caption: string;
@@ -97,9 +90,7 @@ function UploadFileModal({
   topicId?: number;
   subchannelId?: number;
 }) {
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
-  const username = useKeyContext((v) => v.myState.username);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
@@ -113,12 +104,13 @@ function UploadFileModal({
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [aiFileNotSupported, setAiFileNotSupported] = useState(false);
-  const [multiImageUploadErrorText, setMultiImageUploadErrorText] = useState('');
+  const [multiImageUploadErrorText, setMultiImageUploadErrorText] =
+    useState('');
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
-  const [imageAttachments, setImageAttachments] = useState<
-    ImageAttachment[]
-  >([]);
+  const [imageAttachments, setImageAttachments] = useState<ImageAttachment[]>(
+    []
+  );
   const imageAttachmentsRef = useRef<ImageAttachment[]>([]);
   const isMountedRef = useRef(true);
   const [multiImageUploading, setMultiImageUploading] = useState(false);
@@ -139,9 +131,8 @@ function UploadFileModal({
     return Array.isArray(fileObj) ? fileObj : [fileObj];
   }, [fileObj]);
   const isCustomUploadMode = typeof onCustomUploadSubmit === 'function';
-  const [customSelectedFiles, setCustomSelectedFiles] = useState<File[]>(
-    initialSelectedFiles
-  );
+  const [customSelectedFiles, setCustomSelectedFiles] =
+    useState<File[]>(initialSelectedFiles);
   const selectedFiles = isCustomUploadMode
     ? customSelectedFiles
     : initialSelectedFiles;
@@ -359,14 +350,12 @@ function UploadFileModal({
 
     if (!selectedFile) return;
     const uploadHandler = onFileUpload;
-    const submitMessage = onSubmitMessage;
-    if (!uploadHandler || !submitMessage) {
+    if (!uploadHandler) {
       setMultiImageUploadErrorText('Upload handlers are unavailable.');
       return;
     }
 
     const filePath = uuidv1();
-    const messageId = uuidv1();
     const appliedFileName = generateFileName(selectedFile.name);
     const isTopicMessage =
       (selectedTab === 'topic' || isRespondingToSubject) && topicId;
@@ -382,8 +371,10 @@ function UploadFileModal({
       }
     }
 
+    setMultiImageUploading(true);
+    let didClose = false;
     try {
-      uploadHandler({
+      await uploadHandler({
         channelId,
         content: finalizeEmoji(caption),
         fileName: appliedFileName,
@@ -395,43 +386,27 @@ function UploadFileModal({
         userId,
         recipientId,
         recipientUsername,
-        messageId,
         subchannelId,
         targetMessageId: replyTarget?.id,
         topicId: isTopicMessage ? topicId : null,
         thumbnail: thumbnails[selectedThumbnailIndex]
       });
+      didClose = true;
+      onUpload();
     } catch (error: any) {
       if (error.message === 'ai_file_not_supported') {
         setAiFileNotSupported(true);
       }
-      throw error;
+      setMultiImageUploadErrorText(
+        error?.response?.data?.error ||
+          error?.message ||
+          'The file could not be uploaded. Please try again.'
+      );
+    } finally {
+      if (!didClose) {
+        setMultiImageUploading(false);
+      }
     }
-
-    submitMessage({
-      messageId,
-      message: {
-        content: finalizeEmoji(caption),
-        channelId,
-        fileToUpload: selectedFile,
-        filePath,
-        fileName: appliedFileName,
-        profilePicUrl,
-        userId,
-        username
-      },
-      topicId: isTopicMessage ? topicId : null,
-      isRespondingToSubject,
-      replyTarget,
-      subchannelId
-    });
-    saveFileData({
-      fileName: appliedFileName,
-      filePath,
-      actualFileName: selectedFile.name,
-      rootType: 'chat'
-    });
-    onUpload();
   }
 
   return (
@@ -469,10 +444,10 @@ function UploadFileModal({
                       : `Non-image files aren't included in multi-photo messages (${nonImageSelectedFiles.length}). Please upload them one at a time.`}
                   </div>
                 )}
-                  <div
-                    style={{
-                      margin: '0.3rem 0 1rem 0',
-                      display: 'flex',
+                <div
+                  style={{
+                    margin: '0.3rem 0 1rem 0',
+                    display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     gap: '1rem'
@@ -607,9 +582,9 @@ function UploadFileModal({
                       fontSize: '1.2rem'
                     }}
                   >
-                    You selected {selectedFiles.length} files. Only one file will be
-                    uploaded. To send multiple photos in one message, select 2+
-                    photos.
+                    You selected {selectedFiles.length} files. Only one file
+                    will be uploaded. To send multiple photos in one message,
+                    select 2+ photos.
                   </div>
                 )}
                 <FileInfo
@@ -678,15 +653,15 @@ function UploadFileModal({
                     customFilesToSubmit.length === 0 ||
                     customUploadSubmitting
                   : isMultiImageMode
-                  ? !!captionExceedsCharLimit ||
-                    isModalInteractionLocked ||
-                    (imageAttachments.length === 0 &&
-                      (stringIsEmpty(caption) || !onTextMessageSubmit)) ||
-                    shouldBlockForAiUnsupportedFile ||
-                    (imageAttachments.length > 1 && !onTextMessageSubmit)
-                  : !!captionExceedsCharLimit ||
-                    !selectedFile ||
-                    shouldBlockForAiUnsupportedFile
+                    ? !!captionExceedsCharLimit ||
+                      isModalInteractionLocked ||
+                      (imageAttachments.length === 0 &&
+                        (stringIsEmpty(caption) || !onTextMessageSubmit)) ||
+                      shouldBlockForAiUnsupportedFile ||
+                      (imageAttachments.length > 1 && !onTextMessageSubmit)
+                    : !!captionExceedsCharLimit ||
+                      !selectedFile ||
+                      shouldBlockForAiUnsupportedFile
               }
               color={doneColor}
               onClick={handleSubmit}
@@ -823,19 +798,17 @@ function UploadFileModal({
         setCustomSelectedFiles((prev) => [...prev, ...allowedFiles]);
       }
       setAiFileNotSupported(false);
-      const newAttachments: ImageAttachment[] = allowedFiles.map(
-        (file) => ({
-          id: uuidv1(),
-          file,
-          fileName: file.name,
-          previewUrl: URL.createObjectURL(file),
-          previewUrlIsObjectUrl: true,
-          progress: 0,
-          status: 'selected',
-          uploadedUrl: '',
-          error: ''
-        })
-      );
+      const newAttachments: ImageAttachment[] = allowedFiles.map((file) => ({
+        id: uuidv1(),
+        file,
+        fileName: file.name,
+        previewUrl: URL.createObjectURL(file),
+        previewUrlIsObjectUrl: true,
+        progress: 0,
+        status: 'selected',
+        uploadedUrl: '',
+        error: ''
+      }));
       setImageAttachments((prev) => [...prev, ...newAttachments]);
     }
   }
@@ -899,7 +872,9 @@ function UploadFileModal({
 
       const orderedUrls = attachmentsSnapshot.map((attachment) => {
         return (
-          uploadedUrlsById[attachment.id] || existingUrlsById[attachment.id] || ''
+          uploadedUrlsById[attachment.id] ||
+          existingUrlsById[attachment.id] ||
+          ''
         );
       });
 
@@ -928,8 +903,13 @@ function UploadFileModal({
 
       didClose = true;
       onUpload();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setMultiImageUploadErrorTextSafely(
+        error?.response?.data?.error ||
+          error?.message ||
+          'The file could not be uploaded. Please try again.'
+      );
     } finally {
       if (!didClose) {
         setMultiImageUploadingSafely(false);
@@ -942,8 +922,7 @@ function UploadFileModal({
   ) {
     if (!attachment?.file) return;
     const uploadHandler = onFileUpload;
-    const submitMessage = onSubmitMessage;
-    if (!uploadHandler || !submitMessage) {
+    if (!uploadHandler) {
       throw new Error('Upload handlers are unavailable.');
     }
 
@@ -972,13 +951,12 @@ function UploadFileModal({
     }
 
     const filePath = uuidv1();
-    const messageId = uuidv1();
     const appliedFileName = generateFileName(fileToUpload.name);
     const isTopicMessage =
       (selectedTab === 'topic' || isRespondingToSubject) && topicId;
 
     try {
-      uploadHandler({
+      await uploadHandler({
         channelId,
         content: finalizeEmoji(caption),
         fileName: appliedFileName,
@@ -990,7 +968,6 @@ function UploadFileModal({
         userId,
         recipientId,
         recipientUsername,
-        messageId,
         subchannelId,
         targetMessageId: replyTarget?.id,
         topicId: isTopicMessage ? topicId : null,
@@ -1002,31 +979,6 @@ function UploadFileModal({
       }
       throw error;
     }
-
-    submitMessage({
-      messageId,
-      message: {
-        content: finalizeEmoji(caption),
-        channelId,
-        fileToUpload,
-        filePath,
-        fileName: appliedFileName,
-        profilePicUrl,
-        userId,
-        username
-      },
-      topicId: isTopicMessage ? topicId : null,
-      isRespondingToSubject,
-      replyTarget,
-      subchannelId
-    });
-
-    saveFileData({
-      fileName: appliedFileName,
-      filePath,
-      actualFileName: fileToUpload.name,
-      rootType: 'chat'
-    });
   }
 
   async function uploadImagesForOneMessage(
@@ -1063,7 +1015,7 @@ function UploadFileModal({
   }
 
   async function uploadSingleImageAttachment(attachment: ImageAttachment) {
-    if (!onFileUpload || !onSubmitMessage) {
+    if (!onFileUpload) {
       throw new Error('Upload handlers are unavailable.');
     }
 
@@ -1114,18 +1066,26 @@ function UploadFileModal({
 
       const filePath = uuidv1();
       const appliedFileName = generateFileName(fileToUpload.name);
+      let uploadId = '';
+      let uploadToken = '';
       await uploadFile({
         filePath,
         fileName: appliedFileName,
         file: fileToUpload,
         context: 'embed',
+        onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+          uploadId = meta.uploadId;
+          uploadToken = meta.uploadToken;
+        },
         onUploadProgress: handleUploadProgress
       });
       await saveFileData({
         fileName: appliedFileName,
         filePath,
         actualFileName: fileToUpload.name,
-        rootType: 'embed'
+        rootType: 'embed',
+        uploadId,
+        uploadToken
       });
 
       const uploadedUrl = `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(

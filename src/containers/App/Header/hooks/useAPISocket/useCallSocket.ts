@@ -90,18 +90,24 @@ export default function useCallSocket({
       channelOnCall.incomingShown &&
       !channelOnCall.imCalling
     ) {
-      for (const peerId in membersOnCall.current) {
-        socket.emit('inform_peer_signal_accepted', {
-          peerId,
-          channelId: channelOnCall.id
-        });
-        socket.emit('join_call', { channelId: channelOnCall.id, userId });
-        handleNewPeer({
-          peerId: peerId,
-          channelId: channelOnCall.id,
-          initiator: true
-        });
-      }
+      socket.emit(
+        'join_call',
+        { channelId: channelOnCall.id },
+        ({ success }: { success: boolean }) => {
+          if (!success) return;
+          for (const peerId in membersOnCall.current) {
+            socket.emit('inform_peer_signal_accepted', {
+              peerId,
+              channelId: channelOnCall.id
+            });
+            handleNewPeer({
+              peerId,
+              channelId: channelOnCall.id,
+              initiator: true
+            });
+          }
+        }
+      );
     }
     prevIncomingShown.current = channelOnCall.incomingShown;
     // eslint-disable-next-line react-hooks/exhaustive-deps

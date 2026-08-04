@@ -156,6 +156,9 @@ export default function useChatSocket({
   );
   const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
   const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
+  const onAppendAIMessageDelta = useChatContext(
+    (v) => v.actions.onAppendAIMessageDelta
+  );
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
@@ -171,6 +174,9 @@ export default function useChatSocket({
   );
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
+  const onSetChatAttachmentThumbUrl = useChatContext(
+    (v) => v.actions.onSetChatAttachmentThumbUrl
+  );
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onNotifyChatSubjectChange = useNotiContext(
     (v) => v.actions.onNotifyChatSubjectChange
@@ -365,6 +371,8 @@ export default function useChatSocket({
     );
     socket.on('chat_message_deleted', handleChatMessageDeleted);
     socket.on('chat_message_edited', onEditMessage);
+    socket.on('chat_attachment_thumbnail_updated', onSetChatAttachmentThumbUrl);
+    socket.on('ai_message_delta_streamed', onAppendAIMessageDelta);
     socket.on('chat_reaction_added', handleLegacyChatReactionAdded);
     socket.on('chat_reaction_removed', handleLegacyChatReactionRemoved);
     socket.on('chat_reaction_updated', handleChatReactionUpdate);
@@ -413,6 +421,11 @@ export default function useChatSocket({
       );
       socket.off('chat_message_deleted', handleChatMessageDeleted);
       socket.off('chat_message_edited', onEditMessage);
+      socket.off(
+        'chat_attachment_thumbnail_updated',
+        onSetChatAttachmentThumbUrl
+      );
+      socket.off('ai_message_delta_streamed', onAppendAIMessageDelta);
       socket.off('chat_reaction_added', handleLegacyChatReactionAdded);
       socket.off('chat_reaction_removed', handleLegacyChatReactionRemoved);
       socket.off('chat_reaction_updated', handleChatReactionUpdate);
@@ -1417,20 +1430,23 @@ export default function useChatSocket({
       messageId,
       thoughtContent,
       isComplete,
-      isThinkingHard
+      isThinkingHard,
+      isDelta
     }: {
       channelId: number;
       messageId: number;
       thoughtContent: string;
       isComplete: boolean;
       isThinkingHard?: boolean;
+      isDelta?: boolean;
     }) {
       onUpdateAIThoughtStream({
         channelId,
         messageId,
         thoughtContent,
         isComplete,
-        isThinkingHard
+        isThinkingHard,
+        isDelta
       });
     }
 

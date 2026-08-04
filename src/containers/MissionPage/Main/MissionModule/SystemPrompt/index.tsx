@@ -136,10 +136,13 @@ export default function SystemPromptMission({
   const onSetMissionStateRef = useRef(onSetMissionState);
   onSetMissionStateRef.current = onSetMissionState;
   const previewRequestIdRef = useRef<string | null>(null);
+  const previewReplyRef = useRef('');
   const streamingMessageIdRef = useRef<number | null>(null);
   const improveRequestIdRef = useRef<string | null>(null);
   const improveOriginalPromptRef = useRef('');
+  const improvedDraftRef = useRef('');
   const generateRequestIdRef = useRef<string | null>(null);
+  const generatedDraftRef = useRef('');
   const previewDedupWaitTimeoutRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
@@ -149,6 +152,7 @@ export default function SystemPromptMission({
 
   useEffect(() => {
     previewRequestIdRef.current = null;
+    previewReplyRef.current = '';
     streamingMessageIdRef.current = null;
     improveRequestIdRef.current = null;
     improveOriginalPromptRef.current = '';
@@ -286,6 +290,7 @@ export default function SystemPromptMission({
 
     function finalizeStreaming(finalReply?: string) {
       if (typeof finalReply === 'string' && finalReply.length > 0) {
+        previewReplyRef.current = finalReply;
         updateStreamingContent(finalReply);
       }
       streamingMessageIdRef.current = null;
@@ -315,7 +320,22 @@ export default function SystemPromptMission({
         clearTimeout(previewDedupWaitTimeoutRef.current);
         previewDedupWaitTimeoutRef.current = null;
       }
-      updateStreamingContent(reply || '');
+      previewReplyRef.current = reply || '';
+      updateStreamingContent(previewReplyRef.current);
+    }
+
+    function onPreviewDelta({
+      requestId,
+      delta
+    }: {
+      requestId?: string;
+      delta?: string;
+    }) {
+      if (!requestId || requestId !== previewRequestIdRef.current || !delta) {
+        return;
+      }
+      previewReplyRef.current += delta;
+      updateStreamingContent(previewReplyRef.current);
     }
 
     function onPreviewComplete({
@@ -370,11 +390,13 @@ export default function SystemPromptMission({
     }
 
     socket.on('system_prompt_preview_update', onPreviewUpdate);
+    socket.on('system_prompt_preview_delta', onPreviewDelta);
     socket.on('system_prompt_preview_complete', onPreviewComplete);
     socket.on('system_prompt_preview_error', onPreviewError);
 
     return () => {
       socket.off('system_prompt_preview_update', onPreviewUpdate);
+      socket.off('system_prompt_preview_delta', onPreviewDelta);
       socket.off('system_prompt_preview_complete', onPreviewComplete);
       socket.off('system_prompt_preview_error', onPreviewError);
     };
@@ -399,10 +421,30 @@ export default function SystemPromptMission({
         topicText: currentState.title,
         fallbackText: content || ''
       });
+      improvedDraftRef.current = formatted;
 
       handleSetSystemPromptState({
         ...currentState,
         prompt: formatted,
+        promptEverGenerated: true
+      });
+    }
+
+    function onImproveDelta({
+      requestId,
+      delta
+    }: {
+      requestId?: string;
+      delta?: string;
+    }) {
+      if (!requestId || requestId !== improveRequestIdRef.current || !delta) {
+        return;
+      }
+      improvedDraftRef.current += delta;
+      const currentState = latestSystemPromptStateRef.current;
+      handleSetSystemPromptState({
+        ...currentState,
+        prompt: improvedDraftRef.current,
         promptEverGenerated: true
       });
     }
@@ -424,6 +466,7 @@ export default function SystemPromptMission({
         topicText: currentState.title,
         fallbackText: content || currentState.prompt
       });
+      improvedDraftRef.current = formatted;
 
       handleSetSystemPromptState({
         ...currentState,
@@ -456,11 +499,13 @@ export default function SystemPromptMission({
     }
 
     socket.on('improve_custom_instructions_update', onImproveUpdate);
+    socket.on('improve_custom_instructions_delta', onImproveDelta);
     socket.on('improve_custom_instructions_complete', onImproveComplete);
     socket.on('improve_custom_instructions_error', onImproveError);
 
     return () => {
       socket.off('improve_custom_instructions_update', onImproveUpdate);
+      socket.off('improve_custom_instructions_delta', onImproveDelta);
       socket.off('improve_custom_instructions_complete', onImproveComplete);
       socket.off('improve_custom_instructions_error', onImproveError);
     };
@@ -481,9 +526,29 @@ export default function SystemPromptMission({
         generateDedupWaitTimeoutRef.current = null;
       }
       const currentState = latestSystemPromptStateRef.current;
+      generatedDraftRef.current = content || '';
       handleSetSystemPromptState({
         ...currentState,
-        prompt: content || '',
+        prompt: generatedDraftRef.current,
+        promptEverGenerated: true
+      });
+    }
+
+    function onGenerateDelta({
+      requestId,
+      delta
+    }: {
+      requestId?: string;
+      delta?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current || !delta) {
+        return;
+      }
+      generatedDraftRef.current += delta;
+      const currentState = latestSystemPromptStateRef.current;
+      handleSetSystemPromptState({
+        ...currentState,
+        prompt: generatedDraftRef.current,
         promptEverGenerated: true
       });
     }
@@ -501,9 +566,10 @@ export default function SystemPromptMission({
         generateDedupWaitTimeoutRef.current = null;
       }
       const currentState = latestSystemPromptStateRef.current;
+      generatedDraftRef.current = content || '';
       handleSetSystemPromptState({
         ...currentState,
-        prompt: content || '',
+        prompt: generatedDraftRef.current,
         promptEverGenerated: true
       });
       generateRequestIdRef.current = null;
@@ -553,11 +619,13 @@ export default function SystemPromptMission({
     }
 
     socket.on('generate_custom_instructions_update', onGenerateUpdate);
+    socket.on('generate_custom_instructions_delta', onGenerateDelta);
     socket.on('generate_custom_instructions_complete', onGenerateComplete);
     socket.on('generate_custom_instructions_error', onGenerateError);
 
     return () => {
       socket.off('generate_custom_instructions_update', onGenerateUpdate);
+      socket.off('generate_custom_instructions_delta', onGenerateDelta);
       socket.off('generate_custom_instructions_complete', onGenerateComplete);
       socket.off('generate_custom_instructions_error', onGenerateError);
     };
@@ -817,6 +885,7 @@ export default function SystemPromptMission({
     };
     handleSetSystemPromptState(nextState);
     streamingMessageIdRef.current = assistantMessageId;
+    previewReplyRef.current = '';
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     previewRequestIdRef.current = requestId;
     setSending(true);
@@ -837,6 +906,7 @@ export default function SystemPromptMission({
     improveOriginalPromptRef.current = prompt;
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     improveRequestIdRef.current = requestId;
+    improvedDraftRef.current = '';
     setImproving(true);
     socket.emit('improve_custom_instructions', {
       requestId,
@@ -862,6 +932,7 @@ export default function SystemPromptMission({
     });
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     generateRequestIdRef.current = requestId;
+    generatedDraftRef.current = '';
     socket.emit('generate_custom_instructions', {
       requestId,
       topicText: trimmedTitle

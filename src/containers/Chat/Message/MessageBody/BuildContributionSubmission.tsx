@@ -2,6 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ContributionLumineFixPanel, {
+  SponsorBuildContributionLumineFixButton,
+  type BuildContributionLumineFix,
+  type BuildContributionLumineFixDetails
+} from '~/components/Build/ContributionLumineFix';
 import Icon from '~/components/Icon';
 import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
 import { Color } from '~/constants/css';
@@ -14,48 +19,7 @@ import { startBuildContributionLumineFixRecovery } from '~/helpers/buildContribu
 import { socket } from '~/constants/sockets/api';
 
 type BuildContributionSubmissionStatus = 'open' | 'merging' | 'merged' | 'gone';
-type BuildContributionLumineFixStatus =
-  'needs_resolution' | 'running' | 'ready' | 'failed' | 'stale';
-
 type ChangedFileStatus = 'added' | 'updated' | 'deleted';
-
-interface BuildContributionLumineFix {
-  id?: number | null;
-  status?: BuildContributionLumineFixStatus;
-  reviewRequired?: boolean;
-  conflictPaths?: string[];
-  changedPaths?: string[];
-  sponsorUserId?: number | null;
-  model?: string | null;
-  reasoningEffort?: string | null;
-  summary?: string | null;
-  errorMessage?: string | null;
-}
-
-interface LumineModelOption {
-  model: string;
-  label: string;
-  description: string;
-  defaultReasoningEffort: string;
-  supportedReasoningEfforts: string[];
-}
-
-interface LumineFixDetails {
-  canSponsor?: boolean;
-  canApply?: boolean;
-  modelOptions?: LumineModelOption[];
-  modelSelection?: {
-    model?: string;
-    reasoningEffort?: string;
-  };
-  review?: {
-    changedFiles?: Array<{
-      path?: string;
-      beforeContent?: string;
-      afterContent?: string;
-    }>;
-  } | null;
-}
 
 const activeLumineFixStateRequests = new Map<string, Promise<any>>();
 const lumineFixReconnectRefreshers = new Set<() => void>();
@@ -196,7 +160,7 @@ export default function BuildContributionSubmission({
   const [actionError, setActionError] = useState('');
   const [confirmingReplace, setConfirmingReplace] = useState(false);
   const [lumineFixDetails, setLumineFixDetails] =
-    useState<LumineFixDetails | null>(null);
+    useState<BuildContributionLumineFixDetails | null>(null);
   const [selectedLumineModel, setSelectedLumineModel] = useState('');
 
   const rootBuildId = Number(submission?.rootBuildId || 0);
@@ -240,7 +204,8 @@ export default function BuildContributionSubmission({
     Number(payload?.contributorUserId || 0) === Number(myId);
   const lumineFix = payload?.lumineFix || null;
   const lumineFixStatus = lumineFix?.status || null;
-  const hasUnresolvedLumineFix = status === 'merged' && Boolean(lumineFix);
+  const hasUnresolvedLumineFix =
+    (status === 'merging' || status === 'merged') && Boolean(lumineFix);
   const note = String(content || '').trim();
   const canUpdateApp = canUpdateAppFromBuildContributionSubmission({
     isOwner,
@@ -255,7 +220,9 @@ export default function BuildContributionSubmission({
     if (!shouldRecoverMissedOutcome || !rootBuildId || !branchBuildId) {
       return;
     }
-    const shouldPoll = lumineFixStatus === 'running';
+    // Waiting, failed, and stale fixes can also be closed by a branch edit or
+    // a manual Main repair outside this chat surface.
+    const shouldPoll = Boolean(lumineFixStatus);
     let canceled = false;
     const stopRecovery = startBuildContributionLumineFixRecovery({
       shouldPoll,
@@ -353,18 +320,14 @@ export default function BuildContributionSubmission({
             </GameCTAButton>
           ) : null}
           {hasUnresolvedLumineFix &&
-          isContributor &&
+          (isContributor || isOwner) &&
           (lumineFixStatus === 'needs_resolution' ||
-            lumineFixStatus === 'failed') ? (
-            <GameCTAButton
-              variant="purple"
-              size="md"
-              icon="wand-magic-sparkles"
+            lumineFixStatus === 'failed' ||
+            lumineFixStatus === 'stale') ? (
+            <SponsorBuildContributionLumineFixButton
               loading={actionLoading === 'load-lumine-fix'}
               onClick={handleOpenLumineFix}
-            >
-              Sponsor Lumine Fix
-            </GameCTAButton>
+            />
           ) : null}
           {hasUnresolvedLumineFix && isOwner && lumineFixStatus === 'ready' ? (
             <GameCTAButton
@@ -382,7 +345,7 @@ export default function BuildContributionSubmission({
           {/* Only an open branch can merge. Replace Main also supports a merged
               branch with an unresolved conflict as the owner's explicit
               fallback; a contributor never sees that destructive option. */}
-          {isOwner && status === 'merging' ? (
+          {isOwner && status === 'merging' && !hasUnresolvedLumineFix ? (
             <GameCTAButton
               variant="orange"
               size="md"
@@ -392,7 +355,9 @@ export default function BuildContributionSubmission({
               Finish merge
             </GameCTAButton>
           ) : null}
-          {isOwner && (status === 'open' || hasUnresolvedLumineFix) ? (
+          {isOwner &&
+          (status === 'open' ||
+            (status === 'merged' && hasUnresolvedLumineFix)) ? (
             confirmingReplace ? (
               <>
                 <GameCTAButton
@@ -455,9 +420,8 @@ export default function BuildContributionSubmission({
       {note ? <div className={noteClass}>{note}</div> : null}
 
       {hasUnresolvedLumineFix ? (
-        <LumineFixStatusPanel
+        <ContributionLumineFixPanel
           fix={lumineFix}
-          isContributor={isContributor}
           isOwner={isOwner}
           details={lumineFixDetails}
           selectedModel={selectedLumineModel}
@@ -521,11 +485,11 @@ export default function BuildContributionSubmission({
 
       {status === 'merging' ? (
         <div className={ownerLookClass}>
-          <Icon icon="code-branch" />
+          <Icon icon="wand-magic-sparkles" />
           <span>
             {isOwner
-              ? 'This merge has conflicts left to resolve in the project.'
-              : 'The owner is merging this, with conflicts left to resolve.'}
+              ? 'This branch is waiting for its Lumine fix.'
+              : 'Lumine will help finish combining these changes.'}
           </span>
         </div>
       ) : null}
@@ -682,7 +646,9 @@ export default function BuildContributionSubmission({
         return;
       }
       applyCanonicalSubmissionState(result);
-      const details = result as LumineFixDetails & { lumineFix?: unknown };
+      const details = result as BuildContributionLumineFixDetails & {
+        lumineFix?: unknown;
+      };
       setLumineFixDetails(details);
       const modelOptions = Array.isArray(details.modelOptions)
         ? details.modelOptions
@@ -835,198 +801,6 @@ function renderOwnerLookSignal(payload: BuildContributionSubmissionPayload) {
   );
 }
 
-function LumineFixStatusPanel({
-  fix,
-  isContributor,
-  isOwner,
-  details,
-  selectedModel,
-  loading,
-  onSelectModel,
-  onSponsor,
-  onApply
-}: {
-  fix: BuildContributionLumineFix;
-  isContributor: boolean;
-  isOwner: boolean;
-  details: LumineFixDetails | null;
-  selectedModel: string;
-  loading: string;
-  onSelectModel: (model: string) => void;
-  onSponsor: () => void;
-  onApply: () => void;
-}) {
-  const status = fix.status || 'needs_resolution';
-  const modelOptions = Array.isArray(details?.modelOptions)
-    ? details.modelOptions
-    : [];
-  const selectedOption = modelOptions.find(
-    (option) => option.model === selectedModel
-  );
-  const reviewFiles: Array<{
-    path?: string;
-    beforeContent?: string;
-    afterContent?: string;
-  }> = details?.review?.changedFiles || [];
-  const sponsorable =
-    isContributor && (status === 'needs_resolution' || status === 'failed');
-
-  return (
-    <div className={lumineFixPanelClass}>
-      <div className={lumineFixHeadingClass}>
-        <Icon icon="wand-magic-sparkles" />
-        <strong>
-          {getLumineFixHeading(status, Boolean(fix.reviewRequired))}
-        </strong>
-      </div>
-      <span className={lumineFixCopyClass}>
-        {getLumineFixCopy({
-          status,
-          isContributor,
-          isOwner,
-          reviewRequired: Boolean(fix.reviewRequired)
-        })}
-      </span>
-      {fix.errorMessage ? (
-        <span className={lumineFixErrorClass}>{fix.errorMessage}</span>
-      ) : null}
-      {status === 'ready' && fix.reviewRequired && fix.summary ? (
-        <span className={lumineFixCopyClass}>{fix.summary}</span>
-      ) : null}
-      {status === 'ready' && fix.changedPaths?.length ? (
-        <span className={lumineFixPathsClass}>
-          {fix.changedPaths.join(', ')}
-        </span>
-      ) : null}
-      {sponsorable && details?.canSponsor ? (
-        <div className={lumineFixControlsClass}>
-          <label className={lumineModelLabelClass}>
-            <span>Model</span>
-            <select
-              value={selectedModel}
-              disabled={Boolean(loading)}
-              onChange={(event) => onSelectModel(event.target.value)}
-            >
-              {modelOptions.map((option) => (
-                <option key={option.model} value={option.model}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {selectedOption ? (
-            <span className={lumineFixCopyClass}>
-              {selectedOption.description}
-            </span>
-          ) : null}
-          <GameCTAButton
-            variant="purple"
-            size="md"
-            icon="wand-magic-sparkles"
-            loading={loading === 'sponsor-lumine-fix'}
-            disabled={!selectedOption || Boolean(loading)}
-            onClick={onSponsor}
-          >
-            Sponsor {selectedOption?.label || 'Lumine'} Fix
-          </GameCTAButton>
-        </div>
-      ) : null}
-      {isOwner && status === 'ready' && details?.canApply ? (
-        <div className={lumineFixControlsClass}>
-          <strong className={lumineReviewTitleClass}>
-            {fix.reviewRequired ? 'Review fix' : 'Apply resolved fix'}
-          </strong>
-          {reviewFiles.map((file) => (
-            <details
-              key={String(file.path || '')}
-              className={lumineReviewFileClass}
-            >
-              <summary>{String(file.path || 'Changed file')}</summary>
-              <span>Conflict-marked Main</span>
-              <pre>{String(file.beforeContent || '')}</pre>
-              <span>Lumine proposal</span>
-              <pre>{String(file.afterContent || '')}</pre>
-            </details>
-          ))}
-          {reviewFiles.length === 0 ? (
-            <span className={lumineFixErrorClass}>
-              This proposal could not be verified again, so it cannot be
-              applied.
-            </span>
-          ) : null}
-          <GameCTAButton
-            variant="success"
-            size="md"
-            icon="check"
-            loading={loading === 'apply-lumine-fix'}
-            disabled={reviewFiles.length === 0 || Boolean(loading)}
-            onClick={onApply}
-          >
-            Apply Lumine Fix
-          </GameCTAButton>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function getLumineFixHeading(
-  status: BuildContributionLumineFixStatus,
-  reviewRequired: boolean
-) {
-  if (status === 'running') return 'Lumine is preparing a fix';
-  if (status === 'ready') {
-    return reviewRequired
-      ? 'Lumine fix is ready to review'
-      : 'Lumine resolved the conflict';
-  }
-  if (status === 'failed') return 'Lumine fix did not finish';
-  if (status === 'stale') return 'Lumine fix is out of date';
-  return 'This merge needs conflict resolution';
-}
-
-function getLumineFixCopy({
-  status,
-  isContributor,
-  isOwner,
-  reviewRequired
-}: {
-  status: BuildContributionLumineFixStatus;
-  isContributor: boolean;
-  isOwner: boolean;
-  reviewRequired: boolean;
-}) {
-  if (status === 'running') {
-    return reviewRequired
-      ? 'Lumine is resolving the conflict. This project is set to wait for owner review before changing Main.'
-      : 'Lumine is resolving the conflict and will apply the fix to Main automatically after safety checks pass.';
-  }
-  if (status === 'ready') {
-    if (!reviewRequired) {
-      return isOwner
-        ? 'Automatic apply did not complete. Apply the validated fix below.'
-        : 'Automatic apply did not complete. The project owner can finish applying the validated fix.';
-    }
-    return isOwner
-      ? 'Review the exact fix below before applying it to Main.'
-      : 'This project requires the owner to review the fix before it changes Main.';
-  }
-  if (status === 'failed' || status === 'stale') {
-    if (status === 'stale') {
-      return 'Main changed after this conflict merge, so this proposal cannot safely be rerun. Resolve the current Main conflict manually.';
-    }
-    return isContributor
-      ? 'Choose a model to try the fix again, or resolve the conflict manually in Main.'
-      : 'The contributor can sponsor another fix, or the owner can resolve the conflict in Main.';
-  }
-  if (!isContributor) {
-    return 'The contributor can sponsor Lumine, or the owner can resolve the conflict in Main.';
-  }
-  return reviewRequired
-    ? 'Sponsor Lumine to resolve the conflict. This project is set to wait for owner review.'
-    : 'Sponsor Lumine to resolve the conflict and apply the validated fix to Main automatically.';
-}
-
 function formatDiffSummary(
   diffSummary: BuildContributionSubmissionPayload['diffSummary'],
   fallbackTotal: number
@@ -1155,111 +929,4 @@ const confirmCopyClass = css`
   color: ${Color.black()};
   font-size: 1.2rem;
   font-weight: 700;
-`;
-
-const lumineFixPanelClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  border: 1px solid rgba(126, 87, 194, 0.35);
-  border-radius: 8px;
-  padding: 0.8rem;
-  background: #faf7ff;
-`;
-
-const lumineFixHeadingClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #6038a5;
-  font-size: 1.2rem;
-`;
-
-const lumineFixCopyClass = css`
-  color: ${Color.darkerGray()};
-  font-size: 1.1rem;
-  font-weight: 650;
-  line-height: 1.4;
-`;
-
-const lumineFixErrorClass = css`
-  color: ${Color.rose()};
-  font-size: 1.1rem;
-  font-weight: 750;
-  line-height: 1.4;
-`;
-
-const lumineFixPathsClass = css`
-  overflow-wrap: anywhere;
-  color: ${Color.black()};
-  font-family: 'Roboto Mono', monospace;
-  font-size: 1.1rem;
-  line-height: 1.4;
-`;
-
-const lumineFixControlsClass = css`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.6rem;
-  margin-top: 0.1rem;
-`;
-
-const lumineModelLabelClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  color: ${Color.black()};
-  font-size: 1.1rem;
-  font-weight: 800;
-  select {
-    min-height: 2.4rem;
-    min-width: min(100%, 18rem);
-    border: 1px solid var(--ui-border);
-    border-radius: 7px;
-    background: #fff;
-    padding: 0.3rem 0.55rem;
-    color: ${Color.black()};
-    font-size: 1.1rem;
-  }
-`;
-
-const lumineReviewTitleClass = css`
-  color: ${Color.black()};
-  font-size: 1.2rem;
-`;
-
-const lumineReviewFileClass = css`
-  width: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  border-radius: 7px;
-  background: #fff;
-  padding: 0.55rem;
-  summary {
-    cursor: pointer;
-    color: ${Color.logoBlue()};
-    font-family: 'Roboto Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 800;
-  }
-  span {
-    display: block;
-    margin-top: 0.65rem;
-    color: ${Color.darkerGray()};
-    font-size: 1.1rem;
-    font-weight: 800;
-  }
-  pre {
-    max-height: 18rem;
-    overflow: auto;
-    margin: 0.35rem 0 0;
-    border-radius: 6px;
-    background: #0f172a;
-    padding: 0.65rem;
-    color: #e2e8f0;
-    font-size: 1.1rem;
-    line-height: 1.35;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
 `;

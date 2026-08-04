@@ -354,14 +354,14 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { success, isRecovered }
+          data: { success, isRecovered, deletionEvent }
         } = await request.delete(
           `${URL}/chat/message?messageId=${messageId}${
             isUndo ? '&isUndo=1' : ''
           }`,
           auth()
         );
-        return { success, isRecovered };
+        return { success, isRecovered, deletionEvent };
       } catch (error) {
         return handleError(error);
       }
@@ -499,9 +499,7 @@ export default function chatRequestHelpers({
       customInstructions: string;
     }) {
       try {
-        const {
-          data: { success }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/chat/topic`,
           {
             channelId,
@@ -513,7 +511,7 @@ export default function chatRequestHelpers({
           },
           auth()
         );
-        return success;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -678,8 +676,12 @@ export default function chatRequestHelpers({
     },
     async editChannelSettings(params: object) {
       try {
-        await request.put(`${URL}/chat/settings`, params, auth());
-        return { success: true };
+        const { data } = await request.put(
+          `${URL}/chat/settings`,
+          params,
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -696,14 +698,12 @@ export default function chatRequestHelpers({
       subjectId: number;
     }) {
       try {
-        const {
-          data: { subjectChanged }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/chat/message`,
           { editedMessage, messageId, isSubject, subjectId },
           auth()
         );
-        return subjectChanged;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1188,8 +1188,12 @@ export default function chatRequestHelpers({
     },
     async hideChatAttachment(messageId: number) {
       try {
-        await request.put(`${URL}/chat/hide/attachment`, { messageId }, auth());
-        return { success: true };
+        const { data } = await request.put(
+          `${URL}/chat/hide/attachment`,
+          { messageId },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1662,7 +1666,8 @@ export default function chatRequestHelpers({
         const { data } = await request.get(
           `${URL}/chat/chatSubject?channelId=${channelId}${
             subchannelId ? `&subchannelId=${subchannelId}` : ''
-          }`
+          }`,
+          auth()
         );
         return data;
       } catch (error) {
@@ -1759,6 +1764,32 @@ export default function chatRequestHelpers({
           auth()
         );
         return { mySubjects, allSubjects };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadChatSubjectMessages({
+      subjectId,
+      messageIds = []
+    }: {
+      subjectId: number;
+      messageIds?: number[];
+    }) {
+      try {
+        const params = new URLSearchParams({
+          subjectId: String(subjectId)
+        });
+        for (const messageId of messageIds) {
+          params.append('messageIds', String(messageId));
+        }
+        const endpoint = messageIds.length
+          ? 'chatSubject/messages/more'
+          : 'chatSubject/messages';
+        const { data } = await request.get(
+          `${URL}/chat/${endpoint}?${params.toString()}`,
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -2724,14 +2755,12 @@ export default function chatRequestHelpers({
       topicId: number;
     }) {
       try {
-        const {
-          data: { isSuccess }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/chat/topic/featured`,
           { channelId, topicId },
           auth()
         );
-        return isSuccess;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -2782,6 +2811,8 @@ export default function chatRequestHelpers({
         emitAdminTelemetry({
           message: `Uploading file ${fileName} to chat`
         });
+        let uploadId = '';
+        let uploadToken = '';
         await attemptUpload({
           fileName,
           selectedFile,
@@ -2789,9 +2820,13 @@ export default function chatRequestHelpers({
           path,
           isAIChat,
           context: 'chat',
+          onUploadCompletedMeta: (meta) => {
+            uploadId = meta.uploadId;
+            uploadToken = meta.uploadToken;
+          },
           auth
         });
-        return;
+        return { uploadId, uploadToken };
       } catch (error) {
         return handleError(error);
       }

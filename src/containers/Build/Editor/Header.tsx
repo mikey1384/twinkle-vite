@@ -533,7 +533,7 @@ function SettingsMenuButton({ menuProps }: { menuProps: any[] }) {
     setDropdownContext(
       dropdownContext
         ? null
-        : triggerRef.current?.getBoundingClientRect() ?? null
+        : (triggerRef.current?.getBoundingClientRect() ?? null)
     );
   }
 
@@ -958,13 +958,13 @@ export default function Header({
   const settingsMenu = renderSettingsMenu();
   const mobileHeaderActionsShown = Boolean(
     shouldShowMergeBranch ||
-      showContributionButton ||
-      showForkButton ||
-      showThumbnailNudge ||
-      settingsMenu ||
-      runtimeAssetTransferProgress ||
-      (isOwner && !isContributionFork) ||
-      contributionActionError
+    showContributionButton ||
+    showForkButton ||
+    showThumbnailNudge ||
+    settingsMenu ||
+    runtimeAssetTransferProgress ||
+    (isOwner && !isContributionFork) ||
+    contributionActionError
   );
 
   return (
@@ -1021,7 +1021,7 @@ export default function Header({
                 style={getContributionBadgeStyle(contributionStatus)}
                 title={
                   contributionStatus === 'merging'
-                    ? 'This branch has conflict markers to resolve'
+                    ? 'Lumine is helping finish this branch'
                     : 'Branch status'
                 }
               >
@@ -1066,7 +1066,7 @@ export default function Header({
                   style={getContributionBadgeStyle(contributionStatus)}
                   title={
                     contributionStatus === 'merging'
-                      ? 'This branch has conflict markers to resolve'
+                      ? 'Lumine is helping finish this branch'
                       : 'Branch status'
                   }
                 >
@@ -1385,6 +1385,6 @@ function formatContributionStatusLabel(
   status: 'none' | 'draft' | 'merging' | 'merged'
 ) {
   if (status === 'none') return 'Branch';
-  if (status === 'merging') return 'Conflicts';
+  if (status === 'merging') return 'Finishing';
   return status.charAt(0).toUpperCase() + status.slice(1);
 }

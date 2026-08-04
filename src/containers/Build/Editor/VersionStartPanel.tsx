@@ -675,7 +675,11 @@ export default function VersionStartPanel({
       branchNumberById.set(Number(version.id || 0), nextCount);
     });
   const meaningfulStatus =
-    normalizedStatus && normalizedStatus !== 'draft' ? normalizedStatus : '';
+    normalizedStatus === 'merging'
+      ? 'waiting for Lumine'
+      : normalizedStatus && normalizedStatus !== 'draft'
+        ? normalizedStatus
+        : '';
   const ownBranches = versions.filter(
     (version) =>
       Number(version.contributionContributorId || version.userId || 0) ===
@@ -870,9 +874,7 @@ export default function VersionStartPanel({
                   role="button"
                   tabIndex={0}
                   onClick={() => onLoadVersion(version)}
-                  onKeyDown={(event) =>
-                    handleBranchCardKeyDown(event, version)
-                  }
+                  onKeyDown={(event) => handleBranchCardKeyDown(event, version)}
                 >
                   <PreviewFrame
                     className={branchPreviewClass}
@@ -931,7 +933,9 @@ export default function VersionStartPanel({
                       </button>
                       {branchStatus && branchStatus !== 'draft' ? (
                         <span className={versionLoadStatusClass}>
-                          {branchStatus}
+                          {branchStatus === 'merging'
+                            ? 'Waiting for Lumine'
+                            : branchStatus}
                         </span>
                       ) : null}
                     </span>
@@ -1028,30 +1032,31 @@ export default function VersionStartPanel({
       items.push({
         key: 'main-conflicts',
         tone: 'merge',
-        icon: 'exclamation-triangle',
+        icon: 'wand-magic-sparkles',
         label:
           mainProjectConflictMarkerCount > 0
-            ? `${formatOwnerAttentionCount(
-                mainProjectConflictMarkerCount,
-                'conflict file'
-              )} needs help`
+            ? 'Main needs a quick fix'
             : `${formatOwnerAttentionCount(
                 mergingBranches.length,
-                'legacy merge'
-              )} needs help`,
+                'branch'
+              )} waiting for Lumine`,
         detail:
           mainProjectConflictMarkerCount > 0
-            ? 'Send the main project conflict cleanup to Lumine.'
-            : 'Finish the legacy merge record from the branch list below.',
+            ? 'Let Lumine safely repair Main.'
+            : 'Open Team to sponsor or review the Lumine fix.',
         ...(canFixWithLumine
           ? {
-              actionLabel: 'Fix',
+              actionLabel: 'Fix with Lumine',
               actionIcon: 'wand-magic-sparkles',
               onClick: () => {
                 void onFixMergeConflicts?.();
               }
             }
-          : {})
+          : {
+              actionLabel: 'Open Team',
+              actionIcon: 'users',
+              onClick: onOpenTeamPanel
+            })
       });
     }
 

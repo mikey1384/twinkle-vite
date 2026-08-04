@@ -236,10 +236,12 @@ export default function useOptimisticSave({
         twoPeople: currentChannel.twoPeople,
         pathId: currentChannel.pathId
       };
-      socket.emit('new_chat_message', {
-        message: messageToSendOverSocket,
-        channel: channelData
-      });
+      if (!post.isChessMsg) {
+        socket.emit('new_chat_message', {
+          message: messageToSendOverSocket,
+          channel: channelData
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

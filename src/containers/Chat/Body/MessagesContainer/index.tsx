@@ -109,7 +109,6 @@ export default function MessagesContainer({
       onRegisterSaveScrollPositionForAll,
       onSeachChatMessages,
       onSetChessTarget,
-      onSetChessGameState,
       onSetChessModalShown,
       onSetOmokModalShown,
       onSetCreatingNewDMChannel,
@@ -672,24 +671,15 @@ export default function MessagesContainer({
 
   const handleDelete = useCallback(async () => {
     const { messageId } = deleteModal;
-    await deleteChatMessage({ messageId });
-    onDeleteMessage({
-      channelId: selectedChannelId,
-      messageId,
-      subchannelId: subchannel?.id,
-      topicId: appliedTopicId
-    });
+    const { deletionEvent } = await deleteChatMessage({ messageId });
+    if (deletionEvent) {
+      onDeleteMessage(deletionEvent);
+    }
     setDeleteModal({
       shown: false,
       fileName: '',
       filePath: '',
       messageId: null
-    });
-    socket.emit('delete_chat_message', {
-      channelId: selectedChannelId,
-      subchannelId,
-      messageId,
-      topicId: appliedTopicId
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedTopicId, deleteModal, selectedChannelId, subchannelId]);
@@ -714,7 +704,7 @@ export default function MessagesContainer({
       editedTheme: string;
       newThumbPath: string;
     }) => {
-      await editChannelSettings({
+      const { channelSettings } = await editChannelSettings({
         channelName: editedChannelName,
         description: editedDescription,
         isClosed: editedIsClosed,
@@ -726,33 +716,13 @@ export default function MessagesContainer({
         newThumbPath
       });
       onEditChannelSettings({
-        channelName: editedChannelName,
-        description: editedDescription,
-        isClosed: editedIsClosed,
-        isPublic: editedIsPublic,
-        channelId: selectedChannelId,
-        canChangeSubject: editedCanChangeSubject,
-        isOwnerPostingOnly: editedOnlyOwnerCanPost,
-        theme: editedTheme,
-        newThumbPath
+        ...channelSettings,
+        newThumbPath: channelSettings.thumbPath
       });
-      if (Number(userId) === Number(currentChannel.creatorId)) {
-        socket.emit('new_channel_settings', {
-          channelName: editedChannelName,
-          description: editedDescription,
-          isClosed: editedIsClosed,
-          isPublic: editedIsPublic,
-          channelId: selectedChannelId,
-          canChangeSubject: editedCanChangeSubject,
-          isOwnerPostingOnly: editedOnlyOwnerCanPost,
-          theme: editedTheme,
-          newThumbPath
-        });
-      }
       setSettingsModalShown(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentChannel?.creatorId, selectedChannelId, userId]
+    [selectedChannelId]
   );
 
   const handleInviteUsersDone = useCallback(
@@ -886,26 +856,12 @@ export default function MessagesContainer({
   ]);
 
   const handleCancelRewindRequest = useCallback(async () => {
-    const { messageId, cancelMessage, timeStamp } =
-      await cancelChessRewind(selectedChannelId);
-    socket.emit('cancel_chess_rewind', {
-      channelId: selectedChannelId,
-      messageId,
-      cancelMessage,
-      userId,
-      username,
-      profilePicUrl,
-      timeStamp
-    });
+    await cancelChessRewind(selectedChannelId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profilePicUrl, selectedChannelId, userId, username]);
+  }, [selectedChannelId]);
 
   const handleAcceptRewind = useCallback(
     async (chessState: any) => {
-      onSetChessGameState({
-        channelId: selectedChannelId,
-        newState: { rewindRequestId: null }
-      });
       await rewindChessMove({
         channelId: selectedChannelId,
         chessState
@@ -916,19 +872,9 @@ export default function MessagesContainer({
   );
 
   const handleDeclineRewind = useCallback(async () => {
-    const { messageId, declineMessage, timeStamp } =
-      await declineChessRewind(selectedChannelId);
-    socket.emit('decline_chess_rewind', {
-      channelId: selectedChannelId,
-      messageId,
-      declineMessage,
-      userId,
-      username,
-      profilePicUrl,
-      timeStamp
-    });
+    await declineChessRewind(selectedChannelId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profilePicUrl, selectedChannelId, userId, username]);
+  }, [selectedChannelId]);
 
   const handleFavoriteClick = useCallback(async () => {
     if (!favoritingRef.current) {
@@ -1414,12 +1360,6 @@ export default function MessagesContainer({
           messageInputSetTextRef.current?.(text);
         }}
         onOmokSpoilerClick={handleOmokSpoilerClick}
-        onPurchaseSubject={(topic) =>
-          socket.emit('purchased_chat_subject', {
-            channelId: selectedChannelId,
-            topic
-          })
-        }
         onScrollToBottom={onScrollToBottom}
         onSelectNewOwner={handleSelectNewOwner}
         onSetAICardModalCardId={onSetAICardModalCardId}

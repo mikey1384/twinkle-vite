@@ -27,6 +27,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
+import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -452,6 +453,13 @@ export default function useInitSocket({
       } catch {}
     }
 
+    async function onClientRefreshRequired() {
+      try {
+        const data = await checkVersion();
+        onCheckVersion(data);
+      } catch {}
+    }
+
     const onFocus = () => {
       void checkFeedsOutdated();
       ensureSocketConnected();
@@ -463,11 +471,19 @@ export default function useInitSocket({
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onOnline);
     window.addEventListener('pageshow', onPageShow);
+    window.addEventListener(
+      TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT,
+      onClientRefreshRequired
+    );
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('online', onOnline);
       window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener(
+        TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT,
+        onClientRefreshRequired
+      );
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1122,9 +1138,7 @@ export default function useInitSocket({
     let warned = false;
     const interval = window.setInterval(() => {
       if (!userIdRef.current) return;
-      if (
-        bootstrapAwaitingBindUserIdRef.current === userIdRef.current
-      ) {
+      if (bootstrapAwaitingBindUserIdRef.current === userIdRef.current) {
         return;
       }
       if (

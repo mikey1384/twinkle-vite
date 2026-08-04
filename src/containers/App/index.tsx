@@ -64,6 +64,7 @@ import {
   setupChatPushBestEffort
 } from '~/helpers/desktopNotifications';
 import { v1 as uuidv1 } from 'uuid';
+import type { UploadCompletionMeta } from '~/types';
 import {
   useAppContext,
   useManagementContext,
@@ -337,9 +338,7 @@ export default function App() {
   const onSetPendingChessModalChannelId = useChatContext(
     (v) => v.actions.onSetPendingChessModalChannelId
   );
-  const onDisplayAttachedFile = useChatContext(
-    (v) => v.actions.onDisplayAttachedFile
-  );
+  const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
   const onSetChessTarget = useChatContext((v) => v.actions.onSetChessTarget);
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
   const onPostFileUploadStatus = useChatContext(
@@ -347,12 +346,6 @@ export default function App() {
   );
   const onRemoveFileUploadStatus = useChatContext(
     (v) => v.actions.onRemoveFileUploadStatus
-  );
-  const onRemoveTempMessage = useChatContext(
-    (v) => v.actions.onRemoveTempMessage
-  );
-  const onPostUploadComplete = useChatContext(
-    (v) => v.actions.onPostUploadComplete
   );
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const onResetTodayStats = useNotiContext((v) => v.actions.onResetTodayStats);
@@ -590,13 +583,7 @@ export default function App() {
       level,
       userType
     });
-  }, [
-    achievementPoints,
-    analyticsUserIdForSync,
-    joinDate,
-    level,
-    userType
-  ]);
+  }, [achievementPoints, analyticsUserIdForSync, joinDate, level, userType]);
 
   useEffect(() => {
     analyticsPageViewController.observe({
@@ -1301,7 +1288,6 @@ export default function App() {
     fileToUpload,
     recipientId,
     recipientUsername,
-    messageId: tempMessageId,
     targetMessageId,
     subchannelId,
     topicId,
@@ -1317,7 +1303,6 @@ export default function App() {
     fileToUpload: File;
     recipientId: number;
     recipientUsername?: string;
-    messageId: number;
     targetMessageId: number;
     subchannelId: number;
     topicId: number;
@@ -1347,8 +1332,12 @@ export default function App() {
       subchannelId
     });
 
+    let completedUploadMeta: {
+      uploadId: string;
+      uploadToken: string;
+    };
     try {
-      await uploadFileOnChat({
+      completedUploadMeta = await uploadFileOnChat({
         fileName,
         selectedFile: fileToUpload,
         onUploadProgress: handleUploadProgress,
@@ -1360,12 +1349,6 @@ export default function App() {
         channelId,
         subchannelId,
         filePath
-      });
-      onRemoveTempMessage({
-        channelId,
-        subchannelId,
-        topicId,
-        tempMessageId
       });
       throw error;
     }
@@ -1382,6 +1365,15 @@ export default function App() {
       if (userChanged) {
         return;
       }
+
+      await saveFileData({
+        fileName,
+        filePath,
+        actualFileName: fileToUpload.name,
+        rootType: 'chat',
+        uploadId: completedUploadMeta.uploadId,
+        uploadToken: completedUploadMeta.uploadToken
+      });
 
       savedFileMessage = await saveChatMessageWithFileAttachment({
         channelId,
@@ -1411,12 +1403,6 @@ export default function App() {
         subchannelId,
         filePath
       });
-      onRemoveTempMessage({
-        channelId,
-        subchannelId,
-        topicId,
-        tempMessageId
-      });
       if (error?.aiUsagePolicy) {
         onAiUsagePolicyUpdate?.(error.aiUsagePolicy);
       }
@@ -1426,7 +1412,6 @@ export default function App() {
     const {
       channel,
       message,
-      messageId,
       alreadyExists,
       netCoins,
       aiUsagePolicy,
@@ -1446,6 +1431,11 @@ export default function App() {
     if (alreadyExists) {
       return window.location.reload();
     }
+    onRemoveFileUploadStatus({
+      channelId,
+      subchannelId,
+      filePath
+    });
     trackEvent('chat_message_send', {
       channel_type: isZeroChat
         ? 'ai_zero'
@@ -1456,34 +1446,15 @@ export default function App() {
             : 'group',
       has_attachment: true
     });
-    onPostUploadComplete({
-      path: filePath,
-      channelId,
-      tempMessageId,
-      messageId: messageId,
-      subchannelId,
-      result: !!messageId,
-      topicId
-    });
-    const params = {
-      content,
-      fileName,
-      filePath,
-      fileSize: fileToUpload.size,
-      id: messageId,
-      uploaderLevel: level,
-      channelId,
-      userId,
-      username,
-      profilePicUrl,
-      subjectId: topicId || 0,
-      subchannelId,
-      thumbUrl,
-      chessState: currentChannel.chessTarget,
-      targetMessage: currentChannel.replyTarget,
-      ...(topicId ? { targetSubject: currentChannel.topicObj[topicId] } : {})
-    };
-    onDisplayAttachedFile(params);
+    if (channelId && message) {
+      onReceiveMessage({
+        pageVisible: document.visibilityState === 'visible',
+        message,
+        usingChat: true,
+        currentSubchannelId: Number(message.subchannelId || subchannelId || 0),
+        isMyMessage: true
+      });
+    }
     if (channelId) {
       const channelData = {
         id: channelId,
@@ -1493,7 +1464,7 @@ export default function App() {
         pathId: currentChannel.pathId
       };
       socket.emit('new_chat_message', {
-        message: { ...params, isNewMessage: true },
+        message: { ...message, isNewMessage: true },
         channel: channelData
       });
     }
@@ -1649,20 +1620,26 @@ export default function App() {
     fileName: string;
     onUploadProgress: (params: { loaded: number; total: number }) => void;
   }) {
-    const promises = [
-      uploadFile({
-        filePath,
-        file,
-        fileName,
-        onUploadProgress
-      }),
-      saveFileData({
-        fileName,
-        filePath,
-        actualFileName: file.name,
-        rootType: 'subject'
-      })
-    ];
-    return Promise.all(promises);
+    let uploadId = '';
+    let uploadToken = '';
+    const uploadedPath = await uploadFile({
+      filePath,
+      file,
+      fileName,
+      onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+        uploadId = meta.uploadId;
+        uploadToken = meta.uploadToken;
+      },
+      onUploadProgress
+    });
+    await saveFileData({
+      fileName,
+      filePath,
+      actualFileName: file.name,
+      rootType: 'subject',
+      uploadId,
+      uploadToken
+    });
+    return uploadedPath;
   }
 }

@@ -15,9 +15,11 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import { useAppContext, useContentContext, useInputContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { returnImageFileFromUrl } from '~/helpers';
-import { v1 as uuidv1 } from 'uuid';import ThumbnailPicker from '~/components/ThumbnailPicker';
+import { v1 as uuidv1 } from 'uuid';
+import ThumbnailPicker from '~/components/ThumbnailPicker';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
+import type { UploadCompletionMeta } from '~/types';
 
 const cancelLabel = 'Cancel';
 const submitLabel = 'Submit';
@@ -295,58 +297,52 @@ export default function SubjectInputForm({
     let appliedFileName = '';
     try {
       if (secretAttachment) {
-        const promises = [];
         appliedFileName = generateFileName(secretAttachment.file.name);
-        promises.push(
-          uploadFile({
-            fileName: appliedFileName,
-            filePath,
-            file: secretAttachment.file,
-            onUploadProgress: ({
-              loaded,
-              total
-            }: {
-              loaded: number;
-              total: number;
-            }) =>
-              onUpdateSecretFileUploadProgress({
-                contentId,
-                contentType,
-                progress: loaded / total
-              })
-          })
-        );
-        promises.push(
-          saveFileData({
-            fileName: appliedFileName,
-            filePath,
-            actualFileName: secretAttachment.file.name,
-            rootType: 'subject'
-          })
-        );
+        let uploadId = '';
+        let uploadToken = '';
+        await uploadFile({
+          fileName: appliedFileName,
+          filePath,
+          file: secretAttachment.file,
+          onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+            uploadId = meta.uploadId;
+            uploadToken = meta.uploadToken;
+          },
+          onUploadProgress: ({
+            loaded,
+            total
+          }: {
+            loaded: number;
+            total: number;
+          }) =>
+            onUpdateSecretFileUploadProgress({
+              contentId,
+              contentType,
+              progress: loaded / total
+            })
+        });
+        await saveFileData({
+          fileName: appliedFileName,
+          filePath,
+          actualFileName: secretAttachment.file.name,
+          rootType: 'subject',
+          uploadId,
+          uploadToken
+        });
         if (secretAttachment.thumbnail) {
-          promises.push(
-            (async () => {
-              const file = returnImageFileFromUrl({
-                imageUrl: secretAttachment.thumbnail
-              });
-              const thumbUrl = await uploadThumb({
-                file,
-                path: uuidv1()
-              });
-              return Promise.resolve(thumbUrl);
-            })()
-          );
+          const file = returnImageFileFromUrl({
+            imageUrl: secretAttachment.thumbnail
+          });
+          secretThumbUrl = await uploadThumb({
+            file,
+            path: uuidv1()
+          });
         }
         onSetUploadingFile({
           contentId,
           contentType,
           isUploading: true
         });
-        const result = await Promise.all(promises);
-        if (secretAttachment.thumbnail) {
-          secretThumbUrl = result[result.length - 1];
-        }
         onSetUploadingFile({
           contentId,
           contentType,

@@ -1,6 +1,13 @@
 import { userIdRef } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
 import { Theme } from '~/constants/css';
+import type { UploadCompletionMeta } from '~/types';
+import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
+import {
+  getUploadRetryDelayMs,
+  isUploadClientRefreshRequired,
+  shouldRetryUploadRequest
+} from './uploadRetryPolicy';
 
 import {
   CHAT_ID_BASE_NUMBER,
@@ -42,7 +49,9 @@ function clampLevel(value: any, fallback = 1) {
 function calculateDailyTaskStreakMultiplier(streakDays: any) {
   const appliedStreakDays = toNonNegativeInt(streakDays);
   return Math.min(
-    Math.floor(Math.max(appliedStreakDays - 1, 0) / dailyTaskStreakDaysPerTier) + 2,
+    Math.floor(
+      Math.max(appliedStreakDays - 1, 0) / dailyTaskStreakDaysPerTier
+    ) + 2,
     dailyTaskStreakMultiplierCap
   );
 }
@@ -52,9 +61,9 @@ function calculateDailyTaskRepairCost(streakDays: any) {
   if (appliedStreakDays < 1) return 0;
 
   // Match repair pricing to the same 10-day tiers used by the reward boost.
-  return dailyTaskStreakRepairCost * Math.max(
-    1,
-    calculateDailyTaskStreakMultiplier(appliedStreakDays) - 1
+  return (
+    dailyTaskStreakRepairCost *
+    Math.max(1, calculateDailyTaskStreakMultiplier(appliedStreakDays) - 1)
   );
 }
 
@@ -80,7 +89,9 @@ function buildDailyTaskStreakForNextDay({
     toNonNegativeInt(previousStreak.longestStreak),
     toNonNegativeInt(previousDailyTaskBestStreak)
   );
-  const lastCompletedDayIndex = toNullableInt(previousStreak.lastCompletedDayIndex);
+  const lastCompletedDayIndex = toNullableInt(
+    previousStreak.lastCompletedDayIndex
+  );
 
   if (currentDayIndex === null) {
     return {
@@ -98,15 +109,13 @@ function buildDailyTaskStreakForNextDay({
   }
 
   const dayGap =
-    lastCompletedDayIndex === null ? null : currentDayIndex - lastCompletedDayIndex;
+    lastCompletedDayIndex === null
+      ? null
+      : currentDayIndex - lastCompletedDayIndex;
   const streakAtRisk =
-    rawCurrentStreak > 0 &&
-    lastCompletedDayIndex !== null &&
-    dayGap === 2;
+    rawCurrentStreak > 0 && lastCompletedDayIndex !== null && dayGap === 2;
   const streakBroken =
-    rawCurrentStreak > 0 &&
-    lastCompletedDayIndex !== null &&
-    (dayGap || 0) > 2;
+    rawCurrentStreak > 0 && lastCompletedDayIndex !== null && (dayGap || 0) > 2;
   const streakRepairAvailable = false;
   const streakIsCurrent =
     lastCompletedDayIndex === currentDayIndex ||
@@ -119,7 +128,9 @@ function buildDailyTaskStreakForNextDay({
     currentStreak: effectiveCurrentStreak,
     longestStreak,
     lastCompletedDayIndex,
-    rewardMultiplier: calculateDailyTaskStreakMultiplier(effectiveCurrentStreak),
+    rewardMultiplier: calculateDailyTaskStreakMultiplier(
+      effectiveCurrentStreak
+    ),
     streakRepairAvailable,
     repairNoticeHidden: false,
     streakAtRisk,
@@ -164,8 +175,10 @@ function buildDailyTaskStatusForNextDay({
     achievedDailyGoals: [],
     streak,
     preferences: {
-      boostStripCompact: !!previousDailyTaskStatus?.preferences?.boostStripCompact,
-      boostStripCompactSet: !!previousDailyTaskStatus?.preferences?.boostStripCompactSet
+      boostStripCompact:
+        !!previousDailyTaskStatus?.preferences?.boostStripCompact,
+      boostStripCompactSet:
+        !!previousDailyTaskStatus?.preferences?.boostStripCompactSet
     },
     progression: {
       grammarblesLevel,
@@ -239,7 +252,8 @@ export function buildTodayStatsForNextDay(
     previousDailyTaskStatus: todayStats?.dailyTaskStatus,
     previousDailyTaskBestStreak: todayStats?.dailyTaskBestStreak
   });
-  const dailyTaskPatch = buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus);
+  const dailyTaskPatch =
+    buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus);
 
   return {
     aiCallDuration: 0,
@@ -655,6 +669,7 @@ export async function attemptUpload({
   isProfilePic,
   isAIChat = false,
   onSignedUploadMeta,
+  onUploadCompletedMeta,
   auth
 }: {
   fileName: string;
@@ -665,54 +680,78 @@ export async function attemptUpload({
   isProfilePic?: boolean;
   isAIChat?: boolean;
   onSignedUploadMeta?: (meta: { profileUploadToken?: string }) => void;
+  onUploadCompletedMeta?: (meta: UploadCompletionMeta) => void;
   auth: () => any;
 }): Promise<string | void> {
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 2000;
-  const CHUNK_SIZE = 5 * 1024 * 1024;
+  const FALLBACK_CHUNK_SIZE = 5 * 1024 * 1024;
 
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
   const { default: axios } = await import('axios');
 
+  function throwIfClientRefreshRequired(error: any) {
+    if (!isUploadClientRefreshRequired(error)) {
+      return;
+    }
+    window.dispatchEvent(
+      new CustomEvent(TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT)
+    );
+    throw error;
+  }
+
   emitAdminTelemetry({
     message: `Attempting to upload file ${fileName}`
   });
-  const { uploadId, urls, key } = await initiateUpload();
+  const { uploadId, urls, key, uploadToken, partByteLengths } =
+    await initiateUpload();
   emitAdminTelemetry({
     message: `Fetched signed S3 URLs for ${fileName}`
   });
-  const parts = [];
-  let start = 0;
+  try {
+    const parts = [];
+    let start = 0;
 
-  for (let partNumber = 0; partNumber < urls.length; partNumber++) {
-    const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
-    const chunk = selectedFile.slice(start, end);
+    for (let partNumber = 0; partNumber < urls.length; partNumber++) {
+      const expectedPartBytes =
+        partByteLengths?.[partNumber] ?? FALLBACK_CHUNK_SIZE;
+      const end = Math.min(start + expectedPartBytes, selectedFile.size);
+      const chunk = selectedFile.slice(start, end);
+      emitAdminTelemetry({
+        message: `Uploading part ${partNumber + 1} of ${
+          urls.length
+        } for ${fileName}`
+      });
+      const part = await uploadPart(urls[partNumber], chunk, partNumber, start);
+      emitAdminTelemetry({
+        message: `Part ${partNumber + 1} of ${
+          urls.length
+        } for ${fileName} successfully uploaded`
+      });
+      parts.push(part);
+      start = end;
+    }
+
+    await completeUpload(uploadId, key, parts, uploadToken);
+    onUploadCompletedMeta?.({ uploadId, uploadToken });
+    const result = key.split('.com')?.[1] || `/${key}`;
     emitAdminTelemetry({
-      message: `Uploading part ${partNumber + 1} of ${
-        urls.length
-      } for ${fileName}`
+      message: `Upload completed for ${fileName}. Returning key: ${result}`
     });
-    const part = await uploadPart(urls[partNumber], chunk, partNumber);
-    emitAdminTelemetry({
-      message: `Part ${partNumber + 1} of ${
-        urls.length
-      } for ${fileName} successfully uploaded`
-    });
-    parts.push(part);
-    start = end;
+    return result;
+  } catch (error) {
+    await abortUpload(uploadId, key, uploadToken).catch(() => {});
+    throw error;
   }
 
-  await completeUpload(uploadId, key, parts);
-  const result = key.split('.com')?.[1] || `/${key}`;
-  emitAdminTelemetry({
-    message: `Upload completed for ${fileName}. Returning key: ${result}`
-  });
-  return result;
-
-  async function initiateUpload(
-    attempt = 1
-  ): Promise<{ uploadId: string; urls: string[]; key: string }> {
+  async function initiateUpload(attempt = 1): Promise<{
+    uploadId: string;
+    urls: string[];
+    key: string;
+    uploadToken: string;
+    partByteLengths?: number[];
+  }> {
     try {
       emitAdminTelemetry({
         message: `Getting signed S3 URL for ${fileName}`
@@ -742,16 +781,18 @@ export async function attemptUpload({
       });
       return data;
     } catch (error: any) {
-      if (error.status === 400) {
+      throwIfClientRefreshRequired(error);
+      const status = Number(error?.response?.status || 0);
+      if (status === 400) {
         throw new Error(
           error?.response?.data?.error || 'ai_file_not_supported'
         );
       }
-      if (attempt < MAX_RETRIES) {
+      if (attempt < MAX_RETRIES && shouldRetryUploadRequest(error)) {
         emitAdminTelemetry({
           message: `Retrying initiation, attempt ${attempt + 1}`
         });
-        await sleep(RETRY_DELAY);
+        await sleep(getUploadRetryDelayMs(error, RETRY_DELAY));
         return initiateUpload(attempt + 1);
       }
       throw error;
@@ -762,6 +803,7 @@ export async function attemptUpload({
     url: string,
     chunk: Blob,
     partNumber: number,
+    uploadedBeforePart: number,
     attempt = 1
   ): Promise<{ ETag: string; PartNumber: number }> {
     try {
@@ -782,8 +824,7 @@ export async function attemptUpload({
         },
         onUploadProgress: (progressEvent) => {
           const totalProgress =
-            (partNumber * CHUNK_SIZE + progressEvent.loaded) /
-            selectedFile.size;
+            (uploadedBeforePart + progressEvent.loaded) / selectedFile.size;
           onUploadProgress({
             loaded: totalProgress * selectedFile.size,
             total: selectedFile.size
@@ -810,12 +851,19 @@ export async function attemptUpload({
         PartNumber: partNumber + 1
       };
     } catch (error) {
-      if (attempt < MAX_RETRIES) {
+      throwIfClientRefreshRequired(error);
+      if (attempt < MAX_RETRIES && shouldRetryUploadRequest(error)) {
         emitAdminTelemetry({
           message: `Retrying part ${partNumber + 1}, attempt ${attempt + 1}`
         });
-        await sleep(RETRY_DELAY);
-        return uploadPart(url, chunk, partNumber, attempt + 1);
+        await sleep(getUploadRetryDelayMs(error, RETRY_DELAY));
+        return uploadPart(
+          url,
+          chunk,
+          partNumber,
+          uploadedBeforePart,
+          attempt + 1
+        );
       }
       throw error;
     }
@@ -825,6 +873,7 @@ export async function attemptUpload({
     uploadId: string,
     key: string,
     parts: any[],
+    uploadToken: string,
     attempt = 1
   ) {
     try {
@@ -833,20 +882,38 @@ export async function attemptUpload({
       });
       await axios.post(
         `${URL}/content/complete-upload`,
-        { uploadId, key, parts },
+        { uploadId, key, parts, uploadToken },
         auth()
       );
       emitAdminTelemetry({
         message: `Completed upload for ${fileName}`
       });
     } catch (error) {
-      if (attempt < MAX_RETRIES) {
+      throwIfClientRefreshRequired(error);
+      if (attempt < MAX_RETRIES && shouldRetryUploadRequest(error)) {
         emitAdminTelemetry({
           message: `Retrying completion, attempt ${attempt + 1}`
         });
-        await sleep(RETRY_DELAY);
-        return completeUpload(uploadId, key, parts, attempt + 1);
+        await sleep(getUploadRetryDelayMs(error, RETRY_DELAY));
+        return completeUpload(uploadId, key, parts, uploadToken, attempt + 1);
       }
+      throw error;
+    }
+  }
+
+  async function abortUpload(
+    uploadId: string,
+    key: string,
+    uploadToken: string
+  ) {
+    try {
+      await axios.post(
+        `${URL}/content/abort-upload`,
+        { uploadId, key, uploadToken },
+        auth()
+      );
+    } catch (error) {
+      throwIfClientRefreshRequired(error);
       throw error;
     }
   }

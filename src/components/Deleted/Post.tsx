@@ -543,9 +543,7 @@ export default function DeletedPost({
   async function handleDeletePermanently() {
     const success = await deletePostPermanently({
       contentId,
-      contentType,
-      fileName,
-      filePath
+      contentType
     });
     if (success && postId) {
       onDeletePermanently?.(postId);

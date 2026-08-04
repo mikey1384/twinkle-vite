@@ -60,10 +60,9 @@ export default function useMerge({
       const generatedSrt = generateSrtContent(subtitles, secondsToSrtTime);
       const chunkSize = 5 * 1024 * 1024;
       const totalChunks = Math.ceil(videoFile.size / chunkSize);
-      const sessionId = `${Date.now()}-${videoFile.name.replace(
-        /[^a-zA-Z0-9]/g,
-        '_'
-      )}`;
+      const sessionId = `${Date.now()}-${videoFile.name
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .slice(0, 120)}`;
       const uploadedChunkIndexes = new Set<number>();
 
       const uploadChunkWithRetry = async (
@@ -77,34 +76,27 @@ export default function useMerge({
         while (retries < maxRetries) {
           try {
             const reader = new FileReader();
-            const chunkArrayBuffer = await new Promise<ArrayBuffer>(
-              (resolve, reject) => {
-                const timeout = setTimeout(
-                  () => reject(new Error('File read timed out')),
-                  30000
-                );
+            const chunkBase64 = await new Promise<string>((resolve, reject) => {
+              const timeout = setTimeout(
+                () => reject(new Error('File read timed out')),
+                30000
+              );
 
-                reader.onload = () => {
-                  clearTimeout(timeout);
-                  resolve(reader.result as ArrayBuffer);
-                };
-                reader.onerror = () => {
-                  clearTimeout(timeout);
-                  reject(new Error('File read error'));
-                };
+              reader.onload = () => {
+                clearTimeout(timeout);
+                if (typeof reader.result === 'string') {
+                  resolve(reader.result);
+                } else {
+                  reject(new Error('Failed to encode upload chunk'));
+                }
+              };
+              reader.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('File read error'));
+              };
 
-                reader.readAsArrayBuffer(chunk);
-              }
-            );
-
-            let binary = '';
-            const bytes = new Uint8Array(chunkArrayBuffer);
-            for (let i = 0; i < bytes.length; i++) {
-              binary += String.fromCharCode(bytes[i]);
-            }
-
-            const base64 = btoa(binary);
-            const chunkBase64 = `data:${videoFile.type};base64,${base64}`;
+              reader.readAsDataURL(chunk);
+            });
             const response = (await mergeVideoWithSubtitlesRef.current({
               chunk: chunkBase64,
               srtContent: isLastChunk ? generatedSrt : undefined,

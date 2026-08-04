@@ -1,5 +1,6 @@
 import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import { recoverFromLazyImportLoadError } from '~/helpers/lazyImportHelpers';
+import { clientVersion } from '~/constants/defaultValues';
 
 type RequestHelperModuleName =
   | 'build'
@@ -33,7 +34,8 @@ const token = () => getStoredItem('token');
 const auth = () => ({
   headers: {
     authorization: token(),
-    'x-twinkle-device-id': getTwinkleDeviceId()
+    'x-twinkle-device-id': getTwinkleDeviceId(),
+    'x-twinkle-client-version': clientVersion
   }
 });
 
@@ -151,6 +153,8 @@ registerMethods('build', [
   'mergeBuildContributionIntoMyBranch',
   'mergeBuildContribution',
   'replaceMainWithBuildContribution',
+  'loadBuildProjectLumineFix',
+  'sponsorBuildProjectLumineFix',
   'loadBuildContributionLumineFix',
   'sponsorBuildContributionLumineFix',
   'applyBuildContributionLumineFix',
@@ -265,6 +269,8 @@ registerMethods('content', [
   'editPlaylistVideos',
   'fetchPlaylistsContaining',
   'fetchUrlEmbedData',
+  'updateUrlEmbedData',
+  'createThumbnailUpload',
   'finishWatchingVideo',
   'likeContent',
   'batchSellAICards',
@@ -623,6 +629,7 @@ registerMethods('chat', [
   'loadMoreChannels',
   'loadMoreChatMessages',
   'loadChatSubjects',
+  'loadChatSubjectMessages',
   'loadMoreChatSubjects',
   'loadOtherUserTopics',
   'loadMoreOtherUserTopics',

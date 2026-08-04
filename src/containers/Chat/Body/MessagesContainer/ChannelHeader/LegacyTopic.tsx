@@ -7,7 +7,6 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
-import { socket } from '~/constants/sockets/api';
 import { isMobile, textIsOverflown } from '~/helpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -58,9 +57,7 @@ export default function LegacyTopic({
     reloader = {},
     uploader = {}
   } = legacyTopicObj;
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
-  const username = useKeyContext((v) => v.myState.username);
   const { colorKey: buttonColor } = useRoleColor('button', {
     themeName: displayedThemeColor,
     fallback: 'logoBlue'
@@ -255,14 +252,6 @@ export default function LegacyTopic({
         message,
         subject
       });
-      socket.emit('new_subject', {
-        subject,
-        message,
-        channelName: currentChannel.channelName,
-        channelId: selectedChannelId,
-        subchannelId,
-        pathId: currentChannel.pathId
-      });
       onSetIsEditingTopic(false);
       onClearSubjectSearchResults();
       if (!deviceIsMobile) {
@@ -284,7 +273,6 @@ export default function LegacyTopic({
     if (!submitting) {
       setSubmitting(true);
       try {
-        const content = `${text[0].toUpperCase()}${text.slice(1)}`;
         const data = await uploadChatTopic({
           content: text,
           channelId: selectedChannelId,
@@ -294,36 +282,6 @@ export default function LegacyTopic({
           ...data,
           channelId: selectedChannelId,
           subchannelId
-        });
-        const timeStamp = Math.floor(Date.now() / 1000);
-        const subject = {
-          id: data.subjectId,
-          userId,
-          username,
-          reloadedBy: null,
-          reloaderName: null,
-          uploader: { id: userId, username },
-          content,
-          timeStamp
-        };
-        const message = {
-          profilePicUrl,
-          userId,
-          username,
-          content,
-          isSubject: true,
-          channelId: selectedChannelId,
-          timeStamp,
-          isNewMessage: true,
-          subchannelId
-        };
-        socket.emit('new_subject', {
-          subject,
-          message,
-          channelName: currentChannel.channelName,
-          channelId: selectedChannelId,
-          subchannelId,
-          pathId: currentChannel.pathId
         });
         onSetIsEditingTopic(false);
         setSubmitting(false);

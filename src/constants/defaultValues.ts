@@ -1,7 +1,6 @@
 import { Color } from '~/constants/css';
 
-
-export const clientVersion = '2.0.64';
+export const clientVersion = '2.0.65';
 
 export const BOOKMARK_VIEWS = {
   AI: 'ai',
@@ -40,7 +39,6 @@ export const mb = 1000;
 export const mobileFullTextRevealShowDuration = 2000;
 export const returnMissionThumb = (missionType: string): string =>
   `${cloudFrontURL}/missions/${missionType}/thumb.jpeg`;
-
 
 export const CHAT_ID_BASE_NUMBER = import.meta.env.VITE_CHAT_ID_BASE_NUMBER;
 export const GENERAL_CHAT_ID = 2;
@@ -82,7 +80,6 @@ export const reactionsObj: Record<string, any> = {
     position: '84% 5%'
   }
 };
-
 
 export const charLimit: {
   [key: string]: any;
@@ -151,7 +148,6 @@ export const defaultContentState = {
   loadMoreShown: false,
   loaded: false
 };
-
 
 export const DEFAULT_PROFILE_THEME = 'logoBlue';
 export const localStorageKeys: {
@@ -280,7 +276,6 @@ export const videoRewardHash: { [key: string]: any } = {
   }
 };
 
-
 export const JR_MOD_LEVEL = 2;
 export const MOD_LEVEL = 3;
 export const SR_MOD_LEVEL = 4;
@@ -370,7 +365,6 @@ export const statsPerUserTypes: {
     achievements: ['teenager', 'adult', 'mentor', 'sage', 'twinkle_founder']
   }
 };
-
 
 export const cardLevelHash: {
   [key: number]: {
@@ -536,7 +530,6 @@ export const returnCardBurnXP = ({
 
   return Math.round(xp);
 };
-
 
 export const vocabRouletteChances = {
   better_luck: 50,

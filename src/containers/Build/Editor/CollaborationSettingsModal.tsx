@@ -381,7 +381,7 @@ export default function CollaborationSettingsModal({
           </div>
         ) : null}
         <div className={sectionClass}>
-          <div className={sectionTitleClass}>Lumine conflict fixes</div>
+          <div className={sectionTitleClass}>Lumine merge help</div>
           <button
             type="button"
             className={`${optionButtonClass}${
@@ -442,9 +442,8 @@ export default function CollaborationSettingsModal({
       const result = await updateBuildCollaboration({
         buildId: build.id,
         collaborationMode,
-        contributionAccess: getContributionAccessForCollaborationMode(
-          collaborationMode
-        ),
+        contributionAccess:
+          getContributionAccessForCollaborationMode(collaborationMode),
         lumineFixReviewRequired
       });
       if (result?.build) {

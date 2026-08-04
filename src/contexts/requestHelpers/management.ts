@@ -837,22 +837,12 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async deleteMessagePermanently({
-      messageId,
-      filePath,
-      fileName
-    }: {
-      messageId: number;
-      filePath?: string;
-      fileName?: string;
-    }) {
+    async deleteMessagePermanently({ messageId }: { messageId: number }) {
       try {
         const {
           data: { success }
         } = await request.delete(
-          `${URL}/chat/message/permanently?messageId=${messageId}${
-            filePath ? `&filePath=${filePath}` : ''
-          }${fileName ? `&fileName=${fileName}` : ''}`,
+          `${URL}/chat/message/permanently?messageId=${messageId}`,
           auth()
         );
         return success;
@@ -862,22 +852,16 @@ export default function managementRequestHelpers({
     },
     async deletePostPermanently({
       contentId,
-      contentType,
-      filePath,
-      fileName
+      contentType
     }: {
       contentId: number;
       contentType: string;
-      filePath?: string;
-      fileName?: string;
     }) {
       try {
         const {
           data: { success }
         } = await request.delete(
-          `${URL}/content/permanently?contentId=${contentId}&contentType=${contentType}${
-            filePath ? `&filePath=${filePath}` : ''
-          }${fileName ? `&fileName=${fileName}` : ''}`,
+          `${URL}/content/permanently?contentId=${contentId}&contentType=${contentType}`,
           auth()
         );
         return success;

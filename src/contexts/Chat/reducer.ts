@@ -27,6 +27,11 @@ import {
   mergeCanonicalGroupMembers
 } from '~/helpers/chatGroupMembership';
 import { upsertBuildContributionSubmissionState } from '~/helpers/buildContributionSubmissionHelpers';
+import { applyCanonicalChatAttachmentThumbnail } from './attachmentThumbnailState';
+import {
+  applyCanonicalChannelSettings,
+  applyCanonicalTopicSettings
+} from './canonicalSettingsState';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -2318,24 +2323,13 @@ export default function ChatReducer(
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            topicObj: {
-              ...state.channelsObj[action.channelId]?.topicObj,
-              [action.topicId]: {
-                ...state.channelsObj[action.channelId]?.topicObj?.[
-                  action.topicId
-                ],
-                content: action.topicTitle,
-                settings: {
-                  ...state.channelsObj[action.channelId]?.topicObj?.[
-                    action.topicId
-                  ]?.settings,
-                  isOwnerPostingOnly: action.isOwnerPostingOnly
-                }
-              }
-            }
-          }
+          [action.channelId]: applyCanonicalTopicSettings({
+            channel: state.channelsObj[action.channelId],
+            topicId: action.topicId,
+            topicTitle: action.topicTitle,
+            isOwnerPostingOnly: action.isOwnerPostingOnly,
+            customInstructions: action.customInstructions
+          })
         }
       };
     }
@@ -2344,16 +2338,17 @@ export default function ChatReducer(
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
+          [action.channelId]: applyCanonicalChannelSettings({
+            channel: state.channelsObj[action.channelId],
             channelName: action.channelName,
             description: action.description,
             isClosed: action.isClosed,
             isPublic: action.isPublic,
             isOwnerPostingOnly: action.isOwnerPostingOnly,
             canChangeSubject: action.canChangeSubject,
+            theme: action.theme,
             thumbPath: action.thumbPath
-          }
+          })
         }
       };
     }
@@ -2721,6 +2716,44 @@ export default function ChatReducer(
         }
       };
     }
+    case 'APPEND_AI_MESSAGE_DELTA': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const existingMessage = prevChannelObj?.messagesObj?.[action.messageId];
+      if (!existingMessage || typeof action.delta !== 'string') return state;
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            messagesObj: {
+              ...prevChannelObj.messagesObj,
+              [action.messageId]: {
+                ...existingMessage,
+                content: `${existingMessage.content || ''}${action.delta}`
+              }
+            }
+          }
+        }
+      };
+    }
+    case 'SET_CHAT_ATTACHMENT_THUMB_URL': {
+      const channel = state.channelsObj[action.channelId];
+      const nextChannel = applyCanonicalChatAttachmentThumbnail({
+        channel,
+        messageId: action.messageId,
+        subchannelId: action.subchannelId,
+        thumbUrl: action.thumbUrl
+      });
+      if (nextChannel === channel) return state;
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: nextChannel
+        }
+      };
+    }
     case 'EDIT_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId
@@ -2831,21 +2864,6 @@ export default function ChatReducer(
               ...state.channelsObj[action.channelId]?.topicObj,
               [action.topic.id]: action.topic
             }
-          }
-        }
-      };
-    }
-    case 'ENABLE_THEME': {
-      return {
-        ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            unlockedThemes: [
-              ...state.channelsObj[action.channelId].unlockedThemes,
-              action.theme
-            ]
           }
         }
       };
@@ -4675,7 +4693,13 @@ export default function ChatReducer(
                 ...state.channelsObj[action.channelId]?.messagesObj?.[
                   action.messageId
                 ],
-                aiThoughtContent: action.thoughtContent,
+                aiThoughtContent: action.isDelta
+                  ? `${
+                      state.channelsObj[action.channelId]?.messagesObj?.[
+                        action.messageId
+                      ]?.aiThoughtContent || ''
+                    }${action.thoughtContent}`
+                  : action.thoughtContent,
                 aiThoughtStreamComplete: action.isComplete,
                 aiThoughtIsThinkingHard: action.isThinkingHard
               }

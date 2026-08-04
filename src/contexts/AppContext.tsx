@@ -27,6 +27,7 @@ import {
   getErrorMessageFromResponseData
 } from '~/helpers/errorMessageHelpers';
 import { clearAnalyticsUser } from '~/helpers/analytics';
+import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
 
 export const initialMyState = {
   achievementPoints: 0,
@@ -126,6 +127,12 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           getErrorMessageFromResponseData(data) ||
           'An unexpected error occurred';
 
+        if (status === 426 || data?.code === 'client_refresh_required') {
+          window.dispatchEvent(
+            new CustomEvent(TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT)
+          );
+        }
+
         if (status === 401) {
           removeStoredItem('token');
           Object.keys(localStorageKeys).forEach((key) => removeStoredItem(key));
@@ -147,7 +154,14 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
         return Promise.reject({
           status,
-          message
+          message,
+          code: data?.code,
+          retryable: data?.retryable,
+          retryAfterSeconds:
+            Number(data?.retryAfterSeconds) ||
+            Number(error.response.headers?.['retry-after']) ||
+            undefined,
+          requiredVersion: data?.requiredVersion
         });
       }
 

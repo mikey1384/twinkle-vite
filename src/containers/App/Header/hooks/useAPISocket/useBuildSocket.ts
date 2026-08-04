@@ -478,7 +478,9 @@ export default function useBuildSocket() {
       status,
       assistantStatusSteps,
       reply,
+      replyDelta,
       codeGenerated,
+      codeGeneratedDelta,
       userMessageId,
       userClientMessageId,
       userMessageContent,
@@ -498,7 +500,9 @@ export default function useBuildSocket() {
       status?: string | null;
       assistantStatusSteps?: string[];
       reply?: string;
+      replyDelta?: string;
       codeGenerated?: string | null;
+      codeGeneratedDelta?: string;
       userMessageId?: number | null;
       userClientMessageId?: string | null;
       userMessageContent?: string | null;
@@ -555,8 +559,14 @@ export default function useBuildSocket() {
       if (typeof reply === 'string') {
         buildRun.reply = reply;
       }
+      if (typeof replyDelta === 'string') {
+        buildRun.replyDelta = replyDelta;
+      }
       if (Object.prototype.hasOwnProperty.call(payload, 'codeGenerated')) {
         buildRun.codeGenerated = codeGenerated ?? null;
+      }
+      if (typeof codeGeneratedDelta === 'string') {
+        buildRun.codeGeneratedDelta = codeGeneratedDelta;
       }
       if (Object.prototype.hasOwnProperty.call(payload, 'userMessageId')) {
         buildRun.userMessageId =

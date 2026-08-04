@@ -8,6 +8,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
+import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
 import BranchSubmitToOwnerPanel from '../BranchSubmitToOwnerPanel';
 import ContributionDetail from './ContributionDetail';
 import Forum from './Forum';
@@ -15,7 +16,6 @@ import OwnerContributionsPanel from './OwnerContributionsPanel';
 import OwnerTeamPanel from './OwnerTeamPanel';
 import Toolbar from './Toolbar';
 import {
-  MERGE_CONFLICT_MARKERS_MESSAGE,
   UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE,
   canClearConflictMarkerActionError,
   getContributionConflictMarkerPaths,
@@ -102,6 +102,8 @@ export default function CollaborationPanel({
   onAcceptedContributorCountChange,
   onBeforeContributionAction,
   onAskLumineToResolveConflicts,
+  mainUpdateNoticeControl,
+  projectLumineFixControl,
   onOpenCollaborationSettings,
   initialScrollTop = 0,
   onScrollTopChange,
@@ -318,11 +320,8 @@ export default function CollaborationPanel({
   const contentExpanded = embedded || panelExpanded;
   const forumRendered = Boolean(
     canShowPanel &&
-      contentExpanded &&
-      (embedded ||
-        !isOwner ||
-        isContributionFork ||
-        !selectedContribution)
+    contentExpanded &&
+    (embedded || !isOwner || isContributionFork || !selectedContribution)
   );
   const forumRenderedRef = useRef(forumRendered);
   const panelMountedRef = useRef(false);
@@ -427,6 +426,38 @@ export default function CollaborationPanel({
       );
     };
   }, []);
+
+  useEffect(() => {
+    function handleLumineFixUpdated(payload: any) {
+      if (Number(payload?.rootBuildId || 0) !== rootBuildId) return;
+      const contribution =
+        payload?.contribution && typeof payload.contribution === 'object'
+          ? payload.contribution
+          : null;
+      const contributionId = Number(contribution?.id || 0);
+      if (!contributionId) return;
+      setContributions((current) =>
+        current.map((entry) =>
+          Number(entry.id) === contributionId
+            ? { ...entry, ...contribution }
+            : entry
+        )
+      );
+      setSelectedContribution((current) =>
+        Number(current?.id || 0) === contributionId
+          ? { ...(current as BuildLike), ...contribution }
+          : current
+      );
+    }
+
+    socket.on('build_contribution_lumine_fix_updated', handleLumineFixUpdated);
+    return () => {
+      socket.off(
+        'build_contribution_lumine_fix_updated',
+        handleLumineFixUpdated
+      );
+    };
+  }, [rootBuildId]);
 
   const collaborationEventRef = useRef<(payload: any) => void>(() => {});
   collaborationEventRef.current = (payload: any) => {
@@ -980,7 +1011,7 @@ export default function CollaborationPanel({
               </p>
               <p>
                 Any Main changes that are not in this branch will be
-                overwritten. No merge conflict resolution will run.
+                overwritten. Twinkle will not combine the two versions.
               </p>
               <p>The branch will be marked as merged after Main is replaced.</p>
             </div>
@@ -1000,7 +1031,12 @@ export default function CollaborationPanel({
       );
     }
     if (!isContributionFork) {
-      return <div className={embeddedBodyStackClass}>{renderForum()}</div>;
+      return (
+        <div className={embeddedBodyStackClass}>
+          {renderStandaloneProjectLumineFixNotice()}
+          {renderForum()}
+        </div>
+      );
     }
     const canCompleteConflictMerge =
       Number(build.rootBuildUserId || 0) === Number(userId || 0) &&
@@ -1011,6 +1047,26 @@ export default function CollaborationPanel({
         {renderSubmitToOwnerPanel()}
         {renderForum()}
       </div>
+    );
+  }
+
+  function renderStandaloneProjectLumineFixNotice() {
+    if (!mainUpdateNoticeControl?.shown) return null;
+    return (
+      <BranchMainUpdateNotice
+        canUpdate={mainUpdateNoticeControl.canUpdate}
+        loading={mainUpdateNoticeControl.loading}
+        error={mainUpdateNoticeControl.error}
+        lumineFixBlocksBranchSync={
+          mainUpdateNoticeControl.lumineFixBlocksBranchSync
+        }
+        lumineFixTargetsCurrentBranch={
+          mainUpdateNoticeControl.lumineFixTargetsCurrentBranch
+        }
+        lumineFixControl={mainUpdateNoticeControl.lumineFixControl}
+        branchLumineFixControl={mainUpdateNoticeControl.branchLumineFixControl}
+        onUpdate={mainUpdateNoticeControl.onUpdate}
+      />
     );
   }
 
@@ -1439,12 +1495,14 @@ export default function CollaborationPanel({
         filePaths: selectedPaths
       });
       if (result?.success) {
-        const conflictPaths = Array.isArray(result.conflicts)
-          ? result.conflicts
-              .map((conflict: any) => String(conflict?.path || '').trim())
-              .filter(Boolean)
-          : [];
-        setConflictMarkerPaths(conflictPaths);
+        projectLumineFixControl?.applyCanonicalUpdate(result);
+        const canonicalConflictPaths =
+          result.mergeConflictsWritten && Array.isArray(result.conflicts)
+            ? result.conflicts
+                .map((conflict: any) => String(conflict?.path || '').trim())
+                .filter(Boolean)
+            : [];
+        setConflictMarkerPaths(canonicalConflictPaths);
         onCanonicalMerge({
           build: result.build || null,
           projectFiles: Array.isArray(result.projectFiles)
@@ -1462,9 +1520,6 @@ export default function CollaborationPanel({
                 : entry
             )
           );
-        }
-        if (result.mergeConflictsWritten || conflictPaths.length > 0) {
-          setActionError(MERGE_CONFLICT_MARKERS_MESSAGE);
         }
       }
     } catch (error: any) {
@@ -1495,6 +1550,7 @@ export default function CollaborationPanel({
         assetTransferOperationId
       });
       if (result?.success) {
+        projectLumineFixControl?.applyCanonicalUpdate(result);
         onCanonicalMerge({
           build: result.build || null,
           projectFiles: Array.isArray(result.projectFiles)
@@ -1553,9 +1609,7 @@ export default function CollaborationPanel({
           : [];
         setConflictMarkerPaths(markerPaths);
         setActionError(
-          markerPaths.length > 0
-            ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
-            : 'Fix overlapping branch changes before updating from main.'
+          'Main needs a Lumine fix before this branch can update.'
         );
         return;
       }
@@ -1617,14 +1671,15 @@ export default function CollaborationPanel({
           ? result.conflictMarkerPaths
           : [];
         setConflictMarkerPaths(markerPaths);
-        setActionError(
-          markerPaths.length > 0
-            ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
-            : 'Fix overlapping branch changes before completing this merge.'
-        );
+        setActionError('This merge needs a Lumine fix before it can finish.');
+        return;
+      }
+      if (result?.code === 'build_contribution_lumine_fix_required') {
+        setActionError('This merge is waiting for its Lumine fix.');
         return;
       }
       if (result?.success) {
+        projectLumineFixControl?.applyCanonicalUpdate(result);
         setConflictMarkerPaths([]);
         onCanonicalMerge({
           build: result.build || null,
@@ -1651,11 +1706,13 @@ export default function CollaborationPanel({
         setConflictMarkerPaths(markerPaths);
       }
       setActionError(
-        Array.isArray(markerPaths) && markerPaths.length > 0
-          ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
-          : error?.response?.data?.error ||
+        error?.response?.data?.code === 'build_contribution_lumine_fix_required'
+          ? 'This merge is waiting for its Lumine fix.'
+          : Array.isArray(markerPaths) && markerPaths.length > 0
+            ? 'This merge needs a Lumine fix before it can finish.'
+            : error?.response?.data?.error ||
               error?.message ||
-              'Failed to complete branch merge'
+              'Failed to finish this merge'
       );
     } finally {
       setActionLoading('');
@@ -1795,11 +1852,7 @@ export default function CollaborationPanel({
     scope?: 'all';
     scopeIdentity: string;
   }) {
-    if (
-      !rootBuildId ||
-      !panelMountedRef.current ||
-      !forumRenderedRef.current
-    ) {
+    if (!rootBuildId || !panelMountedRef.current || !forumRenderedRef.current) {
       return;
     }
     const lastMarkedPosition =
@@ -1810,8 +1863,7 @@ export default function CollaborationPanel({
     ) {
       return;
     }
-    const inFlightPosition =
-      forumMarkInFlightByScopeRef.current[scopeIdentity];
+    const inFlightPosition = forumMarkInFlightByScopeRef.current[scopeIdentity];
     if (
       inFlightPosition &&
       compareBuildForumActivityPositions(inFlightPosition, position) >= 0
@@ -2247,6 +2299,10 @@ export default function CollaborationPanel({
     const contributionCanMerge = contributionStatus === 'draft';
     const contributionCanReplaceMain =
       contributionStatus === 'draft' || contributionStatus === 'merged';
+    const hasSelectedTrackedLumineFix = Boolean(
+      projectLumineFixControl?.fix &&
+      projectLumineFixControl.contributionBuildId === activeContribution.id
+    );
     const canUpdateFromMain =
       !ownerReview &&
       branchRootDrifted &&
@@ -2255,9 +2311,11 @@ export default function CollaborationPanel({
         Number(userId || 0);
     const branchOwnerNeedsAttention =
       !ownerReview &&
-      (canUpdateFromMain ||
-        activeConflictMarkerPaths.length > 0 ||
-        actionError);
+      (mainUpdateNoticeControl
+        ? mainUpdateNoticeControl.shown
+        : canUpdateFromMain ||
+          activeConflictMarkerPaths.length > 0 ||
+          actionError);
     const detailConflictMarkerPaths = ownerReview
       ? rootConflictMarkerPaths
       : activeConflictMarkerPaths;
@@ -2272,13 +2330,18 @@ export default function CollaborationPanel({
         actionLoading={actionLoading}
         canAskLumineToResolveConflicts={Boolean(onAskLumineToResolveConflicts)}
         canCompleteConflictMerge={
-          ownerReview && contributionStatus === 'merging'
+          ownerReview &&
+          contributionStatus === 'merging' &&
+          !projectLumineFixControl?.checking &&
+          !hasSelectedTrackedLumineFix
         }
         canUpdateFromMain={canUpdateFromMain}
         changedFiles={changedFiles}
         contributionCanMerge={contributionCanMerge}
         contributionCanReplaceMain={contributionCanReplaceMain}
         contributionStatus={contributionStatus}
+        mainUpdateNoticeControl={mainUpdateNoticeControl}
+        projectLumineFixControl={projectLumineFixControl}
         ownerReview={ownerReview}
         runtimeAssetTransferProgress={runtimeAssetTransferProgress}
         selectedPaths={selectedPaths}

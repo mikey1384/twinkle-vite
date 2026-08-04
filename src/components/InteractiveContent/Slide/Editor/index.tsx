@@ -30,6 +30,7 @@ import { v1 as uuidv1 } from 'uuid';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
+import type { UploadCompletionMeta } from '~/types';
 
 export default function Editor({
   attachment,
@@ -609,7 +610,6 @@ export default function Editor({
         editedAttachment?.newAttachment &&
         editedAttachment?.type !== 'none'
       ) {
-        const promises = [];
         onSetSlideState({
           interactiveId,
           slideId,
@@ -619,38 +619,37 @@ export default function Editor({
           editedAttachment.newAttachment.file.name
         );
         const filePath = uuidv1();
-        promises.push(
-          uploadFile({
-            context: 'interactive',
-            fileName: appliedFileName,
-            filePath,
-            file: editedAttachment.newAttachment.file,
-            onUploadProgress: handleUploadProgress
-          })
-        );
-        promises.push(
-          saveFileData({
-            fileName: appliedFileName,
-            filePath,
-            actualFileName: editedAttachment.newAttachment.file.name,
-            rootType: 'interactive'
-          })
-        );
+        let uploadId = '';
+        let uploadToken = '';
+        const uploadedFilePath = await uploadFile({
+          context: 'interactive',
+          fileName: appliedFileName,
+          filePath,
+          file: editedAttachment.newAttachment.file,
+          onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+            uploadId = meta.uploadId;
+            uploadToken = meta.uploadToken;
+          },
+          onUploadProgress: handleUploadProgress
+        });
+        await saveFileData({
+          fileName: appliedFileName,
+          filePath,
+          actualFileName: editedAttachment.newAttachment.file.name,
+          rootType: 'interactive',
+          uploadId,
+          uploadToken
+        });
+        let thumbUrl = '';
         if (editedAttachment?.newAttachment?.thumbnail) {
-          promises.push(
-            (async () => {
-              const file = returnImageFileFromUrl({
-                imageUrl: editedAttachment?.newAttachment?.thumbnail
-              });
-              const thumbUrl = await uploadThumb({
-                file,
-                path: uuidv1()
-              });
-              return Promise.resolve(thumbUrl);
-            })()
-          );
+          const file = returnImageFileFromUrl({
+            imageUrl: editedAttachment?.newAttachment?.thumbnail
+          });
+          thumbUrl = await uploadThumb({
+            file,
+            path: uuidv1()
+          });
         }
-        const [uploadedFilePath, thumbUrl] = await Promise.all(promises);
         onSetSlideState({
           interactiveId,
           slideId,

@@ -1,12 +1,19 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
+import ContributionLumineFixPanel, {
+  FixBuildContributionWithLumineButton,
+  SponsorBuildContributionLumineFixButton
+} from '~/components/Build/ContributionLumineFix';
+import BranchMainUpdateNotice, {
+  type BranchMainUpdateNoticeControl
+} from '../BranchMainUpdateNotice';
 import RuntimeAssetTransferProgressBar from '../RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from '../helpers/runtimeAssetTransferProgress';
 import type {
   BuildContributionFileDiff,
-  BuildContributionStatus
+  BuildContributionStatus,
+  BuildProjectLumineFixControl
 } from './types';
 
 const detailClass = css`
@@ -121,7 +128,7 @@ const errorClass = css`
 `;
 
 function formatContributionStatusLabel(status: BuildContributionStatus) {
-  if (status === 'merging') return 'conflicts';
+  if (status === 'merging') return 'waiting for Lumine';
   return status;
 }
 
@@ -137,6 +144,8 @@ export default function ContributionDetail({
   contributionCanMerge,
   contributionCanReplaceMain,
   contributionStatus,
+  mainUpdateNoticeControl,
+  projectLumineFixControl,
   ownerReview,
   runtimeAssetTransferProgress,
   selectedPaths,
@@ -161,6 +170,8 @@ export default function ContributionDetail({
   contributionCanMerge: boolean;
   contributionCanReplaceMain: boolean;
   contributionStatus: BuildContributionStatus;
+  mainUpdateNoticeControl?: BranchMainUpdateNoticeControl | null;
+  projectLumineFixControl?: BuildProjectLumineFixControl | null;
   ownerReview: boolean;
   runtimeAssetTransferProgress?: RuntimeAssetTransferProgressPayload | null;
   selectedPaths: string[];
@@ -175,8 +186,16 @@ export default function ContributionDetail({
   onUpdateVersionFromMain: () => void;
 }) {
   const hasActiveConflictMarkers = activeConflictMarkerPaths.length > 0;
+  const hasTrackedLumineFix = Boolean(
+    ownerReview &&
+    projectLumineFixControl?.fix &&
+    projectLumineFixControl.contributionBuildId === activeContributionId
+  );
   const ownerConflictRepairShown =
-    ownerReview && (hasActiveConflictMarkers || canCompleteConflictMerge);
+    ownerReview &&
+    (hasTrackedLumineFix ||
+      hasActiveConflictMarkers ||
+      canCompleteConflictMerge);
 
   return (
     <div className={detailClass}>
@@ -200,10 +219,26 @@ export default function ContributionDetail({
         </div>
       ) : (
         <BranchMainUpdateNotice
-          canUpdate={canUpdateFromMain}
-          loading={actionLoading === 'update-from-main'}
+          canUpdate={mainUpdateNoticeControl?.canUpdate ?? canUpdateFromMain}
+          loading={
+            mainUpdateNoticeControl?.loading ??
+            actionLoading === 'update-from-main'
+          }
           disabled={Boolean(actionLoading)}
-          onUpdate={onUpdateVersionFromMain}
+          error={mainUpdateNoticeControl?.error || ''}
+          lumineFixBlocksBranchSync={
+            mainUpdateNoticeControl?.lumineFixBlocksBranchSync
+          }
+          lumineFixTargetsCurrentBranch={
+            mainUpdateNoticeControl?.lumineFixTargetsCurrentBranch
+          }
+          lumineFixControl={mainUpdateNoticeControl?.lumineFixControl}
+          branchLumineFixControl={
+            mainUpdateNoticeControl?.branchLumineFixControl
+          }
+          onUpdate={
+            mainUpdateNoticeControl?.onUpdate ?? onUpdateVersionFromMain
+          }
         />
       )}
       {ownerReview ? (
@@ -221,16 +256,11 @@ export default function ContributionDetail({
       canAskLumineToResolveConflicts &&
       activeConflictMarkerPaths.length > 0 ? (
         <div className={rowClass}>
-          <GameCTAButton
-            variant="purple"
+          <FixBuildContributionWithLumineButton
             size="sm"
-            icon="wand-magic-sparkles"
             loading={actionLoading === 'ask-lumine-conflicts'}
-            disabled={Boolean(actionLoading)}
             onClick={onAskLumineToResolveConflicts}
-          >
-            Fix with Lumine
-          </GameCTAButton>
+          />
         </div>
       ) : null}
       {ownerReview && (contributionCanMerge || contributionCanReplaceMain) ? (
@@ -262,37 +292,79 @@ export default function ContributionDetail({
         </div>
       ) : null}
       {ownerConflictRepairShown ? (
-        <div className={rowClass}>
-          <span className={mutedTextClass}>
-            {hasActiveConflictMarkers
-              ? 'Main project files have conflict markers. Let Lumine fix them or edit the files.'
-              : 'Conflict markers are resolved. Complete the legacy merge record.'}
-          </span>
-          {canAskLumineToResolveConflicts && hasActiveConflictMarkers ? (
-            <GameCTAButton
-              variant="purple"
-              size="sm"
-              icon="wand-magic-sparkles"
-              loading={actionLoading === 'ask-lumine-conflicts'}
-              disabled={Boolean(actionLoading)}
-              onClick={onAskLumineToResolveConflicts}
-            >
-              Fix with Lumine
-            </GameCTAButton>
-          ) : null}
-          {canCompleteConflictMerge ? (
-            <GameCTAButton
-              variant="success"
-              size="sm"
-              icon="check"
-              loading={actionLoading === 'complete-merge'}
-              disabled={Boolean(actionLoading)}
-              onClick={onCompleteContributionMerge}
-            >
-              Complete Merge
-            </GameCTAButton>
-          ) : null}
-        </div>
+        hasTrackedLumineFix && projectLumineFixControl?.fix ? (
+          <>
+            {projectLumineFixControl.canSponsor &&
+            !projectLumineFixControl.details ? (
+              <div className={rowClass}>
+                <SponsorBuildContributionLumineFixButton
+                  loading={
+                    projectLumineFixControl.loading === 'load-lumine-fix'
+                  }
+                  onClick={projectLumineFixControl.onOpenSponsor}
+                />
+              </div>
+            ) : null}
+            {projectLumineFixControl.fix.status === 'ready' &&
+            !projectLumineFixControl.details ? (
+              <div className={rowClass}>
+                <GameCTAButton
+                  variant="purple"
+                  size="md"
+                  icon="wand-magic-sparkles"
+                  loading={
+                    projectLumineFixControl.loading === 'load-lumine-fix'
+                  }
+                  onClick={projectLumineFixControl.onOpenSponsor}
+                >
+                  Review Lumine Fix
+                </GameCTAButton>
+              </div>
+            ) : null}
+            <ContributionLumineFixPanel
+              fix={projectLumineFixControl.fix}
+              isOwner
+              details={projectLumineFixControl.details}
+              selectedModel={projectLumineFixControl.selectedModel}
+              loading={projectLumineFixControl.loading}
+              onSelectModel={projectLumineFixControl.onSelectModel}
+              onSponsor={projectLumineFixControl.onSponsor}
+              onApply={projectLumineFixControl.onApply}
+            />
+            {projectLumineFixControl.error ? (
+              <span className={errorClass}>
+                {projectLumineFixControl.error}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <div className={rowClass}>
+            <span className={mutedTextClass}>
+              {hasActiveConflictMarkers
+                ? 'Main needs a quick fix before this branch can finish.'
+                : 'Main is ready. Finish combining this branch.'}
+            </span>
+            {canAskLumineToResolveConflicts && hasActiveConflictMarkers ? (
+              <FixBuildContributionWithLumineButton
+                size="sm"
+                loading={actionLoading === 'ask-lumine-conflicts'}
+                onClick={onAskLumineToResolveConflicts}
+              />
+            ) : null}
+            {canCompleteConflictMerge && !hasActiveConflictMarkers ? (
+              <GameCTAButton
+                variant="success"
+                size="sm"
+                icon="check"
+                loading={actionLoading === 'complete-merge'}
+                disabled={Boolean(actionLoading)}
+                onClick={onCompleteContributionMerge}
+              >
+                Finish Merge
+              </GameCTAButton>
+            ) : null}
+          </div>
+        )
       ) : null}
       {runtimeAssetTransferProgress ? (
         <RuntimeAssetTransferProgressBar
@@ -342,7 +414,7 @@ function ChangedFiles({
               <span className={filePathClass}>{file.path}</span>
             </button>
             {file.mergeStatus === 'conflict' ? (
-              <span className={conflictBadgeClass}>conflict</span>
+              <span className={conflictBadgeClass}>overlap</span>
             ) : null}
           </label>
         ))}

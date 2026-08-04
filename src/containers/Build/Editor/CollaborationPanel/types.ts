@@ -1,3 +1,9 @@
+import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
+import type {
+  BuildContributionLumineFix,
+  BuildContributionLumineFixDetails
+} from '~/components/Build/ContributionLumineFix';
+
 export type BuildCollaborationMode = 'private' | 'open_source';
 export type BuildContributionAccess = 'anyone' | 'invite_only';
 export type BuildContributionStatus = 'none' | 'draft' | 'merging' | 'merged';
@@ -43,6 +49,22 @@ export interface BuildLike {
   pendingCollaborationRequestCount?: number | null;
 }
 
+export interface BuildProjectLumineFixControl {
+  checking: boolean;
+  contributionBuildId: number;
+  fix: BuildContributionLumineFix | null;
+  details: BuildContributionLumineFixDetails | null;
+  selectedModel: string;
+  loading: string;
+  error: string;
+  canSponsor: boolean;
+  applyCanonicalUpdate: (result: any) => boolean;
+  onOpenSponsor: () => void;
+  onSelectModel: (model: string) => void;
+  onSponsor: () => void;
+  onApply: () => void;
+}
+
 export type BuildForumAuthorRole = 'user' | 'lumine';
 
 export interface BuildForumActivityPosition {
@@ -50,10 +72,7 @@ export interface BuildForumActivityPosition {
 }
 
 export type BuildForumNewsEventType =
-  | 'branchUpdates'
-  | 'branchMerged'
-  | 'mainReplaced'
-  | 'mainPublished';
+  'branchUpdates' | 'branchMerged' | 'mainReplaced' | 'mainPublished';
 
 export interface BuildForumThread {
   id: number;
@@ -158,6 +177,8 @@ export interface CollaborationPanelProps {
   onAskLumineToResolveConflicts?: (
     paths: string[]
   ) => Promise<boolean> | boolean;
+  mainUpdateNoticeControl?: BranchMainUpdateNoticeControl | null;
+  projectLumineFixControl?: BuildProjectLumineFixControl | null;
   onOpenCollaborationSettings?: () => void;
   initialScrollTop?: number;
   onScrollTopChange?: (scrollTop: number) => void;

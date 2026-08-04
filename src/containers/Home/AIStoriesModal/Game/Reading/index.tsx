@@ -109,9 +109,19 @@ export default function Reading({
   userChoiceObj: any;
 }) {
   const finishedStoryIdRef = useRef(0);
+  const streamedStoryRef = useRef(story);
+  const streamedExplanationRef = useRef(explanation);
   const userId = useKeyContext((v) => v.myState.userId);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyLoadError, setStoryLoadError] = useState(false);
+
+  useEffect(() => {
+    streamedStoryRef.current = story;
+  }, [story]);
+
+  useEffect(() => {
+    streamedExplanationRef.current = explanation;
+  }, [explanation]);
 
   useEffect(() => {
     if (!solveObj.isGraded && !isDisabled && userId) {
@@ -158,8 +168,13 @@ export default function Reading({
 
   useEffect(() => {
     socket.on('ai_story_updated', handleAIStoryUpdated);
+    socket.on('ai_story_delta', handleAIStoryDelta);
     socket.on('ai_story_finished', handleAIStoryFinished);
     socket.on('ai_story_explanation_updated', handleAIStoryExplanationUpdated);
+    socket.on(
+      'ai_story_explanation_delta',
+      handleAIStoryExplanationDelta
+    );
     socket.on(
       'ai_story_explanation_finished',
       handleAIStoryExplanationFinished
@@ -175,8 +190,21 @@ export default function Reading({
       story: string;
     }) {
       if (streamedStoryId === storyId) {
+        streamedStoryRef.current = story;
         onSetStory(story);
       }
+    }
+
+    function handleAIStoryDelta({
+      storyId: streamedStoryId,
+      delta
+    }: {
+      storyId: number;
+      delta: string;
+    }) {
+      if (streamedStoryId !== storyId) return;
+      streamedStoryRef.current += delta;
+      onSetStory(streamedStoryRef.current);
     }
 
     async function handleAIStoryFinished(streamedStoryId: number) {
@@ -210,8 +238,21 @@ export default function Reading({
       explanation: string;
     }) {
       if (streamedStoryId === storyId) {
+        streamedExplanationRef.current = explanation;
         onSetExplanation(explanation);
       }
+    }
+
+    function handleAIStoryExplanationDelta({
+      storyId: streamedStoryId,
+      delta
+    }: {
+      storyId: number;
+      delta: string;
+    }) {
+      if (streamedStoryId !== storyId) return;
+      streamedExplanationRef.current += delta;
+      onSetExplanation(streamedExplanationRef.current);
     }
 
     function handleAIStoryExplanationFinished() {
@@ -234,10 +275,15 @@ export default function Reading({
 
     return function cleanUp() {
       socket.off('ai_story_updated', handleAIStoryUpdated);
+      socket.off('ai_story_delta', handleAIStoryDelta);
       socket.off('ai_story_finished', handleAIStoryFinished);
       socket.off(
         'ai_story_explanation_updated',
         handleAIStoryExplanationUpdated
+      );
+      socket.off(
+        'ai_story_explanation_delta',
+        handleAIStoryExplanationDelta
       );
       socket.off(
         'ai_story_explanation_finished',

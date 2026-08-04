@@ -7,7 +7,7 @@ const CONTRIBUTION_CONFLICT_MARKER_END = '>>>>>>> Contribution';
 export const UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE =
   'Main changes overlap with this branch. Let Lumine fix them before merging.';
 export const MERGE_CONFLICT_MARKERS_MESSAGE =
-  'Branch changes overlap in the main project files. Let Lumine fix them or edit the files.';
+  'These branch changes overlap. Let Lumine combine them safely.';
 
 function hasContributionConflictMarkers(content: string) {
   const text = String(content || '');

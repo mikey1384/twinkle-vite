@@ -90,6 +90,7 @@ export default function Rewrite({
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
+    socket.on('zeros_review_delta', handleZeroReviewDelta);
     socket.on('zeros_review_finished', handleZeroReviewFinished);
     socket.on('zeros_review_error', handleZeroReviewError);
 
@@ -123,6 +124,35 @@ export default function Rewrite({
         }));
     }
 
+    function handleZeroReviewDelta({
+      delta,
+      identifier,
+      type,
+      wordLevel,
+      style
+    }: {
+      delta: string;
+      identifier: number;
+      type: string;
+      wordLevel: string;
+      style: string;
+    }) {
+      if (identifier !== responseIdentifier.current || !delta) return;
+      setResponseObj((responseObj: ResponseObj) => ({
+        ...responseObj,
+        [type]:
+          type === 'rewrite'
+            ? {
+                ...(responseObj.rewrite || {}),
+                [style]: {
+                  ...(responseObj.rewrite[style] || {}),
+                  [wordLevel]: `${responseObj.rewrite?.[style]?.[wordLevel] || ''}${delta}`
+                }
+              }
+            : `${(responseObj as any)[type] || ''}${delta}`
+      }));
+    }
+
     async function handleZeroReviewFinished({
       identifier,
       response
@@ -152,6 +182,7 @@ export default function Rewrite({
 
     return function cleanUp() {
       socket.off('zeros_review_updated', handleZeroReviewUpdated);
+      socket.off('zeros_review_delta', handleZeroReviewDelta);
       socket.off('zeros_review_finished', handleZeroReviewFinished);
       socket.off('zeros_review_error', handleZeroReviewError);
     };

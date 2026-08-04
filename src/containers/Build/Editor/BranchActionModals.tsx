@@ -42,9 +42,8 @@ export default function BranchActionModals({
           loading={deletingBranchLoading}
           body={
             <>
-              This permanently deletes the branch{' '}
-              <b>{deletingBranch.title}</b>, including its files, Team
-              comments, and Lumine chat history.
+              This permanently deletes the branch <b>{deletingBranch.title}</b>,
+              including its files, Team comments, and Lumine chat history.
             </>
           }
           confirmLabel={
@@ -78,12 +77,14 @@ export default function BranchActionModals({
               </p>
               <p>
                 Any {replaceBranchTargetLabel} changes that are not in this
-                branch will be overwritten. No merge conflict resolution will
-                run.
+                branch will be overwritten. Twinkle will use this branch exactly
+                as it is instead of combining the two versions.
               </p>
               {replaceBranchTargetLabel === 'Main' ? (
                 <p>
-                  The branch will be marked as merged after Main is replaced.
+                  If these changes need help combining, Main will stay safe
+                  while Lumine finishes. The branch is marked as merged only
+                  after Main is updated.
                 </p>
               ) : (
                 <p>Your branch will stay editable after it is replaced.</p>
@@ -114,8 +115,8 @@ export default function BranchActionModals({
               </p>
               <p>
                 Any branch changes that are not in Main will be{' '}
-                <b>permanently discarded</b>. No merge conflict resolution will
-                run.
+                <b>permanently discarded</b>. Twinkle will use Main exactly as
+                it is instead of combining the two versions.
               </p>
               <p>Your branch will stay editable after it is reset.</p>
             </div>

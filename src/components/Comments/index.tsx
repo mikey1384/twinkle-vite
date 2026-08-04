@@ -21,7 +21,7 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
-import { Comment, Content, Subject } from '~/types';
+import { Comment, Content, Subject, type UploadCompletionMeta } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { ThemeName } from '~/theme';
 
@@ -175,51 +175,45 @@ function Comments({
       const finalContentType = targetCommentId
         ? 'comment'
         : subjectId
-        ? 'subject'
-        : contentType;
+          ? 'subject'
+          : contentType;
       const finalContentId = targetCommentId || subjectId || contentId;
       const appliedFileName = generateFileName(file.name);
       try {
         setCommentSubmitted(true);
-        const promises = [];
-        promises.push(
-          uploadFile({
-            filePath,
-            file,
-            fileName: appliedFileName,
-            onUploadProgress: handleUploadProgress
-          })
-        );
-        promises.push(
-          saveFileData({
-            fileName: appliedFileName,
-            filePath,
-            actualFileName: file.name,
-            rootType: 'comment'
-          })
-        );
+        let uploadId = '';
+        let uploadToken = '';
+        await uploadFile({
+          filePath,
+          file,
+          fileName: appliedFileName,
+          onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+            uploadId = meta.uploadId;
+            uploadToken = meta.uploadToken;
+          },
+          onUploadProgress: handleUploadProgress
+        });
+        await saveFileData({
+          fileName: appliedFileName,
+          filePath,
+          actualFileName: file.name,
+          rootType: 'comment',
+          uploadId,
+          uploadToken
+        });
         let thumbUrl = '';
         if (attachment.thumbnail) {
-          promises.push(
-            (async () => {
-              const file = returnImageFileFromUrl({
-                imageUrl: attachment.thumbnail
-              });
-              const thumbUrl = await uploadThumb({
-                file,
-                path: uuidv1()
-              });
-              return Promise.resolve(thumbUrl);
-            })()
-          );
+          const file = returnImageFileFromUrl({
+            imageUrl: attachment.thumbnail
+          });
+          thumbUrl = await uploadThumb({
+            file,
+            path: uuidv1()
+          });
         }
-        const result = await Promise.all(promises);
         const userChanged = checkUserChange(userId);
         if (userChanged) {
           return;
-        }
-        if (attachment.thumbnail) {
-          thumbUrl = result[result.length - 1];
         }
         const { comment } = await uploadComment({
           content: commentContent,

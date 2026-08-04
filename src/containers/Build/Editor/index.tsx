@@ -1,4 +1,10 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type {
   ChatPanelCommunicationMode,
@@ -33,6 +39,7 @@ import useRuntimeUploads from './hooks/useRuntimeUploads';
 import useRunOrchestration from './hooks/useRunOrchestration';
 import useRunRecovery from './hooks/useRunRecovery';
 import useChatCommandActions from './hooks/useChatCommandActions';
+import useBranchMainLumineFix from './hooks/useBranchMainLumineFix';
 import useChatScrollControls from './hooks/useChatScrollControls';
 import useCurrentRunIdentity from './hooks/useCurrentRunIdentity';
 import useLocalChatMessages from './hooks/useLocalChatMessages';
@@ -75,6 +82,11 @@ import {
   getBuildDisplayTitle,
   isBuildContributionFork
 } from '~/helpers/buildRelationshipHelpers';
+import {
+  resolveBranchMainUpdateNoticeState,
+  resolveBuildProjectLumineFixScope,
+  shouldShowStandaloneBuildProjectLumineFix
+} from '~/helpers/branchMainUpdateNotice';
 import {
   canEditBuildProject,
   normalizeBuildWorkspaceCommunicationMode
@@ -163,11 +175,7 @@ export default function BuildEditor({
         contributionBranchNumber: build?.contributionBranchNumber,
         contributionRootBuildId: build?.contributionRootBuildId
       }),
-    [
-      build?.id,
-      build?.contributionBranchNumber,
-      build?.contributionRootBuildId
-    ]
+    [build?.id, build?.contributionBranchNumber, build?.contributionRootBuildId]
   );
   // opening the build workspace spawns a nav tab for it (same as the app tab)
   useEffect(() => {
@@ -676,6 +684,27 @@ export default function BuildEditor({
     resetBuildContributionToMain,
     userId
   });
+  const currentViewerIsProjectOwner = currentBuildIsContributionFork
+    ? Number(build.rootBuildUserId || 0) === Number(userId || 0)
+    : isOwner;
+  const projectLumineFixScope = resolveBuildProjectLumineFixScope({
+    currentBuildId: build.id,
+    contributionRootBuildId: build.contributionRootBuildId,
+    isContributionFork: currentBuildIsContributionFork,
+    userId,
+    isCurrentBuildOwner: isOwner,
+    isProjectOwner: currentViewerIsProjectOwner,
+    canOpenContributionWorkspace: Boolean(build.canOpenContributionWorkspace)
+  });
+  const branchMainLumineFix = useBranchMainLumineFix({
+    active: projectLumineFixScope.active,
+    buildId: projectLumineFixScope.rootBuildId,
+    contributionBuildId: projectLumineFixScope.openContributionBuildId,
+    onContributionUpdate: currentBuildIsContributionFork
+      ? handleBuildCollaborationPatch
+      : undefined,
+    onApplied: handleBuildContributionMerge
+  });
   const {
     buildThumbnailNudgePromptForDisplay,
     captureThumbnailFromPreview,
@@ -1073,6 +1102,7 @@ export default function BuildEditor({
   }, [
     branchMainUpdateContributionBuildId,
     branchMainUpdateRootBuildId,
+    branchMainLumineFix.wasApplied,
     build.contributionBaseBuildUpdatedAt,
     build.contributionBaseFilesHash,
     build.contributionStatus
@@ -1143,8 +1173,7 @@ export default function BuildEditor({
     bumpRuntimeFollowUpRevision: runtimeFollowUp.bumpRuntimeFollowUpRevision,
     maybeStartNextQueuedRequest,
     releaseQueuedRequestsWaitingForStop,
-    setPostCompleteSyncInFlight:
-      runOrchestration.setPostCompleteSyncInFlight,
+    setPostCompleteSyncInFlight: runOrchestration.setPostCompleteSyncInFlight,
     setRequiresProjectFilesResyncBeforeSave:
       runOrchestration.setRequiresProjectFilesResyncBeforeSave,
     sharedBuildRun,
@@ -1396,15 +1425,9 @@ export default function BuildEditor({
         contributionBuildId: target.contributionBuildId
       });
       if (result?.code === 'build_contribution_conflict_markers_remaining') {
-        const markerPaths = normalizeUpdateFromMainConflictMarkerPaths(
-          result.conflictMarkerPaths
-        );
         setBranchMainUpdateState((current) => ({
           ...current,
-          error:
-            markerPaths.length > 0
-              ? `Fix overlapping branch changes in ${markerPaths.join(', ')} first.`
-              : 'Fix overlapping branch changes before updating from main.'
+          error: 'Main needs a Lumine fix before this branch can update.'
         }));
         return;
       }
@@ -1491,8 +1514,9 @@ export default function BuildEditor({
       buildWorkspaceUi?.communicationMode
     );
   const buildWorkspaceScrollTops = buildWorkspaceUi?.scrollTops || {};
-  const mainProjectConflictMarkerPaths = getContributionConflictMarkerPaths(
-    build.projectFiles
+  const mainProjectConflictMarkerPaths = useMemo(
+    () => getContributionConflictMarkerPaths(build.projectFiles),
+    [build.projectFiles]
   );
   // Scans every project file's content, so keep it off the render hot path.
   // Legacy single-file builds keep their app in build.code with no project
@@ -1500,7 +1524,10 @@ export default function BuildEditor({
   const legacyThreeVendorPaths = useMemo(
     () =>
       getLegacyThreeVendorPaths(
-        normalizeProjectFilesForBuild(build.projectFiles || [], build.code || '')
+        normalizeProjectFilesForBuild(
+          build.projectFiles || [],
+          build.code || ''
+        )
       ),
     [build.projectFiles, build.code]
   );
@@ -1515,10 +1542,100 @@ export default function BuildEditor({
     setThreeUpgradeNoticeDismissed(dismissed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
-  const branchMainUpdateNoticeError =
-    branchMainUpdateTarget && mainProjectConflictMarkerPaths.length > 0
-      ? UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE
-      : branchMainUpdateState.error;
+  const branchMainUpdateNoticeState = resolveBranchMainUpdateNoticeState({
+    rootDrifted: branchMainUpdateState.rootDrifted,
+    fixChecking: branchMainLumineFix.checking,
+    hasLumineFix: Boolean(branchMainLumineFix.fix),
+    lumineFixStatus: branchMainLumineFix.fix?.status || '',
+    lumineFixBlocksBranchSync: branchMainLumineFix.fix?.blocksBranchSync,
+    lumineFixTargetsCurrentBranch: Boolean(
+      build.contributionStatus === 'merging' &&
+      branchMainLumineFix.fix &&
+      branchMainLumineFix.contributionBuildId ===
+        branchMainUpdateContributionBuildId
+    ),
+    lumineFixWasApplied: branchMainLumineFix.wasApplied,
+    branchHasConflictMarkers: Boolean(
+      branchMainUpdateTarget && mainProjectConflictMarkerPaths.length > 0
+    ),
+    updateError: branchMainUpdateState.error
+  });
+  const branchMainLumineFixControl =
+    branchMainUpdateNoticeState.showLumineFix && branchMainLumineFix.fix
+      ? {
+          fix: branchMainLumineFix.fix,
+          details: branchMainLumineFix.details,
+          selectedModel: branchMainLumineFix.selectedModel,
+          loading: branchMainLumineFix.loading,
+          error: branchMainLumineFix.error,
+          canSponsor: branchMainLumineFix.canSponsor,
+          onOpenSponsor: branchMainLumineFix.openSponsor,
+          onSelectModel: branchMainLumineFix.setSelectedModel,
+          onSponsor: branchMainLumineFix.sponsor
+        }
+      : null;
+  const branchWorkspaceLumineFixControl =
+    branchMainUpdateNoticeState.showBranchLumineFix &&
+    mainProjectConflictMarkerPaths.length > 0
+      ? {
+          loading: false,
+          onFix: () => {
+            void handleAskLumineToResolveMergeConflicts(
+              mainProjectConflictMarkerPaths
+            );
+          }
+        }
+      : null;
+  const projectLumineFixControl = {
+    checking: branchMainLumineFix.checking,
+    contributionBuildId: branchMainLumineFix.contributionBuildId,
+    fix: branchMainLumineFix.fix,
+    details: branchMainLumineFix.details,
+    selectedModel: branchMainLumineFix.selectedModel,
+    loading: branchMainLumineFix.loading,
+    error: branchMainLumineFix.error,
+    canSponsor: branchMainLumineFix.canSponsor,
+    applyCanonicalUpdate: branchMainLumineFix.applyCanonicalUpdate,
+    onOpenSponsor: branchMainLumineFix.openSponsor,
+    onSelectModel: branchMainLumineFix.setSelectedModel,
+    onSponsor: branchMainLumineFix.sponsor,
+    onApply: branchMainLumineFix.apply
+  };
+  const standaloneProjectLumineFixNoticeControl =
+    shouldShowStandaloneBuildProjectLumineFix({
+      hasLumineFix: Boolean(branchMainLumineFixControl),
+      isCurrentBuildOwner: isOwner,
+      isProjectOwner: currentViewerIsProjectOwner
+    }) && branchMainLumineFixControl
+      ? {
+          shown: true,
+          canUpdate: false,
+          loading: false,
+          error: '',
+          lumineFixBlocksBranchSync: Boolean(
+            branchMainLumineFix.fix?.blocksBranchSync
+          ),
+          lumineFixTargetsCurrentBranch: false,
+          lumineFixControl: branchMainLumineFixControl,
+          branchLumineFixControl: null,
+          onUpdate: handleUpdateCurrentBranchFromMain
+        }
+      : null;
+  const branchMainUpdateNoticeControl = branchMainUpdateTarget
+    ? {
+        shown: branchMainUpdateNoticeState.shown,
+        canUpdate: branchMainUpdateNoticeState.canUpdate,
+        loading: branchMainUpdateState.loading,
+        error: branchMainUpdateNoticeState.error,
+        lumineFixBlocksBranchSync:
+          branchMainUpdateNoticeState.lumineFixBlocksBranchSync,
+        lumineFixTargetsCurrentBranch:
+          branchMainUpdateNoticeState.lumineFixTargetsCurrentBranch,
+        lumineFixControl: branchMainLumineFixControl,
+        branchLumineFixControl: branchWorkspaceLumineFixControl,
+        onUpdate: handleUpdateCurrentBranchFromMain
+      }
+    : standaloneProjectLumineFixNoticeControl;
   const versionNavigationPanel = (
     <VersionStartPanel
       rootBuildId={Number(build.contributionRootBuildId || 0)}
@@ -1597,17 +1714,7 @@ export default function BuildEditor({
         }
       : null,
     lumineModelSelectionControl,
-    mainUpdateNoticeControl: branchMainUpdateTarget
-      ? {
-          shown:
-            branchMainUpdateState.rootDrifted ||
-            Boolean(branchMainUpdateNoticeError),
-          canUpdate: branchMainUpdateState.rootDrifted,
-          loading: branchMainUpdateState.loading,
-          error: branchMainUpdateNoticeError,
-          onUpdate: handleUpdateCurrentBranchFromMain
-        }
-      : null,
+    mainUpdateNoticeControl: branchMainUpdateNoticeControl,
     threeUpgradeNoticeControl:
       canEditCurrentBuildProject &&
       !threeUpgradeNoticeDismissed &&
@@ -1631,6 +1738,8 @@ export default function BuildEditor({
         onVersionProjectFilesUpdate={handleBuildContributionMerge}
         onBeforeContributionAction={handleBeforeContributionAction}
         onAskLumineToResolveConflicts={handleAskLumineToResolveMergeConflicts}
+        mainUpdateNoticeControl={branchMainUpdateNoticeControl}
+        projectLumineFixControl={projectLumineFixControl}
         onAcceptedContributorCountChange={setAcceptedContributorCount}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         initialScrollTop={buildWorkspaceScrollTops.people || 0}
@@ -1999,7 +2108,9 @@ function getBranchMainUpdateTarget({
     return null;
   }
   const status = String(build.contributionStatus || '').trim();
-  if (status !== 'draft' && status !== 'merged') return null;
+  if (status !== 'draft' && status !== 'merging' && status !== 'merged') {
+    return null;
+  }
   const rootBuildId = Number(build.contributionRootBuildId || 0);
   const contributionBuildId = Number(build.id || 0);
   if (!rootBuildId || !contributionBuildId) return null;
@@ -2007,12 +2118,6 @@ function getBranchMainUpdateTarget({
     rootBuildId,
     contributionBuildId
   };
-}
-
-function normalizeUpdateFromMainConflictMarkerPaths(value: unknown) {
-  return Array.isArray(value)
-    ? value.map((path) => String(path || '').trim()).filter(Boolean)
-    : [];
 }
 
 function getUpdateFromMainErrorMessage(error: any) {

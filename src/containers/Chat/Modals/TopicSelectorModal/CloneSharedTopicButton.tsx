@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { borderRadius } from '~/constants/css';
-import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ScopedTheme from '~/theme/ScopedTheme';
@@ -24,9 +23,6 @@ export default function CloneSharedTopicButton({
   onStartTopic?: () => void;
 }) {
   const navigate = useNavigate();
-  const userId = useKeyContext((v) => v.myState.userId);
-  const username = useKeyContext((v) => v.myState.username);
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const cloneSharedTopic = useAppContext(
     (v) => v.requestHelpers.cloneSharedTopic
   );
@@ -101,28 +97,6 @@ export default function CloneSharedTopicButton({
         channelId
       });
       const subjectId = topic.subjectId || data.subjectId;
-      const timeStamp = topic.timeStamp || Math.floor(Date.now() / 1000);
-      const message = {
-        profilePicUrl: topic.profilePicUrl || profilePicUrl,
-        userId: topic.userId || userId,
-        username: topic.username || username,
-        content: topic.content,
-        isSubject: true,
-        channelId,
-        subjectId,
-        timeStamp,
-        isNewMessage: true,
-        id: topic.id
-      };
-      socket.emit('new_subject', {
-        isFeatured: data.isFeatured,
-        topicObj: topic,
-        subject: topic,
-        message,
-        channelName,
-        channelId,
-        pathId
-      });
       onSetChannelState({
         channelId,
         newState: {

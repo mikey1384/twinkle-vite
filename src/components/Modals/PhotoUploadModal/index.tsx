@@ -24,6 +24,7 @@ import {
 } from '~/helpers/imageHelpers';
 import { cloudFrontURL, mb } from '~/constants/defaultValues';
 import { appendImageMarkdownToText } from '~/helpers/imageAttachmentEmbedHelpers';
+import type { UploadCompletionMeta } from '~/types';
 
 export default function PhotoUploadModal({
   fileObj,
@@ -48,7 +49,8 @@ export default function PhotoUploadModal({
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const [caption, setCaption] = useState(initialCaption);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const [multiImageUploadErrorText, setMultiImageUploadErrorText] = useState('');
+  const [multiImageUploadErrorText, setMultiImageUploadErrorText] =
+    useState('');
   const [imageAttachments, setImageAttachments] = useState<ImageAttachment[]>(
     []
   );
@@ -150,7 +152,8 @@ export default function PhotoUploadModal({
                   }}
                 >
                   Non-image files aren&apos;t included in multi-photo messages (
-                  {nonImageSelectedFiles.length}). Please upload them one at a time.
+                  {nonImageSelectedFiles.length}). Please upload them one at a
+                  time.
                 </div>
               )}
               <div
@@ -423,7 +426,9 @@ export default function PhotoUploadModal({
 
       const orderedUrls = attachmentsSnapshot.map(
         (attachment) =>
-          uploadedUrlsById[attachment.id] || existingUrlsById[attachment.id] || ''
+          uploadedUrlsById[attachment.id] ||
+          existingUrlsById[attachment.id] ||
+          ''
       );
 
       if (orderedUrls.some((url) => !url)) {
@@ -536,18 +541,26 @@ export default function PhotoUploadModal({
 
       const filePath = uuidv1();
       const appliedFileName = generateFileName(fileToUpload.name);
+      let uploadId = '';
+      let uploadToken = '';
       await uploadFile({
         filePath,
         fileName: appliedFileName,
         file: fileToUpload,
         context: 'embed',
+        onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+          uploadId = meta.uploadId;
+          uploadToken = meta.uploadToken;
+        },
         onUploadProgress: handleUploadProgress
       });
       await saveFileData({
         fileName: appliedFileName,
         filePath,
         actualFileName: fileToUpload.name,
-        rootType: 'embed'
+        rootType: 'embed',
+        uploadId,
+        uploadToken
       });
 
       const uploadedUrl = `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(

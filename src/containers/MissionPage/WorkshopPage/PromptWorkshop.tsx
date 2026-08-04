@@ -102,6 +102,8 @@ export default function PromptWorkshop({
   const messageListRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const requestIdRef = useRef<string>('');
+  const generatedDraftRef = useRef('');
+  const improvedDraftRef = useRef('');
   const generateDedupWaitTimeoutRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
@@ -156,8 +158,21 @@ export default function PromptWorkshop({
           clearTimeout(generateDedupWaitTimeoutRef.current);
           generateDedupWaitTimeoutRef.current = null;
         }
-        setSystemPromptState({ prompt: content });
+        generatedDraftRef.current = content;
+        setSystemPromptState({ prompt: generatedDraftRef.current });
       }
+    }
+
+    function handleGenerateDelta({
+      requestId,
+      delta
+    }: {
+      requestId: string;
+      delta: string;
+    }) {
+      if (requestId !== requestIdRef.current || !delta) return;
+      generatedDraftRef.current += delta;
+      setSystemPromptState({ prompt: generatedDraftRef.current });
     }
 
     function handleGenerateComplete({
@@ -172,7 +187,8 @@ export default function PromptWorkshop({
           clearTimeout(generateDedupWaitTimeoutRef.current);
           generateDedupWaitTimeoutRef.current = null;
         }
-        setSystemPromptState({ prompt: content });
+        generatedDraftRef.current = content;
+        setSystemPromptState({ prompt: generatedDraftRef.current });
         setGenerating(false);
       }
     }
@@ -215,11 +231,13 @@ export default function PromptWorkshop({
     }
 
     socket.on('generate_custom_instructions_update', handleGenerateUpdate);
+    socket.on('generate_custom_instructions_delta', handleGenerateDelta);
     socket.on('generate_custom_instructions_complete', handleGenerateComplete);
     socket.on('generate_custom_instructions_error', handleGenerateError);
 
     return () => {
       socket.off('generate_custom_instructions_update', handleGenerateUpdate);
+      socket.off('generate_custom_instructions_delta', handleGenerateDelta);
       socket.off(
         'generate_custom_instructions_complete',
         handleGenerateComplete
@@ -238,8 +256,21 @@ export default function PromptWorkshop({
       content: string;
     }) {
       if (requestId === requestIdRef.current) {
-        setSystemPromptState({ prompt: content });
+        improvedDraftRef.current = content;
+        setSystemPromptState({ prompt: improvedDraftRef.current });
       }
+    }
+
+    function handleImproveDelta({
+      requestId,
+      delta
+    }: {
+      requestId: string;
+      delta: string;
+    }) {
+      if (requestId !== requestIdRef.current || !delta) return;
+      improvedDraftRef.current += delta;
+      setSystemPromptState({ prompt: improvedDraftRef.current });
     }
 
     function handleImproveComplete({
@@ -250,7 +281,8 @@ export default function PromptWorkshop({
       content: string;
     }) {
       if (requestId === requestIdRef.current) {
-        setSystemPromptState({ prompt: content });
+        improvedDraftRef.current = content;
+        setSystemPromptState({ prompt: improvedDraftRef.current });
         setImproving(false);
       }
     }
@@ -269,11 +301,13 @@ export default function PromptWorkshop({
     }
 
     socket.on('improve_custom_instructions_update', handleImproveUpdate);
+    socket.on('improve_custom_instructions_delta', handleImproveDelta);
     socket.on('improve_custom_instructions_complete', handleImproveComplete);
     socket.on('improve_custom_instructions_error', handleImproveError);
 
     return () => {
       socket.off('improve_custom_instructions_update', handleImproveUpdate);
+      socket.off('improve_custom_instructions_delta', handleImproveDelta);
       socket.off('improve_custom_instructions_complete', handleImproveComplete);
       socket.off('improve_custom_instructions_error', handleImproveError);
     };
@@ -305,6 +339,26 @@ export default function PromptWorkshop({
           ];
         });
       }
+    }
+
+    function handlePreviewDelta({
+      requestId,
+      delta
+    }: {
+      requestId: string;
+      delta: string;
+    }) {
+      if (requestId !== requestIdRef.current || !delta) return;
+      setChatMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.role === 'assistant') {
+          return [
+            ...prev.slice(0, -1),
+            { ...last, content: `${last.content}${delta}` }
+          ];
+        }
+        return [...prev, { id: Date.now(), role: 'assistant', content: delta }];
+      });
     }
 
     function handlePreviewComplete({
@@ -371,11 +425,13 @@ export default function PromptWorkshop({
     }
 
     socket.on('system_prompt_preview_update', handlePreviewUpdate);
+    socket.on('system_prompt_preview_delta', handlePreviewDelta);
     socket.on('system_prompt_preview_complete', handlePreviewComplete);
     socket.on('system_prompt_preview_error', handlePreviewError);
 
     return () => {
       socket.off('system_prompt_preview_update', handlePreviewUpdate);
+      socket.off('system_prompt_preview_delta', handlePreviewDelta);
       socket.off('system_prompt_preview_complete', handlePreviewComplete);
       socket.off('system_prompt_preview_error', handlePreviewError);
     };
@@ -411,6 +467,7 @@ export default function PromptWorkshop({
     setGenerating(true);
     const requestId = `gen_${Date.now()}`;
     requestIdRef.current = requestId;
+    generatedDraftRef.current = '';
     setSystemPromptState({ prompt: '', promptEverGenerated: true });
     socket.emit('generate_custom_instructions', {
       requestId,
@@ -425,6 +482,7 @@ export default function PromptWorkshop({
     setImproving(true);
     const requestId = `imp_${Date.now()}`;
     requestIdRef.current = requestId;
+    improvedDraftRef.current = '';
     socket.emit('improve_custom_instructions', {
       requestId,
       topicText: trimmedTitle,

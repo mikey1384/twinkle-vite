@@ -7,14 +7,12 @@ import React, {
   useRef,
   useState
 } from 'react';
-import request from 'axios';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import LinkPreviewImage, {
   getLinkPreviewImageSrc,
   LINK_PREVIEW_FALLBACK_IMAGE
 } from '~/components/LinkPreviewImage';
-import URL from '~/constants/URL';
 import TwinkleVideo from './TwinkleVideo';
 import { css } from '@emotion/css';
 import {
@@ -25,8 +23,6 @@ import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-
-const API_URL = `${URL}/content`;
 
 function Embedly({
   className,
@@ -74,6 +70,9 @@ function Embedly({
   const navigate = useNavigate();
   const makeThumbnailSecure = useAppContext(
     (v) => v.requestHelpers.makeThumbnailSecure
+  );
+  const updateUrlEmbedData = useAppContext(
+    (v) => v.requestHelpers.updateUrlEmbedData
   );
   const translator = {
     actualDescription:
@@ -161,6 +160,7 @@ function Embedly({
       setTwinkleVideoId(extractedVideoId);
     } else if (
       !loadingRef.current &&
+      userCanEditThis &&
       url &&
       ((!thumbUrl && !thumbUrlIsNotAvailable) || (prevUrl && url !== prevUrl))
     ) {
@@ -173,9 +173,7 @@ function Embedly({
     async function fetchUrlData() {
       loadingRef.current = true;
       try {
-        const {
-          data: { image, title, description, site }
-        } = await request.put(`${API_URL}/embed`, {
+        const { image, title, description, site } = await updateUrlEmbedData({
           url,
           contentId,
           contentType
@@ -215,7 +213,7 @@ function Embedly({
     if (getFileInfoFromFileName(url)?.fileType === 'image') {
       setImageUrl(url);
     }
-    if (thumbUrl?.includes('http://')) {
+    if (userCanEditThis && thumbUrl?.includes('http://')) {
       makeThumbnailSecure({ contentId, contentType, thumbUrl });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

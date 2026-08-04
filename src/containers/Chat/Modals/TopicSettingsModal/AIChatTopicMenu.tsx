@@ -46,6 +46,8 @@ export default function AIChatTopicMenu({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const generateRequestIdRef = useRef<string | null>(null);
   const improveRequestIdRef = useRef<string | null>(null);
+  const generatedDraftRef = useRef('');
+  const improvedDraftRef = useRef('');
   const generateDedupWaitTimeoutRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
@@ -133,7 +135,22 @@ export default function AIChatTopicMenu({
         clearTimeout(generateDedupWaitTimeoutRef.current);
         generateDedupWaitTimeoutRef.current = null;
       }
-      onSetCustomInstructions(content || '');
+      generatedDraftRef.current = content || '';
+      onSetCustomInstructions(generatedDraftRef.current);
+    }
+
+    function handleGenerateDelta({
+      requestId,
+      delta
+    }: {
+      requestId?: string;
+      delta?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current || !delta) {
+        return;
+      }
+      generatedDraftRef.current += delta;
+      onSetCustomInstructions(generatedDraftRef.current);
     }
 
     function handleGenerateComplete({
@@ -148,7 +165,8 @@ export default function AIChatTopicMenu({
         clearTimeout(generateDedupWaitTimeoutRef.current);
         generateDedupWaitTimeoutRef.current = null;
       }
-      onSetCustomInstructions(content || '');
+      generatedDraftRef.current = content || '';
+      onSetCustomInstructions(generatedDraftRef.current);
       generateRequestIdRef.current = null;
       setGenerating(false);
     }
@@ -195,11 +213,13 @@ export default function AIChatTopicMenu({
     }
 
     socket.on('generate_custom_instructions_update', handleGenerateUpdate);
+    socket.on('generate_custom_instructions_delta', handleGenerateDelta);
     socket.on('generate_custom_instructions_complete', handleGenerateComplete);
     socket.on('generate_custom_instructions_error', handleGenerateError);
 
     return () => {
       socket.off('generate_custom_instructions_update', handleGenerateUpdate);
+      socket.off('generate_custom_instructions_delta', handleGenerateDelta);
       socket.off(
         'generate_custom_instructions_complete',
         handleGenerateComplete
@@ -225,7 +245,22 @@ export default function AIChatTopicMenu({
         topicText: topicTextRef.current,
         fallbackText: content || ''
       });
+      improvedDraftRef.current = formatted;
       onSetCustomInstructions(formatted);
+    }
+
+    function handleImproveDelta({
+      requestId,
+      delta
+    }: {
+      requestId?: string;
+      delta?: string;
+    }) {
+      if (!requestId || requestId !== improveRequestIdRef.current || !delta) {
+        return;
+      }
+      improvedDraftRef.current += delta;
+      onSetCustomInstructions(improvedDraftRef.current);
     }
 
     function handleImproveComplete({
@@ -243,6 +278,7 @@ export default function AIChatTopicMenu({
         topicText: topicTextRef.current,
         fallbackText: content || originalInstructionsRef.current
       });
+      improvedDraftRef.current = formatted;
       onSetCustomInstructions(formatted);
       improveRequestIdRef.current = null;
       setImproving(false);
@@ -266,11 +302,13 @@ export default function AIChatTopicMenu({
     }
 
     socket.on('improve_custom_instructions_update', handleImproveUpdate);
+    socket.on('improve_custom_instructions_delta', handleImproveDelta);
     socket.on('improve_custom_instructions_complete', handleImproveComplete);
     socket.on('improve_custom_instructions_error', handleImproveError);
 
     return () => {
       socket.off('improve_custom_instructions_update', handleImproveUpdate);
+      socket.off('improve_custom_instructions_delta', handleImproveDelta);
       socket.off('improve_custom_instructions_complete', handleImproveComplete);
       socket.off('improve_custom_instructions_error', handleImproveError);
     };
@@ -453,6 +491,7 @@ export default function AIChatTopicMenu({
     setGenerating(true);
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     generateRequestIdRef.current = requestId;
+    generatedDraftRef.current = '';
     socket.emit('generate_custom_instructions', {
       requestId,
       topicText
@@ -468,6 +507,7 @@ export default function AIChatTopicMenu({
     setImproving(true);
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     improveRequestIdRef.current = requestId;
+    improvedDraftRef.current = '';
     socket.emit('improve_custom_instructions', {
       requestId,
       customInstructions: trimmed,

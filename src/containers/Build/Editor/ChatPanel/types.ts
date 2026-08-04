@@ -3,6 +3,7 @@ import type {
   BuildAgentAssetCreateOptions,
   BuildAgentAssetCreateResult
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
+import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
@@ -258,13 +259,7 @@ export interface LumineModelSelectionControl {
   ) => Promise<boolean | void> | boolean | void;
 }
 
-export interface MainUpdateNoticeControl {
-  shown: boolean;
-  canUpdate: boolean;
-  loading: boolean;
-  error: string;
-  onUpdate: () => Promise<void> | void;
-}
+export type MainUpdateNoticeControl = BranchMainUpdateNoticeControl;
 
 export interface ThreeUpgradeNoticeControl {
   shown: boolean;

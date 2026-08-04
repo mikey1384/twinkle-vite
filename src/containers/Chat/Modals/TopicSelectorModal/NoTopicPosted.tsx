@@ -6,13 +6,11 @@ import { charLimit } from '~/constants/defaultValues';
 
 export default function NoTopicPosted({
   channelId,
-  channelName,
   displayedThemeColor,
   onHide,
   pathId
 }: {
   channelId: number;
-  channelName: string;
   displayedThemeColor: string;
   onHide: () => void;
   pathId: string;
@@ -61,7 +59,6 @@ export default function NoTopicPosted({
       </div>
       <StartTopicButton
         channelId={channelId}
-        channelName={channelName}
         onStartTopic={onHide}
         topicTitle={topicTitle}
         themeColor={displayedThemeColor}

@@ -1,13 +1,9 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type RefObject
-} from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { generateFileName } from '~/helpers/stringHelpers';
 import { v1 as uuidv1 } from 'uuid';
 import type { PreviewPanelHandle } from '../../PreviewPanel/types';
+import type { UploadCompletionMeta } from '~/types';
 import {
   BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX,
   buildBuildChatHiddenMessageContext,
@@ -41,7 +37,9 @@ interface SendBuildMessageOptions {
 interface UseBuildEditorChatUploadsOptions {
   appendLocalBuildChatAssistantMessage: (text: string) => number | null;
   build: Build;
-  cleanupBuildChatReferenceUploads: (options: Record<string, any>) => Promise<any>;
+  cleanupBuildChatReferenceUploads: (
+    options: Record<string, any>
+  ) => Promise<any>;
   createBuildChatAssistantNote: (options: Record<string, any>) => Promise<any>;
   createBuildChatReferenceNote: (options: Record<string, any>) => Promise<any>;
   createBuildChatUserNote: (options: Record<string, any>) => Promise<any>;
@@ -119,10 +117,9 @@ export default function useChatUploads({
           pendingBuildChatUploadClarification.messageText,
           trimmedMessage
         ),
-        historyUserNoteText:
-          pendingBuildChatUploadClarification.intentPersisted
-            ? null
-            : pendingBuildChatUploadClarification.messageText,
+        historyUserNoteText: pendingBuildChatUploadClarification.intentPersisted
+          ? null
+          : pendingBuildChatUploadClarification.messageText,
         resolvingPendingClarification: true
       }
     );
@@ -327,11 +324,17 @@ export default function useChatUploads({
       for (const file of files) {
         const filePath = buildBuildChatReferenceUploadPath(targetBuildId);
         const appliedFileName = generateFileName(file.name || 'reference.png');
+        let uploadId = '';
+        let uploadToken = '';
         await uploadFile({
           filePath,
           fileName: appliedFileName,
           file,
           context: 'embed',
+          onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+            uploadId = meta.uploadId;
+            uploadToken = meta.uploadToken;
+          },
           onUploadProgress: (progressEvent: any) => {
             const loadedBytes = Number(progressEvent?.loaded || 0);
             const effectiveTotalBytes =
@@ -371,7 +374,9 @@ export default function useChatUploads({
           fileName: appliedFileName,
           filePath,
           actualFileName: file.name || appliedFileName,
-          rootType: 'embed'
+          rootType: 'embed',
+          uploadId,
+          uploadToken
         });
         completedBytes += Math.max(0, Number(file?.size || 0));
         const completedFileCount = uploadedReferences.length;

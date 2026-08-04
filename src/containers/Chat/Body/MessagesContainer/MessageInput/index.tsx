@@ -264,8 +264,7 @@ export default function MessageInput({
       onEnterComment,
       onSetIsRespondingToSubject,
       onSetChessTarget,
-      onSetReplyTarget,
-      onSubmitMessage
+      onSetReplyTarget
     }
   } = useContext(LocalContext);
   const prevChannelId = useRef(selectedChannelId);
@@ -822,7 +821,6 @@ export default function MessageInput({
           onAiUsagePolicyUpdate={applyConfirmedAiUsagePolicy}
           onFileUpload={onFileUpload}
           onTextMessageSubmit={handleUploadModalTextMessageSubmit}
-          onSubmitMessage={onSubmitMessage}
           onUpload={() => {
             handleSetText('');
             onSetTextAreaHeight(0);

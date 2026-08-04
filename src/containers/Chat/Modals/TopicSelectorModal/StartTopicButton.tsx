@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { borderRadius } from '~/constants/css';
-import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
@@ -10,23 +9,18 @@ import { useNavigate } from 'react-router-dom';
 
 export default function StartTopicButton({
   channelId,
-  channelName,
   topicTitle,
   themeColor,
   onStartTopic,
   pathId
 }: {
   channelId: number;
-  channelName: string;
   topicTitle: string;
   themeColor: string;
   onStartTopic?: () => void;
   pathId: string;
 }) {
   const navigate = useNavigate();
-  const userId = useKeyContext((v) => v.myState.userId);
-  const username = useKeyContext((v) => v.myState.username);
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const uploadChatTopic = useAppContext(
     (v) => v.requestHelpers.uploadChatTopic
   );
@@ -85,43 +79,9 @@ export default function StartTopicButton({
           channelId,
           isFeatured: false
         });
-        const timeStamp = Math.floor(Date.now() / 1000);
-        const topic = {
-          id: data.subject.id,
-          isSubject: true,
-          subjectId: data.subjectId,
-          userId,
-          username,
-          reloadedBy: null,
-          reloaderName: null,
-          uploader: { id: userId, username },
-          content: text,
-          timeStamp
-        };
         onUploadChatTopic({
           ...data,
-          subject: topic,
           channelId
-        });
-        const message = {
-          profilePicUrl,
-          userId,
-          username,
-          content: text,
-          isSubject: true,
-          channelId,
-          subjectId: data.subjectId,
-          timeStamp,
-          isNewMessage: true
-        };
-        socket.emit('new_subject', {
-          isFeatured: data.isFeatured,
-          topicObj: topic,
-          subject: topic,
-          message,
-          channelName,
-          channelId,
-          pathId
         });
         onSetChannelState({
           channelId,

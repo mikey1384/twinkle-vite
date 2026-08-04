@@ -34,7 +34,8 @@ export default function zeroRequestHelpers({
       onProgress,
       chunkIndex,
       totalChunks,
-      processAudio
+      processAudio,
+      contentType
     }: {
       chunk: string;
       targetLanguage: string;
@@ -43,6 +44,7 @@ export default function zeroRequestHelpers({
       chunkIndex?: number;
       totalChunks?: number;
       processAudio?: boolean;
+      contentType?: string;
     }) {
       try {
         const { data } = await axios.post(
@@ -53,7 +55,8 @@ export default function zeroRequestHelpers({
             filename,
             chunkIndex,
             totalChunks,
-            processAudio
+            processAudio,
+            contentType
           },
           {
             onUploadProgress: (progressEvent) => {
@@ -83,7 +86,7 @@ export default function zeroRequestHelpers({
         const response = await axios.put(
           `${URL}/zero/subtitle/split`,
           { srt, numSplits },
-          { responseType: 'blob' }
+          { responseType: 'blob', ...auth() }
         );
         return response.data;
       } catch (error) {
@@ -92,9 +95,11 @@ export default function zeroRequestHelpers({
     },
     async mergeSubtitles(srtFiles: string[]) {
       try {
-        const { data } = await axios.put(`${URL}/zero/subtitle/merge`, {
-          srt: srtFiles
-        });
+        const { data } = await axios.put(
+          `${URL}/zero/subtitle/merge`,
+          { srt: srtFiles },
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);

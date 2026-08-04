@@ -11,6 +11,7 @@ import {
   needsImageConversion,
   convertToWebFriendlyFormat
 } from '~/helpers/imageHelpers';
+import type { UploadCompletionMeta } from '~/types';
 
 // Single source of truth for uploading a file as an inline embed and getting
 // back its resolvable URL. Shared by the Textarea drop/paste path (mouse +
@@ -90,19 +91,27 @@ export default function useEmbedFileUpload() {
 
     const filePath = uuidv1();
     const appliedFileName = generateFileName(fileToUpload.name);
+    let uploadId = '';
+    let uploadToken = '';
     try {
       await uploadFile({
         filePath,
         fileName: appliedFileName,
         file: fileToUpload,
         context: 'embed',
+        onUploadCompletedMeta: (meta: UploadCompletionMeta) => {
+          uploadId = meta.uploadId;
+          uploadToken = meta.uploadToken;
+        },
         onUploadProgress: handleUploadProgress
       });
       await saveFileData({
         fileName: appliedFileName,
         filePath,
         actualFileName: fileToUpload.name,
-        rootType: 'embed'
+        rootType: 'embed',
+        uploadId,
+        uploadToken
       });
       if (uploadErrorType) setUploadErrorType('');
       return `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(

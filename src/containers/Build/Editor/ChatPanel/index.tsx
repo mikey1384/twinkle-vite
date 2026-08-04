@@ -14,10 +14,7 @@ import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
 } from '../constants';
-import {
-  type ChatPanelCommunicationMode,
-  type ChatPanelProps
-} from './types';
+import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
 
 const panelClass = css`
@@ -144,7 +141,10 @@ const communicationTabsClass = css`
 
 const communicationHeaderClass = css`
   display: grid;
-  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(
+      0,
+      1fr
+    );
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0.9rem;
@@ -733,6 +733,16 @@ export default function ChatPanel({
               canUpdate={mainUpdateNoticeControl.canUpdate}
               loading={mainUpdateNoticeControl.loading}
               error={mainUpdateNoticeControl.error}
+              lumineFixBlocksBranchSync={
+                mainUpdateNoticeControl.lumineFixBlocksBranchSync
+              }
+              lumineFixTargetsCurrentBranch={
+                mainUpdateNoticeControl.lumineFixTargetsCurrentBranch
+              }
+              lumineFixControl={mainUpdateNoticeControl.lumineFixControl}
+              branchLumineFixControl={
+                mainUpdateNoticeControl.branchLumineFixControl
+              }
               onUpdate={mainUpdateNoticeControl.onUpdate}
             />
           ) : null}

@@ -1,7 +1,7 @@
 import request from './axiosInstance';
 import URL from '~/constants/URL';
 import axios from 'axios';
-import { RequestHelpers } from '~/types';
+import { RequestHelpers, type UploadCompletionMeta } from '~/types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
 import { attemptUpload } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
@@ -123,27 +123,41 @@ export default function contentRequestHelpers({
       fileName,
       filePath,
       actualFileName,
-      rootType
+      rootType,
+      uploadId,
+      uploadToken
     }: {
       fileName: string;
       filePath: string;
       actualFileName: string;
       rootType: string;
+      uploadId: string;
+      uploadToken: string;
     }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/file`,
-          {
-            fileName,
-            filePath,
-            actualFileName,
-            rootType
-          },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
+      const body = {
+        fileName,
+        filePath,
+        actualFileName,
+        rootType,
+        uploadId,
+        uploadToken
+      };
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          const { data } = await request.post(
+            `${URL}/content/file`,
+            body,
+            auth()
+          );
+          return data;
+        } catch (error: any) {
+          const status = Number(error?.response?.status || 0);
+          const retryable = !error?.response || status >= 500;
+          if (!retryable || attempt === 3) {
+            return handleError(error);
+          }
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+        }
       }
     },
     async saveDraft({
@@ -218,7 +232,8 @@ export default function contentRequestHelpers({
             url
           )}&contentType=${contentType}${
             videoCode ? `&videoCode=${videoCode}` : ''
-          }`
+          }`,
+          auth()
         );
         return {
           exists,
@@ -424,7 +439,48 @@ export default function contentRequestHelpers({
     },
     async fetchUrlEmbedData(url: string) {
       try {
-        const { data } = await request.get(`${URL}/content/embed?url=${url}`);
+        const { data } = await request.get(
+          `${URL}/content/embed?url=${url}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateUrlEmbedData({
+      url,
+      contentId,
+      contentType
+    }: {
+      url: string;
+      contentId: number;
+      contentType: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/content/embed`,
+          { url, contentId, contentType },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async createThumbnailUpload({
+      fileSize,
+      path
+    }: {
+      fileSize: number;
+      path?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/thumb`,
+          { fileSize, path },
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -2200,6 +2256,7 @@ export default function contentRequestHelpers({
       isProfilePic,
       isAIChat = false,
       onSignedUploadMeta,
+      onUploadCompletedMeta,
       onUploadProgress
     }: {
       context?: string;
@@ -2209,6 +2266,7 @@ export default function contentRequestHelpers({
       isProfilePic?: boolean;
       isAIChat?: boolean;
       onSignedUploadMeta?: (meta: { profileUploadToken?: string }) => void;
+      onUploadCompletedMeta?: (meta: UploadCompletionMeta) => void;
       onUploadProgress?: (progressEvent: any) => void;
     }) {
       const path = await attemptUpload({
@@ -2220,6 +2278,7 @@ export default function contentRequestHelpers({
         isProfilePic,
         isAIChat,
         onSignedUploadMeta,
+        onUploadCompletedMeta,
         auth
       });
       return path;
@@ -2298,26 +2357,31 @@ export default function contentRequestHelpers({
       isSecretAttachment,
       path
     }: {
-      contentId: number;
-      contentType: string;
+      contentId?: number;
+      contentType?: string;
       file: File;
-      isSecretAttachment: boolean;
-      path: string;
+      isSecretAttachment?: boolean;
+      path?: string;
     }) {
       try {
-        const { data: url } = await request.post(`${URL}/content/thumb`, {
-          fileSize: file.size,
-          path
-        });
+        const { data: url } = await request.post(
+          `${URL}/content/thumb`,
+          { fileSize: file.size, path },
+          auth()
+        );
         await request.put(url.signedRequest, file);
         const {
           data: { thumbUrl }
-        } = await request.put(`${URL}/content/thumb`, {
-          path,
-          contentId,
-          contentType,
-          isSecretAttachment
-        });
+        } = await request.put(
+          `${URL}/content/thumb`,
+          {
+            path: url.path,
+            contentId,
+            contentType,
+            isSecretAttachment
+          },
+          auth()
+        );
         return thumbUrl;
       } catch (error) {
         return handleError(error);

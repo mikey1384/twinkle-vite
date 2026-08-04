@@ -49,6 +49,7 @@ export interface BuildLiveRunEvent {
   details?:
     | ({
         thoughtContent?: string | null;
+        thoughtContentIsDelta?: boolean;
         isComplete?: boolean;
         isThinkingHard?: boolean;
       } & Record<string, any>)
@@ -242,7 +243,9 @@ export interface BuildLiveRunStreamUpdatePayload {
   status?: string | null;
   assistantStatusSteps?: string[];
   reply?: string;
+  replyDelta?: string;
   codeGenerated?: string | null;
+  codeGeneratedDelta?: string;
   userMessageId?: number | null;
   assistantMessageId?: number | null;
   assistantClientMessageId?: string | null;
@@ -1327,6 +1330,19 @@ function mergeStableBuildRunEventDuplicate({
   nextEvent: BuildLiveRunEvent;
 }): BuildLiveRunEvent {
   const nextEventIsSparse = isSparseStableBuildRunEventDuplicate(nextEvent);
+  const nextDetails = hasBuildRunEventRecordValue(nextEvent.details)
+    ? nextEvent.details
+    : null;
+  const mergedDetails = nextDetails?.thoughtContentIsDelta
+    ? {
+        ...(currentEvent.details || {}),
+        ...nextDetails,
+        thoughtContent: `${currentEvent.details?.thoughtContent || ''}${
+          nextDetails.thoughtContent || ''
+        }`,
+        thoughtContentIsDelta: false
+      }
+    : nextDetails;
   return {
     ...currentEvent,
     ...nextEvent,
@@ -1367,8 +1383,8 @@ function mergeStableBuildRunEventDuplicate({
     deduped: nextEventIsSparse
       ? Boolean(nextEvent.deduped || currentEvent.deduped)
       : nextEvent.deduped,
-    details: hasBuildRunEventRecordValue(nextEvent.details)
-      ? nextEvent.details
+    details: mergedDetails
+      ? mergedDetails
       : (currentEvent.details ?? null),
     usage: hasBuildRunEventRecordValue(nextEvent.usage)
       ? nextEvent.usage
@@ -1417,7 +1433,7 @@ function resolveBuildRunUpdatedAt(
     : Date.now();
 }
 
-function applyBuildRunStreamUpdate(
+export function applyBuildRunStreamUpdate(
   currentRun: BuildLiveRunState,
   buildRun?: BuildLiveRunStreamUpdatePayload | null,
   options?: {
@@ -1447,6 +1463,9 @@ function applyBuildRunStreamUpdate(
   const hasCodeGeneratedField = Object.prototype.hasOwnProperty.call(
     buildRun || {},
     'codeGenerated'
+  ) || Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'codeGeneratedDelta'
   );
   const hasUsageMetricsField = Object.prototype.hasOwnProperty.call(
     buildRun || {},
@@ -1609,13 +1628,20 @@ function applyBuildRunStreamUpdate(
           content:
             typeof buildRun?.reply === 'string'
               ? buildRun.reply
+              : typeof buildRun?.replyDelta === 'string'
+                ? `${currentRun.assistantMessage.content}${buildRun.replyDelta}`
               : currentRun.assistantMessage.content,
           createdAt:
             persistedAssistantMessageCreatedAt ||
             currentRun.assistantMessage.createdAt,
           ...(hasCodeGeneratedField
             ? {
-                streamCodePreview: buildRun?.codeGenerated ?? null
+                streamCodePreview:
+                  typeof buildRun?.codeGeneratedDelta === 'string'
+                    ? `${currentRun.assistantMessage.streamCodePreview || ''}${
+                        buildRun.codeGeneratedDelta
+                      }`
+                    : buildRun?.codeGenerated ?? null
               }
             : {}),
           ...(hasAssistantClientMessageIdField
@@ -1626,16 +1652,25 @@ function applyBuildRunStreamUpdate(
         }
       : persistedAssistantMessageId ||
           typeof buildRun?.reply === 'string' ||
+          typeof buildRun?.replyDelta === 'string' ||
           hasAssistantClientMessageIdField
         ? {
             id:
               persistedAssistantMessageId || createFallbackBuildRunMessageId(),
             role: 'assistant' as const,
-            content: typeof buildRun?.reply === 'string' ? buildRun.reply : '',
+            content:
+              typeof buildRun?.reply === 'string'
+                ? buildRun.reply
+                : typeof buildRun?.replyDelta === 'string'
+                  ? buildRun.replyDelta
+                  : '',
             codeGenerated: null,
             ...(hasCodeGeneratedField
               ? {
-                  streamCodePreview: buildRun?.codeGenerated ?? null
+                  streamCodePreview:
+                    typeof buildRun?.codeGeneratedDelta === 'string'
+                      ? buildRun.codeGeneratedDelta
+                      : buildRun?.codeGenerated ?? null
                 }
               : {}),
             billingState: null,
