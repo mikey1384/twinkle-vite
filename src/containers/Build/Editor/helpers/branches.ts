@@ -56,6 +56,19 @@ export function createOwnerLumineReviewAction({
   };
 }
 
+export function isBuildContributionOwnerReview({
+  rootBuildUserId,
+  userId
+}: {
+  rootBuildUserId?: number | null;
+  userId?: number | null;
+}) {
+  return Boolean(
+    Number(rootBuildUserId || 0) > 0 &&
+      Number(rootBuildUserId || 0) === Number(userId || 0)
+  );
+}
+
 export function normalizeBuildVersionSummary(
   value: Record<string, any> | null | undefined
 ): BuildVersionSummary | null {

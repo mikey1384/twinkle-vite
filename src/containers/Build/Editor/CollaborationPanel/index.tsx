@@ -32,6 +32,7 @@ import {
   normalizeRuntimeAssetTransferProgressPayload,
   type RuntimeAssetTransferProgressPayload
 } from '../helpers/runtimeAssetTransferProgress';
+import { isBuildContributionOwnerReview } from '../helpers/branches';
 import type {
   BuildCollaborationMode,
   BuildCollaborationRequest,
@@ -1038,12 +1039,13 @@ export default function CollaborationPanel({
         </div>
       );
     }
-    const canCompleteConflictMerge =
-      Number(build.rootBuildUserId || 0) === Number(userId || 0) &&
-      normalizeContributionStatus(build.contributionStatus) === 'merging';
+    const ownerReview = isBuildContributionOwnerReview({
+      rootBuildUserId: build.rootBuildUserId,
+      userId
+    });
     return (
       <div className={embeddedBodyStackClass}>
-        {renderContributionDetail(canCompleteConflictMerge)}
+        {renderContributionDetail(ownerReview)}
         {renderSubmitToOwnerPanel()}
         {renderForum()}
       </div>

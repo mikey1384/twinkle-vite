@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createOwnerLumineReviewAction,
-  hasUnseenBuildBranchChanges
+  hasUnseenBuildBranchChanges,
+  isBuildContributionOwnerReview
 } from '../src/containers/Build/Editor/helpers/branches';
 
 test('branch attention is driven by the exact revision the owner opened', () => {
@@ -69,4 +70,24 @@ test('a waiting Lumine repair takes the owner straight to that branch', () => {
   action?.onClick();
   assert.equal(openedTeam, true);
   assert.equal(openedBranchId, 42);
+});
+
+test('project-owner review identity survives terminal branch transitions', () => {
+  for (const contributionStatus of ['draft', 'merging', 'merged']) {
+    assert.equal(
+      isBuildContributionOwnerReview({
+        rootBuildUserId: 554,
+        userId: 554
+      }),
+      true,
+      contributionStatus
+    );
+  }
+  assert.equal(
+    isBuildContributionOwnerReview({
+      rootBuildUserId: 554,
+      userId: 263
+    }),
+    false
+  );
 });
