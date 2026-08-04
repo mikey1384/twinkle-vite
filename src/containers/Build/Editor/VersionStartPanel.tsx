@@ -640,7 +640,10 @@ export default function VersionStartPanel({
   status?: string | null;
   onBranchNameChange: (value: string) => void;
   onStartVersion: () => void;
-  onLoadVersion: (version: BuildVersionSummary) => void;
+  onLoadVersion: (
+    version: BuildVersionSummary,
+    options?: { openPeoplePanel?: boolean }
+  ) => void;
   onDeleteBranch: (target: BuildBranchDeleteTarget) => void;
   onFork: () => void;
   onFixMergeConflicts?: () => void | Promise<void>;
@@ -1032,8 +1035,7 @@ export default function VersionStartPanel({
         typeof onFixMergeConflicts === 'function';
       const ownerLumineReviewAction = createOwnerLumineReviewAction({
         mergingBranches,
-        onLoadVersion,
-        onOpenTeamPanel
+        onLoadVersion
       });
       items.push({
         key: 'main-conflicts',

@@ -36,12 +36,13 @@ export function sortBuildVersionSummaries(versions: BuildVersionSummary[]) {
 
 export function createOwnerLumineReviewAction({
   mergingBranches,
-  onLoadVersion,
-  onOpenTeamPanel
+  onLoadVersion
 }: {
   mergingBranches: BuildVersionSummary[];
-  onLoadVersion: (version: BuildVersionSummary) => void;
-  onOpenTeamPanel: () => void;
+  onLoadVersion: (
+    version: BuildVersionSummary,
+    options?: { openPeoplePanel?: boolean }
+  ) => void;
 }) {
   const branch = mergingBranches[0];
   if (!branch) return null;
@@ -50,8 +51,7 @@ export function createOwnerLumineReviewAction({
     actionIcon: 'eye',
     detail: 'Review the branch and sponsor Lumine to finish safely.',
     onClick: () => {
-      onOpenTeamPanel();
-      onLoadVersion(branch);
+      onLoadVersion(branch, { openPeoplePanel: true });
     }
   };
 }
@@ -67,6 +67,16 @@ export function isBuildContributionOwnerReview({
     Number(rootBuildUserId || 0) > 0 &&
       Number(rootBuildUserId || 0) === Number(userId || 0)
   );
+}
+
+export function getBuildVersionLoadRouteState({
+  openPeoplePanel = false
+}: {
+  openPeoplePanel?: boolean;
+} = {}) {
+  return openPeoplePanel
+    ? { openPeoplePanel: true }
+    : { openVersionsPanel: true };
 }
 
 export function normalizeBuildVersionSummary(

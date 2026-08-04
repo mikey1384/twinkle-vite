@@ -13,6 +13,7 @@ import {
   formatBranchFullDisplayTitle,
   getBuildBranchMergeTargetLabel,
   getBuildContributionContributorUserId,
+  getBuildVersionLoadRouteState,
   normalizeBuildVersionSummary,
   sortBuildVersionSummaries
 } from '../helpers/branches';
@@ -489,12 +490,13 @@ export default function useBranches({
     }
   }
 
-  function handleLoadVersion(version: BuildVersionSummary) {
+  function handleLoadVersion(
+    version: BuildVersionSummary,
+    options: { openPeoplePanel?: boolean } = {}
+  ) {
     if (!version?.id) return;
     navigate(getBuildWorkspacePath(version), {
-      state: {
-        openVersionsPanel: true
-      }
+      state: getBuildVersionLoadRouteState(options)
     });
   }
 

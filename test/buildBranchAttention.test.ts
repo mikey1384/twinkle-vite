@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createOwnerLumineReviewAction,
+  getBuildVersionLoadRouteState,
   hasUnseenBuildBranchChanges,
   isBuildContributionOwnerReview
 } from '../src/containers/Build/Editor/helpers/branches';
@@ -50,15 +51,12 @@ test('a waiting Lumine repair takes the owner straight to that branch', () => {
     contributionStatus: 'merging' as const
   };
   let openedBranchId = 0;
-  let openedTeam = false;
+  let openedPeoplePanel = false;
   const action = createOwnerLumineReviewAction({
     mergingBranches: [mergingBranch],
-    onLoadVersion: (version) => {
+    onLoadVersion: (version, options) => {
       openedBranchId = version.id;
-      assert.equal(openedTeam, true);
-    },
-    onOpenTeamPanel: () => {
-      openedTeam = true;
+      openedPeoplePanel = options?.openPeoplePanel === true;
     }
   });
 
@@ -68,7 +66,7 @@ test('a waiting Lumine repair takes the owner straight to that branch', () => {
     'Review the branch and sponsor Lumine to finish safely.'
   );
   action?.onClick();
-  assert.equal(openedTeam, true);
+  assert.equal(openedPeoplePanel, true);
   assert.equal(openedBranchId, 42);
 });
 
@@ -89,5 +87,15 @@ test('project-owner review identity survives terminal branch transitions', () =>
       userId: 263
     }),
     false
+  );
+});
+
+test('Lumine repair navigation opens Team while ordinary branch navigation opens Branches', () => {
+  assert.deepEqual(getBuildVersionLoadRouteState(), {
+    openVersionsPanel: true
+  });
+  assert.deepEqual(
+    getBuildVersionLoadRouteState({ openPeoplePanel: true }),
+    { openPeoplePanel: true }
   );
 });
