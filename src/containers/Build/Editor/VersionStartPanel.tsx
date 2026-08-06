@@ -1037,6 +1037,18 @@ export default function VersionStartPanel({
         mergingBranches,
         onLoadVersion
       });
+      const mergeAttentionAction = canFixWithLumine
+        ? {
+            detail: 'Let Lumine safely repair Main.',
+            actionLabel: 'Fix with Lumine',
+            actionIcon: 'wand-magic-sparkles',
+            onClick: () => {
+              void onFixMergeConflicts?.();
+            }
+          }
+        : ownerLumineReviewAction || {
+            detail: 'Review the branch and sponsor Lumine to finish safely.'
+          };
       items.push({
         key: 'main-conflicts',
         tone: 'merge',
@@ -1048,20 +1060,7 @@ export default function VersionStartPanel({
                 mergingBranches.length,
                 'branch'
               )} waiting for Lumine`,
-        detail:
-          mainProjectConflictMarkerCount > 0
-            ? 'Let Lumine safely repair Main.'
-            : ownerLumineReviewAction?.detail ||
-              'Review the branch and sponsor Lumine to finish safely.',
-        ...(canFixWithLumine
-          ? {
-              actionLabel: 'Fix with Lumine',
-              actionIcon: 'wand-magic-sparkles',
-              onClick: () => {
-                void onFixMergeConflicts?.();
-              }
-            }
-          : ownerLumineReviewAction || {})
+        ...mergeAttentionAction
       });
     }
 
