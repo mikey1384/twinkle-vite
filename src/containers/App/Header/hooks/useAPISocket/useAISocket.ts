@@ -45,11 +45,12 @@ export default function useAISocket({
     (v) => v.state.chatNotificationSettings
   );
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const onSetAICallEnding = useChatContext(
-    (v) => v.actions.onSetAICallEnding
-  );
+  const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const onUpdateAIGeneratedFile = useChatContext(
     (v) => v.actions.onUpdateAIGeneratedFile
+  );
+  const onApplyCanonicalAIMessageFailure = useChatContext(
+    (v) => v.actions.onApplyCanonicalAIMessageFailure
   );
 
   const channelsObjRef = useRef(channelsObj);
@@ -209,7 +210,9 @@ export default function useAISocket({
       socket.off('ai_realtime_input_received', sendAIUIInformation);
       socket.off('ai_message_done', handleAIMessageDone);
       socket.off('chat_message_deleted', handleAIMessageDiscardedForNotify);
-      for (const scheduled of Object.values(scheduledAIReplyNotifyRef.current)) {
+      for (const scheduled of Object.values(
+        scheduledAIReplyNotifyRef.current
+      )) {
         clearTimeout(scheduled.timer);
       }
       scheduledAIReplyNotifyRef.current = {};
@@ -519,7 +522,11 @@ export default function useAISocket({
             channelName: prevChannelObj?.channelName || aiUsername,
             twoPeople: prevChannelObj?.twoPeople ?? true,
             members: prevChannelObj?.members || [
-              { id: aiUserId, username: aiUsername, profilePicUrl: aiProfilePicUrl }
+              {
+                id: aiUserId,
+                username: aiUsername,
+                profilePicUrl: aiProfilePicUrl
+              }
             ],
             isHidden: false,
             numUnreads: 1
@@ -532,27 +539,34 @@ export default function useAISocket({
       channelId,
       messageId,
       error,
-      errorType
+      errorType,
+      settings
     }: {
       channelId: number;
       messageId: number;
       error?: string;
       errorType?: 'moderation' | 'general';
+      settings?: Record<string, unknown>;
     }) {
       handleAIMessageDiscardedForNotify({ channelId, messageId });
       onSetChannelState({
         channelId,
         newState: { currentlyStreamingAIMsgId: null }
       });
-
-      onSetChannelState({
-        channelId,
-        newState: {
-          [`aiMessageError_${messageId}`]: error || 'An error occurred',
-          [`hasErrorMessage_${messageId}`]: true,
-          [`aiMessageErrorType_${messageId}`]: errorType || 'general'
-        }
-      });
+      if (settings) {
+        onApplyCanonicalAIMessageFailure({
+          channelId,
+          messageId,
+          settings
+        });
+      } else {
+        console.error('AI message failure lacked canonical settings', {
+          channelId,
+          messageId,
+          error: error || 'An error occurred',
+          errorType: errorType || 'general'
+        });
+      }
     }
 
     function handleAICallDurationUpdate({

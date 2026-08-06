@@ -32,6 +32,7 @@ import {
   applyCanonicalChannelSettings,
   applyCanonicalTopicSettings
 } from './canonicalSettingsState';
+import { applyCanonicalAiMessageFailure } from './aiMessageFailureState';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -2728,6 +2729,22 @@ export default function ChatReducer(
               }
             }
           }
+        }
+      };
+    }
+    case 'APPLY_CANONICAL_AI_MESSAGE_FAILURE': {
+      const channel = state.channelsObj[action.channelId];
+      const nextChannel = applyCanonicalAiMessageFailure({
+        channel,
+        messageId: action.messageId,
+        settings: action.settings
+      });
+      if (nextChannel === channel) return state;
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: nextChannel
         }
       };
     }

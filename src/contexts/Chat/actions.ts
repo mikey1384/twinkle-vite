@@ -685,6 +685,22 @@ export default function ChatActions(dispatch: Dispatch) {
         delta
       });
     },
+    onApplyCanonicalAIMessageFailure({
+      channelId,
+      messageId,
+      settings
+    }: {
+      channelId: number;
+      messageId: number;
+      settings: Record<string, unknown>;
+    }) {
+      return dispatch({
+        type: 'APPLY_CANONICAL_AI_MESSAGE_FAILURE',
+        channelId,
+        messageId,
+        settings
+      });
+    },
     onEditWord({
       deletedDefIds,
       partOfSpeeches,
