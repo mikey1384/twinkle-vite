@@ -31,6 +31,7 @@ import {
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
 import {
+  armUpdateIfDeployedBundleNewer,
   attemptSilentClientUpdate,
   hasUnsavedUserWork,
   isClientUpdatePending,
@@ -234,6 +235,12 @@ export default function useInitSocket({
     if (!data || typeof data.match !== 'boolean') return;
     if (data.match !== false) {
       onCheckVersion(data as object);
+      // Compatible is not the same as current: a wake/reconnect is also the
+      // moment to LEARN whether a newer deploy exists. This only arms the
+      // pending update — the reload happens at the next safe boundary (route
+      // navigation, hidden tab), never here, so a working bundle is never
+      // interrupted just for being outdated.
+      void armUpdateIfDeployedBundleNewer();
       return;
     }
     if (trigger === 'arrival') {

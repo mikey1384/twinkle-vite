@@ -34,6 +34,7 @@ import {
   clientVersion
 } from '~/constants/defaultValues';
 import {
+  armUpdateIfDeployedBundleNewer,
   attemptSilentClientUpdate,
   hasUnsavedUserWork,
   isClientUpdatePending,
@@ -535,10 +536,18 @@ export default function App() {
   // into a full document load of the destination — unless un-persisted typed
   // text (e.g. an unsent chat draft) would be lost, in which case keep
   // deferring. The attempt is budget-guarded, so a reload that fails to
-  // freshen the bundle cannot loop.
+  // freshen the bundle cannot loop. When nothing is pending, a route change is
+  // instead the moment to LEARN whether a newer deploy exists (throttled probe
+  // of our own index.html) — armed now, applied at the NEXT safe boundary, so
+  // an active session picks up new deploys without ever being interrupted
+  // mid-page.
   useEffect(() => {
-    if (isClientUpdatePending() && !hasUnsavedUserWork({ inputState: getInputState?.() })) {
-      attemptSilentClientUpdate({ version: clientVersion });
+    if (isClientUpdatePending()) {
+      if (!hasUnsavedUserWork({ inputState: getInputState?.() })) {
+        attemptSilentClientUpdate({ version: clientVersion });
+      }
+    } else {
+      void armUpdateIfDeployedBundleNewer();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);

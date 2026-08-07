@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  armUpdateIfDeployedBundleNewer,
   attemptSilentClientUpdate,
   clearSilentClientUpdateMemory,
+  getDeployedEntryScripts,
+  getRunningEntryScripts,
   hasLiveBuildRuntimeSession,
   hasStoreDraft,
   hasUnsavedTypedInput,
@@ -423,6 +426,123 @@ test('a loaded Build runtime session blocks silent reloads; a loading one does n
     LOADED_BUILD_RUNTIME_SESSION_SELECTOR,
     /^\[data-build-runtime-keepalive-layer="true"\]\[data-runtime-session-loaded="true"\]$/
   );
+});
+
+test('a newer deployed entry bundle arms the pending update, nothing else does', async () => {
+  // The probe compares the running tab's fingerprinted entry script against
+  // the one index.html currently serves. A mismatch only ARMS the pending
+  // update (the reload happens at the next safe boundary); evidence is held
+  // to the captive-portal standard, so garbage on either side is not a
+  // conclusion in either direction.
+  const runningDoc = (srcs: string[]) =>
+    ({
+      querySelectorAll: (selector: string) =>
+        selector === 'script[src]'
+          ? srcs.map((src) => ({ getAttribute: () => src }))
+          : []
+    }) as any;
+  const deployedHtml = (basename: string) =>
+    `<!doctype html><script type="module" crossorigin src="https://x.vercel.app/assets/${basename}"></script>`;
+  const fetcherFor = (html: string, calls: string[] = []) =>
+    async (url: string) => {
+      calls.push(url);
+      return { ok: true, text: async () => html };
+    };
+  const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
+
+  // Parsers: entry scripts only — runtime <link> preloads and non-entry
+  // chunks must not pollute the identity.
+  assert.deepEqual(getRunningEntryScripts(runningDoc([runningSrc])), [
+    'index-AAA1.js'
+  ]);
+  assert.deepEqual(
+    getRunningEntryScripts(
+      runningDoc(['https://x.vercel.app/assets/Chat-BBB2.js'])
+    ),
+    []
+  );
+  assert.deepEqual(getDeployedEntryScripts(deployedHtml('index-CCC3.js')), [
+    'index-CCC3.js'
+  ]);
+  assert.deepEqual(getDeployedEntryScripts('<html>captive portal</html>'), []);
+
+  // Same entry deployed -> not armed.
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 1_000_000,
+      doc: runningDoc([runningSrc]),
+      fetcher: fetcherFor(deployedHtml('index-AAA1.js'))
+    }),
+    false
+  );
+  assert.equal(isClientUpdatePending(), false);
+
+  // Newer entry deployed -> armed, but throttled: the second probe inside the
+  // window must not even fetch.
+  clearSilentClientUpdateMemory();
+  const calls: string[] = [];
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 1_000_000,
+      doc: runningDoc([runningSrc]),
+      fetcher: fetcherFor(deployedHtml('index-DDD4.js'), calls)
+    }),
+    true
+  );
+  assert.equal(isClientUpdatePending(), true);
+  clearSilentClientUpdateMemory();
+  await armUpdateIfDeployedBundleNewer({
+    now: 2_000_000,
+    doc: runningDoc([runningSrc]),
+    fetcher: fetcherFor(deployedHtml('index-EEE5.js'), calls)
+  });
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 2_000_100,
+      doc: runningDoc([runningSrc]),
+      fetcher: fetcherFor(deployedHtml('index-FFF6.js'), calls)
+    }),
+    false
+  );
+  assert.equal(calls.length, 2);
+
+  // Garbage from the network, a dev-server document with no fingerprinted
+  // entry, or an already-pending update -> no probe conclusion.
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 3_000_000,
+      doc: runningDoc([runningSrc]),
+      fetcher: fetcherFor('<html>captive portal</html>')
+    }),
+    false
+  );
+  assert.equal(isClientUpdatePending(), false);
+  clearSilentClientUpdateMemory();
+  const devCalls: string[] = [];
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 4_000_000,
+      doc: runningDoc(['/src/main.tsx']),
+      fetcher: fetcherFor(deployedHtml('index-GGG7.js'), devCalls)
+    }),
+    false
+  );
+  assert.equal(devCalls.length, 0);
+  clearSilentClientUpdateMemory();
+  markClientUpdatePending();
+  const pendingCalls: string[] = [];
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 5_000_000,
+      doc: runningDoc([runningSrc]),
+      fetcher: fetcherFor(deployedHtml('index-HHH8.js'), pendingCalls)
+    }),
+    false
+  );
+  assert.equal(pendingCalls.length, 0);
+  clearSilentClientUpdateMemory();
 });
 
 test('an unusable storage disables silent reloads entirely', () => {

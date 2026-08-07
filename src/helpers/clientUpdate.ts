@@ -13,8 +13,10 @@ interface AttemptStorage {
 let reloadInitiated = false;
 let updatePending = false;
 let lastStaleActionErrorAt = 0;
+let lastDeployFreshnessProbeAt = 0;
 
 const STALE_ACTION_DEBOUNCE_MS = 5000;
+const DEPLOY_FRESHNESS_PROBE_INTERVAL_MS = 10 * 60 * 1000;
 
 export function performClientUpdateReload() {
   reloadInitiated = true;
@@ -73,6 +75,86 @@ export function markClientUpdatePending() {
 
 export function isClientUpdatePending() {
   return updatePending;
+}
+
+// A SUPPORTED bundle can still be outdated: the API's version check only
+// answers "still compatible?", and an SPA never refetches index.html on its
+// own, so a long-lived tab would coast on an old bundle until the minimum
+// version is raised. The deployment itself is the source of truth for "is
+// there something newer": fetch our own index.html and compare its
+// fingerprinted ENTRY SCRIPT basename (assets/index-<hash>.js) against the
+// one this tab is running. That catches every JS-carrying deploy, including
+// ones that never bump clientVersion, with no API coupling. Script tags only:
+// Vite injects runtime chunk preloads as <link> elements (and dynamic chunks
+// can legitimately be named index-*.js), so links must not pollute the
+// identity; the tradeoff is that a CSS-only deploy goes undetected until the
+// next JS deploy. On a mismatch this only ARMS the pending update — the
+// reload happens at the next safe boundary (route navigation, hidden tab),
+// gated by hasUnsavedUserWork like every other silent path, and a compatible
+// bundle never escalates to the popup. Probes are throttled and evidence is
+// held to the captive-portal standard: no well-formed entry script on both
+// sides, no conclusion.
+export async function armUpdateIfDeployedBundleNewer({
+  now = Date.now(),
+  fetcher,
+  doc = typeof document === 'undefined' ? null : document
+}: {
+  now?: number;
+  fetcher?: (
+    url: string,
+    init?: { cache?: string }
+  ) => Promise<{ ok: boolean; text(): Promise<string> }>;
+  doc?: { querySelectorAll(selector: string): ArrayLike<any> } | null;
+} = {}): Promise<boolean> {
+  if (updatePending || reloadInitiated) return false;
+  if (now - lastDeployFreshnessProbeAt < DEPLOY_FRESHNESS_PROBE_INTERVAL_MS) {
+    return false;
+  }
+  const resolvedFetcher =
+    fetcher ?? (typeof fetch === 'undefined' ? null : fetch);
+  if (!resolvedFetcher || !doc) return false;
+  const runningEntries = getRunningEntryScripts(doc);
+  // No fingerprinted entry script in this document means a dev server or an
+  // unknown layout — there is nothing trustworthy to compare against.
+  if (runningEntries.length === 0) return false;
+  lastDeployFreshnessProbeAt = now;
+  try {
+    const response = await resolvedFetcher('/', { cache: 'no-store' });
+    if (!response?.ok) return false;
+    const deployedEntries = getDeployedEntryScripts(await response.text());
+    if (deployedEntries.length === 0) return false;
+    if (deployedEntries.join('|') === runningEntries.join('|')) return false;
+    markClientUpdatePending();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const ENTRY_SCRIPT_BASENAME_PATTERN = /\/assets\/(index-[\w~-]+\.js)$/;
+
+export function getRunningEntryScripts(
+  doc: { querySelectorAll(selector: string): ArrayLike<any> } | null
+): string[] {
+  if (!doc) return [];
+  const names = new Set<string>();
+  for (const node of Array.from(doc.querySelectorAll('script[src]'))) {
+    const src = String(node?.getAttribute?.('src') || '');
+    const match = ENTRY_SCRIPT_BASENAME_PATTERN.exec(src);
+    if (match) names.add(match[1]);
+  }
+  return [...names].sort();
+}
+
+export function getDeployedEntryScripts(html: string): string[] {
+  const names = new Set<string>();
+  const scriptTagPattern =
+    /<script\b[^>]*\bsrc="([^"]*\/assets\/index-[\w~-]+\.js)"/g;
+  for (const match of String(html || '').matchAll(scriptTagPattern)) {
+    const basename = ENTRY_SCRIPT_BASENAME_PATTERN.exec(match[1]);
+    if (basename) names.add(basename[1]);
+  }
+  return [...names].sort();
 }
 
 // A user action failed because the client is stale (HTTP 426). The first time,
@@ -276,6 +358,7 @@ export function clearSilentClientUpdateMemory() {
   reloadInitiated = false;
   updatePending = false;
   lastStaleActionErrorAt = 0;
+  lastDeployFreshnessProbeAt = 0;
 }
 
 function hasText(value: unknown) {
