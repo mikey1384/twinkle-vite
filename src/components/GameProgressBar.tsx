@@ -11,13 +11,80 @@ const VARIANTS = {
   purple: { bg: '#9333ea', border: '#7e22ce', shadow: '#6b21a8' }
 } as const;
 
-const DEFAULT_MESSAGES = [
-  'Unpacking blocks...',
-  'Warming up the game engine...',
-  'Teaching robots to behave...',
-  'Polishing pixels...',
-  'Almost there...'
+// Loading copy is phased by progress — startup, mid-build, and homestretch —
+// and each pool is shuffled per mount so no two loads open with the same line.
+export const PHASE_MESSAGES: readonly (readonly string[])[] = [
+  [
+    'Unpacking blocks...',
+    'Warming up the game engine...',
+    'Opening the toy box...',
+    'Rolling out the pixel carpet...',
+    'Waking up the code...',
+    'Stacking the first blocks...',
+    'Plugging in the fun...',
+    'Loading the loading screen...',
+    'Stretching before the big run...',
+    'Finding the on switch...',
+    'Shaking the box (something rattles)...',
+    'Dusting off the cartridge...',
+    'Booting up the imagination...',
+    'Reading the instructions (just kidding)...',
+    'Counting the pixels one by one...',
+    'Untangling the wires...',
+    'Pouring coffee for the game engine...',
+    'Inflating the game world...',
+    'Knocking on the server door...',
+    'Sharpening the pixels...'
+  ],
+  [
+    'Teaching robots to behave...',
+    'Polishing pixels...',
+    'Gluing the levels together...',
+    'Herding the sprites into place...',
+    'Convincing gravity to work...',
+    'Painting the sky...',
+    'Hiding the secret passages...',
+    'Tuning the bleeps and bloops...',
+    'Rehearsing the victory dance...',
+    'Feeding the hamsters that power this...',
+    'Balancing the difficulty (be nice)...',
+    'Sorting the blocks by color...',
+    'Testing the jump button...',
+    'Bribing the boss to be beatable...',
+    'Planting the background trees...',
+    'Wiring up the high score board...',
+    'Applying a fresh coat of fun...',
+    'Debugging the debugger...',
+    'Teaching the enemies their patrol routes...',
+    'Spinning up extra frames per second...'
+  ],
+  [
+    'Almost there...',
+    'Final boss of loading...',
+    'Tying the last knots...',
+    'Adding the finishing sparkles...',
+    'Double-checking the fun levels...',
+    'Rolling credits (not yet)...',
+    'Last pixel, pinky promise...',
+    'Buffing the play button...',
+    'Any second now...',
+    'Clearing the runway...',
+    'Drumroll, please...',
+    'Straightening the title screen...',
+    'One more coat of polish...',
+    'Locking in the high scores...',
+    'Taking one last look around...',
+    'Zipping up the game bag...',
+    'Counting down from three...',
+    'Warming up the play button...',
+    'So close you can taste the pixels...',
+    'Opening the gates...'
+  ]
 ];
+
+// Progress boundaries between the three message phases.
+const PHASE_TWO_AT = 45;
+const PHASE_THREE_AT = 80;
 
 const MILESTONES = [25, 50, 75];
 
@@ -29,7 +96,7 @@ export default function GameProgressBar({
   progress,
   complete = false,
   variant = 'logoBlue',
-  messages = DEFAULT_MESSAGES,
+  messages,
   label,
   style
 }: {
@@ -43,6 +110,7 @@ export default function GameProgressBar({
   const colors = VARIANTS[variant] || VARIANTS.logoBlue;
   const [simulated, setSimulated] = useState(4);
   const [messageIndex, setMessageIndex] = useState(0);
+  const [phasePools] = useState(() => PHASE_MESSAGES.map(shuffleList));
   const startRef = useRef(Date.now());
 
   useEffect(() => {
@@ -58,20 +126,27 @@ export default function GameProgressBar({
     return () => clearInterval(timer);
   }, [progress, complete]);
 
+  const customCycleLength = messages ? messages.length : null;
   useEffect(() => {
-    if (messages.length < 2) return;
+    if (customCycleLength !== null && customCycleLength < 2) return;
     const timer = setInterval(() => {
-      setMessageIndex((index) => (index + 1) % messages.length);
+      setMessageIndex((index) => index + 1);
     }, 2600);
     return () => clearInterval(timer);
-  }, [messages.length]);
+  }, [customCycleLength]);
 
   const shown = complete ? 100 : typeof progress === 'number' ? progress : simulated;
   const clamped = Math.max(0, Math.min(100, shown));
-  const statusLine = useMemo(
-    () => label ?? messages[messageIndex % Math.max(1, messages.length)],
-    [label, messages, messageIndex]
-  );
+  const phase =
+    clamped < PHASE_TWO_AT ? 0 : clamped < PHASE_THREE_AT ? 1 : 2;
+  const statusLine = useMemo(() => {
+    // Nullish checks, not truthiness: an explicit '', 0, or false label and an
+    // explicit empty messages array are deliberate suppressions, not absence.
+    if (label != null) return label;
+    if (messages) return messages[messageIndex % Math.max(1, messages.length)];
+    const pool = phasePools[phase];
+    return pool[messageIndex % pool.length];
+  }, [label, messages, phasePools, phase, messageIndex]);
 
   return (
     <div
@@ -192,4 +267,13 @@ export default function GameProgressBar({
       </div>
     </div>
   );
+}
+
+function shuffleList(list: readonly string[]) {
+  const copy = [...list];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
