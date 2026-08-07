@@ -26,6 +26,7 @@ interface EngineResult {
 const VALIDATION_DEPTH = 15;
 const ANALYSIS_DEPTH = 20;
 const ANALYSIS_TIMEOUT = 7000;
+const MAX_ENGINE_RESTARTS = 3;
 
 interface MakeEngineMoveParams {
   chessInstance: Chess;
@@ -58,6 +59,8 @@ export function useChessMove({
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const restartAttemptsRef = useRef(0);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -73,50 +76,13 @@ export function useChessMove({
     isReadyRef.current = isReady;
   }, [isReady]);
 
-  const initializeEngine = useCallback(() => {
-    try {
-      workerRef.current = new Worker('/stockfish-worker.js');
-
-      workerRef.current.onmessage = (e) => {
-        const { type, requestId, result, error } = e.data;
-
-        if (type === 'ready' || type === 'initialized') {
-          setIsReady(true);
-        } else if (type === 'error') {
-          console.error('Stockfish error:', error);
-          setIsReady(false);
-
-          pendingRequests.current.forEach((resolve) => {
-            resolve({
-              success: false,
-              error: error || 'Engine error'
-            });
-          });
-          pendingRequests.current.clear();
-        } else if (
-          type === 'result' &&
-          requestId &&
-          pendingRequests.current.has(requestId)
-        ) {
-          const resolve = pendingRequests.current.get(requestId);
-          if (resolve) {
-            resolve(result);
-            pendingRequests.current.delete(requestId);
-          }
-        } else if (type === 'debug') {
-        }
-      };
-
-      workerRef.current.onerror = (error) => {
-        console.error('Stockfish worker error:', error);
-        setIsReady(false);
-      };
-
-      workerRef.current.postMessage({ type: 'init' });
-    } catch (error) {
-      console.error('Failed to initialize Stockfish worker:', error);
-      setIsReady(false);
+  const waitForEngineReady = useCallback(async (timeoutMs = 5000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (workerRef.current && isReadyRef.current) return true;
+      await sleep(150);
     }
+    return false;
   }, []);
 
   const evaluatePosition = useCallback(
@@ -125,12 +91,27 @@ export function useChessMove({
       depth: number = VALIDATION_DEPTH,
       timeoutMs: number = 5000
     ): Promise<EngineResult> => {
+      // Engine availability is this helper's problem, not the caller's:
+      // resolve with a failed result instead of throwing or making callers
+      // pre-check readiness.
+      if (!workerRef.current || !isReadyRef.current) {
+        const becameReady = await waitForEngineReady(timeoutMs);
+        if (!becameReady || !workerRef.current) {
+          return { success: false, error: 'Engine not ready' };
+        }
+      }
       return new Promise((resolve) => {
         const requestId = ++requestIdRef.current;
 
         const timeout = setTimeout(() => {
           if (pendingRequests.current.has(requestId)) {
             pendingRequests.current.delete(requestId);
+            // Abandoning the request must also stop the search; otherwise
+            // the engine keeps burning CPU and its eventual bestmove gets
+            // attributed to the next request's position.
+            try {
+              workerRef.current?.postMessage({ type: 'stop', requestId });
+            } catch {}
             resolve({
               success: false,
               error: 'Evaluation timeout'
@@ -146,11 +127,17 @@ export function useChessMove({
         workerRef.current!.postMessage({
           type: 'evaluate',
           requestId,
-          data: { fen, depth }
+          data: {
+            fen,
+            depth,
+            // Hard cap so slow hardware returns a shallower answer within
+            // the caller's timeout instead of searching past it.
+            moveTimeMs: Math.max(500, timeoutMs - 500)
+          }
         });
       });
     },
-    []
+    [waitForEngineReady]
   );
 
   const makeEngineMove = useCallback(
@@ -233,15 +220,6 @@ export function useChessMove({
     [isReady]
   );
 
-  const waitForEngineReady = useCallback(async (timeoutMs = 5000) => {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      if (workerRef.current && isReadyRef.current) return true;
-      await sleep(500);
-    }
-    return false;
-  }, []);
-
   async function processUserMove({
     move,
     fenBeforeMove,
@@ -315,15 +293,16 @@ export function useChessMove({
     const moveIndex = Number(puzzleState.solutionIndex);
     const expectedMove = puzzle.moves[moveIndex];
     const engineReply = puzzle.moves[moveIndex + 1];
+    const epochAtMoveStart = boardEpochRef.current;
 
-    if (!isReady) {
-      const becameReady = await waitForEngineReady(5000);
-      if (!becameReady) {
-        console.warn(
-          'Stockfish engine not ready after waiting, rejecting move'
-        );
-        return false;
-      }
+    if (!inTimeAttack) {
+      // The board is client-owned local state: apply the legal move at click
+      // time so the piece responds immediately. Classification (which may
+      // need engine work) follows and only decides the success/fail flow.
+      // In time attack the board must not move ahead of the canonical timer
+      // outcome, so it keeps updating after reconciliation below.
+      boardUpdateFn();
+      onClearSelection?.();
     }
 
     const moveAnalysis = await validateMoveWithAnalysis({
@@ -336,6 +315,16 @@ export function useChessMove({
       fen: fenBeforeMove,
       engineBestMove: evaluatePosition
     });
+
+    if (
+      boardEpochRef.current !== epochAtMoveStart ||
+      phaseRef.current !== 'WAIT_USER'
+    ) {
+      // The user left this board (new puzzle, retry, solution playback, or a
+      // confirmed time-up) while classification was pending; its outcome no
+      // longer applies and must not stamp state onto the current board.
+      return false;
+    }
 
     const isCorrect = moveAnalysis.isCorrect;
 
@@ -351,6 +340,12 @@ export function useChessMove({
         // parent reconciles non-transport conflicts to the canonical run
         // before another move can be attempted.
         console.error('Failed to reconcile promotion timer:', error);
+        return false;
+      }
+      if (
+        boardEpochRef.current !== epochAtMoveStart ||
+        phaseRef.current !== 'WAIT_USER'
+      ) {
         return false;
       }
     }
@@ -372,11 +367,12 @@ export function useChessMove({
     if (!isCorrect) {
       if (!inTimeAttack) {
         onPuzzleResultUpdate('failed');
+      } else {
+        try {
+          boardUpdateFn();
+          onClearSelection?.();
+        } catch {}
       }
-      try {
-        boardUpdateFn();
-        onClearSelection?.();
-      } catch {}
 
       if (!inTimeAttack) {
         try {
@@ -444,7 +440,9 @@ export function useChessMove({
       moveHistory: newMoveHistory
     }));
 
-    boardUpdateFn();
+    if (inTimeAttack) {
+      boardUpdateFn();
+    }
 
     if (isLastMove) {
       onSetPhase('SUCCESS');
@@ -593,21 +591,11 @@ export function useChessMove({
     return true;
   }
 
-  const cleanup = useCallback(() => {
-    if (workerRef.current) {
-      workerRef.current.postMessage({ command: 'terminate' });
-      workerRef.current.terminate();
-      workerRef.current = null;
-      setIsReady(false);
-      pendingRequests.current.clear();
-    }
-  }, []);
-
   useEffect(() => {
     initializeEngine();
     return cleanup;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cleanup]);
+  }, []);
 
   return {
     isReady,
@@ -616,6 +604,92 @@ export function useChessMove({
     makeEngineMove,
     processUserMove
   };
+
+  function initializeEngine() {
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+    if (workerRef.current) {
+      workerRef.current.terminate();
+      workerRef.current = null;
+    }
+    try {
+      workerRef.current = new Worker('/stockfish-worker.js');
+
+      workerRef.current.onmessage = (e) => {
+        const { type, requestId, result, error } = e.data;
+
+        if (type === 'ready' || type === 'initialized') {
+          restartAttemptsRef.current = 0;
+          isReadyRef.current = true;
+          setIsReady(true);
+        } else if (type === 'error') {
+          console.error('Stockfish error:', error);
+          failEngine(error || 'Engine error');
+        } else if (
+          type === 'result' &&
+          requestId &&
+          pendingRequests.current.has(requestId)
+        ) {
+          const resolve = pendingRequests.current.get(requestId);
+          if (resolve) {
+            resolve(result);
+            pendingRequests.current.delete(requestId);
+          }
+        } else if (type === 'debug') {
+        }
+      };
+
+      workerRef.current.onerror = (error) => {
+        console.error('Stockfish worker error:', error);
+        failEngine('Engine worker error');
+      };
+
+      workerRef.current.postMessage({ type: 'init' });
+    } catch (error) {
+      console.error('Failed to initialize Stockfish worker:', error);
+      failEngine('Engine worker error');
+    }
+  }
+
+  function failEngine(error: string) {
+    isReadyRef.current = false;
+    setIsReady(false);
+    pendingRequests.current.forEach((resolve) => {
+      resolve({ success: false, error });
+    });
+    pendingRequests.current.clear();
+    scheduleEngineRestart();
+  }
+
+  function scheduleEngineRestart() {
+    // A dead engine must not permanently kill move processing: retry with
+    // capped backoff. The attempt counter resets whenever init succeeds.
+    if (restartTimerRef.current) return;
+    if (restartAttemptsRef.current >= MAX_ENGINE_RESTARTS) return;
+    restartAttemptsRef.current += 1;
+    const delay = 1000 * 2 ** (restartAttemptsRef.current - 1);
+    restartTimerRef.current = setTimeout(() => {
+      restartTimerRef.current = null;
+      initializeEngine();
+    }, delay);
+  }
+
+  function cleanup() {
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+    if (workerRef.current) {
+      workerRef.current.postMessage({ command: 'terminate' });
+      workerRef.current.terminate();
+      workerRef.current = null;
+      isReadyRef.current = false;
+      setIsReady(false);
+      pendingRequests.current.clear();
+    }
+  }
 
   async function runFailTransition({
     fen,

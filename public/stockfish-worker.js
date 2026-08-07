@@ -6,6 +6,12 @@ let sentIsReady = false;
 let currentEvaluation = null;
 let currentDepth = null;
 let currentMate = null;
+// UCI runs one search at a time. Track the in-flight search so an abandoned
+// one is stopped and its bestmove discarded instead of being attributed to
+// the next request's position.
+let activeSearch = false;
+let staleBestMoves = 0;
+let queuedSearch = null;
 const NL = '\n';
 
 const wasmSupported = typeof WebAssembly === 'object';
@@ -122,6 +128,13 @@ self.onmessage = function (e) {
       return;
     }
 
+    if (type === 'stop' || command === 'stop') {
+      if (engine && (!requestId || requestId === currentRequestId)) {
+        stopActiveSearch();
+      }
+      return;
+    }
+
     if (type === 'uci' || command === 'send') {
       if (engine && isInitialized) {
         engine.postMessage((data || payload) + NL);
@@ -137,6 +150,10 @@ self.onmessage = function (e) {
         engine = null;
         isInitialized = false;
       }
+      activeSearch = false;
+      staleBestMoves = 0;
+      queuedSearch = null;
+      currentRequestId = null;
       self.postMessage({ type: 'terminated' });
       return;
     }
@@ -155,6 +172,27 @@ function evaluatePosition(fen, depth, requestId, moveTimeMs) {
     return;
   }
 
+  if (activeSearch) {
+    // A previous search is still running (typically one the client already
+    // timed out). Stop it, discard its bestmove, and start this search once
+    // the engine acknowledges.
+    if (queuedSearch) {
+      self.postMessage({
+        type: 'result',
+        requestId: queuedSearch.requestId,
+        result: { success: false, error: 'Superseded' }
+      });
+    }
+    queuedSearch = { fen, depth, requestId, moveTimeMs };
+    stopActiveSearch();
+    return;
+  }
+
+  startSearch({ fen, depth, requestId, moveTimeMs });
+}
+
+function startSearch({ fen, depth, requestId, moveTimeMs }) {
+  activeSearch = true;
   currentRequestId = requestId;
   currentEvaluation = null;
   currentDepth = null;
@@ -169,6 +207,18 @@ function evaluatePosition(fen, depth, requestId, moveTimeMs) {
   engine.postMessage(`go depth ${depth}` + NL);
 }
 
+function stopActiveSearch() {
+  if (!activeSearch || !currentRequestId) return;
+  self.postMessage({
+    type: 'result',
+    requestId: currentRequestId,
+    result: { success: false, error: 'Stopped' }
+  });
+  currentRequestId = null;
+  staleBestMoves += 1;
+  engine.postMessage('stop' + NL);
+}
+
 function normalizeMoveTimeMs(value) {
   const normalized = Number(value);
   if (!Number.isFinite(normalized) || normalized <= 0) return null;
@@ -176,9 +226,27 @@ function normalizeMoveTimeMs(value) {
 }
 
 function handleBestMove(message) {
+  if (staleBestMoves > 0) {
+    // Completion of a stopped/superseded search: discard it, then run any
+    // queued search now that the engine is free.
+    staleBestMoves -= 1;
+    if (staleBestMoves === 0) {
+      activeSearch = false;
+      if (queuedSearch) {
+        const next = queuedSearch;
+        queuedSearch = null;
+        startSearch(next);
+      }
+    }
+    return;
+  }
+
   const move = message.split(' ')[1];
 
-  if (!currentRequestId) return;
+  if (!currentRequestId) {
+    activeSearch = false;
+    return;
+  }
 
   self.postMessage({
     type: 'result',
@@ -197,6 +265,7 @@ function handleBestMove(message) {
   currentEvaluation = null;
   currentDepth = null;
   currentMate = null;
+  activeSearch = false;
 }
 
 function handleInfo(message) {
