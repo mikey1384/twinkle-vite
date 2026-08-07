@@ -492,6 +492,8 @@ export default function useInitSocket({
 
   useEffect(() => {
     socket.on('online_acknowledged', handleOnlineAcknowledged);
+    socket.on('online_status_changed', handleSelfPresenceDemoted);
+    socket.on('away_status_changed', handleSelfAwayDemoted);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('home_outdated', handleHomeOutdated);
@@ -500,6 +502,8 @@ export default function useInitSocket({
 
     return function cleanUp() {
       socket.off('online_acknowledged', handleOnlineAcknowledged);
+      socket.off('online_status_changed', handleSelfPresenceDemoted);
+      socket.off('away_status_changed', handleSelfAwayDemoted);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('home_outdated', handleHomeOutdated);
@@ -515,6 +519,47 @@ export default function useInitSocket({
     function handleOnlineAcknowledged() {
       userActionAckedRef.current = true;
       handleStopUserActionCapture();
+    }
+
+    // The qualification capture is one-shot: after online_acknowledged the
+    // listeners detach and ordinary input produces no socket-visible signal,
+    // so the server's idle sweep can demote a user who is actively using the
+    // site (away after 10min, offline after 45min of socket silence — typical
+    // of a long chess game in an always-visible tab, where moves travel over
+    // HTTP). When this socket sees its own user demoted, re-arm the capture so
+    // the next trusted input re-qualifies via presence_user_action and the
+    // server promotes the user back online. A legitimately hidden tab re-arms
+    // harmlessly: no trusted input fires until the user actually returns.
+    function handleSelfPresenceDemoted({
+      userId,
+      isOnline
+    }: {
+      userId: number;
+      isOnline: boolean;
+    }) {
+      if (isOnline) return;
+      if (Number(userId) !== Number(userIdRef.current)) return;
+      handleRearmUserActionCapture();
+    }
+
+    function handleSelfAwayDemoted({
+      userId,
+      isAway
+    }: {
+      userId: number;
+      isAway: boolean;
+    }) {
+      if (!isAway) return;
+      if (Number(userId) !== Number(userIdRef.current)) return;
+      handleRearmUserActionCapture();
+    }
+
+    function handleRearmUserActionCapture() {
+      if (!userIdRef.current) return;
+      handleStopUserActionCapture();
+      userActionAckedRef.current = false;
+      userActionAttemptsRef.current = 0;
+      handleStartUserActionCapture();
     }
 
     function handleHomeOutdated() {

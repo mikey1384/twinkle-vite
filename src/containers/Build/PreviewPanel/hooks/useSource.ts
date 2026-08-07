@@ -5,13 +5,20 @@ import {
 } from './useHostBridge';
 import type { Build } from '../types';
 import type { WorkspaceViewMode } from '../constants/workspaceView';
-import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
+import {
+  buildPreviewFrameSrc,
+  canUseSameOriginBuildPreviewSandbox
+} from '~/helpers/buildPreviewOriginHelpers';
 
 interface RuntimePreviewSrcState {
   key: string;
   src: string;
   expiresAt?: number;
 }
+
+// While the player is focused inside the preview frame, deferred token
+// refreshes re-check on this cadence instead of reloading the running app.
+const ACTIVE_FRAME_REFRESH_RETRY_MS = 60 * 1000;
 
 function toPreviewBaseSrc(build: Build) {
   return Number(build.currentArtifactVersionId) > 0
@@ -149,9 +156,29 @@ export function useRuntimePreviewSrc({
         Date.now() -
         runtimePreviewRefreshLeadMs
     );
-    const refreshTimeout = window.setTimeout(() => {
-      setRuntimePreviewRefreshNonce((currentNonce) => currentNonce + 1);
-    }, refreshDelayMs);
+    // Same-origin frames take token-only refreshes in place over the preview
+    // bridge (preview:token-refresh) with no reload, so deferring there would
+    // only strand the running app with an expired token. Cross-origin signed
+    // frames cannot be bridged — a refresh remounts them and resets a running
+    // app mid-session — so those defer while the player is focused inside the
+    // frame, accepting stale-token risk on late lazy fetches as the lesser harm.
+    const refreshWouldRemount = !canUseSameOriginBuildPreviewSandbox(
+      runtimePreviewSrcState.src
+    );
+    let refreshTimeout = 0;
+    const scheduleRefresh = (delayMs: number) => {
+      refreshTimeout = window.setTimeout(() => {
+        if (
+          refreshWouldRemount &&
+          document.activeElement instanceof HTMLIFrameElement
+        ) {
+          scheduleRefresh(ACTIVE_FRAME_REFRESH_RETRY_MS);
+          return;
+        }
+        setRuntimePreviewRefreshNonce((currentNonce) => currentNonce + 1);
+      }, delayMs);
+    };
+    scheduleRefresh(refreshDelayMs);
 
     return () => {
       window.clearTimeout(refreshTimeout);
@@ -161,7 +188,8 @@ export function useRuntimePreviewSrc({
     runtimePreviewRefreshLeadMs,
     runtimePreviewSrcKey,
     runtimePreviewSrcState?.expiresAt,
-    runtimePreviewSrcState?.key
+    runtimePreviewSrcState?.key,
+    runtimePreviewSrcState?.src
   ]);
 
   if (previewSrcOverride) return previewSrcOverride;

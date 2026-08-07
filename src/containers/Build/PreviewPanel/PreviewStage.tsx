@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
+import GameProgressBar from '~/components/GameProgressBar';
 import {
   BUILD_APP_IFRAME_ALLOW,
   BUILD_APP_PREVIEW_IFRAME_SANDBOX
@@ -34,23 +35,6 @@ const previewPreloadSurfaceClass = css`
   background: #fafbff;
   color: var(--chat-text);
   z-index: 1;
-`;
-
-const previewPreloadIconWrapClass = css`
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  border: 1px solid var(--ui-border);
-  background: rgba(255, 255, 255, 0.9);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const previewPreloadLabelClass = css`
-  font-size: 1.1rem;
-  font-weight: 700;
-  opacity: 0.82;
 `;
 
 const previewIframeClass = css`
@@ -369,10 +353,7 @@ export default function PreviewStage({
 function PreviewLoadingSurface() {
   return (
     <div className={previewPreloadSurfaceClass}>
-      <div className={previewPreloadIconWrapClass}>
-        <Icon icon="spinner" className={previewSpinnerClass} />
-      </div>
-      <div className={previewPreloadLabelClass}>Loading...</div>
+      <GameProgressBar />
     </div>
   );
 }
