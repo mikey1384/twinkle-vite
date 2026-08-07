@@ -5,7 +5,8 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
   ZERO_TWINKLE_ID,
-  CIEL_TWINKLE_ID
+  CIEL_TWINKLE_ID,
+  clientVersion
 } from '~/constants/defaultValues';
 import { emitAdminTelemetry, parseChannelPath } from '~/helpers';
 import {
@@ -22,12 +23,20 @@ import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import {
   useAppContext,
   useHomeContext,
+  useInputContext,
   useNotiContext,
   useChatContext,
   useKeyContext
 } from '~/contexts';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
+import {
+  attemptSilentClientUpdate,
+  hasUnsavedUserWork,
+  isClientUpdatePending,
+  markClientUpdatePending,
+  noteStaleClientActionError
+} from '~/helpers/clientUpdate';
 import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
 
 function dispatchSocketAuthReady(userId?: number | null) {
@@ -162,6 +171,7 @@ export default function useInitSocket({
   const countNewFeeds = useAppContext((v) => v.requestHelpers.countNewFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
+  const getInputState = useInputContext((v) => v.getInputState);
   const getNumberOfUnreadMessages = useAppContext(
     (v) => v.requestHelpers.getNumberOfUnreadMessages
   );
@@ -197,6 +207,65 @@ export default function useInitSocket({
   const retriesScheduledRef = useRef(false);
   const lastOutdatedCheckRef = useRef(0);
   const isCheckingOutdatedRef = useRef(false);
+  // Silent-update eligibility: a stale bundle may only reload itself at an
+  // "arrival" moment (fresh load, or a tab resumed after a long suspension)
+  // and only while the user hasn't interacted yet, so the reload can never
+  // destroy in-progress typing. Any other mismatch falls back to the popup.
+  const hiddenAtRef = useRef(0);
+  const interactedSinceArrivalRef = useRef(false);
+  const COLD_RESUME_MS = 5 * 60 * 1000;
+
+  function handleMarkArrivalIfCold() {
+    // A resume after a short hide (quick app switch) keeps whatever the user
+    // was doing in flight, so it does not reopen silent-update eligibility.
+    const hiddenAt = hiddenAtRef.current;
+    if (!hiddenAt || Date.now() - hiddenAt > COLD_RESUME_MS) {
+      interactedSinceArrivalRef.current = false;
+    }
+  }
+
+  function handleVersionData(
+    data: { match?: boolean } | undefined,
+    trigger: 'arrival' | 'staleActionError'
+  ) {
+    // Captive portals and broken proxies can return a 2xx that isn't our
+    // payload. Canonical version state may only move on an explicit boolean;
+    // anything else is not evidence in either direction.
+    if (!data || typeof data.match !== 'boolean') return;
+    if (data.match !== false) {
+      onCheckVersion(data as object);
+      return;
+    }
+    if (trigger === 'arrival') {
+      if (
+        interactedSinceArrivalRef.current ||
+        hasUnsavedUserWork({ inputState: getInputState?.() })
+      ) {
+        // The user is already doing something (or has un-persisted typed
+        // text) — defer the update to the next safe boundary (route
+        // navigation, hidden tab, clean resume, or a repeat stale-action
+        // error) instead of interrupting with the popup.
+        markClientUpdatePending();
+        return;
+      }
+      if (attemptSilentClientUpdate({ version: clientVersion })) {
+        return;
+      }
+      // A silent reload already ran and the bundle is still stale — the popup
+      // is the only remaining path to a working client.
+      onCheckVersion(data as object);
+      return;
+    }
+    if (
+      noteStaleClientActionError({
+        version: clientVersion,
+        hasUnsavedWork: () =>
+          hasUnsavedUserWork({ inputState: getInputState?.() })
+      }) === 'popup'
+    ) {
+      onCheckVersion(data as object);
+    }
+  }
   const checkFeedsInflightRef = useRef<Promise<void> | null>(null);
   const checkFeedsRerunRequestedRef = useRef(false);
   const pendingHydrateFromOutdatedRef = useRef(false);
@@ -437,12 +506,24 @@ export default function useInitSocket({
 
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
+        handleMarkArrivalIfCold();
         checkFeedsOutdated();
         ensureSocketConnected();
+      } else {
+        hiddenAtRef.current = Date.now();
+        // A hidden tab is the one moment a reload is guaranteed invisible, so
+        // apply a deferred update here — unless typed text would be lost.
+        if (
+          isClientUpdatePending() &&
+          !hasUnsavedUserWork({ inputState: getInputState?.() })
+        ) {
+          attemptSilentClientUpdate({ version: clientVersion });
+        }
       }
     }
 
     async function onPageShow() {
+      handleMarkArrivalIfCold();
       try {
         socket.emit('presence_ping');
       } catch {}
@@ -450,15 +531,19 @@ export default function useInitSocket({
       ensureSocketConnected();
       try {
         const data = await checkVersion();
-        onCheckVersion(data);
+        handleVersionData(data, 'arrival');
       } catch {}
     }
 
     async function onClientRefreshRequired() {
       try {
         const data = await checkVersion();
-        onCheckVersion(data);
+        handleVersionData(data, 'staleActionError');
       } catch {}
+    }
+
+    function onUserInteraction() {
+      interactedSinceArrivalRef.current = true;
     }
 
     const onFocus = () => {
@@ -472,6 +557,14 @@ export default function useInitSocket({
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onOnline);
     window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('pointerdown', onUserInteraction, {
+      capture: true,
+      passive: true
+    });
+    window.addEventListener('keydown', onUserInteraction, {
+      capture: true,
+      passive: true
+    });
     window.addEventListener(
       TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT,
       onClientRefreshRequired
@@ -481,6 +574,12 @@ export default function useInitSocket({
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('online', onOnline);
       window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener('pointerdown', onUserInteraction, {
+        capture: true
+      });
+      window.removeEventListener('keydown', onUserInteraction, {
+        capture: true
+      });
       window.removeEventListener(
         TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT,
         onClientRefreshRequired
@@ -581,8 +680,10 @@ export default function useInitSocket({
     }
 
     async function handleCheckVersion() {
-      const data = await checkVersion();
-      onCheckVersion(data);
+      try {
+        const data = await checkVersion();
+        handleVersionData(data, 'arrival');
+      } catch {}
     }
 
     async function handleGetNumberOfUnreadMessages({

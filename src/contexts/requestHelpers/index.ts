@@ -71,6 +71,7 @@ function registerMethods(
 registerMethods('build', [
   'createBuild',
   'loadBuild',
+  'loadBuildPublishedVersion',
   'loadBuildForkHistory',
   'loadBuildForkers',
   'loadBuildTeamMembers',

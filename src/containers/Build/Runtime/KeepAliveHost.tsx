@@ -12,7 +12,11 @@ import {
   useLocation,
   useNavigate
 } from 'react-router-dom';
-import { useKeyContext, useViewContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import {
+  BUILD_RUNTIME_KEEPALIVE_LAYER_ATTR,
+  BUILD_RUNTIME_SESSION_LOADED_ATTR
+} from '~/constants/appShell';
 import { trackEvent } from '~/helpers/analytics';
 import {
   getBuildRuntimeSourceFromSearch,
@@ -33,6 +37,7 @@ interface RuntimeSession {
   key: string;
   location: Location;
   loaded: boolean;
+  publishedVersionId: number | null;
   runtimeSource: BuildRuntimeSource;
   title: string;
   userId: number | null;
@@ -93,6 +98,7 @@ function createRuntimeSession({
     key: createRuntimeSessionKey(buildId, runtimeSource),
     location,
     loaded: false,
+    publishedVersionId: null,
     runtimeSource,
     title: 'Build App',
     userId
@@ -206,6 +212,72 @@ export default function BuildRuntimeKeepAliveHost() {
     isRuntimeRoute,
     location
   ]);
+
+  // Publish freshness: a kept-alive published-app session can outlive a new
+  // publish (update in the workspace, come back to the app tab -> old build).
+  // Re-entering the app route is a natural reload boundary, so verify the
+  // published version there and discard the stale session when it moved on.
+  // The probe must be the dedicated published-version endpoint: the runtime
+  // endpoint records a view for published fetches, and the workspace loader
+  // returns no build (only an access redirect) for public non-owner visitors
+  // while running heavy owner-only side effects for owners.
+  const loadBuildPublishedVersion = useAppContext(
+    (v) => v.requestHelpers.loadBuildPublishedVersion
+  );
+  const loadBuildPublishedVersionRef = useRef(loadBuildPublishedVersion);
+  loadBuildPublishedVersionRef.current = loadBuildPublishedVersion;
+  useEffect(() => {
+    if (!isRuntimeRoute || !activeBuildId) return;
+    const session = sessionsRef.current.find(
+      (s) => s.buildId === activeBuildId
+    );
+    // A loaded published session with a null version is a legacy build served
+    // through the build.code fallback (no artifact snapshot). It must still
+    // be probed: when its owner later publishes a modern snapshot, the live
+    // version moves null -> id and the kept session below refreshes. A
+    // still-legacy build compares null === null and keeps its session.
+    if (!session || !session.loaded || session.runtimeSource !== 'published') {
+      return;
+    }
+    let cancelled = false;
+    const staleKey = session.key;
+    const loadedVersion = session.publishedVersionId;
+    (async () => {
+      try {
+        const data = await loadBuildPublishedVersionRef.current(activeBuildId);
+        if (cancelled) return;
+        // Only a well-formed 2xx body is canonical; anything else (errors
+        // reject into the catch, malformed proxy bodies land here) keeps the
+        // session. A confirmed null is a real revocation: the owner
+        // unpublished, so the session must not keep serving the old app —
+        // replace it and let the fresh load surface the canonical runtime
+        // response (403 error for visitors, workspace fallback for the owner).
+        if (!data || typeof data !== 'object') return;
+        if (!('publishedArtifactVersionId' in data)) return;
+        const liveVersion =
+          Number(data.publishedArtifactVersionId) || null;
+        if (liveVersion === loadedVersion) return;
+        setSessions((current) =>
+          current.map((s) =>
+            s.key === staleKey && s.publishedVersionId === loadedVersion
+              ? createRuntimeSession({
+                  buildId: s.buildId,
+                  location: s.location,
+                  runtimeSource: s.runtimeSource,
+                  userId: s.userId
+                })
+              : s
+          )
+        );
+      } catch {
+        // Version check is best-effort; the kept session stays up on failure.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+     
+  }, [activeBuildId, isRuntimeRoute]);
 
   // Auth reconciliation (mirrors the single-session version, applied per
   // session): adopt the current user for anon sessions; drop any background
@@ -353,6 +425,7 @@ export default function BuildRuntimeKeepAliveHost() {
                     }
                   : null,
               loaded: true,
+              publishedVersionId: Number(build.publishedArtifactVersionId) || null,
               title: String(build.title || 'Build App')
             }
           : s
@@ -374,8 +447,13 @@ export default function BuildRuntimeKeepAliveHost() {
             key={s.key}
             className={runtimeLayerClass}
             data-active={isActive ? 'true' : 'false'}
-            data-build-runtime-keepalive-layer="true"
-            data-runtime-session-loaded={s.loaded ? 'true' : 'false'}
+            {...{
+              // Shared with clientUpdate.ts's unsaved-work gate: a loaded
+              // layer blocks silent client-update reloads (opaque iframe
+              // state). Keep the attribute names in ~/constants/appShell.
+              [BUILD_RUNTIME_KEEPALIVE_LAYER_ATTR]: 'true',
+              [BUILD_RUNTIME_SESSION_LOADED_ATTR]: s.loaded ? 'true' : 'false'
+            }}
           >
             <BuildRuntime
               key={s.key}
@@ -393,8 +471,10 @@ export default function BuildRuntimeKeepAliveHost() {
         <div
           className={runtimeLayerClass}
           data-active="true"
-          data-build-runtime-keepalive-layer="true"
-          data-runtime-session-loaded="false"
+          {...{
+            [BUILD_RUNTIME_KEEPALIVE_LAYER_ATTR]: 'true',
+            [BUILD_RUNTIME_SESSION_LOADED_ATTR]: 'false'
+          }}
         >
           <BuildRuntime
             key={`invalid:${location.pathname}`}

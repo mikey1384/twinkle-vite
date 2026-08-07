@@ -15,6 +15,15 @@ export const APP_SHELL_KEYBOARD_INSET_VAR = '--app-keyboard-inset';
 export const APP_SHELL_KEYBOARD_INSET_STYLE = `var(${APP_SHELL_KEYBOARD_INSET_VAR}, 0px)`;
 // Raw footprint of the fixed mobile bottom nav, before any keyboard netting.
 export const MOBILE_NAV_FOOTPRINT_STYLE = 'var(--mobile-nav-footprint)';
+// The Build runtime keep-alive host marks each mounted app-session layer with
+// these attributes (KeepAliveHost.tsx renders them; clientUpdate.ts's
+// unsaved-work gate queries them). A LOADED session's iframe holds opaque
+// in-memory app state the parent cannot inspect, so the silent client-update
+// gate must treat its presence — visible or hidden — as unsaved work.
+export const BUILD_RUNTIME_KEEPALIVE_LAYER_ATTR =
+  'data-build-runtime-keepalive-layer';
+export const BUILD_RUNTIME_SESSION_LOADED_ATTR = 'data-runtime-session-loaded';
+export const LOADED_BUILD_RUNTIME_SESSION_SELECTOR = `[${BUILD_RUNTIME_KEEPALIVE_LAYER_ATTR}="true"][${BUILD_RUNTIME_SESSION_LOADED_ATTR}="true"]`;
 // Bottom offset for layers that are themselves `position: fixed` (the build
 // runtime host). Fixed layers resolve against the LAYOUT viewport, which the
 // keyboard does not shrink, so the app shell's keyboard inset does not constrain

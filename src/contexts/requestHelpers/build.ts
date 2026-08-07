@@ -409,6 +409,18 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildPublishedVersion(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/published-version`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildForkHistory(
       buildId: number,
       options?: { fromWriter?: boolean }

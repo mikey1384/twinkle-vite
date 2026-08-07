@@ -55,7 +55,8 @@ export default function Store() {
     (v) => v.requestHelpers.unlockUsernameChange
   );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
-  const [loading, setLoading] = useState(false);
+  const [myDataLoaded, setMyDataLoaded] = useState(false);
+  const [karmaLoaded, setKarmaLoaded] = useState(false);
   const [numTwinklesRewarded, setNumTwinklesRewarded] = useState(0);
   const [numPostsRewarded, setNumPostsRewarded] = useState(0);
   const [numRecommended, setNumRecommended] = useState(0);
@@ -63,6 +64,11 @@ export default function Store() {
     useState(0);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
   const settingsListRef = useRef<HTMLDivElement | null>(null);
+  // Section state belongs to one account and one request round. The generation
+  // drops out-of-order responses; the owner id detects login/logout/switch so
+  // the previous account's counters never render for the new one.
+  const requestGenerationRef = useRef(0);
+  const sectionsOwnerUserIdRef = useRef<number | null>(null);
 
   useScrollAnchorRestoration({
     anchorKey: 'home:settings',
@@ -72,14 +78,52 @@ export default function Store() {
   });
 
   useEffect(() => {
+    const generation = ++requestGenerationRef.current;
+    if (sectionsOwnerUserIdRef.current !== (userId || null)) {
+      // Account identity changed: the loaded flags and counters describe the
+      // previous account, so re-block both sections until this account's
+      // canonical data arrives. A same-account visibility refresh keeps
+      // showing the last canonical values while revalidating instead.
+      sectionsOwnerUserIdRef.current = userId || null;
+      setMyDataLoaded(false);
+      setKarmaLoaded(false);
+      setNumTwinklesRewarded(0);
+      setNumPostsRewarded(0);
+      setNumRecommended(0);
+      setNumApprovedRecommendations(0);
+    }
     if (userId) {
-      init();
+      initMyData();
+      initKarma();
     }
 
-    async function init() {
-      setLoading(true);
+    // The two requests run in parallel and each section unblocks as soon as
+    // its own canonical data arrives: the item panels only need the session
+    // data, so they must not wait for the karma recompute, which scans the
+    // user's full reward history and is by far the slower call. Every
+    // application (including the loaded flags) is generation-gated so a slow
+    // response from a previous round or account can never land.
+    async function initMyData() {
       try {
-        const data = await loadMyData();
+        // karmaPoints is owned by the karma request; the recomputed canonical
+        // value must not be overwritten by the stored session copy when the
+        // two responses race.
+        const { karmaPoints: _staleKarmaPoints, ...data } = await loadMyData();
+        if (generation !== requestGenerationRef.current) return;
+        onSetUserState({
+          userId: data.userId,
+          newState: data
+        });
+        setMyDataLoaded(true);
+      } catch {
+        if (generation !== requestGenerationRef.current) return;
+        console.error('error loading my data');
+        setMyDataLoaded(true);
+      }
+    }
+
+    async function initKarma() {
+      try {
         const {
           karmaPoints: kp,
           numTwinklesRewarded,
@@ -87,9 +131,10 @@ export default function Store() {
           numPostsRewarded,
           numRecommended
         } = await loadKarmaPoints();
+        if (generation !== requestGenerationRef.current) return;
         onSetUserState({
-          userId: data.userId,
-          newState: { ...data, karmaPoints: kp }
+          userId,
+          newState: { karmaPoints: kp }
         });
         if (!isSupermod(level)) {
           setNumTwinklesRewarded(numTwinklesRewarded);
@@ -98,10 +143,11 @@ export default function Store() {
           setNumPostsRewarded(numPostsRewarded);
           setNumRecommended(numRecommended);
         }
+        setKarmaLoaded(true);
       } catch {
-        console.error('error loading my data');
-      } finally {
-        setLoading(false);
+        if (generation !== requestGenerationRef.current) return;
+        console.error('error loading karma points');
+        setKarmaLoaded(true);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,7 +164,7 @@ export default function Store() {
             <KarmaStatus
               karmaPoints={karmaPoints}
               level={level}
-              loading={loading}
+              loading={!karmaLoaded}
               numApprovedRecommendations={numApprovedRecommendations}
               numPostsRewarded={numPostsRewarded}
               numRecommended={numRecommended}
@@ -128,18 +174,18 @@ export default function Store() {
               userType={userType}
             />
           </div>
-          <ChatNotificationsItem loading={loading} />
+          <ChatNotificationsItem loading={!myDataLoaded} />
           <div data-scroll-anchor-id="home-settings:change-password">
             <ItemPanel
               itemKey="changePassword"
               itemName={changePasswordLabel}
               itemDescription={changePasswordDescriptionLabel}
-              loading={loading}
+              loading={!myDataLoaded}
             >
               <ChangePassword style={{ marginTop: '1rem' }} />
             </ItemPanel>
           </div>
-          {loading ? (
+          {!myDataLoaded ? (
             <Loading />
           ) : (
             <>
@@ -152,32 +198,32 @@ export default function Store() {
                   itemDescription={changeUsernameDescriptionLabel}
                   onUnlock={handleUnlockUsernameChange}
                   unlocking={unlockingUsernameChange}
-                  loading={loading}
+                  loading={!myDataLoaded}
                 >
                   <ChangeUsername style={{ marginTop: '1rem' }} />
                 </ItemPanel>
               </div>
               <div data-scroll-anchor-id="home-settings:reward-boost">
-                <RewardBoostItem loading={loading} />
+                <RewardBoostItem loading={!myDataLoaded} />
               </div>
               <div data-scroll-anchor-id="home-settings:file-size">
-                <FileSizeItem loading={loading} />
+                <FileSizeItem loading={!myDataLoaded} />
               </div>
               <div data-scroll-anchor-id="home-settings:profile-picture">
-                <ProfilePictureItem loading={loading} />
+                <ProfilePictureItem loading={!myDataLoaded} />
               </div>
               <div data-scroll-anchor-id="home-settings:ai-card">
                 <AICardItem
                   userId={userId}
                   canGenerateAICard={!!canGenerateAICard}
                   karmaPoints={karmaPoints}
-                  loading={loading}
+                  loading={!myDataLoaded}
                 />
               </div>
               <div data-scroll-anchor-id="home-settings:donor-license">
                 <DonorLicenseItem
                   karmaPoints={karmaPoints}
-                  loading={loading}
+                  loading={!myDataLoaded}
                   canDonate={canDonate}
                   donatedCoins={donatedCoins || 0}
                 />
@@ -188,7 +234,7 @@ export default function Store() {
                   locked
                   itemKey="moreToCome"
                   itemName={`${moreToComeLabel}...`}
-                  loading={loading}
+                  loading={!myDataLoaded}
                 />
               </div>
             </>

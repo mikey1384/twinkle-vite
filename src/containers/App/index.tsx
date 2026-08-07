@@ -30,8 +30,15 @@ import {
 import {
   localStorageKeys,
   ZERO_TWINKLE_ID,
-  DEFAULT_PROFILE_THEME
+  DEFAULT_PROFILE_THEME,
+  clientVersion
 } from '~/constants/defaultValues';
+import {
+  attemptSilentClientUpdate,
+  hasUnsavedUserWork,
+  isClientUpdatePending,
+  stripClientUpdateReloadParam
+} from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
@@ -439,6 +446,7 @@ export default function App() {
   const onResetContentInput = useInputContext(
     (v) => v.actions.onResetContentInput
   );
+  const getInputState = useInputContext((v) => v.getInputState);
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
   const visibilityChangeRef: React.RefObject<any> = useRef(null);
   const hiddenRef: React.RefObject<any> = useRef(null);
@@ -517,6 +525,24 @@ export default function App() {
     currentUserId: userId,
     sessionLoaded: userSessionLoaded
   });
+  // After an update reload lands, drop the cache-busting param from the URL.
+  useEffect(() => {
+    stripClientUpdateReloadParam();
+  }, []);
+
+  // A route change is a safe boundary to apply a deferred client update: the
+  // user just left whatever they were doing, so upgrade the SPA transition
+  // into a full document load of the destination — unless un-persisted typed
+  // text (e.g. an unsent chat draft) would be lost, in which case keep
+  // deferring. The attempt is budget-guarded, so a reload that fails to
+  // freshen the bundle cannot loop.
+  useEffect(() => {
+    if (isClientUpdatePending() && !hasUnsavedUserWork({ inputState: getInputState?.() })) {
+      attemptSilentClientUpdate({ version: clientVersion });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   // On (re)entering a full build app page, restore/persist the "super full
   // screen" preference only when the build toolbar is also collapsed. Embedded
   // app previews are iframe chrome and must not read or overwrite this state.
