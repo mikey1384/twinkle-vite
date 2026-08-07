@@ -47,7 +47,7 @@ export interface BuildContributionLumineFixDetails {
   } | null;
 }
 
-export function SponsorBuildContributionLumineFixButton({
+function SponsorBuildContributionLumineFixButton({
   loading,
   onClick
 }: {
@@ -93,6 +93,8 @@ export default function ContributionLumineFixPanel({
   fix,
   isOwner,
   presentation = 'contribution-card',
+  canSponsor = false,
+  onOpenDetails,
   details,
   selectedModel,
   loading,
@@ -103,6 +105,8 @@ export default function ContributionLumineFixPanel({
   fix: BuildContributionLumineFix;
   isOwner: boolean;
   presentation?: 'contribution-card' | 'branch-main-update';
+  canSponsor?: boolean;
+  onOpenDetails?: () => void;
   details: BuildContributionLumineFixDetails | null;
   selectedModel: string;
   loading: string;
@@ -138,7 +142,7 @@ export default function ContributionLumineFixPanel({
         {getLumineFixCopy({
           status,
           isOwner,
-          canSponsor: Boolean(details?.canSponsor),
+          canSponsor: Boolean(details?.canSponsor) || canSponsor,
           reviewRequired: Boolean(fix.reviewRequired),
           isBranchMainUpdate
         })}
@@ -154,6 +158,30 @@ export default function ContributionLumineFixPanel({
           Lumine prepared {fix.changedPaths.length}{' '}
           {fix.changedPaths.length === 1 ? 'part' : 'parts'} of the fix.
         </span>
+      ) : null}
+      {/* Step 1 renders here so step 2 (model picker + confirm) expands in
+          the same spot; a trigger outside the panel reads as the button
+          teleporting once details load. */}
+      {!details && onOpenDetails && sponsorable && canSponsor ? (
+        <div className={lumineFixControlsClass}>
+          <SponsorBuildContributionLumineFixButton
+            loading={loading === 'load-lumine-fix'}
+            onClick={onOpenDetails}
+          />
+        </div>
+      ) : null}
+      {!details && onOpenDetails && isOwner && status === 'ready' ? (
+        <div className={lumineFixControlsClass}>
+          <GameCTAButton
+            variant="purple"
+            size="md"
+            icon="wand-magic-sparkles"
+            loading={loading === 'load-lumine-fix'}
+            onClick={onOpenDetails}
+          >
+            {fix.reviewRequired ? 'Review Lumine Fix' : 'Finish Lumine Fix'}
+          </GameCTAButton>
+        </div>
       ) : null}
       {sponsorable && details?.canSponsor ? (
         <div className={lumineFixControlsClass}>

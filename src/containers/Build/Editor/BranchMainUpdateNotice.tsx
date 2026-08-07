@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ContributionLumineFixPanel, {
   FixBuildContributionWithLumineButton,
-  SponsorBuildContributionLumineFixButton,
   type BuildContributionLumineFix,
   type BuildContributionLumineFixDetails
 } from '~/components/Build/ContributionLumineFix';
@@ -149,12 +148,6 @@ export default function BranchMainUpdateNotice({
         {error ? <span className={errorClass}>{error}</span> : null}
       </div>
       <div className={actionsClass}>
-        {lumineFixControl?.canSponsor && !lumineFixControl.details ? (
-          <SponsorBuildContributionLumineFixButton
-            loading={lumineFixControl.loading === 'load-lumine-fix'}
-            onClick={lumineFixControl.onOpenSponsor}
-          />
-        ) : null}
         {branchLumineFixControl ? (
           <FixBuildContributionWithLumineButton
             loading={branchLumineFixControl.loading}
@@ -185,6 +178,8 @@ export default function BranchMainUpdateNotice({
                 ? 'branch-main-update'
                 : 'contribution-card'
             }
+            canSponsor={lumineFixControl.canSponsor}
+            onOpenDetails={lumineFixControl.onOpenSponsor}
             details={lumineFixControl.details}
             selectedModel={lumineFixControl.selectedModel}
             loading={lumineFixControl.loading}

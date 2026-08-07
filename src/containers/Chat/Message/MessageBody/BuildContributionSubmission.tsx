@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ContributionLumineFixPanel, {
-  SponsorBuildContributionLumineFixButton,
   type BuildContributionLumineFix,
   type BuildContributionLumineFixDetails
 } from '~/components/Build/ContributionLumineFix';
@@ -319,29 +318,6 @@ export default function BuildContributionSubmission({
               Open branch
             </GameCTAButton>
           ) : null}
-          {hasUnresolvedLumineFix &&
-          (isContributor || isOwner) &&
-          (lumineFixStatus === 'needs_resolution' ||
-            lumineFixStatus === 'failed' ||
-            lumineFixStatus === 'stale') ? (
-            <SponsorBuildContributionLumineFixButton
-              loading={actionLoading === 'load-lumine-fix'}
-              onClick={handleOpenLumineFix}
-            />
-          ) : null}
-          {hasUnresolvedLumineFix && isOwner && lumineFixStatus === 'ready' ? (
-            <GameCTAButton
-              variant="purple"
-              size="md"
-              icon="wand-magic-sparkles"
-              loading={actionLoading === 'load-lumine-fix'}
-              onClick={handleOpenLumineFix}
-            >
-              {lumineFix?.reviewRequired
-                ? 'Review Lumine Fix'
-                : 'Finish Lumine Fix'}
-            </GameCTAButton>
-          ) : null}
           {/* Only an open branch can merge. Replace Main also supports a merged
               branch with an unresolved conflict as the owner's explicit
               fallback; a contributor never sees that destructive option. */}
@@ -423,6 +399,8 @@ export default function BuildContributionSubmission({
         <ContributionLumineFixPanel
           fix={lumineFix}
           isOwner={isOwner}
+          canSponsor={isContributor || isOwner}
+          onOpenDetails={handleOpenLumineFix}
           details={lumineFixDetails}
           selectedModel={selectedLumineModel}
           loading={actionLoading}

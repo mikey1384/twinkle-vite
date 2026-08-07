@@ -2,8 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ContributionLumineFixPanel, {
-  FixBuildContributionWithLumineButton,
-  SponsorBuildContributionLumineFixButton
+  FixBuildContributionWithLumineButton
 } from '~/components/Build/ContributionLumineFix';
 import BranchMainUpdateNotice, {
   type BranchMainUpdateNoticeControl
@@ -300,36 +299,11 @@ export default function ContributionDetail({
       {ownerConflictRepairShown ? (
         hasTrackedLumineFix && projectLumineFixControl?.fix ? (
           <>
-            {projectLumineFixControl.canSponsor &&
-            !projectLumineFixControl.details ? (
-              <div className={rowClass}>
-                <SponsorBuildContributionLumineFixButton
-                  loading={
-                    projectLumineFixControl.loading === 'load-lumine-fix'
-                  }
-                  onClick={projectLumineFixControl.onOpenSponsor}
-                />
-              </div>
-            ) : null}
-            {projectLumineFixControl.fix.status === 'ready' &&
-            !projectLumineFixControl.details ? (
-              <div className={rowClass}>
-                <GameCTAButton
-                  variant="purple"
-                  size="md"
-                  icon="wand-magic-sparkles"
-                  loading={
-                    projectLumineFixControl.loading === 'load-lumine-fix'
-                  }
-                  onClick={projectLumineFixControl.onOpenSponsor}
-                >
-                  Review Lumine Fix
-                </GameCTAButton>
-              </div>
-            ) : null}
             <ContributionLumineFixPanel
               fix={projectLumineFixControl.fix}
               isOwner
+              canSponsor={projectLumineFixControl.canSponsor}
+              onOpenDetails={projectLumineFixControl.onOpenSponsor}
               details={projectLumineFixControl.details}
               selectedModel={projectLumineFixControl.selectedModel}
               loading={projectLumineFixControl.loading}

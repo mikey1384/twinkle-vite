@@ -4,6 +4,7 @@ import test from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import BranchMainUpdateNotice from '../src/containers/Build/Editor/BranchMainUpdateNotice';
+import ContributionLumineFixPanel from '../src/components/Build/ContributionLumineFix';
 import {
   resolveBranchMainUpdateNoticeState,
   resolveBuildProjectLumineFixScope,
@@ -306,6 +307,96 @@ test('the branch notice renders the shared Sponsor Lumine action in product lang
   assert.match(markup, /Sponsor Lumine Fix/);
   assert.doesNotMatch(markup, /Update from Main/);
   assert.doesNotMatch(markup, /app\.js|conflict markers/i);
+});
+
+test('Sponsor renders once inside the repair panel and expands in place', () => {
+  const control = {
+    fix: { status: 'needs_resolution' as const, blocksBranchSync: true },
+    details: null,
+    selectedModel: '',
+    loading: '',
+    error: '',
+    canSponsor: true,
+    onOpenSponsor() {},
+    onSelectModel() {},
+    onSponsor() {}
+  };
+  const before = renderToStaticMarkup(
+    React.createElement(BranchMainUpdateNotice, {
+      canUpdate: false,
+      lumineFixBlocksBranchSync: true,
+      lumineFixControl: control,
+      onUpdate() {}
+    })
+  );
+  // Exactly one Sponsor action, and it sits below the panel heading — not in
+  // the notice's top action row, where pressing it made the control appear to
+  // teleport into the panel once details loaded.
+  assert.equal(before.match(/Sponsor Lumine Fix/g)?.length, 1);
+  assert.ok(
+    before.indexOf('Sponsor Lumine Fix') >
+      before.indexOf('Main needs a Lumine fix')
+  );
+
+  const after = renderToStaticMarkup(
+    React.createElement(BranchMainUpdateNotice, {
+      canUpdate: false,
+      lumineFixBlocksBranchSync: true,
+      lumineFixControl: {
+        ...control,
+        details: {
+          canSponsor: true,
+          modelOptions: [
+            {
+              model: 'sonnet',
+              label: 'Sonnet',
+              description: 'Fast, careful fixes.',
+              defaultReasoningEffort: 'medium',
+              supportedReasoningEfforts: ['medium']
+            }
+          ],
+          modelSelection: { model: 'sonnet' }
+        },
+        selectedModel: 'sonnet'
+      },
+      onUpdate() {}
+    })
+  );
+  assert.doesNotMatch(after, /Sponsor Lumine Fix/);
+  assert.match(after, /<select/);
+  assert.match(after, /Sponsor Sonnet Fix/);
+});
+
+test('an owner with a ready fix gets the Review/Finish action inside the panel', () => {
+  const review = renderToStaticMarkup(
+    React.createElement(ContributionLumineFixPanel, {
+      fix: { status: 'ready', reviewRequired: true },
+      isOwner: true,
+      onOpenDetails() {},
+      details: null,
+      selectedModel: '',
+      loading: '',
+      onSelectModel() {},
+      onSponsor() {},
+      onApply() {}
+    })
+  );
+  assert.match(review, /Review Lumine Fix/);
+
+  const finish = renderToStaticMarkup(
+    React.createElement(ContributionLumineFixPanel, {
+      fix: { status: 'ready', reviewRequired: false },
+      isOwner: true,
+      onOpenDetails() {},
+      details: null,
+      selectedModel: '',
+      loading: '',
+      onSelectModel() {},
+      onSponsor() {},
+      onApply() {}
+    })
+  );
+  assert.match(finish, /Finish Lumine Fix/);
 });
 
 test('a clean canonical Main state exposes Update from Main after checking', () => {
