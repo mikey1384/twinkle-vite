@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import {
+  applyClientUpdateAtSafeBoundary,
+  applyClientVersionResult,
   armUpdateIfDeployedBundleNewer,
   attemptSilentClientUpdate,
+  buildClientVersionCheckUrl,
   clearSilentClientUpdateMemory,
   getDeployedEntryScripts,
   getRunningEntryScripts,
@@ -17,6 +22,22 @@ import {
 } from '../src/helpers/clientUpdate';
 import { LOADED_BUILD_RUNTIME_SESSION_SELECTOR } from '../src/constants/appShell';
 
+const socketInitSource = readFileSync(
+  fileURLToPath(
+    new URL(
+      '../src/containers/App/Header/hooks/useAPISocket/useInitSocket.ts',
+      import.meta.url
+    )
+  ),
+  'utf8'
+);
+const appSource = readFileSync(
+  fileURLToPath(
+    new URL('../src/containers/App/index.tsx', import.meta.url)
+  ),
+  'utf8'
+);
+
 function createStorage() {
   const entries = new Map<string, string>();
   return {
@@ -28,6 +49,66 @@ function createStorage() {
     }
   };
 }
+
+function entryDocument(srcs: string[]) {
+  return {
+    querySelectorAll: (selector: string) =>
+      selector === 'script[src]'
+        ? srcs.map((src) => ({ getAttribute: () => src }))
+        : []
+  } as any;
+}
+
+function entryHtml(basename: string) {
+  return `<!doctype html><script type="module" crossorigin src="https://x.vercel.app/assets/${basename}"></script>`;
+}
+
+function fetcherFor(html: string, calls: string[] = []) {
+  return async (url: string) => {
+    calls.push(url);
+    return { ok: true, text: async () => html };
+  };
+}
+
+function createVersionResultEffects() {
+  const statuses: boolean[] = [];
+  let compatibleArrivals = 0;
+  return {
+    statuses,
+    get compatibleArrivals() {
+      return compatibleArrivals;
+    },
+    onVersionStatus(data: { match: boolean }) {
+      statuses.push(data.match);
+    },
+    onCompatibleArrival() {
+      compatibleArrivals += 1;
+    }
+  };
+}
+
+test('every version check gets a unique cache-busting URL', () => {
+  assert.equal(
+    buildClientVersionCheckUrl({
+      apiUrl: 'https://api.twinkle.network',
+      version: '2.0.68',
+      requestId: 100
+    }),
+    'https://api.twinkle.network/notification/version?version=2.0.68&t=100'
+  );
+  assert.notEqual(
+    buildClientVersionCheckUrl({
+      apiUrl: 'https://api.twinkle.network',
+      version: '2.0.68',
+      requestId: 100
+    }),
+    buildClientVersionCheckUrl({
+      apiUrl: 'https://api.twinkle.network',
+      version: '2.0.68',
+      requestId: 101
+    })
+  );
+});
 
 test('a stale tab silently reloads once, then falls back to the popup', () => {
   clearSilentClientUpdateMemory();
@@ -199,6 +280,275 @@ test('a stale-action retry never reloads over unsaved work — the popup informs
       now: base + 20_000,
       version: '2.0.65',
       reload,
+      hasUnsavedWork: () => false
+    }),
+    'reloading'
+  );
+  assert.equal(reloads, 1);
+});
+
+test('a usable upload-stale client updates quietly and never escalates to the popup', () => {
+  clearSilentClientUpdateMemory();
+  const storage = createStorage();
+  let reloads = 0;
+  const reload = () => {
+    reloads += 1;
+  };
+  const base = 300_000;
+
+  assert.equal(
+    noteStaleClientActionError({
+      storage,
+      now: base,
+      version: '2.0.64',
+      reload,
+      allowPopup: false
+    }),
+    'deferred'
+  );
+  assert.equal(
+    noteStaleClientActionError({
+      storage,
+      now: base + 10_000,
+      version: '2.0.64',
+      reload,
+      allowPopup: false
+    }),
+    'reloading'
+  );
+  assert.equal(reloads, 1);
+
+  clearSilentClientUpdateMemory();
+  markClientUpdatePending();
+  assert.equal(
+    noteStaleClientActionError({
+      storage,
+      now: base + 20_000,
+      version: '2.0.64',
+      reload,
+      hasUnsavedWork: () => true,
+      allowPopup: false
+    }),
+    'deferred'
+  );
+  assert.equal(reloads, 1);
+
+  assert.equal(
+    noteStaleClientActionError({
+      storage,
+      now: base + 30_000,
+      version: '2.0.64',
+      reload,
+      hasUnsavedWork: () => false,
+      allowPopup: false
+    }),
+    'deferred'
+  );
+  assert.equal(reloads, 1);
+});
+
+test('the version-result boundary ignores non-canonical answers and probes compatible arrivals', () => {
+  clearSilentClientUpdateMemory();
+  const effects = createVersionResultEffects();
+  const base = {
+    trigger: 'arrival' as const,
+    version: '2.0.68',
+    interactedSinceArrival: false,
+    hasUnsavedWork: () => false,
+    onVersionStatus: effects.onVersionStatus,
+    onCompatibleArrival: effects.onCompatibleArrival
+  };
+
+  assert.equal(applyClientVersionResult({ ...base, data: undefined }), 'ignored');
+  assert.equal(applyClientVersionResult({ ...base, data: {} }), 'ignored');
+  assert.equal(
+    applyClientVersionResult({ ...base, data: { match: 'true' } }),
+    'ignored'
+  );
+  assert.deepEqual(effects.statuses, []);
+  assert.equal(effects.compatibleArrivals, 0);
+
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      data: { match: true, version: '2.0.68' }
+    }),
+    'compatible'
+  );
+  assert.deepEqual(effects.statuses, [true]);
+  assert.equal(effects.compatibleArrivals, 1);
+  assert.match(
+    socketInitSource,
+    /applyClientVersionResult\(\{[\s\S]*?onVersionStatus: onCheckVersion[\s\S]*?onCompatibleArrival:/
+  );
+});
+
+test('the complete usable-426 branch updates quietly and cannot produce a popup', () => {
+  clearSilentClientUpdateMemory();
+  const effects = createVersionResultEffects();
+  const storage = createStorage();
+  let reloads = 0;
+  const base = {
+    data: { match: true, version: '2.0.64' },
+    trigger: 'staleActionError' as const,
+    version: '2.0.64',
+    interactedSinceArrival: true,
+    onVersionStatus: effects.onVersionStatus,
+    onCompatibleArrival: effects.onCompatibleArrival,
+    storage,
+    reload: () => {
+      reloads += 1;
+    }
+  };
+
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 400_000,
+      hasUnsavedWork: () => false
+    }),
+    'deferred'
+  );
+  assert.equal(isClientUpdatePending(), true);
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 410_000,
+      hasUnsavedWork: () => false
+    }),
+    'reloading'
+  );
+  assert.equal(reloads, 1);
+
+  clearSilentClientUpdateMemory();
+  markClientUpdatePending();
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 420_000,
+      hasUnsavedWork: () => true
+    }),
+    'deferred'
+  );
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 430_000,
+      hasUnsavedWork: () => false
+    }),
+    'deferred'
+  );
+  assert.deepEqual(effects.statuses, [true, true, true, true]);
+  assert.equal(effects.compatibleArrivals, 0);
+  assert.equal(reloads, 1);
+});
+
+test('a mandatory arrival reloads silently, defers over work, and only then permits the popup', () => {
+  clearSilentClientUpdateMemory();
+  const effects = createVersionResultEffects();
+  const storage = createStorage();
+  let reloads = 0;
+  const base = {
+    data: { match: false, version: '1.9.99' },
+    trigger: 'arrival' as const,
+    version: '1.9.99',
+    onVersionStatus: effects.onVersionStatus,
+    onCompatibleArrival: effects.onCompatibleArrival,
+    storage,
+    reload: () => {
+      reloads += 1;
+    }
+  };
+
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 500_000,
+      interactedSinceArrival: false,
+      hasUnsavedWork: () => false
+    }),
+    'reloading'
+  );
+  assert.equal(reloads, 1);
+  assert.deepEqual(effects.statuses, []);
+
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 510_000,
+      interactedSinceArrival: true,
+      hasUnsavedWork: () => false
+    }),
+    'deferred'
+  );
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 520_000,
+      interactedSinceArrival: false,
+      hasUnsavedWork: () => true
+    }),
+    'deferred'
+  );
+  assert.deepEqual(effects.statuses, []);
+
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 530_000,
+      interactedSinceArrival: false,
+      hasUnsavedWork: () => false
+    }),
+    'popup'
+  );
+  assert.deepEqual(effects.statuses, [false]);
+  assert.equal(reloads, 1);
+});
+
+test('a mandatory stale-action retry preserves work but retains genuine popup escalation', () => {
+  clearSilentClientUpdateMemory();
+  const effects = createVersionResultEffects();
+  const storage = createStorage();
+  let reloads = 0;
+  const base = {
+    data: { match: false, version: '1.9.99' },
+    trigger: 'staleActionError' as const,
+    version: '1.9.99',
+    interactedSinceArrival: true,
+    onVersionStatus: effects.onVersionStatus,
+    onCompatibleArrival: effects.onCompatibleArrival,
+    storage,
+    reload: () => {
+      reloads += 1;
+    }
+  };
+
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 600_000,
+      hasUnsavedWork: () => true
+    }),
+    'deferred'
+  );
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 610_000,
+      hasUnsavedWork: () => true
+    }),
+    'popup'
+  );
+  assert.deepEqual(effects.statuses, [false]);
+  assert.equal(reloads, 0);
+
+  assert.equal(
+    applyClientVersionResult({
+      ...base,
+      now: 620_000,
       hasUnsavedWork: () => false
     }),
     'reloading'
@@ -434,34 +784,20 @@ test('a newer deployed entry bundle arms the pending update, nothing else does',
   // update (the reload happens at the next safe boundary); evidence is held
   // to the captive-portal standard, so garbage on either side is not a
   // conclusion in either direction.
-  const runningDoc = (srcs: string[]) =>
-    ({
-      querySelectorAll: (selector: string) =>
-        selector === 'script[src]'
-          ? srcs.map((src) => ({ getAttribute: () => src }))
-          : []
-    }) as any;
-  const deployedHtml = (basename: string) =>
-    `<!doctype html><script type="module" crossorigin src="https://x.vercel.app/assets/${basename}"></script>`;
-  const fetcherFor = (html: string, calls: string[] = []) =>
-    async (url: string) => {
-      calls.push(url);
-      return { ok: true, text: async () => html };
-    };
   const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
 
   // Parsers: entry scripts only — runtime <link> preloads and non-entry
   // chunks must not pollute the identity.
-  assert.deepEqual(getRunningEntryScripts(runningDoc([runningSrc])), [
+  assert.deepEqual(getRunningEntryScripts(entryDocument([runningSrc])), [
     'index-AAA1.js'
   ]);
   assert.deepEqual(
     getRunningEntryScripts(
-      runningDoc(['https://x.vercel.app/assets/Chat-BBB2.js'])
+      entryDocument(['https://x.vercel.app/assets/Chat-BBB2.js'])
     ),
     []
   );
-  assert.deepEqual(getDeployedEntryScripts(deployedHtml('index-CCC3.js')), [
+  assert.deepEqual(getDeployedEntryScripts(entryHtml('index-CCC3.js')), [
     'index-CCC3.js'
   ]);
   assert.deepEqual(getDeployedEntryScripts('<html>captive portal</html>'), []);
@@ -471,8 +807,8 @@ test('a newer deployed entry bundle arms the pending update, nothing else does',
   assert.equal(
     await armUpdateIfDeployedBundleNewer({
       now: 1_000_000,
-      doc: runningDoc([runningSrc]),
-      fetcher: fetcherFor(deployedHtml('index-AAA1.js'))
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-AAA1.js'))
     }),
     false
   );
@@ -485,8 +821,8 @@ test('a newer deployed entry bundle arms the pending update, nothing else does',
   assert.equal(
     await armUpdateIfDeployedBundleNewer({
       now: 1_000_000,
-      doc: runningDoc([runningSrc]),
-      fetcher: fetcherFor(deployedHtml('index-DDD4.js'), calls)
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-DDD4.js'), calls)
     }),
     true
   );
@@ -494,14 +830,14 @@ test('a newer deployed entry bundle arms the pending update, nothing else does',
   clearSilentClientUpdateMemory();
   await armUpdateIfDeployedBundleNewer({
     now: 2_000_000,
-    doc: runningDoc([runningSrc]),
-    fetcher: fetcherFor(deployedHtml('index-EEE5.js'), calls)
+    doc: entryDocument([runningSrc]),
+    fetcher: fetcherFor(entryHtml('index-EEE5.js'), calls)
   });
   assert.equal(
     await armUpdateIfDeployedBundleNewer({
       now: 2_000_100,
-      doc: runningDoc([runningSrc]),
-      fetcher: fetcherFor(deployedHtml('index-FFF6.js'), calls)
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-FFF6.js'), calls)
     }),
     false
   );
@@ -513,7 +849,7 @@ test('a newer deployed entry bundle arms the pending update, nothing else does',
   assert.equal(
     await armUpdateIfDeployedBundleNewer({
       now: 3_000_000,
-      doc: runningDoc([runningSrc]),
+      doc: entryDocument([runningSrc]),
       fetcher: fetcherFor('<html>captive portal</html>')
     }),
     false
@@ -524,8 +860,8 @@ test('a newer deployed entry bundle arms the pending update, nothing else does',
   assert.equal(
     await armUpdateIfDeployedBundleNewer({
       now: 4_000_000,
-      doc: runningDoc(['/src/main.tsx']),
-      fetcher: fetcherFor(deployedHtml('index-GGG7.js'), devCalls)
+      doc: entryDocument(['/src/main.tsx']),
+      fetcher: fetcherFor(entryHtml('index-GGG7.js'), devCalls)
     }),
     false
   );
@@ -536,12 +872,99 @@ test('a newer deployed entry bundle arms the pending update, nothing else does',
   assert.equal(
     await armUpdateIfDeployedBundleNewer({
       now: 5_000_000,
-      doc: runningDoc([runningSrc]),
-      fetcher: fetcherFor(deployedHtml('index-HHH8.js'), pendingCalls)
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-HHH8.js'), pendingCalls)
     }),
     false
   );
   assert.equal(pendingCalls.length, 0);
+  clearSilentClientUpdateMemory();
+});
+
+test('navigation converges to the deployed bundle immediately when safe and does nothing offline', async () => {
+  const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
+  const storage = createStorage();
+  let reloads = 0;
+
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 6_000_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-BBB2.js')),
+      storage,
+      reload: () => {
+        reloads += 1;
+      },
+      hasUnsavedWork: () => false
+    }),
+    'reloading'
+  );
+  assert.equal(reloads, 1);
+
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 7_000_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: async () => {
+        throw new Error('offline');
+      },
+      storage: createStorage(),
+      reload: () => {
+        reloads += 1;
+      },
+      hasUnsavedWork: () => false
+    }),
+    'current'
+  );
+  assert.equal(reloads, 1);
+  assert.equal(isClientUpdatePending(), false);
+
+  clearSilentClientUpdateMemory();
+  const deferredStorage = createStorage();
+  const calls: string[] = [];
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 8_000_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-CCC3.js'), calls),
+      storage: deferredStorage,
+      reload: () => {
+        reloads += 1;
+      },
+      hasUnsavedWork: () => true
+    }),
+    'deferred'
+  );
+  assert.equal(isClientUpdatePending(), true);
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 8_010_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-DDD4.js'), calls),
+      storage: deferredStorage,
+      reload: () => {
+        reloads += 1;
+      },
+      hasUnsavedWork: () => false
+    }),
+    'reloading'
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(reloads, 2);
+
+  // The behavior above is wired to every React Router location dimension, so
+  // query-tab and hash navigation converge just like pathname navigation.
+  assert.match(appSource, /applyClientUpdateAtSafeBoundary\(\{/);
+  assert.match(
+    appSource,
+    /\[location\.hash, location\.pathname, location\.search\]/
+  );
   clearSilentClientUpdateMemory();
 });
 

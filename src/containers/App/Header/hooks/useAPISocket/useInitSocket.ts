@@ -31,12 +31,11 @@ import {
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
 import {
+  applyClientVersionResult,
   armUpdateIfDeployedBundleNewer,
   attemptSilentClientUpdate,
   hasUnsavedUserWork,
-  isClientUpdatePending,
-  markClientUpdatePending,
-  noteStaleClientActionError
+  isClientUpdatePending
 } from '~/helpers/clientUpdate';
 import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
 
@@ -211,7 +210,8 @@ export default function useInitSocket({
   // Silent-update eligibility: a stale bundle may only reload itself at an
   // "arrival" moment (fresh load, or a tab resumed after a long suspension)
   // and only while the user hasn't interacted yet, so the reload can never
-  // destroy in-progress typing. Any other mismatch falls back to the popup.
+  // destroy in-progress typing. A genuine mandatory mismatch can fall back to
+  // the popup; a feature-specific 426 never blockades the site.
   const hiddenAtRef = useRef(0);
   const interactedSinceArrivalRef = useRef(false);
   const COLD_RESUME_MS = 5 * 60 * 1000;
@@ -226,52 +226,24 @@ export default function useInitSocket({
   }
 
   function handleVersionData(
-    data: { match?: boolean } | undefined,
+    data: unknown,
     trigger: 'arrival' | 'staleActionError'
   ) {
-    // Captive portals and broken proxies can return a 2xx that isn't our
-    // payload. Canonical version state may only move on an explicit boolean;
-    // anything else is not evidence in either direction.
-    if (!data || typeof data.match !== 'boolean') return;
-    if (data.match !== false) {
-      onCheckVersion(data as object);
-      // Compatible is not the same as current: a wake/reconnect is also the
-      // moment to LEARN whether a newer deploy exists. This only arms the
-      // pending update — the reload happens at the next safe boundary (route
-      // navigation, hidden tab), never here, so a working bundle is never
-      // interrupted just for being outdated.
-      void armUpdateIfDeployedBundleNewer();
-      return;
-    }
-    if (trigger === 'arrival') {
-      if (
-        interactedSinceArrivalRef.current ||
-        hasUnsavedUserWork({ inputState: getInputState?.() })
-      ) {
-        // The user is already doing something (or has un-persisted typed
-        // text) — defer the update to the next safe boundary (route
-        // navigation, hidden tab, clean resume, or a repeat stale-action
-        // error) instead of interrupting with the popup.
-        markClientUpdatePending();
-        return;
+    applyClientVersionResult({
+      data,
+      trigger,
+      version: clientVersion,
+      interactedSinceArrival: interactedSinceArrivalRef.current,
+      hasUnsavedWork: () =>
+        hasUnsavedUserWork({ inputState: getInputState?.() }),
+      onVersionStatus: onCheckVersion,
+      // Compatible is not the same as current. Wake/reconnect learns whether
+      // a newer entry bundle exists, then a safe navigation/hidden boundary
+      // applies it without interrupting a working client.
+      onCompatibleArrival: () => {
+        void armUpdateIfDeployedBundleNewer();
       }
-      if (attemptSilentClientUpdate({ version: clientVersion })) {
-        return;
-      }
-      // A silent reload already ran and the bundle is still stale — the popup
-      // is the only remaining path to a working client.
-      onCheckVersion(data as object);
-      return;
-    }
-    if (
-      noteStaleClientActionError({
-        version: clientVersion,
-        hasUnsavedWork: () =>
-          hasUnsavedUserWork({ inputState: getInputState?.() })
-      }) === 'popup'
-    ) {
-      onCheckVersion(data as object);
-    }
+    });
   }
   const checkFeedsInflightRef = useRef<Promise<void> | null>(null);
   const checkFeedsRerunRequestedRef = useRef(false);

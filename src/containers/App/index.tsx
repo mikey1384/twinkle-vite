@@ -34,10 +34,8 @@ import {
   clientVersion
 } from '~/constants/defaultValues';
 import {
-  armUpdateIfDeployedBundleNewer,
-  attemptSilentClientUpdate,
+  applyClientUpdateAtSafeBoundary,
   hasUnsavedUserWork,
-  isClientUpdatePending,
   stripClientUpdateReloadParam
 } from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
@@ -531,26 +529,19 @@ export default function App() {
     stripClientUpdateReloadParam();
   }, []);
 
-  // A route change is a safe boundary to apply a deferred client update: the
-  // user just left whatever they were doing, so upgrade the SPA transition
-  // into a full document load of the destination — unless un-persisted typed
-  // text (e.g. an unsent chat draft) would be lost, in which case keep
-  // deferring. The attempt is budget-guarded, so a reload that fails to
-  // freshen the bundle cannot loop. When nothing is pending, a route change is
-  // instead the moment to LEARN whether a newer deploy exists (throttled probe
-  // of our own index.html) — armed now, applied at the NEXT safe boundary, so
-  // an active session picks up new deploys without ever being interrupted
-  // mid-page.
+  // Every in-app navigation is a safe convergence boundary. If a wake/focus
+  // probe already found a newer deployment, apply it now. Otherwise compare
+  // this tab's entry bundle with canonical index.html and apply a discovered
+  // update at this same boundary. The guarded helper never reloads offline,
+  // over unsaved work, or repeatedly when a reload fails to freshen the bundle.
   useEffect(() => {
-    if (isClientUpdatePending()) {
-      if (!hasUnsavedUserWork({ inputState: getInputState?.() })) {
-        attemptSilentClientUpdate({ version: clientVersion });
-      }
-    } else {
-      void armUpdateIfDeployedBundleNewer();
-    }
+    void applyClientUpdateAtSafeBoundary({
+      version: clientVersion,
+      hasUnsavedWork: () =>
+        hasUnsavedUserWork({ inputState: getInputState?.() })
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.hash, location.pathname, location.search]);
 
   // On (re)entering a full build app page, restore/persist the "super full
   // screen" preference only when the build toolbar is also collapsed. Embedded

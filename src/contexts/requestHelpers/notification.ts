@@ -3,16 +3,24 @@ import axios from 'axios';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import { clientVersion } from '~/constants/defaultValues';
+import { buildClientVersionCheckUrl } from '~/helpers/clientUpdate';
 
 export default function notificationRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
   return {
+    // The answer decides whether to blockade the screen, so it must come from
+    // the network every time. The server's no-store policy cannot retroactively
+    // alter a `false` cached before that policy existed, and a resumed iOS tab
+    // can consult that cache before its network path is usable. A unique URL
+    // bypasses every poisoned entry. If the request fails, the caller ignores
+    // the non-boolean result and leaves the client alone, which is the safe way
+    // to be wrong.
     async checkVersion() {
       try {
         const { data } = await request.get(
-          `${URL}/notification/version?version=${clientVersion}`
+          buildClientVersionCheckUrl({ apiUrl: URL, version: clientVersion })
         );
         return data;
       } catch (error) {

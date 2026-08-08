@@ -18,6 +18,22 @@ let lastDeployFreshnessProbeAt = 0;
 const STALE_ACTION_DEBOUNCE_MS = 5000;
 const DEPLOY_FRESHNESS_PROBE_INTERVAL_MS = 10 * 60 * 1000;
 
+export function buildClientVersionCheckUrl({
+  apiUrl,
+  version,
+  requestId = Date.now()
+}: {
+  apiUrl: string;
+  version: string;
+  requestId?: number;
+}) {
+  const query = new URLSearchParams({
+    version,
+    t: String(requestId)
+  });
+  return `${apiUrl}/notification/version?${query.toString()}`;
+}
+
 export function performClientUpdateReload() {
   reloadInitiated = true;
   try {
@@ -88,12 +104,12 @@ export function isClientUpdatePending() {
 // Vite injects runtime chunk preloads as <link> elements (and dynamic chunks
 // can legitimately be named index-*.js), so links must not pollute the
 // identity; the tradeoff is that a CSS-only deploy goes undetected until the
-// next JS deploy. On a mismatch this only ARMS the pending update — the
-// reload happens at the next safe boundary (route navigation, hidden tab),
-// gated by hasUnsavedUserWork like every other silent path, and a compatible
-// bundle never escalates to the popup. Probes are throttled and evidence is
-// held to the captive-portal standard: no well-formed entry script on both
-// sides, no conclusion.
+// next JS deploy. A mismatch arms the pending update. Wake/focus probes leave
+// it for the next safe boundary; the navigation wrapper can consume it during
+// the same user-chosen transition. Every reload remains gated by
+// hasUnsavedUserWork, and a compatible bundle never escalates to the popup.
+// Probes are throttled and evidence is held to the captive-portal standard: no
+// well-formed entry script on both sides, no conclusion.
 export async function armUpdateIfDeployedBundleNewer({
   now = Date.now(),
   fetcher,
@@ -129,6 +145,47 @@ export async function armUpdateIfDeployedBundleNewer({
   } catch {
     return false;
   }
+}
+
+// Route navigation is already a user-chosen boundary, so it can both discover
+// and apply a deployed bundle in one transition. A wake/focus probe still only
+// arms the update; the next navigation calls this helper and consumes it. If
+// the network is offline, the probe has no canonical deployment evidence and
+// leaves the running client alone. If precious local work exists, the update
+// stays pending for a later safe boundary.
+export async function applyClientUpdateAtSafeBoundary({
+  version,
+  now = Date.now(),
+  fetcher,
+  doc = typeof document === 'undefined' ? null : document,
+  storage = getSessionStorage(),
+  reload = performClientUpdateReload,
+  hasUnsavedWork = () => hasUnsavedUserWork()
+}: {
+  version: string;
+  now?: number;
+  fetcher?: (
+    url: string,
+    init?: { cache?: string }
+  ) => Promise<{ ok: boolean; text(): Promise<string> }>;
+  doc?: { querySelectorAll(selector: string): ArrayLike<any> } | null;
+  storage?: AttemptStorage | null;
+  reload?: () => void;
+  hasUnsavedWork?: () => boolean;
+}): Promise<'current' | 'deferred' | 'reloading'> {
+  if (!updatePending) {
+    await armUpdateIfDeployedBundleNewer({ now, fetcher, doc });
+  }
+  if (!updatePending) return 'current';
+  if (hasUnsavedWork()) return 'deferred';
+  return attemptSilentClientUpdate({
+    version,
+    storage,
+    now,
+    reload
+  })
+    ? 'reloading'
+    : 'deferred';
 }
 
 const ENTRY_SCRIPT_BASENAME_PATTERN = /\/assets\/(index-[\w~-]+\.js)$/;
@@ -167,19 +224,23 @@ export function getDeployedEntryScripts(html: string): string[] {
 // instead — it tells the user the client must update while leaving their text
 // on screen to keep or copy. The popup is also the fallback when the reload
 // budget is exhausted (a reload already happened and the bundle is still
-// stale).
+// stale). `allowPopup: false` is for a client that remains generally usable
+// but cannot perform this one action: it follows the same deferred/retry reload
+// ladder without ever blockading the rest of the site.
 export function noteStaleClientActionError({
   version,
   storage,
   now = Date.now(),
   reload,
-  hasUnsavedWork = () => hasUnsavedUserWork()
+  hasUnsavedWork = () => hasUnsavedUserWork(),
+  allowPopup = true
 }: {
   version: string;
   storage?: AttemptStorage | null;
   now?: number;
   reload?: () => void;
   hasUnsavedWork?: () => boolean;
+  allowPopup?: boolean;
 }): 'deferred' | 'reloading' | 'popup' {
   // One failed user action can emit more than one stale-client signal (e.g.
   // the chunked-upload helper and the generic request error handler both
@@ -194,11 +255,97 @@ export function noteStaleClientActionError({
     return 'deferred';
   }
   if (hasUnsavedWork()) {
+    return allowPopup ? 'popup' : 'deferred';
+  }
+  if (attemptSilentClientUpdate({ version, storage, now, reload })) {
+    return 'reloading';
+  }
+  return allowPopup ? 'popup' : 'deferred';
+}
+
+export type ClientVersionResultOutcome =
+  | 'ignored'
+  | 'compatible'
+  | 'deferred'
+  | 'reloading'
+  | 'popup';
+
+// This is the complete decision boundary between the server-owned version
+// answer and user-visible update behavior. Keeping it outside React makes the
+// mandatory and feature-specific compatibility paths behavior-testable as one
+// state machine instead of testing helpers and trusting source wiring between
+// them. Only an explicit boolean `match` is canonical evidence; a failed
+// request, captive portal, or malformed proxy response changes nothing.
+export function applyClientVersionResult({
+  data,
+  trigger,
+  version,
+  interactedSinceArrival,
+  hasUnsavedWork,
+  onVersionStatus,
+  onCompatibleArrival,
+  storage,
+  now = Date.now(),
+  reload
+}: {
+  data: unknown;
+  trigger: 'arrival' | 'staleActionError';
+  version: string;
+  interactedSinceArrival: boolean;
+  hasUnsavedWork: () => boolean;
+  onVersionStatus: (data: Record<string, unknown> & { match: boolean }) => void;
+  onCompatibleArrival: () => void;
+  storage?: AttemptStorage | null;
+  now?: number;
+  reload?: () => void;
+}): ClientVersionResultOutcome {
+  if (!data || typeof data !== 'object') return 'ignored';
+  const versionStatus = data as Record<string, unknown> & { match?: unknown };
+  if (typeof versionStatus.match !== 'boolean') return 'ignored';
+  const confirmedStatus = versionStatus as Record<string, unknown> & {
+    match: boolean;
+  };
+
+  if (confirmedStatus.match) {
+    onVersionStatus(confirmedStatus);
+    if (trigger === 'arrival') {
+      onCompatibleArrival();
+      return 'compatible';
+    }
+    return noteStaleClientActionError({
+      version,
+      storage,
+      now,
+      reload,
+      hasUnsavedWork,
+      // The server confirmed that the site is generally usable. This action
+      // needs a newer feature contract, but that can never blockade the rest
+      // of Twinkle.
+      allowPopup: false
+    });
+  }
+
+  if (trigger === 'arrival') {
+    if (interactedSinceArrival || hasUnsavedWork()) {
+      markClientUpdatePending();
+      return 'deferred';
+    }
+    if (attemptSilentClientUpdate({ version, storage, now, reload })) {
+      return 'reloading';
+    }
+    onVersionStatus(confirmedStatus);
     return 'popup';
   }
-  return attemptSilentClientUpdate({ version, storage, now, reload })
-    ? 'reloading'
-    : 'popup';
+
+  const outcome = noteStaleClientActionError({
+    version,
+    storage,
+    now,
+    reload,
+    hasUnsavedWork
+  });
+  if (outcome === 'popup') onVersionStatus(confirmedStatus);
+  return outcome;
 }
 
 // Silent reloads must never destroy in-progress content that only lives in
