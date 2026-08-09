@@ -14,9 +14,12 @@ let reloadInitiated = false;
 let updatePending = false;
 let lastStaleActionErrorAt = 0;
 let lastDeployFreshnessProbeAt = 0;
+let deployFreshnessProbeInFlight: Promise<boolean> | null = null;
+let deployFreshnessProbeGeneration = 0;
 
 const STALE_ACTION_DEBOUNCE_MS = 5000;
 const DEPLOY_FRESHNESS_PROBE_INTERVAL_MS = 10 * 60 * 1000;
+const DEPLOY_FRESHNESS_PROBE_TIMEOUT_MS = 4000;
 
 export function buildClientVersionCheckUrl({
   apiUrl,
@@ -118,11 +121,16 @@ export async function armUpdateIfDeployedBundleNewer({
   now?: number;
   fetcher?: (
     url: string,
-    init?: { cache?: string }
+    init?: RequestInit
   ) => Promise<{ ok: boolean; text(): Promise<string> }>;
   doc?: { querySelectorAll(selector: string): ArrayLike<any> } | null;
 } = {}): Promise<boolean> {
   if (updatePending || reloadInitiated) return false;
+  // A wake/reconnect probe and an immediate navigation commonly overlap on
+  // mobile Safari. The navigation must await the canonical answer already in
+  // flight; treating a throttled concurrent call as "current" lets the stale
+  // route commit before the first probe can arm the update.
+  if (deployFreshnessProbeInFlight) return deployFreshnessProbeInFlight;
   if (now - lastDeployFreshnessProbeAt < DEPLOY_FRESHNESS_PROBE_INTERVAL_MS) {
     return false;
   }
@@ -133,17 +141,87 @@ export async function armUpdateIfDeployedBundleNewer({
   // No fingerprinted entry script in this document means a dev server or an
   // unknown layout — there is nothing trustworthy to compare against.
   if (runningEntries.length === 0) return false;
-  lastDeployFreshnessProbeAt = now;
+  const generation = deployFreshnessProbeGeneration;
+  const probe = probeDeployedEntryScripts({
+    docGeneration: generation,
+    fetcher: resolvedFetcher,
+    probedAt: now,
+    runningEntries
+  });
+  deployFreshnessProbeInFlight = probe;
   try {
-    const response = await resolvedFetcher('/', { cache: 'no-store' });
+    return await probe;
+  } finally {
+    if (deployFreshnessProbeInFlight === probe) {
+      deployFreshnessProbeInFlight = null;
+    }
+  }
+}
+
+async function probeDeployedEntryScripts({
+  docGeneration,
+  fetcher,
+  probedAt,
+  runningEntries
+}: {
+  docGeneration: number;
+  fetcher: (
+    url: string,
+    init?: RequestInit
+  ) => Promise<{ ok: boolean; text(): Promise<string> }>;
+  probedAt: number;
+  runningEntries: string[];
+}): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    DEPLOY_FRESHNESS_PROBE_TIMEOUT_MS
+  );
+  try {
+    const response = await fetcher('/', {
+      cache: 'no-store',
+      signal: controller.signal
+    });
     if (!response?.ok) return false;
     const deployedEntries = getDeployedEntryScripts(await response.text());
     if (deployedEntries.length === 0) return false;
+    // Only a well-formed canonical document earns the long probe throttle. A
+    // wake-time network failure or captive response is not freshness evidence
+    // and must not suppress the next user-chosen navigation check.
+    lastDeployFreshnessProbeAt = probedAt;
     if (deployedEntries.join('|') === runningEntries.join('|')) return false;
+    // Test resets and a replacement document invalidate any answer from the
+    // prior generation; it must not arm state in the new runtime.
+    if (docGeneration !== deployFreshnessProbeGeneration) return false;
     markClientUpdatePending();
     return true;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function gateClientUpdateNavigation<T>({
+  destination,
+  check,
+  release
+}: {
+  destination: T;
+  check: () => Promise<'current' | 'deferred' | 'reloading'>;
+  release: (destination: T) => void;
+}): Promise<'current' | 'deferred' | 'reloading' | 'failed'> {
+  try {
+    const outcome = await check();
+    if (outcome !== 'reloading') release(destination);
+    return outcome;
+  } catch (error) {
+    // Freshness checks fail open: an unexpected diagnostic/runtime failure is
+    // not canonical evidence that the destination is stale, and must never
+    // strand ordinary SPA navigation on the previous route.
+    console.error('Client update navigation check failed:', error);
+    release(destination);
+    return 'failed';
   }
 }
 
@@ -166,7 +244,7 @@ export async function applyClientUpdateAtSafeBoundary({
   now?: number;
   fetcher?: (
     url: string,
-    init?: { cache?: string }
+    init?: RequestInit
   ) => Promise<{ ok: boolean; text(): Promise<string> }>;
   doc?: { querySelectorAll(selector: string): ArrayLike<any> } | null;
   storage?: AttemptStorage | null;
@@ -506,6 +584,8 @@ export function clearSilentClientUpdateMemory() {
   updatePending = false;
   lastStaleActionErrorAt = 0;
   lastDeployFreshnessProbeAt = 0;
+  deployFreshnessProbeGeneration += 1;
+  deployFreshnessProbeInFlight = null;
 }
 
 function hasText(value: unknown) {

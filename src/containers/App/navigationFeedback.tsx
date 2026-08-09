@@ -11,9 +11,18 @@ import React, {
 import {
   useLocation,
   useNavigate,
+  Route,
+  Routes,
   type Location
 } from 'react-router-dom';
 import { LOADING_INDICATOR_GRACE_PERIOD_MS } from '~/constants/ui';
+import { clientVersion } from '~/constants/defaultValues';
+import {
+  applyClientUpdateAtSafeBoundary,
+  gateClientUpdateNavigation,
+  hasUnsavedUserWork
+} from '~/helpers/clientUpdate';
+import { useInputContext } from '~/contexts/hooks';
 
 export interface ReadyNavigationLocation {
   key: string;
@@ -71,6 +80,8 @@ export function NavigationFeedbackProvider({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const getInputState = useInputContext((v) => v.getInputState);
+  const [acceptedLocation, setAcceptedLocation] = useState<Location>(location);
   const currentLocation = useMemo(
     () => ({
       key: location.key,
@@ -87,6 +98,33 @@ export function NavigationFeedbackProvider({
   const dispatchedRequestIdRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
   const pendingNavigationId = pendingNavigation?.id ?? null;
+
+  // Keep the currently rendered route mounted until canonical index.html says
+  // whether this tab's entry bundle is still current. Previously App learned
+  // this in an effect only after the new route had committed, so a lazy route
+  // could expose the stale bundle's Suspense/loading UI before the reload.
+  // Scoping children through Routes gives every SPA navigation path (Link,
+  // navigate(), POP, query, and hash), not only the primary tabs, this gate.
+  useEffect(() => {
+    let active = true;
+    void gateClientUpdateNavigation({
+      destination: location,
+      check: () =>
+        applyClientUpdateAtSafeBoundary({
+          version: clientVersion,
+          hasUnsavedWork: () =>
+            hasUnsavedUserWork({ inputState: getInputState?.() })
+        }),
+      release: (destination) => {
+        if (active) setAcceptedLocation(destination);
+      }
+    });
+    return () => {
+      active = false;
+    };
+    // getInputState is a stable context helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.hash, location.key, location.pathname, location.search]);
 
   const onRouteReady = useCallback((nextLocation: ReadyNavigationLocation) => {
     setReadyLocation((current) =>
@@ -270,7 +308,9 @@ export function NavigationFeedbackProvider({
 
   return (
     <NavigationFeedbackContext.Provider value={feedback}>
-      {children}
+      <Routes location={acceptedLocation}>
+        <Route path="*" element={children} />
+      </Routes>
     </NavigationFeedbackContext.Provider>
   );
 }

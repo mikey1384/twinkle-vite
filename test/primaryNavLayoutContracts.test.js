@@ -170,17 +170,18 @@ test('fast tab navigation finishes before its loading spinner delay', () => {
   const feedbackSource = readSource(
     'src/containers/App/navigationFeedback.tsx'
   );
+  const uiConstantsSource = readSource('src/constants/ui.ts');
   const navSource = readSource(
     'src/containers/App/Header/MainNavs/Nav.tsx'
   );
 
   assert.match(
-    feedbackSource,
-    /const NAVIGATION_LOADING_INDICATOR_DELAY_MS = 200;/
+    uiConstantsSource,
+    /export const LOADING_INDICATOR_GRACE_PERIOD_MS = 200;/
   );
   assert.match(
     feedbackSource,
-    /setLoadingRequestId\(pendingNavigationId\)[\s\S]*?NAVIGATION_LOADING_INDICATOR_DELAY_MS[\s\S]*?clearTimeout\(loadingIndicatorTimer\)/m
+    /setLoadingRequestId\(pendingNavigationId\)[\s\S]*?LOADING_INDICATOR_GRACE_PERIOD_MS[\s\S]*?clearTimeout\(loadingIndicatorTimer\)/m
   );
   assert.match(
     feedbackSource,

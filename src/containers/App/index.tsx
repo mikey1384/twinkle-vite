@@ -30,14 +30,9 @@ import {
 import {
   localStorageKeys,
   ZERO_TWINKLE_ID,
-  DEFAULT_PROFILE_THEME,
-  clientVersion
+  DEFAULT_PROFILE_THEME
 } from '~/constants/defaultValues';
-import {
-  applyClientUpdateAtSafeBoundary,
-  hasUnsavedUserWork,
-  stripClientUpdateReloadParam
-} from '~/helpers/clientUpdate';
+import { stripClientUpdateReloadParam } from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
@@ -445,7 +440,6 @@ export default function App() {
   const onResetContentInput = useInputContext(
     (v) => v.actions.onResetContentInput
   );
-  const getInputState = useInputContext((v) => v.getInputState);
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
   const visibilityChangeRef: React.RefObject<any> = useRef(null);
   const hiddenRef: React.RefObject<any> = useRef(null);
@@ -528,20 +522,6 @@ export default function App() {
   useEffect(() => {
     stripClientUpdateReloadParam();
   }, []);
-
-  // Every in-app navigation is a safe convergence boundary. If a wake/focus
-  // probe already found a newer deployment, apply it now. Otherwise compare
-  // this tab's entry bundle with canonical index.html and apply a discovered
-  // update at this same boundary. The guarded helper never reloads offline,
-  // over unsaved work, or repeatedly when a reload fails to freshen the bundle.
-  useEffect(() => {
-    void applyClientUpdateAtSafeBoundary({
-      version: clientVersion,
-      hasUnsavedWork: () =>
-        hasUnsavedUserWork({ inputState: getInputState?.() })
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.hash, location.pathname, location.search]);
 
   // On (re)entering a full build app page, restore/persist the "super full
   // screen" preference only when the build toolbar is also collapsed. Embedded

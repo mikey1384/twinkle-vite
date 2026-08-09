@@ -11,6 +11,7 @@ import {
   clearSilentClientUpdateMemory,
   getDeployedEntryScripts,
   getRunningEntryScripts,
+  gateClientUpdateNavigation,
   hasLiveBuildRuntimeSession,
   hasStoreDraft,
   hasUnsavedTypedInput,
@@ -34,6 +35,12 @@ const socketInitSource = readFileSync(
 const appSource = readFileSync(
   fileURLToPath(
     new URL('../src/containers/App/index.tsx', import.meta.url)
+  ),
+  'utf8'
+);
+const navigationFeedbackSource = readFileSync(
+  fileURLToPath(
+    new URL('../src/containers/App/navigationFeedback.tsx', import.meta.url)
   ),
   'utf8'
 );
@@ -958,13 +965,142 @@ test('navigation converges to the deployed bundle immediately when safe and does
   assert.equal(calls.length, 1);
   assert.equal(reloads, 2);
 
-  // The behavior above is wired to every React Router location dimension, so
-  // query-tab and hash navigation converge just like pathname navigation.
-  assert.match(appSource, /applyClientUpdateAtSafeBoundary\(\{/);
+  // The behavior above gates the rendered router location, so stale lazy-route
+  // fallbacks cannot commit while the canonical probe is unresolved. Every
+  // React Router location dimension participates in the boundary.
   assert.match(
-    appSource,
-    /\[location\.hash, location\.pathname, location\.search\]/
+    navigationFeedbackSource,
+    /gateClientUpdateNavigation\(\{[\s\S]*?applyClientUpdateAtSafeBoundary\(\{[\s\S]*?setAcceptedLocation\(destination\)/m
   );
+  assert.match(
+    navigationFeedbackSource,
+    /\[location\.hash, location\.key, location\.pathname, location\.search\]/
+  );
+  assert.match(
+    navigationFeedbackSource,
+    /<Routes location=\{acceptedLocation\}>[\s\S]*?<Route path="\*" element=\{children\} \/>/m
+  );
+  assert.doesNotMatch(appSource, /applyClientUpdateAtSafeBoundary\(\{/);
+  clearSilentClientUpdateMemory();
+});
+
+test('navigation awaits an overlapping wake probe instead of committing stale lazy UI', async () => {
+  clearSilentClientUpdateMemory();
+  const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
+  const storage = createStorage();
+  let resolveFetch: ((value: { ok: boolean; text(): Promise<string> }) => void) | null =
+    null;
+  let fetchCalls = 0;
+  const fetcher = () => {
+    fetchCalls += 1;
+    return new Promise<{ ok: boolean; text(): Promise<string> }>((resolve) => {
+      resolveFetch = resolve;
+    });
+  };
+
+  const wakeProbe = armUpdateIfDeployedBundleNewer({
+    now: 9_000_000,
+    doc: entryDocument([runningSrc]),
+    fetcher
+  });
+  let reloads = 0;
+  const navigationProbe = applyClientUpdateAtSafeBoundary({
+    version: '2.0.68',
+    now: 9_000_001,
+    doc: entryDocument([runningSrc]),
+    fetcher,
+    storage,
+    reload: () => {
+      reloads += 1;
+    },
+    hasUnsavedWork: () => false
+  });
+
+  assert.equal(fetchCalls, 1);
+  assert.ok(resolveFetch);
+  resolveFetch({
+    ok: true,
+    text: async () => entryHtml('index-BBB2.js')
+  });
+  assert.equal(await wakeProbe, true);
+  assert.equal(await navigationProbe, 'reloading');
+  assert.equal(reloads, 1);
+  clearSilentClientUpdateMemory();
+});
+
+test('the navigation gate holds the old route until the check resolves and fails open safely', async () => {
+  let resolveCheck: ((value: 'current') => void) | null = null;
+  const released: string[] = [];
+  const heldNavigation = gateClientUpdateNavigation({
+    destination: '/app/123',
+    check: () =>
+      new Promise<'current'>((resolve) => {
+        resolveCheck = resolve;
+      }),
+    release: (destination) => released.push(destination)
+  });
+
+  assert.deepEqual(released, []);
+  assert.ok(resolveCheck);
+  resolveCheck('current');
+  assert.equal(await heldNavigation, 'current');
+  assert.deepEqual(released, ['/app/123']);
+
+  released.length = 0;
+  assert.equal(
+    await gateClientUpdateNavigation({
+      destination: '/app/456',
+      check: async () => 'reloading',
+      release: (destination) => released.push(destination)
+    }),
+    'reloading'
+  );
+  assert.deepEqual(released, []);
+
+  const originalConsoleError = console.error;
+  console.error = () => undefined;
+  try {
+    assert.equal(
+      await gateClientUpdateNavigation({
+        destination: '/build',
+        check: async () => {
+          throw new Error('unexpected gate failure');
+        },
+        release: (destination) => released.push(destination)
+      }),
+      'failed'
+    );
+  } finally {
+    console.error = originalConsoleError;
+  }
+  assert.deepEqual(released, ['/build']);
+});
+
+test('a failed wake probe does not throttle the next canonical navigation check', async () => {
+  clearSilentClientUpdateMemory();
+  const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
+  let failedCalls = 0;
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 10_000_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: async () => {
+        failedCalls += 1;
+        throw new Error('network still waking');
+      }
+    }),
+    false
+  );
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 10_000_001,
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-BBB2.js'))
+    }),
+    true
+  );
+  assert.equal(failedCalls, 1);
+  assert.equal(isClientUpdatePending(), true);
   clearSilentClientUpdateMemory();
 });
 
