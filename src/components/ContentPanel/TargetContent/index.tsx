@@ -174,10 +174,8 @@ export default function TargetContent({
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const level = useKeyContext((v) => v.myState.level);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const username = useKeyContext((v) => v.myState.username);
   const { canReward } = useMyLevel();
 
   const linkRole = useRoleColor('link', {
@@ -673,9 +671,6 @@ export default function TargetContent({
                         <Comment
                           key={comment.id}
                           comment={comment}
-                          username={username}
-                          userId={userId}
-                          profilePicUrl={profilePicUrl}
                           onDelete={onDeleteComment}
                           onEditDone={onEditComment}
                           theme={theme}

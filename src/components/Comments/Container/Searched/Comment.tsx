@@ -37,6 +37,7 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
@@ -225,9 +226,17 @@ export default function SearchedComment({
     subject
   });
 
-  const userIsUploader = useMemo(
-    () => uploader.id === userId,
-    [uploader.id, userId]
+  const { userCanDeleteThis, userCanEditThis, userIsUploader } = useMemo(
+    () =>
+      getCommentActionPermissions({
+        canDelete,
+        canEdit,
+        uploaderId: uploader?.id,
+        uploaderLevel: uploader?.level,
+        userId,
+        userLevel: level
+      }),
+    [canDelete, canEdit, level, uploader?.id, uploader?.level, userId]
   );
   const userIsParentUploader = useMemo(
     () =>
@@ -236,28 +245,22 @@ export default function SearchedComment({
       parent.uploader?.id === userId,
     [parent.contentType, parent.uploader?.id, userId]
   );
-  const userHasHigherLevel = useMemo(() => {
-    return level > uploader?.level;
-  }, [level, uploader?.level]);
   const dropdownButtonShown = useMemo(() => {
     if (isNotification) {
       return false;
     }
-    const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
-    return userIsUploader || userCanEditThis || userIsParentUploader;
+    return userCanDeleteThis || userCanEditThis || userIsParentUploader;
   }, [
-    canDelete,
-    canEdit,
     isNotification,
-    userHasHigherLevel,
-    userIsParentUploader,
-    userIsUploader
+    userCanDeleteThis,
+    userCanEditThis,
+    userIsParentUploader
   ]);
 
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (
-      (userIsUploader || canEdit) &&
+      userCanEditThis &&
       !isNotification &&
       (!isCommentForASubjectWithSecretMessage ||
         (userIsUploader && userIsParentUploader))
@@ -295,7 +298,7 @@ export default function SearchedComment({
           handlePinComment(pinnedCommentId === comment.id ? null : comment.id)
       });
     }
-    if (userIsUploader || canDelete) {
+    if (userCanDeleteThis) {
       items.push({
         label: (
           <>
@@ -310,13 +313,13 @@ export default function SearchedComment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     banned?.posting,
-    canDelete,
-    canEdit,
     comment.id,
     isCommentForASubjectWithSecretMessage,
     isAdmin,
     isNotification,
     pinnedCommentId,
+    userCanDeleteThis,
+    userCanEditThis,
     userIsParentUploader,
     userIsUploader
   ]);

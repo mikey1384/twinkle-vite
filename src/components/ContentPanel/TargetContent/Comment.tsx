@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -15,30 +15,33 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { Color } from '~/constants/css';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { useAppContext, useContentContext, useHomeContext } from '~/contexts';
+import {
+  useAppContext,
+  useContentContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
 import { Comment as CommentType } from '~/types';
+import { getCommentActionPermissions } from '~/components/Comments/permissions';
 
 function Comment({
   comment,
   comment: { id, content, fileName, filePath, fileSize, timeStamp, thumbUrl },
   onDelete,
   onEditDone,
-  profilePicUrl,
-  theme,
-  userId,
-  username
+  theme
 }: {
   comment: CommentType;
   onDelete: (v: any) => void;
   onEditDone: (v: any) => void;
-  profilePicUrl: string;
   theme: string;
-  userId: number;
-  username: string;
 }) {
   const navigate = useNavigate();
+  const level = useKeyContext((v) => v.myState.level);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const { canDelete, canEdit } = useMyLevel();
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const onDeleteHomeFeedComment = useHomeContext(
@@ -51,6 +54,41 @@ function Comment({
   });
   const { fileType } = getFileInfoFromFileName(fileName);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const uploader = comment.uploader || {};
+  const { userCanDeleteThis, userCanEditThis } = useMemo(
+    () =>
+      getCommentActionPermissions({
+        canDelete,
+        canEdit,
+        uploaderId: uploader.id,
+        uploaderLevel: uploader.level,
+        userId,
+        userLevel: level
+      }),
+    [canDelete, canEdit, level, uploader.id, uploader.level, userId]
+  );
+  const dropdownMenuItems = useMemo(() => {
+    const items = [];
+    if (userCanEditThis) {
+      items.push({
+        label: 'Edit',
+        onClick: () =>
+          onSetIsEditing({
+            contentId: id,
+            contentType: 'comment',
+            isEditing: true
+          })
+      });
+    }
+    if (userCanDeleteThis) {
+      items.push({
+        label: 'Remove',
+        onClick: () => setConfirmModalShown(true)
+      });
+    }
+    return items;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, userCanDeleteThis, userCanEditThis]);
 
   return (
     <ErrorBoundary
@@ -62,7 +100,7 @@ function Comment({
         padding: 1rem;
       `}
     >
-      {!isEditing && (
+      {!isEditing && dropdownMenuItems.length > 0 && (
         <div
           className={css`
             width: 100%;
@@ -76,21 +114,7 @@ function Comment({
             tone="raised"
             color="darkerGray"
             style={{ position: 'absolute' }}
-            menuProps={[
-              {
-                label: 'Edit',
-                onClick: () =>
-                  onSetIsEditing({
-                    contentId: id,
-                    contentType: 'comment',
-                    isEditing: true
-                  })
-              },
-              {
-                label: 'Remove',
-                onClick: () => setConfirmModalShown(true)
-              }
-            ]}
+            menuProps={dropdownMenuItems}
           />
         </div>
       )}
@@ -103,8 +127,8 @@ function Comment({
         <div>
           <ProfilePic
             style={{ width: '5rem' }}
-            userId={userId}
-            profilePicUrl={profilePicUrl}
+            userId={uploader.id}
+            profilePicUrl={uploader.profilePicUrl}
           />
         </div>
         <div
@@ -117,8 +141,8 @@ function Comment({
             <UsernameText
               style={{ fontSize: '1.7rem' }}
               user={{
-                username,
-                id: userId
+                username: uploader.username,
+                id: uploader.id
               }}
             />{' '}
             <small

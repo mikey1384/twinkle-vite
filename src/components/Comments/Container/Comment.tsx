@@ -63,6 +63,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
+import { getCommentActionPermissions } from '~/components/Comments/permissions';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -265,9 +266,17 @@ function Comment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replies]);
 
-  const userIsUploader = useMemo(
-    () => uploader?.id === userId,
-    [uploader?.id, userId]
+  const { userCanDeleteThis, userCanEditThis, userIsUploader } = useMemo(
+    () =>
+      getCommentActionPermissions({
+        canDelete,
+        canEdit,
+        uploaderId: uploader?.id,
+        uploaderLevel: uploader?.level,
+        userId,
+        userLevel: level
+      }),
+    [canDelete, canEdit, level, uploader?.id, uploader?.level, userId]
   );
   const userIsParentUploader = useMemo(() => {
     if (!userId) {
@@ -288,9 +297,6 @@ function Comment({
     () => userId && rootContent.uploader?.id === userId,
     [rootContent.uploader?.id, userId]
   );
-  const userHasHigherLevel = useMemo(() => {
-    return level > uploader?.level;
-  }, [level, uploader?.level]);
   const dropdownLabelMarginLeft = compactMode ? 0 : '1rem';
   const compactDropdownMenuItemStyle: React.CSSProperties | undefined =
     compactMode
@@ -313,11 +319,9 @@ function Comment({
     : undefined;
 
   const dropdownMenuItems = useMemo(() => {
-    const userCanEditThis = canEdit && userHasHigherLevel;
-    const userCanDeleteThis = (canDelete || canEdit) && userHasHigherLevel;
     const items = [];
     if (
-      (userIsUploader || userCanEditThis) &&
+      userCanEditThis &&
       (!isCommentForASubjectWithSecretMessage ||
         (userIsUploader && userIsParentUploader))
     ) {
@@ -357,7 +361,7 @@ function Comment({
         style: compactDropdownMenuItemStyle
       });
     }
-    if (userIsUploader || userCanDeleteThis) {
+    if (userCanDeleteThis) {
       items.push({
         label: (
           <>
@@ -375,15 +379,14 @@ function Comment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     banned?.posting,
-    canDelete,
-    canEdit,
     comment.id,
     compactDropdownMenuItemStyle,
     dropdownLabelMarginLeft,
     isCommentForASubjectWithSecretMessage,
     isAdmin,
     pinnedCommentId,
-    userHasHigherLevel,
+    userCanDeleteThis,
+    userCanEditThis,
     userIsParentUploader,
     userIsRootUploader,
     userIsUploader

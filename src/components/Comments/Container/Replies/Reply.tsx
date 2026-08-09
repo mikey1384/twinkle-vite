@@ -47,6 +47,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { Comment } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
@@ -154,7 +155,18 @@ function Reply({
     useState(false);
   const ReplyInputAreaRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
-  const userIsUploader = userId === uploader.id;
+  const { userCanDeleteThis, userCanEditThis } = useMemo(
+    () =>
+      getCommentActionPermissions({
+        canDelete,
+        canEdit,
+        uploaderId: uploader?.id,
+        uploaderLevel: uploader?.level,
+        userId,
+        userLevel: level
+      }),
+    [canDelete, canEdit, level, uploader?.id, uploader?.level, userId]
+  );
   const subjectUploaderId = useMemo(
     () => subject?.uploader?.id || subject?.userId,
     [subject]
@@ -178,10 +190,6 @@ function Reply({
     () => userId && rootContent?.uploader?.id === userId,
     [rootContent?.uploader?.id, userId]
   );
-  const userHasHigherLevel = useMemo(() => {
-    return level > (uploader?.level || 0);
-  }, [level, uploader?.level]);
-
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
@@ -198,21 +206,18 @@ function Reply({
     if (isDeleteNotification) {
       return false;
     }
-    const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
     return (
-      userIsUploader ||
       userIsParentUploader ||
       userIsRootUploader ||
+      userCanDeleteThis ||
       userCanEditThis
     );
   }, [
-    canDelete,
-    canEdit,
     isDeleteNotification,
-    userHasHigherLevel,
+    userCanDeleteThis,
+    userCanEditThis,
     userIsParentUploader,
-    userIsRootUploader,
-    userIsUploader
+    userIsRootUploader
   ]);
 
   const userCanRewardThis = useMemo(
@@ -275,7 +280,7 @@ function Reply({
     : undefined;
   const dropdownMenuItems = useMemo(() => {
     const items = [];
-    if (userIsUploader || canEdit) {
+    if (userCanEditThis) {
       items.push({
         label: (
           <>
@@ -312,7 +317,7 @@ function Reply({
         style: compactDropdownMenuItemStyle
       });
     }
-    if (userIsUploader || canDelete) {
+    if (userCanDeleteThis) {
       items.push({
         label: (
           <>
@@ -329,14 +334,13 @@ function Reply({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    canDelete,
-    canEdit,
     compactDropdownMenuItemStyle,
     dropdownLabelMarginLeft,
     pinnedCommentId,
     reply.id,
-    userIsParentUploader,
-    userIsUploader
+    userCanDeleteThis,
+    userCanEditThis,
+    userIsParentUploader
   ]);
 
   return !(isDeleteNotification && !reply.numReplies) && !reply.isDeleted ? (

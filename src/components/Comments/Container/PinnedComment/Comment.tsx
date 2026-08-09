@@ -48,6 +48,7 @@ import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 
@@ -181,9 +182,17 @@ function Comment({
     subject
   });
 
-  const userIsUploader = useMemo(
-    () => uploader.id === userId,
-    [uploader.id, userId]
+  const { userCanDeleteThis, userCanEditThis, userIsUploader } = useMemo(
+    () =>
+      getCommentActionPermissions({
+        canDelete,
+        canEdit,
+        uploaderId: uploader?.id,
+        uploaderLevel: uploader?.level,
+        userId,
+        userLevel: level
+      }),
+    [canDelete, canEdit, level, uploader?.id, uploader?.level, userId]
   );
   const userIsParentUploader = useMemo(
     () =>
@@ -192,23 +201,17 @@ function Comment({
       parent.uploader?.id === userId,
     [parent.contentType, parent.uploader?.id, userId]
   );
-  const userHasHigherLevel = useMemo(() => {
-    return level > (uploader?.level || 0);
-  }, [level, uploader?.level]);
   const dropdownButtonShown = useMemo(() => {
     if (isNotification || isPreview) {
       return false;
     }
-    const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
-    return userIsUploader || userCanEditThis || userIsParentUploader;
+    return userCanDeleteThis || userCanEditThis || userIsParentUploader;
   }, [
-    canDelete,
-    canEdit,
     isNotification,
     isPreview,
-    userHasHigherLevel,
-    userIsParentUploader,
-    userIsUploader
+    userCanDeleteThis,
+    userCanEditThis,
+    userIsParentUploader
   ]);
   const dropdownLabelMarginLeft = compactMode ? 0 : '1rem';
   const compactDropdownMenuItemStyle: React.CSSProperties | undefined =
@@ -234,7 +237,7 @@ function Comment({
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (
-      (userIsUploader || canEdit) &&
+      userCanEditThis &&
       !isNotification &&
       (!isCommentForASubjectWithSecretMessage ||
         (userIsUploader && userIsParentUploader))
@@ -271,7 +274,7 @@ function Comment({
         style: compactDropdownMenuItemStyle
       });
     }
-    if (userIsUploader || canDelete) {
+    if (userCanDeleteThis) {
       items.push({
         label: (
           <>
@@ -287,14 +290,14 @@ function Comment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     banned?.posting,
-    canDelete,
-    canEdit,
     compactDropdownMenuItemStyle,
     comment.id,
     dropdownLabelMarginLeft,
     isCommentForASubjectWithSecretMessage,
     isAdmin,
     isNotification,
+    userCanDeleteThis,
+    userCanEditThis,
     userIsParentUploader,
     userIsUploader
   ]);
