@@ -4,11 +4,42 @@ import URL from '~/constants/URL';
 import { clientVersion } from '~/constants/defaultValues';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray } from '~/helpers/stringHelpers';
-import { getTwinkleDeviceId, setStoredItem } from '~/helpers/userDataHelpers';
+import {
+  getTwinkleDeviceId,
+  persistAuthToken
+} from '~/helpers/userDataHelpers';
 import type {
   ChatNotificationPreferences,
   ChatNotificationSettings
 } from '~/types/chat';
+
+const SESSION_STORAGE_ERROR_MESSAGE =
+  'Twinkle could not save your login on this device. Check that browser storage is enabled, then try again.';
+
+function createSessionPersistenceError(code: string, message: string) {
+  const error: any = new Error(message);
+  error.status = 500;
+  error.code = code;
+  return error;
+}
+
+function persistReturnedSessionToken(
+  token: unknown,
+  options: { preserveNavSession?: boolean } = {}
+) {
+  if (typeof token !== 'string' || !token) {
+    throw createSessionPersistenceError(
+      'auth_session_missing',
+      'Twinkle did not receive a login session. Please try again.'
+    );
+  }
+  if (!persistAuthToken(token, options)) {
+    throw createSessionPersistenceError(
+      'auth_token_storage_unavailable',
+      SESSION_STORAGE_ERROR_MESSAGE
+    );
+  }
+}
 
 export default function userRequestHelpers({
   auth,
@@ -49,18 +80,17 @@ export default function userRequestHelpers({
       userId: number;
       password: string;
     }) {
+      let data;
       try {
-        const { data } = await request.put(`${URL}/user/password`, {
+        ({ data } = await request.put(`${URL}/user/password`, {
           userId,
           password
-        });
-        if (data.token) {
-          setStoredItem('token', data.token);
-        }
-        return data;
+        }));
       } catch (error) {
         return handleError(error);
       }
+      persistReturnedSessionToken(data.token);
+      return data;
     },
     async changePasswordFromStore({
       currentPassword,
@@ -69,21 +99,21 @@ export default function userRequestHelpers({
       currentPassword: string;
       newPassword: string;
     }) {
+      let data;
       try {
-        const {
-          data: { isSuccess, token }
-        } = await request.put(
+        ({ data } = await request.put(
           `${URL}/user/password/change`,
           { currentPassword, newPassword },
           auth()
-        );
-        if (isSuccess && token) {
-          setStoredItem('token', token, { preserveNavSession: true });
-        }
-        return { isSuccess };
+        ));
       } catch (error) {
         return handleError(error);
       }
+      const { isSuccess, token: nextToken } = data;
+      if (isSuccess) {
+        persistReturnedSessionToken(nextToken, { preserveNavSession: true });
+      }
+      return { isSuccess };
     },
     async changeUsername(newUsername: string) {
       try {
@@ -690,20 +720,21 @@ export default function userRequestHelpers({
       }
     },
     async login(params: { username: string; password: string }) {
+      let data;
       try {
-        const { data } = await axios.post(`${URL}/user/login`, params, {
+        ({ data } = await axios.post(`${URL}/user/login`, params, {
           headers: {
             'x-twinkle-device-id': getTwinkleDeviceId()
           }
-        });
-        setStoredItem('token', data.token);
-        return data;
+        }));
       } catch (error: any) {
-        if (error.response.status === 401) {
+        if (error?.response?.status === 401) {
           return Promise.reject('Wrong username/password combination');
         }
         return handleError(error);
       }
+      persistReturnedSessionToken(data.token);
+      return data;
     },
     async recordLogout(authorization = auth()) {
       try {
@@ -1008,8 +1039,9 @@ export default function userRequestHelpers({
       password: string;
       userType: string;
     }) {
+      let data;
       try {
-        const { data } = await request.post(
+        ({ data } = await request.post(
           `${URL}/user/signup`,
           {
             username,
@@ -1027,29 +1059,26 @@ export default function userRequestHelpers({
               'x-twinkle-device-id': getTwinkleDeviceId()
             }
           }
-        );
-        if (data.token) {
-          setStoredItem('token', data.token);
-        }
-        return data;
+        ));
       } catch (error) {
         return handleError(error);
       }
+      persistReturnedSessionToken(data.token);
+      return data;
     },
     async createDevAccount() {
+      let data;
       try {
-        const { data } = await request.post(`${URL}/user/dev/signup`, null, {
+        ({ data } = await request.post(`${URL}/user/dev/signup`, null, {
           headers: {
             'x-twinkle-device-id': getTwinkleDeviceId()
           }
-        });
-        if (data.token) {
-          setStoredItem('token', data.token);
-        }
-        return data;
+        }));
       } catch (error) {
         return handleError(error);
       }
+      persistReturnedSessionToken(data.token);
+      return data;
     },
     async toggleHideWatched() {
       try {

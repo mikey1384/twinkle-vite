@@ -6,7 +6,7 @@ import InvalidPage from '~/components/InvalidPage';
 import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
 import { normalizeAllowedBuildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
-import { setStoredItem } from '~/helpers/userDataHelpers';
+import { persistAuthToken } from '~/helpers/userDataHelpers';
 
 const shellClass = css`
   width: 100%;
@@ -125,8 +125,9 @@ export default function ThumbnailCaptureHost() {
   useEffect(() => {
     const rawAuthToken = captureBootstrap.authToken;
     if (rawAuthToken) {
-      if (!setStoredItem('token', rawAuthToken)) {
-        console.error('Failed to persist capture auth token.');
+      if (!persistAuthToken(rawAuthToken)) {
+        setError('Failed to start the secure capture session.');
+        return;
       }
       if (location.hash) {
         window.history.replaceState(
@@ -208,6 +209,14 @@ export default function ThumbnailCaptureHost() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, numericBuildId, previewPath]);
 
+  if (error) {
+    return (
+      <div className={shellClass}>
+        <InvalidPage text={error} />
+      </div>
+    );
+  }
+
   if (loading || !authReady) {
     return (
       <div className={shellClass}>
@@ -216,10 +225,10 @@ export default function ThumbnailCaptureHost() {
     );
   }
 
-  if (error || !payload) {
+  if (!payload) {
     return (
       <div className={shellClass}>
-        <InvalidPage text={error || 'Thumbnail capture preview is unavailable'} />
+        <InvalidPage text="Thumbnail capture preview is unavailable" />
       </div>
     );
   }

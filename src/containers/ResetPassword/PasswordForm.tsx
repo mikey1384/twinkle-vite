@@ -3,6 +3,7 @@ import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { useNavigate } from 'react-router-dom';
 
 export default function PasswordForm({
@@ -73,10 +74,19 @@ export default function PasswordForm({
     if (!isValidPassword(password)) {
       return setErrorMsg('Passwords need to be at least 5 characters long');
     }
-    await changePassword({ userId, password });
-    onLogin({ userId, username });
-    onSetUserState({ userId, newState: { profilePicUrl, userId, username } });
-    navigate('/');
+    try {
+      await changePassword({ userId, password });
+      onLogin({ userId, username });
+      onSetUserState({
+        userId,
+        newState: { profilePicUrl, userId, username }
+      });
+      navigate('/');
+    } catch (error) {
+      setErrorMsg(
+        getErrorMessage(error, 'Failed to start your new login session.')
+      );
+    }
   }
 
   function isValidPassword(password: string) {

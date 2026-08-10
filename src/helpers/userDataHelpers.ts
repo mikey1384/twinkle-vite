@@ -85,6 +85,16 @@ export function setStoredItem(
   }
 }
 
+export function persistAuthToken(
+  token: unknown,
+  options: { preserveNavSession?: boolean } = {}
+) {
+  if (typeof token !== 'string' || !token) return false;
+  return (
+    setStoredItem('token', token, options) && getStoredItem('token') === token
+  );
+}
+
 export function removeStoredItem(key: string) {
   const storage = getLocalStorage();
   if (!storage) {

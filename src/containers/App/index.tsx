@@ -1518,16 +1518,16 @@ export default function App() {
     attempts = 0,
     canonicalAnalyticsUserConfirmed = false
   ) {
-    if (!userId) {
-      return;
-    }
+    const initToken = auth()?.headers?.authorization;
+    if (!initToken) return;
+    const sessionChanged = () => auth()?.headers?.authorization !== initToken;
     const maxRetries = 3;
     const retryDelay = 1000;
     let analyticsUserConfirmed = canonicalAnalyticsUserConfirmed;
 
     try {
       const data = await loadMyData(location.pathname);
-      if (checkUserChange(userId)) return;
+      if (sessionChanged()) return;
       if (!data?.id) {
         throw new Error('Session response did not include a canonical user');
       }
@@ -1545,7 +1545,7 @@ export default function App() {
       analyticsUserConfirmed = true;
       try {
         const { totalFunds } = await loadCommunityFunds();
-        if (checkUserChange(userId)) return;
+        if (sessionChanged()) return;
         onSetCommunityFunds(totalFunds || 0);
       } catch (error) {
         console.error('Failed to load community funds:', error);
@@ -1553,7 +1553,7 @@ export default function App() {
 
       try {
         const chessStats = await loadChessStats();
-        if (checkUserChange(userId)) return;
+        if (sessionChanged()) return;
         if (chessStats) {
           onSetChessStats(chessStats);
         }
@@ -1562,15 +1562,16 @@ export default function App() {
       }
       await recordUserTraffic(location.pathname);
     } catch (error: any) {
-      if (checkUserChange(userId)) return;
+      if (sessionChanged()) return;
       if (attempts < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        if (sessionChanged()) return;
         return handleInit(attempts + 1, analyticsUserConfirmed);
       }
       if (!analyticsUserConfirmed) clearAnalyticsUser();
       console.error('Failed to initialize after multiple attempts:', error);
     } finally {
-      if (checkUserChange(userId)) return;
+      if (sessionChanged()) return;
       onSetSessionLoaded();
     }
   }

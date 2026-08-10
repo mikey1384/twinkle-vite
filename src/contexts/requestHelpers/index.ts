@@ -17,7 +17,7 @@ type RequestHelperModuleName =
 
 interface RequestHelperContext {
   auth: typeof auth;
-  handleError: (error: unknown) => void;
+  handleError: (error: unknown) => Promise<never>;
   token: typeof token;
 }
 
@@ -793,7 +793,9 @@ registerMethods('zero', [
   'textToSpeech'
 ]);
 
-export default function requestHelpers(handleError: (error: unknown) => void) {
+export default function requestHelpers(
+  handleError: (error: unknown) => Promise<never>
+) {
   const loadedModules: Partial<
     Record<RequestHelperModuleName, Promise<Record<string, any>>>
   > = {};

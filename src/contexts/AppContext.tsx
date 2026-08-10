@@ -1,4 +1,5 @@
 import React, { useReducer, ReactNode, useCallback, useMemo } from 'react';
+import axios from 'axios';
 import { createContext } from './selectableContext';
 import UserActions from './User/actions';
 import UserReducer from './User/reducer';
@@ -19,15 +20,22 @@ import { ViewContextProvider } from './View';
 import {
   DEFAULT_PROFILE_THEME,
   LAST_ONLINE_FILTER_LABEL,
+  clientVersion,
   localStorageKeys
 } from '~/constants/defaultValues';
-import { removeStoredItem } from '~/helpers/userDataHelpers';
+import {
+  getStoredItem,
+  getTwinkleDeviceId,
+  removeStoredItem
+} from '~/helpers/userDataHelpers';
 import {
   getErrorMessage,
   getErrorMessageFromResponseData
 } from '~/helpers/errorMessageHelpers';
 import { clearAnalyticsUser } from '~/helpers/analytics';
 import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
+import URL from '~/constants/URL';
+import { createUnauthorizedSessionResolver } from '~/helpers/sessionUnauthorizedGuard';
 
 export const initialMyState = {
   achievementPoints: 0,
@@ -92,6 +100,38 @@ export const AppContext = createContext<any>(defaultAppContextValue);
 
 const REDIRECT_RELOAD_STORAGE_KEY = 'twinkleRedirectReloadAt';
 const REDIRECT_RELOAD_COOLDOWN_MS = 60 * 1000;
+const SESSION_VALIDATION_TIMEOUT_MS = 15 * 1000;
+
+async function validateInteractiveSessionToken(token: string) {
+  try {
+    const response = await axios.get(`${URL}/user/session/validate`, {
+      headers: {
+        authorization: token,
+        'x-twinkle-device-id': getTwinkleDeviceId(),
+        'x-twinkle-client-version': clientVersion
+      },
+      timeout: SESSION_VALIDATION_TIMEOUT_MS,
+      validateStatus: () => true
+    });
+    if (response.status === 401) return 'invalid' as const;
+    if (
+      response.status >= 200 &&
+      response.status < 300 &&
+      response.data?.valid === true
+    ) {
+      return 'valid' as const;
+    }
+    return 'unknown' as const;
+  } catch {
+    return 'unknown' as const;
+  }
+}
+
+const resolveInvalidSessionToken = createUnauthorizedSessionResolver({
+  canonicalSessionUrl: `${URL}/user/session`,
+  getCurrentToken: () => getStoredItem('token'),
+  validateSessionToken: validateInteractiveSessionToken
+});
 
 function shouldReloadForRedirect() {
   try {
@@ -120,7 +160,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
   const [userState, userDispatch] = useReducer(UserReducer, initialUserState);
 
   const handleError = useCallback(
-    (error: any) => {
+    async (error: any) => {
       if (error?.response) {
         const { status, data } = error.response;
         const message =
@@ -134,12 +174,20 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
         }
 
         if (status === 401) {
-          removeStoredItem('token');
-          Object.keys(localStorageKeys).forEach((key) => removeStoredItem(key));
-          clearAnalyticsUser();
-          userDispatch({
-            type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
-          });
+          const invalidSessionToken = await resolveInvalidSessionToken(error);
+          if (
+            invalidSessionToken &&
+            getStoredItem('token') === invalidSessionToken
+          ) {
+            removeStoredItem('token');
+            Object.keys(localStorageKeys).forEach((key) =>
+              removeStoredItem(key)
+            );
+            clearAnalyticsUser();
+            userDispatch({
+              type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
+            });
+          }
         }
 
         if (status === 301) {

@@ -145,7 +145,7 @@ export interface Recommendation {
 
 export interface RequestHelpers {
   auth: () => any;
-  handleError: (error: unknown) => void;
+  handleError: (error: unknown) => Promise<never>;
   token?: () => string | null;
 }
 

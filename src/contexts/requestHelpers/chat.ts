@@ -2441,7 +2441,10 @@ export default function chatRequestHelpers({
           needsReload
         };
       } catch (error) {
-        handleError(error);
+        // This probe is deliberately fail-closed: on request failure, treat
+        // the attempt as a duplicate immediately while the shared error path
+        // reconciles any 401 against the canonical session in the background.
+        void handleError(error).catch(() => undefined);
         return true;
       }
     },

@@ -8,6 +8,7 @@ import axios, {
 } from 'axios';
 import pLimit from 'p-limit';
 import { emitAdminTelemetry } from '~/helpers';
+import { getDefaultRequestCollapseKey } from './requestCollapseKey';
 
 export type ChannelName = 'ui' | 'normal' | 'bulk';
 
@@ -149,7 +150,7 @@ class RequestChannel {
 
     const promise = this.executeWithinTotalTimeout(baseConfig, context).finally(
       () => {
-        if (collapseKey) {
+        if (collapseKey && this.inflight.get(collapseKey) === promise) {
           this.inflight.delete(collapseKey);
         }
       }
@@ -195,11 +196,7 @@ class RequestChannel {
   }
 
   private computeDefaultCollapseKey(config: AxiosRequestConfig) {
-    const method = (config.method || 'get').toLowerCase();
-    if (!this.policy.collapseGet || method !== 'get') return null;
-    const url = config.url || '';
-    const paramsKey = config.params ? JSON.stringify(config.params) : '';
-    return `${method}:${url}:${paramsKey}`;
+    return getDefaultRequestCollapseKey(config, this.policy.collapseGet);
   }
 
   private async executeWithRetries<T>(

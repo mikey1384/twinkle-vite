@@ -5,6 +5,7 @@ import Input from '~/components/Texts/Input';
 import Banner from '~/components/Banner';
 import { mobileMaxWidth } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { setAnalyticsUser, trackEvent } from '~/helpers/analytics';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -147,7 +148,12 @@ export default function LoginForm({
       setAnalyticsUser(data);
       trackEvent('login', { method: 'password' });
     } catch (error: any) {
-      setErrorMessage(error);
+      setErrorMessage(
+        getErrorMessage(
+          error,
+          'Server connection failed. Make sure your internet is connected'
+        )
+      );
     } finally {
       setLoggingIn(false);
     }
