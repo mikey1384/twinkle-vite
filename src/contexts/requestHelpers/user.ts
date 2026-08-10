@@ -208,6 +208,36 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async resolveLumineRescue(
+      eventType: string,
+      params?: Record<string, any>
+    ) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/lumine-rescue/resolve`,
+          { eventType, ...(params || {}) },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async redeemLumineRescue(
+      eventType: string,
+      params?: Record<string, any>
+    ) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/lumine-rescue/redeem`,
+          { eventType, ...(params || {}) },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadFeaturedSubjectsOnProfile(userId: { userId: number }) {
       try {
         const { data: subjects } = await request.get(

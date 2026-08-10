@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import LumineRescueEntry from '~/components/LumineRescueEntry';
 import { css } from '@emotion/css';
 import {
   Color,
@@ -357,6 +358,13 @@ export default function AiEnergyCard({
           </>
         )}
 
+        {resetNeeded && (
+          <LumineRescueEntry
+            eventType="aiEnergy"
+            active
+            style={{ marginTop: '0.6rem' }}
+          />
+        )}
         {resetNeeded && !isInline && (
           <div className={rechargeSectionCls}>
             <div className={rechargeMessageCls}>

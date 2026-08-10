@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import LumineRescueEntry from '~/components/LumineRescueEntry';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -437,6 +438,12 @@ export default function AiEnergyDashboardModal({
 
             {activeSection === 'overview' && (
               <div className={overviewPageCls}>
+                <LumineRescueEntry
+                  eventType="aiEnergy"
+                  active={energyDepleted}
+                  onRedeemed={handleRescueRedeemed}
+                  style={{ marginBottom: '1rem' }}
+                />
                 <Overview
                   chargeButtonDisabled={
                     chargeLoading ||
@@ -575,6 +582,18 @@ export default function AiEnergyDashboardModal({
   async function handleConfirmPaidCharge() {
     await handleCharge();
     setPaidChargeConfirmShown(false);
+  }
+
+  function handleRescueRedeemed(result: any) {
+    const nextPolicy = result?.snapshot || result?.aiUsagePolicy || null;
+    if (nextPolicy) {
+      setAiUsagePolicy(nextPolicy);
+      onUpdateTodayStats({
+        newStats: {
+          aiUsagePolicy: nextPolicy
+        }
+      });
+    }
   }
 
   async function handleCharge() {

@@ -2036,6 +2036,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadWordleSkipShield(channelId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/wordle/skipShield/resolve`,
+          { channelId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadWordle(channelId: number) {
       try {
         const {

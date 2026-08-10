@@ -288,6 +288,7 @@ export interface BuildCopilotPolicy {
     generationRequestsPerDay: number;
     generationRequestsToday: number;
     generationRequestsRemaining: number;
+    firstLumineExchangeAvailable?: boolean;
   };
   lumineModelPreference?: BuildLumineModelPreference | null;
   lumineModelOptions?: BuildLumineModelOption[];

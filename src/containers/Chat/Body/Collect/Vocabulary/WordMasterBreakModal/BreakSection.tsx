@@ -1,4 +1,5 @@
 import React from 'react';
+import LumineRescueEntry from '~/components/LumineRescueEntry';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
@@ -23,6 +24,7 @@ export default function BreakSection({
   onOpenDailyQuestion,
   onOpenGrammarGame,
   onOpenOmokStart,
+  onRefresh,
   onOpenPendingOmok,
   onOpenWordle,
   onQuizSelect,
@@ -54,6 +56,7 @@ export default function BreakSection({
   onOpenDailyQuestion?: () => void;
   onOpenGrammarGame?: () => void;
   onOpenOmokStart?: () => void;
+  onRefresh?: () => void;
   onOpenPendingOmok?: (channelId: number) => void;
   onOpenWordle?: () => void;
   onQuizSelect: (index: number) => void;
@@ -92,7 +95,19 @@ export default function BreakSection({
 
   let breakPanel: React.ReactNode = null;
   if (isLocked && !justFailedQuiz) {
-    breakPanel = <LockedPanel lockReason={lockReason} />;
+    breakPanel = (
+      <>
+        {lockReason === 'grammarbles' ? (
+          <LumineRescueEntry
+            eventType="wordMaster"
+            active
+            onRedeemed={() => onRefresh?.()}
+            style={{ marginBottom: '1rem' }}
+          />
+        ) : null}
+        <LockedPanel lockReason={lockReason} />
+      </>
+    );
   } else {
     switch (breakType) {
       case 'daily_tasks':

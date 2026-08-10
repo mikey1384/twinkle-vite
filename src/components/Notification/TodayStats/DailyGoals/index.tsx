@@ -6,6 +6,7 @@ import React, {
   useState
 } from 'react';
 import Badge from './Badge';
+import LumineRescueEntry from '~/components/LumineRescueEntry';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -73,6 +74,7 @@ export default function DailyGoals({
   );
   const repairCost = Math.max(0, Number(streakStatus.repairCost) || 0);
   const streakAtRisk = !!streakStatus.streakAtRisk && repairableStreak > 0;
+  const streakBroken = !!streakStatus.streakBroken;
   const streakRepairAvailable = !!streakStatus.streakRepairAvailable;
   const repairNoticeHidden = !!streakStatus.repairNoticeHidden;
   const hasEnoughCoins = (twinkleCoins || 0) >= repairCost;
@@ -171,6 +173,14 @@ export default function DailyGoals({
           </Badge>
         ))}
       </div>
+      {(streakAtRisk || streakBroken) && !streakRepairAvailable && (
+        <LumineRescueEntry
+          eventType="dailyTask"
+          active
+          onRedeemed={handleRescueRedeemed}
+          style={{ margin: '0.9rem auto 0', maxWidth: '32rem' }}
+        />
+      )}
       {streakAtRisk &&
         (isRepairNoticeCollapsed ? (
           <div
@@ -437,6 +447,16 @@ export default function DailyGoals({
       )}
     </div>
   );
+
+  function handleRescueRedeemed(result: any) {
+    if (result?.dailyTaskStatus) {
+      onApplyTodayStatsProgress({
+        newStats: buildTodayStatsPatchFromDailyTaskStatus(
+          result.dailyTaskStatus
+        )
+      });
+    }
+  }
 
   async function handlePurchaseRepair() {
     if (purchasingRepair || !streakAtRisk || streakRepairAvailable) return;

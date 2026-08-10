@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
+import Modal from '~/components/Modal';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import Toast from '~/components/Toast';
 import type {
   BuildProjectListItemData,
@@ -71,6 +74,10 @@ export default function BuildList({
 } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [sayHiContinueBuild, setSayHiContinueBuild] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [activityRailVisible, setActivityRailVisible] = useState(
     getIsBuildActivityRailVisible
@@ -249,6 +256,33 @@ export default function BuildList({
     buildSearchQuery.length > 0 || buildSearchOwner.length > 0;
   // Owner mode shows the owner's PUBLIC builds only (the Community section);
   // the viewer's own builds — including private ones — must not leak in.
+  // Wordle skip-shield deep link: land the player straight in a Lumine chat
+  // with zero extra taps — their most recent workspace when they have one,
+  // otherwise the one-field New Build page. The param rides along so the
+  // workspace shows the say-hi nudge on the chat box.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('sayHi') !== 'lumine') return;
+    if (!normalizedUserId) return;
+    if (!myBuildsLoadedForCurrentUser) return;
+    // "Actual build" means it has code: someone with only empty shells is
+    // still a first-timer and goes straight to the one-field New page. With
+    // a real build, they choose — continue it, or start fresh.
+    const latestActualBuild = builds.find(
+      (build) =>
+        Number(build?.userId || 0) === normalizedUserId && build?.hasCode
+    );
+    if (latestActualBuild?.id) {
+      setSayHiContinueBuild({
+        id: Number(latestActualBuild.id),
+        title: String(latestActualBuild.title || 'your app')
+      });
+    } else {
+      navigate('/build/new?sayHi=lumine', { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, myBuildsLoadedForCurrentUser, normalizedUserId]);
+
   const displayedMyBuilds = buildSearchOwner
     ? []
     : isBuildSearchActive
@@ -964,8 +998,61 @@ export default function BuildList({
         onOpenQuickAccessBuild={handleOpenQuickAccessBuild}
         onSubmitMetadata={handleSubmitMetadata}
       />
+      {sayHiContinueBuild && (
+        <Modal
+          modalKey="LumineSayHiChooser"
+          isOpen={true}
+          onClose={handleCloseSayHiChooser}
+          size="sm"
+          hasHeader
+          title="Build with Lumine 🤖"
+        >
+          <main
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 1.2rem;
+              padding: 0.5rem 0.5rem 1.5rem 0.5rem;
+              font-size: 1.3rem;
+              line-height: 1.55;
+            `}
+          >
+            <p>
+              Start something brand new, or keep building{' '}
+              <b>{sayHiContinueBuild.title}</b> — Lumine is ready either way.
+            </p>
+            <Button
+              color="logoBlue"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                setSayHiContinueBuild(null);
+                navigate('/build/new?sayHi=lumine', { replace: true });
+              }}
+            >
+              Make a new app <Icon icon="arrow-right" />
+            </Button>
+            <Button
+              color="green"
+              variant="outline"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                const buildId = sayHiContinueBuild.id;
+                setSayHiContinueBuild(null);
+                navigate(`/build/${buildId}?sayHi=lumine`, { replace: true });
+              }}
+            >
+              Continue “{sayHiContinueBuild.title}”
+            </Button>
+          </main>
+        </Modal>
+      )}
     </div>
   );
+
+  function handleCloseSayHiChooser() {
+    setSayHiContinueBuild(null);
+    navigate('/build', { replace: true });
+  }
 
   async function handleStartFromPrompt() {
     if (!promptInput.trim() || creatingFromPrompt) return;

@@ -1,4 +1,5 @@
 import React from 'react';
+import LumineRescueEntry from '~/components/LumineRescueEntry';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
@@ -49,6 +50,7 @@ export default function StartScreen({
   twinkleCoins,
   onClose,
   onPurchaseRepair,
+  onRescueRepaired,
   onShowOriginal,
   onSimplify,
   onStart
@@ -69,6 +71,7 @@ export default function StartScreen({
   twinkleCoins?: number;
   onClose: () => void;
   onPurchaseRepair: () => void;
+  onRescueRepaired?: (result: any) => void;
   onShowOriginal: () => void;
   onSimplify: () => void;
   onStart: () => void;
@@ -151,6 +154,16 @@ export default function StartScreen({
           </div>
         )}
 
+        {(streakAtRisk || streakBroken) &&
+          currentStreak > 0 &&
+          !streakRepairAvailable && (
+            <LumineRescueEntry
+              eventType="dailyReflection"
+              active
+              onRedeemed={(result) => onRescueRepaired?.(result)}
+              style={{ marginBottom: '1rem', textAlign: 'left' }}
+            />
+          )}
         {streakAtRisk && currentStreak > 0 && (
           <div
             className={css`

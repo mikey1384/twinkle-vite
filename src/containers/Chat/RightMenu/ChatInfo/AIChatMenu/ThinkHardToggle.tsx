@@ -1,4 +1,5 @@
 import React from 'react';
+import LumineRescueEntry from '~/components/LumineRescueEntry';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 
@@ -129,6 +130,13 @@ export default function ThinkHardToggle({
               ? 'Recharge AI Energy to use enhanced reasoning.'
             : 'Enhanced reasoning mode. Uses more AI Energy.'}
         </p>
+        {disabled && !thinkHard ? (
+          <LumineRescueEntry
+            eventType="aiEnergy"
+            active
+            style={{ marginTop: '0.6rem' }}
+          />
+        ) : null}
       </div>
     </div>
   );

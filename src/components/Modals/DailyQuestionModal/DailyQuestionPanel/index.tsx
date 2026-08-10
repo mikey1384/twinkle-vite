@@ -1362,11 +1362,19 @@ export default function DailyQuestionPanel({
         twinkleCoins={twinkleCoins}
         onClose={onClose}
         onPurchaseRepair={handlePurchaseRepair}
+        onRescueRepaired={handleRescueRepaired}
         onShowOriginal={handleShowOriginal}
         onSimplify={handleSimplify}
         onStart={handleStart}
       />
     );
+  }
+
+  function handleRescueRepaired(result: any) {
+    setCurrentStreak(Number(result?.currentStreak) || 0);
+    setStreakRepairAvailable(Boolean(result?.streakRepairAvailable));
+    setStreakAtRisk(Boolean(result?.streakAtRisk));
+    setStreakBroken(Boolean(result?.streakBroken));
   }
 
   if (screen === 'writing') {

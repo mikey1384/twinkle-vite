@@ -3,6 +3,8 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Game from './Game';
 import OverviewModal from './OverviewModal';
+import SkipShieldModal from './SkipShieldModal';
+import LumineRescueEntry from '~/components/LumineRescueEntry';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import FilterBar from '~/components/FilterBar';
 import Streaks from './Streaks';
@@ -56,12 +58,22 @@ export default function WordleModal({
   const [rankingsTab, setRankingsTab] = useState('all');
   const [streaksTab, setStreaksTab] = useState(isStrictMode ? 'double' : 'win');
   const loadWordle = useAppContext((v) => v.requestHelpers.loadWordle);
+  const loadWordleSkipShield = useAppContext(
+    (v) => v.requestHelpers.loadWordleSkipShield
+  );
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [isRevealing, setIsRevealing] = useState(false);
   const [overviewModalShown, setOverviewModalShown] = useState(false);
+  const [skipShieldModalShown, setSkipShieldModalShown] = useState(false);
+  const [skipShieldChecklist, setSkipShieldChecklist] = useState<{
+    metLumine: boolean;
+    hasWorkingBuild: boolean;
+    triedPeerBuildToday: boolean;
+  } | null>(null);
+  const skipShieldRequestInFlightRef = useRef(false);
   const [uiScale, setUiScale] = useState(1);
   const uiScaleRef = useRef(1);
   const baseGameHeightRef = useRef(0);
@@ -205,10 +217,35 @@ export default function WordleModal({
         style={{
           width: '100%',
           display: 'flex',
-          justifyContent: 'center'
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.6rem'
         }}
       >
-        <Button variant="ghost" onClick={onHide}>
+        <LumineRescueEntry
+          eventType="wordle"
+          active={
+            (Number(wordleStats?.currentStreak || 0) === 0 &&
+              Number(wordleStats?.bestStreak || 0) > 0) ||
+            wordleStats?.lumineRescueEventType === 'wordle'
+          }
+          params={{ channelId }}
+          onRedeemed={handleWordleRescueRedeemed}
+          style={{ maxWidth: '36rem' }}
+        />
+        <LumineRescueEntry
+          eventType="wordleStrict"
+          active={
+            (Number(wordleStats?.currentStreak || 0) > 0 &&
+              Number(wordleStats?.currentStrictStreak || 0) === 0 &&
+              Number(wordleStats?.bestStrictStreak || 0) > 0) ||
+            wordleStats?.lumineRescueEventType === 'wordleStrict'
+          }
+          params={{ channelId }}
+          onRedeemed={handleWordleRescueRedeemed}
+          style={{ maxWidth: '36rem' }}
+        />
+        <Button variant="ghost" onClick={handleRequestClose}>
           Close
         </Button>
       </div>
@@ -220,7 +257,7 @@ export default function WordleModal({
       <Modal
         modalKey="WordleModal"
         isOpen={true}
-        onClose={onHide}
+        onClose={handleRequestClose}
         hasHeader={false}
         closeOnBackdropClick={false}
         size="lg"
@@ -309,6 +346,16 @@ export default function WordleModal({
             )}
           </div>
         </div>
+        {skipShieldModalShown && skipShieldChecklist && (
+          <SkipShieldModal
+            checklist={skipShieldChecklist}
+            onKeepPlaying={() => setSkipShieldModalShown(false)}
+            onCloseAnyway={() => {
+              setSkipShieldModalShown(false);
+              onHide();
+            }}
+          />
+        )}
         {overviewModalShown && (
           <OverviewModal
             numGuesses={guesses.length}
@@ -324,6 +371,50 @@ export default function WordleModal({
       </Modal>
     </ErrorBoundary>
   );
+
+  async function handleRequestClose() {
+    if (guesses.length === 0 || isGameOver) {
+      return onHide();
+    }
+    if (skipShieldRequestInFlightRef.current) return;
+    skipShieldRequestInFlightRef.current = true;
+    // Mid-game close: the day counts as a dodge unless the skip-shield side
+    // quest is done. Show the friendly checklist instead of closing silently.
+    try {
+      const status = await loadWordleSkipShield(channelId);
+      // The resolver is the source of truth and may also persist a newly
+      // earned cover. If it cannot confirm a result, leave the game open
+      // instead of silently bypassing the warning on a network failure.
+      if (!status) return;
+      if (
+        status?.shieldActive &&
+        status?.todayDodgePending &&
+        !status?.todayCovered
+      ) {
+        setSkipShieldChecklist({
+          metLumine: Boolean(status?.checklist?.metLumine),
+          hasWorkingBuild: Boolean(status?.checklist?.hasWorkingBuild),
+          triedPeerBuildToday: Boolean(status?.checklist?.triedPeerBuildToday)
+        });
+        setSkipShieldModalShown(true);
+        return;
+      }
+    } catch (error) {
+      console.error(error);
+      return;
+    } finally {
+      skipShieldRequestInFlightRef.current = false;
+    }
+    onHide();
+  }
+
+  function handleWordleRescueRedeemed(result: any) {
+    if (!result?.wordleStats) return;
+    onSetChannelState({
+      channelId,
+      newState: { wordleStats: result.wordleStats }
+    });
+  }
 
   async function handleCountdownComplete() {
     const {

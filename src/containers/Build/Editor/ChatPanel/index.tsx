@@ -363,10 +363,16 @@ export default function ChatPanel({
     ? communicationMode
     : communicationOptions[0]?.value || 'lumine';
   const energyPolicy = aiUsagePolicy;
-  const energyUnavailable =
+  const energyDepleted =
     !!energyPolicy &&
     typeof energyPolicy.energyRemaining === 'number' &&
     energyPolicy.energyRemaining <= 0;
+  // First-exchange eligibility is global across every build, so only the
+  // server policy may keep an empty-battery composer enabled. The current
+  // thread is not authoritative for messages sent in another workspace.
+  const energyUnavailable =
+    energyDepleted &&
+    copilotPolicy?.requestLimits?.firstLumineExchangeAvailable !== true;
   const aiInputDisabled = AI_FEATURES_DISABLED || energyUnavailable;
   const aiInputDisabledNotice = AI_FEATURES_DISABLED
     ? AI_DISABLED_NOTICE

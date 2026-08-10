@@ -252,6 +252,10 @@ export default function BuildEditor({
   );
   const routeOpenForkHistory = Boolean(routeState.openForkHistory);
   const routeOpenPeoplePanel = Boolean(routeState.openPeoplePanel);
+  // Wordle skip-shield deep link: open straight onto the Lumine chat (the
+  // mobile panel default) so "say hi to Lumine" is zero extra taps.
+  const routeSayHiToLumine =
+    new URLSearchParams(location.search).get('sayHi') === 'lumine';
   const routeOpenVersionsPanel = Boolean(routeState.openVersionsPanel);
   useLayoutEffect(() => {
     const unlockAppShellScrollSurface = lockAppShellScrollSurface();
@@ -317,6 +321,7 @@ export default function BuildEditor({
     useState<MobilePanelTabIntent>(() => ({
       tab: getRouteMobilePanelTab({
         routeOpenPeoplePanel,
+        routeSayHiToLumine,
         routeOpenVersionsPanel,
         build
       }),
@@ -949,6 +954,19 @@ export default function BuildEditor({
     requestLimits: BuildRequestLimitsSnapshot | null | undefined
   ) {
     if (!requestLimits || typeof requestLimits !== 'object') return;
+    const currentPolicy = getLatestCopilotPolicy();
+    if (currentPolicy) {
+      // Request-limit snapshots are canonical server responses. Merge them
+      // into the workspace policy as well as the global battery display so
+      // monotonic, build-specific gates cannot fall back to page-load state.
+      replaceCopilotPolicy({
+        ...currentPolicy,
+        requestLimits: {
+          ...currentPolicy.requestLimits,
+          ...requestLimits
+        }
+      });
+    }
     onUpdateTodayStatsRef.current({
       newStats: {
         aiUsagePolicy: requestLimits
@@ -1116,6 +1134,7 @@ export default function BuildEditor({
     setMobilePanelTabIntent((currentIntent) => ({
       tab: getRouteMobilePanelTab({
         routeOpenPeoplePanel,
+        routeSayHiToLumine,
         routeOpenVersionsPanel,
         build: getLatestBuild()
       }),
@@ -2073,15 +2092,18 @@ function getDefaultMobilePanelTab(build: {
 function getRouteMobilePanelTab({
   routeOpenPeoplePanel,
   routeOpenVersionsPanel,
+  routeSayHiToLumine = false,
   build
 }: {
   routeOpenPeoplePanel: boolean;
   routeOpenVersionsPanel: boolean;
+  routeSayHiToLumine?: boolean;
   build: {
     projectFiles?: Array<{ path: string; content?: string }> | null;
     code?: string | null;
   };
 }): MobilePanelTab {
+  if (routeSayHiToLumine) return 'lumine';
   if (routeOpenPeoplePanel) return 'people';
   if (routeOpenVersionsPanel) return 'versions';
   return getDefaultMobilePanelTab(build);

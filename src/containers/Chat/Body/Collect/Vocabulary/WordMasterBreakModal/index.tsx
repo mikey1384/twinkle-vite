@@ -206,6 +206,7 @@ export default function WordMasterBreakModal({
       actionLoading={actionLoading}
       body={
         <BreakSection
+          onRefresh={onRefresh}
           breakIndex={breakIndex}
           breakInterval={breakInterval}
           breakStatus={breakStatus}

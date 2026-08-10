@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
@@ -10,6 +10,9 @@ import { displayFontFamily } from './styles';
 
 export default function New() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const sayHiToLumine =
+    new URLSearchParams(location.search).get('sayHi') === 'lumine';
   const userId = useKeyContext((v) => v.myState.userId);
   const banned = useKeyContext((v) => v.myState.banned);
   const createBuild = useAppContext((v) => v.requestHelpers.createBuild);
@@ -36,7 +39,7 @@ export default function New() {
         title: title.trim()
       });
       if (build?.id) {
-        navigate(`/build/${build.id}`, {
+        navigate(`/build/${build.id}${sayHiToLumine ? '?sayHi=lumine' : ''}`, {
           replace: true,
           state: { seedGreeting: true }
         });
