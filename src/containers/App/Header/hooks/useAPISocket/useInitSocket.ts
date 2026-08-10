@@ -43,6 +43,7 @@ import {
   invalidateFeaturedSubjectsRequests,
   loadLatestCanonicalFeaturedSubjects
 } from '~/helpers/featuredSubjects';
+import { getServerDisconnectReconnectDelayMs } from '~/helpers/socketRecovery';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -210,6 +211,7 @@ export default function useInitSocket({
   const loadChatRetryTimerRef = useRef<number | null>(null);
   const loadChatRetryCountRef = useRef(0);
   const heartbeatTimerRef = useRef<number | null>(null);
+  const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
   const socketBindRetryTimerRef = useRef<number | null>(null);
   const socketBindAttemptRef = useRef(0);
   const bootstrapAwaitingBindUserIdRef = useRef<number | null>(userId || null);
@@ -603,6 +605,10 @@ export default function useInitSocket({
         clearTimeout(loadChatRetryTimerRef.current);
         loadChatRetryTimerRef.current = null;
       }
+      if (serverDisconnectReconnectTimerRef.current) {
+        clearTimeout(serverDisconnectReconnectTimerRef.current);
+        serverDisconnectReconnectTimerRef.current = null;
+      }
       socketBindAttemptRef.current += 1;
       clearSocketBindRetryTimer();
       handleLoadChatRef.current = null;
@@ -722,6 +728,10 @@ export default function useInitSocket({
     }
 
     function handleConnect() {
+      if (serverDisconnectReconnectTimerRef.current) {
+        clearTimeout(serverDisconnectReconnectTimerRef.current);
+        serverDisconnectReconnectTimerRef.current = null;
+      }
       clearSocketBindRetryTimer();
       emitAdminTelemetry({
         message: 'connected to socket'
@@ -1206,11 +1216,15 @@ export default function useInitSocket({
       handleStopUserActionCapture();
 
       if (reason === 'io server disconnect') {
-        setTimeout(() => {
+        if (serverDisconnectReconnectTimerRef.current) {
+          clearTimeout(serverDisconnectReconnectTimerRef.current);
+        }
+        serverDisconnectReconnectTimerRef.current = window.setTimeout(() => {
+          serverDisconnectReconnectTimerRef.current = null;
           try {
             socket.connect();
           } catch {}
-        }, 1000);
+        }, getServerDisconnectReconnectDelayMs());
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
