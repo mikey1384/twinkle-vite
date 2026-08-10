@@ -22,6 +22,7 @@ import {
 import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import {
   useAppContext,
+  useExploreContext,
   useHomeContext,
   useInputContext,
   useNotiContext,
@@ -38,6 +39,10 @@ import {
   isClientUpdatePending
 } from '~/helpers/clientUpdate';
 import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
+import {
+  invalidateFeaturedSubjectsRequests,
+  loadLatestCanonicalFeaturedSubjects
+} from '~/helpers/featuredSubjects';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -146,6 +151,12 @@ export default function useInitSocket({
   const onSetFeedsOutdated = useHomeContext(
     (v) => v.actions.onSetFeedsOutdated
   );
+  const onSetFeaturedSubjectsLoaded = useHomeContext(
+    (v) => v.actions.onSetFeaturedSubjectsLoaded
+  );
+  const onLoadFeaturedSubjects = useExploreContext(
+    (v) => v.actions.onLoadFeaturedSubjects
+  );
   const onSetOnlinePresenceSnapshot = useChatContext(
     (v) => v.actions.onSetOnlinePresenceSnapshot
   );
@@ -170,6 +181,9 @@ export default function useInitSocket({
   );
   const countNewFeeds = useAppContext((v) => v.requestHelpers.countNewFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
+  const loadFeaturedSubjects = useAppContext(
+    (v) => v.requestHelpers.loadFeaturedSubjects
+  );
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
   const getInputState = useInputContext((v) => v.getInputState);
   const getNumberOfUnreadMessages = useAppContext(
@@ -640,7 +654,14 @@ export default function useInitSocket({
       handleStartUserActionCapture();
     }
 
-    function handleHomeOutdated() {
+    function handleHomeOutdated({
+      featuredSubjects = false
+    }: { featuredSubjects?: boolean } = {}) {
+      if (featuredSubjects === true) {
+        invalidateFeaturedSubjectsRequests();
+        void refreshFeaturedSubjects();
+        return;
+      }
       if (displayOrderRef.current !== 'desc') {
         onSetFeedsOutdated(false);
         pendingHydrateFromOutdatedRef.current = false;
@@ -656,6 +677,22 @@ export default function useInitSocket({
         return;
       }
       pendingHydrateFromOutdatedRef.current = true;
+    }
+
+    async function refreshFeaturedSubjects() {
+      const requestUserId = userIdRef.current;
+      try {
+        const subjects = await loadLatestCanonicalFeaturedSubjects({
+          load: loadFeaturedSubjects,
+          isCurrentOwner: () => userIdRef.current === requestUserId
+        });
+        if (!subjects) return;
+        onLoadFeaturedSubjects(subjects);
+        onSetFeaturedSubjectsLoaded(true);
+      } catch (error) {
+        if (userIdRef.current !== requestUserId) return;
+        console.error('Failed to refresh Featured Subjects:', error);
+      }
     }
 
     async function handleCheckVersion() {

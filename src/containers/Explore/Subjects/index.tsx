@@ -3,7 +3,13 @@ import Featured from './Featured';
 import Recommended from './Recommended';
 import MadeByUsers from './MadeByUsers';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useExploreContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
+import { loadLatestCanonicalFeaturedSubjects } from '~/helpers/featuredSubjects';
 
 export default function Subjects() {
   const canPinPlaylists = useKeyContext((v) => v.myState.canPinPlaylists);
@@ -68,6 +74,9 @@ export default function Subjects() {
   const onSetSubjectsLoaded = useExploreContext(
     (v) => v.actions.onSetSubjectsLoaded
   );
+  const onSetFeaturedSubjectsLoaded = useHomeContext(
+    (v) => v.actions.onSetFeaturedSubjectsLoaded
+  );
 
   useEffect(() => {
     const requestUserId = userId;
@@ -75,19 +84,35 @@ export default function Subjects() {
 
     async function init() {
       if (!loaded || userId !== prevUserId) {
-        handleLoadFeaturedSubjects();
-        handleLoadByUserSubjects();
-        handleLoadRecommendedSubjects();
-        if (!checkUserChange(requestUserId)) {
+        const results = await Promise.allSettled([
+          handleLoadFeaturedSubjects(),
+          handleLoadByUserSubjects(),
+          handleLoadRecommendedSubjects()
+        ]);
+        if (checkUserChange(requestUserId)) return;
+        for (const result of results) {
+          if (result.status === 'rejected') {
+            console.error('Failed to load Explore subjects:', result.reason);
+          }
+        }
+        const allCanonicalResponsesApplied = results.every(
+          (result) => result.status === 'fulfilled' && result.value === true
+        );
+        if (allCanonicalResponsesApplied) {
           onSetSubjectsLoaded(true);
         }
       }
     }
 
     async function handleLoadFeaturedSubjects() {
-      const subjects = await loadFeaturedSubjects();
-      if (checkUserChange(requestUserId)) return;
+      const subjects = await loadLatestCanonicalFeaturedSubjects({
+        load: loadFeaturedSubjects,
+        isCurrentOwner: () => !checkUserChange(requestUserId)
+      });
+      if (!subjects) return false;
       onLoadFeaturedSubjects(subjects);
+      onSetFeaturedSubjectsLoaded(true);
+      return true;
     }
 
     async function handleLoadByUserSubjects() {
@@ -100,6 +125,7 @@ export default function Subjects() {
         subjects: results,
         loadMoreButton
       });
+      return true;
     }
 
     async function handleLoadRecommendedSubjects() {
@@ -113,6 +139,7 @@ export default function Subjects() {
         subjects: results,
         loadMoreButton: loadMoreRecommendsButton
       });
+      return true;
     }
     // checkUserChange/loadFeaturedSubjects/loadByUserUploads/loadRecommendedUploads and context actions are stable helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -15,6 +15,7 @@ import {
   tabletMaxWidth
 } from '~/constants/css';
 import { css } from '@emotion/css';
+import { loadLatestCanonicalFeaturedSubjects } from '~/helpers/featuredSubjects';
 
 const portraitTabletMediaQuery = `(min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) and (orientation: portrait)`;
 
@@ -60,17 +61,16 @@ export default function FeaturedSubject({
 
     async function init() {
       try {
-        const subjects = await loadFeaturedSubjects();
-        if (checkUserChange(requestUserId)) return;
+        const subjects = await loadLatestCanonicalFeaturedSubjects({
+          load: loadFeaturedSubjects,
+          isCurrentOwner: () => !checkUserChange(requestUserId)
+        });
+        if (!subjects) return;
         onLoadFeaturedSubjects(subjects);
+        onSetFeaturedSubjectsLoaded(true);
       } catch (error) {
         if (checkUserChange(requestUserId)) return;
         console.error('Failed to load featured subjects:', error);
-        onLoadFeaturedSubjects([]);
-      } finally {
-        if (!checkUserChange(requestUserId)) {
-          onSetFeaturedSubjectsLoaded(true);
-        }
       }
     }
     // checkUserChange/loadFeaturedSubjects/onLoadFeaturedSubjects/onSetFeaturedSubjectsLoaded are stable context helpers.

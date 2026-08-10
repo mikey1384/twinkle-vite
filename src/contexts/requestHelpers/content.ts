@@ -9,6 +9,7 @@ import {
   getLiveObservedAt,
   withFeedRowsObservedAt
 } from '~/helpers/liveComments';
+import { invalidateFeaturedSubjectsRequests } from '~/helpers/featuredSubjects';
 
 const HOME_FEED_LOAD_MORE_TOTAL_TIMEOUT_MS = 60000;
 
@@ -2148,6 +2149,7 @@ export default function contentRequestHelpers({
           { selectedSubjects: selected },
           auth()
         );
+        invalidateFeaturedSubjectsRequests();
         return subjects;
       } catch (error) {
         return handleError(error);
