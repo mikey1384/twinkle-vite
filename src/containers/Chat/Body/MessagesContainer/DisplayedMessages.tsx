@@ -6,8 +6,8 @@ import React, {
   useRef,
   useState
 } from 'react';
-import Button from '~/components/Button';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
+import NewMessagesButton from '~/components/Buttons/NewMessagesButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
@@ -23,6 +23,10 @@ import { rewardReasons } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
+import {
+  countConfirmedRealtimeMessageArrivals,
+  getChatMessageIdentity
+} from './newMessageIndicator';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
@@ -198,7 +202,7 @@ export default function DisplayedMessages({
     visibleMessageIndexRef.current = 10;
   }, [selectedChannelId, subchannel?.id, selectedTab]);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
-  const [newUnseenMessage, setNewUnseenMessage] = useState(false);
+  const [unseenMessageCount, setUnseenMessageCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingMoreRecent, setLoadingMoreRecent] = useState(false);
   const MessagesDomRef = useRef<Record<string, any>>({});
@@ -262,6 +266,36 @@ export default function DisplayedMessages({
     isSearchActive,
     searchedMessageIds
   ]);
+
+  // Count arrivals by diffing the newest edge of the list instead of relying
+  // on per-message mount effects: messages that land in the same React commit
+  // would otherwise register as one. Only realtime arrivals carry isNewMessage
+  // (stamped in RECEIVE_MESSAGE), so canonical loads never count.
+  const prevNewestMessageIdRef = useRef<number | string | null>(null);
+  const unseenMessageScopeKey = `${selectedChannelId}:${selectedTab}:${
+    selectedTab === 'topic' ? appliedTopicId || 0 : subchannel?.id || 0
+  }:${isSearchActive ? 'search' : 'live'}`;
+  const prevUnseenMessageScopeKeyRef = useRef(unseenMessageScopeKey);
+  useEffect(() => {
+    const newestMessageId = getChatMessageIdentity(messages[0]);
+    if (prevUnseenMessageScopeKeyRef.current !== unseenMessageScopeKey) {
+      prevUnseenMessageScopeKeyRef.current = unseenMessageScopeKey;
+      prevNewestMessageIdRef.current = newestMessageId;
+      setUnseenMessageCount(0);
+      return;
+    }
+    const prevNewestMessageId = prevNewestMessageIdRef.current;
+    prevNewestMessageIdRef.current = newestMessageId;
+    if (scrolledToBottomRef.current) return;
+    const arrivedCount = countConfirmedRealtimeMessageArrivals({
+      messages,
+      previousNewestMessageId: prevNewestMessageId,
+      viewerUserId: userId
+    });
+    if (arrivedCount > 0) {
+      setUnseenMessageCount((count) => count + arrivedCount);
+    }
+  }, [messages, unseenMessageScopeKey, userId]);
 
   const loadMoreButtonShown = useMemo(() => {
     if (selectedTab === 'topic') {
@@ -584,7 +618,7 @@ export default function DisplayedMessages({
       }
 
       if (scrollTop >= unseenButtonThreshold) {
-        setNewUnseenMessage(false);
+        setUnseenMessageCount(0);
       }
       setShowGoToBottom(scrollTop < -10000);
     }
@@ -723,8 +757,8 @@ export default function DisplayedMessages({
                 isReconnecting
                   ? 'Reconnecting...'
                   : isLoadingChannel || isConnecting
-                  ? `Loading...`
-                  : ''
+                    ? `Loading...`
+                    : ''
               }
             />
           </div>
@@ -740,19 +774,16 @@ export default function DisplayedMessages({
                 zIndex: 1000
               }}
             >
-              {newUnseenMessage ? (
-                <Button
-                  variant="solid"
-                  tone="raised"
-                  color="orange"
-                  style={{ opacity: 0.9 }}
+              {unseenMessageCount > 0 ? (
+                <NewMessagesButton
+                  count={unseenMessageCount}
+                  theme={displayedThemeColor}
                   onClick={() => {
-                    setNewUnseenMessage(false);
+                    setUnseenMessageCount(0);
                     onScrollToBottom();
+                    scrolledToBottomRef.current = true;
                   }}
-                >
-                  New Message
-                </Button>
+                />
               ) : showGoToBottom ? (
                 <GoToBottomButton
                   theme={displayedThemeColor}
@@ -882,9 +913,9 @@ export default function DisplayedMessages({
   );
 
   function handleReceiveNewMessage() {
-    if (MessagesRef.current && !scrolledToBottomRef.current) {
-      setNewUnseenMessage(true);
-    } else {
+    // Counting happens in the messages-diff effect above; this only keeps the
+    // view pinned when the user is already at the bottom.
+    if (!MessagesRef.current || scrolledToBottomRef.current) {
       onScrollToBottom();
     }
   }

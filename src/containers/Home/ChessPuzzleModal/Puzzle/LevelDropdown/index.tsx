@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import DropdownButton from './DropdownButton';
 import DropdownMenu from './DropdownMenu';
+import { useOutsideClick } from '~/helpers/hooks';
 
 export interface Item {
   label: string;
@@ -30,21 +31,14 @@ export default function LevelDropdown({
   const menuRef = React.useRef<HTMLUListElement | null>(null);
   const didInitialScrollRef = React.useRef<boolean>(false);
 
-  useEffect(() => {
-    function handleOutside(e: MouseEvent | TouchEvent) {
-      if (!open) return;
-      const target = e.target as Node;
-      if (btnRef.current && btnRef.current.contains(target)) return;
-      if (menuRef.current && menuRef.current.contains(target)) return;
-      setOpen(false);
-    }
-    document.addEventListener('mousedown', handleOutside);
-    document.addEventListener('touchstart', handleOutside, { passive: true });
-    return () => {
-      document.removeEventListener('mousedown', handleOutside);
-      document.removeEventListener('touchstart', handleOutside);
-    };
-  }, [open]);
+  // Capture-phase outside detection (same as the shared DropdownList): the
+  // Modal backdrop stops bubble-phase mousedown/touchstart propagation, so
+  // plain document listeners never fire for taps inside a modal.
+  const outsideClickRefs = useMemo(() => [btnRef, menuRef], []);
+  useOutsideClick(outsideClickRefs, () => setOpen(false), {
+    capture: true,
+    enabled: open
+  });
 
   // Anchor positioning and viewport updates
   useEffect(() => {

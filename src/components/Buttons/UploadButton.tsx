@@ -10,6 +10,7 @@ export default function UploadButton({
   onFilesSelect,
   accept,
   multiple = false,
+  allowMultipleGenericFileSelection = false,
   disabled = false,
   icon = 'upload',
   iconSize = 'lg',
@@ -32,6 +33,7 @@ export default function UploadButton({
   onFilesSelect?: (files: File[]) => void;
   accept?: string;
   multiple?: boolean;
+  allowMultipleGenericFileSelection?: boolean;
   disabled?: boolean;
 
   icon?: IconName;
@@ -70,14 +72,15 @@ export default function UploadButton({
 
   const appliedColor = color || defaultButtonColor;
   const appliedHoverColor = hoverColor || defaultHoverColor || appliedColor;
-  const { variant: overrideVariant, tone: overrideTone, ...restButtonProps } =
-    buttonProps;
+  const {
+    variant: overrideVariant,
+    tone: overrideTone,
+    ...restButtonProps
+  } = buttonProps;
   const resolvedVariant =
-    overrideVariant ??
-    (filled ? 'solid' : transparent ? 'ghost' : 'soft');
+    overrideVariant ?? (filled ? 'solid' : transparent ? 'ghost' : 'soft');
   const resolvedTone =
-    overrideTone ??
-    (resolvedVariant === 'soft' ? 'raised' : undefined);
+    overrideTone ?? (resolvedVariant === 'soft' ? 'raised' : undefined);
 
   return (
     <>
@@ -107,6 +110,7 @@ export default function UploadButton({
         onFilesSelect={onFilesSelect}
         accept={accept}
         multiple={multiple}
+        allowMultipleGenericFileSelection={allowMultipleGenericFileSelection}
       />
     </>
   );

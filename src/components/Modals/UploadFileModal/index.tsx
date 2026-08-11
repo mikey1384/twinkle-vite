@@ -30,7 +30,8 @@ import {
 } from '~/constants/defaultValues';
 import Textarea from '~/components/Texts/Textarea';
 import ImageAttachmentsBar, {
-  ImageAttachment
+  ImageAttachment,
+  swapAttachmentWithNeighbor
 } from '~/components/ImageAttachmentsBar';
 import { appendImageMarkdownToText } from '~/helpers/imageAttachmentEmbedHelpers';
 import type { UploadCompletionMeta } from '~/types';
@@ -490,6 +491,15 @@ function UploadFileModal({
                   removeDisabled={isModalInteractionLocked}
                   onEmbedAttachment={handleEmbedImageAttachment}
                   embedDisabled={isModalInteractionLocked}
+                  // In custom upload mode (Build editor) the submit order comes
+                  // from the selected-files list, not the preview bar, so
+                  // reordering there would be cosmetic and misleading.
+                  onReorder={
+                    isCustomUploadMode
+                      ? undefined
+                      : handleReorderImageAttachment
+                  }
+                  reorderDisabled={isModalInteractionLocked}
                 />
                 <Textarea
                   autoFocus
@@ -715,6 +725,16 @@ function UploadFileModal({
     removeImageAttachmentById(attachmentId);
     setAiFileNotSupported(false);
     setMultiImageUploadErrorText('');
+  }
+
+  function handleReorderImageAttachment(
+    attachmentId: string,
+    direction: 'left' | 'right'
+  ) {
+    if (isModalInteractionLocked) return;
+    setImageAttachments((prev) =>
+      swapAttachmentWithNeighbor(prev, attachmentId, direction)
+    );
   }
 
   async function handleEmbedImageAttachment(attachmentId: string) {

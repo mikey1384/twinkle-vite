@@ -125,7 +125,7 @@ function InputForm({
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [multiSelectAlertShown, setMultiSelectAlertShown] = useState(false);
   const [multiSelectAlertContent, setMultiSelectAlertContent] = useState(
-    'Please upload non-image files one at a time using “Choose File.”'
+    'Please select one non-image file at a time.'
   );
   const [photoUploadModalShown, setPhotoUploadModalShown] = useState(false);
   const [photoUploadFileObj, setPhotoUploadFileObj] = useState<
@@ -144,18 +144,13 @@ function InputForm({
     [parent.contentId, targetCommentId]
   );
 
-  const {
-    savingState,
-    saveDraft,
-    deleteDraft,
-    loadDraft,
-    cancelPendingSave
-  } = useDraft({
-    contentType: 'comment',
-    rootType: targetCommentId ? 'comment' : parent.contentType,
-    rootId: targetCommentId || parent.contentId,
-    enabled: !!isComment && !!userId && !disableReason
-  });
+  const { savingState, saveDraft, deleteDraft, loadDraft, cancelPendingSave } =
+    useDraft({
+      contentType: 'comment',
+      rootType: targetCommentId ? 'comment' : parent.contentType,
+      rootId: targetCommentId || parent.contentId,
+      enabled: !!isComment && !!userId && !disableReason
+    });
 
   useEffect(() => {
     return () => {
@@ -294,8 +289,11 @@ function InputForm({
       // These formats may not be classified as 'image' but are images that need conversion
       if (needsImageConversion(fileObj.name)) {
         try {
-          const { file: convertedFile, dataUrl, converted } =
-            await convertToWebFriendlyFormat(fileObj);
+          const {
+            file: convertedFile,
+            dataUrl,
+            converted
+          } = await convertToWebFriendlyFormat(fileObj);
           if (converted) {
             // Note: We don't re-check size after conversion. The user selected a file
             // within their limit - they shouldn't be penalized if our conversion inflates it.
@@ -340,22 +338,22 @@ function InputForm({
                 if (img && typeof img.toDataURL === 'function') {
                   const outputFormat = extension === 'png' ? 'png' : 'jpeg';
                   const imageUrl = img.toDataURL(`image/${outputFormat}`);
-	                  const dataUri = imageUrl.replace(
-	                    /^data:image\/\w+;base64,/,
-	                    ''
-	                  );
-	                  const binary = window.atob(dataUri);
-	                  const bytes = new Uint8Array(binary.length);
-	                  for (let i = 0; i < binary.length; i += 1) {
-	                    bytes[i] = binary.charCodeAt(i);
-	                  }
-	                  const outputFileName =
-	                    outputFormat === 'png'
-	                      ? fileObj.name
-	                      : fileObj.name.replace(/\.[^.]+$/, '.jpg');
-	                  const file = new File([bytes], outputFileName, {
-	                    type: `image/${outputFormat}`
-	                  });
+                  const dataUri = imageUrl.replace(
+                    /^data:image\/\w+;base64,/,
+                    ''
+                  );
+                  const binary = window.atob(dataUri);
+                  const bytes = new Uint8Array(binary.length);
+                  for (let i = 0; i < binary.length; i += 1) {
+                    bytes[i] = binary.charCodeAt(i);
+                  }
+                  const outputFileName =
+                    outputFormat === 'png'
+                      ? fileObj.name
+                      : fileObj.name.replace(/\.[^.]+$/, '.jpg');
+                  const file = new File([bytes], outputFileName, {
+                    type: `image/${outputFormat}`
+                  });
                   onSetCommentAttachment({
                     attachment: {
                       file,
@@ -582,6 +580,10 @@ function InputForm({
               onFileSelect={handleUploadButtonFileSelect}
               onFilesSelect={handleUploadButtonFilesSelect}
               multiple
+              // Let the generic device picker multi-select too; all-image
+              // selections open the photo modal and mixed selections get the
+              // existing guidance alert in handleUploadButtonFilesSelect.
+              allowMultipleGenericFileSelection
               disabled={uploadDisabled || submitting}
               color={buttonColor}
               hoverColor={buttonHoverColor}
@@ -795,16 +797,14 @@ function InputForm({
 
     if (imageFiles.length > 0) {
       setMultiSelectAlertContent(
-        'Please upload photos by themselves, or upload non-image files one at a time using “Choose File.”'
+        'Please select photos by themselves, or select one non-image file at a time.'
       );
       setMultiSelectAlertShown(true);
       return;
     }
 
     if (files.length > 1) {
-      setMultiSelectAlertContent(
-        'Please upload non-image files one at a time using “Choose File.”'
-      );
+      setMultiSelectAlertContent('Please select one non-image file at a time.');
       setMultiSelectAlertShown(true);
       return;
     }

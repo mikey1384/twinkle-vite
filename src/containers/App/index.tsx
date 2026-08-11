@@ -1469,8 +1469,11 @@ export default function App() {
         twoPeople: currentChannel.twoPeople,
         pathId: currentChannel.pathId
       };
+      // No client-side flags on the relay payload: the socket server reloads
+      // the canonical message row and discards anything else. "New message"
+      // stamping happens on the receiving client in RECEIVE_MESSAGE.
       socket.emit('new_chat_message', {
-        message: { ...message, isNewMessage: true },
+        message,
         channel: channelData
       });
     }

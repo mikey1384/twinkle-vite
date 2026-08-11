@@ -193,10 +193,10 @@ export default function useOptimisticSave({
           channel_type: isZeroChat
             ? 'ai_zero'
             : isCielChat
-            ? 'ai_ciel'
-            : currentChannel?.twoPeople
-            ? 'dm'
-            : 'group',
+              ? 'ai_ciel'
+              : currentChannel?.twoPeople
+                ? 'dm'
+                : 'group',
           has_attachment: false
         });
       }
@@ -222,7 +222,6 @@ export default function useOptimisticSave({
       const messageToSendOverSocket = {
         ...message,
         uploaderLevel: level,
-        isNewMessage: true,
         targetSubject: subjectId
           ? targetSubject || currentChannel?.topicObj[subjectId]
           : null,

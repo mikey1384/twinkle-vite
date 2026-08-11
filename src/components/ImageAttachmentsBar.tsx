@@ -4,7 +4,10 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { setImageAttachmentDragData } from '~/helpers/imageAttachmentEmbedHelpers';
 
-export type ImageAttachmentStatus = 'selected' | 'uploading' | 'ready' | 'error';
+export { swapAttachmentWithNeighbor } from '~/helpers/imageAttachmentOrder';
+
+export type ImageAttachmentStatus =
+  'selected' | 'uploading' | 'ready' | 'error';
 
 export interface ImageAttachment {
   id: string;
@@ -23,15 +26,34 @@ export default function ImageAttachmentsBar({
   onRemove,
   removeDisabled,
   onEmbedAttachment,
-  embedDisabled
+  embedDisabled,
+  onReorder,
+  reorderDisabled
 }: {
   attachments: ImageAttachment[];
   onRemove: (attachmentId: string) => void;
   removeDisabled?: boolean;
   onEmbedAttachment?: (attachmentId: string) => void;
   embedDisabled?: boolean;
+  onReorder?: (attachmentId: string, direction: 'left' | 'right') => void;
+  reorderDisabled?: boolean;
 }) {
   if (attachments.length === 0) return null;
+
+  const showReorderControls = !!onReorder && attachments.length > 1;
+  const reorderButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    bottom: '0.3rem',
+    padding: 0,
+    width: '2.3rem',
+    height: '2.3rem',
+    minWidth: 0,
+    borderRadius: '999px',
+    background: Color.black(0.55),
+    color: '#fff',
+    opacity: reorderDisabled ? 0.35 : 1,
+    zIndex: 2
+  };
 
   return (
     <div
@@ -43,7 +65,7 @@ export default function ImageAttachmentsBar({
         marginBottom: '1rem'
       }}
     >
-      {attachments.map((attachment) => (
+      {attachments.map((attachment, index) => (
         <div
           key={attachment.id}
           draggable={
@@ -108,13 +130,37 @@ export default function ImageAttachmentsBar({
               borderRadius: '999px',
               background: Color.black(0.55),
               color: '#fff',
-              opacity: removeDisabled ? 0.35 : 1
+              opacity: removeDisabled ? 0.35 : 1,
+              zIndex: 2
             }}
             aria-label={`Remove ${attachment.fileName}`}
           >
             <Icon icon="times" />
           </Button>
-          {(attachment.status === 'uploading' || attachment.status === 'error') && (
+          {showReorderControls && index > 0 && (
+            <Button
+              variant="ghost"
+              disabled={reorderDisabled}
+              onClick={() => onReorder?.(attachment.id, 'left')}
+              style={{ ...reorderButtonStyle, left: '0.3rem' }}
+              aria-label={`Move ${attachment.fileName} left`}
+            >
+              <Icon icon="chevron-left" />
+            </Button>
+          )}
+          {showReorderControls && index < attachments.length - 1 && (
+            <Button
+              variant="ghost"
+              disabled={reorderDisabled}
+              onClick={() => onReorder?.(attachment.id, 'right')}
+              style={{ ...reorderButtonStyle, right: '0.3rem' }}
+              aria-label={`Move ${attachment.fileName} right`}
+            >
+              <Icon icon="chevron-right" />
+            </Button>
+          )}
+          {(attachment.status === 'uploading' ||
+            attachment.status === 'error') && (
             <div
               style={{
                 position: 'absolute',
@@ -125,7 +171,8 @@ export default function ImageAttachmentsBar({
                     : Color.black(0.28),
                 display: 'flex',
                 alignItems: 'flex-end',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                zIndex: 1
               }}
             >
               {attachment.status === 'uploading' && (

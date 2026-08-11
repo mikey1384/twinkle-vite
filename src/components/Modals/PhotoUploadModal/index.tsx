@@ -6,7 +6,8 @@ import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
 import Textarea from '~/components/Texts/Textarea';
 import ImageAttachmentsBar, {
-  ImageAttachment
+  ImageAttachment,
+  swapAttachmentWithNeighbor
 } from '~/components/ImageAttachmentsBar';
 import { useAppContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
@@ -196,6 +197,8 @@ export default function PhotoUploadModal({
                 removeDisabled={multiImageUploading || !!embeddingAttachmentId}
                 onEmbedAttachment={handleEmbedImageAttachment}
                 embedDisabled={multiImageUploading || !!embeddingAttachmentId}
+                onReorder={handleReorderImageAttachment}
+                reorderDisabled={multiImageUploading || !!embeddingAttachmentId}
               />
               <Textarea
                 autoFocus
@@ -283,6 +286,16 @@ export default function PhotoUploadModal({
     if (multiImageUploading || !!embeddingAttachmentId) return;
     removeImageAttachmentById(attachmentId);
     setMultiImageUploadErrorText('');
+  }
+
+  function handleReorderImageAttachment(
+    attachmentId: string,
+    direction: 'left' | 'right'
+  ) {
+    if (multiImageUploading || !!embeddingAttachmentId) return;
+    setImageAttachments((prev) =>
+      swapAttachmentWithNeighbor(prev, attachmentId, direction)
+    );
   }
 
   async function handleEmbedImageAttachment(attachmentId: string) {

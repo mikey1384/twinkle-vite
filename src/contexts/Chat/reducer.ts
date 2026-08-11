@@ -374,16 +374,22 @@ function removeConfirmedRealtimeActivity({
 function toConfirmedRealtimeMessage({
   message,
   messageId,
-  eventSequence
+  eventSequence,
+  isNewMessage
 }: {
   message: any;
   messageId: number | string;
   eventSequence?: number;
+  isNewMessage?: boolean;
 }) {
   return {
     ...message,
     id: messageId,
     isLoaded: true,
+    // Stamped on the receiving client, not trusted from the wire: the socket
+    // relay rebuilds browser messages from the canonical DB row, so any flag a
+    // sender attaches never survives the trip.
+    ...(isNewMessage ? { isNewMessage: true } : {}),
     confirmedRealtimeSequence: Math.max(Number(eventSequence || 0), 1)
   };
 }
@@ -5242,7 +5248,8 @@ export default function ChatReducer(
             [messageId]: toConfirmedRealtimeMessage({
               message: action.message,
               messageId,
-              eventSequence: action.eventSequence
+              eventSequence: action.eventSequence,
+              isNewMessage: !action.isMyMessage
             })
           };
       const members = action.newMembers
@@ -5291,7 +5298,8 @@ export default function ChatReducer(
                 [messageId]: toConfirmedRealtimeMessage({
                   message: action.message,
                   messageId,
-                  eventSequence: action.eventSequence
+                  eventSequence: action.eventSequence,
+                  isNewMessage: !action.isMyMessage
                 })
               },
               ...(!action.isMyMessage
