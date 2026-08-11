@@ -338,6 +338,19 @@ export default function ChatActions(dispatch: Dispatch) {
         feedId
       });
     },
+    onUpdateAICardOfferNoticeStatus({
+      offerId,
+      status
+    }: {
+      offerId: number;
+      status: 'accepted' | 'withdrawn';
+    }) {
+      return dispatch({
+        type: 'UPDATE_AI_CARD_OFFER_NOTICE_STATUS',
+        offerId,
+        status
+      });
+    },
     onCallReceptionConfirm(channelId: number) {
       return dispatch({
         type: 'CONFIRM_CALL_RECEPTION',

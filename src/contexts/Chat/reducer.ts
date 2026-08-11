@@ -33,6 +33,7 @@ import {
   applyCanonicalTopicSettings
 } from './canonicalSettingsState';
 import { applyCanonicalAiMessageFailure } from './aiMessageFailureState';
+import { updateAICardOfferNoticeStatusMap } from '~/helpers/aiCardOfferNotice';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -1781,6 +1782,19 @@ export default function ChatReducer(
         timeStamp: action.timeStamp,
         userId: action.userId
       });
+    // Terminal outcome of an offer, keyed by offer id, so the DM offer-notice
+    // message can flip to accepted/withdrawn live. Statuses only move
+    // open -> terminal, so overlaying this on the message's hydrated payload
+    // can never regress it.
+    case 'UPDATE_AI_CARD_OFFER_NOTICE_STATUS':
+      return {
+        ...state,
+        aiCardOfferNoticeStatusById: updateAICardOfferNoticeStatusMap({
+          current: state.aiCardOfferNoticeStatusById,
+          offerId: action.offerId,
+          status: action.status
+        })
+      };
     case 'AI_CARD_OFFER_WITHDRAWAL': {
       return {
         ...state,

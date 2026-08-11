@@ -28,6 +28,9 @@ export default function useAICardSocket() {
   const onAICardOfferWithdrawal = useChatContext(
     (v) => v.actions.onAICardOfferWithdrawal
   );
+  const onUpdateAICardOfferNoticeStatus = useChatContext(
+    (v) => v.actions.onUpdateAICardOfferNoticeStatus
+  );
   const onCancelTransaction = useChatContext(
     (v) => v.actions.onCancelTransaction
   );
@@ -363,6 +366,9 @@ export default function useAICardSocket() {
     }) {
       const currentUserId = userIdRef.current;
       onAICardOfferWithdrawal(feedId);
+      if (offerId) {
+        onUpdateAICardOfferNoticeStatus({ offerId, status: 'withdrawn' });
+      }
       if (offererId === currentUserId) {
         onWithdrawOutgoingOffer(offerId);
         if (Number(card?.id) === Number(cardId)) {
@@ -401,6 +407,9 @@ export default function useAICardSocket() {
       sellerId: number;
     }) {
       const currentUserId = userIdRef.current;
+      if (offerId) {
+        onUpdateAICardOfferNoticeStatus({ offerId, status: 'accepted' });
+      }
       if (card.ownerId === currentUserId) {
         onWithdrawOutgoingOffer(offerId);
         onAddMyAICard({

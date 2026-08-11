@@ -7,21 +7,21 @@ interface BuildCollaborationDirectMessage {
   message?: Record<string, any> | null;
 }
 
-export function useCollaborationDirectMessageUpdater() {
+export function useDirectMessageResponseUpdater() {
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
 
-  function updateBuildCollaborationDirectMessage({
+  function updateDirectMessageResponse({
     directMessage
   }: {
     directMessage?: BuildCollaborationDirectMessage | null;
   }) {
     if (!directMessage?.message || !directMessage?.channel?.id) return;
-    if (directMessage.isNew === false) return;
-    if (directMessage.isNew) {
-      socket.emit('join_chat_group', directMessage.channel.id);
-    }
+    // The API response is canonical and RECEIVE_MSG_ON_DIFF_CHANNEL dedupes by
+    // message id. Apply it for both new and previously hidden DMs so the sender
+    // never depends on winning a race with the socket relay.
+    socket.emit('join_chat_group', directMessage.channel.id);
     onReceiveMessageOnDifferentChannel({
       message: directMessage.message,
       channel: directMessage.channel,
@@ -31,5 +31,10 @@ export function useCollaborationDirectMessageUpdater() {
     });
   }
 
-  return updateBuildCollaborationDirectMessage;
+  return updateDirectMessageResponse;
 }
+
+// Existing Build callers keep the domain name while AI-card offers reuse the
+// same canonical response-to-chat-state boundary.
+export const useCollaborationDirectMessageUpdater =
+  useDirectMessageResponseUpdater;

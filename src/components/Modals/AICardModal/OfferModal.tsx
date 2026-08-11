@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
+import { useDirectMessageResponseUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 
 export default function OfferModal({
   askPrice,
@@ -31,6 +32,7 @@ export default function OfferModal({
   const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const updateDirectMessageResponse = useDirectMessageResponseUpdater();
   const banned = useKeyContext((v) => v.myState.banned);
   const askPriceIsLargerThanOne = askPrice > 1;
 
@@ -117,6 +119,7 @@ export default function OfferModal({
     setPosting(true);
     try {
       const result = await postAICardOffer({ cardId, price: amount });
+      updateDirectMessageResponse({ directMessage: result.directMessage });
       const confirmedOffer = result.offer;
       const confirmedOfferer = {
         ...confirmedOffer.user,

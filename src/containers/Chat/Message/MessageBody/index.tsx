@@ -39,6 +39,9 @@ import GameOverMessage from './GameOverMessage';
 import TopicMessagePreview from './TopicMessagePreview';
 import TopicStartNotification from './TopicStartNotification';
 import TransferMessage from './TransferMessage';
+import AICardOfferMessage from './AICardOfferMessage';
+import { parseMessageSettings } from './messageSettings';
+import { normalizeAICardOfferMessagePayload } from '~/helpers/aiCardOfferNotice';
 import type { MessageBodyProps } from './types';
 import useOptimisticSave from './hooks/useOptimisticSave';
 import WordleResult from './WordleResult';
@@ -274,6 +277,11 @@ function MessageBody({
 
   const hasOmokBoardState = useMemo(() => Boolean(omokState), [omokState]);
   const hasChessBoardState = useMemo(() => Boolean(chessState), [chessState]);
+  const aiCardOfferDetails = useMemo(() => {
+    if (message?.rootType !== 'aiCardOffer') return null;
+    const payload = parseMessageSettings(message?.settings)?.aiCardOffer;
+    return normalizeAICardOfferMessagePayload(payload);
+  }, [message?.rootType, message?.settings]);
   const gameTypeForMessage = useMemo(() => {
     if (hasOmokBoardState) return 'omok';
     if (hasChessBoardState) return 'chess';
@@ -671,6 +679,19 @@ function MessageBody({
         myUsername={myUsername}
         partner={partner}
         transferDetails={transferDetails}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+      />
+    );
+  }
+
+  if (aiCardOfferDetails) {
+    return (
+      <AICardOfferMessage
+        myId={myId}
+        myUsername={myUsername}
+        offerDetails={aiCardOfferDetails}
+        senderUsername={appliedUsername}
+        timeStamp={message.timeStamp}
         onSetAICardModalCardId={onSetAICardModalCardId}
       />
     );

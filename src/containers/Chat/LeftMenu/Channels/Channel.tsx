@@ -334,6 +334,9 @@ export default function Channel({
       if (rootType === 'buildThumbnailSuggestion') {
         return <span>{messageSender}: suggested a thumbnail</span>;
       }
+      if (rootType === 'aiCardOffer') {
+        return <span>{messageSender}: made an offer on a card</span>;
+      }
       return <span>{'\u00a0'}</span>;
     }
   }, [

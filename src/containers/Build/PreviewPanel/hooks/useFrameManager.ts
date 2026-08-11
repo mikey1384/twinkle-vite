@@ -397,7 +397,10 @@ export function useFrameManager({
           canonicalPreviewSrc
         )
       ) {
-        const bridgeLoadId = createPreviewFrameBridgeLoadId();
+        // This changes only the credential carried by the current navigation.
+        // Keep the load identity stable so the frame manager can deliver the
+        // token over the bridge without replacing the running iframe.
+        const bridgeLoadId = currentNavigation.bridgeLoadId;
         const nextSrc = refreshPreviewFrameNavigationQuery({
           bridgeLoadId,
           canonicalSrc: canonicalPreviewSrc,
@@ -661,6 +664,27 @@ export function useFrameManager({
           }
         };
       }
+      return;
+    }
+
+    const activeMeta = previewFrameMetaRef.current[activeFrame];
+    const activeFrameHasTokenOnlyRefresh =
+      isPreviewFrameTokenOnlyRefresh(activeSrc, previewSrc) &&
+      hasPreviewFrameRefreshToken(activeSrc) &&
+      hasPreviewFrameRefreshToken(previewSrc) &&
+      canUseSameOriginBuildPreviewSandbox(activeSrc) &&
+      activeMeta.viewerKey === viewerKey &&
+      activeMeta.hasLoaded;
+    if (activeFrameHasTokenOnlyRefresh) {
+      postPreviewTokenRefreshToFrame({
+        previewNonce: activeMeta.messageNonce,
+        previewSrc,
+        targetSrc: activeSrc,
+        targetWindow:
+          activeFrame === 'primary'
+            ? primaryIframeRef.current?.contentWindow
+            : secondaryIframeRef.current?.contentWindow
+      });
       return;
     }
 

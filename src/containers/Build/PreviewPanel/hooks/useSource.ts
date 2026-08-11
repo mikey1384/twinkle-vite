@@ -214,16 +214,33 @@ export function useWorkspacePreviewSrc({
   userId: number | null;
   previewAuth: PreviewHostBridgeAuth;
 }) {
-  const [workspacePreviewSrc, setWorkspacePreviewSrc] = useState<string | null>(
-    null
-  );
+  const [workspacePreviewSrcState, setWorkspacePreviewSrcState] = useState<{
+    src: string;
+    expiresAt?: number;
+  } | null>(null);
+  const workspacePreviewRefreshLeadMs = 25 * 1000;
+  const [workspacePreviewRefreshNonce, setWorkspacePreviewRefreshNonce] =
+    useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
+    function applyWorkspacePreviewSrcState(nextState: {
+      src: string;
+      expiresAt?: number;
+    }) {
+      setWorkspacePreviewSrcState((currentState) =>
+        currentState &&
+        currentState.src === nextState.src &&
+        currentState.expiresAt === nextState.expiresAt
+          ? currentState
+          : nextState
+      );
+    }
+
     async function resolveWorkspacePreviewSrc() {
       if (runtimeOnly) {
-        setWorkspacePreviewSrc(null);
+        setWorkspacePreviewSrcState(null);
         return;
       }
       if (viewMode !== 'preview') {
@@ -238,21 +255,30 @@ export function useWorkspacePreviewSrc({
       );
 
       if (!userId) {
-        setWorkspacePreviewSrc(versionedPreviewSrc);
+        applyWorkspacePreviewSrcState({ src: versionedPreviewSrc });
         return;
       }
 
       try {
         const token = await ensureBuildApiToken(['preview:read'], previewAuth);
         if (cancelled) return;
-        const separator = versionedPreviewSrc.includes('?') ? '&' : '?';
-        setWorkspacePreviewSrc(
-          `${versionedPreviewSrc}${separator}buildApiToken=${encodeURIComponent(token)}`
-        );
+        const tokenState = previewAuth.buildApiTokenRef.current;
+        const tokenExpiresAt =
+          tokenState && tokenState.token === token
+            ? Number(tokenState.expiresAt || 0)
+            : 0;
+        applyWorkspacePreviewSrcState({
+          src: appendPreviewQueryParam(
+            versionedPreviewSrc,
+            'buildApiToken',
+            token
+          ),
+          expiresAt: tokenExpiresAt || undefined
+        });
       } catch (error) {
         if (cancelled) return;
         console.error('Failed to resolve preview access token:', error);
-        setWorkspacePreviewSrc(versionedPreviewSrc);
+        applyWorkspacePreviewSrcState({ src: versionedPreviewSrc });
       }
     }
 
@@ -271,8 +297,52 @@ export function useWorkspacePreviewSrc({
     previewRevision,
     runtimeOnly,
     userId,
-    viewMode
+    viewMode,
+    workspacePreviewRefreshNonce
   ]);
 
-  return workspacePreviewSrc;
+  useEffect(() => {
+    if (!workspacePreviewSrcState?.expiresAt) {
+      return;
+    }
+
+    const refreshDelayMs = Math.max(
+      0,
+      workspacePreviewSrcState.expiresAt * 1000 -
+        Date.now() -
+        workspacePreviewRefreshLeadMs
+    );
+    // Same-origin frames take token-only refreshes in place over the preview
+    // bridge (preview:token-refresh) with no reload; cross-origin signed
+    // frames cannot be bridged — a refresh remounts them and resets a running
+    // app mid-session — so those defer while the player is focused inside the
+    // frame, accepting stale-token risk on late lazy fetches as the lesser harm.
+    const refreshWouldRemount = !canUseSameOriginBuildPreviewSandbox(
+      workspacePreviewSrcState.src
+    );
+    let refreshTimeout = 0;
+    const scheduleRefresh = (delayMs: number) => {
+      refreshTimeout = window.setTimeout(() => {
+        if (
+          refreshWouldRemount &&
+          document.activeElement instanceof HTMLIFrameElement
+        ) {
+          scheduleRefresh(ACTIVE_FRAME_REFRESH_RETRY_MS);
+          return;
+        }
+        setWorkspacePreviewRefreshNonce((currentNonce) => currentNonce + 1);
+      }, delayMs);
+    };
+    scheduleRefresh(refreshDelayMs);
+
+    return () => {
+      window.clearTimeout(refreshTimeout);
+    };
+  }, [
+    workspacePreviewRefreshLeadMs,
+    workspacePreviewSrcState?.expiresAt,
+    workspacePreviewSrcState?.src
+  ]);
+
+  return workspacePreviewSrcState?.src ?? null;
 }

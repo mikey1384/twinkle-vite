@@ -67,29 +67,6 @@ const bottomInterfaceCSS = css`
       }
     }
   }
-  /* Shared prompts keep their liker line stacked under the Like button that
-     produces it, so the row aligns to the top instead of centering. */
-  &.bottom-interface--shared-topic {
-    align-items: flex-start;
-
-    .left {
-      align-items: flex-start;
-      gap: 1.1rem;
-      flex-wrap: wrap;
-    }
-
-    .content-panel__shared-topic-like-action {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.45rem;
-    }
-
-    .content-panel__shared-topic-like-action .content-panel__likes {
-      margin-left: 0.1rem;
-      line-height: 1.2;
-    }
-  }
   /* Hide Like/Comment labels on tablet and smaller */
   @media (max-width: ${tabletMaxWidth}) {
     .left .button-label {
@@ -350,25 +327,16 @@ export default function BottomInterface({
     return Number(numComments) > 0 || Number(numReplies) > 0;
   }, [autoExpand, commentsShown, numComments, numReplies]);
 
-  const marginBottom = useMemo(() => {
-    return likes.length > 0 &&
-      !(rewards.length > 0) &&
-      !commentsShown &&
-      !xpRewardInterfaceShown
-      ? '0.5rem'
-      : '';
-  }, [likes?.length, rewards?.length, commentsShown, xpRewardInterfaceShown]);
-
   if (isEditing || isNotification) {
     return null;
   }
 
   const deviceIsTablet = isTablet(navigator);
-  const isSharedTopic = contentType === 'sharedTopic';
-  const sharedTopicLikeStatusShown = isSharedTopic && likes.length > 0;
-  // A shared prompt shows its likers next to the Like button, so the generic
-  // stats row would otherwise be an empty strip of margin.
-  const bottomStatsRowShown = !isSharedTopic || viewCountShown;
+  // The likers/view-count strip renders only when it has something to say.
+  // It used to render unconditionally, and its empty margins created a
+  // phantom gap under the action row that per-content-type hacks (like the
+  // shared-prompt likers-under-the-Like-button column) then fought over.
+  const bottomStatsRowShown = likes.length > 0 || viewCountShown;
   const commentActionLabel = getContentPanelCommentActionLabel(contentType);
   const rewardActionSupported =
     isContentPanelRewardActionSupported(contentType);
@@ -391,38 +359,19 @@ export default function BottomInterface({
     <div
       className="bottom-interface"
       style={{
-        marginBottom
+        // The gap below the action row is owned here, unconditionally. It used
+        // to be whatever content happened to render underneath (the likers
+        // strip, a recommendation banner), so the comment input sat flush
+        // against the Like button whenever that content was absent.
+        marginBottom: '1.5rem'
       }}
     >
       <div
         style={{ marginTop: secretHidden ? '0.5rem' : '1.5rem' }}
-        className={`${bottomInterfaceCSS}${isSharedTopic ? ' bottom-interface--shared-topic content-panel__shared-topic-actions' : ''}`}
+        className={`${bottomInterfaceCSS}`}
       >
         <div className="left">
-          {!secretHidden && isSharedTopic ? (
-            <div className="content-panel__shared-topic-like-action">
-              <LikeButton
-                contentType={contentType}
-                contentId={contentId}
-                likes={likes}
-                rootType={contentObj.rootType}
-                key="likeButton"
-                onClick={handleLikeClick}
-                theme={theme}
-                labelClassName="button-label"
-                hideLabel={deviceIsTablet}
-              />
-              {sharedTopicLikeStatusShown && (
-                <Likers
-                  className="content-panel__likes"
-                  userId={userId}
-                  likes={likes}
-                  onLinkClick={() => onSetUserListModalShown(true)}
-                  theme={theme}
-                />
-              )}
-            </div>
-          ) : !secretHidden ? (
+          {!secretHidden && (
             <LikeButton
               contentType={contentType}
               contentId={contentId}
@@ -434,7 +383,7 @@ export default function BottomInterface({
               labelClassName="button-label"
               hideLabel={deviceIsTablet}
             />
-          ) : null}
+          )}
           {!secretHidden && (
             <Button
               key="commentButton"
@@ -536,19 +485,16 @@ export default function BottomInterface({
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
+            margin-top: 0.7rem;
           `}
         >
-          {!isSharedTopic && (
-            <Likers
-              className="content-panel__likes"
-              userId={userId}
-              likes={likes}
-              onLinkClick={() => onSetUserListModalShown(true)}
-              theme={theme}
-            />
-          )}
+          <Likers
+            className="content-panel__likes"
+            userId={userId}
+            likes={likes}
+            onLinkClick={() => onSetUserListModalShown(true)}
+            theme={theme}
+          />
           {viewCountShown && (
             <ViewCount
               count={displayViewCount}
