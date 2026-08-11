@@ -10,7 +10,7 @@ import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { themedCardBase } from '~/theme/card';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { REWARD_VALUE } from '~/constants/defaultValues';
@@ -380,13 +380,22 @@ export default function MainFeeds({
         ((activeTab === 'notification' && loadMoreNotificationsButton) ||
           (activeTab === 'reward' && loadMoreRewardsButton)) &&
         !!userId && (
-          <LoadMoreButton
-            style={{ marginTop: '1rem' }}
-            loading={loading}
-            filled
-            stretch
-            onClick={onLoadMore}
-          />
+          <div
+            className={css`
+              width: 100%;
+              margin-top: 1rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                padding: 0 1rem;
+              }
+            `}
+          >
+            <LoadMoreButton
+              loading={loading}
+              filled
+              stretch
+              onClick={onLoadMore}
+            />
+          </div>
         )}
     </ErrorBoundary>
   );

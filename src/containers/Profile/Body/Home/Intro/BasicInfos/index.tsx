@@ -5,7 +5,7 @@ import InfoEditForm from './InfoEditForm';
 import PasswordInputModal from './PasswordInputModal';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { stringIsEmpty, trimUrl } from '~/helpers/stringHelpers';
+import { processedURL, stringIsEmpty, trimUrl } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
@@ -271,7 +271,7 @@ export default function BasicInfos({
                 <span>{youtubeLabel}: </span>
                 <a
                   style={{ color: linkColorVar }}
-                  href={youtubeUrl}
+                  href={processedURL(youtubeUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -284,7 +284,7 @@ export default function BasicInfos({
                 <span>{websiteLabel}: </span>
                 <a
                   style={{ color: linkColorVar }}
-                  href={website}
+                  href={processedURL(website)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

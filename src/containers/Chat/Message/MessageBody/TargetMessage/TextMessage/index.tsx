@@ -4,6 +4,9 @@ import RichText from '~/components/Texts/RichText';
 import VideoThumb from './VideoThumb';
 import FileThumb from './FileThumb';
 import Spoiler from '../../Spoiler';
+import BuildCardTargetSummary, {
+  getBuildCardTargetSummary
+} from '../../BuildCardTargetSummary';
 import { css } from '@emotion/css';
 import moment from 'moment';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -57,6 +60,11 @@ export default function TextMessage({
     [message?.timeStamp]
   );
 
+  const buildCardSummary = useMemo(
+    () => getBuildCardTargetSummary(message),
+    [message]
+  );
+
   return (
     <div
       style={{
@@ -87,7 +95,28 @@ export default function TextMessage({
             {displayedTime}
           </small>
         </section>
-        {isValidSpoiler(message.content) ? (
+        {buildCardSummary ? (
+          <BuildCardTargetSummary
+            summary={buildCardSummary}
+            style={{ marginTop: '0.5rem' }}
+          >
+            {message.content ? (
+              <RichText
+                contentId={message.id}
+                contentType="chat"
+                theme={displayedThemeColor}
+                readMoreHeightFixed
+                className={css`
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.3rem;
+                  }
+                `}
+              >
+                {message.content}
+              </RichText>
+            ) : null}
+          </BuildCardTargetSummary>
+        ) : isValidSpoiler(message.content) ? (
           <Spoiler content={message.content} />
         ) : (
           <RichText

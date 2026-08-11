@@ -185,8 +185,14 @@ const wideSubjectEmbedPreviewClass = css`
     background: ${Color.whiteGray()};
   }
 
+  /* Fill helpers for ContentFileViewer/embed wrappers only. The attachment
+     card lays out its own children (icon square, copy column), so the filler
+     must not reach inside it — it used to collapse the icon into a full-height
+     sliver by overriding its fixed square size. */
   .home-feed-card__target-media-wrap > div,
-  .home-feed-card__target-media-wrap > div > div {
+  .home-feed-card__target-media-wrap
+    > div:not(.home-feed-card__attachment-card)
+    > div {
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -264,38 +270,47 @@ const wideSubjectEmbedPreviewClass = css`
     white-space: nowrap;
   }
 
+  /* The media column is narrow (32% of the panel), so the attachment card
+     renders as a centered vertical tile — mirroring the main feed card's
+     --subject-file treatment — instead of an icon | copy | chip row that has
+     no room to breathe. */
   .home-feed-card__attachment-card {
     box-sizing: border-box;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.6rem;
+    justify-content: center;
+    gap: 0.65rem;
     width: 100%;
     height: 100%;
     min-width: 0;
-    padding: 0.55rem 0.7rem;
+    padding: 0.9rem;
+    border: 1px solid ${Color.logoBlue(0.16)};
     border-radius: 0.7rem;
     background: #fff;
     color: ${Color.darkerGray()};
+    text-align: center;
   }
 
   .home-feed-card__attachment-card-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 3.1rem;
-    height: 3.1rem;
-    border-radius: 0.85rem;
+    width: 4.6rem;
+    height: 4.6rem;
+    border-radius: 1.2rem;
     background: ${Color.logoBlue(0.12)};
     color: ${Color.logoBlue()};
-    font-size: 1.45rem;
+    font-size: 2.2rem;
   }
 
   .home-feed-card__attachment-card-copy {
     display: flex;
     min-width: 0;
+    width: 100%;
     flex-direction: column;
-    gap: 0.16rem;
+    align-items: center;
+    gap: 0.2rem;
     line-height: 1.18;
   }
 
@@ -307,6 +322,8 @@ const wideSubjectEmbedPreviewClass = css`
   }
 
   .home-feed-card__attachment-card-copy strong {
+    display: block;
+    width: 100%;
     min-width: 0;
     overflow: hidden;
     color: ${Color.black()};

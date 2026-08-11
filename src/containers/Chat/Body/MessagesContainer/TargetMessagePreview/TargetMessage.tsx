@@ -1,6 +1,9 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import FileInfo from './FileInfo';
+import BuildCardTargetSummary, {
+  getBuildCardTargetSummary
+} from '~/containers/Chat/Message/MessageBody/BuildCardTargetSummary';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -25,6 +28,11 @@ export default function TargetMessage({
   const displayedTimeStamp = useMemo(
     () => moment.unix(replyTarget.timeStamp).format('lll'),
     [replyTarget.timeStamp]
+  );
+
+  const buildCardSummary = useMemo(
+    () => getBuildCardTargetSummary(replyTarget),
+    [replyTarget]
   );
 
   return (
@@ -52,7 +60,7 @@ export default function TargetMessage({
           justifyContent: 'space-between'
         }}
       >
-        <div>
+        <div style={buildCardSummary ? { width: '100%' } : undefined}>
           <div>
             <p
               style={{
@@ -76,7 +84,13 @@ export default function TargetMessage({
             </span>
           </div>
           <div style={{ marginTop: '0.5rem', paddingBottom: '1rem' }}>
-            {replyTarget.content || replyTarget.fileName}
+            {buildCardSummary ? (
+              <BuildCardTargetSummary summary={buildCardSummary}>
+                {replyTarget.content ? <div>{replyTarget.content}</div> : null}
+              </BuildCardTargetSummary>
+            ) : (
+              replyTarget.content || replyTarget.fileName
+            )}
           </div>
         </div>
         {hasFileAttachment ? (

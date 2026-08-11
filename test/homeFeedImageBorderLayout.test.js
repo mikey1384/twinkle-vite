@@ -14,6 +14,9 @@ const mainStylesSource = readSource(
 const subjectMediaPreviewSource = readSource(
   '../src/components/Subjects/SubjectMediaPreview.tsx'
 );
+const wideSubjectEmbedPreviewSource = readSource(
+  '../src/components/Subjects/WideSubjectEmbedPreview.tsx'
+);
 const targetStylesSource = readSource(
   '../src/containers/Home/Stories/FeedCard/Body/styles/targetPreviewStyles.ts'
 );
@@ -41,6 +44,18 @@ assert.match(
 assert.match(
   targetStylesSource,
   /\.home-feed-card__target-media-wrap\[data-attachment-preview-kind='image'\] \{[\s\S]*?border: 0;[\s\S]*?background: \$\{Color\.whiteGray\(\)\};/
+);
+assert.match(
+  wideSubjectEmbedPreviewSource,
+  /> div:not\(\.home-feed-card__attachment-card\)[\s\S]*?> div \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;/
+);
+assert.doesNotMatch(
+  wideSubjectEmbedPreviewSource,
+  /\.home-feed-card__target-media-wrap > div > div \{/
+);
+assert.match(
+  wideSubjectEmbedPreviewSource,
+  /\.home-feed-card__attachment-card \{[\s\S]*?display: flex;[\s\S]*?flex-direction: column;[\s\S]*?align-items: center;/
 );
 
 console.log('Home feed image border layout guard passed.');

@@ -23,6 +23,7 @@ import TargetChessPosition from './TargetChessPosition';
 import TargetMessage from './TargetMessage';
 import TargetSubject from './TargetSubject';
 import TextMessage from './TextMessage';
+import { parseMessageSettings } from './messageSettings';
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
 interface Props {
@@ -77,22 +78,6 @@ interface Props {
   uploadStatus: any;
   userCanEditThis: boolean;
   userId: number;
-}
-
-function parseMessageSettings(settings: unknown): Record<string, any> {
-  if (typeof settings === 'string') {
-    try {
-      const parsed = JSON.parse(settings);
-      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? parsed
-        : {};
-    } catch {
-      return {};
-    }
-  }
-  return settings && typeof settings === 'object' && !Array.isArray(settings)
-    ? (settings as Record<string, any>)
-    : {};
 }
 
 export default function Content({

@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '~/components/Icon';
+import { processedURL } from '~/helpers/stringHelpers';
 import {
   quickLinkClass,
   quickLinksClass,
@@ -57,7 +58,7 @@ export default function QuickLinks({
   );
 
   function handleExternalLink(url: string) {
-    window.open(url);
+    window.open(processedURL(url), '_blank', 'noopener,noreferrer');
   }
 }
 
