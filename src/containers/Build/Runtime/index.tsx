@@ -1530,10 +1530,18 @@ export default function BuildRuntime({
       updateBuildCollaborationDirectMessage({
         directMessage: result?.directMessage
       });
-      if (result?.request) {
-        setCollaborationRequest(result.request);
-        setCollaborationRequestMessage(String(result.request.message || ''));
-      }
+      setCollaborationRequest(result?.request ?? null);
+      setCollaborationRequestMessage(String(result?.request?.message || ''));
+      setBuild((current) =>
+        current
+          ? {
+              ...current,
+              hasActiveContributionInvite: Boolean(
+                result?.hasActiveContributionInvite
+              )
+            }
+          : current
+      );
     } catch (error: any) {
       setCollaborationRequestError(
         error?.response?.data?.error ||
@@ -1561,8 +1569,8 @@ export default function BuildRuntime({
         requestId: collaborationRequest.id
       });
       if (result?.success) {
-        setCollaborationRequest(null);
-        setCollaborationRequestMessage('');
+        setCollaborationRequest(result?.request ?? null);
+        setCollaborationRequestMessage(String(result?.request?.message || ''));
       }
     } catch (error: any) {
       setCollaborationRequestError(
@@ -1592,11 +1600,16 @@ export default function BuildRuntime({
           eventTimeMs: result.eventTimeMs,
           status: 'accepted'
         });
-        setCollaborationRequest((current) =>
-          current ? { ...current, status: 'accepted' } : current
-        );
+        setCollaborationRequest(result?.request ?? null);
         setBuild((current) =>
-          current ? { ...current, hasActiveContributionInvite: true } : current
+          current
+            ? {
+                ...current,
+                hasActiveContributionInvite: Boolean(
+                  result?.hasActiveContributionInvite
+                )
+              }
+            : current
         );
         handleOpenCollaborationWorkspace();
       }
@@ -1628,8 +1641,18 @@ export default function BuildRuntime({
           eventTimeMs: result.eventTimeMs,
           status: 'declined'
         });
-        setCollaborationRequest(null);
-        setCollaborationRequestMessage('');
+        setCollaborationRequest(result?.request ?? null);
+        setCollaborationRequestMessage(String(result?.request?.message || ''));
+        setBuild((current) =>
+          current
+            ? {
+                ...current,
+                hasActiveContributionInvite: Boolean(
+                  result?.hasActiveContributionInvite
+                )
+              }
+            : current
+        );
       }
     } catch (error: any) {
       setCollaborationRequestError(

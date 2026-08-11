@@ -68,6 +68,7 @@ export interface BuildSummary {
   viewerCollaborationRequest: BuildViewerCollaborationRequest | null;
   viewerCollaborationRequestLoaded: boolean;
   viewerCollaborationRequestLoading: boolean;
+  viewerCollaborationEventTimeMs?: number;
   viewerStateUserId: number | null;
   deleted: boolean;
   [key: string]: unknown;
@@ -280,6 +281,134 @@ export function mergeBuildSummaryMap(
   return changed ? nextMap : currentMap;
 }
 
+export function shouldShowBuildUpdatedMeta(
+  displayUpdatedAt: unknown,
+  publishedAt: unknown
+) {
+  const normalizedUpdatedAt = Math.floor(Number(displayUpdatedAt) || 0);
+  return (
+    normalizedUpdatedAt > 0 &&
+    normalizedUpdatedAt !== Math.floor(Number(publishedAt) || 0)
+  );
+}
+
+// Derives the BuildContext summary patch a `build_collaboration_updated`
+// socket event implies for the CURRENT viewer's join status. Every build card
+// (RichText-embedded, list, mini) renders that status from the summary cache,
+// so the canonical event has to land there — the chat-context update only
+// reaches the chat request/invite cards. Returns null when the event is about
+// another user's request/invite (e.g. the owner receiving someone's
+// ask-to-join), which must not touch the viewer's own state.
+export function getViewerCollaborationBuildSummaryPatch({
+  viewerId,
+  buildId,
+  invite,
+  inviteStatus,
+  request,
+  eventTimeMs,
+  timeStamp
+}: {
+  viewerId: number;
+  buildId?: number;
+  invite?: Record<string, any> | null;
+  inviteStatus?: string;
+  request?: Record<string, any> | null;
+  eventTimeMs?: number;
+  timeStamp?: number;
+}): { buildId: number; patch: Record<string, unknown> } | null {
+  const normalizedViewerId = Math.floor(Number(viewerId || 0));
+  const summaryBuildId = Math.floor(
+    Number(buildId || request?.buildId || invite?.buildId || 0)
+  );
+  if (!normalizedViewerId || !summaryBuildId) return null;
+  const requestIsMine =
+    Math.floor(Number(request?.requesterUserId || 0)) === normalizedViewerId;
+  const inviteIsMine =
+    Math.floor(Number(invite?.userId || 0)) === normalizedViewerId;
+  if (!requestIsMine && !inviteIsMine) return null;
+  const requestBuildId = Math.floor(Number(request?.buildId || 0));
+  const inviteBuildId = Math.floor(Number(invite?.buildId || 0));
+  if (
+    (requestIsMine && requestBuildId && requestBuildId !== summaryBuildId) ||
+    (inviteIsMine && inviteBuildId && inviteBuildId !== summaryBuildId)
+  ) {
+    return null;
+  }
+  const resolvedInviteStatus = String(invite?.status || inviteStatus || '');
+  const patch: Record<string, unknown> = {
+    viewerCollaborationRequestLoading: false,
+    viewerCollaborationEventTimeMs: getBuildCollaborationEventTimeMs({
+      eventTimeMs,
+      invite,
+      request,
+      timeStamp
+    }),
+    viewerStateUserId: normalizedViewerId
+  };
+  if (requestIsMine) {
+    const requestStatus = String(request?.status || '');
+    patch.viewerCollaborationRequest = request;
+    patch.viewerCollaborationRequestLoaded = true;
+    if (requestStatus === 'accepted') {
+      patch.hasActiveContributionInvite = true;
+    } else if (
+      requestStatus === 'rejected' ||
+      requestStatus === 'canceled'
+    ) {
+      patch.hasActiveContributionInvite = false;
+    }
+  } else if (
+    resolvedInviteStatus === 'declined' ||
+    resolvedInviteStatus === 'revoked' ||
+    resolvedInviteStatus === 'left'
+  ) {
+    patch.viewerCollaborationRequest = null;
+    patch.viewerCollaborationRequestLoaded = true;
+    patch.hasActiveContributionInvite = false;
+  } else {
+    // The API contract supplies a canonical request projection for pending
+    // and accepted invites. If an older/malformed event lacks it, force the
+    // normal writer-backed loader instead of inventing shared state locally.
+    patch.viewerCollaborationRequestLoaded = false;
+    if (resolvedInviteStatus === 'accepted') {
+      patch.hasActiveContributionInvite = true;
+    }
+  }
+  return { buildId: summaryBuildId, patch };
+}
+
+function getBuildCollaborationEventTimeMs({
+  eventTimeMs,
+  invite,
+  request,
+  timeStamp
+}: {
+  eventTimeMs?: number;
+  invite?: Record<string, any> | null;
+  request?: Record<string, any> | null;
+  timeStamp?: number;
+}) {
+  return Math.max(
+    normalizeBuildEventTimeMs(eventTimeMs),
+    normalizeBuildEventTimeMs(timeStamp),
+    normalizeBuildEventTimeMs(invite?.createdAt),
+    normalizeBuildEventTimeMs(invite?.acceptedAt),
+    normalizeBuildEventTimeMs(invite?.declinedAt),
+    normalizeBuildEventTimeMs(invite?.revokedAt),
+    normalizeBuildEventTimeMs(invite?.leftAt),
+    normalizeBuildEventTimeMs(request?.createdAt),
+    normalizeBuildEventTimeMs(request?.updatedAt),
+    normalizeBuildEventTimeMs(request?.respondedAt),
+    normalizeBuildEventTimeMs(request?.canceledAt)
+  );
+}
+
+function normalizeBuildEventTimeMs(value: unknown) {
+  const normalized = Number(value || 0);
+  if (!Number.isFinite(normalized) || normalized <= 0) return 0;
+  return normalized > 1000000000000 ? normalized : normalized * 1000;
+}
+
 export function patchBuildSummaryMap(
   currentMap: Record<string, BuildSummary>,
   buildId: number,
@@ -289,6 +418,18 @@ export function patchBuildSummaryMap(
   if (!id) return currentMap;
   const key = String(id);
   const current = currentMap[key] || null;
+  const nextViewerEventTime = Number(
+    patch?.viewerCollaborationEventTimeMs || 0
+  );
+  const currentViewerEventTime = Number(
+    current?.viewerCollaborationEventTimeMs || 0
+  );
+  if (
+    nextViewerEventTime > 0 &&
+    currentViewerEventTime > nextViewerEventTime
+  ) {
+    return currentMap;
+  }
   const nextBuild = normalizeBuildSummary({ ...(patch || {}), id }, current);
   if (!nextBuild) return currentMap;
   return {

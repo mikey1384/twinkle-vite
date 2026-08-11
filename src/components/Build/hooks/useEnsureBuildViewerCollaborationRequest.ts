@@ -68,14 +68,19 @@ export function useEnsureBuildViewerCollaborationRequest({
         viewerStateUserId: viewerId
       }
     });
+    const requestStartedAt = Date.now();
     const requestPromise = loadMyBuildCollaborationRequest(buildId)
       .then((result: any) => {
         onPatchBuildSummary({
           buildId,
           patch: {
+            hasActiveContributionInvite: Boolean(
+              result?.hasActiveContributionInvite
+            ),
             viewerCollaborationRequest: result?.request || null,
             viewerCollaborationRequestLoaded: true,
             viewerCollaborationRequestLoading: false,
+            viewerCollaborationEventTimeMs: requestStartedAt,
             viewerStateUserId: viewerId
           }
         });

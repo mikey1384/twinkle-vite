@@ -21,6 +21,7 @@ import {
 } from '~/contexts/Build/resumeRunState';
 import { createFallbackBuildRunMessageId } from '~/contexts/Build/messageIdentity';
 import { resolveBuildContributionLumineFixSocketUpdate } from '~/helpers/buildContributionSubmissionHelpers';
+import { getViewerCollaborationBuildSummaryPatch } from '~/helpers/buildSummaryHelpers';
 
 function getBuildRequestLimitsFromPayload(payload: any) {
   return payload?.requestLimits || payload?.billing?.snapshot || null;
@@ -67,6 +68,9 @@ export default function useBuildSocket() {
   );
   const onInvalidateBuildStudioBrowseTab = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioBrowseTab
+  );
+  const onPatchBuildSummary = useBuildContext(
+    (v) => v.actions.onPatchBuildSummary
   );
   const onUpdateBuildCollaborationState = useChatContext(
     (v) => v.actions.onUpdateBuildCollaborationState
@@ -1028,6 +1032,7 @@ export default function useBuildSocket() {
     }
 
     function handleBuildCollaborationUpdated({
+      buildId,
       invite,
       inviteId,
       inviteStatus,
@@ -1037,6 +1042,7 @@ export default function useBuildSocket() {
       eventTimeMs,
       timeStamp
     }: {
+      buildId?: number;
       invite?: Record<string, any> | null;
       inviteId?: number;
       inviteStatus?: 'pending' | 'accepted' | 'declined' | 'revoked' | 'left';
@@ -1069,6 +1075,41 @@ export default function useBuildSocket() {
           eventTimeMs
         });
       }
+      patchViewerCollaborationBuildSummary({
+        buildId,
+        eventTimeMs,
+        invite,
+        inviteStatus,
+        request,
+        timeStamp
+      });
+    }
+
+    function patchViewerCollaborationBuildSummary({
+      buildId,
+      eventTimeMs,
+      invite,
+      inviteStatus,
+      request,
+      timeStamp
+    }: {
+      buildId?: number;
+      eventTimeMs?: number;
+      invite?: Record<string, any> | null;
+      inviteStatus?: string;
+      request?: Record<string, any> | null;
+      timeStamp?: number;
+    }) {
+      const update = getViewerCollaborationBuildSummaryPatch({
+        viewerId: Number(userIdRef.current || 0),
+        buildId,
+        eventTimeMs,
+        invite,
+        inviteStatus,
+        request,
+        timeStamp
+      });
+      if (update) onPatchBuildSummary(update);
     }
 
     function handleBuildContributionLumineFixUpdated(payload: unknown) {

@@ -27,6 +27,7 @@ import {
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { normalizeViewCount } from '~/helpers/viewCount';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
+import { shouldShowBuildUpdatedMeta } from '~/helpers/buildSummaryHelpers';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
@@ -637,6 +638,14 @@ export default function BuildWideCard({
   const displayRank = Math.floor(Number(rank) || 0);
   const rankShown = displayRank > 0;
   const displayUpdatedAt = getDisplayUpdatedAt(build, updatedAtSource);
+  // The public lists source "Updated" from publishedAt itself, and a workspace
+  // card right after a publish stamps both with the same moment — either way
+  // two chips showing one timestamp read as a bug, so the Updated chip only
+  // renders when it says something the Published chip doesn't.
+  const showUpdatedMeta = shouldShowBuildUpdatedMeta(
+    displayUpdatedAt,
+    build?.publishedAt
+  );
   const targetPath = to || (buildId ? `/build/${buildId}` : '');
   const description = String(build?.description || '').trim();
   const visitCount = normalizeViewCount(build?.viewCount);
@@ -950,7 +959,7 @@ export default function BuildWideCard({
             ) : null}
           </div>
           <div className={metaRowClass}>
-            {displayUpdatedAt ? (
+            {showUpdatedMeta ? (
               <span className={metaItemClass}>
                 <Icon icon="clock-rotate-left" />
                 Updated {formatRelativeTime(displayUpdatedAt)}
@@ -1269,14 +1278,19 @@ export default function BuildWideCard({
     setActionError('');
     setCollaborationRequestError('');
     setCollaborationRequestModalShown(true);
+    const requestStartedAt = Date.now();
     try {
       const result = await loadMyBuildCollaborationRequest(buildId);
       onPatchBuildSummary({
         buildId,
         patch: {
+          hasActiveContributionInvite: Boolean(
+            result?.hasActiveContributionInvite
+          ),
           viewerCollaborationRequest: result?.request || null,
           viewerCollaborationRequestLoaded: true,
           viewerCollaborationRequestLoading: false,
+          ...getViewerCollaborationEventPatch(result, requestStartedAt),
           viewerStateUserId: Number(userId)
         }
       });
@@ -1293,6 +1307,7 @@ export default function BuildWideCard({
     if (collaborationRequestLoading) return;
     setCollaborationRequestLoading(true);
     setCollaborationRequestError('');
+    const requestStartedAt = Date.now();
     try {
       const result = await createBuildCollaborationRequest({
         buildId,
@@ -1304,9 +1319,13 @@ export default function BuildWideCard({
       onPatchBuildSummary({
         buildId,
         patch: {
+          hasActiveContributionInvite: Boolean(
+            result?.hasActiveContributionInvite
+          ),
           viewerCollaborationRequest: result?.request || null,
           viewerCollaborationRequestLoaded: true,
           viewerCollaborationRequestLoading: false,
+          ...getViewerCollaborationEventPatch(result, requestStartedAt),
           viewerStateUserId: Number(userId)
         }
       });
@@ -1323,6 +1342,7 @@ export default function BuildWideCard({
     if (!collaborationRequest?.id || collaborationRequestLoading) return;
     setCollaborationRequestLoading(true);
     setCollaborationRequestError('');
+    const requestStartedAt = Date.now();
     try {
       const result = await cancelBuildCollaborationRequest({
         buildId,
@@ -1332,9 +1352,13 @@ export default function BuildWideCard({
         onPatchBuildSummary({
           buildId,
           patch: {
-            viewerCollaborationRequest: null,
+            hasActiveContributionInvite: Boolean(
+              result?.hasActiveContributionInvite
+            ),
+            viewerCollaborationRequest: result?.request ?? null,
             viewerCollaborationRequestLoaded: true,
             viewerCollaborationRequestLoading: false,
+            ...getViewerCollaborationEventPatch(result, requestStartedAt),
             viewerStateUserId: Number(userId)
           }
         });
@@ -1354,6 +1378,7 @@ export default function BuildWideCard({
     if (!inviteId || collaborationRequestLoading) return;
     setCollaborationRequestLoading(true);
     setCollaborationRequestError('');
+    const requestStartedAt = Date.now();
     try {
       const result = await acceptBuildContributorInvite({
         buildId,
@@ -1369,12 +1394,13 @@ export default function BuildWideCard({
         onPatchBuildSummary({
           buildId,
           patch: {
-            hasActiveContributionInvite: true,
-            viewerCollaborationRequest: collaborationRequest
-              ? { ...collaborationRequest, status: 'accepted' }
-              : null,
+            hasActiveContributionInvite: Boolean(
+              result?.hasActiveContributionInvite
+            ),
+            viewerCollaborationRequest: result?.request ?? null,
             viewerCollaborationRequestLoaded: true,
             viewerCollaborationRequestLoading: false,
+            ...getViewerCollaborationEventPatch(result, requestStartedAt),
             viewerStateUserId: Number(userId)
           }
         });
@@ -1394,6 +1420,7 @@ export default function BuildWideCard({
     if (!inviteId || collaborationRequestLoading) return;
     setCollaborationRequestLoading(true);
     setCollaborationRequestError('');
+    const requestStartedAt = Date.now();
     try {
       const result = await declineBuildContributorInvite({
         buildId,
@@ -1409,9 +1436,13 @@ export default function BuildWideCard({
         onPatchBuildSummary({
           buildId,
           patch: {
-            viewerCollaborationRequest: null,
+            hasActiveContributionInvite: Boolean(
+              result?.hasActiveContributionInvite
+            ),
+            viewerCollaborationRequest: result?.request ?? null,
             viewerCollaborationRequestLoaded: true,
             viewerCollaborationRequestLoading: false,
+            ...getViewerCollaborationEventPatch(result, requestStartedAt),
             viewerStateUserId: Number(userId)
           }
         });
@@ -1558,6 +1589,14 @@ function isBuildAppTargetPath(targetPath: string, buildId: number) {
   if (!targetPath || !buildId) return false;
   const pathname = targetPath.split(/[?#]/)[0];
   return pathname === `/app/${buildId}`;
+}
+
+function getViewerCollaborationEventPatch(
+  result: any,
+  requestStartedAt = 0
+) {
+  const eventTimeMs = Number(result?.eventTimeMs || requestStartedAt || 0);
+  return eventTimeMs > 0 ? { viewerCollaborationEventTimeMs: eventTimeMs } : {};
 }
 
 function getDisplayUpdatedAt(
