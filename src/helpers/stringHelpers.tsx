@@ -967,10 +967,20 @@ export function applyTextEffects({ string }: { string: string }) {
 }
 
 export function processedURL(url: string): string {
-  if (!url.includes('://')) {
-    url = 'http://' + url;
+  const candidate = String(url || '').trim();
+  if (!candidate) return '';
+  const normalized = candidate.includes('://')
+    ? candidate
+    : 'http://' + candidate;
+  try {
+    const protocol = new URL(normalized).protocol.toLowerCase();
+    if (protocol === 'http:' || protocol === 'https:' || protocol === 'ftp:') {
+      return normalized;
+    }
+  } catch {
+    // Invalid and non-network URLs are not safe external-link targets.
   }
-  return url;
+  return '';
 }
 
 export function processInternalLink(url = '') {

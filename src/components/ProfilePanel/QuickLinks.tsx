@@ -58,7 +58,9 @@ export default function QuickLinks({
   );
 
   function handleExternalLink(url: string) {
-    window.open(processedURL(url), '_blank', 'noopener,noreferrer');
+    const externalUrl = processedURL(url);
+    if (!externalUrl) return;
+    window.open(externalUrl, '_blank', 'noopener,noreferrer');
   }
 }
 
