@@ -91,9 +91,7 @@ function getSortedPercentile(sortedValues: number[], percentile: number) {
   return sortedValues[index];
 }
 
-function getTypingCadenceSummary(
-  timestamps: number[]
-): TypingCadenceSummary {
+function getTypingCadenceSummary(timestamps: number[]): TypingCadenceSummary {
   const inputEventCount = timestamps.length;
   const summary: TypingCadenceSummary = {
     burstPauseThresholdMs: TYPING_BURST_PAUSE_THRESHOLD_MS,
@@ -123,7 +121,8 @@ function getTypingCadenceSummary(
     if (currentBurst <= 1) return;
 
     summary.burstCount += 1;
-    const durationMs = timestamps[endIndex] - timestamps[currentBurstStartIndex];
+    const durationMs =
+      timestamps[endIndex] - timestamps[currentBurstStartIndex];
 
     summary.maxBurstSize = Math.max(summary.maxBurstSize, currentBurst);
     longestBurstDurationMs = Math.max(longestBurstDurationMs, durationMs);
@@ -248,6 +247,8 @@ export default function DailyQuestionPanel({
   const [reusableCurrentFocusSelection, setReusableCurrentFocusSelection] =
     useState<string | null>(null);
   const [isAdultUser, setIsAdultUser] = useState<boolean>(false);
+  const [isKeywordDay, setIsKeywordDay] = useState(false);
+  const [dayKeyword, setDayKeyword] = useState('');
   const [purchasingRepair, setPurchasingRepair] = useState(false);
   const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
   const [restoredDraftNeedsFreshTyping, setRestoredDraftNeedsFreshTyping] =
@@ -256,6 +257,8 @@ export default function DailyQuestionPanel({
   const responseTooLong = isResponseOverMaxLength(response);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isKeywordDayRef = useRef(isKeywordDay);
+  isKeywordDayRef.current = isKeywordDay;
   const gradingCompleteRef = useRef(false);
   const hasStartedRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -483,7 +486,9 @@ export default function DailyQuestionPanel({
     setError(null);
     setRecoveryNotice(notice);
     setRestoredDraftNeedsFreshTyping(
-      Boolean((responseText || '').trim()) && !restoredTypingMetadata
+      !isKeywordDayRef.current &&
+        Boolean((responseText || '').trim()) &&
+        !restoredTypingMetadata
     );
     setScreen('start');
     isSubmittingRef.current = false;
@@ -764,6 +769,9 @@ export default function DailyQuestionPanel({
           data.reusableCurrentFocusSelection || null
         );
         setIsAdultUser(!!data.isAdult);
+        isKeywordDayRef.current = !!data.isKeywordDay;
+        setIsKeywordDay(isKeywordDayRef.current);
+        setDayKeyword(data.keyword || '');
 
         const pendingSubmission = loadPendingDailyQuestionSubmission(userId);
         if (
@@ -849,7 +857,8 @@ export default function DailyQuestionPanel({
   }, [userId]);
 
   useEffect(() => {
-    if (screen !== 'writing') return;
+    // Keyword days have no inactivity pressure: nothing auto-submits.
+    if (screen !== 'writing' || isKeywordDay) return;
 
     lastActivityRef.current = Date.now();
     setInactivityTimer(INACTIVITY_LIMIT);
@@ -874,7 +883,7 @@ export default function DailyQuestionPanel({
     return () => {
       clearInterval(interval);
     };
-  }, [screen, restoredDraftNeedsFreshTyping, responseTooLong]);
+  }, [screen, isKeywordDay, restoredDraftNeedsFreshTyping, responseTooLong]);
 
   function handleStart() {
     setRecoveryNotice(null);
@@ -959,6 +968,11 @@ export default function DailyQuestionPanel({
         return;
       }
 
+      // Keyword days write like a normal editor: deleting and undo are fine.
+      if (isKeywordDayRef.current) {
+        return;
+      }
+
       const canShortenOverLimitResponse = isResponseOverMaxLength(
         committedResponseRef.current
       );
@@ -992,6 +1006,19 @@ export default function DailyQuestionPanel({
   const handleBeforeInput = useCallback(
     (e: React.FormEvent<HTMLTextAreaElement>) => {
       if (isComposingRef.current) {
+        return;
+      }
+
+      if (isKeywordDayRef.current) {
+        // Keyword days still ask for your own words: paste/drop stay blocked,
+        // but deleting and undo are allowed.
+        const keywordDayInputType = (e.nativeEvent as InputEvent).inputType;
+        if (
+          keywordDayInputType === 'insertFromPaste' ||
+          keywordDayInputType === 'insertFromDrop'
+        ) {
+          e.preventDefault();
+        }
         return;
       }
 
@@ -1033,6 +1060,22 @@ export default function DailyQuestionPanel({
       const committedResponse = committedResponseRef.current;
 
       isComposingRef.current = false;
+
+      if (isKeywordDayRef.current) {
+        if (restoredDraftNeedsFreshTypingRef.current) {
+          setRestoredDraftNeedsFreshTyping(false);
+        }
+        if (finalValue.length > committedResponse.length) {
+          typingMetadataRef.current.keystrokeTimestamps.push(now);
+        }
+        committedResponseRef.current = finalValue;
+        if (responseRef.current !== finalValue) {
+          responseRef.current = finalValue;
+          setResponse(finalValue);
+        }
+        lastActivityRef.current = now;
+        return;
+      }
 
       const isShorterChange = finalValue.length < committedResponse.length;
       const looksLikeDeletionOnly =
@@ -1086,6 +1129,22 @@ export default function DailyQuestionPanel({
       const nativeEvent = e.nativeEvent as InputEvent;
 
       if (isComposingRef.current || nativeEvent.isComposing) {
+        if (responseRef.current !== newValue) {
+          responseRef.current = newValue;
+          setResponse(newValue);
+        }
+        lastActivityRef.current = now;
+        return;
+      }
+
+      if (isKeywordDayRef.current) {
+        if (restoredDraftNeedsFreshTypingRef.current) {
+          setRestoredDraftNeedsFreshTyping(false);
+        }
+        if (newValue.length > committedResponse.length) {
+          typingMetadataRef.current.keystrokeTimestamps.push(now);
+        }
+        committedResponseRef.current = newValue;
         if (responseRef.current !== newValue) {
           responseRef.current = newValue;
           setResponse(newValue);
@@ -1157,7 +1216,10 @@ export default function DailyQuestionPanel({
 
   const handleCut = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      if (isResponseOverMaxLength(committedResponseRef.current)) {
+      if (
+        isKeywordDayRef.current ||
+        isResponseOverMaxLength(committedResponseRef.current)
+      ) {
         return;
       }
       e.preventDefault();
@@ -1188,6 +1250,10 @@ export default function DailyQuestionPanel({
     const metadata = typingMetadataRef.current;
     const endTime = Date.now();
     const timestamps = metadata.keystrokeTimestamps;
+    if (isKeywordDayRef.current && !response.trim()) {
+      isSubmittingRef.current = false;
+      return;
+    }
     const trimmedResponse = response.trim() || '(no response)';
 
     if (trimmedResponse.length > MAX_RESPONSE_LENGTH) {
@@ -1347,7 +1413,9 @@ export default function DailyQuestionPanel({
     return (
       <StartScreen
         currentStreak={currentStreak}
+        dayKeyword={dayKeyword}
         hasEnoughCoins={hasEnoughCoins}
+        isKeywordDay={isKeywordDay}
         isSimplified={isSimplified}
         isSimplifying={isSimplifying}
         profileTheme={profileTheme}
@@ -1380,7 +1448,9 @@ export default function DailyQuestionPanel({
   if (screen === 'writing') {
     return (
       <WritingScreen
+        canSubmitKeywordDay={response.trim().length > 0}
         inactivityTimer={inactivityTimer}
+        isKeywordDay={isKeywordDay}
         minEffortBarShown={minEffortBarShown}
         minEffortColor={minEffortColor}
         minEffortDisplayLabel={minEffortDisplayLabel}
@@ -1406,6 +1476,7 @@ export default function DailyQuestionPanel({
         onInput={handleInput}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
+        onSubmitKeywordDay={() => handleSubmitRef.current()}
       />
     );
   }
@@ -1426,6 +1497,7 @@ export default function DailyQuestionPanel({
           question={question}
           response={response}
           questionId={questionId}
+          isKeywordDay={isKeywordDay}
           grade={gradingResult.grade}
           masterpieceType={gradingResult.masterpieceType}
           xpAwarded={gradingResult.xpAwarded}

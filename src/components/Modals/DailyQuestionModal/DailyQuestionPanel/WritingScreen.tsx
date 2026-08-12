@@ -1,5 +1,7 @@
 import React from 'react';
+import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -13,7 +15,9 @@ import {
 } from './styles';
 
 export default function WritingScreen({
+  canSubmitKeywordDay,
   inactivityTimer,
+  isKeywordDay,
   minEffortBarShown,
   minEffortColor,
   minEffortDisplayLabel,
@@ -38,9 +42,12 @@ export default function WritingScreen({
   onDrop,
   onInput,
   onKeyDown,
-  onPaste
+  onPaste,
+  onSubmitKeywordDay
 }: {
+  canSubmitKeywordDay?: boolean;
   inactivityTimer: number;
+  isKeywordDay?: boolean;
   minEffortBarShown: boolean;
   minEffortColor: string;
   minEffortDisplayLabel: React.ReactNode;
@@ -66,39 +73,44 @@ export default function WritingScreen({
   onInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+  onSubmitKeywordDay?: () => void;
 }) {
   return (
     <ErrorBoundary componentPath="DailyQuestionPanel/Writing">
       <div className={containerCls}>
-        <div className={timerContainerCls}>
-          <div
-            className={css`
-              font-size: 2.5rem;
-              font-weight: bold;
-              color: ${timeWarning && !responseTooLong
-                ? Color.rose()
-                : Color.black()};
-              ${!restoredDraftNeedsFreshTyping &&
-              !responseTooLong &&
-              timeWarning
-                ? `animation: ${pulseAnimation} 0.5s infinite;`
-                : ''}
-            `}
-          >
-            {restoredDraftNeedsFreshTyping || responseTooLong
-              ? '--'
-              : `${inactivityTimer}s`}
+        {!isKeywordDay && (
+          <div className={timerContainerCls}>
+            <div
+              className={css`
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: ${
+                  timeWarning && !responseTooLong ? Color.rose() : Color.black()
+                };
+                ${
+                  !restoredDraftNeedsFreshTyping &&
+                  !responseTooLong &&
+                  timeWarning
+                    ? `animation: ${pulseAnimation} 0.5s infinite;`
+                    : ''
+                }
+              `}
+            >
+              {restoredDraftNeedsFreshTyping || responseTooLong
+                ? '--'
+                : `${inactivityTimer}s`}
+            </div>
+            <div style={{ color: Color.darkerGray(), fontSize: '1.2rem' }}>
+              {responseTooLong
+                ? 'Shorten to continue'
+                : restoredDraftNeedsFreshTyping
+                  ? 'Make one small edit to resume'
+                  : inactivityTimer <= 3
+                    ? 'Done?'
+                    : 'Keep typing!'}
+            </div>
           </div>
-          <div style={{ color: Color.darkerGray(), fontSize: '1.2rem' }}>
-            {responseTooLong
-              ? 'Shorten to continue'
-              : restoredDraftNeedsFreshTyping
-                ? 'Make one small edit to resume'
-                : inactivityTimer <= 3
-                  ? 'Done?'
-                  : 'Keep typing!'}
-          </div>
-        </div>
+        )}
 
         <p className={questionTextSmallCls}>{question}</p>
 
@@ -114,7 +126,11 @@ export default function WritingScreen({
           onCut={onCut}
           onDragOver={onDragOver}
           onDrop={onDrop}
-          placeholder="Just start typing... don't stop to think, just write..."
+          placeholder={
+            isKeywordDay
+              ? 'Write a little or a lot — anything counts today...'
+              : "Just start typing... don't stop to think, just write..."
+          }
           className={textareaCls}
           maxLength={maxResponseLength}
           autoCapitalize="off"
@@ -156,12 +172,12 @@ export default function WritingScreen({
           >
             {responseTooLong
               ? `${charsOverLimit} chars over limit`
-              : minLengthMet
+              : isKeywordDay || minLengthMet
                 ? `${remainingMaxChars.toLocaleString()} chars left`
                 : `${remainingChars} chars to go`}
           </span>
         </div>
-        {minEffortBarShown && (
+        {!isKeywordDay && minEffortBarShown && (
           <div style={{ width: '100%' }}>
             <ProgressBar
               text={minEffortDisplayLabel}
@@ -170,15 +186,36 @@ export default function WritingScreen({
             />
           </div>
         )}
-        <div
-          style={{
-            color: Color.lightGray(),
-            fontSize: '1.1rem',
-            marginTop: '0.3rem'
-          }}
-        >
-          No backspace allowed - keep going!
-        </div>
+        {isKeywordDay ? (
+          <div
+            className={css`
+              width: 100%;
+              display: flex;
+              justify-content: center;
+              margin-top: 1rem;
+            `}
+          >
+            <Button
+              variant="solid"
+              color="green"
+              disabled={!canSubmitKeywordDay || responseTooLong}
+              onClick={() => onSubmitKeywordDay?.()}
+            >
+              <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+              Done
+            </Button>
+          </div>
+        ) : (
+          <div
+            style={{
+              color: Color.lightGray(),
+              fontSize: '1.1rem',
+              marginTop: '0.3rem'
+            }}
+          >
+            No backspace allowed - keep going!
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

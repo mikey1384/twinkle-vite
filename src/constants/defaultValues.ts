@@ -1,6 +1,6 @@
 import { Color } from '~/constants/css';
 
-export const clientVersion = '2.0.72';
+export const clientVersion = '2.0.73';
 
 export const BOOKMARK_VIEWS = {
   AI: 'ai',

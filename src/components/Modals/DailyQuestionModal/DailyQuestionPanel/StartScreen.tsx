@@ -35,7 +35,9 @@ function getStreakColor(currentStreak: number) {
 
 export default function StartScreen({
   currentStreak,
+  dayKeyword,
   hasEnoughCoins,
+  isKeywordDay,
   isSimplified,
   isSimplifying,
   profileTheme,
@@ -56,7 +58,9 @@ export default function StartScreen({
   onStart
 }: {
   currentStreak: number;
+  dayKeyword?: string;
   hasEnoughCoins: boolean;
+  isKeywordDay?: boolean;
   isSimplified: boolean;
   isSimplifying: boolean;
   profileTheme?: string | null;
@@ -149,7 +153,9 @@ export default function StartScreen({
                 margin-top: 0.3rem;
               `}
             >
-              Keep it going for x{Math.min(currentStreak + 1, 10)} XP!
+              {isKeywordDay
+                ? 'Write anything today to keep it going'
+                : `Keep it going for x${Math.min(currentStreak + 1, 10)} XP!`}
             </p>
           </div>
         )}
@@ -285,101 +291,150 @@ export default function StartScreen({
             </div>
           )}
 
-        <div className={todayPreferenceRowCls}>
-          <div className={todayPreferenceCardCls}>
-            <span className={todayPreferenceLabelCls}>Today's vibe</span>
-            <span className={todayPreferenceValueCls}>{todayVibeLabel}</span>
-          </div>
-          <div className={todayPreferenceCardCls}>
-            <span className={todayPreferenceLabelCls}>Current focus</span>
-            <span className={todayPreferenceValueCls}>
-              {todayCurrentFocusLabel}
-            </span>
-          </div>
-        </div>
-
-        <p className={questionTextCls}>{question}</p>
-
-        <div
-          className={css`
-            margin-bottom: 1.5rem;
-          `}
-        >
-          {isSimplified ? (
-            <Button
-              variant="soft"
-              tone="raised"
-              color={profileTheme || undefined}
-              onClick={onShowOriginal}
-              uppercase={false}
-            >
-              <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
-              Show original question
-            </Button>
-          ) : (
-            <Button
-              variant="soft"
-              tone="raised"
-              color={profileTheme || undefined}
-              onClick={onSimplify}
-              disabled={isSimplifying}
-              loading={isSimplifying}
-              uppercase={false}
-            >
-              <Icon icon="child" style={{ marginRight: '0.5rem' }} />
-              {isSimplifying
-                ? 'Simplifying...'
-                : 'Make question easier to understand'}
-            </Button>
-          )}
-        </div>
-
-        <div className={instructionBoxCls}>
-          <h4 style={{ marginBottom: '0.75rem', color: Color.black() }}>
-            <Icon icon="info-circle" style={{ marginRight: '0.5rem' }} />
-            Rules
-          </h4>
-          <ul className={instructionListCls}>
-            <li>
-              <span className={ruleTitleCls}>Keep typing</span> — if you stop
-              for more than{' '}
-              <span className={ruleWarningCls}>{INACTIVITY_LIMIT} seconds</span>
-              , your response auto-submits
-            </li>
-            <li>
-              <span className={ruleTitleCls}>Minimum length</span> — write at
-              least{' '}
-              <span className={ruleSuccessCls}>
-                {MIN_RESPONSE_LENGTH} characters
-              </span>{' '}
-              before the timer runs out, or it's an{' '}
-              <span className={ruleWarningCls}>automatic fail</span>
-            </li>
-            <li>
-              <span className={ruleTitleCls}>Maximum length</span> — up to{' '}
-              <span className={ruleSuccessCls}>
-                {MAX_RESPONSE_LENGTH.toLocaleString()} characters
+        {!isKeywordDay && (
+          <div className={todayPreferenceRowCls}>
+            <div className={todayPreferenceCardCls}>
+              <span className={todayPreferenceLabelCls}>Today's vibe</span>
+              <span className={todayPreferenceValueCls}>{todayVibeLabel}</span>
+            </div>
+            <div className={todayPreferenceCardCls}>
+              <span className={todayPreferenceLabelCls}>Current focus</span>
+              <span className={todayPreferenceValueCls}>
+                {todayCurrentFocusLabel}
               </span>
-            </li>
-            <li>
-              <span className={ruleTitleCls}>No going back</span> —{' '}
-              <span className={ruleWarningCls}>
-                backspace and delete are disabled
-              </span>
-              . Just keep moving forward!
-            </li>
-            <li>
-              <span className={ruleTitleCls}>No copy‑paste</span> — write in
-              your own words
-            </li>
-            <li>
-              <span className={ruleTitleCls}>Closing this window cancels</span>{' '}
-              — your response{' '}
-              <span className={ruleWarningCls}>won't be saved</span>, so you'll
-              need to start over
-            </li>
-          </ul>
-        </div>
+            </div>
+          </div>
+        )}
+
+        {isKeywordDay && dayKeyword ? (
+          <div
+            className={css`
+              text-align: center;
+              margin-bottom: 2rem;
+            `}
+          >
+            <p
+              className={css`
+                font-size: 1.2rem;
+                color: ${Color.darkerGray()};
+                margin-bottom: 0.5rem;
+              `}
+            >
+              Today's word:
+            </p>
+            <p
+              className={css`
+                font-size: 3rem;
+                font-weight: bold;
+                color: ${Color.black()};
+                margin-bottom: 0.5rem;
+              `}
+            >
+              {dayKeyword}
+            </p>
+            <p
+              className={css`
+                font-size: 1.2rem;
+                font-style: italic;
+                color: ${Color.darkerGray()};
+                margin: 0;
+              `}
+            >
+              or write about anything else
+            </p>
+          </div>
+        ) : (
+          <p className={questionTextCls}>{question}</p>
+        )}
+
+        {!isKeywordDay && (
+          <div
+            className={css`
+              margin-bottom: 1.5rem;
+            `}
+          >
+            {isSimplified ? (
+              <Button
+                variant="soft"
+                tone="raised"
+                color={profileTheme || undefined}
+                onClick={onShowOriginal}
+                uppercase={false}
+              >
+                <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
+                Show original question
+              </Button>
+            ) : (
+              <Button
+                variant="soft"
+                tone="raised"
+                color={profileTheme || undefined}
+                onClick={onSimplify}
+                disabled={isSimplifying}
+                loading={isSimplifying}
+                uppercase={false}
+              >
+                <Icon icon="child" style={{ marginRight: '0.5rem' }} />
+                {isSimplifying
+                  ? 'Simplifying...'
+                  : 'Make question easier to understand'}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {!isKeywordDay && (
+          <div className={instructionBoxCls}>
+            <h4 style={{ marginBottom: '0.75rem', color: Color.black() }}>
+              <Icon icon="info-circle" style={{ marginRight: '0.5rem' }} />
+              Rules
+            </h4>
+            <ul className={instructionListCls}>
+              <li>
+                <span className={ruleTitleCls}>Keep typing</span> — if you stop
+                for more than{' '}
+                <span className={ruleWarningCls}>
+                  {INACTIVITY_LIMIT} seconds
+                </span>
+                , your response auto-submits
+              </li>
+              <li>
+                <span className={ruleTitleCls}>Minimum length</span> — write at
+                least{' '}
+                <span className={ruleSuccessCls}>
+                  {MIN_RESPONSE_LENGTH} characters
+                </span>{' '}
+                before the timer runs out, or it's an{' '}
+                <span className={ruleWarningCls}>automatic fail</span>
+              </li>
+              <li>
+                <span className={ruleTitleCls}>Maximum length</span> — up to{' '}
+                <span className={ruleSuccessCls}>
+                  {MAX_RESPONSE_LENGTH.toLocaleString()} characters
+                </span>
+              </li>
+              <li>
+                <span className={ruleTitleCls}>No going back</span> —{' '}
+                <span className={ruleWarningCls}>
+                  backspace and delete are disabled
+                </span>
+                . Just keep moving forward!
+              </li>
+              <li>
+                <span className={ruleTitleCls}>No copy‑paste</span> — write in
+                your own words
+              </li>
+              <li>
+                <span className={ruleTitleCls}>
+                  Closing this window cancels
+                </span>{' '}
+                — your response{' '}
+                <span className={ruleWarningCls}>won't be saved</span>, so
+                you'll need to start over
+              </li>
+            </ul>
+          </div>
+        )}
 
         <div className={buttonContainerCls}>
           <Button variant="ghost" onClick={onClose}>

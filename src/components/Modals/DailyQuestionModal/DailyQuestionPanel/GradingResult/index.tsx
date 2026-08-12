@@ -16,10 +16,7 @@ import {
   type VibeOptionId
 } from '../helpers/questionPreferences';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import {
-  DEFAULT_REWARD_COLOR,
-  DEFAULT_XP_NUMBER_COLOR
-} from './constants';
+import { DEFAULT_REWARD_COLOR, DEFAULT_XP_NUMBER_COLOR } from './constants';
 import GradeOverview from './GradeOverview';
 import Preferences from './Preferences';
 import ResponseSection from './ResponseSection';
@@ -28,6 +25,7 @@ import ShareActions from './ShareActions';
 export default function GradingResult({
   question,
   questionId,
+  isKeywordDay = false,
   response,
   originalResponse,
   initialRefinedResponse,
@@ -52,6 +50,7 @@ export default function GradingResult({
 }: {
   question: string;
   questionId: number | null;
+  isKeywordDay?: boolean;
   response: string;
   originalResponse: string;
   initialRefinedResponse: string | null;
@@ -456,6 +455,7 @@ export default function GradingResult({
       <GradeOverview
         feedback={feedback}
         grade={grade}
+        isKeywordDay={isKeywordDay}
         masterpieceType={masterpieceType}
         rewardColor={rewardColor}
         streak={streak}

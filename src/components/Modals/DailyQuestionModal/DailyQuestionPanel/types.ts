@@ -38,6 +38,7 @@ export interface DailyQuestionSubmitResult {
   streak?: number;
   streakMultiplier?: number;
   usedRepair?: boolean;
+  isKeywordDay?: boolean;
 }
 
 export interface DailyQuestionGradingResultState {

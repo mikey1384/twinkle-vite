@@ -14,6 +14,7 @@ import {
 export default function GradeOverview({
   feedback,
   grade,
+  isKeywordDay = false,
   masterpieceType,
   rewardColor,
   streak,
@@ -24,6 +25,7 @@ export default function GradeOverview({
 }: {
   feedback: string;
   grade: string;
+  isKeywordDay?: boolean;
   masterpieceType?: 'heart' | 'mind' | 'heart_and_mind' | null;
   rewardColor: string;
   streak: number;
@@ -32,12 +34,15 @@ export default function GradeOverview({
   xpAwarded: number;
   xpNumberColor: string;
 }) {
-  const gradeColor = gradeColors[grade] || Color.darkerGray();
-  const gradeLabel =
-    grade === 'Masterpiece' && masterpieceType
+  const gradeColor = isKeywordDay
+    ? Color.green()
+    : gradeColors[grade] || Color.darkerGray();
+  const gradeLabel = isKeywordDay
+    ? 'Counted'
+    : grade === 'Masterpiece' && masterpieceType
       ? masterpieceTypeLabels[masterpieceType] || 'Masterpiece'
       : gradeLabels[grade] || '';
-  const gradeSymbol = gradeSymbols[grade] || '?';
+  const gradeSymbol = isKeywordDay ? '✓' : gradeSymbols[grade] || '?';
 
   return (
     <>
@@ -121,11 +126,9 @@ export default function GradeOverview({
           >
             <span
               className={css`
-                font-size: ${streak >= 10
-                  ? '2.5rem'
-                  : streak >= 5
-                    ? '2.2rem'
-                    : '2rem'};
+                font-size: ${
+                  streak >= 10 ? '2.5rem' : streak >= 5 ? '2.2rem' : '2rem'
+                };
                 animation: ${streak >= 5 ? fireAnimation : 'none'} 0.6s
                   ease-in-out infinite;
               `}
@@ -134,11 +137,9 @@ export default function GradeOverview({
             </span>
             <span
               className={css`
-                font-size: ${streak >= 10
-                  ? '2rem'
-                  : streak >= 5
-                    ? '1.8rem'
-                    : '1.6rem'};
+                font-size: ${
+                  streak >= 10 ? '2rem' : streak >= 5 ? '1.8rem' : '1.6rem'
+                };
                 font-weight: bold;
                 color: ${getStreakColor(streak)};
               `}
@@ -146,7 +147,7 @@ export default function GradeOverview({
               {streak}-day streak
             </span>
           </div>
-          {streakMultiplier > 1 && (
+          {streakMultiplier > 1 && !isKeywordDay && (
             <p
               className={css`
                 font-size: 1.3rem;
@@ -190,7 +191,7 @@ export default function GradeOverview({
             margin-bottom: 0.5rem;
           `}
         >
-          Feedback
+          {isKeywordDay ? 'Today' : 'Feedback'}
         </h4>
         <p
           className={css`
