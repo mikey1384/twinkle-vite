@@ -199,6 +199,11 @@ export default function GradingResult({
   }
 
   async function handleShareClick() {
+    if (isKeywordDay) {
+      await handleConfirmShare();
+      return;
+    }
+
     if (!refinedResponse && !refining) {
       try {
         setRefining(true);
@@ -232,8 +237,9 @@ export default function GradingResult({
       setShareError(null);
 
       const rawResponseText = originalResponse || response;
-      const textToShare =
-        selectedVersion === 'refined' && refinedResponse
+      const textToShare = isKeywordDay
+        ? refinedResponse || ''
+        : selectedVersion === 'refined' && refinedResponse
           ? refinedResponse
           : rawResponseText;
 
@@ -498,6 +504,7 @@ export default function GradingResult({
 
       {!showVersionSelector &&
         !showAIVersionSelector &&
+        !isKeywordDay &&
         (canShareToFeedNow || canShareWithZero || canShareWithCiel) && (
           <p
             className={css`
@@ -574,6 +581,11 @@ export default function GradingResult({
     if (refining && !refinedResponse) return;
     setShareError(null);
 
+    if (isKeywordDay) {
+      await performShareWithAI({ target, version: 'refined' });
+      return;
+    }
+
     let refinedTextForOpen = refinedResponse;
     const needsRefineForAI = !refinedTextForOpen && responseId > 0;
     if (needsRefineForAI) {
@@ -604,27 +616,43 @@ export default function GradingResult({
 
   async function handleConfirmShareWithAI() {
     if (!aiShareTarget || !hasResponseText) return;
-    try {
-      if (aiShareTarget === 'zero') setSharingWithZero(true);
-      if (aiShareTarget === 'ciel') setSharingWithCiel(true);
-      setShareError(null);
+    const refinedTextToSend =
+      aiSelectedVersion === 'refined' || aiSelectedVersion === 'both'
+        ? refinedResponse || undefined
+        : undefined;
 
-      const refinedTextToSend =
-        aiSelectedVersion === 'refined' || aiSelectedVersion === 'both'
-          ? refinedResponse || undefined
-          : undefined;
+    await performShareWithAI({
+      target: aiShareTarget,
+      version: aiSelectedVersion,
+      refinedText: refinedTextToSend
+    });
+  }
+
+  async function performShareWithAI({
+    target,
+    version,
+    refinedText
+  }: {
+    target: 'zero' | 'ciel';
+    version: 'original' | 'refined' | 'both';
+    refinedText?: string;
+  }) {
+    try {
+      if (target === 'zero') setSharingWithZero(true);
+      if (target === 'ciel') setSharingWithCiel(true);
+      setShareError(null);
 
       const result = await shareDailyQuestionWithAI({
         responseId: responseId || undefined,
         questionId,
         question,
-        target: aiShareTarget,
-        version: aiSelectedVersion,
-        responseText: refinedTextToSend,
+        target,
+        version,
+        responseText: refinedText,
         originalResponse: originalResponse || response,
         grade,
         feedback,
-        thinkHard: thinkHardState[aiShareTarget]?.global
+        thinkHard: thinkHardState[target]?.global
       });
 
       if (result.error) {
@@ -640,8 +668,8 @@ export default function GradingResult({
         onSetUserState({ userId, newState: { twinkleCoins: result.newCoins } });
       }
 
-      if (aiShareTarget === 'zero') setSharedWithZero(true);
-      if (aiShareTarget === 'ciel') setSharedWithCiel(true);
+      if (target === 'zero') setSharedWithZero(true);
+      if (target === 'ciel') setSharedWithCiel(true);
 
       setShowAIVersionSelector(false);
       setAiShareTarget(null);
@@ -649,8 +677,8 @@ export default function GradingResult({
       console.error('Failed to share with AI:', err);
       setShareError('Failed to share with AI. Please try again.');
     } finally {
-      if (aiShareTarget === 'zero') setSharingWithZero(false);
-      if (aiShareTarget === 'ciel') setSharingWithCiel(false);
+      if (target === 'zero') setSharingWithZero(false);
+      if (target === 'ciel') setSharingWithCiel(false);
     }
   }
 
