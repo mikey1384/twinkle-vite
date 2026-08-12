@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { priceTable } from '~/constants/defaultValues';
@@ -99,6 +99,7 @@ export default function GradingResult({
   const rewardColor = DEFAULT_REWARD_COLOR;
 
   const [sharing, setSharing] = useState(false);
+  const sharingRef = useRef(false);
   const [isShared, setIsShared] = useState(initialIsShared);
   const [sharedWithZero, setSharedWithZero] = useState(initialSharedWithZero);
   const [sharedWithCiel, setSharedWithCiel] = useState(initialSharedWithCiel);
@@ -199,10 +200,7 @@ export default function GradingResult({
   }
 
   async function handleShareClick() {
-    if (isKeywordDay) {
-      await handleConfirmShare();
-      return;
-    }
+    if (sharingRef.current) return;
 
     if (!refinedResponse && !refining) {
       try {
@@ -232,20 +230,23 @@ export default function GradingResult({
   }
 
   async function handleConfirmShare() {
+    if (sharingRef.current) return;
+    sharingRef.current = true;
+
     try {
       setSharing(true);
       setShareError(null);
 
       const rawResponseText = originalResponse || response;
-      const textToShare = isKeywordDay
-        ? refinedResponse || ''
-        : selectedVersion === 'refined' && refinedResponse
+      const textToShare =
+        selectedVersion === 'refined' && refinedResponse
           ? refinedResponse
           : rawResponseText;
 
       const result = await shareDailyQuestionResponse({
         responseId,
-        responseText: textToShare
+        responseText: textToShare,
+        version: selectedVersion
       });
 
       if (result.error) {
@@ -267,6 +268,7 @@ export default function GradingResult({
       console.error('Failed to share:', err);
       setShareError('Failed to share. Please try again.');
     } finally {
+      sharingRef.current = false;
       setSharing(false);
     }
   }
@@ -504,7 +506,6 @@ export default function GradingResult({
 
       {!showVersionSelector &&
         !showAIVersionSelector &&
-        !isKeywordDay &&
         (canShareToFeedNow || canShareWithZero || canShareWithCiel) && (
           <p
             className={css`

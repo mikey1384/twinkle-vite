@@ -75,14 +75,19 @@ export default function ShareActions({
             variant="solid"
             color="logoBlue"
             onClick={onShareClick}
-            disabled={!canShareToFeedNow || refining}
-            loading={canShareToFeedNow && refining && !preparingAIVersionTarget}
+            disabled={!canShareToFeedNow || refining || sharing}
+            loading={
+              canShareToFeedNow &&
+              ((refining && !preparingAIVersionTarget) || sharing)
+            }
           >
             {!canShareToFeedNow ? (
               <>
                 <Icon icon="check" style={{ marginRight: '0.5rem' }} />
                 Shared to Feed
               </>
+            ) : sharing ? (
+              'Sharing...'
             ) : refining && !preparingAIVersionTarget ? (
               'Polishing...'
             ) : refinedResponse ? (

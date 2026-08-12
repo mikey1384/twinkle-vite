@@ -2555,19 +2555,36 @@ export default function contentRequestHelpers({
     },
     async shareDailyQuestionResponse({
       responseId,
-      responseText
+      responseText,
+      version
     }: {
       responseId: number;
       responseText: string;
+      version: 'original' | 'refined';
     }) {
-      try {
-        const { data } = await request.post(
+      const shareRequest = () =>
+        request.post(
           `${URL}/content/daily-question/share`,
-          { responseId, responseText },
+          { responseId, responseText, version },
           auth()
         );
+
+      try {
+        const { data } = await shareRequest();
         return data;
-      } catch (error) {
+      } catch (error: any) {
+        // The API uses responseId as the durable idempotency boundary. If the
+        // response was interrupted after the canonical share committed, one
+        // retry resumes any remaining side effects and returns the settled
+        // feed/coin state instead of showing a false failure.
+        if (!error?.response) {
+          try {
+            const { data } = await shareRequest();
+            return data;
+          } catch (retryError) {
+            return handleError(retryError);
+          }
+        }
         return handleError(error);
       }
     },
