@@ -278,6 +278,7 @@ export default function ChatPanel({
   purchasingGenerationReset,
   generationResetError,
   onPurchaseGenerationReset,
+  onRequestProjectLimitIncrease,
   onStopGeneration,
   onFixRuntimeObservationMessage,
   onDeleteMessage
@@ -764,6 +765,7 @@ export default function ChatPanel({
           <Header
             copilotPolicy={copilotPolicy}
             aiUsagePolicy={aiUsagePolicy}
+            isOwner={isOwner}
             lumineChatVisibilityControl={lumineChatVisibilityControl}
             lumineModelSelectionControl={lumineModelSelectionControl}
             pageFeedbackEvents={pageFeedbackEvents}
@@ -774,6 +776,7 @@ export default function ChatPanel({
             limitsExpanded={limitsExpanded}
             minimized={lumineHeaderMinimized}
             onPurchaseGenerationReset={onPurchaseGenerationReset}
+            onRequestProjectLimitIncrease={onRequestProjectLimitIncrease}
             onOpenRuntimeUploadsManager={onOpenRuntimeUploadsManager}
             onToggleLimitsExpanded={handleToggleLimitsExpanded}
             onToggleMinimized={handleToggleMinimized}

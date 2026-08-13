@@ -91,6 +91,7 @@ import {
   canEditBuildProject,
   normalizeBuildWorkspaceCommunicationMode
 } from './helpers/branches';
+import { shouldApplyBuildProjectLimitApproval } from '~/helpers/buildProjectLimitApproval';
 import {
   EMPTY_BUILD_PROJECT_FILES,
   normalizeProjectFilesForBuild,
@@ -297,6 +298,7 @@ export default function BuildEditor({
     onSetUserState,
     publishBuild,
     purchaseBuildGenerationReset,
+    requestBuildProjectLimitIncrease,
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
     resetBuildContributionToMain,
@@ -972,6 +974,36 @@ export default function BuildEditor({
         aiUsagePolicy: requestLimits
       }
     });
+  }
+
+  async function handleRequestProjectLimitIncrease(selection: {
+    files: boolean;
+    size: boolean;
+  }) {
+    if (!selection.files && !selection.size) return;
+    try {
+      const result = await requestBuildProjectLimitIncrease({
+        buildId: Number(build.id),
+        ...selection
+      });
+      if (!result?.success || !result?.copilotPolicy) {
+        throw new Error(result?.error || 'Could not send this request');
+      }
+      const currentPolicy = getLatestCopilotPolicy();
+      if (!currentPolicy) return;
+      if (
+        !shouldApplyBuildProjectLimitApproval(
+          result.copilotPolicy.projectLimitApproval,
+          currentPolicy.projectLimitApproval
+        )
+      ) {
+        return;
+      }
+      replaceCopilotPolicy(result.copilotPolicy);
+    } catch (error) {
+      console.error('Failed to request more project room:', error);
+      throw error;
+    }
   }
 
   const mergedChatMessages = mergeDisplayedChatMessages({
@@ -1831,6 +1863,7 @@ export default function BuildEditor({
     purchasingGenerationReset,
     generationResetError,
     onPurchaseGenerationReset: handlePurchaseGenerationReset,
+    onRequestProjectLimitIncrease: handleRequestProjectLimitIncrease,
     onStopGeneration: handleStopGeneration,
     onFixRuntimeObservationMessage: handleFixRuntimeObservationMessage,
     onDeleteMessage: handleDeleteMessage

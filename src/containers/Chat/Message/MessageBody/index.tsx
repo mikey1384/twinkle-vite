@@ -210,7 +210,9 @@ function MessageBody({
   }, []);
 
   const userCanDeleteThis = useMemo(() => {
-    if (isDrawOffer) return false;
+    if (isDrawOffer || message.rootType === 'buildProjectLimitRequest') {
+      return false;
+    }
 
     const hasEditOrDeletePermission = canEdit || canDelete;
     const isGeneralChannel = channelId === GENERAL_CHAT_ID;
@@ -228,6 +230,7 @@ function MessageBody({
     isAIMessage,
     isDrawOffer,
     level,
+    message.rootType,
     uploaderLevel,
     userIsUploader
   ]);
@@ -237,6 +240,7 @@ function MessageBody({
       !rewardAmount &&
       !invitePath &&
       !isDrawOffer &&
+      message.rootType !== 'buildProjectLimitRequest' &&
       ((canEdit &&
         level > uploaderLevel &&
         (channelId === GENERAL_CHAT_ID || isSupermod(level))) ||
@@ -250,6 +254,7 @@ function MessageBody({
     isAIMessage,
     isDrawOffer,
     level,
+    message.rootType,
     rewardAmount,
     uploaderLevel,
     userIsUploader

@@ -52,6 +52,27 @@ export function getBuildCardTargetSummary(
       detail: String(submission?.branchLabel || '')
     };
   }
+  if (rootType === 'buildProjectLimitRequest') {
+    const request =
+      parseMessageSettings(message.settings)?.buildProjectLimitRequest || {};
+    const buildId = Math.floor(Number(request?.buildId) || 0);
+    if (!buildId) return null;
+    const details = [
+      Number(request?.requestedMaxFiles || 0) > 0
+        ? `${Number(request.requestedMaxFiles)} files`
+        : '',
+      Number(request?.requestedMaxProjectBytes || 0) > 0
+        ? `${Math.round(Number(request.requestedMaxProjectBytes) / 1048576)} MB`
+        : ''
+    ].filter(Boolean);
+    return {
+      icon: 'sparkles',
+      label: `Requested more room for ${String(
+        request?.title || 'a project'
+      )}`,
+      detail: details.join(' + ')
+    };
+  }
   return null;
 }
 

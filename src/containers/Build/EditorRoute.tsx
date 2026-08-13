@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Loading from '~/components/Loading';
 import BuildEditor from './Editor';
@@ -13,6 +19,7 @@ import {
   applyBuildProjectFilesSocketUpdate,
   resolveBuildProjectFilesSocketUpdate
 } from '~/helpers/buildProjectFilesSocketUpdate';
+import { mergeBuildPolicyPreservingNewerProjectLimits } from '~/helpers/buildProjectLimitApproval';
 
 interface BuildWorkspaceAccessResult {
   kind: 'redirect-runtime' | 'unpublished' | 'branch-private';
@@ -136,13 +143,25 @@ export default function BuildEditorRoute() {
   const [chatMessages, setChatMessages] = useState<any[]>(
     usableCachedWorkspace?.chatMessages || []
   );
-  const [copilotPolicy, setCopilotPolicy] =
-    useState<BuildCopilotPolicy | null>(
-      usableCachedWorkspace?.copilotPolicy || null
-    );
+  const [copilotPolicy, setCopilotPolicy] = useState<BuildCopilotPolicy | null>(
+    usableCachedWorkspace?.copilotPolicy || null
+  );
   const [error, setError] = useState('');
   const replayedPersistedRunStateKeysRef = useRef<Record<string, string>>({});
   const lastCanonicalProjectFilesEventTimeMsRef = useRef(0);
+  const applyCanonicalCopilotPolicy = useCallback(
+    (nextPolicy: BuildCopilotPolicy | null) => {
+      setCopilotPolicy((currentPolicy) => {
+        return nextPolicy && currentPolicy
+          ? mergeBuildPolicyPreservingNewerProjectLimits(
+              nextPolicy,
+              currentPolicy
+            )
+          : nextPolicy;
+      });
+    },
+    []
+  );
 
   const locationState = (location.state as any) || null;
   const seedGreeting = Boolean(locationState?.seedGreeting);
@@ -152,7 +171,7 @@ export default function BuildEditorRoute() {
   );
   const skipDefaultContributionBranchRedirect = Boolean(
     locationState?.skipDefaultContributionBranchRedirect ||
-      routeForumThreadId > 0
+    routeForumThreadId > 0
   );
   const initialPrompt =
     typeof locationState?.initialPrompt === 'string'
@@ -173,15 +192,20 @@ export default function BuildEditorRoute() {
           ? usableCachedWorkspace.chatMessages
           : []
       );
-      setCopilotPolicy(usableCachedWorkspace.copilotPolicy || null);
+      applyCanonicalCopilotPolicy(usableCachedWorkspace.copilotPolicy || null);
       setLoading(false);
       return;
     }
     setBuild(null);
     setChatMessages([]);
-    setCopilotPolicy(null);
+    applyCanonicalCopilotPolicy(null);
     setLoading(true);
-  }, [numericBuildId, numericBranchNumber, usableCachedWorkspace]);
+  }, [
+    applyCanonicalCopilotPolicy,
+    numericBuildId,
+    numericBranchNumber,
+    usableCachedWorkspace
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -214,14 +238,14 @@ export default function BuildEditorRoute() {
         if (access?.kind === 'unpublished') {
           setBuild(null);
           setChatMessages([]);
-          setCopilotPolicy(null);
+          applyCanonicalCopilotPolicy(null);
           setError(BUILD_UNPUBLISHED_PUBLIC_TEXT);
           return;
         }
         if (access?.kind === 'branch-private') {
           setBuild(null);
           setChatMessages([]);
-          setCopilotPolicy(null);
+          applyCanonicalCopilotPolicy(null);
           setError(BUILD_PRIVATE_BRANCH_TEXT);
           return;
         }
@@ -335,7 +359,7 @@ export default function BuildEditorRoute() {
             return applied.build;
           });
           setChatMessages(nextChatMessages);
-          setCopilotPolicy(nextCopilotPolicy);
+          applyCanonicalCopilotPolicy(nextCopilotPolicy);
           setError('');
           const didHydratePersistedActiveRun =
             hydrateBuildRunFromPersistedSnapshot({
@@ -357,7 +381,8 @@ export default function BuildEditorRoute() {
               }
             });
           if (didHydratePersistedActiveRun && nextActiveRun) {
-            const normalizedActiveRun = normalizeBuildResumeRunState(nextActiveRun);
+            const normalizedActiveRun =
+              normalizeBuildResumeRunState(nextActiveRun);
             const activeRunRequestId = String(
               normalizedActiveRun.requestId || ''
             ).trim();
@@ -383,7 +408,7 @@ export default function BuildEditorRoute() {
           if (!usableCachedWorkspace?.build) {
             setBuild(null);
             setChatMessages([]);
-            setCopilotPolicy(null);
+            applyCanonicalCopilotPolicy(null);
           }
           setError('Build not found');
         }
@@ -393,7 +418,7 @@ export default function BuildEditorRoute() {
         if (!usableCachedWorkspace?.build) {
           setBuild(null);
           setChatMessages([]);
-          setCopilotPolicy(null);
+          applyCanonicalCopilotPolicy(null);
         }
         setError(err?.message || 'Failed to load build');
       } finally {
@@ -434,8 +459,7 @@ export default function BuildEditorRoute() {
         }
         const applied = applyBuildProjectFilesSocketUpdate({
           currentBuild,
-          currentEventTimeMs:
-            lastCanonicalProjectFilesEventTimeMsRef.current,
+          currentEventTimeMs: lastCanonicalProjectFilesEventTimeMsRef.current,
           update
         });
         lastCanonicalProjectFilesEventTimeMsRef.current = applied.eventTimeMs;
@@ -484,10 +508,7 @@ export default function BuildEditorRoute() {
     socket.on('connect', recoverCanonicalProjectFiles);
     window.addEventListener('pageshow', recoverCanonicalProjectFiles);
     window.addEventListener('online', recoverCanonicalProjectFiles);
-    document.addEventListener(
-      'visibilitychange',
-      recoverCanonicalProjectFiles
-    );
+    document.addEventListener('visibilitychange', recoverCanonicalProjectFiles);
     return () => {
       cancelled = true;
       socket.off('build_project_files_updated', applyCanonicalProjectFiles);
@@ -502,6 +523,62 @@ export default function BuildEditorRoute() {
     // loadBuild is a stable context request helper.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numericBranchNumber, numericBuildId, userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const workspaceBuildId = Number(build?.id || 0);
+    const canonicalBuildId =
+      Number(build?.contributionRootBuildId || 0) || workspaceBuildId;
+    if (!workspaceBuildId || !canonicalBuildId || Number(userId || 0) <= 0) {
+      return;
+    }
+
+    async function refreshProjectLimits(payload: any) {
+      if (cancelled || Number(payload?.buildId || 0) !== canonicalBuildId) {
+        return;
+      }
+      try {
+        const data = numericBranchNumber
+          ? await loadBuildBranch({
+              buildId: canonicalBuildId,
+              branchNumber: numericBranchNumber,
+              options: { fromWriter: true }
+            })
+          : await loadBuild(workspaceBuildId, { fromWriter: true });
+        if (cancelled || !data?.build) return;
+        const nextPolicy = data.copilotPolicy || null;
+        applyCanonicalCopilotPolicy(nextPolicy);
+      } catch (error) {
+        console.error('Failed to refresh approved project limits:', error);
+      }
+    }
+
+    function recoverProjectLimits() {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'hidden'
+      ) {
+        return;
+      }
+      void refreshProjectLimits({ buildId: canonicalBuildId });
+    }
+
+    socket.on('build_project_limits_updated', refreshProjectLimits);
+    socket.on('connect', recoverProjectLimits);
+    window.addEventListener('pageshow', recoverProjectLimits);
+    window.addEventListener('online', recoverProjectLimits);
+    document.addEventListener('visibilitychange', recoverProjectLimits);
+    return () => {
+      cancelled = true;
+      socket.off('build_project_limits_updated', refreshProjectLimits);
+      socket.off('connect', recoverProjectLimits);
+      window.removeEventListener('pageshow', recoverProjectLimits);
+      window.removeEventListener('online', recoverProjectLimits);
+      document.removeEventListener('visibilitychange', recoverProjectLimits);
+    };
+    // loadBuild and loadBuildBranch are stable context request helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build?.contributionRootBuildId, build?.id, numericBranchNumber, userId]);
 
   useEffect(() => {
     const workspaceBuildId = Number(build?.id || numericBuildId || 0);
@@ -581,7 +658,7 @@ export default function BuildEditorRoute() {
       seedGreeting={seedGreeting}
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}
-      onUpdateCopilotPolicy={setCopilotPolicy}
+      onUpdateCopilotPolicy={applyCanonicalCopilotPolicy}
     />
   );
 }

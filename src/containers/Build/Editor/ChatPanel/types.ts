@@ -62,6 +62,24 @@ export interface ChatMessage {
   runtimeObservationResolvedAt?: number | null;
 }
 
+export interface BuildProjectLimitApproval {
+  canonicalBuildId: number;
+  isInherited: boolean;
+  canApproveDirectly?: boolean;
+  canRequestFiles: boolean;
+  canRequestSize: boolean;
+  requestedMaxFiles: number;
+  requestedMaxProjectBytes: number;
+  latestRequest?: {
+    requestId: number;
+    status: 'pending' | 'approved' | 'rejected';
+    requestedMaxFiles?: number | null;
+    requestedMaxProjectBytes?: number | null;
+    revision?: number;
+    eventTimeMs?: number;
+  } | null;
+}
+
 export interface BuildCopilotPolicy {
   limits: {
     maxProjectBytes: number;
@@ -72,6 +90,7 @@ export interface BuildCopilotPolicy {
     maxRuntimeFileStorageBytes: number;
     maxRuntimeFileBytes: number;
   };
+  projectLimitApproval?: BuildProjectLimitApproval | null;
   usage: {
     currentProjectBytes: number;
     projectBytesRemaining: number;
@@ -357,6 +376,10 @@ export interface ChatPanelProps {
   purchasingGenerationReset: boolean;
   generationResetError: string;
   onPurchaseGenerationReset: () => Promise<void> | void;
+  onRequestProjectLimitIncrease: (selection: {
+    files: boolean;
+    size: boolean;
+  }) => Promise<void> | void;
   onStopGeneration: () => void;
   onFixRuntimeObservationMessage: (
     message: ChatMessage

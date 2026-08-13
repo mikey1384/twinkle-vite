@@ -1,9 +1,22 @@
 import { useEffect, useRef } from 'react';
+import { mergeBuildPolicyPreservingNewerProjectLimits } from '~/helpers/buildProjectLimitApproval';
+
+interface ProjectLimitPolicyLike {
+  limits?: unknown;
+  usage?: unknown;
+  projectLimitApproval?: {
+    latestRequest?: {
+      requestId?: number | null;
+      revision?: number | null;
+      eventTimeMs?: number | null;
+    } | null;
+  } | null;
+}
 
 interface UseBuildEditorMutableStateOptions<
   TBuild,
   TChatMessage,
-  TCopilotPolicy
+  TCopilotPolicy extends ProjectLimitPolicyLike | null
 > {
   build: TBuild;
   chatMessages: TChatMessage[];
@@ -17,7 +30,11 @@ interface UseBuildEditorMutableStateOptions<
   ) => boolean;
 }
 
-interface BuildEditorMutableStateApi<TBuild, TChatMessage, TCopilotPolicy> {
+interface BuildEditorMutableStateApi<
+  TBuild,
+  TChatMessage,
+  TCopilotPolicy extends ProjectLimitPolicyLike | null
+> {
   getLatestBuild(): TBuild;
   applyBuildUpdate(nextBuild: TBuild): TBuild;
   getLatestChatMessages(): TChatMessage[];
@@ -29,7 +46,7 @@ interface BuildEditorMutableStateApi<TBuild, TChatMessage, TCopilotPolicy> {
 export default function useMutableState<
   TBuild,
   TChatMessage,
-  TCopilotPolicy
+  TCopilotPolicy extends ProjectLimitPolicyLike | null
 >({
   build,
   chatMessages,
@@ -50,9 +67,11 @@ export default function useMutableState<
   const onUpdateChatMessagesRef = useRef(onUpdateChatMessages);
   const onUpdateCopilotPolicyRef = useRef(onUpdateCopilotPolicy);
   const areChatMessagesEqualRef = useRef(areChatMessagesEqual);
-  const apiRef = useRef<
-    BuildEditorMutableStateApi<TBuild, TChatMessage, TCopilotPolicy> | null
-  >(null);
+  const apiRef = useRef<BuildEditorMutableStateApi<
+    TBuild,
+    TChatMessage,
+    TCopilotPolicy
+  > | null>(null);
 
   onUpdateBuildRef.current = onUpdateBuild;
   onUpdateChatMessagesRef.current = onUpdateChatMessages;
@@ -104,9 +123,17 @@ export default function useMutableState<
       },
 
       replaceCopilotPolicy(nextPolicy) {
-        copilotPolicyRef.current = nextPolicy;
-        onUpdateCopilotPolicyRef.current(nextPolicy);
-        return nextPolicy;
+        const currentPolicy = copilotPolicyRef.current;
+        const resolvedPolicy =
+          nextPolicy && currentPolicy
+            ? (mergeBuildPolicyPreservingNewerProjectLimits(
+                nextPolicy,
+                currentPolicy
+              ) as TCopilotPolicy)
+            : nextPolicy;
+        copilotPolicyRef.current = resolvedPolicy;
+        onUpdateCopilotPolicyRef.current(resolvedPolicy);
+        return resolvedPolicy;
       }
     };
   }

@@ -12,6 +12,7 @@ import BuildCollaborationRequest from './BuildCollaborationRequest';
 import BuildContributionSubmission from './BuildContributionSubmission';
 import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
 import BuildContributionInvite from './BuildContributionInvite';
+import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
 import Invitation from './Invitation';
@@ -221,6 +222,16 @@ export default function Content({
         <BuildContributionSubmission
           content={content}
           submission={parsedSettings?.buildContributionSubmission}
+          myId={myId}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
+        />
+      ) : rootType === 'buildProjectLimitRequest' && rootId ? (
+        <BuildProjectLimitRequest
+          request={parsedSettings?.buildProjectLimitRequest}
           myId={myId}
           sender={{
             id: userId,

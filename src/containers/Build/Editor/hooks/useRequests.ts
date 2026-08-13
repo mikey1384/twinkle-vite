@@ -102,6 +102,9 @@ export default function useRequests() {
   const purchaseBuildGenerationReset = useAppContext(
     (v) => v.requestHelpers.purchaseBuildGenerationReset
   );
+  const requestBuildProjectLimitIncrease = useAppContext(
+    (v) => v.requestHelpers.requestBuildProjectLimitIncrease
+  );
 
   return {
     cleanupBuildChatReferenceUploads,
@@ -127,6 +130,7 @@ export default function useRequests() {
     onSetUserState,
     publishBuild,
     purchaseBuildGenerationReset,
+    requestBuildProjectLimitIncrease,
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
     resetBuildContributionToMain,

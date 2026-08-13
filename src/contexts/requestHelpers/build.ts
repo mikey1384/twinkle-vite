@@ -369,6 +369,44 @@ export default function buildRequestHelpers({
   }
 
   return {
+    async requestBuildProjectLimitIncrease({
+      buildId,
+      files,
+      size
+    }: {
+      buildId: number;
+      files: boolean;
+      size: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/project-limit-request`,
+          { files, size },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleBuildCanonicalActionError(error);
+      }
+    },
+    async reviewBuildProjectLimitRequest({
+      requestId,
+      approved
+    }: {
+      requestId: number;
+      approved: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/project-limit-requests/${requestId}`,
+          { approved },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleBuildCanonicalActionError(error);
+      }
+    },
     async createBuild({
       title,
       description
