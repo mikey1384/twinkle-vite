@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import {
+  getChatProjectionActivityRevision,
+  markChatProjectionSocketEvent
+} from '../src/helpers/chatUnreadActivity';
 
 function readSource(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -111,11 +115,11 @@ test('wake requires an authenticated room barrier and broken sessions keep the w
   );
   assert.match(
     postBootstrapChannelRecovery,
-    /const expectedActivityRevision =[\s\S]*?getChatUnreadActivityRevision\(\)[\s\S]*?loadChatChannel\(\{[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
+    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(\)[\s\S]*?loadChatChannel\(\{[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
   );
   assert.match(
     postBootstrapChannelRecovery,
-    /getChatUnreadActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
+    /getChatProjectionActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
   );
   assert.match(
     postBootstrapChannelRecovery,
@@ -189,7 +193,7 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(
     messagesSource,
-    /const expectedActivityRevision = getChatUnreadActivityRevision\(\);[\s\S]*?await loadChatChannel\([\s\S]*?getChatUnreadActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
+    /const expectedActivityRevision = getChatProjectionActivityRevision\(\);[\s\S]*?await loadChatChannel\([\s\S]*?getChatProjectionActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
   );
   assert.match(
     messagesSource,
@@ -221,4 +225,29 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(displayedMessagesSource, /Catching up&hellip;/);
   assert.match(displayedMessagesSource, /isReconnecting && !pageLoading/);
+});
+
+test('selected-channel recovery invalidates on every overwritable socket projection', () => {
+  const before = getChatProjectionActivityRevision();
+  for (const eventName of [
+    'new_message_received',
+    'chat_message_edited',
+    'member_joined',
+    'topic_settings_changed',
+    'ai_message_delta_streamed',
+    'chess_move_made'
+  ]) {
+    assert.equal(markChatProjectionSocketEvent(eventName), true);
+  }
+  assert.equal(getChatProjectionActivityRevision(), before + 6);
+  assert.equal(markChatProjectionSocketEvent('online_status_changed'), false);
+  assert.equal(getChatProjectionActivityRevision(), before + 6);
+  assert.match(
+    socketSource,
+    /socket\.onAny\(handleChatProjectionSocketEvent\)/
+  );
+  assert.match(
+    socketSource,
+    /socket\.offAny\(handleChatProjectionSocketEvent\)/
+  );
 });

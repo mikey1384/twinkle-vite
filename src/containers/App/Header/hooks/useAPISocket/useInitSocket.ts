@@ -44,7 +44,10 @@ import {
   loadLatestCanonicalFeaturedSubjects
 } from '~/helpers/featuredSubjects';
 import { getServerDisconnectReconnectDelayMs } from '~/helpers/socketRecovery';
-import { getChatUnreadActivityRevision } from '~/helpers/chatUnreadActivity';
+import {
+  getChatProjectionActivityRevision,
+  markChatProjectionSocketEvent
+} from '~/helpers/chatUnreadActivity';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -709,6 +712,10 @@ export default function useInitSocket({
   }, [checkFeedsOutdated]);
 
   useEffect(() => {
+    const handleChatProjectionSocketEvent = (eventName: string) => {
+      markChatProjectionSocketEvent(eventName);
+    };
+    socket.onAny(handleChatProjectionSocketEvent);
     socket.on('online_acknowledged', handleOnlineAcknowledged);
     socket.on('online_status_changed', handleSelfPresenceDemoted);
     socket.on('away_status_changed', handleSelfAwayDemoted);
@@ -719,6 +726,7 @@ export default function useInitSocket({
     onChangeSocketStatus(socket.connected);
 
     return function cleanUp() {
+      socket.offAny(handleChatProjectionSocketEvent);
       socket.off('online_acknowledged', handleOnlineAcknowledged);
       socket.off('online_status_changed', handleSelfPresenceDemoted);
       socket.off('away_status_changed', handleSelfAwayDemoted);
@@ -1191,7 +1199,8 @@ export default function useInitSocket({
             if (!channelPathIdHashRef.current[latestPathId]) {
               onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
             }
-            const expectedActivityRevision = getChatUnreadActivityRevision();
+            const expectedActivityRevision =
+              getChatProjectionActivityRevision();
             const channelData = await loadChatChannel({
               channelId,
               subchannelPath: requestedSubchannelPath,
@@ -1210,10 +1219,12 @@ export default function useInitSocket({
             }
             // A confirmed socket event can land after the writer captured this
             // channel response but before the HTTP response arrives. Applying
-            // that older page would erase the newer message/deletion/reaction
-            // projection. Discard it and let the owning writer retry cover the
-            // whole chain instead.
-            if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
+            // that older page would erase its newer message, edit, membership,
+            // settings, AI-stream, or game projection. Discard it and let the
+            // owning writer retry cover the whole chain instead.
+            if (
+              getChatProjectionActivityRevision() !== expectedActivityRevision
+            ) {
               throw new Error(
                 'Canonical chat activity changed during channel recovery'
               );
