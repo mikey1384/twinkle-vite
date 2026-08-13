@@ -161,7 +161,7 @@ const sdkSections: GuideSection[] = [
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
       'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
       'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
-      'generateObject low uses GPT-5.6 Luna and billable Lite Mode; medium uses Grok 4.5 with normal AI Energy; high uses GPT-5.6 Sol with high AI Energy.',
+      'generateObject low uses GPT-5.6 Luna and billable Lite Mode; medium uses Grok 4.6 with normal AI Energy; high uses GPT-5.6 Sol with high AI Energy.',
       'Use systemPrompt to define the app AI personality, tone, role, or response rules.',
       'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
@@ -190,7 +190,7 @@ const sdkSections: GuideSection[] = [
       'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
       'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
       'thinkingMode low is billable Lite Mode and usually costs less because it uses a smaller model or lower reasoning; medium is normal battery use; high is high battery use.',
-      'Inside Build character chat, Zero and Ciel use GPT-5.6 Luna with reasoning disabled for low and medium. In high mode, Zero uses Grok 4.5 with high reasoning and Ciel uses GPT-5.6 Terra with high reasoning.',
+      'Inside Build character chat, Zero and Ciel use GPT-5.6 Luna with reasoning disabled for low and medium. In high mode, Zero uses Grok 4.6 with high reasoning and Ciel uses GPT-5.6 Terra with high reasoning.',
       'When AI Energy is empty, Low, Medium, and High all reject before new provider work; there is no free fallback mode.',
       'Use Twinkle.characters.chat for Zero/Ciel NPCs instead of pretending with Twinkle.ai.chat systemPrompt.'
     ]

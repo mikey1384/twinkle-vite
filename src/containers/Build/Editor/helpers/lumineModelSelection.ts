@@ -7,8 +7,8 @@ import type {
   BuildLumineThinkLevel
 } from '../ChatPanel/types';
 
-export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'grok-4.5';
-export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'high';
+export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'grok-4.6';
+export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'medium';
 
 export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
   light: 'Light',
@@ -22,9 +22,9 @@ const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
   BuildLumineMode,
   BuildLumineModel
 > = {
-  light: 'grok-4.5',
-  medium: 'gpt-5.6-terra',
-  heavy: 'claude-opus-5'
+  light: 'grok-4.6',
+  medium: 'grok-4.6',
+  heavy: 'grok-4.6'
 };
 
 const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
@@ -37,10 +37,18 @@ const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
 
 const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
   {
-    model: 'grok-4.5',
+    model: 'grok-4.6',
     mode: 'light',
-    label: 'Grok 4.5',
-    description: 'Light mode: fast, capable builds at lower cost.',
+    label: 'Grok 4.6',
+    description: 'Light mode: efficient reasoning for everyday builds.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
+  {
+    model: 'grok-4.6',
+    mode: 'medium',
+    label: 'Grok 4.6',
+    description: 'Medium mode: deeper reasoning for complex builds.',
     defaultReasoningEffort: 'high',
     supportedReasoningEfforts: ['high']
   },
@@ -59,6 +67,14 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     description: 'Medium mode: efficient agentic coding and tool use.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
+  },
+  {
+    model: 'grok-4.6',
+    mode: 'heavy',
+    label: 'Grok 4.6',
+    description: 'Heavy mode: maximum reasoning for demanding builds.',
+    defaultReasoningEffort: 'xhigh',
+    supportedReasoningEfforts: ['xhigh']
   },
   {
     model: 'claude-opus-5',
@@ -85,6 +101,7 @@ const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
 
 function isLumineModel(value: unknown): value is BuildLumineModel {
   return (
+    value === 'grok-4.6' ||
     value === 'grok-4.5' ||
     value === 'gpt-5.6-terra' ||
     value === 'claude-sonnet-5' ||
@@ -241,6 +258,11 @@ export function resolveLumineMode({
   reasoningEffort
 }: Pick<BuildLumineModelPreference, 'model'> &
   Partial<Pick<BuildLumineModelPreference, 'reasoningEffort'>>): BuildLumineMode {
+  if (model === 'grok-4.6') {
+    if (reasoningEffort === 'xhigh') return 'heavy';
+    if (reasoningEffort === 'high') return 'medium';
+    return 'light';
+  }
   if (model === 'grok-4.5') return 'light';
   if (model === 'gpt-5.6-terra' || model === 'claude-sonnet-5') {
     return 'medium';

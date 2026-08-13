@@ -65,11 +65,15 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /DEFAULT_LUMINE_MODEL[^=]*= 'grok-4\.5'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'high'/
+    /DEFAULT_LUMINE_MODEL[^=]*= 'grok-4\.6'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'medium'/
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.5'[\s\S]*?medium: 'gpt-5\.6-terra'[\s\S]*?heavy: 'claude-opus-5'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.6'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'grok-4\.6'/m
+  );
+  assert.match(
+    selectionHelperSource,
+    /model: 'grok-4\.6'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'medium'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'medium'[\s\S]*?defaultReasoningEffort: 'high'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'heavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/m
   );
   assert.match(
     selectionHelperSource,

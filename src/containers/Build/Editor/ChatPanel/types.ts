@@ -8,12 +8,14 @@ import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
+  | 'grok-4.6'
+  // Legacy stored preference; normalization migrates it to grok-4.6.
   | 'grok-4.5'
   | 'gpt-5.6-terra'
   | 'claude-sonnet-5'
   | 'gpt-5.6-sol'
   | 'claude-opus-5'
-  // Legacy stored preference; the server migrates it to claude-opus-5.
+  // Other legacy stored preferences migrated by the server.
   | 'claude-opus-4-8'
   | 'claude-fable-5';
 export type BuildLumineMode = 'light' | 'medium' | 'heavy';
