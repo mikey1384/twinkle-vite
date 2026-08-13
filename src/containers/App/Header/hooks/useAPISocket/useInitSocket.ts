@@ -44,6 +44,7 @@ import {
   loadLatestCanonicalFeaturedSubjects
 } from '~/helpers/featuredSubjects';
 import { getServerDisconnectReconnectDelayMs } from '~/helpers/socketRecovery';
+import { getChatUnreadActivityRevision } from '~/helpers/chatUnreadActivity';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -964,6 +965,7 @@ export default function useInitSocket({
       onSetReconnecting();
       isLoadingChatRef.current = true;
       let didInitChat = false;
+      let didCompleteChatSync = false;
       const rawCurrentPathId = currentPathIdRef.current;
       const routePathId = Number(rawCurrentPathId);
       const hasRoutePathId = !isNaN(routePathId) && routePathId > 0;
@@ -1071,11 +1073,30 @@ export default function useInitSocket({
           throw new Error('Chat bootstrap returned no canonical channel state');
         }
 
-        loadChatRetryCountRef.current = 0;
         if (loadChatRetryTimerRef.current) {
           clearTimeout(loadChatRetryTimerRef.current);
           loadChatRetryTimerRef.current = null;
         }
+
+        const latestPathId =
+          Number(latestPathIdRef.current) > 0
+            ? Number(latestPathIdRef.current)
+            : 0;
+        const needsPostBootstrapChannelReconciliation = Boolean(
+          !hasRoutePathId &&
+          latestPathId &&
+          (data.currentPathId !== latestPathId || data.chatType) &&
+          userIdRef.current
+        );
+        // Capture navigation intent before INIT_CHAT installs the server
+        // snapshot. A later ref update can be caused by that dispatch itself,
+        // so reading latestChatTypeRef after an awaited channel recovery would
+        // mistake stale response state for a user navigation that must win.
+        const routedChatTypeToRestore =
+          latestChatTypeRef.current &&
+          String(currentPathIdRef.current) === String(latestChatTypeRef.current)
+            ? latestChatTypeRef.current
+            : null;
 
         recordChatBootstrapEvent('chat-bootstrap-dispatch-init-chat', {
           bootstrapId,
@@ -1088,37 +1109,28 @@ export default function useInitSocket({
           userId: bootstrapUserId,
           bootstrapId
         });
-        // Only a snapshot loaded entirely after the latest authenticated room
-        // barrier closes a proven transport gap. If the socket changed while
-        // this request was in flight, a follow-up writer read must own repair.
-        if (
-          socket.connected &&
-          boundSocketIdRef.current === socket.id &&
-          bootstrapDisconnectSequence === socketDisconnectSequenceRef.current
-        ) {
-          didSocketDisconnectRef.current = false;
-        }
         chatLoadedRef.current = true;
         loadedForUserIdRef.current = bootstrapUserId;
         didInitChat = true;
+        // INIT_CHAT makes the full snapshot renderable and ordinarily opens the
+        // interaction gate. A plain /chat restore can still owe a second
+        // canonical channel read, and a socket can also have changed while the
+        // full request was in flight. Keep the last confirmed projection
+        // visible but non-interactive until the whole synchronization chain
+        // completes.
+        if (
+          needsPostBootstrapChannelReconciliation ||
+          didSocketDisconnectRef.current
+        ) {
+          onSetReconnecting();
+        }
         void handleGetNumberOfUnreadMessages({
           expectedUserId: bootstrapUserId
         });
-        lastFailedBootstrapIdRef.current = null;
-
-        const latestPathId =
-          Number(latestPathIdRef.current) > 0
-            ? Number(latestPathIdRef.current)
-            : 0;
 
         // Explicit routed numeric chat paths are resolved by Chat/Main.handleChannelEnter().
         // Keep this bootstrap reconciliation for non-routed restore cases like plain /chat.
-        if (
-          !hasRoutePathId &&
-          latestPathId &&
-          (data.currentPathId !== latestPathId || data.chatType) &&
-          userIdRef.current
-        ) {
+        if (needsPostBootstrapChannelReconciliation) {
           const channelId = parseChannelPath(latestPathId);
           const { isAccessible, isPublic } =
             await checkChatAccessible(latestPathId);
@@ -1168,6 +1180,7 @@ export default function useInitSocket({
                     replace: true
                   });
                 }
+                didCompleteChatSync = true;
                 return;
               }
               // For AI DM channels, continue loading - don't redirect
@@ -1178,14 +1191,70 @@ export default function useInitSocket({
             if (!channelPathIdHashRef.current[latestPathId]) {
               onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
             }
+            const expectedActivityRevision = getChatUnreadActivityRevision();
             const channelData = await loadChatChannel({
               channelId,
-              subchannelPath: requestedSubchannelPath
+              subchannelPath: requestedSubchannelPath,
+              // This request resolves a canonical path/access mismatch and may
+              // follow an invitation mutation. It always reads the writer;
+              // otherwise a cold (non-reconnect) bootstrap could still replace
+              // confirmed access or messages with a lagging replica page.
+              fromWriter: true,
+              bounded: true
             });
             if (
               activeBootstrapIdRef.current !== bootstrapId ||
               userIdRef.current !== bootstrapUserId
             ) {
+              return;
+            }
+            // A confirmed socket event can land after the writer captured this
+            // channel response but before the HTTP response arrives. Applying
+            // that older page would erase the newer message/deletion/reaction
+            // projection. Discard it and let the owning writer retry cover the
+            // whole chain instead.
+            if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
+              throw new Error(
+                'Canonical chat activity changed during channel recovery'
+              );
+            }
+            if (!channelData?.channel?.id) {
+              throw new Error(
+                'Canonical chat channel recovery returned no channel'
+              );
+            }
+            const canonicalChannelId = Number(channelData.channel.id);
+            if (canonicalChannelId !== channelId) {
+              if (
+                canonicalChannelId !== GENERAL_CHAT_ID ||
+                channelId === GENERAL_CHAT_ID
+              ) {
+                throw new Error(
+                  'Canonical chat channel recovery returned a different channel'
+                );
+              }
+              // GET /chat/channel canonicalizes a channel the user lost access
+              // to as General with HTTP 200. Apply that confirmed response and
+              // repair both selection and route instead of reinstalling the
+              // now-inaccessible requested id.
+              onEnterChannelWithId({
+                data: channelData,
+                userId: bootstrapUserId
+              });
+              for (const member of channelData.channel.members || []) {
+                onSetUserState({
+                  userId: member.id,
+                  newState: member
+                });
+              }
+              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+              onUpdateChatType(null);
+              if (usingChatRef.current) {
+                navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
+                  replace: true
+                });
+              }
+              didCompleteChatSync = true;
               return;
             }
             onEnterChannelWithId({
@@ -1198,13 +1267,19 @@ export default function useInitSocket({
                 newState: member
               });
             }
-            onUpdateSelectedChannelId(channelId);
+            onUpdateSelectedChannelId(canonicalChannelId);
+            // /chat/channel canonically clears the persisted Collect mode when
+            // it confirms a numeric channel. Mirror that confirmed response;
+            // retaining data.chatType from the preceding full snapshot can
+            // otherwise redirect the user straight back to Collect.
+            onUpdateChatType(null);
           }
         }
 
-        if (latestChatTypeRef.current) {
-          onUpdateChatType(latestChatTypeRef.current);
+        if (routedChatTypeToRestore) {
+          onUpdateChatType(routedChatTypeToRestore);
         }
+        didCompleteChatSync = true;
       } catch (error) {
         const normalizedError = error as {
           status?: number;
@@ -1267,7 +1342,33 @@ export default function useInitSocket({
             }
           }
         } else {
-          console.error('Failed to sync post-load chat state:', error);
+          const isOwningBootstrap =
+            activeBootstrapIdRef.current === bootstrapId;
+          if (!isOwningBootstrap) {
+            recordChatBootstrapEvent('chat-bootstrap-retry-skipped-stale', {
+              sourceBootstrapId: bootstrapId,
+              activeBootstrapId: activeBootstrapIdRef.current,
+              alreadyLoaded: true,
+              userId: bootstrapUserId,
+              selectedChannelId: selectedChannelIdRef.current
+            });
+          } else {
+            lastFailedBootstrapIdRef.current = bootstrapId;
+            console.error('Failed to sync post-load chat state:', error);
+            if (socket.connected) {
+              scheduleLoadChatRetry({ fromWriter: true });
+            } else {
+              recordChatBootstrapEvent(
+                'chat-bootstrap-retry-skipped-disconnected',
+                {
+                  sourceBootstrapId: bootstrapId,
+                  retryCount: loadChatRetryCountRef.current,
+                  userId: bootstrapUserId,
+                  selectedChannelId: selectedChannelIdRef.current
+                }
+              );
+            }
+          }
         }
       } finally {
         // Only the owning (latest-started) attempt clears the shared in-flight
@@ -1277,6 +1378,29 @@ export default function useInitSocket({
         const isOwningBootstrap = activeBootstrapIdRef.current === bootstrapId;
         let shouldFollowWithCanonicalResync = false;
         if (isOwningBootstrap) {
+          if (didCompleteChatSync) {
+            loadChatRetryCountRef.current = 0;
+            if (loadChatRetryTimerRef.current) {
+              clearTimeout(loadChatRetryTimerRef.current);
+              loadChatRetryTimerRef.current = null;
+            }
+            lastFailedBootstrapIdRef.current = null;
+            // Only a synchronization chain completed entirely after the latest
+            // authenticated room barrier can close a proven transport gap. If
+            // the socket changed anywhere in the chain, the next writer read
+            // still owns recovery.
+            if (
+              socket.connected &&
+              boundSocketIdRef.current === socket.id &&
+              bootstrapDisconnectSequence ===
+                socketDisconnectSequenceRef.current
+            ) {
+              didSocketDisconnectRef.current = false;
+            }
+            if (!didSocketDisconnectRef.current) {
+              onFinishReconnecting();
+            }
+          }
           isLoadingChatRef.current = false;
           activeBootstrapIdRef.current = null;
           bootstrapStartedAtRef.current = 0;
@@ -1284,14 +1408,17 @@ export default function useInitSocket({
             onFinishChatBootstrap(bootstrapId);
           }
           shouldFollowWithCanonicalResync =
-            didInitChat &&
+            didCompleteChatSync &&
             didSocketDisconnectRef.current &&
             socket.connected &&
-            boundSocketIdRef.current === socket.id;
+            boundSocketIdRef.current === socket.id &&
+            !loadChatRetryTimerRef.current &&
+            lastFailedBootstrapIdRef.current === null;
         }
         recordChatBootstrapEvent('chat-bootstrap-attempt-finished', {
           bootstrapId,
           didInitChat,
+          didCompleteChatSync,
           isOwningBootstrap,
           isLoadingChat: isLoadingChatRef.current,
           hasRetryTimer: !!loadChatRetryTimerRef.current

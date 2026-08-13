@@ -104,6 +104,40 @@ test('wake requires an authenticated room barrier and broken sessions keep the w
     loadHandler,
     /const canonicalReadFromWriter =[\s\S]*?fromWriter \|\| didSocketDisconnectRef\.current[\s\S]*?loadChat\(\{[\s\S]*?fromWriter: canonicalReadFromWriter,[\s\S]*?bounded: canonicalReadFromWriter/
   );
+  const postBootstrapChannelRecovery = sourceBetween(
+    loadHandler,
+    'if (needsPostBootstrapChannelReconciliation)',
+    'if (routedChatTypeToRestore)'
+  );
+  assert.match(
+    postBootstrapChannelRecovery,
+    /const expectedActivityRevision =[\s\S]*?getChatUnreadActivityRevision\(\)[\s\S]*?loadChatChannel\(\{[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
+  );
+  assert.match(
+    postBootstrapChannelRecovery,
+    /getChatUnreadActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
+  );
+  assert.match(
+    postBootstrapChannelRecovery,
+    /const canonicalChannelId = Number\(channelData\.channel\.id\)[\s\S]*?canonicalChannelId !== channelId[\s\S]*?canonicalChannelId !== GENERAL_CHAT_ID[\s\S]*?onUpdateSelectedChannelId\(GENERAL_CHAT_ID\)[\s\S]*?onUpdateChatType\(null\)/
+  );
+  assert.match(
+    loadHandler,
+    /const routedChatTypeToRestore =[\s\S]*?String\(currentPathIdRef\.current\) === String\(latestChatTypeRef\.current\)[\s\S]*?onInitChat\([\s\S]*?if \(routedChatTypeToRestore\) {[\s\S]*?onUpdateChatType\(routedChatTypeToRestore\)/
+  );
+  assert.ok(
+    loadHandler.lastIndexOf('didSocketDisconnectRef.current = false') >
+      loadHandler.indexOf('if (needsPostBootstrapChannelReconciliation)'),
+    'the transport gap must remain open through selected-channel recovery'
+  );
+  assert.match(
+    loadHandler,
+    /Failed to sync post-load chat state:[\s\S]*?scheduleLoadChatRetry\(\{ fromWriter: true \}\)/
+  );
+  assert.match(
+    loadHandler,
+    /shouldFollowWithCanonicalResync =[\s\S]*?didCompleteChatSync[\s\S]*?!loadChatRetryTimerRef\.current[\s\S]*?lastFailedBootstrapIdRef\.current === null/
+  );
   const fullLoadHelper = sourceBetween(
     requestHelperSource,
     'async loadChat({',
@@ -152,6 +186,10 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   assert.match(
     messagesSource,
     /if \(!isReloadRequired\) return;[\s\S]*?loadChatChannel\(\{[\s\S]*?subchannelPath: subchannelPath \|\| undefined,[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
+  );
+  assert.match(
+    messagesSource,
+    /const expectedActivityRevision = getChatUnreadActivityRevision\(\);[\s\S]*?await loadChatChannel\([\s\S]*?getChatUnreadActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
   );
   assert.match(
     messagesSource,

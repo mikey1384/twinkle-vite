@@ -19,6 +19,7 @@ import {
 import { socket } from '~/constants/sockets/api';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
+import { getChatUnreadActivityRevision } from '~/helpers/chatUnreadActivity';
 import { useNavigate } from 'react-router-dom';
 import {
   useAppContext,
@@ -500,6 +501,7 @@ export default function MessagesContainer({
 
     async function reload() {
       try {
+        const expectedActivityRevision = getChatUnreadActivityRevision();
         const data = await loadChatChannel({
           channelId: selectedChannelId,
           subchannelPath: subchannelPath || undefined,
@@ -516,6 +518,11 @@ export default function MessagesContainer({
           userIdRef.current !== userId
         ) {
           return;
+        }
+        if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
+          throw new Error(
+            'Canonical chat activity changed during channel recovery'
+          );
         }
         if (!data?.channel?.id) {
           throw new Error(
