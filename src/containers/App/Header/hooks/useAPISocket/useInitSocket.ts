@@ -62,6 +62,7 @@ interface SocketBindPayload {
 interface SocketBindResult {
   authError?: boolean;
   bindError?: boolean;
+  chatRoomsChanged?: boolean;
 }
 
 function emitSocketBind({
@@ -145,6 +146,9 @@ export default function useInitSocket({
   const onFinishChatBootstrap = useChatContext(
     (v) => v.actions.onFinishChatBootstrap
   );
+  const onFinishReconnecting = useChatContext(
+    (v) => v.actions.onFinishReconnecting
+  );
   const onInitChat = useChatContext((v) => v.actions.onInitChat);
   const onStartChatBootstrap = useChatContext(
     (v) => v.actions.onStartChatBootstrap
@@ -202,6 +206,8 @@ export default function useInitSocket({
   const chatLoadedRef = useRef(chatLoaded);
   const loadedForUserIdRef = useRef(loadedForUserId);
   const didSocketDisconnectRef = useRef(false);
+  const socketDisconnectSequenceRef = useRef(0);
+  const boundSocketIdRef = useRef<string | null>(null);
   const isLoadingChatRef = useRef(false);
   // When the currently-owning bootstrap attempt began its loadChat (0 = none in
   // flight). The watchdog uses this to tell a healthy slow load from a hung one.
@@ -214,6 +220,7 @@ export default function useInitSocket({
   const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
   const socketBindRetryTimerRef = useRef<number | null>(null);
   const socketBindAttemptRef = useRef(0);
+  const wakeReconcileInFlightRef = useRef(false);
   const bootstrapAwaitingBindUserIdRef = useRef<number | null>(userId || null);
   const userActionAckedRef = useRef(false);
   const userActionAttemptsRef = useRef(0);
@@ -239,6 +246,97 @@ export default function useInitSocket({
     if (!hiddenAt || Date.now() - hiddenAt > COLD_RESUME_MS) {
       interactedSinceArrivalRef.current = false;
     }
+  }
+
+  function markSocketTransportGap(confirmedFailure = false) {
+    if (confirmedFailure || !didSocketDisconnectRef.current) {
+      socketDisconnectSequenceRef.current += 1;
+    }
+    didSocketDisconnectRef.current = true;
+    boundSocketIdRef.current = null;
+    wakeReconcileInFlightRef.current = false;
+    if (
+      chatLoadedRef.current &&
+      loadedForUserIdRef.current === userIdRef.current
+    ) {
+      onSetReconnecting();
+    }
+  }
+
+  function requestChatWakeBarrier(reason: 'focus' | 'online' | 'pageshow') {
+    const bindingUserId = Number(userIdRef.current || 0);
+    const hasCurrentChatProjection =
+      bindingUserId > 0 &&
+      chatLoadedRef.current &&
+      Number(loadedForUserIdRef.current || 0) === bindingUserId;
+    if (!hasCurrentChatProjection) return;
+
+    // Keep the last confirmed projection visible, but close every message-send
+    // path until the server proves this exact socket still owns its canonical
+    // room membership. A real disconnect already owns the stronger writer
+    // resync and must not be displaced by a competing wake bind.
+    onSetReconnecting();
+    if (
+      !socket.connected ||
+      didSocketDisconnectRef.current ||
+      isLoadingChatRef.current ||
+      activeBootstrapIdRef.current ||
+      lastFailedBootstrapIdRef.current ||
+      loadChatRetryTimerRef.current ||
+      wakeReconcileInFlightRef.current
+    ) {
+      return;
+    }
+
+    wakeReconcileInFlightRef.current = true;
+    const expectedSocketId = socket.id;
+    recordChatBootstrapEvent('chat-wake-barrier-start', {
+      reason,
+      userId: bindingUserId,
+      socketId: expectedSocketId || null
+    });
+    bindSocketToUser({
+      bindingUserId,
+      onBound(result) {
+        const sameContinuousSession =
+          socket.connected &&
+          socket.id === expectedSocketId &&
+          !didSocketDisconnectRef.current;
+        const canonicalRecoveryOwnsGate =
+          isLoadingChatRef.current ||
+          !!activeBootstrapIdRef.current ||
+          !!lastFailedBootstrapIdRef.current ||
+          !!loadChatRetryTimerRef.current;
+        if (
+          bindingUserId !== Number(userIdRef.current || 0) ||
+          !sameContinuousSession ||
+          canonicalRecoveryOwnsGate
+        ) {
+          return;
+        }
+        // Socket.IO preserves packet ordering within one session, and the
+        // server reconciles room ids from the writer before acknowledging. A
+        // membership delta also requires a writer-backed projection refresh;
+        // an unchanged room set can safely keep the rendered conversation.
+        recordChatBootstrapEvent('chat-wake-barrier-acknowledged', {
+          reason,
+          userId: bindingUserId,
+          socketId: socket.id || null,
+          chatRoomsChanged: Boolean(result?.chatRoomsChanged)
+        });
+        if (result?.chatRoomsChanged) {
+          void handleLoadChatRef.current?.({
+            selectedChannelId: selectedChannelIdRef.current,
+            fromWriter: true
+          });
+          return;
+        }
+        onFinishReconnecting();
+      },
+      onBindSettled() {
+        wakeReconcileInFlightRef.current = false;
+      }
+    });
   }
 
   function handleVersionData(
@@ -477,6 +575,8 @@ export default function useInitSocket({
     if (userId) return;
     clearSocketAuthReady();
     socketBindAttemptRef.current += 1;
+    wakeReconcileInFlightRef.current = false;
+    boundSocketIdRef.current = null;
     clearSocketBindRetryTimer();
     if (loadChatRetryTimerRef.current) {
       clearTimeout(loadChatRetryTimerRef.current);
@@ -491,6 +591,10 @@ export default function useInitSocket({
       // application-level acknowledgement can be delayed by tab throttling and
       // must not turn a confirmed connection into a synthetic disconnect.
       if (socket.connected) return;
+      // A resume can observe the disconnected transport before Socket.IO's
+      // disconnect callback has run. Preserve the same canonical-resync
+      // invariant instead of treating the next connect as a clean cold bind.
+      markSocketTransportGap();
       emitAdminTelemetry({
         message: 'Socket disconnected on resume - attempting reconnect'
       });
@@ -501,9 +605,14 @@ export default function useInitSocket({
 
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
+        const resumedFromHidden = hiddenAtRef.current > 0;
         handleMarkArrivalIfCold();
         checkFeedsOutdated();
         ensureSocketConnected();
+        if (resumedFromHidden) {
+          hiddenAtRef.current = 0;
+          requestChatWakeBarrier('focus');
+        }
       } else {
         hiddenAtRef.current = Date.now();
         // A hidden tab is the one moment a reload is guaranteed invisible, so
@@ -517,13 +626,18 @@ export default function useInitSocket({
       }
     }
 
-    async function onPageShow() {
+    async function onPageShow(event: PageTransitionEvent) {
+      const resumedFromHidden = hiddenAtRef.current > 0;
       handleMarkArrivalIfCold();
       try {
         socket.emit('presence_ping');
       } catch {}
       void checkFeedsOutdated();
       ensureSocketConnected();
+      if (resumedFromHidden || event.persisted) {
+        hiddenAtRef.current = 0;
+        requestChatWakeBarrier('pageshow');
+      }
       try {
         const data = await checkVersion();
         handleVersionData(data, 'arrival');
@@ -542,12 +656,21 @@ export default function useInitSocket({
     }
 
     const onFocus = () => {
+      const resumedFromHidden = hiddenAtRef.current > 0;
+      if (resumedFromHidden) handleMarkArrivalIfCold();
       void checkFeedsOutdated();
       ensureSocketConnected();
+      if (resumedFromHidden) {
+        hiddenAtRef.current = 0;
+        requestChatWakeBarrier('focus');
+      }
     };
     const onOnline = () => {
       void checkFeedsOutdated();
       ensureSocketConnected();
+      if (document.visibilityState === 'visible') {
+        requestChatWakeBarrier('online');
+      }
     };
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onOnline);
@@ -741,16 +864,16 @@ export default function useInitSocket({
 
       handleStartUserActionCapture();
 
-      const shouldResyncLoadedChat =
-        didSocketDisconnectRef.current &&
-        chatLoadedRef.current &&
-        loadedForUserIdRef.current === userIdRef.current;
+      // Any proven transport break requires the next bootstrap to read the
+      // writer, including a break during the initial load. A replica snapshot
+      // taken after the new room barrier can still omit commits made before
+      // that barrier, which no later socket event is required to replay.
+      const shouldResyncAfterDisconnect = didSocketDisconnectRef.current;
       const shouldSkipReload =
         isLoadingChatRef.current ||
-        (!shouldResyncLoadedChat &&
+        (!shouldResyncAfterDisconnect &&
           chatLoadedRef.current &&
           loadedForUserIdRef.current === userIdRef.current);
-      didSocketDisconnectRef.current = false;
 
       onClearRecentChessMessage(selectedChannelIdRef.current);
       void handleCheckVersion();
@@ -777,18 +900,31 @@ export default function useInitSocket({
             // reconnect resync must start after that barrier so activity before
             // it comes from the writer snapshot and activity after it arrives
             // through the socket.
-            if (!shouldSkipReload) {
+            // The load that was in flight when `connect` fired can settle
+            // before this bind acknowledgement. Re-evaluate here: if it could
+            // not close the transport gap because the new socket was not bound
+            // yet, this acknowledgement must start the writer repair. If it is
+            // still in flight, its `finally` path will start that repair after
+            // it settles.
+            const needsPostBindWriterResync =
+              didSocketDisconnectRef.current &&
+              !isLoadingChatRef.current &&
+              !activeBootstrapIdRef.current &&
+              !loadChatRetryTimerRef.current;
+            if (needsPostBindWriterResync || !shouldSkipReload) {
+              const loadFromWriter =
+                needsPostBindWriterResync || didSocketDisconnectRef.current;
               recordChatBootstrapEvent('chat-bootstrap-triggered-by-connect', {
                 userId: bindingUserId,
                 selectedChannelId: selectedChannelIdRef.current,
                 currentPathId: currentPathIdRef.current,
                 latestPathId: latestPathIdRef.current,
                 socketConnected: socket.connected,
-                fromWriter: shouldResyncLoadedChat
+                fromWriter: loadFromWriter
               });
               void handleLoadChat({
                 selectedChannelId: selectedChannelIdRef.current,
-                fromWriter: shouldResyncLoadedChat
+                fromWriter: loadFromWriter
               });
             }
           }
@@ -818,6 +954,13 @@ export default function useInitSocket({
         return;
       }
       const bootstrapUserId = userIdRef.current;
+      // Callers do not all know whether a transport break happened before
+      // they reached this function (autoload and watchdog are intentionally
+      // generic). Centralize the source-of-truth choice here so no recovery
+      // path can close a disconnect gap with a replica snapshot.
+      const canonicalReadFromWriter =
+        fromWriter || didSocketDisconnectRef.current;
+      const bootstrapDisconnectSequence = socketDisconnectSequenceRef.current;
       onSetReconnecting();
       isLoadingChatRef.current = true;
       let didInitChat = false;
@@ -858,7 +1001,7 @@ export default function useInitSocket({
         fallbackPathId,
         latestPathId: latestPathIdRef.current,
         socketConnected: socket.connected,
-        fromWriter
+        fromWriter: canonicalReadFromWriter
       });
 
       try {
@@ -883,7 +1026,8 @@ export default function useInitSocket({
         const data = await loadChat({
           channelId: bootstrapChannelId,
           subchannelPath: requestedSubchannelPath,
-          fromWriter
+          fromWriter: canonicalReadFromWriter,
+          bounded: canonicalReadFromWriter
         });
 
         const endTime = Date.now();
@@ -944,6 +1088,16 @@ export default function useInitSocket({
           userId: bootstrapUserId,
           bootstrapId
         });
+        // Only a snapshot loaded entirely after the latest authenticated room
+        // barrier closes a proven transport gap. If the socket changed while
+        // this request was in flight, a follow-up writer read must own repair.
+        if (
+          socket.connected &&
+          boundSocketIdRef.current === socket.id &&
+          bootstrapDisconnectSequence === socketDisconnectSequenceRef.current
+        ) {
+          didSocketDisconnectRef.current = false;
+        }
         chatLoadedRef.current = true;
         loadedForUserIdRef.current = bootstrapUserId;
         didInitChat = true;
@@ -1093,7 +1247,13 @@ export default function useInitSocket({
             lastFailedBootstrapIdRef.current = bootstrapId;
             console.error('Failed to load chat:', error);
             if (socket.connected) {
-              scheduleLoadChatRetry({ fromWriter });
+              scheduleLoadChatRetry({
+                // A disconnect can happen after this request starts. Its retry
+                // must then upgrade to the writer even if the failed request
+                // itself began as an ordinary replica bootstrap.
+                fromWriter:
+                  canonicalReadFromWriter || didSocketDisconnectRef.current
+              });
             } else {
               recordChatBootstrapEvent(
                 'chat-bootstrap-retry-skipped-disconnected',
@@ -1115,6 +1275,7 @@ export default function useInitSocket({
         // alone, or it would reopen the gate while the newer attempt is still
         // running and invite yet another overlapping bootstrap.
         const isOwningBootstrap = activeBootstrapIdRef.current === bootstrapId;
+        let shouldFollowWithCanonicalResync = false;
         if (isOwningBootstrap) {
           isLoadingChatRef.current = false;
           activeBootstrapIdRef.current = null;
@@ -1122,6 +1283,11 @@ export default function useInitSocket({
           if (!didInitChat) {
             onFinishChatBootstrap(bootstrapId);
           }
+          shouldFollowWithCanonicalResync =
+            didInitChat &&
+            didSocketDisconnectRef.current &&
+            socket.connected &&
+            boundSocketIdRef.current === socket.id;
         }
         recordChatBootstrapEvent('chat-bootstrap-attempt-finished', {
           bootstrapId,
@@ -1130,6 +1296,22 @@ export default function useInitSocket({
           isLoadingChat: isLoadingChatRef.current,
           hasRetryTimer: !!loadChatRetryTimerRef.current
         });
+        if (shouldFollowWithCanonicalResync) {
+          recordChatBootstrapEvent(
+            'chat-bootstrap-follow-up-after-transport-gap',
+            {
+              bootstrapId,
+              userId: bootstrapUserId,
+              selectedChannelId: selectedChannelIdRef.current,
+              bootstrapDisconnectSequence,
+              currentDisconnectSequence: socketDisconnectSequenceRef.current
+            }
+          );
+          void handleLoadChat({
+            selectedChannelId: selectedChannelIdRef.current,
+            fromWriter: true
+          });
+        }
       }
     }
 
@@ -1205,7 +1387,7 @@ export default function useInitSocket({
       });
       clearSocketAuthReady();
       socketBindAttemptRef.current += 1;
-      didSocketDisconnectRef.current = true;
+      markSocketTransportGap(true);
       onSetAICallEnding(false);
       onChangeSocketStatus(false);
 
@@ -1295,12 +1477,11 @@ export default function useInitSocket({
     });
   }, [chatLoaded, loadedForUserId, loadChatHandlerVersion, userId]);
 
-  // Self-heal watchdog. The bootstrap request (loadChat) runs with no timeout and
-  // no stall guard (meta.enforceTimeout:false + ui/normal policy progress guard
-  // off), and every recovery path is gated behind isLoadingChatRef, which clears
-  // only when loadChat settles. So a single stalled loadChat — e.g. issued by a
-  // reconnect while the tab is throttled behind a Build game window — wedges chat
-  // on "Loading Twinkle Chat..." forever with no error and no retry.
+  // Self-heal watchdog. An ordinary initial bootstrap deliberately has no hard
+  // request deadline because a throttled tab can remain healthy but slow.
+  // Canonical reconnect repair is bounded separately and retries through its
+  // owning loop. This watchdog protects only the unbounded initial-bootstrap
+  // case, where every recovery path otherwise waits behind isLoadingChatRef.
   //
   // The watchdog must NOT preempt a healthy-but-slow load (a throttled tab can
   // legitimately take a while), or it would supersede every attempt before it can
@@ -1412,10 +1593,12 @@ export default function useInitSocket({
 
   function bindSocketToUser({
     bindingUserId,
-    onBound
+    onBound,
+    onBindSettled
   }: {
     bindingUserId: number;
-    onBound?: () => void;
+    onBound?: (result?: SocketBindResult) => void;
+    onBindSettled?: () => void;
   }) {
     const bindAttempt = ++socketBindAttemptRef.current;
     emitSocketBind({
@@ -1432,9 +1615,11 @@ export default function useInitSocket({
           bindingUserId !== userIdRef.current ||
           !socket.connected
         ) {
+          onBindSettled?.();
           return;
         }
         if (result?.authError) {
+          onBindSettled?.();
           window.location.reload();
           return;
         }
@@ -1444,6 +1629,7 @@ export default function useInitSocket({
           bootstrapAwaitingBindUserIdRef.current = null;
         }
         clearSocketBindRetryTimer();
+        boundSocketIdRef.current = socket.id || null;
         dispatchSocketAuthReady(bindingUserId);
         socket.emit('enter_my_notification_channel', bindingUserId);
         socket.emit('change_busy_status', chatBusyRef.current);
@@ -1451,7 +1637,7 @@ export default function useInitSocket({
         userActionAttemptsRef.current = 0;
         handleStartUserActionCapture();
         hydrateOnlinePresence(bindingUserId);
-        onBound?.();
+        onBound?.(result);
         if (
           wasAwaitingBootstrapBind &&
           !onBound &&
@@ -1463,8 +1649,10 @@ export default function useInitSocket({
             selectedChannelId: selectedChannelIdRef.current
           });
         }
+        onBindSettled?.();
       },
       onFailure(error) {
+        onBindSettled?.();
         if (bindAttempt !== socketBindAttemptRef.current) return;
         handleSocketBindFailure({ bindingUserId, error });
       }
@@ -1509,7 +1697,7 @@ export default function useInitSocket({
   }) {
     if (bindingUserId !== userIdRef.current) return;
     clearSocketAuthReady();
-    didSocketDisconnectRef.current = true;
+    markSocketTransportGap(true);
     recordChatBootstrapEvent('socket-bind-failed', {
       userId: bindingUserId,
       socketConnected: socket.connected,

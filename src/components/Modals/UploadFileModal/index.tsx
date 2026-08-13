@@ -47,6 +47,7 @@ const buttonFileInputOverlayStyle: React.CSSProperties = {
 
 function UploadFileModal({
   initialCaption = '',
+  interactionLocked = false,
   isRespondingToSubject,
   isCielChat,
   isZeroChat,
@@ -68,6 +69,7 @@ function UploadFileModal({
   subchannelId
 }: {
   initialCaption?: string;
+  interactionLocked?: boolean;
   isRespondingToSubject?: boolean;
   isCielChat?: boolean;
   isZeroChat?: boolean;
@@ -312,6 +314,8 @@ function UploadFileModal({
     multiImageUploading || customUploadSubmitting || !!embeddingAttachmentId;
 
   async function handleSubmit() {
+    if (interactionLocked) return;
+
     if (isCustomUploadMode) {
       if (customUploadSubmittingRef.current) {
         return;
@@ -658,7 +662,8 @@ function UploadFileModal({
             </Button>
             <Button
               disabled={
-                isCustomUploadMode
+                interactionLocked ||
+                (isCustomUploadMode
                   ? !!captionExceedsCharLimit ||
                     customFilesToSubmit.length === 0 ||
                     customUploadSubmitting
@@ -671,7 +676,7 @@ function UploadFileModal({
                       (imageAttachments.length > 1 && !onTextMessageSubmit)
                     : !!captionExceedsCharLimit ||
                       !selectedFile ||
-                      shouldBlockForAiUnsupportedFile
+                      shouldBlockForAiUnsupportedFile)
               }
               color={doneColor}
               onClick={handleSubmit}

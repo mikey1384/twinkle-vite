@@ -96,6 +96,9 @@ export default function MessagesContainer({
   const onChangeChannelOwner = useChatContext(
     (v) => v.actions.onChangeChannelOwner
   );
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
   const navigate = useNavigate();
   const {
     actions: {
@@ -205,6 +208,10 @@ export default function MessagesContainer({
   const MessageToScrollToFromTopic = useRef<number | null>(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
+  const selectedChannelIdRef = useRef(selectedChannelId);
+  selectedChannelIdRef.current = selectedChannelId;
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
   const { boardCountdownObj, clearBoardCountdown, setLatestBoardMessageId } =
@@ -380,7 +387,6 @@ export default function MessagesContainer({
     }
     if (
       creatingNewDMChannel ||
-      reconnecting ||
       selectedChannelIdAndPathIdNotSynced ||
       currentPathId === VOCAB_CHAT_TYPE ||
       currentPathId === AI_CARD_CHAT_TYPE
@@ -397,7 +403,6 @@ export default function MessagesContainer({
   }, [
     isAIChannel,
     creatingNewDMChannel,
-    reconnecting,
     selectedChannelIdAndPathIdNotSynced,
     currentPathId,
     subchannelPath,
@@ -487,23 +492,99 @@ export default function MessagesContainer({
   }, [wordleModalShown]);
 
   useEffect(() => {
-    if (isReloadRequired) {
-      reload();
-    }
+    if (!isReloadRequired) return;
+    let cancelled = false;
+    let retryCount = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    void reload();
+
     async function reload() {
-      const data = await loadChatChannel({
-        channelId: selectedChannelId
-      });
-      onEnterChannelWithId({ data, userId });
-      for (const member of data?.channel?.members || []) {
-        onSetUserState({
-          userId: member.id,
-          newState: member
+      try {
+        const data = await loadChatChannel({
+          channelId: selectedChannelId,
+          subchannelPath: subchannelPath || undefined,
+          // isReloadRequired is produced when navigation outruns a canonical
+          // chat bootstrap. This follow-up owns recovery for the newly selected
+          // channel, so a replica read could reintroduce the stale projection we
+          // just gated interaction to repair.
+          fromWriter: true,
+          bounded: true
         });
+        if (
+          cancelled ||
+          selectedChannelIdRef.current !== selectedChannelId ||
+          userIdRef.current !== userId
+        ) {
+          return;
+        }
+        if (!data?.channel?.id) {
+          throw new Error(
+            'Canonical chat channel recovery returned no channel'
+          );
+        }
+        const canonicalChannelId = Number(data.channel.id);
+        if (canonicalChannelId !== selectedChannelId) {
+          if (
+            canonicalChannelId !== GENERAL_CHAT_ID ||
+            selectedChannelId === GENERAL_CHAT_ID
+          ) {
+            throw new Error(
+              'Canonical chat channel recovery returned a different channel'
+            );
+          }
+          // GET /chat/channel intentionally canonicalizes an inaccessible
+          // requested channel to General with HTTP 200. Apply that confirmed
+          // response, then repair the route; waiting only for 403/404 leaves
+          // the URL pointing at a channel the user no longer belongs to.
+          onEnterChannelWithId({ data, userId });
+          for (const member of data.channel.members || []) {
+            onSetUserState({
+              userId: member.id,
+              newState: member
+            });
+          }
+          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+          navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
+          return;
+        }
+        onEnterChannelWithId({ data, userId });
+        for (const member of data.channel.members || []) {
+          onSetUserState({
+            userId: member.id,
+            newState: member
+          });
+        }
+      } catch (error) {
+        if (cancelled) return;
+        const status = Number((error as { status?: number })?.status || 0);
+        if (
+          (status === 403 || status === 404) &&
+          selectedChannelId !== GENERAL_CHAT_ID &&
+          selectedChannelIdRef.current === selectedChannelId &&
+          userIdRef.current === userId
+        ) {
+          // The writer says this channel is no longer part of the user's
+          // canonical projection. Stop retrying an impossible recovery and let
+          // the ordinary General navigation load its own confirmed state.
+          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+          navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
+          return;
+        }
+        console.error('Failed to recover selected chat channel:', error);
+        const delay = Math.min(1000 * 2 ** retryCount, 10000);
+        retryCount += 1;
+        retryTimer = setTimeout(() => {
+          retryTimer = null;
+          void reload();
+        }, delay);
       }
     }
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReloadRequired, selectedChannelId]);
+  }, [isReloadRequired, selectedChannelId, subchannelPath, userId]);
 
   useEffect(() => {
     onSetReplyTarget({ channelId: selectedChannelId, target: null });
@@ -802,10 +883,7 @@ export default function MessagesContainer({
         // Rolling-deploy bridge for an older API. Current servers broadcast
         // the canonical membership transition after committing it.
         if (
-          !Object.prototype.hasOwnProperty.call(
-            leaveState,
-            'membershipChanged'
-          )
+          !Object.prototype.hasOwnProperty.call(leaveState, 'membershipChanged')
         ) {
           socket.emit('leave_chat_channel', {
             channelId: selectedChannelId,
@@ -1153,7 +1231,7 @@ export default function MessagesContainer({
     pageLoading,
     loadMoreShownAtBottom,
     isLoadingTopicMessages,
-    isReconnecting: reconnecting,
+    isReconnecting: reconnecting || isReloadRequired,
     isConnecting: !selectedChannelIdAndPathIdNotSynced,
     isLoadingChannel: !currentChannel?.loaded,
     chessTarget,
@@ -1215,7 +1293,7 @@ export default function MessagesContainer({
     isOwnerPostingOnly: currentChannel.isOwnerPostingOnly,
     innerRef: ChatInputRef,
     currentlyStreamingAIMsgId: currentChannel.currentlyStreamingAIMsgId,
-    loading: pageLoading,
+    loading: pageLoading || reconnecting || isReloadRequired,
     socketConnected,
     isRespondingToSubject: appliedIsRespondingToSubject,
     isTwoPeopleChannel: currentChannel.twoPeople,

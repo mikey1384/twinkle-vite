@@ -1276,11 +1276,13 @@ export default function chatRequestHelpers({
     async loadChat({
       channelId,
       subchannelPath,
-      fromWriter = false
+      fromWriter = false,
+      bounded = false
     }: {
       channelId: number;
       subchannelPath: string;
       fromWriter?: boolean;
+      bounded?: boolean;
     }) {
       try {
         const { data } = await request.get(
@@ -1291,7 +1293,14 @@ export default function chatRequestHelpers({
             ...auth(),
             meta: {
               collapseKey: null,
-              enforceTimeout: false
+              // An ordinary initial bootstrap can tolerate a throttled tab's
+              // long request. Canonical reconnect repair owns an outer retry
+              // loop, so bound each writer attempt instead of leaving chat
+              // interactions gated forever if a request never settles.
+              enforceTimeout: bounded,
+              allowExtendedTimeout: bounded ? false : undefined,
+              maxRetries: bounded ? 0 : undefined,
+              totalTimeoutMs: bounded ? 60000 : undefined
             }
           }
         );
@@ -1307,7 +1316,8 @@ export default function chatRequestHelpers({
       invitationMessageId,
       subchannelPath,
       skipUpdateChannelId,
-      fromWriter
+      fromWriter,
+      bounded = false
     }: {
       channelId: number;
       isForInvitation?: boolean;
@@ -1316,6 +1326,7 @@ export default function chatRequestHelpers({
       subchannelPath?: string;
       skipUpdateChannelId?: boolean;
       fromWriter?: boolean;
+      bounded?: boolean;
     }) {
       try {
         const { data } = await request.get(
@@ -1336,7 +1347,14 @@ export default function chatRequestHelpers({
             ...auth(),
             meta: {
               collapseKey: null,
-              enforceTimeout: false
+              // Ordinary channel navigation may legitimately sit behind a
+              // long throttled-tab request. Canonical recovery has its own
+              // retry loop, so give each attempt a hard boundary and let that
+              // owner retry rather than leaving interaction gated forever.
+              enforceTimeout: bounded,
+              allowExtendedTimeout: bounded ? false : undefined,
+              maxRetries: bounded ? 0 : undefined,
+              totalTimeoutMs: bounded ? 60000 : undefined
             }
           }
         );

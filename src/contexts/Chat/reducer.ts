@@ -6683,19 +6683,15 @@ export default function ChatReducer(
           : {}
       };
     case 'SET_RECONNECTING': {
-      const channelsObj: Record<string, any> = {};
-      for (const [channelId, channel] of Object.entries(state.channelsObj)) {
-        channelsObj[channelId] = channel
-          ? {
-              ...channel,
-              loaded: false
-            }
-          : channel;
-      }
       return {
         ...state,
-        channelsObj,
         reconnecting: true
+      };
+    }
+    case 'SET_RECONNECTED': {
+      return {
+        ...state,
+        reconnecting: false
       };
     }
     case 'SET_REPLY_TARGET': {

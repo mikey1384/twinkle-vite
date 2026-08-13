@@ -750,6 +750,30 @@ export default function DisplayedMessages({
         }}
         ref={MessagesRef}
       >
+        {isReconnecting && !pageLoading && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1001,
+              padding: '0.6rem 1rem',
+              border: '1px solid var(--ui-border)',
+              borderRadius: '999px',
+              background: 'var(--chat-title-bg)',
+              boxShadow: '0 0.2rem 0.8rem rgba(0, 0, 0, 0.12)',
+              color: 'var(--chat-text)',
+              fontSize: '1.3rem',
+              fontWeight: 600,
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Catching up&hellip;
+          </div>
+        )}
         {pageLoading || isSearching ? (
           <div style={{ position: 'absolute', top: '20%', width: '100%' }}>
             <Loading
@@ -808,7 +832,21 @@ export default function DisplayedMessages({
             {messages.map((message, index) => {
               return message.id || message.tempMessageId ? (
                 <div
-                  style={{ width: '100%' }}
+                  aria-disabled={isReconnecting}
+                  style={{
+                    width: '100%',
+                    pointerEvents: isReconnecting ? 'none' : undefined
+                  }}
+                  onClickCapture={(event) => {
+                    if (!isReconnecting) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onSubmitCapture={(event) => {
+                    if (!isReconnecting) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
                   key={message.id || message.tempMessageId}
                   ref={(ref) => {
                     MessagesDomRef.current[

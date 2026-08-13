@@ -461,6 +461,7 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
+    if (loading) return;
     if (aiInputDisabled) return;
     if (stringIsEmpty(inputText)) return;
 
@@ -578,6 +579,7 @@ export default function MessageInput({
     selectedChannelId,
     subchannelId,
     innerRef,
+    loading,
     socketConnected,
     inputText
   ]);
@@ -799,6 +801,7 @@ export default function MessageInput({
       {uploadModalShown && (
         <UploadFileModal
           initialCaption={inputText}
+          interactionLocked={loading}
           isRespondingToSubject={isRespondingToSubject}
           isCielChat={isCielChannel}
           isZeroChat={isZeroChannel}

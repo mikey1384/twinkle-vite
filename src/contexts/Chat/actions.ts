@@ -1994,6 +1994,11 @@ export default function ChatActions(dispatch: Dispatch) {
         type: 'SET_RECONNECTING'
       });
     },
+    onFinishReconnecting() {
+      return dispatch({
+        type: 'SET_RECONNECTED'
+      });
+    },
     onSetChessTarget({
       channelId,
       messageId,
