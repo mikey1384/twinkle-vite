@@ -91,7 +91,10 @@ import {
   canEditBuildProject,
   normalizeBuildWorkspaceCommunicationMode
 } from './helpers/branches';
-import { shouldApplyBuildProjectLimitApproval } from '~/helpers/buildProjectLimitApproval';
+import {
+  canInspectBuildProjectSource,
+  shouldApplyBuildProjectLimitApproval
+} from '~/helpers/buildProjectLimitApproval';
 import {
   EMPTY_BUILD_PROJECT_FILES,
   normalizeProjectFilesForBuild,
@@ -159,6 +162,10 @@ export default function BuildEditor({
   onUpdateCopilotPolicy
 }: BuildEditorProps) {
   const canEditCurrentBuildProject = isOwner && canEditBuildProject(build);
+  const canInspectCurrentBuildProject = canInspectBuildProjectSource({
+    canEditProject: canEditCurrentBuildProject,
+    serverCanInspectSource: build.canInspectProjectSource
+  });
   const currentBuildIsContributionFork = isBuildContributionFork(build);
   const canEditCurrentBuildMetadata =
     isOwner && !currentBuildIsContributionFork && canEditBuildProject(build);
@@ -1875,7 +1882,7 @@ export default function BuildEditor({
     streamingProjectFiles: currentBuildRunView.streamingProjectFiles,
     streamingFocusFilePath: currentBuildRunView.streamingFocusFilePath,
     isOwner: canEditCurrentBuildProject,
-    codeWorkspaceAvailable: canEditCurrentBuildProject,
+    codeWorkspaceAvailable: canInspectCurrentBuildProject,
     capabilitySnapshot: build.capabilitySnapshot || null,
     maxProjectFileLines: copilotPolicy?.limits?.maxFileLines ?? null,
     runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,

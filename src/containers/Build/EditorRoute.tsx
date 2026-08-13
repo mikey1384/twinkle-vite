@@ -285,6 +285,7 @@ export default function BuildEditorRoute() {
             Number(data.build.contributionBranchNumber || 0) === 0 &&
             Boolean(data.build.canOpenContributionWorkspace) &&
             Boolean(data.build.hasActiveContributionInvite) &&
+            !Boolean(data.build.canInspectProjectSource) &&
             !isSessionAwareOfContributionBranch({
               userId: currentUserId,
               rootBuildId: mainBuildId

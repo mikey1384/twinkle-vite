@@ -15,6 +15,16 @@ interface ProjectLimitPolicyVersion {
   projectLimitApproval?: ProjectLimitApprovalVersion | null;
 }
 
+export function canInspectBuildProjectSource({
+  canEditProject,
+  serverCanInspectSource
+}: {
+  canEditProject: boolean;
+  serverCanInspectSource?: boolean | null;
+}) {
+  return canEditProject || serverCanInspectSource === true;
+}
+
 export function getBuildProjectLimitRequestOpenPath({
   buildId,
   myId,

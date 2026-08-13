@@ -155,6 +155,9 @@ export interface Build {
   // on a stale snapshot (e.g. a tab opened before a branch merge landed).
   // Null/undefined means "unknown base" and the save is unguarded.
   projectFilesHash?: string | null;
+  // Server-owned read-only access used by temporary project reviewers. This
+  // never grants project mutations; edit controls still require ownership.
+  canInspectProjectSource?: boolean;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   executionPlan?: BuildExecutionPlan | null;
   followUpPrompt?: BuildFollowUpPrompt | null;

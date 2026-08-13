@@ -1,11 +1,48 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  canInspectBuildProjectSource,
   compareBuildProjectLimitRequestVersions,
   getBuildProjectLimitRequestOpenPath,
   mergeBuildPolicyPreservingNewerProjectLimits,
   shouldApplyBuildProjectLimitApproval
 } from '../src/helpers/buildProjectLimitApproval';
+
+test('temporary reviewers can inspect source without receiving edit access', () => {
+  assert.equal(
+    canInspectBuildProjectSource({
+      canEditProject: false,
+      serverCanInspectSource: true
+    }),
+    true
+  );
+  assert.equal(
+    canInspectBuildProjectSource({
+      canEditProject: false,
+      serverCanInspectSource: false
+    }),
+    false
+  );
+  assert.equal(
+    canInspectBuildProjectSource({
+      canEditProject: true,
+      serverCanInspectSource: false
+    }),
+    true
+  );
+});
+
+test('temporary review wins over the ordinary contribution-branch redirect', () => {
+  const route = readFileSync(
+    new URL('../src/containers/Build/EditorRoute.tsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(
+    route,
+    /Boolean\(data\.build\.hasActiveContributionInvite\)[\s\S]{0,120}!Boolean\(data\.build\.canInspectProjectSource\)/
+  );
+});
 
 test('project-limit request versions follow canonical request, revision, then event time', () => {
   assert.ok(
