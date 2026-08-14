@@ -712,8 +712,11 @@ export default function useInitSocket({
   }, [checkFeedsOutdated]);
 
   useEffect(() => {
-    const handleChatProjectionSocketEvent = (eventName: string) => {
-      markChatProjectionSocketEvent(eventName);
+    const handleChatProjectionSocketEvent = (
+      eventName: string,
+      ...args: unknown[]
+    ) => {
+      markChatProjectionSocketEvent(eventName, ...args);
     };
     socket.onAny(handleChatProjectionSocketEvent);
     socket.on('online_acknowledged', handleOnlineAcknowledged);
@@ -969,6 +972,12 @@ export default function useInitSocket({
       // path can close a disconnect gap with a replica snapshot.
       const canonicalReadFromWriter =
         fromWriter || didSocketDisconnectRef.current;
+      const preserveSelectedProjection = Boolean(
+        canonicalReadFromWriter &&
+          chatLoadedRef.current &&
+          loadedForUserIdRef.current === bootstrapUserId &&
+          channelsObjRef.current[selectedChannelIdRef.current]?.loaded
+      );
       const bootstrapDisconnectSequence = socketDisconnectSequenceRef.current;
       onSetReconnecting();
       isLoadingChatRef.current = true;
@@ -1011,7 +1020,8 @@ export default function useInitSocket({
         fallbackPathId,
         latestPathId: latestPathIdRef.current,
         socketConnected: socket.connected,
-        fromWriter: canonicalReadFromWriter
+        fromWriter: canonicalReadFromWriter,
+        preserveSelectedProjection
       });
 
       try {
@@ -1110,12 +1120,14 @@ export default function useInitSocket({
           bootstrapId,
           userId: bootstrapUserId,
           currentChannelId: data?.currentChannelId ?? null,
-          hasChannelsObj: !!data?.channelsObj
+          hasChannelsObj: !!data?.channelsObj,
+          preserveSelectedProjection
         });
         onInitChat({
           data,
           userId: bootstrapUserId,
-          bootstrapId
+          bootstrapId,
+          preserveSelectedProjection
         });
         chatLoadedRef.current = true;
         loadedForUserIdRef.current = bootstrapUserId;
@@ -1200,7 +1212,7 @@ export default function useInitSocket({
               onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
             }
             const expectedActivityRevision =
-              getChatProjectionActivityRevision();
+              getChatProjectionActivityRevision(channelId);
             const channelData = await loadChatChannel({
               channelId,
               subchannelPath: requestedSubchannelPath,
@@ -1223,7 +1235,8 @@ export default function useInitSocket({
             // settings, AI-stream, or game projection. Discard it and let the
             // owning writer retry cover the whole chain instead.
             if (
-              getChatProjectionActivityRevision() !== expectedActivityRevision
+              getChatProjectionActivityRevision(channelId) !==
+              expectedActivityRevision
             ) {
               throw new Error(
                 'Canonical chat activity changed during channel recovery'

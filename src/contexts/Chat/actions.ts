@@ -844,17 +844,46 @@ export default function ChatActions(dispatch: Dispatch) {
     onInitChat({
       data,
       userId,
-      bootstrapId
+      bootstrapId,
+      preserveSelectedProjection = false
     }: {
       data: object;
       userId: number;
       bootstrapId?: string;
+      preserveSelectedProjection?: boolean;
     }) {
       return dispatch({
         type: 'INIT_CHAT',
         data,
         userId,
-        bootstrapId
+        bootstrapId,
+        preserveSelectedProjection
+      });
+    },
+    onRecoverSelectedChannel({
+      channelData,
+      subjectData,
+      topicData,
+      userId
+    }: {
+      channelData: object;
+      subjectData?: object | null;
+      topicData?: {
+        channelId: number;
+        topicId: number;
+        messages: object[];
+        topicObj: object;
+        loadMoreShown: boolean;
+        loadMoreShownAtBottom: boolean;
+      } | null;
+      userId: number;
+    }) {
+      return dispatch({
+        type: 'RECOVER_SELECTED_CHANNEL',
+        channelData,
+        subjectData,
+        topicData,
+        userId
       });
     },
     onStartChatBootstrap({

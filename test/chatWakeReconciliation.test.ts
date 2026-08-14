@@ -56,6 +56,23 @@ test('catch-up keeps the last confirmed chat projection renderable', () => {
     actionsSource,
     /onFinishReconnecting\(\)[\s\S]*?SET_RECONNECTED/
   );
+  assert.match(
+    socketSource,
+    /const preserveSelectedProjection = Boolean\([\s\S]*?canonicalReadFromWriter[\s\S]*?channelsObjRef\.current\[selectedChannelIdRef\.current\]\?\.loaded[\s\S]*?onInitChat\(\{[\s\S]*?preserveSelectedProjection/
+  );
+  const initChatCase = sourceBetween(
+    reducerSource,
+    "case 'INIT_CHAT':",
+    "case 'RECOVER_SELECTED_CHANNEL':"
+  );
+  assert.match(
+    initChatCase,
+    /action\.preserveSelectedProjection[\s\S]*?state\.channelsObj\[state\.selectedChannelId\]\?\.loaded/
+  );
+  assert.match(
+    initChatCase,
+    /alreadyUsingChat \|\| preserveSelectedProjection[\s\S]*?isReloadRequired: true[\s\S]*?loaded: true/
+  );
 });
 
 test('wake requires an authenticated room barrier and broken sessions keep the writer fallback', () => {
@@ -115,11 +132,11 @@ test('wake requires an authenticated room barrier and broken sessions keep the w
   );
   assert.match(
     postBootstrapChannelRecovery,
-    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(\)[\s\S]*?loadChatChannel\(\{[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
+    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(channelId\)[\s\S]*?loadChatChannel\(\{[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
   );
   assert.match(
     postBootstrapChannelRecovery,
-    /getChatProjectionActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
+    /getChatProjectionActivityRevision\(channelId\) !==[\s\S]*?expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
   );
   assert.match(
     postBootstrapChannelRecovery,
@@ -193,7 +210,15 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(
     messagesSource,
-    /const expectedActivityRevision = getChatProjectionActivityRevision\(\);[\s\S]*?await loadChatChannel\([\s\S]*?getChatProjectionActivityRevision\(\) !== expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
+    /loadChatSubject\(\{[\s\S]*?channelId: canonicalChannelId,[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
+  );
+  assert.match(
+    messagesSource,
+    /selectedTab === 'topic'[\s\S]*?loadTopicMessages\(\{[\s\S]*?topicId: selectedTopicId,[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
+  );
+  assert.match(
+    messagesSource,
+    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(selectedChannelId\);[\s\S]*?await loadChatChannel\([\s\S]*?await loadChatSubject\([\s\S]*?getChatProjectionActivityRevision\(selectedChannelId\) !==[\s\S]*?expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
   );
   assert.match(
     messagesSource,
@@ -205,7 +230,7 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(
     messagesSource,
-    /canonicalChannelId !== selectedChannelId[\s\S]*?canonicalChannelId !== GENERAL_CHAT_ID[\s\S]*?onEnterChannelWithId\(\{ data, userId \}\)[\s\S]*?navigate\(`\/chat\/\$\{GENERAL_CHAT_PATH_ID\}`/
+    /canonicalChannelId !== selectedChannelId[\s\S]*?canonicalChannelId !== GENERAL_CHAT_ID[\s\S]*?onRecoverSelectedChannel\(\{[\s\S]*?channelData,[\s\S]*?navigate\(`\/chat\/\$\{GENERAL_CHAT_PATH_ID\}`/
   );
   assert.match(
     messagesSource,
@@ -225,9 +250,57 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(displayedMessagesSource, /Catching up&hellip;/);
   assert.match(displayedMessagesSource, /isReconnecting && !pageLoading/);
+
+  const atomicRecoveryCase = sourceBetween(
+    reducerSource,
+    "case 'RECOVER_SELECTED_CHANNEL':",
+    "case 'INVITE_USERS_TO_CHANNEL':"
+  );
+  assert.match(atomicRecoveryCase, /type: 'ENTER_CHANNEL'/);
+  assert.match(atomicRecoveryCase, /type: 'LOAD_SUBJECT'/);
+  assert.match(atomicRecoveryCase, /type: 'LOAD_TOPIC_MESSAGES'/);
+  assert.ok(
+    atomicRecoveryCase.indexOf("type: 'ENTER_CHANNEL'") <
+      atomicRecoveryCase.indexOf("type: 'LOAD_SUBJECT'")
+  );
+  assert.ok(
+    atomicRecoveryCase.indexOf("type: 'LOAD_SUBJECT'") <
+      atomicRecoveryCase.indexOf("type: 'LOAD_TOPIC_MESSAGES'")
+  );
+
+  assert.match(
+    requestHelperSource,
+    /async loadTopicMessages\(\{[\s\S]*?fromWriter = false,[\s\S]*?bounded = false[\s\S]*?fromWriter \? '&fromWriter=1' : ''[\s\S]*?enforceTimeout: bounded/
+  );
+  assert.match(
+    requestHelperSource,
+    /async loadChatSubject\(\{[\s\S]*?fromWriter = false,[\s\S]*?bounded = false[\s\S]*?fromWriter \? '&fromWriter=1' : ''[\s\S]*?enforceTimeout: bounded/
+  );
 });
 
 test('selected-channel recovery invalidates on every overwritable socket projection', () => {
+  const firstChannelId = 901;
+  const secondChannelId = 902;
+  const firstChannelBefore =
+    getChatProjectionActivityRevision(firstChannelId);
+  const secondChannelBefore =
+    getChatProjectionActivityRevision(secondChannelId);
+  assert.equal(
+    markChatProjectionSocketEvent('new_message_received', {
+      message: { channelId: firstChannelId }
+    }),
+    true
+  );
+  assert.equal(
+    getChatProjectionActivityRevision(firstChannelId),
+    firstChannelBefore + 1
+  );
+  assert.equal(
+    getChatProjectionActivityRevision(secondChannelId),
+    secondChannelBefore,
+    'unrelated channel activity must not starve selected-channel recovery'
+  );
+
   const before = getChatProjectionActivityRevision();
   for (const eventName of [
     'new_message_received',
@@ -244,7 +317,7 @@ test('selected-channel recovery invalidates on every overwritable socket project
   assert.equal(getChatProjectionActivityRevision(), before + 6);
   assert.match(
     socketSource,
-    /socket\.onAny\(handleChatProjectionSocketEvent\)/
+    /handleChatProjectionSocketEvent = \([\s\S]*?\.\.\.args: unknown\[\][\s\S]*?markChatProjectionSocketEvent\(eventName, \.\.\.args\)[\s\S]*?socket\.onAny\(handleChatProjectionSocketEvent\)/
   );
   assert.match(
     socketSource,

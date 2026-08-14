@@ -79,11 +79,17 @@ export default function MessagesContainer({
   const loadTopicMessages = useAppContext(
     (v) => v.requestHelpers.loadTopicMessages
   );
+  const loadChatSubject = useAppContext(
+    (v) => v.requestHelpers.loadChatSubject
+  );
   const saveChatMessage = useAppContext(
     (v) => v.requestHelpers.saveChatMessage
   );
   const onLoadTopicMessages = useChatContext(
     (v) => v.actions.onLoadTopicMessages
+  );
+  const onRecoverSelectedChannel = useChatContext(
+    (v) => v.actions.onRecoverSelectedChannel
   );
   const pendingChessModalChannelId = useChatContext(
     (v) => v.state.pendingChessModalChannelId
@@ -106,7 +112,6 @@ export default function MessagesContainer({
       onDeleteMessage,
       onEditChannelSettings,
       onEnterComment,
-      onEnterChannelWithId,
       onLeaveChannel,
       onReceiveMessageOnDifferentChannel,
       onCreateNewDMChannel,
@@ -500,14 +505,17 @@ export default function MessagesContainer({
     void reload();
 
     async function reload() {
+      let channelRequestConfirmed = false;
       try {
-        const expectedActivityRevision = getChatProjectionActivityRevision();
-        const data = await loadChatChannel({
+        const expectedActivityRevision =
+          getChatProjectionActivityRevision(selectedChannelId);
+        const channelData = await loadChatChannel({
           channelId: selectedChannelId,
           subchannelPath: subchannelPath || undefined,
           // isReloadRequired is produced when navigation outruns a canonical
-          // chat bootstrap. This follow-up owns recovery for the newly selected
-          // channel, so a replica read could reintroduce the stale projection we
+          // bootstrap or when reconnect recovery intentionally preserves the
+          // last confirmed selected projection. This follow-up owns the atomic
+          // replacement, so a replica read could reintroduce the stale state we
           // just gated interaction to repair.
           fromWriter: true,
           bounded: true
@@ -520,18 +528,20 @@ export default function MessagesContainer({
           return;
         }
         if (
-          getChatProjectionActivityRevision() !== expectedActivityRevision
+          getChatProjectionActivityRevision(selectedChannelId) !==
+          expectedActivityRevision
         ) {
           throw new Error(
             'Canonical chat activity changed during channel recovery'
           );
         }
-        if (!data?.channel?.id) {
+        if (!channelData?.channel?.id) {
           throw new Error(
             'Canonical chat channel recovery returned no channel'
           );
         }
-        const canonicalChannelId = Number(data.channel.id);
+        channelRequestConfirmed = true;
+        const canonicalChannelId = Number(channelData.channel.id);
         if (canonicalChannelId !== selectedChannelId) {
           if (
             canonicalChannelId !== GENERAL_CHAT_ID ||
@@ -541,40 +551,97 @@ export default function MessagesContainer({
               'Canonical chat channel recovery returned a different channel'
             );
           }
-          // GET /chat/channel intentionally canonicalizes an inaccessible
-          // requested channel to General with HTTP 200. Apply that confirmed
-          // response, then repair the route; waiting only for 403/404 leaves
-          // the URL pointing at a channel the user no longer belongs to.
-          onEnterChannelWithId({ data, userId });
-          for (const member of data.channel.members || []) {
-            onSetUserState({
-              userId: member.id,
-              newState: member
-            });
-          }
-          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
+        }
+
+        const canonicalSubchannelId = Number(
+          channelData.currentSubchannelId || 0
+        );
+        const subjectData = await loadChatSubject({
+          channelId: canonicalChannelId,
+          subchannelId: canonicalSubchannelId || undefined,
+          fromWriter: true,
+          bounded: true
+        });
+        const selectedTopicId = Number(
+          currentChannel.selectedTopicId ||
+            subjectData?.id ||
+            currentChannel.featuredTopicId ||
+            0
+        );
+        const canonicalTopicExists = Boolean(
+          selectedTopicId &&
+            (Number(subjectData?.id || 0) === selectedTopicId ||
+              channelData.channel.topicObj?.[selectedTopicId])
+        );
+        const topicData =
+          canonicalChannelId === selectedChannelId &&
+          selectedTab === 'topic' &&
+          canonicalTopicExists
+            ? await loadTopicMessages({
+                channelId: canonicalChannelId,
+                topicId: selectedTopicId,
+                fromWriter: true,
+                bounded: true
+              })
+            : null;
+        if (
+          cancelled ||
+          selectedChannelIdRef.current !== selectedChannelId ||
+          userIdRef.current !== userId
+        ) {
           return;
         }
-        onEnterChannelWithId({ data, userId });
-        for (const member of data.channel.members || []) {
+        if (
+          getChatProjectionActivityRevision(selectedChannelId) !==
+          expectedActivityRevision
+        ) {
+          throw new Error(
+            'Canonical chat activity changed during channel recovery'
+          );
+        }
+
+        onRecoverSelectedChannel({
+          channelData,
+          subjectData,
+          topicData: topicData
+            ? {
+                channelId: canonicalChannelId,
+                topicId: selectedTopicId,
+                ...topicData
+              }
+            : null,
+          userId
+        });
+        for (const member of channelData.channel.members || []) {
           onSetUserState({
             userId: member.id,
             newState: member
           });
+        }
+        if (canonicalChannelId !== selectedChannelId) {
+          // GET /chat/channel intentionally canonicalizes an inaccessible
+          // requested channel to General with HTTP 200. Apply that confirmed
+          // response atomically, then repair the route; waiting only for
+          // 403/404 leaves the URL pointing at a channel the user no longer
+          // belongs to.
+          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+          navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
+          return;
         }
       } catch (error) {
         if (cancelled) return;
         const status = Number((error as { status?: number })?.status || 0);
         if (
           (status === 403 || status === 404) &&
+          !channelRequestConfirmed &&
           selectedChannelId !== GENERAL_CHAT_ID &&
           selectedChannelIdRef.current === selectedChannelId &&
           userIdRef.current === userId
         ) {
-          // The writer says this channel is no longer part of the user's
-          // canonical projection. Stop retrying an impossible recovery and let
-          // the ordinary General navigation load its own confirmed state.
+          // The channel request itself says this channel is no longer part of
+          // the user's canonical projection. A later subject/topic 403 or 404
+          // is only a race inside this recovery chain and must retry the whole
+          // selected projection rather than ejecting the user from the group.
           onUpdateSelectedChannelId(GENERAL_CHAT_ID);
           navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
           return;
@@ -593,7 +660,16 @@ export default function MessagesContainer({
       if (retryTimer) clearTimeout(retryTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReloadRequired, selectedChannelId, subchannelPath, userId]);
+  }, [
+    currentChannel.featuredTopicId,
+    currentChannel.legacyTopicObj?.id,
+    currentChannel.selectedTopicId,
+    isReloadRequired,
+    selectedChannelId,
+    selectedTab,
+    subchannelPath,
+    userId
+  ]);
 
   useEffect(() => {
     onSetReplyTarget({ channelId: selectedChannelId, target: null });

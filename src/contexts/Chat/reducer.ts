@@ -3342,6 +3342,12 @@ export default function ChatReducer(
         (!!state.selectedChannelId || state.selectedChannelId === 0) &&
         state.selectedChannelId !== action.data.currentChannelId &&
         action.userId === state.prevUserId;
+      const preserveSelectedProjection = Boolean(
+        action.preserveSelectedProjection &&
+          action.userId === state.prevUserId &&
+          state.selectedChannelId != null &&
+          state.channelsObj[state.selectedChannelId]?.loaded
+      );
       let messagesLoadMoreButton = false;
       let classLoadMoreButton = false;
       let homeLoadMoreButton = false;
@@ -3711,7 +3717,7 @@ export default function ChatReducer(
           visibility
         });
       }
-      if (alreadyUsingChat) {
+      if (alreadyUsingChat || preserveSelectedProjection) {
         newChannelsObj[state.selectedChannelId] = {
           ...state.channelsObj[state.selectedChannelId],
           isReloadRequired: true,
@@ -4013,6 +4019,28 @@ export default function ChatReducer(
         channelCount: Object.keys(reconciledNextState.channelsObj || {}).length
       });
       return reconciledNextState;
+    }
+
+    case 'RECOVER_SELECTED_CHANNEL': {
+      let recoveredState = ChatReducer(state, {
+        type: 'ENTER_CHANNEL',
+        data: action.channelData,
+        userId: action.userId
+      });
+      if (recoveredState === state) return state;
+      if (action.subjectData) {
+        recoveredState = ChatReducer(recoveredState, {
+          type: 'LOAD_SUBJECT',
+          data: action.subjectData
+        });
+      }
+      if (action.topicData) {
+        recoveredState = ChatReducer(recoveredState, {
+          type: 'LOAD_TOPIC_MESSAGES',
+          ...action.topicData
+        });
+      }
+      return recoveredState;
     }
 
     case 'INVITE_USERS_TO_CHANNEL': {
@@ -4490,13 +4518,17 @@ export default function ChatReducer(
                   ...action.data,
                   loaded: true
                 },
-                topicObj: {
-                  ...prevChannelObj?.topicObj,
-                  [action.data.id]: {
-                    ...prevChannelObj?.topicObj?.[action.data.id],
-                    ...action.data
-                  }
-                }
+                ...(action.data.id
+                  ? {
+                      topicObj: {
+                        ...prevChannelObj?.topicObj,
+                        [action.data.id]: {
+                          ...prevChannelObj?.topicObj?.[action.data.id],
+                          ...action.data
+                        }
+                      }
+                    }
+                  : {})
               }
         }
       };

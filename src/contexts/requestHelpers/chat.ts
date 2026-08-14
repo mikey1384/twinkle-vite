@@ -1615,12 +1615,16 @@ export default function chatRequestHelpers({
       channelId,
       topicId,
       lastMessageId,
-      messageIdToScrollTo
+      messageIdToScrollTo,
+      fromWriter = false,
+      bounded = false
     }: {
       channelId: number;
       topicId: number;
-      lastMessageId: number;
+      lastMessageId?: number;
       messageIdToScrollTo?: number;
+      fromWriter?: boolean;
+      bounded?: boolean;
     }) {
       try {
         const {
@@ -1632,12 +1636,14 @@ export default function chatRequestHelpers({
             messageIdToScrollTo
               ? `&messageIdToScrollTo=${messageIdToScrollTo}`
               : ''
-          }`,
+          }${fromWriter ? '&fromWriter=1' : ''}`,
           {
             ...auth(),
             meta: {
-              allowExtendedTimeout: true,
-              enforceTimeout: false
+              allowExtendedTimeout: bounded ? false : true,
+              enforceTimeout: bounded,
+              maxRetries: bounded ? 0 : undefined,
+              totalTimeoutMs: bounded ? 60000 : undefined
             }
           }
         );
@@ -1675,17 +1681,29 @@ export default function chatRequestHelpers({
     },
     async loadChatSubject({
       channelId,
-      subchannelId
+      subchannelId,
+      fromWriter = false,
+      bounded = false
     }: {
       channelId: number;
-      subchannelId: number;
+      subchannelId?: number;
+      fromWriter?: boolean;
+      bounded?: boolean;
     }) {
       try {
         const { data } = await request.get(
           `${URL}/chat/chatSubject?channelId=${channelId}${
             subchannelId ? `&subchannelId=${subchannelId}` : ''
-          }`,
-          auth()
+          }${fromWriter ? '&fromWriter=1' : ''}`,
+          {
+            ...auth(),
+            meta: {
+              enforceTimeout: bounded,
+              allowExtendedTimeout: bounded ? false : undefined,
+              maxRetries: bounded ? 0 : undefined,
+              totalTimeoutMs: bounded ? 60000 : undefined
+            }
+          }
         );
         return data;
       } catch (error) {

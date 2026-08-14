@@ -8,6 +8,8 @@
 // Chat Main and the AI socket hook must honor the same invalidations.
 let chatUnreadActivityRevision = 0;
 let chatProjectionActivityRevision = 0;
+let unscopedChatProjectionActivityRevision = 0;
+const chatProjectionActivityRevisionByChannel = new Map<number, number>();
 
 // These are confirmed server events whose reducers can update state that a
 // concurrent /chat/channel response also replaces. Mark them at packet ingress
@@ -60,12 +62,56 @@ export function getChatUnreadActivityRevision() {
   return chatUnreadActivityRevision;
 }
 
-export function markChatProjectionSocketEvent(eventName: string) {
+function getChatProjectionEventChannelId(args: unknown[]) {
+  for (const arg of args) {
+    if (!arg || typeof arg !== 'object' || Array.isArray(arg)) continue;
+    const value = arg as Record<string, any>;
+    const candidates = [
+      value.channelId,
+      value.channel?.id,
+      value.message?.channelId,
+      value.update?.channelId,
+      value.channelState?.channelId,
+      value.data?.channelId
+    ];
+    for (const candidate of candidates) {
+      const channelId = Number(candidate || 0);
+      if (Number.isSafeInteger(channelId) && channelId > 0) return channelId;
+    }
+  }
+  return null;
+}
+
+export function markChatProjectionSocketEvent(
+  eventName: string,
+  ...args: unknown[]
+) {
   if (!CHAT_PROJECTION_SOCKET_EVENTS.has(eventName)) return false;
   chatProjectionActivityRevision += 1;
+  const channelId = getChatProjectionEventChannelId(args);
+  if (channelId) {
+    chatProjectionActivityRevisionByChannel.set(
+      channelId,
+      Number(chatProjectionActivityRevisionByChannel.get(channelId) || 0) + 1
+    );
+  } else {
+    // Some legacy relays do not carry a channel-bearing envelope. Keep those
+    // conservative: they invalidate every selected-channel recovery rather
+    // than allowing an unidentifiable update to be overwritten.
+    unscopedChatProjectionActivityRevision += 1;
+  }
   return true;
 }
 
-export function getChatProjectionActivityRevision() {
+export function getChatProjectionActivityRevision(channelId?: number) {
+  const normalizedChannelId = Number(channelId || 0);
+  if (Number.isSafeInteger(normalizedChannelId) && normalizedChannelId > 0) {
+    return (
+      unscopedChatProjectionActivityRevision +
+      Number(
+        chatProjectionActivityRevisionByChannel.get(normalizedChannelId) || 0
+      )
+    );
+  }
   return chatProjectionActivityRevision;
 }
