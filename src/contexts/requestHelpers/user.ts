@@ -1092,7 +1092,7 @@ export default function userRequestHelpers({
     },
     async toggleWordleStrictMode(strictMode: boolean) {
       try {
-        const data = await request.put(
+        const { data } = await request.put(
           `${URL}/user/wordleStrictMode`,
           { strictMode },
           auth()

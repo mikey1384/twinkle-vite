@@ -3,7 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Grid from './Grid';
 import Keyboard from './Keyboard';
 import Banner from '~/components/Banner';
-import SwitchButton from '~/components/Buttons/SwitchButton';
+import StatusRail from '../StatusRail';
 import {
   ALERT_TIME_MS,
   MAX_GUESSES,
@@ -23,15 +23,10 @@ import {
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 import {
   buildTodayStatsPatchFromDailyTaskStatus,
-  getDailyRewardPreviewStreak,
-  isMobile
+  getDailyRewardPreviewStreak
 } from '~/helpers';
-import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
-import SkipShieldChecklist, {
-  type SkipShieldChecklistState
-} from '../SkipShieldChecklist';
-
-const deviceIsMobile = isMobile(navigator);
+import { type SkipShieldChecklistState } from '../SkipShieldChecklist';
+import { normalizeCanonicalWordleState } from '../wordleCanonicalState';
 
 export default function Game({
   attemptState,
@@ -47,8 +42,11 @@ export default function Game({
   isStrictMode,
   nextDayTimeStamp,
   onSetIsRevealing,
+  onSetSubmissionPending,
   socketConnected,
+  submissionPending,
   skipShieldChecklist,
+  playAreaRef,
   uiScale = 1
 }: {
   attemptState: any;
@@ -62,13 +60,17 @@ export default function Game({
   isStrictMode: boolean;
   nextDayTimeStamp: number;
   onSetIsRevealing: (isRevealing: boolean) => void;
+  onSetSubmissionPending: (isPending: boolean) => void;
   onSetOverviewModalShown: (isShown: boolean) => void;
   socketConnected: boolean;
+  submissionPending: boolean;
   skipShieldChecklist: SkipShieldChecklistState | null;
+  playAreaRef: React.RefObject<HTMLDivElement | null>;
   solution: string;
   uiScale?: number;
 }) {
   const isProcessingGameResult = useRef(false);
+  const strictModeRequestInFlightRef = useRef(false);
   const onToggleWordleStrictMode = useAppContext(
     (v) => v.user.actions.onToggleWordleStrictMode
   );
@@ -76,14 +78,12 @@ export default function Game({
     (v) => v.requestHelpers.toggleWordleStrictMode
   );
   const [isChecking, setIsChecking] = useState(false);
+  const [savingStrictMode, setSavingStrictMode] = useState(false);
   const updateWordleAttempt = useAppContext(
     (v) => v.requestHelpers.updateWordleAttempt
   );
   const checkIfDuplicateWordleAttempt = useAppContext(
     (v) => v.requestHelpers.checkIfDuplicateWordleAttempt
-  );
-  const onSetWordleGuesses = useChatContext(
-    (v) => v.actions.onSetWordleGuesses
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onApplyTodayStatsProgress = useNotiContext(
@@ -124,11 +124,11 @@ export default function Game({
   }, [guesses, solution]);
 
   useEffect(() => {
-    if (strictModeSwitchDisabled) {
-      onToggleWordleStrictMode(false);
+    if (strictModeSwitchDisabled && isStrictMode) {
+      void persistWordleStrictMode(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [strictModeSwitchDisabled]);
+  }, [isStrictMode, strictModeSwitchDisabled]);
 
   useEffect(() => {
     if (isGameLost) {
@@ -145,6 +145,14 @@ export default function Game({
 
   useEffect(() => {
     setAlertMessage({});
+    setCurrentGuess('');
+    setCurrentRowClass('');
+    setIsChecking(false);
+    setIsWaving(false);
+    isProcessingGameResult.current = false;
+    onSetIsRevealing(false);
+    // onSetIsRevealing is a stable state setter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nextDayTimeStamp]);
 
   return (
@@ -160,57 +168,23 @@ export default function Game({
           {alertMessage.message}
         </Banner>
       )}
+      <StatusRail
+        streak={dailyRewardPreviewStreak}
+        wordleTask={attemptState?.dailyTask}
+        skipShieldChecklist={skipShieldChecklist}
+        isStrictMode={isStrictMode}
+        strictToggleDisabled={strictModeSwitchDisabled}
+        strictToggleSaving={savingStrictMode}
+        onToggleStrictMode={handleToggleWordleStrictMode}
+      />
       <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          width: 'CALC(100% - 3rem)',
-          marginRight: '3rem'
-        }}
-      >
-        <SwitchButton
-          disabled={strictModeSwitchDisabled}
-          labelStyle={{
-            display: 'inline',
-            fontSize: deviceIsMobile
-              ? `${Math.max(1.1, 1.2 * uiScale)}rem`
-              : `${Math.max(1.1, 1.3 * uiScale)}rem`,
-            fontWeight: deviceIsMobile ? 'normal' : 'bold',
-            marginRight: deviceIsMobile ? '0.5rem' : '1rem'
-          }}
-          style={{ flexDirection: 'row' }}
-          small={deviceIsMobile}
-          checked={isStrictMode}
-          label="Aim for Double Bonus"
-          onChange={() => handleToggleWordleStrictMode(!isStrictMode)}
-        />
-      </div>
-      {skipShieldChecklist && (
-        <SkipShieldChecklist checklist={skipShieldChecklist} compact />
-      )}
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          paddingLeft: '2rem',
-          paddingRight: '2rem',
-          marginTop: `${1.2 * uiScale}rem`
-        }}
-      >
-        <DailyRewardBoostStrip
-          focus="wordle"
-          streak={dailyRewardPreviewStreak}
-          wordle={attemptState?.dailyTask}
-        />
-      </div>
-      <div
+        ref={playAreaRef}
         style={{
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          marginTop: `${3 * uiScale}rem`,
-          marginBottom: `${2.5 * uiScale}rem`,
+          marginTop: `${1.6 * uiScale}rem`,
+          marginBottom: `${1.6 * uiScale}rem`,
           paddingLeft: '2rem',
           paddingRight: '2rem'
         }}
@@ -228,7 +202,7 @@ export default function Game({
           />
         </ErrorBoundary>
         <Keyboard
-          isChecking={isChecking}
+          isChecking={isChecking || submissionPending}
           onChar={handleChar}
           onDelete={handleDelete}
           onEnter={handleEnter}
@@ -239,35 +213,74 @@ export default function Game({
           isDeleteReady={isDeleteReady}
           isEnterReady={isEnterReady}
           uiScale={uiScale}
-          style={{ marginTop: `${2 * uiScale}rem` }}
+          style={{ marginTop: `${1.6 * uiScale}rem` }}
         />
       </div>
     </ErrorBoundary>
   );
 
-  function handleToggleWordleStrictMode(isStrictMode: boolean) {
-    toggleWordleStrictMode(isStrictMode);
-    onToggleWordleStrictMode(isStrictMode);
+  async function handleToggleWordleStrictMode(isStrictMode: boolean) {
+    await persistWordleStrictMode(isStrictMode);
+  }
+
+  async function persistWordleStrictMode(nextStrictMode: boolean) {
+    if (strictModeRequestInFlightRef.current) return;
+    strictModeRequestInFlightRef.current = true;
+    setSavingStrictMode(true);
+    try {
+      const result = await toggleWordleStrictMode(nextStrictMode);
+      if (typeof result?.wordleStrictMode !== 'boolean') {
+        throw new Error(
+          'Wordle strict-mode update returned no canonical state'
+        );
+      }
+      onToggleWordleStrictMode(result.wordleStrictMode);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      strictModeRequestInFlightRef.current = false;
+      setSavingStrictMode(false);
+    }
   }
 
   function handleChar(value: string) {
     if (
       unicodeLength(`${currentGuess}${value}`) <= MAX_WORD_LENGTH &&
       guesses.length < MAX_GUESSES &&
-      !isGameWon
+      !isGameWon &&
+      !isChecking &&
+      !submissionPending &&
+      !isRevealing &&
+      !isProcessingGameResult.current
     ) {
       setCurrentGuess(`${currentGuess}${value}`);
     }
   }
 
   function handleDelete() {
+    if (
+      isChecking ||
+      submissionPending ||
+      isRevealing ||
+      isProcessingGameResult.current
+    ) {
+      return;
+    }
     setCurrentGuess((currentGuess) =>
       currentGuess.split('').slice(0, -1).join('')
     );
   }
 
   async function handleEnter() {
-    if (!socketConnected || isProcessingGameResult.current) return;
+    if (
+      !socketConnected ||
+      isChecking ||
+      submissionPending ||
+      isRevealing ||
+      isProcessingGameResult.current
+    ) {
+      return;
+    }
     const newGuesses = guesses.concat([currentGuess]);
     if (isGameWon || isGameLost) {
       return;
@@ -296,155 +309,118 @@ export default function Game({
     }
     isProcessingGameResult.current = true;
     setIsChecking(true);
-    const { isDuplicate, actualWordLevel, actualSolution, needsReload } =
-      await checkIfDuplicateWordleAttempt({
+    onSetSubmissionPending(true);
+    let canonicalSubmissionApplied = false;
+    try {
+      const duplicateStatus = await checkIfDuplicateWordleAttempt({
         channelId,
         numGuesses: newGuesses.length,
         solution
       });
-    if (isDuplicate || needsReload) return window.location.reload();
-    const resolvedSolution = actualSolution || solution;
-    const resolvedWordLength =
-      unicodeLength(resolvedSolution) || MAX_WORD_LENGTH;
-    const resolvedDelayMs = REVEAL_TIME_MS * resolvedWordLength;
-    if (actualSolution) {
-      onSetChannelState({
-        channelId,
-        newState: {
-          wordleWordLevel: actualWordLevel,
-          wordleSolution: actualSolution
-        }
-      });
-      if (resolvedWordLength !== MAX_WORD_LENGTH) {
-        return window.location.reload();
+      if (
+        !duplicateStatus ||
+        duplicateStatus.isDuplicate ||
+        duplicateStatus.needsReload
+      ) {
+        window.location.reload();
+        return;
       }
-    }
-    if (isStrictMode) {
-      const { isPass, message } = checkWordleAttemptStrictness({
-        guesses: newGuesses,
-        solution: resolvedSolution
+      const resolvedSolution = duplicateStatus.actualSolution || solution;
+      const resolvedWordLength =
+        unicodeLength(resolvedSolution) || MAX_WORD_LENGTH;
+      if (duplicateStatus.actualSolution) {
+        onSetChannelState({
+          channelId,
+          newState: {
+            wordleWordLevel: duplicateStatus.actualWordLevel,
+            wordleSolution: duplicateStatus.actualSolution
+          }
+        });
+        if (resolvedWordLength !== MAX_WORD_LENGTH) {
+          window.location.reload();
+          return;
+        }
+      }
+      if (isStrictMode) {
+        const { isPass, message } = checkWordleAttemptStrictness({
+          guesses: newGuesses,
+          solution: resolvedSolution
+        });
+        if (!isPass) {
+          setCurrentRowClass('jiggle');
+          handleShowAlert({
+            status: 'error',
+            message,
+            options: {
+              callback: () => setCurrentRowClass('')
+            }
+          });
+          return;
+        }
+      }
+
+      const response = await updateWordleAttempt({
+        channelName,
+        channelId,
+        guesses: newGuesses
       });
-      if (!isPass) {
-        setIsChecking(false);
+      if (!response) return;
+      if (response.needsReload) {
+        window.location.reload();
+        return;
+      }
+      const canonicalState = normalizeCanonicalWordleState(response);
+      if (!canonicalState) {
+        window.location.reload();
+        return;
+      }
+
+      const revealDelayMs =
+        REVEAL_TIME_MS * unicodeLength(canonicalState.wordleSolution);
+      applyCanonicalWordleState(canonicalState);
+      canonicalSubmissionApplied = true;
+      setCurrentGuess('');
+      setIsChecking(false);
+      onSetIsRevealing(true);
+      setTimeout(() => {
+        onSetIsRevealing(false);
         isProcessingGameResult.current = false;
-        setCurrentRowClass('jiggle');
-        return handleShowAlert({
-          status: 'error',
-          message,
+      }, revealDelayMs);
+
+      const gameWasWon = canonicalState.wordleAttemptState.isSolved === true;
+      const gameWasLost =
+        canonicalState.wordleAttemptState.isFailed === true ||
+        (canonicalState.wordleAttemptState.isCompleted === true && !gameWasWon);
+      if (gameWasWon) {
+        handleShowAlert({
+          status: 'success',
+          message:
+            WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)],
           options: {
-            callback: () => setCurrentRowClass('')
+            delayMs: revealDelayMs,
+            callback: () => onSetOverviewModalShown(true)
+          }
+        });
+      } else if (gameWasLost) {
+        handleShowAlert({
+          status: 'fail',
+          message: CORRECT_WORD_MESSAGE(canonicalState.wordleSolution),
+          options: {
+            persist: true,
+            delayMs: revealDelayMs,
+            callback: () => onSetOverviewModalShown(true)
           }
         });
       }
-    }
-    if (newGuesses.length < MAX_GUESSES && currentGuess !== resolvedSolution) {
-      const { needsReload: attemptNeedsReload } =
-        (await updateWordleAttempt({
-          channelName,
-          channelId,
-          guesses: newGuesses,
-          solution: resolvedSolution
-        })) || {};
-      if (attemptNeedsReload) {
-        return window.location.reload();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsChecking(false);
+      onSetSubmissionPending(false);
+      // Successful submissions stay locked through their reveal animation.
+      if (!canonicalSubmissionApplied) {
+        isProcessingGameResult.current = false;
       }
-    }
-    setIsChecking(false);
-
-    setCurrentGuess('');
-    onSetWordleGuesses({
-      channelId,
-      guesses: newGuesses
-    });
-    onSetIsRevealing(true);
-    setTimeout(() => {
-      onSetIsRevealing(false);
-      isProcessingGameResult.current = false;
-    }, REVEAL_TIME_MS * MAX_WORD_LENGTH);
-
-    if (
-      unicodeLength(currentGuess) === resolvedWordLength &&
-      guesses.length < MAX_GUESSES &&
-      !guesses.includes(resolvedSolution)
-    ) {
-      if (currentGuess === resolvedSolution) {
-        return handleGameWon();
-      }
-
-      if (newGuesses.length === MAX_GUESSES) {
-        handleGameLost();
-      }
-    }
-
-    async function handleGameLost() {
-      const loadStartTime = Date.now();
-      const {
-        dailyTaskStatus,
-        wordleAttemptState,
-        wordleStats,
-        needsReload: attemptNeedsReload
-      } =
-        (await updateWordleAttempt({
-          channelName,
-          channelId,
-          guesses: guesses.concat([currentGuess]),
-          solution: resolvedSolution,
-          isSolved: false
-        })) || {};
-      if (attemptNeedsReload) {
-        return window.location.reload();
-      }
-      onSetChannelState({
-        channelId,
-        newState: { wordleAttemptState, wordleStats }
-      });
-      applyDailyTaskStatus(dailyTaskStatus);
-      const loadEndTime = Date.now();
-      const loadTime = loadEndTime - loadStartTime;
-      handleShowAlert({
-        status: 'fail',
-        message: CORRECT_WORD_MESSAGE(resolvedSolution),
-        options: {
-          persist: true,
-          delayMs: Math.max(resolvedDelayMs - loadTime, 0),
-          callback: () => onSetOverviewModalShown(true)
-        }
-      });
-    }
-
-    async function handleGameWon() {
-      const loadStartTime = Date.now();
-      const {
-        dailyTaskStatus,
-        wordleAttemptState,
-        wordleStats,
-        needsReload: attemptNeedsReload
-      } =
-        (await updateWordleAttempt({
-          channelName,
-          channelId,
-          guesses: guesses.concat([currentGuess]),
-          solution: resolvedSolution,
-          isSolved: true
-        })) || {};
-      if (attemptNeedsReload) {
-        return window.location.reload();
-      }
-      onSetChannelState({
-        channelId,
-        newState: { wordleAttemptState, wordleStats }
-      });
-      applyDailyTaskStatus(dailyTaskStatus);
-      const loadEndTime = Date.now();
-      const loadTime = loadEndTime - loadStartTime;
-      return handleShowAlert({
-        status: 'success',
-        message: WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)],
-        options: {
-          delayMs: Math.max(resolvedDelayMs - loadTime, 0),
-          callback: () => onSetOverviewModalShown(true)
-        }
-      });
     }
   }
 
@@ -489,10 +465,32 @@ export default function Game({
     }, delayMs);
   }
 
-  function applyDailyTaskStatus(dailyTaskStatus: any) {
-    if (!dailyTaskStatus) return;
+  function applyCanonicalWordleState(canonicalState: {
+    dailyTaskStatus: Record<string, any>;
+    wordleAttemptState: Record<string, any>;
+    wordleGuesses: string[];
+    wordleSolution: string;
+    wordleWordLevel: number;
+    wordleStats: Record<string, any>;
+    nextDayTimeStamp: number;
+  }) {
+    onSetChannelState({
+      channelId,
+      newState: {
+        wordleAttemptState: canonicalState.wordleAttemptState,
+        wordleGuesses: canonicalState.wordleGuesses,
+        wordleSolution: canonicalState.wordleSolution,
+        wordleWordLevel: canonicalState.wordleWordLevel,
+        wordleStats: canonicalState.wordleStats
+      }
+    });
     onApplyTodayStatsProgress({
-      newStats: buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
+      newStats: {
+        ...buildTodayStatsPatchFromDailyTaskStatus(
+          canonicalState.dailyTaskStatus
+        ),
+        nextDayTimeStamp: canonicalState.nextDayTimeStamp
+      }
     });
   }
 }

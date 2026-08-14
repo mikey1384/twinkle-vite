@@ -1,5 +1,6 @@
 import React, { useMemo, useRef } from 'react';
-import { borderRadius, Color } from '~/constants/css';
+import { css } from '@emotion/css';
+import { mediumBorderRadius, Color } from '~/constants/css';
 import { REVEAL_TIME_MS } from '../../constants/settings';
 
 export default function Key({
@@ -46,21 +47,28 @@ export default function Key({
 
   return (
     <button
-      className="unselectable"
+      className={`unselectable ${css`
+        transition: background-color 0.15s ease;
+        box-shadow: 0 2px 0 rgba(15, 23, 42, 0.22);
+        &:active {
+          transform: translateY(2px);
+          box-shadow: none;
+        }
+      `}`}
       style={{
-        borderRadius,
+        borderRadius: mediumBorderRadius,
         color: '#fff',
         cursor: isChecking ? 'default' : 'pointer',
-        marginRight: `${2 * uiScale}px`,
+        marginRight: `${3 * uiScale}px`,
         border: 0,
-        fontWeight:
-          status === 'ready' || status === 'canDelete' ? 'bold' : 'normal',
+        fontWeight: 700,
         transitionDelay: isRevealing ? `${keyDelayMs}ms` : 'unset',
         width: `${width * uiScale}px`,
         height: `${5.5 * uiScale}rem`,
         fontSize: `${Math.max(1.1, 1.2 * uiScale)}rem`,
         backgroundColor
       }}
+      disabled={isChecking}
       onClick={handleClick}
     >
       {children || value}

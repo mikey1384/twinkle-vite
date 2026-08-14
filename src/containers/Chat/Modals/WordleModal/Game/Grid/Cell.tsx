@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { borderRadius, Color } from '~/constants/css';
+import { mediumBorderRadius, Color } from '~/constants/css';
 import { REVEAL_TIME_MS } from '../../constants/settings';
 import { css } from '@emotion/css';
 
@@ -31,13 +31,14 @@ export default function Cell({
   return (
     <div
       className={`unselectable ${css`
-        border: 1px solid ${Color.lightBlueGray()};
-        background: ${value ? Color.lightBlueGray() : ''};
+        border: 2px solid
+          ${value ? Color.lightBlueGray() : 'var(--ui-border)'};
+        background: ${value ? Color.lightBlueGray() : '#fff'};
       `} ${shouldWave ? 'cell-waving' : shouldReveal ? 'cell-reveal' : ''} ${
         status || ''
       }`}
       style={{
-        borderRadius,
+        borderRadius: mediumBorderRadius,
         width: `${3.7 * uiScale}rem`,
         height: `${3.7 * uiScale}rem`,
         display: 'flex',

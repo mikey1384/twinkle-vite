@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import {
+  isSkipShieldReady,
+  normalizeSkipShieldStatus,
+  shouldBlockWordleClose
+} from '../src/containers/Chat/Modals/WordleModal/skipShieldStatus';
+import { normalizeCanonicalWordleState } from '../src/containers/Chat/Modals/WordleModal/wordleCanonicalState';
 
 function source(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
@@ -11,32 +17,108 @@ test('Wordle shows canonical today-only skip protection before close', () => {
   const wordleModal = source(
     'src/containers/Chat/Modals/WordleModal/index.tsx'
   );
-  const game = source(
-    'src/containers/Chat/Modals/WordleModal/Game/index.tsx'
-  );
+  const game = source('src/containers/Chat/Modals/WordleModal/Game/index.tsx');
   const checklist = source(
     'src/containers/Chat/Modals/WordleModal/SkipShieldChecklist.tsx'
   );
-
-  assert.match(
-    wordleModal,
-    /builtWithLumineToday:[\s\S]*?builtWithLumineToday[\s\S]*?hasWorkingBuild/
+  const statusRail = source(
+    'src/containers/Chat/Modals/WordleModal/StatusRail.tsx'
   );
+
+  assert.match(wordleModal, /normalizeSkipShieldStatus/);
   assert.match(wordleModal, /void refreshSkipShieldStatus\(\)/);
   assert.match(wordleModal, /window\.addEventListener\('focus'/);
   assert.match(wordleModal, /skipShieldChecklist=\{skipShieldChecklist\}/);
+  assert.match(wordleModal, /shouldBlockWordleClose\(status\)/);
+  assert.match(statusRail, /isSkipShieldReady\(skipShieldChecklist\)/);
   assert.match(
-    wordleModal,
-    /status\?\.todayDodgePending &&[\s\S]*?!status\?\.todayCovered[\s\S]*?setSkipShieldModalShown\(true\)/
-  );
-  assert.match(
-    game,
-    /skipShieldChecklist &&[\s\S]*?<SkipShieldChecklist checklist=\{skipShieldChecklist\} compact/
+    statusRail,
+    /<SkipShieldChecklist checklist=\{skipShieldChecklist\} compact bare/
   );
   assert.match(checklist, /Built with Lumine today/);
   assert.match(checklist, /new projects and updates both count/);
   assert.match(checklist, /improve one you already have/);
   assert.match(checklist, /first build chat works even with an empty battery/);
   assert.match(checklist, /Tried a member's app today/);
-  assert.match(checklist, /You're protected if you leave today's word unfinished/);
+  assert.match(
+    checklist,
+    /You're protected if you leave today's word unfinished/
+  );
+  assert.match(game, /normalizeCanonicalWordleState\(response\)/);
+  assert.equal(
+    (game.match(/await updateWordleAttempt\(/g) || []).length,
+    1,
+    'every accepted guess crosses exactly one canonical mutation boundary'
+  );
+  assert.doesNotMatch(game, /onSetWordleGuesses/);
+  assert.match(wordleModal, /if \(wordleSubmissionPending\) return/);
+  assert.match(
+    wordleModal,
+    /wordleGuesses,[\s\S]*?wordleStats: canonicalWordleStats/
+  );
+});
+
+test('persisted skip coverage overrides lossy live checklist evidence', () => {
+  const covered = normalizeSkipShieldStatus({
+    shieldActive: true,
+    todayDodgePending: true,
+    todayCovered: true,
+    checklist: {
+      metLumine: true,
+      builtWithLumineToday: false,
+      triedPeerBuildToday: false
+    }
+  });
+  assert.ok(covered);
+  assert.equal(isSkipShieldReady(covered.checklist), true);
+  assert.equal(shouldBlockWordleClose(covered), false);
+
+  const pending = normalizeSkipShieldStatus({
+    shieldActive: true,
+    todayDodgePending: true,
+    todayCovered: false,
+    checklist: {
+      metLumine: true,
+      hasWorkingBuild: true,
+      triedPeerBuildToday: false
+    }
+  });
+  assert.ok(pending);
+  assert.equal(pending.checklist.builtWithLumineToday, true);
+  assert.equal(isSkipShieldReady(pending.checklist), false);
+  assert.equal(shouldBlockWordleClose(pending), true);
+  assert.equal(normalizeSkipShieldStatus({}), null);
+});
+
+test('Wordle shared state accepts only a complete canonical response', () => {
+  const canonical = {
+    dailyTaskStatus: { wordle: { basicQualified: true } },
+    wordleAttemptState: { isSolved: false, isCompleted: false },
+    wordleGuesses: ['CRANE'],
+    wordleSolution: 'PLANT',
+    wordleWordLevel: 2,
+    wordleStats: { currentStreak: 4 },
+    nextDayTimeStamp: 2_000_000_000,
+    needsReload: false
+  };
+
+  assert.deepEqual(normalizeCanonicalWordleState(canonical), canonical);
+  assert.equal(
+    normalizeCanonicalWordleState({
+      ...canonical,
+      wordleGuesses: undefined
+    }),
+    null
+  );
+  assert.equal(
+    normalizeCanonicalWordleState({
+      ...canonical,
+      wordleGuesses: '["CRANE"]'
+    }),
+    null
+  );
+  assert.equal(
+    normalizeCanonicalWordleState({ ...canonical, wordleStats: null }),
+    null
+  );
 });

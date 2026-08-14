@@ -17,7 +17,9 @@ import FilterBar from '~/components/FilterBar';
 import Streaks from './Streaks';
 import Rankings from './Rankings';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { MAX_GUESSES } from './constants/settings';
 import {
   useAppContext,
@@ -29,17 +31,11 @@ import {
   buildTodayStatsPatchFromDailyTaskStatus,
   toValidNextDayTimeStamp
 } from '~/helpers';
-
-function normalizeSkipShieldChecklist(status: any): SkipShieldChecklistState {
-  return {
-    metLumine: Boolean(status?.checklist?.metLumine),
-    builtWithLumineToday: Boolean(
-      status?.checklist?.builtWithLumineToday ??
-        status?.checklist?.hasWorkingBuild
-    ),
-    triedPeerBuildToday: Boolean(status?.checklist?.triedPeerBuildToday)
-  };
-}
+import {
+  normalizeSkipShieldStatus,
+  shouldBlockWordleClose
+} from './skipShieldStatus';
+import { normalizeCanonicalWordleState } from './wordleCanonicalState';
 
 export default function WordleModal({
   channelId,
@@ -84,6 +80,7 @@ export default function WordleModal({
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [wordleSubmissionPending, setWordleSubmissionPending] = useState(false);
   const [overviewModalShown, setOverviewModalShown] = useState(false);
   const [skipShieldModalShown, setSkipShieldModalShown] = useState(false);
   const [skipShieldChecklist, setSkipShieldChecklist] =
@@ -92,10 +89,11 @@ export default function WordleModal({
   const skipShieldStatusRequestSequenceRef = useRef(0);
   const [uiScale, setUiScale] = useState(1);
   const uiScaleRef = useRef(1);
-  const baseGameHeightRef = useRef(0);
+  const basePlayAreaHeightRef = useRef(0);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const filterBarRef = useRef<HTMLDivElement | null>(null);
   const gameRef = useRef<HTMLDivElement | null>(null);
+  const playAreaRef = useRef<HTMLDivElement | null>(null);
   const isGameWon = useMemo(
     () => guesses.includes(solution),
     [guesses, solution]
@@ -109,16 +107,21 @@ export default function WordleModal({
     [isGameLost, isGameWon]
   );
 
+  // This identity is shared by focus/visibility listeners and the close gate;
+  // keeping it stable avoids tearing those listeners down on every render.
   const refreshSkipShieldStatus = useCallback(async () => {
     const requestSequence = ++skipShieldStatusRequestSequenceRef.current;
     const status = await loadWordleSkipShield(channelId);
     if (!status) return null;
-    const checklist = normalizeSkipShieldChecklist(status);
+    const normalizedStatus = normalizeSkipShieldStatus(status);
+    if (!normalizedStatus) return null;
     if (requestSequence === skipShieldStatusRequestSequenceRef.current) {
-      setSkipShieldChecklist(checklist);
+      setSkipShieldChecklist(normalizedStatus.checklist);
     }
-    return { ...status, checklist };
-  }, [channelId, loadWordleSkipShield]);
+    return normalizedStatus;
+    // Context request helpers have stable identities by contract.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId]);
 
   useEffect(() => {
     setStreaksTab(isStrictMode ? 'double' : 'win');
@@ -132,11 +135,12 @@ export default function WordleModal({
       return;
     }
 
-    void refreshSkipShieldStatus();
-    const handleFocus = () => void refreshSkipShieldStatus();
+    void refreshSkipShieldStatus().catch(console.error);
+    const handleFocus = () =>
+      void refreshSkipShieldStatus().catch(console.error);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        void refreshSkipShieldStatus();
+        void refreshSkipShieldStatus().catch(console.error);
       }
     };
     window.addEventListener('focus', handleFocus);
@@ -155,7 +159,7 @@ export default function WordleModal({
       );
       if (currentNextDayTimeStamp === null) return;
       if (nextDayTimeStamp && nextDayTimeStamp !== currentNextDayTimeStamp) {
-        handleCountdownComplete();
+        await handleCountdownComplete();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,32 +172,38 @@ export default function WordleModal({
       const bodyEl = bodyRef.current;
       const filterEl = filterBarRef.current;
       const gameEl = gameRef.current;
-      if (!bodyEl || !filterEl || !gameEl) return;
+      const playAreaEl = playAreaRef.current;
+      if (!bodyEl || !filterEl || !gameEl || !playAreaEl) return;
 
-      // Derive available vertical space using viewport height (accounts for orientation & keyboards)
-      const visualViewport = (window as any).visualViewport;
-      const viewportHeight = visualViewport?.height || window.innerHeight;
-      const estimatedModalMax = Math.floor(viewportHeight * 0.95);
-      // Small fudge margin for modal inner chrome
-      const chromeMargin = 24;
+      // The Modal body is already the exact space left after its footer and
+      // viewport constraints, so measure that boundary directly.
       const availableHeight = Math.max(
         0,
-        estimatedModalMax - filterEl.offsetHeight - chromeMargin
+        bodyEl.clientHeight - filterEl.offsetHeight
       );
 
       const currentScale = uiScaleRef.current || 1;
-      const measuredGameHeight = gameEl.scrollHeight; // current scaled height
-      const baseCandidate = measuredGameHeight / currentScale || 1;
+      const measuredGameHeight = gameEl.scrollHeight;
+      const playAreaStyle = window.getComputedStyle(playAreaEl);
+      const measuredPlayAreaHeight =
+        playAreaEl.scrollHeight +
+        (Number.parseFloat(playAreaStyle.marginTop) || 0) +
+        (Number.parseFloat(playAreaStyle.marginBottom) || 0);
+      const fixedHeight = Math.max(
+        0,
+        measuredGameHeight - measuredPlayAreaHeight
+      );
+      const baseCandidate = measuredPlayAreaHeight / currentScale || 1;
 
       if (
-        !baseGameHeightRef.current ||
-        baseCandidate > baseGameHeightRef.current + 1
+        !basePlayAreaHeightRef.current ||
+        baseCandidate > basePlayAreaHeightRef.current + 1
       ) {
-        baseGameHeightRef.current = baseCandidate;
+        basePlayAreaHeightRef.current = baseCandidate;
       }
 
-      const baseGameHeight = baseGameHeightRef.current || baseCandidate;
-      const rawScale = availableHeight / baseGameHeight;
+      const basePlayAreaHeight = basePlayAreaHeightRef.current || baseCandidate;
+      const rawScale = (availableHeight - fixedHeight) / basePlayAreaHeight;
       const nextScale = Math.max(0.5, Math.min(1, rawScale));
       if (Math.abs(nextScale - currentScale) > 0.02) {
         uiScaleRef.current = nextScale;
@@ -205,6 +215,7 @@ export default function WordleModal({
     if (bodyRef.current) ro.observe(bodyRef.current);
     if (filterBarRef.current) ro.observe(filterBarRef.current);
     if (gameRef.current) ro.observe(gameRef.current);
+    if (playAreaRef.current) ro.observe(playAreaRef.current);
 
     window.addEventListener('resize', computeScale);
     const vv = (window as any).visualViewport;
@@ -224,78 +235,90 @@ export default function WordleModal({
     <div
       style={{
         width: '100%',
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.7rem'
       }}
     >
+      <LumineRescueEntry
+        eventType="wordle"
+        active={
+          (Number(wordleStats?.currentStreak || 0) === 0 &&
+            Number(wordleStats?.bestStreak || 0) > 0) ||
+          wordleStats?.lumineRescueEventType === 'wordle'
+        }
+        params={{ channelId }}
+        onRedeemed={handleWordleRescueRedeemed}
+        style={{ maxWidth: '36rem' }}
+      />
+      <LumineRescueEntry
+        eventType="wordleStrict"
+        active={
+          (Number(wordleStats?.currentStreak || 0) > 0 &&
+            Number(wordleStats?.currentStrictStreak || 0) === 0 &&
+            Number(wordleStats?.bestStrictStreak || 0) > 0) ||
+          wordleStats?.lumineRescueEventType === 'wordleStrict'
+        }
+        params={{ channelId }}
+        onRedeemed={handleWordleRescueRedeemed}
+        style={{ maxWidth: '36rem' }}
+      />
       <div
-        style={{
-          flexGrow: 1,
-          display: 'flex',
-          justifyContent: 'center'
-        }}
+        className={css`
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.8rem;
+        `}
       >
-        <Button color={doneColor} onClick={() => setOverviewModalShown(true)}>
-          Show {isGameOver ? 'Overview' : 'Stats'}
+        <Button
+          variant="soft"
+          color={doneColor}
+          onClick={() => setOverviewModalShown(true)}
+        >
+          {isGameOver ? 'Overview' : 'Stats'}
         </Button>
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center'
-        }}
-      >
-        <NextDayCountdown
-          label="Next Wordle"
-          onComplete={handleCountdownComplete}
+        <div
           className={css`
-            display: flex;
-            justify-content: center;
+            display: inline-flex;
             align-items: center;
-            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            border-radius: 999px;
+            background: ${Color.logoBlue(0.08)};
+            border: 1px solid ${Color.logoBlue(0.25)};
+            color: ${Color.logoBlue()};
+            font-weight: 700;
+            font-size: 1.2rem;
+            white-space: nowrap;
           `}
-          labelClassName={css`
-            font-weight: bold;
-            font-size: 1.5rem;
-          `}
-          timerClassName={css`
-            font-size: 1.3rem;
-          `}
-        />
-      </div>
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '0.6rem'
-        }}
-      >
-        <LumineRescueEntry
-          eventType="wordle"
-          active={
-            (Number(wordleStats?.currentStreak || 0) === 0 &&
-              Number(wordleStats?.bestStreak || 0) > 0) ||
-            wordleStats?.lumineRescueEventType === 'wordle'
-          }
-          params={{ channelId }}
-          onRedeemed={handleWordleRescueRedeemed}
-          style={{ maxWidth: '36rem' }}
-        />
-        <LumineRescueEntry
-          eventType="wordleStrict"
-          active={
-            (Number(wordleStats?.currentStreak || 0) > 0 &&
-              Number(wordleStats?.currentStrictStreak || 0) === 0 &&
-              Number(wordleStats?.bestStrictStreak || 0) > 0) ||
-            wordleStats?.lumineRescueEventType === 'wordleStrict'
-          }
-          params={{ channelId }}
-          onRedeemed={handleWordleRescueRedeemed}
-          style={{ maxWidth: '36rem' }}
-        />
-        <Button variant="ghost" onClick={handleRequestClose}>
+          title="Time until the next Wordle"
+        >
+          <Icon icon="clock" style={{ fontSize: '1.1rem' }} />
+          <span
+            className={css`
+              @media (max-width: ${mobileMaxWidth}) {
+                display: none;
+              }
+            `}
+          >
+            Next Wordle
+          </span>
+          <NextDayCountdown
+            inline
+            onComplete={handleCountdownComplete}
+            timerClassName={css`
+              font-variant-numeric: tabular-nums;
+            `}
+          />
+        </div>
+        <Button
+          variant="ghost"
+          disabled={wordleSubmissionPending}
+          onClick={handleRequestClose}
+        >
           Close
         </Button>
       </div>
@@ -358,6 +381,7 @@ export default function WordleModal({
                   attemptState={attemptState}
                   isRevealing={isRevealing}
                   onSetIsRevealing={setIsRevealing}
+                  onSetSubmissionPending={setWordleSubmissionPending}
                   channelName={channelName}
                   channelId={channelId}
                   guesses={guesses}
@@ -369,7 +393,9 @@ export default function WordleModal({
                   solution={solution}
                   onSetOverviewModalShown={setOverviewModalShown}
                   socketConnected={socketConnected}
+                  submissionPending={wordleSubmissionPending}
                   skipShieldChecklist={skipShieldChecklist}
+                  playAreaRef={playAreaRef}
                   uiScale={uiScale}
                 />
               </div>
@@ -424,6 +450,7 @@ export default function WordleModal({
   );
 
   async function handleRequestClose() {
+    if (wordleSubmissionPending) return;
     if (guesses.length === 0 || isGameOver) {
       return onHide();
     }
@@ -437,11 +464,7 @@ export default function WordleModal({
       // earned cover. If it cannot confirm a result, leave the game open
       // instead of silently bypassing the warning on a network failure.
       if (!status) return;
-      if (
-        status?.shieldActive &&
-        status?.todayDodgePending &&
-        !status?.todayCovered
-      ) {
+      if (shouldBlockWordleClose(status)) {
         setSkipShieldModalShown(true);
         return;
       }
@@ -463,27 +486,41 @@ export default function WordleModal({
   }
 
   async function handleCountdownComplete() {
-    const {
-      dailyTaskStatus,
-      wordleSolution,
-      wordleWordLevel,
-      wordleAttemptState,
-      nextDayTimeStamp: newNextDayTimeStamp
-    } = await loadWordle(channelId);
-    onSetChannelState({
-      channelId,
-      newState: {
-        wordleAttemptState,
+    try {
+      const response = await loadWordle(channelId);
+      if (!response) return;
+      const canonicalState = normalizeCanonicalWordleState(response);
+      if (!canonicalState || canonicalState.needsReload) {
+        window.location.reload();
+        return;
+      }
+      const {
+        dailyTaskStatus,
         wordleSolution,
         wordleWordLevel,
-        wordleGuesses: []
-      }
-    });
-    onApplyTodayStatsProgress({
-      newStats: {
-        ...buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus),
+        wordleAttemptState,
+        wordleGuesses,
+        wordleStats: canonicalWordleStats,
         nextDayTimeStamp: newNextDayTimeStamp
-      }
-    });
+      } = canonicalState;
+      onSetChannelState({
+        channelId,
+        newState: {
+          wordleAttemptState,
+          wordleSolution,
+          wordleWordLevel,
+          wordleGuesses,
+          wordleStats: canonicalWordleStats
+        }
+      });
+      onApplyTodayStatsProgress({
+        newStats: {
+          ...buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus),
+          nextDayTimeStamp: newNextDayTimeStamp
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

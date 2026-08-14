@@ -2086,25 +2086,11 @@ export default function chatRequestHelpers({
     },
     async loadWordle(channelId: number) {
       try {
-        const {
-          data: {
-            dailyTaskStatus,
-            wordleSolution,
-            wordleWordLevel,
-            wordleAttemptState,
-            nextDayTimeStamp
-          }
-        } = await request.get(
+        const { data } = await request.get(
           `${URL}/chat/wordle?channelId=${channelId}`,
           auth()
         );
-        return {
-          dailyTaskStatus,
-          wordleSolution,
-          wordleWordLevel,
-          wordleAttemptState,
-          nextDayTimeStamp
-        };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -2481,41 +2467,30 @@ export default function chatRequestHelpers({
         // the attempt as a duplicate immediately while the shared error path
         // reconciles any 401 against the canonical session in the background.
         void handleError(error).catch(() => undefined);
-        return true;
+        return {
+          isDuplicate: true,
+          actualSolution: null,
+          actualWordLevel: null,
+          needsReload: true
+        };
       }
     },
     async updateWordleAttempt({
       channelName,
       channelId,
-      guesses,
-      solution,
-      isSolved
+      guesses
     }: {
-      channelName: string;
+      channelName?: string;
       channelId: number;
       guesses: string[];
-      solution: string;
-      isSolved: boolean;
     }) {
       try {
-        const {
-          data: {
-            wordleAttemptState,
-            wordleStats,
-            dailyTaskStatus,
-            needsReload
-          }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/chat/wordle/attempt`,
-          { channelName, channelId, guesses, solution, isSolved },
+          { channelName, channelId, guesses },
           auth()
         );
-        return {
-          dailyTaskStatus,
-          wordleAttemptState,
-          wordleStats,
-          needsReload
-        };
+        return data;
       } catch (error) {
         return handleError(error);
       }

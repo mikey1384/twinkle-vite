@@ -60,7 +60,7 @@ export default function Keyboard({
         style={{
           display: 'flex',
           justifyContent: 'center',
-          marginBottom: `${2 * uiScale}px`
+          marginBottom: `${5 * uiScale}px`
         }}
       >
         {['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((key) => (
@@ -70,6 +70,7 @@ export default function Keyboard({
             onClick={handleClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
+            maxWordLength={maxWordLength}
             uiScale={uiScale}
             isChecking={isChecking}
           />
@@ -79,7 +80,7 @@ export default function Keyboard({
         style={{
           display: 'flex',
           justifyContent: 'center',
-          marginBottom: `${2 * uiScale}px`
+          marginBottom: `${5 * uiScale}px`
         }}
       >
         {['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'].map((key) => (
@@ -101,6 +102,7 @@ export default function Keyboard({
           width={65.4}
           onClick={handleClick}
           value="ENTER"
+          maxWordLength={maxWordLength}
           uiScale={uiScale}
           isChecking={isChecking}
         >
@@ -113,6 +115,7 @@ export default function Keyboard({
             onClick={handleClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
+            maxWordLength={maxWordLength}
             uiScale={uiScale}
             isChecking={isChecking}
           />
@@ -122,6 +125,7 @@ export default function Keyboard({
           width={65.4}
           onClick={handleClick}
           value="DELETE"
+          maxWordLength={maxWordLength}
           uiScale={uiScale}
           isChecking={isChecking}
         >
@@ -132,6 +136,7 @@ export default function Keyboard({
   );
 
   function handleClick(value: string) {
+    if (isChecking) return;
     if (value === 'ENTER') {
       onEnter();
     } else if (value === 'DELETE') {

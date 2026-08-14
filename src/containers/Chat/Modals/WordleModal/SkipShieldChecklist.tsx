@@ -4,31 +4,41 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
+import {
+  isSkipShieldChecklistItemDone,
+  isSkipShieldReady,
+  type SkipShieldChecklistState
+} from './skipShieldStatus';
 
-export interface SkipShieldChecklistState {
-  metLumine: boolean;
-  builtWithLumineToday: boolean;
-  triedPeerBuildToday: boolean;
-}
+export type { SkipShieldChecklistState } from './skipShieldStatus';
 
 export default function SkipShieldChecklist({
   checklist,
-  compact = false
+  compact = false,
+  bare = false
 }: {
   checklist: SkipShieldChecklistState;
   compact?: boolean;
+  bare?: boolean;
 }) {
   const navigate = useNavigate();
-  const ready =
-    checklist.builtWithLumineToday && checklist.triedPeerBuildToday;
+  const ready = isSkipShieldReady(checklist);
+  const builtDone = isSkipShieldChecklistItemDone(
+    checklist,
+    'builtWithLumineToday'
+  );
+  const triedDone = isSkipShieldChecklistItemDone(
+    checklist,
+    'triedPeerBuildToday'
+  );
 
   if (compact) {
     return (
       <section
         aria-label="Wordle skip protection status"
         className={css`
-          width: calc(100% - 4rem);
-          margin: 1rem 2rem 0;
+          width: ${bare ? '100%' : 'calc(100% - 4rem)'};
+          margin: ${bare ? '0' : '1rem 2rem 0'};
           padding: 0.8rem 1rem;
           border: 1px solid
             ${ready ? Color.limeGreen(0.65) : Color.borderGray()};
@@ -62,14 +72,8 @@ export default function SkipShieldChecklist({
             gap: 0.6rem 1.4rem;
           `}
         >
-          <CompactStatus
-            done={checklist.builtWithLumineToday}
-            label="Built with Lumine today"
-          />
-          <CompactStatus
-            done={checklist.triedPeerBuildToday}
-            label="Tried a member's app today"
-          />
+          <CompactStatus done={builtDone} label="Built with Lumine today" />
+          <CompactStatus done={triedDone} label="Tried a member's app today" />
         </div>
         <p
           className={css`
@@ -95,10 +99,10 @@ export default function SkipShieldChecklist({
       `}
     >
       <ChecklistRow
-        done={checklist.builtWithLumineToday}
+        done={builtDone}
         label="Build something with Lumine today 🤖"
         detail={
-          checklist.builtWithLumineToday
+          builtDone
             ? 'completed today — new projects and updates both count'
             : checklist.metLumine
               ? 'start a new project or improve one you already have'
@@ -108,7 +112,7 @@ export default function SkipShieldChecklist({
         onAction={() => navigate('/build?sayHi=lumine')}
       />
       <ChecklistRow
-        done={checklist.triedPeerBuildToday}
+        done={triedDone}
         label="Try an app another member built today 🎮"
         detail="any app on the Build page counts"
         actionLabel="Explore apps"

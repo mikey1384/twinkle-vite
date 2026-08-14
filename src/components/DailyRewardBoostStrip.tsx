@@ -1202,7 +1202,7 @@ function getToneColor(tone?: Tone, opacity = 1) {
   }
 }
 
-function withAlpha(color: string, alpha: number) {
+export function withAlpha(color: string, alpha: number) {
   const clampedAlpha = Math.max(0, Math.min(1, alpha));
   const rgbaMatch = color.match(
     /rgba?\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)(?:,\s*([-\d.]+))?\)/i
@@ -1225,7 +1225,7 @@ function withAlpha(color: string, alpha: number) {
   return color;
 }
 
-function getBoostStreakMultiplier(streak: any) {
+export function getBoostStreakMultiplier(streak: any) {
   const appliedStreak = Math.max(0, Math.floor(Number(streak) || 0));
   return Math.min(Math.floor(Math.max(appliedStreak - 1, 0) / 10) + 2, 10);
 }
