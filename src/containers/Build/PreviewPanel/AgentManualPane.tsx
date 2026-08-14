@@ -273,6 +273,7 @@ const sdkSections: GuideSection[] = [
     items: [
       'Twinkle.viewer.get() returns { id, username, profilePicUrl, isLoggedIn, isOwner, isGuest } for the current viewer.',
       'Twinkle.viewer.refresh() clears the cache and re-fetches viewer identity.',
+      'Every Twinkle-owned profilePicUrl returned by the SDK is an absolute HTTPS URL ready for img src, or null. App-owned JSON fields are not rewritten.',
       'Twinkle.preview.getLayout() returns { mode, viewport, stage, safeInsets, playfield }.',
       'Canvas, WebGL, Three.js, and fullscreen game apps must use Twinkle.preview as their layout source of truth.',
       'Do not use 100vh, 100vw, window.innerWidth, or window.innerHeight as the source of truth for game/canvas sizing.',

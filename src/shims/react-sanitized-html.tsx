@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import DOMPurify from 'dompurify';
+import DOMPurify, { type Config } from 'dompurify';
 
 interface SanitizedHTMLProps {
   allowedAttributes?:
@@ -25,7 +25,7 @@ export default function SanitizedHTML({
   style
 }: SanitizedHTMLProps) {
   const sanitizedHTML = useMemo(() => {
-    const config: DOMPurify.Config = {};
+    const config: Config = {};
 
     if (allowedTags?.length) {
       config.ALLOWED_TAGS = allowedTags;

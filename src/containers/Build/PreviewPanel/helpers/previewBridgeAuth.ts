@@ -3,6 +3,8 @@ import type {
   RefObject,
   SetStateAction
 } from 'react';
+import { cloudFrontURL } from '~/constants/defaultValues';
+import { toBuildProfilePicUrl } from '~/helpers/buildProfilePicUrl';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import type { Build } from '../types';
 
@@ -128,7 +130,10 @@ export function getViewerInfo(previewAuth: PreviewHostBridgeAuth) {
     return {
       id: previewAuth.userIdRef.current,
       username: previewAuth.usernameRef.current,
-      profilePicUrl: previewAuth.profilePicUrlRef.current,
+      profilePicUrl: toBuildProfilePicUrl({
+        src: previewAuth.profilePicUrlRef.current,
+        assetOrigin: cloudFrontURL
+      }),
       isLoggedIn: true,
       isOwner: Boolean(previewAuth.isOwnerRef.current),
       isGuest: false

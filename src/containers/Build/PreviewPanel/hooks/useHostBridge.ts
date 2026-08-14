@@ -2209,8 +2209,9 @@ export function useHostBridge({
                 player: {
                   ...(payload?.player || {}),
                   name: payload?.player?.name || viewer.username,
-                  profilePicUrl:
-                    payload?.player?.profilePicUrl || viewer.profilePicUrl
+                  profilePicUrl: viewer.isLoggedIn
+                    ? viewer.profilePicUrl
+                    : payload?.player?.profilePicUrl
                 },
                 guestSessionId: viewer.isGuest ? viewer.id : null
               }
