@@ -28,6 +28,7 @@ export default function SkipShieldModal({
         modalKey="WordleSkipShieldModal"
         isOpen={true}
         onClose={onKeepPlaying}
+        modalLevel={1}
         size="sm"
         hasHeader
         title="Saving this word for another day? 🎯"

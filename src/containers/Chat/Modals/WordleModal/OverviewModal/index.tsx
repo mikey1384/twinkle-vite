@@ -69,6 +69,7 @@ export default function OverviewModal({
       modalKey="OverviewModal"
       isOpen={true}
       onClose={onHide}
+      modalLevel={1}
       size="sm"
       hasHeader
       title={isGameOver ? 'Overview' : 'Your Statistics'}
