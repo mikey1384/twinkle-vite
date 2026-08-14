@@ -1,27 +1,22 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color, borderRadius } from '~/constants/css';
+import { Color } from '~/constants/css';
+import SkipShieldChecklist, {
+  type SkipShieldChecklistState
+} from './SkipShieldChecklist';
 
 export default function SkipShieldModal({
   checklist,
   onKeepPlaying,
   onCloseAnyway
 }: {
-  checklist: {
-    metLumine: boolean;
-    hasWorkingBuild: boolean;
-    triedPeerBuildToday: boolean;
-  };
+  checklist: SkipShieldChecklistState;
   onKeepPlaying: () => void;
   onCloseAnyway: () => void;
 }) {
-  const navigate = useNavigate();
-
   return (
     <ErrorBoundary componentPath="Chat/Modals/WordleModal/SkipShieldModal">
       <Modal
@@ -67,32 +62,7 @@ export default function SkipShieldModal({
             Totally fine — your streak can stay safe! Skipping just comes with a
             little side quest now: check out something else on Twinkle today. ✨
           </p>
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              gap: 0.8rem;
-            `}
-          >
-            <ChecklistRow
-              done={checklist.metLumine && checklist.hasWorkingBuild}
-              label="Make something with Lumine 🤖"
-              detail={
-                checklist.metLumine && !checklist.hasWorkingBuild
-                  ? 'almost there — get your app working and this checks off'
-                  : 'say hi and Lumine builds it with you — your first exchange works even with an empty battery'
-              }
-              actionLabel="Open Build"
-              onAction={() => navigate('/build?sayHi=lumine')}
-            />
-            <ChecklistRow
-              done={checklist.triedPeerBuildToday}
-              label="Try an app another member built today 🎮"
-              detail="any app on the Build page counts"
-              actionLabel="Explore apps"
-              onAction={() => navigate('/build')}
-            />
-          </div>
+          <SkipShieldChecklist checklist={checklist} />
           <p
             className={css`
               font-size: 1.2rem;
@@ -107,68 +77,4 @@ export default function SkipShieldModal({
       </Modal>
     </ErrorBoundary>
   );
-
-  function ChecklistRow({
-    done,
-    label,
-    detail,
-    actionLabel,
-    onAction
-  }: {
-    done: boolean;
-    label: string;
-    detail: string;
-    actionLabel: string;
-    onAction: () => void;
-  }) {
-    return (
-      <div
-        className={css`
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 1rem;
-          border: 1px solid ${done ? Color.limeGreen() : Color.borderGray()};
-          border-radius: ${borderRadius};
-          background: ${done ? Color.limeGreen(0.08) : Color.whiteGray()};
-        `}
-      >
-        <Icon
-          icon={done ? 'check-circle' : ['far', 'circle']}
-          style={{
-            fontSize: '1.7rem',
-            color: done ? Color.limeGreen() : Color.gray()
-          }}
-        />
-        <div
-          className={css`
-            flex: 1;
-            min-width: 0;
-          `}
-        >
-          <div
-            className={css`
-              font-size: 1.3rem;
-              font-weight: bold;
-            `}
-          >
-            {label}
-          </div>
-          <div
-            className={css`
-              font-size: 1.1rem;
-              color: ${Color.gray()};
-            `}
-          >
-            {detail}
-          </div>
-        </div>
-        {!done && (
-          <Button variant="soft" color="logoBlue" onClick={onAction}>
-            {actionLabel}
-          </Button>
-        )}
-      </div>
-    );
-  }
 }

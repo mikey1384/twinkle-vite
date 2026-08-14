@@ -1,9 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Game from './Game';
 import OverviewModal from './OverviewModal';
 import SkipShieldModal from './SkipShieldModal';
+import type { SkipShieldChecklistState } from './SkipShieldChecklist';
 import LumineRescueEntry from '~/components/LumineRescueEntry';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import FilterBar from '~/components/FilterBar';
@@ -22,6 +29,17 @@ import {
   buildTodayStatsPatchFromDailyTaskStatus,
   toValidNextDayTimeStamp
 } from '~/helpers';
+
+function normalizeSkipShieldChecklist(status: any): SkipShieldChecklistState {
+  return {
+    metLumine: Boolean(status?.checklist?.metLumine),
+    builtWithLumineToday: Boolean(
+      status?.checklist?.builtWithLumineToday ??
+        status?.checklist?.hasWorkingBuild
+    ),
+    triedPeerBuildToday: Boolean(status?.checklist?.triedPeerBuildToday)
+  };
+}
 
 export default function WordleModal({
   channelId,
@@ -68,12 +86,10 @@ export default function WordleModal({
   const [isRevealing, setIsRevealing] = useState(false);
   const [overviewModalShown, setOverviewModalShown] = useState(false);
   const [skipShieldModalShown, setSkipShieldModalShown] = useState(false);
-  const [skipShieldChecklist, setSkipShieldChecklist] = useState<{
-    metLumine: boolean;
-    hasWorkingBuild: boolean;
-    triedPeerBuildToday: boolean;
-  } | null>(null);
+  const [skipShieldChecklist, setSkipShieldChecklist] =
+    useState<SkipShieldChecklistState | null>(null);
   const skipShieldRequestInFlightRef = useRef(false);
+  const skipShieldStatusRequestSequenceRef = useRef(0);
   const [uiScale, setUiScale] = useState(1);
   const uiScaleRef = useRef(1);
   const baseGameHeightRef = useRef(0);
@@ -93,9 +109,43 @@ export default function WordleModal({
     [isGameLost, isGameWon]
   );
 
+  const refreshSkipShieldStatus = useCallback(async () => {
+    const requestSequence = ++skipShieldStatusRequestSequenceRef.current;
+    const status = await loadWordleSkipShield(channelId);
+    if (!status) return null;
+    const checklist = normalizeSkipShieldChecklist(status);
+    if (requestSequence === skipShieldStatusRequestSequenceRef.current) {
+      setSkipShieldChecklist(checklist);
+    }
+    return { ...status, checklist };
+  }, [channelId, loadWordleSkipShield]);
+
   useEffect(() => {
     setStreaksTab(isStrictMode ? 'double' : 'win');
   }, [isStrictMode]);
+
+  useEffect(() => {
+    if (guesses.length === 0 || isGameOver) {
+      skipShieldStatusRequestSequenceRef.current += 1;
+      setSkipShieldChecklist(null);
+      setSkipShieldModalShown(false);
+      return;
+    }
+
+    void refreshSkipShieldStatus();
+    const handleFocus = () => void refreshSkipShieldStatus();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshSkipShieldStatus();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [guesses.length, isGameOver, refreshSkipShieldStatus]);
 
   useEffect(() => {
     init();
@@ -319,6 +369,7 @@ export default function WordleModal({
                   solution={solution}
                   onSetOverviewModalShown={setOverviewModalShown}
                   socketConnected={socketConnected}
+                  skipShieldChecklist={skipShieldChecklist}
                   uiScale={uiScale}
                 />
               </div>
@@ -381,7 +432,7 @@ export default function WordleModal({
     // Mid-game close: the day counts as a dodge unless the skip-shield side
     // quest is done. Show the friendly checklist instead of closing silently.
     try {
-      const status = await loadWordleSkipShield(channelId);
+      const status = await refreshSkipShieldStatus();
       // The resolver is the source of truth and may also persist a newly
       // earned cover. If it cannot confirm a result, leave the game open
       // instead of silently bypassing the warning on a network failure.
@@ -391,11 +442,6 @@ export default function WordleModal({
         status?.todayDodgePending &&
         !status?.todayCovered
       ) {
-        setSkipShieldChecklist({
-          metLumine: Boolean(status?.checklist?.metLumine),
-          hasWorkingBuild: Boolean(status?.checklist?.hasWorkingBuild),
-          triedPeerBuildToday: Boolean(status?.checklist?.triedPeerBuildToday)
-        });
         setSkipShieldModalShown(true);
         return;
       }

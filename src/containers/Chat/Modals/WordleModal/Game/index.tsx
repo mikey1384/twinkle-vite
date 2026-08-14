@@ -27,6 +27,9 @@ import {
   isMobile
 } from '~/helpers';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
+import SkipShieldChecklist, {
+  type SkipShieldChecklistState
+} from '../SkipShieldChecklist';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -45,6 +48,7 @@ export default function Game({
   nextDayTimeStamp,
   onSetIsRevealing,
   socketConnected,
+  skipShieldChecklist,
   uiScale = 1
 }: {
   attemptState: any;
@@ -60,6 +64,7 @@ export default function Game({
   onSetIsRevealing: (isRevealing: boolean) => void;
   onSetOverviewModalShown: (isShown: boolean) => void;
   socketConnected: boolean;
+  skipShieldChecklist: SkipShieldChecklistState | null;
   solution: string;
   uiScale?: number;
 }) {
@@ -180,6 +185,9 @@ export default function Game({
           onChange={() => handleToggleWordleStrictMode(!isStrictMode)}
         />
       </div>
+      {skipShieldChecklist && (
+        <SkipShieldChecklist checklist={skipShieldChecklist} compact />
+      )}
       <div
         style={{
           width: '100%',
