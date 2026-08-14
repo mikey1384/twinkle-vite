@@ -18,6 +18,9 @@ export default function useAppRequests() {
   const callBuildRuntimeAiImage = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiImage
   );
+  const loadAIImageResult = useAppContext(
+    (v) => v.requestHelpers.loadAIImageResult
+  );
   const callBuildRuntimeAiChatStream = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiChatStream
   );
@@ -258,6 +261,7 @@ export default function useAppRequests() {
   const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
   const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
   const callBuildRuntimeAiImageRef = useRef(callBuildRuntimeAiImage);
+  const loadAIImageResultRef = useRef(loadAIImageResult);
   const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
   const getBuildTwinkleNewsRef = useRef(getBuildTwinkleNews);
@@ -368,6 +372,7 @@ export default function useAppRequests() {
     loadBuildAiPromptsRef,
     callBuildRuntimeAiChatRef,
     callBuildRuntimeAiImageRef,
+    loadAIImageResultRef,
     callBuildRuntimeAiChatStreamRef,
     callBuildRuntimeAiObjectRef,
     getBuildTwinkleNewsRef,

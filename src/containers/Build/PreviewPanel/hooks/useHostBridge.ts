@@ -56,6 +56,24 @@ import {
   evaluateBuildChessPosition
 } from '../helpers/chessEngine';
 import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
+import {
+  resolveAIImageStatusImageUrl,
+  shouldRecoverAIImageFromSocket
+} from '~/helpers/aiImageStatus';
+
+const AI_IMAGE_STATUS_RECOVERY_RETENTION_MS = 6 * 60 * 1000;
+
+interface ActiveAiImageStatusTarget {
+  messageId: string;
+  requestId: string;
+  sourceWindow: Window;
+  statusCount: number;
+  terminalStatusForwarded: boolean;
+  transportFailed: boolean;
+  pendingCompletionPayload?: any;
+  recoveryPromise?: Promise<any> | null;
+  cleanupTimeout?: number;
+}
 
 function getBuildRuntimeWorldViewerIdentityKey(
   viewer: ReturnType<typeof getViewerInfo>
@@ -334,12 +352,7 @@ export function useHostBridge({
     const chatSubscriptions = new Map<string, Set<Window>>();
     const activeAiImageStatusTargets = new Map<
       string,
-      {
-        requestId: string;
-        sourceWindow: Window;
-        statusCount: number;
-        terminalStatusForwarded: boolean;
-      }
+      ActiveAiImageStatusTarget
     >();
     const activeWorldSessions = new Map<
       string,
@@ -599,12 +612,7 @@ export function useHostBridge({
     }
 
     function postAiImageStatusToTarget(
-      target: {
-        requestId: string;
-        sourceWindow: Window;
-        statusCount: number;
-        terminalStatusForwarded: boolean;
-      },
+      target: ActiveAiImageStatusTarget,
       payload: any
     ) {
       if (payload?.aiUsagePolicy && typeof payload.aiUsagePolicy === 'object') {
@@ -612,7 +620,11 @@ export function useHostBridge({
       }
       target.statusCount += 1;
       const stage = String(payload?.stage || '').trim();
-      if (stage === 'completed' || stage === 'error') {
+      const hasCompletedImage =
+        stage === 'completed' &&
+        typeof payload?.imageUrl === 'string' &&
+        !!payload.imageUrl;
+      if (hasCompletedImage || stage === 'error') {
         target.terminalStatusForwarded = true;
       }
       const targetWindow = target.sourceWindow;
@@ -635,14 +647,70 @@ export function useHostBridge({
       }
     }
 
+    async function recoverAiImageStatusForTarget(
+      target: ActiveAiImageStatusTarget,
+      payload: any
+    ) {
+      if (target.recoveryPromise) return await target.recoveryPromise;
+      target.recoveryPromise = (async () => {
+        const imageUrl = await resolveAIImageStatusImageUrl({
+          recovery: payload.recovery,
+          loadResult: requestRefs.loadAIImageResultRef.current
+        });
+        if (!imageUrl) return null;
+        const forwardedPayload = { ...payload, imageUrl };
+        delete forwardedPayload.recovery;
+        return forwardedPayload;
+      })().finally(() => {
+        target.recoveryPromise = null;
+      });
+      return await target.recoveryPromise;
+    }
+
     // Fan-out path for status events pushed from the server (no specific target
     // known): route to whichever registered in-flight target owns the requestId.
-    function handleAiImageGenerationStatus(payload: any) {
+    async function handleAiImageGenerationStatus(payload: any) {
       const payloadRequestId = String(payload?.requestId || '').trim();
       if (!payloadRequestId) return;
       for (const target of activeAiImageStatusTargets.values()) {
         if (payloadRequestId !== target.requestId) continue;
-        postAiImageStatusToTarget(target, payload);
+        let forwardedPayload = payload;
+        if (
+          payload?.stage === 'completed' &&
+          !payload?.imageUrl &&
+          payload?.recovery
+        ) {
+          target.pendingCompletionPayload = payload;
+          if (!target.transportFailed) continue;
+          try {
+            forwardedPayload = await recoverAiImageStatusForTarget(
+              target,
+              payload
+            );
+            if (!forwardedPayload) continue;
+          } catch (error) {
+            console.error(
+              'Failed to recover completed Build AI image status:',
+              error
+            );
+            continue;
+          }
+        }
+        if (
+          target.terminalStatusForwarded &&
+          (forwardedPayload?.stage === 'completed' ||
+            forwardedPayload?.stage === 'error')
+        ) {
+          continue;
+        }
+        if (activeAiImageStatusTargets.get(target.messageId) !== target) {
+          continue;
+        }
+        postAiImageStatusToTarget(target, forwardedPayload);
+        if (target.terminalStatusForwarded) {
+          if (target.cleanupTimeout) clearTimeout(target.cleanupTimeout);
+          activeAiImageStatusTargets.delete(target.messageId);
+        }
       }
     }
 
@@ -691,12 +759,7 @@ export function useHostBridge({
       target,
       response
     }: {
-      target: {
-        requestId: string;
-        sourceWindow: Window;
-        statusCount: number;
-        terminalStatusForwarded: boolean;
-      };
+      target: ActiveAiImageStatusTarget;
       response: any;
     }) {
       if (target.terminalStatusForwarded) return;
@@ -1290,12 +1353,15 @@ export function useHostBridge({
             }
 
             activeAiImageStatusTargets.set(id, {
+              messageId: id,
               requestId: String(payload?.requestId || id),
               sourceWindow,
               statusCount: 0,
-              terminalStatusForwarded: false
+              terminalStatusForwarded: false,
+              transportFailed: false
             });
             const aiImageStatusTarget = activeAiImageStatusTargets.get(id);
+            let retainAiImageStatusTarget = false;
             try {
               await ensureAiImageNotificationChannel();
               response = await requestRefs.callBuildRuntimeAiImageRef.current({
@@ -1314,7 +1380,42 @@ export function useHostBridge({
               ) {
                 onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
               }
-              if (aiImageStatusTarget) {
+              if (
+                aiImageStatusTarget &&
+                response?.success === false &&
+                shouldRecoverAIImageFromSocket({
+                  reachedServer: response.reachedServer,
+                  hasServerProgress: aiImageStatusTarget.statusCount > 0,
+                  hasPendingCompletion:
+                    !!aiImageStatusTarget.pendingCompletionPayload
+                })
+              ) {
+                aiImageStatusTarget.transportFailed = true;
+                const pendingPayload =
+                  aiImageStatusTarget.pendingCompletionPayload;
+                if (pendingPayload) {
+                  const recoveredStatus =
+                    await recoverAiImageStatusForTarget(
+                      aiImageStatusTarget,
+                      pendingPayload
+                    );
+                  if (recoveredStatus) {
+                    response = {
+                      success: true,
+                      requestId: aiImageStatusTarget.requestId,
+                      imageUrl: recoveredStatus.imageUrl,
+                      responseId: recoveredStatus.responseId,
+                      imageId: recoveredStatus.imageId,
+                      engine: recoveredStatus.engine,
+                      quality: recoveredStatus.quality,
+                      aiUsagePolicy: recoveredStatus.aiUsagePolicy
+                    };
+                  }
+                } else {
+                  retainAiImageStatusTarget = true;
+                }
+              }
+              if (aiImageStatusTarget && !retainAiImageStatusTarget) {
                 forwardTerminalAiImageStatusIfNeeded({
                   target: aiImageStatusTarget,
                   response
@@ -1329,7 +1430,21 @@ export function useHostBridge({
               }
               throw error;
             } finally {
-              activeAiImageStatusTargets.delete(id);
+              if (
+                retainAiImageStatusTarget &&
+                aiImageStatusTarget &&
+                !aiImageStatusTarget.terminalStatusForwarded
+              ) {
+                aiImageStatusTarget.cleanupTimeout = window.setTimeout(() => {
+                  if (
+                    activeAiImageStatusTargets.get(id) === aiImageStatusTarget
+                  ) {
+                    activeAiImageStatusTargets.delete(id);
+                  }
+                }, AI_IMAGE_STATUS_RECOVERY_RETENTION_MS);
+              } else {
+                activeAiImageStatusTargets.delete(id);
+              }
               imageAuthorization.release();
             }
             break;
@@ -2642,6 +2757,9 @@ export function useHostBridge({
         'image_generation_status_received',
         handleAiImageGenerationStatus
       );
+      for (const target of activeAiImageStatusTargets.values()) {
+        if (target.cleanupTimeout) clearTimeout(target.cleanupTimeout);
+      }
       for (const subscriptionKey of chatSubscriptions.keys()) {
         const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
         const subscribedBuildId = Number(rawBuildId);

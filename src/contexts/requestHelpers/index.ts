@@ -356,6 +356,7 @@ registerMethods('content', [
   'uploadSubject',
   'uploadThumb',
   'generateAIImage',
+  'loadAIImageResult',
   'getDailyQuestion',
   'submitDailyQuestionResponse',
   'recoverDailyQuestionSubmission',

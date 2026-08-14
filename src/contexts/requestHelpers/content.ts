@@ -2472,8 +2472,28 @@ export default function contentRequestHelpers({
           error: errorMessage,
           reason,
           code,
+          reachedServer:
+            !!String(requestId || '').trim() &&
+            String(error?.response?.data?.requestId || '').trim() ===
+              String(requestId || '').trim(),
           aiUsagePolicy
         };
+      }
+    },
+    async loadAIImageResult({
+      recovery
+    }: {
+      recovery: { objectKey: string; format: string };
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/image/ai/result`,
+          { recovery },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
       }
     },
     async getDailyQuestion() {

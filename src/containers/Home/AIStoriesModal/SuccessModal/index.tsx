@@ -61,6 +61,7 @@ interface ImageGenStatus {
   imageUrl?: string;
   message?: string;
   partialImageB64?: string;
+  aiUsagePolicy?: AiUsagePolicy;
 }
 
 interface AiUsageRequirement {
@@ -407,6 +408,9 @@ export default function SuccessModal({
       });
       setProgressStage(getImageGenerationDisplayStage(status));
       setGeneratingImage(isRunning);
+      if (status.aiUsagePolicy) {
+        applyAiUsagePolicy(status.aiUsagePolicy);
+      }
       if (status.partialImageB64) {
         setPreviewImageUrl(`data:image/png;base64,${status.partialImageB64}`);
       }
@@ -433,6 +437,7 @@ export default function SuccessModal({
         handleImageGenerationStatusReceived
       );
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedStoryId]);
 
   const canGenerateImage = useMemo(() => {

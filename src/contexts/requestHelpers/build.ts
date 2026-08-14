@@ -1343,6 +1343,10 @@ export default function buildRequestHelpers({
             'Failed to generate image',
           reason: errorData?.reason,
           code: errorData?.code,
+          reachedServer:
+            !!String(requestId || '').trim() &&
+            String(errorData?.requestId || '').trim() ===
+              String(requestId || '').trim(),
           aiUsagePolicy: errorData?.aiUsagePolicy
         };
       }
