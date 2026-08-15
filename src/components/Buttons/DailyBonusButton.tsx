@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { useNotiContext } from '~/contexts';
+import useDailyRewardModalLauncher from '~/components/Modals/DailyRewardModal/useDailyRewardModalLauncher';
 
 export default function DailyBonusButton() {
   const dailyBonusModalShown = useNotiContext(
@@ -9,11 +10,16 @@ export default function DailyBonusButton() {
   const onSetDailyBonusModalShown = useNotiContext(
     (v) => v.actions.onSetDailyBonusModalShown
   );
+  const { isOpening, openModal } = useDailyRewardModalLauncher(
+    onSetDailyBonusModalShown
+  );
+  const isDisabled = dailyBonusModalShown || isOpening;
 
   return (
     <button
-      onClick={() => onSetDailyBonusModalShown(true)}
-      disabled={dailyBonusModalShown}
+      aria-busy={isOpening}
+      onClick={openModal}
+      disabled={isDisabled}
       className={css`
         font-family: 'Poppins', sans-serif;
         background-image: linear-gradient(
@@ -23,11 +29,11 @@ export default function DailyBonusButton() {
           #006d75 100%
         );
         background-size: 400% 400%;
-        animation: ${dailyBonusModalShown
+        animation: ${isDisabled
           ? 'none'
           : 'colorShift 6s ease infinite, pulse 2s infinite'};
-        opacity: ${dailyBonusModalShown ? 0.5 : 1};
-        cursor: ${dailyBonusModalShown ? 'default' : 'pointer'};
+        opacity: ${isDisabled ? 0.5 : 1};
+        cursor: ${isDisabled ? 'default' : 'pointer'};
         color: #fff;
         padding: 12px 24px;
         border: none;
@@ -67,10 +73,11 @@ export default function DailyBonusButton() {
         &:disabled {
           background-image: none;
           background-color: #ccc;
+          transform: none;
         }
       `}
     >
-      Bonus!
+      {isOpening ? 'Opening…' : 'Bonus!'}
     </button>
   );
 }

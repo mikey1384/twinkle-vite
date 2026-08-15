@@ -92,7 +92,7 @@ export default function BonusView({
     return (
       <div className={`${contentGridClass} ${contentClass}`}>
         <div className={loadingWrapClass}>
-          <Loading />
+          <Loading text="Preparing your bonus question..." />
         </div>
       </div>
     );

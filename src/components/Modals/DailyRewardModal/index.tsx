@@ -76,7 +76,7 @@ export default function DailyRewardModal({
   const [openedFromSummary, setOpenedFromSummary] = useState(false);
   const [animateReveal, setAnimateReveal] = useState(false);
   const [cardModalShown, setCardModalShown] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!openBonus);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const [chosenCardId, setChosenCardId] = useState(0);
   const [coinEarned, setCoinEarned] = useState(0);
@@ -89,7 +89,7 @@ export default function DailyRewardModal({
   const [bonusAttempted, setBonusAttempted] = useState(false);
   const [bonusAchieved, setBonusAchieved] = useState(false);
   const [bonusQuestions, setBonusQuestions] = useState<any[]>([]);
-  const [bonusLoading, setBonusLoading] = useState(false);
+  const [bonusLoading, setBonusLoading] = useState(!!openBonus);
   const [bonusSubmitting, setBonusSubmitting] = useState(false);
   const [bonusIsGraded, setBonusIsGraded] = useState(false);
   const [bonusSelectedChoiceIndex, setBonusSelectedChoiceIndex] =
@@ -202,7 +202,9 @@ export default function DailyRewardModal({
           setBonusLoadFailed(true);
         }
       } finally {
-        setBonusLoading(false);
+        if (!ignore) {
+          setBonusLoading(false);
+        }
       }
     })();
 
@@ -405,6 +407,9 @@ export default function DailyRewardModal({
       onHideBonusSummary={() => setShowBonusUI(false)}
       onOpenBonusSummary={() => {
         setOpenedFromSummary(true);
+        if (bonusQuestions.length === 0) {
+          setBonusLoading(true);
+        }
         setShowBonusUI(true);
       }}
       onRetryBonusLoad={() => setBonusLoadAttempt((count) => count + 1)}

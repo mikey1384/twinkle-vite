@@ -12,6 +12,7 @@ import Header from './Header';
 import SocketManager from './SocketManager';
 import InvalidPage from '~/components/InvalidPage';
 import LazyModalFallback from '~/components/Modals/LazyModalFallback';
+import { LazyDailyRewardModal } from '~/components/Modals/DailyRewardModal/lazy';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import API_URL from '~/constants/URL';
@@ -132,9 +133,6 @@ const SigninModal = lazyWithRetry(() => import('~/containers/Signin'));
 const MobileMenu = lazyWithRetry(() => import('./MobileMenu'));
 const Incoming = lazyWithRetry(() => import('./Stream/Incoming'));
 const Outgoing = lazyWithRetry(() => import('./Stream/Outgoing'));
-const DailyRewardModal = lazyWithRetry(
-  () => import('~/components/Modals/DailyRewardModal')
-);
 const AICallWindow = lazyWithRetry(() => import('./AICallWindow'));
 const AdminTelemetryWindow = lazyWithRetry(
   () => import('./AdminTelemetryWindow')
@@ -981,10 +979,12 @@ export default function App() {
             fallback={
               <LazyModalFallback
                 onHide={() => onSetDailyRewardModalShown(false)}
+                title="Daily Reward"
+                loadingText="Opening your daily reward..."
               />
             }
           >
-            <DailyRewardModal
+            <LazyDailyRewardModal
               onSetHasBonus={(hasBonus: boolean) => {
                 onUpdateTodayStats({
                   newStats: {
@@ -1010,10 +1010,12 @@ export default function App() {
             fallback={
               <LazyModalFallback
                 onHide={() => onSetDailyBonusModalShown(false)}
+                title="Daily Bonus"
+                loadingText="Opening your daily bonus..."
               />
             }
           >
-            <DailyRewardModal
+            <LazyDailyRewardModal
               openBonus
               onHide={() => onSetDailyBonusModalShown(false)}
               onSetDailyBonusAttempted={handleSetDailyBonusAttempted}

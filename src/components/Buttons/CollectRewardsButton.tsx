@@ -2,6 +2,7 @@ import React from 'react';
 import Icon from '~/components/Icon';
 import { useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
+import useDailyRewardModalLauncher from '~/components/Modals/DailyRewardModal/useDailyRewardModalLauncher';
 
 export default function CollectRewardsButton({
   isChecked
@@ -14,11 +15,16 @@ export default function CollectRewardsButton({
   const onSetDailyRewardModalShown = useNotiContext(
     (v) => v.actions.onSetDailyRewardModalShown
   );
+  const { isOpening, openModal } = useDailyRewardModalLauncher(
+    onSetDailyRewardModalShown
+  );
+  const isDisabled = dailyRewardModalShown || isOpening;
 
   return (
     <button
-      onClick={() => onSetDailyRewardModalShown(true)}
-      disabled={dailyRewardModalShown}
+      aria-busy={isOpening}
+      onClick={openModal}
+      disabled={isDisabled}
       className={css`
         font-family: 'Poppins', sans-serif;
         position: relative;
@@ -33,11 +39,11 @@ export default function CollectRewardsButton({
         font-weight: bold;
         font-size: 1.2rem;
         background-size: 200% auto;
-        animation: ${dailyRewardModalShown || isChecked
+        animation: ${isDisabled || isChecked
           ? 'none'
           : 'colorShift 6s ease infinite, pulse 2s infinite'};
-        opacity: ${dailyRewardModalShown ? 0.5 : 1};
-        cursor: ${dailyRewardModalShown ? 'default' : 'pointer'};
+        opacity: ${isDisabled ? 0.5 : 1};
+        cursor: ${isDisabled ? 'default' : 'pointer'};
         transition: background-position 0.5s ease, transform 0.3s ease,
           box-shadow 0.3s ease;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -93,7 +99,9 @@ export default function CollectRewardsButton({
           : ''}
       `}
     >
-      {isChecked ? (
+      {isOpening ? (
+        'Opening…'
+      ) : isChecked ? (
         <>
           Collected <Icon icon="check" style={{ marginLeft: '0.5rem' }} />
         </>

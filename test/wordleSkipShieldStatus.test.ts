@@ -58,6 +58,14 @@ test('Wordle shows canonical today-only skip protection before close', () => {
   );
   assert.match(
     wordleModal,
+    /Loading[\s\S]*?minHeight: WORDLE_MODAL_BODY_MIN_HEIGHT/
+  );
+  assert.doesNotMatch(
+    wordleModal,
+    /Loading[\s\S]{0,180}?style=\{\{ height: '100%' \}\}/
+  );
+  assert.match(
+    wordleModal,
     /catch \(error\)[\s\S]*?setWordleSnapshotStatus\('error'\)/
   );
   assert.equal(

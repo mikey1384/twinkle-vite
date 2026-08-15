@@ -36,6 +36,9 @@ import {
 } from './skipShieldStatus';
 import { fetchCanonicalWordleState } from './wordleCanonicalState';
 
+const WORDLE_MODAL_BODY_MIN_HEIGHT =
+  'min(55rem, calc(100vh - 16rem))';
+
 export default function WordleModal({
   channelId,
   channelName,
@@ -363,7 +366,7 @@ export default function WordleModal({
         {wordleSnapshotStatus === 'loading' ? (
           <Loading
             text="Loading today's Wordle..."
-            style={{ height: '100%' }}
+            style={{ minHeight: WORDLE_MODAL_BODY_MIN_HEIGHT }}
             theme={theme}
           />
         ) : wordleSnapshotStatus === 'error' ? (
@@ -371,7 +374,7 @@ export default function WordleModal({
             style={{
               width: '100%',
               height: '100%',
-              minHeight: '18rem',
+              minHeight: WORDLE_MODAL_BODY_MIN_HEIGHT,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
@@ -391,6 +394,7 @@ export default function WordleModal({
             style={{
               width: '100%',
               height: '100%',
+              minHeight: WORDLE_MODAL_BODY_MIN_HEIGHT,
               display: 'flex',
               flexDirection: 'column'
             }}

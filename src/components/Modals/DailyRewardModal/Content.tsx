@@ -308,7 +308,13 @@ export default function Content({
         >
           {loading ? (
             <div className={loadingWrapClass}>
-              <Loading />
+              <Loading
+                text={
+                  showBonusUI
+                    ? 'Preparing your daily bonus...'
+                    : 'Preparing your daily reward...'
+                }
+              />
             </div>
           ) : loadFailed || revealFailed || (bonusLoadFailed && showBonusUI) ? (
             <div

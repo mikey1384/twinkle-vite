@@ -1,30 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
+import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
 import { reloadForLazyImportRecovery } from '~/helpers/lazyImportHelpers';
 
+const SHOW_FALLBACK_AFTER_MS = 250;
 const TAKING_LONG_MS = 8000;
 
-// Suspense fallback for lazily-loaded modals. Rendering null while the chunk
-// loads means a stalled import looks like the app silently ignored the click
-// (and any "modal shown" flag that disables its trigger button stays latched
-// with no way out), so this always shows a closable modal instead.
-export default function LazyModalFallback({ onHide }: { onHide: () => void }) {
+// Normally the modal chunk is loaded before its shown flag is set. Keep this
+// delayed shell for direct state changes and genuine chunk stalls, without
+// flashing a second modal during an ordinary cached import.
+export default function LazyModalFallback({
+  loadingText,
+  onHide,
+  title
+}: {
+  loadingText: string;
+  onHide: () => void;
+  title: string;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
   const [isTakingLong, setIsTakingLong] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsTakingLong(true), TAKING_LONG_MS);
-    return () => clearTimeout(timer);
+    const visibilityTimer = setTimeout(
+      () => setIsVisible(true),
+      SHOW_FALLBACK_AFTER_MS
+    );
+    const takingLongTimer = setTimeout(
+      () => setIsTakingLong(true),
+      TAKING_LONG_MS
+    );
+    return () => {
+      clearTimeout(visibilityTimer);
+      clearTimeout(takingLongTimer);
+    };
   }, []);
+
+  if (!isVisible) return null;
 
   return (
     <Modal
       modalKey="LazyModalFallback"
       isOpen
       onClose={onHide}
-      size="md"
+      size="lg"
+      title={title}
       footer={
         <Button variant="ghost" onClick={onHide}>
           Close
@@ -37,14 +59,11 @@ export default function LazyModalFallback({ onHide }: { onHide: () => void }) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '200px',
+          minHeight: '30vh',
           gap: '1.5rem'
         }}
       >
-        <div style={{ color: Color.gray(), fontSize: '1.5rem' }}>
-          <Icon icon="spinner" pulse />
-          <span style={{ marginLeft: '0.7rem' }}>Loading...</span>
-        </div>
+        <Loading text={loadingText} />
         {isTakingLong && (
           <>
             <p
