@@ -124,7 +124,7 @@ export default function CompactPreview({
     promptText?: string;
     engine?: string;
   };
-  const detailPreview = getCardDetailPreview(card, promptText);
+  const detailPreview = getCardDetailPreview(card, promptText, engine);
   const promptHtml = String(promptText || '').trim();
   const fallbackPrompt = promptHtml ? '' : detailPreview;
   const summonedDate = getSummonedDate(card);
@@ -265,12 +265,16 @@ function getCardImageSrc(card: Partial<Card>) {
   return `${cloudFrontURL}${imagePath}`;
 }
 
-function getCardDetailPreview(card: Partial<Card>, promptText?: string) {
+function getCardDetailPreview(
+  card: Partial<Card>,
+  promptText?: string,
+  engine?: string
+) {
   const prompt = String(promptText || (card as any).prompt || '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  return prompt || card.style || card.engine || '';
+  return prompt || card.style || engine || '';
 }
 
 function getSummonedDate(card: Partial<Card>) {

@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { ADMIN_USER_ID, cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { getAICardDisplayEngine } from '~/helpers/aiCardDisplay';
 
 interface ManagedCard {
   id: number;
@@ -130,7 +131,8 @@ export default function AiCards() {
                 <strong>Style:</strong> {card.style || '—'}
               </span>
               <span className={metaItemClass}>
-                <strong>Engine:</strong> {card.engine || '—'}
+                <strong>Engine:</strong>{' '}
+                {getAICardDisplayEngine(card) || '—'}
               </span>
               {Number(card.isBurned) === 1 && (
                 <span className={`${metaItemClass} ${burnedTagClass}`}>

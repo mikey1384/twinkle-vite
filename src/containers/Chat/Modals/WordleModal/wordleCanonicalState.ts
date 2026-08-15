@@ -44,3 +44,19 @@ export function normalizeCanonicalWordleState(
     needsReload: value.needsReload === true
   };
 }
+
+export async function fetchCanonicalWordleState({
+  channelId,
+  loadWordle
+}: {
+  channelId: number;
+  loadWordle: (channelId: number) => Promise<unknown>;
+}) {
+  const canonicalState = normalizeCanonicalWordleState(
+    await loadWordle(channelId)
+  );
+  if (!canonicalState) {
+    throw new Error('Wordle returned an invalid canonical state');
+  }
+  return canonicalState;
+}

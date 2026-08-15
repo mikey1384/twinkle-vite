@@ -7,7 +7,10 @@ import {
   normalizeSkipShieldStatus,
   shouldBlockWordleClose
 } from '../src/containers/Chat/Modals/WordleModal/skipShieldStatus';
-import { normalizeCanonicalWordleState } from '../src/containers/Chat/Modals/WordleModal/wordleCanonicalState';
+import {
+  fetchCanonicalWordleState,
+  normalizeCanonicalWordleState
+} from '../src/containers/Chat/Modals/WordleModal/wordleCanonicalState';
 
 function source(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
@@ -45,11 +48,30 @@ test('Wordle shows canonical today-only skip protection before close', () => {
     /You're protected if you leave today's word unfinished/
   );
   assert.match(game, /normalizeCanonicalWordleState\(response\)/);
+  assert.match(
+    wordleModal,
+    /void refreshCanonicalWordleState\(\);[\s\S]*?\}, \[channelId\]\);/
+  );
+  assert.match(
+    wordleModal,
+    /wordleSnapshotStatus === 'loading'[\s\S]*?Loading today's Wordle/
+  );
+  assert.match(
+    wordleModal,
+    /catch \(error\)[\s\S]*?setWordleSnapshotStatus\('error'\)/
+  );
   assert.equal(
     (game.match(/await updateWordleAttempt\(/g) || []).length,
     1,
     'every accepted guess crosses exactly one canonical mutation boundary'
   );
+  assert.doesNotMatch(game, /checkIfDuplicateWordleAttempt/);
+  assert.match(game, /expectedSolution: solution/);
+  assert.match(
+    game,
+    /canonicalState\.wordleSolution !== solution[\s\S]*?return;/
+  );
+  assert.match(game, /catch \(error\)[\s\S]*?await onRefreshCanonicalState\(\)/);
   assert.doesNotMatch(game, /onSetWordleGuesses/);
   assert.match(wordleModal, /if \(wordleSubmissionPending\) return/);
   assert.match(
@@ -120,5 +142,52 @@ test('Wordle shared state accepts only a complete canonical response', () => {
   assert.equal(
     normalizeCanonicalWordleState({ ...canonical, wordleStats: null }),
     null
+  );
+});
+
+test('opening Wordle ignores a stale channel snapshot and loads canonical state', async () => {
+  const staleChannelSnapshot = {
+    wordleSolution: 'OLDIE',
+    wordleGuesses: ['OLDIE']
+  };
+  const canonical = {
+    dailyTaskStatus: { wordle: { basicQualified: false } },
+    wordleAttemptState: { isSolved: false, isCompleted: false },
+    wordleGuesses: [],
+    wordleSolution: 'TODAY',
+    wordleWordLevel: 2,
+    wordleStats: { currentStreak: 4 },
+    nextDayTimeStamp: 2_000_086_400,
+    needsReload: false
+  };
+  const requestedChannelIds: number[] = [];
+
+  const loaded = await fetchCanonicalWordleState({
+    channelId: 1,
+    loadWordle: async (channelId) => {
+      requestedChannelIds.push(channelId);
+      return canonical;
+    }
+  });
+
+  assert.deepEqual(requestedChannelIds, [1]);
+  assert.deepEqual(loaded, canonical);
+  assert.notEqual(loaded?.wordleSolution, staleChannelSnapshot.wordleSolution);
+
+  await assert.rejects(
+    fetchCanonicalWordleState({
+      channelId: 1,
+      loadWordle: async () => {
+        throw new Error('offline');
+      }
+    }),
+    /offline/
+  );
+  await assert.rejects(
+    fetchCanonicalWordleState({
+      channelId: 1,
+      loadWordle: async () => ({ wordleSolution: 'INCOMPLETE' })
+    }),
+    /invalid canonical state/
   );
 });

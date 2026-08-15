@@ -43,6 +43,7 @@ export default function Game({
   nextDayTimeStamp,
   onSetIsRevealing,
   onSetSubmissionPending,
+  onRefreshCanonicalState,
   socketConnected,
   submissionPending,
   skipShieldChecklist,
@@ -61,6 +62,7 @@ export default function Game({
   nextDayTimeStamp: number;
   onSetIsRevealing: (isRevealing: boolean) => void;
   onSetSubmissionPending: (isPending: boolean) => void;
+  onRefreshCanonicalState: () => Promise<void>;
   onSetOverviewModalShown: (isShown: boolean) => void;
   socketConnected: boolean;
   submissionPending: boolean;
@@ -81,9 +83,6 @@ export default function Game({
   const [savingStrictMode, setSavingStrictMode] = useState(false);
   const updateWordleAttempt = useAppContext(
     (v) => v.requestHelpers.updateWordleAttempt
-  );
-  const checkIfDuplicateWordleAttempt = useAppContext(
-    (v) => v.requestHelpers.checkIfDuplicateWordleAttempt
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onApplyTodayStatsProgress = useNotiContext(
@@ -312,39 +311,10 @@ export default function Game({
     onSetSubmissionPending(true);
     let canonicalSubmissionApplied = false;
     try {
-      const duplicateStatus = await checkIfDuplicateWordleAttempt({
-        channelId,
-        numGuesses: newGuesses.length,
-        solution
-      });
-      if (
-        !duplicateStatus ||
-        duplicateStatus.isDuplicate ||
-        duplicateStatus.needsReload
-      ) {
-        window.location.reload();
-        return;
-      }
-      const resolvedSolution = duplicateStatus.actualSolution || solution;
-      const resolvedWordLength =
-        unicodeLength(resolvedSolution) || MAX_WORD_LENGTH;
-      if (duplicateStatus.actualSolution) {
-        onSetChannelState({
-          channelId,
-          newState: {
-            wordleWordLevel: duplicateStatus.actualWordLevel,
-            wordleSolution: duplicateStatus.actualSolution
-          }
-        });
-        if (resolvedWordLength !== MAX_WORD_LENGTH) {
-          window.location.reload();
-          return;
-        }
-      }
       if (isStrictMode) {
         const { isPass, message } = checkWordleAttemptStrictness({
           guesses: newGuesses,
-          solution: resolvedSolution
+          solution
         });
         if (!isPass) {
           setCurrentRowClass('jiggle');
@@ -362,24 +332,28 @@ export default function Game({
       const response = await updateWordleAttempt({
         channelName,
         channelId,
-        guesses: newGuesses
+        guesses: newGuesses,
+        expectedSolution: solution
       });
       if (!response) return;
-      if (response.needsReload) {
-        window.location.reload();
-        return;
-      }
       const canonicalState = normalizeCanonicalWordleState(response);
       if (!canonicalState) {
-        window.location.reload();
+        await onRefreshCanonicalState();
+        return;
+      }
+
+      applyCanonicalWordleState(canonicalState);
+      setCurrentGuess('');
+      if (
+        canonicalState.needsReload ||
+        canonicalState.wordleSolution !== solution
+      ) {
         return;
       }
 
       const revealDelayMs =
         REVEAL_TIME_MS * unicodeLength(canonicalState.wordleSolution);
-      applyCanonicalWordleState(canonicalState);
       canonicalSubmissionApplied = true;
-      setCurrentGuess('');
       setIsChecking(false);
       onSetIsRevealing(true);
       setTimeout(() => {
@@ -414,6 +388,9 @@ export default function Game({
       }
     } catch (error) {
       console.error(error);
+      // A lost PUT response has an unknown outcome. Reconcile from the writer
+      // instead of leaving the modal on a guessed local state.
+      await onRefreshCanonicalState();
     } finally {
       setIsChecking(false);
       onSetSubmissionPending(false);

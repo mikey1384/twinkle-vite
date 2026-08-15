@@ -11,8 +11,9 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function SummonActivity({ card }: { card: any }) {
   const navigate = useNavigate();
+  const { promptText, engine } = useAICard(card);
   const isNanoBananaEngine =
-    card.engine === 'Nano Banana' || card.engine === 'Nano Banana 2';
+    engine === 'Nano Banana' || engine === 'Nano Banana 2';
   const displayedTime = useMemo(
     () => moment.unix(card.timeStamp).format('hh:mm a'),
     [card.timeStamp]
@@ -27,8 +28,6 @@ export default function SummonActivity({ card }: { card: any }) {
     }
     return card.style;
   }, [card.imagePath, card.isBurned, card.style]);
-  const { promptText } = useAICard(card);
-
   return (
     <div
       className={css`
@@ -139,10 +138,10 @@ export default function SummonActivity({ card }: { card: any }) {
         >
           {displayedStyle}
         </div>
-        {(card.engine === 'DALL-E 3' ||
-          card.engine === 'image-1' ||
-          card.engine === 'image-1.5' ||
-          card.engine === 'image-2' ||
+        {(engine === 'DALL-E 3' ||
+          engine === 'image-1' ||
+          engine === 'image-1.5' ||
+          engine === 'image-2' ||
           isNanoBananaEngine) && (
           <div
             className={css`
@@ -151,16 +150,16 @@ export default function SummonActivity({ card }: { card: any }) {
               font-family: ${
                 isNanoBananaEngine
                   ? `'Baloo 2', 'Poppins', sans-serif`
-                  : card.engine === 'DALL-E 3'
+                  : engine === 'DALL-E 3'
                     ? `'Orbitron', 'Roboto Mono', sans-serif`
                     : `'Roboto Mono', monospace`
               };
-              text-transform: ${card.engine === 'DALL-E 3'
+              text-transform: ${engine === 'DALL-E 3'
                 ? 'uppercase'
                 : 'none'};
               letter-spacing: ${isNanoBananaEngine
                 ? '0'
-                : card.engine === 'DALL-E 3'
+                : engine === 'DALL-E 3'
                   ? '0.1em'
                   : '0.02em'};
               font-weight: ${isNanoBananaEngine ? 800 : 700};
@@ -173,7 +172,7 @@ export default function SummonActivity({ card }: { card: any }) {
               }
             `}
           >
-            {card.engine === 'DALL-E 3' ? 'DALL·E 3' : card.engine}
+            {engine === 'DALL-E 3' ? 'DALL·E 3' : engine}
           </div>
         )}
       </div>

@@ -2478,16 +2478,18 @@ export default function chatRequestHelpers({
     async updateWordleAttempt({
       channelName,
       channelId,
-      guesses
+      guesses,
+      expectedSolution
     }: {
       channelName?: string;
       channelId: number;
       guesses: string[];
+      expectedSolution: string;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/wordle/attempt`,
-          { channelName, channelId, guesses },
+          { channelName, channelId, guesses, expectedSolution },
           auth()
         );
         return data;

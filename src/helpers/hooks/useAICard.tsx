@@ -13,6 +13,7 @@ import {
   totalMysteryCycleKeyframes,
   TOTAL_MYSTERY_CYCLE_SECONDS
 } from '~/components/AICard/totalMysteryGlow';
+import { getAICardDisplayEngine } from '~/helpers/aiCardDisplay';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -53,7 +54,12 @@ export default function useAICard(card: any) {
     const finalPromptText = card?.word
       ? getPromptText(card?.prompt, card?.word, cardObj.color)
       : card?.prompt || '';
-    const finalEngine = card?.engine || 'DALL-E 2';
+    const finalEngine = getAICardDisplayEngine({
+      engine: card?.engine,
+      imagePath: card?.imagePath,
+      isBurned: card?.isBurned,
+      isMysteryCard: card?.isMysteryCard
+    });
 
     return {
       memoizedCardQuality: mq,
@@ -68,6 +74,8 @@ export default function useAICard(card: any) {
     card?.prompt,
     card?.word,
     card?.isBurned,
+    card?.isMysteryCard,
+    card?.imagePath,
     card?.engine
   ]);
 
