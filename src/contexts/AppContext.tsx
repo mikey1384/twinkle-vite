@@ -20,14 +20,9 @@ import { ViewContextProvider } from './View';
 import {
   DEFAULT_PROFILE_THEME,
   LAST_ONLINE_FILTER_LABEL,
-  clientVersion,
-  localStorageKeys
+  clientVersion
 } from '~/constants/defaultValues';
-import {
-  getStoredItem,
-  getTwinkleDeviceId,
-  removeStoredItem
-} from '~/helpers/userDataHelpers';
+import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import {
   getErrorMessage,
   getErrorMessageFromResponseData
@@ -36,6 +31,7 @@ import { clearAnalyticsUser } from '~/helpers/analytics';
 import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
 import URL from '~/constants/URL';
 import { createUnauthorizedSessionResolver } from '~/helpers/sessionUnauthorizedGuard';
+import { createSessionInterruption } from '~/helpers/sessionInterruption';
 
 export const initialMyState = {
   achievementPoints: 0,
@@ -71,6 +67,7 @@ const initialUserState = {
   profiles: [],
   profilesLoaded: false,
   searchedProfiles: [],
+  sessionInterruption: null,
   signinModalShown: false,
   userObj: {},
   achievementsObj: {},
@@ -179,13 +176,12 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
             invalidSessionToken &&
             getStoredItem('token') === invalidSessionToken
           ) {
-            removeStoredItem('token');
-            Object.keys(localStorageKeys).forEach((key) =>
-              removeStoredItem(key)
-            );
             clearAnalyticsUser();
             userDispatch({
-              type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
+              type: 'SESSION_INTERRUPTED',
+              interruption: createSessionInterruption(
+                'session_token_invalid'
+              )
             });
           }
         }

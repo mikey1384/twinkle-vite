@@ -112,7 +112,9 @@ export default function UserReducer(
           ...normalizeCommunityFundsState(action.data)
         },
         missions: action.data.state?.missions || {},
-        loaded: true
+        loaded: true,
+        sessionInterruption: null,
+        signinModalShown: false
       };
     case 'LOAD_USERS': {
       let loadMoreButton = false;
@@ -146,17 +148,22 @@ export default function UserReducer(
           ...initialMyState,
           ...normalizeCommunityFundsState(action.data)
         },
+        sessionInterruption: null,
         signinModalShown: false
       };
     case 'LOGOUT':
       return {
         ...state,
         achievementsObj: state.achievementsObj || {},
+        sessionInterruption: null,
+        signinModalShown: false,
         myState: initialMyState
       };
-    case 'LOGOUT_AND_OPEN_SIGNIN_MODAL':
+    case 'SESSION_INTERRUPTED':
       return {
         ...state,
+        loaded: true,
+        sessionInterruption: action.interruption,
         signinModalShown: true,
         achievementsObj: state.achievementsObj || {},
         myState: initialMyState
@@ -194,6 +201,7 @@ export default function UserReducer(
           ...initialMyState,
           ...normalizeCommunityFundsState(action.data)
         },
+        sessionInterruption: null,
         signinModalShown: false
       };
     case 'SET_ACHIEVERS': {

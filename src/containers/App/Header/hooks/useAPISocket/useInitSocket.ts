@@ -19,7 +19,11 @@ import {
   recordChatBootstrapEvent,
   flushChatBootstrapHistory
 } from '~/helpers/chatBootstrapDebug';
-import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
+import { readAuthToken, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
+import {
+  createSessionInterruption,
+  type SessionInterruptionCode
+} from '~/helpers/sessionInterruption';
 import {
   useAppContext,
   useExploreContext,
@@ -117,6 +121,12 @@ export default function useInitSocket({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const sessionInterruption = useAppContext(
+    (v) => v.user.state.sessionInterruption
+  );
+  const onInterruptSession = useAppContext(
+    (v) => v.user.actions.onInterruptSession
+  );
   const navigate = useNavigate();
 
   const category = useHomeContext((v) => v.state.category);
@@ -224,6 +234,7 @@ export default function useInitSocket({
   const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
   const socketBindRetryTimerRef = useRef<number | null>(null);
   const socketBindAttemptRef = useRef(0);
+  const terminalSocketAuthFailureRef = useRef(false);
   const wakeReconcileInFlightRef = useRef(false);
   const bootstrapAwaitingBindUserIdRef = useRef<number | null>(userId || null);
   const userActionAckedRef = useRef(false);
@@ -242,6 +253,38 @@ export default function useInitSocket({
   const hiddenAtRef = useRef(0);
   const interactedSinceArrivalRef = useRef(false);
   const COLD_RESUME_MS = 5 * 60 * 1000;
+
+  function stopSocketAuthRecovery() {
+    clearSocketAuthReady();
+    socketBindAttemptRef.current += 1;
+    wakeReconcileInFlightRef.current = false;
+    boundSocketIdRef.current = null;
+    clearSocketBindRetryTimer();
+    if (serverDisconnectReconnectTimerRef.current) {
+      clearTimeout(serverDisconnectReconnectTimerRef.current);
+      serverDisconnectReconnectTimerRef.current = null;
+    }
+    if (loadChatRetryTimerRef.current) {
+      clearTimeout(loadChatRetryTimerRef.current);
+      loadChatRetryTimerRef.current = null;
+    }
+    if (heartbeatTimerRef.current) {
+      clearInterval(heartbeatTimerRef.current);
+      heartbeatTimerRef.current = null;
+    }
+    handleStopUserActionCapture();
+    if (socket.connected) {
+      socket.disconnect();
+    }
+    onChangeSocketStatus(false);
+  }
+
+  function interruptSocketSession(code: SessionInterruptionCode) {
+    if (terminalSocketAuthFailureRef.current) return;
+    terminalSocketAuthFailureRef.current = true;
+    stopSocketAuthRecovery();
+    onInterruptSession(createSessionInterruption(code));
+  }
 
   function handleMarkArrivalIfCold() {
     // A resume after a short hide (quick app switch) keeps whatever the user
@@ -268,6 +311,7 @@ export default function useInitSocket({
   }
 
   function requestChatWakeBarrier(reason: 'focus' | 'online' | 'pageshow') {
+    if (terminalSocketAuthFailureRef.current) return;
     const bindingUserId = Number(userIdRef.current || 0);
     const hasCurrentChatProjection =
       bindingUserId > 0 &&
@@ -391,6 +435,25 @@ export default function useInitSocket({
   const userIdRef = useRef(userId);
   const usernameRef = useRef(username);
   const profilePicUrlRef = useRef(profilePicUrl);
+
+  useEffect(() => {
+    if (sessionInterruption) {
+      terminalSocketAuthFailureRef.current = true;
+      stopSocketAuthRecovery();
+      return;
+    }
+
+    if (!userId || !readAuthToken().token) return;
+    const wasTerminal = terminalSocketAuthFailureRef.current;
+    terminalSocketAuthFailureRef.current = false;
+    if (wasTerminal && !socket.connected) {
+      try {
+        socket.connect();
+      } catch {}
+    }
+    // Context actions are stable; the session/user transition owns recovery.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionInterruption, userId]);
 
   useEffect(() => {
     const previousUserId = userIdRef.current;
@@ -591,6 +654,7 @@ export default function useInitSocket({
 
   useEffect(() => {
     function ensureSocketConnected() {
+      if (terminalSocketAuthFailureRef.current) return;
       // Socket.IO's transport ping/pong owns connection health. An
       // application-level acknowledgement can be delayed by tab throttling and
       // must not turn a confirmed connection into a synthetic disconnect.
@@ -863,6 +927,10 @@ export default function useInitSocket({
     }
 
     function handleConnect() {
+      if (terminalSocketAuthFailureRef.current) {
+        stopSocketAuthRecovery();
+        return;
+      }
       if (serverDisconnectReconnectTimerRef.current) {
         clearTimeout(serverDisconnectReconnectTimerRef.current);
         serverDisconnectReconnectTimerRef.current = null;
@@ -1472,7 +1540,13 @@ export default function useInitSocket({
     function scheduleLoadChatRetry({
       fromWriter = false
     }: { fromWriter?: boolean } = {}) {
-      if (loadChatRetryTimerRef.current || !userIdRef.current) return;
+      if (
+        terminalSocketAuthFailureRef.current ||
+        loadChatRetryTimerRef.current ||
+        !userIdRef.current
+      ) {
+        return;
+      }
       const delay = Math.min(1000 * 2 ** loadChatRetryCountRef.current, 10000);
       loadChatRetryCountRef.current += 1;
       recordChatBootstrapEvent('chat-bootstrap-retry-scheduled', {
@@ -1547,6 +1621,8 @@ export default function useInitSocket({
         heartbeatTimerRef.current = null;
       }
       handleStopUserActionCapture();
+
+      if (terminalSocketAuthFailureRef.current) return;
 
       if (reason === 'io server disconnect') {
         if (serverDisconnectReconnectTimerRef.current) {
@@ -1652,6 +1728,7 @@ export default function useInitSocket({
     let forcedRetries = 0;
     let warned = false;
     const interval = window.setInterval(() => {
+      if (terminalSocketAuthFailureRef.current) return;
       if (!userIdRef.current) return;
       if (bootstrapAwaitingBindUserIdRef.current === userIdRef.current) {
         return;
@@ -1751,19 +1828,34 @@ export default function useInitSocket({
     onBound?: (result?: SocketBindResult) => void;
     onBindSettled?: () => void;
   }) {
+    if (terminalSocketAuthFailureRef.current) {
+      onBindSettled?.();
+      return;
+    }
+    const tokenRead = readAuthToken();
+    if (!tokenRead.token) {
+      onBindSettled?.();
+      interruptSocketSession(
+        tokenRead.storageAvailable
+          ? 'session_token_missing'
+          : 'session_storage_unavailable'
+      );
+      return;
+    }
     const bindAttempt = ++socketBindAttemptRef.current;
     emitSocketBind({
       payload: {
         userId: bindingUserId,
         username: usernameRef.current,
         profilePicUrl: profilePicUrlRef.current,
-        token: getStoredItem('token'),
+        token: tokenRead.token,
         deviceId: getTwinkleDeviceId()
       },
       onAcknowledged(result) {
         if (
           bindAttempt !== socketBindAttemptRef.current ||
           bindingUserId !== userIdRef.current ||
+          tokenRead.token !== readAuthToken().token ||
           !socket.connected
         ) {
           onBindSettled?.();
@@ -1771,7 +1863,7 @@ export default function useInitSocket({
         }
         if (result?.authError) {
           onBindSettled?.();
-          window.location.reload();
+          interruptSocketSession('session_token_invalid');
           return;
         }
         const wasAwaitingBootstrapBind =
@@ -1804,7 +1896,12 @@ export default function useInitSocket({
       },
       onFailure(error) {
         onBindSettled?.();
-        if (bindAttempt !== socketBindAttemptRef.current) return;
+        if (
+          bindAttempt !== socketBindAttemptRef.current ||
+          tokenRead.token !== readAuthToken().token
+        ) {
+          return;
+        }
         handleSocketBindFailure({ bindingUserId, error });
       }
     });
@@ -1846,7 +1943,12 @@ export default function useInitSocket({
     bindingUserId: number;
     error: Error;
   }) {
-    if (bindingUserId !== userIdRef.current) return;
+    if (
+      terminalSocketAuthFailureRef.current ||
+      bindingUserId !== userIdRef.current
+    ) {
+      return;
+    }
     clearSocketAuthReady();
     markSocketTransportGap(true);
     recordChatBootstrapEvent('socket-bind-failed', {
@@ -1861,7 +1963,13 @@ export default function useInitSocket({
     if (socket.connected) socket.disconnect();
     socketBindRetryTimerRef.current = window.setTimeout(() => {
       socketBindRetryTimerRef.current = null;
-      if (bindingUserId !== userIdRef.current || socket.connected) return;
+      if (
+        terminalSocketAuthFailureRef.current ||
+        bindingUserId !== userIdRef.current ||
+        socket.connected
+      ) {
+        return;
+      }
       try {
         socket.connect();
       } catch {}

@@ -48,6 +48,9 @@ export default function useAPISocket({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const sessionInterruption = useAppContext(
+    (v) => v.user.state.sessionInterruption
+  );
 
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
@@ -117,6 +120,11 @@ export default function useAPISocket({
 
     if (!userIdChanged) return;
 
+    if (sessionInterruption) {
+      if (socket.connected) socket.disconnect();
+      return;
+    }
+
     if (socket.connected) {
       socket.disconnect();
       socket.connect();
@@ -126,7 +134,7 @@ export default function useAPISocket({
     if (!socket.active) {
       socket.connect();
     }
-  }, [userId]);
+  }, [sessionInterruption, userId]);
 
   useEffect(() => {
     if (userId && profilePicUrl !== prevProfilePicUrl.current) {

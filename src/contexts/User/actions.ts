@@ -5,6 +5,7 @@ import {
 } from '~/constants/defaultValues';
 import { removeStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import { clearAnalyticsUser } from '~/helpers/analytics';
+import type { SessionInterruption } from '~/helpers/sessionInterruption';
 
 export default function UserActions(dispatch: Dispatch) {
   return {
@@ -75,6 +76,13 @@ export default function UserActions(dispatch: Dispatch) {
       clearAnalyticsUser();
       return dispatch({
         type: 'LOGOUT'
+      });
+    },
+    onInterruptSession(interruption: SessionInterruption) {
+      clearAnalyticsUser();
+      return dispatch({
+        type: 'SESSION_INTERRUPTED',
+        interruption
       });
     },
     onOpenSigninModal() {

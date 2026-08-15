@@ -1,5 +1,14 @@
 import { noteNavAuthTokenChange } from './navTabOrder';
 
+let inMemoryAuthToken = '';
+let authTokenRemovalPending = false;
+
+export interface AuthTokenRead {
+  storageAvailable: boolean;
+  token: string;
+  usedMemoryFallback: boolean;
+}
+
 export function checkMultiMissionPassStatus({
   mission,
   myAttempts
@@ -45,6 +54,9 @@ export function getLocalStorage() {
 }
 
 export function getStoredItem(key: string, defaultValue = ''): string {
+  if (key === 'token') {
+    return readAuthToken().token || defaultValue;
+  }
   const storage = getLocalStorage();
   if (!storage) {
     return defaultValue;
@@ -59,6 +71,72 @@ export function getStoredItem(key: string, defaultValue = ''): string {
   return item || defaultValue;
 }
 
+export function readAuthToken(): AuthTokenRead {
+  const storage = getLocalStorage();
+  if (!storage) {
+    return {
+      storageAvailable: false,
+      token: authTokenRemovalPending ? '' : inMemoryAuthToken,
+      usedMemoryFallback:
+        !authTokenRemovalPending && !!inMemoryAuthToken
+    };
+  }
+
+  try {
+    if (authTokenRemovalPending) {
+      storage.removeItem('token');
+      if (!storage.getItem('token')) {
+        authTokenRemovalPending = false;
+      }
+      return {
+        storageAvailable: true,
+        token: '',
+        usedMemoryFallback: false
+      };
+    }
+
+    const storedToken = storage.getItem('token') || '';
+    if (storedToken) {
+      inMemoryAuthToken = storedToken;
+      return {
+        storageAvailable: true,
+        token: storedToken,
+        usedMemoryFallback: false
+      };
+    }
+
+    if (inMemoryAuthToken) {
+      // Mobile Safari can transiently lose access to a localStorage entry
+      // while the page itself is still alive. The token was established by a
+      // confirmed login/session read earlier in this page lifetime, so retain
+      // it and repair the durable copy instead of turning a storage glitch
+      // into a destructive logout.
+      try {
+        storage.setItem('token', inMemoryAuthToken);
+      } catch {
+        // The in-memory session still keeps this page authenticated.
+      }
+      return {
+        storageAvailable: true,
+        token: inMemoryAuthToken,
+        usedMemoryFallback: true
+      };
+    }
+
+    return {
+      storageAvailable: true,
+      token: '',
+      usedMemoryFallback: false
+    };
+  } catch {
+    return {
+      storageAvailable: false,
+      token: inMemoryAuthToken,
+      usedMemoryFallback: !!inMemoryAuthToken
+    };
+  }
+}
+
 export function setStoredItem(
   key: string,
   value: string,
@@ -70,8 +148,15 @@ export function setStoredItem(
   }
 
   try {
-    const previousValue = key === 'token' ? storage.getItem(key) || '' : '';
+    const previousValue =
+      key === 'token'
+        ? storage.getItem(key) || inMemoryAuthToken || ''
+        : '';
     storage.setItem(key, value);
+    if (key === 'token') {
+      inMemoryAuthToken = value;
+      authTokenRemovalPending = false;
+    }
     if (key === 'token' && previousValue !== value) {
       noteNavAuthTokenChange({
         previousToken: previousValue,
@@ -90,20 +175,36 @@ export function persistAuthToken(
   options: { preserveNavSession?: boolean } = {}
 ) {
   if (typeof token !== 'string' || !token) return false;
-  return (
-    setStoredItem('token', token, options) && getStoredItem('token') === token
-  );
+  if (!setStoredItem('token', token, options)) return false;
+  const storage = getLocalStorage();
+  if (!storage) return false;
+  try {
+    return storage.getItem('token') === token;
+  } catch {
+    return false;
+  }
 }
 
 export function removeStoredItem(key: string) {
   const storage = getLocalStorage();
+  const previousMemoryToken = key === 'token' ? inMemoryAuthToken : '';
+  if (key === 'token') {
+    inMemoryAuthToken = '';
+    authTokenRemovalPending = true;
+  }
   if (!storage) {
     return false;
   }
 
   try {
-    const previousValue = key === 'token' ? storage.getItem(key) || '' : '';
+    const previousValue =
+      key === 'token'
+        ? storage.getItem(key) || previousMemoryToken || ''
+        : '';
     storage.removeItem(key);
+    if (key === 'token' && !storage.getItem(key)) {
+      authTokenRemovalPending = false;
+    }
     if (key === 'token' && previousValue) {
       noteNavAuthTokenChange({
         previousToken: previousValue,
@@ -114,6 +215,22 @@ export function removeStoredItem(key: string) {
   } catch {
     return false;
   }
+}
+
+export function resetAuthTokenMemoryForTests() {
+  inMemoryAuthToken = '';
+  authTokenRemovalPending = false;
+}
+
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== 'token') return;
+    // A real same-origin change in another tab is authoritative. Explicit
+    // logout clears the shadow token; login/account switching adopts the new
+    // token so a later route read cannot restore stale credentials.
+    inMemoryAuthToken = event.newValue || '';
+    authTokenRemovalPending = false;
+  });
 }
 
 let sessionTwinkleDeviceId = '';

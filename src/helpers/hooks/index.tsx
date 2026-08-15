@@ -323,6 +323,9 @@ export function useMyState() {
   );
 
   const loaded = useAppContext((v) => v.user.state.loaded);
+  const sessionInterruption = useAppContext(
+    (v) => v.user.state.sessionInterruption
+  );
   const signinModalShown = useAppContext((v) => v.user.state.signinModalShown);
 
   const getStoredItems = (config: { [key: string]: any }) => {
@@ -366,6 +369,7 @@ export function useMyState() {
             ...missions
           },
           isAdmin: myStateFromUserObj.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
+          sessionInterruption,
           loggedIn: true
         }
       : {
@@ -376,7 +380,13 @@ export function useMyState() {
           signinModalShown,
           isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           ...storedItems,
-          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME
+          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME,
+          // Cached display data may remain available after an interrupted
+          // session, but it must never make request/socket consumers act as an
+          // authenticated user until a new canonical session is established.
+          userId: sessionInterruption ? null : storedItems.userId,
+          loggedIn: false,
+          sessionInterruption
         };
   }, [
     buildQuickAccessMode,
@@ -389,6 +399,7 @@ export function useMyState() {
     myStateFromUserObj,
     notifications,
     searchFilter,
+    sessionInterruption,
     signinModalShown,
     storedItems,
     userId,

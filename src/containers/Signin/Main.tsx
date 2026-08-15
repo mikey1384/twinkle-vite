@@ -21,6 +21,9 @@ export default function Main({
 }) {
   const onSignup = useAppContext((v) => v.user.actions.onSignup);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const sessionInterruption = useAppContext(
+    (v) => v.user.state.sessionInterruption
+  );
   const createDevAccount = useAppContext(
     (v) => v.requestHelpers.createDevAccount
   );
@@ -29,7 +32,10 @@ export default function Main({
 
   return (
     <ErrorBoundary componentPath="Signin/Main">
-      <header>{welcomeLabel}</header>
+      <header>{sessionInterruption?.title || welcomeLabel}</header>
+      {sessionInterruption ? (
+        <Banner>{sessionInterruption.message}</Banner>
+      ) : null}
       {devAccountError ? <Banner>{devAccountError}</Banner> : null}
       <main
         style={{
@@ -48,7 +54,7 @@ export default function Main({
           style={{ display: 'block', fontSize: '2.7rem', padding: '1rem' }}
           onClick={onShowLoginForm}
         >
-          {yesIHaveAnAccountLabel}
+          {sessionInterruption ? 'Sign in again' : yesIHaveAnAccountLabel}
         </Button>
         <Button
           color="pink"

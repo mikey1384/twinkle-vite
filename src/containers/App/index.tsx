@@ -51,7 +51,12 @@ import {
 import { getConfirmedAnalyticsUserId } from '~/helpers/analyticsIdentity';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
-import { setStoredItem } from '~/helpers/userDataHelpers';
+import {
+  getStoredItem,
+  readAuthToken,
+  setStoredItem
+} from '~/helpers/userDataHelpers';
+import { createSessionInterruption } from '~/helpers/sessionInterruption';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState } from '~/helpers/hooks';
 import {
@@ -250,7 +255,9 @@ export default function App() {
   const onSetChessOptionsTargetUser = useHomeContext(
     (v) => v.actions.onSetChessOptionsTargetUser
   );
-  const onLogout = useAppContext((v) => v.user.actions.onLogout);
+  const onInterruptSession = useAppContext(
+    (v) => v.user.actions.onInterruptSession
+  );
   const onSetSessionLoaded = useAppContext(
     (v) => v.user.actions.onSetSessionLoaded
   );
@@ -301,6 +308,7 @@ export default function App() {
     joinDate,
     level,
     profilePicUrl,
+    sessionInterruption,
     signinModalShown,
     twinkleCoins,
     twinkleXP,
@@ -721,7 +729,8 @@ export default function App() {
   }, [twinkleXP, twinkleCoins, userId]);
 
   useEffect(() => {
-    const token = auth()?.headers?.authorization;
+    const tokenRead = readAuthToken();
+    const token = tokenRead.token;
     const prevToken = authRef.current?.headers?.authorization;
 
     if (!achievementsObj || Object.keys(achievementsObj).length === 0) {
@@ -729,19 +738,32 @@ export default function App() {
     }
     if (!token) {
       authRef.current = null;
-      if (!signinModalShown) {
-        onLogout();
+      const hadAuthenticatedSession = Boolean(
+        userId || getStoredItem('userId')
+      );
+      if (
+        !signinModalShown &&
+        !sessionInterruption &&
+        hadAuthenticatedSession
+      ) {
+        onInterruptSession(
+          createSessionInterruption(
+            tokenRead.storageAvailable
+              ? 'session_token_missing'
+              : 'session_storage_unavailable'
+          )
+        );
         socket.emit('ai_end_ai_voice_conversation');
         onResetChat(userId);
-        onSetSessionLoaded();
       }
+      onSetSessionLoaded();
     } else {
       if (token === prevToken) {
         onSetSessionLoaded();
       } else {
         handleInit();
       }
-      authRef.current = auth();
+      authRef.current = { headers: { authorization: token } };
     }
     async function initAchievements() {
       const data = await loadAllAchievements();
@@ -1568,6 +1590,10 @@ export default function App() {
       await recordUserTraffic(location.pathname);
     } catch (error: any) {
       if (sessionChanged()) return;
+      // The global request boundary has already moved a canonically rejected
+      // session into the sign-in interruption state. Retaining the credential
+      // for diagnosis/recovery must not turn the old token into a retry loop.
+      if (error?.status === 401) return;
       if (attempts < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         if (sessionChanged()) return;
