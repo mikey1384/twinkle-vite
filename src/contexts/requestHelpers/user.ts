@@ -425,7 +425,19 @@ export default function userRequestHelpers({
     },
     async loadMyData() {
       try {
-        const { data } = await request.get(`${URL}/user/session`, auth());
+        const { data } = await request.get(`${URL}/user/session`, {
+          ...auth(),
+          meta: {
+            collapseKey: null,
+            // The App session pipeline owns its bounded retry chain. Letting
+            // the shared GET scheduler retry each one of those attempts would
+            // multiply a lost-route recovery into as many as sixteen HTTP
+            // attempts, keeping a mobile radio hot while providing no extra
+            // canonical evidence.
+            maxRetries: 0,
+            totalTimeoutMs: 15_000
+          }
+        });
         return data;
       } catch (error) {
         return handleError(error);

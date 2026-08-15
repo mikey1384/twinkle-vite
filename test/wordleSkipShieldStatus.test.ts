@@ -33,6 +33,10 @@ test('Wordle shows canonical today-only skip protection before close', () => {
   assert.match(wordleModal, /window\.addEventListener\('focus'/);
   assert.match(wordleModal, /skipShieldChecklist=\{skipShieldChecklist\}/);
   assert.match(wordleModal, /shouldBlockWordleClose\(status\)/);
+  assert.match(
+    wordleModal,
+    /requestSequence !== skipShieldStatusRequestSequenceRef\.current[\s\S]*?return null;/
+  );
   assert.match(statusRail, /isSkipShieldReady\(skipShieldChecklist\)/);
   assert.match(
     statusRail,
@@ -66,12 +70,21 @@ test('Wordle shows canonical today-only skip protection before close', () => {
   );
   assert.match(
     wordleModal,
+    /clamp\(18rem, calc\(100dvh - 16rem\), 55rem\)/
+  );
+  assert.match(
+    wordleModal,
     /catch \(error\)[\s\S]*?setWordleSnapshotStatus\('error'\)/
   );
   assert.equal(
     (game.match(/await updateWordleAttempt\(/g) || []).length,
     1,
     'every accepted guess crosses exactly one canonical mutation boundary'
+  );
+  assert.doesNotMatch(
+    game,
+    /socketConnected/,
+    'canonical HTTP Wordle guesses must not depend on socket connectivity'
   );
   assert.doesNotMatch(game, /checkIfDuplicateWordleAttempt/);
   assert.match(game, /expectedSolution: solution/);

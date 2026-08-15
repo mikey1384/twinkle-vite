@@ -28,8 +28,10 @@ import {
 } from '~/helpers/aiEnergy';
 import { mergeAiUsagePolicyWithCurrent } from '~/helpers/aiUsagePolicy';
 import {
+  createAIImageRequestFingerprint,
+  pollCanonicalAIImageStatus,
   resolveAIImageStatusImageUrl,
-  shouldRecoverAIImageFromSocket
+  shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
@@ -46,6 +48,17 @@ interface ImageGeneratorProps {
 
 type AiImageEngine = 'gemini' | 'openai';
 type AiImageQuality = 'low' | 'medium' | 'high';
+
+interface AiImageGenerationRequest {
+  prompt: string;
+  previousResponseId?: string;
+  previousImageId?: string;
+  referenceImageB64?: string;
+  engine: AiImageEngine;
+  quality?: AiImageQuality;
+  requestId: string;
+  requestFingerprint?: string;
+}
 
 interface AiUsagePolicy {
   dayIndex?: number;
@@ -109,6 +122,12 @@ export default function ImageGenerator({
   const activeImageRequestServerProgressRef = useRef(false);
   const activeImageRequestTransportFailedRef = useRef(false);
   const activeImageRecoveryInFlightRef = useRef(false);
+  const activeImageRequestPayloadRef = useRef<AiImageGenerationRequest | null>(
+    null
+  );
+  const completionRecoveryTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const activeImageRequestKindRef = useRef<'initial' | 'follow-up' | null>(
     null
   );
@@ -175,6 +194,9 @@ export default function ImageGenerator({
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
+  );
+  const loadAIImageGenerationStatus = useAppContext(
+    (v) => v.requestHelpers.loadAIImageGenerationStatus
   );
   const loadAIImageResult = useAppContext(
     (v) => v.requestHelpers.loadAIImageResult
@@ -297,8 +319,29 @@ export default function ImageGenerator({
         } else if (status.stage === 'completed') {
           if (!status.imageUrl && status.recovery) {
             pendingImageCompletionStatusRef.current = status;
-            if (!activeImageRequestTransportFailedRef.current) {
+            const activeRequest = activeImageRequestPayloadRef.current;
+            if (activeRequest) {
               setProgressStage('downloading');
+              if (activeImageRequestTransportFailedRef.current) {
+                await recoverCanonicalImageGeneration(activeRequest);
+              } else if (!completionRecoveryTimerRef.current) {
+                // The HTTP response normally follows this canonical terminal
+                // event immediately and carries the image bytes itself. Give it
+                // a short head start so ordinary requests do not download the
+                // same image twice, but do not let a stalled mobile HTTP stream
+                // strand a completed generation indefinitely.
+                completionRecoveryTimerRef.current = setTimeout(() => {
+                  completionRecoveryTimerRef.current = null;
+                  if (
+                    cancelled ||
+                    shouldIgnoreImageGenerationStatus(status.requestId) ||
+                    activeImageRequestPayloadRef.current !== activeRequest
+                  ) {
+                    return;
+                  }
+                  void recoverCanonicalImageGeneration(activeRequest);
+                }, 1_000);
+              }
               return;
             }
             if (activeImageRecoveryInFlightRef.current) return;
@@ -390,6 +433,10 @@ export default function ImageGenerator({
 
     return () => {
       cancelled = true;
+      if (completionRecoveryTimerRef.current) {
+        clearTimeout(completionRecoveryTimerRef.current);
+        completionRecoveryTimerRef.current = null;
+      }
       socket.off(
         'image_generation_status_received',
         handleImageGenerationStatus
@@ -769,12 +816,17 @@ export default function ImageGenerator({
   }
 
   function startImageRequest(kind: 'initial' | 'follow-up') {
+    if (completionRecoveryTimerRef.current) {
+      clearTimeout(completionRecoveryTimerRef.current);
+      completionRecoveryTimerRef.current = null;
+    }
     const requestId = createImageRequestId(kind);
     activeImageRequestIdRef.current = requestId;
     activeImageRequestServerProgressRef.current = false;
     activeImageRequestTransportFailedRef.current = false;
     activeImageRecoveryInFlightRef.current = false;
     activeImageRequestKindRef.current = kind;
+    activeImageRequestPayloadRef.current = null;
     pendingImageCompletionStatusRef.current = null;
     return requestId;
   }
@@ -790,12 +842,62 @@ export default function ImageGenerator({
       activeImageRequestTransportFailedRef.current = false;
       activeImageRecoveryInFlightRef.current = false;
       activeImageRequestKindRef.current = null;
+      activeImageRequestPayloadRef.current = null;
       pendingImageCompletionStatusRef.current = null;
+      if (completionRecoveryTimerRef.current) {
+        clearTimeout(completionRecoveryTimerRef.current);
+        completionRecoveryTimerRef.current = null;
+      }
     }
   }
 
   function imageRequestIsActive(requestId: string) {
     return activeImageRequestIdRef.current === requestId;
+  }
+
+  async function recoverCanonicalImageGeneration(
+    imageRequest: AiImageGenerationRequest
+  ) {
+    if (!imageRequestIsActive(imageRequest.requestId)) return;
+    if (activeImageRecoveryInFlightRef.current) return;
+    if (completionRecoveryTimerRef.current) {
+      clearTimeout(completionRecoveryTimerRef.current);
+      completionRecoveryTimerRef.current = null;
+    }
+    activeImageRecoveryInFlightRef.current = true;
+    try {
+      const requestFingerprint =
+        await createAIImageRequestFingerprint(imageRequest);
+      const statusRequest = requestFingerprint
+        ? { ...imageRequest, requestFingerprint }
+        : imageRequest;
+      const canonicalResult = await pollCanonicalAIImageStatus({
+        loadStatus: () => loadAIImageGenerationStatus(statusRequest),
+        isActive: () => imageRequestIsActive(imageRequest.requestId),
+        transientInitialStatuses: ['not_found'],
+        transientInitialStatusTimeoutMs: 10_000
+      });
+      if (!canonicalResult || !imageRequestIsActive(imageRequest.requestId)) {
+        return;
+      }
+      await imageGenerationStatusHandlerRef.current(
+        canonicalResult.success === true && canonicalResult.imageUrl
+          ? {
+              ...canonicalResult,
+              requestId: imageRequest.requestId,
+              stage: 'completed'
+            }
+          : {
+              requestId: imageRequest.requestId,
+              stage: 'error',
+              error:
+                canonicalResult.error ||
+                'Unable to recover the completed image.'
+            }
+      );
+    } finally {
+      activeImageRecoveryInFlightRef.current = false;
+    }
   }
 
   function shouldIgnoreImageGenerationStatus(requestId?: string) {
@@ -879,6 +981,7 @@ export default function ImageGenerator({
     setGeneratedImageId(null);
     setIsFollowUpGenerating(false);
     const requestId = startImageRequest('initial');
+    let imageRequest: AiImageGenerationRequest | null = null;
 
     try {
       let referenceB64: string | undefined;
@@ -888,13 +991,15 @@ export default function ImageGenerator({
         referenceB64 = drawingCanvasUrl.split(',')[1];
       }
 
-      const result = await generateAIImage({
+      imageRequest = {
         prompt: buildGenerationPrompt(prompt.trim()),
         referenceImageB64: referenceB64,
         engine,
         quality: engine === 'openai' ? quality : undefined,
         requestId
-      });
+      };
+      activeImageRequestPayloadRef.current = imageRequest;
+      const result = await generateAIImage(imageRequest);
 
       // An older server can still deliver its inline terminal socket event
       // before this HTTP call settles. That terminal event owns the UI; a late
@@ -920,7 +1025,7 @@ export default function ImageGenerator({
       }
 
       if (!result.success) {
-        const shouldAwaitSocket = shouldRecoverAIImageFromSocket({
+        const shouldAwaitSocket = shouldRecoverAIImageUnknownOutcome({
           reachedServer: result.reachedServer,
           hasServerProgress: activeImageRequestServerProgressRef.current,
           hasPendingCompletion: !!pendingImageCompletionStatusRef.current
@@ -928,11 +1033,7 @@ export default function ImageGenerator({
 
         if (shouldAwaitSocket) {
           activeImageRequestTransportFailedRef.current = true;
-          if (pendingImageCompletionStatusRef.current) {
-            await imageGenerationStatusHandlerRef.current(
-              pendingImageCompletionStatusRef.current
-            );
-          }
+          await recoverCanonicalImageGeneration(imageRequest);
         } else {
           const rawError = result.error || 'Failed to generate image';
           const errorMessage = safeErrorToString(rawError);
@@ -942,13 +1043,13 @@ export default function ImageGenerator({
           clearActiveImageRequest(requestId);
           onError?.(errorMessage);
         }
-        // A transport failure after confirmed server progress can still finish
-        // through the authenticated socket recovery path.
+        // A response-less transport failure can still finish through the
+        // canonical status path; volatile socket frames continue meanwhile.
       }
     } catch (err) {
       if (!imageRequestIsActive(requestId)) return;
       console.error('Image generation error:', err);
-      const shouldAwaitSocket = shouldRecoverAIImageFromSocket({
+      const shouldAwaitSocket = shouldRecoverAIImageUnknownOutcome({
         reachedServer: false,
         hasServerProgress: activeImageRequestServerProgressRef.current,
         hasPendingCompletion: !!pendingImageCompletionStatusRef.current
@@ -956,11 +1057,7 @@ export default function ImageGenerator({
 
       if (shouldAwaitSocket) {
         activeImageRequestTransportFailedRef.current = true;
-        if (pendingImageCompletionStatusRef.current) {
-          await imageGenerationStatusHandlerRef.current(
-            pendingImageCompletionStatusRef.current
-          );
-        }
+        if (imageRequest) await recoverCanonicalImageGeneration(imageRequest);
       } else {
         const errorMessage =
           'Network error: Unable to connect to image generation service';
@@ -970,7 +1067,7 @@ export default function ImageGenerator({
         clearActiveImageRequest(requestId);
         onError?.(errorMessage);
       }
-      // Confirmed server progress leaves the socket as the terminal path.
+      // Unknown transport outcomes reconcile through canonical status.
     }
   }
 
@@ -1005,6 +1102,7 @@ export default function ImageGenerator({
     setPartialImageData(null);
     setProgressStage('prompt_ready');
     const requestId = startImageRequest('follow-up');
+    let imageRequest: AiImageGenerationRequest | null = null;
 
     try {
       let referenceB64: string | undefined;
@@ -1012,7 +1110,7 @@ export default function ImageGenerator({
         referenceB64 = generatedImageUrl.split(',')[1];
       }
 
-      const result = await generateAIImage({
+      imageRequest = {
         prompt: buildGenerationPrompt(followUpPrompt.trim()),
         previousResponseId: generatedResponseId, // Marks this as an edit of the prior turn
         previousImageId: generatedImageId ?? undefined, // Provider file handle, when we have one
@@ -1020,7 +1118,9 @@ export default function ImageGenerator({
         engine: followUpEngine,
         quality: followUpEngine === 'openai' ? followUpQuality : undefined,
         requestId
-      });
+      };
+      activeImageRequestPayloadRef.current = imageRequest;
+      const result = await generateAIImage(imageRequest);
 
       if (!imageRequestIsActive(requestId)) return;
 
@@ -1044,7 +1144,7 @@ export default function ImageGenerator({
       }
 
       if (!result.success) {
-        const shouldAwaitSocket = shouldRecoverAIImageFromSocket({
+        const shouldAwaitSocket = shouldRecoverAIImageUnknownOutcome({
           reachedServer: result.reachedServer,
           hasServerProgress: activeImageRequestServerProgressRef.current,
           hasPendingCompletion: !!pendingImageCompletionStatusRef.current
@@ -1052,11 +1152,7 @@ export default function ImageGenerator({
 
         if (shouldAwaitSocket) {
           activeImageRequestTransportFailedRef.current = true;
-          if (pendingImageCompletionStatusRef.current) {
-            await imageGenerationStatusHandlerRef.current(
-              pendingImageCompletionStatusRef.current
-            );
-          }
+          await recoverCanonicalImageGeneration(imageRequest);
         } else {
           const rawError = result.error || 'Failed to generate follow-up image';
           const errorMessage = safeErrorToString(rawError);
@@ -1071,7 +1167,7 @@ export default function ImageGenerator({
     } catch (err) {
       if (!imageRequestIsActive(requestId)) return;
       console.error('Follow-up image generation error:', err);
-      const shouldAwaitSocket = shouldRecoverAIImageFromSocket({
+      const shouldAwaitSocket = shouldRecoverAIImageUnknownOutcome({
         reachedServer: false,
         hasServerProgress: activeImageRequestServerProgressRef.current,
         hasPendingCompletion: !!pendingImageCompletionStatusRef.current
@@ -1079,11 +1175,7 @@ export default function ImageGenerator({
 
       if (shouldAwaitSocket) {
         activeImageRequestTransportFailedRef.current = true;
-        if (pendingImageCompletionStatusRef.current) {
-          await imageGenerationStatusHandlerRef.current(
-            pendingImageCompletionStatusRef.current
-          );
-        }
+        if (imageRequest) await recoverCanonicalImageGeneration(imageRequest);
       } else {
         const errorMessage =
           'Network error: Unable to connect for follow-up generation';

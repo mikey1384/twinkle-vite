@@ -21,9 +21,10 @@ import {
 } from '~/helpers/chatBootstrapDebug';
 import { readAuthToken, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import {
-  createSessionInterruption,
-  type SessionInterruptionCode
-} from '~/helpers/sessionInterruption';
+  browserReportsOffline,
+  markBrowserNetworkOffline,
+  markBrowserNetworkReachable
+} from '~/helpers/browserNetwork';
 import {
   useAppContext,
   useExploreContext,
@@ -47,7 +48,10 @@ import {
   invalidateFeaturedSubjectsRequests,
   loadLatestCanonicalFeaturedSubjects
 } from '~/helpers/featuredSubjects';
-import { getServerDisconnectReconnectDelayMs } from '~/helpers/socketRecovery';
+import {
+  getServerDisconnectReconnectDelayMs,
+  getSocketBindRetryDelayMs
+} from '~/helpers/socketRecovery';
 import {
   getChatProjectionActivityRevision,
   markChatProjectionSocketEvent
@@ -56,8 +60,6 @@ import {
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
 }
-
-const SOCKET_BIND_RETRY_DELAY_MS = 1000;
 
 interface SocketBindPayload {
   userId: number;
@@ -92,10 +94,9 @@ function emitSocketBind({
           onFailure(error);
           return;
         }
-        if (result?.bindError) {
-          onFailure(new Error('Socket bind failed'));
-          return;
-        }
+        // A server acknowledgement can distinguish a missing/unusable bind
+        // payload from a transport timeout and from a canonically invalid
+        // credential. Preserve that distinction for the owning recovery path.
         onAcknowledged(result);
       }
     );
@@ -113,7 +114,7 @@ export default function useInitSocket({
   chatBusyRef: React.RefObject<boolean>;
   chatType: string;
   currentPathId: string | number;
-  onInit: () => void;
+  onInit: () => Promise<boolean>;
   selectedChannelId: number;
   subchannelPath: string | null;
   usingChatRef: React.RefObject<boolean>;
@@ -124,8 +125,8 @@ export default function useInitSocket({
   const sessionInterruption = useAppContext(
     (v) => v.user.state.sessionInterruption
   );
-  const onInterruptSession = useAppContext(
-    (v) => v.user.actions.onInterruptSession
+  const canonicalSessionUserId = useAppContext((v) =>
+    Number(v.user.state.myState.userId || 0)
   );
   const navigate = useNavigate();
 
@@ -233,7 +234,9 @@ export default function useInitSocket({
   const heartbeatTimerRef = useRef<number | null>(null);
   const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
   const socketBindRetryTimerRef = useRef<number | null>(null);
+  const socketBindRetryCountRef = useRef(0);
   const socketBindAttemptRef = useRef(0);
+  const socketAuthValidationInFlightRef = useRef(false);
   const terminalSocketAuthFailureRef = useRef(false);
   const wakeReconcileInFlightRef = useRef(false);
   const bootstrapAwaitingBindUserIdRef = useRef<number | null>(userId || null);
@@ -260,6 +263,7 @@ export default function useInitSocket({
     wakeReconcileInFlightRef.current = false;
     boundSocketIdRef.current = null;
     clearSocketBindRetryTimer();
+    socketBindRetryCountRef.current = 0;
     if (serverDisconnectReconnectTimerRef.current) {
       clearTimeout(serverDisconnectReconnectTimerRef.current);
       serverDisconnectReconnectTimerRef.current = null;
@@ -273,17 +277,11 @@ export default function useInitSocket({
       heartbeatTimerRef.current = null;
     }
     handleStopUserActionCapture();
-    if (socket.connected) {
-      socket.disconnect();
-    }
+    // This cancels Socket.IO's Manager-owned reconnect loop even while the
+    // socket is between connection attempts. Checking `connected` here leaves
+    // that background loop alive after a terminal auth decision.
+    socket.disconnect();
     onChangeSocketStatus(false);
-  }
-
-  function interruptSocketSession(code: SessionInterruptionCode) {
-    if (terminalSocketAuthFailureRef.current) return;
-    terminalSocketAuthFailureRef.current = true;
-    stopSocketAuthRecovery();
-    onInterruptSession(createSessionInterruption(code));
   }
 
   function handleMarkArrivalIfCold() {
@@ -433,8 +431,13 @@ export default function useInitSocket({
   const subFilterRef = useRef(subFilter);
   const numNewPostsRef = useRef(numNewPosts);
   const userIdRef = useRef(userId);
+  const canonicalSessionUserIdRef = useRef(canonicalSessionUserId);
   const usernameRef = useRef(username);
   const profilePicUrlRef = useRef(profilePicUrl);
+
+  useEffect(() => {
+    canonicalSessionUserIdRef.current = canonicalSessionUserId;
+  }, [canonicalSessionUserId]);
 
   useEffect(() => {
     if (sessionInterruption) {
@@ -446,7 +449,7 @@ export default function useInitSocket({
     if (!userId || !readAuthToken().token) return;
     const wasTerminal = terminalSocketAuthFailureRef.current;
     terminalSocketAuthFailureRef.current = false;
-    if (wasTerminal && !socket.connected) {
+    if (wasTerminal && !socket.connected && !browserReportsOffline()) {
       try {
         socket.connect();
       } catch {}
@@ -459,6 +462,9 @@ export default function useInitSocket({
     const previousUserId = userIdRef.current;
     userIdRef.current = userId;
     if (previousUserId === userId) return;
+
+    clearSocketBindRetryTimer();
+    socketBindRetryCountRef.current = 0;
 
     // A bootstrap belongs to the account that started it. Retire that attempt
     // before the autoload effect considers the replacement account; otherwise
@@ -645,6 +651,7 @@ export default function useInitSocket({
     wakeReconcileInFlightRef.current = false;
     boundSocketIdRef.current = null;
     clearSocketBindRetryTimer();
+    socketBindRetryCountRef.current = 0;
     if (loadChatRetryTimerRef.current) {
       clearTimeout(loadChatRetryTimerRef.current);
       loadChatRetryTimerRef.current = null;
@@ -655,6 +662,7 @@ export default function useInitSocket({
   useEffect(() => {
     function ensureSocketConnected() {
       if (terminalSocketAuthFailureRef.current) return;
+      if (browserReportsOffline()) return;
       // Socket.IO's transport ping/pong owns connection health. An
       // application-level acknowledgement can be delayed by tab throttling and
       // must not turn a confirmed connection into a synthetic disconnect.
@@ -734,14 +742,32 @@ export default function useInitSocket({
       }
     };
     const onOnline = () => {
+      markBrowserNetworkReachable();
       void checkFeedsOutdated();
       ensureSocketConnected();
       if (document.visibilityState === 'visible') {
         requestChatWakeBarrier('online');
       }
     };
+    const onOffline = () => {
+      markBrowserNetworkOffline();
+      if (terminalSocketAuthFailureRef.current) {
+        socket.disconnect();
+        return;
+      }
+      // Preserve the last confirmed chat/session projection, but stop all
+      // transport work until the browser reports connectivity again. The next
+      // online bind reads canonical writer state before reopening interactions.
+      // A connected socket owns this transition through `handleDisconnect`.
+      // A connecting socket has no disconnect event, so mark that gap here.
+      const wasConnected = socket.connected;
+      socket.disconnect();
+      if (!wasConnected) markSocketTransportGap(true);
+      onChangeSocketStatus(false);
+    };
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
     window.addEventListener('pageshow', onPageShow);
     window.addEventListener('pointerdown', onUserInteraction, {
       capture: true,
@@ -756,9 +782,13 @@ export default function useInitSocket({
       onClientRefreshRequired
     );
     document.addEventListener('visibilitychange', onVisibilityChange);
+    if (browserReportsOffline()) {
+      onOffline();
+    }
     return () => {
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
       window.removeEventListener('pageshow', onPageShow);
       window.removeEventListener('pointerdown', onUserInteraction, {
         capture: true
@@ -810,6 +840,7 @@ export default function useInitSocket({
       }
       socketBindAttemptRef.current += 1;
       clearSocketBindRetryTimer();
+      socketBindRetryCountRef.current = 0;
       handleLoadChatRef.current = null;
     };
 
@@ -936,6 +967,14 @@ export default function useInitSocket({
         serverDisconnectReconnectTimerRef.current = null;
       }
       clearSocketBindRetryTimer();
+      // A successful transport connection is stronger reachability evidence
+      // than Safari's navigator.onLine hint. If a cold session HTTP bootstrap
+      // previously failed, use this proof to retry canonical identity rather
+      // than leaving the saved session behind a permanent recovery screen.
+      markBrowserNetworkReachable();
+      if (readAuthToken().token && !canonicalSessionUserIdRef.current) {
+        onInit();
+      }
       emitAdminTelemetry({
         message: 'connected to socket'
       });
@@ -1015,6 +1054,13 @@ export default function useInitSocket({
         heartbeatTimerRef.current = window.setInterval(() => {
           if (userIdRef.current) socket.emit('user_heartbeat');
         }, 15000);
+      } else if (readAuthToken().token) {
+        // A cold offline launch can have a durable token without a cached user
+        // id. If Socket.IO later proves the network is reachable (including
+        // when Safari missed `online`), let the canonical HTTP session pipeline
+        // establish identity. Its in-flight gate deduplicates this against the
+        // app shell's normal initialization attempt.
+        onInit();
       }
     }
 
@@ -1625,11 +1671,19 @@ export default function useInitSocket({
       if (terminalSocketAuthFailureRef.current) return;
 
       if (reason === 'io server disconnect') {
+        // A socket auth rejection is not, by itself, an HTTP session verdict.
+        // Its canonical validation owns this disconnect until it settles.
+        if (socketAuthValidationInFlightRef.current) return;
+        // A failed authenticated bind owns its own exponential retry. Starting
+        // the generic server-disconnect timer as well creates two competing
+        // reconnect loops and was a major mobile heat multiplier.
+        if (socketBindRetryTimerRef.current) return;
         if (serverDisconnectReconnectTimerRef.current) {
           clearTimeout(serverDisconnectReconnectTimerRef.current);
         }
         serverDisconnectReconnectTimerRef.current = window.setTimeout(() => {
           serverDisconnectReconnectTimerRef.current = null;
+          if (browserReportsOffline()) return;
           try {
             socket.connect();
           } catch {}
@@ -1729,6 +1783,7 @@ export default function useInitSocket({
     let warned = false;
     const interval = window.setInterval(() => {
       if (terminalSocketAuthFailureRef.current) return;
+      if (browserReportsOffline()) return;
       if (!userIdRef.current) return;
       if (bootstrapAwaitingBindUserIdRef.current === userIdRef.current) {
         return;
@@ -1743,13 +1798,15 @@ export default function useInitSocket({
       // quit (not just the reload used to escape the hang).
       flushChatBootstrapHistory();
       if (!socket.connected) {
-        recordChatBootstrapEvent('chat-bootstrap-watchdog-reconnect', {
+        // Transport recovery has one bounded owner (Socket.IO plus the App
+        // session scheduler). Restarting it from this 15-second bootstrap
+        // watchdog defeated the Manager attempt ceiling and repeatedly woke a
+        // mobile radio while the route was unavailable. Wait for the transport
+        // owner; a successful bind will re-enter the bootstrap below.
+        recordChatBootstrapEvent('chat-bootstrap-watchdog-waiting-for-transport', {
           userId: userIdRef.current,
           selectedChannelId: selectedChannelIdRef.current
         });
-        try {
-          socket.connect();
-        } catch {}
         return;
       }
       // Let a healthy in-flight attempt finish. Only intervene once nothing is
@@ -1835,11 +1892,17 @@ export default function useInitSocket({
     const tokenRead = readAuthToken();
     if (!tokenRead.token) {
       onBindSettled?.();
-      interruptSocketSession(
-        tokenRead.storageAvailable
-          ? 'session_token_missing'
-          : 'session_storage_unavailable'
-      );
+      // Socket binding is not an authentication authority, and an unreadable
+      // browser credential is not proof that the saved session is invalid.
+      // Stop this unauthenticated transport quietly; App's bounded storage/
+      // network recovery will reconnect it as soon as the exact token is
+      // readable again. This also avoids a credential-less reconnect loop.
+      clearSocketAuthReady();
+      markSocketTransportGap(true);
+      // `disconnect()` also cancels an in-progress Manager reconnect. Guarding
+      // it with `connected` leaves a credential-less handshake loop alive in
+      // the exact Safari storage/network race this branch is meant to contain.
+      socket.disconnect();
       return;
     }
     const bindAttempt = ++socketBindAttemptRef.current;
@@ -1863,7 +1926,44 @@ export default function useInitSocket({
         }
         if (result?.authError) {
           onBindSettled?.();
-          interruptSocketSession('session_token_invalid');
+          // Socket auth can fail during a rolling/runtime fault and historically
+          // also conflated a transient missing payload with an invalid account.
+          // Confirm the exact saved credential through the canonical HTTP
+          // session pipeline before showing any terminal interruption. A true
+          // 401 is handled there; a valid session reconnects this socket.
+          clearSocketAuthReady();
+          markSocketTransportGap(true);
+          socketAuthValidationInFlightRef.current = true;
+          socket.disconnect();
+          void onInit()
+            .then((sessionConfirmed) => {
+              if (
+                !sessionConfirmed ||
+                terminalSocketAuthFailureRef.current ||
+                bindingUserId !== userIdRef.current ||
+                tokenRead.token !== readAuthToken().token ||
+                browserReportsOffline()
+              ) {
+                return;
+              }
+              if (!socket.connected) socket.connect();
+            })
+            .finally(() => {
+              socketAuthValidationInFlightRef.current = false;
+            });
+          return;
+        }
+        if (result?.bindError) {
+          onBindSettled?.();
+          // The server did not receive a usable credential, but it did not
+          // reject the saved session. Treat this as a failed bind owned by the
+          // bounded exponential retry path; marking auth ready here would
+          // briefly publish an unauthenticated socket and then let the
+          // server-disconnect handler start a second reconnect loop.
+          handleSocketBindFailure({
+            bindingUserId,
+            error: new Error('Socket bind credential was unavailable')
+          });
           return;
         }
         const wasAwaitingBootstrapBind =
@@ -1872,6 +1972,7 @@ export default function useInitSocket({
           bootstrapAwaitingBindUserIdRef.current = null;
         }
         clearSocketBindRetryTimer();
+        socketBindRetryCountRef.current = 0;
         boundSocketIdRef.current = socket.id || null;
         dispatchSocketAuthReady(bindingUserId);
         socket.emit('enter_my_notification_channel', bindingUserId);
@@ -1960,20 +2061,35 @@ export default function useInitSocket({
       message: `Socket bind failed; retrying connection: ${error.message}`
     });
     if (socketBindRetryTimerRef.current) return;
-    if (socket.connected) socket.disconnect();
+    if (serverDisconnectReconnectTimerRef.current) {
+      clearTimeout(serverDisconnectReconnectTimerRef.current);
+      serverDisconnectReconnectTimerRef.current = null;
+    }
+    if (browserReportsOffline()) {
+      socket.disconnect();
+      return;
+    }
+    const retryDelay = getSocketBindRetryDelayMs(
+      socketBindRetryCountRef.current
+    );
+    socketBindRetryCountRef.current += 1;
     socketBindRetryTimerRef.current = window.setTimeout(() => {
       socketBindRetryTimerRef.current = null;
       if (
         terminalSocketAuthFailureRef.current ||
         bindingUserId !== userIdRef.current ||
-        socket.connected
+        socket.connected ||
+        browserReportsOffline()
       ) {
         return;
       }
       try {
         socket.connect();
       } catch {}
-    }, SOCKET_BIND_RETRY_DELAY_MS);
+    }, retryDelay);
+    // Install the retry owner before disconnecting so the synchronous
+    // disconnect event cannot also schedule the generic reconnect timer.
+    socket.disconnect();
   }
 
   function clearSocketBindRetryTimer() {

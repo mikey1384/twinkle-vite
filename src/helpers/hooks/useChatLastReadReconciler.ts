@@ -57,6 +57,29 @@ export default function useChatLastReadReconciler() {
     });
   }
 
+  async function reconcileChannelUnreadActivity({
+    channelId,
+    subchannelId = 0
+  }: {
+    channelId: number;
+    subchannelId?: number;
+  }) {
+    const requestUserId = Number(userIdRef.current || 0);
+    if (requestUserId <= 0 || !(channelId > 0)) return;
+    // A socket event proves activity, but neither its recipient-specific scope
+    // count nor the aggregate navigation badge. Read both projections from the
+    // writer without advancing lastRead; this is the off-screen counterpart to
+    // reconcileLastRead's visible-scope mutation.
+    markChatUnreadActivity();
+    try {
+      await applyFreshUnreadState({ requestUserId, channelId, subchannelId });
+    } catch (error) {
+      console.error('Failed to re-read chat unread activity:', error);
+    } finally {
+      await applyFreshGlobalUnreadCount(requestUserId);
+    }
+  }
+
   async function reconcileLastRead({
     request,
     channelId,
@@ -187,5 +210,9 @@ export default function useChatLastReadReconciler() {
     });
   }
 
-  return { reconcileChannelLastRead, reconcileSubchannelLastRead };
+  return {
+    reconcileChannelLastRead,
+    reconcileSubchannelLastRead,
+    reconcileChannelUnreadActivity
+  };
 }

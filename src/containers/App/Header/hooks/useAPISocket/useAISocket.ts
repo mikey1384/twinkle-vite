@@ -38,7 +38,8 @@ export default function useAISocket({
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
-  const { reconcileChannelLastRead } = useChatLastReadReconciler();
+  const { reconcileChannelLastRead, reconcileChannelUnreadActivity } =
+    useChatLastReadReconciler();
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const chatNotificationSettings = useChatContext(
@@ -493,20 +494,36 @@ export default function useAISocket({
       };
       const messageIsForActiveChannel =
         channelId === activeChatChannelIdRef.current;
+      const messageScopeIsActivelyVisible = Boolean(
+        messageIsForActiveChannel &&
+          currentPageVisible &&
+          usingChatRef.current
+      );
       const appliedMessage = {
         ...message,
         channelId,
         profilePicUrl:
           message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
       };
-      if (messageIsForActiveChannel) {
+      if (messageScopeIsActivelyVisible) {
         void reconcileChannelLastRead(channelId);
         onReceiveMessage({
           message: appliedMessage,
           pageVisible: currentPageVisible,
-          usingChat: true
+          usingChat: usingChatRef.current
+        });
+      } else if (messageIsForActiveChannel) {
+        // The selected channel remains mounted while Safari is hidden or the
+        // user is on another section. Do not mark that unseen AI reply read;
+        // hydrate its scoped and global unread projections from the writer.
+        void reconcileChannelUnreadActivity({ channelId });
+        onReceiveMessage({
+          message: appliedMessage,
+          pageVisible: currentPageVisible,
+          usingChat: usingChatRef.current
         });
       } else {
+        void reconcileChannelUnreadActivity({ channelId });
         const prevChannelObj = currentChannelsObj[channelId];
         const aiUsername = isZeroMessage ? 'Zero' : 'Ciel';
         const aiUserId = isZeroMessage ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
@@ -528,8 +545,7 @@ export default function useAISocket({
                 profilePicUrl: aiProfilePicUrl
               }
             ],
-            isHidden: false,
-            numUnreads: 1
+            isHidden: false
           }
         });
       }

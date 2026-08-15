@@ -465,7 +465,12 @@ export default function Main({
   }, [chatType, userId]);
 
   useEffect(() => {
-    if (!chatReadyForCurrentUser || !selectedChannelId) return;
+    // A mounted Chat route is not proof that its messages were seen. Mobile
+    // Safari keeps the route mounted while the tab/app is hidden, so only a
+    // visible scope may advance the canonical read watermark. Including
+    // visibility in this effect also makes returning to the same group perform
+    // the acknowledgement that a path/channel-only effect would skip.
+    if (!pageVisible || !chatReadyForCurrentUser || !selectedChannelId) return;
     const routedChannelId =
       currentPathId && !isNaN(Number(currentPathId))
         ? parseChannelPath(currentPathId)
@@ -489,6 +494,7 @@ export default function Main({
   }, [
     chatReadyForCurrentUser,
     currentPathId,
+    pageVisible,
     selectedChannelId,
     selectedSubchannelId,
     subchannelPath

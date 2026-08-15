@@ -295,7 +295,7 @@ export default function ChatActions(dispatch: Dispatch) {
       ownerUserId,
       pageVisible = false,
       usingChat = false,
-      shouldIncrementUnreads = false
+      shouldTrackUnreadActivity = false
     }: {
       update: CanonicalChatReactionUpdate;
       // The account that issued the request or owns the socket session. This
@@ -303,7 +303,7 @@ export default function ChatActions(dispatch: Dispatch) {
       ownerUserId: number;
       pageVisible?: boolean;
       usingChat?: boolean;
-      shouldIncrementUnreads?: boolean;
+      shouldTrackUnreadActivity?: boolean;
     }) {
       return dispatch({
         type: 'APPLY_CANONICAL_CHAT_REACTION',
@@ -311,7 +311,7 @@ export default function ChatActions(dispatch: Dispatch) {
         ownerUserId,
         pageVisible,
         usingChat,
-        shouldIncrementUnreads,
+        shouldTrackUnreadActivity,
         eventSequence: getNextConfirmedChatEventSequence()
       });
     },

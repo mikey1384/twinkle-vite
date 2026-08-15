@@ -200,9 +200,6 @@ export default function AccountMenu({
     onResetChat(userId);
     onResetSharedPrompts();
     onResetTodayStats();
-    setTimeout(() => {
-      socket.connect();
-    }, 500);
     void logoutRecord;
   }
 }

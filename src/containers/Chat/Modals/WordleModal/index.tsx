@@ -37,7 +37,7 @@ import {
 import { fetchCanonicalWordleState } from './wordleCanonicalState';
 
 const WORDLE_MODAL_BODY_MIN_HEIGHT =
-  'min(55rem, calc(100vh - 16rem))';
+  'clamp(18rem, calc(100dvh - 16rem), 55rem)';
 
 export default function WordleModal({
   channelId,
@@ -48,7 +48,6 @@ export default function WordleModal({
   wordLevel,
   wordleStats,
   onHide,
-  socketConnected,
   theme
 }: {
   attemptState: any;
@@ -59,7 +58,6 @@ export default function WordleModal({
   wordLevel: number;
   wordleStats: any;
   onHide: () => void;
-  socketConnected: boolean;
   theme: string;
 }) {
   const doneColor = useKeyContext((v) => v.theme.done.color);
@@ -118,9 +116,13 @@ export default function WordleModal({
     if (!status) return null;
     const normalizedStatus = normalizeSkipShieldStatus(status);
     if (!normalizedStatus) return null;
-    if (requestSequence === skipShieldStatusRequestSequenceRef.current) {
-      setSkipShieldChecklist(normalizedStatus.checklist);
+    // Focus/visibility and an explicit close can overlap. An older response is
+    // not authoritative once a newer writer read has started, and must not be
+    // allowed to drive the close gate even if it happens to arrive last.
+    if (requestSequence !== skipShieldStatusRequestSequenceRef.current) {
+      return null;
     }
+    setSkipShieldChecklist(normalizedStatus.checklist);
     return normalizedStatus;
     // Context request helpers have stable identities by contract.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -445,7 +447,6 @@ export default function WordleModal({
                   nextDayTimeStamp={nextDayTimeStamp}
                   solution={solution}
                   onSetOverviewModalShown={setOverviewModalShown}
-                  socketConnected={socketConnected}
                   submissionPending={wordleSubmissionPending}
                   skipShieldChecklist={skipShieldChecklist}
                   playAreaRef={playAreaRef}

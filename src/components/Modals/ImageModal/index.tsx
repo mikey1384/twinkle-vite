@@ -13,6 +13,8 @@ import {
 } from '~/helpers/stringHelpers';
 import { v1 as uuidv1 } from 'uuid';
 import type { UploadCompletionMeta } from '~/types';
+import { downloadImage } from '~/helpers/imageHelpers';
+import { Color } from '~/constants/css';
 
 export default function ImageModal({
   caption = '',
@@ -55,6 +57,8 @@ export default function ImageModal({
   const [editedCaption, setEditedCaption] = useState(caption || '');
   const [isEditing, setIsEditing] = useState(false);
   const [replacing, setReplacing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const captionExceedChatLimit = useMemo(
     () =>
@@ -90,11 +94,20 @@ export default function ImageModal({
           {downloadable && (
             <Button
               color="orange"
-              onClick={() => window.open(downloadSrc || src)}
+              loading={downloading}
+              onClick={handleDownload}
             >
               <Icon icon="download" />
               <span style={{ marginLeft: '0.5rem' }}>Download</span>
             </Button>
+          )}
+          {downloadError && (
+            <span
+              role="alert"
+              style={{ color: Color.rose(), fontWeight: 600 }}
+            >
+              {downloadError}
+            </span>
           )}
           {isReplaceable &&
             ['subject', 'comment'].includes(String(contentType)) &&
@@ -243,6 +256,19 @@ export default function ImageModal({
       )}
     </Modal>
   );
+
+  async function handleDownload() {
+    setDownloading(true);
+    setDownloadError('');
+    try {
+      await downloadImage(downloadSrc || src, fileName);
+    } catch (error) {
+      console.error('Failed to download image:', error);
+      setDownloadError('Download failed. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function handleReplace(event: React.ChangeEvent<HTMLInputElement>) {
     try {

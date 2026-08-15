@@ -34,8 +34,10 @@ import {
 } from '~/helpers/aiEnergy';
 import { mergeAiUsagePolicyWithCurrent } from '~/helpers/aiUsagePolicy';
 import {
+  createAIImageRequestFingerprint,
+  pollCanonicalAIImageStatus,
   resolveAIImageStatusImageUrl,
-  shouldRecoverAIImageFromSocket
+  shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
@@ -77,6 +79,15 @@ interface AiUsagePolicy {
   };
 }
 
+interface AiImageGenerationRequest {
+  prompt: string;
+  referenceImageB64: string;
+  engine: 'openai';
+  quality: 'high';
+  requestId: string;
+  requestFingerprint?: string;
+}
+
 export default function ImageEditModal({
   imageUrl,
   onClose,
@@ -97,6 +108,12 @@ export default function ImageEditModal({
   const activeImageRequestServerProgressRef = useRef(false);
   const activeImageRequestTransportFailedRef = useRef(false);
   const activeImageRecoveryInFlightRef = useRef(false);
+  const activeImageRequestPayloadRef = useRef<AiImageGenerationRequest | null>(
+    null
+  );
+  const completionRecoveryTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const pendingImageCompletionStatusRef = useRef<any>(null);
   const imageGenerationStatusHandlerRef = useRef<
     (status: any) => Promise<void>
@@ -123,6 +140,9 @@ export default function ImageEditModal({
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
+  );
+  const loadAIImageGenerationStatus = useAppContext(
+    (v) => v.requestHelpers.loadAIImageGenerationStatus
   );
   const loadAIImageResult = useAppContext(
     (v) => v.requestHelpers.loadAIImageResult
@@ -422,8 +442,24 @@ export default function ImageEditModal({
         } else if (status.stage === 'completed') {
           if (!status.imageUrl && status.recovery) {
             pendingImageCompletionStatusRef.current = status;
-            if (!activeImageRequestTransportFailedRef.current) {
+            const activeRequest = activeImageRequestPayloadRef.current;
+            if (activeRequest) {
               setProgressStage('downloading');
+              if (activeImageRequestTransportFailedRef.current) {
+                await recoverCanonicalImageGeneration(activeRequest);
+              } else if (!completionRecoveryTimerRef.current) {
+                completionRecoveryTimerRef.current = setTimeout(() => {
+                  completionRecoveryTimerRef.current = null;
+                  if (
+                    cancelled ||
+                    shouldIgnoreImageGenerationStatus(status.requestId) ||
+                    activeImageRequestPayloadRef.current !== activeRequest
+                  ) {
+                    return;
+                  }
+                  void recoverCanonicalImageGeneration(activeRequest);
+                }, 1_000);
+              }
               return;
             }
             if (activeImageRecoveryInFlightRef.current) return;
@@ -493,6 +529,10 @@ export default function ImageEditModal({
 
     return () => {
       cancelled = true;
+      if (completionRecoveryTimerRef.current) {
+        clearTimeout(completionRecoveryTimerRef.current);
+        completionRecoveryTimerRef.current = null;
+      }
       socket.off(
         'image_generation_status_received',
         handleImageGenerationStatus
@@ -892,11 +932,16 @@ export default function ImageEditModal({
   }
 
   function startImageRequest() {
+    if (completionRecoveryTimerRef.current) {
+      clearTimeout(completionRecoveryTimerRef.current);
+      completionRecoveryTimerRef.current = null;
+    }
     const requestId = createImageRequestId();
     activeImageRequestIdRef.current = requestId;
     activeImageRequestServerProgressRef.current = false;
     activeImageRequestTransportFailedRef.current = false;
     activeImageRecoveryInFlightRef.current = false;
+    activeImageRequestPayloadRef.current = null;
     pendingImageCompletionStatusRef.current = null;
     return requestId;
   }
@@ -911,12 +956,62 @@ export default function ImageEditModal({
       activeImageRequestServerProgressRef.current = false;
       activeImageRequestTransportFailedRef.current = false;
       activeImageRecoveryInFlightRef.current = false;
+      activeImageRequestPayloadRef.current = null;
       pendingImageCompletionStatusRef.current = null;
+      if (completionRecoveryTimerRef.current) {
+        clearTimeout(completionRecoveryTimerRef.current);
+        completionRecoveryTimerRef.current = null;
+      }
     }
   }
 
   function imageRequestIsActive(requestId: string) {
     return activeImageRequestIdRef.current === requestId;
+  }
+
+  async function recoverCanonicalImageGeneration(
+    imageRequest: AiImageGenerationRequest
+  ) {
+    if (!imageRequestIsActive(imageRequest.requestId)) return;
+    if (activeImageRecoveryInFlightRef.current) return;
+    if (completionRecoveryTimerRef.current) {
+      clearTimeout(completionRecoveryTimerRef.current);
+      completionRecoveryTimerRef.current = null;
+    }
+    activeImageRecoveryInFlightRef.current = true;
+    try {
+      const requestFingerprint =
+        await createAIImageRequestFingerprint(imageRequest);
+      const statusRequest = requestFingerprint
+        ? { ...imageRequest, requestFingerprint }
+        : imageRequest;
+      const canonicalResult = await pollCanonicalAIImageStatus({
+        loadStatus: () => loadAIImageGenerationStatus(statusRequest),
+        isActive: () => imageRequestIsActive(imageRequest.requestId),
+        transientInitialStatuses: ['not_found'],
+        transientInitialStatusTimeoutMs: 10_000
+      });
+      if (!canonicalResult || !imageRequestIsActive(imageRequest.requestId)) {
+        return;
+      }
+      await imageGenerationStatusHandlerRef.current(
+        canonicalResult.success === true && canonicalResult.imageUrl
+          ? {
+              ...canonicalResult,
+              requestId: imageRequest.requestId,
+              stage: 'completed'
+            }
+          : {
+              requestId: imageRequest.requestId,
+              stage: 'error',
+              error:
+                canonicalResult.error ||
+                'Unable to recover the completed image.'
+            }
+      );
+    } finally {
+      activeImageRecoveryInFlightRef.current = false;
+    }
   }
 
   function shouldIgnoreImageGenerationStatus(requestId?: string) {
@@ -1003,6 +1098,7 @@ export default function ImageEditModal({
     setProgressStage('prompt_ready');
     setPartialImageData(null);
     const requestId = startImageRequest();
+    let imageRequest: AiImageGenerationRequest | null = null;
 
     try {
       const canvas = canvasRef.current;
@@ -1013,13 +1109,15 @@ export default function ImageEditModal({
       const dataUrl = canvas.toDataURL('image/png');
       const referenceB64 = extractBase64FromDataUrl(dataUrl);
 
-      const result = await generateAIImage({
+      imageRequest = {
         prompt: prompt.trim(),
         referenceImageB64: referenceB64,
         engine: 'openai',
         quality: 'high',
         requestId
-      });
+      };
+      activeImageRequestPayloadRef.current = imageRequest;
+      const result = await generateAIImage(imageRequest);
 
       // An older server can still deliver its inline terminal socket event
       // before this HTTP call settles. That terminal event owns the UI; a late
@@ -1043,7 +1141,7 @@ export default function ImageEditModal({
       }
 
       if (!result.success) {
-        const shouldAwaitSocket = shouldRecoverAIImageFromSocket({
+        const shouldAwaitSocket = shouldRecoverAIImageUnknownOutcome({
           reachedServer: result.reachedServer,
           hasServerProgress: activeImageRequestServerProgressRef.current,
           hasPendingCompletion: !!pendingImageCompletionStatusRef.current
@@ -1051,11 +1149,7 @@ export default function ImageEditModal({
 
         if (shouldAwaitSocket) {
           activeImageRequestTransportFailedRef.current = true;
-          if (pendingImageCompletionStatusRef.current) {
-            await imageGenerationStatusHandlerRef.current(
-              pendingImageCompletionStatusRef.current
-            );
-          }
+          await recoverCanonicalImageGeneration(imageRequest);
         } else {
           const errorMessage = result.error || 'Failed to generate image';
           setError(errorMessage);
@@ -1065,13 +1159,13 @@ export default function ImageEditModal({
           setProgressStage('not_started');
           clearActiveImageRequest(requestId);
         }
-        // A transport failure after confirmed server progress can still finish
-        // through the authenticated socket recovery path.
+        // A response-less transport failure can still finish through the
+        // canonical status path; volatile socket frames continue meanwhile.
       }
     } catch (err) {
       if (!imageRequestIsActive(requestId)) return;
       console.error('Image generation error:', err);
-      const shouldAwaitSocket = shouldRecoverAIImageFromSocket({
+      const shouldAwaitSocket = shouldRecoverAIImageUnknownOutcome({
         reachedServer: false,
         hasServerProgress: activeImageRequestServerProgressRef.current,
         hasPendingCompletion: !!pendingImageCompletionStatusRef.current
@@ -1079,11 +1173,7 @@ export default function ImageEditModal({
 
       if (shouldAwaitSocket) {
         activeImageRequestTransportFailedRef.current = true;
-        if (pendingImageCompletionStatusRef.current) {
-          await imageGenerationStatusHandlerRef.current(
-            pendingImageCompletionStatusRef.current
-          );
-        }
+        if (imageRequest) await recoverCanonicalImageGeneration(imageRequest);
       } else {
         setError(
           'Network error: Unable to connect to image generation service'
@@ -1093,7 +1183,7 @@ export default function ImageEditModal({
         setProgressStage('not_started');
         clearActiveImageRequest(requestId);
       }
-      // Confirmed server progress leaves the socket as the terminal path.
+      // Unknown transport outcomes reconcile through canonical status.
     }
   }
 

@@ -124,6 +124,9 @@ export default function AICardModal({
   const generateAICardImage = useAppContext(
     (v) => v.requestHelpers.generateAICardImage
   );
+  const loadAICardImageStatus = useAppContext(
+    (v) => v.requestHelpers.loadAICardImageStatus
+  );
   const getOffersForCard = useAppContext(
     (v) => v.requestHelpers.getOffersForCard
   );
@@ -206,9 +209,6 @@ export default function AICardModal({
     return Number(card?.isLive) === 1;
   }, [card?.isLive]);
 
-  const showMenuTabs = useMemo(() => {
-    return !!card?.id && !card?.isBurned && cardIsLive;
-  }, [card?.id, card?.isBurned, cardIsLive]);
   const generatingImage = useMemo(() => {
     return (
       pendingImageRequestCardIds.has(cardId) ||
@@ -221,6 +221,9 @@ export default function AICardModal({
     card?.isImageGenerating,
     pendingImageRequestCardIds
   ]);
+  const showMenuTabs = useMemo(() => {
+    return !!card?.id && !card?.isBurned && cardIsLive && !generatingImage;
+  }, [card?.id, card?.isBurned, cardIsLive, generatingImage]);
   const progressStage: CardImageGenStatus['stage'] = useMemo(() => {
     if (card?.isImageGenerating) {
       return 'generating';
@@ -290,6 +293,13 @@ export default function AICardModal({
           cardId: card.id,
           newState: card
         });
+        if (
+          Number(card.ownerId) === Number(userId) &&
+          Number(card.isLive) === 1 &&
+          card.isImageGenerating
+        ) {
+          queueCanonicalImageStateReconciliation(card.id);
+        }
       } else {
         setCardNotFound(true);
       }
@@ -642,6 +652,7 @@ export default function AICardModal({
                         </>
                       )}
                       {cardIsLive &&
+                        !generatingImage &&
                         (card.isListed ? (
                           <ListedMenu
                             burnXP={burnXP}
@@ -926,13 +937,46 @@ export default function AICardModal({
     canonicalImageReconciliationInFlightCardIdsRef.current.add(requestedCardId);
     try {
       const result = await loadAICard(requestedCardId);
-      const canonicalCard = result?.card;
+      let canonicalCard = result?.card;
       if (
         normalizeAICardId(canonicalCard?.id) !== requestedCardId ||
         !isMountedRef.current ||
         Number(userIdRef.current || 0) !== requestedUserId
       ) {
         return;
+      }
+      let confirmedTerminalStage: 'completed' | 'error' | null = null;
+      if (canonicalCard.isImageGenerating) {
+        const imageStatus = await loadAICardImageStatus({
+          cardId: requestedCardId
+        });
+        if (
+          !isMountedRef.current ||
+          Number(userIdRef.current || 0) !== requestedUserId
+        ) {
+          return;
+        }
+        if (
+          normalizeAICardId(imageStatus?.card?.id) === requestedCardId
+        ) {
+          canonicalCard = {
+            ...canonicalCard,
+            ...imageStatus.card
+          };
+          confirmedTerminalStage =
+            imageStatus.status === 'completed'
+              ? 'completed'
+              : imageStatus.status === 'failed'
+                ? 'error'
+                : null;
+          if (
+            confirmedTerminalStage === 'error' &&
+            imageStatus.error &&
+            cardIdRef.current === requestedCardId
+          ) {
+            setImageGenerationError(imageStatus.error);
+          }
+        }
       }
       const canonicalImageState = getConfirmedAICardImageState(canonicalCard);
       if (typeof canonicalImageState.isImageGenerating !== 'boolean') {
@@ -950,10 +994,11 @@ export default function AICardModal({
         : getConfirmedAICardImageTerminalState({
             card: canonicalCard,
             stage:
-              typeof canonicalImageState.imagePath === 'string' &&
+              confirmedTerminalStage ||
+              (typeof canonicalImageState.imagePath === 'string' &&
               canonicalImageState.imagePath.trim()
                 ? 'completed'
-                : 'error'
+                : 'error')
           });
       if (!canonicalReconciliationState) return;
 
@@ -961,7 +1006,11 @@ export default function AICardModal({
         cardId: requestedCardId,
         newState: canonicalReconciliationState
       });
-      if (!canonicalGenerationStillRunning || socket.connected) {
+      // Keep a running generation queued even while the socket is currently
+      // connected. If Safari disconnects after this read and the terminal
+      // frame is missed, the next reconnect must re-read canonical status
+      // instead of leaving the modal on the persisted placeholder forever.
+      if (!canonicalGenerationStillRunning) {
         pendingCanonicalImageReconciliationCardIdsRef.current.delete(
           requestedCardId
         );

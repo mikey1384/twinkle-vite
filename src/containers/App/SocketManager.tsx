@@ -13,7 +13,11 @@ import { useChatContext, useKeyContext } from '~/contexts';
 // the socket was never identity-bound or marked auth-ready there and Build apps
 // hung on "Connecting to the shared world...". Mounting it at the App shell,
 // unconditionally, keeps socket auth/reconnect alive on every route.
-export default function SocketManager({ onInit }: { onInit: () => void }) {
+export default function SocketManager({
+  onInit
+}: {
+  onInit: () => Promise<boolean>;
+}) {
   const { pathname = '' } = useLocation();
 
   const userId = useKeyContext((v) => v.myState.userId);

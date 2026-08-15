@@ -7,6 +7,7 @@ import {
   emitPromptStudioCloneConfirmed,
   emitPromptStudioShareStateUpdated
 } from '~/constants/systemPrompt';
+import { pollCanonicalRequestStatus } from '~/helpers/aiImageStatus';
 
 export default function chatRequestHelpers({
   auth,
@@ -44,6 +45,45 @@ export default function chatRequestHelpers({
       });
     }
     return handleError(error);
+  }
+
+  async function loadCanonicalChatRequestStatus({
+    path,
+    payload,
+    fallbackError
+  }: {
+    path: string;
+    payload: Record<string, unknown>;
+    fallbackError: string;
+  }) {
+    try {
+      const { data } = await request.post(`${URL}${path}`, payload, auth());
+      return data;
+    } catch (statusError: any) {
+      const responseData = statusError?.response?.data;
+      let normalizedStatusError: any = null;
+      try {
+        await handleChatError(statusError);
+      } catch (handledStatusError) {
+        normalizedStatusError = handledStatusError;
+      }
+      return {
+        success: false,
+        generationStatus: responseData?.status || 'unknown',
+        error:
+          responseData?.error ||
+          normalizedStatusError?.message ||
+          fallbackError,
+        code: responseData?.code || normalizedStatusError?.code,
+        retryable:
+          responseData?.retryable === true ||
+          normalizedStatusError?.isTransportError === true,
+        retryAfterSeconds:
+          responseData?.retryAfterSeconds ||
+          normalizedStatusError?.retryAfterSeconds,
+        isTransportError: normalizedStatusError?.isTransportError === true
+      };
+    }
   }
 
   async function loadCanonicalChatChannelUnreadState({
@@ -878,9 +918,45 @@ export default function chatRequestHelpers({
           auth()
         );
         return data;
-      } catch (error) {
-        return handleChatError(error);
+      } catch (error: any) {
+        let normalizedError: any = null;
+        try {
+          await handleChatError(error);
+        } catch (handledError) {
+          normalizedError = handledError;
+        }
+        if (normalizedError?.isTransportError !== true) {
+          return Promise.reject(normalizedError || error);
+        }
+        const canonicalResult = await pollCanonicalRequestStatus({
+          loadStatus: () =>
+            loadCanonicalChatRequestStatus({
+              path: '/chat/aiCard/image/status',
+              payload: { cardId },
+              fallbackError: 'Unable to check card image generation status'
+            }),
+          isComplete: (result) =>
+            result?.success === true && !!result?.card,
+          transientInitialStatuses: ['not_found'],
+          transientInitialStatusTimeoutMs: 10_000
+        });
+        if (canonicalResult?.success === true) return canonicalResult;
+        return Promise.reject({
+          ...normalizedError,
+          ...canonicalResult,
+          message:
+            canonicalResult?.error ||
+            normalizedError?.message ||
+            'Unable to recover the completed card image.'
+        });
       }
+    },
+    async loadAICardImageStatus({ cardId }: { cardId: number }) {
+      return loadCanonicalChatRequestStatus({
+        path: '/chat/aiCard/image/status',
+        payload: { cardId },
+        fallbackError: 'Unable to check card image generation status'
+      });
     },
     async getOffersForCard({
       cardId,
@@ -1128,20 +1204,49 @@ export default function chatRequestHelpers({
       }
     },
     async generateAICard() {
+      const clientRequestId =
+        typeof crypto !== 'undefined' &&
+        typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       try {
-        const clientRequestId =
-          typeof crypto !== 'undefined' &&
-          typeof crypto.randomUUID === 'function'
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const { data } = await request.post(
           `${URL}/chat/aiCard/generate`,
           { clientRequestId },
           auth()
         );
         return data;
-      } catch (error) {
-        return handleChatError(error);
+      } catch (error: any) {
+        let normalizedError: any = null;
+        try {
+          await handleChatError(error);
+        } catch (handledError) {
+          normalizedError = handledError;
+        }
+        if (normalizedError?.isTransportError !== true) {
+          return Promise.reject(normalizedError || error);
+        }
+
+        const canonicalResult = await pollCanonicalRequestStatus({
+          loadStatus: () =>
+            loadCanonicalChatRequestStatus({
+              path: '/chat/aiCard/generate/status',
+              payload: { clientRequestId },
+              fallbackError: 'Unable to check card generation status'
+            }),
+          isComplete: (result) => result?.success === true,
+          transientInitialStatuses: ['not_found'],
+          transientInitialStatusTimeoutMs: 10_000
+        });
+        if (canonicalResult?.success === true) return canonicalResult;
+        return Promise.reject({
+          ...normalizedError,
+          ...canonicalResult,
+          message:
+            canonicalResult?.error ||
+            normalizedError?.message ||
+            'Unable to recover the completed card.'
+        });
       }
     },
     async getCurrentNextDayTimeStamp() {

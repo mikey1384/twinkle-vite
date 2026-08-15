@@ -616,7 +616,7 @@ function MessageBody({
       ownerUserId,
       pageVisible: true,
       usingChat: true,
-      shouldIncrementUnreads: false
+      shouldTrackUnreadActivity: false
     });
 
     const dmRecencyChanged =

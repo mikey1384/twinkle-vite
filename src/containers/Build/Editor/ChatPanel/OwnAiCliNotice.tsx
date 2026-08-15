@@ -9,13 +9,16 @@ export default function OwnAiCliNotice({ buildId }: { buildId: number }) {
 
   const buildUrl = `${window.location.origin}/build/${buildId}`;
   const prompt = [
-    `I build apps on Twinkle using an AI called Lumine, but I'm out of AI Energy there. Please help me keep working on my project from my own computer instead.`,
+    `I build apps on Twinkle using an AI called Lumine, but I want my own Codex or Claude Code subscription to power Lumine's workspace loop without using Twinkle AI Energy. Please help me set it up from my computer.`,
     '',
-    `1. If your CLI coding tool (Claude Code or Codex) isn't installed on my computer yet, walk me through installing it.`,
+    `1. Ask whether I want to use Codex or Claude Code. If that CLI isn't installed and signed in with my subscription yet, walk me through it. Never ask me to paste a provider token into Twinkle.`,
     `2. Help me log in to the Lumine CLI by running this in a terminal: npx @stage5/lumine@latest login`,
     `3. Download my project: npx @stage5/lumine@latest pull ${buildUrl}`,
-    `4. Open the downloaded folder with your CLI tool, read the AGENTS.md (or CLAUDE.md) inside, and follow it while making the changes I ask for.`,
-    `5. When I say I'm happy with the changes, save my work back with: npx @stage5/lumine@latest save`
+    `4. Open the downloaded folder in the terminal. For each change I request, run one of these commands from that folder:`,
+    `   Codex: npx @stage5/lumine@latest agent --provider codex "<my request>"`,
+    `   Claude Code: npx @stage5/lumine@latest agent --provider claude-code "<my request>"`,
+    `5. Explain that the external model can only inspect and change the project through Lumine's tools, Lumine validates before saving, and the normal server filesHash guard prevents stale overwrites.`,
+    `6. After the run, show me its short result and any evidence-based Lumine loop feedback saved under .twinkle/agent-runs/. Do not expose private chain-of-thought.`
   ].join('\n');
 
   useEffect(() => {
@@ -123,9 +126,11 @@ export default function OwnAiCliNotice({ buildId }: { buildId: number }) {
           margin-bottom: 0.7rem;
         `}
       >
-        If you or a parent have a Claude or ChatGPT subscription, it can keep
-        working on this project from your computer — no AI Energy needed. Copy
-        this prompt and paste it into Claude or ChatGPT:
+        A Codex or Claude Code subscription can power Lumine&apos;s core workspace
+        tools and validation from your computer — no Twinkle AI Energy needed.
+        Lumine saves only after the project passes its checks, and records
+        evidence-based feedback about the loop. Copy this setup prompt into
+        Claude or ChatGPT:
       </div>
       <button
         type="button"

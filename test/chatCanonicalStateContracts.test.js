@@ -250,6 +250,15 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
     aiSocketSource,
     /cancelledMessageIds[\s\S]*?markChatUnreadActivity\(\);[\s\S]*?if \(messageIsForActiveChannel\)/m
   );
+  assert.match(
+    aiSocketSource,
+    /messageScopeIsActivelyVisible[\s\S]*?reconcileChannelLastRead\(channelId\)[\s\S]*?reconcileChannelUnreadActivity\(\{ channelId \}\)/m
+  );
+  assert.doesNotMatch(aiSocketSource, /numUnreads:\s*1/);
+  assert.match(
+    reconcilerSource,
+    /function reconcileChannelUnreadActivity[\s\S]*?applyFreshUnreadState[\s\S]*?applyFreshGlobalUnreadCount/m
+  );
 });
 
 test('chat visibility follows the rendered body independently from presence', () => {
@@ -292,7 +301,7 @@ test('chat visibility follows the rendered body independently from presence', ()
   );
   assert.match(
     aiSocketSource,
-    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?if \(messageIsForActiveChannel\) \{\s*void reconcileChannelLastRead\(channelId\)/
+    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?messageScopeIsActivelyVisible[\s\S]*?if \(messageScopeIsActivelyVisible\) \{\s*void reconcileChannelLastRead\(channelId\)/
   );
   assert.doesNotMatch(aiSocketSource, /selectedChannelIdRef/);
 });
@@ -326,11 +335,11 @@ test('navigation and live activity reconcile only the visible chat scope', () =>
   );
   assert.match(
     socketSource,
-    /if \(messageIsForCurrentChannel\) \{\s*if \(usingChatRef\.current\)/
+    /const scopeIsActivelyVisible = Boolean\([\s\S]*?messageIsForCurrentChannel[\s\S]*?currentPageVisible[\s\S]*?usingChatRef\.current/
   );
   assert.match(
     reducerSource,
-    /const scopeIsOpen = Boolean\(action\.usingChat\);[\s\S]*?subchannelId === currentSubchannelId && scopeIsOpen[\s\S]*?scopeIsOpen && currentSubchannelId === 0/
+    /const scopeIsOpen = Boolean\(action\.pageVisible && action\.usingChat\);[\s\S]*?subchannelId === currentSubchannelId && scopeIsOpen[\s\S]*?scopeIsOpen && currentSubchannelId === 0/
   );
   assert.match(
     channelSource,
@@ -360,10 +369,15 @@ test('navigation and live activity reconcile only the visible chat scope', () =>
       )?.[0] || '';
     assert.doesNotMatch(actionBlock, /numUnreads:\s*0/);
   }
+  const submitMessageCase =
+    reducerSource.match(
+      /case 'SUBMIT_MESSAGE':[\s\S]*?(?=\n    case 'TRIM_MESSAGES')/
+    )?.[0] || '';
   assert.match(
-    reducerSource,
-    /numUnreads: action\.subchannelId[\s\S]*?prevChannelObj\.numUnreads[\s\S]*?: 0/
+    submitMessageCase,
+    /numUnreads: Number\(prevChannelObj\.numUnreads \|\| 0\)/
   );
+  assert.doesNotMatch(submitMessageCase, /numUnreads:\s*0/);
 });
 
 test('sidebar and member-leave paths consume canonical scoped unread state', () => {
@@ -427,11 +441,15 @@ test('same-account socket messages update caches without becoming unread', () =>
   );
   assert.match(
     receiveMessageCase,
-    /action\.isMyMessage \|\| \(action\.pageVisible && action\.usingChat\)/
+    /const scopeWouldBeUnread =[\s\S]*?!action\.isMyMessage[\s\S]*?scopeIsOpen/
   );
   assert.match(
-    receiveMessageCase,
-    /!action\.isMyMessage &&[\s\S]*?didIncrementScopedUnreads/
+    receiveMessageHandler,
+    /if \(!isMyMessage && !scopeIsActivelyVisible\) \{[\s\S]*?queueChannelUnreadStateResync/
+  );
+  assert.doesNotMatch(
+    receiveMessageHandler,
+    /if \(isMyMessage\)[\s\S]{0,200}?queueChannelUnreadStateResync/
   );
   assert.match(
     receiveMessageCase,
@@ -722,6 +740,10 @@ test('global Chat unread state is reconciled canonically when Chat becomes visib
     /getNumberOfUnreadMessages\(\{ fromWriter: true \}\)/
   );
   assert.match(
+    mainSource,
+    /if \(!pageVisible \|\| !chatReadyForCurrentUser \|\| !selectedChannelId\) return;[\s\S]*?reconcileChannelLastRead\(selectedChannelId\)[\s\S]*?pageVisible,/
+  );
+  assert.match(
     initSocketSource,
     /loadFreshCanonicalChatGlobalUnreadCount\(\{[\s\S]*?getNumberOfUnreadMessages\(\{ fromWriter: true \}\)/
   );
@@ -729,13 +751,68 @@ test('global Chat unread state is reconciled canonically when Chat becomes visib
     chatSocketSource,
     /const activityRaced =[\s\S]*?markUnreadActivity\(\);[\s\S]*?if \(activityRaced\)/
   );
+  assert.match(
+    chatSocketSource,
+    /reconcileCanonicalLastRead[\s\S]*?finally \{[\s\S]*?queueGlobalUnreadCountResync\(UNREAD_RESYNC_RETRY_DELAY_MS\)/
+  );
+  assert.match(
+    chatSocketSource,
+    /const reactionScopeIsActivelyVisible =[\s\S]*?currentPageVisible &&[\s\S]*?reactionIsForCurrentChannel[\s\S]*?reactionIsForCurrentSubchannel/
+  );
+  assert.match(
+    chatSocketSource,
+    /if \(!isMyMessage && scopeIsActivelyVisible\) \{[\s\S]*?maybeUpdateLastRead/
+  );
   assert.doesNotMatch(chatSocketSource, /wasUsingChat|route-exit restoration/);
   assert.match(
+    chatSocketSource,
+    /socket event confirms activity, not the viewer's resulting aggregate[\s\S]*?queueGlobalUnreadCountResync\(UNREAD_RESYNC_RETRY_DELAY_MS\)/
+  );
+  assert.doesNotMatch(
     reducerSource,
-    /global navigation badge is an acknowledgement signal[\s\S]*?background activity increments it[\s\S]*?document title/
+    /Number\(state\.numUnreads\) \+ 1|state\.numUnreads \+ 1/
+  );
+  const receiveFirstMessageCase =
+    reducerSource.match(
+      /case 'RECEIVE_FIRST_MSG':[\s\S]*?(?=\n    case 'RECEIVE_MSG_ON_DIFF_CHANNEL')/
+    )?.[0] || '';
+  assert.match(receiveFirstMessageCase, /numUnreads: state\.numUnreads/);
+  assert.doesNotMatch(
+    receiveFirstMessageCase,
+    /numUnreads\s*:\s*(?:1|[^,\n]*\+|Math\.max\()/,
+    'an invitation envelope must preserve, not fabricate, the confirmed unread count'
+  );
+  assert.doesNotMatch(
+    reducerSource,
+    /alreadyUsingChat && !preservedRealtimeActivity \? 0 : state\.numUnreads/
   );
   assert.match(
     reducerSource,
-    /action\.isMyMessage \|\| \(action\.pageVisible && action\.usingChat\)[\s\S]*?state\.numUnreads \+ 1/
+    /const scopeIsOpen = Boolean\(action\.pageVisible && action\.usingChat\)/
+  );
+  for (const [caseName, nextCaseName] of [
+    ['RECEIVE_MESSAGE', 'RECEIVE_FIRST_MSG'],
+    ['RECEIVE_FIRST_MSG', 'RECEIVE_MSG_ON_DIFF_CHANNEL'],
+    ['RECEIVE_MSG_ON_DIFF_CHANNEL', 'APPLY_CANONICAL_REACTION_ADD_ACTIVITY']
+  ]) {
+    const reducerCase =
+      reducerSource.match(
+        new RegExp(
+          `case '${caseName}':[\\s\\S]*?(?=\\n    case '${nextCaseName}')`
+        )
+      )?.[0] || '';
+    assert.doesNotMatch(
+      reducerCase,
+      /numUnreads\s*:\s*[^,\n]*(?:\+|Math\.max\()/,
+      `${caseName} must not synthesize a server-owned unread count`
+    );
+  }
+  assert.doesNotMatch(
+    reducerSource,
+    /getRebasedConfirmedUnreadActivityState[\s\S]{0,500}?Math\.max\(/
+  );
+  assert.match(
+    chatSocketSource,
+    /!isMyMessage && !scopeIsActivelyVisible[\s\S]*?queueChannelUnreadStateResync/
   );
 });

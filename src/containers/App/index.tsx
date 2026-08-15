@@ -53,10 +53,14 @@ import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import {
   getStoredItem,
+  isExplicitAuthTokenRemovalStorageEvent,
   readAuthToken,
   setStoredItem
 } from '~/helpers/userDataHelpers';
-import { createSessionInterruption } from '~/helpers/sessionInterruption';
+import {
+  browserReportsOffline,
+  markBrowserNetworkReachable
+} from '~/helpers/browserNetwork';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState } from '~/helpers/hooks';
 import {
@@ -97,6 +101,7 @@ import { NavigationRouteReadyObserver } from './navigationFeedback';
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 // persists the build "super full screen" (nav-also-hidden) preference
 const BUILD_NAV_HIDDEN_KEY = 'twinkle-build-nav-hidden';
+const OFFLINE_SESSION_RECOVERY_PROBE_DELAYS_MS = [15_000, 30_000, 60_000];
 
 const Build = lazyWithRetry(() => import('~/containers/Build'));
 const Prompts = lazyWithRetry(() => import('~/containers/Prompts'));
@@ -159,11 +164,58 @@ const buildRuntimeLoadingInnerClass = css`
   height: 15rem;
 `;
 
+const sessionRecoveryClass = css`
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.4rem;
+  background: ${Color.white()};
+  text-align: center;
+
+  > div {
+    width: min(48rem, 100%);
+  }
+
+  p {
+    margin: 0.8rem auto 0;
+    color: ${Color.darkerGray()};
+    font-size: 1.5rem;
+    line-height: 1.5;
+  }
+`;
+
 function BuildRuntimeLoading() {
   return (
     <div className={buildRuntimeLoadingClass} data-build-runtime-loading="true">
       <Loading className={buildRuntimeLoadingInnerClass} />
     </div>
+  );
+}
+
+function SessionRecovery({ offline }: { offline: boolean }) {
+  return (
+    <section
+      className={sessionRecoveryClass}
+      aria-live="polite"
+      data-session-recovery="true"
+    >
+      <div>
+        <Loading
+          text={
+            offline
+              ? 'Your session is saved. Waiting for internet…'
+              : 'Restoring your saved session…'
+          }
+        />
+        <p>
+          Twinkle has not logged you out. Your account will reconnect
+          automatically when the server is reachable.
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -219,6 +271,7 @@ export default function App() {
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
+  const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
@@ -255,11 +308,11 @@ export default function App() {
   const onSetChessOptionsTargetUser = useHomeContext(
     (v) => v.actions.onSetChessOptionsTargetUser
   );
-  const onInterruptSession = useAppContext(
-    (v) => v.user.actions.onInterruptSession
-  );
   const onSetSessionLoaded = useAppContext(
     (v) => v.user.actions.onSetSessionLoaded
+  );
+  const canonicalSessionUserId = useAppContext(
+    (v) => Number(v.user.state.myState.userId || 0)
   );
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
@@ -317,8 +370,16 @@ export default function App() {
     userType,
     username
   } = myState;
+  const [sessionCredentialUnavailable, setSessionCredentialUnavailable] =
+    useState(() => Boolean(userId && !readAuthToken().token));
+  const awaitingCanonicalSession = Boolean(
+    !sessionInterruption &&
+      (sessionCredentialUnavailable ||
+        (!canonicalSessionUserId && readAuthToken().token))
+  );
 
   const prevUserId = useRef(userId);
+  const sessionInitPromiseRef = useRef<Promise<boolean> | null>(null);
   const [confirmedAnalyticsUserId, setConfirmedAnalyticsUserId] = useState<
     number | null
   >(null);
@@ -354,7 +415,6 @@ export default function App() {
   const onRemoveFileUploadStatus = useChatContext(
     (v) => v.actions.onRemoveFileUploadStatus
   );
-  const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const onResetTodayStats = useNotiContext((v) => v.actions.onResetTodayStats);
   const onCreateNewDMChannel = useChatContext(
     (v) => v.actions.onCreateNewDMChannel
@@ -741,23 +801,17 @@ export default function App() {
       const hadAuthenticatedSession = Boolean(
         userId || getStoredItem('userId')
       );
-      if (
-        !signinModalShown &&
-        !sessionInterruption &&
-        hadAuthenticatedSession
-      ) {
-        onInterruptSession(
-          createSessionInterruption(
-            tokenRead.storageAvailable
-              ? 'session_token_missing'
-              : 'session_storage_unavailable'
-          )
-        );
-        socket.emit('ai_end_ai_voice_conversation');
-        onResetChat(userId);
-      }
+      // A missing read is not an authentication verdict. Mobile Safari can
+      // transiently deny or return an empty localStorage read during a route,
+      // visibility, or process-resume transition. Preserve the authenticated
+      // projection and let the bounded recovery loop below reread the saved
+      // credential. Only a canonical HTTP 401 may interrupt the session.
+      setSessionCredentialUnavailable(
+        !sessionInterruption && hadAuthenticatedSession
+      );
       onSetSessionLoaded();
     } else {
+      setSessionCredentialUnavailable(false);
       if (token === prevToken) {
         onSetSessionLoaded();
       } else {
@@ -771,6 +825,215 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, pageVisible, signinModalShown, userId]);
+
+  useEffect(() => {
+    const handleAuthTokenStorageChange = (event: StorageEvent) => {
+      if (event.key !== 'token') return;
+
+      if (!event.newValue) {
+        if (!isExplicitAuthTokenRemovalStorageEvent(event)) {
+          // A token-removal event proves only that storage changed, not why.
+          // Preserve and repair a page-lifetime credential after Safari
+          // cleanup or an older buggy tab; if this page has no credential to
+          // repair, keep its signed-in projection behind the recovery screen.
+          const retainedToken = readAuthToken().token;
+          if (retainedToken) {
+            authRef.current = {
+              headers: { authorization: retainedToken }
+            };
+            setSessionCredentialUnavailable(false);
+          } else if (userId || getStoredItem('userId')) {
+            authRef.current = null;
+            setSessionCredentialUnavailable(true);
+          }
+          return;
+        }
+
+        // The dedicated logout signal plus token removal proves another
+        // same-origin tab explicitly signed out through Twinkle.
+        setSessionCredentialUnavailable(false);
+        authRef.current = null;
+        onLogout();
+        return;
+      }
+
+      // A login or account switch in another tab is also authoritative, but
+      // the server remains the source of truth for the resulting identity.
+      // Adopt only the credential here and let the canonical session response
+      // populate shared state.
+      setSessionCredentialUnavailable(false);
+      authRef.current = { headers: { authorization: event.newValue } };
+      const initializeChangedCredential = () => {
+        if (readAuthToken().token !== event.newValue) return;
+        authRef.current = { headers: { authorization: event.newValue } };
+        void handleInit();
+      };
+      const activeInit = sessionInitPromiseRef.current;
+      if (activeInit) {
+        // An older credential's canonical read owns the current single-flight
+        // slot. Let it observe the token mismatch and settle, then initialize
+        // the newly stored credential; joining the old promise would otherwise
+        // leave shared state on the departing account until another route.
+        void activeInit.then(
+          initializeChangedCredential,
+          initializeChangedCredential
+        );
+      } else {
+        initializeChangedCredential();
+      }
+    };
+
+    window.addEventListener('storage', handleAuthTokenStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleAuthTokenStorageChange);
+    };
+    // `handleInit` is the component-owned canonical session pipeline.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onLogout]);
+
+  useEffect(() => {
+    let offlineRecoveryTimer: number | null = null;
+    let offlineRecoveryAttempt = 0;
+
+    const clearOfflineRecoveryProbe = () => {
+      if (offlineRecoveryTimer !== null) {
+        window.clearTimeout(offlineRecoveryTimer);
+        offlineRecoveryTimer = null;
+      }
+    };
+
+    const resumeSavedSession = (allowOfflineProbe = false) => {
+      const recoveredToken = readAuthToken().token;
+      const hasSavedSessionIdentity = Boolean(
+        canonicalSessionUserId || userId || getStoredItem('userId')
+      );
+      if (
+        sessionInterruption ||
+        (!recoveredToken && !hasSavedSessionIdentity)
+      ) {
+        return;
+      }
+      if (!recoveredToken) {
+        setSessionCredentialUnavailable(true);
+        return;
+      }
+      setSessionCredentialUnavailable(false);
+      authRef.current = { headers: { authorization: recoveredToken } };
+      // Socket.IO is manually paused on a real offline event. If Safari later
+      // updates navigator.onLine without delivering `online`, a focus or the
+      // bounded fallback probe must explicitly restart its Manager.
+      if (!browserReportsOffline() && !socket.connected) {
+        socket.connect();
+      }
+      // A confirmed session normally needs no HTTP work on focus; Socket.IO's
+      // own focus path reconnects it. The exception is iOS reporting offline
+      // after the route is usable again: make one canonical request to prove
+      // reachability, then reconnect explicitly below.
+      if (
+        canonicalSessionUserId &&
+        (!allowOfflineProbe || !browserReportsOffline())
+      ) {
+        return;
+      }
+      void handleInit(
+        0,
+        Boolean(canonicalSessionUserId),
+        allowOfflineProbe
+      );
+    };
+    const scheduleOfflineRecoveryProbe = () => {
+      clearOfflineRecoveryProbe();
+      if (
+        sessionInterruption ||
+        (!readAuthToken().token &&
+          !sessionCredentialUnavailable &&
+          !canonicalSessionUserId &&
+          !userId) ||
+        (socket.connected && canonicalSessionUserId) ||
+        document.visibilityState !== 'visible'
+      ) {
+        return;
+      }
+      const delay =
+        OFFLINE_SESSION_RECOVERY_PROBE_DELAYS_MS[
+          Math.min(
+            offlineRecoveryAttempt,
+            OFFLINE_SESSION_RECOVERY_PROBE_DELAYS_MS.length - 1
+          )
+        ];
+      offlineRecoveryTimer = window.setTimeout(() => {
+        offlineRecoveryTimer = null;
+        offlineRecoveryAttempt += 1;
+        // This is the last-resort path for iOS omitting both `online` and a
+        // resume event. Canonical HTTP identity recovery must not wait behind
+        // Socket.IO: the Manager can remain connected/reconnecting while a
+        // prior session read failed. Once identity exists, this timer only
+        // rescues a Manager that has stopped. Either path backs off to at most
+        // once/minute.
+        // `socket.active` remains true after Socket.IO exhausts its configured
+        // reconnect attempts, so it cannot tell us that the Manager needs a
+        // fresh bounded burst. `socket.connect()` is a no-op while a Manager
+        // attempt is already active and restarts it after `reconnect_failed`.
+        resumeSavedSession(true);
+        scheduleOfflineRecoveryProbe();
+      }, delay);
+    };
+    const onOnline = () => {
+      clearOfflineRecoveryProbe();
+      offlineRecoveryAttempt = 0;
+      markBrowserNetworkReachable();
+      resumeSavedSession();
+    };
+    // Safari can restore a usable route before it updates navigator.onLine or
+    // dispatches `online`. A user-driven resume gets one real session request
+    // even while that hint is stale; handleInit deliberately does not retry
+    // that probe until the browser itself reports online.
+    const onFocus = () => {
+      offlineRecoveryAttempt = 0;
+      resumeSavedSession(true);
+      scheduleOfflineRecoveryProbe();
+    };
+    const onPageShow = () => {
+      offlineRecoveryAttempt = 0;
+      resumeSavedSession(true);
+      scheduleOfflineRecoveryProbe();
+    };
+    const onOffline = () => {
+      offlineRecoveryAttempt = 0;
+      scheduleOfflineRecoveryProbe();
+    };
+
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('pageshow', onPageShow);
+    // A transport loss is authoritative even when Safari omits its network
+    // events. Start the same bounded canonical recovery loop so an exhausted
+    // Socket.IO reconnect burst cannot leave an otherwise valid saved session
+    // offline until the next focus or navigation.
+    socket.on('disconnect', scheduleOfflineRecoveryProbe);
+    scheduleOfflineRecoveryProbe();
+    return () => {
+      clearOfflineRecoveryProbe();
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('pageshow', onPageShow);
+      socket.off('disconnect', scheduleOfflineRecoveryProbe);
+    };
+    // `handleInit` deliberately remains a component-owned pipeline. This
+    // listener only supplies the missing cold-start transition: a saved token
+    // whose first canonical session read happened while the browser was
+    // offline must retry as soon as connectivity returns. Safari may resume a
+    // suspended or back-forward-cached page without first delivering `online`,
+    // so focus/pageshow are equivalent bounded recovery opportunities.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    canonicalSessionUserId,
+    sessionCredentialUnavailable,
+    sessionInterruption,
+    userId
+  ]);
 
   const handleVisibilityChange = useCallback(() => {
     const visible = !document[hiddenRef.current as keyof Document];
@@ -860,8 +1123,13 @@ export default function App() {
           </Suspense>
         )}
         {!suppressHeader && (
-          <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
+          awaitingCanonicalSession ? null : (
+            <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
+          )
         )}
+        {awaitingCanonicalSession ? (
+          <SessionRecovery offline={browserReportsOffline()} />
+        ) : null}
         <div
           id="App"
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
@@ -874,9 +1142,10 @@ export default function App() {
             }
           `}`}
         >
-          <Suspense fallback={<Loading />}>
-            <NavigationRouteReadyObserver />
-            <Routes>
+          {!awaitingCanonicalSession ? (
+            <Suspense fallback={<Loading />}>
+              <NavigationRouteReadyObserver />
+              <Routes>
               <Route path="/users/:username/*" element={<Profile />} />
               <Route path="/ai-stories/:contentId" element={<ContentPage />} />
               <Route path="/comments/:contentId" element={<ContentPage />} />
@@ -964,10 +1233,12 @@ export default function App() {
               />
               <Route path="/:username/*" element={<Redirect />} />
               <Route path="*" element={<InvalidPage />} />
-            </Routes>
-          </Suspense>
+              </Routes>
+            </Suspense>
+          ) : null}
         </div>
-        {usingBuildAppRuntime || runtimeKeepAliveHostEnabled ? (
+        {!awaitingCanonicalSession &&
+        (usingBuildAppRuntime || runtimeKeepAliveHostEnabled) ? (
           <Suspense
             fallback={usingBuildAppRuntime ? <BuildRuntimeLoading /> : null}
           >
@@ -1543,10 +1814,45 @@ export default function App() {
 
   async function handleInit(
     attempts = 0,
-    canonicalAnalyticsUserConfirmed = false
-  ) {
+    canonicalAnalyticsUserConfirmed = false,
+    allowOfflineProbe = false
+  ): Promise<boolean> {
+    if (attempts > 0) {
+      return runSessionInit(
+        attempts,
+        canonicalAnalyticsUserConfirmed,
+        allowOfflineProbe
+      );
+    }
+
+    const existingInit = sessionInitPromiseRef.current;
+    if (existingInit) return existingInit;
+
+    const initPromise = runSessionInit(
+      attempts,
+      canonicalAnalyticsUserConfirmed,
+      allowOfflineProbe
+    );
+    const trackedInit = initPromise.finally(() => {
+      if (sessionInitPromiseRef.current === trackedInit) {
+        sessionInitPromiseRef.current = null;
+      }
+    });
+    sessionInitPromiseRef.current = trackedInit;
+    return trackedInit;
+  }
+
+  async function runSessionInit(
+    attempts: number,
+    canonicalAnalyticsUserConfirmed: boolean,
+    allowOfflineProbe: boolean
+  ): Promise<boolean> {
     const initToken = auth()?.headers?.authorization;
-    if (!initToken) return;
+    if (!initToken) return false;
+    if (browserReportsOffline() && !allowOfflineProbe) {
+      onSetSessionLoaded();
+      return false;
+    }
     const sessionChanged = () => auth()?.headers?.authorization !== initToken;
     const maxRetries = 3;
     const retryDelay = 1000;
@@ -1554,10 +1860,14 @@ export default function App() {
 
     try {
       const data = await loadMyData(location.pathname);
-      if (sessionChanged()) return;
+      if (sessionChanged()) return false;
       if (!data?.id) {
         throw new Error('Session response did not include a canonical user');
       }
+      // The canonical session response is stronger reachability evidence than
+      // Safari's navigator.onLine hint. This lets the ensuing identity update
+      // reconnect Socket.IO even if iOS has not refreshed that hint yet.
+      markBrowserNetworkReachable();
       Object.keys(localStorageKeys).forEach((key) => {
         const value = data[key] || localStorageKeys[key];
         setStoredItem(key, value);
@@ -1567,12 +1877,18 @@ export default function App() {
         newState: data
       });
       onInitMyState(data);
+      if (!socket.connected) {
+        // This is the bounded stale-navigator recovery path above. The stored
+        // identity is canonical at this point, so the socket can safely resume
+        // without waiting for a browser `online` event that Safari omitted.
+        socket.connect();
+      }
       setConfirmedAnalyticsUserId(Number(data.id));
       setAnalyticsUser(data);
       analyticsUserConfirmed = true;
       try {
         const { totalFunds } = await loadCommunityFunds();
-        if (sessionChanged()) return;
+        if (sessionChanged()) return false;
         onSetCommunityFunds(totalFunds || 0);
       } catch (error) {
         console.error('Failed to load community funds:', error);
@@ -1580,30 +1896,48 @@ export default function App() {
 
       try {
         const chessStats = await loadChessStats();
-        if (sessionChanged()) return;
+        if (sessionChanged()) return false;
         if (chessStats) {
           onSetChessStats(chessStats);
         }
       } catch (error) {
         console.error('Failed to load chess stats:', error);
       }
-      await recordUserTraffic(location.pathname);
+      try {
+        await recordUserTraffic(location.pathname);
+      } catch (error) {
+        // Traffic accounting is ancillary. Retrying the complete identity
+        // bootstrap when it fails multiplies session reads and socket work on
+        // a weak mobile route even though canonical identity already loaded.
+        console.error('Failed to record user traffic:', error);
+      }
+      return !sessionChanged();
     } catch (error: any) {
-      if (sessionChanged()) return;
+      if (sessionChanged()) return false;
       // The global request boundary has already moved a canonically rejected
       // session into the sign-in interruption state. Retaining the credential
       // for diagnosis/recovery must not turn the old token into a retry loop.
-      if (error?.status === 401) return;
-      if (attempts < maxRetries) {
+      if (error?.status === 401) return false;
+      // A focus/pageshow probe made while Safari still says offline is a
+      // one-shot reachability check. If it fails, wait for another explicit
+      // recovery signal instead of heating the device with retry traffic.
+      if (attempts < maxRetries && !browserReportsOffline()) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        if (sessionChanged()) return;
-        return handleInit(attempts + 1, analyticsUserConfirmed);
+        if (sessionChanged()) return false;
+        // Keep the original in-flight owner closed until the entire bounded
+        // retry chain settles. Releasing it before a recursive attempt ends
+        // lets focus/pageshow start duplicate session requests on mobile.
+        return handleInit(
+          attempts + 1,
+          analyticsUserConfirmed,
+          allowOfflineProbe
+        );
       }
       if (!analyticsUserConfirmed) clearAnalyticsUser();
       console.error('Failed to initialize after multiple attempts:', error);
+      return false;
     } finally {
-      if (sessionChanged()) return;
-      onSetSessionLoaded();
+      if (!sessionChanged()) onSetSessionLoaded();
     }
   }
 

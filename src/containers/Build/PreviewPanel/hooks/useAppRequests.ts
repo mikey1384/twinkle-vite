@@ -18,6 +18,9 @@ export default function useAppRequests() {
   const callBuildRuntimeAiImage = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiImage
   );
+  const loadBuildRuntimeAiImageStatus = useAppContext(
+    (v) => v.requestHelpers.loadBuildRuntimeAiImageStatus
+  );
   const loadAIImageResult = useAppContext(
     (v) => v.requestHelpers.loadAIImageResult
   );
@@ -261,6 +264,9 @@ export default function useAppRequests() {
   const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
   const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
   const callBuildRuntimeAiImageRef = useRef(callBuildRuntimeAiImage);
+  const loadBuildRuntimeAiImageStatusRef = useRef(
+    loadBuildRuntimeAiImageStatus
+  );
   const loadAIImageResultRef = useRef(loadAIImageResult);
   const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
@@ -372,6 +378,7 @@ export default function useAppRequests() {
     loadBuildAiPromptsRef,
     callBuildRuntimeAiChatRef,
     callBuildRuntimeAiImageRef,
+    loadBuildRuntimeAiImageStatusRef,
     loadAIImageResultRef,
     callBuildRuntimeAiChatStreamRef,
     callBuildRuntimeAiObjectRef,

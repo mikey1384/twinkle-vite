@@ -147,13 +147,83 @@ export function dataUrlToFile(dataUrl: string, fileName: string): File {
   return new File([blob], fileName, { type: blob.type });
 }
 
-export function downloadImage(src: string, fileName: string): void {
+export function getImageDownloadFileName({
+  src,
+  fileName,
+  mimeType
+}: {
+  src: string;
+  fileName?: string;
+  mimeType?: string;
+}) {
+  const requestedName = String(fileName || '').trim();
+  if (requestedName) return requestedName;
+
+  if (!src.startsWith('data:')) {
+    try {
+      const pathName = new URL(src, 'https://twinkle.invalid').pathname;
+      const sourceName = decodeURIComponent(pathName.split('/').pop() || '');
+      if (sourceName) return sourceName;
+    } catch {
+      // Fall through to a MIME-derived name.
+    }
+  }
+
+  const rawSubtype = String(mimeType || '').split('/')[1] || 'png';
+  const extension = rawSubtype === 'jpeg' ? 'jpg' : rawSubtype.split('+')[0];
+  return `twinkle-image.${extension}`;
+}
+
+export async function downloadImage(src: string, fileName?: string) {
+  let response: Response;
+  try {
+    response = await fetch(src, { mode: 'cors' });
+  } catch (error) {
+    if (openImageSource(src)) return;
+    throw error;
+  }
+  if (!response.ok) {
+    if (openImageSource(src)) return;
+    throw new Error(`Image download failed with status ${response.status}`);
+  }
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = src;
-  link.download = fileName;
+  link.href = objectUrl;
+  link.download = getImageDownloadFileName({
+    src,
+    fileName,
+    mimeType: blob.type
+  });
   document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    link.click();
+  } finally {
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+  }
+}
+
+function openImageSource(src: string) {
+  let parsedSource: URL;
+  try {
+    parsedSource = new URL(src, window.location.href);
+  } catch {
+    return false;
+  }
+  if (!['http:', 'https:'].includes(parsedSource.protocol)) return false;
+
+  const link = document.createElement('a');
+  link.href = parsedSource.href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  try {
+    link.click();
+  } finally {
+    document.body.removeChild(link);
+  }
+  return true;
 }
 
 export async function imageUrlToDataUrl(imageUrl: string): Promise<string> {

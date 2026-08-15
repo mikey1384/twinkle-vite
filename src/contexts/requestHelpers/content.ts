@@ -1112,6 +1112,43 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAIStoryImageStatus({ storyId }: { storyId: number | string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/story/image/status`,
+          { storyId },
+          auth()
+        );
+        return {
+          ...data,
+          success: data?.status === 'completed' && !!data?.imageUrl
+        };
+      } catch (error: any) {
+        const responseData = error?.response?.data;
+        let normalizedError: any = null;
+        try {
+          await handleError(error);
+        } catch (handledError) {
+          normalizedError = handledError;
+        }
+        return {
+          success: false,
+          generationStatus: responseData?.status || 'unknown',
+          error:
+            responseData?.error ||
+            normalizedError?.message ||
+            'Unable to check story image status',
+          code: responseData?.code || normalizedError?.code,
+          retryable:
+            responseData?.retryable === true ||
+            normalizedError?.isTransportError === true,
+          retryAfterSeconds:
+            responseData?.retryAfterSeconds ||
+            normalizedError?.retryAfterSeconds,
+          isTransportError: normalizedError?.isTransportError === true
+        };
+      }
+    },
     async loadGrammarGame() {
       try {
         const {
@@ -2477,6 +2514,68 @@ export default function contentRequestHelpers({
             String(error?.response?.data?.requestId || '').trim() ===
               String(requestId || '').trim(),
           aiUsagePolicy
+        };
+      }
+    },
+    async loadAIImageGenerationStatus({
+      prompt,
+      previousImageId,
+      previousResponseId,
+      referenceImageB64,
+      engine = 'openai',
+      quality = 'high',
+      requestId,
+      requestFingerprint
+    }: {
+      prompt: string;
+      previousResponseId?: string;
+      previousImageId?: string;
+      referenceImageB64?: string;
+      engine?: 'gemini' | 'openai';
+      quality?: 'low' | 'medium' | 'high';
+      requestId: string;
+      requestFingerprint?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/image/ai/status`,
+          requestFingerprint
+            ? { requestId, requestFingerprint, engine, quality }
+            : {
+                prompt,
+                previousImageId,
+                previousResponseId,
+                referenceImageB64,
+                engine,
+                quality,
+                requestId
+              },
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        const responseData = error?.response?.data;
+        let normalizedError: any = null;
+        try {
+          await handleError(error);
+        } catch (handledError) {
+          normalizedError = handledError;
+        }
+        return {
+          success: false,
+          generationStatus: responseData?.status || 'unknown',
+          error:
+            responseData?.error ||
+            normalizedError?.message ||
+            'Unable to check image generation status',
+          code: responseData?.code || normalizedError?.code,
+          retryable:
+            responseData?.retryable === true ||
+            normalizedError?.isTransportError === true,
+          retryAfterSeconds:
+            responseData?.retryAfterSeconds ||
+            normalizedError?.retryAfterSeconds,
+          isTransportError: normalizedError?.isTransportError === true
         };
       }
     },

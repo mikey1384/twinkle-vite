@@ -44,7 +44,6 @@ export default function Game({
   onSetIsRevealing,
   onSetSubmissionPending,
   onRefreshCanonicalState,
-  socketConnected,
   submissionPending,
   skipShieldChecklist,
   playAreaRef,
@@ -64,7 +63,6 @@ export default function Game({
   onSetSubmissionPending: (isPending: boolean) => void;
   onRefreshCanonicalState: () => Promise<void>;
   onSetOverviewModalShown: (isShown: boolean) => void;
-  socketConnected: boolean;
   submissionPending: boolean;
   skipShieldChecklist: SkipShieldChecklistState | null;
   playAreaRef: React.RefObject<HTMLDivElement | null>;
@@ -272,7 +270,6 @@ export default function Game({
 
   async function handleEnter() {
     if (
-      !socketConnected ||
       isChecking ||
       submissionPending ||
       isRevealing ||

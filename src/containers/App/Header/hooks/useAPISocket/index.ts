@@ -7,7 +7,8 @@ import {
   useKeyContext
 } from '~/contexts';
 import { getSectionFromPathname, parseChannelPath } from '~/helpers';
-import { setStoredItem } from '~/helpers/userDataHelpers';
+import { readAuthToken, setStoredItem } from '~/helpers/userDataHelpers';
+import { browserReportsOffline } from '~/helpers/browserNetwork';
 import {
   AI_CARD_CHAT_TYPE,
   VOCAB_CHAT_TYPE
@@ -39,7 +40,7 @@ export default function useAPISocket({
   channelsObj: any;
   currentPathId: string;
   isAIChat: boolean;
-  onInit: () => void;
+  onInit: () => Promise<boolean>;
   pathname: string;
   selectedChannelId: number;
   subchannelId: number;
@@ -121,17 +122,19 @@ export default function useAPISocket({
     if (!userIdChanged) return;
 
     if (sessionInterruption) {
-      if (socket.connected) socket.disconnect();
-      return;
-    }
-
-    if (socket.connected) {
+      // `disconnect()` also cancels a Manager-owned reconnect attempt when the
+      // transport has not connected yet. A terminal auth decision must stop
+      // both connected and connecting sockets.
       socket.disconnect();
-      socket.connect();
       return;
     }
 
-    if (!socket.active) {
+    // Account identity is part of the socket handshake. Cancel either a live
+    // transport or an in-progress Manager attempt before reconnecting; leaving
+    // an active old-account attempt alone can bind the replacement session with
+    // stale credentials. Explicit logout stays disconnected.
+    socket.disconnect();
+    if (userId && readAuthToken().token && !browserReportsOffline()) {
       socket.connect();
     }
   }, [sessionInterruption, userId]);

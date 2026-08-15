@@ -578,7 +578,7 @@ function reconcileConfirmedReactionMarkers({
         });
   let confirmedRealtimeUnreadActivityByChannel =
     state.confirmedRealtimeUnreadActivityByChannel || {};
-  if (update.mutation === 'add' && action.shouldIncrementUnreads) {
+  if (update.mutation === 'add' && action.shouldTrackUnreadActivity) {
     confirmedRealtimeUnreadActivityByChannel = markConfirmedRealtimeActivity({
       activityByChannel: confirmedRealtimeUnreadActivityByChannel,
       ...markerParams,
@@ -629,7 +629,7 @@ function bufferCanonicalReactionUpdateDuringBootstrap({
         ownerUserId: action.ownerUserId,
         pageVisible: action.pageVisible,
         usingChat: action.usingChat,
-        shouldIncrementUnreads: action.shouldIncrementUnreads,
+        shouldTrackUnreadActivity: action.shouldTrackUnreadActivity,
         eventSequence: action.eventSequence
       }
     }
@@ -788,16 +788,16 @@ function getPostBootstrapMessageIds({
 }
 
 function getRebasedConfirmedUnreadActivityState({
-  serverSource,
   existingSource
 }: {
-  serverSource: any;
   existingSource: any;
 }) {
   return {
-    // Channel bootstrap unread counts are binary today. Rebase the confirmed
-    // event on the writer snapshot instead of copying a stale absolute count.
-    numUnreads: Math.max(Number(serverSource?.numUnreads || 0), 1),
+    // A socket event confirms activity, not this account's resulting unread
+    // projection. Preserve only the last writer-confirmed scope while the
+    // socket owner queues a fresh writer read; never synthesize `1` over a
+    // bootstrap snapshot that may have raced a read acknowledgement.
+    numUnreads: Number(existingSource?.numUnreads || 0),
     lastUnreadUserId: existingSource?.lastUnreadUserId,
     lastUnreadReaction: existingSource?.lastUnreadReaction,
     lastUnreadMessageId: existingSource?.lastUnreadMessageId,
@@ -2128,7 +2128,7 @@ export default function ChatReducer(
               pageVisible: action.pageVisible,
               usingChat: action.usingChat,
               timeStamp: Number(update.timeStamp || 0),
-              shouldIncrementUnreads: action.shouldIncrementUnreads
+              shouldTrackUnreadActivity: action.shouldTrackUnreadActivity
             })
           : stateWithCanonicalActivitySnapshot;
 
@@ -3555,7 +3555,6 @@ export default function ChatReducer(
               }),
               ...(activeUnreadSubchannelIds.has(subchannelId)
                 ? getRebasedConfirmedUnreadActivityState({
-                    serverSource: serverSubchannel,
                     existingSource: existingSubchannel
                   })
                 : {})
@@ -3609,7 +3608,6 @@ export default function ChatReducer(
           messagesObj: mergedMessagesObj,
           ...(rootUnreadArrivedDuringBootstrap
             ? getRebasedConfirmedUnreadActivityState({
-                serverSource: serverChannel,
                 existingSource: existingChannel
               })
             : {}),
@@ -3895,8 +3893,11 @@ export default function ChatReducer(
             : action.data.myListedCardsLoadMoreButton || false,
         mostRecentOfferTimeStamp: action.data.mostRecentOfferTimeStamp,
         numCardSummonedToday: action.data.numCardSummonedToday,
-        numUnreads:
-          alreadyUsingChat && !preservedRealtimeActivity ? 0 : state.numUnreads,
+        // INIT_CHAT does not carry the aggregate unread projection. Preserve
+        // the last writer-confirmed badge until the post-bootstrap
+        // /chat/numUnreads writer read completes; navigating during bootstrap
+        // is not proof that every unread scope was acknowledged.
+        numUnreads: state.numUnreads,
         outgoingOffers:
           action.userId === state.prevUserId
             ? state.outgoingOffers
@@ -5236,17 +5237,16 @@ export default function ChatReducer(
       const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const subchannelId = Number(action.message.subchannelId || 0);
       const currentSubchannelId = Number(action.currentSubchannelId || 0);
-      const scopeIsOpen = Boolean(action.usingChat);
-      // The global navigation badge is an acknowledgement signal, not a mirror
-      // of every scoped unread. Chat Main clears it when the page is visible;
-      // background activity increments it so the document title can notify the
-      // user without relighting the open channel's sidebar badge.
-      const numUnreads =
-        action.isMyMessage || (action.pageVisible && action.usingChat)
-          ? state.numUnreads
-          : state.numUnreads + 1;
+      // A route that remains mounted in a hidden Safari tab is not an open
+      // reading scope. Preserve that activity as unread until the visible
+      // Chat route advances the canonical last-read watermark.
+      const scopeIsOpen = Boolean(action.pageVisible && action.usingChat);
+      // A realtime message proves activity but cannot prove the resulting
+      // aggregate across every channel (a prior event may have been missed).
+      // The socket owner now refreshes this global projection from the writer.
+      const numUnreads = state.numUnreads;
       const prevChannelObj = state.channelsObj[action.message.channelId] || {};
-      const didIncrementScopedUnreads =
+      const scopeWouldBeUnread =
         !action.isMyMessage &&
         (subchannelId
           ? !(subchannelId === currentSubchannelId && scopeIsOpen)
@@ -5313,13 +5313,12 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[subchannelId],
-              // Visible scopes are cleared only by the canonical last-read
-              // response started by the socket handler. Until then, preserve
-              // the last confirmed count rather than guessing that write won.
-              numUnreads:
-                Number(
-                  prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
-                ) + (didIncrementScopedUnreads ? 1 : 0),
+              // The socket confirms a message, not this account's derived
+              // unread projection. Keep the last writer-backed value until
+              // the socket owner applies the canonical unread-state response.
+              numUnreads: Number(
+                prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
+              ),
               messageIds: prependUniqueChatMessageId({
                 messageIds:
                   prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds,
@@ -5334,14 +5333,6 @@ export default function ChatReducer(
                   isNewMessage: !action.isMyMessage
                 })
               },
-              ...(!action.isMyMessage
-                ? {
-                    lastUnreadUserId: null,
-                    lastUnreadReaction: null,
-                    lastUnreadMessageId: null,
-                    lastUnreadReactionTimeStamp: null
-                  }
-                : {})
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -5361,7 +5352,7 @@ export default function ChatReducer(
             : state.confirmedRealtimeActivityByChannel || {},
         confirmedRealtimeUnreadActivityByChannel:
           shouldTrackConfirmedRealtimeActivity(state) &&
-          didIncrementScopedUnreads
+          scopeWouldBeUnread
             ? markConfirmedRealtimeActivity({
                 activityByChannel:
                   state.confirmedRealtimeUnreadActivityByChannel,
@@ -5406,19 +5397,9 @@ export default function ChatReducer(
               action.message.id
             ),
             members,
-            numUnreads:
-              Number(prevChannelObj.numUnreads || 0) +
-              (!subchannelId && didIncrementScopedUnreads ? 1 : 0),
+            numUnreads: Number(prevChannelObj.numUnreads || 0),
             gameState,
             isHidden: false,
-            ...(!subchannelId && !action.isMyMessage
-              ? {
-                  lastUnreadUserId: null,
-                  lastUnreadReaction: null,
-                  lastUnreadMessageId: null,
-                  lastUnreadReactionTimeStamp: null
-                }
-              : {}),
             ...(subchannelObj ? { subchannelObj } : {}),
             ...(action.message.notificationType === 'owner_change' &&
             action.message.newOwner?.id
@@ -5470,10 +5451,7 @@ export default function ChatReducer(
                 eventSequence: action.eventSequence
               })
             : state.confirmedRealtimeUnreadActivityByChannel || {},
-        numUnreads:
-          action.isDuplicate && action.pageVisible
-            ? state.numUnreads
-            : Number(state.numUnreads) + 1,
+        numUnreads: state.numUnreads,
         selectedChannelId: action.isDuplicate
           ? action.message.channelId
           : state.selectedChannelId,
@@ -5495,8 +5473,7 @@ export default function ChatReducer(
             lastUpdated: Number(action.message.timeStamp || 0),
             isClass: action.isClass,
             members: invitationMembers,
-            channelName: action.message.channelName || action.message.username,
-            numUnreads: action.isDuplicate ? 0 : 1
+            channelName: action.message.channelName || action.message.username
           }
         },
         homeChannelIds: [action.message.channelId].concat(
@@ -5531,10 +5508,9 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.message.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[subchannelId],
-              numUnreads:
-                Number(
-                  prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
-                ) + (action.isMyMessage ? 0 : 1),
+              numUnreads: Number(
+                prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
+              ),
               messageIds: prependUniqueChatMessageId({
                 messageIds:
                   prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds,
@@ -5548,10 +5524,6 @@ export default function ChatReducer(
                   eventSequence: action.eventSequence
                 })
               },
-              lastUnreadUserId: null,
-              lastUnreadReaction: null,
-              lastUnreadMessageId: null,
-              lastUnreadReactionTimeStamp: null
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -5674,13 +5646,7 @@ export default function ChatReducer(
                   prevChannelObj?.lastMessageId,
                   action.message.id
                 ),
-                numUnreads: action.isMyMessage
-                  ? Number(prevChannelObj?.numUnreads || 0)
-                  : Number(prevChannelObj?.numUnreads || 0) + 1,
-                lastUnreadUserId: null,
-                lastUnreadReaction: null,
-                lastUnreadMessageId: null,
-                lastUnreadReactionTimeStamp: null,
+                numUnreads: Number(prevChannelObj?.numUnreads || 0),
                 // Preserve or compute partnerUsername for DM channels
                 ...(prevChannelObj?.twoPeople || action.channel?.twoPeople
                   ? {
@@ -5702,10 +5668,7 @@ export default function ChatReducer(
                   : {})
               }
         },
-        numUnreads:
-          action.isMyMessage || (action.pageVisible && action.usingChat)
-            ? state.numUnreads
-            : Number(state.numUnreads) + 1,
+        numUnreads: state.numUnreads,
         favoriteChannelIds: state.allFavoriteChannelIds[action.channel.id]
           ? [action.channel.id].concat(
               state.favoriteChannelIds.filter(
@@ -5722,70 +5685,20 @@ export default function ChatReducer(
     }
     case 'APPLY_CANONICAL_REACTION_ADD_ACTIVITY': {
       const prevChannelObj = state.channelsObj[action.channelId];
-      const shouldIncrementUnreads = action.shouldIncrementUnreads !== false;
-      const subchannelId = Number(action.subchannelId) || null;
       if (!prevChannelObj) {
         return {
           ...state,
-          numUnreads:
-            !shouldIncrementUnreads || (action.pageVisible && action.usingChat)
-              ? state.numUnreads
-              : 1
+          numUnreads: state.numUnreads
         };
       }
 
-      const updatedSubchannelObj = subchannelId
-        ? {
-            ...prevChannelObj?.subchannelObj,
-            [subchannelId]: {
-              ...prevChannelObj?.subchannelObj?.[subchannelId],
-              ...(shouldIncrementUnreads
-                ? {
-                    numUnreads: 1,
-                    lastUnreadUserId: action.userId,
-                    lastUnreadReaction: action.reaction,
-                    lastUnreadMessageId: action.messageId,
-                    lastUnreadReactionTimeStamp: action.timeStamp
-                  }
-                : {})
-            }
-          }
-        : prevChannelObj?.subchannelObj;
-
       return {
         ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: subchannelId
-            ? {
-                ...prevChannelObj,
-                ...(shouldIncrementUnreads
-                  ? {
-                      lastUnreadUserId: action.userId,
-                      lastUnreadReaction: action.reaction,
-                      lastUnreadMessageId: action.messageId,
-                      lastUnreadReactionTimeStamp: action.timeStamp
-                    }
-                  : {}),
-                subchannelObj: updatedSubchannelObj
-              }
-            : {
-                ...prevChannelObj,
-                ...(shouldIncrementUnreads
-                  ? {
-                      numUnreads: 1,
-                      lastUnreadUserId: action.userId,
-                      lastUnreadReaction: action.reaction,
-                      lastUnreadMessageId: action.messageId,
-                      lastUnreadReactionTimeStamp: action.timeStamp
-                    }
-                  : {})
-              }
-        },
-        numUnreads:
-          !shouldIncrementUnreads || (action.pageVisible && action.usingChat)
-            ? state.numUnreads
-            : 1,
+        // Reaction activity and message reaction state arrived canonically,
+        // but per-user unread fields did not. Preserve their writer-backed
+        // values until the socket owner applies `/channel/unread-state`.
+        channelsObj: state.channelsObj,
+        numUnreads: state.numUnreads,
         favoriteChannelIds: state.allFavoriteChannelIds[action.channelId]
           ? [action.channelId].concat(
               state.favoriteChannelIds.filter(
@@ -6976,7 +6889,12 @@ export default function ChatReducer(
             gameState,
             messageIds,
             messagesObj,
-            numUnreads: action.subchannelId ? prevChannelObj.numUnreads : 0,
+            // Submitting a message proves only that the server accepted that
+            // message; it is not a canonical acknowledgement of every
+            // unread event that may have raced the submit. Preserve the last
+            // writer-backed projection until the visible-scope last-read
+            // response (or its writer re-read) confirms the new value.
+            numUnreads: Number(prevChannelObj.numUnreads || 0),
             subchannelObj
           }
         }

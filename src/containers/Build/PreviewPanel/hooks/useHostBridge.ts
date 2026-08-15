@@ -57,11 +57,12 @@ import {
 } from '../helpers/chessEngine';
 import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
 import {
+  type AiImageRequestFingerprintInput,
+  createAIImageRequestFingerprint,
+  pollCanonicalAIImageStatus,
   resolveAIImageStatusImageUrl,
-  shouldRecoverAIImageFromSocket
+  shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
-
-const AI_IMAGE_STATUS_RECOVERY_RETENTION_MS = 6 * 60 * 1000;
 
 interface ActiveAiImageStatusTarget {
   messageId: string;
@@ -72,7 +73,11 @@ interface ActiveAiImageStatusTarget {
   transportFailed: boolean;
   pendingCompletionPayload?: any;
   recoveryPromise?: Promise<any> | null;
-  cleanupTimeout?: number;
+  terminalResponse?: any;
+  imageRequest?: any;
+  completionFallbackTimer?: number | null;
+  terminalResponsePromise: Promise<any>;
+  resolveTerminalResponse: (response: any) => void;
 }
 
 function getBuildRuntimeWorldViewerIdentityKey(
@@ -626,6 +631,27 @@ export function useHostBridge({
         !!payload.imageUrl;
       if (hasCompletedImage || stage === 'error') {
         target.terminalStatusForwarded = true;
+        target.terminalResponse = hasCompletedImage
+          ? {
+              success: true,
+              requestId: target.requestId,
+              imageUrl: payload.imageUrl,
+              responseId: payload.responseId,
+              imageId: payload.imageId,
+              engine: payload.engine,
+              quality: payload.quality,
+              aiUsagePolicy: payload.aiUsagePolicy
+            }
+          : {
+              success: false,
+              requestId: target.requestId,
+              error:
+                payload?.error || payload?.message || 'Image generation failed',
+              code: payload?.code,
+              reason: payload?.reason,
+              aiUsagePolicy: payload?.aiUsagePolicy
+            };
+        target.resolveTerminalResponse(target.terminalResponse);
       }
       const targetWindow = target.sourceWindow;
       const targetBridge = getMessageTargetBridgeForWindow(targetWindow);
@@ -653,18 +679,86 @@ export function useHostBridge({
     ) {
       if (target.recoveryPromise) return await target.recoveryPromise;
       target.recoveryPromise = (async () => {
-        const imageUrl = await resolveAIImageStatusImageUrl({
-          recovery: payload.recovery,
-          loadResult: requestRefs.loadAIImageResultRef.current
-        });
+        let canonicalResult: any = null;
+        if (target.imageRequest) {
+          const requestFingerprint =
+            await createAIImageRequestFingerprint(target.imageRequest);
+          const statusRequest = requestFingerprint
+            ? { ...target.imageRequest, requestFingerprint }
+            : target.imageRequest;
+          canonicalResult = await pollCanonicalAIImageStatus({
+            loadStatus: () =>
+              requestRefs.loadBuildRuntimeAiImageStatusRef.current(
+                statusRequest
+              ),
+            isActive: () =>
+              activeAiImageStatusTargets.get(target.messageId) === target &&
+              !target.terminalStatusForwarded,
+            transientInitialStatuses: ['not_found'],
+            transientInitialStatusTimeoutMs: 10_000
+          });
+        }
+        if (
+          activeAiImageStatusTargets.get(target.messageId) !== target ||
+          target.terminalStatusForwarded
+        ) {
+          return null;
+        }
+        const imageUrl = canonicalResult?.imageUrl
+          ? canonicalResult.imageUrl
+          : await resolveAIImageStatusImageUrl({
+              recovery: payload.recovery,
+              loadResult: requestRefs.loadAIImageResultRef.current
+            });
         if (!imageUrl) return null;
-        const forwardedPayload = { ...payload, imageUrl };
+        const forwardedPayload = {
+          ...payload,
+          ...(canonicalResult || {}),
+          requestId: target.requestId,
+          stage: 'completed',
+          imageUrl
+        };
         delete forwardedPayload.recovery;
         return forwardedPayload;
       })().finally(() => {
         target.recoveryPromise = null;
       });
       return await target.recoveryPromise;
+    }
+
+    function retireAiImageStatusTarget(target: ActiveAiImageStatusTarget) {
+      if (target.completionFallbackTimer) {
+        window.clearTimeout(target.completionFallbackTimer);
+        target.completionFallbackTimer = null;
+      }
+      if (activeAiImageStatusTargets.get(target.messageId) === target) {
+        activeAiImageStatusTargets.delete(target.messageId);
+      }
+    }
+
+    async function recoverAndForwardAiImageCompletion(
+      target: ActiveAiImageStatusTarget,
+      payload: any
+    ) {
+      try {
+        const forwardedPayload = await recoverAiImageStatusForTarget(
+          target,
+          payload
+        );
+        if (
+          !forwardedPayload ||
+          target.terminalStatusForwarded ||
+          activeAiImageStatusTargets.get(target.messageId) !== target
+        ) {
+          return;
+        }
+        postAiImageStatusToTarget(target, forwardedPayload);
+        if (target.terminalStatusForwarded) {
+          retireAiImageStatusTarget(target);
+        }
+      } catch (error) {
+        console.error('Failed to recover completed Build AI image status:', error);
+      }
     }
 
     // Fan-out path for status events pushed from the server (no specific target
@@ -681,20 +775,21 @@ export function useHostBridge({
           payload?.recovery
         ) {
           target.pendingCompletionPayload = payload;
-          if (!target.transportFailed) continue;
-          try {
-            forwardedPayload = await recoverAiImageStatusForTarget(
-              target,
-              payload
-            );
-            if (!forwardedPayload) continue;
-          } catch (error) {
-            console.error(
-              'Failed to recover completed Build AI image status:',
-              error
-            );
+          if (!target.transportFailed) {
+            if (!target.completionFallbackTimer) {
+              // A healthy HTTP response follows the terminal socket event and
+              // avoids a second image download. If that response stalls, the
+              // confirmed socket completion becomes the SDK result after a
+              // short grace period instead of leaving the Build app waiting.
+              target.completionFallbackTimer = window.setTimeout(() => {
+                target.completionFallbackTimer = null;
+                void recoverAndForwardAiImageCompletion(target, payload);
+              }, 1_000);
+            }
             continue;
           }
+          forwardedPayload = await recoverAiImageStatusForTarget(target, payload);
+          if (!forwardedPayload) continue;
         }
         if (
           target.terminalStatusForwarded &&
@@ -708,8 +803,7 @@ export function useHostBridge({
         }
         postAiImageStatusToTarget(target, forwardedPayload);
         if (target.terminalStatusForwarded) {
-          if (target.cleanupTimeout) clearTimeout(target.cleanupTimeout);
-          activeAiImageStatusTargets.delete(target.messageId);
+          retireAiImageStatusTarget(target);
         }
       }
     }
@@ -1326,9 +1420,9 @@ export function useHostBridge({
               );
             }
 
-            const selectedImageEngine =
+            const selectedImageEngine: 'gemini' | 'openai' =
               payload?.engine === 'gemini' ? 'gemini' : 'openai';
-            const selectedImageQuality =
+            const selectedImageQuality: 'low' | 'medium' | 'high' =
               payload?.quality === 'low' ||
               payload?.quality === 'medium' ||
               payload?.quality === 'high'
@@ -1352,28 +1446,47 @@ export function useHostBridge({
               );
             }
 
+            let resolveTerminalResponse!: (response: any) => void;
+            const terminalResponsePromise = new Promise<any>((resolve) => {
+              resolveTerminalResponse = resolve;
+            });
             activeAiImageStatusTargets.set(id, {
               messageId: id,
               requestId: String(payload?.requestId || id),
               sourceWindow,
               statusCount: 0,
               terminalStatusForwarded: false,
-              transportFailed: false
+              transportFailed: false,
+              terminalResponsePromise,
+              resolveTerminalResponse
             });
             const aiImageStatusTarget = activeAiImageStatusTargets.get(id);
-            let retainAiImageStatusTarget = false;
             try {
               await ensureAiImageNotificationChannel();
-              response = await requestRefs.callBuildRuntimeAiImageRef.current({
+              const imageRequest: AiImageRequestFingerprintInput & {
+                buildId: number;
+                requestId: string;
+              } = {
                 buildId: activeBuild.id,
-                prompt: payload?.prompt,
+                prompt: String(payload?.prompt || '').trim(),
                 previousImageId: payload?.previousImageId,
                 previousResponseId: payload?.previousResponseId,
                 referenceImageB64: payload?.referenceImageB64,
                 engine: selectedImageEngine,
                 quality: selectedImageQuality,
-                requestId: payload?.requestId || id
-              });
+                requestId: String(payload?.requestId || id)
+              };
+              if (aiImageStatusTarget) {
+                aiImageStatusTarget.imageRequest = imageRequest;
+              }
+              const httpResponsePromise =
+                requestRefs.callBuildRuntimeAiImageRef.current(imageRequest);
+              response = aiImageStatusTarget
+                ? await Promise.race([
+                    httpResponsePromise,
+                    aiImageStatusTarget.terminalResponsePromise
+                  ])
+                : await httpResponsePromise;
               if (
                 response?.aiUsagePolicy &&
                 typeof response.aiUsagePolicy === 'object'
@@ -1383,7 +1496,7 @@ export function useHostBridge({
               if (
                 aiImageStatusTarget &&
                 response?.success === false &&
-                shouldRecoverAIImageFromSocket({
+                shouldRecoverAIImageUnknownOutcome({
                   reachedServer: response.reachedServer,
                   hasServerProgress: aiImageStatusTarget.statusCount > 0,
                   hasPendingCompletion:
@@ -1391,31 +1504,48 @@ export function useHostBridge({
                 })
               ) {
                 aiImageStatusTarget.transportFailed = true;
-                const pendingPayload =
-                  aiImageStatusTarget.pendingCompletionPayload;
-                if (pendingPayload) {
-                  const recoveredStatus =
-                    await recoverAiImageStatusForTarget(
+                if (aiImageStatusTarget.completionFallbackTimer) {
+                  window.clearTimeout(
+                    aiImageStatusTarget.completionFallbackTimer
+                  );
+                  aiImageStatusTarget.completionFallbackTimer = null;
+                }
+                let canonicalResult = aiImageStatusTarget.pendingCompletionPayload
+                  ? await recoverAiImageStatusForTarget(
                       aiImageStatusTarget,
-                      pendingPayload
-                    );
-                  if (recoveredStatus) {
-                    response = {
-                      success: true,
-                      requestId: aiImageStatusTarget.requestId,
-                      imageUrl: recoveredStatus.imageUrl,
-                      responseId: recoveredStatus.responseId,
-                      imageId: recoveredStatus.imageId,
-                      engine: recoveredStatus.engine,
-                      quality: recoveredStatus.quality,
-                      aiUsagePolicy: recoveredStatus.aiUsagePolicy
-                    };
-                  }
-                } else {
-                  retainAiImageStatusTarget = true;
+                      aiImageStatusTarget.pendingCompletionPayload
+                    )
+                  : null;
+                if (!canonicalResult) {
+                  const requestFingerprint =
+                    await createAIImageRequestFingerprint(imageRequest);
+                  const statusRequest = requestFingerprint
+                    ? { ...imageRequest, requestFingerprint }
+                    : imageRequest;
+                  canonicalResult = await pollCanonicalAIImageStatus({
+                    loadStatus: () =>
+                      requestRefs.loadBuildRuntimeAiImageStatusRef.current(
+                        statusRequest
+                      ),
+                    isActive: () =>
+                      activeAiImageStatusTargets.get(id) ===
+                        aiImageStatusTarget &&
+                      !aiImageStatusTarget.terminalStatusForwarded,
+                    transientInitialStatuses: ['not_found'],
+                    transientInitialStatusTimeoutMs: 10_000
+                  });
+                }
+                if (canonicalResult) {
+                  response = canonicalResult;
+                } else if (aiImageStatusTarget.terminalResponse) {
+                  // A socket completion can win while the read-only status
+                  // request is in flight. Return that same terminal truth to
+                  // the SDK promise as well as its status listener so a
+                  // successful image never resolves as a transport failure.
+                  response = aiImageStatusTarget.terminalResponse;
                 }
               }
-              if (aiImageStatusTarget && !retainAiImageStatusTarget) {
+              if (aiImageStatusTarget) {
                 forwardTerminalAiImageStatusIfNeeded({
                   target: aiImageStatusTarget,
                   response
@@ -1430,18 +1560,8 @@ export function useHostBridge({
               }
               throw error;
             } finally {
-              if (
-                retainAiImageStatusTarget &&
-                aiImageStatusTarget &&
-                !aiImageStatusTarget.terminalStatusForwarded
-              ) {
-                aiImageStatusTarget.cleanupTimeout = window.setTimeout(() => {
-                  if (
-                    activeAiImageStatusTargets.get(id) === aiImageStatusTarget
-                  ) {
-                    activeAiImageStatusTargets.delete(id);
-                  }
-                }, AI_IMAGE_STATUS_RECOVERY_RETENTION_MS);
+              if (aiImageStatusTarget) {
+                retireAiImageStatusTarget(aiImageStatusTarget);
               } else {
                 activeAiImageStatusTargets.delete(id);
               }
@@ -2757,9 +2877,6 @@ export function useHostBridge({
         'image_generation_status_received',
         handleAiImageGenerationStatus
       );
-      for (const target of activeAiImageStatusTargets.values()) {
-        if (target.cleanupTimeout) clearTimeout(target.cleanupTimeout);
-      }
       for (const subscriptionKey of chatSubscriptions.keys()) {
         const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
         const subscribedBuildId = Number(rawBuildId);
@@ -2768,6 +2885,11 @@ export function useHostBridge({
         unsubscribeBuildRuntimeChatRoom(subscribedBuildId, subscribedRoomKey);
       }
       chatSubscriptions.clear();
+      for (const target of activeAiImageStatusTargets.values()) {
+        if (target.completionFallbackTimer) {
+          window.clearTimeout(target.completionFallbackTimer);
+        }
+      }
       activeAiImageStatusTargets.clear();
       leaveAllWorldSessions();
       if (resetWorldSessionsRef.current) {

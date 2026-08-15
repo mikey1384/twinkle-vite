@@ -69,6 +69,29 @@ test('unknown AI Card image outcomes retry canonical reconciliation after reconn
   );
 });
 
+test('persisted AI Card image placeholders reconcile through canonical status on modal open', () => {
+  assert.match(
+    modalSource,
+    /card\.isImageGenerating[\s\S]*?queueCanonicalImageStateReconciliation\(card\.id\)/m
+  );
+  assert.match(
+    modalSource,
+    /if \(canonicalCard\.isImageGenerating\)[\s\S]*?await loadAICardImageStatus\([\s\S]*?imageStatus\.card[\s\S]*?confirmedTerminalStage/m
+  );
+  assert.match(
+    requestHelperSource,
+    /async loadAICardImageStatus[\s\S]*?path: '\/chat\/aiCard\/image\/status'/m
+  );
+  assert.match(
+    modalSource,
+    /if \(!canonicalGenerationStillRunning\) \{[\s\S]*?pendingCanonicalImageReconciliationCardIdsRef\.current\.delete/m
+  );
+  assert.doesNotMatch(
+    modalSource,
+    /!canonicalGenerationStillRunning \|\| socket\.connected/
+  );
+});
+
 test('AI Card image progress remains shared from canonical server events', () => {
   assert.match(
     socketSource,
@@ -78,6 +101,17 @@ test('AI Card image progress remains shared from canonical server events', () =>
   assert.match(
     socketSource,
     /\(stage === 'completed' \|\| stage === 'error'\)[\s\S]*?getConfirmedAICardImageTerminalState\(\{[\s\S]*?card: canonicalCard,[\s\S]*?stage/
+  );
+});
+
+test('AI Card market and burn controls stay unavailable during image generation', () => {
+  assert.match(
+    modalSource,
+    /showMenuTabs[\s\S]*?cardIsLive && !generatingImage/
+  );
+  assert.match(
+    modalSource,
+    /\{cardIsLive &&\s*!generatingImage &&\s*\(card\.isListed \?/
   );
 });
 

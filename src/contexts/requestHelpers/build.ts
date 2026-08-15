@@ -1352,6 +1352,71 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildRuntimeAiImageStatus({
+      buildId,
+      prompt,
+      previousImageId,
+      previousResponseId,
+      referenceImageB64,
+      engine = 'openai',
+      quality = 'high',
+      requestId,
+      requestFingerprint
+    }: {
+      buildId: number;
+      prompt: string;
+      previousResponseId?: string;
+      previousImageId?: string;
+      referenceImageB64?: string;
+      engine?: 'gemini' | 'openai';
+      quality?: 'low' | 'medium' | 'high';
+      requestId: string;
+      requestFingerprint?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/runtime-ai-image/status`,
+          requestFingerprint
+            ? { requestId, requestFingerprint, engine, quality }
+            : {
+                prompt,
+                previousImageId,
+                previousResponseId,
+                referenceImageB64,
+                engine,
+                quality,
+                requestId
+              },
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        const responseData = error?.response?.data;
+        let normalizedError: any = null;
+        try {
+          await handleError(error);
+        } catch (handledError) {
+          normalizedError = handledError;
+        }
+        return {
+          success: false,
+          generationStatus: responseData?.status || 'unknown',
+          error:
+            responseData?.error ||
+            normalizedError?.message ||
+            'Unable to check image generation status',
+          code: responseData?.code || normalizedError?.code,
+          retryable:
+            responseData?.retryable === true ||
+            normalizedError?.isTransportError === true,
+          retryAfterSeconds:
+            responseData?.retryAfterSeconds ||
+            normalizedError?.retryAfterSeconds,
+          isTransportError: normalizedError?.isTransportError === true
+        };
+      }
+    },
+
     async callBuildRuntimeAiChatStream({
       buildId,
       promptId,

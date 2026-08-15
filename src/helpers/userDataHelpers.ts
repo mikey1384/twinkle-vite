@@ -3,6 +3,11 @@ import { noteNavAuthTokenChange } from './navTabOrder';
 let inMemoryAuthToken = '';
 let authTokenRemovalPending = false;
 
+const AUTH_TOKEN_STORAGE_KEY = 'token';
+const EXPLICIT_LOGOUT_STORAGE_KEY = 'twinkleExplicitLogoutAt';
+const EXPLICIT_LOGOUT_SIGNAL_MAX_AGE_MS = 60_000;
+const EXPLICIT_LOGOUT_SIGNAL_CLOCK_SKEW_MS = 5_000;
+
 export interface AuthTokenRead {
   storageAvailable: boolean;
   token: string;
@@ -142,28 +147,16 @@ export function setStoredItem(
   value: string,
   options: { preserveNavSession?: boolean } = {}
 ) {
+  if (key === 'token') {
+    return persistAuthToken(value, options);
+  }
   const storage = getLocalStorage();
   if (!storage) {
     return false;
   }
 
   try {
-    const previousValue =
-      key === 'token'
-        ? storage.getItem(key) || inMemoryAuthToken || ''
-        : '';
     storage.setItem(key, value);
-    if (key === 'token') {
-      inMemoryAuthToken = value;
-      authTokenRemovalPending = false;
-    }
-    if (key === 'token' && previousValue !== value) {
-      noteNavAuthTokenChange({
-        previousToken: previousValue,
-        nextToken: value,
-        preserveSameUserSession: options.preserveNavSession
-      });
-    }
     return true;
   } catch {
     return false;
@@ -175,20 +168,59 @@ export function persistAuthToken(
   options: { preserveNavSession?: boolean } = {}
 ) {
   if (typeof token !== 'string' || !token) return false;
-  if (!setStoredItem('token', token, options)) return false;
   const storage = getLocalStorage();
   if (!storage) return false;
+
+  let previousValue = '';
   try {
-    return storage.getItem('token') === token;
+    previousValue = storage.getItem('token') || inMemoryAuthToken || '';
+    storage.setItem('token', token);
+    if (storage.getItem('token') !== token) return false;
   } catch {
     return false;
   }
+
+  // Only publish the credential to page memory and account-scoped navigation
+  // state after durable storage confirms the exact value. A silently dropped
+  // mobile write is not a session-producing event and must have no optimistic
+  // side effects for the failed token.
+  inMemoryAuthToken = token;
+  authTokenRemovalPending = false;
+  try {
+    // A newly confirmed login/account switch retires any prior explicit-logout
+    // signal before another tab can mistake a later storage cleanup for that
+    // older user action.
+    storage.removeItem(EXPLICIT_LOGOUT_STORAGE_KEY);
+  } catch {
+    // The token round trip above is the persistence boundary. This marker is
+    // only cross-tab intent metadata and must not invalidate a saved login.
+  }
+  if (previousValue !== token) {
+    noteNavAuthTokenChange({
+      previousToken: previousValue,
+      nextToken: token,
+      preserveSameUserSession: options.preserveNavSession
+    });
+  }
+  return true;
 }
 
 export function removeStoredItem(key: string) {
   const storage = getLocalStorage();
   const previousMemoryToken = key === 'token' ? inMemoryAuthToken : '';
   if (key === 'token') {
+    if (storage) {
+      try {
+        // Token removal alone is ambiguous: a browser storage cleanup or an
+        // older buggy tab can also produce it. Record the explicit user action
+        // first so other tabs clear their page-lifetime credential only for a
+        // genuine logout initiated through Twinkle.
+        storage.setItem(EXPLICIT_LOGOUT_STORAGE_KEY, String(Date.now()));
+      } catch {
+        // This tab still logs out locally. Other tabs conservatively preserve
+        // their confirmed sessions when logout intent cannot be proven.
+      }
+    }
     inMemoryAuthToken = '';
     authTokenRemovalPending = true;
   }
@@ -222,14 +254,49 @@ export function resetAuthTokenMemoryForTests() {
   authTokenRemovalPending = false;
 }
 
+export function adoptAuthTokenStorageChange(nextToken: string | null) {
+  // A StorageEvent is emitted only for an actual same-origin mutation made
+  // by another document. Unlike an ordinary localStorage read, it is an
+  // authoritative account transition and may safely replace the page-lifetime
+  // fallback credential.
+  inMemoryAuthToken = nextToken || '';
+  authTokenRemovalPending = false;
+}
+
+export function isExplicitAuthTokenRemovalStorageEvent(
+  event: Pick<StorageEvent, 'key' | 'newValue' | 'storageArea'>,
+  now = Date.now()
+) {
+  if (event.key !== AUTH_TOKEN_STORAGE_KEY || event.newValue) return false;
+  const storage = event.storageArea || getLocalStorage();
+  if (!storage) return false;
+  try {
+    const signalledAt = Number(storage.getItem(EXPLICIT_LOGOUT_STORAGE_KEY));
+    return (
+      Number.isFinite(signalledAt) &&
+      signalledAt > 0 &&
+      signalledAt <= now + EXPLICIT_LOGOUT_SIGNAL_CLOCK_SKEW_MS &&
+      now - signalledAt <= EXPLICIT_LOGOUT_SIGNAL_MAX_AGE_MS
+    );
+  } catch {
+    return false;
+  }
+}
+
 if (typeof window !== 'undefined' && window.addEventListener) {
   window.addEventListener('storage', (event) => {
-    if (event.key !== 'token') return;
-    // A real same-origin change in another tab is authoritative. Explicit
-    // logout clears the shadow token; login/account switching adopts the new
-    // token so a later route read cannot restore stale credentials.
-    inMemoryAuthToken = event.newValue || '';
-    authTokenRemovalPending = false;
+    if (event.key !== AUTH_TOKEN_STORAGE_KEY) return;
+    if (event.newValue) {
+      // A concrete replacement credential is an authoritative account
+      // transition. Canonical HTTP session state still determines its user.
+      adoptAuthTokenStorageChange(event.newValue);
+      return;
+    }
+    if (isExplicitAuthTokenRemovalStorageEvent(event)) {
+      adoptAuthTokenStorageChange(null);
+    }
+    // An unexplained removal is not a logout verdict. Keep the confirmed
+    // page-lifetime token so readAuthToken can repair durable storage.
   });
 }
 

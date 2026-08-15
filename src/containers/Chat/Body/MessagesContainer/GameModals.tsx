@@ -106,7 +106,6 @@ export default function GameModals({
           wordLevel={wordleWordLevel}
           wordleStats={wordleStats}
           onHide={onHideWordleModal}
-          socketConnected={socketConnected}
           theme={displayedThemeColor}
         />
       )}

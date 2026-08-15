@@ -269,11 +269,15 @@ export default function useChatSocket({
 
     function markUnreadActivity() {
       markChatUnreadActivity();
-      if (unreadResyncQueuedRef.current && unreadResyncTimerRef.current) {
+      // A socket event confirms activity, not the viewer's resulting aggregate
+      // unread count. Re-read that projection from the writer after a short
+      // quiet period instead of incrementing a possibly stale client total.
+      // Resetting the timer coalesces a burst of messages into one request.
+      if (unreadResyncTimerRef.current) {
         clearTimeout(unreadResyncTimerRef.current);
         unreadResyncTimerRef.current = null;
-        queueGlobalUnreadCountResync(UNREAD_RESYNC_RETRY_DELAY_MS);
       }
+      queueGlobalUnreadCountResync(UNREAD_RESYNC_RETRY_DELAY_MS);
     }
 
     async function maybeUpdateLastRead({
@@ -363,6 +367,12 @@ export default function useChatSocket({
         // writer instead of guessing whether the scope is now read.
         queueChannelUnreadStateResync({ channelId, subchannelId });
         console.error('Failed to reconcile canonical chat read state:', error);
+      } finally {
+        // Channel state and the global navigation badge are separate canonical
+        // projections. Advancing one scope can clear the final global unread,
+        // so never leave the badge on its pre-write live value. Debouncing
+        // coalesces a burst of visible messages into one writer-backed read.
+        queueGlobalUnreadCountResync(UNREAD_RESYNC_RETRY_DELAY_MS);
       }
     }
 
@@ -595,7 +605,6 @@ export default function useChatSocket({
     async function handleChatReactionUpdate(
       update: CanonicalChatReactionUpdate
     ) {
-      markUnreadActivity();
       const { channelId, subchannelId, userId: reactorId, mutation } = update;
       const requiresSidebarResync = update.requiresSidebarResync === true;
       const isDirectMessage = getReactionDirectMessageState({
@@ -618,12 +627,14 @@ export default function useChatSocket({
         channelId === currentActiveChatChannelId;
       const reactionIsForCurrentSubchannel =
         Number(subchannelId || 0) === Number(currentSubchannelId || 0);
-
-      const reactionScopeIsVisibleToViewer =
-        reactorId !== userId &&
+      const reactionScopeIsActivelyVisible =
+        currentPageVisible &&
         reactionIsForCurrentChannel &&
         usingChatRef.current &&
         reactionIsForCurrentSubchannel;
+
+      const reactionScopeIsVisibleToViewer =
+        reactorId !== userId && reactionScopeIsActivelyVisible;
       const reactionIsVisibleToViewer =
         mutation === 'add' && reactionScopeIsVisibleToViewer;
 
@@ -633,24 +644,30 @@ export default function useChatSocket({
         ? maybeUpdateLastRead({ channelId, subchannelId })
         : null;
 
-      // Update channel preview state for DM reactions.
-      // Only increment unread counts if the viewer isn't already seeing the reaction.
-      const shouldIncrementUnreads =
+      const unreadProjectionCouldChange = Boolean(
+        isDirectMessage !== false &&
+          reactorId !== userId &&
+          update.channelActivity?.changed
+      );
+      if (unreadProjectionCouldChange && !reactionIsVisibleToViewer) {
+        markUnreadActivity();
+        queueChannelUnreadStateResync({ channelId, subchannelId });
+      }
+
+      // Retain a race marker during Chat bootstrap, but never derive a count
+      // from it. The queued writer read owns the displayed unread projection.
+      const shouldTrackUnreadActivity =
         !requiresSidebarResync &&
         mutation === 'add' &&
         reactorId !== userId &&
-        !(
-          reactionIsForCurrentChannel &&
-          usingChatRef.current &&
-          reactionIsForCurrentSubchannel
-        );
+        !reactionScopeIsActivelyVisible;
 
       onApplyCanonicalChatReaction({
         update,
         ownerUserId: userId,
         pageVisible: currentPageVisible,
         usingChat: usingChatRef.current,
-        shouldIncrementUnreads
+        shouldTrackUnreadActivity
       });
       if (requiresSidebarResync) {
         // Legacy events carry no ordered unread projection. If the addition is
@@ -661,22 +678,9 @@ export default function useChatSocket({
         if (unreadResyncGenerationRef.current !== unreadResyncGeneration) {
           return;
         }
-        if (isDirectMessage !== false) {
-          queueChannelUnreadStateResync({ channelId, subchannelId });
-          if (reactorId !== userId) queueGlobalUnreadCountResync();
-        }
         return;
       }
       if (lastReadReconciliation) void lastReadReconciliation;
-      if (mutation !== 'remove' || !update.channelActivity?.changed) return;
-
-      const removalCouldAffectGlobalUnreads =
-        isDirectMessage !== false &&
-        reactorId !== userId &&
-        !reactionScopeIsVisibleToViewer;
-      if (!removalCouldAffectGlobalUnreads) return;
-      queueChannelUnreadStateResync({ channelId, subchannelId });
-      queueGlobalUnreadCountResync();
     }
 
     function queueChannelUnreadStateResync(
@@ -848,15 +852,19 @@ export default function useChatSocket({
       }
       const currentSelectedChannelId = selectedChannelIdRef.current;
       const currentChannelsObj = channelsObjRef.current;
-      if (currentSelectedChannelId === 0) {
-        if (
-          members.filter((member) => member.id !== userId)[0].id ===
-          currentChannelsObj[currentSelectedChannelId].members.filter(
-            (member: { id: number }) => member.id !== userId
-          )[0].id
-        ) {
-          isDuplicate = true;
-        }
+      if (currentSelectedChannelId === 0 && isTwoPeople) {
+        const invitedPartnerId = members.find(
+          (member) => Number(member?.id) !== Number(userId)
+        )?.id;
+        const temporaryPartnerId = currentChannelsObj[0]?.members?.find(
+          (member: { id?: number }) =>
+            Number(member?.id) !== Number(userId)
+        )?.id;
+        isDuplicate = Boolean(
+          invitedPartnerId &&
+            temporaryPartnerId &&
+            Number(invitedPartnerId) === Number(temporaryPartnerId)
+        );
       }
       socket.emit('join_chat_group', message.channelId);
       if (message.userId !== userId && document.hidden) {
@@ -875,6 +883,10 @@ export default function useChatSocket({
         pathId,
         quickAccess,
         userId
+      });
+      queueChannelUnreadStateResync({
+        channelId: Number(message.channelId),
+        subchannelId: Number(message.subchannelId || 0)
       });
       rememberHandledRealtimeMessage(message);
     }
@@ -911,13 +923,23 @@ export default function useChatSocket({
       message: any;
       pathId: string;
     }) {
-      markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = Number(subchannelIdRef.current || 0);
       const isForCurrentChannel =
         Number(channelId) === activeChatChannelIdRef.current;
+      const isMyMessage = Number(message.userId) === Number(userId);
+      const scopeIsActivelyVisible = Boolean(
+        isForCurrentChannel &&
+          currentPageVisible &&
+          usingChatRef.current &&
+          currentSubchannelId === 0
+      );
+      if (!isMyMessage && !scopeIsActivelyVisible) {
+        markUnreadActivity();
+        queueChannelUnreadStateResync({ channelId, subchannelId: 0 });
+      }
       if (isForCurrentChannel) {
-        if (usingChatRef.current && currentSubchannelId === 0) {
+        if (!isMyMessage && scopeIsActivelyVisible) {
           void maybeUpdateLastRead({ channelId });
         }
         onReceiveMessage({
@@ -925,7 +947,7 @@ export default function useChatSocket({
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
           currentSubchannelId,
-          isMyMessage: Number(message.userId) === Number(userId)
+          isMyMessage
         });
       }
       if (!isForCurrentChannel) {
@@ -938,7 +960,7 @@ export default function useChatSocket({
           },
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
-          isMyMessage: Number(message.userId) === Number(userId)
+          isMyMessage
         });
       }
       if (user.id === userId && user.newXp) {
@@ -974,7 +996,6 @@ export default function useChatSocket({
       newMembers: any[];
     }) {
       if (shouldSkipRealtimeMessage(message)) return;
-      markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = subchannelIdRef.current;
       const messageIsForCurrentChannel =
@@ -983,6 +1004,20 @@ export default function useChatSocket({
       // though the initiating user's ID is stored as the message author.
       const isMyMessage =
         Number(message.userId) === Number(userId) && !message.transferId;
+      const messageSubchannelId = Number(message.subchannelId || 0);
+      const scopeIsActivelyVisible = Boolean(
+        messageIsForCurrentChannel &&
+          currentPageVisible &&
+          usingChatRef.current &&
+          messageSubchannelId === Number(currentSubchannelId || 0)
+      );
+      if (!isMyMessage && !scopeIsActivelyVisible) {
+        markUnreadActivity();
+        queueChannelUnreadStateResync({
+          channelId: Number(message.channelId),
+          subchannelId: messageSubchannelId
+        });
+      }
       const activityChannel =
         channelsObjRef.current?.[message.channelId] || channel;
       if (activityChannel?.twoPeople) {
@@ -998,16 +1033,11 @@ export default function useChatSocket({
         });
       }
       if (messageIsForCurrentChannel) {
-        if (usingChatRef.current) {
-          if (
-            Number(message.subchannelId || 0) ===
-            Number(currentSubchannelId || 0)
-          ) {
-            void maybeUpdateLastRead({
-              channelId: message.channelId,
-              subchannelId: message.subchannelId
-            });
-          }
+        if (!isMyMessage && scopeIsActivelyVisible) {
+          void maybeUpdateLastRead({
+            channelId: message.channelId,
+            subchannelId: message.subchannelId
+          });
         }
         onReceiveMessage({
           message,
@@ -1201,13 +1231,32 @@ export default function useChatSocket({
       topicObj: any;
       isFeatured: boolean;
     }) {
-      markUnreadActivity();
       const currentPageVisible = pageVisibleRef.current;
       const messageIsForCurrentChannel =
         message.channelId === activeChatChannelIdRef.current;
       const senderIsUser = message.userId === userId;
 
       if (senderIsUser) return;
+
+      const scopeIsActivelyVisible = Boolean(
+        messageIsForCurrentChannel &&
+          currentPageVisible &&
+          usingChatRef.current &&
+          Number(message.subchannelId || 0) ===
+            Number(subchannelIdRef.current || 0)
+      );
+      if (scopeIsActivelyVisible) {
+        void maybeUpdateLastRead({
+          channelId: message.channelId,
+          subchannelId: message.subchannelId
+        });
+      } else {
+        markUnreadActivity();
+        queueChannelUnreadStateResync({
+          channelId: Number(message.channelId),
+          subchannelId: Number(message.subchannelId || 0)
+        });
+      }
 
       if (channelId === GENERAL_CHAT_ID && !subchannelId) {
         onNotifyChatSubjectChange(subject);
@@ -1222,17 +1271,6 @@ export default function useChatSocket({
       });
 
       if (messageIsForCurrentChannel) {
-        if (usingChatRef.current) {
-          if (
-            Number(message.subchannelId || 0) ===
-            Number(subchannelIdRef.current || 0)
-          ) {
-            void maybeUpdateLastRead({
-              channelId: message.channelId,
-              subchannelId: message.subchannelId
-            });
-          }
-        }
         onReceiveMessage({
           message,
           pageVisible: currentPageVisible,
@@ -1248,8 +1286,7 @@ export default function useChatSocket({
             id: channelId,
             pathId,
             channelName,
-            isHidden: false,
-            numUnreads: 1
+            isHidden: false
           }
         });
       }

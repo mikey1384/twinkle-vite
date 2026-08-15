@@ -19,6 +19,7 @@ import {
   errorHasActualCommunityFundsBalance,
   isCommunityFundRechargeAvailable
 } from '~/helpers/aiEnergy';
+import { pollCanonicalAIImageStatus } from '~/helpers/aiImageStatus';
 
 const colorHash: Record<
   number,
@@ -207,6 +208,9 @@ export default function SuccessModal({
   const xpNumberColorKey = xpNumberRole.colorKey;
   const generateAIStoryImage = useAppContext(
     (v) => v.requestHelpers.generateAIStoryImage
+  );
+  const loadAIStoryImageStatus = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryImageStatus
   );
   const loadAIStoryVocabSummary = useAppContext(
     (v) => v.requestHelpers.loadAIStoryVocabSummary
@@ -810,6 +814,40 @@ export default function SuccessModal({
       console.error(error);
       if (error?.aiUsagePolicy) {
         applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      let recoveredImageUrl = getAIStoryGeneratedImageUrl(normalizedStoryId);
+      let recoveredAiUsagePolicy: AiUsagePolicy | null = null;
+      if (!recoveredImageUrl && error?.isTransportError === true) {
+        const canonicalResult = await pollCanonicalAIImageStatus({
+          loadStatus: () => loadAIStoryImageStatus({ storyId }),
+          isActive: () =>
+            isAIStoryImageGenerationInProgress(normalizedStoryId),
+          transientInitialStatuses: ['not_found', 'not_started'],
+          transientInitialStatusTimeoutMs: 10_000
+        });
+        if (canonicalResult?.success === true && canonicalResult.imageUrl) {
+          recoveredImageUrl = canonicalResult.imageUrl;
+          recoveredAiUsagePolicy = canonicalResult.aiUsagePolicy || null;
+        }
+        // The socket completion path may win while the status request is in
+        // flight. Re-read its canonical URL before treating a cancelled poll as
+        // failure so a successful generation can never flash an error.
+        recoveredImageUrl ||= getAIStoryGeneratedImageUrl(normalizedStoryId);
+      }
+      if (recoveredImageUrl) {
+        setAIStoryGeneratedImageUrl({
+          storyId: normalizedStoryId,
+          imageUrl: recoveredImageUrl
+        });
+        if (recoveredAiUsagePolicy) {
+          applyAiUsagePolicy(recoveredAiUsagePolicy);
+        }
+        if (isMountedRef.current) {
+          setImageUrl(recoveredImageUrl);
+          setPreviewImageUrl('');
+          setProgressStage('not_started');
+        }
+        return;
       }
       if (isMountedRef.current) {
         setProgressStage('error');

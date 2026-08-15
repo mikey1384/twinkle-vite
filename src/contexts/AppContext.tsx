@@ -170,6 +170,10 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           );
         }
 
+        // A transport failure has no HTTP response and can never reach this
+        // branch. Conversely, an actual 401 is canonical server evidence even
+        // when Safari's navigator.onLine hint is stale, so do not let that hint
+        // override the session-validation boundary.
         if (status === 401) {
           const invalidSessionToken = await resolveInvalidSessionToken(error);
           if (
