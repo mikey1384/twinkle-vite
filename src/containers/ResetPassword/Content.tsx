@@ -6,11 +6,10 @@ import { useAppContext } from '~/contexts';
 
 export default function Content() {
   const { token = '' } = useParams();
+  const resetToken = token.replace(/\+/g, '.');
   const verifyEmail = useAppContext((v) => v.requestHelpers.verifyEmail);
   const [loaded, setLoaded] = useState(false);
-  const [profilePicUrl, setProfilePicUrl] = useState('');
-  const [userId, setUserId] = useState(null);
-  const [username, setUsername] = useState('');
+  const [authorized, setAuthorized] = useState(false);
   const [expired, setExpired] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -18,16 +17,12 @@ export default function Content() {
     init();
     async function init() {
       try {
-        const { profilePicUrl, userId, username, errorMsg } = await verifyEmail(
-          {
-            token: token.replace(/\+/g, '.'),
-            forPasswordReset: true
-          }
-        );
+        const { userId, username, errorMsg } = await verifyEmail({
+          token: resetToken,
+          forPasswordReset: true
+        });
         setLoaded(true);
-        setProfilePicUrl(profilePicUrl);
-        setUserId(userId);
-        setUsername(username);
+        setAuthorized(Boolean(userId && username));
         if (errorMsg) {
           setErrorMessage(errorMsg);
         }
@@ -51,12 +46,8 @@ export default function Content() {
     >
       {loaded ? (
         <div style={{ textAlign: 'center' }}>
-          {userId && username ? (
-            <PasswordForm
-              profilePicUrl={profilePicUrl}
-              userId={userId}
-              username={username}
-            />
+          {authorized ? (
+            <PasswordForm resetToken={resetToken} />
           ) : expired ? (
             <div>
               The token is invalid or expired. Please request the verification

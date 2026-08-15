@@ -74,17 +74,17 @@ export default function userRequestHelpers({
       }
     },
     async changePassword({
-      userId,
-      password
+      password,
+      resetToken
     }: {
-      userId: number;
       password: string;
+      resetToken: string;
     }) {
       let data;
       try {
-        ({ data } = await request.put(`${URL}/user/password`, {
-          userId,
-          password
+        ({ data } = await request.put(`${URL}/user/password/reset`, {
+          password,
+          resetToken
         }));
       } catch (error) {
         return handleError(error);

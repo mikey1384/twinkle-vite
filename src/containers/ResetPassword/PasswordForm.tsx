@@ -7,13 +7,9 @@ import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { useNavigate } from 'react-router-dom';
 
 export default function PasswordForm({
-  profilePicUrl,
-  userId,
-  username
+  resetToken
 }: {
-  profilePicUrl: string;
-  userId: number;
-  username: string;
+  resetToken: string;
 }) {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
@@ -75,7 +71,10 @@ export default function PasswordForm({
       return setErrorMsg('Passwords need to be at least 5 characters long');
     }
     try {
-      await changePassword({ userId, password });
+      const { profilePicUrl, userId, username } = await changePassword({
+        password,
+        resetToken
+      });
       onLogin({ userId, username });
       onSetUserState({
         userId,
