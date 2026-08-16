@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import test, { type TestContext } from 'node:test';
 import {
   adoptAuthTokenStorageChange,
+  isExplicitAuthLogoutMarkerStorageEvent,
   isExplicitAuthTokenRemovalStorageEvent,
+  isExplicitAuthLogoutStorageEvent,
   persistAuthToken,
   readAuthToken,
   removeStoredItem,
@@ -47,8 +49,7 @@ test('auth token persistence is confirmed by a storage round trip', (t) => {
 });
 
 test('auth token persistence fails closed when mobile storage drops the write', (t) => {
-  const token =
-    'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjk4NzY1NDMyMX0.signature';
+  const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjk4NzY1NDMyMX0.signature';
   const sessionGenerationBefore = getNavSessionMeta('987654321').sessionGen;
   installStorage(t, {
     getItem: () => null,
@@ -207,10 +208,50 @@ test('cross-tab token removal requires a recent explicit logout signal', (t) => 
   );
 });
 
+test('the explicit logout marker is authoritative without a token removal event', (t) => {
+  const values = new Map<string, string>([['token', 'session-token']]);
+  const storage = {
+    getItem: (key: string) => values.get(key) || null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key)
+  };
+  installStorage(t, storage);
+
+  assert.equal(readAuthToken().token, 'session-token');
+  assert.equal(
+    isExplicitAuthLogoutStorageEvent(
+      {
+        key: 'twinkleExplicitLogoutAt',
+        newValue: '5000',
+        storageArea: storage as Storage
+      },
+      5001
+    ),
+    true
+  );
+  assert.equal(
+    isExplicitAuthLogoutMarkerStorageEvent(
+      { key: 'twinkleExplicitLogoutAt', newValue: '5000' },
+      5001
+    ),
+    true
+  );
+  assert.equal(
+    isExplicitAuthLogoutStorageEvent(
+      {
+        key: 'twinkleExplicitLogoutAt',
+        newValue: null,
+        storageArea: storage as Storage
+      },
+      5001
+    ),
+    false,
+    'removing an old marker during a new login is not a logout'
+  );
+});
+
 test('an old logout signal cannot authorize a later storage cleanup', (t) => {
-  const values = new Map<string, string>([
-    ['twinkleExplicitLogoutAt', '1000']
-  ]);
+  const values = new Map<string, string>([['twinkleExplicitLogoutAt', '1000']]);
   const storage = {
     getItem: (key: string) => values.get(key) || null,
     setItem: (key: string, value: string) => values.set(key, value),
@@ -326,7 +367,10 @@ test('only canonical auth rejection interrupts; unreadable browser storage stays
   );
   assert.doesNotMatch(socketBind, /window\.location\.reload/);
   assert.match(apiSocket, /if \(sessionInterruption\)/);
-  assert.match(apiSocket, /if \(sessionInterruption\) \{[\s\S]*socket\.disconnect\(\)/);
+  assert.match(
+    apiSocket,
+    /if \(sessionInterruption\) \{[\s\S]*socket\.disconnect\(\)/
+  );
   assert.doesNotMatch(
     socketInit.slice(
       socketInit.indexOf('function stopSocketAuthRecovery'),
@@ -337,7 +381,14 @@ test('only canonical auth rejection interrupts; unreadable browser storage stays
   assert.match(app, /window\.addEventListener\('storage'/);
   assert.match(
     app,
-    /if \(!event\.newValue\) \{[\s\S]*?!isExplicitAuthTokenRemovalStorageEvent\(event\)[\s\S]*?return;[\s\S]*?authRef\.current = null;[\s\S]*?onLogout\(\)/
+    /if \(isExplicitAuthLogoutStorageEvent\(event\)\) \{[\s\S]*?authRef\.current = null;[\s\S]*?onAdoptCrossTabLogout\(\)[\s\S]*?if \(event\.key !== 'token'\) return;/
+  );
+  assert.match(
+    readFileSync(
+      new URL('../src/contexts/User/actions.ts', import.meta.url),
+      'utf8'
+    ),
+    /onAdoptCrossTabLogout\(\)[\s\S]*?dispatch\(\{[\s\S]*?type: 'LOGOUT'[\s\S]*?\}\)[\s\S]*?onInterruptSession/
   );
 });
 
@@ -387,26 +438,11 @@ test('an offline start keeps the session and rehydrates after connectivity retur
   assert.match(socketInit, /if \(browserReportsOffline\(\)\) return;/);
   assert.match(ensureConnected, /socket\.connect\(\)/);
   assert.match(socketInit, /onInit\(\);/);
-  assert.match(
-    app,
-    /window\.addEventListener\('online', onOnline\)/
-  );
-  assert.match(
-    app,
-    /window\.addEventListener\('focus', onFocus\)/
-  );
-  assert.match(
-    app,
-    /window\.addEventListener\('pageshow', onPageShow\)/
-  );
-  assert.match(
-    app,
-    /window\.addEventListener\('offline', onOffline\)/
-  );
-  assert.match(
-    app,
-    /socket\.on\('disconnect', scheduleOfflineRecoveryProbe\)/
-  );
+  assert.match(app, /window\.addEventListener\('online', onOnline\)/);
+  assert.match(app, /window\.addEventListener\('focus', onFocus\)/);
+  assert.match(app, /window\.addEventListener\('pageshow', onPageShow\)/);
+  assert.match(app, /window\.addEventListener\('offline', onOffline\)/);
+  assert.match(app, /socket\.on\('disconnect', scheduleOfflineRecoveryProbe\)/);
   assert.match(
     app,
     /socket\.off\('disconnect', scheduleOfflineRecoveryProbe\)/
@@ -418,10 +454,7 @@ test('an offline start keeps the session and rehydrates after connectivity retur
   );
   assert.match(app, /socket\.connected && canonicalSessionUserId/);
   assert.match(app, /resumeSavedSession\(true\)/);
-  assert.match(
-    app,
-    /browserReportsOffline\(\) && !allowOfflineProbe/
-  );
+  assert.match(app, /browserReportsOffline\(\) && !allowOfflineProbe/);
   assert.match(app, /markBrowserNetworkReachable\(\);/);
   assert.match(
     app,

@@ -22,6 +22,26 @@ test('server-forced socket reconnects are spread across a bounded recovery windo
   assert.equal(getServerDisconnectReconnectDelayMs(-1), 1_000);
   assert.equal(getServerDisconnectReconnectDelayMs(2), 5_000);
   assert.equal(getServerDisconnectReconnectDelayMs(Number.NaN), 1_000);
+  assert.equal(
+    getServerDisconnectReconnectDelayMs(0.75, true),
+    0,
+    'a prepared rolling handoff must not inherit emergency reconnect jitter'
+  );
+});
+
+test('only a fresh authenticated handoff event skips server-disconnect jitter', () => {
+  assert.match(
+    socketInitSource,
+    /socket\.on\(TWINKLE_SERVER_HANDOFF_EVENT, handlePlannedServerHandoff\)/
+  );
+  assert.match(
+    socketInitSource,
+    /reason === 'io server disconnect'[\s\S]*?Date\.now\(\) - plannedServerHandoffAtRef\.current <= 5_000/
+  );
+  assert.match(
+    socketInitSource,
+    /getServerDisconnectReconnectDelayMs\(\s*Math\.random\(\),\s*plannedServerHandoff\s*\)/
+  );
 });
 
 test('authenticated bind failures back off to a bounded retry cadence', () => {
@@ -60,12 +80,18 @@ test('every failed or credential-less bind cancels Manager recovery even between
 
   assert.ok(bindStart > 0 && bindEnd > bindStart);
   assert.ok(failureStart > 0 && failureEnd > failureStart);
-  assert.doesNotMatch(bindSource, /if \(socket\.connected\) socket\.disconnect\(\)/);
+  assert.doesNotMatch(
+    bindSource,
+    /if \(socket\.connected\) socket\.disconnect\(\)/
+  );
   assert.doesNotMatch(
     failureSource,
     /if \(socket\.connected\) socket\.disconnect\(\)/
   );
-  assert.match(bindSource, /if \(!tokenRead\.token\)[\s\S]*?socket\.disconnect\(\)/);
+  assert.match(
+    bindSource,
+    /if \(!tokenRead\.token\)[\s\S]*?socket\.disconnect\(\)/
+  );
   assert.match(failureSource, /socket\.disconnect\(\)/);
 });
 
@@ -78,9 +104,6 @@ test('the chat bootstrap watchdog never restarts the bounded transport loop', ()
   const watchdogSource = socketInitSource.slice(watchdogStart, watchdogEnd);
 
   assert.ok(watchdogStart > 0 && watchdogEnd > watchdogStart);
-  assert.match(
-    watchdogSource,
-    /chat-bootstrap-watchdog-waiting-for-transport/
-  );
+  assert.match(watchdogSource, /chat-bootstrap-watchdog-waiting-for-transport/);
   assert.doesNotMatch(watchdogSource, /socket\.connect\(\)/);
 });

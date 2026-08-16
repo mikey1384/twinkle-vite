@@ -4,7 +4,6 @@ import {
   getChatUnreadActivityRevision,
   markChatUnreadActivity
 } from '~/helpers/chatUnreadActivity';
-import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
 import type { CanonicalChatChannelUnreadState } from '~/types/chat';
 
 const MAX_FRESH_READ_ATTEMPTS = 3;
@@ -20,24 +19,44 @@ export default function useChatLastReadReconciler() {
   const loadChatChannelUnreadState = useAppContext(
     (v) => v.requestHelpers.loadChatChannelUnreadState
   );
-  const getNumberOfUnreadMessages = useAppContext(
-    (v) => v.requestHelpers.getNumberOfUnreadMessages
-  );
   const onApplyCanonicalChannelUnreadState = useChatContext(
     (v) => v.actions.onApplyCanonicalChannelUnreadState
   );
   const onApplyCanonicalChatSidebarState = useChatContext(
     (v) => v.actions.onApplyCanonicalChatSidebarState
   );
-  const onGetNumberOfUnreadMessages = useChatContext(
-    (v) => v.actions.onGetNumberOfUnreadMessages
-  );
+  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const userIdRef = useRef(userId);
+  const channelsObjRef = useRef(channelsObj);
   userIdRef.current = userId;
+  channelsObjRef.current = channelsObj;
+
+  function getVisibleReadMessageId({
+    channelId,
+    subchannelId
+  }: {
+    channelId: number;
+    subchannelId: number;
+  }) {
+    const channel = channelsObjRef.current?.[channelId];
+    const scope = subchannelId
+      ? channel?.subchannelObj?.[subchannelId]
+      : channel;
+    return Math.max(
+      0,
+      ...(scope?.messageIds || []).map((messageId: number) =>
+        Number(messageId || 0)
+      )
+    );
+  }
 
   function reconcileChannelLastRead(channelId: number) {
+    const lastReadMessageId = getVisibleReadMessageId({
+      channelId,
+      subchannelId: 0
+    });
     return reconcileLastRead({
-      request: () => updateChatLastRead(channelId),
+      request: () => updateChatLastRead({ channelId, lastReadMessageId }),
       channelId,
       subchannelId: 0
     });
@@ -50,8 +69,17 @@ export default function useChatLastReadReconciler() {
     channelId: number;
     subchannelId: number;
   }) {
+    const lastReadMessageId = getVisibleReadMessageId({
+      channelId,
+      subchannelId
+    });
     return reconcileLastRead({
-      request: () => updateSubchannelLastRead({ channelId, subchannelId }),
+      request: () =>
+        updateSubchannelLastRead({
+          channelId,
+          subchannelId,
+          lastReadMessageId
+        }),
       channelId,
       subchannelId
     });
@@ -66,17 +94,14 @@ export default function useChatLastReadReconciler() {
   }) {
     const requestUserId = Number(userIdRef.current || 0);
     if (requestUserId <= 0 || !(channelId > 0)) return;
-    // A socket event proves activity, but neither its recipient-specific scope
-    // count nor the aggregate navigation badge. Read both projections from the
-    // writer without advancing lastRead; this is the off-screen counterpart to
-    // reconcileLastRead's visible-scope mutation.
+    // A socket event proves activity, but not its recipient-specific unread
+    // projection. The channel endpoint returns its scope and the global alert
+    // from one writer snapshot, so neither can advance without the other.
     markChatUnreadActivity();
     try {
       await applyFreshUnreadState({ requestUserId, channelId, subchannelId });
     } catch (error) {
       console.error('Failed to re-read chat unread activity:', error);
-    } finally {
-      await applyFreshGlobalUnreadCount(requestUserId);
     }
   }
 
@@ -128,24 +153,6 @@ export default function useChatLastReadReconciler() {
         // source of truth.
         console.error('Failed to re-read chat unread state:', readError);
       }
-    } finally {
-      await applyFreshGlobalUnreadCount(requestUserId);
-    }
-  }
-
-  async function applyFreshGlobalUnreadCount(requestUserId: number) {
-    try {
-      const numUnreads = await loadFreshCanonicalChatGlobalUnreadCount({
-        load: () => getNumberOfUnreadMessages({ fromWriter: true }),
-        isCurrentOwner: () => Number(userIdRef.current || 0) === requestUserId
-      });
-      if (numUnreads !== null) {
-        onGetNumberOfUnreadMessages(numUnreads);
-      }
-    } catch (error) {
-      // Preserve the last confirmed global state. Socket reconnect/bootstrap
-      // remains the fallback source of truth.
-      console.error('Failed to re-read global chat unread state:', error);
     }
   }
 

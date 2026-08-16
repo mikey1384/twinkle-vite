@@ -48,13 +48,13 @@ export default function LeftButtons({
   const baseButtonColorKey = isGoldTheme
     ? 'bluerGray'
     : isOrangeTheme
-    ? 'darkGray'
-    : buttonColor;
+      ? 'darkGray'
+      : buttonColor;
   const baseHoverColorKey = isGoldTheme
     ? 'darkBluerGray'
     : isOrangeTheme
-    ? 'darkerGray'
-    : buttonHoverColor;
+      ? 'darkerGray'
+      : buttonHoverColor;
 
   const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
     const fn = (Color as any)[key];
@@ -210,7 +210,8 @@ export default function LeftButtons({
         </>
       ) : hasWordleButton ? (
         <Button
-          loading={loading || !nextDayTimeStamp}
+          disabled={loading || !nextDayTimeStamp}
+          loading={!nextDayTimeStamp}
           variant="soft"
           tone="raised"
           onClick={onWordleButtonClick}

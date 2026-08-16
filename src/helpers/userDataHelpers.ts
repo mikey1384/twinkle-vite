@@ -4,7 +4,7 @@ let inMemoryAuthToken = '';
 let authTokenRemovalPending = false;
 
 const AUTH_TOKEN_STORAGE_KEY = 'token';
-const EXPLICIT_LOGOUT_STORAGE_KEY = 'twinkleExplicitLogoutAt';
+export const EXPLICIT_LOGOUT_STORAGE_KEY = 'twinkleExplicitLogoutAt';
 const EXPLICIT_LOGOUT_SIGNAL_MAX_AGE_MS = 60_000;
 const EXPLICIT_LOGOUT_SIGNAL_CLOCK_SKEW_MS = 5_000;
 
@@ -82,8 +82,7 @@ export function readAuthToken(): AuthTokenRead {
     return {
       storageAvailable: false,
       token: authTokenRemovalPending ? '' : inMemoryAuthToken,
-      usedMemoryFallback:
-        !authTokenRemovalPending && !!inMemoryAuthToken
+      usedMemoryFallback: !authTokenRemovalPending && !!inMemoryAuthToken
     };
   }
 
@@ -230,9 +229,7 @@ export function removeStoredItem(key: string) {
 
   try {
     const previousValue =
-      key === 'token'
-        ? storage.getItem(key) || previousMemoryToken || ''
-        : '';
+      key === 'token' ? storage.getItem(key) || previousMemoryToken || '' : '';
     storage.removeItem(key);
     if (key === 'token' && !storage.getItem(key)) {
       authTokenRemovalPending = false;
@@ -271,29 +268,60 @@ export function isExplicitAuthTokenRemovalStorageEvent(
   const storage = event.storageArea || getLocalStorage();
   if (!storage) return false;
   try {
-    const signalledAt = Number(storage.getItem(EXPLICIT_LOGOUT_STORAGE_KEY));
-    return (
-      Number.isFinite(signalledAt) &&
-      signalledAt > 0 &&
-      signalledAt <= now + EXPLICIT_LOGOUT_SIGNAL_CLOCK_SKEW_MS &&
-      now - signalledAt <= EXPLICIT_LOGOUT_SIGNAL_MAX_AGE_MS
+    return isRecentExplicitLogoutSignal(
+      storage.getItem(EXPLICIT_LOGOUT_STORAGE_KEY),
+      now
     );
   } catch {
     return false;
   }
 }
 
+function isRecentExplicitLogoutSignal(value: string | null, now: number) {
+  const signalledAt = Number(value);
+  return (
+    Number.isFinite(signalledAt) &&
+    signalledAt > 0 &&
+    signalledAt <= now + EXPLICIT_LOGOUT_SIGNAL_CLOCK_SKEW_MS &&
+    now - signalledAt <= EXPLICIT_LOGOUT_SIGNAL_MAX_AGE_MS
+  );
+}
+
+export function isExplicitAuthLogoutStorageEvent(
+  event: Pick<StorageEvent, 'key' | 'newValue' | 'storageArea'>,
+  now = Date.now()
+) {
+  if (event.key === EXPLICIT_LOGOUT_STORAGE_KEY) {
+    return isRecentExplicitLogoutSignal(event.newValue, now);
+  }
+  return isExplicitAuthTokenRemovalStorageEvent(event, now);
+}
+
+export function isExplicitAuthLogoutMarkerStorageEvent(
+  event: Pick<StorageEvent, 'key' | 'newValue'>,
+  now = Date.now()
+) {
+  return (
+    event.key === EXPLICIT_LOGOUT_STORAGE_KEY &&
+    isRecentExplicitLogoutSignal(event.newValue, now)
+  );
+}
+
 if (typeof window !== 'undefined' && window.addEventListener) {
   window.addEventListener('storage', (event) => {
+    if (isExplicitAuthLogoutStorageEvent(event)) {
+      // The marker is written before token removal. Treat it as the canonical
+      // cross-tab logout signal even when removeItem('token') is a no-op and
+      // therefore produces no second StorageEvent.
+      adoptAuthTokenStorageChange(null);
+      return;
+    }
     if (event.key !== AUTH_TOKEN_STORAGE_KEY) return;
     if (event.newValue) {
       // A concrete replacement credential is an authoritative account
       // transition. Canonical HTTP session state still determines its user.
       adoptAuthTokenStorageChange(event.newValue);
       return;
-    }
-    if (isExplicitAuthTokenRemovalStorageEvent(event)) {
-      adoptAuthTokenStorageChange(null);
     }
     // An unexplained removal is not a logout verdict. Keep the confirmed
     // page-lifetime token so readAuthToken can repair durable storage.

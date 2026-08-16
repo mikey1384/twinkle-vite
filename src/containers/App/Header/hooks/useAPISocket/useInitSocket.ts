@@ -35,7 +35,10 @@ import {
   useKeyContext
 } from '~/contexts';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
-import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents';
+import {
+  TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT,
+  TWINKLE_SERVER_HANDOFF_EVENT
+} from '~/constants/socketEvents';
 import {
   applyClientVersionResult,
   armUpdateIfDeployedBundleNewer,
@@ -233,6 +236,7 @@ export default function useInitSocket({
   const loadChatRetryCountRef = useRef(0);
   const heartbeatTimerRef = useRef<number | null>(null);
   const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
+  const plannedServerHandoffAtRef = useRef(0);
   const socketBindRetryTimerRef = useRef<number | null>(null);
   const socketBindRetryCountRef = useRef(0);
   const socketBindAttemptRef = useRef(0);
@@ -317,11 +321,11 @@ export default function useInitSocket({
       Number(loadedForUserIdRef.current || 0) === bindingUserId;
     if (!hasCurrentChatProjection) return;
 
-    // Keep the last confirmed projection visible, but close every message-send
-    // path until the server proves this exact socket still owns its canonical
-    // room membership. A real disconnect already owns the stronger writer
-    // resync and must not be displaced by a competing wake bind.
-    onSetReconnecting();
+    // Revalidating an already-connected Socket.IO session is a silent
+    // background barrier. HTTP chat mutations still enforce canonical access,
+    // and any room delta below starts the full writer-backed recovery before
+    // its changed projection is consumed. A real transport gap continues to
+    // own the visible reconnecting gate.
     if (
       !socket.connected ||
       didSocketDisconnectRef.current ||
@@ -377,7 +381,6 @@ export default function useInitSocket({
           });
           return;
         }
-        onFinishReconnecting();
       },
       onBindSettled() {
         wakeReconcileInFlightRef.current = false;
@@ -819,6 +822,7 @@ export default function useInitSocket({
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('home_outdated', handleHomeOutdated);
+    socket.on(TWINKLE_SERVER_HANDOFF_EVENT, handlePlannedServerHandoff);
 
     onChangeSocketStatus(socket.connected);
 
@@ -830,6 +834,7 @@ export default function useInitSocket({
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('home_outdated', handleHomeOutdated);
+      socket.off(TWINKLE_SERVER_HANDOFF_EVENT, handlePlannedServerHandoff);
       if (loadChatRetryTimerRef.current) {
         clearTimeout(loadChatRetryTimerRef.current);
         loadChatRetryTimerRef.current = null;
@@ -847,6 +852,12 @@ export default function useInitSocket({
     function handleOnlineAcknowledged() {
       userActionAckedRef.current = true;
       handleStopUserActionCapture();
+    }
+
+    function handlePlannedServerHandoff(payload?: { planned?: boolean }) {
+      if (payload?.planned === true) {
+        plannedServerHandoffAtRef.current = Date.now();
+      }
     }
 
     // The qualification capture is one-shot: after online_acknowledged the
@@ -958,6 +969,7 @@ export default function useInitSocket({
     }
 
     function handleConnect() {
+      plannedServerHandoffAtRef.current = 0;
       if (terminalSocketAuthFailureRef.current) {
         stopSocketAuthRecovery();
         return;
@@ -1088,9 +1100,9 @@ export default function useInitSocket({
         fromWriter || didSocketDisconnectRef.current;
       const preserveSelectedProjection = Boolean(
         canonicalReadFromWriter &&
-          chatLoadedRef.current &&
-          loadedForUserIdRef.current === bootstrapUserId &&
-          channelsObjRef.current[selectedChannelIdRef.current]?.loaded
+        chatLoadedRef.current &&
+        loadedForUserIdRef.current === bootstrapUserId &&
+        channelsObjRef.current[selectedChannelIdRef.current]?.loaded
       );
       const bootstrapDisconnectSequence = socketDisconnectSequenceRef.current;
       onSetReconnecting();
@@ -1653,6 +1665,12 @@ export default function useInitSocket({
     }
 
     function handleDisconnect(reason: string) {
+      const plannedServerHandoff = Boolean(
+        reason === 'io server disconnect' &&
+        plannedServerHandoffAtRef.current > 0 &&
+        Date.now() - plannedServerHandoffAtRef.current <= 5_000
+      );
+      plannedServerHandoffAtRef.current = 0;
       emitAdminTelemetry({
         message: `disconnected from socket. reason: ${reason}`
       });
@@ -1681,13 +1699,19 @@ export default function useInitSocket({
         if (serverDisconnectReconnectTimerRef.current) {
           clearTimeout(serverDisconnectReconnectTimerRef.current);
         }
-        serverDisconnectReconnectTimerRef.current = window.setTimeout(() => {
-          serverDisconnectReconnectTimerRef.current = null;
-          if (browserReportsOffline()) return;
-          try {
-            socket.connect();
-          } catch {}
-        }, getServerDisconnectReconnectDelayMs());
+        serverDisconnectReconnectTimerRef.current = window.setTimeout(
+          () => {
+            serverDisconnectReconnectTimerRef.current = null;
+            if (browserReportsOffline()) return;
+            try {
+              socket.connect();
+            } catch {}
+          },
+          getServerDisconnectReconnectDelayMs(
+            Math.random(),
+            plannedServerHandoff
+          )
+        );
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1803,10 +1827,13 @@ export default function useInitSocket({
         // watchdog defeated the Manager attempt ceiling and repeatedly woke a
         // mobile radio while the route was unavailable. Wait for the transport
         // owner; a successful bind will re-enter the bootstrap below.
-        recordChatBootstrapEvent('chat-bootstrap-watchdog-waiting-for-transport', {
-          userId: userIdRef.current,
-          selectedChannelId: selectedChannelIdRef.current
-        });
+        recordChatBootstrapEvent(
+          'chat-bootstrap-watchdog-waiting-for-transport',
+          {
+            userId: userIdRef.current,
+            selectedChannelId: selectedChannelIdRef.current
+          }
+        );
         return;
       }
       // Let a healthy in-flight attempt finish. Only intervene once nothing is

@@ -108,10 +108,7 @@ test('reaction requests expose pending UI without synthesizing canonical counts'
     messageSource,
     /setPendingReactionMutation\(reaction, mutation\)[\s\S]*?await (?:postChatReaction|removeChatReaction)/
   );
-  assert.match(
-    uiConstantsSource,
-    /LOADING_INDICATOR_GRACE_PERIOD_MS = 200/
-  );
+  assert.match(uiConstantsSource, /LOADING_INDICATOR_GRACE_PERIOD_MS = 200/);
   assert.match(
     navigationFeedbackSource,
     /setTimeout\(\(\) => \{[\s\S]*?LOADING_INDICATOR_GRACE_PERIOD_MS/
@@ -206,23 +203,32 @@ test('canonical last-read reconciliation is monotonic across writes, reads, and 
 
   assert.match(
     typeSource,
-    /interface CanonicalChatUnreadScopeState \{\s*lastRead: number;/
+    /interface CanonicalChatUnreadScopeState \{\s*lastRead: number;\s*lastReadMessageId: number;/
   );
   assert.match(
     requestSource,
     /recoverCanonicalChatChannelUnreadState[\s\S]*?loadCanonicalChatChannelUnreadState/
   );
   assert.match(
-    reducerSource,
-    /incomingChannelLastRead >= currentChannelLastRead/
+    requestSource,
+    /async updateChatLastRead\(\{[\s\S]*?lastReadMessageId[\s\S]*?\{ channelId, lastReadMessageId \}/
+  );
+  assert.match(mainSource, /reconcileChannelLastRead\(selectedChannelId\)/);
+  assert.match(
+    socketSource,
+    /lastReadMessageId >[\s\S]*?previousMainWrite\?\.lastReadMessageId[\s\S]*?updateChatLastRead\(\{ channelId, lastReadMessageId \}\)/
   );
   assert.match(
     reducerSource,
-    /incomingSubchannelLastRead >= currentSubchannelLastRead/
+    /function canonicalUnreadScopeIsAtLeastAsNew[\s\S]*?incomingLastReadMessageId > existingLastReadMessageId/
   );
   assert.match(
     reducerSource,
-    /function bufferCanonicalUnreadStateDuringBootstrap[\s\S]*?existingScope\?\.lastRead[\s\S]*?incomingScope\?\.lastRead/
+    /canonicalUnreadScopeIsAtLeastAsNew\(\{[\s\S]*?incomingSource: unreadState\.channel,[\s\S]*?existingSource: prevChannel/
+  );
+  assert.match(
+    reducerSource,
+    /function bufferCanonicalUnreadStateDuringBootstrap[\s\S]*?canonicalUnreadScopeIsAtLeastAsNew\(\{[\s\S]*?incomingSource: incomingScope,[\s\S]*?existingSource: existingScope/
   );
   assert.match(reducerSource, /getLatestCanonicalUnreadScopeState/);
   // The call also names the account the snapshot belongs to, so a snapshot
@@ -257,8 +263,9 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   assert.doesNotMatch(aiSocketSource, /numUnreads:\s*1/);
   assert.match(
     reconcilerSource,
-    /function reconcileChannelUnreadActivity[\s\S]*?applyFreshUnreadState[\s\S]*?applyFreshGlobalUnreadCount/m
+    /function reconcileChannelUnreadActivity[\s\S]*?applyFreshUnreadState/m
   );
+  assert.doesNotMatch(reconcilerSource, /applyFreshGlobalUnreadCount/);
 });
 
 test('chat visibility follows the rendered body independently from presence', () => {
@@ -393,10 +400,7 @@ test('sidebar and member-leave paths consume canonical scoped unread state', () 
   );
 
   assert.doesNotMatch(channelSource, /lastUnreadSenderId|lastSenderId/);
-  assert.match(
-    subchannelSource,
-    /!subchannelSelected && numUnreads > 0/
-  );
+  assert.match(subchannelSource, /!subchannelSelected && numUnreads > 0/);
   assert.doesNotMatch(
     subchannelSource,
     /lastUnreadSenderId|lastMessage\?\.userId/
@@ -408,7 +412,7 @@ test('sidebar and member-leave paths consume canonical scoped unread state', () 
   assert.match(socketSource, /socket\.on\('member_left'/);
   assert.match(
     socketSource,
-    /handleMemberLeftUnreadState[\s\S]*?mainScopeIsVisible[\s\S]*?queueChannelUnreadStateResync\(\{[\s\S]*?subchannelId: 0[\s\S]*?queueGlobalUnreadCountResync\(\)/
+    /handleMemberLeftUnreadState[\s\S]*?mainScopeIsVisible[\s\S]*?queueChannelUnreadStateResync\(\{[\s\S]*?subchannelId: 0/
   );
 });
 
@@ -727,17 +731,17 @@ test('global Chat unread state is reconciled canonically when Chat becomes visib
     'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
   );
   const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+  const mainNavSource = readSource(
+    'src/containers/App/Header/MainNavs/index.tsx'
+  );
 
   assert.doesNotMatch(headerSource, /onGetNumberOfUnreadMessages\(0\)/);
   assert.doesNotMatch(mainSource, /onClearNumUnreads|CLEAR_NUM_UNREADS/);
   assert.doesNotMatch(reducerSource, /case 'CLEAR_NUM_UNREADS'/);
+  assert.doesNotMatch(reconcilerSource, /applyFreshGlobalUnreadCount/);
   assert.match(
     reconcilerSource,
-    /finally \{\s*await applyFreshGlobalUnreadCount\(requestUserId\);/
-  );
-  assert.match(
-    reconcilerSource,
-    /getNumberOfUnreadMessages\(\{ fromWriter: true \}\)/
+    /applyFreshUnreadState[\s\S]*?onApplyCanonicalChannelUnreadState/
   );
   assert.match(
     mainSource,
@@ -751,10 +755,11 @@ test('global Chat unread state is reconciled canonically when Chat becomes visib
     chatSocketSource,
     /const activityRaced =[\s\S]*?markUnreadActivity\(\);[\s\S]*?if \(activityRaced\)/
   );
-  assert.match(
-    chatSocketSource,
-    /reconcileCanonicalLastRead[\s\S]*?finally \{[\s\S]*?queueGlobalUnreadCountResync\(UNREAD_RESYNC_RETRY_DELAY_MS\)/
+  const socketLastReadReconciler = chatSocketSource.slice(
+    chatSocketSource.indexOf('async function reconcileCanonicalLastRead'),
+    chatSocketSource.indexOf("socket.on('ai_thinking_status_updated'")
   );
+  assert.doesNotMatch(socketLastReadReconciler, /queueGlobalUnreadCountResync/);
   assert.match(
     chatSocketSource,
     /const reactionScopeIsActivelyVisible =[\s\S]*?currentPageVisible &&[\s\S]*?reactionIsForCurrentChannel[\s\S]*?reactionIsForCurrentSubchannel/
@@ -765,8 +770,12 @@ test('global Chat unread state is reconciled canonically when Chat becomes visib
   );
   assert.doesNotMatch(chatSocketSource, /wasUsingChat|route-exit restoration/);
   assert.match(
-    chatSocketSource,
-    /socket event confirms activity, not the viewer's resulting aggregate[\s\S]*?queueGlobalUnreadCountResync\(UNREAD_RESYNC_RETRY_DELAY_MS\)/
+    reducerSource,
+    /applyCanonicalGlobalUnreadProjection[\s\S]*?hasVisibleCanonicalChatUnread/
+  );
+  assert.match(
+    mainNavSource,
+    /numChatUnreads > 0 &&[\s\S]*?hasVisibleChatUnreadBadge/
   );
   assert.doesNotMatch(
     reducerSource,
@@ -814,5 +823,93 @@ test('global Chat unread state is reconciled canonically when Chat becomes visib
   assert.match(
     chatSocketSource,
     /!isMyMessage && !scopeIsActivelyVisible[\s\S]*?queueChannelUnreadStateResync/
+  );
+});
+
+test('every unread-producing socket path converges on a visible canonical scope', () => {
+  const socketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+  const requestSource = readSource('src/contexts/requestHelpers/chat.ts');
+  const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+  const typeSource = readSource('src/types/chat.ts');
+
+  assert.match(
+    typeSource,
+    /interface CanonicalChatChannelUnreadState \{[\s\S]*?numUnreads: number;[\s\S]*?channelSummary\?: ChatChannelSummary;/
+  );
+  assert.match(
+    requestSource,
+    /includeChannelSummary = false[\s\S]*?includeChannelSummary \? '&includeChannelSummary=1'/
+  );
+  assert.match(
+    socketSource,
+    /handleChatInvitation[\s\S]*?invitationScopeIsActivelyVisible[\s\S]*?maybeUpdateLastRead[\s\S]*?queueChannelUnreadStateResync/
+  );
+  assert.match(
+    socketSource,
+    /invitationSubchannelId === activeSubchannelId[\s\S]*?invitationChannelId === activeChatChannelIdRef\.current/
+  );
+  assert.match(
+    socketSource,
+    /function canonicalUnreadSummaryIsNeeded[\s\S]*?!channel\?\.id[\s\S]*?channel\.isHidden[\s\S]*?!listedChannelIdsRef\.current\.has/
+  );
+  assert.doesNotMatch(
+    socketSource,
+    /includeChannelSummary:\s*!channelsObjRef\.current/,
+    'an existing but hidden or unlisted channel shell still needs a canonical summary'
+  );
+  for (const handlerName of [
+    'handleMemberLeftUnreadState',
+    'handleNewWordleAttempt',
+    'handleReceiveMessage',
+    'handleTopicChange',
+    'handleHumanTopicStateChanged'
+  ]) {
+    const handlerStart = socketSource.indexOf(`function ${handlerName}`);
+    assert.ok(handlerStart >= 0, `missing ${handlerName}`);
+    const nextHandler = socketSource.indexOf(
+      '\n    function ',
+      handlerStart + 10
+    );
+    const handlerSource = socketSource.slice(
+      handlerStart,
+      nextHandler >= 0 ? nextHandler : undefined
+    );
+    assert.match(
+      handlerSource,
+      /queueChannelUnreadStateResync\(\{/,
+      `${handlerName} must reconcile its canonical unread scope`
+    );
+  }
+  assert.match(
+    socketSource,
+    /catch \(error\) \{[\s\S]*?socket\.connected[\s\S]*?retryCount: scope\.retryCount \+ 1[\s\S]*?getUnreadResyncRetryDelayMs/
+  );
+
+  const unreadReducerCase = reducerSource.slice(
+    reducerSource.indexOf("case 'APPLY_CANONICAL_CHANNEL_UNREAD_STATE':"),
+    reducerSource.indexOf("case 'EDIT_CHANNEL_SETTINGS':")
+  );
+  assert.match(
+    unreadReducerCase,
+    /channelSummary[\s\S]*?homeChannelIds[\s\S]*?favoriteChannelIds[\s\S]*?classChannelIds/
+  );
+  assert.doesNotMatch(
+    unreadReducerCase,
+    /!state\.channelsObj\[channelId\] && hasCanonicalChannelSummary/,
+    'an existing channel shell must not prevent canonical list membership repair'
+  );
+  assert.match(
+    unreadReducerCase,
+    /projectCanonicalUnreadChannelLists\(\{[\s\S]*?mergeCanonicalFavoriteChannelSummary\(\{/
+  );
+  assert.match(
+    unreadReducerCase,
+    /nextState = \{[\s\S]*?\.\.\.nextState,[\s\S]*?channelsObj: \{[\s\S]*?\.\.\.nextState\.channelsObj/
+  );
+  assert.match(
+    unreadReducerCase,
+    /applyCanonicalGlobalUnreadProjection\([\s\S]*?unreadState\.numUnreads/
   );
 });

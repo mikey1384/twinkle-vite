@@ -68,11 +68,18 @@ export default function UserActions(dispatch: Dispatch) {
       });
     },
     onLogout() {
-      Object.keys(localStorageKeys).forEach((key) =>
-        removeStoredItem(key)
-      );
+      Object.keys(localStorageKeys).forEach((key) => removeStoredItem(key));
       removeStoredItem('token');
       setStoredItem('profileTheme', DEFAULT_PROFILE_THEME);
+      clearAnalyticsUser();
+      return dispatch({
+        type: 'LOGOUT'
+      });
+    },
+    onAdoptCrossTabLogout() {
+      // The initiating tab already removed the shared durable data. Applying
+      // that authoritative transition here must not publish another logout
+      // marker and bounce StorageEvents indefinitely between open tabs.
       clearAnalyticsUser();
       return dispatch({
         type: 'LOGOUT'

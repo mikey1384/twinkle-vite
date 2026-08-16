@@ -24,6 +24,9 @@ const displayedMessagesSource = readSource(
 const messageInputSource = readSource(
   'src/containers/Chat/Body/MessagesContainer/MessageInput/index.tsx'
 );
+const messageInputLeftButtonsSource = readSource(
+  'src/containers/Chat/Body/MessagesContainer/MessageInput/LeftButtons.tsx'
+);
 const requestHelperSource = readSource('src/contexts/requestHelpers/chat.ts');
 const uploadModalSource = readSource(
   'src/components/Modals/UploadFileModal/index.tsx'
@@ -75,7 +78,7 @@ test('catch-up keeps the last confirmed chat projection renderable', () => {
   );
 });
 
-test('wake requires an authenticated room barrier and broken sessions keep the writer fallback', () => {
+test('wake silently validates an authenticated room barrier and broken sessions keep the writer fallback', () => {
   const wakeBarrier = sourceBetween(
     socketSource,
     'function requestChatWakeBarrier',
@@ -102,16 +105,13 @@ test('wake requires an authenticated room barrier and broken sessions keep the w
     'function requestChatWakeBarrier'
   );
 
-  assert.ok(
-    wakeBarrier.indexOf('onSetReconnecting();') <
-      wakeBarrier.indexOf('bindSocketToUser({'),
-    'the interaction gate must close before the wake bind starts'
-  );
+  assert.doesNotMatch(wakeBarrier, /onSetReconnecting\(\)/);
   assert.match(wakeBarrier, /socket\.id === expectedSocketId/);
   assert.match(
     wakeBarrier,
-    /onBound\(result\)[\s\S]*?result\?\.chatRoomsChanged[\s\S]*?handleLoadChatRef\.current\?\.\(\{[\s\S]*?fromWriter: true[\s\S]*?onFinishReconnecting\(\)/
+    /onBound\(result\)[\s\S]*?result\?\.chatRoomsChanged[\s\S]*?handleLoadChatRef\.current\?\.\(\{[\s\S]*?fromWriter: true/
   );
+  assert.doesNotMatch(wakeBarrier, /onFinishReconnecting\(\)/);
 
   assert.match(
     connectHandler,
@@ -250,6 +250,11 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(displayedMessagesSource, /Catching up&hellip;/);
   assert.match(displayedMessagesSource, /isReconnecting && !pageLoading/);
+  assert.match(
+    messageInputLeftButtonsSource,
+    /disabled=\{loading \|\| !nextDayTimeStamp\}[\s\S]*?loading=\{!nextDayTimeStamp\}/,
+    'generic reconnecting must keep the Wordle label stable instead of impersonating a Wordle load'
+  );
 
   const atomicRecoveryCase = sourceBetween(
     reducerSource,
@@ -281,8 +286,7 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
 test('selected-channel recovery invalidates on every overwritable socket projection', () => {
   const firstChannelId = 901;
   const secondChannelId = 902;
-  const firstChannelBefore =
-    getChatProjectionActivityRevision(firstChannelId);
+  const firstChannelBefore = getChatProjectionActivityRevision(firstChannelId);
   const secondChannelBefore =
     getChatProjectionActivityRevision(secondChannelId);
   assert.equal(

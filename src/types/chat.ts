@@ -123,6 +123,7 @@ export interface CanonicalChatReactionUpdate {
 
 export interface CanonicalChatUnreadScopeState {
   lastRead: number;
+  lastReadMessageId: number;
   numUnreads: number;
   lastUnreadUserId: number | null;
   lastUnreadReaction: string | null;
@@ -134,8 +135,10 @@ export interface CanonicalChatChannelUnreadState {
   channelId: number;
   subchannelId: number;
   reactionActivityRevision: number;
+  numUnreads: number;
   channel: CanonicalChatUnreadScopeState;
   subchannel: CanonicalChatUnreadScopeState | null;
+  channelSummary?: ChatChannelSummary;
   channelVisibility?: CanonicalChatChannelVisibility;
   quickAccess?: ChatQuickAccessState;
 }

@@ -89,16 +89,18 @@ export default function chatRequestHelpers({
   async function loadCanonicalChatChannelUnreadState({
     channelId,
     subchannelId = 0,
-    includeSidebarState = false
+    includeSidebarState = false,
+    includeChannelSummary = false
   }: {
     channelId: number;
     subchannelId?: number;
     includeSidebarState?: boolean;
+    includeChannelSummary?: boolean;
   }) {
     const { data } = await request.get(
       `${URL}/chat/channel/unread-state?channelId=${channelId}&subchannelId=${subchannelId}${
         includeSidebarState ? '&includeSidebarState=1' : ''
-      }`,
+      }${includeChannelSummary ? '&includeChannelSummary=1' : ''}`,
       {
         ...auth(),
         meta: {
@@ -935,8 +937,7 @@ export default function chatRequestHelpers({
               payload: { cardId },
               fallbackError: 'Unable to check card image generation status'
             }),
-          isComplete: (result) =>
-            result?.success === true && !!result?.card,
+          isComplete: (result) => result?.success === true && !!result?.card,
           transientInitialStatuses: ['not_found'],
           transientInitialStatusTimeoutMs: 10_000
         });
@@ -1205,8 +1206,7 @@ export default function chatRequestHelpers({
     },
     async generateAICard() {
       const clientRequestId =
-        typeof crypto !== 'undefined' &&
-        typeof crypto.randomUUID === 'function'
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? crypto.randomUUID()
           : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       try {
@@ -2806,12 +2806,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async updateChatLastRead(channelId: number) {
+    async updateChatLastRead({
+      channelId,
+      lastReadMessageId
+    }: {
+      channelId: number;
+      lastReadMessageId: number;
+    }) {
       if (channelId <= 0) return { success: false };
       try {
         const { data } = await request.post(
           `${URL}/chat/lastRead`,
-          { channelId },
+          { channelId, lastReadMessageId },
           {
             ...auth(),
             meta: {
@@ -2831,15 +2837,17 @@ export default function chatRequestHelpers({
     },
     async updateSubchannelLastRead({
       channelId,
-      subchannelId
+      subchannelId,
+      lastReadMessageId
     }: {
       channelId: number;
       subchannelId: number;
+      lastReadMessageId: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/lastRead/subchannel`,
-          { channelId, subchannelId },
+          { channelId, subchannelId, lastReadMessageId },
           {
             ...auth(),
             meta: {

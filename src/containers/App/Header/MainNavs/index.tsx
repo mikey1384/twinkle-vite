@@ -56,6 +56,7 @@ import {
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { getBuildStudioNavTarget } from '~/containers/Build/studioNavigation';
+import { hasVisibleCanonicalChatUnread } from '~/helpers/chatUnreadProjection';
 
 // max tabs a user may pin (server enforces the same cap in settings.ts)
 const MAX_PINNED_TABS = 10;
@@ -329,9 +330,9 @@ export default function MainNavs({
     useState<PrimaryNavTabKey | null>(
       () => getNavSessionMeta(userId).lastActivePrimaryKey
     );
-  const [recentExtraTabKeys, setRecentExtraTabKeys] = useState<string[]>(
-    () => [...getNavSessionMeta(userId).recentExtraTabKeys]
-  );
+  const [recentExtraTabKeys, setRecentExtraTabKeys] = useState<string[]>(() => [
+    ...getNavSessionMeta(userId).recentExtraTabKeys
+  ]);
   // which account the COMMITTED nav state belongs to. On an SPA login the
   // account-reset effect and the adoption effect share one flush: the
   // reset's setStates haven't committed, so adoption's closures still
@@ -808,6 +809,12 @@ export default function MainNavs({
   );
   const feedsOutdated = useHomeContext((v) => v.state.feedsOutdated);
   const chatType = useChatContext((v) => v.state.chatType);
+  const chatChannelsObj = useChatContext((v) => v.state.channelsObj);
+  const chatHomeChannelIds = useChatContext((v) => v.state.homeChannelIds);
+  const chatFavoriteChannelIds = useChatContext(
+    (v) => v.state.favoriteChannelIds
+  );
+  const chatClassChannelIds = useChatContext((v) => v.state.classChannelIds);
   const loaded = useRef(false);
   const isMissionSection = useMemo(
     () => pathname.startsWith('/missions'),
@@ -1203,9 +1210,25 @@ export default function MainNavs({
     return result;
   }, [profileNav]);
 
+  const hasVisibleChatUnreadBadge = useMemo(
+    () =>
+      hasVisibleCanonicalChatUnread({
+        channelsObj: chatChannelsObj,
+        homeChannelIds: chatHomeChannelIds,
+        favoriteChannelIds: chatFavoriteChannelIds,
+        classChannelIds: chatClassChannelIds
+      }),
+    [
+      chatChannelsObj,
+      chatClassChannelIds,
+      chatFavoriteChannelIds,
+      chatHomeChannelIds
+    ]
+  );
   const chatAlertShown = useMemo(
-    () => loggedIn && !chatMatch && numChatUnreads > 0,
-    [chatMatch, loggedIn, numChatUnreads]
+    () =>
+      loggedIn && !chatMatch && numChatUnreads > 0 && hasVisibleChatUnreadBadge,
+    [chatMatch, hasVisibleChatUnreadBadge, loggedIn, numChatUnreads]
   );
 
   const chatButtonPath = useMemo(() => {
@@ -1366,17 +1389,16 @@ export default function MainNavs({
       const descriptor = primaryTabByKey.get(entry);
       return Boolean(
         descriptor &&
-          navTargetIsActive({
-            exactActive: descriptor.exactActive,
-            pathname,
-            profileUsername: descriptor.profileUsername,
-            search,
-            to: descriptor.to
-          })
+        navTargetIsActive({
+          exactActive: descriptor.exactActive,
+          pathname,
+          profileUsername: descriptor.profileUsername,
+          search,
+          to: descriptor.to
+        })
       );
     });
-    const displayedPrimaryKey =
-      currentActivePrimaryKey || lastActivePrimaryKey;
+    const displayedPrimaryKey = currentActivePrimaryKey || lastActivePrimaryKey;
     // Primary tabs have one fixed baseline order. The current (or most
     // recently active) primary moves to the right edge and is the only primary
     // whose label renders on desktop/tablet. Non-primary navigation therefore
@@ -1425,9 +1447,7 @@ export default function MainNavs({
       const tab = baseExtraTabByKey.get(key);
       return tab ? [tab] : [];
     });
-    const recentExtraKeySet = new Set(
-      recentExtraNavTabs.map((tab) => tab.key)
-    );
+    const recentExtraKeySet = new Set(recentExtraNavTabs.map((tab) => tab.key));
     const extraNavTabs = [
       ...recentExtraNavTabs,
       ...baseExtraNavTabs.filter((tab) => !recentExtraKeySet.has(tab.key))
@@ -1577,23 +1597,19 @@ export default function MainNavs({
     target: contentPath ? `/${contentPath}` : null
   });
   const mobileProfileTabShown = Boolean(
-    profileNav &&
-      !mobileProfileCaptured &&
-      !mobileProfileDynamicTargetDismissed
+    profileNav && !mobileProfileCaptured && !mobileProfileDynamicTargetDismissed
   );
   const mobileContentTabShown = Boolean(
     contentTabShown &&
-      !mobileContentCaptured &&
-      !mobileContentDynamicTargetDismissed
+    !mobileContentCaptured &&
+    !mobileContentDynamicTargetDismissed
   );
   const availableMobileExtraTabKeys = [
     ...(mobileProfileTabShown ? ['profile'] : []),
     ...(mobileContentTabShown ? ['content'] : []),
     ...(mostRecentAddedTab ? [mostRecentAddedTab.id] : [])
   ];
-  const availableMobileExtraTabKeySet = new Set(
-    availableMobileExtraTabKeys
-  );
+  const availableMobileExtraTabKeySet = new Set(availableMobileExtraTabKeys);
   const mobileExtraTabKeys = extraNavTabs
     .map((tab) => tab.key)
     .filter((key) => availableMobileExtraTabKeySet.has(key));
@@ -2106,9 +2122,7 @@ export default function MainNavs({
               items: [
                 {
                   icon: addedTab.pinned ? 'thumbtack' : ['far', 'thumbtack'],
-                  label: addedTab.pinned
-                    ? 'Unpin this tab'
-                    : 'Pin this tab',
+                  label: addedTab.pinned ? 'Unpin this tab' : 'Pin this tab',
                   className: 'pin',
                   onClick: () => handleToggleTabPinned(addedTab.id)
                 },
@@ -2575,10 +2589,10 @@ export default function MainNavs({
     const customTab = customTabsRef.current.find((tab) => tab.id === key);
     return Boolean(
       renderedTab &&
-        !isTabletPortrait &&
-        !isSacredDefaultKey(key) &&
-        renderedTab.label &&
-        !customTab?.pinned
+      !isTabletPortrait &&
+      !isSacredDefaultKey(key) &&
+      renderedTab.label &&
+      !customTab?.pinned
     );
   }
 
@@ -2586,22 +2600,21 @@ export default function MainNavs({
     const renderedTab = getRenderedTab(key);
     if (!renderedTab || isSacredDefaultKey(key)) return null;
     const customTab = customTabs.find((tab) => tab.id === key);
-    const labelControlItems: TabMenuItem[] =
-      !tabSupportsLabelControl(key)
-        ? []
-        : [
-            renderedTab.minimized
-              ? {
-                  label: 'Expand',
-                  icon: 'expand',
-                  onClick: () => handleToggleTabMinimized(key)
-                }
-              : {
-                  label: 'Minimize',
-                  icon: 'compress',
-                  onClick: () => handleToggleTabMinimized(key)
-                }
-          ];
+    const labelControlItems: TabMenuItem[] = !tabSupportsLabelControl(key)
+      ? []
+      : [
+          renderedTab.minimized
+            ? {
+                label: 'Expand',
+                icon: 'expand',
+                onClick: () => handleToggleTabMinimized(key)
+              }
+            : {
+                label: 'Minimize',
+                icon: 'compress',
+                onClick: () => handleToggleTabMinimized(key)
+              }
+        ];
     if (key === 'content') {
       return [
         {

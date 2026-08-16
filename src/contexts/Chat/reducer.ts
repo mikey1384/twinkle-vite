@@ -13,6 +13,10 @@ import { objectify } from '~/helpers';
 import { prependUniqueIds } from '~/contexts/Content/idListHelpers';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { hasCanonicalChatMessage } from '~/helpers/chatRealtimeMessageIdentity';
+import {
+  hasVisibleCanonicalChatUnread,
+  projectCanonicalUnreadChannelLists
+} from '~/helpers/chatUnreadProjection';
 import { v1 as uuidv1 } from 'uuid';
 import type { CanonicalChatChannelVisibility } from '~/types/chat';
 import { shouldApplyChatNotificationSettings } from './notificationSettingsRevision';
@@ -639,6 +643,7 @@ function bufferCanonicalReactionUpdateDuringBootstrap({
 function getCanonicalUnreadScopeState(unreadState: any) {
   return {
     lastRead: Number(unreadState?.lastRead || 0),
+    lastReadMessageId: Number(unreadState?.lastReadMessageId || 0),
     numUnreads: Number(unreadState?.numUnreads || 0),
     lastUnreadUserId:
       unreadState?.lastUnreadUserId == null
@@ -663,6 +668,50 @@ function applyCanonicalUnreadScope(source: any, unreadState: any) {
   };
 }
 
+function applyCanonicalGlobalUnreadProjection(state: any, value: unknown) {
+  const numUnreads = Number(value);
+  if (!Number.isFinite(numUnreads) || numUnreads < 0) return state;
+  return {
+    ...state,
+    // A top-level alert without a corresponding canonical channel/subchannel
+    // badge is an impossible navigation state. Keep the server aggregate and
+    // its visible scope projection in the same reducer commit; if a channel is
+    // not loaded yet, its scoped reconciliation must land before the alert can.
+    numUnreads:
+      numUnreads > 0 &&
+      !hasVisibleCanonicalChatUnread({
+        channelsObj: state.channelsObj,
+        homeChannelIds: state.homeChannelIds,
+        favoriteChannelIds: state.favoriteChannelIds,
+        classChannelIds: state.classChannelIds
+      })
+        ? 0
+        : numUnreads
+  };
+}
+
+function canonicalUnreadScopeIsAtLeastAsNew({
+  incomingSource,
+  existingSource
+}: {
+  incomingSource: any;
+  existingSource: any;
+}) {
+  const incomingLastReadMessageId = Number(
+    incomingSource?.lastReadMessageId || 0
+  );
+  const existingLastReadMessageId = Number(
+    existingSource?.lastReadMessageId || 0
+  );
+  if (incomingLastReadMessageId !== existingLastReadMessageId) {
+    return incomingLastReadMessageId > existingLastReadMessageId;
+  }
+  return (
+    Number(incomingSource?.lastRead || 0) >=
+    Number(existingSource?.lastRead || 0)
+  );
+}
+
 function getLatestCanonicalUnreadScopeState({
   existingSource,
   serverSource
@@ -670,10 +719,13 @@ function getLatestCanonicalUnreadScopeState({
   existingSource: any;
   serverSource: any;
 }) {
-  const existingLastRead = Number(existingSource?.lastRead || 0);
-  const serverLastRead = Number(serverSource?.lastRead || 0);
   return getCanonicalUnreadScopeState(
-    existingLastRead > serverLastRead ? existingSource : serverSource
+    canonicalUnreadScopeIsAtLeastAsNew({
+      incomingSource: serverSource,
+      existingSource
+    })
+      ? serverSource
+      : existingSource
   );
 }
 
@@ -725,8 +777,10 @@ function bufferCanonicalUnreadStateDuringBootstrap({
     if (
       existingActivityRevision > incomingActivityRevision ||
       (existingActivityRevision === incomingActivityRevision &&
-        Number(existingScope?.lastRead || 0) >
-          Number(incomingScope?.lastRead || 0))
+        !canonicalUnreadScopeIsAtLeastAsNew({
+          incomingSource: incomingScope,
+          existingSource: existingScope
+        }))
     ) {
       return state;
     }
@@ -2157,7 +2211,36 @@ export default function ChatReducer(
       );
       if (channelId <= 0 || !unreadState.channel) return state;
 
-      const prevChannel = state.channelsObj[channelId];
+      const channelSummary = unreadState.channelSummary;
+      const hasCanonicalChannelSummary = Boolean(
+        channelSummary &&
+        Number(channelSummary.id || 0) === channelId &&
+        !channelSummary.isHidden
+      );
+      let nextState = state;
+      if (hasCanonicalChannelSummary) {
+        const channelLists = projectCanonicalUnreadChannelLists({
+          channelId,
+          isClass: Boolean(channelSummary.isClass),
+          favorited: Boolean(state.allFavoriteChannelIds[channelId]),
+          homeChannelIds: state.homeChannelIds,
+          favoriteChannelIds: state.favoriteChannelIds,
+          classChannelIds: state.classChannelIds
+        });
+        nextState = {
+          ...state,
+          ...channelLists,
+          channelsObj: {
+            ...state.channelsObj,
+            [channelId]: mergeCanonicalFavoriteChannelSummary({
+              canonicalChannel: channelSummary,
+              currentChannel: state.channelsObj[channelId],
+              visibility: state.channelVisibilityById?.[channelId]
+            })
+          }
+        };
+      }
+      const prevChannel = nextState.channelsObj[channelId];
       const currentActivityRevision = Number(
         loadChannelSettings(prevChannel?.settings).reactionActivityRevision || 0
       );
@@ -2165,15 +2248,15 @@ export default function ChatReducer(
         return state;
       }
 
-      let nextState = state;
       if (prevChannel) {
         let nextChannel = prevChannel;
         let appliedCanonicalReadState = false;
-        const incomingChannelLastRead = Number(
-          unreadState.channel?.lastRead || 0
-        );
-        const currentChannelLastRead = Number(prevChannel.lastRead || 0);
-        if (incomingChannelLastRead >= currentChannelLastRead) {
+        if (
+          canonicalUnreadScopeIsAtLeastAsNew({
+            incomingSource: unreadState.channel,
+            existingSource: prevChannel
+          })
+        ) {
           nextChannel = applyCanonicalUnreadScope(
             nextChannel,
             unreadState.channel
@@ -2183,13 +2266,12 @@ export default function ChatReducer(
         if (subchannelId > 0 && unreadState.subchannel) {
           const previousSubchannel =
             prevChannel.subchannelObj?.[subchannelId] || {};
-          const incomingSubchannelLastRead = Number(
-            unreadState.subchannel.lastRead || 0
-          );
-          const currentSubchannelLastRead = Number(
-            previousSubchannel.lastRead || 0
-          );
-          if (incomingSubchannelLastRead >= currentSubchannelLastRead) {
+          if (
+            canonicalUnreadScopeIsAtLeastAsNew({
+              incomingSource: unreadState.subchannel,
+              existingSource: previousSubchannel
+            })
+          ) {
             nextChannel = {
               ...nextChannel,
               subchannelObj: {
@@ -2207,19 +2289,24 @@ export default function ChatReducer(
           return state;
         }
         nextState = {
-          ...state,
+          ...nextState,
           channelsObj: {
-            ...state.channelsObj,
+            ...nextState.channelsObj,
             [channelId]: nextChannel
           }
         };
       }
 
-      return bufferCanonicalUnreadStateDuringBootstrap({
-        state: nextState,
-        unreadState,
-        eventSequence: action.eventSequence
-      });
+      const stateWithScopedProjection =
+        bufferCanonicalUnreadStateDuringBootstrap({
+          state: nextState,
+          unreadState,
+          eventSequence: action.eventSequence
+        });
+      return applyCanonicalGlobalUnreadProjection(
+        stateWithScopedProjection,
+        unreadState.numUnreads
+      );
     }
     case 'EDIT_CHANNEL_SETTINGS':
       return {
@@ -2953,18 +3040,16 @@ export default function ChatReducer(
             ...action.data.channel?.subchannelObj?.[
               action.data.currentSubchannelId
             ],
-            lastRead: Math.max(
-              Number(
+            ...getLatestCanonicalUnreadScopeState({
+              existingSource:
                 state.channelsObj[loadedChannel.id]?.subchannelObj?.[
                   action.data.currentSubchannelId
-                ]?.lastRead || 0
-              ),
-              Number(
+                ],
+              serverSource:
                 action.data.channel?.subchannelObj?.[
                   action.data.currentSubchannelId
-                ]?.lastRead || 0
-              )
-            ),
+                ]
+            }),
             messageIds:
               action.data.channel?.subchannelObj[
                 action.data.currentSubchannelId
@@ -3021,10 +3106,10 @@ export default function ChatReducer(
             : {}),
           [loadedChannel.id]: {
             ...loadedChannel,
-            lastRead: Math.max(
-              Number(existingLoadedChannel.lastRead || 0),
-              Number(loadedChannel.lastRead || 0)
-            ),
+            ...getLatestCanonicalUnreadScopeState({
+              existingSource: existingLoadedChannel,
+              serverSource: loadedChannel
+            }),
             lastUpdated: mergedChannelLastUpdated,
             settings: mergedChannelSettings,
             messagesLoadMoreButton,
@@ -3054,13 +3139,20 @@ export default function ChatReducer(
         },
         selectedChannelId: loadedChannel.id
       };
+      const enteredStateWithUnreadProjection =
+        action.data.numUnreads === undefined
+          ? enteredState
+          : applyCanonicalGlobalUnreadProjection(
+              enteredState,
+              action.data.numUnreads
+            );
       return action.data.quickAccess
-        ? ChatReducer(enteredState, {
+        ? ChatReducer(enteredStateWithUnreadProjection, {
             type: 'APPLY_CANONICAL_QUICK_ACCESS',
             quickAccess: action.data.quickAccess,
             userId: action.userId
           })
-        : enteredState;
+        : enteredStateWithUnreadProjection;
     }
     case 'ENTER_EMPTY_CHAT':
       return {
@@ -3193,10 +3285,7 @@ export default function ChatReducer(
       };
     }
     case 'GET_NUM_UNREAD_MSGS':
-      return {
-        ...state,
-        numUnreads: action.numUnreads
-      };
+      return applyCanonicalGlobalUnreadProjection(state, action.numUnreads);
     case 'HANG_UP': {
       const newChannelOnCallMembers = { ...state.channelOnCall?.members };
       delete newChannelOnCallMembers[action.memberId];
@@ -3344,9 +3433,9 @@ export default function ChatReducer(
         action.userId === state.prevUserId;
       const preserveSelectedProjection = Boolean(
         action.preserveSelectedProjection &&
-          action.userId === state.prevUserId &&
-          state.selectedChannelId != null &&
-          state.channelsObj[state.selectedChannelId]?.loaded
+        action.userId === state.prevUserId &&
+        state.selectedChannelId != null &&
+        state.channelsObj[state.selectedChannelId]?.loaded
       );
       let messagesLoadMoreButton = false;
       let classLoadMoreButton = false;
@@ -4019,7 +4108,10 @@ export default function ChatReducer(
         prevUserId: reconciledNextState.prevUserId,
         channelCount: Object.keys(reconciledNextState.channelsObj || {}).length
       });
-      return reconciledNextState;
+      return applyCanonicalGlobalUnreadProjection(
+        reconciledNextState,
+        reconciledNextState.numUnreads
+      );
     }
 
     case 'RECOVER_SELECTED_CHANNEL': {
@@ -5332,7 +5424,7 @@ export default function ChatReducer(
                   eventSequence: action.eventSequence,
                   isNewMessage: !action.isMyMessage
                 })
-              },
+              }
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -5351,8 +5443,7 @@ export default function ChatReducer(
               })
             : state.confirmedRealtimeActivityByChannel || {},
         confirmedRealtimeUnreadActivityByChannel:
-          shouldTrackConfirmedRealtimeActivity(state) &&
-          scopeWouldBeUnread
+          shouldTrackConfirmedRealtimeActivity(state) && scopeWouldBeUnread
             ? markConfirmedRealtimeActivity({
                 activityByChannel:
                   state.confirmedRealtimeUnreadActivityByChannel,
@@ -5480,7 +5571,15 @@ export default function ChatReducer(
           state.homeChannelIds.filter((_: number, index: number) =>
             action.isDuplicate ? index !== 0 : true
           )
-        )
+        ),
+        classChannelIds: action.isClass
+          ? [
+              action.message.channelId,
+              ...state.classChannelIds.filter(
+                (channelId: number) => channelId !== action.message.channelId
+              )
+            ]
+          : state.classChannelIds
       };
       return action.quickAccess
         ? ChatReducer(nextState, {
@@ -5503,27 +5602,37 @@ export default function ChatReducer(
       const realtimeEventKey = getRealtimeMessageEventKey(messageId);
       const prevChannelObj = state.channelsObj[action.channel.id];
       const subchannelId = action.message.subchannelId;
+      const channelShell = prevChannelObj || {
+        ...action.channel,
+        id: action.channel.id,
+        pathId: action.channel.pathId,
+        channelName: action.channel.channelName,
+        twoPeople: action.channel.twoPeople,
+        members: action.channel.members,
+        isHidden: false,
+        numUnreads: 0
+      };
       const subchannelObj = subchannelId
         ? {
-            ...prevChannelObj?.subchannelObj,
+            ...channelShell?.subchannelObj,
             [action.message.subchannelId]: {
-              ...prevChannelObj?.subchannelObj?.[subchannelId],
+              ...channelShell?.subchannelObj?.[subchannelId],
               numUnreads: Number(
-                prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
+                channelShell?.subchannelObj?.[subchannelId]?.numUnreads || 0
               ),
               messageIds: prependUniqueChatMessageId({
                 messageIds:
-                  prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds,
+                  channelShell?.subchannelObj?.[subchannelId]?.messageIds,
                 messageId
               }),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
+                ...channelShell?.subchannelObj?.[subchannelId]?.messagesObj,
                 [messageId]: toConfirmedRealtimeMessage({
                   message: action.message,
                   messageId,
                   eventSequence: action.eventSequence
                 })
-              },
+              }
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -5555,14 +5664,14 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channel.id]: subchannelId
             ? {
-                ...prevChannelObj,
+                ...channelShell,
                 subchannelObj,
                 lastUpdated: Math.max(
-                  Number(prevChannelObj?.lastUpdated || 0),
+                  Number(channelShell?.lastUpdated || 0),
                   Number(action.message.timeStamp || 0)
                 ),
                 lastMessageId: getConfirmedLastMessageId(
-                  prevChannelObj?.lastMessageId,
+                  channelShell?.lastMessageId,
                   action.message.id
                 )
               }

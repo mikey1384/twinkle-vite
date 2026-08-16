@@ -3,8 +3,10 @@ const SERVER_DISCONNECT_RECONNECT_SPREAD_MS = 4_000;
 const SOCKET_BIND_RETRY_MAX_MS = 30_000;
 
 export function getServerDisconnectReconnectDelayMs(
-  randomValue = Math.random()
+  randomValue = Math.random(),
+  plannedHandoff = false
 ) {
+  if (plannedHandoff) return 0;
   const boundedRandomValue = Number.isFinite(randomValue)
     ? Math.min(Math.max(randomValue, 0), 1)
     : 0;

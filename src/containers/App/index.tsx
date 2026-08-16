@@ -53,7 +53,7 @@ import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import {
   getStoredItem,
-  isExplicitAuthTokenRemovalStorageEvent,
+  isExplicitAuthLogoutStorageEvent,
   readAuthToken,
   setStoredItem
 } from '~/helpers/userDataHelpers';
@@ -254,7 +254,9 @@ export default function App() {
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
-  const onLogout = useAppContext((v) => v.user.actions.onLogout);
+  const onAdoptCrossTabLogout = useAppContext(
+    (v) => v.user.actions.onAdoptCrossTabLogout
+  );
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
@@ -294,8 +296,8 @@ export default function App() {
   const onSetSessionLoaded = useAppContext(
     (v) => v.user.actions.onSetSessionLoaded
   );
-  const canonicalSessionUserId = useAppContext(
-    (v) => Number(v.user.state.myState.userId || 0)
+  const canonicalSessionUserId = useAppContext((v) =>
+    Number(v.user.state.myState.userId || 0)
   );
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
@@ -357,8 +359,8 @@ export default function App() {
     useState(() => Boolean(userId && !readAuthToken().token));
   const awaitingCanonicalSession = Boolean(
     !sessionInterruption &&
-      (sessionCredentialUnavailable ||
-        (!canonicalSessionUserId && readAuthToken().token))
+    (sessionCredentialUnavailable ||
+      (!canonicalSessionUserId && readAuthToken().token))
   );
 
   const prevUserId = useRef(userId);
@@ -811,32 +813,34 @@ export default function App() {
 
   useEffect(() => {
     const handleAuthTokenStorageChange = (event: StorageEvent) => {
+      if (isExplicitAuthLogoutStorageEvent(event)) {
+        // The explicit marker is authoritative on its own, while the ordered
+        // token-removal event covers a tab that began listening between the
+        // two mutations. Both adopt the same idempotent transition and never
+        // publish another logout marker.
+        setSessionCredentialUnavailable(false);
+        authRef.current = null;
+        onAdoptCrossTabLogout();
+        return;
+      }
+
       if (event.key !== 'token') return;
 
       if (!event.newValue) {
-        if (!isExplicitAuthTokenRemovalStorageEvent(event)) {
-          // A token-removal event proves only that storage changed, not why.
-          // Preserve and repair a page-lifetime credential after Safari
-          // cleanup or an older buggy tab; if this page has no credential to
-          // repair, keep its signed-in projection behind the recovery screen.
-          const retainedToken = readAuthToken().token;
-          if (retainedToken) {
-            authRef.current = {
-              headers: { authorization: retainedToken }
-            };
-            setSessionCredentialUnavailable(false);
-          } else if (userId || getStoredItem('userId')) {
-            authRef.current = null;
-            setSessionCredentialUnavailable(true);
-          }
-          return;
+        // A token-removal event proves only that storage changed, not why.
+        // Preserve and repair a page-lifetime credential after Safari
+        // cleanup or an older buggy tab; if this page has no credential to
+        // repair, keep its signed-in projection behind the recovery screen.
+        const retainedToken = readAuthToken().token;
+        if (retainedToken) {
+          authRef.current = {
+            headers: { authorization: retainedToken }
+          };
+          setSessionCredentialUnavailable(false);
+        } else if (userId || getStoredItem('userId')) {
+          authRef.current = null;
+          setSessionCredentialUnavailable(true);
         }
-
-        // The dedicated logout signal plus token removal proves another
-        // same-origin tab explicitly signed out through Twinkle.
-        setSessionCredentialUnavailable(false);
-        authRef.current = null;
-        onLogout();
         return;
       }
 
@@ -872,7 +876,7 @@ export default function App() {
     };
     // `handleInit` is the component-owned canonical session pipeline.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onLogout]);
+  }, [onAdoptCrossTabLogout]);
 
   useEffect(() => {
     let offlineRecoveryTimer: number | null = null;
@@ -918,11 +922,7 @@ export default function App() {
       ) {
         return;
       }
-      void handleInit(
-        0,
-        Boolean(canonicalSessionUserId),
-        allowOfflineProbe
-      );
+      void handleInit(0, Boolean(canonicalSessionUserId), allowOfflineProbe);
     };
     const scheduleOfflineRecoveryProbe = () => {
       clearOfflineRecoveryProbe();
@@ -1105,14 +1105,11 @@ export default function App() {
             <UpdateNotice updateDetail={updateDetail} />
           </Suspense>
         )}
-        {!suppressHeader && (
-          awaitingCanonicalSession ? null : (
+        {!suppressHeader &&
+          (awaitingCanonicalSession ? null : (
             <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
-          )
-        )}
-        {awaitingCanonicalSession ? (
-          <SessionRecovery />
-        ) : null}
+          ))}
+        {awaitingCanonicalSession ? <SessionRecovery /> : null}
         <div
           id="App"
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
@@ -1129,93 +1126,99 @@ export default function App() {
             <Suspense fallback={<Loading />}>
               <NavigationRouteReadyObserver />
               <Routes>
-              <Route path="/users/:username/*" element={<Profile />} />
-              <Route path="/ai-stories/:contentId" element={<ContentPage />} />
-              <Route path="/comments/:contentId" element={<ContentPage />} />
-              <Route
-                path="/mission-passes/:contentId"
-                element={<ContentPage />}
-              />
-              <Route
-                path="/achievement-unlocks/:contentId"
-                element={<ContentPage />}
-              />
-              <Route
-                path="/daily-rewards/:contentId"
-                element={<ContentPage />}
-              />
-              <Route
-                path="/shared-prompts/:contentId"
-                element={<ContentPage />}
-              />
-              <Route
-                path="/daily-reflections/:contentId"
-                element={<ContentPage />}
-              />
-              <Route path="/videos/:videoId" element={<VideoPage />} />
-              <Route path="/videos/:videoId/*" element={<VideoPage />} />
-              <Route path="/links/:linkId" element={<LinkPage />} />
-              <Route path="/subjects/:contentId" element={<ContentPage />} />
-              <Route path="/explore" element={<ExploreRedirect />} />
-              <Route
-                path="/ai-cards"
-                element={<Explore category="ai-cards" />}
-              />
-              <Route path="/videos" element={<Explore category="videos" />} />
-              <Route path="/links" element={<Explore category="links" />} />
-              <Route
-                path="/subjects"
-                element={<Explore category="subjects" />}
-              />
-              <Route path="/playlists/*" element={<PlaylistPage />} />
-              <Route
-                path="/missions/:missionType/*"
-                element={<MissionPage />}
-              />
-              <Route path="/missions" element={<Mission />} />
-              <Route
-                path="/build/preview/*"
-                element={<BuildPreviewPassthrough />}
-              />
-              <Route path="/build/*" element={<Build />} />
-              <Route path="/prompts/*" element={<Prompts />} />
-              <Route
-                path="/app-capture/:buildId"
-                element={<BuildThumbnailCaptureHost />}
-              />
-              <Route
-                path="/app/:buildId/*"
-                element={<BuildRuntimeKeepAliveRoute />}
-              />
-              <Route path="/cli" element={<CliDeviceAuth />} />
-              <Route
-                path="/chat/*"
-                element={<Chat onFileUpload={handleFileUploadOnChat} />}
-              />
-              <Route path="/management/*" element={<Management />} />
-              <Route path="/reset/*" element={<ResetPassword />} />
-              <Route path="/verify/*" element={<Verify />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/users" element={<Home section="people" />} />
-              <Route path="/groups" element={<Home section="group" />} />
-              <Route
-                path="/achievements"
-                element={<Home section="achievement" />}
-              />
-              <Route
-                path="/achievements/:achievementType"
-                element={<AchievementPage />}
-              />
-              <Route path="/settings" element={<Home section="store" />} />
-              <Route path="/earn" element={<Home section="earn" />} />
-              <Route
-                path="/"
-                element={
-                  <Home section="story" onFileUpload={handleFileUploadOnHome} />
-                }
-              />
-              <Route path="/:username/*" element={<Redirect />} />
-              <Route path="*" element={<InvalidPage />} />
+                <Route path="/users/:username/*" element={<Profile />} />
+                <Route
+                  path="/ai-stories/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route path="/comments/:contentId" element={<ContentPage />} />
+                <Route
+                  path="/mission-passes/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route
+                  path="/achievement-unlocks/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route
+                  path="/daily-rewards/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route
+                  path="/shared-prompts/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route
+                  path="/daily-reflections/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route path="/videos/:videoId" element={<VideoPage />} />
+                <Route path="/videos/:videoId/*" element={<VideoPage />} />
+                <Route path="/links/:linkId" element={<LinkPage />} />
+                <Route path="/subjects/:contentId" element={<ContentPage />} />
+                <Route path="/explore" element={<ExploreRedirect />} />
+                <Route
+                  path="/ai-cards"
+                  element={<Explore category="ai-cards" />}
+                />
+                <Route path="/videos" element={<Explore category="videos" />} />
+                <Route path="/links" element={<Explore category="links" />} />
+                <Route
+                  path="/subjects"
+                  element={<Explore category="subjects" />}
+                />
+                <Route path="/playlists/*" element={<PlaylistPage />} />
+                <Route
+                  path="/missions/:missionType/*"
+                  element={<MissionPage />}
+                />
+                <Route path="/missions" element={<Mission />} />
+                <Route
+                  path="/build/preview/*"
+                  element={<BuildPreviewPassthrough />}
+                />
+                <Route path="/build/*" element={<Build />} />
+                <Route path="/prompts/*" element={<Prompts />} />
+                <Route
+                  path="/app-capture/:buildId"
+                  element={<BuildThumbnailCaptureHost />}
+                />
+                <Route
+                  path="/app/:buildId/*"
+                  element={<BuildRuntimeKeepAliveRoute />}
+                />
+                <Route path="/cli" element={<CliDeviceAuth />} />
+                <Route
+                  path="/chat/*"
+                  element={<Chat onFileUpload={handleFileUploadOnChat} />}
+                />
+                <Route path="/management/*" element={<Management />} />
+                <Route path="/reset/*" element={<ResetPassword />} />
+                <Route path="/verify/*" element={<Verify />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/users" element={<Home section="people" />} />
+                <Route path="/groups" element={<Home section="group" />} />
+                <Route
+                  path="/achievements"
+                  element={<Home section="achievement" />}
+                />
+                <Route
+                  path="/achievements/:achievementType"
+                  element={<AchievementPage />}
+                />
+                <Route path="/settings" element={<Home section="store" />} />
+                <Route path="/earn" element={<Home section="earn" />} />
+                <Route
+                  path="/"
+                  element={
+                    <Home
+                      section="story"
+                      onFileUpload={handleFileUploadOnHome}
+                    />
+                  }
+                />
+                <Route path="/:username/*" element={<Redirect />} />
+                <Route path="*" element={<InvalidPage />} />
               </Routes>
             </Suspense>
           ) : null}
