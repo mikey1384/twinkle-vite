@@ -446,7 +446,9 @@ test('an offline start keeps the session and rehydrates after connectivity retur
     /!sessionInterruption &&[\s\S]*sessionCredentialUnavailable[\s\S]*!canonicalSessionUserId && readAuthToken\(\)\.token/
   );
   assert.match(app, /data-session-recovery="true"/);
-  assert.match(app, /Twinkle has not logged you out/);
+  assert.match(app, /Restoring your session…/);
+  assert.doesNotMatch(app, /Your session is saved/);
+  assert.doesNotMatch(app, /Twinkle has not logged you out/);
   assert.match(
     app,
     /!awaitingCanonicalSession \? \([\s\S]*?<Routes>[\s\S]*?<Route\s+path="\/chat\/\*"/

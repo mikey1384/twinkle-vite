@@ -178,13 +178,6 @@ const sessionRecoveryClass = css`
   > div {
     width: min(48rem, 100%);
   }
-
-  p {
-    margin: 0.8rem auto 0;
-    color: ${Color.darkerGray()};
-    font-size: 1.5rem;
-    line-height: 1.5;
-  }
 `;
 
 function BuildRuntimeLoading() {
@@ -195,7 +188,7 @@ function BuildRuntimeLoading() {
   );
 }
 
-function SessionRecovery({ offline }: { offline: boolean }) {
+function SessionRecovery() {
   return (
     <section
       className={sessionRecoveryClass}
@@ -203,17 +196,7 @@ function SessionRecovery({ offline }: { offline: boolean }) {
       data-session-recovery="true"
     >
       <div>
-        <Loading
-          text={
-            offline
-              ? 'Your session is saved. Waiting for internet…'
-              : 'Restoring your saved session…'
-          }
-        />
-        <p>
-          Twinkle has not logged you out. Your account will reconnect
-          automatically when the server is reachable.
-        </p>
+        <Loading text="Restoring your session…" />
       </div>
     </section>
   );
@@ -1128,7 +1111,7 @@ export default function App() {
           )
         )}
         {awaitingCanonicalSession ? (
-          <SessionRecovery offline={browserReportsOffline()} />
+          <SessionRecovery />
         ) : null}
         <div
           id="App"
