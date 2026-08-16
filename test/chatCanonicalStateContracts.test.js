@@ -258,7 +258,7 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   );
   assert.match(
     aiSocketSource,
-    /messageScopeIsActivelyVisible[\s\S]*?reconcileChannelLastRead\(channelId\)[\s\S]*?reconcileChannelUnreadActivity\(\{ channelId \}\)/m
+    /messageScopeIsActivelyVisible[\s\S]*?reconcileChannelLastRead\(channelId, message\.id\)[\s\S]*?reconcileChannelUnreadActivity\(\{ channelId \}\)/m
   );
   assert.doesNotMatch(aiSocketSource, /numUnreads:\s*1/);
   assert.match(
@@ -308,7 +308,11 @@ test('chat visibility follows the rendered body independently from presence', ()
   );
   assert.match(
     aiSocketSource,
-    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?messageScopeIsActivelyVisible[\s\S]*?if \(messageScopeIsActivelyVisible\) \{\s*void reconcileChannelLastRead\(channelId\)/
+    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?messageScopeIsActivelyVisible[\s\S]*?currentSubchannelId === 0[\s\S]*?if \(messageScopeIsActivelyVisible\) \{[\s\S]*?reconcileChannelLastRead\(channelId, message\.id\)/
+  );
+  assert.match(
+    socketManagerSource,
+    /useAISocket\(\{[\s\S]*?subchannelId,[\s\S]*?usingChatRef/
   );
   assert.doesNotMatch(aiSocketSource, /selectedChannelIdRef/);
 });
@@ -350,7 +354,7 @@ test('navigation and live activity reconcile only the visible chat scope', () =>
   );
   assert.match(
     channelSource,
-    /const badgeShown = useMemo\(\(\) => \{\s*return !selected && totalNumUnreads > 0;/
+    /const badgeShown =\s*!selected && canonicalUnreadBadgeIsShown\(totalNumUnreads\)/
   );
   assert.match(
     socketSource,
@@ -400,7 +404,10 @@ test('sidebar and member-leave paths consume canonical scoped unread state', () 
   );
 
   assert.doesNotMatch(channelSource, /lastUnreadSenderId|lastSenderId/);
-  assert.match(subchannelSource, /!subchannelSelected && numUnreads > 0/);
+  assert.match(
+    subchannelSource,
+    /badgeShown =\s*!subchannelSelected && canonicalUnreadBadgeIsShown\(numUnreads\)/
+  );
   assert.doesNotMatch(
     subchannelSource,
     /lastUnreadSenderId|lastMessage\?\.userId/

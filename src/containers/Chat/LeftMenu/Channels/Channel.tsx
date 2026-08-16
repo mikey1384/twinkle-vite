@@ -399,11 +399,12 @@ export default function Channel({
     selectedChannelId
   ]);
 
-  // Selection only proves that the route changed. Keep the writer-confirmed
-  // unread badge visible until the channel-open response advances the
-  // canonical read cursor; otherwise leaving quickly can reveal a top-nav
-  // alert for a badge this menu optimistically hid.
-  const badgeShown = canonicalUnreadBadgeIsShown(totalNumUnreads);
+  // The active row is already the user's reading surface, so its unread badge
+  // would be a contradictory navigation cue. Keep the canonical count intact
+  // while the writer-backed read acknowledgement settles; only suppress its
+  // presentation for the currently active channel.
+  const badgeShown =
+    !selected && canonicalUnreadBadgeIsShown(totalNumUnreads);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">

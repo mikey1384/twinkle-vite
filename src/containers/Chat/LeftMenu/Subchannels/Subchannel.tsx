@@ -31,10 +31,11 @@ export default function Subchannel({
   );
 
   const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
-  // The selected route is not the read-state authority. The writer response
-  // clears this count after the visible visit is recorded; until then the dot
-  // must remain consistent with the aggregate Chat navigation alert.
-  const badgeShown = canonicalUnreadBadgeIsShown(numUnreads);
+  // An active subchannel is the scope being read, so its badge is not useful as
+  // a navigation cue. The canonical count remains untouched until the writer
+  // confirms the read acknowledgement.
+  const badgeShown =
+    !subchannelSelected && canonicalUnreadBadgeIsShown(numUnreads);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels/Subchannel">

@@ -24,10 +24,12 @@ import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler
 export default function useAISocket({
   activeChatChannelIdRef,
   usingChatRef,
+  subchannelId,
   aiCallChannelId
 }: {
   activeChatChannelIdRef: React.RefObject<number | null>;
   usingChatRef: React.RefObject<boolean>;
+  subchannelId: number;
   aiCallChannelId: number;
 }) {
   const navigate = useNavigate();
@@ -65,11 +67,13 @@ export default function useAISocket({
     Record<number, { timer: ReturnType<typeof setTimeout>; messageId: number }>
   >({});
   const pageVisibleRef = useRef(pageVisible);
+  const subchannelIdRef = useRef(subchannelId);
   const aiCallChannelIdRef = useRef(aiCallChannelId);
   const chatNotificationSettingsRef = useRef(chatNotificationSettings);
   const userIdRef = useRef(userId);
   channelsObjRef.current = channelsObj;
   pageVisibleRef.current = pageVisible;
+  subchannelIdRef.current = subchannelId;
   aiCallChannelIdRef.current = aiCallChannelId;
   chatNotificationSettingsRef.current = chatNotificationSettings;
   userIdRef.current = userId;
@@ -467,6 +471,7 @@ export default function useAISocket({
     }) {
       const currentChannelsObj = channelsObjRef.current;
       const currentPageVisible = pageVisibleRef.current;
+      const currentSubchannelId = Number(subchannelIdRef.current || 0);
       const channelState = currentChannelsObj[channelId];
       if (channelState?.cancelledMessageIds?.has(message.id)) {
         return;
@@ -497,7 +502,8 @@ export default function useAISocket({
       const messageScopeIsActivelyVisible = Boolean(
         messageIsForActiveChannel &&
           currentPageVisible &&
-          usingChatRef.current
+          usingChatRef.current &&
+          currentSubchannelId === 0
       );
       const appliedMessage = {
         ...message,
@@ -506,11 +512,16 @@ export default function useAISocket({
           message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
       };
       if (messageScopeIsActivelyVisible) {
-        void reconcileChannelLastRead(channelId);
+        // The AI placeholder was persisted before this server event, but it is
+        // not in channelsObj until the reducer below runs. Carry that exact
+        // confirmed id into the writer-backed read mutation so the arriving
+        // reply, rather than only the previous message, becomes read.
+        void reconcileChannelLastRead(channelId, message.id);
         onReceiveMessage({
           message: appliedMessage,
           pageVisible: currentPageVisible,
-          usingChat: usingChatRef.current
+          usingChat: usingChatRef.current,
+          currentSubchannelId
         });
       } else if (messageIsForActiveChannel) {
         // The selected channel remains mounted while Safari is hidden or the
@@ -520,7 +531,8 @@ export default function useAISocket({
         onReceiveMessage({
           message: appliedMessage,
           pageVisible: currentPageVisible,
-          usingChat: usingChatRef.current
+          usingChat: usingChatRef.current,
+          currentSubchannelId
         });
       } else {
         void reconcileChannelUnreadActivity({ channelId });

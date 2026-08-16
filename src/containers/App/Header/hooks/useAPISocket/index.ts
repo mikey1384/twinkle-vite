@@ -157,7 +157,12 @@ export default function useAPISocket({
     usingChatRef
   });
   useAICardSocket();
-  useAISocket({ activeChatChannelIdRef, aiCallChannelId, usingChatRef });
+  useAISocket({
+    activeChatChannelIdRef,
+    aiCallChannelId,
+    subchannelId,
+    usingChatRef
+  });
   useBuildSocket();
   useCallSocket({
     channelsObj,

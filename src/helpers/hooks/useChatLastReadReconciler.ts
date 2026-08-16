@@ -4,6 +4,7 @@ import {
   getChatUnreadActivityRevision,
   markChatUnreadActivity
 } from '~/helpers/chatUnreadActivity';
+import { getVisibleChatReadMessageId } from '~/helpers/chatReadCursor';
 import type { CanonicalChatChannelUnreadState } from '~/types/chat';
 
 const MAX_FRESH_READ_ATTEMPTS = 3;
@@ -33,27 +34,31 @@ export default function useChatLastReadReconciler() {
 
   function getVisibleReadMessageId({
     channelId,
-    subchannelId
+    subchannelId,
+    confirmedMessageId
   }: {
     channelId: number;
     subchannelId: number;
+    confirmedMessageId?: unknown;
   }) {
     const channel = channelsObjRef.current?.[channelId];
     const scope = subchannelId
       ? channel?.subchannelObj?.[subchannelId]
       : channel;
-    return Math.max(
-      0,
-      ...(scope?.messageIds || []).map((messageId: number) =>
-        Number(messageId || 0)
-      )
-    );
+    return getVisibleChatReadMessageId({
+      confirmedMessageId,
+      visibleMessageIds: scope?.messageIds
+    });
   }
 
-  function reconcileChannelLastRead(channelId: number) {
+  function reconcileChannelLastRead(
+    channelId: number,
+    confirmedMessageId?: unknown
+  ) {
     const lastReadMessageId = getVisibleReadMessageId({
       channelId,
-      subchannelId: 0
+      subchannelId: 0,
+      confirmedMessageId
     });
     return reconcileLastRead({
       request: () => updateChatLastRead({ channelId, lastReadMessageId }),

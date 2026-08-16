@@ -23,7 +23,7 @@ const subchannelMenuSource = readFileSync(
   'utf8'
 );
 
-test('a route selection cannot hide writer-confirmed unread state', () => {
+test('an active scope suppresses its navigation badge without changing canonical state', () => {
   assert.equal(canonicalUnreadBadgeIsShown(1), true);
   assert.equal(canonicalUnreadBadgeIsShown('2'), true);
   assert.equal(canonicalUnreadBadgeIsShown(0), false);
@@ -31,14 +31,12 @@ test('a route selection cannot hide writer-confirmed unread state', () => {
   assert.equal(canonicalUnreadBadgeIsShown(-1), false);
   assert.match(
     channelMenuSource,
-    /badgeShown = canonicalUnreadBadgeIsShown\(totalNumUnreads\)/
+    /badgeShown =\s*!selected && canonicalUnreadBadgeIsShown\(totalNumUnreads\)/
   );
   assert.match(
     subchannelMenuSource,
-    /badgeShown = canonicalUnreadBadgeIsShown\(numUnreads\)/
+    /badgeShown =\s*!subchannelSelected && canonicalUnreadBadgeIsShown\(numUnreads\)/
   );
-  assert.doesNotMatch(channelMenuSource, /!selected && totalNumUnreads/);
-  assert.doesNotMatch(subchannelMenuSource, /!subchannelSelected && numUnreads/);
 });
 
 test('a listed channel or subchannel unread is a visible canonical badge', () => {

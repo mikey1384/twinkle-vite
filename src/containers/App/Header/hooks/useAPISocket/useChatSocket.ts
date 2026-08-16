@@ -24,6 +24,7 @@ import {
   getChatUnreadActivityRevision,
   markChatUnreadActivity
 } from '~/helpers/chatUnreadActivity';
+import { getVisibleChatReadMessageId } from '~/helpers/chatReadCursor';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
 import type {
   CanonicalChatChannelUnreadState,
@@ -338,13 +339,10 @@ export default function useChatSocket({
       const scope = normalizedSubchannelId
         ? channel?.subchannelObj?.[normalizedSubchannelId]
         : channel;
-      const lastReadMessageId = Math.max(
-        Number(eventMessageId || 0),
-        0,
-        ...(scope?.messageIds || []).map((messageId: number) =>
-          Number(messageId || 0)
-        )
-      );
+      const lastReadMessageId = getVisibleChatReadMessageId({
+        confirmedMessageId: eventMessageId,
+        visibleMessageIds: scope?.messageIds
+      });
       const previousMainWrite = lastReadWriteRef.current.channel[channelId];
       const previousSubchannelWrite =
         lastReadWriteRef.current.subchannel[normalizedSubchannelId];
