@@ -1,10 +1,45 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  canonicalUnreadBadgeIsShown,
   channelHasCanonicalUnread,
   hasVisibleCanonicalChatUnread,
   projectCanonicalUnreadChannelLists
 } from '../src/helpers/chatUnreadProjection';
+
+const channelMenuSource = readFileSync(
+  new URL(
+    '../src/containers/Chat/LeftMenu/Channels/Channel.tsx',
+    import.meta.url
+  ),
+  'utf8'
+);
+const subchannelMenuSource = readFileSync(
+  new URL(
+    '../src/containers/Chat/LeftMenu/Subchannels/Subchannel.tsx',
+    import.meta.url
+  ),
+  'utf8'
+);
+
+test('a route selection cannot hide writer-confirmed unread state', () => {
+  assert.equal(canonicalUnreadBadgeIsShown(1), true);
+  assert.equal(canonicalUnreadBadgeIsShown('2'), true);
+  assert.equal(canonicalUnreadBadgeIsShown(0), false);
+  assert.equal(canonicalUnreadBadgeIsShown(Number.NaN), false);
+  assert.equal(canonicalUnreadBadgeIsShown(-1), false);
+  assert.match(
+    channelMenuSource,
+    /badgeShown = canonicalUnreadBadgeIsShown\(totalNumUnreads\)/
+  );
+  assert.match(
+    subchannelMenuSource,
+    /badgeShown = canonicalUnreadBadgeIsShown\(numUnreads\)/
+  );
+  assert.doesNotMatch(channelMenuSource, /!selected && totalNumUnreads/);
+  assert.doesNotMatch(subchannelMenuSource, /!subchannelSelected && numUnreads/);
+});
 
 test('a listed channel or subchannel unread is a visible canonical badge', () => {
   assert.equal(channelHasCanonicalUnread({ numUnreads: 2 }), true);

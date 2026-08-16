@@ -1,8 +1,14 @@
+export function canonicalUnreadBadgeIsShown(numUnreads: unknown) {
+  const canonicalCount = Number(numUnreads || 0);
+  return Number.isFinite(canonicalCount) && canonicalCount > 0;
+}
+
 export function channelHasCanonicalUnread(channel: any) {
   if (!channel || channel.isHidden) return false;
-  if (Number(channel.numUnreads || 0) > 0) return true;
+  if (canonicalUnreadBadgeIsShown(channel.numUnreads)) return true;
   return Object.values(channel.subchannelObj || {}).some(
-    (subchannel: any) => Number(subchannel?.numUnreads || 0) > 0
+    (subchannel: any) =>
+      canonicalUnreadBadgeIsShown(subchannel?.numUnreads)
   );
 }
 

@@ -9,8 +9,10 @@ import {
   reactionsObj
 } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
-import LocalContext from '../../Context';import ErrorBoundary from '~/components/ErrorBoundary';
+import LocalContext from '../../Context';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { canonicalUnreadBadgeIsShown } from '~/helpers/chatUnreadProjection';
 
 const deletedLabel = 'Deleted';
 
@@ -397,9 +399,11 @@ export default function Channel({
     selectedChannelId
   ]);
 
-  const badgeShown = useMemo(() => {
-    return !selected && totalNumUnreads > 0;
-  }, [selected, totalNumUnreads]);
+  // Selection only proves that the route changed. Keep the writer-confirmed
+  // unread badge visible until the channel-open response advances the
+  // canonical read cursor; otherwise leaving quickly can reveal a top-nav
+  // alert for a badge this menu optimistically hid.
+  const badgeShown = canonicalUnreadBadgeIsShown(totalNumUnreads);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">

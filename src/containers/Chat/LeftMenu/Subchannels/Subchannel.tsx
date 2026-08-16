@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Link } from 'react-router-dom';
+import { canonicalUnreadBadgeIsShown } from '~/helpers/chatUnreadProjection';
 
 export default function Subchannel({
   chatUnreadColor,
@@ -30,9 +31,10 @@ export default function Subchannel({
   );
 
   const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
-  const badgeShown = useMemo(() => {
-    return !subchannelSelected && numUnreads > 0;
-  }, [numUnreads, subchannelSelected]);
+  // The selected route is not the read-state authority. The writer response
+  // clears this count after the visible visit is recorded; until then the dot
+  // must remain consistent with the aggregate Chat navigation alert.
+  const badgeShown = canonicalUnreadBadgeIsShown(numUnreads);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels/Subchannel">
