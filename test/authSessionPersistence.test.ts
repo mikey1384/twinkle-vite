@@ -58,7 +58,7 @@ test('auth token persistence is confirmed by a storage round trip', (t) => {
 });
 
 test('auth token persistence fails closed when mobile storage drops the write', (t) => {
-  const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjk4NzY1NDMyMX0.signature';
+  const token = 'synthetic-session-token';
   const sessionGenerationBefore = getNavSessionMeta('987654321').sessionGen;
   installStorage(t, {
     getItem: () => null,
@@ -236,8 +236,7 @@ test('an authoritative cross-tab logout clears the page fallback credential', (t
 });
 
 test('a canonical rejection retires the exact credential without storing it in the signal', (t) => {
-  const rejectedToken =
-    'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjI2MywidmVyIjowfQ.rejected-signature';
+  const rejectedToken = 'synthetic-rejected-token';
   const values = new Map<string, string>([['token', rejectedToken]]);
   installStorage(t, {
     getItem: (key) => values.get(key) || null,
