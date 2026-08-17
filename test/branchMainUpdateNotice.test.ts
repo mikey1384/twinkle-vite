@@ -542,13 +542,10 @@ test('update-from-main has a terminal deadline and reconciles an ambiguous resul
     'utf8'
   );
 
+  assert.match(requestSource, /BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS\s*=\s*90_000/);
   assert.match(
     requestSource,
-    /UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS\s*=\s*90_000/
-  );
-  assert.match(
-    requestSource,
-    /update-from-main[\s\S]*?maxRetries:\s*0,[\s\S]*?totalTimeoutMs:\s*UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS/
+    /update-from-main[\s\S]*?maxRetries:\s*0,[\s\S]*?totalTimeoutMs:\s*BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS/
   );
   assert.match(
     editorSource,
@@ -564,7 +561,7 @@ test('update-from-main has a terminal deadline and reconciles an ambiguous resul
   );
   assert.match(
     editorSource,
-    /const boundedRead = \{[\s\S]*?collapseKey:\s*null,[\s\S]*?maxRetries:\s*0,[\s\S]*?BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS/
+    /reconcileBuildFromWriter\(target\.contributionBuildId\)[\s\S]*?collapseKey:\s*null,[\s\S]*?maxRetries:\s*0,[\s\S]*?BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS/
   );
   assert.match(
     editorSource,
@@ -573,6 +570,37 @@ test('update-from-main has a terminal deadline and reconciles an ambiguous resul
   assert.match(
     editorSource,
     /Reload this branch to check its saved state before trying again/
+  );
+});
+
+test('reset-to-main uses a long terminal deadline and reconciles an ambiguous result', () => {
+  const requestSource = readFileSync(
+    new URL('../src/contexts/requestHelpers/build.ts', import.meta.url),
+    'utf8'
+  );
+  const editorSource = readFileSync(
+    new URL('../src/containers/Build/Editor/index.tsx', import.meta.url),
+    'utf8'
+  );
+  const branchesSource = readFileSync(
+    new URL(
+      '../src/containers/Build/Editor/hooks/useBranches.ts',
+      import.meta.url
+    ),
+    'utf8'
+  );
+
+  assert.match(
+    requestSource,
+    /reset-to-main[\s\S]*?maxRetries:\s*0,[\s\S]*?totalTimeoutMs:\s*BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS/
+  );
+  assert.match(
+    editorSource,
+    /function reconcileBuildFromWriter[\s\S]*?fromWriter:\s*true,[\s\S]*?collapseKey:\s*null,[\s\S]*?maxRetries:\s*0,[\s\S]*?BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS/
+  );
+  assert.match(
+    branchesSource,
+    /error\?\.isTransportError[\s\S]*?reconcileBuildFromWriter\([\s\S]*?contributionBuildId[\s\S]*?typeof canonicalBuild\.contributionRevisionHash === 'string'[\s\S]*?canonicalBuild\.contributionRevisionHash === ''[\s\S]*?saved server state/
   );
 });
 

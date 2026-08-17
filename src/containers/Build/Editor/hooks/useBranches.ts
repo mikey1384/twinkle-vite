@@ -73,6 +73,7 @@ interface UseBuildEditorBranchesOptions {
   replaceMainWithBuildContribution: (
     options: Record<string, any>
   ) => Promise<any>;
+  reconcileBuildFromWriter: (buildId: number) => Promise<Build | null>;
   resetBuildContributionToMain: (options: Record<string, any>) => Promise<any>;
   userId: number;
 }
@@ -96,6 +97,7 @@ export default function useBranches({
   prepareProjectFilesForContributionAction,
   replaceBuildContributionIntoMyBranch,
   replaceMainWithBuildContribution,
+  reconcileBuildFromWriter,
   resetBuildContributionToMain,
   userId
 }: UseBuildEditorBranchesOptions) {
@@ -714,7 +716,8 @@ export default function useBranches({
     setContributionActionError('');
     const assetTransferOperationId = beginRuntimeAssetTransferProgress();
     try {
-      const preparedFiles = await handleBeforeContributionAction('reset-to-main');
+      const preparedFiles =
+        await handleBeforeContributionAction('reset-to-main');
       if (!preparedFiles.ready) return;
       const result = await resetBuildContributionToMain({
         buildId: rootBuildId,
@@ -738,6 +741,36 @@ export default function useBranches({
         );
       }
     } catch (error: any) {
+      if (error?.isTransportError) {
+        try {
+          const canonicalBuild =
+            await reconcileBuildFromWriter(contributionBuildId);
+          if (canonicalBuild) {
+            if (
+              typeof canonicalBuild.contributionRevisionHash === 'string' &&
+              canonicalBuild.contributionRevisionHash === ''
+            ) {
+              // The writer proves the requested end state despite the lost
+              // response. The canonical files are already applied above.
+              setContributionActionError('');
+              return;
+            }
+            setContributionActionError(
+              'The reset did not return a final result. This branch now shows its saved server state; check it before trying again.'
+            );
+            return;
+          }
+        } catch (recoveryError) {
+          console.error(
+            'Failed to reconcile reset-to-main from canonical state:',
+            recoveryError
+          );
+        }
+        setContributionActionError(
+          'The reset did not return a final result. Reload this branch to check its saved state before trying again.'
+        );
+        return;
+      }
       setContributionActionError(
         error?.response?.data?.error ||
           error?.message ||

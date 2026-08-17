@@ -5,7 +5,7 @@ import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { RequestHelpers } from '~/types';
 
-const UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS = 90_000;
+const BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS = 90_000;
 
 export default function buildRequestHelpers({
   auth,
@@ -2434,7 +2434,10 @@ export default function buildRequestHelpers({
           {
             ...(assetTransferOperationId ? { assetTransferOperationId } : {})
           },
-          auth()
+          getBuildRequestConfig({
+            maxRetries: 0,
+            totalTimeoutMs: BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS
+          })
         );
         return data;
       } catch (error) {
@@ -2464,7 +2467,7 @@ export default function buildRequestHelpers({
           },
           getBuildRequestConfig({
             maxRetries: 0,
-            totalTimeoutMs: UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS
+            totalTimeoutMs: BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS
           })
         );
         return data;

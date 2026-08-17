@@ -642,10 +642,29 @@ export default function BuildEditor({
 
   async function handleBuildReloadFromServer() {
     const expectedBuildId = Number(build.id || 0);
-    const buildPayload = await loadBuild(expectedBuildId, {
-      fromWriter: true
+    await loadAndApplyCanonicalBuild(expectedBuildId, { fromWriter: true });
+  }
+
+  async function loadAndApplyCanonicalBuild(
+    expectedBuildId: number,
+    options: {
+      fromWriter?: boolean;
+      collapseKey?: string | null;
+      maxRetries?: number;
+      totalTimeoutMs?: number;
+    }
+  ) {
+    const buildPayload = await loadBuild(expectedBuildId, options);
+    return applyCanonicalBuildPayload(buildPayload, expectedBuildId);
+  }
+
+  function reconcileBuildFromWriter(expectedBuildId: number) {
+    return loadAndApplyCanonicalBuild(expectedBuildId, {
+      fromWriter: true,
+      collapseKey: null,
+      maxRetries: 0,
+      totalTimeoutMs: BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS
     });
-    applyCanonicalBuildPayload(buildPayload, expectedBuildId);
   }
   const {
     availableVersions,
@@ -717,6 +736,7 @@ export default function BuildEditor({
       prepareProjectFilesForContributionAction(options),
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
+    reconcileBuildFromWriter,
     resetBuildContributionToMain,
     userId
   });
@@ -1590,26 +1610,16 @@ export default function BuildEditor({
     rootBuildId: number;
     contributionBuildId: number;
   }) {
-    const boundedRead = {
-      collapseKey: null,
-      maxRetries: 0,
-      totalTimeoutMs: BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS
-    } as const;
-    const [buildPayload, contributionState] = await Promise.all([
-      loadBuild(target.contributionBuildId, {
-        fromWriter: true,
-        ...boundedRead
-      }),
+    const [canonicalBuild, contributionState] = await Promise.all([
+      reconcileBuildFromWriter(target.contributionBuildId),
       loadBuildContribution({
         buildId: target.rootBuildId,
         contributionBuildId: target.contributionBuildId,
-        ...boundedRead
+        collapseKey: null,
+        maxRetries: 0,
+        totalTimeoutMs: BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS
       }).catch(() => null)
     ]);
-    const canonicalBuild = applyCanonicalBuildPayload(
-      buildPayload,
-      target.contributionBuildId
-    );
     if (!canonicalBuild) return null;
     const conflictPaths = getContributionConflictMarkerPaths(
       canonicalBuild.projectFiles
