@@ -8,6 +8,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { setAnalyticsUser, trackEvent } from '~/helpers/analytics';
 import { useAppContext } from '~/contexts';
+import type { SessionInterruption } from '~/helpers/sessionInterruption';
 import { css } from '@emotion/css';
 const enterYourUsernameLabel = 'Enter your username';
 const enterYourPasswordLabel = 'Enter your password';
@@ -17,11 +18,13 @@ const logMeInLabel = 'Log me in!';
 const yourUsernameAndPasswordLabel = `What's your username and password?`;
 
 export default function LoginForm({
+  sessionInterruption,
   username,
   onSetUsername,
   onShowForgotPasswordForm,
   onShowSignupForm
 }: {
+  sessionInterruption?: SessionInterruption | null;
   username: string;
   onSetUsername: (username: string) => void;
   onShowForgotPasswordForm: () => any;
@@ -36,7 +39,12 @@ export default function LoginForm({
 
   return (
     <ErrorBoundary componentPath="Signin/LoginForm">
-      <header>{yourUsernameAndPasswordLabel}</header>
+      <header>
+        {sessionInterruption?.title || yourUsernameAndPasswordLabel}
+      </header>
+      {sessionInterruption ? (
+        <Banner color="logoBlue">{sessionInterruption.message}</Banner>
+      ) : null}
       {errorMessage && (
         <Banner>
           {typeof errorMessage === 'string'
@@ -133,7 +141,7 @@ export default function LoginForm({
           disabled={stringIsEmpty(username) || stringIsEmpty(password)}
           onClick={onSubmit}
         >
-          {logMeInLabel}
+          {sessionInterruption ? 'Sign in' : logMeInLabel}
         </Button>
       </footer>
     </ErrorBoundary>

@@ -2,16 +2,25 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test, { type TestContext } from 'node:test';
 import {
+  adoptRejectedAuthSessionStorageEvent,
   adoptAuthTokenStorageChange,
   isExplicitAuthLogoutMarkerStorageEvent,
   isExplicitAuthTokenRemovalStorageEvent,
   isExplicitAuthLogoutStorageEvent,
+  hasExplicitAuthLogoutMarker,
+  hasRejectedAuthSessionMarker,
   persistAuthToken,
   readAuthToken,
+  REJECTED_AUTH_SESSION_STORAGE_KEY,
   removeStoredItem,
-  resetAuthTokenMemoryForTests
+  resetAuthTokenMemoryForTests,
+  retireRejectedAuthToken
 } from '../src/helpers/userDataHelpers';
 import { getNavSessionMeta } from '../src/helpers/navTabOrder';
+import {
+  createSessionInterruption,
+  getVisibleCachedIdentity
+} from '../src/helpers/sessionInterruption';
 
 test.beforeEach(() => {
   resetAuthTokenMemoryForTests();
@@ -124,6 +133,60 @@ test('a transient missing token entry is repaired from the confirmed page sessio
   assert.equal(values.get('token'), 'session-token');
 });
 
+test('a persisted canonical rejection prevents page-memory token resurrection', (t) => {
+  const values = new Map<string, string>([['token', 'rejected-token']]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key)
+  });
+
+  assert.equal(readAuthToken().token, 'rejected-token');
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, '5000');
+  values.delete('token');
+
+  assert.deepEqual(readAuthToken(), {
+    storageAvailable: true,
+    token: '',
+    usedMemoryFallback: false
+  });
+  assert.equal(values.has('token'), false);
+  assert.deepEqual(
+    getVisibleCachedIdentity(
+      { userId: 263, username: 'programmer', managementLevel: 5 },
+      hasRejectedAuthSessionMarker()
+    ),
+    {}
+  );
+});
+
+test('a persisted explicit logout prevents token and cached-identity resurrection', (t) => {
+  const values = new Map<string, string>([
+    ['token', 'logged-out-token'],
+    ['twinkleExplicitLogoutAt', '5000']
+  ]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key)
+  });
+
+  assert.equal(hasExplicitAuthLogoutMarker(), true);
+  assert.deepEqual(readAuthToken(), {
+    storageAvailable: true,
+    token: '',
+    usedMemoryFallback: false
+  });
+  assert.equal(values.has('token'), false);
+  assert.deepEqual(
+    getVisibleCachedIdentity(
+      { userId: 263, username: 'programmer', managementLevel: 5 },
+      hasExplicitAuthLogoutMarker()
+    ),
+    {}
+  );
+});
+
 test('an explicit logout clears both durable and in-memory credentials', (t) => {
   const values = new Map<string, string>([['token', 'session-token']]);
   installStorage(t, {
@@ -170,6 +233,427 @@ test('an authoritative cross-tab logout clears the page fallback credential', (t
   values.delete('token');
   adoptAuthTokenStorageChange(null);
   assert.equal(readAuthToken().token, '');
+});
+
+test('a canonical rejection retires the exact credential without storing it in the signal', (t) => {
+  const rejectedToken =
+    'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjI2MywidmVyIjowfQ.rejected-signature';
+  const values = new Map<string, string>([['token', rejectedToken]]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key)
+  });
+
+  assert.equal(readAuthToken().token, rejectedToken);
+  assert.equal(retireRejectedAuthToken(rejectedToken, 5_000), true);
+  assert.equal(values.has('token'), false);
+  assert.equal(readAuthToken().token, '');
+  assert.equal(values.has('twinkleExplicitLogoutAt'), false);
+  const signal = values.get(REJECTED_AUTH_SESSION_STORAGE_KEY) || '';
+  assert.ok(signal);
+  assert.equal(hasRejectedAuthSessionMarker(), true);
+  assert.equal(signal.includes(rejectedToken), false);
+  assert.equal(JSON.parse(signal).at, 5_000);
+  assert.equal(typeof JSON.parse(signal).credentialId, 'string');
+  assert.equal(persistAuthToken('new-login-token'), true);
+  assert.equal(hasRejectedAuthSessionMarker(), false);
+});
+
+test('a rejection signal cannot block a newer cross-tab login', (t) => {
+  const values = new Map<string, string>([['token', 'rejected-token']]);
+  const storage = {
+    getItem: (key: string) => values.get(key) || null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key)
+  };
+  installStorage(t, storage);
+
+  assert.equal(readAuthToken().token, 'rejected-token');
+  assert.equal(retireRejectedAuthToken('rejected-token', 5_000), true);
+  const rejectionSignal =
+    values.get(REJECTED_AUTH_SESSION_STORAGE_KEY) || '';
+  values.set('token', 'new-login-token');
+
+  assert.equal(
+    adoptRejectedAuthSessionStorageEvent({
+      key: REJECTED_AUTH_SESSION_STORAGE_KEY,
+      oldValue: null,
+      newValue: rejectionSignal,
+      storageArea: storage as Storage
+    }),
+    false
+  );
+  assert.equal(readAuthToken().token, 'new-login-token');
+  assert.equal(values.get('token'), 'new-login-token');
+  assert.equal(hasRejectedAuthSessionMarker(), false);
+});
+
+test('a late rejection cannot retire a newer login', (t) => {
+  const values = new Map<string, string>([['token', 'new-login-token']]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key)
+  });
+
+  assert.equal(readAuthToken().token, 'new-login-token');
+  assert.equal(retireRejectedAuthToken('old-rejected-token', 5_000), false);
+  assert.equal(readAuthToken().token, 'new-login-token');
+  assert.equal(values.has(REJECTED_AUTH_SESSION_STORAGE_KEY), false);
+});
+
+test('a confirmed login clears a rejected-session marker even when removal is silently dropped', (t) => {
+  const values = new Map<string, string>([
+    [REJECTED_AUTH_SESSION_STORAGE_KEY, '5000'],
+    ['twinkleExplicitLogoutAt', '5000']
+  ]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: () => undefined
+  });
+
+  assert.equal(persistAuthToken('new-login-token'), true);
+  assert.equal(readAuthToken().token, 'new-login-token');
+  assert.equal(values.get(REJECTED_AUTH_SESSION_STORAGE_KEY), '');
+  assert.equal(values.get('twinkleExplicitLogoutAt'), '');
+  assert.equal(hasRejectedAuthSessionMarker(), false);
+});
+
+test('a dropped durable removal cannot resurrect a canonically rejected token', (t) => {
+  const values = new Map<string, string>([['token', 'rejected-token']]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => {
+      if (key !== 'token') values.delete(key);
+    }
+  });
+
+  assert.equal(readAuthToken().token, 'rejected-token');
+  assert.equal(retireRejectedAuthToken('rejected-token', 5_000), true);
+  assert.equal(values.get('token'), 'rejected-token');
+  assert.equal(readAuthToken().token, '');
+  assert.equal(values.get('token'), 'rejected-token');
+});
+
+test('a silently dropped rejection signal falls back to exact-token removal', (t) => {
+  const values = new Map<string, string>([['token', 'rejected-token']]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => {
+      if (key !== REJECTED_AUTH_SESSION_STORAGE_KEY) values.set(key, value);
+    },
+    removeItem: (key) => values.delete(key)
+  });
+
+  assert.equal(readAuthToken().token, 'rejected-token');
+  assert.equal(retireRejectedAuthToken('rejected-token', 5_000), true);
+  assert.equal(values.has('token'), false);
+  assert.equal(readAuthToken().token, '');
+});
+
+test('a delayed fallback removal cannot erase a newer login', (t) => {
+  const values = new Map<string, string>([['token', 'rejected-token']]);
+  installStorage(t, {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => {
+      if (key !== REJECTED_AUTH_SESSION_STORAGE_KEY) values.set(key, value);
+    },
+    removeItem: (key) => {
+      if (key !== 'token') values.delete(key);
+    }
+  });
+
+  assert.equal(readAuthToken().token, 'rejected-token');
+  assert.equal(retireRejectedAuthToken('rejected-token', 5_000), true);
+  assert.equal(values.get('token'), 'rejected-token');
+
+  values.set('token', 'new-login-token');
+  assert.equal(readAuthToken().token, 'new-login-token');
+  assert.equal(values.get('token'), 'new-login-token');
+});
+
+test('canonical rejection signals affect only tabs holding the rejected token', (t) => {
+  const rejectedToken = 'rejected-session-token';
+  const values = new Map<string, string>([['token', rejectedToken]]);
+  const storage = {
+    getItem: (key: string) => values.get(key) || null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key)
+  };
+  installStorage(t, storage);
+
+  assert.equal(readAuthToken().token, rejectedToken);
+  assert.equal(retireRejectedAuthToken(rejectedToken, 5_000), true);
+
+  resetAuthTokenMemoryForTests();
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, '');
+  values.set('token', rejectedToken);
+  assert.equal(readAuthToken().token, rejectedToken);
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, '5000');
+  values.delete('token');
+  assert.equal(
+    adoptRejectedAuthSessionStorageEvent(
+      {
+        key: 'token',
+        oldValue: rejectedToken,
+        newValue: null,
+        storageArea: storage as Storage
+      }
+    ),
+    true
+  );
+  assert.equal(readAuthToken().token, '');
+
+  resetAuthTokenMemoryForTests();
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, '');
+  values.set('token', rejectedToken);
+  assert.equal(readAuthToken().token, rejectedToken);
+  values.set('token', 'new-login-token');
+  assert.equal(
+    adoptRejectedAuthSessionStorageEvent(
+      {
+        key: 'token',
+        oldValue: rejectedToken,
+        newValue: null,
+        storageArea: storage as Storage
+      }
+    ),
+    false
+  );
+  assert.equal(readAuthToken().token, 'new-login-token');
+});
+
+test('a canonical rejection marker immediately retires a suspended tab, but not a newer login', (t) => {
+  const values = new Map<string, string>([['token', 'rejected-token']]);
+  const storage = {
+    getItem: (key: string) => values.get(key) || null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key)
+  };
+  installStorage(t, storage);
+
+  assert.equal(readAuthToken().token, 'rejected-token');
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, '5000');
+  assert.equal(
+    adoptRejectedAuthSessionStorageEvent({
+      key: REJECTED_AUTH_SESSION_STORAGE_KEY,
+      oldValue: null,
+      newValue: '5000',
+      storageArea: storage as Storage
+    }),
+    true
+  );
+  assert.equal(readAuthToken().token, '');
+
+  resetAuthTokenMemoryForTests();
+  values.set('token', 'new-login-token');
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, '');
+  assert.equal(readAuthToken().token, 'new-login-token');
+  assert.equal(
+    adoptRejectedAuthSessionStorageEvent({
+      key: REJECTED_AUTH_SESSION_STORAGE_KEY,
+      oldValue: null,
+      newValue: '5000',
+      storageArea: storage as Storage
+    }),
+    false
+  );
+  assert.equal(readAuthToken().token, 'new-login-token');
+});
+
+test('an unreadable suspended tab retires only page memory matching the rejection', (t) => {
+  const values = new Map<string, string>([['token', 'rejected-token']]);
+  let readsThrow = false;
+  const storage = {
+    getItem: (key: string) => {
+      if (readsThrow) throw new Error('storage temporarily unavailable');
+      return values.get(key) || null;
+    },
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key)
+  };
+  installStorage(t, storage);
+
+  assert.equal(readAuthToken().token, 'rejected-token');
+  assert.equal(retireRejectedAuthToken('rejected-token', 5_000), true);
+  const rejectionSignal =
+    values.get(REJECTED_AUTH_SESSION_STORAGE_KEY) || '';
+
+  resetAuthTokenMemoryForTests();
+  values.delete(REJECTED_AUTH_SESSION_STORAGE_KEY);
+  values.set('token', 'rejected-token');
+  assert.equal(readAuthToken().token, 'rejected-token');
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, rejectionSignal);
+  readsThrow = true;
+
+  assert.equal(
+    adoptRejectedAuthSessionStorageEvent({
+      key: REJECTED_AUTH_SESSION_STORAGE_KEY,
+      oldValue: null,
+      newValue: rejectionSignal,
+      storageArea: storage as Storage
+    }),
+    true
+  );
+  assert.equal(readAuthToken().token, '');
+
+  resetAuthTokenMemoryForTests();
+  readsThrow = false;
+  values.delete(REJECTED_AUTH_SESSION_STORAGE_KEY);
+  values.set('token', 'new-login-token');
+  assert.equal(readAuthToken().token, 'new-login-token');
+  values.set(REJECTED_AUTH_SESSION_STORAGE_KEY, rejectionSignal);
+  readsThrow = true;
+
+  assert.equal(
+    adoptRejectedAuthSessionStorageEvent({
+      key: REJECTED_AUTH_SESSION_STORAGE_KEY,
+      oldValue: null,
+      newValue: rejectionSignal,
+      storageArea: storage as Storage
+    }),
+    false
+  );
+  assert.equal(readAuthToken().token, 'new-login-token');
+});
+
+test('an interrupted session exposes no cached authenticated identity', () => {
+  const cachedIdentity = {
+    userId: 263,
+    username: 'programmer',
+    managementLevel: 5
+  };
+  const interruption = createSessionInterruption('session_token_invalid');
+  const signin = readFileSync(
+    new URL('../src/containers/Signin/index.tsx', import.meta.url),
+    'utf8'
+  );
+  const loginForm = readFileSync(
+    new URL('../src/containers/Signin/LoginForm.tsx', import.meta.url),
+    'utf8'
+  );
+  const appContext = readFileSync(
+    new URL('../src/contexts/AppContext.tsx', import.meta.url),
+    'utf8'
+  );
+  const hooks = readFileSync(
+    new URL('../src/helpers/hooks/index.tsx', import.meta.url),
+    'utf8'
+  );
+
+  assert.deepEqual(
+    getVisibleCachedIdentity(cachedIdentity, false),
+    cachedIdentity
+  );
+  assert.deepEqual(
+    getVisibleCachedIdentity(cachedIdentity, Boolean(interruption)),
+    {}
+  );
+  assert.equal(interruption.title, 'Please sign in again');
+  assert.match(interruption.message, /often happens after a password change/);
+  assert.match(interruption.message, /sign-in saved in this browser/);
+  assert.match(interruption.message, /signed you out here/);
+  assert.match(interruption.message, /current password/);
+  assert.doesNotMatch(
+    interruption.message,
+    /reconnect|token|version|session|storage/
+  );
+  for (const code of [
+    'session_storage_unavailable',
+    'session_token_missing'
+  ] as const) {
+    const plainInterruption = createSessionInterruption(code);
+    assert.doesNotMatch(
+      `${plainInterruption.title} ${plainInterruption.message}`,
+      /reconnect|token|version|session|storage|origin/
+    );
+  }
+  assert.match(
+    signin,
+    /closeOnBackdropClick=\{!username\}/
+  );
+  assert.match(
+    signin,
+    /requiresCredentialReentry \? 'login' : 'main'/
+  );
+  assert.match(signin, /sessionInterruption=\{[\s\S]*requiresCredentialReentry/);
+  assert.match(
+    loginForm,
+    /sessionInterruption\?\.title \|\| yourUsernameAndPasswordLabel/
+  );
+  assert.match(
+    loginForm,
+    /<Banner color="logoBlue">\{sessionInterruption\.message\}<\/Banner>/
+  );
+  assert.match(
+    signin,
+    /function handleModalClose\(\) \{[\s\S]*?if \(!sessionInterruption\) \{[\s\S]*?onHide\(\)[\s\S]*?hasRejectedAuthSessionMarker\(\) \|\| !readAuthToken\(\)\.token[\s\S]*?onLogout\(\)/
+  );
+  assert.match(
+    signin,
+    /function handleRestoreClose\(\) \{[\s\S]*?handleModalClose\(\)/
+  );
+  assert.match(
+    appContext,
+    /function createInitialUserState\(\)[\s\S]*hasRejectedAuthSessionMarker\(\)[\s\S]*createSessionInterruption\('session_token_invalid'\)[\s\S]*signinModalShown: Boolean\(sessionInterruption\)/
+  );
+  assert.match(
+    hooks,
+    /const storedItems = useMemo\([\s\S]*\[sessionInterruption, userId\]/
+  );
+  assert.match(
+    hooks,
+    /authIdentityHidden =[\s\S]*hasRejectedAuthSessionMarker\(\)[\s\S]*hasExplicitAuthLogoutMarker\(\)[\s\S]*userId && !authIdentityHidden/
+  );
+});
+
+test('mandatory update recovery preempts sign-in without blocking password recovery links', () => {
+  const app = readFileSync(
+    new URL('../src/containers/App/index.tsx', import.meta.url),
+    'utf8'
+  );
+  const header = readFileSync(
+    new URL('../src/containers/App/Header/index.tsx', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(app, /const requiredUpdateNoticeShown = updateNoticeShown \|\| !versionMatch/);
+  assert.match(app, /onShowUpdateNotice\(!versionMatch\)/);
+  assert.match(
+    app,
+    /if \(!sessionInterruption\) return;[\s\S]*checkVersion\(\)[\s\S]*typeof data\?\.match === 'boolean'[\s\S]*onCheckVersion\(data\)/
+  );
+  assert.match(
+    app,
+    /if \(sessionInterruption\) \{[\s\S]*const replacementToken = readAuthToken\(\)\.token;[\s\S]*resumeStoredCredential\(replacementToken\)/
+  );
+  assert.match(
+    app,
+    /if \(sessionInterruption\) \{[\s\S]*if \(recoveredToken\) resumeStoredCredential\(recoveredToken\)/
+  );
+  assert.match(
+    app,
+    /const resumeSavedSession = \(allowOfflineProbe = false\) => \{[\s\S]*hasRejectedAuthSessionMarker\(\)[\s\S]*interruptRejectedSession\(\)[\s\S]*hasExplicitAuthLogoutMarker\(\)[\s\S]*adoptPersistedExplicitLogout\(\)/
+  );
+  assert.match(
+    app,
+    /function resumeStoredCredential\(token: string\) \{[\s\S]*authRef\.current = \{ headers: \{ authorization: token \} \};[\s\S]*handleInit\(\)/
+  );
+  assert.match(app, /\{requiredUpdateNoticeShown && \(/);
+  assert.match(
+    app,
+    /signinModalShown &&[\s\S]*!sessionRecoveryRouteAllowed &&[\s\S]*!requiredUpdateNoticeShown/
+  );
+  assert.match(app, /location\.pathname\.startsWith\('\/reset\/'\)/);
+  assert.match(app, /location\.pathname\.startsWith\('\/verify\/'\)/);
+  assert.match(
+    app,
+    /!sessionAccessBlocked \|\| sessionRecoveryRouteAllowed \? \([\s\S]*?<Routes>/
+  );
+  assert.doesNotMatch(header, /onShowUpdateNotice|versionMatch/);
 });
 
 test('cross-tab token removal requires a recent explicit logout signal', (t) => {
@@ -381,6 +865,10 @@ test('only canonical auth rejection interrupts; unreadable browser storage stays
   assert.match(app, /window\.addEventListener\('storage'/);
   assert.match(
     app,
+    /if \(adoptRejectedAuthSessionStorageEvent\(event\)\) \{[\s\S]*?onInterruptSession/
+  );
+  assert.match(
+    app,
     /if \(isExplicitAuthLogoutStorageEvent\(event\)\) \{[\s\S]*?authRef\.current = null;[\s\S]*?onAdoptCrossTabLogout\(\)[\s\S]*?if \(event\.key !== 'token'\) return;/
   );
   assert.match(
@@ -484,11 +972,23 @@ test('an offline start keeps the session and rehydrates after connectivity retur
   assert.doesNotMatch(app, /Twinkle has not logged you out/);
   assert.match(
     app,
-    /!awaitingCanonicalSession \? \([\s\S]*?<Routes>[\s\S]*?<Route\s+path="\/chat\/\*"/
+    /const sessionAccessBlocked =[\s\S]*awaitingCanonicalSession \|\| Boolean\(sessionInterruption\)/
   );
   assert.match(
     app,
-    /!awaitingCanonicalSession &&[\s\S]*?runtimeKeepAliveHostEnabled/
+    /!sessionAccessBlocked \|\| sessionRecoveryRouteAllowed \? \([\s\S]*?<Routes>[\s\S]*?<Route\s+path="\/chat\/\*"/
+  );
+  assert.match(
+    app,
+    /!sessionAccessBlocked &&[\s\S]*?runtimeKeepAliveHostEnabled/
+  );
+  assert.match(
+    app,
+    /sessionAccessBlocked \? null : \([\s\S]*?<Header/
+  );
+  assert.match(
+    app,
+    /onResetChat\(Number\(prevUserId\.current \|\| 0\)\)/
   );
   assert.match(
     socketInit,

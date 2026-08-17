@@ -129,6 +129,9 @@ import type {
   QueuedBuildRequest
 } from './types';
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
+const BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS = 15_000;
+const BRANCH_MAIN_UPDATE_UNCONFIRMED_MESSAGE =
+  'The update did not return a final result. Reload this branch to check its saved state before trying again.';
 
 interface BranchMainUpdateState {
   checking: boolean;
@@ -605,10 +608,21 @@ export default function BuildEditor({
     setCollaborationSettingsModalShown
   });
 
-  async function handleBuildReloadFromServer() {
-    const buildPayload = await loadBuild(build.id, { fromWriter: true });
-    if (!buildPayload?.build) return;
-    applyBuildUpdate({
+  function applyCanonicalBuildPayload(
+    buildPayload: any,
+    expectedBuildId: number
+  ) {
+    if (
+      !buildPayload?.build ||
+      Number(buildPayload.build.id || 0) !== Number(expectedBuildId) ||
+      Number(getLatestBuild()?.id || 0) !== Number(expectedBuildId)
+    ) {
+      return null;
+    }
+    const canonicalProjectFiles = Array.isArray(buildPayload.projectFiles)
+      ? buildPayload.projectFiles
+      : [];
+    const canonicalBuild = {
       ...buildPayload.build,
       executionPlan: buildPayload.executionPlan || null,
       followUpPrompt: buildPayload.followUpPrompt || null,
@@ -616,14 +630,22 @@ export default function BuildEditor({
       thumbnailNudge: buildPayload.thumbnailNudge || null,
       runtimeExplorationPlan: buildPayload.runtimeExplorationPlan || null,
       projectManifest: buildPayload.projectManifest || null,
-      projectFiles: Array.isArray(buildPayload.projectFiles)
-        ? buildPayload.projectFiles
-        : [],
+      projectFiles: canonicalProjectFiles,
       projectFilesHash:
         typeof buildPayload.projectFilesHash === 'string'
           ? buildPayload.projectFilesHash
           : null
+    };
+    applyBuildUpdate(canonicalBuild);
+    return canonicalBuild;
+  }
+
+  async function handleBuildReloadFromServer() {
+    const expectedBuildId = Number(build.id || 0);
+    const buildPayload = await loadBuild(expectedBuildId, {
+      fromWriter: true
     });
+    applyCanonicalBuildPayload(buildPayload, expectedBuildId);
   }
   const {
     availableVersions,
@@ -1483,10 +1505,13 @@ export default function BuildEditor({
         contributionBuildId: target.contributionBuildId
       });
       if (result?.code === 'build_contribution_conflict_markers_remaining') {
-        setBranchMainUpdateState((current) => ({
-          ...current,
-          error: 'Main needs a Lumine fix before this branch can update.'
-        }));
+        await settleCurrentBranchMainUpdateFailure({
+          target,
+          error: {
+            message:
+              'This branch needs a Lumine fix before it can update from Main.'
+          }
+        });
         return;
       }
       if (!result?.success) {
@@ -1518,16 +1543,86 @@ export default function BuildEditor({
             : ''
       }));
     } catch (error: any) {
-      setBranchMainUpdateState((current) => ({
-        ...current,
-        error: getUpdateFromMainErrorMessage(error)
-      }));
+      await settleCurrentBranchMainUpdateFailure({ target, error });
     } finally {
       setBranchMainUpdateState((current) => ({
         ...current,
         loading: false
       }));
     }
+  }
+
+  async function settleCurrentBranchMainUpdateFailure({
+    target,
+    error
+  }: {
+    target: { rootBuildId: number; contributionBuildId: number };
+    error: any;
+  }) {
+    let recovery: {
+      confirmed: boolean;
+      conflictPaths: string[];
+      rootDrifted: boolean | null;
+    } | null = null;
+    try {
+      recovery = await reconcileCurrentBranchMainUpdate(target);
+    } catch (recoveryError) {
+      console.error(
+        'Failed to reconcile update-from-main from canonical state:',
+        recoveryError
+      );
+    }
+    setBranchMainUpdateState((current) => ({
+      ...current,
+      rootDrifted:
+        recovery?.rootDrifted == null
+          ? current.rootDrifted
+          : recovery.rootDrifted,
+      error: recovery?.confirmed
+        ? recovery.conflictPaths.length > 0
+          ? UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE
+          : ''
+        : getUpdateFromMainErrorMessage(error)
+    }));
+  }
+
+  async function reconcileCurrentBranchMainUpdate(target: {
+    rootBuildId: number;
+    contributionBuildId: number;
+  }) {
+    const boundedRead = {
+      collapseKey: null,
+      maxRetries: 0,
+      totalTimeoutMs: BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS
+    } as const;
+    const [buildPayload, contributionState] = await Promise.all([
+      loadBuild(target.contributionBuildId, {
+        fromWriter: true,
+        ...boundedRead
+      }),
+      loadBuildContribution({
+        buildId: target.rootBuildId,
+        contributionBuildId: target.contributionBuildId,
+        ...boundedRead
+      }).catch(() => null)
+    ]);
+    const canonicalBuild = applyCanonicalBuildPayload(
+      buildPayload,
+      target.contributionBuildId
+    );
+    if (!canonicalBuild) return null;
+    const conflictPaths = getContributionConflictMarkerPaths(
+      canonicalBuild.projectFiles
+    );
+    const rootDrifted =
+      typeof contributionState?.rootDrifted === 'boolean'
+        ? contributionState.rootDrifted
+        : null;
+    return {
+      confirmed: conflictPaths.length > 0 || rootDrifted === false,
+      conflictPaths,
+      rootDrifted
+    };
   }
 
   function handleStopGenerationForQueue(options?: {
@@ -2183,6 +2278,9 @@ function getBranchMainUpdateTarget({
 }
 
 function getUpdateFromMainErrorMessage(error: any) {
+  if (error?.isTransportError) {
+    return BRANCH_MAIN_UPDATE_UNCONFIRMED_MESSAGE;
+  }
   return (
     error?.response?.data?.error ||
     error?.message ||

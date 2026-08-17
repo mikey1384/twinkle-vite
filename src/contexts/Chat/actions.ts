@@ -295,7 +295,8 @@ export default function ChatActions(dispatch: Dispatch) {
       ownerUserId,
       pageVisible = false,
       usingChat = false,
-      shouldTrackUnreadActivity = false
+      shouldTrackUnreadActivity = false,
+      deferChannelListProjection = false
     }: {
       update: CanonicalChatReactionUpdate;
       // The account that issued the request or owns the socket session. This
@@ -304,6 +305,7 @@ export default function ChatActions(dispatch: Dispatch) {
       pageVisible?: boolean;
       usingChat?: boolean;
       shouldTrackUnreadActivity?: boolean;
+      deferChannelListProjection?: boolean;
     }) {
       return dispatch({
         type: 'APPLY_CANONICAL_CHAT_REACTION',
@@ -312,6 +314,7 @@ export default function ChatActions(dispatch: Dispatch) {
         pageVisible,
         usingChat,
         shouldTrackUnreadActivity,
+        deferChannelListProjection,
         eventSequence: getNextConfirmedChatEventSequence()
       });
     },
@@ -1599,7 +1602,8 @@ export default function ChatActions(dispatch: Dispatch) {
       pageVisible,
       usingChat,
       isMyMessage = false,
-      newMembers = []
+      newMembers = [],
+      deferChannelListProjection = false
     }: {
       message: object;
       channel: object;
@@ -1607,6 +1611,7 @@ export default function ChatActions(dispatch: Dispatch) {
       usingChat: boolean;
       isMyMessage?: boolean;
       newMembers: object[];
+      deferChannelListProjection?: boolean;
     }) {
       return dispatch({
         type: 'RECEIVE_MSG_ON_DIFF_CHANNEL',
@@ -1616,6 +1621,7 @@ export default function ChatActions(dispatch: Dispatch) {
         usingChat,
         isMyMessage,
         newMembers,
+        deferChannelListProjection,
         eventSequence: getNextConfirmedChatEventSequence()
       });
     },

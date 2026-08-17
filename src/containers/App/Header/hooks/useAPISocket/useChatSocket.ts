@@ -25,6 +25,10 @@ import {
   markChatUnreadActivity
 } from '~/helpers/chatUnreadActivity';
 import { getVisibleChatReadMessageId } from '~/helpers/chatReadCursor';
+import {
+  chatRealtimeChannelNeedsCanonicalSummary,
+  mergeChatUnreadResyncRequirement
+} from '~/helpers/chatUnreadProjection';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
 import { buildCanonicalChatMessagePageState } from '~/contexts/Chat/messagePageState';
 import type {
@@ -318,11 +322,10 @@ export default function useChatSocket({
     function canonicalUnreadSummaryIsNeeded(channelId: number) {
       const normalizedChannelId = Number(channelId || 0);
       const channel = channelsObjRef.current?.[normalizedChannelId];
-      return Boolean(
-        !channel?.id ||
-          channel.isHidden ||
-          !listedChannelIdsRef.current.has(normalizedChannelId)
-      );
+      return chatRealtimeChannelNeedsCanonicalSummary({
+        channel,
+        isListed: listedChannelIdsRef.current.has(normalizedChannelId)
+      });
     }
 
     async function maybeUpdateLastRead({
@@ -341,8 +344,11 @@ export default function useChatSocket({
         ? channel?.subchannelObj?.[normalizedSubchannelId]
         : channel;
       const lastReadMessageId = getVisibleChatReadMessageId({
+        channelId,
         confirmedMessageId: eventMessageId,
-        visibleMessageIds: scope?.messageIds
+        subchannelId: normalizedSubchannelId,
+        visibleMessageIds: scope?.messageIds,
+        visibleMessagesObj: scope?.messagesObj
       });
       const previousMainWrite = lastReadWriteRef.current.channel[channelId];
       const previousSubchannelWrite =
@@ -745,12 +751,23 @@ export default function useChatSocket({
         reactorId !== userId &&
         (requiresSidebarResync || update.channelActivity?.changed)
       );
+      const channelSummaryIsNeeded =
+        canonicalUnreadSummaryIsNeeded(channelId);
       if (unreadProjectionCouldChange && !reactionIsVisibleToViewer) {
         markUnreadActivity();
         queueChannelUnreadStateResync({
           channelId,
           subchannelId,
-          includeChannelSummary: canonicalUnreadSummaryIsNeeded(channelId)
+          includeChannelSummary: channelSummaryIsNeeded
+        });
+      } else if (
+        channelSummaryIsNeeded &&
+        (requiresSidebarResync || update.channelActivity?.changed)
+      ) {
+        queueChannelUnreadStateResync({
+          channelId,
+          subchannelId,
+          includeChannelSummary: true
         });
       }
 
@@ -767,7 +784,8 @@ export default function useChatSocket({
         ownerUserId: userId,
         pageVisible: currentPageVisible,
         usingChat: usingChatRef.current,
-        shouldTrackUnreadActivity
+        shouldTrackUnreadActivity,
+        deferChannelListProjection: channelSummaryIsNeeded
       });
       if (requiresSidebarResync) {
         // Legacy events carry no ordered unread projection. If the addition is
@@ -807,14 +825,15 @@ export default function useChatSocket({
       }
       const key = `${normalizedChannelId}:${normalizedSubchannelId}`;
       const existingScope = channelUnreadResyncQueueRef.current.get(key);
-      channelUnreadResyncQueueRef.current.set(key, {
-        channelId: normalizedChannelId,
-        subchannelId: normalizedSubchannelId,
-        includeChannelSummary:
-          includeChannelSummary ||
-          Boolean(existingScope?.includeChannelSummary),
-        retryCount
-      });
+      channelUnreadResyncQueueRef.current.set(
+        key,
+        mergeChatUnreadResyncRequirement(existingScope, {
+          channelId: normalizedChannelId,
+          subchannelId: normalizedSubchannelId,
+          includeChannelSummary,
+          retryCount
+        })
+      );
       if (
         channelUnreadResyncInFlightRef.current ||
         channelUnreadResyncTimerRef.current ||
@@ -855,10 +874,16 @@ export default function useChatSocket({
           return;
         }
         if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
-          channelUnreadResyncQueueRef.current.set(key, {
-            ...scope,
-            retryCount: 0
-          });
+          channelUnreadResyncQueueRef.current.set(
+            key,
+            mergeChatUnreadResyncRequirement(
+              channelUnreadResyncQueueRef.current.get(key),
+              {
+                ...scope,
+                retryCount: 0
+              }
+            )
+          );
         } else if (
           Number(unreadState?.channelId || 0) === scope.channelId &&
           unreadState?.channel
@@ -870,10 +895,16 @@ export default function useChatSocket({
         // + global snapshot while this transport remains healthy. A real
         // disconnect hands ownership to the writer-backed reconnect bootstrap.
         if (socket.connected && shouldRetryCanonicalUnreadRead(error)) {
-          channelUnreadResyncQueueRef.current.set(key, {
-            ...scope,
-            retryCount: scope.retryCount + 1
-          });
+          channelUnreadResyncQueueRef.current.set(
+            key,
+            mergeChatUnreadResyncRequirement(
+              channelUnreadResyncQueueRef.current.get(key),
+              {
+                ...scope,
+                retryCount: scope.retryCount + 1
+              }
+            )
+          );
         } else if (
           Number(error?.status || error?.response?.status || 0) === 403 ||
           Number(error?.status || error?.response?.status || 0) === 404
@@ -1092,6 +1123,8 @@ export default function useChatSocket({
       const isForCurrentChannel =
         Number(channelId) === activeChatChannelIdRef.current;
       const isMyMessage = Number(message.userId) === Number(userId);
+      const channelSummaryIsNeeded =
+        canonicalUnreadSummaryIsNeeded(channelId);
       const scopeIsActivelyVisible = Boolean(
         isForCurrentChannel &&
         currentPageVisible &&
@@ -1103,7 +1136,13 @@ export default function useChatSocket({
         queueChannelUnreadStateResync({
           channelId,
           subchannelId: 0,
-          includeChannelSummary: canonicalUnreadSummaryIsNeeded(channelId)
+          includeChannelSummary: channelSummaryIsNeeded
+        });
+      } else if (!isForCurrentChannel && channelSummaryIsNeeded) {
+        queueChannelUnreadStateResync({
+          channelId,
+          subchannelId: 0,
+          includeChannelSummary: true
         });
       }
       if (isForCurrentChannel) {
@@ -1121,7 +1160,7 @@ export default function useChatSocket({
           isMyMessage
         });
       }
-      if (!isForCurrentChannel) {
+      if (!isForCurrentChannel && !channelSummaryIsNeeded) {
         onReceiveMessageOnDifferentChannel({
           message,
           channel: {
@@ -1176,6 +1215,9 @@ export default function useChatSocket({
       const isMyMessage =
         Number(message.userId) === Number(userId) && !message.transferId;
       const messageSubchannelId = Number(message.subchannelId || 0);
+      const channelSummaryIsNeeded = canonicalUnreadSummaryIsNeeded(
+        Number(message.channelId)
+      );
       const scopeIsActivelyVisible = Boolean(
         messageIsForCurrentChannel &&
         currentPageVisible &&
@@ -1187,9 +1229,17 @@ export default function useChatSocket({
         queueChannelUnreadStateResync({
           channelId: Number(message.channelId),
           subchannelId: messageSubchannelId,
-          includeChannelSummary: canonicalUnreadSummaryIsNeeded(
-            Number(message.channelId)
-          )
+          includeChannelSummary: channelSummaryIsNeeded
+        });
+      } else if (!messageIsForCurrentChannel && channelSummaryIsNeeded) {
+        // Messages authored by this account do not change its unread count,
+        // but another tab can still reveal or create a sidebar channel this
+        // tab has not loaded. Let the writer-owned summary decide visibility,
+        // identity, and preview before adding that channel to shared state.
+        queueChannelUnreadStateResync({
+          channelId: Number(message.channelId),
+          subchannelId: messageSubchannelId,
+          includeChannelSummary: true
         });
       }
       const activityChannel =
@@ -1223,7 +1273,14 @@ export default function useChatSocket({
           currentSubchannelId
         });
       }
-      if (!messageIsForCurrentChannel && activityChannel) {
+      if (
+        !messageIsForCurrentChannel &&
+        activityChannel &&
+        !channelSummaryIsNeeded
+      ) {
+        // An unknown, hidden, unlisted, or id-only channel must not become a
+        // renderable client shell. The canonical summary requested above owns
+        // both sidebar membership and its latest confirmed message preview.
         onReceiveMessageOnDifferentChannel({
           message,
           channel: activityChannel,
@@ -1233,7 +1290,7 @@ export default function useChatSocket({
           newMembers
         });
       }
-      if (message.transactionDetails?.id) {
+      if (message.transactionDetails?.id && !channelSummaryIsNeeded) {
         onUpdateCurrentTransactionId({
           channelId: message.channelId,
           transactionId: message.transactionDetails.id
@@ -1412,7 +1469,9 @@ export default function useChatSocket({
         message.channelId === activeChatChannelIdRef.current;
       const senderIsUser = message.userId === userId;
 
-      if (senderIsUser) return;
+      const channelSummaryIsNeeded = canonicalUnreadSummaryIsNeeded(
+        Number(message.channelId)
+      );
 
       const scopeIsActivelyVisible = Boolean(
         messageIsForCurrentChannel &&
@@ -1421,47 +1480,59 @@ export default function useChatSocket({
         Number(message.subchannelId || 0) ===
           Number(subchannelIdRef.current || 0)
       );
-      if (scopeIsActivelyVisible) {
+      if (!senderIsUser && scopeIsActivelyVisible) {
         void maybeUpdateLastRead({
           channelId: message.channelId,
           subchannelId: message.subchannelId,
           lastReadMessageId: message.id
         });
-      } else {
+      } else if (!senderIsUser) {
         markUnreadActivity();
         queueChannelUnreadStateResync({
           channelId: Number(message.channelId),
           subchannelId: Number(message.subchannelId || 0),
-          includeChannelSummary: canonicalUnreadSummaryIsNeeded(
-            Number(message.channelId)
-          )
+          includeChannelSummary: channelSummaryIsNeeded
+        });
+      } else if (!messageIsForCurrentChannel && channelSummaryIsNeeded) {
+        queueChannelUnreadStateResync({
+          channelId: Number(message.channelId),
+          subchannelId: Number(message.subchannelId || 0),
+          includeChannelSummary: true
         });
       }
 
-      if (channelId === GENERAL_CHAT_ID && !subchannelId) {
+      if (
+        !senderIsUser &&
+        channelId === GENERAL_CHAT_ID &&
+        !subchannelId
+      ) {
         onNotifyChatSubjectChange(subject);
       }
 
-      onChangeChatSubject({
-        subject,
-        topicObj,
-        channelId,
-        subchannelId,
-        isFeatured
-      });
+      if (messageIsForCurrentChannel || !channelSummaryIsNeeded) {
+        onChangeChatSubject({
+          subject,
+          topicObj,
+          channelId,
+          subchannelId,
+          isFeatured
+        });
+      }
 
       if (messageIsForCurrentChannel) {
         onReceiveMessage({
           message,
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
-          currentSubchannelId: subchannelIdRef.current
+          currentSubchannelId: subchannelIdRef.current,
+          isMyMessage: senderIsUser
         });
-      } else {
+      } else if (!channelSummaryIsNeeded) {
         onReceiveMessageOnDifferentChannel({
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
           message,
+          isMyMessage: senderIsUser,
           channel: {
             id: channelId,
             pathId,

@@ -139,7 +139,7 @@ test('transport uncertainty never destroys the current session', async () => {
   );
 });
 
-test('the global 401 boundary interrupts without erasing confirmed credentials', () => {
+test('the global 401 boundary retires only a canonically rejected credential', () => {
   const appContext = readFileSync(
     new URL('../src/contexts/AppContext.tsx', import.meta.url),
     'utf8'
@@ -147,8 +147,10 @@ test('the global 401 boundary interrupts without erasing confirmed credentials',
 
   assert.match(appContext, /await resolveInvalidSessionToken\(error\)/);
   assert.match(appContext, /getStoredItem\('token'\) === invalidSessionToken/);
+  assert.match(appContext, /retireRejectedAuthToken\(invalidSessionToken\)/);
+  assert.match(appContext, /Object\.keys\(localStorageKeys\)/);
+  assert.match(appContext, /removeStoredItem\(key\)/);
   assert.match(appContext, /type: 'SESSION_INTERRUPTED'/);
-  assert.doesNotMatch(appContext, /removeStoredItem/);
   assert.doesNotMatch(appContext, /LOGOUT_AND_OPEN_SIGNIN_MODAL/);
   assert.match(appContext, /\/user\/session\/validate/);
   assert.match(appContext, /response\.data\?\.valid === true/);

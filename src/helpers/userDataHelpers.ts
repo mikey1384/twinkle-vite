@@ -2,11 +2,123 @@ import { noteNavAuthTokenChange } from './navTabOrder';
 
 let inMemoryAuthToken = '';
 let authTokenRemovalPending = false;
+let authTokenPendingRemovalValue = '';
 
 const AUTH_TOKEN_STORAGE_KEY = 'token';
 export const EXPLICIT_LOGOUT_STORAGE_KEY = 'twinkleExplicitLogoutAt';
-const EXPLICIT_LOGOUT_SIGNAL_MAX_AGE_MS = 60_000;
-const EXPLICIT_LOGOUT_SIGNAL_CLOCK_SKEW_MS = 5_000;
+export const REJECTED_AUTH_SESSION_STORAGE_KEY =
+  'twinkleRejectedAuthSession';
+const AUTH_TRANSITION_SIGNAL_MAX_AGE_MS = 60_000;
+const AUTH_TRANSITION_SIGNAL_CLOCK_SKEW_MS = 5_000;
+
+interface AuthTransitionSignal {
+  at: number;
+  credentialId?: string;
+}
+
+function getAuthCredentialId(token: string) {
+  let first = 0x811c9dc5;
+  let second = 0x9e3779b9;
+  for (let index = 0; index < token.length; index++) {
+    const code = token.charCodeAt(index);
+    first = Math.imul(first ^ code, 0x01000193);
+    second = Math.imul(second ^ code, 0x5bd1e995);
+  }
+  return `${token.length}.${(first >>> 0).toString(36)}.${(
+    second >>> 0
+  ).toString(36)}`;
+}
+
+function parseAuthTransitionSignal(
+  value: string | null
+): AuthTransitionSignal | null {
+  if (!value) return null;
+  const numericTimestamp = Number(value);
+  if (Number.isFinite(numericTimestamp) && numericTimestamp > 0) {
+    return { at: numericTimestamp };
+  }
+  try {
+    const parsed = JSON.parse(value);
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !Number.isFinite(parsed.at) ||
+      parsed.at <= 0
+    ) {
+      return null;
+    }
+    return {
+      at: parsed.at,
+      credentialId:
+        typeof parsed.credentialId === 'string' && parsed.credentialId
+          ? parsed.credentialId
+          : undefined
+    };
+  } catch {
+    return null;
+  }
+}
+
+function hasActiveAuthTransitionSignal(value: string | null) {
+  return Boolean(parseAuthTransitionSignal(value));
+}
+
+function authTransitionSignalTargetsToken(
+  value: string | null,
+  token: string
+) {
+  const signal = parseAuthTransitionSignal(value);
+  if (!signal) return false;
+  return (
+    !signal.credentialId ||
+    !token ||
+    signal.credentialId === getAuthCredentialId(token)
+  );
+}
+
+function createRejectedAuthSessionSignal(token: string, now: number) {
+  return JSON.stringify({
+    at: now,
+    credentialId: getAuthCredentialId(token)
+  });
+}
+
+function beginAuthTokenRemoval(expectedToken = '') {
+  authTokenRemovalPending = true;
+  authTokenPendingRemovalValue = expectedToken;
+}
+
+function finishAuthTokenRemoval() {
+  authTokenRemovalPending = false;
+  authTokenPendingRemovalValue = '';
+}
+
+function clearAuthTransitionSignal(storage: Storage, key: string) {
+  try {
+    storage.removeItem(key);
+    // Some mobile storage implementations silently drop removals while still
+    // accepting writes. An empty value is also an inactive signal.
+    if (storage.getItem(key)) storage.setItem(key, '');
+  } catch {
+    try {
+      storage.setItem(key, '');
+    } catch {}
+  }
+  try {
+    return !hasActiveAuthTransitionSignal(storage.getItem(key));
+  } catch {
+    return false;
+  }
+}
+
+function hasBlockingAuthTransitionMarker(storage: Storage) {
+  return (
+    hasActiveAuthTransitionSignal(
+      storage.getItem(REJECTED_AUTH_SESSION_STORAGE_KEY)
+    ) ||
+    hasActiveAuthTransitionSignal(storage.getItem(EXPLICIT_LOGOUT_STORAGE_KEY))
+  );
+}
 
 export interface AuthTokenRead {
   storageAvailable: boolean;
@@ -87,10 +199,34 @@ export function readAuthToken(): AuthTokenRead {
   }
 
   try {
-    if (authTokenRemovalPending) {
-      storage.removeItem('token');
-      if (!storage.getItem('token')) {
-        authTokenRemovalPending = false;
+    const explicitLogoutSignal = storage.getItem(
+      EXPLICIT_LOGOUT_STORAGE_KEY
+    );
+    const rejectedSessionSignal = storage.getItem(
+      REJECTED_AUTH_SESSION_STORAGE_KEY
+    );
+    const storedToken = storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+    const currentToken = storedToken || inMemoryAuthToken;
+    const explicitLogoutActive = hasActiveAuthTransitionSignal(
+      explicitLogoutSignal
+    );
+    const rejectedCredentialActive = authTransitionSignalTargetsToken(
+      rejectedSessionSignal,
+      currentToken
+    );
+
+    if (explicitLogoutActive || rejectedCredentialActive) {
+      // A canonical rejection or explicit logout remains authoritative across
+      // suspended tabs and reloads. Never repair that credential from memory.
+      inMemoryAuthToken = '';
+      if (explicitLogoutActive) {
+        beginAuthTokenRemoval(currentToken);
+        storage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+        if (!storage.getItem(AUTH_TOKEN_STORAGE_KEY)) {
+          finishAuthTokenRemoval();
+        }
+      } else {
+        finishAuthTokenRemoval();
       }
       return {
         storageAvailable: true,
@@ -99,12 +235,45 @@ export function readAuthToken(): AuthTokenRead {
       };
     }
 
-    const storedToken = storage.getItem('token') || '';
-    if (storedToken) {
-      inMemoryAuthToken = storedToken;
+    if (hasActiveAuthTransitionSignal(rejectedSessionSignal)) {
+      // A fresh login won a cross-tab race after an older request was
+      // rejected. The rejection belongs only to the old credential.
+      clearAuthTransitionSignal(storage, REJECTED_AUTH_SESSION_STORAGE_KEY);
+      finishAuthTokenRemoval();
+    }
+
+    if (authTokenRemovalPending) {
+      const tokenPendingRemoval = storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+      if (
+        tokenPendingRemoval &&
+        authTokenPendingRemovalValue &&
+        tokenPendingRemoval !== authTokenPendingRemovalValue
+      ) {
+        inMemoryAuthToken = tokenPendingRemoval;
+        finishAuthTokenRemoval();
+        return {
+          storageAvailable: true,
+          token: tokenPendingRemoval,
+          usedMemoryFallback: false
+        };
+      }
+      storage.removeItem('token');
+      if (!storage.getItem('token')) {
+        finishAuthTokenRemoval();
+      }
       return {
         storageAvailable: true,
-        token: storedToken,
+        token: '',
+        usedMemoryFallback: false
+      };
+    }
+
+    const confirmedStoredToken = storage.getItem('token') || '';
+    if (confirmedStoredToken) {
+      inMemoryAuthToken = confirmedStoredToken;
+      return {
+        storageAvailable: true,
+        token: confirmedStoredToken,
         usedMemoryFallback: false
       };
     }
@@ -173,6 +342,29 @@ export function persistAuthToken(
   let previousValue = '';
   try {
     previousValue = storage.getItem('token') || inMemoryAuthToken || '';
+    if (hasBlockingAuthTransitionMarker(storage)) {
+      // Remove the departed credential before clearing its marker. Writing a
+      // new token while a transition marker is still active lets another tab
+      // mistake that new login for the departed session.
+      storage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+      if (storage.getItem(AUTH_TOKEN_STORAGE_KEY)) {
+        storage.setItem(AUTH_TOKEN_STORAGE_KEY, '');
+      }
+      if (storage.getItem(AUTH_TOKEN_STORAGE_KEY)) return false;
+      inMemoryAuthToken = '';
+      finishAuthTokenRemoval();
+    }
+
+    const logoutSignalCleared = clearAuthTransitionSignal(
+      storage,
+      EXPLICIT_LOGOUT_STORAGE_KEY
+    );
+    const rejectionSignalCleared = clearAuthTransitionSignal(
+      storage,
+      REJECTED_AUTH_SESSION_STORAGE_KEY
+    );
+    if (!logoutSignalCleared || !rejectionSignalCleared) return false;
+
     storage.setItem('token', token);
     if (storage.getItem('token') !== token) return false;
   } catch {
@@ -184,16 +376,7 @@ export function persistAuthToken(
   // mobile write is not a session-producing event and must have no optimistic
   // side effects for the failed token.
   inMemoryAuthToken = token;
-  authTokenRemovalPending = false;
-  try {
-    // A newly confirmed login/account switch retires any prior explicit-logout
-    // signal before another tab can mistake a later storage cleanup for that
-    // older user action.
-    storage.removeItem(EXPLICIT_LOGOUT_STORAGE_KEY);
-  } catch {
-    // The token round trip above is the persistence boundary. This marker is
-    // only cross-tab intent metadata and must not invalidate a saved login.
-  }
+  finishAuthTokenRemoval();
   if (previousValue !== token) {
     noteNavAuthTokenChange({
       previousToken: previousValue,
@@ -215,13 +398,17 @@ export function removeStoredItem(key: string) {
         // first so other tabs clear their page-lifetime credential only for a
         // genuine logout initiated through Twinkle.
         storage.setItem(EXPLICIT_LOGOUT_STORAGE_KEY, String(Date.now()));
+        clearAuthTransitionSignal(
+          storage,
+          REJECTED_AUTH_SESSION_STORAGE_KEY
+        );
       } catch {
         // This tab still logs out locally. Other tabs conservatively preserve
         // their confirmed sessions when logout intent cannot be proven.
       }
     }
     inMemoryAuthToken = '';
-    authTokenRemovalPending = true;
+    beginAuthTokenRemoval(previousMemoryToken);
   }
   if (!storage) {
     return false;
@@ -232,7 +419,7 @@ export function removeStoredItem(key: string) {
       key === 'token' ? storage.getItem(key) || previousMemoryToken || '' : '';
     storage.removeItem(key);
     if (key === 'token' && !storage.getItem(key)) {
-      authTokenRemovalPending = false;
+      finishAuthTokenRemoval();
     }
     if (key === 'token' && previousValue) {
       noteNavAuthTokenChange({
@@ -246,9 +433,133 @@ export function removeStoredItem(key: string) {
   }
 }
 
+function isRecentAuthTransitionSignal(value: string | null, now: number) {
+  const signal = parseAuthTransitionSignal(value);
+  if (!signal) return false;
+  const signalledAt = signal.at;
+  return (
+    signalledAt <= now + AUTH_TRANSITION_SIGNAL_CLOCK_SKEW_MS &&
+    now - signalledAt <= AUTH_TRANSITION_SIGNAL_MAX_AGE_MS
+  );
+}
+
+function hasRejectedAuthSessionMarkerInStorage(storage: Storage) {
+  const signal = storage.getItem(REJECTED_AUTH_SESSION_STORAGE_KEY);
+  if (!hasActiveAuthTransitionSignal(signal)) return false;
+  const currentToken =
+    storage.getItem(AUTH_TOKEN_STORAGE_KEY) || inMemoryAuthToken;
+  if (currentToken && !authTransitionSignalTargetsToken(signal, currentToken)) {
+    return false;
+  }
+  return true;
+}
+
+export function hasRejectedAuthSessionMarker() {
+  const storage = getLocalStorage();
+  if (!storage) return false;
+  try {
+    return hasRejectedAuthSessionMarkerInStorage(storage);
+  } catch {
+    return false;
+  }
+}
+
+export function hasExplicitAuthLogoutMarker() {
+  const storage = getLocalStorage();
+  if (!storage) return false;
+  try {
+    return hasActiveAuthTransitionSignal(
+      storage.getItem(EXPLICIT_LOGOUT_STORAGE_KEY)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Retires only the credential that the canonical session boundary rejected.
+ * A newer login that lands while an older request is resolving must survive.
+ */
+export function retireRejectedAuthToken(
+  expectedToken: string,
+  now = Date.now()
+) {
+  if (!expectedToken || readAuthToken().token !== expectedToken) return false;
+
+  const storage = getLocalStorage();
+  let rejectionSignalPersisted = false;
+  if (storage) {
+    try {
+      const durableToken = storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+      if (durableToken && durableToken !== expectedToken) return false;
+      clearAuthTransitionSignal(storage, EXPLICIT_LOGOUT_STORAGE_KEY);
+      const rejectionSignal = createRejectedAuthSessionSignal(
+        expectedToken,
+        now
+      );
+      storage.setItem(REJECTED_AUTH_SESSION_STORAGE_KEY, rejectionSignal);
+      rejectionSignalPersisted =
+        storage.getItem(REJECTED_AUTH_SESSION_STORAGE_KEY) === rejectionSignal;
+      const currentToken = storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+      if (currentToken && currentToken !== expectedToken) {
+        clearAuthTransitionSignal(storage, REJECTED_AUTH_SESSION_STORAGE_KEY);
+        inMemoryAuthToken = currentToken;
+        finishAuthTokenRemoval();
+        return false;
+      }
+    } catch {
+      // The canonical rejection still retires this page's in-memory token.
+      // Other tabs will independently reach the same server boundary.
+    }
+  }
+
+  inMemoryAuthToken = '';
+  if (rejectionSignalPersisted) {
+    finishAuthTokenRemoval();
+  } else {
+    beginAuthTokenRemoval(expectedToken);
+  }
+  if (storage) {
+    try {
+      const tokenBeforeRemoval =
+        storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+      if (tokenBeforeRemoval && tokenBeforeRemoval !== expectedToken) {
+        inMemoryAuthToken = tokenBeforeRemoval;
+        finishAuthTokenRemoval();
+        return false;
+      }
+      storage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+      const remainingToken = storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+      if (remainingToken && remainingToken !== expectedToken) {
+        inMemoryAuthToken = remainingToken;
+        finishAuthTokenRemoval();
+        return false;
+      }
+      if (remainingToken) {
+        beginAuthTokenRemoval(expectedToken);
+      } else {
+        finishAuthTokenRemoval();
+      }
+    } catch {
+      // Keep removal pending so this page cannot resurrect the rejected token.
+    }
+  }
+
+  // The marker remains authoritative if a mobile storage implementation drops
+  // the removal. Its credential id also lets a newer cross-tab login survive a
+  // delayed rejection event or repair an exceptionally narrow write/remove
+  // race without ever making the rejected credential usable again.
+
+  noteNavAuthTokenChange({
+    previousToken: expectedToken,
+    nextToken: null
+  });
+  return true;
+}
+
 export function resetAuthTokenMemoryForTests() {
   inMemoryAuthToken = '';
-  authTokenRemovalPending = false;
+  finishAuthTokenRemoval();
 }
 
 export function adoptAuthTokenStorageChange(nextToken: string | null) {
@@ -257,7 +568,7 @@ export function adoptAuthTokenStorageChange(nextToken: string | null) {
   // authoritative account transition and may safely replace the page-lifetime
   // fallback credential.
   inMemoryAuthToken = nextToken || '';
-  authTokenRemovalPending = false;
+  finishAuthTokenRemoval();
 }
 
 export function isExplicitAuthTokenRemovalStorageEvent(
@@ -268,7 +579,7 @@ export function isExplicitAuthTokenRemovalStorageEvent(
   const storage = event.storageArea || getLocalStorage();
   if (!storage) return false;
   try {
-    return isRecentExplicitLogoutSignal(
+    return isRecentAuthTransitionSignal(
       storage.getItem(EXPLICIT_LOGOUT_STORAGE_KEY),
       now
     );
@@ -277,22 +588,12 @@ export function isExplicitAuthTokenRemovalStorageEvent(
   }
 }
 
-function isRecentExplicitLogoutSignal(value: string | null, now: number) {
-  const signalledAt = Number(value);
-  return (
-    Number.isFinite(signalledAt) &&
-    signalledAt > 0 &&
-    signalledAt <= now + EXPLICIT_LOGOUT_SIGNAL_CLOCK_SKEW_MS &&
-    now - signalledAt <= EXPLICIT_LOGOUT_SIGNAL_MAX_AGE_MS
-  );
-}
-
 export function isExplicitAuthLogoutStorageEvent(
   event: Pick<StorageEvent, 'key' | 'newValue' | 'storageArea'>,
   now = Date.now()
 ) {
   if (event.key === EXPLICIT_LOGOUT_STORAGE_KEY) {
-    return isRecentExplicitLogoutSignal(event.newValue, now);
+    return isRecentAuthTransitionSignal(event.newValue, now);
   }
   return isExplicitAuthTokenRemovalStorageEvent(event, now);
 }
@@ -303,8 +604,110 @@ export function isExplicitAuthLogoutMarkerStorageEvent(
 ) {
   return (
     event.key === EXPLICIT_LOGOUT_STORAGE_KEY &&
-    isRecentExplicitLogoutSignal(event.newValue, now)
+    isRecentAuthTransitionSignal(event.newValue, now)
   );
+}
+
+export function adoptRejectedAuthSessionStorageEvent(
+  event: Pick<
+    StorageEvent,
+    'key' | 'newValue' | 'oldValue' | 'storageArea'
+  >
+) {
+  const storage = event.storageArea || getLocalStorage();
+  if (!storage) return false;
+
+  if (event.key === REJECTED_AUTH_SESSION_STORAGE_KEY) {
+    const memoryTokenBeforeRejection = inMemoryAuthToken;
+    try {
+      if (
+        !hasActiveAuthTransitionSignal(event.newValue) ||
+        storage.getItem(REJECTED_AUTH_SESSION_STORAGE_KEY) !== event.newValue
+      ) {
+        return false;
+      }
+      // Consult the shared marker through readAuthToken so a suspended tab
+      // cannot repair that credential from its page-memory fallback.
+      readAuthToken();
+      if (!hasRejectedAuthSessionMarkerInStorage(storage)) return false;
+      if (memoryTokenBeforeRejection) {
+        noteNavAuthTokenChange({
+          previousToken: memoryTokenBeforeRejection,
+          nextToken: null
+        });
+      }
+      return true;
+    } catch {
+      // The StorageEvent itself is authoritative even if mobile storage has
+      // become temporarily unreadable. Retire only matching page memory; a
+      // newer credential must survive the delayed event.
+      if (
+        memoryTokenBeforeRejection &&
+        !authTransitionSignalTargetsToken(
+          event.newValue,
+          memoryTokenBeforeRejection
+        )
+      ) {
+        return false;
+      }
+      inMemoryAuthToken = '';
+      beginAuthTokenRemoval(memoryTokenBeforeRejection);
+      if (memoryTokenBeforeRejection) {
+        noteNavAuthTokenChange({
+          previousToken: memoryTokenBeforeRejection,
+          nextToken: null
+        });
+      }
+      return hasActiveAuthTransitionSignal(event.newValue);
+    }
+  }
+
+  if (
+    event.key !== AUTH_TOKEN_STORAGE_KEY ||
+    event.newValue ||
+    !event.oldValue
+  ) {
+    return false;
+  }
+
+  try {
+    if (!hasRejectedAuthSessionMarkerInStorage(storage)) {
+      return false;
+    }
+
+    // Shared durable storage wins over an old page-lifetime value. A login
+    // that replaced the rejected token while this event was queued survives.
+    const durableToken = storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+    const currentToken = durableToken || inMemoryAuthToken;
+    if (currentToken && currentToken !== event.oldValue) return false;
+
+    inMemoryAuthToken = '';
+    beginAuthTokenRemoval(event.oldValue);
+    if (durableToken === event.oldValue) {
+      storage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+    }
+    const remainingToken = storage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+    if (remainingToken) {
+      if (remainingToken !== event.oldValue) {
+        adoptAuthTokenStorageChange(remainingToken);
+        return false;
+      }
+    } else {
+      finishAuthTokenRemoval();
+    }
+  } catch {
+    if (inMemoryAuthToken && inMemoryAuthToken !== event.oldValue) {
+      return false;
+    }
+    inMemoryAuthToken = '';
+    beginAuthTokenRemoval(event.oldValue);
+  }
+
+  noteNavAuthTokenChange({
+    previousToken: event.oldValue,
+    nextToken: null
+  });
+  return true;
 }
 
 if (typeof window !== 'undefined' && window.addEventListener) {

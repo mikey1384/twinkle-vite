@@ -20,9 +20,17 @@ import { ViewContextProvider } from './View';
 import {
   DEFAULT_PROFILE_THEME,
   LAST_ONLINE_FILTER_LABEL,
-  clientVersion
+  clientVersion,
+  localStorageKeys
 } from '~/constants/defaultValues';
-import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
+import {
+  getStoredItem,
+  getTwinkleDeviceId,
+  hasRejectedAuthSessionMarker,
+  removeStoredItem,
+  retireRejectedAuthToken,
+  setStoredItem
+} from '~/helpers/userDataHelpers';
 import {
   getErrorMessage,
   getErrorMessageFromResponseData
@@ -67,12 +75,24 @@ const initialUserState = {
   profiles: [],
   profilesLoaded: false,
   searchedProfiles: [],
-  sessionInterruption: null,
+  sessionInterruption:
+    null as ReturnType<typeof createSessionInterruption> | null,
   signinModalShown: false,
   userObj: {},
   achievementsObj: {},
   achieverObj: {}
 };
+
+function createInitialUserState() {
+  const sessionInterruption = hasRejectedAuthSessionMarker()
+    ? createSessionInterruption('session_token_invalid')
+    : null;
+  return {
+    ...initialUserState,
+    sessionInterruption,
+    signinModalShown: Boolean(sessionInterruption)
+  };
+}
 
 const noopDispatch = () => undefined;
 
@@ -154,7 +174,11 @@ function shouldReloadForRedirect() {
 }
 
 export function AppContextProvider({ children }: { children: ReactNode }) {
-  const [userState, userDispatch] = useReducer(UserReducer, initialUserState);
+  const [userState, userDispatch] = useReducer(
+    UserReducer,
+    initialUserState,
+    createInitialUserState
+  );
 
   const handleError = useCallback(
     async (error: any) => {
@@ -178,8 +202,16 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           const invalidSessionToken = await resolveInvalidSessionToken(error);
           if (
             invalidSessionToken &&
-            getStoredItem('token') === invalidSessionToken
+            getStoredItem('token') === invalidSessionToken &&
+            retireRejectedAuthToken(invalidSessionToken)
           ) {
+            // A canonical rejection retires the exact unusable credential and
+            // its cached identity. This is deliberately separate from missing
+            // or unreadable mobile storage, which remains recoverable.
+            Object.keys(localStorageKeys).forEach((key) =>
+              removeStoredItem(key)
+            );
+            setStoredItem('profileTheme', DEFAULT_PROFILE_THEME);
             clearAnalyticsUser();
             userDispatch({
               type: 'SESSION_INTERRUPTED',

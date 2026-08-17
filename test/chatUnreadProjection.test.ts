@@ -3,8 +3,10 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   canonicalUnreadBadgeIsShown,
+  chatRealtimeChannelNeedsCanonicalSummary,
   channelHasCanonicalUnread,
   hasVisibleCanonicalChatUnread,
+  mergeChatUnreadResyncRequirement,
   projectCanonicalUnreadChannelLists
 } from '../src/helpers/chatUnreadProjection';
 
@@ -73,6 +75,51 @@ test('hidden, unlisted, and read channels cannot light the top Chat nav', () => 
       classChannelIds: []
     }),
     true
+  );
+});
+
+test('realtime projection waits for complete, visible, listed channel identity', () => {
+  assert.equal(
+    chatRealtimeChannelNeedsCanonicalSummary({
+      channel: { id: 7, pathId: 1000007, isHidden: false },
+      isListed: true
+    }),
+    false
+  );
+  for (const input of [
+    { channel: undefined, isListed: false },
+    { channel: { id: 7 }, isListed: true },
+    { channel: { id: 7, pathId: 1000007, isHidden: true }, isListed: true },
+    { channel: { id: 7, pathId: 1000007 }, isListed: false }
+  ]) {
+    assert.equal(chatRealtimeChannelNeedsCanonicalSummary(input), true);
+  }
+});
+
+test('a queued canonical-summary requirement survives narrower retries', () => {
+  const pendingUpgrade = {
+    channelId: 7,
+    subchannelId: 0,
+    includeChannelSummary: true,
+    retryCount: 0
+  };
+  const narrowerRetry = {
+    channelId: 7,
+    subchannelId: 0,
+    includeChannelSummary: false,
+    retryCount: 2
+  };
+
+  assert.deepEqual(
+    mergeChatUnreadResyncRequirement(pendingUpgrade, narrowerRetry),
+    {
+      ...narrowerRetry,
+      includeChannelSummary: true
+    }
+  );
+  assert.deepEqual(
+    mergeChatUnreadResyncRequirement(undefined, narrowerRetry),
+    narrowerRetry
   );
 });
 

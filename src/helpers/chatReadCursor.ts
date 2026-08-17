@@ -5,15 +5,59 @@ function normalizeConfirmedChatMessageId(messageId: unknown) {
     : 0;
 }
 
-export function getVisibleChatReadMessageId({
-  confirmedMessageId,
-  visibleMessageIds
+function isConfirmedMessageInReadScope({
+  channelId,
+  message,
+  messageId,
+  subchannelId
 }: {
-  confirmedMessageId?: unknown;
-  visibleMessageIds?: readonly unknown[] | null;
+  channelId: number;
+  message: unknown;
+  messageId: number;
+  subchannelId: number;
 }) {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    return false;
+  }
+  const candidate = message as {
+    channelId?: unknown;
+    id?: unknown;
+    subchannelId?: unknown;
+  };
+  return Boolean(
+    normalizeConfirmedChatMessageId(candidate.id) === messageId &&
+      Number(candidate.channelId || 0) === channelId &&
+      Number(candidate.subchannelId || 0) === subchannelId
+  );
+}
+
+export function getVisibleChatReadMessageId({
+  channelId,
+  confirmedMessageId,
+  subchannelId,
+  visibleMessageIds,
+  visibleMessagesObj
+}: {
+  channelId: number;
+  confirmedMessageId?: unknown;
+  subchannelId: number;
+  visibleMessageIds?: readonly unknown[] | null;
+  visibleMessagesObj?: Readonly<Record<string | number, unknown>> | null;
+}) {
+  const scopedVisibleMessageIds = (visibleMessageIds || [])
+    .map(normalizeConfirmedChatMessageId)
+    .filter(
+      (messageId) =>
+        messageId > 0 &&
+        isConfirmedMessageInReadScope({
+          channelId,
+          message: visibleMessagesObj?.[messageId],
+          messageId,
+          subchannelId
+        })
+    );
   return Math.max(
     normalizeConfirmedChatMessageId(confirmedMessageId),
-    ...(visibleMessageIds || []).map(normalizeConfirmedChatMessageId)
+    ...scopedVisibleMessageIds
   );
 }

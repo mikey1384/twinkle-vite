@@ -12,6 +12,29 @@ export function channelHasCanonicalUnread(channel: any) {
   );
 }
 
+export function chatRealtimeChannelNeedsCanonicalSummary({
+  channel,
+  isListed
+}: {
+  channel: any;
+  isListed: boolean;
+}) {
+  return Boolean(
+    !channel?.id || !channel.pathId || channel.isHidden || !isListed
+  );
+}
+
+export function mergeChatUnreadResyncRequirement<
+  T extends { includeChannelSummary: boolean }
+>(existing: T | undefined, next: T): T {
+  return {
+    ...next,
+    includeChannelSummary:
+      next.includeChannelSummary ||
+      Boolean(existing?.includeChannelSummary)
+  };
+}
+
 export function hasVisibleCanonicalChatUnread({
   channelsObj,
   homeChannelIds,

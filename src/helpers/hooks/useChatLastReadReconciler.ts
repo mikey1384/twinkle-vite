@@ -46,8 +46,11 @@ export default function useChatLastReadReconciler() {
       ? channel?.subchannelObj?.[subchannelId]
       : channel;
     return getVisibleChatReadMessageId({
+      channelId,
       confirmedMessageId,
-      visibleMessageIds: scope?.messageIds
+      subchannelId,
+      visibleMessageIds: scope?.messageIds,
+      visibleMessagesObj: scope?.messagesObj
     });
   }
 
@@ -92,10 +95,12 @@ export default function useChatLastReadReconciler() {
 
   async function reconcileChannelUnreadActivity({
     channelId,
-    subchannelId = 0
+    subchannelId = 0,
+    includeChannelSummary = false
   }: {
     channelId: number;
     subchannelId?: number;
+    includeChannelSummary?: boolean;
   }) {
     const requestUserId = Number(userIdRef.current || 0);
     if (requestUserId <= 0 || !(channelId > 0)) return;
@@ -104,7 +109,12 @@ export default function useChatLastReadReconciler() {
     // from one writer snapshot, so neither can advance without the other.
     markChatUnreadActivity();
     try {
-      await applyFreshUnreadState({ requestUserId, channelId, subchannelId });
+      await applyFreshUnreadState({
+        requestUserId,
+        channelId,
+        subchannelId,
+        includeChannelSummary
+      });
     } catch (error) {
       console.error('Failed to re-read chat unread activity:', error);
     }
@@ -164,17 +174,20 @@ export default function useChatLastReadReconciler() {
   async function applyFreshUnreadState({
     requestUserId,
     channelId,
-    subchannelId
+    subchannelId,
+    includeChannelSummary = false
   }: {
     requestUserId: number;
     channelId: number;
     subchannelId: number;
+    includeChannelSummary?: boolean;
   }) {
     for (let attempt = 0; attempt < MAX_FRESH_READ_ATTEMPTS; attempt++) {
       const expectedActivityRevision = getChatUnreadActivityRevision();
       const unreadState = (await loadChatChannelUnreadState({
         channelId,
-        subchannelId
+        subchannelId,
+        includeChannelSummary
       })) as CanonicalChatChannelUnreadState;
       if (getChatUnreadActivityRevision() !== expectedActivityRevision) {
         continue;

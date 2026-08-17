@@ -99,20 +99,23 @@ export function shouldShowStandaloneBranchLumineFixAction({
   ownerReview,
   contributionStatus,
   canAskLumineToResolveConflicts,
-  hasNoticeLumineFixAction,
+  canonicalNoticeOwnsBranchActions,
   activeConflictMarkerCount
 }: {
   ownerReview: boolean;
   contributionStatus: string;
   canAskLumineToResolveConflicts: boolean;
-  hasNoticeLumineFixAction: boolean;
+  canonicalNoticeOwnsBranchActions: boolean;
   activeConflictMarkerCount: number;
 }) {
+  // Diff metadata can predict an overlap before Update from Main has written
+  // anything to the branch. While the canonical notice is present, it owns
+  // that transition and exposes repair only after saved markers are confirmed.
   return Boolean(
     !ownerReview &&
     contributionStatus === 'draft' &&
     canAskLumineToResolveConflicts &&
-    !hasNoticeLumineFixAction &&
+    !canonicalNoticeOwnsBranchActions &&
     activeConflictMarkerCount > 0
   );
 }

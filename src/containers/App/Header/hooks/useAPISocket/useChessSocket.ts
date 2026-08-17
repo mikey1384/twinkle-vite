@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext } from '~/contexts';
+import {
+  chatRealtimeChannelNeedsCanonicalSummary
+} from '~/helpers/chatUnreadProjection';
+import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
 
 export default function useChessSocket({
   selectedChannelId
@@ -9,6 +13,24 @@ export default function useChessSocket({
 }) {
   const selectedChannelIdRef = useRef(selectedChannelId);
   selectedChannelIdRef.current = selectedChannelId;
+
+  const channelsObj = useChatContext((v) => v.state.channelsObj);
+  const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
+  const favoriteChannelIds = useChatContext(
+    (v) => v.state.favoriteChannelIds
+  );
+  const classChannelIds = useChatContext((v) => v.state.classChannelIds);
+  const channelsObjRef = useRef(channelsObj);
+  const listedChannelIdsRef = useRef(new Set<number>());
+  channelsObjRef.current = channelsObj;
+  listedChannelIdsRef.current = new Set(
+    [
+      ...(homeChannelIds || []),
+      ...(favoriteChannelIds || []),
+      ...(classChannelIds || [])
+    ].map(Number)
+  );
+  const { reconcileChannelUnreadActivity } = useChatLastReadReconciler();
 
   const onSetChessGameState = useChatContext(
     (v) => v.actions.onSetChessGameState
@@ -70,6 +92,7 @@ export default function useChessSocket({
       sender: any;
       timeStamp: number;
     }) {
+      if (!canApplyPersistedChessActivityImmediately(channelId)) return;
       onSubmitMessage({
         message: {
           channelId,
@@ -99,6 +122,7 @@ export default function useChessSocket({
       sender: any;
       timeStamp: number;
     }) {
+      if (!canApplyPersistedChessActivityImmediately(channelId)) return;
       onSubmitMessage({
         message: {
           channelId,
@@ -125,6 +149,7 @@ export default function useChessSocket({
       channelId: number;
       messageId: number;
     }) {
+      if (!canApplyPersistedChessActivityImmediately(channelId)) return;
       onSetChessGameState({
         channelId,
         newState: { rewindRequestId: messageId }
@@ -138,6 +163,7 @@ export default function useChessSocket({
       channelId: number;
       message: any;
     }) {
+      if (!canApplyPersistedChessActivityImmediately(channelId)) return;
       onUpdateRecentChessMessage({ channelId, message });
       onSetChessGameState({
         channelId,
@@ -147,6 +173,32 @@ export default function useChessSocket({
         message,
         messageId: message.id
       });
+    }
+
+    function canApplyPersistedChessActivityImmediately(channelId: number) {
+      const normalizedChannelId = Number(channelId);
+      const channel = channelsObjRef.current?.[normalizedChannelId];
+      const channelSummaryIsNeeded =
+        chatRealtimeChannelNeedsCanonicalSummary({
+          channel,
+          isListed: listedChannelIdsRef.current.has(normalizedChannelId)
+        });
+      if (channelSummaryIsNeeded) {
+        void reconcileChannelUnreadActivity({
+          channelId: normalizedChannelId,
+          includeChannelSummary: true
+        });
+      }
+      // A loaded channel the user is actively viewing already has canonical
+      // identity. Keep its live game state moving while the writer summary
+      // repairs a temporarily missing sidebar projection.
+      return (
+        !channelSummaryIsNeeded ||
+        Boolean(
+          channel?.id &&
+            normalizedChannelId === Number(selectedChannelIdRef.current || 0)
+        )
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

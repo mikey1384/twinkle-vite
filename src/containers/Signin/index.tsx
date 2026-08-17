@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import LoginForm from './LoginForm';
@@ -6,10 +6,23 @@ import SignUpForm from './SignUpForm';
 import RestoreAccount from './RestoreAccount';
 import Main from './Main';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { useAppContext } from '~/contexts';
+import {
+  hasRejectedAuthSessionMarker,
+  readAuthToken
+} from '~/helpers/userDataHelpers';
 
 export default function Signin({ onHide }: { onHide: () => void }) {
+  const sessionInterruption = useAppContext(
+    (v) => v.user.state.sessionInterruption
+  );
+  const onLogout = useAppContext((v) => v.user.actions.onLogout);
+  const requiresCredentialReentry =
+    sessionInterruption?.code === 'session_token_invalid';
   const [username, setUsername] = useState('');
-  const [currentPage, setCurrentPage] = useState('main');
+  const [currentPage, setCurrentPage] = useState(() =>
+    requiresCredentialReentry ? 'login' : 'main'
+  );
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [password, setPassword] = useState('');
   const [reenteredPassword, setReenteredPassword] = useState('');
@@ -23,12 +36,16 @@ export default function Signin({ onHide }: { onHide: () => void }) {
   const [hasNameError, setHasNameError] = useState(false);
   const [hasEmailError, setHasEmailError] = useState(false);
 
+  useEffect(() => {
+    if (requiresCredentialReentry) setCurrentPage('login');
+  }, [requiresCredentialReentry]);
+
   return (
     <ErrorBoundary componentPath="Signin/index">
       <Modal
         modalKey="Signin"
         isOpen
-        onClose={onHide}
+        onClose={handleModalClose}
         closeOnBackdropClick={!username}
         hasHeader={false}
         bodyPadding={0}
@@ -43,6 +60,9 @@ export default function Signin({ onHide }: { onHide: () => void }) {
           )}
           {currentPage === 'login' && (
             <LoginForm
+              sessionInterruption={
+                requiresCredentialReentry ? sessionInterruption : null
+              }
               username={username}
               onSetUsername={setUsername}
               onShowSignupForm={() => setCurrentPage('signUp')}
@@ -84,11 +104,27 @@ export default function Signin({ onHide }: { onHide: () => void }) {
             <RestoreAccount
               username={username}
               onShowLoginForm={() => setCurrentPage('login')}
-              onHide={onHide}
+              onHide={handleRestoreClose}
             />
           )}
         </LegacyModalLayout>
       </Modal>
     </ErrorBoundary>
   );
+
+  function handleModalClose() {
+    if (!sessionInterruption) {
+      onHide();
+      return;
+    }
+    // Closing recovery means continuing as a clean guest. Never let a late
+    // close erase a newer login that another tab has already stored.
+    if (hasRejectedAuthSessionMarker() || !readAuthToken().token) {
+      onLogout();
+    }
+  }
+
+  function handleRestoreClose() {
+    handleModalClose();
+  }
 }

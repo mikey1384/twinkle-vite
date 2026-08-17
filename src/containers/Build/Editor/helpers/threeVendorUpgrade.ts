@@ -1,5 +1,9 @@
-export const LEGACY_THREE_VENDOR_PREFIX = '/build/vendor/three/0.160.0/';
-export const CURRENT_THREE_VENDOR_PREFIX = '/build/vendor/three/0.184.0/';
+export const LEGACY_THREE_VENDOR_VERSION = '0.160.0';
+export const CURRENT_THREE_VENDOR_VERSION = '0.184.0';
+export const LEGACY_THREE_VENDOR_PREFIX =
+  `/build/vendor/three/${LEGACY_THREE_VENDOR_VERSION}/`;
+export const CURRENT_THREE_VENDOR_PREFIX =
+  `/build/vendor/three/${CURRENT_THREE_VENDOR_VERSION}/`;
 export const CURRENT_THREE_VENDOR_VERSION_LABEL = '0.184';
 
 interface ProjectFileLike {

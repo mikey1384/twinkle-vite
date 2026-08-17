@@ -52,11 +52,15 @@ import { getConfirmedAnalyticsUserId } from '~/helpers/analyticsIdentity';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import {
+  adoptRejectedAuthSessionStorageEvent,
   getStoredItem,
+  hasExplicitAuthLogoutMarker,
+  hasRejectedAuthSessionMarker,
   isExplicitAuthLogoutStorageEvent,
   readAuthToken,
   setStoredItem
 } from '~/helpers/userDataHelpers';
+import { createSessionInterruption } from '~/helpers/sessionInterruption';
 import {
   browserReportsOffline,
   markBrowserNetworkReachable
@@ -188,7 +192,11 @@ function BuildRuntimeLoading() {
   );
 }
 
-function SessionRecovery() {
+function SessionRecovery({
+  text = 'Restoring your session…'
+}: {
+  text?: string;
+}) {
   return (
     <section
       className={sessionRecoveryClass}
@@ -196,7 +204,7 @@ function SessionRecovery() {
       data-session-recovery="true"
     >
       <div>
-        <Loading text="Restoring your session…" />
+        <Loading text={text} />
       </div>
     </section>
   );
@@ -256,6 +264,9 @@ export default function App() {
   );
   const onAdoptCrossTabLogout = useAppContext(
     (v) => v.user.actions.onAdoptCrossTabLogout
+  );
+  const onInterruptSession = useAppContext(
+    (v) => v.user.actions.onInterruptSession
   );
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
@@ -362,6 +373,15 @@ export default function App() {
     (sessionCredentialUnavailable ||
       (!canonicalSessionUserId && readAuthToken().token))
   );
+  const sessionAccessBlocked =
+    awaitingCanonicalSession || Boolean(sessionInterruption);
+  const sessionRecoveryRouteAllowed = Boolean(
+    sessionInterruption &&
+      (location.pathname === '/reset' ||
+        location.pathname.startsWith('/reset/') ||
+        location.pathname === '/verify' ||
+        location.pathname.startsWith('/verify/'))
+  );
 
   const prevUserId = useRef(userId);
   const sessionInitPromiseRef = useRef<Promise<boolean> | null>(null);
@@ -392,6 +412,7 @@ export default function App() {
     (v) => v.actions.onSetPendingChessModalChannelId
   );
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
+  const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const onSetChessTarget = useChatContext((v) => v.actions.onSetChessTarget);
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
   const onPostFileUploadStatus = useChatContext(
@@ -445,6 +466,13 @@ export default function App() {
     (v) => v.actions.onResetSharedPrompts
   );
   const updateDetail = useNotiContext((v) => v.state.updateDetail);
+  const updateNoticeShown = useNotiContext((v) => v.state.updateNoticeShown);
+  const versionMatch = useNotiContext((v) => v.state.versionMatch);
+  const onShowUpdateNotice = useNotiContext(
+    (v) => v.actions.onShowUpdateNotice
+  );
+  const onCheckVersion = useNotiContext((v) => v.actions.onCheckVersion);
+  const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );
@@ -467,7 +495,6 @@ export default function App() {
     (v) => v.state.dailyBonusModalShown
   );
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
-  const updateNoticeShown = useNotiContext((v) => v.state.updateNoticeShown);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -492,6 +519,7 @@ export default function App() {
     (v) => v.actions.onResetContentInput
   );
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
+  const requiredUpdateNoticeShown = updateNoticeShown || !versionMatch;
   const visibilityChangeRef: React.RefObject<any> = useRef(null);
   const hiddenRef: React.RefObject<any> = useRef(null);
   const authRef: React.RefObject<any> = useRef(null);
@@ -774,6 +802,56 @@ export default function App() {
   }, [twinkleXP, twinkleCoins, userId]);
 
   useEffect(() => {
+    if (sessionInterruption) setMobileMenuShown(false);
+  }, [sessionInterruption]);
+
+  useEffect(() => {
+    onShowUpdateNotice(!versionMatch);
+    // onShowUpdateNotice is a stable context action.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [versionMatch]);
+
+  useEffect(() => {
+    if (!sessionInterruption) return;
+    let cancelled = false;
+    void checkVersion()
+      .then((data: any) => {
+        if (!cancelled && typeof data?.match === 'boolean') {
+          onCheckVersion(data);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+    // checkVersion and onCheckVersion are stable context helpers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionInterruption]);
+
+  useEffect(() => {
+    const rejectedSessionMarkerPresent = hasRejectedAuthSessionMarker();
+    if (rejectedSessionMarkerPresent) {
+      interruptRejectedSession();
+      return;
+    }
+    if (hasExplicitAuthLogoutMarker()) {
+      adoptPersistedExplicitLogout();
+      return;
+    }
+    if (sessionInterruption) {
+      const replacementToken = readAuthToken().token;
+      if (replacementToken) {
+        // A confirmed login in another tab clears the rejection marker before
+        // publishing its new credential. A tab that slept through that storage
+        // event must still adopt the replacement through canonical session data.
+        resumeStoredCredential(replacementToken);
+        return;
+      }
+      authRef.current = null;
+      setSessionCredentialUnavailable(false);
+      onSetSessionLoaded();
+      return;
+    }
     const tokenRead = readAuthToken();
     const token = tokenRead.token;
     const prevToken = authRef.current?.headers?.authorization;
@@ -809,10 +887,27 @@ export default function App() {
       onSetAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, pageVisible, signinModalShown, userId]);
+  }, [
+    location.pathname,
+    pageVisible,
+    sessionInterruption,
+    signinModalShown,
+    userId
+  ]);
 
   useEffect(() => {
     const handleAuthTokenStorageChange = (event: StorageEvent) => {
+      if (adoptRejectedAuthSessionStorageEvent(event)) {
+        // Another tab received a canonical rejection for this exact token.
+        // A newer login stores a different credential and survives this event.
+        setSessionCredentialUnavailable(false);
+        authRef.current = null;
+        onInterruptSession(
+          createSessionInterruption('session_token_invalid')
+        );
+        return;
+      }
+
       if (isExplicitAuthLogoutStorageEvent(event)) {
         // The explicit marker is authoritative on its own, while the ordered
         // token-removal event covers a tab that began listening between the
@@ -875,8 +970,9 @@ export default function App() {
       window.removeEventListener('storage', handleAuthTokenStorageChange);
     };
     // `handleInit` is the component-owned canonical session pipeline.
+    // Context actions are stable and intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onAdoptCrossTabLogout]);
+  }, []);
 
   useEffect(() => {
     let offlineRecoveryTimer: number | null = null;
@@ -890,14 +986,23 @@ export default function App() {
     };
 
     const resumeSavedSession = (allowOfflineProbe = false) => {
+      if (hasRejectedAuthSessionMarker()) {
+        interruptRejectedSession();
+        return;
+      }
+      if (hasExplicitAuthLogoutMarker()) {
+        adoptPersistedExplicitLogout();
+        return;
+      }
       const recoveredToken = readAuthToken().token;
       const hasSavedSessionIdentity = Boolean(
         canonicalSessionUserId || userId || getStoredItem('userId')
       );
-      if (
-        sessionInterruption ||
-        (!recoveredToken && !hasSavedSessionIdentity)
-      ) {
+      if (sessionInterruption) {
+        if (recoveredToken) resumeStoredCredential(recoveredToken);
+        return;
+      }
+      if (!recoveredToken && !hasSavedSessionIdentity) {
         return;
       }
       if (!recoveredToken) {
@@ -1050,6 +1155,7 @@ export default function App() {
 
   useLayoutEffect(() => {
     if (prevUserId.current === userId) return;
+    onResetChat(Number(prevUserId.current || 0));
     onResetContent();
     onResetFeeds();
     onResetSubjects();
@@ -1095,18 +1201,20 @@ export default function App() {
     >
       <KeyContext.Provider value={keyContextValue}>
         <SocketManager onInit={handleInit} />
-        {mobileMenuShown && (
+        {mobileMenuShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <MobileMenu onClose={() => setMobileMenuShown(false)} />
           </Suspense>
         )}
-        {updateNoticeShown && (
-          <Suspense fallback={null}>
+        {requiredUpdateNoticeShown && (
+          <Suspense
+            fallback={<SessionRecovery text="Opening required update…" />}
+          >
             <UpdateNotice updateDetail={updateDetail} />
           </Suspense>
         )}
         {!suppressHeader &&
-          (awaitingCanonicalSession ? null : (
+          (sessionAccessBlocked ? null : (
             <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
           ))}
         {awaitingCanonicalSession ? <SessionRecovery /> : null}
@@ -1122,7 +1230,7 @@ export default function App() {
             }
           `}`}
         >
-          {!awaitingCanonicalSession ? (
+          {!sessionAccessBlocked || sessionRecoveryRouteAllowed ? (
             <Suspense fallback={<Loading />}>
               <NavigationRouteReadyObserver />
               <Routes>
@@ -1223,7 +1331,7 @@ export default function App() {
             </Suspense>
           ) : null}
         </div>
-        {!awaitingCanonicalSession &&
+        {!sessionAccessBlocked &&
         (usingBuildAppRuntime || runtimeKeepAliveHostEnabled) ? (
           <Suspense
             fallback={usingBuildAppRuntime ? <BuildRuntimeLoading /> : null}
@@ -1231,7 +1339,7 @@ export default function App() {
             <BuildRuntimeKeepAliveHost />
           </Suspense>
         ) : null}
-        {chessOptionsTargetUser && (
+        {chessOptionsTargetUser && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <ChessOptionsModal
               onHide={handleHideChessOptionsModal}
@@ -1246,14 +1354,14 @@ export default function App() {
             />
           </Suspense>
         )}
-        {chessPuzzleModalShown && (
+        {chessPuzzleModalShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <ChessPuzzleModal
               onHide={() => onSetChessPuzzleModalShown(false)}
             />
           </Suspense>
         )}
-        {dailyRewardModalShown && (
+        {dailyRewardModalShown && !sessionAccessBlocked && (
           <Suspense
             fallback={
               <LazyModalFallback
@@ -1284,7 +1392,7 @@ export default function App() {
             />
           </Suspense>
         )}
-        {dailyBonusModalShown && (
+        {dailyBonusModalShown && !sessionAccessBlocked && (
           <Suspense
             fallback={
               <LazyModalFallback
@@ -1304,17 +1412,19 @@ export default function App() {
             />
           </Suspense>
         )}
-        {signinModalShown && (
-          <Suspense fallback={null}>
-            <SigninModal onHide={onCloseSigninModal} />
-          </Suspense>
-        )}
-        {channelOnCall.incomingShown && (
+        {signinModalShown &&
+          !sessionRecoveryRouteAllowed &&
+          !requiredUpdateNoticeShown && (
+            <Suspense fallback={<SessionRecovery text="Opening sign-in…" />}>
+              <SigninModal onHide={onCloseSigninModal} />
+            </Suspense>
+          )}
+        {channelOnCall.incomingShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <Incoming />
           </Suspense>
         )}
-        {outgoingShown && (
+        {outgoingShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <Outgoing />
           </Suspense>
@@ -1326,7 +1436,7 @@ export default function App() {
             background: url('/img/emojis.png');
           `}
         />
-        {aiCallOngoing && (
+        {aiCallOngoing && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <AICallWindow
               initialPosition={{
@@ -1336,16 +1446,18 @@ export default function App() {
             />
           </Suspense>
         )}
-        {isAdmin && shouldShowAdminTelemetryWindow && (
-          <Suspense fallback={null}>
-            <AdminTelemetryWindow
-              initialPosition={{
-                x: Math.max(0, window.innerWidth - 520),
-                y: 100
-              }}
-            />
-          </Suspense>
-        )}
+        {isAdmin &&
+          shouldShowAdminTelemetryWindow &&
+          !sessionAccessBlocked && (
+            <Suspense fallback={null}>
+              <AdminTelemetryWindow
+                initialPosition={{
+                  x: Math.max(0, window.innerWidth - 520),
+                  y: 100
+                }}
+              />
+            </Suspense>
+          )}
       </KeyContext.Provider>
       <Global
         styles={{
@@ -1828,6 +1940,30 @@ export default function App() {
     return trackedInit;
   }
 
+  function resumeStoredCredential(token: string) {
+    setSessionCredentialUnavailable(false);
+    authRef.current = { headers: { authorization: token } };
+    void handleInit();
+  }
+
+  function interruptRejectedSession() {
+    authRef.current = null;
+    setSessionCredentialUnavailable(false);
+    if (!sessionInterruption) {
+      onInterruptSession(createSessionInterruption('session_token_invalid'));
+    }
+  }
+
+  function adoptPersistedExplicitLogout() {
+    authRef.current = null;
+    setSessionCredentialUnavailable(false);
+    if (canonicalSessionUserId || userId || getStoredItem('userId')) {
+      onAdoptCrossTabLogout();
+    } else {
+      onSetSessionLoaded();
+    }
+  }
+
   async function runSessionInit(
     attempts: number,
     canonicalAnalyticsUserConfirmed: boolean,
@@ -1900,9 +2036,8 @@ export default function App() {
       return !sessionChanged();
     } catch (error: any) {
       if (sessionChanged()) return false;
-      // The global request boundary has already moved a canonically rejected
-      // session into the sign-in interruption state. Retaining the credential
-      // for diagnosis/recovery must not turn the old token into a retry loop.
+      // The global request boundary has already retired a canonically rejected
+      // credential and opened sign-in recovery. Never retry that old session.
       if (error?.status === 401) return false;
       // A focus/pageshow probe made while Safari still says offline is a
       // one-shot reachability check. If it fails, wait for another explicit

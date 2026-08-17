@@ -497,7 +497,7 @@ test('branch-local overlap remains blocked after Main is fixed', () => {
   assert.doesNotMatch(markup, /conflict markers|\/app\.js/i);
 });
 
-test('a branch-local overlap uses the shared notice action only once', () => {
+test('the canonical branch notice owns the update-or-repair action', () => {
   const input = {
     ownerReview: false,
     contributionStatus: 'draft',
@@ -508,16 +508,71 @@ test('a branch-local overlap uses the shared notice action only once', () => {
   assert.equal(
     shouldShowStandaloneBranchLumineFixAction({
       ...input,
-      hasNoticeLumineFixAction: true
+      canonicalNoticeOwnsBranchActions: true
     }),
     false
   );
   assert.equal(
     shouldShowStandaloneBranchLumineFixAction({
       ...input,
-      hasNoticeLumineFixAction: false
+      canonicalNoticeOwnsBranchActions: false
     }),
     true
+  );
+  const contributionDetailSource = readFileSync(
+    new URL(
+      '../src/containers/Build/Editor/CollaborationPanel/ContributionDetail.tsx',
+      import.meta.url
+    ),
+    'utf8'
+  );
+  assert.match(
+    contributionDetailSource,
+    /canonicalNoticeOwnsBranchActions:\s*Boolean\(mainUpdateNoticeControl\)/
+  );
+});
+
+test('update-from-main has a terminal deadline and reconciles an ambiguous result', () => {
+  const requestSource = readFileSync(
+    new URL('../src/contexts/requestHelpers/build.ts', import.meta.url),
+    'utf8'
+  );
+  const editorSource = readFileSync(
+    new URL('../src/containers/Build/Editor/index.tsx', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(
+    requestSource,
+    /UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS\s*=\s*90_000/
+  );
+  assert.match(
+    requestSource,
+    /update-from-main[\s\S]*?maxRetries:\s*0,[\s\S]*?totalTimeoutMs:\s*UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS/
+  );
+  assert.match(
+    editorSource,
+    /catch \(error: any\)[\s\S]*?settleCurrentBranchMainUpdateFailure\(\{ target, error \}\)/
+  );
+  assert.match(
+    editorSource,
+    /build_contribution_conflict_markers_remaining[\s\S]*?settleCurrentBranchMainUpdateFailure\(\{[\s\S]*?This branch needs a Lumine fix/
+  );
+  assert.match(
+    editorSource,
+    /async function settleCurrentBranchMainUpdateFailure[\s\S]*?reconcileCurrentBranchMainUpdate\(target\)/
+  );
+  assert.match(
+    editorSource,
+    /const boundedRead = \{[\s\S]*?collapseKey:\s*null,[\s\S]*?maxRetries:\s*0,[\s\S]*?BRANCH_MAIN_UPDATE_RECOVERY_TIMEOUT_MS/
+  );
+  assert.match(
+    editorSource,
+    /getContributionConflictMarkerPaths\([\s\S]*?canonicalBuild\.projectFiles[\s\S]*?confirmed:\s*conflictPaths\.length > 0 \|\| rootDrifted === false/
+  );
+  assert.match(
+    editorSource,
+    /Reload this branch to check its saved state before trying again/
   );
 });
 

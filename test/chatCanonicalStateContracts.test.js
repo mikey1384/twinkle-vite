@@ -258,7 +258,7 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   );
   assert.match(
     aiSocketSource,
-    /messageScopeIsActivelyVisible[\s\S]*?reconcileChannelLastRead\(channelId, message\.id\)[\s\S]*?reconcileChannelUnreadActivity\(\{ channelId \}\)/m
+    /messageScopeIsActivelyVisible[\s\S]*?reconcileChannelLastRead\(channelId, message\.id\)[\s\S]*?reconcileChannelUnreadActivity\(\{[\s\S]*?channelId/m
   );
   assert.doesNotMatch(aiSocketSource, /numUnreads:\s*1/);
   assert.match(
@@ -338,7 +338,7 @@ test('navigation and live activity reconcile only the visible chat scope', () =>
   );
   assert.match(
     socketSource,
-    /const activityChannel =[\s\S]*?channelsObjRef\.current\?\.\[message\.channelId\] \|\| channel;[\s\S]*?if \(!messageIsForCurrentChannel && activityChannel\) \{[\s\S]*?channel: activityChannel/
+    /const activityChannel =[\s\S]*?channelsObjRef\.current\?\.\[message\.channelId\] \|\| channel;[\s\S]*?!messageIsForCurrentChannel &&[\s\S]*?activityChannel &&[\s\S]*?!channelSummaryIsNeeded[\s\S]*?channel: activityChannel/
   );
   assert.match(
     socketSource,
@@ -840,6 +840,9 @@ test('every unread-producing socket path converges on a visible canonical scope'
   const requestSource = readSource('src/contexts/requestHelpers/chat.ts');
   const reducerSource = readSource('src/contexts/Chat/reducer.ts');
   const typeSource = readSource('src/types/chat.ts');
+  const unreadProjectionSource = readSource(
+    'src/helpers/chatUnreadProjection.ts'
+  );
 
   assert.match(
     typeSource,
@@ -848,6 +851,14 @@ test('every unread-producing socket path converges on a visible canonical scope'
   assert.match(
     requestSource,
     /includeChannelSummary = false[\s\S]*?includeChannelSummary \? '&includeChannelSummary=1'/
+  );
+  const publicUnreadStateHelper =
+    requestSource.match(
+      /async loadChatChannelUnreadState\(\{[\s\S]*?(?=\n    async hideChatAttachment)/
+    )?.[0] || '';
+  assert.match(
+    publicUnreadStateHelper,
+    /includeChannelSummary = false[\s\S]*?loadCanonicalChatChannelUnreadState\(\{[\s\S]*?includeChannelSummary/
   );
   assert.match(
     socketSource,
@@ -859,7 +870,11 @@ test('every unread-producing socket path converges on a visible canonical scope'
   );
   assert.match(
     socketSource,
-    /function canonicalUnreadSummaryIsNeeded[\s\S]*?!channel\?\.id[\s\S]*?channel\.isHidden[\s\S]*?!listedChannelIdsRef\.current\.has/
+    /function canonicalUnreadSummaryIsNeeded[\s\S]*?chatRealtimeChannelNeedsCanonicalSummary\(\{[\s\S]*?isListed: listedChannelIdsRef\.current\.has/
+  );
+  assert.match(
+    unreadProjectionSource,
+    /function chatRealtimeChannelNeedsCanonicalSummary[\s\S]*?!channel\?\.id[\s\S]*?!channel\.pathId[\s\S]*?channel\.isHidden[\s\S]*?!isListed/
   );
   assert.doesNotMatch(
     socketSource,
@@ -918,5 +933,84 @@ test('every unread-producing socket path converges on a visible canonical scope'
   assert.match(
     unreadReducerCase,
     /applyCanonicalGlobalUnreadProjection\([\s\S]*?unreadState\.numUnreads/
+  );
+});
+
+test('unlisted realtime channels wait for canonical identity before rendering', () => {
+  const socketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+  const aiSocketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useAISocket.ts'
+  );
+  const chessSocketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChessSocket.ts'
+  );
+  const reconcilerSource = readSource(
+    'src/helpers/hooks/useChatLastReadReconciler.ts'
+  );
+  const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+  const handlerSource = socketSource.slice(
+    socketSource.indexOf('async function handleReceiveMessage'),
+    socketSource.indexOf('function shouldSkipRealtimeMessage')
+  );
+
+  assert.match(
+    handlerSource,
+    /const channelSummaryIsNeeded = canonicalUnreadSummaryIsNeeded/
+  );
+  assert.match(
+    handlerSource,
+    /else if \(!messageIsForCurrentChannel && channelSummaryIsNeeded\)[\s\S]*?includeChannelSummary: true/
+  );
+  assert.match(
+    handlerSource,
+    /!messageIsForCurrentChannel &&[\s\S]*?activityChannel &&[\s\S]*?!channelSummaryIsNeeded[\s\S]*?onReceiveMessageOnDifferentChannel/
+  );
+
+  for (const handlerName of ['handleNewWordleAttempt', 'handleTopicChange']) {
+    const handlerStart = socketSource.indexOf(`function ${handlerName}`);
+    const nextHandler = socketSource.indexOf('\n    function ', handlerStart + 10);
+    const specialHandlerSource = socketSource.slice(handlerStart, nextHandler);
+    assert.match(
+      specialHandlerSource,
+      /channelSummaryIsNeeded[\s\S]*?includeChannelSummary: (?:true|channelSummaryIsNeeded)/
+    );
+    assert.match(
+      specialHandlerSource,
+      /!channelSummaryIsNeeded[\s\S]*?onReceiveMessageOnDifferentChannel/
+    );
+    if (handlerName === 'handleTopicChange') {
+      assert.match(
+        specialHandlerSource,
+        /messageIsForCurrentChannel \|\| !channelSummaryIsNeeded[\s\S]*?onChangeChatSubject/
+      );
+      assert.match(
+        specialHandlerSource,
+        /else if \(!messageIsForCurrentChannel && channelSummaryIsNeeded\)[\s\S]*?includeChannelSummary: true/
+      );
+      assert.match(specialHandlerSource, /isMyMessage: senderIsUser/);
+    }
+  }
+
+  assert.match(
+    aiSocketSource,
+    /channelSummaryIsNeeded =[\s\S]*?includeChannelSummary: channelSummaryIsNeeded[\s\S]*?onReceiveMessageOnDifferentChannel\(\{[\s\S]*?deferChannelListProjection: channelSummaryIsNeeded/
+  );
+  assert.match(
+    chessSocketSource,
+    /canApplyPersistedChessActivityImmediately[\s\S]*?includeChannelSummary: true[\s\S]*?channel\?\.id[\s\S]*?selectedChannelIdRef\.current/
+  );
+  assert.match(
+    reconcilerSource,
+    /reconcileChannelUnreadActivity\(\{[\s\S]*?includeChannelSummary = false[\s\S]*?applyFreshUnreadState\(\{[\s\S]*?includeChannelSummary/
+  );
+  assert.match(
+    reducerSource,
+    /case 'APPLY_CANONICAL_REACTION_ADD_ACTIVITY':[\s\S]*?action\.deferChannelListProjection[\s\S]*?state\.homeChannelIds/
+  );
+  assert.match(
+    reducerSource,
+    /case 'RECEIVE_MSG_ON_DIFF_CHANNEL':[\s\S]*?action\.deferChannelListProjection[\s\S]*?state\.homeChannelIds/
   );
 });

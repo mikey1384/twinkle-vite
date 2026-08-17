@@ -3,7 +3,11 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
-import { CURRENT_THREE_VENDOR_PREFIX } from '../Editor/helpers/threeVendorUpgrade';
+import {
+  CURRENT_THREE_VENDOR_PREFIX,
+  CURRENT_THREE_VENDOR_VERSION,
+  LEGACY_THREE_VENDOR_VERSION
+} from '../Editor/helpers/threeVendorUpgrade';
 import {
   DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT,
   PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS
@@ -34,6 +38,7 @@ const previewLayoutBoilerplate = [
   '//   camera.aspect = width / height;',
   '//   camera.updateProjectionMatrix();',
   '//   renderer.setSize(width, height, false);',
+  '//   // When using EffectComposer, also call composer.setSize(width, height).',
   '// });'
 ].join('\n');
 
@@ -88,9 +93,15 @@ const guideSections: GuideSection[] = [
     items: [
       'Do not use CDN imports, package imports, or pasted library bundles for project code.',
       `For Three.js, use import * as THREE from "${CURRENT_THREE_VENDOR_PREFIX}three.module.min.js"; inside a type="module" project file.`,
-      `Three.js addons (OrbitControls, GLTFLoader, CSS2DRenderer, ...) are served under ${CURRENT_THREE_VENDOR_PREFIX}addons/, e.g. import { OrbitControls } from "${CURRENT_THREE_VENDOR_PREFIX}addons/controls/OrbitControls.js";.`,
+      `Twinkle serves the supported official Three.js ${CURRENT_THREE_VENDOR_VERSION} addon tree under ${CURRENT_THREE_VENDOR_PREFIX}addons/, including controls, loaders, CSS renderers, shaders, physics and WebXR helpers, and WebGLRenderer post-processing modules such as EffectComposer, RenderPass, SSAOPass/GTAOPass, UnrealBloomPass, and OutputPass. Example: import { EffectComposer } from "${CURRENT_THREE_VENDOR_PREFIX}addons/postprocessing/EffectComposer.js";`,
+      'The project file tree does not enumerate vendor modules, so absence there is not evidence that an official addon is unavailable. Use its documented addon subpath; project validation checks the exact file and its transitive imports.',
+      `WebGPU and TSL entry modules are also vendored at ${CURRENT_THREE_VENDOR_PREFIX}three.webgpu.min.js and ${CURRENT_THREE_VENDOR_PREFIX}three.tsl.min.js, but WebGL EffectComposer passes do not work with WebGPURenderer and runtime GPU support varies.`,
+      'Treat addons as available tools, not defaults. Use them when they materially serve the requested experience; for continuously animated mobile builds, target about 30 FPS, cap render pixel ratio around 1–1.25, and lower expensive post-processing resolution or quality only when that preserves the requested visual behavior. Do not remove or disable a requested visual effect as a performance tradeoff without the user\'s explicit approval.',
       `Loader runtime assets are served too: point decoder/transcoder paths at the vendor prefix, e.g. dracoLoader.setDecoderPath("${CURRENT_THREE_VENDOR_PREFIX}addons/libs/draco/");, never at a CDN.`,
-      'The Three.js vendor paths are served by Twinkle and are stable for preview and published builds; projects saved with the older 0.160.0 path keep working.'
+      'This vendor surface covers supported official Three.js modules, not arbitrary third-party Three.js packages. Do not paste library source into project files.',
+      `Keep one Three.js version throughout a project. Projects saved with the older ${LEGACY_THREE_VENDOR_VERSION} core path keep working, but a project that needs current addons must migrate every Three.js import to ${CURRENT_THREE_VENDOR_VERSION} in one coherent change; never mix the legacy core with current addons.`,
+      'Size both WebGLRenderer and EffectComposer from Twinkle.preview layout dimensions, coalesce resize work, and render with composer.render() when a composer owns the pass chain.',
+      'The versioned Three.js vendor paths are stable for preview and published builds.'
     ]
   },
   {
@@ -314,7 +325,7 @@ export default function AgentManualPane({
 }: AgentManualPaneProps) {
   const [copied, setCopied] = useState(false);
   const manualText = useMemo(
-    () => buildManualText(capabilitySnapshot),
+    () => buildAgentManualText(capabilitySnapshot),
     [capabilitySnapshot]
   );
   const viewerRows = buildViewerRows(capabilitySnapshot);
@@ -469,7 +480,9 @@ function buildNamespaceRows(
   }));
 }
 
-function buildManualText(capabilitySnapshot: BuildCapabilitySnapshot | null) {
+export function buildAgentManualText(
+  capabilitySnapshot: BuildCapabilitySnapshot | null
+) {
   const lines = [
     '# Twinkle Build Agent Manual',
     '',

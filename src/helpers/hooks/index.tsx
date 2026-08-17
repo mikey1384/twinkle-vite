@@ -33,7 +33,12 @@ import {
 import { Color } from '~/constants/css';
 import { levels } from '~/constants/userLevels';
 import { User, UserLevel } from '~/types';
-import { getStoredItem } from '~/helpers/userDataHelpers';
+import {
+  getStoredItem,
+  hasExplicitAuthLogoutMarker,
+  hasRejectedAuthSessionMarker
+} from '~/helpers/userDataHelpers';
+import { getVisibleCachedIdentity } from '~/helpers/sessionInterruption';
 import { throttle } from '~/helpers';
 import {
   eventTargetsPopupDismissNavigationFeedCard,
@@ -349,10 +354,19 @@ export function useMyState() {
   const storedItems = useMemo(
     () => getStoredItems(localStorageKeys),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId]
+    [sessionInterruption, userId]
+  );
+  const authIdentityHidden =
+    Boolean(sessionInterruption) ||
+    hasRejectedAuthSessionMarker() ||
+    hasExplicitAuthLogoutMarker();
+  const visibleStoredItems = useMemo(
+    () =>
+      getVisibleCachedIdentity(storedItems, authIdentityHidden),
+    [authIdentityHidden, storedItems]
   );
   const result = useMemo(() => {
-    return userId
+    return userId && !authIdentityHidden
       ? {
           unlockedAchievementIds: [],
           ...contextValues,
@@ -378,18 +392,19 @@ export function useMyState() {
           missions: {},
           rewardBoostLvl: 0,
           signinModalShown,
-          isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
-          ...storedItems,
-          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME,
-          // Cached display data may remain available after an interrupted
-          // session, but it must never make request/socket consumers act as an
-          // authenticated user until a new canonical session is established.
-          userId: sessionInterruption ? null : storedItems.userId,
+          isAdmin:
+            Number(visibleStoredItems.managementLevel || 0) >=
+            ADMIN_MANAGEMENT_LEVEL,
+          ...visibleStoredItems,
+          profileTheme:
+            visibleStoredItems.profileTheme || DEFAULT_PROFILE_THEME,
+          userId: visibleStoredItems.userId || null,
           loggedIn: false,
           sessionInterruption
         };
   }, [
     buildQuickAccessMode,
+    authIdentityHidden,
     collectType,
     contextValues,
     hideWatched,
@@ -401,7 +416,7 @@ export function useMyState() {
     searchFilter,
     sessionInterruption,
     signinModalShown,
-    storedItems,
+    visibleStoredItems,
     userId,
     wordleStrictMode
   ]);

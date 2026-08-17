@@ -5,12 +5,42 @@ import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { RequestHelpers } from '~/types';
 
+const UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS = 90_000;
+
 export default function buildRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
   const BUILD_RUNTIME_UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024;
   const PUBLIC_BUILD_LEADERBOARD_ORDER_VERSION = 2;
+
+  function getBuildRequestConfig({
+    collapseKey,
+    maxRetries,
+    totalTimeoutMs
+  }: {
+    collapseKey?: string | null;
+    maxRetries?: number;
+    totalTimeoutMs?: number;
+  } = {}) {
+    const config = auth() || {};
+    if (
+      collapseKey === undefined &&
+      maxRetries == null &&
+      totalTimeoutMs == null
+    ) {
+      return config;
+    }
+    return {
+      ...config,
+      meta: {
+        ...(config.meta || {}),
+        ...(collapseKey === undefined ? {} : { collapseKey }),
+        ...(maxRetries == null ? {} : { maxRetries }),
+        ...(totalTimeoutMs == null ? {} : { totalTimeoutMs })
+      }
+    };
+  }
 
   interface BuildRuntimeAiChatStreamEvent {
     type?: string;
@@ -434,12 +464,20 @@ export default function buildRequestHelpers({
       }
     },
 
-    async loadBuild(buildId: number, options?: { fromWriter?: boolean }) {
+    async loadBuild(
+      buildId: number,
+      options?: {
+        fromWriter?: boolean;
+        collapseKey?: string | null;
+        maxRetries?: number;
+        totalTimeoutMs?: number;
+      }
+    ) {
       try {
         const qs = options?.fromWriter ? '?fromWriter=1' : '';
         const { data } = await request.get(
           `${URL}/build/${buildId}${qs}`,
-          auth()
+          getBuildRequestConfig(options)
         );
         return data;
       } catch (error) {
@@ -2355,15 +2393,25 @@ export default function buildRequestHelpers({
 
     async loadBuildContribution({
       buildId,
-      contributionBuildId
+      contributionBuildId,
+      collapseKey,
+      maxRetries,
+      totalTimeoutMs
     }: {
       buildId: number;
       contributionBuildId: number;
+      collapseKey?: string | null;
+      maxRetries?: number;
+      totalTimeoutMs?: number;
     }) {
       try {
         const { data } = await request.get(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}`,
-          auth()
+          getBuildRequestConfig({
+            collapseKey,
+            maxRetries,
+            totalTimeoutMs
+          })
         );
         return data;
       } catch (error) {
@@ -2414,7 +2462,10 @@ export default function buildRequestHelpers({
             ...(projectFiles ? { projectFiles, baseFilesHash } : {}),
             ...(assetTransferOperationId ? { assetTransferOperationId } : {})
           },
-          auth()
+          getBuildRequestConfig({
+            maxRetries: 0,
+            totalTimeoutMs: UPDATE_FROM_MAIN_TOTAL_TIMEOUT_MS
+          })
         );
         return data;
       } catch (error: any) {

@@ -1277,15 +1277,18 @@ export default function chatRequestHelpers({
     },
     async loadChatChannelUnreadState({
       channelId,
-      subchannelId = 0
+      subchannelId = 0,
+      includeChannelSummary = false
     }: {
       channelId: number;
       subchannelId?: number;
+      includeChannelSummary?: boolean;
     }) {
       try {
         return await loadCanonicalChatChannelUnreadState({
           channelId,
-          subchannelId
+          subchannelId,
+          includeChannelSummary
         });
       } catch (error) {
         return handleError(error);

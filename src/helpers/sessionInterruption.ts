@@ -14,21 +14,28 @@ const SESSION_INTERRUPTION_COPY: Record<
   Omit<SessionInterruption, 'code'>
 > = {
   session_storage_unavailable: {
-    title: 'Safari could not read your saved sign-in',
+    title: 'Twinkle can’t read your saved sign-in',
     message:
-      'Twinkle did not erase your account data. Please try again; if Safari cleared its website storage, sign in again.'
+      'Your account is still there. Try again. If this keeps happening, sign in again on this browser.'
   },
   session_token_missing: {
-    title: 'This browser lost access to your saved sign-in',
+    title: 'This browser no longer has your saved sign-in',
     message:
-      'Twinkle did not log you out or erase your account data. Safari may have cleared website storage, or this tab may be using a different Twinkle website origin.'
+      'Your account is still there. Sign in again to keep using Twinkle on this browser.'
   },
   session_token_invalid: {
-    title: 'Twinkle could not verify this saved sign-in',
+    title: 'Please sign in again',
     message:
-      'Automatic reconnects have been stopped and the saved sign-in was not erased. Please sign in again to continue.'
+      'Twinkle can’t use the sign-in saved in this browser anymore. This often happens after a password change. We signed you out here to keep your account safe. Sign in below with your current password.'
   }
 };
+
+export function getVisibleCachedIdentity<T extends Record<string, any>>(
+  cachedIdentity: T,
+  hideCachedIdentity: boolean
+): Partial<T> {
+  return hideCachedIdentity ? {} : cachedIdentity;
+}
 
 export function createSessionInterruption(
   code: SessionInterruptionCode

@@ -19,6 +19,9 @@ import {
   CHAT_ID_BASE_NUMBER
 } from '~/constants/defaultValues';
 import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
+import {
+  chatRealtimeChannelNeedsCanonicalSummary
+} from '~/helpers/chatUnreadProjection';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
 
 export default function useAISocket({
@@ -44,6 +47,11 @@ export default function useAISocket({
     useChatLastReadReconciler();
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
+  const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
+  const favoriteChannelIds = useChatContext(
+    (v) => v.state.favoriteChannelIds
+  );
+  const classChannelIds = useChatContext((v) => v.state.classChannelIds);
   const chatNotificationSettings = useChatContext(
     (v) => v.state.chatNotificationSettings
   );
@@ -57,6 +65,7 @@ export default function useAISocket({
   );
 
   const channelsObjRef = useRef(channelsObj);
+  const listedChannelIdsRef = useRef(new Set<number>());
   const pendingAIReplyRef = useRef<
     Record<
       number,
@@ -72,6 +81,13 @@ export default function useAISocket({
   const chatNotificationSettingsRef = useRef(chatNotificationSettings);
   const userIdRef = useRef(userId);
   channelsObjRef.current = channelsObj;
+  listedChannelIdsRef.current = new Set(
+    [
+      ...(homeChannelIds || []),
+      ...(favoriteChannelIds || []),
+      ...(classChannelIds || [])
+    ].map(Number)
+  );
   pageVisibleRef.current = pageVisible;
   subchannelIdRef.current = subchannelId;
   aiCallChannelIdRef.current = aiCallChannelId;
@@ -473,6 +489,11 @@ export default function useAISocket({
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = Number(subchannelIdRef.current || 0);
       const channelState = currentChannelsObj[channelId];
+      const channelSummaryIsNeeded =
+        chatRealtimeChannelNeedsCanonicalSummary({
+          channel: channelState,
+          isListed: listedChannelIdsRef.current.has(Number(channelId))
+        });
       if (channelState?.cancelledMessageIds?.has(message.id)) {
         return;
       }
@@ -481,12 +502,14 @@ export default function useAISocket({
       // generic chat receipt handler. Invalidate older writer snapshots before
       // either applying this message or reconciling its read watermark.
       markChatUnreadActivity();
-      onSetChannelState({
-        channelId,
-        newState: {
-          currentlyStreamingAIMsgId: message.id
-        }
-      });
+      if (channelState?.id) {
+        onSetChannelState({
+          channelId,
+          newState: {
+            currentlyStreamingAIMsgId: message.id
+          }
+        });
+      }
       const isZeroMessage = message.userId === ZERO_TWINKLE_ID;
       const computedPathId =
         currentChannelsObj[channelId]?.pathId ??
@@ -527,7 +550,10 @@ export default function useAISocket({
         // The selected channel remains mounted while Safari is hidden or the
         // user is on another section. Do not mark that unseen AI reply read;
         // hydrate its scoped and global unread projections from the writer.
-        void reconcileChannelUnreadActivity({ channelId });
+        void reconcileChannelUnreadActivity({
+          channelId,
+          includeChannelSummary: channelSummaryIsNeeded
+        });
         onReceiveMessage({
           message: appliedMessage,
           pageVisible: currentPageVisible,
@@ -535,7 +561,10 @@ export default function useAISocket({
           currentSubchannelId
         });
       } else {
-        void reconcileChannelUnreadActivity({ channelId });
+        void reconcileChannelUnreadActivity({
+          channelId,
+          includeChannelSummary: channelSummaryIsNeeded
+        });
         const prevChannelObj = currentChannelsObj[channelId];
         const aiUsername = isZeroMessage ? 'Zero' : 'Ciel';
         const aiUserId = isZeroMessage ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
@@ -544,6 +573,7 @@ export default function useAISocket({
           pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
           isMyMessage: false,
+          deferChannelListProjection: channelSummaryIsNeeded,
           message: appliedMessage,
           channel: {
             id: channelId,
@@ -560,6 +590,17 @@ export default function useAISocket({
             isHidden: false
           }
         });
+        if (!channelState?.id) {
+          // Keep the confirmed placeholder and subsequent stream deltas in a
+          // non-rendered cache while the canonical summary decides whether
+          // this channel belongs in the sidebar.
+          onSetChannelState({
+            channelId,
+            newState: {
+              currentlyStreamingAIMsgId: message.id
+            }
+          });
+        }
       }
     }
 

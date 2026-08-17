@@ -255,9 +255,7 @@ export default function ContributionDetail({
         ownerReview,
         contributionStatus,
         canAskLumineToResolveConflicts,
-        hasNoticeLumineFixAction: Boolean(
-          mainUpdateNoticeControl?.branchLumineFixControl
-        ),
+        canonicalNoticeOwnsBranchActions: Boolean(mainUpdateNoticeControl),
         activeConflictMarkerCount: activeConflictMarkerPaths.length
       }) ? (
         <div className={rowClass}>

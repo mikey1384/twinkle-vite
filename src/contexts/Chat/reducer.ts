@@ -2183,7 +2183,9 @@ export default function ChatReducer(
               pageVisible: action.pageVisible,
               usingChat: action.usingChat,
               timeStamp: Number(update.timeStamp || 0),
-              shouldTrackUnreadActivity: action.shouldTrackUnreadActivity
+              shouldTrackUnreadActivity: action.shouldTrackUnreadActivity,
+              deferChannelListProjection:
+                action.deferChannelListProjection === true
             })
           : stateWithCanonicalActivitySnapshot;
 
@@ -5782,18 +5784,22 @@ export default function ChatReducer(
               }
         },
         numUnreads: state.numUnreads,
-        favoriteChannelIds: state.allFavoriteChannelIds[action.channel.id]
+        favoriteChannelIds: action.deferChannelListProjection
+          ? state.favoriteChannelIds
+          : state.allFavoriteChannelIds[action.channel.id]
           ? [action.channel.id].concat(
               state.favoriteChannelIds.filter(
                 (channelId: number) => channelId !== action.channel.id
               )
             )
           : state.favoriteChannelIds,
-        homeChannelIds: [action.channel.id].concat(
-          state.homeChannelIds.filter(
-            (channelId: number) => channelId !== action.channel.id
-          )
-        )
+        homeChannelIds: action.deferChannelListProjection
+          ? state.homeChannelIds
+          : [action.channel.id].concat(
+              state.homeChannelIds.filter(
+                (channelId: number) => channelId !== action.channel.id
+              )
+            )
       };
     }
     case 'APPLY_CANONICAL_REACTION_ADD_ACTIVITY': {
@@ -5812,18 +5818,22 @@ export default function ChatReducer(
         // values until the socket owner applies `/channel/unread-state`.
         channelsObj: state.channelsObj,
         numUnreads: state.numUnreads,
-        favoriteChannelIds: state.allFavoriteChannelIds[action.channelId]
+        favoriteChannelIds: action.deferChannelListProjection
+          ? state.favoriteChannelIds
+          : state.allFavoriteChannelIds[action.channelId]
           ? [action.channelId].concat(
               state.favoriteChannelIds.filter(
                 (channelId: number) => channelId !== action.channelId
               )
             )
           : state.favoriteChannelIds,
-        homeChannelIds: [action.channelId].concat(
-          state.homeChannelIds.filter(
-            (channelId: number) => channelId !== action.channelId
-          )
-        )
+        homeChannelIds: action.deferChannelListProjection
+          ? state.homeChannelIds
+          : [action.channelId].concat(
+              state.homeChannelIds.filter(
+                (channelId: number) => channelId !== action.channelId
+              )
+            )
       };
     }
     case 'INSERT_BLACK_AI_CARD_UPDATE_LOG': {

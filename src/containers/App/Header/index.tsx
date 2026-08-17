@@ -75,10 +75,6 @@ export default function Header({
   const myRewardStats = useNotiContext((v) =>
     userId ? v.state?.notiObj?.[userId] : null
   );
-  const versionMatch = useNotiContext((v) => v.state.versionMatch);
-  const onShowUpdateNotice = useNotiContext(
-    (v) => v.actions.onShowUpdateNotice
-  );
 
   const totalRewardedTwinkles = myRewardStats?.totalRewardedTwinkles || 0;
 
@@ -155,11 +151,6 @@ export default function Header({
       }`;
     }
   }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle, chatType]);
-
-  useEffect(() => {
-    onShowUpdateNotice(!versionMatch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [versionMatch]);
 
   const navRef = useRef<HTMLElement | null>(null);
 
