@@ -38,6 +38,7 @@ import {
 } from './canonicalSettingsState';
 import { applyCanonicalAiMessageFailure } from './aiMessageFailureState';
 import { updateAICardOfferNoticeStatusMap } from '~/helpers/aiCardOfferNotice';
+import { applyCanonicalChatMessagePage } from './messagePageState';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -3030,6 +3031,8 @@ export default function ChatReducer(
         action.data.currentSubchannelId &&
         action.data.channel?.subchannelObj
       ) {
+        const currentSubchannel =
+          action.data.channel.subchannelObj[action.data.currentSubchannelId];
         newSubchannelObj = {
           ...state.channelsObj[loadedChannel.id]?.subchannelObj,
           ...action.data.channel?.subchannelObj,
@@ -3054,29 +3057,26 @@ export default function ChatReducer(
               action.data.channel?.subchannelObj[
                 action.data.currentSubchannelId
               ]?.messageIds,
-            // Merge with existing messagesObj to preserve loaded messages
-            messagesObj: {
-              ...state.channelsObj[loadedChannel.id]?.subchannelObj?.[
-                action.data.currentSubchannelId
-              ]?.messagesObj,
-              ...action.data.channel?.subchannelObj[
-                action.data.currentSubchannelId
-              ]?.messagesObj
-            },
+            messagesObj: applyCanonicalChatMessagePage({
+              existingMessagesObj:
+                state.channelsObj[loadedChannel.id]?.subchannelObj?.[
+                  action.data.currentSubchannelId
+                ]?.messagesObj,
+              messages: Object.values(currentSubchannel?.messagesObj || {}),
+              messagesHydrated:
+                action.data.currentSubchannelMessagesHydrated === true
+            }),
             loaded: true
           }
         };
       }
 
-      const messagesObj: any = {
-        ...state.channelsObj[loadedChannel.id]?.messagesObj
-      };
-      for (const message of action.data.messages) {
-        messagesObj[message.id] = {
-          ...message,
-          isLoaded: false
-        };
-      }
+      const messagesObj = applyCanonicalChatMessagePage({
+        existingMessagesObj:
+          state.channelsObj[loadedChannel.id]?.messagesObj,
+        messages: action.data.messages,
+        messagesHydrated: action.data.messagesHydrated === true
+      });
 
       const mergedTopicObj = resetTopicMessageCachesForCanonicalChannelLoad(
         loadedChannel.topicObj
@@ -4685,10 +4685,12 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            messagesObj: {
-              ...(state.channelsObj[action.channelId]?.messagesObj || {}),
-              ...(objectify(action.messages) as Record<number, object>)
-            },
+            messagesObj: applyCanonicalChatMessagePage({
+              existingMessagesObj:
+                state.channelsObj[action.channelId]?.messagesObj,
+              messages: action.messages,
+              messagesHydrated: action.messagesHydrated === true
+            }),
             topicObj: {
               ...state.channelsObj[action.channelId]?.topicObj,
               [action.topicId]: {
@@ -4715,10 +4717,12 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            messagesObj: {
-              ...(state.channelsObj[action.channelId]?.messagesObj || {}),
-              ...(objectify(action.messages) as Record<number, object>)
-            },
+            messagesObj: applyCanonicalChatMessagePage({
+              existingMessagesObj:
+                state.channelsObj[action.channelId]?.messagesObj,
+              messages: action.messages,
+              messagesHydrated: action.messagesHydrated === true
+            }),
             topicObj: {
               ...state.channelsObj[action.channelId]?.topicObj,
               [action.topicId]: {

@@ -872,6 +872,7 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId: number;
         topicId: number;
         messages: object[];
+        messagesHydrated?: boolean;
         topicObj: object;
         loadMoreShown: boolean;
         loadMoreShownAtBottom: boolean;
@@ -957,6 +958,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       topicId,
       messages,
+      messagesHydrated,
       topicObj,
       loadMoreShown,
       loadMoreShownAtBottom
@@ -964,6 +966,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       topicId: number;
       messages: object[];
+      messagesHydrated?: boolean;
       topicObj: object;
       loadMoreShown: boolean;
       loadMoreShownAtBottom: boolean;
@@ -973,6 +976,7 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId,
         topicId,
         messages,
+        messagesHydrated,
         topicObj,
         loadMoreShown,
         loadMoreShownAtBottom
@@ -982,12 +986,14 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       topicId,
       messages,
+      messagesHydrated,
       topicObj,
       loadMoreShown
     }: {
       channelId: number;
       topicId: number;
       messages: object[];
+      messagesHydrated?: boolean;
       topicObj: object;
       loadMoreShown: boolean;
     }) {
@@ -996,6 +1002,7 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId,
         topicId,
         messages,
+        messagesHydrated,
         topicObj,
         loadMoreShown
       });

@@ -1421,6 +1421,7 @@ export default function chatRequestHelpers({
       invitationMessageId,
       subchannelPath,
       skipUpdateChannelId,
+      hydrateMessages = false,
       fromWriter,
       bounded = false
     }: {
@@ -1430,6 +1431,7 @@ export default function chatRequestHelpers({
       invitationMessageId?: number;
       subchannelPath?: string;
       skipUpdateChannelId?: boolean;
+      hydrateMessages?: boolean;
       fromWriter?: boolean;
       bounded?: boolean;
     }) {
@@ -1438,6 +1440,8 @@ export default function chatRequestHelpers({
           `${URL}/chat/channel?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }${skipUpdateChannelId ? '&skipUpdateChannelId=1' : ''}${
+            hydrateMessages ? '&hydrateMessages=1' : ''
+          }${
             isForInvitation ? '&isForInvitation=1' : ''
           }${
             isForInvitation && invitationSourceChannelId
@@ -1733,7 +1737,13 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { topicObj, messages, loadMoreShown, loadMoreShownAtBottom }
+          data: {
+            topicObj,
+            messages,
+            messagesHydrated,
+            loadMoreShown,
+            loadMoreShownAtBottom
+          }
         } = await request.get(
           `${URL}/chat/topic/messages?channelId=${channelId}&topicId=${topicId}${
             lastMessageId ? `&lastMessageId=${lastMessageId}` : ''
@@ -1752,7 +1762,13 @@ export default function chatRequestHelpers({
             }
           }
         );
-        return { topicObj, messages, loadMoreShown, loadMoreShownAtBottom };
+        return {
+          topicObj,
+          messages,
+          messagesHydrated: messagesHydrated === true,
+          loadMoreShown,
+          loadMoreShownAtBottom
+        };
       } catch (error) {
         return handleError(error);
       }

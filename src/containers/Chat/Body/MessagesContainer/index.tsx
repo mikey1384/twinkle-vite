@@ -512,6 +512,10 @@ export default function MessagesContainer({
         const channelData = await loadChatChannel({
           channelId: selectedChannelId,
           subchannelPath: subchannelPath || undefined,
+          // Every selected-channel message cache touched by reconnect recovery
+          // is replaced by a fully hydrated writer-backed page. Topic recovery
+          // also loads its canonical topic page below.
+          hydrateMessages: true,
           // isReloadRequired is produced when navigation outruns a canonical
           // bootstrap or when reconnect recovery intentionally preserves the
           // last confirmed selected projection. This follow-up owns the atomic
@@ -1545,16 +1549,22 @@ export default function MessagesContainer({
   ) {
     setIsLoadingTopicMessages(true);
     try {
-      const { messages, loadMoreShown, loadMoreShownAtBottom, topicObj } =
-        await loadTopicMessages({
-          messageIdToScrollTo,
-          channelId: selectedChannelId,
-          topicId: appliedTopicId
-        });
+      const {
+        messages,
+        messagesHydrated,
+        loadMoreShown,
+        loadMoreShownAtBottom,
+        topicObj
+      } = await loadTopicMessages({
+        messageIdToScrollTo,
+        channelId: selectedChannelId,
+        topicId: appliedTopicId
+      });
 
       onLoadTopicMessages({
         channelId: selectedChannelId,
         messages,
+        messagesHydrated,
         loadMoreShown,
         loadMoreShownAtBottom,
         topicObj,

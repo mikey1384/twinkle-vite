@@ -1342,6 +1342,7 @@ export default function useInitSocket({
             const channelData = await loadChatChannel({
               channelId,
               subchannelPath: requestedSubchannelPath,
+              hydrateMessages: preserveSelectedProjection,
               // This request resolves a canonical path/access mismatch and may
               // follow an invitation mutation. It always reads the writer;
               // otherwise a cold (non-reconnect) bootstrap could still replace

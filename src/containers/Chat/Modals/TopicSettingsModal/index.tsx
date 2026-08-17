@@ -360,6 +360,7 @@ export default function TopicSettingsModal({
       const data = await loadChatChannel({
         channelId,
         skipUpdateChannelId: true,
+        hydrateMessages: true,
         fromWriter: true
       });
       const canonicalChannel = data?.channel || {};
@@ -377,7 +378,8 @@ export default function TopicSettingsModal({
           ...(!isAIChannel && Array.isArray(data?.messages)
             ? buildCanonicalChannelMessagesState({
                 messages: data.messages,
-                existingMessagesObj: currentMessagesObj
+                existingMessagesObj: currentMessagesObj,
+                messagesHydrated: data.messagesHydrated === true
               })
             : {}),
           ...(deletedTopicIsActive

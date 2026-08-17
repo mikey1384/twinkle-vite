@@ -378,14 +378,16 @@ export default function DisplayedMessages({
         });
       },
       topic: async () => {
-        const { messages, loadMoreShown, topicObj } = await loadTopicMessages({
-          channelId: selectedChannelId,
-          topicId: appliedTopicId,
-          lastMessageId: lastMessageId
-        });
+        const { messages, messagesHydrated, loadMoreShown, topicObj } =
+          await loadTopicMessages({
+            channelId: selectedChannelId,
+            topicId: appliedTopicId,
+            lastMessageId: lastMessageId
+          });
         onLoadMoreTopicMessages({
           channelId: selectedChannelId,
           messages,
+          messagesHydrated,
           loadMoreShown,
           topicObj,
           topicId: appliedTopicId
@@ -457,12 +459,14 @@ export default function DisplayedMessages({
         return;
       }
       const topicId = selectedTab === 'topic' ? appliedTopicId : undefined;
-      const { messages: recentMessages, loadMoreShownAtBottom } =
-        await loadMoreRecentTopicMessages({
-          channelId: selectedChannelId,
-          topicId,
-          lastMessageId: messageId
-        });
+      const {
+        messages: recentMessages,
+        loadMoreShownAtBottom
+      } = await loadMoreRecentTopicMessages({
+        channelId: selectedChannelId,
+        topicId,
+        lastMessageId: messageId
+      });
       onLoadMoreRecentTopicMessages({
         channelId: selectedChannelId,
         messages: recentMessages,

@@ -26,6 +26,7 @@ import {
 } from '~/helpers/chatUnreadActivity';
 import { getVisibleChatReadMessageId } from '~/helpers/chatReadCursor';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
+import { buildCanonicalChatMessagePageState } from '~/contexts/Chat/messagePageState';
 import type {
   CanonicalChatChannelUnreadState,
   CanonicalChatReactionUpdate,
@@ -1518,6 +1519,7 @@ export default function useChatSocket({
         const data = await loadChatChannel({
           channelId: normalizedChannelId,
           skipUpdateChannelId: true,
+          hydrateMessages: true,
           fromWriter: true
         });
         if (
@@ -1548,17 +1550,11 @@ export default function useChatSocket({
         const canonicalMessages = Array.isArray(data?.messages)
           ? data.messages
           : [];
-        const canonicalPreviewMessages =
-          canonicalMessages.length === 21
-            ? canonicalMessages.slice(0, 20)
-            : canonicalMessages;
-        const canonicalMessagesObj: Record<number, any> = {};
-        for (const message of canonicalPreviewMessages) {
-          canonicalMessagesObj[message.id] = {
-            ...message,
-            isLoaded: false
-          };
-        }
+        const canonicalMessageState = buildCanonicalChatMessagePageState({
+          messages: canonicalMessages,
+          existingMessagesObj: currentChannel.messagesObj,
+          messagesHydrated: data.messagesHydrated === true
+        });
 
         if (shouldEnterSelectedChannel) {
           onEnterChannelWithId({ data, userId });
@@ -1619,14 +1615,7 @@ export default function useChatSocket({
             topicObj: mergedTopicObj,
             ...(shouldApplyCanonicalMessages
               ? {
-                  messageIds: canonicalPreviewMessages.map(
-                    (message: { id: number }) => message.id
-                  ),
-                  messagesObj: {
-                    ...currentChannel.messagesObj,
-                    ...canonicalMessagesObj
-                  },
-                  messagesLoadMoreButton: canonicalMessages.length === 21
+                  ...canonicalMessageState
                 }
               : {}),
             ...(selectedTopicWasHidden

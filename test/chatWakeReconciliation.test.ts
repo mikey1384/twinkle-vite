@@ -132,7 +132,7 @@ test('wake silently validates an authenticated room barrier and broken sessions 
   );
   assert.match(
     postBootstrapChannelRecovery,
-    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(channelId\)[\s\S]*?loadChatChannel\(\{[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
+    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(channelId\)[\s\S]*?loadChatChannel\(\{[\s\S]*?hydrateMessages: preserveSelectedProjection,[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
   );
   assert.match(
     postBootstrapChannelRecovery,
@@ -210,6 +210,10 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(
     messagesSource,
+    /loadChatChannel\(\{[\s\S]*?channelId: selectedChannelId,[\s\S]*?hydrateMessages: true,[\s\S]*?fromWriter: true/
+  );
+  assert.match(
+    messagesSource,
     /loadChatSubject\(\{[\s\S]*?channelId: canonicalChannelId,[\s\S]*?fromWriter: true,[\s\S]*?bounded: true/
   );
   assert.match(
@@ -280,6 +284,14 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   assert.match(
     requestHelperSource,
     /async loadChatSubject\(\{[\s\S]*?fromWriter = false,[\s\S]*?bounded = false[\s\S]*?fromWriter \? '&fromWriter=1' : ''[\s\S]*?enforceTimeout: bounded/
+  );
+  assert.match(
+    requestHelperSource,
+    /async loadChatChannel\(\{[\s\S]*?hydrateMessages = false[\s\S]*?hydrateMessages \? '&hydrateMessages=1' : ''/
+  );
+  assert.match(
+    reducerSource,
+    /applyCanonicalChatMessagePage\(\{[\s\S]*?currentSubchannelMessagesHydrated === true[\s\S]*?applyCanonicalChatMessagePage\(\{[\s\S]*?messagesHydrated === true/
   );
 });
 

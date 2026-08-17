@@ -314,7 +314,11 @@ function TopicItem({
     try {
       setSelectButtonDisabled(true);
       await deleteTopic({ topicId: id, channelId });
-      const data = await loadChatChannel({ channelId, fromWriter: true });
+      const data = await loadChatChannel({
+        channelId,
+        hydrateMessages: true,
+        fromWriter: true
+      });
       onEnterChannelWithId({ data, userId: myId });
       const canonicalChannel = data?.channel || {};
       const deletedTopicIsActive = Number(currentTopicId) === Number(id);
