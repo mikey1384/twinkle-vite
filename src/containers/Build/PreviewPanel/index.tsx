@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useKeyContext, useViewContext } from '~/contexts';
 import { css } from '@emotion/css';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
@@ -159,7 +160,20 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }: PreviewPanelProps,
     ref
   ) {
+    const navigate = useNavigate();
     const pageVisible = useViewContext((v) => v.state.pageVisible);
+    // useNavigate changes identity with declarative-router locations. Keep it
+    // behind a stable ref so ordinary SPA navigation does not tear down the
+    // host bridge's live world/chat subscriptions and runtime sessions.
+    const navigateHostContentRef = useRef<(url: string) => void>(
+      () => undefined
+    );
+    navigateHostContentRef.current = (url: string) => {
+      const destination = new URL(url);
+      navigate(
+        `${destination.pathname}${destination.search}${destination.hash}`
+      );
+    };
     const [viewMode, setViewMode] = useState<WorkspaceViewMode>('preview');
     const onRuntimeObservationChangeRef = useRef(
       onRuntimeObservationChange || null
@@ -1101,6 +1115,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       capabilitySnapshotRef,
       runtimeExplorationPlanRef,
       messageTargetFrameRef,
+      navigateHostContentRef,
       navigatePreviewFrameRef,
       previewCodeSignatureRef,
       previewFrameMetaRef,

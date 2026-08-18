@@ -158,7 +158,9 @@ export function normalizeTwinkleContentNavigationUrl({
       if (pathParts.length !== 2 || !routeId) return '';
       canonicalPath = `/achievements/${routeId}`;
     } else {
-      canonicalPath = normalizeAiCardContentPath({ pathParts, targetUrl });
+      canonicalPath =
+        normalizeAiCardContentPath({ pathParts, targetUrl }) ||
+        normalizeChatContentPath(pathParts);
     }
 
     if (!canonicalPath) return '';
@@ -195,10 +197,49 @@ function normalizeAiCardContentPath({
       : 1;
   if (pathParts.length !== expectedLength) return '';
 
-  const cardId = pathId || targetUrl.searchParams.get('cardId') || '';
-  if (!isPositiveIntegerPathSegment(cardId)) return '';
-  targetUrl.searchParams.set('cardId', cardId);
+  const queryCardIds = targetUrl.searchParams.getAll('cardId');
+  if (pathId && !isPositiveIntegerPathSegment(pathId)) return '';
+  if (pathId) {
+    targetUrl.searchParams.set('cardId', pathId);
+  } else if (queryCardIds.length > 0) {
+    if (
+      queryCardIds.length !== 1 ||
+      !isPositiveIntegerPathSegment(queryCardIds[0] || '')
+    ) {
+      return '';
+    }
+    targetUrl.searchParams.set('cardId', queryCardIds[0]);
+  }
   return '/ai-cards/';
+}
+
+function normalizeChatContentPath(pathParts: string[]) {
+  if (pathParts[0]?.toLowerCase() !== 'chat') return '';
+  const channelPathId = pathParts[1] || '';
+  if (!isPositiveIntegerPathSegment(channelPathId)) return '';
+
+  if (pathParts.length === 2) {
+    return `/chat/${channelPathId}`;
+  }
+  if (pathParts.length === 3 && pathParts[2]) {
+    return `/chat/${channelPathId}/${pathParts[2]}`;
+  }
+  if (
+    pathParts.length === 4 &&
+    pathParts[2]?.toLowerCase() === 'topic' &&
+    isPositiveIntegerPathSegment(pathParts[3] || '')
+  ) {
+    return `/chat/${channelPathId}/topic/${pathParts[3]}`;
+  }
+  if (
+    pathParts.length === 5 &&
+    pathParts[2] &&
+    pathParts[3]?.toLowerCase() === 'topic' &&
+    isPositiveIntegerPathSegment(pathParts[4] || '')
+  ) {
+    return `/chat/${channelPathId}/${pathParts[2]}/topic/${pathParts[4]}`;
+  }
+  return '';
 }
 
 function isPositiveIntegerPathSegment(value: string) {

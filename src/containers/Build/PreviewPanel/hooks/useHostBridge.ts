@@ -184,6 +184,7 @@ export function useHostBridge({
   capabilitySnapshotRef,
   runtimeExplorationPlanRef,
   messageTargetFrameRef,
+  navigateHostContentRef,
   navigatePreviewFrameRef,
   previewCodeSignatureRef,
   previewFrameMetaRef,
@@ -2791,7 +2792,7 @@ export function useHostBridge({
         );
         if (pendingHostNavigationUrl) {
           window.setTimeout(() => {
-            window.location.assign(pendingHostNavigationUrl);
+            navigateHostContentRef.current(pendingHostNavigationUrl);
           }, 0);
         }
       } catch (error: any) {
@@ -2906,6 +2907,7 @@ export function useHostBridge({
     contentNavigationConfirmationController,
     imageGenerationController,
     messageTargetFrameRef,
+    navigateHostContentRef,
     navigatePreviewFrameRef,
     previewAuth,
     previewCodeSignatureRef,

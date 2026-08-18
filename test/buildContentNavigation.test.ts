@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -8,6 +9,10 @@ import {
 } from '../src/containers/Build/PreviewPanel/helpers/twinkleContentNavigation';
 
 const CURRENT_ORIGIN = 'https://www.twin-kle.com';
+
+function readSource(path: string) {
+  return readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+}
 
 test('Build content navigation authorizes only active gestures with valid content', () => {
   assert.deepEqual(
@@ -184,9 +189,70 @@ test('Build content navigation canonicalizes aliases and AI Card links', () => {
   assert.equal(
     normalizeTwinkleContentNavigationUrl({
       currentOrigin: CURRENT_ORIGIN,
+      target: '/ai-cards/42?cardId=not-the-canonical-card'
+    }),
+    `${CURRENT_ORIGIN}/ai-cards/?cardId=42`
+  );
+  assert.equal(
+    normalizeTwinkleContentNavigationUrl({
+      currentOrigin: CURRENT_ORIGIN,
       target: '/chat/ai-cards?cardId=43'
     }),
     `${CURRENT_ORIGIN}/ai-cards/?cardId=43`
+  );
+  assert.equal(
+    normalizeTwinkleContentNavigationUrl({
+      currentOrigin: CURRENT_ORIGIN,
+      target:
+        '/ai-cards/?search[owner]=mikey&search[isBuyNow]=true'
+    }),
+    `${CURRENT_ORIGIN}/ai-cards/?search%5Bowner%5D=mikey&search%5BisBuyNow%5D=true`
+  );
+  assert.equal(
+    normalizeTwinkleContentNavigationUrl({
+      currentOrigin: CURRENT_ORIGIN,
+      target: '/chat/ai-cards?search[isMystery]=true'
+    }),
+    `${CURRENT_ORIGIN}/ai-cards/?search%5BisMystery%5D=true`
+  );
+});
+
+test('Build content navigation accepts canonical public chat deep links', () => {
+  for (const path of [
+    '/chat/1000042',
+    '/chat/1000042/project%20ideas',
+    '/chat/1000042/topic/91',
+    '/chat/1000042/project%20ideas/topic/91'
+  ]) {
+    assert.equal(
+      normalizeTwinkleContentNavigationUrl({
+        currentOrigin: CURRENT_ORIGIN,
+        target: path
+      }),
+      `${CURRENT_ORIGIN}${path}`
+    );
+  }
+});
+
+test('confirmed Build content navigation stays inside the Twinkle SPA', () => {
+  const previewPanelSource = readSource(
+    'src/containers/Build/PreviewPanel/index.tsx'
+  );
+  const hostBridgeSource = readSource(
+    'src/containers/Build/PreviewPanel/hooks/useHostBridge.ts'
+  );
+
+  assert.match(
+    previewPanelSource,
+    /const navigateHostContentRef = useRef[\s\S]*?navigateHostContentRef\.current = \(url: string\)[\s\S]*?navigate\(\s*`\$\{destination\.pathname\}\$\{destination\.search\}\$\{destination\.hash\}`/m
+  );
+  assert.match(
+    hostBridgeSource,
+    /if \(pendingHostNavigationUrl\) \{\s*window\.setTimeout\(\(\) => \{\s*navigateHostContentRef\.current\(pendingHostNavigationUrl\);/m
+  );
+  assert.doesNotMatch(
+    hostBridgeSource,
+    /window\.location\.assign\(pendingHostNavigationUrl\)/
   );
 });
 
@@ -211,6 +277,13 @@ test('Build content navigation rejects preview, privileged, malformed, and exter
     '/cli/login',
     '/management/builds',
     '/settings/account',
+    '/chat/not-a-channel',
+    '/chat/1000042/topic/not-a-topic',
+    '/chat/1000042/project-ideas/not-a-route',
+    '/ai-cards/not-a-card',
+    '/ai-cards?cardId=',
+    '/ai-cards?cardId=not-a-card',
+    '/ai-cards?cardId=42&cardId=43',
     '/subjects/not-an-id',
     'https://example.com/app/1168',
     'javascript:alert(1)'
