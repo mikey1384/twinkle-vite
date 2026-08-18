@@ -47,6 +47,7 @@ export function useRuntimePreviewSrc({
   build,
   enabled,
   previewSrcOverride,
+  appMcpSessionId,
   requireSignedAccess,
   userId,
   previewAuth
@@ -54,6 +55,7 @@ export function useRuntimePreviewSrc({
   build: Build;
   enabled: boolean;
   previewSrcOverride: string | null;
+  appMcpSessionId?: string | null;
   requireSignedAccess: boolean;
   userId: number | null;
   previewAuth: PreviewHostBridgeAuth;
@@ -61,7 +63,10 @@ export function useRuntimePreviewSrc({
   const [runtimePreviewSrcState, setRuntimePreviewSrcState] =
     useState<RuntimePreviewSrcState | null>(null);
 
-  const basePreviewSrc = enabled ? buildPreviewBaseSrc(build) : null;
+  const rawBasePreviewSrc = enabled ? buildPreviewBaseSrc(build) : null;
+  const basePreviewSrc = rawBasePreviewSrc
+    ? appendPreviewQueryParam(rawBasePreviewSrc, 'appMcpSession', appMcpSessionId)
+    : null;
   const runtimePreviewSrcKey = basePreviewSrc
     ? `${basePreviewSrc}|user:${Number(userId || 0)}|public:${
         build.isPublic ? 1 : 0
@@ -135,6 +140,7 @@ export function useRuntimePreviewSrc({
     enabled,
     needsSignedPreviewSrc,
     previewAuth,
+    appMcpSessionId,
     previewSrcOverride,
     runtimePreviewRefreshNonce,
     runtimePreviewSrcKey

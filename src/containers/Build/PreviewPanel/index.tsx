@@ -144,6 +144,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       preventFrameSuspend = false,
       audioMuted = false,
       capabilitySnapshot = null,
+      appMcpSessionId = null,
       maxProjectFileLines = null,
       onEditableProjectFilesStateChange,
       runtimeExplorationPlan = null,
@@ -879,6 +880,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       build,
       enabled: runtimeOnly && hasRuntimePreview,
       previewSrcOverride: normalizedPreviewSrcOverride,
+      appMcpSessionId,
       requireSignedAccess: requireSignedPreviewAccess,
       userId: resolvedUserId || null,
       previewAuth
@@ -1101,6 +1103,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
 
     useHostBridge({
       runtimeOnly,
+      appMcpSessionId,
       buildId: build.id,
       buildIsPublic: build.isPublic,
       isOwner,

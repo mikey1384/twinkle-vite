@@ -26,6 +26,10 @@ import {
   createTwinkleContentNavigationConfirmationController
 } from '../helpers/twinkleContentNavigation';
 import { createBuildRuntimeImageGenerationController } from '../helpers/buildRuntimeImageGeneration';
+import {
+  getBuildAppAiUsagePolicy,
+  sanitizeBuildAppAiUsagePolicyPayload
+} from '../helpers/previewAiUsagePolicy';
 
 export {
   buildEmptyRuntimeObservationState,
@@ -170,6 +174,7 @@ function emitWorldBridgeTelemetry(data: {
 
 export function useHostBridge({
   runtimeOnly,
+  appMcpSessionId,
   buildId,
   buildIsPublic,
   isOwner,
@@ -356,6 +361,71 @@ export function useHostBridge({
 
   useEffect(() => {
     const chatSubscriptions = new Map<string, Set<Window>>();
+    let appMcpRuntime: {
+      connectionId: string;
+      sourceWindow: Window;
+      activeCallId: string | null;
+      stopped: boolean;
+    } | null = null;
+    let appMcpPollTimer = 0;
+
+    function scheduleAppMcpPoll(delayMs = 250) {
+      window.clearTimeout(appMcpPollTimer);
+      if (!appMcpRuntime || appMcpRuntime.stopped) {
+        return;
+      }
+      const resolvedDelayMs = appMcpRuntime.activeCallId
+        ? Math.max(delayMs, 15_000)
+        : delayMs;
+      appMcpPollTimer = window.setTimeout(
+        () => void pollAppMcpCall(),
+        resolvedDelayMs
+      );
+    }
+
+    async function pollAppMcpCall() {
+      const runtime = appMcpRuntime;
+      if (!runtime || runtime.stopped || !appMcpSessionId) {
+        return;
+      }
+      try {
+        const payload = await requestRefs.pollBuildAppMcpCallRef.current({
+          buildId,
+          sessionId: appMcpSessionId,
+          connectionId: runtime.connectionId,
+          activeCallId: runtime.activeCallId
+        });
+        if (runtime !== appMcpRuntime || runtime.stopped) return;
+        const call = payload?.call;
+        if (!call?.id) {
+          scheduleAppMcpPoll(runtime.activeCallId ? 15_000 : 350);
+          return;
+        }
+        if (runtime.activeCallId) {
+          scheduleAppMcpPoll(15_000);
+          return;
+        }
+        runtime.activeCallId = String(call.id);
+        const targetBridge = getMessageTargetBridgeForWindow(runtime.sourceWindow);
+        runtime.sourceWindow.postMessage(
+          {
+            source: 'twinkle-parent',
+            type: 'app-tools:invoke',
+            previewNonce: targetBridge.previewNonce,
+            payload: call
+          },
+          targetBridge.targetOrigin
+        );
+        scheduleAppMcpPoll(15_000);
+      } catch (error: any) {
+        if (runtime !== appMcpRuntime || runtime.stopped) return;
+        if (Number(error?.status || error?.response?.status) === 404) {
+          runtime.stopped = true;
+          return;
+        }
+        scheduleAppMcpPoll(runtime.activeCallId ? 15_000 : 1500);
+      }
+    }
     const activeAiImageStatusTargets = new Map<
       string,
       ActiveAiImageStatusTarget
@@ -656,13 +726,14 @@ export function useHostBridge({
       }
       const targetWindow = target.sourceWindow;
       const targetBridge = getMessageTargetBridgeForWindow(targetWindow);
+      const iframePayload = sanitizeBuildAppAiUsagePolicyPayload(payload);
       try {
         targetWindow.postMessage(
           {
             source: 'twinkle-parent',
             type: 'ai:image-generation-status',
             previewNonce: targetBridge.previewNonce,
-            payload
+            payload: iframePayload
           },
           targetBridge.targetOrigin
         );
@@ -962,6 +1033,7 @@ export function useHostBridge({
         onAiUsagePolicyUpdateRef.current?.(event.aiUsagePolicy);
       }
       const targetBridge = getMessageTargetBridgeForWindow(sourceWindow);
+      const iframeEvent = sanitizeBuildAppAiUsagePolicyPayload(event || {});
       sourceWindow.postMessage(
         {
           source: 'twinkle-parent',
@@ -969,7 +1041,7 @@ export function useHostBridge({
           previewNonce: targetBridge.previewNonce,
           payload: {
             requestId,
-            ...(event || {})
+            ...iframeEvent
           }
         },
         targetBridge.targetOrigin
@@ -1179,6 +1251,90 @@ export function useHostBridge({
         let pendingHostNavigationUrl = '';
 
         switch (type) {
+          case 'app-tools:register': {
+            if (!runtimeOnly || !appMcpSessionId) {
+              response = { success: true, active: false, session: null };
+              break;
+            }
+            if (!userId) {
+              throw createPreviewBridgeError(
+                'Sign in to connect this Lumine app-mcp session',
+                'APP_MCP_SIGN_IN_REQUIRED'
+              );
+            }
+            const handlerNames = Array.isArray(payload?.handlerNames)
+              ? payload.handlerNames.map(String)
+              : [];
+            const existingRuntime = appMcpRuntime;
+            if (
+              existingRuntime?.activeCallId &&
+              existingRuntime.sourceWindow !== sourceWindow
+            ) {
+              throw createPreviewBridgeError(
+                'Wait for the active App MCP call before reconnecting the app',
+                'APP_MCP_CALL_ACTIVE'
+              );
+            }
+            const connectionId =
+              existingRuntime?.connectionId || crypto.randomUUID();
+            const connected =
+              await requestRefs.connectBuildAppMcpRuntimeRef.current({
+                buildId,
+                sessionId: appMcpSessionId,
+                connectionId,
+                handlerNames
+              });
+            if (existingRuntime) {
+              existingRuntime.sourceWindow = sourceWindow;
+              existingRuntime.stopped = false;
+              appMcpRuntime = existingRuntime;
+            } else {
+              appMcpRuntime = {
+                connectionId,
+                sourceWindow,
+                activeCallId: null,
+                stopped: false
+              };
+            }
+            scheduleAppMcpPoll(0);
+            response = {
+              success: true,
+              active: true,
+              session: connected?.session || null
+            };
+            break;
+          }
+
+          case 'app-tools:complete': {
+            const runtime = appMcpRuntime;
+            const callId = String(payload?.callId || '');
+            if (
+              !runtime ||
+              runtime.sourceWindow !== sourceWindow ||
+              !appMcpSessionId ||
+              !callId
+            ) {
+              throw createPreviewBridgeError(
+                'App MCP call is not active',
+                'APP_MCP_CALL_NOT_ACTIVE'
+              );
+            }
+            await requestRefs.completeBuildAppMcpCallRef.current({
+              buildId,
+              sessionId: appMcpSessionId,
+              callId,
+              connectionId: runtime.connectionId,
+              result: payload?.result,
+              error: payload?.error
+            });
+            if (runtime.activeCallId === callId) {
+              runtime.activeCallId = null;
+              scheduleAppMcpPoll(0);
+            }
+            response = { success: true };
+            break;
+          }
+
           case 'init':
             response = {
               id: activeBuild.id,
@@ -1263,6 +1419,24 @@ export function useHostBridge({
               prompts:
                 (await requestRefs.loadBuildAiPromptsRef.current())?.prompts ||
                 []
+            };
+            break;
+
+          case 'ai:get-usage-policy':
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+            }
+            response = await requestRefs.getAiEnergyPolicyRef.current();
+            if (
+              response?.aiUsagePolicy &&
+              typeof response.aiUsagePolicy === 'object'
+            ) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
+            response = {
+              aiUsagePolicy: getBuildAppAiUsagePolicy(
+                response?.aiUsagePolicy
+              )
             };
             break;
 
@@ -2795,12 +2969,13 @@ export function useHostBridge({
             throw new Error(`Unknown request type: ${type}`);
         }
 
+        const iframeResponse = sanitizeBuildAppAiUsagePolicyPayload(response);
         sourceWindow.postMessage(
           {
             source: 'twinkle-parent',
             id,
             previewNonce: previewMessageNonce,
-            payload: response
+            payload: iframeResponse
           },
           previewMessageTargetOrigin
         );
@@ -2830,7 +3005,7 @@ export function useHostBridge({
             message: error?.message
           });
         }
-        const errorDetails =
+        const rawErrorDetails =
           error && typeof error === 'object'
             ? {
                 ...(typeof error.status === 'number'
@@ -2851,6 +3026,9 @@ export function useHostBridge({
                   : {})
               }
             : null;
+        const errorDetails = sanitizeBuildAppAiUsagePolicyPayload(
+          rawErrorDetails
+        );
         sourceWindow.postMessage(
           {
             source: 'twinkle-parent',
@@ -2880,6 +3058,8 @@ export function useHostBridge({
       handleAiImageGenerationStatus
     );
     return () => {
+      window.clearTimeout(appMcpPollTimer);
+      if (appMcpRuntime) appMcpRuntime.stopped = true;
       window.removeEventListener('message', handleMessage);
       window.removeEventListener(
         TWINKLE_SOCKET_AUTH_READY_EVENT,
@@ -2916,6 +3096,7 @@ export function useHostBridge({
       disposeBuildChessEngine();
     };
   }, [
+    appMcpSessionId,
     buildId,
     capabilitySnapshotRef,
     contentNavigationConfirmationController,
@@ -2938,6 +3119,7 @@ export function useHostBridge({
     runtimeExplorationPlanRef,
     runtimeOnly,
     secondaryIframeRef,
-    setRuntimeObservationState
+    setRuntimeObservationState,
+    userId
   ]);
 }

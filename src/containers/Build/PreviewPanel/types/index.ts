@@ -93,6 +93,7 @@ export interface PreviewPanelProps {
   preventFrameSuspend?: boolean;
   audioMuted?: boolean;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
+  appMcpSessionId?: string | null;
   maxProjectFileLines?: number | null;
   onEditableProjectFilesStateChange?: (state: {
     files: Array<{ path: string; content?: string }>;

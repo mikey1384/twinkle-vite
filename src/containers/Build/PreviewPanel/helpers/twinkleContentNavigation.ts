@@ -25,6 +25,7 @@ const TWINKLE_PUBLIC_HOSTS = new Set([
 ]);
 
 const PREVIEW_QUERY_PARAMETERS = [
+  'appMcpSession',
   'buildApiToken',
   'embedded',
   'previewRev',

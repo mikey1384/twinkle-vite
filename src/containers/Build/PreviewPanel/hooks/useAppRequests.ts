@@ -3,6 +3,18 @@ import { useAppContext } from '~/contexts';
 import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
 
 export default function useAppRequests() {
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
+  );
+  const connectBuildAppMcpRuntime = useAppContext(
+    (v) => v.requestHelpers.connectBuildAppMcpRuntime
+  );
+  const pollBuildAppMcpCall = useAppContext(
+    (v) => v.requestHelpers.pollBuildAppMcpCall
+  );
+  const completeBuildAppMcpCall = useAppContext(
+    (v) => v.requestHelpers.completeBuildAppMcpCall
+  );
   const captureBuildThumbnailPreview = useAppContext(
     (v) => v.requestHelpers.captureBuildThumbnailPreview
   );
@@ -262,6 +274,7 @@ export default function useAppRequests() {
   );
 
   const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
+  const getAiEnergyPolicyRef = useRef(getAiEnergyPolicy);
   const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
   const callBuildRuntimeAiImageRef = useRef(callBuildRuntimeAiImage);
   const loadBuildRuntimeAiImageStatusRef = useRef(
@@ -291,6 +304,9 @@ export default function useAppRequests() {
   const getBuildApiUserRef = useRef(getBuildApiUser);
   const getBuildApiUsersRef = useRef(getBuildApiUsers);
   const getBuildDailyReflectionsRef = useRef(getBuildDailyReflections);
+  const connectBuildAppMcpRuntimeRef = useRef(connectBuildAppMcpRuntime);
+  const pollBuildAppMcpCallRef = useRef(pollBuildAppMcpCall);
+  const completeBuildAppMcpCallRef = useRef(completeBuildAppMcpCall);
   const listBuildRuntimeFilesRef = useRef(listBuildRuntimeFiles);
   const deleteBuildRuntimeFileRef = useRef(deleteBuildRuntimeFile);
   const uploadBuildRuntimeFilesRef = useRef(uploadBuildRuntimeFiles);
@@ -375,6 +391,10 @@ export default function useAppRequests() {
   );
 
   const previewRequestRefs = useRef<PreviewHostBridgeRequestRefs>({
+    connectBuildAppMcpRuntimeRef,
+    pollBuildAppMcpCallRef,
+    completeBuildAppMcpCallRef,
+    getAiEnergyPolicyRef,
     loadBuildAiPromptsRef,
     callBuildRuntimeAiChatRef,
     callBuildRuntimeAiImageRef,

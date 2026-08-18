@@ -720,6 +720,9 @@ export default function BuildRuntime({
   const loadRuntimeBuild = useAppContext(
     (v) => v.requestHelpers.loadRuntimeBuild
   );
+  const loadBuildAppMcpSession = useAppContext(
+    (v) => v.requestHelpers.loadBuildAppMcpSession
+  );
   const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
   const onOpenSigninModal = useAppContext(
@@ -921,6 +924,12 @@ export default function BuildRuntime({
     () => getBuildRuntimeSourceFromSearch(location.search),
     [location.search]
   );
+  const appMcpSessionId = useMemo(() => {
+    const value = String(
+      new URLSearchParams(location.search).get('appMcpSession') || ''
+    ).trim();
+    return /^[0-9a-f-]{36}$/i.test(value) ? value : '';
+  }, [location.search]);
   const buildAppTabTarget = useMemo(() => {
     if (!build?.id) return '';
     return getBuildAppTabTarget({
@@ -1834,10 +1843,23 @@ export default function BuildRuntime({
       setLoading(true);
       setError('');
       try {
-        const data = await loadRuntimeBuild(numericBuildId, {
-          runtimeSource: requestedRuntimeSource,
-          viewSource: runtimeViewSource
-        });
+        const [data, appMcpPayload] = await Promise.all([
+          loadRuntimeBuild(numericBuildId, {
+            runtimeSource: requestedRuntimeSource,
+            viewSource: runtimeViewSource
+          }),
+          appMcpSessionId
+            ? loadBuildAppMcpSession(numericBuildId, appMcpSessionId)
+            : Promise.resolve(null)
+        ]);
+        if (appMcpPayload?.session?.artifactVersionId && data?.build) {
+          data.build = {
+            ...data.build,
+            currentArtifactVersionId: Number(
+              appMcpPayload.session.artifactVersionId
+            )
+          };
+        }
         if (!applyRuntimeBuildPayload(data)) {
           setError('Build not found');
         }
@@ -1848,7 +1870,13 @@ export default function BuildRuntime({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numericBuildId, requestedRuntimeSource, runtimeViewSource, userId]);
+  }, [
+    appMcpSessionId,
+    numericBuildId,
+    requestedRuntimeSource,
+    runtimeViewSource,
+    userId
+  ]);
 
   useEffect(() => {
     if (!runtimeBuildId || !userId) {
@@ -2353,6 +2381,7 @@ export default function BuildRuntime({
                     mountContext={runtimeMountContext}
                     launchTarget={buildLaunchTarget}
                     capabilitySnapshot={build.capabilitySnapshot || null}
+                    appMcpSessionId={appMcpSessionId || null}
                     onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
                     onReplaceCode={() => {}}
                     onApplyRestoredProjectFiles={() => {}}

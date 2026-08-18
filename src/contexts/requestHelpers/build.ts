@@ -598,6 +598,91 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildAppMcpSession(buildId: number, sessionId: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/app-mcp/sessions/${sessionId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async connectBuildAppMcpRuntime({
+      buildId,
+      sessionId,
+      connectionId,
+      handlerNames
+    }: {
+      buildId: number;
+      sessionId: string;
+      connectionId: string;
+      handlerNames: string[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/app-mcp/sessions/${sessionId}/connect`,
+          { connectionId, handlerNames },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async pollBuildAppMcpCall({
+      buildId,
+      sessionId,
+      connectionId,
+      activeCallId
+    }: {
+      buildId: number;
+      sessionId: string;
+      connectionId: string;
+      activeCallId?: string | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/app-mcp/sessions/${sessionId}/calls/next`,
+          { connectionId, activeCallId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async completeBuildAppMcpCall({
+      buildId,
+      sessionId,
+      callId,
+      connectionId,
+      result,
+      error: callError
+    }: {
+      buildId: number;
+      sessionId: string;
+      callId: string;
+      connectionId: string;
+      result?: any;
+      error?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/app-mcp/sessions/${sessionId}/calls/${callId}/complete`,
+          { connectionId, result, error: callError },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async updateBuildMetadata({
       buildId,
       title,

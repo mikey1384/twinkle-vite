@@ -21,6 +21,7 @@ export interface PreviewOpenContentConfirmationRequest {
 
 export interface UsePreviewHostBridgeArgs {
   runtimeOnly: boolean;
+  appMcpSessionId: string | null;
   buildId: number;
   buildIsPublic: boolean | number | null | undefined;
   isOwner: boolean;
