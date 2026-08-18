@@ -851,7 +851,8 @@ export default function AiCosts() {
       bucketId,
       matchType: 'email',
       email,
-      note: `${notePrefix} email ${row.userId || ''}`.trim()
+      note: `${notePrefix} email ${row.userId || ''}`.trim(),
+      explicitEmailRule: true
     });
   }
 

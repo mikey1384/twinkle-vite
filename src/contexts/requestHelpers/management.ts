@@ -351,7 +351,8 @@ export default function managementRequestHelpers({
       riskKeyType,
       riskKeyHash,
       riskKeyValue,
-      note
+      note,
+      explicitEmailRule
     }: {
       bucketId: number;
       matchType: 'email' | 'user' | 'risk_key';
@@ -361,6 +362,7 @@ export default function managementRequestHelpers({
       riskKeyHash?: string;
       riskKeyValue?: string;
       note?: string;
+      explicitEmailRule?: boolean;
     }) {
       try {
         const { data } = await request.post(
@@ -372,7 +374,8 @@ export default function managementRequestHelpers({
             riskKeyType,
             riskKeyHash,
             riskKeyValue,
-            note
+            note,
+            explicitEmailRule
           },
           auth()
         );

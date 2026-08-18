@@ -984,7 +984,8 @@ export default function UserBuckets() {
       await saveRuleHelper({
         bucketId: selectedBucket.id,
         matchType: 'email',
-        email
+        email,
+        explicitEmailRule: true
       });
       setEmailDraft('');
       await loadBuckets(selectedBucket.id);
