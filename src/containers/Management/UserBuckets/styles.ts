@@ -152,6 +152,33 @@ export const memberListClass = css`
   gap: 0.6rem;
 `;
 
+export const effectiveAccountsHintClass = css`
+  margin: -0.25rem 0 0.8rem;
+  color: ${Color.darkGray()};
+  font-size: 1.1rem;
+  line-height: 1.45;
+`;
+
+export const implicitMembershipWarningClass = css`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid ${Color.orange(0.45)};
+  border-radius: ${mediumBorderRadius};
+  background: ${Color.orange(0.1)};
+  color: ${Color.orange()};
+  padding: 0.9rem 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.45;
+
+  > svg {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+  }
+`;
+
 export const memberRowClass = css`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

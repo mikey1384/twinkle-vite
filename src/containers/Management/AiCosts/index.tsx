@@ -737,7 +737,6 @@ export default function AiCosts() {
     notePrefix: string;
   }) {
     const userId = Number(row.userId || 0);
-    const email = getRowEmail(row);
     const signals = getEventSignals(row);
     if (userId) {
       await saveAiEnergyManualIdentityRule({
@@ -745,14 +744,6 @@ export default function AiCosts() {
         matchType: 'user',
         userId,
         note: `${notePrefix} user ${userId}`
-      });
-    }
-    if (email) {
-      await saveAiEnergyManualIdentityRule({
-        bucketId,
-        matchType: 'email',
-        email,
-        note: `${notePrefix} email`
       });
     }
     for (const signal of signals) {

@@ -122,6 +122,14 @@ export interface AiEnergyManualIdentityRule {
   accountVerifiedEmail?: string;
 }
 
+export interface AiEnergyManualIdentityEffectiveAccount {
+  userId: number;
+  username: string;
+  sourceRuleId: number;
+  sourceMatchType: 'user' | 'email';
+  isImplicit: boolean;
+}
+
 export interface AiEnergyManualIdentityBucket {
   id: number;
   label: string;
@@ -137,6 +145,9 @@ export interface AiEnergyManualIdentityBucket {
   updatedAt?: number;
   disabledAt?: number;
   rules: AiEnergyManualIdentityRule[];
+  effectiveAccounts: AiEnergyManualIdentityEffectiveAccount[];
+  effectiveAccountCount: number;
+  implicitAccountCount: number;
 }
 
 export interface AiEnergyManualIdentityRecommendation {

@@ -24,7 +24,9 @@ import {
   banMessageHintClass,
   banStatusClass,
   bucketSettingsClass,
+  effectiveAccountsHintClass,
   emptyMembersClass,
+  implicitMembershipWarningClass,
   memberListClass,
   memberRowClass,
   mergeFormClass,
@@ -107,7 +109,7 @@ export default function UserBuckets() {
     selectedBucket?.banMessage
   ]);
 
-  const memberUserIds = useMemo(
+  const exactAccountUserIds = useMemo(
     () =>
       (selectedBucket?.rules || [])
         .filter((rule) => rule.matchType === 'user')
@@ -116,7 +118,13 @@ export default function UserBuckets() {
     [selectedBucket]
   );
 
-  const memberCount = (selectedBucket?.rules || []).length;
+  const effectiveAccounts = selectedBucket?.effectiveAccounts || [];
+  const effectiveAccountCount =
+    selectedBucket?.effectiveAccountCount ?? effectiveAccounts.length;
+  const implicitAccountCount =
+    selectedBucket?.implicitAccountCount ??
+    effectiveAccounts.filter((account) => account.isImplicit).length;
+  const ruleCount = (selectedBucket?.rules || []).length;
 
   const typeCounts = useMemo(() => {
     const counts = { user: 0, email: 0, ip: 0, other: 0 };
@@ -188,7 +196,10 @@ export default function UserBuckets() {
               </div>
             ) : (
               buckets.map((bucket) => {
-                const count = (bucket.rules || []).length;
+                const accountCount =
+                  bucket.effectiveAccountCount ??
+                  (bucket.effectiveAccounts || []).length;
+                const bucketRuleCount = (bucket.rules || []).length;
                 return (
                   <button
                     key={bucket.id}
@@ -197,6 +208,10 @@ export default function UserBuckets() {
                     onClick={() => setSelectedBucketId(bucket.id)}
                   >
                     <strong>{bucket.label}</strong>
+                    <small>
+                      {accountCount} account{accountCount === 1 ? '' : 's'} ·{' '}
+                      {bucketRuleCount} rule{bucketRuleCount === 1 ? '' : 's'}
+                    </small>
                     {bucket.isBanned ? (
                       <small
                         style={{
@@ -211,11 +226,7 @@ export default function UserBuckets() {
                           ? 'Signup blocked'
                           : 'Fully banned'}
                       </small>
-                    ) : (
-                      <small>
-                        {count} member{count === 1 ? '' : 's'}
-                      </small>
-                    )}
+                    ) : null}
                   </button>
                 );
               })
@@ -253,7 +264,9 @@ export default function UserBuckets() {
               <div>
                 <h2>{selectedBucket.label}</h2>
                 <span>
-                  {memberCount} member{memberCount === 1 ? '' : 's'}
+                  {effectiveAccountCount} account
+                  {effectiveAccountCount === 1 ? '' : 's'} · {ruleCount} rule
+                  {ruleCount === 1 ? '' : 's'}
                 </span>
               </div>
               <div
@@ -290,7 +303,7 @@ export default function UserBuckets() {
                     color={banScopeDraft === 'signup' ? 'orange' : 'rose'}
                     variant="solid"
                     loading={busy}
-                    disabled={busy || memberCount === 0}
+                    disabled={busy || ruleCount === 0}
                     onClick={() => handleSetBan(true)}
                   >
                     <Icon icon="ban" />
@@ -316,7 +329,10 @@ export default function UserBuckets() {
                       {buckets
                         .filter((bucket) => bucket.id !== selectedBucket.id)
                         .map((bucket) => {
-                          const count = (bucket.rules || []).length;
+                          const accountCount =
+                            bucket.effectiveAccountCount ??
+                            (bucket.effectiveAccounts || []).length;
+                          const bucketRuleCount = (bucket.rules || []).length;
                           return (
                             <option key={bucket.id} value={bucket.id}>
                               {bucket.label}
@@ -325,7 +341,10 @@ export default function UserBuckets() {
                                   ? ' (signup blocked)'
                                   : ' (fully banned)'
                                 : ''}{' '}
-                              · {count} member{count === 1 ? '' : 's'}
+                              · {accountCount} account
+                              {accountCount === 1 ? '' : 's'} ·{' '}
+                              {bucketRuleCount} rule
+                              {bucketRuleCount === 1 ? '' : 's'}
                             </option>
                           );
                         })}
@@ -445,7 +464,7 @@ export default function UserBuckets() {
 
               <div className={typeSummaryClass}>
                 <div>
-                  <span>Accounts</span>
+                  <span>Exact accounts</span>
                   <strong>{typeCounts.user}</strong>
                 </div>
                 <div>
@@ -500,12 +519,67 @@ export default function UserBuckets() {
               )}
 
               <div className={subsectionHeaderClass}>
-                <h3>Members</h3>
-                <span>{memberCount} total</span>
+                <h3>Effective accounts</h3>
+                <span>{effectiveAccountCount} total</span>
               </div>
-              {memberCount === 0 ? (
+              <div className={effectiveAccountsHintClass}>
+                Resolved from exact account and email rules. IP and device rules
+                are request-specific, so they stay in the identity-rule list
+                below instead of being guessed as permanent account members.
+              </div>
+              {implicitAccountCount > 0 ? (
+                <div className={implicitMembershipWarningClass}>
+                  <Icon icon="exclamation-triangle" />
+                  <span>
+                    {implicitAccountCount} account
+                    {implicitAccountCount === 1 ? ' is' : 's are'} included by
+                    an email rule rather than an exact account rule. Verify each
+                    one belongs to the same person; shared email addresses can
+                    otherwise combine unrelated AI batteries.
+                  </span>
+                </div>
+              ) : null}
+              {effectiveAccountCount === 0 ? (
                 <div className={emptyMembersClass}>
-                  No members yet. Add an account, email, IP, or device below.
+                  No account or email rule currently resolves to an account.
+                  Network and device rules, if any, are listed below.
+                </div>
+              ) : (
+                <div className={memberListClass}>
+                  {effectiveAccounts.map((account) => (
+                    <div className={memberRowClass} key={account.userId}>
+                      <div className="member-icon">
+                        <Icon
+                          icon={
+                            account.isImplicit ? 'exclamation-triangle' : 'user'
+                          }
+                        />
+                      </div>
+                      <div className="member-main">
+                        <strong>
+                          {account.username
+                            ? `@${account.username}`
+                            : `Account #${account.userId}`}
+                        </strong>
+                        <span>
+                          {account.isImplicit
+                            ? `Included by email rule #${account.sourceRuleId}`
+                            : `Exact account rule #${account.sourceRuleId}`}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className={subsectionHeaderClass}>
+                <h3>Identity rules</h3>
+                <span>{ruleCount} total</span>
+              </div>
+              {ruleCount === 0 ? (
+                <div className={emptyMembersClass}>
+                  No identity rules yet. Add an exact account, email, IP, or
+                  device below.
                 </div>
               ) : (
                 <div className={memberListClass}>
@@ -536,16 +610,20 @@ export default function UserBuckets() {
               )}
 
               <div className={subsectionHeaderClass}>
-                <h3>Add members</h3>
+                <h3>Add identity rules</h3>
               </div>
               <div className={addGridClass}>
                 <div className="add-field">
-                  <label>Account</label>
+                  <label>Exact account</label>
                   <UserSearchInput
-                    excludeUserIds={memberUserIds}
+                    excludeUserIds={exactAccountUserIds}
                     onSelect={handleAddAccount}
                     placeholder="Search users to add..."
                   />
+                  <div className="add-hint">
+                    Adds only the selected account. Email aliases are never
+                    inferred.
+                  </div>
                 </div>
 
                 <div className="add-field">
@@ -570,6 +648,11 @@ export default function UserBuckets() {
                       <Icon icon="plus" />
                       <span style={{ marginLeft: '0.5rem' }}>Add</span>
                     </Button>
+                  </div>
+                  <div className="add-warn">
+                    An email rule includes every account that resolves to that
+                    address. Use it only after verifying they are the same
+                    person.
                   </div>
                 </div>
 
@@ -680,7 +763,7 @@ export default function UserBuckets() {
     if (rule.matchType === 'user') {
       return {
         icon: 'user',
-        label: 'Account',
+        label: 'Exact account',
         value: rule.username
           ? `@${rule.username}`
           : `#${rule.userId || rule.matchValue}`
@@ -689,7 +772,7 @@ export default function UserBuckets() {
     if (rule.matchType === 'email') {
       return {
         icon: 'paper-plane',
-        label: signupOnly ? 'Email · signup-only' : 'Email',
+        label: signupOnly ? 'Email rule · signup-only' : 'Email rule',
         value: String(rule.matchValue || '')
       };
     }
@@ -941,7 +1024,7 @@ export default function UserBuckets() {
       await disableRuleHelper(ruleId);
       await loadBuckets(selectedBucket.id);
     } catch {
-      setError('Failed to remove member.');
+      setError('Failed to remove identity rule.');
     } finally {
       setBusy(false);
     }

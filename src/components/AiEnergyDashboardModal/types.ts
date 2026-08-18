@@ -6,6 +6,8 @@ export type DashboardSection =
 
 export interface AiUsageHistoryEvent {
   id: number;
+  actorUserId: number | null;
+  actorUsername: string;
   aiUsername: string;
   targetType: string;
   provider: string;

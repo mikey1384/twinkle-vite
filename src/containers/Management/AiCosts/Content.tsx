@@ -215,6 +215,16 @@ export default function Content({
       ...rule
     }));
   }, [selectedBucket]);
+  const effectiveAccountRows = useMemo<AiCostRow[]>(() => {
+    return (selectedBucket?.effectiveAccounts || []).map((account) => ({
+      userId: account.userId,
+      username: account.username,
+      matchType: account.sourceMatchType,
+      note: account.isImplicit
+        ? `Included by email rule #${account.sourceRuleId}`
+        : `Exact account rule #${account.sourceRuleId}`
+    }));
+  }, [selectedBucket]);
   const recommendationAccountRows = useMemo<AiCostRow[]>(() => {
     return bucketRecommendations.accounts.map((row) => ({
       ...row,
@@ -320,7 +330,13 @@ export default function Content({
               onClick={() => onSelectBucket(bucket.id)}
             >
               <strong>{bucket.label}</strong>
-              <small>{formatNumber(bucket.rules.length)} items</small>
+              <small>
+                {formatNumber(
+                  bucket.effectiveAccountCount ??
+                    (bucket.effectiveAccounts || []).length
+                )}{' '}
+                accounts · {formatNumber(bucket.rules.length)} rules
+              </small>
             </button>
           ))}
         </div>
@@ -445,15 +461,19 @@ export default function Content({
                     </div>
                     <SubsectionHeader
                       title="Add to Bucket"
-                      note="Search an account or add an IP"
+                      note="Add an exact account or an IP signal"
                     />
                     <div className="bucket-manual-add">
                       <div className="manual-add-field">
-                        <label>Account</label>
+                        <label>Exact Account</label>
                         <UserSearchInput
                           placeholder="Search username, name, or email..."
                           onSelect={onAddAccountToBucket}
                         />
+                        <span className="manual-add-hint">
+                          Adds only the selected account; email aliases are not
+                          inferred.
+                        </span>
                       </div>
                       <div className="manual-add-field">
                         <label htmlFor="manual-ai-add-ip">IP Address</label>
@@ -486,8 +506,44 @@ export default function Content({
                       ) : null}
                     </div>
                     <SubsectionHeader
-                      title="Linked Items"
-                      note={`${formatNumber(linkedRuleRows.length)} items`}
+                      title="Effective Accounts"
+                      note={`${formatNumber(
+                        effectiveAccountRows.length
+                      )} accounts`}
+                    />
+                    <div className="effective-membership-hint">
+                      Resolved from exact account and email rules. IP and device
+                      rules remain request-specific identity signals.
+                    </div>
+                    {(selectedBucket.implicitAccountCount || 0) > 0 ? (
+                      <div className="implicit-membership-warning">
+                        <Icon icon="exclamation-triangle" />
+                        <span>
+                          {formatNumber(selectedBucket.implicitAccountCount)}{' '}
+                          account
+                          {selectedBucket.implicitAccountCount === 1
+                            ? ' is'
+                            : 's are'}{' '}
+                          included by email rules. Verify they belong to the
+                          same person before sharing an AI battery.
+                        </span>
+                      </div>
+                    ) : null}
+                    <DataTable
+                      columns={[
+                        {
+                          key: 'username',
+                          label: 'Account',
+                          render: (value, row) =>
+                            formatAccountName({ value, row })
+                        },
+                        { key: 'note', label: 'Membership source' }
+                      ]}
+                      rows={effectiveAccountRows}
+                    />
+                    <SubsectionHeader
+                      title="Identity Rules"
+                      note={`${formatNumber(linkedRuleRows.length)} rules`}
                     />
                     <DataTable
                       columns={[
@@ -1264,6 +1320,12 @@ function BucketActionModal({
           <div className="target-summary">
             <span>Target</span>
             <strong>{getBucketActionSummary(action)}</strong>
+            {action.actionType === 'event_row' ? (
+              <small>
+                Adds the exact account and request-specific signals. Verified
+                email is never added automatically.
+              </small>
+            ) : null}
           </div>
           {isSaving ? (
             <div className="modal-saving">
@@ -1284,7 +1346,13 @@ function BucketActionModal({
                     onClick={() => onAddToBucket(bucket.id)}
                   >
                     <strong>{bucket.label}</strong>
-                    <small>{formatNumber(bucket.rules.length)} items</small>
+                    <small>
+                      {formatNumber(
+                        bucket.effectiveAccountCount ??
+                          (bucket.effectiveAccounts || []).length
+                      )}{' '}
+                      accounts · {formatNumber(bucket.rules.length)} rules
+                    </small>
                   </button>
                 ))}
               </div>
@@ -1380,7 +1448,9 @@ function getBucketActionKey(action: AiEnergyManualIdentityBucketAction) {
 }
 
 function getBucketActionTitle(action: AiEnergyManualIdentityBucketAction) {
-  if (action.actionType === 'event_row') return 'Add Event Evidence';
+  if (action.actionType === 'event_row') {
+    return 'Add Exact Account + Signals';
+  }
   if (action.actionType === 'user') return 'Add User';
   if (action.actionType === 'email') return 'Add Email';
   return 'Add Signal';

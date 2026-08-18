@@ -200,6 +200,14 @@ export const bucketActionModalClass = css`
     overflow-wrap: anywhere;
   }
 
+  .target-summary small {
+    display: block;
+    margin-top: 0.5rem;
+    color: ${Color.darkGray()};
+    font-size: 1.15rem;
+    line-height: 1.45;
+  }
+
   .bucket-choice-section {
     display: flex;
     flex-direction: column;
@@ -503,6 +511,34 @@ export const panelClass = css`
     color: ${Color.darkGray()};
     font-size: 1.1rem;
     font-weight: 700;
+  }
+
+  .bucket-manual-add .manual-add-hint {
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+
+  .implicit-membership-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    margin-bottom: 0.9rem;
+    border: 1px solid ${Color.orange(0.45)};
+    border-radius: ${mediumBorderRadius};
+    background: ${Color.orange(0.1)};
+    color: ${Color.orange()};
+    padding: 0.9rem 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .effective-membership-hint {
+    margin: -0.3rem 0 0.9rem;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    line-height: 1.45;
   }
 
   @media (max-width: ${mobileMaxWidth}) {

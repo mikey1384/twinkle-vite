@@ -96,7 +96,8 @@ export default function UsageHistory({
         <div className={surfaceTitleCls}>Today&apos;s usage</div>
         <p className={surfaceDescriptionCls}>
           Each item shows how much energy a request used &mdash; 100 is a full
-          battery&apos;s worth.
+          battery&apos;s worth. If accounts share this battery, each item names
+          the account that made the request.
         </p>
         {loading ? (
           <Loading style={{ height: '12rem' }} />
@@ -109,6 +110,11 @@ export default function UsageHistory({
                 event.energyOverflowUnits > 0 &&
                 event.energyChargedUnits < event.energyUnits;
               const targetLabel = getAiUsageTargetLabel(event.targetType);
+              const actorLabel = event.actorUsername
+                ? `@${event.actorUsername}`
+                : event.actorUserId
+                  ? `account #${event.actorUserId}`
+                  : 'an unavailable account';
               return (
                 <div key={event.id} className={rowCls}>
                   <div className={rowMainCls}>
@@ -117,6 +123,7 @@ export default function UsageHistory({
                     </div>
                     <div className={rowMetaCls}>
                       {moment.unix(event.createdAt).format('LT')}
+                      {` · used by ${actorLabel}`}
                       {targetLabel ? ` · ${targetLabel}` : ''}
                       {event.model ? ` · ${event.model}` : ''}
                       {isLiteMode

@@ -153,9 +153,10 @@ export function getRowEmail(row: AiCostRow) {
 }
 
 export function hasBucketEvidence(row: AiCostRow) {
-  return Boolean(
-    Number(row.userId || 0) || getRowEmail(row) || getEventSignals(row).length
-  );
+  // The bundled event action may add only the exact actor and request-scoped
+  // signals. Verified email is a separate explicit action because an address
+  // can legitimately belong to unrelated accounts.
+  return Boolean(Number(row.userId || 0) || getEventSignals(row).length);
 }
 
 export function getBucketLabelForRow(row: AiCostRow) {
