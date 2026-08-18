@@ -4,6 +4,10 @@ import URL from '~/constants/URL';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { RequestHelpers } from '~/types';
+import {
+  readBuildRuntimeAiStream,
+  type BuildRuntimeAiStreamEvent
+} from './buildRuntimeAiStream';
 
 const BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS = 90_000;
 
@@ -40,20 +44,6 @@ export default function buildRequestHelpers({
         ...(totalTimeoutMs == null ? {} : { totalTimeoutMs })
       }
     };
-  }
-
-  interface BuildRuntimeAiChatStreamEvent {
-    type?: string;
-    status?: string;
-    text?: string;
-    response?: string;
-    delta?: string;
-    done?: boolean;
-    model?: string;
-    webSearch?: boolean;
-    aiUsagePolicy?: Record<string, any>;
-    error?: string;
-    code?: string;
   }
 
   function getBuildApiConfig(token?: string) {
@@ -113,61 +103,6 @@ export default function buildRequestHelpers({
         request: responseData.request
       })
     );
-  }
-
-  async function readBuildRuntimeAiChatStream({
-    response,
-    onEvent
-  }: {
-    response: Response;
-    onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
-  }) {
-    const decoder = new TextDecoder();
-    const reader = response.body?.getReader();
-    let buffer = '';
-    let finalEvent: BuildRuntimeAiChatStreamEvent | null = null;
-
-    function consumeLine(rawLine: string) {
-      const line = rawLine.trim();
-      if (!line) return;
-      const event = JSON.parse(line) as BuildRuntimeAiChatStreamEvent;
-      onEvent?.(event);
-      if (event.type === 'error') {
-        const error: any = new Error(event.error || 'AI chat stream failed');
-        if (event.code) error.code = event.code;
-        if (event.aiUsagePolicy) {
-          error.aiUsagePolicy = event.aiUsagePolicy;
-        }
-        throw error;
-      }
-      if (event.type === 'done') {
-        finalEvent = event;
-      }
-    }
-
-    if (!reader) {
-      const text = await response.text();
-      text.split('\n').forEach(consumeLine);
-      return finalEvent || {};
-    }
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        consumeLine(line);
-      }
-    }
-
-    buffer += decoder.decode();
-    if (buffer.trim()) {
-      consumeLine(buffer);
-    }
-
-    return finalEvent || {};
   }
 
   function isVideoRuntimeUploadCandidate(file: File) {
@@ -1470,7 +1405,7 @@ export default function buildRequestHelpers({
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
       systemPrompt?: string;
       webSearch?: boolean;
-      onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
+      onEvent?: (event: BuildRuntimeAiStreamEvent) => void;
     }) {
       try {
         const response = await fetch(
@@ -1501,7 +1436,7 @@ export default function buildRequestHelpers({
           }
           throw error;
         }
-        return await readBuildRuntimeAiChatStream({ response, onEvent });
+        return await readBuildRuntimeAiStream({ response, onEvent });
       } catch (error: any) {
         if (error?.aiUsagePolicy || error?.code) {
           return Promise.reject(error);
@@ -1516,20 +1451,59 @@ export default function buildRequestHelpers({
       expectedStructure,
       thinkingMode,
       mode,
+      model,
       instructions,
       systemPrompt,
-      webSearch
+      webSearch,
+      onEvent
     }: {
       buildId: number;
       prompt: string;
       expectedStructure: Record<string, unknown>;
       thinkingMode?: 'low' | 'medium' | 'mid' | 'high';
       mode?: 'low' | 'medium' | 'mid' | 'high';
+      model?: 'claude-opus-5' | 'claude-fable-5';
       instructions?: string;
       systemPrompt?: string;
       webSearch?: boolean;
+      onEvent?: (event: BuildRuntimeAiStreamEvent) => void;
     }) {
       try {
+        if (onEvent) {
+          const response = await fetch(
+            `${URL}/build/${buildId}/runtime-ai-object/stream`,
+            {
+              method: 'POST',
+              headers: getFetchAuthHeaders({
+                Accept: 'application/x-ndjson',
+                'Content-Type': 'application/json'
+              }),
+              body: JSON.stringify({
+                prompt,
+                expectedStructure,
+                thinkingMode,
+                mode,
+                model,
+                instructions,
+                systemPrompt,
+                webSearch
+              })
+            }
+          );
+          if (!response.ok) {
+            const errorPayload = await response.json().catch(() => null);
+            const error: any = new Error(
+              errorPayload?.error || 'Object generation stream failed'
+            );
+            if (errorPayload?.code) error.code = errorPayload.code;
+            if (errorPayload?.aiUsagePolicy) {
+              error.aiUsagePolicy = errorPayload.aiUsagePolicy;
+            }
+            throw error;
+          }
+          return await readBuildRuntimeAiStream({ response, onEvent });
+        }
+
         const { data } = await request.post(
           `${URL}/build/${buildId}/runtime-ai-object`,
           {
@@ -1537,6 +1511,7 @@ export default function buildRequestHelpers({
             expectedStructure,
             thinkingMode,
             mode,
+            model,
             instructions,
             systemPrompt,
             webSearch
@@ -1545,6 +1520,9 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error: any) {
+        if (error?.aiUsagePolicy || (error?.code && !error?.response)) {
+          return Promise.reject(error);
+        }
         const response = error?.response;
         if (response?.data?.code || response?.data?.aiUsagePolicy) {
           return Promise.reject({
@@ -1736,7 +1714,7 @@ export default function buildRequestHelpers({
       instructions?: string;
       includeWebsiteContext?: boolean;
       webSearch?: boolean;
-      onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
+      onEvent?: (event: BuildRuntimeAiStreamEvent) => void;
     }) {
       try {
         const response = await fetch(
@@ -1772,7 +1750,7 @@ export default function buildRequestHelpers({
           }
           throw error;
         }
-        return await readBuildRuntimeAiChatStream({ response, onEvent });
+        return await readBuildRuntimeAiStream({ response, onEvent });
       } catch (error: any) {
         if (error?.aiUsagePolicy || error?.code) {
           return Promise.reject(error);

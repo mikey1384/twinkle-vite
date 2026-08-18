@@ -947,14 +947,16 @@ export function useHostBridge({
       return { targetOrigin: '*', previewNonce: null };
     }
 
-    function forwardAiChatStreamEventToFrame({
+    function forwardAiStreamEventToFrame({
       sourceWindow,
       requestId,
-      event
+      event,
+      messageType = 'ai:chat-status'
     }: {
       sourceWindow: Window;
       requestId: string;
       event: any;
+      messageType?: 'ai:chat-status' | 'ai:object-status';
     }) {
       if (event?.aiUsagePolicy && typeof event.aiUsagePolicy === 'object') {
         onAiUsagePolicyUpdateRef.current?.(event.aiUsagePolicy);
@@ -963,7 +965,7 @@ export function useHostBridge({
       sourceWindow.postMessage(
         {
           source: 'twinkle-parent',
-          type: 'ai:chat-status',
+          type: messageType,
           previewNonce: targetBridge.previewNonce,
           payload: {
             requestId,
@@ -1279,7 +1281,7 @@ export function useHostBridge({
                   systemPrompt: payload.systemPrompt,
                   webSearch: payload.webSearch,
                   onEvent: (streamEvent: any) => {
-                    forwardAiChatStreamEventToFrame({
+                    forwardAiStreamEventToFrame({
                       sourceWindow,
                       requestId,
                       event: streamEvent
@@ -1314,9 +1316,21 @@ export function useHostBridge({
               expectedStructure: payload.expectedStructure,
               thinkingMode: payload.thinkingMode,
               mode: payload.mode,
+              model: payload.model,
               instructions: payload.instructions,
               systemPrompt: payload.systemPrompt,
-              webSearch: payload.webSearch
+              webSearch: payload.webSearch,
+              onEvent:
+                payload?.stream === true
+                  ? (streamEvent: any) => {
+                      forwardAiStreamEventToFrame({
+                        sourceWindow,
+                        requestId: String(payload?.requestId || id),
+                        event: streamEvent,
+                        messageType: 'ai:object-status'
+                      });
+                    }
+                  : undefined
             });
             if (
               response?.aiUsagePolicy &&
@@ -1380,7 +1394,7 @@ export function useHostBridge({
                     includeWebsiteContext: payload.includeWebsiteContext,
                     webSearch: payload.webSearch,
                     onEvent: (streamEvent: any) => {
-                      forwardAiChatStreamEventToFrame({
+                      forwardAiStreamEventToFrame({
                         sourceWindow,
                         requestId,
                         event: streamEvent
