@@ -369,6 +369,22 @@ export function useHostBridge({
     } | null = null;
     let appMcpPollTimer = 0;
 
+    function getActiveAppMcpInvocation(sourceWindow: Window) {
+      if (
+        !appMcpRuntime ||
+        appMcpRuntime.stopped ||
+        appMcpRuntime.sourceWindow !== sourceWindow ||
+        !appMcpRuntime.activeCallId ||
+        !appMcpSessionId
+      ) {
+        return undefined;
+      }
+      return {
+        appMcpSessionId,
+        appMcpCallId: appMcpRuntime.activeCallId
+      };
+    }
+
     function scheduleAppMcpPoll(delayMs = 250) {
       window.clearTimeout(appMcpPollTimer);
       if (!appMcpRuntime || appMcpRuntime.stopped) {
@@ -1454,6 +1470,8 @@ export function useHostBridge({
                   history: payload.history,
                   systemPrompt: payload.systemPrompt,
                   webSearch: payload.webSearch,
+                  appMcpInvocation:
+                    getActiveAppMcpInvocation(sourceWindow),
                   onEvent: (streamEvent: any) => {
                     forwardAiStreamEventToFrame({
                       sourceWindow,
@@ -1469,7 +1487,8 @@ export function useHostBridge({
                 message: payload.message,
                 history: payload.history,
                 systemPrompt: payload.systemPrompt,
-                webSearch: payload.webSearch
+                webSearch: payload.webSearch,
+                appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
               });
             }
             if (
@@ -1494,6 +1513,7 @@ export function useHostBridge({
               instructions: payload.instructions,
               systemPrompt: payload.systemPrompt,
               webSearch: payload.webSearch,
+              appMcpInvocation: getActiveAppMcpInvocation(sourceWindow),
               onEvent:
                 payload?.stream === true
                   ? (streamEvent: any) => {
@@ -1543,7 +1563,8 @@ export function useHostBridge({
             }
             response = await requestRefs.generateBuildTwinkleNewsRef.current({
               buildId: activeBuild.id,
-              refresh: payload?.refresh === true
+              refresh: payload?.refresh === true,
+              appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
             });
             break;
 
@@ -1567,6 +1588,8 @@ export function useHostBridge({
                     instructions: payload.instructions,
                     includeWebsiteContext: payload.includeWebsiteContext,
                     webSearch: payload.webSearch,
+                    appMcpInvocation:
+                      getActiveAppMcpInvocation(sourceWindow),
                     onEvent: (streamEvent: any) => {
                       forwardAiStreamEventToFrame({
                         sourceWindow,
@@ -1589,7 +1612,8 @@ export function useHostBridge({
                   systemPrompt: payload.systemPrompt,
                   instructions: payload.instructions,
                   includeWebsiteContext: payload.includeWebsiteContext,
-                  webSearch: payload.webSearch
+                  webSearch: payload.webSearch,
+                  appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
                 });
             }
             if (
@@ -1655,6 +1679,10 @@ export function useHostBridge({
               const imageRequest: AiImageRequestFingerprintInput & {
                 buildId: number;
                 requestId: string;
+                appMcpInvocation?: {
+                  appMcpSessionId: string;
+                  appMcpCallId: string;
+                };
               } = {
                 buildId: activeBuild.id,
                 prompt: String(payload?.prompt || '').trim(),
@@ -1663,7 +1691,8 @@ export function useHostBridge({
                 referenceImageB64: payload?.referenceImageB64,
                 engine: selectedImageEngine,
                 quality: selectedImageQuality,
-                requestId: String(payload?.requestId || id)
+                requestId: String(payload?.requestId || id),
+                appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
               };
               if (aiImageStatusTarget) {
                 aiImageStatusTarget.imageRequest = imageRequest;

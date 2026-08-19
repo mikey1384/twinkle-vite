@@ -11,6 +11,11 @@ import {
 
 const BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS = 90_000;
 
+export interface BuildAppMcpInvocationContext {
+  appMcpSessionId: string;
+  appMcpCallId: string;
+}
+
 export default function buildRequestHelpers({
   auth,
   handleError
@@ -1313,7 +1318,8 @@ export default function buildRequestHelpers({
       message,
       history,
       systemPrompt,
-      webSearch
+      webSearch,
+      appMcpInvocation
     }: {
       buildId: number;
       promptId?: number;
@@ -1321,11 +1327,19 @@ export default function buildRequestHelpers({
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
       systemPrompt?: string;
       webSearch?: boolean;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/runtime-ai-chat`,
-          { promptId, message, history, systemPrompt, webSearch },
+          {
+            promptId,
+            message,
+            history,
+            systemPrompt,
+            webSearch,
+            ...appMcpInvocation
+          },
           auth()
         );
         return data;
@@ -1352,7 +1366,8 @@ export default function buildRequestHelpers({
       referenceImageB64,
       engine = 'openai',
       quality = 'high',
-      requestId
+      requestId,
+      appMcpInvocation
     }: {
       buildId: number;
       prompt: string;
@@ -1362,6 +1377,7 @@ export default function buildRequestHelpers({
       engine?: 'gemini' | 'openai';
       quality?: 'low' | 'medium' | 'high';
       requestId?: string;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
       try {
         const { data } = await request.post(
@@ -1373,7 +1389,8 @@ export default function buildRequestHelpers({
             referenceImageB64,
             engine,
             quality,
-            requestId
+            requestId,
+            ...appMcpInvocation
           },
           {
             ...auth(),
@@ -1482,6 +1499,7 @@ export default function buildRequestHelpers({
       history,
       systemPrompt,
       webSearch,
+      appMcpInvocation,
       onEvent
     }: {
       buildId: number;
@@ -1490,6 +1508,7 @@ export default function buildRequestHelpers({
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
       systemPrompt?: string;
       webSearch?: boolean;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
       onEvent?: (event: BuildRuntimeAiStreamEvent) => void;
     }) {
       try {
@@ -1506,7 +1525,8 @@ export default function buildRequestHelpers({
               message,
               history,
               systemPrompt,
-              webSearch
+              webSearch,
+              ...appMcpInvocation
             })
           }
         );
@@ -1540,6 +1560,7 @@ export default function buildRequestHelpers({
       instructions,
       systemPrompt,
       webSearch,
+      appMcpInvocation,
       onEvent
     }: {
       buildId: number;
@@ -1551,6 +1572,7 @@ export default function buildRequestHelpers({
       instructions?: string;
       systemPrompt?: string;
       webSearch?: boolean;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
       onEvent?: (event: BuildRuntimeAiStreamEvent) => void;
     }) {
       try {
@@ -1571,7 +1593,8 @@ export default function buildRequestHelpers({
                 model,
                 instructions,
                 systemPrompt,
-                webSearch
+                webSearch,
+                ...appMcpInvocation
               })
             }
           );
@@ -1599,7 +1622,8 @@ export default function buildRequestHelpers({
             model,
             instructions,
             systemPrompt,
-            webSearch
+            webSearch,
+            ...appMcpInvocation
           },
           auth()
         );
@@ -1689,15 +1713,17 @@ export default function buildRequestHelpers({
 
     async generateBuildTwinkleNews({
       buildId,
-      refresh = false
+      refresh = false,
+      appMcpInvocation
     }: {
       buildId: number;
       refresh?: boolean;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/news/generate`,
-          { refresh },
+          { refresh, ...appMcpInvocation },
           auth()
         );
         return data;
@@ -1717,7 +1743,8 @@ export default function buildRequestHelpers({
       systemPrompt,
       instructions,
       includeWebsiteContext,
-      webSearch
+      webSearch,
+      appMcpInvocation
     }: {
       buildId: number;
       character: 'zero' | 'ciel';
@@ -1734,6 +1761,7 @@ export default function buildRequestHelpers({
       instructions?: string;
       includeWebsiteContext?: boolean;
       webSearch?: boolean;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
       try {
         const { data } = await request.post(
@@ -1748,7 +1776,8 @@ export default function buildRequestHelpers({
             systemPrompt,
             instructions,
             includeWebsiteContext,
-            webSearch
+            webSearch,
+            ...appMcpInvocation
           },
           auth()
         );
@@ -1782,6 +1811,7 @@ export default function buildRequestHelpers({
       instructions,
       includeWebsiteContext,
       webSearch,
+      appMcpInvocation,
       onEvent
     }: {
       buildId: number;
@@ -1799,6 +1829,7 @@ export default function buildRequestHelpers({
       instructions?: string;
       includeWebsiteContext?: boolean;
       webSearch?: boolean;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
       onEvent?: (event: BuildRuntimeAiStreamEvent) => void;
     }) {
       try {
@@ -1820,7 +1851,8 @@ export default function buildRequestHelpers({
               systemPrompt,
               instructions,
               includeWebsiteContext,
-              webSearch
+              webSearch,
+              ...appMcpInvocation
             })
           }
         );
