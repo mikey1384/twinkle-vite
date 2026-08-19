@@ -170,14 +170,23 @@ export default function useAppRequests() {
   const getSharedDbEntries = useAppContext(
     (v) => v.requestHelpers.getSharedDbEntries
   );
+  const getSharedDbEntriesByIds = useAppContext(
+    (v) => v.requestHelpers.getSharedDbEntriesByIds
+  );
   const addSharedDbEntry = useAppContext(
     (v) => v.requestHelpers.addSharedDbEntry
+  );
+  const addSharedDbEntries = useAppContext(
+    (v) => v.requestHelpers.addSharedDbEntries
   );
   const updateSharedDbEntry = useAppContext(
     (v) => v.requestHelpers.updateSharedDbEntry
   );
   const deleteSharedDbEntry = useAppContext(
     (v) => v.requestHelpers.deleteSharedDbEntry
+  );
+  const deleteSharedDbEntries = useAppContext(
+    (v) => v.requestHelpers.deleteSharedDbEntries
   );
   const claimSharedDbEntry = useAppContext(
     (v) => v.requestHelpers.claimSharedDbEntry
@@ -338,9 +347,12 @@ export default function useAppRequests() {
   const getSharedDbTopicsRef = useRef(getSharedDbTopics);
   const createSharedDbTopicRef = useRef(createSharedDbTopic);
   const getSharedDbEntriesRef = useRef(getSharedDbEntries);
+  const getSharedDbEntriesByIdsRef = useRef(getSharedDbEntriesByIds);
   const addSharedDbEntryRef = useRef(addSharedDbEntry);
+  const addSharedDbEntriesRef = useRef(addSharedDbEntries);
   const updateSharedDbEntryRef = useRef(updateSharedDbEntry);
   const deleteSharedDbEntryRef = useRef(deleteSharedDbEntry);
+  const deleteSharedDbEntriesRef = useRef(deleteSharedDbEntries);
   const claimSharedDbEntryRef = useRef(claimSharedDbEntry);
   const getSharedDbKvItemRef = useRef(getSharedDbKvItem);
   const listSharedDbKvItemsRef = useRef(listSharedDbKvItems);
@@ -442,9 +454,12 @@ export default function useAppRequests() {
     getSharedDbTopicsRef,
     createSharedDbTopicRef,
     getSharedDbEntriesRef,
+    getSharedDbEntriesByIdsRef,
     addSharedDbEntryRef,
+    addSharedDbEntriesRef,
     updateSharedDbEntryRef,
     deleteSharedDbEntryRef,
+    deleteSharedDbEntriesRef,
     claimSharedDbEntryRef,
     getSharedDbKvItemRef,
     listSharedDbKvItemsRef,

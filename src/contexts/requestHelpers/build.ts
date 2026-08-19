@@ -4282,6 +4282,33 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getSharedDbEntriesByIds({
+      buildId,
+      entryIds,
+      token
+    }: {
+      buildId: number;
+      entryIds: number[];
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entries/by-ids`,
+          { entryIds },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async addSharedDbEntry({
       buildId,
       topicName,
@@ -4303,6 +4330,37 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entry`,
           { topicName, topicId, data: entryData, notify, subjectRef },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async addSharedDbEntries({
+      buildId,
+      topicName,
+      topicId,
+      items,
+      token
+    }: {
+      buildId: number;
+      topicName?: string;
+      topicId?: number;
+      items: Array<Record<string, any>>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entries/batch`,
+          { topicName, topicId, items },
           {
             ...auth(),
             headers: {
@@ -4361,6 +4419,33 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entry/delete`,
           { entryId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteSharedDbEntries({
+      buildId,
+      entryIds,
+      token
+    }: {
+      buildId: number;
+      entryIds: number[];
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entries/delete`,
+          { entryIds },
           {
             ...auth(),
             headers: {

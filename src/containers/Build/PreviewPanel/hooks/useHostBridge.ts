@@ -2389,6 +2389,22 @@ export function useHostBridge({
             break;
           }
 
+          case 'shared-db:get-entries-by-ids': {
+            const sharedDbEntriesByIdsToken = await ensureBuildApiToken(
+              ['sharedDb:read'],
+              previewAuth
+            );
+            response =
+              await requestRefs.getSharedDbEntriesByIdsRef.current({
+                buildId: activeBuild.id,
+                entryIds: Array.isArray(payload?.entryIds)
+                  ? payload.entryIds
+                  : [],
+                token: sharedDbEntriesByIdsToken
+              });
+            break;
+          }
+
           case 'shared-db:add-entry': {
             // A subjectRef add is get-or-create: it may return an existing
             // (possibly another user's) canonical entry, which is a read. Only
@@ -2409,6 +2425,21 @@ export function useHostBridge({
               notify: payload?.notify,
               subjectRef: payload?.subjectRef,
               token: sharedDbAddEntryToken
+            });
+            break;
+          }
+
+          case 'shared-db:add-entries': {
+            const sharedDbAddEntriesToken = await ensureBuildApiToken(
+              ['sharedDb:write'],
+              previewAuth
+            );
+            response = await requestRefs.addSharedDbEntriesRef.current({
+              buildId: activeBuild.id,
+              topicName: payload?.topicName,
+              topicId: payload?.topicId,
+              items: Array.isArray(payload?.items) ? payload.items : [],
+              token: sharedDbAddEntriesToken
             });
             break;
           }
@@ -2437,6 +2468,21 @@ export function useHostBridge({
               buildId: activeBuild.id,
               entryId: payload?.entryId,
               token: sharedDbDeleteEntryToken
+            });
+            break;
+          }
+
+          case 'shared-db:delete-entries': {
+            const sharedDbDeleteEntriesToken = await ensureBuildApiToken(
+              ['sharedDb:write'],
+              previewAuth
+            );
+            response = await requestRefs.deleteSharedDbEntriesRef.current({
+              buildId: activeBuild.id,
+              entryIds: Array.isArray(payload?.entryIds)
+                ? payload.entryIds
+                : [],
+              token: sharedDbDeleteEntriesToken
             });
             break;
           }

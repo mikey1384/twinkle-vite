@@ -52,9 +52,12 @@ export interface PreviewHostBridgeRequestRefs {
   getSharedDbTopicsRef: AsyncRequestRef;
   createSharedDbTopicRef: AsyncRequestRef;
   getSharedDbEntriesRef: AsyncRequestRef;
+  getSharedDbEntriesByIdsRef: AsyncRequestRef;
   addSharedDbEntryRef: AsyncRequestRef;
+  addSharedDbEntriesRef: AsyncRequestRef;
   updateSharedDbEntryRef: AsyncRequestRef;
   deleteSharedDbEntryRef: AsyncRequestRef;
+  deleteSharedDbEntriesRef: AsyncRequestRef;
   claimSharedDbEntryRef: AsyncRequestRef;
   getSharedDbKvItemRef: AsyncRequestRef;
   listSharedDbKvItemsRef: AsyncRequestRef;
