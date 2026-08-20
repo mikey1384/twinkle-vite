@@ -74,7 +74,7 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
     <Modal
       modalKey="AddLinkModal"
       isOpen
-      onClose={onHide}
+      onClose={handleClose}
       hasHeader={false}
       bodyPadding={0}
     >
@@ -146,8 +146,9 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
         </main>
         <footer>
           <Button
-            onClick={onHide}
+            onClick={handleClose}
             variant="ghost"
+            disabled={submitting}
             style={{ marginRight: '0.7rem' }}
           >
             Cancel
@@ -187,6 +188,10 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
       submittingRef.current = false;
       setSubmitting(false);
     }
+  }
+
+  function handleClose() {
+    if (!submittingRef.current) onHide();
   }
 
   function handleUrlFieldChange(text: string) {

@@ -173,6 +173,12 @@ test('Embedly treats loaded URL metadata as server-owned and image errors as loc
   assert.match(linkPageSource, /onEditLinkPage\(\{\s*id: linkId,\s*data/);
   assert.match(addLinkSource, /submittingRef\.current/);
   assert.match(addLinkSource, /loading=\{submitting\}/);
+  assert.match(addLinkSource, /onClose=\{handleClose\}/);
+  assert.match(addLinkSource, /if \(!submittingRef\.current\) onHide\(\)/);
+  assert.match(
+    addLinkSource,
+    /onClick=\{handleClose\}[\s\S]*?disabled=\{submitting\}/
+  );
   assert.match(addLinkSource, /setForm\(\(currentForm\) =>/);
   assert.match(linkItemSource, /onEditContent\(\{ data,/);
   assert.match(linkItemSource, /onEditLinkPage\(\{ id, data \}\)/);
