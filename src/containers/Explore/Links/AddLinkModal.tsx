@@ -21,6 +21,8 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
   });
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const onUploadLink = useExploreContext((v) => v.actions.onUploadLink);
+  const submittingRef = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
   const [urlError, setUrlError] = useState('');
   const [form, setForm] = useState({
     url: '',
@@ -69,7 +71,13 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
   }, [urlError, urlExceedsCharLimit]);
 
   return (
-    <Modal modalKey="AddLinkModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal
+      modalKey="AddLinkModal"
+      isOpen
+      onClose={onHide}
+      hasHeader={false}
+      bodyPadding={0}
+    >
       <LegacyModalLayout>
         <header>Add Links</header>
         <main>
@@ -89,14 +97,16 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
               ...(titleExceedsCharLimit?.style || {})
             }}
             value={form.title}
-            onChange={(text) => setForm({ ...form, title: text })}
+            onChange={(text) =>
+              setForm((currentForm) => ({ ...currentForm, title: text }))
+            }
             placeholder="Enter Title"
             onKeyUp={(event: any) => {
               if (event.key === ' ') {
-                setForm({
-                  ...form,
+                setForm((currentForm) => ({
+                  ...currentForm,
                   title: addEmoji(event.target.value)
-                });
+                }));
               }
             }}
           />
@@ -114,14 +124,17 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
             minRows={4}
             placeholder="Enter Description (Optional, you don't need to write this)"
             onChange={(event: any) =>
-              setForm({ ...form, description: event.target.value })
+              setForm((currentForm) => ({
+                ...currentForm,
+                description: event.target.value
+              }))
             }
             onKeyUp={(event: any) => {
               if (event.key === ' ') {
-                setForm({
-                  ...form,
+                setForm((currentForm) => ({
+                  ...currentForm,
                   description: addEmoji(event.target.value)
-                });
+                }));
               }
             }}
           />
@@ -142,7 +155,8 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
           <Button
             color={doneColor}
             onClick={handleSubmit}
-            disabled={submitDisabled()}
+            disabled={submitDisabled() || submitting}
+            loading={submitting}
           >
             Add
           </Button>
@@ -158,20 +172,28 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
       setUrlError('That is not a valid url');
       return UrlFieldRef.current.focus();
     }
-    const linkItem = await uploadContent({
-      url,
-      title: finalizeEmoji(title),
-      description: finalizeEmoji(description)
-    });
-    onUploadLink(linkItem);
-    onHide();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    try {
+      const linkItem = await uploadContent({
+        url,
+        title: finalizeEmoji(title),
+        description: finalizeEmoji(description)
+      });
+      onUploadLink(linkItem);
+      onHide();
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
   }
 
   function handleUrlFieldChange(text: string) {
-    setForm({
-      ...form,
+    setForm((currentForm) => ({
+      ...currentForm,
       url: text
-    });
+    }));
     setUrlError('');
   }
 

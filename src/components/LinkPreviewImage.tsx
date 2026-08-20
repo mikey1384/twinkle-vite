@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import {
+  LINK_PREVIEW_FALLBACK_IMAGE,
+  resolveLinkPreviewImageSrc
+} from '~/helpers/linkPreviewImage';
 
-export const LINK_PREVIEW_FALLBACK_IMAGE = '/img/link.png';
+export { LINK_PREVIEW_FALLBACK_IMAGE } from '~/helpers/linkPreviewImage';
 
 export function getLinkPreviewImageSrc(
   src: unknown,
   fallbackSrc = LINK_PREVIEW_FALLBACK_IMAGE
 ) {
-  const normalizedSrc = String(src || '').trim();
-  if (!normalizedSrc) return fallbackSrc;
-  if (normalizedSrc.startsWith('/thumbs')) return `${cloudFrontURL}${normalizedSrc}`;
-  return normalizedSrc;
+  return resolveLinkPreviewImageSrc({
+    src,
+    fallbackSrc,
+    cloudFrontUrl: cloudFrontURL
+  });
 }
 
 type LinkPreviewImageProps = Omit<
@@ -27,6 +32,7 @@ export default function LinkPreviewImage({
   fallbackSrc = LINK_PREVIEW_FALLBACK_IMAGE,
   onFallback,
   src,
+  style,
   ...props
 }: LinkPreviewImageProps) {
   const appliedFallbackSrc = getLinkPreviewImageSrc(
@@ -46,6 +52,10 @@ export default function LinkPreviewImage({
       {...props}
       alt={alt}
       src={imageSrc}
+      style={{
+        ...style,
+        ...(imageSrc === appliedFallbackSrc ? { objectFit: 'contain' } : {})
+      }}
       onError={handleImageLoadError}
     />
   );

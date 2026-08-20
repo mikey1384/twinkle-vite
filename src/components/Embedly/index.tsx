@@ -94,6 +94,7 @@ function Embedly({
 
   const {
     description,
+    loaded,
     prevUrl,
     thumbUrl: rawThumbUrl,
     title,
@@ -138,8 +139,12 @@ function Embedly({
     [small]
   );
   const thumbUrlIsNotAvailable = useMemo(
-    () => !appliedRawThumbUrl && (rawThumbUrl === '' || defaultThumbUrl === ''),
-    [appliedRawThumbUrl, defaultThumbUrl, rawThumbUrl]
+    () =>
+      !appliedRawThumbUrl &&
+      (contentType === 'url'
+        ? Boolean(loaded)
+        : rawThumbUrl === '' || defaultThumbUrl === ''),
+    [appliedRawThumbUrl, contentType, defaultThumbUrl, loaded, rawThumbUrl]
   );
   const [imageUrl, setImageUrl] = useState(
     thumbUrlIsNotAvailable ? fallbackImage : thumbUrl
@@ -160,6 +165,7 @@ function Embedly({
       setTwinkleVideoId(extractedVideoId);
     } else if (
       !loadingRef.current &&
+      contentType !== 'url' &&
       userCanEditThis &&
       url &&
       ((!thumbUrl && !thumbUrlIsNotAvailable) || (prevUrl && url !== prevUrl))
@@ -178,13 +184,15 @@ function Embedly({
           contentId,
           contentType
         });
-        const imageUrl = image?.url
-          ? image.url.replace('http://', 'https://')
-          : fallbackImage;
+        const canonicalThumbUrl = image?.url || '';
+        const imageUrl = getLinkPreviewImageSrc(
+          canonicalThumbUrl,
+          fallbackImage
+        );
         onSetThumbUrl({
           contentId,
           contentType,
-          thumbUrl: imageUrl
+          thumbUrl: canonicalThumbUrl
         });
         setImageUrl(imageUrl);
         onSetActualDescription({ contentId, contentType, description });
@@ -192,7 +200,6 @@ function Embedly({
         onSetSiteUrl({ contentId, contentType, siteUrl: site });
       } catch (error: any) {
         setImageUrl(fallbackImage);
-        onHideAttachment();
         console.error(error.response || error);
       }
       loadingRef.current = false;
@@ -204,6 +211,7 @@ function Embedly({
     url,
     defaultSiteUrl,
     defaultThumbUrl,
+    loaded,
     rawThumbUrl,
     siteUrl,
     thumbUrl
@@ -213,7 +221,11 @@ function Embedly({
     if (getFileInfoFromFileName(url)?.fileType === 'image') {
       setImageUrl(url);
     }
-    if (userCanEditThis && thumbUrl?.includes('http://')) {
+    if (
+      contentType !== 'url' &&
+      userCanEditThis &&
+      thumbUrl?.includes('http://')
+    ) {
       makeThumbnailSecure({ contentId, contentType, thumbUrl });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -328,12 +340,14 @@ function Embedly({
                 width: 100%;
                 line-height: 1.5;
                 padding: 1rem;
-                cursor: ${contentType === 'chat' || directUrl || small
-                  ? 'pointer'
-                  : ''};
-                ${contentType === 'chat' || directUrl
-                  ? 'margin-bottom: 1rem;'
-                  : ''}
+                cursor: ${
+                  contentType === 'chat' || directUrl || small ? 'pointer' : ''
+                };
+                ${
+                  contentType === 'chat' || directUrl
+                    ? 'margin-bottom: 1rem;'
+                    : ''
+                }
                 ${small ? 'margin-left: 1rem;' : ''}
                 ${small ? '' : 'margin-top: 1rem;'}
               `,
@@ -363,13 +377,12 @@ function Embedly({
               >
                 {actualDescription || defaultActualDescription || description}
               </p>
-              <p style={{ fontWeight: 'bold' }}>{siteUrl}</p>
+              <p style={{ fontWeight: 'bold' }}>{siteUrl || defaultSiteUrl}</p>
             </>
           )}
       </div>
     );
     function handleImageLoadError(fallbackSrc = fallbackImage) {
-      onSetThumbUrl({ contentId, contentType, thumbUrl: fallbackSrc });
       setImageUrl(fallbackSrc);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

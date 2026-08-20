@@ -69,26 +69,11 @@ export default function ExploreActions(dispatch: Dispatch) {
         playlistId
       });
     },
-    onEditLinkPage({
-      id,
-      title,
-      content
-    }: {
-      id: number;
-      title: string;
-      content: string;
-    }) {
+    onEditLinkPage({ id, data }: { id: number; data: object }) {
       return dispatch({
         type: 'EDIT_LINK_PAGE',
         id,
-        title,
-        content
-      });
-    },
-    onEditLinkTitle(params: object) {
-      return dispatch({
-        type: 'EDIT_LINK_TITLE',
-        data: params
+        data
       });
     },
     onEditPlaylistTitle({

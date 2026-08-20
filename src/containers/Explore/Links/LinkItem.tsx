@@ -49,8 +49,9 @@ export default function LinkItem({
   const { color: linkColor } = useRoleColor('link', {
     fallback: 'logoBlue'
   });
-  const onEditLinkTitle = useExploreContext((v) => v.actions.onEditLinkTitle);
+  const onEditLinkPage = useExploreContext((v) => v.actions.onEditLinkPage);
   const onDeleteContent = useContentContext((v) => v.actions.onDeleteContent);
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const { loaded, isDeleted } = useContentState({
     contentType: 'url',
@@ -304,8 +305,13 @@ export default function LinkItem({
 
   async function handleEditedTitleSubmit(text: string) {
     setSavingEdit(true);
-    await editContent({ editedTitle: text, contentId: id, contentType: 'url' });
-    onEditLinkTitle({ title: text, id });
+    const data = await editContent({
+      editedTitle: text,
+      contentId: id,
+      contentType: 'url'
+    });
+    onEditContent({ data, contentType: 'url', contentId: id });
+    onEditLinkPage({ id, data });
     setOnEdit(false);
     setSavingEdit(false);
   }

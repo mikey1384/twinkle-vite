@@ -223,8 +223,7 @@ export default function ExploreReducer(
             link.id === action.id
               ? {
                   ...link,
-                  title: action.title,
-                  content: action.content
+                  ...action.data
                 }
               : link
           ),
@@ -232,8 +231,7 @@ export default function ExploreReducer(
             link.id === action.id
               ? {
                   ...link,
-                  title: action.title,
-                  content: action.content
+                  ...action.data
                 }
               : link
           ),
@@ -241,30 +239,10 @@ export default function ExploreReducer(
             link.id === action.id
               ? {
                   ...link,
-                  title: action.title,
-                  content: action.content
+                  ...action.data
                 }
               : link
           )
-        }
-      };
-    case 'EDIT_LINK_TITLE':
-      return {
-        ...state,
-        links: {
-          ...state.links,
-          byUserLinks: state.links.byUserLinks.map((link: Link) => ({
-            ...link,
-            title: action.data.id === link.id ? action.data.title : link.title
-          })),
-          recommendeds: state.links.recommendeds.map((link: Link) => ({
-            ...link,
-            title: action.data.id === link.id ? action.data.title : link.title
-          })),
-          links: state.links.links.map((link: Link) => ({
-            ...link,
-            title: action.data.id === link.id ? action.data.title : link.title
-          }))
         }
       };
     case 'EDIT_PLAYLIST_TITLE':
@@ -905,23 +883,22 @@ export default function ExploreReducer(
           )
         }
       };
-    case 'UPLOAD_LINK':
+    case 'UPLOAD_LINK': {
+      const { contentId, lastInteraction, ...canonicalLink } = action.linkItem;
       return {
         ...state,
         links: {
           ...state.links,
           links: [
             {
-              id: action.linkItem.contentId,
-              content: action.linkItem.content,
-              likes: [],
-              timeStamp: action.linkItem.lastInteraction,
-              title: action.linkItem.title,
-              uploader: action.linkItem.uploader
+              ...canonicalLink,
+              id: contentId,
+              timeStamp: lastInteraction
             }
           ].concat(state.links.links)
         }
       };
+    }
     case 'UPLOAD_PLAYLIST':
       return {
         ...state,

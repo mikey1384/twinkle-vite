@@ -38,7 +38,6 @@ import {
   homeFeedNavigationKeyShouldClear
 } from '~/helpers/homeFeedActionIntent';
 import { scrollAnchorSavesAreSuppressed } from '~/helpers/scrollAnchorRestorationCoordinator';
-import { processedURL } from '~/helpers/stringHelpers';
 import {
   useAppContext,
   useContentContext,
@@ -289,11 +288,12 @@ export default function LinkPage() {
     async function handleLoadComments(loadKey: string, requestUserId: number) {
       setLoadingComments(true);
       try {
-        const { comments: loadedComments, loadMoreButton } =
-          await loadComments({
+        const { comments: loadedComments, loadMoreButton } = await loadComments(
+          {
             contentType: 'url',
             contentId: linkId
-          });
+          }
+        );
         if (
           checkUserChange(requestUserId) ||
           commentsLoadKeyRef.current !== loadKey
@@ -796,20 +796,15 @@ export default function LinkPage() {
 
   async function handleEditLinkPage(params: any) {
     const data = await editContent(params);
-    const { contentId, editedTitle: title, editedUrl: content } = params;
+    const { contentId } = params;
     onEditContent({
-      data: {
-        content: processedURL(content),
-        title,
-        description: data.description
-      },
+      data,
       contentType: 'url',
       contentId
     });
     onEditLinkPage({
       id: linkId,
-      title,
-      content: processedURL(content)
+      data
     });
   }
 
@@ -911,9 +906,13 @@ export default function LinkPage() {
     window.removeEventListener('wheel', handleHomeFeedNavigationUserScroll, {
       capture: true
     });
-    window.removeEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
-      capture: true
-    });
+    window.removeEventListener(
+      'touchmove',
+      handleHomeFeedNavigationUserScroll,
+      {
+        capture: true
+      }
+    );
     window.removeEventListener('keydown', handleHomeFeedNavigationKeyDown, {
       capture: true
     });
