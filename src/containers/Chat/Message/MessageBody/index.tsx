@@ -49,6 +49,9 @@ import type {
   PendingReactionMutation,
   PendingReactionMutations
 } from './Reactions/types';
+import {
+  canUseGenericChatMessageActions
+} from '~/helpers/chatMessageCapabilities';
 
 function MessageBody({
   channelId,
@@ -191,6 +194,10 @@ function MessageBody({
   const isAIChat = useMemo(() => {
     return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
   }, [partner?.id]);
+  const genericActionsAllowed = canUseGenericChatMessageActions({
+    ...message,
+    isNotification: isNotification || message.isNotification
+  });
 
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
@@ -210,7 +217,7 @@ function MessageBody({
   }, []);
 
   const userCanDeleteThis = useMemo(() => {
-    if (isDrawOffer || message.rootType === 'buildProjectLimitRequest') {
+    if (!genericActionsAllowed || isDrawOffer) {
       return false;
     }
 
@@ -227,10 +234,10 @@ function MessageBody({
     canDelete,
     canEdit,
     channelId,
+    genericActionsAllowed,
     isAIMessage,
     isDrawOffer,
     level,
-    message.rootType,
     uploaderLevel,
     userIsUploader
   ]);
@@ -240,7 +247,7 @@ function MessageBody({
       !rewardAmount &&
       !invitePath &&
       !isDrawOffer &&
-      message.rootType !== 'buildProjectLimitRequest' &&
+      genericActionsAllowed &&
       ((canEdit &&
         level > uploaderLevel &&
         (channelId === GENERAL_CHAT_ID || isSupermod(level))) ||
@@ -250,19 +257,23 @@ function MessageBody({
   }, [
     canEdit,
     channelId,
+    genericActionsAllowed,
     invitePath,
     isAIMessage,
     isDrawOffer,
     level,
-    message.rootType,
     rewardAmount,
     uploaderLevel,
     userIsUploader
   ]);
 
   const userCanRewardThis = useMemo(
-    () => canReward && level > uploaderLevel && myId !== userId,
-    [canReward, level, myId, uploaderLevel, userId]
+    () =>
+      genericActionsAllowed &&
+      canReward &&
+      level > uploaderLevel &&
+      myId !== userId,
+    [canReward, genericActionsAllowed, level, myId, uploaderLevel, userId]
   );
 
   const [uploadStatus = {}] = useMemo(
@@ -478,6 +489,7 @@ function MessageBody({
   const isMenuButtonsAllowed = useMemo(
     () =>
       !!messageId &&
+      genericActionsAllowed &&
       !isApprovalRequest &&
       !isNotification &&
       !isCallMsg &&
@@ -486,6 +498,7 @@ function MessageBody({
       !fileToUpload,
     [
       fileToUpload,
+      genericActionsAllowed,
       isApprovalRequest,
       isCallMsg,
       isChessMsg,
@@ -922,7 +935,7 @@ function MessageBody({
               userId={userId}
             />
           </div>
-          {messageRewardModalShown && (
+          {messageRewardModalShown && genericActionsAllowed && (
             <MessageRewardModal
               userToReward={{
                 username: appliedUsername,

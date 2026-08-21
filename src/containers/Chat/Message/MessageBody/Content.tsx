@@ -436,18 +436,16 @@ export default function Content({
               Message failed to send. Copy it and try again.
             </div>
           )}
-          {!isEditing && !isNotification && (
+          {!isEditing && isMenuButtonsAllowed && (
             <div style={{ marginTop: '2rem', height: '2.5rem' }}>
-              {isMenuButtonsAllowed && (
-                <Reactions
-                  pendingReactionMutations={pendingReactionMutations}
-                  reactions={message.reactions}
-                  reactionsMenuShown={reactionsMenuShown}
-                  onRemoveReaction={handleRemoveReaction}
-                  onAddReaction={handleAddReaction}
-                  theme={displayedThemeColor}
-                />
-              )}
+              <Reactions
+                pendingReactionMutations={pendingReactionMutations}
+                reactions={message.reactions}
+                reactionsMenuShown={reactionsMenuShown}
+                onRemoveReaction={handleRemoveReaction}
+                onAddReaction={handleAddReaction}
+                theme={displayedThemeColor}
+              />
             </div>
           )}
         </>
