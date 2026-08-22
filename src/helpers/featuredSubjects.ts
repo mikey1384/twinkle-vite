@@ -2,6 +2,19 @@ let featuredSubjectsGeneration = 0;
 let nextFeaturedSubjectsRequestId = 0;
 let latestAppliedFeaturedSubjectsRequestId = 0;
 
+export function getFeaturedSubjectIds(subjects: unknown): number[] {
+  if (!Array.isArray(subjects)) return [];
+  const seen = new Set<number>();
+  const ids: number[] = [];
+  for (const subject of subjects) {
+    const id = Number(subject?.id || 0);
+    if (!Number.isSafeInteger(id) || id <= 0 || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
+
 // A confirmed mutation makes every request that started before it obsolete,
 // even if the replacement request later fails. Preserve the last confirmed UI
 // instead of allowing an older snapshot to land after the mutation signal.

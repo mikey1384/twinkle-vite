@@ -150,7 +150,6 @@ export default function Home({
     });
   const [loadingComments, setLoadingComments] = useState(false);
   const [isNotablesLoading, setIsNotablesLoading] = useState(false);
-  const [isSubjectsLoading, setIsSubjectsLoading] = useState(false);
   const [reorderModalShown, setReorderModalShown] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const profileHomeRef = useRef<HTMLDivElement | null>(null);
@@ -184,7 +183,7 @@ export default function Home({
         username={username}
         subjects={featuredSubjects}
         selectedTheme={selectedTheme}
-        loading={isSubjectsLoading}
+        loaded={isSubjectsLoaded}
       />
     ) : null,
     notableActivities: (
@@ -265,17 +264,12 @@ export default function Home({
       }
     }
     async function initSubjects() {
-      setIsSubjectsLoading(true);
       try {
         const subjects = await loadFeaturedSubjectsOnProfile(id);
         if (checkUserChange(requestUserId)) return;
         onLoadFeaturedSubjects({ username, subjects });
       } catch (error) {
         console.error(error);
-      } finally {
-        if (!checkUserChange(requestUserId)) {
-          setIsSubjectsLoading(false);
-        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

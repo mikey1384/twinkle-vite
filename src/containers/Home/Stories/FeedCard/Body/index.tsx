@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AchievementItem from '~/components/AchievementItem';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import CardThumb from '~/components/CardThumb';
@@ -32,8 +32,7 @@ import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
   addCommasToNumber,
   getFileInfoFromFileName,
-  processInternalLink,
-  stripTextSizeMarkers
+  processInternalLink
 } from '~/helpers/stringHelpers';
 import { bodyClass, homeFeedSecretGuardBannerStyle } from './styles';
 import {
@@ -46,6 +45,7 @@ import {
 } from './PreviewPrimitives';
 import TargetPreview from './TargetPreview';
 import { normalizeRootType } from '../helpers/navigation';
+import { getCommentPreviewPlainText } from '../helpers/commentPreviewText';
 import type { Comment } from '~/types';
 import DailyGoalsPreview from './DailyGoalsPreview';
 import VideoPreview from './VideoPreview';
@@ -58,9 +58,10 @@ import {
   getSubjectPreviewLineLimits,
   hasDailyReflectionMetaBadges,
   getMarkdownImageEmbedPreview,
-  isMarkdownImageFileEmbed,
+  isMarkdownFileEmbed,
   isAIContentAuthor,
   removeMarkdownImageEmbeds,
+  shouldAttemptMarkdownImagePreview,
   type MarkdownImageEmbed
 } from '../helpers/sizing';
 
@@ -91,6 +92,8 @@ type PreviewCommentMedia =
       label: string;
     }
   | {
+      fallbackExtension: string;
+      fallbackIcon: string;
       isVideo: boolean;
       kind: 'image';
       label: string;
@@ -289,7 +292,7 @@ export default function Body({
     const description = String(content?.description || content?.content || '');
     const descriptionEmbed = getMarkdownImageEmbedPreview(description);
     const promotedDescriptionAttachmentEmbed =
-      !attachmentPreview && isMarkdownImageFileEmbed(descriptionEmbed)
+      !attachmentPreview && shouldAttemptMarkdownImagePreview(descriptionEmbed)
         ? descriptionEmbed
         : null;
     const richDescriptionEmbed = promotedDescriptionAttachmentEmbed
@@ -1052,7 +1055,8 @@ export default function Body({
     const isCompactRichTextEmbed =
       resolvedSizing.main.size === 'rich-image-compact' ||
       resolvedSizing.main.size === 'rich-embed-compact';
-    const isImageEmbed = isMarkdownImageFileEmbed(imageEmbed);
+    const isImageEmbed = shouldAttemptMarkdownImagePreview(imageEmbed);
+    const isFileEmbed = isMarkdownFileEmbed(imageEmbed);
     const isCompactImageEmbed =
       isImageEmbed && resolvedSizing.main.size === 'rich-image-compact';
     const textMaxLines = isCompactRichTextEmbed
@@ -1083,7 +1087,7 @@ export default function Body({
           isCompactImageEmbed
             ? ' home-feed-card__rich-embed-preview--compact-image'
             : ''
-        }`}
+        }${isFileEmbed ? ' home-feed-card__rich-embed-preview--file' : ''}`}
       >
         {hasText ? (
           <div className="home-feed-card__rich-embed-copy">
@@ -1148,11 +1152,9 @@ export default function Body({
 }
 
 function getSubjectMarkdownAttachmentClassName(embed: MarkdownImageEmbed) {
-  const { fileType } = getMarkdownEmbedFileInfo(embed.src);
-  const mediaClass =
-    fileType && fileType !== 'image'
-      ? 'home-feed-card__attachment-preview--subject-file home-feed-card__attachment-preview--subject-embed-file'
-      : 'home-feed-card__attachment-preview--subject-image home-feed-card__attachment-preview--subject-embed-image';
+  const mediaClass = shouldAttemptMarkdownImagePreview(embed)
+    ? 'home-feed-card__attachment-preview--subject-image home-feed-card__attachment-preview--subject-embed-image'
+    : 'home-feed-card__attachment-preview--subject-file home-feed-card__attachment-preview--subject-embed-file';
 
   return `home-feed-card__attachment-preview ${mediaClass}`;
 }
@@ -1197,11 +1199,11 @@ export function HomeFeedCommentPreview({
 
   const uploader = getPreviewCommentUploader(comment);
   const aiEnergyPlaceholderName = getAiEnergyPlaceholderName(comment);
-  const commentText = aiEnergyPlaceholderName
-    ? ''
-    : getPreviewCommentText(comment);
-  const commentTextIsMessage =
-    !aiEnergyPlaceholderName && hasPreviewCommentMessageText(comment);
+  const commentTextInfo = aiEnergyPlaceholderName
+    ? { isMessage: false, text: '' }
+    : getPreviewCommentTextInfo(comment);
+  const commentText = commentTextInfo.text;
+  const commentTextIsMessage = commentTextInfo.isMessage;
   const previewLabel = getPreviewCommentLabel(comment, contentType);
   const previewMedia = aiEnergyPlaceholderName
     ? null
@@ -1342,29 +1344,10 @@ export function HomeFeedCommentPreview({
     }
 
     if (media.kind === 'image') {
-      return (
-        <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--image">
-          <img src={media.src} alt={media.label} loading="lazy" />
-          {media.isVideo ? (
-            <span className="home-feed-card__comment-preview-media-play">
-              <Icon icon="play" />
-            </span>
-          ) : null}
-        </span>
-      );
+      return <PreviewCommentImageMedia media={media} />;
     }
 
-    return (
-      <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--file">
-        <Icon
-          className="home-feed-card__comment-preview-media-icon"
-          icon={media.icon}
-        />
-        {media.extension ? (
-          <small>{media.extension.toUpperCase()}</small>
-        ) : null}
-      </span>
-    );
+    return <PreviewCommentFileMedia {...media} />;
   }
 
   function handlePreviewCommentClick(
@@ -1377,6 +1360,59 @@ export function HomeFeedCommentPreview({
       onNavigate(`/comments/${commentId}`, event.currentTarget);
     }
   }
+}
+
+function PreviewCommentImageMedia({
+  media
+}: {
+  media: Extract<PreviewCommentMedia, { kind: 'image' }>;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => setFailed(false), [media.src]);
+
+  if (failed) {
+    return (
+      <PreviewCommentFileMedia
+        extension={media.fallbackExtension}
+        icon={media.fallbackIcon}
+      />
+    );
+  }
+
+  return (
+    <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--image">
+      <img
+        src={media.src}
+        alt={media.label}
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+      {media.isVideo ? (
+        <span className="home-feed-card__comment-preview-media-play">
+          <Icon icon="play" />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function PreviewCommentFileMedia({
+  extension,
+  icon
+}: {
+  extension: string;
+  icon: string;
+}) {
+  return (
+    <span className="home-feed-card__comment-preview-media home-feed-card__comment-preview-media--file">
+      <Icon
+        className="home-feed-card__comment-preview-media-icon"
+        icon={icon}
+      />
+      {extension ? <small>{extension.toUpperCase()}</small> : null}
+    </span>
+  );
 }
 
 function PreviewCommentAICardMedia({ cardId }: { cardId: number }) {
@@ -1559,29 +1595,26 @@ function getPreviewCommentUploader(comment: Comment) {
   };
 }
 
-function getPreviewCommentText(comment: Comment) {
-  const aiName = getAiEnergyPlaceholderName(comment);
-  if (aiName) return `${aiName} needs AI Energy`;
-
+function getPreviewCommentTextInfo(comment: Comment) {
   const rawContent = String(comment.content || '');
   const markdownEmbed = getMarkdownImageEmbedPreview(rawContent);
-  const content = stripMarkdownForCommentPreview(
-    removeMarkdownImageEmbeds(rawContent)
-  );
-  if (content) return content;
-  if (markdownEmbed) return getPreviewCommentEmbedText(markdownEmbed);
-  if (comment.filePath || comment.thumbUrl || (comment as any).actualFilePath) {
-    return getPreviewCommentAttachmentText(comment);
+  const content = getCommentPreviewPlainText(rawContent, {
+    isAIMessage: isAIContentAuthor(comment)
+  });
+  if (content) return { isMessage: true, text: content };
+  if (markdownEmbed) {
+    return {
+      isMessage: false,
+      text: getPreviewCommentEmbedText(markdownEmbed)
+    };
   }
-  return 'View latest comment';
-}
-
-function hasPreviewCommentMessageText(comment: Comment) {
-  const rawContent = String(comment.content || '');
-  const content = stripMarkdownForCommentPreview(
-    removeMarkdownImageEmbeds(rawContent)
-  );
-  return Boolean(content);
+  if (comment.filePath || comment.thumbUrl || (comment as any).actualFilePath) {
+    return {
+      isMessage: false,
+      text: getPreviewCommentAttachmentText(comment)
+    };
+  }
+  return { isMessage: false, text: 'View latest comment' };
 }
 
 function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
@@ -1602,6 +1635,8 @@ function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
 
     if ((fileType === 'image' || thumbUrl) && src) {
       return {
+        fallbackExtension: extension,
+        fallbackIcon: getPreviewCommentFileIcon(fileType),
         isVideo: fileType === 'video',
         kind: 'image',
         label: fileName || getPreviewCommentAttachmentText(comment),
@@ -1626,8 +1661,10 @@ function getPreviewCommentMedia(comment: Comment): PreviewCommentMedia | null {
     const { extension, fileName, fileType } = getMarkdownEmbedFileInfo(
       markdownEmbed.src
     );
-    if (fileType === 'image') {
+    if (shouldAttemptMarkdownImagePreview(markdownEmbed)) {
       return {
+        fallbackExtension: extension,
+        fallbackIcon: getPreviewCommentFileIcon(fileType),
         isVideo: false,
         kind: 'image',
         label: markdownEmbed.alt || fileName,
@@ -1716,7 +1753,7 @@ function getPreviewCommentEmbedText(embed: MarkdownImageEmbed) {
   }
   if (embed.type === 'image') {
     const { fileType } = getMarkdownEmbedFileInfo(embed.src);
-    if (fileType === 'image') return 'shared an image';
+    if (shouldAttemptMarkdownImagePreview(embed)) return 'shared an image';
     if (fileType === 'video') return 'shared a video';
     if (fileType === 'audio') return 'shared audio';
     if (fileType === 'pdf') return 'shared a PDF';
@@ -1752,12 +1789,4 @@ function getPreviewCommentLabel(comment: Comment, contentType: string) {
   return contentType === 'comment' || Number(comment.replyId || 0)
     ? 'replied'
     : 'commented';
-}
-
-function stripMarkdownForCommentPreview(text: string) {
-  return stripTextSizeMarkers(text)
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-    .replace(/[`*_>#~]+/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
 }

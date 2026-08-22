@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
-import { AttachmentCard } from '~/components/Subjects/SubjectMediaPreview';
 import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
+import FileDownload from '~/components/Texts/RichText/Markdown/EmbeddedComponent/FileDownload';
 import InternalComponent from '~/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent';
 import YouTubeVideo from '~/components/Texts/RichText/Markdown/EmbeddedComponent/YouTubeVideo';
 import { Color } from '~/constants/css';
@@ -14,6 +14,7 @@ import { processInternalLink } from '~/helpers/stringHelpers';
 import {
   getMarkdownEmbedFileInfo,
   getMarkdownImageEmbedPreview,
+  shouldAttemptMarkdownImagePreview,
   removeMarkdownImageEmbeds,
   type MarkdownImageEmbed
 } from '../helpers/sizing';
@@ -140,7 +141,13 @@ export function MarkdownEmbedPreview({
     );
   }
 
-  return <MarkdownImagePreview className={className} imageEmbed={embed} />;
+  return (
+    <MarkdownImagePreview
+      className={className}
+      imageEmbed={embed}
+      theme={theme}
+    />
+  );
 
   function handleInternalPreviewClick(event: React.MouseEvent<HTMLElement>) {
     if (
@@ -410,32 +417,27 @@ function getContentAttachmentFilePath(source: any) {
 
 function MarkdownImagePreview({
   className,
-  imageEmbed
+  imageEmbed,
+  theme
 }: {
   className?: string;
   imageEmbed: MarkdownImageEmbed;
+  theme?: string;
 }) {
   const [src, setSrc] = useState(imageEmbed.src);
   const [failed, setFailed] = useState(false);
   const { extension, fileName, fileType } = getMarkdownEmbedFileInfo(
     imageEmbed.src
   );
+  const shouldAttemptImage = shouldAttemptMarkdownImagePreview(imageEmbed);
 
   useEffect(() => {
     setSrc(imageEmbed.src);
     setFailed(false);
   }, [imageEmbed.src]);
 
-  if (fileType && fileType !== 'image') {
-    return (
-      <div className={className}>
-        <AttachmentCard
-          extension={extension}
-          fileName={imageEmbed.alt || fileName}
-          fileType={fileType}
-        />
-      </div>
-    );
+  if (!shouldAttemptImage || (failed && fileType !== 'image')) {
+    return renderFilePreview();
   }
 
   if (failed) {
@@ -464,5 +466,24 @@ function MarkdownImagePreview({
       return;
     }
     setFailed(true);
+  }
+
+  function renderFilePreview() {
+    return (
+      <div
+        className={`${className || ''} home-feed-card__rich-file-embed`}
+        data-rich-text-embed-kind="file"
+      >
+        <FileDownload
+          extension={extension}
+          fileName={imageEmbed.alt || fileName}
+          fileType={fileType}
+          isPreview
+          openFile={false}
+          src={imageEmbed.src}
+          theme={theme}
+        />
+      </div>
+    );
   }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -238,14 +238,20 @@ export default function CollaborationSettingsModal({
   const [contributors, setContributors] = useState<BuildContributorInvite[]>(
     []
   );
+  const [contributorsBuildId, setContributorsBuildId] = useState(0);
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsError, setSettingsError] = useState('');
   const [loadingContributors, setLoadingContributors] = useState(false);
+  const modalMountedRef = useRef(false);
+  const activeBuildIdRef = useRef(Number(build.id || 0));
+  const contributorLoadSequenceRef = useRef(0);
+  activeBuildIdRef.current = Number(build.id || 0);
   const persistedCollaborationMode = normalizeBuildCollaborationMode(
     build.collaborationMode
   );
   const canInviteContributors = true;
   const contributorsCardShown = true;
+  const contributorsReady = contributorsBuildId === Number(build.id || 0);
   const openSourceNotPublished =
     collaborationMode === 'open_source' && !build.isPublic;
   const persistedLumineChatVisibility = normalizeLumineChatVisibility(
@@ -266,6 +272,14 @@ export default function CollaborationSettingsModal({
     '--collaboration-accent-bg': accentRole.getColor(0.12),
     '--collaboration-accent-hover-bg': accentRole.getColor(0.06)
   } as React.CSSProperties;
+
+  useEffect(() => {
+    modalMountedRef.current = true;
+    return () => {
+      modalMountedRef.current = false;
+      contributorLoadSequenceRef.current += 1;
+    };
+  }, []);
 
   useEffect(() => {
     setCollaborationMode(
@@ -415,14 +429,16 @@ export default function CollaborationSettingsModal({
                 <span className={mutedTextClass}>Loading...</span>
               ) : null}
             </div>
-            <ContributorInvitePicker
-              buildId={build.id}
-              canInvite={canInviteContributors}
-              confirmModalOverModal
-              contributors={contributors}
-              onInvited={reloadContributors}
-              onRemoveContributor={handleRevokeContributor}
-            />
+            {contributorsReady ? (
+              <ContributorInvitePicker
+                buildId={build.id}
+                canInvite={canInviteContributors}
+                confirmModalOverModal
+                contributors={contributors}
+                onInvited={reloadContributors}
+                onRemoveContributor={handleRevokeContributor}
+              />
+            ) : null}
           </div>
         ) : null}
         {settingsError ? (
@@ -478,35 +494,44 @@ export default function CollaborationSettingsModal({
   }
 
   async function reloadContributors() {
-    if (!build.id) return;
+    const buildId = Number(build.id || 0);
+    if (!buildId) return;
+    const loadSequence = ++contributorLoadSequenceRef.current;
     setLoadingContributors(true);
     try {
-      const result = await loadBuildContributors(build.id);
+      const result = await loadBuildContributors(buildId);
+      if (
+        !modalMountedRef.current ||
+        activeBuildIdRef.current !== buildId ||
+        loadSequence !== contributorLoadSequenceRef.current
+      ) {
+        return;
+      }
       setContributors(
         Array.isArray(result?.contributors) ? result.contributors : []
       );
+      setContributorsBuildId(buildId);
     } catch (error) {
       console.error('Failed to load build contributors:', error);
     } finally {
-      setLoadingContributors(false);
+      if (
+        modalMountedRef.current &&
+        activeBuildIdRef.current === buildId &&
+        loadSequence === contributorLoadSequenceRef.current
+      ) {
+        setLoadingContributors(false);
+      }
     }
   }
 
   async function handleRevokeContributor(contributorUserId: number) {
     if (!build.id || contributorUserId <= 0) return;
     try {
-      const result = await revokeBuildContributor({
+      await revokeBuildContributor({
         buildId: build.id,
         userId: contributorUserId
       });
-      if (result?.success) {
-        setContributors((current) =>
-          current.filter(
-            (contributor) =>
-              Number(contributor.userId) !== Number(contributorUserId)
-          )
-        );
-      }
+      await reloadContributors();
     } catch (error) {
       console.error('Failed to revoke build contributor:', error);
     }

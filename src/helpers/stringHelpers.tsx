@@ -3,6 +3,17 @@ import parse from 'html-react-parser';
 import Link from '~/components/Link';
 import { Color } from '~/constants/css';
 import { charLimit } from '~/constants/defaultValues';
+import { stripTwinkleTextMarkers } from './richTextMarkerHelpers';
+import {
+  getYouTubeVideoId,
+  isYouTubeVideoUrl
+} from './youtubeUrlHelpers';
+
+export {
+  stripTextColorMarkers,
+  stripTextSizeMarkers,
+  stripTwinkleTextMarkers
+} from './richTextMarkerHelpers';
 
 const urlRegex =
   /(\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n)\]<* ])+)\b(?:\/)?)/giu;
@@ -520,20 +531,7 @@ export function fetchURLFromText(text: string): string {
 }
 
 export function fetchedVideoCodeFromURL(url: string): string {
-  let videoCode = '';
-  try {
-    url = decodeURIComponent(url);
-  } catch {
-    // ignore decode errors and use original url
-  }
-  if (typeof url.split('v=')[1] !== 'undefined') {
-    const trimmedUrl = url?.split('v=')[1]?.split('#')[0];
-    videoCode = trimmedUrl.split('&')[0];
-  } else {
-    const trimmedUrl = url?.split('youtu.be/')[1]?.split('#')?.[0];
-    videoCode = trimmedUrl?.split('&')[0]?.split('?')?.[0];
-  }
-  return videoCode || '';
+  return getYouTubeVideoId(url);
 }
 
 export function finalizeEmoji(string: string): string {
@@ -551,14 +549,30 @@ export function getFileInfoFromFileName(fileName: string): {
   fileType: string;
 } {
   if (typeof fileName !== 'string') return { extension: '', fileType: '' };
-  const fileNameArray = fileName.split('.');
+  const lastDotIndex = fileName.lastIndexOf('.');
   const extension =
-    fileNameArray[fileNameArray.length - 1]?.toLowerCase?.() || '';
+    lastDotIndex > 0 && lastDotIndex < fileName.length - 1
+      ? fileName.slice(lastDotIndex + 1).toLowerCase()
+      : '';
   return { extension, fileType: getFileType(extension) };
 
   function getFileType(extension: string): string {
-    const audioExt = ['wav', 'aif', 'mp3', 'mid', 'm4a'];
+    const audioExt = [
+      'wav',
+      'aif',
+      'aiff',
+      'mp3',
+      'mid',
+      'midi',
+      'm4a',
+      'aac',
+      'flac',
+      'opus',
+      'weba'
+    ];
     const imageExt = [
+      'apng',
+      'avif',
       'jpg',
       'png',
       'jpeg',
@@ -569,9 +583,31 @@ export function getFileInfoFromFileName(fileName: string): {
       'heic',
       'heif'
     ];
-    const movieExt = ['wmv', 'mov', 'mp4', '3gp', 'ogg', 'm4v'];
-    const compressedExt = ['zip', 'rar', 'arj', 'tar', 'gz', 'tgz'];
-    const wordExt = ['docx', 'docm', 'dotx', 'dotm', 'docb'];
+    const movieExt = [
+      'wmv',
+      'mov',
+      'mp4',
+      '3gp',
+      'ogg',
+      'ogv',
+      'webm',
+      'm4v',
+      'avi',
+      'mkv'
+    ];
+    const compressedExt = [
+      'zip',
+      'rar',
+      'arj',
+      'tar',
+      'gz',
+      'tgz',
+      '7z',
+      'bz2',
+      'xz'
+    ];
+    const wordExt = ['doc', 'docx', 'docm', 'dotx', 'dotm', 'docb'];
+    const textExt = ['txt', 'md', 'csv', 'json', 'log'];
     if (audioExt.includes(extension)) {
       return 'audio';
     }
@@ -590,8 +626,34 @@ export function getFileInfoFromFileName(fileName: string): {
     if (extension === 'pdf') {
       return 'pdf';
     }
+    if (textExt.includes(extension)) {
+      return 'text';
+    }
     return 'other';
   }
+}
+
+export function getFileInfoFromUrl(value: unknown): {
+  extension: string;
+  fileName: string;
+  fileType: string;
+} {
+  const source = typeof value === 'string' ? value : '';
+  let path = source.split('?')[0].split('#')[0];
+  try {
+    path = new URL(source, 'https://twinkle.invalid').pathname;
+  } catch {
+    // Preserve path-like sources that are not valid URLs.
+  }
+
+  const encodedFileName = path.split('/').pop() || '';
+  let fileName = encodedFileName;
+  try {
+    fileName = decodeURIComponent(encodedFileName);
+  } catch {
+    // Keep the encoded filename when it contains malformed URI escapes.
+  }
+  return { fileName, ...getFileInfoFromFileName(fileName) };
 }
 export function getRenderedTextForVocabQuestions(
   text: string,
@@ -656,15 +718,7 @@ export function isValidUrl(url = '') {
 }
 
 export function isValidYoutubeUrl(url = '') {
-  if (!url.includes('://') && !url.includes('www.')) {
-    url = 'www.' + url;
-  }
-  const trimOne = url.split('v=')[1];
-  const trimTwo = url.split('youtu.be/')[1];
-  return (
-    urlRegex2.test(url) &&
-    (typeof trimOne !== 'undefined' || typeof trimTwo !== 'undefined')
-  );
+  return isYouTubeVideoUrl(url);
 }
 
 export function isValidPassword(password: string): boolean {
@@ -798,40 +852,12 @@ export function applyTextSize(string: string): string {
   return outputString;
 }
 
-export function stripTextSizeMarkers(string: string): string {
-  const textSizeMarkerRegex = /([hbst])\[([^\n]*?)\]\1/gi;
-  let outputString = String(string || '');
-  let previousString = '';
-
-  while (outputString !== previousString) {
-    previousString = outputString;
-    outputString = outputString.replace(textSizeMarkerRegex, '$2');
-  }
-
-  return outputString;
-}
-
-export function stripTextColorMarkers(string: string): string {
-  // color effects use `code|text|code` (e.g. b|hi|b, lb|hi|lb, pf|hi|pf)
-  const colorMarkerRegex = /(gr|lb|pf|pu|b|g|l|o|p|r|y)\|([^|\n]+?)\|\1/gi;
-  let outputString = String(string || '');
-  let previousString = '';
-
-  while (outputString !== previousString) {
-    previousString = outputString;
-    outputString = outputString.replace(colorMarkerRegex, '$2');
-  }
-
-  return outputString;
-}
-
 // Plain-text preview of rich content: strips Twinkle text-size/color markers,
 // underline, image/link markdown, and HTML, then collapses whitespace. Use for
 // compact embed previews so editor markup never leaks as raw characters.
 export function getPlainPreviewText(value: unknown): string {
   if (typeof value !== 'string') return '';
-  return stripTextColorMarkers(stripTextSizeMarkers(value))
-    .replace(/__([^_\n]+?)__/g, '$1')
+  return stripTwinkleTextMarkers(value)
     .replace(/!\[[^\]]*]\([^)]*\)/g, '')
     .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
     .replace(/<[^>]+>/g, ' ')

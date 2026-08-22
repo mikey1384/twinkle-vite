@@ -4,6 +4,7 @@ import InternalComponent from './InternalComponent';
 import ImageComponent from './ImageComponent';
 import FileDownload from './FileDownload';
 import {
+  getFileInfoFromUrl,
   isValidYoutubeUrl,
   processInternalLink
 } from '~/helpers/stringHelpers';
@@ -61,59 +62,11 @@ function EmbeddedComponent({
     subjectPreviewVariant === 'fullWidth' &&
     cleanReplacedLink.split('/')?.[1] === 'subjects';
 
-  const { fileType } = useMemo(() => {
-    const url = (src || '').split('?')[0].split('#')[0];
-    const last = url.split('/').pop() || '';
-    let decoded = last;
-    try {
-      decoded = decodeURIComponent(last);
-    } catch {
-      decoded = last;
-    }
-    const dotIdx = decoded.lastIndexOf('.');
-    const ext = dotIdx > -1 ? decoded.slice(dotIdx + 1).toLowerCase() : '';
-    const imageExts = [
-      'jpg',
-      'jpeg',
-      'png',
-      'gif',
-      'webp',
-      'heic',
-      'heif',
-      'bmp',
-      'svg'
-    ];
-    const audioExts = [
-      'mp3',
-      'wav',
-      'ogg',
-      'm4a',
-      'aac',
-      'flac',
-      'opus',
-      'weba'
-    ];
-    const videoExts = ['mp4', 'webm', 'ogv', 'ogg', 'mov', 'm4v', 'avi', 'mkv'];
-    const pdfExts = ['pdf'];
-    const textExts = ['txt', 'md', 'csv', 'json', 'log'];
-    let type: 'image' | 'audio' | 'video' | 'pdf' | 'text' | 'other' = 'other';
-    if (imageExts.includes(ext)) type = 'image';
-    else if (audioExts.includes(ext)) type = 'audio';
-    else if (videoExts.includes(ext)) type = 'video';
-    else if (pdfExts.includes(ext)) type = 'pdf';
-    else if (textExts.includes(ext)) type = 'text';
-    return { ext, fileType: type };
+  const { ext, fileNameFromSrc, fileType } = useMemo(() => {
+    const { extension, fileName, fileType } = getFileInfoFromUrl(src);
+    return { ext: extension, fileNameFromSrc: fileName, fileType };
   }, [src]);
-
-  const fileNameFromSrc = useMemo(() => {
-    const url = (src || '').split('?')[0].split('#')[0];
-    const last = url.split('/').pop() || '';
-    try {
-      return decodeURIComponent(last);
-    } catch {
-      return last;
-    }
-  }, [src]);
+  const shouldAttemptImage = fileType === 'image' || !ext;
 
   return (
     <div
@@ -154,7 +107,7 @@ function EmbeddedComponent({
           isPreview={isPreview}
           src={src}
         />
-      ) : src && !errorLoadingImage ? (
+      ) : src && shouldAttemptImage && !errorLoadingImage ? (
         <ImageComponent
           {...commonProps}
           src={src}
@@ -165,6 +118,7 @@ function EmbeddedComponent({
         />
       ) : src ? (
         <FileDownload
+          extension={ext}
           src={href || src}
           fileName={fileNameFromSrc || alt || 'file'}
           fileType={fileType}
@@ -173,6 +127,7 @@ function EmbeddedComponent({
         />
       ) : href ? (
         <FileDownload
+          extension={ext}
           src={href}
           fileName={fileNameFromSrc || alt || 'file'}
           fileType={fileType}

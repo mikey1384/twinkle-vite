@@ -64,6 +64,7 @@ import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import { getCommentActionPermissions } from '~/components/Comments/permissions';
+import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -131,9 +132,6 @@ function Comment({
   const navigate = useNavigate();
   const deviceIsTablet = isTablet(navigator);
   const deviceIsMobile = isMobile(navigator);
-  const checkIfUserResponded = useAppContext(
-    (v) => v.requestHelpers.checkIfUserResponded
-  );
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
   const updateCommentPinStatus = useAppContext(
@@ -155,9 +153,6 @@ function Comment({
     themeName,
     fallback: 'pink'
   });
-  const onChangeSpoilerStatus = useContentContext(
-    (v) => v.actions.onChangeSpoilerStatus
-  );
   const onLoadReplies = useContentContext((v) => v.actions.onLoadReplies);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
@@ -228,6 +223,10 @@ function Comment({
   );
   const subjectHasSecretMessage =
     hasSubjectSecretSignal(subjectState) || hasSubjectSecretSignal(subject);
+  useSubjectSecretVisibility({
+    subjectHasSecretMessage,
+    subjectId
+  });
   const isCommentForASubjectWithSecretMessage =
     hasSubjectSecretSignal(parent);
   const isRecommendedByUser = useMemo(() => {
@@ -461,33 +460,6 @@ function Comment({
     () => timeSince(comment.timeStamp),
     [comment.timeStamp]
   );
-
-  useEffect(() => {
-    if (
-      userId &&
-      subjectHasSecretMessage &&
-      subjectId &&
-      subjectState.prevSecretViewerId !== userId
-    ) {
-      handleCheckSecretShown();
-    }
-    if (!userId) {
-      onChangeSpoilerStatus({
-        shown: false,
-        subjectId
-      });
-    }
-
-    async function handleCheckSecretShown() {
-      const { responded } = await checkIfUserResponded(subjectId);
-      onChangeSpoilerStatus({
-        shown: responded,
-        subjectId,
-        prevSecretViewerId: userId
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subjectId, subjectState?.prevSecretViewerId, userId]);
 
   useEffect(() => {
     return function cleanUp() {

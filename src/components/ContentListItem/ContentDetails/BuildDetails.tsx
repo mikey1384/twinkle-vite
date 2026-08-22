@@ -85,6 +85,7 @@ export default function BuildDetails({
         embedded={embedded}
         themeName={themeName || undefined}
         to={to}
+        updatedAtSource={isPublic ? 'publicVersion' : 'workspace'}
         showFavoriteAction
         onCardClick={onCardClick}
         onOpenForkHistory={setForkHistoryBuildId}

@@ -1,5 +1,6 @@
 import React, {
   memo,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -26,6 +27,10 @@ import {
   getRichTextSubjectPreviewVariant,
   type RichTextSubjectPreviewVariant
 } from './embedPreviewMode';
+import {
+  isRichTextMeasurementOverflown,
+  resolveRichTextCollapseThreshold
+} from './helpers/overflow';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
@@ -375,6 +380,8 @@ function RichText({
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
+  const [containerMeasurementRevision, setContainerMeasurementRevision] =
+    useState(0);
   const isPreviewRef = useRef(isPreview);
   // Preview RichText is deterministic: no expansion state or shared height cache.
   const fullTextState = useMemo(
@@ -406,7 +413,6 @@ function RichText({
     () => fullTextState?.[section]?.textLength,
     [fullTextState, section]
   );
-  const thresholdRef = useRef<number | null>(null);
   const embeddedContentRef = useRef<HTMLDivElement | null>(null);
   const [hasTopEmbeddedContent, setHasTopEmbeddedContent] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -464,6 +470,10 @@ function RichText({
   });
   const shouldUseBlockPreviewMaxHeight =
     isBlockPreservingPreview && !fullTextShown;
+  const handleSetContainerNode = useCallback((node: HTMLDivElement) => {
+    setContainerNode(node);
+    setContainerMeasurementRevision((revision) => revision + 1);
+  }, []);
 
   useEffect(() => {
     if (isPreview) {
@@ -483,24 +493,35 @@ function RichText({
       setIsOverflown(false);
       return;
     }
-    if (containerNode && !fullTextShown) {
-      if (!thresholdRef.current) {
-        thresholdRef.current = containerNode.clientHeight;
-      }
-
-      let threshold = thresholdRef.current;
-      if (!isPreview && hasTopEmbeddedContent && embeddedContentRef.current) {
-        threshold += embeddedContentRef.current.offsetHeight;
-      }
-
-      const overflown = containerNode.scrollHeight > threshold;
-      setFullTextShown(!overflown);
+    if (containerNode) {
+      const collapseThreshold = resolveRichTextCollapseThreshold({
+        computedMaxHeight: window.getComputedStyle(containerNode).maxHeight,
+        fallbackClientHeight: containerNode.clientHeight
+      });
+      const extraAllowedHeight =
+        hasTopEmbeddedContent && embeddedContentRef.current
+          ? embeddedContentRef.current.offsetHeight
+          : 0;
+      const overflown = isRichTextMeasurementOverflown({
+        scrollHeight: containerNode.scrollHeight,
+        collapseThreshold,
+        extraAllowedHeight
+      });
       setIsOverflown(overflown);
-      if (!isPreview) {
-        overflownRef.current = overflown;
+      overflownRef.current = overflown;
+      if (!overflown) {
+        setFullTextShown(true);
+        fullTextShownRef.current = true;
       }
     }
-  }, [isPreview, fullTextShown, containerNode, hasTopEmbeddedContent]);
+  }, [
+    containerMeasurementRevision,
+    containerNode,
+    hasTopEmbeddedContent,
+    isPreview,
+    previewCollapsedMaxHeight,
+    text
+  ]);
 
   // The tooLongNonUrlToken fallback renders raw text without the invisible
   // measuring container, so containerNode never arrives; measure the visible
@@ -521,37 +542,6 @@ function RichText({
       fullTextShownRef.current = true;
     }
   }, [isPreview, renderAsLiteralText, fullTextShown, text]);
-
-  useEffect(() => {
-    if (!TextRef.current) {
-      return;
-    }
-    if (isPreview) {
-      TextRef.current.style.height = '';
-      return;
-    }
-    const visibleHeight = TextRef.current.clientHeight;
-    if (containerNode && isParsed) {
-      const hasEmbeddedContent = containerNode.querySelector(
-        'img, iframe, video, audio'
-      );
-      if (!hasEmbeddedContent) {
-        const heightToApply =
-          isOverflown && !isPreview ? visibleHeight - 20 : visibleHeight;
-        TextRef.current.style.height = fullTextShown
-          ? 'auto'
-          : `${heightToApply}px`;
-      } else {
-        TextRef.current.style.height = fullTextShown ? 'auto' : visibleHeight;
-      }
-    } else if (!isParsed) {
-      TextRef.current.style.height = fullTextShown
-        ? 'auto'
-        : visibleHeight - 20;
-    } else {
-      TextRef.current.style.height = 'auto';
-    }
-  }, [containerNode, fullTextShown, isOverflown, isParsed, isPreview]);
 
   const appliedLinkColor = useMemo(
     () => (isStatusMsg ? statusMsgLinkColor : linkColor),
@@ -831,6 +821,7 @@ function RichText({
         {!isPreview && !renderAsLiteralText && (
           <ErrorBoundary componentPath="components/Texts/RichText/InvisibleTextContainer">
             <InvisibleTextContainer
+              collapsedMaxHeight={previewCollapsedMaxHeight}
               contentId={contentId}
               contentType={contentType}
               embedPreviewMode={embedPreviewMode}
@@ -842,8 +833,7 @@ function RichText({
               subjectPreviewVariant={appliedSubjectPreviewVariant}
               theme={theme}
               text={text}
-              maxLines={maxLines}
-              onSetContainerNode={setContainerNode}
+              onSetContainerNode={handleSetContainerNode}
               onSetIsParsed={setIsParsed}
             />
           </ErrorBoundary>

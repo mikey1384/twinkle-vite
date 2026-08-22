@@ -24,8 +24,10 @@ const {
   getFeedCardSizing,
   getMarkdownEmbedFileInfo,
   getMarkdownImageEmbedPreview,
+  isMarkdownFileEmbed,
   isMarkdownImageFileEmbed,
   removeMarkdownImageEmbeds,
+  shouldAttemptMarkdownImagePreview,
   getSubjectPreviewLineLimits
 } = sizingModule.exports;
 
@@ -1091,7 +1093,7 @@ test('uses compact rich embed bucket for sparse internal RichText embeds', () =>
   assert.equal(sizing.flags.hasRichTextEmbed, true);
 });
 
-test('scopes the fitted portrait thumbnail to sparse markdown image embeds', () => {
+test('uses confirmed file extensions without misclassifying opaque image URLs', () => {
   const imageEmbed = getMarkdownImageEmbedPreview(
     '![Vietnam pool](https://cdn.example.com/vietnam.jpg)'
   );
@@ -1166,14 +1168,20 @@ test('scopes the fitted portrait thumbnail to sparse markdown image embeds', () 
   assert.equal(sizing.main.size, 'rich-image-compact');
   assert.equal(longTextSizing.main.size, 'rich-embed');
   assert.equal(imageOnlySizing.main.size, 'rich-embed');
-  assert.equal(pdfSizing.main.size, 'rich-embed-compact');
-  assert.equal(unknownFileSizing.main.size, 'rich-embed-compact');
+  assert.equal(pdfSizing.main.size, 'standard');
+  assert.equal(unknownFileSizing.main.size, 'rich-image-compact');
   assert.equal(sizing.card.size, 'rich-embed-card');
   assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
   assert.equal(sizing.card.mobileBodyHeight, 'max(15.5rem, 155px)');
   assert.equal(isMarkdownImageFileEmbed(imageEmbed), true);
   assert.equal(isMarkdownImageFileEmbed(pdfEmbed), false);
   assert.equal(isMarkdownImageFileEmbed(unknownFileEmbed), false);
+  assert.equal(shouldAttemptMarkdownImagePreview(imageEmbed), true);
+  assert.equal(shouldAttemptMarkdownImagePreview(pdfEmbed), false);
+  assert.equal(shouldAttemptMarkdownImagePreview(unknownFileEmbed), true);
+  assert.equal(isMarkdownFileEmbed(imageEmbed), false);
+  assert.equal(isMarkdownFileEmbed(pdfEmbed), true);
+  assert.equal(isMarkdownFileEmbed(unknownFileEmbed), false);
   assert.deepEqual(
     getMarkdownEmbedFileInfo(
       'https://cdn.example.com/trip%20notes.pdf?download=1#page=2'
@@ -1184,9 +1192,38 @@ test('scopes the fitted portrait thumbnail to sparse markdown image embeds', () 
       fileType: 'pdf'
     }
   );
+  assert.deepEqual(
+    getMarkdownEmbedFileInfo('https://cdn.example.com/download/3JR4WRK2'),
+    {
+      extension: '',
+      fileName: '3JR4WRK2',
+      fileType: 'other'
+    }
+  );
+  assert.deepEqual(getMarkdownEmbedFileInfo('https://cdn.example.com'), {
+    extension: '',
+    fileName: 'Image unavailable',
+    fileType: 'other'
+  });
+  assert.deepEqual(
+    getMarkdownEmbedFileInfo('https://cdn.example.com/files/archive.zip'),
+    {
+      extension: 'zip',
+      fileName: 'archive.zip',
+      fileType: 'archive'
+    }
+  );
+  assert.deepEqual(
+    getMarkdownEmbedFileInfo('https://cdn.example.com/files/readme.md'),
+    {
+      extension: 'md',
+      fileName: 'readme.md',
+      fileType: 'text'
+    }
+  );
   assert.match(
     bodySource,
-    /const isImageEmbed = isMarkdownImageFileEmbed\(imageEmbed\);[\s\S]*?const isCompactImageEmbed =[\s\S]*?isImageEmbed &&[\s\S]*?resolvedSizing\.main\.size === 'rich-image-compact';/
+    /const isImageEmbed = shouldAttemptMarkdownImagePreview\(imageEmbed\);[\s\S]*?const isCompactImageEmbed =[\s\S]*?isImageEmbed &&[\s\S]*?resolvedSizing\.main\.size === 'rich-image-compact';/
   );
   assert.match(
     bodySource,
@@ -1212,6 +1249,58 @@ test('scopes the fitted portrait thumbnail to sparse markdown image embeds', () 
     mobileStylesSource,
     /\.home-feed-card__rich-embed-preview--with-text\.home-feed-card__rich-embed-preview--compact-image \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(8\.5rem, 10\.5rem\);/
   );
+});
+
+test('classifies ordinary and Shorts YouTube links as video embeds', () => {
+  const videoId = 'dQw4w9WgXcQ';
+  const watchEmbed = getMarkdownImageEmbedPreview(
+    `![watch](https://www.youtube.com/watch?v=${videoId}&feature=shared)`
+  );
+  const mobileWatchEmbed = getMarkdownImageEmbedPreview(
+    `![watch](https://m.youtube.com/watch?app=desktop&v=${videoId})`
+  );
+  const shortsEmbed = getMarkdownImageEmbedPreview(
+    `![watch](https://youtube.com/shorts/${videoId}?feature=share)`
+  );
+  const storedEscapedWatchEmbed = getMarkdownImageEmbedPreview(
+    `![watch](https://www.youtube.com/watch?v\\=${videoId})`
+  );
+  const nonYouTubeEmbed = getMarkdownImageEmbedPreview(
+    `![watch](https://example.com/watch?v=${videoId})`
+  );
+
+  assert.equal(watchEmbed?.type, 'youtube');
+  assert.equal(mobileWatchEmbed?.type, 'youtube');
+  assert.equal(shortsEmbed?.type, 'youtube');
+  assert.equal(storedEscapedWatchEmbed?.type, 'youtube');
+  assert.equal(nonYouTubeEmbed?.type, 'image');
+});
+
+test('promotes opaque subject image endpoints and content-sizes real file embeds', () => {
+  const opaqueGifSizing = getFeedCardSizing({
+    content: {
+      contentType: 'subject',
+      description:
+        'A typing Snoopy GIF\n\n![Snoopy](https://cdn.example.com/3JR4WRK2)',
+      title: 'New text and image effects'
+    },
+    userId: 1
+  });
+  const pdfSizing = getFeedCardSizing({
+    content: {
+      contentType: 'subject',
+      description:
+        'Read the attached notes\n\n![Lesson notes](https://cdn.example.com/lesson-notes.pdf)',
+      title: 'Today\'s lesson'
+    },
+    userId: 1
+  });
+
+  assert.equal(opaqueGifSizing.flags.hasRichTextEmbed, false);
+  assert.equal(opaqueGifSizing.main.size, 'rich-image-compact');
+  assert.equal(pdfSizing.flags.hasRichTextEmbed, true);
+  assert.equal(pdfSizing.main.size, 'subject-comment-embed');
+  assert.notEqual(pdfSizing.card.bodyHeight, 'max(34rem, 340px)');
 });
 
 test('matches AI card modal coin styling in rich text compact previews', () => {

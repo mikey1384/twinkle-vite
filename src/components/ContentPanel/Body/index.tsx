@@ -38,6 +38,8 @@ import {
 } from '~/helpers/contentActionAvailability';
 import { resolveContentRewardLevel } from '~/helpers/rewardLevel';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
+import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
+import { invalidateSecretVisibilityRequest } from '~/contexts/Content/secretVisibilityRequests';
 
 const settingCannotBeChangedLabel = 'This setting cannot be changed';
 
@@ -84,10 +86,6 @@ export default function Body({
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
-  const checkIfUserResponded = useAppContext(
-    (v) => v.requestHelpers.checkIfUserResponded
-  );
-
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -172,6 +170,11 @@ export default function Body({
     targetObj.subject?.userId,
     uploader.id
   ]);
+
+  useSubjectSecretVisibility({
+    subjectHasSecretMessage,
+    subjectId
+  });
 
   const { secretShown: rootSecretShown } = useContentState({
     contentId: rootId,
@@ -258,39 +261,6 @@ export default function Body({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootId, normalizedRootType, rootObj?.loaded, userId]);
-
-  useEffect(() => {
-    if (
-      userId &&
-      subjectHasSecretMessage &&
-      subjectId &&
-      subjectState?.prevSecretViewerId !== userId
-    ) {
-      handleCheckSecretShown();
-    }
-    if (!userId) {
-      onChangeSpoilerStatus({
-        shown: false,
-        subjectId
-      });
-    }
-
-    async function handleCheckSecretShown() {
-      const { responded } = await checkIfUserResponded(subjectId);
-      if (!mountedRef.current) return;
-      onChangeSpoilerStatus({
-        shown: responded,
-        subjectId,
-        prevSecretViewerId: userId
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    subjectHasSecretMessage,
-    subjectId,
-    subjectState?.prevSecretViewerId,
-    userId
-  ]);
 
   useEffect(() => {
     if (!commentsLoaded && !(numPreviewComments > 0 && previewLoaded)) {
@@ -749,28 +719,32 @@ export default function Body({
       contentHasSecretMessage &&
       !secretShown
     ) {
-      await refreshSubjectAfterSecretUnlock();
-      await handleExpandComments();
-      if (!mountedRef.current) return;
+      const secretIsCanonicallyShown = await refreshSubjectAfterSecretUnlock();
+      if (!secretIsCanonicallyShown || !mountedRef.current) return;
+      invalidateSecretVisibilityRequest({ subjectId, userId });
       onChangeSpoilerStatus({
         shown: true,
         subjectId,
         prevSecretViewerId: userId
       });
+      await handleExpandComments();
     } else {
       onCommentSubmit(params);
     }
   }
 
   async function refreshSubjectAfterSecretUnlock() {
-    if (!subjectId) return;
+    if (!subjectId) return false;
     const requestUserId = userId;
     const data = await loadContent({
       contentId: subjectId,
       contentType: 'subject'
     });
-    if (!mountedRef.current || !data || checkUserChange(requestUserId)) return;
+    if (!mountedRef.current || !data || checkUserChange(requestUserId)) {
+      return false;
+    }
     onInitContent(data);
+    return data.secretShown === true;
   }
 
   function onSecretAnswerClick() {

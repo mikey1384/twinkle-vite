@@ -5,9 +5,10 @@ import {
   isAICardEmbedSrc
 } from '~/helpers/aiCardEmbedHelpers';
 import {
-  getFileInfoFromFileName,
+  getFileInfoFromUrl,
   hasStructuredPreviewMarkdown
 } from '~/helpers/stringHelpers';
+import { isYouTubeVideoUrl } from '~/helpers/youtubeUrlHelpers';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 export type FeedCardPreviewKind =
@@ -508,19 +509,10 @@ export function getMarkdownImageEmbedPreview(
 }
 
 export function getMarkdownEmbedFileInfo(src: string): MarkdownEmbedFileInfo {
-  const path = String(src || '')
-    .split('?')[0]
-    .split('#')[0];
-  const encodedFileName = path.split('/').pop() || 'Image unavailable';
-  let fileName = encodedFileName;
-  try {
-    fileName = decodeURIComponent(encodedFileName);
-  } catch {
-    // Keep the source filename when it contains malformed URI escapes.
-  }
+  const fileInfo = getFileInfoFromUrl(src);
   return {
-    fileName,
-    ...getFileInfoFromFileName(fileName)
+    ...fileInfo,
+    fileName: fileInfo.fileName || 'Image unavailable'
   };
 }
 
@@ -528,6 +520,24 @@ export function isMarkdownImageFileEmbed(embed?: MarkdownImageEmbed | null) {
   return Boolean(
     embed?.type === 'image' &&
     getMarkdownEmbedFileInfo(embed.src).fileType === 'image'
+  );
+}
+
+// Markdown image syntax can point at an image-serving endpoint whose final URL
+// segment is an opaque id rather than a filename. In that case the extension
+// is not evidence of the media type: let the browser attempt the image and
+// only fall back to a file card after a confirmed image-load error.
+export function shouldAttemptMarkdownImagePreview(
+  embed?: MarkdownImageEmbed | null
+) {
+  if (embed?.type !== 'image') return false;
+  const { extension, fileType } = getMarkdownEmbedFileInfo(embed.src);
+  return fileType === 'image' || !extension;
+}
+
+export function isMarkdownFileEmbed(embed?: MarkdownImageEmbed | null) {
+  return Boolean(
+    embed?.type === 'image' && !shouldAttemptMarkdownImagePreview(embed)
   );
 }
 
@@ -926,11 +936,10 @@ function getFeedCardFrameSizing({
 
   const size = getFeedCardFrameSize({ mainSize, target });
 
-  // The subject-comment-embed panel is content-sized, so its CSS height can't be
-  // a static rem like the fixed sizes. Expose the panel-only height (excludes
-  // the target) so the panel takes exactly its share and the target sibling
-  // keeps its space (height: 100% would make the panel claim the whole body and
-  // starve/clip the target). '100%' for other sizes is an unused fallback.
+  // The legacy subject-comment-embed bucket covers every natural-height
+  // subject embed (comments, AI stories, and compact file rows), so its CSS
+  // height cannot be a static rem. Expose the panel-only height (excluding the
+  // target) so a target sibling keeps its share of the body.
   const isCommentEmbedPanel = mainSize === 'subject-comment-embed';
   const commentEmbedPanelHeight = isCommentEmbedPanel
     ? toCssFixedHeight(
@@ -1027,6 +1036,13 @@ const AI_STORY_EMBED_PREVIEW_HEIGHT_REM = {
   mobile: 15.8
 };
 
+// The compact RichText file row is content-height rather than a media canvas.
+// This includes the row's border and a small rounding allowance.
+const FILE_EMBED_PREVIEW_HEIGHT_REM = {
+  desktop: 5.6,
+  mobile: 5.1
+};
+
 function estimateCommentEmbedBodyHeight(
   content: any,
   axis: FeedCardLayoutAxis,
@@ -1096,10 +1112,13 @@ function estimateCommentEmbedBodyHeight(
     showSecretPreview
   ].filter(Boolean).length;
   const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
+  const embedKind = getSubjectContentSizedEmbedKind(content);
   const embedHeight =
-    getSubjectContentSizedEmbedKind(content) === 'aiStory'
+    embedKind === 'aiStory'
       ? AI_STORY_EMBED_PREVIEW_HEIGHT_REM[axis]
-      : COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis];
+      : embedKind === 'file'
+        ? FILE_EMBED_PREVIEW_HEIGHT_REM[axis]
+        : COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis];
 
   return (
     layout.previewPaddingY +
@@ -1365,17 +1384,19 @@ function hasRichTextEmbed(content: any) {
 
 // Subject description embeds that render a natural-height card (instead of
 // stretching to fill the panel) get the content-sized 'subject-comment-embed'
-// panel: comment embeds and AI-story embeds. A fixed 34rem subject-rich-embed
-// panel would leave a large empty gap under them.
+// panel. A fixed 34rem subject-rich-embed panel would leave a large empty gap
+// under compact comments, AI stories, and file rows.
 function getSubjectContentSizedEmbedKind(
   content: any
-): 'comment' | 'aiStory' | null {
+): 'comment' | 'aiStory' | 'file' | null {
   const embedPreview = getMarkdownImageEmbedPreview(
     String(content?.description || content?.content || '')
   );
-  if (!embedPreview || embedPreview.type !== 'internal') {
+  if (!embedPreview) {
     return null;
   }
+  if (isMarkdownFileEmbed(embedPreview)) return 'file';
+  if (embedPreview.type !== 'internal') return null;
   const kind = getInternalEmbedPreviewInfo(embedPreview.src)?.kind;
   return kind === 'comment' || kind === 'aiStory' ? kind : null;
 }
@@ -1418,7 +1439,7 @@ function hasPromotableSubjectAttachmentEmbed(
       String(content?.description || content?.content || '')
     );
 
-  return isMarkdownImageFileEmbed(embedPreview);
+  return shouldAttemptMarkdownImagePreview(embedPreview);
 }
 
 function isSparseSubjectContent(content: any) {
@@ -1771,7 +1792,7 @@ function hasAttachedRootContent(content: any) {
 
 function getCompactRichTextEmbedSize(
   content: any
-): 'rich-image-compact' | 'rich-embed-compact' | null {
+): FeedCardSize | null {
   const embedPreview = getMarkdownImageEmbedPreview(
     String(content?.content || content?.description || '')
   );
@@ -1788,7 +1809,11 @@ function getCompactRichTextEmbedSize(
   ) {
     return null;
   }
-  if (isMarkdownImageFileEmbed(embedPreview)) {
+  if (isMarkdownFileEmbed(embedPreview)) {
+    if (plainTextLength === 0) return 'attachment-only';
+    return plainTextLength <= 120 ? 'standard' : null;
+  }
+  if (shouldAttemptMarkdownImagePreview(embedPreview)) {
     return plainTextLength > 0 && plainTextLength <= 120
       ? 'rich-image-compact'
       : null;
@@ -2538,7 +2563,7 @@ function getMarkdownEmbedType(src: string): MarkdownImageEmbed['type'] {
     return 'unknown';
   }
 
-  if (isYoutubeUrl(src)) {
+  if (isYouTubeVideoUrl(src)) {
     return 'youtube';
   }
 
@@ -2565,10 +2590,4 @@ function isInternalEmbedSrc(src: string) {
   } catch {
     return src.startsWith('/');
   }
-}
-
-function isYoutubeUrl(src: string) {
-  return /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtu\.be\/)/i.test(
-    src
-  );
 }

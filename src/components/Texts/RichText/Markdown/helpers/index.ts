@@ -339,6 +339,24 @@ export function preprocessText(
   return processedText;
 }
 
+export function prepareMarkdownText(
+  text: string,
+  { isAIMessage }: { isAIMessage?: boolean }
+) {
+  let textToProcess = text;
+  if (isAIMessage) {
+    textToProcess = text
+      .replace(/\\\[([\s\S]*?)\\\]/g, (_, content: string) => {
+        return `\n\n$$${content.trim().replace(/\n/g, ' ')}$$\n\n`;
+      })
+      .replace(/\\\(([\s\S]*?)\\\)/g, (_, content: string) => {
+        return `$${content.trim()}$`;
+      });
+  }
+
+  return preprocessText(textToProcess, { isAIMessage });
+}
+
 export function removeNbsp(
   text: string | undefined,
   { isAIMessage }: { isAIMessage?: boolean }

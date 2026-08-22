@@ -35,6 +35,7 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { charLimit } from '~/constants/defaultValues';
 import { resolveDirectSubjectRewardLevel } from '~/helpers/rewardLevel';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
+import { invalidateSecretVisibilityRequest } from '~/contexts/Content/secretVisibilityRequests';
 const commentLabel = 'Comment';
 const editLabel = 'Edit';
 const byLabel = 'By';
@@ -667,13 +668,15 @@ export default function SubjectPanel({
 
   async function handleCommentSubmit(params: any) {
     try {
-      onChangeSpoilerStatus({
-        shown: true,
-        subjectId,
-        prevSecretViewerId: userId
-      });
       if (secretHidden) {
-        await refreshSubjectAfterSecretUnlock();
+        const secretIsCanonicallyShown = await refreshSubjectAfterSecretUnlock();
+        if (!secretIsCanonicallyShown) return;
+        invalidateSecretVisibilityRequest({ subjectId, userId: myId });
+        onChangeSpoilerStatus({
+          shown: true,
+          subjectId,
+          prevSecretViewerId: myId
+        });
         await handleExpand(true);
       } else {
         onUploadComment({
@@ -694,8 +697,9 @@ export default function SubjectPanel({
       contentId: subjectId,
       contentType: 'subject'
     });
-    if (!data || checkUserChange(requestUserId)) return;
+    if (!data || checkUserChange(requestUserId)) return false;
     onInitContent(data);
+    return data.secretShown === true;
   }
 
   async function handleExpand(revealingSecret: boolean) {
@@ -715,12 +719,13 @@ export default function SubjectPanel({
           contentId: rootId
         });
       }
-      setLoadingComments(false);
       if (CommentsRef.current) {
         CommentsRef.current.focus();
       }
     } catch (error: any) {
       console.error(error?.response || error);
+    } finally {
+      setLoadingComments(false);
     }
   }
 

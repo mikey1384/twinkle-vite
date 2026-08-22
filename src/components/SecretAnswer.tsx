@@ -1,10 +1,11 @@
-import React, { memo, useMemo, useEffect } from 'react';
+import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RichText from '~/components/Texts/RichText';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
+import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
 import {
   getFileInfoFromFileName,
   stringIsEmpty
@@ -33,39 +34,19 @@ function SecretAnswer({
   theme?: string;
   uploaderId: number;
 }) {
-  const checkIfUserResponded = useAppContext(
-    (v) => v.requestHelpers.checkIfUserResponded
-  );
   const userId = useKeyContext((v) => v.myState.userId);
-  const onChangeSpoilerStatus = useContentContext(
-    (v) => v.actions.onChangeSpoilerStatus
-  );
-  const { secretShown, prevSecretViewerId } = useContentState({
+  const { secretShown } = useContentState({
     contentType: 'subject',
     contentId: subjectId
+  });
+  useSubjectSecretVisibility({
+    subjectHasSecretMessage: true,
+    subjectId
   });
   const spoilerShown = useMemo(
     () => secretShown || uploaderId === userId,
     [secretShown, uploaderId, userId]
   );
-
-  useEffect(() => {
-    if (userId && userId !== prevSecretViewerId) {
-      init();
-    }
-    if (!userId) {
-      onChangeSpoilerStatus({ shown: false, subjectId });
-    }
-    async function init() {
-      const { responded } = await checkIfUserResponded(subjectId);
-      onChangeSpoilerStatus({
-        shown: responded,
-        subjectId,
-        prevSecretViewerId: userId
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevSecretViewerId, subjectId, userId]);
 
   const { fileType } = useMemo(
     () => getFileInfoFromFileName(attachment?.fileName),

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BuildWideCard } from '~/components/Build/Cards';
 import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import type { BuildCardUpdatedAtSource } from '~/helpers/buildSummaryHelpers';
 import type { BuildProjectListItemData, BuildTag } from './types';
 
 export type { BuildProjectListItemData, BuildTag } from './types';
@@ -21,7 +22,7 @@ export default function ProjectListItem({
   showForkBadge = true,
   showOpenAppAction,
   showVisibilityBadge,
-  updatedAtSource = 'workspace',
+  updatedAtSource,
   onAddDescription,
   onDelete,
   onFavoriteChange,
@@ -45,7 +46,7 @@ export default function ProjectListItem({
   showForkBadge?: boolean;
   showOpenAppAction?: boolean;
   showVisibilityBadge?: boolean;
-  updatedAtSource?: 'workspace' | 'publicVersion';
+  updatedAtSource: BuildCardUpdatedAtSource;
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
   onFavoriteChange?: (

@@ -20,7 +20,8 @@ import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
 import { useContentState, useLiveComment } from '~/helpers/hooks';
 import {
   fetchedVideoCodeFromURL,
-  getFileInfoFromFileName
+  getFileInfoFromFileName,
+  isValidYoutubeUrl
 } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
@@ -611,14 +612,10 @@ function getMarkdownMediaType(
   src: string,
   internalInfo?: InternalEmbedPreviewInfo
 ): MarkdownMediaEmbed['type'] {
-  const normalizedSrc = src.toLowerCase();
   if (internalInfo) {
     return 'internal';
   }
-  if (
-    normalizedSrc.includes('youtube.com') ||
-    normalizedSrc.includes('youtu.be')
-  ) {
+  if (isValidYoutubeUrl(src)) {
     return 'video';
   }
   if (/\.(apng|avif|gif|hei[cf]|jpe?g|png|webp|svg)(\?|#|$)/i.test(src)) {

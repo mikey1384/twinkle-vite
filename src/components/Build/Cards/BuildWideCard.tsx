@@ -27,7 +27,10 @@ import {
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { normalizeViewCount } from '~/helpers/viewCount';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
-import { shouldShowBuildUpdatedMeta } from '~/helpers/buildSummaryHelpers';
+import {
+  getBuildCardUpdatedAt,
+  type BuildCardUpdatedAtSource
+} from '~/helpers/buildSummaryHelpers';
 import { useCollaborationDirectMessageUpdater } from '~/helpers/hooks/useCollaborationDirectMessageUpdater';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
@@ -524,7 +527,7 @@ export default function BuildWideCard({
   showVisibilityBadge = true,
   themeName,
   to,
-  updatedAtSource = 'workspace',
+  updatedAtSource,
   onAddDescription,
   onDelete,
   onFavoriteChange,
@@ -556,7 +559,7 @@ export default function BuildWideCard({
   showVisibilityBadge?: boolean;
   themeName?: string;
   to?: string;
-  updatedAtSource?: 'workspace' | 'publicVersion';
+  updatedAtSource: BuildCardUpdatedAtSource;
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
   onFavoriteChange?: (
@@ -637,15 +640,7 @@ export default function BuildWideCard({
   const displayTitle = build ? getBuildDisplayTitle(build) : '';
   const displayRank = Math.floor(Number(rank) || 0);
   const rankShown = displayRank > 0;
-  const displayUpdatedAt = getDisplayUpdatedAt(build, updatedAtSource);
-  // The public lists source "Updated" from publishedAt itself, and a workspace
-  // card right after a publish stamps both with the same moment — either way
-  // two chips showing one timestamp read as a bug, so the Updated chip only
-  // renders when it says something the Published chip doesn't.
-  const showUpdatedMeta = shouldShowBuildUpdatedMeta(
-    displayUpdatedAt,
-    build?.publishedAt
-  );
+  const displayUpdatedAt = getBuildCardUpdatedAt(build, updatedAtSource);
   const targetPath = to || (buildId ? `/build/${buildId}` : '');
   const description = String(build?.description || '').trim();
   const visitCount = normalizeViewCount(build?.viewCount);
@@ -822,7 +817,7 @@ export default function BuildWideCard({
             </div>
             {build.username ? (
               <div className={bylineClass}>
-                Published by{' '}
+                By{' '}
                 <span onClick={stopEvent} onKeyDown={stopEvent}>
                   <UsernameText
                     color="inherit"
@@ -959,7 +954,7 @@ export default function BuildWideCard({
             ) : null}
           </div>
           <div className={metaRowClass}>
-            {showUpdatedMeta ? (
+            {displayUpdatedAt > 0 ? (
               <span className={metaItemClass}>
                 <Icon icon="clock-rotate-left" />
                 Updated {formatRelativeTime(displayUpdatedAt)}
@@ -969,12 +964,6 @@ export default function BuildWideCard({
               <span className={metaItemClass}>
                 <Icon icon="clock" />
                 Created {formatRelativeTime(build.createdAt)}
-              </span>
-            ) : null}
-            {build.publishedAt ? (
-              <span className={metaItemClass}>
-                <Icon icon="globe" />
-                Published {formatRelativeTime(build.publishedAt)}
               </span>
             ) : null}
           </div>
@@ -1597,28 +1586,4 @@ function getViewerCollaborationEventPatch(
 ) {
   const eventTimeMs = Number(result?.eventTimeMs || requestStartedAt || 0);
   return eventTimeMs > 0 ? { viewerCollaborationEventTimeMs: eventTimeMs } : {};
-}
-
-function getDisplayUpdatedAt(
-  build:
-    | {
-        publishedAt?: unknown;
-        updatedAt?: unknown;
-        lastActivityAt?: unknown;
-      }
-    | null
-    | undefined,
-  updatedAtSource: 'workspace' | 'publicVersion'
-) {
-  if (!build) return 0;
-  if (updatedAtSource === 'publicVersion') {
-    return Number(build.publishedAt || 0);
-  }
-  // lastActivityAt includes contribution-branch saves; lists are ordered by
-  // it, so display the same timestamp to keep the order legible. updatedAt
-  // can be fresher when the cached build was just saved in this session.
-  return Math.max(
-    Number(build.lastActivityAt || 0),
-    Number(build.updatedAt || 0)
-  );
 }

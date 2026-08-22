@@ -535,6 +535,7 @@ export function useSearch({
 }) {
   const [searching, setSearching] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchGenerationRef = useRef(0);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -549,6 +550,7 @@ export function useSearch({
   }, []);
 
   function handleSearch(text: string) {
+    const searchGeneration = ++searchGenerationRef.current;
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -566,11 +568,16 @@ export function useSearch({
     timerRef.current = setTimeout(async () => {
       try {
         await onSearch(text);
+      } catch (error) {
+        console.error('Search request failed:', error);
       } finally {
-        if (isMountedRef.current) {
+        if (
+          isMountedRef.current &&
+          searchGeneration === searchGenerationRef.current
+        ) {
           setSearching(false);
+          timerRef.current = null;
         }
-        timerRef.current = null;
       }
     }, 500);
   }

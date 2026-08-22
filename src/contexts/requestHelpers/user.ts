@@ -268,7 +268,7 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async loadFeaturedSubjectsOnProfile(userId: { userId: number }) {
+    async loadFeaturedSubjectsOnProfile(userId: number) {
       try {
         const { data: subjects } = await request.get(
           `${URL}/user/featured/subjects?userId=${userId}`,

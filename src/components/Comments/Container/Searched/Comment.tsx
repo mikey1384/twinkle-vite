@@ -42,6 +42,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
+import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
 
 const pinLabel = 'Pin';
 const unpinLabel = 'Unpin';
@@ -140,9 +141,6 @@ export default function SearchedComment({
   );
   const { fileType } = getFileInfoFromFileName(fileName);
   const navigate = useNavigate();
-  const checkIfUserResponded = useAppContext(
-    (v) => v.requestHelpers.checkIfUserResponded
-  );
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const updateCommentPinStatus = useAppContext(
     (v) => v.requestHelpers.updateCommentPinStatus
@@ -168,9 +166,6 @@ export default function SearchedComment({
     themeName,
     fallback: 'pink'
   });
-  const onChangeSpoilerStatus = useContentContext(
-    (v) => v.actions.onChangeSpoilerStatus
-  );
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
@@ -202,6 +197,10 @@ export default function SearchedComment({
   );
   const subjectHasSecretMessage =
     hasSubjectSecretSignal(subjectState) || hasSubjectSecretSignal(subject);
+  useSubjectSecretVisibility({
+    subjectHasSecretMessage,
+    subjectId
+  });
   const isCommentForASubjectWithSecretMessage =
     hasSubjectSecretSignal(parent);
   const isRecommendedByUser = useMemo(() => {
@@ -360,33 +359,6 @@ export default function SearchedComment({
       rewards
     });
   }, [rewardLevel, rewards, userId, xpRewardInterfaceShown]);
-
-  useEffect(() => {
-    if (
-      userId &&
-      subjectHasSecretMessage &&
-      subjectId &&
-      subjectState.prevSecretViewerId !== userId
-    ) {
-      handleCheckSecretShown();
-    }
-    if (!userId) {
-      onChangeSpoilerStatus({
-        shown: false,
-        subjectId
-      });
-    }
-
-    async function handleCheckSecretShown() {
-      const { responded } = await checkIfUserResponded(subjectId);
-      onChangeSpoilerStatus({
-        shown: responded,
-        subjectId,
-        prevSecretViewerId: userId
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subjectId, subjectState.prevSecretViewerId, userId]);
 
   return isDeleted ? null : (
     <ScopedTheme theme={themeName} roles={['link', 'reward']}>

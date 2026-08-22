@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 const submitYourResponseLabel = 'Submit your response to view this comment';
@@ -6,18 +6,12 @@ const submitYourResponseLabel = 'Submit your response to view this comment';
 export default function SecretComment({
   label = submitYourResponseLabel,
   onClick,
-  onMount,
   style
 }: {
   label?: string;
   onClick?: () => void;
-  onMount?: () => void;
   style?: React.CSSProperties;
 }) {
-  useEffect(() => {
-    onMount?.();
-  }, [onMount]);
-
   return (
     <div
       style={{

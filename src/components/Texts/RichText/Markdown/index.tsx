@@ -29,7 +29,7 @@ import {
   hasMeaningfulContent,
   isSectionLabelParagraph,
   keyToCamelCase,
-  preprocessText,
+  prepareMarkdownText,
   removeNbsp,
   splitLabelAndContent,
   splitNodesByDoubleBreaks,
@@ -112,20 +112,7 @@ function Markdown({
     }
 
     try {
-      // For AI messages, convert LaTeX math delimiters BEFORE preprocessing
-      let textToProcess = children;
-      if (isAIMessage) {
-        textToProcess = children
-          .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1: string) => {
-            const content = p1.trim().replace(/\n/g, ' ');
-            return '\n\n$$' + content + '$$\n\n';
-          })
-          .replace(/\\\(([\s\S]*?)\\\)/g, (_, p1: string) => {
-            return '$' + p1.trim() + '$';
-          });
-      }
-
-      const preprocessedText = preprocessText(textToProcess, { isAIMessage });
+      const preprocessedText = prepareMarkdownText(children, { isAIMessage });
 
       let textForMarkdown = preprocessedText;
       if (isAIMessage) {

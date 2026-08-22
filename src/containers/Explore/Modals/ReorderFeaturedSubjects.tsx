@@ -82,7 +82,6 @@ export default function ReorderFeaturedSubjects({
   }
 
   async function handleSubmit() {
-    setIsReordering(true);
     for (const subjectId of subjectIds) {
       if (!subjectId) {
         return reportError({
@@ -91,10 +90,17 @@ export default function ReorderFeaturedSubjects({
         });
       }
     }
-    const reorderedSubjects = await uploadFeaturedSubjects({
-      selected: subjectIds
-    });
-    onLoadFeaturedSubjects(reorderedSubjects);
-    onHide();
+    setIsReordering(true);
+    try {
+      const reorderedSubjects = await uploadFeaturedSubjects({
+        selected: subjectIds
+      });
+      onLoadFeaturedSubjects(reorderedSubjects);
+      onHide();
+    } catch (error) {
+      console.error('Error while reordering Featured Subjects:', error);
+    } finally {
+      setIsReordering(false);
+    }
   }
 }

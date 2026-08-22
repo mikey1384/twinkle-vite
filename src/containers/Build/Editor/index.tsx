@@ -1741,7 +1741,7 @@ export default function BuildEditor({
     branchMainUpdateNoticeState.showBranchLumineFix &&
     mainProjectConflictMarkerPaths.length > 0
       ? {
-          loading: false,
+          loading: currentBuildRunView.generating,
           onFix: () => {
             void handleAskLumineToResolveMergeConflicts(
               mainProjectConflictMarkerPaths

@@ -13,7 +13,6 @@ import type {
 } from './embedPreviewMode';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
-const collapsedLineHeight = 1.7;
 
 export function stripMarkdownLinkUrls(text: string) {
   const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
@@ -21,6 +20,7 @@ export function stripMarkdownLinkUrls(text: string) {
 }
 
 export default function InvisibleTextContainer({
+  collapsedMaxHeight,
   contentId,
   contentType,
   embedPreviewMode,
@@ -32,10 +32,10 @@ export default function InvisibleTextContainer({
   subjectPreviewVariant,
   theme,
   text,
-  maxLines,
   onSetContainerNode,
   onSetIsParsed
 }: {
+  collapsedMaxHeight: string;
   contentId?: string | number;
   contentType?: string;
   embedPreviewMode?: RichTextEmbedPreviewMode;
@@ -47,7 +47,6 @@ export default function InvisibleTextContainer({
   subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
   text: string;
-  maxLines: number;
   onSetContainerNode: (node: HTMLDivElement) => void;
   onSetIsParsed: (isParsed: boolean) => void;
 }) {
@@ -91,10 +90,24 @@ export default function InvisibleTextContainer({
   );
 
   useEffect(() => {
+    const node = containerRef.current;
+    const resizeObserver =
+      node && typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            if (parsedRef.current) {
+              scheduleContainerNodeUpdate(node);
+            }
+          })
+        : null;
+    if (resizeObserver && node) {
+      resizeObserver.observe(node);
+    }
+
     return () => {
+      resizeObserver?.disconnect();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, []);
+  }, [scheduleContainerNodeUpdate]);
 
   const containerStyle = useMemo(
     () => css`
@@ -107,9 +120,9 @@ export default function InvisibleTextContainer({
       word-break: break-word;
       line-height: 1.7;
       overflow: hidden;
-      max-height: calc(${collapsedLineHeight}em * ${maxLines});
+      max-height: ${collapsedMaxHeight};
     `,
-    [maxLines]
+    [collapsedMaxHeight]
   );
 
   return (

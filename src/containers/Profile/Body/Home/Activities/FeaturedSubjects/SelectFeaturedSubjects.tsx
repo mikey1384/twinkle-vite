@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
@@ -10,6 +10,7 @@ import SearchInput from '~/components/Texts/SearchInput';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { objectify } from '~/helpers';
+import { getFeaturedSubjectIds } from '~/helpers/featuredSubjects';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
@@ -37,18 +38,26 @@ export default function SelectFeaturedSubjectsModal({
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [subjectObj, setSubjectObj] = useState<Record<string, any>>({});
-  const [selected, setSelected] = useState<number[]>([]);
+  const [subjectObj, setSubjectObj] = useState<Record<string, any>>(() =>
+    objectify(subjects)
+  );
+  const [selected, setSelected] = useState<number[]>(() =>
+    getFeaturedSubjectIds(subjects)
+  );
   const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectTabActive, setSelectTabActive] = useState(true);
   const [allSubjects, setAllSubjects] = useState([]);
   const [searchedSubjects, setSearchedSubjects] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const searchGenerationRef = useRef(0);
   const { handleSearch, searching } = useSearch({
     onSearch: handleSubjectSearch,
     onClear: () => setSearchedSubjects([]),
-    onSetSearchText: setSearchText
+    onSetSearchText: (text) => {
+      searchGenerationRef.current += 1;
+      setSearchText(text);
+    }
   });
 
   useEffect(() => {
@@ -57,9 +66,6 @@ export default function SelectFeaturedSubjectsModal({
       const maxRetries = 3;
       let attempts = 0;
       let success = false;
-
-      const selectedIds = subjects.map(({ id }) => id);
-      setSelected(selectedIds);
 
       while (attempts < maxRetries && !success) {
         attempts++;
@@ -70,10 +76,11 @@ export default function SelectFeaturedSubjectsModal({
             includeRoot: true
           });
 
-          setSubjectObj({
+          setSubjectObj((current) => ({
+            ...current,
             ...objectify(results),
             ...objectify(subjects)
-          });
+          }));
           setAllSubjects(results.map((subject: { id: number }) => subject.id));
           setLoadMoreButton(loadMoreShown);
           success = true;
@@ -230,7 +237,7 @@ export default function SelectFeaturedSubjectsModal({
             Cancel
           </Button>
           <Button
-            disabled={selected.length > 10}
+            disabled={!loaded || selected.length > 10}
             loading={submitting}
             color={doneColor}
             onClick={handleSubmit}
@@ -243,11 +250,13 @@ export default function SelectFeaturedSubjectsModal({
   );
 
   async function handleSubjectSearch(text: string) {
+    const searchGeneration = searchGenerationRef.current;
     const { loadMoreButton: loadMoreShown, results } = await searchContent({
       limit: 10,
       filter: 'subject',
       searchText: text
     });
+    if (searchGeneration !== searchGenerationRef.current) return;
     setSubjectObj((legacyTopicObj) => ({
       ...legacyTopicObj,
       ...objectify(results)
@@ -257,39 +266,46 @@ export default function SelectFeaturedSubjectsModal({
   }
 
   async function handleLoadMore() {
+    const loadGeneration = searchGenerationRef.current;
     setLoadingMore(true);
-    const options = stringIsEmpty(searchText)
-      ? {
-          limit: 10,
-          contentType: 'subject',
-          includeRoot: true,
-          excludeContentIds: allSubjects
-        }
-      : {
-          limit: 10,
-          filter: 'subject',
-          searchText,
-          shownResults: searchedSubjects.map(
-            (subjectId) => subjectObj[subjectId]
-          )
-        };
-    const method = stringIsEmpty(searchText) ? loadUploads : searchContent;
-    const { results, loadMoreButton: loadMoreShown } = await method(options);
-    setSubjectObj({
-      ...subjectObj,
-      ...objectify(results)
-    });
-    const setSubjectsMethod = stringIsEmpty(searchText)
-      ? setAllSubjects
-      : setSearchedSubjects;
-    setSubjectsMethod((subjects) =>
-      subjects.concat(results.map((subject: { id: number }) => subject.id))
-    );
-    setLoadingMore(false);
-    const setLoadMoreButtonMethod = stringIsEmpty(searchText)
-      ? setLoadMoreButton
-      : setSearchLoadMoreButton;
-    setLoadMoreButtonMethod(loadMoreShown);
+    try {
+      const options = stringIsEmpty(searchText)
+        ? {
+            limit: 10,
+            contentType: 'subject',
+            includeRoot: true,
+            excludeContentIds: allSubjects
+          }
+        : {
+            limit: 10,
+            filter: 'subject',
+            searchText,
+            shownResults: searchedSubjects.map(
+              (subjectId) => subjectObj[subjectId]
+            )
+          };
+      const method = stringIsEmpty(searchText) ? loadUploads : searchContent;
+      const { results, loadMoreButton: loadMoreShown } = await method(options);
+      if (loadGeneration !== searchGenerationRef.current) return;
+      setSubjectObj((current) => ({
+        ...current,
+        ...objectify(results)
+      }));
+      const setSubjectsMethod = stringIsEmpty(searchText)
+        ? setAllSubjects
+        : setSearchedSubjects;
+      setSubjectsMethod((subjects) =>
+        subjects.concat(results.map((subject: { id: number }) => subject.id))
+      );
+      const setLoadMoreButtonMethod = stringIsEmpty(searchText)
+        ? setLoadMoreButton
+        : setSearchLoadMoreButton;
+      setLoadMoreButtonMethod(loadMoreShown);
+    } catch (error) {
+      console.error('Failed to load more profile subjects:', error);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 
   function handleSelect(selectedId: number) {
@@ -312,8 +328,8 @@ export default function SelectFeaturedSubjectsModal({
           });
         }
       }
-      await featureSubjectsOnProfile({ selected });
-      onSubmit(selected.map((selectedId) => subjectObj[selectedId]));
+      const subjects = await featureSubjectsOnProfile({ selected });
+      onSubmit(subjects);
     } catch (error) {
       console.error('Error during handleSubmit:', error);
     } finally {

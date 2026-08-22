@@ -88,7 +88,6 @@ export default function ReorderFeaturedSubjects({
   }
 
   async function handleSubmit() {
-    setIsReordering(true);
     for (const subjectId of subjectIds) {
       if (!subjectId) {
         return reportError({
@@ -98,13 +97,20 @@ export default function ReorderFeaturedSubjects({
         });
       }
     }
-    const reorderedSubjects = await featureSubjectsOnProfile({
-      selected: subjectIds
-    });
-    onLoadFeaturedSubjects({
-      username,
-      subjects: reorderedSubjects
-    });
-    onHide();
+    setIsReordering(true);
+    try {
+      const reorderedSubjects = await featureSubjectsOnProfile({
+        selected: subjectIds
+      });
+      onLoadFeaturedSubjects({
+        username,
+        subjects: reorderedSubjects
+      });
+      onHide();
+    } catch (error) {
+      console.error('Error while reordering profile subjects:', error);
+    } finally {
+      setIsReordering(false);
+    }
   }
 }

@@ -184,6 +184,14 @@ export const mainPreviewStyles = `
       gap: 0.85rem;
       justify-content: stretch;
     }
+    .home-feed-card__rich-embed-preview--with-text.home-feed-card__rich-embed-preview--file,
+    .home-feed-card__rich-embed-preview--with-text:has(
+        > .home-feed-card__rich-file-embed
+      ) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-content: center;
+    }
     .home-feed-card__rich-embed-preview--with-text.home-feed-card__rich-embed-preview--compact-image {
       grid-template-columns: minmax(0, 1fr) minmax(13rem, 14.5rem);
       align-items: center;
@@ -418,6 +426,25 @@ export const mainPreviewStyles = `
       .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--comment {
       background: #fff;
     }
+    .home-feed-card__rich-embed-image.home-feed-card__rich-file-embed {
+      display: flex;
+      align-self: center;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      max-height: none;
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+    .home-feed-card__rich-embed-preview--image-only
+      > .home-feed-card__rich-file-embed {
+      max-width: 42rem;
+      margin-inline: auto;
+    }
     .home-feed-card__embed-fallback {
       display: flex;
       flex-direction: column;
@@ -626,6 +653,21 @@ export const mainPreviewStyles = `
     border-radius: 0.9rem;
     background: #fff;
     container-type: inline-size;
+  }
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-file-embed {
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-start;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-file-embed
+    > * {
+    height: auto;
   }
   .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--build {
     flex: 0 0 max(18rem, 180px);
@@ -857,6 +899,16 @@ export const mainPreviewStyles = `
     border: 0;
     background: transparent;
     box-shadow: none;
+  }
+  .home-feed-card__attachment-preview.home-feed-card__rich-file-embed {
+    align-self: center;
+    aspect-ratio: auto;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
   .home-feed-card__attachment-preview--subject-file
     .home-feed-card__attachment-card {

@@ -4,7 +4,8 @@ import ContentListItem from '~/components/ContentListItem';
 import SectionPanel from '~/components/SectionPanel';
 import SelectFeaturedSubjects from '../Modals/SelectFeaturedSubjects';
 import ReorderFeaturedSubjects from '../Modals/ReorderFeaturedSubjects';
-import Button from '~/components/Button';import { useKeyContext } from '~/contexts';
+import Button from '~/components/Button';
+import { useKeyContext } from '~/contexts';
 
 const featuredLabel = 'Featured';
 const noFeaturedSubjectsLabel = 'No Featured Subjects';
@@ -48,6 +49,7 @@ export default function Featured({
                 variant="solid"
                 tone="raised"
                 color="darkerGray"
+                disabled={!loaded}
                 style={{ marginLeft: 'auto' }}
                 onClick={() => setSelectModalShown(true)}
               >
@@ -57,6 +59,7 @@ export default function Featured({
                 variant="solid"
                 tone="raised"
                 color="darkerGray"
+                disabled={!loaded}
                 style={{ marginLeft: '1rem' }}
                 onClick={() => setReorderModalShown(true)}
               >

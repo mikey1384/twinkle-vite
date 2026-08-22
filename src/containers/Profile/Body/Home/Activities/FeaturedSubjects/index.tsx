@@ -14,13 +14,13 @@ const selectLabel = 'Select';
 const reorderLabel = 'Reorder';
 
 export default function FeaturedSubjects({
-  loading,
+  loaded,
   selectedTheme,
   subjects = [],
   username,
   userId
 }: {
-  loading: boolean;
+  loaded: boolean;
   selectedTheme: string;
   subjects: any[];
   username: string;
@@ -46,7 +46,7 @@ export default function FeaturedSubjects({
       <SectionPanel
         elevated
         title="Featured Subjects"
-        loaded={!loading}
+        loaded={loaded}
         loadMoreButtonShown={!isExpanded && subjects.length > 3}
         onLoadMore={() => setIsExpanded(true)}
         customColorTheme={selectedTheme}
@@ -57,6 +57,7 @@ export default function FeaturedSubjects({
                 variant="solid"
                 tone="raised"
                 color="darkerGray"
+                disabled={!loaded}
                 style={{ marginLeft: 'auto' }}
                 onClick={() => setSelectModalShown(true)}
               >
@@ -66,6 +67,7 @@ export default function FeaturedSubjects({
                 variant="solid"
                 tone="raised"
                 color="darkerGray"
+                disabled={!loaded}
                 style={{ marginLeft: '1rem' }}
                 onClick={() => setReorderModalShown(true)}
               >

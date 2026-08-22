@@ -294,6 +294,7 @@ export default function Builds({
                 navigationState={buildRuntimeNavigationState}
                 isOwner={isOwnProfile}
                 themeName={selectedTheme}
+                updatedAtSource="publicVersion"
                 showFavoriteAction
                 showVisibilityBadge={false}
                 onFavoriteChange={handleBuildFavoriteChange}

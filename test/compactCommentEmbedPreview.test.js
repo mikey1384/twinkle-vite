@@ -33,6 +33,9 @@ const contentPanelCommentSource = readSource(
   'src/components/ContentPanel/TargetContent/Comment.tsx'
 );
 const stringHelpersSource = readSource('src/helpers/stringHelpers.tsx');
+const richTextMarkerHelpersSource = readSource(
+  'src/helpers/richTextMarkerHelpers.ts'
+);
 
 assert.match(
   compactCommentEmbedSource,
@@ -206,13 +209,17 @@ assert.match(feedCardBodySource, /PreviewCommentAICardMedia/);
 assert.match(
   feedCardBodySource,
   // An AI-energy placeholder now suppresses the message treatment.
-  /const commentTextIsMessage =\s*!aiEnergyPlaceholderName && hasPreviewCommentMessageText\(comment\)/
+  /const commentTextInfo = aiEnergyPlaceholderName[\s\S]*?getPreviewCommentTextInfo\(comment\)/
 );
 assert.match(
   feedCardBodySource,
   /home-feed-card__comment-preview-text--message/
 );
-assert.match(feedCardBodySource, /function hasPreviewCommentMessageText/);
+assert.match(
+  feedCardBodySource,
+  /const commentTextIsMessage = commentTextInfo\.isMessage/
+);
+assert.match(feedCardBodySource, /function getPreviewCommentTextInfo/);
 assert.match(feedCardBodySource, /kind: 'aiCard'/);
 assert.match(feedCardBodySource, /kind: 'build'/);
 assert.match(
@@ -248,8 +255,12 @@ assert.match(
 assert.match(commentPreviewStylesSource, /font-weight: 500;/);
 assert.match(stringHelpersSource, /'heic'/);
 assert.match(stringHelpersSource, /'heif'/);
-assert.match(stringHelpersSource, /export function stripTextSizeMarkers/);
-assert.match(feedCardBodySource, /stripTextSizeMarkers\(text\)/);
+assert.match(
+  richTextMarkerHelpersSource,
+  /export function stripTextSizeMarkers/
+);
+assert.match(feedCardBodySource, /getCommentPreviewPlainText\(rawContent/);
+assert.doesNotMatch(feedCardBodySource, /\[`\*_>#~\]\+/);
 assert.doesNotMatch(
   feedCardBodySource,
   /return text\s*\n\s*\.replace\(\s*\/\\\[\(\[\^\\\]\]\+\)\\\]\\\(\(\[\^\)\]\+\)\\\)\/g/

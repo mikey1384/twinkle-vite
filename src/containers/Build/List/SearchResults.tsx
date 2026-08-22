@@ -185,6 +185,7 @@ export default function SearchResults({
                 build={build}
                 isOwner
                 to={`/app/${build.id}`}
+                updatedAtSource="workspace"
                 navigationState={{
                   runtimeBackTo,
                   runtimeBackLabel: 'Back to Build Studio'
@@ -222,6 +223,7 @@ export default function SearchResults({
                 <ProjectListItem
                   build={build}
                   to={getCollaboratingBuildListItemTargetPath(build)}
+                  updatedAtSource="workspace"
                   navigationState={navigationState}
                   primaryActionLabel="Open workspace"
                   primaryActionIcon="wrench"

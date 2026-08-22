@@ -225,6 +225,9 @@ export default function ForkHistoryModal({
                     build={build}
                     to={getForkHistoryBuildPath(build, isOwner)}
                     isOwner={isOwner}
+                    updatedAtSource={
+                      build.isPublic ? 'publicVersion' : 'workspace'
+                    }
                     primaryActionLabel="Open"
                     primaryActionIcon="external-link-alt"
                     showCollaborationRequestAction={false}

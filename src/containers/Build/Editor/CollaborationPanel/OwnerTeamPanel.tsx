@@ -168,7 +168,9 @@ export default function OwnerTeamPanel({
   requestActionError,
   rootBuildId,
   showHiddenCollaborationRequests,
+  showJoinRequests = true,
   showPrompt = true,
+  showTeamManagement = true,
   onAcceptRequest,
   onHideRequest,
   onInvited,
@@ -188,7 +190,9 @@ export default function OwnerTeamPanel({
   requestActionError: string;
   rootBuildId: number;
   showHiddenCollaborationRequests: boolean;
+  showJoinRequests?: boolean;
   showPrompt?: boolean;
+  showTeamManagement?: boolean;
   onAcceptRequest: (requestId: number) => void;
   onHideRequest: (requestId: number) => void;
   onInvited: () => void;
@@ -199,112 +203,133 @@ export default function OwnerTeamPanel({
 }) {
   return (
     <>
-      <div className={detailClass}>
-        <div className={rowClass}>
-          <strong>
-            {showHiddenCollaborationRequests
-              ? 'Hidden join requests'
-              : 'Join requests'}
-          </strong>
-          <span className={mutedTextClass}>{collaborationRequests.length}</span>
-          {loadingCollaborationRequests ? (
-            <span className={mutedTextClass}>Loading...</span>
-          ) : null}
-          <GameCTAButton
-            variant="neutral"
-            size="sm"
-            icon={showHiddenCollaborationRequests ? 'inbox' : 'eye-slash'}
-            disabled={loadingCollaborationRequests}
-            onClick={onToggleHiddenRequests}
-          >
-            {showHiddenCollaborationRequests ? 'Visible' : 'Hidden'}
-          </GameCTAButton>
-        </div>
-        {collaborationRequests.length === 0 ? (
-          <span className={mutedTextClass}>
-            {showHiddenCollaborationRequests
-              ? 'No hidden requests.'
-              : 'No pending requests.'}
-          </span>
-        ) : (
-          <div className={listClass}>
-            {collaborationRequests.map((request) => (
-              <div key={request.id} className={requestCardClass}>
-                <div className={rowClass}>
-                  <strong>{request.username || 'User'}</strong>
-                  <span className={statusPillClass}>{request.status}</span>
-                  {request.ownerHidden ? (
-                    <span className={mutedTextClass}>Hidden</span>
-                  ) : null}
-                </div>
-                {request.message ? (
-                  <div className={requestMessageClass}>{request.message}</div>
-                ) : (
-                  <span className={mutedTextClass}>No message.</span>
-                )}
-                {request.status === 'pending' ? (
+      {showJoinRequests ? (
+        <div className={detailClass}>
+          <div className={rowClass}>
+            <strong>
+              {showHiddenCollaborationRequests
+                ? 'Hidden join requests'
+                : 'Join requests'}
+            </strong>
+            <span className={mutedTextClass}>{collaborationRequests.length}</span>
+            {loadingCollaborationRequests ? (
+              <span className={mutedTextClass}>Loading...</span>
+            ) : null}
+            <GameCTAButton
+              variant="neutral"
+              size="sm"
+              icon={showHiddenCollaborationRequests ? 'inbox' : 'eye-slash'}
+              disabled={
+                loadingCollaborationRequests || Boolean(actionLoading)
+              }
+              onClick={onToggleHiddenRequests}
+            >
+              {showHiddenCollaborationRequests ? 'Visible' : 'Hidden'}
+            </GameCTAButton>
+          </div>
+          {collaborationRequests.length === 0 ? (
+            <span className={mutedTextClass}>
+              {showHiddenCollaborationRequests
+                ? 'No hidden requests.'
+                : 'No pending requests.'}
+            </span>
+          ) : (
+            <div className={listClass}>
+              {collaborationRequests.map((request) => (
+                <div key={request.id} className={requestCardClass}>
                   <div className={rowClass}>
-                    <GameCTAButton
-                      variant="success"
-                      size="sm"
-                      icon="check"
-                      loading={actionLoading === `accept-request-${request.id}`}
-                      disabled={Boolean(actionLoading)}
-                      onClick={() => onAcceptRequest(request.id)}
-                    >
-                      Accept
-                    </GameCTAButton>
-                    <GameCTAButton
-                      variant="neutral"
-                      size="sm"
-                      icon="ban"
-                      loading={actionLoading === `reject-request-${request.id}`}
-                      disabled={Boolean(actionLoading)}
-                      onClick={() => onRejectRequest(request.id)}
-                    >
-                      Reject
-                    </GameCTAButton>
-                    {!request.ownerHidden ? (
+                    <strong>{request.username || 'User'}</strong>
+                    <span className={statusPillClass}>{request.status}</span>
+                    {request.ownerHidden ? (
+                      <span className={mutedTextClass}>Hidden</span>
+                    ) : null}
+                  </div>
+                  {request.message ? (
+                    <div className={requestMessageClass}>{request.message}</div>
+                  ) : (
+                    <span className={mutedTextClass}>No message.</span>
+                  )}
+                  {request.status === 'pending' ? (
+                    <div className={rowClass}>
+                      <GameCTAButton
+                        variant="success"
+                        size="sm"
+                        icon="check"
+                        loading={
+                          actionLoading === `accept-request-${request.id}`
+                        }
+                        disabled={
+                          loadingCollaborationRequests || Boolean(actionLoading)
+                        }
+                        onClick={() => onAcceptRequest(request.id)}
+                      >
+                        Accept
+                      </GameCTAButton>
                       <GameCTAButton
                         variant="neutral"
                         size="sm"
-                        icon="eye-slash"
-                        loading={actionLoading === `hide-request-${request.id}`}
-                        disabled={Boolean(actionLoading)}
-                        onClick={() => onHideRequest(request.id)}
+                        icon="ban"
+                        loading={
+                          actionLoading === `reject-request-${request.id}`
+                        }
+                        disabled={
+                          loadingCollaborationRequests || Boolean(actionLoading)
+                        }
+                        onClick={() => onRejectRequest(request.id)}
                       >
-                        Hide
+                        Reject
                       </GameCTAButton>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        )}
-        {requestActionError ? (
-          <span className={errorClass}>{requestActionError}</span>
-        ) : null}
-      </div>
-      {showPrompt && acceptedContributorCount === 0 ? (
-        <CollaborationPromptCard
-          build={build}
-          onOpenCollaborationSettings={onOpenCollaborationSettings}
-        />
-      ) : null}
-      {contributorsCardShown ? (
-        <div className={detailClass}>
-          <div className={rowClass}>
-            <strong>Team members</strong>
-          </div>
-          <ContributorInvitePicker
-            buildId={rootBuildId}
-            canInvite={canInviteContributors}
-            contributors={contributors}
-            onInvited={onInvited}
-            onRemoveContributor={onRemoveContributor}
-          />
+                      {!request.ownerHidden ? (
+                        <GameCTAButton
+                          variant="neutral"
+                          size="sm"
+                          icon="eye-slash"
+                          loading={
+                            actionLoading === `hide-request-${request.id}`
+                          }
+                          disabled={
+                            loadingCollaborationRequests ||
+                            Boolean(actionLoading)
+                          }
+                          onClick={() => onHideRequest(request.id)}
+                        >
+                          Hide
+                        </GameCTAButton>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+          {requestActionError ? (
+            <span className={errorClass}>{requestActionError}</span>
+          ) : null}
         </div>
+      ) : null}
+      {showTeamManagement ? (
+        <>
+          {showPrompt && acceptedContributorCount === 0 ? (
+            <CollaborationPromptCard
+              build={build}
+              onOpenCollaborationSettings={onOpenCollaborationSettings}
+            />
+          ) : null}
+          {contributorsCardShown ? (
+            <div className={detailClass}>
+              <div className={rowClass}>
+                <strong>Team members</strong>
+              </div>
+              <ContributorInvitePicker
+                buildId={rootBuildId}
+                canInvite={canInviteContributors}
+                contributors={contributors}
+                onInvited={onInvited}
+                onRemoveContributor={onRemoveContributor}
+              />
+            </div>
+          ) : null}
+        </>
       ) : null}
     </>
   );

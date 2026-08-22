@@ -385,6 +385,23 @@ export default function CollaborationPanel({
   activeForumScopeIdentityRef.current = forumScopeIdentity;
   const canInviteContributors = true;
   const contributorsCardShown = true;
+  const ownerCollaborationIdentity = `${rootBuildId}:${Number(
+    userId || 0
+  )}:${isOwner && !isContributionFork ? 'owner' : 'other'}`;
+  const collaborationRequestViewIdentity = `${ownerCollaborationIdentity}:${
+    showHiddenCollaborationRequests ? 'hidden' : 'visible'
+  }`;
+  const activeOwnerCollaborationIdentityRef = useRef(
+    ownerCollaborationIdentity
+  );
+  const activeCollaborationRequestViewIdentityRef = useRef(
+    collaborationRequestViewIdentity
+  );
+  const contributorLoadSequenceRef = useRef(0);
+  const collaborationRequestLoadSequenceRef = useRef(0);
+  activeOwnerCollaborationIdentityRef.current = ownerCollaborationIdentity;
+  activeCollaborationRequestViewIdentityRef.current =
+    collaborationRequestViewIdentity;
 
   useEffect(() => {
     panelMountedRef.current = true;
@@ -1026,8 +1043,13 @@ export default function CollaborationPanel({
     if (isOwner && !isContributionFork) {
       return (
         <div className={embeddedBodyStackClass}>
+          {renderOwnerTeamPanel({
+            showJoinRequests: true,
+            showPrompt: false,
+            showTeamManagement: false
+          })}
           {renderForum()}
-          {renderOwnerTeamPanel()}
+          {renderOwnerTeamPanel({ showJoinRequests: false })}
         </div>
       );
     }
@@ -1106,7 +1128,11 @@ export default function CollaborationPanel({
     );
   }
 
-  function renderOwnerTeamPanel({ showPrompt = true } = {}) {
+  function renderOwnerTeamPanel({
+    showJoinRequests = true,
+    showPrompt = true,
+    showTeamManagement = true
+  } = {}) {
     return (
       <OwnerTeamPanel
         acceptedContributorCount={acceptedContributorCount}
@@ -1120,16 +1146,19 @@ export default function CollaborationPanel({
         requestActionError={requestActionError}
         rootBuildId={rootBuildId}
         showHiddenCollaborationRequests={showHiddenCollaborationRequests}
+        showJoinRequests={showJoinRequests}
         showPrompt={showPrompt}
+        showTeamManagement={showTeamManagement}
         onAcceptRequest={handleAcceptCollaborationRequest}
         onHideRequest={handleHideCollaborationRequest}
         onInvited={reloadContributors}
         onOpenCollaborationSettings={onOpenCollaborationSettings}
         onRejectRequest={handleRejectCollaborationRequest}
         onRemoveContributor={handleRevokeContributor}
-        onToggleHiddenRequests={() =>
-          setShowHiddenCollaborationRequests((current) => !current)
-        }
+        onToggleHiddenRequests={() => {
+          setLoadingCollaborationRequests(true);
+          setShowHiddenCollaborationRequests((current) => !current);
+        }}
       />
     );
   }
@@ -1191,8 +1220,17 @@ export default function CollaborationPanel({
 
   async function reloadContributors() {
     if (!rootBuildId) return;
+    const loadSequence = ++contributorLoadSequenceRef.current;
+    const loadIdentity = ownerCollaborationIdentity;
     try {
       const result = await loadBuildContributors(rootBuildId);
+      if (
+        !panelMountedRef.current ||
+        activeOwnerCollaborationIdentityRef.current !== loadIdentity ||
+        loadSequence !== contributorLoadSequenceRef.current
+      ) {
+        return;
+      }
       const nextContributors = Array.isArray(result?.contributors)
         ? result.contributors
         : [];
@@ -1210,6 +1248,10 @@ export default function CollaborationPanel({
 
   async function reloadCollaborationRequests(hidden: boolean) {
     if (!rootBuildId || !isOwner || isContributionFork) return;
+    const loadSequence = ++collaborationRequestLoadSequenceRef.current;
+    const loadIdentity = `${ownerCollaborationIdentity}:${
+      hidden ? 'hidden' : 'visible'
+    }`;
     setLoadingCollaborationRequests(true);
     try {
       const result = await loadBuildCollaborationRequests({
@@ -1219,6 +1261,13 @@ export default function CollaborationPanel({
       const nextRequests = Array.isArray(result?.requests)
         ? result.requests
         : [];
+      if (
+        !panelMountedRef.current ||
+        activeCollaborationRequestViewIdentityRef.current !== loadIdentity ||
+        loadSequence !== collaborationRequestLoadSequenceRef.current
+      ) {
+        return;
+      }
       setCollaborationRequests(nextRequests);
       if (!hidden) {
         patchPendingCollaborationRequestCount(
@@ -1228,7 +1277,13 @@ export default function CollaborationPanel({
     } catch (error) {
       console.error('Failed to load build collaboration requests:', error);
     } finally {
-      setLoadingCollaborationRequests(false);
+      if (
+        panelMountedRef.current &&
+        activeCollaborationRequestViewIdentityRef.current === loadIdentity &&
+        loadSequence === collaborationRequestLoadSequenceRef.current
+      ) {
+        setLoadingCollaborationRequests(false);
+      }
     }
   }
 
@@ -1250,54 +1305,33 @@ export default function CollaborationPanel({
     });
   }
 
-  function getPendingRequestCountAfterResolving(
-    request?: BuildCollaborationRequest | null
-  ) {
-    if (
-      !request ||
-      request.status !== 'pending' ||
-      Number(request.ownerHidden || 0) !== 0
-    ) {
-      return null;
-    }
-    const currentCount = Math.max(
-      Math.floor(Number(build.pendingCollaborationRequestCount) || 0),
-      getVisiblePendingCollaborationRequestCount()
-    );
-    return Math.max(0, currentCount - 1);
-  }
-
   async function handleAcceptCollaborationRequest(requestId: number) {
-    if (!rootBuildId || !requestId || actionLoading) return;
+    if (
+      !rootBuildId ||
+      !requestId ||
+      actionLoading ||
+      loadingCollaborationRequests
+    ) {
+      return;
+    }
     setActionLoading(`accept-request-${requestId}`);
     setRequestActionError('');
     try {
-      const request = collaborationRequests.find(
-        (entry) => Number(entry.id) === Number(requestId)
-      );
-      const nextPendingCount = getPendingRequestCountAfterResolving(request);
       const result = await acceptBuildCollaborationRequest({
         buildId: rootBuildId,
         requestId
       });
       if (result?.build) {
-        onBuildPatch({
-          ...result.build,
-          ...(nextPendingCount !== null
-            ? { pendingCollaborationRequestCount: nextPendingCount }
-            : {})
-        });
-      } else if (nextPendingCount !== null) {
-        patchPendingCollaborationRequestCount(nextPendingCount);
+        onBuildPatch(result.build);
       }
-      setCollaborationRequests((current) =>
-        current.filter((request) => Number(request.id) !== Number(requestId))
-      );
       if (result?.defaultBranch) {
         onContributionBranchCreated?.(result.defaultBranch);
         void reloadContributions();
       }
-      void reloadContributors();
+      await Promise.all([
+        reloadCollaborationRequests(showHiddenCollaborationRequests),
+        reloadContributors()
+      ]);
     } catch (error: any) {
       setRequestActionError(
         error?.response?.data?.error ||
@@ -1310,32 +1344,22 @@ export default function CollaborationPanel({
   }
 
   async function handleRejectCollaborationRequest(requestId: number) {
-    if (!rootBuildId || !requestId || actionLoading) return;
+    if (
+      !rootBuildId ||
+      !requestId ||
+      actionLoading ||
+      loadingCollaborationRequests
+    ) {
+      return;
+    }
     setActionLoading(`reject-request-${requestId}`);
     setRequestActionError('');
     try {
-      const request = collaborationRequests.find(
-        (entry) => Number(entry.id) === Number(requestId)
-      );
-      const nextPendingCount = getPendingRequestCountAfterResolving(request);
-      const result = await rejectBuildCollaborationRequest({
+      await rejectBuildCollaborationRequest({
         buildId: rootBuildId,
         requestId
       });
-      if (result?.request && showHiddenCollaborationRequests) {
-        setCollaborationRequests((current) =>
-          current.map((request) =>
-            Number(request.id) === Number(requestId) ? result.request : request
-          )
-        );
-      } else if (result?.success) {
-        setCollaborationRequests((current) =>
-          current.filter((request) => Number(request.id) !== Number(requestId))
-        );
-      }
-      if (nextPendingCount !== null) {
-        patchPendingCollaborationRequestCount(nextPendingCount);
-      }
+      await reloadCollaborationRequests(showHiddenCollaborationRequests);
     } catch (error: any) {
       setRequestActionError(
         error?.response?.data?.error ||
@@ -1348,26 +1372,22 @@ export default function CollaborationPanel({
   }
 
   async function handleHideCollaborationRequest(requestId: number) {
-    if (!rootBuildId || !requestId || actionLoading) return;
+    if (
+      !rootBuildId ||
+      !requestId ||
+      actionLoading ||
+      loadingCollaborationRequests
+    ) {
+      return;
+    }
     setActionLoading(`hide-request-${requestId}`);
     setRequestActionError('');
     try {
-      const request = collaborationRequests.find(
-        (entry) => Number(entry.id) === Number(requestId)
-      );
-      const nextPendingCount = getPendingRequestCountAfterResolving(request);
-      const result = await hideBuildCollaborationRequest({
+      await hideBuildCollaborationRequest({
         buildId: rootBuildId,
         requestId
       });
-      if (result?.success) {
-        setCollaborationRequests((current) =>
-          current.filter((request) => Number(request.id) !== Number(requestId))
-        );
-        if (nextPendingCount !== null) {
-          patchPendingCollaborationRequestCount(nextPendingCount);
-        }
-      }
+      await reloadCollaborationRequests(showHiddenCollaborationRequests);
     } catch (error: any) {
       setRequestActionError(
         error?.response?.data?.error ||
@@ -1382,18 +1402,11 @@ export default function CollaborationPanel({
   async function handleRevokeContributor(contributorUserId: number) {
     if (!rootBuildId || contributorUserId <= 0) return;
     try {
-      const result = await revokeBuildContributor({
+      await revokeBuildContributor({
         buildId: rootBuildId,
         userId: contributorUserId
       });
-      if (result?.success) {
-        setContributors((current) =>
-          current.filter(
-            (contributor) =>
-              Number(contributor.userId) !== Number(contributorUserId)
-          )
-        );
-      }
+      await reloadContributors();
     } catch (error) {
       console.error('Failed to revoke build contributor:', error);
     }

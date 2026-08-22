@@ -234,6 +234,7 @@ export default function Results({
               build={build}
               isOwner
               to={`/app/${build.id}`}
+              updatedAtSource="workspace"
               navigationState={{
                 runtimeBackTo,
                 runtimeBackLabel: 'Back to Build Studio'

@@ -6,6 +6,7 @@ import {
   buildLiveCommentEntries,
   upsertLiveComments
 } from '~/helpers/liveComments';
+import { applySpoilerStatusChange } from './spoilerState';
 
 type RewardListUpdater = (rewards: Reward[] | undefined) => Reward[];
 type RewardCapsUpdater = (
@@ -452,48 +453,20 @@ export default function ContentReducer(
         }
       };
     case 'CHANGE_SPOILER_STATUS': {
-      const newState = { ...state };
-      const contentKeys = Object.keys(newState);
-      for (const contentKey of contentKeys) {
-        const prevContentState = newState[contentKey];
-        const contentMatches =
-          prevContentState.contentId === action.contentId &&
-          prevContentState.contentType === action.contentType;
-        const targetSubjectMatches =
-          prevContentState.targetObj?.subject?.id === action.contentId;
-        newState[contentKey] = {
-          ...prevContentState,
-          ...(contentMatches || targetSubjectMatches
-            ? {
-                prevSecretViewerId: action.prevSecretViewerId,
-                secretShown: action.shown
-              }
-            : {}),
-          targetObj: prevContentState.targetObj
-            ? {
-                ...prevContentState.targetObj,
-                subject: prevContentState.targetObj.subject
-                  ? targetSubjectMatches
-                    ? {
-                        ...prevContentState.targetObj.subject,
-                        secretShown: action.shown
-                      }
-                    : prevContentState.targetObj.subject
-                  : undefined
-              }
-            : undefined
-        };
-      }
-      if (!newState['subject' + action.contentId]) {
-        newState['subject' + action.contentId] = {
+      return applySpoilerStatusChange({
+        state,
+        contentId: action.contentId,
+        contentType: action.contentType,
+        prevSecretViewerId: action.prevSecretViewerId,
+        shown: action.shown,
+        missingSubjectState: {
           ...defaultState,
           contentType: 'subject',
           contentId: action.contentId,
           prevSecretViewerId: action.prevSecretViewerId,
           secretShown: action.shown
-        };
-      }
-      return newState;
+        }
+      });
     }
     case 'UPDATE_USER_COINS':
       return {

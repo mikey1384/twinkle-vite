@@ -25,7 +25,7 @@ import AICardModal from '~/components/Modals/AICardModal';
 import AIStoryView from './AIStoryView';
 import BuildContent from './BuildContent';
 import SanitizedHTML from 'react-sanitized-html';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { Subject, User, Content, Comment } from '~/types';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
@@ -92,12 +92,6 @@ export default function Content({
   title: string;
   uploader: User;
 }) {
-  const checkIfUserResponded = useAppContext(
-    (v) => v.requestHelpers.checkIfUserResponded
-  );
-  const onChangeSpoilerStatus = useContentContext(
-    (v) => v.actions.onChangeSpoilerStatus
-  );
   const userId = useKeyContext((v) => v.myState.userId);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
   const [cardModalShown, setCardModalShown] = useState(false);
@@ -238,8 +232,9 @@ export default function Content({
   const dailyTaskRewardMultiplierLabel = formatRewardMultiplier(
     dailyTaskRewardMultiplier
   );
-  const dailyTaskRewardMultiplierTier =
-    getDailyTaskRewardMultiplierTier(dailyTaskRewardMultiplier);
+  const dailyTaskRewardMultiplierTier = getDailyTaskRewardMultiplierTier(
+    dailyTaskRewardMultiplier
+  );
   const dailyTaskRewardMultiplierChipStyle = useMemo(
     () => getDailyTaskRewardMultiplierChipStyle(dailyTaskRewardMultiplierTier),
     [dailyTaskRewardMultiplierTier]
@@ -265,14 +260,6 @@ export default function Content({
         if (secretHidden) {
           return (
             <SecretComment
-              onMount={async () => {
-                const { responded } = await checkIfUserResponded(rootId);
-                onChangeSpoilerStatus({
-                  shown: responded,
-                  subjectId: rootId,
-                  prevSecretViewerId: userId
-                });
-              }}
               onClick={() =>
                 navigate(`/subjects/${targetObj?.subject?.id || rootId}`)
               }

@@ -497,6 +497,30 @@ test('branch-local overlap remains blocked after Main is fixed', () => {
   assert.doesNotMatch(markup, /conflict markers|\/app\.js/i);
 });
 
+test('an active Lumine run keeps the branch repair action loading', () => {
+  const editorSource = readFileSync(
+    new URL('../src/containers/Build/Editor/index.tsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(
+    editorSource,
+    /const branchWorkspaceLumineFixControl[\s\S]*?loading:\s*currentBuildRunView\.generating/
+  );
+
+  const markup = renderToStaticMarkup(
+    React.createElement(BranchMainUpdateNotice, {
+      canUpdate: false,
+      branchLumineFixControl: {
+        loading: true,
+        onFix() {}
+      },
+      onUpdate() {}
+    })
+  );
+  assert.match(markup, /disabled=""/);
+  assert.match(markup, /aria-busy="true"/);
+});
+
 test('the canonical branch notice owns the update-or-repair action', () => {
   const input = {
     ownerReview: false,

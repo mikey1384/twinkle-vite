@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  getBuildCardUpdatedAt,
   getViewerCollaborationBuildSummaryPatch,
-  patchBuildSummaryMap,
-  shouldShowBuildUpdatedMeta
+  patchBuildSummaryMap
 } from '../src/helpers/buildSummaryHelpers';
 
 const VIEWER = 7;
@@ -218,10 +218,20 @@ test('collaboration event times normalize seconds before stale comparison', () =
   assert.equal(update?.patch.viewerCollaborationEventTimeMs, 3000);
 });
 
-test('Updated metadata is hidden only when it duplicates Published', () => {
-  assert.equal(shouldShowBuildUpdatedMeta(100, 100), false);
-  assert.equal(shouldShowBuildUpdatedMeta(100.9, 100.1), false);
-  assert.equal(shouldShowBuildUpdatedMeta(101, 100), true);
-  assert.equal(shouldShowBuildUpdatedMeta(100, null), true);
-  assert.equal(shouldShowBuildUpdatedMeta(0, 100), false);
+test('card update time follows the version represented by the surface', () => {
+  const build = {
+    publishedAt: 100,
+    updatedAt: 110,
+    lastActivityAt: 120
+  };
+  assert.equal(getBuildCardUpdatedAt(build, 'publicVersion'), 100);
+  assert.equal(getBuildCardUpdatedAt(build, 'workspace'), 120);
+  assert.equal(
+    getBuildCardUpdatedAt(
+      { publishedAt: 100, updatedAt: 130, lastActivityAt: 120 },
+      'workspace'
+    ),
+    130
+  );
+  assert.equal(getBuildCardUpdatedAt(null, 'workspace'), 0);
 });

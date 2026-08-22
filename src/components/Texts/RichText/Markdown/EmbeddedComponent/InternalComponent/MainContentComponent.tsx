@@ -263,6 +263,7 @@ function BuildRichTextEmbed({
         build={buildCardInput}
         showFavoriteAction
         to={`/app/${contentId}`}
+        updatedAtSource={build?.isPublic ? 'publicVersion' : 'workspace'}
         onOpenForkHistory={setForkHistoryBuildId}
       />
       {forkHistoryBuildId ? (

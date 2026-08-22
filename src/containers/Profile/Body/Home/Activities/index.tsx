@@ -18,7 +18,6 @@ export default function Activities({
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const [isNotablesLoading, setIsNotablesLoading] = useState(false);
-  const [isSubjectsLoading, setIsSubjectsLoading] = useState(false);
   const loadNotableContent = useAppContext(
     (v) => v.requestHelpers.loadNotableContent
   );
@@ -59,17 +58,12 @@ export default function Activities({
       }
     }
     async function initSubjects() {
-      setIsSubjectsLoading(true);
       try {
         const subjects = await loadFeaturedSubjectsOnProfile(id);
         if (checkUserChange(requestUserId)) return;
         onLoadFeaturedSubjects({ username, subjects });
       } catch (error) {
         console.error(error);
-      } finally {
-        if (!checkUserChange(requestUserId)) {
-          setIsSubjectsLoading(false);
-        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,7 +84,7 @@ export default function Activities({
           username={username}
           subjects={featuredSubjects}
           selectedTheme={selectedTheme}
-          loading={isSubjectsLoading}
+          loaded={isSubjectsLoaded}
         />
       )}
       <NotableActivities

@@ -35,6 +35,7 @@ export const initialExploreState = {
     byUsersLoadMoreButton: false,
     byUsersLoaded: false,
     featureds: [],
+    featuredLoaded: false,
     featuredExpanded: false,
     recommendeds: [],
     recommendedExpanded: false,

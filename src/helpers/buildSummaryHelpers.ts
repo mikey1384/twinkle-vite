@@ -281,14 +281,29 @@ export function mergeBuildSummaryMap(
   return changed ? nextMap : currentMap;
 }
 
-export function shouldShowBuildUpdatedMeta(
-  displayUpdatedAt: unknown,
-  publishedAt: unknown
+export type BuildCardUpdatedAtSource = 'workspace' | 'publicVersion';
+
+export function getBuildCardUpdatedAt(
+  build:
+    | {
+        publishedAt?: unknown;
+        updatedAt?: unknown;
+        lastActivityAt?: unknown;
+      }
+    | null
+    | undefined,
+  source: BuildCardUpdatedAtSource
 ) {
-  const normalizedUpdatedAt = Math.floor(Number(displayUpdatedAt) || 0);
-  return (
-    normalizedUpdatedAt > 0 &&
-    normalizedUpdatedAt !== Math.floor(Number(publishedAt) || 0)
+  if (!build) return 0;
+  if (source === 'publicVersion') {
+    return normalizeNonNegativeInteger(build.publishedAt);
+  }
+  // lastActivityAt includes contribution-branch saves; lists are ordered by
+  // it, so display the same timestamp to keep the order legible. updatedAt
+  // can be fresher when the cached build was just saved in this session.
+  return Math.max(
+    normalizeNonNegativeInteger(build.lastActivityAt),
+    normalizeNonNegativeInteger(build.updatedAt)
   );
 }
 
