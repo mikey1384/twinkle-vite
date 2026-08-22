@@ -240,10 +240,10 @@ test('keeps mobile build app thumbnails close to square without changing desktop
     },
     userId: 1
   });
-  const mainStylesSource = readFileSync(
+  const buildMiniCardSource = readFileSync(
     path.resolve(
       __dirname,
-      '../src/containers/Home/Stories/FeedCard/Body/styles/mainPreviewStyles.ts'
+      '../src/components/Build/Cards/BuildMiniCard.tsx'
     ),
     'utf8'
   );
@@ -265,8 +265,12 @@ test('keeps mobile build app thumbnails close to square without changing desktop
   assert.equal(noThumbnailSizing.main.size, 'build');
   assert.equal(noThumbnailSizing.card.mobileBodyHeight, 'max(14rem, 140px)');
   assert.match(
-    mainStylesSource,
-    /\.home-feed-card__build-preview--no-thumb \{\n\s+grid-template-columns: 1fr;/
+    buildMiniCardSource,
+    /&\.no-preview \{\n\s+grid-template-columns: minmax\(0, 1fr\);/
+  );
+  assert.match(
+    buildMiniCardSource,
+    /\(!thumbnailUrl \|\| isCompactEmbed\) && 'no-preview'/
   );
   assert.match(
     mobileStylesSource,
@@ -421,9 +425,9 @@ test('keeps secret-answer subjects above the action floor', () => {
     userId: 1
   });
 
-  assert.equal(sizing.main.size, 'standard');
-  assert.equal(sizing.card.bodyHeight, 'max(20rem, 200px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(19rem, 190px)');
+  assert.equal(sizing.main.size, 'subject-secret-preview');
+  assert.equal(sizing.card.bodyHeight, 'max(22.5rem, 225px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(22rem, 220px)');
   assert.deepEqual(
     getSubjectPreviewLineLimits({
       axis: 'desktop',
@@ -463,10 +467,10 @@ test('uses compact height for short effort subjects with short revealed secrets'
   assert.equal(sizing.main.size, 'subject-secret-compact');
   assert.equal(sizing.card.size, 'compact-card');
   assert.equal(sizing.card.hasCommentPreview, true);
-  assert.equal(sizing.card.bodyHeight, 'max(17.5rem, 175px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(18.5rem, 185px)');
-  assert.equal(sizing.card.desktopHeight, 'calc(max(37.65rem, 376.5px) + 2px)');
-  assert.equal(sizing.card.mobileHeight, 'calc(max(38.3rem, 383px) + 2px)');
+  assert.equal(sizing.card.bodyHeight, 'max(19rem, 190px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(20rem, 200px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(39.15rem, 391.5px) + 2px)');
+  assert.equal(sizing.card.mobileHeight, 'calc(max(39.8rem, 398px) + 2px)');
   assert.deepEqual(
     getSubjectPreviewLineLimits({
       axis: 'desktop',
@@ -522,9 +526,9 @@ test('uses preview height for short public subjects with long revealed secrets',
 
   assert.equal(sizing.main.size, 'subject-secret-preview');
   assert.equal(sizing.card.hasCommentPreview, true);
-  assert.equal(sizing.card.bodyHeight, 'max(22rem, 220px)');
+  assert.equal(sizing.card.bodyHeight, 'max(22.5rem, 225px)');
   assert.equal(sizing.card.mobileBodyHeight, 'max(22rem, 220px)');
-  assert.equal(sizing.card.desktopHeight, 'calc(max(42.15rem, 421.5px) + 2px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(42.65rem, 426.5px) + 2px)');
   assert.equal(sizing.card.mobileHeight, 'calc(max(41.8rem, 418px) + 2px)');
   assert.deepEqual(
     getSubjectPreviewLineLimits({
@@ -870,33 +874,42 @@ test('keeps subject description styling separate from secret styling', () => {
   const rootDescriptionBlock = stylesSource.match(
     /\.home-feed-card__subject-preview--with-root \.home-feed-card__subject-description \{([\s\S]*?)\n  \}/
   )?.[1];
+  const subjectDescriptionBlock = stylesSource.match(
+    /\n  \.home-feed-card__subject-description \{([\s\S]*?)\n  \}/
+  )?.[1];
 
   assert.ok(rootDescriptionBlock);
+  assert.ok(subjectDescriptionBlock);
   assert.doesNotMatch(rootDescriptionBlock, /background:/);
   assert.doesNotMatch(rootDescriptionBlock, /border:/);
   assert.match(rootDescriptionBlock, /color: inherit/);
   assert.doesNotMatch(rootDescriptionBlock, /Color\.gold|Color\.ivory/);
-  assert.match(
-    stylesSource,
-    /\.home-feed-card__subject-description \{[\s\S]*font-family: inherit;[\s\S]*font-size: inherit;/
-  );
+  assert.match(subjectDescriptionBlock, /font-family: inherit;/);
+  assert.match(subjectDescriptionBlock, /font-size: inherit;/);
   assert.match(
     stylesSource,
     /\.home-feed-card__reflection-answer \{[\s\S]*line-height: 1\.36;/
   );
   assert.match(
     mobileStylesSource,
-    /\.home-feed-card__subject-copy[\s\S]*>\s+\.home-feed-card__subject-description,[\s\S]*line-height: 1\.36;/
+    /\.home-feed-card__subject-copy\s+\.home-feed-card__subject-description,[\s\S]*?\.home-feed-card__subject-copy\s+\.home-feed-card__subject-description p,[\s\S]*?\{\s+line-height: 1\.36;/
   );
   assert.match(
     bodySource,
-    /const homeFeedPreviewRichTextStyle: React\.CSSProperties = \{\s+lineHeight: 1\.36\s+\};/
+    /const homeFeedPreviewLineHeight = 1\.36;/
+  );
+  assert.match(
+    bodySource,
+    /const homeFeedPreviewRichTextStyle: React\.CSSProperties = \{\s+lineHeight: homeFeedPreviewLineHeight\s+\};/
   );
   assert.equal(
     (bodySource.match(/style=\{homeFeedPreviewRichTextStyle\}/g) || []).length,
     5
   );
-  assert.doesNotMatch(stylesSource, /font-size: max\(1\.28rem, 12\.8px\)/);
+  assert.doesNotMatch(
+    subjectDescriptionBlock,
+    /font-size: max\(1\.28rem, 12\.8px\)/
+  );
   assert.match(stylesSource, /\.home-feed-card__subject-secret-answer \{/);
   assert.match(
     stylesSource,
@@ -904,7 +917,7 @@ test('keeps subject description styling separate from secret styling', () => {
   );
 });
 
-test('standardizes mobile subject title typography across feed card subject variants', () => {
+test('keeps mobile main and target subject title typography explicit across variants', () => {
   const mobileStylesSource = readFileSync(
     path.resolve(
       __dirname,
@@ -933,21 +946,33 @@ test('standardizes mobile subject title typography across feed card subject vari
     ),
     'utf8'
   );
-  const subjectTitleRule = mobileStylesSource.match(
-    /\.home-feed-card__subject-preview\s+\.home-feed-card__subject-copy\s+>\s+h3\.home-feed-card__primary-preview-text,\s+\.home-feed-card__target-subject \.home-feed-card__target-copy > h4 \{([\s\S]*?)\n\s+\}/
+  const mainSubjectTitleRule = mobileStylesSource.match(
+    /\.home-feed-card__subject-preview \.home-feed-card__subject-title \{([\s\S]*?)\n\s+\}/
+  );
+  const targetSubjectTitleRule = mobileStylesSource.match(
+    /\.home-feed-card__target-subject \.home-feed-card__target-copy > h4 \{([\s\S]*?)\n\s+\}/
   );
   const genericHeadingRule = mobileStylesSource.match(
     /\n\s+h3 \{([\s\S]*?)\n\s+\}/
   );
 
-  assert.ok(subjectTitleRule);
+  assert.ok(mainSubjectTitleRule);
+  assert.ok(targetSubjectTitleRule);
   assert.ok(genericHeadingRule);
-  assert.match(subjectTitleRule[0], /\.home-feed-card__target-subject/);
-  assert.match(subjectTitleRule[1], /font-size: 1\.9rem;/);
-  assert.match(subjectTitleRule[1], /line-height: 1\.24;/);
-  assert.doesNotMatch(subjectTitleRule[1], /max\(/);
+  assert.match(
+    mainSubjectTitleRule[1],
+    /font-size: max\(1\.811rem, 18\.11px\) !important;/
+  );
+  assert.match(mainSubjectTitleRule[1], /line-height: 1\.24;/);
+  assert.match(targetSubjectTitleRule[1], /font-size: 1\.9rem;/);
+  assert.match(targetSubjectTitleRule[1], /line-height: 1\.24;/);
+  assert.doesNotMatch(targetSubjectTitleRule[1], /max\(/);
   assert.ok(
-    mobileStylesSource.indexOf(subjectTitleRule[0]) >
+    mobileStylesSource.indexOf(mainSubjectTitleRule[0]) >
+      mobileStylesSource.indexOf(genericHeadingRule[0])
+  );
+  assert.ok(
+    mobileStylesSource.indexOf(targetSubjectTitleRule[0]) >
       mobileStylesSource.indexOf(genericHeadingRule[0])
   );
   assert.doesNotMatch(genericHeadingRule[1], /font-size: 1\.9rem;/);
@@ -961,15 +986,14 @@ test('standardizes mobile subject title typography across feed card subject vari
   );
 
   for (const variantSelector of [
-    '.home-feed-card__subject-preview--root-compact h3',
-    '.home-feed-card__subject-preview--with-embed h3',
-    '.home-feed-card__subject-preview--minimal h3'
+    '.home-feed-card__subject-preview--root-compact\n    .home-feed-card__subject-title',
+    '.home-feed-card__subject-preview--minimal\n    .home-feed-card__subject-title'
   ]) {
     assert.ok(getCssBlock(mainPreviewStylesSource, variantSelector));
     assert.ok(
       getCssSelectorClassCount(
-        '.home-feed-card__subject-preview .home-feed-card__subject-copy > h3.home-feed-card__primary-preview-text'
-      ) > getCssSelectorClassCount(variantSelector)
+        '.home-feed-card__subject-preview .home-feed-card__subject-title'
+      ) >= getCssSelectorClassCount(variantSelector)
     );
   }
   assert.ok(
@@ -1004,6 +1028,20 @@ test('protects crowded target-subject titles before lower-priority preview rows'
     path.resolve(
       __dirname,
       '../src/containers/Home/Stories/FeedCard/Body/TargetPreview.tsx'
+    ),
+    'utf8'
+  );
+  const wideSubjectPreviewSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/components/Subjects/WideSubjectEmbedPreview.tsx'
+    ),
+    'utf8'
+  );
+  const subjectTargetPreviewSource = readFileSync(
+    path.resolve(
+      __dirname,
+      '../src/components/Subjects/HomeFeedSubjectTargetPreview.tsx'
     ),
     'utf8'
   );
@@ -1053,15 +1091,26 @@ test('protects crowded target-subject titles before lower-priority preview rows'
   );
   assert.match(
     targetPreviewSource,
-    /const hasReward = Number\(target\?\.rewardLevel \|\| 0\) > 0;/
+    /<WideSubjectEmbedPreview[\s\S]*subject=\{target\}/
   );
-  assert.match(targetPreviewSource, /\$\{hasReward \? ' has-reward' : ''\}/);
   assert.match(
-    targetPreviewSource,
+    wideSubjectPreviewSource,
+    /const rewardLevel = Number\(subject\?\.rewardLevel \|\| 0\);/
+  );
+  assert.match(
+    wideSubjectPreviewSource,
+    /rewardLevel > 0 \? \([\s\S]*<CompactEffortStrip[\s\S]*className="home-feed-card__target-reward-bar"/
+  );
+  assert.match(
+    subjectTargetPreviewSource,
+    /rewardPreview \? 'has-reward' : ''/
+  );
+  assert.match(
+    subjectTargetPreviewSource,
     /className="home-feed-card__target-subject-description-slot"/
   );
   assert.match(
-    targetPreviewSource,
+    subjectTargetPreviewSource,
     /className="home-feed-card__target-subject-description"/
   );
   assert.match(targetSubjectCopyBlock, /height: 100%;/);
@@ -1070,8 +1119,8 @@ test('protects crowded target-subject titles before lower-priority preview rows'
   assert.ok(protectedTitleRule);
   assert.match(protectedTitleRule[1], /flex: 0 0 auto;/);
   assert.ok(targetTitleMinHeightRule);
-  assert.match(metadataBlock, /flex: 0 1 auto;/);
-  assert.match(metadataBlock, /min-height: 0;/);
+  assert.match(metadataBlock, /flex: 0 0 auto;/);
+  assert.match(metadataBlock, /min-height: max\(1\.37rem, 13\.7px\);/);
   assert.match(descriptionSlotBlock, /flex: 1 1 auto;/);
   assert.match(descriptionSlotBlock, /min-height: 0;/);
   assert.match(descriptionSlotBlock, /overflow: hidden;/);
@@ -1369,6 +1418,9 @@ test('keeps subject AI-card markdown embeds visible in the rich embed layout', (
   const embedCopyBlock = stylesSource.match(
     /\.home-feed-card__subject-preview--with-embed \.home-feed-card__subject-copy \{([\s\S]*?)\n  \}/
   )?.[1];
+  const embedTextStackBlock = stylesSource.match(
+    /\.home-feed-card__subject-preview--with-embed\s+\.home-feed-card__subject-copy\s+\.home-feed-card__subject-text-stack \{([\s\S]*?)\n  \}/
+  )?.[1];
 
   assert.equal(sizing.main.size, 'subject-rich-embed');
   assert.equal(sizing.flags.hasRichTextEmbed, true);
@@ -1388,12 +1440,19 @@ test('keeps subject AI-card markdown embeds visible in the rich embed layout', (
   );
   assert.match(
     bodySource,
-    /const descriptionText = descriptionEmbed[\s\S]*removeMarkdownImageEmbeds\(description\)/
+    /const descriptionText = descriptionEmbed\s+\? removeMarkdownImageEmbeds\(description\)\s+: description;/
   );
-  assert.match(bodySource, /className="home-feed-card__subject-embed-preview"/);
   assert.match(
     bodySource,
-    /<MarkdownEmbedPreview[\s\S]*embed=\{descriptionEmbed\}/
+    /const promotedDescriptionAttachmentEmbed =\s+!attachmentPreview && shouldAttemptMarkdownImagePreview\(descriptionEmbed\)\s+\? descriptionEmbed\s+: null;/
+  );
+  assert.match(
+    bodySource,
+    /const richDescriptionEmbed = promotedDescriptionAttachmentEmbed\s+\? null\s+: descriptionEmbed;/
+  );
+  assert.match(
+    bodySource,
+    /\{richDescriptionEmbed \? \(\s+<MarkdownEmbedPreview\s+className="home-feed-card__subject-embed-preview"\s+contentId=\{contentId\}\s+contentType=\{contentType\}\s+embed=\{richDescriptionEmbed\}/
   );
   assert.match(bodySource, /function renderRichTextEmbedPreview/);
   assert.match(bodySource, /className="home-feed-card__rich-embed-image"/);
@@ -1414,8 +1473,12 @@ test('keeps subject AI-card markdown embeds visible in the rich embed layout', (
     /\.home-feed-card__subject-embed-preview[\s\S]*\.compact-main-content-embed--ai-story-card:not\([\s\S]*compact-main-content-embed--ai-story-has-image[\s\S]*height: auto;[\s\S]*max-height: none;/
   );
   assert.ok(embedCopyBlock);
-  assert.match(embedCopyBlock, /flex: 0 0 auto;/);
-  assert.match(embedCopyBlock, /height: auto;/);
+  assert.match(embedCopyBlock, /min-height: 0;/);
+  assert.match(embedCopyBlock, /height: 100%;/);
+  assert.ok(embedTextStackBlock);
+  assert.match(embedTextStackBlock, /flex: 0 0 auto;/);
+  assert.match(embedTextStackBlock, /height: auto;/);
+  assert.match(embedTextStackBlock, /overflow: hidden;/);
 });
 
 test('reuses the Continue Watching video tile for compact XP video embeds', () => {
@@ -1552,10 +1615,10 @@ test('expands attachment-only image comments into full-width media frames', () =
     ),
     'utf8'
   );
-  const primitivesSource = readFileSync(
+  const subjectMediaPreviewSource = readFileSync(
     path.resolve(
       __dirname,
-      '../src/containers/Home/Stories/FeedCard/Body/PreviewPrimitives.tsx'
+      '../src/components/Subjects/SubjectMediaPreview.tsx'
     ),
     'utf8'
   );
@@ -1604,14 +1667,22 @@ test('expands attachment-only image comments into full-width media frames', () =
     /attachmentFileType === 'image' \|\| attachmentFileType === 'video'/
   );
   assert.match(bodySource, /`comment-\$\{attachmentFileType\}`/);
-  assert.match(primitivesSource, /fillUnavailablePreview/);
+  assert.match(
+    bodySource,
+    /import \{ AttachmentSurface \} from '~\/components\/Subjects\/SubjectMediaPreview';/
+  );
+  assert.match(subjectMediaPreviewSource, /export function AttachmentSurface/);
+  assert.match(subjectMediaPreviewSource, /fillUnavailablePreview/);
   assert.match(
     fileViewerSource,
     /fillUnavailablePreview=\{fillUnavailablePreview\}/
   );
-  assert.match(primitivesSource, /fillPreview=\{fileType === 'image'\}/);
   assert.match(
-    primitivesSource,
+    subjectMediaPreviewSource,
+    /fillPreview=\{fileType === 'image'\}/
+  );
+  assert.match(
+    subjectMediaPreviewSource,
     /previewObjectFit=\{fileType === 'image' \? 'contain' : undefined\}/
   );
   assert.match(fileViewerSource, /fillPreview=\{fillPreview\}/);
@@ -1894,7 +1965,7 @@ test('uses layout-aware description lines for subjects with secret answers', () 
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 4,
+      descriptionMaxLines: 6,
       secretMaxLines: 1
     }
   );
@@ -2179,7 +2250,7 @@ test('keeps AI Story listening cards out of story text clamps', () => {
   assert.match(mainStylesSource, /home-feed-card__audio-wave/);
 });
 
-test('keeps sibling media-like content in bounded feed buckets', () => {
+test('keeps sibling media-like content in their bounded feed buckets', () => {
   const aiStorySizing = getFeedCardSizing({
     content: {
       contentType: 'aiStory',
@@ -2194,7 +2265,7 @@ test('keeps sibling media-like content in bounded feed buckets', () => {
   assert.equal(aiStorySizing.card.bodyHeight, 'max(20rem, 200px)');
   assert.equal(aiStorySizing.card.mobileBodyHeight, 'max(19rem, 190px)');
 
-  for (const contentType of ['sharedTopic', 'url', 'video']) {
+  for (const contentType of ['sharedTopic', 'video']) {
     const sizing = getFeedCardSizing({
       content: {
         contentType,
@@ -2212,6 +2283,20 @@ test('keeps sibling media-like content in bounded feed buckets', () => {
       contentType
     );
   }
+
+  const urlSizing = getFeedCardSizing({
+    content: {
+      contentType: 'url',
+      description: 'A short media-like feed item.',
+      title: 'url item'
+    },
+    userId: 1
+  });
+
+  assert.equal(urlSizing.main.size, 'url');
+  assert.equal(urlSizing.card.size, 'media-card');
+  assert.equal(urlSizing.card.bodyHeight, 'max(25rem, 250px)');
+  assert.equal(urlSizing.card.mobileBodyHeight, 'max(23rem, 230px)');
 });
 
 test('AI Story home previews render generated images when available', () => {
@@ -2243,6 +2328,14 @@ test('AI Story home previews render generated images when available', () => {
     ),
     'utf8'
   );
+  const toplineBlock = getCssBlock(
+    stylesSource,
+    '.home-feed-card__ai-story-topline'
+  );
+  const toplineLabelBlock = getCssBlock(
+    stylesSource,
+    '.home-feed-card__ai-story-topline span:first-child'
+  );
 
   assert.match(primitivesSource, /function getAIStoryImageUrl/);
   assert.match(primitivesSource, /imageUrl/);
@@ -2253,18 +2346,11 @@ test('AI Story home previews render generated images when available', () => {
   assert.match(bodySource, /home-feed-card__ai-story-image/);
   assert.match(targetSource, /home-feed-card__ai-story-image/);
   assert.match(stylesSource, /home-feed-card__ai-story-image-frame/);
-  assert.match(
-    stylesSource,
-    /\.home-feed-card__ai-story-topline \{[\s\S]*line-height: 1\.25;/
-  );
-  assert.match(
-    stylesSource,
-    /\.home-feed-card__ai-story-topline span:first-child \{[\s\S]*overflow: visible;[\s\S]*padding-block: 0\.08rem;[\s\S]*line-height: 1\.35;/
-  );
-  assert.doesNotMatch(
-    stylesSource,
-    /\.home-feed-card__ai-story-topline \{[\s\S]*line-height: 1;/
-  );
+  assert.match(toplineBlock, /line-height: 1\.25;/);
+  assert.match(toplineLabelBlock, /overflow: visible;/);
+  assert.match(toplineLabelBlock, /padding-block: 0\.08rem;/);
+  assert.match(toplineLabelBlock, /line-height: 1\.35;/);
+  assert.doesNotMatch(toplineBlock, /line-height: 1;/);
 });
 
 test('uses secret bucket for hidden secret subjects', () => {
@@ -2297,10 +2383,12 @@ test('keeps public subject media visible when only the secret answer is hidden',
 
   assert.equal(sizing.flags.secretHidden, true);
   assert.equal(sizing.flags.hasAttachment, true);
-  assert.equal(sizing.main.size, 'subject-media');
+  assert.equal(sizing.main.size, 'subject-secret-media');
+  assert.equal(sizing.card.bodyHeight, 'max(25rem, 250px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(24rem, 240px)');
   assert.match(
     sizing.main.className,
-    /home-feed-card__panel-preview--size-subject-media/
+    /home-feed-card__panel-preview--size-subject-secret-media/
   );
 });
 
@@ -2436,7 +2524,7 @@ test('hides target comments when a secret subject locks the feed card', () => {
   assert.match(targetPreviewSource, /if \(secretHidden\) return null;/);
 });
 
-test('home feed cards keep latest preview comments from feed and loaded state', () => {
+test('home feed cards keep latest canonical preview comments from feed and loaded state', () => {
   const feedCardSource = readFileSync(
     path.resolve(
       __dirname,
@@ -2447,7 +2535,19 @@ test('home feed cards keep latest preview comments from feed and loaded state', 
 
   assert.match(
     feedCardSource,
-    /const previewComments = getHomeFeedCardPreviewComments\(\{[\s\S]*contentComments,[\s\S]*feedPreviewComments[\s\S]*\}\);/
+    /const selectedPreviewComments = getHomeFeedCardPreviewComments\(\{[\s\S]*contentComments,[\s\S]*feedPreviewComments[\s\S]*\}\);/
+  );
+  assert.match(
+    feedCardSource,
+    /const livePreviewComment = useLiveComment\(selectedPreviewComments\[0\]\);/
+  );
+  assert.match(
+    feedCardSource,
+    /const previewComments =[\s\S]*livePreviewComment === selectedPreviewComments\[0\][\s\S]*\? selectedPreviewComments[\s\S]*: \[livePreviewComment, \.\.\.selectedPreviewComments\.slice\(1\)\];/
+  );
+  assert.match(
+    feedCardSource,
+    /const renderablePreviewComments =[\s\S]*getRenderableHomeFeedPreviewComments\(previewComments\);/
   );
   assert.match(feedCardSource, /function getHomeFeedCardPreviewComments/);
   assert.match(
@@ -2563,7 +2663,7 @@ test('uses feed-level uploader ids for hidden secret subject sizing', () => {
   );
 });
 
-test('uses compact target bucket for media-only target comments', () => {
+test('uses media target bucket for media-only target comments', () => {
   const sizing = getFeedCardSizing({
     content: {
       contentType: 'comment',
@@ -2579,15 +2679,16 @@ test('uses compact target bucket for media-only target comments', () => {
     userId: 1
   });
 
-  assert.equal(sizing.target?.size, 'compact');
+  assert.equal(sizing.target?.size, 'media-comment');
   assert.equal(sizing.card.hasTarget, true);
   assert.equal(sizing.card.size, 'comment-with-target-card');
-  assert.equal(sizing.card.bodyHeight, 'max(20.35rem, 203.5px)');
-  assert.equal(sizing.card.desktopHeight, 'calc(max(32.25rem, 322.5px) + 2px)');
-  assert.equal(sizing.card.mobileHeight, 'calc(max(31.1rem, 311px) + 2px)');
+  assert.equal(sizing.card.bodyHeight, 'max(31.85rem, 318.5px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(28.85rem, 288.5px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(43.75rem, 437.5px) + 2px)');
+  assert.equal(sizing.card.mobileHeight, 'calc(max(40.6rem, 406px) + 2px)');
   assert.match(
     sizing.target?.className || '',
-    /home-feed-card__target-preview--attachment/
+    /home-feed-card__target-preview--size-media-comment/
   );
 });
 
