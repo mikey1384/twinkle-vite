@@ -1,7 +1,6 @@
 import React, {
   memo,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState
