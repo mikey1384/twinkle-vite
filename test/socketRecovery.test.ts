@@ -107,3 +107,56 @@ test('the chat bootstrap watchdog never restarts the bounded transport loop', ()
   assert.match(watchdogSource, /chat-bootstrap-watchdog-waiting-for-transport/);
   assert.doesNotMatch(watchdogSource, /socket\.connect\(\)/);
 });
+
+test('passive presence heartbeat only runs while the page is visible', () => {
+  const heartbeatStart = socketInitSource.indexOf(
+    'function startUserHeartbeat()'
+  );
+  const heartbeatEnd = socketInitSource.indexOf(
+    'function stopSocketAuthRecovery()',
+    heartbeatStart
+  );
+  const heartbeatSource = socketInitSource.slice(heartbeatStart, heartbeatEnd);
+  const visibilityStart = socketInitSource.indexOf(
+    '// Inform server of away/visible status and keep the application-level'
+  );
+  const visibilityEffectStart = socketInitSource.indexOf(
+    'useEffect(() => {',
+    visibilityStart
+  );
+  const visibilityEnd = socketInitSource.indexOf(
+    'useEffect(() => {',
+    visibilityEffectStart + 1
+  );
+  const visibilitySource = socketInitSource.slice(
+    visibilityStart,
+    visibilityEnd
+  );
+
+  assert.ok(heartbeatStart > 0 && heartbeatEnd > heartbeatStart);
+  assert.ok(visibilityStart > 0 && visibilityEnd > visibilityStart);
+  assert.match(
+    heartbeatSource,
+    /!socket\.connected[\s\S]*?!userIdRef\.current[\s\S]*?document\.visibilityState !== 'visible'/
+  );
+  assert.match(
+    heartbeatSource,
+    /window\.setInterval\([\s\S]*?document\.visibilityState !== 'visible'[\s\S]*?stopUserHeartbeat\(\)[\s\S]*?socket\.emit\('user_heartbeat'\)/
+  );
+  assert.match(
+    visibilitySource,
+    /const emitVisible = \(\) => \{[\s\S]*?startUserHeartbeat\(\)/
+  );
+  assert.match(
+    visibilitySource,
+    /const emitHidden = \(\) => \{[\s\S]*?stopUserHeartbeat\(\)/
+  );
+  assert.match(
+    visibilitySource,
+    /window\.addEventListener\('online',[\s\S]*?startUserHeartbeat\(\)/
+  );
+  assert.match(
+    visibilitySource,
+    /return \(\) => \{[\s\S]*?stopUserHeartbeat\(\)/
+  );
+});

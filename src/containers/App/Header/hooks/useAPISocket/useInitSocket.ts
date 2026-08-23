@@ -263,6 +263,38 @@ export default function useInitSocket({
   const interactedSinceArrivalRef = useRef(false);
   const COLD_RESUME_MS = 5 * 60 * 1000;
 
+  function stopUserHeartbeat() {
+    if (!heartbeatTimerRef.current) return;
+    clearInterval(heartbeatTimerRef.current);
+    heartbeatTimerRef.current = null;
+  }
+
+  function startUserHeartbeat() {
+    if (
+      heartbeatTimerRef.current ||
+      !socket.connected ||
+      !userIdRef.current ||
+      document.visibilityState !== 'visible'
+    ) {
+      return;
+    }
+    heartbeatTimerRef.current = window.setInterval(() => {
+      // Visibility events are the primary owner, but re-check at the boundary
+      // in case mobile WebKit suspended event delivery while changing state.
+      // The heartbeat is presence metadata only; transport ping/pong remains
+      // the canonical Socket.IO connection lifecycle while this is paused.
+      if (
+        !socket.connected ||
+        !userIdRef.current ||
+        document.visibilityState !== 'visible'
+      ) {
+        stopUserHeartbeat();
+        return;
+      }
+      socket.emit('user_heartbeat');
+    }, 15000);
+  }
+
   function stopSocketAuthRecovery() {
     clearSocketAuthReady();
     socketBindAttemptRef.current += 1;
@@ -278,10 +310,7 @@ export default function useInitSocket({
       clearTimeout(loadChatRetryTimerRef.current);
       loadChatRetryTimerRef.current = null;
     }
-    if (heartbeatTimerRef.current) {
-      clearInterval(heartbeatTimerRef.current);
-      heartbeatTimerRef.current = null;
-    }
+    stopUserHeartbeat();
     handleStopUserActionCapture();
     // This cancels Socket.IO's Manager-owned reconnect loop even while the
     // socket is between connection attempts. Checking `connected` here leaves
@@ -848,6 +877,7 @@ export default function useInitSocket({
       socketBindAttemptRef.current += 1;
       clearSocketBindRetryTimer();
       socketBindRetryCountRef.current = 0;
+      stopUserHeartbeat();
       handleLoadChatRef.current = null;
     };
 
@@ -1062,12 +1092,7 @@ export default function useInitSocket({
             }
           }
         });
-        if (heartbeatTimerRef.current) {
-          clearInterval(heartbeatTimerRef.current);
-        }
-        heartbeatTimerRef.current = window.setInterval(() => {
-          if (userIdRef.current) socket.emit('user_heartbeat');
-        }, 15000);
+        startUserHeartbeat();
       } else if (readAuthToken().token) {
         // A cold offline launch can have a durable token without a cached user
         // id. If Socket.IO later proves the network is reachable (including
@@ -1732,10 +1757,7 @@ export default function useInitSocket({
       onSetAICallEnding(false);
       onChangeSocketStatus(false);
 
-      if (heartbeatTimerRef.current) {
-        clearInterval(heartbeatTimerRef.current);
-        heartbeatTimerRef.current = null;
-      }
+      stopUserHeartbeat();
       handleStopUserActionCapture();
 
       if (terminalSocketAuthFailureRef.current) return;
@@ -1769,10 +1791,19 @@ export default function useInitSocket({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Inform server of away/visible status — helps server detect long-away sessions reliably
+  // Inform server of away/visible status and keep the application-level
+  // presence heartbeat foreground-only. Socket.IO transport liveness remains
+  // active independently; a hidden page does not need to wake the mobile radio
+  // every 15 seconds merely to refresh passive presence metadata.
   useEffect(() => {
-    const emitVisible = () => socket.emit('change_away_status', true);
-    const emitHidden = () => socket.emit('change_away_status', false);
+    const emitVisible = () => {
+      socket.emit('change_away_status', true);
+      startUserHeartbeat();
+    };
+    const emitHidden = () => {
+      stopUserHeartbeat();
+      socket.emit('change_away_status', false);
+    };
 
     const onVisibility = () => {
       if (document.visibilityState === 'visible') emitVisible();
@@ -1787,13 +1818,22 @@ export default function useInitSocket({
     window.addEventListener('focus', emitVisible);
     window.addEventListener('blur', emitHidden);
     window.addEventListener('online', onOnline);
+    // The socket singleton can already be connected if this hook remounts, so
+    // establish the timer from current canonical browser state rather than
+    // waiting for a future focus/connect transition. Do not synthesize an
+    // extra away-status event here; App owns the initial canonical status emit.
+    startUserHeartbeat();
 
     return () => {
+      stopUserHeartbeat();
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', emitVisible);
       window.removeEventListener('blur', emitHidden);
       window.removeEventListener('online', onOnline);
     };
+    // The listeners intentionally own one mount-lifetime timer and read all
+    // changing eligibility through refs and live browser/socket state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
