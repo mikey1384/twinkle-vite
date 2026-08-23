@@ -59,6 +59,8 @@ import {
   getChatProjectionActivityRevision,
   markChatProjectionSocketEvent
 } from '~/helpers/chatUnreadActivity';
+import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
+import type { RequestAttemptTiming } from '~/contexts/requestHelpers/axiosInstance';
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
@@ -1122,6 +1124,13 @@ export default function useInitSocket({
       const requestedSubchannelPath = hasRoutePathId
         ? subchannelPathRef.current || ''
         : '';
+      const compactGeneralTopics = bootstrapChannelId === GENERAL_CHAT_ID;
+      const bootstrapTopicIds = compactGeneralTopics
+        ? getChatTopicProjectionIds({
+            pathname: window.location.pathname,
+            channel: channelsObjRef.current[bootstrapChannelId]
+          })
+        : [];
       const bootstrapId = nextChatBootstrapId();
       activeBootstrapIdRef.current = bootstrapId;
       const bootstrapStartedAt = Date.now();
@@ -1141,6 +1150,8 @@ export default function useInitSocket({
         selectedChannelId,
         bootstrapChannelId,
         requestedSubchannelPath,
+        compactGeneralTopics,
+        bootstrapTopicCount: bootstrapTopicIds.length,
         rawCurrentPathId,
         routePathId: hasRoutePathId ? routePathId : null,
         fallbackPathId,
@@ -1173,7 +1184,15 @@ export default function useInitSocket({
           channelId: bootstrapChannelId,
           subchannelPath: requestedSubchannelPath,
           fromWriter: canonicalReadFromWriter,
-          bounded: canonicalReadFromWriter
+          bounded: canonicalReadFromWriter,
+          compactGeneralTopics,
+          topicIds: bootstrapTopicIds,
+          onAttemptTiming(timing: RequestAttemptTiming) {
+            recordChatBootstrapEvent('chat-bootstrap-request-attempt-timing', {
+              bootstrapId,
+              ...timing
+            });
+          }
         });
 
         const endTime = Date.now();
@@ -1249,11 +1268,26 @@ export default function useInitSocket({
           hasChannelsObj: !!data?.channelsObj,
           preserveSelectedProjection
         });
+        const initDispatchStartedAt = performance.now();
         onInitChat({
           data,
           userId: bootstrapUserId,
           bootstrapId,
           preserveSelectedProjection
+        });
+        const initDispatchElapsedMs =
+          performance.now() - initDispatchStartedAt;
+        recordChatBootstrapEvent('chat-bootstrap-dispatch-returned', {
+          bootstrapId,
+          elapsedMs: Math.round(initDispatchElapsedMs)
+        });
+        window.requestAnimationFrame(() => {
+          recordChatBootstrapEvent('chat-bootstrap-post-reducer-frame', {
+            bootstrapId,
+            elapsedSinceDispatchMs: Math.round(
+              performance.now() - initDispatchStartedAt
+            )
+          });
         });
         chatLoadedRef.current = true;
         loadedForUserIdRef.current = bootstrapUserId;
@@ -1339,6 +1373,7 @@ export default function useInitSocket({
             }
             const expectedActivityRevision =
               getChatProjectionActivityRevision(channelId);
+            const compactRecoveryTopics = channelId === GENERAL_CHAT_ID;
             const channelData = await loadChatChannel({
               channelId,
               subchannelPath: requestedSubchannelPath,
@@ -1348,7 +1383,14 @@ export default function useInitSocket({
               // otherwise a cold (non-reconnect) bootstrap could still replace
               // confirmed access or messages with a lagging replica page.
               fromWriter: true,
-              bounded: true
+              bounded: true,
+              compactGeneralTopics: compactRecoveryTopics,
+              topicIds: compactRecoveryTopics
+                ? getChatTopicProjectionIds({
+                    pathname: window.location.pathname,
+                    channel: channelsObjRef.current[channelId]
+                  })
+                : []
             });
             if (
               activeBootstrapIdRef.current !== bootstrapId ||

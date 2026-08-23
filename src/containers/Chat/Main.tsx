@@ -49,6 +49,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { enterRoutedTopic } from './topicRoute';
+import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
 
 const loadingPromises: { [channelId: string]: any } = {};
 const deviceIsMobile = isMobile(navigator);
@@ -1384,7 +1385,18 @@ export default function Main({
           return;
         }
 
-        const data = await loadChatChannel({ channelId, subchannelPath });
+        const compactGeneralTopics = channelId === GENERAL_CHAT_ID;
+        const data = await loadChatChannel({
+          channelId,
+          subchannelPath,
+          compactGeneralTopics,
+          topicIds: compactGeneralTopics
+            ? getChatTopicProjectionIds({
+                pathname,
+                channel: channelsObj[channelId]
+              })
+            : []
+        });
         if (isStale()) return;
 
         const pathIdMismatch =

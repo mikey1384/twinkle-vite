@@ -6,9 +6,9 @@ import axios, {
   CanceledError,
   GenericAbortSignal
 } from 'axios';
-import pLimit from 'p-limit';
 import { emitAdminTelemetry } from '~/helpers';
 import { getDefaultRequestCollapseKey } from './requestCollapseKey';
+import { RequestPriorityLimiters } from './requestPriorityLimiters';
 
 export type ChannelName = 'ui' | 'normal' | 'bulk';
 
@@ -37,6 +37,15 @@ export interface RequestMeta {
   enforceTimeout?: boolean;
   maxRetries?: number;
   totalTimeoutMs?: number;
+  onAttemptTiming?: (timing: RequestAttemptTiming) => void;
+}
+
+export interface RequestAttemptTiming {
+  attempt: number;
+  preQueueDelayMs: number;
+  queueWaitMs: number;
+  httpAndParseMs: number;
+  outcome: 'success' | 'error';
 }
 
 export type ExtendedAxiosRequestConfig<T = any> = AxiosRequestConfig<T> & {
@@ -102,7 +111,7 @@ const DEFAULT_POLICIES: Record<ChannelName, RequestPolicy> = {
 };
 
 class RequestChannel {
-  private limiter: ReturnType<typeof pLimit>;
+  private limiters: RequestPriorityLimiters;
   private inflight = new Map<string, Promise<AxiosResponse>>();
   private breakerState: 'closed' | 'open' | 'half' = 'closed';
   private openedAt = 0;
@@ -123,13 +132,13 @@ class RequestChannel {
     private policy: RequestPolicy,
     onLatencyMeasured?: (latency: number) => void
   ) {
-    this.limiter = pLimit(Math.max(1, policy.concurrency));
+    this.limiters = new RequestPriorityLimiters(policy.concurrency);
     this.onLatencyMeasured = onLatencyMeasured;
   }
 
   updatePolicy(policy: RequestPolicy) {
     this.policy = policy;
-    this.limiter = pLimit(Math.max(1, policy.concurrency));
+    this.limiters = new RequestPriorityLimiters(policy.concurrency);
   }
 
   request<T = any>(
@@ -204,6 +213,7 @@ class RequestChannel {
     context: ResolvedRequestContext,
     attempt: number
   ): Promise<AxiosResponse<T>> {
+    const attemptStartedAt = Date.now();
     throwIfRequestAborted(baseConfig.signal);
     if (this.pauseUntil && Date.now() < this.pauseUntil) {
       await sleep(this.pauseUntil - Date.now(), baseConfig.signal);
@@ -243,35 +253,56 @@ class RequestChannel {
       }
     }
 
+    const queuedAt = Date.now();
     try {
       const response = await raceWithRequestAbort(
-        this.limiter(async () => {
-          throwIfRequestAborted(baseConfig.signal);
-          if (timeoutMs > 0) {
-            const timer = setTimeout(() => {
-              controller.abort(new CanceledError('timeout'));
-            }, timeoutMs);
-            clearTimeoutFn = () => clearTimeout(timer);
-          }
-          const httpStartTime = Date.now();
-
-          try {
-            const result = await axios.request<T>(config);
-
-            if (this.onLatencyMeasured) {
-              this.onLatencyMeasured(Date.now() - httpStartTime);
+        this.limiters.run({
+          priority: config.meta?.priority,
+          task: async () => {
+            throwIfRequestAborted(baseConfig.signal);
+            if (timeoutMs > 0) {
+              const timer = setTimeout(() => {
+                controller.abort(new CanceledError('timeout'));
+              }, timeoutMs);
+              clearTimeoutFn = () => clearTimeout(timer);
             }
+            const httpStartTime = Date.now();
+            const preQueueDelayMs = queuedAt - attemptStartedAt;
+            const queueWaitMs = httpStartTime - queuedAt;
 
-            return result;
-          } catch (err) {
-            if (
-              this.onLatencyMeasured &&
-              (isTimeoutCancellation(err as AxiosError) ||
-                isTimeoutAbortSignal(controller.signal))
-            ) {
-              this.onLatencyMeasured(Date.now() - httpStartTime);
+            try {
+              const result = await axios.request<T>(config);
+
+              notifyAttemptTiming(config.meta?.onAttemptTiming, {
+                attempt,
+                preQueueDelayMs,
+                queueWaitMs,
+                httpAndParseMs: Date.now() - httpStartTime,
+                outcome: 'success'
+              });
+
+              if (this.onLatencyMeasured) {
+                this.onLatencyMeasured(Date.now() - httpStartTime);
+              }
+
+              return result;
+            } catch (err) {
+              notifyAttemptTiming(config.meta?.onAttemptTiming, {
+                attempt,
+                preQueueDelayMs,
+                queueWaitMs,
+                httpAndParseMs: Date.now() - httpStartTime,
+                outcome: 'error'
+              });
+              if (
+                this.onLatencyMeasured &&
+                (isTimeoutCancellation(err as AxiosError) ||
+                  isTimeoutAbortSignal(controller.signal))
+              ) {
+                this.onLatencyMeasured(Date.now() - httpStartTime);
+              }
+              throw err;
             }
-            throw err;
           }
         }),
         baseConfig.signal
@@ -639,6 +670,18 @@ function computeBackoff(policy: RequestPolicy, attempt: number) {
   const base = policy.backoffBase * Math.pow(policy.backoffMultiplier, attempt);
   const jitter = Math.random() * policy.backoffJitter;
   return base + jitter;
+}
+
+function notifyAttemptTiming(
+  callback: RequestMeta['onAttemptTiming'],
+  timing: RequestAttemptTiming
+) {
+  if (!callback) return;
+  try {
+    callback(timing);
+  } catch {
+    // Diagnostics must never change request completion or retry behavior.
+  }
 }
 
 function parseRetryAfter(error?: AxiosError): number | null {

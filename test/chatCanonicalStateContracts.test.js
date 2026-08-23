@@ -713,16 +713,23 @@ test('current-channel recency reuses the all-scope reconciliation result', () =>
 
 test('bootstrap invalidates noncanonical topic message caches and navigation', () => {
   const reducerSource = readSource('src/contexts/Chat/reducer.ts');
+  const topicProjectionSource = readSource(
+    'src/contexts/Chat/topicProjectionState.ts'
+  );
 
   assert.match(
-    reducerSource,
+    topicProjectionSource,
     /function resetTopicMessageCachesForCanonicalChannelLoad[\s\S]*?loaded: false,[\s\S]*?messageIds: \[\]/
   );
   assert.match(
-    reducerSource,
+    topicProjectionSource,
     /function reconcileCanonicalTopicNavigation[\s\S]*?selectedTopicIsVisible[\s\S]*?selectedTab: 'all'/
   );
-  assert.doesNotMatch(reducerSource, /messageIds:\s*existingTopic\.messageIds/);
+  assert.match(reducerSource, /mergeCanonicalTopicProjection\(\{/);
+  assert.doesNotMatch(
+    topicProjectionSource,
+    /messageIds:\s*existingTopic\.messageIds/
+  );
 });
 
 test('global Chat unread state is reconciled canonically when Chat becomes visible', () => {

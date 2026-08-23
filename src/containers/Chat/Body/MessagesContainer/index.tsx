@@ -20,6 +20,7 @@ import { socket } from '~/constants/sockets/api';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
 import { getChatProjectionActivityRevision } from '~/helpers/chatUnreadActivity';
+import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
 import { useNavigate } from 'react-router-dom';
 import {
   useAppContext,
@@ -530,6 +531,7 @@ export default function MessagesContainer({
       try {
         const expectedActivityRevision =
           getChatProjectionActivityRevision(selectedChannelId);
+        const compactGeneralTopics = selectedChannelId === GENERAL_CHAT_ID;
         const channelData = await loadChatChannel({
           channelId: selectedChannelId,
           subchannelPath: subchannelPath || undefined,
@@ -543,7 +545,14 @@ export default function MessagesContainer({
           // replacement, so a replica read could reintroduce the stale state we
           // just gated interaction to repair.
           fromWriter: true,
-          bounded: true
+          bounded: true,
+          compactGeneralTopics,
+          topicIds: compactGeneralTopics
+            ? getChatTopicProjectionIds({
+                pathname: window.location.pathname,
+                channel: currentChannel
+              })
+            : []
         });
         if (
           cancelled ||

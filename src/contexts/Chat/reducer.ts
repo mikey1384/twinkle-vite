@@ -39,6 +39,11 @@ import {
 import { applyCanonicalAiMessageFailure } from './aiMessageFailureState';
 import { updateAICardOfferNoticeStatusMap } from '~/helpers/aiCardOfferNotice';
 import { applyCanonicalChatMessagePage } from './messagePageState';
+import {
+  mergeCanonicalTopicProjection,
+  reconcileCanonicalTopicNavigation,
+  resetTopicMessageCachesForCanonicalChannelLoad
+} from './topicProjectionState';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -178,70 +183,6 @@ function applyCanonicalChannelVisibility({
       !!visibility?.isHidden &&
       currentLastMessageId <= visibilityAtLastMessageId,
     visibilityRevision: incomingRevision
-  };
-}
-
-function resetTopicMessageCachesForCanonicalChannelLoad(
-  topicObj: Record<string, any> | null | undefined
-) {
-  const invalidatedTopicObj: Record<string, any> = {};
-  for (const [topicId, topic] of Object.entries(topicObj || {})) {
-    // A channel load does not include each topic's message page. Never carry a
-    // pre-snapshot ID list across that boundary: an offline deletion or
-    // moderation event may have made it stale. Keeping `loaded: false` lets
-    // the existing topic loader repopulate the selected topic canonically.
-    invalidatedTopicObj[topicId] = {
-      ...topic,
-      loaded: false,
-      messageIds: []
-    };
-  }
-  return invalidatedTopicObj;
-}
-
-function reconcileCanonicalTopicNavigation({
-  existingChannel,
-  canonicalTopicObj
-}: {
-  existingChannel: any;
-  canonicalTopicObj: Record<string, any>;
-}) {
-  const selectedTopicId = Number(existingChannel?.selectedTopicId || 0);
-  const selectedTopicIsVisible =
-    selectedTopicId <= 0 || Boolean(canonicalTopicObj[selectedTopicId]);
-  const visibleTopicHistory = (existingChannel?.topicHistory || []).filter(
-    (topicId: number) => Boolean(canonicalTopicObj[topicId])
-  );
-
-  if (!selectedTopicIsVisible) {
-    return {
-      selectedTab: 'all',
-      selectedTopicId: null,
-      topicHistory: [],
-      currentTopicIndex: -1
-    };
-  }
-
-  const topicHistory =
-    selectedTopicId > 0 &&
-    !visibleTopicHistory.some(
-      (topicId: number) => Number(topicId) === selectedTopicId
-    )
-      ? [...visibleTopicHistory, selectedTopicId]
-      : visibleTopicHistory;
-  const selectedTopicIndex = topicHistory.findIndex(
-    (topicId: number) => Number(topicId) === selectedTopicId
-  );
-  const existingTopicIndex = Number(existingChannel?.currentTopicIndex ?? -1);
-
-  return {
-    selectedTab: existingChannel?.selectedTab,
-    selectedTopicId: existingChannel?.selectedTopicId,
-    topicHistory,
-    currentTopicIndex:
-      selectedTopicId > 0
-        ? selectedTopicIndex
-        : Math.max(-1, Math.min(existingTopicIndex, topicHistory.length - 1))
   };
 }
 
@@ -3080,12 +3021,18 @@ export default function ChatReducer(
         messagesHydrated: action.data.messagesHydrated === true
       });
 
-      const mergedTopicObj = resetTopicMessageCachesForCanonicalChannelLoad(
-        loadedChannel.topicObj
-      );
+      const canonicalTopicProjection = mergeCanonicalTopicProjection({
+        existingTopicObj: existingLoadedChannel.topicObj,
+        serverChannel: loadedChannel,
+        preserveUnrequestedTopics: true
+      });
+      const mergedTopicObj = canonicalTopicProjection.topicObj;
       const canonicalTopicNavigation = reconcileCanonicalTopicNavigation({
         existingChannel: existingLoadedChannel,
-        canonicalTopicObj: mergedTopicObj
+        canonicalTopicObj: mergedTopicObj,
+        topicCatalogComplete: canonicalTopicProjection.topicCatalogComplete,
+        topicProjectionRequestedIds:
+          canonicalTopicProjection.topicProjectionRequestedIds
       });
 
       const enteredState = {
@@ -3573,22 +3520,35 @@ export default function ChatReducer(
               Number(mergedSettings?.lastReaction?.timeStamp || 0)
             )
           : Number(serverChannel?.lastUpdated || 0);
-        const hasCanonicalTopicCatalog =
+        const hasCanonicalTopicProjection =
           Number(channelId) === Number(action.data.currentChannelId);
-        const mergedTopicObj = resetTopicMessageCachesForCanonicalChannelLoad(
-          hasCanonicalTopicCatalog
-            ? serverChannel?.topicObj
-            : existingChannel?.topicObj
-        );
+        const canonicalTopicProjection = hasCanonicalTopicProjection
+          ? mergeCanonicalTopicProjection({
+              existingTopicObj: existingChannel?.topicObj,
+              serverChannel,
+              preserveUnrequestedTopics: isSameLoadedUser
+            })
+          : {
+              topicObj: resetTopicMessageCachesForCanonicalChannelLoad(
+                existingChannel?.topicObj
+              ),
+              topicCatalogComplete: false,
+              topicProjectionRequestedIds: []
+            };
+        const mergedTopicObj = canonicalTopicProjection.topicObj;
         // Bootstrap summaries omit topic catalogs for noncurrent channels.
         // Invalidate their message-page caches, but wait for the later detailed
         // channel load before deciding whether a topic/navigation entry still
         // exists. The current channel's detailed writer snapshot can reconcile
         // that state immediately.
-        const canonicalTopicNavigation = hasCanonicalTopicCatalog
+        const canonicalTopicNavigation = hasCanonicalTopicProjection
           ? reconcileCanonicalTopicNavigation({
               existingChannel,
-              canonicalTopicObj: mergedTopicObj
+              canonicalTopicObj: mergedTopicObj,
+              topicCatalogComplete:
+                canonicalTopicProjection.topicCatalogComplete,
+              topicProjectionRequestedIds:
+                canonicalTopicProjection.topicProjectionRequestedIds
             })
           : {
               selectedTab: existingChannel?.selectedTab,
@@ -3728,8 +3688,6 @@ export default function ChatReducer(
           };
         }
       }
-      const existingCurrentChannel =
-        state.channelsObj[action.data.currentChannelId];
       const reconciledCurrentChannel =
         newChannelsObj[action.data.currentChannelId] || newCurrentChannel || {};
       const currentRootActivityArrivedDuringBootstrap =
@@ -3757,16 +3715,16 @@ export default function ChatReducer(
               messagesObj: newMessagesObj
             })
           : newMessageIds;
-      const mergedCurrentTopicObj =
-        resetTopicMessageCachesForCanonicalChannelLoad(
-          newCurrentChannel?.topicObj
-        );
-      const canonicalCurrentTopicNavigation = reconcileCanonicalTopicNavigation(
-        {
-          existingChannel: existingCurrentChannel,
-          canonicalTopicObj: mergedCurrentTopicObj
-        }
-      );
+      // The channel loop already reconciled the canonical topic projection and
+      // invalidated its message caches. Reuse that result instead of cloning
+      // the complete topic catalog a second time during every bootstrap.
+      const mergedCurrentTopicObj = reconciledCurrentChannel.topicObj || {};
+      const canonicalCurrentTopicNavigation = {
+        selectedTab: reconciledCurrentChannel.selectedTab,
+        selectedTopicId: reconciledCurrentChannel.selectedTopicId,
+        topicHistory: reconciledCurrentChannel.topicHistory || [],
+        currentTopicIndex: reconciledCurrentChannel.currentTopicIndex ?? -1
+      };
       newChannelsObj[action.data.currentChannelId] = {
         ...reconciledCurrentChannel,
         allMemberIds:

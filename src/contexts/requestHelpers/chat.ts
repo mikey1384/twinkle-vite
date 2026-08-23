@@ -1,6 +1,6 @@
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
-import request from './axiosInstance';
+import request, { type RequestAttemptTiming } from './axiosInstance';
 import axios from 'axios';
 import { attemptUpload, emitAdminTelemetry } from '~/helpers';
 import {
@@ -1385,22 +1385,32 @@ export default function chatRequestHelpers({
       channelId,
       subchannelPath,
       fromWriter = false,
-      bounded = false
+      bounded = false,
+      compactGeneralTopics = false,
+      topicIds = [],
+      onAttemptTiming
     }: {
       channelId: number;
       subchannelPath: string;
       fromWriter?: boolean;
       bounded?: boolean;
+      compactGeneralTopics?: boolean;
+      topicIds?: number[];
+      onAttemptTiming?: (timing: RequestAttemptTiming) => void;
     }) {
       try {
         const { data } = await request.get(
           `${URL}/chat?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
-          }${fromWriter ? '&fromWriter=1' : ''}`,
+          }${fromWriter ? '&fromWriter=1' : ''}${
+            compactGeneralTopics ? '&compactGeneralTopics=1' : ''
+          }${topicIds.length ? `&topicIds=${topicIds.join(',')}` : ''}`,
           {
             ...auth(),
             meta: {
               collapseKey: null,
+              priority: compactGeneralTopics ? 'high' : 'normal',
+              onAttemptTiming,
               // An ordinary initial bootstrap can tolerate a throttled tab's
               // long request. Canonical reconnect repair owns an outer retry
               // loop, so bound each writer attempt instead of leaving chat
@@ -1426,7 +1436,9 @@ export default function chatRequestHelpers({
       skipUpdateChannelId,
       hydrateMessages = false,
       fromWriter,
-      bounded = false
+      bounded = false,
+      compactGeneralTopics = false,
+      topicIds = []
     }: {
       channelId: number;
       isForInvitation?: boolean;
@@ -1437,6 +1449,8 @@ export default function chatRequestHelpers({
       hydrateMessages?: boolean;
       fromWriter?: boolean;
       bounded?: boolean;
+      compactGeneralTopics?: boolean;
+      topicIds?: number[];
     }) {
       try {
         const { data } = await request.get(
@@ -1454,11 +1468,14 @@ export default function chatRequestHelpers({
             isForInvitation && invitationMessageId
               ? `&invitationMessageId=${invitationMessageId}`
               : ''
-          }${fromWriter ? '&fromWriter=1' : ''}`,
+          }${fromWriter ? '&fromWriter=1' : ''}${
+            compactGeneralTopics ? '&compactGeneralTopics=1' : ''
+          }${topicIds.length ? `&topicIds=${topicIds.join(',')}` : ''}`,
           {
             ...auth(),
             meta: {
               collapseKey: null,
+              priority: compactGeneralTopics ? 'high' : 'normal',
               // Ordinary channel navigation may legitimately sit behind a
               // long throttled-tab request. Canonical recovery has its own
               // retry loop, so give each attempt a hard boundary and let that

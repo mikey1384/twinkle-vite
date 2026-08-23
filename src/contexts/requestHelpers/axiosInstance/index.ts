@@ -3,6 +3,7 @@ import scheduler, { ExtendedAxiosRequestConfig } from './requestScheduler';
 
 export type {
   RequestMeta,
+  RequestAttemptTiming,
   ChannelName,
   RequestPolicy
 } from './requestScheduler';
