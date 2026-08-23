@@ -21,6 +21,9 @@ const messagesSource = readSource(
 const displayedMessagesSource = readSource(
   'src/containers/Chat/Body/MessagesContainer/DisplayedMessages.tsx'
 );
+const messagesContentSource = readSource(
+  'src/containers/Chat/Body/MessagesContainer/Content.tsx'
+);
 const messageInputSource = readSource(
   'src/containers/Chat/Body/MessagesContainer/MessageInput/index.tsx'
 );
@@ -252,8 +255,20 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
     displayedMessagesSource,
     /aria-disabled=\{isReconnecting\}[\s\S]*?pointerEvents: isReconnecting[\s\S]*?onClickCapture/
   );
-  assert.match(displayedMessagesSource, /Catching up&hellip;/);
-  assert.match(displayedMessagesSource, /isReconnecting && !pageLoading/);
+  assert.doesNotMatch(displayedMessagesSource, /Catching up&hellip;/);
+  assert.match(messagesContentSource, /Catching up&hellip;/);
+  assert.match(
+    messagesContentSource,
+    /Catching up&hellip;[\s\S]*?<MessageInput/
+  );
+  assert.match(
+    messagesSource,
+    /const catchUpStatusShown =\s*\(reconnecting \|\| isReloadRequired\) && !pageLoading/
+  );
+  assert.match(
+    messagesSource,
+    /catchUpStatusShown \? ' - 4rem' : ''/
+  );
   assert.match(
     messageInputLeftButtonsSource,
     /disabled=\{loading \|\| !nextDayTimeStamp\}[\s\S]*?loading=\{!nextDayTimeStamp\}/,

@@ -316,23 +316,6 @@ export default function MessagesContainer({
     );
   }, [currentPathId, selectedChannelId]);
 
-  const containerHeight = `CALC(100% - 1rem - 2px - ${
-    socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
-  }${aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''}${
-    socketConnected && appliedIsRespondingToSubject
-      ? ' - 8rem - 2px'
-      : replyTarget
-        ? ' - 12rem - 2px'
-        : chessTarget
-          ? ' - 24rem - 2px'
-          : ''
-  }
-    ${
-      selectedChannelIsOnCall || selectedChannelIsOnAICall
-        ? ` - ${CALL_SCREEN_HEIGHT}`
-        : ''
-    })`;
-
   const topicObj = useMemo(() => {
     if (currentChannel.topicObj) {
       return currentChannel.topicObj;
@@ -417,6 +400,25 @@ export default function MessagesContainer({
     currentChannel?.loaded,
     subchannel?.loaded
   ]);
+
+  const catchUpStatusShown =
+    (reconnecting || isReloadRequired) && !pageLoading;
+  const containerHeight = `CALC(100% - 1rem - 2px - ${
+    socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
+  }${aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''}${
+    socketConnected && appliedIsRespondingToSubject
+      ? ' - 8rem - 2px'
+      : replyTarget
+        ? ' - 12rem - 2px'
+        : chessTarget
+          ? ' - 24rem - 2px'
+          : ''
+  }${catchUpStatusShown ? ' - 4rem' : ''}
+    ${
+      selectedChannelIsOnCall || selectedChannelIsOnAICall
+        ? ` - ${CALL_SCREEN_HEIGHT}`
+        : ''
+    })`;
 
   useEffect(() => {
     const topicMessageIds =
@@ -1446,6 +1448,7 @@ export default function MessagesContainer({
         selectedChannelIsOnCall={selectedChannelIsOnCall}
       />
       <Content
+        catchUpStatusShown={catchUpStatusShown}
         containerHeight={containerHeight}
         subchannel={subchannel}
         channelHeaderProps={channelHeaderProps}
