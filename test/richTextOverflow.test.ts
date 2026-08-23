@@ -285,7 +285,7 @@ test('RichText uses the CSS ceiling and never subtracts pixels from visible cont
 
   assert.match(
     richTextSource,
-    /computedMaxHeight: window\.getComputedStyle\(containerNode\)\.maxHeight/
+    /computedMaxHeight: window\.getComputedStyle\(node\)\.maxHeight/
   );
   assert.match(
     richTextSource,
@@ -298,4 +298,21 @@ test('RichText uses the CSS ceiling and never subtracts pixels from visible cont
   assert.doesNotMatch(richTextSource, /visibleHeight\s*-\s*20/);
   assert.match(measurementSource, /new ResizeObserver/);
   assert.match(measurementSource, /renderAsLiteralText \? \(/);
+});
+
+test('repeated RichText observer reports do not schedule redundant React updates', () => {
+  const richTextSource = readFileSync(
+    new URL('../src/components/Texts/RichText/index.tsx', import.meta.url),
+    'utf8'
+  );
+
+  assert.doesNotMatch(richTextSource, /containerMeasurementRevision/);
+  assert.match(
+    richTextSource,
+    /if \(measuredOverflowRef\.current === overflown\) return;/
+  );
+  assert.match(
+    richTextSource,
+    /const heightChanged = minHeightRef\.current !== newHeight;/
+  );
 });

@@ -389,11 +389,8 @@ function RichText({
       fallback: 'white'
     }
   );
-  const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
-    null
-  );
-  const [containerMeasurementRevision, setContainerMeasurementRevision] =
-    useState(0);
+  const containerNodeRef = useRef<HTMLDivElement | null>(null);
+  const measuredOverflowRef = useRef<boolean | null>(null);
   const isPreviewRef = useRef(isPreview);
   // Preview RichText is deterministic: no expansion state or shared height cache.
   const fullTextState = useMemo(
@@ -498,10 +495,41 @@ function RichText({
   });
   const shouldUseBlockPreviewMaxHeight =
     isBlockPreservingPreview && !isExpanded;
-  const handleSetContainerNode = useCallback((node: HTMLDivElement) => {
-    setContainerNode(node);
-    setContainerMeasurementRevision((revision) => revision + 1);
-  }, []);
+  const handleMeasureContainerNode = useCallback(
+    (node: HTMLDivElement) => {
+      containerNodeRef.current = node;
+      if (isPreview) return;
+
+      const collapseThreshold = resolveRichTextCollapseThreshold({
+        computedMaxHeight: window.getComputedStyle(node).maxHeight,
+        fallbackClientHeight: node.clientHeight
+      });
+      const extraAllowedHeight =
+        !renderAsLiteralText &&
+        hasTopEmbeddedContent &&
+        embeddedContentRef.current
+          ? embeddedContentRef.current.offsetHeight
+          : 0;
+      const overflown = isRichTextMeasurementOverflown({
+        scrollHeight: node.scrollHeight,
+        collapseThreshold,
+        extraAllowedHeight
+      });
+
+      // ResizeObserver is allowed to report the same layout repeatedly. Do not
+      // schedule a React update unless the user-visible overflow result changed;
+      // an unconditional measurement revision can feed a layout/update loop.
+      if (measuredOverflowRef.current === overflown) return;
+      measuredOverflowRef.current = overflown;
+      setPresentationState((state) =>
+        applyRichTextOverflowMeasurement({
+          state,
+          isOverflown: overflown
+        })
+      );
+    },
+    [hasTopEmbeddedContent, isPreview, renderAsLiteralText]
+  );
   const measurementConfig = `${Boolean(isPreview)}:${Boolean(
     renderAsLiteralText
   )}:${previewCollapsedMaxHeight}`;
@@ -523,6 +551,7 @@ function RichText({
     if (transition === 'reset') {
       isExpandedRef.current = false;
     }
+    measuredOverflowRef.current = null;
     minHeightRef.current = defaultMinHeight;
     heightContentRevisionRef.current =
       typeof defaultMinHeight === 'number' ? contentRevision : null;
@@ -544,8 +573,9 @@ function RichText({
     if (previewChanged) {
       isExpandedRef.current = false;
     }
+    measuredOverflowRef.current = null;
     if (isPreview) {
-      setContainerNode(null);
+      containerNodeRef.current = null;
     }
     setPresentationState((state) => ({
       isExpanded: previewChanged ? false : state.isExpanded,
@@ -554,37 +584,14 @@ function RichText({
   }, [isPreview, measurementConfig]);
 
   useEffect(() => {
-    if (isPreview || !containerNode) {
+    if (isPreview || !containerNodeRef.current) {
       return;
     }
-    const collapseThreshold = resolveRichTextCollapseThreshold({
-      computedMaxHeight: window.getComputedStyle(containerNode).maxHeight,
-      fallbackClientHeight: containerNode.clientHeight
-    });
-    const extraAllowedHeight =
-      !renderAsLiteralText &&
-      hasTopEmbeddedContent &&
-      embeddedContentRef.current
-        ? embeddedContentRef.current.offsetHeight
-        : 0;
-    const overflown = isRichTextMeasurementOverflown({
-      scrollHeight: containerNode.scrollHeight,
-      collapseThreshold,
-      extraAllowedHeight
-    });
-    setPresentationState((state) =>
-      applyRichTextOverflowMeasurement({
-        state,
-        isOverflown: overflown
-      })
-    );
+    handleMeasureContainerNode(containerNodeRef.current);
   }, [
-    containerMeasurementRevision,
-    containerNode,
-    hasTopEmbeddedContent,
+    handleMeasureContainerNode,
     isPreview,
     previewCollapsedMaxHeight,
-    renderAsLiteralText,
     text
   ]);
 
@@ -618,9 +625,12 @@ function RichText({
       resizeObserver = new ResizeObserver((entries) => {
         const clientHeight = entries[0].target.clientHeight;
         const newHeight = clientHeight;
+        const heightChanged = minHeightRef.current !== newHeight;
         heightContentRevisionRef.current = contentRevision;
         minHeightRef.current = newHeight;
-        setMinHeight(newHeight);
+        if (heightChanged) {
+          setMinHeight(newHeight);
+        }
       });
       resizeObserver.observe(TextRef.current);
     }
@@ -888,7 +898,7 @@ function RichText({
               subjectPreviewVariant={appliedSubjectPreviewVariant}
               theme={theme}
               text={text}
-              onSetContainerNode={handleSetContainerNode}
+              onSetContainerNode={handleMeasureContainerNode}
               onSetIsParsed={setIsParsed}
             />
           </ErrorBoundary>
