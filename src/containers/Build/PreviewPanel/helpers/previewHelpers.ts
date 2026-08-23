@@ -10,6 +10,8 @@ import { resolveLocalProjectPathFromBase } from './moduleRewrite';
 import { normalizeProjectFilePath } from './projectFiles';
 import type { EditableProjectFile, PreviewRuntimeUploadAsset } from '../types';
 
+export { createStringRevision as createPreviewRevision } from '~/helpers/stringRevision';
+
 export const BUILD_PROJECT_UPLOAD_ACCEPT =
   '.html,.htm,.css,.js,.mjs,.cjs,.json,.txt,.md,.svg,.xml,.csv,.yml,.yaml';
 
@@ -64,15 +66,6 @@ export function buildProjectExportBaseName(title: string, buildId: number) {
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
   return normalized || `lumine-project-${buildId}`;
-}
-
-export function createPreviewRevision(value: string) {
-  let hash = 2166136261;
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return `${value.length.toString(36)}-${(hash >>> 0).toString(36)}`;
 }
 
 export function getRuntimePreviewIframeSandbox(frameSrc: string | null | undefined) {

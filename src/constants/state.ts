@@ -1,6 +1,6 @@
 export interface FullTextSectionState {
-  fullTextShown: boolean;
-  textLength: number;
+  contentRevision: string;
+  isExpanded: boolean;
 }
 
 export interface FullTextStates {
@@ -9,12 +9,20 @@ export interface FullTextStates {
   };
 }
 
+export interface RichTextHeightState {
+  contentRevision: string;
+  height: number;
+}
+
 export const fullTextStates: FullTextStates = {};
 export const userIdRef: Record<string, any> = { current: null };
 export const inputStates: Record<string, boolean> = {};
 export const editFormTextStates: Record<string, any> = {};
 export const placeholderHeights: Record<string, number> = {};
-export const richTextHeights: Record<string, Record<string, number>> = {};
+export const richTextHeights: Record<
+  string,
+  Record<string, RichTextHeightState>
+> = {};
 export const scrollPositions: Record<string, number> = {};
 export const currentTimes: Record<string, number> = {};
 export const isRewardCollected: Record<string, boolean> = {};

@@ -3,7 +3,8 @@ import React, {
   useMemo,
   useCallback,
   useRef,
-  useEffect
+  useEffect,
+  useLayoutEffect
 } from 'react';
 import { css } from '@emotion/css';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
@@ -27,8 +28,10 @@ export default function InvisibleTextContainer({
   isAIMessage,
   isPreview,
   isProfileComponent,
+  lineHeight,
   linkColor,
   markerColor,
+  renderAsLiteralText,
   subjectPreviewVariant,
   theme,
   text,
@@ -42,8 +45,10 @@ export default function InvisibleTextContainer({
   isAIMessage?: boolean;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  lineHeight: number;
   linkColor: string;
   markerColor: string;
+  renderAsLiteralText: boolean;
   subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
   text: string;
@@ -64,7 +69,10 @@ export default function InvisibleTextContainer({
     [onSetContainerNode]
   );
 
-  const renderedText = useMemo(() => stripMarkdownLinkUrls(text), [text]);
+  const renderedText = useMemo(
+    () => (renderAsLiteralText ? text : stripMarkdownLinkUrls(text)),
+    [renderAsLiteralText, text]
+  );
 
   const handleSetContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -89,13 +97,27 @@ export default function InvisibleTextContainer({
     [onSetIsParsed, scheduleContainerNodeUpdate]
   );
 
+  useLayoutEffect(() => {
+    if (renderAsLiteralText && containerRef.current) {
+      onSetContainerNode(containerRef.current);
+    }
+  }, [onSetContainerNode, renderAsLiteralText, renderedText]);
+
+  useEffect(() => {
+    if (renderAsLiteralText) {
+      parsedRef.current = false;
+    }
+  }, [renderAsLiteralText]);
+
   useEffect(() => {
     const node = containerRef.current;
     const resizeObserver =
       node && typeof ResizeObserver === 'function'
         ? new ResizeObserver(() => {
-            if (parsedRef.current) {
-              scheduleContainerNodeUpdate(node);
+            if (renderAsLiteralText) {
+              onSetContainerNode(node);
+            } else if (parsedRef.current) {
+              onSetContainerNode(node);
             }
           })
         : null;
@@ -107,7 +129,7 @@ export default function InvisibleTextContainer({
       resizeObserver?.disconnect();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [scheduleContainerNodeUpdate]);
+  }, [onSetContainerNode, renderAsLiteralText, scheduleContainerNodeUpdate]);
 
   const containerStyle = useMemo(
     () => css`
@@ -118,33 +140,37 @@ export default function InvisibleTextContainer({
       overflow-wrap: break-word;
       overflow-wrap: anywhere;
       word-break: break-word;
-      line-height: 1.7;
+      line-height: ${lineHeight};
       overflow: hidden;
       max-height: ${collapsedMaxHeight};
     `,
-    [collapsedMaxHeight]
+    [collapsedMaxHeight, lineHeight]
   );
 
   return (
     <div ref={handleSetContainerRef} className={containerStyle}>
-      <Suspense fallback={null}>
-        <Markdown
-          isInvisible
-          contentId={contentId}
-          contentType={contentType}
-          embedPreviewMode={embedPreviewMode}
-          isPreview={isPreview}
-          isProfileComponent={isProfileComponent}
-          isAIMessage={isAIMessage}
-          linkColor={linkColor}
-          markerColor={markerColor}
-          subjectPreviewVariant={subjectPreviewVariant}
-          theme={theme}
-          onSetIsParsed={handleSetIsParsed}
-        >
-          {renderedText}
-        </Markdown>
-      </Suspense>
+      {renderAsLiteralText ? (
+        renderedText
+      ) : (
+        <Suspense fallback={null}>
+          <Markdown
+            isInvisible
+            contentId={contentId}
+            contentType={contentType}
+            embedPreviewMode={embedPreviewMode}
+            isPreview={isPreview}
+            isProfileComponent={isProfileComponent}
+            isAIMessage={isAIMessage}
+            linkColor={linkColor}
+            markerColor={markerColor}
+            subjectPreviewVariant={subjectPreviewVariant}
+            theme={theme}
+            onSetIsParsed={handleSetIsParsed}
+          >
+            {renderedText}
+          </Markdown>
+        </Suspense>
+      )}
     </div>
   );
 }
