@@ -44,6 +44,7 @@ import useBoardTimers from './hooks/useBoardTimers';
 import useGameMoveHandlers from './hooks/useGameMoveHandlers';
 import LocalContext from '../../Context';
 const deviceIsMobile = isMobile(navigator);
+const CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750;
 
 export default function MessagesContainer({
   channelName,
@@ -401,8 +402,26 @@ export default function MessagesContainer({
     subchannel?.loaded
   ]);
 
-  const catchUpStatusShown =
+  const catchUpStatusPending =
     (reconnecting || isReloadRequired) && !pageLoading;
+  const [catchUpStatusDelayElapsed, setCatchUpStatusDelayElapsed] =
+    useState(false);
+
+  useEffect(() => {
+    if (!catchUpStatusPending) {
+      setCatchUpStatusDelayElapsed(false);
+      return;
+    }
+    const catchUpStatusTimer = window.setTimeout(() => {
+      setCatchUpStatusDelayElapsed(true);
+    }, CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS);
+    return () => clearTimeout(catchUpStatusTimer);
+  }, [catchUpStatusPending]);
+
+  // Keep the canonical interaction gate immediate, but avoid flashing a
+  // transient status pill for a recovery that finishes in under one beat.
+  const catchUpStatusShown =
+    catchUpStatusPending && catchUpStatusDelayElapsed;
   const containerHeight = `CALC(100% - 1rem - 2px - ${
     socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
   }${aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''}${

@@ -115,6 +115,10 @@ test('wake silently validates an authenticated room barrier and broken sessions 
     /onBound\(result\)[\s\S]*?result\?\.chatRoomsChanged[\s\S]*?handleLoadChatRef\.current\?\.\(\{[\s\S]*?fromWriter: true/
   );
   assert.doesNotMatch(wakeBarrier, /onFinishReconnecting\(\)/);
+  assert.match(
+    disconnectHandler,
+    /recordChatBootstrapEvent\('chat-socket-disconnected',[\s\S]*?reason,[\s\S]*?visibility: document\.visibilityState[\s\S]*?hiddenForMs:[\s\S]*?online: !browserReportsOffline\(\)/
+  );
 
   assert.match(
     connectHandler,
@@ -271,7 +275,15 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   assert.doesNotMatch(catchUpStatusMarkup, /(?:^|\n)\s*width: 100%;/);
   assert.match(
     messagesSource,
-    /const catchUpStatusShown =\s*\(reconnecting \|\| isReloadRequired\) && !pageLoading/
+    /CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750/
+  );
+  assert.match(
+    messagesSource,
+    /const catchUpStatusPending =\s*\(reconnecting \|\| isReloadRequired\) && !pageLoading[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?setCatchUpStatusDelayElapsed\(true\)[\s\S]*?CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS[\s\S]*?clearTimeout\(catchUpStatusTimer\)/
+  );
+  assert.match(
+    messagesSource,
+    /const catchUpStatusShown =\s*catchUpStatusPending && catchUpStatusDelayElapsed/
   );
   assert.match(
     messagesSource,

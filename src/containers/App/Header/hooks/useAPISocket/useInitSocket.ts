@@ -1672,6 +1672,15 @@ export default function useInitSocket({
         Date.now() - plannedServerHandoffAtRef.current <= 5_000
       );
       plannedServerHandoffAtRef.current = 0;
+      recordChatBootstrapEvent('chat-socket-disconnected', {
+        reason,
+        userId: userIdRef.current || null,
+        visibility: document.visibilityState,
+        hiddenForMs: hiddenAtRef.current
+          ? Date.now() - hiddenAtRef.current
+          : null,
+        online: !browserReportsOffline()
+      });
       emitAdminTelemetry({
         message: `disconnected from socket. reason: ${reason}`
       });
