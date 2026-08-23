@@ -261,6 +261,14 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
     messagesContentSource,
     /Catching up&hellip;[\s\S]*?<MessageInput/
   );
+  const catchUpStatusMarkup =
+    messagesContentSource.match(
+      /\{catchUpStatusShown && \([\s\S]*?Catching up&hellip;[\s\S]*?\)\}/
+    )?.[0] || '';
+  assert.match(catchUpStatusMarkup, /width: fit-content/);
+  assert.match(catchUpStatusMarkup, /height: 3rem/);
+  assert.match(catchUpStatusMarkup, /margin: 0 auto 1rem/);
+  assert.doesNotMatch(catchUpStatusMarkup, /(?:^|\n)\s*width: 100%;/);
   assert.match(
     messagesSource,
     /const catchUpStatusShown =\s*\(reconnecting \|\| isReloadRequired\) && !pageLoading/

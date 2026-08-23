@@ -36,37 +36,39 @@ export default function Content({
         {!subchannel?.isRestricted && <ChannelHeader {...channelHeaderProps} />}
         <DisplayedMessages {...displayedMessagesProps} />
       </div>
-      {catchUpStatusShown && (
-        <div
-          role="status"
-          aria-live="polite"
-          className={css`
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            width: 100%;
-            height: 4rem;
-            border-top: 1px solid var(--ui-border);
-            background: var(--chat-title-bg);
-            color: var(--chat-text);
-            font-size: 1.4rem;
-            font-weight: 500;
-            letter-spacing: 0.02em;
-          `}
-        >
-          Catching up&hellip;
-        </div>
-      )}
       <div
         style={{
           background: 'var(--chat-bg)',
           padding: '1rem',
-          borderTop: catchUpStatusShown
-            ? undefined
-            : '1px solid var(--ui-border)'
+          borderTop: '1px solid var(--ui-border)'
         }}
       >
+        {catchUpStatusShown && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: fit-content;
+              max-width: 100%;
+              height: 3rem;
+              margin: 0 auto 1rem;
+              padding: 0 1rem;
+              border: 1px solid var(--ui-border);
+              border-radius: 999px;
+              background: var(--chat-title-bg);
+              box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.12);
+              color: var(--chat-text);
+              font-size: 1.3rem;
+              font-weight: 600;
+              white-space: nowrap;
+            `}
+          >
+            Catching up&hellip;
+          </div>
+        )}
         <MessageInput key={messageInputKey} {...messageInputProps} />
       </div>
     </>
