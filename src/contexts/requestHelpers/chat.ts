@@ -1409,7 +1409,12 @@ export default function chatRequestHelpers({
             ...auth(),
             meta: {
               collapseKey: null,
-              priority: compactGeneralTopics ? 'high' : 'normal',
+              // Every full Chat bootstrap gates the entire Chat surface. The
+              // priority lane is about that interaction boundary, not about
+              // whether General happens to request a compact topic catalog.
+              // Keeping DMs in the ordinary lane made a cold routed DM wait
+              // behind unrelated page GETs while General bypassed them.
+              priority: 'high',
               onAttemptTiming,
               // An ordinary initial bootstrap can tolerate a throttled tab's
               // long request. Canonical reconnect repair owns an outer retry

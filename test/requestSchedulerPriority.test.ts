@@ -85,3 +85,20 @@ test('the scheduler records queue and HTTP/parse phases around the selected lane
   assert.match(schedulerSource, /httpAndParseMs: Date\.now\(\) - httpStartTime/);
   assert.match(schedulerSource, /notifyAttemptTiming\(config\.meta\?\.onAttemptTiming/);
 });
+
+test('every full Chat bootstrap uses the high-priority lane', () => {
+  const requestSource = readFileSync(
+    new URL('../src/contexts/requestHelpers/chat.ts', import.meta.url),
+    'utf8'
+  );
+  const fullBootstrapSource = requestSource.slice(
+    requestSource.indexOf('async loadChat({'),
+    requestSource.indexOf('async loadChatChannel({')
+  );
+
+  assert.match(fullBootstrapSource, /priority: 'high'/);
+  assert.doesNotMatch(
+    fullBootstrapSource,
+    /priority: compactGeneralTopics \? 'high'/
+  );
+});
