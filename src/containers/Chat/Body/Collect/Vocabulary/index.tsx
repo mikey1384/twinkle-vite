@@ -583,12 +583,17 @@ export default function Vocabulary({
       'other'
     ];
 
-    const { content, frequency = 1, ...rest } = searchedWord || {};
+    const { content, frequency = 1, validationReceipt, ...rest } =
+      searchedWord || {};
 
     const payload: Record<string, any> = {
       content: content?.toLowerCase?.() || '',
       frequency
     };
+
+    if (typeof validationReceipt === 'string') {
+      payload.validationReceipt = validationReceipt;
+    }
 
     const otherDefinitions: { definition: string }[] = [];
 

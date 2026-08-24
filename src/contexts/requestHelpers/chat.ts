@@ -2527,10 +2527,22 @@ export default function chatRequestHelpers({
     },
     async collectVocabulary(wordObject: any) {
       try {
+        const { validationReceipt, ...wordPayload } = wordObject || {};
+        const requestConfig = auth();
         const { data } = await request.post(
           `${URL}/chat/vocabulary/word`,
-          wordObject,
-          auth()
+          wordPayload,
+          {
+            ...requestConfig,
+            headers: {
+              ...requestConfig.headers,
+              ...(typeof validationReceipt === 'string'
+                ? {
+                    'x-twinkle-word-validation-receipt': validationReceipt
+                  }
+                : {})
+            }
+          }
         );
         return data;
       } catch (error) {
