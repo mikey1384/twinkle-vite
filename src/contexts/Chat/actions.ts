@@ -1176,7 +1176,7 @@ export default function ChatActions(dispatch: Dispatch) {
       cardObj: object;
       loadMoreShown: boolean;
       mostRecentOfferTimeStamp: number;
-      numCardSummonedToday: number;
+      numCardSummonedToday?: number;
     }) {
       return dispatch({
         type: 'LOAD_AI_CARD_CHAT',

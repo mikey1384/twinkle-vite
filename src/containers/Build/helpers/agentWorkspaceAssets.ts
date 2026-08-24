@@ -1,9 +1,7 @@
 import type { PreviewRuntimeUploadAsset } from '../types/runtimeUploadTypes';
 
 export type BuildAgentAssetBytesInput =
-  | ArrayBuffer
-  | ArrayBufferView
-  | number[];
+  ArrayBuffer | ArrayBufferView | number[];
 
 export interface BuildAgentAssetCreateOptions {
   fileName?: string;
@@ -45,9 +43,7 @@ export interface BuildAgentWorkspaceAssetsApi {
   createMany: (
     items: BuildAgentAssetCreateOptions[]
   ) => Promise<BuildAgentAssetCreateManyResult>;
-  list: (
-    options?: BuildAgentAssetListOptions
-  ) => Promise<{
+  list: (options?: BuildAgentAssetListOptions) => Promise<{
     assets: PreviewRuntimeUploadAsset[];
     nextCursor: number | null;
     usage: unknown;
@@ -57,7 +53,7 @@ export interface BuildAgentWorkspaceAssetsApi {
 }
 
 export const BUILD_PROJECT_ASSET_UPLOAD_ACCEPT =
-  'image/*,audio/*,model/gltf-binary,model/gltf+json,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff,.tif,.heic,.heif,.avif,.mp3,.wav,.ogg,.m4a,.aac,.flac,.aif,.aiff,.glb,.gltf,.ktx2,.hdr,.exr,.bin,.drc';
+  'image/*,audio/*,audio/midi,audio/x-midi,model/gltf-binary,model/gltf+json,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff,.tif,.heic,.heif,.avif,.mp3,.mid,.midi,.wav,.ogg,.m4a,.aac,.flac,.aif,.aiff,.glb,.gltf,.ktx2,.hdr,.exr,.bin,.drc';
 
 const BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS = [
   '.png',
@@ -73,6 +69,8 @@ const BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS = [
   '.heif',
   '.avif',
   '.mp3',
+  '.mid',
+  '.midi',
   '.wav',
   '.ogg',
   '.m4a',
@@ -102,6 +100,8 @@ const AGENT_ASSET_EXTENSION_BY_MIME_TYPE: Record<string, string> = {
   'image/avif': '.avif',
   'audio/mpeg': '.mp3',
   'audio/mp3': '.mp3',
+  'audio/midi': '.mid',
+  'audio/x-midi': '.mid',
   'audio/wav': '.wav',
   'audio/wave': '.wav',
   'audio/x-wav': '.wav',

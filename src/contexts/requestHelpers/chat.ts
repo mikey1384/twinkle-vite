@@ -8,6 +8,11 @@ import {
   emitPromptStudioShareStateUpdated
 } from '~/constants/systemPrompt';
 import { pollCanonicalRequestStatus } from '~/helpers/aiImageStatus';
+import {
+  acceptAICardSummonQuotaMutationProjection,
+  acceptAICardSummonQuotaReadProjection,
+  captureAICardSummonQuotaProjectionRequest
+} from '~/helpers/aiCardSummonQuotaProjection';
 
 export default function chatRequestHelpers({
   auth,
@@ -1205,6 +1210,8 @@ export default function chatRequestHelpers({
       }
     },
     async generateAICard() {
+      const quotaProjectionRequest =
+        captureAICardSummonQuotaProjectionRequest();
       const clientRequestId =
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? crypto.randomUUID()
@@ -1215,7 +1222,13 @@ export default function chatRequestHelpers({
           { clientRequestId },
           auth()
         );
-        return data;
+        const quotaProjectionAccepted =
+          acceptAICardSummonQuotaMutationProjection(quotaProjectionRequest);
+        return quotaProjectionAccepted &&
+          Number.isSafeInteger(data?.numCardSummoned) &&
+          data.numCardSummoned >= 0
+          ? data
+          : { ...data, numCardSummoned: undefined };
       } catch (error: any) {
         let normalizedError: any = null;
         try {
@@ -1238,7 +1251,15 @@ export default function chatRequestHelpers({
           transientInitialStatuses: ['not_found'],
           transientInitialStatusTimeoutMs: 10_000
         });
-        if (canonicalResult?.success === true) return canonicalResult;
+        if (canonicalResult?.success === true) {
+          const quotaProjectionAccepted =
+            acceptAICardSummonQuotaMutationProjection(quotaProjectionRequest);
+          return quotaProjectionAccepted &&
+            Number.isSafeInteger(canonicalResult?.numCardSummoned) &&
+            canonicalResult.numCardSummoned >= 0
+            ? canonicalResult
+            : { ...canonicalResult, numCardSummoned: undefined };
+        }
         return Promise.reject({
           ...normalizedError,
           ...canonicalResult,
@@ -1398,6 +1419,8 @@ export default function chatRequestHelpers({
       topicIds?: number[];
       onAttemptTiming?: (timing: RequestAttemptTiming) => void;
     }) {
+      const quotaProjectionRequest =
+        captureAICardSummonQuotaProjectionRequest();
       try {
         const { data } = await request.get(
           `${URL}/chat?channelId=${channelId}${
@@ -1427,7 +1450,11 @@ export default function chatRequestHelpers({
             }
           }
         );
-        return data;
+        return Number.isSafeInteger(data?.numCardSummonedToday) &&
+          data.numCardSummonedToday >= 0 &&
+          acceptAICardSummonQuotaReadProjection(quotaProjectionRequest)
+          ? data
+          : { ...data, numCardSummonedToday: undefined };
       } catch (error) {
         return handleError(error);
       }
@@ -1463,9 +1490,7 @@ export default function chatRequestHelpers({
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }${skipUpdateChannelId ? '&skipUpdateChannelId=1' : ''}${
             hydrateMessages ? '&hydrateMessages=1' : ''
-          }${
-            isForInvitation ? '&isForInvitation=1' : ''
-          }${
+          }${isForInvitation ? '&isForInvitation=1' : ''}${
             isForInvitation && invitationSourceChannelId
               ? `&invitationSourceChannelId=${invitationSourceChannelId}`
               : ''
@@ -1520,6 +1545,8 @@ export default function chatRequestHelpers({
       }
     },
     async loadAICardFeeds(lastId: number) {
+      const quotaProjectionRequest =
+        captureAICardSummonQuotaProjectionRequest();
       try {
         const {
           data: {
@@ -1538,7 +1565,12 @@ export default function chatRequestHelpers({
           cardObj,
           loadMoreShown,
           mostRecentOfferTimeStamp,
-          numCardSummonedToday
+          numCardSummonedToday:
+            Number.isSafeInteger(numCardSummonedToday) &&
+            numCardSummonedToday >= 0 &&
+            acceptAICardSummonQuotaReadProjection(quotaProjectionRequest)
+              ? numCardSummonedToday
+              : undefined
         };
       } catch (error) {
         return handleError(error);

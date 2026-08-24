@@ -383,7 +383,11 @@ export default function AICards({
       // The server omits this when it could not read the canonical count after
       // the card went live (a bookkeeping failure never fails a real summon).
       // Keep the current count rather than writing undefined into chat state.
-      if (typeof numCardSummoned === 'number') {
+      if (
+        typeof numCardSummoned === 'number' &&
+        Number.isSafeInteger(numCardSummoned) &&
+        numCardSummoned >= 0
+      ) {
         onUpdateNumSummoned(numCardSummoned);
       }
       if (isMaxReached) {
@@ -399,8 +403,8 @@ export default function AICards({
         isTotalMysteryCard
           ? 'Total Mystery Card Summoned'
           : isMysteryCard
-          ? 'Mystery Card Summoned'
-          : 'Card Summoned'
+            ? 'Mystery Card Summoned'
+            : 'Card Summoned'
       );
       trackEvent('ai_card_summon', {
         card_quality: card?.quality,
@@ -409,7 +413,12 @@ export default function AICards({
       });
       onPostAICardFeed({
         feed,
-        isSummon: true,
+        // Recovery rehydrates the card from the writer. If it was burned or
+        // transferred after the original summon, keep the historical feed but
+        // do not synthesize current collection ownership.
+        isSummon:
+          Number(card?.ownerId) === Number(userId) &&
+          Number(card?.isBurned || 0) !== 1,
         card
       });
     } catch (error: any) {
@@ -427,6 +436,12 @@ export default function AICards({
       } else if (errorKey === 'image_generation_failed') {
         errorMessage =
           "Card generation failed. Open 'My Collection' at the bottom right, select your card, and press 'Generate' to add an image.";
+      } else if (
+        error?.code === 'MANUAL_IDENTITY_MUTATION_BUSY' ||
+        error?.code === 'ai_card_summon_day_changed'
+      ) {
+        errorMessage =
+          error?.message || errorKey || 'Please try summoning again.';
       }
 
       onSetAICardStatusMessage(errorMessage);

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { queueCanonicalAICardBurnTransition } from '~/helpers/aiCardBurnTransition';
@@ -11,12 +11,14 @@ import {
 } from '~/helpers/aiCardCanonicalUpdates';
 import type { Card } from '~/types';
 import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
+import { invalidateAICardSummonQuotaProjection } from '~/helpers/aiCardSummonQuotaProjection';
 
 export default function useAICardSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
 
   const userIdRef = useRef(userId);
   userIdRef.current = userId;
+  const quotaProjectionUserIdRef = useRef(userId);
   const onAcceptTransaction = useChatContext(
     (v) => v.actions.onAcceptTransaction
   );
@@ -68,6 +70,15 @@ export default function useAICardSocket() {
     (v) => v.actions.onInsertBlackAICardUpdateLog
   );
 
+  useLayoutEffect(() => {
+    if (quotaProjectionUserIdRef.current !== userId) {
+      // Reject prior-account responses before passive subscriptions or newly
+      // committed account UI can consume them.
+      invalidateAICardSummonQuotaProjection();
+      quotaProjectionUserIdRef.current = userId;
+    }
+  }, [userId]);
+
   useEffect(() => {
     socket.on('ai_card_bought', handleAICardBought);
     socket.on('ai_card_sold', handleAICardSold);
@@ -83,6 +94,7 @@ export default function useAICardSocket() {
     );
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
+    socket.on('ai_card_summon_quota_updated', handleAICardSummonQuotaUpdate);
     socket.on('transaction_accepted', handleTransactionAccept);
     socket.on('transaction_cancelled', handleTransactionCancel);
     socket.on('new_ai_card_generation_status', onSetAICardStatusMessage);
@@ -110,6 +122,7 @@ export default function useAICardSocket() {
       );
       socket.off('current_transaction_id_updated', handleTransactionIdUpdate);
       socket.off('new_ai_card_summoned', handleNewAICardSummon);
+      socket.off('ai_card_summon_quota_updated', handleAICardSummonQuotaUpdate);
       socket.off('transaction_accepted', handleTransactionAccept);
       socket.off('transaction_cancelled', handleTransactionCancel);
       socket.off('new_ai_card_generation_status', onSetAICardStatusMessage);
@@ -515,13 +528,11 @@ export default function useAICardSocket() {
     function handleNewAICardSummon({
       feed,
       card,
-      summonerId,
-      numCardSummoned
+      summonerId
     }: {
       feed: any;
       card: any;
       summonerId?: number;
-      numCardSummoned?: number;
     }) {
       // The summoner used to be skipped here because the summon response adds
       // the card itself. That made the response the only way they could ever
@@ -535,11 +546,36 @@ export default function useAICardSocket() {
         // The response path also maintains myCardIds, which RECEIVE_AI_CARD_SUMMON
         // does not — the summoner has to go through the same action it does.
         onPostAICardFeed({ feed, card, isSummon: true });
-        if (typeof numCardSummoned === 'number') {
-          onUpdateNumSummoned(numCardSummoned);
-        }
       } else {
         onNewAICardSummon({ card, feed });
+      }
+    }
+
+    function handleAICardSummonQuotaUpdate({
+      numCardSummoned,
+      userId: quotaUserId
+    }: {
+      numCardSummoned?: number;
+      userId?: number;
+    }) {
+      // A listener from the previous account survives until this effect's
+      // passive cleanup. Reject it against the render-current identity; the
+      // server target is an additional defense against a misrouted delivery.
+      if (
+        !userId ||
+        userId !== userIdRef.current ||
+        (Number.isSafeInteger(quotaUserId) &&
+          Number(quotaUserId) !== Number(userIdRef.current))
+      ) {
+        return;
+      }
+      if (
+        typeof numCardSummoned === 'number' &&
+        Number.isSafeInteger(numCardSummoned) &&
+        numCardSummoned >= 0
+      ) {
+        invalidateAICardSummonQuotaProjection();
+        onUpdateNumSummoned(numCardSummoned);
       }
     }
 
@@ -561,5 +597,5 @@ export default function useAICardSocket() {
       onCancelTransaction({ transactionId, reason: cancelReason });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userId]);
 }

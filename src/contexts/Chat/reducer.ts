@@ -3015,8 +3015,7 @@ export default function ChatReducer(
       }
 
       const messagesObj = applyCanonicalChatMessagePage({
-        existingMessagesObj:
-          state.channelsObj[loadedChannel.id]?.messagesObj,
+        existingMessagesObj: state.channelsObj[loadedChannel.id]?.messagesObj,
         messages: action.data.messages,
         messagesHydrated: action.data.messagesHydrated === true
       });
@@ -3941,7 +3940,10 @@ export default function ChatReducer(
             ? state.myListedCardsLoadMoreButton
             : action.data.myListedCardsLoadMoreButton || false,
         mostRecentOfferTimeStamp: action.data.mostRecentOfferTimeStamp,
-        numCardSummonedToday: action.data.numCardSummonedToday,
+        ...(Number.isSafeInteger(action.data.numCardSummonedToday) &&
+        action.data.numCardSummonedToday >= 0
+          ? { numCardSummonedToday: action.data.numCardSummonedToday }
+          : {}),
         // INIT_CHAT does not carry the aggregate unread projection. Preserve
         // the last writer-confirmed badge until the post-bootstrap
         // /chat/numUnreads writer read completes; navigating during bootstrap
@@ -4602,7 +4604,10 @@ export default function ChatReducer(
             : {})
         },
         mostRecentOfferTimeStamp: action.mostRecentOfferTimeStamp,
-        numCardSummonedToday: action.numCardSummonedToday,
+        ...(Number.isSafeInteger(action.numCardSummonedToday) &&
+        action.numCardSummonedToday >= 0
+          ? { numCardSummonedToday: action.numCardSummonedToday }
+          : {}),
         selectedChannelId: null,
         selectedSubchannelId: null,
         chatType: AI_CARD_CHAT_TYPE,
@@ -5745,12 +5750,12 @@ export default function ChatReducer(
         favoriteChannelIds: action.deferChannelListProjection
           ? state.favoriteChannelIds
           : state.allFavoriteChannelIds[action.channel.id]
-          ? [action.channel.id].concat(
-              state.favoriteChannelIds.filter(
-                (channelId: number) => channelId !== action.channel.id
+            ? [action.channel.id].concat(
+                state.favoriteChannelIds.filter(
+                  (channelId: number) => channelId !== action.channel.id
+                )
               )
-            )
-          : state.favoriteChannelIds,
+            : state.favoriteChannelIds,
         homeChannelIds: action.deferChannelListProjection
           ? state.homeChannelIds
           : [action.channel.id].concat(
@@ -5779,12 +5784,12 @@ export default function ChatReducer(
         favoriteChannelIds: action.deferChannelListProjection
           ? state.favoriteChannelIds
           : state.allFavoriteChannelIds[action.channelId]
-          ? [action.channelId].concat(
-              state.favoriteChannelIds.filter(
-                (channelId: number) => channelId !== action.channelId
+            ? [action.channelId].concat(
+                state.favoriteChannelIds.filter(
+                  (channelId: number) => channelId !== action.channelId
+                )
               )
-            )
-          : state.favoriteChannelIds,
+            : state.favoriteChannelIds,
         homeChannelIds: action.deferChannelListProjection
           ? state.homeChannelIds
           : [action.channelId].concat(
