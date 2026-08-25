@@ -13,7 +13,10 @@ import {
   useProfileContext
 } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
-import { getCanonicalPinnedAICardIds } from './canonical';
+import {
+  getCanonicalPinnedAICardIds,
+  getCanonicalPinnedAICardsLoadPayload
+} from './canonical';
 
 const pinnedLabel = 'AI Cards';
 const pinCardsLabel = 'Pin Cards';
@@ -128,15 +131,14 @@ export default function PinnedAICards({
       try {
         const data = await loadPinnedAICardsOnProfile(profile.id);
         if (!isMounted) return;
-        const nextCardIds = getCanonicalPinnedAICardIds(data);
-        if (!Array.isArray(data?.cards)) {
-          throw new Error(
-            'Pinned AI Cards response did not include canonical card details'
-          );
-        }
+        const {
+          cardIds: nextCardIds,
+          cards,
+          isTopCards: nextIsTopCards
+        } = getCanonicalPinnedAICardsLoadPayload(data);
         setDisplayedCardIds(nextCardIds);
-        setIsTopCards(Boolean(data?.isTopCards));
-        if (!data?.isTopCards) {
+        setIsTopCards(nextIsTopCards);
+        if (!nextIsTopCards) {
           onLoadPinnedAICards({
             username: profile.username,
             cardIds: nextCardIds
@@ -152,13 +154,13 @@ export default function PinnedAICards({
             });
           }
         }
-        for (const card of data.cards) {
+        for (const card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
         setLoadedForProfileId(profile.id);
       } catch (error) {
         console.error(error);
-        // Fallback to unvalidated IDs on error to avoid blank UI
+        // Preserve the last profile snapshot rather than synthesizing new IDs.
         if (isMounted && displayedCardIds.length === 0) {
           setDisplayedCardIds(pinnedCardIds);
         }

@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { getCanonicalPinnedAICardIds } from '../src/containers/Profile/Body/Home/PinnedAICards/canonical';
+import {
+  getCanonicalPinnedAICardIds,
+  getCanonicalPinnedAICardsLoadPayload
+} from '../src/containers/Profile/Body/Home/PinnedAICards/canonical';
+import {
+  getCanonicalPinnedBuildsLoadPayload,
+  getCanonicalPinnedBuildsWritePayload
+} from '../src/containers/Profile/Body/Home/Builds/canonical';
 
 const componentSource = readFileSync(
   new URL(
@@ -39,11 +46,55 @@ test('pinned AI Card state accepts only canonical server IDs', () => {
 test('profile pin loads and writes both consume the canonical validator', () => {
   assert.equal(
     componentSource.match(/getCanonicalPinnedAICardIds\(data\)/g)?.length,
-    2
+    1
   );
+  assert.match(componentSource, /getCanonicalPinnedAICardsLoadPayload\(data\)/);
   assert.doesNotMatch(
     componentSource,
     /Array\.isArray\(data\?\.cardIds\)[\s\S]*?:\s*cardIds/
+  );
+});
+
+test('pinned profile loads require explicit canonical fallback state', () => {
+  assert.deepEqual(
+    getCanonicalPinnedAICardsLoadPayload({
+      cardIds: [9],
+      cards: [{ id: 9 }],
+      isTopCards: false
+    }),
+    { cardIds: [9], cards: [{ id: 9 }], isTopCards: false }
+  );
+  assert.throws(
+    () =>
+      getCanonicalPinnedAICardsLoadPayload({
+        cardIds: [9],
+        cards: [{ id: 9 }]
+      }),
+    /canonical display data/
+  );
+
+  assert.deepEqual(
+    getCanonicalPinnedBuildsLoadPayload({
+      buildIds: [4],
+      builds: [{ id: 4 }],
+      isTopBuilds: true
+    }),
+    { buildIds: [4], builds: [{ id: 4 }], isTopBuilds: true }
+  );
+  assert.throws(
+    () =>
+      getCanonicalPinnedBuildsLoadPayload({
+        buildIds: [4],
+        builds: [{ id: 4 }]
+      }),
+    /canonical display data/
+  );
+  assert.deepEqual(
+    getCanonicalPinnedBuildsWritePayload({
+      buildIds: [4],
+      builds: [{ id: 4 }]
+    }),
+    { buildIds: [4], builds: [{ id: 4 }] }
   );
 });
 

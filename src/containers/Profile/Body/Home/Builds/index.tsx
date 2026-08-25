@@ -15,6 +15,10 @@ import DescriptionModal from '~/components/Modals/BuildDescriptionModal';
 import SelectPinnedBuildsModal from './SelectPinnedBuildsModal';
 import ReorderPinnedBuildsModal from './ReorderPinnedBuildsModal';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  getCanonicalPinnedBuildsLoadPayload,
+  getCanonicalPinnedBuildsWritePayload
+} from './canonical';
 
 const panelTitle = 'Builds';
 const defaultVisibleBuildCount = 3;
@@ -167,14 +171,11 @@ export default function Builds({
       try {
         const data = await loadPinnedBuildsOnProfile(profile.id);
         if (canceled) return;
-        if (!Array.isArray(data?.buildIds) || !Array.isArray(data?.builds)) {
-          throw new Error(
-            'Pinned builds response did not include canonical data'
-          );
-        }
-        const nextBuilds = data.builds as BuildProjectListItemData[];
-        const isTopBuilds = Boolean(data?.isTopBuilds);
-        const nextBuildIds = normalizeBuildIds(data.buildIds);
+        const {
+          buildIds: nextBuildIds,
+          builds: nextBuilds,
+          isTopBuilds
+        } = getCanonicalPinnedBuildsLoadPayload(data);
         setDisplayedBuilds(nextBuilds);
         onLoadPinnedBuilds({
           username: profile.username,
@@ -386,11 +387,10 @@ export default function Builds({
     buildIds?: unknown;
     builds?: unknown;
   }) {
-    if (!Array.isArray(data?.buildIds) || !Array.isArray(data?.builds)) {
-      throw new Error('Pinned builds response did not include canonical data');
-    }
-    const nextBuildIds = normalizeBuildIds(data.buildIds);
-    const nextBuilds = data.builds as BuildProjectListItemData[];
+    const {
+      buildIds: nextBuildIds,
+      builds: nextBuilds
+    } = getCanonicalPinnedBuildsWritePayload(data);
     onApplyCanonicalUserProfileState({
       userId: profile.id,
       profileState: { pinnedBuildIds: nextBuildIds }
@@ -475,11 +475,4 @@ export default function Builds({
       error
     );
   }
-}
-
-function normalizeBuildIds(buildIds: unknown) {
-  if (!Array.isArray(buildIds)) return [];
-  return buildIds
-    .map((buildId) => Number(buildId))
-    .filter((buildId) => Number.isFinite(buildId) && buildId > 0);
 }

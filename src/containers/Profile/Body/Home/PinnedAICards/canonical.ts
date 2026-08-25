@@ -8,3 +8,25 @@ export function getCanonicalPinnedAICardIds(payload: unknown): number[] {
   }
   return cardIds;
 }
+
+export function getCanonicalPinnedAICardsLoadPayload(payload: unknown) {
+  const canonicalPayload = payload as {
+    cardIds?: unknown;
+    cards?: unknown;
+    isTopCards?: unknown;
+  } | null;
+  const cardIds = getCanonicalPinnedAICardIds(payload);
+  if (
+    !Array.isArray(canonicalPayload?.cards) ||
+    typeof canonicalPayload?.isTopCards !== 'boolean'
+  ) {
+    throw new Error(
+      'Pinned AI Cards response did not include canonical display data'
+    );
+  }
+  return {
+    cardIds,
+    cards: canonicalPayload.cards,
+    isTopCards: canonicalPayload.isTopCards
+  };
+}
