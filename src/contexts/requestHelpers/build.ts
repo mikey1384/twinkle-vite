@@ -1568,7 +1568,7 @@ export default function buildRequestHelpers({
       expectedStructure: Record<string, unknown>;
       thinkingMode?: 'low' | 'medium' | 'mid' | 'high';
       mode?: 'low' | 'medium' | 'mid' | 'high';
-      model?: 'claude-opus-5' | 'claude-fable-5';
+      model?: 'gpt-5.6-sol' | 'claude-opus-5' | 'claude-fable-5';
       instructions?: string;
       systemPrompt?: string;
       webSearch?: boolean;

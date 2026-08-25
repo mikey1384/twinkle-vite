@@ -69,11 +69,11 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.6'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'grok-4\.6'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.6'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'/m
   );
   assert.match(
     selectionHelperSource,
-    /model: 'grok-4\.6'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'medium'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'medium'[\s\S]*?defaultReasoningEffort: 'high'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'heavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/m
+    /model: 'grok-4\.6'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'medium'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'medium'[\s\S]*?defaultReasoningEffort: 'high'[\s\S]*?model: 'gpt-5\.6-sol'[\s\S]*?mode: 'heavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/m
   );
   assert.match(
     selectionHelperSource,
@@ -92,6 +92,89 @@ test('lumine workspace header exposes simple modes with advanced model choices',
     /model: 'claude-opus-5'[\s\S]*?mode: 'heavy'/
   );
   assert.doesNotMatch(headerSource, /gpt-5\.[1-5]|GPT-5\.[1-5]|Think level/i);
+});
+
+test('lumine retires Grok Heavy while preserving existing users on Heavy', async () => {
+  const {
+    getLumineSelectionForMode,
+    getSelectableLumineModelOptions,
+    resolveLumineModelSelectionFromPolicy
+  } = await import(
+    '../src/containers/Build/Editor/helpers/lumineModelSelection.ts'
+  );
+  const legacyPolicy = {
+    lumineModelPreference: {
+      model: 'grok-4.6',
+      reasoningEffort: 'xhigh',
+      mode: 'heavy',
+      source: 'stored'
+    },
+    lumineModelOptions: [
+      {
+        model: 'grok-4.6',
+        mode: 'light',
+        label: 'Grok 4.6',
+        description: '',
+        defaultReasoningEffort: 'medium',
+        supportedReasoningEfforts: ['medium']
+      },
+      {
+        model: 'grok-4.6',
+        mode: 'medium',
+        label: 'Grok 4.6',
+        description: '',
+        defaultReasoningEffort: 'high',
+        supportedReasoningEfforts: ['high']
+      },
+      {
+        model: 'grok-4.6',
+        mode: 'heavy',
+        label: 'Grok 4.6',
+        description: '',
+        defaultReasoningEffort: 'xhigh',
+        supportedReasoningEfforts: ['xhigh']
+      },
+      {
+        model: 'claude-opus-5',
+        mode: 'heavy',
+        label: 'Claude Opus 5',
+        description: '',
+        defaultReasoningEffort: 'high',
+        supportedReasoningEfforts: ['high']
+      },
+      {
+        model: 'gpt-5.6-sol',
+        mode: 'heavy',
+        label: 'GPT-5.6 Sol',
+        description: '',
+        defaultReasoningEffort: 'xhigh',
+        supportedReasoningEfforts: ['xhigh']
+      }
+    ]
+  };
+
+  const options = getSelectableLumineModelOptions(legacyPolicy);
+  assert.equal(
+    options.some(
+      (option) => option.model === 'grok-4.6' && option.mode === 'heavy'
+    ),
+    false
+  );
+  assert.deepEqual(resolveLumineModelSelectionFromPolicy(legacyPolicy), {
+    model: 'gpt-5.6-sol',
+    reasoningEffort: 'xhigh',
+    mode: 'heavy',
+    source: 'stored'
+  });
+  assert.deepEqual(
+    getLumineSelectionForMode({ mode: 'heavy', modelOptions: options }),
+    {
+      model: 'gpt-5.6-sol',
+      reasoningEffort: 'xhigh',
+      mode: 'heavy',
+      source: 'default'
+    }
+  );
 });
 
 test('lumine model preference saves through the build request helper', () => {

@@ -24,7 +24,7 @@ const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
 > = {
   light: 'grok-4.6',
   medium: 'grok-4.6',
-  heavy: 'grok-4.6'
+  heavy: 'gpt-5.6-sol'
 };
 
 const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
@@ -69,10 +69,10 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ['medium']
   },
   {
-    model: 'grok-4.6',
+    model: 'gpt-5.6-sol',
     mode: 'heavy',
-    label: 'Grok 4.6',
-    description: 'Heavy mode: maximum reasoning for demanding builds.',
+    label: 'GPT-5.6 Sol',
+    description: 'Heavy mode: deep reasoning for demanding builds.',
     defaultReasoningEffort: 'xhigh',
     supportedReasoningEfforts: ['xhigh']
   },
@@ -83,14 +83,6 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     description: 'Heavy mode: powerful reasoning for ambitious builds.',
     defaultReasoningEffort: 'high',
     supportedReasoningEfforts: ['high']
-  },
-  {
-    model: 'gpt-5.6-sol',
-    mode: 'heavy',
-    label: 'GPT-5.6 Sol',
-    description: 'Heavy mode: deep reasoning for demanding builds.',
-    defaultReasoningEffort: 'xhigh',
-    supportedReasoningEfforts: ['xhigh']
   }
 ];
 
@@ -179,7 +171,12 @@ export function getSelectableLumineModelOptions(
             ? supportedReasoningEfforts
             : ALL_LUMINE_THINK_LEVELS
       };
-    });
+    })
+    // During an API/Vite overlap an older policy may still advertise Grok's
+    // retired Heavy variant. Never put it back into the visible category.
+    .filter(
+      (option) => !(option.model === 'grok-4.6' && option.mode === 'heavy')
+    );
   return normalizedOptions.length > 0
     ? normalizedOptions
     : FALLBACK_LUMINE_MODEL_OPTIONS;
@@ -194,21 +191,31 @@ export function normalizeLumineModelSelection({
 }): BuildLumineModelPreference {
   const options =
     modelOptions.length > 0 ? modelOptions : FALLBACK_LUMINE_MODEL_OPTIONS;
-  const model = isLumineModel(selection?.model)
-    ? selection.model
+  const migratedSelection =
+    selection?.model === 'grok-4.6' &&
+    (selection.mode === 'heavy' || selection.reasoningEffort === 'xhigh')
+      ? {
+          ...selection,
+          model: 'gpt-5.6-sol' as const,
+          reasoningEffort: 'xhigh' as const,
+          mode: 'heavy' as const
+        }
+      : selection;
+  const model = isLumineModel(migratedSelection?.model)
+    ? migratedSelection.model
     : DEFAULT_LUMINE_MODEL;
   const matchingModelOptions = options.filter(
     (candidate) => candidate.model === model
   );
   const requestedSelectionEffort = isSelectableLumineThinkLevel(
-    selection?.reasoningEffort
+    migratedSelection?.reasoningEffort
   )
-    ? selection.reasoningEffort
+    ? migratedSelection.reasoningEffort
     : null;
   const option =
-    (isLumineMode(selection?.mode)
+    (isLumineMode(migratedSelection?.mode)
       ? matchingModelOptions.find(
-          (candidate) => candidate.mode === selection.mode
+          (candidate) => candidate.mode === migratedSelection.mode
         )
       : undefined) ||
     (requestedSelectionEffort
@@ -236,10 +243,11 @@ export function normalizeLumineModelSelection({
     ? requestedEffort
     : fallbackEffort;
   const selectionModelMatchesOption =
-    isLumineModel(selection?.model) && selection.model === option?.model;
+    isLumineModel(migratedSelection?.model) &&
+    migratedSelection.model === option?.model;
   const mode =
-    selectionModelMatchesOption && isLumineMode(selection?.mode)
-      ? selection.mode
+    selectionModelMatchesOption && isLumineMode(migratedSelection?.mode)
+      ? migratedSelection.mode
       : isLumineMode(option?.mode)
         ? option.mode
         : resolveLumineMode({
@@ -249,7 +257,7 @@ export function normalizeLumineModelSelection({
     model: option?.model || DEFAULT_LUMINE_MODEL,
     reasoningEffort,
     mode,
-    source: selection?.source || 'default'
+    source: migratedSelection?.source || 'default'
   };
 }
 
