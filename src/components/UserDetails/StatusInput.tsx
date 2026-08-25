@@ -18,7 +18,8 @@ export default function StatusInput({
   statusColor,
   onStatusSubmit,
   onTextChange,
-  setColor
+  setColor,
+  submitting = false
 }: {
   autoFocus?: boolean;
   profile: any;
@@ -29,6 +30,7 @@ export default function StatusInput({
   onStatusSubmit: () => void;
   onTextChange: (text: string) => void;
   setColor: (color: string) => void;
+  submitting?: boolean;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColorKey = doneRole.colorKey || 'blue';
@@ -75,6 +77,7 @@ export default function StatusInput({
           hasError={!!statusExceedsCharLimit}
           innerRef={innerRef}
           minRows={1}
+          disabled={submitting}
           value={editedStatusMsg}
           onChange={(event) => onTextChange(event.target.value)}
           placeholder={statusMsgPlaceholder}
@@ -105,7 +108,14 @@ export default function StatusInput({
             marginTop: '0.5rem'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              pointerEvents: submitting ? 'none' : undefined,
+              opacity: submitting ? 0.6 : 1
+            }}
+          >
             <ColorSelector
               colors={[
                 'purple',
@@ -134,6 +144,7 @@ export default function StatusInput({
             }}
           >
             <Button
+              disabled={submitting}
               variant="solid"
               tone="raised"
               color="darkerGray"
@@ -143,6 +154,7 @@ export default function StatusInput({
               Cancel
             </Button>
             <Button
+              loading={submitting}
               color={doneColorKey}
               variant="solid"
               tone="raised"

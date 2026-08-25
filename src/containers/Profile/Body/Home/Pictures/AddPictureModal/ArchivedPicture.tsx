@@ -6,6 +6,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { getCanonicalDeletedProfilePicture } from '~/helpers/profileCanonicalState';
 
 const width = 25;
 
@@ -107,7 +108,8 @@ export default function ArchivedPicture({
   );
 
   async function handleImageDelete() {
-    await deleteArchivedPicture(picture.id);
-    onDeleteArchivedPicture(picture.id);
+    const data = await deleteArchivedPicture(picture.id);
+    const canonicalDeletion = getCanonicalDeletedProfilePicture(data);
+    onDeleteArchivedPicture(canonicalDeletion.pictureId);
   }
 }

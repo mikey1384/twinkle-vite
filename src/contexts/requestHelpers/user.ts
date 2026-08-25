@@ -199,23 +199,22 @@ export default function userRequestHelpers({
         destinationVar: 'remainingPictureIds'
       });
       try {
-        const {
-          data: { success }
-        } = await request.delete(`${URL}/user/picture?${queryString}`, auth());
-        return success;
+        const { data } = await request.delete(
+          `${URL}/user/picture?${queryString}`,
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
     },
     async deleteArchivedPicture(pictureId: number) {
       try {
-        const {
-          data: { success }
-        } = await request.delete(
+        const { data } = await request.delete(
           `${URL}/user/picture/archive?pictureId=${pictureId}`,
           auth()
         );
-        return success;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -759,14 +758,12 @@ export default function userRequestHelpers({
     },
     async reorderProfilePictures(reorderedPictureIds: number[]) {
       try {
-        const {
-          data: { success }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/user/picture/reorder`,
           { reorderedPictureIds },
           auth()
         );
-        return success;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1024,8 +1021,12 @@ export default function userRequestHelpers({
     },
     async setTheme({ color }: { color: string }) {
       try {
-        await request.put(`${URL}/user/theme`, { color }, auth());
-        return;
+        const { data } = await request.put(
+          `${URL}/user/theme`,
+          { color },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1222,8 +1223,12 @@ export default function userRequestHelpers({
     },
     async uploadGreeting({ greeting }: { greeting: string }) {
       try {
-        await request.put(`${URL}/user/greeting`, { greeting }, auth());
-        return;
+        const { data } = await request.put(
+          `${URL}/user/greeting`,
+          { greeting },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1395,14 +1400,12 @@ export default function userRequestHelpers({
       uploadToken?: string;
     }) {
       try {
-        const {
-          data: { pictures }
-        } = await request.post(
+        const { data } = await request.post(
           `${URL}/user/picture`,
           { caption, src, isProfilePic, uploadToken },
           auth()
         );
-        return pictures;
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1415,28 +1418,24 @@ export default function userRequestHelpers({
       pictureId: number;
     }) {
       try {
-        const {
-          data: { pictures }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/user/picture/caption`,
           { caption, pictureId },
           auth()
         );
-        return pictures;
+        return data;
       } catch (error) {
         return handleError(error);
       }
     },
     async updateUserPictures(pictureIds: number[]) {
       try {
-        const {
-          data: { pictures }
-        } = await request.put(
+        const { data } = await request.put(
           `${URL}/user/picture/archive`,
           { pictureIds },
           auth()
         );
-        return pictures;
+        return data;
       } catch (error) {
         return handleError(error);
       }

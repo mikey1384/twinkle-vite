@@ -32,7 +32,7 @@ export default function ImageModal({
 }: {
   caption?: string;
   hasCaption?: boolean;
-  onEditCaption?: (caption: string) => void;
+  onEditCaption?: (caption: string) => void | Promise<void>;
   onHide: () => void;
   fileName?: string;
   src: string;
@@ -165,9 +165,14 @@ export default function ImageModal({
                 loading={submitting}
                 onClick={async () => {
                   setSubmitting(true);
-                  await onEditCaption?.(finalizeEmoji(editedCaption));
-                  setSubmitting(false);
-                  setIsEditing(false);
+                  try {
+                    await onEditCaption?.(finalizeEmoji(editedCaption));
+                    setIsEditing(false);
+                  } catch (error) {
+                    console.error(error);
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
               >
                 {stringIsEmpty(caption) ? 'Submit Caption' : 'Apply Changes'}

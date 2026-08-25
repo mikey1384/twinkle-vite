@@ -13,6 +13,10 @@ import {
 import { ThemeName } from '~/theme';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import Content from './Content';
+import {
+  getCanonicalProfilePictureUrl,
+  getCanonicalProfileStatus
+} from '~/helpers/profileCanonicalState';
 
 function ProfilePanel({
   expandable,
@@ -327,19 +331,12 @@ function ProfilePanel({
     setImageEditModalShown(true);
   }
 
-  function handleImageEditDone({
-    pictures,
-    filePath
-  }: {
-    pictures?: any[];
-    filePath?: string;
-  }) {
-    if (pictures && filePath) {
-      onSetUserState({
-        userId,
-        newState: { profilePicUrl: `/profile/${filePath}` }
-      });
-    }
+  function handleImageEditDone(data: unknown) {
+    const canonicalPicture = getCanonicalProfilePictureUrl(data);
+    onSetUserState({
+      userId: canonicalPicture.userId,
+      newState: { profilePicUrl: canonicalPicture.profilePicUrl }
+    });
     setImageEditModalShown(false);
   }
 
@@ -351,20 +348,25 @@ function ProfilePanel({
     onResetProfile(username);
   }
 
-  function handleRemoveStatusMsg(userId: number) {
+  function handleRemoveStatusMsg(data: unknown) {
+    const canonicalStatus = getCanonicalProfileStatus(data);
     onSetUserState({
-      userId,
-      newState: { statusMsg: '', statusColor: '' }
+      userId: canonicalStatus.userId,
+      newState: {
+        statusMsg: canonicalStatus.statusMsg,
+        statusColor: canonicalStatus.statusColor
+      }
     });
   }
 
   function handleUpdateStatusMsg(data: any) {
-    if (banned?.posting) {
-      return;
-    }
+    const canonicalStatus = getCanonicalProfileStatus(data);
     onSetUserState({
-      userId: data.userId,
-      newState: data
+      userId: canonicalStatus.userId,
+      newState: {
+        statusMsg: canonicalStatus.statusMsg,
+        statusColor: canonicalStatus.statusColor
+      }
     });
   }
 

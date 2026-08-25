@@ -29,9 +29,10 @@ export default function ImageEditModal({
   isProfilePic?: boolean;
   onEditDone: (params: {
     pictures?: any[];
-    filePath?: string;
+    profilePicUrl?: string;
+    userId?: number;
     croppedImageUrl?: string;
-  }) => void;
+  }) => void | Promise<void>;
   onHide: () => void;
   imageUri: any;
   uploadDisabled?: boolean;
@@ -297,7 +298,7 @@ export default function ImageEditModal({
 
   async function handleSubmit() {
     if (uploadDisabled) {
-      onEditDone({ croppedImageUrl });
+      await onEditDone({ croppedImageUrl });
       return;
     }
 
@@ -334,19 +335,15 @@ export default function ImageEditModal({
       ) {
         throw new Error('Failed to upload profile picture');
       }
-      const uploadedFilePath = uploadedSrc.slice('/profile/'.length);
-      const pictures = await uploadUserPic({
+      const data = await uploadUserPic({
         src: uploadedSrc,
         isProfilePic,
         caption,
         uploadToken: profileUploadToken
       });
+      await onEditDone(data);
       setUploading(false);
       isUploadingRef.current = false;
-      onEditDone({
-        pictures,
-        filePath: uploadedFilePath
-      });
     } catch (error) {
       setUploading(false);
       isUploadingRef.current = false;

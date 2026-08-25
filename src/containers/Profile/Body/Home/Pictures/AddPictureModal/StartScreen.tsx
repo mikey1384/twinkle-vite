@@ -9,17 +9,16 @@ import { isMobile } from '~/helpers';
 import { Color } from '~/constants/css';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import UploadButton from '~/components/Buttons/UploadButton';
+import { getCanonicalProfilePictureState } from '~/helpers/profileCanonicalState';
 
 const deviceIsMobile = isMobile(navigator);
 
 export default function StartScreen({
   navigateTo,
-  onHide,
-  profileId
+  onHide
 }: {
   navigateTo: (arg0: any) => any;
   onHide: () => any;
-  profileId: number;
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [alertModalShown, setAlertModalShown] = useState(false);
@@ -126,13 +125,12 @@ export default function StartScreen({
     </ErrorBoundary>
   );
 
-  function handleImageEditDone({ pictures }: { pictures?: any[] }) {
-    if (pictures) {
-      onSetUserState({
-        userId: profileId,
-        newState: { pictures }
-      });
-    }
+  function handleImageEditDone(data: unknown) {
+    const canonicalState = getCanonicalProfilePictureState(data);
+    onSetUserState({
+      userId: canonicalState.userId,
+      newState: { pictures: canonicalState.pictures }
+    });
     onHide();
   }
 

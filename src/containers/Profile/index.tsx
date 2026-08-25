@@ -19,6 +19,7 @@ import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import { setStoredItem } from '~/helpers/userDataHelpers';
+import { getCanonicalProfileTheme } from '~/helpers/profileCanonicalState';
 
 export default function Profile() {
   const params = useParams();
@@ -175,8 +176,13 @@ export default function Profile() {
   );
 
   async function handleSetTheme() {
-    await setTheme({ color: selectedTheme });
-    onSetUserState({ userId, newState: { profileTheme: selectedTheme } });
-    setStoredItem('profileTheme', selectedTheme);
+    const data = await setTheme({ color: selectedTheme });
+    const canonicalTheme = getCanonicalProfileTheme(data);
+    onSetUserState({
+      userId: canonicalTheme.userId,
+      newState: { profileTheme: canonicalTheme.profileTheme }
+    });
+    setSelectedTheme(canonicalTheme.profileTheme);
+    setStoredItem('profileTheme', canonicalTheme.profileTheme);
   }
 }

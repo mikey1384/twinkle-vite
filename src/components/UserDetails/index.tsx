@@ -24,6 +24,7 @@ import {
   useInputContext,
   useProfileContext
 } from '~/contexts';
+import { getCanonicalProfileStatus } from '~/helpers/profileCanonicalState';
 const doesNotHaveBioLabel = ' does not have a bio, yet';
 
 export default function UserDetails({
@@ -61,6 +62,7 @@ export default function UserDetails({
   );
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
   useEffect(() => {
     onSetEditedStatusColor('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -177,6 +179,7 @@ export default function UserDetails({
             onSetEditedStatusColor('');
           }}
           onStatusSubmit={onStatusMsgSubmit}
+          submitting={statusSubmitting}
         />
       )}
       {(profile.statusMsg || displayedStatusMsg) && (
@@ -286,24 +289,36 @@ export default function UserDetails({
   }
 
   async function onRemoveStatus() {
-    await request.delete(`${URL}/user/statusMsg`, auth());
-    removeStatusMsg(profile.id);
+    const { data } = await request.delete(`${URL}/user/statusMsg`, auth());
+    const canonicalStatus = getCanonicalProfileStatus(data);
+    removeStatusMsg(canonicalStatus);
     setConfirmModalShown(false);
   }
 
   async function onStatusMsgSubmit() {
+    if (statusSubmitting) return;
     const statusMsg = finalizeEmoji(editedStatusMsg);
     const statusColor = editedStatusColor || profile.statusColor;
-    const { data } = await request.post(
-      `${URL}/user/statusMsg`,
-      {
-        statusMsg,
-        statusColor
-      },
-      auth()
-    );
-    onSetEditedStatusColor('');
-    onSetEditedStatusMsg('');
-    if (typeof updateStatusMsg === 'function') updateStatusMsg(data);
+    setStatusSubmitting(true);
+    try {
+      const { data } = await request.post(
+        `${URL}/user/statusMsg`,
+        {
+          statusMsg,
+          statusColor
+        },
+        auth()
+      );
+      const canonicalStatus = getCanonicalProfileStatus(data);
+      if (typeof updateStatusMsg === 'function') {
+        updateStatusMsg(canonicalStatus);
+      }
+      onSetEditedStatusColor('');
+      onSetEditedStatusMsg('');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setStatusSubmitting(false);
+    }
   }
 }

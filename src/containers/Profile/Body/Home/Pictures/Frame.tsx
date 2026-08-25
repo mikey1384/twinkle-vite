@@ -82,7 +82,10 @@ export default function Frame({
   );
 
   async function handleEditCaption(text: string) {
-    await updateUserPictureCaption({ caption: text, pictureId: picture.id });
-    onUpdatePictureCaption({ caption: text, pictureId: picture.id });
+    const data = await updateUserPictureCaption({
+      caption: text,
+      pictureId: picture.id
+    });
+    onUpdatePictureCaption(data);
   }
 }

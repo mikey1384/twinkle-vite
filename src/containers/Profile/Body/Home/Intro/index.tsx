@@ -30,6 +30,10 @@ import {
   finalizeEmoji,
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
+import {
+  getCanonicalProfileGreeting,
+  getCanonicalProfileStatus
+} from '~/helpers/profileCanonicalState';
 const editLabel = 'Edit';
 const enterMessageForVisitorsLabel = 'Enter a message for your visitors';
 const removeLabel = 'Remove';
@@ -58,6 +62,7 @@ export default function Intro({
   const banned = useKeyContext((v) => v.myState.banned);
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
   useEffect(() => {
     onSetEditedStatusColor('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -158,6 +163,7 @@ export default function Intro({
                     onSetEditedStatusColor('');
                   }}
                   onStatusSubmit={handleStatusMsgSubmit}
+                  submitting={statusSubmitting}
                 />
               )}
               {(!stringIsEmpty(statusMsg) || displayedStatusMsg) && (
@@ -395,35 +401,57 @@ export default function Intro({
     if (banned?.posting) {
       return;
     }
-    await uploadGreeting({ greeting });
-    onSetUserState({ userId, newState: { greeting } });
+    const data = await uploadGreeting({ greeting });
+    const canonicalGreeting = getCanonicalProfileGreeting(data);
+    onSetUserState({
+      userId: canonicalGreeting.userId,
+      newState: { greeting: canonicalGreeting.greeting }
+    });
   }
 
   async function handleRemoveStatus() {
-    await request.delete(`${URL}/user/statusMsg`, auth());
+    const { data } = await request.delete(`${URL}/user/statusMsg`, auth());
+    const canonicalStatus = getCanonicalProfileStatus(data);
     onSetUserState({
-      userId,
-      newState: { statusMsg: '', statusColor: '' }
+      userId: canonicalStatus.userId,
+      newState: {
+        statusMsg: canonicalStatus.statusMsg,
+        statusColor: canonicalStatus.statusColor
+      }
     });
     setConfirmModalShown(false);
   }
 
   async function handleStatusMsgSubmit() {
-    if (banned?.posting) {
+    if (banned?.posting || statusSubmitting) {
       return;
     }
     const statusMsg = finalizeEmoji(editedStatusMsg);
     const statusColor = editedStatusColor || profile.statusColor;
-    const { data } = await request.post(
-      `${URL}/user/statusMsg`,
-      {
-        statusMsg,
-        statusColor
-      },
-      auth()
-    );
-    onSetEditedStatusColor('');
-    onSetEditedStatusMsg('');
-    onSetUserState({ userId, newState: data });
+    setStatusSubmitting(true);
+    try {
+      const { data } = await request.post(
+        `${URL}/user/statusMsg`,
+        {
+          statusMsg,
+          statusColor
+        },
+        auth()
+      );
+      const canonicalStatus = getCanonicalProfileStatus(data);
+      onSetUserState({
+        userId: canonicalStatus.userId,
+        newState: {
+          statusMsg: canonicalStatus.statusMsg,
+          statusColor: canonicalStatus.statusColor
+        }
+      });
+      onSetEditedStatusColor('');
+      onSetEditedStatusMsg('');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setStatusSubmitting(false);
+    }
   }
 }

@@ -19,6 +19,7 @@ import { isMobile } from '~/helpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
+import { getCanonicalProfilePictureUrl } from '~/helpers/profileCanonicalState';
 
 const deviceIsMobile = isMobile(navigator);
 const changeThemeMobileLabel = 'Theme';
@@ -31,7 +32,7 @@ export default function Cover({
   selectedTheme
 }: {
   onSelectTheme: (theme: string) => void;
-  onSetTheme: () => void;
+  onSetTheme: () => Promise<void>;
   profile: any;
   selectedTheme: string;
 }) {
@@ -55,6 +56,7 @@ export default function Cover({
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [profilePicModalShown, setProfilePicModalShown] = useState(false);
+  const [themeSubmitting, setThemeSubmitting] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
 
@@ -317,6 +319,7 @@ export default function Cover({
                     }}
                   >
                     <Button
+                      disabled={themeSubmitting}
                       style={{ fontSize: '1.2rem', marginRight: '1rem' }}
                       variant="solid"
                       tone="raised"
@@ -326,6 +329,7 @@ export default function Cover({
                       Cancel
                     </Button>
                     <Button
+                      loading={themeSubmitting}
                       style={{ fontSize: '1.2rem' }}
                       color={doneButtonColor}
                       variant="soft"
@@ -438,19 +442,26 @@ export default function Cover({
     setColorSelectorShown(false);
   }
 
-  function handleImageEditDone({ filePath }: { filePath?: string }) {
-    if (filePath) {
-      onSetUserState({
-        userId,
-        newState: { profilePicUrl: `/profile/${filePath}` }
-      });
-    }
+  function handleImageEditDone(data: unknown) {
+    const canonicalPicture = getCanonicalProfilePictureUrl(data);
+    onSetUserState({
+      userId: canonicalPicture.userId,
+      newState: { profilePicUrl: canonicalPicture.profilePicUrl }
+    });
     setImageEditModalShown(false);
   }
 
   async function handleSetTheme() {
-    setColorSelectorShown(false);
-    onSetTheme();
+    if (themeSubmitting) return;
+    setThemeSubmitting(true);
+    try {
+      await onSetTheme();
+      setColorSelectorShown(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setThemeSubmitting(false);
+    }
   }
 
   function handlePicture(event: any) {

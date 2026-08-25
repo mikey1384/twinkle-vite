@@ -29,10 +29,12 @@ export default function EditModals({
   onHideProfilePicModal: () => void;
   onImageEditDone: ({
     pictures,
-    filePath
+    profilePicUrl,
+    userId
   }: {
     pictures?: any[];
-    filePath?: string;
+    profilePicUrl?: string;
+    userId?: number;
   }) => void;
   onSelectProfileImage: (selectedImageUri: any) => void;
   onSubmitBio: (params: object) => void | Promise<void>;

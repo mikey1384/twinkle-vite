@@ -10,14 +10,12 @@ export default function AddPictureModal({
   currentPictures,
   maxNumSelectable,
   onConfirm,
-  onHide,
-  profileId
+  onHide
 }: {
   currentPictures: any[];
   maxNumSelectable: number;
-  onConfirm: (arg0: any) => any;
+  onConfirm: (arg0: any) => Promise<boolean>;
   onHide: () => any;
-  profileId: number;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(
@@ -26,6 +24,7 @@ export default function AddPictureModal({
   );
   const [section, setSection] = useState('start');
   const [selectedPictureIds, setSelectedPictureIds] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
   return (
     <Modal
@@ -39,6 +38,7 @@ export default function AddPictureModal({
       footer={
         <>
           <Button
+            disabled={submitting}
             variant="ghost"
             onClick={
               section === 'start'
@@ -54,12 +54,14 @@ export default function AddPictureModal({
           {section !== 'start' && (
             <Button
               disabled={
+                submitting ||
                 selectedPictureIds.length === 0 ||
                 selectedPictureIds.length > maxNumSelectable
               }
+              loading={submitting}
               color={doneColor}
               style={{ marginLeft: '0.7rem' }}
-              onClick={() => onConfirm({ selectedPictureIds })}
+              onClick={handleConfirm}
             >
               {selectedPictureIds.length > maxNumSelectable
                 ? `Cannot select more than ${maxNumSelectable}`
@@ -70,11 +72,7 @@ export default function AddPictureModal({
       }
     >
       {section === 'start' && (
-        <StartScreen
-          profileId={profileId}
-          navigateTo={setSection}
-          onHide={onHide}
-        />
+        <StartScreen navigateTo={setSection} onHide={onHide} />
       )}
       {section === 'archive' && (
         <SelectFromArchive
@@ -85,4 +83,20 @@ export default function AddPictureModal({
       )}
     </Modal>
   );
+
+  async function handleConfirm() {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const confirmed = await onConfirm({ selectedPictureIds });
+      if (confirmed) {
+        onHide();
+      } else {
+        setSubmitting(false);
+      }
+    } catch (error) {
+      console.error(error);
+      setSubmitting(false);
+    }
+  }
 }

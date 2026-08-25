@@ -6,12 +6,12 @@ import Frame from './Frame';
 import Icon from '~/components/Icon';
 import DeleteInterface from './DeleteInterface';
 import AddPictureModal from './AddPictureModal';
-import { objectify } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ReorderInterface from './ReorderInterface';
 import NoPictures from './NoPictures';
+import { getCanonicalProfilePictureState } from '~/helpers/profileCanonicalState';
 const addPictureLabel = 'Add Picture';
 const deleteLabel = 'Delete';
 const deletePicturesLabel = 'Delete Pictures';
@@ -152,33 +152,36 @@ export default function Pictures({
 
     async function handlePictureDeleteConfirm() {
       setSaveDisabled(true);
-      const success = await deleteProfilePictures(remainingPictures);
-      if (success) {
+      try {
+        const data = await deleteProfilePictures(remainingPictures);
+        const canonicalState = getCanonicalProfilePictureState(data);
         onSetUserState({
-          userId: profileId,
-          newState: { pictures: remainingPictures }
+          userId: canonicalState.userId,
+          newState: { pictures: canonicalState.pictures }
         });
+        setDeleteMode(false);
+      } catch (error) {
+        console.error('Failed to delete profile pictures:', error);
+      } finally {
+        setSaveDisabled(false);
       }
-      setSaveDisabled(false);
-      setDeleteMode(false);
     }
 
     async function handlePictureReorderConfirm() {
       setSaveDisabled(true);
-      const success = await reorderProfilePictures(reorderedPictureIds);
-      if (success) {
-        const pictureObj = objectify(pictures);
+      try {
+        const data = await reorderProfilePictures(reorderedPictureIds);
+        const canonicalState = getCanonicalProfilePictureState(data);
         onSetUserState({
-          userId: profileId,
-          newState: {
-            pictures: reorderedPictureIds.map(
-              (pictureId) => pictureObj[pictureId]
-            )
-          }
+          userId: canonicalState.userId,
+          newState: { pictures: canonicalState.pictures }
         });
+        setReorderMode(false);
+      } catch (error) {
+        console.error('Failed to reorder profile pictures:', error);
+      } finally {
+        setSaveDisabled(false);
       }
-      setSaveDisabled(false);
-      setReorderMode(false);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -274,7 +277,6 @@ export default function Pictures({
         <AddPictureModal
           onHide={() => setAddPictureModalShown(false)}
           onConfirm={handleAddPictures}
-          profileId={profileId}
           currentPictures={pictures}
           maxNumSelectable={numPics - pictures.length}
         />
@@ -288,35 +290,25 @@ export default function Pictures({
     selectedPictureIds: number[];
   }) {
     if (banned?.posting) {
-      return;
+      return false;
     }
-    const pics = await updateUserPictures([
+    const data = await updateUserPictures([
       ...selectedPictureIds,
       ...pictures.map((picture) => Number(picture.id))
     ]);
-    onSetUserState({ userId: profileId, newState: { pictures: pics } });
-    setAddPictureModalShown(false);
+    const canonicalState = getCanonicalProfilePictureState(data);
+    onSetUserState({
+      userId: canonicalState.userId,
+      newState: { pictures: canonicalState.pictures }
+    });
+    return true;
   }
 
-  function handleUpdatePictureCaption({
-    caption,
-    pictureId
-  }: {
-    caption: string;
-    pictureId: number;
-  }) {
+  function handleUpdatePictureCaption(data: unknown) {
+    const canonicalState = getCanonicalProfilePictureState(data);
     onSetUserState({
-      userId: profileId,
-      newState: {
-        pictures: pictures.map((picture) =>
-          Number(picture.id) === Number(pictureId)
-            ? {
-                ...picture,
-                caption
-              }
-            : picture
-        )
-      }
+      userId: canonicalState.userId,
+      newState: { pictures: canonicalState.pictures }
     });
   }
 }

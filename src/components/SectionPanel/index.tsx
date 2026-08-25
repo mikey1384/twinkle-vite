@@ -50,7 +50,7 @@ export default function SectionPanel({
   onLoadMore?: () => void;
   children?: React.ReactNode;
   loadMoreButtonShown?: boolean;
-  onEditTitle?: (v: string) => void;
+  onEditTitle?: (v: string) => void | Promise<void>;
   onSearch?: (v: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
@@ -86,7 +86,7 @@ export default function SectionPanel({
       setOnEdit(false);
       setEditedTitle(typeof title === 'string' ? title : '');
     },
-    { enabled: onEdit }
+    { enabled: onEdit && !savingEdit }
   );
 
   const paddingTop = useMemo(() => {
@@ -348,9 +348,14 @@ export default function SectionPanel({
   async function onChangeTitle(title: string) {
     if (savingEdit) return;
     setSavingEdit(true);
-    await onEditTitle?.(title);
-    setOnEdit(false);
-    setSavingEdit(false);
+    try {
+      await onEditTitle?.(title);
+      setOnEdit(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSavingEdit(false);
+    }
   }
 
   async function handleLoadMore() {

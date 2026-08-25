@@ -119,10 +119,12 @@ export default function Content({
   onHideProfilePicModal: () => void;
   onImageEditDone: ({
     pictures,
-    filePath
+    profilePicUrl,
+    userId
   }: {
     pictures?: any[];
-    filePath?: string;
+    profilePicUrl?: string;
+    userId?: number;
   }) => void;
   onLikeComment: any;
   onLoadMoreComments: any;
@@ -134,7 +136,7 @@ export default function Content({
   onOpenProfile: () => void;
   onOpenProfilePicModal: () => void;
   onReloadProfile: () => void;
-  onRemoveStatusMsg: (userId: number) => void;
+  onRemoveStatusMsg: (data: unknown) => void;
   onSelectProfileImage: (selectedImageUri: any) => void;
   onSubmitBio: (params: object) => void | Promise<void>;
   onTalkClick: () => void;
