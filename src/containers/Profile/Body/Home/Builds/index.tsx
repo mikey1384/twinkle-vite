@@ -50,7 +50,9 @@ export default function Builds({
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
   );
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onApplyCanonicalUserProfileState = useAppContext(
+    (v) => v.user.actions.onApplyCanonicalUserProfileState
+  );
   const onLoadPinnedBuilds = useProfileContext(
     (v) => v.actions.onLoadPinnedBuilds
   );
@@ -182,16 +184,9 @@ export default function Builds({
         });
         const nextPinnedBuildIds = isTopBuilds ? [] : nextBuildIds;
         if (nextPinnedBuildIds.join(',') !== pinnedBuildIdsKey) {
-          const nextState = {
-            ...(profile.state || {}),
-            profile: {
-              ...(profile.state?.profile || {}),
-              pinnedBuildIds: nextPinnedBuildIds
-            }
-          };
-          onSetUserState({
+          onApplyCanonicalUserProfileState({
             userId: profile.id,
-            newState: { state: nextState }
+            profileState: { pinnedBuildIds: nextPinnedBuildIds }
           });
         }
       } catch (error) {
@@ -396,16 +391,9 @@ export default function Builds({
     }
     const nextBuildIds = normalizeBuildIds(data.buildIds);
     const nextBuilds = data.builds as BuildProjectListItemData[];
-    const nextState = {
-      ...(profile.state || {}),
-      profile: {
-        ...(profile.state?.profile || {}),
-        pinnedBuildIds: nextBuildIds
-      }
-    };
-    onSetUserState({
+    onApplyCanonicalUserProfileState({
       userId: profile.id,
-      newState: { state: nextState }
+      profileState: { pinnedBuildIds: nextBuildIds }
     });
     onSetPinnedBuilds({
       username: profile.username,

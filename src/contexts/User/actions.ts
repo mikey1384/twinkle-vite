@@ -170,6 +170,19 @@ export default function UserActions(dispatch: Dispatch) {
         newState
       });
     },
+    onApplyCanonicalUserProfileState({
+      userId,
+      profileState
+    }: {
+      userId: number;
+      profileState: object;
+    }) {
+      return dispatch({
+        type: 'APPLY_CANONICAL_USER_PROFILE_STATE',
+        userId,
+        profileState
+      });
+    },
     onToggleHideWatched(hideWatched: boolean) {
       return dispatch({
         type: 'TOGGLE_HIDE_WATCHED',

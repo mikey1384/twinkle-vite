@@ -14,12 +14,14 @@ export default function ReorderSectionsModal({
   initialSectionOrder,
   sectionLabels,
   onHide,
-  onSubmit
+  onSubmit,
+  submitting
 }: {
   initialSectionOrder: string[];
   sectionLabels: Record<string, string>;
   onHide: () => void;
-  onSubmit: (sectionOrder: string[]) => void;
+  onSubmit: (sectionOrder: string[]) => void | Promise<void>;
+  submitting: boolean;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(
@@ -36,7 +38,13 @@ export default function ReorderSectionsModal({
   }, [sectionLabels]);
 
   return (
-    <Modal modalKey="ReorderSectionsModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal
+      modalKey="ReorderSectionsModal"
+      isOpen
+      onClose={submitting ? () => {} : onHide}
+      hasHeader={false}
+      bodyPadding={0}
+    >
       <LegacyModalLayout>
         <header>{titleLabel}</header>
         <main>
@@ -48,18 +56,21 @@ export default function ReorderSectionsModal({
             listItemObj={listItemObj}
             onMove={handleMove}
             itemIds={sectionOrder}
+            disabled={submitting}
           />
         </main>
         <footer>
           <Button
             variant="ghost"
+            disabled={submitting}
             style={{ marginRight: '0.7rem' }}
             onClick={onHide}
           >
             Cancel
           </Button>
           <Button
-            disabled={isEqual(sectionOrder, initialSectionOrder)}
+            disabled={submitting || isEqual(sectionOrder, initialSectionOrder)}
+            loading={submitting}
             color={doneColor}
             onClick={() => onSubmit(sectionOrder)}
           >
@@ -77,6 +88,7 @@ export default function ReorderSectionsModal({
     sourceId: string;
     targetId: string;
   }) {
+    if (submitting) return;
     const sourceIndex = sectionOrder.indexOf(sourceId);
     const targetIndex = sectionOrder.indexOf(targetId);
     const nextOrder = [...sectionOrder];

@@ -11,6 +11,7 @@ export default function SortableListGroup<T extends number | string = number>({
   onMove,
   itemIds,
   numbered,
+  disabled = false,
   style
 }: {
   listItemObj: any;
@@ -21,6 +22,7 @@ export default function SortableListGroup<T extends number | string = number>({
   itemIds: T[];
   listItemType?: string;
   numbered?: boolean;
+  disabled?: boolean;
   style?: React.CSSProperties;
 }) {
   const [draggedId, setDraggedId] = useState<T | null>(null);
@@ -34,6 +36,7 @@ export default function SortableListGroup<T extends number | string = number>({
   onMoveRef.current = onMove;
 
   const handleSwap = useCallback((sourceId: T, targetId: T) => {
+    if (disabled) return;
     if (sourceId === targetId) return;
 
     // Throttle swaps to prevent jitter (min 80ms between swaps)
@@ -42,9 +45,13 @@ export default function SortableListGroup<T extends number | string = number>({
     lastSwapTime.current = now;
 
     onMoveRef.current({ sourceId, targetId });
-  }, []);
+  }, [disabled]);
 
   function handleDragStart(e: React.DragEvent, id: T) {
+    if (disabled) {
+      e.preventDefault();
+      return;
+    }
     setDraggedId(id);
     draggedIdRef.current = id;
     e.dataTransfer.effectAllowed = 'move';
@@ -52,6 +59,7 @@ export default function SortableListGroup<T extends number | string = number>({
   }
 
   function handleDragOver(e: React.DragEvent, id: T) {
+    if (disabled) return;
     e.preventDefault();
     if (draggedId && draggedId !== id) {
       handleSwap(draggedId, id);
@@ -64,6 +72,7 @@ export default function SortableListGroup<T extends number | string = number>({
   }
 
   function handleTouchStart(e: React.TouchEvent, id: T) {
+    if (disabled) return;
     touchStartY.current = e.touches[0].clientY;
     isDragging.current = false;
     setDraggedId(id);
@@ -110,7 +119,7 @@ export default function SortableListGroup<T extends number | string = number>({
     return () => {
       container.removeEventListener('touchmove', onTouchMove);
     };
-  }, [handleSwap]);
+  }, [disabled, handleSwap]);
 
   return (
     <div
@@ -142,7 +151,8 @@ export default function SortableListGroup<T extends number | string = number>({
                 itemRefs.current.delete(id);
               }
             }}
-            draggable
+            draggable={!disabled}
+            aria-disabled={disabled}
             onDragStart={(e) => handleDragStart(e, id)}
             onDragOver={(e) => handleDragOver(e, id)}
             onDragEnd={handleDragEnd}
@@ -160,11 +170,11 @@ export default function SortableListGroup<T extends number | string = number>({
               background: ${isBeingDragged
                 ? Color.whiteBlueGray(0.95)
                 : '#fff'};
-              opacity: ${isBeingDragged ? 0.8 : 1};
+              opacity: ${disabled ? 0.6 : isBeingDragged ? 0.8 : 1};
               transform: ${isBeingDragged ? 'scale(1.02)' : 'scale(1)'};
               transition: all 150ms ease;
-              cursor: grab;
-              touch-action: none;
+              cursor: ${disabled ? 'default' : 'grab'};
+              touch-action: ${disabled ? 'auto' : 'none'};
               user-select: none;
               box-shadow: ${isBeingDragged
                 ? '0 8px 20px -4px rgba(15, 23, 42, 0.25)'
@@ -173,7 +183,7 @@ export default function SortableListGroup<T extends number | string = number>({
                 padding: 1.1rem 1.3rem;
               }
               &:active {
-                cursor: grabbing;
+                cursor: ${disabled ? 'default' : 'grabbing'};
               }
             `}
           >

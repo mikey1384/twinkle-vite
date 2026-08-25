@@ -96,7 +96,9 @@ export default function Home({
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const isOwnProfile = userId === profile.id;
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onApplyCanonicalUserProfileState = useAppContext(
+    (v) => v.user.actions.onApplyCanonicalUserProfileState
+  );
   const onDeleteComment = useContentContext((v) => v.actions.onDeleteComment);
   const onEditComment = useContentContext((v) => v.actions.onEditComment);
   const onEditRewardComment = useContentContext(
@@ -151,6 +153,7 @@ export default function Home({
   const [loadingComments, setLoadingComments] = useState(false);
   const [isNotablesLoading, setIsNotablesLoading] = useState(false);
   const [reorderModalShown, setReorderModalShown] = useState(false);
+  const [savingSectionOrder, setSavingSectionOrder] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const profileHomeRef = useRef<HTMLDivElement | null>(null);
   const sectionOrder = useMemo(
@@ -378,31 +381,31 @@ export default function Home({
           sectionLabels={profileSectionLabels}
           onHide={() => setReorderModalShown(false)}
           onSubmit={handleUpdateSectionOrder}
+          submitting={savingSectionOrder}
         />
       )}
     </ErrorBoundary>
   );
 
   async function handleUpdateSectionOrder(nextOrder: string[]) {
+    if (savingSectionOrder) return;
+    setSavingSectionOrder(true);
     try {
       const data = await updateProfileSectionOrder(nextOrder);
-      const savedOrder = Array.isArray(data?.sectionOrder)
-        ? data.sectionOrder
-        : nextOrder;
-      const nextState = {
-        ...(profile.state || {}),
-        profile: {
-          ...(profile.state?.profile || {}),
-          sectionOrder: savedOrder
-        }
-      };
-      onSetUserState({
+      if (!Array.isArray(data?.sectionOrder)) {
+        throw new Error(
+          'Profile section response did not include canonical data'
+        );
+      }
+      onApplyCanonicalUserProfileState({
         userId: profile.id,
-        newState: { state: nextState }
+        profileState: { sectionOrder: data.sectionOrder }
       });
       setReorderModalShown(false);
     } catch (error) {
       console.error(error);
+    } finally {
+      setSavingSectionOrder(false);
     }
   }
 }

@@ -14,6 +14,7 @@ export default function SelectAICardModal({
   currentlySelectedCardIds,
   maxSelectedCards,
   allowEmptySelection = false,
+  submitting = false,
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
@@ -32,6 +33,7 @@ export default function SelectAICardModal({
   };
   maxSelectedCards?: number;
   allowEmptySelection?: boolean;
+  submitting?: boolean;
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -143,13 +145,15 @@ export default function SelectAICardModal({
     <Modal
       modalKey="SelectAICardModal"
       isOpen
-      onClose={onHide}
+      onClose={submitting ? () => {} : onHide}
+      closeOnBackdropClick={!submitting}
       size="xl"
       title={headerLabel || 'AI Cards'}
       footer={
         <>
           <Button
             variant="ghost"
+            disabled={submitting}
             style={{ marginRight: '0.7rem' }}
             onClick={onHide}
           >
@@ -158,9 +162,11 @@ export default function SelectAICardModal({
           <Button
             disabled={
               !hasChanges ||
+              submitting ||
               overLimit ||
               (!allowEmptySelection && !selectedCardIds?.length)
             }
+            loading={submitting}
             color={doneColor}
             onClick={() => {
               onSelectDone(selectedCardIds);

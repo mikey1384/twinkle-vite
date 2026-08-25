@@ -3,6 +3,7 @@ import {
   achievementTypeToId,
   achievementIdToType
 } from '~/constants/defaultValues';
+import { applyCanonicalUserProfileStatePatch } from './profileState';
 
 function normalizeCommunityFundsState(data: { [key: string]: any } | null) {
   if (!data) return data;
@@ -326,6 +327,36 @@ export default function UserReducer(
         userObj: {
           ...state.userObj,
           [action.userId]: updatedUser
+        },
+        myState: nextMyState
+      };
+    }
+    case 'APPLY_CANONICAL_USER_PROFILE_STATE': {
+      const userId = Number(action.userId);
+      const profileState =
+        action.profileState &&
+        typeof action.profileState === 'object' &&
+        !Array.isArray(action.profileState)
+          ? action.profileState
+          : {};
+      const updatedUser = applyCanonicalUserProfileStatePatch({
+        profileState,
+        user: state.userObj[userId],
+        userId
+      });
+      const nextMyState =
+        userId === Number(state.myState.userId)
+          ? applyCanonicalUserProfileStatePatch({
+              profileState,
+              user: state.myState,
+              userId
+            })
+          : state.myState;
+      return {
+        ...state,
+        userObj: {
+          ...state.userObj,
+          [userId]: updatedUser
         },
         myState: nextMyState
       };

@@ -13,6 +13,7 @@ import {
   useProfileContext
 } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
+import { getCanonicalPinnedAICardIds } from './canonical';
 
 const pinnedLabel = 'AI Cards';
 const pinCardsLabel = 'Pin Cards';
@@ -38,7 +39,9 @@ export default function PinnedAICards({
   const pinAICardsOnProfile = useAppContext(
     (v) => v.requestHelpers.pinAICardsOnProfile
   );
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onApplyCanonicalUserProfileState = useAppContext(
+    (v) => v.user.actions.onApplyCanonicalUserProfileState
+  );
   const onLoadPinnedAICards = useProfileContext(
     (v) => v.actions.onLoadPinnedAICards
   );
@@ -47,6 +50,7 @@ export default function PinnedAICards({
   );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [selectModalShown, setSelectModalShown] = useState(false);
+  const [pinning, setPinning] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState<number | null>(
     null
   );
@@ -124,9 +128,12 @@ export default function PinnedAICards({
       try {
         const data = await loadPinnedAICardsOnProfile(profile.id);
         if (!isMounted) return;
-        const nextCardIds = Array.isArray(data?.cardIds)
-          ? data.cardIds
-          : pinnedCardIds;
+        const nextCardIds = getCanonicalPinnedAICardIds(data);
+        if (!Array.isArray(data?.cards)) {
+          throw new Error(
+            'Pinned AI Cards response did not include canonical card details'
+          );
+        }
         setDisplayedCardIds(nextCardIds);
         setIsTopCards(Boolean(data?.isTopCards));
         if (!data?.isTopCards) {
@@ -139,20 +146,13 @@ export default function PinnedAICards({
             .filter((id: number) => Number.isFinite(id) && id > 0)
             .join(',');
           if (nextCardIdsKey !== pinnedCardIdsKey) {
-            const nextState = {
-              ...(profile.state || {}),
-              profile: {
-                ...(profile.state?.profile || {}),
-                pinnedAICardIds: nextCardIds
-              }
-            };
-            onSetUserState({
+            onApplyCanonicalUserProfileState({
               userId: profile.id,
-              newState: { state: nextState }
+              profileState: { pinnedAICardIds: nextCardIds }
             });
           }
         }
-        for (const card of data?.cards || []) {
+        for (const card of data.cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
         setLoadedForProfileId(profile.id);
@@ -238,6 +238,7 @@ export default function PinnedAICards({
           partner={{ id: profile.id, username: profile.username }}
           maxSelectedCards={MAX_PINNED_AI_CARDS}
           allowEmptySelection
+          submitting={pinning}
         />
       )}
       {aiCardModalCardId && (
@@ -251,19 +252,14 @@ export default function PinnedAICards({
   );
 
   async function handlePinAICards(cardIds: number[]) {
+    if (pinning) return;
+    setPinning(true);
     try {
       const data = await pinAICardsOnProfile({ cardIds });
-      const nextCardIds = Array.isArray(data?.cardIds) ? data.cardIds : cardIds;
-      const nextState = {
-        ...(profile.state || {}),
-        profile: {
-          ...(profile.state?.profile || {}),
-          pinnedAICardIds: nextCardIds
-        }
-      };
-      onSetUserState({
+      const nextCardIds = getCanonicalPinnedAICardIds(data);
+      onApplyCanonicalUserProfileState({
         userId: profile.id,
-        newState: { state: nextState }
+        profileState: { pinnedAICardIds: nextCardIds }
       });
       onSetPinnedAICards({
         username: profile.username,
@@ -273,6 +269,8 @@ export default function PinnedAICards({
       setSelectModalShown(false);
     } catch (error) {
       console.error(error);
+    } finally {
+      setPinning(false);
     }
   }
 }

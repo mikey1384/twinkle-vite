@@ -58,6 +58,7 @@ export default function ReorderPinnedBuildsModal({
             listItemObj={listItemObj}
             onMove={handleMove}
             itemIds={buildIds}
+            disabled={submitting}
           />
         </main>
         <footer>
