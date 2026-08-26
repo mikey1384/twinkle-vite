@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { shouldRenderRichTextLiterally } from '../src/components/Texts/RichText/helpers/renderMode';
+import {
+  shouldKeepRichTextContentVisible,
+  shouldRenderRichTextLiterally
+} from '../src/components/Texts/RichText/helpers/renderMode';
 
 test('incomplete rich-text streams stay literal until their terminal snapshot', () => {
   assert.equal(
@@ -17,6 +20,34 @@ test('incomplete rich-text streams stay literal until their terminal snapshot', 
       tooLongNonUrlToken: false
     }),
     false
+  );
+});
+
+test('the completed renderer cannot blank an already-visible stream while parsing', () => {
+  assert.equal(
+    shouldKeepRichTextContentVisible({
+      isParsed: false,
+      preserveStreamingTextUntilParsed: true,
+      renderAsLiteralText: false
+    }),
+    true
+  );
+  assert.equal(
+    shouldKeepRichTextContentVisible({
+      isParsed: false,
+      preserveStreamingTextUntilParsed: false,
+      renderAsLiteralText: false
+    }),
+    false,
+    'ordinary initial Markdown loading keeps its existing presentation'
+  );
+  assert.equal(
+    shouldKeepRichTextContentVisible({
+      isParsed: true,
+      preserveStreamingTextUntilParsed: false,
+      renderAsLiteralText: false
+    }),
+    true
   );
 });
 

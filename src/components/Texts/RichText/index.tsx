@@ -8,7 +8,10 @@ import React, {
   useState,
   Suspense
 } from 'react';
-import { shouldRenderRichTextLiterally } from './helpers/renderMode';
+import {
+  shouldKeepRichTextContentVisible,
+  shouldRenderRichTextLiterally
+} from './helpers/renderMode';
 import AIAudioButton from './AIAudioButton';
 import InvisibleTextContainer, {
   stripMarkdownLinkUrls
@@ -410,6 +413,8 @@ function RichText({
     [contentRevision, contentType, contentId, isPreview, isStreaming, section]
   );
   const [isParsed, setIsParsed] = useState(false);
+  const [preserveStreamingTextUntilParsed, setPreserveStreamingTextUntilParsed] =
+    useState(Boolean(isStreaming));
   const TextRef = useRef<any>(null);
   const minHeightRef = useRef(defaultMinHeight);
   const heightContentRevisionRef = useRef<string | null>(
@@ -450,6 +455,11 @@ function RichText({
     cleanString,
     isStreaming,
     tooLongNonUrlToken
+  });
+  const contentIsVisible = shouldKeepRichTextContentVisible({
+    isParsed,
+    preserveStreamingTextUntilParsed,
+    renderAsLiteralText
   });
   const fullContentShown = shouldShowRichTextFully({
     isExpanded,
@@ -535,6 +545,17 @@ function RichText({
   )}:${previewCollapsedMaxHeight}`;
   const measurementConfigRef = useRef(measurementConfig);
   const wasPreviewRef = useRef(Boolean(isPreview));
+
+  useLayoutEffect(() => {
+    // Streaming renders synchronously as literal text. Keep that already-visible
+    // content painted while the completed Markdown renderer mounts; otherwise
+    // the parser's ready notification creates a blank frame at the handoff.
+    if (isStreaming) {
+      setPreserveStreamingTextUntilParsed(true);
+    } else if (isParsed) {
+      setPreserveStreamingTextUntilParsed(false);
+    }
+  }, [isParsed, isStreaming]);
 
   useLayoutEffect(() => {
     const transition = resolveRichTextContentTransition({
@@ -732,7 +753,7 @@ function RichText({
         ref={TextRef}
         style={
           {
-            opacity: isParsed || renderAsLiteralText ? 1 : 0,
+            opacity: contentIsVisible ? 1 : 0,
             minHeight:
               !isParsed && !renderAsLiteralText && minHeight
                 ? `${minHeight}px`
