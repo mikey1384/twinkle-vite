@@ -20,9 +20,9 @@ const versionStartPanelSource = readFileSync(
   ),
   'utf8'
 );
-const composerSource = readFileSync(
+const chatPanelSource = readFileSync(
   new URL(
-    '../src/containers/Build/Editor/ChatPanel/Composer.tsx',
+    '../src/containers/Build/Editor/ChatPanel/index.tsx',
     import.meta.url
   ),
   'utf8'
@@ -38,7 +38,7 @@ const assistantMessageSource = readFileSync(
 test('merge-conflict shortcuts route users into Lumine chat before starting the request', () => {
   assert.match(
     chatCommandActionsSource,
-    /function openLumineChatShortcutTarget\(\) \{[\s\S]*?handleBuildWorkspaceCommunicationModeChange\('lumine'\);[\s\S]*?setMobilePanelTab\('chat'\);[\s\S]*?scrollChatToBottom\('smooth'\);[\s\S]*?\}/m
+    /function openLumineChatShortcutTarget\(\) \{[\s\S]*?setMobilePanelTab\('lumine'\);[\s\S]*?window\.requestAnimationFrame\(\(\) => \{[\s\S]*?scrollChatToBottom\('smooth'\);[\s\S]*?\}\);[\s\S]*?\}/m
   );
   assert.match(
     chatCommandActionsSource,
@@ -49,11 +49,11 @@ test('merge-conflict shortcuts route users into Lumine chat before starting the 
 test('owner attention conflict fix uses the Lumine conflict shortcut, not only branch navigation', () => {
   assert.match(
     buildEditorSource,
-    /import \{ getContributionConflictMarkerPaths \} from '\.\/CollaborationPanel\/helpers\/collaborationConflicts';/
+    /import \{\s*UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE,\s*getContributionConflictMarkerPaths\s*\} from '\.\/CollaborationPanel\/helpers\/collaborationConflicts';/
   );
   assert.match(
     buildEditorSource,
-    /const mainProjectConflictMarkerPaths = getContributionConflictMarkerPaths\([\s\S]*?build\.projectFiles[\s\S]*?\);/
+    /const mainProjectConflictMarkerPaths = useMemo\(\s*\(\) => getContributionConflictMarkerPaths\(build\.projectFiles\),\s*\[build\.projectFiles\]\s*\);/
   );
   assert.match(
     buildEditorSource,
@@ -66,27 +66,30 @@ test('owner attention conflict fix uses the Lumine conflict shortcut, not only b
   assert.match(versionStartPanelSource, /onFixMergeConflicts\?:/);
   assert.match(
     versionStartPanelSource,
-    /mainProjectConflictMarkerCount > 0[\s\S]*?typeof onFixMergeConflicts === 'function';[\s\S]*?actionLabel: canFixWithLumine \? 'Fix' : 'Open Branches'[\s\S]*?void onFixMergeConflicts\?\.\(\);/m
+    /mainProjectConflictMarkerCount > 0[\s\S]*?typeof onFixMergeConflicts === 'function';[\s\S]*?const mergeAttentionAction = canFixWithLumine[\s\S]*?actionLabel: 'Fix with Lumine'[\s\S]*?void onFixMergeConflicts\?\.\(\);/m
   );
 });
 
 test('route-seeded Lumine prompts open the chat panel before auto-starting', () => {
   assert.match(
     buildEditorSource,
-    /if \(!forceInitialPrompt && getLatestChatMessages\(\)\.length > 0\) return;[\s\S]*?didAutoPromptRef\.current = true;[\s\S]*?handleBuildWorkspaceCommunicationModeChange\('lumine'\);[\s\S]*?setMobilePanelTab\('chat'\);[\s\S]*?void startGeneration\(prompt,\s*\{/m
+    /if \(!forceInitialPrompt && getLatestChatMessages\(\)\.length > 0\) return;[\s\S]*?didAutoPromptRef\.current = true;[\s\S]*?setMobilePanelTab\('lumine'\);[\s\S]*?void startGeneration\(prompt,\s*\{/m
   );
 });
 
 test('Lumine quick-reply buttons map to the expected run actions', () => {
   assert.match(
-    composerSource,
+    chatPanelSource,
     /showScopedPlanQuickReplies[\s\S]*?\? onContinueScopedPlan[\s\S]*?: onAcceptFollowUpPrompt/m
   );
   assert.match(
-    composerSource,
+    chatPanelSource,
     /showScopedPlanQuickReplies[\s\S]*?\? onCancelScopedPlan[\s\S]*?: onDismissFollowUpPrompt/m
   );
-  assert.match(composerSource, /onClick=\{onPrefillRedirect\}/);
+  assert.match(
+    chatPanelSource,
+    /onQuickReplyRedirect=\{handlePrefillRedirect\}/
+  );
   assert.match(
     assistantMessageSource,
     /onClick=\{\(\) => void onFixRuntimeObservationMessage\(message\)\}/

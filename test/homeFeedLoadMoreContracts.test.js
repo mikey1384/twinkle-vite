@@ -35,7 +35,7 @@ test('home load-more has one scheduler-owned timeout and retry budget', () => {
   );
   assert.match(
     schedulerSource,
-    /raceWithRequestAbort\([\s\S]*?this\.limiter\(async \(\) => \{\s*throwIfRequestAborted\(baseConfig\.signal\)/
+    /raceWithRequestAbort\([\s\S]*?this\.limiters\.run\(\{[\s\S]*?priority: config\.meta\?\.priority,[\s\S]*?task: async \(\) => \{\s*throwIfRequestAborted\(baseConfig\.signal\)/
   );
   assert.match(schedulerSource, /Promise\.race\(\[promise, abortPromise\]\)/);
   assert.match(

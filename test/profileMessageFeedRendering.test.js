@@ -54,12 +54,17 @@ assert.match(
   targetPreviewSource,
   /isRenderableHomeFeedTargetComment\(targetComment\)/
 );
+const commentTargetBranchIndex = targetPreviewSource.lastIndexOf(
+  'if (isRenderableHomeFeedTargetComment(targetComment))'
+);
+const profileRootFallbackIndex = targetPreviewSource.indexOf(
+  "if (contentType === 'comment' && normalizedRootType === 'user')"
+);
+assert(commentTargetBranchIndex >= 0, 'expected the concrete comment branch');
+assert(profileRootFallbackIndex >= 0, 'expected the profile-root fallback');
 assert.ok(
-  targetPreviewSource.indexOf("normalizedRootType === 'user'") <
-    targetPreviewSource.lastIndexOf(
-      'isRenderableHomeFeedTargetComment(targetComment)'
-    ),
-  'profile target branch must run before target comment branch'
+  commentTargetBranchIndex < profileRootFallbackIndex,
+  'a concrete comment target must render before the profile-root fallback'
 );
 assert.match(targetPreviewSource, /targetContentType === 'user'/);
 assert.match(targetPreviewSource, /`\/users\/\$\{target\.username\}`/);

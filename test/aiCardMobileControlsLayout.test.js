@@ -95,7 +95,11 @@ assert.match(
 );
 assert.match(
   globalStylesSource,
-  /--mobile-nav-total-height: calc\(\s*var\(--mobile-nav-height, 7rem\) \+ env\(safe-area-inset-bottom, 0px\)\s*\);/
+  /--mobile-nav-footprint: calc\(\s*var\(--mobile-nav-height, 7rem\) \+ env\(safe-area-inset-bottom, 0px\)\s*\);/
+);
+assert.match(
+  globalStylesSource,
+  /--mobile-nav-total-height: max\(\s*0px,\s*var\(--mobile-nav-footprint\) - var\(--app-keyboard-inset, 0px\)\s*\);/
 );
 
 console.log('AI card mobile controls layout verifier passed.');

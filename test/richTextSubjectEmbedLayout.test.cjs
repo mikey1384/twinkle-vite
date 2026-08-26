@@ -89,7 +89,7 @@ test('lets full-width surfaces opt into subject cards without weakening compact 
       maxLines: 10,
       subjectPreviewVariant: 'fullWidth'
     }),
-    'calc(1.7em * 10 + 10rem)'
+    'calc(1.7em * 10 + 13rem)'
   );
   assert.equal(
     getRichTextPreviewMaxHeight({

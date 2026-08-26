@@ -10,18 +10,24 @@ function readSource(relativePath) {
   return fs.readFileSync(path.resolve(__dirname, '..', relativePath), 'utf8');
 }
 
-test('shared prompt ContentPanel keeps like status inside the like action wrapper', () => {
+test('shared prompt ContentPanel uses the common action and non-empty stats rows', () => {
   const source = readSource(
     'src/components/ContentPanel/Body/BottomInterface.tsx'
   );
 
-  assert.match(source, /content-panel__shared-topic-like-action/);
   assert.match(
     source,
-    /<div className="content-panel__shared-topic-like-action">[\s\S]*<LikeButton[\s\S]*sharedTopicLikeStatusShown[\s\S]*<Likers/
+    /<div className="left">[\s\S]*?\{!secretHidden && \(\s*<LikeButton/
   );
-  assert.match(source, /bottomStatsRowShown\s*=\s*[\s\S]*!isSharedTopic/);
-  assert.match(source, /{!isSharedTopic && \(\s*<Likers/);
+  assert.match(
+    source,
+    /const bottomStatsRowShown = likes\.length > 0 \|\| viewCountShown;/
+  );
+  assert.match(source, /\{bottomStatsRowShown && \([\s\S]*?<Likers/);
+  assert.doesNotMatch(
+    source,
+    /content-panel__shared-topic-like-action|sharedTopicLikeStatusShown/
+  );
 });
 
 test('shared prompt clone buttons live in their own band below the content, not in the action row', () => {

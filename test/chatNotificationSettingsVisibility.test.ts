@@ -50,7 +50,9 @@ test('advanced notification settings are collapsed by default', () => {
   const disclosureIndex = source.indexOf(
     'aria-expanded={advancedSettingsShown}'
   );
-  const advancedGateIndex = source.indexOf('{advancedSettingsShown && (');
+  const advancedGateIndex = source.indexOf(
+    '{advancedSettingsAvailable && advancedSettingsShown && ('
+  );
   const backgroundSettingsIndex = source.indexOf(
     'While Twinkle is in the background'
   );
