@@ -33,17 +33,28 @@ function isConfirmedMessageInReadScope({
 
 export function getVisibleChatReadMessageId({
   channelId,
-  confirmedMessageId,
+  confirmedMessage,
   subchannelId,
   visibleMessageIds,
   visibleMessagesObj
 }: {
   channelId: number;
-  confirmedMessageId?: unknown;
+  confirmedMessage?: unknown;
   subchannelId: number;
   visibleMessageIds?: readonly unknown[] | null;
   visibleMessagesObj?: Readonly<Record<string | number, unknown>> | null;
 }) {
+  const confirmedMessageId = normalizeConfirmedChatMessageId(
+    (confirmedMessage as { id?: unknown } | null)?.id
+  );
+  const scopedConfirmedMessageId = isConfirmedMessageInReadScope({
+    channelId,
+    message: confirmedMessage,
+    messageId: confirmedMessageId,
+    subchannelId
+  })
+    ? confirmedMessageId
+    : 0;
   const scopedVisibleMessageIds = (visibleMessageIds || [])
     .map(normalizeConfirmedChatMessageId)
     .filter(
@@ -57,7 +68,7 @@ export function getVisibleChatReadMessageId({
         })
     );
   return Math.max(
-    normalizeConfirmedChatMessageId(confirmedMessageId),
+    scopedConfirmedMessageId,
     ...scopedVisibleMessageIds
   );
 }

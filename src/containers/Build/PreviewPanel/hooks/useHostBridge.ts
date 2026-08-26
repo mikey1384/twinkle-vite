@@ -15,6 +15,7 @@ import {
   postToPreviewFrames,
   syncPreviewRuntimeUploadsState
 } from '../helpers/previewBridgeMessaging';
+import { createBuildRuntimeWorldAdmission } from '../helpers/buildRuntimeWorldAdmission';
 import {
   handlePreviewHealthMessage,
   handleRuntimeObservationPreviewMessage
@@ -456,6 +457,7 @@ export function useHostBridge({
         instanceId: string;
       }
     >();
+    const worldEventAdmission = createBuildRuntimeWorldAdmission();
 
     function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
       socket.emit('build_app_chat_subscribe', {
@@ -574,6 +576,16 @@ export function useHostBridge({
             createPreviewBridgeError(
               'Socket transport is not ready',
               'WORLD_SOCKET_NOT_READY'
+            )
+          );
+          return;
+        }
+        const admission = worldEventAdmission.admit(eventName);
+        if (!admission.admitted) {
+          reject(
+            createPreviewBridgeError(
+              `World updates are arriving too quickly. Drop this transient update and try again in ${admission.retryAfterMs}ms.`,
+              'WORLD_EVENT_RATE_LIMITED'
             )
           );
           return;

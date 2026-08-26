@@ -331,11 +331,11 @@ export default function useChatSocket({
     async function maybeUpdateLastRead({
       channelId,
       subchannelId,
-      lastReadMessageId: eventMessageId
+      confirmedMessage
     }: {
       channelId: number;
       subchannelId?: number | null;
-      lastReadMessageId?: number | null;
+      confirmedMessage?: unknown;
     }) {
       const nowSec = Math.floor(Date.now() / 1000);
       const normalizedSubchannelId = Number(subchannelId || 0);
@@ -345,7 +345,7 @@ export default function useChatSocket({
         : channel;
       const lastReadMessageId = getVisibleChatReadMessageId({
         channelId,
-        confirmedMessageId: eventMessageId,
+        confirmedMessage,
         subchannelId: normalizedSubchannelId,
         visibleMessageIds: scope?.messageIds,
         visibleMessagesObj: scope?.messagesObj
@@ -742,7 +742,11 @@ export default function useChatSocket({
         ? maybeUpdateLastRead({
             channelId,
             subchannelId,
-            lastReadMessageId: update.messageId
+            confirmedMessage: {
+              id: update.messageId,
+              channelId,
+              subchannelId
+            }
           })
         : null;
 
@@ -1071,7 +1075,11 @@ export default function useChatSocket({
         void maybeUpdateLastRead({
           channelId: invitationChannelId,
           subchannelId: invitationSubchannelId,
-          lastReadMessageId: message.id
+          confirmedMessage: {
+            ...message,
+            channelId: invitationChannelId,
+            subchannelId: invitationSubchannelId
+          }
         });
       } else if (Number(message.userId) !== Number(userId)) {
         markUnreadActivity();
@@ -1149,7 +1157,11 @@ export default function useChatSocket({
         if (!isMyMessage && scopeIsActivelyVisible) {
           void maybeUpdateLastRead({
             channelId,
-            lastReadMessageId: message.id
+            confirmedMessage: {
+              ...message,
+              channelId,
+              subchannelId: 0
+            }
           });
         }
         onReceiveMessage({
@@ -1261,7 +1273,7 @@ export default function useChatSocket({
           void maybeUpdateLastRead({
             channelId: message.channelId,
             subchannelId: message.subchannelId,
-            lastReadMessageId: message.id
+            confirmedMessage: message
           });
         }
         onReceiveMessage({
@@ -1484,7 +1496,7 @@ export default function useChatSocket({
         void maybeUpdateLastRead({
           channelId: message.channelId,
           subchannelId: message.subchannelId,
-          lastReadMessageId: message.id
+          confirmedMessage: message
         });
       } else if (!senderIsUser) {
         markUnreadActivity();

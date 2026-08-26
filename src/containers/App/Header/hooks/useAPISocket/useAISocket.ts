@@ -538,7 +538,7 @@ export default function useAISocket({
         // not in channelsObj until the reducer below runs. Carry that exact
         // confirmed id into the writer-backed read mutation so the arriving
         // reply, rather than only the previous message, becomes read.
-        void reconcileChannelLastRead(channelId, message.id);
+        void reconcileChannelLastRead(channelId, appliedMessage);
         onReceiveMessage({
           message: appliedMessage,
           pageVisible: currentPageVisible,

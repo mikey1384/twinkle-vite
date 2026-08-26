@@ -35,11 +35,11 @@ export default function useChatLastReadReconciler() {
   function getVisibleReadMessageId({
     channelId,
     subchannelId,
-    confirmedMessageId
+    confirmedMessage
   }: {
     channelId: number;
     subchannelId: number;
-    confirmedMessageId?: unknown;
+    confirmedMessage?: unknown;
   }) {
     const channel = channelsObjRef.current?.[channelId];
     const scope = subchannelId
@@ -47,7 +47,7 @@ export default function useChatLastReadReconciler() {
       : channel;
     return getVisibleChatReadMessageId({
       channelId,
-      confirmedMessageId,
+      confirmedMessage,
       subchannelId,
       visibleMessageIds: scope?.messageIds,
       visibleMessagesObj: scope?.messagesObj
@@ -56,12 +56,12 @@ export default function useChatLastReadReconciler() {
 
   function reconcileChannelLastRead(
     channelId: number,
-    confirmedMessageId?: unknown
+    confirmedMessage?: unknown
   ) {
     const lastReadMessageId = getVisibleReadMessageId({
       channelId,
       subchannelId: 0,
-      confirmedMessageId
+      confirmedMessage
     });
     return reconcileLastRead({
       request: () => updateChatLastRead({ channelId, lastReadMessageId }),

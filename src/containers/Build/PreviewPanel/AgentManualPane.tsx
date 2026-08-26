@@ -236,6 +236,7 @@ const sdkSections: GuideSection[] = [
       'world.subscribe(listener) receives snapshot, player.joined, player.left, presence.updated, and action.received events with serverTime, seq, eventId, room, player, and players.',
       'world.updatePresence({ x, y, z, facing, animation }) updates the current avatar snapshot. Throttle movement updates to about 5-15 times per second; do not call it every animation frame.',
       'world.send("emote", { emote: "wave" }) sends lightweight in-room actions for emotes, interactions, and chat bubbles.',
+      'The parent limits updatePresence and send together to protect the website connection. WORLD_EVENT_RATE_LIMITED is recoverable: drop that transient presence/action update and keep the session.',
       'World sessions are disposable. On session.ended or Twinkle.world.isSessionEndedError(error), stop using that handle and reconnect with backoff. If Twinkle.world.isRecoverableSessionError(error) is true but the session did not end, drop that transient presence/action and keep the handle.',
       'world.leave() leaves the room; Twinkle.world.leaveAll() leaves all active sessions in the iframe.',
       'Twinkle.world is ephemeral heartbeat/TTL state. Use Twinkle.sharedDb/privateDb for durable inventory, XP, quests, ownership, and saved progress.'

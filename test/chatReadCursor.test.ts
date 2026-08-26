@@ -6,7 +6,7 @@ test('an arriving confirmed message advances the read boundary before local inse
   assert.equal(
     getVisibleChatReadMessageId({
       channelId: 7,
-      confirmedMessageId: 103,
+      confirmedMessage: { id: 103, channelId: 7, subchannelId: 0 },
       subchannelId: 0,
       visibleMessageIds: [101, 102],
       visibleMessagesObj: {
@@ -22,7 +22,7 @@ test('a delayed confirmed event cannot move an already visible read boundary bac
   assert.equal(
     getVisibleChatReadMessageId({
       channelId: 7,
-      confirmedMessageId: 101,
+      confirmedMessage: { id: 101, channelId: 7, subchannelId: 0 },
       subchannelId: 0,
       visibleMessageIds: [102, 103],
       visibleMessagesObj: {
@@ -38,7 +38,11 @@ test('invalid message ids cannot become a canonical read boundary', () => {
   assert.equal(
     getVisibleChatReadMessageId({
       channelId: 7,
-      confirmedMessageId: 'not-an-id',
+      confirmedMessage: {
+        id: 'not-an-id',
+        channelId: 7,
+        subchannelId: 0
+      },
       subchannelId: 0,
       visibleMessageIds: [undefined, -1, 0]
     }),
@@ -50,7 +54,7 @@ test('a channel-wide subchannel preview cannot become the Main read boundary', (
   assert.equal(
     getVisibleChatReadMessageId({
       channelId: 7,
-      confirmedMessageId: 103,
+      confirmedMessage: { id: 103, channelId: 7, subchannelId: 0 },
       subchannelId: 0,
       visibleMessageIds: [205, 102],
       visibleMessagesObj: {
@@ -71,6 +75,33 @@ test('a stale message from another channel cannot become a scoped read boundary'
       visibleMessagesObj: {
         205: { id: 205, channelId: 8, subchannelId: 0 }
       }
+    }),
+    0
+  );
+});
+
+test('an arriving boundary carries canonical scope proof instead of trusting a bare id', () => {
+  assert.equal(
+    getVisibleChatReadMessageId({
+      channelId: 7,
+      confirmedMessage: { id: 205, channelId: 8, subchannelId: 0 },
+      subchannelId: 0
+    }),
+    0
+  );
+  assert.equal(
+    getVisibleChatReadMessageId({
+      channelId: 7,
+      confirmedMessage: { id: 205, channelId: 7, subchannelId: 9 },
+      subchannelId: 0
+    }),
+    0
+  );
+  assert.equal(
+    getVisibleChatReadMessageId({
+      channelId: 7,
+      confirmedMessage: 205,
+      subchannelId: 0
     }),
     0
   );
