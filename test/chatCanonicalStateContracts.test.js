@@ -258,7 +258,7 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   );
   assert.match(
     aiSocketSource,
-    /messageScopeIsActivelyVisible[\s\S]*?reconcileChannelLastRead\(channelId, message\.id\)[\s\S]*?reconcileChannelUnreadActivity\(\{[\s\S]*?channelId/m
+    /messageScopeIsActivelyVisible[\s\S]*?reconcileChannelLastRead\(channelId, appliedMessage\)[\s\S]*?reconcileChannelUnreadActivity\(\{[\s\S]*?channelId/m
   );
   assert.doesNotMatch(aiSocketSource, /numUnreads:\s*1/);
   assert.match(
@@ -308,7 +308,7 @@ test('chat visibility follows the rendered body independently from presence', ()
   );
   assert.match(
     aiSocketSource,
-    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?messageScopeIsActivelyVisible[\s\S]*?currentSubchannelId === 0[\s\S]*?if \(messageScopeIsActivelyVisible\) \{[\s\S]*?reconcileChannelLastRead\(channelId, message\.id\)/
+    /const messageIsForActiveChannel =[\s\S]*?channelId === activeChatChannelIdRef\.current;[\s\S]*?messageScopeIsActivelyVisible[\s\S]*?currentSubchannelId === 0[\s\S]*?if \(messageScopeIsActivelyVisible\) \{[\s\S]*?reconcileChannelLastRead\(channelId, appliedMessage\)/
   );
   assert.match(
     socketManagerSource,
