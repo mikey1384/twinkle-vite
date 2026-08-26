@@ -409,6 +409,9 @@ export default function Content({
               numMsgs={numMsgs}
               isCielMessage={isCielMessage}
               isCallMsg={isCallMsg}
+              isGenerationConfirmed={
+                parsedSettings?.aiGenerationStatus === 'generating'
+              }
               isNotification={isNotification}
               isSubject={!!isSubject}
               isReloadedSubject={!!isReloadedSubject}

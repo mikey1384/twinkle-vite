@@ -1,10 +1,12 @@
 export function applyCanonicalAiMessageFailure({
   channel,
   messageId,
+  content,
   settings
 }: {
   channel: any;
   messageId: number;
+  content?: string;
   settings: Record<string, unknown>;
 }) {
   let changed = false;
@@ -15,6 +17,7 @@ export function applyCanonicalAiMessageFailure({
       ...messagesObj,
       [messageId]: {
         ...messagesObj[messageId],
+        ...(content !== undefined ? { content } : {}),
         settings
       }
     };
@@ -35,6 +38,7 @@ export function applyCanonicalAiMessageFailure({
           ...typedSubchannel.messagesObj,
           [messageId]: {
             ...typedSubchannel.messagesObj[messageId],
+            ...(content !== undefined ? { content } : {}),
             settings
           }
         }

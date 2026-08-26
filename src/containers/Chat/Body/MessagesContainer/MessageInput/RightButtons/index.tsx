@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DefaultButtons from './DefaultButtons';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 
 export default function RightButtons({
   buttonColor,
@@ -52,40 +52,50 @@ export default function RightButtons({
   const cancelAIMessage = useAppContext(
     (v) => v.requestHelpers.cancelAIMessage
   );
-  const onCancelAIMessage = useChatContext((v) => v.actions.onCancelAIMessage);
-  const channelState = useChatContext(
-    (v) => v.state.channelsObj[selectedChannelId]
+  const [cancelRequest, setCancelRequest] = useState<{
+    channelId: number;
+    messageId: number;
+  } | null>(null);
+  const cancellingCurrentMessage = Boolean(
+    cancelRequest?.channelId === selectedChannelId &&
+    cancelRequest.messageId === currentlyStreamingAIMsgId
   );
+
   return isCielChannel || isZeroChannel ? (
     currentlyStreamingAIMsgId ? (
-      <Button
-        color={buttonColor}
-        variant="solid"
-        onClick={() => {
-          const aiMessage =
-            channelState?.messagesObj?.[currentlyStreamingAIMsgId];
-          const hasContent =
-            aiMessage?.content && aiMessage.content.trim().length > 0;
-
-          const shouldRemoveMessage = !hasContent;
-
-          onCancelAIMessage({
-            messageId: currentlyStreamingAIMsgId,
-            channelId: selectedChannelId,
-            topicId: aiMessage?.subjectId,
-            shouldRemoveMessage
-          });
-
-          cancelAIMessage({
-            AIMessageId: currentlyStreamingAIMsgId,
-            channelId: selectedChannelId,
-            hasContent
-          }).catch(() => {
-          });
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          margin: '0.2rem 0'
         }}
       >
-        <Icon icon="stop" />
-      </Button>
+        <Button
+          color={buttonColor}
+          loading={cancellingCurrentMessage}
+          variant="solid"
+          onClick={() => {
+            const request = {
+              messageId: currentlyStreamingAIMsgId,
+              channelId: selectedChannelId
+            };
+            setCancelRequest(request);
+
+            cancelAIMessage({
+              AIMessageId: currentlyStreamingAIMsgId
+            }).catch(() => {
+              setCancelRequest((currentRequest) =>
+                currentRequest?.channelId === request.channelId &&
+                currentRequest.messageId === request.messageId
+                  ? null
+                  : currentRequest
+              );
+            });
+          }}
+        >
+          <Icon icon="stop" />
+        </Button>
+      </div>
     ) : (
       <DefaultButtons
         currentTransactionId={currentTransactionId}

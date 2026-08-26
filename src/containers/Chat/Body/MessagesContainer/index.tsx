@@ -14,7 +14,8 @@ import {
   VOCAB_CHAT_TYPE,
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID,
-  GENERAL_CHAT_ID
+  GENERAL_CHAT_ID,
+  CHAT_AI_GENERATION_RECONCILE_AFTER_MS
 } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { isMobile, parseChannelPath } from '~/helpers';
@@ -44,6 +45,10 @@ import useMessageSearch from './hooks/useMessageSearch';
 import useBoardTimers from './hooks/useBoardTimers';
 import useGameMoveHandlers from './hooks/useGameMoveHandlers';
 import LocalContext from '../../Context';
+import {
+  getCanonicalAiGenerationStartedAt,
+  isCanonicalAiGenerationConfirmed
+} from '~/contexts/Chat/aiGenerationState';
 const deviceIsMobile = isMobile(navigator);
 const CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750;
 
@@ -84,6 +89,9 @@ export default function MessagesContainer({
   const loadChatSubject = useAppContext(
     (v) => v.requestHelpers.loadChatSubject
   );
+  const loadChatMessage = useAppContext(
+    (v) => v.requestHelpers.loadChatMessage
+  );
   const saveChatMessage = useAppContext(
     (v) => v.requestHelpers.saveChatMessage
   );
@@ -123,6 +131,7 @@ export default function MessagesContainer({
       onSetChessModalShown,
       onSetOmokModalShown,
       onSetCreatingNewDMChannel,
+      onSetMessageState,
       onSetReplyTarget,
       onSetWordleModalShown,
       onSubmitMessage,
@@ -179,6 +188,82 @@ export default function MessagesContainer({
   const textForThisChannel = useInputContext(
     (v) => v.state['chat' + selectedChannelId]?.text || ''
   );
+  const activeAiGenerationMessageId = Number(
+    currentChannel.currentlyStreamingAIMsgId || 0
+  );
+  const activeAiGenerationMessage =
+    currentChannel.messagesObj?.[activeAiGenerationMessageId];
+  const activeAiGenerationStartedAt = getCanonicalAiGenerationStartedAt(
+    activeAiGenerationMessage
+  );
+  const activeAiGenerationSubchannelId = Number(
+    activeAiGenerationMessage?.subchannelId || 0
+  );
+  const activeAiGenerationTopicId = Number(
+    activeAiGenerationMessage?.subjectId || 0
+  );
+
+  useEffect(() => {
+    if (!activeAiGenerationMessageId) return;
+
+    let disposed = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = (delayMs: number) => {
+      timer = setTimeout(reconcileFromServer, Math.max(1000, delayMs));
+    };
+    schedule(
+      activeAiGenerationStartedAt
+        ? activeAiGenerationStartedAt * 1000 +
+            CHAT_AI_GENERATION_RECONCILE_AFTER_MS -
+            Date.now()
+        : 1000
+    );
+
+    return () => {
+      disposed = true;
+      if (timer) clearTimeout(timer);
+    };
+
+    async function reconcileFromServer() {
+      try {
+        const canonicalMessage = await loadChatMessage({
+          messageId: activeAiGenerationMessageId,
+          fromWriter: true
+        });
+        if (disposed) return;
+        if (isCanonicalAiGenerationConfirmed(canonicalMessage)) {
+          schedule(30_000);
+          return;
+        }
+        onSetMessageState({
+          channelId: selectedChannelId,
+          messageId: activeAiGenerationMessageId,
+          newState: { ...canonicalMessage, isLoaded: true }
+        });
+      } catch (error: any) {
+        if (!disposed && Number(error?.status || 0) === 404) {
+          onDeleteMessage({
+            channelId: selectedChannelId,
+            messageId: activeAiGenerationMessageId,
+            subchannelId: activeAiGenerationSubchannelId,
+            topicId: activeAiGenerationTopicId
+          });
+          return;
+        }
+        if (!disposed) schedule(30_000);
+      }
+    }
+  }, [
+    activeAiGenerationMessageId,
+    activeAiGenerationStartedAt,
+    activeAiGenerationSubchannelId,
+    activeAiGenerationTopicId,
+    loadChatMessage,
+    onDeleteMessage,
+    onSetMessageState,
+    selectedChannelId
+  ]);
+
   const [textAreaHeight, setTextAreaHeight] = useState(0);
   const [aiUsagePolicyHeight, setAiUsagePolicyHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
@@ -421,8 +506,7 @@ export default function MessagesContainer({
 
   // Keep the canonical interaction gate immediate, but avoid flashing a
   // transient status pill for a recovery that finishes in under one beat.
-  const catchUpStatusShown =
-    catchUpStatusPending && catchUpStatusDelayElapsed;
+  const catchUpStatusShown = catchUpStatusPending && catchUpStatusDelayElapsed;
   const containerHeight = `CALC(100% - 1rem - 2px - ${
     socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
   }${aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''}${

@@ -254,7 +254,7 @@ test('standalone last-read writes and AI receipts invalidate older unread snapsh
   );
   assert.match(
     aiSocketSource,
-    /cancelledMessageIds[\s\S]*?markChatUnreadActivity\(\);[\s\S]*?if \(messageIsForActiveChannel\)/m
+    /channelSummaryIsNeeded[\s\S]*?markChatUnreadActivity\(\);[\s\S]*?messageIsForActiveChannel/m
   );
   assert.match(
     aiSocketSource,
@@ -897,10 +897,7 @@ test('every unread-producing socket path converges on a visible canonical scope'
   ]) {
     const handlerStart = socketSource.indexOf(`function ${handlerName}`);
     assert.ok(handlerStart >= 0, `missing ${handlerName}`);
-    const nextHandler = socketSource.indexOf(
-      '\n    function ',
-      handlerStart + 10
-    );
+    const nextHandler = socketSource.indexOf('\n    function ', handlerStart + 10);
     const handlerSource = socketSource.slice(
       handlerStart,
       nextHandler >= 0 ? nextHandler : undefined
@@ -977,7 +974,10 @@ test('unlisted realtime channels wait for canonical identity before rendering', 
 
   for (const handlerName of ['handleNewWordleAttempt', 'handleTopicChange']) {
     const handlerStart = socketSource.indexOf(`function ${handlerName}`);
-    const nextHandler = socketSource.indexOf('\n    function ', handlerStart + 10);
+    const nextHandler = socketSource.indexOf(
+      '\n    function ',
+      handlerStart + 10
+    );
     const specialHandlerSource = socketSource.slice(handlerStart, nextHandler);
     assert.match(
       specialHandlerSource,

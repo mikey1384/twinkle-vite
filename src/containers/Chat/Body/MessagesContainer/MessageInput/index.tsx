@@ -203,8 +203,6 @@ export default function MessageInput({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
-  const channelState =
-    useChatContext((v) => v.state.channelsObj[selectedChannelId]) || {};
   const isAICallOngoing = useMemo(
     () => aiCallChannelId === selectedChannelId,
     [aiCallChannelId, selectedChannelId]
@@ -217,10 +215,7 @@ export default function MessageInput({
     () => AI_FEATURES_DISABLED && isAIChannel,
     [AI_FEATURES_DISABLED, isAIChannel]
   );
-  const isAIActuallyStreaming = useMemo(() => {
-    if (!currentlyStreamingAIMsgId) return false;
-    return !channelState?.cancelledMessageIds?.has(currentlyStreamingAIMsgId);
-  }, [currentlyStreamingAIMsgId, channelState?.cancelledMessageIds]);
+  const isAIActuallyStreaming = Boolean(currentlyStreamingAIMsgId);
   const getInputStateValue = useInputContext((v) => v.getInputStateValue);
 
   const textForThisChannel = useMemo(

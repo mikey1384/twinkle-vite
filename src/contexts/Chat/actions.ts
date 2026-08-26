@@ -78,7 +78,8 @@ export default function ChatActions(dispatch: Dispatch) {
       thoughtContent,
       isComplete,
       isThinkingHard,
-      isDelta
+      isDelta,
+      startOffset
     }: {
       channelId: number;
       messageId: number;
@@ -86,6 +87,7 @@ export default function ChatActions(dispatch: Dispatch) {
       isComplete: boolean;
       isThinkingHard?: boolean;
       isDelta?: boolean;
+      startOffset?: number;
     }) {
       return dispatch({
         type: 'UPDATE_AI_THOUGHT_STREAM',
@@ -94,7 +96,8 @@ export default function ChatActions(dispatch: Dispatch) {
         thoughtContent,
         isComplete,
         isThinkingHard,
-        isDelta
+        isDelta,
+        startOffset
       });
     },
     onUpdateAIGeneratedFile({
@@ -664,7 +667,9 @@ export default function ChatActions(dispatch: Dispatch) {
       isSubject,
       isAIEdited,
       subchannelId,
-      subjectChanged
+      subjectChanged,
+      settings,
+      isAIStreamProjection
     }: {
       editedMessage: string;
       channelId: number;
@@ -673,6 +678,8 @@ export default function ChatActions(dispatch: Dispatch) {
       isAIEdited?: boolean;
       subchannelId: number;
       subjectChanged: boolean;
+      settings?: Record<string, unknown>;
+      isAIStreamProjection?: boolean;
     }) {
       return dispatch({
         type: 'EDIT_MESSAGE',
@@ -682,38 +689,72 @@ export default function ChatActions(dispatch: Dispatch) {
         isSubject,
         isAIEdited,
         subchannelId,
-        subjectChanged
+        subjectChanged,
+        settings,
+        isAIStreamProjection
       });
     },
     onAppendAIMessageDelta({
       channelId,
       messageId,
-      delta
+      delta,
+      startOffset
     }: {
       channelId: number;
       messageId: number;
       delta: string;
+      startOffset?: number;
     }) {
       return dispatch({
         type: 'APPEND_AI_MESSAGE_DELTA',
         channelId,
         messageId,
-        delta
+        delta,
+        startOffset
+      });
+    },
+    onConfirmCanonicalAIGeneration({
+      channelId,
+      message
+    }: {
+      channelId: number;
+      message: Record<string, unknown>;
+    }) {
+      return dispatch({
+        type: 'CONFIRM_CANONICAL_AI_GENERATION',
+        channelId,
+        message
+      });
+    },
+    onFinishAIMessage({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId?: number;
+    }) {
+      return dispatch({
+        type: 'FINISH_AI_MESSAGE',
+        channelId,
+        messageId
       });
     },
     onApplyCanonicalAIMessageFailure({
       channelId,
       messageId,
+      content,
       settings
     }: {
       channelId: number;
       messageId: number;
+      content?: string;
       settings: Record<string, unknown>;
     }) {
       return dispatch({
         type: 'APPLY_CANONICAL_AI_MESSAGE_FAILURE',
         channelId,
         messageId,
+        content,
         settings
       });
     },
@@ -2558,26 +2599,6 @@ export default function ChatActions(dispatch: Dispatch) {
         type: 'SET_THINK_HARD',
         aiType: 'ciel',
         thinkHard
-      });
-    },
-    onCancelAIMessage({
-      messageId,
-      channelId,
-      topicId,
-      shouldRemoveMessage
-    }: {
-      messageId: number;
-      channelId: number;
-      subchannelId?: number;
-      topicId?: number;
-      shouldRemoveMessage: boolean;
-    }) {
-      return dispatch({
-        type: 'CANCEL_AI_MESSAGE',
-        messageId,
-        channelId,
-        topicId,
-        shouldRemoveMessage
       });
     },
     onSetThinkHardForTopic({

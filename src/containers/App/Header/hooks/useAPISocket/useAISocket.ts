@@ -19,9 +19,7 @@ import {
   CHAT_ID_BASE_NUMBER
 } from '~/constants/defaultValues';
 import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
-import {
-  chatRealtimeChannelNeedsCanonicalSummary
-} from '~/helpers/chatUnreadProjection';
+import { chatRealtimeChannelNeedsCanonicalSummary } from '~/helpers/chatUnreadProjection';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
 
 export default function useAISocket({
@@ -46,11 +44,13 @@ export default function useAISocket({
   const { reconcileChannelLastRead, reconcileChannelUnreadActivity } =
     useChatLastReadReconciler();
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onFinishAIMessage = useChatContext((v) => v.actions.onFinishAIMessage);
+  const onConfirmCanonicalAIGeneration = useChatContext(
+    (v) => v.actions.onConfirmCanonicalAIGeneration
+  );
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
-  const favoriteChannelIds = useChatContext(
-    (v) => v.state.favoriteChannelIds
-  );
+  const favoriteChannelIds = useChatContext((v) => v.state.favoriteChannelIds);
   const classChannelIds = useChatContext((v) => v.state.classChannelIds);
   const chatNotificationSettings = useChatContext(
     (v) => v.state.chatNotificationSettings
@@ -407,17 +407,23 @@ export default function useAISocket({
       }
     }
 
-    function handleAIMessageDone(channelId: number) {
+    function handleAIMessageDone(channelId: number, messageId?: number) {
+      const normalizedMessageId = Number(messageId || 0);
       const pendingReply = pendingAIReplyRef.current[channelId];
-      delete pendingAIReplyRef.current[channelId];
-      onSetChannelState({
+      onFinishAIMessage({
         channelId,
-        newState: { currentlyStreamingAIMsgId: null }
+        messageId: normalizedMessageId || undefined
       });
-      if (!pendingReply || !document.hidden) return;
-      // On failed/cancelled generations the server emits done BEFORE
-      // ai_message_error / chat_message_deleted, so hold the notification for
-      // a grace period during which those events can cancel it.
+      if (
+        !pendingReply ||
+        (normalizedMessageId && pendingReply.messageId !== normalizedMessageId)
+      ) {
+        return;
+      }
+      delete pendingAIReplyRef.current[channelId];
+      if (!document.hidden) return;
+      // The terminal error/delete event normally arrives before done. Keep a
+      // short grace period for rolling deployments and network reordering.
       cancelScheduledAIReplyNotification({ channelId });
       scheduledAIReplyNotifyRef.current[channelId] = {
         messageId: pendingReply.messageId,
@@ -425,9 +431,6 @@ export default function useAISocket({
           delete scheduledAIReplyNotifyRef.current[channelId];
           if (
             !document.hidden ||
-            channelsObjRef.current[channelId]?.cancelledMessageIds?.has(
-              pendingReply.messageId
-            ) ||
             !shouldShowBackgroundAiReplyNotification({
               channelId,
               settings: chatNotificationSettingsRef.current,
@@ -489,44 +492,40 @@ export default function useAISocket({
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = Number(subchannelIdRef.current || 0);
       const channelState = currentChannelsObj[channelId];
-      const channelSummaryIsNeeded =
-        chatRealtimeChannelNeedsCanonicalSummary({
-          channel: channelState,
-          isListed: listedChannelIdsRef.current.has(Number(channelId))
-        });
-      if (channelState?.cancelledMessageIds?.has(message.id)) {
-        return;
-      }
-
+      const channelSummaryIsNeeded = chatRealtimeChannelNeedsCanonicalSummary({
+        channel: channelState,
+        isListed: listedChannelIdsRef.current.has(Number(channelId))
+      });
       // AI replies use their own socket event and never pass through the
       // generic chat receipt handler. Invalidate older writer snapshots before
       // either applying this message or reconciling its read watermark.
       markChatUnreadActivity();
       if (channelState?.id) {
-        onSetChannelState({
-          channelId,
-          newState: {
-            currentlyStreamingAIMsgId: message.id
-          }
-        });
+        onConfirmCanonicalAIGeneration({ channelId, message });
       }
       const isZeroMessage = message.userId === ZERO_TWINKLE_ID;
       const computedPathId =
         currentChannelsObj[channelId]?.pathId ??
         Number(channelId) + Number(CHAT_ID_BASE_NUMBER);
-      pendingAIReplyRef.current[channelId] = {
-        aiName: isZeroMessage ? 'Zero' : 'Ciel',
-        messageId: message.id,
-        pathId: computedPathId,
-        topicId: Number(message.subjectId || message.targetSubject?.id) || 0
-      };
+      const existingPendingReply = pendingAIReplyRef.current[channelId];
+      if (
+        !existingPendingReply ||
+        Number(message.id || 0) >= Number(existingPendingReply.messageId || 0)
+      ) {
+        pendingAIReplyRef.current[channelId] = {
+          aiName: isZeroMessage ? 'Zero' : 'Ciel',
+          messageId: message.id,
+          pathId: computedPathId,
+          topicId: Number(message.subjectId || message.targetSubject?.id) || 0
+        };
+      }
       const messageIsForActiveChannel =
         channelId === activeChatChannelIdRef.current;
       const messageScopeIsActivelyVisible = Boolean(
         messageIsForActiveChannel &&
-          currentPageVisible &&
-          usingChatRef.current &&
-          currentSubchannelId === 0
+        currentPageVisible &&
+        usingChatRef.current &&
+        currentSubchannelId === 0
       );
       const appliedMessage = {
         ...message,
@@ -594,12 +593,7 @@ export default function useAISocket({
           // Keep the confirmed placeholder and subsequent stream deltas in a
           // non-rendered cache while the canonical summary decides whether
           // this channel belongs in the sidebar.
-          onSetChannelState({
-            channelId,
-            newState: {
-              currentlyStreamingAIMsgId: message.id
-            }
-          });
+          onConfirmCanonicalAIGeneration({ channelId, message });
         }
       }
     }
@@ -607,28 +601,28 @@ export default function useAISocket({
     function handleAIMessageError({
       channelId,
       messageId,
+      content,
       error,
       errorType,
       settings
     }: {
       channelId: number;
       messageId: number;
+      content?: string;
       error?: string;
       errorType?: 'moderation' | 'general';
       settings?: Record<string, unknown>;
     }) {
       handleAIMessageDiscardedForNotify({ channelId, messageId });
-      onSetChannelState({
-        channelId,
-        newState: { currentlyStreamingAIMsgId: null }
-      });
       if (settings) {
         onApplyCanonicalAIMessageFailure({
           channelId,
           messageId,
+          content,
           settings
         });
       } else {
+        onFinishAIMessage({ channelId, messageId });
         console.error('AI message failure lacked canonical settings', {
           channelId,
           messageId,

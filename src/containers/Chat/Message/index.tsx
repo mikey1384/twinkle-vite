@@ -87,10 +87,13 @@ function Message({
     rootType?: string | null;
     userId?: number;
     isNotification?: boolean;
+    timeStamp?: number;
     settings?: {
       hasError?: boolean;
       errorType?: 'moderation' | 'general';
       saveFailed?: boolean;
+      aiGenerationStatus?: string;
+      aiGenerationStartedAt?: number;
     };
   };
   nextMessageHasTopic: boolean;
@@ -153,7 +156,13 @@ function Message({
         onSetVisibleMessageId(message.id);
       }
     }
-  }, [index, onSetVisibleMessageIndex, onSetVisibleMessageId, inView, message?.id]);
+  }, [
+    index,
+    onSetVisibleMessageIndex,
+    onSetVisibleMessageId,
+    inView,
+    message?.id
+  ]);
 
   useEffect(() => {
     if (!message?.isLoaded && message?.id && !message?.isNotification) {

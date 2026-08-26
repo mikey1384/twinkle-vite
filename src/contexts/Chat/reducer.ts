@@ -5,7 +5,9 @@ import {
   AI_CARD_CHAT_TYPE,
   BOOKMARK_VIEWS,
   BookmarkView,
-  GENERAL_CHAT_ID
+  GENERAL_CHAT_ID,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { applyPresenceSnapshot, stampPresenceEntry } from './presenceSnapshot';
@@ -37,8 +39,15 @@ import {
   applyCanonicalTopicSettings
 } from './canonicalSettingsState';
 import { applyCanonicalAiMessageFailure } from './aiMessageFailureState';
+import {
+  isActiveAiStreamMessage,
+  reconcileCanonicalAiGenerationReceipt,
+  reconcileCanonicalGeneratingAiMessagePage,
+  reconcileCanonicalStreamingMessageId
+} from './aiGenerationState';
 import { updateAICardOfferNoticeStatusMap } from '~/helpers/aiCardOfferNotice';
 import { applyCanonicalChatMessagePage } from './messagePageState';
+import { applyCanonicalTextStreamUpdate } from '~/helpers/canonicalTextStream';
 import {
   mergeCanonicalTopicProjection,
   reconcileCanonicalTopicNavigation,
@@ -62,6 +71,8 @@ const chatTabHash: {
   favorite: 'favoriteChannelIds',
   class: 'classChannelIds'
 };
+
+const CHAT_AI_USER_IDS = [ZERO_TWINKLE_ID, CIEL_TWINKLE_ID];
 
 function loadChannelSettings(settings: any) {
   if (!settings) return {};
@@ -2607,6 +2618,8 @@ export default function ChatReducer(
         messageId: action.messageId,
         subchannelId: action.subchannelId
       });
+      const nextMessagesObj = { ...prevChannelObj?.messagesObj };
+      delete nextMessagesObj[action.messageId];
       const deletedSubchannelId =
         Number(action.subchannelId || deletedMessage?.subchannelId || 0) ||
         null;
@@ -2620,10 +2633,17 @@ export default function ChatReducer(
                 action.subchannelId
               ]?.messageIds?.filter(
                 (messageId: number) => messageId !== action.messageId
-              )
+              ),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                  ?.messagesObj
+              }
             }
           }
         : prevChannelObj?.subchannelObj;
+      if (action.subchannelId) {
+        delete subchannelObj[action.subchannelId].messagesObj[action.messageId];
+      }
       const nextState = {
         ...state,
         confirmedRealtimeActivityByChannel: removeConfirmedRealtimeActivity({
@@ -2643,6 +2663,13 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
+            currentlyStreamingAIMsgId: reconcileCanonicalStreamingMessageId({
+              currentMessageId: prevChannelObj?.currentlyStreamingAIMsgId,
+              messageId: action.messageId,
+              newState: { settings: {} },
+              messages: Object.values(nextMessagesObj),
+              assistantUserIds: CHAT_AI_USER_IDS
+            }),
             topicObj: action.topicId
               ? {
                   ...state.channelsObj[action.channelId]?.topicObj,
@@ -2661,6 +2688,7 @@ export default function ChatReducer(
             messageIds: prevChannelObj?.messageIds?.filter(
               (messageId: number) => messageId !== action.messageId
             ),
+            messagesObj: nextMessagesObj,
             ...(subchannelObj ? { subchannelObj } : {})
           }
         }
@@ -2672,54 +2700,6 @@ export default function ChatReducer(
           subchannelId: deletedSubchannelId
         }
       });
-    }
-    case 'CANCEL_AI_MESSAGE': {
-      const prevChannelObj = state.channelsObj[action.channelId];
-      const newChannelState = {
-        currentlyStreamingAIMsgId: null,
-        cancelledMessageIds: new Set([
-          ...(prevChannelObj?.cancelledMessageIds || new Set()),
-          action.messageId
-        ])
-      };
-
-      let messageIds = prevChannelObj?.messageIds;
-      let messagesObj = prevChannelObj?.messagesObj;
-      let topicObj = prevChannelObj?.topicObj;
-
-      if (action.shouldRemoveMessage) {
-        messageIds = messageIds?.filter(
-          (messageId: number) => messageId !== action.messageId
-        );
-        messagesObj = { ...messagesObj };
-        delete messagesObj[action.messageId];
-
-        if (action.topicId) {
-          topicObj = {
-            ...topicObj,
-            [action.topicId]: {
-              ...topicObj?.[action.topicId],
-              messageIds: topicObj?.[action.topicId]?.messageIds?.filter(
-                (messageId: number) => messageId !== action.messageId
-              )
-            }
-          };
-        }
-      }
-
-      return {
-        ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...prevChannelObj,
-            ...newChannelState,
-            messageIds,
-            messagesObj,
-            topicObj
-          }
-        }
-      };
     }
     case 'DISPLAY_ATTACHED_FILE': {
       const prevChannelObj = state.channelsObj[action.channelId];
@@ -2765,7 +2745,22 @@ export default function ChatReducer(
     case 'APPEND_AI_MESSAGE_DELTA': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const existingMessage = prevChannelObj?.messagesObj?.[action.messageId];
-      if (!existingMessage || typeof action.delta !== 'string') return state;
+      if (
+        !existingMessage ||
+        typeof action.delta !== 'string' ||
+        !isActiveAiStreamMessage({
+          currentMessageId: prevChannelObj?.currentlyStreamingAIMsgId,
+          messageId: action.messageId
+        })
+      ) {
+        return state;
+      }
+      const nextContent = applyCanonicalTextStreamUpdate({
+        currentText: String(existingMessage.content || ''),
+        delta: action.delta,
+        startOffset: action.startOffset
+      });
+      if (nextContent === String(existingMessage.content || '')) return state;
       return {
         ...state,
         channelsObj: {
@@ -2776,9 +2771,63 @@ export default function ChatReducer(
               ...prevChannelObj.messagesObj,
               [action.messageId]: {
                 ...existingMessage,
-                content: `${existingMessage.content || ''}${action.delta}`
+                content: nextContent
               }
             }
+          }
+        }
+      };
+    }
+    case 'CONFIRM_CANONICAL_AI_GENERATION': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const currentlyStreamingAIMsgId =
+        reconcileCanonicalAiGenerationReceipt({
+          currentMessageId: prevChannelObj?.currentlyStreamingAIMsgId,
+          message: action.message
+        });
+      if (
+        currentlyStreamingAIMsgId ===
+        (prevChannelObj?.currentlyStreamingAIMsgId ?? null)
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            currentlyStreamingAIMsgId
+          }
+        }
+      };
+    }
+    case 'FINISH_AI_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      if (!prevChannelObj) return state;
+      const messageId = Number(action.messageId || 0);
+      const currentlyStreamingAIMsgId = messageId
+        ? reconcileCanonicalStreamingMessageId({
+            currentMessageId: prevChannelObj.currentlyStreamingAIMsgId,
+            messageId,
+            newState: { settings: {} },
+            assistantUserIds: CHAT_AI_USER_IDS,
+            messages: Object.values(prevChannelObj.messagesObj || {})
+          })
+        : null;
+      if (
+        currentlyStreamingAIMsgId ===
+        (prevChannelObj.currentlyStreamingAIMsgId ?? null)
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            currentlyStreamingAIMsgId
           }
         }
       };
@@ -2788,14 +2837,30 @@ export default function ChatReducer(
       const nextChannel = applyCanonicalAiMessageFailure({
         channel,
         messageId: action.messageId,
+        content: action.content,
         settings: action.settings
       });
-      if (nextChannel === channel) return state;
+      const currentlyStreamingAIMsgId = reconcileCanonicalStreamingMessageId({
+        currentMessageId: channel?.currentlyStreamingAIMsgId,
+        messageId: action.messageId,
+        newState: { content: action.content, settings: action.settings },
+        messages: Object.values(nextChannel?.messagesObj || {}),
+        assistantUserIds: CHAT_AI_USER_IDS
+      });
+      if (
+        nextChannel === channel &&
+        currentlyStreamingAIMsgId === channel?.currentlyStreamingAIMsgId
+      ) {
+        return state;
+      }
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: nextChannel
+          [action.channelId]: {
+            ...nextChannel,
+            currentlyStreamingAIMsgId
+          }
         }
       };
     }
@@ -2818,6 +2883,30 @@ export default function ChatReducer(
     }
     case 'EDIT_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
+      // Canonical persisted edits must always reconcile. Temporary stream
+      // snapshots belong only to the generation that still owns this channel.
+      if (
+        action.isAIStreamProjection &&
+        !isActiveAiStreamMessage({
+          currentMessageId: prevChannelObj?.currentlyStreamingAIMsgId,
+          messageId: action.messageId
+        })
+      ) {
+        return state;
+      }
+      const currentlyStreamingAIMsgId =
+        action.settings === undefined
+          ? prevChannelObj?.currentlyStreamingAIMsgId
+          : reconcileCanonicalStreamingMessageId({
+              currentMessageId: prevChannelObj?.currentlyStreamingAIMsgId,
+              messageId: action.messageId,
+              newState: {
+                content: action.editedMessage,
+                settings: action.settings
+              },
+              messages: Object.values(prevChannelObj?.messagesObj || {}),
+              assistantUserIds: CHAT_AI_USER_IDS
+            });
       const subchannelObj = action.subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
@@ -2839,6 +2928,7 @@ export default function ChatReducer(
                   ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                     ?.messagesObj?.[action.messageId],
                   content: action.editedMessage,
+                  ...(action.settings ? { settings: action.settings } : {}),
                   ...(action.isAIEdited ? { isAIEdited: true } : {})
                 }
               }
@@ -2854,10 +2944,12 @@ export default function ChatReducer(
                 [action.channelId]: action.subchannelId
                   ? {
                       ...prevChannelObj,
+                      currentlyStreamingAIMsgId,
                       subchannelObj
                     }
                   : {
                       ...prevChannelObj,
+                      currentlyStreamingAIMsgId,
                       legacyTopicObj:
                         action.isSubject && action.subjectChanged
                           ? {
@@ -2870,6 +2962,9 @@ export default function ChatReducer(
                         [action.messageId]: {
                           ...prevChannelObj?.messagesObj[action.messageId],
                           content: action.editedMessage,
+                          ...(action.settings
+                            ? { settings: action.settings }
+                            : {}),
                           ...(action.isAIEdited ? { isAIEdited: true } : {})
                         }
                       }
@@ -3019,6 +3114,12 @@ export default function ChatReducer(
         messages: action.data.messages,
         messagesHydrated: action.data.messagesHydrated === true
       });
+      const canonicalGeneratingAiMessageId =
+        reconcileCanonicalGeneratingAiMessagePage({
+          currentMessageId: existingLoadedChannel.currentlyStreamingAIMsgId,
+          messages: action.data.messages,
+          assistantUserIds: CHAT_AI_USER_IDS
+        });
 
       const canonicalTopicProjection = mergeCanonicalTopicProjection({
         existingTopicObj: existingLoadedChannel.topicObj,
@@ -3066,6 +3167,7 @@ export default function ChatReducer(
             subchannelObj: action.data.channel?.subchannelObj,
             messageIds: action.data.messages.map((message: any) => message.id),
             messagesObj,
+            currentlyStreamingAIMsgId: canonicalGeneratingAiMessageId,
             isReloadRequired: false,
             legacyTopicObj: state.channelsObj[loadedChannel.id]?.legacyTopicObj,
             ...canonicalTopicNavigation,
@@ -4644,12 +4746,20 @@ export default function ChatReducer(
       };
     }
     case 'LOAD_TOPIC_MESSAGES': {
+      const canonicalGeneratingAiMessageId =
+        reconcileCanonicalGeneratingAiMessagePage({
+          currentMessageId:
+            state.channelsObj[action.channelId]?.currentlyStreamingAIMsgId,
+          messages: action.messages,
+          assistantUserIds: CHAT_AI_USER_IDS
+        });
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
+            currentlyStreamingAIMsgId: canonicalGeneratingAiMessageId,
             messagesObj: applyCanonicalChatMessagePage({
               existingMessagesObj:
                 state.channelsObj[action.channelId]?.messagesObj,
@@ -4786,6 +4896,15 @@ export default function ChatReducer(
       };
     }
     case 'UPDATE_AI_THINKING_STATUS': {
+      const channel = state.channelsObj[action.channelId];
+      if (
+        !isActiveAiStreamMessage({
+          currentMessageId: channel?.currentlyStreamingAIMsgId,
+          messageId: action.messageId
+        })
+      ) {
+        return state;
+      }
       return {
         ...state,
         channelsObj: {
@@ -4806,6 +4925,27 @@ export default function ChatReducer(
       };
     }
     case 'UPDATE_AI_THOUGHT_STREAM': {
+      const channel = state.channelsObj[action.channelId];
+      if (
+        !isActiveAiStreamMessage({
+          currentMessageId: channel?.currentlyStreamingAIMsgId,
+          messageId: action.messageId
+        })
+      ) {
+        return state;
+      }
+      const currentThoughtContent = String(
+        channel?.messagesObj?.[action.messageId]?.aiThoughtContent || ''
+      );
+      const nextThoughtContent = applyCanonicalTextStreamUpdate({
+        currentText: currentThoughtContent,
+        ...(action.isDelta
+          ? {
+              delta: action.thoughtContent,
+              startOffset: action.startOffset
+            }
+          : { snapshot: action.thoughtContent })
+      });
       return {
         ...state,
         channelsObj: {
@@ -4818,13 +4958,7 @@ export default function ChatReducer(
                 ...state.channelsObj[action.channelId]?.messagesObj?.[
                   action.messageId
                 ],
-                aiThoughtContent: action.isDelta
-                  ? `${
-                      state.channelsObj[action.channelId]?.messagesObj?.[
-                        action.messageId
-                      ]?.aiThoughtContent || ''
-                    }${action.thoughtContent}`
-                  : action.thoughtContent,
+                aiThoughtContent: nextThoughtContent,
                 aiThoughtStreamComplete: action.isComplete,
                 aiThoughtIsThinkingHard: action.isThinkingHard
               }
@@ -6622,6 +6756,13 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
+            currentlyStreamingAIMsgId: reconcileCanonicalStreamingMessageId({
+              currentMessageId: prevChannelObj.currentlyStreamingAIMsgId,
+              messageId: action.messageId,
+              newState: action.newState,
+              messages: Object.values(prevChannelObj.messagesObj || {}),
+              assistantUserIds: CHAT_AI_USER_IDS
+            }),
             messagesObj: {
               ...prevChannelObj.messagesObj,
               [action.messageId]: {

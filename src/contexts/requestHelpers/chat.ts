@@ -240,20 +240,10 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async cancelAIMessage({
-      AIMessageId,
-      channelId,
-      hasContent
-    }: {
-      AIMessageId: number;
-      channelId: number;
-      hasContent: boolean;
-    }) {
+    async cancelAIMessage({ AIMessageId }: { AIMessageId: number }) {
       try {
         const queryParams = new URLSearchParams();
         queryParams.append('AIMessageId', AIMessageId.toString());
-        queryParams.append('channelId', channelId.toString());
-        queryParams.append('hasContent', hasContent.toString());
 
         const url = `${URL}/chat/aiMessage?${queryParams.toString()}`;
 
@@ -1522,10 +1512,20 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadChatMessage({ messageId }: { messageId: number }) {
+    async loadChatMessage({
+      messageId,
+      fromWriter = false
+    }: {
+      messageId: number;
+      fromWriter?: boolean;
+    }) {
       try {
+        const queryParams = new URLSearchParams({
+          messageId: String(messageId)
+        });
+        if (fromWriter) queryParams.set('fromWriter', 'true');
         const { data } = await request.get(
-          `${URL}/chat/message?messageId=${messageId}`,
+          `${URL}/chat/message?${queryParams.toString()}`,
           auth()
         );
         return data;

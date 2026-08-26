@@ -30,13 +30,13 @@ function TextMessage({
   extractedUrl,
   isCielMessage,
   isCallMsg,
+  isGenerationConfirmed,
   isCurrentlyStreaming,
   isNotification,
   isReloadedSubject,
   isSubject,
   isAIMessage,
   isAIEdited,
-  isLastMsg,
   messageId,
   MessageStyle,
   numMsgs,
@@ -58,6 +58,7 @@ function TextMessage({
   extractedUrl: string;
   isCielMessage?: boolean;
   isCallMsg: boolean;
+  isGenerationConfirmed?: boolean;
   isCurrentlyStreaming?: boolean;
   isNotification: boolean;
   isReloadedSubject: boolean;
@@ -86,8 +87,11 @@ function TextMessage({
   }, [extractedUrl]);
 
   const showFullIndicator = useMemo(
-    () => isAIMessage && !content && (isLastMsg || isCurrentlyStreaming),
-    [isAIMessage, content, isLastMsg, isCurrentlyStreaming]
+    () =>
+      isAIMessage &&
+      !content &&
+      (isGenerationConfirmed || isCurrentlyStreaming),
+    [isAIMessage, content, isGenerationConfirmed, isCurrentlyStreaming]
   );
 
   const showCompactIndicator = useMemo(() => {
@@ -115,9 +119,17 @@ function TextMessage({
       return false;
     }
 
-    // Show for currently streaming OR last message (status updates continue after streaming ends)
-    return isCurrentlyStreaming || isLastMsg;
-  }, [isAIMessage, content, isCurrentlyStreaming, isLastMsg, aiThinkingStatus]);
+    // Tool status belongs only to the server-confirmed generation. A cancelled
+    // partial remains the last message, but it must not keep a stale thinking
+    // indicator after that generation has settled.
+    return isGenerationConfirmed || isCurrentlyStreaming;
+  }, [
+    isAIMessage,
+    content,
+    isGenerationConfirmed,
+    isCurrentlyStreaming,
+    aiThinkingStatus
+  ]);
 
   const Prefix = useMemo(() => {
     let prefix = null;

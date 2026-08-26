@@ -4,6 +4,7 @@ export interface BuildRuntimeAiStreamEvent {
   text?: string;
   response?: string;
   delta?: string;
+  startOffset?: number;
   done?: boolean;
   model?: string;
   provider?: string;

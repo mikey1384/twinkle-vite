@@ -4,6 +4,7 @@ import ContentContainer from './ContentContainer';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { trackEvent } from '~/helpers/analytics';
+import { applyCanonicalTextStreamUpdate } from '~/helpers/canonicalTextStream';
 import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
 
 const STORY_GENERATION_ACCEPT_TIMEOUT_MS = 10000;
@@ -221,21 +222,30 @@ export default function Reading({
       story: string;
     }) {
       if (streamedStoryId === activeStoryIdRef.current) {
-        streamedStoryRef.current = story;
-        streamContextRef.current.onSetStory(story);
+        streamedStoryRef.current = applyCanonicalTextStreamUpdate({
+          currentText: streamedStoryRef.current,
+          snapshot: story
+        });
+        streamContextRef.current.onSetStory(streamedStoryRef.current);
         setStoryStreamComplete(true);
       }
     }
 
     function handleAIStoryDelta({
       storyId: streamedStoryId,
-      delta
+      delta,
+      startOffset
     }: {
       storyId: number;
       delta: string;
+      startOffset?: number;
     }) {
       if (streamedStoryId !== activeStoryIdRef.current) return;
-      streamedStoryRef.current += delta;
+      streamedStoryRef.current = applyCanonicalTextStreamUpdate({
+        currentText: streamedStoryRef.current,
+        delta,
+        startOffset
+      });
       streamContextRef.current.onSetStory(streamedStoryRef.current);
     }
 
@@ -284,13 +294,22 @@ export default function Reading({
 
     function handleAIStoryExplanationDelta({
       storyId: streamedStoryId,
-      delta
+      delta,
+      explanation,
+      startOffset
     }: {
       storyId: number;
       delta: string;
+      explanation?: string;
+      startOffset?: number;
     }) {
       if (streamedStoryId !== activeStoryIdRef.current) return;
-      streamedExplanationRef.current += delta;
+      streamedExplanationRef.current = applyCanonicalTextStreamUpdate({
+        currentText: streamedExplanationRef.current,
+        delta,
+        snapshot: explanation,
+        startOffset
+      });
       streamContextRef.current.onSetExplanation(streamedExplanationRef.current);
     }
 

@@ -1721,7 +1721,8 @@ export default function useChatSocket({
       thoughtContent,
       isComplete,
       isThinkingHard,
-      isDelta
+      isDelta,
+      startOffset
     }: {
       channelId: number;
       messageId: number;
@@ -1729,6 +1730,7 @@ export default function useChatSocket({
       isComplete: boolean;
       isThinkingHard?: boolean;
       isDelta?: boolean;
+      startOffset?: number;
     }) {
       onUpdateAIThoughtStream({
         channelId,
@@ -1736,7 +1738,8 @@ export default function useChatSocket({
         thoughtContent,
         isComplete,
         isThinkingHard,
-        isDelta
+        isDelta,
+        startOffset
       });
     }
 

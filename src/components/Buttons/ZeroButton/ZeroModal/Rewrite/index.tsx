@@ -16,6 +16,7 @@ import {
   isCurrentAudioIntent
 } from '~/constants/state';
 import Button from '~/components/Button';
+import { applyCanonicalTextStreamUpdate } from '~/helpers/canonicalTextStream';
 
 const deviceIsMobile = isMobile(navigator) && !isTablet(navigator);
 
@@ -128,7 +129,8 @@ export default function Rewrite({
       identifier,
       type,
       wordLevel,
-      style
+      style,
+      isComplete
     }: {
       response: string;
       identifier: number;
@@ -136,9 +138,10 @@ export default function Rewrite({
       difficulty: string;
       wordLevel: string;
       style: string;
+      isComplete?: boolean;
     }) {
       if (identifier === responseIdentifier.current) {
-        setResponseStreaming(false);
+        setResponseStreaming(isComplete === false);
         setResponseObj((current) =>
           applyZeroReviewResponse({
             current,
@@ -156,28 +159,36 @@ export default function Rewrite({
       identifier,
       type,
       wordLevel,
-      style
+      style,
+      startOffset
     }: {
       delta: string;
       identifier: number;
       type: string;
       wordLevel: string;
       style: string;
+      startOffset?: number;
     }) {
       if (identifier !== responseIdentifier.current || !delta) return;
-      setResponseObj((responseObj: ResponseObj) => ({
-        ...responseObj,
-        [type]:
+      setResponseObj((current: ResponseObj) => {
+        const currentText =
           type === 'rewrite'
-            ? {
-                ...(responseObj.rewrite || {}),
-                [style]: {
-                  ...(responseObj.rewrite[style] || {}),
-                  [wordLevel]: `${responseObj.rewrite?.[style]?.[wordLevel] || ''}${delta}`
-                }
-              }
-            : `${(responseObj as any)[type] || ''}${delta}`
-      }));
+            ? current.rewrite?.[style]?.[wordLevel] || ''
+            : (current as any)[type] || '';
+        const response = applyCanonicalTextStreamUpdate({
+          currentText,
+          delta,
+          startOffset
+        });
+        if (response === currentText) return current;
+        return applyZeroReviewResponse({
+          current,
+          response,
+          style,
+          type,
+          wordLevel
+        });
+      });
     }
 
     async function handleZeroReviewFinished({
