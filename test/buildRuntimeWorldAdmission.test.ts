@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   BUILD_RUNTIME_WORLD_EVENT_BURST,
   BUILD_RUNTIME_WORLD_EVENTS_PER_SECOND,
+  buildRuntimeWorldAdmission,
   createBuildRuntimeWorldAdmission
 } from '../src/containers/Build/PreviewPanel/helpers/buildRuntimeWorldAdmission';
 
@@ -48,6 +49,21 @@ test('Build world lifecycle traffic is admitted without consuming realtime updat
   assert.equal(admission.admit('build_app_world_send').admitted, true);
   assert.equal(
     admission.admit('build_app_world_update_presence').admitted,
+    false
+  );
+});
+
+test('kept-alive Build apps share one page-wide world admission budget', () => {
+  const initialAdmissions = Array.from(
+    { length: BUILD_RUNTIME_WORLD_EVENT_BURST },
+    () => buildRuntimeWorldAdmission.admit('build_app_world_send')
+  );
+
+  assert(initialAdmissions.every((result) => result.admitted));
+  assert.equal(
+    buildRuntimeWorldAdmission.admit(
+      'build_app_world_update_presence'
+    ).admitted,
     false
   );
 });

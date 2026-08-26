@@ -51,3 +51,10 @@ export function createBuildRuntimeWorldAdmission({
     }
   };
 }
+
+// BuildRuntimeKeepAliveHost deliberately keeps multiple Build apps mounted in
+// one page. Every PreviewPanel still emits through the same website socket, so
+// their realtime traffic must share one page-wide budget rather than receiving
+// a fresh allowance per mounted app.
+export const buildRuntimeWorldAdmission =
+  createBuildRuntimeWorldAdmission();

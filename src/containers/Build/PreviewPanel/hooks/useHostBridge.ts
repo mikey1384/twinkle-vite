@@ -15,7 +15,7 @@ import {
   postToPreviewFrames,
   syncPreviewRuntimeUploadsState
 } from '../helpers/previewBridgeMessaging';
-import { createBuildRuntimeWorldAdmission } from '../helpers/buildRuntimeWorldAdmission';
+import { buildRuntimeWorldAdmission } from '../helpers/buildRuntimeWorldAdmission';
 import {
   handlePreviewHealthMessage,
   handleRuntimeObservationPreviewMessage
@@ -457,7 +457,6 @@ export function useHostBridge({
         instanceId: string;
       }
     >();
-    const worldEventAdmission = createBuildRuntimeWorldAdmission();
 
     function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
       socket.emit('build_app_chat_subscribe', {
@@ -580,7 +579,7 @@ export function useHostBridge({
           );
           return;
         }
-        const admission = worldEventAdmission.admit(eventName);
+        const admission = buildRuntimeWorldAdmission.admit(eventName);
         if (!admission.admitted) {
           reject(
             createPreviewBridgeError(
