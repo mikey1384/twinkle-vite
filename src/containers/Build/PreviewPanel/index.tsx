@@ -45,7 +45,9 @@ import type {
   PreviewPanelProps
 } from './types';
 import type {
+  BuildLiveSafetyHostSession,
   BuildLiveSafetyReportRequest,
+  BuildLiveSafetyStopRequest,
   BuildLiveSafetyViewerGrant,
   BuildMediaActionConfirmationRequest,
   PreviewOpenContentConfirmationRequest
@@ -66,7 +68,7 @@ import {
 } from './helpers/previewHelpers';
 import { createIframeFocusController } from '~/helpers/iframeFocus';
 import AgentManualPane from './AgentManualPane';
-import PreviewStage from './PreviewStage';
+import PreviewStage, { BuildLiveHostSafetyControls } from './PreviewStage';
 import ProjectFileInputs from './ProjectFileInputs';
 import WorkspaceToolbar from './WorkspaceToolbar';
 import {
@@ -678,8 +680,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       activeBuildLiveSafetyViewerGrants,
       setActiveBuildLiveSafetyViewerGrants
     ] = useState<BuildLiveSafetyViewerGrant[]>([]);
+    const [
+      activeBuildLiveSafetyHostSessions,
+      setActiveBuildLiveSafetyHostSessions
+    ] = useState<BuildLiveSafetyHostSession[]>([]);
     const requestBuildLiveSafetyReportRef = useRef<
       ((request: BuildLiveSafetyReportRequest) => Promise<void>) | null
+    >(null);
+    const requestBuildLiveSafetyStopRef = useRef<
+      ((request: BuildLiveSafetyStopRequest) => Promise<void>) | null
     >(null);
     const requestOpenContentConfirmationRef = useRef<
       | ((request: PreviewOpenContentConfirmationRequest) => Promise<boolean>)
@@ -1233,9 +1242,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onAiUsagePolicyUpdateRef,
       requestBuildImageGenerationConfirmationRef,
       requestBuildMediaActionConfirmationRef,
+      onBuildLiveSafetyHostSessionsChange:
+        setActiveBuildLiveSafetyHostSessions,
       onBuildLiveSafetyViewerGrantsChange:
         setActiveBuildLiveSafetyViewerGrants,
       requestBuildLiveSafetyReportRef,
+      requestBuildLiveSafetyStopRef,
       requestOpenContentConfirmationRef
     });
 
@@ -1463,6 +1475,14 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       await report(request);
     }
 
+    async function handleBuildLiveSafetyStop(
+      request: BuildLiveSafetyStopRequest
+    ) {
+      const stop = requestBuildLiveSafetyStopRef.current;
+      if (!stop) throw new Error('Live safety is unavailable.');
+      await stop(request);
+    }
+
     return (
       <div
         className={`${runtimeOnly ? runtimePanelClass : panelClass}${className ? ` ${className}` : ''}`}
@@ -1494,11 +1514,16 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         <div
           className={css`
             flex: 1;
+            position: relative;
             overflow: hidden;
             background: #fff;
             min-height: 0;
           `}
         >
+          <BuildLiveHostSafetyControls
+            sessions={activeBuildLiveSafetyHostSessions}
+            onStop={handleBuildLiveSafetyStop}
+          />
           {runtimeOnly ? (
             <PreviewStage
               activePreviewFrame={activePreviewFrame}

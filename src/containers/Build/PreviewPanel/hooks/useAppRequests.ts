@@ -113,6 +113,9 @@ export default function useAppRequests() {
   const listBuildLiveSessions = useAppContext(
     (v) => v.requestHelpers.listBuildLiveSessions
   );
+  const listBuildLiveHostSessions = useAppContext(
+    (v) => v.requestHelpers.listBuildLiveHostSessions
+  );
   const getBuildLiveSessionStatus = useAppContext(
     (v) => v.requestHelpers.getBuildLiveSessionStatus
   );
@@ -358,6 +361,7 @@ export default function useAppRequests() {
   const startBuildLiveSessionRef = useRef(startBuildLiveSession);
   const markBuildLiveSessionStartedRef = useRef(markBuildLiveSessionStarted);
   const listBuildLiveSessionsRef = useRef(listBuildLiveSessions);
+  const listBuildLiveHostSessionsRef = useRef(listBuildLiveHostSessions);
   const getBuildLiveSessionStatusRef = useRef(getBuildLiveSessionStatus);
   const joinBuildLiveSessionRef = useRef(joinBuildLiveSession);
   const leaveBuildLiveSessionRef = useRef(leaveBuildLiveSession);
@@ -479,6 +483,7 @@ export default function useAppRequests() {
     startBuildLiveSessionRef,
     markBuildLiveSessionStartedRef,
     listBuildLiveSessionsRef,
+    listBuildLiveHostSessionsRef,
     getBuildLiveSessionStatusRef,
     joinBuildLiveSessionRef,
     leaveBuildLiveSessionRef,

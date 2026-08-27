@@ -33,6 +33,7 @@ export interface PreviewHostBridgeRequestRefs {
   startBuildLiveSessionRef: AsyncRequestRef;
   markBuildLiveSessionStartedRef: AsyncRequestRef;
   listBuildLiveSessionsRef: AsyncRequestRef;
+  listBuildLiveHostSessionsRef: AsyncRequestRef;
   getBuildLiveSessionStatusRef: AsyncRequestRef;
   joinBuildLiveSessionRef: AsyncRequestRef;
   leaveBuildLiveSessionRef: AsyncRequestRef;

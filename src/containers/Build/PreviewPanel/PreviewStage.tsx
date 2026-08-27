@@ -7,8 +7,10 @@ import { buildPreviewFrameWindowName } from '~/helpers/buildPreviewOriginHelpers
 import type { BuildRuntimeObservationIssue } from '../types/runtimeObservationTypes';
 import type { PreviewFrameMeta } from './types';
 import type {
+  BuildLiveSafetyHostSession,
   BuildLiveSafetyReportReason,
   BuildLiveSafetyReportRequest,
+  BuildLiveSafetyStopRequest,
   BuildLiveSafetyViewerGrant
 } from './types/previewHostBridgeTypes';
 import {
@@ -206,6 +208,39 @@ const liveSafetyErrorClass = css`
   color: #991b1b;
   font-size: 1rem;
   text-align: right;
+`;
+
+const liveHostSafetyControlsClass = css`
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: min(28rem, calc(100% - 1.6rem));
+`;
+
+const liveHostSafetyControlClass = css`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+  padding: 0.55rem;
+  border: 2px solid #b91c1c;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--chat-text);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.24);
+  font-size: 1.1rem;
+  backdrop-filter: blur(2px);
+`;
+
+const liveHostSafetyDetailClass = css`
+  flex-basis: 100%;
+  color: #7f1d1d;
+  font-size: 1rem;
 `;
 
 const previewSpinnerClass = css`
@@ -559,6 +594,104 @@ function BuildLiveSafetyControl({
       >
         {submitting ? 'Reporting…' : 'Report & end'}
       </button>
+      {error ? (
+        <span className={liveSafetyErrorClass} role="alert">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+export function BuildLiveHostSafetyControls({
+  sessions,
+  onStop
+}: {
+  sessions: BuildLiveSafetyHostSession[];
+  onStop: (request: BuildLiveSafetyStopRequest) => Promise<void>;
+}) {
+  if (sessions.length === 0) return null;
+  return (
+    <div
+      className={liveHostSafetyControlsClass}
+      data-testid="build-live-host-safety-controls"
+    >
+      {sessions.map((session) => (
+        <BuildLiveHostSafetyControl
+          key={session.sessionId}
+          session={session}
+          onStop={onStop}
+        />
+      ))}
+    </div>
+  );
+}
+
+function BuildLiveHostSafetyControl({
+  session,
+  onStop
+}: {
+  session: BuildLiveSafetyHostSession;
+  onStop: (request: BuildLiveSafetyStopRequest) => Promise<void>;
+}) {
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const statusLabel = !session.statusConfirmed
+    ? 'Live status unconfirmed'
+    : session.status === 'live'
+      ? 'You are live'
+      : ['ending', 'cleanup_failed'].includes(session.status)
+        ? 'Livestream cleanup pending'
+        : 'Livestream starting — camera may be on';
+  const detail = !session.statusConfirmed
+    ? 'Twinkle has not confirmed that this stream ended. Keep this warning open and retry End.'
+    : ['ending', 'cleanup_failed'].includes(session.status)
+      ? 'Twinkle is still stopping the provider stream. This warning stays until cleanup is confirmed.'
+      : session.hardEndsAt
+        ? `Twinkle will force-stop it by ${new Date(
+            session.hardEndsAt * 1000
+          ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+        : 'Twinkle will keep this warning visible until the stream is confirmed ended.';
+
+  async function stopHostedStream() {
+    if (submitting) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await onStop({ sessionId: session.sessionId });
+    } catch (stopError: any) {
+      setError(
+        stopError?.message ||
+          'Twinkle could not confirm the stream ended. Retry now.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className={liveHostSafetyControlClass}
+      data-build-live-host-session={session.sessionId}
+      role="status"
+      aria-live="assertive"
+      aria-label="Hosted livestream safety"
+    >
+      <span className={liveSafetyLabelClass}>
+        <Icon icon="exclamation-triangle" />
+        {statusLabel}
+      </span>
+      <button
+        type="button"
+        className={liveSafetyButtonClass}
+        disabled={submitting}
+        onClick={() => {
+          void stopHostedStream();
+        }}
+      >
+        {submitting ? 'Ending…' : 'End stream'}
+      </button>
+      <span className={liveHostSafetyDetailClass}>{detail}</span>
       {error ? (
         <span className={liveSafetyErrorClass} role="alert">
           {error}

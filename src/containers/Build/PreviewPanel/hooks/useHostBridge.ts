@@ -21,8 +21,10 @@ import {
   handleRuntimeObservationPreviewMessage
 } from '../helpers/runtimeObservationMessages';
 import type {
+  BuildLiveSafetyHostSession,
   BuildLiveSafetyReportReason,
   BuildLiveSafetyReportRequest,
+  BuildLiveSafetyStopRequest,
   BuildLiveSafetyViewerGrant,
   BuildMediaActionConfirmationRequest,
   UsePreviewHostBridgeArgs
@@ -215,8 +217,10 @@ export function useHostBridge({
   requestOpenContentConfirmationRef,
   requestBuildImageGenerationConfirmationRef,
   requestBuildMediaActionConfirmationRef,
+  onBuildLiveSafetyHostSessionsChange,
   onBuildLiveSafetyViewerGrantsChange,
-  requestBuildLiveSafetyReportRef
+  requestBuildLiveSafetyReportRef,
+  requestBuildLiveSafetyStopRef
 }: UsePreviewHostBridgeArgs) {
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
@@ -391,7 +395,18 @@ export function useHostBridge({
       string,
       ActiveBuildLiveSafetyGrant
     >();
-    const activeBuildLiveHostSessions = new Map<string, Set<Window>>();
+    interface ActiveBuildLiveHostSession
+      extends BuildLiveSafetyHostSession {
+      sourceWindows: Set<Window>;
+    }
+    const activeBuildLiveHostSessions = new Map<
+      string,
+      ActiveBuildLiveHostSession
+    >();
+    const terminalBuildLiveHostSessions = new Map<string, number>();
+    let buildLiveHostReconcileTimer = 0;
+    let buildLiveHostReconcileRunning = false;
+    let buildLiveHostDisposed = false;
     const buildLiveReportReasons = new Set<BuildLiveSafetyReportReason>([
       'privacy',
       'harassment',
@@ -619,6 +634,7 @@ export function useHostBridge({
     function settleRetiredBuildLiveHostSession(sessionId: string) {
       const activeBuildId = Number(buildId || 0);
       if (!activeBuildId) return;
+      markBuildLiveHostSessionUnconfirmed(sessionId);
       void ensureBuildApiToken(['live:write'], previewAuth)
         .then((token) =>
           requestRefs.stopBuildLiveSessionRef.current({
@@ -627,29 +643,282 @@ export function useHostBridge({
             token
           })
         )
-        .catch(() => {});
+        .then((response) => {
+          reconcileBuildLiveHostSession(response?.session);
+        })
+        .catch(() => {
+          markBuildLiveHostSessionUnconfirmed(sessionId);
+        });
+    }
+
+    function publishBuildLiveHostSessions() {
+      if (buildLiveHostDisposed) return;
+      onBuildLiveSafetyHostSessionsChange(
+        Array.from(activeBuildLiveHostSessions.values()).map((session) => ({
+          sessionId: session.sessionId,
+          status: session.status,
+          statusConfirmed: session.statusConfirmed,
+          hardEndsAt: session.hardEndsAt,
+          updatedAt: session.updatedAt
+        }))
+      );
+    }
+
+    function isBuildLiveHostSafetyPresentationVisible(sessionId: string) {
+      return Array.from(
+        document.querySelectorAll('[data-build-live-host-session]')
+      ).some(
+        (element) =>
+          element.getAttribute('data-build-live-host-session') === sessionId
+      );
+    }
+
+    async function ensureBuildLiveHostSafetyPresentation(sessionId: string) {
+      const deadline = Date.now() + 1000;
+      while (!buildLiveHostDisposed && Date.now() < deadline) {
+        if (isBuildLiveHostSafetyPresentationVisible(sessionId)) return;
+        await new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 16);
+        });
+      }
+      throw createPreviewBridgeError(
+        'Twinkle could not show the livestream safety controls, so the stream was cancelled.',
+        'BUILD_LIVE_SAFETY_PRESENTATION_UNAVAILABLE'
+      );
+    }
+
+    function shouldAcceptBuildLiveHostSessionUpdate({
+      current,
+      incomingStatus,
+      incomingUpdatedAt
+    }: {
+      current: ActiveBuildLiveHostSession | undefined;
+      incomingStatus: string;
+      incomingUpdatedAt: number;
+    }) {
+      if (!current) return true;
+      if (incomingUpdatedAt > current.updatedAt) return true;
+      if (incomingUpdatedAt < current.updatedAt) return false;
+      const statusOrder = new Map([
+        ['provisioning', 0],
+        ['ready', 1],
+        ['live', 2],
+        ['ending', 3],
+        ['cleanup_failed', 4],
+        ['ended', 5],
+        ['failed', 5]
+      ]);
+      return (
+        Number(statusOrder.get(incomingStatus) ?? -1) >=
+        Number(statusOrder.get(current.status) ?? -1)
+      );
     }
 
     function registerBuildLiveHostSession(
-      sessionId: string,
-      sourceWindow: Window
+      session: any,
+      sourceWindow?: Window
     ) {
-      const ownerWindows =
-        activeBuildLiveHostSessions.get(sessionId) || new Set<Window>();
-      ownerWindows.add(sourceWindow);
-      activeBuildLiveHostSessions.set(sessionId, ownerWindows);
+      const sessionId = String(session?.id || '').trim();
+      if (!sessionId) return;
+      const current = activeBuildLiveHostSessions.get(sessionId);
+      const sourceWindows = current?.sourceWindows || new Set<Window>();
+      if (sourceWindow) sourceWindows.add(sourceWindow);
+      const incomingStatus = String(session?.status || 'ready');
+      const incomingUpdatedAt = Math.max(
+        0,
+        Math.floor(Number(session?.updatedAt) || 0)
+      );
+      const terminalUpdatedAt = terminalBuildLiveHostSessions.get(sessionId);
+      if (
+        terminalUpdatedAt !== undefined &&
+        incomingUpdatedAt <= terminalUpdatedAt
+      ) {
+        if (sourceWindow) {
+          postBuildLiveSafetyStopLocal(sourceWindow, sessionId);
+        }
+        return;
+      }
+      if (terminalUpdatedAt !== undefined) {
+        terminalBuildLiveHostSessions.delete(sessionId);
+      }
+      if (
+        !shouldAcceptBuildLiveHostSessionUpdate({
+          current,
+          incomingStatus,
+          incomingUpdatedAt
+        })
+      ) {
+        if (current && sourceWindow) {
+          activeBuildLiveHostSessions.set(sessionId, {
+            ...current,
+            sourceWindows
+          });
+        }
+        return;
+      }
+      activeBuildLiveHostSessions.set(sessionId, {
+        sessionId,
+        status: incomingStatus,
+        statusConfirmed: true,
+        hardEndsAt: Number.isFinite(Number(session?.hardEndsAt))
+          ? Number(session.hardEndsAt)
+          : current?.hardEndsAt || null,
+        updatedAt: incomingUpdatedAt,
+        sourceWindows
+      });
+      publishBuildLiveHostSessions();
+      scheduleBuildLiveHostReconciliation(5000);
+    }
+
+    function markBuildLiveHostSessionUnconfirmed(sessionId: string) {
+      const current = activeBuildLiveHostSessions.get(sessionId);
+      if (!current || !current.statusConfirmed) return;
+      activeBuildLiveHostSessions.set(sessionId, {
+        ...current,
+        statusConfirmed: false
+      });
+      publishBuildLiveHostSessions();
+    }
+
+    function stopBuildLiveHostSessionLocally(sessionId: string) {
+      const current = activeBuildLiveHostSessions.get(sessionId);
+      if (!current) return;
+      const targetWindows = new Set(current.sourceWindows);
+      const primaryWindow = primaryIframeRef.current?.contentWindow;
+      const secondaryWindow = secondaryIframeRef.current?.contentWindow;
+      if (primaryWindow) targetWindows.add(primaryWindow);
+      if (secondaryWindow) targetWindows.add(secondaryWindow);
+      targetWindows.forEach((sourceWindow) => {
+        postBuildLiveSafetyStopLocal(sourceWindow, sessionId);
+      });
+    }
+
+    function reconcileBuildLiveHostSession(
+      session: any,
+      sourceWindow?: Window
+    ) {
+      const sessionId = String(session?.id || '').trim();
+      if (!sessionId) return;
+      const status = String(session?.status || '');
+      const current = activeBuildLiveHostSessions.get(sessionId);
+      if (['ended', 'failed'].includes(status)) {
+        const incomingUpdatedAt = Math.max(
+          0,
+          Math.floor(Number(session?.updatedAt) || 0)
+        );
+        if (
+          !shouldAcceptBuildLiveHostSessionUpdate({
+            current,
+            incomingStatus: status,
+            incomingUpdatedAt
+          })
+        ) {
+          return;
+        }
+        terminalBuildLiveHostSessions.delete(sessionId);
+        terminalBuildLiveHostSessions.set(sessionId, incomingUpdatedAt);
+        while (terminalBuildLiveHostSessions.size > 100) {
+          const oldestSessionId = terminalBuildLiveHostSessions.keys().next()
+            .value;
+          if (typeof oldestSessionId !== 'string') break;
+          terminalBuildLiveHostSessions.delete(oldestSessionId);
+        }
+        if (sourceWindow) {
+          postBuildLiveSafetyStopLocal(sourceWindow, sessionId);
+        }
+        if (current) stopBuildLiveHostSessionLocally(sessionId);
+        activeBuildLiveHostSessions.delete(sessionId);
+        publishBuildLiveHostSessions();
+        return;
+      }
+      registerBuildLiveHostSession(session, sourceWindow);
+      if (!['provisioning', 'ready', 'live'].includes(status)) {
+        stopBuildLiveHostSessionLocally(sessionId);
+      }
     }
 
     function retireBuildLiveHostSessionsForWindow(sourceWindow: Window) {
       const retiredSessionIds: string[] = [];
-      for (const [sessionId, ownerWindows] of activeBuildLiveHostSessions) {
-        if (!ownerWindows.has(sourceWindow)) continue;
-        ownerWindows.delete(sourceWindow);
-        if (ownerWindows.size > 0) continue;
-        activeBuildLiveHostSessions.delete(sessionId);
+      for (const [sessionId, active] of activeBuildLiveHostSessions) {
+        if (!active.sourceWindows.has(sourceWindow)) continue;
+        postBuildLiveSafetyStopLocal(sourceWindow, sessionId);
+        active.sourceWindows.delete(sourceWindow);
+        if (active.sourceWindows.size > 0) continue;
         retiredSessionIds.push(sessionId);
       }
       retiredSessionIds.forEach(settleRetiredBuildLiveHostSession);
+    }
+
+    function scheduleBuildLiveHostReconciliation(delayMs: number) {
+      window.clearTimeout(buildLiveHostReconcileTimer);
+      if (buildLiveHostDisposed || !userId || !buildId) return;
+      buildLiveHostReconcileTimer = window.setTimeout(() => {
+        void reconcileBuildLiveHostSessions();
+      }, Math.max(0, delayMs));
+    }
+
+    async function reconcileBuildLiveHostSessions() {
+      if (
+        buildLiveHostDisposed ||
+        buildLiveHostReconcileRunning ||
+        !userId ||
+        !buildId
+      ) {
+        return;
+      }
+      buildLiveHostReconcileRunning = true;
+      try {
+        const token = await ensureBuildApiToken(['live:read'], previewAuth);
+        const response =
+          await requestRefs.listBuildLiveHostSessionsRef.current({
+            buildId,
+            token
+          });
+        if (buildLiveHostDisposed) return;
+        const ownedSessions = Array.isArray(response?.sessions)
+          ? response.sessions.filter(
+              (session: any) =>
+                Number(session?.hostUserId) === Number(userId)
+            )
+          : [];
+        const listedIds = new Set<string>();
+        ownedSessions.forEach((session: any) => {
+          const sessionId = String(session?.id || '').trim();
+          if (sessionId) listedIds.add(sessionId);
+          reconcileBuildLiveHostSession(session);
+        });
+        for (const sessionId of activeBuildLiveHostSessions.keys()) {
+          if (listedIds.has(sessionId)) continue;
+          try {
+            const statusResponse =
+              await requestRefs.getBuildLiveSessionStatusRef.current({
+                buildId,
+                sessionId,
+                token
+              });
+            if (buildLiveHostDisposed) return;
+            reconcileBuildLiveHostSession(statusResponse?.session);
+          } catch {
+            markBuildLiveHostSessionUnconfirmed(sessionId);
+          }
+        }
+      } catch {
+        if (buildLiveHostDisposed) return;
+        activeBuildLiveHostSessions.forEach((session) => {
+          markBuildLiveHostSessionUnconfirmed(session.sessionId);
+        });
+      } finally {
+        buildLiveHostReconcileRunning = false;
+        if (activeBuildLiveHostSessions.size > 0) {
+          scheduleBuildLiveHostReconciliation(5000);
+        }
+      }
+    }
+
+    function handleBuildLiveHostVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        scheduleBuildLiveHostReconciliation(0);
+      }
     }
 
     async function authorizeBuildMediaAction({
@@ -737,6 +1006,42 @@ export function useHostBridge({
       }
     }
 
+    requestBuildLiveSafetyStopRef.current = async (
+      request: BuildLiveSafetyStopRequest
+    ) => {
+      const sessionId = normalizeBuildLiveActionId(
+        request.sessionId,
+        'sessionId'
+      );
+      if (!activeBuildLiveHostSessions.has(sessionId)) {
+        throw createPreviewBridgeError(
+          'This hosted livestream is no longer active.',
+          'BUILD_LIVE_HOST_NOT_ACTIVE'
+        );
+      }
+      stopBuildLiveHostSessionLocally(sessionId);
+      const activeBuildId = Number(previewAuth.buildRef.current?.id || 0);
+      if (!activeBuildId) {
+        markBuildLiveHostSessionUnconfirmed(sessionId);
+        throw createPreviewBridgeError(
+          'This Build app is no longer active.',
+          'BUILD_NOT_ACTIVE'
+        );
+      }
+      const token = await ensureBuildApiToken(['live:write'], previewAuth);
+      try {
+        const response = await requestRefs.stopBuildLiveSessionRef.current({
+          buildId: activeBuildId,
+          sessionId,
+          token
+        });
+        reconcileBuildLiveHostSession(response?.session);
+      } catch (error) {
+        markBuildLiveHostSessionUnconfirmed(sessionId);
+        throw error;
+      }
+    };
+
     requestBuildLiveSafetyReportRef.current = async (
       request: BuildLiveSafetyReportRequest
     ) => {
@@ -791,7 +1096,7 @@ export function useHostBridge({
       }
       const token = await ensureBuildApiToken(['live:write'], previewAuth);
       try {
-        await requestRefs.reportBuildLiveSessionRef.current({
+        const response = await requestRefs.reportBuildLiveSessionRef.current({
           buildId: activeBuildId,
           sessionId,
           viewerGrantId,
@@ -800,7 +1105,9 @@ export function useHostBridge({
           token
         });
         removeBuildLiveSafetyGrant(sessionId, viewerGrantId);
-        activeBuildLiveHostSessions.delete(sessionId);
+        if (activeBuildLiveHostSessions.has(sessionId)) {
+          reconcileBuildLiveHostSession(response?.session);
+        }
       } catch (error) {
         if (!isRetryableBuildLiveSafetyError(error)) {
           const retired = removeBuildLiveSafetyGrant(
@@ -2595,9 +2902,29 @@ export function useHostBridge({
             });
             if (response?.session?.id) {
               registerBuildLiveHostSession(
-                String(response.session.id),
+                response.session,
                 sourceWindow
               );
+              try {
+                await ensureBuildLiveHostSafetyPresentation(
+                  String(response.session.id)
+                );
+              } catch (presentationError) {
+                try {
+                  const stopped =
+                    await requestRefs.stopBuildLiveSessionRef.current({
+                      buildId: activeBuild.id,
+                      sessionId: response.session.id,
+                      token: liveWriteToken
+                    });
+                  reconcileBuildLiveHostSession(stopped?.session, sourceWindow);
+                } catch {
+                  markBuildLiveHostSessionUnconfirmed(
+                    String(response.session.id)
+                  );
+                }
+                throw presentationError;
+              }
             }
             break;
           }
@@ -2616,7 +2943,7 @@ export function useHostBridge({
             );
             if (response?.session?.id) {
               registerBuildLiveHostSession(
-                String(response.session.id),
+                response.session,
                 sourceWindow
               );
             }
@@ -2632,6 +2959,16 @@ export function useHostBridge({
               buildId: activeBuild.id,
               token: liveReadToken
             });
+            if (Array.isArray(response?.sessions)) {
+              response.sessions.forEach((session: any) => {
+                if (
+                  Number(session?.hostUserId) ===
+                  Number(previewAuth.userIdRef.current)
+                ) {
+                  reconcileBuildLiveHostSession(session);
+                }
+              });
+            }
             break;
           }
 
@@ -2646,13 +2983,20 @@ export function useHostBridge({
               token: liveReadToken
             });
             if (
+              response?.session?.id &&
+              (activeBuildLiveHostSessions.has(
+                String(response.session.id)
+              ) ||
+                Number(response.session.hostUserId) ===
+                  Number(previewAuth.userIdRef.current))
+            ) {
+              reconcileBuildLiveHostSession(response.session, sourceWindow);
+            }
+            if (
               response?.session &&
               ['ended', 'failed'].includes(response.session.status)
             ) {
               removeBuildLiveSafetyGrantsForSession(
-                String(response.session.id || '')
-              );
-              activeBuildLiveHostSessions.delete(
                 String(response.session.id || '')
               );
             }
@@ -2770,8 +3114,13 @@ export function useHostBridge({
               reason,
               token: liveWriteToken
             });
+            if (
+              response?.session?.id &&
+              activeBuildLiveHostSessions.has(String(response.session.id))
+            ) {
+              reconcileBuildLiveHostSession(response.session);
+            }
             removeBuildLiveSafetyGrant(sessionId, viewerGrantId);
-            activeBuildLiveHostSessions.delete(sessionId);
             break;
           }
 
@@ -2816,10 +3165,8 @@ export function useHostBridge({
               sessionId: payload?.sessionId,
               token: liveWriteToken
             });
+            reconcileBuildLiveHostSession(response?.session, sourceWindow);
             removeBuildLiveSafetyGrantsForSession(
-              String(payload?.sessionId || '').trim()
-            );
-            activeBuildLiveHostSessions.delete(
               String(payload?.sessionId || '').trim()
             );
             break;
@@ -3998,8 +4345,15 @@ export function useHostBridge({
       'image_generation_status_received',
       handleAiImageGenerationStatus
     );
+    document.addEventListener(
+      'visibilitychange',
+      handleBuildLiveHostVisibilityChange
+    );
+    scheduleBuildLiveHostReconciliation(0);
     return () => {
+      buildLiveHostDisposed = true;
       window.clearTimeout(appMcpPollTimer);
+      window.clearTimeout(buildLiveHostReconcileTimer);
       if (appMcpRuntime) appMcpRuntime.stopped = true;
       window.removeEventListener('message', handleMessage);
       window.removeEventListener(
@@ -4012,6 +4366,10 @@ export function useHostBridge({
       socket.off(
         'image_generation_status_received',
         handleAiImageGenerationStatus
+      );
+      document.removeEventListener(
+        'visibilitychange',
+        handleBuildLiveHostVisibilityChange
       );
       for (const subscriptionKey of chatSubscriptions.keys()) {
         const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
@@ -4039,8 +4397,11 @@ export function useHostBridge({
         settleRetiredBuildLiveHostSession(sessionId);
       }
       activeBuildLiveHostSessions.clear();
+      terminalBuildLiveHostSessions.clear();
       onBuildLiveSafetyViewerGrantsChange([]);
+      onBuildLiveSafetyHostSessionsChange([]);
       requestBuildLiveSafetyReportRef.current = null;
+      requestBuildLiveSafetyStopRef.current = null;
       if (resetWorldSessionsRef.current) {
         resetWorldSessionsRef.current = null;
       }
@@ -4058,6 +4419,7 @@ export function useHostBridge({
     messageTargetFrameRef,
     navigateHostContentRef,
     navigatePreviewFrameRef,
+    onBuildLiveSafetyHostSessionsChange,
     onBuildLiveSafetyViewerGrantsChange,
     previewAuth,
     previewCodeSignatureRef,
@@ -4072,6 +4434,7 @@ export function useHostBridge({
     requestBuildImageGenerationConfirmationRef,
     requestBuildMediaActionConfirmationRef,
     requestBuildLiveSafetyReportRef,
+    requestBuildLiveSafetyStopRef,
     requestOpenContentConfirmationRef,
     runtimeExplorationPlanRef,
     runtimeOnly,

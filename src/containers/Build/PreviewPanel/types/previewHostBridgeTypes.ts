@@ -44,6 +44,18 @@ export interface BuildLiveSafetyViewerGrant {
   viewerGrantId: string;
 }
 
+export interface BuildLiveSafetyHostSession {
+  sessionId: string;
+  status: string;
+  statusConfirmed: boolean;
+  hardEndsAt: number | null;
+  updatedAt: number;
+}
+
+export interface BuildLiveSafetyStopRequest {
+  sessionId: string;
+}
+
 export interface BuildLiveSafetyReportRequest
   extends BuildLiveSafetyViewerGrant {
   reason: BuildLiveSafetyReportReason;
@@ -117,8 +129,15 @@ export interface UsePreviewHostBridgeArgs {
   onBuildLiveSafetyViewerGrantsChange: (
     grants: BuildLiveSafetyViewerGrant[]
   ) => void;
+  onBuildLiveSafetyHostSessionsChange: (
+    sessions: BuildLiveSafetyHostSession[]
+  ) => void;
   requestBuildLiveSafetyReportRef: RefObject<
     | ((request: BuildLiveSafetyReportRequest) => Promise<void>)
+    | null
+  >;
+  requestBuildLiveSafetyStopRef: RefObject<
+    | ((request: BuildLiveSafetyStopRequest) => Promise<void>)
     | null
   >;
 }

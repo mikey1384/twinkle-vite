@@ -3487,6 +3487,25 @@ export default function buildRequestHelpers({
       }
     },
 
+    async listBuildLiveHostSessions({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/host-sessions`,
+          {},
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
     async getBuildLiveSessionStatus({
       buildId,
       sessionId,

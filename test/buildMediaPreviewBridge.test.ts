@@ -70,16 +70,29 @@ test('Build media confirmation copy is mixed-age and discloses saved app-usable 
   assert.doesNotMatch(confirmationSource, /\b(?:kid|child|minor)\b/i);
 });
 
-test('livestream viewers retain a host-owned report-and-end control', () => {
+test('livestream viewers and hosts retain platform-owned safety controls', () => {
   const stageSource = readSource(
     'src/containers/Build/PreviewPanel/PreviewStage.tsx'
   );
   const hostSource = readSource(
     'src/containers/Build/PreviewPanel/hooks/useHostBridge.ts'
   );
+  const panelSource = readSource(
+    'src/containers/Build/PreviewPanel/index.tsx'
+  );
 
   assert.match(stageSource, /data-testid="build-live-safety-controls"/);
+  assert.match(
+    stageSource,
+    /data-testid="build-live-host-safety-controls"/
+  );
   assert.match(stageSource, /aria-label="Live safety"/);
+  assert.match(stageSource, /aria-label="Hosted livestream safety"/);
+  assert.match(
+    panelSource,
+    /<BuildLiveHostSafetyControls[\s\S]*?sessions=\{activeBuildLiveSafetyHostSessions\}[\s\S]*?onStop=\{handleBuildLiveSafetyStop\}/
+  );
+  assert.match(stageSource, /data-build-live-host-session=\{session\.sessionId\}/);
   assert.match(stageSource, /'privacy'[\s\S]*?'harassment'[\s\S]*?'explicit-content'[\s\S]*?'violence'[\s\S]*?'dangerous-activity'[\s\S]*?'other'/);
   assert.match(stageSource, /Report & end/);
   assert.match(
@@ -104,7 +117,7 @@ test('livestream viewers retain a host-owned report-and-end control', () => {
   );
   assert.match(
     hostSource,
-    /ownerWindows\.delete\(sourceWindow\);[\s\S]*?if \(ownerWindows\.size > 0\) continue;[\s\S]*?activeBuildLiveHostSessions\.delete\(sessionId\)/
+    /postBuildLiveSafetyStopLocal\(sourceWindow, sessionId\);[\s\S]*?active\.sourceWindows\.delete\(sourceWindow\);[\s\S]*?settleRetiredBuildLiveHostSession/
   );
   assert.match(
     hostSource,
@@ -117,6 +130,30 @@ test('livestream viewers retain a host-owned report-and-end control', () => {
   assert.match(
     hostSource,
     /case 'live:start':[\s\S]*?registerBuildLiveHostSession/
+  );
+  assert.match(
+    hostSource,
+    /case 'live:start':[\s\S]*?registerBuildLiveHostSession[\s\S]*?ensureBuildLiveHostSafetyPresentation[\s\S]*?stopBuildLiveSessionRef/
+  );
+  assert.match(
+    hostSource,
+    /function reconcileBuildLiveHostSession[\s\S]*?\['ended', 'failed'\][\s\S]*?activeBuildLiveHostSessions\.delete\(sessionId\)[\s\S]*?publishBuildLiveHostSessions/
+  );
+  assert.match(
+    hostSource,
+    /terminalBuildLiveHostSessions[\s\S]*?incomingUpdatedAt <= terminalUpdatedAt[\s\S]*?postBuildLiveSafetyStopLocal/
+  );
+  assert.match(
+    hostSource,
+    /reconcileBuildLiveHostSessions[\s\S]*?listBuildLiveHostSessionsRef[\s\S]*?getBuildLiveSessionStatusRef[\s\S]*?markBuildLiveHostSessionUnconfirmed/
+  );
+  assert.match(
+    hostSource,
+    /requestBuildLiveSafetyStopRef\.current = async[\s\S]*?stopBuildLiveHostSessionLocally\(sessionId\)[\s\S]*?stopBuildLiveSessionRef/
+  );
+  assert.match(
+    hostSource,
+    /stopBuildLiveHostSessionLocally[\s\S]*?primaryIframeRef\.current\?\.contentWindow[\s\S]*?secondaryIframeRef\.current\?\.contentWindow[\s\S]*?postBuildLiveSafetyStopLocal/
   );
 });
 

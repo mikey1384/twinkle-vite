@@ -190,6 +190,7 @@ registerMethods('build', [
   'startBuildLiveSession',
   'markBuildLiveSessionStarted',
   'listBuildLiveSessions',
+  'listBuildLiveHostSessions',
   'getBuildLiveSessionStatus',
   'joinBuildLiveSession',
   'leaveBuildLiveSession',
