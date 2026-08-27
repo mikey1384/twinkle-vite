@@ -92,6 +92,42 @@ export default function useAppRequests() {
   const uploadBuildRuntimeFiles = useAppContext(
     (v) => v.requestHelpers.uploadBuildRuntimeFiles
   );
+  const uploadBuildRuntimeClip = useAppContext(
+    (v) => v.requestHelpers.uploadBuildRuntimeClip
+  );
+  const getBuildRuntimeClipStatus = useAppContext(
+    (v) => v.requestHelpers.getBuildRuntimeClipStatus
+  );
+  const listBuildRuntimeClips = useAppContext(
+    (v) => v.requestHelpers.listBuildRuntimeClips
+  );
+  const getBuildMediaEnergy = useAppContext(
+    (v) => v.requestHelpers.getBuildMediaEnergy
+  );
+  const startBuildLiveSession = useAppContext(
+    (v) => v.requestHelpers.startBuildLiveSession
+  );
+  const markBuildLiveSessionStarted = useAppContext(
+    (v) => v.requestHelpers.markBuildLiveSessionStarted
+  );
+  const listBuildLiveSessions = useAppContext(
+    (v) => v.requestHelpers.listBuildLiveSessions
+  );
+  const getBuildLiveSessionStatus = useAppContext(
+    (v) => v.requestHelpers.getBuildLiveSessionStatus
+  );
+  const joinBuildLiveSession = useAppContext(
+    (v) => v.requestHelpers.joinBuildLiveSession
+  );
+  const leaveBuildLiveSession = useAppContext(
+    (v) => v.requestHelpers.leaveBuildLiveSession
+  );
+  const reportBuildLiveSession = useAppContext(
+    (v) => v.requestHelpers.reportBuildLiveSession
+  );
+  const stopBuildLiveSession = useAppContext(
+    (v) => v.requestHelpers.stopBuildLiveSession
+  );
   const getBuildMySubjects = useAppContext(
     (v) => v.requestHelpers.getBuildMySubjects
   );
@@ -104,9 +140,7 @@ export default function useAppRequests() {
   const searchBuildAiCards = useAppContext(
     (v) => v.requestHelpers.searchBuildAiCards
   );
-  const getBuildAiCard = useAppContext(
-    (v) => v.requestHelpers.getBuildAiCard
-  );
+  const getBuildAiCard = useAppContext((v) => v.requestHelpers.getBuildAiCard);
   const listBuildAiStories = useAppContext(
     (v) => v.requestHelpers.listBuildAiStories
   );
@@ -293,9 +327,7 @@ export default function useAppRequests() {
   const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
   const getBuildTwinkleNewsRef = useRef(getBuildTwinkleNews);
-  const listBuildTwinkleNewsEditionsRef = useRef(
-    listBuildTwinkleNewsEditions
-  );
+  const listBuildTwinkleNewsEditionsRef = useRef(listBuildTwinkleNewsEditions);
   const getBuildTwinkleNewsEditionRef = useRef(getBuildTwinkleNewsEdition);
   const generateBuildTwinkleNewsRef = useRef(generateBuildTwinkleNews);
   const callBuildRuntimeCharacterChatRef = useRef(
@@ -319,6 +351,18 @@ export default function useAppRequests() {
   const listBuildRuntimeFilesRef = useRef(listBuildRuntimeFiles);
   const deleteBuildRuntimeFileRef = useRef(deleteBuildRuntimeFile);
   const uploadBuildRuntimeFilesRef = useRef(uploadBuildRuntimeFiles);
+  const uploadBuildRuntimeClipRef = useRef(uploadBuildRuntimeClip);
+  const getBuildRuntimeClipStatusRef = useRef(getBuildRuntimeClipStatus);
+  const listBuildRuntimeClipsRef = useRef(listBuildRuntimeClips);
+  const getBuildMediaEnergyRef = useRef(getBuildMediaEnergy);
+  const startBuildLiveSessionRef = useRef(startBuildLiveSession);
+  const markBuildLiveSessionStartedRef = useRef(markBuildLiveSessionStarted);
+  const listBuildLiveSessionsRef = useRef(listBuildLiveSessions);
+  const getBuildLiveSessionStatusRef = useRef(getBuildLiveSessionStatus);
+  const joinBuildLiveSessionRef = useRef(joinBuildLiveSession);
+  const leaveBuildLiveSessionRef = useRef(leaveBuildLiveSession);
+  const reportBuildLiveSessionRef = useRef(reportBuildLiveSession);
+  const stopBuildLiveSessionRef = useRef(stopBuildLiveSession);
   const getBuildMySubjectsRef = useRef(getBuildMySubjects);
   const searchBuildSubjectsRef = useRef(searchBuildSubjects);
   const listBuildAiCardsRef = useRef(listBuildAiCards);
@@ -428,6 +472,18 @@ export default function useAppRequests() {
     listBuildRuntimeFilesRef,
     deleteBuildRuntimeFileRef,
     uploadBuildRuntimeFilesRef,
+    uploadBuildRuntimeClipRef,
+    getBuildRuntimeClipStatusRef,
+    listBuildRuntimeClipsRef,
+    getBuildMediaEnergyRef,
+    startBuildLiveSessionRef,
+    markBuildLiveSessionStartedRef,
+    listBuildLiveSessionsRef,
+    getBuildLiveSessionStatusRef,
+    joinBuildLiveSessionRef,
+    leaveBuildLiveSessionRef,
+    reportBuildLiveSessionRef,
+    stopBuildLiveSessionRef,
     getBuildMySubjectsRef,
     searchBuildSubjectsRef,
     listBuildAiCardsRef,

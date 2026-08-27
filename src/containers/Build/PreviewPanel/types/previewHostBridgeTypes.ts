@@ -19,6 +19,36 @@ export interface PreviewOpenContentConfirmationRequest {
   url: string;
 }
 
+export interface BuildMediaActionConfirmationRequest {
+  kind:
+    | 'photo'
+    | 'clip'
+    | 'clip-upload'
+    | 'live'
+    | 'live-watch'
+    | 'live-report';
+  audio: boolean;
+  reason?: string;
+}
+
+export type BuildLiveSafetyReportReason =
+  | 'privacy'
+  | 'harassment'
+  | 'explicit-content'
+  | 'violence'
+  | 'dangerous-activity'
+  | 'other';
+
+export interface BuildLiveSafetyViewerGrant {
+  sessionId: string;
+  viewerGrantId: string;
+}
+
+export interface BuildLiveSafetyReportRequest
+  extends BuildLiveSafetyViewerGrant {
+  reason: BuildLiveSafetyReportReason;
+}
+
 export interface UsePreviewHostBridgeArgs {
   runtimeOnly: boolean;
   appMcpSessionId: string | null;
@@ -78,6 +108,17 @@ export interface UsePreviewHostBridgeArgs {
     | ((
         request: BuildRuntimeImageGenerationConfirmationRequest
       ) => Promise<boolean>)
+    | null
+  >;
+  requestBuildMediaActionConfirmationRef: RefObject<
+    | ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>)
+    | null
+  >;
+  onBuildLiveSafetyViewerGrantsChange: (
+    grants: BuildLiveSafetyViewerGrant[]
+  ) => void;
+  requestBuildLiveSafetyReportRef: RefObject<
+    | ((request: BuildLiveSafetyReportRequest) => Promise<void>)
     | null
   >;
 }

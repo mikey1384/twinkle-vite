@@ -379,7 +379,9 @@ export interface BuildRuntimeUploadAsset {
   filePath: string;
   url: string;
   thumbUrl: string | null;
-  fileType: 'image' | 'audio' | 'pdf' | 'archive' | 'other';
+  fileType: 'image' | 'video' | 'audio' | 'pdf' | 'archive' | 'other';
+  mediaKind?: 'file' | 'clip';
+  durationMs?: number | null;
   uploadedByUserId: number;
   createdAt: number;
 }

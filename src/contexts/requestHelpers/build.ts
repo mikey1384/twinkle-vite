@@ -84,6 +84,29 @@ export default function buildRequestHelpers({
     return handleError(error);
   }
 
+  function handleBuildMediaError(error: any) {
+    const data = error?.response?.data;
+    if (error?.response && data && typeof data === 'object') {
+      const retryAfterSeconds =
+        data.retryAfterSeconds != null
+          ? data.retryAfterSeconds
+          : data.retryAfter;
+      return Promise.reject({
+        status: error.response.status,
+        message:
+          (typeof data.error === 'string' && data.error) ||
+          'Media request failed',
+        ...(typeof data.code === 'string' ? { code: data.code } : {}),
+        ...(typeof data.scope === 'string' ? { scope: data.scope } : {}),
+        ...(retryAfterSeconds != null
+          ? { retryAfterSeconds }
+          : {}),
+        ...(data.mediaEnergy ? { mediaEnergy: data.mediaEnergy } : {})
+      });
+    }
+    return handleError(error);
+  }
+
   function getFetchAuthHeaders(extraHeaders?: Record<string, string>) {
     const headers = new Headers();
     const authHeaders = auth()?.headers || {};
@@ -201,6 +224,70 @@ export default function buildRequestHelpers({
     return data;
   }
 
+  async function prepareBuildRuntimeClipUpload({
+    buildId,
+    file,
+    requestId,
+    token
+  }: {
+    buildId: number;
+    file: File;
+    requestId: string;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/media/clips/prepare-upload`,
+      {
+        requestId,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || null
+      },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
+  async function completeBuildRuntimeClipUpload({
+    buildId,
+    assetId,
+    uploadId,
+    key,
+    parts,
+    token
+  }: {
+    buildId: number;
+    assetId: number;
+    uploadId: string;
+    key: string;
+    parts: Array<{ ETag: string; PartNumber: number }>;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/media/clips/complete-upload`,
+      { assetId, uploadId, key, parts },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
+  async function abortBuildRuntimeClipUpload({
+    buildId,
+    assetId,
+    token
+  }: {
+    buildId: number;
+    assetId: number;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/media/clips/abort-upload`,
+      { assetId },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
   async function listBuildRuntimeFiles({
     buildId,
     cursor,
@@ -242,33 +329,41 @@ export default function buildRequestHelpers({
     return data;
   }
 
-  async function uploadBuildRuntimeFile({
-    buildId,
+  async function uploadBuildRuntimeMultipartFile({
     file,
-    token,
-    onUploadProgress
+    onUploadProgress,
+    prepare,
+    complete,
+    abort
   }: {
-    buildId: number;
     file: File;
-    token?: string;
     onUploadProgress?: (event: {
       file: File;
       loaded: number;
       total: number;
     }) => void;
+    prepare: () => Promise<any>;
+    complete: (payload: {
+      assetId: number;
+      uploadId: string;
+      key: string;
+      parts: Array<{ ETag: string; PartNumber: number }>;
+    }) => Promise<any>;
+    abort: (assetId: number) => Promise<any>;
   }) {
-    if (isVideoRuntimeUploadCandidate(file)) {
-      throw new Error('Video uploads are not supported in Twinkle.files yet.');
+    const prepared = await prepare();
+    if (
+      prepared?.clip &&
+      ['completing', 'processing', 'ready'].includes(
+        String(prepared.clip.status || '')
+      )
+    ) {
+      return prepared;
     }
-    const prepared = await prepareBuildRuntimeFileUpload({
-      buildId,
-      file,
-      token
-    });
     const uploadId = String(prepared?.uploadId || '');
     const key = String(prepared?.key || '');
     const urls = Array.isArray(prepared?.urls) ? prepared.urls : [];
-    const assetId = Number(prepared?.asset?.id);
+    const assetId = Number(prepared?.asset?.id || prepared?.clip?.id);
 
     if (!uploadId || !key || urls.length === 0 || !assetId) {
       throw new Error('Failed to prepare upload.');
@@ -313,29 +408,94 @@ export default function buildRequestHelpers({
         start = end;
       }
 
-      const completed = await completeBuildRuntimeFileUpload({
-        buildId,
+      const completed = await complete({
         assetId,
         uploadId,
         key,
-        parts,
-        token
+        parts
       });
       onUploadProgress?.({
         file,
         loaded: file.size,
         total: file.size
       });
-      return completed?.asset || prepared?.asset || null;
+      return completed;
     } catch (error) {
-      await abortBuildRuntimeFileUpload({
-        buildId,
-        assetId,
-        reason: 'upload_failed',
-        token
-      }).catch(() => {});
+      await abort(assetId).catch(() => {});
       throw error;
     }
+  }
+
+  async function uploadBuildRuntimeFile({
+    buildId,
+    file,
+    token,
+    onUploadProgress
+  }: {
+    buildId: number;
+    file: File;
+    token?: string;
+    onUploadProgress?: (event: {
+      file: File;
+      loaded: number;
+      total: number;
+    }) => void;
+  }) {
+    if (isVideoRuntimeUploadCandidate(file)) {
+      throw new Error('Video uploads are not supported in Twinkle.files yet.');
+    }
+    const completed = await uploadBuildRuntimeMultipartFile({
+      file,
+      onUploadProgress,
+      prepare: () => prepareBuildRuntimeFileUpload({ buildId, file, token }),
+      complete: (payload) =>
+        completeBuildRuntimeFileUpload({ buildId, token, ...payload }),
+      abort: (assetId) =>
+        abortBuildRuntimeFileUpload({
+          buildId,
+          assetId,
+          reason: 'upload_failed',
+          token
+        })
+    });
+    return completed?.asset || null;
+  }
+
+  async function uploadBuildRuntimeClip({
+    buildId,
+    file,
+    requestId,
+    token,
+    onUploadProgress
+  }: {
+    buildId: number;
+    file: File;
+    requestId: string;
+    token?: string;
+    onUploadProgress?: (event: {
+      file: File;
+      loaded: number;
+      total: number;
+    }) => void;
+  }) {
+    if (!isVideoRuntimeUploadCandidate(file)) {
+      throw new Error('Twinkle.media clips must be video files.');
+    }
+    return await uploadBuildRuntimeMultipartFile({
+      file,
+      onUploadProgress,
+      prepare: () =>
+        prepareBuildRuntimeClipUpload({
+          buildId,
+          file,
+          requestId,
+          token
+        }),
+      complete: (payload) =>
+        completeBuildRuntimeClipUpload({ buildId, token, ...payload }),
+      abort: (assetId) =>
+        abortBuildRuntimeClipUpload({ buildId, assetId, token })
+    });
   }
 
   return {
@@ -3166,6 +3326,279 @@ export default function buildRequestHelpers({
         return data;
       } catch (error) {
         return handleError(error);
+      }
+    },
+
+    async uploadBuildRuntimeClip({
+      buildId,
+      file,
+      requestId,
+      token,
+      onUploadProgress
+    }: {
+      buildId: number;
+      file: File;
+      requestId: string;
+      token?: string;
+      onUploadProgress?: (event: {
+        file: File;
+        loaded: number;
+        total: number;
+      }) => void;
+    }) {
+      try {
+        return await uploadBuildRuntimeClip({
+          buildId,
+          file,
+          requestId,
+          token,
+          onUploadProgress
+        });
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async getBuildRuntimeClipStatus({
+      buildId,
+      assetId,
+      token
+    }: {
+      buildId: number;
+      assetId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/media/clips/status`,
+          { assetId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async listBuildRuntimeClips({
+      buildId,
+      cursor,
+      limit,
+      token
+    }: {
+      buildId: number;
+      cursor?: number | null;
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/media/clips/list`,
+          { cursor, limit },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async getBuildMediaEnergy({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/media/usage`,
+          {},
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async startBuildLiveSession({
+      buildId,
+      requestId,
+      durationSeconds,
+      maxViewers,
+      token
+    }: {
+      buildId: number;
+      requestId: string;
+      durationSeconds?: number;
+      maxViewers?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/start`,
+          { requestId, durationSeconds, maxViewers },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async markBuildLiveSessionStarted({
+      buildId,
+      sessionId,
+      token
+    }: {
+      buildId: number;
+      sessionId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/started`,
+          { sessionId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async listBuildLiveSessions({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/list`,
+          {},
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async getBuildLiveSessionStatus({
+      buildId,
+      sessionId,
+      token
+    }: {
+      buildId: number;
+      sessionId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/status`,
+          { sessionId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async joinBuildLiveSession({
+      buildId,
+      sessionId,
+      requestId,
+      token
+    }: {
+      buildId: number;
+      sessionId: string;
+      requestId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/join`,
+          { sessionId, requestId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async leaveBuildLiveSession({
+      buildId,
+      sessionId,
+      viewerGrantId,
+      token
+    }: {
+      buildId: number;
+      sessionId: string;
+      viewerGrantId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/leave`,
+          { sessionId, viewerGrantId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async reportBuildLiveSession({
+      buildId,
+      sessionId,
+      viewerGrantId,
+      requestId,
+      reason,
+      token
+    }: {
+      buildId: number;
+      sessionId: string;
+      viewerGrantId: string;
+      requestId: string;
+      reason: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/report`,
+          { sessionId, viewerGrantId, requestId, reason },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async stopBuildLiveSession({
+      buildId,
+      sessionId,
+      token
+    }: {
+      buildId: number;
+      sessionId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/stop`,
+          { sessionId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
       }
     },
 

@@ -553,8 +553,8 @@ export default function CodeWorkspacePane({
                         className={css`
                           color: #64748b;
                           font-size: 1.1rem;
-                          font-family: 'SF Mono', 'Menlo', 'Consolas',
-                            monospace;
+                          font-family:
+                            'SF Mono', 'Menlo', 'Consolas', monospace;
                         `}
                       >
                         {truncateSearchLine(result.beforeText)}
@@ -575,8 +575,8 @@ export default function CodeWorkspacePane({
                         className={css`
                           color: #64748b;
                           font-size: 1.1rem;
-                          font-family: 'SF Mono', 'Menlo', 'Consolas',
-                            monospace;
+                          font-family:
+                            'SF Mono', 'Menlo', 'Consolas', monospace;
                         `}
                       >
                         {truncateSearchLine(result.afterText)}
@@ -603,16 +603,20 @@ export default function CodeWorkspacePane({
               data-testid="build-project-file-line-diagnostics"
               className={css`
                 border: 1px solid
-                  ${blockingLineDiagnostics.length > 0
-                    ? 'rgba(248, 113, 113, 0.45)'
-                    : 'rgba(251, 191, 36, 0.36)'};
+                  ${
+                    blockingLineDiagnostics.length > 0
+                      ? 'rgba(248, 113, 113, 0.45)'
+                      : 'rgba(251, 191, 36, 0.36)'
+                  };
                 border-radius: 10px;
-                background: ${blockingLineDiagnostics.length > 0
-                  ? 'rgba(127, 29, 29, 0.24)'
-                  : 'rgba(120, 53, 15, 0.22)'};
-                color: ${blockingLineDiagnostics.length > 0
-                  ? '#fecaca'
-                  : '#fde68a'};
+                background: ${
+                  blockingLineDiagnostics.length > 0
+                    ? 'rgba(127, 29, 29, 0.24)'
+                    : 'rgba(120, 53, 15, 0.22)'
+                };
+                color: ${
+                  blockingLineDiagnostics.length > 0 ? '#fecaca' : '#fde68a'
+                };
                 padding: 0.52rem 0.58rem;
                 font-size: 1.1rem;
                 line-height: 1.4;
@@ -698,12 +702,16 @@ export default function CodeWorkspacePane({
                       min-width: 0;
                       text-align: left;
                       border: 1px solid
-                        ${isSelected
-                          ? 'rgba(65, 140, 235, 0.7)'
-                          : 'rgba(255, 255, 255, 0.08)'};
-                      background: ${isSelected
-                        ? 'rgba(65, 140, 235, 0.25)'
-                        : 'rgba(148, 163, 184, 0.1)'};
+                        ${
+                          isSelected
+                            ? 'rgba(65, 140, 235, 0.7)'
+                            : 'rgba(255, 255, 255, 0.08)'
+                        };
+                      background: ${
+                        isSelected
+                          ? 'rgba(65, 140, 235, 0.25)'
+                          : 'rgba(148, 163, 184, 0.1)'
+                      };
                       color: #cbd5e1;
                       border-radius: 8px;
                       padding: 0.34rem 0.48rem;
@@ -762,20 +770,24 @@ export default function CodeWorkspacePane({
                     min-width: 0;
                     text-align: left;
                     border: 1px solid
-                      ${fileLineDiagnostic?.severity === 'error'
-                        ? 'rgba(248, 113, 113, 0.62)'
+                      ${
+                        fileLineDiagnostic?.severity === 'error'
+                          ? 'rgba(248, 113, 113, 0.62)'
+                          : fileLineDiagnostic?.severity === 'warning'
+                            ? 'rgba(251, 191, 36, 0.5)'
+                            : isActive
+                              ? 'rgba(65, 140, 235, 0.65)'
+                              : 'rgba(255, 255, 255, 0.08)'
+                      };
+                    background: ${
+                      fileLineDiagnostic?.severity === 'error'
+                        ? 'rgba(127, 29, 29, 0.18)'
                         : fileLineDiagnostic?.severity === 'warning'
-                          ? 'rgba(251, 191, 36, 0.5)'
+                          ? 'rgba(120, 53, 15, 0.18)'
                           : isActive
-                        ? 'rgba(65, 140, 235, 0.65)'
-                        : 'rgba(255, 255, 255, 0.08)'};
-                    background: ${fileLineDiagnostic?.severity === 'error'
-                      ? 'rgba(127, 29, 29, 0.18)'
-                      : fileLineDiagnostic?.severity === 'warning'
-                        ? 'rgba(120, 53, 15, 0.18)'
-                        : isActive
-                      ? 'rgba(65, 140, 235, 0.2)'
-                      : 'rgba(17, 24, 39, 0.6)'};
+                            ? 'rgba(65, 140, 235, 0.2)'
+                            : 'rgba(17, 24, 39, 0.6)'
+                    };
                     color: ${isActive ? '#dbeafe' : '#e5e7eb'};
                     border-radius: 8px;
                     padding: 0.42rem 0.5rem;
@@ -804,11 +816,13 @@ export default function CodeWorkspacePane({
                       align-items: center;
                       gap: 0.25rem;
                       flex-shrink: 0;
-                      color: ${fileLineDiagnostic?.severity === 'error'
-                        ? '#fecaca'
-                        : fileLineDiagnostic?.severity === 'warning'
-                          ? '#fde68a'
-                          : '#94a3b8'};
+                      color: ${
+                        fileLineDiagnostic?.severity === 'error'
+                          ? '#fecaca'
+                          : fileLineDiagnostic?.severity === 'warning'
+                            ? '#fde68a'
+                            : '#94a3b8'
+                      };
                       font-size: 1.1rem;
                       font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                       font-weight: 800;
@@ -818,9 +832,7 @@ export default function CodeWorkspacePane({
                       resolvedMaxProjectFileLines
                     )} effective lines`}
                   >
-                    {fileLineDiagnostic && (
-                      <Icon icon="exclamation-triangle" />
-                    )}
+                    {fileLineDiagnostic && <Icon icon="exclamation-triangle" />}
                     {formatProjectFileEffectiveLineCount(
                       fileEffectiveLineCount,
                       resolvedMaxProjectFileLines
@@ -982,7 +994,13 @@ export default function CodeWorkspacePane({
                           />
                         ) : (
                           <Icon
-                            icon={asset.fileType === 'audio' ? 'music' : 'file'}
+                            icon={
+                              asset.fileType === 'audio'
+                                ? 'music'
+                                : asset.fileType === 'video'
+                                  ? 'file-video'
+                                  : 'file'
+                            }
                           />
                         )}
                       </div>
@@ -1073,11 +1091,13 @@ export default function CodeWorkspacePane({
                   display: inline-flex;
                   align-items: center;
                   gap: 0.35rem;
-                  color: ${activeFileLineDiagnostic?.severity === 'error'
-                    ? '#fecaca'
-                    : activeFileLineDiagnostic?.severity === 'warning'
-                      ? '#fde68a'
-                      : '#94a3b8'};
+                  color: ${
+                    activeFileLineDiagnostic?.severity === 'error'
+                      ? '#fecaca'
+                      : activeFileLineDiagnostic?.severity === 'warning'
+                        ? '#fde68a'
+                        : '#94a3b8'
+                  };
                   font-size: 1.1rem;
                   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                   font-weight: 800;
@@ -1259,16 +1279,22 @@ export default function CodeWorkspacePane({
                     className={css`
                       max-width: 34rem;
                       border: 1px solid
-                        ${projectFileSaveError || saveBlockedByLineLimit
-                          ? 'rgba(248, 113, 113, 0.45)'
-                          : 'rgba(251, 191, 36, 0.34)'};
+                        ${
+                          projectFileSaveError || saveBlockedByLineLimit
+                            ? 'rgba(248, 113, 113, 0.45)'
+                            : 'rgba(251, 191, 36, 0.34)'
+                        };
                       border-radius: 8px;
-                      background: ${projectFileSaveError || saveBlockedByLineLimit
-                        ? 'rgba(127, 29, 29, 0.2)'
-                        : 'rgba(120, 53, 15, 0.16)'};
-                      color: ${projectFileSaveError || saveBlockedByLineLimit
-                        ? '#fecaca'
-                        : '#fde68a'};
+                      background: ${
+                        projectFileSaveError || saveBlockedByLineLimit
+                          ? 'rgba(127, 29, 29, 0.2)'
+                          : 'rgba(120, 53, 15, 0.16)'
+                      };
+                      color: ${
+                        projectFileSaveError || saveBlockedByLineLimit
+                          ? '#fecaca'
+                          : '#fde68a'
+                      };
                       padding: 0.35rem 0.5rem;
                       font-size: 1.1rem;
                       line-height: 1.35;
@@ -1383,15 +1409,21 @@ export default function CodeWorkspacePane({
                   data-testid="build-active-file-line-diagnostic"
                   className={css`
                     border-bottom: 1px solid
-                      ${activeFileLineDiagnostic.severity === 'error'
-                        ? 'rgba(248, 113, 113, 0.35)'
-                        : 'rgba(251, 191, 36, 0.3)'};
-                    background: ${activeFileLineDiagnostic.severity === 'error'
-                      ? 'rgba(127, 29, 29, 0.18)'
-                      : 'rgba(120, 53, 15, 0.18)'};
-                    color: ${activeFileLineDiagnostic.severity === 'error'
-                      ? '#fecaca'
-                      : '#fde68a'};
+                      ${
+                        activeFileLineDiagnostic.severity === 'error'
+                          ? 'rgba(248, 113, 113, 0.35)'
+                          : 'rgba(251, 191, 36, 0.3)'
+                      };
+                    background: ${
+                      activeFileLineDiagnostic.severity === 'error'
+                        ? 'rgba(127, 29, 29, 0.18)'
+                        : 'rgba(120, 53, 15, 0.18)'
+                    };
+                    color: ${
+                      activeFileLineDiagnostic.severity === 'error'
+                        ? '#fecaca'
+                        : '#fde68a'
+                    };
                     padding: 0.55rem 0.75rem;
                     font-size: 1.1rem;
                     line-height: 1.45;

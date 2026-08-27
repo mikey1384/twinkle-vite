@@ -2,13 +2,15 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import GameProgressBar from '~/components/GameProgressBar';
-import {
-  BUILD_APP_IFRAME_ALLOW,
-  BUILD_APP_PREVIEW_IFRAME_SANDBOX
-} from '~/helpers/buildIframePermissions';
+import { BUILD_APP_IFRAME_ALLOW } from '~/helpers/buildIframePermissions';
 import { buildPreviewFrameWindowName } from '~/helpers/buildPreviewOriginHelpers';
 import type { BuildRuntimeObservationIssue } from '../types/runtimeObservationTypes';
 import type { PreviewFrameMeta } from './types';
+import type {
+  BuildLiveSafetyReportReason,
+  BuildLiveSafetyReportRequest,
+  BuildLiveSafetyViewerGrant
+} from './types/previewHostBridgeTypes';
 import {
   getRuntimeIssueLocationText,
   getRuntimePreviewIframeSandbox
@@ -130,6 +132,82 @@ const previewRuntimeIssueStackClass = css`
   font-size: 1.1rem;
 `;
 
+const liveSafetyControlsClass = css`
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: min(25rem, calc(100% - 1.6rem));
+  max-height: calc(100% - 1.6rem);
+  overflow-y: auto;
+`;
+
+const liveSafetyControlClass = css`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(127, 29, 29, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--chat-text);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+  font-size: 1.1rem;
+  backdrop-filter: blur(2px);
+`;
+
+const liveSafetyLabelClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 800;
+`;
+
+const liveSafetySelectClass = css`
+  min-height: 2.2rem;
+  max-width: 12rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--chat-text);
+  padding: 0.28rem 0.4rem;
+  font: inherit;
+`;
+
+const liveSafetyButtonClass = css`
+  min-height: 2.2rem;
+  border: 1px solid #b91c1c;
+  border-radius: 7px;
+  background: #b91c1c;
+  color: #fff;
+  padding: 0.3rem 0.58rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #991b1b;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.68;
+  }
+`;
+
+const liveSafetyErrorClass = css`
+  flex-basis: 100%;
+  color: #991b1b;
+  font-size: 1rem;
+  text-align: right;
+`;
+
 const previewSpinnerClass = css`
   animation: previewSpin 0.9s linear infinite;
   @keyframes previewSpin {
@@ -173,6 +251,7 @@ const emptyPreviewBodyStyle: React.CSSProperties = {
 
 export default function PreviewStage({
   activePreviewFrame,
+  activeBuildLiveSafetyViewerGrants,
   codeWorkspaceAvailable,
   isOwner,
   latestRuntimeObservationIssue,
@@ -190,10 +269,12 @@ export default function PreviewStage({
   shouldShowRuntimePreviewStage,
   shouldShowWorkspacePreviewStage,
   variant,
+  onBuildLiveSafetyReport,
   onOpenRuntimeIssueProjectFile,
   onPreviewFrameLoad
 }: {
   activePreviewFrame: PreviewFrameKey;
+  activeBuildLiveSafetyViewerGrants: BuildLiveSafetyViewerGrant[];
   codeWorkspaceAvailable: boolean;
   isOwner: boolean;
   latestRuntimeObservationIssue: BuildRuntimeObservationIssue | null;
@@ -214,6 +295,9 @@ export default function PreviewStage({
   shouldShowRuntimePreviewStage: boolean;
   shouldShowWorkspacePreviewStage: boolean;
   variant: 'runtime' | 'workspace';
+  onBuildLiveSafetyReport: (
+    request: BuildLiveSafetyReportRequest
+  ) => Promise<void>;
   onOpenRuntimeIssueProjectFile: (path: string) => void;
   onPreviewFrameLoad: (frame: PreviewFrameKey, src: string) => void;
 }) {
@@ -246,6 +330,10 @@ export default function PreviewStage({
             }}
           />
         ) : null}
+        <BuildLiveSafetyControls
+          grants={activeBuildLiveSafetyViewerGrants}
+          onReport={onBuildLiveSafetyReport}
+        />
       </div>
     );
   }
@@ -279,7 +367,9 @@ export default function PreviewStage({
           )}
           allow={BUILD_APP_IFRAME_ALLOW}
           allowFullScreen
-          sandbox={BUILD_APP_PREVIEW_IFRAME_SANDBOX}
+          sandbox={getRuntimePreviewIframeSandbox(
+            previewFrameSources.primary
+          )}
           onLoad={() =>
             onPreviewFrameLoad('primary', previewFrameSources.primary || '')
           }
@@ -311,7 +401,9 @@ export default function PreviewStage({
           )}
           allow={BUILD_APP_IFRAME_ALLOW}
           allowFullScreen
-          sandbox={BUILD_APP_PREVIEW_IFRAME_SANDBOX}
+          sandbox={getRuntimePreviewIframeSandbox(
+            previewFrameSources.secondary
+          )}
           onLoad={() =>
             onPreviewFrameLoad(
               'secondary',
@@ -331,6 +423,10 @@ export default function PreviewStage({
           }}
         />
       )}
+      <BuildLiveSafetyControls
+        grants={activeBuildLiveSafetyViewerGrants}
+        onReport={onBuildLiveSafetyReport}
+      />
       {isOwner && latestRuntimeObservationIssue && (
         <RuntimeIssuePanel
           codeWorkspaceAvailable={codeWorkspaceAvailable}
@@ -346,6 +442,128 @@ export default function PreviewStage({
           Updating preview
         </div>
       )}
+    </div>
+  );
+}
+
+const buildLiveSafetyReasonOptions: Array<{
+  value: BuildLiveSafetyReportReason;
+  label: string;
+}> = [
+  { value: 'privacy', label: 'Privacy' },
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'explicit-content', label: 'Explicit content' },
+  { value: 'violence', label: 'Violence' },
+  { value: 'dangerous-activity', label: 'Dangerous activity' },
+  { value: 'other', label: 'Other safety issue' }
+];
+
+function BuildLiveSafetyControls({
+  grants,
+  onReport
+}: {
+  grants: BuildLiveSafetyViewerGrant[];
+  onReport: (request: BuildLiveSafetyReportRequest) => Promise<void>;
+}) {
+  if (grants.length === 0) return null;
+
+  return (
+    <div
+      className={liveSafetyControlsClass}
+      data-testid="build-live-safety-controls"
+    >
+      {grants.map((grant) => (
+        <BuildLiveSafetyControl
+          key={`${grant.sessionId}:${grant.viewerGrantId}`}
+          grant={grant}
+          onReport={onReport}
+        />
+      ))}
+    </div>
+  );
+}
+
+function BuildLiveSafetyControl({
+  grant,
+  onReport
+}: {
+  grant: BuildLiveSafetyViewerGrant;
+  onReport: (request: BuildLiveSafetyReportRequest) => Promise<void>;
+}) {
+  const [reason, setReason] =
+    React.useState<BuildLiveSafetyReportReason>('other');
+  const [submittedReason, setSubmittedReason] =
+    React.useState<BuildLiveSafetyReportReason | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  async function reportAndEnd() {
+    if (submitting) return;
+    const reportReason = submittedReason || reason;
+    if (!submittedReason) setSubmittedReason(reportReason);
+    setSubmitting(true);
+    setError('');
+    try {
+      await onReport({ ...grant, reason: reportReason });
+    } catch (reportError: any) {
+      if (
+        [
+          'BUILD_MEDIA_ACTION_CANCELLED',
+          'BUILD_MEDIA_CONFIRMATION_UNAVAILABLE',
+          'USER_ACTIVATION_REQUIRED',
+          'build_media_confirmation_in_progress'
+        ].includes(String(reportError?.code || ''))
+      ) {
+        setSubmittedReason(null);
+      }
+      setError(
+        reportError?.message || 'Could not report this livestream. Try again.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className={liveSafetyControlClass}
+      role="region"
+      aria-label="Live safety"
+    >
+      <span className={liveSafetyLabelClass}>
+        <Icon icon="exclamation-triangle" />
+        Live safety
+      </span>
+      <select
+        className={liveSafetySelectClass}
+        aria-label="Livestream report reason"
+        value={reason}
+        disabled={submitting || submittedReason !== null}
+        onChange={(event) =>
+          setReason(event.target.value as BuildLiveSafetyReportReason)
+        }
+      >
+        {buildLiveSafetyReasonOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        className={liveSafetyButtonClass}
+        disabled={submitting}
+        onClick={() => {
+          void reportAndEnd();
+        }}
+      >
+        {submitting ? 'Reporting…' : 'Report & end'}
+      </button>
+      {error ? (
+        <span className={liveSafetyErrorClass} role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -26,6 +26,18 @@ export interface PreviewHostBridgeRequestRefs {
   listBuildRuntimeFilesRef: AsyncRequestRef;
   deleteBuildRuntimeFileRef: AsyncRequestRef;
   uploadBuildRuntimeFilesRef: AsyncRequestRef;
+  uploadBuildRuntimeClipRef: AsyncRequestRef;
+  getBuildRuntimeClipStatusRef: AsyncRequestRef;
+  listBuildRuntimeClipsRef: AsyncRequestRef;
+  getBuildMediaEnergyRef: AsyncRequestRef;
+  startBuildLiveSessionRef: AsyncRequestRef;
+  markBuildLiveSessionStartedRef: AsyncRequestRef;
+  listBuildLiveSessionsRef: AsyncRequestRef;
+  getBuildLiveSessionStatusRef: AsyncRequestRef;
+  joinBuildLiveSessionRef: AsyncRequestRef;
+  leaveBuildLiveSessionRef: AsyncRequestRef;
+  reportBuildLiveSessionRef: AsyncRequestRef;
+  stopBuildLiveSessionRef: AsyncRequestRef;
   getBuildMySubjectsRef: AsyncRequestRef;
   searchBuildSubjectsRef: AsyncRequestRef;
   listBuildAiCardsRef: AsyncRequestRef;

@@ -44,7 +44,12 @@ import type {
   PreviewFrameRetiredHandler,
   PreviewPanelProps
 } from './types';
-import type { PreviewOpenContentConfirmationRequest } from './types/previewHostBridgeTypes';
+import type {
+  BuildLiveSafetyReportRequest,
+  BuildLiveSafetyViewerGrant,
+  BuildMediaActionConfirmationRequest,
+  PreviewOpenContentConfirmationRequest
+} from './types/previewHostBridgeTypes';
 import type { BuildRuntimeImageGenerationConfirmationRequest } from './helpers/buildRuntimeImageGeneration';
 import VersionHistoryModal from './VersionHistoryModal';
 import {
@@ -665,6 +670,17 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       confirmModal: imageGenerationConfirmModal,
       requestConfirm: requestImageGenerationConfirm
     } = useConfirmModal();
+    const {
+      confirmModal: mediaActionConfirmModal,
+      requestConfirm: requestMediaActionConfirm
+    } = useConfirmModal();
+    const [
+      activeBuildLiveSafetyViewerGrants,
+      setActiveBuildLiveSafetyViewerGrants
+    ] = useState<BuildLiveSafetyViewerGrant[]>([]);
+    const requestBuildLiveSafetyReportRef = useRef<
+      ((request: BuildLiveSafetyReportRequest) => Promise<void>) | null
+    >(null);
     const requestOpenContentConfirmationRef = useRef<
       | ((request: PreviewOpenContentConfirmationRequest) => Promise<boolean>)
       | null
@@ -732,6 +748,87 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         requestBuildImageGenerationConfirmationRef.current = null;
       };
     }, [build.title, requestImageGenerationConfirm]);
+    const requestBuildMediaActionConfirmationRef = useRef<
+      | ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>)
+      | null
+    >(null);
+    useEffect(() => {
+      requestBuildMediaActionConfirmationRef.current = ({
+        kind,
+        audio,
+        reason
+      }) => {
+        const appTitle = build.title || 'This Build app';
+        const confirmation =
+          kind === 'photo'
+            ? {
+                title: 'Allow camera use?',
+                description: 'use your camera to take one photo',
+                detail:
+                  'Nothing starts unless you approve. The photo is saved in your Twinkle file storage so this app can use it. Your browser may also ask for camera permission.',
+                confirmButtonLabel: 'Take photo'
+              }
+            : kind === 'clip'
+              ? {
+                  title: 'Allow camera use?',
+                  description:
+                    'use your camera to record one short, camera-only clip',
+                  detail:
+                    'Nothing starts unless you approve. The clip is saved in your Twinkle file storage so this app can use it. Your browser may also ask for camera permission. Processing uses Media Energy.',
+                  confirmButtonLabel: 'Record clip'
+                }
+              : kind === 'clip-upload'
+                ? {
+                    title: 'Use Media Energy?',
+                    description: 'process and save one short video',
+                    detail:
+                      'Each approval authorizes one video saved in your Twinkle file storage so this app can use it. Processing uses Media Energy.',
+                    confirmButtonLabel: 'Process video'
+                  }
+                : kind === 'live'
+                  ? {
+                      title: 'Allow camera use?',
+                      description: `start a livestream using your camera${
+                        audio ? ' and microphone' : ''
+                      }`,
+                      detail:
+                        'Nothing starts unless you approve. Livestreams last up to 15 minutes and use Media Energy. Your browser may also ask for camera or microphone permission.',
+                      confirmButtonLabel: 'Start livestream'
+                    }
+                  : kind === 'live-watch'
+                    ? {
+                        title: 'Watch livestream?',
+                        description: 'join one livestream',
+                        detail:
+                          'Each approval authorizes one viewer spot and uses Media Energy.',
+                        confirmButtonLabel: 'Watch livestream'
+                      }
+                    : {
+                        title: 'Report livestream?',
+                        description:
+                          'report this livestream and end it immediately for everyone',
+                        detail: `Twinkle will privately record your account and the report reason (${reason || 'other'}). The app and broadcaster will not receive your identity.`,
+                        confirmButtonLabel: 'Report and end'
+                      };
+        return requestMediaActionConfirm({
+          title: confirmation.title,
+          description: (
+            <span className={imageGenerationConfirmationClass}>
+              <span>
+                <strong>{appTitle}</strong> wants to {confirmation.description}.
+              </span>
+              <span>{confirmation.detail}</span>
+            </span>
+          ),
+          descriptionFontSize: '1.1rem',
+          confirmButtonLabel: confirmation.confirmButtonLabel,
+          modalOverModal: true
+        });
+      };
+      return () => {
+        requestBuildMediaActionConfirmationRef.current = null;
+      };
+    }, [build.title, requestMediaActionConfirm]);
     const {
       areProjectFileMutationsLocked,
       ensureBuildApiTokenForBuild,
@@ -1135,6 +1232,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       runtimeUploadsSyncRef: onRuntimeUploadsSyncRef,
       onAiUsagePolicyUpdateRef,
       requestBuildImageGenerationConfirmationRef,
+      requestBuildMediaActionConfirmationRef,
+      onBuildLiveSafetyViewerGrantsChange:
+        setActiveBuildLiveSafetyViewerGrants,
+      requestBuildLiveSafetyReportRef,
       requestOpenContentConfirmationRef
     });
 
@@ -1354,6 +1455,14 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       setViewMode(nextMode);
     }
 
+    async function handleBuildLiveSafetyReport(
+      request: BuildLiveSafetyReportRequest
+    ) {
+      const report = requestBuildLiveSafetyReportRef.current;
+      if (!report) throw new Error('Live safety is unavailable.');
+      await report(request);
+    }
+
     return (
       <div
         className={`${runtimeOnly ? runtimePanelClass : panelClass}${className ? ` ${className}` : ''}`}
@@ -1393,6 +1502,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           {runtimeOnly ? (
             <PreviewStage
               activePreviewFrame={activePreviewFrame}
+              activeBuildLiveSafetyViewerGrants={
+                activeBuildLiveSafetyViewerGrants
+              }
               codeWorkspaceAvailable={codeWorkspaceAvailable}
               isOwner={isOwner}
               latestRuntimeObservationIssue={latestRuntimeObservationIssue}
@@ -1414,12 +1526,16 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               shouldShowRuntimePreviewStage={shouldShowRuntimePreviewStage}
               shouldShowWorkspacePreviewStage={shouldShowWorkspacePreviewStage}
               variant="runtime"
+              onBuildLiveSafetyReport={handleBuildLiveSafetyReport}
               onOpenRuntimeIssueProjectFile={openRuntimeIssueProjectFile}
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />
           ) : viewMode === 'preview' ? (
             <PreviewStage
               activePreviewFrame={activePreviewFrame}
+              activeBuildLiveSafetyViewerGrants={
+                activeBuildLiveSafetyViewerGrants
+              }
               codeWorkspaceAvailable={codeWorkspaceAvailable}
               isOwner={isOwner}
               latestRuntimeObservationIssue={latestRuntimeObservationIssue}
@@ -1441,6 +1557,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               shouldShowRuntimePreviewStage={shouldShowRuntimePreviewStage}
               shouldShowWorkspacePreviewStage={shouldShowWorkspacePreviewStage}
               variant="workspace"
+              onBuildLiveSafetyReport={handleBuildLiveSafetyReport}
               onOpenRuntimeIssueProjectFile={openRuntimeIssueProjectFile}
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />
@@ -1522,6 +1639,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         {projectFileConfirmModal}
         {openContentConfirmModal}
         {imageGenerationConfirmModal}
+        {mediaActionConfirmModal}
       </div>
     );
   }
