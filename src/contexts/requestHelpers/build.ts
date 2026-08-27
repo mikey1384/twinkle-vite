@@ -3573,33 +3573,6 @@ export default function buildRequestHelpers({
       }
     },
 
-    async reportBuildLiveSession({
-      buildId,
-      sessionId,
-      viewerGrantId,
-      requestId,
-      reason,
-      token
-    }: {
-      buildId: number;
-      sessionId: string;
-      viewerGrantId: string;
-      requestId: string;
-      reason: string;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/live/report`,
-          { sessionId, viewerGrantId, requestId, reason },
-          getBuildApiConfig(token)
-        );
-        return data;
-      } catch (error) {
-        return handleBuildMediaError(error);
-      }
-    },
-
     async stopBuildLiveSession({
       buildId,
       sessionId,
@@ -3701,33 +3674,6 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/live/replays/leave`,
           { replayId, viewerGrantId },
-          getBuildApiConfig(token)
-        );
-        return data;
-      } catch (error) {
-        return handleBuildMediaError(error);
-      }
-    },
-
-    async reportBuildLiveReplay({
-      buildId,
-      replayId,
-      viewerGrantId,
-      requestId,
-      reason,
-      token
-    }: {
-      buildId: number;
-      replayId: string;
-      viewerGrantId: string;
-      requestId: string;
-      reason: string;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/live/replays/report`,
-          { replayId, viewerGrantId, requestId, reason },
           getBuildApiConfig(token)
         );
         return data;

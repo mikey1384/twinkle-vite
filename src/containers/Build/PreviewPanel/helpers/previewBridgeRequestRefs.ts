@@ -37,13 +37,11 @@ export interface PreviewHostBridgeRequestRefs {
   getBuildLiveSessionStatusRef: AsyncRequestRef;
   joinBuildLiveSessionRef: AsyncRequestRef;
   leaveBuildLiveSessionRef: AsyncRequestRef;
-  reportBuildLiveSessionRef: AsyncRequestRef;
   stopBuildLiveSessionRef: AsyncRequestRef;
   listBuildLiveReplaysRef: AsyncRequestRef;
   getBuildLiveReplayStatusRef: AsyncRequestRef;
   joinBuildLiveReplayRef: AsyncRequestRef;
   leaveBuildLiveReplayRef: AsyncRequestRef;
-  reportBuildLiveReplayRef: AsyncRequestRef;
   deleteBuildLiveReplayRef: AsyncRequestRef;
   getBuildMySubjectsRef: AsyncRequestRef;
   searchBuildSubjectsRef: AsyncRequestRef;

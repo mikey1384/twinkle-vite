@@ -46,9 +46,7 @@ import type {
 } from './types';
 import type {
   BuildLiveSafetyHostSession,
-  BuildLiveSafetyReportRequest,
   BuildLiveSafetyStopRequest,
-  BuildLiveSafetyViewerGrant,
   BuildMediaActionConfirmationRequest,
   PreviewOpenContentConfirmationRequest
 } from './types/previewHostBridgeTypes';
@@ -677,16 +675,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestConfirm: requestMediaActionConfirm
     } = useConfirmModal();
     const [
-      activeBuildLiveSafetyViewerGrants,
-      setActiveBuildLiveSafetyViewerGrants
-    ] = useState<BuildLiveSafetyViewerGrant[]>([]);
-    const [
       activeBuildLiveSafetyHostSessions,
       setActiveBuildLiveSafetyHostSessions
     ] = useState<BuildLiveSafetyHostSession[]>([]);
-    const requestBuildLiveSafetyReportRef = useRef<
-      ((request: BuildLiveSafetyReportRequest) => Promise<void>) | null
-    >(null);
     const requestBuildLiveSafetyStopRef = useRef<
       ((request: BuildLiveSafetyStopRequest) => Promise<void>) | null
     >(null);
@@ -765,8 +756,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestBuildMediaActionConfirmationRef.current = ({
         kind,
         audio,
-        saveReplay,
-        reason
+        saveReplay
       }) => {
         const appTitle = build.title || 'This Build app';
         const confirmation =
@@ -803,7 +793,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                       }`,
                       detail: `Nothing starts unless you approve. Livestreams last up to 15 minutes and use Media Energy.${
                         saveReplay
-                          ? ' This stream will also be saved for this app as a replay for seven days. Replay storage and viewing use Media Energy; viewers can report it, and its creator or the app owner can remove it.'
+                          ? ' This stream will also be saved for this app as a replay for seven days. Replay storage and viewing use Media Energy; its creator or the app owner can remove it.'
                           : ''
                       } Your browser may also ask for ${
                         audio
@@ -820,38 +810,22 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                           'Each approval authorizes one viewer spot and uses Media Energy.',
                         confirmButtonLabel: 'Watch livestream'
                       }
-                    : kind === 'live-report'
-                      ? {
-                          title: 'Report livestream?',
-                          description:
-                            'report this livestream and end it immediately for everyone',
-                          detail: `Twinkle will privately record your account and the report reason (${reason || 'other'}). The app and broadcaster will not receive your identity.`,
-                          confirmButtonLabel: 'Report and end'
-                        }
-                      : kind === 'replay-watch'
+                    : kind === 'replay-watch'
                         ? {
                             title: 'Watch replay?',
                             description: 'play one saved livestream',
                             detail:
-                              'Each approval opens one private playback grant for up to 20 minutes and uses Media Energy. Twinkle keeps the report control visible while it plays.',
+                              'Each approval opens one private playback grant for up to 20 minutes and uses Media Energy.',
                             confirmButtonLabel: 'Watch replay'
                           }
-                        : kind === 'replay-report'
-                          ? {
-                              title: 'Report replay?',
-                              description:
-                                'report this replay and remove it from the app immediately',
-                              detail: `Twinkle will privately record your account and the report reason (${reason || 'other'}). The app and creator will not receive your identity.`,
-                              confirmButtonLabel: 'Report and remove'
-                            }
-                          : {
-                              title: 'Remove replay?',
-                              description:
-                                'permanently remove this saved livestream',
-                              detail:
-                                'Only the replay creator or app owner can do this. Twinkle will delete the private recording; this cannot be undone.',
-                              confirmButtonLabel: 'Remove replay'
-                            };
+                        : {
+                            title: 'Remove replay?',
+                            description:
+                              'permanently remove this saved livestream',
+                            detail:
+                              'Only the replay creator or app owner can do this. Twinkle will delete the private recording; this cannot be undone.',
+                            confirmButtonLabel: 'Remove replay'
+                          };
         return requestMediaActionConfirm({
           title: confirmation.title,
           description: (
@@ -1276,8 +1250,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestBuildImageGenerationConfirmationRef,
       requestBuildMediaActionConfirmationRef,
       onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
-      onBuildLiveSafetyViewerGrantsChange: setActiveBuildLiveSafetyViewerGrants,
-      requestBuildLiveSafetyReportRef,
       requestBuildLiveSafetyStopRef,
       requestOpenContentConfirmationRef
     });
@@ -1498,14 +1470,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       setViewMode(nextMode);
     }
 
-    async function handleBuildLiveSafetyReport(
-      request: BuildLiveSafetyReportRequest
-    ) {
-      const report = requestBuildLiveSafetyReportRef.current;
-      if (!report) throw new Error('Live safety is unavailable.');
-      await report(request);
-    }
-
     async function handleBuildLiveSafetyStop(
       request: BuildLiveSafetyStopRequest
     ) {
@@ -1558,9 +1522,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           {runtimeOnly ? (
             <PreviewStage
               activePreviewFrame={activePreviewFrame}
-              activeBuildLiveSafetyViewerGrants={
-                activeBuildLiveSafetyViewerGrants
-              }
               codeWorkspaceAvailable={codeWorkspaceAvailable}
               isOwner={isOwner}
               latestRuntimeObservationIssue={latestRuntimeObservationIssue}
@@ -1582,16 +1543,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               shouldShowRuntimePreviewStage={shouldShowRuntimePreviewStage}
               shouldShowWorkspacePreviewStage={shouldShowWorkspacePreviewStage}
               variant="runtime"
-              onBuildLiveSafetyReport={handleBuildLiveSafetyReport}
               onOpenRuntimeIssueProjectFile={openRuntimeIssueProjectFile}
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />
           ) : viewMode === 'preview' ? (
             <PreviewStage
               activePreviewFrame={activePreviewFrame}
-              activeBuildLiveSafetyViewerGrants={
-                activeBuildLiveSafetyViewerGrants
-              }
               codeWorkspaceAvailable={codeWorkspaceAvailable}
               isOwner={isOwner}
               latestRuntimeObservationIssue={latestRuntimeObservationIssue}
@@ -1613,7 +1570,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               shouldShowRuntimePreviewStage={shouldShowRuntimePreviewStage}
               shouldShowWorkspacePreviewStage={shouldShowWorkspacePreviewStage}
               variant="workspace"
-              onBuildLiveSafetyReport={handleBuildLiveSafetyReport}
               onOpenRuntimeIssueProjectFile={openRuntimeIssueProjectFile}
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />

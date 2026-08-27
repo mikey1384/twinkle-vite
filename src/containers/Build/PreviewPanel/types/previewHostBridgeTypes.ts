@@ -26,27 +26,10 @@ export interface BuildMediaActionConfirmationRequest {
     | 'clip-upload'
     | 'live'
     | 'live-watch'
-    | 'live-report'
     | 'replay-watch'
-    | 'replay-report'
     | 'replay-delete';
   audio: boolean;
   saveReplay?: boolean;
-  reason?: string;
-}
-
-export type BuildLiveSafetyReportReason =
-  | 'privacy'
-  | 'harassment'
-  | 'explicit-content'
-  | 'violence'
-  | 'dangerous-activity'
-  | 'other';
-
-export interface BuildLiveSafetyViewerGrant {
-  sessionId: string;
-  viewerGrantId: string;
-  mediaKind?: 'live' | 'replay';
 }
 
 export interface BuildLiveSafetyHostSession {
@@ -59,10 +42,6 @@ export interface BuildLiveSafetyHostSession {
 
 export interface BuildLiveSafetyStopRequest {
   sessionId: string;
-}
-
-export interface BuildLiveSafetyReportRequest extends BuildLiveSafetyViewerGrant {
-  reason: BuildLiveSafetyReportReason;
 }
 
 export interface UsePreviewHostBridgeArgs {
@@ -129,15 +108,9 @@ export interface UsePreviewHostBridgeArgs {
   requestBuildMediaActionConfirmationRef: RefObject<
     ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>) | null
   >;
-  onBuildLiveSafetyViewerGrantsChange: (
-    grants: BuildLiveSafetyViewerGrant[]
-  ) => void;
   onBuildLiveSafetyHostSessionsChange: (
     sessions: BuildLiveSafetyHostSession[]
   ) => void;
-  requestBuildLiveSafetyReportRef: RefObject<
-    ((request: BuildLiveSafetyReportRequest) => Promise<void>) | null
-  >;
   requestBuildLiveSafetyStopRef: RefObject<
     ((request: BuildLiveSafetyStopRequest) => Promise<void>) | null
   >;

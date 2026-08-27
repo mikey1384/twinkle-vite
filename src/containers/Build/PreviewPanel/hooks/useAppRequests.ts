@@ -125,9 +125,6 @@ export default function useAppRequests() {
   const leaveBuildLiveSession = useAppContext(
     (v) => v.requestHelpers.leaveBuildLiveSession
   );
-  const reportBuildLiveSession = useAppContext(
-    (v) => v.requestHelpers.reportBuildLiveSession
-  );
   const stopBuildLiveSession = useAppContext(
     (v) => v.requestHelpers.stopBuildLiveSession
   );
@@ -142,9 +139,6 @@ export default function useAppRequests() {
   );
   const leaveBuildLiveReplay = useAppContext(
     (v) => v.requestHelpers.leaveBuildLiveReplay
-  );
-  const reportBuildLiveReplay = useAppContext(
-    (v) => v.requestHelpers.reportBuildLiveReplay
   );
   const deleteBuildLiveReplay = useAppContext(
     (v) => v.requestHelpers.deleteBuildLiveReplay
@@ -383,13 +377,11 @@ export default function useAppRequests() {
   const getBuildLiveSessionStatusRef = useRef(getBuildLiveSessionStatus);
   const joinBuildLiveSessionRef = useRef(joinBuildLiveSession);
   const leaveBuildLiveSessionRef = useRef(leaveBuildLiveSession);
-  const reportBuildLiveSessionRef = useRef(reportBuildLiveSession);
   const stopBuildLiveSessionRef = useRef(stopBuildLiveSession);
   const listBuildLiveReplaysRef = useRef(listBuildLiveReplays);
   const getBuildLiveReplayStatusRef = useRef(getBuildLiveReplayStatus);
   const joinBuildLiveReplayRef = useRef(joinBuildLiveReplay);
   const leaveBuildLiveReplayRef = useRef(leaveBuildLiveReplay);
-  const reportBuildLiveReplayRef = useRef(reportBuildLiveReplay);
   const deleteBuildLiveReplayRef = useRef(deleteBuildLiveReplay);
   const getBuildMySubjectsRef = useRef(getBuildMySubjects);
   const searchBuildSubjectsRef = useRef(searchBuildSubjects);
@@ -511,13 +503,11 @@ export default function useAppRequests() {
     getBuildLiveSessionStatusRef,
     joinBuildLiveSessionRef,
     leaveBuildLiveSessionRef,
-    reportBuildLiveSessionRef,
     stopBuildLiveSessionRef,
     listBuildLiveReplaysRef,
     getBuildLiveReplayStatusRef,
     joinBuildLiveReplayRef,
     leaveBuildLiveReplayRef,
-    reportBuildLiveReplayRef,
     deleteBuildLiveReplayRef,
     getBuildMySubjectsRef,
     searchBuildSubjectsRef,
