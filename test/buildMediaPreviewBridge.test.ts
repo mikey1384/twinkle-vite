@@ -20,7 +20,14 @@ test('Build media paid and destructive bridge calls remain transition-safe mutat
     'live:leave',
     'live:report-consent',
     'live:report',
-    'live:stop'
+    'live:stop',
+    'replay:watch-consent',
+    'replay:join',
+    'replay:leave',
+    'replay:report-consent',
+    'replay:report',
+    'replay:delete-consent',
+    'replay:delete'
   ]) {
     assert.equal(isMutatingPreviewRequestType(requestType), true, requestType);
   }
@@ -34,7 +41,7 @@ test('Build media host bridge reauthorizes raw paid actions with exact action id
   );
   assert.match(
     source,
-    /function buildMediaActionConfirmationKey[\s\S]*?kind,[\s\S]*?requestId,[\s\S]*?audio === true[\s\S]*?resourceId[\s\S]*?reason/
+    /function buildMediaActionConfirmationKey[\s\S]*?kind,[\s\S]*?requestId,[\s\S]*?audio === true[\s\S]*?saveReplay === true[\s\S]*?resourceId[\s\S]*?reason/
   );
   assert.match(
     source,
@@ -54,47 +61,79 @@ test('Build media host bridge reauthorizes raw paid actions with exact action id
   );
   assert.match(
     source,
+    /case 'replay:join':[\s\S]*?kind: 'replay-watch'[\s\S]*?joinBuildLiveReplayRef[\s\S]*?mediaKind: 'replay'/
+  );
+  assert.match(
+    source,
+    /case 'replay:report':[\s\S]*?kind: 'replay-report'[\s\S]*?reportBuildLiveReplayRef/
+  );
+  assert.match(
+    source,
+    /case 'replay:delete':[\s\S]*?kind: 'replay-delete'[\s\S]*?deleteBuildLiveReplayRef/
+  );
+  assert.match(
+    source,
     /if \(navigator\.userActivation\?\.isActive !== true\)[\s\S]*?'USER_ACTIVATION_REQUIRED'/
   );
 });
 
 test('Build media confirmation copy is mixed-age and discloses saved app-usable media', () => {
   const source = readSource('src/containers/Build/PreviewPanel/index.tsx');
-  const start = source.indexOf('requestBuildMediaActionConfirmationRef.current');
-  const end = source.indexOf('requestBuildMediaActionConfirmationRef.current = null', start);
+  const start = source.indexOf(
+    'requestBuildMediaActionConfirmationRef.current'
+  );
+  const end = source.indexOf(
+    'requestBuildMediaActionConfirmationRef.current = null',
+    start
+  );
   const confirmationSource = source.slice(start, end);
   assert.match(confirmationSource, /saved in your Twinkle file storage/);
   assert.match(confirmationSource, /this app can use it/);
-  assert.match(confirmationSource, /report this livestream and end it immediately/);
+  assert.match(
+    confirmationSource,
+    /report this livestream and end it immediately/
+  );
   assert.match(confirmationSource, /privately record your account/);
+  assert.match(
+    confirmationSource,
+    /saved for this app as a replay for seven days/
+  );
+  assert.match(confirmationSource, /Report replay\?/);
+  assert.match(confirmationSource, /Remove replay\?/);
+  assert.match(
+    confirmationSource,
+    /audio[\s\S]*?'camera and microphone permissions\.'[\s\S]*?: 'camera permission\.'/
+  );
   assert.doesNotMatch(confirmationSource, /\b(?:kid|child|minor)\b/i);
 });
 
-test('livestream viewers and hosts retain platform-owned safety controls', () => {
+test('livestream and replay viewers plus hosts retain platform-owned safety controls', () => {
   const stageSource = readSource(
     'src/containers/Build/PreviewPanel/PreviewStage.tsx'
   );
   const hostSource = readSource(
     'src/containers/Build/PreviewPanel/hooks/useHostBridge.ts'
   );
-  const panelSource = readSource(
-    'src/containers/Build/PreviewPanel/index.tsx'
-  );
+  const panelSource = readSource('src/containers/Build/PreviewPanel/index.tsx');
 
   assert.match(stageSource, /data-testid="build-live-safety-controls"/);
-  assert.match(
-    stageSource,
-    /data-testid="build-live-host-safety-controls"/
-  );
-  assert.match(stageSource, /aria-label="Live safety"/);
+  assert.match(stageSource, /data-testid="build-live-host-safety-controls"/);
+  assert.match(stageSource, /isReplay \? 'Replay safety' : 'Live safety'/);
   assert.match(stageSource, /aria-label="Hosted livestream safety"/);
   assert.match(
     panelSource,
     /<BuildLiveHostSafetyControls[\s\S]*?sessions=\{activeBuildLiveSafetyHostSessions\}[\s\S]*?onStop=\{handleBuildLiveSafetyStop\}/
   );
-  assert.match(stageSource, /data-build-live-host-session=\{session\.sessionId\}/);
-  assert.match(stageSource, /'privacy'[\s\S]*?'harassment'[\s\S]*?'explicit-content'[\s\S]*?'violence'[\s\S]*?'dangerous-activity'[\s\S]*?'other'/);
+  assert.match(
+    stageSource,
+    /data-build-live-host-session=\{session\.sessionId\}/
+  );
+  assert.match(
+    stageSource,
+    /'privacy'[\s\S]*?'harassment'[\s\S]*?'explicit-content'[\s\S]*?'violence'[\s\S]*?'dangerous-activity'[\s\S]*?'other'/
+  );
   assert.match(stageSource, /Report & end/);
+  assert.match(stageSource, /Report & remove/);
   assert.match(
     stageSource,
     /submittedReason[\s\S]*?disabled=\{submitting \|\| submittedReason !== null\}/
@@ -105,7 +144,7 @@ test('livestream viewers and hosts retain platform-owned safety controls', () =>
   );
   assert.match(
     hostSource,
-    /requestBuildLiveSafetyReportRef\.current = async[\s\S]*?active\.reportReason[\s\S]*?postBuildLiveSafetyStopLocal\(active\.sourceWindow, sessionId\)[\s\S]*?reportBuildLiveSessionRef\.current/
+    /requestBuildLiveSafetyReportRef\.current = async[\s\S]*?active\.reportReason[\s\S]*?postBuildLiveSafetyStopLocal\([\s\S]*?active\.sourceWindow,[\s\S]*?sessionId,[\s\S]*?mediaKind[\s\S]*?reportBuildLiveReplayRef\.current[\s\S]*?reportBuildLiveSessionRef\.current/
   );
   assert.match(
     hostSource,
@@ -125,7 +164,7 @@ test('livestream viewers and hosts retain platform-owned safety controls', () =>
   );
   assert.match(
     hostSource,
-    /expiryDelayMs = hardEndsAt[\s\S]*?hardEndsAt \* 1000 - Date\.now\(\)[\s\S]*?postBuildLiveSafetyStopLocal\(retired\.sourceWindow, sessionId\)[\s\S]*?settleRetiredBuildLiveSafetyGrant\(retired\)/
+    /expiryDelayMs = hardEndsAt[\s\S]*?hardEndsAt \* 1000 - Date\.now\(\)[\s\S]*?postBuildLiveSafetyStopLocal\([\s\S]*?retired\.sourceWindow,[\s\S]*?sessionId,[\s\S]*?retired\.mediaKind[\s\S]*?settleRetiredBuildLiveSafetyGrant\(retired\)/
   );
   assert.match(
     hostSource,

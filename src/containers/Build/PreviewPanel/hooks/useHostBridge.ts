@@ -395,8 +395,7 @@ export function useHostBridge({
       string,
       ActiveBuildLiveSafetyGrant
     >();
-    interface ActiveBuildLiveHostSession
-      extends BuildLiveSafetyHostSession {
+    interface ActiveBuildLiveHostSession extends BuildLiveSafetyHostSession {
       sourceWindows: Set<Window>;
     }
     const activeBuildLiveHostSessions = new Map<
@@ -431,7 +430,9 @@ export function useHostBridge({
       value: unknown
     ): BuildLiveSafetyReportReason {
       const normalized = String(value || '').trim();
-      if (!buildLiveReportReasons.has(normalized as BuildLiveSafetyReportReason)) {
+      if (
+        !buildLiveReportReasons.has(normalized as BuildLiveSafetyReportReason)
+      ) {
         throw createPreviewBridgeError(
           'Choose a valid livestream report reason.',
           'BUILD_LIVE_INVALID_REPORT_REASON'
@@ -444,12 +445,14 @@ export function useHostBridge({
       kind,
       requestId,
       audio,
+      saveReplay,
       resourceId,
       reason
     }: {
       kind: BuildMediaActionConfirmationRequest['kind'];
       requestId: string;
       audio?: boolean;
+      saveReplay?: boolean;
       resourceId?: unknown;
       reason?: unknown;
     }) {
@@ -457,6 +460,7 @@ export function useHostBridge({
         kind,
         requestId,
         audio === true ? 'audio' : 'silent',
+        saveReplay === true ? 'save-replay' : 'no-replay',
         String(resourceId || '').trim(),
         String(reason || '').trim()
       ].join('\u0000');
@@ -480,26 +484,29 @@ export function useHostBridge({
     }
 
     function buildLiveSafetyGrantKey(
+      mediaKind: 'live' | 'replay',
       sessionId: string,
       viewerGrantId: string
     ) {
-      return `${sessionId}\u0000${viewerGrantId}`;
+      return `${mediaKind}\u0000${sessionId}\u0000${viewerGrantId}`;
     }
 
     function publishBuildLiveSafetyGrants() {
       onBuildLiveSafetyViewerGrantsChange(
         Array.from(activeBuildLiveSafetyGrants.values()).map((grant) => ({
           sessionId: grant.sessionId,
-          viewerGrantId: grant.viewerGrantId
+          viewerGrantId: grant.viewerGrantId,
+          mediaKind: grant.mediaKind || 'live'
         }))
       );
     }
 
     function removeBuildLiveSafetyGrant(
       sessionId: string,
-      viewerGrantId: string
+      viewerGrantId: string,
+      mediaKind: 'live' | 'replay' = 'live'
     ) {
-      const key = buildLiveSafetyGrantKey(sessionId, viewerGrantId);
+      const key = buildLiveSafetyGrantKey(mediaKind, sessionId, viewerGrantId);
       const active = activeBuildLiveSafetyGrants.get(key);
       if (!active) return null;
       activeBuildLiveSafetyGrants.delete(key);
@@ -513,7 +520,12 @@ export function useHostBridge({
     function removeBuildLiveSafetyGrantsForSession(sessionId: string) {
       let changed = false;
       for (const [key, active] of activeBuildLiveSafetyGrants) {
-        if (active.sessionId !== sessionId) continue;
+        if (
+          active.sessionId !== sessionId ||
+          (active.mediaKind || 'live') !== 'live'
+        ) {
+          continue;
+        }
         activeBuildLiveSafetyGrants.delete(key);
         if (active.expiryTimer !== null) {
           window.clearTimeout(active.expiryTimer);
@@ -525,22 +537,37 @@ export function useHostBridge({
 
     function registerBuildLiveSafetyGrant({
       sourceWindow,
-      response
+      response,
+      mediaKind = 'live'
     }: {
       sourceWindow: Window;
       response: any;
+      mediaKind?: 'live' | 'replay';
     }) {
-      const sessionId = String(response?.session?.id || '').trim();
+      const sessionId = String(
+        mediaKind === 'replay'
+          ? response?.replay?.id || ''
+          : response?.session?.id || ''
+      ).trim();
       const viewerGrantId = String(response?.viewerGrantId || '').trim();
       if (!sessionId || !viewerGrantId) return;
-      const key = buildLiveSafetyGrantKey(sessionId, viewerGrantId);
+      const key = buildLiveSafetyGrantKey(mediaKind, sessionId, viewerGrantId);
       const existing = activeBuildLiveSafetyGrants.get(key);
-      if (existing?.expiryTimer !== null && existing?.expiryTimer !== undefined) {
+      if (
+        existing?.expiryTimer !== null &&
+        existing?.expiryTimer !== undefined
+      ) {
         window.clearTimeout(existing.expiryTimer);
       }
       const hardEndsAt = Math.max(
         0,
-        Math.floor(Number(response?.session?.hardEndsAt) || 0)
+        Math.floor(
+          Number(
+            mediaKind === 'replay'
+              ? response?.viewerGrantExpiresAt
+              : response?.session?.hardEndsAt
+          ) || 0
+        )
       );
       const expiryDelayMs = hardEndsAt
         ? Math.max(0, hardEndsAt * 1000 - Date.now())
@@ -548,17 +575,31 @@ export function useHostBridge({
       const active: ActiveBuildLiveSafetyGrant = {
         sessionId,
         viewerGrantId,
+        mediaKind,
         sourceWindow,
         reportRequestId: existing?.reportRequestId || null,
         reportReason: existing?.reportReason || null,
         expiryTimer: null
       };
-      active.expiryTimer = window.setTimeout(() => {
-        const retired = removeBuildLiveSafetyGrant(sessionId, viewerGrantId);
-        if (!retired) return;
-        postBuildLiveSafetyStopLocal(retired.sourceWindow, sessionId);
-        settleRetiredBuildLiveSafetyGrant(retired);
-      }, Math.min(expiryDelayMs, 15 * 60 * 1000));
+      const maximumGrantLifetimeMs =
+        mediaKind === 'replay' ? 20 * 60 * 1000 : 15 * 60 * 1000;
+      active.expiryTimer = window.setTimeout(
+        () => {
+          const retired = removeBuildLiveSafetyGrant(
+            sessionId,
+            viewerGrantId,
+            mediaKind
+          );
+          if (!retired) return;
+          postBuildLiveSafetyStopLocal(
+            retired.sourceWindow,
+            sessionId,
+            retired.mediaKind || 'live'
+          );
+          settleRetiredBuildLiveSafetyGrant(retired);
+        },
+        Math.min(expiryDelayMs, maximumGrantLifetimeMs)
+      );
       activeBuildLiveSafetyGrants.set(key, active);
       publishBuildLiveSafetyGrants();
     }
@@ -588,19 +629,27 @@ export function useHostBridge({
       if (!activeBuildId) return;
       void ensureBuildApiToken(['live:write'], previewAuth)
         .then((token) =>
-          requestRefs.leaveBuildLiveSessionRef.current({
-            buildId: activeBuildId,
-            sessionId: active.sessionId,
-            viewerGrantId: active.viewerGrantId,
-            token
-          })
+          (active.mediaKind || 'live') === 'replay'
+            ? requestRefs.leaveBuildLiveReplayRef.current({
+                buildId: activeBuildId,
+                replayId: active.sessionId,
+                viewerGrantId: active.viewerGrantId,
+                token
+              })
+            : requestRefs.leaveBuildLiveSessionRef.current({
+                buildId: activeBuildId,
+                sessionId: active.sessionId,
+                viewerGrantId: active.viewerGrantId,
+                token
+              })
         )
         .catch(() => {});
     }
 
     function postBuildLiveSafetyStopLocal(
       sourceWindow: Window,
-      sessionId: string
+      sessionId: string,
+      mediaKind: 'live' | 'replay' = 'live'
     ) {
       try {
         const targetBridge = getMessageTargetBridgeForWindow(sourceWindow);
@@ -609,7 +658,7 @@ export function useHostBridge({
             source: 'twinkle-parent',
             type: 'live:safety-stop-local',
             previewNonce: targetBridge.previewNonce,
-            payload: { sessionId }
+            payload: { sessionId, mediaKind }
           },
           targetBridge.targetOrigin
         );
@@ -714,10 +763,7 @@ export function useHostBridge({
       );
     }
 
-    function registerBuildLiveHostSession(
-      session: any,
-      sourceWindow?: Window
-    ) {
+    function registerBuildLiveHostSession(session: any, sourceWindow?: Window) {
       const sessionId = String(session?.id || '').trim();
       if (!sessionId) return;
       const current = activeBuildLiveHostSessions.get(sessionId);
@@ -818,8 +864,9 @@ export function useHostBridge({
         terminalBuildLiveHostSessions.delete(sessionId);
         terminalBuildLiveHostSessions.set(sessionId, incomingUpdatedAt);
         while (terminalBuildLiveHostSessions.size > 100) {
-          const oldestSessionId = terminalBuildLiveHostSessions.keys().next()
-            .value;
+          const oldestSessionId = terminalBuildLiveHostSessions
+            .keys()
+            .next().value;
           if (typeof oldestSessionId !== 'string') break;
           terminalBuildLiveHostSessions.delete(oldestSessionId);
         }
@@ -852,9 +899,12 @@ export function useHostBridge({
     function scheduleBuildLiveHostReconciliation(delayMs: number) {
       window.clearTimeout(buildLiveHostReconcileTimer);
       if (buildLiveHostDisposed || !userId || !buildId) return;
-      buildLiveHostReconcileTimer = window.setTimeout(() => {
-        void reconcileBuildLiveHostSessions();
-      }, Math.max(0, delayMs));
+      buildLiveHostReconcileTimer = window.setTimeout(
+        () => {
+          void reconcileBuildLiveHostSessions();
+        },
+        Math.max(0, delayMs)
+      );
     }
 
     async function reconcileBuildLiveHostSessions() {
@@ -869,16 +919,16 @@ export function useHostBridge({
       buildLiveHostReconcileRunning = true;
       try {
         const token = await ensureBuildApiToken(['live:read'], previewAuth);
-        const response =
-          await requestRefs.listBuildLiveHostSessionsRef.current({
+        const response = await requestRefs.listBuildLiveHostSessionsRef.current(
+          {
             buildId,
             token
-          });
+          }
+        );
         if (buildLiveHostDisposed) return;
         const ownedSessions = Array.isArray(response?.sessions)
           ? response.sessions.filter(
-              (session: any) =>
-                Number(session?.hostUserId) === Number(userId)
+              (session: any) => Number(session?.hostUserId) === Number(userId)
             )
           : [];
         const listedIds = new Set<string>();
@@ -926,6 +976,7 @@ export function useHostBridge({
       kind,
       requestId,
       audio = false,
+      saveReplay = false,
       resourceId,
       reason
     }: {
@@ -933,6 +984,7 @@ export function useHostBridge({
       kind: BuildMediaActionConfirmationRequest['kind'];
       requestId?: unknown;
       audio?: boolean;
+      saveReplay?: boolean;
       resourceId?: unknown;
       reason?: unknown;
     }) {
@@ -947,6 +999,7 @@ export function useHostBridge({
         kind,
         requestId: normalizedRequestId,
         audio,
+        saveReplay,
         resourceId,
         reason
       });
@@ -981,6 +1034,7 @@ export function useHostBridge({
         confirmed = await requestConfirmation({
           kind,
           audio,
+          saveReplay,
           reason: String(reason || '').trim() || undefined
         });
       } finally {
@@ -992,7 +1046,17 @@ export function useHostBridge({
           'BUILD_MEDIA_ACTION_CANCELLED'
         );
       }
-      if (['clip-upload', 'live', 'live-watch', 'live-report'].includes(kind)) {
+      if (
+        [
+          'clip-upload',
+          'live',
+          'live-watch',
+          'live-report',
+          'replay-watch',
+          'replay-report',
+          'replay-delete'
+        ].includes(kind)
+      ) {
         rememberConfirmedMediaAction(sourceWindow, confirmationKey);
       }
       if (kind === 'clip') {
@@ -1054,17 +1118,20 @@ export function useHostBridge({
         'viewerGrantId'
       );
       const reason = normalizeBuildLiveBridgeReportReason(request.reason);
-      const key = buildLiveSafetyGrantKey(sessionId, viewerGrantId);
+      const mediaKind = request.mediaKind === 'replay' ? 'replay' : 'live';
+      const key = buildLiveSafetyGrantKey(mediaKind, sessionId, viewerGrantId);
       const active = activeBuildLiveSafetyGrants.get(key);
       if (!active) {
         throw createPreviewBridgeError(
-          'This livestream viewer session is no longer active.',
+          mediaKind === 'replay'
+            ? 'This replay viewer session is no longer active.'
+            : 'This livestream viewer session is no longer active.',
           'BUILD_LIVE_VIEWER_NOT_ACTIVE'
         );
       }
       const requestId =
         active.reportRequestId ||
-        `live-report-host-${
+        `${mediaKind}-report-host-${
           typeof crypto.randomUUID === 'function'
             ? crypto.randomUUID()
             : `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -1077,7 +1144,7 @@ export function useHostBridge({
       }
       await authorizeBuildMediaAction({
         sourceWindow: active.sourceWindow,
-        kind: 'live-report',
+        kind: mediaKind === 'replay' ? 'replay-report' : 'live-report',
         requestId,
         resourceId: `${sessionId}\u0000${viewerGrantId}`,
         reason
@@ -1085,7 +1152,7 @@ export function useHostBridge({
       active.reportRequestId = requestId;
       active.reportReason = reason;
 
-      postBuildLiveSafetyStopLocal(active.sourceWindow, sessionId);
+      postBuildLiveSafetyStopLocal(active.sourceWindow, sessionId, mediaKind);
 
       const activeBuildId = Number(previewAuth.buildRef.current?.id || 0);
       if (!activeBuildId) {
@@ -1096,23 +1163,37 @@ export function useHostBridge({
       }
       const token = await ensureBuildApiToken(['live:write'], previewAuth);
       try {
-        const response = await requestRefs.reportBuildLiveSessionRef.current({
-          buildId: activeBuildId,
-          sessionId,
-          viewerGrantId,
-          requestId,
-          reason,
-          token
-        });
-        removeBuildLiveSafetyGrant(sessionId, viewerGrantId);
-        if (activeBuildLiveHostSessions.has(sessionId)) {
+        const response =
+          mediaKind === 'replay'
+            ? await requestRefs.reportBuildLiveReplayRef.current({
+                buildId: activeBuildId,
+                replayId: sessionId,
+                viewerGrantId,
+                requestId,
+                reason,
+                token
+              })
+            : await requestRefs.reportBuildLiveSessionRef.current({
+                buildId: activeBuildId,
+                sessionId,
+                viewerGrantId,
+                requestId,
+                reason,
+                token
+              });
+        removeBuildLiveSafetyGrant(sessionId, viewerGrantId, mediaKind);
+        if (
+          mediaKind === 'live' &&
+          activeBuildLiveHostSessions.has(sessionId)
+        ) {
           reconcileBuildLiveHostSession(response?.session);
         }
       } catch (error) {
         if (!isRetryableBuildLiveSafetyError(error)) {
           const retired = removeBuildLiveSafetyGrant(
             sessionId,
-            viewerGrantId
+            viewerGrantId,
+            mediaKind
           );
           if (retired) settleRetiredBuildLiveSafetyGrant(retired);
         }
@@ -2750,7 +2831,8 @@ export function useHostBridge({
               sourceWindow,
               kind: captureKind,
               requestId: payload?.requestId,
-              audio: captureKind === 'live' && payload?.audio !== false
+              audio: captureKind === 'live' && payload?.audio !== false,
+              saveReplay: captureKind === 'live' && payload?.saveReplay === true
             });
             await ensureBuildApiToken(
               [
@@ -2887,7 +2969,8 @@ export function useHostBridge({
               sourceWindow,
               kind: 'live',
               requestId: payload?.requestId,
-              audio: payload?.audio !== false
+              audio: payload?.audio !== false,
+              saveReplay: payload?.saveReplay === true
             });
             const liveWriteToken = await ensureBuildApiToken(
               ['live:write'],
@@ -2898,13 +2981,11 @@ export function useHostBridge({
               requestId: payload?.requestId,
               durationSeconds: payload?.durationSeconds,
               maxViewers: payload?.maxViewers,
+              saveReplay: payload?.saveReplay === true,
               token: liveWriteToken
             });
             if (response?.session?.id) {
-              registerBuildLiveHostSession(
-                response.session,
-                sourceWindow
-              );
+              registerBuildLiveHostSession(response.session, sourceWindow);
               try {
                 await ensureBuildLiveHostSafetyPresentation(
                   String(response.session.id)
@@ -2942,10 +3023,7 @@ export function useHostBridge({
               }
             );
             if (response?.session?.id) {
-              registerBuildLiveHostSession(
-                response.session,
-                sourceWindow
-              );
+              registerBuildLiveHostSession(response.session, sourceWindow);
             }
             break;
           }
@@ -2984,9 +3062,7 @@ export function useHostBridge({
             });
             if (
               response?.session?.id &&
-              (activeBuildLiveHostSessions.has(
-                String(response.session.id)
-              ) ||
+              (activeBuildLiveHostSessions.has(String(response.session.id)) ||
                 Number(response.session.hostUserId) ===
                   Number(previewAuth.userIdRef.current))
             ) {
@@ -3169,6 +3245,229 @@ export function useHostBridge({
             removeBuildLiveSafetyGrantsForSession(
               String(payload?.sessionId || '').trim()
             );
+            break;
+          }
+
+          case 'replay:list': {
+            const liveReadToken = await ensureBuildApiToken(
+              ['live:read'],
+              previewAuth
+            );
+            response = await requestRefs.listBuildLiveReplaysRef.current({
+              buildId: activeBuild.id,
+              limit: payload?.limit,
+              token: liveReadToken
+            });
+            break;
+          }
+
+          case 'replay:status': {
+            const liveReadToken = await ensureBuildApiToken(
+              ['live:read'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildLiveReplayStatusRef.current({
+              buildId: activeBuild.id,
+              replayId: normalizeBuildLiveActionId(
+                payload?.replayId,
+                'replayId'
+              ),
+              token: liveReadToken
+            });
+            break;
+          }
+
+          case 'replay:watch-consent': {
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+              throw createPreviewBridgeError(
+                'Sign in to watch replays in this app.',
+                'AUTH_REQUIRED'
+              );
+            }
+            const replayId = normalizeBuildLiveActionId(
+              payload?.replayId,
+              'replayId'
+            );
+            await authorizeBuildMediaAction({
+              sourceWindow,
+              kind: 'replay-watch',
+              requestId: payload?.requestId,
+              resourceId: replayId
+            });
+            await ensureBuildApiToken(['live:write'], previewAuth);
+            response = { approved: true, kind: 'replay-watch' };
+            break;
+          }
+
+          case 'replay:join': {
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+              throw createPreviewBridgeError(
+                'Sign in to watch replays in this app.',
+                'AUTH_REQUIRED'
+              );
+            }
+            const replayId = normalizeBuildLiveActionId(
+              payload?.replayId,
+              'replayId'
+            );
+            await authorizeBuildMediaAction({
+              sourceWindow,
+              kind: 'replay-watch',
+              requestId: payload?.requestId,
+              resourceId: replayId
+            });
+            const liveWriteToken = await ensureBuildApiToken(
+              ['live:write'],
+              previewAuth
+            );
+            response = await requestRefs.joinBuildLiveReplayRef.current({
+              buildId: activeBuild.id,
+              replayId,
+              requestId: payload?.requestId,
+              token: liveWriteToken
+            });
+            registerBuildLiveSafetyGrant({
+              sourceWindow,
+              response,
+              mediaKind: 'replay'
+            });
+            break;
+          }
+
+          case 'replay:leave': {
+            const replayId = normalizeBuildLiveActionId(
+              payload?.replayId,
+              'replayId'
+            );
+            const viewerGrantId = normalizeBuildLiveActionId(
+              payload?.viewerGrantId,
+              'viewerGrantId'
+            );
+            const liveWriteToken = await ensureBuildApiToken(
+              ['live:write'],
+              previewAuth
+            );
+            response = await requestRefs.leaveBuildLiveReplayRef.current({
+              buildId: activeBuild.id,
+              replayId,
+              viewerGrantId,
+              token: liveWriteToken
+            });
+            removeBuildLiveSafetyGrant(replayId, viewerGrantId, 'replay');
+            break;
+          }
+
+          case 'replay:report': {
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+              throw createPreviewBridgeError(
+                'Sign in to report replays in this app.',
+                'AUTH_REQUIRED'
+              );
+            }
+            const replayId = normalizeBuildLiveActionId(
+              payload?.replayId,
+              'replayId'
+            );
+            const viewerGrantId = normalizeBuildLiveActionId(
+              payload?.viewerGrantId,
+              'viewerGrantId'
+            );
+            const reason = normalizeBuildLiveBridgeReportReason(
+              payload?.reason
+            );
+            await authorizeBuildMediaAction({
+              sourceWindow,
+              kind: 'replay-report',
+              requestId: payload?.requestId,
+              resourceId: `${replayId}\u0000${viewerGrantId}`,
+              reason
+            });
+            const liveWriteToken = await ensureBuildApiToken(
+              ['live:write'],
+              previewAuth
+            );
+            response = await requestRefs.reportBuildLiveReplayRef.current({
+              buildId: activeBuild.id,
+              replayId,
+              viewerGrantId,
+              requestId: payload?.requestId,
+              reason,
+              token: liveWriteToken
+            });
+            removeBuildLiveSafetyGrant(replayId, viewerGrantId, 'replay');
+            break;
+          }
+
+          case 'replay:report-consent': {
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+              throw createPreviewBridgeError(
+                'Sign in to report replays in this app.',
+                'AUTH_REQUIRED'
+              );
+            }
+            const replayId = normalizeBuildLiveActionId(
+              payload?.replayId,
+              'replayId'
+            );
+            const viewerGrantId = normalizeBuildLiveActionId(
+              payload?.viewerGrantId,
+              'viewerGrantId'
+            );
+            const reason = normalizeBuildLiveBridgeReportReason(
+              payload?.reason
+            );
+            await authorizeBuildMediaAction({
+              sourceWindow,
+              kind: 'replay-report',
+              requestId: payload?.requestId,
+              resourceId: `${replayId}\u0000${viewerGrantId}`,
+              reason
+            });
+            await ensureBuildApiToken(['live:write'], previewAuth);
+            response = { approved: true, kind: 'replay-report' };
+            break;
+          }
+
+          case 'replay:delete-consent': {
+            const replayId = normalizeBuildLiveActionId(
+              payload?.replayId,
+              'replayId'
+            );
+            await authorizeBuildMediaAction({
+              sourceWindow,
+              kind: 'replay-delete',
+              requestId: payload?.requestId,
+              resourceId: replayId
+            });
+            await ensureBuildApiToken(['live:write'], previewAuth);
+            response = { approved: true, kind: 'replay-delete' };
+            break;
+          }
+
+          case 'replay:delete': {
+            const replayId = normalizeBuildLiveActionId(
+              payload?.replayId,
+              'replayId'
+            );
+            await authorizeBuildMediaAction({
+              sourceWindow,
+              kind: 'replay-delete',
+              requestId: payload?.requestId,
+              resourceId: replayId
+            });
+            const liveWriteToken = await ensureBuildApiToken(
+              ['live:write'],
+              previewAuth
+            );
+            response = await requestRefs.deleteBuildLiveReplayRef.current({
+              buildId: activeBuild.id,
+              replayId,
+              token: liveWriteToken
+            });
             break;
           }
 

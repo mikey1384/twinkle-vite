@@ -98,9 +98,7 @@ export default function buildRequestHelpers({
           'Media request failed',
         ...(typeof data.code === 'string' ? { code: data.code } : {}),
         ...(typeof data.scope === 'string' ? { scope: data.scope } : {}),
-        ...(retryAfterSeconds != null
-          ? { retryAfterSeconds }
-          : {}),
+        ...(retryAfterSeconds != null ? { retryAfterSeconds } : {}),
         ...(data.mediaEnergy ? { mediaEnergy: data.mediaEnergy } : {})
       });
     }
@@ -3427,18 +3425,20 @@ export default function buildRequestHelpers({
       requestId,
       durationSeconds,
       maxViewers,
+      saveReplay,
       token
     }: {
       buildId: number;
       requestId: string;
       durationSeconds?: number;
       maxViewers?: number;
+      saveReplay?: boolean;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/live/start`,
-          { requestId, durationSeconds, maxViewers },
+          { requestId, durationSeconds, maxViewers, saveReplay },
           getBuildApiConfig(token)
         );
         return data;
@@ -3613,6 +3613,142 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/live/stop`,
           { sessionId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async listBuildLiveReplays({
+      buildId,
+      limit,
+      token
+    }: {
+      buildId: number;
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/replays/list`,
+          { limit },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async getBuildLiveReplayStatus({
+      buildId,
+      replayId,
+      token
+    }: {
+      buildId: number;
+      replayId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/replays/status`,
+          { replayId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async joinBuildLiveReplay({
+      buildId,
+      replayId,
+      requestId,
+      token
+    }: {
+      buildId: number;
+      replayId: string;
+      requestId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/replays/join`,
+          { replayId, requestId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async leaveBuildLiveReplay({
+      buildId,
+      replayId,
+      viewerGrantId,
+      token
+    }: {
+      buildId: number;
+      replayId: string;
+      viewerGrantId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/replays/leave`,
+          { replayId, viewerGrantId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async reportBuildLiveReplay({
+      buildId,
+      replayId,
+      viewerGrantId,
+      requestId,
+      reason,
+      token
+    }: {
+      buildId: number;
+      replayId: string;
+      viewerGrantId: string;
+      requestId: string;
+      reason: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/replays/report`,
+          { replayId, viewerGrantId, requestId, reason },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleBuildMediaError(error);
+      }
+    },
+
+    async deleteBuildLiveReplay({
+      buildId,
+      replayId,
+      token
+    }: {
+      buildId: number;
+      replayId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/live/replays/delete`,
+          { replayId },
           getBuildApiConfig(token)
         );
         return data;

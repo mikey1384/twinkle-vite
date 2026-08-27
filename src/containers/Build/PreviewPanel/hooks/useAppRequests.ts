@@ -131,6 +131,24 @@ export default function useAppRequests() {
   const stopBuildLiveSession = useAppContext(
     (v) => v.requestHelpers.stopBuildLiveSession
   );
+  const listBuildLiveReplays = useAppContext(
+    (v) => v.requestHelpers.listBuildLiveReplays
+  );
+  const getBuildLiveReplayStatus = useAppContext(
+    (v) => v.requestHelpers.getBuildLiveReplayStatus
+  );
+  const joinBuildLiveReplay = useAppContext(
+    (v) => v.requestHelpers.joinBuildLiveReplay
+  );
+  const leaveBuildLiveReplay = useAppContext(
+    (v) => v.requestHelpers.leaveBuildLiveReplay
+  );
+  const reportBuildLiveReplay = useAppContext(
+    (v) => v.requestHelpers.reportBuildLiveReplay
+  );
+  const deleteBuildLiveReplay = useAppContext(
+    (v) => v.requestHelpers.deleteBuildLiveReplay
+  );
   const getBuildMySubjects = useAppContext(
     (v) => v.requestHelpers.getBuildMySubjects
   );
@@ -367,6 +385,12 @@ export default function useAppRequests() {
   const leaveBuildLiveSessionRef = useRef(leaveBuildLiveSession);
   const reportBuildLiveSessionRef = useRef(reportBuildLiveSession);
   const stopBuildLiveSessionRef = useRef(stopBuildLiveSession);
+  const listBuildLiveReplaysRef = useRef(listBuildLiveReplays);
+  const getBuildLiveReplayStatusRef = useRef(getBuildLiveReplayStatus);
+  const joinBuildLiveReplayRef = useRef(joinBuildLiveReplay);
+  const leaveBuildLiveReplayRef = useRef(leaveBuildLiveReplay);
+  const reportBuildLiveReplayRef = useRef(reportBuildLiveReplay);
+  const deleteBuildLiveReplayRef = useRef(deleteBuildLiveReplay);
   const getBuildMySubjectsRef = useRef(getBuildMySubjects);
   const searchBuildSubjectsRef = useRef(searchBuildSubjects);
   const listBuildAiCardsRef = useRef(listBuildAiCards);
@@ -489,6 +513,12 @@ export default function useAppRequests() {
     leaveBuildLiveSessionRef,
     reportBuildLiveSessionRef,
     stopBuildLiveSessionRef,
+    listBuildLiveReplaysRef,
+    getBuildLiveReplayStatusRef,
+    joinBuildLiveReplayRef,
+    leaveBuildLiveReplayRef,
+    reportBuildLiveReplayRef,
+    deleteBuildLiveReplayRef,
     getBuildMySubjectsRef,
     searchBuildSubjectsRef,
     listBuildAiCardsRef,

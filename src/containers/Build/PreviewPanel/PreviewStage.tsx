@@ -206,7 +206,7 @@ const liveSafetyButtonClass = css`
 const liveSafetyErrorClass = css`
   flex-basis: 100%;
   color: #991b1b;
-  font-size: 1rem;
+  font-size: 1.1rem;
   text-align: right;
 `;
 
@@ -240,7 +240,7 @@ const liveHostSafetyControlClass = css`
 const liveHostSafetyDetailClass = css`
   flex-basis: 100%;
   color: #7f1d1d;
-  font-size: 1rem;
+  font-size: 1.1rem;
 `;
 
 const previewSpinnerClass = css`
@@ -355,9 +355,7 @@ export default function PreviewStage({
             allow={BUILD_APP_IFRAME_ALLOW}
             allowFullScreen
             sandbox={getRuntimePreviewIframeSandbox(runtimePreviewFrameSrc)}
-            onLoad={() =>
-              onPreviewFrameLoad('primary', runtimePreviewFrameSrc)
-            }
+            onLoad={() => onPreviewFrameLoad('primary', runtimePreviewFrameSrc)}
             className={previewIframeClass}
             style={{
               opacity: previewFrameReady.primary ? 1 : 0,
@@ -402,9 +400,7 @@ export default function PreviewStage({
           )}
           allow={BUILD_APP_IFRAME_ALLOW}
           allowFullScreen
-          sandbox={getRuntimePreviewIframeSandbox(
-            previewFrameSources.primary
-          )}
+          sandbox={getRuntimePreviewIframeSandbox(previewFrameSources.primary)}
           onLoad={() =>
             onPreviewFrameLoad('primary', previewFrameSources.primary || '')
           }
@@ -440,10 +436,7 @@ export default function PreviewStage({
             previewFrameSources.secondary
           )}
           onLoad={() =>
-            onPreviewFrameLoad(
-              'secondary',
-              previewFrameSources.secondary || ''
-            )
+            onPreviewFrameLoad('secondary', previewFrameSources.secondary || '')
           }
           className={previewIframeClass}
           style={{
@@ -509,7 +502,7 @@ function BuildLiveSafetyControls({
     >
       {grants.map((grant) => (
         <BuildLiveSafetyControl
-          key={`${grant.sessionId}:${grant.viewerGrantId}`}
+          key={`${grant.mediaKind || 'live'}:${grant.sessionId}:${grant.viewerGrantId}`}
           grant={grant}
           onReport={onReport}
         />
@@ -531,6 +524,7 @@ function BuildLiveSafetyControl({
     React.useState<BuildLiveSafetyReportReason | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState('');
+  const isReplay = grant.mediaKind === 'replay';
 
   async function reportAndEnd() {
     if (submitting) return;
@@ -552,7 +546,8 @@ function BuildLiveSafetyControl({
         setSubmittedReason(null);
       }
       setError(
-        reportError?.message || 'Could not report this livestream. Try again.'
+        reportError?.message ||
+          `Could not report this ${isReplay ? 'replay' : 'livestream'}. Try again.`
       );
     } finally {
       setSubmitting(false);
@@ -563,15 +558,17 @@ function BuildLiveSafetyControl({
     <div
       className={liveSafetyControlClass}
       role="region"
-      aria-label="Live safety"
+      aria-label={isReplay ? 'Replay safety' : 'Live safety'}
     >
       <span className={liveSafetyLabelClass}>
         <Icon icon="exclamation-triangle" />
-        Live safety
+        {isReplay ? 'Replay safety' : 'Live safety'}
       </span>
       <select
         className={liveSafetySelectClass}
-        aria-label="Livestream report reason"
+        aria-label={
+          isReplay ? 'Replay report reason' : 'Livestream report reason'
+        }
         value={reason}
         disabled={submitting || submittedReason !== null}
         onChange={(event) =>
@@ -592,7 +589,11 @@ function BuildLiveSafetyControl({
           void reportAndEnd();
         }}
       >
-        {submitting ? 'Reporting…' : 'Report & end'}
+        {submitting
+          ? 'Reporting…'
+          : isReplay
+            ? 'Report & remove'
+            : 'Report & end'}
       </button>
       {error ? (
         <span className={liveSafetyErrorClass} role="alert">
