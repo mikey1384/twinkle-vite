@@ -51,6 +51,7 @@ interface Props {
   isChessDiscussion: boolean;
   isCielMessage?: boolean;
   isCurrentlyStreaming: boolean;
+  isDeleteOnlyBuildSuggestion: boolean;
   isDrawOffer: boolean;
   isEditing: boolean;
   isLastMsg: boolean;
@@ -105,6 +106,7 @@ export default function Content({
   isChessDiscussion,
   isCielMessage,
   isCurrentlyStreaming,
+  isDeleteOnlyBuildSuggestion,
   isDrawOffer,
   isEditing,
   isLastMsg,
@@ -326,11 +328,11 @@ export default function Content({
               messageId={messageId}
               showPgn={Boolean(
                 gameWinnerId ||
-                  isDraw ||
-                  isAbort ||
-                  chessState?.isCheckmate ||
-                  chessState?.isStalemate ||
-                  chessState?.isDraw
+                isDraw ||
+                isAbort ||
+                chessState?.isCheckmate ||
+                chessState?.isStalemate ||
+                chessState?.isDraw
               )}
               style={{ marginTop: '0.5rem' }}
             />
@@ -439,18 +441,20 @@ export default function Content({
               Message failed to send. Copy it and try again.
             </div>
           )}
-          {!isEditing && isMenuButtonsAllowed && (
-            <div style={{ marginTop: '2rem', height: '2.5rem' }}>
-              <Reactions
-                pendingReactionMutations={pendingReactionMutations}
-                reactions={message.reactions}
-                reactionsMenuShown={reactionsMenuShown}
-                onRemoveReaction={handleRemoveReaction}
-                onAddReaction={handleAddReaction}
-                theme={displayedThemeColor}
-              />
-            </div>
-          )}
+          {!isEditing &&
+            isMenuButtonsAllowed &&
+            !isDeleteOnlyBuildSuggestion && (
+              <div style={{ marginTop: '2rem', height: '2.5rem' }}>
+                <Reactions
+                  pendingReactionMutations={pendingReactionMutations}
+                  reactions={message.reactions}
+                  reactionsMenuShown={reactionsMenuShown}
+                  onRemoveReaction={handleRemoveReaction}
+                  onAddReaction={handleAddReaction}
+                  theme={displayedThemeColor}
+                />
+              </div>
+            )}
         </>
       )}
     </div>

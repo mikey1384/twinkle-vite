@@ -50,7 +50,8 @@ import type {
   PendingReactionMutations
 } from './Reactions/types';
 import {
-  canUseGenericChatMessageActions
+  canUseGenericChatMessageActions,
+  isSenderDeleteOnlyBuildSuggestionMessage
 } from '~/helpers/chatMessageCapabilities';
 
 function MessageBody({
@@ -198,6 +199,10 @@ function MessageBody({
     ...message,
     isNotification: isNotification || message.isNotification
   });
+  const isDeleteOnlyBuildSuggestion = isSenderDeleteOnlyBuildSuggestionMessage({
+    message,
+    actorUserId: myId
+  });
 
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
@@ -217,6 +222,9 @@ function MessageBody({
   }, []);
 
   const userCanDeleteThis = useMemo(() => {
+    if (isDeleteOnlyBuildSuggestion) {
+      return true;
+    }
     if (!genericActionsAllowed || isDrawOffer) {
       return false;
     }
@@ -236,6 +244,7 @@ function MessageBody({
     channelId,
     genericActionsAllowed,
     isAIMessage,
+    isDeleteOnlyBuildSuggestion,
     isDrawOffer,
     level,
     uploaderLevel,
@@ -489,7 +498,7 @@ function MessageBody({
   const isMenuButtonsAllowed = useMemo(
     () =>
       !!messageId &&
-      genericActionsAllowed &&
+      (genericActionsAllowed || isDeleteOnlyBuildSuggestion) &&
       !isApprovalRequest &&
       !isNotification &&
       !isCallMsg &&
@@ -502,6 +511,7 @@ function MessageBody({
       isApprovalRequest,
       isCallMsg,
       isChessMsg,
+      isDeleteOnlyBuildSuggestion,
       isEditing,
       isNotification,
       messageId
@@ -870,6 +880,7 @@ function MessageBody({
               isEditing={isEditing}
               isLastMsg={isLastMsg}
               isMenuButtonsAllowed={isMenuButtonsAllowed}
+              isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
               isModificationNotice={isModificationNotice}
               isNotification={isNotification}
               isOmokCountdownActive={isOmokCountdownActive}
@@ -908,6 +919,7 @@ function MessageBody({
               isCurrentlyStreaming={!!isCurrentlyStreaming}
               isDrawOffer={isDrawOffer}
               isMenuButtonsAllowed={isMenuButtonsAllowed}
+              isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
               isRestricted={isRestricted}
               message={message}
               messageId={messageId}

@@ -10,6 +10,9 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'cliAdminChatMessage'
 ]);
 
+const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =
+  new Set(['buildContributionSubmission', 'buildThumbnailSuggestion']);
+
 export function canUseGenericChatMessageActions({
   inviteFrom,
   invitePath,
@@ -47,5 +50,23 @@ export function canUseGenericChatMessageActions({
     !isNotificationMessage &&
     !isStructuredNotice &&
     !SERVER_ISSUED_CHAT_CARD_ROOT_TYPES.has(String(rootType || '').trim())
+  );
+}
+
+export function isSenderDeleteOnlyBuildSuggestionMessage({
+  message,
+  actorUserId
+}: {
+  message?: { rootType?: unknown; userId?: unknown } | null;
+  actorUserId?: unknown;
+}) {
+  const normalizedActorUserId = Number(actorUserId || 0);
+  const normalizedSenderUserId = Number(message?.userId || 0);
+  return (
+    normalizedActorUserId > 0 &&
+    normalizedSenderUserId === normalizedActorUserId &&
+    SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES.has(
+      String(message?.rootType || '').trim()
+    )
   );
 }

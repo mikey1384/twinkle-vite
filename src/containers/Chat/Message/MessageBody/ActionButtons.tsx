@@ -3,10 +3,7 @@ import { css } from '@emotion/css';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import {
-  BOOKMARK_VIEWS,
-  BookmarkView
-} from '~/constants/defaultValues';
+import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import ReactionButton from './ReactionButton';
 
@@ -15,6 +12,7 @@ const deviceIsMobile = isMobile(navigator);
 const replyLabel = 'Reply';
 const rewardLabel = 'Reward';
 const removeLabel = 'Remove';
+const deleteLabel = 'Delete';
 const editLabel = 'Edit';
 
 interface Props {
@@ -28,6 +26,7 @@ interface Props {
   isCielMessage?: boolean;
   isChessMsg: boolean;
   isCurrentlyStreaming: boolean;
+  isDeleteOnlyBuildSuggestion: boolean;
   isDrawOffer: boolean;
   isMenuButtonsAllowed: boolean;
   isRestricted: boolean;
@@ -68,6 +67,7 @@ export default function ActionButtons({
   isCielMessage,
   isChessMsg,
   isCurrentlyStreaming,
+  isDeleteOnlyBuildSuggestion,
   isDrawOffer,
   isMenuButtonsAllowed,
   isRestricted,
@@ -102,7 +102,7 @@ export default function ActionButtons({
     const result: any[] = [];
     if (isBanned) return result;
 
-    if (!isRestricted) {
+    if (!isDeleteOnlyBuildSuggestion && !isRestricted) {
       result.push({
         label: (
           <>
@@ -128,7 +128,7 @@ export default function ActionButtons({
       });
     }
 
-    if (userCanEditThis) {
+    if (!isDeleteOnlyBuildSuggestion && userCanEditThis) {
       result.push({
         label: (
           <>
@@ -151,7 +151,9 @@ export default function ActionButtons({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span style={{ marginLeft: '1rem' }}>{removeLabel}</span>
+            <span style={{ marginLeft: '1rem' }}>
+              {isDeleteOnlyBuildSuggestion ? deleteLabel : removeLabel}
+            </span>
           </>
         ),
         onClick: () => {
@@ -160,7 +162,12 @@ export default function ActionButtons({
       });
     }
 
-    if (userCanRewardThis && !rewardAmount && !isAIMessage) {
+    if (
+      !isDeleteOnlyBuildSuggestion &&
+      userCanRewardThis &&
+      !rewardAmount &&
+      !isAIMessage
+    ) {
       result.push({
         label: (
           <>
@@ -181,7 +188,7 @@ export default function ActionButtons({
 
     const canBookmark =
       isAIChat && (isAIMessage || (!!myId && userId === myId && !!messageId));
-    if (canBookmark) {
+    if (!isDeleteOnlyBuildSuggestion && canBookmark) {
       const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
       result.push({
         label: (
@@ -213,6 +220,7 @@ export default function ActionButtons({
     isAIMessage,
     isBanned,
     isCielMessage,
+    isDeleteOnlyBuildSuggestion,
     isRestricted,
     message,
     messageId,
@@ -254,16 +262,20 @@ export default function ActionButtons({
         display: flex;
       `}
     >
-      {!invitePath && !isDrawOffer && !isChessMsg && !isBanned && (
-        <ReactionButton
-          onReactionClick={onAddReaction}
-          reactionsMenuShown={reactionsMenuShown}
-          onSetReactionsMenuShown={onSetReactionsMenuShown}
-          style={{
-            marginRight: dropdownButtonShown ? '0.5rem' : 0
-          }}
-        />
-      )}
+      {!isDeleteOnlyBuildSuggestion &&
+        !invitePath &&
+        !isDrawOffer &&
+        !isChessMsg &&
+        !isBanned && (
+          <ReactionButton
+            onReactionClick={onAddReaction}
+            reactionsMenuShown={reactionsMenuShown}
+            onSetReactionsMenuShown={onSetReactionsMenuShown}
+            style={{
+              marginRight: dropdownButtonShown ? '0.5rem' : 0
+            }}
+          />
+        )}
       {dropdownButtonShown && (
         <DropdownButton
           variant="solid"
