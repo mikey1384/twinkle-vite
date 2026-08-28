@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import zero from '~/assets/zero.png';
+import zeroBuilder from '~/assets/zero-builder.png';
 import Icon from '~/components/Icon';
 import { ZERO_TWINKLE_ID, ZERO_PFP_URL } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
+import useWorkshopEngineerMode from '~/helpers/hooks/useWorkshopEngineerMode';
 
 export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
   const navigate = useNavigate();
+  const engineerMode = useWorkshopEngineerMode();
   const username = useKeyContext((v) => v.myState.username);
   const userId = useKeyContext((v) => v.myState.userId);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -38,7 +41,6 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
         <Button
           style={{
             opacity: chatLoading ? 0.5 : 1,
-            background: `no-repeat center/80% url(${zero})`,
             ...(chatLoading
               ? { boxShadow: 'none', border: `1px solid ${Color.black()}` }
               : {}),
@@ -50,6 +52,31 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
         >
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         </Button>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            pointerEvents: 'none'
+          }}
+        >
+          <img
+            src={engineerMode ? zeroBuilder : zero}
+            alt="Zero"
+            style={{
+              height: '82%',
+              aspectRatio: '1',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              userSelect: 'none'
+            }}
+          />
+        </div>
         {chatLoading && (
           <div
             style={{

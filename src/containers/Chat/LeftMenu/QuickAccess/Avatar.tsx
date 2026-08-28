@@ -1,9 +1,12 @@
 import React from 'react';
 import ciel from '~/assets/ciel.png';
+import cielBuilder from '~/assets/ciel-builder.png';
 import zero from '~/assets/zero.png';
+import zeroBuilder from '~/assets/zero-builder.png';
 import ProfilePic from '~/components/ProfilePic';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import useWorkshopEngineerMode from '~/helpers/hooks/useWorkshopEngineerMode';
 import type { ChatQuickAccessPartner } from './types';
 
 export default function QuickAccessAvatar({
@@ -13,11 +16,16 @@ export default function QuickAccessAvatar({
   partner: ChatQuickAccessPartner;
   size?: number | string;
 }) {
+  const engineerMode = useWorkshopEngineerMode();
   const aiImage =
     partner.id === CIEL_TWINKLE_ID
-      ? ciel
+      ? engineerMode
+        ? cielBuilder
+        : ciel
       : partner.id === ZERO_TWINKLE_ID
-        ? zero
+        ? engineerMode
+          ? zeroBuilder
+          : zero
         : null;
 
   return (
